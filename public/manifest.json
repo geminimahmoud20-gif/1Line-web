@@ -1,0 +1,19 @@
+{
+  "short_name": "OneLine Sohag",
+  "name": "One Line Real Estate - Sohag Platform",
+  "description": "The Premier Verified Real Estate Platform in Sohag and Upper Egypt",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#0d48a1",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "lang": "ar",
+  "dir": "rtl"
+}

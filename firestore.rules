@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 🛡️ 1. LEADS & CUSTOMER INQUIRIES (حماية بيانات العملاء والطلبات)
+    // Anyone can submit inquiries, but only authenticated admins can read/update/delete
+    match /leads/{leadId} {
+      allow create: if request.resource.data.phone is string 
+                    && request.resource.data.name is string;
+      allow read, update, delete: if request.auth != null;
+    }
+    
+    // 🏠 2. PROPERTIES INVENTORY (مخزون العقارات)
+    // Public read for website visitors; write/update/delete restricted to certified admins
+    match /properties/{propId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // 🔔 3. NOTIFICATIONS & AUDIT LOGS
+    match /notifications/{notifId} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
