@@ -6,17 +6,18 @@ import {
   MessageSquare, FileText, Sparkles 
 } from 'lucide-react';
 import { loginUser } from '../firebaseService';
+import { exportToCsv } from '../utils/exportCsv';
 
 export const CrmAdminPanel = ({
-  lang,
-  t,
-  firebaseConnected,
-  leads,
+  lang = 'ar',
+  t = {},
+  firebaseConnected = false,
+  leads = [],
   setLeads,
-  activeMatches,
+  activeMatches = [],
   exportLeadsCSV,
   handleCrmLogout,
-  crmAuthenticated,
+  crmAuthenticated = true,
   setCrmAuthenticated,
   updateLeadStatus,
   updateLeadFollowUp,
@@ -24,8 +25,8 @@ export const CrmAdminPanel = ({
   handleWhatsAppAction,
   updateLeadNotes,
   triggerToast,
-  addNotification,
-  notifications
+  addNotification = () => {},
+  notifications = []
 }) => {
   // Local Authentication States
   const [crmPasswordInput, setCrmPasswordInput] = useState('');
@@ -72,6 +73,28 @@ export const CrmAdminPanel = ({
       setCrmAuthError(err.message || (lang === 'ar' ? 'فشل تسجيل الدخول' : 'Login failed'));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleExportCSV = () => {
+    if (exportLeadsCSV) {
+      exportLeadsCSV();
+      return;
+    }
+    const headers = {
+      id: 'المعرف ID',
+      name: 'اسم العميل',
+      phone: 'رقم الهاتف',
+      type: 'نوع الطلب',
+      propertyType: 'نوع العقار',
+      area: 'المنطقة',
+      budget: 'الميزانية',
+      status: 'حالة المتابعة',
+      timestamp: 'تاريخ التسجيل'
+    };
+    exportToCsv('Oneline_Leads_Report', leads || [], headers);
+    if (triggerToast) {
+      triggerToast(lang === 'ar' ? 'تم تنزيل ملف العملاء Excel/CSV بنجاح!' : 'Exported leads successfully!', 'success');
     }
   };
 
@@ -244,7 +267,7 @@ export const CrmAdminPanel = ({
           <button className={`btn btn-sm ${adminTab === 'automation' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setAdminTab('automation')}>{lang === 'ar' ? 'الأتمتة والمحاكاة' : 'Automation'}</button>
           <button 
             className="btn btn-sm" 
-            onClick={exportLeadsCSV}
+            onClick={handleExportCSV}
             style={{ 
               background: 'var(--emerald-bg)', 
               color: 'var(--emerald)', 
