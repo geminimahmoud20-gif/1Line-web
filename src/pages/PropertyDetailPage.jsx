@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { 
   MapPin, 
@@ -19,8 +19,11 @@ import {
   TrendingUp,
   Compass,
   Calculator,
-  DollarSign
+  DollarSign,
+  Eye,
+  Flame
 } from 'lucide-react';
+import { incrementPropertyView, getPropertyViews } from '../utils/visitorTracker';
 import PropertyGallery from '../components/properties/PropertyGallery';
 import MortgageRoiCalculator from '../components/calculators/MortgageRoiCalculator';
 import PropertyCard from '../components/properties/PropertyCard';
@@ -46,11 +49,21 @@ export default function PropertyDetailPage({
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'legal' | 'valuation' | 'financing'
   const [depositModalOpen, setDepositModalOpen] = useState(false);
   const [storyModalOpen, setStoryModalOpen] = useState(false);
+  const [viewsCount, setViewsCount] = useState(150);
 
   // Find Property
   const property = useMemo(() => {
     return properties.find(p => p.id === id) || properties[0];
   }, [properties, id]);
+
+  // Track Property View in Visitor Intelligence
+  useEffect(() => {
+    if (property?.id) {
+      const updated = incrementPropertyView(property.id, property);
+      if (updated) setViewsCount(updated);
+      else setViewsCount(getPropertyViews(property.id));
+    }
+  }, [property?.id]);
 
   // Booking Form State
   const [bookingForm, setBookingForm] = useState({
@@ -127,6 +140,11 @@ export default function PropertyDetailPage({
               <span className="status-pill-badge">
                 <CheckCircle2 size={13} />
                 {isAr ? 'مفحوص ومعتمد قانونياً' : 'Legally Verified'}
+              </span>
+              <span className="status-pill-badge" style={{ background: 'rgba(6, 182, 212, 0.12)', color: '#06b6d4', borderColor: 'rgba(6, 182, 212, 0.3)' }}>
+                <Eye size={13} />
+                <span>{viewsCount} {isAr ? 'مشاهدة حقيقية' : 'Live Views'}</span>
+                {viewsCount >= 350 && <span style={{ fontSize: '11px' }}>🔥</span>}
               </span>
             </div>
             <h1 className="detail-main-title">{title}</h1>

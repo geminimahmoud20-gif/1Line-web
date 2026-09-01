@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Sparkles, MapPin, X, CheckCircle2 } from 'lucide-react';
 
 const ACTIVITIES = [
@@ -41,7 +42,9 @@ export default function LiveActivityToast({ lang = 'ar' }) {
     }, 6000);
   };
 
-  if (!visible || !currentActivity) return null;
+  const location = useLocation();
+
+  if (!visible || !currentActivity || location.pathname.startsWith('/crm')) return null;
 
   return (
     <div className="live-activity-toast-pill">

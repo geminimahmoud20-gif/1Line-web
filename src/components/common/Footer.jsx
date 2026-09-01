@@ -78,8 +78,9 @@ export default function Footer({ lang = 'ar' }) {
 
           {/* Portals */}
           <div className="footer-col">
-            <h4>{isAr ? 'الخدمات' : 'Services'}</h4>
+            <h4>{isAr ? 'الخدمات والمؤسسة' : 'Services & Company'}</h4>
             <ul className="footer-links">
+              <li><a href="/#about-us">{isAr ? 'عن ون لاين ورؤية المؤسس' : 'About & Founder'}</a></li>
               <li><Link to="/investor">{isAr ? 'مركز المستثمرين (VIP)' : 'Investors Desk'}</Link></li>
               <li><Link to="/broker">{isAr ? 'شبكة الوسطاء والشركاء' : 'Brokers'}</Link></li>
               <li><Link to="/crm">{isAr ? 'لوحة إدارة المبيعات (CRM)' : 'Admin CRM'}</Link></li>

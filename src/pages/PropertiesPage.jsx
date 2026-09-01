@@ -53,6 +53,11 @@ export default function PropertiesPage({
   // Filter & Sort Properties
   const filteredProperties = useMemo(() => {
     return properties.filter((prop) => {
+      // 🛡️ Exclude soft-deleted, hidden, or draft properties from public visitors
+      if (prop.isDeleted || prop.status === 'trash' || prop.status === 'hidden' || prop.status === 'draft') {
+        return false;
+      }
+
       // Type filter
       if (filters.type !== 'all' && prop.type !== filters.type) return false;
 

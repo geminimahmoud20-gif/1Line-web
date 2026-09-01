@@ -18,6 +18,8 @@ import {
   Gift
 } from 'lucide-react';
 import PropertyCard from '../components/properties/PropertyCard';
+import AboutFounderSection from '../components/home/AboutFounderSection';
+import MortgageRoiCalculator from '../components/calculators/MortgageRoiCalculator';
 import { SOHAG_AREAS, PROPERTY_TYPES } from '../data/propertiesData';
 import { FAQS, TESTIMONIALS } from '../data/mockData';
 
@@ -44,7 +46,12 @@ export default function HomePage({
   // FAQ Accordion State
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
 
-  const matchingProperties = properties.filter(p => {
+  // Exclude hidden, draft, and deleted properties from public homepage
+  const publishedProperties = properties.filter(
+    (p) => !p.isDeleted && p.status !== 'trash' && p.status !== 'hidden' && p.status !== 'draft'
+  );
+
+  const matchingProperties = publishedProperties.filter(p => {
     if (!searchKeyword.trim()) return false;
     const q = searchKeyword.toLowerCase().trim();
     const tAr = (p.title_ar || '').toLowerCase();
@@ -63,7 +70,12 @@ export default function HomePage({
     navigate(`/properties?${queryParams.toString()}`);
   };
 
-  const featuredProperties = properties.filter(p => p.featured).slice(0, 4);
+  const featuredProperties = publishedProperties
+    .filter(p => p.featured)
+    .slice(0, 4);
+  
+  // Fallback to latest published if no featured
+  const displayProperties = featuredProperties.length > 0 ? featuredProperties : publishedProperties.slice(0, 4);
 
   return (
     <div className="homepage-wrapper">
@@ -362,7 +374,7 @@ export default function HomePage({
         </div>
 
         <div className="properties-grid-4">
-          {featuredProperties.map((prop) => (
+          {displayProperties.map((prop) => (
             <PropertyCard
               key={prop.id}
               property={prop}
@@ -418,41 +430,27 @@ export default function HomePage({
         </div>
       </section>
 
-      {/* 🛡️ 5. WHY CHOOSE ONE LINE (عوامل الثقة) */}
-      <section className="homepage-section bg-gradient-subtle">
-        <div className="section-header-centered">
-          <span className="section-pill">{lang === 'ar' ? 'لماذا ون لاين؟' : 'Why One Line?'}</span>
-          <h2>{lang === 'ar' ? 'المعايير التي تجعلنا خيارك الأول بسوهاج' : 'Standards Setting Us Apart'}</h2>
+      {/* 🏛️ 5. ABOUT ONE LINE & FOUNDER PROFILE (الشركة ورؤية المؤسس د. محمود الباز) */}
+      <AboutFounderSection lang={lang} />
+
+      {/* 🧮 6. LIVE FINANCING & ROI SIMULATOR (حاسبة التمويل والأقساط التفاعلية) */}
+      <section className="homepage-section bg-surface" id="mortgage-calculator">
+        <div className="section-header-centered" style={{ marginBottom: '28px' }}>
+          <span className="section-pill">{lang === 'ar' ? 'أدوات الذكاء المالي' : 'PropTech Financial Simulator'}</span>
+          <h2>{lang === 'ar' ? 'احسب أقساطك أو عوائد استثمارك فوراً' : 'Simulate Your Mortgage & Rental ROI'}</h2>
+          <p className="section-subtitle" style={{ maxWidth: '640px', margin: '8px auto 0' }}>
+            {lang === 'ar' 
+              ? 'أداة حسابية تفاعلية دقيقة مبنية على معدلات الفائدة وأنظمة السداد المعتمدة في سوهاج ومصر'
+              : 'Interactive financial simulator customized for mortgage plans and rental yield benchmarks'}
+          </p>
         </div>
 
-        <div className="trust-pillars-grid">
-          <div className="pillar-box">
-            <div className="pillar-icon"><ShieldCheck size={28} /></div>
-            <h3>{lang === 'ar' ? 'فحص قانوني ورقابي صارم' : 'Strict Legal Verification'}</h3>
-            <p>{lang === 'ar' ? 'لا يتم عرض أي وحدة إلا بعد مراجعة تسلسل الملكية وتراخيص البناء بواسطة مستشارينا القانونيين.' : 'Zero compromises on title deeds and construction permits validation.'}</p>
-          </div>
-
-          <div className="pillar-box">
-            <div className="pillar-icon"><Zap size={28} /></div>
-            <h3>{lang === 'ar' ? 'سرعة الإنجاز والشفافية' : 'Speed & Complete Transparency'}</h3>
-            <p>{lang === 'ar' ? 'نربط البائع والمشتري مباشرة بدون وسطاء مجهولين أو عمولات خفية.' : 'Direct transparent transactions connecting buyers and verified sellers.'}</p>
-          </div>
-
-          <div className="pillar-box">
-            <div className="pillar-icon"><Calculator size={28} /></div>
-            <h3>{lang === 'ar' ? 'حلول تمويل وتقسيط حصرية' : 'Flexible Financing Programs'}</h3>
-            <p>{lang === 'ar' ? 'خطط سداد تناسب ميزانيتك بالتعاون مع كبرى الكيانات التمويلية.' : 'Tailored payment structures designed for your cash flow.'}</p>
-          </div>
-
-          <div className="pillar-box">
-            <div className="pillar-icon"><Gift size={28} /></div>
-            <h3>{lang === 'ar' ? 'مكافآت ترشيح وجوائز قيمة' : 'Referral Rewards'}</h3>
-            <p>{lang === 'ar' ? 'اربح عمولات ومكافآت كاش مجزية عند ترشيح أصدقائك للشراء أو البيع معنا.' : 'Earn cash commissions on successful referrals of friends and family.'}</p>
-          </div>
+        <div style={{ maxWidth: '1060px', margin: '0 auto' }}>
+          <MortgageRoiCalculator lang={lang} />
         </div>
       </section>
 
-      {/* 💬 6. TESTIMONIALS */}
+      {/* 💬 7. TESTIMONIALS */}
       <section className="homepage-section">
         <div className="section-header-centered">
           <span className="section-pill">{lang === 'ar' ? 'آراء العملاء' : 'Testimonials'}</span>

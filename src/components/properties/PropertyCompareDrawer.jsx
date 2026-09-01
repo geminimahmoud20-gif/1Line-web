@@ -1,5 +1,8 @@
-import { X, Check, ArrowRight, ArrowLeft, Trash2, Maximize2, ShieldCheck, DollarSign, BedDouble, Bath, ExternalLink } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { X, Check, ArrowRight, ArrowLeft, Trash2, Maximize2, ShieldCheck, DollarSign, BedDouble, Bath, ExternalLink, Share2, Sparkles, Star, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { trackEvent } from '../../utils/visitorTracker';
+import { generateComparePdf } from '../../utils/comparePdfGenerator';
 
 export default function PropertyCompareDrawer({
   isOpen,
@@ -9,8 +12,56 @@ export default function PropertyCompareDrawer({
   onClearCompare,
   lang = 'ar'
 }) {
+  const [copied, setCopied] = useState(false);
   if (!isOpen) return null;
   const isAr = lang === 'ar';
+
+  // Best Price Per Meter
+  const bestPpmId = useMemo(() => {
+    if (compareList.length < 2) return null;
+    let minPpm = Infinity;
+    let bestId = null;
+    compareList.forEach(p => {
+      const ppm = p.pricePerMeter || (p.size ? Math.round(p.price / p.size) : Infinity);
+      if (ppm < minPpm) {
+        minPpm = ppm;
+        bestId = p.id;
+      }
+    });
+    return bestId;
+  }, [compareList]);
+
+  const handleDownloadPdf = () => {
+    if (compareList.length === 0) return;
+    generateComparePdf(compareList, lang);
+    trackEvent('compare_downloaded_pdf', { count: compareList.length });
+  };
+
+  const handleShareWhatsApp = () => {
+    if (compareList.length === 0) return;
+    let msg = isAr 
+      ? `⚖️ *جدول مقارنة العقارات المختارة — One Line Real Estate*\n\n`
+      : `⚖️ *Selected Properties Comparison — One Line Real Estate*\n\n`;
+
+    compareList.forEach((p, idx) => {
+      const title = isAr ? p.title_ar : p.title_en;
+      const loc = isAr ? p.locationName_ar : p.locationName_en;
+      const ppm = p.pricePerMeter || Math.round(p.price / p.size);
+      msg += `📌 *عقار ${idx + 1}: ${title}*\n`;
+      msg += `• السعر: ${p.price.toLocaleString()} ج.م\n`;
+      msg += `• المقدم: ${p.downPayment?.toLocaleString() || 'كاش'} ج.م\n`;
+      msg += `• القسط: ${p.monthlyInstallment?.toLocaleString() || '-'} ج.م/شهر\n`;
+      msg += `• المساحة: ${p.size} م² (سعر المتر: ${ppm.toLocaleString()} ج.م)\n`;
+      msg += `• الموقع: ${loc}\n`;
+      msg += `• رابط العقار: ${window.location.origin}/properties/${p.id}\n\n`;
+    });
+
+    msg += isAr ? `📞 للتواصل والمعاينة: +20 101 234 5678` : `📞 Contact: +20 101 234 5678`;
+
+    trackEvent('compare_shared_whatsapp', { count: compareList.length });
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(waUrl, '_blank');
+  };
 
   return (
     <div className="compare-drawer-backdrop" onClick={onClose}>
@@ -22,15 +73,50 @@ export default function PropertyCompareDrawer({
             <span className="compare-count-tag">{compareList.length} / 3</span>
           </div>
 
-          <div className="compare-header-actions">
+          <div className="compare-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {compareList.length > 0 && (
+              <button 
+                type="button" 
+                className="btn btn-sm" 
+                onClick={handleDownloadPdf}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '6px', 
+                  fontSize: '0.78rem', 
+                  background: 'linear-gradient(135deg, #0d48a1 0%, #1565c0 100%)', 
+                  color: '#fff',
+                  border: '1px solid rgba(255, 179, 0, 0.35)',
+                  boxShadow: '0 2px 8px rgba(13, 72, 161, 0.25)'
+                }}
+                title={isAr ? 'تحميل جدول المقارنة بصيغة PDF' : 'Download Comparison PDF'}
+              >
+                <Download size={13} className="text-gold" />
+                <span>{isAr ? 'تحميل PDF' : 'PDF Report'}</span>
+              </button>
+            )}
+
+            {compareList.length > 0 && (
+              <button 
+                type="button" 
+                className="btn btn-sm btn-outline" 
+                onClick={handleShareWhatsApp}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: 'var(--emerald)', borderColor: 'rgba(16, 185, 129, 0.4)' }}
+                title={isAr ? 'مشاركة جدول المقارنة عبر الواتساب' : 'Share on WhatsApp'}
+              >
+                <Share2 size={13} />
+                <span>{isAr ? 'مشاركة' : 'Share'}</span>
+              </button>
+            )}
+
             {compareList.length > 0 && (
               <button type="button" className="btn-clear-compare" onClick={onClearCompare}>
-                <Trash2 size={15} />
-                <span>{isAr ? 'مسح الكل' : 'Clear All'}</span>
+                <Trash2 size={14} />
+                <span>{isAr ? 'مسح' : 'Clear'}</span>
               </button>
             )}
             <button type="button" className="drawer-close-btn" onClick={onClose}>
-              <X size={20} />
+              <X size={18} />
             </button>
           </div>
         </div>
@@ -61,10 +147,33 @@ export default function PropertyCompareDrawer({
               {compareList.map((prop) => {
                 const title = isAr ? prop.title_ar : prop.title_en;
                 const location = isAr ? prop.locationName_ar : prop.locationName_en;
+                const isBestPpm = prop.id === bestPpmId;
+
                 return (
                   <div key={prop.id} className="compare-property-col">
                     {/* Header Card Item */}
-                    <div className="compare-cell cell-header">
+                    <div className="compare-cell cell-header" style={{ position: 'relative' }}>
+                      {isBestPpm && (
+                        <div style={{
+                          position: 'absolute',
+                          top: '6px',
+                          left: '6px',
+                          background: 'var(--gradient-gold)',
+                          color: '#000',
+                          fontSize: '0.65rem',
+                          fontWeight: 'bold',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                          zIndex: 2
+                        }}>
+                          <Star size={10} />
+                          <span>{isAr ? 'أفضل سعر للمتر' : 'Best Value/m²'}</span>
+                        </div>
+                      )}
+
                       <button
                         type="button"
                         className="remove-compare-item-btn"
@@ -99,7 +208,9 @@ export default function PropertyCompareDrawer({
 
                     {/* Price Per SqM */}
                     <div className="compare-cell">
-                      <span>{prop.pricePerMeter?.toLocaleString() || Math.round(prop.price / prop.size).toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</span>
+                      <span style={{ fontWeight: isBestPpm ? 'bold' : 'normal', color: isBestPpm ? 'var(--accent-gold)' : undefined }}>
+                        {prop.pricePerMeter?.toLocaleString() || Math.round(prop.price / prop.size).toLocaleString()} {isAr ? 'ج.م' : 'EGP'}
+                      </span>
                     </div>
 
                     {/* Beds/Baths */}

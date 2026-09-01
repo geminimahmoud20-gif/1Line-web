@@ -5,8 +5,9 @@
 export const MEGA_PROJECTS = [
   {
     id: 'proj-1',
-    title_ar: 'كمبوند لؤلؤة سوهاج الجديدة (Pearl Compound)',
+    title_ar: 'كمبوند لؤلؤة سوهاج الجديدة',
     title_en: 'New Sohag Pearl Luxury Compound',
+    brandTag: 'Pearl Compound',
     developer_ar: 'شركة ون لاين للتطوير العقاري',
     developer_en: 'One Line Real Estate Developments',
     location_ar: 'سوهاج الجديدة - الحي السكني الثاني بجوار الجامعة',
@@ -41,8 +42,9 @@ export const MEGA_PROJECTS = [
   },
   {
     id: 'proj-2',
-    title_ar: 'سيتي سنتر مول سوهاج (City Center Mall)',
+    title_ar: 'سيتي سنتر مول سوهاج',
     title_en: 'City Center Mall & Executive Hub',
+    brandTag: 'City Center Mall',
     developer_ar: 'مجموعة الصعيد للمشروعات التجارية',
     developer_en: 'Upper Egypt Commercial Group',
     location_ar: 'سوهاج الجديدة - المحور المركزي الرئيسي',
@@ -77,8 +79,9 @@ export const MEGA_PROJECTS = [
   },
   {
     id: 'proj-3',
-    title_ar: 'أبراج رويال بلازا كورنيش النيل (Royal Plaza)',
+    title_ar: 'أبراج رويال بلازا كورنيش النيل',
     title_en: 'Royal Plaza Nilefront Towers',
+    brandTag: 'Royal Plaza',
     developer_ar: 'شركة الصفا للاستثمار والتطوير',
     developer_en: 'Al Safa Development',
     location_ar: 'مدينة سوهاج - الكورنيش الشرقي المباشر',
@@ -99,15 +102,15 @@ export const MEGA_PROJECTS = [
       infrastructure: 45
     },
     area_sqm: '28,000 م²',
-    totalUnits: 80,
+    totalUnits: 180,
     availableUnits: 14,
     images: [
-      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80'
+      'https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80'
     ],
-    features_ar: ['إطلالة بانورامية كاملة على نهر النيل', 'واجهات زجاجية مزدوجة عازلة', 'مولدات كهربائية ونظام إطفاء ذكي', 'جراج ميكانيكي تحت الأرض'],
-    features_en: ['Direct Panoramic Nile Views', 'Double-Glazed Facades', 'Power Generators & Smart Safety', 'Underground Parking'],
+    features_ar: ['إطلالة بانورامية كاملة على نهر النيل', 'واجهات زجاجية مزدوجة عازلة', 'مولدات كهربائية ونظام إطفاء ذكي', 'خدمة كونسيرج واستقبال فندقي', 'تشطيبات فائقة الجودة'],
+    features_en: ['Direct Panoramic Nile Views', 'Double-Glazed Facades', 'Smart Backup Generators', '24/7 Hotel Concierge', 'Ultra-Lux Finishing'],
     description_ar: 'عنوان الفخامة على ضفاف نيل سوهاج، وحدات سكنية وبنتهاوس بمساحات من 180 إلى 320 م² بتشطيبات فندقية فائقة الجودة.',
-    description_en: 'The pinnacle of luxury on Sohag’s Nile Corniche with 180 - 320 sqm residences and duplexes.'
+    description_en: 'The pinnacle of Nilefront luxury living in Sohag, featuring residences and penthouses from 180 to 320 sqm.'
   }
 ];

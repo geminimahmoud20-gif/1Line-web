@@ -11,6 +11,15 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
+const SOHAG_DISTRICTS = [
+  { id: 'all', label_ar: 'جميع المناطق', label_en: 'All Zones', center: [26.5569, 31.6990], zoom: 13 },
+  { id: 'new_sohag', label_ar: 'سوهاج الجديدة', label_en: 'New Sohag', center: [26.4765, 31.6620], zoom: 14 },
+  { id: 'east', label_ar: 'سوهاج شرق', label_en: 'East Sohag', center: [26.5610, 31.7040], zoom: 15 },
+  { id: 'west', label_ar: 'سوهاج غرب', label_en: 'West Sohag', center: [26.5520, 31.6880], zoom: 15 },
+  { id: 'corniche', label_ar: 'الكورنيش الشرقي', label_en: 'Corniche', center: [26.5640, 31.7010], zoom: 16 },
+  { id: 'akhmeem', label_ar: 'أخميم', label_en: 'Akhmeem', center: [26.5630, 31.7450], zoom: 14 }
+];
+
 export default function PropertyMapView({
   properties = [],
   selectedProperty,
@@ -23,8 +32,16 @@ export default function PropertyMapView({
   const tileLayerRef = useRef(null);
   const [mapType, setMapType] = useState('satellite'); // 'streets' | 'satellite'
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [activeDistrict, setActiveDistrict] = useState('all');
 
   const isAr = lang === 'ar';
+
+  const handleFlyToDistrict = (district) => {
+    setActiveDistrict(district.id);
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.flyTo(district.center, district.zoom, { duration: 1.0 });
+    }
+  };
 
   // Tile Layer URLs
   const streetTiles = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
@@ -215,6 +232,21 @@ export default function PropertyMapView({
           {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
           <span>{isAr ? (isFullscreen ? 'تصغير' : 'ملء الشاشة') : (isFullscreen ? 'Minimize' : 'Expand')}</span>
         </button>
+      </div>
+
+      {/* Floating District Quick Jump Bar */}
+      <div className="map-districts-quick-bar">
+        {SOHAG_DISTRICTS.map((dist) => (
+          <button
+            key={dist.id}
+            type="button"
+            className={`map-dist-chip ${activeDistrict === dist.id ? 'active' : ''}`}
+            onClick={() => handleFlyToDistrict(dist)}
+          >
+            <Navigation size={12} className={activeDistrict === dist.id ? 'text-gold' : ''} />
+            <span>{isAr ? dist.label_ar : dist.label_en}</span>
+          </button>
+        ))}
       </div>
 
       <div ref={mapContainerRef} className="interactive-leaflet-map" />

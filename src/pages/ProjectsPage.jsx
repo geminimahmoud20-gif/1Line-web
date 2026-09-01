@@ -16,16 +16,22 @@ import {
   FileDown
 } from 'lucide-react';
 import { MEGA_PROJECTS } from '../data/projectsData';
+import BrandWatermark from '../components/common/BrandWatermark';
 
-export default function ProjectsPage({ lang = 'ar', triggerToast }) {
+export default function ProjectsPage({ 
+  projects = [],
+  lang = 'ar', 
+  triggerToast 
+}) {
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   const isAr = lang === 'ar';
+  const allProjects = projects && projects.length > 0 ? projects : MEGA_PROJECTS;
 
   const filteredProjects = useMemo(() => {
-    if (selectedCategory === 'all') return MEGA_PROJECTS;
-    return MEGA_PROJECTS.filter(p => p.category === selectedCategory);
-  }, [selectedCategory]);
+    if (selectedCategory === 'all') return allProjects;
+    return allProjects.filter(p => p.category === selectedCategory);
+  }, [selectedCategory, allProjects]);
 
   const handleInquireProject = (project) => {
     const title = isAr ? project.title_ar : project.title_en;
@@ -98,6 +104,9 @@ export default function ProjectsPage({ lang = 'ar', triggerToast }) {
                   <img src={project.images[0]} alt={title} className="project-card-img" />
                   <div className="project-overlay-gradient" />
 
+                  {/* Brand Watermark Overlay */}
+                  <BrandWatermark size="md" position="bottom-right" />
+
                   {/* Progress Tag Badge */}
                   <div className="project-progress-badge">
                     <span className="prog-percent">{project.progress}%</span>
@@ -118,23 +127,28 @@ export default function ProjectsPage({ lang = 'ar', triggerToast }) {
                       <MapPin size={14} className="text-gold" />
                       <span>{location}</span>
                     </div>
-                    <h3 className="project-title-text">{title}</h3>
+                    <div className="project-title-row">
+                      <h3 className="project-title-text">{title}</h3>
+                      {project.brandTag && (
+                        <span className="project-brand-pill">{project.brandTag}</span>
+                      )}
+                    </div>
                     <p className="project-desc-snippet">{desc}</p>
                   </div>
 
                   {/* Construction Progress Breakdown */}
                   <div className="project-construction-box">
                     <div className="prog-header-flex">
-                      <span>{isAr ? 'معدل التنفيذ الميداني للمشروع' : 'Live Construction Stage'}</span>
-                      <strong>{project.progress}% {isAr ? 'مكتمل' : 'Completed'}</strong>
+                      <span className="prog-title-lbl">{isAr ? 'معدل التنفيذ الميداني' : 'Construction Progress'}</span>
+                      <span className="prog-status-pill">{project.progress}% {isAr ? 'مكتمل' : 'Completed'}</span>
                     </div>
                     <div className="prog-track">
                       <div className="prog-fill" style={{ width: `${project.progress}%` }} />
                     </div>
                     <div className="prog-milestones-row">
-                      <span>{isAr ? 'الخرسانات: 100%' : 'Structure: 100%'}</span>
-                      <span>{isAr ? `المباني: ${project.progressBreakdown.masonry}%` : `Masonry: ${project.progressBreakdown.masonry}%`}</span>
-                      <span>{isAr ? `التشطيب: ${project.progressBreakdown.finishing}%` : `Finishing: ${project.progressBreakdown.finishing}%`}</span>
+                      <span className="milestone-chip"><strong>100%</strong> {isAr ? 'خرسانات' : 'Structure'}</span>
+                      <span className="milestone-chip"><strong>{project.progressBreakdown.masonry}%</strong> {isAr ? 'مباني' : 'Masonry'}</span>
+                      <span className="milestone-chip"><strong>{project.progressBreakdown.finishing}%</strong> {isAr ? 'تشطيب' : 'Finishing'}</span>
                     </div>
                   </div>
 
@@ -172,10 +186,10 @@ export default function ProjectsPage({ lang = 'ar', triggerToast }) {
                   </div>
 
                   {/* Card Actions */}
-                  <div className="project-card-footer-actions" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '10px' }}>
+                  <div className="project-card-footer-actions">
                     <button
                       type="button"
-                      className="btn btn-primary"
+                      className="btn btn-primary btn-project-cta"
                       onClick={() => handleInquireProject(project)}
                     >
                       <MessageSquare size={15} />
@@ -184,11 +198,11 @@ export default function ProjectsPage({ lang = 'ar', triggerToast }) {
 
                     <button
                       type="button"
-                      className="btn btn-outline"
+                      className="btn btn-outline btn-project-brochure"
                       onClick={() => handleDownloadBrochure(project)}
                     >
                       <FileDown size={15} />
-                      <span>{isAr ? 'الكتالوج PDF' : 'Brochure'}</span>
+                      <span>{isAr ? 'الكتالوج PDF' : 'Brochure PDF'}</span>
                     </button>
                   </div>
                 </div>

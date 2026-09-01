@@ -2,14 +2,19 @@ import { useState, useEffect, useCallback } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { TRANSLATIONS } from './translations';
 import { PROPERTIES_DATA } from './data/propertiesData';
+import { MEGA_PROJECTS } from './data/projectsData';
 import { INITIAL_LEADS, INITIAL_DEMANDS } from './data/mockData';
 import { 
   saveLead, 
   subscribeToLeads, 
   isFirebaseActive, 
-  saveNotification 
+  saveNotification,
+  updateLeadField,
+  deleteLead
 } from './firebaseService';
 import { playNotificationChime } from './utils/notificationHub';
+import { sanitizeObject, normalizePhoneNumber } from './utils/securityShield';
+import { getOrCreateSession, trackEvent, identifyVisitor } from './utils/visitorTracker';
 
 // Layout & Common Components
 import Header from './components/common/Header';
@@ -63,9 +68,11 @@ export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Scroll to top on page navigation
+  // Scroll to top on page navigation & Track Visitor Intelligence
   useEffect(() => {
     window.scrollTo(0, 0);
+    getOrCreateSession();
+    trackEvent('page_view', { path: location.pathname });
   }, [location.pathname]);
 
   // Toast System
@@ -75,7 +82,7 @@ export default function App() {
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 4500);
+    }, 4000);
   }, []);
 
   const dismissToast = useCallback((id) => {
@@ -111,6 +118,39 @@ export default function App() {
       return updated;
     });
   }, []);
+
+  // Mega Projects State
+  const [projects, setProjects] = useState(() => {
+    const saved = localStorage.getItem('oneline_mega_projects');
+    return saved ? JSON.parse(saved) : MEGA_PROJECTS;
+  });
+
+  const handleAddProject = useCallback((newProj) => {
+    setProjects((prev) => {
+      const updated = [newProj, ...prev];
+      localStorage.setItem('oneline_mega_projects', JSON.stringify(updated));
+      return updated;
+    });
+    triggerToast(lang === 'ar' ? 'تم إضافة المشروع بنجاح 🏢' : 'Project added!', 'success');
+  }, [lang, triggerToast]);
+
+  const handleUpdateProject = useCallback((id, updatedData) => {
+    setProjects((prev) => {
+      const updated = prev.map((p) => (p.id === id ? { ...p, ...updatedData } : p));
+      localStorage.setItem('oneline_mega_projects', JSON.stringify(updated));
+      return updated;
+    });
+    triggerToast(lang === 'ar' ? 'تم تحديث بيانات المشروع ونسب الإنجاز بنجاح 💾' : 'Project updated!', 'success');
+  }, [lang, triggerToast]);
+
+  const handleDeleteProject = useCallback((id) => {
+    setProjects((prev) => {
+      const updated = prev.filter((p) => p.id !== id);
+      localStorage.setItem('oneline_mega_projects', JSON.stringify(updated));
+      return updated;
+    });
+    triggerToast(lang === 'ar' ? 'تم حذف المشروع بنجاح 🗑️' : 'Project deleted!', 'info');
+  }, [lang, triggerToast]);
 
   // Favorites State
   const [favorites, setFavorites] = useState(() => {
@@ -195,42 +235,128 @@ export default function App() {
     }
   }, []);
 
-  // Generic Lead Submission Handler
+  // Generic Lead Submission Handler with Deduplication & Auto-Merge
   const handleAddNewLead = useCallback(async (leadData) => {
-    const newLead = {
-      id: 'lead-' + Date.now(),
-      timestamp: new Date().toISOString(),
-      status: 'new',
-      followUp: 'Pending Contact',
-      assignedTo: 'Sales Advisor Team',
-      score: 85,
-      temperature: 'hot',
-      ...leadData
-    };
+    // 🛡️ Sanitize all user-submitted data to prevent XSS attacks
+    const cleanData = sanitizeObject(leadData);
+    const incomingPhone = normalizePhoneNumber(cleanData.phone || cleanData.whatsapp);
+
+    // 🌐 Enrich Digital Visitor Session
+    identifyVisitor(cleanData);
 
     // Play subtle audio alert for sales team if sound enabled
     if (soundEnabled) {
       playNotificationChime();
     }
 
-    // 1. Update State
+    let finalLead = null;
+
+    // 1. Update State & LocalStorage
     setLeads((prev) => {
-      const updated = [newLead, ...prev];
-      localStorage.setItem('oneline_crm_leads', JSON.stringify(updated));
-      return updated;
+      // 🛡️ Check if phone already exists in leads database
+      const existingIndex = prev.findIndex(
+        (l) => normalizePhoneNumber(l.phone || l.whatsapp) === incomingPhone
+      );
+
+      if (existingIndex !== -1 && incomingPhone) {
+        // Customer already exists -> Merge new request into existing lead record
+        const existing = prev[existingIndex];
+        const newLog = {
+          timestamp: new Date().toISOString(),
+          action: `تسجيل اهتمام إضافي: طلب ${cleanData.details?.propertyType || cleanData.type || 'جديد'}`
+        };
+
+        const mergedLead = {
+          ...existing,
+          score: Math.min(100, (existing.score || 80) + 10), // Boost urgency score
+          timestamp: new Date().toISOString(), // Refresh recency
+          notes: `${existing.notes ? existing.notes + ' | ' : ''}طلب إضافي: ${cleanData.details?.propertyType || ''} في ${cleanData.details?.area || ''}`,
+          details: { ...(existing.details || {}), ...(cleanData.details || {}) },
+          activityLogs: [newLog, ...(existing.activityLogs || [])]
+        };
+
+        finalLead = mergedLead;
+        const updated = [...prev];
+        updated[existingIndex] = mergedLead;
+        localStorage.setItem('oneline_crm_leads', JSON.stringify(updated));
+        return updated;
+      } else {
+        // Brand new customer record
+        const newLead = {
+          id: 'lead-' + Date.now(),
+          timestamp: new Date().toISOString(),
+          status: 'new',
+          followUp: 'Pending Contact',
+          assignedTo: 'Sales Advisor Team',
+          score: 85,
+          temperature: 'hot',
+          activityLogs: [{
+            timestamp: new Date().toISOString(),
+            action: 'تسجيل العميل لأول مرة عبر المنصة'
+          }],
+          ...cleanData
+        };
+
+        finalLead = newLead;
+        const updated = [newLead, ...prev];
+        localStorage.setItem('oneline_crm_leads', JSON.stringify(updated));
+        return updated;
+      }
     });
 
     // 2. Push to Firebase if configured
-    if (isFirebaseActive()) {
+    if (isFirebaseActive() && finalLead) {
       try {
-        await saveLead(newLead);
-        await saveNotification(`New lead submitted: ${newLead.name || 'Client'}`);
+        await saveLead(finalLead);
+        await saveNotification(`Lead update: ${finalLead.name || 'Client'}`);
       } catch (err) {
         console.error('Firebase save lead error:', err);
       }
     }
 
-    return newLead;
+    return finalLead;
+  }, [soundEnabled]);
+
+  const handleUpdateLead = useCallback(async (id, updatedFields) => {
+    setLeads((prev) => {
+      const updated = prev.map((l) => {
+        if (l.id === id) {
+          const activityLogs = l.activityLogs || [];
+          const newLog = {
+            timestamp: new Date().toISOString(),
+            action: `تحديث بيانات: ${Object.keys(updatedFields).join(', ')}`
+          };
+          return { ...l, ...updatedFields, activityLogs: [newLog, ...activityLogs] };
+        }
+        return l;
+      });
+      localStorage.setItem('oneline_crm_leads', JSON.stringify(updated));
+      return updated;
+    });
+
+    if (isFirebaseActive()) {
+      try {
+        await updateLeadField(id, updatedFields);
+      } catch (err) {
+        console.error('Firebase update lead error:', err);
+      }
+    }
+  }, []);
+
+  const handleDeleteLead = useCallback(async (id) => {
+    setLeads((prev) => {
+      const updated = prev.filter((l) => l.id !== id);
+      localStorage.setItem('oneline_crm_leads', JSON.stringify(updated));
+      return updated;
+    });
+
+    if (isFirebaseActive()) {
+      try {
+        await deleteLead(id);
+      } catch (err) {
+        console.error('Firebase delete lead error:', err);
+      }
+    }
   }, []);
 
   // Modals States
@@ -446,21 +572,23 @@ export default function App() {
         triggerToast={triggerToast}
       />
 
-      {/* Site Header Navigation */}
-      <Header
-        lang={lang}
-        setLang={setLang}
-        currency={currency}
-        setCurrency={setCurrency}
-        theme={theme}
-        toggleTheme={toggleTheme}
-        soundEnabled={soundEnabled}
-        toggleSound={toggleSound}
-        onOpenShare={() => setShareModalOpen(true)}
-        onOpenTrackLead={() => setTrackModalOpen(true)}
-        compareCount={compareList.length}
-        onOpenCompare={() => setCompareDrawerOpen(true)}
-      />
+      {/* Site Header Navigation (Hidden on CRM for clean enterprise workspace) */}
+      {!location.pathname.startsWith('/crm') && (
+        <Header
+          lang={lang}
+          setLang={setLang}
+          currency={currency}
+          setCurrency={setCurrency}
+          theme={theme}
+          toggleTheme={toggleTheme}
+          soundEnabled={soundEnabled}
+          toggleSound={toggleSound}
+          onOpenShare={() => setShareModalOpen(true)}
+          onOpenTrackLead={() => setTrackModalOpen(true)}
+          compareCount={compareList.length}
+          onOpenCompare={() => setCompareDrawerOpen(true)}
+        />
+      )}
 
       {/* Property Comparison Drawer */}
       <PropertyCompareDrawer
@@ -701,6 +829,7 @@ export default function App() {
             element={
               <ProjectsPage
                 lang={lang}
+                projects={projects}
                 triggerToast={triggerToast}
               />
             }
@@ -717,7 +846,7 @@ export default function App() {
             }
           />
 
-          {/* 6. CRM Admin Control Panel & Property CMS */}
+          {/* 6. CRM Admin Control Panel & Property CMS & Mega Projects */}
           <Route
             path="/crm"
             element={
@@ -730,10 +859,17 @@ export default function App() {
                 onAddProperty={handleAddProperty}
                 onUpdateProperty={handleUpdateProperty}
                 onDeleteProperty={handleDeleteProperty}
+                projects={projects}
+                onAddProject={handleAddProject}
+                onUpdateProject={handleUpdateProject}
+                onDeleteProject={handleDeleteProject}
                 crmAuthenticated={crmAuthenticated}
                 setCrmAuthenticated={setCrmAuthenticated}
                 onLogout={handleCrmLogout}
                 triggerToast={triggerToast}
+                onUpdateLead={handleUpdateLead}
+                onDeleteLead={handleDeleteLead}
+                onAddNewLead={handleAddNewLead}
               />
             }
           />
@@ -758,8 +894,8 @@ export default function App() {
         </Routes>
       </main>
 
-      {/* Site Footer */}
-      <Footer lang={lang} />
+      {/* Site Footer (Hidden on CRM) */}
+      {!location.pathname.startsWith('/crm') && <Footer lang={lang} />}
 
       {/* ⚖️ Property Comparison Drawer Matrix */}
       <PropertyCompareDrawer
@@ -778,16 +914,18 @@ export default function App() {
         lang={lang}
       />
 
-      {/* 🤖 Floating AI Advisor Quick Trigger */}
-      <button
-        type="button"
-        className="floating-ai-advisor-trigger"
-        onClick={() => setAiModalOpen(true)}
-        title={lang === 'ar' ? 'اسأل المستشار العقاري الذكي' : 'Ask AI Real Estate Advisor'}
-      >
-        <span className="ai-icon-pulse">🤖</span>
-        <span className="ai-trigger-text">{lang === 'ar' ? 'اسأل المستشار الذكي AI' : 'Ask AI Advisor'}</span>
-      </button>
+      {/* 🤖 Floating AI Advisor Quick Trigger (Hidden on CRM) */}
+      {!location.pathname.startsWith('/crm') && (
+        <button
+          type="button"
+          className="floating-ai-advisor-trigger"
+          onClick={() => setAiModalOpen(true)}
+          title={lang === 'ar' ? 'اسأل المستشار العقاري الذكي' : 'Ask AI Real Estate Advisor'}
+        >
+          <span className="ai-icon-pulse">🤖</span>
+          <span className="ai-trigger-text">{lang === 'ar' ? 'اسأل المستشار الذكي AI' : 'Ask AI Advisor'}</span>
+        </button>
+      )}
 
       {/* ⬆️ Floating Back-To-Top Button */}
       <BackToTopButton />
@@ -800,13 +938,15 @@ export default function App() {
         lang={lang}
       />
 
-      {/* 📱 Mobile Floating 1-Thumb Bottom Navigation */}
-      <MobileBottomBar
-        lang={lang}
-        compareCount={compareList.length}
-        onOpenCompare={() => setCompareDrawerOpen(true)}
-        onOpenContactDrawer={() => setContactDrawerOpen(true)}
-      />
+      {/* 📱 Mobile Floating 1-Thumb Bottom Navigation (Hidden on CRM) */}
+      {!location.pathname.startsWith('/crm') && (
+        <MobileBottomBar
+          lang={lang}
+          compareCount={compareList.length}
+          onOpenCompare={() => setCompareDrawerOpen(true)}
+          onOpenContactDrawer={() => setContactDrawerOpen(true)}
+        />
+      )}
     </div>
   );
 }

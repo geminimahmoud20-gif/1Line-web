@@ -10,13 +10,16 @@ import {
   ArrowRight, 
   ArrowLeft,
   Eye,
-  Scale
+  Scale,
+  Flame
 } from 'lucide-react';
+import { getPropertyViews } from '../../utils/visitorTracker';
+import BrandWatermark from '../common/BrandWatermark';
 
 export default function PropertyCard({ 
   property, 
-  lang, 
-  isFavorite, 
+  lang = 'ar', 
+  isFavorite = false, 
   onToggleFavorite, 
   isCompared = false, 
   onToggleCompare, 
@@ -27,6 +30,7 @@ export default function PropertyCard({
   const title = lang === 'ar' ? property.title_ar : property.title_en;
   const location = lang === 'ar' ? property.locationName_ar : property.locationName_en;
   const badge = lang === 'ar' ? property.badge_ar : property.badge_en;
+  const viewsCount = getPropertyViews(property.id);
 
   return (
     <div className="property-card-modern">
@@ -40,6 +44,9 @@ export default function PropertyCard({
           loading="lazy"
         />
 
+        {/* Brand Watermark Overlay */}
+        <BrandWatermark size="sm" position="bottom-right" />
+
         {/* Badges */}
         <div className="card-top-badges">
           {badge && <span className="property-badge gold-badge">{badge}</span>}
@@ -49,6 +56,24 @@ export default function PropertyCard({
               {lang === 'ar' ? 'جولة 3D' : '3D Tour'}
             </span>
           )}
+          {/* Real-time Views Badge */}
+          <span 
+            className="property-badge" 
+            style={{ 
+              background: 'rgba(15, 23, 42, 0.75)', 
+              color: '#06b6d4', 
+              border: '1px solid rgba(6, 182, 212, 0.4)',
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '3px',
+              backdropFilter: 'blur(4px)'
+            }}
+            title={lang === 'ar' ? `تمت مشاهدة هذا العقار ${viewsCount} مرة` : `Viewed ${viewsCount} times`}
+          >
+            <Eye size={11} />
+            <span>{viewsCount}</span>
+            {viewsCount >= 350 && <span style={{ fontSize: '10px' }}>🔥</span>}
+          </span>
         </div>
 
         {/* Floating Quick Action Buttons */}

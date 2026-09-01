@@ -9,11 +9,12 @@ import DOMPurify from 'dompurify';
 // Generated using SHA-256(password + salt)
 const ADMIN_SALT = 'ONELINE_SOHAG_SECURE_SALT_2026';
 
-// Pre-computed salted SHA-256 hashes for authorized admin PINs (1234, admin, oneline2026)
+// Pre-computed salted SHA-256 hashes for authorized admin PINs
+// Generated using: SHA-256(password + ADMIN_SALT)
 const AUTHORIZED_PIN_HASHES = [
-  '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', // Salted 1234
-  'c7ad44cbad762a5da0a452f9e854fdc1e0e7a52a38015f23f3eab1d80b931dd4', // Salted admin
-  '4c9184f37cff01bcdc32dc486ec36961edd76b41470d7ecda678d4007d61a64f'  // Salted oneline2026
+  '3fd8c3db7e43a40784a855f3e63bb667c805bd68f2745d30d28cfe5a5a431360',
+  'ec4a806ab9ac1c3cbc2b0cfe4045d11eb19ffdc66da5aa873cdb08e91af41353',
+  'a971ec4aa4a195209a4640c9a9d5040810c4c8644d5995978cf27ff81d1b109b'
 ];
 
 /**
@@ -74,6 +75,7 @@ export function resetFailedAttempts() {
 
 /**
  * Verify Admin Password Cryptographically
+ * 🔒 Uses SHA-256 salted hash comparison ONLY — no plaintext passwords in code
  */
 export async function verifyAdminCredentials(inputPassword) {
   const rateLimitStatus = checkRateLimit();
@@ -84,11 +86,9 @@ export async function verifyAdminCredentials(inputPassword) {
   try {
     const hashedInput = await sha256Hash(inputPassword.trim());
     
-    // Check against authorized hashes or direct match
-    const isValid = AUTHORIZED_PIN_HASHES.includes(hashedInput) || 
-                    inputPassword === '1234' || 
-                    inputPassword === 'admin' || 
-                    inputPassword === 'oneline2026';
+    // 🔒 Secure: Compare ONLY against pre-computed salted SHA-256 hashes
+    // No plaintext passwords are stored or compared anywhere in the codebase
+    const isValid = AUTHORIZED_PIN_HASHES.includes(hashedInput);
 
     if (isValid) {
       resetFailedAttempts();
@@ -133,3 +133,19 @@ export function sanitizeObject(obj) {
   }
   return sanitized;
 }
+
+/**
+ * 📱 Normalize phone numbers to eliminate spaces, dashes, and international prefixes
+ * e.g. "+20 101-234-5678" -> "01012345678"
+ */
+export function normalizePhoneNumber(phone) {
+  if (!phone || typeof phone !== 'string') return '';
+  let clean = phone.replace(/[^0-9]/g, '');
+  if (clean.startsWith('20') && clean.length === 12) {
+    clean = '0' + clean.slice(2);
+  } else if (clean.startsWith('0020') && clean.length === 14) {
+    clean = '0' + clean.slice(4);
+  }
+  return clean;
+}
+

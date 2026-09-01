@@ -3,23 +3,34 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // 🛡️ 1. LEADS & CUSTOMER INQUIRIES (حماية بيانات العملاء والطلبات)
-    // Anyone can submit inquiries, but only authenticated admins can read/update/delete
+    // Anyone can submit inquiries (create), but only authenticated admins can read/update/delete
     match /leads/{leadId} {
+      // Allow public lead submission with basic validation
       allow create: if request.resource.data.phone is string 
                     && request.resource.data.name is string;
-      allow read, update, delete: if request.auth != null;
+      
+      // 🔒 SECURE: Only admins with Custom Claims can read/modify/delete leads
+      // To set admin claims, run in Firebase Admin SDK:
+      //   admin.auth().setCustomUserClaims(uid, { admin: true })
+      allow read, update, delete: if request.auth != null 
+                                   && request.auth.token.admin == true;
     }
     
     // 🏠 2. PROPERTIES INVENTORY (مخزون العقارات)
     // Public read for website visitors; write/update/delete restricted to certified admins
     match /properties/{propId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      
+      // 🔒 SECURE: Only admins can modify properties catalog
+      allow write: if request.auth != null 
+                    && request.auth.token.admin == true;
     }
 
     // 🔔 3. NOTIFICATIONS & AUDIT LOGS
+    // Only authenticated admins can access notification logs
     match /notifications/{notifId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if request.auth != null 
+                          && request.auth.token.admin == true;
     }
   }
 }

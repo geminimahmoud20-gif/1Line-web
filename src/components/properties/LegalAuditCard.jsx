@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ShieldCheck, CheckCircle2, FileText, Award, UserCheck } from 'lucide-react';
+import { generatePropertyPdf } from '../../utils/pdfBrochure';
 
 export default function LegalAuditCard({ property, lang = 'ar' }) {
   const [showCertificateModal, setShowCertificateModal] = useState(false);
@@ -143,13 +144,27 @@ export default function LegalAuditCard({ property, lang = 'ar' }) {
                 </div>
               </div>
 
-              <button
-                type="button"
-                className="btn btn-primary btn-full"
-                onClick={() => setShowCertificateModal(false)}
-              >
-                {isAr ? 'إغلاق الشهادة' : 'Close Certificate'}
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-full"
+                  onClick={() => {
+                    generatePropertyPdf(property);
+                  }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                >
+                  <FileText size={16} />
+                  <span>{isAr ? 'تحميل التقرير والبروشور القانوني المعتمد (PDF)' : 'Download Certified Legal PDF'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => setShowCertificateModal(false)}
+                >
+                  {isAr ? 'إغلاق الشهادة' : 'Close Certificate'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

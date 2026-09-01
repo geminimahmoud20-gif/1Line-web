@@ -1,6 +1,7 @@
 import { X, MapPin, Maximize2, BedDouble, Bath, MessageSquare, ArrowLeft, ArrowRight, Download, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { generatePropertyPdf } from '../../utils/pdfBrochure';
+import BrandWatermark from './BrandWatermark';
 
 export default function QuickViewModal({ property, lang = 'ar', onClose }) {
   if (!property) return null;
@@ -22,6 +23,7 @@ export default function QuickViewModal({ property, lang = 'ar', onClose }) {
           {/* Left / Top Media Section */}
           <div className="quickview-media">
             <img src={property.images[0]} alt={title} className="quickview-img" />
+            <BrandWatermark size="md" position="bottom-right" />
             <div className="quickview-price-badge-floating">
               <span className="price-tag-big">{property.price.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</span>
             </div>
