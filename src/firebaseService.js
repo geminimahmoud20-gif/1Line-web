@@ -256,6 +256,12 @@ export const isFirebaseActive = () => {
 
 export const isFirebaseAuthAvailable = () => isFirebaseConfigured() && auth !== null;
 
+// Firebase Authentication user IDs approved to access the internal CRM.
+// Authorization is also enforced independently by Firestore rules.
+const ADMIN_USER_IDS = new Set(['dB6GM2RoPQRE0iksDnqcdvUKgXy2']);
+
+const isAdminUser = (user) => Boolean(user && ADMIN_USER_IDS.has(user.uid));
+
 // ===================== AUTHENTICATION =====================
 
 /**
@@ -267,8 +273,7 @@ export const loginUser = async (email, password) => {
   }
 
   const credential = await signInWithEmailAndPassword(auth, email, password);
-  const token = await credential.user.getIdTokenResult();
-  if (token.claims.admin !== true) {
+  if (!isAdminUser(credential.user)) {
     await signOut(auth);
     throw new Error('This account is not authorized to access the CRM');
   }
@@ -293,14 +298,8 @@ export const monitorAuthState = (callback) => {
     return () => {};
   }
 
-  return onAuthStateChanged(auth, async (user) => {
+  return onAuthStateChanged(auth, (user) => {
     if (!user) return callback(false);
-    try {
-      const token = await user.getIdTokenResult();
-      callback(token.claims.admin === true);
-    } catch (error) {
-      console.error('Unable to verify CRM role:', error);
-      callback(false);
-    }
+    callback(isAdminUser(user));
   });
 };
