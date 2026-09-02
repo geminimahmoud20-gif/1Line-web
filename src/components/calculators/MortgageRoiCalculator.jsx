@@ -19,6 +19,7 @@ import { trackEvent } from '../../utils/visitorTracker';
 
 export default function MortgageRoiCalculator({ 
   lang = 'ar', 
+  currency = 'EGP',
   initialPrice = 3500000, 
   initialDownpaymentPercent = 20,
   initialYears = 5 

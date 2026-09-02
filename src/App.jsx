@@ -19,6 +19,7 @@ import {
 import { playNotificationChime } from './utils/notificationHub';
 import { sanitizeObject, normalizePhoneNumber } from './utils/securityShield';
 import { getOrCreateSession, trackEvent, identifyVisitor } from './utils/visitorTracker';
+import { isRecordArray, readStoredJson } from './utils/browserStorage';
 
 // Layout & Common Components
 import Header from './components/common/Header';
@@ -147,8 +148,7 @@ export default function App() {
 
   // Properties Data State
   const [properties, setProperties] = useState(() => {
-    const saved = localStorage.getItem('oneline_properties');
-    return saved ? JSON.parse(saved) : PROPERTIES_DATA;
+    return readStoredJson('oneline_properties', PROPERTIES_DATA, isRecordArray);
   });
 
   const handleAddProperty = useCallback((newProp) => {
@@ -177,8 +177,7 @@ export default function App() {
 
   // Mega Projects State
   const [projects, setProjects] = useState(() => {
-    const saved = localStorage.getItem('oneline_mega_projects');
-    return saved ? JSON.parse(saved) : MEGA_PROJECTS;
+    return readStoredJson('oneline_mega_projects', MEGA_PROJECTS, isRecordArray);
   });
 
   const handleAddProject = useCallback((newProj) => {
@@ -210,8 +209,7 @@ export default function App() {
 
   // Favorites State
   const [favorites, setFavorites] = useState(() => {
-    const saved = localStorage.getItem('oneline_favorites');
-    return saved ? JSON.parse(saved) : [];
+    return readStoredJson('oneline_favorites', [], Array.isArray);
   });
 
   const toggleFavorite = useCallback((propertyId) => {
@@ -261,16 +259,12 @@ export default function App() {
 
   // CRM Leads State
   const [leads, setLeads] = useState(() => {
-    const saved = localStorage.getItem('oneline_crm_leads');
-    return saved ? JSON.parse(saved) : INITIAL_LEADS;
+    return readStoredJson('oneline_crm_leads', INITIAL_LEADS, isRecordArray);
   });
 
   const [demands, setDemands] = useState(() => {
-    const saved = localStorage.getItem('oneline_demands');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) { console.error(e); }
-    }
-    return INITIAL_DEMANDS.map(d => ({ ...d, status: d.status || 'published' }));
+    const fallback = INITIAL_DEMANDS.map((d) => ({ ...d, status: d.status || 'published' }));
+    return readStoredJson('oneline_demands', fallback, isRecordArray);
   });
 
   const [addDemandModalOpen, setAddDemandModalOpen] = useState(false);
