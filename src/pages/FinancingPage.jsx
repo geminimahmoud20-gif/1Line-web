@@ -11,7 +11,7 @@ export default function FinancingPage({ lang = 'ar' }) {
         <div className="financing-hero-container">
           <div className="financing-badge-pill">
             <Sparkles size={15} className="text-gold" />
-            <span>{isAr ? 'برنامج One Line Now للتمويل والتقسيط العقاري' : 'One Line Now Mortgage & Installment Program'}</span>
+            <span>{isAr ? 'برنامج 1Line Now للتمويل والتقسيط العقاري' : '1Line Now Mortgage & Installment Program'}</span>
           </div>
 
           <h1>{isAr ? 'امتلك عقارك اليوم بأطول فترة سداد وأقل مقدم في سوهاج' : 'Own Your Property with Long-Term Flexible Financing in Sohag'}</h1>
@@ -34,7 +34,7 @@ export default function FinancingPage({ lang = 'ar' }) {
       <section className="financing-benefits-section">
         <div className="financing-container">
           <div className="section-header-centered">
-            <h2>{isAr ? 'لماذا تختار برامج التقسيط والتمويل من ون لاين؟' : 'Why Choose One Line Financing Programs?'}</h2>
+            <h2>{isAr ? 'لماذا تختار برامج التقسيط والتمويل من 1Line؟' : 'Why Choose 1Line Financing Programs?'}</h2>
             <p>{isAr ? 'حلول مالية صُممت خصيصاً لتناسب التدفقات النقدية للمشترين والمستثمرين في سوهاج' : 'Tailored financing solutions designed for Upper Egypt homebuyers and investors'}</p>
           </div>
 

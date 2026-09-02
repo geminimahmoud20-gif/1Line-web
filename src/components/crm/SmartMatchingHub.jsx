@@ -98,7 +98,7 @@ export default function SmartMatchingHub({
     const propPrice = property.price?.toLocaleString();
 
     const waText = isAr
-      ? `🏛️ *شركة ون لاين للحلول العقارية — عرض خاص ومطابق لطلبك*\n\n` +
+      ? `🏛️ *شركة 1Line للحلول العقارية — عرض خاص ومطابق لطلبك*\n\n` +
         `أهلاً أ. *${lead.name}*،\n` +
         `بناءً على طلبكم المسجل لدينا، يسعدنا أن نرشح لكم هذه الوحدة المطابقة لاهتمامكم بنسبة ${match.score}%:\n\n` +
         `🏢 *العقار:* ${propTitle}\n` +
@@ -107,7 +107,7 @@ export default function SmartMatchingHub({
         `💰 *السعر الإجمالي:* ${propPrice} ج.م\n` +
         `💳 *المقدم:* ${property.downPayment?.toLocaleString()} ج.م وقسط شهري: ${property.monthlyInstallment?.toLocaleString()} ج.م\n\n` +
         `📲 هل يناسبكم حجز موعد لمعاينة العقار على الطبيعة اليوم أو غداً؟`
-      : `🏛️ *One Line Real Estate — Tailored Property Match (${match.score}%)*\n\n` +
+      : `🏛️ *1Line Real Estate — Tailored Property Match (${match.score}%)*\n\n` +
         `Dear Mr/Ms *${lead.name}*,\n` +
         `We have matched a prime property for your criteria:\n` +
         `🏢 *${propTitle}*\n` +

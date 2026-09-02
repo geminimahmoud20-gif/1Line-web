@@ -37,7 +37,7 @@ export default function SiteVisitModal({
   });
   const [visitTime, setVisitTime] = useState('16:00');
   const [agentName, setAgentName] = useState(lead.assignedTo || 'Dr. Mahmoud Elbaz');
-  const [meetingLocation, setMeetingLocation] = useState('مقر شركة ون لاين العقارية - شرق سوهاج');
+  const [meetingLocation, setMeetingLocation] = useState('مقر شركة 1Line العقارية - شرق سوهاج');
   const [notes, setNotes] = useState('معاينة ميدانية للوحدة مع شرح الموقف القانوني');
 
   const selectedProperty = properties.find(p => p.id === selectedPropertyId) || properties[0] || {};
@@ -67,7 +67,7 @@ export default function SiteVisitModal({
     const propLoc = isAr ? selectedProperty.locationName_ar : selectedProperty.locationName_en;
     
     const waText = isAr
-      ? `🏛️ *تأكيد موعد معاينة عقارية - شركة ون لاين للحلول العقارية*\n\n` +
+      ? `🏛️ *تأكيد موعد معاينة عقارية - شركة 1Line للحلول العقارية*\n\n` +
         `أهلاً أ. *${lead.name}*،\n` +
         `يسعدنا تأكيد موعد معاينتكم الميدانية للعقار:\n` +
         `🏢 *العقار:* ${propTitle}\n` +
@@ -77,7 +77,7 @@ export default function SiteVisitModal({
         `🤝 *المستشار المرافق:* ${agentName}\n` +
         `📍 *نقطة التجمع:* ${meetingLocation}\n\n` +
         `📌 للتواصل المباشر مع المستشار المسؤول، نتمنى لكم تجربة موفقة.`
-      : `🏛️ *Property Site Visit Confirmation - One Line Real Estate*\n\n` +
+      : `🏛️ *Property Site Visit Confirmation - 1Line Real Estate*\n\n` +
         `Dear Mr/Ms *${lead.name}*,\n` +
         `We look forward to meeting you for the site viewing:\n` +
         `🏢 *Property:* ${propTitle}\n` +
@@ -192,7 +192,7 @@ export default function SiteVisitModal({
                 type="text"
                 value={meetingLocation}
                 onChange={(e) => setMeetingLocation(e.target.value)}
-                placeholder="مثال: مقر ون لاين أو أمام العقار مباشرة"
+                placeholder="مثال: مقر 1Line أو أمام العقار مباشرة"
               />
             </div>
           </div>

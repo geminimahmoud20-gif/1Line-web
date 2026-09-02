@@ -16,7 +16,7 @@ export default function WhatsAppAutomationBar({ property, lang = 'ar', triggerTo
 
   // Formatted WhatsApp Message for Client
   const whatsAppText = isAr
-    ? `*🏛️ تفاصيل العقار من منصة ون لاين بسوهاج*
+    ? `*🏛️ تفاصيل العقار من منصة 1Line بسوهاج*
 ----------------------------------------
 📌 *العقار:* ${title}
 📍 *الموقع:* ${location}
@@ -28,7 +28,7 @@ export default function WhatsAppAutomationBar({ property, lang = 'ar', triggerTo
 ----------------------------------------
 🔗 *رابط العقار والبروشور:* ${window.location.href}
 📞 *للحجز والمعاينة الفورية:* 01012345678`
-    : `*🏛️ Property Details - One Line Sohag*
+    : `*🏛️ Property Details - 1Line Sohag*
 ----------------------------------------
 📌 *Listing:* ${title}
 📍 *Location:* ${location}

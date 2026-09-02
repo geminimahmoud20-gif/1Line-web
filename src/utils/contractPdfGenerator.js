@@ -42,7 +42,7 @@ export const generateReservationContractPdf = (contractData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(18);
   doc.setFont('helvetica', 'bold');
-  doc.text('ONE LINE REAL ESTATE DEVELOPMENT', 15, 18);
+  doc.text('1LINE REAL ESTATE DEVELOPMENT', 15, 18);
 
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
@@ -175,7 +175,7 @@ export const generateReservationContractPdf = (contractData) => {
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(71, 85, 105);
   doc.text('1. This preliminary reservation holds the specified unit for (15) calendar days to complete final contract signing.', 15, 204);
-  doc.text('2. One Line guarantees legal title deed audit, building license validity, and zero municipal encumbrances.', 15, 209);
+  doc.text('2. 1Line guarantees legal title deed audit, building license validity, and zero municipal encumbrances.', 15, 209);
   doc.text('3. The reservation deposit is officially credited toward the unit downpayment upon final contract execution.', 15, 214);
   doc.text('4. All transactions are backed by Dr. Mahmoud Elbaz legal advisory and registered brokerage charter in Sohag.', 15, 219);
 
@@ -183,11 +183,11 @@ export const generateReservationContractPdf = (contractData) => {
   doc.setDrawColor(203, 213, 225);
   doc.line(15, 226, 195, 226);
 
-  // First Party (One Line)
+  // First Party (1Line)
   doc.setFontSize(9);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(9, 35, 71);
-  doc.text('FIRST PARTY: ONE LINE REAL ESTATE', 20, 233);
+  doc.text('FIRST PARTY: 1LINE REAL ESTATE', 20, 233);
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(100, 116, 139);
@@ -214,11 +214,11 @@ export const generateReservationContractPdf = (contractData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
-  doc.text('One Line Real Estate Development & Brokerage - Sohag & New Sohag, Egypt', 15, 287);
+  doc.text('1Line Real Estate Development & Brokerage - Sohag & New Sohag, Egypt', 15, 287);
   doc.text('Hotline: +20 101 234 5678  |  Website: www.oneline-egypt.com  |  CR: 489201', 15, 292);
 
   // Save the PDF file
-  const filename = `OneLine_Contract_${transactionRef}_${new Date().toISOString().slice(0, 10)}.pdf`;
+  const filename = `1Line_Contract_${transactionRef}_${new Date().toISOString().slice(0, 10)}.pdf`;
   doc.save(filename);
   return filename;
 };

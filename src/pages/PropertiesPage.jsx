@@ -24,6 +24,7 @@ export default function PropertiesPage({
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState('split'); // 'split' | 'grid' | 'map'
   const [selectedProperty, setSelectedProperty] = useState(null);
+  const [hoveredPropertyId, setHoveredPropertyId] = useState(null);
   const [sortBy, setSortBy] = useState('featured'); // 'featured' | 'price_asc' | 'price_desc' | 'size_desc'
 
   // Initialize filters from URL search params
@@ -165,8 +166,13 @@ export default function PropertiesPage({
                   {filteredProperties.map((prop) => (
                     <div 
                       key={prop.id}
-                      onMouseEnter={() => setSelectedProperty(prop)}
-                      className={`split-card-item ${selectedProperty?.id === prop.id ? 'highlighted' : ''}`}
+                      id={`prop-card-${prop.id}`}
+                      onMouseEnter={() => {
+                        setSelectedProperty(prop);
+                        setHoveredPropertyId(prop.id);
+                      }}
+                      onMouseLeave={() => setHoveredPropertyId(null)}
+                      className={`split-card-item ${selectedProperty?.id === prop.id || hoveredPropertyId === prop.id ? 'highlighted' : ''}`}
                     >
                       <PropertyCard
                         property={prop}
@@ -199,7 +205,25 @@ export default function PropertiesPage({
               <PropertyMapView
                 properties={filteredProperties.length > 0 ? filteredProperties : properties}
                 selectedProperty={selectedProperty}
-                onSelectProperty={setSelectedProperty}
+                onSelectProperty={(prop) => {
+                  setSelectedProperty(prop);
+                  if (prop) {
+                    const cardEl = document.getElementById(`prop-card-${prop.id}`);
+                    if (cardEl) {
+                      cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                  }
+                }}
+                hoveredPropertyId={hoveredPropertyId}
+                onHoverProperty={(id) => {
+                  setHoveredPropertyId(id);
+                  if (id) {
+                    const cardEl = document.getElementById(`prop-card-${id}`);
+                    if (cardEl) {
+                      cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                  }
+                }}
                 lang={lang}
                 centerArea={filters.area}
               />

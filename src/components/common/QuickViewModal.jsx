@@ -87,7 +87,7 @@ export default function QuickViewModal({ property, lang = 'ar', onClose }) {
               {/* Secondary 2-Column Actions */}
               <div className="quickview-secondary-actions-row">
                 <a
-                  href={`https://wa.me/201012345678?text=${encodeURIComponent(`مرحباً ون لاين، أريد الاستفسار عن كود العقار: ${property.id.toUpperCase()} (${title}) بسوهاج.`)}`}
+                  href={`https://wa.me/201012345678?text=${encodeURIComponent(`مرحباً 1Line، أريد الاستفسار عن كود العقار: ${property.id.toUpperCase()} (${title}) بسوهاج.`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-whatsapp quickview-half-btn"

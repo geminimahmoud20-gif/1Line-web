@@ -335,8 +335,8 @@ export default function PaymentScheduleBuilder({
               {/* Receipt Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #d97706', paddingBottom: '14px', marginBottom: '18px' }}>
                 <div>
-                  <h2 style={{ margin: 0, color: '#0f172a', fontSize: '1.3rem' }}>شركة ون لاين للحلول العقارية</h2>
-                  <span style={{ fontSize: '0.8rem', color: '#64748b' }}>ONE LINE REAL ESTATE SOLUTIONS — SOHAG HQ</span>
+                  <h2 style={{ margin: 0, color: '#0f172a', fontSize: '1.3rem' }}>شركة 1Line للحلول العقارية</h2>
+                  <span style={{ fontSize: '0.8rem', color: '#64748b' }}>1LINE REAL ESTATE SOLUTIONS — SOHAG HQ</span>
                 </div>
                 <div style={{ textAlign: isAr ? 'left' : 'right' }}>
                   <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#d97706', display: 'block' }}>رقم الإيصال الإلكتروني:</span>
@@ -381,7 +381,7 @@ export default function PaymentScheduleBuilder({
                 <div style={{ textAlign: 'center' }}>
                   <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'block' }}>خاتم وتوقيع الإدارة المالية:</span>
                   <div style={{ marginTop: '6px', color: '#d97706', fontWeight: 'bold', fontSize: '0.85rem' }}>
-                    شركة ون لاين للاستثمار العقاري
+                    شركة 1Line للاستثمار العقاري
                   </div>
                   <span style={{ fontSize: '0.65rem', color: '#16a34a' }}>✓ تم السداد والاعتماد إلكترونياً</span>
                 </div>

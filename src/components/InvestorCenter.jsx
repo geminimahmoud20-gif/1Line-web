@@ -9,9 +9,15 @@ import {
   ShieldCheck, 
   Building2, 
   Store, 
-  Briefcase 
+  Briefcase,
+  Video,
+  PhoneCall,
+  Download,
+  Globe,
+  Award
 } from 'lucide-react';
 import PhoneInputField, { SUPPORTED_COUNTRIES } from './PhoneInputField';
+import { generateInvestorProspectusPdf } from '../utils/pdfBrochure';
 
 export const InvestorCenter = ({
   lang = 'ar',
@@ -33,8 +39,14 @@ export const InvestorCenter = ({
   const [phoneError, setPhoneError] = useState('');
   const [whatsappCountry, setWhatsappCountry] = useState('+20');
   const [whatsappError, setWhatsappError] = useState('');
+  const [meetingFormat, setMeetingFormat] = useState('video_tour'); // 'video_tour' | 'phone_call' | 'in_person'
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
   const isAr = lang === 'ar';
+
+  const formatConverted = (valEgp) => {
+    return `${valEgp.toLocaleString()} ${isAr ? 'ج.م' : 'EGP'}`;
+  };
 
   // Dynamic ROI Yields based on property type in Sohag
   const yieldRates = {
@@ -92,15 +104,36 @@ export const InvestorCenter = ({
 
     const updatedForm = {
       ...investorForm,
-      investmentAmount: invAmount,
-      investmentPeriod: invPeriod,
+      budget: invAmount,
+      investmentHorizon: invPeriod,
       targetType: invPropType,
-      projectedProfit: investmentSim.netProfit,
+      meetingFormat,
+      selectedCurrency: 'EGP',
+      projectedRoi: investmentSim.totalRoiPercent,
+      projectedNetProfit: investmentSim.netProfit,
+      submittedAt: new Date().toISOString(),
       phone: `${phoneCountry}${normalizedPhone}`,
       whatsapp: cleanWhatsapp ? `${whatsappCountry}${normalizedWhatsapp}` : ''
     };
 
     submitInvestorForm(updatedForm);
+  };
+
+  const handleDownloadProspectus = () => {
+    setIsDownloadingPdf(true);
+    try {
+      generateInvestorProspectusPdf({
+        invAmount,
+        invPeriod,
+        invPropType,
+        investmentSim,
+        currency: 'EGP'
+      });
+    } catch (err) {
+      console.error('Error generating investor PDF:', err);
+    } finally {
+      setTimeout(() => setIsDownloadingPdf(false), 800);
+    }
   };
 
   return (
@@ -132,7 +165,9 @@ export const InvestorCenter = ({
         <div className="form-group-flex">
           <div className="flex-between">
             <label className="block-label">{isAr ? 'رأس المال المستثمر' : 'Investment Capital'}</label>
-            <span className="text-gold font-bold">{(invAmount).toLocaleString()} ج.م</span>
+            <span className="text-gold font-bold">
+              {formatConverted(invAmount)}
+            </span>
           </div>
           <input
             type="range"
@@ -157,16 +192,16 @@ export const InvestorCenter = ({
           </div>
         </div>
 
-        {/* Holding Period Slider */}
+        {/* Investment Period Slider */}
         <div className="form-group-flex">
           <div className="flex-between">
-            <label className="block-label">{isAr ? 'مدة الاستثمار والاحتفاظ' : 'Holding Period'}</label>
+            <label className="block-label">{isAr ? 'أفق ومدة الاستثمار' : 'Investment Horizon'}</label>
             <span className="text-gold font-bold">{invPeriod} {isAr ? 'سنوات' : 'Years'}</span>
           </div>
           <input
             type="range"
             min="1"
-            max="10"
+            max="15"
             step="1"
             value={invPeriod}
             onChange={(e) => setInvPeriod(parseInt(e.target.value))}
@@ -199,8 +234,7 @@ export const InvestorCenter = ({
         <div className="cert-price-range">
           <span className="range-lbl">{isAr ? 'صافي الأرباح الرأسمالية والإيجارية المتوقعة:' : 'Projected Net Cumulative Profits:'}</span>
           <div className="range-numbers">
-            <strong>+{investmentSim.netProfit.toLocaleString()}</strong>
-            <span className="range-curr">{isAr ? 'ج.م ربح' : 'EGP'}</span>
+            <strong>+{formatConverted(investmentSim.netProfit)}</strong>
           </div>
           <span className="sqm-rate-sub" style={{ color: '#4ade80' }}>
             {isAr ? `إجمالي العائد على الاستثمار: +${investmentSim.totalRoiPercent}% خلال المدة` : `Total ROI: +${investmentSim.totalRoiPercent}%`}
@@ -210,22 +244,118 @@ export const InvestorCenter = ({
         <div className="calc-breakdown-list">
           <div className="calc-breakdown-glass-row">
             <span className="glass-row-lbl">{isAr ? 'العائد الإيجاري السنوي المتوقع' : 'Estimated Annual Rent'}</span>
-            <strong className="text-emerald">{investmentSim.annualRent.toLocaleString()} ج.م / سنوياً</strong>
+            <strong className="text-emerald">{formatConverted(investmentSim.annualRent)} / {isAr ? 'سنوياً' : 'yr'}</strong>
           </div>
           <div className="calc-breakdown-glass-row">
             <span className="glass-row-lbl">{isAr ? 'القيمة السوقية المتوقعة للأصل بعد المدة' : 'Projected Asset Capital Value'}</span>
-            <strong className="text-gold">{investmentSim.futureCapitalValue.toLocaleString()} ج.م</strong>
+            <strong className="text-gold">{formatConverted(investmentSim.futureCapitalValue)}</strong>
           </div>
           <div className="calc-breakdown-glass-row">
             <span className="glass-row-lbl">{isAr ? 'إجمالي الإيجارات المحصلة خلال المدة' : 'Total Rental Income Collected'}</span>
-            <strong className="text-sky">{investmentSim.totalRentOverPeriod.toLocaleString()} ج.م</strong>
+            <strong className="text-sky">{formatConverted(investmentSim.totalRentOverPeriod)}</strong>
           </div>
+        </div>
+
+        {/* Institutional Prospectus Download Action */}
+        <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid rgba(255, 255, 255, 0.15)', display: 'flex', justifyContent: 'flex-end' }}>
+          <button
+            type="button"
+            onClick={handleDownloadProspectus}
+            disabled={isDownloadingPdf}
+            className="btn btn-sm"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: 'linear-gradient(135deg, #ffca28 0%, #ff8f00 100%)',
+              color: '#081226',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '8px 16px',
+              fontSize: '0.84rem',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(255, 202, 40, 0.4)'
+            }}
+          >
+            <Download size={15} />
+            <span>{isDownloadingPdf ? (isAr ? 'جاري إنشاء الملف...' : 'Generating...') : (isAr ? 'تحميل دراسة الجدوى والملف الاستثماري PDF' : 'Download Institutional Prospectus PDF')}</span>
+          </button>
         </div>
       </div>
 
-      {/* VIP Consultation Booking Form */}
+      {/* VIP Consultation & Live Video Tour Booking Form */}
       <form onSubmit={validateAndSubmit} className="seller-contact-submission-form" style={{ marginTop: '28px' }}>
-        <h4 className="form-sub-title">{isAr ? 'احجز استشارة استثمارية خاصة مع مستشاري ون لاين (VIP)' : 'Book a Confidential VIP Investment Advisory Session'}</h4>
+        <h4 className="form-sub-title">{isAr ? 'احجز استشارة استثمارية خاصة مع مستشاري 1Line (VIP)' : 'Book a Confidential VIP Investment Advisory Session'}</h4>
+
+        {/* Meeting Format Selector */}
+        <div className="form-group-block" style={{ marginBottom: '18px' }}>
+          <label className="block-label">{isAr ? 'طريقة الاستشارة وتنسيق المعاينة المفضل:' : 'Preferred Meeting / Tour Format:'}</label>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
+            <button
+              type="button"
+              onClick={() => setMeetingFormat('video_tour')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 14px',
+                borderRadius: '8px',
+                fontSize: '0.82rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                border: meetingFormat === 'video_tour' ? '2px solid #0d48a1' : '1px solid var(--border-color)',
+                background: meetingFormat === 'video_tour' ? 'rgba(13, 72, 161, 0.08)' : 'var(--card-bg)',
+                color: meetingFormat === 'video_tour' ? '#0d48a1' : 'var(--text-main)'
+              }}
+            >
+              <Video size={16} style={{ color: '#0d48a1' }} />
+              <span>{isAr ? 'جولة فيديو حية (Zoom / WhatsApp)' : 'Live Video Tour'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setMeetingFormat('phone_call')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 14px',
+                borderRadius: '8px',
+                fontSize: '0.82rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                border: meetingFormat === 'phone_call' ? '2px solid #0d48a1' : '1px solid var(--border-color)',
+                background: meetingFormat === 'phone_call' ? 'rgba(13, 72, 161, 0.08)' : 'var(--card-bg)',
+                color: meetingFormat === 'phone_call' ? '#0d48a1' : 'var(--text-main)'
+              }}
+            >
+              <PhoneCall size={16} style={{ color: '#10b981' }} />
+              <span>{isAr ? 'مكالمة هاتفية VIP مع استشاري' : 'Direct VIP Call'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setMeetingFormat('in_person')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 14px',
+                borderRadius: '8px',
+                fontSize: '0.82rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                border: meetingFormat === 'in_person' ? '2px solid #0d48a1' : '1px solid var(--border-color)',
+                background: meetingFormat === 'in_person' ? 'rgba(13, 72, 161, 0.08)' : 'var(--card-bg)',
+                color: meetingFormat === 'in_person' ? '#0d48a1' : 'var(--text-main)'
+              }}
+            >
+              <Building2 size={16} style={{ color: '#d97706' }} />
+              <span>{isAr ? 'جلسة خاصة بمقر الشركة بسوهاج' : 'HQ Executive Lounge'}</span>
+            </button>
+          </div>
+        </div>
 
         <div className="phase-inputs-row">
           <div className="form-group-flex">

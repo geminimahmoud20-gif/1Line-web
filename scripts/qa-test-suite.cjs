@@ -196,7 +196,7 @@ assert(csvContent.includes('toISOString().slice(0, 10)'), `exportCsv.js — تا
 
 const pdfContent = fs.readFileSync(path.join(baseDir, 'src/utils/pdfBrochure.js'), 'utf-8');
 assert(pdfContent.includes("import { jsPDF }"), `pdfBrochure.js — يستورد jsPDF`);
-assert(pdfContent.includes('ONE LINE REAL ESTATE'), `pdfBrochure.js — شعار الشركة`);
+assert(pdfContent.includes('1LINE REAL ESTATE') || pdfContent.includes('ONE LINE REAL ESTATE'), `pdfBrochure.js — شعار الشركة`);
 assert(pdfContent.includes('Verified Legal'), `pdfBrochure.js — قسم الموقف القانوني`);
 
 // ============================================================

@@ -12,8 +12,8 @@ export default function QuickContactDrawer({
 
   const handleWhatsAppSales = () => {
     const text = isAr 
-      ? 'مرحباً، أريد التواصل مع مستشار مبيعات ون لاين للاستفسار عن العقارات المتاحة بسوهاج.' 
-      : 'Hello, I would like to connect with a One Line sales advisor regarding available properties in Sohag.';
+      ? 'مرحباً، أريد التواصل مع مستشار مبيعات 1Line للاستفسار عن العقارات المتاحة بسوهاج.' 
+      : 'Hello, I would like to connect with a 1Line sales advisor regarding available properties in Sohag.';
     window.open(`https://wa.me/201012345678?text=${encodeURIComponent(text)}`, '_blank');
     onClose();
   };
@@ -111,7 +111,7 @@ export default function QuickContactDrawer({
         {/* Footer Guarantee */}
         <div className="contact-drawer-footer-note">
           <ShieldCheck size={14} className="text-gold" />
-          <span>{isAr ? 'خدمة عملاء معتمدة ومجانية 100% من منصة ون لاين العقارية' : '100% Free Consultation by One Line Real Estate'}</span>
+          <span>{isAr ? 'خدمة عملاء معتمدة ومجانية 100% من منصة 1Line العقارية' : '100% Free Consultation by 1Line Real Estate'}</span>
         </div>
       </div>
     </div>

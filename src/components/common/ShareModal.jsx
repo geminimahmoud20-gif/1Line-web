@@ -22,13 +22,13 @@ export default function ShareModal({ isOpen, onClose, lang, triggerToast }) {
         </button>
 
         <div className="track-modal-header">
-          <h3>{lang === 'ar' ? 'مشاركة منصة ون لاين العقارية' : 'Share One Line Platform'}</h3>
+          <h3>{lang === 'ar' ? 'مشاركة منصة 1Line العقارية' : 'Share 1Line Platform'}</h3>
           <p>{lang === 'ar' ? 'شارك أفضل الفرص العقارية مع أصدقائك وعائلتك' : 'Share top real estate opportunities with your network'}</p>
         </div>
 
         <div className="share-links-row">
           <a
-            href={`https://wa.me/?text=${encodeURIComponent(`اكتشف أرقى العقارات والفرص الاستثمارية بسوهاج على منصة ون لاين: ${url}`)}`}
+            href={`https://wa.me/?text=${encodeURIComponent(`اكتشف أرقى العقارات والفرص الاستثمارية بسوهاج على منصة 1Line: ${url}`)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="btn btn-whatsapp"

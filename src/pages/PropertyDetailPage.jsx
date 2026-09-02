@@ -21,7 +21,8 @@ import {
   Calculator,
   DollarSign,
   Eye,
-  Flame
+  Flame,
+  Navigation
 } from 'lucide-react';
 import { incrementPropertyView, getPropertyViews } from '../utils/visitorTracker';
 import PropertyGallery from '../components/properties/PropertyGallery';
@@ -148,9 +149,35 @@ export default function PropertyDetailPage({
               </span>
             </div>
             <h1 className="detail-main-title">{title}</h1>
-            <div className="detail-location-text">
-              <MapPin size={16} />
-              <span>{location}</span>
+            <div className="detail-location-text" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <MapPin size={16} />
+                <span>{location}</span>
+              </div>
+              {property.coordinates?.lat && (
+                <a
+                  href={`https://www.google.com/maps?q=${property.coordinates.lat},${property.coordinates.lng}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn btn-sm"
+                  style={{
+                    padding: '3px 10px',
+                    fontSize: '0.74rem',
+                    background: 'rgba(217, 119, 6, 0.12)',
+                    border: '1px solid rgba(217, 119, 6, 0.35)',
+                    color: 'var(--accent-gold)',
+                    borderRadius: 'var(--radius-pill)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    textDecoration: 'none'
+                  }}
+                  title={isAr ? 'فتح اللوكيشن الدقيق على خرائط Google' : 'Open Location in Google Maps'}
+                >
+                  <Navigation size={11} />
+                  <span>{isAr ? '📍 عرض على خرائط Google' : 'Open in Google Maps'}</span>
+                </a>
+              )}
             </div>
           </div>
 
@@ -377,9 +404,9 @@ export default function PropertyDetailPage({
           <div className="detail-sidebar-col">
             <div className="sticky-booking-card">
               <div className="agent-profile-header">
-                <div className="agent-avatar-circle">OL</div>
+                <div className="agent-avatar-circle">1L</div>
                 <div>
-                  <h4>{isAr ? 'مستشار ون لاين العقاري' : 'One Line Real Estate Advisor'}</h4>
+                  <h4>{isAr ? 'مستشار 1Line العقاري' : '1Line Real Estate Advisor'}</h4>
                   <span className="agent-status-badge">
                     <span className="green-dot" />
                     {isAr ? 'متاح للرد الفوري' : 'Online & Ready'}
@@ -402,7 +429,7 @@ export default function PropertyDetailPage({
               {/* Instant Contact Direct Row */}
               <div className="sidebar-instant-contact-row">
                 <a
-                  href={`https://wa.me/201012345678?text=${encodeURIComponent(`مرحباً ون لاين، أريد الاستفسار عن كود العقار: ${property.id.toUpperCase()} (${title})`)}`}
+                  href={`https://wa.me/201012345678?text=${encodeURIComponent(`مرحباً 1Line، أريد الاستفسار عن كود العقار: ${property.id.toUpperCase()} (${title})`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-whatsapp-half"
@@ -559,7 +586,7 @@ export default function PropertyDetailPage({
             </button>
 
             <a
-              href={`https://wa.me/201012345678?text=${encodeURIComponent(`مرحباً ون لاين، أريد الاستفسار عن كود: ${property.id.toUpperCase()}`)}`}
+              href={`https://wa.me/201012345678?text=${encodeURIComponent(`مرحباً 1Line، أريد الاستفسار عن كود: ${property.id.toUpperCase()}`)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-whatsapp-mini"

@@ -40,8 +40,8 @@ export default function PropertyCompareDrawer({
   const handleShareWhatsApp = () => {
     if (compareList.length === 0) return;
     let msg = isAr 
-      ? `⚖️ *جدول مقارنة العقارات المختارة — One Line Real Estate*\n\n`
-      : `⚖️ *Selected Properties Comparison — One Line Real Estate*\n\n`;
+      ? `⚖️ *جدول مقارنة العقارات المختارة — 1Line Real Estate*\n\n`
+      : `⚖️ *Selected Properties Comparison — 1Line Real Estate*\n\n`;
 
     compareList.forEach((p, idx) => {
       const title = isAr ? p.title_ar : p.title_en;

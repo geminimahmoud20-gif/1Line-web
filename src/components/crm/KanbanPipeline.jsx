@@ -108,8 +108,8 @@ export default function KanbanPipeline({
   const onWhatsAppClick = (lead) => {
     const cleanPhone = (lead.whatsapp || lead.phone || '').replace(/[^0-9]/g, '');
     const text = isAr 
-      ? `مرحباً أ. ${lead.name}، معك مستشار شركة ون لاين للحلول العقارية بسوهاج. نود متابعة طلبك بخصوص ${lead.details?.propertyType || 'الوحدات المتاحة'}.`
-      : `Hello ${lead.name}, this is One Line Real Estate following up on your request.`;
+      ? `مرحباً أ. ${lead.name}، معك مستشار شركة 1Line للحلول العقارية بسوهاج. نود متابعة طلبك بخصوص ${lead.details?.propertyType || 'الوحدات المتاحة'}.`
+      : `Hello ${lead.name}, this is 1Line Real Estate following up on your request.`;
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`, '_blank');
   };
 

@@ -94,7 +94,7 @@ export default function AIPropertyAdvisorModal({
           : 'East Sohag remains the most prestigious and liquid residential district in Sohag.';
       } else {
         reply = isAr
-          ? `شكراً لاستفسارك! بناءً على مؤشرات سوق عقارات سوهاج الحالية: يمكن لفريق ون لاين تزويدك بقائمة مخصصة ومطابقة لطلبك تماماً مع فحص قانوني مجاني. يمكنك أيضاً الضغط بالأسفل للتواصل المباشر مع استشاري مبيعات ون لاين.`
+          ? `شكراً لاستفسارك! بناءً على مؤشرات سوق عقارات سوهاج الحالية: يمكن لفريق 1Line تزويدك بقائمة مخصصة ومطابقة لطلبك تماماً مع فحص قانوني مجاني. يمكنك أيضاً الضغط بالأسفل للتواصل المباشر مع استشاري مبيعات 1Line.`
           : 'Thank you! Our advisory team is ready to provide tailored units and legal verification.';
       }
 
@@ -106,8 +106,8 @@ export default function AIPropertyAdvisorModal({
   const handleTransferToWhatsApp = () => {
     const lastMsg = messages[messages.length - 1]?.text || 'استشارة عقارية';
     const msg = isAr 
-      ? `مرحباً ون لاين، كنت أتحدث مع المستشار الذكي في الموقع بخصوص:\n"${lastMsg.slice(0, 120)}..."\nوأرغب في استكمال الاستشارة مع مستشار عقاري متخصص.`
-      : 'Hello One Line, I would like to speak with a human property consultant regarding my inquiry.';
+      ? `مرحباً 1Line، كنت أتحدث مع المستشار الذكي في الموقع بخصوص:\n"${lastMsg.slice(0, 120)}..."\nوأرغب في استكمال الاستشارة مع مستشار عقاري متخصص.`
+      : 'Hello 1Line, I would like to speak with a human property consultant regarding my inquiry.';
     window.open(`https://wa.me/201012345678?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
@@ -195,7 +195,7 @@ export default function AIPropertyAdvisorModal({
           <div className="ai-escalate-strip">
             <button type="button" className="btn-escalate-whatsapp" onClick={handleTransferToWhatsApp}>
               <MessageSquare size={14} />
-              <span>{isAr ? 'استكمال الاستشارة مع خبير ون لاين عبر الواتساب' : 'Chat with Human Consultant on WhatsApp'}</span>
+              <span>{isAr ? 'استكمال الاستشارة مع خبير 1Line عبر الواتساب' : 'Chat with Human Consultant on WhatsApp'}</span>
             </button>
           </div>
         </div>

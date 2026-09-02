@@ -36,8 +36,8 @@ export default function ProjectsPage({
   const handleInquireProject = (project) => {
     const title = isAr ? project.title_ar : project.title_en;
     const msg = isAr 
-      ? `مرحباً ون لاين، أريد حجز موعد معاينة ميدانية ومعرفة الوحدات المتاحة في مشروع: ${title}`
-      : `Hello One Line, I would like to book a viewing tour and request unit availability for: ${title}`;
+      ? `مرحباً 1Line، أريد حجز موعد معاينة ميدانية ومعرفة الوحدات المتاحة في مشروع: ${title}`
+      : `Hello 1Line, I would like to book a viewing tour and request unit availability for: ${title}`;
     window.open(`https://wa.me/201012345678?text=${encodeURIComponent(msg)}`, '_blank');
   };
 

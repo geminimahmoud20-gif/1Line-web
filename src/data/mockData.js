@@ -176,16 +176,16 @@ export const INITIAL_DEMANDS = [
 
 export const FAQS = [
   {
-    q_ar: 'كيف تضمن شركة ون لاين صحة وسلامة الأوراق القانونية للعقارات؟',
-    q_en: 'How does One Line ensure legal verification of property documents?',
+    q_ar: 'كيف تضمن شركة 1Line صحة وسلامة الأوراق القانونية للعقارات؟',
+    q_en: 'How does 1Line ensure legal verification of property documents?',
     a_ar: 'لدينا فريق قانوني واستشاري متخصص يقوم بفحص تسلسل الملكية وتراخيص البناء وشهادات السجل العيني قبل عرض أي عقار على المنصة.',
     a_en: 'Our dedicated legal team conducts thorough title deeds verification, building permits check, and municipality validation before listing any property.'
   },
   {
     q_ar: 'هل يمكنني الشراء بأنظمة تقسيط مرنة؟',
     q_en: 'Can I purchase properties with flexible installment plans?',
-    a_ar: 'نعم، نوفر برنامج One Line Now للتمويل العقاري بأقساط تصل إلى 7 سنوات ومقدمات تبدأ من 15% مع خطط سداد مريحة.',
-    a_en: 'Yes, our One Line Now financing program provides installment plans up to 7 years with downpayments starting from 15%.'
+    a_ar: 'نعم، نوفر برنامج 1Line Now للتمويل العقاري بأقساط تصل إلى 7 سنوات ومقدمات تبدأ من 15% مع خطط سداد مريحة.',
+    a_en: 'Yes, our 1Line Now financing program provides installment plans up to 7 years with downpayments starting from 15%.'
   },
   {
     q_ar: 'كيف أستفيد كمسوق أو وسيط عقاري من المنصة؟',
@@ -201,8 +201,8 @@ export const TESTIMONIALS = [
     name_en: 'Eng. Hossam El-Din',
     role_ar: 'مستثمر عقاري - سوهاج الجديدة',
     role_en: 'Real Estate Investor - New Sohag',
-    text_ar: 'تجربة استثنائية مع ون لاين في شراء مقر تجاري بسوهاج الجديدة. الشفافية التامة والدقة في مواعيد التسليم هي سر تميزهم.',
-    text_en: 'Exceptional experience with One Line purchasing commercial real estate in New Sohag. True transparency and professionalism.',
+    text_ar: 'تجربة استثنائية مع 1Line في شراء مقر تجاري بسوهاج الجديدة. الشفافية التامة والدقة في مواعيد التسليم هي سر تميزهم.',
+    text_en: 'Exceptional experience with 1Line purchasing commercial real estate in New Sohag. True transparency and professionalism.',
     rating: 5
   },
   {
@@ -219,8 +219,8 @@ export const TESTIMONIALS = [
     name_en: 'Dr. Tarek El-Kady',
     role_ar: 'استشاري جراحة - وسط البلد',
     role_en: 'Consultant Surgeon - City Center',
-    text_ar: 'حصلت على عيادة طبية بمواصفات ممتازة وموقع استراتيجي بفضل المعالج الذكي للبحث في ون لاين.',
-    text_en: 'Found the perfect clinic space with prime accessibility thanks to One Line smart matching wizard.',
+    text_ar: 'حصلت على عيادة طبية بمواصفات ممتازة وموقع استراتيجي بفضل المعالج الذكي للبحث في 1Line.',
+    text_en: 'Found the perfect clinic space with prime accessibility thanks to 1Line smart matching wizard.',
     rating: 5
   }
 ];

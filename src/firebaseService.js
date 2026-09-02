@@ -170,6 +170,80 @@ export const saveNotification = async (text) => {
   }
 };
 
+// ===================== DEMANDS =====================
+
+/**
+ * Save a new demand to Firestore (or return for local fallback).
+ */
+export const saveDemand = async (demand) => {
+  if (isFirebaseConfigured() && db) {
+    try {
+      const docRef = await addDoc(collection(db, 'demands'), {
+        ...demand,
+        createdAt: serverTimestamp()
+      });
+      return { ...demand, id: docRef.id };
+    } catch (error) {
+      console.error('Firebase saveDemand error:', error);
+      return demand;
+    }
+  }
+  return demand;
+};
+
+/**
+ * Load all demands from Firestore.
+ */
+export const loadDemands = async () => {
+  if (isFirebaseConfigured() && db) {
+    try {
+      const q = query(collection(db, 'demands'), orderBy('createdAt', 'desc'));
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (error) {
+      console.error('Firebase loadDemands error:', error);
+      return null;
+    }
+  }
+  return null;
+};
+
+/**
+ * Update demand status or fields in Firestore.
+ */
+export const updateDemandStatus = async (demandId, updates) => {
+  if (isFirebaseConfigured() && db) {
+    try {
+      const demandRef = doc(db, 'demands', demandId);
+      await updateDoc(demandRef, {
+        ...updates,
+        updatedAt: serverTimestamp()
+      });
+      return true;
+    } catch (error) {
+      console.error('Firebase updateDemandStatus error:', error);
+      return false;
+    }
+  }
+  return false;
+};
+
+/**
+ * Delete a demand from Firestore.
+ */
+export const deleteDemandDoc = async (demandId) => {
+  if (isFirebaseConfigured() && db) {
+    try {
+      await deleteDoc(doc(db, 'demands', demandId));
+      return true;
+    } catch (error) {
+      console.error('Firebase deleteDemandDoc error:', error);
+      return false;
+    }
+  }
+  return false;
+};
+
 // ===================== UTILITY =====================
 
 /**

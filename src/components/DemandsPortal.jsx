@@ -12,7 +12,7 @@ import {
 export const DemandsPortal = ({
   lang,
   t,
-  demands,
+  demands = [],
   ownerSearch,
   setOwnerSearch,
   isScanningMap,
@@ -24,18 +24,33 @@ export const DemandsPortal = ({
   navigateTo,
   setSellerAnswers,
   triggerToast,
-  handleAddNewLead
+  handleAddNewLead,
+  onOpenAddDemand
 }) => {
+  const publishedDemands = demands.filter(d => (d.status || 'published') === 'published');
+
   return (
     <div>
       <div className="investment-hero" style={{ background: 'linear-gradient(135deg, var(--primary) 0%, #0d1b3e 100%)', color: 'white', padding: '40px 20px', borderRadius: 'var(--radius-lg)', marginBottom: '30px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
         <Zap size={40} style={{ color: 'var(--accent-gold)', marginBottom: '16px' }} />
         <h2>{lang === 'ar' ? 'طلبات الشراء النشطة بسوهاج' : 'Active Market Demands in Sohag'}</h2>
-        <p style={{ marginTop: '10px', fontSize: '0.95rem', opacity: 0.9 }}>
+        <p style={{ marginTop: '10px', fontSize: '0.95rem', opacity: 0.9, maxWidth: '640px', margin: '10px auto 20px' }}>
           {lang === 'ar'
             ? 'قاعدة بيانات حية بمتطلبات المشترين والمستثمرين الفعليين لمطابقتها مع عقارك فوراً.'
             : 'A live directory of serious buyers looking for immediate property acquisitions.'}
         </p>
+
+        {onOpenAddDemand && (
+          <button 
+            type="button" 
+            className="btn btn-primary" 
+            onClick={onOpenAddDemand}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', fontWeight: 'bold', fontSize: '0.95rem' }}
+          >
+            <Sparkles size={16} />
+            <span>{lang === 'ar' ? 'أضف طلبك العقاري الآن (مجاناً)' : 'Post Your Buyer Request Now'}</span>
+          </button>
+        )}
       </div>
 
       {/* Owner Matching Search Widget */}
@@ -151,7 +166,7 @@ export const DemandsPortal = ({
 
       {/* Demands List Grid */}
       <div className="demands-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
-        {demands.map((dem) => {
+        {publishedDemands.map((dem) => {
           const urgencyColor = dem.urgency === 'high' ? 'var(--rose)' : dem.urgency === 'medium' ? 'var(--accent-gold)' : 'var(--cyan)';
           return (
             <div key={dem.id} className="demand-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderLeft: `4px solid ${urgencyColor}` }}>

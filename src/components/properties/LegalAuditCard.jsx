@@ -122,13 +122,13 @@ export default function LegalAuditCard({ property, lang = 'ar' }) {
               <div className="cert-header">
                 <ShieldCheck size={48} className="text-success" />
                 <h2>{isAr ? 'شهادة ضمان الفحص القانوني المعتمدة' : 'Official Legal Verification Certificate'}</h2>
-                <span className="cert-sub">{isAr ? 'صادرة من الإدارة القانونية لمنصة ون لاين العقارية' : 'Issued by One Line Real Estate Legal Board'}</span>
+                <span className="cert-sub">{isAr ? 'صادرة من الإدارة القانونية لمنصة 1Line العقارية' : 'Issued by 1Line Real Estate Legal Board'}</span>
               </div>
 
               <div className="cert-body">
                 <p>
                   {isAr 
-                    ? `تشهد منصة ون لاين العقارية ومستشاروها القانونيون بسوهاج أن العقار كود (${property.id.toUpperCase()}) قد تم فحصه ميدانياً ومراجعة كافة مستندات ملكيته وتراخيصه وسجلاته العقارية وخلوه التام من أية نزاعات قضائية أو مخالفات بنائية.`
+                    ? `تشهد منصة 1Line العقارية ومستشاروها القانونيون بسوهاج أن العقار كود (${property.id.toUpperCase()}) قد تم فحصه ميدانياً ومراجعة كافة مستندات ملكيته وتراخيصه وسجلاته العقارية وخلوه التام من أية نزاعات قضائية أو مخالفات بنائية.`
                     : `This certifies that property code (${property.id.toUpperCase()}) has undergone full legal due diligence, title deed clearance, building permit validation, and is guaranteed 100% compliant.`}
                 </p>
 

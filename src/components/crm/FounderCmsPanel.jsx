@@ -59,6 +59,14 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
     setFormData({ ...formData, stats: updatedStats });
   };
 
+  // Helper for updating Hero stats (top of homepage)
+  const handleHeroStatChange = (idx, field, value) => {
+    const updatedHeroStats = [...(formData.heroStats || DEFAULT_FOUNDER_CMS.heroStats)];
+    if (!updatedHeroStats[idx]) updatedHeroStats[idx] = {};
+    updatedHeroStats[idx][field] = value;
+    setFormData({ ...formData, heroStats: updatedHeroStats });
+  };
+
   // Helper for updating nested pillars
   const handlePillarChange = (idx, field, value) => {
     const updatedPillars = [...(formData.pillars || [])];
@@ -274,48 +282,99 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
           </div>
         )}
 
-        {/* SUBTAB 3: 4 TOP STATS */}
+        {/* SUBTAB 3: 4 TOP STATS & HERO STATS */}
         {activeSubTab === 'stats' && (
-          <div>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '16px' }}>
-              {isAr ? 'تعديل المؤشرات الرقمية الأربعة التي تظهر في أسفل قسم المؤسس لتعزيز ثقة المستثمرين:' : 'Edit the 4 key statistical achievement metrics:'}
-            </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+            {/* 1. HERO STATS CARDS (TOP OF HOMEPAGE) */}
+            <div style={{ background: 'rgba(217, 119, 6, 0.05)', border: '1px solid rgba(217, 119, 6, 0.25)', borderRadius: 'var(--radius-lg)', padding: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <Sparkles size={18} style={{ color: 'var(--accent-gold)' }} />
+                <h4 style={{ margin: 0, color: '#ffffff', fontSize: '1rem' }}>
+                  {isAr ? 'أرقام شريط الواجهة الرئيسية (Hero Stats Strip - أعلى الموقع)' : 'Hero Stats Strip (Top of Homepage)'}
+                </h4>
+              </div>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '0 0 16px 0' }}>
+                {isAr 
+                  ? 'هذه هي الأرقام الأربعة الظاهرة مباشرة أسفل شريط البحث الرئيسي في صدر الصفحة الرئيسية (قابلة للتعديل بالكامل):' 
+                  : 'These are the 4 cards displayed directly below the main search bar on the homepage:'}
+              </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
-              {(formData.stats || []).map((st, idx) => (
-                <div key={idx} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px', color: 'var(--accent-gold)', fontWeight: 'bold' }}>
-                    <span>المؤشر #{idx + 1}</span>
-                  </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+                {(formData.heroStats || DEFAULT_FOUNDER_CMS.heroStats).map((hs, idx) => (
+                  <div key={idx} style={{ background: 'rgba(0, 0, 0, 0.3)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: 'var(--radius-md)', padding: '14px' }}>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--accent-gold)', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
+                      البطاقة #{idx + 1}
+                    </span>
 
-                  <div className="form-group-item" style={{ marginBottom: '10px' }}>
-                    <label>{isAr ? 'الرقم / النسبة:' : 'Number / Metric:'}</label>
-                    <input
-                      type="text"
-                      value={st.num_ar || ''}
-                      onChange={(e) => handleStatChange(idx, 'num_ar', e.target.value)}
-                    />
-                  </div>
+                    <div className="form-group-item" style={{ marginBottom: '8px' }}>
+                      <label style={{ fontSize: '0.75rem' }}>{isAr ? 'الرقم / النسبة الظاهرة:' : 'Value:'}</label>
+                      <input
+                        type="text"
+                        value={hs.num_ar || ''}
+                        onChange={(e) => handleHeroStatChange(idx, 'num_ar', e.target.value)}
+                        placeholder="مثال: +150"
+                      />
+                    </div>
 
-                  <div className="form-group-item" style={{ marginBottom: '10px' }}>
-                    <label>{isAr ? 'العنوان الرئيسي:' : 'Label (Arabic):'}</label>
-                    <input
-                      type="text"
-                      value={st.label_ar || ''}
-                      onChange={(e) => handleStatChange(idx, 'label_ar', e.target.value)}
-                    />
+                    <div className="form-group-item">
+                      <label style={{ fontSize: '0.75rem' }}>{isAr ? 'التسمية والوصف:' : 'Label:'}</label>
+                      <input
+                        type="text"
+                        value={hs.label_ar || ''}
+                        onChange={(e) => handleHeroStatChange(idx, 'label_ar', e.target.value)}
+                        placeholder="مثال: عقار مفحوص ومعتمد"
+                      />
+                    </div>
                   </div>
+                ))}
+              </div>
+            </div>
 
-                  <div className="form-group-item">
-                    <label>{isAr ? 'النص التوضيحي:' : 'Subtitle (Arabic):'}</label>
-                    <input
-                      type="text"
-                      value={st.sub_ar || ''}
-                      onChange={(e) => handleStatChange(idx, 'sub_ar', e.target.value)}
-                    />
+            {/* 2. FOUNDER STATS */}
+            <div>
+              <h4 style={{ margin: '0 0 6px 0', color: '#ffffff', fontSize: '0.95rem' }}>
+                {isAr ? 'المؤشرات الرقمية لقسم المؤسس د. محمود الباز' : 'Founder Section Stats'}
+              </h4>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '16px' }}>
+                {isAr ? 'تعديل المؤشرات الرقمية الأربعة التي تظهر في أسفل قسم المؤسس لتعزيز ثقة المستثمرين:' : 'Edit the 4 key statistical achievement metrics:'}
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
+                {(formData.stats || []).map((st, idx) => (
+                  <div key={idx} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-md)', padding: '14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: 'var(--accent-gold)', fontWeight: 'bold' }}>
+                      <span>المؤشر #{idx + 1}</span>
+                    </div>
+
+                    <div className="form-group-item" style={{ marginBottom: '8px' }}>
+                      <label style={{ fontSize: '0.75rem' }}>{isAr ? 'الرقم / النسبة:' : 'Number / Metric:'}</label>
+                      <input
+                        type="text"
+                        value={st.num_ar || ''}
+                        onChange={(e) => handleStatChange(idx, 'num_ar', e.target.value)}
+                      />
+                    </div>
+
+                    <div className="form-group-item" style={{ marginBottom: '8px' }}>
+                      <label style={{ fontSize: '0.75rem' }}>{isAr ? 'العنوان الرئيسي:' : 'Label (Arabic):'}</label>
+                      <input
+                        type="text"
+                        value={st.label_ar || ''}
+                        onChange={(e) => handleStatChange(idx, 'label_ar', e.target.value)}
+                      />
+                    </div>
+
+                    <div className="form-group-item">
+                      <label style={{ fontSize: '0.75rem' }}>{isAr ? 'النص التوضيحي:' : 'Subtitle (Arabic):'}</label>
+                      <input
+                        type="text"
+                        value={st.sub_ar || ''}
+                        onChange={(e) => handleStatChange(idx, 'sub_ar', e.target.value)}
+                      />
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         )}

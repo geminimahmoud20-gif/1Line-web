@@ -43,7 +43,7 @@ export default function SocialStoryCardModal({ isOpen, onClose, property, lang =
 
             {/* Top Brand Header */}
             <div className="story-top-brand">
-              <span className="story-brand-pill">ONE LINE REAL ESTATE</span>
+              <span className="story-brand-pill">1LINE REAL ESTATE</span>
               <span className="story-city-tag">{isAr ? 'سوهاج' : 'SOHAG'}</span>
             </div>
 

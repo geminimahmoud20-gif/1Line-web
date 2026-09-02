@@ -86,7 +86,7 @@ export default function RetargetingHub({
 
     if (activeSegment === 'vip_cash') {
       return isAr
-        ? `💎 *فرصة حصرية لكبار العملاء — شركة ون لاين العقارية*\n\n` +
+        ? `💎 *فرصة حصرية لكبار العملاء — شركة 1Line العقارية*\n\n` +
           `أهلاً أستاذ *${name}*،\n` +
           `تواصلت معك تحديداً لأننا تعاقدنا للتو على *وحدة نادرة ومسجلة شهر عقاري* تلائم تطلعاتكم السكنية والاستثمارية:\n\n` +
           `🏢 *${propTitle}*\n` +
@@ -95,7 +95,7 @@ export default function RetargetingHub({
           `💰 *السعر الإجمالي:* ${propPrice}\n\n` +
           `📸 يمكنك معاينة الوحدة والاطلاع على الموقف القانوني اليوم قبل طرحها للإعلان العام.\n` +
           `📲 هل نحدد موعداً للمعاينة الخاصة غداً؟`
-        : `💎 *Exclusive VIP Opportunity — One Line Real Estate*\n\n` +
+        : `💎 *Exclusive VIP Opportunity — 1Line Real Estate*\n\n` +
           `Dear Mr/Ms *${name}*,\n` +
           `We have secured an exclusive prime property matching your profile:\n\n` +
           `🏢 *${propTitle}*\n` +
@@ -115,7 +115,7 @@ export default function RetargetingHub({
           `💵 *القسط الشهري:* ${propInstallment} على أطول فترة سداد\n` +
           `📑 *خالصة التراخيص والمرافق*\n\n` +
           `📲 للحجز والاستفسار عن جدول الأقساط، تواصل معنا فوراً.`
-        : `🏡 *Flexible Payment Plan Available — One Line Real Estate*\n\n` +
+        : `🏡 *Flexible Payment Plan Available — 1Line Real Estate*\n\n` +
           `Hello ${name},\n` +
           `A new phase is now open with flexible installments for *${propTitle}* in ${propLocation}.\n` +
           `Down Payment: ${propDownPayment} | Monthly: ${propInstallment}.\n` +
@@ -124,7 +124,7 @@ export default function RetargetingHub({
 
     if (activeSegment === 'investors') {
       return isAr
-        ? `📈 *دراسة جدوى استثمارية بعائد إيجاري مرتفع — ONE LINE INVEST*\n\n` +
+        ? `📈 *دراسة جدوى استثمارية بعائد إيجاري مرتفع — 1LINE INVEST*\n\n` +
           `أهلاً أستاذ *${name}*،\n` +
           `فرصة استثمارية واعدة بسوهاج تحقق عائداً سنوياً يفوق 14% ونمواً رأسمالياً سريعاً:\n\n` +
           `🏢 *الأصل العقاري:* ${propTitle}\n` +
@@ -132,7 +132,7 @@ export default function RetargetingHub({
           `💵 *السعر الإجمالي:* ${propPrice} (مع تسهيلات سداد)\n` +
           `⚖️ *الموقف القانوني:* مفحوص ومعتمد 100% بدون أي نزاعات\n\n` +
           `📊 لطلب ملف التدفقات النقدية وجدول الأرباح المتوقعة، رد على هذه الرسالة وسنرسل لك التقرير فوراً.`
-        : `📈 *High-Yield Investment Opportunity — One Line Real Estate*\n\n` +
+        : `📈 *High-Yield Investment Opportunity — 1Line Real Estate*\n\n` +
           `Dear ${name},\n` +
           `An exceptional investment asset with 14%+ ROI is now available: *${propTitle}*.\n` +
           `Reply to receive the detailed financial prospectus.`;
@@ -155,11 +155,11 @@ export default function RetargetingHub({
 
     // Default: Dormant Lead Re-warming
     return isAr
-      ? `🌸 *تقرير عقارات سوهاج 2026 الحصري — شركة ون لاين*\n\n` +
+      ? `🌸 *تقرير عقارات سوهاج 2026 الحصري — شركة 1Line*\n\n` +
         `أهلاً بك أ. *${name}*، نتمنى أن تكون بأفضل حال 🌸\n\n` +
         `أصدرت إدارتنا الاستشارية *دليل أسعار وتوقعات العقارات بسوهاج لعام 2026* (شرق النيل، سوهاج الجديدة، والكوثر)، لمساعدتك في اتخاذ قرار الشراء الأنسب قبل الزيادات السعرية.\n\n` +
         `💬 إذا كنت ما زلت تبحث عن شقة أو عقار، أخبرنا بمواصفاتك وسنرشح لك أفضل 3 خيارات متاحة كاش وتقسيط فوراً!`
-      : `🌸 *Sohag Real Estate Market Outlook 2026 — One Line*\n\n` +
+      : `🌸 *Sohag Real Estate Market Outlook 2026 — 1Line*\n\n` +
         `Hello ${name},\n` +
         `We have released our updated 2026 property market report. If you are still seeking a property in Sohag, let us know your requirements!`;
   };

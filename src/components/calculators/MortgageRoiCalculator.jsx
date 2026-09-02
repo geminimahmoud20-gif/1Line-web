@@ -12,7 +12,8 @@ import {
   Building2,
   Landmark,
   Handshake,
-  Percent
+  Percent,
+  Globe
 } from 'lucide-react';
 import { trackEvent } from '../../utils/visitorTracker';
 
@@ -33,8 +34,11 @@ export default function MortgageRoiCalculator({
   const [monthlyRent, setMonthlyRent] = useState(18000);
   const annualMaintenance = 10000;
   const [annualAppreciation, setAnnualAppreciation] = useState(15); // Capital growth %
-
   const isAr = lang === 'ar';
+
+  const formatCurrency = (valInEgp) => {
+    return `${Math.round(valInEgp).toLocaleString()} ${isAr ? 'ج.م' : 'EGP'}`;
+  };
 
   // Egyptian Financing Programs Presets
   const FINANCING_PROGRAMS = [
@@ -92,21 +96,21 @@ export default function MortgageRoiCalculator({
 
   const handleCopyPlan = () => {
     const text = isAr 
-      ? `🏢 خطة التمويل والأقساط - One Line Real Estate\n` +
-        `• سعر الوحدة: ${price.toLocaleString()} ج.م\n` +
-        `• المقدم المطلوب (${downpaymentPercent}%): ${downPaymentAmount.toLocaleString()} ج.م\n` +
-        `• القسط الشهري: ${monthlyInstallment.toLocaleString()} ج.م\n` +
+      ? `🏢 خطة التمويل والأقساط - 1Line Real Estate (${currency})\n` +
+        `• سعر الوحدة: ${formatCurrency(price)}\n` +
+        `• المقدم المطلوب (${downpaymentPercent}%): ${formatCurrency(downPaymentAmount)}\n` +
+        `• القسط الشهري: ${formatCurrency(monthlyInstallment)}\n` +
         `• مدة التقسيط: ${years} سنوات (${years * 12} شهر)\n` +
         `• معدل الفائدة/المرابحة: ${interestRate}%\n` +
-        `• إجمالي المبلغ المسترد: ${totalPaid.toLocaleString()} ج.م\n` +
+        `• إجمالي المبلغ المسترد: ${formatCurrency(totalPaid)}\n` +
         `📞 للاستفسار وحجز الوحدة: +20 101 234 5678`
-      : `🏢 Mortgage & Payment Plan - One Line\n` +
-        `• Price: ${price.toLocaleString()} EGP\n` +
-        `• Downpayment (${downpaymentPercent}%): ${downPaymentAmount.toLocaleString()} EGP\n` +
-        `• Monthly Installment: ${monthlyInstallment.toLocaleString()} EGP\n` +
+      : `🏢 Mortgage & Payment Plan - 1Line Real Estate (${currency})\n` +
+        `• Price: ${formatCurrency(price)}\n` +
+        `• Downpayment (${downpaymentPercent}%): ${formatCurrency(downPaymentAmount)}\n` +
+        `• Monthly Installment: ${formatCurrency(monthlyInstallment)}\n` +
         `• Duration: ${years} Years\n` +
         `• Rate: ${interestRate}%\n` +
-        `• Total Repayment: ${totalPaid.toLocaleString()} EGP`;
+        `• Total Repayment: ${formatCurrency(totalPaid)}`;
     navigator.clipboard.writeText(text);
     setCopied(true);
     trackEvent('calculator_used', { price, monthlyInstallment, type: activeTab });
@@ -522,8 +526,13 @@ export default function MortgageRoiCalculator({
               <div className="result-highlight-box">
                 <span className="result-label">{isAr ? 'القسط الشهري التقديري' : 'Estimated Monthly Payment'}</span>
                 <h2 className="result-primary-number">
-                  {monthlyInstallment.toLocaleString()} <span className="curr">{isAr ? 'ج.م / شهر' : 'EGP / mo'}</span>
+                  {formatCurrency(monthlyInstallment)} <span className="curr">{isAr ? '/ شهر' : '/ mo'}</span>
                 </h2>
+                {currency !== 'EGP' && (
+                  <div style={{ fontSize: '0.74rem', color: '#94a3b8', marginTop: '4px' }}>
+                    ({monthlyInstallment.toLocaleString()} ج.م / شهر)
+                  </div>
+                )}
                 <div className="result-center-gold-line" />
               </div>
 
@@ -531,15 +540,15 @@ export default function MortgageRoiCalculator({
               <div className="calc-visual-allocation-wrap">
                 <div className="allocation-bar-header">
                   <span>{isAr ? 'توزيع سداد سعر العقار الأصلي' : 'Property Value Distribution'}</span>
-                  <strong>{price.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</strong>
+                  <strong>{formatCurrency(price)}</strong>
                 </div>
                 <div className="multi-segment-bar">
                   <div className="seg-downpayment" style={{ width: `${downpaymentShare}%` }} title={isAr ? `المقدم: ${downpaymentShare}%` : `Downpayment: ${downpaymentShare}%`} />
                   <div className="seg-principal" style={{ width: `${principalShare}%` }} title={isAr ? `التمويل المتبقي: ${principalShare}%` : `Loan: ${principalShare}%`} />
                 </div>
                 <div className="allocation-legend-row">
-                  <span className="legend-item"><span className="dot dot-gold" /> {isAr ? `المقدم (${downpaymentShare}%): ${downPaymentAmount.toLocaleString()} ج.م` : `Downpayment (${downpaymentShare}%)`}</span>
-                  <span className="legend-item"><span className="dot dot-blue" /> {isAr ? `الممول (${principalShare}%): ${loanAmount.toLocaleString()} ج.م` : `Financed (${principalShare}%)`}</span>
+                  <span className="legend-item"><span className="dot dot-gold" /> {isAr ? `المقدم (${downpaymentShare}%): ${formatCurrency(downPaymentAmount)}` : `Downpayment (${downpaymentShare}%)`}</span>
+                  <span className="legend-item"><span className="dot dot-blue" /> {isAr ? `الممول (${principalShare}%): ${formatCurrency(loanAmount)}` : `Financed (${principalShare}%)`}</span>
                 </div>
               </div>
 
@@ -547,29 +556,29 @@ export default function MortgageRoiCalculator({
               <div className="calc-breakdown-list">
                 <div className="calc-breakdown-glass-row">
                   <span className="glass-row-lbl">{isAr ? 'الدفعة الأولى (المقدم)' : 'Required Downpayment'}</span>
-                  <strong className="glass-row-val text-gold">{downPaymentAmount.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</strong>
+                  <strong className="glass-row-val text-gold">{formatCurrency(downPaymentAmount)}</strong>
                 </div>
 
                 <div className="calc-breakdown-glass-row">
                   <span className="glass-row-lbl">{isAr ? 'مبلغ التمويل المتبقي' : 'Financed Balance'}</span>
-                  <strong className="glass-row-val text-blue-light">{loanAmount.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</strong>
+                  <strong className="glass-row-val text-blue-light">{formatCurrency(loanAmount)}</strong>
                 </div>
 
                 <div className="calc-breakdown-glass-row">
                   <span className="glass-row-lbl">{isAr ? 'إجمالي الفائدة / المرابحة على المدة' : 'Total Est. Margin'}</span>
-                  <strong className="glass-row-val">{totalInterest.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</strong>
+                  <strong className="glass-row-val">{formatCurrency(totalInterest)}</strong>
                 </div>
 
                 <div className="calc-breakdown-glass-row total-highlight-row">
                   <span className="glass-row-lbl">{isAr ? 'إجمالي المدفوعات الكلية' : 'Total Repayment'}</span>
-                  <strong className="glass-row-val text-success">{totalPaid.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</strong>
+                  <strong className="glass-row-val text-success">{formatCurrency(totalPaid)}</strong>
                 </div>
               </div>
 
               {/* Action Buttons */}
               <div className="calc-card-footer" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <a
-                  href={`https://wa.me/201012345678?text=${encodeURIComponent(`مرحباً ون لاين، أريد الاستفسار عن تمويل عقار بقيمة ${price.toLocaleString()} ج.م وقسط شهري ${monthlyInstallment.toLocaleString()} ج.م بنظام ${interestRate}% لمدة ${years} سنوات.`)}`}
+                  href={`https://wa.me/201012345678?text=${encodeURIComponent(`مرحباً 1Line، أريد الاستفسار عن تمويل عقار بقيمة ${formatCurrency(price)} وقسط شهري ${formatCurrency(monthlyInstallment)} بنظام ${interestRate}% لمدة ${years} سنوات.`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-primary btn-full calc-cta-btn"
@@ -602,25 +611,80 @@ export default function MortgageRoiCalculator({
               <div className="calc-breakdown-list">
                 <div className="calc-breakdown-glass-row">
                   <span className="glass-row-lbl">{isAr ? 'إجمالي الدخل الإيجاري السنوي' : 'Gross Annual Rent'}</span>
-                  <strong className="glass-row-val text-gold">{annualGrossRent.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</strong>
+                  <strong className="glass-row-val text-gold">{formatCurrency(annualGrossRent)}</strong>
                 </div>
 
                 <div className="calc-breakdown-glass-row">
                   <span className="glass-row-lbl">{isAr ? 'القيمة الرأسمالية المتوقعة (5 سنوات)' : 'Est. Property Value (5 Yrs)'}</span>
-                  <strong className="glass-row-val text-blue-light">{estimatedValueAfter5Years.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</strong>
+                  <strong className="glass-row-val text-blue-light">{formatCurrency(estimatedValueAfter5Years)}</strong>
                 </div>
 
                 <div className="calc-breakdown-glass-row total-highlight-row">
                   <span className="glass-row-lbl">{isAr ? 'إجمالي الأرباح والعوائد (5 سنوات)' : 'Total 5-Yr Returns'}</span>
                   <strong className="glass-row-val text-success">
-                    {(estimatedValueAfter5Years - price + (annualNetIncome * 5)).toLocaleString()} {isAr ? 'ج.م' : 'EGP'}
+                    {formatCurrency(estimatedValueAfter5Years - price + (annualNetIncome * 5))}
                   </strong>
                 </div>
               </div>
 
-              <div className="calc-card-footer" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {/* 5-Year Capital Growth Simulation Timeline */}
+              <div className="five-year-growth-card" style={{
+                background: 'linear-gradient(135deg, rgba(8, 18, 38, 0.95) 0%, rgba(13, 72, 161, 0.9) 100%)',
+                color: '#ffffff',
+                padding: '14px',
+                borderRadius: 'var(--radius-md)',
+                marginTop: '12px',
+                border: '1px solid rgba(255, 202, 40, 0.3)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: '800' }}>
+                    <Sparkles size={14} style={{ color: '#ffca28' }} />
+                    <span>{isAr ? 'نمو رأس المال التراكمي (5 سنوات)' : '5-Year Wealth Forecast'}</span>
+                  </span>
+                  <span style={{
+                    background: 'rgba(255, 202, 40, 0.2)',
+                    color: '#ffca28',
+                    border: '1px solid rgba(255, 202, 40, 0.4)',
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    fontSize: '0.72rem',
+                    fontWeight: '900'
+                  }}>
+                    +{Math.round(((estimatedValueAfter5Years - price) / price) * 100)}% {isAr ? 'عائد رأسمالي' : 'Gain'}
+                  </span>
+                </div>
+
+                {/* Micro Progression Timeline */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '6px', textAlign: 'center', margin: '10px 0' }}>
+                  {[1, 2, 3, 4, 5].map((yr) => {
+                    const yrVal = Math.round(price * Math.pow(1 + (annualAppreciation / 100), yr));
+                    return (
+                      <div key={yr} style={{ background: 'rgba(255, 255, 255, 0.08)', borderRadius: '6px', padding: '6px 2px' }}>
+                        <div style={{ fontSize: '0.66rem', color: '#94a3b8' }}>{isAr ? `سنة ${yr}` : `Yr ${yr}`}</div>
+                        <div style={{ fontSize: '0.72rem', fontWeight: '800', color: '#ffca28', marginTop: '2px' }}>
+                          {formatCurrency(yrVal)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingTop: '8px',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.15)',
+                  fontSize: '0.76rem'
+                }}>
+                  <span style={{ color: '#cbd5e1' }}>{isAr ? 'صافي الربح التراكمي المتوقع:' : 'Net Capital Profit:'}</span>
+                  <strong style={{ color: '#10b981', fontWeight: '900' }}>+{formatCurrency(estimatedValueAfter5Years - price)}</strong>
+                </div>
+              </div>
+
+              <div className="calc-card-footer" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px' }}>
                 <a
-                  href={`https://wa.me/201012345678?text=${encodeURIComponent(`مرحباً ون لاين، أريد دراسة جدوى استثمارية لعقار بقيمة ${price.toLocaleString()} ج.م بعائد إيجاري ${netYield}% ونمو سنوي ${annualAppreciation}%`)}`}
+                  href={`https://wa.me/201012345678?text=${encodeURIComponent(`مرحباً 1Line، أريد دراسة جدوى استثمارية لعقار بقيمة ${formatCurrency(price)} بعائد إيجاري ${netYield}% ونمو سنوي ${annualAppreciation}%`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-primary btn-full calc-cta-btn"

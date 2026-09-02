@@ -115,7 +115,7 @@ export default function ContractStudioModal({
   };
 
   const whatsappText = encodeURIComponent(
-    `🏢 شركة ون لاين للاستثمار والتطوير العقاري - سوهاج\n` +
+    `🏢 شركة 1Line للاستثمار والتطوير العقاري - سوهاج\n` +
     `مرحباً أستاذ / ${formData.buyerName}\n` +
     `تم إصدار استمارة وعقد حجز وحدتكم العقارية وسند الاستلام المبدئي:\n` +
     `• الوحدة: ${formData.propertyTitle}\n` +

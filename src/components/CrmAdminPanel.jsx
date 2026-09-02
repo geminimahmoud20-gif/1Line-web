@@ -213,7 +213,7 @@ export const CrmAdminPanel = ({
   // Full Leads Database JSON Backup
   const handleExportLeadsJson = () => {
     const backupData = {
-      platform: 'One Line Real Estate CRM Leads',
+      platform: '1Line Real Estate CRM Leads',
       timestamp: new Date().toISOString(),
       leadsCount: leads.length,
       leads: leads
@@ -330,8 +330,8 @@ export const CrmAdminPanel = ({
     } else {
       const cleanPhone = (lead.whatsapp || lead.phone || '').replace(/[^0-9]/g, '');
       const text = isAr 
-        ? `مرحباً أ. ${lead.name}، معك مستشار شركة ون لاين للحلول العقارية بسوهاج. نود متابعة طلبك العقاري.` 
-        : `Hello ${lead.name}, this is One Line Real Estate following up on your request.`;
+        ? `مرحباً أ. ${lead.name}، معك مستشار شركة 1Line للحلول العقارية بسوهاج. نود متابعة طلبك العقاري.` 
+        : `Hello ${lead.name}, this is 1Line Real Estate following up on your request.`;
       window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`, '_blank');
     }
   };
@@ -740,28 +740,28 @@ export const CrmAdminPanel = ({
 
           <div className="crm-stats-grid">
             <div className="crm-stat-card">
-              <div className="crm-stat-icon" style={{ background: 'var(--accent-gold-light)', color: 'var(--accent-gold)' }}><Bell size={20} /></div>
+              <div className="crm-stat-icon" style={{ background: 'linear-gradient(135deg, rgba(255, 202, 40, 0.25), rgba(217, 119, 6, 0.15))', color: '#ffca28', border: '1px solid rgba(255, 202, 40, 0.4)' }}><Bell size={20} /></div>
               <div className="crm-stat-info">
                 <span className="crm-stat-num">{crmAnalytics.todayCount}</span>
                 <span className="crm-stat-lbl">{isAr ? 'عملاء اليوم' : 'Leads Today'}</span>
               </div>
             </div>
             <div className="crm-stat-card">
-              <div className="crm-stat-icon" style={{ background: 'var(--cyan-bg)', color: 'var(--cyan)' }}><Building size={20} /></div>
+              <div className="crm-stat-icon" style={{ background: 'linear-gradient(135deg, rgba(13, 72, 161, 0.35), rgba(21, 101, 192, 0.2))', color: '#60a5fa', border: '1px solid rgba(96, 165, 250, 0.4)' }}><Building size={20} /></div>
               <div className="crm-stat-info">
                 <span className="crm-stat-num">{crmAnalytics.buyersCount}</span>
                 <span className="crm-stat-lbl">{isAr ? 'إجمالي المشترين' : 'Total Buyers'}</span>
               </div>
             </div>
             <div className="crm-stat-card">
-              <div className="crm-stat-icon" style={{ background: 'var(--amber-bg)', color: 'var(--amber)' }}><Users size={20} /></div>
+              <div className="crm-stat-icon" style={{ background: 'linear-gradient(135deg, rgba(255, 202, 40, 0.25), rgba(245, 158, 11, 0.15))', color: '#ffca28', border: '1px solid rgba(255, 202, 40, 0.4)' }}><Users size={20} /></div>
               <div className="crm-stat-info">
                 <span className="crm-stat-num">{crmAnalytics.sellersCount}</span>
                 <span className="crm-stat-lbl">{isAr ? 'إجمالي البائعين' : 'Total Sellers'}</span>
               </div>
             </div>
             <div className="crm-stat-card">
-              <div className="crm-stat-icon" style={{ background: 'var(--emerald-bg)', color: 'var(--emerald)' }}><Briefcase size={20} /></div>
+              <div className="crm-stat-icon" style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.15))', color: '#34d399', border: '1px solid rgba(52, 211, 153, 0.4)' }}><Briefcase size={20} /></div>
               <div className="crm-stat-info">
                 <span className="crm-stat-num">{crmAnalytics.conversionSuccess}</span>
                 <span className="crm-stat-lbl">{isAr ? 'معدل إغلاق الصفقات' : 'Conversion Rate'}</span>

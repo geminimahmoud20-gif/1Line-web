@@ -53,7 +53,8 @@ export default function PortalsPage({
   setScanningMessage,
   navigateTo,
   triggerToast,
-  handleAddNewLead
+  handleAddNewLead,
+  onOpenAddDemand
 }) {
   const isAr = lang === 'ar';
 
@@ -74,14 +75,14 @@ export default function PortalsPage({
         };
       case 'investor':
         return {
-          badge: isAr ? 'نادي ون لاين لكبار المستثمرين (VIP)' : 'One Line VIP Investors Club',
+          badge: isAr ? 'نادي 1Line لكبار المستثمرين (VIP)' : '1Line VIP Investors Club',
           title: isAr ? 'مركز الفرص الاستثمارية عالية العائد بسوهاج' : 'High-Yield Property Investment Center',
           subtitle: isAr ? 'محفظة حصرية من المشروعات التجارية والمقرات الإدارية بعوائد إيجارية تتجاوز 14% سنوياً.' : 'Exclusive commercial portfolios with projected rental yields exceeding 14% annually.'
         };
       case 'broker':
         return {
           badge: isAr ? 'شبكة الوسطاء والشركاء المعتمدين' : 'Certified Brokers & Partners Network',
-          title: isAr ? 'انضم لشبكة شركاء ون لاين العقارية' : 'Join One Line Broker Partner Network',
+          title: isAr ? 'انضم لشبكة شركاء 1Line العقارية' : 'Join 1Line Broker Partner Network',
           subtitle: isAr ? 'احصل على عمولات مجزية وتسهيلات حصرية وحوافز فورية على كل صفقة ناجحة.' : 'Access verified inventory, high commission rates, and instant closing bonuses.'
         };
       case 'demands':
@@ -110,7 +111,7 @@ export default function PortalsPage({
         };
       default:
         return {
-          badge: isAr ? 'خدمات ون لاين العقارية' : 'One Line Real Estate Services',
+          badge: isAr ? 'خدمات 1Line العقارية' : '1Line Real Estate Services',
           title: isAr ? 'البوابات العقارية المتخصصة' : 'Specialized Property Portals',
           subtitle: ''
         };
@@ -219,6 +220,8 @@ export default function PortalsPage({
               navigateTo={navigateTo}
               setSellerAnswers={setSellerAnswers}
               triggerToast={triggerToast}
+              handleAddNewLead={handleAddNewLead}
+              onOpenAddDemand={onOpenAddDemand}
             />
           )}
 

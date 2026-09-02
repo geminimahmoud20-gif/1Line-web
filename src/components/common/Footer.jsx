@@ -52,7 +52,7 @@ export default function Footer({ lang = 'ar' }) {
           <div className="footer-col brand-col">
             <div className="footer-logo">
               <LogoEmblem size={32} />
-              <span className="footer-brand-name">ONE LINE</span>
+              <span className="footer-brand-name">1Line</span>
             </div>
             <p className="footer-desc">
               {isAr 
@@ -80,10 +80,10 @@ export default function Footer({ lang = 'ar' }) {
           <div className="footer-col">
             <h4>{isAr ? 'الخدمات والمؤسسة' : 'Services & Company'}</h4>
             <ul className="footer-links">
-              <li><a href="/#about-us">{isAr ? 'عن ون لاين ورؤية المؤسس' : 'About & Founder'}</a></li>
+              <li><a href="/#about-us">{isAr ? 'عن 1Line ورؤية المؤسس' : 'About & Founder'}</a></li>
               <li><Link to="/investor">{isAr ? 'مركز المستثمرين (VIP)' : 'Investors Desk'}</Link></li>
               <li><Link to="/broker">{isAr ? 'شبكة الوسطاء والشركاء' : 'Brokers'}</Link></li>
-              <li><Link to="/crm">{isAr ? 'لوحة إدارة المبيعات (CRM)' : 'Admin CRM'}</Link></li>
+              <li><Link to="/financing">{isAr ? 'حاسبة التمويل والأقساط' : 'Mortgage & Financing'}</Link></li>
             </ul>
           </div>
 
@@ -107,7 +107,24 @@ export default function Footer({ lang = 'ar' }) {
 
         {/* Footer Bottom Bar */}
         <div className="footer-bottom">
-          <p>© {new Date().getFullYear()} ONE LINE Real Estate. {isAr ? 'جميع الحقوق محفوظة' : 'All rights reserved.'}</p>
+          <p>
+            © {new Date().getFullYear()} 1Line Real Estate. {isAr ? 'جميع الحقوق محفوظة' : 'All rights reserved.'}
+            <Link 
+              to="/crm" 
+              style={{ 
+                opacity: 0.08, 
+                color: 'inherit', 
+                textDecoration: 'none', 
+                marginInlineStart: '8px', 
+                fontSize: '0.65rem',
+                cursor: 'default' 
+              }} 
+              tabIndex="-1"
+              title=""
+            >
+              🔒
+            </Link>
+          </p>
           <button 
             type="button" 
             className="scroll-top-btn"

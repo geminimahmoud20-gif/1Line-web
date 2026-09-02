@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { TRANSLATIONS } from './translations';
 import { PROPERTIES_DATA } from './data/propertiesData';
@@ -10,7 +10,11 @@ import {
   isFirebaseActive, 
   saveNotification,
   updateLeadField,
-  deleteLead
+  deleteLead,
+  saveDemand,
+  loadDemands,
+  updateDemandStatus,
+  deleteDemandDoc
 } from './firebaseService';
 import { playNotificationChime } from './utils/notificationHub';
 import { sanitizeObject, normalizePhoneNumber } from './utils/securityShield';
@@ -25,21 +29,61 @@ import QuickViewModal from './components/common/QuickViewModal';
 import TrackLeadModal from './components/common/TrackLeadModal';
 import ShareModal from './components/common/ShareModal';
 import CallbackModal from './components/common/CallbackModal';
+import AddDemandModal from './components/common/AddDemandModal';
 import PropertyCompareDrawer from './components/properties/PropertyCompareDrawer';
 import LiveActivityToast from './components/common/LiveActivityToast';
 import QuickContactDrawer from './components/common/QuickContactDrawer';
 import BackToTopButton from './components/common/BackToTopButton';
 import AIPropertyAdvisorModal from './components/common/AIPropertyAdvisorModal';
 
-// Pages
+// Critical Landing Page (Direct Import for instant FCP)
 import HomePage from './pages/HomePage';
-import PropertiesPage from './pages/PropertiesPage';
-import PropertyDetailPage from './pages/PropertyDetailPage';
-import FinancingPage from './pages/FinancingPage';
-import ProjectsPage from './pages/ProjectsPage';
-import MarketIntelligencePage from './pages/MarketIntelligencePage';
-import PortalsPage from './pages/PortalsPage';
-import CrmPage from './pages/CrmPage';
+
+// Lazy Loaded Secondary & Heavy Admin Pages (Code Splitting)
+const PropertiesPage = lazy(() => import('./pages/PropertiesPage'));
+const PropertyDetailPage = lazy(() => import('./pages/PropertyDetailPage'));
+const FinancingPage = lazy(() => import('./pages/FinancingPage'));
+const ProjectsPage = lazy(() => import('./pages/ProjectsPage'));
+const MarketIntelligencePage = lazy(() => import('./pages/MarketIntelligencePage'));
+const PortalsPage = lazy(() => import('./pages/PortalsPage'));
+const CrmPage = lazy(() => import('./pages/CrmPage'));
+
+// Luxury Route Transition Fallback Spinner
+function RouteLoadingSpinner({ lang = 'ar' }) {
+  return (
+    <div style={{
+      minHeight: '60vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '16px',
+      padding: '40px'
+    }}>
+      <div style={{
+        width: '42px',
+        height: '42px',
+        borderRadius: '50%',
+        border: '3px solid rgba(217, 119, 6, 0.15)',
+        borderTopColor: 'var(--accent-gold)',
+        animation: 'routeSpin 0.8s linear infinite'
+      }} />
+      <span style={{
+        fontSize: '0.85rem',
+        color: '#94a3b8',
+        fontWeight: 'bold',
+        letterSpacing: '0.5px'
+      }}>
+        {lang === 'ar' ? 'جاري تحميل البيانات الذكية... 1Line Sohag' : 'Loading Platform Data...'}
+      </span>
+      <style>{`
+        @keyframes routeSpin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  );
+}
 
 import './App.css';
 
@@ -74,6 +118,18 @@ export default function App() {
     getOrCreateSession();
     trackEvent('page_view', { path: location.pathname });
   }, [location.pathname]);
+
+  // Secret Admin Portal Access Shortcut (Ctrl + Shift + A)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a' || e.code === 'KeyA')) {
+        e.preventDefault();
+        navigate('/crm');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigate]);
 
   // Toast System
   const [toasts, setToasts] = useState([]);
@@ -209,31 +265,15 @@ export default function App() {
     return saved ? JSON.parse(saved) : INITIAL_LEADS;
   });
 
-  const [demands, setDemands] = useState(INITIAL_DEMANDS);
-
-  // CRM Auth State
-  const [crmAuthenticated, setCrmAuthenticated] = useState(() => {
-    return sessionStorage.getItem('crm_auth') === 'true';
+  const [demands, setDemands] = useState(() => {
+    const saved = localStorage.getItem('oneline_demands');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { console.error(e); }
+    }
+    return INITIAL_DEMANDS.map(d => ({ ...d, status: d.status || 'published' }));
   });
 
-  const handleCrmLogout = () => {
-    setCrmAuthenticated(false);
-    sessionStorage.removeItem('crm_auth');
-    navigate('/');
-    triggerToast(lang === 'ar' ? 'تم تسجيل الخروج بنجاح' : 'Logged out successfully', 'info');
-  };
-
-  // Sync with Firebase if configured
-  useEffect(() => {
-    if (isFirebaseActive()) {
-      const unsub = subscribeToLeads((cloudLeads) => {
-        if (cloudLeads && cloudLeads.length > 0) {
-          setLeads(cloudLeads);
-        }
-      });
-      return () => { if (unsub) unsub(); };
-    }
-  }, []);
+  const [addDemandModalOpen, setAddDemandModalOpen] = useState(false);
 
   // Generic Lead Submission Handler with Deduplication & Auto-Merge
   const handleAddNewLead = useCallback(async (leadData) => {
@@ -317,6 +357,125 @@ export default function App() {
     return finalLead;
   }, [soundEnabled]);
 
+  // Demands Management Handlers
+  const handleAddPublicDemand = useCallback(async (newDemand) => {
+    // 🛡️ Sanitize user-submitted demand payload
+    const sanitizedDemand = sanitizeObject(newDemand);
+
+    setDemands((prev) => {
+      const updated = [sanitizedDemand, ...prev];
+      localStorage.setItem('oneline_demands', JSON.stringify(updated));
+      return updated;
+    });
+
+    // Also log in CRM Leads for immediate sales tracking
+    handleAddNewLead({
+      name: sanitizedDemand.clientName || 'مشتري عقار',
+      phone: sanitizedDemand.phone,
+      whatsapp: sanitizedDemand.whatsapp,
+      source: 'طلب شراء عقار (مراجعة الإدارة)',
+      notes: `طلب شراء جديد: ${sanitizedDemand.text_ar || ''} | الميزانية: ${sanitizedDemand.budget} ج.م | المنطقة: ${sanitizedDemand.area_ar || sanitizedDemand.area}`,
+      type: 'buyer_demand',
+      status: 'new',
+      details: {
+        demandId: sanitizedDemand.id,
+        budget: sanitizedDemand.budget,
+        propertyType: sanitizedDemand.type,
+        area: sanitizedDemand.area
+      }
+    });
+
+    if (isFirebaseActive()) {
+      saveDemand(sanitizedDemand);
+    }
+  }, [handleAddNewLead]);
+
+  const handleAddAdminDemand = useCallback((demandPayload) => {
+    const sanitizedPayload = sanitizeObject(demandPayload);
+    setDemands((prev) => {
+      const updated = [sanitizedPayload, ...prev];
+      localStorage.setItem('oneline_demands', JSON.stringify(updated));
+      return updated;
+    });
+    if (isFirebaseActive()) {
+      saveDemand(sanitizedPayload);
+    }
+  }, []);
+
+  const handleApproveDemand = useCallback((demandId) => {
+    setDemands((prev) => {
+      const updated = prev.map(d => d.id === demandId ? { ...d, status: 'published', approvedAt: new Date().toISOString() } : d);
+      localStorage.setItem('oneline_demands', JSON.stringify(updated));
+      return updated;
+    });
+    if (isFirebaseActive()) {
+      updateDemandStatus(demandId, { status: 'published' });
+    }
+  }, []);
+
+  const handleUpdateDemand = useCallback((demandId, updatedData) => {
+    setDemands((prev) => {
+      const updated = prev.map(d => d.id === demandId ? { ...d, ...updatedData } : d);
+      localStorage.setItem('oneline_demands', JSON.stringify(updated));
+      return updated;
+    });
+    if (isFirebaseActive()) {
+      updateDemandStatus(demandId, updatedData);
+    }
+  }, []);
+
+  const handleDeleteDemand = useCallback((demandId) => {
+    setDemands((prev) => {
+      const updated = prev.filter(d => d.id !== demandId);
+      localStorage.setItem('oneline_demands', JSON.stringify(updated));
+      return updated;
+    });
+    if (isFirebaseActive()) {
+      deleteDemandDoc(demandId);
+    }
+  }, []);
+
+  const handleUnpublishDemand = useCallback((demandId) => {
+    setDemands((prev) => {
+      const updated = prev.map(d => d.id === demandId ? { ...d, status: 'pending' } : d);
+      localStorage.setItem('oneline_demands', JSON.stringify(updated));
+      return updated;
+    });
+    if (isFirebaseActive()) {
+      updateDemandStatus(demandId, { status: 'pending' });
+    }
+  }, []);
+
+  // CRM Auth State
+  const [crmAuthenticated, setCrmAuthenticated] = useState(() => {
+    return sessionStorage.getItem('crm_auth') === 'true';
+  });
+
+  const handleCrmLogout = () => {
+    setCrmAuthenticated(false);
+    sessionStorage.removeItem('crm_auth');
+    navigate('/');
+    triggerToast(lang === 'ar' ? 'تم تسجيل الخروج بنجاح' : 'Logged out successfully', 'info');
+  };
+
+  // Sync with Firebase if configured
+  useEffect(() => {
+    if (isFirebaseActive()) {
+      const unsub = subscribeToLeads((cloudLeads) => {
+        if (cloudLeads && cloudLeads.length > 0) {
+          setLeads(cloudLeads);
+        }
+      });
+      loadDemands().then((cloudDemands) => {
+        if (cloudDemands && cloudDemands.length > 0) {
+          setDemands(cloudDemands);
+        }
+      });
+      return () => { if (unsub) unsub(); };
+    }
+  }, []);
+
+  // CRM Leads Handlers
   const handleUpdateLead = useCallback(async (id, updatedFields) => {
     setLeads((prev) => {
       const updated = prev.map((l) => {
@@ -577,8 +736,6 @@ export default function App() {
         <Header
           lang={lang}
           setLang={setLang}
-          currency={currency}
-          setCurrency={setCurrency}
           theme={theme}
           toggleTheme={toggleTheme}
           soundEnabled={soundEnabled}
@@ -600,9 +757,10 @@ export default function App() {
         lang={lang}
       />
 
-      {/* Application Main Routes */}
+      {/* Application Main Routes with Lazy Suspense Code Splitting */}
       <main className="main-site-content">
-        <Routes>
+        <Suspense fallback={<RouteLoadingSpinner lang={lang} />}>
+          <Routes>
           {/* 1. Home Page */}
           <Route
             path="/"
@@ -616,6 +774,7 @@ export default function App() {
                 compareList={compareList}
                 onToggleCompare={toggleCompare}
                 onQuickView={handleOpenQuickView}
+                onOpenAddDemand={() => setAddDemandModalOpen(true)}
               />
             }
           />
@@ -780,6 +939,7 @@ export default function App() {
                 setSellerAnswers={setSellerAnswers}
                 triggerToast={triggerToast}
                 handleAddNewLead={handleAddNewLead}
+                onOpenAddDemand={() => setAddDemandModalOpen(true)}
               />
             }
           />
@@ -846,7 +1006,7 @@ export default function App() {
             }
           />
 
-          {/* 6. CRM Admin Control Panel & Property CMS & Mega Projects */}
+          {/* 6. CRM Admin Control Panel & Property CMS & Mega Projects & Demands CMS */}
           <Route
             path="/crm"
             element={
@@ -863,6 +1023,12 @@ export default function App() {
                 onAddProject={handleAddProject}
                 onUpdateProject={handleUpdateProject}
                 onDeleteProject={handleDeleteProject}
+                demands={demands}
+                onAddDemand={handleAddAdminDemand}
+                onApproveDemand={handleApproveDemand}
+                onUpdateDemand={handleUpdateDemand}
+                onDeleteDemand={handleDeleteDemand}
+                onUnpublishDemand={handleUnpublishDemand}
                 crmAuthenticated={crmAuthenticated}
                 setCrmAuthenticated={setCrmAuthenticated}
                 onLogout={handleCrmLogout}
@@ -887,15 +1053,26 @@ export default function App() {
                 onToggleFavorite={toggleFavorite}
                 onQuickView={handleOpenQuickView}
                 onOpenTrackLead={() => setTrackModalOpen(true)}
+                onOpenAddDemand={() => setAddDemandModalOpen(true)}
                 triggerToast={triggerToast}
               />
             }
           />
-        </Routes>
+          </Routes>
+        </Suspense>
       </main>
 
       {/* Site Footer (Hidden on CRM) */}
       {!location.pathname.startsWith('/crm') && <Footer lang={lang} />}
+
+      {/* 📝 Add Buyer Demand Modal */}
+      <AddDemandModal
+        isOpen={addDemandModalOpen}
+        onClose={() => setAddDemandModalOpen(false)}
+        lang={lang}
+        onSubmitDemand={handleAddPublicDemand}
+        triggerToast={triggerToast}
+      />
 
       {/* ⚖️ Property Comparison Drawer Matrix */}
       <PropertyCompareDrawer

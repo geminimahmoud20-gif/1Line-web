@@ -67,7 +67,7 @@ export default function LegalTaxCalculator({ price = 2500000, lang = 'ar' }) {
         <div className="breakdown-row highlight-free">
           <div className="row-label">
             <span className="text-success">{isAr ? 'الفحص القانوني والتدقيق المعتمد' : 'Legal Due Diligence & Audit'}</span>
-            <small>{isAr ? '(خدمة مجانية 100% لعملاء منصة ون لاين)' : '(100% Free with One Line Platform)'}</small>
+            <small>{isAr ? '(خدمة مجانية 100% لعملاء منصة 1Line)' : '(100% Free with 1Line Platform)'}</small>
           </div>
           <strong className="row-value text-success">{isAr ? 'مجاناً 0 ج.م' : 'FREE'}</strong>
         </div>

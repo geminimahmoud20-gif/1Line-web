@@ -43,7 +43,7 @@ export const formatSalesAlert = (lead, lang = 'ar') => {
 
   const typeName = typeMap[lead.type] || lead.type;
 
-  return `*🚨 تنبيه عميل جديد - منصة ون لاين سوهاج*
+  return `*🚨 تنبيه عميل جديد - منصة 1Line سوهاج*
 ----------------------------------------
 👤 *الاسم:* ${lead.name || 'عميل'}
 📱 *الهاتف:* ${lead.phone || '-'}

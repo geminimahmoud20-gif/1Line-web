@@ -82,7 +82,7 @@ export default function DepositModal({ isOpen, onClose, property, lang = 'ar', t
   };
 
   const whatsappReceiptMsg = encodeURIComponent(
-    `مرحباً ون لاين، قمت بتحويل مقدم تثبيت وحجز لعقار (${property.id.toUpperCase()})\n` +
+    `مرحباً 1Line، قمت بتحويل مقدم تثبيت وحجز لعقار (${property.id.toUpperCase()})\n` +
     `• الاسم: ${form.name}\n` +
     `• الهاتف: ${form.phone}\n` +
     `• الرقم القومي: ${form.nationalId || 'مرفق بالصورة'}\n` +

@@ -7,15 +7,15 @@ export const DEFAULT_FOUNDER_CMS = {
   // Founder Information
   founderName_ar: 'د. محمود الباز',
   founderName_en: 'Dr. Mahmoud Elbaz',
-  founderRole_ar: 'مؤسس ورئيس مجلس إدارة One Line',
-  founderRole_en: 'Founder & Chairman of One Line',
+  founderRole_ar: 'مؤسس ورئيس مجلس إدارة 1Line',
+  founderRole_en: 'Founder & Chairman of 1Line',
   founderSub_ar: 'استشاري التقييم والتطوير العقاري بسوهاج',
   founderSub_en: 'Real Estate Valuation & Investment Consultant',
   founderPhoto: '', // Optional URL, if empty fallback to Gold Logo Emblem
   
   // Founder Message & Vision
-  founderQuote_ar: '«هدفنا في ون لاين ليس مجرد إتمام صفقات بيع وشراء، بل بناء منظومة حماية واستثمار حقيقية تحمي مدخرات أهالينا والمغتربين بالخارج، وتضمن حصول كل عميل على أعلى قيمة عقارية بأمان قانوني لا يقبل الشك.»',
-  founderQuote_en: '«Our mission at One Line is to establish a truly secure real estate environment that protects client savings, guarantees transparent pricing, and offers unmatched investment growth in Sohag.»',
+  founderQuote_ar: '«هدفنا في 1Line ليس مجرد إتمام صفقات بيع وشراء، بل بناء منظومة حماية واستثمار حقيقية تحمي مدخرات أهالينا والمغتربين بالخارج، وتضمن حصول كل عميل على أعلى قيمة عقارية بأمان قانوني لا يقبل الشك.»',
+  founderQuote_en: '«Our mission at 1Line is to establish a truly secure real estate environment that protects client savings, guarantees transparent pricing, and offers unmatched investment growth in Sohag.»',
 
   // Contact Channels
   whatsappNumber: '201012345678',
@@ -66,6 +66,34 @@ export const DEFAULT_FOUNDER_CMS = {
     }
   ],
 
+  // 4 Hero Stats Strip (Top of Homepage)
+  heroStats: [
+    {
+      num_ar: '+150',
+      num_en: '150+',
+      label_ar: 'عقار مفحوص ومعتمد',
+      label_en: 'Verified Properties'
+    },
+    {
+      num_ar: '100%',
+      num_en: '100%',
+      label_ar: 'سلامة قانونية وتراخيص',
+      label_en: 'Legal Compliance'
+    },
+    {
+      num_ar: '+12 M',
+      num_en: '12M+',
+      label_ar: 'حجم مبيعات سنوي',
+      label_en: 'Annual Volume'
+    },
+    {
+      num_ar: '7 سنوات',
+      num_en: '7 Yrs',
+      label_ar: 'أطول فترة تقسيط',
+      label_en: 'Max Installment'
+    }
+  ],
+
   // 3 Corporate Pillars
   pillars: [
     {
@@ -95,7 +123,12 @@ export function getFounderSettings() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_FOUNDER_CMS;
-    return { ...DEFAULT_FOUNDER_CMS, ...JSON.parse(raw) };
+    const parsed = { ...DEFAULT_FOUNDER_CMS, ...JSON.parse(raw) };
+    if (parsed.founderRole_ar) parsed.founderRole_ar = parsed.founderRole_ar.replace(/One\s*Line/gi, '1Line');
+    if (parsed.founderRole_en) parsed.founderRole_en = parsed.founderRole_en.replace(/One\s*Line/gi, '1Line');
+    if (parsed.founderQuote_ar) parsed.founderQuote_ar = parsed.founderQuote_ar.replace(/One\s*Line/gi, '1Line');
+    if (parsed.founderQuote_en) parsed.founderQuote_en = parsed.founderQuote_en.replace(/One\s*Line/gi, '1Line');
+    return parsed;
   } catch (err) {
     console.error('Failed to parse founder CMS settings:', err);
     return DEFAULT_FOUNDER_CMS;

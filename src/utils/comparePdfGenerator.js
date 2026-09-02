@@ -27,7 +27,7 @@ export const generateComparePdf = (compareList = [], lang = 'ar') => {
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(18);
   doc.setFont('helvetica', 'bold');
-  doc.text('ONE LINE REAL ESTATE & INVESTMENT', 16, 16);
+  doc.text('1LINE REAL ESTATE & INVESTMENT', 16, 16);
 
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
@@ -139,9 +139,9 @@ export const generateComparePdf = (compareList = [], lang = 'ar') => {
   doc.setFontSize(8);
   doc.setTextColor(100, 116, 139);
   doc.setFont('helvetica', 'italic');
-  doc.text('Note: This official comparison is issued by One Line Real Estate Brokerage. Pricing and unit availability are subject to daily updates.', 18, 192);
+  doc.text('Note: This official comparison is issued by 1Line Real Estate Brokerage. Pricing and unit availability are subject to daily updates.', 18, 192);
   doc.text('Visit our headquarters in Sohag or contact our certified property advisors at https://oneline-eg.com', 18, 196);
 
   // Save PDF
-  doc.save(`OneLine_Properties_Comparison_${reportDate.replace(/\//g, '-')}.pdf`);
+  doc.save(`1Line_Properties_Comparison_${reportDate.replace(/\//g, '-')}.pdf`);
 };

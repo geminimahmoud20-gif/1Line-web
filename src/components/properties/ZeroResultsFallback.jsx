@@ -15,8 +15,8 @@ export default function ZeroResultsFallback({
 
   const handleCustomRequestWhatsApp = () => {
     const msg = isAr 
-      ? 'مرحباً ون لاين، أبحث عن عقار بمواصفات محددة في سوهاج ولم أجده في الموقع، وأرغب في تسجيل طلب مخصص.'
-      : 'Hello One Line, I am looking for a specific property in Sohag and would like to submit a custom request.';
+      ? 'مرحباً 1Line، أبحث عن عقار بمواصفات محددة في سوهاج ولم أجده في الموقع، وأرغب في تسجيل طلب مخصص.'
+      : 'Hello 1Line, I am looking for a specific property in Sohag and would like to submit a custom request.';
     window.open(`https://wa.me/201012345678?text=${encodeURIComponent(msg)}`, '_blank');
   };
 

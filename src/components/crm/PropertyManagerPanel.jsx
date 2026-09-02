@@ -23,11 +23,15 @@ import {
   Database,
   Archive,
   AlertTriangle,
-  FileSpreadsheet
+  FileSpreadsheet,
+  MessageSquare
 } from 'lucide-react';
 import { SOHAG_AREAS, PROPERTY_TYPES } from '../../data/propertiesData';
 import { exportToCsv } from '../../utils/exportCsv';
 import InteractiveMapPickerModal from './InteractiveMapPickerModal';
+import WhatsAppMatchNotifierModal from './WhatsAppMatchNotifierModal';
+import { findMatchingClientsForProperty } from '../../utils/matchingEngine';
+import { compressImageFile } from '../../utils/imageCompressor';
 
 // Accurate GPS Coordinates map for Sohag Districts
 const SOHAG_AREA_COORDINATES = {
@@ -41,6 +45,8 @@ const SOHAG_AREA_COORDINATES = {
 
 export default function PropertyManagerPanel({
   properties = [],
+  leads = [],
+  demands = [],
   onAddProperty,
   onUpdateProperty,
   onDeleteProperty,
@@ -54,6 +60,8 @@ export default function PropertyManagerPanel({
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'published' | 'hidden' | 'under_negotiation' | 'sold' | 'trash'
   const [searchQuery, setSearchQuery] = useState('');
   const [showMapPicker, setShowMapPicker] = useState(false);
+  const [notifierProperty, setNotifierProperty] = useState(null);
+  const [notifierEventType, setNotifierEventType] = useState('new_unit');
 
   const isAr = lang === 'ar';
 
@@ -94,7 +102,7 @@ export default function PropertyManagerPanel({
       reconciliationStatus_ar: 'نموذج 10 النهائي للتصالح معتمد',
       reconciliationStatus_en: 'Approved Form 10 Reconciliation',
       inspectionReportId: `LAW-SOH-${Date.now().toString().slice(-4)}`,
-      verifiedByLawyer: 'الإدارة القانونية لمنصة ون لاين',
+      verifiedByLawyer: 'الإدارة القانونية لمنصة 1Line',
       safetyScore: 100
     }
   };
@@ -146,6 +154,11 @@ export default function PropertyManagerPanel({
   // Quick Status Change from Table Row
   const handleStatusChange = (propId, newStatus) => {
     onUpdateProperty(propId, { status: newStatus });
+    const targetProp = properties.find(p => p.id === propId);
+    if (newStatus === 'sold' && targetProp) {
+      setNotifierProperty(targetProp);
+      setNotifierEventType('sold_unit');
+    }
     triggerToast(isAr ? `تم تحديث حالة العقار بنجاح` : `Property status updated`, 'success');
   };
 
@@ -202,18 +215,38 @@ export default function PropertyManagerPanel({
 
     if (validFiles.length === 0) return;
 
-    validFiles.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (uploadEvent) => {
-        setForm((prev) => ({
-          ...prev,
-          images: [uploadEvent.target.result, ...prev.images]
-        }));
-      };
-      reader.readAsDataURL(file);
-    });
+    // ⚡ Automatic Canvas Compression (Downscales to max 1400px and 80% quality)
+    Promise.all(
+      validFiles.map(file => compressImageFile(file, { maxWidth: 1400, quality: 0.82 }))
+    ).then((compressedResults) => {
+      const newImages = compressedResults.map(res => res.dataUrl);
+      setForm((prev) => ({
+        ...prev,
+        images: [...newImages, ...prev.images]
+      }));
 
-    triggerToast(isAr ? `تمت إضافة ${validFiles.length} صورة بنجاح` : `${validFiles.length} photos uploaded`, 'success');
+      const avgRatio = compressedResults[0]?.compressionRatio || '85%';
+      triggerToast(
+        isAr 
+          ? `تم ضغط وحفظ ${validFiles.length} صورة بنجاح بجودة معمارية فائقة (توفير ${avgRatio} من المساحة) ⚡` 
+          : `${validFiles.length} images compressed & saved successfully (${avgRatio} saved)!`, 
+        'success'
+      );
+    }).catch((err) => {
+      console.error('Image compression error:', err);
+      // Fallback to FileReader if canvas compression has an unexpected issue
+      validFiles.forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = (uploadEvent) => {
+          setForm((prev) => ({
+            ...prev,
+            images: [uploadEvent.target.result, ...prev.images]
+          }));
+        };
+        reader.readAsDataURL(file);
+      });
+      triggerToast(isAr ? `تمت إضافة الصور بنجاح` : `Photos added`, 'success');
+    });
   };
 
   const handleRemoveImage = (indexToRemove) => {
@@ -248,7 +281,7 @@ export default function PropertyManagerPanel({
   // Full Database JSON Backup Export
   const handleExportJsonBackup = () => {
     const backupData = {
-      platform: 'One Line Real Estate',
+      platform: '1Line Real Estate',
       timestamp: new Date().toISOString(),
       propertiesCount: properties.length,
       properties: properties
@@ -333,6 +366,13 @@ export default function PropertyManagerPanel({
       };
       onAddProperty(newProp);
       triggerToast(isAr ? 'تمت إضافة العقار وتثبيت موقعه الفعلي على الخريطة بنجاح!' : 'New property added successfully!', 'success');
+
+      // 🎯 Auto-check matching clients in database
+      const matched = findMatchingClientsForProperty(newProp, leads, demands);
+      if (matched.length > 0) {
+        setNotifierProperty(newProp);
+        setNotifierEventType('new_unit');
+      }
     }
 
     setShowAddModal(false);
@@ -374,7 +414,7 @@ export default function PropertyManagerPanel({
 
   const badgePresets = [
     { ar: 'عرض مميز', en: 'Featured Deal' },
-    { ar: 'حصري لـ One Line', en: 'Exclusive Deal' },
+    { ar: 'حصري لـ 1Line', en: 'Exclusive Deal' },
     { ar: 'لقطة الأسبوع', en: 'Deal of the Week' },
     { ar: 'خصم الكاش الفوري', en: 'Instant Cash Discount' },
     { ar: 'تم تخفيض السعر', en: 'Price Reduced' },
@@ -625,6 +665,32 @@ export default function PropertyManagerPanel({
                               style={{ color: propStatus === 'published' ? 'var(--emerald)' : 'var(--text-muted)' }}
                             >
                               {propStatus === 'published' ? <Eye size={16} /> : <EyeOff size={16} />}
+                            </button>
+
+                            {/* WhatsApp Retargeting / Match Broadcast Button */}
+                            <button
+                              type="button"
+                              className="btn btn-sm"
+                              onClick={() => {
+                                setNotifierProperty(prop);
+                                setNotifierEventType(propStatus === 'sold' ? 'sold_unit' : 'new_unit');
+                              }}
+                              style={{
+                                background: 'rgba(16, 185, 129, 0.12)',
+                                border: '1px solid rgba(16, 185, 129, 0.35)',
+                                color: '#10b981',
+                                padding: '4px 8px',
+                                borderRadius: '8px',
+                                fontSize: '0.72rem',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                cursor: 'pointer'
+                              }}
+                              title={isAr ? 'إرسال إشعارات واتساب للعملاء المهتمين بهذه الوحدة' : 'Notify Matched Leads via WhatsApp'}
+                            >
+                              <MessageSquare size={13} />
+                              <span>{isAr ? 'إشعار واتساب' : 'Notify'}</span>
                             </button>
 
                             {/* Edit */}
@@ -983,6 +1049,21 @@ export default function PropertyManagerPanel({
           onClose={() => setShowMapPicker(false)}
           initialCoordinates={form.coordinates || SOHAG_AREA_COORDINATES[form.areaKey]}
           onConfirmCoordinates={(coords) => setForm(prev => ({ ...prev, coordinates: coords }))}
+          lang={lang}
+          triggerToast={triggerToast}
+        />
+      )}
+
+      {/* 💬 Smart WhatsApp Retargeting & Matched Leads Modal */}
+      {notifierProperty && (
+        <WhatsAppMatchNotifierModal
+          isOpen={Boolean(notifierProperty)}
+          onClose={() => setNotifierProperty(null)}
+          property={notifierProperty}
+          allProperties={properties}
+          leads={leads}
+          demands={demands}
+          defaultEventType={notifierEventType}
           lang={lang}
           triggerToast={triggerToast}
         />

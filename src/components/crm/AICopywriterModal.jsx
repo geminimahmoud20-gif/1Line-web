@@ -45,7 +45,7 @@ export default function AICopywriterModal({
 `✨【 قصر السكن الراقي في قلب سوهاج — ${propTitle} 】✨
 
 💎 هل تبحث عن السكن الفندقي والخصوصية الكاملة لك ولأسرتك؟
-يسر شركة "ون لاين للحلول العقارية" أن تقدم لعشاق الفخامة والمغتربين أرقى المعروضات العقارية بسوهاج:
+يسر شركة "1Line للحلول العقارية" أن تقدم لعشاق الفخامة والمغتربين أرقى المعروضات العقارية بسوهاج:
 
 📍 الموقع الاستراتيجي: ${propLocation}
 📐 المساحة الملكية: ${propSize} م² بتوزيع داخلي فريد (${propRooms} غرف نوم فاخرة)
@@ -60,7 +60,7 @@ export default function AICopywriterModal({
 📞 للتواصل المباشر وحجز موعد المعاينة الخاصة:
 مستشارك العقاري: 01012345678
 واتساب فوري: https://wa.me/201012345678
-شركة ون لاين — استثمارك المضمون في سوهاج.`);
+شركة 1Line — استثمارك المضمون في سوهاج.`);
     }
 
     if (adTone === 'social') {
@@ -78,12 +78,12 @@ export default function AICopywriterModal({
 
 ⏳ العرض ساري لأسبقية الحجز فقط!
 📲 كلمنا فوراً أو ابعتلنا واتساب على: 01012345678
-#عقارات_سوهاج #شقق_للبيع #سوهاج_الجديدة #ون_لاين`);
+#عقارات_سوهاج #شقق_للبيع #سوهاج_الجديدة #1Line`);
     }
 
     if (adTone === 'investor') {
       return (
-`📊【 دراسة جدوى استثمارية عالية العائد — ONE LINE INVEST 】📊
+`📊【 دراسة جدوى استثمارية عالية العائد — 1LINE INVEST 】📊
 
 🏢 الأصل العقاري: ${propTitle}
 📍 الموقع: ${propLocation}
@@ -96,14 +96,14 @@ export default function AICopywriterModal({
 • التسهيلات: مقدم ${propDownPayment} والباقي على أقساط مريحة.
 
 🛡️ الفحص والتدقيق القانوني:
-العقار معتمد ومفحوص بواسطة الإدارة القانونية لمنصة ون لاين مع حصة مسجلة في الأرض وخلو تام من أي نزاعات.
+العقار معتمد ومفحوص بواسطة الإدارة القانونية لمنصة 1Line مع حصة مسجلة في الأرض وخلو تام من أي نزاعات.
 
 💼 لطلب الملف الاستثماري الكامل وجدول التدفقات النقدية:
 تواصل مع مكتب كبار المستثمرين: 01012345678`);
     }
 
     return (
-`🏛️【 Premium Verified Property in Sohag — One Line Real Estate 】🏛️
+`🏛️【 Premium Verified Property in Sohag — 1Line Real Estate 】🏛️
 
 🌟 Featured Unit: ${selectedProp.title_en || propTitle}
 📍 Prime Location: ${selectedProp.locationName_en || propLocation}
@@ -117,7 +117,7 @@ export default function AICopywriterModal({
 
 📲 Book a private viewing today with our executive team:
 WhatsApp / Direct Call: +201012345678
-One Line Real Estate — Trust, Security, Excellence.`);
+1Line Real Estate — Trust, Security, Excellence.`);
   };
 
   const adText = generateAdContent();
