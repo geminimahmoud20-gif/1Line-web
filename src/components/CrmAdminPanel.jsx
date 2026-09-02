@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import { loginUser } from '../firebaseService';
 import { exportToCsv } from '../utils/exportCsv';
-import { verifyAdminCredentials } from '../utils/securityShield';
 import { SOHAG_AREAS, PROPERTY_TYPES } from '../data/propertiesData';
 
 // Enterprise PropTech Modules
@@ -30,7 +29,7 @@ import ContractStudioModal from './crm/ContractStudioModal';
 export const CrmAdminPanel = ({
   lang = 'ar',
   t = {},
-  firebaseConnected = false,
+  firebaseConnected = true,
   leads = [],
   setLeads,
   properties = [],
@@ -162,7 +161,7 @@ export const CrmAdminPanel = ({
     setCrmAuthError('');
 
     try {
-      if (firebaseConnected) {
+      if (true) {
         if (!crmEmailInput || !crmPasswordInput) {
           throw new Error(isAr ? 'الرجاء إدخال البريد الإلكتروني وكلمة المرور' : 'Please enter email and password');
         }
@@ -171,6 +170,8 @@ export const CrmAdminPanel = ({
         sessionStorage.setItem('crm_auth', 'true');
         triggerToast(isAr ? 'تم تسجيل الدخول بنجاح عبر السحابة!' : 'Logged in successfully via Cloud Auth!');
       } else {
+        throw new Error('Firebase Authentication is not configured.');
+        /* Legacy local-PIN login intentionally disabled.
         const verifyResult = await verifyAdminCredentials(crmPasswordInput);
         if (verifyResult.success) {
           setCrmAuthenticated(true);
@@ -179,6 +180,7 @@ export const CrmAdminPanel = ({
         } else {
           throw new Error(verifyResult.message || (isAr ? 'كلمة المرور غير صحيحة' : 'Incorrect password'));
         }
+        */
       }
     } catch (err) {
       console.error(err);

@@ -14,7 +14,9 @@ import {
   saveDemand,
   loadDemands,
   updateDemandStatus,
-  deleteDemandDoc
+  deleteDemandDoc,
+  logoutUser,
+  monitorAuthState
 } from './firebaseService';
 import { playNotificationChime } from './utils/notificationHub';
 import { sanitizeObject, normalizePhoneNumber } from './utils/securityShield';
@@ -441,13 +443,13 @@ export default function App() {
   }, []);
 
   // CRM Auth State
-  const [crmAuthenticated, setCrmAuthenticated] = useState(() => {
-    return sessionStorage.getItem('crm_auth') === 'true';
-  });
+  const [crmAuthenticated, setCrmAuthenticated] = useState(false);
 
-  const handleCrmLogout = () => {
+  useEffect(() => monitorAuthState(setCrmAuthenticated), []);
+
+  const handleCrmLogout = async () => {
+    await logoutUser();
     setCrmAuthenticated(false);
-    sessionStorage.removeItem('crm_auth');
     navigate('/');
     triggerToast(lang === 'ar' ? 'تم تسجيل الخروج بنجاح' : 'Logged out successfully', 'info');
   };

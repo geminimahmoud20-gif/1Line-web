@@ -17,6 +17,7 @@ import {
   onSnapshot,
   serverTimestamp
 } from 'firebase/firestore';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
 // ===================== PROPERTIES =====================
 
@@ -253,25 +254,32 @@ export const isFirebaseActive = () => {
   return isFirebaseConfigured() && db !== null;
 };
 
+export const isFirebaseAuthAvailable = () => isFirebaseConfigured() && auth !== null;
+
 // ===================== AUTHENTICATION =====================
 
 /**
  * Sign in with email and password using Firebase Auth.
  */
 export const loginUser = async (email, password) => {
-  if (isFirebaseConfigured() && auth) {
-    const { signInWithEmailAndPassword } = await import('firebase/auth');
-    return signInWithEmailAndPassword(auth, email, password);
+  if (!isFirebaseAuthAvailable()) {
+    throw new Error('Firebase Auth is not configured');
   }
-  throw new Error("Firebase Auth is not configured");
+
+  const credential = await signInWithEmailAndPassword(auth, email, password);
+  const token = await credential.user.getIdTokenResult();
+  if (token.claims.admin !== true) {
+    await signOut(auth);
+    throw new Error('This account is not authorized to access the CRM');
+  }
+  return credential;
 };
 
 /**
  * Sign out the current user.
  */
 export const logoutUser = async () => {
-  if (isFirebaseConfigured() && auth) {
-    const { signOut } = await import('firebase/auth');
+  if (isFirebaseAuthAvailable()) {
     return signOut(auth);
   }
 };
@@ -280,10 +288,19 @@ export const logoutUser = async () => {
  * Monitor user authentication state changes.
  */
 export const monitorAuthState = (callback) => {
-  if (isFirebaseConfigured() && auth) {
-    // Dynamic import to avoid loading auth unless Firebase is active
-    import('firebase/auth').then(({ onAuthStateChanged }) => {
-      onAuthStateChanged(auth, callback);
-    }).catch(err => console.error("Error loading auth listener:", err));
+  if (!isFirebaseAuthAvailable()) {
+    callback(false);
+    return () => {};
   }
+
+  return onAuthStateChanged(auth, async (user) => {
+    if (!user) return callback(false);
+    try {
+      const token = await user.getIdTokenResult();
+      callback(token.claims.admin === true);
+    } catch (error) {
+      console.error('Unable to verify CRM role:', error);
+      callback(false);
+    }
+  });
 };

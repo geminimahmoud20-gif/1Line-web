@@ -9,13 +9,9 @@ import DOMPurify from 'dompurify';
 // Generated using SHA-256(password + salt)
 const ADMIN_SALT = 'ONELINE_SOHAG_SECURE_SALT_2026';
 
-// Pre-computed salted SHA-256 hashes for authorized admin PINs
-// Generated using: SHA-256(password + ADMIN_SALT)
-const AUTHORIZED_PIN_HASHES = [
-  '3fd8c3db7e43a40784a855f3e63bb667c805bd68f2745d30d28cfe5a5a431360',
-  'ec4a806ab9ac1c3cbc2b0cfe4045d11eb19ffdc66da5aa873cdb08e91af41353',
-  'a971ec4aa4a195209a4640c9a9d5040810c4c8644d5995978cf27ff81d1b109b'
-];
+// CRM authentication is handled exclusively by Firebase Authentication and
+// Firebase custom claims. No local administrator credentials are stored here.
+const AUTHORIZED_PIN_HASHES = [];
 
 /**
  * Generate SHA-256 hash in browser using native Web Crypto API
@@ -148,4 +144,3 @@ export function normalizePhoneNumber(phone) {
   }
   return clean;
 }
-

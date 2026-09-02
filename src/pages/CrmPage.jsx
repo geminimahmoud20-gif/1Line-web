@@ -7,7 +7,7 @@ import MegaProjectsManagerPanel from '../components/crm/MegaProjectsManagerPanel
 import DemandsManagerPanel from '../components/crm/DemandsManagerPanel';
 import FounderCmsPanel from '../components/crm/FounderCmsPanel';
 import GoLiveWizardModal from '../components/crm/GoLiveWizardModal';
-import { verifyAdminCredentials, checkRateLimit } from '../utils/securityShield';
+import { isFirebaseAuthAvailable, loginUser } from '../firebaseService';
 
 export default function CrmPage({
   lang = 'ar',
@@ -37,6 +37,7 @@ export default function CrmPage({
   onUnpublishDemand
 }) {
   const [activeTab, setActiveTab] = useState('leads'); // 'leads' | 'properties' | 'projects' | 'demands'
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [honeypot, setHoneypot] = useState('');
@@ -94,12 +95,31 @@ export default function CrmPage({
       return;
     }
 
-    const res = await verifyAdminCredentials(password);
+    let res;
+    if (!isFirebaseAuthAvailable()) {
+      res = {
+        success: false,
+        message: isAr
+          ? 'لم يتم إعداد Firebase Authentication بعد. أضف إعدادات مشروع Firebase وأنشئ حساب مدير.'
+          : 'Firebase Authentication is not configured. Add your Firebase project settings and create an admin account.'
+      };
+    } else {
+      try {
+        await loginUser(email, password);
+        res = { success: true };
+      } catch {
+        res = {
+          success: false,
+          message: isAr
+            ? 'تعذر تسجيل الدخول. تأكد من البريد وكلمة المرور ومن منح الحساب صلاحية admin.'
+            : 'Sign-in failed. Check the email, password, and admin role.'
+        };
+      }
+    }
     setIsVerifying(false);
 
     if (res.success) {
       setCrmAuthenticated(true);
-      sessionStorage.setItem('crm_auth', 'true');
       if (triggerToast) {
         triggerToast(isAr ? 'تم التحقق المشفر وتسجيل الدخول بنجاح' : 'Authenticated successfully', 'success');
       }
@@ -147,6 +167,22 @@ export default function CrmPage({
             </div>
 
             <div className="crm-input-group">
+              <label>{isAr ? 'البريد الإلكتروني' : 'Email address'}</label>
+              <div className="crm-password-input-relative">
+                <KeyRound size={18} className="input-icon-left" />
+                <input
+                  type="email"
+                  dir="ltr"
+                  placeholder="admin@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="crm-input-group">
               <label>{isAr ? 'رمز الدخول السري (PIN / Password)' : 'Security PIN / Password'}</label>
               <div className="crm-password-input-relative">
                 <KeyRound size={18} className="input-icon-left" />
@@ -155,6 +191,7 @@ export default function CrmPage({
                   placeholder={isAr ? 'أدخل رمز المرور الخاص بك' : 'Enter your secure PIN'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
                   autoFocus
                   required
                 />
