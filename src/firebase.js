@@ -11,18 +11,18 @@ import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
   // ⬇️ ضع بيانات مشروعك من Firebase Console هنا ⬇️
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "000000000000",
-  appId: "1:000000000000:web:xxxxxxxxxxxx"
+  apiKey: "AIzaSyDPgFF3temb0pgQfSbycUj3DMkZdzcNGRs",
+  authDomain: "line-c9601.firebaseapp.com",
+  projectId: "line-c9601",
+  storageBucket: "line-c9601.firebasestorage.app",
+  messagingSenderId: "229136955798",
+  appId: "1:229136955798:web:26ce9b1ce054de874905b7",
+  measurementId: "G-EXT5JHJMX3"
 };
 
 // Check if Firebase is configured (not placeholder)
 export const isFirebaseConfigured = () => {
-  return firebaseConfig.apiKey !== "YOUR_API_KEY" && 
-         firebaseConfig.projectId !== "YOUR_PROJECT_ID";
+  return Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
 };
 
 let app = null;
