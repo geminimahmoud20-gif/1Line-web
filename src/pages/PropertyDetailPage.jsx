@@ -33,6 +33,7 @@ import WhatsAppAutomationBar from '../components/properties/WhatsAppAutomationBa
 import DepositModal from '../components/properties/DepositModal';
 import PriceBenchmarkIndicator from '../components/properties/PriceBenchmarkIndicator';
 import NearbyAmenities from '../components/properties/NearbyAmenities';
+import { getWhatsAppUrl, getPhoneCallUrl } from '../utils/founderCmsData';
 import SunlightCompassWidget from '../components/properties/SunlightCompassWidget';
 import HistoricalPriceChart from '../components/properties/HistoricalPriceChart';
 import LegalTaxCalculator from '../components/calculators/LegalTaxCalculator';
@@ -429,7 +430,7 @@ export default function PropertyDetailPage({
               {/* Instant Contact Direct Row */}
               <div className="sidebar-instant-contact-row">
                 <a
-                  href={`https://wa.me/201012345678?text=${encodeURIComponent(`مرحباً 1Line، أريد الاستفسار عن كود العقار: ${property.id.toUpperCase()} (${title})`)}`}
+                  href={getWhatsAppUrl(`مرحباً 1Line، أريد الاستفسار عن كود العقار: ${property.id.toUpperCase()} (${title})`)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-whatsapp-half"
@@ -438,7 +439,7 @@ export default function PropertyDetailPage({
                   <span>{isAr ? 'واتساب' : 'WhatsApp'}</span>
                 </a>
 
-                <a href="tel:+201012345678" className="btn btn-call-half">
+                <a href={getPhoneCallUrl()} className="btn btn-call-half">
                   <Phone size={16} />
                   <span>{isAr ? 'اتصال فوري' : 'Call Agent'}</span>
                 </a>
@@ -586,7 +587,7 @@ export default function PropertyDetailPage({
             </button>
 
             <a
-              href={`https://wa.me/201012345678?text=${encodeURIComponent(`مرحباً 1Line، أريد الاستفسار عن كود: ${property.id.toUpperCase()}`)}`}
+              href={getWhatsAppUrl(`مرحباً 1Line، أريد الاستفسار عن كود: ${property.id.toUpperCase()}`)}
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-whatsapp-mini"
@@ -594,7 +595,7 @@ export default function PropertyDetailPage({
               <MessageSquare size={16} />
             </a>
 
-            <a href="tel:+201012345678" className="btn btn-call-mini">
+            <a href={getPhoneCallUrl()} className="btn btn-call-mini">
               <Phone size={16} />
             </a>
           </div>

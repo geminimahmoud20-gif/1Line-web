@@ -1,5 +1,6 @@
 import { RotateCcw, Sparkles, MessageSquare, SearchX, CheckCircle2 } from 'lucide-react';
 import PropertyCard from './PropertyCard';
+import { getWhatsAppUrl } from '../../utils/founderCmsData';
 
 export default function ZeroResultsFallback({
   lang = 'ar',
@@ -17,7 +18,7 @@ export default function ZeroResultsFallback({
     const msg = isAr 
       ? 'مرحباً 1Line، أبحث عن عقار بمواصفات محددة في سوهاج ولم أجده في الموقع، وأرغب في تسجيل طلب مخصص.'
       : 'Hello 1Line, I am looking for a specific property in Sohag and would like to submit a custom request.';
-    window.open(`https://wa.me/201012345678?text=${encodeURIComponent(msg)}`, '_blank');
+    window.open(getWhatsAppUrl(msg), '_blank');
   };
 
   return (

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { MEGA_PROJECTS } from '../data/projectsData';
 import BrandWatermark from '../components/common/BrandWatermark';
+import { getWhatsAppUrl } from '../utils/founderCmsData';
 
 export default function ProjectsPage({ 
   projects = [],
@@ -38,7 +39,7 @@ export default function ProjectsPage({
     const msg = isAr 
       ? `مرحباً 1Line، أريد حجز موعد معاينة ميدانية ومعرفة الوحدات المتاحة في مشروع: ${title}`
       : `Hello 1Line, I would like to book a viewing tour and request unit availability for: ${title}`;
-    window.open(`https://wa.me/201012345678?text=${encodeURIComponent(msg)}`, '_blank');
+    window.open(getWhatsAppUrl(msg), '_blank');
   };
 
   const handleDownloadBrochure = (project) => {

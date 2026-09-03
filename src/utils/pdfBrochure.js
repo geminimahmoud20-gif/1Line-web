@@ -1,4 +1,5 @@
 import { jsPDF } from 'jspdf';
+import { getDynamicPhone, getDynamicWhatsApp } from './founderCmsData';
 
 /**
  * Generate a luxury, professional PDF brochure for a property in Sohag.
@@ -165,8 +166,8 @@ export const generatePropertyPdf = (property) => {
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(255, 255, 255);
-  doc.text('Phone: +20 101 234 5678 / +20 112 345 6789', 15, 279);
-  doc.text('WhatsApp: wa.me/201012345678 (Instant 24/7 Response)', 15, 285);
+  doc.text(`Phone: ${getDynamicPhone()}`, 15, 279);
+  doc.text(`WhatsApp: wa.me/${getDynamicWhatsApp()} (Instant 24/7 Response)`, 15, 285);
   doc.text('Headquarters: El Gomhoureya St, Sohag / Central Axis, New Sohag', 15, 291);
 
   // Save the PDF
@@ -310,7 +311,7 @@ export const generateInvestorProspectusPdf = ({
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(255, 255, 255);
-  doc.text('VIP Direct Hotline: +20 101 234 5678 | WhatsApp: wa.me/201012345678', 15, 279);
+  doc.text(`VIP Direct Hotline: ${getDynamicPhone()} | WhatsApp: wa.me/${getDynamicWhatsApp()}`, 15, 279);
   doc.text('Email: vip@1line-re.com | Head Office: El Gomhoureya St, Sohag, Egypt', 15, 285);
   doc.text('Confidential Document - Issued for the designated recipient only.', 15, 291);
 

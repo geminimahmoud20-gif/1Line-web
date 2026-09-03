@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Building, 
   User, 
@@ -14,7 +14,8 @@ import {
   MapPin, 
   Sparkles,
   Award,
-  Eye
+  Eye,
+  Loader2
 } from 'lucide-react';
 import { 
   getFounderSettings, 
@@ -26,26 +27,44 @@ import {
 export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
   const isAr = lang === 'ar';
   const [formData, setFormData] = useState(() => getFounderSettings());
+  const [isSaving, setIsSaving] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState('founder'); // 'founder' | 'quote' | 'stats' | 'pillars'
 
-  const handleSave = (e) => {
+  // Sync state if remote cloud update arrives
+  useEffect(() => {
+    const handleUpdate = () => {
+      setFormData(getFounderSettings());
+    };
+    window.addEventListener('oneline_founder_cms_updated', handleUpdate);
+    return () => window.removeEventListener('oneline_founder_cms_updated', handleUpdate);
+  }, []);
+
+  const handleSave = async (e) => {
     e?.preventDefault();
-    const success = saveFounderSettings(formData);
-    if (success) {
-      triggerToast(
-        isAr 
-          ? 'تم حفظ وتحديث بيانات المؤسس والشركة ونشرها على الموقع فوراً! 🚀' 
-          : 'Corporate & Founder profile updated and published live!', 
-        'success'
-      );
-    } else {
-      triggerToast(isAr ? 'حدث خطأ أثناء الحفظ' : 'Failed to save changes', 'error');
+    setIsSaving(true);
+    try {
+      const success = await saveFounderSettings(formData);
+      if (success) {
+        triggerToast(
+          isAr 
+            ? 'تم حفظ وتحديث بيانات المؤسس والشركة ونشرها سحابياً على كامل الموقع فوراً! 🚀' 
+            : 'Corporate & Founder profile updated and published live to cloud!', 
+          'success'
+        );
+      } else {
+        triggerToast(isAr ? 'حدث خطأ أثناء الحفظ' : 'Failed to save changes', 'error');
+      }
+    } catch (err) {
+      console.error('Founder CMS save error:', err);
+      triggerToast(isAr ? 'تعذر حفظ البيانات' : 'Save failed', 'error');
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleReset = () => {
+  const handleReset = async () => {
     if (window.confirm(isAr ? 'هل أنت متأكد من استعادة النصوص والإعدادات الافتراضية؟' : 'Reset all corporate text to defaults?')) {
-      resetFounderSettings();
+      await resetFounderSettings();
       setFormData(DEFAULT_FOUNDER_CMS);
       triggerToast(isAr ? 'تمت استعادة الإعدادات الافتراضية بنجاح' : 'Reset to default settings', 'info');
     }
@@ -115,10 +134,11 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
             type="button"
             className="btn btn-sm btn-primary"
             onClick={handleSave}
+            disabled={isSaving}
             style={{ background: 'var(--gradient-gold)', fontWeight: 'bold' }}
           >
-            <Save size={15} />
-            <span>{isAr ? 'حفظ ونشر التعديلات فوراً' : 'Save & Publish Live'}</span>
+            {isSaving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+            <span>{isSaving ? (isAr ? 'جاري الحفظ سحابياً...' : 'Saving...') : (isAr ? 'حفظ ونشر التعديلات فوراً' : 'Save & Publish Live')}</span>
           </button>
         </div>
       </div>
@@ -225,7 +245,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
               <label>{isAr ? 'رقم واتساب استشارات المؤسس:' : 'Founder WhatsApp Number:'}</label>
               <input
                 type="text"
-                placeholder="مثال: 201012345678"
+                placeholder="مثال: 01223222956"
                 value={formData.whatsappNumber || ''}
                 onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
               />
@@ -235,7 +255,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
               <label>{isAr ? 'رقم هاتف مكتب الإدارة:' : 'Office Phone Number:'}</label>
               <input
                 type="text"
-                placeholder="+201012345678"
+                placeholder="+201223222956 أو 01223222956"
                 value={formData.phoneNumber || ''}
                 onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
               />
@@ -418,10 +438,11 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
           <button
             type="submit"
             className="btn btn-primary"
+            disabled={isSaving}
             style={{ background: 'var(--gradient-gold)', padding: '10px 24px', fontSize: '0.95rem', fontWeight: 'bold' }}
           >
-            <Save size={16} />
-            <span>{isAr ? 'حفظ ونشر التعديلات فوراً على الموقع' : 'Save & Publish Live'}</span>
+            {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            <span>{isSaving ? (isAr ? 'جاري الحفظ سحابياً...' : 'Saving to Cloud...') : (isAr ? 'حفظ ونشر التعديلات فوراً على الموقع' : 'Save & Publish Live')}</span>
           </button>
         </div>
       </form>

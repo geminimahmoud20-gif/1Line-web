@@ -1,5 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Phone, MessageSquare, ShieldCheck, Clock, X, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { 
+  getFounderSettings, 
+  getWhatsAppUrl, 
+  getPhoneCallUrl, 
+  cleanPhoneNumber 
+} from '../../utils/founderCmsData';
 
 export default function QuickContactDrawer({
   isOpen,
@@ -7,14 +13,24 @@ export default function QuickContactDrawer({
   onOpenCallbackModal,
   lang = 'ar'
 }) {
-  if (!isOpen) return null;
   const isAr = lang === 'ar';
+  const [cms, setCms] = useState(() => getFounderSettings());
+
+  useEffect(() => {
+    const handleUpdate = () => setCms(getFounderSettings());
+    window.addEventListener('oneline_founder_cms_updated', handleUpdate);
+    return () => window.removeEventListener('oneline_founder_cms_updated', handleUpdate);
+  }, []);
+
+  if (!isOpen) return null;
+
+  const currentPhone = cleanPhoneNumber(cms.phoneNumber || '+201223222956');
 
   const handleWhatsAppSales = () => {
     const text = isAr 
       ? 'مرحباً، أريد التواصل مع مستشار مبيعات 1Line للاستفسار عن العقارات المتاحة بسوهاج.' 
       : 'Hello, I would like to connect with a 1Line sales advisor regarding available properties in Sohag.';
-    window.open(`https://wa.me/201012345678?text=${encodeURIComponent(text)}`, '_blank');
+    window.open(getWhatsAppUrl(text), '_blank');
     onClose();
   };
 
@@ -22,7 +38,7 @@ export default function QuickContactDrawer({
     const text = isAr 
       ? 'مرحباً، أنا مستثمر / مغترب وأريد التواصل مع مكتب كبار العملاء (VIP Desk).' 
       : 'Hello, I am an investor / expat looking for the VIP Investment Desk.';
-    window.open(`https://wa.me/201012345678?text=${encodeURIComponent(text)}`, '_blank');
+    window.open(getWhatsAppUrl(text), '_blank');
     onClose();
   };
 
@@ -43,7 +59,7 @@ export default function QuickContactDrawer({
         {/* Channels List */}
         <div className="quick-contact-channels-list">
           {/* 1. Direct Phone Call */}
-          <a href="tel:+201012345678" className="contact-channel-item channel-call" onClick={onClose}>
+          <a href={getPhoneCallUrl()} className="contact-channel-item channel-call" onClick={onClose}>
             <div className="channel-icon-circle bg-blue">
               <Phone size={22} />
             </div>
@@ -52,7 +68,7 @@ export default function QuickContactDrawer({
                 <strong>{isAr ? 'اتصال هاتفي مباشر (الخط الساخن)' : 'Direct Hot-Line Call'}</strong>
                 <span className="live-status-pill">{isAr ? 'متاح الآن' : 'Active'}</span>
               </div>
-              <span className="channel-sub">01012345678 - {isAr ? 'مستشارونا متاحون للرد الفوري' : 'Our advisors are ready'}</span>
+              <span className="channel-sub">{currentPhone} - {isAr ? 'مستشارونا متاحون للرد الفوري' : 'Our advisors are ready'}</span>
             </div>
             {isAr ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
           </a>
@@ -117,3 +133,4 @@ export default function QuickContactDrawer({
     </div>
   );
 }
+

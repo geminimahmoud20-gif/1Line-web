@@ -31,7 +31,7 @@ export const DEFAULT_SPONSORED_ADS = [
     ctaText_ar: 'احجز وحدتك الآن عبر واتساب',
     ctaText_en: 'Reserve via WhatsApp',
     whatsappMessage: 'مرحباً، أرغب في الاستفسار عن عرض كمبوند لؤلؤة سوهاج الجديدة المتاح على الواجهة الرئيسية لموقع 1Line.',
-    phone: '+201012345678',
+    phone: '+201223222956',
     brochureUrl: '#',
     active: true
   },
@@ -63,7 +63,7 @@ export const DEFAULT_SPONSORED_ADS = [
     ctaText_ar: 'طلب دراسة الجدوى وتفاصيل العائد',
     ctaText_en: 'Request Feasibility & Yield Study',
     whatsappMessage: 'مرحباً، أود الحصول على دراسة الجدوى وتفاصيل الوحدات التجارية/الطبية في سيتي سنتر مول سوهاج المعلن عنه عبر 1Line.',
-    phone: '+201012345678',
+    phone: '+201223222956',
     brochureUrl: '#',
     active: true
   },
@@ -95,7 +95,7 @@ export const DEFAULT_SPONSORED_ADS = [
     ctaText_ar: 'تنسيق موعد معاينة خاصة',
     ctaText_en: 'Book Private Viewing Tour',
     whatsappMessage: 'مرحباً، أرغب في تنسيق موعد لمعاينة شقق أبراج النيل بلازا الفاخرة المعلنة على موقع 1Line.',
-    phone: '+201012345678',
+    phone: '+201223222956',
     brochureUrl: '#',
     active: true
   }

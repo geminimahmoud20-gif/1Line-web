@@ -12,6 +12,7 @@ import {
   MessageSquare,
   Wand2
 } from 'lucide-react';
+import { getDynamicPhone, getWhatsAppUrl } from '../../utils/founderCmsData';
 
 export default function AICopywriterModal({
   isOpen,
@@ -58,8 +59,8 @@ export default function AICopywriterModal({
 • قسط شهري ميسر: ${propInstallment} فقط!
 
 📞 للتواصل المباشر وحجز موعد المعاينة الخاصة:
-مستشارك العقاري: 01012345678
-واتساب فوري: https://wa.me/201012345678
+مستشارك العقاري: ${getDynamicPhone()}
+واتساب فوري: ${getWhatsAppUrl()}
 شركة 1Line — استثمارك المضمون في سوهاج.`);
     }
 
@@ -77,7 +78,7 @@ export default function AICopywriterModal({
 ✅ مفيش عمولة على المشتري!
 
 ⏳ العرض ساري لأسبقية الحجز فقط!
-📲 كلمنا فوراً أو ابعتلنا واتساب على: 01012345678
+📲 كلمنا فوراً أو ابعتلنا واتساب على: ${getDynamicPhone()}
 #عقارات_سوهاج #شقق_للبيع #سوهاج_الجديدة #1Line`);
     }
 
@@ -99,7 +100,7 @@ export default function AICopywriterModal({
 العقار معتمد ومفحوص بواسطة الإدارة القانونية لمنصة 1Line مع حصة مسجلة في الأرض وخلو تام من أي نزاعات.
 
 💼 لطلب الملف الاستثماري الكامل وجدول التدفقات النقدية:
-تواصل مع مكتب كبار المستثمرين: 01012345678`);
+تواصل مع مكتب كبار المستثمرين: ${getDynamicPhone()}`);
     }
 
     return (
@@ -116,7 +117,7 @@ export default function AICopywriterModal({
 • Monthly Installment: ${propInstallment}
 
 📲 Book a private viewing today with our executive team:
-WhatsApp / Direct Call: +201012345678
+WhatsApp / Direct Call: ${getDynamicPhone()}
 1Line Real Estate — Trust, Security, Excellence.`);
   };
 

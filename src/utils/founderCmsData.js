@@ -1,7 +1,10 @@
 /**
  * Corporate & Founder CMS Configuration Store
  * Manages Dr. Mahmoud Elbaz & One Line Company Profile dynamic settings
+ * Supports local caching + Real-time Firebase Firestore cloud persistence
  */
+
+import { saveSettings, subscribeToSettings, isFirebaseActive } from '../firebaseService';
 
 export const DEFAULT_FOUNDER_CMS = {
   // Founder Information
@@ -18,10 +21,10 @@ export const DEFAULT_FOUNDER_CMS = {
   founderQuote_en: '«Our mission at 1Line is to establish a truly secure real estate environment that protects client savings, guarantees transparent pricing, and offers unmatched investment growth in Sohag.»',
 
   // Contact Channels
-  whatsappNumber: '201012345678',
-  phoneNumber: '+201012345678',
-  headquarters_ar: 'المقر الرئيسي: محافظة سوهاج (شرق النيل - سوهاج الجديدة)',
-  headquarters_en: 'HQ: Sohag (East Nile & New Sohag)',
+  whatsappNumber: '01223222956',
+  phoneNumber: '+201223222956',
+  headquarters_ar: 'المقر الرئيسي: محافظة سوهاج ش الجمهورية برج احمد حلمي الشريف',
+  headquarters_en: 'HQ: Sohag - El Gomhoria St., Ahmed Helmy El Sherif Tower',
 
   // Badges
   badges: [
@@ -119,11 +122,91 @@ export const DEFAULT_FOUNDER_CMS = {
 
 const STORAGE_KEY = 'oneline_founder_cms_settings';
 
+/**
+ * Normalizes any phone / whatsapp string to international WhatsApp digits format (e.g. 201223222956)
+ */
+export function cleanWhatsAppNumber(input) {
+  if (!input) input = DEFAULT_FOUNDER_CMS.whatsappNumber;
+  let digits = String(input).replace(/[^0-9]/g, '');
+  if (!digits) digits = '201223222956';
+
+  // Handle leading 00
+  if (digits.startsWith('00')) {
+    digits = digits.slice(2);
+  }
+
+  // If Egyptian local format starting with 01 (11 digits: 01XXXXXXXXX) -> convert to 201XXXXXXXXX
+  if (digits.startsWith('01') && digits.length === 11) {
+    digits = '2' + digits; // '2' + '01...' = '201...'
+  } else if (digits.startsWith('1') && digits.length === 10) {
+    // 10 digits without leading zero -> '20' + '1XXXXXXXXX'
+    digits = '20' + digits;
+  }
+
+  return digits;
+}
+
+/**
+ * Normalizes phone number for direct dial (tel:...) and UI presentation
+ */
+export function cleanPhoneNumber(input) {
+  if (!input) input = DEFAULT_FOUNDER_CMS.phoneNumber;
+  const str = String(input).trim();
+  if (str.startsWith('+')) return str;
+  if (str.startsWith('00')) return '+' + str.slice(2);
+  if (str.startsWith('01') && str.length === 11) return '+2' + str;
+  return str;
+}
+
+/**
+ * Generates a full WhatsApp wa.me URL with prefilled text and dynamic contact number
+ */
+export function getWhatsAppUrl(text = '', customNumber = null) {
+  const num = customNumber ? cleanWhatsAppNumber(customNumber) : getDynamicWhatsApp();
+  return `https://wa.me/${num}${text ? `?text=${encodeURIComponent(text)}` : ''}`;
+}
+
+/**
+ * Generates a full tel: URL with dynamic contact number
+ */
+export function getPhoneCallUrl(customNumber = null) {
+  const num = customNumber ? cleanPhoneNumber(customNumber) : getDynamicPhone();
+  return `tel:${num}`;
+}
+
+/**
+ * Retrieves the current dynamic WhatsApp number (clean digits)
+ */
+export function getDynamicWhatsApp() {
+  const current = getFounderSettings();
+  return cleanWhatsAppNumber(current.whatsappNumber);
+}
+
+/**
+ * Retrieves the current dynamic Phone number
+ */
+export function getDynamicPhone() {
+  const current = getFounderSettings();
+  return cleanPhoneNumber(current.phoneNumber);
+}
+
+/**
+ * Read founder settings from localStorage or default fallback
+ */
 export function getFounderSettings() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_FOUNDER_CMS;
     const parsed = { ...DEFAULT_FOUNDER_CMS, ...JSON.parse(raw) };
+    
+    // Auto-migrate legacy placeholder number if present
+    if (parsed.whatsappNumber === '201012345678' || parsed.whatsappNumber === '01012345678') {
+      parsed.whatsappNumber = DEFAULT_FOUNDER_CMS.whatsappNumber;
+    }
+    if (parsed.phoneNumber === '+201012345678' || parsed.phoneNumber === '01012345678') {
+      parsed.phoneNumber = DEFAULT_FOUNDER_CMS.phoneNumber;
+    }
+
     if (parsed.founderRole_ar) parsed.founderRole_ar = parsed.founderRole_ar.replace(/One\s*Line/gi, '1Line');
     if (parsed.founderRole_en) parsed.founderRole_en = parsed.founderRole_en.replace(/One\s*Line/gi, '1Line');
     if (parsed.founderQuote_ar) parsed.founderQuote_ar = parsed.founderQuote_ar.replace(/One\s*Line/gi, '1Line');
@@ -135,11 +218,25 @@ export function getFounderSettings() {
   }
 }
 
-export function saveFounderSettings(data) {
+/**
+ * Save settings both locally and to Firebase Firestore cloud database
+ */
+export async function saveFounderSettings(data) {
   try {
-    const merged = { ...getFounderSettings(), ...data };
+    const current = getFounderSettings();
+    const merged = { ...current, ...data };
+    
+    // 1. Save locally for instant availability
     localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-    window.dispatchEvent(new Event('oneline_founder_cms_updated'));
+    window.dispatchEvent(new CustomEvent('oneline_founder_cms_updated', { detail: merged }));
+
+    // 2. Persist to Firestore cloud database
+    try {
+      await saveSettings('founder_cms', merged);
+    } catch (cloudErr) {
+      console.warn('Could not persist founder settings to Firebase Firestore:', cloudErr);
+    }
+
     return true;
   } catch (err) {
     console.error('Failed to save founder CMS settings:', err);
@@ -147,13 +244,42 @@ export function saveFounderSettings(data) {
   }
 }
 
-export function resetFounderSettings() {
+/**
+ * Reset settings back to defaults
+ */
+export async function resetFounderSettings() {
   try {
     localStorage.removeItem(STORAGE_KEY);
-    window.dispatchEvent(new Event('oneline_founder_cms_updated'));
+    window.dispatchEvent(new CustomEvent('oneline_founder_cms_updated', { detail: DEFAULT_FOUNDER_CMS }));
+
+    try {
+      await saveSettings('founder_cms', DEFAULT_FOUNDER_CMS);
+    } catch (cloudErr) {
+      console.warn('Could not reset founder settings in Firebase Firestore:', cloudErr);
+    }
+
     return true;
   } catch (err) {
     console.error('Failed to reset founder CMS settings:', err);
     return false;
   }
 }
+
+/**
+ * Subscribe to real-time updates from Firebase Firestore
+ * Syncs incoming cloud settings to localStorage and dispatches updates
+ */
+export function initFounderCmsSync() {
+  return subscribeToSettings('founder_cms', (cloudData) => {
+    if (cloudData && typeof cloudData === 'object') {
+      try {
+        const merged = { ...DEFAULT_FOUNDER_CMS, ...cloudData };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+        window.dispatchEvent(new CustomEvent('oneline_founder_cms_updated', { detail: merged }));
+      } catch (e) {
+        console.warn('Failed to sync Firestore founder settings to local state:', e);
+      }
+    }
+  });
+}
+

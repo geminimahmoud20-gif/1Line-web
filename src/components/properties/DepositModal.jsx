@@ -3,6 +3,7 @@ import { X, CheckCircle2, ShieldCheck, DollarSign, Smartphone, Copy, Check, Spar
 import { PhoneInputField } from '../PhoneInputField';
 import { trackEvent } from '../../utils/visitorTracker';
 import { generateReservationContractPdf } from '../../utils/contractPdfGenerator';
+import { getWhatsAppUrl, getDynamicWhatsApp } from '../../utils/founderCmsData';
 
 export default function DepositModal({ isOpen, onClose, property, lang = 'ar', triggerToast, onConfirmDeposit }) {
   const [copiedInsta, setCopiedInsta] = useState(false);
@@ -21,6 +22,7 @@ export default function DepositModal({ isOpen, onClose, property, lang = 'ar', t
   if (!isOpen || !property) return null;
   const isAr = lang === 'ar';
   const title = isAr ? property.title_ar : property.title_en;
+  const walletPhone = getDynamicWhatsApp();
 
   const handleCopy = (text, type) => {
     navigator.clipboard.writeText(text);
@@ -31,25 +33,23 @@ export default function DepositModal({ isOpen, onClose, property, lang = 'ar', t
       setCopiedVoda(true);
       setTimeout(() => setCopiedVoda(false), 2000);
     }
-    triggerToast(isAr ? 'تم نسخ المعرف بنجاح' : 'Copied successfully', 'success');
+    if (triggerToast) {
+      triggerToast(isAr ? 'تم نسخ الحساب إلى الحافظة بنجاح' : 'Account copied to clipboard', 'success');
+    }
   };
 
   const handleDownloadContract = () => {
     try {
-      generateReservationContractPdf({
-        buyerName: form.name,
-        buyerPhone: form.phone,
-        buyerNationalId: form.nationalId || '29000000000000',
-        property,
-        depositAmount: form.amount,
-        paymentMethod: form.paymentMethod === 'instapay' ? 'InstaPay (إنستاباي)' : 'Vodafone Cash (فودافون كاش)',
-        transactionRef: form.referenceNumber
-      });
-      triggerToast(isAr ? 'تم تحميل استمارة وعقد الحجز الابتدائي بنجاح! 📄' : 'Contract downloaded successfully!', 'success');
+      generateReservationContractPdf(property, form, lang);
+      if (triggerToast) {
+        triggerToast(isAr ? 'تم تجهيز وتنزيل عقد الحجز المعتمد PDF بنجاح!' : 'Contract PDF generated successfully!', 'success');
+      }
       trackEvent('reservation_contract_downloaded', { propertyId: property.id });
     } catch (err) {
       console.error(err);
-      triggerToast(isAr ? 'حدث خطأ أثناء إنشاء العقد' : 'Failed to generate contract', 'error');
+      if (triggerToast) {
+        triggerToast(isAr ? 'حدث خطأ أثناء تنزيل العقد' : 'Error generating contract', 'error');
+      }
     }
   };
 
@@ -81,16 +81,6 @@ export default function DepositModal({ isOpen, onClose, property, lang = 'ar', t
     triggerToast(isAr ? 'تم تسجيل طلب حجز وتثبيت العقار بنجاح!' : 'Deposit confirmation submitted!', 'success');
   };
 
-  const whatsappReceiptMsg = encodeURIComponent(
-    `مرحباً 1Line، قمت بتحويل مقدم تثبيت وحجز لعقار (${property.id.toUpperCase()})\n` +
-    `• الاسم: ${form.name}\n` +
-    `• الهاتف: ${form.phone}\n` +
-    `• الرقم القومي: ${form.nationalId || 'مرفق بالصورة'}\n` +
-    `• طريقة الدفع: ${form.paymentMethod}\n` +
-    `• رقم العملية المرجعي: ${form.referenceNumber}\n` +
-    `مرفق صورة إيصال التحويل لتأكيد التثبيت.`
-  );
-
   return (
     <div className="track-modal-backdrop" onClick={onClose}>
       <div className="deposit-modal-card" onClick={(e) => e.stopPropagation()}>
@@ -119,7 +109,6 @@ export default function DepositModal({ isOpen, onClose, property, lang = 'ar', t
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {/* 1-Click PDF Contract Download */}
               <button
                 type="button"
                 className="btn btn-primary btn-full"
@@ -131,7 +120,9 @@ export default function DepositModal({ isOpen, onClose, property, lang = 'ar', t
               </button>
 
               <a
-                href={`https://wa.me/201012345678?text=${whatsappReceiptMsg}`}
+                href={getWhatsAppUrl(isAr
+                  ? `مرحباً 1Line، قمت بإتمام تحويل مقدم حجز لعقار كود (${property.id.toUpperCase()}) بقيمة ${form.amount.toLocaleString()} ج.م باسم (${form.name}) ورقم المعاملة: (${form.referenceNumber || 'مرفق الإيصال'}).`
+                  : `Hello 1Line, I completed deposit payment for property ${property.id.toUpperCase()}: ${form.amount} EGP for ${form.name}.`)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-primary btn-full"
@@ -148,11 +139,9 @@ export default function DepositModal({ isOpen, onClose, property, lang = 'ar', t
           </div>
         ) : (
           <div className="deposit-modal-body">
-            {/* Payment Details Box */}
             <div className="deposit-accounts-box">
               <span className="box-tag">{isAr ? 'حسابات الدفع الرسمية المعتمدة' : 'Official Payment Handles'}</span>
 
-              {/* InstaPay */}
               <div className="payment-account-row">
                 <div>
                   <strong>InstaPay (إنستاباي)</strong>
@@ -168,16 +157,15 @@ export default function DepositModal({ isOpen, onClose, property, lang = 'ar', t
                 </button>
               </div>
 
-              {/* Vodafone Cash */}
               <div className="payment-account-row">
                 <div>
                   <strong>Vodafone Cash (فودافون كاش)</strong>
-                  <span className="account-number">01012345678</span>
+                  <span className="account-number">{walletPhone}</span>
                 </div>
                 <button
                   type="button"
                   className="btn-copy-mini"
-                  onClick={() => handleCopy('01012345678', 'voda')}
+                  onClick={() => handleCopy(walletPhone, 'voda')}
                 >
                   {copiedVoda ? <Check size={14} /> : <Copy size={14} />}
                   <span>{copiedVoda ? (isAr ? 'تم' : 'Copied') : (isAr ? 'نسخ' : 'Copy')}</span>

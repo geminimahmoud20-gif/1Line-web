@@ -22,6 +22,7 @@ import { playNotificationChime } from './utils/notificationHub';
 import { sanitizeObject, normalizePhoneNumber } from './utils/securityShield';
 import { getOrCreateSession, trackEvent, identifyVisitor } from './utils/visitorTracker';
 import { isRecordArray, readStoredJson } from './utils/browserStorage';
+import { initFounderCmsSync } from './utils/founderCmsData';
 
 // Layout & Common Components
 import Header from './components/common/Header';
@@ -121,6 +122,14 @@ export default function App() {
     getOrCreateSession();
     trackEvent('page_view', { path: location.pathname });
   }, [location.pathname]);
+
+  // Real-time Cloud Settings & Founder CMS Synchronization
+  useEffect(() => {
+    const unsub = initFounderCmsSync();
+    return () => {
+      if (typeof unsub === 'function') unsub();
+    };
+  }, []);
 
   // Secret Admin Portal Access Shortcut (Ctrl + Shift + A)
   useEffect(() => {

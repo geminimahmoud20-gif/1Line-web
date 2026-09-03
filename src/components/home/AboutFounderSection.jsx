@@ -17,7 +17,13 @@ import {
   Briefcase
 } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
-import { getFounderSettings } from '../../utils/founderCmsData';
+import { 
+  getFounderSettings, 
+  cleanWhatsAppNumber, 
+  cleanPhoneNumber, 
+  getWhatsAppUrl, 
+  getPhoneCallUrl 
+} from '../../utils/founderCmsData';
 
 export default function AboutFounderSection({ lang = 'ar' }) {
   const isAr = lang === 'ar';
@@ -103,8 +109,8 @@ export default function AboutFounderSection({ lang = 'ar' }) {
 
   const pillarIcons = [<ShieldCheck size={22} />, <TrendingUp size={22} />, <Briefcase size={22} />];
 
-  const cleanWhatsApp = (cms.whatsappNumber || '201012345678').replace(/[^0-9]/g, '');
-  const cleanPhone = cms.phoneNumber || '+201012345678';
+  const cleanWhatsApp = cleanWhatsAppNumber(cms.whatsappNumber);
+  const cleanPhone = cleanPhoneNumber(cms.phoneNumber);
 
   return (
     <section id="about-us" className="homepage-section about-founder-section" style={{ position: 'relative', overflow: 'hidden', paddingBottom: '70px' }}>

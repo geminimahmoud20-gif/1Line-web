@@ -19,6 +19,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { getSponsoredAds } from '../../data/advertisementsData';
+import { getWhatsAppUrl, cleanWhatsAppNumber } from '../../utils/founderCmsData';
 
 export default function SponsoredAdsShowcase({ lang = 'ar' }) {
   const [ads, setAds] = useState(getSponsoredAds);
@@ -56,9 +57,9 @@ export default function SponsoredAdsShowcase({ lang = 'ar' }) {
   };
 
   const handleWhatsAppInquiry = (ad) => {
-    const cleanPhone = (ad.phone || '+201012345678').replace(/[^0-9]/g, '');
+    const cleanPhone = cleanWhatsAppNumber(ad.phone);
     const message = ad.whatsappMessage || `مرحباً، أستفسر عن إعلان ${isAr ? ad.title_ar : ad.title_en} المعروض على منصة 1Line.`;
-    window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`, '_blank');
+    window.open(getWhatsAppUrl(message, cleanPhone), '_blank');
   };
 
   return (
@@ -590,7 +591,7 @@ export default function SponsoredAdsShowcase({ lang = 'ar' }) {
                 const text = isAr 
                   ? 'مرحباً إدارة 1Line العقارية، أرغب في الاستفسار عن باقات وأسعار حجز المساحات الإعلانية لمشروعي على الواجهة الرئيسية للموقع.'
                   : 'Hello 1Line Real Estate, I would like to inquire about sponsored advertisement slots for my development.';
-                window.open(`https://wa.me/201012345678?text=${encodeURIComponent(text)}`, '_blank');
+                window.open(getWhatsAppUrl(text), '_blank');
                 setShowAdvertiseModal(false);
               }}
               style={{

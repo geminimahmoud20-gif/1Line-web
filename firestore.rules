@@ -2,36 +2,42 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function isAdmin() {
-      return request.auth != null
-        && request.auth.uid == 'dB6GM2RoPQRE0iksDnqcdvUKgXy2';
+      return request.auth != null && (
+        request.auth.token.admin == true ||
+        request.auth.uid == 'dB6GM2RoPQRE0iksDnqcdvUKgXy2'
+      );
     }
     
     // 🛡️ 1. LEADS & CUSTOMER INQUIRIES (حماية بيانات العملاء والطلبات)
-    // Anyone can submit inquiries (create), but only authenticated admins can read/update/delete
     match /leads/{leadId} {
-      // Allow public lead submission with basic validation
       allow create: if request.resource.data.phone is string 
                     && request.resource.data.name is string;
-      
-      // 🔒 SECURE: Only admins with Custom Claims can read/modify/delete leads
-      // To set admin claims, run in Firebase Admin SDK:
-      //   admin.auth().setCustomUserClaims(uid, { admin: true })
-      allow read, update, delete: if isAdmin();
+      allow read, update, delete: if request.auth != null && (request.auth.token.admin == true || isAdmin());
     }
     
-    // 🏠 2. PROPERTIES INVENTORY (مخزون العقارات)
-    // Public read for website visitors; write/update/delete restricted to certified admins
-    match /properties/{propId} {
-      allow read: if true;
-      
-      // 🔒 SECURE: Only admins can modify properties catalog
-      allow write: if isAdmin();
+    // 📋 2. DEMANDS & CLIENT REQUESTS (طلبات العقارات المخصصة)
+    match /demands/{demandId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
     }
 
-    // 🔔 3. NOTIFICATIONS & AUDIT LOGS
-    // Only authenticated admins can access notification logs
+    // 🏠 3. PROPERTIES INVENTORY (مخزون العقارات)
+    match /properties/{propId} {
+      allow read: if true;
+      allow write: if request.auth != null && (request.auth.token.admin == true || isAdmin());
+    }
+
+    // 🔔 4. NOTIFICATIONS & AUDIT LOGS (سجل الإشعارات)
     match /notifications/{notifId} {
       allow read, write: if isAdmin();
     }
+
+    // ⚙️ 5. SITE & FOUNDER SETTINGS (إعدادات الموقع والمؤسس وأرقام التواصل الحية)
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
   }
 }
+
+

@@ -16,6 +16,7 @@ import {
   Globe
 } from 'lucide-react';
 import { trackEvent } from '../../utils/visitorTracker';
+import { getWhatsAppUrl } from '../../utils/founderCmsData';
 
 export default function MortgageRoiCalculator({ 
   lang = 'ar', 
@@ -579,7 +580,7 @@ export default function MortgageRoiCalculator({
               {/* Action Buttons */}
               <div className="calc-card-footer" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <a
-                  href={`https://wa.me/201012345678?text=${encodeURIComponent(`مرحباً 1Line، أريد الاستفسار عن تمويل عقار بقيمة ${formatCurrency(price)} وقسط شهري ${formatCurrency(monthlyInstallment)} بنظام ${interestRate}% لمدة ${years} سنوات.`)}`}
+                  href={getWhatsAppUrl(`مرحباً 1Line، أريد الاستفسار عن تمويل عقار بقيمة ${formatCurrency(price)} وقسط شهري ${formatCurrency(monthlyInstallment)} بنظام ${interestRate}% لمدة ${years} سنوات.`)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-primary btn-full calc-cta-btn"
@@ -685,7 +686,7 @@ export default function MortgageRoiCalculator({
 
               <div className="calc-card-footer" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px' }}>
                 <a
-                  href={`https://wa.me/201012345678?text=${encodeURIComponent(`مرحباً 1Line، أريد دراسة جدوى استثمارية لعقار بقيمة ${formatCurrency(price)} بعائد إيجاري ${netYield}% ونمو سنوي ${annualAppreciation}%`)}`}
+                  href={getWhatsAppUrl(`مرحباً 1Line، أريد دراسة جدوى استثمارية لعقار بقيمة ${formatCurrency(price)} بعائد إيجاري ${netYield}% ونمو سنوي ${annualAppreciation}%`)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-primary btn-full calc-cta-btn"

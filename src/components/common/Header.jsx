@@ -17,6 +17,7 @@ import {
   Building 
 } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
+import { getWhatsAppUrl } from '../../utils/founderCmsData';
 
 export default function Header({ 
   lang = 'ar', 
@@ -208,14 +209,14 @@ export default function Header({
 
         {/* WhatsApp Direct CTA Button */}
         <a
-          href="https://wa.me/201012345678"
+          href={getWhatsAppUrl(isAr ? 'مرحباً 1Line، أريد الاستفسار عن العقارات والفرص المتاحة بسوهاج.' : 'Hello 1Line, inquiring about available properties in Sohag.')}
           target="_blank"
           rel="noopener noreferrer"
           className="cta-primary-btn hide-tablet"
         >
-            <MessageSquare size={16} />
-            <span>{isAr ? 'تواصل معنا' : 'Contact Us'}</span>
-          </a>
+          <MessageSquare size={16} />
+          <span>{isAr ? 'تواصل معنا' : 'Contact Us'}</span>
+        </a>
 
           {/* Mobile Menu Hamburger */}
           <button

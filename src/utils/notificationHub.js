@@ -55,11 +55,14 @@ export const formatSalesAlert = (lead, lang = 'ar') => {
 ⚡ يرجى التواصل مع العميل خلال 5 دقائق لإتمام الحجز.`;
 };
 
+import { getDynamicWhatsApp, cleanWhatsAppNumber } from './founderCmsData';
+
 /**
  * Direct forward to Telegram or WhatsApp sales team
  */
-export const forwardLeadToSalesWhatsApp = (lead, salesPhoneNumber = '201012345678') => {
+export const forwardLeadToSalesWhatsApp = (lead, salesPhoneNumber = null) => {
+  const phone = salesPhoneNumber ? cleanWhatsAppNumber(salesPhoneNumber) : getDynamicWhatsApp();
   const text = formatSalesAlert(lead);
-  const waUrl = `https://wa.me/${salesPhoneNumber}?text=${encodeURIComponent(text)}`;
+  const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
   window.open(waUrl, '_blank');
 };

@@ -16,7 +16,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { getPropertyViews } from '../../utils/visitorTracker';
-import { getFounderSettings } from '../../utils/founderCmsData';
+import { getFounderSettings, getWhatsAppUrl } from '../../utils/founderCmsData';
 import BrandWatermark from '../common/BrandWatermark';
 
 export default function PropertyCard({ 
@@ -255,12 +255,10 @@ export default function PropertyCard({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              const founder = getFounderSettings();
-              const phone = (founder.whatsappNumber || '201012345678').replace(/[^0-9]/g, '');
               const msg = lang === 'ar'
                 ? `مرحباً 1Line، أستفسر عن عقار: "${title}" بسعر ${property.price.toLocaleString()} ج.م (كود: #${property.id}). هل هو متاح للمعاينة؟`
                 : `Hello 1Line, inquiring about property "${title}" priced at ${property.price.toLocaleString()} EGP (ID: #${property.id}).`;
-              window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+              window.open(getWhatsAppUrl(msg), '_blank');
             }}
             style={{
               background: '#ecfdf5',

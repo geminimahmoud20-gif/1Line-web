@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Download, MessageSquare, Share2, Check, Sparkles } from 'lucide-react';
 import { generatePropertyPdf } from '../../utils/pdfBrochure';
+import { getWhatsAppUrl, getDynamicPhone } from '../../utils/founderCmsData';
 
 export default function WhatsAppAutomationBar({ property, lang = 'ar', triggerToast, onOpenStoryCard }) {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -13,6 +14,7 @@ export default function WhatsAppAutomationBar({ property, lang = 'ar', triggerTo
   const downPaymentFormatted = `${property.downPayment?.toLocaleString() || 0} ${isAr ? 'ج.م' : 'EGP'}`;
   const monthlyFormatted = `${property.monthlyInstallment?.toLocaleString() || 0} ${isAr ? 'ج.م' : 'EGP'}`;
   const legalId = property.legalStatus?.inspectionReportId || `LAW-SOH-${property.id.toUpperCase()}`;
+  const dynamicPhone = getDynamicPhone();
 
   // Formatted WhatsApp Message for Client
   const whatsAppText = isAr
@@ -27,7 +29,7 @@ export default function WhatsAppAutomationBar({ property, lang = 'ar', triggerTo
 🛡️ *كود الفحص والضمان القانوني:* ${legalId} (100% مسجل ومرخص)
 ----------------------------------------
 🔗 *رابط العقار والبروشور:* ${window.location.href}
-📞 *للحجز والمعاينة الفورية:* 01012345678`
+📞 *للحجز والمعاينة الفورية:* ${dynamicPhone}`
     : `*🏛️ Property Details - 1Line Sohag*
 ----------------------------------------
 📌 *Listing:* ${title}
@@ -39,7 +41,7 @@ export default function WhatsAppAutomationBar({ property, lang = 'ar', triggerTo
 🛡️ *Legal Audit ID:* ${legalId} (100% Verified)
 ----------------------------------------
 🔗 *Link:* ${window.location.href}
-📞 *Viewing & Inquiry:* +20 101 234 5678`;
+📞 *Viewing & Inquiry:* ${dynamicPhone}`;
 
   // 1. Download PDF Brochure Handler
   const handleDownloadPdf = () => {
@@ -61,7 +63,7 @@ export default function WhatsAppAutomationBar({ property, lang = 'ar', triggerTo
 
   // 2. Direct WhatsApp Broadcast
   const handleWhatsAppDirect = () => {
-    const waUrl = `https://wa.me/201012345678?text=${encodeURIComponent(whatsAppText)}`;
+    const waUrl = getWhatsAppUrl(whatsAppText);
     window.open(waUrl, '_blank');
   };
 

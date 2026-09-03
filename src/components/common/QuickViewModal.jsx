@@ -1,6 +1,7 @@
 import { X, MapPin, Maximize2, BedDouble, Bath, MessageSquare, ArrowLeft, ArrowRight, Download, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { generatePropertyPdf } from '../../utils/pdfBrochure';
+import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import BrandWatermark from './BrandWatermark';
 
 export default function QuickViewModal({ property, lang = 'ar', onClose }) {
@@ -87,7 +88,7 @@ export default function QuickViewModal({ property, lang = 'ar', onClose }) {
               {/* Secondary 2-Column Actions */}
               <div className="quickview-secondary-actions-row">
                 <a
-                  href={`https://wa.me/201012345678?text=${encodeURIComponent(`مرحباً 1Line، أريد الاستفسار عن كود العقار: ${property.id.toUpperCase()} (${title}) بسوهاج.`)}`}
+                  href={getWhatsAppUrl(`مرحباً 1Line، أريد الاستفسار عن كود العقار: ${property.id.toUpperCase()} (${title}) بسوهاج.`)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-whatsapp quickview-half-btn"

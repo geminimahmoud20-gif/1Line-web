@@ -34,7 +34,7 @@ export default function GoLiveWizardModal({
   const [activeStep, setActiveStep] = useState('checklist'); // 'checklist' | 'cleanse' | 'domain'
 
   // Audit Calculations
-  const isPhoneDefault = founderSettings.whatsappNumber === '201012345678' || founderSettings.phoneNumber?.includes('12345678');
+  const isPhoneDefault = !founderSettings.whatsappNumber || founderSettings.whatsappNumber === '201012345678' || founderSettings.whatsappNumber === '01012345678';
   const isFounderDefault = founderSettings.founderName_ar === 'د. محمود الباز';
   const hasDemoLeads = leads.some(l => l.id?.startsWith('lead-'));
   const totalProperties = properties.length;
@@ -51,20 +51,21 @@ export default function GoLiveWizardModal({
 
   // Handle phone quick save
   const [customPhone, setCustomPhone] = useState(founderSettings.whatsappNumber || '');
-  const handleSavePhone = (e) => {
+  const handleSavePhone = async (e) => {
     e.preventDefault();
     if (!customPhone || customPhone.length < 9) {
       if (triggerToast) triggerToast(isAr ? 'يرجى إدخال رقم هاتف صحيح' : 'Invalid phone number', 'error');
       return;
     }
+    const cleanDigits = customPhone.replace(/[^0-9]/g, '');
     const updated = {
       ...founderSettings,
-      whatsappNumber: customPhone.replace(/[^0-9]/g, ''),
-      phoneNumber: '+' + customPhone.replace(/[^0-9]/g, '')
+      whatsappNumber: cleanDigits,
+      phoneNumber: '+' + cleanDigits
     };
-    saveFounderSettings(updated);
+    await saveFounderSettings(updated);
     setFounderSettings(updated);
-    if (triggerToast) triggerToast(isAr ? 'تم حفظ رقم الهاتف الفعلي وتحديثه على كامل الموقع فوراً! 📞' : 'Real phone saved across site!', 'success');
+    if (triggerToast) triggerToast(isAr ? 'تم حفظ رقم الهاتف والواتساب ونشره سحابياً على كامل الموقع! 📞' : 'Real phone saved across site & cloud!', 'success');
   };
 
   // Safe Demo Cleansing: Download backup first, then purge
@@ -264,7 +265,7 @@ export default function GoLiveWizardModal({
                   type="text"
                   value={customPhone}
                   onChange={(e) => setCustomPhone(e.target.value)}
-                  placeholder="مثال: 201012345678"
+                  placeholder="مثال: 01223222956"
                   style={{
                     flex: 1,
                     background: 'rgba(0, 0, 0, 0.4)',

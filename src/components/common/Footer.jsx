@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   MapPin, 
@@ -8,12 +9,31 @@ import {
   ArrowUp
 } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
+import { 
+  getFounderSettings, 
+  getWhatsAppUrl, 
+  getPhoneCallUrl, 
+  cleanPhoneNumber 
+} from '../../utils/founderCmsData';
 
 export default function Footer({ lang = 'ar' }) {
   const isAr = lang === 'ar';
+  const [cms, setCms] = useState(() => getFounderSettings());
+
+  useEffect(() => {
+    const handleUpdate = () => setCms(getFounderSettings());
+    window.addEventListener('oneline_founder_cms_updated', handleUpdate);
+    return () => window.removeEventListener('oneline_founder_cms_updated', handleUpdate);
+  }, []);
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const currentPhone = cleanPhoneNumber(cms.phoneNumber || '+201223222956');
+  const hqText = isAr 
+    ? (cms.headquarters_ar || 'سوهاج - شارع الجمهورية / سوهاج الجديدة')
+    : (cms.headquarters_en || 'Sohag - Republic St. / New Sohag');
 
   return (
     <footer className="site-footer">
@@ -26,7 +46,7 @@ export default function Footer({ lang = 'ar' }) {
           </div>
           <div className="footer-cta-actions">
             <a 
-              href="https://wa.me/201012345678" 
+              href={getWhatsAppUrl(isAr ? 'مرحباً 1Line، أريد استشارة عقارية مجانية بخصوص المشروعات المتاحة.' : 'Hello 1Line, I would like a certified consultation.')} 
               target="_blank" 
               rel="noopener noreferrer" 
               className="btn btn-whatsapp"
@@ -35,7 +55,7 @@ export default function Footer({ lang = 'ar' }) {
               <span>{isAr ? 'واتساب مبيعات' : 'WhatsApp'}</span>
             </a>
             <a 
-              href="tel:+201012345678" 
+              href={getPhoneCallUrl()} 
               className="btn btn-call"
             >
               <Phone size={16} />
@@ -92,11 +112,11 @@ export default function Footer({ lang = 'ar' }) {
             <h4>{isAr ? 'التواصل' : 'Contact'}</h4>
             <div className="contact-item">
               <MapPin size={15} />
-              <span>{isAr ? 'سوهاج - شارع الجمهورية / سوهاج الجديدة' : 'Sohag - Republic St.'}</span>
+              <span>{hqText}</span>
             </div>
             <div className="contact-item">
               <Phone size={15} />
-              <span dir="ltr">+20 101 234 5678</span>
+              <span dir="ltr">{currentPhone}</span>
             </div>
             <div className="contact-item">
               <Mail size={15} />
@@ -138,3 +158,4 @@ export default function Footer({ lang = 'ar' }) {
     </footer>
   );
 }
+

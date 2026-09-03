@@ -18,6 +18,7 @@ import {
   Compass
 } from 'lucide-react';
 import { exportToCsv } from '../utils/exportCsv';
+import { getWhatsAppUrl } from '../utils/founderCmsData';
 
 export default function MarketIntelligencePage({ lang = 'ar', triggerToast }) {
   const [selectedAssetType, setSelectedAssetType] = useState('all'); // 'all' | 'residential' | 'commercial'
@@ -368,7 +369,7 @@ export default function MarketIntelligencePage({ lang = 'ar', triggerToast }) {
             </div>
             <p>{isAr ? 'هل تمتلك سيولة وترغب في توزيعها على أفضل محفظة عقارية في سوهاج؟ تواصل مع خبرائنا لإعداد دراسة جدوى مجانية.' : 'Have investment capital and looking for the optimal property portfolio? Consult our advisors.'}</p>
             <a
-              href="https://wa.me/201012345678?text=مرحباً،%20أريد%20طلب%20دراسة%20جدوى%20عقارية%20استثمارية%20لمحفظتي"
+              href={getWhatsAppUrl('مرحباً، أريد طلب دراسة جدوى عقارية استثمارية لمحفظتي')}
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-whatsapp btn-full"

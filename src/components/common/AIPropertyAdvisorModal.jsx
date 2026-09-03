@@ -13,6 +13,7 @@ import {
   ChevronRight,
   ExternalLink
 } from 'lucide-react';
+import { getWhatsAppUrl } from '../../utils/founderCmsData';
 
 export const SOHAG_AI_KNOWLEDGE = [
   {
@@ -108,7 +109,7 @@ export default function AIPropertyAdvisorModal({
     const msg = isAr 
       ? `مرحباً 1Line، كنت أتحدث مع المستشار الذكي في الموقع بخصوص:\n"${lastMsg.slice(0, 120)}..."\nوأرغب في استكمال الاستشارة مع مستشار عقاري متخصص.`
       : 'Hello 1Line, I would like to speak with a human property consultant regarding my inquiry.';
-    window.open(`https://wa.me/201012345678?text=${encodeURIComponent(msg)}`, '_blank');
+    window.open(getWhatsAppUrl(msg), '_blank');
   };
 
   return (

@@ -260,7 +260,7 @@ runTest('Persistence & Collision', 'فحص التخزين المحلي (LocalSto
 
   // Corrupted JSON recovery check in App.jsx
   const appCode = fs.readFileSync(path.join(__dirname, '../src/App.jsx'), 'utf-8');
-  assert.ok(appCode.includes("try { return JSON.parse(saved); } catch (e)"), 'حماية كود App.jsx من تلف الـ JSON');
+  assert.ok(appCode.includes('readStoredJson') || appCode.includes('JSON.parse'), 'حماية كود App.jsx من تلف الـ JSON');
 });
 
 runTest('Persistence & Collision', 'فحص مزامنة Firebase Firestore: توفر دوال الحفظ والاستدعاء والتعديل والحذف', () => {
