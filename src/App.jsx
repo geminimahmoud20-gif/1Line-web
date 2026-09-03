@@ -162,7 +162,8 @@ export default function App() {
 
   // Properties Data State
   const [properties, setProperties] = useState(() => {
-    return readStoredJson('oneline_properties', PROPERTIES_DATA, isRecordArray);
+    const stored = readStoredJson('oneline_properties', PROPERTIES_DATA, isRecordArray);
+    return Array.isArray(stored) && stored.length > 0 ? stored : PROPERTIES_DATA;
   });
 
   const handleAddProperty = useCallback((newProp) => {
@@ -278,7 +279,8 @@ export default function App() {
 
   const [demands, setDemands] = useState(() => {
     const fallback = INITIAL_DEMANDS.map((d) => ({ ...d, status: d.status || 'published' }));
-    return readStoredJson('oneline_demands', fallback, isRecordArray);
+    const stored = readStoredJson('oneline_demands', fallback, isRecordArray);
+    return Array.isArray(stored) && stored.length > 0 ? stored : fallback;
   });
 
   const [addDemandModalOpen, setAddDemandModalOpen] = useState(false);

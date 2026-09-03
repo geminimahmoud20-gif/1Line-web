@@ -15,16 +15,20 @@ import {
   Award, 
   Zap, 
   Lock, 
-  Gift
+  Gift,
+  Filter,
+  CheckCircle2,
+  Flame,
+  Clock
 } from 'lucide-react';
 import PropertyCard from '../components/properties/PropertyCard';
 import AboutFounderSection from '../components/home/AboutFounderSection';
 import SponsoredAdsShowcase from '../components/home/SponsoredAdsShowcase';
 import MortgageRoiCalculator from '../components/calculators/MortgageRoiCalculator';
 import MarketTickerBar from '../components/home/MarketTickerBar';
-import { PROPERTY_TYPES } from '../data/propertiesData';
+import { PROPERTY_TYPES, PROPERTIES_DATA } from '../data/propertiesData';
 import { MEGA_PROJECTS } from '../data/projectsData';
-import { TESTIMONIALS } from '../data/mockData';
+import { TESTIMONIALS, INITIAL_DEMANDS } from '../data/mockData';
 import { getFounderSettings, DEFAULT_FOUNDER_CMS } from '../utils/founderCmsData';
 import { getAreas } from '../utils/areasData';
 
@@ -67,11 +71,28 @@ export default function HomePage({
   // Compact Hub Navigation Tabs
   const [marketplaceTab, setMarketplaceTab] = useState('properties'); // 'properties' | 'demands'
   const [insightsTab, setInsightsTab] = useState('calculator'); // 'calculator' | 'founder'
+  const [marketplaceAreaFilter, setMarketplaceAreaFilter] = useState('all');
+
+  // Safe fallback to default verified catalog if parent state was ever empty
+  const safeProperties = (Array.isArray(properties) && properties.length > 0) ? properties : PROPERTIES_DATA;
+  const safeDemands = (Array.isArray(demands) && demands.length > 0) ? demands : INITIAL_DEMANDS;
 
   // Exclude hidden, draft, and deleted properties from public homepage
-  const publishedProperties = properties.filter(
+  const publishedProperties = safeProperties.filter(
     (p) => !p.isDeleted && p.status !== 'trash' && p.status !== 'hidden' && p.status !== 'draft'
   );
+  const activePublished = publishedProperties.length > 0 ? publishedProperties : PROPERTIES_DATA;
+
+  // In-Tab Quick District Filter for Marketplace Properties
+  const filteredMarketplaceProps = useMemo(() => {
+    if (marketplaceAreaFilter === 'all') return activePublished;
+    return activePublished.filter(p => p.areaKey === marketplaceAreaFilter || (p.locationName_ar || '').includes(marketplaceAreaFilter));
+  }, [activePublished, marketplaceAreaFilter]);
+
+  const featuredProperties = filteredMarketplaceProps.filter(p => p.featured);
+  const displayProperties = featuredProperties.length > 0 ? featuredProperties.slice(0, 4) : filteredMarketplaceProps.slice(0, 4);
+
+  const activeDemandsList = safeDemands.filter(d => (d.status || 'published') === 'published');
 
   // Categorized Omnibox Search Matchers (Districts, Projects, and Properties)
   const matchingDistricts = useMemo(() => {
@@ -94,13 +115,13 @@ export default function HomePage({
   const matchingProperties = useMemo(() => {
     if (!searchKeyword.trim()) return [];
     const q = searchKeyword.toLowerCase().trim();
-    return publishedProperties.filter(p => {
+    return activePublished.filter(p => {
       const tAr = (p.title_ar || '').toLowerCase();
       const tEn = (p.title_en || '').toLowerCase();
       const lAr = (p.locationName_ar || '').toLowerCase();
       return tAr.includes(q) || tEn.includes(q) || lAr.includes(q);
     }).slice(0, 3);
-  }, [searchKeyword, publishedProperties]);
+  }, [searchKeyword, activePublished]);
 
   const handleHeroSearch = (e) => {
     e.preventDefault();
@@ -111,13 +132,6 @@ export default function HomePage({
     if (searchBudget !== 'all') queryParams.set('budget', searchBudget);
     navigate(`/properties?${queryParams.toString()}`);
   };
-
-  const featuredProperties = publishedProperties
-    .filter(p => p.featured)
-    .slice(0, 4);
-  
-  // Fallback to latest published if no featured
-  const displayProperties = featuredProperties.length > 0 ? featuredProperties : publishedProperties.slice(0, 4);
 
   return (
     <div className="homepage-wrapper">
@@ -552,67 +566,50 @@ export default function HomePage({
       <MarketTickerBar lang={lang} />
 
       {/* 🏢 2. SOHAG LIVE MARKETPLACE HUB (Consolidated Segmented Discovery) */}
-      <section className="homepage-section bg-surface">
-        <div className="section-header-flex" style={{ marginBottom: '24px' }}>
+      <section className="homepage-section bg-surface" id="marketplace">
+        <div className="section-header-flex" style={{ marginBottom: '22px' }}>
           <div>
-            <span className="section-pill">{lang === 'ar' ? 'سوق سوهاج العقاري' : 'Sohag Marketplace'}</span>
-            <h2>{lang === 'ar' ? 'أحدث العقارات والطلبات اللحظية' : 'Featured Properties & Live Demands'}</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <span className="section-pill" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <span className="live-pulse-dot" />
+                {lang === 'ar' ? 'سوق سوهاج العقاري المعتمد' : 'Verified Sohag Marketplace'}
+              </span>
+              <span style={{ fontSize: '0.74rem', color: '#10b981', fontWeight: '800', background: 'rgba(16, 185, 129, 0.1)', padding: '2px 8px', borderRadius: '6px', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
+                ● {lang === 'ar' ? 'تحديث لحظي مباشر' : 'Live Stream'}
+              </span>
+            </div>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: '900', color: 'var(--text-primary)', margin: 0 }}>
+              {lang === 'ar' ? 'أحدث العقارات والطلبات الاستثمارية الحية' : 'Featured Properties & Live Demands'}
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '6px', marginBottom: 0 }}>
+              {lang === 'ar' ? 'تصفح أحدث الوحدات المفحوصة هندسياً وقانونياً أو طابق عقارك مع مشتري الكاش الجاهزين فوراً' : 'Certified properties & instant matching with serious cash buyers in Sohag'}
+            </p>
           </div>
 
           {/* Interactive Switcher Tabs (Ultra High Contrast Navy & Gold) */}
-          <div style={{
-            display: 'inline-flex',
-            background: '#081226',
-            padding: '4px',
-            borderRadius: 'var(--radius-pill)',
-            border: '1px solid rgba(255, 202, 40, 0.4)',
-            gap: '4px',
-            boxShadow: '0 4px 16px rgba(8, 18, 38, 0.25)'
-          }}>
+          <div className="marketplace-switcher-bar">
             <button
               type="button"
               onClick={() => setMarketplaceTab('properties')}
-              style={{
-                background: marketplaceTab === 'properties' ? 'linear-gradient(135deg, #ffca28, #ff8f00)' : 'transparent',
-                color: marketplaceTab === 'properties' ? '#081226' : '#ffffff',
-                border: 'none',
-                borderRadius: 'var(--radius-pill)',
-                padding: '8px 20px',
-                fontSize: '0.84rem',
-                fontWeight: '900',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '7px',
-                boxShadow: marketplaceTab === 'properties' ? '0 0 16px rgba(255, 202, 40, 0.4)' : 'none',
-                transition: 'all 0.2s ease'
-              }}
+              className={`marketplace-tab-btn ${marketplaceTab === 'properties' ? 'active' : ''}`}
             >
-              <Building size={15} style={{ color: marketplaceTab === 'properties' ? '#081226' : '#ffca28' }} />
-              <span>{lang === 'ar' ? 'العقارات المعروضة' : 'Properties'} ({displayProperties.length})</span>
+              <Building size={16} />
+              <span>{lang === 'ar' ? 'العقارات المعروضة' : 'Properties'}</span>
+              <span className="tab-count-badge">
+                {activePublished.length}
+              </span>
             </button>
 
             <button
               type="button"
               onClick={() => setMarketplaceTab('demands')}
-              style={{
-                background: marketplaceTab === 'demands' ? 'linear-gradient(135deg, #ffca28, #ff8f00)' : 'transparent',
-                color: marketplaceTab === 'demands' ? '#081226' : '#ffffff',
-                border: 'none',
-                borderRadius: 'var(--radius-pill)',
-                padding: '8px 20px',
-                fontSize: '0.84rem',
-                fontWeight: '900',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '7px',
-                boxShadow: marketplaceTab === 'demands' ? '0 0 16px rgba(255, 202, 40, 0.4)' : 'none',
-                transition: 'all 0.2s ease'
-              }}
+              className={`marketplace-tab-btn ${marketplaceTab === 'demands' ? 'active' : ''}`}
             >
-              <Users size={15} style={{ color: marketplaceTab === 'demands' ? '#081226' : '#ffca28' }} />
-              <span>{lang === 'ar' ? 'طلبات المشترين الكاش' : 'Live Buyer Demands'} ({demands.filter(d => (d.status || 'published') === 'published').length})</span>
+              <Users size={16} />
+              <span>{lang === 'ar' ? 'طلبات المشترين الكاش' : 'Cash Demands'}</span>
+              <span className="tab-count-badge">
+                {activeDemandsList.length}
+              </span>
             </button>
           </div>
         </div>
@@ -620,26 +617,87 @@ export default function HomePage({
         {/* Tab 1: Properties */}
         {marketplaceTab === 'properties' && (
           <div>
-            <div className="properties-grid-4">
-              {displayProperties.map((prop) => (
-                <PropertyCard
-                  key={prop.id}
-                  property={prop}
-                  lang={lang}
-                  isFavorite={favorites.includes(prop.id)}
-                  onToggleFavorite={onToggleFavorite}
-                  isCompared={compareList.some(c => c.id === prop.id)}
-                  onToggleCompare={onToggleCompare}
-                  onQuickView={onQuickView}
-                />
-              ))}
+            {/* Quick In-Tab District Filter Strip */}
+            <div className="marketplace-filter-strip">
+              <span className="filter-strip-label">
+                <Filter size={14} className="text-gold" />
+                <span>{lang === 'ar' ? 'تصفية سريعة بالمنطقة:' : 'Quick District Filter:'}</span>
+              </span>
+              <div className="filter-strip-chips">
+                {[
+                  { id: 'all', label_ar: 'الكل (جميع الأحياء)', label_en: 'All Districts' },
+                  { id: 'east', label_ar: 'شرق سوهاج', label_en: 'East Sohag' },
+                  { id: 'new_sohag', label_ar: 'سوهاج الجديدة', label_en: 'New Sohag' },
+                  { id: 'corniche', label_ar: 'كورنيش النيل', label_en: 'Nile Corniche' },
+                  { id: 'center', label_ar: 'وسط البلد والجامعة', label_en: 'City Center' },
+                  { id: 'kawthar', label_ar: 'حي الكوثر', label_en: 'Al-Kawthar' }
+                ].map(area => (
+                  <button
+                    key={area.id}
+                    type="button"
+                    onClick={() => setMarketplaceAreaFilter(area.id)}
+                    className={`filter-chip-btn ${marketplaceAreaFilter === area.id ? 'active' : ''}`}
+                  >
+                    {lang === 'ar' ? area.label_ar : area.label_en}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div style={{ textAlign: 'center', marginTop: '24px' }}>
-              <Link to="/properties" className="btn btn-outline" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                <span>{lang === 'ar' ? `استعراض كامل محفظة العقارات (${publishedProperties.length} عقار معتمد)` : 'View All Properties'}</span>
-                {lang === 'ar' ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
-              </Link>
+            {displayProperties.length > 0 ? (
+              <div className="properties-grid-4">
+                {displayProperties.map((prop) => (
+                  <PropertyCard
+                    key={prop.id}
+                    property={prop}
+                    lang={lang}
+                    isFavorite={favorites.includes(prop.id)}
+                    onToggleFavorite={onToggleFavorite}
+                    isCompared={compareList.some(c => c.id === prop.id)}
+                    onToggleCompare={onToggleCompare}
+                    onQuickView={onQuickView}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="marketplace-empty-box">
+                <div className="empty-icon-circle">
+                  <Building size={30} className="text-gold" />
+                </div>
+                <h3>{lang === 'ar' ? 'لا توجد وحدات معروضة حالياً في هذه المنطقة' : 'No properties in this district right now'}</h3>
+                <p>{lang === 'ar' ? 'يمكنك إرسال مواصفات طلبك وسيتولى فريقنا الميداني توفير أفضل وحدة لك مباشرة بأعلى عائد وأفضل سعر.' : 'Submit your request and our advisory team will find the best match for you.'}</p>
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '18px', flexWrap: 'wrap' }}>
+                  <Link to="/buy" className="btn btn-primary" style={{ padding: '8px 20px', fontWeight: 'bold' }}>
+                    {lang === 'ar' ? 'بدء معالج الشراء وتوفير عقار 🚀' : 'Start Buy Wizard'}
+                  </Link>
+                  <button type="button" className="btn btn-outline" onClick={() => setMarketplaceAreaFilter('all')}>
+                    {lang === 'ar' ? 'استعراض كل المناطق' : 'Reset to All Districts'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Executive Bottom Hub & Certified Trust Bar */}
+            <div className="marketplace-bottom-hub">
+              <div className="bottom-hub-trust">
+                <div className="trust-icon-box">
+                  <ShieldCheck size={22} className="text-gold" />
+                </div>
+                <div>
+                  <strong>{lang === 'ar' ? 'ضمان 1Line المعتمد للأمان العقاري' : '1Line Certified Trust Guarantee'}</strong>
+                  <p>{lang === 'ar' ? 'جميع الوحدات المعروضة مفحوصة هندسياً ومطابقة للتراخيص الرسمية وتخضع لإشراف قانوني كامل.' : '100% verified legal inspection on all listed units across Sohag governorate.'}</p>
+                </div>
+              </div>
+
+              <div className="bottom-hub-actions">
+                <Link to="/properties" className="btn btn-luxury-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 22px' }}>
+                  <span>{lang === 'ar' ? `استعراض كامل محفظة العقارات (${activePublished.length} عقار معتمد)` : 'Explore Full Portfolio'}</span>
+                  {lang === 'ar' ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
+                </Link>
+                <Link to="/buy" className="btn btn-outline" style={{ color: '#ffffff', borderColor: 'rgba(255,255,255,0.3)' }}>
+                  <span>{lang === 'ar' ? 'طلب توفير عقار خاص' : 'Custom Request'}</span>
+                </Link>
+              </div>
             </div>
           </div>
         )}
@@ -647,11 +705,43 @@ export default function HomePage({
         {/* Tab 2: Buyer Demands */}
         {marketplaceTab === 'demands' && (
           <div>
+            {/* Live Demands Metrics Strip */}
+            <div className="demands-metrics-strip">
+              <div className="demand-metric-card">
+                <div className="metric-icon" style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981' }}>
+                  <DollarSign size={20} />
+                </div>
+                <div className="metric-info">
+                  <span>{lang === 'ar' ? 'إجمالي القوة الشرائية المسجلة' : 'Total Purchasing Power'}</span>
+                  <strong>
+                    {(activeDemandsList.reduce((sum, d) => sum + (typeof d.budget === 'number' ? d.budget : parseInt(String(d.budget).replace(/,/g, '')) || 0), 0) / 1000000).toFixed(1)}M {lang === 'ar' ? 'مليون ج.م' : 'EGP'}
+                  </strong>
+                </div>
+              </div>
+
+              <div className="demand-metric-card">
+                <div className="metric-icon" style={{ background: 'rgba(217, 119, 6, 0.12)', color: '#d97706' }}>
+                  <Clock size={20} />
+                </div>
+                <div className="metric-info">
+                  <span>{lang === 'ar' ? 'متوسط سرعة المطابقة المباشرة' : 'Avg. Direct Match Speed'}</span>
+                  <strong>{lang === 'ar' ? '24 - 48 ساعة كاش' : '24 - 48 Hours'}</strong>
+                </div>
+              </div>
+
+              <div className="demand-metric-card">
+                <div className="metric-icon" style={{ background: 'rgba(13, 72, 161, 0.12)', color: '#0d48a1' }}>
+                  <ShieldCheck size={20} />
+                </div>
+                <div className="metric-info">
+                  <span>{lang === 'ar' ? 'فحص الجدية والقدرة المالية' : 'Buyer Financial Verification'}</span>
+                  <strong>{lang === 'ar' ? '100% عملاء جادين' : '100% Verified'}</strong>
+                </div>
+              </div>
+            </div>
+
             <div className="demands-grid-compact">
-              {demands
-                .filter(d => (d.status || 'published') === 'published')
-                .slice(0, 4)
-                .map((dem) => (
+              {activeDemandsList.slice(0, 4).map((dem) => (
                 <div key={dem.id} className="demand-card-box">
                   <div className="demand-top-row">
                     <span className="demand-time-tag">{dem.timestamp}</span>
@@ -669,7 +759,7 @@ export default function HomePage({
                         fontWeight: '800'
                       }}
                     >
-                      {dem.urgency === 'high' ? (lang === 'ar' ? 'مستعجل كاش' : 'Urgent Cash') : (lang === 'ar' ? 'طلب جاد' : 'Serious Buyer')}
+                      {dem.urgency === 'high' ? (lang === 'ar' ? '🔥 مستعجل كاش' : 'Urgent Cash') : (lang === 'ar' ? '⭐ طلب جاد' : 'Serious Buyer')}
                     </span>
                   </div>
                   <p className="demand-text" style={{ color: '#0f172a', fontWeight: '700' }}>{lang === 'ar' ? dem.text_ar : dem.text_en}</p>
@@ -708,14 +798,14 @@ export default function HomePage({
                   type="button" 
                   className="btn btn-primary" 
                   onClick={onOpenAddDemand}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', padding: '10px 20px', fontWeight: 'bold' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', padding: '10px 22px', fontWeight: 'bold' }}
                 >
                   <Sparkles size={15} />
-                  <span>{lang === 'ar' ? 'أضف طلبك العقاري مجاناً' : 'Post Buyer Request'}</span>
+                  <span>{lang === 'ar' ? '➕ أضف طلبك العقاري مجاناً' : 'Post Buyer Request'}</span>
                 </button>
               )}
               <Link to="/demands" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span>{lang === 'ar' ? `عرض كل الطلبات (${demands.filter(d => (d.status || 'published') === 'published').length})` : 'All Demands'}</span>
+                <span>{lang === 'ar' ? `استعراض كل طلبات المشترين (${activeDemandsList.length})` : 'All Demands'}</span>
                 {lang === 'ar' ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
               </Link>
             </div>
