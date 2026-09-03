@@ -473,6 +473,19 @@ export default function App() {
 
   // CRM Leads Handlers
   const handleUpdateLead = useCallback(async (id, updatedFields) => {
+    if (isFirebaseActive()) {
+      const saved = await updateLeadField(id, updatedFields);
+      if (!saved) {
+        triggerToast(
+          lang === 'ar'
+            ? 'تعذر حفظ التعديل في Firebase. تأكد من نشر قواعد Firestore وتسجيل الدخول بحساب المدير.'
+            : 'Could not save to Firebase. Check Firestore rules and your admin sign-in.',
+          'error'
+        );
+        return false;
+      }
+    }
+
     setLeads((prev) => {
       const updated = prev.map((l) => {
         if (l.id === id) {
@@ -489,14 +502,8 @@ export default function App() {
       return updated;
     });
 
-    if (isFirebaseActive()) {
-      try {
-        await updateLeadField(id, updatedFields);
-      } catch (err) {
-        console.error('Firebase update lead error:', err);
-      }
-    }
-  }, []);
+    return true;
+  }, [lang, triggerToast]);
 
   const handleDeleteLead = useCallback(async (id) => {
     setLeads((prev) => {

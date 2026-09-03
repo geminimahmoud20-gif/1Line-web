@@ -12,6 +12,7 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  setDoc,
   query,
   orderBy,
   onSnapshot,
@@ -124,10 +125,12 @@ export const updateLeadField = async (leadId, fieldUpdates) => {
   if (isFirebaseConfigured() && db) {
     try {
       const leadRef = doc(db, 'leads', leadId);
-      await updateDoc(leadRef, {
+      // merge also supports leads that were created locally before Firebase
+      // was connected, instead of failing because the document does not exist.
+      await setDoc(leadRef, {
         ...fieldUpdates,
         updatedAt: serverTimestamp()
-      });
+      }, { merge: true });
       return true;
     } catch (error) {
       console.error('Firebase updateLeadField error:', error);

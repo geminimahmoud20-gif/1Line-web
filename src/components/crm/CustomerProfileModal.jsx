@@ -117,7 +117,7 @@ export default function CustomerProfileModal({
   };
 
   // Save Full Profile Edits
-  const handleSaveProfile = (e) => {
+  const handleSaveProfile = async (e) => {
     e.preventDefault();
 
     const updatedLead = {
@@ -146,7 +146,8 @@ export default function CustomerProfileModal({
     };
 
     if (onUpdateLead) {
-      onUpdateLead(lead.id, updatedLead);
+      const saved = await onUpdateLead(lead.id, updatedLead);
+      if (saved === false) return;
     }
 
     setIsEditing(false);

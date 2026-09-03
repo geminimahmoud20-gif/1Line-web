@@ -280,7 +280,7 @@ export const CrmAdminPanel = ({
   };
 
   // Save Lead Edits
-  const handleSaveLeadEdits = (e) => {
+  const handleSaveLeadEdits = async (e) => {
     e.preventDefault();
     if (!editingLead) return;
 
@@ -304,7 +304,8 @@ export const CrmAdminPanel = ({
     };
 
     if (onUpdateLead) {
-      onUpdateLead(editingLead.id, updatedLeadData);
+      const saved = await onUpdateLead(editingLead.id, updatedLeadData);
+      if (saved === false) return;
     } else {
       setLeads(prev => prev.map(l => l.id === editingLead.id ? { ...l, ...updatedLeadData } : l));
     }
