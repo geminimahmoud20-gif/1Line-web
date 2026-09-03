@@ -16,7 +16,7 @@ import {
   cleanPhoneNumber 
 } from '../../utils/founderCmsData';
 
-export default function Footer({ lang = 'ar' }) {
+export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
   const isAr = lang === 'ar';
   const [cms, setCms] = useState(() => getFounderSettings());
 
@@ -100,8 +100,23 @@ export default function Footer({ lang = 'ar' }) {
           <div className="footer-col">
             <h4>{isAr ? 'الخدمات والمؤسسة' : 'Services & Company'}</h4>
             <ul className="footer-links">
-              <li><a href="/#about-us">{isAr ? 'عن 1Line ورؤية المؤسس' : 'About & Founder'}</a></li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onOpenAboutFounder) {
+                      onOpenAboutFounder();
+                    } else {
+                      window.location.href = '/#about-us';
+                    }
+                  }}
+                  style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', font: 'inherit', cursor: 'pointer', textAlign: 'inherit' }}
+                >
+                  {isAr ? 'عن 1Line ورؤية المؤسس' : 'About & Founder'}
+                </button>
+              </li>
               <li><Link to="/investor">{isAr ? 'مركز المستثمرين (VIP)' : 'Investors Desk'}</Link></li>
+              <li><Link to="/special-requests">{isAr ? 'الطلبات العقارية الخاصة' : 'Bespoke Requests'}</Link></li>
               <li><Link to="/broker">{isAr ? 'شبكة الوسطاء والشركاء' : 'Brokers'}</Link></li>
               <li><Link to="/financing">{isAr ? 'حاسبة التمويل والأقساط' : 'Mortgage & Financing'}</Link></li>
             </ul>

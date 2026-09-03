@@ -197,6 +197,26 @@ export const saveDemand = async (demand) => {
 };
 
 /**
+ * Subscribe to real-time demands updates from Firestore.
+ * Returns an unsubscribe function, or null if Firebase isn't configured.
+ */
+export const subscribeToDemands = (callback) => {
+  if (isFirebaseConfigured() && db) {
+    try {
+      const q = query(collection(db, 'demands'), orderBy('createdAt', 'desc'));
+      return onSnapshot(q, (snapshot) => {
+        const demands = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        callback(demands);
+      });
+    } catch (error) {
+      console.error('Firebase subscribeToDemands error:', error);
+      return null;
+    }
+  }
+  return null;
+};
+
+/**
  * Load all demands from Firestore.
  */
 export const loadDemands = async () => {

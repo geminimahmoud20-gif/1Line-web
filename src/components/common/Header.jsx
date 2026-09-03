@@ -14,7 +14,8 @@ import {
   VolumeX, 
   MoreHorizontal, 
   Scale, 
-  Building 
+  Building,
+  Sparkles 
 } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
@@ -31,7 +32,8 @@ export default function Header({
   onOpenShare, 
   onOpenTrackLead,
   compareCount = 0,
-  onOpenCompare
+  onOpenCompare,
+  onOpenAboutFounder
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
@@ -191,17 +193,34 @@ export default function Header({
                   </button>
                 )}
 
-                <div className="tool-dropdown-divider" />
-
-                {/* About One Line & Founder */}
-                <a
-                  href="/#about-us"
+                {/* Special / Bespoke Requests */}
+                <Link
+                  to="/special-requests"
                   className="tool-dropdown-item"
                   onClick={() => setToolsMenuOpen(false)}
                 >
+                  <Sparkles size={16} className="text-gold" />
+                  <span>{isAr ? 'طلب عقار بمواصفات خاصة' : 'Bespoke Requests'}</span>
+                </Link>
+
+                <div className="tool-dropdown-divider" />
+
+                {/* About One Line & Founder */}
+                <button
+                  type="button"
+                  className="tool-dropdown-item"
+                  onClick={() => {
+                    setToolsMenuOpen(false);
+                    if (onOpenAboutFounder) {
+                      onOpenAboutFounder();
+                    } else {
+                      window.location.href = '/#about-us';
+                    }
+                  }}
+                >
                   <Building size={16} />
                   <span>{isAr ? 'عن 1Line والمؤسس' : 'About & Founder'}</span>
-                </a>
+                </button>
               </div>
             )}
           </div>
@@ -245,13 +264,28 @@ export default function Header({
                 {link.badge && <span className="nav-badge">{link.badge}</span>}
               </Link>
             ))}
-            <a
-              href="/#about-us"
+            <Link
+              to="/special-requests"
               className="mobile-nav-item"
               onClick={() => setMobileMenuOpen(false)}
             >
+              <span>{isAr ? 'الطلبات والمواصفات الخاصة' : 'Bespoke Requests'}</span>
+            </Link>
+            <button
+              type="button"
+              className="mobile-nav-item"
+              style={{ background: 'none', border: 'none', width: '100%', textAlign: isAr ? 'right' : 'left', cursor: 'pointer', fontFamily: 'inherit' }}
+              onClick={() => {
+                setMobileMenuOpen(false);
+                if (onOpenAboutFounder) {
+                  onOpenAboutFounder();
+                } else {
+                  window.location.href = '/#about-us';
+                }
+              }}
+            >
               <span>{isAr ? 'عن 1Line والمؤسس' : 'About & Founder'}</span>
-            </a>
+            </button>
           </div>
         </div>
       )}

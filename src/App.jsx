@@ -7,6 +7,7 @@ import { INITIAL_LEADS, INITIAL_DEMANDS } from './data/mockData';
 import { 
   saveLead, 
   subscribeToLeads, 
+  subscribeToDemands,
   isFirebaseActive, 
   saveNotification,
   updateLeadField,
@@ -35,6 +36,7 @@ import TrackLeadModal from './components/common/TrackLeadModal';
 import ShareModal from './components/common/ShareModal';
 import CallbackModal from './components/common/CallbackModal';
 import AddDemandModal from './components/common/AddDemandModal';
+import AboutFounderModal from './components/common/AboutFounderModal';
 import PropertyCompareDrawer from './components/properties/PropertyCompareDrawer';
 import LiveActivityToast from './components/common/LiveActivityToast';
 import QuickContactDrawer from './components/common/QuickContactDrawer';
@@ -284,6 +286,14 @@ export default function App() {
   });
 
   const [addDemandModalOpen, setAddDemandModalOpen] = useState(false);
+  const [aboutFounderModalOpen, setAboutFounderModalOpen] = useState(false);
+
+  // Global event listener to trigger Founder Modal from anywhere
+  useEffect(() => {
+    const handleOpenModal = () => setAboutFounderModalOpen(true);
+    window.addEventListener('oneline_open_founder_modal', handleOpenModal);
+    return () => window.removeEventListener('oneline_open_founder_modal', handleOpenModal);
+  }, []);
 
   // Generic Lead Submission Handler with Deduplication & Auto-Merge
   const handleAddNewLead = useCallback(async (leadData) => {
@@ -414,12 +424,23 @@ export default function App() {
 
   const handleApproveDemand = useCallback((demandId) => {
     setDemands((prev) => {
-      const updated = prev.map(d => d.id === demandId ? { ...d, status: 'published', approvedAt: new Date().toISOString() } : d);
-      localStorage.setItem('oneline_demands', JSON.stringify(updated));
-      return updated;
+      const updated = prev.map(d => d.id === demandId ? { 
+        ...d, 
+        status: 'published', 
+        approvedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      } : d);
+      // Ensure newly approved / published demands appear at the top
+      const sorted = [...updated].sort((a, b) => {
+        const timeA = new Date(a.approvedAt || a.createdAt || a.timestamp || 0).getTime();
+        const timeB = new Date(b.approvedAt || b.createdAt || b.timestamp || 0).getTime();
+        return timeB - timeA;
+      });
+      localStorage.setItem('oneline_demands', JSON.stringify(sorted));
+      return sorted;
     });
     if (isFirebaseActive()) {
-      updateDemandStatus(demandId, { status: 'published' });
+      updateDemandStatus(demandId, { status: 'published', approvedAt: new Date().toISOString() });
     }
   }, []);
 
@@ -468,20 +489,28 @@ export default function App() {
     triggerToast(lang === 'ar' ? 'تم تسجيل الخروج بنجاح' : 'Logged out successfully', 'info');
   };
 
-  // Sync with Firebase if configured
+  // Sync with Firebase if configured (Real-time Leads & Demands)
   useEffect(() => {
     if (isFirebaseActive()) {
-      const unsub = subscribeToLeads((cloudLeads) => {
+      const unsubLeads = subscribeToLeads((cloudLeads) => {
         if (cloudLeads && cloudLeads.length > 0) {
           setLeads(cloudLeads);
         }
       });
-      loadDemands().then((cloudDemands) => {
+      const unsubDemands = subscribeToDemands((cloudDemands) => {
         if (cloudDemands && cloudDemands.length > 0) {
-          setDemands(cloudDemands);
+          const sorted = [...cloudDemands].sort((a, b) => {
+            const timeA = new Date(a.approvedAt || a.createdAt || a.timestamp || 0).getTime();
+            const timeB = new Date(b.approvedAt || b.createdAt || b.timestamp || 0).getTime();
+            return timeB - timeA;
+          });
+          setDemands(sorted);
         }
       });
-      return () => { if (unsub) unsub(); };
+      return () => { 
+        if (unsubLeads) unsubLeads(); 
+        if (unsubDemands) unsubDemands();
+      };
     }
   }, []);
 
@@ -761,6 +790,7 @@ export default function App() {
           onOpenTrackLead={() => setTrackModalOpen(true)}
           compareCount={compareList.length}
           onOpenCompare={() => setCompareDrawerOpen(true)}
+          onOpenAboutFounder={() => setAboutFounderModalOpen(true)}
         />
       )}
 
@@ -1000,6 +1030,19 @@ export default function App() {
             }
           />
 
+          <Route
+            path="/special-requests"
+            element={
+              <PortalsPage
+                portalType="special"
+                lang={lang}
+                t={t}
+                triggerToast={triggerToast}
+                handleAddNewLead={handleAddNewLead}
+              />
+            }
+          />
+
           {/* 4. Mega Projects & Flagship Compounds Hub */}
           <Route
             path="/projects"
@@ -1080,7 +1123,19 @@ export default function App() {
       </main>
 
       {/* Site Footer (Hidden on CRM) */}
-      {!location.pathname.startsWith('/crm') && <Footer lang={lang} />}
+      {!location.pathname.startsWith('/crm') && (
+        <Footer 
+          lang={lang} 
+          onOpenAboutFounder={() => setAboutFounderModalOpen(true)} 
+        />
+      )}
+
+      {/* 🏢 About 1Line & Founder Profile Modal */}
+      <AboutFounderModal
+        isOpen={aboutFounderModalOpen}
+        onClose={() => setAboutFounderModalOpen(false)}
+        lang={lang}
+      />
 
       {/* 📝 Add Buyer Demand Modal */}
       <AddDemandModal

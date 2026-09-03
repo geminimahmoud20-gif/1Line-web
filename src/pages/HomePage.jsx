@@ -62,6 +62,19 @@ export default function HomePage({
     const handleAreasUpdate = () => setDistricts(getAreas());
     window.addEventListener('oneline_founder_cms_updated', handleUpdate);
     window.addEventListener('oneline_areas_updated', handleAreasUpdate);
+    
+    // Smooth scroll and highlight if navigated to #about-us
+    if (window.location.hash === '#about-us') {
+      setTimeout(() => {
+        const el = document.getElementById('about-us');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+          el.classList.add('section-highlight-pulse');
+          setTimeout(() => el.classList.remove('section-highlight-pulse'), 3000);
+        }
+      }, 200);
+    }
+
     return () => {
       window.removeEventListener('oneline_founder_cms_updated', handleUpdate);
       window.removeEventListener('oneline_areas_updated', handleAreasUpdate);
@@ -92,7 +105,16 @@ export default function HomePage({
   const featuredProperties = filteredMarketplaceProps.filter(p => p.featured);
   const displayProperties = featuredProperties.length > 0 ? featuredProperties.slice(0, 4) : filteredMarketplaceProps.slice(0, 4);
 
-  const activeDemandsList = safeDemands.filter(d => (d.status || 'published') === 'published');
+  // Active Demands List sorted with newest approved/published first
+  const activeDemandsList = useMemo(() => {
+    return safeDemands
+      .filter(d => (d.status || 'published') === 'published')
+      .sort((a, b) => {
+        const timeA = new Date(a.approvedAt || a.createdAt || a.timestamp || 0).getTime();
+        const timeB = new Date(b.approvedAt || b.createdAt || b.timestamp || 0).getTime();
+        return timeB - timeA;
+      });
+  }, [safeDemands]);
 
   // Categorized Omnibox Search Matchers (Districts, Projects, and Properties)
   const matchingDistricts = useMemo(() => {
@@ -386,103 +408,60 @@ export default function HomePage({
             </form>
 
             {/* 🔥 Quick Area Discovery Tags */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              flexWrap: 'wrap',
-              marginTop: '12px',
-              padding: '0 4px',
-              fontSize: '0.78rem'
-            }}>
-              <span style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Sparkles size={12} className="text-gold" />
+            <div className="hero-quick-tags-container">
+              <span className="hero-quick-tag-label">
+                <Sparkles size={13} className="text-gold" />
                 <span>{lang === 'ar' ? 'الأكثر طلباً:' : 'Trending:'}</span>
               </span>
-              {[
-                { id: 'east', label_ar: 'شرق سوهاج', label_en: 'East Sohag' },
-                { id: 'new_sohag', label_ar: 'سوهاج الجديدة', label_en: 'New Sohag' },
-                { id: 'corniche', label_ar: 'الكورنيش', label_en: 'Corniche' },
-                { id: 'nasr', label_ar: 'مدينة ناصر', label_en: 'Nasr City' }
-              ].map((area) => (
-                <button
-                  key={area.id}
-                  type="button"
-                  onClick={() => {
-                    setSearchArea(area.id);
-                    navigate(`/properties?area=${area.id}`);
-                  }}
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.06)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    color: '#e2e8f0',
-                    borderRadius: 'var(--radius-pill)',
-                    padding: '3px 10px',
-                    fontSize: '0.74rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--accent-gold)';
-                    e.currentTarget.style.color = '#ffca28';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
-                    e.currentTarget.style.color = '#e2e8f0';
-                  }}
-                >
-                  📍 {lang === 'ar' ? area.label_ar : area.label_en}
-                </button>
-              ))}
+              <div className="hero-quick-tags-list">
+                {[
+                  { id: 'east', label_ar: 'شرق سوهاج', label_en: 'East Sohag', icon: '📍' },
+                  { id: 'new_sohag', label_ar: 'سوهاج الجديدة', label_en: 'New Sohag', icon: '✨' },
+                  { id: 'corniche', label_ar: 'الكورنيش', label_en: 'Corniche', icon: '🌊' },
+                  { id: 'nasr', label_ar: 'مدينة ناصر', label_en: 'Nasr City', icon: '🏙️' }
+                ].map((area) => (
+                  <button
+                    key={area.id}
+                    type="button"
+                    onClick={() => {
+                      setSearchArea(area.id);
+                      navigate(`/properties?area=${area.id}`);
+                    }}
+                    className="hero-quick-area-tag"
+                  >
+                    <span>{area.icon}</span>
+                    <span>{lang === 'ar' ? area.label_ar : area.label_en}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* 💰 Quick Budget Tier Discovery Pills */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              flexWrap: 'wrap',
-              marginTop: '8px',
-              padding: '0 4px',
-              fontSize: '0.78rem'
-            }}>
-              <span style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <DollarSign size={12} className="text-gold" />
+            <div className="hero-quick-tags-container budget-tier">
+              <span className="hero-quick-tag-label budget">
+                <DollarSign size={13} className="text-gold" />
                 <span>{lang === 'ar' ? 'الميزانية السريعة:' : 'Quick Budget:'}</span>
               </span>
-              {[
-                { id: 'under_3m', label_ar: 'أقل من 3 مليون', label_en: 'Under 3M EGP' },
-                { id: '3m_to_6m', label_ar: '3 إلى 6 مليون', label_en: '3M - 6M EGP' },
-                { id: 'above_6m', label_ar: 'أكثر من 6 مليون', label_en: 'Above 6M EGP' }
-              ].map((b) => (
-                <button
-                  key={b.id}
-                  type="button"
-                  onClick={() => {
-                    setSearchBudget(b.id);
-                    navigate(`/properties?budget=${b.id}`);
-                  }}
-                  style={{
-                    background: 'rgba(255, 202, 40, 0.08)',
-                    border: '1px solid rgba(255, 202, 40, 0.25)',
-                    color: '#ffca28',
-                    borderRadius: 'var(--radius-pill)',
-                    padding: '3px 10px',
-                    fontSize: '0.74rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    fontWeight: '600'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 202, 40, 0.2)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 202, 40, 0.08)';
-                  }}
-                >
-                  💵 {lang === 'ar' ? b.label_ar : b.label_en}
-                </button>
-              ))}
+              <div className="hero-quick-tags-list">
+                {[
+                  { id: 'under_3m', label_ar: 'أقل من 3 مليون', label_en: 'Under 3M EGP', icon: '💵' },
+                  { id: '3m_to_6m', label_ar: '3 إلى 6 مليون', label_en: '3M - 6M EGP', icon: '💎' },
+                  { id: 'above_6m', label_ar: 'أكثر من 6 مليون', label_en: 'Above 6M EGP', icon: '👑' }
+                ].map((b) => (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={() => {
+                      setSearchBudget(b.id);
+                      navigate(`/properties?budget=${b.id}`);
+                    }}
+                    className="hero-quick-budget-tag"
+                  >
+                    <span>{b.icon}</span>
+                    <span>{lang === 'ar' ? b.label_ar : b.label_en}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
