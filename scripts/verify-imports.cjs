@@ -48,11 +48,19 @@ allJsxFiles.forEach(filePath => {
     if (match[1]) importedIdentifiers.add(match[1].trim());
   }
 
+  // Strip comments to avoid JSDoc or inline comment false positives
+  const strippedContent = content
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*/g, '');
+
   // Find all JSX tags <TagName ...
-  const jsxTags = [...content.matchAll(/<([A-Z][a-zA-Z0-9_$]+)\b/g)].map(m => m[1]);
+  const jsxTags = [...strippedContent.matchAll(/<([A-Z][a-zA-Z0-9_$]+)\b/g)].map(m => m[1]);
   const uniqueTags = [...new Set(jsxTags)];
 
-  const standard = ['React', 'Fragment', 'Link', 'NavLink', 'Route', 'Routes', 'Navigate', 'BrowserRouter'];
+  const standard = [
+    'React', 'Fragment', 'Link', 'NavLink', 'Route', 'Routes', 'Navigate', 'BrowserRouter',
+    'File', 'FileList', 'Blob', 'Array', 'Promise', 'Set', 'Map', 'Date', 'Object', 'String', 'Number', 'Boolean'
+  ];
 
   uniqueTags.forEach(tag => {
     if (standard.includes(tag)) return;

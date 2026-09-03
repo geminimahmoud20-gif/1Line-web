@@ -38,6 +38,8 @@ import SunlightCompassWidget from '../components/properties/SunlightCompassWidge
 import HistoricalPriceChart from '../components/properties/HistoricalPriceChart';
 import LegalTaxCalculator from '../components/calculators/LegalTaxCalculator';
 import SocialStoryCardModal from '../components/properties/SocialStoryCardModal';
+import { updatePageSeo, buildPropertySchema } from '../utils/seoHelper';
+import { checkFormSpamProtection } from '../utils/securityShield';
 
 export default function PropertyDetailPage({
   lang,
@@ -58,6 +60,27 @@ export default function PropertyDetailPage({
     return properties.find(p => p.id === id) || properties[0];
   }, [properties, id]);
 
+  const isAr = lang === 'ar';
+
+  // 🌐 Inject Google Schema.org & Dynamic OpenGraph Meta Tags
+  useEffect(() => {
+    if (property) {
+      const propTitle = isAr ? property.title_ar : property.title_en;
+      const propDesc = isAr ? property.description_ar : property.description_en;
+      const schema = buildPropertySchema(property, lang);
+
+      updatePageSeo({
+        title: propTitle,
+        description: propDesc,
+        image: property.image || (property.images && property.images[0]),
+        url: `/properties/${property.id}`,
+        type: 'article',
+        schemaId: 'property-jsonld-schema',
+        schema: schema
+      });
+    }
+  }, [property, lang, isAr]);
+
   // Track Property View in Visitor Intelligence
   useEffect(() => {
     if (property?.id) {
@@ -76,6 +99,7 @@ export default function PropertyDetailPage({
     notes: ''
   });
   const [bookingSubmitted, setBookingSubmitted] = useState(false);
+  const [hpField, setHpField] = useState('');
 
   if (!property) {
     return (
@@ -88,7 +112,6 @@ export default function PropertyDetailPage({
     );
   }
 
-  const isAr = lang === 'ar';
   const title = isAr ? property.title_ar : property.title_en;
   const location = isAr ? property.locationName_ar : property.locationName_en;
   const finishing = isAr ? property.finishing_ar : property.finishing_en;
@@ -99,6 +122,14 @@ export default function PropertyDetailPage({
 
   const handleBookingSubmit = (e) => {
     e.preventDefault();
+
+    // 🛡️ Anti-Bot & Spam Rate-Limit Shield
+    const spamCheck = checkFormSpamProtection(hpField, 'property_inspection_booking');
+    if (!spamCheck.allowed) {
+      triggerToast(isAr ? spamCheck.message_ar : spamCheck.message_en, 'error');
+      return;
+    }
+
     if (!bookingForm.name || !bookingForm.phone) {
       triggerToast(isAr ? 'يرجى إدخال اسمك ورقم هاتفك' : 'Please enter your name and phone', 'error');
       return;
@@ -458,6 +489,18 @@ export default function PropertyDetailPage({
                 </div>
               ) : (
                 <form onSubmit={handleBookingSubmit} className="booking-form-wrap">
+                  {/* 🍯 Invisible Honeypot Anti-Bot Shield */}
+                  <div style={{ position: 'absolute', opacity: 0, zIndex: -1, pointerEvents: 'none', height: 0, overflow: 'hidden' }} aria-hidden="true">
+                    <input
+                      type="text"
+                      name="agent_booking_field_hp"
+                      tabIndex="-1"
+                      autoComplete="off"
+                      value={hpField}
+                      onChange={(e) => setHpField(e.target.value)}
+                    />
+                  </div>
+
                   <div className="form-group-item">
                     <label>{isAr ? 'الاسم بالكامل' : 'Full Name'}</label>
                     <input

@@ -22,6 +22,7 @@ import {
 import PhoneInputField, { SUPPORTED_COUNTRIES } from './PhoneInputField';
 import { getAreas } from '../utils/areasData';
 import { getFounderSettings, getWhatsAppUrl } from '../utils/founderCmsData';
+import { checkFormSpamProtection } from '../utils/securityShield';
 
 export const SpecialRequests = ({
   lang = 'ar',
@@ -37,6 +38,7 @@ export const SpecialRequests = ({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submittedRefCode, setSubmittedRefCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [hpField, setHpField] = useState('');
 
   // Fallback internal state if not managed externally
   const [internalForm, setInternalForm] = useState({
@@ -71,6 +73,13 @@ export const SpecialRequests = ({
 
   const validateAndSubmit = async (e) => {
     e.preventDefault();
+
+    // 🛡️ Anti-Bot & Spam Rate-Limit Shield
+    const spamCheck = checkFormSpamProtection(hpField, 'special_requests_form');
+    if (!spamCheck.allowed) {
+      triggerToast?.(isAr ? spamCheck.message_ar : spamCheck.message_en, 'error');
+      return;
+    }
 
     if (!form.name || !form.name.trim()) {
       triggerToast?.(isAr ? 'يرجى إدخال اسمك الكريم' : 'Please enter your name', 'error');
@@ -266,6 +275,17 @@ export const SpecialRequests = ({
       </div>
 
       <form onSubmit={validateAndSubmit} className="wizard-step-container" style={{ background: 'var(--bg-surface, #ffffff)', padding: '28px', borderRadius: '20px', boxShadow: '0 10px 35px rgba(0, 0, 0, 0.06)', border: '1px solid var(--border-color)' }}>
+        {/* 🍯 Invisible Honeypot Anti-Bot Shield */}
+        <div style={{ position: 'absolute', opacity: 0, zIndex: -1, pointerEvents: 'none', height: 0, overflow: 'hidden' }} aria-hidden="true">
+          <input
+            type="text"
+            name="client_contact_website_hp"
+            tabIndex="-1"
+            autoComplete="off"
+            value={hpField}
+            onChange={(e) => setHpField(e.target.value)}
+          />
+        </div>
         
         {/* Section 1: Property Specifications */}
         <div style={{ marginBottom: '24px' }}>

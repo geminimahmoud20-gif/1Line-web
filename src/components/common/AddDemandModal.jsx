@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import PhoneInputField, { SUPPORTED_COUNTRIES } from '../PhoneInputField';
 import { getAreas } from '../../utils/areasData';
+import { checkFormSpamProtection } from '../../utils/securityShield';
 
 const PROP_TYPE_OPTIONS = [
   { value: 'apartment', label_ar: 'شقة سكنية', label_en: 'Apartment' },
@@ -63,6 +64,7 @@ export default function AddDemandModal({
   const [whatsappError, setWhatsappError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedSuccess, setSubmittedSuccess] = useState(false);
+  const [hpField, setHpField] = useState('');
 
   if (!isOpen) return null;
 
@@ -70,6 +72,13 @@ export default function AddDemandModal({
     e.preventDefault();
     setPhoneError('');
     setWhatsappError('');
+
+    // 🛡️ 1. Anti-Bot & Spam Rate-Limit Shield
+    const spamCheck = checkFormSpamProtection(hpField, 'buyer_demand_modal');
+    if (!spamCheck.allowed) {
+      triggerToast?.(isAr ? spamCheck.message_ar : spamCheck.message_en, 'error');
+      return;
+    }
 
     // Validation
     if (!formData.name.trim()) {
@@ -245,6 +254,18 @@ export default function AddDemandModal({
             </div>
 
             <form onSubmit={handleSubmit} className="booking-form-wrap" style={{ gap: '16px' }}>
+              {/* 🍯 Invisible Honeypot Anti-Bot Shield */}
+              <div style={{ position: 'absolute', opacity: 0, zIndex: -1, pointerEvents: 'none', height: 0, overflow: 'hidden' }} aria-hidden="true">
+                <input
+                  type="text"
+                  name="user_web_ref_field"
+                  tabIndex="-1"
+                  autoComplete="off"
+                  value={hpField}
+                  onChange={(e) => setHpField(e.target.value)}
+                />
+              </div>
+
               {/* Privacy Notice Banner */}
               <div style={{ 
                 background: 'rgba(217, 119, 6, 0.08)', 

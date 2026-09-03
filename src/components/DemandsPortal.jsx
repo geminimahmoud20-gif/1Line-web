@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { 
   Zap, 
   Search, 
@@ -8,6 +8,7 @@ import {
   MapPin, 
   DollarSign 
 } from 'lucide-react';
+import { getAreas } from '../utils/areasData';
 
 export const DemandsPortal = ({
   lang,
@@ -27,7 +28,16 @@ export const DemandsPortal = ({
   handleAddNewLead,
   onOpenAddDemand
 }) => {
-  const publishedDemands = demands.filter(d => (d.status || 'published') === 'published');
+  const publishedDemands = useMemo(() => {
+    const publishedDemands = demands.filter(d => (d.status || 'published') === 'published');
+    return publishedDemands.sort((a, b) => {
+      const timeA = new Date(a.approvedAt || a.createdAt || a.timestamp || 0).getTime();
+      const timeB = new Date(b.approvedAt || b.createdAt || b.timestamp || 0).getTime();
+      return timeB - timeA;
+    });
+  }, [demands]);
+
+  const areas = useMemo(() => getAreas().filter(a => a.id !== 'all'), []);
 
   return (
     <div>
@@ -82,11 +92,12 @@ export const DemandsPortal = ({
               value={ownerSearch.area}
               onChange={(e) => setOwnerSearch({ ...ownerSearch, area: e.target.value })}
             >
-              <option value="east">{t.east}</option>
-              <option value="new_sohag">{t.new_sohag}</option>
-              <option value="kawthar">{t.kawthar}</option>
-              <option value="center">{t.center}</option>
-            </select>
+                {areas.map(a => (
+                  <option key={a.id} value={a.id}>
+                    {lang === 'ar' ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}
+                  </option>
+                ))}
+              </select>
           </div>
 
           <button 

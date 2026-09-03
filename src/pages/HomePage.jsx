@@ -31,6 +31,8 @@ import { MEGA_PROJECTS } from '../data/projectsData';
 import { TESTIMONIALS, INITIAL_DEMANDS } from '../data/mockData';
 import { getFounderSettings, DEFAULT_FOUNDER_CMS } from '../utils/founderCmsData';
 import { getAreas } from '../utils/areasData';
+import { updatePageSeo, buildOrganizationSchema } from '../utils/seoHelper';
+import { parseSemanticQuery, SEMANTIC_SEARCH_PRESETS } from '../utils/semanticSearchEngine';
 
 export default function HomePage({ 
   lang, 
@@ -63,6 +65,18 @@ export default function HomePage({
     window.addEventListener('oneline_founder_cms_updated', handleUpdate);
     window.addEventListener('oneline_areas_updated', handleAreasUpdate);
     
+    // 🌐 Update Homepage SEO & Organization Schema
+    updatePageSeo({
+      title: lang === 'ar' ? 'المنصة العقارية الذكية بسوهاج' : 'Smart Real Estate in Sohag',
+      description: lang === 'ar' 
+        ? 'المنصة العقارية الأولى المعتمدة بسوهاج وسوهاج الجديدة برؤية د. محمود الباز. عقارات مفحوصة هندسياً وقانونياً 100%، طلبات كاش فورية، ومؤشرات السوق المعتمدة.'
+        : 'Sohag premier verified real estate portal by Dr. Mahmoud Elbaz. 100% legally audited properties, cash buyer matching, and certified price benchmarks.',
+      url: '/',
+      type: 'website',
+      schemaId: 'organization-jsonld-schema',
+      schema: buildOrganizationSchema()
+    });
+
     // Smooth scroll and highlight if navigated to #about-us
     if (window.location.hash === '#about-us') {
       setTimeout(() => {
@@ -148,7 +162,22 @@ export default function HomePage({
   const handleHeroSearch = (e) => {
     e.preventDefault();
     const queryParams = new URLSearchParams();
-    if (searchKeyword.trim() !== '') queryParams.set('q', searchKeyword.trim());
+    const trimmed = searchKeyword.trim();
+    
+    if (trimmed !== '') {
+      queryParams.set('q', trimmed);
+      // Run deep semantic NLP extraction
+      const parsed = parseSemanticQuery(trimmed);
+      if (parsed.filters.area && searchArea === 'all') queryParams.set('area', parsed.filters.area);
+      if (parsed.filters.type && searchType === 'all') queryParams.set('type', parsed.filters.type);
+      if (parsed.filters.maxPrice && searchBudget === 'all') {
+        if (parsed.filters.maxPrice <= 3000000) queryParams.set('budget', 'under_3m');
+        else if (parsed.filters.maxPrice <= 6000000) queryParams.set('budget', '3m_to_6m');
+        else queryParams.set('budget', 'above_6m');
+      }
+      if (parsed.filters.bedrooms) queryParams.set('bedrooms', String(parsed.filters.bedrooms));
+    }
+
     if (searchArea !== 'all') queryParams.set('area', searchArea);
     if (searchType !== 'all') queryParams.set('type', searchType);
     if (searchBudget !== 'all') queryParams.set('budget', searchBudget);
@@ -459,6 +488,37 @@ export default function HomePage({
                   >
                     <span>{b.icon}</span>
                     <span>{lang === 'ar' ? b.label_ar : b.label_en}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 🤖 Smart AI Real Estate Query Chips */}
+            <div className="hero-quick-tags-container semantic-tier">
+              <span className="hero-quick-tag-label" style={{ color: 'var(--accent-gold)' }}>
+                <Sparkles size={13} className="text-gold" />
+                <span>{lang === 'ar' ? 'اسأل بالذكاء الاصطناعي:' : 'AI Natural Search:'}</span>
+              </span>
+              <div className="hero-quick-tags-list">
+                {SEMANTIC_SEARCH_PRESETS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => {
+                      const qText = lang === 'ar' ? preset.query_ar : preset.query_en;
+                      setSearchKeyword(qText);
+                      const parsed = parseSemanticQuery(qText);
+                      const params = new URLSearchParams();
+                      params.set('q', qText);
+                      if (parsed.filters.area) params.set('area', parsed.filters.area);
+                      if (parsed.filters.type) params.set('type', parsed.filters.type);
+                      navigate(`/properties?${params.toString()}`);
+                    }}
+                    className="hero-quick-area-tag"
+                    style={{ borderColor: 'rgba(217, 119, 6, 0.4)', background: 'rgba(217, 119, 6, 0.08)' }}
+                  >
+                    <span>{preset.icon}</span>
+                    <span>{lang === 'ar' ? preset.tag_ar : preset.query_en}</span>
                   </button>
                 ))}
               </div>

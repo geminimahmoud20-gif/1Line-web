@@ -326,17 +326,36 @@ export const CrmAdminPanel = ({
     }
   };
 
-  // Quick Action Handler (WhatsApp)
+  // Quick Action Handler (WhatsApp Direct Contact)
   const onWhatsAppClick = (lead) => {
     if (handleWhatsAppAction) {
       handleWhatsAppAction(lead);
     } else {
-      const cleanPhone = (lead.whatsapp || lead.phone || '').replace(/[^0-9]/g, '');
+      let cleanPhone = (lead.whatsapp || lead.phone || '').replace(/[^0-9]/g, '');
+      if (cleanPhone.startsWith('0') && cleanPhone.length === 11) {
+        cleanPhone = '2' + cleanPhone;
+      }
       const text = isAr 
-        ? `مرحباً أ. ${lead.name}، معك مستشار شركة 1Line للحلول العقارية بسوهاج. نود متابعة طلبك العقاري.` 
-        : `Hello ${lead.name}, this is 1Line Real Estate following up on your request.`;
+        ? `مرحباً أ. ${lead.name || ''}، معك مستشار شركة 1Line للحلول العقارية بسوهاج. نود متابعة طلبك العقاري ومساعدتك في أفضل الفرص المتاحة.` 
+        : `Hello ${lead.name || ''}, this is 1Line Real Estate following up on your property request in Sohag.`;
       window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`, '_blank');
     }
+  };
+
+  // Quick Action Handler (Dispatch Lead to Team / Agent via WhatsApp)
+  const onDispatchLeadClick = (lead) => {
+    const clientName = lead.name || (isAr ? 'عميل جديد' : 'New Lead');
+    const phone = lead.phone || lead.whatsapp || 'غير مسجل';
+    const type = isAr ? (lead.type === 'buyer' ? 'طلب شراء عقار' : lead.type === 'seller' ? 'عرض عقار للبيع' : lead.type === 'investor' ? 'مستثمر VIP' : lead.type) : lead.type;
+    const budget = lead.details?.budget || lead.details?.expectedPrice || 'غير محدد';
+    const area = lead.details?.area || 'سوهاج';
+    const notes = lead.notes || lead.details?.notes || 'لا توجد ملاحظات إضافية';
+
+    const dispatchText = isAr
+      ? `🚨 *إحالة عميل جديد - منصة 1Line العقارية*\n👤 *العميل:* ${clientName}\n📞 *الهاتف:* ${phone}\n🏢 *التصنيف:* ${type}\n📍 *المنطقة:* ${area}\n💰 *الميزانية/السعر:* ${budget}\n📝 *الملاحظات:* ${notes}\n📅 *الوقت:* ${new Date().toLocaleDateString('ar-EG')}\n⚡ *الإجراء المطلوب:* يرجى سرعة التواصل والمتابعة فوراً.`
+      : `🚨 *New 1Line Lead Dispatch*\n👤 *Client:* ${clientName}\n📞 *Phone:* ${phone}\n🏢 *Type:* ${type}\n📍 *Area:* ${area}\n💰 *Budget:* ${budget}\n📝 *Notes:* ${notes}`;
+
+    window.open(`https://wa.me/?text=${encodeURIComponent(dispatchText)}`, '_blank');
   };
 
   // CRM Analytics Metrics
@@ -1231,14 +1250,24 @@ export const CrmAdminPanel = ({
                             </button>
                           )}
 
-                          {/* WhatsApp Instant Direct Contact */}
+                          {/* WhatsApp Instant Direct Contact with Client */}
                           <button 
                             className="btn btn-sm btn-accent" 
                             onClick={() => onWhatsAppClick(l)} 
                             style={{ padding: '5px 7px' }} 
-                            title="WhatsApp"
+                            title={isAr ? 'محادثة العميل مباشرة عبر واتساب' : 'Chat with Client on WhatsApp'}
                           >
                             <MessageSquare size={13} />
+                          </button>
+
+                          {/* 1-Click Dispatch Lead Details to Agent/Team via WhatsApp */}
+                          <button 
+                            className="btn btn-sm btn-outline" 
+                            onClick={() => onDispatchLeadClick(l)} 
+                            style={{ padding: '5px 7px', borderColor: 'var(--accent-gold)', color: 'var(--accent-gold)' }} 
+                            title={isAr ? 'إحالة بيانات العميل لمسؤول المبيعات عبر واتساب' : 'Dispatch Lead to Sales Agent'}
+                          >
+                            <Send size={13} />
                           </button>
 
                           {/* Delete Lead */}

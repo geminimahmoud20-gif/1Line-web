@@ -144,3 +144,55 @@ export function normalizePhoneNumber(phone) {
   }
   return clean;
 }
+
+/**
+ * 🤖 Anti-Bot & Spam Prevention System (Honeypot + Client Rate-Limiting)
+ */
+const FORM_SUBMISSIONS_KEY = 'oneline_public_form_submissions';
+const MAX_SUBMISSIONS_PER_WINDOW = 3;
+const WINDOW_DURATION_MS = 2 * 60 * 1000; // 2 minutes
+
+export function checkFormSpamProtection(honeypotValue, formType = 'general') {
+  // 1. Honeypot check: If the hidden honeypot field has any value, it was filled by an automated bot
+  if (honeypotValue && typeof honeypotValue === 'string' && honeypotValue.trim().length > 0) {
+    console.warn(`[SecurityShield] Automated bot detected via honeypot in form [${formType}]. Submission blocked.`);
+    return {
+      allowed: false,
+      isBot: true,
+      message_ar: 'تعذر إرسال الطلب، يرجى إعادة المحاولة لاحقاً.',
+      message_en: 'Submission blocked. Please try again.'
+    };
+  }
+
+  // 2. Client-side Rate-limiting: Limit rapid automated spam flooding
+  try {
+    const raw = sessionStorage.getItem(FORM_SUBMISSIONS_KEY);
+    const history = raw ? JSON.parse(raw) : [];
+    const now = Date.now();
+    
+    // Filter timestamps within current window
+    const recentSubmissions = history.filter(time => now - time < WINDOW_DURATION_MS);
+
+    if (recentSubmissions.length >= MAX_SUBMISSIONS_PER_WINDOW) {
+      const oldest = Math.min(...recentSubmissions);
+      const remainingSeconds = Math.ceil((WINDOW_DURATION_MS - (now - oldest)) / 1000);
+      return {
+        allowed: false,
+        isRateLimited: true,
+        remainingSeconds,
+        message_ar: `تم إرسال عدة طلبات مؤخراً. لحماية المنظومة، يرجى الانتظار ${remainingSeconds} ثانية قبل إرسال طلب جديد.`,
+        message_en: `You have submitted multiple requests recently. Please wait ${remainingSeconds} seconds before submitting again.`
+      };
+    }
+
+    // Record submission timestamp
+    recentSubmissions.push(now);
+    sessionStorage.setItem(FORM_SUBMISSIONS_KEY, JSON.stringify(recentSubmissions));
+
+    return { allowed: true };
+  } catch (err) {
+    // If storage is unavailable, fail open safely
+    return { allowed: true };
+  }
+}
+

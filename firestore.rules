@@ -18,7 +18,8 @@ service cloud.firestore {
     // 📋 2. DEMANDS & CLIENT REQUESTS (طلبات العقارات المخصصة)
     match /demands/{demandId} {
       allow create: if true;
-      allow read, update, delete: if isAdmin();
+      allow read: if true;
+      allow update, delete: if isAdmin();
     }
 
     // 🏠 3. PROPERTIES INVENTORY (مخزون العقارات)

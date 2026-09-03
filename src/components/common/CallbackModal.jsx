@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, Phone, Sparkles } from 'lucide-react';
+import { checkFormSpamProtection } from '../../utils/securityShield';
 
 export default function CallbackModal({ isOpen, onClose, lang, onSubmitCallback, triggerToast }) {
   const [form, setForm] = useState({
@@ -7,11 +8,20 @@ export default function CallbackModal({ isOpen, onClose, lang, onSubmitCallback,
     phone: '',
     preferredTime: 'immediate'
   });
+  const [hpField, setHpField] = useState('');
 
   if (!isOpen) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // 🛡️ Anti-Bot & Spam Rate-Limit Shield
+    const spamCheck = checkFormSpamProtection(hpField, 'callback_modal');
+    if (!spamCheck.allowed) {
+      triggerToast(lang === 'ar' ? spamCheck.message_ar : spamCheck.message_en, 'error');
+      return;
+    }
+
     if (!form.name || !form.phone) {
       triggerToast(lang === 'ar' ? 'يرجى إدخال الاسم ورقم الهاتف' : 'Please fill name and phone', 'error');
       return;
@@ -35,6 +45,18 @@ export default function CallbackModal({ isOpen, onClose, lang, onSubmitCallback,
         </div>
 
         <form onSubmit={handleSubmit} className="booking-form-wrap">
+          {/* 🍯 Invisible Honeypot Anti-Bot Shield */}
+          <div style={{ position: 'absolute', opacity: 0, zIndex: -1, pointerEvents: 'none', height: 0, overflow: 'hidden' }} aria-hidden="true">
+            <input
+              type="text"
+              name="callback_bot_trap_hp"
+              tabIndex="-1"
+              autoComplete="off"
+              value={hpField}
+              onChange={(e) => setHpField(e.target.value)}
+            />
+          </div>
+
           <div className="form-group-item">
             <label>{lang === 'ar' ? 'الاسم بالكامل' : 'Full Name'}</label>
             <input

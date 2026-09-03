@@ -1038,54 +1038,84 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 22px;
-  padding: 12px 18px;
-  background: rgba(13, 72, 161, 0.04);
-  border: 1px solid rgba(13, 72, 161, 0.12);
-  border-radius: var(--radius-md);
+  gap: 14px;
+  margin-bottom: 24px;
+  padding: 14px 20px;
+  background: #f8fafc;
+  border: 1px solid rgba(13, 72, 161, 0.16);
+  border-radius: var(--radius-lg);
   flex-wrap: wrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="dark"] .marketplace-filter-strip,
+.dark .marketplace-filter-strip {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .filter-strip-label {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.82rem;
-  font-weight: 800;
-  color: var(--text-primary);
+  font-size: 0.86rem;
+  font-weight: 850;
+  color: #0d48a1;
+}
+
+[data-theme="dark"] .filter-strip-label,
+.dark .filter-strip-label {
+  color: #93c5fd;
 }
 
 .filter-strip-chips {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .filter-chip-btn {
   background: #ffffff;
-  border: 1px solid var(--border-color);
-  color: var(--text-secondary);
+  border: 1px solid rgba(13, 72, 161, 0.22);
+  color: #0f172a;
   border-radius: var(--radius-pill);
-  padding: 5px 14px;
-  font-size: 0.78rem;
-  font-weight: 700;
+  padding: 6px 16px;
+  font-size: 0.8rem;
+  font-weight: 800;
   cursor: pointer;
-  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .filter-chip-btn:hover {
-  border-color: var(--primary);
-  color: var(--primary);
-  transform: translateY(-1px);
+  border-color: #0d48a1;
+  color: #0d48a1;
+  background: rgba(13, 72, 161, 0.06);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(13, 72, 161, 0.18);
 }
 
 .filter-chip-btn.active {
   background: linear-gradient(135deg, #0d48a1 0%, #092347 100%);
   color: #ffffff;
   border-color: #0d48a1;
-  box-shadow: 0 4px 12px rgba(13, 72, 161, 0.25);
+  box-shadow: 0 4px 14px rgba(13, 72, 161, 0.35);
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .filter-chip-btn,
+.dark .filter-chip-btn {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .filter-chip-btn:hover,
+.dark .filter-chip-btn:hover {
+  background: rgba(13, 72, 161, 0.4);
+  border-color: #93c5fd;
+  color: #ffffff;
 }
 
 .marketplace-empty-box {

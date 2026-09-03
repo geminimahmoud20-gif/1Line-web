@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
   LayoutGrid, 
@@ -11,6 +11,8 @@ import PropertyCard from '../components/properties/PropertyCard';
 import PropertyFilters from '../components/properties/PropertyFilters';
 import PropertyMapView from '../components/properties/PropertyMapView';
 import ZeroResultsFallback from '../components/properties/ZeroResultsFallback';
+import { updatePageSeo } from '../utils/seoHelper';
+import { searchPropertiesSemantic, parseSemanticQuery } from '../utils/semanticSearchEngine';
 
 export default function PropertiesPage({
   lang,
@@ -26,6 +28,20 @@ export default function PropertiesPage({
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [hoveredPropertyId, setHoveredPropertyId] = useState(null);
   const [sortBy, setSortBy] = useState('featured'); // 'featured' | 'price_asc' | 'price_desc' | 'size_desc'
+  const [visibleCount, setVisibleCount] = useState(12);
+
+  // Dynamic SEO for Properties Catalog
+  useEffect(() => {
+    const isAr = lang === 'ar';
+    updatePageSeo({
+      title: isAr ? 'استكشاف العقارات بسوهاج | شقق وفيلات وأراضي' : 'Properties in Sohag | Apartments & Villas',
+      description: isAr 
+        ? 'تصفح أحدث العقارات المفحوصة والمعتمدة قانونياً في سوهاج وسوهاج الجديدة مع منصة 1Line.' 
+        : 'Explore certified properties in Sohag and New Sohag with 1Line Real Estate.',
+      url: '/properties',
+      type: 'website'
+    });
+  }, [lang]);
 
   // Initialize filters from URL search params
   const [filters, setFilters] = useState({
@@ -35,6 +51,11 @@ export default function PropertiesPage({
     maxPrice: searchParams.get('budget') ? (searchParams.get('budget') === 'under_3m' ? 3000000 : searchParams.get('budget') === '3m_to_6m' ? 6000000 : 15000000) : 15000000,
     bedrooms: searchParams.get('bedrooms') || 'any'
   });
+
+  // Reset pagination on filter change
+  useEffect(() => {
+    setVisibleCount(12);
+  }, [filters, sortBy]);
 
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -51,14 +72,27 @@ export default function PropertiesPage({
     setSearchParams({});
   };
 
+  // Parse semantic query tags if query is present
+  const parsedSemantic = useMemo(() => {
+    if (!filters.query || !filters.query.trim()) return null;
+    return parseSemanticQuery(filters.query);
+  }, [filters.query]);
+
   // Filter & Sort Properties
   const filteredProperties = useMemo(() => {
-    return properties.filter((prop) => {
-      // 🛡️ Exclude soft-deleted, hidden, or draft properties from public visitors
-      if (prop.isDeleted || prop.status === 'trash' || prop.status === 'hidden' || prop.status === 'draft') {
-        return false;
-      }
+    // 1. Initial pool: exclude deleted, trash, hidden, draft
+    const pool = properties.filter((prop) => {
+      return !(prop.isDeleted || prop.status === 'trash' || prop.status === 'hidden' || prop.status === 'draft');
+    });
 
+    // 2. If semantic query exists, rank by semantic engine
+    let list = pool;
+    if (filters.query && filters.query.trim() !== '') {
+      list = searchPropertiesSemantic(pool, filters.query);
+    }
+
+    // 3. Apply manual dropdown filters
+    return list.filter((prop) => {
       // Type filter
       if (filters.type !== 'all' && prop.type !== filters.type) return false;
 
@@ -77,24 +111,15 @@ export default function PropertiesPage({
         }
       }
 
-      // Keyword query search
-      if (filters.query && filters.query.trim() !== '') {
-        const q = filters.query.toLowerCase().trim();
-        const titleAr = (prop.title_ar || '').toLowerCase();
-        const titleEn = (prop.title_en || '').toLowerCase();
-        const locAr = (prop.locationName_ar || '').toLowerCase();
-        const locEn = (prop.locationName_en || '').toLowerCase();
-        const descAr = (prop.description_ar || '').toLowerCase();
-        if (!titleAr.includes(q) && !titleEn.includes(q) && !locAr.includes(q) && !locEn.includes(q) && !descAr.includes(q)) {
-          return false;
-        }
-      }
-
       return true;
     }).sort((a, b) => {
       if (sortBy === 'price_asc') return a.price - b.price;
       if (sortBy === 'price_desc') return b.price - a.price;
       if (sortBy === 'size_desc') return b.size - a.size;
+      // If semantic score exists and differs, preserve semantic ranking
+      if (a._semanticScore !== undefined && b._semanticScore !== undefined && a._semanticScore !== b._semanticScore) {
+        return b._semanticScore - a._semanticScore;
+      }
       return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
     });
   }, [properties, filters, sortBy]);
@@ -156,36 +181,104 @@ export default function PropertiesPage({
           totalResults={filteredProperties.length}
         />
 
+        {/* 🤖 AI Semantic Recognition Active Banner */}
+        {parsedSemantic && parsedSemantic.tagsFound && parsedSemantic.tagsFound.length > 0 && (
+          <div className="semantic-active-tags-banner" style={{
+            background: 'linear-gradient(90deg, rgba(217, 119, 6, 0.12), rgba(15, 23, 42, 0.4))',
+            border: '1px solid rgba(217, 119, 6, 0.3)',
+            borderRadius: '12px',
+            padding: '10px 16px',
+            margin: '14px 0 18px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '10px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--accent-gold)' }}>
+                🤖 {lang === 'ar' ? 'نتائج مطابقة الفهم الذكي للطلب:' : 'AI Recognized Parameters:'}
+              </span>
+              {parsedSemantic.tagsFound.map((tag, idx) => (
+                <span key={idx} style={{
+                  background: 'rgba(217, 119, 6, 0.2)',
+                  color: 'var(--text-primary)',
+                  padding: '3px 9px',
+                  borderRadius: '16px',
+                  fontSize: '0.78rem',
+                  fontWeight: '600'
+                }}>
+                  {tag.label_ar}
+                </span>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={handleResetFilters}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-secondary)',
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+                textDecoration: 'underline'
+              }}
+            >
+              {lang === 'ar' ? 'إلغاء وتصفية الكل' : 'Clear Search'}
+            </button>
+          </div>
+        )}
+
         {/* View Layout Container */}
         {viewMode === 'split' ? (
           <div className="split-view-container">
             {/* Cards List Column */}
             <div className="split-cards-column">
               {filteredProperties.length > 0 ? (
-                <div className="properties-grid-split">
-                  {filteredProperties.map((prop) => (
-                    <div 
-                      key={prop.id}
-                      id={`prop-card-${prop.id}`}
-                      onMouseEnter={() => {
-                        setSelectedProperty(prop);
-                        setHoveredPropertyId(prop.id);
-                      }}
-                      onMouseLeave={() => setHoveredPropertyId(null)}
-                      className={`split-card-item ${selectedProperty?.id === prop.id || hoveredPropertyId === prop.id ? 'highlighted' : ''}`}
-                    >
-                      <PropertyCard
-                        property={prop}
-                        lang={lang}
-                        isFavorite={favorites.includes(prop.id)}
-                        onToggleFavorite={onToggleFavorite}
-                        isCompared={compareList.some(c => c.id === prop.id)}
-                        onToggleCompare={onToggleCompare}
-                        onQuickView={onQuickView}
-                      />
+                <>
+                  <div className="properties-grid-split">
+                    {filteredProperties.slice(0, visibleCount).map((prop) => (
+                      <div 
+                        key={prop.id}
+                        id={`prop-card-${prop.id}`}
+                        onMouseEnter={() => {
+                          setSelectedProperty(prop);
+                          setHoveredPropertyId(prop.id);
+                        }}
+                        onMouseLeave={() => setHoveredPropertyId(null)}
+                        className={`split-card-item ${selectedProperty?.id === prop.id || hoveredPropertyId === prop.id ? 'highlighted' : ''}`}
+                      >
+                        <PropertyCard
+                          property={prop}
+                          lang={lang}
+                          isFavorite={favorites.includes(prop.id)}
+                          onToggleFavorite={onToggleFavorite}
+                          isCompared={compareList.some(c => c.id === prop.id)}
+                          onToggleCompare={onToggleCompare}
+                          onQuickView={onQuickView}
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {visibleCount < filteredProperties.length && (
+                    <div style={{ textAlign: 'center', marginTop: '24px', padding: '16px 0' }}>
+                      <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '10px' }}>
+                        {lang === 'ar' 
+                          ? `عرض ${Math.min(visibleCount, filteredProperties.length)} من أصل ${filteredProperties.length} عقاراً معتمداً` 
+                          : `Showing ${Math.min(visibleCount, filteredProperties.length)} of ${filteredProperties.length} verified properties`}
+                      </p>
+                      <button
+                        type="button"
+                        className="btn btn-outline"
+                        style={{ padding: '8px 20px', fontWeight: 'bold', borderColor: 'var(--accent-gold)', color: 'var(--text-primary)' }}
+                        onClick={() => setVisibleCount(prev => prev + 12)}
+                      >
+                        <span>{lang === 'ar' ? 'عرض المزيد من العقارات ➕' : 'Load More Properties ➕'}</span>
+                      </button>
                     </div>
-                  ))}
-                </div>
+                  )}
+                </>
               ) : (
                 <ZeroResultsFallback
                   lang={lang}
@@ -233,20 +326,40 @@ export default function PropertiesPage({
           /* Grid View Layout */
           <div className="grid-view-container">
             {filteredProperties.length > 0 ? (
-              <div className="properties-grid-full">
-                {filteredProperties.map((prop) => (
-                  <PropertyCard
-                    key={prop.id}
-                    property={prop}
-                    lang={lang}
-                    isFavorite={favorites.includes(prop.id)}
-                    onToggleFavorite={onToggleFavorite}
-                    isCompared={compareList.some(c => c.id === prop.id)}
-                    onToggleCompare={onToggleCompare}
-                    onQuickView={onQuickView}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="properties-grid-full">
+                  {filteredProperties.slice(0, visibleCount).map((prop) => (
+                    <PropertyCard
+                      key={prop.id}
+                      property={prop}
+                      lang={lang}
+                      isFavorite={favorites.includes(prop.id)}
+                      onToggleFavorite={onToggleFavorite}
+                      isCompared={compareList.some(c => c.id === prop.id)}
+                      onToggleCompare={onToggleCompare}
+                      onQuickView={onQuickView}
+                    />
+                  ))}
+                </div>
+
+                {visibleCount < filteredProperties.length && (
+                  <div style={{ textAlign: 'center', marginTop: '30px', padding: '20px 0' }}>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+                      {lang === 'ar' 
+                        ? `عرض ${Math.min(visibleCount, filteredProperties.length)} من أصل ${filteredProperties.length} عقاراً معتمداً` 
+                        : `Showing ${Math.min(visibleCount, filteredProperties.length)} of ${filteredProperties.length} verified properties`}
+                    </p>
+                    <button
+                      type="button"
+                      className="btn btn-outline"
+                      style={{ padding: '10px 24px', fontWeight: 'bold', borderColor: 'var(--accent-gold)', color: 'var(--text-primary)' }}
+                      onClick={() => setVisibleCount(prev => prev + 12)}
+                    >
+                      <span>{lang === 'ar' ? 'عرض المزيد من العقارات ➕' : 'Load More Properties ➕'}</span>
+                    </button>
+                  </div>
+                )}
+              </>
             ) : (
               <ZeroResultsFallback
                 lang={lang}
