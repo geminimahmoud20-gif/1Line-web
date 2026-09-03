@@ -23,6 +23,7 @@ import { sanitizeObject, normalizePhoneNumber } from './utils/securityShield';
 import { getOrCreateSession, trackEvent, identifyVisitor } from './utils/visitorTracker';
 import { isRecordArray, readStoredJson } from './utils/browserStorage';
 import { initFounderCmsSync } from './utils/founderCmsData';
+import { initAreasSync } from './utils/areasData';
 
 // Layout & Common Components
 import Header from './components/common/Header';
@@ -123,11 +124,13 @@ export default function App() {
     trackEvent('page_view', { path: location.pathname });
   }, [location.pathname]);
 
-  // Real-time Cloud Settings & Founder CMS Synchronization
+  // Real-time Cloud Settings, Founder CMS & Areas Synchronization
   useEffect(() => {
-    const unsub = initFounderCmsSync();
+    const unsubFounder = initFounderCmsSync();
+    const unsubAreas = initAreasSync();
     return () => {
-      if (typeof unsub === 'function') unsub();
+      if (typeof unsubFounder === 'function') unsubFounder();
+      if (typeof unsubAreas === 'function') unsubAreas();
     };
   }, []);
 

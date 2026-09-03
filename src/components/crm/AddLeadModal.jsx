@@ -12,7 +12,8 @@ import {
   X, 
   Save 
 } from 'lucide-react';
-import { SOHAG_AREAS, PROPERTY_TYPES } from '../../data/propertiesData';
+import { PROPERTY_TYPES } from '../../data/propertiesData';
+import { getAreas } from '../../utils/areasData';
 
 export default function AddLeadModal({
   isOpen,
@@ -202,8 +203,8 @@ export default function AddLeadModal({
                 value={formData.area}
                 onChange={(e) => setFormData({ ...formData, area: e.target.value })}
               >
-                {SOHAG_AREAS.filter(a => a.id !== 'all').map(a => (
-                  <option key={a.id} value={a.id}>{isAr ? a.name_ar : a.name_en}</option>
+                {getAreas().filter(a => a.id !== 'all').map(a => (
+                  <option key={a.id} value={a.id}>{isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}</option>
                 ))}
               </select>
             </div>

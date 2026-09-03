@@ -1,5 +1,7 @@
+import { useState, useEffect } from 'react';
 import { Search, SlidersHorizontal, RotateCcw } from 'lucide-react';
-import { SOHAG_AREAS, PROPERTY_TYPES } from '../../data/propertiesData';
+import { PROPERTY_TYPES } from '../../data/propertiesData';
+import { getAreas } from '../../utils/areasData';
 
 export default function PropertyFilters({
   lang,
@@ -8,6 +10,15 @@ export default function PropertyFilters({
   onResetFilters,
   totalResults
 }) {
+  const [areas, setAreas] = useState(() => getAreas());
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setAreas(getAreas());
+    };
+    window.addEventListener('oneline_areas_updated', handleUpdate);
+    return () => window.removeEventListener('oneline_areas_updated', handleUpdate);
+  }, []);
   return (
     <div className="properties-filters-card">
       <div className="filter-header-bar">
@@ -67,9 +78,9 @@ export default function PropertyFilters({
             value={filters.area || 'all'}
             onChange={(e) => onFilterChange('area', e.target.value)}
           >
-            {SOHAG_AREAS.map((a) => (
+            {areas.map((a) => (
               <option key={a.id} value={a.id}>
-                {lang === 'ar' ? a.name_ar : a.name_en}
+                {lang === 'ar' ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}
               </option>
             ))}
           </select>
@@ -83,48 +94,64 @@ export default function PropertyFilters({
               {filters.maxPrice ? parseInt(filters.maxPrice).toLocaleString() : '15,000,000'} {lang === 'ar' ? 'ج.م' : 'EGP'}
             </span>
           </div>
-          <input
-            type="range"
-            min="1000000"
-            max="15000000"
-            step="250000"
-            value={filters.maxPrice || 15000000}
-            onChange={(e) => onFilterChange('maxPrice', parseInt(e.target.value))}
-            className="filter-range-slider"
-          />
-          <div className="filter-quick-chips-strip" style={{ display: 'flex', gap: '4px', marginTop: '6px', flexWrap: 'wrap' }}>
-            {[
-              { val: 2000000, label_ar: '2 مليون', label_en: '2M' },
-              { val: 3500000, label_ar: '3.5 مليون', label_en: '3.5M' },
-              { val: 5000000, label_ar: '5 مليون', label_en: '5M' },
-              { val: 8000000, label_ar: '8 مليون', label_en: '8M' },
-              { val: 15000000, label_ar: 'الكل', label_en: 'Max' }
-            ].map(b => (
-              <button
-                key={b.val}
-                type="button"
-                className={`bedroom-pill ${filters.maxPrice === b.val ? 'active' : ''}`}
-                onClick={() => onFilterChange('maxPrice', b.val)}
-                style={{ fontSize: '0.7rem', padding: '2px 7px' }}
+          <div className="budget-slider-wrap">
+            <input
+              type="range"
+              min="500000"
+              max="20000000"
+              step="250000"
+              value={filters.maxPrice || 15000000}
+              onChange={(e) => onFilterChange('maxPrice', e.target.value)}
+              className="range-slider"
+            />
+            {/* Quick Price Shortcuts */}
+            <div className="quick-price-pills">
+              <button 
+                type="button" 
+                className={`price-mini-pill ${filters.maxPrice === '2000000' ? 'active' : ''}`}
+                onClick={() => onFilterChange('maxPrice', '2000000')}
               >
-                {lang === 'ar' ? b.label_ar : b.label_en}
+                {lang === 'ar' ? 'حتى 2 مليون' : '≤ 2M'}
               </button>
-            ))}
+              <button 
+                type="button" 
+                className={`price-mini-pill ${filters.maxPrice === '4000000' ? 'active' : ''}`}
+                onClick={() => onFilterChange('maxPrice', '4000000')}
+              >
+                {lang === 'ar' ? 'حتى 4 مليون' : '≤ 4M'}
+              </button>
+              <button 
+                type="button" 
+                className={`price-mini-pill ${filters.maxPrice === '8000000' ? 'active' : ''}`}
+                onClick={() => onFilterChange('maxPrice', '8000000')}
+              >
+                {lang === 'ar' ? 'حتى 8 مليون' : '≤ 8M'}
+              </button>
+              <button 
+                type="button" 
+                className={`price-mini-pill ${!filters.maxPrice || filters.maxPrice === '20000000' ? 'active' : ''}`}
+                onClick={() => onFilterChange('maxPrice', '20000000')}
+              >
+                {lang === 'ar' ? 'الكل' : 'Any'}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Bedrooms selector */}
+        {/* Bedrooms Count */}
         <div className="filter-item">
-          <label>{lang === 'ar' ? 'عدد الغرف الأدنى' : 'Min Bedrooms'}</label>
-          <div className="bedrooms-pills">
-            {['any', '1', '2', '3', '4+'].map((beds) => (
+          <label>{lang === 'ar' ? 'عدد الغرف' : 'Bedrooms'}</label>
+          <div className="bedroom-pills">
+            {['all', '1', '2', '3', '4+'].map((beds) => (
               <button
                 key={beds}
                 type="button"
-                className={`bedroom-pill ${filters.bedrooms === beds ? 'active' : ''}`}
-                onClick={() => onFilterChange('bedrooms', beds)}
+                className={`bedroom-pill ${
+                  (filters.bedrooms === beds || (!filters.bedrooms && beds === 'all')) ? 'active' : ''
+                }`}
+                onClick={() => onFilterChange('bedrooms', beds === 'all' ? '' : beds)}
               >
-                {beds === 'any' ? (lang === 'ar' ? 'الكل' : 'Any') : beds}
+                {beds === 'all' ? (lang === 'ar' ? 'الكل' : 'All') : beds}
               </button>
             ))}
           </div>
@@ -136,7 +163,7 @@ export default function PropertyFilters({
         <span style={{ fontSize: '0.76rem', fontWeight: '800', color: 'var(--text-muted)' }}>
           {lang === 'ar' ? 'أبرز المناطق:' : 'Top Locations:'}
         </span>
-        {SOHAG_AREAS.slice(0, 6).map((area) => (
+        {areas.slice(0, 7).map((area) => (
           <button
             key={area.id}
             type="button"

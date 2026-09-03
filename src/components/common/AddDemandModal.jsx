@@ -16,15 +16,7 @@ import {
   Info 
 } from 'lucide-react';
 import PhoneInputField, { SUPPORTED_COUNTRIES } from '../PhoneInputField';
-
-const AREA_OPTIONS = [
-  { value: 'east', label_ar: 'شرق سوهاج', label_en: 'East Sohag' },
-  { value: 'new_sohag', label_ar: 'سوهاج الجديدة', label_en: 'New Sohag' },
-  { value: 'kawthar', label_ar: 'حي الكوثر', label_en: 'Al-Kawthar' },
-  { value: 'center', label_ar: 'وسط البلد - الجامعة', label_en: 'City Center / University' },
-  { value: 'west', label_ar: 'غرب سوهاج', label_en: 'West Sohag' },
-  { value: 'akhmeem', label_ar: 'أخميم', label_en: 'Akhmeem' }
-];
+import { getAreas } from '../../utils/areasData';
 
 const PROP_TYPE_OPTIONS = [
   { value: 'apartment', label_ar: 'شقة سكنية', label_en: 'Apartment' },
@@ -303,9 +295,9 @@ export default function AddDemandModal({
                     onChange={(e) => setFormData({ ...formData, area: e.target.value })}
                     required
                   >
-                    {AREA_OPTIONS.map(opt => (
-                      <option key={opt.value} value={opt.value}>
-                        {isAr ? opt.label_ar : opt.label_en}
+                    {getAreas().filter(a => a.id !== 'all').map(opt => (
+                      <option key={opt.id} value={opt.id}>
+                        {isAr ? (opt.label_ar || opt.name_ar) : (opt.label_en || opt.name_en)}
                       </option>
                     ))}
                   </select>

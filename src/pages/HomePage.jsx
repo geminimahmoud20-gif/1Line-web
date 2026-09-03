@@ -22,10 +22,11 @@ import AboutFounderSection from '../components/home/AboutFounderSection';
 import SponsoredAdsShowcase from '../components/home/SponsoredAdsShowcase';
 import MortgageRoiCalculator from '../components/calculators/MortgageRoiCalculator';
 import MarketTickerBar from '../components/home/MarketTickerBar';
-import { SOHAG_AREAS, PROPERTY_TYPES } from '../data/propertiesData';
+import { PROPERTY_TYPES } from '../data/propertiesData';
 import { MEGA_PROJECTS } from '../data/projectsData';
 import { TESTIMONIALS } from '../data/mockData';
 import { getFounderSettings, DEFAULT_FOUNDER_CMS } from '../utils/founderCmsData';
+import { getAreas } from '../utils/areasData';
 
 export default function HomePage({ 
   lang, 
@@ -47,14 +48,20 @@ export default function HomePage({
   const [searchArea, setSearchArea] = useState('all');
   const [searchType, setSearchType] = useState('all');
   const [searchBudget, setSearchBudget] = useState('all');
+  const [districts, setDistricts] = useState(() => getAreas());
 
   // Dynamic Corporate & Hero Stats Settings from CMS
   const [founderSettings, setFounderSettings] = useState(() => getFounderSettings());
 
   useEffect(() => {
     const handleUpdate = () => setFounderSettings(getFounderSettings());
+    const handleAreasUpdate = () => setDistricts(getAreas());
     window.addEventListener('oneline_founder_cms_updated', handleUpdate);
-    return () => window.removeEventListener('oneline_founder_cms_updated', handleUpdate);
+    window.addEventListener('oneline_areas_updated', handleAreasUpdate);
+    return () => {
+      window.removeEventListener('oneline_founder_cms_updated', handleUpdate);
+      window.removeEventListener('oneline_areas_updated', handleAreasUpdate);
+    };
   }, []);
 
   // Compact Hub Navigation Tabs
@@ -70,10 +77,10 @@ export default function HomePage({
   const matchingDistricts = useMemo(() => {
     if (!searchKeyword.trim()) return [];
     const q = searchKeyword.toLowerCase().trim();
-    return SOHAG_AREAS.filter(a => 
-      a.id !== 'all' && (a.name_ar.toLowerCase().includes(q) || a.name_en.toLowerCase().includes(q))
+    return districts.filter(a => 
+      a.id !== 'all' && ((a.name_ar && a.name_ar.toLowerCase().includes(q)) || (a.name_en && a.name_en.toLowerCase().includes(q)))
     ).slice(0, 3);
-  }, [searchKeyword]);
+  }, [searchKeyword, districts]);
 
   const matchingProjects = useMemo(() => {
     if (!searchKeyword.trim()) return [];
@@ -320,9 +327,9 @@ export default function HomePage({
                   <span>{lang === 'ar' ? 'المنطقة' : 'Location'}</span>
                 </label>
                 <select value={searchArea} onChange={(e) => setSearchArea(e.target.value)}>
-                  {SOHAG_AREAS.map((a) => (
+                  {districts.map((a) => (
                     <option key={a.id} value={a.id}>
-                      {lang === 'ar' ? a.name_ar : a.name_en}
+                      {lang === 'ar' ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}
                     </option>
                   ))}
                 </select>

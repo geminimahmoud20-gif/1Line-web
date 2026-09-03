@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Lock, ShieldCheck, LogOut, Users, Building, Sparkles, KeyRound, Eye, EyeOff, AlertTriangle, Globe, Zap, Search, X, ChevronDown, Plus, Clock, Rocket } from 'lucide-react';
+import { Lock, ShieldCheck, LogOut, Users, Building, Sparkles, KeyRound, Eye, EyeOff, AlertTriangle, Globe, Zap, Search, X, ChevronDown, Plus, Clock, Rocket, MapPin } from 'lucide-react';
 import LogoEmblem from '../components/LogoEmblem';
 import CrmAdminPanel from '../components/CrmAdminPanel';
 import PropertyManagerPanel from '../components/crm/PropertyManagerPanel';
 import MegaProjectsManagerPanel from '../components/crm/MegaProjectsManagerPanel';
 import DemandsManagerPanel from '../components/crm/DemandsManagerPanel';
 import FounderCmsPanel from '../components/crm/FounderCmsPanel';
+import AreaManagerPanel from '../components/crm/AreaManagerPanel';
 import GoLiveWizardModal from '../components/crm/GoLiveWizardModal';
 import { isFirebaseAuthAvailable, loginUser } from '../firebaseService';
 
@@ -737,6 +738,30 @@ export default function CrmPage({
               <ShieldCheck size={16} />
               <span>{isAr ? 'هوية الشركة والإدارة (CMS)' : 'Corporate CMS'}</span>
             </button>
+
+            {/* Tab 6: Areas & Districts CMS */}
+            <button
+              type="button"
+              onClick={() => setActiveTab('areas')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 18px',
+                borderRadius: '10px',
+                fontSize: '0.86rem',
+                fontWeight: activeTab === 'areas' ? 'bold' : '500',
+                background: activeTab === 'areas' ? 'linear-gradient(135deg, #d97706, #b45309)' : 'transparent',
+                color: activeTab === 'areas' ? '#ffffff' : '#94a3b8',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: activeTab === 'areas' ? '0 4px 15px rgba(217, 119, 6, 0.35)' : 'none'
+              }}
+            >
+              <MapPin size={16} />
+              <span>{isAr ? 'إدارة المناطق والأحياء' : 'Districts CMS'}</span>
+            </button>
           </nav>
 
           {/* Universal Search & Quick Action Speed Dial */}
@@ -921,10 +946,18 @@ export default function CrmPage({
                   <button
                     type="button"
                     onClick={() => { setActiveTab('projects'); setShowQuickActionMenu(false); }}
-                    style={{ width: '100%', padding: '10px 14px', textAlign: isAr ? 'right' : 'left', background: 'none', border: 'none', color: '#fff', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                    style={{ width: '100%', padding: '10px 14px', textAlign: isAr ? 'right' : 'left', background: 'none', border: 'none', color: '#fff', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
                   >
                     <Sparkles size={14} style={{ color: '#a855f7' }} />
                     <span>{isAr ? '+ إضافة مشروع استثماري' : '+ New Project'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setActiveTab('areas'); setShowQuickActionMenu(false); }}
+                    style={{ width: '100%', padding: '10px 14px', textAlign: isAr ? 'right' : 'left', background: 'none', border: 'none', color: '#fff', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                  >
+                    <MapPin size={14} style={{ color: 'var(--accent-gold)' }} />
+                    <span>{isAr ? '+ إدارة وإضافة المناطق' : '+ Districts CMS'}</span>
                   </button>
                 </div>
               )}
@@ -987,6 +1020,13 @@ export default function CrmPage({
             onUnpublishDemand={onUnpublishDemand}
             lang={lang}
             triggerToast={triggerToast}
+          />
+        ) : activeTab === 'areas' ? (
+          <AreaManagerPanel
+            lang={lang}
+            triggerToast={triggerToast}
+            properties={properties}
+            leads={leads}
           />
         ) : (
           <FounderCmsPanel

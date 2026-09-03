@@ -344,15 +344,10 @@ export const PROPERTIES_DATA = [
   }
 ];
 
-export const SOHAG_AREAS = [
-  { id: 'all', name_ar: 'كل المناطق', name_en: 'All Locations' },
-  { id: 'east', name_ar: 'شرق سوهاج', name_en: 'East Sohag', center: { lat: 26.5569, lng: 31.7001 } },
-  { id: 'new_sohag', name_ar: 'سوهاج الجديدة', name_en: 'New Sohag', center: { lat: 26.4715, lng: 31.6620 } },
-  { id: 'west', name_ar: 'غرب سوهاج', name_en: 'West Sohag', center: { lat: 26.5500, lng: 31.6850 } },
-  { id: 'kawthar', name_ar: 'حي الكوثر', name_en: 'Al Kawthar', center: { lat: 26.5920, lng: 31.7850 } },
-  { id: 'center', name_ar: 'وسط البلد', name_en: 'City Center', center: { lat: 26.5620, lng: 31.6910 } },
-  { id: 'akhmeem', name_ar: 'أخميم', name_en: 'Akhmeem', center: { lat: 26.5650, lng: 31.7450 } }
-];
+import { getAreas, DEFAULT_SOHAG_AREAS } from '../utils/areasData';
+
+export const SOHAG_AREAS = getAreas();
+export { getAreas, DEFAULT_SOHAG_AREAS };
 
 export const PROPERTY_TYPES = [
   { id: 'all', name_ar: 'جميع الأنواع', name_en: 'All Types' },

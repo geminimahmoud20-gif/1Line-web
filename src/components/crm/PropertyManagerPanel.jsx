@@ -26,7 +26,8 @@ import {
   FileSpreadsheet,
   MessageSquare
 } from 'lucide-react';
-import { SOHAG_AREAS, PROPERTY_TYPES } from '../../data/propertiesData';
+import { PROPERTY_TYPES } from '../../data/propertiesData';
+import { getAreas } from '../../utils/areasData';
 import { exportToCsv } from '../../utils/exportCsv';
 import InteractiveMapPickerModal from './InteractiveMapPickerModal';
 import WhatsAppMatchNotifierModal from './WhatsAppMatchNotifierModal';
@@ -62,6 +63,13 @@ export default function PropertyManagerPanel({
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [notifierProperty, setNotifierProperty] = useState(null);
   const [notifierEventType, setNotifierEventType] = useState('new_unit');
+  const [areas, setAreas] = useState(() => getAreas());
+
+  useEffect(() => {
+    const handleUpdate = () => setAreas(getAreas());
+    window.addEventListener('oneline_areas_updated', handleUpdate);
+    return () => window.removeEventListener('oneline_areas_updated', handleUpdate);
+  }, []);
 
   const isAr = lang === 'ar';
 
@@ -911,8 +919,8 @@ export default function PropertyManagerPanel({
                     value={form.areaKey}
                     onChange={(e) => setForm({ ...form, areaKey: e.target.value })}
                   >
-                    {SOHAG_AREAS.filter(a => a.id !== 'all').map(a => (
-                      <option key={a.id} value={a.id}>{isAr ? a.name_ar : a.name_en}</option>
+                    {areas.filter(a => a.id !== 'all').map(a => (
+                      <option key={a.id} value={a.id}>{isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}</option>
                     ))}
                   </select>
                 </div>

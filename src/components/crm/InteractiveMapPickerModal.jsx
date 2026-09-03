@@ -12,7 +12,7 @@ import {
   Sparkles,
   Search
 } from 'lucide-react';
-import { SOHAG_AREAS } from '../../data/propertiesData';
+import { getAreas } from '../../utils/areasData';
 
 export default function InteractiveMapPickerModal({
   isOpen,
@@ -30,8 +30,15 @@ export default function InteractiveMapPickerModal({
   const markerRef = useRef(null);
   const tileLayerRef = useRef(null);
 
+  const [areas, setAreas] = useState(() => getAreas());
   const [currentCoords, setCurrentCoords] = useState(initialCoordinates || { lat: 26.5569, lng: 31.7001 });
   const [mapType, setMapType] = useState('satellite'); // 'satellite' | 'streets'
+
+  useEffect(() => {
+    const handleUpdate = () => setAreas(getAreas());
+    window.addEventListener('oneline_areas_updated', handleUpdate);
+    return () => window.removeEventListener('oneline_areas_updated', handleUpdate);
+  }, []);
 
   const streetTiles = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
   const satelliteTiles = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
@@ -129,7 +136,7 @@ export default function InteractiveMapPickerModal({
 
   // Jump to Area center
   const handleJumpToArea = (areaKey) => {
-    const targetArea = SOHAG_AREAS.find(a => a.id === areaKey);
+    const targetArea = areas.find(a => a.id === areaKey);
     if (targetArea && targetArea.center && mapInstanceRef.current && markerRef.current) {
       mapInstanceRef.current.setView([targetArea.center.lat, targetArea.center.lng], 16);
       markerRef.current.setLatLng([targetArea.center.lat, targetArea.center.lng]);
@@ -189,8 +196,8 @@ export default function InteractiveMapPickerModal({
                 className="form-input"
                 style={{ padding: '4px 8px', fontSize: '0.8rem' }}
               >
-                {SOHAG_AREAS.filter(a => a.id !== 'all').map(a => (
-                  <option key={a.id} value={a.id}>{isAr ? a.name_ar : a.name_en}</option>
+                {areas.filter(a => a.id !== 'all').map(a => (
+                  <option key={a.id} value={a.id}>{isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}</option>
                 ))}
               </select>
             </div>

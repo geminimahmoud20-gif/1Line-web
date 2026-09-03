@@ -1,5 +1,7 @@
+import { useState, useEffect } from 'react';
 import { X, SlidersHorizontal, Check, RotateCcw } from 'lucide-react';
-import { SOHAG_AREAS, PROPERTY_TYPES } from '../../data/propertiesData';
+import { PROPERTY_TYPES } from '../../data/propertiesData';
+import { getAreas } from '../../utils/areasData';
 
 export default function MobileFilterBottomSheet({
   isOpen,
@@ -10,6 +12,16 @@ export default function MobileFilterBottomSheet({
   totalResultsCount = 0,
   lang = 'ar'
 }) {
+  const [areas, setAreas] = useState(() => getAreas());
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setAreas(getAreas());
+    };
+    window.addEventListener('oneline_areas_updated', handleUpdate);
+    return () => window.removeEventListener('oneline_areas_updated', handleUpdate);
+  }, []);
+
   if (!isOpen) return null;
   const isAr = lang === 'ar';
 
@@ -40,14 +52,14 @@ export default function MobileFilterBottomSheet({
           <div className="drawer-field-group">
             <label className="drawer-lbl">{isAr ? 'المنطقة في سوهاج' : 'Location'}</label>
             <div className="drawer-pills-wrap">
-              {SOHAG_AREAS.map((a) => (
+              {areas.map((a) => (
                 <button
                   key={a.id}
                   type="button"
                   className={`drawer-pill-btn ${filters.area === a.id ? 'active' : ''}`}
                   onClick={() => onChange('area', a.id)}
                 >
-                  {isAr ? a.name_ar : a.name_en}
+                  {isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}
                 </button>
               ))}
             </div>

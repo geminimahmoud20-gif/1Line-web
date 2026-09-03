@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Building, 
   Home, 
@@ -16,6 +16,7 @@ import {
   DollarSign
 } from 'lucide-react';
 import PhoneInputField, { SUPPORTED_COUNTRIES } from './PhoneInputField';
+import { getAreas } from '../utils/areasData';
 
 export const SellWizard = ({ 
   lang = 'ar', 
@@ -127,14 +128,15 @@ export const SellWizard = ({
     { id: 'land', label_ar: 'قطعة أرض', label_en: 'Land Plot', icon: MapPin, desc_ar: 'أراضي مباني وتجارية بترخيص معتمد' }
   ];
 
-  const sohagDistricts = [
-    { id: 'east', label_ar: 'شرق سوهاج (الجمهورية وسيتي)', label_en: 'East Sohag' },
-    { id: 'new_sohag', label_ar: 'سوهاج الجديدة (الحي الأول والثاني)', label_en: 'New Sohag' },
-    { id: 'corniche', label_ar: 'كورنيش النيل (شرقي / غربي)', label_en: 'Nile Corniche' },
-    { id: 'thakafa', label_ar: 'منطقة الثقافة والمخبز الآلي', label_en: 'El Thakafa' },
-    { id: 'center', label_ar: 'وسط البلد والجامعة', label_en: 'City Center' },
-    { id: 'kawthar', label_ar: 'حي الكوثر والمراكز', label_en: 'Al-Kawthar' }
-  ];
+  const [districts, setDistricts] = useState(() => getAreas().filter(a => a.id !== 'all'));
+
+  useEffect(() => {
+    const handleAreasUpdate = () => {
+      setDistricts(getAreas().filter(a => a.id !== 'all'));
+    };
+    window.addEventListener('oneline_areas_updated', handleAreasUpdate);
+    return () => window.removeEventListener('oneline_areas_updated', handleAreasUpdate);
+  }, []);
 
   return (
     <div className="smart-valuation-wizard-box">
@@ -208,8 +210,10 @@ export const SellWizard = ({
                 value={sellerAnswers.area || 'east'}
                 onChange={(e) => handleSellerChoice('area', e.target.value)}
               >
-                {sohagDistricts.map((d) => (
-                  <option key={d.id} value={d.id}>{isAr ? d.label_ar : d.label_en}</option>
+                {districts.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {isAr ? (d.label_ar || d.name_ar) : (d.label_en || d.name_en)}
+                  </option>
                 ))}
               </select>
             </div>
