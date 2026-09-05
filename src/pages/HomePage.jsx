@@ -559,21 +559,21 @@ export default function HomePage({
                     boxShadow: '0 4px 14px rgba(0, 0, 0, 0.2)'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.5)';
-                    e.currentTarget.style.background = 'rgba(212, 175, 55, 0.08)';
+                    e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.6)';
+                    e.currentTarget.style.background = 'rgba(56, 189, 248, 0.12)';
                     e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(212, 175, 55, 0.2)';
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(2, 132, 199, 0.3)';
                     e.currentTarget.style.color = '#ffffff';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
                     e.currentTarget.style.transform = 'translateY(0)';
                     e.currentTarget.style.boxShadow = '0 4px 14px rgba(0, 0, 0, 0.2)';
                     e.currentTarget.style.color = '#f1f5f9';
                   }}
                 >
-                  <IconComponent size={15} style={{ color: '#d4af37' }} />
+                  <IconComponent size={15} style={{ color: '#38bdf8' }} />
                   <span>{lang === 'ar' ? p.label_ar : p.label_en}</span>
                 </Link>
               );
@@ -860,11 +860,11 @@ export default function HomePage({
                       to="/sell" 
                       className="btn-match-demand"
                       style={{
-                        background: 'linear-gradient(135deg, #071224, #0d2c54)',
-                        border: '1px solid rgba(212, 175, 55, 0.35)',
+                        background: 'linear-gradient(135deg, #0284c7, #0369a1)',
+                        border: '1px solid rgba(2, 132, 199, 0.35)',
                         color: '#ffffff',
                         fontWeight: '800',
-                        boxShadow: '0 2px 10px rgba(7, 18, 36, 0.25)',
+                        boxShadow: '0 2px 10px rgba(2, 132, 199, 0.25)',
                         padding: '6px 14px'
                       }}
                     >

@@ -85,15 +85,15 @@ export default function PropertyCard({
           <span 
             className="property-badge momentum-badge"
             style={{
-              background: 'rgba(8, 18, 38, 0.85)',
-              border: '1px solid rgba(255, 202, 40, 0.4)',
-              color: '#ffca28',
+              background: 'rgba(3, 105, 161, 0.90)',
+              border: '1px solid rgba(56, 189, 248, 0.5)',
+              color: '#ffffff',
               backdropFilter: 'blur(6px)'
             }}
           >
             {property.featured ? (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                <Sparkles size={11} style={{ color: '#ffca28' }} />
+                <Sparkles size={11} style={{ color: '#38bdf8' }} />
                 <span>{lang === 'ar' ? 'فرصة حصرية' : 'Prime Exclusive'}</span>
               </span>
             ) : viewsCount >= 250 ? (
@@ -217,8 +217,8 @@ export default function PropertyCard({
 
         {/* Payment Plan / Downpayment Summary */}
         <div className="property-card-finance" style={{
-          background: 'linear-gradient(135deg, rgba(13, 72, 161, 0.04) 0%, rgba(241, 245, 249, 0.95) 100%)',
-          border: '1px solid rgba(13, 72, 161, 0.12)',
+          background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.05) 0%, rgba(240, 249, 255, 0.95) 100%)',
+          border: '1px solid rgba(2, 132, 199, 0.16)',
           borderRadius: '10px'
         }}>
           <div className="finance-mini-item">
@@ -227,7 +227,7 @@ export default function PropertyCard({
           </div>
           <div className="finance-mini-item">
             <span className="finance-label" style={{ color: '#475569', fontWeight: '600' }}>{lang === 'ar' ? 'قسط شهري:' : 'Monthly:'}</span>
-            <span className="finance-value highlight" style={{ color: '#0d48a1', fontWeight: '900', fontSize: '0.85rem' }}>{property.monthlyInstallment.toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}</span>
+            <span className="finance-value highlight" style={{ color: '#0284c7', fontWeight: '900', fontSize: '0.85rem' }}>{property.monthlyInstallment.toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}</span>
           </div>
         </div>
 
@@ -240,12 +240,12 @@ export default function PropertyCard({
             title={lang === 'ar' ? 'معاينة سريعة' : 'Quick View'}
             style={{
               background: '#ffffff',
-              border: '1px solid rgba(13, 72, 161, 0.25)',
-              color: '#0d48a1',
+              border: '1px solid rgba(2, 132, 199, 0.3)',
+              color: '#0284c7',
               fontWeight: '800'
             }}
           >
-            <Eye size={13} style={{ color: '#0d48a1' }} />
+            <Eye size={13} style={{ color: '#0284c7' }} />
             <span>{lang === 'ar' ? 'معاينة' : 'Quick'}</span>
           </button>
 
@@ -285,10 +285,10 @@ export default function PropertyCard({
             to={`/properties/${property.id}`} 
             className="btn-view-details"
             style={{
-              background: 'linear-gradient(135deg, #0d48a1, #1565c0)',
+              background: 'linear-gradient(135deg, #0284c7, #0369a1)',
               color: '#ffffff',
               fontWeight: '800',
-              boxShadow: '0 2px 8px rgba(13, 72, 161, 0.25)'
+              boxShadow: '0 2px 8px rgba(2, 132, 199, 0.28)'
             }}
           >
             <span>{lang === 'ar' ? 'التفاصيل' : 'Details'}</span>
