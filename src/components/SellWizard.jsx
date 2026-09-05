@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   Building, 
   Home, 
@@ -9,26 +9,27 @@ import {
   ShieldCheck, 
   CheckCircle2, 
   ArrowRight, 
-  ArrowLeft, 
-  Calculator, 
-  Phone, 
-  FileText,
-  DollarSign
+  ArrowLeft
 } from 'lucide-react';
 import PhoneInputField, { SUPPORTED_COUNTRIES } from './PhoneInputField';
 import { getAreas } from '../utils/areasData';
 
+// Benchmark pricing per sqm based on district and type
+const BENCHMARK_PRICING = {
+  east: { base: 21500, name_ar: 'شرق سوهاج (الجمهورية وسيتي)', name_en: 'East Sohag' },
+  new_sohag: { base: 17800, name_ar: 'سوهاج الجديدة (الحي الأول والثاني)', name_en: 'New Sohag' },
+  corniche: { base: 31000, name_ar: 'كورنيش النيل', name_en: 'Nile Corniche' },
+  thakafa: { base: 15200, name_ar: 'منطقة الثقافة والمخبز الآلي', name_en: 'El Thakafa' },
+  center: { base: 18500, name_ar: 'وسط البلد والجامعة', name_en: 'City Center' },
+  kawthar: { base: 12000, name_ar: 'حي الكوثر', name_en: 'Al-Kawthar' }
+};
+
 export const SellWizard = ({ 
   lang = 'ar', 
-  t, 
-  sellerStep = 1, 
-  setSellerStep, 
   sellerAnswers = {}, 
   setSellerAnswers, 
   handleSellerChoice, 
-  submitSellerJourney,
-  estimatedValue,
-  triggerToast
+  submitSellerJourney
 }) => {
   const [currentPhase, setCurrentPhase] = useState(1); // 1: Basic Info, 2: Specs & Legal, 3: Valuation & Contact
   const [sellerCountry, setSellerCountry] = useState('+20');
@@ -38,20 +39,10 @@ export const SellWizard = ({
 
   const isAr = lang === 'ar';
 
-  // Benchmark pricing per sqm based on district and type
-  const benchmarkPricing = {
-    east: { base: 21500, name_ar: 'شرق سوهاج (الجمهورية وسيتي)', name_en: 'East Sohag' },
-    new_sohag: { base: 17800, name_ar: 'سوهاج الجديدة (الحي الأول والثاني)', name_en: 'New Sohag' },
-    corniche: { base: 31000, name_ar: 'كورنيش النيل', name_en: 'Nile Corniche' },
-    thakafa: { base: 15200, name_ar: 'منطقة الثقافة والمخبز الآلي', name_en: 'El Thakafa' },
-    center: { base: 18500, name_ar: 'وسط البلد والجامعة', name_en: 'City Center' },
-    kawthar: { base: 12000, name_ar: 'حي الكوثر', name_en: 'Al-Kawthar' }
-  };
-
   // Live Real-Time Estimated Valuation Range calculation
   const calculatedEstimate = useMemo(() => {
     const areaKey = sellerAnswers.area || 'east';
-    const areaData = benchmarkPricing[areaKey] || benchmarkPricing.east;
+    const areaData = BENCHMARK_PRICING[areaKey] || BENCHMARK_PRICING.east;
     const size = parseInt(sellerAnswers.size) || 140;
     
     // Type multiplier
@@ -82,8 +73,8 @@ export const SellWizard = ({
   const validateAndSubmit = (e) => {
     e.preventDefault();
 
-    const cleanPhone = (sellerAnswers.phone || '').trim().replace(/[\s\-\(\)]/g, '');
-    const cleanWhatsapp = (sellerAnswers.whatsapp || '').trim().replace(/[\s\-\(\)]/g, '');
+    const cleanPhone = (sellerAnswers.phone || '').trim().replace(/[\s\-()]/g, '');
+    const cleanWhatsapp = (sellerAnswers.whatsapp || '').trim().replace(/[\s\-()]/g, '');
 
     // Check phone format
     const phoneCountryObj = SUPPORTED_COUNTRIES.find(c => c.code === sellerCountry);

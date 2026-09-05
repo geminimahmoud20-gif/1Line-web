@@ -27,13 +27,12 @@ export default function ContractStudioModal({
   lang = 'ar',
   triggerToast = () => {}
 }) {
-  if (!isOpen) return null;
   const isAr = lang === 'ar';
 
   const [selectedLeadId, setSelectedLeadId] = useState('');
   const [selectedPropertyId, setSelectedPropertyId] = useState('');
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(() => ({
     buyerName: 'محمد أحمد علي',
     buyerPhone: '+20 101 234 5678',
     buyerNationalId: '29001012600000',
@@ -45,7 +44,9 @@ export default function ContractStudioModal({
     depositAmount: 50000,
     paymentMethod: 'InstaPay (إنستاباي)',
     transactionRef: `REF-OL-${Math.floor(100000 + Math.random() * 900000)}`
-  });
+  }));
+
+  if (!isOpen) return null;
 
   // Auto-fill from selected Lead
   const handleLeadSelect = (e) => {

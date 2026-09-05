@@ -1,27 +1,25 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { 
-  TrendingUp, 
-  Calculator, 
-  DollarSign, 
-  Calendar, 
-  Sparkles, 
-  CheckCircle2, 
-  ShieldCheck, 
   Building2, 
   Store, 
-  Briefcase,
-  Video,
-  PhoneCall,
+  Briefcase, 
+  Video, 
+  PhoneCall, 
   Download,
-  Globe,
-  Award
+  Sparkles
 } from 'lucide-react';
 import PhoneInputField, { SUPPORTED_COUNTRIES } from './PhoneInputField';
 import { generateInvestorProspectusPdf } from '../utils/pdfBrochure';
 
+// Dynamic ROI Yields based on property type in Sohag
+const YIELD_RATES = {
+  commercial: { name_ar: 'محلات ومساحات تجارية', yieldPercent: 15.5, growthPercent: 18.0, icon: Store },
+  medical: { name_ar: 'عيادات ومراكز طبية', yieldPercent: 13.5, growthPercent: 16.5, icon: Briefcase },
+  residential: { name_ar: 'شقق وأدوار سكنية فاخرة', yieldPercent: 9.5, growthPercent: 14.0, icon: Building2 }
+};
+
 export const InvestorCenter = ({
   lang = 'ar',
-  t,
   invAmount = 3000000,
   setInvAmount,
   invPeriod = 5,
@@ -30,9 +28,6 @@ export const InvestorCenter = ({
   setInvPropType,
   investorForm = {},
   setInvestorForm,
-  showInvResultForm,
-  setShowInvResultForm,
-  roiRes,
   submitInvestorForm
 }) => {
   const [phoneCountry, setPhoneCountry] = useState('+20');
@@ -48,14 +43,7 @@ export const InvestorCenter = ({
     return `${valEgp.toLocaleString()} ${isAr ? 'ج.م' : 'EGP'}`;
   };
 
-  // Dynamic ROI Yields based on property type in Sohag
-  const yieldRates = {
-    commercial: { name_ar: 'محلات ومساحات تجارية', yieldPercent: 15.5, growthPercent: 18.0, icon: Store },
-    medical: { name_ar: 'عيادات ومراكز طبية', yieldPercent: 13.5, growthPercent: 16.5, icon: Briefcase },
-    residential: { name_ar: 'شقق وأدوار سكنية فاخرة', yieldPercent: 9.5, growthPercent: 14.0, icon: Building2 }
-  };
-
-  const selectedYield = yieldRates[invPropType] || yieldRates.commercial;
+  const selectedYield = YIELD_RATES[invPropType] || YIELD_RATES.commercial;
 
   // Real-time financial calculations
   const investmentSim = useMemo(() => {
@@ -72,13 +60,13 @@ export const InvestorCenter = ({
       netProfit,
       totalRoiPercent
     };
-  }, [invAmount, invPeriod, invPropType]);
+  }, [invAmount, invPeriod, selectedYield]);
 
   const validateAndSubmit = (e) => {
     e.preventDefault();
 
-    const cleanPhone = (investorForm.phone || '').trim().replace(/[\s\-\(\)]/g, '');
-    const cleanWhatsapp = (investorForm.whatsapp || '').trim().replace(/[\s\-\(\)]/g, '');
+    const cleanPhone = (investorForm.phone || '').trim().replace(/[\s\-()]/g, '');
+    const cleanWhatsapp = (investorForm.whatsapp || '').trim().replace(/[\s\-()]/g, '');
 
     const phoneCountryObj = SUPPORTED_COUNTRIES.find(c => c.code === phoneCountry);
     const isPhoneValid = phoneCountryObj ? phoneCountryObj.regex.test(cleanPhone) : true;
@@ -142,7 +130,7 @@ export const InvestorCenter = ({
       <div className="form-group-block">
         <label className="block-label">{isAr ? 'اختر فئة الاستثمار المستهدفة بسوهاج' : 'Select Target Investment Asset Class'}</label>
         <div className="options-pill-grid">
-          {Object.entries(yieldRates).map(([key, data]) => {
+          {Object.entries(YIELD_RATES).map(([key, data]) => {
             const IconC = data.icon;
             const isSelected = invPropType === key;
             return (
@@ -382,6 +370,20 @@ export const InvestorCenter = ({
               onCountryChange={setPhoneCountry}
               error={phoneError}
               required
+            />
+          </div>
+
+          <div className="form-group-flex">
+            <PhoneInputField
+              label={isAr ? 'رقم الواتساب (اختياري)' : 'WhatsApp Number (Optional)'}
+              value={investorForm.whatsapp || ''}
+              onChange={(whatsapp) => {
+                setInvestorForm({ ...investorForm, whatsapp });
+                if (whatsappError) setWhatsappError('');
+              }}
+              country={whatsappCountry}
+              onCountryChange={setWhatsappCountry}
+              error={whatsappError}
             />
           </div>
         </div>

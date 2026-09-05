@@ -1,20 +1,9 @@
 import { useState, useMemo } from 'react';
 import { 
   Send, 
-  Sparkles, 
   Users, 
-  DollarSign, 
-  TrendingDown, 
-  Flame, 
-  Clock, 
-  MessageSquare, 
   Copy, 
   Check, 
-  CheckCircle2, 
-  Building, 
-  Filter, 
-  RefreshCw,
-  Award,
   Zap
 } from 'lucide-react';
 
@@ -32,8 +21,12 @@ export default function RetargetingHub({
   const [activeSegment, setActiveSegment] = useState('vip_cash');
   const [selectedPropertyId, setSelectedPropertyId] = useState(properties[0]?.id || '');
   const [copiedId, setCopiedId] = useState(null);
+  const [mountTime] = useState(() => Date.now());
 
-  const selectedProperty = properties.find(p => p.id === selectedPropertyId) || properties[0] || {};
+  const selectedProperty = useMemo(() => {
+    return properties.find(p => p.id === selectedPropertyId) || properties[0] || {};
+  }, [properties, selectedPropertyId]);
+
   const propTitle = isAr ? selectedProperty.title_ar : selectedProperty.title_en;
   const propLocation = isAr ? selectedProperty.locationName_ar : selectedProperty.locationName_en;
   const propPrice = selectedProperty.price ? selectedProperty.price.toLocaleString() + ' ج.م' : 'سعر مميز';
@@ -42,7 +35,6 @@ export default function RetargetingHub({
 
   // Dynamic Segmentation Engine
   const segmentedLeads = useMemo(() => {
-    const now = Date.now();
     const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
 
     return {
@@ -60,7 +52,7 @@ export default function RetargetingHub({
       dormant: leads.filter(l => {
         if (l.status === 'closed') return false;
         const leadTime = l.timestamp ? new Date(l.timestamp).getTime() : 0;
-        return (now - leadTime) > thirtyDaysMs || l.status === 'contacted';
+        return (mountTime - leadTime) > thirtyDaysMs || l.status === 'contacted';
       }),
       price_drop: leads.filter(l => {
         // Leads looking in the same area as selected property
@@ -69,7 +61,7 @@ export default function RetargetingHub({
         return (leadArea === propArea || leadArea === 'all') && l.status !== 'closed';
       })
     };
-  }, [leads, selectedProperty]);
+  }, [leads, selectedProperty, mountTime]);
 
   const currentList = segmentedLeads[activeSegment] || [];
 
@@ -362,8 +354,6 @@ export default function RetargetingHub({
               </tr>
             ) : (
               currentList.map((lead) => {
-                const sampleMsg = getWhatsAppMessage(lead);
-
                 return (
                   <tr key={lead.id}>
                     <td>

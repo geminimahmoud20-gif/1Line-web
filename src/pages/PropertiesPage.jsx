@@ -3,8 +3,6 @@ import { useSearchParams } from 'react-router-dom';
 import { 
   LayoutGrid, 
   Map as MapIcon, 
-  Building,
-  RotateCcw,
   ArrowUpDown
 } from 'lucide-react';
 import PropertyCard from '../components/properties/PropertyCard';
@@ -53,10 +51,12 @@ export default function PropertiesPage({
     bedrooms: searchParams.get('bedrooms') || 'all'
   });
 
-  // Reset pagination on filter change
-  useEffect(() => {
+  // Reset pagination on filter or sort change without cascading effect renders
+  const [prevFilterState, setPrevFilterState] = useState({ filters, sortBy });
+  if (prevFilterState.filters !== filters || prevFilterState.sortBy !== sortBy) {
+    setPrevFilterState({ filters, sortBy });
     setVisibleCount(12);
-  }, [filters, sortBy]);
+  }
 
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));

@@ -543,37 +543,37 @@ export default function HomePage({
                   key={idx}
                   to={p.path}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.04)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    background: 'rgba(255, 255, 255, 0.09)',
+                    border: '1px solid rgba(255, 255, 255, 0.22)',
                     backdropFilter: 'blur(12px)',
-                    padding: '8px 16px',
+                    padding: '9px 18px',
                     borderRadius: 'var(--radius-pill)',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '8px',
-                    color: '#f1f5f9',
-                    fontSize: '0.82rem',
-                    fontWeight: '700',
+                    color: '#ffffff',
+                    fontSize: '0.85rem',
+                    fontWeight: '800',
                     textDecoration: 'none',
                     transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.2)'
+                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(56, 189, 248, 0.6)';
-                    e.currentTarget.style.background = 'rgba(56, 189, 248, 0.12)';
+                    e.currentTarget.style.borderColor = '#ffca28';
+                    e.currentTarget.style.background = 'rgba(255, 202, 40, 0.18)';
                     e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(2, 132, 199, 0.3)';
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 202, 40, 0.3)';
                     e.currentTarget.style.color = '#ffffff';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.22)';
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.09)';
                     e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 14px rgba(0, 0, 0, 0.2)';
-                    e.currentTarget.style.color = '#f1f5f9';
+                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.2)';
+                    e.currentTarget.style.color = '#ffffff';
                   }}
                 >
-                  <IconComponent size={15} style={{ color: '#38bdf8' }} />
+                  <IconComponent size={15} style={{ color: '#ffca28' }} />
                   <span>{lang === 'ar' ? p.label_ar : p.label_en}</span>
                 </Link>
               );
@@ -775,8 +775,8 @@ export default function HomePage({
                   <span>{lang === 'ar' ? `استعراض كامل محفظة العقارات (${activePublished.length} عقار معتمد)` : 'Explore Full Portfolio'}</span>
                   {lang === 'ar' ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
                 </Link>
-                <Link to="/special-requests" className="btn btn-outline" style={{ color: '#ffffff', borderColor: 'rgba(255,255,255,0.3)' }}>
-                  <FileText size={15} className="text-gold" style={{ verticalAlign: 'middle', marginInlineEnd: '6px' }} />
+                <Link to="/special-requests" className="btn btn-glass-outline" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 20px', fontSize: '0.88rem' }}>
+                  <FileText size={15} style={{ color: '#ffca28' }} />
                   <span>{lang === 'ar' ? 'طلب توفير عقار خاص VIP' : 'Bespoke Request VIP'}</span>
                 </Link>
               </div>
@@ -997,16 +997,16 @@ export default function HomePage({
         </div>
       </section>
 
-      {/* 🌟 6. EXECUTIVE VIP CONSULTATION CTA STRIP (Serene Sky Blue Gradient) */}
+      {/* 🌟 6. EXECUTIVE VIP CONSULTATION CTA STRIP (Architectural Royal Navy & Sun Gold) */}
       <section className="homepage-section" style={{ padding: '30px 20px 70px' }}>
         <div style={{
           maxWidth: '1240px',
           margin: '0 auto',
-          background: 'linear-gradient(135deg, #075985 0%, #0284c7 50%, #0369a1 100%)',
+          background: 'linear-gradient(135deg, #092347 0%, #0d48a1 60%, #08214d 100%)',
           borderRadius: '28px',
           padding: '48px 44px',
-          border: '1px solid rgba(255, 255, 255, 0.25)',
-          boxShadow: '0 20px 50px rgba(2, 132, 199, 0.25)',
+          border: '1px solid rgba(255, 202, 40, 0.35)',
+          boxShadow: '0 20px 50px rgba(9, 35, 71, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -1015,7 +1015,7 @@ export default function HomePage({
           position: 'relative',
           overflow: 'hidden'
         }}>
-          {/* Ambient Sky-Blue Nebula */}
+          {/* Ambient Warm Sun-Gold Nebula */}
           <div style={{
             position: 'absolute',
             top: '-40px',
@@ -1023,28 +1023,31 @@ export default function HomePage({
             width: '260px',
             height: '260px',
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255, 255, 255, 0.18) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(255, 202, 40, 0.15) 0%, transparent 70%)',
             pointerEvents: 'none'
           }} />
 
           <div style={{ maxWidth: '680px', position: 'relative', zIndex: 2 }}>
             <span style={{
-              background: 'rgba(255, 255, 255, 0.18)',
-              border: '1px solid rgba(255, 255, 255, 0.4)',
-              color: '#ffffff',
-              fontSize: '0.8rem',
+              background: 'rgba(255, 202, 40, 0.14)',
+              border: '1px solid rgba(255, 202, 40, 0.45)',
+              color: '#ffca28',
+              fontSize: '0.82rem',
               fontWeight: '800',
-              padding: '6px 16px',
+              padding: '6px 18px',
               borderRadius: '999px',
-              display: 'inline-block',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
               marginBottom: '14px'
             }}>
-              {lang === 'ar' ? 'استشارة عقارية وقانونية معتمدة' : 'Certified Advisory & Legal Security'}
+              <Sparkles size={13} style={{ color: '#ffca28' }} />
+              <span>{lang === 'ar' ? 'استشارة عقارية وقانونية معتمدة' : 'Certified Advisory & Legal Security'}</span>
             </span>
             <h2 style={{ fontSize: '1.9rem', color: '#ffffff', fontWeight: '900', margin: '0 0 10px 0', lineHeight: 1.3 }}>
               {lang === 'ar' ? 'جاهز لتملك عقارك المثالي أو استثمارك القادم بسوهاج؟' : 'Ready to Secure Your Ideal Property in Sohag?'}
             </h2>
-            <p style={{ color: '#e0f2fe', fontSize: '0.95rem', margin: 0, lineHeight: 1.65 }}>
+            <p style={{ color: '#e0f2fe', fontSize: '0.95rem', margin: 0, lineHeight: 1.65, fontWeight: '500' }}>
               {lang === 'ar' 
                 ? 'فريق خبراء ومستشاري 1Line جاهز لمساعدتك في فحص صحة الأوراق والتراخيص، التفاوض، واختيار العقار الأنسب لاحتياجك وميزانيتك مجاناً.' 
                 : 'Our certified real estate advisors are ready to guide you through legal vetting, price negotiation, and financing.'}
@@ -1054,40 +1057,42 @@ export default function HomePage({
           <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', position: 'relative', zIndex: 2 }}>
             <Link
               to="/buy"
-              className="btn btn-primary"
+              className="btn btn-white-navy"
               style={{
                 background: '#ffffff',
-                color: '#0284c7',
+                color: '#092347',
                 fontWeight: '900',
                 padding: '14px 28px',
                 borderRadius: '14px',
                 border: 'none',
-                boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
+                boxShadow: '0 8px 25px rgba(0, 0, 0, 0.25)',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '8px',
+                fontSize: '0.95rem'
               }}
             >
-              <span>{lang === 'ar' ? 'ابدأ معالج الشراء الآن' : 'Start Buy Wizard'}</span>
-              {lang === 'ar' ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
+              <span style={{ color: '#092347', fontWeight: '900' }}>{lang === 'ar' ? 'ابدأ معالج الشراء الآن' : 'Start Buy Wizard'}</span>
+              {lang === 'ar' ? <ArrowLeft size={16} style={{ color: '#092347' }} /> : <ArrowRight size={16} style={{ color: '#092347' }} />}
             </Link>
 
             <Link
               to="/sell"
-              className="btn btn-outline"
+              className="btn btn-glass-outline"
               style={{
-                borderColor: 'rgba(255, 255, 255, 0.6)',
-                background: 'rgba(255, 255, 255, 0.12)',
+                borderColor: 'rgba(255, 255, 255, 0.65)',
+                background: 'rgba(255, 255, 255, 0.14)',
                 color: '#ffffff',
-                fontWeight: 'bold',
+                fontWeight: '700',
                 padding: '14px 24px',
                 borderRadius: '14px',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '8px',
+                fontSize: '0.95rem'
               }}
             >
-              <span>{lang === 'ar' ? 'اعرض عقارك للبيع' : 'List Property'}</span>
+              <span style={{ color: '#ffffff' }}>{lang === 'ar' ? 'اعرض عقارك للبيع' : 'List Property'}</span>
             </Link>
           </div>
         </div>

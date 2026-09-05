@@ -22,8 +22,6 @@ export default function AddLeadModal({
   lang = 'ar',
   triggerToast
 }) {
-  if (!isOpen) return null;
-
   const isAr = lang === 'ar';
 
   const [formData, setFormData] = useState({
@@ -44,6 +42,8 @@ export default function AddLeadModal({
     notes: '',
     tags: ['💎 VIP كاش', '🔥 مستعجل للشراء']
   });
+
+  if (!isOpen) return null;
 
   const AVAILABLE_TAGS = [
     { id: 'vip', name_ar: '💎 VIP كاش', name_en: 'VIP Cash' },

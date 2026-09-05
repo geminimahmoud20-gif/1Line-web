@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { X, Check, ArrowRight, ArrowLeft, Trash2, Maximize2, ShieldCheck, DollarSign, BedDouble, Bath, ExternalLink, Share2, Sparkles, Star, Download } from 'lucide-react';
+import { useMemo } from 'react';
+import { X, Trash2, ShieldCheck, ExternalLink, Share2, Star, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { trackEvent } from '../../utils/visitorTracker';
 import { generateComparePdf } from '../../utils/comparePdfGenerator';
@@ -12,10 +12,6 @@ export default function PropertyCompareDrawer({
   onClearCompare,
   lang = 'ar'
 }) {
-  const [copied, setCopied] = useState(false);
-  if (!isOpen) return null;
-  const isAr = lang === 'ar';
-
   // Best Price Per Meter
   const bestPpmId = useMemo(() => {
     if (compareList.length < 2) return null;
@@ -30,6 +26,9 @@ export default function PropertyCompareDrawer({
     });
     return bestId;
   }, [compareList]);
+
+  if (!isOpen) return null;
+  const isAr = lang === 'ar';
 
   const handleDownloadPdf = () => {
     if (compareList.length === 0) return;

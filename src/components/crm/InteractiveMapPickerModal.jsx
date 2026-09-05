@@ -22,8 +22,6 @@ export default function InteractiveMapPickerModal({
   lang = 'ar',
   triggerToast
 }) {
-  if (!isOpen) return null;
-
   const isAr = lang === 'ar';
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -44,7 +42,7 @@ export default function InteractiveMapPickerModal({
   const satelliteTiles = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
 
   useEffect(() => {
-    if (!mapContainerRef.current) return;
+    if (!isOpen || !mapContainerRef.current) return;
 
     const startLat = initialCoordinates?.lat || 26.5569;
     const startLng = initialCoordinates?.lng || 31.7001;
@@ -119,7 +117,9 @@ export default function InteractiveMapPickerModal({
     return () => {
       map.remove();
     };
-  }, []);
+  }, [isOpen]);
+
+  if (!isOpen) return null;
 
   // Handle Layer Switch
   const toggleMapLayer = (type) => {

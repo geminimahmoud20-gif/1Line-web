@@ -4,25 +4,16 @@ import {
   Plus, 
   Trash2, 
   Edit3, 
-  Check, 
-  X, 
   Sparkles, 
-  MapPin, 
-  DollarSign, 
-  Maximize2, 
-  ShieldCheck, 
   Image as ImageIcon,
   Save,
-  Download,
   Upload,
   Eye,
   EyeOff,
   RotateCcw,
   Star,
-  Tag,
   Database,
   Archive,
-  AlertTriangle,
   FileSpreadsheet,
   MessageSquare
 } from 'lucide-react';
@@ -38,10 +29,51 @@ import { compressImageFile } from '../../utils/imageCompressor';
 const SOHAG_AREA_COORDINATES = {
   east: { lat: 26.5569, lng: 31.7001 },
   new_sohag: { lat: 26.4715, lng: 31.6620 },
-  west: { lat: 26.5500, lng: 31.6850 },
-  kawthar: { lat: 26.5920, lng: 31.7850 },
-  center: { lat: 26.5620, lng: 31.6910 },
-  akhmeem: { lat: 26.5650, lng: 31.7450 }
+  west: { lat: 26.5600, lng: 31.6850 },
+  markaz: { lat: 26.5700, lng: 31.6700 },
+  akhmeem: { lat: 26.5630, lng: 31.7450 }
+};
+
+const DEFAULT_FORM_STATE = {
+  title_ar: '',
+  title_en: '',
+  type: 'apartment',
+  areaKey: 'east',
+  locationName_ar: 'شرق سوهاج - شارع الجمهورية الرئيسي',
+  locationName_en: 'East Sohag - Main Republic St.',
+  price: 2500000,
+  downPayment: 500000,
+  monthlyInstallment: 20000,
+  installmentYears: 5,
+  size: 150,
+  bedrooms: 3,
+  bathrooms: 2,
+  floor: 3,
+  finishing_ar: 'سوبر لوكس',
+  finishing_en: 'Super Lux',
+  status: 'published', // 'published' | 'hidden' | 'under_negotiation' | 'sold'
+  featured: true,
+  priorityRank: 90,
+  badge_ar: 'عرض مميز',
+  badge_en: 'Featured Deal',
+  images: [
+    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80'
+  ],
+  description_ar: 'شقة فاخرة بموقع حيوي متكامل الخدمات وإطلالة ممتازة كاملة المرافق.',
+  description_en: 'Luxury unit in a vibrant prime location with complete utilities.',
+  virtualTour: true,
+  isDeleted: false,
+  legalStatus: {
+    ownershipType_ar: 'عقد مسجل شهر عقاري',
+    ownershipType_en: 'Registered Title Deed',
+    licenseStatus_ar: 'ترخيص بناء رسمي صادر من الحي',
+    licenseStatus_en: 'Official Municipal Permit',
+    reconciliationStatus_ar: 'نموذج 10 النهائي للتصالح معتمد',
+    reconciliationStatus_en: 'Approved Form 10 Reconciliation',
+    inspectionReportId: 'LAW-SOH-2026',
+    verifiedByLawyer: 'الإدارة القانونية لمنصة 1Line',
+    safetyScore: 100
+  }
 };
 
 export default function PropertyManagerPanel({
@@ -73,73 +105,36 @@ export default function PropertyManagerPanel({
 
   const isAr = lang === 'ar';
 
-  const defaultFormState = {
-    title_ar: '',
-    title_en: '',
-    type: 'apartment',
-    areaKey: 'east',
-    locationName_ar: 'شرق سوهاج - شارع الجمهورية الرئيسي',
-    locationName_en: 'East Sohag - Main Republic St.',
-    price: 2500000,
-    downPayment: 500000,
-    monthlyInstallment: 20000,
-    installmentYears: 5,
-    size: 150,
-    bedrooms: 3,
-    bathrooms: 2,
-    floor: 3,
-    finishing_ar: 'سوبر لوكس',
-    finishing_en: 'Super Lux',
-    status: 'published', // 'published' | 'hidden' | 'under_negotiation' | 'sold'
-    featured: true,
-    priorityRank: 90,
-    badge_ar: 'عرض مميز',
-    badge_en: 'Featured Deal',
-    images: [
-      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80'
-    ],
-    description_ar: 'شقة فاخرة بموقع حيوي متكامل الخدمات وإطلالة ممتازة كاملة المرافق.',
-    description_en: 'Luxury unit in a vibrant prime location with complete utilities.',
-    virtualTour: true,
-    isDeleted: false,
-    legalStatus: {
-      ownershipType_ar: 'عقد مسجل شهر عقاري',
-      ownershipType_en: 'Registered Title Deed',
-      licenseStatus_ar: 'ترخيص بناء رسمي صادر من الحي',
-      licenseStatus_en: 'Official Municipal Permit',
-      reconciliationStatus_ar: 'نموذج 10 النهائي للتصالح معتمد',
-      reconciliationStatus_en: 'Approved Form 10 Reconciliation',
-      inspectionReportId: `LAW-SOH-${Date.now().toString().slice(-4)}`,
-      verifiedByLawyer: 'الإدارة القانونية لمنصة 1Line',
-      safetyScore: 100
-    }
-  };
-
-  const [form, setForm] = useState(defaultFormState);
+  const [form, setForm] = useState(DEFAULT_FORM_STATE);
 
   // Handle external conversion request (from CRM Leads to Property)
+  const [prevExternalData, setPrevExternalData] = useState(null);
+  if (externalNewPropertyData && externalNewPropertyData !== prevExternalData) {
+    setPrevExternalData(externalNewPropertyData);
+    setEditingPropertyId(null);
+    setForm({
+      ...DEFAULT_FORM_STATE,
+      ...externalNewPropertyData
+    });
+    setShowAddModal(true);
+  }
+
   useEffect(() => {
     if (externalNewPropertyData) {
-      setEditingPropertyId(null);
-      setForm({
-        ...defaultFormState,
-        ...externalNewPropertyData
-      });
-      setShowAddModal(true);
-      onClearExternalData();
+      onClearExternalData?.();
     }
-  }, [externalNewPropertyData]);
+  }, [externalNewPropertyData, onClearExternalData]);
 
   const handleOpenAdd = () => {
     setEditingPropertyId(null);
-    setForm(defaultFormState);
+    setForm(DEFAULT_FORM_STATE);
     setShowAddModal(true);
   };
 
   const handleOpenEdit = (prop) => {
     setEditingPropertyId(prop.id);
     setForm({
-      ...defaultFormState,
+      ...DEFAULT_FORM_STATE,
       ...prop,
       status: prop.status || (prop.isArchived ? 'hidden' : 'published')
     });

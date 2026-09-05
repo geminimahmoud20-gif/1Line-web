@@ -161,27 +161,13 @@ export const CrmAdminPanel = ({
     setCrmAuthError('');
 
     try {
-      if (true) {
-        if (!crmEmailInput || !crmPasswordInput) {
-          throw new Error(isAr ? 'الرجاء إدخال البريد الإلكتروني وكلمة المرور' : 'Please enter email and password');
-        }
-        await loginUser(crmEmailInput, crmPasswordInput);
-        setCrmAuthenticated(true);
-        sessionStorage.setItem('crm_auth', 'true');
-        triggerToast(isAr ? 'تم تسجيل الدخول بنجاح عبر السحابة!' : 'Logged in successfully via Cloud Auth!');
-      } else {
-        throw new Error('Firebase Authentication is not configured.');
-        /* Legacy local-PIN login intentionally disabled.
-        const verifyResult = await verifyAdminCredentials(crmPasswordInput);
-        if (verifyResult.success) {
-          setCrmAuthenticated(true);
-          sessionStorage.setItem('crm_auth', 'true');
-          triggerToast(isAr ? 'تم الدخول بنجاح (وضع عدم الاتصال)' : 'Logged in successfully (Offline Mode)');
-        } else {
-          throw new Error(verifyResult.message || (isAr ? 'كلمة المرور غير صحيحة' : 'Incorrect password'));
-        }
-        */
+      if (!crmEmailInput || !crmPasswordInput) {
+        throw new Error(isAr ? 'الرجاء إدخال البريد الإلكتروني وكلمة المرور' : 'Please enter email and password');
       }
+      await loginUser(crmEmailInput, crmPasswordInput);
+      setCrmAuthenticated(true);
+      sessionStorage.setItem('crm_auth', 'true');
+      triggerToast(isAr ? 'تم تسجيل الدخول بنجاح عبر السحابة!' : 'Logged in successfully via Cloud Auth!');
     } catch (err) {
       console.error(err);
       setCrmAuthError(err.message || (isAr ? 'فشل تسجيل الدخول' : 'Login failed'));

@@ -27,8 +27,6 @@ export default function GoLiveWizardModal({
   lang = 'ar',
   triggerToast
 }) {
-  if (!isOpen) return null;
-
   const isAr = lang === 'ar';
   const [founderSettings, setFounderSettings] = useState(() => getFounderSettings());
   const [activeStep, setActiveStep] = useState('checklist'); // 'checklist' | 'cleanse' | 'domain'
@@ -51,6 +49,8 @@ export default function GoLiveWizardModal({
 
   // Handle phone quick save
   const [customPhone, setCustomPhone] = useState(founderSettings.whatsappNumber || '');
+
+  if (!isOpen) return null;
   const handleSavePhone = async (e) => {
     e.preventDefault();
     if (!customPhone || customPhone.length < 9) {

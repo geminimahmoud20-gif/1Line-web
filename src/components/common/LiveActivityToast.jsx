@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Sparkles, MapPin, X, CheckCircle2 } from 'lucide-react';
+import { Sparkles, X } from 'lucide-react';
 
 const ACTIVITIES = [
   { id: 1, user_ar: 'مستثمر من سوهاج الجديدة', user_en: 'Investor from New Sohag', action_ar: 'طلب دراسة جدوى استثمارية لمقر تجاري', action_en: 'Requested commercial feasibility study', time_ar: 'منذ دقيقتين', time_en: '2m ago' },
@@ -13,6 +13,18 @@ export default function LiveActivityToast({ lang = 'ar' }) {
   const [currentActivity, setCurrentActivity] = useState(null);
   const [visible, setVisible] = useState(false);
   const isAr = lang === 'ar';
+  const location = useLocation();
+
+  const showRandomActivity = useCallback(() => {
+    const randomItem = ACTIVITIES[Math.floor(Math.random() * ACTIVITIES.length)];
+    setCurrentActivity(randomItem);
+    setVisible(true);
+
+    // Auto-hide after 6 seconds
+    setTimeout(() => {
+      setVisible(false);
+    }, 6000);
+  }, []);
 
   useEffect(() => {
     // Initial delay before showing first activity
@@ -29,20 +41,7 @@ export default function LiveActivityToast({ lang = 'ar' }) {
       clearTimeout(initialTimer);
       clearInterval(interval);
     };
-  }, []);
-
-  const showRandomActivity = () => {
-    const randomItem = ACTIVITIES[Math.floor(Math.random() * ACTIVITIES.length)];
-    setCurrentActivity(randomItem);
-    setVisible(true);
-
-    // Auto-hide after 6 seconds
-    setTimeout(() => {
-      setVisible(false);
-    }, 6000);
-  };
-
-  const location = useLocation();
+  }, [showRandomActivity]);
 
   if (!visible || !currentActivity || location.pathname.startsWith('/crm')) return null;
 
@@ -66,3 +65,4 @@ export default function LiveActivityToast({ lang = 'ar' }) {
     </div>
   );
 }
+

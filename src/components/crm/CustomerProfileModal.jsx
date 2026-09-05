@@ -1,34 +1,14 @@
 import { useState, useMemo } from 'react';
 import { 
-  User, 
   Phone, 
   MessageSquare, 
-  Calendar, 
-  DollarSign, 
-  MapPin, 
-  Clock, 
-  Building, 
   CheckCircle2, 
-  Flame, 
-  Sparkles, 
-  Tag, 
-  Plane, 
   Edit3, 
   Save, 
   Plus, 
-  Trash2, 
-  FileText, 
-  X, 
-  ArrowRight,
-  ShieldCheck,
   Send,
-  Car,
-  Activity,
-  Eye,
-  MousePointerClick,
-  Globe
+  Activity
 } from 'lucide-react';
-import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { getAreas } from '../../utils/areasData';
 import { getLeadDigitalJourney } from '../../utils/visitorTracker';
 
@@ -41,31 +21,29 @@ export default function CustomerProfileModal({
   lang = 'ar',
   triggerToast
 }) {
-  if (!isOpen || !lead) return null;
-
   const isAr = lang === 'ar';
   const [profileTab, setProfileTab] = useState('overview'); // 'overview' | 'properties' | 'timeline' | 'actions'
   const [isEditing, setIsEditing] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
-    name: lead.name || '',
-    phone: lead.phone || '',
-    whatsapp: lead.whatsapp || lead.phone || '',
-    altPhone: lead.altPhone || '',
-    cityOrExpat: lead.cityOrExpat || 'سوهاج',
-    type: lead.type || 'buyer',
-    status: lead.status || 'new',
-    temperature: lead.temperature || 'hot',
-    score: lead.score || 85,
-    assignedTo: lead.assignedTo || 'Sales Advisor Team',
-    budget: lead.details?.budget || lead.details?.expectedPrice || '',
-    area: lead.details?.area || 'east',
-    propertyType: lead.details?.propertyType || 'apartment',
-    financing: lead.financing || 'cash', // 'cash' | 'installments' | 'mortgage'
-    tags: lead.tags || ['VIP كاش', 'جاهز للمعاينة'],
-    nextActionDate: lead.nextActionDate || '',
-    nextActionNote: lead.nextActionNote || lead.followUp || ''
+    name: lead?.name || '',
+    phone: lead?.phone || '',
+    whatsapp: lead?.whatsapp || lead?.phone || '',
+    altPhone: lead?.altPhone || '',
+    cityOrExpat: lead?.cityOrExpat || 'سوهاج',
+    type: lead?.type || 'buyer',
+    status: lead?.status || 'new',
+    temperature: lead?.temperature || 'hot',
+    score: lead?.score || 85,
+    assignedTo: lead?.assignedTo || 'Sales Advisor Team',
+    budget: lead?.details?.budget || lead?.details?.expectedPrice || '',
+    area: lead?.details?.area || 'east',
+    propertyType: lead?.details?.propertyType || 'apartment',
+    financing: lead?.financing || 'cash', // 'cash' | 'installments' | 'mortgage'
+    tags: lead?.tags || ['VIP كاش', 'جاهز للمعاينة'],
+    nextActionDate: lead?.nextActionDate || '',
+    nextActionNote: lead?.nextActionNote || lead?.followUp || ''
   });
 
   // Call Log / Note Input State
@@ -168,33 +146,39 @@ export default function CustomerProfileModal({
     const directEvents = getLeadDigitalJourney(lead.phone || lead.name);
     if (directEvents && directEvents.length > 0) return directEvents;
 
+    const baseTime = lead.timestamp 
+      ? (typeof lead.timestamp === 'string' ? new Date(lead.timestamp).getTime() : Number(lead.timestamp) || 1772700000000)
+      : 1772700000000;
+
     return [
       {
         id: 'tr_1',
         eventType: 'whatsapp_click',
-        timestamp: lead.timestamp || new Date(Date.now() - 1800000).toISOString(),
+        timestamp: lead.timestamp || new Date(baseTime - 1800000).toISOString(),
         metadata: { title: `طلب تواصل مباشر واتساب بشأن عقارات ${formData.area || 'سوهاج'}` }
       },
       {
         id: 'tr_2',
         eventType: 'calculator_used',
-        timestamp: new Date(Date.now() - 5400000).toISOString(),
+        timestamp: new Date(baseTime - 5400000).toISOString(),
         metadata: { title: `تجربة حاسبة التمويل والأقساط لميزانية ${formData.budget || '3,000,000'} ج.م` }
       },
       {
         id: 'tr_3',
         eventType: 'property_view',
-        timestamp: new Date(Date.now() - 9000000).toISOString(),
+        timestamp: new Date(baseTime - 9000000).toISOString(),
         metadata: { title: `تصفح تفاصيل وحدات ${formData.propertyType || 'الشقق'} في ${formData.area || 'شرق سوهاج'}` }
       },
       {
         id: 'tr_4',
         eventType: 'page_view',
-        timestamp: new Date(Date.now() - 12600000).toISOString(),
+        timestamp: new Date(baseTime - 12600000).toISOString(),
         metadata: { title: 'دخول الموقع عبر حملة إعلانات مستهدفة' }
       }
     ];
   }, [lead, formData]);
+
+  if (!isOpen || !lead) return null;
 
   const cleanPhone = (formData.whatsapp || formData.phone || '').replace(/[^0-9]/g, '');
 

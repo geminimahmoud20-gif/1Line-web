@@ -39,8 +39,8 @@ export const BuyWizard = ({
   const validateAndSubmit = (e) => {
     e.preventDefault();
 
-    const cleanPhone = (buyerAnswers.phone || '').trim().replace(/[\s\-\(\)]/g, '');
-    const cleanWhatsapp = (buyerAnswers.whatsapp || '').trim().replace(/[\s\-\(\)]/g, '');
+    const cleanPhone = (buyerAnswers.phone || '').trim().replace(/[\s\-()]/g, '');
+    const cleanWhatsapp = (buyerAnswers.whatsapp || '').trim().replace(/[\s\-()]/g, '');
 
     // Check phone format
     const phoneCountryObj = SUPPORTED_COUNTRIES.find(c => c.code === buyerCountry);

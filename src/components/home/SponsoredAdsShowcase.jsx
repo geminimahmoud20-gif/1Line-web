@@ -332,23 +332,25 @@ export default function SponsoredAdsShowcase({ lang = 'ar' }) {
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-              gap: '10px',
-              background: 'rgba(0, 0, 0, 0.35)',
-              padding: '14px',
-              borderRadius: '14px',
-              border: '1px solid rgba(255, 255, 255, 0.06)'
+              gap: '12px',
+              background: 'rgba(9, 35, 71, 0.65)',
+              backdropFilter: 'blur(12px)',
+              padding: '16px 18px',
+              borderRadius: '16px',
+              border: '1px solid rgba(255, 202, 40, 0.25)',
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)'
             }}>
               <div>
-                <small style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'block' }}>{isAr ? 'الأسعار' : 'Starting Price'}</small>
-                <strong style={{ fontSize: '0.85rem', color: '#ffffff' }}>{isAr ? currentAd.priceStarts_ar : currentAd.priceStarts_en}</strong>
+                <small style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'block', marginBottom: '3px' }}>{isAr ? 'الأسعار' : 'Starting Price'}</small>
+                <strong style={{ fontSize: '0.95rem', color: '#ffffff', fontWeight: '800' }}>{isAr ? currentAd.priceStarts_ar : currentAd.priceStarts_en}</strong>
               </div>
               <div>
-                <small style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'block' }}>{isAr ? 'المقدم' : 'Down Payment'}</small>
-                <strong style={{ fontSize: '0.85rem', color: '#10b981' }}>{isAr ? currentAd.downPayment_ar : currentAd.downPayment_en}</strong>
+                <small style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'block', marginBottom: '3px' }}>{isAr ? 'المقدم' : 'Down Payment'}</small>
+                <strong style={{ fontSize: '0.95rem', color: '#34d399', fontWeight: '800' }}>{isAr ? currentAd.downPayment_ar : currentAd.downPayment_en}</strong>
               </div>
               <div>
-                <small style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'block' }}>{isAr ? 'نظام الأقساط' : 'Installment Plan'}</small>
-                <strong style={{ fontSize: '0.85rem', color: 'var(--accent-gold)' }}>{isAr ? currentAd.installment_ar : currentAd.installment_en}</strong>
+                <small style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'block', marginBottom: '3px' }}>{isAr ? 'نظام الأقساط' : 'Installment Plan'}</small>
+                <strong style={{ fontSize: '0.95rem', color: '#ffca28', fontWeight: '800' }}>{isAr ? currentAd.installment_ar : currentAd.installment_en}</strong>
               </div>
             </div>
 
@@ -444,11 +446,12 @@ export default function SponsoredAdsShowcase({ lang = 'ar' }) {
             {/* Floating Luxury Badges on Media */}
             <div style={{
               position: 'absolute',
-              top: '20px',
-              [isAr ? 'left' : 'right']: '20px',
+              top: '16px',
+              [isAr ? 'left' : 'right']: '16px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '8px'
+              gap: '8px',
+              zIndex: 5
             }}>
               <span style={{
                 background: 'rgba(13, 72, 161, 0.88)',

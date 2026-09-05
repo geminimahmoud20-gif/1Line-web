@@ -5,16 +5,8 @@ import {
   Check, 
   Copy, 
   X, 
-  Sparkles, 
-  Building, 
-  MapPin, 
   Users, 
-  ShieldCheck, 
-  Flame, 
-  CheckCircle2, 
-  ExternalLink,
-  ChevronRight,
-  Filter
+  CheckCircle2
 } from 'lucide-react';
 import { 
   findMatchingClientsForProperty, 
@@ -33,24 +25,27 @@ export default function WhatsAppMatchNotifierModal({
   lang = 'ar',
   triggerToast
 }) {
-  if (!isOpen || !property) return null;
-
-  const isAr = lang === 'ar';
   const [eventType, setEventType] = useState(defaultEventType);
   const [sentLeadIds, setSentLeadIds] = useState([]);
   const [copiedLeadId, setCopiedLeadId] = useState(null);
 
   // Alternative units in the same area if sold
   const alternativeProperties = useMemo(() => {
+    if (!property) return [];
     return allProperties
       .filter(p => p.id !== property.id && p.areaKey === property.areaKey && p.status === 'published')
       .slice(0, 3);
-  }, [allProperties, property.id, property.areaKey]);
+  }, [allProperties, property]);
 
   // Find all matched clients from leads & demands database
   const matchedClients = useMemo(() => {
+    if (!property) return [];
     return findMatchingClientsForProperty(property, leads, demands);
   }, [property, leads, demands]);
+
+  if (!isOpen || !property) return null;
+
+  const isAr = lang === 'ar';
 
   const handleSendWhatsApp = (client) => {
     const formattedPhone = formatWhatsAppPhone(client.phone || client.whatsapp);

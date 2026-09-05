@@ -114,12 +114,15 @@ export default function AddDemandModal({
     const fullWhatsapp = formData.whatsapp ? `${whatsappCountry}${formData.whatsapp.replace(/^0+/, '')}` : fullPhone;
     
     // Construct rich text for Arabic & English
-    const areaObj = AREA_OPTIONS.find(a => a.value === formData.area) || AREA_OPTIONS[0];
+    const allAreas = getAreas().filter(a => a.id !== 'all');
+    const areaObj = allAreas.find(a => a.id === formData.area) || allAreas[0] || { name_ar: formData.area, name_en: formData.area };
+    // Map area field names to match expected label_ar/label_en
+    const areaMapped = { label_ar: areaObj.label_ar || areaObj.name_ar, label_en: areaObj.label_en || areaObj.name_en };
     const typeObj = PROP_TYPE_OPTIONS.find(t => t.value === formData.type) || PROP_TYPE_OPTIONS[0];
     const budgetNum = parseInt(String(formData.budget).replace(/,/g, '')) || 2500000;
     
-    const textAr = `مطلوب ${typeObj.label_ar} في ${areaObj.label_ar} بميزانية ${budgetNum.toLocaleString()} جنيه ${formData.paymentMethod === 'cash' ? 'كاش' : 'تسهيلات'}${formData.minSize ? ` بمساحة لا تقل عن ${formData.minSize} متر` : ''}. ${formData.notes ? `(${formData.notes})` : ''}`;
-    const textEn = `Wanted: ${typeObj.label_en} in ${areaObj.label_en} with a budget of ${budgetNum.toLocaleString()} EGP (${formData.paymentMethod})${formData.minSize ? `, min size ${formData.minSize} sqm` : ''}. ${formData.notes || ''}`;
+    const textAr = `مطلوب ${typeObj.label_ar} في ${areaMapped.label_ar} بميزانية ${budgetNum.toLocaleString()} جنيه ${formData.paymentMethod === 'cash' ? 'كاش' : 'تسهيلات'}${formData.minSize ? ` بمساحة لا تقل عن ${formData.minSize} متر` : ''}. ${formData.notes ? `(${formData.notes})` : ''}`;
+    const textEn = `Wanted: ${typeObj.label_en} in ${areaMapped.label_en} with a budget of ${budgetNum.toLocaleString()} EGP (${formData.paymentMethod})${formData.minSize ? `, min size ${formData.minSize} sqm` : ''}. ${formData.notes || ''}`;
 
     const newDemandPayload = {
       id: `dem-pub-${Date.now()}-${Math.random().toString(36).slice(2, 10)}-${Math.random().toString(36).slice(2, 8)}`,

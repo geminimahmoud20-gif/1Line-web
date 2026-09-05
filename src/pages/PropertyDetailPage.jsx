@@ -6,8 +6,6 @@ import {
   Bath, 
   Maximize2, 
   Sparkles, 
-  Heart, 
-  Share2, 
   CheckCircle2, 
   Layers, 
   Calendar, 
@@ -15,13 +13,9 @@ import {
   MessageSquare, 
   ShieldCheck, 
   Clock,
-  FileText,
   TrendingUp,
-  Compass,
   Calculator,
-  DollarSign,
   Eye,
-  Flame,
   Navigation
 } from 'lucide-react';
 import { incrementPropertyView, getPropertyViews } from '../utils/visitorTracker';
@@ -53,7 +47,12 @@ export default function PropertyDetailPage({
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'legal' | 'valuation' | 'financing'
   const [depositModalOpen, setDepositModalOpen] = useState(false);
   const [storyModalOpen, setStoryModalOpen] = useState(false);
-  const [viewsCount, setViewsCount] = useState(150);
+  const [viewsCount, setViewsCount] = useState(() => {
+    if (id) {
+      return getPropertyViews(id) || 150;
+    }
+    return 150;
+  });
 
   // Find Property
   const property = useMemo(() => {
@@ -81,14 +80,17 @@ export default function PropertyDetailPage({
     }
   }, [property, lang, isAr]);
 
-  // Track Property View in Visitor Intelligence
+  // Track Property View in Visitor Intelligence (scheduled asynchronously to avoid cascading renders)
   useEffect(() => {
     if (property?.id) {
       const updated = incrementPropertyView(property.id, property);
-      if (updated) setViewsCount(updated);
-      else setViewsCount(getPropertyViews(property.id));
+      if (updated) {
+        requestAnimationFrame(() => {
+          setViewsCount(updated);
+        });
+      }
     }
-  }, [property?.id]);
+  }, [property?.id, property]);
 
   // Booking Form State
   const [bookingForm, setBookingForm] = useState({
@@ -117,8 +119,6 @@ export default function PropertyDetailPage({
   const finishing = isAr ? property.finishing_ar : property.finishing_en;
   const description = isAr ? property.description_ar : property.description_en;
   const features = isAr ? property.features_ar : property.features_en;
-
-  const isFavorite = favorites.includes(property.id);
 
   const handleBookingSubmit = (e) => {
     e.preventDefault();

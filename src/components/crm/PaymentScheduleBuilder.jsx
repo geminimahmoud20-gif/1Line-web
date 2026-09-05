@@ -3,22 +3,16 @@ import {
   Calculator, 
   FileText, 
   Printer, 
-  Download, 
-  CheckCircle2, 
-  Building, 
   Calendar, 
   DollarSign, 
-  Sparkles,
-  QrCode,
-  ShieldCheck,
-  X
+  QrCode, 
+  ShieldCheck 
 } from 'lucide-react';
 
 export default function PaymentScheduleBuilder({
   properties = [],
   leads = [],
-  lang = 'ar',
-  triggerToast
+  lang = 'ar'
 }) {
   const isAr = lang === 'ar';
 
@@ -31,12 +25,12 @@ export default function PaymentScheduleBuilder({
   const [years, setYears] = useState(5);
   const [frequency, setFrequency] = useState('quarterly'); // 'monthly' | 'quarterly' | 'semi_annual' | 'annual'
   const [maintenancePercent, setMaintenancePercent] = useState(7);
-  const [deliveryYear, setDeliveryYear] = useState(2);
 
   // E-Receipt Modal State
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [receiptDepositAmount, setReceiptDepositAmount] = useState(50000);
   const [paymentMethod, setPaymentMethod] = useState('cash'); // 'cash' | 'bank_transfer' | 'cheque' | 'vodafone_cash'
+  const [receiptSerial] = useState(() => `ONE-REC-2026-${Math.floor(1000 + Math.random() * 9000)}`);
 
   const selectedProp = properties.find(p => p.id === selectedPropertyId) || properties[0] || {};
   const selectedLead = leads.find(l => l.id === selectedLeadId) || leads[0] || {};
@@ -95,8 +89,6 @@ export default function PaymentScheduleBuilder({
   const handlePrintReceipt = () => {
     window.print();
   };
-
-  const receiptSerial = `ONE-REC-2026-${Math.floor(1000 + Math.random() * 9000)}`;
 
   return (
     <div className="payment-schedule-builder-card">
@@ -158,6 +150,22 @@ export default function PaymentScheduleBuilder({
               {properties.map(p => (
                 <option key={p.id} value={p.id}>
                   {isAr ? p.title_ar : p.title_en} ({p.price?.toLocaleString()} ج.م)
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Select Lead / Client */}
+          <div className="form-group-item">
+            <label>{isAr ? 'العميل المستهدف للإيصال:' : 'Client:'}</label>
+            <select
+              value={selectedLeadId}
+              onChange={(e) => setSelectedLeadId(e.target.value)}
+              style={{ fontWeight: 'bold' }}
+            >
+              {leads.map(l => (
+                <option key={l.id} value={l.id}>
+                  {l.name} ({l.phone || 'بدون هاتف'})
                 </option>
               ))}
             </select>
@@ -320,6 +328,35 @@ export default function PaymentScheduleBuilder({
                 </h3>
               </div>
               <button type="button" className="drawer-close-btn" onClick={() => setShowReceiptModal(false)}>✕</button>
+            </div>
+
+            {/* Receipt Parameters Controls */}
+            <div style={{ display: 'flex', gap: '14px', padding: '12px 16px 0', flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: '160px' }}>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                  {isAr ? 'مبلغ جدية الحجز (ج.م):' : 'Deposit (EGP):'}
+                </label>
+                <input
+                  type="number"
+                  value={receiptDepositAmount}
+                  onChange={(e) => setReceiptDepositAmount(parseInt(e.target.value) || 0)}
+                  style={{ width: '100%', padding: '6px 10px', borderRadius: '4px' }}
+                />
+              </div>
+              <div style={{ flex: 1, minWidth: '160px' }}>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                  {isAr ? 'طريقة السداد:' : 'Payment Method:'}
+                </label>
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  style={{ width: '100%', padding: '6px 10px', borderRadius: '4px' }}
+                >
+                  <option value="cash">{isAr ? 'نقداً بخزينة الشركة' : 'Cash'}</option>
+                  <option value="bank_transfer">{isAr ? 'تحويل بنكي رسمي' : 'Bank Transfer'}</option>
+                  <option value="vodafone_cash">{isAr ? 'فودافون كاش / إنستاباي' : 'Vodafone Cash / InstaPay'}</option>
+                </select>
+              </div>
             </div>
 
             {/* Printable Receipt Paper Body */}

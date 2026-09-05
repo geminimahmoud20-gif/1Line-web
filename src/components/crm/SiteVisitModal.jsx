@@ -1,18 +1,7 @@
 import { useState } from 'react';
 import { 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  User, 
-  Phone, 
-  Building, 
   Send, 
-  Check, 
-  X, 
-  Navigation, 
-  Car,
-  MessageSquare,
-  Sparkles
+  Car
 } from 'lucide-react';
 
 export default function SiteVisitModal({
@@ -24,11 +13,7 @@ export default function SiteVisitModal({
   lang = 'ar',
   triggerToast
 }) {
-  if (!isOpen || !lead) return null;
-
-  const isAr = lang === 'ar';
-
-  const defaultPropId = lead.details?.targetPropertyId || (properties.length > 0 ? properties[0].id : '');
+  const defaultPropId = lead?.details?.targetPropertyId || (properties.length > 0 ? properties[0].id : '');
   const [selectedPropertyId, setSelectedPropertyId] = useState(defaultPropId);
   const [visitDate, setVisitDate] = useState(() => {
     const tomorrow = new Date();
@@ -36,9 +21,13 @@ export default function SiteVisitModal({
     return tomorrow.toISOString().slice(0, 10);
   });
   const [visitTime, setVisitTime] = useState('16:00');
-  const [agentName, setAgentName] = useState(lead.assignedTo || 'Dr. Mahmoud Elbaz');
+  const [agentName, setAgentName] = useState(lead?.assignedTo || 'Dr. Mahmoud Elbaz');
   const [meetingLocation, setMeetingLocation] = useState('مقر شركة 1Line العقارية - شرق سوهاج');
   const [notes, setNotes] = useState('معاينة ميدانية للوحدة مع شرح الموقف القانوني');
+
+  if (!isOpen || !lead) return null;
+
+  const isAr = lang === 'ar';
 
   const selectedProperty = properties.find(p => p.id === selectedPropertyId) || properties[0] || {};
 

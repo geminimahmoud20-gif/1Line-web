@@ -21,13 +21,13 @@ export default function AICopywriterModal({
   lang = 'ar',
   triggerToast
 }) {
-  if (!isOpen) return null;
-
   const isAr = lang === 'ar';
   const [selectedPropertyId, setSelectedPropertyId] = useState(properties[0]?.id || '');
   const [adTone, setAdTone] = useState('luxury'); // 'luxury' | 'social' | 'investor' | 'english'
   const [copied, setCopied] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  if (!isOpen) return null;
 
   const selectedProp = properties.find(p => p.id === selectedPropertyId) || properties[0] || {};
 
