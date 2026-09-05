@@ -263,7 +263,7 @@ export default function MortgageRoiCalculator({
                     onChange={(e) => setDownpaymentPercent(parseInt(e.target.value))}
                     className="calc-range"
                     style={{
-                      background: `linear-gradient(to right, #ffb300 0%, #ffb300 ${downpaymentFillPct}%, #e2e8f0 ${downpaymentFillPct}%, #e2e8f0 100%)`
+                      background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${downpaymentFillPct}%, #e2e8f0 ${downpaymentFillPct}%, #e2e8f0 100%)`
                     }}
                   />
                   <div className="calc-range-limits-ltr">
@@ -585,7 +585,7 @@ export default function MortgageRoiCalculator({
                   rel="noopener noreferrer"
                   className="btn btn-primary btn-full calc-cta-btn"
                 >
-                  <Sparkles size={16} />
+                  <Sparkles size={16} className="text-gold" />
                   <span>{isAr ? 'طلب موافقة تمويل مبدئية فورية' : 'Request Instant Pre-Approval'}</span>
                 </a>
 

@@ -70,8 +70,8 @@ export const ReferralPortal = ({
 
   return (
     <div>
-      <div className="investment-hero" style={{ background: 'linear-gradient(135deg, #0e1630 0%, #15224e 100%)', color: 'white', padding: '40px 20px', borderRadius: 'var(--radius-lg)', marginBottom: '30px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
-        <Gift size={40} style={{ color: 'var(--accent-gold)', marginBottom: '16px' }} />
+      <div className="investment-hero" style={{ background: 'linear-gradient(135deg, #092347 0%, #0d48a1 60%, #0a3880 100%)', color: 'white', padding: '36px 20px', borderRadius: 'var(--radius-lg)', marginBottom: '30px', textAlign: 'center', border: '1px solid rgba(255, 202, 40, 0.35)', boxShadow: '0 15px 35px rgba(13, 72, 161, 0.25)' }}>
+        <Gift size={40} className="text-gold" style={{ marginBottom: '16px' }} />
         <h2>{lang === 'ar' ? 'برنامج شركاء النجاح وعمولات الإحالة' : 'Referral Reward Partner Program'}</h2>
         <p style={{ marginTop: '10px', fontSize: '0.95rem', opacity: 0.9 }}>
           {lang === 'ar'

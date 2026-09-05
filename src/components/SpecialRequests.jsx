@@ -258,9 +258,9 @@ export const SpecialRequests = ({
     <div className="wizard-container" style={{ maxWidth: '860px', margin: '0 auto', animation: 'fadeIn 0.3s ease' }}>
       {/* Header Banner */}
       <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(217, 119, 6, 0.1)', border: '1px solid rgba(217, 119, 6, 0.3)', borderRadius: '20px', padding: '5px 14px', marginBottom: '12px' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255, 202, 40, 0.16)', border: '1px solid rgba(245, 158, 11, 0.45)', borderRadius: '20px', padding: '5px 14px', marginBottom: '12px' }}>
           <Award size={14} className="text-gold" />
-          <span style={{ fontSize: '0.8rem', color: 'var(--accent-gold-hover, #d97706)', fontWeight: 'bold' }}>
+          <span style={{ fontSize: '0.8rem', color: '#b45309', fontWeight: '800' }}>
             {isAr ? 'بوابة 1Line للطلبات والاستشارات الاستثنائية' : '1Line Bespoke Property Acquisition'}
           </span>
         </div>

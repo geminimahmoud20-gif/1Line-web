@@ -173,8 +173,8 @@ export default function AddDemandModal({
           maxHeight: '90vh', 
           overflowY: 'auto', 
           borderRadius: '20px', 
-          border: '1px solid rgba(217, 119, 6, 0.3)', 
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)' 
+          border: '1px solid rgba(255, 202, 40, 0.35)', 
+          boxShadow: '0 25px 50px -12px rgba(9, 35, 71, 0.5)' 
         }}
       >
         <button type="button" className="modal-close-btn" onClick={handleResetAndClose} aria-label="Close">
@@ -209,7 +209,7 @@ export default function AddDemandModal({
             </p>
 
             <div style={{ 
-              background: 'rgba(15, 23, 42, 0.6)', 
+              background: 'rgba(9, 35, 71, 0.6)', 
               border: '1px dashed var(--accent-gold)', 
               borderRadius: '12px', 
               padding: '16px', 
@@ -240,8 +240,8 @@ export default function AddDemandModal({
         ) : (
           <>
             <div className="track-modal-header" style={{ marginBottom: '20px' }}>
-              <div className="track-icon-wrap" style={{ background: 'linear-gradient(135deg, #d97706, #b45309)' }}>
-                <Zap size={22} style={{ color: '#fff' }} />
+              <div className="track-icon-wrap" style={{ background: 'linear-gradient(135deg, #0d48a1 0%, #0a3880 100%)', boxShadow: '0 4px 12px rgba(13, 72, 161, 0.3)' }}>
+                <Zap size={22} className="text-gold" />
               </div>
               <h3 style={{ fontSize: '1.3rem', color: 'var(--text-primary)' }}>
                 {isAr ? 'أضف طلبك العقاري للشراء أو الاستثمار' : 'Submit Your Property Acquisition Request'}
@@ -268,15 +268,15 @@ export default function AddDemandModal({
 
               {/* Privacy Notice Banner */}
               <div style={{ 
-                background: 'rgba(217, 119, 6, 0.08)', 
-                border: '1px solid rgba(217, 119, 6, 0.3)', 
+                background: 'rgba(255, 202, 40, 0.12)', 
+                border: '1px solid rgba(255, 202, 40, 0.35)', 
                 borderRadius: '10px', 
                 padding: '10px 14px', 
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '10px', 
                 fontSize: '0.8rem', 
-                color: 'var(--accent-gold)' 
+                color: 'var(--brand-gold-warm, #f59e0b)' 
               }}>
                 <ShieldCheck size={18} style={{ flexShrink: 0 }} />
                 <span>

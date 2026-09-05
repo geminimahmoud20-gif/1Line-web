@@ -59,7 +59,7 @@ export const BrokerPortal = ({
 
   const commissionTiers = [
     { title_ar: 'وسيط معتمد (Silver)', rate: '2.0%', desc_ar: 'وصول لمخزون الوحدات المباشرة + إغلاق سريع', color: '#94a3b8' },
-    { title_ar: 'شريك ذهبي (Gold Partner)', rate: '2.5% + بونص', desc_ar: 'أولوية في حجز مشروعات سوهاج الجديدة + عمولات فورية', color: '#fbbf24', featured: true },
+    { title_ar: 'شريك ذهبي (Gold Partner)', rate: '2.5% + بونص', desc_ar: 'أولوية في حجز مشروعات سوهاج الجديدة + عمولات فورية', color: '#ffca28', featured: true },
     { title_ar: 'شريك استراتيجي (VIP Club)', rate: '3.0% + دعم تسويقي', desc_ar: 'تمويل حملات إعلانية مشتركة ورعاية صفقات كبرى', color: '#38bdf8' }
   ];
 
@@ -156,7 +156,7 @@ export const BrokerPortal = ({
             type="submit"
             className="btn btn-primary btn-submit-valuation"
           >
-            <Sparkles size={16} />
+            <Sparkles size={16} className="text-gold" />
             <span>{isAr ? 'تأكيد التسجيل وتفعيل حساب الشريك المعتمد' : 'Activate Certified Broker Partner Profile'}</span>
           </button>
         </div>

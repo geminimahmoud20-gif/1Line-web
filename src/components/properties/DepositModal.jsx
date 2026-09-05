@@ -197,10 +197,10 @@ export default function DepositModal({
         {/* Modal Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '20px' }}>
           <div style={{
-            background: 'var(--gradient-gold, linear-gradient(135deg, #d97706, #b45309))',
+            background: 'var(--gradient-gold)',
             padding: '12px',
             borderRadius: '14px',
-            boxShadow: '0 4px 15px rgba(217, 119, 6, 0.35)',
+            boxShadow: '0 4px 15px rgba(245, 158, 11, 0.35)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'

@@ -266,26 +266,26 @@ export default function CrmPage({
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{
-                background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.2), rgba(15, 23, 42, 0.9))',
+                background: 'linear-gradient(135deg, rgba(255, 202, 40, 0.2), rgba(13, 72, 161, 0.5))',
                 padding: '6px',
                 borderRadius: '12px',
-                border: '1px solid rgba(217, 119, 6, 0.4)',
-                boxShadow: '0 0 15px rgba(217, 119, 6, 0.25)'
+                border: '1px solid rgba(255, 202, 40, 0.45)',
+                boxShadow: '0 0 15px rgba(255, 202, 40, 0.25)'
               }}>
                 <LogoEmblem size={30} />
               </div>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <strong style={{ fontSize: '1.1rem', color: '#ffffff', letterSpacing: '0.6px', fontWeight: '900' }}>
+                  <strong style={{ fontSize: '1.15rem', color: '#ffffff', letterSpacing: '0.6px', fontWeight: '900' }}>
                     1Line
                   </strong>
                   <span style={{ 
                     fontSize: '0.68rem', 
-                    background: 'linear-gradient(135deg, #d97706, #b45309)', 
-                    color: '#ffffff', 
+                    background: 'var(--gradient-gold)', 
+                    color: '#092347', 
                     padding: '2px 8px', 
                     borderRadius: '6px', 
-                    fontWeight: 'bold',
+                    fontWeight: '900',
                     letterSpacing: '0.5px'
                   }}>
                     COMMAND CENTER

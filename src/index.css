@@ -15,6 +15,11 @@
   --accent-gold-hover: #d97706;
   --accent-gold-light: rgba(255, 202, 40, 0.14);
   --accent-gold-border: rgba(245, 158, 11, 0.4);
+  
+  --gradient-gold: linear-gradient(135deg, #ffd54f 0%, #f59e0b 100%);
+  --gradient-navy: linear-gradient(135deg, #0d48a1 0%, #0a3880 100%);
+  --gradient-sky: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  --gradient-emerald: linear-gradient(135deg, #34d399 0%, #10b981 100%);
 
   /* 🌊 SERENE PROPTECH SKY-BLUE (سماوي مريح للعين) */
   --primary: #0284c7;

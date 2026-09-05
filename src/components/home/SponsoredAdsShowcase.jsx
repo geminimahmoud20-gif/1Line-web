@@ -89,9 +89,9 @@ export default function SponsoredAdsShowcase({ lang = 'ar' }) {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.2), rgba(15, 23, 42, 0.8))',
-              border: '1px solid rgba(217, 119, 6, 0.45)',
-              color: 'var(--accent-gold, #f59e0b)',
+              background: 'rgba(255, 202, 40, 0.14)',
+              border: '1px solid rgba(255, 202, 40, 0.45)',
+              color: 'var(--brand-gold, #ffca28)',
               padding: '5px 14px',
               borderRadius: 'var(--radius-pill)',
               fontSize: '0.78rem',
@@ -116,7 +116,7 @@ export default function SponsoredAdsShowcase({ lang = 'ar' }) {
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: 'var(--accent-gold, #f59e0b)',
+                color: 'var(--brand-gold, #ffca28)',
                 fontSize: '0.8rem',
                 fontWeight: 'bold',
                 display: 'flex',
@@ -165,7 +165,7 @@ export default function SponsoredAdsShowcase({ lang = 'ar' }) {
                         width: idx === currentIndex ? '22px' : '7px',
                         height: '7px',
                         borderRadius: '4px',
-                        background: idx === currentIndex ? 'var(--accent-gold, #f59e0b)' : 'rgba(255, 255, 255, 0.25)',
+                        background: idx === currentIndex ? 'var(--brand-gold, #ffca28)' : 'rgba(255, 255, 255, 0.25)',
                         border: 'none',
                         cursor: 'pointer',
                         transition: 'all 0.3s ease'
@@ -201,24 +201,24 @@ export default function SponsoredAdsShowcase({ lang = 'ar' }) {
 
         {/* The Luxury Chic Showcase Card */}
         <div style={{
-          background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.92) 50%, rgba(10, 17, 40, 0.98) 100%)',
+          background: 'linear-gradient(135deg, #092347 0%, #0d48a1 60%, #0a3880 100%)',
           borderRadius: '24px',
-          border: '1px solid rgba(217, 119, 6, 0.35)',
-          boxShadow: '0 20px 45px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+          border: '1px solid rgba(255, 202, 40, 0.35)',
+          boxShadow: '0 20px 45px rgba(13, 72, 161, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
           overflow: 'hidden',
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
           position: 'relative'
         }}>
           
-          {/* Subtle Ambient Glow behind card */}
+          {/* Subtle Ambient Gold Glow behind card */}
           <div style={{
             position: 'absolute',
             top: '-50px',
             [isAr ? 'right' : 'left']: '-50px',
             width: '240px',
             height: '240px',
-            background: 'radial-gradient(circle, rgba(217, 119, 6, 0.25) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(255, 202, 40, 0.22) 0%, transparent 70%)',
             pointerEvents: 'none'
           }} />
 
@@ -426,8 +426,8 @@ export default function SponsoredAdsShowcase({ lang = 'ar' }) {
               position: 'absolute',
               inset: 0,
               background: isAr 
-                ? 'linear-gradient(to left, transparent 50%, rgba(15, 23, 42, 0.95) 100%)' 
-                : 'linear-gradient(to right, transparent 50%, rgba(15, 23, 42, 0.95) 100%)',
+                ? 'linear-gradient(to left, transparent 50%, rgba(9, 35, 71, 0.95) 100%)' 
+                : 'linear-gradient(to right, transparent 50%, rgba(9, 35, 71, 0.95) 100%)',
               pointerEvents: 'none'
             }} />
 
@@ -437,7 +437,7 @@ export default function SponsoredAdsShowcase({ lang = 'ar' }) {
               left: 0,
               right: 0,
               height: '80px',
-              background: 'linear-gradient(to top, rgba(10, 17, 40, 0.9), transparent)',
+              background: 'linear-gradient(to top, rgba(9, 35, 71, 0.92), transparent)',
               pointerEvents: 'none'
             }} />
 
@@ -451,9 +451,9 @@ export default function SponsoredAdsShowcase({ lang = 'ar' }) {
               gap: '8px'
             }}>
               <span style={{
-                background: 'rgba(15, 23, 42, 0.85)',
+                background: 'rgba(13, 72, 161, 0.88)',
                 backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(217, 119, 6, 0.4)',
+                border: '1px solid rgba(255, 202, 40, 0.45)',
                 color: '#fff',
                 fontSize: '0.74rem',
                 fontWeight: 'bold',
@@ -462,9 +462,9 @@ export default function SponsoredAdsShowcase({ lang = 'ar' }) {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.4)'
+                boxShadow: '0 4px 15px rgba(13, 72, 161, 0.4)'
               }}>
-                <Sparkles size={12} style={{ color: 'var(--accent-gold)' }} />
+                <Sparkles size={12} className="text-gold" />
                 <span>{isAr ? currentAd.tag_ar : currentAd.tag_en}</span>
               </span>
 
@@ -491,7 +491,7 @@ export default function SponsoredAdsShowcase({ lang = 'ar' }) {
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0, 0, 0, 0.75)',
+            background: 'rgba(9, 35, 71, 0.75)',
             backdropFilter: 'blur(8px)',
             zIndex: 999,
             display: 'flex',
@@ -503,13 +503,13 @@ export default function SponsoredAdsShowcase({ lang = 'ar' }) {
         >
           <div 
             style={{
-              background: '#0f172a',
-              border: '1px solid rgba(217, 119, 6, 0.4)',
+              background: 'linear-gradient(145deg, #092347 0%, #0d3b82 100%)',
+              border: '1px solid rgba(255, 202, 40, 0.4)',
               borderRadius: '20px',
               padding: '30px',
               maxWidth: '520px',
               width: '100%',
-              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.7)',
+              boxShadow: '0 25px 60px rgba(9, 35, 71, 0.7)',
               position: 'relative',
               textAlign: isAr ? 'right' : 'left'
             }}
@@ -543,12 +543,12 @@ export default function SponsoredAdsShowcase({ lang = 'ar' }) {
                 width: '42px',
                 height: '42px',
                 borderRadius: '12px',
-                background: 'rgba(217, 119, 6, 0.15)',
-                border: '1px solid rgba(217, 119, 6, 0.35)',
+                background: 'rgba(255, 202, 40, 0.18)',
+                border: '1px solid rgba(255, 202, 40, 0.45)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--accent-gold)'
+                color: 'var(--brand-gold, #ffca28)'
               }}>
                 <Megaphone size={20} />
               </div>
@@ -595,8 +595,8 @@ export default function SponsoredAdsShowcase({ lang = 'ar' }) {
                 setShowAdvertiseModal(false);
               }}
               style={{
-                background: 'linear-gradient(135deg, #d97706, #b45309)',
-                color: '#fff',
+                background: 'linear-gradient(135deg, #ffd54f 0%, #f59e0b 100%)',
+                color: '#081226',
                 fontWeight: 'bold',
                 fontSize: '0.92rem',
                 padding: '13px',
@@ -607,7 +607,7 @@ export default function SponsoredAdsShowcase({ lang = 'ar' }) {
                 gap: '8px',
                 border: 'none',
                 cursor: 'pointer',
-                boxShadow: '0 4px 15px rgba(217, 119, 6, 0.4)'
+                boxShadow: '0 4px 15px rgba(245, 158, 11, 0.45)'
               }}
             >
               <Send size={16} />

@@ -206,7 +206,7 @@ export default function AboutFounderSection({ lang = 'ar' }) {
                     <h3 style={{ margin: 0, fontSize: '1.35rem', color: '#ffffff', fontWeight: 'bold' }}>
                       {isAr ? (cms.founderName_ar || 'د. محمود الباز') : (cms.founderName_en || 'Dr. Mahmoud Elbaz')}
                     </h3>
-                    <CheckCircle2 size={18} style={{ color: '#38bdf8' }} />
+                    <CheckCircle2 size={18} style={{ color: '#ffca28' }} />
                   </div>
                   <span style={{ fontSize: '0.84rem', color: '#bae6fd', display: 'block', marginTop: '3px', fontWeight: '700' }}>
                     {isAr ? (cms.founderRole_ar || 'مؤسس ورئيس مجلس إدارة 1Line') : (cms.founderRole_en || 'Founder & Chairman of 1Line')}
@@ -220,7 +220,7 @@ export default function AboutFounderSection({ lang = 'ar' }) {
               {/* Founder Quote Card - Crisp High-Contrast Styling */}
               <div style={{
                 background: 'rgba(255, 255, 255, 0.12)',
-                borderInlineStart: '4px solid #38bdf8',
+                borderInlineStart: '4px solid #ffca28',
                 borderRadius: 'var(--radius-sm, 10px)',
                 padding: '18px 20px',
                 marginBottom: '22px',

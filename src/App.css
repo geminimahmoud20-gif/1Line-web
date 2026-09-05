@@ -2574,9 +2574,13 @@
 }
 
 .price-num-row h2 {
-  font-size: 2rem;
+  font-size: 2.1rem;
   font-weight: 900;
-  color: var(--primary);
+  color: var(--brand-navy, #0d48a1);
+}
+
+.dark-theme .price-num-row h2 {
+  color: #38bdf8;
 }
 
 .price-per-m {

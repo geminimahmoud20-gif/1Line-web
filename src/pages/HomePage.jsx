@@ -802,7 +802,7 @@ export default function HomePage({
               </div>
 
               <div className="demand-metric-card">
-                <div className="metric-icon" style={{ background: 'rgba(217, 119, 6, 0.12)', color: '#d97706' }}>
+                <div className="metric-icon" style={{ background: 'rgba(255, 202, 40, 0.16)', color: 'var(--brand-gold-warm, #f59e0b)' }}>
                   <Clock size={20} />
                 </div>
                 <div className="metric-info">
@@ -851,7 +851,7 @@ export default function HomePage({
                       <span style={{ color: '#1e293b', fontWeight: '800' }}>{lang === 'ar' ? (dem.area_ar || dem.area) : (dem.area_en || dem.area)}</span>
                     </div>
                     <div className="demand-meta-item">
-                      <DollarSign size={14} style={{ color: '#d97706' }} />
+                      <DollarSign size={14} className="text-gold" />
                       <span style={{ color: '#0d48a1', fontWeight: '900', fontSize: '0.92rem' }}>
                         {(typeof dem.budget === 'number' ? dem.budget : parseInt(String(dem.budget).replace(/,/g, ''))).toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}
                       </span>
@@ -883,7 +883,7 @@ export default function HomePage({
                   onClick={onOpenAddDemand}
                   style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', padding: '10px 22px', fontWeight: 'bold' }}
                 >
-                  <Sparkles size={15} />
+                  <Sparkles size={15} className="text-gold" />
                   <span>{lang === 'ar' ? '➕ أضف طلبك العقاري مجاناً' : 'Post Buyer Request'}</span>
                 </button>
               )}

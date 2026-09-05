@@ -38,6 +38,18 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+
+    // 🏢 6. PROJECTS & MEGA DEVELOPMENTS (المشروعات والكمبوندات الكبرى)
+    match /projects/{projectId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 📢 7. SPONSORED ADS & CAMPAIGNS (الحملات الإعلانية ومساحات الرعاة)
+    match /advertisements/{adId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
   }
 }
 

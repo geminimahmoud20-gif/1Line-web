@@ -41,8 +41,8 @@ export const DemandsPortal = ({
 
   return (
     <div>
-      <div className="investment-hero" style={{ background: 'linear-gradient(135deg, var(--primary) 0%, #0d1b3e 100%)', color: 'white', padding: '40px 20px', borderRadius: 'var(--radius-lg)', marginBottom: '30px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
-        <Zap size={40} style={{ color: 'var(--accent-gold)', marginBottom: '16px' }} />
+      <div className="investment-hero" style={{ background: 'linear-gradient(135deg, #092347 0%, #0d48a1 60%, #0a3880 100%)', color: 'white', padding: '36px 20px', borderRadius: 'var(--radius-lg)', marginBottom: '30px', textAlign: 'center', border: '1px solid rgba(255, 202, 40, 0.35)', boxShadow: '0 15px 35px rgba(13, 72, 161, 0.25)' }}>
+        <Zap size={40} className="text-gold" style={{ marginBottom: '16px' }} />
         <h2>{lang === 'ar' ? 'طلبات الشراء النشطة بسوهاج' : 'Active Market Demands in Sohag'}</h2>
         <p style={{ marginTop: '10px', fontSize: '0.95rem', opacity: 0.9, maxWidth: '640px', margin: '10px auto 20px' }}>
           {lang === 'ar'
@@ -57,7 +57,7 @@ export const DemandsPortal = ({
             onClick={onOpenAddDemand}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', fontWeight: 'bold', fontSize: '0.95rem' }}
           >
-            <Sparkles size={16} />
+            <Sparkles size={16} className="text-gold" />
             <span>{lang === 'ar' ? 'أضف طلبك العقاري الآن (مجاناً)' : 'Post Your Buyer Request Now'}</span>
           </button>
         )}
@@ -140,12 +140,12 @@ export const DemandsPortal = ({
         )}
 
         {ownerMatchesFound !== null && (
-          <div style={{ marginTop: '20px', padding: '16px', background: 'var(--primary-light)', border: '1px solid var(--accent-gold)', borderRadius: 'var(--radius-sm)', animation: 'fadeIn 0.5s ease' }}>
+          <div style={{ marginTop: '20px', padding: '16px', background: 'var(--primary-light)', border: '1px solid rgba(255, 202, 40, 0.45)', borderRadius: 'var(--radius-sm)', animation: 'fadeIn 0.5s ease' }}>
             {ownerMatchesFound > 0 ? (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
                 <div>
-                  <h4 style={{ color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                    <CheckCircle size={18} />
+                  <h4 style={{ color: 'var(--brand-navy, #0d48a1)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', fontWeight: '800' }}>
+                    <CheckCircle size={18} className="text-gold" />
                     {lang === 'ar' ? `تم العثور على ${ownerMatchesFound} مشتري مهتمين بعقارك!` : `Found ${ownerMatchesFound} interested buyers!`}
                   </h4>
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
@@ -154,7 +154,7 @@ export const DemandsPortal = ({
                       : 'Register your property to match with these active buyers and close the transaction.'}
                   </p>
                 </div>
-                <button className="btn btn-accent btn-sm" onClick={() => navigateTo('valuation')}>
+                <button className="btn btn-primary btn-sm" onClick={() => navigateTo('valuation')}>
                   {lang === 'ar' ? 'سجل عقارك للمطابقة الآن' : 'Match My Property Now'}
                 </button>
               </div>
