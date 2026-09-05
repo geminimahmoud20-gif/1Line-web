@@ -596,10 +596,10 @@ export default function HomePage({
                 ● {lang === 'ar' ? 'تحديث لحظي مباشر' : 'Live Stream'}
               </span>
             </div>
-            <h2 style={{ fontSize: '1.75rem', fontWeight: '900', color: 'var(--text-primary)', margin: 0 }}>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: '900', color: '#0f172a', margin: 0 }}>
               {lang === 'ar' ? 'أحدث العقارات والطلبات الاستثمارية الحية' : 'Featured Properties & Live Demands'}
             </h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '6px', marginBottom: 0 }}>
+            <p style={{ color: '#334155', fontSize: '0.9rem', marginTop: '6px', marginBottom: 0 }}>
               {lang === 'ar' ? 'تصفح أحدث الوحدات المفحوصة هندسياً وقانونياً أو طابق عقارك مع مشتري الكاش الجاهزين فوراً' : 'Certified properties & instant matching with serious cash buyers in Sohag'}
             </p>
           </div>
@@ -903,23 +903,23 @@ export default function HomePage({
           <span className="section-pill">{lang === 'ar' ? 'دراسات السوق والضمان المؤسسي' : 'Market Research & Institutional Trust'}</span>
           <h2>{lang === 'ar' ? 'أدوات الحساب المالي والضمان القانوني المعتمد' : 'Financial Simulator & Certified Legal Security'}</h2>
 
-          {/* Dual Segment Switcher (Ultra High Contrast Navy & Champagne Gold) */}
+          {/* Dual Segment Switcher (Serene Sky-Blue Palette) */}
           <div style={{
             display: 'inline-flex',
-            background: '#071224',
+            background: '#e0f2fe',
             padding: '5px',
             borderRadius: 'var(--radius-pill)',
-            border: '1px solid rgba(212, 175, 55, 0.3)',
+            border: '1px solid rgba(2, 132, 199, 0.25)',
             gap: '6px',
             marginTop: '16px',
-            boxShadow: '0 8px 24px rgba(7, 18, 36, 0.25)'
+            boxShadow: '0 4px 14px rgba(2, 132, 199, 0.08)'
           }}>
             <button
               type="button"
               onClick={() => setInsightsTab('calculator')}
               style={{
-                background: insightsTab === 'calculator' ? 'linear-gradient(135deg, #d4af37, #c5a059)' : 'transparent',
-                color: insightsTab === 'calculator' ? '#071224' : '#cbd5e1',
+                background: insightsTab === 'calculator' ? 'linear-gradient(135deg, #0284c7, #0ea5e9)' : 'transparent',
+                color: insightsTab === 'calculator' ? '#ffffff' : '#0369a1',
                 border: 'none',
                 borderRadius: 'var(--radius-pill)',
                 padding: '9px 24px',
@@ -929,11 +929,11 @@ export default function HomePage({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                boxShadow: insightsTab === 'calculator' ? '0 4px 16px rgba(212, 175, 55, 0.35)' : 'none',
+                boxShadow: insightsTab === 'calculator' ? '0 4px 14px rgba(2, 132, 199, 0.3)' : 'none',
                 transition: 'all 0.25s ease'
               }}
             >
-              <Calculator size={16} style={{ color: insightsTab === 'calculator' ? '#071224' : '#d4af37' }} />
+              <Calculator size={16} style={{ color: insightsTab === 'calculator' ? '#ffffff' : '#0284c7' }} />
               <span>{lang === 'ar' ? 'حاسبة التمويل والأقساط الذكية' : 'Mortgage & ROI Simulator'}</span>
             </button>
 
@@ -941,8 +941,8 @@ export default function HomePage({
               type="button"
               onClick={() => setInsightsTab('founder')}
               style={{
-                background: insightsTab === 'founder' ? 'linear-gradient(135deg, #d4af37, #c5a059)' : 'transparent',
-                color: insightsTab === 'founder' ? '#071224' : '#cbd5e1',
+                background: insightsTab === 'founder' ? 'linear-gradient(135deg, #0284c7, #0ea5e9)' : 'transparent',
+                color: insightsTab === 'founder' ? '#ffffff' : '#0369a1',
                 border: 'none',
                 borderRadius: 'var(--radius-pill)',
                 padding: '9px 24px',
@@ -952,11 +952,11 @@ export default function HomePage({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                boxShadow: insightsTab === 'founder' ? '0 4px 16px rgba(212, 175, 55, 0.35)' : 'none',
+                boxShadow: insightsTab === 'founder' ? '0 4px 14px rgba(2, 132, 199, 0.3)' : 'none',
                 transition: 'all 0.25s ease'
               }}
             >
-              <ShieldCheck size={16} style={{ color: insightsTab === 'founder' ? '#071224' : '#d4af37' }} />
+              <ShieldCheck size={16} style={{ color: insightsTab === 'founder' ? '#ffffff' : '#0284c7' }} />
               <span>{lang === 'ar' ? 'عن 1Line والضمان القانوني' : 'About 1Line & Legal Pillars'}</span>
             </button>
           </div>
@@ -995,16 +995,16 @@ export default function HomePage({
         </div>
       </section>
 
-      {/* 🌟 6. EXECUTIVE VIP CONSULTATION CTA STRIP */}
+      {/* 🌟 6. EXECUTIVE VIP CONSULTATION CTA STRIP (Serene Sky Blue Gradient) */}
       <section className="homepage-section" style={{ padding: '30px 20px 70px' }}>
         <div style={{
           maxWidth: '1240px',
           margin: '0 auto',
-          background: 'linear-gradient(145deg, #071224 0%, #0c1c38 50%, #040812 100%)',
+          background: 'linear-gradient(135deg, #075985 0%, #0284c7 50%, #0369a1 100%)',
           borderRadius: '28px',
           padding: '48px 44px',
-          border: '1px solid rgba(212, 175, 55, 0.35)',
-          boxShadow: '0 24px 60px rgba(4, 8, 18, 0.5), 0 0 35px rgba(212, 175, 55, 0.08)',
+          border: '1px solid rgba(255, 255, 255, 0.25)',
+          boxShadow: '0 20px 50px rgba(2, 132, 199, 0.25)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -1013,7 +1013,7 @@ export default function HomePage({
           position: 'relative',
           overflow: 'hidden'
         }}>
-          {/* Ambient Champagne Nebula */}
+          {/* Ambient Sky-Blue Nebula */}
           <div style={{
             position: 'absolute',
             top: '-40px',
@@ -1021,15 +1021,15 @@ export default function HomePage({
             width: '260px',
             height: '260px',
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(255, 255, 255, 0.18) 0%, transparent 70%)',
             pointerEvents: 'none'
           }} />
 
           <div style={{ maxWidth: '680px', position: 'relative', zIndex: 2 }}>
             <span style={{
-              background: 'rgba(212, 175, 55, 0.12)',
-              border: '1px solid rgba(212, 175, 55, 0.4)',
-              color: '#d4af37',
+              background: 'rgba(255, 255, 255, 0.18)',
+              border: '1px solid rgba(255, 255, 255, 0.4)',
+              color: '#ffffff',
               fontSize: '0.8rem',
               fontWeight: '800',
               padding: '6px 16px',
@@ -1042,7 +1042,7 @@ export default function HomePage({
             <h2 style={{ fontSize: '1.9rem', color: '#ffffff', fontWeight: '900', margin: '0 0 10px 0', lineHeight: 1.3 }}>
               {lang === 'ar' ? 'جاهز لتملك عقارك المثالي أو استثمارك القادم بسوهاج؟' : 'Ready to Secure Your Ideal Property in Sohag?'}
             </h2>
-            <p style={{ color: '#cbd5e1', fontSize: '0.95rem', margin: 0, lineHeight: 1.65 }}>
+            <p style={{ color: '#e0f2fe', fontSize: '0.95rem', margin: 0, lineHeight: 1.65 }}>
               {lang === 'ar' 
                 ? 'فريق خبراء ومستشاري 1Line جاهز لمساعدتك في فحص صحة الأوراق والتراخيص، التفاوض، واختيار العقار الأنسب لاحتياجك وميزانيتك مجاناً.' 
                 : 'Our certified real estate advisors are ready to guide you through legal vetting, price negotiation, and financing.'}
@@ -1054,13 +1054,13 @@ export default function HomePage({
               to="/buy"
               className="btn btn-primary"
               style={{
-                background: 'linear-gradient(135deg, #d4af37 0%, #c5a059 100%)',
-                color: '#071224',
+                background: '#ffffff',
+                color: '#0284c7',
                 fontWeight: '900',
                 padding: '14px 28px',
                 borderRadius: '14px',
                 border: 'none',
-                boxShadow: '0 8px 25px rgba(212, 175, 55, 0.35)',
+                boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '8px'
@@ -1074,8 +1074,8 @@ export default function HomePage({
               to="/sell"
               className="btn btn-outline"
               style={{
-                borderColor: 'rgba(212, 175, 55, 0.4)',
-                background: 'rgba(255, 255, 255, 0.05)',
+                borderColor: 'rgba(255, 255, 255, 0.6)',
+                background: 'rgba(255, 255, 255, 0.12)',
                 color: '#ffffff',
                 fontWeight: 'bold',
                 padding: '14px 24px',

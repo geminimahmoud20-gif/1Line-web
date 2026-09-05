@@ -4,34 +4,36 @@
 ------------------------------------------------------------- */
 
 :root {
-  /* Color Palette - Ultra-Luxury Real Estate Identity (Architectural Midnight, Royal Champagne Gold & Crisp Slate) */
-  --primary: #0a2540;
-  --primary-light: #123358;
-  --secondary: #f8fafc;
-  --accent-gold: #d4af37;
-  --accent-gold-hover: #c5a059;
-  --accent-gold-light: rgba(212, 175, 55, 0.1);
+  /* Color Palette - Serene Eye-Comfort Sky-Blue & Pure Alabaster (سماوي مريح للعين) */
+  --primary: #0284c7;
+  --primary-light: #38bdf8;
+  --primary-dark: #0369a1;
+  --accent-sky: #0ea5e9;
+  --secondary: #f0f9ff;
+  --accent-gold: #0284c7;
+  --accent-gold-hover: #0369a1;
+  --accent-gold-light: rgba(2, 132, 199, 0.08);
   
-  --bg-slate: #fafaf9;
+  --bg-slate: #f8fafc;
   --bg-card: #ffffff;
-  --bg-card-hover: #fcfcfb;
+  --bg-card-hover: #f0f9ff;
   
-  --text-primary: #071224;
-  --text-secondary: #475569;
-  --text-muted: #8292a6;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
   
-  --border-color: rgba(10, 37, 64, 0.1);
-  --border-hover: rgba(212, 175, 55, 0.45);
-  --border-light: rgba(10, 37, 64, 0.05);
+  --border-color: rgba(2, 132, 199, 0.16);
+  --border-hover: rgba(2, 132, 199, 0.45);
+  --border-light: rgba(2, 132, 199, 0.08);
   
   --emerald: #10b981;
   --emerald-bg: rgba(16, 185, 129, 0.1);
-  --cyan: #06b6d4;
-  --cyan-bg: rgba(6, 182, 212, 0.1);
-  --rose: #e52427;
-  --rose-bg: rgba(229, 36, 39, 0.1);
-  --amber: #ffb300;
-  --amber-bg: rgba(255, 179, 0, 0.1);
+  --cyan: #0284c7;
+  --cyan-bg: rgba(2, 132, 199, 0.1);
+  --rose: #ef4444;
+  --rose-bg: rgba(239, 68, 68, 0.1);
+  --amber: #0ea5e9;
+  --amber-bg: rgba(14, 165, 233, 0.1);
 
   /* Fonts */
   --font-ar: 'Cairo', system-ui, -apple-system, sans-serif;
@@ -73,8 +75,8 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   background-image: 
-    radial-gradient(circle at 10% 20%, rgba(197, 160, 43, 0.03) 0%, transparent 45%),
-    radial-gradient(circle at 90% 80%, rgba(10, 17, 40, 0.02) 0%, transparent 45%);
+    radial-gradient(circle at 15% 15%, rgba(2, 132, 199, 0.04) 0%, transparent 45%),
+    radial-gradient(circle at 85% 85%, rgba(14, 165, 233, 0.03) 0%, transparent 45%);
   background-attachment: fixed;
 }
 

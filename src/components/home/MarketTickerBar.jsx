@@ -16,14 +16,14 @@ export default function MarketTickerBar({ lang = 'ar' }) {
   return (
     <div 
       style={{
-        background: 'linear-gradient(90deg, #040914 0%, #071328 50%, #040914 100%)',
-        borderBottom: '1px solid rgba(212, 175, 55, 0.25)',
-        borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+        background: 'linear-gradient(90deg, #075985 0%, #0284c7 50%, #0369a1 100%)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
+        borderTop: 'none',
         padding: '8px 0',
         overflow: 'hidden',
         position: 'relative',
         zIndex: 50,
-        boxShadow: '0 4px 15px rgba(0, 0, 0, 0.35)'
+        boxShadow: '0 4px 15px rgba(2, 132, 199, 0.2)'
       }}
     >
       <div style={{ maxWidth: '1440px', margin: '0 auto', display: 'flex', alignItems: 'center', padding: '0 16px', gap: '14px' }}>
@@ -33,15 +33,15 @@ export default function MarketTickerBar({ lang = 'ar' }) {
           display: 'flex',
           alignItems: 'center',
           gap: '6px',
-          background: 'rgba(212, 175, 55, 0.12)',
-          border: '1px solid rgba(212, 175, 55, 0.35)',
+          background: 'rgba(255, 255, 255, 0.2)',
+          border: '1px solid rgba(255, 255, 255, 0.35)',
           padding: '4px 12px',
           borderRadius: '999px',
           flexShrink: 0,
-          boxShadow: '0 0 10px rgba(212, 175, 55, 0.15)'
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
         }}>
-          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px #10b981' }} />
-          <Activity size={13} style={{ color: '#d4af37' }} />
+          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#38bdf8', boxShadow: '0 0 6px #38bdf8' }} />
+          <Activity size={13} style={{ color: '#ffffff' }} />
           <span style={{ fontSize: '0.74rem', fontWeight: '900', color: '#ffffff', letterSpacing: '0.3px' }}>
             {isAr ? 'مؤشر بورصة سوهاج العقارية' : 'Sohag PropTech Index'}
           </span>
@@ -66,20 +66,20 @@ export default function MarketTickerBar({ lang = 'ar' }) {
                 alignItems: 'center',
                 gap: '8px',
                 fontSize: '0.76rem',
-                color: '#cbd5e1',
+                color: '#e0f2fe',
                 padding: '2px 8px',
                 borderRadius: '6px',
-                background: 'rgba(255, 255, 255, 0.03)'
+                background: 'rgba(255, 255, 255, 0.1)'
               }}
             >
-              <MapPin size={12} style={{ color: '#d4af37' }} />
+              <MapPin size={12} style={{ color: '#38bdf8' }} />
               <strong style={{ color: '#ffffff' }}>{isAr ? item.area_ar : item.area_en}:</strong>
-              <span style={{ color: '#94a3b8' }}>{isAr ? 'المتر' : 'sqm'}</span>
-              <span style={{ fontWeight: 'bold', color: '#d4af37' }}>{item.avg_meter} {isAr ? 'ج.م' : 'EGP'}</span>
+              <span style={{ color: '#bae6fd' }}>{isAr ? 'المتر' : 'sqm'}</span>
+              <span style={{ fontWeight: 'bold', color: '#ffffff' }}>{item.avg_meter} {isAr ? 'ج.م' : 'EGP'}</span>
               <span style={{
-                color: '#10b981',
+                color: '#ffffff',
                 fontWeight: 'bold',
-                background: 'rgba(16, 185, 129, 0.12)',
+                background: 'rgba(16, 185, 129, 0.35)',
                 padding: '1px 5px',
                 borderRadius: '4px',
                 fontSize: '0.7rem',
@@ -90,8 +90,8 @@ export default function MarketTickerBar({ lang = 'ar' }) {
                 <TrendingUp size={10} />
                 <span>{item.change}</span>
               </span>
-              <span style={{ fontSize: '0.68rem', color: '#64748b' }}>({isAr ? item.note_ar : item.note_en})</span>
-              {idx < MARKET_TICKER_ITEMS.length - 1 && <span style={{ color: 'rgba(255, 255, 255, 0.15)', margin: '0 4px' }}>•</span>}
+              <span style={{ fontSize: '0.68rem', color: '#e0f2fe' }}>({isAr ? item.note_ar : item.note_en})</span>
+              {idx < MARKET_TICKER_ITEMS.length - 1 && <span style={{ color: 'rgba(255, 255, 255, 0.25)', margin: '0 4px' }}>•</span>}
             </div>
           ))}
         </div>

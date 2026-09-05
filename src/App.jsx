@@ -734,7 +734,11 @@ export default function App() {
   const [scanningMessage, setScanningMessage] = useState('');
 
   return (
-    <div className={`app-root ${lang === 'ar' ? 'rtl-dir' : 'ltr-dir'} ${theme === 'dark' ? 'dark-theme' : ''}`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+    <div 
+      className={`app-root ${lang === 'ar' ? 'rtl-dir' : 'ltr-dir'} ${theme === 'dark' ? 'dark-theme' : ''}`} 
+      dir={lang === 'ar' ? 'rtl' : 'ltr'}
+      data-theme={theme}
+    >
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 

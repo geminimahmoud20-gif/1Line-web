@@ -52,7 +52,7 @@ export default function AboutFounderSection({ lang = 'ar' }) {
       label_en: cms.stats?.[0]?.label_en || 'Successful Deals',
       sub_ar: cms.stats?.[0]?.sub_ar || 'موثقة ومسجلة رسمياً',
       sub_en: cms.stats?.[0]?.sub_en || 'Officially Verified',
-      icon: <FileCheck size={20} className="text-gold" />
+      icon: <FileCheck size={20} style={{ color: '#0284c7' }} />
     },
     {
       num_ar: cms.stats?.[1]?.num_ar || '+1.2B',
@@ -61,7 +61,7 @@ export default function AboutFounderSection({ lang = 'ar' }) {
       label_en: cms.stats?.[1]?.label_en || 'Trading Volume',
       sub_ar: cms.stats?.[1]?.sub_ar || 'أصول واستثمارات مدارة',
       sub_en: cms.stats?.[1]?.sub_en || 'Managed Real Estate Assets',
-      icon: <TrendingUp size={20} className="text-gold" />
+      icon: <TrendingUp size={20} style={{ color: '#0284c7' }} />
     },
     {
       num_ar: cms.stats?.[2]?.num_ar || '100%',
@@ -70,7 +70,7 @@ export default function AboutFounderSection({ lang = 'ar' }) {
       label_en: cms.stats?.[2]?.label_en || 'Legal Compliance',
       sub_ar: cms.stats?.[2]?.sub_ar || 'تراخيص وملكية معتمدة',
       sub_en: cms.stats?.[2]?.sub_en || 'Valid Title Deeds',
-      icon: <ShieldCheck size={20} className="text-gold" />
+      icon: <ShieldCheck size={20} style={{ color: '#0284c7' }} />
     },
     {
       num_ar: cms.stats?.[3]?.num_ar || '+12K',
@@ -79,7 +79,7 @@ export default function AboutFounderSection({ lang = 'ar' }) {
       label_en: cms.stats?.[3]?.label_en || 'Trusted Clients',
       sub_ar: cms.stats?.[3]?.sub_ar || 'بسوهاج ومغتربي الخليج',
       sub_en: cms.stats?.[3]?.sub_en || 'In Egypt & Gulf Expats',
-      icon: <Users size={20} className="text-gold" />
+      icon: <Users size={20} style={{ color: '#0284c7' }} />
     }
   ];
 
@@ -114,7 +114,7 @@ export default function AboutFounderSection({ lang = 'ar' }) {
 
   return (
     <section id="about-us" className="homepage-section about-founder-section" style={{ position: 'relative', overflow: 'hidden', paddingBottom: '70px' }}>
-      {/* Subtle Background Glow */}
+      {/* Subtle Sky-Blue Background Glow */}
       <div style={{
         position: 'absolute',
         top: '10%',
@@ -122,7 +122,7 @@ export default function AboutFounderSection({ lang = 'ar' }) {
         transform: 'translateX(-50%)',
         width: '600px',
         height: '400px',
-        background: 'radial-gradient(circle, rgba(217, 119, 6, 0.07) 0%, rgba(10, 17, 40, 0) 70%)',
+        background: 'radial-gradient(circle, rgba(2, 132, 199, 0.08) 0%, rgba(10, 17, 40, 0) 70%)',
         pointerEvents: 'none',
         zIndex: 0
       }}></div>
@@ -131,7 +131,7 @@ export default function AboutFounderSection({ lang = 'ar' }) {
         {/* Section Header */}
         <div className="section-header-centered" style={{ marginBottom: '40px' }}>
           <span className="section-pill" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-            <Building size={14} className="text-gold" />
+            <Building size={14} style={{ color: '#0284c7' }} />
             <span>{isAr ? 'عن 1Line ورؤية الإدارة' : 'About 1Line & Leadership'}</span>
           </span>
           <h2 style={{ fontSize: 'clamp(1.6rem, 3vw, 2.3rem)', margin: '12px 0 10px 0', lineHeight: 1.3, color: 'var(--text-primary, #0d2c54)' }}>
@@ -152,16 +152,16 @@ export default function AboutFounderSection({ lang = 'ar' }) {
           alignItems: 'stretch',
           marginBottom: '40px'
         }}>
-          {/* 👤 LEFT COLUMN: THE FOUNDER PROFILE CARD */}
+          {/* 👤 LEFT COLUMN: THE FOUNDER PROFILE CARD (Executive Sky-Blue Gradient) */}
           <div style={{
-            background: 'linear-gradient(145deg, #071224 0%, #0a1630 100%)',
-            border: '1px solid rgba(212, 175, 55, 0.35)',
+            background: 'linear-gradient(145deg, #075985 0%, #0369a1 50%, #0284c7 100%)',
+            border: '1px solid rgba(255, 255, 255, 0.25)',
             borderRadius: 'var(--radius-lg, 24px)',
             padding: '32px 26px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            boxShadow: '0 15px 40px -5px rgba(7, 18, 36, 0.35), 0 0 25px rgba(212, 175, 55, 0.08)',
+            boxShadow: '0 15px 40px -5px rgba(2, 132, 199, 0.3)',
             position: 'relative'
           }}>
             {/* Top Founder Identity */}
@@ -171,9 +171,9 @@ export default function AboutFounderSection({ lang = 'ar' }) {
                   width: '70px',
                   height: '70px',
                   borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #d4af37, #c5a059)',
+                  background: 'linear-gradient(135deg, #38bdf8, #ffffff)',
                   padding: '3px',
-                  boxShadow: '0 4px 18px rgba(212, 175, 55, 0.35)',
+                  boxShadow: '0 4px 18px rgba(0, 0, 0, 0.2)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -190,11 +190,11 @@ export default function AboutFounderSection({ lang = 'ar' }) {
                       width: '100%',
                       height: '100%',
                       borderRadius: '50%',
-                      background: '#071224',
+                      background: '#075985',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: 'var(--accent-gold)'
+                      color: '#ffffff'
                     }}>
                       <LogoEmblem size={36} />
                     </div>
@@ -206,12 +206,12 @@ export default function AboutFounderSection({ lang = 'ar' }) {
                     <h3 style={{ margin: 0, fontSize: '1.35rem', color: '#ffffff', fontWeight: 'bold' }}>
                       {isAr ? (cms.founderName_ar || 'د. محمود الباز') : (cms.founderName_en || 'Dr. Mahmoud Elbaz')}
                     </h3>
-                    <CheckCircle2 size={18} style={{ color: '#10b981' }} />
+                    <CheckCircle2 size={18} style={{ color: '#38bdf8' }} />
                   </div>
-                  <span style={{ fontSize: '0.84rem', color: '#d4af37', display: 'block', marginTop: '3px', fontWeight: '700' }}>
+                  <span style={{ fontSize: '0.84rem', color: '#bae6fd', display: 'block', marginTop: '3px', fontWeight: '700' }}>
                     {isAr ? (cms.founderRole_ar || 'مؤسس ورئيس مجلس إدارة 1Line') : (cms.founderRole_en || 'Founder & Chairman of 1Line')}
                   </span>
-                  <small style={{ color: '#94a3b8', fontSize: '0.78rem', display: 'block', marginTop: '2px' }}>
+                  <small style={{ color: '#e0f2fe', fontSize: '0.78rem', display: 'block', marginTop: '2px' }}>
                     {isAr ? (cms.founderSub_ar || 'استشاري التقييم والتطوير العقاري بسوهاج') : (cms.founderSub_en || 'Real Estate Valuation Consultant')}
                   </small>
                 </div>
@@ -219,22 +219,21 @@ export default function AboutFounderSection({ lang = 'ar' }) {
 
               {/* Founder Quote Card - Crisp High-Contrast Styling */}
               <div style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                borderInlineStart: '4px solid #d4af37',
+                background: 'rgba(255, 255, 255, 0.12)',
+                borderInlineStart: '4px solid #38bdf8',
                 borderRadius: 'var(--radius-sm, 10px)',
                 padding: '18px 20px',
                 marginBottom: '22px',
                 position: 'relative'
               }}>
-                <Quote size={26} style={{ color: 'rgba(212, 175, 55, 0.3)', position: 'absolute', top: '10px', left: isAr ? '12px' : 'auto', right: isAr ? 'auto' : '12px' }} />
+                <Quote size={26} style={{ color: 'rgba(255, 255, 255, 0.35)', position: 'absolute', top: '10px', left: isAr ? '12px' : 'auto', right: isAr ? 'auto' : '12px' }} />
                 <p style={{
                   fontSize: '0.95rem',
                   lineHeight: 1.85,
-                  color: '#f8fafc',
+                  color: '#ffffff',
                   margin: 0,
                   fontStyle: 'normal',
-                  fontWeight: '400',
-                  textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+                  fontWeight: '400'
                 }}>
                   {isAr ? cms.founderQuote_ar : cms.founderQuote_en}
                 </p>
@@ -247,9 +246,9 @@ export default function AboutFounderSection({ lang = 'ar' }) {
                     key={idx} 
                     className="badge" 
                     style={{ 
-                      background: idx === 0 ? 'rgba(212, 175, 55, 0.15)' : idx === 1 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(6, 182, 212, 0.15)', 
-                      color: idx === 0 ? '#d4af37' : idx === 1 ? '#34d399' : '#38bdf8', 
-                      border: `1px solid ${idx === 0 ? 'rgba(212, 175, 55, 0.4)' : idx === 1 ? 'rgba(16, 185, 129, 0.4)' : 'rgba(6, 182, 212, 0.4)'}`, 
+                      background: 'rgba(255, 255, 255, 0.18)', 
+                      color: '#ffffff', 
+                      border: '1px solid rgba(255, 255, 255, 0.35)', 
                       fontSize: '0.78rem',
                       fontWeight: '600',
                       padding: '5px 10px',
@@ -263,7 +262,7 @@ export default function AboutFounderSection({ lang = 'ar' }) {
             </div>
 
             {/* Direct Consultation Actions */}
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', borderTop: '1px solid rgba(255, 255, 255, 0.12)', paddingTop: '18px' }}>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', borderTop: '1px solid rgba(255, 255, 255, 0.2)', paddingTop: '18px' }}>
               <a
                 href={`https://wa.me/${cleanWhatsApp}?text=${encodeURIComponent(`مرحباً د. محمود الباز، أود حجز استشارة عقارية خاصة مع مكتب الإدارة.`)}`}
                 target="_blank"
@@ -272,8 +271,8 @@ export default function AboutFounderSection({ lang = 'ar' }) {
                 style={{ 
                   flex: 1, 
                   minWidth: '170px', 
-                  background: 'linear-gradient(135deg, #d4af37 0%, #c5a059 100%)', 
-                  color: '#071224',
+                  background: '#ffffff', 
+                  color: '#0284c7',
                   border: 'none',
                   display: 'flex', 
                   alignItems: 'center', 
@@ -282,7 +281,7 @@ export default function AboutFounderSection({ lang = 'ar' }) {
                   fontSize: '0.88rem',
                   fontWeight: '900',
                   padding: '12px 18px',
-                  boxShadow: '0 4px 15px rgba(212, 175, 55, 0.35)'
+                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.15)'
                 }}
               >
                 <MessageSquare size={16} />
@@ -300,12 +299,12 @@ export default function AboutFounderSection({ lang = 'ar' }) {
                   gap: '6px', 
                   fontSize: '0.88rem',
                   color: '#ffffff',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(212, 175, 55, 0.35)',
+                  background: 'rgba(255, 255, 255, 0.12)',
+                  border: '1px solid rgba(255, 255, 255, 0.4)',
                   fontWeight: '600'
                 }}
               >
-                <Phone size={15} style={{ color: 'var(--accent-gold)' }} />
+                <Phone size={15} style={{ color: '#ffffff' }} />
                 <span>{isAr ? 'مكتب الإدارة' : 'Call Office'}</span>
               </a>
             </div>
@@ -320,13 +319,13 @@ export default function AboutFounderSection({ lang = 'ar' }) {
                   key={idx}
                   style={{
                     background: 'var(--bg-card, #ffffff)',
-                    border: '1px solid var(--border-color, rgba(13, 72, 161, 0.12))',
+                    border: '1px solid var(--border-color, rgba(2, 132, 199, 0.15))',
                     borderRadius: 'var(--radius-md, 16px)',
                     padding: '18px 20px',
                     display: 'flex',
                     alignItems: 'flex-start',
                     gap: '16px',
-                    boxShadow: '0 4px 18px -2px rgba(10, 17, 40, 0.05)',
+                    boxShadow: '0 4px 18px -2px rgba(2, 132, 199, 0.05)',
                     transition: 'var(--transition-normal)'
                   }}
                   className="pillar-hover-card"
@@ -335,9 +334,9 @@ export default function AboutFounderSection({ lang = 'ar' }) {
                     width: '46px',
                     height: '46px',
                     borderRadius: '12px',
-                    background: 'rgba(212, 175, 55, 0.12)',
-                    color: 'var(--accent-gold, #d4af37)',
-                    border: '1px solid rgba(212, 175, 55, 0.25)',
+                    background: '#e0f2fe',
+                    color: '#0284c7',
+                    border: '1px solid rgba(2, 132, 199, 0.25)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -362,7 +361,7 @@ export default function AboutFounderSection({ lang = 'ar' }) {
             {/* Corporate Location & Headquarters Ribbon */}
             <div style={{
               background: 'var(--bg-card, #ffffff)',
-              border: '1px solid var(--border-color, rgba(13, 72, 161, 0.12))',
+              border: '1px solid var(--border-color, rgba(2, 132, 199, 0.15))',
               borderRadius: 'var(--radius-md, 16px)',
               padding: '14px 20px',
               display: 'flex',
@@ -370,10 +369,10 @@ export default function AboutFounderSection({ lang = 'ar' }) {
               justifyContent: 'space-between',
               flexWrap: 'wrap',
               gap: '12px',
-              boxShadow: '0 4px 15px rgba(10, 17, 40, 0.04)'
+              boxShadow: '0 4px 15px rgba(2, 132, 199, 0.05)'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <MapPin size={18} className="text-gold" />
+                <MapPin size={18} style={{ color: '#0284c7' }} />
                 <span style={{ fontSize: '0.85rem', color: 'var(--text-primary, #0d2c54)', fontWeight: '600' }}>
                   {isAr ? (cms.headquarters_ar || 'المقر الرئيسي: محافظة سوهاج (شرق النيل - سوهاج الجديدة)') : (cms.headquarters_en || 'HQ: Sohag')}
                 </span>
@@ -400,18 +399,18 @@ export default function AboutFounderSection({ lang = 'ar' }) {
               key={idx}
               style={{
                 background: 'var(--bg-card, #ffffff)',
-                border: '1px solid var(--border-color, rgba(13, 72, 161, 0.12))',
+                border: '1px solid var(--border-color, rgba(2, 132, 199, 0.15))',
                 borderRadius: 'var(--radius-md, 16px)',
                 padding: '22px 18px',
                 textAlign: 'center',
-                boxShadow: '0 4px 18px -2px rgba(10, 17, 40, 0.05)',
+                boxShadow: '0 4px 18px -2px rgba(2, 132, 199, 0.06)',
                 transition: 'var(--transition-normal)'
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
                 {item.icon}
               </div>
-              <div style={{ fontSize: '2.1rem', fontWeight: '900', color: 'var(--accent-gold, #d4af37)', marginBottom: '4px', letterSpacing: '-0.5px' }}>
+              <div style={{ fontSize: '2.1rem', fontWeight: '900', color: '#0284c7', marginBottom: '4px', letterSpacing: '-0.5px' }}>
                 {isAr ? item.num_ar : item.num_en}
               </div>
               <strong style={{ fontSize: '0.9rem', display: 'block', color: 'var(--text-primary, #0d2c54)', marginBottom: '3px', fontWeight: 'bold' }}>
