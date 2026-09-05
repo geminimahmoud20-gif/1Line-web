@@ -192,7 +192,7 @@ export default function HomePage({
         <div className="hero-backdrop-gradient" />
         <div className="hero-content-container">
           <div className="hero-badge">
-            <Sparkles size={14} style={{ color: '#38bdf8' }} />
+            <Sparkles size={14} style={{ color: '#ffca28' }} />
             <span>{lang === 'ar' ? 'المنصة العقارية الأكثر موثوقية في سوهاج' : 'Sohag’s Most Trusted Real Estate Platform'}</span>
           </div>
 

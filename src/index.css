@@ -4,19 +4,29 @@
 ------------------------------------------------------------- */
 
 :root {
-  /* Color Palette - Serene Eye-Comfort Sky-Blue & Pure Alabaster (سماوي مريح للعين) */
+  /* 🏛️ 1LINE BRAND IDENTITY - HARMONIZED WITH LOGO EMBLEM */
+  --brand-navy: #0d48a1;          /* لون سقف وأعمدة الشعار */
+  --brand-navy-dark: #0a3880;     /* كحلي معماري موثوق */
+  --brand-navy-light: #1565c0;
+  
+  --brand-gold: #ffca28;          /* كبسولة الشعار الذهبية الأصلية */
+  --brand-gold-warm: #f59e0b;     /* كهرماني ناصع للتباين العالي */
+  --accent-gold: #f59e0b;
+  --accent-gold-hover: #d97706;
+  --accent-gold-light: rgba(255, 202, 40, 0.14);
+  --accent-gold-border: rgba(245, 158, 11, 0.4);
+
+  /* 🌊 SERENE PROPTECH SKY-BLUE (سماوي مريح للعين) */
   --primary: #0284c7;
   --primary-light: #38bdf8;
   --primary-dark: #0369a1;
   --accent-sky: #0ea5e9;
   --secondary: #f0f9ff;
-  --accent-gold: #0284c7;
-  --accent-gold-hover: #0369a1;
-  --accent-gold-light: rgba(2, 132, 199, 0.08);
   
   --bg-slate: #f8fafc;
   --bg-card: #ffffff;
   --bg-card-hover: #f0f9ff;
+  --bg-surface: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
   
   --text-primary: #0f172a;
   --text-secondary: #334155;
@@ -40,9 +50,9 @@
   --font-en: 'Outfit', system-ui, -apple-system, sans-serif;
   
   /* Shadow Systems */
-  --shadow-sm: 0 2px 8px -1px rgba(10, 17, 40, 0.08);
-  --shadow-md: 0 4px 20px -2px rgba(10, 17, 40, 0.12);
-  --shadow-lg: 0 10px 30px -5px rgba(10, 17, 40, 0.15), 0 0 20px rgba(197, 160, 43, 0.05);
+  --shadow-sm: 0 2px 8px -1px rgba(2, 132, 199, 0.08);
+  --shadow-md: 0 4px 20px -2px rgba(2, 132, 199, 0.12);
+  --shadow-lg: 0 10px 30px -5px rgba(2, 132, 199, 0.18);
   --shadow-inset: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
   
   /* Radius */

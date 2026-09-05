@@ -85,16 +85,16 @@ export default function PropertyCard({
           <span 
             className="property-badge momentum-badge"
             style={{
-              background: 'rgba(3, 105, 161, 0.90)',
-              border: '1px solid rgba(56, 189, 248, 0.5)',
+              background: property.featured ? 'rgba(13, 72, 161, 0.92)' : 'rgba(3, 105, 161, 0.90)',
+              border: property.featured ? '1px solid rgba(255, 202, 40, 0.55)' : '1px solid rgba(56, 189, 248, 0.5)',
               color: '#ffffff',
               backdropFilter: 'blur(6px)'
             }}
           >
             {property.featured ? (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                <Sparkles size={11} style={{ color: '#38bdf8' }} />
-                <span>{lang === 'ar' ? 'فرصة حصرية' : 'Prime Exclusive'}</span>
+                <Sparkles size={11} style={{ color: '#ffca28' }} />
+                <span style={{ color: '#ffca28', fontWeight: '800' }}>{lang === 'ar' ? 'فرصة حصرية' : 'Prime Exclusive'}</span>
               </span>
             ) : viewsCount >= 250 ? (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', color: '#f59e0b' }}>

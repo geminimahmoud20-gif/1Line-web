@@ -47,17 +47,21 @@
 }
 
 .brand-title {
-  font-size: 1.2rem;
-  font-weight: 800;
+  font-size: 1.25rem;
+  font-weight: 900;
   letter-spacing: 0.5px;
-  color: #0284c7;
+  color: #0d48a1;
   line-height: 1.2;
+}
+
+.dark-theme .brand-title {
+  color: #38bdf8;
 }
 
 .brand-subtitle {
   font-size: 0.68rem;
-  color: #64748b;
-  font-weight: 600;
+  color: #475569;
+  font-weight: 700;
   line-height: 1.2;
 }
 
@@ -111,9 +115,9 @@
 .nav-badge-gold {
   font-size: 0.65rem;
   padding: 1px 7px;
-  background: #e0f2fe;
-  color: #0284c7;
-  border: 1px solid rgba(2, 132, 199, 0.35);
+  background: rgba(255, 202, 40, 0.2);
+  color: #b45309;
+  border: 1px solid rgba(245, 158, 11, 0.45);
   border-radius: var(--radius-pill);
   font-weight: 800;
   line-height: 1.2;
@@ -356,7 +360,11 @@
 }
 
 .text-gold {
-  color: #38bdf8 !important;
+  color: #f59e0b !important;
+}
+
+.dark-theme .text-gold {
+  color: #ffca28 !important;
 }
 
 .hero-main-title {
@@ -1537,9 +1545,9 @@
 }
 
 .gold-badge {
-  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: linear-gradient(135deg, #0d48a1 0%, #0a3880 100%);
+  color: #ffca28;
+  border: 1px solid rgba(255, 202, 40, 0.45);
 }
 
 .tour-badge {
