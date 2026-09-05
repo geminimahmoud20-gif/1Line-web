@@ -23,17 +23,19 @@
 .header-container {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 10px 24px;
+  padding: 8px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .brand-logo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   text-decoration: none;
   color: var(--text-primary);
   flex-shrink: 0;
@@ -45,30 +47,34 @@
 }
 
 .brand-title {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 800;
   letter-spacing: 0.5px;
   color: #0284c7;
+  line-height: 1.2;
 }
 
 .brand-subtitle {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   color: #64748b;
   font-weight: 600;
+  line-height: 1.2;
 }
 
 .desktop-nav {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .nav-item {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  font-size: 0.88rem;
+  gap: 4px;
+  padding: 6px 9px;
+  font-size: 0.83rem;
   font-weight: 700;
   color: #334155;
   text-decoration: none;
@@ -180,7 +186,7 @@
 
 .dark-theme .utility-sub-btn:hover, .dark-theme .utility-sub-btn.active {
   background: rgba(255, 255, 255, 0.1);
-  color: var(--accent-gold);
+  color: #38bdf8;
 }
 
 .header-special-cta-btn {
@@ -218,22 +224,24 @@
 .cta-primary-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 18px;
+  gap: 6px;
+  padding: 6px 14px;
   border-radius: var(--radius-pill);
-  background: linear-gradient(135deg, #092347 0%, #0d48a1 100%);
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
   color: #ffffff;
   text-decoration: none;
-  font-size: 0.88rem;
-  font-weight: 700;
-  box-shadow: 0 4px 14px rgba(13, 72, 161, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 0.82rem;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   transition: all 0.25s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .cta-primary-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 22px rgba(13, 72, 161, 0.35);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(2, 132, 199, 0.35);
   color: #ffffff;
 }
 
@@ -9706,10 +9714,34 @@
   .advisor-res-yield { border: none !important; padding: 0 !important; margin-top: 10px; }
 }
 
+@media (max-width: 1280px) and (min-width: 1081px) {
+  .header-container {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+  .desktop-nav {
+    gap: 1px;
+  }
+  .nav-item {
+    padding: 5px 6px;
+    font-size: 0.78rem;
+  }
+  .brand-title {
+    font-size: 1.1rem;
+  }
+  .cta-primary-btn {
+    padding: 6px 10px;
+    font-size: 0.78rem;
+  }
+}
+
+@media (max-width: 1080px) {
+  .desktop-nav { display: none !important; }
+  .mobile-hamburger-btn { display: inline-flex !important; }
+}
+
 @media (max-width: 768px) {
   body { padding-bottom: 70px; }
-  .desktop-nav { display: none; }
-  .mobile-hamburger-btn { display: inline-flex; }
   .hide-mobile { display: none; }
   .mobile-floating-bottom-bar { display: block; }
   .mobile-detail-sticky-bar { display: flex; }
