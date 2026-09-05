@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { MessageSquare } from 'lucide-react';
 import { TRANSLATIONS } from './translations';
 import { PROPERTIES_DATA } from './data/propertiesData';
 import { MEGA_PROJECTS } from './data/projectsData';
@@ -1171,7 +1172,7 @@ export default function App() {
           onClick={() => setAiModalOpen(true)}
           title={lang === 'ar' ? 'استشارة عقارية مباشرة مع مستشاري 1Line' : 'Live 1Line Real Estate Advisory'}
         >
-          <span className="ai-icon-pulse">🏛️</span>
+          <span className="ai-icon-pulse"><MessageSquare size={16} strokeWidth={1.8} /></span>
           <span className="ai-trigger-text">{lang === 'ar' ? 'مستشارك العقاري المباشر' : 'Live Property Advisor'}</span>
         </button>
       )}

@@ -304,14 +304,14 @@ export const SpecialRequests = ({
                 required 
                 value={form.propertyType}
                 onChange={(e) => setForm({ ...form, propertyType: e.target.value })}
-                style={{ height: '46px', fontWeight: '600' }}
+                style={{ height: '48px', padding: '8px 14px', fontSize: '0.92rem', fontWeight: '600', lineHeight: 'normal' }}
               >
-                <option value="apartment">{isAr ? '🏢 شقة سكنية فاخرة / دوبلكس' : 'Apartment / Duplex'}</option>
-                <option value="villa">{isAr ? '🏡 فيلا مستقلة / تاون هاوس' : 'Standalone Villa / Townhouse'}</option>
-                <option value="commercial">{isAr ? '🛍️ مقر تجاري / محل لبراند أو توكيل' : 'Retail / Commercial Shop'}</option>
-                <option value="office">{isAr ? '💼 مقر إداري / عيادة / مكتب شركات' : 'Administrative Office / Clinic'}</option>
-                <option value="land">{isAr ? '📐 قطعة أرض للبناء أو الاستثمار' : 'Plot of Land'}</option>
-                <option value="building">{isAr ? '🏛️ عمارة كاملة / مجمع سكني أو تجاري' : 'Full Building / Complex'}</option>
+                <option value="apartment">{isAr ? 'شقة سكنية فاخرة / دوبلكس' : 'Apartment / Duplex'}</option>
+                <option value="villa">{isAr ? 'فيلا مستقلة / تاون هاوس' : 'Standalone Villa / Townhouse'}</option>
+                <option value="commercial">{isAr ? 'مقر تجاري / محل لبراند أو توكيل' : 'Retail / Commercial Shop'}</option>
+                <option value="office">{isAr ? 'مقر إداري / عيادة / مكتب شركات' : 'Administrative Office / Clinic'}</option>
+                <option value="land">{isAr ? 'قطعة أرض للبناء أو الاستثمار' : 'Plot of Land'}</option>
+                <option value="building">{isAr ? 'عمارة كاملة / مجمع سكني أو تجاري' : 'Full Building / Complex'}</option>
               </select>
             </div>
 
@@ -324,11 +324,11 @@ export const SpecialRequests = ({
                 required 
                 value={form.area}
                 onChange={(e) => setForm({ ...form, area: e.target.value })}
-                style={{ height: '46px', fontWeight: '600' }}
+                style={{ height: '48px', padding: '8px 14px', fontSize: '0.92rem', fontWeight: '600', lineHeight: 'normal' }}
               >
                 {areas.map(a => (
                   <option key={a.id} value={a.id}>
-                    📍 {isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}
+                    {isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}
                   </option>
                 ))}
               </select>
@@ -347,7 +347,7 @@ export const SpecialRequests = ({
                 className="form-input" 
                 value={form.budget}
                 onChange={(e) => setForm({ ...form, budget: e.target.value })}
-                style={{ height: '46px', fontWeight: '600' }}
+                style={{ height: '48px', padding: '8px 14px', fontSize: '0.92rem', fontWeight: '600' }}
               />
             </div>
 
@@ -361,7 +361,7 @@ export const SpecialRequests = ({
                 className="form-input" 
                 value={form.minSize || ''}
                 onChange={(e) => setForm({ ...form, minSize: e.target.value })}
-                style={{ height: '46px', fontWeight: '600' }}
+                style={{ height: '48px', padding: '8px 14px', fontSize: '0.92rem', fontWeight: '600' }}
               />
             </div>
 
@@ -373,11 +373,11 @@ export const SpecialRequests = ({
                 className="form-input" 
                 value={form.priority}
                 onChange={(e) => setForm({ ...form, priority: e.target.value })}
-                style={{ height: '46px', fontWeight: '600' }}
+                style={{ height: '48px', padding: '8px 14px', fontSize: '0.92rem', fontWeight: '600', lineHeight: 'normal' }}
               >
-                <option value="high">{isAr ? '🔥 عاجل جداً (جاهزية كاش فورية)' : 'Urgent (Ready Cash)'}</option>
-                <option value="normal">{isAr ? '⚡ خلال شهر إلى شهرين' : 'Within 1-2 Months'}</option>
-                <option value="low">{isAr ? '🌱 استثماري مستقبلي' : 'Future Investment'}</option>
+                <option value="high">{isAr ? 'عاجل جداً (جاهزية كاش فورية)' : 'Urgent (Ready Cash)'}</option>
+                <option value="normal">{isAr ? 'خلال شهر إلى شهرين' : 'Within 1-2 Months'}</option>
+                <option value="low">{isAr ? 'استثماري مستقبلي' : 'Future Investment'}</option>
               </select>
             </div>
           </div>

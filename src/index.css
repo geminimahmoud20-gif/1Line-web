@@ -834,6 +834,24 @@ a:hover {
   box-shadow: none;
   width: 100%;
 }
+select.form-input,
+select {
+  min-height: 48px !important;
+  height: 48px !important;
+  padding: 8px 14px !important;
+  line-height: 1.5 !important;
+  box-sizing: border-box !important;
+  font-family: inherit !important;
+  font-size: 0.95rem !important;
+  color: var(--text-primary) !important;
+  background-color: #ffffff;
+}
+
+select option {
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
 .form-input:focus {
   border-color: var(--accent-gold);
   background: #ffffff;

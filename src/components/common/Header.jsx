@@ -15,7 +15,8 @@ import {
   MoreHorizontal, 
   Scale, 
   Building,
-  Sparkles 
+  Sparkles,
+  FileText
 } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
@@ -63,6 +64,8 @@ export default function Header({
     { path: '/', label: isAr ? 'الرئيسية' : 'Home' },
     { path: '/properties', label: isAr ? 'العقارات' : 'Properties', badge: isAr ? 'جديد' : 'New', badgeType: 'gold' },
     { path: '/projects', label: isAr ? 'المشروعات' : 'Projects', badge: isAr ? 'حصري' : 'Exclusive', badgeType: 'emerald' },
+    { path: '/special-requests', label: isAr ? 'الطلبات الخاصة' : 'Special Requests', badge: isAr ? 'VIP' : 'VIP', badgeType: 'gold', icon: FileText },
+    { path: '/demands', label: isAr ? 'طلبات المشترين' : 'Buyer Demands' },
     { path: '/market-intelligence', label: isAr ? 'مؤشرات السوق' : 'Market Intel' },
     { path: '/financing', label: isAr ? 'التمويل والأقساط' : 'Financing' },
     { path: '/investor', label: isAr ? 'المستثمرين' : 'Investors' }
@@ -82,20 +85,24 @@ export default function Header({
 
         {/* Clean Desktop Navigation */}
         <nav className="desktop-nav">
-          {navLinks.map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className={`nav-item ${isActive(link.path) ? 'active' : ''}`}
-            >
-              {link.label}
-              {link.badge && (
-                <span className={`nav-badge nav-badge-${link.badgeType || 'gold'}`}>
-                  {link.badge}
-                </span>
-              )}
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            const LinkIcon = link.icon;
+            return (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`nav-item ${isActive(link.path) ? 'active' : ''} ${link.path === '/special-requests' ? 'nav-item-vip' : ''}`}
+              >
+                {LinkIcon && <LinkIcon size={14} className="nav-link-icon" style={{ verticalAlign: 'middle', marginInlineEnd: '5px' }} />}
+                <span>{link.label}</span>
+                {link.badge && (
+                  <span className={`nav-badge nav-badge-${link.badgeType || 'gold'}`}>
+                    {link.badge}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Streamlined, Clean Action Group */}
@@ -112,6 +119,16 @@ export default function Header({
               <span>{isAr ? `مقارنة (${compareCount})` : `Compare (${compareCount})`}</span>
             </button>
           )}
+
+          {/* Quick Special Requests Direct Button on Main Header */}
+          <Link
+            to="/special-requests"
+            className="header-special-cta-btn"
+            title={isAr ? 'تقديم طلب عقاري بمواصفات خاصة' : 'Submit Bespoke Property Request'}
+          >
+            <FileText size={14} className="text-gold" />
+            <span>{isAr ? 'الطلبات الخاصة' : 'Special Requests'}</span>
+          </Link>
 
           {/* Unified Glassmorphic Utility Control Group */}
           <div className="header-utility-pill-group">
@@ -253,24 +270,27 @@ export default function Header({
       {mobileMenuOpen && (
         <div className="mobile-drawer open">
           <div className="mobile-drawer-links">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`mobile-nav-item ${isActive(link.path) ? 'active' : ''}`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <span>{link.label}</span>
-                {link.badge && <span className="nav-badge">{link.badge}</span>}
-              </Link>
-            ))}
-            <Link
-              to="/special-requests"
-              className="mobile-nav-item"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <span>{isAr ? 'الطلبات والمواصفات الخاصة' : 'Bespoke Requests'}</span>
-            </Link>
+            {navLinks.map((link) => {
+              const LinkIcon = link.icon;
+              return (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`mobile-nav-item ${isActive(link.path) ? 'active' : ''} ${link.path === '/special-requests' ? 'mobile-nav-vip' : ''}`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {LinkIcon && <LinkIcon size={16} className="text-gold" />}
+                    <span>{link.label}</span>
+                  </div>
+                  {link.badge && (
+                    <span className={`nav-badge nav-badge-${link.badgeType || 'gold'}`}>
+                      {link.badge}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
             <button
               type="button"
               className="mobile-nav-item"

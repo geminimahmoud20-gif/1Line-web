@@ -19,7 +19,8 @@ import {
   Filter,
   CheckCircle2,
   Flame,
-  Clock
+  Clock,
+  FileText
 } from 'lucide-react';
 import PropertyCard from '../components/properties/PropertyCard';
 import AboutFounderSection from '../components/home/AboutFounderSection';
@@ -259,6 +260,15 @@ export default function HomePage({
                 <Users size={14} />
                 <span>{lang === 'ar' ? 'طلبات المشترين الحية' : 'Live Demands'}</span>
               </button>
+              <button
+                type="button"
+                className="hero-tab hero-tab-vip"
+                onClick={() => navigate('/special-requests')}
+                title={lang === 'ar' ? 'طلب عقار بمواصفات خاصة VIP' : 'Special Bespoke Requests VIP'}
+              >
+                <FileText size={14} className="text-gold" />
+                <span>{lang === 'ar' ? 'الطلبات الخاصة VIP' : 'Special Requests VIP'}</span>
+              </button>
             </div>
 
             <form onSubmit={handleHeroSearch} className="hero-search-inputs-row">
@@ -318,7 +328,7 @@ export default function HomePage({
                                 navigate(`/properties?area=${area.id}`);
                               }}
                             >
-                              <span className="omnibox-badge-area">📍</span>
+                              <MapPin size={14} className="text-muted" />
                               <span className="omnibox-item-name">{lang === 'ar' ? area.name_ar : area.name_en}</span>
                               <small className="omnibox-item-action">{lang === 'ar' ? 'عرض عقارات المنطقة ←' : 'Explore Area →'}</small>
                             </div>
@@ -340,7 +350,7 @@ export default function HomePage({
                               className="omnibox-item-row"
                               onClick={() => setShowSuggestions(false)}
                             >
-                              <span className="omnibox-badge-proj">🏢</span>
+                              <Building size={14} className="text-muted" />
                               <div style={{ flex: 1 }}>
                                 <div className="omnibox-item-name">{lang === 'ar' ? proj.title_ar : proj.title_en}</div>
                                 <small style={{ color: '#94a3b8', fontSize: '0.7rem' }}>{lang === 'ar' ? proj.location_ar : proj.location_en}</small>
@@ -436,18 +446,17 @@ export default function HomePage({
               </button>
             </form>
 
-            {/* 🔥 Quick Area Discovery Tags */}
-            <div className="hero-quick-tags-container">
-              <span className="hero-quick-tag-label">
-                <Sparkles size={13} className="text-gold" />
-                <span>{lang === 'ar' ? 'الأكثر طلباً:' : 'Trending:'}</span>
+            {/* Quick Minimalist Discovery Strip (Single Clean Row - Zero Emojis) */}
+            <div className="hero-quick-discovery-strip">
+              <span className="discovery-label">
+                {lang === 'ar' ? 'المناطق الأكثر تميزاً:' : 'Top Locations:'}
               </span>
-              <div className="hero-quick-tags-list">
+              <div className="discovery-chips-list">
                 {[
-                  { id: 'east', label_ar: 'شرق سوهاج', label_en: 'East Sohag', icon: '📍' },
-                  { id: 'new_sohag', label_ar: 'سوهاج الجديدة', label_en: 'New Sohag', icon: '✨' },
-                  { id: 'corniche', label_ar: 'الكورنيش', label_en: 'Corniche', icon: '🌊' },
-                  { id: 'nasr', label_ar: 'مدينة ناصر', label_en: 'Nasr City', icon: '🏙️' }
+                  { id: 'east', label_ar: 'شرق سوهاج', label_en: 'East Sohag' },
+                  { id: 'new_sohag', label_ar: 'سوهاج الجديدة', label_en: 'New Sohag' },
+                  { id: 'corniche', label_ar: 'الكورنيش', label_en: 'Corniche' },
+                  { id: 'nasr', label_ar: 'مدينة ناصر', label_en: 'Nasr City' }
                 ].map((area) => (
                   <button
                     key={area.id}
@@ -456,50 +465,18 @@ export default function HomePage({
                       setSearchArea(area.id);
                       navigate(`/properties?area=${area.id}`);
                     }}
-                    className="hero-quick-area-tag"
+                    className="discovery-chip"
                   >
-                    <span>{area.icon}</span>
                     <span>{lang === 'ar' ? area.label_ar : area.label_en}</span>
                   </button>
                 ))}
-              </div>
-            </div>
 
-            {/* 💰 Quick Budget Tier Discovery Pills */}
-            <div className="hero-quick-tags-container budget-tier">
-              <span className="hero-quick-tag-label budget">
-                <DollarSign size={13} className="text-gold" />
-                <span>{lang === 'ar' ? 'الميزانية السريعة:' : 'Quick Budget:'}</span>
-              </span>
-              <div className="hero-quick-tags-list">
-                {[
-                  { id: 'under_3m', label_ar: 'أقل من 3 مليون', label_en: 'Under 3M EGP', icon: '💵' },
-                  { id: '3m_to_6m', label_ar: '3 إلى 6 مليون', label_en: '3M - 6M EGP', icon: '💎' },
-                  { id: 'above_6m', label_ar: 'أكثر من 6 مليون', label_en: 'Above 6M EGP', icon: '👑' }
-                ].map((b) => (
-                  <button
-                    key={b.id}
-                    type="button"
-                    onClick={() => {
-                      setSearchBudget(b.id);
-                      navigate(`/properties?budget=${b.id}`);
-                    }}
-                    className="hero-quick-budget-tag"
-                  >
-                    <span>{b.icon}</span>
-                    <span>{lang === 'ar' ? b.label_ar : b.label_en}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+                <span className="discovery-divider" aria-hidden="true" />
 
-            {/* 🎯 Featured Quick Searches */}
-            <div className="hero-quick-tags-container semantic-tier">
-              <span className="hero-quick-tag-label" style={{ color: 'var(--accent-gold)' }}>
-                <Sparkles size={13} className="text-gold" />
-                <span>{lang === 'ar' ? 'مقترحات بحث استثمارية سريعة:' : 'Featured Quick Searches:'}</span>
-              </span>
-              <div className="hero-quick-tags-list">
+                <span className="discovery-label secondary">
+                  {lang === 'ar' ? 'خيارات شائعة:' : 'Popular:'}
+                </span>
+
                 {SEMANTIC_SEARCH_PRESETS.map((preset) => (
                   <button
                     key={preset.id}
@@ -514,10 +491,8 @@ export default function HomePage({
                       if (parsed.filters.type) params.set('type', parsed.filters.type);
                       navigate(`/properties?${params.toString()}`);
                     }}
-                    className="hero-quick-area-tag"
-                    style={{ borderColor: 'rgba(217, 119, 6, 0.4)', background: 'rgba(217, 119, 6, 0.08)' }}
+                    className="discovery-chip investment"
                   >
-                    <span>{preset.icon}</span>
                     <span>{lang === 'ar' ? preset.tag_ar : preset.query_en}</span>
                   </button>
                 ))}
@@ -605,7 +580,7 @@ export default function HomePage({
       <MarketTickerBar lang={lang} />
 
       {/* 🏢 2. SOHAG LIVE MARKETPLACE HUB (Consolidated Segmented Discovery) */}
-      <section className="homepage-section bg-surface" id="marketplace">
+      <section className="homepage-section bg-surface" id="marketplace-hub">
         <div className="section-header-flex" style={{ marginBottom: '22px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
@@ -716,6 +691,67 @@ export default function HomePage({
               </div>
             )}
 
+            {/* 🌟 Direct Live Preview: Special Requests & Buyer Demands on the Main Screen */}
+            <div className="homepage-demands-live-preview">
+              <div className="demands-preview-header">
+                <div className="preview-header-left">
+                  <div className="preview-badge">
+                    <span className="live-pulse-dot" />
+                    <span>{lang === 'ar' ? 'بورصة الطلبات الخاصة وطلبات المشترين المباشرة' : 'Live Special Requests & Buyer Demands'}</span>
+                  </div>
+                  <h3 className="preview-title">
+                    {lang === 'ar' ? 'طلبات مشتري كاش جادة تبحث عن وحدات مطابقة بسوهاج الآن' : 'Serious Cash Buyers Seeking Direct Property Matches'}
+                  </h3>
+                </div>
+                <div className="preview-header-actions">
+                  <Link to="/special-requests" className="btn btn-luxury-cta preview-cta-btn" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 18px', fontSize: '0.85rem' }}>
+                    <FileText size={15} />
+                    <span>{lang === 'ar' ? 'تقديم طلب خاص بمواصفاتك' : 'Submit Bespoke Request'}</span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setMarketplaceTab('demands')}
+                    className="btn btn-outline preview-all-btn"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', fontSize: '0.85rem' }}
+                  >
+                    <span>{lang === 'ar' ? `استعراض كل الطلبات (${activeDemandsList.length})` : `All Demands (${activeDemandsList.length})`}</span>
+                    {lang === 'ar' ? <ArrowLeft size={14} /> : <ArrowRight size={14} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Top 3 Live Demands */}
+              <div className="demands-preview-grid">
+                {activeDemandsList.slice(0, 3).map((dem) => (
+                  <div key={dem.id} className="demand-preview-card">
+                    <div className="demand-preview-top">
+                      <span className="preview-area-tag">
+                        <MapPin size={13} className="text-gold" />
+                        <span>{lang === 'ar' ? (dem.area_ar || dem.area) : (dem.area_en || dem.area)}</span>
+                      </span>
+                      <span className={`preview-urgency-tag ${dem.urgency === 'high' ? 'urgent' : ''}`}>
+                        {dem.urgency === 'high' ? (lang === 'ar' ? 'مستعجل كاش' : 'Urgent Cash') : (lang === 'ar' ? 'طلب جاد' : 'Verified Buyer')}
+                      </span>
+                    </div>
+                    <p className="demand-preview-text">
+                      {lang === 'ar' ? dem.text_ar : dem.text_en}
+                    </p>
+                    <div className="demand-preview-bottom">
+                      <div className="demand-preview-budget">
+                        <span className="budget-label">{lang === 'ar' ? 'الميزانية:' : 'Budget:'}</span>
+                        <span className="budget-val">
+                          {(typeof dem.budget === 'number' ? dem.budget : parseInt(String(dem.budget).replace(/,/g, '')) || 0).toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}
+                        </span>
+                      </div>
+                      <Link to="/sell" className="preview-match-btn">
+                        {lang === 'ar' ? 'طابق عقارك ←' : 'Match →'}
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Executive Bottom Hub & Certified Trust Bar */}
             <div className="marketplace-bottom-hub">
               <div className="bottom-hub-trust">
@@ -733,8 +769,9 @@ export default function HomePage({
                   <span>{lang === 'ar' ? `استعراض كامل محفظة العقارات (${activePublished.length} عقار معتمد)` : 'Explore Full Portfolio'}</span>
                   {lang === 'ar' ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
                 </Link>
-                <Link to="/buy" className="btn btn-outline" style={{ color: '#ffffff', borderColor: 'rgba(255,255,255,0.3)' }}>
-                  <span>{lang === 'ar' ? 'طلب توفير عقار خاص' : 'Custom Request'}</span>
+                <Link to="/special-requests" className="btn btn-outline" style={{ color: '#ffffff', borderColor: 'rgba(255,255,255,0.3)' }}>
+                  <FileText size={15} className="text-gold" style={{ verticalAlign: 'middle', marginInlineEnd: '6px' }} />
+                  <span>{lang === 'ar' ? 'طلب توفير عقار خاص VIP' : 'Bespoke Request VIP'}</span>
                 </Link>
               </div>
             </div>

@@ -318,28 +318,28 @@ export const SEMANTIC_SEARCH_PRESETS = [
     id: 'preset_new_sohag_apt',
     query_ar: 'شقق للبيع سوهاج الجديدة أقل من 3 مليون',
     query_en: 'Apartments in New Sohag under 3M EGP',
-    icon: '🏢',
-    tag_ar: 'شقق سوهاج الجديدة < 3 مليون'
+    icon: '',
+    tag_ar: 'شقق سوهاج الجديدة'
   },
   {
     id: 'preset_commercial_pharmacy',
     query_ar: 'محل تجاري يصلح صيدلية أو فرنشايز شرق سوهاج',
     query_en: 'Commercial retail shop in East Sohag',
-    icon: '💊',
-    tag_ar: 'محلات تجارية وصيدليات'
+    icon: '',
+    tag_ar: 'محلات تجارية ومقرات'
   },
   {
     id: 'preset_corniche_luxury',
     query_ar: 'شقة فاخرة على كورنيش النيل 3 غرف',
     query_en: 'Luxury 3-bedroom apartment on Nile Corniche',
-    icon: '🌊',
-    tag_ar: 'شقق كورنيش النيل الفاخرة'
+    icon: '',
+    tag_ar: 'شقق كورنيش النيل'
   },
   {
     id: 'preset_villas_cash',
     query_ar: 'فيلا مستقلة استثمارية كاش بسوهاج الجديدة',
     query_en: 'Standalone villa cash deal in New Sohag',
-    icon: '🏡',
-    tag_ar: 'فيلات مستقلة كاش'
+    icon: '',
+    tag_ar: 'فيلات مستقلة'
   }
 ];
