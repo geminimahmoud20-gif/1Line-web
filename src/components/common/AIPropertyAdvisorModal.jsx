@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  Bot, 
+  Building, 
   Sparkles, 
   X, 
   Send, 
@@ -8,10 +8,10 @@ import {
   TrendingUp, 
   MapPin, 
   ShieldCheck, 
-  Building, 
   DollarSign,
   ChevronRight,
-  ExternalLink
+  ExternalLink,
+  Briefcase
 } from 'lucide-react';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 
@@ -25,13 +25,13 @@ export const SOHAG_AI_KNOWLEDGE = [
   {
     q_ar: 'كم متوسط سعر المتر السكني والتجاري بسوهاج 2026؟',
     q_en: 'Average price per sqm in Sohag?',
-    a_ar: 'متوسطات أسعار المتر في سوهاج لعام 2026:\n• **كورنيش النيل:** 28,000 - 35,000 ج.م/م²\n• **شرق سوهاج (الجمهورية وسيتي):** 20,000 - 24,000 ج.م/م²\n• **سوهاج الجديدة:** 16,500 - 19,500 ج.م/م²\n• **المحلات التجارية (مواقع رئيسية):** 60,000 - 110,000 ج.م/م²',
+    a_ar: 'متوسطات أسعار المتر في سوهاج لعام 2026 وفق دراسات السوق الميدانية:\n• **كورنيش النيل:** 28,000 - 35,000 ج.م/م²\n• **شرق سوهاج (الجمهورية وسيتي):** 20,000 - 24,000 ج.م/م²\n• **سوهاج الجديدة:** 16,500 - 19,500 ج.م/م²\n• **المحلات التجارية (مواقع رئيسية):** 60,000 - 110,000 ج.م/م²',
     tag: 'price'
   },
   {
     q_ar: 'كيف أضمن الموقف القانوني للعقار قبل الشراء؟',
     q_en: 'How to verify property legal status?',
-    a_ar: 'تأكد دائماً من 3 مستندات أساسية:\n1. **تسلسل الملكية:** عقد مسجل شهر عقاري أو حكم صحة ونفاذ نهائي.\n2. **ترخيص البناء الرسمي:** والتأكد من مطابقة الدور للترخيص بدون مخالفات.\n3. **شهادة سداد التصالح (نموذج 10):** إن كان العقار به تصالح معتمد من جهاز المدينة أو الحي.',
+    a_ar: 'تأكد دائماً من 3 مستندات أساسية يدققها فريقنا القانوني:\n1. **تسلسل الملكية:** عقد مسجل شهر عقاري أو حكم صحة ونفاذ نهائي.\n2. **ترخيص البناء الرسمي:** والتأكد من مطابقة الدور للترخيص بدون مخالفات.\n3. **شهادة سداد التصالح (نموذج 10):** إن كان العقار به تصالح معتمد من جهاز المدينة أو الحي.',
     tag: 'legal'
   },
   {
@@ -52,8 +52,8 @@ export default function AIPropertyAdvisorModal({
     {
       sender: 'bot',
       text: isAr 
-        ? 'مرحباً بك! أنا مستشارك العقاري الذكي في سوهاج 🤖🏠. يسعدني مساعدتك في حساب الأسعار، اختيار أفضل الأحياء، وتقديم المشورة الاستثمارية والقانونية. كيف يمكنني مساعدتك اليوم؟'
-        : 'Welcome! I am your Sohag AI Real Estate Advisor 🤖🏠. How can I assist you with prices, district insights, or investments today?',
+        ? 'أهلاً بك في منصة 1Line للحلول والاستشارات العقارية بسوهاج برؤية د. محمود الباز 🏛️. يسعدنا تقديم المشورة الدقيقة حول أسعار المتر، أفضل أحياء سوهاج، والمساعدة في تدقيق الموقف القانوني لأي عقار. كيف يمكننا مساعدتك اليوم؟'
+        : 'Welcome to 1Line Real Estate Consultation in Sohag by Dr. Mahmoud Elbaz 🏛️. How can we assist you with property valuations, district insights, or investments today?',
       time: 'الآن'
     }
   ]);
@@ -72,7 +72,6 @@ export default function AIPropertyAdvisorModal({
     setIsTyping(true);
 
     setTimeout(() => {
-      // Find matching knowledge or generate intelligent Sohag advice
       const lower = query.toLowerCase();
       let reply = '';
 
@@ -87,7 +86,7 @@ export default function AIPropertyAdvisorModal({
         reply = isAr ? matched.a_ar : matched.q_en;
       } else if (lower.includes('جديدة') || lower.includes('سوهاج الجديدة')) {
         reply = isAr
-          ? 'سوهاج الجديدة هي الحصان الرابح للاستثمار العقاري في الصعيد لعام 2026. تتميز ببنية تحتية عالمية، جامعات، وأضخم مجمعات سكنية وتجارية. متوسط سعر المتر السكني يتراوح بين 16,500 إلى 19,500 ج.م مع خطط تقسيط تصل لـ 7 سنوات.'
+          ? 'سوهاج الجديدة هي الحصان الرابح للاستثمار العقاري في الصعيد لعام 2026. تتميز ببنية تحتية قوية، جامعات، وأضخم مجمعات سكنية وتجارية. متوسط سعر المتر السكني يتراوح بين 16,500 إلى 19,500 ج.م مع خطط تقسيط تصل لـ 7 سنوات.'
           : 'New Sohag is the prime investment hub for 2026 with rapid capital appreciation and modern gated communities.';
       } else if (lower.includes('شرق') || lower.includes('الجمهورية') || lower.includes('سيتي')) {
         reply = isAr
@@ -95,20 +94,20 @@ export default function AIPropertyAdvisorModal({
           : 'East Sohag remains the most prestigious and liquid residential district in Sohag.';
       } else {
         reply = isAr
-          ? `شكراً لاستفسارك! بناءً على مؤشرات سوق عقارات سوهاج الحالية: يمكن لفريق 1Line تزويدك بقائمة مخصصة ومطابقة لطلبك تماماً مع فحص قانوني مجاني. يمكنك أيضاً الضغط بالأسفل للتواصل المباشر مع استشاري مبيعات 1Line.`
-          : 'Thank you! Our advisory team is ready to provide tailored units and legal verification.';
+          ? `شكراً لاستفسارك! بناءً على مؤشرات سوق عقارات سوهاج المعتمدة: يمكن لمستشاري 1Line تزويدك بقائمة مخصصة ومطابقة لطلبك تماماً مع فحص قانوني مجاني. يمكنك أيضاً الضغط بالأسفل للتواصل المباشر مع استشاري المبيعات عبر الواتساب.`
+          : 'Thank you! Our advisory team is ready to provide tailored units and certified legal verification.';
       }
 
       setMessages(prev => [...prev, { sender: 'bot', text: reply, time: 'الآن' }]);
       setIsTyping(false);
-    }, 700);
+    }, 600);
   };
 
   const handleTransferToWhatsApp = () => {
     const lastMsg = messages[messages.length - 1]?.text || 'استشارة عقارية';
     const msg = isAr 
-      ? `مرحباً 1Line، كنت أتحدث مع المستشار الذكي في الموقع بخصوص:\n"${lastMsg.slice(0, 120)}..."\nوأرغب في استكمال الاستشارة مع مستشار عقاري متخصص.`
-      : 'Hello 1Line, I would like to speak with a human property consultant regarding my inquiry.';
+      ? `مرحباً 1Line، أود استكمال الاستشارة العقارية بخصوص:\n"${lastMsg.slice(0, 120)}..."\nمع أحد مستشاري الشركة بسوهاج.`
+      : 'Hello 1Line, I would like to speak with a property consultant regarding my inquiry.';
     window.open(getWhatsAppUrl(msg), '_blank');
   };
 
@@ -118,15 +117,15 @@ export default function AIPropertyAdvisorModal({
         {/* Header */}
         <div className="ai-advisor-header">
           <div className="flex-center gap-10">
-            <div className="ai-bot-avatar">
-              <Bot size={22} className="text-gold" />
+            <div className="ai-bot-avatar" style={{ background: 'var(--gradient-gold)' }}>
+              <Building size={20} className="text-white" />
             </div>
             <div>
               <div className="flex-center gap-6">
-                <h3 className="ai-title">{isAr ? 'مستشارك العقاري الذكي' : 'Sohag AI Property Advisor'}</h3>
-                <span className="ai-live-badge">AI 2.0</span>
+                <h3 className="ai-title">{isAr ? 'مستشار 1Line العقاري المباشر' : '1Line Real Estate Advisory'}</h3>
+                <span className="ai-live-badge" style={{ background: '#10b981' }}>{isAr ? 'معتمد رسمياً' : 'Verified'}</span>
               </div>
-              <span className="ai-status-sub">{isAr ? 'متصل الآن • مدرب على بيانات سوق سوهاج 2026' : 'Online • Trained on Sohag Real Estate Data'}</span>
+              <span className="ai-status-sub">{isAr ? 'متاح الآن • استشارات فورية وفق أحدث أسعار سوهاج 2026' : 'Online • Live Sohag Real Estate Insights 2026'}</span>
             </div>
           </div>
 
@@ -155,7 +154,9 @@ export default function AIPropertyAdvisorModal({
           {messages.map((msg, index) => (
             <div key={index} className={`ai-message-row ${msg.sender === 'user' ? 'user-side' : 'bot-side'}`}>
               {msg.sender === 'bot' && (
-                <div className="msg-bot-avatar"><Bot size={16} /></div>
+                <div className="msg-bot-avatar" style={{ background: 'var(--primary)' }}>
+                  <Building size={14} className="text-gold" />
+                </div>
               )}
               <div className={`msg-bubble ${msg.sender === 'user' ? 'user-bubble' : 'bot-bubble'}`}>
                 <div className="msg-text-content" dangerouslySetInnerHTML={{ 
@@ -167,7 +168,9 @@ export default function AIPropertyAdvisorModal({
 
           {isTyping && (
             <div className="ai-message-row bot-side">
-              <div className="msg-bot-avatar"><Bot size={16} /></div>
+              <div className="msg-bot-avatar" style={{ background: 'var(--primary)' }}>
+                <Building size={14} className="text-gold" />
+              </div>
               <div className="msg-bubble bot-bubble typing-dots">
                 <span></span><span></span><span></span>
               </div>
@@ -183,7 +186,7 @@ export default function AIPropertyAdvisorModal({
           >
             <input
               type="text"
-              placeholder={isAr ? 'اسأل المستشار الذكي عن الأسعار، المناطق، أو الاستثمار...' : 'Ask about prices, compounds, ROI...'}
+              placeholder={isAr ? 'اكتب استفسارك عن الأسعار، أحياء سوهاج، أو فرص الاستثمار...' : 'Inquire about prices, districts, or investments...'}
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
               className="ai-chat-input"
@@ -196,7 +199,7 @@ export default function AIPropertyAdvisorModal({
           <div className="ai-escalate-strip">
             <button type="button" className="btn-escalate-whatsapp" onClick={handleTransferToWhatsApp}>
               <MessageSquare size={14} />
-              <span>{isAr ? 'استكمال الاستشارة مع خبير 1Line عبر الواتساب' : 'Chat with Human Consultant on WhatsApp'}</span>
+              <span>{isAr ? 'متابعة الاستشارة مع خبير مبيعات 1Line عبر الواتساب' : 'Chat with Sales Consultant on WhatsApp'}</span>
             </button>
           </div>
         </div>

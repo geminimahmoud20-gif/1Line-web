@@ -30,7 +30,7 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar' }) {
       <div className="benchmark-header">
         <div className="benchmark-title-wrap">
           <Sparkles size={18} className="text-gold" />
-          <h4>{isAr ? 'مؤشر الذكاء التسعيري ومقارنة سعر المنطقة' : 'Market Price Benchmark & Valuation'}</h4>
+          <h4>{isAr ? 'مؤشر التقييم السعري ومقارنة أسعار المنطقة' : 'Market Price Benchmark & Valuation'}</h4>
         </div>
         <span className={`benchmark-pill ${isBelowMarket ? 'pill-opportunity' : isFairMarket ? 'pill-fair' : 'pill-premium'}`}>
           {isBelowMarket ? (

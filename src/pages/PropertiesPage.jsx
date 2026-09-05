@@ -197,7 +197,7 @@ export default function PropertiesPage({
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--accent-gold)' }}>
-                🤖 {lang === 'ar' ? 'نتائج مطابقة الفهم الذكي للطلب:' : 'AI Recognized Parameters:'}
+                🎯 {lang === 'ar' ? 'المعايير المحددة لبحثك:' : 'Selected Search Criteria:'}
               </span>
               {parsedSemantic.tagsFound.map((tag, idx) => (
                 <span key={idx} style={{

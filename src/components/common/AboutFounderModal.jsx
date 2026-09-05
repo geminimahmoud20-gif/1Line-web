@@ -97,8 +97,8 @@ export default function AboutFounderModal({ isOpen, onClose, lang = 'ar' }) {
       icon: <TrendingUp size={20} className="text-gold" />,
       title_ar: 'التقييم السعري العادل',
       title_en: 'Certified Fair Valuation',
-      desc_ar: 'خوارزميات رصد سعر المتر الفعلي في كل منطقة بسوهاج لمنع أي مغالاة وحماية أموالك.',
-      desc_en: 'Accurate valuation algorithms tracking actual meter prices to protect buyer capital.'
+      desc_ar: 'دراسات ميدانية وتقييم هندسي دقيق يرصد سعر المتر الفعلي في كل منطقة بسوهاج لمنع أي مغالاة وحماية أموالك.',
+      desc_en: 'Accurate field studies and certified engineering valuations tracking actual meter prices to protect buyer capital.'
     },
     {
       icon: <Briefcase size={20} className="text-gold" />,

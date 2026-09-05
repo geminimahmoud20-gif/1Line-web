@@ -144,7 +144,7 @@ export default function MarketIntelligencePage({ lang = 'ar', triggerToast }) {
 
     exportToCsv('Sohag_RealEstate_Market_Intelligence_Report_2026', districtsData, headers);
     if (triggerToast) {
-      triggerToast(isAr ? 'تم تصدير تقرير ذكاء السوق العقاري بنجاح' : 'Market intelligence report exported successfully!', 'success');
+      triggerToast(isAr ? 'تم تصدير تقرير دراسة السوق العقاري الشاملة بنجاح' : 'Market intelligence report exported successfully!', 'success');
     }
   };
 
@@ -226,7 +226,7 @@ export default function MarketIntelligencePage({ lang = 'ar', triggerToast }) {
                 <Calculator size={20} className="text-white" />
               </div>
               <div>
-                <h4>{isAr ? 'محاكي ترشيح أفضل حي لاستثمار ميزانيتك' : 'AI Investment District Recommender'}</h4>
+                <h4>{isAr ? 'محاكي ترشيح أفضل حي لاستثمار ميزانيتك' : 'Certified Investment District Recommender'}</h4>
                 <p>{isAr ? 'أدخل حجم السيولة المتاحة لديك لنرشح لك الحي الأكثر ربحية وأعلى عائد إيجاري فورياً' : 'Input your capital to discover the highest-yield district in Sohag'}</p>
               </div>
             </div>

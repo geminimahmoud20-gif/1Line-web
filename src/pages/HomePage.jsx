@@ -266,7 +266,7 @@ export default function HomePage({
               <div className="search-field keyword-search-field">
                 <label>
                   <Search size={14} />
-                  <span>{lang === 'ar' ? 'محرك البحث الذكي (Omnibox)' : 'Smart Omnibox Search'}</span>
+                  <span>{lang === 'ar' ? 'البحث الشامل في عقارات سوهاج' : 'Comprehensive Property Search'}</span>
                 </label>
                 <div className="hero-input-relative">
                   <input
@@ -297,7 +297,7 @@ export default function HomePage({
                   {showSuggestions && searchKeyword.trim().length > 0 && (
                     <div className="hero-live-suggestions-dropdown">
                       <div className="suggestions-header">
-                        <span>{lang === 'ar' ? 'نتائج البحث الذكي المقترحة' : 'Smart Suggestions'}</span>
+                        <span>{lang === 'ar' ? 'أفضل النتائج والمقترحات' : 'Suggested Results'}</span>
                         <button type="button" className="close-sug-btn" onClick={() => setShowSuggestions(false)}>✕</button>
                       </div>
 
@@ -432,7 +432,7 @@ export default function HomePage({
               {/* Submit Button */}
               <button type="submit" className="hero-search-btn">
                 <Search size={18} />
-                <span>{lang === 'ar' ? 'بحث ذكي' : 'Search'}</span>
+                <span>{lang === 'ar' ? 'ابحث الآن' : 'Search Now'}</span>
               </button>
             </form>
 
@@ -493,11 +493,11 @@ export default function HomePage({
               </div>
             </div>
 
-            {/* 🤖 Smart AI Real Estate Query Chips */}
+            {/* 🎯 Featured Quick Searches */}
             <div className="hero-quick-tags-container semantic-tier">
               <span className="hero-quick-tag-label" style={{ color: 'var(--accent-gold)' }}>
                 <Sparkles size={13} className="text-gold" />
-                <span>{lang === 'ar' ? 'اسأل بالذكاء الاصطناعي:' : 'AI Natural Search:'}</span>
+                <span>{lang === 'ar' ? 'مقترحات بحث استثمارية سريعة:' : 'Featured Quick Searches:'}</span>
               </span>
               <div className="hero-quick-tags-list">
                 {SEMANTIC_SEARCH_PRESETS.map((preset) => (
@@ -855,11 +855,11 @@ export default function HomePage({
       {/* 🌟 3. LUXURY SPONSORED ADS & FEATURED DEVELOPER SHOWCASE */}
       <SponsoredAdsShowcase lang={lang} />
 
-      {/* 🧮 4. PROPTECH FINANCIAL INTELLIGENCE & INSTITUTIONAL TRUST HUB */}
+      {/* 🧮 4. PROPTECH FINANCIAL SIMULATOR & INSTITUTIONAL TRUST HUB */}
       <section className="homepage-section bg-surface" id="mortgage-calculator">
         <div className="section-header-centered" style={{ marginBottom: '24px' }}>
-          <span className="section-pill">{lang === 'ar' ? 'ذكاء السوق والضمان المؤسسي' : 'Financial Intelligence & Trust'}</span>
-          <h2>{lang === 'ar' ? 'أدوات الحساب المالي والضمان القانوني المعتمد' : 'PropTech Simulator & Certified Legal Security'}</h2>
+          <span className="section-pill">{lang === 'ar' ? 'دراسات السوق والضمان المؤسسي' : 'Market Research & Institutional Trust'}</span>
+          <h2>{lang === 'ar' ? 'أدوات الحساب المالي والضمان القانوني المعتمد' : 'Financial Simulator & Certified Legal Security'}</h2>
 
           {/* Dual Segment Switcher (Ultra High Contrast Navy & Gold) */}
           <div style={{

@@ -1163,16 +1163,16 @@ export default function App() {
         lang={lang}
       />
 
-      {/* 🤖 Floating AI Advisor Quick Trigger (Hidden on CRM) */}
+      {/* 🏛️ Floating Real Estate Advisor Quick Trigger (Hidden on CRM) */}
       {!location.pathname.startsWith('/crm') && (
         <button
           type="button"
           className="floating-ai-advisor-trigger"
           onClick={() => setAiModalOpen(true)}
-          title={lang === 'ar' ? 'اسأل المستشار العقاري الذكي' : 'Ask AI Real Estate Advisor'}
+          title={lang === 'ar' ? 'استشارة عقارية مباشرة مع مستشاري 1Line' : 'Live 1Line Real Estate Advisory'}
         >
-          <span className="ai-icon-pulse">🤖</span>
-          <span className="ai-trigger-text">{lang === 'ar' ? 'اسأل المستشار الذكي AI' : 'Ask AI Advisor'}</span>
+          <span className="ai-icon-pulse">🏛️</span>
+          <span className="ai-trigger-text">{lang === 'ar' ? 'مستشارك العقاري المباشر' : 'Live Property Advisor'}</span>
         </button>
       )}
 

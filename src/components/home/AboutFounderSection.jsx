@@ -95,8 +95,8 @@ export default function AboutFounderSection({ lang = 'ar' }) {
       icon: <TrendingUp size={22} />,
       title_ar: 'التقييم السعري العادل والمعتمد',
       title_en: 'Certified Fair Valuation',
-      desc_ar: 'نعتمد على خوارزميات تقييم دقيقة ترصد سعر المتر الفعلي في كل منطقة بسوهاج لمنع أي مغالاة أو تسعير عشوائي يحمي أموال المشترين.',
-      desc_en: 'Accurate valuation models tracking fair meter prices across Sohag to prevent inflated costs.'
+      desc_ar: 'نعتمد على دراسات ميدانية وتقييم هندسي دقيق يرصد سعر المتر الفعلي في كل منطقة بسوهاج لمنع أي مغالاة أو تسعير عشوائي يحمي أموال المشترين.',
+      desc_en: 'Accurate field studies and certified engineering valuations tracking fair meter prices across Sohag to protect buyer capital.'
     },
     {
       icon: <Briefcase size={22} />,

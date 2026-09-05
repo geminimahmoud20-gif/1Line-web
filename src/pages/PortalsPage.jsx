@@ -62,14 +62,14 @@ export default function PortalsPage({
     switch (portalType) {
       case 'buy':
         return {
-          badge: isAr ? 'المعالج العقاري الذكي للمشترين' : 'Smart Property Buyer Wizard',
+          badge: isAr ? 'دليل ومطابقة متطلبات المشترين المعتمد' : 'Verified Property Buyer Advisory',
           title: isAr ? 'اعثر على عقارك المثالي في سوهاج بمواصفاتك الخاصة' : 'Find Your Ideal Property in Sohag Tailored to You',
           subtitle: isAr ? 'حدد متطلباتك وميزانيتك وسنقوم بمطابقتها فورياً مع أفضل الوحدات والفرص المتاحة.' : 'Specify your preferences and budget for instant matching with top verified units.'
         };
       case 'sell':
       case 'valuation':
         return {
-          badge: isAr ? 'محرك التقييم العقاري الذكي المعتمد بسوهاج 2026' : 'Sohag Certified AI Valuation Engine',
+          badge: isAr ? 'منظومة التقييم العقاري المعتمدة بسوهاج 2026' : 'Sohag Certified Real Estate Valuation System',
           title: isAr ? 'بوابة تقييم وعرض العقار للبيع الفوري' : 'Property Valuation & Instant Listing Portal',
           subtitle: isAr ? 'احسب القيمة السوقية العادلة لعقارك واعرضه لأكثر من 500 مشترٍ ومستثمر جاد مجاناً وبدون عمولات على البائع.' : 'Calculate fair market value and showcase your property to 500+ ready buyers with zero seller fees.'
         };

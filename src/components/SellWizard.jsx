@@ -378,7 +378,7 @@ export const SellWizard = ({
             <div className="cert-header">
               <div className="cert-badge">
                 <Sparkles size={16} className="text-gold" />
-                <span>{isAr ? 'شهادة التقييم السوقي التقديري المبدئي' : 'Preliminary AI Market Valuation'}</span>
+                <span>{isAr ? 'شهادة التقييم السوقي التقديري المبدئي' : 'Preliminary Certified Market Valuation'}</span>
               </div>
               <span className="cert-date">{isAr ? 'ساري لعام 2026' : 'Valid for 2026'}</span>
             </div>
