@@ -1,0 +1,190 @@
+{
+  "timestamp": "2026-09-05T08:43:10.918Z",
+  "total": 30,
+  "passed": 30,
+  "warnings": 0,
+  "failed": 0,
+  "passRate": "100.0%",
+  "results": [
+    {
+      "scenarioId": 1,
+      "testName": "NLP Query Parser Extraction",
+      "status": "PASS",
+      "details": "Extracted area=new_sohag, type=apartment, beds=3, maxPrice=3M"
+    },
+    {
+      "scenarioId": 1,
+      "testName": "URL Search Params Forwarding",
+      "status": "PASS",
+      "details": "Cleanly forwards parsed filters to /properties"
+    },
+    {
+      "scenarioId": 1,
+      "testName": "AI Recognized Active Banner DOM Presence",
+      "status": "PASS",
+      "details": "Tags displayed dynamically upon search"
+    },
+    {
+      "scenarioId": 1,
+      "testName": "Semantic Relevance Score & Ranking",
+      "status": "PASS",
+      "details": "Top item scored 121 points"
+    },
+    {
+      "scenarioId": 1,
+      "testName": "Progressive Pagination & Map Split Toggle",
+      "status": "PASS",
+      "details": "12 items chunking with smooth load-more"
+    },
+    {
+      "scenarioId": 2,
+      "testName": "InstaPay Official IPA & Clipboard Handle",
+      "status": "PASS",
+      "details": "Verified oneline.sohag@instapay"
+    },
+    {
+      "scenarioId": 2,
+      "testName": "Card / Meeza 3D-Secure Simulation",
+      "status": "PASS",
+      "details": "Card inputs & simulated secure handshake (~1.4s)"
+    },
+    {
+      "scenarioId": 2,
+      "testName": "Mobile Cash Wallets Support",
+      "status": "PASS",
+      "details": "Vodafone/Orange/Etisalat/WE Cash integration"
+    },
+    {
+      "scenarioId": 2,
+      "testName": "Fawry Pay 10-Digit Kiosk Code",
+      "status": "PASS",
+      "details": "Generates 48h valid Fawry POS code"
+    },
+    {
+      "scenarioId": 2,
+      "testName": "Checkout Honeypot Anti-Bot Shield",
+      "status": "PASS",
+      "details": "Rejects bots submitting hidden trap input"
+    },
+    {
+      "scenarioId": 2,
+      "testName": "Post-Payment Digital Receipt & Contract PDF",
+      "status": "PASS",
+      "details": "Displays 1L-TXN ID & triggers PDF contract"
+    },
+    {
+      "scenarioId": 2,
+      "testName": "WhatsApp Instant Sales Notification Link",
+      "status": "PASS",
+      "details": "Encodes client details and transaction receipt"
+    },
+    {
+      "scenarioId": 3,
+      "testName": "Egyptian Phone Number Validation",
+      "status": "PASS",
+      "details": "Enforces official prefixes (010, 011, 012, 015)"
+    },
+    {
+      "scenarioId": 3,
+      "testName": "Pending Demands Isolation from HomePage",
+      "status": "PASS",
+      "details": "Strictly filters out pending demands"
+    },
+    {
+      "scenarioId": 3,
+      "testName": "Pending Demands Isolation from DemandsPortal",
+      "status": "PASS",
+      "details": "Strictly filters out pending demands"
+    },
+    {
+      "scenarioId": 3,
+      "testName": "Buyer Privacy Shield (No Phone Leakage)",
+      "status": "PASS",
+      "details": "Buyer contact details are withheld from public DOM"
+    },
+    {
+      "scenarioId": 3,
+      "testName": "Client Rate Limiter Stress (4 submissions/2m)",
+      "status": "PASS",
+      "details": "Successfully blocks 4th consecutive flood attempt"
+    },
+    {
+      "scenarioId": 4,
+      "testName": "CRM Admin Authentication Gate",
+      "status": "PASS",
+      "details": "Protected login with credential validation"
+    },
+    {
+      "scenarioId": 4,
+      "testName": "Demand Approval & Timestamp Lifecycle",
+      "status": "PASS",
+      "details": "Sets status to published and records approvedAt timestamp"
+    },
+    {
+      "scenarioId": 4,
+      "testName": "Firestore Real-Time Demands Listener",
+      "status": "PASS",
+      "details": "Instant sync without page reload"
+    },
+    {
+      "scenarioId": 4,
+      "testName": "Newest Approved Demands Priority Sort",
+      "status": "PASS",
+      "details": "Approved demands appear at top of homepage"
+    },
+    {
+      "scenarioId": 4,
+      "testName": "1-Click WhatsApp Sales Agent Dispatch",
+      "status": "PASS",
+      "details": "Generates lead brief with +20 international format"
+    },
+    {
+      "scenarioId": 5,
+      "testName": "Founder Profile Modal (Dr. Mahmoud Elbaz)",
+      "status": "PASS",
+      "details": "Instant presentation of credentials & numbers"
+    },
+    {
+      "scenarioId": 5,
+      "testName": "Founder CMS Live Broadcast Event",
+      "status": "PASS",
+      "details": "Dispatches and listens to oneline_founder_cms_updated"
+    },
+    {
+      "scenarioId": 6,
+      "testName": "Google Schema.org Organization JSON-LD",
+      "status": "PASS",
+      "details": "Injected into <head> on HomePage"
+    },
+    {
+      "scenarioId": 6,
+      "testName": "Google Schema.org RealEstateListing JSON-LD",
+      "status": "PASS",
+      "details": "Injected into <head> on Property Detail"
+    },
+    {
+      "scenarioId": 6,
+      "testName": "Firestore Rules: Public Demands Read",
+      "status": "PASS",
+      "details": "Public visitors can read approved demands"
+    },
+    {
+      "scenarioId": 6,
+      "testName": "Firestore Rules: Demands Update/Delete Protection",
+      "status": "PASS",
+      "details": "Only authenticated admin can alter demands"
+    },
+    {
+      "scenarioId": 6,
+      "testName": "Firestore Rules: Leads Privacy Guard",
+      "status": "PASS",
+      "details": "Unauthenticated visitors are forbidden from reading leads"
+    },
+    {
+      "scenarioId": 6,
+      "testName": "Firestore Rules: Internal Audit Logs Guard",
+      "status": "PASS",
+      "details": "Notifications collection is locked to admin only"
+    }
+  ]
+}
