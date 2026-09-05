@@ -11,6 +11,7 @@ import PropertyCard from '../components/properties/PropertyCard';
 import PropertyFilters from '../components/properties/PropertyFilters';
 import PropertyMapView from '../components/properties/PropertyMapView';
 import ZeroResultsFallback from '../components/properties/ZeroResultsFallback';
+import { PROPERTIES_DATA } from '../data/propertiesData';
 import { updatePageSeo } from '../utils/seoHelper';
 import { searchPropertiesSemantic, parseSemanticQuery } from '../utils/semanticSearchEngine';
 
@@ -49,7 +50,7 @@ export default function PropertiesPage({
     type: searchParams.get('type') || 'all',
     area: searchParams.get('area') || 'all',
     maxPrice: searchParams.get('budget') ? (searchParams.get('budget') === 'under_3m' ? 3000000 : searchParams.get('budget') === '3m_to_6m' ? 6000000 : 15000000) : 15000000,
-    bedrooms: searchParams.get('bedrooms') || 'any'
+    bedrooms: searchParams.get('bedrooms') || 'all'
   });
 
   // Reset pagination on filter change
@@ -67,10 +68,13 @@ export default function PropertiesPage({
       type: 'all',
       area: 'all',
       maxPrice: 15000000,
-      bedrooms: 'any'
+      bedrooms: 'all'
     });
     setSearchParams({});
   };
+
+  // Safe properties pool fallback to ensure verified catalog is never empty
+  const safeProperties = (Array.isArray(properties) && properties.length > 0) ? properties : PROPERTIES_DATA;
 
   // Parse semantic query tags if query is present
   const parsedSemantic = useMemo(() => {
@@ -81,7 +85,7 @@ export default function PropertiesPage({
   // Filter & Sort Properties
   const filteredProperties = useMemo(() => {
     // 1. Initial pool: exclude deleted, trash, hidden, draft
-    const pool = properties.filter((prop) => {
+    const pool = safeProperties.filter((prop) => {
       return !(prop.isDeleted || prop.status === 'trash' || prop.status === 'hidden' || prop.status === 'draft');
     });
 
@@ -94,20 +98,21 @@ export default function PropertiesPage({
     // 3. Apply manual dropdown filters
     return list.filter((prop) => {
       // Type filter
-      if (filters.type !== 'all' && prop.type !== filters.type) return false;
+      if (filters.type && filters.type !== 'all' && prop.type !== filters.type) return false;
 
       // Area filter
-      if (filters.area !== 'all' && prop.areaKey !== filters.area) return false;
+      if (filters.area && filters.area !== 'all' && prop.areaKey !== filters.area) return false;
 
       // Max Price filter
       if (filters.maxPrice && prop.price > filters.maxPrice) return false;
 
       // Bedrooms filter
-      if (filters.bedrooms !== 'any') {
+      if (filters.bedrooms && filters.bedrooms !== 'any' && filters.bedrooms !== 'all' && String(filters.bedrooms).trim() !== '') {
         if (filters.bedrooms === '4+') {
           if ((prop.bedrooms || 0) < 4) return false;
         } else {
-          if ((prop.bedrooms || 0) !== parseInt(filters.bedrooms)) return false;
+          const parsedBeds = parseInt(filters.bedrooms, 10);
+          if (!isNaN(parsedBeds) && (prop.bedrooms || 0) !== parsedBeds) return false;
         }
       }
 
@@ -122,16 +127,25 @@ export default function PropertiesPage({
       }
       return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
     });
-  }, [properties, filters, sortBy]);
+  }, [safeProperties, filters, sortBy]);
 
   return (
     <div className="properties-page-wrapper">
       {/* Page Header Bar */}
       <div className="properties-page-header">
         <div className="page-header-container">
-          <div>
-            <h1>{lang === 'ar' ? 'استكشاف العقارات في سوهاج' : 'Explore Properties in Sohag'}</h1>
-            <p>{lang === 'ar' ? 'تصفح أحدث الشقق، الفيلات، المحلات التجارية والأراضي المعروضة حصرياً' : 'Browse the latest verified apartments, commercial units, and lands'}</p>
+          <div className="page-header-titles">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+              <h1 style={{ fontSize: '1.85rem', fontWeight: '900', margin: 0 }}>
+                {lang === 'ar' ? 'استكشاف العقارات في سوهاج' : 'Explore Properties in Sohag'}
+              </h1>
+              <span className="results-count-badge" style={{ fontSize: '0.8rem', padding: '3px 10px', fontWeight: '800' }}>
+                {filteredProperties.length} {lang === 'ar' ? 'عقار متاح' : 'Units'}
+              </span>
+            </div>
+            <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text-muted)' }}>
+              {lang === 'ar' ? 'تصفح أحدث الشقق، الفيلات، المحلات التجارية والأراضي المعروضة حصرياً' : 'Browse the latest verified apartments, commercial units, and lands'}
+            </p>
           </div>
 
           {/* View Mode Controls */}

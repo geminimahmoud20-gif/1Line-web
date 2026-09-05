@@ -108,29 +108,29 @@ export default function PropertyFilters({
             <div className="quick-price-pills">
               <button 
                 type="button" 
-                className={`price-mini-pill ${filters.maxPrice === '2000000' ? 'active' : ''}`}
-                onClick={() => onFilterChange('maxPrice', '2000000')}
+                className={`price-mini-pill ${filters.maxPrice == 2000000 ? 'active' : ''}`}
+                onClick={() => onFilterChange('maxPrice', 2000000)}
               >
                 {lang === 'ar' ? 'حتى 2 مليون' : '≤ 2M'}
               </button>
               <button 
                 type="button" 
-                className={`price-mini-pill ${filters.maxPrice === '4000000' ? 'active' : ''}`}
-                onClick={() => onFilterChange('maxPrice', '4000000')}
+                className={`price-mini-pill ${filters.maxPrice == 4000000 ? 'active' : ''}`}
+                onClick={() => onFilterChange('maxPrice', 4000000)}
               >
                 {lang === 'ar' ? 'حتى 4 مليون' : '≤ 4M'}
               </button>
               <button 
                 type="button" 
-                className={`price-mini-pill ${filters.maxPrice === '8000000' ? 'active' : ''}`}
-                onClick={() => onFilterChange('maxPrice', '8000000')}
+                className={`price-mini-pill ${filters.maxPrice == 8000000 ? 'active' : ''}`}
+                onClick={() => onFilterChange('maxPrice', 8000000)}
               >
                 {lang === 'ar' ? 'حتى 8 مليون' : '≤ 8M'}
               </button>
               <button 
                 type="button" 
-                className={`price-mini-pill ${!filters.maxPrice || filters.maxPrice === '20000000' ? 'active' : ''}`}
-                onClick={() => onFilterChange('maxPrice', '20000000')}
+                className={`price-mini-pill ${!filters.maxPrice || filters.maxPrice == 20000000 || filters.maxPrice == 15000000 ? 'active' : ''}`}
+                onClick={() => onFilterChange('maxPrice', 20000000)}
               >
                 {lang === 'ar' ? 'الكل' : 'Any'}
               </button>
@@ -147,9 +147,9 @@ export default function PropertyFilters({
                 key={beds}
                 type="button"
                 className={`bedroom-pill ${
-                  (filters.bedrooms === beds || (!filters.bedrooms && beds === 'all')) ? 'active' : ''
+                  (filters.bedrooms === beds || ((!filters.bedrooms || filters.bedrooms === 'any') && beds === 'all')) ? 'active' : ''
                 }`}
-                onClick={() => onFilterChange('bedrooms', beds === 'all' ? '' : beds)}
+                onClick={() => onFilterChange('bedrooms', beds)}
               >
                 {beds === 'all' ? (lang === 'ar' ? 'الكل' : 'All') : beds}
               </button>
@@ -159,19 +159,25 @@ export default function PropertyFilters({
       </div>
 
       {/* Quick Location Chips Row */}
-      <div className="filter-quick-locations-bar" style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '14px', paddingTop: '12px', borderTop: '1px solid var(--border-light)', flexWrap: 'wrap' }}>
-        <span style={{ fontSize: '0.76rem', fontWeight: '800', color: 'var(--text-muted)' }}>
+      <div className="filter-quick-locations-bar">
+        <span className="quick-locations-label">
           {lang === 'ar' ? 'أبرز المناطق:' : 'Top Locations:'}
         </span>
-        {areas.slice(0, 7).map((area) => (
+        <button
+          type="button"
+          className={`location-chip ${(!filters.area || filters.area === 'all') ? 'active' : ''}`}
+          onClick={() => onFilterChange('area', 'all')}
+        >
+          {lang === 'ar' ? 'كل المناطق' : 'All Districts'}
+        </button>
+        {areas.filter(a => a.id !== 'all').slice(0, 7).map((area) => (
           <button
             key={area.id}
             type="button"
-            className={`bedroom-pill ${filters.area === area.id ? 'active' : ''}`}
+            className={`location-chip ${filters.area === area.id ? 'active' : ''}`}
             onClick={() => onFilterChange('area', area.id)}
-            style={{ fontSize: '0.74rem', padding: '3px 10px' }}
           >
-            {lang === 'ar' ? area.name_ar : area.name_en}
+            {lang === 'ar' ? (area.name_ar || area.label_ar) : (area.name_en || area.label_en)}
           </button>
         ))}
       </div>
