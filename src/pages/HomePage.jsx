@@ -192,18 +192,20 @@ export default function HomePage({
         <div className="hero-backdrop-gradient" />
         <div className="hero-content-container">
           <div className="hero-badge">
-            <Sparkles size={14} className="text-gold" />
+            <Sparkles size={14} style={{ color: '#38bdf8' }} />
             <span>{lang === 'ar' ? 'المنصة العقارية الأكثر موثوقية في سوهاج' : 'Sohag’s Most Trusted Real Estate Platform'}</span>
           </div>
 
           <h1 className="hero-main-title">
             {lang === 'ar' ? (
               <>
-                امتلك واستثمر في <span className="text-gradient-gold">أرقى عقارات سوهاج</span> بكل ثقة
+                <span className="hero-title-line">امتلك واستثمر في أرقى عقارات سوهاج</span>
+                <span className="hero-title-line hero-title-highlight">بكل ثقة وضمان قانوني معتمد</span>
               </>
             ) : (
               <>
-                Own & Invest in <span className="text-gradient-gold">Sohag’s Finest Properties</span> with Full Confidence
+                <span className="hero-title-line">Own & Invest in Sohag’s Finest Properties</span>
+                <span className="hero-title-line hero-title-highlight">With Full Confidence & Legal Security</span>
               </>
             )}
           </h1>
