@@ -525,15 +525,15 @@ export default function HomePage({
             flexWrap: 'wrap',
             marginTop: '22px',
             paddingTop: '18px',
-            borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)'
           }}>
             {[
-              { path: '/buy', icon: Building, label_ar: 'معالج الشراء', label_en: 'Buy Wizard', color: '#ffca28' },
-              { path: '/sell', icon: TrendingUp, label_ar: 'عرض عقار وتقييم', label_en: 'Sell & Valuation', color: '#60a5fa' },
-              { path: '/financing', icon: Calculator, label_ar: 'حاسبة الأقساط', label_en: 'Mortgage Plans', color: '#34d399' },
-              { path: '/investor', icon: Award, label_ar: 'كبار المستثمرين', label_en: 'Investor Hub', color: '#c084fc' },
-              { path: '/broker', icon: Users, label_ar: 'شبكة الوسطاء', label_en: 'Brokers', color: '#fbbf24' },
-              { path: '/vault', icon: Lock, label_ar: 'الخزينة السرية', label_en: 'Private Vault', color: '#f87171' }
+              { path: '/buy', icon: Building, label_ar: 'معالج الشراء', label_en: 'Buy Wizard' },
+              { path: '/sell', icon: TrendingUp, label_ar: 'عرض عقار وتقييم', label_en: 'Sell & Valuation' },
+              { path: '/financing', icon: Calculator, label_ar: 'حاسبة الأقساط', label_en: 'Mortgage Plans' },
+              { path: '/investor', icon: Award, label_ar: 'كبار المستثمرين', label_en: 'Investor Hub' },
+              { path: '/broker', icon: Users, label_ar: 'شبكة الوسطاء', label_en: 'Brokers' },
+              { path: '/vault', icon: Lock, label_ar: 'الخزينة السرية', label_en: 'Private Vault' }
             ].map((p, idx) => {
               const IconComponent = p.icon;
               return (
@@ -541,33 +541,37 @@ export default function HomePage({
                   key={idx}
                   to={p.path}
                   style={{
-                    background: 'rgba(10, 25, 47, 0.75)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                    backdropFilter: 'blur(10px)',
+                    background: 'rgba(255, 255, 255, 0.04)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    backdropFilter: 'blur(12px)',
                     padding: '8px 16px',
                     borderRadius: 'var(--radius-pill)',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '8px',
-                    color: '#ffffff',
+                    color: '#f1f5f9',
                     fontSize: '0.82rem',
-                    fontWeight: 'bold',
+                    fontWeight: '700',
                     textDecoration: 'none',
-                    transition: 'all 0.2s ease',
-                    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)'
+                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.2)'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = p.color;
+                    e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.5)';
+                    e.currentTarget.style.background = 'rgba(212, 175, 55, 0.08)';
                     e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = `0 6px 20px ${p.color}33`;
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(212, 175, 55, 0.2)';
+                    e.currentTarget.style.color = '#ffffff';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
                     e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 14px rgba(0, 0, 0, 0.25)';
+                    e.currentTarget.style.boxShadow = '0 4px 14px rgba(0, 0, 0, 0.2)';
+                    e.currentTarget.style.color = '#f1f5f9';
                   }}
                 >
-                  <IconComponent size={15} style={{ color: p.color }} />
+                  <IconComponent size={15} style={{ color: '#d4af37' }} />
                   <span>{lang === 'ar' ? p.label_ar : p.label_en}</span>
                 </Link>
               );
@@ -854,10 +858,11 @@ export default function HomePage({
                       to="/sell" 
                       className="btn-match-demand"
                       style={{
-                        background: 'linear-gradient(135deg, #0d48a1, #1565c0)',
+                        background: 'linear-gradient(135deg, #071224, #0d2c54)',
+                        border: '1px solid rgba(212, 175, 55, 0.35)',
                         color: '#ffffff',
                         fontWeight: '800',
-                        boxShadow: '0 2px 8px rgba(13, 72, 161, 0.25)',
+                        boxShadow: '0 2px 10px rgba(7, 18, 36, 0.25)',
                         padding: '6px 14px'
                       }}
                     >
@@ -898,23 +903,23 @@ export default function HomePage({
           <span className="section-pill">{lang === 'ar' ? 'دراسات السوق والضمان المؤسسي' : 'Market Research & Institutional Trust'}</span>
           <h2>{lang === 'ar' ? 'أدوات الحساب المالي والضمان القانوني المعتمد' : 'Financial Simulator & Certified Legal Security'}</h2>
 
-          {/* Dual Segment Switcher (Ultra High Contrast Navy & Gold) */}
+          {/* Dual Segment Switcher (Ultra High Contrast Navy & Champagne Gold) */}
           <div style={{
             display: 'inline-flex',
-            background: '#081226',
-            padding: '4px',
+            background: '#071224',
+            padding: '5px',
             borderRadius: 'var(--radius-pill)',
-            border: '1px solid rgba(255, 202, 40, 0.4)',
-            gap: '4px',
+            border: '1px solid rgba(212, 175, 55, 0.3)',
+            gap: '6px',
             marginTop: '16px',
-            boxShadow: '0 4px 16px rgba(8, 18, 38, 0.25)'
+            boxShadow: '0 8px 24px rgba(7, 18, 36, 0.25)'
           }}>
             <button
               type="button"
               onClick={() => setInsightsTab('calculator')}
               style={{
-                background: insightsTab === 'calculator' ? 'linear-gradient(135deg, #ffca28, #ff8f00)' : 'transparent',
-                color: insightsTab === 'calculator' ? '#081226' : '#ffffff',
+                background: insightsTab === 'calculator' ? 'linear-gradient(135deg, #d4af37, #c5a059)' : 'transparent',
+                color: insightsTab === 'calculator' ? '#071224' : '#cbd5e1',
                 border: 'none',
                 borderRadius: 'var(--radius-pill)',
                 padding: '9px 24px',
@@ -924,11 +929,11 @@ export default function HomePage({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                boxShadow: insightsTab === 'calculator' ? '0 0 16px rgba(255, 202, 40, 0.4)' : 'none',
-                transition: 'all 0.2s ease'
+                boxShadow: insightsTab === 'calculator' ? '0 4px 16px rgba(212, 175, 55, 0.35)' : 'none',
+                transition: 'all 0.25s ease'
               }}
             >
-              <Calculator size={16} style={{ color: insightsTab === 'calculator' ? '#081226' : '#ffca28' }} />
+              <Calculator size={16} style={{ color: insightsTab === 'calculator' ? '#071224' : '#d4af37' }} />
               <span>{lang === 'ar' ? 'حاسبة التمويل والأقساط الذكية' : 'Mortgage & ROI Simulator'}</span>
             </button>
 
@@ -936,8 +941,8 @@ export default function HomePage({
               type="button"
               onClick={() => setInsightsTab('founder')}
               style={{
-                background: insightsTab === 'founder' ? 'linear-gradient(135deg, #ffca28, #ff8f00)' : 'transparent',
-                color: insightsTab === 'founder' ? '#081226' : '#ffffff',
+                background: insightsTab === 'founder' ? 'linear-gradient(135deg, #d4af37, #c5a059)' : 'transparent',
+                color: insightsTab === 'founder' ? '#071224' : '#cbd5e1',
                 border: 'none',
                 borderRadius: 'var(--radius-pill)',
                 padding: '9px 24px',
@@ -947,11 +952,11 @@ export default function HomePage({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                boxShadow: insightsTab === 'founder' ? '0 0 16px rgba(255, 202, 40, 0.4)' : 'none',
-                transition: 'all 0.2s ease'
+                boxShadow: insightsTab === 'founder' ? '0 4px 16px rgba(212, 175, 55, 0.35)' : 'none',
+                transition: 'all 0.25s ease'
               }}
             >
-              <ShieldCheck size={16} style={{ color: insightsTab === 'founder' ? '#081226' : '#ffca28' }} />
+              <ShieldCheck size={16} style={{ color: insightsTab === 'founder' ? '#071224' : '#d4af37' }} />
               <span>{lang === 'ar' ? 'عن 1Line والضمان القانوني' : 'About 1Line & Legal Pillars'}</span>
             </button>
           </div>
@@ -995,11 +1000,11 @@ export default function HomePage({
         <div style={{
           maxWidth: '1240px',
           margin: '0 auto',
-          background: 'radial-gradient(circle at 15% 20%, #1565c0 0%, #0d48a1 40%, #081226 95%)',
+          background: 'linear-gradient(145deg, #071224 0%, #0c1c38 50%, #040812 100%)',
           borderRadius: '28px',
-          padding: '44px 40px',
-          border: '1px solid rgba(255, 202, 40, 0.35)',
-          boxShadow: '0 24px 60px rgba(13, 72, 161, 0.35)',
+          padding: '48px 44px',
+          border: '1px solid rgba(212, 175, 55, 0.35)',
+          boxShadow: '0 24px 60px rgba(4, 8, 18, 0.5), 0 0 35px rgba(212, 175, 55, 0.08)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -1008,36 +1013,36 @@ export default function HomePage({
           position: 'relative',
           overflow: 'hidden'
         }}>
-          {/* Ambient Glow */}
+          {/* Ambient Champagne Nebula */}
           <div style={{
             position: 'absolute',
             top: '-40px',
             right: '-40px',
-            width: '240px',
-            height: '240px',
+            width: '260px',
+            height: '260px',
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255, 202, 40, 0.15) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, transparent 70%)',
             pointerEvents: 'none'
           }} />
 
           <div style={{ maxWidth: '680px', position: 'relative', zIndex: 2 }}>
             <span style={{
-              background: 'rgba(255, 202, 40, 0.18)',
-              border: '1px solid rgba(255, 202, 40, 0.45)',
-              color: '#ffca28',
+              background: 'rgba(212, 175, 55, 0.12)',
+              border: '1px solid rgba(212, 175, 55, 0.4)',
+              color: '#d4af37',
               fontSize: '0.8rem',
-              fontWeight: 'bold',
-              padding: '5px 14px',
+              fontWeight: '800',
+              padding: '6px 16px',
               borderRadius: '999px',
               display: 'inline-block',
-              marginBottom: '12px'
+              marginBottom: '14px'
             }}>
-              {lang === 'ar' ? 'استشارة عقارية وقانونية مجانية' : 'Free Certified Advisory'}
+              {lang === 'ar' ? 'استشارة عقارية وقانونية معتمدة' : 'Certified Advisory & Legal Security'}
             </span>
-            <h2 style={{ fontSize: '1.9rem', color: '#ffffff', fontWeight: 'bold', margin: '0 0 10px 0', lineHeight: 1.3 }}>
+            <h2 style={{ fontSize: '1.9rem', color: '#ffffff', fontWeight: '900', margin: '0 0 10px 0', lineHeight: 1.3 }}>
               {lang === 'ar' ? 'جاهز لتملك عقارك المثالي أو استثمارك القادم بسوهاج؟' : 'Ready to Secure Your Ideal Property in Sohag?'}
             </h2>
-            <p style={{ color: '#cbd5e1', fontSize: '0.95rem', margin: 0, lineHeight: 1.6 }}>
+            <p style={{ color: '#cbd5e1', fontSize: '0.95rem', margin: 0, lineHeight: 1.65 }}>
               {lang === 'ar' 
                 ? 'فريق خبراء ومستشاري 1Line جاهز لمساعدتك في فحص صحة الأوراق والتراخيص، التفاوض، واختيار العقار الأنسب لاحتياجك وميزانيتك مجاناً.' 
                 : 'Our certified real estate advisors are ready to guide you through legal vetting, price negotiation, and financing.'}
@@ -1049,13 +1054,13 @@ export default function HomePage({
               to="/buy"
               className="btn btn-primary"
               style={{
-                background: 'linear-gradient(135deg, #ffca28, #ff8f00)',
-                color: '#081226',
+                background: 'linear-gradient(135deg, #d4af37 0%, #c5a059 100%)',
+                color: '#071224',
                 fontWeight: '900',
                 padding: '14px 28px',
                 borderRadius: '14px',
                 border: 'none',
-                boxShadow: '0 8px 25px rgba(255, 202, 40, 0.4)',
+                boxShadow: '0 8px 25px rgba(212, 175, 55, 0.35)',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '8px'
@@ -1069,7 +1074,8 @@ export default function HomePage({
               to="/sell"
               className="btn btn-outline"
               style={{
-                borderColor: 'rgba(255, 255, 255, 0.4)',
+                borderColor: 'rgba(212, 175, 55, 0.4)',
+                background: 'rgba(255, 255, 255, 0.05)',
                 color: '#ffffff',
                 fontWeight: 'bold',
                 padding: '14px 24px',

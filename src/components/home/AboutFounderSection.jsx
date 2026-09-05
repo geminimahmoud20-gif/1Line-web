@@ -154,14 +154,14 @@ export default function AboutFounderSection({ lang = 'ar' }) {
         }}>
           {/* 👤 LEFT COLUMN: THE FOUNDER PROFILE CARD */}
           <div style={{
-            background: 'linear-gradient(145deg, #101a36 0%, #0a1128 100%)',
-            border: '1px solid rgba(217, 119, 6, 0.4)',
+            background: 'linear-gradient(145deg, #071224 0%, #0a1630 100%)',
+            border: '1px solid rgba(212, 175, 55, 0.35)',
             borderRadius: 'var(--radius-lg, 24px)',
             padding: '32px 26px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            boxShadow: '0 15px 40px -5px rgba(10, 17, 40, 0.3)',
+            boxShadow: '0 15px 40px -5px rgba(7, 18, 36, 0.35), 0 0 25px rgba(212, 175, 55, 0.08)',
             position: 'relative'
           }}>
             {/* Top Founder Identity */}
@@ -171,9 +171,9 @@ export default function AboutFounderSection({ lang = 'ar' }) {
                   width: '70px',
                   height: '70px',
                   borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #d97706, #b45309)',
+                  background: 'linear-gradient(135deg, #d4af37, #c5a059)',
                   padding: '3px',
-                  boxShadow: '0 4px 18px rgba(217, 119, 6, 0.4)',
+                  boxShadow: '0 4px 18px rgba(212, 175, 55, 0.35)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -190,7 +190,7 @@ export default function AboutFounderSection({ lang = 'ar' }) {
                       width: '100%',
                       height: '100%',
                       borderRadius: '50%',
-                      background: '#0a1128',
+                      background: '#071224',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -208,7 +208,7 @@ export default function AboutFounderSection({ lang = 'ar' }) {
                     </h3>
                     <CheckCircle2 size={18} style={{ color: '#10b981' }} />
                   </div>
-                  <span style={{ fontSize: '0.84rem', color: 'var(--accent-gold, #fbbf24)', display: 'block', marginTop: '3px', fontWeight: '600' }}>
+                  <span style={{ fontSize: '0.84rem', color: '#d4af37', display: 'block', marginTop: '3px', fontWeight: '700' }}>
                     {isAr ? (cms.founderRole_ar || 'مؤسس ورئيس مجلس إدارة 1Line') : (cms.founderRole_en || 'Founder & Chairman of 1Line')}
                   </span>
                   <small style={{ color: '#94a3b8', fontSize: '0.78rem', display: 'block', marginTop: '2px' }}>
@@ -219,14 +219,14 @@ export default function AboutFounderSection({ lang = 'ar' }) {
 
               {/* Founder Quote Card - Crisp High-Contrast Styling */}
               <div style={{
-                background: 'rgba(255, 255, 255, 0.06)',
-                borderInlineStart: '4px solid var(--accent-gold, #d97706)',
+                background: 'rgba(255, 255, 255, 0.05)',
+                borderInlineStart: '4px solid #d4af37',
                 borderRadius: 'var(--radius-sm, 10px)',
                 padding: '18px 20px',
                 marginBottom: '22px',
                 position: 'relative'
               }}>
-                <Quote size={26} style={{ color: 'rgba(217, 119, 6, 0.35)', position: 'absolute', top: '10px', left: isAr ? '12px' : 'auto', right: isAr ? 'auto' : '12px' }} />
+                <Quote size={26} style={{ color: 'rgba(212, 175, 55, 0.3)', position: 'absolute', top: '10px', left: isAr ? '12px' : 'auto', right: isAr ? 'auto' : '12px' }} />
                 <p style={{
                   fontSize: '0.95rem',
                   lineHeight: 1.85,
@@ -247,9 +247,9 @@ export default function AboutFounderSection({ lang = 'ar' }) {
                     key={idx} 
                     className="badge" 
                     style={{ 
-                      background: idx === 0 ? 'rgba(217, 119, 6, 0.2)' : idx === 1 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(6, 182, 212, 0.2)', 
-                      color: idx === 0 ? '#fbbf24' : idx === 1 ? '#34d399' : '#38bdf8', 
-                      border: `1px solid ${idx === 0 ? 'rgba(217, 119, 6, 0.45)' : idx === 1 ? 'rgba(16, 185, 129, 0.45)' : 'rgba(6, 182, 212, 0.45)'}`, 
+                      background: idx === 0 ? 'rgba(212, 175, 55, 0.15)' : idx === 1 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(6, 182, 212, 0.15)', 
+                      color: idx === 0 ? '#d4af37' : idx === 1 ? '#34d399' : '#38bdf8', 
+                      border: `1px solid ${idx === 0 ? 'rgba(212, 175, 55, 0.4)' : idx === 1 ? 'rgba(16, 185, 129, 0.4)' : 'rgba(6, 182, 212, 0.4)'}`, 
                       fontSize: '0.78rem',
                       fontWeight: '600',
                       padding: '5px 10px',
@@ -272,17 +272,17 @@ export default function AboutFounderSection({ lang = 'ar' }) {
                 style={{ 
                   flex: 1, 
                   minWidth: '170px', 
-                  background: 'linear-gradient(135deg, #d97706, #b45309)', 
-                  color: '#ffffff',
+                  background: 'linear-gradient(135deg, #d4af37 0%, #c5a059 100%)', 
+                  color: '#071224',
                   border: 'none',
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'center', 
                   gap: '8px', 
                   fontSize: '0.88rem',
-                  fontWeight: 'bold',
+                  fontWeight: '900',
                   padding: '12px 18px',
-                  boxShadow: '0 4px 15px rgba(217, 119, 6, 0.35)'
+                  boxShadow: '0 4px 15px rgba(212, 175, 55, 0.35)'
                 }}
               >
                 <MessageSquare size={16} />
@@ -300,8 +300,8 @@ export default function AboutFounderSection({ lang = 'ar' }) {
                   gap: '6px', 
                   fontSize: '0.88rem',
                   color: '#ffffff',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: '1px solid rgba(255, 255, 255, 0.25)',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(212, 175, 55, 0.35)',
                   fontWeight: '600'
                 }}
               >
@@ -335,9 +335,9 @@ export default function AboutFounderSection({ lang = 'ar' }) {
                     width: '46px',
                     height: '46px',
                     borderRadius: '12px',
-                    background: 'rgba(217, 119, 6, 0.12)',
-                    color: 'var(--accent-gold, #d97706)',
-                    border: '1px solid rgba(217, 119, 6, 0.25)',
+                    background: 'rgba(212, 175, 55, 0.12)',
+                    color: 'var(--accent-gold, #d4af37)',
+                    border: '1px solid rgba(212, 175, 55, 0.25)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -411,7 +411,7 @@ export default function AboutFounderSection({ lang = 'ar' }) {
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
                 {item.icon}
               </div>
-              <div style={{ fontSize: '2.1rem', fontWeight: '900', color: 'var(--accent-gold, #d97706)', marginBottom: '4px', letterSpacing: '-0.5px' }}>
+              <div style={{ fontSize: '2.1rem', fontWeight: '900', color: 'var(--accent-gold, #d4af37)', marginBottom: '4px', letterSpacing: '-0.5px' }}>
                 {isAr ? item.num_ar : item.num_en}
               </div>
               <strong style={{ fontSize: '0.9rem', display: 'block', color: 'var(--text-primary, #0d2c54)', marginBottom: '3px', fontWeight: 'bold' }}>

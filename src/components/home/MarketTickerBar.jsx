@@ -16,8 +16,8 @@ export default function MarketTickerBar({ lang = 'ar' }) {
   return (
     <div 
       style={{
-        background: 'linear-gradient(90deg, #050b18 0%, #0d2250 50%, #050b18 100%)',
-        borderBottom: '1px solid rgba(255, 202, 40, 0.25)',
+        background: 'linear-gradient(90deg, #040914 0%, #071328 50%, #040914 100%)',
+        borderBottom: '1px solid rgba(212, 175, 55, 0.25)',
         borderTop: '1px solid rgba(255, 255, 255, 0.05)',
         padding: '8px 0',
         overflow: 'hidden',
@@ -33,15 +33,15 @@ export default function MarketTickerBar({ lang = 'ar' }) {
           display: 'flex',
           alignItems: 'center',
           gap: '6px',
-          background: 'rgba(255, 202, 40, 0.15)',
-          border: '1px solid rgba(255, 202, 40, 0.4)',
+          background: 'rgba(212, 175, 55, 0.12)',
+          border: '1px solid rgba(212, 175, 55, 0.35)',
           padding: '4px 12px',
           borderRadius: '999px',
           flexShrink: 0,
-          boxShadow: '0 0 10px rgba(255, 202, 40, 0.2)'
+          boxShadow: '0 0 10px rgba(212, 175, 55, 0.15)'
         }}>
           <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px #10b981' }} />
-          <Activity size={13} style={{ color: '#ffca28' }} />
+          <Activity size={13} style={{ color: '#d4af37' }} />
           <span style={{ fontSize: '0.74rem', fontWeight: '900', color: '#ffffff', letterSpacing: '0.3px' }}>
             {isAr ? 'مؤشر بورصة سوهاج العقارية' : 'Sohag PropTech Index'}
           </span>
@@ -72,10 +72,10 @@ export default function MarketTickerBar({ lang = 'ar' }) {
                 background: 'rgba(255, 255, 255, 0.03)'
               }}
             >
-              <MapPin size={12} style={{ color: '#ffca28' }} />
+              <MapPin size={12} style={{ color: '#d4af37' }} />
               <strong style={{ color: '#ffffff' }}>{isAr ? item.area_ar : item.area_en}:</strong>
               <span style={{ color: '#94a3b8' }}>{isAr ? 'المتر' : 'sqm'}</span>
-              <span style={{ fontWeight: 'bold', color: '#ffca28' }}>{item.avg_meter} {isAr ? 'ج.م' : 'EGP'}</span>
+              <span style={{ fontWeight: 'bold', color: '#d4af37' }}>{item.avg_meter} {isAr ? 'ج.م' : 'EGP'}</span>
               <span style={{
                 color: '#10b981',
                 fontWeight: 'bold',

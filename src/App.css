@@ -1101,12 +1101,12 @@
 
 .marketplace-switcher-bar {
   display: inline-flex;
-  background: #081226;
+  background: #071224;
   padding: 5px;
   border-radius: var(--radius-pill);
-  border: 1px solid rgba(255, 202, 40, 0.4);
+  border: 1px solid rgba(212, 175, 55, 0.3);
   gap: 6px;
-  box-shadow: 0 8px 24px rgba(8, 18, 38, 0.35);
+  box-shadow: 0 8px 24px rgba(7, 18, 36, 0.25);
 }
 
 .marketplace-tab-btn {
@@ -1130,9 +1130,9 @@
 }
 
 .marketplace-tab-btn.active {
-  background: linear-gradient(135deg, #ffca28 0%, #d97706 100%);
-  color: #081226;
-  box-shadow: 0 4px 18px rgba(255, 202, 40, 0.45);
+  background: linear-gradient(135deg, #d4af37 0%, #c5a059 50%, #aa8022 100%);
+  color: #071224;
+  box-shadow: 0 4px 18px rgba(212, 175, 55, 0.35);
 }
 
 .marketplace-tab-btn .tab-count-badge {
@@ -1145,8 +1145,8 @@
 }
 
 .marketplace-tab-btn.active .tab-count-badge {
-  background: #081226;
-  color: #ffca28;
+  background: #071224;
+  color: #d4af37;
 }
 
 .marketplace-filter-strip {
@@ -3549,17 +3549,17 @@
   font-weight: 900;
 }
 
-/* Results Column Card */
+/* Results Column Card - Architectural Obsidian & Gold */
 .calc-results-card {
-  background: linear-gradient(135deg, #092347 0%, #0d48a1 60%, #1565c0 100%);
+  background: linear-gradient(145deg, #071224 0%, #0c1c38 60%, #040812 100%);
   color: #ffffff;
   border-radius: var(--radius-lg);
-  padding: 26px;
-  box-shadow: 0 20px 40px -10px rgba(13, 72, 161, 0.35);
+  padding: 28px;
+  box-shadow: 0 20px 40px -10px rgba(7, 18, 36, 0.45), 0 0 25px rgba(212, 175, 55, 0.08);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(212, 175, 55, 0.35);
 }
 
 .result-highlight-box {
@@ -3704,17 +3704,101 @@
 }
 
 .calc-cta-btn {
-  background: var(--accent-gold);
-  color: #0d2c54;
+  background: linear-gradient(135deg, #d4af37 0%, #c5a059 100%);
+  color: #071224;
   font-weight: 900;
-  padding: 12px;
+  padding: 13px;
   border-radius: var(--radius-sm);
   font-size: 0.92rem;
+  border: none;
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+  cursor: pointer;
+  transition: all 0.25s ease;
 }
 
 .calc-cta-btn:hover {
-  background: var(--accent-gold-hover);
+  background: linear-gradient(135deg, #fef3c7 0%, #d4af37 100%);
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.45);
   transform: translateY(-1px);
+}
+
+/* 💬 Testimonials Grid & Luxury Cards */
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.testimonial-card {
+  background: #ffffff;
+  border: 1px solid rgba(10, 37, 64, 0.08);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 10px 30px -5px rgba(10, 17, 40, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.testimonial-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px -8px rgba(10, 17, 40, 0.12), 0 0 20px rgba(212, 175, 55, 0.08);
+  border-color: rgba(212, 175, 55, 0.35);
+}
+
+.testimonial-card .stars-row {
+  color: #d4af37;
+  font-size: 1.1rem;
+  letter-spacing: 3px;
+}
+
+.testimonial-card .testimonial-text {
+  font-size: 0.96rem;
+  line-height: 1.8;
+  color: #334155;
+  font-style: italic;
+  margin: 0;
+  flex-grow: 1;
+}
+
+.testimonial-card .testimonial-author {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-top: 1px solid rgba(10, 37, 64, 0.06);
+  padding-top: 16px;
+}
+
+.testimonial-card .author-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #071224, #0d2c54);
+  color: #d4af37;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 800;
+  border: 1.5px solid rgba(212, 175, 55, 0.35);
+  box-shadow: 0 4px 10px rgba(7, 18, 36, 0.15);
+}
+
+.testimonial-card .testimonial-author h4 {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #071224;
+  margin: 0 0 2px 0;
+}
+
+.testimonial-card .testimonial-author span {
+  font-size: 0.78rem;
+  color: #64748b;
+  display: block;
 }
 
 /* Calculator Dark Theme Rules */
