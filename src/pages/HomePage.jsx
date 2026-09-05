@@ -473,7 +473,7 @@ export default function HomePage({
 
                 <span className="discovery-divider" aria-hidden="true" />
 
-                <span className="discovery-label secondary">
+                <span className="discovery-label">
                   {lang === 'ar' ? 'خيارات شائعة:' : 'Popular:'}
                 </span>
 
@@ -491,7 +491,7 @@ export default function HomePage({
                       if (parsed.filters.type) params.set('type', parsed.filters.type);
                       navigate(`/properties?${params.toString()}`);
                     }}
-                    className="discovery-chip investment"
+                    className="discovery-chip"
                   >
                     <span>{lang === 'ar' ? preset.tag_ar : preset.query_en}</span>
                   </button>

@@ -280,25 +280,30 @@
 
 /* --- Hero Section Premium --- */
 /* --- Hero Section Premium (World-Class Luxury Real Estate) --- */
+/* --- Hero Section Premium (World-Class Luxury Real Estate) --- */
 .hero-section-premium {
   position: relative;
-  background: radial-gradient(120% 120% at 50% 0%, #0d1e3a 0%, #071124 55%, #030813 100%);
+  background: 
+    radial-gradient(ellipse 75% 55% at 50% -15%, rgba(212, 175, 55, 0.2), transparent 70%),
+    radial-gradient(ellipse 65% 45% at 15% 35%, rgba(13, 72, 161, 0.25), transparent 60%),
+    radial-gradient(ellipse 65% 45% at 85% 65%, rgba(16, 185, 129, 0.07), transparent 60%),
+    linear-gradient(180deg, #071224 0%, #050d1a 45%, #02060d 100%);
   color: #ffffff;
-  padding: 68px 24px 84px;
+  padding: 72px 24px 92px;
   overflow: hidden;
 }
 
 .hero-backdrop-gradient {
   position: absolute;
-  top: -30%;
+  top: -25%;
   left: 50%;
   transform: translateX(-50%);
-  width: 900px;
-  height: 600px;
-  background: radial-gradient(circle, rgba(212, 175, 55, 0.1) 0%, rgba(13, 72, 161, 0.12) 50%, transparent 75%);
+  width: 1000px;
+  height: 650px;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.16) 0%, rgba(13, 72, 161, 0.16) 50%, transparent 75%);
   border-radius: 50%;
   pointer-events: none;
-  filter: blur(40px);
+  filter: blur(50px);
 }
 
 .hero-content-container {
@@ -313,15 +318,17 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(212, 175, 55, 0.28);
+  padding: 7px 18px;
+  background: rgba(13, 30, 60, 0.65);
+  border: 1px solid rgba(212, 175, 55, 0.4);
   border-radius: var(--radius-pill);
-  font-size: 0.82rem;
-  font-weight: 600;
-  margin-bottom: 22px;
-  backdrop-filter: blur(12px);
-  color: #f1f5f9;
+  font-size: 0.84rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+  backdrop-filter: blur(16px);
+  color: #f8fafc;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  letter-spacing: 0.2px;
 }
 
 .text-gold {
@@ -329,25 +336,27 @@
 }
 
 .text-gradient-gold {
-  background: linear-gradient(135deg, #fef08a 0%, #d4af37 50%, #b45309 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #fef3c7 20%, #d4af37 55%, #c5a059 80%, #aa8022 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   display: inline-block;
   font-weight: 900;
+  filter: drop-shadow(0 2px 18px rgba(212, 175, 55, 0.45));
 }
 
 .hero-main-title {
-  font-size: 2.85rem;
-  font-weight: 800;
-  line-height: 1.35;
-  margin-bottom: 16px;
+  font-size: clamp(2.3rem, 4vw, 3.4rem);
+  font-weight: 900;
+  line-height: 1.32;
+  margin-bottom: 18px;
   color: #ffffff !important;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
+  text-shadow: 0 4px 25px rgba(0, 0, 0, 0.4);
 }
 
 .hero-description {
   font-size: 1.08rem;
-  color: rgba(226, 232, 240, 0.85);
+  color: rgba(226, 232, 240, 0.88);
   max-width: 740px;
   margin: 0 auto 36px;
   line-height: 1.7;
@@ -357,24 +366,28 @@
 /* Hero Search Glassbox - Ultra Clean & Elegant */
 .hero-search-glassbox {
   background: #ffffff;
-  border-radius: 20px;
-  padding: 24px 26px 20px;
-  box-shadow: 0 25px 60px -15px rgba(3, 10, 24, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.9) inset;
+  border-radius: 22px;
+  padding: 26px 28px 22px;
+  box-shadow: 
+    0 30px 70px -15px rgba(2, 8, 20, 0.4), 
+    0 0 0 1px rgba(212, 175, 55, 0.25),
+    0 1px 0 rgba(255, 255, 255, 0.8) inset;
   color: var(--text-primary);
-  max-width: 1080px;
+  max-width: 1100px;
   margin: 0 auto 40px;
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.85);
 }
 
 .hero-search-tabs {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   background: #f1f5f9;
   padding: 4px;
   border-radius: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
   border: 1px solid #e2e8f0;
+  flex-wrap: wrap;
 }
 
 .hero-tab {
@@ -385,22 +398,35 @@
   border-radius: 8px;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #475569;
   font-size: 0.88rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .hero-tab:hover {
-  color: #0f172a;
+  color: #0d2c54;
+  background: rgba(255, 255, 255, 0.6);
 }
 
 .hero-tab.active {
   background: #ffffff;
-  color: #0f172a;
-  font-weight: 700;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+  color: #0d2c54;
+  font-weight: 800;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.hero-tab.hero-tab-vip {
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  color: #856404;
+  font-weight: 800;
+}
+
+.hero-tab.hero-tab-vip:hover {
+  background: rgba(212, 175, 55, 0.22);
+  border-color: rgba(212, 175, 55, 0.55);
 }
 
 .hero-search-inputs-row {
@@ -425,7 +451,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.76rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: #64748b;
   margin-bottom: 4px;
@@ -440,10 +466,10 @@
   width: 100%;
   height: 48px;
   padding: 10px 14px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid #e2e8f0;
   background: #f8fafc;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: #0f172a;
   transition: all 0.2s ease;
@@ -456,9 +482,9 @@
 }
 
 .search-field select:focus, .search-field input:focus {
-  border-color: #0f172a;
+  border-color: #d4af37;
   background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
 }
 
 .hero-search-btn {
@@ -468,22 +494,22 @@
   gap: 8px;
   height: 48px;
   width: 100%;
-  background: #0f172a;
+  background: linear-gradient(135deg, #0d2c54 0%, #081a33 100%);
   color: #ffffff;
-  border: none;
-  border-radius: 10px;
-  font-size: 0.92rem;
-  font-weight: 700;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 800;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+  box-shadow: 0 4px 15px rgba(13, 44, 84, 0.3), 0 0 10px rgba(212, 175, 55, 0.15);
 }
 
 .hero-search-btn:hover {
-  background: #1e293b;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.25);
+  background: linear-gradient(135deg, #153e75 0%, #0d2c54 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(13, 44, 84, 0.4), 0 0 18px rgba(212, 175, 55, 0.3);
 }
 
 /* Single Minimalist Quick Discovery Strip */
@@ -491,21 +517,24 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 16px;
-  padding-top: 14px;
+  margin-top: 18px;
+  padding-top: 16px;
   border-top: 1px solid #f1f5f9;
   flex-wrap: wrap;
 }
 
 .discovery-label {
-  font-size: 0.78rem;
-  font-weight: 700;
+  font-size: 0.8rem;
+  font-weight: 800;
   color: #64748b;
   white-space: nowrap;
 }
 
-.discovery-label.secondary {
-  color: #92400e;
+.discovery-divider {
+  width: 1px;
+  height: 16px;
+  background: #e2e8f0;
+  margin: 0 4px;
 }
 
 .discovery-chips-list {
@@ -518,34 +547,23 @@
 .discovery-chip {
   display: inline-flex;
   align-items: center;
-  padding: 4px 12px;
+  padding: 5px 14px;
   background: #f8fafc;
   color: #334155;
   border: 1px solid #e2e8f0;
   border-radius: var(--radius-pill);
-  font-size: 0.78rem;
-  font-weight: 600;
+  font-size: 0.79rem;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .discovery-chip:hover {
-  background: #0f172a;
+  background: #0d2c54;
   color: #ffffff;
-  border-color: #0f172a;
+  border-color: #0d2c54;
   transform: translateY(-1px);
-}
-
-.discovery-chip.investment {
-  background: rgba(217, 119, 6, 0.05);
-  color: #92400e;
-  border-color: rgba(217, 119, 6, 0.2);
-}
-
-.discovery-chip.investment:hover {
-  background: #d97706;
-  color: #ffffff;
-  border-color: #d97706;
+  box-shadow: 0 4px 12px rgba(13, 44, 84, 0.2);
 }
 
 .discovery-divider {

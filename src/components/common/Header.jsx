@@ -62,9 +62,9 @@ export default function Header({
 
   const navLinks = [
     { path: '/', label: isAr ? 'الرئيسية' : 'Home' },
-    { path: '/properties', label: isAr ? 'العقارات' : 'Properties', badge: isAr ? 'جديد' : 'New', badgeType: 'gold' },
-    { path: '/projects', label: isAr ? 'المشروعات' : 'Projects', badge: isAr ? 'حصري' : 'Exclusive', badgeType: 'emerald' },
-    { path: '/special-requests', label: isAr ? 'الطلبات الخاصة' : 'Special Requests', badge: isAr ? 'VIP' : 'VIP', badgeType: 'gold', icon: FileText },
+    { path: '/properties', label: isAr ? 'العقارات' : 'Properties' },
+    { path: '/projects', label: isAr ? 'المشروعات' : 'Projects' },
+    { path: '/special-requests', label: isAr ? 'الطلبات الخاصة' : 'Special Requests', badge: 'VIP', badgeType: 'gold', icon: FileText },
     { path: '/demands', label: isAr ? 'طلبات المشترين' : 'Buyer Demands' },
     { path: '/market-intelligence', label: isAr ? 'مؤشرات السوق' : 'Market Intel' },
     { path: '/financing', label: isAr ? 'التمويل والأقساط' : 'Financing' },
@@ -119,16 +119,6 @@ export default function Header({
               <span>{isAr ? `مقارنة (${compareCount})` : `Compare (${compareCount})`}</span>
             </button>
           )}
-
-          {/* Quick Special Requests Direct Button on Main Header */}
-          <Link
-            to="/special-requests"
-            className="header-special-cta-btn"
-            title={isAr ? 'تقديم طلب عقاري بمواصفات خاصة' : 'Submit Bespoke Property Request'}
-          >
-            <FileText size={14} className="text-gold" />
-            <span>{isAr ? 'الطلبات الخاصة' : 'Special Requests'}</span>
-          </Link>
 
           {/* Unified Glassmorphic Utility Control Group */}
           <div className="header-utility-pill-group">
