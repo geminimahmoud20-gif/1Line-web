@@ -988,6 +988,10 @@ export default function CrmPage({
             onAddNewLead={onAddNewLead}
             demands={demands}
             onSwitchToDemands={() => setActiveTab('demands')}
+            onSwitchToProperties={() => setActiveTab('properties')}
+            onSwitchToProjects={() => setActiveTab('projects')}
+            onSwitchToAreas={() => setActiveTab('areas')}
+            onSwitchToCorporate={() => setActiveTab('corporate')}
           />
         ) : activeTab === 'properties' ? (
           <PropertyManagerPanel

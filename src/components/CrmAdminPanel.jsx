@@ -7,7 +7,7 @@ import {
   Edit3, Trash2, Database, Upload, Save, X, Clock, CheckCircle2,
   Trophy, Calculator, LayoutGrid, Wand2, Calendar, Target, Zap,
   UserPlus, CheckSquare, Square, Flame, Tag, Filter, Send, Activity,
-  ArrowLeft, ArrowRight
+  ArrowLeft, ArrowRight, MapPin
 } from 'lucide-react';
 import { loginUser } from '../firebaseService';
 import { exportToCsv } from '../utils/exportCsv';
@@ -51,7 +51,11 @@ export const CrmAdminPanel = ({
   onDeleteLead,
   onAddNewLead,
   demands = [],
-  onSwitchToDemands
+  onSwitchToDemands,
+  onSwitchToProperties,
+  onSwitchToProjects,
+  onSwitchToAreas,
+  onSwitchToCorporate
 }) => {
   // Local Authentication States
   const [crmPasswordInput, setCrmPasswordInput] = useState('');
@@ -625,13 +629,15 @@ export const CrmAdminPanel = ({
           { id: 'dashboard', icon: LayoutGrid, label_ar: 'لوحة القيادة التنفيذية', label_en: 'Executive Overview' },
           { id: 'kanban', icon: Target, label_ar: 'مسار الصفقات (Kanban)', label_en: 'Deals Pipeline' },
           { id: 'matching', icon: Sparkles, label_ar: 'المطابقات الذكية', label_en: 'AI Match Engine' },
-          { id: 'demands_hub', icon: Zap, label_ar: `طلبات المشترين (${demands.length})`, label_en: `Buyer Demands (${demands.length})`, isExternal: true },
+          { id: 'demands_hub', icon: Zap, label_ar: `طلبات المشترين (${demands.length})`, label_en: `Buyer Demands (${demands.length})`, onAction: onSwitchToDemands },
+          { id: 'properties_hub', icon: Building, label_ar: `محفظة العقارات (${properties.length})`, label_en: `Properties (${properties.length})`, onAction: onSwitchToProperties },
+          { id: 'areas_hub', icon: MapPin, label_ar: 'المناطق والأحياء', label_en: 'Districts CMS', onAction: onSwitchToAreas },
           { id: 'leads', icon: Users, label_ar: `قاعدة بيانات العملاء (${leads.length})`, label_en: `Leads Hub (${leads.length})` },
           { id: 'agents', icon: Trophy, label_ar: 'تارجت وعمولات الفريق', label_en: 'Team & Commissions' },
           { id: 'financials', icon: Calculator, label_ar: 'الأقساط وإيصالات الحجز', label_en: 'Financials & Receipts' },
           { id: 'retargeting', icon: Zap, label_ar: 'حملات إعادة الاستهداف', label_en: 'Retargeting' },
           { id: 'visitor_intelligence', icon: Activity, label_ar: 'تحليلات وسلوك الزوار', label_en: 'Visitor Intelligence' },
-          { id: 'founder_cms', icon: Building, label_ar: 'بيانات الشركة والمؤسس', label_en: 'Corporate CMS' },
+          { id: 'founder_cms', icon: ShieldCheck, label_ar: 'بيانات الشركة والمؤسس', label_en: 'Corporate CMS' },
           { id: 'automation', icon: Bell, label_ar: 'الأتمتة والإشعارات', label_en: 'Automations' }
         ].map((tab) => {
           const IconComp = tab.icon;
@@ -642,8 +648,8 @@ export const CrmAdminPanel = ({
               type="button"
               className={`crm-nav-pill-btn ${isActive ? 'active' : ''}`}
               onClick={() => {
-                if (tab.isExternal && onSwitchToDemands) {
-                  onSwitchToDemands();
+                if (tab.onAction) {
+                  tab.onAction();
                 } else {
                   setAdminTab(tab.id);
                 }
