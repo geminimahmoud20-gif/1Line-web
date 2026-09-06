@@ -116,6 +116,22 @@ export default function App() {
     setSoundEnabled((prev) => !prev);
   }, []);
 
+  // Synchronize theme to document root, body and mobile theme-color meta tag
+  useEffect(() => {
+    const isDark = theme === 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.classList.toggle('dark-theme', isDark);
+    document.documentElement.classList.toggle('dark', isDark);
+    document.body.setAttribute('data-theme', theme);
+    document.body.classList.toggle('dark-theme', isDark);
+    document.body.classList.toggle('dark', isDark);
+
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', isDark ? '#070b14' : '#f8fafc');
+    }
+  }, [theme]);
+
   const t = TRANSLATIONS[lang] || TRANSLATIONS.ar;
   const navigate = useNavigate();
   const location = useLocation();

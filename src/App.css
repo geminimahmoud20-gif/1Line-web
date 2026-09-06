@@ -194,6 +194,39 @@
   color: #38bdf8;
 }
 
+.theme-toggle-btn {
+  position: relative;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+  transform: scale(1.08);
+}
+
+.theme-toggle-btn:active {
+  transform: scale(0.92);
+}
+
+.theme-icon-rotate {
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease;
+  animation: themeIconSpin 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes themeIconSpin {
+  0% {
+    transform: rotate(-180deg) scale(0.5);
+    opacity: 0;
+  }
+  100% {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+.dark-theme .theme-toggle-btn {
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.2);
+}
+
 .header-special-cta-btn {
   display: inline-flex;
   align-items: center;
@@ -608,89 +641,105 @@
   margin: 0 4px;
 }
 
-/* Dark Mode Overrides for Hero (Preserve Clean Sky-White Search Box) */
+/* 🌙 Ultra-Luxury Dark Mode Overrides for Hero (Frosted Obsidian Glassbox) */
 [data-theme="dark"] .hero-search-glassbox,
+.dark-theme .hero-search-glassbox,
 .dark .hero-search-glassbox {
-  background: #ffffff !important;
-  border-color: rgba(2, 132, 199, 0.2) !important;
-  box-shadow: 0 25px 60px -15px rgba(2, 84, 133, 0.25) !important;
-  color: #0f172a !important;
+  background: rgba(15, 23, 42, 0.88) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.85), 0 0 35px rgba(13, 72, 161, 0.2) !important;
+  color: #f8fafc !important;
 }
 
 [data-theme="dark"] .hero-search-tabs,
+.dark-theme .hero-search-tabs,
 .dark .hero-search-tabs {
-  background: #f0f9ff !important;
-  border-color: #e0f2fe !important;
+  background: rgba(7, 11, 20, 0.75) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 [data-theme="dark"] .hero-tab,
+.dark-theme .hero-tab,
 .dark .hero-tab {
-  color: #475569 !important;
+  color: #94a3b8 !important;
 }
 
 [data-theme="dark"] .hero-tab.active,
+.dark-theme .hero-tab.active,
 .dark .hero-tab.active {
-  background: #ffffff !important;
-  color: #0284c7 !important;
-  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.2) !important;
+  background: #1e293b !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), 0 0 10px rgba(245, 158, 11, 0.15) !important;
 }
 
 [data-theme="dark"] .search-field select,
 [data-theme="dark"] .search-field input,
+.dark-theme .search-field select,
+.dark-theme .search-field input,
 .dark .search-field select,
 .dark .search-field input {
-  background: #ffffff !important;
-  border-color: rgba(2, 132, 199, 0.2) !important;
-  color: #0f172a !important;
+  background: #0f172a !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  color: #f8fafc !important;
 }
 
 [data-theme="dark"] .search-field select:focus,
 [data-theme="dark"] .search-field input:focus,
+.dark-theme .search-field select:focus,
+.dark-theme .search-field input:focus,
 .dark .search-field select:focus,
 .dark .search-field input:focus {
-  background: #ffffff !important;
-  border-color: #0284c7 !important;
-  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.18) !important;
+  background: #131c31 !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.22) !important;
 }
 
 [data-theme="dark"] .hero-search-btn,
+.dark-theme .hero-search-btn,
 .dark .hero-search-btn {
-  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
-  color: #ffffff !important;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  color: #0b0f17 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3) !important;
 }
 
 [data-theme="dark"] .hero-search-btn:hover,
+.dark-theme .hero-search-btn:hover,
 .dark .hero-search-btn:hover {
-  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
+  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.45) !important;
 }
 
 [data-theme="dark"] .discovery-chip,
+.dark-theme .discovery-chip,
 .dark .discovery-chip {
-  background: #f0f9ff !important;
-  color: #0369a1 !important;
-  border-color: #bae6fd !important;
-}
-.dark .discovery-chip {
-  background: #1e293b;
-  color: #cbd5e1;
-  border-color: #334155;
+  background: rgba(15, 23, 42, 0.8) !important;
+  color: #cbd5e1 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 [data-theme="dark"] .discovery-chip:hover,
+.dark-theme .discovery-chip:hover,
 .dark .discovery-chip:hover {
-  background: #ffffff;
-  color: #0f172a;
-  border-color: #ffffff;
+  background: #1e293b !important;
+  color: #fbbf24 !important;
+  border-color: rgba(245, 158, 11, 0.4) !important;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.2) !important;
 }
 
 [data-theme="dark"] .hero-quick-discovery-strip,
+.dark-theme .hero-quick-discovery-strip,
 .dark .hero-quick-discovery-strip {
-  border-top-color: #1e293b;
+  border-top-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 [data-theme="dark"] .discovery-divider,
+.dark-theme .discovery-divider,
 .dark .discovery-divider {
-  background: #334155;
+  background: rgba(255, 255, 255, 0.12) !important;
 }
 
 /* Section Highlight Pulse Animation */
@@ -6492,28 +6541,45 @@
 /* =============================================================
    🌙 ULTRA-LUXURY MIDNIGHT OBSIDIAN DARK MODE
    ============================================================= */
-.dark-theme {
-  --background: #0b0f17;
-  --surface: #111827;
-  --surface-raised: #1f2937;
+:root[data-theme="dark"],
+html[data-theme="dark"],
+html.dark-theme,
+html.dark,
+body.dark-theme,
+body.dark,
+.dark-theme,
+[data-theme="dark"] {
+  --background: #070b14;
+  --surface: #0f172a;
+  --surface-raised: #162238;
   --text-primary: #f8fafc;
   --text-secondary: #cbd5e1;
   --text-muted: #94a3b8;
-  --border-color: #334155;
-  --border-light: #1e293b;
-  --secondary: #1e293b;
-  --accent-gold-light: rgba(2, 132, 199, 0.15);
-  --emerald-bg: rgba(16, 185, 129, 0.15);
-  background-color: #0b0f17;
+  --border-color: rgba(255, 255, 255, 0.12);
+  --border-hover: rgba(245, 158, 11, 0.45);
+  --border-light: rgba(255, 255, 255, 0.06);
+  --secondary: #131c31;
+  --bg-card: #0f172a;
+  --bg-card-hover: #162238;
+  --bg-slate: #070b14;
+  --accent-gold-light: rgba(245, 158, 11, 0.18);
+  --emerald-bg: rgba(16, 185, 129, 0.18);
+  background-color: #070b14;
   color: #f8fafc;
 }
 
-.dark-theme .site-header {
-  background: rgba(11, 15, 23, 0.95);
-  border-bottom-color: #1e293b;
+.dark-theme .site-header,
+[data-theme="dark"] .site-header {
+  background: rgba(7, 11, 20, 0.88) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6) !important;
 }
 
 .dark-theme .property-card,
+.dark-theme .property-card-modern,
+.dark-theme .cinematic-card,
 .dark-theme .detail-card-box,
 .dark-theme .legal-audit-card-container,
 .dark-theme .nearby-amenities-card,
@@ -6530,10 +6596,71 @@
 .dark-theme .property-form-modal-card,
 .dark-theme .deposit-modal-card,
 .dark-theme .currency-dropdown-menu,
-.dark-theme .hero-live-suggestions-dropdown {
-  background: #111827 !important;
-  border-color: #334155 !important;
+.dark-theme .hero-live-suggestions-dropdown,
+.dark-theme .project-card-modern,
+.dark-theme .mega-project-card,
+.dark-theme .portal-action-card,
+.dark-theme .demand-card-box,
+.dark-theme .about-founder-modal-card,
+.dark-theme .calculator-wrapper-box,
+.dark-theme .calc-input-card,
+.dark-theme .mobile-drawer,
+.dark-theme .quickview-modal-card,
+.dark-theme .ai-advisor-modal-card,
+.dark-theme .callback-modal-card,
+.dark-theme .modal-card,
+.dark-theme .crm-modal-card,
+.dark-theme .add-demand-modal-card,
+.dark-theme .share-modal-card,
+.dark-theme .track-lead-card,
+.dark-theme .quick-contact-drawer-panel,
+[data-theme="dark"] .property-card,
+[data-theme="dark"] .property-card-modern,
+[data-theme="dark"] .cinematic-card,
+[data-theme="dark"] .detail-card-box,
+[data-theme="dark"] .legal-audit-card-container,
+[data-theme="dark"] .nearby-amenities-card,
+[data-theme="dark"] .price-benchmark-card,
+[data-theme="dark"] .historical-price-chart-card,
+[data-theme="dark"] .legal-tax-calculator-card,
+[data-theme="dark"] .sunlight-compass-card,
+[data-theme="dark"] .sticky-booking-card,
+[data-theme="dark"] .property-manager-panel,
+[data-theme="dark"] .mobile-floating-bottom-bar,
+[data-theme="dark"] .compare-drawer-panel,
+[data-theme="dark"] .mobile-filter-drawer,
+[data-theme="dark"] .live-activity-toast-pill,
+[data-theme="dark"] .property-form-modal-card,
+[data-theme="dark"] .deposit-modal-card,
+[data-theme="dark"] .currency-dropdown-menu,
+[data-theme="dark"] .hero-live-suggestions-dropdown,
+[data-theme="dark"] .project-card-modern,
+[data-theme="dark"] .mega-project-card,
+[data-theme="dark"] .portal-action-card,
+[data-theme="dark"] .demand-card-box,
+[data-theme="dark"] .about-founder-modal-card,
+[data-theme="dark"] .calculator-wrapper-box,
+[data-theme="dark"] .calc-input-card,
+[data-theme="dark"] .mobile-drawer,
+[data-theme="dark"] .quickview-modal-card,
+[data-theme="dark"] .ai-advisor-modal-card,
+[data-theme="dark"] .callback-modal-card,
+[data-theme="dark"] .modal-card,
+[data-theme="dark"] .crm-modal-card,
+[data-theme="dark"] .add-demand-modal-card,
+[data-theme="dark"] .share-modal-card,
+[data-theme="dark"] .track-lead-card,
+[data-theme="dark"] .quick-contact-drawer-panel {
+  background: rgba(15, 23, 42, 0.94) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
   color: #f8fafc !important;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.7) !important;
+}
+
+.dark-theme .property-card-modern:hover,
+[data-theme="dark"] .property-card-modern:hover {
+  border-color: rgba(245, 158, 11, 0.45) !important;
+  box-shadow: 0 15px 40px -5px rgba(0, 0, 0, 0.85), 0 0 20px rgba(245, 158, 11, 0.12) !important;
 }
 
 .dark-theme .legal-check-item,
@@ -6543,22 +6670,99 @@
 .dark-theme .compass-feature-box,
 .dark-theme .cms-image-uploader-box,
 .dark-theme .spec-box,
-.dark-theme .quickview-content-col {
-  background: #1e293b !important;
-  border-color: #334155 !important;
+.dark-theme .spec-pill,
+.dark-theme .quickview-content-col,
+.dark-theme .filter-drawer-footer,
+.dark-theme .tools-dropdown-menu,
+.dark-theme .tool-dropdown-item,
+.dark-theme .contact-channel-item,
+[data-theme="dark"] .legal-check-item,
+[data-theme="dark"] .amenity-item-card,
+[data-theme="dark"] .benchmark-metric-box,
+[data-theme="dark"] .breakdown-row,
+[data-theme="dark"] .compass-feature-box,
+[data-theme="dark"] .cms-image-uploader-box,
+[data-theme="dark"] .spec-box,
+[data-theme="dark"] .spec-pill,
+[data-theme="dark"] .quickview-content-col,
+[data-theme="dark"] .filter-drawer-footer,
+[data-theme="dark"] .tools-dropdown-menu,
+[data-theme="dark"] .tool-dropdown-item,
+[data-theme="dark"] .contact-channel-item {
+  background: #162238 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
   color: #f8fafc !important;
+}
+
+.dark-theme .tool-dropdown-item:hover,
+[data-theme="dark"] .tool-dropdown-item:hover {
+  background: #1e3050 !important;
+  color: #fbbf24 !important;
 }
 
 .dark-theme input,
 .dark-theme select,
-.dark-theme textarea {
-  background: #1e293b !important;
-  border-color: #475569 !important;
+.dark-theme textarea,
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background: #131c31 !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
   color: #f8fafc !important;
 }
 
-.dark-theme .shimmer {
-  background: linear-gradient(90deg, #1e293b 0%, #334155 50%, #1e293b 100%);
+.dark-theme input:focus,
+.dark-theme select:focus,
+.dark-theme textarea:focus,
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2) !important;
+}
+
+.dark-theme .shimmer,
+[data-theme="dark"] .shimmer {
+  background: linear-gradient(90deg, #131c31 0%, #1e293b 50%, #131c31 100%) !important;
+}
+
+/* 🗺️ Leaflet Maps Dark Mode Integration */
+.dark-theme .leaflet-tile-pane,
+[data-theme="dark"] .leaflet-tile-pane {
+  filter: brightness(0.72) invert(1) contrast(3) hue-rotate(200deg) saturate(0.35);
+}
+
+.dark-theme .leaflet-container,
+[data-theme="dark"] .leaflet-container {
+  background: #070b14 !important;
+}
+
+.dark-theme .leaflet-popup-content-wrapper,
+[data-theme="dark"] .leaflet-popup-content-wrapper {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8) !important;
+}
+
+.dark-theme .leaflet-popup-tip,
+[data-theme="dark"] .leaflet-popup-tip {
+  background: #0f172a !important;
+}
+
+/* 🌟 Global Smooth Surface Transition */
+.property-card-modern,
+.detail-card-box,
+.site-header,
+.mobile-floating-bottom-bar,
+.modal-card,
+.quickview-modal-card,
+.ai-advisor-modal-card,
+.callback-modal-card {
+  transition: background-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.35s ease,
+              color 0.35s ease,
+              box-shadow 0.35s ease !important;
 }
 
 /* --- Map Layer Switcher Floating Pill --- */

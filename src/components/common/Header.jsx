@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
+import { playNotificationChime } from '../../utils/notificationHub';
 
 export default function Header({ 
   lang = 'ar', 
@@ -42,6 +43,11 @@ export default function Header({
   const location = useLocation();
 
   const isAr = lang === 'ar';
+
+  const handleThemeToggle = () => {
+    if (toggleTheme) toggleTheme();
+    if (soundEnabled) playNotificationChime();
+  };
 
   const isActive = (path) => {
     if (path === '/' && location.pathname === '/') return true;
@@ -122,14 +128,19 @@ export default function Header({
 
           {/* Unified Glassmorphic Utility Control Group */}
           <div className="header-utility-pill-group">
-            {/* Theme Toggle (Sun/Moon) */}
+            {/* Theme Toggle (Sun/Moon) with Luxury Rotation Effect */}
             <button
               type="button"
               className="utility-sub-btn theme-toggle-btn"
-              onClick={toggleTheme}
-              title={isAr ? (theme === 'dark' ? 'تفعيل الوضع النهاري' : 'تفعيل الوضع الليلي الفاخر') : 'Toggle Theme'}
+              onClick={handleThemeToggle}
+              title={isAr ? (theme === 'dark' ? 'الوضع الليلي مفعّل — انقر للتبديل للنهاري' : 'الوضع النهاري مفعّل — انقر لتفعيل الوضع الليلي الفاخر') : 'Toggle Luxury Theme'}
+              aria-label="Toggle Luxury Theme"
             >
-              {theme === 'dark' ? <Sun size={15} className="text-gold" /> : <Moon size={15} />}
+              {theme === 'dark' ? (
+                <Sun size={15} className="text-gold theme-icon-rotate" />
+              ) : (
+                <Moon size={15} className="theme-icon-rotate" />
+              )}
             </button>
 
             <div className="utility-divider" />
@@ -296,6 +307,62 @@ export default function Header({
             >
               <span>{isAr ? 'عن 1Line والمؤسس' : 'About & Founder'}</span>
             </button>
+
+            {/* Mobile Dedicated Luxury Utility Bar */}
+            <div className="mobile-drawer-utilities" style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '12px 16px',
+              marginTop: '16px',
+              borderTop: '1px solid var(--border-color)',
+              background: 'var(--secondary)',
+              borderRadius: 'var(--radius-md)'
+            }}>
+              {/* Theme Toggle Button */}
+              <button
+                type="button"
+                className="mobile-util-btn"
+                onClick={handleThemeToggle}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-primary)',
+                  fontFamily: 'inherit',
+                  fontWeight: 600,
+                  fontSize: '0.88rem',
+                  cursor: 'pointer'
+                }}
+              >
+                {theme === 'dark' ? <Sun size={18} className="text-gold" /> : <Moon size={18} />}
+                <span>{isAr ? (theme === 'dark' ? 'الوضع النهاري' : 'الوضع الليلي الفاخر') : (theme === 'dark' ? 'Day Pearl' : 'Midnight Luxury')}</span>
+              </button>
+
+              {/* Language Switch */}
+              <button
+                type="button"
+                className="mobile-util-btn"
+                onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-primary)',
+                  fontFamily: 'inherit',
+                  fontWeight: 600,
+                  fontSize: '0.88rem',
+                  cursor: 'pointer'
+                }}
+              >
+                <Globe size={16} />
+                <span>{isAr ? 'English' : 'عربي'}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

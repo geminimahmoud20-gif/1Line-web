@@ -6,8 +6,25 @@
     <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#0a1128" />
+    <meta name="theme-color" content="#070b14" />
     <meta name="description" content="1Line Solutions - المنصة العقارية الذكية الأولى في سوهاج. حلول متكاملة لبيع وشراء العقارات، تقييم أسعار الأراضي والشقق، واستشارات استثمارية مع الدكتور محمود الباز." />
+    
+    <!-- 🌙 Ultra-Luxury Dark Mode Pre-Hydration Sync (Zero FOUC) -->
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('oneline_theme');
+          var theme = saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+          if (theme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.documentElement.classList.add('dark-theme', 'dark');
+          } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            document.documentElement.classList.remove('dark-theme', 'dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
     
     <!-- 🛡️ Commercial Security Headers & Policies -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
