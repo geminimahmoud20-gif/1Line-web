@@ -1,21 +1,14 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { 
   Building, 
   Sparkles, 
   X, 
   Send, 
-  MessageSquare, 
-  TrendingUp, 
-  MapPin, 
-  ShieldCheck, 
-  DollarSign,
-  ChevronRight,
-  ExternalLink,
-  Briefcase
+  MessageSquare 
 } from 'lucide-react';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 
-export const SOHAG_AI_KNOWLEDGE = [
+const SOHAG_AI_KNOWLEDGE = [
   {
     q_ar: 'ما هي أفضل منطقة للشراء بميزانية 2 مليون ج.م؟',
     q_en: 'Best area for a 2M EGP budget?',

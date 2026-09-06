@@ -8,7 +8,8 @@ import {
   Download,
   Sparkles
 } from 'lucide-react';
-import PhoneInputField, { SUPPORTED_COUNTRIES } from './PhoneInputField';
+import PhoneInputField from './PhoneInputField';
+import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { generateInvestorProspectusPdf } from '../utils/pdfBrochure';
 
 // Dynamic ROI Yields based on property type in Sohag

@@ -1,32 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Sparkles, 
   ShieldCheck, 
   CheckCircle2, 
   Building, 
-  MapPin, 
-  DollarSign, 
-  Clock, 
   FileText, 
   MessageSquare, 
-  Phone, 
   Award, 
   Send,
-  Lock,
-  ChevronRight,
-  ChevronLeft,
-  ArrowRight,
-  ArrowLeft,
-  Zap
+  Lock
 } from 'lucide-react';
-import PhoneInputField, { SUPPORTED_COUNTRIES } from './PhoneInputField';
+import PhoneInputField from './PhoneInputField';
+import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { getAreas } from '../utils/areasData';
-import { getFounderSettings, getWhatsAppUrl } from '../utils/founderCmsData';
+import { getWhatsAppUrl } from '../utils/founderCmsData';
 import { checkFormSpamProtection } from '../utils/securityShield';
 
 export const SpecialRequests = ({
   lang = 'ar',
-  t = {},
   specialForm: externalForm,
   setSpecialForm: setExternalForm,
   submitSpecialRequest,

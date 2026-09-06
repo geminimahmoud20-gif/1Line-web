@@ -15,7 +15,8 @@ import {
   Zap, 
   Info 
 } from 'lucide-react';
-import PhoneInputField, { SUPPORTED_COUNTRIES } from '../PhoneInputField';
+import PhoneInputField from '../PhoneInputField';
+import { SUPPORTED_COUNTRIES } from '../../utils/phoneCountries';
 import { getAreas } from '../../utils/areasData';
 import { checkFormSpamProtection } from '../../utils/securityShield';
 

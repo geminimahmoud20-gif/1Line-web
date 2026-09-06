@@ -1,21 +1,17 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Maximize2, 
-  Sparkles, 
   X, 
   ChevronRight, 
   ChevronLeft, 
-  Image as ImageIcon,
-  Layers,
-  Compass,
-  Rotate3d,
-  ZoomIn,
-  ZoomOut,
-  RotateCw,
-  RefreshCw,
-  Download,
-  Share2,
-  ExternalLink
+  Image as ImageIcon, 
+  Layers, 
+  Rotate3d, 
+  ZoomIn, 
+  ZoomOut, 
+  RotateCw, 
+  RefreshCw, 
+  Download 
 } from 'lucide-react';
 import { trackEvent } from '../../utils/visitorTracker';
 import BrandWatermark from '../common/BrandWatermark';
@@ -30,7 +26,6 @@ export default function PropertyGallery({
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [activeViewMode, setActiveViewMode] = useState('photos'); // 'photos' | 'floorplan' | '360'
-  const [panoramaRotation, setPanoramaRotation] = useState(0);
 
   // Zoom, Pan & Rotation States
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -57,10 +52,10 @@ export default function PropertyGallery({
     trackEvent('property_gallery_opened', { index, title });
   };
 
-  const handleCloseLightbox = () => {
+  const handleCloseLightbox = useCallback(() => {
     setLightboxOpen(false);
     resetTransform();
-  };
+  }, [resetTransform]);
 
   const handleNext = useCallback((e) => {
     e?.stopPropagation();
@@ -136,7 +131,7 @@ export default function PropertyGallery({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [lightboxOpen, isAr, handleNext, handlePrev, resetTransform]);
+  }, [lightboxOpen, isAr, handleNext, handlePrev, resetTransform, handleCloseLightbox]);
 
   // Sample Architectural Floor Plan schematic URL
   const floorPlanImage = 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80';

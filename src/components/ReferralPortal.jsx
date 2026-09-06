@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { 
   Gift 
 } from 'lucide-react';
-import PhoneInputField, { SUPPORTED_COUNTRIES } from './PhoneInputField';
+import PhoneInputField from './PhoneInputField';
+import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 
 export const ReferralPortal = ({
   lang,
-  t,
   handleAddNewLead,
   triggerToast
 }) => {

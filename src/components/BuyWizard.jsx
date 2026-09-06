@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Building, 
   Home, 
@@ -12,17 +12,14 @@ import {
   CheckCircle2, 
   ArrowRight, 
   ArrowLeft, 
-  Clock, 
-  ShieldCheck 
+  Clock 
 } from 'lucide-react';
-import PhoneInputField, { SUPPORTED_COUNTRIES } from './PhoneInputField';
+import PhoneInputField from './PhoneInputField';
+import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { getAreas } from '../utils/areasData';
 
 export const BuyWizard = ({ 
   lang = 'ar', 
-  t, 
-  buyerStep = 1, 
-  setBuyerStep, 
   buyerAnswers = {}, 
   setBuyerAnswers, 
   handleBuyerChoice, 

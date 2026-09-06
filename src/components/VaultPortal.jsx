@@ -1,20 +1,15 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { 
   Lock, 
-  Unlock, 
   X, 
   Sparkles, 
-  ShieldCheck, 
-  Building, 
-  MapPin, 
-  Eye, 
   KeyRound 
 } from 'lucide-react';
-import PhoneInputField, { SUPPORTED_COUNTRIES } from './PhoneInputField';
+import PhoneInputField from './PhoneInputField';
+import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 
 export const VaultPortal = ({
   lang = 'ar',
-  t,
   triggerToast,
   handleAddNewLead
 }) => {

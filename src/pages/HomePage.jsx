@@ -13,14 +13,10 @@ import {
   Sparkles, 
   Calculator, 
   Award, 
-  Zap, 
   Lock, 
-  Gift,
-  Filter,
-  CheckCircle2,
-  Flame,
-  Clock,
-  FileText
+  Filter, 
+  Clock, 
+  FileText 
 } from 'lucide-react';
 import PropertyCard from '../components/properties/PropertyCard';
 import AboutFounderSection from '../components/home/AboutFounderSection';
@@ -94,7 +90,7 @@ export default function HomePage({
       window.removeEventListener('oneline_founder_cms_updated', handleUpdate);
       window.removeEventListener('oneline_areas_updated', handleAreasUpdate);
     };
-  }, []);
+  }, [lang]);
 
   // Compact Hub Navigation Tabs
   const [marketplaceTab, setMarketplaceTab] = useState('properties'); // 'properties' | 'demands'

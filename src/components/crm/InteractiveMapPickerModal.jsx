@@ -5,12 +5,7 @@ import {
   MapPin, 
   Satellite, 
   Map as MapIcon, 
-  Check, 
-  X, 
-  Navigation, 
-  Layers,
-  Sparkles,
-  Search
+  Check 
 } from 'lucide-react';
 import { getAreas } from '../../utils/areasData';
 
