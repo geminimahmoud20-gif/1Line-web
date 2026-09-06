@@ -117,7 +117,7 @@ export default function InteractiveMapPickerModal({
     return () => {
       map.remove();
     };
-  }, [isOpen]);
+  }, [isOpen, initialCoordinates?.lat, initialCoordinates?.lng]);
 
   if (!isOpen) return null;
 
