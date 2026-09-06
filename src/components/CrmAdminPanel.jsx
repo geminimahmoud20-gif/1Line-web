@@ -717,6 +717,52 @@ export const CrmAdminPanel = ({
               <span>{isAr ? `طلبات المشترين والاعتماد (${demands.length})` : `Buyer Demands (${demands.length})`}</span>
             </button>
 
+            {/* Direct Shortcut to Properties CMS */}
+            <button
+              type="button"
+              className="btn btn-sm"
+              onClick={() => onSwitchToProperties?.()}
+              style={{
+                background: 'rgba(217, 119, 6, 0.12)',
+                border: '1px solid rgba(217, 119, 6, 0.35)',
+                color: 'var(--accent-gold)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '10px 14px',
+                borderRadius: 'var(--radius-sm)',
+                fontWeight: 'bold',
+                fontSize: '0.82rem'
+              }}
+            >
+              <Building size={15} />
+              <span>{isAr ? `محفظة العقارات (${properties.length})` : `Properties (${properties.length})`}</span>
+            </button>
+
+            {/* Direct Shortcut to Districts & Areas CMS */}
+            <button
+              type="button"
+              className="btn btn-sm"
+              onClick={() => onSwitchToAreas?.()}
+              style={{
+                background: 'rgba(56, 189, 248, 0.12)',
+                border: '1px solid rgba(56, 189, 248, 0.35)',
+                color: '#38bdf8',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '10px 14px',
+                borderRadius: 'var(--radius-sm)',
+                fontWeight: 'bold',
+                fontSize: '0.82rem'
+              }}
+            >
+              <MapPin size={15} />
+              <span>{isAr ? 'إدارة المناطق والأحياء' : 'Districts CMS'}</span>
+            </button>
+
             <button
               type="button"
               className="btn btn-sm"
@@ -807,11 +853,19 @@ export const CrmAdminPanel = ({
                 </span>
               </div>
             </div>
-            <div className="crm-stat-card">
-              <div className="crm-stat-icon" style={{ background: 'linear-gradient(135deg, rgba(255, 202, 40, 0.25), rgba(245, 158, 11, 0.15))', color: '#ffca28', border: '1px solid rgba(255, 202, 40, 0.4)' }}><Users size={20} /></div>
+            <div 
+              className="crm-stat-card"
+              onClick={() => onSwitchToProperties?.()}
+              style={{ cursor: onSwitchToProperties ? 'pointer' : 'default', transition: 'all 0.2s ease' }}
+              title={isAr ? 'انقر لفتح واستعراض محفظة العقارات' : 'Click to open Properties Portfolio'}
+            >
+              <div className="crm-stat-icon" style={{ background: 'linear-gradient(135deg, rgba(255, 202, 40, 0.25), rgba(245, 158, 11, 0.15))', color: '#ffca28', border: '1px solid rgba(255, 202, 40, 0.4)' }}><Building size={20} /></div>
               <div className="crm-stat-info">
-                <span className="crm-stat-num">{crmAnalytics.sellersCount}</span>
-                <span className="crm-stat-lbl">{isAr ? 'إجمالي البائعين' : 'Total Sellers'}</span>
+                <span className="crm-stat-num">{properties.length || crmAnalytics.sellersCount}</span>
+                <span className="crm-stat-lbl" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span>{isAr ? 'محفظة العقارات' : 'Properties Portfolio'}</span>
+                  {onSwitchToProperties && <span style={{ fontSize: '0.7rem', color: 'var(--accent-gold)' }}>←</span>}
+                </span>
               </div>
             </div>
             <div className="crm-stat-card">
