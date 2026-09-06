@@ -249,11 +249,8 @@ export default function HomePage({
               <button
                 type="button"
                 className="hero-tab"
-                onClick={() => {
-                  setMarketplaceTab('demands');
-                  const elem = document.getElementById('marketplace-hub');
-                  if (elem) elem.scrollIntoView({ behavior: 'smooth' });
-                }}
+                onClick={() => navigate('/demands')}
+                title={lang === 'ar' ? 'استعراض كل طلبات المشترين الحية' : 'Live Demands'}
               >
                 <Users size={14} />
                 <span>{lang === 'ar' ? 'طلبات المشترين الحية' : 'Live Demands'}</span>
@@ -710,22 +707,27 @@ export default function HomePage({
                     <FileText size={15} />
                     <span>{lang === 'ar' ? 'تقديم طلب خاص بمواصفاتك' : 'Submit Bespoke Request'}</span>
                   </Link>
-                  <button
-                    type="button"
-                    onClick={() => setMarketplaceTab('demands')}
+                  <Link
+                    to="/demands"
                     className="btn btn-outline preview-all-btn"
                     style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', fontSize: '0.85rem' }}
                   >
                     <span>{lang === 'ar' ? `استعراض كل الطلبات (${activeDemandsList.length})` : `All Demands (${activeDemandsList.length})`}</span>
                     {lang === 'ar' ? <ArrowLeft size={14} /> : <ArrowRight size={14} />}
-                  </button>
+                  </Link>
                 </div>
               </div>
 
               {/* Top 3 Live Demands */}
               <div className="demands-preview-grid">
                 {activeDemandsList.slice(0, 3).map((dem) => (
-                  <div key={dem.id} className="demand-preview-card">
+                  <div 
+                    key={dem.id} 
+                    className="demand-preview-card"
+                    onClick={() => navigate('/demands')}
+                    style={{ cursor: 'pointer' }}
+                    title={lang === 'ar' ? 'انقر لعرض تفاصيل الطلب في بوابة طلبات المشترين' : 'Click to view details in Demands Portal'}
+                  >
                     <div className="demand-preview-top">
                       <span className="preview-area-tag">
                         <MapPin size={13} className="text-gold" />
@@ -745,7 +747,11 @@ export default function HomePage({
                           {(typeof dem.budget === 'number' ? dem.budget : parseInt(String(dem.budget).replace(/,/g, '')) || 0).toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}
                         </span>
                       </div>
-                      <Link to="/sell" className="preview-match-btn">
+                      <Link 
+                        to="/sell" 
+                        className="preview-match-btn"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         {lang === 'ar' ? 'طابق عقارك ←' : 'Match →'}
                       </Link>
                     </div>

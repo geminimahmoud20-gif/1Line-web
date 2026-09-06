@@ -49,7 +49,9 @@ export const CrmAdminPanel = ({
   onConvertToProperty,
   onUpdateLead,
   onDeleteLead,
-  onAddNewLead
+  onAddNewLead,
+  demands = [],
+  onSwitchToDemands
 }) => {
   // Local Authentication States
   const [crmPasswordInput, setCrmPasswordInput] = useState('');
@@ -623,6 +625,7 @@ export const CrmAdminPanel = ({
           { id: 'dashboard', icon: LayoutGrid, label_ar: 'لوحة القيادة التنفيذية', label_en: 'Executive Overview' },
           { id: 'kanban', icon: Target, label_ar: 'مسار الصفقات (Kanban)', label_en: 'Deals Pipeline' },
           { id: 'matching', icon: Sparkles, label_ar: 'المطابقات الذكية', label_en: 'AI Match Engine' },
+          { id: 'demands_hub', icon: Zap, label_ar: `طلبات المشترين (${demands.length})`, label_en: `Buyer Demands (${demands.length})`, isExternal: true },
           { id: 'leads', icon: Users, label_ar: `قاعدة بيانات العملاء (${leads.length})`, label_en: `Leads Hub (${leads.length})` },
           { id: 'agents', icon: Trophy, label_ar: 'تارجت وعمولات الفريق', label_en: 'Team & Commissions' },
           { id: 'financials', icon: Calculator, label_ar: 'الأقساط وإيصالات الحجز', label_en: 'Financials & Receipts' },
@@ -638,7 +641,13 @@ export const CrmAdminPanel = ({
               key={tab.id}
               type="button"
               className={`crm-nav-pill-btn ${isActive ? 'active' : ''}`}
-              onClick={() => setAdminTab(tab.id)}
+              onClick={() => {
+                if (tab.isExternal && onSwitchToDemands) {
+                  onSwitchToDemands();
+                } else {
+                  setAdminTab(tab.id);
+                }
+              }}
             >
               <IconComp size={14} className={isActive ? 'text-gold' : ''} />
               <span>{isAr ? tab.label_ar : tab.label_en}</span>
@@ -677,6 +686,29 @@ export const CrmAdminPanel = ({
             >
               <UserPlus size={15} />
               <span>{isAr ? '+ تسجيل عميل هاتفي جديد' : '+ Register New Lead'}</span>
+            </button>
+
+            {/* Direct Shortcut to Buyer Demands */}
+            <button
+              type="button"
+              className="btn btn-sm"
+              onClick={() => onSwitchToDemands?.()}
+              style={{
+                background: 'rgba(16, 185, 129, 0.12)',
+                border: '1px solid rgba(16, 185, 129, 0.35)',
+                color: '#10b981',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '10px 14px',
+                borderRadius: 'var(--radius-sm)',
+                fontWeight: 'bold',
+                fontSize: '0.82rem'
+              }}
+            >
+              <Zap size={15} />
+              <span>{isAr ? `طلبات المشترين والاعتماد (${demands.length})` : `Buyer Demands (${demands.length})`}</span>
             </button>
 
             <button
@@ -754,11 +786,19 @@ export const CrmAdminPanel = ({
                 <span className="crm-stat-lbl">{isAr ? 'عملاء اليوم' : 'Leads Today'}</span>
               </div>
             </div>
-            <div className="crm-stat-card">
-              <div className="crm-stat-icon" style={{ background: 'linear-gradient(135deg, rgba(13, 72, 161, 0.35), rgba(21, 101, 192, 0.2))', color: '#60a5fa', border: '1px solid rgba(96, 165, 250, 0.4)' }}><Building size={20} /></div>
+            <div 
+              className="crm-stat-card"
+              onClick={() => onSwitchToDemands?.()}
+              style={{ cursor: 'pointer', transition: 'all 0.2s ease' }}
+              title={isAr ? 'انقر لفتح واستعراض طلبات المشترين' : 'Click to open Buyer Demands'}
+            >
+              <div className="crm-stat-icon" style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.15))', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.4)' }}><Zap size={20} /></div>
               <div className="crm-stat-info">
-                <span className="crm-stat-num">{crmAnalytics.buyersCount}</span>
-                <span className="crm-stat-lbl">{isAr ? 'إجمالي المشترين' : 'Total Buyers'}</span>
+                <span className="crm-stat-num">{demands.length || crmAnalytics.buyersCount}</span>
+                <span className="crm-stat-lbl" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span>{isAr ? 'طلبات المشترين' : 'Buyer Demands'}</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--accent-gold)' }}>←</span>
+                </span>
               </div>
             </div>
             <div className="crm-stat-card">

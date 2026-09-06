@@ -986,6 +986,8 @@ export default function CrmPage({
             onUpdateLead={onUpdateLead}
             onDeleteLead={onDeleteLead}
             onAddNewLead={onAddNewLead}
+            demands={demands}
+            onSwitchToDemands={() => setActiveTab('demands')}
           />
         ) : activeTab === 'properties' ? (
           <PropertyManagerPanel

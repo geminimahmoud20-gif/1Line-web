@@ -54,7 +54,7 @@ async function run() {
   }
   console.log('✓ All source and script files staged into Git.');
 
-  // 3. Commit
+  const commitMessage = process.argv[2] || 'Fix: Enable seamless navigation to Buyer Demands from CRM Dashboard and Homepage';
   const sha = await git.commit({
     fs,
     dir,
@@ -62,7 +62,7 @@ async function run() {
       name: 'Dr. Mahmoud Elbaz / One Line Solutions',
       email: 'admin@onelinesolutions.com'
     },
-    message: 'Fix: React 19 compliance, Windows Vite build stability & 100% QA pass rate'
+    message: commitMessage
   });
 
   console.log('✓ Successfully committed with SHA:', sha);
