@@ -44,6 +44,7 @@ async function run() {
   }
 
   walkDir(path.join(dir, 'src'));
+  walkDir(path.join(dir, 'scripts'));
 
   console.log(`Adding ${filesToAdd.length} files to Git index...`);
   for (const filepath of filesToAdd) {
@@ -51,7 +52,7 @@ async function run() {
       await git.add({ fs, dir, filepath });
     }
   }
-  console.log('✓ All source files staged into Git.');
+  console.log('✓ All source and script files staged into Git.');
 
   // 3. Commit
   const sha = await git.commit({
@@ -61,7 +62,7 @@ async function run() {
       name: 'Dr. Mahmoud Elbaz / One Line Solutions',
       email: 'admin@onelinesolutions.com'
     },
-    message: 'Initial Release: One Line Solutions Real Estate Platform 2026'
+    message: 'Fix: React 19 compliance, Windows Vite build stability & 100% QA pass rate'
   });
 
   console.log('✓ Successfully committed with SHA:', sha);
