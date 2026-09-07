@@ -49,5 +49,29 @@ npm run build
 
 ---
 
+## 🧪 اختبارات E2E (Cypress)
+
+### تشغيل الاختبارات
+```bash
+# 1. تشغيل خادم التطوير أولاً
+npm run dev
+
+# 2. تشغيل Cypress في الخلفية (headless)
+npm run cypress:run
+
+# 3. أو فتح واجهة Cypress التفاعلية
+npm run cypress:open
+```
+
+### ملفات الاختبار
+| الملف | عدد الاختبارات | التغطية |
+|-------|---------------|---------|
+| `buyer-demands.cy.js` | 11 | بوابة CRM، طلبات المشترين، الوصول المباشر، الاستجابة |
+| `crm-dashboard.cy.js` | 10 | بوابة الأمان، نموذج الدخول، Responsive |
+| `full-workflow.cy.js` | 17 | أداء التحميل، أمان Login، محتوى الصفحات، Viewports |
+| `homepage-navigation.cy.js` | 5 | تحميل الصفحة، Header، الروابط، Hero، Mobile |
+
+---
+
 ## 📄 الترخيص (License)
 جميع الحقوق محفوظة © 2026 - **One Line Solutions للتطوير والاستثمار العقاري**.
