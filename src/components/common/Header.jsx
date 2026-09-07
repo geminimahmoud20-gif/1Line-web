@@ -4,7 +4,6 @@ import {
   MessageSquare, 
   Menu, 
   X, 
-  Lock, 
   Search, 
   Globe, 
   Share2, 
@@ -16,7 +15,13 @@ import {
   Scale, 
   Building,
   Sparkles,
-  FileText
+  FileText,
+  ChevronDown,
+  Home,
+  TrendingUp,
+  Landmark,
+  Award,
+  Layers
 } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
@@ -39,6 +44,9 @@ export default function Header({
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const dropdownTimeoutRef = useRef(null);
+  const navRef = useRef(null);
   const toolsDropdownRef = useRef(null);
   const location = useLocation();
 
@@ -55,31 +63,149 @@ export default function Header({
     return false;
   };
 
-  // Close tools menu on outside click
+  const isGroupActive = (paths = []) => {
+    return paths.some(p => isActive(p));
+  };
+
+  // Close menus on outside click or route change
+  useEffect(() => {
+    setActiveDropdown(null);
+    setToolsMenuOpen(false);
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
   useEffect(() => {
     const handleOutsideClick = (e) => {
       if (toolsDropdownRef.current && !toolsDropdownRef.current.contains(e.target)) {
         setToolsMenuOpen(false);
+      }
+      if (navRef.current && !navRef.current.contains(e.target)) {
+        setActiveDropdown(null);
       }
     };
     document.addEventListener('mousedown', handleOutsideClick);
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
 
-  const navLinks = [
-    { path: '/', label: isAr ? 'الرئيسية' : 'Home' },
-    { path: '/properties', label: isAr ? 'العقارات' : 'Properties' },
-    { path: '/projects', label: isAr ? 'المشروعات' : 'Projects' },
-    { path: '/special-requests', label: isAr ? 'الطلبات الخاصة' : 'Special Requests', badge: 'VIP', badgeType: 'gold', icon: FileText },
-    { path: '/demands', label: isAr ? 'طلبات المشترين' : 'Buyer Demands' },
-    { path: '/market-intelligence', label: isAr ? 'مؤشرات السوق' : 'Market Intel' },
-    { path: '/financing', label: isAr ? 'التمويل والأقساط' : 'Financing' },
-    { path: '/investor', label: isAr ? 'المستثمرين' : 'Investors' }
+  const handleMouseEnter = (id) => {
+    if (dropdownTimeoutRef.current) {
+      clearTimeout(dropdownTimeoutRef.current);
+    }
+    setActiveDropdown(id);
+  };
+
+  const handleMouseLeave = () => {
+    dropdownTimeoutRef.current = setTimeout(() => {
+      setActiveDropdown(null);
+    }, 220);
+  };
+
+  // 🏛️ Smart Categorized Navigation Hubs
+  const navHubs = [
+    {
+      id: 'home',
+      type: 'link',
+      path: '/',
+      label: isAr ? 'الرئيسية' : 'Home',
+      icon: Home
+    },
+    {
+      id: 'real-estate',
+      type: 'dropdown',
+      label: isAr ? 'العقارات والمشروعات' : 'Properties & Projects',
+      icon: Building,
+      activePaths: ['/properties', '/projects'],
+      items: [
+        {
+          path: '/properties',
+          label: isAr ? 'دليل العقارات المعتمدة' : 'Verified Properties',
+          desc: isAr ? 'شقق، فلل، محلات ومكاتب فندقية' : 'Verified residential & commercial listings',
+          badge: isAr ? 'شامل' : 'All',
+          icon: Building
+        },
+        {
+          path: '/projects',
+          label: isAr ? 'دليل المشروعات والكمبوندات' : 'Mega Projects & Compounds',
+          desc: isAr ? 'سوهاج الجديدة وأرقى المشروعات' : 'New Sohag premier compounds & developments',
+          badge: isAr ? 'حصري' : 'Exclusive',
+          badgeType: 'gold',
+          icon: Layers
+        }
+      ]
+    },
+    {
+      id: 'finance-intel',
+      type: 'dropdown',
+      label: isAr ? 'المال والاستثمار' : 'Finance & Intel',
+      icon: TrendingUp,
+      activePaths: ['/market-intelligence', '/financing', '/investor'],
+      items: [
+        {
+          path: '/market-intelligence',
+          label: isAr ? 'مؤشرات أسعار السوق' : 'Market Intelligence',
+          desc: isAr ? 'تحليل يومي لسعر المتر والعائد بسوهاج' : 'Real-time sqm price indices & trends',
+          badge: isAr ? 'بيانات حية' : 'Live',
+          badgeType: 'blue',
+          icon: TrendingUp
+        },
+        {
+          path: '/financing',
+          label: isAr ? 'حاسبة التمويل والأقساط' : 'Financing & Installments',
+          desc: isAr ? 'حساب القسط الشهري حتى 7 سنوات' : 'Mortgage & monthly installment simulator',
+          icon: Landmark
+        },
+        {
+          path: '/investor',
+          label: isAr ? 'بوابة كبار المستثمرين' : 'Investor Portal',
+          desc: isAr ? 'فرص استثمارية كبرى وعوائد إيجارية' : 'High-yield commercial & land portfolios',
+          badge: 'ROI',
+          badgeType: 'gold',
+          icon: Award
+        }
+      ]
+    },
+    {
+      id: 'vip-services',
+      type: 'dropdown',
+      label: isAr ? 'الخدمات الخاصة' : 'VIP Services',
+      icon: Sparkles,
+      badge: 'VIP',
+      badgeType: 'gold',
+      activePaths: ['/special-requests', '/demands'],
+      items: [
+        {
+          path: '/special-requests',
+          label: isAr ? 'الطلبات الخاصة لكبار العملاء' : 'VIP Bespoke Requests',
+          desc: isAr ? 'طلب عقار بمواصفات خاصة وسرية تامة' : 'Private bespoke requests for premium clients',
+          badge: 'VIP',
+          badgeType: 'gold',
+          icon: Sparkles
+        },
+        {
+          path: '/demands',
+          label: isAr ? 'سوق طلبات المشترين' : 'Buyer Demands Marketplace',
+          desc: isAr ? 'طلبات حقيقية ومطابقة فورية للبائعين' : 'Live buyer demands ready for instant matching',
+          icon: FileText
+        }
+      ]
+    }
+  ];
+
+  // Flat nav list for mobile compatibility
+  const flatMobileLinks = [
+    { path: '/', label: isAr ? 'الرئيسية' : 'Home', icon: Home },
+    { path: '/properties', label: isAr ? 'دليل العقارات المعتمدة' : 'Properties', icon: Building },
+    { path: '/projects', label: isAr ? 'المشروعات والكمبوندات' : 'Projects', icon: Layers, badge: 'حصري', badgeType: 'gold' },
+    { path: '/special-requests', label: isAr ? 'الطلبات الخاصة' : 'Special Requests', badge: 'VIP', badgeType: 'gold', icon: Sparkles },
+    { path: '/demands', label: isAr ? 'طلبات المشترين' : 'Buyer Demands', icon: FileText },
+    { path: '/market-intelligence', label: isAr ? 'مؤشرات أسعار السوق' : 'Market Intel', icon: TrendingUp, badge: 'مباشر', badgeType: 'blue' },
+    { path: '/financing', label: isAr ? 'التمويل والأقساط' : 'Financing', icon: Landmark },
+    { path: '/investor', label: isAr ? 'بوابة المستثمرين' : 'Investors', icon: Award }
   ];
 
   return (
     <header className="site-header sticky-header">
-      <div className="header-container">
+      <div className="header-container glass-capsule">
         {/* Brand Logo */}
         <Link to="/" className="brand-logo" onClick={() => setMobileMenuOpen(false)}>
           <LogoEmblem size={40} />
@@ -92,24 +218,85 @@ export default function Header({
           </div>
         </Link>
 
-        {/* Clean Desktop Navigation */}
-        <nav className="desktop-nav">
-          {navLinks.map((link) => {
-            const LinkIcon = link.icon;
+        {/* 🌟 Smart Floating Desktop Navigation */}
+        <nav className="desktop-nav smart-desktop-nav" ref={navRef}>
+          {navHubs.map((hub) => {
+            if (hub.type === 'link') {
+              const HubIcon = hub.icon;
+              return (
+                <Link
+                  key={hub.id}
+                  to={hub.path}
+                  className={`smart-nav-trigger ${isActive(hub.path) ? 'active' : ''}`}
+                >
+                  {HubIcon && <HubIcon size={14} className="nav-hub-icon" />}
+                  <span>{hub.label}</span>
+                </Link>
+              );
+            }
+
+            const isGroupOn = isGroupActive(hub.activePaths);
+            const isOpen = activeDropdown === hub.id;
+            const HubIcon = hub.icon;
+
             return (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`nav-item ${isActive(link.path) ? 'active' : ''} ${link.path === '/special-requests' ? 'nav-item-vip' : ''}`}
+              <div 
+                key={hub.id} 
+                className={`smart-nav-group ${isOpen ? 'open' : ''}`}
+                onMouseEnter={() => handleMouseEnter(hub.id)}
+                onMouseLeave={handleMouseLeave}
               >
-                {LinkIcon && <LinkIcon size={14} className="nav-link-icon" style={{ verticalAlign: 'middle', marginInlineEnd: '5px' }} />}
-                <span>{link.label}</span>
-                {link.badge && (
-                  <span className={`nav-badge nav-badge-${link.badgeType || 'gold'}`}>
-                    {link.badge}
-                  </span>
+                <button
+                  type="button"
+                  className={`smart-nav-trigger ${isGroupOn ? 'active' : ''}`}
+                  onClick={() => setActiveDropdown(isOpen ? null : hub.id)}
+                  aria-expanded={isOpen}
+                >
+                  {HubIcon && <HubIcon size={14} className="nav-hub-icon" />}
+                  <span>{hub.label}</span>
+                  {hub.badge && (
+                    <span className={`nav-badge nav-badge-${hub.badgeType || 'gold'}`}>
+                      {hub.badge}
+                    </span>
+                  )}
+                  <ChevronDown size={13} className={`dropdown-chevron ${isOpen ? 'rotated' : ''}`} />
+                </button>
+
+                {/* Glassmorphic Dropdown Card */}
+                {isOpen && (
+                  <div className="smart-dropdown-glass">
+                    <div className="smart-dropdown-list">
+                      {hub.items.map((item) => {
+                        const ItemIcon = item.icon;
+                        const itemActive = isActive(item.path);
+                        return (
+                          <Link
+                            key={item.path}
+                            to={item.path}
+                            className={`smart-dropdown-item ${itemActive ? 'active-item' : ''}`}
+                            onClick={() => setActiveDropdown(null)}
+                          >
+                            <div className="item-icon-box">
+                              {ItemIcon && <ItemIcon size={17} />}
+                            </div>
+                            <div className="item-content">
+                              <div className="item-title-row">
+                                <span className="item-title">{item.label}</span>
+                                {item.badge && (
+                                  <span className={`nav-badge nav-badge-${item.badgeType || 'gold'}`}>
+                                    {item.badge}
+                                  </span>
+                                )}
+                              </div>
+                              <span className="item-desc">{item.desc}</span>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
                 )}
-              </Link>
+              </div>
             );
           })}
         </nav>
@@ -274,7 +461,7 @@ export default function Header({
       {mobileMenuOpen && (
         <div className="mobile-drawer open">
           <div className="mobile-drawer-links">
-            {navLinks.map((link) => {
+            {flatMobileLinks.map((link) => {
               const LinkIcon = link.icon;
               return (
                 <Link
