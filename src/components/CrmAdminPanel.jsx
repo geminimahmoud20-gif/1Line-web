@@ -414,7 +414,7 @@ export const CrmAdminPanel = ({
                   required
                   className="form-input"
                   placeholder="admin@oneline.com"
-                  value={crmEmailInput}
+                  value={crmEmailInput} data-testid="login-email"
                   onChange={(e) => setCrmEmailInput(e.target.value)}
                   style={{ marginTop: '4px', textAlign: 'left', direction: 'ltr' }}
                 />
@@ -431,7 +431,7 @@ export const CrmAdminPanel = ({
                   required
                   className="form-input"
                   placeholder={isAr ? 'كلمة المرور' : 'Password'}
-                  value={crmPasswordInput}
+                  value={crmPasswordInput} data-testid="login-password"
                   onChange={(e) => setCrmPasswordInput(e.target.value)}
                   style={{ 
                     paddingInlineEnd: '40px', 
@@ -646,7 +646,7 @@ export const CrmAdminPanel = ({
             <button
               key={tab.id}
               type="button"
-              className={`crm-nav-pill-btn ${isActive ? 'active' : ''}`}
+              className={`crm-nav-pill-btn ${isActive ? 'active' : ''}`} data-testid={`nav-pill-${tab.id}`}
               onClick={() => {
                 if (tab.onAction) {
                   tab.onAction();
@@ -698,7 +698,7 @@ export const CrmAdminPanel = ({
             <button
               type="button"
               className="btn btn-sm"
-              onClick={() => onSwitchToDemands?.()}
+              onClick={() => onSwitchToDemands?.()} data-testid="shortcut-demand"
               style={{
                 background: 'rgba(16, 185, 129, 0.12)',
                 border: '1px solid rgba(16, 185, 129, 0.35)',
@@ -721,7 +721,7 @@ export const CrmAdminPanel = ({
             <button
               type="button"
               className="btn btn-sm"
-              onClick={() => onSwitchToProperties?.()}
+              onClick={() => onSwitchToProperties?.()} data-testid="shortcut-properties"
               style={{
                 background: 'rgba(217, 119, 6, 0.12)',
                 border: '1px solid rgba(217, 119, 6, 0.35)',
@@ -744,7 +744,7 @@ export const CrmAdminPanel = ({
             <button
               type="button"
               className="btn btn-sm"
-              onClick={() => onSwitchToAreas?.()}
+              onClick={() => onSwitchToAreas?.()} data-testid="shortcut-areas"
               style={{
                 background: 'rgba(56, 189, 248, 0.12)',
                 border: '1px solid rgba(56, 189, 248, 0.35)',

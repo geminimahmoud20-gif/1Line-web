@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-09-06T13:30:30.633Z",
-  "total": 30,
-  "passed": 30,
+  "timestamp": "2026-09-07T09:17:27.800Z",
+  "total": 32,
+  "passed": 32,
   "warnings": 0,
   "failed": 0,
   "passRate": "100.0%",
@@ -137,6 +137,18 @@
       "testName": "1-Click WhatsApp Sales Agent Dispatch",
       "status": "PASS",
       "details": "Generates lead brief with +20 international format"
+    },
+    {
+      "scenarioId": 4,
+      "testName": "CRM Executive Dashboard Omnipresent CMS Navigation",
+      "status": "PASS",
+      "details": "Direct seamless switching to Demands, Properties & Areas from Dashboard"
+    },
+    {
+      "scenarioId": 4,
+      "testName": "HomePage Live Demands Direct Portal Navigation",
+      "status": "PASS",
+      "details": "Hero tab and demand cards link directly to /demands"
     },
     {
       "scenarioId": 5,
