@@ -209,6 +209,18 @@ async function runAudit() {
                               crmPanelSrc.includes('cleanPhone.startsWith(\'0\')');
     recordTest(4, '1-Click WhatsApp Sales Agent Dispatch', hasDispatchButton ? 'PASS' : 'FAIL', 'Generates lead brief with +20 international format');
 
+    // 4.6 CRM Executive Dashboard Omnipresent CMS Navigation
+    const hasDashboardHubs = crmPageSrc.includes("onSwitchToDemands={() => setActiveTab('demands')}") &&
+                             crmPanelSrc.includes('onSwitchToDemands') &&
+                             crmPanelSrc.includes('onSwitchToProperties') &&
+                             crmPanelSrc.includes('onSwitchToAreas');
+    recordTest(4, 'CRM Executive Dashboard Omnipresent CMS Navigation', hasDashboardHubs ? 'PASS' : 'FAIL', 'Direct seamless switching to Demands, Properties & Areas from Dashboard');
+
+    // 4.7 HomePage Live Demands Direct Portal Navigation
+    const hasHomePageDemandsNav = homePageSrc.includes("navigate('/demands')") &&
+                                  homePageSrc.includes('to="/demands"');
+    recordTest(4, 'HomePage Live Demands Direct Portal Navigation', hasHomePageDemandsNav ? 'PASS' : 'FAIL', 'Hero tab and demand cards link directly to /demands');
+
   } catch (err) {
     recordTest(4, 'Scenario 4 Execution', 'FAIL', err.message);
   }
