@@ -72,7 +72,9 @@ export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
           <div className="footer-col brand-col">
             <div className="footer-logo">
               <LogoEmblem size={32} />
-              <span className="footer-brand-name">1Line</span>
+              <span className="footer-brand-name">
+                <span className="brand-one">1</span>Line
+              </span>
             </div>
             <p className="footer-desc">
               {isAr 

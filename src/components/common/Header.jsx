@@ -84,8 +84,10 @@ export default function Header({
         <Link to="/" className="brand-logo" onClick={() => setMobileMenuOpen(false)}>
           <LogoEmblem size={36} />
           <div className="brand-text">
-            <span className="brand-title">1Line</span>
-            <span className="brand-subtitle">{isAr ? 'للتطوير والاستثمار العقاري' : 'Real Estate Development'}</span>
+            <span className="brand-title">
+              <span className="brand-one">1</span>Line
+            </span>
+            <span className="brand-subtitle">{isAr ? 'للاستشارات و التسويق العقاري' : 'Real Estate Consulting & Marketing'}</span>
           </div>
         </Link>
 

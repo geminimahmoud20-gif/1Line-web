@@ -54,8 +54,19 @@
   line-height: 1.2;
 }
 
+.brand-one {
+  color: #e53935;
+  font-weight: 900;
+  display: inline-block;
+  transition: color 0.2s ease;
+}
+
 .dark-theme .brand-title {
   color: #38bdf8;
+}
+
+.dark-theme .brand-one {
+  color: #ef4444;
 }
 
 .brand-subtitle {
