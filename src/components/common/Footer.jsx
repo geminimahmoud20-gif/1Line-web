@@ -71,10 +71,14 @@ export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
           {/* Brand Column */}
           <div className="footer-col brand-col">
             <div className="footer-logo">
-              <LogoEmblem size={32} />
-              <span className="footer-brand-name">
-                <span className="brand-one">1</span>Line
-              </span>
+              <LogoEmblem size={36} />
+              <div className="footer-brand-text">
+                <span className="footer-brand-name" dir="ltr">
+                  <span className="brand-one">1</span>
+                  <span className="brand-line-footer">LINE</span>
+                </span>
+                <span className="footer-brand-sub">{isAr ? 'للاستشارات و التسويق العقاري' : 'Real Estate Consulting & Marketing'}</span>
+              </div>
             </div>
             <p className="footer-desc">
               {isAr 

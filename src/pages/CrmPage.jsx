@@ -276,8 +276,8 @@ export default function CrmPage({
               </div>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <strong style={{ fontSize: '1.15rem', color: '#ffffff', letterSpacing: '0.6px', fontWeight: '900' }}>
-                    <span className="brand-one">1</span>Line
+                  <strong style={{ fontSize: '1.2rem', color: '#ffffff', letterSpacing: '0.8px', fontWeight: '900', direction: 'ltr', display: 'inline-flex', alignItems: 'baseline', gap: '3px' }} dir="ltr">
+                    <span className="brand-one">1</span>LINE
                   </strong>
                   <span style={{ 
                     fontSize: '0.68rem', 

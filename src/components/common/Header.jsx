@@ -82,10 +82,11 @@ export default function Header({
       <div className="header-container">
         {/* Brand Logo */}
         <Link to="/" className="brand-logo" onClick={() => setMobileMenuOpen(false)}>
-          <LogoEmblem size={36} />
+          <LogoEmblem size={40} />
           <div className="brand-text">
-            <span className="brand-title">
-              <span className="brand-one">1</span>Line
+            <span className="brand-title" dir="ltr">
+              <span className="brand-one">1</span>
+              <span className="brand-line">LINE</span>
             </span>
             <span className="brand-subtitle">{isAr ? 'للاستشارات و التسويق العقاري' : 'Real Estate Consulting & Marketing'}</span>
           </div>

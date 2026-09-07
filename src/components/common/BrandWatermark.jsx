@@ -22,7 +22,7 @@ export default function BrandWatermark({
         <LogoEmblem size={emblemSizes[size] || 20} />
         {variant !== 'emblem-only' && (
           <div className="watermark-text-group">
-            <span className="watermark-brand-name"><span className="brand-one">1</span>Line</span>
+            <span className="watermark-brand-name" dir="ltr"><span className="brand-one">1</span> LINE</span>
             {size === 'lg' && (
               <span className="watermark-brand-sub">REAL ESTATE</span>
             )}
