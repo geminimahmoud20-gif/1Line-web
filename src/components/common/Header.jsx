@@ -210,34 +210,91 @@ export default function Header({
         <Link to="/" className="brand-logo" onClick={() => setMobileMenuOpen(false)}>
           <LogoEmblem size={40} />
           <div className="brand-text">
-            <span className="brand-title" dir="ltr">
-              <span className="brand-one">1</span>
+            <span className="brand-title header-brand-title" dir="ltr">
+              <span className="brand-one header-brand-one">1</span>
               <span className="brand-line">LINE</span>
             </span>
             <span className="brand-subtitle">{isAr ? 'للاستشارات و التسويق العقاري' : 'Real Estate Consulting & Marketing'}</span>
           </div>
         </Link>
 
-        {/* 🌟 Ultra-Luxury Harmonious Desktop Navigation */}
-        <nav className="desktop-nav luxury-desktop-nav">
-          {flatMobileLinks.map((link) => {
-            const LinkIcon = link.icon;
-            const active = isActive(link.path);
+        {/* 🌟 Ultra-Luxury Harmonious Desktop Navigation (Consolidated Hubs) */}
+        <nav className="desktop-nav luxury-desktop-nav" ref={navRef}>
+          {navHubs.map((hub) => {
+            if (hub.type === 'link') {
+              const active = isActive(hub.path);
+              const HubIcon = hub.icon;
+              return (
+                <Link
+                  key={hub.id}
+                  to={hub.path}
+                  className={`luxury-nav-pill ${active ? 'active' : ''}`}
+                >
+                  <HubIcon size={14} className="nav-pill-icon" />
+                  <span className="nav-pill-label">{hub.label}</span>
+                </Link>
+              );
+            }
+
+            const groupActive = isGroupActive(hub.activePaths);
+            const isOpen = activeDropdown === hub.id;
+            const HubIcon = hub.icon;
+
             return (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`luxury-nav-pill ${active ? 'active' : ''} ${link.path === '/special-requests' ? 'vip-nav-pill' : ''}`}
+              <div
+                key={hub.id}
+                className="luxury-nav-dropdown-wrapper"
+                onMouseEnter={() => handleMouseEnter(hub.id)}
+                onMouseLeave={handleMouseLeave}
               >
-                {LinkIcon && <LinkIcon size={14} className="nav-pill-icon" />}
-                <span className="nav-pill-label">{link.label}</span>
-                {link.badge && (
-                  <span className={`luxury-badge luxury-badge-${link.badgeType || 'gold'}`}>
-                    {link.badgeType === 'blue' && <span className="pulse-dot" />}
-                    {link.badge}
-                  </span>
+                <button
+                  type="button"
+                  className={`luxury-nav-pill ${groupActive ? 'active' : ''} ${isOpen ? 'open' : ''} ${hub.id === 'vip-services' ? 'vip-nav-pill' : ''}`}
+                  onClick={() => setActiveDropdown(isOpen ? null : hub.id)}
+                  aria-expanded={isOpen}
+                >
+                  <HubIcon size={14} className="nav-pill-icon" />
+                  <span className="nav-pill-label">{hub.label}</span>
+                  {hub.badge && (
+                    <span className={`luxury-badge luxury-badge-${hub.badgeType || 'gold'}`}>
+                      {hub.badge}
+                    </span>
+                  )}
+                  <ChevronDown size={12} className={`nav-chevron ${isOpen ? 'rotate' : ''}`} />
+                </button>
+
+                {isOpen && (
+                  <div className="luxury-dropdown-menu">
+                    {hub.items.map((item) => {
+                      const ItemIcon = item.icon;
+                      const itemActive = isActive(item.path);
+                      return (
+                        <Link
+                          key={item.path}
+                          to={item.path}
+                          className={`luxury-dropdown-item ${itemActive ? 'active' : ''}`}
+                          onClick={() => setActiveDropdown(null)}
+                        >
+                          <div className="dropdown-item-icon-box">
+                            <ItemIcon size={15} />
+                          </div>
+                          <div className="dropdown-item-text">
+                            <div className="dropdown-item-title-row">
+                              <span className="dropdown-item-title">{item.label}</span>
+                              {item.badge && (
+                                <span className={`luxury-badge luxury-badge-${item.badgeType || 'gold'}`}>
+                                  {item.badge}
+                                </span>
+                              )}
+                            </div>
+                            <span className="dropdown-item-desc">{item.desc}</span>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
                 )}
-              </Link>
+              </div>
             );
           })}
         </nav>

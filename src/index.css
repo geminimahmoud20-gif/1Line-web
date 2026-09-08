@@ -118,6 +118,12 @@ body.dark,
 }
 
 /* Base Resets & Layout */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 96px;
+  overflow-x: clip;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -133,7 +139,7 @@ body {
   font-size: 16px;
   line-height: 1.6;
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow-x: clip;
   background-image: 
     radial-gradient(circle at 15% 15%, rgba(2, 132, 199, 0.04) 0%, transparent 45%),
     radial-gradient(circle at 85% 85%, rgba(14, 165, 233, 0.03) 0%, transparent 45%);

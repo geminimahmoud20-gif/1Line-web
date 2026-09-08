@@ -19,6 +19,8 @@ import { getPropertyViews } from '../../utils/visitorTracker';
 import { getFounderSettings, getWhatsAppUrl } from '../../utils/founderCmsData';
 import BrandWatermark from '../common/BrandWatermark';
 
+const FALLBACK_PROPERTY_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 500' fill='%23071e3d'%3E%3Crect width='800' height='500' fill='%23071e3d'/%3E%3Cpath d='M400 130 L620 320 L180 320 Z' fill='%230b4ea2' opacity='0.7'/%3E%3Crect x='340' y='220' width='120' height='100' rx='20' fill='%23fdcb42' opacity='0.85'/%3E%3Ctext x='50%25' y='75%25' dominant-baseline='middle' text-anchor='middle' fill='%23ffffff' font-family='sans-serif' font-size='24' font-weight='bold'%3E1LINE REAL ESTATE%3C/text%3E%3Ctext x='50%25' y='85%25' dominant-baseline='middle' text-anchor='middle' fill='%23fdcb42' font-family='sans-serif' font-size='16'%3E%D8%B9%D9%82%D8%A7%D8%B1%D8%A7%D8%AA%20%D8%B3%D9%88%D9%87%D8%A7%D8%AC%20%D8%A7%D9%84%D9%85%D8%B9%D8%AA%D9%85%D8%AF%D8%A9%3C/text%3E%3C/svg%3E";
+
 export default function PropertyCard({ 
   property, 
   lang = 'ar', 
@@ -35,17 +37,22 @@ export default function PropertyCard({
   const location = lang === 'ar' ? property.locationName_ar : property.locationName_en;
   const badge = lang === 'ar' ? property.badge_ar : property.badge_en;
   const viewsCount = getPropertyViews(property.id);
-  const imagesList = property.images && property.images.length > 0 ? property.images : ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800'];
+  const imagesList = property.images && property.images.length > 0 ? property.images : [FALLBACK_PROPERTY_IMG];
 
   return (
     <div className="property-card-modern cinematic-card">
       {/* 16:9 Cinematic Image Container */}
       <div className="property-card-media aspect-16-9">
         <img
-          src={imagesList[activeImageIndex] || imagesList[0]}
+          src={imagesList[activeImageIndex] || imagesList[0] || FALLBACK_PROPERTY_IMG}
           alt={title}
           className={`property-card-img ${imageLoaded ? 'loaded' : 'loading'}`}
           onLoad={() => setImageLoaded(true)}
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = FALLBACK_PROPERTY_IMG;
+            setImageLoaded(true);
+          }}
           loading="lazy"
         />
 

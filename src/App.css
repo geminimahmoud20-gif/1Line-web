@@ -348,6 +348,156 @@
   }
 }
 
+/* 🌟 Luxury Smart Navigation Dropdown System */
+.luxury-nav-dropdown-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.luxury-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 290px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(11, 78, 162, 0.16);
+  border-radius: 18px;
+  padding: 8px;
+  box-shadow: 
+    0 20px 45px -8px rgba(11, 78, 162, 0.16), 
+    0 4px 14px rgba(0, 0, 0, 0.04);
+  z-index: 1200;
+  animation: dropdownGlassIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: top center;
+}
+
+[dir="ltr"] .luxury-dropdown-menu {
+  right: auto;
+  left: 0;
+}
+
+@keyframes dropdownGlassIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.luxury-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  color: #0f172a;
+}
+
+.luxury-dropdown-item:hover {
+  background: rgba(11, 78, 162, 0.06);
+  transform: translateX(-3px);
+}
+
+[dir="ltr"] .luxury-dropdown-item:hover {
+  transform: translateX(3px);
+}
+
+.dropdown-item-icon-box {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgba(11, 78, 162, 0.08);
+  color: #0b4ea2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.luxury-dropdown-item:hover .dropdown-item-icon-box {
+  background: #0b4ea2;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(11, 78, 162, 0.3);
+}
+
+.dropdown-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-grow: 1;
+  text-align: right;
+}
+
+[dir="ltr"] .dropdown-item-text {
+  text-align: left;
+}
+
+.dropdown-item-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.dropdown-item-title {
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.dropdown-item-desc {
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.nav-chevron {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  opacity: 0.7;
+}
+
+.nav-chevron.rotate {
+  transform: rotate(180deg);
+}
+
+/* Dark theme for dropdowns */
+.dark-theme .luxury-dropdown-menu,
+.dark .luxury-dropdown-menu {
+  background: rgba(15, 23, 42, 0.96);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+}
+
+.dark-theme .luxury-dropdown-item:hover,
+.dark .luxury-dropdown-item:hover {
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.dark-theme .dropdown-item-title,
+.dark .dropdown-item-title {
+  color: #f8fafc;
+}
+
+.dark-theme .dropdown-item-desc,
+.dark .dropdown-item-desc {
+  color: #94a3b8;
+}
+
+.dark-theme .dropdown-item-icon-box,
+.dark .dropdown-item-icon-box {
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+}
+
 /* 2. Royal Blue & Gold WhatsApp CTA Button */
 .cta-royal-btn {
   display: inline-flex;
@@ -2317,7 +2467,11 @@
   position: absolute;
   top: 12px;
   left: 12px;
-  z-index: 2;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
 }
 
 [dir="ltr"] .card-media-actions {
@@ -2326,21 +2480,31 @@
 }
 
 .card-circle-btn {
-  width: 34px;
-  height: 34px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(6px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  display: flex;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  z-index: 16;
 }
 
-.card-circle-btn:hover, .card-circle-btn.favorite-active {
-  background: rgba(255, 255, 255, 0.9);
+.card-circle-btn:hover {
+  background: #ffffff;
+  transform: scale(1.08);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+.card-circle-btn.favorite-active {
+  background: #ffffff;
+  border-color: #ef4444;
 }
 
 .card-price-overlay {
@@ -10700,11 +10864,34 @@ body.dark,
   .mobile-hamburger-btn { display: inline-flex !important; }
 }
 
+@media (max-width: 992px) {
+  .hide-tablet { display: none !important; }
+}
+
 @media (max-width: 768px) {
   body { padding-bottom: 70px; overflow-x: hidden; }
-  .hide-mobile { display: none; }
+  .hide-mobile, .hide-tablet { display: none !important; }
   .mobile-floating-bottom-bar { display: block; }
   .mobile-detail-sticky-bar { display: flex; }
+}
+
+@media (max-width: 640px) {
+  .brand-subtitle { display: none !important; }
+  .header-container.glass-capsule {
+    padding: 6px 12px;
+    gap: 6px;
+  }
+  .header-actions {
+    gap: 6px;
+  }
+  .header-utility-pill-group {
+    padding: 1px 3px;
+  }
+  .utility-sub-btn {
+    padding: 5px 7px;
+    font-size: 0.75rem;
+  }
+}
   
   /* Hero & Search Mobile Ergonomics */
   .hero-section-premium { padding: 42px 16px 60px; }

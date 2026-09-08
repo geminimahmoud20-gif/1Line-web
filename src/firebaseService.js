@@ -322,6 +322,10 @@ export const subscribeToSettings = (key, callback) => {
           callback(snapshot.data());
         }
       }, (err) => {
+        if (err && err.code === 'permission-denied') {
+          // Graceful fallback to default/local cached settings for guests
+          return;
+        }
         console.warn(`Firebase subscribeToSettings [${key}] snapshot warning:`, err);
       });
     } catch (error) {

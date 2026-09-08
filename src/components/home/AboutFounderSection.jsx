@@ -184,6 +184,10 @@ export default function AboutFounderSection({ lang = 'ar' }) {
                       src={cms.founderPhoto} 
                       alt={cms.founderName_ar} 
                       style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} 
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='100' fill='%23092347'/%3E%3Cpath d='M70 140 C70 115, 130 115, 130 140 Z M100 65 A20 20 0 1 0 100 105 A20 20 0 1 0 100 65' fill='%23fdcb42'/%3E%3C/svg%3E";
+                      }}
                     />
                   ) : (
                     <div style={{
