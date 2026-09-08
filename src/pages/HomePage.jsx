@@ -191,10 +191,17 @@ export default function HomePage({
     <div className="homepage-wrapper">
       {/* 🌟 1. HERO SECTION */}
       <section className="hero-section-premium">
+        <div className="hero-ambient-mesh" aria-hidden="true">
+          <div className="hero-orb hero-orb-1" />
+          <div className="hero-orb hero-orb-2" />
+          <div className="hero-orb hero-orb-3" />
+        </div>
         <div className="hero-backdrop-gradient" />
         <div className="hero-content-container">
           <div className="hero-badge">
-            <Sparkles size={14} style={{ color: '#ffca28' }} />
+            <span className="hero-badge-sparkle">
+              <Sparkles size={14} />
+            </span>
             <span>{lang === 'ar' ? 'المنصة العقارية الأكثر موثوقية في سوهاج' : 'Sohag’s Most Trusted Real Estate Platform'}</span>
           </div>
 
@@ -202,12 +209,12 @@ export default function HomePage({
             {lang === 'ar' ? (
               <>
                 <span className="hero-title-line">امتلك واستثمر في أرقى عقارات سوهاج</span>
-                <span className="hero-title-line hero-title-highlight">بكل ثقة وضمان قانوني معتمد</span>
+                <span className="hero-title-line hero-title-highlight hero-title-shimmer">بكل ثقة وضمان قانوني معتمد</span>
               </>
             ) : (
               <>
                 <span className="hero-title-line">Own & Invest in Sohag’s Finest Properties</span>
-                <span className="hero-title-line hero-title-highlight">With Full Confidence & Legal Security</span>
+                <span className="hero-title-line hero-title-highlight hero-title-shimmer">With Full Confidence & Legal Security</span>
               </>
             )}
           </h1>

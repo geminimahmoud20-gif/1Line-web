@@ -13,7 +13,9 @@ import {
   Scale,
   Flame,
   MessageSquare,
-  ShieldCheck
+  ShieldCheck,
+  ChevronRight,
+  ChevronLeft
 } from 'lucide-react';
 import { getPropertyViews } from '../../utils/visitorTracker';
 import { getFounderSettings, getWhatsAppUrl } from '../../utils/founderCmsData';
@@ -76,6 +78,38 @@ export default function PropertyCard({
                 title={`صورة ${idx + 1}`}
               />
             ))}
+          </div>
+        )}
+
+        {/* Interactive Next / Prev Photo Cycling Arrows on Hover */}
+        {imagesList.length > 1 && (
+          <div className="card-media-nav-arrows">
+            <button
+              type="button"
+              className="card-nav-arrow arrow-prev"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setActiveImageIndex((prev) => (prev > 0 ? prev - 1 : imagesList.length - 1));
+              }}
+              title={lang === 'ar' ? 'الصورة السابقة' : 'Previous photo'}
+              aria-label="Previous photo"
+            >
+              {lang === 'ar' ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+            </button>
+            <button
+              type="button"
+              className="card-nav-arrow arrow-next"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setActiveImageIndex((prev) => (prev < imagesList.length - 1 ? prev + 1 : 0));
+              }}
+              title={lang === 'ar' ? 'الصورة التالية' : 'Next photo'}
+              aria-label="Next photo"
+            >
+              {lang === 'ar' ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+            </button>
           </div>
         )}
 
@@ -192,18 +226,21 @@ export default function PropertyCard({
             <MapPin size={14} style={{ color: 'var(--brand-navy-light, #0284c7)' }} />
             <span>{location}</span>
           </div>
-          <span style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '4px',
-            fontSize: '0.7rem',
-            color: '#10b981',
-            background: 'rgba(16, 185, 129, 0.12)',
-            border: '1px solid rgba(16, 185, 129, 0.3)',
-            padding: '3px 8px',
-            borderRadius: '6px',
-            fontWeight: '800'
-          }}>
+          <span 
+            className="verified-shimmer-badge"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              fontSize: '0.7rem',
+              color: '#10b981',
+              background: 'rgba(16, 185, 129, 0.12)',
+              border: '1px solid rgba(16, 185, 129, 0.3)',
+              padding: '3px 8px',
+              borderRadius: '6px',
+              fontWeight: '800'
+            }}
+          >
             <ShieldCheck size={12} style={{ color: '#10b981' }} />
             <span>{lang === 'ar' ? '🛡️ سند ملكية وتراخيص مفحوصة 100%' : '100% Verified Legal Deed'}</span>
           </span>

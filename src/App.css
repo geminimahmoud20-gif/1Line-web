@@ -1078,6 +1078,68 @@
   overflow: hidden;
 }
 
+/* Ambient Mesh and Glowing Orbs */
+.hero-ambient-mesh {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(65px);
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.hero-orb-1 {
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, rgba(255, 202, 40, 0.28) 0%, rgba(217, 119, 6, 0.12) 50%, transparent 70%);
+  top: -80px;
+  right: 8%;
+  animation: heroOrbFloat1 18s ease-in-out infinite alternate;
+}
+
+.hero-orb-2 {
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.28) 0%, rgba(13, 72, 161, 0.15) 50%, transparent 70%);
+  bottom: -40px;
+  left: 6%;
+  animation: heroOrbFloat2 15s ease-in-out infinite alternate;
+}
+
+.hero-orb-3 {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, transparent 70%);
+  top: 35%;
+  left: 45%;
+  animation: heroOrbFloat3 22s ease-in-out infinite alternate;
+}
+
+@keyframes heroOrbFloat1 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-40px, 35px) scale(1.1); }
+}
+
+@keyframes heroOrbFloat2 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(35px, -30px) scale(1.08); }
+}
+
+@keyframes heroOrbFloat3 {
+  0% { transform: translate(-50%, 0) scale(0.95); opacity: 0.3; }
+  100% { transform: translate(-45%, -25px) scale(1.15); opacity: 0.55; }
+}
+
 .hero-backdrop-gradient {
   position: absolute;
   top: -25%;
@@ -1144,6 +1206,33 @@
   display: inline-block;
   font-weight: 900;
   text-shadow: 0 2px 14px rgba(0, 0, 0, 0.3), 0 0 25px rgba(56, 189, 248, 0.35);
+}
+
+/* Gold Text Shimmer */
+.hero-title-shimmer {
+  background: linear-gradient(120deg, #ffffff 0%, #ffca28 25%, #ffd54f 50%, #ffca28 75%, #ffffff 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: goldTextShimmer 6s linear infinite;
+  display: inline-block;
+}
+
+@keyframes goldTextShimmer {
+  0% { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+/* Hero Badge Sparkle Pulse */
+.hero-badge-sparkle {
+  color: #ffca28;
+  display: inline-flex;
+  animation: pulseSparkle 2.5s ease-in-out infinite;
+}
+
+@keyframes pulseSparkle {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.9; }
+  50% { transform: scale(1.25) rotate(12deg); opacity: 1; }
 }
 
 .hero-description {
@@ -2605,9 +2694,15 @@
 }
 
 .property-card-modern:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-lg);
-  border-color: rgba(13, 72, 161, 0.3);
+  transform: translateY(-8px);
+  box-shadow: 0 20px 45px -10px rgba(11, 78, 162, 0.22), 0 0 20px rgba(253, 203, 66, 0.12);
+  border-color: rgba(253, 203, 66, 0.45);
+}
+
+.dark-theme .property-card-modern:hover,
+[data-theme="dark"] .property-card-modern:hover {
+  box-shadow: 0 22px 50px -10px rgba(0, 0, 0, 0.65), 0 0 25px rgba(253, 203, 66, 0.15);
+  border-color: rgba(253, 203, 66, 0.5);
 }
 
 .property-card-media {
@@ -2622,6 +2717,83 @@
   aspect-ratio: 16 / 9;
   height: auto;
   min-height: 210px;
+}
+
+/* Media Navigation Arrows */
+.card-media-nav-arrows {
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  right: 8px;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  z-index: 6;
+}
+
+.property-card-modern:hover .card-media-nav-arrows {
+  opacity: 1;
+}
+
+.card-nav-arrow {
+  pointer-events: auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.card-nav-arrow:hover {
+  background: var(--brand-gold-warm, #f59e0b);
+  color: #000000;
+  border-color: var(--brand-gold-warm, #f59e0b);
+  transform: scale(1.12);
+}
+
+/* Heart Beat Animation on Favorite */
+.card-circle-btn.favorite-active {
+  animation: heartBeatPulse 0.4s ease;
+}
+
+@keyframes heartBeatPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+/* Verified Deed Pill Shimmer */
+.verified-shimmer-badge {
+  position: relative;
+  overflow: hidden;
+}
+
+.verified-shimmer-badge::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transform: skewX(-20deg);
+  animation: verifiedPillShine 3.5s infinite;
+}
+
+@keyframes verifiedPillShine {
+  0%, 70% { left: -100%; }
+  100% { left: 200%; }
 }
 
 /* Interactive Thumbnail Indicator Dots */
