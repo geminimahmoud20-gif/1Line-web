@@ -149,15 +149,20 @@ describe('Homepage Exhaustive Deep Audit', () => {
         if (bodyWidth > windowWidth + 5) {
           doc.querySelectorAll('*').forEach((el) => {
             const rect = el.getBoundingClientRect();
-            if (rect.right > windowWidth + 10 || el.scrollWidth > windowWidth + 10) {
-              offending.push({
-                tag: el.tagName,
-                className: String(el.className).substring(0, 50),
-                id: el.id,
-                right: Math.round(rect.right),
-                scrollWidth: el.scrollWidth,
-                clientWidth: el.clientWidth
-              });
+            const cls = String(el.className || '');
+            const isRTLOverflow = rect.left < -5 || rect.right > windowWidth + 5 || (rect.width > windowWidth + 5);
+            if (isRTLOverflow) {
+              if (!['HTML', 'BODY'].includes(el.tagName) && el.id !== 'root' && !cls.includes('app-root') && !cls.includes('main-site-content') && !cls.includes('homepage-wrapper')) {
+                offending.push({
+                  tag: el.tagName,
+                  className: cls.substring(0, 50),
+                  id: el.id,
+                  left: Math.round(rect.left),
+                  right: Math.round(rect.right),
+                  width: Math.round(rect.width),
+                  scrollWidth: el.scrollWidth
+                });
+              }
             }
           });
           cy.log(`⚠️ Overflow on ${vp.name}: body ${bodyWidth} > win ${windowWidth}`, offending.slice(0, 10));
