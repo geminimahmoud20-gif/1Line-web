@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   School, 
   Hospital, 
@@ -10,35 +10,51 @@ import {
   Navigation,
   Sparkles
 } from 'lucide-react';
+import { getAreaById } from '../../utils/areasData';
+
+const getCategoryIcon = (category) => {
+  switch (category) {
+    case 'education': return School;
+    case 'health': return Hospital;
+    case 'shopping': return ShoppingBag;
+    case 'transport': return Train;
+    case 'lifestyle': return Coffee;
+    default: return MapPin;
+  }
+};
 
 export default function NearbyAmenities({ property, lang = 'ar' }) {
   const [activeCategory, setActiveCategory] = useState('all');
+  const [, setTick] = useState(0);
   const isAr = lang === 'ar';
 
-  // Specific real-world landmark amenities in Sohag based on property areaKey
-  const getAmenitiesData = (areaKey) => {
-    switch (areaKey) {
-      case 'new_sohag':
-        return [
-          { id: 1, category: 'education', name_ar: 'جامعة سوهاج (المقر الجديد)', name_en: 'Sohag University (New Campus)', distance: '1.2 كم', timeWalk: '15 دقيقة', timeDrive: '3 دقائق', icon: School },
-          { id: 2, category: 'health', name_ar: 'مستشفى سوهاج الجامعي الجديد', name_en: 'New Sohag University Hospital', distance: '1.8 كم', timeWalk: '20 دقيقة', timeDrive: '4 دقائق', icon: Hospital },
-          { id: 3, category: 'shopping', name_ar: 'مول سيتي سنتر سوهاج الجديدة', name_en: 'City Center Mall New Sohag', distance: '800 متر', timeWalk: '9 دقائق', timeDrive: '2 دقيقة', icon: ShoppingBag },
-          { id: 4, category: 'transport', name_ar: 'موقف النقل الداخلي لمدينة سوهاج', name_en: 'New Sohag Transit Station', distance: '950 متر', timeWalk: '11 دقيقة', timeDrive: '3 دقائق', icon: Train },
-          { id: 5, category: 'lifestyle', name_ar: 'نادي ونادي الطفل سوهاج الجديدة', name_en: 'New Sohag Sports & Kids Club', distance: '600 متر', timeWalk: '7 دقائق', timeDrive: '2 دقيقة', icon: Coffee }
-        ];
-      case 'east':
-      default:
-        return [
-          { id: 1, category: 'lifestyle', name_ar: 'كورنيش النيل الشرقي وحديقة الفردوس', name_en: 'East Nile Corniche & Ferdous Park', distance: '400 متر', timeWalk: '5 دقائق', timeDrive: '1 دقيقة', icon: Coffee },
-          { id: 2, category: 'education', name_ar: 'مجمع مدارس شرق سوهاج واللغات', name_en: 'East Sohag Language Schools Complex', distance: '750 متر', timeWalk: '9 دقائق', timeDrive: '2 دقيقة', icon: School },
-          { id: 3, category: 'health', name_ar: 'مستشفى الهلال والمراكز الطبية التخصصية', name_en: 'El-Helal Hospital & Medical Clinics', distance: '900 متر', timeWalk: '10 دقائق', timeDrive: '3 دقائق', icon: Hospital },
-          { id: 4, category: 'transport', name_ar: 'محطة قطار سوهاج الرئيسية', name_en: 'Sohag Main Railway Station', distance: '1.5 كم', timeWalk: '18 دقيقة', timeDrive: '4 دقائق', icon: Train },
-          { id: 5, category: 'shopping', name_ar: 'منطقة التسوق بشارع الجمهورية و15', name_en: 'Gomhoreya & 15th St Shopping District', distance: '600 متر', timeWalk: '7 دقائق', timeDrive: '2 دقيقة', icon: ShoppingBag }
-        ];
-    }
-  };
+  // Live listen for area data modifications from CRM
+  useEffect(() => {
+    const handleUpdate = () => setTick(t => t + 1);
+    window.addEventListener('oneline_areas_updated', handleUpdate);
+    return () => window.removeEventListener('oneline_areas_updated', handleUpdate);
+  }, []);
 
-  const amenities = getAmenitiesData(property?.areaKey);
+  const areaData = getAreaById(property?.areaKey);
+
+  // Dynamic Resolution: Property-specific overrides -> Area amenities from CRM -> Fallback defaults
+  const rawAmenities = (Array.isArray(property?.nearbyAmenities) && property.nearbyAmenities.length > 0)
+    ? property.nearbyAmenities
+    : (Array.isArray(areaData?.amenities) && areaData.amenities.length > 0)
+      ? areaData.amenities
+      : [
+          { id: 1, category: 'lifestyle', name_ar: 'كورنيش النيل والحدائق العامة', name_en: 'Nile Corniche Promenade', distance: '500 متر', timeWalk: '6 دقائق', timeDrive: '1 دقيقة' },
+          { id: 2, category: 'education', name_ar: 'المجمعات التعليمية والمدارس النموذجية', name_en: 'Schools & Educational Hubs', distance: '800 متر', timeWalk: '10 دقائق', timeDrive: '2 دقيقة' },
+          { id: 3, category: 'health', name_ar: 'المستشفيات والعيادات الطبية التخصصية', name_en: 'Specialized Medical Centers', distance: '1.0 كم', timeWalk: '12 دقيقة', timeDrive: '3 دقائق' },
+          { id: 4, category: 'transport', name_ar: 'محطات النقل والمحاور الرئيسية', name_en: 'Transit Terminals & Main Arteries', distance: '900 متر', timeWalk: '11 دقيقة', timeDrive: '2 دقيقة' },
+          { id: 5, category: 'shopping', name_ar: 'المراكز التجارية وسلاسل التجزئة', name_en: 'Retail & Shopping Centers', distance: '600 متر', timeWalk: '7 دقائق', timeDrive: '2 دقيقة' }
+        ];
+
+  const amenities = rawAmenities.map((item, idx) => ({
+    ...item,
+    id: item.id || idx + 1,
+    icon: typeof item.icon === 'function' ? item.icon : getCategoryIcon(item.category)
+  }));
 
   const filteredAmenities = activeCategory === 'all'
     ? amenities
@@ -97,6 +113,14 @@ export default function NearbyAmenities({ property, lang = 'ar' }) {
           >
             <Train size={14} />
             <span>{isAr ? 'المواصلات' : 'Transit'}</span>
+          </button>
+          <button
+            type="button"
+            className={`amenity-tab-btn ${activeCategory === 'lifestyle' ? 'active' : ''}`}
+            onClick={() => setActiveCategory('lifestyle')}
+          >
+            <Coffee size={14} />
+            <span>{isAr ? 'الترفيه' : 'Leisure'}</span>
           </button>
         </div>
       </div>

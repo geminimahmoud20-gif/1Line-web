@@ -59,10 +59,70 @@ export const saveProperty = async (property) => {
   return property;
 };
 
-// ===================== LEADS =====================
+// ===================== LEADS & OFFLINE SYNC QUEUE =====================
+
+const PENDING_LEADS_KEY = 'oneline_pending_leads_queue';
 
 /**
- * Save a new lead to Firestore (or localStorage fallback).
+ * Enqueues a lead locally if network or Firebase is unavailable.
+ */
+export const enqueuePendingLead = (lead) => {
+  try {
+    const raw = localStorage.getItem(PENDING_LEADS_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    list.push({ ...lead, queuedAt: Date.now() });
+    localStorage.setItem(PENDING_LEADS_KEY, JSON.stringify(list));
+    console.warn('⚠️ Lead enqueued locally for automatic background synchronization.');
+  } catch (err) {
+    console.error('Failed to enqueue pending lead:', err);
+  }
+};
+
+/**
+ * Synchronizes all locally queued leads to Firebase Firestore when connection is live.
+ */
+export const syncPendingLeads = async () => {
+  if (!isFirebaseConfigured() || !db) return;
+  try {
+    const raw = localStorage.getItem(PENDING_LEADS_KEY);
+    if (!raw) return;
+    const list = JSON.parse(raw);
+    if (!Array.isArray(list) || list.length === 0) return;
+
+    const remaining = [];
+    for (const lead of list) {
+      try {
+        await addDoc(collection(db, 'leads'), {
+          ...lead,
+          createdAt: serverTimestamp(),
+          syncedFromOfflineQueue: true
+        });
+      } catch {
+        remaining.push(lead);
+      }
+    }
+
+    if (remaining.length > 0) {
+      localStorage.setItem(PENDING_LEADS_KEY, JSON.stringify(remaining));
+    } else {
+      localStorage.removeItem(PENDING_LEADS_KEY);
+      console.log('✅ All offline pending leads synchronized to Cloud.');
+    }
+  } catch (err) {
+    console.error('Error syncing pending leads:', err);
+  }
+};
+
+// Automatic network recovery listener
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    syncPendingLeads();
+  });
+  setTimeout(syncPendingLeads, 4000);
+}
+
+/**
+ * Save a new lead to Firestore (with automatic offline fallback queue).
  */
 export const saveLead = async (lead) => {
   if (isFirebaseConfigured() && db) {
@@ -73,11 +133,12 @@ export const saveLead = async (lead) => {
       });
       return { ...lead, id: docRef.id };
     } catch (error) {
-      console.error('Firebase saveLead error:', error);
-      return lead; // fallback: return as-is
+      console.error('Firebase saveLead error, enqueuing for background retry:', error);
+      enqueuePendingLead(lead);
+      return lead;
     }
   }
-  // localStorage fallback handled by the app
+  enqueuePendingLead(lead);
   return lead;
 };
 

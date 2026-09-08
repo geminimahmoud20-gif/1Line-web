@@ -73,7 +73,9 @@ const DEFAULT_FORM_STATE = {
     inspectionReportId: 'LAW-SOH-2026',
     verifiedByLawyer: 'الإدارة القانونية لمنصة 1Line',
     safetyScore: 100
-  }
+  },
+  customBenchmarkPrice: '',
+  nearbyAmenities: []
 };
 
 export default function PropertyManagerPanel({
@@ -256,6 +258,38 @@ export default function PropertyManagerPanel({
     setForm((prev) => ({
       ...prev,
       images: prev.images.filter((_, idx) => idx !== indexToRemove)
+    }));
+  };
+
+  // Handlers for Custom Amenities per Property
+  const handleAddCustomAmenity = () => {
+    const newItem = {
+      id: Date.now(),
+      name_ar: '',
+      name_en: '',
+      category: 'education',
+      distance: '500 متر',
+      timeWalk: '6 دقائق',
+      timeDrive: '2 دقيقة'
+    };
+    setForm(prev => ({
+      ...prev,
+      nearbyAmenities: [...(prev.nearbyAmenities || []), newItem]
+    }));
+  };
+
+  const handleUpdateCustomAmenity = (index, field, value) => {
+    setForm(prev => {
+      const list = [...(prev.nearbyAmenities || [])];
+      list[index] = { ...list[index], [field]: value };
+      return { ...prev, nearbyAmenities: list };
+    });
+  };
+
+  const handleRemoveCustomAmenity = (index) => {
+    setForm(prev => ({
+      ...prev,
+      nearbyAmenities: (prev.nearbyAmenities || []).filter((_, i) => i !== index)
     }));
   };
 
@@ -1016,6 +1050,121 @@ export default function PropertyManagerPanel({
                     onChange={(e) => setForm({ ...form, floor: parseInt(e.target.value) || 0 })}
                   />
                 </div>
+              </div>
+
+              {/* 🎯 Custom District Benchmark & Nearby Landmarks Control */}
+              <div style={{
+                background: 'rgba(2, 132, 199, 0.05)',
+                border: '1px solid rgba(2, 132, 199, 0.25)',
+                borderRadius: 'var(--radius-md)',
+                padding: '16px',
+                marginTop: '16px',
+                marginBottom: '16px'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <h4 style={{ fontSize: '0.9rem', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}>
+                    <MapPin size={16} />
+                    {isAr ? 'المعالم والخدمات الحيوية وسعر المتر المقارن (ذكاء السوق)' : 'Market Intelligence & Custom Amenities'}
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={handleAddCustomAmenity}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      background: 'rgba(56, 189, 248, 0.15)',
+                      color: '#38bdf8',
+                      border: '1px solid rgba(56, 189, 248, 0.3)',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      fontSize: '0.78rem',
+                      cursor: 'pointer',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    <Plus size={14} />
+                    <span>{isAr ? 'إضافة مَعلَم قريب خاص' : 'Add Landmark'}</span>
+                  </button>
+                </div>
+
+                {/* Custom Benchmark Price Override */}
+                <div className="form-group-item" style={{ marginBottom: '12px' }}>
+                  <label style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>
+                    {isAr ? 'تخصيص متوسط سعر المتر المقارن لهذا العقار (ج.م/م² - اختياري)' : 'Custom Benchmark Price/m² (Optional Override)'}
+                  </label>
+                  <input
+                    type="number"
+                    min="1000"
+                    step="500"
+                    placeholder={isAr ? 'اتركه فارغاً لاستخدام متوسط الحي التلقائي' : 'Leave blank to use district auto benchmark'}
+                    value={form.customBenchmarkPrice || ''}
+                    onChange={(e) => setForm({ ...form, customBenchmarkPrice: e.target.value ? parseInt(e.target.value) : '' })}
+                    style={{
+                      background: 'rgba(0, 0, 0, 0.4)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      fontSize: '0.85rem'
+                    }}
+                  />
+                </div>
+
+                {/* Custom Amenities List */}
+                {form.nearbyAmenities && form.nearbyAmenities.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {form.nearbyAmenities.map((am, idx) => (
+                      <div key={idx} style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1.2fr 1fr 1fr auto',
+                        gap: '8px',
+                        alignItems: 'center',
+                        background: 'rgba(0, 0, 0, 0.3)',
+                        padding: '8px 10px',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(255, 255, 255, 0.08)'
+                      }}>
+                        <input
+                          type="text"
+                          placeholder={isAr ? 'اسم المعلم (مثال: مدرسة اللغات)' : 'Landmark name'}
+                          value={am.name_ar || ''}
+                          onChange={(e) => handleUpdateCustomAmenity(idx, 'name_ar', e.target.value)}
+                          style={{ background: 'transparent', border: '1px solid rgba(255, 255, 255, 0.15)', padding: '6px', borderRadius: '6px', color: '#fff', fontSize: '0.8rem' }}
+                        />
+                        <select
+                          value={am.category || 'education'}
+                          onChange={(e) => handleUpdateCustomAmenity(idx, 'category', e.target.value)}
+                          style={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(255, 255, 255, 0.15)', padding: '6px', borderRadius: '6px', color: '#fff', fontSize: '0.8rem' }}
+                        >
+                          <option value="education">{isAr ? 'تعليم' : 'Education'}</option>
+                          <option value="health">{isAr ? 'صحة' : 'Health'}</option>
+                          <option value="shopping">{isAr ? 'تسوق' : 'Shopping'}</option>
+                          <option value="transport">{isAr ? 'مواصلات' : 'Transit'}</option>
+                          <option value="lifestyle">{isAr ? 'ترفيه' : 'Leisure'}</option>
+                        </select>
+                        <input
+                          type="text"
+                          placeholder={isAr ? 'المسافة (مثال: 300 متر)' : 'Distance (e.g. 300m)'}
+                          value={am.distance || ''}
+                          onChange={(e) => handleUpdateCustomAmenity(idx, 'distance', e.target.value)}
+                          style={{ background: 'transparent', border: '1px solid rgba(255, 255, 255, 0.15)', padding: '6px', borderRadius: '6px', color: '#fff', fontSize: '0.8rem' }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCustomAmenity(idx)}
+                          style={{ background: 'rgba(239, 68, 68, 0.2)', border: 'none', color: '#ef4444', padding: '6px 8px', borderRadius: '6px', cursor: 'pointer' }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ margin: 0, fontSize: '0.78rem', color: '#94a3b8' }}>
+                    {isAr ? 'يتم حالياً عرض المعالم الحيوية الافتراضية للحي تلقائياً. يمكنك إضافة معالم مخصصة للعقار بالنقر على الزر أعلاه.' : 'Default district amenities are automatically displayed. Click above to add custom landmarks.'}
+                  </p>
+                )}
               </div>
 
               {/* Description */}

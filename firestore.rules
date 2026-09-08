@@ -11,13 +11,18 @@ service cloud.firestore {
     // 🛡️ 1. LEADS & CUSTOMER INQUIRIES (حماية بيانات العملاء والطلبات)
     match /leads/{leadId} {
       allow create: if request.resource.data.phone is string 
-                    && request.resource.data.name is string;
+                    && request.resource.data.phone.size() >= 10
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() >= 2;
       allow read, update, delete: if request.auth != null && (request.auth.token.admin == true || isAdmin());
     }
     
     // 📋 2. DEMANDS & CLIENT REQUESTS (طلبات العقارات المخصصة)
     match /demands/{demandId} {
-      allow create: if true;
+      allow create: if request.resource.data.name is string 
+                    && request.resource.data.name.size() >= 2
+                    && request.resource.data.phone is string 
+                    && request.resource.data.phone.size() >= 10;
       allow read: if true;
       allow update, delete: if isAdmin();
     }

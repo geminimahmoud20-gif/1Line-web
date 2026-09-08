@@ -1,14 +1,24 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { TrendingDown, TrendingUp, Sparkles, CheckCircle2, ShieldCheck, BarChart3 } from 'lucide-react';
-import { SOHAG_DISTRICT_BENCHMARKS, formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
+import { getDistrictBenchmark, formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
+import { getAreaById } from '../../utils/areasData';
 
 export default function PriceBenchmarkIndicator({ property, lang = 'ar', currency = 'EGP' }) {
   if (!property) return null;
 
   const isAr = lang === 'ar';
+  const [, setTick] = useState(0);
+
+  // Live listen for area modifications from CRM
+  useEffect(() => {
+    const handleUpdate = () => setTick(t => t + 1);
+    window.addEventListener('oneline_areas_updated', handleUpdate);
+    return () => window.removeEventListener('oneline_areas_updated', handleUpdate);
+  }, []);
 
   const areaKey = property.areaKey || 'default';
-  const districtAvg = SOHAG_DISTRICT_BENCHMARKS[areaKey] || SOHAG_DISTRICT_BENCHMARKS.default;
+  const areaData = getAreaById(areaKey);
+  const districtAvg = property.customBenchmarkPrice || (areaData && areaData.avgPricePerMeter) || getDistrictBenchmark(areaKey);
 
   const propertyPricePerM = property.pricePerMeter || Math.round((Number(property.price) || 0) / (Number(property.size) || 1));
 
@@ -28,17 +38,7 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
   const convertedPricePerM = formatCurrencyPrice(propertyPricePerM, currency, lang);
   const convertedAvgPricePerM = formatCurrencyPrice(districtAvg, currency, lang);
 
-  const districtNames = {
-    corniche: isAr ? 'كورنيش النيل' : 'Nile Corniche',
-    east: isAr ? 'شرق سوهاج والجمهورية' : 'East Sohag & Republic St.',
-    center: isAr ? 'سيتي والمخبز الآلي ووسط البلد' : 'City St. & Center',
-    new_sohag: isAr ? 'سوهاج الجديدة' : 'New Sohag City',
-    kawthar: isAr ? 'حي الكوثر' : 'Al-Kawthar',
-    akhmeem: isAr ? 'أخميم' : 'Akhmeem',
-    default: isAr ? 'سوهاج عام' : 'Sohag Average'
-  };
-
-  const currentDistrictName = districtNames[areaKey] || districtNames.default;
+  const currentDistrictName = (isAr ? areaData?.name_ar : areaData?.name_en) || (isAr ? 'سوهاج عام' : 'Sohag Average');
 
   return (
     <div className="price-benchmark-card">

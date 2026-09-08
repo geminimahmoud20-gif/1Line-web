@@ -13295,4 +13295,238 @@ body.dark,
   user-select: none;
 }
 
+/* =============================================================
+   🎟️ OFFICIAL BOOKING CONFIRMATION RECEIPT MODAL
+   ============================================================= */
+.booking-receipt-card {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  max-width: 520px;
+  width: 92%;
+  padding: 32px 28px;
+  position: relative;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.4), 0 0 30px rgba(16, 185, 129, 0.15);
+  animation: receiptPopIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  color: var(--text-primary);
+  text-align: center;
+}
+
+@keyframes receiptPopIn {
+  from { opacity: 0; transform: scale(0.92) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.close-receipt-btn {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+[dir="ltr"] .close-receipt-btn {
+  left: auto;
+  right: 18px;
+}
+
+.close-receipt-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+.receipt-success-icon-wrap {
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 16px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16, 185, 129, 0.12);
+  border-radius: 50%;
+}
+
+.receipt-check-icon {
+  color: #10b981;
+  position: relative;
+  z-index: 2;
+}
+
+.receipt-pulse-ring {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  right: -6px;
+  bottom: -6px;
+  border-radius: 50%;
+  border: 2px solid rgba(16, 185, 129, 0.35);
+  animation: receiptPulseRing 2.5s infinite;
+}
+
+@keyframes receiptPulseRing {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 0.2; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.receipt-main-title {
+  font-size: 1.35rem;
+  font-weight: 900;
+  margin: 0 0 6px;
+  color: var(--text-primary);
+}
+
+.receipt-subtitle {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+.receipt-serial-badge-box {
+  background: var(--bg-card-hover, #f8fafc);
+  border: 1.5px dashed var(--accent-gold-border, rgba(245, 158, 11, 0.4));
+  border-radius: 14px;
+  padding: 12px 18px;
+  margin-bottom: 20px;
+}
+
+.serial-label {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+
+.serial-code-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.serial-code-text {
+  font-size: 1.25rem;
+  font-family: monospace;
+  color: var(--brand-navy-light, #0284c7);
+  letter-spacing: 1.5px;
+}
+
+.copy-serial-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.copy-serial-btn:hover {
+  background: var(--bg-card);
+  border-color: var(--brand-gold-warm);
+}
+
+.receipt-details-list {
+  background: var(--bg-card-hover, #f8fafc);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 22px;
+  text-align: right;
+  font-size: 0.86rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+[dir="ltr"] .receipt-details-list {
+  text-align: left;
+}
+
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.r-label {
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.r-val {
+  color: var(--text-primary);
+  font-weight: 800;
+}
+
+.receipt-actions-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.btn-whatsapp-confirm {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  border: none;
+  padding: 13px 20px;
+  border-radius: 14px;
+  font-weight: 800;
+  font-size: 0.92rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.3);
+  transition: all 0.25s ease;
+}
+
+.btn-whatsapp-confirm:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(16, 185, 129, 0.4);
+}
+
+.btn-call-desk {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  padding: 11px 18px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.btn-call-desk:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+  border-color: var(--brand-navy-light);
+}
+
 

@@ -1,45 +1,37 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TrendingUp, Award, Calendar, DollarSign, ArrowUpRight } from 'lucide-react';
+import { getAreaById } from '../../utils/areasData';
 
-export default function HistoricalPriceChart({ areaKey = 'east', lang = 'ar' }) {
+export default function HistoricalPriceChart({ areaKey = 'east', customPoints = null, lang = 'ar' }) {
   const [selectedPeriod, setSelectedPeriod] = useState('3y'); // '1y' | '3y' | '5y'
+  const [, setTick] = useState(0);
   const isAr = lang === 'ar';
 
-  // Historical data per sqm for Sohag prime areas (2023 - 2026)
-  const trendsData = {
-    east: [
-      { year: '2023 Q1', price: 11500 },
-      { year: '2023 Q3', price: 13200 },
-      { year: '2024 Q1', price: 15400 },
-      { year: '2024 Q3', price: 17100 },
-      { year: '2025 Q1', price: 18800 },
-      { year: '2025 Q3', price: 19800 },
-      { year: '2026 (الآن)', price: 21500 }
-    ],
-    new_sohag: [
-      { year: '2023 Q1', price: 8500 },
-      { year: '2023 Q3', price: 9800 },
-      { year: '2024 Q1', price: 11800 },
-      { year: '2024 Q3', price: 13500 },
-      { year: '2025 Q1', price: 14900 },
-      { year: '2025 Q3', price: 16200 },
-      { year: '2026 (الآن)', price: 17800 }
-    ],
-    corniche: [
-      { year: '2023 Q1', price: 16500 },
-      { year: '2023 Q3', price: 19000 },
-      { year: '2024 Q1', price: 22000 },
-      { year: '2024 Q3', price: 24500 },
-      { year: '2025 Q1', price: 26800 },
-      { year: '2025 Q3', price: 28500 },
-      { year: '2026 (الآن)', price: 31000 }
-    ]
-  };
+  // Live listen for area data modifications from CRM
+  useEffect(() => {
+    const handleUpdate = () => setTick(t => t + 1);
+    window.addEventListener('oneline_areas_updated', handleUpdate);
+    return () => window.removeEventListener('oneline_areas_updated', handleUpdate);
+  }, []);
 
-  const points = trendsData[areaKey] || trendsData.east;
-  const startPrice = points[0].price;
-  const currentPrice = points[points.length - 1].price;
-  const totalGrowthPercent = Math.round(((currentPrice - startPrice) / startPrice) * 100);
+  const areaData = getAreaById(areaKey);
+
+  // Dynamic points resolution: custom -> areaData -> fallbacks
+  const points = customPoints || (areaData && areaData.historicalPrices && areaData.historicalPrices.length > 0
+    ? areaData.historicalPrices
+    : [
+        { year: '2023 Q1', price: 9500 },
+        { year: '2023 Q3', price: 11000 },
+        { year: '2024 Q1', price: 12800 },
+        { year: '2024 Q3', price: 14200 },
+        { year: '2025 Q1', price: 15400 },
+        { year: '2025 Q3', price: 16200 },
+        { year: '2026 (الآن)', price: 17500 }
+      ]);
+
+  const startPrice = points[0]?.price || 1;
+  const currentPrice = points[points.length - 1]?.price || startPrice;
+  const totalGrowthPercent = areaData?.annualGrowthRate || Math.round(((currentPrice - startPrice) / startPrice) * 100);
 
   // SVG Chart Dimensions
   const width = 580;

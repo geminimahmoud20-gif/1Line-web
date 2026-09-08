@@ -93,7 +93,9 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
       lat: 26.5569,
       lng: 31.7001,
       zoom: 14,
-      description_ar: ''
+      description_ar: '',
+      avgPricePerMeter: 15000,
+      annualGrowthRate: 75
     });
     setModalMode('add');
   };
@@ -110,7 +112,9 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
       lat: area.center?.lat || 26.5569,
       lng: area.center?.lng || 31.7001,
       zoom: area.zoom || 14,
-      description_ar: area.description_ar || ''
+      description_ar: area.description_ar || '',
+      avgPricePerMeter: area.avgPricePerMeter || 15000,
+      annualGrowthRate: area.annualGrowthRate || 75
     });
     setModalMode('edit');
   };
@@ -134,9 +138,11 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
           label_en: formData.label_en || formData.name_en || formData.name_ar,
           center: { lat: parseFloat(formData.lat) || 26.5569, lng: parseFloat(formData.lng) || 31.7001 },
           zoom: parseInt(formData.zoom, 10) || 14,
-          description_ar: formData.description_ar
+          description_ar: formData.description_ar,
+          avgPricePerMeter: Number(formData.avgPricePerMeter) || 15000,
+          annualGrowthRate: Number(formData.annualGrowthRate) || 75
         });
-        if (triggerToast) triggerToast(isAr ? 'تمت إضافة المنطقة بنجاح ونشرها على كامل الموقع! 🎉' : 'Area added successfully!', 'success');
+        if (triggerToast) triggerToast(isAr ? 'تمت إضافة المنطقة بنجاح وتحديث أسعارها ومؤشراتها! 🎉' : 'Area added successfully!', 'success');
       } else if (modalMode === 'edit' && activeArea) {
         await updateArea(activeArea.id, {
           name_ar: formData.name_ar,
@@ -145,9 +151,11 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
           label_en: formData.label_en,
           center: { lat: parseFloat(formData.lat) || 26.5569, lng: parseFloat(formData.lng) || 31.7001 },
           zoom: parseInt(formData.zoom, 10) || 14,
-          description_ar: formData.description_ar
+          description_ar: formData.description_ar,
+          avgPricePerMeter: Number(formData.avgPricePerMeter) || 15000,
+          annualGrowthRate: Number(formData.annualGrowthRate) || 75
         });
-        if (triggerToast) triggerToast(isAr ? 'تم تحديث بيانات المنطقة ونشرها سحابياً! ✏️' : 'Area updated successfully!', 'success');
+        if (triggerToast) triggerToast(isAr ? 'تم تحديث بيانات المنطقة ومتوسط سعر المتر ونسب النمو سحابياً! ✏️' : 'Area updated successfully!', 'success');
       }
       setAreas(getAreas());
       setModalMode(null);
@@ -422,6 +430,46 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                   </div>
                 )}
 
+                {/* Benchmark & Growth Highlights */}
+                <div style={{
+                  display: 'flex',
+                  gap: '8px',
+                  flexWrap: 'wrap',
+                  marginBottom: '12px'
+                }}>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: '700',
+                    padding: '3px 8px',
+                    borderRadius: '6px',
+                    background: 'rgba(217, 119, 6, 0.12)',
+                    color: 'var(--accent-gold)',
+                    border: '1px solid rgba(217, 119, 6, 0.25)'
+                  }}>
+                    {isAr ? `متوسط: ${(area.avgPricePerMeter || 15000).toLocaleString()} ج.م/م²` : `Avg: ${(area.avgPricePerMeter || 15000).toLocaleString()} EGP/m²`}
+                  </span>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: '700',
+                    padding: '3px 8px',
+                    borderRadius: '6px',
+                    background: 'rgba(16, 185, 129, 0.12)',
+                    color: '#10b981',
+                    border: '1px solid rgba(16, 185, 129, 0.25)'
+                  }}>
+                    {isAr ? `نمو: +${area.annualGrowthRate || 75}%` : `Growth: +${area.annualGrowthRate || 75}%`}
+                  </span>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    padding: '3px 8px',
+                    borderRadius: '6px',
+                    background: 'rgba(56, 189, 248, 0.1)',
+                    color: '#38bdf8'
+                  }}>
+                    {isAr ? `${area.amenities?.length || 5} معالم حيوية` : `${area.amenities?.length || 5} Amenities`}
+                  </span>
+                </div>
+
                 {/* Coordinates & Geo Info */}
                 {area.center && (
                   <div style={{ 
@@ -647,6 +695,63 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                       fontSize: '0.88rem'
                     }}
                   />
+                </div>
+              </div>
+
+              {/* Market Benchmark: Avg Price Per Meter & Growth Rate */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
+                <div className="form-group-item">
+                  <label style={{ display: 'block', fontSize: '0.82rem', color: '#cbd5e1', marginBottom: '6px' }}>
+                    {isAr ? 'متوسط سعر المتر (ج.م/م²) *' : 'Avg Price/m² (EGP) *'}
+                  </label>
+                  <input
+                    type="number"
+                    min="1000"
+                    step="500"
+                    placeholder="15000"
+                    value={formData.avgPricePerMeter}
+                    onChange={(e) => setFormData({ ...formData, avgPricePerMeter: e.target.value })}
+                    style={{
+                      width: '100%',
+                      background: 'rgba(0, 0, 0, 0.4)',
+                      border: '1px solid rgba(217, 119, 6, 0.4)',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      color: 'var(--accent-gold)',
+                      fontWeight: 'bold',
+                      fontSize: '0.88rem'
+                    }}
+                  />
+                  <small style={{ color: '#94a3b8', fontSize: '0.72rem', display: 'block', marginTop: '4px' }}>
+                    {isAr ? 'يحدد معيار عدالة الأسعار التلقائي للحي' : 'Sets valuation benchmark for district'}
+                  </small>
+                </div>
+
+                <div className="form-group-item">
+                  <label style={{ display: 'block', fontSize: '0.82rem', color: '#cbd5e1', marginBottom: '6px' }}>
+                    {isAr ? 'مؤشر النمو التراكمي للأسعار (%)' : 'Capital Growth Rate (%)'}
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="500"
+                    placeholder="75"
+                    value={formData.annualGrowthRate}
+                    onChange={(e) => setFormData({ ...formData, annualGrowthRate: e.target.value })}
+                    style={{
+                      width: '100%',
+                      background: 'rgba(0, 0, 0, 0.4)',
+                      border: '1px solid rgba(16, 185, 129, 0.4)',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      color: '#10b981',
+                      fontWeight: 'bold',
+                      fontSize: '0.88rem'
+                    }}
+                  />
+                  <small style={{ color: '#94a3b8', fontSize: '0.72rem', display: 'block', marginTop: '4px' }}>
+                    {isAr ? 'النسبة المعروضة على الرسم البياني' : 'Displayed in historical growth chart'}
+                  </small>
                 </div>
               </div>
 

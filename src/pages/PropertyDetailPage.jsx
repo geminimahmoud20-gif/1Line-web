@@ -35,6 +35,8 @@ import SocialStoryCardModal from '../components/properties/SocialStoryCardModal'
 import { updatePageSeo, buildPropertySchema } from '../utils/seoHelper';
 import { checkFormSpamProtection } from '../utils/securityShield';
 import { formatCurrencyPrice, getPriceBenchmark } from '../utils/currencyAndBenchmark';
+import BookingConfirmationModal from '../components/common/BookingConfirmationModal';
+import { saveLead } from '../firebaseService';
 
 export default function PropertyDetailPage({
   lang,
@@ -49,6 +51,8 @@ export default function PropertyDetailPage({
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'legal' | 'valuation' | 'financing'
   const [depositModalOpen, setDepositModalOpen] = useState(false);
   const [storyModalOpen, setStoryModalOpen] = useState(false);
+  const [bookingConfirmationOpen, setBookingConfirmationOpen] = useState(false);
+  const [confirmedBookingData, setConfirmedBookingData] = useState(null);
   const [viewsCount, setViewsCount] = useState(() => {
     if (id) {
       return getPropertyViews(id) || 150;
@@ -139,13 +143,23 @@ export default function PropertyDetailPage({
       return;
     }
 
+    const serialCode = `1LINE-BK-${Math.floor(1000 + Math.random() * 9000)}`;
+    const fullBookingRecord = {
+      ...bookingForm,
+      serialCode,
+      propertyId: property.id,
+      propertyTitle: title,
+      propertyPrice: property.price,
+      source: 'property_detail_viewing_form',
+      createdAt: new Date().toISOString()
+    };
+
+    // Save lead to cloud/local queue
+    saveLead(fullBookingRecord);
+
+    setConfirmedBookingData(fullBookingRecord);
     setBookingSubmitted(true);
-    triggerToast(
-      isAr 
-        ? 'تم تأكيد طلب المعاينة المجانية بنجاح! سيتواصل معك مستشارنا العقاري لتحديد الموعد.' 
-        : 'Viewing appointment booked successfully!', 
-      'success'
-    );
+    setBookingConfirmationOpen(true);
   };
 
   // Similar properties in same area
@@ -427,6 +441,7 @@ export default function PropertyDetailPage({
                 {/* 📈 Historical Price Trends & Capital Growth Chart */}
                 <HistoricalPriceChart
                   areaKey={property.areaKey}
+                  customPoints={property.historicalPrices}
                   lang={lang}
                 />
 
@@ -639,6 +654,15 @@ export default function PropertyDetailPage({
           property={property}
           lang={lang}
           triggerToast={triggerToast}
+        />
+
+        {/* 🎟️ Official Instant Booking Confirmation & Receipt Modal */}
+        <BookingConfirmationModal
+          isOpen={bookingConfirmationOpen}
+          onClose={() => setBookingConfirmationOpen(false)}
+          bookingData={confirmedBookingData}
+          property={property}
+          lang={lang}
         />
 
         {/* 📱 Sticky Mobile Quick Action Bar (Solves Scrolling on Phones) */}

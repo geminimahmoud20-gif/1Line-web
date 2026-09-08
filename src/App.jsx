@@ -187,10 +187,20 @@ export default function App() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  // Properties Data State
+  // Properties Data State (Smart Catalog Merge to ensure all verified Sohag listings are always accessible)
   const [properties, setProperties] = useState(() => {
     const stored = readStoredJson('oneline_properties', PROPERTIES_DATA, isRecordArray);
-    return Array.isArray(stored) && stored.length > 0 ? stored : PROPERTIES_DATA;
+    if (Array.isArray(stored) && stored.length > 0) {
+      const existingIds = new Set(stored.map(p => p.id));
+      const missing = PROPERTIES_DATA.filter(p => !existingIds.has(p.id));
+      if (missing.length > 0) {
+        const merged = [...stored, ...missing];
+        localStorage.setItem('oneline_properties', JSON.stringify(merged));
+        return merged;
+      }
+      return stored;
+    }
+    return PROPERTIES_DATA;
   });
 
   const handleAddProperty = useCallback((newProp) => {

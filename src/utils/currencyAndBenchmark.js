@@ -12,7 +12,9 @@ export const CURRENCY_RATES = {
   KWD: { rate: 0.0062, symbol_ar: 'د.ك', symbol_en: 'KWD', flag: '🇰🇼' }
 };
 
-// District average price per m² benchmarks in Sohag (EGP / m²)
+import { getAreas } from './areasData';
+
+// Fallback District average price per m² benchmarks in Sohag (EGP / m²)
 export const SOHAG_DISTRICT_BENCHMARKS = {
   corniche: 26000,   // كورنيش النيل (أعلى قيمة معمارية)
   east: 21000,       // شرق سوهاج والجمهورية والثقافة
@@ -20,8 +22,27 @@ export const SOHAG_DISTRICT_BENCHMARKS = {
   new_sohag: 12000,  // سوهاج الجديدة
   kawthar: 9000,     // حي الكوثر
   akhmeem: 9500,     // أخميم
+  tahta: 11000,      // طهطا
+  west: 13500,       // غرب سوهاج
+  girga: 10500,      // جرجا
   default: 15000     // متوسط عام
 };
+
+/**
+ * Dynamically resolves district average benchmark price per sqm from active CRM area data
+ */
+export function getDistrictBenchmark(areaKey) {
+  try {
+    const areas = getAreas();
+    const found = areas.find(a => a.id === areaKey);
+    if (found && found.avgPricePerMeter) {
+      return Number(found.avgPricePerMeter);
+    }
+  } catch (e) {
+    // Fallback if environment without localStorage
+  }
+  return SOHAG_DISTRICT_BENCHMARKS[areaKey] || SOHAG_DISTRICT_BENCHMARKS.default;
+}
 
 /**
  * Formats a monetary value according to selected currency and language
@@ -65,7 +86,7 @@ export function getPriceBenchmark(property, lang = 'ar') {
   const pricePerMeter = Math.round(price / size);
 
   const areaKey = property.areaKey || 'default';
-  const districtAvg = SOHAG_DISTRICT_BENCHMARKS[areaKey] || SOHAG_DISTRICT_BENCHMARKS.default;
+  const districtAvg = property.customBenchmarkPrice || getDistrictBenchmark(areaKey);
 
   const ratio = pricePerMeter / districtAvg;
 
