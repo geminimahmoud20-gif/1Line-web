@@ -10877,25 +10877,6 @@ body.dark,
   .hide-mobile, .hide-tablet { display: none !important; }
   .mobile-floating-bottom-bar { display: block; }
   .mobile-detail-sticky-bar { display: flex; }
-}
-
-@media (max-width: 640px) {
-  .brand-subtitle { display: none !important; }
-  .header-container.glass-capsule {
-    padding: 6px 12px;
-    gap: 6px;
-  }
-  .header-actions {
-    gap: 6px;
-  }
-  .header-utility-pill-group {
-    padding: 1px 3px;
-  }
-  .utility-sub-btn {
-    padding: 5px 7px;
-    font-size: 0.75rem;
-  }
-}
   
   /* Hero & Search Mobile Ergonomics */
   .hero-section-premium { padding: 42px 16px 60px; }
@@ -11043,6 +11024,24 @@ body.dark,
   .section-header-flex { flex-direction: column; align-items: flex-start; gap: 12px; }
   .live-activity-toast-pill { bottom: 75px; right: 12px; left: 12px; max-width: none; }
   .floating-back-to-top-btn { bottom: 80px; right: 16px; width: 38px; height: 38px; }
+}
+
+@media (max-width: 640px) {
+  .brand-subtitle { display: none !important; }
+  .header-container.glass-capsule {
+    padding: 6px 12px;
+    gap: 6px;
+  }
+  .header-actions {
+    gap: 6px;
+  }
+  .header-utility-pill-group {
+    padding: 1px 3px;
+  }
+  .utility-sub-btn {
+    padding: 5px 7px;
+    font-size: 0.75rem;
+  }
 }
 
 /* =============================================================
