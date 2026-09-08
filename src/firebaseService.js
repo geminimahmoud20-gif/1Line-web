@@ -63,13 +63,29 @@ export const saveProperty = async (property) => {
 
 const PENDING_LEADS_KEY = 'oneline_pending_leads_queue';
 
+// Guard against concurrent background synchronization tasks
+let isSyncingPendingLeads = false;
+
 /**
- * Enqueues a lead locally if network or Firebase is unavailable.
+ * Enqueues a lead locally if network or Firebase is unavailable (with deduplication).
  */
 export const enqueuePendingLead = (lead) => {
   try {
     const raw = localStorage.getItem(PENDING_LEADS_KEY);
     const list = raw ? JSON.parse(raw) : [];
+
+    // Prevent duplicate lead submission within 30 seconds for identical phone & property
+    const isDuplicate = list.some(item => 
+      item.phone === lead.phone && 
+      item.propertyId === lead.propertyId && 
+      Math.abs(Date.now() - (item.queuedAt || 0)) < 30000
+    );
+
+    if (isDuplicate) {
+      console.warn('🛡️ Duplicate lead submission prevented.');
+      return;
+    }
+
     list.push({ ...lead, queuedAt: Date.now() });
     localStorage.setItem(PENDING_LEADS_KEY, JSON.stringify(list));
     console.warn('⚠️ Lead enqueued locally for automatic background synchronization.');
@@ -80,9 +96,11 @@ export const enqueuePendingLead = (lead) => {
 
 /**
  * Synchronizes all locally queued leads to Firebase Firestore when connection is live.
+ * Guarded against duplicate concurrent task executions.
  */
 export const syncPendingLeads = async () => {
-  if (!isFirebaseConfigured() || !db) return;
+  if (!isFirebaseConfigured() || !db || isSyncingPendingLeads) return;
+  isSyncingPendingLeads = true;
   try {
     const raw = localStorage.getItem(PENDING_LEADS_KEY);
     if (!raw) return;
@@ -110,6 +128,8 @@ export const syncPendingLeads = async () => {
     }
   } catch (err) {
     console.error('Error syncing pending leads:', err);
+  } finally {
+    isSyncingPendingLeads = false;
   }
 };
 

@@ -107,6 +107,7 @@ export default function PropertyDetailPage({
     notes: ''
   });
   const [bookingSubmitted, setBookingSubmitted] = useState(false);
+  const [isBookingSubmitting, setIsBookingSubmitting] = useState(false);
   const [hpField, setHpField] = useState('');
 
   if (!property) {
@@ -128,8 +129,9 @@ export default function PropertyDetailPage({
   const priceData = formatCurrencyPrice(property.price, currency, lang);
   const benchmark = getPriceBenchmark(property, lang);
 
-  const handleBookingSubmit = (e) => {
+  const handleBookingSubmit = async (e) => {
     e.preventDefault();
+    if (isBookingSubmitting) return;
 
     // 🛡️ Anti-Bot & Spam Rate-Limit Shield
     const spamCheck = checkFormSpamProtection(hpField, 'property_inspection_booking');
@@ -143,23 +145,28 @@ export default function PropertyDetailPage({
       return;
     }
 
-    const serialCode = `1LINE-BK-${Math.floor(1000 + Math.random() * 9000)}`;
-    const fullBookingRecord = {
-      ...bookingForm,
-      serialCode,
-      propertyId: property.id,
-      propertyTitle: title,
-      propertyPrice: property.price,
-      source: 'property_detail_viewing_form',
-      createdAt: new Date().toISOString()
-    };
+    setIsBookingSubmitting(true);
+    try {
+      const serialCode = `1LINE-BK-${Math.floor(1000 + Math.random() * 9000)}`;
+      const fullBookingRecord = {
+        ...bookingForm,
+        serialCode,
+        propertyId: property.id,
+        propertyTitle: title,
+        propertyPrice: property.price,
+        source: 'property_detail_viewing_form',
+        createdAt: new Date().toISOString()
+      };
 
-    // Save lead to cloud/local queue
-    saveLead(fullBookingRecord);
+      // Save lead to cloud/local queue with automatic deduplication
+      await saveLead(fullBookingRecord);
 
-    setConfirmedBookingData(fullBookingRecord);
-    setBookingSubmitted(true);
-    setBookingConfirmationOpen(true);
+      setConfirmedBookingData(fullBookingRecord);
+      setBookingSubmitted(true);
+      setBookingConfirmationOpen(true);
+    } finally {
+      setIsBookingSubmitting(false);
+    }
   };
 
   // Similar properties in same area
@@ -430,20 +437,22 @@ export default function PropertyDetailPage({
 
             {/* TAB 3: VALUATION, PRICE TRENDS & NEARBY POIs */}
             {activeTab === 'valuation' && (
-              <div className="tab-pane-content">
-                {/* 📉 Smart Market Price Benchmark & Valuation Indicator */}
-                <PriceBenchmarkIndicator
-                  property={property}
-                  lang={lang}
-                  currency={currency}
-                />
+              <div className="tab-pane-content valuation-tab-content">
+                <div className="valuation-market-grid">
+                  {/* 📉 Smart Market Price Benchmark & Valuation Indicator */}
+                  <PriceBenchmarkIndicator
+                    property={property}
+                    lang={lang}
+                    currency={currency}
+                  />
 
-                {/* 📈 Historical Price Trends & Capital Growth Chart */}
-                <HistoricalPriceChart
-                  areaKey={property.areaKey}
-                  customPoints={property.historicalPrices}
-                  lang={lang}
-                />
+                  {/* 📈 Historical Price Trends & Capital Growth Chart */}
+                  <HistoricalPriceChart
+                    areaKey={property.areaKey}
+                    customPoints={property.historicalPrices}
+                    lang={lang}
+                  />
+                </div>
 
                 {/* 🏥🏫 Nearby Landmarks & POIs in Sohag */}
                 <NearbyAmenities
@@ -596,9 +605,9 @@ export default function PropertyDetailPage({
                     </div>
                   </div>
 
-                  <button type="submit" className="btn btn-primary btn-full">
+                  <button type="submit" className="btn btn-primary btn-full" disabled={isBookingSubmitting}>
                     <Calendar size={16} />
-                    <span>{isAr ? 'تأكيد طلب المعاينة مجاناً' : 'Confirm Free Viewing'}</span>
+                    <span>{isBookingSubmitting ? (isAr ? 'جاري تأكيد الموعد...' : 'Confirming...') : (isAr ? 'تأكيد طلب المعاينة مجاناً' : 'Confirm Free Viewing')}</span>
                   </button>
                 </form>
               )}

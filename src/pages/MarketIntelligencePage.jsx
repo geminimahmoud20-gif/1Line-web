@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   TrendingUp, 
   BarChart3, 
@@ -19,85 +19,138 @@ import {
 } from 'lucide-react';
 import { exportToCsv } from '../utils/exportCsv';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
+import { getAreas } from '../utils/areasData';
 
 export default function MarketIntelligencePage({ lang = 'ar', triggerToast }) {
   const [selectedAssetType, setSelectedAssetType] = useState('all'); // 'all' | 'residential' | 'commercial'
   const [userBudget, setUserBudget] = useState(2500000);
+  const [, setTick] = useState(0);
   const isAr = lang === 'ar';
 
+  // Live listen for area data updates from CRM
+  useEffect(() => {
+    const handleUpdate = () => setTick(t => t + 1);
+    window.addEventListener('oneline_areas_updated', handleUpdate);
+    return () => window.removeEventListener('oneline_areas_updated', handleUpdate);
+  }, []);
+
   // Live Sohag District Price Benchmark & Rental Yield Intelligence Data
-  const districtsData = [
-    {
-      id: 'corniche',
-      name_ar: 'كورنيش النيل (شرقي وغربي)',
-      name_en: 'Nile Corniche (East & West)',
-      avgPricePerSqm: 31000,
-      annualGrowth: 18.5,
-      rentalYield: 9.2,
-      demandLevel_ar: 'طلب فائق (نادر المعروض)',
-      demandLevel_en: 'Very High (Scarce)',
-      topAsset_ar: 'شقق سكنية بإطلالة نيلية',
-      topAsset_en: 'Nile View Residences',
-      category: 'residential',
-      cagr3Yrs: 54
-    },
-    {
-      id: 'east_sohag',
-      name_ar: 'شرق سوهاج (شارع الجمهورية وسيتي)',
-      name_en: 'East Sohag (Republic St & City)',
-      avgPricePerSqm: 21500,
-      annualGrowth: 24.0,
-      rentalYield: 11.0,
-      demandLevel_ar: 'نشط جداً (المركز الإداري)',
-      demandLevel_en: 'Highly Active',
-      topAsset_ar: 'مقرات إدارية وعيادات',
-      topAsset_en: 'Offices & Clinics',
-      category: 'commercial',
-      cagr3Yrs: 48
-    },
-    {
-      id: 'new_sohag',
-      name_ar: 'سوهاج الجديدة (الحي الأول والثاني والمحور)',
-      name_en: 'New Sohag (1st & 2nd Districts)',
-      avgPricePerSqm: 17800,
-      annualGrowth: 32.5,
-      rentalYield: 14.2,
-      demandLevel_ar: 'أعلى عائد رأسمالي في الصعيد',
-      demandLevel_en: 'Highest Capital Growth in Upper Egypt',
-      topAsset_ar: 'محلات ومقرات تجارية وكمبوندات',
-      topAsset_en: 'Retail Shops & Gated Villas',
-      category: 'commercial',
-      cagr3Yrs: 72
-    },
-    {
-      id: 'thakafa',
-      name_ar: 'منطقة الثقافة والمخبز الآلي',
-      name_en: 'El Thakafa & Automatic Bakery',
-      avgPricePerSqm: 15200,
-      annualGrowth: 16.0,
-      rentalYield: 8.8,
-      demandLevel_ar: 'طلب سكني مستقر',
-      demandLevel_en: 'Stable Residential',
-      topAsset_ar: 'شقق سكنية عائلية',
-      topAsset_en: 'Family Apartments',
-      category: 'residential',
-      cagr3Yrs: 36
-    },
-    {
-      id: 'tahta_girga',
-      name_ar: 'مراكز المحافظة (طهطا وجرجا)',
-      name_en: 'Major Hubs (Tahta & Girga)',
-      avgPricePerSqm: 13500,
-      annualGrowth: 14.5,
-      rentalYield: 9.5,
-      demandLevel_ar: 'نشاط تجاري مرتفع',
-      demandLevel_en: 'High Commercial Activity',
-      topAsset_ar: 'أراضي ومحلات رئيسية',
-      topAsset_en: 'Plots & Main Street Shops',
-      category: 'commercial',
-      cagr3Yrs: 30
-    }
-  ];
+  const districtsData = useMemo(() => {
+    const rawAreas = getAreas().filter(a => a.id !== 'all');
+    
+    // Metadata presets per district ID to enrich dynamic prices
+    const districtMeta = {
+      corniche: {
+        rentalYield: 9.2,
+        demandLevel_ar: 'طلب فائق (نادر المعروض)',
+        demandLevel_en: 'Very High (Scarce)',
+        topAsset_ar: 'شقق سكنية بإطلالة نيلية',
+        topAsset_en: 'Nile View Residences',
+        category: 'residential'
+      },
+      east: {
+        rentalYield: 11.0,
+        demandLevel_ar: 'نشط جداً (المركز الإداري والمالي)',
+        demandLevel_en: 'Highly Active',
+        topAsset_ar: 'مقرات إدارية وعيادات',
+        topAsset_en: 'Offices & Clinics',
+        category: 'commercial'
+      },
+      new_sohag: {
+        rentalYield: 14.2,
+        demandLevel_ar: 'أعلى عائد رأسمالي في الصعيد',
+        demandLevel_en: 'Highest Capital Growth in Upper Egypt',
+        topAsset_ar: 'محلات ومقرات تجارية وكمبوندات',
+        topAsset_en: 'Retail Shops & Gated Villas',
+        category: 'commercial'
+      },
+      center: {
+        rentalYield: 10.5,
+        demandLevel_ar: 'حركة تجارية مستمرة (قلب المدينة)',
+        demandLevel_en: 'Continuous Downtown Traffic',
+        topAsset_ar: 'صيدليات ومحلات تجزئة',
+        topAsset_en: 'Pharmacies & Retail Stores',
+        category: 'commercial'
+      },
+      kawthar: {
+        rentalYield: 12.8,
+        demandLevel_ar: 'نمو صناعي ولوجستي واعد',
+        demandLevel_en: 'Industrial & Logistics Expansion',
+        topAsset_ar: 'مستودعات ومصانع وسكن متميز',
+        topAsset_en: 'Warehouses & Industrial Sites',
+        category: 'commercial'
+      },
+      thakafa: {
+        rentalYield: 8.8,
+        demandLevel_ar: 'طلب سكني عائلي مستقر',
+        demandLevel_en: 'Stable Residential',
+        topAsset_ar: 'شقق سكنية عائلية',
+        topAsset_en: 'Family Apartments',
+        category: 'residential'
+      },
+      tahta: {
+        rentalYield: 10.2,
+        demandLevel_ar: 'عاصمة التجارة والأثاث شمالاً',
+        demandLevel_en: 'Northern Commercial Hub',
+        topAsset_ar: 'محلات تجارية وأراضي استثمارية',
+        topAsset_en: 'Commercial Outlets & Land',
+        category: 'commercial'
+      },
+      girga: {
+        rentalYield: 9.5,
+        demandLevel_ar: 'مركز الثقل الاقتصادي جنوباً',
+        demandLevel_en: 'Southern Commercial Center',
+        topAsset_ar: 'عقارات شارع البحر والكورنيش',
+        topAsset_en: 'Waterfront & Bahr St Real Estate',
+        category: 'commercial'
+      },
+      west: {
+        rentalYield: 8.5,
+        demandLevel_ar: 'طلب سكني متصل بالمحطة',
+        demandLevel_en: 'Transit & Residential Demand',
+        topAsset_ar: 'وحدات سكنية وتجارية',
+        topAsset_en: 'Mixed-Use Units',
+        category: 'residential'
+      },
+      akhmeem: {
+        rentalYield: 9.0,
+        demandLevel_ar: 'تراث ونشاط سكني تجاري متنامي',
+        demandLevel_en: 'Historic & Commercial Growth',
+        topAsset_ar: 'شقق سكنية وأسواق تجزئة',
+        topAsset_en: 'Apartments & Retail Stalls',
+        category: 'residential'
+      }
+    };
+
+    return rawAreas.map(area => {
+      const meta = districtMeta[area.id] || {
+        rentalYield: 9.5,
+        demandLevel_ar: 'طلب استثماري مستقر',
+        demandLevel_en: 'Stable Demand',
+        topAsset_ar: 'وحدات سكنية وتجارية',
+        topAsset_en: 'Mixed-Use Real Estate',
+        category: 'residential'
+      };
+
+      const cagr = area.annualGrowthRate || 75;
+      const annualGrowth = Number((cagr / 3.2).toFixed(1));
+
+      return {
+        id: area.id,
+        name_ar: area.name_ar,
+        name_en: area.name_en,
+        avgPricePerSqm: area.avgPricePerMeter || 15000,
+        annualGrowth: annualGrowth,
+        cagr3Yrs: cagr,
+        rentalYield: meta.rentalYield,
+        demandLevel_ar: meta.demandLevel_ar,
+        demandLevel_en: meta.demandLevel_en,
+        topAsset_ar: meta.topAsset_ar,
+        topAsset_en: meta.topAsset_en,
+        category: meta.category
+      };
+    });
+  }, [tick]);
 
   const filteredDistricts = selectedAssetType === 'all' 
     ? districtsData 
