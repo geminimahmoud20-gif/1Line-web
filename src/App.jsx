@@ -843,6 +843,8 @@ export default function App() {
                 onToggleCompare={toggleCompare}
                 onQuickView={handleOpenQuickView}
                 onOpenAddDemand={() => setAddDemandModalOpen(true)}
+                onAddNewLead={handleAddNewLead}
+                triggerToast={triggerToast}
               />
             }
           />

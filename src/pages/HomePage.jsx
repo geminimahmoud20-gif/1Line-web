@@ -23,6 +23,7 @@ import AboutFounderSection from '../components/home/AboutFounderSection';
 import SponsoredAdsShowcase from '../components/home/SponsoredAdsShowcase';
 import MortgageRoiCalculator from '../components/calculators/MortgageRoiCalculator';
 import MarketTickerBar from '../components/home/MarketTickerBar';
+import ExpressLeadStrip from '../components/home/ExpressLeadStrip';
 import { PROPERTY_TYPES, PROPERTIES_DATA } from '../data/propertiesData';
 import { MEGA_PROJECTS } from '../data/projectsData';
 import { TESTIMONIALS, INITIAL_DEMANDS } from '../data/mockData';
@@ -40,7 +41,9 @@ export default function HomePage({
   compareList = [],
   onToggleCompare,
   onQuickView,
-  onOpenAddDemand
+  onOpenAddDemand,
+  onAddNewLead,
+  triggerToast
 }) {
   const navigate = useNavigate();
 
@@ -541,6 +544,13 @@ export default function HomePage({
 
       {/* 📈 REAL-TIME SOHAG PROPTECH MARKET TICKER */}
       <MarketTickerBar lang={lang} />
+
+      {/* ⚡ 1-CLICK 10-SECOND EXPRESS LEAD STRIP */}
+      <ExpressLeadStrip 
+        lang={lang} 
+        onAddNewLead={onAddNewLead} 
+        triggerToast={triggerToast} 
+      />
 
       {/* 🏢 2. SOHAG LIVE MARKETPLACE HUB (Consolidated Segmented Discovery) */}
       <section className="homepage-section bg-surface" id="marketplace-hub">
