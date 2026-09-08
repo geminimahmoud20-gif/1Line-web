@@ -2,19 +2,24 @@ import { useState } from 'react';
 import { Download, MessageSquare, Share2, Check, Sparkles } from 'lucide-react';
 import { generatePropertyPdf } from '../../utils/pdfBrochure';
 import { getWhatsAppUrl, getDynamicPhone } from '../../utils/founderCmsData';
+import { formatCurrencyPrice, getPriceBenchmark } from '../../utils/currencyAndBenchmark';
 
-export default function WhatsAppAutomationBar({ property, lang = 'ar', triggerToast, onOpenStoryCard }) {
+export default function WhatsAppAutomationBar({ property, lang = 'ar', currency = 'EGP', triggerToast, onOpenStoryCard }) {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const isAr = lang === 'ar';
   const title = isAr ? property.title_ar : property.title_en;
   const location = isAr ? property.locationName_ar : property.locationName_en;
-  const priceFormatted = `${property.price.toLocaleString()} ${isAr ? 'ج.م' : 'EGP'}`;
+  const priceData = formatCurrencyPrice(property.price, currency, lang);
+  const benchmark = getPriceBenchmark(property, lang);
+
+  const priceFormatted = `${priceData.primary} ${priceData.symbol}${priceData.isConverted ? ` (≈ ${priceData.originalEgp})` : ''}`;
   const downPaymentFormatted = `${property.downPayment?.toLocaleString() || 0} ${isAr ? 'ج.م' : 'EGP'}`;
   const monthlyFormatted = `${property.monthlyInstallment?.toLocaleString() || 0} ${isAr ? 'ج.م' : 'EGP'}`;
   const legalId = property.legalStatus?.inspectionReportId || `LAW-SOH-${property.id.toUpperCase()}`;
   const dynamicPhone = getDynamicPhone();
+  const benchmarkLine = benchmark ? (isAr ? `📊 *تقييم السعر بالحي:* ${benchmark.badgeLabel}\n` : `📊 *District Benchmark:* ${benchmark.badgeLabel}\n`) : '';
 
   // Formatted WhatsApp Message for Client
   const whatsAppText = isAr
@@ -23,7 +28,7 @@ export default function WhatsAppAutomationBar({ property, lang = 'ar', triggerTo
 📌 *العقار:* ${title}
 📍 *الموقع:* ${location}
 💰 *السعر الإجمالي:* ${priceFormatted}
-💵 *المقدم المطلوب:* ${downPaymentFormatted}
+${benchmarkLine}💵 *المقدم المطلوب:* ${downPaymentFormatted}
 🗓️ *القسط الشهري:* ${monthlyFormatted}
 📐 *المساحة:* ${property.size} متر مربع (${property.bedrooms || 0} غرف نوم)
 🛡️ *كود الفحص والضمان القانوني:* ${legalId} (100% مسجل ومرخص)
@@ -35,7 +40,7 @@ export default function WhatsAppAutomationBar({ property, lang = 'ar', triggerTo
 📌 *Listing:* ${title}
 📍 *Location:* ${location}
 💰 *Price:* ${priceFormatted}
-💵 *Downpayment:* ${downPaymentFormatted}
+${benchmarkLine}💵 *Downpayment:* ${downPaymentFormatted}
 🗓️ *Monthly Installment:* ${monthlyFormatted}
 📐 *Area:* ${property.size} sqm (${property.bedrooms || 0} Beds)
 🛡️ *Legal Audit ID:* ${legalId} (100% Verified)

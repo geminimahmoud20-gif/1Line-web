@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { getPropertyViews } from '../../utils/visitorTracker';
 import { getFounderSettings, getWhatsAppUrl } from '../../utils/founderCmsData';
+import { formatCurrencyPrice, getPriceBenchmark } from '../../utils/currencyAndBenchmark';
 import BrandWatermark from '../common/BrandWatermark';
 
 const FALLBACK_PROPERTY_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 500' fill='%23071e3d'%3E%3Crect width='800' height='500' fill='%23071e3d'/%3E%3Cpath d='M400 130 L620 320 L180 320 Z' fill='%230b4ea2' opacity='0.7'/%3E%3Crect x='340' y='220' width='120' height='100' rx='20' fill='%23fdcb42' opacity='0.85'/%3E%3Ctext x='50%25' y='75%25' dominant-baseline='middle' text-anchor='middle' fill='%23ffffff' font-family='sans-serif' font-size='24' font-weight='bold'%3E1LINE REAL ESTATE%3C/text%3E%3Ctext x='50%25' y='85%25' dominant-baseline='middle' text-anchor='middle' fill='%23fdcb42' font-family='sans-serif' font-size='16'%3E%D8%B9%D9%82%D8%A7%D8%B1%D8%A7%D8%AA%20%D8%B3%D9%88%D9%87%D8%A7%D8%AC%20%D8%A7%D9%84%D9%85%D8%B9%D8%AA%D9%85%D8%AF%D8%A9%3C/text%3E%3C/svg%3E";
@@ -24,6 +25,7 @@ const FALLBACK_PROPERTY_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.or
 export default function PropertyCard({ 
   property, 
   lang = 'ar', 
+  currency = 'EGP',
   isFavorite = false, 
   onToggleFavorite, 
   isCompared = false, 
@@ -38,6 +40,8 @@ export default function PropertyCard({
   const badge = lang === 'ar' ? property.badge_ar : property.badge_en;
   const viewsCount = getPropertyViews(property.id);
   const imagesList = property.images && property.images.length > 0 ? property.images : [FALLBACK_PROPERTY_IMG];
+  const priceData = formatCurrencyPrice(property.price, currency, lang);
+  const benchmark = getPriceBenchmark(property, lang);
 
   return (
     <div className="property-card-modern cinematic-card">
@@ -167,18 +171,25 @@ export default function PropertyCard({
           )}
         </div>
 
-        {/* Bottom Price Tag on Image */}
+        {/* Bottom Price Tag on Image with Multi-Currency Support */}
         <div className="card-price-overlay">
-          <span className="price-val">{property.price.toLocaleString()}</span>
-          <span className="price-curr">{lang === 'ar' ? 'ج.م' : 'EGP'}</span>
+          <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '4px' }}>
+            <span className="price-val">{priceData.primary}</span>
+            <span className="price-curr">{priceData.symbol}</span>
+          </div>
+          {priceData.isConverted && (
+            <span className="price-converted-sub" style={{ fontSize: '0.68rem', opacity: 0.88, display: 'block' }}>
+              ≈ {priceData.originalEgp}
+            </span>
+          )}
         </div>
       </div>
 
       {/* Card Content */}
       <div className="property-card-body">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
-          <div className="property-location-tag" style={{ margin: 0, color: '#1e293b', fontWeight: '700' }}>
-            <MapPin size={14} style={{ color: '#0d48a1' }} />
+          <div className="property-location-tag" style={{ margin: 0, color: 'var(--text-secondary)', fontWeight: '700' }}>
+            <MapPin size={14} style={{ color: 'var(--brand-navy-light, #0284c7)' }} />
             <span>{location}</span>
           </div>
           <span style={{
@@ -186,55 +197,82 @@ export default function PropertyCard({
             alignItems: 'center',
             gap: '4px',
             fontSize: '0.7rem',
-            color: '#065f46',
-            background: '#ecfdf5',
-            border: '1px solid #10b981',
+            color: '#10b981',
+            background: 'rgba(16, 185, 129, 0.12)',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
             padding: '3px 8px',
             borderRadius: '6px',
             fontWeight: '800'
           }}>
-            <ShieldCheck size={12} style={{ color: '#059669' }} />
+            <ShieldCheck size={12} style={{ color: '#10b981' }} />
             <span>{lang === 'ar' ? '🛡️ سند ملكية وتراخيص مفحوصة 100%' : '100% Verified Legal Deed'}</span>
           </span>
         </div>
 
         <h3 className="property-card-title">
-          <Link to={`/properties/${property.id}`} style={{ color: '#0a192f', fontWeight: '800' }}>{title}</Link>
+          <Link to={`/properties/${property.id}`} style={{ color: 'var(--text-primary)', fontWeight: '800' }}>{title}</Link>
         </h3>
 
         {/* Specs Grid */}
         <div className="property-specs-grid">
           <div className="spec-item" title={lang === 'ar' ? 'المساحة' : 'Area'}>
-            <Maximize2 size={15} style={{ color: '#0d48a1' }} />
-            <span style={{ color: '#0f172a', fontWeight: '700' }}>{property.size} {lang === 'ar' ? 'م²' : 'sqm'}</span>
+            <Maximize2 size={15} style={{ color: 'var(--brand-navy-light, #0284c7)' }} />
+            <span style={{ color: 'var(--text-secondary)', fontWeight: '700' }}>{property.size} {lang === 'ar' ? 'م²' : 'sqm'}</span>
           </div>
           {property.bedrooms > 0 && (
             <div className="spec-item" title={lang === 'ar' ? 'غرف النوم' : 'Bedrooms'}>
-              <BedDouble size={16} style={{ color: '#d97706' }} />
-              <span style={{ color: '#0f172a', fontWeight: '700' }}>{property.bedrooms} {lang === 'ar' ? 'غرف' : 'Beds'}</span>
+              <BedDouble size={16} style={{ color: 'var(--accent-gold, #f59e0b)' }} />
+              <span style={{ color: 'var(--text-secondary)', fontWeight: '700' }}>{property.bedrooms} {lang === 'ar' ? 'غرف' : 'Beds'}</span>
             </div>
           )}
           {property.bathrooms > 0 && (
             <div className="spec-item" title={lang === 'ar' ? 'الحمامات' : 'Bathrooms'}>
-              <Bath size={15} style={{ color: '#0284c7' }} />
-              <span style={{ color: '#0f172a', fontWeight: '700' }}>{property.bathrooms} {lang === 'ar' ? 'حمام' : 'Baths'}</span>
+              <Bath size={15} style={{ color: 'var(--primary-light, #38bdf8)' }} />
+              <span style={{ color: 'var(--text-secondary)', fontWeight: '700' }}>{property.bathrooms} {lang === 'ar' ? 'حمام' : 'Baths'}</span>
             </div>
           )}
         </div>
 
+        {/* 📊 Sohag District Price Benchmark Strip */}
+        {benchmark && (
+          <div 
+            className="card-benchmark-strip" 
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '6px 10px',
+              margin: '8px 0 10px',
+              borderRadius: '8px',
+              background: benchmark.badgeBg,
+              border: `1px solid ${benchmark.badgeColor}33`,
+              color: benchmark.badgeColor,
+              fontSize: '0.74rem',
+              fontWeight: '800'
+            }}
+            title={lang === 'ar' ? `سعر المتر المحسوب: ${benchmark.pricePerMeterFormatted}` : `Price per m²: ${benchmark.pricePerMeterFormatted}`}
+          >
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+              <span>{benchmark.badgeType === 'deal' ? '🔥' : benchmark.badgeType === 'premium' ? '💎' : '⚖️'}</span>
+              <span>{benchmark.badgeLabel}</span>
+            </span>
+            <span style={{ fontSize: '0.72rem', opacity: 0.92, direction: 'ltr', fontWeight: '800' }}>{benchmark.pricePerMeterFormatted}</span>
+          </div>
+        )}
+
         {/* Payment Plan / Downpayment Summary */}
         <div className="property-card-finance" style={{
-          background: 'linear-gradient(135deg, rgba(11, 78, 162, 0.04) 0%, rgba(240, 246, 255, 0.95) 100%)',
-          border: '1px solid rgba(11, 78, 162, 0.14)',
+          background: 'var(--bg-card-hover, rgba(11, 78, 162, 0.04))',
+          border: '1px solid var(--border-color)',
           borderRadius: '10px'
         }}>
           <div className="finance-mini-item">
-            <span className="finance-label" style={{ color: '#475569', fontWeight: '600' }}>{lang === 'ar' ? 'مقدم يبدأ من:' : 'Min Downpayment:'}</span>
-            <span className="finance-value" style={{ color: '#0f172a', fontWeight: '800' }}>{property.downPayment.toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}</span>
+            <span className="finance-label" style={{ color: 'var(--text-muted)', fontWeight: '600' }}>{lang === 'ar' ? 'مقدم يبدأ من:' : 'Min Downpayment:'}</span>
+            <span className="finance-value" style={{ color: 'var(--text-primary)', fontWeight: '800' }}>{property.downPayment.toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}</span>
           </div>
           <div className="finance-mini-item">
-            <span className="finance-label" style={{ color: '#475569', fontWeight: '600' }}>{lang === 'ar' ? 'قسط شهري:' : 'Monthly:'}</span>
-            <span className="finance-value highlight" style={{ color: '#0b4ea2', fontWeight: '900', fontSize: '0.85rem' }}>{property.monthlyInstallment.toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}</span>
+            <span className="finance-label" style={{ color: 'var(--text-muted)', fontWeight: '600' }}>{lang === 'ar' ? 'قسط شهري:' : 'Monthly:'}</span>
+            <span className="finance-value highlight" style={{ color: 'var(--brand-gold-warm, #f59e0b)', fontWeight: '900', fontSize: '0.85rem' }}>{property.monthlyInstallment.toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}</span>
           </div>
         </div>
 

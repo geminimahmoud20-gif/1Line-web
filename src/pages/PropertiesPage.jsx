@@ -15,6 +15,7 @@ import { searchPropertiesSemantic, parseSemanticQuery } from '../utils/semanticS
 
 export default function PropertiesPage({
   lang,
+  currency = 'EGP',
   properties,
   favorites,
   onToggleFavorite,
@@ -265,6 +266,7 @@ export default function PropertiesPage({
                         <PropertyCard
                           property={prop}
                           lang={lang}
+                          currency={currency}
                           isFavorite={favorites.includes(prop.id)}
                           onToggleFavorite={onToggleFavorite}
                           isCompared={compareList.some(c => c.id === prop.id)}
@@ -347,6 +349,7 @@ export default function PropertiesPage({
                       key={prop.id}
                       property={prop}
                       lang={lang}
+                      currency={currency}
                       isFavorite={favorites.includes(prop.id)}
                       onToggleFavorite={onToggleFavorite}
                       isCompared={compareList.some(c => c.id === prop.id)}

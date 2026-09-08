@@ -2,15 +2,18 @@ import { X, MapPin, Maximize2, BedDouble, Bath, MessageSquare, ArrowLeft, ArrowR
 import { Link } from 'react-router-dom';
 import { generatePropertyPdf } from '../../utils/pdfBrochure';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
+import { formatCurrencyPrice, getPriceBenchmark } from '../../utils/currencyAndBenchmark';
 import BrandWatermark from './BrandWatermark';
 
-export default function QuickViewModal({ property, lang = 'ar', onClose }) {
+export default function QuickViewModal({ property, lang = 'ar', currency = 'EGP', onClose }) {
   if (!property) return null;
 
   const isAr = lang === 'ar';
   const title = isAr ? property.title_ar : property.title_en;
   const location = isAr ? property.locationName_ar : property.locationName_en;
   const description = isAr ? property.description_ar : property.description_en;
+  const priceData = formatCurrencyPrice(property.price, currency, lang);
+  const benchmark = getPriceBenchmark(property, lang);
 
   return (
     <div className="quickview-modal-backdrop" onClick={onClose}>
@@ -26,7 +29,12 @@ export default function QuickViewModal({ property, lang = 'ar', onClose }) {
             <img src={property.images[0]} alt={title} className="quickview-img" />
             <BrandWatermark size="md" position="bottom-right" />
             <div className="quickview-price-badge-floating">
-              <span className="price-tag-big">{property.price.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</span>
+              <span className="price-tag-big">{priceData.primary} {priceData.symbol}</span>
+              {priceData.isConverted && (
+                <span style={{ fontSize: '0.72rem', opacity: 0.9, display: 'block', fontWeight: 600 }}>
+                  ≈ {priceData.originalEgp}
+                </span>
+              )}
             </div>
           </div>
 

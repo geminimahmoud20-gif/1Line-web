@@ -15,27 +15,57 @@ export default function LiveActivityToast({ lang = 'ar' }) {
   const isAr = lang === 'ar';
   const location = useLocation();
 
+  const handleDismiss = () => {
+    setVisible(false);
+    try {
+      sessionStorage.setItem('oneline_dismissed_live_activity', 'true');
+    } catch {
+      // Storage unavailable fallback
+    }
+  };
+
   const showRandomActivity = useCallback(() => {
+    try {
+      if (sessionStorage.getItem('oneline_dismissed_live_activity') === 'true') {
+        return;
+      }
+    } catch {
+      // Storage unavailable fallback
+    }
+
+    // Suppress on mobile devices to prevent touch collision
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+      return;
+    }
+
     const randomItem = ACTIVITIES[Math.floor(Math.random() * ACTIVITIES.length)];
     setCurrentActivity(randomItem);
     setVisible(true);
 
-    // Auto-hide after 6 seconds
+    // Auto-hide after 5 seconds
     setTimeout(() => {
       setVisible(false);
-    }, 6000);
+    }, 5000);
   }, []);
 
   useEffect(() => {
-    // Initial delay before showing first activity
+    try {
+      if (sessionStorage.getItem('oneline_dismissed_live_activity') === 'true') {
+        return;
+      }
+    } catch {
+      // Storage unavailable fallback
+    }
+
+    // Gentle initial delay
     const initialTimer = setTimeout(() => {
       showRandomActivity();
-    }, 4000);
+    }, 10000);
 
-    // Recurring interval
+    // Calm 60s interval
     const interval = setInterval(() => {
       showRandomActivity();
-    }, 28000);
+    }, 60000);
 
     return () => {
       clearTimeout(initialTimer);
@@ -46,8 +76,8 @@ export default function LiveActivityToast({ lang = 'ar' }) {
   if (!visible || !currentActivity || location.pathname.startsWith('/crm')) return null;
 
   return (
-    <div className="live-activity-toast-pill">
-      <button type="button" className="close-activity-btn" onClick={() => setVisible(false)}>
+    <div className="live-activity-toast-pill" role="status" aria-live="polite">
+      <button type="button" className="close-activity-btn" onClick={handleDismiss} aria-label={isAr ? 'إغلاق الإشعار' : 'Dismiss notification'}>
         <X size={13} />
       </button>
 

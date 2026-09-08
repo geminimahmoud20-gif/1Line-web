@@ -16,7 +16,9 @@ import {
   Lock, 
   Filter, 
   Clock, 
-  FileText 
+  FileText,
+  Home,
+  Landmark
 } from 'lucide-react';
 import PropertyCard from '../components/properties/PropertyCard';
 import AboutFounderSection from '../components/home/AboutFounderSection';
@@ -34,6 +36,7 @@ import { parseSemanticQuery, SEMANTIC_SEARCH_PRESETS } from '../utils/semanticSe
 
 export default function HomePage({ 
   lang, 
+  currency = 'EGP',
   properties, 
   demands = [], 
   favorites, 
@@ -220,52 +223,43 @@ export default function HomePage({
             <div className="hero-search-tabs">
               <button
                 type="button"
-                className={`hero-tab ${searchPurpose === 'buy' ? 'active' : ''}`}
-                onClick={() => {
-                  setSearchPurpose('buy');
-                  setSearchType('all');
-                }}
+                className={`hero-tab ${searchType === 'all' ? 'active' : ''}`}
+                onClick={() => setSearchType('all')}
               >
                 <Building size={14} />
-                <span>{lang === 'ar' ? 'شراء عقار' : 'Buy Property'}</span>
+                <span>{lang === 'ar' ? 'جميع العقارات' : 'All Properties'}</span>
               </button>
               <button
                 type="button"
-                className="hero-tab"
-                onClick={() => navigate('/sell')}
-                title={lang === 'ar' ? 'اعرض أو قيم عقارك للبيع' : 'Sell or Value Property'}
+                className={`hero-tab ${searchType === 'apartment' ? 'active' : ''}`}
+                onClick={() => setSearchType('apartment')}
               >
-                <TrendingUp size={14} />
-                <span>{lang === 'ar' ? 'بيع / قيّم عقارك' : 'Sell / Value'}</span>
+                <Home size={14} />
+                <span>{lang === 'ar' ? 'شقق وسكني' : 'Residential'}</span>
               </button>
               <button
                 type="button"
-                className={`hero-tab ${searchPurpose === 'invest' ? 'active' : ''}`}
-                onClick={() => {
-                  setSearchPurpose('invest');
-                  setSearchType('commercial');
-                }}
+                className={`hero-tab ${searchType === 'commercial' ? 'active' : ''}`}
+                onClick={() => setSearchType('commercial')}
               >
                 <Award size={14} />
-                <span>{lang === 'ar' ? 'استثمار وتجاري' : 'Commercial & Invest'}</span>
+                <span>{lang === 'ar' ? 'تجاري ومحلات' : 'Commercial'}</span>
               </button>
               <button
                 type="button"
-                className="hero-tab"
-                onClick={() => navigate('/demands')}
-                title={lang === 'ar' ? 'استعراض كل طلبات المشترين الحية' : 'Live Demands'}
+                className={`hero-tab ${searchType === 'villa' ? 'active' : ''}`}
+                onClick={() => setSearchType('villa')}
               >
-                <Users size={14} />
-                <span>{lang === 'ar' ? 'طلبات المشترين الحية' : 'Live Demands'}</span>
+                <Sparkles size={14} />
+                <span>{lang === 'ar' ? 'فيلات ودوبلكس' : 'Villas'}</span>
               </button>
               <button
                 type="button"
-                className="hero-tab hero-tab-vip"
-                onClick={() => navigate('/special-requests')}
-                title={lang === 'ar' ? 'طلب عقار بمواصفات خاصة VIP' : 'Special Bespoke Requests VIP'}
+                className={`hero-tab ${searchType === 'land' ? 'active' : ''}`}
+                onClick={() => setSearchType('land')}
               >
-                <FileText size={14} className="text-gold" />
-                <span>{lang === 'ar' ? 'الطلبات الخاصة VIP' : 'Special Requests VIP'}</span>
+                <Landmark size={14} />
+                <span>{lang === 'ar' ? 'أراضي واستثمار' : 'Lands'}</span>
               </button>
             </div>
 
@@ -514,15 +508,15 @@ export default function HomePage({
               );
             })}
           </div>
-          {/* ⚡ Quick Portals & Action Services Deck (Instant 1-Click Access) */}
+          {/* ⚡ Quick VIP Portals & Action Services Deck (Instant 1-Click Access) */}
           <div className="quick-portals-deck">
             {[
-              { path: '/buy', icon: Building, label_ar: 'معالج الشراء', label_en: 'Buy Wizard' },
-              { path: '/sell', icon: TrendingUp, label_ar: 'عرض عقار وتقييم', label_en: 'Sell & Valuation' },
-              { path: '/financing', icon: Calculator, label_ar: 'حاسبة الأقساط', label_en: 'Mortgage Plans' },
-              { path: '/investor', icon: Award, label_ar: 'كبار المستثمرين', label_en: 'Investor Hub' },
-              { path: '/broker', icon: Users, label_ar: 'شبكة الوسطاء', label_en: 'Brokers' },
-              { path: '/vault', icon: Lock, label_ar: 'الخزينة السرية', label_en: 'Private Vault' }
+              { path: '/buy', icon: Building, label_ar: 'معالج الشراء الذكي', label_en: 'Buy Wizard', color: 'var(--brand-navy-light, #0284c7)', bg: 'rgba(2, 132, 199, 0.12)' },
+              { path: '/sell', icon: TrendingUp, label_ar: 'عرض عقار وتقييم', label_en: 'Sell & Valuation', color: '#10b981', bg: 'rgba(16, 185, 129, 0.12)' },
+              { path: '/demands', icon: Users, label_ar: 'طلبات المشترين الكاش', label_en: 'Cash Demands', color: 'var(--brand-gold-warm, #f59e0b)', bg: 'rgba(245, 158, 11, 0.14)' },
+              { path: '/financing', icon: Calculator, label_ar: 'حاسبة الأقساط والتمويل', label_en: 'Mortgage Plans', color: 'var(--brand-navy-light, #0284c7)', bg: 'rgba(2, 132, 199, 0.12)' },
+              { path: '/special-requests', icon: Sparkles, label_ar: 'الطلبات الخاصة VIP', label_en: 'Bespoke VIP', color: 'var(--brand-gold, #ffca28)', bg: 'rgba(255, 202, 40, 0.16)' },
+              { path: '/vault', icon: Lock, label_ar: 'الخزينة الحصرية', label_en: 'Private Vault', color: '#10b981', bg: 'rgba(16, 185, 129, 0.12)' }
             ].map((p, idx) => {
               const IconComponent = p.icon;
               return (
@@ -531,7 +525,7 @@ export default function HomePage({
                   to={p.path}
                   className="quick-portal-pill"
                 >
-                  <span className="portal-icon-wrapper">
+                  <span className="portal-icon-wrapper" style={{ color: p.color, background: p.bg, borderColor: `${p.color}40` }}>
                     <IconComponent size={14} />
                   </span>
                   <span>{lang === 'ar' ? p.label_ar : p.label_en}</span>
@@ -565,10 +559,10 @@ export default function HomePage({
                 ● {lang === 'ar' ? 'تحديث لحظي مباشر' : 'Live Stream'}
               </span>
             </div>
-            <h2 style={{ fontSize: '1.75rem', fontWeight: '900', color: '#0f172a', margin: 0 }}>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: '900', color: 'var(--text-primary)', margin: 0 }}>
               {lang === 'ar' ? 'أحدث العقارات والطلبات الاستثمارية الحية' : 'Featured Properties & Live Demands'}
             </h2>
-            <p style={{ color: '#334155', fontSize: '0.9rem', marginTop: '6px', marginBottom: 0 }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '6px', marginBottom: 0 }}>
               {lang === 'ar' ? 'تصفح أحدث الوحدات المفحوصة هندسياً وقانونياً أو طابق عقارك مع مشتري الكاش الجاهزين فوراً' : 'Certified properties & instant matching with serious cash buyers in Sohag'}
             </p>
           </div>
@@ -638,6 +632,7 @@ export default function HomePage({
                     key={prop.id}
                     property={prop}
                     lang={lang}
+                    currency={currency}
                     isFavorite={favorites.includes(prop.id)}
                     onToggleFavorite={onToggleFavorite}
                     isCompared={compareList.some(c => c.id === prop.id)}
@@ -750,15 +745,15 @@ export default function HomePage({
                       {dem.urgency === 'high' ? (lang === 'ar' ? '🔥 مستعجل كاش' : 'Urgent Cash') : (lang === 'ar' ? '⭐ طلب جاد' : 'Serious Buyer')}
                     </span>
                   </div>
-                  <p className="demand-text" style={{ color: '#0f172a', fontWeight: '700' }}>{lang === 'ar' ? dem.text_ar : dem.text_en}</p>
+                  <p className="demand-text" style={{ color: 'var(--text-primary)', fontWeight: '700' }}>{lang === 'ar' ? dem.text_ar : dem.text_en}</p>
                   <div className="demand-footer-row">
                     <div className="demand-meta-item">
-                      <MapPin size={14} style={{ color: '#0d48a1' }} />
-                      <span style={{ color: '#1e293b', fontWeight: '800' }}>{lang === 'ar' ? (dem.area_ar || dem.area) : (dem.area_en || dem.area)}</span>
+                      <MapPin size={14} style={{ color: 'var(--brand-navy-light, #0284c7)' }} />
+                      <span style={{ color: 'var(--text-secondary)', fontWeight: '800' }}>{lang === 'ar' ? (dem.area_ar || dem.area) : (dem.area_en || dem.area)}</span>
                     </div>
                     <div className="demand-meta-item">
                       <DollarSign size={14} className="text-gold" />
-                      <span style={{ color: '#0d48a1', fontWeight: '900', fontSize: '0.92rem' }}>
+                      <span style={{ color: 'var(--brand-gold-warm, #f59e0b)', fontWeight: '900', fontSize: '0.92rem' }}>
                         {(typeof dem.budget === 'number' ? dem.budget : parseInt(String(dem.budget).replace(/,/g, ''))).toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}
                       </span>
                     </div>
@@ -814,20 +809,20 @@ export default function HomePage({
           {/* Dual Segment Switcher (Royal Blue & Amber Palette) */}
           <div style={{
             display: 'inline-flex',
-            background: '#f8fafc',
+            background: 'var(--bg-card, #f8fafc)',
             padding: '5px',
             borderRadius: 'var(--radius-pill)',
-            border: '1px solid rgba(11, 78, 162, 0.15)',
+            border: '1px solid var(--border-color)',
             gap: '6px',
             marginTop: '16px',
-            boxShadow: '0 4px 14px rgba(11, 78, 162, 0.08)'
+            boxShadow: 'var(--shadow-sm)'
           }}>
             <button
               type="button"
               onClick={() => setInsightsTab('calculator')}
               style={{
                 background: insightsTab === 'calculator' ? 'linear-gradient(135deg, #0b4ea2 0%, #073875 100%)' : 'transparent',
-                color: insightsTab === 'calculator' ? '#ffffff' : '#475569',
+                color: insightsTab === 'calculator' ? '#ffffff' : 'var(--text-secondary)',
                 border: insightsTab === 'calculator' ? '1px solid rgba(253, 203, 66, 0.35)' : 'none',
                 borderRadius: 'var(--radius-pill)',
                 padding: '9px 24px',
@@ -841,7 +836,7 @@ export default function HomePage({
                 transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
               }}
             >
-              <Calculator size={16} style={{ color: insightsTab === 'calculator' ? '#fdcb42' : '#0b4ea2' }} />
+              <Calculator size={16} style={{ color: insightsTab === 'calculator' ? '#fdcb42' : 'var(--brand-navy-light, #0284c7)' }} />
               <span>{lang === 'ar' ? 'حاسبة التمويل والأقساط الذكية' : 'Mortgage & ROI Simulator'}</span>
             </button>
 
@@ -850,7 +845,7 @@ export default function HomePage({
               onClick={() => setInsightsTab('founder')}
               style={{
                 background: insightsTab === 'founder' ? 'linear-gradient(135deg, #0b4ea2 0%, #073875 100%)' : 'transparent',
-                color: insightsTab === 'founder' ? '#ffffff' : '#475569',
+                color: insightsTab === 'founder' ? '#ffffff' : 'var(--text-secondary)',
                 border: insightsTab === 'founder' ? '1px solid rgba(253, 203, 66, 0.35)' : 'none',
                 borderRadius: 'var(--radius-pill)',
                 padding: '9px 24px',
@@ -864,7 +859,7 @@ export default function HomePage({
                 transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
               }}
             >
-              <ShieldCheck size={16} style={{ color: insightsTab === 'founder' ? '#fdcb42' : '#0b4ea2' }} />
+              <ShieldCheck size={16} style={{ color: insightsTab === 'founder' ? '#fdcb42' : 'var(--brand-navy-light, #0284c7)' }} />
               <span>{lang === 'ar' ? 'عن 1Line والضمان القانوني' : 'About 1Line & Legal Pillars'}</span>
             </button>
           </div>

@@ -97,7 +97,15 @@ import './App.css';
 
 export default function App() {
   const [lang, setLang] = useState('ar');
-  const [currency, setCurrency] = useState('EGP');
+  const [currency, setCurrency] = useState(() => {
+    return localStorage.getItem('oneline_currency') || 'EGP';
+  });
+
+  const handleSetCurrency = useCallback((newCurr) => {
+    setCurrency(newCurr);
+    localStorage.setItem('oneline_currency', newCurr);
+  }, []);
+
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('oneline_theme') || 'light';
   });
@@ -768,6 +776,7 @@ export default function App() {
       <QuickViewModal
         property={quickViewProperty}
         lang={lang}
+        currency={currency}
         onClose={handleCloseQuickView}
         onToggleFavorite={toggleFavorite}
         isFavorite={quickViewProperty ? favorites.includes(quickViewProperty.id) : false}
@@ -803,6 +812,8 @@ export default function App() {
         <Header
           lang={lang}
           setLang={setLang}
+          currency={currency}
+          setCurrency={handleSetCurrency}
           theme={theme}
           toggleTheme={toggleTheme}
           soundEnabled={soundEnabled}
@@ -835,6 +846,7 @@ export default function App() {
             element={
               <HomePage
                 lang={lang}
+                currency={currency}
                 properties={properties}
                 demands={demands}
                 favorites={favorites}
@@ -855,6 +867,7 @@ export default function App() {
             element={
               <PropertiesPage
                 lang={lang}
+                currency={currency}
                 properties={properties}
                 favorites={favorites}
                 onToggleFavorite={toggleFavorite}
@@ -871,6 +884,7 @@ export default function App() {
             element={
               <PropertyDetailPage
                 lang={lang}
+                currency={currency}
                 t={t}
                 properties={properties}
                 favorites={favorites}

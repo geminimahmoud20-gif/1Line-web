@@ -34,9 +34,11 @@ import LegalTaxCalculator from '../components/calculators/LegalTaxCalculator';
 import SocialStoryCardModal from '../components/properties/SocialStoryCardModal';
 import { updatePageSeo, buildPropertySchema } from '../utils/seoHelper';
 import { checkFormSpamProtection } from '../utils/securityShield';
+import { formatCurrencyPrice, getPriceBenchmark } from '../utils/currencyAndBenchmark';
 
 export default function PropertyDetailPage({
   lang,
+  currency = 'EGP',
   properties,
   favorites,
   onToggleFavorite,
@@ -119,6 +121,8 @@ export default function PropertyDetailPage({
   const finishing = isAr ? property.finishing_ar : property.finishing_en;
   const description = isAr ? property.description_ar : property.description_en;
   const features = isAr ? property.features_ar : property.features_en;
+  const priceData = formatCurrencyPrice(property.price, currency, lang);
+  const benchmark = getPriceBenchmark(property, lang);
 
   const handleBookingSubmit = (e) => {
     e.preventDefault();
@@ -216,11 +220,34 @@ export default function PropertyDetailPage({
           <div className="detail-price-box">
             <span className="price-tag-sub">{isAr ? 'السعر الإجمالي' : 'Total Price'}</span>
             <div className="price-num-row">
-              <h2>{property.price.toLocaleString()}</h2>
-              <span className="curr">{isAr ? 'ج.م' : 'EGP'}</span>
+              <h2>{priceData.primary}</h2>
+              <span className="curr">{priceData.symbol}</span>
             </div>
+            {priceData.isConverted && (
+              <span className="price-converted-sub" style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: '700', display: 'block', marginTop: '2px' }}>
+                ≈ {priceData.originalEgp}
+              </span>
+            )}
+            {benchmark && (
+              <div style={{
+                marginTop: '8px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                background: benchmark.badgeBg,
+                color: benchmark.badgeColor,
+                fontSize: '0.74rem',
+                fontWeight: '800',
+                border: `1px solid ${benchmark.badgeColor}33`
+              }}>
+                <span>{benchmark.badgeType === 'deal' ? '🔥' : benchmark.badgeType === 'premium' ? '💎' : '⚖️'}</span>
+                <span>{benchmark.badgeLabel}</span>
+              </div>
+            )}
             {property.pricePerMeter && (
-              <span className="price-per-m">
+              <span className="price-per-m" style={{ marginTop: '6px' }}>
                 {property.pricePerMeter.toLocaleString()} {isAr ? 'ج.م / متر' : 'EGP / sqm'}
               </span>
             )}
@@ -239,6 +266,7 @@ export default function PropertyDetailPage({
         <WhatsAppAutomationBar
           property={property}
           lang={lang}
+          currency={currency}
           triggerToast={triggerToast}
           onOpenStoryCard={() => setStoryModalOpen(true)}
         />
@@ -393,6 +421,7 @@ export default function PropertyDetailPage({
                 <PriceBenchmarkIndicator
                   property={property}
                   lang={lang}
+                  currency={currency}
                 />
 
                 {/* 📈 Historical Price Trends & Capital Growth Chart */}
@@ -584,6 +613,7 @@ export default function PropertyDetailPage({
                   key={p.id}
                   property={p}
                   lang={lang}
+                  currency={currency}
                   isFavorite={favorites.includes(p.id)}
                   onToggleFavorite={onToggleFavorite}
                   onQuickView={onQuickView}
@@ -615,7 +645,7 @@ export default function PropertyDetailPage({
         <div className="mobile-detail-sticky-bar">
           <div className="mobile-sticky-price">
             <span className="mob-lbl">{isAr ? 'السعر' : 'Price'}</span>
-            <strong>{property.price.toLocaleString()} ج.م</strong>
+            <strong>{priceData.primary} {priceData.symbol}</strong>
           </div>
 
           <div className="mobile-sticky-actions">
