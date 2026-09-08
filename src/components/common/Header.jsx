@@ -218,85 +218,26 @@ export default function Header({
           </div>
         </Link>
 
-        {/* 🌟 Smart Floating Desktop Navigation */}
-        <nav className="desktop-nav smart-desktop-nav" ref={navRef}>
-          {navHubs.map((hub) => {
-            if (hub.type === 'link') {
-              const HubIcon = hub.icon;
-              return (
-                <Link
-                  key={hub.id}
-                  to={hub.path}
-                  className={`smart-nav-trigger ${isActive(hub.path) ? 'active' : ''}`}
-                >
-                  {HubIcon && <HubIcon size={14} className="nav-hub-icon" />}
-                  <span>{hub.label}</span>
-                </Link>
-              );
-            }
-
-            const isGroupOn = isGroupActive(hub.activePaths);
-            const isOpen = activeDropdown === hub.id;
-            const HubIcon = hub.icon;
-
+        {/* 🌟 Ultra-Luxury Harmonious Desktop Navigation */}
+        <nav className="desktop-nav luxury-desktop-nav">
+          {flatMobileLinks.map((link) => {
+            const LinkIcon = link.icon;
+            const active = isActive(link.path);
             return (
-              <div 
-                key={hub.id} 
-                className={`smart-nav-group ${isOpen ? 'open' : ''}`}
-                onMouseEnter={() => handleMouseEnter(hub.id)}
-                onMouseLeave={handleMouseLeave}
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`luxury-nav-pill ${active ? 'active' : ''} ${link.path === '/special-requests' ? 'vip-nav-pill' : ''}`}
               >
-                <button
-                  type="button"
-                  className={`smart-nav-trigger ${isGroupOn ? 'active' : ''}`}
-                  onClick={() => setActiveDropdown(isOpen ? null : hub.id)}
-                  aria-expanded={isOpen}
-                >
-                  {HubIcon && <HubIcon size={14} className="nav-hub-icon" />}
-                  <span>{hub.label}</span>
-                  {hub.badge && (
-                    <span className={`nav-badge nav-badge-${hub.badgeType || 'gold'}`}>
-                      {hub.badge}
-                    </span>
-                  )}
-                  <ChevronDown size={13} className={`dropdown-chevron ${isOpen ? 'rotated' : ''}`} />
-                </button>
-
-                {/* Glassmorphic Dropdown Card */}
-                {isOpen && (
-                  <div className="smart-dropdown-glass">
-                    <div className="smart-dropdown-list">
-                      {hub.items.map((item) => {
-                        const ItemIcon = item.icon;
-                        const itemActive = isActive(item.path);
-                        return (
-                          <Link
-                            key={item.path}
-                            to={item.path}
-                            className={`smart-dropdown-item ${itemActive ? 'active-item' : ''}`}
-                            onClick={() => setActiveDropdown(null)}
-                          >
-                            <div className="item-icon-box">
-                              {ItemIcon && <ItemIcon size={17} />}
-                            </div>
-                            <div className="item-content">
-                              <div className="item-title-row">
-                                <span className="item-title">{item.label}</span>
-                                {item.badge && (
-                                  <span className={`nav-badge nav-badge-${item.badgeType || 'gold'}`}>
-                                    {item.badge}
-                                  </span>
-                                )}
-                              </div>
-                              <span className="item-desc">{item.desc}</span>
-                            </div>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
+                {LinkIcon && <LinkIcon size={14} className="nav-pill-icon" />}
+                <span className="nav-pill-label">{link.label}</span>
+                {link.badge && (
+                  <span className={`luxury-badge luxury-badge-${link.badgeType || 'gold'}`}>
+                    {link.badgeType === 'blue' && <span className="pulse-dot" />}
+                    {link.badge}
+                  </span>
                 )}
-              </div>
+              </Link>
             );
           })}
         </nav>
@@ -434,14 +375,16 @@ export default function Header({
           </div>
         </div>
 
-        {/* WhatsApp Direct CTA Button */}
+        {/* 💬 Royal Blue & Gold WhatsApp CTA Button with Live Advisor Pulse */}
         <a
           href={getWhatsAppUrl(isAr ? 'مرحباً 1Line، أريد الاستفسار عن العقارات والفرص المتاحة بسوهاج.' : 'Hello 1Line, inquiring about available properties in Sohag.')}
           target="_blank"
           rel="noopener noreferrer"
-          className="cta-primary-btn hide-tablet"
+          className="cta-royal-btn hide-tablet"
+          title={isAr ? 'تواصل مباشر مع مستشار 1Line عبر واتساب' : 'Direct WhatsApp with 1Line Advisor'}
         >
-          <MessageSquare size={16} />
+          <span className="advisor-live-dot" title="مستشار متاح الآن"></span>
+          <MessageSquare size={15} />
           <span>{isAr ? 'تواصل معنا' : 'Contact Us'}</span>
         </a>
 

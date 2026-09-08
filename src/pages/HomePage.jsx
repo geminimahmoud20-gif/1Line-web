@@ -512,16 +512,7 @@ export default function HomePage({
             })}
           </div>
           {/* ⚡ Quick Portals & Action Services Deck (Instant 1-Click Access) */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '10px',
-            flexWrap: 'wrap',
-            marginTop: '22px',
-            paddingTop: '18px',
-            borderTop: '1px solid rgba(255, 255, 255, 0.08)'
-          }}>
+          <div className="quick-portals-deck">
             {[
               { path: '/buy', icon: Building, label_ar: 'معالج الشراء', label_en: 'Buy Wizard' },
               { path: '/sell', icon: TrendingUp, label_ar: 'عرض عقار وتقييم', label_en: 'Sell & Valuation' },
@@ -535,38 +526,11 @@ export default function HomePage({
                 <Link
                   key={idx}
                   to={p.path}
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.09)',
-                    border: '1px solid rgba(255, 255, 255, 0.22)',
-                    backdropFilter: 'blur(12px)',
-                    padding: '9px 18px',
-                    borderRadius: 'var(--radius-pill)',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    color: '#ffffff',
-                    fontSize: '0.85rem',
-                    fontWeight: '800',
-                    textDecoration: 'none',
-                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = '#ffca28';
-                    e.currentTarget.style.background = 'rgba(255, 202, 40, 0.18)';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 202, 40, 0.3)';
-                    e.currentTarget.style.color = '#ffffff';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.22)';
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.09)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.2)';
-                    e.currentTarget.style.color = '#ffffff';
-                  }}
+                  className="quick-portal-pill"
                 >
-                  <IconComponent size={15} style={{ color: '#ffca28' }} />
+                  <span className="portal-icon-wrapper">
+                    <IconComponent size={14} />
+                  </span>
                   <span>{lang === 'ar' ? p.label_ar : p.label_en}</span>
                 </Link>
               );
@@ -690,76 +654,6 @@ export default function HomePage({
               </div>
             )}
 
-            {/* 🌟 Direct Live Preview: Special Requests & Buyer Demands on the Main Screen */}
-            <div className="homepage-demands-live-preview">
-              <div className="demands-preview-header">
-                <div className="preview-header-left">
-                  <div className="preview-badge">
-                    <span className="live-pulse-dot" />
-                    <span>{lang === 'ar' ? 'بورصة الطلبات الخاصة وطلبات المشترين المباشرة' : 'Live Special Requests & Buyer Demands'}</span>
-                  </div>
-                  <h3 className="preview-title">
-                    {lang === 'ar' ? 'طلبات مشتري كاش جادة تبحث عن وحدات مطابقة بسوهاج الآن' : 'Serious Cash Buyers Seeking Direct Property Matches'}
-                  </h3>
-                </div>
-                <div className="preview-header-actions">
-                  <Link to="/special-requests" className="btn btn-luxury-cta preview-cta-btn" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 18px', fontSize: '0.85rem' }}>
-                    <FileText size={15} />
-                    <span>{lang === 'ar' ? 'تقديم طلب خاص بمواصفاتك' : 'Submit Bespoke Request'}</span>
-                  </Link>
-                  <Link
-                    to="/demands"
-                    className="btn btn-outline preview-all-btn"
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', fontSize: '0.85rem' }}
-                  >
-                    <span>{lang === 'ar' ? `استعراض كل الطلبات (${activeDemandsList.length})` : `All Demands (${activeDemandsList.length})`}</span>
-                    {lang === 'ar' ? <ArrowLeft size={14} /> : <ArrowRight size={14} />}
-                  </Link>
-                </div>
-              </div>
-
-              {/* Top 3 Live Demands */}
-              <div className="demands-preview-grid">
-                {activeDemandsList.slice(0, 3).map((dem) => (
-                  <div 
-                    key={dem.id} 
-                    className="demand-preview-card"
-                    onClick={() => navigate('/demands')}
-                    style={{ cursor: 'pointer' }}
-                    title={lang === 'ar' ? 'انقر لعرض تفاصيل الطلب في بوابة طلبات المشترين' : 'Click to view details in Demands Portal'}
-                  >
-                    <div className="demand-preview-top">
-                      <span className="preview-area-tag">
-                        <MapPin size={13} className="text-gold" />
-                        <span>{lang === 'ar' ? (dem.area_ar || dem.area) : (dem.area_en || dem.area)}</span>
-                      </span>
-                      <span className={`preview-urgency-tag ${dem.urgency === 'high' ? 'urgent' : ''}`}>
-                        {dem.urgency === 'high' ? (lang === 'ar' ? 'مستعجل كاش' : 'Urgent Cash') : (lang === 'ar' ? 'طلب جاد' : 'Verified Buyer')}
-                      </span>
-                    </div>
-                    <p className="demand-preview-text">
-                      {lang === 'ar' ? dem.text_ar : dem.text_en}
-                    </p>
-                    <div className="demand-preview-bottom">
-                      <div className="demand-preview-budget">
-                        <span className="budget-label">{lang === 'ar' ? 'الميزانية:' : 'Budget:'}</span>
-                        <span className="budget-val">
-                          {(typeof dem.budget === 'number' ? dem.budget : parseInt(String(dem.budget).replace(/,/g, '')) || 0).toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}
-                        </span>
-                      </div>
-                      <Link 
-                        to="/sell" 
-                        className="preview-match-btn"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {lang === 'ar' ? 'طابق عقارك ←' : 'Match →'}
-                      </Link>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* Executive Bottom Hub & Certified Trust Bar */}
             <div className="marketplace-bottom-hub">
               <div className="bottom-hub-trust">
@@ -862,11 +756,11 @@ export default function HomePage({
                       to="/sell" 
                       className="btn-match-demand"
                       style={{
-                        background: 'linear-gradient(135deg, #0284c7, #0369a1)',
-                        border: '1px solid rgba(2, 132, 199, 0.35)',
+                        background: 'linear-gradient(135deg, #0b4ea2 0%, #073875 100%)',
+                        border: '1px solid rgba(253, 203, 66, 0.35)',
                         color: '#ffffff',
                         fontWeight: '800',
-                        boxShadow: '0 2px 10px rgba(2, 132, 199, 0.25)',
+                        boxShadow: '0 3px 12px rgba(11, 78, 162, 0.25)',
                         padding: '6px 14px'
                       }}
                     >
@@ -907,24 +801,24 @@ export default function HomePage({
           <span className="section-pill">{lang === 'ar' ? 'دراسات السوق والضمان المؤسسي' : 'Market Research & Institutional Trust'}</span>
           <h2>{lang === 'ar' ? 'أدوات الحساب المالي والضمان القانوني المعتمد' : 'Financial Simulator & Certified Legal Security'}</h2>
 
-          {/* Dual Segment Switcher (Serene Sky-Blue Palette) */}
+          {/* Dual Segment Switcher (Royal Blue & Amber Palette) */}
           <div style={{
             display: 'inline-flex',
-            background: '#e0f2fe',
+            background: '#f8fafc',
             padding: '5px',
             borderRadius: 'var(--radius-pill)',
-            border: '1px solid rgba(2, 132, 199, 0.25)',
+            border: '1px solid rgba(11, 78, 162, 0.15)',
             gap: '6px',
             marginTop: '16px',
-            boxShadow: '0 4px 14px rgba(2, 132, 199, 0.08)'
+            boxShadow: '0 4px 14px rgba(11, 78, 162, 0.08)'
           }}>
             <button
               type="button"
               onClick={() => setInsightsTab('calculator')}
               style={{
-                background: insightsTab === 'calculator' ? 'linear-gradient(135deg, #0284c7, #0ea5e9)' : 'transparent',
-                color: insightsTab === 'calculator' ? '#ffffff' : '#0369a1',
-                border: 'none',
+                background: insightsTab === 'calculator' ? 'linear-gradient(135deg, #0b4ea2 0%, #073875 100%)' : 'transparent',
+                color: insightsTab === 'calculator' ? '#ffffff' : '#475569',
+                border: insightsTab === 'calculator' ? '1px solid rgba(253, 203, 66, 0.35)' : 'none',
                 borderRadius: 'var(--radius-pill)',
                 padding: '9px 24px',
                 fontSize: '0.86rem',
@@ -933,11 +827,11 @@ export default function HomePage({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                boxShadow: insightsTab === 'calculator' ? '0 4px 14px rgba(2, 132, 199, 0.3)' : 'none',
-                transition: 'all 0.25s ease'
+                boxShadow: insightsTab === 'calculator' ? '0 4px 14px rgba(11, 78, 162, 0.25)' : 'none',
+                transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
               }}
             >
-              <Calculator size={16} style={{ color: insightsTab === 'calculator' ? '#ffffff' : '#0284c7' }} />
+              <Calculator size={16} style={{ color: insightsTab === 'calculator' ? '#fdcb42' : '#0b4ea2' }} />
               <span>{lang === 'ar' ? 'حاسبة التمويل والأقساط الذكية' : 'Mortgage & ROI Simulator'}</span>
             </button>
 
@@ -945,9 +839,9 @@ export default function HomePage({
               type="button"
               onClick={() => setInsightsTab('founder')}
               style={{
-                background: insightsTab === 'founder' ? 'linear-gradient(135deg, #0284c7, #0ea5e9)' : 'transparent',
-                color: insightsTab === 'founder' ? '#ffffff' : '#0369a1',
-                border: 'none',
+                background: insightsTab === 'founder' ? 'linear-gradient(135deg, #0b4ea2 0%, #073875 100%)' : 'transparent',
+                color: insightsTab === 'founder' ? '#ffffff' : '#475569',
+                border: insightsTab === 'founder' ? '1px solid rgba(253, 203, 66, 0.35)' : 'none',
                 borderRadius: 'var(--radius-pill)',
                 padding: '9px 24px',
                 fontSize: '0.86rem',
@@ -956,11 +850,11 @@ export default function HomePage({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                boxShadow: insightsTab === 'founder' ? '0 4px 14px rgba(2, 132, 199, 0.3)' : 'none',
-                transition: 'all 0.25s ease'
+                boxShadow: insightsTab === 'founder' ? '0 4px 14px rgba(11, 78, 162, 0.25)' : 'none',
+                transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
               }}
             >
-              <ShieldCheck size={16} style={{ color: insightsTab === 'founder' ? '#ffffff' : '#0284c7' }} />
+              <ShieldCheck size={16} style={{ color: insightsTab === 'founder' ? '#fdcb42' : '#0b4ea2' }} />
               <span>{lang === 'ar' ? 'عن 1Line والضمان القانوني' : 'About 1Line & Legal Pillars'}</span>
             </button>
           </div>

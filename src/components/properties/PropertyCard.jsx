@@ -217,8 +217,8 @@ export default function PropertyCard({
 
         {/* Payment Plan / Downpayment Summary */}
         <div className="property-card-finance" style={{
-          background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.05) 0%, rgba(240, 249, 255, 0.95) 100%)',
-          border: '1px solid rgba(2, 132, 199, 0.16)',
+          background: 'linear-gradient(135deg, rgba(11, 78, 162, 0.04) 0%, rgba(240, 246, 255, 0.95) 100%)',
+          border: '1px solid rgba(11, 78, 162, 0.14)',
           borderRadius: '10px'
         }}>
           <div className="finance-mini-item">
@@ -227,7 +227,7 @@ export default function PropertyCard({
           </div>
           <div className="finance-mini-item">
             <span className="finance-label" style={{ color: '#475569', fontWeight: '600' }}>{lang === 'ar' ? 'قسط شهري:' : 'Monthly:'}</span>
-            <span className="finance-value highlight" style={{ color: '#0284c7', fontWeight: '900', fontSize: '0.85rem' }}>{property.monthlyInstallment.toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}</span>
+            <span className="finance-value highlight" style={{ color: '#0b4ea2', fontWeight: '900', fontSize: '0.85rem' }}>{property.monthlyInstallment.toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}</span>
           </div>
         </div>
 
@@ -240,12 +240,12 @@ export default function PropertyCard({
             title={lang === 'ar' ? 'معاينة سريعة' : 'Quick View'}
             style={{
               background: '#ffffff',
-              border: '1px solid rgba(2, 132, 199, 0.3)',
-              color: '#0284c7',
+              border: '1.5px solid rgba(11, 78, 162, 0.22)',
+              color: '#0b4ea2',
               fontWeight: '800'
             }}
           >
-            <Eye size={13} style={{ color: '#0284c7' }} />
+            <Eye size={13} style={{ color: '#0b4ea2' }} />
             <span>{lang === 'ar' ? 'معاينة' : 'Quick'}</span>
           </button>
 
@@ -285,10 +285,11 @@ export default function PropertyCard({
             to={`/properties/${property.id}`} 
             className="btn-view-details"
             style={{
-              background: 'linear-gradient(135deg, #0284c7, #0369a1)',
+              background: 'linear-gradient(135deg, #0b4ea2 0%, #073875 100%)',
               color: '#ffffff',
               fontWeight: '800',
-              boxShadow: '0 2px 8px rgba(2, 132, 199, 0.28)'
+              border: '1px solid rgba(253, 203, 66, 0.25)',
+              boxShadow: '0 3px 10px rgba(11, 78, 162, 0.3)'
             }}
           >
             <span>{lang === 'ar' ? 'التفاصيل' : 'Details'}</span>
