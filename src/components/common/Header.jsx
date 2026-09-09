@@ -531,7 +531,7 @@ export default function Header({
           {onOpenQuickSearch && (
             <button
               type="button"
-              className="mobile-quick-search-btn"
+              className="mobile-quick-search-btn hide-desktop"
               onClick={onOpenQuickSearch}
               title={isAr ? 'البحث السريع' : 'Quick Search'}
               aria-label="Quick Search"
