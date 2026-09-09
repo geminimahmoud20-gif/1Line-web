@@ -43,6 +43,7 @@ import LiveActivityToast from './components/common/LiveActivityToast';
 import QuickContactDrawer from './components/common/QuickContactDrawer';
 import BackToTopButton from './components/common/BackToTopButton';
 import AIPropertyAdvisorModal from './components/common/AIPropertyAdvisorModal';
+import QuickSearchModal from './components/common/QuickSearchModal';
 
 // Critical Landing Page (Direct Import for instant FCP)
 import HomePage from './pages/HomePage';
@@ -616,6 +617,25 @@ export default function App() {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [callbackModalOpen, setCallbackModalOpen] = useState(false);
   const [contactDrawerOpen, setContactDrawerOpen] = useState(false);
+  const [quickSearchOpen, setQuickSearchOpen] = useState(false);
+
+  // Global Keyboard Shortcut for Omnisearch (Ctrl + K / Cmd + K or '/')
+  useEffect(() => {
+    const handleGlobalSearchKey = (e) => {
+      const tag = document.activeElement?.tagName?.toLowerCase();
+      const isInput = tag === 'input' || tag === 'textarea' || document.activeElement?.isContentEditable;
+
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        setQuickSearchOpen(prev => !prev);
+      } else if (e.key === '/' && !isInput && !(e.ctrlKey || e.metaKey || e.altKey)) {
+        e.preventDefault();
+        setQuickSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalSearchKey);
+    return () => window.removeEventListener('keydown', handleGlobalSearchKey);
+  }, []);
 
   // Quick View Handler
   const handleOpenQuickView = (property) => {
@@ -844,6 +864,7 @@ export default function App() {
           compareCount={compareList.length}
           onOpenCompare={() => setCompareDrawerOpen(true)}
           onOpenAboutFounder={() => setAboutFounderModalOpen(true)}
+          onOpenQuickSearch={() => setQuickSearchOpen(true)}
         />
       )}
 
@@ -1219,6 +1240,16 @@ export default function App() {
         isOpen={aiModalOpen}
         onClose={() => setAiModalOpen(false)}
         lang={lang}
+      />
+
+      {/* 🔍 Global Omnisearch Spotlight Modal */}
+      <QuickSearchModal
+        isOpen={quickSearchOpen}
+        onClose={() => setQuickSearchOpen(false)}
+        properties={properties}
+        lang={lang}
+        currency={currency}
+        onOpenAddDemand={() => setAddDemandModalOpen(true)}
       />
 
       {/* 🏛️ Floating Real Estate Advisor Quick Trigger (Hidden on CRM) */}

@@ -41,7 +41,8 @@ export default function Header({
   onOpenTrackLead,
   compareCount = 0,
   onOpenCompare,
-  onOpenAboutFounder
+  onOpenAboutFounder,
+  onOpenQuickSearch
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
@@ -321,6 +322,21 @@ export default function Header({
             </button>
           )}
 
+          {/* 🔍 Global Quick Search (Ctrl + K) Button */}
+          {onOpenQuickSearch && (
+            <button
+              type="button"
+              className="header-omnisearch-btn hide-mobile"
+              onClick={onOpenQuickSearch}
+              title={isAr ? 'البحث السريع في عقارات ومناطق سوهاج (Ctrl + K)' : 'Quick Search (Ctrl + K)'}
+              aria-label={isAr ? 'البحث السريع' : 'Quick Search'}
+            >
+              <Search size={14} className="search-btn-icon" />
+              <span className="search-btn-label">{isAr ? 'بحث سريع...' : 'Quick Search...'}</span>
+              <kbd className="search-kbd-shortcut">Ctrl K</kbd>
+            </button>
+          )}
+
           {/* Unified Glassmorphic Utility Control Group */}
           <div className="header-utility-pill-group">
             {/* Theme Toggle (Sun/Moon) with Luxury Rotation Effect */}
@@ -495,6 +511,19 @@ export default function Header({
           <span>{isAr ? 'تواصل معنا' : 'Contact Us'}</span>
         </a>
 
+          {/* Mobile Quick Search Button */}
+          {onOpenQuickSearch && (
+            <button
+              type="button"
+              className="mobile-quick-search-btn"
+              onClick={onOpenQuickSearch}
+              title={isAr ? 'البحث السريع' : 'Quick Search'}
+              aria-label="Quick Search"
+            >
+              <Search size={20} />
+            </button>
+          )}
+
           {/* Mobile Menu Hamburger */}
           <button
             type="button"
@@ -511,6 +540,19 @@ export default function Header({
       {mobileMenuOpen && (
         <div className="mobile-drawer open">
           <div className="mobile-drawer-links">
+            {onOpenQuickSearch && (
+              <button
+                type="button"
+                className="mobile-drawer-search-pill"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenQuickSearch();
+                }}
+              >
+                <Search size={16} />
+                <span>{isAr ? 'البحث السريع (Ctrl + K)' : 'Quick Search (Ctrl + K)'}</span>
+              </button>
+            )}
             {flatMobileLinks.map((link) => {
               const LinkIcon = link.icon;
               return (
