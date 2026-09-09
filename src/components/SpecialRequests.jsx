@@ -64,6 +64,7 @@ export const SpecialRequests = ({
 
   const validateAndSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return;
 
     // 🛡️ Anti-Bot & Spam Rate-Limit Shield
     const spamCheck = checkFormSpamProtection(hpField, 'special_requests_form');

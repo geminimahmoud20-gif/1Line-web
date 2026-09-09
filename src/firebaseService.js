@@ -4,7 +4,7 @@
 //  Falls back to localStorage if Firebase is not configured.
 // =============================================================
 
-import { db, auth, isFirebaseConfigured } from './firebase';
+import { db, auth, isFirebaseConfigured } from './firebase.js';
 import {
   collection,
   addDoc,

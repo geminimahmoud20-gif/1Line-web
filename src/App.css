@@ -13559,4 +13559,58 @@ body.dark,
   border-color: var(--brand-navy-light);
 }
 
+.receipt-sub-actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.btn-print-ticket {
+  background: var(--bg-card-hover, #f1f5f9);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: 11px 14px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-print-ticket:hover {
+  background: var(--bg-card);
+  border-color: var(--brand-gold-warm, #d97706);
+  color: var(--brand-gold-warm, #d97706);
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .booking-receipt-card,
+  .booking-receipt-card * {
+    visibility: visible;
+  }
+  .booking-receipt-card {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+    width: 100% !important;
+    max-width: 600px !important;
+    padding: 24px !important;
+  }
+  .close-receipt-btn,
+  .receipt-actions-grid {
+    display: none !important;
+  }
+}
+
+
 

@@ -169,10 +169,14 @@ export default function PropertyDetailPage({
     }
   };
 
-  // Similar properties in same area
-  const similarProperties = properties
-    .filter((p) => p.id !== property.id && p.areaKey === property.areaKey)
-    .slice(0, 3);
+  // Smart Similar Properties recommendation (Same district first, fallback to same property type)
+  const similarProperties = useMemo(() => {
+    if (!property) return [];
+    const sameArea = properties.filter((p) => p.id !== property.id && p.areaKey === property.areaKey);
+    if (sameArea.length >= 3) return sameArea.slice(0, 3);
+    const sameType = properties.filter((p) => p.id !== property.id && p.type === property.type && !sameArea.some(sa => sa.id === p.id));
+    return [...sameArea, ...sameType].slice(0, 3);
+  }, [properties, property]);
 
   return (
     <div className="property-detail-page-wrapper">

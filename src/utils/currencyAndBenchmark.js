@@ -12,19 +12,20 @@ export const CURRENCY_RATES = {
   KWD: { rate: 0.0062, symbol_ar: 'د.ك', symbol_en: 'KWD', flag: '🇰🇼' }
 };
 
-import { getAreas } from './areasData';
+import { getAreas } from './areasData.js';
 
 // Fallback District average price per m² benchmarks in Sohag (EGP / m²)
 export const SOHAG_DISTRICT_BENCHMARKS = {
   corniche: 26000,   // كورنيش النيل (أعلى قيمة معمارية)
-  east: 21000,       // شرق سوهاج والجمهورية والثقافة
-  center: 17500,     // سيتي وشارع 15 ووسط البلد والمخبز الآلي
+  east: 21000,       // شرق سوهاج والجمهورية
+  center: 17500,     // سيتي وشارع 15 ووسط البلد
+  thakafa: 15500,    // منطقة الثقافة والمخبز الآلي
   new_sohag: 12000,  // سوهاج الجديدة
   kawthar: 9000,     // حي الكوثر
   akhmeem: 9500,     // أخميم
   tahta: 11000,      // طهطا
-  west: 13500,       // غرب سوهاج
   girga: 10500,      // جرجا
+  west: 13500,       // غرب سوهاج
   default: 15000     // متوسط عام
 };
 

@@ -988,7 +988,7 @@ export const PROPERTIES_DATA = [
   }
 ];
 
-import { getAreas, DEFAULT_SOHAG_AREAS } from '../utils/areasData';
+import { getAreas, DEFAULT_SOHAG_AREAS } from '../utils/areasData.js';
 
 export const SOHAG_AREAS = getAreas();
 export { getAreas, DEFAULT_SOHAG_AREAS };

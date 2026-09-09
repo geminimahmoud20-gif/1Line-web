@@ -227,9 +227,20 @@ export default function App() {
     });
   }, []);
 
-  // Mega Projects State
+  // Mega Projects State (Smart Catalog Merge to ensure verified Sohag developments are always accessible)
   const [projects, setProjects] = useState(() => {
-    return readStoredJson('oneline_mega_projects', MEGA_PROJECTS, isRecordArray);
+    const stored = readStoredJson('oneline_mega_projects', MEGA_PROJECTS, isRecordArray);
+    if (Array.isArray(stored) && stored.length > 0) {
+      const existingIds = new Set(stored.map(p => p.id));
+      const missing = MEGA_PROJECTS.filter(p => !existingIds.has(p.id));
+      if (missing.length > 0) {
+        const merged = [...stored, ...missing];
+        localStorage.setItem('oneline_mega_projects', JSON.stringify(merged));
+        return merged;
+      }
+      return stored;
+    }
+    return MEGA_PROJECTS;
   });
 
   const handleAddProject = useCallback((newProj) => {

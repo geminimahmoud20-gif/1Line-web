@@ -12,6 +12,7 @@ import {
 import PhoneInputField from './PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { getWhatsAppUrl, getDynamicPhone } from '../utils/founderCmsData';
+import { checkFormSpamProtection } from '../utils/securityShield';
 
 export const VaultPortal = ({
   lang = 'ar',
@@ -40,12 +41,25 @@ export const VaultPortal = ({
   const [phoneError, setPhoneError] = useState('');
   const [whatsappCountry, setWhatsappCountry] = useState('+20');
   const [whatsappError, setWhatsappError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hpField, setHpField] = useState('');
 
   const isAr = lang === 'ar';
   const dynamicPhone = getDynamicPhone();
 
   const validateAndSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
+    // 🛡️ Anti-Bot Honeypot & Rate-Limiter Check
+    const spamCheck = checkFormSpamProtection(hpField, 'vault_unlock_request');
+    if (!spamCheck.allowed) {
+      if (triggerToast) triggerToast(isAr ? spamCheck.message_ar : spamCheck.message_en, 'error');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
 
     const phoneCountryObj = SUPPORTED_COUNTRIES.find(c => c.code === phoneCountry);
     const isPhoneValid = phoneCountryObj ? phoneCountryObj.regex.test(vaultForm.phone) : true;
@@ -100,6 +114,9 @@ export const VaultPortal = ({
           : 'Asset unlocked successfully! You can now explore full details.',
         'success'
       );
+    }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -335,9 +352,9 @@ export const VaultPortal = ({
                 <button type="button" className="btn btn-secondary" onClick={() => setShowVaultUnlockModal(false)}>
                   {isAr ? 'إلغاء' : 'Cancel'}
                 </button>
-                <button type="submit" className="btn btn-primary btn-submit-valuation">
+                <button type="submit" className="btn btn-primary btn-submit-valuation" disabled={isSubmitting}>
                   <Sparkles size={16} />
-                  <span>{isAr ? 'إرسال طلب فتح الخزينة' : 'Submit Unlock Request'}</span>
+                  <span>{isSubmitting ? (isAr ? 'جارِ التحقق...' : 'Verifying...') : (isAr ? 'إرسال طلب فتح الخزينة' : 'Submit Unlock Request')}</span>
                 </button>
               </div>
             </form>

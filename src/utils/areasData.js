@@ -1,4 +1,4 @@
-import { saveSettings, loadSettings, subscribeToSettings } from '../firebaseService';
+import { saveSettings, loadSettings, subscribeToSettings } from '../firebaseService.js';
 
 export const DEFAULT_SOHAG_AREAS = [
   {
@@ -168,6 +168,34 @@ export const DEFAULT_SOHAG_AREAS = [
       { id: 3, category: 'health', name_ar: 'مستشفى سوهاج العام ومراكز الأشعة والتحاليل', name_en: 'Sohag General Hospital & Labs', distance: '600 متر', timeWalk: '7 دقائق', timeDrive: '2 دقيقة' },
       { id: 4, category: 'education', name_ar: 'جامعة سوهاج (المقر القديم بمدينة ناصر)', name_en: 'Sohag University (Old Campus)', distance: '1.1 كم', timeWalk: '13 دقيقة', timeDrive: '3 دقائق' },
       { id: 5, category: 'transport', name_ar: 'موقف السيرفيس الرئيسي الداخلي لوسط المدينة', name_en: 'Downtown Microbus Terminal', distance: '400 متر', timeWalk: '5 دقائق', timeDrive: '1 دقيقة' }
+    ]
+  },
+  {
+    id: 'thakafa',
+    name_ar: 'منطقة الثقافة',
+    name_en: 'El Thakafa',
+    label_ar: 'منطقة الثقافة (ميدان الثقافة والمخبز الآلي)',
+    label_en: 'El Thakafa & Bakery Zone',
+    center: { lat: 26.5540, lng: 31.6920 },
+    zoom: 15,
+    description_ar: 'أعرق الأحياء السكنية العائلية وأقربها لكافة المراكز الثقافية والخدمية',
+    avgPricePerMeter: 15500,
+    annualGrowthRate: 74,
+    historicalPrices: [
+      { year: '2023 Q1', price: 9000 },
+      { year: '2023 Q3', price: 10400 },
+      { year: '2024 Q1', price: 11900 },
+      { year: '2024 Q3', price: 13200 },
+      { year: '2025 Q1', price: 14400 },
+      { year: '2025 Q3', price: 15000 },
+      { year: '2026 (الآن)', price: 15500 }
+    ],
+    amenities: [
+      { id: 1, category: 'lifestyle', name_ar: 'قصر ثقافة سوهاج والمسرح الصيفي', name_en: 'Sohag Palace of Culture & Gardens', distance: '150 متر', timeWalk: '2 دقيقة', timeDrive: '1 دقيقة' },
+      { id: 2, category: 'education', name_ar: 'مجمع مدارس الثقافة ومدرسة اللغات الرسمية', name_en: 'Thakafa Schools & Official Language School', distance: '400 متر', timeWalk: '5 دقائق', timeDrive: '1 دقيقة' },
+      { id: 3, category: 'shopping', name_ar: 'منطقة المخبز الآلي والأسواق الاستهلاكية الكبرى', name_en: 'Automated Bakery Commercial Hub', distance: '300 متر', timeWalk: '4 دقائق', timeDrive: '1 دقيقة' },
+      { id: 4, category: 'health', name_ar: 'مجمع العيادات التخصصية ومستشفى الطلبة', name_en: 'Specialized Clinics Complex', distance: '550 متر', timeWalk: '7 دقائق', timeDrive: '2 دقيقة' },
+      { id: 5, category: 'transport', name_ar: 'ميدان الثقافة ومحاور الربط بين الشرق والغرب', name_en: 'Thakafa Square & Central Transit', distance: '250 متر', timeWalk: '3 دقائق', timeDrive: '1 دقيقة' }
     ]
   },
   {

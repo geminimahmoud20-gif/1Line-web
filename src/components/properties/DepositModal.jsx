@@ -80,6 +80,7 @@ export default function DepositModal({
 
   const handleProcessPayment = async (e) => {
     e.preventDefault();
+    if (isProcessing) return;
 
     // 1. Anti-Bot Honeypot & Rate Limiter Check
     const spamCheck = checkFormSpamProtection(hpField, 'deposit_checkout');

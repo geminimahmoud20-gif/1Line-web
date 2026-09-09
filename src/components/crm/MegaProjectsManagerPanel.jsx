@@ -39,6 +39,7 @@ export default function MegaProjectsManagerPanel({
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProjectId, setEditingProjectId] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
   
   // Form State
   const initialForm = {
@@ -97,10 +98,15 @@ export default function MegaProjectsManagerPanel({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSaving) return;
+
     if (!formData.title_ar) {
       triggerToast(isAr ? 'يرجى إدخال اسم المشروع بالعربية' : 'Please enter project title', 'error');
       return;
     }
+
+    setIsSaving(true);
+    try {
 
     const payload = {
       ...formData,
@@ -133,6 +139,9 @@ export default function MegaProjectsManagerPanel({
     }
 
     setIsModalOpen(false);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDelete = (projId, title) => {
@@ -543,10 +552,11 @@ export default function MegaProjectsManagerPanel({
                 <button
                   type="submit"
                   className="btn btn-primary"
+                  disabled={isSaving}
                   style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
                   <Save size={16} />
-                  <span>{editingProjectId ? (isAr ? 'حفظ التعديلات' : 'Save Changes') : (isAr ? 'إضافة المشروع' : 'Add Project')}</span>
+                  <span>{isSaving ? (isAr ? 'جارِ الحفظ...' : 'Saving...') : (editingProjectId ? (isAr ? 'حفظ التعديلات' : 'Save Changes') : (isAr ? 'إضافة المشروع' : 'Add Project'))}</span>
                 </button>
               </div>
             </form>

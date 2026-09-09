@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { CheckCircle2, Copy, Check, MessageSquare, X, Calendar, MapPin, Building, ShieldCheck, Phone } from 'lucide-react';
+import { CheckCircle2, Copy, Check, MessageSquare, X, Calendar, MapPin, Building, ShieldCheck, Phone, Printer } from 'lucide-react';
 import { getWhatsAppUrl, getDynamicPhone } from '../../utils/founderCmsData';
 
 export default function BookingConfirmationModal({
@@ -126,13 +125,25 @@ Please confirm my viewing appointment.`;
             <span>{isAr ? 'تأكيد الحجز فوراً عبر واتساب المستشار' : 'Instant WhatsApp Confirmation'}</span>
           </button>
 
-          <a
-            href={`tel:${dynamicPhone}`}
-            className="btn-call-desk"
-          >
-            <Phone size={15} />
-            <span>{isAr ? `اتصال مباشر بغرفة المعاينات (${dynamicPhone})` : `Call Desk (${dynamicPhone})`}</span>
-          </a>
+          <div className="receipt-sub-actions-row">
+            <button
+              type="button"
+              className="btn-print-ticket"
+              onClick={() => window.print()}
+              title={isAr ? 'طباعة أو حفظ التذكرة كـ PDF' : 'Print or Save Ticket as PDF'}
+            >
+              <Printer size={15} />
+              <span>{isAr ? 'طباعة التذكرة / PDF' : 'Print Ticket / PDF'}</span>
+            </button>
+
+            <a
+              href={`tel:${dynamicPhone}`}
+              className="btn-call-desk"
+            >
+              <Phone size={15} />
+              <span>{isAr ? `اتصال هاتفي (${dynamicPhone})` : `Call Desk (${dynamicPhone})`}</span>
+            </a>
+          </div>
         </div>
       </div>
     </div>

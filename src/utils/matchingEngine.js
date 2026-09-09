@@ -2,7 +2,7 @@
 //  ONE LINE REAL ESTATE - SMART WHATSAPP MATCH & RETARGETING ENGINE
 // =============================================================
 
-import { SOHAG_AREAS } from '../data/propertiesData';
+import { SOHAG_AREAS } from '../data/propertiesData.js';
 
 /**
  * Normalizes phone number for WhatsApp URL
