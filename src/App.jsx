@@ -39,6 +39,7 @@ import CallbackModal from './components/common/CallbackModal';
 import AddDemandModal from './components/common/AddDemandModal';
 import AboutFounderModal from './components/common/AboutFounderModal';
 import PropertyCompareDrawer from './components/properties/PropertyCompareDrawer';
+import FavoritesDrawer from './components/properties/FavoritesDrawer';
 import LiveActivityToast from './components/common/LiveActivityToast';
 import QuickContactDrawer from './components/common/QuickContactDrawer';
 import BackToTopButton from './components/common/BackToTopButton';
@@ -289,6 +290,14 @@ export default function App() {
       );
       return updated;
     });
+  }, [lang, triggerToast]);
+
+  const [favoritesDrawerOpen, setFavoritesDrawerOpen] = useState(false);
+
+  const clearFavorites = useCallback(() => {
+    setFavorites([]);
+    localStorage.removeItem('oneline_favorites');
+    triggerToast(lang === 'ar' ? 'تم مسح قائمة المفضلة' : 'Favorites cleared', 'info');
   }, [lang, triggerToast]);
 
   // Comparison State (Up to 3 properties)
@@ -865,6 +874,8 @@ export default function App() {
           onOpenCompare={() => setCompareDrawerOpen(true)}
           onOpenAboutFounder={() => setAboutFounderModalOpen(true)}
           onOpenQuickSearch={() => setQuickSearchOpen(true)}
+          favoritesCount={favorites.length}
+          onOpenFavorites={() => setFavoritesDrawerOpen(true)}
         />
       )}
 
@@ -1233,6 +1244,19 @@ export default function App() {
         onRemoveFromCompare={removeCompare}
         onClearCompare={clearCompare}
         lang={lang}
+      />
+
+      {/* ❤️ Saved Properties & Favorites Drawer */}
+      <FavoritesDrawer
+        isOpen={favoritesDrawerOpen}
+        onClose={() => setFavoritesDrawerOpen(false)}
+        favorites={favorites}
+        properties={properties}
+        onRemoveFavorite={toggleFavorite}
+        onClearFavorites={clearFavorites}
+        onQuickView={handleOpenQuickView}
+        lang={lang}
+        currency={currency}
       />
 
       {/* 🤖 AI Virtual Real Estate Advisor Modal */}

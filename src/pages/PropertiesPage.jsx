@@ -52,6 +52,23 @@ export default function PropertiesPage({
     bedrooms: searchParams.get('bedrooms') || 'all'
   });
 
+  // Synchronize URL search params (e.g. from Omnisearch or external links) with active filters
+  useEffect(() => {
+    const q = searchParams.get('q') || '';
+    const type = searchParams.get('type') || 'all';
+    const area = searchParams.get('area') || 'all';
+    const budgetParam = searchParams.get('budget');
+    const maxPrice = budgetParam ? (budgetParam === 'under_3m' ? 3000000 : budgetParam === '3m_to_6m' ? 6000000 : 15000000) : 15000000;
+    const bedrooms = searchParams.get('bedrooms') || 'all';
+
+    setFilters(prev => {
+      if (prev.query === q && prev.type === type && prev.area === area && prev.maxPrice === maxPrice && prev.bedrooms === bedrooms) {
+        return prev;
+      }
+      return { query: q, type, area, maxPrice, bedrooms };
+    });
+  }, [searchParams]);
+
   // Reset pagination on filter or sort change without cascading effect renders
   const [prevFilterState, setPrevFilterState] = useState({ filters, sortBy });
   if (prevFilterState.filters !== filters || prevFilterState.sortBy !== sortBy) {

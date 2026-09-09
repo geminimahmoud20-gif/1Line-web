@@ -21,7 +21,8 @@ import {
   TrendingUp,
   Landmark,
   Award,
-  Layers
+  Layers,
+  Heart
 } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
@@ -42,7 +43,9 @@ export default function Header({
   compareCount = 0,
   onOpenCompare,
   onOpenAboutFounder,
-  onOpenQuickSearch
+  onOpenQuickSearch,
+  favoritesCount = 0,
+  onOpenFavorites
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
@@ -322,6 +325,19 @@ export default function Header({
             </button>
           )}
 
+          {/* Active Favorites Pill */}
+          {favoritesCount > 0 && onOpenFavorites && (
+            <button
+              type="button"
+              className="header-favorites-pill"
+              onClick={onOpenFavorites}
+              title={isAr ? 'عرض العقارات المحفوظة' : 'View Saved Properties'}
+            >
+              <Heart size={14} fill="#ef4444" color="#ef4444" />
+              <span>{isAr ? `المفضلة (${favoritesCount})` : `Saved (${favoritesCount})`}</span>
+            </button>
+          )}
+
           {/* 🔍 Global Quick Search (Ctrl + K) Button */}
           {onOpenQuickSearch && (
             <button
@@ -551,6 +567,20 @@ export default function Header({
               >
                 <Search size={16} />
                 <span>{isAr ? 'البحث السريع (Ctrl + K)' : 'Quick Search (Ctrl + K)'}</span>
+              </button>
+            )}
+
+            {favoritesCount > 0 && onOpenFavorites && (
+              <button
+                type="button"
+                className="mobile-drawer-fav-pill"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenFavorites();
+                }}
+              >
+                <Heart size={16} fill="#ef4444" color="#ef4444" />
+                <span>{isAr ? `العقارات المحفوظة بالمفضلة (${favoritesCount})` : `Saved Properties (${favoritesCount})`}</span>
               </button>
             )}
             {flatMobileLinks.map((link) => {
