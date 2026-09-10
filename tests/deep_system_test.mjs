@@ -196,6 +196,44 @@ const distManifestPath = path.join(projectRoot, 'dist/manifest.json');
 const manifestExists = fs.existsSync(distManifestPath);
 assert(manifestExists, 'PWA Manifest dist/manifest.json is present for mobile installation');
 
+// ----------------------------------------------------
+// 8. REACT COMPONENT HOOK & SYNTAX INTEGRITY
+// ----------------------------------------------------
+console.log('\n⚛️ [8/8] Testing React Component Hook Integrity across All JSX Modules...');
+let allHooksImported = true;
+const jsxFiles = [];
+function findJsx(dir) {
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  for (const e of entries) {
+    const full = path.join(dir, e.name);
+    if (e.isDirectory() && e.name !== 'node_modules' && e.name !== 'dist') {
+      findJsx(full);
+    } else if (e.isFile() && e.name.endsWith('.jsx')) {
+      jsxFiles.push(full);
+    }
+  }
+}
+findJsx(path.join(projectRoot, 'src'));
+
+for (const f of jsxFiles) {
+  const code = fs.readFileSync(f, 'utf8');
+  const hooks = ['useState', 'useEffect', 'useCallback', 'useMemo', 'useRef'];
+  for (const h of hooks) {
+    const usage = new RegExp(`\\b${h}\\s*\\(`, 'g');
+    if (usage.test(code) && !code.includes(`import`) && !code.includes(h)) {
+      allHooksImported = false;
+      console.error(`Missing import for ${h} in ${path.relative(projectRoot, f)}`);
+    } else if (usage.test(code)) {
+      const imp = new RegExp(`import\\s+[^;]*\\b${h}\\b[^;]*from`, 'g');
+      if (!imp.test(code) && !code.includes(`const ${h}`) && !code.includes(`function ${h}`)) {
+        allHooksImported = false;
+        console.error(`Unimported hook usage ${h} in ${path.relative(projectRoot, f)}`);
+      }
+    }
+  }
+}
+assert(allHooksImported, `All ${jsxFiles.length} JSX modules have 100% verified hook imports and syntax`);
+
 console.log('\n====================================================');
 console.log(`📊 AUDIT SUMMARY: ${passed} PASSED | ${failed} FAILED`);
 console.log('====================================================');

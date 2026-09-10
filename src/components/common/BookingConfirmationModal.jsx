@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { CheckCircle2, Copy, Check, MessageSquare, X, Calendar, MapPin, Building, ShieldCheck, Phone, Printer } from 'lucide-react';
 import { getWhatsAppUrl, getDynamicPhone } from '../../utils/founderCmsData';
 
