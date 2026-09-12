@@ -761,30 +761,25 @@ export default function HomePage({
                     </span>
                   </div>
                   <p className="demand-text" style={{ color: 'var(--text-primary)', fontWeight: '700' }}>{lang === 'ar' ? dem.text_ar : dem.text_en}</p>
-                  <div className="demand-footer-row">
-                    <div className="demand-meta-item">
-                      <MapPin size={14} style={{ color: 'var(--brand-navy-light, #0284c7)' }} />
-                      <span style={{ color: 'var(--text-secondary)', fontWeight: '800' }}>{lang === 'ar' ? (dem.area_ar || dem.area) : (dem.area_en || dem.area)}</span>
-                    </div>
-                    <div className="demand-meta-item">
-                      <DollarSign size={14} className="text-gold" />
-                      <span style={{ color: 'var(--brand-gold-warm, #f59e0b)', fontWeight: '900', fontSize: '0.92rem' }}>
-                        {(typeof dem.budget === 'number' ? dem.budget : parseInt(String(dem.budget).replace(/,/g, ''))).toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}
-                      </span>
+                  <div className="demand-footer-clean">
+                    <div className="demand-meta-specs-row">
+                      <div className="demand-meta-item">
+                        <MapPin size={14} style={{ color: 'var(--brand-navy-light, #0284c7)' }} />
+                        <span style={{ color: 'var(--text-secondary)', fontWeight: '800' }}>{lang === 'ar' ? (dem.area_ar || dem.area) : (dem.area_en || dem.area)}</span>
+                      </div>
+                      <div className="demand-meta-item">
+                        <DollarSign size={14} className="text-gold" />
+                        <span style={{ color: 'var(--brand-gold-warm, #f59e0b)', fontWeight: '900', fontSize: '0.94rem' }}>
+                          {(typeof dem.budget === 'number' ? dem.budget : parseInt(String(dem.budget).replace(/,/g, ''))).toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}
+                        </span>
+                      </div>
                     </div>
                     <Link 
                       to="/sell" 
-                      className="btn-match-demand"
-                      style={{
-                        background: 'linear-gradient(135deg, #0b4ea2 0%, #073875 100%)',
-                        border: '1px solid rgba(253, 203, 66, 0.35)',
-                        color: '#ffffff',
-                        fontWeight: '800',
-                        boxShadow: '0 3px 12px rgba(11, 78, 162, 0.25)',
-                        padding: '6px 14px'
-                      }}
+                      className="btn-match-demand-full"
                     >
-                      {lang === 'ar' ? 'عقاري يطابق هذا الطلب ←' : 'Match My Property →'}
+                      <span>{lang === 'ar' ? 'عقاري يطابق هذا الطلب' : 'Match My Property'}</span>
+                      <span className="btn-match-arrow">{lang === 'ar' ? '←' : '→'}</span>
                     </Link>
                   </div>
                 </div>

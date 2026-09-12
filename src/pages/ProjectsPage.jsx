@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   Building2, 
   MapPin, 
@@ -13,7 +14,9 @@ import {
   Clock,
   Sparkles,
   TrendingUp,
-  FileDown
+  FileDown,
+  ArrowRight,
+  ArrowLeft
 } from 'lucide-react';
 import { MEGA_PROJECTS } from '../data/projectsData';
 import BrandWatermark from '../components/common/BrandWatermark';
@@ -25,6 +28,7 @@ export default function ProjectsPage({
   triggerToast 
 }) {
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const navigate = useNavigate();
 
   const isAr = lang === 'ar';
   const allProjects = projects && projects.length > 0 ? projects : MEGA_PROJECTS;
@@ -56,6 +60,30 @@ export default function ProjectsPage({
       {/* Hero Header */}
       <div className="projects-hero-banner">
         <div className="projects-hero-container">
+          {/* Quick Back Navigation Bar */}
+          <div className="page-top-back-bar">
+            <button
+              type="button"
+              className="btn-back-step"
+              onClick={() => {
+                if (window.history.length > 1) {
+                  navigate(-1);
+                } else {
+                  navigate('/');
+                }
+              }}
+              title={isAr ? 'الرجوع خطوة للخلف' : 'Go back one step'}
+            >
+              {isAr ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
+              <span>{isAr ? 'رجوع خطوة للخلف' : 'Back'}</span>
+            </button>
+            <div className="page-breadcrumb-sub">
+              <Link to="/">{isAr ? 'الرئيسية' : 'Home'}</Link>
+              <span>/</span>
+              <span className="crumb-current">{isAr ? 'دليل المشروعات' : 'Mega Projects'}</span>
+            </div>
+          </div>
+
           <div className="projects-badge-pill">
             <Sparkles size={16} className="text-gold" />
             <span>{isAr ? 'دليل المشروعات والكمبوندات الكبرى في سوهاج' : 'Mega Projects & Flagship Compounds'}</span>

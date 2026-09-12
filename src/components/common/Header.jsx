@@ -22,7 +22,9 @@ import {
   Landmark,
   Award,
   Layers,
-  Heart
+  Heart,
+  ArrowRight,
+  ArrowLeft
 } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
@@ -217,6 +219,25 @@ export default function Header({
   return (
     <header className="site-header sticky-header">
       <div className="header-container glass-capsule">
+        {/* Mobile One-Step Back Navigation Button */}
+        {location.pathname !== '/' && (
+          <button
+            type="button"
+            className="mobile-header-back-btn hide-desktop"
+            onClick={() => {
+              if (window.history.length > 1) {
+                window.history.back();
+              } else {
+                window.location.href = '/';
+              }
+            }}
+            title={isAr ? 'الرجوع خطوة للخلف' : 'Go back one step'}
+            aria-label={isAr ? 'الرجوع خطوة للخلف' : 'Go back one step'}
+          >
+            {isAr ? <ArrowRight size={20} /> : <ArrowLeft size={20} />}
+          </button>
+        )}
+
         {/* Brand Logo */}
         <Link to="/" className="brand-logo" onClick={() => setMobileMenuOpen(false)}>
           <LogoEmblem size={40} />

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   MapPin, 
   BedDouble, 
@@ -12,11 +12,13 @@ import {
   Phone, 
   MessageSquare, 
   ShieldCheck, 
-  Clock,
-  TrendingUp,
-  Calculator,
-  Eye,
-  Navigation
+  Clock, 
+  TrendingUp, 
+  Calculator, 
+  Eye, 
+  Navigation,
+  ArrowRight,
+  ArrowLeft
 } from 'lucide-react';
 import { incrementPropertyView, getPropertyViews } from '../utils/visitorTracker';
 import PropertyGallery from '../components/properties/PropertyGallery';
@@ -49,6 +51,7 @@ export default function PropertyDetailPage({
   onAddNewLead
 }) {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'legal' | 'valuation' | 'financing'
   const [depositModalOpen, setDepositModalOpen] = useState(false);
   const [storyModalOpen, setStoryModalOpen] = useState(false);
@@ -200,12 +203,42 @@ export default function PropertyDetailPage({
   return (
     <div className="property-detail-page-wrapper">
       <div className="detail-container">
+        {/* Quick Back Navigation Bar */}
+        <div className="page-top-back-bar">
+          <button
+            type="button"
+            className="btn-back-step"
+            onClick={() => {
+              if (window.history.length > 1) {
+                navigate(-1);
+              } else {
+                navigate('/properties');
+              }
+            }}
+            title={isAr ? 'الرجوع خطوة للخلف' : 'Go back one step'}
+          >
+            {isAr ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
+            <span>{isAr ? 'رجوع خطوة للخلف' : 'Back'}</span>
+          </button>
+          <div className="page-breadcrumb-sub">
+            <Link to="/">{isAr ? 'الرئيسية' : 'Home'}</Link>
+            <span>/</span>
+            <Link to="/properties">{isAr ? 'العقارات' : 'Properties'}</Link>
+            <span>/</span>
+            <span className="crumb-current">{property.id.toUpperCase()}</span>
+          </div>
+        </div>
+
         {/* Main Title & Price Header Banner */}
         <div className="detail-header-block">
           <div className="detail-title-col">
             <div className="detail-badges-row">
-              {property.badge_ar && <span className="gold-pill-badge">{isAr ? property.badge_ar : property.badge_en}</span>}
+              <span className="status-pill-badge">
+                <CheckCircle2 size={13} />
+                {isAr ? 'مفحوص ومعتمد قانونياً' : 'Legally Verified'}
+              </span>
               <span className="type-pill-badge">{property.type}</span>
+              {property.badge_ar && <span className="gold-pill-badge">{isAr ? property.badge_ar : property.badge_en}</span>}
               <button 
                 type="button" 
                 className="code-copy-pill-btn" 
@@ -218,15 +251,6 @@ export default function PropertyDetailPage({
                 <span>{property.id.toUpperCase()}</span>
                 <span className="copy-icon-txt">📋</span>
               </button>
-              <span className="status-pill-badge">
-                <CheckCircle2 size={13} />
-                {isAr ? 'مفحوص ومعتمد قانونياً' : 'Legally Verified'}
-              </span>
-              <span className="status-pill-badge" style={{ background: 'rgba(6, 182, 212, 0.12)', color: '#06b6d4', borderColor: 'rgba(6, 182, 212, 0.3)' }}>
-                <Eye size={13} />
-                <span>{viewsCount} {isAr ? 'مشاهدة حقيقية' : 'Live Views'}</span>
-                {viewsCount >= 350 && <span style={{ fontSize: '11px' }}>🔥</span>}
-              </span>
             </div>
             <h1 className="detail-main-title">{title}</h1>
             <div className="detail-location-text" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>

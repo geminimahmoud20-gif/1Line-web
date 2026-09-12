@@ -1,14 +1,40 @@
-import { CheckCircle2, Sparkles, ShieldCheck, Clock, Percent } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { ArrowRight, ArrowLeft, Sparkles, ShieldCheck, Clock, Percent } from 'lucide-react';
 import MortgageRoiCalculator from '../components/calculators/MortgageRoiCalculator';
 
 export default function FinancingPage({ lang = 'ar' }) {
   const isAr = lang === 'ar';
+  const navigate = useNavigate();
 
   return (
     <div className="financing-page-wrapper">
       {/* Deep Navy Luxury Hero Header */}
       <section className="financing-hero-section">
         <div className="financing-hero-container">
+          {/* Quick Back Navigation Bar */}
+          <div className="page-top-back-bar">
+            <button
+              type="button"
+              className="btn-back-step"
+              onClick={() => {
+                if (window.history.length > 1) {
+                  navigate(-1);
+                } else {
+                  navigate('/');
+                }
+              }}
+              title={isAr ? 'الرجوع خطوة للخلف' : 'Go back one step'}
+            >
+              {isAr ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
+              <span>{isAr ? 'رجوع خطوة للخلف' : 'Back'}</span>
+            </button>
+            <div className="page-breadcrumb-sub">
+              <Link to="/">{isAr ? 'الرئيسية' : 'Home'}</Link>
+              <span>/</span>
+              <span className="crumb-current">{isAr ? 'التمويل والتقسيط' : 'Financing'}</span>
+            </div>
+          </div>
+
           <div className="financing-badge-pill">
             <Sparkles size={15} className="text-gold" />
             <span>{isAr ? 'برنامج 1Line Now للتمويل والتقسيط العقاري' : '1Line Now Mortgage & Installment Program'}</span>
@@ -47,8 +73,8 @@ export default function FinancingPage({ lang = 'ar' }) {
 
             <div className="fin-benefit-card">
               <div className="fin-benefit-icon"><Percent size={24} className="text-gold" /></div>
-              <h3>{isAr ? 'مقدمات تبدأ من 15% فقط' : 'Downpayments from 15%'}</h3>
-              <p>{isAr ? 'ادفع أقل مقدم ممكن واستلم وحدتك السكنية أو التجارية فوراً مع خطة دفع واضحة.' : 'Pay minimal upfront capital and receive your property keys immediately.'}</p>
+              <h3>{isAr ? 'مقدمات تبدأ من 10% فقط' : 'Downpayments from 10%'}</h3>
+              <p>{isAr ? 'ادفع أقل مقدم ممكن (10% فقط) واستلم وحدتك السكنية أو التجارية فوراً مع خطة دفع واضحة.' : 'Pay minimal upfront capital (from 10%) and receive your property keys immediately.'}</p>
             </div>
 
             <div className="fin-benefit-card">

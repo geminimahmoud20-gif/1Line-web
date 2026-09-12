@@ -59,18 +59,21 @@ export default function MortgageRoiCalculator({
     return Math.max(0, price - downPaymentAmount);
   }, [price, downPaymentAmount]);
 
+  const effectiveRate = typeof interestRate === 'number' ? interestRate : (parseFloat(interestRate) || 0);
+  const effectiveYears = typeof years === 'number' ? years : (parseInt(years) || 1);
+
   const monthlyInstallment = useMemo(() => {
     if (loanAmount <= 0) return 0;
-    const monthlyRate = (interestRate / 100) / 12;
-    const totalMonths = years * 12;
+    const monthlyRate = (effectiveRate / 100) / 12;
+    const totalMonths = effectiveYears * 12;
     if (monthlyRate === 0) return Math.round(loanAmount / totalMonths);
     const monthly = (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) / (Math.pow(1 + monthlyRate, totalMonths) - 1);
     return Math.round(monthly);
-  }, [loanAmount, interestRate, years]);
+  }, [loanAmount, effectiveRate, effectiveYears]);
 
   const totalPaid = useMemo(() => {
-    return downPaymentAmount + (monthlyInstallment * years * 12);
-  }, [downPaymentAmount, monthlyInstallment, years]);
+    return downPaymentAmount + (monthlyInstallment * effectiveYears * 12);
+  }, [downPaymentAmount, monthlyInstallment, effectiveYears]);
 
   const totalInterest = useMemo(() => {
     return Math.max(0, totalPaid - price);
@@ -82,9 +85,9 @@ export default function MortgageRoiCalculator({
 
   // Dynamic slider track fill percentages for active color fill
   const priceFillPct = Math.min(100, Math.max(0, ((price - 500000) / (20000000 - 500000)) * 100));
-  const downpaymentFillPct = Math.min(100, Math.max(0, ((downpaymentPercent - 5) / (80 - 5)) * 100));
-  const yearsFillPct = Math.min(100, Math.max(0, ((years - 1) / (15 - 1)) * 100));
-  const interestFillPct = Math.min(100, Math.max(0, (interestRate / 24) * 100));
+  const downpaymentFillPct = Math.min(100, Math.max(0, ((downpaymentPercent - 10) / (80 - 10)) * 100));
+  const yearsFillPct = Math.min(100, Math.max(0, ((effectiveYears - 1) / (15 - 1)) * 100));
+  const interestFillPct = Math.min(100, Math.max(0, (effectiveRate / 24) * 100));
   const rentFillPct = Math.min(100, Math.max(0, ((monthlyRent - 2000) / (100000 - 2000)) * 100));
   const growthFillPct = Math.min(100, Math.max(0, ((annualAppreciation - 3) / (35 - 3)) * 100));
 
@@ -123,7 +126,7 @@ export default function MortgageRoiCalculator({
   const handleDownpaymentAmountChange = (val) => {
     const numericVal = Math.max(0, parseInt(val) || 0);
     if (price > 0) {
-      const calculatedPct = Math.min(80, Math.max(5, Math.round((numericVal / price) * 100)));
+      const calculatedPct = Math.min(80, Math.max(10, Math.round((numericVal / price) * 100)));
       setDownpaymentPercent(calculatedPct);
     }
   };
@@ -256,7 +259,7 @@ export default function MortgageRoiCalculator({
                 <div className="calc-slider-track-wrap">
                   <input
                     type="range"
-                    min="5"
+                    min="10"
                     max="80"
                     step="1"
                     value={downpaymentPercent}
@@ -267,7 +270,7 @@ export default function MortgageRoiCalculator({
                     }}
                   />
                   <div className="calc-range-limits-ltr">
-                    <span>5% ({isAr ? 'أدنى مقدم' : 'Min'})</span>
+                    <span>10% ({isAr ? 'أدنى مقدم' : 'Min'})</span>
                     <span>40%</span>
                     <span>80% ({isAr ? 'أقصى مقدم' : 'Max'})</span>
                   </div>
@@ -275,7 +278,7 @@ export default function MortgageRoiCalculator({
 
                 {/* Quick Downpayment % Chips (Ascending Order) */}
                 <div className="calc-quick-chips-row">
-                  {[5, 10, 15, 20, 25, 30, 40, 50].map((pct) => (
+                  {[10, 15, 20, 25, 30, 40, 50].map((pct) => (
                     <button
                       key={pct}
                       type="button"
@@ -300,8 +303,21 @@ export default function MortgageRoiCalculator({
                       min="1"
                       max="15"
                       step="1"
-                      value={years}
-                      onChange={(e) => setYears(Math.min(25, Math.max(1, parseInt(e.target.value) || 1)))}
+                      value={years === '' ? '' : years}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '') {
+                          setYears('');
+                        } else {
+                          const parsed = parseInt(val);
+                          setYears(isNaN(parsed) ? '' : Math.min(25, Math.max(1, parsed)));
+                        }
+                      }}
+                      onBlur={() => {
+                        if (years === '' || isNaN(years)) {
+                          setYears(5);
+                        }
+                      }}
                       className="direct-num-input"
                       title={isAr ? 'اكتب عدد السنوات مباشرة' : 'Type duration in years'}
                     />
@@ -316,7 +332,7 @@ export default function MortgageRoiCalculator({
                     min="1"
                     max="15"
                     step="1"
-                    value={years}
+                    value={effectiveYears}
                     onChange={(e) => setYears(parseInt(e.target.value))}
                     className="calc-range"
                     style={{
@@ -357,8 +373,21 @@ export default function MortgageRoiCalculator({
                       min="0"
                       max="30"
                       step="0.5"
-                      value={interestRate}
-                      onChange={(e) => setInterestRate(Math.max(0, parseFloat(e.target.value) || 0))}
+                      value={interestRate === '' ? '' : interestRate}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '') {
+                          setInterestRate('');
+                        } else {
+                          const parsed = parseFloat(val);
+                          setInterestRate(isNaN(parsed) ? '' : Math.min(50, Math.max(0, parsed)));
+                        }
+                      }}
+                      onBlur={() => {
+                        if (interestRate === '' || isNaN(interestRate)) {
+                          setInterestRate(0);
+                        }
+                      }}
                       className="direct-num-input"
                       title={isAr ? 'اكتب نسبة الفائدة أو المرابحة مباشرة' : 'Type interest rate'}
                     />
@@ -373,7 +402,7 @@ export default function MortgageRoiCalculator({
                     min="0"
                     max="24"
                     step="1"
-                    value={interestRate}
+                    value={effectiveRate}
                     onChange={(e) => setInterestRate(parseFloat(e.target.value))}
                     className="calc-range"
                     style={{

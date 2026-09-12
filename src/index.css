@@ -618,20 +618,47 @@ a:hover {
   color: var(--text-secondary);
 }
 
-/* General Button Styles */
+/* 🔘 UNIFIED BUTTON DESIGN SYSTEM */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  font-family: inherit;
-  font-weight: 600;
-  padding: 14px 28px;
-  border-radius: var(--radius-md);
+  gap: 8px;
+  font-family: var(--font-ar) !important;
+  font-weight: 700;
+  padding: 10px 20px;
+  min-height: 42px;
+  border-radius: 12px;
   cursor: pointer;
-  transition: var(--transition-normal);
-  font-size: 0.95rem;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  font-size: 0.9rem;
+  line-height: 1.4;
+  text-decoration: none;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
+
+.btn-sm {
+  padding: 6px 14px;
+  min-height: 34px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 9px;
+  gap: 6px;
+}
+
+.btn-lg {
+  padding: 12px 28px;
+  min-height: 48px;
+  font-size: 0.98rem;
+  font-weight: 800;
+  border-radius: 14px;
+}
+
+.btn-full {
+  width: 100%;
+}
+
 .btn-primary {
   background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
   color: #ffffff;
@@ -643,6 +670,64 @@ a:hover {
   box-shadow: 0 6px 20px rgba(2, 132, 199, 0.38);
   background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
   color: #ffffff;
+}
+
+/* 🏷️ UNIFIED LUXURY BADGE DESIGN SYSTEM */
+.badge,
+.pill-badge,
+.status-pill-badge,
+.type-pill-badge,
+.gold-pill-badge,
+.urgency-badge,
+.tag-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.badge-gold, .gold-pill-badge {
+  background: rgba(245, 158, 11, 0.12) !important;
+  color: #b45309 !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+
+.dark-theme .badge-gold, .dark-theme .gold-pill-badge {
+  background: rgba(245, 158, 11, 0.18) !important;
+  color: #fbbf24 !important;
+  border-color: rgba(245, 158, 11, 0.4) !important;
+}
+
+.badge-emerald, .status-pill-badge {
+  background: rgba(16, 185, 129, 0.1) !important;
+  color: #059669 !important;
+  border: 1px solid rgba(16, 185, 129, 0.25) !important;
+}
+
+.dark-theme .badge-emerald, .dark-theme .status-pill-badge {
+  background: rgba(16, 185, 129, 0.16) !important;
+  color: #34d399 !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+.badge-navy, .type-pill-badge {
+  background: rgba(13, 72, 161, 0.08) !important;
+  color: #0d48a1 !important;
+  border: 1px solid rgba(13, 72, 161, 0.18) !important;
+}
+
+.dark-theme .badge-navy, .dark-theme .type-pill-badge {
+  background: rgba(56, 189, 248, 0.12) !important;
+  color: #38bdf8 !important;
+  border-color: rgba(56, 189, 248, 0.25) !important;
 }
 .btn-secondary {
   background: var(--bg-card);
