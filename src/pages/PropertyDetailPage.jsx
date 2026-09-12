@@ -45,7 +45,8 @@ export default function PropertyDetailPage({
   favorites,
   onToggleFavorite,
   onQuickView,
-  triggerToast
+  triggerToast,
+  onAddNewLead
 }) {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'legal' | 'valuation' | 'financing'
@@ -140,8 +141,15 @@ export default function PropertyDetailPage({
       return;
     }
 
-    if (!bookingForm.name || !bookingForm.phone) {
-      triggerToast(isAr ? 'يرجى إدخال اسمك ورقم هاتفك' : 'Please enter your name and phone', 'error');
+    const cleanWhatsapp = (bookingForm.whatsapp || bookingForm.phone || '').trim().replace(/[\s\-()]/g, '');
+
+    if (!bookingForm.name || !bookingForm.name.trim()) {
+      triggerToast(isAr ? 'الرجاء إدخال اسمك بالكامل (إلزامي)' : 'Full name is required', 'error');
+      return;
+    }
+
+    if (!cleanWhatsapp) {
+      triggerToast(isAr ? 'الرجاء إدخال رقم الواتساب (إلزامي لتأكيد المعاينة والموقع)' : 'WhatsApp number is required', 'error');
       return;
     }
 
@@ -150,16 +158,27 @@ export default function PropertyDetailPage({
       const serialCode = `1LINE-BK-${Math.floor(1000 + Math.random() * 9000)}`;
       const fullBookingRecord = {
         ...bookingForm,
+        name: bookingForm.name.trim(),
+        whatsapp: cleanWhatsapp,
+        phone: bookingForm.phone || cleanWhatsapp,
+        propertyType: property.type || 'residential',
+        area: property.areaKey || 'sohag_jadida',
         serialCode,
         propertyId: property.id,
         propertyTitle: title,
         propertyPrice: property.price,
-        source: 'property_detail_viewing_form',
+        type: 'viewing_request',
+        source: 'حجز معاينة عقار (صفحة العقار)',
+        notes: `طلب حجز معاينة ميدانية للعقار: ${title} (كود ${property.id.toUpperCase()}) | التاريخ: ${bookingForm.date || 'أقرب موعد'} | الفترة: ${bookingForm.slot === 'morning' ? 'صباحاً' : 'مساءً'}`,
         createdAt: new Date().toISOString()
       };
 
-      // Save lead to cloud/local queue with automatic deduplication
-      await saveLead(fullBookingRecord);
+      // Save lead to CRM & cloud with automatic deduplication
+      if (typeof onAddNewLead === 'function') {
+        await onAddNewLead(fullBookingRecord);
+      } else {
+        await saveLead(fullBookingRecord);
+      }
 
       setConfirmedBookingData(fullBookingRecord);
       setBookingSubmitted(true);
@@ -559,7 +578,7 @@ export default function PropertyDetailPage({
                   </div>
 
                   <div className="form-group-item">
-                    <label>{isAr ? 'الاسم بالكامل' : 'Full Name'}</label>
+                    <label>{isAr ? 'الاسم بالكامل * (إلزامي)' : 'Full Name * (Required)'}</label>
                     <input
                       type="text"
                       placeholder={isAr ? 'مثال: محمد السيد' : 'John Doe'}
@@ -570,7 +589,7 @@ export default function PropertyDetailPage({
                   </div>
 
                   <div className="form-group-item">
-                    <label>{isAr ? 'رقم الهاتف / الواتساب' : 'Phone / WhatsApp'}</label>
+                    <label>{isAr ? 'رقم الواتساب * (إلزامي لتأكيد المعاينة والموقع)' : 'WhatsApp Number * (Required)'}</label>
                     <input
                       type="tel"
                       placeholder="01012345678"

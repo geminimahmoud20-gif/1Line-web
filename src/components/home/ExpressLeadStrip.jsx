@@ -3,14 +3,20 @@ import { Zap, Send, Phone, MessageSquare, CheckCircle2, ShieldCheck, ArrowLeft, 
 import { getWhatsAppUrl, getPhoneCallUrl } from '../../utils/founderCmsData';
 import { checkFormSpamProtection, normalizePhoneNumber } from '../../utils/securityShield';
 
+import { getAreas } from '../../utils/areasData';
+
 export default function ExpressLeadStrip({ lang = 'ar', onAddNewLead, triggerToast }) {
   const isAr = lang === 'ar';
   const [requirement, setRequirement] = useState('');
   const [phone, setPhone] = useState('');
   const [clientName, setClientName] = useState('');
+  const [propertyType, setPropertyType] = useState('apartment');
+  const [area, setArea] = useState('new_sohag');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [hpField, setHpField] = useState('');
+
+  const areasList = getAreas().filter(a => a.id !== 'all');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,9 +30,16 @@ export default function ExpressLeadStrip({ lang = 'ar', onAddNewLead, triggerToa
       return;
     }
 
+    if (!clientName || !clientName.trim()) {
+      if (triggerToast) {
+        triggerToast(isAr ? 'يرجى كتابة الاسم بالكامل' : 'Please enter your full name', 'error');
+      }
+      return;
+    }
+
     if (!phone || phone.trim().length < 8) {
       if (triggerToast) {
-        triggerToast(isAr ? 'يرجى إدخال رقم هاتف صحيح للتواصل' : 'Please enter a valid phone number', 'error');
+        triggerToast(isAr ? 'يرجى إدخال رقم واتساب صحيح للتواصل' : 'Please enter a valid WhatsApp number', 'error');
       }
       return;
     }
@@ -35,12 +48,15 @@ export default function ExpressLeadStrip({ lang = 'ar', onAddNewLead, triggerToa
 
     const cleanPhone = normalizePhoneNumber(phone.trim());
     const leadData = {
-      name: clientName.trim() || (isAr ? 'عميل طلب سريع' : 'Express Lead'),
+      name: clientName.trim(),
       phone: cleanPhone,
+      whatsapp: cleanPhone,
+      propertyType: propertyType || 'apartment',
+      area: area || 'new_sohag',
       source: 'express_hero_strip',
       type: 'express_buyer',
       status: 'new',
-      notes: requirement.trim() || (isAr ? 'طلب عروض عقارية سريعة بسوهاج' : 'Quick property specs requested'),
+      notes: `${requirement.trim() ? requirement.trim() + ' | ' : ''}نوع العقار: ${propertyType} | المنطقة: ${area}`,
       createdAt: new Date().toISOString()
     };
 
@@ -133,20 +149,10 @@ export default function ExpressLeadStrip({ lang = 'ar', onAddNewLead, triggerToa
                 <input
                   type="text"
                   className="express-input"
-                  placeholder={isAr ? 'طلبك إيه؟ (مثال: شقة بسوهاج الجديدة، محل تمليك بسيتي...)' : 'What are you looking for? (e.g. 3-bed in New Sohag...)'}
-                  value={requirement}
-                  onChange={(e) => setRequirement(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="express-field-wrap">
-                <input
-                  type="text"
-                  className="express-input"
-                  placeholder={isAr ? 'اسمك الكريم (اختياري)' : 'Your Name (Optional)'}
+                  placeholder={isAr ? 'الاسم بالكامل * (إلزامي)' : 'Full Name * (Required)'}
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
+                  required
                 />
               </div>
 
@@ -154,11 +160,51 @@ export default function ExpressLeadStrip({ lang = 'ar', onAddNewLead, triggerToa
                 <input
                   type="tel"
                   className="express-input phone-input"
-                  placeholder={isAr ? 'رقم تليفونك المحمول (01xxxxxxxxx)' : 'Phone Number (01xxxxxxxxx)'}
+                  placeholder={isAr ? 'رقم الواتساب * (01xxxxxxxxx)' : 'WhatsApp Number * (01xxxxxxxxx)'}
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   required
                   dir="ltr"
+                />
+              </div>
+
+              <div className="express-field-wrap">
+                <select
+                  className="express-input express-select"
+                  value={propertyType}
+                  onChange={(e) => setPropertyType(e.target.value)}
+                  required
+                >
+                  <option value="apartment">{isAr ? 'نوع العقار: شقة سكنية' : 'Type: Apartment'}</option>
+                  <option value="retail">{isAr ? 'نوع العقار: محل تجاري' : 'Type: Retail Shop'}</option>
+                  <option value="villa">{isAr ? 'نوع العقار: فيلا / تاون هاوس' : 'Type: Villa'}</option>
+                  <option value="office">{isAr ? 'نوع العقار: مكتب / عيادة' : 'Type: Office / Clinic'}</option>
+                  <option value="land">{isAr ? 'نوع العقار: قطعة أرض' : 'Type: Land Plot'}</option>
+                </select>
+              </div>
+
+              <div className="express-field-wrap">
+                <select
+                  className="express-input express-select"
+                  value={area}
+                  onChange={(e) => setArea(e.target.value)}
+                  required
+                >
+                  {areasList.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {isAr ? `المنطقة: ${a.name_ar || a.label_ar}` : `Area: ${a.name_en || a.label_en}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="express-field-wrap express-field-full">
+                <input
+                  type="text"
+                  className="express-input"
+                  placeholder={isAr ? 'تفاصيل إضافية عن طلبك وميزانيتك (مثال: بحري، دور ثاني، كاش أو تقسيط)' : 'Additional details & budget (e.g. 2nd floor, cash/installments)'}
+                  value={requirement}
+                  onChange={(e) => setRequirement(e.target.value)}
                 />
               </div>
 

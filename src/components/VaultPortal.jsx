@@ -61,36 +61,55 @@ export const VaultPortal = ({
     setIsSubmitting(true);
     try {
 
+    if (!vaultForm.whatsapp || !vaultForm.whatsapp.trim()) {
+      setWhatsappError(isAr ? 'رقم الواتساب إلزامي لاستلام كود فك القفل' : 'WhatsApp number is required');
+      setIsSubmitting(false);
+      return;
+    }
+
     const phoneCountryObj = SUPPORTED_COUNTRIES.find(c => c.code === phoneCountry);
     const isPhoneValid = phoneCountryObj ? phoneCountryObj.regex.test(vaultForm.phone) : true;
     
-    let isWhatsappValid = true;
-    if (vaultForm.whatsapp) {
-      const whatsappCountryObj = SUPPORTED_COUNTRIES.find(c => c.code === whatsappCountry);
-      isWhatsappValid = whatsappCountryObj ? whatsappCountryObj.regex.test(vaultForm.whatsapp) : true;
-    }
+    const whatsappCountryObj = SUPPORTED_COUNTRIES.find(c => c.code === whatsappCountry);
+    const isWhatsappValid = whatsappCountryObj ? whatsappCountryObj.regex.test(vaultForm.whatsapp.trim()) : true;
 
     if (!isPhoneValid) {
       setPhoneError(isAr ? 'رقم الهاتف غير متوافق مع صيغة الدولة المحددة' : 'Phone number does not match country format');
+      setIsSubmitting(false);
       return;
     }
     
-    if (vaultForm.whatsapp && !isWhatsappValid) {
+    if (!isWhatsappValid) {
       setWhatsappError(isAr ? 'رقم الواتساب غير متوافق مع صيغة الدولة المحددة' : 'WhatsApp number does not match country format');
+      setIsSubmitting(false);
       return;
     }
 
+    const fullPhone = `${phoneCountry}${vaultForm.phone.trim()}`;
+    const fullWhatsapp = `${whatsappCountry}${vaultForm.whatsapp.trim()}`;
+
     const updatedForm = {
       ...vaultForm,
-      phone: `${phoneCountry}${vaultForm.phone}`,
-      whatsapp: vaultForm.whatsapp ? `${whatsappCountry}${vaultForm.whatsapp}` : '',
-      propertyType: selectedVaultProperty?.type_ar || 'vault_unit',
+      phone: fullPhone,
+      whatsapp: fullWhatsapp,
+      propertyType: selectedVaultProperty?.type_ar || 'عقار سري بالخزينة',
+      area: selectedVaultProperty?.area_ar || 'sohag_jadida',
       targetProperty: selectedVaultProperty?.desc_ar || 'Off-Market Asset',
       urgency: 'high'
     };
 
     if (handleAddNewLead) {
-      handleAddNewLead('vault', updatedForm, 'Vault Unlock Form');
+      handleAddNewLead({
+        name: vaultForm.name.trim(),
+        phone: fullPhone,
+        whatsapp: fullWhatsapp,
+        propertyType: selectedVaultProperty?.type_ar || 'عقار سري بالخزينة',
+        area: selectedVaultProperty?.area_ar || 'sohag_jadida',
+        type: 'vault_unlock',
+        source: 'الخزينة السرية (VIP Vault)',
+        notes: `طلب تصريح فك القفل لعقار الخزينة (${selectedVaultProperty?.title_ar || 'Off-Market'})`,
+        details: updatedForm
+      });
     }
 
     if (selectedVaultProperty?.id) {
@@ -336,7 +355,7 @@ export const VaultPortal = ({
 
               <div className="form-group-block">
                 <PhoneInputField
-                  label={isAr ? 'رقم الواتساب (لاستلام البروشور السري)' : 'WhatsApp (To receive private brochure)'}
+                  label={isAr ? 'رقم الواتساب * (إلزامي لاستلام كود الفك والملف)' : 'WhatsApp * (Required)'}
                   value={vaultForm.whatsapp}
                   onChange={(whatsapp) => {
                     setVaultForm({ ...vaultForm, whatsapp });
@@ -345,6 +364,7 @@ export const VaultPortal = ({
                   country={whatsappCountry}
                   onCountryChange={setWhatsappCountry}
                   error={whatsappError}
+                  required
                 />
               </div>
 

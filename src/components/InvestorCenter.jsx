@@ -11,6 +11,7 @@ import {
 import PhoneInputField from './PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { generateInvestorProspectusPdf } from '../utils/pdfBrochure';
+import { getAreas } from '../utils/areasData';
 
 // Dynamic ROI Yields based on property type in Sohag
 const YIELD_RATES = {
@@ -69,30 +70,39 @@ export const InvestorCenter = ({
     const cleanPhone = (investorForm.phone || '').trim().replace(/[\s\-()]/g, '');
     const cleanWhatsapp = (investorForm.whatsapp || '').trim().replace(/[\s\-()]/g, '');
 
+    if (!investorForm.name || !investorForm.name.trim()) {
+      return;
+    }
+
+    if (!cleanWhatsapp) {
+      setWhatsappError(isAr ? 'رقم الواتساب إلزامي للتواصل وإرسال الدراسات الاستثمارية' : 'WhatsApp number is required');
+      return;
+    }
+
     const phoneCountryObj = SUPPORTED_COUNTRIES.find(c => c.code === phoneCountry);
     const isPhoneValid = phoneCountryObj ? phoneCountryObj.regex.test(cleanPhone) : true;
     
-    let isWhatsappValid = true;
-    if (cleanWhatsapp) {
-      const whatsappCountryObj = SUPPORTED_COUNTRIES.find(c => c.code === whatsappCountry);
-      isWhatsappValid = whatsappCountryObj ? whatsappCountryObj.regex.test(cleanWhatsapp) : true;
-    }
+    const whatsappCountryObj = SUPPORTED_COUNTRIES.find(c => c.code === whatsappCountry);
+    const isWhatsappValid = whatsappCountryObj ? whatsappCountryObj.regex.test(cleanWhatsapp) : true;
 
     if (!isPhoneValid) {
       setPhoneError(isAr ? 'رقم الهاتف غير متوافق مع صيغة الدولة المحددة' : 'Phone number does not match country format');
       return;
     }
     
-    if (cleanWhatsapp && !isWhatsappValid) {
+    if (!isWhatsappValid) {
       setWhatsappError(isAr ? 'رقم الواتساب غير متوافق مع صيغة الدولة المحددة' : 'WhatsApp number does not match country format');
       return;
     }
 
+    const targetArea = investorForm.area || 'sohag_jadida';
     const normalizedPhone = cleanPhone.startsWith('0') ? cleanPhone.substring(1) : cleanPhone;
     const normalizedWhatsapp = cleanWhatsapp.startsWith('0') ? cleanWhatsapp.substring(1) : cleanWhatsapp;
 
     const updatedForm = {
       ...investorForm,
+      area: targetArea,
+      propertyType: invPropType,
       budget: invAmount,
       investmentHorizon: invPeriod,
       targetType: invPropType,
@@ -102,7 +112,7 @@ export const InvestorCenter = ({
       projectedNetProfit: investmentSim.netProfit,
       submittedAt: new Date().toISOString(),
       phone: `${phoneCountry}${normalizedPhone}`,
-      whatsapp: cleanWhatsapp ? `${whatsappCountry}${normalizedWhatsapp}` : ''
+      whatsapp: `${whatsappCountry}${normalizedWhatsapp}`
     };
 
     submitInvestorForm(updatedForm);
@@ -348,7 +358,7 @@ export const InvestorCenter = ({
 
         <div className="phase-inputs-row">
           <div className="form-group-flex">
-            <label>{isAr ? 'الاسم بالكامل' : 'Full Name'}</label>
+            <label>{isAr ? 'الاسم بالكامل * (إلزامي)' : 'Full Name * (Required)'}</label>
             <input
               type="text"
               placeholder={isAr ? 'مثال: م. طارق الصاوي' : 'Full Name'}
@@ -360,8 +370,26 @@ export const InvestorCenter = ({
           </div>
 
           <div className="form-group-flex">
+            <label>{isAr ? 'الموقع / المنطقة المستهدفة بسوهاج * (إلزامي)' : 'Target Area in Sohag * (Required)'}</label>
+            <select
+              className="form-input-styled"
+              value={investorForm.area || 'sohag_jadida'}
+              onChange={(e) => setInvestorForm({ ...investorForm, area: e.target.value })}
+              required
+            >
+              {getAreas().filter(a => a.id !== 'all').map(a => (
+                <option key={a.id} value={a.id}>
+                  {isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="phase-inputs-row" style={{ marginTop: '14px' }}>
+          <div className="form-group-flex">
             <PhoneInputField
-              label={isAr ? 'رقم الهاتف الأساسي' : 'Primary Phone Number'}
+              label={isAr ? 'رقم الهاتف الأساسي *' : 'Primary Phone Number *'}
               value={investorForm.phone || ''}
               onChange={(phone) => {
                 setInvestorForm({ ...investorForm, phone });
@@ -376,7 +404,7 @@ export const InvestorCenter = ({
 
           <div className="form-group-flex">
             <PhoneInputField
-              label={isAr ? 'رقم الواتساب (اختياري)' : 'WhatsApp Number (Optional)'}
+              label={isAr ? 'رقم الواتساب * (إلزامي)' : 'WhatsApp Number * (Required)'}
               value={investorForm.whatsapp || ''}
               onChange={(whatsapp) => {
                 setInvestorForm({ ...investorForm, whatsapp });
@@ -385,6 +413,7 @@ export const InvestorCenter = ({
               country={whatsappCountry}
               onCountryChange={setWhatsappCountry}
               error={whatsappError}
+              required
             />
           </div>
         </div>

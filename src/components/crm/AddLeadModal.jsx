@@ -64,16 +64,33 @@ export default function AddLeadModal({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const nameTrimmed = formData.name.trim();
+    const whatsappTrimmed = (formData.whatsapp || formData.phone || '').trim();
 
-    if (!formData.name.trim() || !formData.phone.trim()) {
-      if (triggerToast) triggerToast(isAr ? 'الرجاء إدخال اسم العميل ورقم الهاتف!' : 'Name and phone required!', 'error');
+    if (!nameTrimmed) {
+      if (triggerToast) triggerToast(isAr ? 'الرجاء إدخال اسم العميل بالكامل (إلزامي)!' : 'Full Name is required!', 'error');
+      return;
+    }
+
+    if (!whatsappTrimmed) {
+      if (triggerToast) triggerToast(isAr ? 'الرجاء إدخال رقم الواتساب (إلزامي للتواصل وإرسال العروض)!' : 'WhatsApp number is required!', 'error');
+      return;
+    }
+
+    if (!formData.area) {
+      if (triggerToast) triggerToast(isAr ? 'الرجاء تحديد الموقع / المنطقة بسوهاج (إلزامي)!' : 'Target Location/Area is required!', 'error');
+      return;
+    }
+
+    if (!formData.propertyType) {
+      if (triggerToast) triggerToast(isAr ? 'الرجاء تحديد العقارات المهتم بها / نوع العقار (إلزامي)!' : 'Interested Property Type is required!', 'error');
       return;
     }
 
     const leadPayload = {
-      name: formData.name,
-      phone: formData.phone,
-      whatsapp: formData.whatsapp || formData.phone,
+      name: nameTrimmed,
+      phone: formData.phone.trim() || whatsappTrimmed,
+      whatsapp: whatsappTrimmed,
       altPhone: formData.altPhone,
       cityOrExpat: formData.cityOrExpat,
       type: formData.type,
@@ -98,7 +115,7 @@ export default function AddLeadModal({
     }
 
     if (triggerToast) {
-      triggerToast(isAr ? `تم تسجيل العميل الجديد (${formData.name}) بنجاح! 👤` : 'Lead added successfully!', 'success');
+      triggerToast(isAr ? `تم تسجيل العميل الجديد (${nameTrimmed}) بنجاح! 👤` : 'Lead added successfully!', 'success');
     }
 
     onClose();
@@ -150,9 +167,10 @@ export default function AddLeadModal({
 
             {/* WhatsApp */}
             <div className="form-group-item">
-              <label>{isAr ? 'رقم الواتساب:' : 'WhatsApp:'}</label>
+              <label>{isAr ? 'رقم الواتساب * (إلزامي للتواصل وإرسال العروض):' : 'WhatsApp Number * (Required):'}</label>
               <input
                 type="text"
+                required
                 placeholder="010XXXXXXXX"
                 value={formData.whatsapp}
                 onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
@@ -172,7 +190,7 @@ export default function AddLeadModal({
 
             {/* Type */}
             <div className="form-group-item">
-              <label>{isAr ? 'نوع العميل والطلب:' : 'Lead Type:'}</label>
+              <label>{isAr ? 'تصنيف العميل:' : 'Lead Classification:'}</label>
               <select
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
@@ -185,21 +203,11 @@ export default function AddLeadModal({
               </select>
             </div>
 
-            {/* Budget */}
-            <div className="form-group-item">
-              <label>{isAr ? 'الميزانية المالية المتوقعة (ج.م):' : 'Budget (EGP):'}</label>
-              <input
-                type="text"
-                placeholder="مثال: 3,500,000"
-                value={formData.budget}
-                onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-              />
-            </div>
-
             {/* Area */}
             <div className="form-group-item">
-              <label>{isAr ? 'المنطقة في سوهاج:' : 'Target Area:'}</label>
+              <label>{isAr ? 'الموقع / المنطقة بسوهاج * (إلزامي):' : 'Target Location / Area * (Required):'}</label>
               <select
+                required
                 value={formData.area}
                 onChange={(e) => setFormData({ ...formData, area: e.target.value })}
               >
@@ -211,8 +219,9 @@ export default function AddLeadModal({
 
             {/* Property Type */}
             <div className="form-group-item">
-              <label>{isAr ? 'نوع العقار المطلوب:' : 'Property Type:'}</label>
+              <label>{isAr ? 'العقارات المهتم بها / نوع العقار * (إلزامي):' : 'Interested Property Type * (Required):'}</label>
               <select
+                required
                 value={formData.propertyType}
                 onChange={(e) => setFormData({ ...formData, propertyType: e.target.value })}
               >
@@ -220,6 +229,17 @@ export default function AddLeadModal({
                   <option key={t.id} value={t.id}>{isAr ? t.name_ar : t.name_en}</option>
                 ))}
               </select>
+            </div>
+
+            {/* Budget */}
+            <div className="form-group-item">
+              <label>{isAr ? 'الميزانية المالية المتوقعة (ج.م):' : 'Budget (EGP):'}</label>
+              <input
+                type="text"
+                placeholder="مثال: 3,500,000"
+                value={formData.budget}
+                onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+              />
             </div>
 
             {/* Temperature */}

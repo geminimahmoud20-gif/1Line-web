@@ -268,6 +268,14 @@ export default function HomePage({
                 <Landmark size={14} />
                 <span>{lang === 'ar' ? 'أراضي واستثمار' : 'Lands'}</span>
               </button>
+              <button
+                type="button"
+                className="hero-tab"
+                onClick={() => navigate('/demands')}
+              >
+                <Users size={14} />
+                <span>{lang === 'ar' ? 'طلبات المشترين الكاش' : 'Cash Demands'}</span>
+              </button>
             </div>
 
             <form onSubmit={handleHeroSearch} className="hero-search-inputs-row">

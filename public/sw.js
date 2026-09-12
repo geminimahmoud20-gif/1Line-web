@@ -2,7 +2,7 @@
 //  1LINE SOLUTIONS SOHAG - SERVICE WORKER (PWA & OFFLINE RESILIENCE)
 // =============================================================
 
-const CACHE_NAME = 'oneline-sohag-v1';
+const CACHE_NAME = 'oneline-sohag-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

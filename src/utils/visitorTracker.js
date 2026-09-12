@@ -278,6 +278,30 @@ export function getLeadDigitalJourney(phoneOrName) {
   }
 }
 
+/**
+ * Get the current visitor session's live events and calculated dwell time
+ */
+export function getCurrentSessionJourney() {
+  if (typeof window === 'undefined') return { events: [], dwellTimeSeconds: 0, dwellTimeFormatted: '0 ثانية' };
+
+  try {
+    const session = getOrCreateSession();
+    const events = JSON.parse(localStorage.getItem(STORAGE_KEYS.EVENTS) || '[]');
+    const sessionEvents = events.filter(e => e.sessionId === session.sessionId);
+    const startMs = new Date(session.startedAt || Date.now()).getTime();
+    const elapsedSeconds = Math.max(15, Math.round((Date.now() - startMs) / 1000));
+
+    return {
+      sessionId: session.sessionId,
+      events: sessionEvents,
+      dwellTimeSeconds: elapsedSeconds,
+      dwellTimeFormatted: formatDuration(elapsedSeconds)
+    };
+  } catch (err) {
+    return { events: [], dwellTimeSeconds: 0, dwellTimeFormatted: '0 ثانية' };
+  }
+}
+
 // Helpers
 function formatDuration(seconds) {
   if (!seconds || seconds < 60) return `${seconds || 45} ثانية`;

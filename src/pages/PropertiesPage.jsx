@@ -49,7 +49,12 @@ export default function PropertiesPage({
     type: searchParams.get('type') || 'all',
     area: searchParams.get('area') || 'all',
     maxPrice: searchParams.get('budget') ? (searchParams.get('budget') === 'under_3m' ? 3000000 : searchParams.get('budget') === '3m_to_6m' ? 6000000 : 15000000) : 15000000,
-    bedrooms: searchParams.get('bedrooms') || 'all'
+    bedrooms: searchParams.get('bedrooms') || 'all',
+    completionStatus: 'all',
+    finishing: 'all',
+    paymentPlan: 'all',
+    maxInstallmentYears: 'all',
+    smartTags: []
   });
 
   // Synchronize URL search params (e.g. from Omnisearch or external links) with active filters
@@ -65,7 +70,7 @@ export default function PropertiesPage({
       if (prev.query === q && prev.type === type && prev.area === area && prev.maxPrice === maxPrice && prev.bedrooms === bedrooms) {
         return prev;
       }
-      return { query: q, type, area, maxPrice, bedrooms };
+      return { ...prev, query: q, type, area, maxPrice, bedrooms };
     });
   }, [searchParams]);
 
@@ -86,7 +91,12 @@ export default function PropertiesPage({
       type: 'all',
       area: 'all',
       maxPrice: 15000000,
-      bedrooms: 'all'
+      bedrooms: 'all',
+      completionStatus: 'all',
+      finishing: 'all',
+      paymentPlan: 'all',
+      maxInstallmentYears: 'all',
+      smartTags: []
     });
     setSearchParams({});
   };
@@ -131,6 +141,88 @@ export default function PropertiesPage({
         } else {
           const parsedBeds = parseInt(filters.bedrooms, 10);
           if (!isNaN(parsedBeds) && (prop.bedrooms || 0) !== parsedBeds) return false;
+        }
+      }
+
+      // Completion / Delivery Status filter
+      if (filters.completionStatus && filters.completionStatus !== 'all') {
+        if (filters.completionStatus === 'ready') {
+          const isReady = prop.completionStatus === 'ready' || 
+            (prop.description_ar && prop.description_ar.includes('فوري')) || 
+            (prop.description_en && prop.description_en.toLowerCase().includes('ready'));
+          if (!isReady) return false;
+        } else if (filters.completionStatus === 'under_construction') {
+          const isUnder = prop.completionStatus === 'under_construction' || 
+            prop.completionStatus === 'off_plan' ||
+            (prop.description_ar && prop.description_ar.includes('إنشاء'));
+          if (!isUnder) return false;
+        }
+      }
+
+      // Finishing Quality filter
+      if (filters.finishing && filters.finishing !== 'all') {
+        if (filters.finishing === 'lux') {
+          const isLux = (prop.finishing_ar && (prop.finishing_ar.includes('لوكس') || prop.finishing_ar.includes('سوبر'))) ||
+            (prop.finishing_en && prop.finishing_en.toLowerCase().includes('lux'));
+          if (!isLux) return false;
+        } else if (filters.finishing === 'core') {
+          const isCore = (prop.finishing_ar && (prop.finishing_ar.includes('محارة') || prop.finishing_ar.includes('نصف'))) ||
+            (prop.finishing_en && prop.finishing_en.toLowerCase().includes('core'));
+          if (!isCore) return false;
+        }
+      }
+
+      // Payment Plan filter
+      if (filters.paymentPlan && filters.paymentPlan !== 'all') {
+        if (filters.paymentPlan === 'cash') {
+          if (prop.installmentYears && prop.installmentYears > 0 && (!prop.purpose || prop.purpose === 'sale')) {
+            // allows cash-only properties
+          }
+        } else if (filters.paymentPlan === 'installments') {
+          if (!prop.installmentYears || prop.installmentYears === 0) return false;
+        }
+      }
+
+      // Installment Years
+      if (filters.maxInstallmentYears && filters.maxInstallmentYears !== 'all') {
+        const reqYears = parseInt(filters.maxInstallmentYears, 10);
+        if (reqYears === 3 && (prop.installmentYears || 0) > 3) return false;
+        if (reqYears === 5 && (prop.installmentYears || 0) > 5) return false;
+        if (reqYears === 7 && (prop.installmentYears || 0) < 7) return false;
+      }
+
+      // Smart Tags Filter
+      if (filters.smartTags && filters.smartTags.length > 0) {
+        for (const tag of filters.smartTags) {
+          if (tag === 'nile_view') {
+            const hasNile = prop.title_ar?.includes('نيل') || 
+              prop.locationName_ar?.includes('نيل') || 
+              prop.areaKey === 'corniche' || 
+              (prop.features_ar && prop.features_ar.some(f => f.includes('نيل')));
+            if (!hasNile) return false;
+          }
+          if (tag === 'registered') {
+            const isReg = prop.legalStatus?.ownershipType_ar?.includes('مسجل') || 
+              prop.legalStatus?.ownershipType_en?.toLowerCase().includes('registered') ||
+              (prop.features_ar && prop.features_ar.some(f => f.includes('مسجل')));
+            if (!isReg) return false;
+          }
+          if (tag === 'licensed') {
+            const isLic = Boolean(prop.legalStatus?.licenseStatus_ar || prop.legalStatus?.reconciliationStatus_ar);
+            if (!isLic) return false;
+          }
+          if (tag === 'land_share') {
+            const hasShare = Boolean(prop.legalStatus?.landShare_ar) || 
+              (prop.features_ar && prop.features_ar.some(f => f.includes('حصة بالأرض') || f.includes('حصة في الأرض') || f.includes('حصة شائعة')));
+            if (!hasShare) return false;
+          }
+          if (tag === 'investment') {
+            const isInv = prop.type === 'commercial' || 
+              (prop.badge_ar && prop.badge_ar.includes('عائد')) || 
+              (prop.badge_en && prop.badge_en.includes('ROI')) || 
+              prop.areaKey === 'new_sohag';
+            if (!isInv) return false;
+          }
         }
       }
 
@@ -350,6 +442,7 @@ export default function PropertiesPage({
                     }
                   }
                 }}
+                onFilterChange={handleFilterChange}
                 lang={lang}
                 centerArea={filters.area}
               />

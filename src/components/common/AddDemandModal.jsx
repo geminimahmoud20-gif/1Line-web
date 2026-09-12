@@ -81,9 +81,19 @@ export default function AddDemandModal({
       return;
     }
 
-    // Validation
+    // Validation of mandatory fields: Name, WhatsApp, Property Type, Area
     if (!formData.name.trim()) {
-      triggerToast?.(isAr ? 'يرجى إدخال اسمك الكريم' : 'Please enter your name', 'error');
+      triggerToast?.(isAr ? 'يرجى إدخال اسمك الكريم (إلزامي)' : 'Full Name is required', 'error');
+      return;
+    }
+
+    if (!formData.type) {
+      triggerToast?.(isAr ? 'يرجى اختيار نوع العقار المهتم به (إلزامي)' : 'Property type is required', 'error');
+      return;
+    }
+
+    if (!formData.area) {
+      triggerToast?.(isAr ? 'يرجى اختيار الموقع / المنطقة بسوهاج (إلزامي)' : 'Target area is required', 'error');
       return;
     }
 
@@ -100,13 +110,18 @@ export default function AddDemandModal({
       return;
     }
 
-    if (formData.whatsapp) {
-      const waCountryObj = SUPPORTED_COUNTRIES.find(c => c.code === whatsappCountry);
-      const isWaValid = waCountryObj ? waCountryObj.regex.test(formData.whatsapp) : true;
-      if (!isWaValid) {
-        setWhatsappError(isAr ? 'صيغة رقم الواتساب غير صحيحة' : 'Invalid WhatsApp number format');
-        return;
-      }
+    // WhatsApp is mandatory
+    const waValue = formData.whatsapp || formData.phone;
+    if (!waValue || !waValue.trim()) {
+      setWhatsappError(isAr ? 'رقم الواتساب إلزامي للتواصل وإرسال العروض' : 'WhatsApp number is required');
+      return;
+    }
+
+    const waCountryObj = SUPPORTED_COUNTRIES.find(c => c.code === whatsappCountry);
+    const isWaValid = waCountryObj ? waCountryObj.regex.test(waValue) : true;
+    if (!isWaValid) {
+      setWhatsappError(isAr ? 'صيغة رقم الواتساب غير صحيحة' : 'Invalid WhatsApp number format');
+      return;
     }
 
     setIsSubmitting(true);
@@ -453,12 +468,16 @@ export default function AddDemandModal({
 
                 <div style={{ marginTop: '10px' }}>
                   <PhoneInputField
-                    label={isAr ? 'رقم الواتساب (اختياري للتواصل السريع)' : 'WhatsApp Number (Optional)'}
+                    label={isAr ? 'رقم الواتساب * (إلزامي لإرسال العروض والمطابقات)' : 'WhatsApp Number * (Required for Matches)'}
                     value={formData.whatsapp}
-                    onChange={(val) => setFormData({ ...formData, whatsapp: val })}
+                    onChange={(val) => {
+                      setFormData({ ...formData, whatsapp: val });
+                      if (whatsappError) setWhatsappError('');
+                    }}
                     country={whatsappCountry}
                     onCountryChange={setWhatsappCountry}
                     error={whatsappError}
+                    required
                   />
                 </div>
               </div>

@@ -37,6 +37,7 @@ export const SellWizard = ({
   const [phoneError, setPhoneError] = useState('');
   const [whatsappCountry, setWhatsappCountry] = useState('+20');
   const [whatsappError, setWhatsappError] = useState('');
+  const [sameAsPhone, setSameAsPhone] = useState(true);
 
   const isAr = lang === 'ar';
 
@@ -77,22 +78,28 @@ export const SellWizard = ({
     const cleanPhone = (sellerAnswers.phone || '').trim().replace(/[\s\-()]/g, '');
     const cleanWhatsapp = (sellerAnswers.whatsapp || '').trim().replace(/[\s\-()]/g, '');
 
+    if (!sellerAnswers.name || !sellerAnswers.name.trim()) {
+      return;
+    }
+
+    if (!cleanWhatsapp) {
+      setWhatsappError(isAr ? 'رقم الواتساب إلزامي لإرسال تقرير التقييم والمتابعة' : 'WhatsApp number is required');
+      return;
+    }
+
     // Check phone format
     const phoneCountryObj = SUPPORTED_COUNTRIES.find(c => c.code === sellerCountry);
     const isPhoneValid = phoneCountryObj ? phoneCountryObj.regex.test(cleanPhone) : true;
     
-    let isWhatsappValid = true;
-    if (cleanWhatsapp) {
-      const whatsappCountryObj = SUPPORTED_COUNTRIES.find(c => c.code === whatsappCountry);
-      isWhatsappValid = whatsappCountryObj ? whatsappCountryObj.regex.test(cleanWhatsapp) : true;
-    }
+    const whatsappCountryObj = SUPPORTED_COUNTRIES.find(c => c.code === whatsappCountry);
+    const isWhatsappValid = whatsappCountryObj ? whatsappCountryObj.regex.test(cleanWhatsapp) : true;
 
     if (!isPhoneValid) {
       setPhoneError(isAr ? 'رقم الهاتف غير متوافق مع صيغة الدولة المحددة' : 'Phone number does not match country format');
       return;
     }
     
-    if (cleanWhatsapp && !isWhatsappValid) {
+    if (!isWhatsappValid) {
       setWhatsappError(isAr ? 'رقم الواتساب غير متوافق مع صيغة الدولة المحددة' : 'WhatsApp number does not match country format');
       return;
     }
@@ -106,7 +113,7 @@ export const SellWizard = ({
       estimatedMax: calculatedEstimate.max,
       estimatedAvg: calculatedEstimate.avg,
       phone: `${sellerCountry}${normalizedPhone}`,
-      whatsapp: cleanWhatsapp ? `${whatsappCountry}${normalizedWhatsapp}` : ''
+      whatsapp: `${whatsappCountry}${normalizedWhatsapp}`
     };
 
     submitSellerJourney(updatedAnswers);
@@ -400,7 +407,7 @@ export const SellWizard = ({
             <h4 className="form-sub-title">{isAr ? 'سجل بياناتك لإرسال التقرير الكامل وعرض العقار فوراً' : 'Submit Details to Activate Listing & Receive Full PDF Report'}</h4>
 
             <div className="form-group-block">
-              <label>{isAr ? 'الاسم بالكامل' : 'Full Name'}</label>
+              <label>{isAr ? 'الاسم بالكامل * (إلزامي)' : 'Full Name * (Required)'}</label>
               <input
                 type="text"
                 placeholder={isAr ? 'مثال: أسامة الشريف' : 'Full Name'}
@@ -413,30 +420,61 @@ export const SellWizard = ({
 
             <div className="form-group-block">
               <PhoneInputField
-                label={isAr ? 'رقم الهاتف الأساسي' : 'Primary Phone Number'}
+                label={isAr ? 'رقم الهاتف الأساسي *' : 'Primary Phone Number *'}
                 value={sellerAnswers.phone || ''}
                 onChange={(phone) => {
-                  setSellerAnswers({ ...sellerAnswers, phone });
+                  const updated = { ...sellerAnswers, phone };
+                  if (sameAsPhone) {
+                    updated.whatsapp = phone;
+                  }
+                  setSellerAnswers(updated);
                   if (phoneError) setPhoneError('');
+                  if (sameAsPhone && whatsappError) setWhatsappError('');
                 }}
                 country={sellerCountry}
-                onCountryChange={setSellerCountry}
+                onCountryChange={(code) => {
+                  setSellerCountry(code);
+                  if (sameAsPhone) setWhatsappCountry(code);
+                }}
                 error={phoneError}
                 required
               />
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.84rem', color: 'var(--text-secondary)', cursor: 'pointer', marginTop: '6px' }}>
+                <input
+                  type="checkbox"
+                  checked={sameAsPhone}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setSameAsPhone(checked);
+                    if (checked) {
+                      setSellerAnswers(prev => ({ ...prev, whatsapp: prev.phone || '' }));
+                      setWhatsappCountry(sellerCountry);
+                      if (whatsappError) setWhatsappError('');
+                    }
+                  }}
+                />
+                <span>{isAr ? 'رقم الواتساب هو نفس رقم الهاتف الأساسي' : 'WhatsApp number is same as phone'}</span>
+              </label>
             </div>
 
             <div className="form-group-block">
               <PhoneInputField
-                label={isAr ? 'رقم الواتساب (اختياري لاستلام التقرير)' : 'WhatsApp (Optional for PDF Report)'}
+                label={isAr ? 'رقم الواتساب * (إلزامي لاستلام التقرير)' : 'WhatsApp * (Required for PDF Report)'}
                 value={sellerAnswers.whatsapp || ''}
                 onChange={(whatsapp) => {
                   setSellerAnswers({ ...sellerAnswers, whatsapp });
+                  if (whatsapp !== sellerAnswers.phone) {
+                    setSameAsPhone(false);
+                  }
                   if (whatsappError) setWhatsappError('');
                 }}
                 country={whatsappCountry}
-                onCountryChange={setWhatsappCountry}
+                onCountryChange={(code) => {
+                  setWhatsappCountry(code);
+                  if (code !== sellerCountry) setSameAsPhone(false);
+                }}
                 error={whatsappError}
+                required
               />
             </div>
 

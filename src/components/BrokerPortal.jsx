@@ -5,6 +5,8 @@ import {
 } from 'lucide-react';
 import PhoneInputField from './PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
+import { getAreas } from '../utils/areasData';
+import { PROPERTY_TYPES } from '../data/propertiesData';
 
 export const BrokerPortal = ({
   lang = 'ar',
@@ -22,29 +24,50 @@ export const BrokerPortal = ({
   const validateAndSubmit = (e) => {
     e.preventDefault();
 
-    const phoneCountryObj = SUPPORTED_COUNTRIES.find(c => c.code === phoneCountry);
-    const isPhoneValid = phoneCountryObj ? phoneCountryObj.regex.test(brokerForm.phone) : true;
-    
-    let isWhatsappValid = true;
-    if (brokerForm.whatsapp) {
-      const whatsappCountryObj = SUPPORTED_COUNTRIES.find(c => c.code === whatsappCountry);
-      isWhatsappValid = whatsappCountryObj ? whatsappCountryObj.regex.test(brokerForm.whatsapp) : true;
+    const cleanPhone = (brokerForm.phone || '').trim().replace(/[\s\-()]/g, '');
+    const cleanWhatsapp = (brokerForm.whatsapp || '').trim().replace(/[\s\-()]/g, '');
+
+    if (!brokerForm.name || !brokerForm.name.trim()) {
+      return;
     }
+
+    if (!cleanWhatsapp) {
+      setWhatsappError(isAr ? 'رقم الواتساب إلزامي لتفعيل حساب الوسيط واستلام الصفقات' : 'WhatsApp number is required');
+      return;
+    }
+
+    const phoneCountryObj = SUPPORTED_COUNTRIES.find(c => c.code === phoneCountry);
+    const isPhoneValid = phoneCountryObj ? phoneCountryObj.regex.test(cleanPhone) : true;
+    
+    const whatsappCountryObj = SUPPORTED_COUNTRIES.find(c => c.code === whatsappCountry);
+    const isWhatsappValid = whatsappCountryObj ? whatsappCountryObj.regex.test(cleanWhatsapp) : true;
 
     if (!isPhoneValid) {
       setPhoneError(isAr ? 'رقم الهاتف غير متوافق مع صيغة الدولة المحددة' : 'Phone number does not match country format');
       return;
     }
     
-    if (brokerForm.whatsapp && !isWhatsappValid) {
+    if (!isWhatsappValid) {
       setWhatsappError(isAr ? 'رقم الواتساب غير متوافق مع صيغة الدولة المحددة' : 'WhatsApp number does not match country format');
       return;
     }
 
+    const targetArea = brokerForm.area || 'sohag_jadida';
+    const targetType = brokerForm.propertyType || 'apartment';
+
+    const normalizedPhone = cleanPhone.startsWith('0') ? cleanPhone.substring(1) : cleanPhone;
+    const normalizedWhatsapp = cleanWhatsapp.startsWith('0') ? cleanWhatsapp.substring(1) : cleanWhatsapp;
+
     const updatedForm = {
       ...brokerForm,
-      phone: `${phoneCountry}${brokerForm.phone}`,
-      whatsapp: brokerForm.whatsapp ? `${whatsappCountry}${brokerForm.whatsapp}` : ''
+      name: brokerForm.name.trim(),
+      phone: `${phoneCountry}${normalizedPhone}`,
+      whatsapp: `${whatsappCountry}${normalizedWhatsapp}`,
+      area: targetArea,
+      propertyType: targetType,
+      type: 'broker',
+      source: 'بوابة الوسطاء والشركاء',
+      notes: `تسجيل وسيط معتمد (خبرة: ${brokerForm.experience || '3'} سنوات) - المنطقة: ${targetArea} | التخصص: ${targetType}`
     };
 
     submitBrokerPortal(updatedForm);
@@ -87,7 +110,7 @@ export const BrokerPortal = ({
 
         <div className="phase-inputs-row">
           <div className="form-group-flex">
-            <label>{isAr ? 'الاسم بالكامل / اسم الشركة العقارية' : 'Full Name / Agency Name'}</label>
+            <label>{isAr ? 'الاسم بالكامل / اسم الشركة العقارية * (إلزامي)' : 'Full Name / Agency Name * (Required)'}</label>
             <input
               type="text"
               placeholder={isAr ? 'مثال: أسامة القاضي (القاضي للتسويق العقاري)' : 'Agency Name'}
@@ -113,10 +136,40 @@ export const BrokerPortal = ({
           </div>
         </div>
 
-        <div className="phase-inputs-row">
+        <div className="phase-inputs-row" style={{ marginTop: '14px' }}>
+          <div className="form-group-flex">
+            <label>{isAr ? 'الموقع / منطقة نشاطك الأساسية بسوهاج * (إلزامي)' : 'Primary District in Sohag * (Required)'}</label>
+            <select
+              className="form-select-styled"
+              value={brokerForm.area || 'sohag_jadida'}
+              onChange={(e) => setBrokerForm({ ...brokerForm, area: e.target.value })}
+              required
+            >
+              {getAreas().filter(a => a.id !== 'all').map(a => (
+                <option key={a.id} value={a.id}>{isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group-flex">
+            <label>{isAr ? 'فئات العقارات التي تعمل عليها * (إلزامي)' : 'Property Category * (Required)'}</label>
+            <select
+              className="form-select-styled"
+              value={brokerForm.propertyType || 'apartment'}
+              onChange={(e) => setBrokerForm({ ...brokerForm, propertyType: e.target.value })}
+              required
+            >
+              {PROPERTY_TYPES.filter(t => t.id !== 'all').map(t => (
+                <option key={t.id} value={t.id}>{isAr ? t.name_ar : t.name_en}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="phase-inputs-row" style={{ marginTop: '14px' }}>
           <div className="form-group-flex">
             <PhoneInputField
-              label={isAr ? 'رقم الهاتف الأساسي' : 'Primary Phone'}
+              label={isAr ? 'رقم الهاتف الأساسي *' : 'Primary Phone *'}
               value={brokerForm.phone || ''}
               onChange={(phone) => {
                 setBrokerForm({ ...brokerForm, phone });
@@ -131,7 +184,7 @@ export const BrokerPortal = ({
 
           <div className="form-group-flex">
             <PhoneInputField
-              label={isAr ? 'رقم الواتساب (لاستلام ملفات الوحدات الحصرية)' : 'WhatsApp (To receive exclusive inventory)'}
+              label={isAr ? 'رقم الواتساب * (إلزامي لاستلام الصفقات)' : 'WhatsApp Number * (Required)'}
               value={brokerForm.whatsapp || ''}
               onChange={(whatsapp) => {
                 setBrokerForm({ ...brokerForm, whatsapp });
@@ -140,6 +193,7 @@ export const BrokerPortal = ({
               country={whatsappCountry}
               onCountryChange={setWhatsappCountry}
               error={whatsappError}
+              required
             />
           </div>
         </div>

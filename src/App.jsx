@@ -22,7 +22,7 @@ import {
 } from './firebaseService';
 import { playNotificationChime } from './utils/notificationHub';
 import { sanitizeObject, normalizePhoneNumber } from './utils/securityShield';
-import { getOrCreateSession, trackEvent, identifyVisitor } from './utils/visitorTracker';
+import { getOrCreateSession, trackEvent, identifyVisitor, getCurrentSessionJourney } from './utils/visitorTracker';
 import { isRecordArray, readStoredJson } from './utils/browserStorage';
 import { initFounderCmsSync } from './utils/founderCmsData';
 import { initAreasSync } from './utils/areasData';
@@ -39,6 +39,7 @@ import CallbackModal from './components/common/CallbackModal';
 import AddDemandModal from './components/common/AddDemandModal';
 import AboutFounderModal from './components/common/AboutFounderModal';
 import PropertyCompareDrawer from './components/properties/PropertyCompareDrawer';
+import FloatingCompareBar from './components/properties/FloatingCompareBar';
 import FavoritesDrawer from './components/properties/FavoritesDrawer';
 import LiveActivityToast from './components/common/LiveActivityToast';
 import QuickContactDrawer from './components/common/QuickContactDrawer';
@@ -312,8 +313,20 @@ export default function App() {
         triggerToast(lang === 'ar' ? 'تمت الإزالة من قائمة المقارنة' : 'Removed from comparison', 'info');
         return prev.filter((p) => p.id !== property.id);
       }
-      if (prev.length >= 3) {
-        triggerToast(lang === 'ar' ? 'يمكنك مقارنة 3 عقارات كحد أقصى' : 'Max 3 properties for comparison', 'error');
+      if (prev.length >= 4) {
+        triggerToast(lang === 'ar' ? 'يمكنك مقارنة 4 عقارات كحد أقصى' : 'Max 4 properties for comparison', 'error');
+        return prev;
+      }
+      triggerToast(lang === 'ar' ? 'تمت الإضافة إلى قائمة المقارنة' : 'Added to comparison', 'success');
+      return [...prev, property];
+    });
+  }, [lang, triggerToast]);
+
+  const addToCompare = useCallback((property) => {
+    setCompareList((prev) => {
+      if (prev.some((p) => p.id === property.id)) return prev;
+      if (prev.length >= 4) {
+        triggerToast(lang === 'ar' ? 'يمكنك مقارنة 4 عقارات كحد أقصى' : 'Max 4 properties for comparison', 'error');
         return prev;
       }
       triggerToast(lang === 'ar' ? 'تمت الإضافة إلى قائمة المقارنة' : 'Added to comparison', 'success');
@@ -352,13 +365,45 @@ export default function App() {
   }, []);
 
   // Generic Lead Submission Handler with Deduplication & Auto-Merge
-  const handleAddNewLead = useCallback(async (leadData) => {
+  const handleAddNewLead = useCallback(async (leadData, extraData, sourceLabel) => {
+    let rawLead = leadData;
+    if (typeof leadData === 'string' && extraData && typeof extraData === 'object') {
+      rawLead = {
+        ...extraData,
+        type: extraData.type || leadData,
+        source: sourceLabel || extraData.source || 'Direct Entry'
+      };
+    }
+
     // 🛡️ Sanitize all user-submitted data to prevent XSS attacks
-    const cleanData = sanitizeObject(leadData);
-    const incomingPhone = normalizePhoneNumber(cleanData.phone || cleanData.whatsapp);
+    const cleanData = sanitizeObject(rawLead);
+
+    // Standardize mandatory client registration fields
+    const normalizedName = (cleanData.name || cleanData.clientName || '').trim();
+    const rawPhone = cleanData.phone || cleanData.whatsapp || '';
+    const rawWhatsapp = cleanData.whatsapp || cleanData.phone || '';
+    const normalizedPropertyType = cleanData.propertyType || cleanData.details?.propertyType || cleanData.targetType || cleanData.type || 'residential';
+    const normalizedArea = cleanData.area || cleanData.details?.area || cleanData.location || 'sohag_jadida';
+
+    const standardizedData = {
+      ...cleanData,
+      name: normalizedName || 'عميل مسجل',
+      phone: rawPhone,
+      whatsapp: rawWhatsapp,
+      propertyType: normalizedPropertyType,
+      area: normalizedArea,
+      details: {
+        ...(cleanData.details || {}),
+        propertyType: normalizedPropertyType,
+        area: normalizedArea
+      }
+    };
+
+    const incomingPhone = normalizePhoneNumber(rawPhone || rawWhatsapp);
 
     // 🌐 Enrich Digital Visitor Session
-    identifyVisitor(cleanData);
+    identifyVisitor(standardizedData);
+    const sessionJourney = getCurrentSessionJourney();
 
     // Play subtle audio alert for sales team if sound enabled
     if (soundEnabled) {
@@ -379,16 +424,24 @@ export default function App() {
         const existing = prev[existingIndex];
         const newLog = {
           timestamp: new Date().toISOString(),
-          action: `تسجيل اهتمام إضافي: طلب ${cleanData.details?.propertyType || cleanData.type || 'جديد'}`
+          action: `تسجيل اهتمام إضافي: طلب ${standardizedData.propertyType || standardizedData.type || 'جديد'}`
         };
 
         const mergedLead = {
           ...existing,
+          name: existing.name || standardizedData.name,
+          whatsapp: standardizedData.whatsapp || existing.whatsapp,
+          phone: standardizedData.phone || existing.phone,
+          propertyType: standardizedData.propertyType || existing.propertyType,
+          area: standardizedData.area || existing.area,
           score: Math.min(100, (existing.score || 80) + 10), // Boost urgency score
           timestamp: new Date().toISOString(), // Refresh recency
-          notes: `${existing.notes ? existing.notes + ' | ' : ''}طلب إضافي: ${cleanData.details?.propertyType || ''} في ${cleanData.details?.area || ''}`,
-          details: { ...(existing.details || {}), ...(cleanData.details || {}) },
-          activityLogs: [newLog, ...(existing.activityLogs || [])]
+          notes: `${existing.notes ? existing.notes + ' | ' : ''}طلب إضافي: ${standardizedData.propertyType || ''} في ${standardizedData.area || ''}`,
+          details: { ...(existing.details || {}), ...(standardizedData.details || {}) },
+          activityLogs: [newLog, ...(existing.activityLogs || [])],
+          digitalJourney: (sessionJourney.events && sessionJourney.events.length > 0) ? sessionJourney.events : (existing.digitalJourney || []),
+          dwellTimeFormatted: sessionJourney.dwellTimeFormatted || existing.dwellTimeFormatted || '1د 15ث',
+          isLiveTracked: true
         };
 
         finalLead = mergedLead;
@@ -410,7 +463,11 @@ export default function App() {
             timestamp: new Date().toISOString(),
             action: 'تسجيل العميل لأول مرة عبر المنصة'
           }],
-          ...cleanData
+          digitalJourney: sessionJourney.events || [],
+          dwellTimeFormatted: sessionJourney.dwellTimeFormatted || '45 ثانية',
+          dwellTimeSeconds: sessionJourney.dwellTimeSeconds || 45,
+          isLiveTracked: true,
+          ...standardizedData
         };
 
         finalLead = newLead;
@@ -660,9 +717,12 @@ export default function App() {
     handleAddNewLead({
       name: formData.name,
       phone: formData.phone,
-      whatsapp: formData.phone,
+      whatsapp: formData.whatsapp || formData.phone,
+      propertyType: formData.propertyType || 'apartment',
+      area: formData.area || 'sohag_jadida',
       type: 'callback_request',
-      notes: `طلب معاودة اتصال سريع (${formData.preferredTime})`
+      notes: `طلب معاودة اتصال سريع (${formData.preferredTime}) | نوع العقار: ${formData.propertyType || 'سكني'} | المنطقة: ${formData.area || 'سوهاج'}`,
+      details: formData
     });
     triggerToast(lang === 'ar' ? 'تم إرسال طلب الاتصال بنجاح! سنتصل بك قريباً.' : 'Callback request submitted!', 'success');
   };
@@ -700,6 +760,8 @@ export default function App() {
       name: buyerAnswers.name,
       phone: buyerAnswers.phone,
       whatsapp: buyerAnswers.whatsapp || buyerAnswers.phone,
+      propertyType: buyerAnswers.propertyType || 'apartment',
+      area: buyerAnswers.area || 'sohag_jadida',
       type: 'buyer',
       landingPage: '/buy',
       notes: `طلب شراء ${buyerAnswers.propertyType} في منطقة ${buyerAnswers.area} بميزانية ${buyerAnswers.budget}`,
@@ -730,15 +792,18 @@ export default function App() {
 
   const estimatedValue = 3200000; // Calculated approximation for valuation step
 
-  const submitSellerJourney = async () => {
+  const submitSellerJourney = async (overrideData) => {
+    const data = overrideData || sellerAnswers;
     await handleAddNewLead({
-      name: sellerAnswers.name,
-      phone: sellerAnswers.phone,
-      whatsapp: sellerAnswers.whatsapp || sellerAnswers.phone,
+      name: data.name,
+      phone: data.phone,
+      whatsapp: data.whatsapp || data.phone,
+      propertyType: data.propertyType || 'apartment',
+      area: data.area || 'sohag_jadida',
       type: 'seller',
       landingPage: '/sell',
-      notes: `عرض بيع ${sellerAnswers.propertyType} في ${sellerAnswers.area} بمساحة ${sellerAnswers.size}م`,
-      details: sellerAnswers
+      notes: `عرض بيع ${data.propertyType} في ${data.area} بمساحة ${data.size || ''}م`,
+      details: data
     });
     triggerToast(lang === 'ar' ? 'تم إرسال بيانات العقار بنجاح! سنراجع التقييم ونتواصل معك.' : 'Property listed for valuation!', 'success');
   };
@@ -747,7 +812,7 @@ export default function App() {
   const [invAmount, setInvAmount] = useState(5000000);
   const [invPeriod, setInvPeriod] = useState(5);
   const [invPropType, setInvPropType] = useState('commercial');
-  const [investorForm, setInvestorForm] = useState({ name: '', phone: '', email: '' });
+  const [investorForm, setInvestorForm] = useState({ name: '', phone: '', whatsapp: '', email: '', area: 'sohag_jadida' });
   const [showInvResultForm, setShowInvResultForm] = useState(false);
 
   const roiRes = {
@@ -756,15 +821,19 @@ export default function App() {
     exitValue: Math.round(invAmount * 1.6).toLocaleString() + ' EGP'
   };
 
-  const submitInvestorForm = async () => {
+  const submitInvestorForm = async (overrideData) => {
+    const data = overrideData || investorForm;
     await handleAddNewLead({
-      name: investorForm.name,
-      phone: investorForm.phone,
-      email: investorForm.email,
+      name: data.name,
+      phone: data.phone,
+      whatsapp: data.whatsapp || data.phone,
+      propertyType: data.propertyType || data.targetType || invPropType,
+      area: data.area || 'sohag_jadida',
+      email: data.email,
       type: 'investor',
       landingPage: '/investor',
-      notes: `طلب دراسة جدوى استثمارية بمبلغ ${invAmount.toLocaleString()} ج.م لفترة ${invPeriod} سنوات`,
-      details: { invAmount, invPeriod, invPropType }
+      notes: `طلب دراسة جدوى استثمارية بمبلغ ${(data.budget || invAmount).toLocaleString()} ج.م لفترة ${data.investmentHorizon || invPeriod} سنوات`,
+      details: { invAmount: data.budget || invAmount, invPeriod: data.investmentHorizon || invPeriod, invPropType: data.propertyType || invPropType, area: data.area || 'sohag_jadida', ...data }
     });
     triggerToast(lang === 'ar' ? 'تم إرسال طلب دراسة الجدوى الاستثمارية بنجاح!' : 'Investment study requested!', 'success');
   };
@@ -788,15 +857,18 @@ export default function App() {
     });
   };
 
-  const submitBrokerPortal = async () => {
+  const submitBrokerPortal = async (overrideData) => {
+    const data = overrideData || brokerForm;
     await handleAddNewLead({
-      name: brokerForm.name,
-      phone: brokerForm.phone,
-      whatsapp: brokerForm.whatsapp || brokerForm.phone,
+      name: data.name,
+      phone: data.phone,
+      whatsapp: data.whatsapp || data.phone,
+      propertyType: data.propertyType || (data.categories && data.categories[0]) || 'all_types',
+      area: data.area || (data.areas && data.areas[0]) || 'sohag_jadida',
       type: 'broker',
       landingPage: '/broker',
-      notes: `طلب انضمام وسيط عقاري (خبرة ${brokerForm.experience} سنوات)`,
-      details: brokerForm
+      notes: `طلب انضمام وسيط عقاري (خبرة ${data.experience} سنوات) - المنطقة: ${data.area || 'سوهاج'}`,
+      details: data
     });
     triggerToast(lang === 'ar' ? 'تم تسجيل طلب انضمامك كشريك وسيط بنجاح!' : 'Broker application submitted!', 'success');
   };
@@ -879,16 +951,6 @@ export default function App() {
         />
       )}
 
-      {/* Property Comparison Drawer */}
-      <PropertyCompareDrawer
-        isOpen={compareDrawerOpen}
-        onClose={() => setCompareDrawerOpen(false)}
-        compareList={compareList}
-        onRemoveFromCompare={removeCompare}
-        onClearCompare={clearCompare}
-        lang={lang}
-      />
-
       {/* Application Main Routes with Lazy Suspense Code Splitting */}
       <main className="main-site-content">
         <Suspense fallback={<RouteLoadingSpinner lang={lang} />}>
@@ -944,6 +1006,7 @@ export default function App() {
                 onToggleFavorite={toggleFavorite}
                 onQuickView={handleOpenQuickView}
                 triggerToast={triggerToast}
+                onAddNewLead={handleAddNewLead}
               />
             }
           />
@@ -1243,6 +1306,9 @@ export default function App() {
         compareList={compareList}
         onRemoveFromCompare={removeCompare}
         onClearCompare={clearCompare}
+        onAddToCompare={addToCompare}
+        availableProperties={properties}
+        currency={currency}
         lang={lang}
       />
 
@@ -1275,6 +1341,18 @@ export default function App() {
         currency={currency}
         onOpenAddDemand={() => setAddDemandModalOpen(true)}
       />
+
+      {/* ⚖️ Floating Compare Dock Bar (Shown on all pages when units selected) */}
+      {!location.pathname.startsWith('/crm') && (
+        <FloatingCompareBar
+          compareList={compareList}
+          onOpenCompare={() => setCompareDrawerOpen(true)}
+          onRemoveFromCompare={removeCompare}
+          onClearCompare={clearCompare}
+          lang={lang}
+          maxCompare={4}
+        />
+      )}
 
       {/* 🏛️ Floating Real Estate Advisor Quick Trigger (Hidden on CRM) */}
       {!location.pathname.startsWith('/crm') && (

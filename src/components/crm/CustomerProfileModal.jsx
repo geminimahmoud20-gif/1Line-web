@@ -99,10 +99,33 @@ export default function CustomerProfileModal({
   const handleSaveProfile = async (e) => {
     e.preventDefault();
 
+    const nameTrimmed = (formData.name || '').trim();
+    const whatsappTrimmed = (formData.whatsapp || formData.phone || '').trim();
+
+    if (!nameTrimmed) {
+      if (triggerToast) triggerToast(isAr ? 'اسم العميل إلزامي!' : 'Name is required!', 'error');
+      return;
+    }
+
+    if (!whatsappTrimmed) {
+      if (triggerToast) triggerToast(isAr ? 'رقم الواتساب إلزامي!' : 'WhatsApp number is required!', 'error');
+      return;
+    }
+
+    if (!formData.area) {
+      if (triggerToast) triggerToast(isAr ? 'تحديد الموقع / المنطقة بسوهاج إلزامي!' : 'Area is required!', 'error');
+      return;
+    }
+
+    if (!formData.propertyType) {
+      if (triggerToast) triggerToast(isAr ? 'تحديد نوع العقار المهتم به إلزامي!' : 'Property type is required!', 'error');
+      return;
+    }
+
     const updatedLead = {
-      name: formData.name,
-      phone: formData.phone,
-      whatsapp: formData.whatsapp,
+      name: nameTrimmed,
+      phone: (formData.phone || '').trim() || whatsappTrimmed,
+      whatsapp: whatsappTrimmed,
       altPhone: formData.altPhone,
       cityOrExpat: formData.cityOrExpat,
       type: formData.type,
@@ -142,41 +165,62 @@ export default function CustomerProfileModal({
   }).slice(0, 4);
 
   // Digital Journey & Clickstream History for this lead
-  const digitalJourney = useMemo(() => {
-    const directEvents = getLeadDigitalJourney(lead.phone || lead.name);
-    if (directEvents && directEvents.length > 0) return directEvents;
+  const { journeyEvents, isLiveTracked, dwellTimeLabel } = useMemo(() => {
+    // Priority 1: Real events saved directly on the lead object (synced from Cloud/LocalStorage)
+    if (Array.isArray(lead.digitalJourney) && lead.digitalJourney.length > 0) {
+      return {
+        journeyEvents: lead.digitalJourney,
+        isLiveTracked: true,
+        dwellTimeLabel: lead.dwellTimeFormatted || 'جلسة مباشرة'
+      };
+    }
 
+    // Priority 2: Direct events recorded in active browser session matching phone/name
+    const directEvents = getLeadDigitalJourney(lead.phone || lead.name);
+    if (directEvents && directEvents.length > 0) {
+      return {
+        journeyEvents: directEvents,
+        isLiveTracked: true,
+        dwellTimeLabel: lead.dwellTimeFormatted || 'جلسة مباشرة'
+      };
+    }
+
+    // Priority 3: Transparently identified demo journey for sample/mock leads
     const baseTime = lead.timestamp 
       ? (typeof lead.timestamp === 'string' ? new Date(lead.timestamp).getTime() : Number(lead.timestamp) || 1772700000000)
       : 1772700000000;
 
-    return [
-      {
-        id: 'tr_1',
-        eventType: 'whatsapp_click',
-        timestamp: lead.timestamp || new Date(baseTime - 1800000).toISOString(),
-        metadata: { title: `طلب تواصل مباشر واتساب بشأن عقارات ${formData.area || 'سوهاج'}` }
-      },
-      {
-        id: 'tr_2',
-        eventType: 'calculator_used',
-        timestamp: new Date(baseTime - 5400000).toISOString(),
-        metadata: { title: `تجربة حاسبة التمويل والأقساط لميزانية ${formData.budget || '3,000,000'} ج.م` }
-      },
-      {
-        id: 'tr_3',
-        eventType: 'property_view',
-        timestamp: new Date(baseTime - 9000000).toISOString(),
-        metadata: { title: `تصفح تفاصيل وحدات ${formData.propertyType || 'الشقق'} في ${formData.area || 'شرق سوهاج'}` }
-      },
-      {
-        id: 'tr_4',
-        eventType: 'page_view',
-        timestamp: new Date(baseTime - 12600000).toISOString(),
-        metadata: { title: 'دخول الموقع عبر حملة إعلانات مستهدفة' }
-      }
-    ];
-  }, [lead, formData]);
+    return {
+      journeyEvents: [
+        {
+          id: 'tr_1',
+          eventType: 'whatsapp_click',
+          timestamp: lead.timestamp || new Date(baseTime - 1800000).toISOString(),
+          metadata: { title: `طلب تواصل مباشر واتساب بشأن عقارات ${formData.area || 'سوهاج'}` }
+        },
+        {
+          id: 'tr_2',
+          eventType: 'calculator_used',
+          timestamp: new Date(baseTime - 5400000).toISOString(),
+          metadata: { title: `تجربة حاسبة التمويل والأقساط لميزانية ${formData.budget || '3,000,000'} ج.م` }
+        },
+        {
+          id: 'tr_3',
+          eventType: 'property_view',
+          timestamp: new Date(baseTime - 9000000).toISOString(),
+          metadata: { title: `تصفح تفاصيل وحدات ${formData.propertyType || 'الشقق'} في ${formData.area || 'شرق سوهاج'}` }
+        },
+        {
+          id: 'tr_4',
+          eventType: 'page_view',
+          timestamp: new Date(baseTime - 12600000).toISOString(),
+          metadata: { title: 'دخول الموقع واستكشاف الفرص المتاحة' }
+        }
+      ],
+      isLiveTracked: false,
+      dwellTimeLabel: isAr ? '6د 15ث (تقديري استرشادي)' : '~6m 15s (Demo Estimate)'
+    };
+  }, [lead, formData, isAr]);
 
   if (!isOpen || !lead) return null;
 
@@ -481,8 +525,8 @@ export default function CustomerProfileModal({
           {profileTab === 'journey' && (
             <div>
               <div style={{
-                background: 'rgba(6, 182, 212, 0.08)',
-                border: '1px solid rgba(6, 182, 212, 0.25)',
+                background: isLiveTracked ? 'rgba(16, 185, 129, 0.08)' : 'rgba(6, 182, 212, 0.08)',
+                border: `1px solid ${isLiveTracked ? 'rgba(16, 185, 129, 0.3)' : 'rgba(6, 182, 212, 0.25)'}`,
                 borderRadius: 'var(--radius-sm)',
                 padding: '14px 18px',
                 marginBottom: '16px',
@@ -493,61 +537,100 @@ export default function CustomerProfileModal({
                 gap: '10px'
               }}>
                 <div>
-                  <h4 style={{ margin: 0, color: '#06b6d4', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <h4 style={{ margin: 0, color: isLiveTracked ? '#10b981' : '#06b6d4', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Activity size={16} />
                     <span>{isAr ? 'البصمة الرقمية وسلوك التصفح الفعلي للعميل' : 'Customer Digital Footprint & Dwell Time'}</span>
                   </h4>
                   <small style={{ color: 'var(--text-secondary)' }}>
-                    {isAr ? 'رصد كل صفحة وعقار ونقرة قام بها هذا العميل قبل وأثناء التواصل' : 'Tracks page views, property views, and buttons clicked.'}
+                    {isLiveTracked 
+                      ? (isAr ? 'سجل حقيقي مباشر لكافة الصفحات والعقارات والنقرات التي قام بها العميل أثناء زيارته' : 'Live real-time log of pages, listings, and clicks during visitor session.') 
+                      : (isAr ? 'بيانات استرشادية توضيحية لرحلة العميل النموذجية قبل بدء نشاطه الفعلي' : 'Illustrative sample footprint representing typical buyer journey.')}
                   </small>
                 </div>
 
-                <span className="badge" style={{ background: 'rgba(6, 182, 212, 0.2)', color: '#06b6d4', fontWeight: 'bold' }}>
-                  ⏱️ {isAr ? 'مدة الجلسة التقديرية: 6د 15ث' : 'Dwell Time: ~6m 15s'}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <span className="badge" style={{
+                    background: isLiveTracked ? 'rgba(16, 185, 129, 0.18)' : 'rgba(245, 158, 11, 0.18)',
+                    color: isLiveTracked ? '#10b981' : '#b45309',
+                    fontWeight: 'bold',
+                    border: `1px solid ${isLiveTracked ? 'rgba(16, 185, 129, 0.4)' : 'rgba(245, 158, 11, 0.35)'}`,
+                    fontSize: '0.74rem'
+                  }}>
+                    {isLiveTracked ? '🟢 ' + (isAr ? 'رصد حي ومباشر 100%' : '100% Live Tracked') : '🟡 ' + (isAr ? 'نموذج محاكاة استرشادي' : 'Demo Simulation')}
+                  </span>
+
+                  <span className="badge" style={{ background: 'rgba(6, 182, 212, 0.2)', color: '#06b6d4', fontWeight: 'bold' }}>
+                    ⏱️ {isAr ? `مدة الجلسة: ${dwellTimeLabel}` : `Dwell Time: ${dwellTimeLabel}`}
+                  </span>
+                </div>
               </div>
 
               {/* Step-by-step Journey Stream */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {digitalJourney.map((evt, idx) => (
-                  <div
-                    key={evt.id || idx}
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.03)',
-                      borderInlineStart: '4px solid #06b6d4',
-                      borderRadius: 'var(--radius-sm)',
-                      padding: '12px 16px',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
-                    }}
-                  >
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
-                        <span style={{
-                          background: 'rgba(6, 182, 212, 0.15)',
-                          color: '#06b6d4',
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          fontSize: '0.72rem',
-                          fontWeight: 'bold'
-                        }}>
-                          {evt.eventType === 'whatsapp_click' ? '💬 نقرة واتساب' : evt.eventType === 'calculator_used' ? '🧮 حاسبة التمويل' : evt.eventType === 'property_view' ? '👁️ تصفح عقار' : '🌐 دخول الموقع'}
+                {journeyEvents.map((evt, idx) => {
+                  const getEventLabel = (type) => {
+                    switch (type) {
+                      case 'whatsapp_click':
+                        return { text: isAr ? '💬 نقرة واتساب' : '💬 WhatsApp Click', color: '#10b981', bg: 'rgba(16, 185, 129, 0.15)' };
+                      case 'calculator_used':
+                        return { text: isAr ? '🧮 حاسبة التمويل' : '🧮 Calculator Used', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.15)' };
+                      case 'property_view':
+                        return { text: isAr ? '👁️ تصفح عقار' : '👁️ Listing Viewed', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)' };
+                      case 'compare_added':
+                        return { text: isAr ? '⚖️ إضافة للمقارنة' : '⚖️ Added to Compare', color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.15)' };
+                      case 'favorite_added':
+                        return { text: isAr ? '❤️ إضافة للمفضلة' : '❤️ Favorited', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.15)' };
+                      case 'brochure_download':
+                        return { text: isAr ? '📑 تنزيل بروشور' : '📑 PDF Brochure', color: '#06b6d4', bg: 'rgba(6, 182, 212, 0.15)' };
+                      default:
+                        return { text: isAr ? '🌐 تصفح الموقع' : '🌐 Page View', color: '#06b6d4', bg: 'rgba(6, 182, 212, 0.15)' };
+                    }
+                  };
+
+                  const badgeInfo = getEventLabel(evt.eventType);
+                  const title = evt.metadata?.title || evt.url || (isAr ? 'تصفح صفحة' : 'Page Visit');
+
+                  return (
+                    <div
+                      key={evt.id || idx}
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        borderInlineStart: `4px solid ${badgeInfo.color}`,
+                        borderRadius: 'var(--radius-sm)',
+                        padding: '12px 16px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: '12px'
+                      }}
+                    >
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px', flexWrap: 'wrap' }}>
+                          <span style={{
+                            background: badgeInfo.bg,
+                            color: badgeInfo.color,
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            fontSize: '0.72rem',
+                            fontWeight: 'bold'
+                          }}>
+                            {badgeInfo.text}
+                          </span>
+                          <strong style={{ fontSize: '0.85rem' }}>
+                            {title}
+                          </strong>
+                        </div>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                          📍 {formData.cityOrExpat || 'سوهاج'} • {isAr ? 'عبر متصفح الهاتف / الويب' : 'Mobile / Web'}
                         </span>
-                        <strong style={{ fontSize: '0.85rem' }}>
-                          {evt.metadata?.title || evt.eventType}
-                        </strong>
                       </div>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        📍 {formData.cityOrExpat} • {isAr ? 'عبر متصفح الهاتف / الويب' : 'Mobile / Web'}
+
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                        {new Date(evt.timestamp).toLocaleTimeString(isAr ? 'ar-EG' : 'en-US')}
                       </span>
                     </div>
-
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                      {new Date(evt.timestamp).toLocaleTimeString(isAr ? 'ar-EG' : 'en-US')}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

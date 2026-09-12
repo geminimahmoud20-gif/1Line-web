@@ -74,7 +74,7 @@ export const SpecialRequests = ({
     }
 
     if (!form.name || !form.name.trim()) {
-      triggerToast?.(isAr ? 'يرجى إدخال اسمك الكريم' : 'Please enter your name', 'error');
+      triggerToast?.(isAr ? 'يرجى إدخال اسمك الكريم (إلزامي)' : 'Please enter your name', 'error');
       return;
     }
 
@@ -83,31 +83,43 @@ export const SpecialRequests = ({
       return;
     }
 
+    if (!form.whatsapp || !form.whatsapp.trim()) {
+      setWhatsappError(isAr ? 'يرجى إدخال رقم الواتساب (إلزامي)' : 'WhatsApp number is required');
+      return;
+    }
+
+    if (!form.propertyType) {
+      triggerToast?.(isAr ? 'يرجى تحديد نوع العقار المطلوب (إلزامي)' : 'Property type is required', 'error');
+      return;
+    }
+
+    if (!form.area) {
+      triggerToast?.(isAr ? 'يرجى تحديد المنطقة أو الحي المستهدف بسوهاج (إلزامي)' : 'Target area is required', 'error');
+      return;
+    }
+
     // Check phone number format
     const phoneCountryObj = SUPPORTED_COUNTRIES.find(c => c.code === phoneCountry);
-    const isPhoneValid = phoneCountryObj ? phoneCountryObj.regex.test(form.phone) : true;
+    const isPhoneValid = phoneCountryObj ? phoneCountryObj.regex.test(form.phone.trim()) : true;
     
-    // Check whatsapp format if provided
-    let isWhatsappValid = true;
-    if (form.whatsapp) {
-      const whatsappCountryObj = SUPPORTED_COUNTRIES.find(c => c.code === whatsappCountry);
-      isWhatsappValid = whatsappCountryObj ? whatsappCountryObj.regex.test(form.whatsapp) : true;
-    }
+    // Check whatsapp format
+    const whatsappCountryObj = SUPPORTED_COUNTRIES.find(c => c.code === whatsappCountry);
+    const isWhatsappValid = whatsappCountryObj ? whatsappCountryObj.regex.test(form.whatsapp.trim()) : true;
 
     if (!isPhoneValid) {
       setPhoneError(isAr ? 'رقم الهاتف غير متوافق مع صيغة الدولة المحددة' : 'Phone number does not match country format');
       return;
     }
     
-    if (form.whatsapp && !isWhatsappValid) {
+    if (!isWhatsappValid) {
       setWhatsappError(isAr ? 'رقم الواتساب غير متوافق مع صيغة الدولة المحددة' : 'WhatsApp number does not match country format');
       return;
     }
 
     setSubmitting(true);
 
-    const fullPhone = `${phoneCountry}${form.phone}`;
-    const fullWhatsapp = form.whatsapp ? `${whatsappCountry}${form.whatsapp}` : fullPhone;
+    const fullPhone = `${phoneCountry}${form.phone.trim()}`;
+    const fullWhatsapp = `${whatsappCountry}${form.whatsapp.trim()}`;
     const refCode = `REQ-${Math.floor(100000 + Math.random() * 900000)}`;
 
     const payload = {
@@ -127,9 +139,11 @@ export const SpecialRequests = ({
         await submitSpecialRequest(payload);
       } else if (typeof handleAddNewLead === 'function') {
         await handleAddNewLead({
-          name: form.name,
+          name: form.name.trim(),
           phone: fullPhone,
           whatsapp: fullWhatsapp,
+          propertyType: form.propertyType,
+          area: form.area,
           type: 'طلب عقار بمواصفات خاصة',
           source: 'بوابة الطلبات الخاصة',
           details: payload
@@ -289,7 +303,7 @@ export const SpecialRequests = ({
           <div className="form-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
             <div className="form-group">
               <label className="form-label" style={{ fontWeight: '700' }}>
-                {isAr ? 'نوع العقار' : 'Property Type'} *
+                {isAr ? 'نوع العقار المطلوب * (إلزامي)' : 'Property Type * (Required)'}
               </label>
               <select 
                 className="form-input" 
@@ -309,7 +323,7 @@ export const SpecialRequests = ({
 
             <div className="form-group">
               <label className="form-label" style={{ fontWeight: '700' }}>
-                {isAr ? 'المنطقة أو الحي المستهدف' : 'Target District'} *
+                {isAr ? 'الموقع / المنطقة المستهدفة بسوهاج * (إلزامي)' : 'Target Location / District * (Required)'}
               </label>
               <select 
                 className="form-input" 
@@ -443,7 +457,8 @@ export const SpecialRequests = ({
                 country={whatsappCountry}
                 setCountry={setWhatsappCountry}
                 error={whatsappError}
-                label={isAr ? 'رقم الواتساب (اختياري)' : 'WhatsApp Number (Optional)'}
+                label={isAr ? 'رقم الواتساب * (إلزامي)' : 'WhatsApp Number * (Required)'}
+                required
               />
             </div>
           </div>

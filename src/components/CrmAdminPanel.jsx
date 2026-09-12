@@ -149,7 +149,10 @@ export const CrmAdminPanel = ({
     const headers = {
       id: 'المعرف',
       name: 'اسم العميل',
+      whatsapp: 'رقم الواتساب',
       phone: 'رقم الهاتف',
+      propertyType: 'نوع العقار',
+      area: 'المنطقة',
       type: 'النوع',
       status: 'الحالة',
       assignedTo: 'المسؤول',
@@ -190,6 +193,7 @@ export const CrmAdminPanel = ({
     const headers = {
       id: 'المعرف ID',
       name: 'اسم العميل',
+      whatsapp: 'رقم الواتساب',
       phone: 'رقم الهاتف',
       type: 'نوع الطلب',
       propertyType: 'نوع العقار',
@@ -276,10 +280,33 @@ export const CrmAdminPanel = ({
     e.preventDefault();
     if (!editingLead) return;
 
+    if (!leadFormData.name || !leadFormData.name.trim()) {
+      triggerToast(isAr ? 'الاسم بالكامل إلزامي!' : 'Full Name is required!', 'error');
+      return;
+    }
+
+    const cleanWhatsapp = (leadFormData.whatsapp || leadFormData.phone || '').trim().replace(/[\s\-()]/g, '');
+    if (!cleanWhatsapp) {
+      triggerToast(isAr ? 'رقم الواتساب إلزامي للتواصل!' : 'WhatsApp number is required!', 'error');
+      return;
+    }
+
+    if (!leadFormData.area) {
+      triggerToast(isAr ? 'الموقع / المنطقة بسوهاج إلزامي!' : 'Target Area is required!', 'error');
+      return;
+    }
+
+    if (!leadFormData.propertyType) {
+      triggerToast(isAr ? 'نوع العقار المهتم به إلزامي!' : 'Property Type is required!', 'error');
+      return;
+    }
+
     const updatedLeadData = {
-      name: leadFormData.name,
-      phone: leadFormData.phone,
-      whatsapp: leadFormData.whatsapp || leadFormData.phone,
+      name: leadFormData.name.trim(),
+      phone: leadFormData.phone.trim() || cleanWhatsapp,
+      whatsapp: cleanWhatsapp,
+      propertyType: leadFormData.propertyType,
+      area: leadFormData.area,
       type: leadFormData.type,
       status: leadFormData.status,
       followUp: leadFormData.followUp,
@@ -1513,11 +1540,12 @@ export const CrmAdminPanel = ({
                 </div>
 
                 <div className="form-group-item">
-                  <label>{isAr ? 'رقم الواتساب' : 'WhatsApp'}</label>
+                  <label>{isAr ? 'رقم الواتساب * (إلزامي)' : 'WhatsApp * (Required)'}</label>
                   <input
                     type="text"
                     value={leadFormData.whatsapp}
                     onChange={(e) => setLeadFormData({ ...leadFormData, whatsapp: e.target.value })}
+                    required
                   />
                 </div>
 
@@ -1536,6 +1564,32 @@ export const CrmAdminPanel = ({
                 </div>
 
                 <div className="form-group-item">
+                  <label>{isAr ? 'الموقع / المنطقة بسوهاج * (إلزامي)' : 'Target Area in Sohag * (Required)'}</label>
+                  <select
+                    value={leadFormData.area}
+                    onChange={(e) => setLeadFormData({ ...leadFormData, area: e.target.value })}
+                    required
+                  >
+                    {SOHAG_AREAS.filter(a => a.id !== 'all').map(a => (
+                      <option key={a.id} value={a.id}>{isAr ? a.name_ar : a.name_en}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group-item">
+                  <label>{isAr ? 'العقارات المهتم بها / نوع العقار * (إلزامي)' : 'Interested Property Type * (Required)'}</label>
+                  <select
+                    value={leadFormData.propertyType}
+                    onChange={(e) => setLeadFormData({ ...leadFormData, propertyType: e.target.value })}
+                    required
+                  >
+                    {PROPERTY_TYPES.filter(t => t.id !== 'all').map(t => (
+                      <option key={t.id} value={t.id}>{isAr ? t.name_ar : t.name_en}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group-item">
                   <label>{isAr ? 'الميزانية / السعر المتوقع (ج.م)' : 'Budget / Price (EGP)'}</label>
                   <input
                     type="text"
@@ -1543,18 +1597,6 @@ export const CrmAdminPanel = ({
                     onChange={(e) => setLeadFormData({ ...leadFormData, budget: e.target.value })}
                     placeholder="مثال: 3,000,000"
                   />
-                </div>
-
-                <div className="form-group-item">
-                  <label>{isAr ? 'المنطقة المستهدفة' : 'Area'}</label>
-                  <select
-                    value={leadFormData.area}
-                    onChange={(e) => setLeadFormData({ ...leadFormData, area: e.target.value })}
-                  >
-                    {SOHAG_AREAS.map(a => (
-                      <option key={a.id} value={a.id}>{isAr ? a.name_ar : a.name_en}</option>
-                    ))}
-                  </select>
                 </div>
 
                 <div className="form-group-item">

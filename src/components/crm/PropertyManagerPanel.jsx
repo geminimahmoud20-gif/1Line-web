@@ -15,7 +15,8 @@ import {
   Database,
   Archive,
   FileSpreadsheet,
-  MessageSquare
+  MessageSquare,
+  MapPin
 } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { getAreas } from '../../utils/areasData';

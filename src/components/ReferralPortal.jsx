@@ -53,7 +53,19 @@ export const ReferralPortal = ({
       referralPhone: `${referralCountry}${referralForm.referralPhone}`
     };
 
-    handleAddNewLead('referral', updatedForm, 'Referral Portal');
+    if (typeof handleAddNewLead === 'function') {
+      handleAddNewLead({
+        name: referralForm.referralName,
+        phone: `${referralCountry}${referralForm.referralPhone}`,
+        whatsapp: `${referralCountry}${referralForm.referralPhone}`,
+        propertyType: referralForm.referralType || 'residential',
+        area: 'sohag_jadida',
+        type: 'referral',
+        source: 'برنامج الإحالة والشركاء',
+        notes: `إحالة من: ${referralForm.referrerName} (${referrerCountry}${referralForm.referrerPhone}) - صلة القرابة: ${referralForm.relationship}`,
+        details: updatedForm
+      });
+    }
     setReferralForm({
       referrerName: '',
       referrerPhone: '',
