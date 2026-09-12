@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Sparkles, ChevronLeft, ChevronRight, Zap, CheckCircle2 } from 'lucide-react';
 import { BuyWizard } from '../components/BuyWizard';
 import { SellWizard } from '../components/SellWizard';
 import { InvestorCenter } from '../components/InvestorCenter';
@@ -8,6 +9,7 @@ import { DemandsPortal } from '../components/DemandsPortal';
 import { VaultPortal } from '../components/VaultPortal';
 import { ReferralPortal } from '../components/ReferralPortal';
 import { SpecialRequests } from '../components/SpecialRequests';
+import QuickPortalLeadCard from '../components/common/QuickPortalLeadCard';
 
 export default function PortalsPage({
   portalType,
@@ -57,6 +59,7 @@ export default function PortalsPage({
   onOpenAddDemand
 }) {
   const isAr = lang === 'ar';
+  const [fastMode, setFastMode] = useState(false);
 
   const getPortalInfo = () => {
     switch (portalType) {
@@ -146,51 +149,85 @@ export default function PortalsPage({
       {/* Main Interactive Wizard / Content Card */}
       <div className="portal-content-wrapper">
         <div className="portal-main-container">
-          {portalType === 'buy' && (
-            <BuyWizard
-              lang={lang}
-              t={t}
-              buyerStep={buyerStep}
-              setBuyerStep={setBuyerStep}
-              buyerAnswers={buyerAnswers}
-              setBuyerAnswers={setBuyerAnswers}
-              handleBuyerChoice={handleBuyerChoice}
-              submitBuyerJourney={submitBuyerJourney}
-            />
+          {/* Frictionless Mode Toggle for Portals with Wizards */}
+          {['buy', 'sell', 'valuation', 'investor'].includes(portalType) && (
+            <div className="portal-mode-toggle-strip">
+              <button
+                type="button"
+                className={`portal-mode-btn ${!fastMode ? 'active' : ''}`}
+                onClick={() => setFastMode(false)}
+              >
+                <CheckCircle2 size={16} />
+                <span>{isAr ? 'المعالج التفاعلي خطوة بخطوة' : 'Step-by-Step Advisory'}</span>
+              </button>
+              <button
+                type="button"
+                className={`portal-mode-btn ${fastMode ? 'active' : ''}`}
+                onClick={() => setFastMode(true)}
+              >
+                <Zap size={16} className="text-gold" />
+                <span>{isAr ? 'طلب فوري ومباشر (دقيقة واحدة ⚡)' : '1-Step Fast Request ⚡'}</span>
+              </button>
+            </div>
           )}
 
-          {(portalType === 'sell' || portalType === 'valuation') && (
-            <SellWizard
+          {/* ⚡ 1-Step Fast Request Mode */}
+          {fastMode && ['buy', 'sell', 'valuation', 'investor'].includes(portalType) ? (
+            <QuickPortalLeadCard
+              portalType={portalType}
               lang={lang}
-              t={t}
-              sellerStep={sellerStep}
-              setSellerStep={setSellerStep}
-              sellerAnswers={sellerAnswers}
-              setSellerAnswers={setSellerAnswers}
-              handleSellerChoice={handleSellerChoice}
-              submitSellerJourney={submitSellerJourney}
-              estimatedValue={estimatedValue}
+              handleAddNewLead={handleAddNewLead}
               triggerToast={triggerToast}
             />
-          )}
+          ) : (
+            <>
+              {portalType === 'buy' && (
+                <BuyWizard
+                  lang={lang}
+                  t={t}
+                  buyerStep={buyerStep}
+                  setBuyerStep={setBuyerStep}
+                  buyerAnswers={buyerAnswers}
+                  setBuyerAnswers={setBuyerAnswers}
+                  handleBuyerChoice={handleBuyerChoice}
+                  submitBuyerJourney={submitBuyerJourney}
+                />
+              )}
 
-          {portalType === 'investor' && (
-            <InvestorCenter
-              lang={lang}
-              t={t}
-              invAmount={invAmount}
-              setInvAmount={setInvAmount}
-              invPeriod={invPeriod}
-              setInvPeriod={setInvPeriod}
-              invPropType={invPropType}
-              setInvPropType={setInvPropType}
-              investorForm={investorForm}
-              setInvestorForm={setInvestorForm}
-              showInvResultForm={showInvResultForm}
-              setShowInvResultForm={setShowInvResultForm}
-              roiRes={roiRes}
-              submitInvestorForm={submitInvestorForm}
-            />
+              {(portalType === 'sell' || portalType === 'valuation') && (
+                <SellWizard
+                  lang={lang}
+                  t={t}
+                  sellerStep={sellerStep}
+                  setSellerStep={setSellerStep}
+                  sellerAnswers={sellerAnswers}
+                  setSellerAnswers={setSellerAnswers}
+                  handleSellerChoice={handleSellerChoice}
+                  submitSellerJourney={submitSellerJourney}
+                  estimatedValue={estimatedValue}
+                  triggerToast={triggerToast}
+                />
+              )}
+
+              {portalType === 'investor' && (
+                <InvestorCenter
+                  lang={lang}
+                  t={t}
+                  invAmount={invAmount}
+                  setInvAmount={setInvAmount}
+                  invPeriod={invPeriod}
+                  setInvPeriod={setInvPeriod}
+                  invPropType={invPropType}
+                  setInvPropType={setInvPropType}
+                  investorForm={investorForm}
+                  setInvestorForm={setInvestorForm}
+                  showInvResultForm={showInvResultForm}
+                  setShowInvResultForm={setShowInvResultForm}
+                  roiRes={roiRes}
+                  submitInvestorForm={submitInvestorForm}
+                />
+              )}
+            </>
           )}
 
           {portalType === 'broker' && (

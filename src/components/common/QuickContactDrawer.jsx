@@ -60,8 +60,8 @@ export default function QuickContactDrawer({
         <div className="quick-contact-channels-list">
           {/* 1. Direct Phone Call */}
           <a href={getPhoneCallUrl()} className="contact-channel-item channel-call" onClick={onClose}>
-            <div className="channel-icon-circle bg-blue">
-              <Phone size={22} />
+            <div className="channel-icon-circle bg-navy">
+              <Phone size={20} />
             </div>
             <div className="channel-info-text">
               <div className="channel-title-badge">
@@ -76,7 +76,7 @@ export default function QuickContactDrawer({
           {/* 2. WhatsApp Sales Chat */}
           <button type="button" className="contact-channel-item channel-wa" onClick={handleWhatsAppSales}>
             <div className="channel-icon-circle bg-green">
-              <MessageSquare size={22} />
+              <MessageSquare size={20} />
             </div>
             <div className="channel-info-text">
               <div className="channel-title-badge">
@@ -91,7 +91,7 @@ export default function QuickContactDrawer({
           {/* 3. VIP Expat & Investors Desk */}
           <button type="button" className="contact-channel-item channel-vip" onClick={handleWhatsAppVip}>
             <div className="channel-icon-circle bg-gold">
-              <ShieldCheck size={22} />
+              <ShieldCheck size={20} />
             </div>
             <div className="channel-info-text">
               <div className="channel-title-badge">
@@ -111,8 +111,8 @@ export default function QuickContactDrawer({
               if (onOpenCallbackModal) onOpenCallbackModal();
             }}
           >
-            <div className="channel-icon-circle bg-purple">
-              <Clock size={22} />
+            <div className="channel-icon-circle bg-slate">
+              <Clock size={20} />
             </div>
             <div className="channel-info-text">
               <div className="channel-title-badge">
