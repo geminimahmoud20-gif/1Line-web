@@ -14,6 +14,7 @@ import {
   Flame
 } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
+import { getAreas } from '../../utils/areasData';
 
 export default function SmartMatchingHub({
   leads = [],
@@ -26,18 +27,41 @@ export default function SmartMatchingHub({
   const [minMatchScore, setMinMatchScore] = useState(60);
   const [schedulingVisitLead, setSchedulingVisitLead] = useState(null);
 
+  const allAreas = useMemo(() => getAreas(), []);
+
+  const getLocalizedArea = (areaKey) => {
+    if (!areaKey) return isAr ? 'سوهاج' : 'Sohag';
+    const cleanKey = String(areaKey).trim().toLowerCase();
+    const map = {
+      thakafa: 'حي الثقافة',
+      east: 'حي شرق',
+      west: 'حي غرب',
+      new_sohag: 'سوهاج الجديدة',
+      corniche: 'كورنيش النيل',
+      city: 'سيتي والشبان',
+      kawthar: 'مدينة الكوثر',
+      akhmeem: 'أخميم',
+      tahta: 'طهطا',
+      girga: 'جرجا',
+      araba: 'عرابة أبيدوس'
+    };
+    if (map[cleanKey]) return map[cleanKey];
+    const found = allAreas.find(a => a.id === cleanKey);
+    return found ? (isAr ? (found.name_ar || found.label_ar) : (found.name_en || found.label_en)) : areaKey;
+  };
+
   // Compute live match matrix between Buyer Leads and Published Properties
   const matches = useMemo(() => {
-    const buyerLeads = leads.filter(l => l.type === 'buyer' || l.type === 'investor' || l.type === 'request');
+    const buyerLeads = leads.filter(l => l.type === 'buyer' || l.type === 'investor' || l.type === 'request' || !l.type);
     const liveProps = properties.filter(p => !p.isDeleted && p.status !== 'trash' && p.status !== 'hidden');
 
     const results = [];
 
     buyerLeads.forEach(lead => {
       const details = lead.details || {};
-      const leadArea = (details.area || '').toLowerCase();
-      const leadType = (details.propertyType || '').toLowerCase();
-      const leadBudget = parseInt(details.budget) || parseInt(details.investmentAmount) || 3000000;
+      const leadArea = (lead.area || details.area || lead.location || '').toLowerCase();
+      const leadType = (lead.propertyType || details.propertyType || '').toLowerCase();
+      const leadBudget = parseInt(lead.budget) || parseInt(details.budget) || parseInt(details.investmentAmount) || 2500000;
 
       liveProps.forEach(prop => {
         let score = 0;
@@ -237,29 +261,33 @@ export default function SmartMatchingHub({
                     marginBottom: '10px'
                   }}>
                     {/* Buyer Side */}
-                    <div style={{ borderInlineEnd: '1px solid var(--border-light)', paddingInlineEnd: '8px' }}>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--cyan)', fontWeight: 'bold', display: 'block', marginBottom: '2px' }}>
+                    <div style={{ borderInlineEnd: '1px solid rgba(255,255,255,0.1)', paddingInlineEnd: '10px' }}>
+                      <span style={{ fontSize: '0.72rem', color: '#38bdf8', fontWeight: 'bold', display: 'block', marginBottom: '3px' }}>
                         👤 {isAr ? 'المشتري الراغب:' : 'Buyer Request:'}
                       </span>
-                      <strong style={{ fontSize: '0.85rem', display: 'block' }}>{lead.name}</strong>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{lead.phone}</span>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--emerald)', display: 'block', marginTop: '2px' }}>
-                        💰 ميزانية: {lead.details?.budget ? parseInt(lead.details.budget).toLocaleString() + ' ج.م' : 'مرنة'}
+                      <strong style={{ fontSize: '0.95rem', color: '#ffffff', fontWeight: '800', display: 'block', marginBottom: '2px' }}>
+                        {lead.name}
+                      </strong>
+                      <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', direction: 'ltr', textAlign: isAr ? 'right' : 'left' }}>
+                        📱 {lead.whatsapp || lead.phone}
+                      </span>
+                      <span style={{ fontSize: '0.78rem', color: '#34d399', display: 'block', marginTop: '4px', fontWeight: '700' }}>
+                        💰 ميزانية: {(lead.details?.budget || lead.budget) ? parseInt(lead.details?.budget || lead.budget).toLocaleString() + ' ج.م' : '2,500,000 ج.م'}
                       </span>
                     </div>
 
                     {/* Matched Property Side */}
                     <div>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--accent-gold)', fontWeight: 'bold', display: 'block', marginBottom: '2px' }}>
+                      <span style={{ fontSize: '0.72rem', color: '#fbbf24', fontWeight: 'bold', display: 'block', marginBottom: '3px' }}>
                         🏢 {isAr ? 'العقار المطابق:' : 'Matched Property:'}
                       </span>
-                      <strong style={{ fontSize: '0.85rem', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <strong style={{ fontSize: '0.92rem', color: '#ffffff', fontWeight: '800', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: '2px' }}>
                         {isAr ? property.title_ar : property.title_en}
                       </strong>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        {property.size} م² • {property.areaKey}
+                      <span style={{ fontSize: '0.75rem', color: '#cbd5e1', display: 'block' }}>
+                        📐 {property.size} م² • 📍 {getLocalizedArea(property.areaKey)}
                       </span>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--primary-light)', display: 'block', marginTop: '2px', fontWeight: 'bold' }}>
+                      <span style={{ fontSize: '0.78rem', color: '#34d399', display: 'block', marginTop: '4px', fontWeight: '800' }}>
                         💵 السعر: {property.price?.toLocaleString()} ج.م
                       </span>
                     </div>

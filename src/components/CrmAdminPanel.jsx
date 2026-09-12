@@ -102,6 +102,28 @@ export const CrmAdminPanel = ({
 
   const isAr = lang === 'ar';
 
+  const getLocalizedPropertyType = (typeKey) => {
+    if (!typeKey) return isAr ? 'عقار غير محدد' : 'N/A';
+    const found = PROPERTY_TYPES.find(t => t.id === typeKey);
+    if (found) return isAr ? found.name_ar : found.name_en;
+    const fallbackMap = {
+      apartment: 'شقة سكنية',
+      retail: 'محل تجاري',
+      villa: 'فيلا / تاون هاوس',
+      office: 'مكتب إداري / عيادة',
+      land: 'قطعة أرض',
+      building: 'عمارة سكنية'
+    };
+    return fallbackMap[typeKey.toLowerCase()] || typeKey;
+  };
+
+  const getLocalizedArea = (areaKey) => {
+    if (!areaKey) return isAr ? 'سوهاج' : 'Sohag';
+    const found = SOHAG_AREAS.find(a => a.id === areaKey);
+    if (found) return isAr ? found.name_ar : found.name_en;
+    return areaKey;
+  };
+
   // Bulk Selection Handlers
   const handleToggleSelectAll = (visibleLeads) => {
     if (selectedLeadIds.length === visibleLeads.length) {
@@ -1255,7 +1277,7 @@ export const CrmAdminPanel = ({
                             </strong>
                           )}
                           <span style={{ color: 'var(--text-secondary)' }}>
-                            {l.details?.propertyType || l.type} • {l.details?.area || 'سوهاج'}
+                            {getLocalizedPropertyType(l.propertyType || l.details?.propertyType || l.type)} • {getLocalizedArea(l.area || l.details?.area || l.details?.district || 'east')}
                           </span>
                         </div>
                       </td>
@@ -1288,12 +1310,12 @@ export const CrmAdminPanel = ({
                             fontSize: '0.8rem'
                           }}
                         >
-                          <option value="new">NEW</option>
-                          <option value="contacted">CONTACTED</option>
-                          <option value="site_visit">SITE VISIT</option>
-                          <option value="negotiating">NEGOTIATING</option>
-                          <option value="closing">CLOSING</option>
-                          <option value="closed">CLOSED</option>
+                          <option value="new">{isAr ? 'طلب جديد' : 'New'}</option>
+                          <option value="contacted">{isAr ? 'تم التواصل' : 'Contacted'}</option>
+                          <option value="site_visit">{isAr ? 'معاينة مجدولة' : 'Site Visit'}</option>
+                          <option value="negotiating">{isAr ? 'قيد التفاوض' : 'Negotiating'}</option>
+                          <option value="closing">{isAr ? 'توقيع وحجز' : 'Closing'}</option>
+                          <option value="closed">{isAr ? 'صفقة ناجحة' : 'Closed Won'}</option>
                         </select>
                       </td>
 
@@ -1329,11 +1351,11 @@ export const CrmAdminPanel = ({
                             fontSize: '0.8rem'
                           }}
                         >
-                          <option value="Dr. Mahmoud Elbaz">Dr. Mahmoud Elbaz</option>
-                          <option value="Sales Team A">Sales Team A</option>
-                          <option value="Sales Team B">Sales Team B</option>
-                          <option value="Sales Advisor Team">Sales Advisor Team</option>
-                          <option value="Unassigned">Unassigned</option>
+                          <option value="Dr. Mahmoud Elbaz">{isAr ? 'د. محمود الباز' : 'Dr. Mahmoud Elbaz'}</option>
+                          <option value="Sales Team A">{isAr ? 'فريق المبيعات (أ)' : 'Sales Team A'}</option>
+                          <option value="Sales Team B">{isAr ? 'فريق المبيعات (ب)' : 'Sales Team B'}</option>
+                          <option value="Sales Advisor Team">{isAr ? 'مستشار المبيعات' : 'Sales Advisor Team'}</option>
+                          <option value="Unassigned">{isAr ? 'غير مسند' : 'Unassigned'}</option>
                         </select>
                       </td>
 

@@ -18,6 +18,7 @@ export const BrokerPortal = ({
   const [phoneError, setPhoneError] = useState('');
   const [whatsappCountry, setWhatsappCountry] = useState('+20');
   const [whatsappError, setWhatsappError] = useState('');
+  const [sameAsPhone, setSameAsPhone] = useState(true);
 
   const isAr = lang === 'ar';
 
@@ -172,14 +173,38 @@ export const BrokerPortal = ({
               label={isAr ? 'رقم الهاتف الأساسي *' : 'Primary Phone *'}
               value={brokerForm.phone || ''}
               onChange={(phone) => {
-                setBrokerForm({ ...brokerForm, phone });
+                const updated = { ...brokerForm, phone };
+                if (sameAsPhone) {
+                  updated.whatsapp = phone;
+                }
+                setBrokerForm(updated);
                 if (phoneError) setPhoneError('');
+                if (sameAsPhone && whatsappError) setWhatsappError('');
               }}
               country={phoneCountry}
-              onCountryChange={setPhoneCountry}
+              onCountryChange={(code) => {
+                setPhoneCountry(code);
+                if (sameAsPhone) setWhatsappCountry(code);
+              }}
               error={phoneError}
               required
             />
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.84rem', color: 'var(--text-secondary)', cursor: 'pointer', marginTop: '6px' }}>
+              <input
+                type="checkbox"
+                checked={sameAsPhone}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setSameAsPhone(checked);
+                  if (checked) {
+                    setBrokerForm(prev => ({ ...prev, whatsapp: prev.phone || '' }));
+                    setWhatsappCountry(phoneCountry);
+                    if (whatsappError) setWhatsappError('');
+                  }
+                }}
+              />
+              <span>{isAr ? 'رقم الواتساب هو نفس رقم الهاتف الأساسي' : 'WhatsApp number is same as phone'}</span>
+            </label>
           </div>
 
           <div className="form-group-flex">
@@ -188,10 +213,16 @@ export const BrokerPortal = ({
               value={brokerForm.whatsapp || ''}
               onChange={(whatsapp) => {
                 setBrokerForm({ ...brokerForm, whatsapp });
+                if (whatsapp !== brokerForm.phone) {
+                  setSameAsPhone(false);
+                }
                 if (whatsappError) setWhatsappError('');
               }}
               country={whatsappCountry}
-              onCountryChange={setWhatsappCountry}
+              onCountryChange={(code) => {
+                setWhatsappCountry(code);
+                if (code !== phoneCountry) setSameAsPhone(false);
+              }}
               error={whatsappError}
               required
             />
