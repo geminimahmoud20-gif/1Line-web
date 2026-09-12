@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Building, 
@@ -18,7 +18,11 @@ import {
   Clock, 
   FileText,
   Home,
-  Landmark
+  Landmark,
+  Pause,
+  Play,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import PropertyCard from '../components/properties/PropertyCard';
 import AboutFounderSection from '../components/home/AboutFounderSection';
@@ -61,6 +65,28 @@ export default function HomePage({
 
   // Dynamic Corporate & Hero Stats Settings from CMS
   const [founderSettings, setFounderSettings] = useState(() => getFounderSettings());
+
+  // 🎬 Cinematic Hero Video State & Controls (The Agency RE Experience)
+  const [videoPlaying, setVideoPlaying] = useState(true);
+  const [videoMuted, setVideoMuted] = useState(true);
+  const heroVideoRef = useRef(null);
+
+  const toggleVideoPlayback = () => {
+    if (!heroVideoRef.current) return;
+    if (videoPlaying) {
+      heroVideoRef.current.pause();
+      setVideoPlaying(false);
+    } else {
+      heroVideoRef.current.play();
+      setVideoPlaying(true);
+    }
+  };
+
+  const toggleVideoMute = () => {
+    if (!heroVideoRef.current) return;
+    heroVideoRef.current.muted = !videoMuted;
+    setVideoMuted(!videoMuted);
+  };
 
   useEffect(() => {
     const handleUpdate = () => setFounderSettings(getFounderSettings());
@@ -190,39 +216,102 @@ export default function HomePage({
   return (
     <div className="homepage-wrapper">
       {/* 🌟 1. HERO SECTION */}
-      <section className="hero-section-premium">
-        <div className="hero-ambient-mesh" aria-hidden="true">
-          <div className="hero-orb hero-orb-1" />
-          <div className="hero-orb hero-orb-2" />
-          <div className="hero-orb hero-orb-3" />
-        </div>
-        <div className="hero-backdrop-gradient" />
+      {/* 🌟 1. HERO SECTION (The Agency RE Cinematic Luxury Experience) */}
+      <section className="hero-section-premium hero-cinematic-mode">
+        {/* Cinematic Video Background Engine */}
+        {founderSettings.heroVideoEnabled !== false ? (
+          <div className="hero-cinematic-video-wrap" aria-hidden="true">
+            <video
+              ref={heroVideoRef}
+              autoPlay
+              loop
+              muted={videoMuted}
+              playsInline
+              poster={founderSettings.heroPosterUrl || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=2000&q=85'}
+              className="hero-cinematic-video"
+            >
+              <source src={founderSettings.heroVideoUrl || 'https://assets.mixkit.co/videos/preview/mixkit-modern-architecture-buildings-and-skyscrapers-41551-large.mp4'} type="video/mp4" />
+            </video>
+            <div 
+              className="hero-video-overlay-gradient"
+              style={{
+                opacity: founderSettings.heroOverlayOpacity !== undefined ? founderSettings.heroOverlayOpacity : 0.65
+              }}
+            />
+          </div>
+        ) : (
+          <>
+            <div className="hero-ambient-mesh" aria-hidden="true">
+              <div className="hero-orb hero-orb-1" />
+              <div className="hero-orb hero-orb-2" />
+              <div className="hero-orb hero-orb-3" />
+            </div>
+            <div className="hero-backdrop-gradient" />
+          </>
+        )}
+
+        {/* Video Playback & Sound Control Badge */}
+        {founderSettings.heroVideoEnabled !== false && (
+          <div className="hero-video-controls-badge">
+            <button
+              type="button"
+              className="hero-media-ctrl-btn"
+              onClick={toggleVideoPlayback}
+              title={videoPlaying ? (lang === 'ar' ? 'إيقاف الفيديو مؤقتاً' : 'Pause Video') : (lang === 'ar' ? 'تشغيل الفيديو' : 'Play Video')}
+              aria-label="Toggle Video Playback"
+            >
+              {videoPlaying ? <Pause size={13} /> : <Play size={13} />}
+            </button>
+            <button
+              type="button"
+              className="hero-media-ctrl-btn"
+              onClick={toggleVideoMute}
+              title={videoMuted ? (lang === 'ar' ? 'تشغيل الصوت' : 'Unmute Sound') : (lang === 'ar' ? 'كتم الصوت' : 'Mute Sound')}
+              aria-label="Toggle Video Sound"
+            >
+              {videoMuted ? <VolumeX size={13} /> : <Volume2 size={13} />}
+            </button>
+          </div>
+        )}
+
         <div className="hero-content-container">
           <div className="hero-badge">
             <span className="hero-badge-sparkle">
               <Sparkles size={14} />
             </span>
-            <span>{lang === 'ar' ? 'المنصة العقارية الأكثر موثوقية في سوهاج' : 'Sohag’s Most Trusted Real Estate Platform'}</span>
+            <span>
+              {lang === 'ar' 
+                ? (founderSettings.heroBadge_ar || 'المنصة العقارية الأكثر موثوقية في سوهاج') 
+                : (founderSettings.heroBadge_en || 'Sohag’s Most Trusted Real Estate Platform')}
+            </span>
           </div>
 
           <h1 className="hero-main-title">
             {lang === 'ar' ? (
               <>
-                <span className="hero-title-line">امتلك واستثمر في أرقى عقارات سوهاج</span>
-                <span className="hero-title-line hero-title-highlight hero-title-shimmer">بكل ثقة وضمان قانوني معتمد</span>
+                <span className="hero-title-line">
+                  {founderSettings.heroTitle_ar || 'امتلك واستثمر في أرقى عقارات سوهاج'}
+                </span>
+                <span className="hero-title-line hero-title-highlight hero-title-shimmer">
+                  {founderSettings.heroHighlight_ar || 'بكل ثقة وضمان قانوني معتمد'}
+                </span>
               </>
             ) : (
               <>
-                <span className="hero-title-line">Own & Invest in Sohag’s Finest Properties</span>
-                <span className="hero-title-line hero-title-highlight hero-title-shimmer">With Full Confidence & Legal Security</span>
+                <span className="hero-title-line">
+                  {founderSettings.heroTitle_en || 'Own & Invest in Sohag’s Finest Properties'}
+                </span>
+                <span className="hero-title-line hero-title-highlight hero-title-shimmer">
+                  {founderSettings.heroHighlight_en || 'With Full Confidence & Legal Security'}
+                </span>
               </>
             )}
           </h1>
 
           <p className="hero-description">
             {lang === 'ar' 
-              ? 'شقق سكنية فاخرة، مقرات تجارية وإدارية، وفيلات مستقلة مسجلة ومفحوصة قانونياً مع برامج تقسيط مرنة حتى 7 سنوات.' 
-              : 'Verified luxury apartments, retail shops, executive offices, and standalone villas with flexible financing up to 7 years.'}
+              ? (founderSettings.heroSubtitle_ar || 'شقق سكنية فاخرة، مقرات تجارية وإدارية، وفيلات مستقلة مسجلة ومفحوصة قانونياً مع برامج تقسيط مرنة حتى 7 سنوات.') 
+              : (founderSettings.heroSubtitle_en || 'Verified luxury apartments, retail shops, executive offices, and standalone villas with flexible financing up to 7 years.')}
           </p>
 
           {/* Smart Universal Search Bar */}

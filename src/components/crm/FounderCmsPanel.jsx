@@ -15,7 +15,9 @@ import {
   Sparkles,
   Award,
   Eye,
-  Loader2
+  Loader2,
+  Film,
+  Sliders
 } from 'lucide-react';
 import { 
   getFounderSettings, 
@@ -154,6 +156,15 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
       }}>
         <button
           type="button"
+          className={`btn btn-sm ${activeSubTab === 'hero_video' ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() => setActiveSubTab('hero_video')}
+        >
+          <Film size={14} />
+          <span>{isAr ? '🎬 الفيديو والهيرو السينمائي (The Agency)' : 'Hero Video & Media'}</span>
+        </button>
+
+        <button
+          type="button"
           className={`btn btn-sm ${activeSubTab === 'founder' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => setActiveSubTab('founder')}
         >
@@ -191,6 +202,174 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
 
       {/* Form Content */}
       <form onSubmit={handleSave}>
+        {/* SUBTAB 0: CINEMATIC HERO VIDEO & VISUALS (THE AGENCY RE) */}
+        {activeSubTab === 'hero_video' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{
+              background: 'rgba(13, 72, 161, 0.05)',
+              border: '1px solid rgba(13, 72, 161, 0.15)',
+              borderRadius: '14px',
+              padding: '16px 20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '12px'
+            }}>
+              <div>
+                <strong style={{ display: 'block', fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '4px' }}>
+                  {isAr ? 'تفعيل خلفية الفيديو السينمائي في الواجهة الرئيسية' : 'Enable Cinematic Background Video'}
+                </strong>
+                <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                  {isAr 
+                    ? 'عند تفعيله، سيتم تشغيل لقطات فيديو معمارية راقية بالخلفية مستوحاة من The Agency RE.' 
+                    : 'Display full luxury video loop behind the hero section.'}
+                </span>
+              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 800 }}>
+                <input
+                  type="checkbox"
+                  checked={formData.heroVideoEnabled !== false}
+                  onChange={(e) => setFormData({ ...formData, heroVideoEnabled: e.target.checked })}
+                  style={{ width: '20px', height: '20px', accentColor: '#0d48a1' }}
+                />
+                <span>{formData.heroVideoEnabled !== false ? (isAr ? 'مفعّل 🟢' : 'Enabled') : (isAr ? 'معطّل ⚪' : 'Disabled')}</span>
+              </label>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
+              <div className="form-group-item" style={{ gridColumn: '1 / -1' }}>
+                <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>{isAr ? 'رابط ملف الفيديو (MP4 / WebM Direct URL):' : 'Hero Video URL:'}</span>
+                  <small style={{ color: 'var(--accent-gold)' }}>{isAr ? 'فيديو مباشر عالي الوضوح' : 'HD direct stream'}</small>
+                </label>
+                <input
+                  type="url"
+                  value={formData.heroVideoUrl || ''}
+                  onChange={(e) => setFormData({ ...formData, heroVideoUrl: e.target.value })}
+                  placeholder="https://assets.mixkit.co/videos/preview/..."
+                  required
+                />
+                {/* Presets */}
+                <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{isAr ? 'مقترحات جاهزة:' : 'Presets:'}</span>
+                  <button
+                    type="button"
+                    className="btn btn-xs btn-ghost"
+                    onClick={() => setFormData({
+                      ...formData,
+                      heroVideoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-modern-architecture-buildings-and-skyscrapers-41551-large.mp4'
+                    })}
+                  >
+                    🏢 {isAr ? 'أبراج معمارية حديثة' : 'Modern Architecture'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-xs btn-ghost"
+                    onClick={() => setFormData({
+                      ...formData,
+                      heroVideoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-a-luxury-pool-resort-41553-large.mp4'
+                    })}
+                  >
+                    🏡 {isAr ? 'منتجع وقصور فاخرة' : 'Luxury Resort'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-xs btn-ghost"
+                    onClick={() => setFormData({
+                      ...formData,
+                      heroVideoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-drone-view-of-a-modern-residential-neighborhood-41555-large.mp4'
+                    })}
+                  >
+                    🏘️ {isAr ? 'حي سكني راقٍ دروني' : 'Drone Neighborhood'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="form-group-item" style={{ gridColumn: '1 / -1' }}>
+                <label>{isAr ? 'رابط صورة البوستر البديلة (Fallback Poster Image):' : 'Fallback Poster Image URL:'}</label>
+                <input
+                  type="url"
+                  value={formData.heroPosterUrl || ''}
+                  onChange={(e) => setFormData({ ...formData, heroPosterUrl: e.target.value })}
+                  placeholder="https://images.unsplash.com/photo-..."
+                />
+                <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: '4px' }}>
+                  {isAr ? 'تظهر في أول أجزاء من الثانية لضمان سرعة التحميل أو على الأجهزة التي تعطل تشغيل الفيديو التلقائي.' : 'Shown before video loads or on power-save devices.'}
+                </small>
+              </div>
+
+              {/* Overlay Opacity Slider */}
+              <div className="form-group-item" style={{ gridColumn: '1 / -1' }}>
+                <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>{isAr ? 'نسبة تعتيم التظليل الملكي (Dark Vignette Opacity):' : 'Dark Overlay Opacity:'}</span>
+                  <strong style={{ color: 'var(--accent-gold)' }}>
+                    {Math.round((Number(formData.heroOverlayOpacity ?? 0.65)) * 100)}%
+                  </strong>
+                </label>
+                <input
+                  type="range"
+                  min="0.20"
+                  max="0.85"
+                  step="0.05"
+                  value={formData.heroOverlayOpacity ?? 0.65}
+                  onChange={(e) => setFormData({ ...formData, heroOverlayOpacity: parseFloat(e.target.value) })}
+                  style={{ width: '100%', cursor: 'pointer', accentColor: '#0d48a1' }}
+                />
+                <small style={{ color: 'var(--text-muted)' }}>
+                  {isAr ? 'زيادة النسبة تزيد من سواد وظلمة الفيديو لجعل النصوص البيضاء مقروءة وواضحة جداً.' : 'Higher opacity guarantees crisp text readability over bright footage.'}
+                </small>
+              </div>
+
+              {/* Slogan and Highlight Titles */}
+              <div className="form-group-item">
+                <label>{isAr ? 'شارة الهيرو العليا (بالعربية):' : 'Hero Badge (Arabic):'}</label>
+                <input
+                  type="text"
+                  value={formData.heroBadge_ar || ''}
+                  onChange={(e) => setFormData({ ...formData, heroBadge_ar: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group-item">
+                <label>{isAr ? 'شارة الهيرو العليا (بالإنجليزية):' : 'Hero Badge (English):'}</label>
+                <input
+                  type="text"
+                  value={formData.heroBadge_en || ''}
+                  onChange={(e) => setFormData({ ...formData, heroBadge_en: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group-item">
+                <label>{isAr ? 'العنوان الرئيسي السطر الأول (بالعربية):' : 'Main Title Line 1 (Arabic):'}</label>
+                <input
+                  type="text"
+                  value={formData.heroTitle_ar || ''}
+                  onChange={(e) => setFormData({ ...formData, heroTitle_ar: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group-item">
+                <label>{isAr ? 'العبارة الذهبية المميزة (بالعربية):' : 'Golden Highlight (Arabic):'}</label>
+                <input
+                  type="text"
+                  value={formData.heroHighlight_ar || ''}
+                  onChange={(e) => setFormData({ ...formData, heroHighlight_ar: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group-item" style={{ gridColumn: '1 / -1' }}>
+                <label>{isAr ? 'النص الوصفي للهيرو (بالعربية):' : 'Hero Subtitle (Arabic):'}</label>
+                <textarea
+                  rows={2}
+                  value={formData.heroSubtitle_ar || ''}
+                  onChange={(e) => setFormData({ ...formData, heroSubtitle_ar: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* SUBTAB 1: FOUNDER INFO */}
         {activeSubTab === 'founder' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>

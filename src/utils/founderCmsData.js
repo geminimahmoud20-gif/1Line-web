@@ -117,7 +117,21 @@ export const DEFAULT_FOUNDER_CMS = {
       desc_ar: 'إدارة متكاملة مخصصة للمغتربين بالخليج تتولى المعاينات الحية بالفيديو، وتسهيلات السداد والتوكيلات، وتحقيق أعلى عائد استثماري وإيجاري.',
       desc_en: 'Dedicated services for Gulf expats including live video tours, verified legal procedures, and high ROI deals.'
     }
-  ]
+  ],
+
+  // 🎬 Cinematic Hero Video & Visual Engine (The Agency RE Style)
+  heroVideoEnabled: true,
+  heroVideoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-modern-architecture-buildings-and-skyscrapers-41551-large.mp4',
+  heroPosterUrl: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=2000&q=85',
+  heroOverlayOpacity: 0.65,
+  heroBadge_ar: 'المنصة العقارية الأكثر موثوقية في سوهاج',
+  heroBadge_en: 'Sohag’s Most Trusted Real Estate Platform',
+  heroTitle_ar: 'امتلك واستثمر في أرقى عقارات سوهاج',
+  heroTitle_en: 'Own & Invest in Sohag’s Finest Properties',
+  heroHighlight_ar: 'بكل ثقة وضمان قانوني معتمد',
+  heroHighlight_en: 'With Full Confidence & Legal Security',
+  heroSubtitle_ar: 'شقق سكنية فاخرة، مقرات تجارية وإدارية، وفيلات مستقلة مسجلة ومفحوصة قانونياً مع برامج تقسيط مرنة حتى 7 سنوات.',
+  heroSubtitle_en: 'Verified luxury apartments, retail shops, executive offices, and standalone villas with flexible financing up to 7 years.'
 };
 
 const STORAGE_KEY = 'oneline_founder_cms_settings';
