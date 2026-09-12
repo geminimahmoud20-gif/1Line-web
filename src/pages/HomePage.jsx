@@ -325,7 +325,7 @@ export default function HomePage({
                 onClick={() => setSearchType('all')}
               >
                 <Building size={14} />
-                <span>{lang === 'ar' ? 'جميع العقارات' : 'All Properties'}</span>
+                <span>{lang === 'ar' ? 'جميع العقارات' : 'All'}</span>
               </button>
               <button
                 type="button"
@@ -341,7 +341,7 @@ export default function HomePage({
                 onClick={() => setSearchType('commercial')}
               >
                 <Award size={14} />
-                <span>{lang === 'ar' ? 'تجاري ومحلات' : 'Commercial'}</span>
+                <span>{lang === 'ar' ? 'تجاري وإداري' : 'Commercial'}</span>
               </button>
               <button
                 type="button"
@@ -357,29 +357,21 @@ export default function HomePage({
                 onClick={() => setSearchType('land')}
               >
                 <Landmark size={14} />
-                <span>{lang === 'ar' ? 'أراضي واستثمار' : 'Lands'}</span>
-              </button>
-              <button
-                type="button"
-                className="hero-tab"
-                onClick={() => navigate('/demands')}
-              >
-                <Users size={14} />
-                <span>{lang === 'ar' ? 'طلبات المشترين الكاش' : 'Cash Demands'}</span>
+                <span>{lang === 'ar' ? 'أراضي' : 'Lands'}</span>
               </button>
             </div>
 
             <form onSubmit={handleHeroSearch} className="hero-search-inputs-row">
-              {/* Keyword / Omnibox Search with Multi-Category Live Dropdown */}
+              {/* 1. Keyword Search */}
               <div className="search-field keyword-search-field">
                 <label>
                   <Search size={14} />
-                  <span>{lang === 'ar' ? 'البحث الشامل في عقارات سوهاج' : 'Comprehensive Property Search'}</span>
+                  <span>{lang === 'ar' ? 'البحث الذكي' : 'Search'}</span>
                 </label>
                 <div className="hero-input-relative">
                   <input
                     type="text"
-                    placeholder={lang === 'ar' ? 'ابحث بالحي، المشروع، الكود، أو نوع العقار...' : 'Search by district, compound, code, or type...'}
+                    placeholder={lang === 'ar' ? 'ابحث بالحي، اسم المشروع، أو كود العقار...' : 'Search by district, compound, or property ID...'}
                     value={searchKeyword}
                     onChange={(e) => {
                       setSearchKeyword(e.target.value);
@@ -493,11 +485,11 @@ export default function HomePage({
                 </div>
               </div>
 
-              {/* Location Select */}
+              {/* 2. Location Select */}
               <div className="search-field">
                 <label>
                   <MapPin size={14} />
-                  <span>{lang === 'ar' ? 'المنطقة' : 'Location'}</span>
+                  <span>{lang === 'ar' ? 'المنطقة أو الحي' : 'Location'}</span>
                 </label>
                 <select value={searchArea} onChange={(e) => setSearchArea(e.target.value)}>
                   {districts.map((a) => (
@@ -508,22 +500,7 @@ export default function HomePage({
                 </select>
               </div>
 
-              {/* Property Type */}
-              <div className="search-field">
-                <label>
-                  <Building size={14} />
-                  <span>{lang === 'ar' ? 'نوع العقار' : 'Property Type'}</span>
-                </label>
-                <select value={searchType} onChange={(e) => setSearchType(e.target.value)}>
-                  {PROPERTY_TYPES.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {lang === 'ar' ? t.name_ar : t.name_en}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Budget Range */}
+              {/* 3. Budget Range */}
               <div className="search-field">
                 <label>
                   <DollarSign size={14} />
@@ -537,24 +514,25 @@ export default function HomePage({
                 </select>
               </div>
 
-              {/* Submit Button */}
+              {/* 4. Submit Button */}
               <button type="submit" className="hero-search-btn">
                 <Search size={18} />
-                <span>{lang === 'ar' ? 'ابحث الآن' : 'Search Now'}</span>
+                <span>{lang === 'ar' ? 'ابحث الآن' : 'Search'}</span>
               </button>
             </form>
 
-            {/* Quick Minimalist Discovery Strip (Single Clean Row - Zero Emojis) */}
+            {/* Clean Quick Discovery Strip */}
             <div className="hero-quick-discovery-strip">
               <span className="discovery-label">
-                {lang === 'ar' ? 'المناطق الأكثر تميزاً:' : 'Top Locations:'}
+                {lang === 'ar' ? 'أبرز مناطق سوهاج:' : 'Top Locations:'}
               </span>
               <div className="discovery-chips-list">
                 {[
-                  { id: 'east', label_ar: 'شرق سوهاج', label_en: 'East Sohag' },
                   { id: 'new_sohag', label_ar: 'سوهاج الجديدة', label_en: 'New Sohag' },
+                  { id: 'east', label_ar: 'شرق سوهاج', label_en: 'East Sohag' },
                   { id: 'corniche', label_ar: 'الكورنيش', label_en: 'Corniche' },
-                  { id: 'nasr', label_ar: 'مدينة ناصر', label_en: 'Nasr City' }
+                  { id: 'nasr', label_ar: 'مدينة ناصر', label_en: 'Nasr City' },
+                  { id: 'center', label_ar: 'وسط البلد', label_en: 'City Center' }
                 ].map((area) => (
                   <button
                     key={area.id}
@@ -566,32 +544,6 @@ export default function HomePage({
                     className="discovery-chip"
                   >
                     <span>{lang === 'ar' ? area.label_ar : area.label_en}</span>
-                  </button>
-                ))}
-
-                <span className="discovery-divider" aria-hidden="true" />
-
-                <span className="discovery-label">
-                  {lang === 'ar' ? 'خيارات شائعة:' : 'Popular:'}
-                </span>
-
-                {SEMANTIC_SEARCH_PRESETS.map((preset) => (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    onClick={() => {
-                      const qText = lang === 'ar' ? preset.query_ar : preset.query_en;
-                      setSearchKeyword(qText);
-                      const parsed = parseSemanticQuery(qText);
-                      const params = new URLSearchParams();
-                      params.set('q', qText);
-                      if (parsed.filters.area) params.set('area', parsed.filters.area);
-                      if (parsed.filters.type) params.set('type', parsed.filters.type);
-                      navigate(`/properties?${params.toString()}`);
-                    }}
-                    className="discovery-chip"
-                  >
-                    <span>{lang === 'ar' ? preset.tag_ar : preset.query_en}</span>
                   </button>
                 ))}
               </div>

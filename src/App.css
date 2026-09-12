@@ -1411,9 +1411,21 @@
 
 .hero-search-inputs-row {
   display: grid;
-  grid-template-columns: 1.5fr 1.1fr 1.1fr 1.1fr 130px;
+  grid-template-columns: 2fr 1.3fr 1.2fr 135px;
   gap: 12px;
   align-items: flex-end;
+}
+
+@media (max-width: 900px) {
+  .hero-search-inputs-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 580px) {
+  .hero-search-inputs-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .search-field {
@@ -2783,26 +2795,33 @@
 }
 
 .property-card-modern {
-  background: #ffffff;
+  background: var(--bg-card, #ffffff);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   flex-direction: column;
 }
 
+.dark-theme .property-card-modern,
+[data-theme="dark"] .property-card-modern,
+.dark .property-card-modern {
+  background: var(--bg-card, #0f172a);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
 .property-card-modern:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 45px -10px rgba(11, 78, 162, 0.22), 0 0 20px rgba(253, 203, 66, 0.12);
+  transform: translateY(-6px);
+  box-shadow: 0 16px 36px -8px rgba(11, 78, 162, 0.18), 0 0 16px rgba(253, 203, 66, 0.1);
   border-color: rgba(253, 203, 66, 0.45);
 }
 
 .dark-theme .property-card-modern:hover,
 [data-theme="dark"] .property-card-modern:hover {
-  box-shadow: 0 22px 50px -10px rgba(0, 0, 0, 0.65), 0 0 25px rgba(253, 203, 66, 0.15);
-  border-color: rgba(253, 203, 66, 0.5);
+  box-shadow: 0 18px 40px -8px rgba(0, 0, 0, 0.6), 0 0 20px rgba(253, 203, 66, 0.12);
+  border-color: rgba(253, 203, 66, 0.4);
 }
 
 .property-card-media {
@@ -10412,17 +10431,26 @@ body.dark,
 }
 
 .mega-project-card {
-  background: #ffffff;
+  background: var(--bg-card, #ffffff);
   border-radius: var(--radius-lg);
   overflow: hidden;
   border: 1px solid var(--border-color);
   box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08);
-  transition: transform 0.25s, box-shadow 0.25s;
+  transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+}
+
+.dark-theme .mega-project-card,
+[data-theme="dark"] .mega-project-card,
+.dark .mega-project-card {
+  background: var(--bg-card, #0f172a);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
 }
 
 .mega-project-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 20px 40px -10px rgba(13, 72, 161, 0.18);
+  border-color: var(--border-hover);
 }
 
 .project-card-media-wrap {

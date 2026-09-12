@@ -117,7 +117,7 @@ export default function Header({
     }, 220);
   };
 
-  // 🏛️ Smart Categorized Navigation Hubs
+  // 🏛️ Smart, Direct & Intuitive Navigation Hubs
   const navHubs = [
     {
       id: 'home',
@@ -127,96 +127,76 @@ export default function Header({
       icon: Home
     },
     {
-      id: 'real-estate',
-      type: 'dropdown',
-      label: isAr ? 'العقارات والمشروعات' : 'Properties & Projects',
-      icon: Building,
-      activePaths: ['/properties', '/projects'],
-      items: [
-        {
-          path: '/properties',
-          label: isAr ? 'دليل العقارات المعتمدة' : 'Verified Properties',
-          desc: isAr ? 'شقق، فلل، محلات ومكاتب فندقية' : 'Verified residential & commercial listings',
-          badge: isAr ? 'شامل' : 'All',
-          icon: Building
-        },
-        {
-          path: '/projects',
-          label: isAr ? 'دليل المشروعات والكمبوندات' : 'Mega Projects & Compounds',
-          desc: isAr ? 'سوهاج الجديدة وأرقى المشروعات' : 'New Sohag premier compounds & developments',
-          badge: isAr ? 'حصري' : 'Exclusive',
-          badgeType: 'gold',
-          icon: Layers
-        }
-      ]
+      id: 'properties',
+      type: 'link',
+      path: '/properties',
+      label: isAr ? 'العقارات المعتمدة' : 'Properties',
+      icon: Building
     },
     {
-      id: 'finance-intel',
-      type: 'dropdown',
-      label: isAr ? 'المال والاستثمار' : 'Finance & Intel',
-      icon: TrendingUp,
-      activePaths: ['/market-intelligence', '/financing', '/investor'],
-      items: [
-        {
-          path: '/market-intelligence',
-          label: isAr ? 'مؤشرات أسعار السوق' : 'Market Intelligence',
-          desc: isAr ? 'تحليل يومي لسعر المتر والعائد بسوهاج' : 'Real-time sqm price indices & trends',
-          badge: isAr ? 'بيانات حية' : 'Live',
-          badgeType: 'blue',
-          icon: TrendingUp
-        },
-        {
-          path: '/financing',
-          label: isAr ? 'حاسبة التمويل والأقساط' : 'Financing & Installments',
-          desc: isAr ? 'حساب القسط الشهري حتى 7 سنوات' : 'Mortgage & monthly installment simulator',
-          icon: Landmark
-        },
-        {
-          path: '/investor',
-          label: isAr ? 'بوابة كبار المستثمرين' : 'Investor Portal',
-          desc: isAr ? 'فرص استثمارية كبرى وعوائد إيجارية' : 'High-yield commercial & land portfolios',
-          badge: 'ROI',
-          badgeType: 'gold',
-          icon: Award
-        }
-      ]
+      id: 'projects',
+      type: 'link',
+      path: '/projects',
+      label: isAr ? 'المشروعات والكمبوندات' : 'Projects',
+      icon: Layers
+    },
+    {
+      id: 'demands',
+      type: 'link',
+      path: '/demands',
+      label: isAr ? 'طلبات المشترين' : 'Buyer Demands',
+      icon: FileText
     },
     {
       id: 'vip-services',
       type: 'dropdown',
-      label: isAr ? 'الخدمات الخاصة' : 'VIP Services',
+      label: isAr ? 'خدمات واستشارات VIP' : 'VIP & Advisory',
       icon: Sparkles,
       badge: 'VIP',
       badgeType: 'gold',
-      activePaths: ['/special-requests', '/demands'],
+      activePaths: ['/special-requests', '/market-intelligence', '/financing', '/investor'],
       items: [
         {
           path: '/special-requests',
-          label: isAr ? 'الطلبات الخاصة لكبار العملاء' : 'VIP Bespoke Requests',
-          desc: isAr ? 'طلب عقار بمواصفات خاصة وسرية تامة' : 'Private bespoke requests for premium clients',
+          label: isAr ? 'طلب عقار خاص VIP' : 'VIP Bespoke Requests',
+          desc: isAr ? 'طلب بمواصفات خاصة وسرية تامة' : 'Private bespoke sourcing for premium clients',
           badge: 'VIP',
           badgeType: 'gold',
           icon: Sparkles
         },
         {
-          path: '/demands',
-          label: isAr ? 'سوق طلبات المشترين' : 'Buyer Demands Marketplace',
-          desc: isAr ? 'طلبات حقيقية ومطابقة فورية للبائعين' : 'Live buyer demands ready for instant matching',
-          icon: FileText
+          path: '/market-intelligence',
+          label: isAr ? 'مؤشرات أسعار السوق' : 'Market Intelligence',
+          desc: isAr ? 'تحليل يومي لسعر المتر بسوهاج' : 'Real-time sqm price indices & trends',
+          icon: TrendingUp
+        },
+        {
+          path: '/financing',
+          label: isAr ? 'حاسبة التمويل والأقساط' : 'Financing & Installments',
+          desc: isAr ? 'محاكاة القسط حتى 7 سنوات' : 'Mortgage & installment calculator',
+          icon: Landmark
+        },
+        {
+          path: '/investor',
+          label: isAr ? 'بوابة كبار المستثمرين' : 'Investor Portal',
+          desc: isAr ? 'محافظ عقارية وأراضي كبرى' : 'High-yield portfolios & lands',
+          badge: 'ROI',
+          badgeType: 'gold',
+          icon: Award
         }
       ]
     }
   ];
 
-  // Flat nav list for mobile compatibility
+  // Flat nav list for mobile drawer
   const flatMobileLinks = [
     { path: '/', label: isAr ? 'الرئيسية' : 'Home', icon: Home },
-    { path: '/properties', label: isAr ? 'دليل العقارات المعتمدة' : 'Properties', icon: Building },
-    { path: '/projects', label: isAr ? 'المشروعات والكمبوندات' : 'Projects', icon: Layers, badge: 'حصري', badgeType: 'gold' },
-    { path: '/special-requests', label: isAr ? 'الطلبات الخاصة' : 'Special Requests', badge: 'VIP', badgeType: 'gold', icon: Sparkles },
+    { path: '/properties', label: isAr ? 'العقارات المعتمدة' : 'Properties', icon: Building },
+    { path: '/projects', label: isAr ? 'المشروعات والكمبوندات' : 'Projects', icon: Layers },
     { path: '/demands', label: isAr ? 'طلبات المشترين' : 'Buyer Demands', icon: FileText },
-    { path: '/market-intelligence', label: isAr ? 'مؤشرات أسعار السوق' : 'Market Intel', icon: TrendingUp, badge: 'مباشر', badgeType: 'blue' },
-    { path: '/financing', label: isAr ? 'التمويل والأقساط' : 'Financing', icon: Landmark },
+    { path: '/special-requests', label: isAr ? 'طلب عقار خاص VIP' : 'Special Requests', badge: 'VIP', badgeType: 'gold', icon: Sparkles },
+    { path: '/market-intelligence', label: isAr ? 'مؤشرات أسعار السوق' : 'Market Intel', icon: TrendingUp },
+    { path: '/financing', label: isAr ? 'حاسبة التمويل والأقساط' : 'Financing', icon: Landmark },
     { path: '/investor', label: isAr ? 'بوابة المستثمرين' : 'Investors', icon: Award }
   ];
 
