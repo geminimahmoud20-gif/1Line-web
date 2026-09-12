@@ -65,10 +65,6 @@ export default function PrimeDistrictsShowcase({ lang = 'ar' }) {
                   <TrendingUp size={12} />
                   <span>+{growth}% {isAr ? 'نمو سنوي' : 'YoY'}</span>
                 </span>
-                <span className="district-verified-badge">
-                  <ShieldCheck size={12} />
-                  <span>{isAr ? 'معتمد 1Line' : 'Verified'}</span>
-                </span>
               </div>
 
               <div className="district-card-bottom-content">

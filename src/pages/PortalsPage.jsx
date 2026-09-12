@@ -6,7 +6,6 @@ import { SellWizard } from '../components/SellWizard';
 import { InvestorCenter } from '../components/InvestorCenter';
 import { BrokerPortal } from '../components/BrokerPortal';
 import { DemandsPortal } from '../components/DemandsPortal';
-import { VaultPortal } from '../components/VaultPortal';
 import { ReferralPortal } from '../components/ReferralPortal';
 import { SpecialRequests } from '../components/SpecialRequests';
 import QuickPortalLeadCard from '../components/common/QuickPortalLeadCard';
@@ -93,12 +92,6 @@ export default function PortalsPage({
           badge: isAr ? 'طلبات السوق العقاري الحية واللحظية' : 'Live Real Estate Market Demands',
           title: isAr ? 'طلبات حقيقية لمشترين يبحثون عن عقارات الآن' : 'Active Buyer Requests Looking for Sellers',
           subtitle: isAr ? 'تصفح طلبات الشراء الكاش الفورية وقدم عقارك للمطابقة والبيع السريع.' : 'Browse active cash buyers and match your property for fast closing.'
-        };
-      case 'vault':
-        return {
-          badge: isAr ? 'الخزينة العقارية السرية (VIP Vault)' : 'Off-Market Private Vault',
-          title: isAr ? 'صفقات خاصة وحصرية غير معروضة للعامة' : 'Exclusive Off-Market Real Estate Deals',
-          subtitle: isAr ? 'عقارات بأسعار استثنائية أقل من القيمة السوقية متاحة لكبار العملاء فقط برمز سري.' : 'Below-market investment opportunities accessible only with authorized PIN.'
         };
       case 'referral':
         return {
@@ -259,14 +252,6 @@ export default function PortalsPage({
               triggerToast={triggerToast}
               handleAddNewLead={handleAddNewLead}
               onOpenAddDemand={onOpenAddDemand}
-            />
-          )}
-
-          {portalType === 'vault' && (
-            <VaultPortal
-              lang={lang}
-              t={t}
-              triggerToast={triggerToast}
             />
           )}
 

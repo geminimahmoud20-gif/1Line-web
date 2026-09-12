@@ -15,7 +15,6 @@ export const TRANSLATIONS = {
     
     // New V2 Navigation
     activeRequests: 'الطلبات النشطة بالسوق',
-    offMarketVault: 'خزنة العقارات الحصرية',
     referralSys: 'برنامج الإحالة والمكافآت',
     findBuyers: 'ابحث عن مشترين لعقاري',
     
@@ -176,7 +175,6 @@ export const TRANSLATIONS = {
     
     // New V2 Navigation
     activeRequests: 'Active Requests',
-    offMarketVault: 'Off-Market Vault',
     referralSys: 'Referrals & Rewards',
     findBuyers: 'Find Buyers',
     

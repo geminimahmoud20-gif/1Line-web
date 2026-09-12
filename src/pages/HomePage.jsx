@@ -31,7 +31,6 @@ import MortgageRoiCalculator from '../components/calculators/MortgageRoiCalculat
 import MarketTickerBar from '../components/home/MarketTickerBar';
 import ExpressLeadStrip from '../components/home/ExpressLeadStrip';
 import PrimeDistrictsShowcase from '../components/home/PrimeDistrictsShowcase';
-import PrivateVaultBanner from '../components/home/PrivateVaultBanner';
 import GoldStandardsSection from '../components/home/GoldStandardsSection';
 import { PROPERTY_TYPES, PROPERTIES_DATA } from '../data/propertiesData';
 import { MEGA_PROJECTS } from '../data/projectsData';
@@ -615,31 +614,6 @@ export default function HomePage({
               );
             })}
           </div>
-          {/* ⚡ Quick VIP Portals & Action Services Deck (Instant 1-Click Access) */}
-          <div className="quick-portals-deck">
-            {[
-              { path: '/buy', icon: Building, label_ar: 'معالج الشراء الذكي', label_en: 'Buy Wizard', color: 'var(--brand-navy-light, #0284c7)', bg: 'rgba(2, 132, 199, 0.12)' },
-              { path: '/sell', icon: TrendingUp, label_ar: 'عرض عقار وتقييم', label_en: 'Sell & Valuation', color: '#10b981', bg: 'rgba(16, 185, 129, 0.12)' },
-              { path: '/demands', icon: Users, label_ar: 'طلبات المشترين الكاش', label_en: 'Cash Demands', color: 'var(--brand-gold-warm, #f59e0b)', bg: 'rgba(245, 158, 11, 0.14)' },
-              { path: '/financing', icon: Calculator, label_ar: 'حاسبة الأقساط والتمويل', label_en: 'Mortgage Plans', color: 'var(--brand-navy-light, #0284c7)', bg: 'rgba(2, 132, 199, 0.12)' },
-              { path: '/special-requests', icon: Sparkles, label_ar: 'الطلبات الخاصة VIP', label_en: 'Bespoke VIP', color: 'var(--brand-gold, #ffca28)', bg: 'rgba(255, 202, 40, 0.16)' },
-              { path: '/vault', icon: Lock, label_ar: 'الخزينة الحصرية', label_en: 'Private Vault', color: '#10b981', bg: 'rgba(16, 185, 129, 0.12)' }
-            ].map((p, idx) => {
-              const IconComponent = p.icon;
-              return (
-                <Link
-                  key={idx}
-                  to={p.path}
-                  className="quick-portal-pill"
-                >
-                  <span className="portal-icon-wrapper" style={{ color: p.color, background: p.bg, borderColor: `${p.color}40` }}>
-                    <IconComponent size={14} />
-                  </span>
-                  <span>{lang === 'ar' ? p.label_ar : p.label_en}</span>
-                </Link>
-              );
-            })}
-          </div>
         </div>
       </section>
 
@@ -660,13 +634,10 @@ export default function HomePage({
       <section className="homepage-section bg-surface" id="marketplace-hub">
         <div className="section-header-flex" style={{ marginBottom: '22px' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <div style={{ marginBottom: '8px' }}>
               <span className="section-pill" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                 <span className="live-pulse-dot" />
                 {lang === 'ar' ? 'سوق سوهاج العقاري المعتمد' : 'Verified Sohag Marketplace'}
-              </span>
-              <span style={{ fontSize: '0.74rem', color: '#10b981', fontWeight: '800', background: 'rgba(16, 185, 129, 0.1)', padding: '2px 8px', borderRadius: '6px', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
-                ● {lang === 'ar' ? 'تحديث لحظي مباشر' : 'Live Stream'}
               </span>
             </div>
             <h2 style={{ fontSize: '1.75rem', fontWeight: '900', color: 'var(--text-primary)', margin: 0 }}>
@@ -901,9 +872,6 @@ export default function HomePage({
           </div>
         )}
       </section>
-
-      {/* 🔐 THE 1LINE PRIVATE CLIENT VAULT (OFF-MARKET VIP DEALS) */}
-      <PrivateVaultBanner lang={lang} />
 
       {/* 🌟 3. LUXURY SPONSORED ADS & FEATURED DEVELOPER SHOWCASE */}
       <SponsoredAdsShowcase lang={lang} />

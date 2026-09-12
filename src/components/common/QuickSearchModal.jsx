@@ -93,14 +93,6 @@ export default function QuickSearchModal({
       action: () => { navigate('/market-intelligence'); onClose(); }
     },
     {
-      id: 'tool-vault',
-      type: 'tool',
-      title: isAr ? 'خزنة الفرص الحصرية للمستثمرين (VIP Vault)' : 'VIP Investor Off-Market Vault',
-      desc: isAr ? 'أصول عقارية سرية واستثنائية لكبار المستثمرين' : 'Exclusive high-yield private assets',
-      icon: Lock,
-      action: () => { navigate('/portals'); onClose(); }
-    },
-    {
       id: 'tool-demand',
       type: 'tool',
       title: isAr ? 'تسجيل طلب عقاري بمواصفات خاصة' : 'Submit Custom Property Request',

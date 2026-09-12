@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
 import { TRANSLATIONS } from './translations';
 import { PROPERTIES_DATA } from './data/propertiesData';
@@ -1147,15 +1147,7 @@ export default function App() {
 
           <Route
             path="/vault"
-            element={
-              <PortalsPage
-                portalType="vault"
-                lang={lang}
-                t={t}
-                triggerToast={triggerToast}
-                handleAddNewLead={handleAddNewLead}
-              />
-            }
+            element={<Navigate to="/properties" replace />}
           />
 
           <Route

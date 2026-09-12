@@ -117,61 +117,19 @@ export default function PropertyCard({
         <BrandWatermark size="sm" position="bottom-right" />
 
         {/* Badges Layer */}
+        {/* Badges Layer - Clean & Minimal Luxury */}
         <div className="card-top-badges">
-          {badge && <span className="property-badge gold-badge">{badge}</span>}
+          {(badge || property.featured) && (
+            <span className="property-badge gold-badge">
+              {badge || (lang === 'ar' ? 'حصري' : 'Exclusive')}
+            </span>
+          )}
           {property.virtualTour && (
             <span className="property-badge tour-badge">
               <Sparkles size={12} />
-              {lang === 'ar' ? 'جولة 3D' : '3D Tour'}
+              <span>{lang === 'ar' ? 'جولة 3D' : '3D'}</span>
             </span>
           )}
-          
-          {/* Market Momentum Tag */}
-          <span 
-            className="property-badge momentum-badge"
-            style={{
-              background: property.featured ? 'rgba(13, 72, 161, 0.92)' : 'rgba(3, 105, 161, 0.90)',
-              border: property.featured ? '1px solid rgba(255, 202, 40, 0.55)' : '1px solid rgba(56, 189, 248, 0.5)',
-              color: '#ffffff',
-              backdropFilter: 'blur(6px)'
-            }}
-          >
-            {property.featured ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                <Sparkles size={11} style={{ color: '#ffca28' }} />
-                <span style={{ color: '#ffca28', fontWeight: '800' }}>{lang === 'ar' ? 'فرصة حصرية' : 'Prime Exclusive'}</span>
-              </span>
-            ) : viewsCount >= 250 ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', color: '#f59e0b' }}>
-                <Flame size={11} />
-                <span>{lang === 'ar' ? 'طلب مرتفع' : 'High Demand'}</span>
-              </span>
-            ) : (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', color: '#10b981' }}>
-                <ShieldCheck size={11} />
-                <span>{lang === 'ar' ? 'سعر عادل' : 'Fair Price'}</span>
-              </span>
-            )}
-          </span>
-
-          {/* Real-time Views Badge */}
-          <span 
-            className="property-badge" 
-            style={{ 
-              background: 'rgba(15, 23, 42, 0.75)', 
-              color: '#06b6d4', 
-              border: '1px solid rgba(6, 182, 212, 0.4)',
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '3px',
-              backdropFilter: 'blur(4px)'
-            }}
-            title={lang === 'ar' ? `تمت مشاهدة هذا العقار ${viewsCount} مرة` : `Viewed ${viewsCount} times`}
-          >
-            <Eye size={11} />
-            <span>{viewsCount}</span>
-            {viewsCount >= 350 && <span style={{ fontSize: '10px' }}>🔥</span>}
-          </span>
         </div>
 
         {/* Floating Quick Action Buttons */}
@@ -234,15 +192,15 @@ export default function PropertyCard({
               gap: '4px',
               fontSize: '0.7rem',
               color: '#10b981',
-              background: 'rgba(16, 185, 129, 0.12)',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
-              padding: '3px 8px',
+              background: 'rgba(16, 185, 129, 0.1)',
+              border: '1px solid rgba(16, 185, 129, 0.25)',
+              padding: '2px 8px',
               borderRadius: '6px',
               fontWeight: '800'
             }}
           >
             <ShieldCheck size={12} style={{ color: '#10b981' }} />
-            <span>{lang === 'ar' ? '🛡️ سند ملكية وتراخيص مفحوصة 100%' : '100% Verified Legal Deed'}</span>
+            <span>{lang === 'ar' ? 'معتمد قانونياً 100%' : '100% Verified'}</span>
           </span>
         </div>
 
