@@ -30,6 +30,9 @@ import SponsoredAdsShowcase from '../components/home/SponsoredAdsShowcase';
 import MortgageRoiCalculator from '../components/calculators/MortgageRoiCalculator';
 import MarketTickerBar from '../components/home/MarketTickerBar';
 import ExpressLeadStrip from '../components/home/ExpressLeadStrip';
+import PrimeDistrictsShowcase from '../components/home/PrimeDistrictsShowcase';
+import PrivateVaultBanner from '../components/home/PrivateVaultBanner';
+import GoldStandardsSection from '../components/home/GoldStandardsSection';
 import { PROPERTY_TYPES, PROPERTIES_DATA } from '../data/propertiesData';
 import { MEGA_PROJECTS } from '../data/projectsData';
 import { TESTIMONIALS, INITIAL_DEMANDS } from '../data/mockData';
@@ -650,6 +653,9 @@ export default function HomePage({
         triggerToast={triggerToast} 
       />
 
+      {/* 🏛️ SOHAG PRIME DISTRICTS & CAPITAL APPRECIATION INDEX */}
+      <PrimeDistrictsShowcase lang={lang} />
+
       {/* 🏢 2. SOHAG LIVE MARKETPLACE HUB (Consolidated Segmented Discovery) */}
       <section className="homepage-section bg-surface" id="marketplace-hub">
         <div className="section-header-flex" style={{ marginBottom: '22px' }}>
@@ -896,8 +902,14 @@ export default function HomePage({
         )}
       </section>
 
+      {/* 🔐 THE 1LINE PRIVATE CLIENT VAULT (OFF-MARKET VIP DEALS) */}
+      <PrivateVaultBanner lang={lang} />
+
       {/* 🌟 3. LUXURY SPONSORED ADS & FEATURED DEVELOPER SHOWCASE */}
       <SponsoredAdsShowcase lang={lang} />
+
+      {/* 🛡️ THE 4 1LINE GOLDEN STANDARDS OF INSTITUTIONAL TRUST */}
+      <GoldStandardsSection lang={lang} />
 
       {/* 🧮 4. PROPTECH FINANCIAL SIMULATOR & INSTITUTIONAL TRUST HUB */}
       <section className="homepage-section bg-surface" id="mortgage-calculator">
