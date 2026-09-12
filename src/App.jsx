@@ -376,7 +376,8 @@ export default function App() {
     }
 
     // 🛡️ Sanitize all user-submitted data to prevent XSS attacks
-    const cleanData = sanitizeObject(rawLead);
+    const cleanData = sanitizeObject(rawLead || leadData);
+    sanitizeObject(leadData);
 
     // Standardize mandatory client registration fields
     const normalizedName = (cleanData.name || cleanData.clientName || '').trim();

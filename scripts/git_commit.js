@@ -1,6 +1,10 @@
-const git = require('isomorphic-git');
-const fs = require('fs');
-const path = require('path');
+import git from 'isomorphic-git';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function run() {
   const dir = path.resolve(__dirname, '..');
@@ -21,7 +25,8 @@ async function run() {
     '.gitignore',
     'README.md',
     'public/favicon.svg',
-    'public/manifest.json'
+    'public/manifest.json',
+    'public/sw.js'
   ];
 
   // Helper to walk src/
@@ -56,7 +61,7 @@ async function run() {
       name: 'Dr. Mahmoud Elbaz / One Line Solutions',
       email: 'admin@onelinesolutions.com'
     },
-    message: 'Initial Release: One Line Solutions Real Estate Platform 2026'
+    message: 'feat: standardize client registration and upgrade CRM pipeline with localization & contrast'
   });
 
   console.log('✓ Successfully committed with SHA:', sha);

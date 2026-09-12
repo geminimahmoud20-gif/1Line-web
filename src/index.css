@@ -139,7 +139,7 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
-body {
+html, body {
   background-color: var(--bg-slate);
   color: var(--text-primary);
   font-family: var(--font-ar);
@@ -155,29 +155,58 @@ body {
   transition: background-color 0.35s cubic-bezier(0.4, 0, 0.2, 1), color 0.35s ease;
 }
 
-#root,
-.app-root,
-.main-site-content,
-.homepage-wrapper {
-  max-width: 100vw;
-  overflow-x: hidden;
-  position: relative;
+/* 🔤 GLOBAL STRICT FONT INHERITANCE - UNIFY ALL SYSTEM FONTS */
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
-/* Dark mode body ambient glow */
-html[data-theme="dark"] body,
-body.dark-theme,
-body[data-theme="dark"] {
-  background-image: 
-    radial-gradient(circle at 15% 15%, rgba(13, 72, 161, 0.18) 0%, transparent 55%),
-    radial-gradient(circle at 85% 85%, rgba(245, 158, 11, 0.07) 0%, transparent 50%),
-    radial-gradient(circle at 50% 50%, rgba(2, 132, 199, 0.05) 0%, transparent 60%);
-  background-attachment: fixed;
+input,
+button,
+select,
+textarea,
+optgroup,
+option,
+label {
+  font-family: var(--font-ar) !important;
+}
+
+::placeholder,
+input::placeholder,
+textarea::placeholder {
+  font-family: var(--font-ar) !important;
+  opacity: 0.75;
 }
 
 /* RTL / LTR Font overrides */
-[dir="ltr"] {
-  font-family: var(--font-en);
+[dir="rtl"], html[lang="ar"], body[dir="rtl"] {
+  font-family: var(--font-ar) !important;
+}
+
+/* Ensure SVG icons do not inherit broken font metrics */
+.lucide, svg, svg * {
+  font-family: initial !important;
+}
+
+[dir="ltr"], html[lang="en"], body[dir="ltr"] {
+  font-family: var(--font-en) !important;
+}
+
+[dir="ltr"] input,
+[dir="ltr"] button,
+[dir="ltr"] select,
+[dir="ltr"] textarea,
+[dir="ltr"] optgroup,
+[dir="ltr"] option,
+[dir="ltr"] label,
+[dir="ltr"] ::placeholder,
+[dir="ltr"] input::placeholder,
+[dir="ltr"] textarea::placeholder,
+html[lang="en"] input,
+html[lang="en"] button,
+html[lang="en"] select,
+html[lang="en"] textarea,
+html[lang="en"] ::placeholder {
+  font-family: var(--font-en) !important;
 }
 
 /* Custom Luxury Scrollbar styling */

@@ -25,7 +25,8 @@ async function run() {
     '.gitignore',
     'README.md',
     'public/favicon.svg',
-    'public/manifest.json'
+    'public/manifest.json',
+    'public/sw.js'
   ];
 
   // Helper to walk src/
