@@ -478,18 +478,53 @@ export default function App() {
       }
     });
 
-    // 2. Push to Firebase if configured
+    // 2. Push to Firebase if configured (with Offline Sync Queue resilience)
     if (isFirebaseActive() && finalLead) {
-      try {
-        await saveLead(finalLead);
-        await saveNotification(`Lead update: ${finalLead.name || 'Client'}`);
-      } catch (err) {
-        console.error('Firebase save lead error:', err);
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        try {
+          const queue = JSON.parse(localStorage.getItem('oneline_offline_lead_queue') || '[]');
+          queue.push(finalLead);
+          localStorage.setItem('oneline_offline_lead_queue', JSON.stringify(queue));
+          triggerToast(lang === 'ar' ? 'تم حفظ الطلب محلياً دون اتصال وسيتم رفعه تلقائياً فور توفر الإنترنت 📶' : 'Saved offline! Will sync automatically when connected.', 'info');
+        } catch (e) {}
+      } else {
+        try {
+          await saveLead(finalLead);
+          await saveNotification(`Lead update: ${finalLead.name || 'Client'}`);
+        } catch (err) {
+          console.error('Firebase save lead error:', err);
+          try {
+            const queue = JSON.parse(localStorage.getItem('oneline_offline_lead_queue') || '[]');
+            queue.push(finalLead);
+            localStorage.setItem('oneline_offline_lead_queue', JSON.stringify(queue));
+          } catch (e) {}
+        }
       }
     }
 
     return finalLead;
-  }, [soundEnabled]);
+  }, [soundEnabled, lang, triggerToast]);
+
+  // 📶 Auto Offline Queue Synchronization when device reconnects
+  useEffect(() => {
+    const handleOnline = async () => {
+      try {
+        const queue = JSON.parse(localStorage.getItem('oneline_offline_lead_queue') || '[]');
+        if (Array.isArray(queue) && queue.length > 0 && isFirebaseActive()) {
+          for (const item of queue) {
+            await saveLead(item);
+          }
+          localStorage.removeItem('oneline_offline_lead_queue');
+          triggerToast(lang === 'ar' ? `تمت مزامنة ${queue.length} طلبات مسجلة دون اتصال بنجاح! 📶` : `Synced ${queue.length} offline leads!`, 'success');
+        }
+      } catch (err) {
+        console.error('Offline queue sync error:', err);
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [lang, triggerToast]);
 
   // Demands Management Handlers
   const handleAddPublicDemand = useCallback(async (newDemand) => {
