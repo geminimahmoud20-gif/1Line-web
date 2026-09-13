@@ -777,7 +777,13 @@ export default function HomePage({
 
             <div className="demands-grid-compact">
               {activeDemandsList.slice(0, 4).map((dem) => (
-                <div key={dem.id} className="demand-card-box titanium-card">
+                <div 
+                  key={dem.id} 
+                  className="demand-card-box titanium-card"
+                  onClick={() => navigate('/demands')}
+                  style={{ cursor: 'pointer' }}
+                  title={lang === 'ar' ? 'انقر للانتقال إلى بوابة طلبات المشترين' : 'Click to view in Demands Portal'}
+                >
                   <div className="demand-top-row">
                     <span className="demand-time-tag">{dem.timestamp}</span>
                     <span 
@@ -814,6 +820,7 @@ export default function HomePage({
                     <Link 
                       to="/sell" 
                       className="btn-match-demand-full"
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <span>{lang === 'ar' ? 'عقاري يطابق هذا الطلب' : 'Match My Property'}</span>
                       <span className="btn-match-arrow">{lang === 'ar' ? '←' : '→'}</span>
