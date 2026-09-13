@@ -20,7 +20,9 @@ import {
   AlertTriangle,
   Shuffle,
   MapPin,
-  Tag
+  Tag,
+  Search,
+  X
 } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
 import { getAreas } from '../../utils/areasData';
@@ -65,13 +67,16 @@ export default function KanbanPipeline({
   leads = [],
   properties = [],
   onUpdateLead,
+  onDeleteLead,
   onOpenEditLead,
   lang = 'ar',
   triggerToast
 }) {
   const [draggedLeadId, setDraggedLeadId] = useState(null);
   const [schedulingVisitLead, setSchedulingVisitLead] = useState(null);
+  const [leadToDelete, setLeadToDelete] = useState(null);
   const [filterType, setFilterType] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const isAr = lang === 'ar';
 
@@ -145,10 +150,20 @@ export default function KanbanPipeline({
     }
   };
 
-  const filteredLeads = leads.filter(l => {
-    if (filterType !== 'all' && l.type !== filterType) return false;
-    return true;
-  });
+  const filteredLeads = useMemo(() => {
+    return leads.filter(l => {
+      if (filterType !== 'all' && l.type !== filterType) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.trim().toLowerCase();
+        const nameMatch = (l.name || '').toLowerCase().includes(q);
+        const phoneMatch = (l.phone || l.whatsapp || '').replace(/[^0-9]/g, '').includes(q.replace(/[^0-9]/g, ''));
+        const areaMatch = (l.area || l.details?.area || l.location || '').toLowerCase().includes(q);
+        const propTypeMatch = (l.propertyType || l.details?.propertyType || '').toLowerCase().includes(q);
+        if (!nameMatch && !phoneMatch && !areaMatch && !propTypeMatch) return false;
+      }
+      return true;
+    });
+  }, [leads, filterType, searchQuery]);
 
   // Calculate Column metrics
   const getStageStats = (stageId) => {
@@ -246,7 +261,7 @@ export default function KanbanPipeline({
 
   return (
     <div className="kanban-pipeline-wrapper" style={{ paddingBottom: '70px' }}>
-      {/* Top Filter Bar */}
+      {/* Top Filter & Search Bar */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -255,16 +270,60 @@ export default function KanbanPipeline({
         flexWrap: 'wrap',
         gap: '12px'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <Sparkles size={18} className="text-gold" />
           <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '800', color: '#ffffff' }}>
             {isAr ? 'مسار الصفقات والمبيعات المرئي (Deals Kanban Pipeline)' : 'Visual Sales Deals Pipeline'}
           </h3>
+          <span className="badge" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', fontSize: '0.75rem' }}>
+            {filteredLeads.length} {isAr ? 'صفقة' : 'deals'}
+          </span>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Live Search Input */}
+          <div style={{ position: 'relative', width: '220px' }}>
+            <Search size={14} style={{ position: 'absolute', [isAr ? 'right' : 'left']: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={isAr ? 'بحث بالاسم أو الهاتف...' : 'Search lead...'}
+              className="form-input"
+              style={{
+                width: '100%',
+                paddingTop: '5px',
+                paddingBottom: '5px',
+                [isAr ? 'paddingRight' : 'paddingLeft']: '30px',
+                [isAr ? 'paddingLeft' : 'paddingRight']: searchQuery ? '24px' : '10px',
+                fontSize: '0.78rem',
+                borderRadius: '8px',
+                background: 'rgba(15, 23, 42, 0.7)'
+              }}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                style={{
+                  position: 'absolute',
+                  [isAr ? 'left' : 'right']: '6px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#94a3b8',
+                  cursor: 'pointer',
+                  padding: '2px'
+                }}
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+
           <span style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <Filter size={13} /> {isAr ? 'تصفية النوع:' : 'Filter Type:'}
+            <Filter size={13} /> {isAr ? 'النوع:' : 'Type:'}
           </span>
           <button 
             className={`btn btn-sm ${filterType === 'all' ? 'btn-primary' : 'btn-outline'}`}
@@ -301,7 +360,7 @@ export default function KanbanPipeline({
             className="btn btn-sm btn-outline"
             onClick={handleAutoDistributeStages}
             title={isAr ? 'توزيع الصفقات تلقائياً على كل مراحل خط الأنابيب لاختبار النظام' : 'Distribute across pipeline'}
-            style={{ borderRadius: '8px', fontSize: '0.78rem', borderColor: 'rgba(245, 158, 11, 0.4)', color: '#fbbf24', marginLeft: '6px' }}
+            style={{ borderRadius: '8px', fontSize: '0.78rem', borderColor: 'rgba(245, 158, 11, 0.4)', color: '#fbbf24', marginLeft: '4px' }}
           >
             <Shuffle size={13} />
             <span>{isAr ? 'توزيع المراحل' : 'Auto Distribute'}</span>
@@ -621,6 +680,25 @@ export default function KanbanPipeline({
                                 <Edit3 size={13} />
                               </button>
                             )}
+
+                            {/* Delete Lead */}
+                            {onDeleteLead && (
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline"
+                                onClick={() => setLeadToDelete(lead)}
+                                style={{ 
+                                  padding: '5px 7px', 
+                                  fontSize: '0.72rem',
+                                  borderRadius: '6px',
+                                  borderColor: 'rgba(239, 68, 68, 0.35)',
+                                  color: '#f87171'
+                                }}
+                                title={isAr ? 'حذف العميل' : 'Delete Lead'}
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            )}
                           </div>
 
                           {/* RTL/LTR Intuitive Stage Transitions */}
@@ -680,6 +758,56 @@ export default function KanbanPipeline({
           lang={lang}
           triggerToast={triggerToast}
         />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {leadToDelete && (
+        <div className="track-modal-backdrop" onClick={() => setLeadToDelete(null)}>
+          <div className="property-form-modal-card animate-fadeIn" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px', width: '90%' }}>
+            <div className="modal-form-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Trash2 size={20} style={{ color: '#ef4444' }} />
+                <h3 style={{ margin: 0, color: '#ffffff' }}>
+                  {isAr ? 'تأكيد حذف العميل' : 'Confirm Delete Lead'}
+                </h3>
+              </div>
+              <button type="button" className="drawer-close-btn" onClick={() => setLeadToDelete(null)}>✕</button>
+            </div>
+            <div style={{ padding: '20px' }}>
+              <p style={{ color: '#cbd5e1', fontSize: '0.9rem', lineHeight: '1.6', margin: '0 0 20px 0' }}>
+                {isAr 
+                  ? `هل أنت متأكد من رغبتك في حذف العميل "${leadToDelete.name || 'بدون اسم'}" نهائياً من خط أنابيب المبيعات؟ لا يمكن التراجع عن هذا الإجراء.`
+                  : `Are you sure you want to permanently delete lead "${leadToDelete.name || 'Unnamed'}"? This action cannot be undone.`}
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => setLeadToDelete(null)}
+                >
+                  {isAr ? 'إلغاء' : 'Cancel'}
+                </button>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => {
+                    if (onDeleteLead) {
+                      onDeleteLead(leadToDelete.id);
+                      if (triggerToast) {
+                        triggerToast(isAr ? 'تم حذف العميل بنجاح من مسار المبيعات' : 'Lead deleted successfully', 'info');
+                      }
+                    }
+                    setLeadToDelete(null);
+                  }}
+                  style={{ background: '#dc2626', color: '#ffffff', border: 'none' }}
+                >
+                  <Trash2 size={15} />
+                  <span>{isAr ? 'تأكيد الحذف' : 'Delete'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

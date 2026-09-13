@@ -1002,6 +1002,7 @@ export const CrmAdminPanel = ({
           leads={leads}
           properties={properties}
           onUpdateLead={onUpdateLead}
+          onDeleteLead={onDeleteLead}
           onOpenEditLead={handleOpenEditLead}
           lang={lang}
           triggerToast={triggerToast}

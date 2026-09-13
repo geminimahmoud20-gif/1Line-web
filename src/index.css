@@ -1742,7 +1742,7 @@ select:focus {
   }
 }
 
-/* V2 Added Styles - Demands, Off-Market Vault, and Referral Components */
+/* V2 Added Styles - Demands, Corporate, and Referral Components */
 .demands-grid {
   display: grid;
   gap: 20px;
