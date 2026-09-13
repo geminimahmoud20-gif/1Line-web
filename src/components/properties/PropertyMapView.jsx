@@ -18,6 +18,7 @@ import {
   Eye,
   DollarSign
 } from 'lucide-react';
+import { formatCurrencyPrice, CURRENCY_RATES } from '../../utils/currencyAndBenchmark';
 
 // Fix Leaflet Default Marker Icon issues in Webpack/Vite
 delete L.Icon.Default.prototype._getIconUrl;
@@ -209,6 +210,7 @@ export default function PropertyMapView({
   hoveredPropertyId = null,
   onHoverProperty,
   onFilterChange,
+  currency = 'EGP',
   lang = 'ar'
 }) {
   const mapContainerRef = useRef(null);
@@ -331,8 +333,22 @@ export default function PropertyMapView({
       const isSelected = selectedProperty?.id === prop.id;
       const isHovered = hoveredPropertyId === prop.id;
 
-      // Price Formatting in Millions
-      const priceFormatted = (prop.price / 1000000).toFixed(1) + (isAr ? ' م.ج' : 'M');
+      // Multi-currency price formatting for Luxury Beacon Pin
+      const priceObj = formatCurrencyPrice(prop.price, currency, lang);
+      let pinPriceLabel = '';
+      if (currency === 'EGP') {
+        pinPriceLabel = (prop.price / 1000000).toFixed(1) + (isAr ? ' م.ج' : 'M');
+      } else {
+        const rate = CURRENCY_RATES[currency]?.rate || 1;
+        const converted = Math.round(prop.price * rate);
+        if (converted >= 1000000) {
+          pinPriceLabel = (converted / 1000000).toFixed(1) + 'M ' + priceObj.symbol;
+        } else if (converted >= 1000) {
+          pinPriceLabel = Math.round(converted / 1000) + 'K ' + priceObj.symbol;
+        } else {
+          pinPriceLabel = `${converted} ${priceObj.symbol}`;
+        }
+      }
 
       // Luxury Beacon Pin with Pointer Needle directly hitting the property unit
       const customPinHtml = `
@@ -340,7 +356,7 @@ export default function PropertyMapView({
           <div class="pin-pulse-radar"></div>
           <div class="pin-bubble-pill">
             <span class="pin-badge-dot"></span>
-            <span class="pin-price-label">${priceFormatted}</span>
+            <span class="pin-price-label">${pinPriceLabel}</span>
           </div>
           <div class="pin-needle-pointer"></div>
         </div>
@@ -363,7 +379,7 @@ export default function PropertyMapView({
         <div class="luxury-map-popup-card">
           <div class="popup-thumb-wrap">
             <img src="${prop.images && prop.images[0] ? prop.images[0] : 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=400&q=80'}" alt="${title}" class="popup-thumb-img" />
-            <span class="popup-badge-pill">${prop.badge_ar || 'معتمد'}</span>
+            <span class="popup-badge-pill">${prop.badge_ar || (isAr ? 'معتمد' : 'Verified')}</span>
           </div>
           <div class="popup-details-body">
             <h5 class="popup-property-title">${title}</h5>
@@ -371,9 +387,15 @@ export default function PropertyMapView({
               <span>📍 ${location}</span>
             </div>
             <div class="popup-price-row">
-              <strong>${prop.price ? prop.price.toLocaleString() : ''} ج.م</strong>
-              <span class="popup-size">${prop.size || ''} م²</span>
+              <div>
+                <strong style="color: var(--primary, #071e3d); font-size: 0.95rem;">${priceObj.primary} ${priceObj.symbol}</strong>
+                ${priceObj.isConverted ? `<div style="font-size: 0.72rem; color: #64748b; font-weight: 600;">≈ ${priceObj.originalEgp}</div>` : ''}
+              </div>
+              <span class="popup-size">${prop.size || ''} ${isAr ? 'م²' : 'sqm'}</span>
             </div>
+            <a href="/properties/${prop.id}" class="popup-cta-btn" style="display: block; margin-top: 8px; text-align: center; background: #071e3d; color: #ffffff; padding: 6px 12px; border-radius: 6px; font-size: 0.76rem; font-weight: 700; text-decoration: none;">
+              ${isAr ? 'عرض الملف والتوثيق ↗' : 'View Property Details ↗'}
+            </a>
           </div>
         </div>
       `;
@@ -402,7 +424,7 @@ export default function PropertyMapView({
     if (bounds.length > 0 && mapInstanceRef.current && !selectedProperty && activeDistrict === 'all') {
       mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
     }
-  }, [visibleMapProperties, isAr, selectedProperty, hoveredPropertyId, onSelectProperty, onHoverProperty, activeDistrict]);
+  }, [visibleMapProperties, isAr, selectedProperty, hoveredPropertyId, onSelectProperty, onHoverProperty, activeDistrict, currency]);
 
   // Landmarks Layer
   useEffect(() => {

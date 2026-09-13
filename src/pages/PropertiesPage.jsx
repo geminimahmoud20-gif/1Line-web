@@ -449,6 +449,7 @@ export default function PropertiesPage({
                   }
                 }}
                 onFilterChange={handleFilterChange}
+                currency={currency}
                 lang={lang}
                 centerArea={filters.area}
               />

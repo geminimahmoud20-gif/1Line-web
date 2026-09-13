@@ -22,6 +22,7 @@ import { MEGA_PROJECTS } from '../data/projectsData';
 import BrandWatermark from '../components/common/BrandWatermark';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
 import { updatePageSeo } from '../utils/seoHelper';
+import { formatCurrencyPrice } from '../utils/currencyAndBenchmark';
 
 export default function ProjectsPage({ 
   projects = [],
@@ -140,6 +141,7 @@ export default function ProjectsPage({
             const delivery = isAr ? project.deliveryDate_ar : project.deliveryDate_en;
             const desc = isAr ? project.description_ar : project.description_en;
             const feats = isAr ? project.features_ar : project.features_en;
+            const priceData = formatCurrencyPrice(project.startPrice, currency, lang);
 
             return (
               <div key={project.id} className="mega-project-card">
@@ -200,7 +202,12 @@ export default function ProjectsPage({
                   <div className="project-metrics-grid">
                     <div className="proj-metric-item">
                       <span className="metric-lbl">{isAr ? 'يبدأ من' : 'Starting From'}</span>
-                      <strong className="metric-val text-primary">{project.startPrice.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</strong>
+                      <strong className="metric-val text-primary">{priceData.primary} {priceData.symbol}</strong>
+                      {priceData.isConverted && (
+                        <small style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'block', fontWeight: '700' }}>
+                          ≈ {priceData.originalEgp}
+                        </small>
+                      )}
                     </div>
 
                     <div className="proj-metric-item">
