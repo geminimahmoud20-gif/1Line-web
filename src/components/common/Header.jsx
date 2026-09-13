@@ -24,7 +24,8 @@ import {
   Layers,
   Heart,
   ArrowRight,
-  ArrowLeft
+  ArrowLeft,
+  Lock
 } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
@@ -156,6 +157,14 @@ export default function Header({
       badgeType: 'gold',
       activePaths: ['/special-requests', '/market-intelligence', '/financing', '/investor'],
       items: [
+        {
+          path: '/#private-office',
+          label: isAr ? 'المكتب الخاص: صفقات سرية (Off-Market)' : '1Line Private Office (Off-Market)',
+          desc: isAr ? 'عقارات وقصور مليونية حصرية بكتمان وسرية تامة' : 'Confidential multi-million acquisitions & estates',
+          badge: 'Private',
+          badgeType: 'gold',
+          icon: Lock
+        },
         {
           path: '/special-requests',
           label: isAr ? 'طلب عقار خاص VIP' : 'VIP Bespoke Requests',

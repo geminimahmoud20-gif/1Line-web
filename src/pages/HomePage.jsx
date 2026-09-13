@@ -31,6 +31,8 @@ import MortgageRoiCalculator from '../components/calculators/MortgageRoiCalculat
 import MarketTickerBar from '../components/home/MarketTickerBar';
 import ExpressLeadStrip from '../components/home/ExpressLeadStrip';
 import PrimeDistrictsShowcase from '../components/home/PrimeDistrictsShowcase';
+import LifestyleCollectionsSection from '../components/home/LifestyleCollectionsSection';
+import PrivateOfficeSection from '../components/home/PrivateOfficeSection';
 import GoldStandardsSection from '../components/home/GoldStandardsSection';
 import { PROPERTY_TYPES, PROPERTIES_DATA } from '../data/propertiesData';
 import { MEGA_PROJECTS } from '../data/projectsData';
@@ -582,6 +584,9 @@ export default function HomePage({
       {/* 🏛️ SOHAG PRIME DISTRICTS & CAPITAL APPRECIATION INDEX */}
       <PrimeDistrictsShowcase lang={lang} />
 
+      {/* 🌟 SOTHEBY'S BENCHMARK: CURATED LIFESTYLE COLLECTIONS */}
+      <LifestyleCollectionsSection lang={lang} />
+
       {/* 🏢 2. SOHAG LIVE MARKETPLACE HUB (Consolidated Segmented Discovery) */}
       <section className="homepage-section bg-surface" id="marketplace-hub">
         <div className="section-header-flex" style={{ marginBottom: '22px' }}>
@@ -928,6 +933,9 @@ export default function HomePage({
           ))}
         </div>
       </section>
+
+      {/* 🔒 SOTHEBY'S BENCHMARK: 1LINE PRIVATE OFFICE (OFF-MARKET POCKET LISTINGS) */}
+      <PrivateOfficeSection lang={lang} />
 
       {/* 🌟 6. EXECUTIVE VIP CONSULTATION CTA STRIP (Architectural Royal Navy & Sun Gold) */}
       <section className="homepage-section" style={{ padding: '30px 20px 70px' }}>

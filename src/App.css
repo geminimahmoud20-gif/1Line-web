@@ -16834,6 +16834,344 @@ body.dark-theme .compare-tabs-bar {
   color: #34d399;
 }
 
+/* ============================================================
+   🌟 SOTHEBY'S BENCHMARK: LUXURY SERIF ACCENT
+   ============================================================ */
+.luxury-serif-title {
+  font-family: 'Playfair Display', Georgia, 'Amiri', 'Cairo', serif;
+  letter-spacing: -0.3px;
+  line-height: 1.35;
+}
+
+/* ============================================================
+   🌟 SOTHEBY'S BENCHMARK: CURATED LIFESTYLE COLLECTIONS
+   ============================================================ */
+.lifestyle-collections-section {
+  padding: 60px 20px;
+}
+
+.lifestyle-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.lifestyle-card {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 340px;
+  padding: 26px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.lifestyle-card-large {
+  grid-column: span 3;
+  min-height: 380px;
+}
+
+.lifestyle-card-regular {
+  grid-column: span 2;
+  min-height: 340px;
+}
+
+@media (max-width: 992px) {
+  .lifestyle-card-large, .lifestyle-card-regular {
+    grid-column: span 3;
+  }
+}
+
+@media (max-width: 640px) {
+  .lifestyle-grid {
+    grid-template-columns: 1fr;
+  }
+  .lifestyle-card-large, .lifestyle-card-regular {
+    grid-column: span 1;
+    min-height: 300px;
+  }
+}
+
+.lifestyle-image-wrapper {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.lifestyle-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lifestyle-card:hover .lifestyle-img {
+  transform: scale(1.08);
+}
+
+.lifestyle-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.3);
+}
+
+.lifestyle-gradient-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(7, 26, 54, 0.15) 0%, rgba(5, 19, 41, 0.75) 55%, rgba(3, 12, 26, 0.95) 100%);
+  transition: opacity 0.3s ease;
+}
+
+.lifestyle-badge {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 3;
+  background: rgba(10, 25, 47, 0.75);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 202, 40, 0.3);
+  color: #ffca28;
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+[dir="ltr"] .lifestyle-badge {
+  right: auto;
+  left: 18px;
+}
+
+.lifestyle-content {
+  position: relative;
+  z-index: 3;
+  color: #ffffff;
+}
+
+.lifestyle-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 8px 0;
+  line-height: 1.3;
+}
+
+.lifestyle-desc {
+  font-size: 0.86rem;
+  color: #cbd5e1;
+  line-height: 1.55;
+  margin: 0 0 16px 0;
+  opacity: 0.92;
+}
+
+.lifestyle-action-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #ffca28;
+  transition: gap 0.25s ease;
+}
+
+.lifestyle-card:hover .lifestyle-action-link {
+  gap: 10px;
+}
+
+/* ============================================================
+   🔒 SOTHEBY'S BENCHMARK: 1LINE PRIVATE OFFICE (OFF-MARKET)
+   ============================================================ */
+.private-office-section {
+  padding: 40px 20px 70px;
+}
+
+.private-office-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  background: linear-gradient(145deg, #051329 0%, #001731 50%, #082042 100%);
+  border: 1.5px solid rgba(197, 160, 89, 0.45);
+  border-radius: 28px;
+  padding: 50px 40px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 25px 60px rgba(0, 15, 36, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.private-office-glow {
+  position: absolute;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(197, 160, 89, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.private-office-header {
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto 40px;
+  position: relative;
+  z-index: 2;
+}
+
+.private-office-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(197, 160, 89, 0.12);
+  border: 1px solid rgba(197, 160, 89, 0.4);
+  color: #e5b964;
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 6px 18px;
+  border-radius: var(--radius-pill);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.private-office-title {
+  font-size: 2.1rem;
+  color: #ffffff;
+  font-weight: 900;
+  margin: 0 0 14px 0;
+  line-height: 1.3;
+}
+
+.private-office-desc {
+  font-size: 1rem;
+  color: #cbd5e1;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.private-office-pillars {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  position: relative;
+  z-index: 2;
+  margin-bottom: 36px;
+}
+
+@media (max-width: 868px) {
+  .private-office-pillars {
+    grid-template-columns: 1fr;
+  }
+  .private-office-container {
+    padding: 36px 20px;
+  }
+  .private-office-title {
+    font-size: 1.6rem;
+  }
+}
+
+.private-pillar-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 24px;
+  transition: all 0.3s ease;
+}
+
+.private-pillar-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(197, 160, 89, 0.35);
+  transform: translateY(-3px);
+}
+
+.pillar-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(197, 160, 89, 0.12);
+  border: 1px solid rgba(197, 160, 89, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.private-pillar-card h4 {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 10px 0;
+}
+
+.private-pillar-card p {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.private-office-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 2;
+}
+
+.btn-gold-luxury {
+  background: linear-gradient(135deg, #d4af37 0%, #aa7c11 100%);
+  color: #051329 !important;
+  font-weight: 900;
+  font-size: 0.95rem;
+  padding: 14px 28px;
+  border-radius: 14px;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 10px 25px rgba(212, 175, 55, 0.3);
+  transition: all 0.3s ease;
+}
+
+.btn-gold-luxury:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(212, 175, 55, 0.45);
+}
+
+.btn-glass-luxury {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff !important;
+  font-weight: 800;
+  font-size: 0.95rem;
+  padding: 14px 26px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.btn-glass-luxury:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(197, 160, 89, 0.6);
+  transform: translateY(-2px);
+}
+
+
 
 
 
