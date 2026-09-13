@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   TrendingUp, 
   BarChart3, 
@@ -15,17 +16,33 @@ import {
   CheckCircle2,
   Calendar,
   Calculator,
-  Compass
+  Compass,
+  ArrowRight,
+  ArrowLeft
 } from 'lucide-react';
 import { exportToCsv } from '../utils/exportCsv';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
 import { getAreas } from '../utils/areasData';
+import { updatePageSeo } from '../utils/seoHelper';
 
-export default function MarketIntelligencePage({ lang = 'ar', triggerToast }) {
+export default function MarketIntelligencePage({ lang = 'ar', currency = 'EGP', triggerToast }) {
+  const navigate = useNavigate();
   const [selectedAssetType, setSelectedAssetType] = useState('all'); // 'all' | 'residential' | 'commercial'
   const [userBudget, setUserBudget] = useState(2500000);
   const [, setTick] = useState(0);
   const isAr = lang === 'ar';
+
+  // Dynamic SEO Meta Tags for Market Intelligence
+  useEffect(() => {
+    updatePageSeo({
+      title: isAr ? 'مركز أبحاث وبيانات السوق العقاري بسوهاج 2026 | 1Line' : 'Sohag Real Estate Market Intelligence Hub 2026',
+      description: isAr 
+        ? 'بيانات حية ومحدثة لأسعار المتر في سوهاج وسوهاج الجديدة، مؤشرات العائد الإيجاري، وتحليل الفرص الاستثمارية.' 
+        : 'Live verified transaction data, sqm benchmarks, and rental yields across all Sohag districts.',
+      url: '/market-intelligence',
+      type: 'website'
+    });
+  }, [lang, isAr]);
 
   // Live listen for area data updates from CRM
   useEffect(() => {
@@ -186,13 +203,20 @@ export default function MarketIntelligencePage({ lang = 'ar', triggerToast }) {
   }, [userBudget]);
 
   const handleExportReport = () => {
-    const headers = [
+    const headers = isAr ? [
       { key: 'name_ar', label: 'المنطقة في سوهاج' },
       { key: 'avgPricePerSqm', label: 'متوسط سعر المتر (ج.م)' },
       { key: 'annualGrowth', label: 'نسبة النمو السنوي (%)' },
       { key: 'rentalYield', label: 'العائد الإيجاري السنوي (%)' },
       { key: 'demandLevel_ar', label: 'مستوى الطلب' },
       { key: 'topAsset_ar', label: 'النوع الأكثر ربحية' }
+    ] : [
+      { key: 'name_en', label: 'District' },
+      { key: 'avgPricePerSqm', label: 'Avg Price / Sqm (EGP)' },
+      { key: 'annualGrowth', label: 'Annual Growth (%)' },
+      { key: 'rentalYield', label: 'Rental Yield (%)' },
+      { key: 'demandLevel_en', label: 'Demand Status' },
+      { key: 'topAsset_en', label: 'Top Profitable Asset' }
     ];
 
     exportToCsv('Sohag_RealEstate_Market_Intelligence_Report_2026', districtsData, headers);
@@ -206,6 +230,30 @@ export default function MarketIntelligencePage({ lang = 'ar', triggerToast }) {
       {/* Hero Banner */}
       <div className="market-hero-banner">
         <div className="market-hero-container">
+          {/* Quick Back Navigation Bar */}
+          <div className="page-top-back-bar">
+            <button
+              type="button"
+              className="btn-back-step"
+              onClick={() => {
+                if (window.history.length > 1) {
+                  navigate(-1);
+                } else {
+                  navigate('/');
+                }
+              }}
+              title={isAr ? 'الرجوع خطوة للخلف' : 'Go back one step'}
+            >
+              {isAr ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
+              <span>{isAr ? 'رجوع خطوة للخلف' : 'Back'}</span>
+            </button>
+            <div className="page-breadcrumb-sub">
+              <Link to="/">{isAr ? 'الرئيسية' : 'Home'}</Link>
+              <span>/</span>
+              <span className="crumb-current">{isAr ? 'مركز أبحاث السوق' : 'Market Intelligence'}</span>
+            </div>
+          </div>
+
           <div className="market-badge-pill">
             <TrendingUp size={16} className="text-gold" />
             <span>{isAr ? 'مركز أبحاث وبيانات السوق العقاري بسوهاج 2026' : 'Sohag Real Estate Market Intelligence Hub'}</span>
@@ -371,7 +419,7 @@ export default function MarketIntelligencePage({ lang = 'ar', triggerToast }) {
                       </div>
                     </td>
                     <td>
-                      <strong className="cell-price">{d.avgPricePerSqm.toLocaleString()} ج.م</strong>
+                      <strong className="cell-price">{d.avgPricePerSqm.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</strong>
                     </td>
                     <td>
                       <span className="growth-badge">+{d.annualGrowth}%</span>
@@ -422,7 +470,7 @@ export default function MarketIntelligencePage({ lang = 'ar', triggerToast }) {
             </div>
             <p>{isAr ? 'هل تمتلك سيولة وترغب في توزيعها على أفضل محفظة عقارية في سوهاج؟ تواصل مع خبرائنا لإعداد دراسة جدوى مجانية.' : 'Have investment capital and looking for the optimal property portfolio? Consult our advisors.'}</p>
             <a
-              href={getWhatsAppUrl('مرحباً، أريد طلب دراسة جدوى عقارية استثمارية لمحفظتي')}
+              href={getWhatsAppUrl(isAr ? 'مرحباً، أريد طلب دراسة جدوى عقارية استثمارية لمحفظتي' : 'Hello, I would like to request a custom investment feasibility study')}
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-whatsapp btn-full"

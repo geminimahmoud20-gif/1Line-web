@@ -13,6 +13,7 @@ import QuickPortalLeadCard from '../components/common/QuickPortalLeadCard';
 export default function PortalsPage({
   portalType,
   lang,
+  currency = 'EGP',
   t,
   buyerStep,
   setBuyerStep,
@@ -205,6 +206,8 @@ export default function PortalsPage({
               {portalType === 'investor' && (
                 <InvestorCenter
                   lang={lang}
+                  currency={currency}
+                  triggerToast={triggerToast}
                   t={t}
                   invAmount={invAmount}
                   setInvAmount={setInvAmount}

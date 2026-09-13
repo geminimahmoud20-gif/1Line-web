@@ -526,20 +526,20 @@ export default function Header({
               </div>
             )}
           </div>
-        </div>
 
-        {/* 💬 Royal Blue & Gold WhatsApp CTA Button with Live Advisor Pulse */}
-        <a
-          href={getWhatsAppUrl(isAr ? 'مرحباً 1Line، أريد الاستفسار عن العقارات والفرص المتاحة بسوهاج.' : 'Hello 1Line, inquiring about available properties in Sohag.')}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="cta-royal-btn hide-tablet"
-          title={isAr ? 'تواصل مباشر مع مستشار 1Line عبر واتساب' : 'Direct WhatsApp with 1Line Advisor'}
-        >
-          <span className="advisor-live-dot" title="مستشار متاح الآن"></span>
-          <MessageSquare size={15} />
-          <span>{isAr ? 'تواصل معنا' : 'Contact Us'}</span>
-        </a>
+          {/* 💬 Royal Blue & Gold WhatsApp CTA Button with Live Advisor Pulse */}
+          <a
+            href={getWhatsAppUrl(isAr ? 'مرحباً 1Line، أريد الاستفسار عن العقارات والفرص المتاحة بسوهاج.' : 'Hello 1Line, inquiring about available properties in Sohag.')}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="cta-royal-btn hide-tablet"
+            title={isAr ? 'تواصل مباشر مع مستشار 1Line عبر واتساب' : 'Direct WhatsApp with 1Line Advisor'}
+          >
+            <span className="advisor-live-dot" title="مستشار متاح الآن"></span>
+            <MessageSquare size={15} />
+            <span>{isAr ? 'تواصل معنا' : 'Contact Us'}</span>
+          </a>
+        </div>
 
           {/* Mobile Quick Search Button */}
           {onOpenQuickSearch && (

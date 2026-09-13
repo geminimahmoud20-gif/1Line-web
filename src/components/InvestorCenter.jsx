@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   Building2, 
   Store, 
@@ -22,6 +22,8 @@ const YIELD_RATES = {
 
 export const InvestorCenter = ({
   lang = 'ar',
+  currency = 'EGP',
+  triggerToast,
   invAmount = 3000000,
   setInvAmount,
   invPeriod = 5,
@@ -38,6 +40,16 @@ export const InvestorCenter = ({
   const [whatsappError, setWhatsappError] = useState('');
   const [meetingFormat, setMeetingFormat] = useState('video_tour'); // 'video_tour' | 'phone_call' | 'in_person'
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [areasList, setAreasList] = useState(() => getAreas().filter(a => a.id !== 'all'));
+
+  // Live listen for area data updates from Admin CRM
+  useEffect(() => {
+    const handleAreasUpdated = () => {
+      setAreasList(getAreas().filter(a => a.id !== 'all'));
+    };
+    window.addEventListener('oneline_areas_updated', handleAreasUpdated);
+    return () => window.removeEventListener('oneline_areas_updated', handleAreasUpdated);
+  }, []);
 
   const isAr = lang === 'ar';
 
@@ -107,7 +119,7 @@ export const InvestorCenter = ({
       investmentHorizon: invPeriod,
       targetType: invPropType,
       meetingFormat,
-      selectedCurrency: 'EGP',
+      selectedCurrency: currency,
       projectedRoi: investmentSim.totalRoiPercent,
       projectedNetProfit: investmentSim.netProfit,
       submittedAt: new Date().toISOString(),
@@ -126,10 +138,16 @@ export const InvestorCenter = ({
         invPeriod,
         invPropType,
         investmentSim,
-        currency: 'EGP'
+        currency
       });
+      if (triggerToast) {
+        triggerToast(isAr ? 'تم إنشاء وتحميل دراسة الجدوى الاستثمارية بنجاح' : 'Prospectus PDF generated and downloaded successfully', 'success');
+      }
     } catch (err) {
       console.error('Error generating investor PDF:', err);
+      if (triggerToast) {
+        triggerToast(isAr ? 'تعذر توليد ملف PDF، يرجى المحاولة لاحقاً' : 'Failed to generate PDF, please try again', 'error');
+      }
     } finally {
       setTimeout(() => setIsDownloadingPdf(false), 800);
     }
@@ -181,8 +199,8 @@ export const InvestorCenter = ({
             <input
               type="number"
               min="500000"
-              max="50000000"
-              step="50000"
+              max="30000000"
+              step="100000"
               value={invAmount}
               onChange={(e) => setInvAmount(parseInt(e.target.value) || 0)}
               className="form-input-styled"
@@ -191,11 +209,13 @@ export const InvestorCenter = ({
           </div>
         </div>
 
-        {/* Investment Period Slider */}
+        {/* Investment Period Slider & Direct Input */}
         <div className="form-group-flex">
           <div className="flex-between">
-            <label className="block-label">{isAr ? 'أفق ومدة الاستثمار' : 'Investment Horizon'}</label>
-            <span className="text-gold font-bold">{invPeriod} {isAr ? 'سنوات' : 'Years'}</span>
+            <label className="block-label">{isAr ? 'المدى الزمني للاستثمار' : 'Investment Horizon'}</label>
+            <span className="text-gold font-bold">
+              {invPeriod} {isAr ? 'سنوات' : 'Years'}
+            </span>
           </div>
           <input
             type="range"
@@ -256,26 +276,12 @@ export const InvestorCenter = ({
         </div>
 
         {/* Institutional Prospectus Download Action */}
-        <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid rgba(255, 255, 255, 0.15)', display: 'flex', justifyContent: 'flex-end' }}>
+        <div className="prospectus-download-bar">
           <button
             type="button"
             onClick={handleDownloadProspectus}
             disabled={isDownloadingPdf}
-            className="btn btn-sm"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: 'linear-gradient(135deg, #ffca28 0%, #ff8f00 100%)',
-              color: '#081226',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '8px 16px',
-              fontSize: '0.84rem',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(255, 202, 40, 0.4)'
-            }}
+            className="btn-download-prospectus"
           >
             <Download size={15} />
             <span>{isDownloadingPdf ? (isAr ? 'جاري إنشاء الملف...' : 'Generating...') : (isAr ? 'تحميل دراسة الجدوى والملف الاستثماري PDF' : 'Download Institutional Prospectus PDF')}</span>
@@ -290,67 +296,31 @@ export const InvestorCenter = ({
         {/* Meeting Format Selector */}
         <div className="form-group-block" style={{ marginBottom: '18px' }}>
           <label className="block-label">{isAr ? 'طريقة الاستشارة وتنسيق المعاينة المفضل:' : 'Preferred Meeting / Tour Format:'}</label>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
+          <div className="meeting-format-grid">
             <button
               type="button"
               onClick={() => setMeetingFormat('video_tour')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 14px',
-                borderRadius: '8px',
-                fontSize: '0.82rem',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                border: meetingFormat === 'video_tour' ? '2px solid #0d48a1' : '1px solid var(--border-color)',
-                background: meetingFormat === 'video_tour' ? 'rgba(13, 72, 161, 0.08)' : 'var(--card-bg)',
-                color: meetingFormat === 'video_tour' ? '#0d48a1' : 'var(--text-main)'
-              }}
+              className={`meeting-format-btn ${meetingFormat === 'video_tour' ? 'active' : ''}`}
             >
-              <Video size={16} style={{ color: '#0d48a1' }} />
+              <Video size={16} className="format-icon" />
               <span>{isAr ? 'جولة فيديو حية (Zoom / WhatsApp)' : 'Live Video Tour'}</span>
             </button>
 
             <button
               type="button"
               onClick={() => setMeetingFormat('phone_call')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 14px',
-                borderRadius: '8px',
-                fontSize: '0.82rem',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                border: meetingFormat === 'phone_call' ? '2px solid #0d48a1' : '1px solid var(--border-color)',
-                background: meetingFormat === 'phone_call' ? 'rgba(13, 72, 161, 0.08)' : 'var(--card-bg)',
-                color: meetingFormat === 'phone_call' ? '#0d48a1' : 'var(--text-main)'
-              }}
+              className={`meeting-format-btn ${meetingFormat === 'phone_call' ? 'active' : ''}`}
             >
-              <PhoneCall size={16} style={{ color: '#10b981' }} />
+              <PhoneCall size={16} className="format-icon" />
               <span>{isAr ? 'مكالمة هاتفية VIP مع استشاري' : 'Direct VIP Call'}</span>
             </button>
 
             <button
               type="button"
               onClick={() => setMeetingFormat('in_person')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 14px',
-                borderRadius: '8px',
-                fontSize: '0.82rem',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                border: meetingFormat === 'in_person' ? '2px solid #0d48a1' : '1px solid var(--border-color)',
-                background: meetingFormat === 'in_person' ? 'rgba(13, 72, 161, 0.08)' : 'var(--card-bg)',
-                color: meetingFormat === 'in_person' ? '#0d48a1' : 'var(--text-main)'
-              }}
+              className={`meeting-format-btn ${meetingFormat === 'in_person' ? 'active' : ''}`}
             >
-              <Building2 size={16} style={{ color: '#d97706' }} />
+              <Building2 size={16} className="format-icon" />
               <span>{isAr ? 'جلسة خاصة بمقر الشركة بسوهاج' : 'HQ Executive Lounge'}</span>
             </button>
           </div>
@@ -377,7 +347,7 @@ export const InvestorCenter = ({
               onChange={(e) => setInvestorForm({ ...investorForm, area: e.target.value })}
               required
             >
-              {getAreas().filter(a => a.id !== 'all').map(a => (
+              {areasList.map(a => (
                 <option key={a.id} value={a.id}>
                   {isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}
                 </option>

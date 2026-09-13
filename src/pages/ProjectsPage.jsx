@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
   Building2, 
@@ -21,16 +21,31 @@ import {
 import { MEGA_PROJECTS } from '../data/projectsData';
 import BrandWatermark from '../components/common/BrandWatermark';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
+import { updatePageSeo } from '../utils/seoHelper';
 
 export default function ProjectsPage({ 
   projects = [],
   lang = 'ar', 
+  currency = 'EGP',
   triggerToast 
 }) {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const navigate = useNavigate();
 
   const isAr = lang === 'ar';
+
+  // Dynamic SEO Meta Tags
+  useEffect(() => {
+    updatePageSeo({
+      title: isAr ? 'دليل المشروعات والكمبوندات الكبرى بسوهاج 2026 | 1Line' : 'Mega Projects & Flagship Compounds in Sohag 2026',
+      description: isAr 
+        ? 'تصفح الكمبوندات السكنية والمولات التجارية والأبراج الإدارية بسوهاج مع متابعة حية لنسب التنفيذ الإنشائي.' 
+        : 'Explore gated compounds, retail malls, and executive towers with live construction progress updates.',
+      url: '/projects',
+      type: 'website'
+    });
+  }, [lang, isAr]);
+
   const allProjects = projects && projects.length > 0 ? projects : MEGA_PROJECTS;
 
   const filteredProjects = useMemo(() => {
@@ -185,12 +200,16 @@ export default function ProjectsPage({
                   <div className="project-metrics-grid">
                     <div className="proj-metric-item">
                       <span className="metric-lbl">{isAr ? 'يبدأ من' : 'Starting From'}</span>
-                      <strong className="metric-val text-primary">{project.startPrice.toLocaleString()} ج.م</strong>
+                      <strong className="metric-val text-primary">{project.startPrice.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</strong>
                     </div>
 
                     <div className="proj-metric-item">
                       <span className="metric-lbl">{isAr ? 'مقدم ونظام التقسيط' : 'Downpayment & Plan'}</span>
-                      <strong className="metric-val">{project.downPaymentPercent}% مقدم • {project.installmentYears} سنوات</strong>
+                      <strong className="metric-val">
+                        {isAr 
+                          ? `${project.downPaymentPercent}% مقدم • ${project.installmentYears} سنوات` 
+                          : `${project.downPaymentPercent}% Down • ${project.installmentYears} Yrs`}
+                      </strong>
                     </div>
 
                     <div className="proj-metric-item">

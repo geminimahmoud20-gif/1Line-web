@@ -1084,6 +1084,7 @@ export default function App() {
               <PortalsPage
                 portalType="investor"
                 lang={lang}
+                currency={currency}
                 t={t}
                 invAmount={invAmount}
                 setInvAmount={setInvAmount}
@@ -1195,6 +1196,7 @@ export default function App() {
             element={
               <ProjectsPage
                 lang={lang}
+                currency={currency}
                 projects={projects}
                 triggerToast={triggerToast}
               />
@@ -1207,6 +1209,7 @@ export default function App() {
             element={
               <MarketIntelligencePage
                 lang={lang}
+                currency={currency}
                 triggerToast={triggerToast}
               />
             }
