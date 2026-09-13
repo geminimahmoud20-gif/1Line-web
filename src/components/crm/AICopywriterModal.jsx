@@ -103,6 +103,30 @@ export default function AICopywriterModal({
 تواصل مع مكتب كبار المستثمرين: ${getDynamicPhone()}`);
     }
 
+    if (adTone === 'expat') {
+      return (
+`✈️【 إلى أهلنا وإخوتنا المغتربين في السعودية والخليج — استثمارك الآمن في سوهاج 】✈️
+
+🇸🇦🇦🇪🇰🇼 هل تخطط لتأمين مستقبل عائلتك وحفظ مدخراتك في أصل عقاري استراتيجي عالي العائد؟
+تقدم شركة "1Line للحلول العقارية" بسوهاج فرصة حصرية لأبناء الصعيد المغتربين:
+
+🏢 العقار: ${propTitle}
+📍 الموقع: ${propLocation}
+📐 المساحة: ${propSize} م² (${propRooms} غرف نوم بتشطيب فندقي معاصر)
+⚖️ الموقف القانوني: ترخيص كامل وتوثيق شهر عقاري وحصة مسجلة بالأرض (ضمان مؤسسي 100%)
+
+💰 خطة السداد المرنة وتحويل العملات:
+• السعر الإجمالي: ${propPrice} (مع إمكانية السداد بتحويلات بنكية مباشرة معتمدة بالريال/الدرهم/الدولار)
+• مقدم التعاقد: ${propDownPayment}
+• قسط شهري ميسر: ${propInstallment}
+• خدمة "إدارة وتأجير العقار" نيابة عنك لتحقيق عائد إيجاري أثناء فترة سفرك!
+
+📲 للاستشارة الخاصة بخدمة عملاء المغتربين عبر واتساب الدولي:
+واتساب مباشر: ${getWhatsAppUrl()}
+اتصال هاتفي: ${getDynamicPhone()}
+شركة 1Line — عينك وأمانك العقاري في مصر.`);
+    }
+
     return (
 `🏛️【 Premium Verified Property in Sohag — 1Line Real Estate 】🏛️
 
@@ -136,7 +160,7 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
 
   return (
     <div className="track-modal-backdrop" onClick={onClose}>
-      <div className="property-form-modal-card animate-fadeIn" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '720px' }}>
+      <div className="property-form-modal-card animate-fadeIn" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '780px' }}>
         <div className="modal-form-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Wand2 size={20} className="text-gold" />
@@ -172,36 +196,44 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
               <label style={{ fontSize: '0.8rem', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
                 {isAr ? 'نبرة وأسلوب الإعلان (Tone):' : 'Campaign Tone:'}
               </label>
-              <div style={{ display: 'flex', gap: '6px' }}>
+              <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
                 <button
                   type="button"
                   className={`btn btn-sm ${adTone === 'luxury' ? 'btn-primary' : 'btn-outline'}`}
                   onClick={() => setAdTone('luxury')}
-                  style={{ flex: 1, padding: '6px 4px', fontSize: '0.75rem' }}
+                  style={{ flex: '1 1 auto', padding: '5px 6px', fontSize: '0.72rem' }}
                 >
-                  👑 {isAr ? 'فندقي نخبوي' : 'Luxury'}
+                  👑 {isAr ? 'فندقي' : 'Luxury'}
                 </button>
                 <button
                   type="button"
                   className={`btn btn-sm ${adTone === 'social' ? 'btn-primary' : 'btn-outline'}`}
                   onClick={() => setAdTone('social')}
-                  style={{ flex: 1, padding: '6px 4px', fontSize: '0.75rem' }}
+                  style={{ flex: '1 1 auto', padding: '5px 6px', fontSize: '0.72rem' }}
                 >
-                  🔥 {isAr ? 'سوشيال جذاب' : 'Viral'}
+                  🔥 {isAr ? 'سوشيال' : 'Viral'}
                 </button>
                 <button
                   type="button"
                   className={`btn btn-sm ${adTone === 'investor' ? 'btn-primary' : 'btn-outline'}`}
                   onClick={() => setAdTone('investor')}
-                  style={{ flex: 1, padding: '6px 4px', fontSize: '0.75rem' }}
+                  style={{ flex: '1 1 auto', padding: '5px 6px', fontSize: '0.72rem' }}
                 >
                   📈 {isAr ? 'استثماري' : 'Investor'}
                 </button>
                 <button
                   type="button"
+                  className={`btn btn-sm ${adTone === 'expat' ? 'btn-primary' : 'btn-outline'}`}
+                  onClick={() => setAdTone('expat')}
+                  style={{ flex: '1 1 auto', padding: '5px 6px', fontSize: '0.72rem' }}
+                >
+                  ✈️ {isAr ? 'مغتربين' : 'Expats'}
+                </button>
+                <button
+                  type="button"
                   className={`btn btn-sm ${adTone === 'english' ? 'btn-primary' : 'btn-outline'}`}
                   onClick={() => setAdTone('english')}
-                  style={{ flex: 1, padding: '6px 4px', fontSize: '0.75rem' }}
+                  style={{ flex: '1 1 auto', padding: '5px 6px', fontSize: '0.72rem' }}
                 >
                   🌐 EN
                 </button>

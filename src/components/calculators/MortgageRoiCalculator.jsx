@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { trackEvent } from '../../utils/visitorTracker';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
+import { formatCurrencyPrice, CURRENCY_RATES } from '../../utils/currencyAndBenchmark';
 
 export default function MortgageRoiCalculator({ 
   lang = 'ar', 
@@ -26,6 +27,7 @@ export default function MortgageRoiCalculator({
   initialYears = 5 
 }) {
   const [activeTab, setActiveTab] = useState('mortgage'); // 'mortgage' | 'roi'
+  const [selectedCurrency, setSelectedCurrency] = useState(currency || 'EGP');
   const [price, setPrice] = useState(initialPrice);
   const [downpaymentPercent, setDownpaymentPercent] = useState(initialDownpaymentPercent);
   const [years, setYears] = useState(initialYears);
@@ -39,7 +41,8 @@ export default function MortgageRoiCalculator({
   const isAr = lang === 'ar';
 
   const formatCurrency = (valInEgp) => {
-    return `${Math.round(valInEgp).toLocaleString()} ${isAr ? 'ج.م' : 'EGP'}`;
+    const formatted = formatCurrencyPrice(valInEgp, selectedCurrency, lang);
+    return `${formatted.primary} ${formatted.symbol}`;
   };
 
   // Egyptian Financing Programs Presets
@@ -133,24 +136,57 @@ export default function MortgageRoiCalculator({
 
   return (
     <div className="calculator-wrapper-box">
-      {/* Centered Tab Switcher */}
-      <div className="calc-tab-switcher-centered">
-        <button
-          type="button"
-          className={`calc-tab-btn ${activeTab === 'mortgage' ? 'active' : ''}`}
-          onClick={() => setActiveTab('mortgage')}
-        >
-          <Calculator size={16} />
-          <span>{isAr ? 'حاسبة التمويل والأقساط' : 'Mortgage & Installments'}</span>
-        </button>
-        <button
-          type="button"
-          className={`calc-tab-btn ${activeTab === 'roi' ? 'active' : ''}`}
-          onClick={() => setActiveTab('roi')}
-        >
-          <TrendingUp size={16} />
-          <span>{isAr ? 'تحليل العائد الاستثماري (ROI)' : 'Investment ROI Analysis'}</span>
-        </button>
+      {/* Top Controls: Tabs & Expat Currency Switcher */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '22px', flexWrap: 'wrap', gap: '12px' }}>
+        {/* Centered Tab Switcher */}
+        <div className="calc-tab-switcher-centered" style={{ margin: 0 }}>
+          <button
+            type="button"
+            className={`calc-tab-btn ${activeTab === 'mortgage' ? 'active' : ''}`}
+            onClick={() => setActiveTab('mortgage')}
+          >
+            <Calculator size={16} />
+            <span>{isAr ? 'حاسبة التمويل والأقساط' : 'Mortgage & Installments'}</span>
+          </button>
+          <button
+            type="button"
+            className={`calc-tab-btn ${activeTab === 'roi' ? 'active' : ''}`}
+            onClick={() => setActiveTab('roi')}
+          >
+            <TrendingUp size={16} />
+            <span>{isAr ? 'تحليل العائد الاستثماري (ROI)' : 'Investment ROI Analysis'}</span>
+          </button>
+        </div>
+
+        {/* Currency Switcher for Gulf & Expat Investors */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(15, 23, 42, 0.7)', padding: '5px 10px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.12)' }}>
+          <Globe size={13} style={{ color: 'var(--accent-gold)' }} />
+          <span style={{ fontSize: '0.74rem', color: '#94a3b8' }}>{isAr ? 'العملة:' : 'Currency:'}</span>
+          {Object.entries(CURRENCY_RATES).map(([currKey, currInfo]) => (
+            <button
+              key={currKey}
+              type="button"
+              onClick={() => setSelectedCurrency(currKey)}
+              style={{
+                background: selectedCurrency === currKey ? 'var(--accent-gold)' : 'transparent',
+                color: selectedCurrency === currKey ? '#0f172a' : '#cbd5e1',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '3px 8px',
+                fontSize: '0.74rem',
+                fontWeight: selectedCurrency === currKey ? 'bold' : 'normal',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '3px',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <span>{currInfo.flag}</span>
+              <span>{isAr ? currInfo.symbol_ar : currInfo.symbol_en}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="calc-main-grid">
