@@ -201,8 +201,7 @@
   display: flex;
   align-items: center;
   gap: 3px;
-  flex-shrink: 0;
-  min-width: max-content;
+  flex: 0 1 auto;
 }
 
 /* 🌟 Ultra-Luxury Harmonious Desktop Navigation */
@@ -210,8 +209,7 @@
   display: flex;
   align-items: center;
   gap: 3px;
-  flex-shrink: 0;
-  min-width: max-content;
+  flex: 0 1 auto;
 }
 
 .luxury-nav-pill {
@@ -704,6 +702,10 @@
   flex-shrink: 0;
   position: relative;
   overflow: hidden;
+}
+
+.cta-btn-short-text {
+  display: none;
 }
 
 .cta-royal-btn::after {
@@ -12838,9 +12840,16 @@ body.dark,
   .advisor-res-yield { border: none !important; padding: 0 !important; margin-top: 10px; }
 }
 
+/* --- Header Responsiveness (1141px to 1480px Viewports) --- */
+@media (max-width: 1440px) {
+  .brand-subtitle {
+    display: none !important;
+  }
+}
+
 @media (max-width: 1380px) and (min-width: 1141px) {
   .header-container.glass-capsule {
-    padding: 5px 12px;
+    padding: 5px 14px;
     gap: 8px;
   }
   .luxury-desktop-nav {
@@ -12857,28 +12866,50 @@ body.dark,
   }
   .header-actions {
     gap: 6px;
+    flex-shrink: 0;
   }
   .cta-royal-btn {
     padding: 5px 10px;
     font-size: 0.76rem;
     gap: 5px;
+    flex-shrink: 0;
+  }
+  .cta-btn-text {
+    display: none !important;
+  }
+  .cta-btn-short-text {
+    display: inline !important;
   }
   .utility-sub-btn {
     padding: 4px 6px;
-    font-size: 0.75rem;
+    font-size: 0.74rem;
   }
   .brand-title {
     font-size: 1.18rem;
   }
 }
 
-@media (max-width: 1260px) and (min-width: 1141px) {
-  .brand-subtitle {
-    display: none !important;
+@media (max-width: 1280px) and (min-width: 1141px) {
+  .header-container.glass-capsule {
+    padding: 4px 10px;
+    gap: 5px;
   }
   .luxury-nav-pill {
-    padding: 5px 6px;
-    font-size: 0.76rem;
+    padding: 4px 5px;
+    font-size: 0.75rem;
+    gap: 3px;
+  }
+  .luxury-nav-pill .nav-pill-icon {
+    width: 13px;
+    height: 13px;
+  }
+  .header-utility-pill-group {
+    padding: 2px 4px;
+    gap: 1px;
+  }
+  .utility-sub-btn {
+    padding: 3px 5px;
+    font-size: 0.72rem;
   }
 }
 
@@ -12886,19 +12917,12 @@ body.dark,
   .header-omnisearch-btn .search-btn-label {
     display: none !important;
   }
-  .header-omnisearch-btn {
-    padding: 5px 8px;
-    gap: 5px;
-  }
-}
-
-@media (max-width: 1200px) {
   .header-omnisearch-btn .search-kbd-shortcut {
     display: none !important;
   }
   .header-omnisearch-btn {
-    width: 34px;
-    height: 34px;
+    width: 32px;
+    height: 32px;
     padding: 0;
     justify-content: center;
     border-radius: 50%;

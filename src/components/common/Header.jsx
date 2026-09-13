@@ -537,7 +537,8 @@ export default function Header({
           >
             <span className="advisor-live-dot" title="مستشار متاح الآن"></span>
             <MessageSquare size={15} />
-            <span>{isAr ? 'تواصل معنا' : 'Contact Us'}</span>
+            <span className="cta-btn-text">{isAr ? 'تواصل معنا' : 'Contact Us'}</span>
+            <span className="cta-btn-short-text">{isAr ? 'تواصل' : 'Contact'}</span>
           </a>
         </div>
 
