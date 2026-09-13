@@ -17,7 +17,11 @@ import {
   Eye,
   Loader2,
   Film,
-  Sliders
+  Sliders,
+  Upload,
+  Trash2,
+  Plus,
+  Play
 } from 'lucide-react';
 import { 
   getFounderSettings, 
@@ -102,6 +106,66 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
     if (!updated[idx]) updated[idx] = {};
     updated[idx][field] = value;
     setFormData({ ...formData, goldStandards: updated });
+  };
+
+  // Upload short video directly from device (MP4 / WebM / MOV)
+  const handleVideoFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 50 * 1024 * 1024) {
+      if (!window.confirm(isAr ? 'حجم الفيديو أكبر من 50 ميجابايت، يفضل اختيار فيديو أقصر لتسريع التحميل للزوار. هل تود المتابعة؟' : 'File is > 50MB. Continue?')) {
+        return;
+      }
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target.result;
+      const newClip = {
+        id: `uploaded-${Date.now()}`,
+        title_ar: file.name.replace(/\.[^/.]+$/, ''),
+        title_en: file.name.replace(/\.[^/.]+$/, ''),
+        url: dataUrl,
+        poster: formData.heroPosterUrl || ''
+      };
+      const currentClips = formData.heroVideoClips || DEFAULT_FOUNDER_CMS.heroVideoClips;
+      setFormData({
+        ...formData,
+        heroVideoUrl: dataUrl,
+        heroVideoClips: [newClip, ...currentClips]
+      });
+      if (triggerToast) {
+        triggerToast(isAr ? 'تم رفع الفيديو بنجاح! اضغط "حفظ ونشر التعديلات" لتعميمه فوراً 🚀' : 'Video uploaded! Click Save to publish.', 'success');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Add new clip to playlist
+  const handleAddClip = () => {
+    const newClip = {
+      id: `clip-${Date.now()}`,
+      title_ar: isAr ? 'فيديو قصير جديد' : 'New Short Clip',
+      title_en: 'New Short Clip',
+      url: '',
+      poster: ''
+    };
+    const currentClips = formData.heroVideoClips || DEFAULT_FOUNDER_CMS.heroVideoClips;
+    setFormData({ ...formData, heroVideoClips: [...currentClips, newClip] });
+  };
+
+  const handleUpdateClip = (idx, field, value) => {
+    const currentClips = [...(formData.heroVideoClips || DEFAULT_FOUNDER_CMS.heroVideoClips)];
+    if (!currentClips[idx]) currentClips[idx] = {};
+    currentClips[idx][field] = value;
+    setFormData({ ...formData, heroVideoClips: currentClips });
+  };
+
+  const handleRemoveClip = (idx) => {
+    const currentClips = [...(formData.heroVideoClips || DEFAULT_FOUNDER_CMS.heroVideoClips)];
+    currentClips.splice(idx, 1);
+    setFormData({ ...formData, heroVideoClips: currentClips });
   };
 
   return (
@@ -254,10 +318,173 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
               </label>
             </div>
 
+            {/* 📁 Direct File Upload Box */}
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1.5px dashed rgba(212, 175, 55, 0.4)',
+              borderRadius: '16px',
+              padding: '24px 20px',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              cursor: 'pointer',
+              position: 'relative'
+            }}>
+              <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-gold)' }}>
+                <Upload size={24} />
+              </div>
+              <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: 800 }}>
+                {isAr ? 'رفع فيديو قصير من جهازك مباشرة (MP4 / WebM / MOV)' : 'Upload Short Video from Your Device'}
+              </h4>
+              <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.82rem', maxWidth: '480px' }}>
+                {isAr
+                  ? 'اختر فيديو من هاتفك أو حاسوبك، سيتم قراءته وتعيينه كخلفية سينمائية للواجهة فوراً مع إمكانية إضافته لقائمة الفيديوهات المتعاقبة.'
+                  : 'Select a short architectural video from your computer or phone to stream as a background.'}
+              </p>
+              <input
+                type="file"
+                accept="video/mp4,video/webm,video/quicktime"
+                onChange={handleVideoFileUpload}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  opacity: 0,
+                  cursor: 'pointer',
+                  width: '100%',
+                  height: '100%'
+                }}
+                title={isAr ? 'انقر لاختيار فيديو' : 'Choose video'}
+              />
+            </div>
+
+            {/* 🎞️ Short Videos Playlist Engine */}
+            <div style={{
+              background: 'var(--bg-card, rgba(255,255,255,0.03))',
+              border: '1px solid var(--border-light)',
+              borderRadius: '16px',
+              padding: '20px'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+                <div>
+                  <h4 style={{ margin: '0 0 4px 0', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Film size={18} />
+                    <span>{isAr ? 'قائمة الفيديوهات القصيرة المتعاقبة (Short Videos Playlist)' : 'Short Videos Playlist'}</span>
+                  </h4>
+                  <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                    {isAr
+                      ? 'يمكنك إضافة عدة فيديوهات قصيرة (10-15 ثانية) ليقوم الموقع بالتبديل بينها بسلاسة وفخامة كأنها لقطات سينمائية مستمرة.'
+                      : 'Add multiple short clips to auto-cycle smoothly like a continuous luxury documentary.'}
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', cursor: 'pointer', fontWeight: 700 }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.heroVideoAutoCycle !== false}
+                      onChange={(e) => setFormData({ ...formData, heroVideoAutoCycle: e.target.checked })}
+                      style={{ width: '18px', height: '18px', accentColor: '#0d48a1' }}
+                    />
+                    <span>{isAr ? 'تبديل تلقائي سلس كل 10 ثوانٍ' : 'Auto-cycle clips'}</span>
+                  </label>
+
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline"
+                    onClick={handleAddClip}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                  >
+                    <Plus size={14} />
+                    <span>{isAr ? 'إضافة مقطع فيديو' : 'Add Clip'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Clips List */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {(formData.heroVideoClips || DEFAULT_FOUNDER_CMS.heroVideoClips || []).map((clip, idx) => {
+                  const isActive = formData.heroVideoUrl === clip.url;
+
+                  return (
+                    <div
+                      key={clip.id || idx}
+                      style={{
+                        background: isActive ? 'rgba(13, 72, 161, 0.08)' : 'rgba(255,255,255,0.02)',
+                        border: isActive ? '1.5px solid rgba(13, 72, 161, 0.4)' : '1px solid var(--border-light)',
+                        borderRadius: '12px',
+                        padding: '14px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '10px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ background: 'rgba(212, 175, 55, 0.2)', color: 'var(--accent-gold)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.78rem', fontWeight: 800 }}>
+                            #{idx + 1}
+                          </span>
+                          <strong style={{ fontSize: '0.92rem', color: 'var(--text-primary)' }}>
+                            {isAr ? clip.title_ar : (clip.title_en || clip.title_ar)}
+                          </strong>
+                          {isActive && (
+                            <span style={{ fontSize: '0.72rem', color: '#10b981', background: 'rgba(16, 185, 129, 0.12)', padding: '2px 8px', borderRadius: '4px', fontWeight: 800 }}>
+                              {isAr ? '● المقطع النشط حالياً' : 'Active Clip'}
+                            </span>
+                          )}
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          {!isActive && (
+                            <button
+                              type="button"
+                              className="btn btn-xs btn-primary"
+                              onClick={() => setFormData({ ...formData, heroVideoUrl: clip.url })}
+                              style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                            >
+                              <Play size={11} />
+                              <span>{isAr ? 'تعيين كفيديو أساسي' : 'Set as Active'}</span>
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-ghost text-danger"
+                            onClick={() => handleRemoveClip(idx)}
+                            title={isAr ? 'حذف هذا المقطع' : 'Delete clip'}
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '10px' }}>
+                        <input
+                          type="text"
+                          placeholder={isAr ? 'عنوان المقطع (بالعربي)' : 'Clip Title'}
+                          value={clip.title_ar || ''}
+                          onChange={(e) => handleUpdateClip(idx, 'title_ar', e.target.value)}
+                          style={{ fontSize: '0.84rem' }}
+                        />
+                        <input
+                          type="url"
+                          placeholder={isAr ? 'رابط ملف الفيديو المباشر (MP4 URL أو Base64)' : 'Video URL'}
+                          value={clip.url || ''}
+                          onChange={(e) => handleUpdateClip(idx, 'url', e.target.value)}
+                          style={{ fontSize: '0.84rem' }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
               <div className="form-group-item" style={{ gridColumn: '1 / -1' }}>
                 <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span>{isAr ? 'رابط ملف الفيديو (MP4 / WebM Direct URL):' : 'Hero Video URL:'}</span>
+                  <span>{isAr ? 'رابط الفيديو الأساسي الحالي (MP4 / WebM Direct URL):' : 'Current Active Video URL:'}</span>
                   <small style={{ color: 'var(--accent-gold)' }}>{isAr ? 'فيديو مباشر عالي الوضوح' : 'HD direct stream'}</small>
                 </label>
                 <input
@@ -269,7 +496,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                 />
                 {/* Presets */}
                 <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{isAr ? 'مقترحات جاهزة:' : 'Presets:'}</span>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{isAr ? 'مقترحات سريعة:' : 'Presets:'}</span>
                   <button
                     type="button"
                     className="btn btn-xs btn-ghost"

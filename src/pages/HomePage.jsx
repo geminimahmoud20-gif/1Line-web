@@ -65,10 +65,24 @@ export default function HomePage({
   // Dynamic Corporate & Hero Stats Settings from CMS
   const [founderSettings, setFounderSettings] = useState(() => getFounderSettings());
 
-  // 🎬 Cinematic Hero Video State & Controls (The Agency RE Experience)
+  // 🎬 Cinematic Hero Video State & Controls (Multi-clip Short Video Engine)
   const [videoPlaying, setVideoPlaying] = useState(true);
   const [videoMuted, setVideoMuted] = useState(true);
+  const [activeClipIndex, setActiveClipIndex] = useState(0);
+  const [clipFade, setClipFade] = useState(false);
   const heroVideoRef = useRef(null);
+
+  const heroClips = (founderSettings.heroVideoClips && founderSettings.heroVideoClips.length > 0)
+    ? founderSettings.heroVideoClips
+    : [{
+        id: 'default',
+        url: founderSettings.heroVideoUrl || 'https://assets.mixkit.co/videos/preview/mixkit-modern-architecture-buildings-and-skyscrapers-41551-large.mp4',
+        title_ar: 'واجهات وأبراج معمارية حديثة',
+        title_en: 'Modern Architecture & Glass Towers'
+      }];
+
+  const currentClip = heroClips[activeClipIndex] || heroClips[0];
+  const activeVideoUrl = currentClip?.url || founderSettings.heroVideoUrl;
 
   const toggleVideoPlayback = () => {
     if (!heroVideoRef.current) return;
@@ -85,6 +99,36 @@ export default function HomePage({
     if (!heroVideoRef.current) return;
     heroVideoRef.current.muted = !videoMuted;
     setVideoMuted(!videoMuted);
+  };
+
+  const switchClip = (newIndex) => {
+    setClipFade(true);
+    setTimeout(() => {
+      setActiveClipIndex(newIndex);
+      setClipFade(false);
+    }, 400);
+  };
+
+  // Auto-cycle through short clips smoothly
+  useEffect(() => {
+    if (!founderSettings.heroVideoAutoCycle || heroClips.length <= 1 || !videoPlaying) return;
+
+    const intervalMs = (founderSettings.heroVideoIntervalSec || 10) * 1000;
+    const timer = setInterval(() => {
+      setClipFade(true);
+      setTimeout(() => {
+        setActiveClipIndex((prev) => (prev + 1) % heroClips.length);
+        setClipFade(false);
+      }, 400);
+    }, intervalMs);
+
+    return () => clearInterval(timer);
+  }, [founderSettings.heroVideoAutoCycle, founderSettings.heroVideoIntervalSec, heroClips.length, videoPlaying]);
+
+  const handleVideoEnded = () => {
+    if (heroClips.length > 1) {
+      switchClip((activeClipIndex + 1) % heroClips.length);
+    }
   };
 
   useEffect(() => {
@@ -222,14 +266,16 @@ export default function HomePage({
           <div className="hero-cinematic-video-wrap" aria-hidden="true">
             <video
               ref={heroVideoRef}
+              key={activeVideoUrl}
               autoPlay
-              loop
+              loop={heroClips.length <= 1}
               muted={videoMuted}
               playsInline
-              poster={founderSettings.heroPosterUrl || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=2000&q=85'}
-              className="hero-cinematic-video"
+              onEnded={handleVideoEnded}
+              poster={currentClip?.poster || founderSettings.heroPosterUrl || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=2000&q=85'}
+              className={`hero-cinematic-video ${clipFade ? 'clip-fading' : ''}`}
             >
-              <source src={founderSettings.heroVideoUrl || 'https://assets.mixkit.co/videos/preview/mixkit-modern-architecture-buildings-and-skyscrapers-41551-large.mp4'} type="video/mp4" />
+              <source src={activeVideoUrl} type="video/mp4" />
             </video>
             <div 
               className="hero-video-overlay-gradient"
@@ -270,6 +316,27 @@ export default function HomePage({
             >
               {videoMuted ? <VolumeX size={13} /> : <Volume2 size={13} />}
             </button>
+
+            {/* Short video clips playlist indicator & selector */}
+            {heroClips.length > 1 && (
+              <div className="hero-clips-switcher">
+                <span className="hero-clip-title-label">
+                  {lang === 'ar' ? (currentClip?.title_ar || `مقطع ${activeClipIndex + 1}`) : (currentClip?.title_en || `Clip ${activeClipIndex + 1}`)}
+                </span>
+                <div className="hero-clip-dots">
+                  {heroClips.map((clip, idx) => (
+                    <button
+                      key={clip.id || idx}
+                      type="button"
+                      className={`hero-clip-dot ${idx === activeClipIndex ? 'active' : ''}`}
+                      onClick={() => switchClip(idx)}
+                      title={lang === 'ar' ? clip.title_ar : clip.title_en}
+                      aria-label={`Switch to clip ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

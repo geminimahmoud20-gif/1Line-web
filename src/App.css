@@ -1111,6 +1111,11 @@
   transform: translate(-50%, -50%);
   object-fit: cover;
   filter: brightness(0.88) contrast(1.04);
+  transition: opacity 0.4s ease;
+}
+
+.hero-cinematic-video.clip-fading {
+  opacity: 0 !important;
 }
 
 .hero-video-overlay-gradient {
@@ -1166,6 +1171,64 @@
   background: rgba(255, 255, 255, 0.22);
   opacity: 1;
   transform: scale(1.1);
+}
+
+/* Short Video Clips Switcher & Indicators */
+.hero-clips-switcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 8px;
+  margin-left: 4px;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+[dir="rtl"] .hero-clips-switcher {
+  padding-left: 0;
+  padding-right: 8px;
+  margin-left: 0;
+  margin-right: 4px;
+  border-left: none;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.hero-clip-title-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  white-space: nowrap;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.2px;
+}
+
+.hero-clip-dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hero-clip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.35);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hero-clip-dot:hover {
+  background: rgba(255, 255, 255, 0.75);
+  transform: scale(1.2);
+}
+
+.hero-clip-dot.active {
+  width: 18px;
+  background: var(--accent-gold, #f59e0b);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
 }
 
 /* Ambient Mesh and Glowing Orbs */

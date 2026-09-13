@@ -167,9 +167,34 @@ export const DEFAULT_FOUNDER_CMS = {
     }
   ],
 
-  // 🎬 Cinematic Hero Video & Visual Engine (The Agency RE Style)
+  // 🎬 Cinematic Hero Video & Visual Engine (The Agency & Sotheby's Style)
   heroVideoEnabled: true,
   heroVideoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-modern-architecture-buildings-and-skyscrapers-41551-large.mp4',
+  heroVideoAutoCycle: true,
+  heroVideoIntervalSec: 10,
+  heroVideoClips: [
+    {
+      id: 'clip-1',
+      title_ar: '🏢 أبراج معمارية حديثة وواجهات زجاجية',
+      title_en: 'Modern Skyscrapers & Architecture',
+      url: 'https://assets.mixkit.co/videos/preview/mixkit-modern-architecture-buildings-and-skyscrapers-41551-large.mp4',
+      poster: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=2000&q=85'
+    },
+    {
+      id: 'clip-2',
+      title_ar: '🏡 فلل فارهة ومنتجع مائي خاص',
+      title_en: 'Luxury Pool Resort & Signature Villas',
+      url: 'https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-a-luxury-pool-resort-41553-large.mp4',
+      poster: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=2000&q=85'
+    },
+    {
+      id: 'clip-3',
+      title_ar: '🌳 كمبوند سكني ومساحات خضراء بالدرون',
+      title_en: 'Residential Compound & Drone Landscapes',
+      url: 'https://assets.mixkit.co/videos/preview/mixkit-drone-view-of-a-modern-residential-neighborhood-41555-large.mp4',
+      poster: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=2000&q=85'
+    }
+  ],
   heroPosterUrl: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=2000&q=85',
   heroOverlayOpacity: 0.65,
   heroBadge_ar: 'المنصة العقارية الأكثر موثوقية في سوهاج',
