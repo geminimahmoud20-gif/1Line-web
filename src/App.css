@@ -17171,6 +17171,190 @@ body.dark-theme .compare-tabs-bar {
   transform: translateY(-2px);
 }
 
+/* ============================================================
+   🌟 STREAMLINED QUIET-LUXURY PROPERTY CARD
+   ============================================================ */
+.card-sub-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.property-location-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.verified-pill-subtle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #059669;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+}
+
+.dark-theme .verified-pill-subtle {
+  background: rgba(16, 185, 129, 0.16);
+  color: #34d399;
+}
+
+.property-specs-clean {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  padding: 8px 0;
+  border-top: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border-light);
+  margin-bottom: 10px;
+}
+
+.spec-unit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.spec-dot {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.card-benchmark-clean {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.74rem;
+  background: var(--bg-card-hover, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  padding: 4px 10px;
+  margin-bottom: 10px;
+}
+
+.benchmark-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+}
+
+.benchmark-meter {
+  font-weight: 800;
+  direction: ltr;
+  color: var(--text-secondary);
+}
+
+.card-finance-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+  margin-bottom: 14px;
+}
+
+.fin-pill {
+  background: rgba(11, 78, 162, 0.05);
+  border: 1px solid rgba(11, 78, 162, 0.12);
+  padding: 3px 8px;
+  border-radius: 6px;
+  color: var(--text-primary);
+}
+
+.dark-theme .fin-pill {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.fin-lbl {
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+
+[dir="ltr"] .fin-lbl {
+  margin-right: 0;
+  margin-left: 4px;
+}
+
+.property-card-footer-streamlined {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.btn-card-main {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #0b4ea2 0%, #073875 100%);
+  color: #ffffff !important;
+  font-size: 0.85rem;
+  font-weight: 800;
+  padding: 10px 16px;
+  border-radius: 12px;
+  text-decoration: none;
+  border: 1px solid rgba(253, 203, 66, 0.25);
+  box-shadow: 0 4px 12px rgba(11, 78, 162, 0.2);
+  transition: all 0.25s ease;
+}
+
+.btn-card-main:hover {
+  background: linear-gradient(135deg, #0d5bbd 0%, #0a468e 100%);
+  box-shadow: 0 6px 18px rgba(11, 78, 162, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-card-wa-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #ecfdf5;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #059669;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.15);
+  flex-shrink: 0;
+}
+
+.btn-card-wa-icon:hover {
+  background: #10b981;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.dark-theme .btn-card-wa-icon {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #34d399;
+}
+
+.dark-theme .btn-card-wa-icon:hover {
+  background: #10b981;
+  color: #ffffff;
+}
+
+
 
 
 

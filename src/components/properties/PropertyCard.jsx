@@ -179,119 +179,93 @@ export default function PropertyCard({
 
       {/* Card Content */}
       <div className="property-card-body">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
-          <div className="property-location-tag" style={{ margin: 0, color: 'var(--text-secondary)', fontWeight: '700' }}>
-            <MapPin size={14} style={{ color: 'var(--brand-navy-light, #0284c7)' }} />
+        {/* District & Legal Shield Tag */}
+        <div className="card-sub-header">
+          <div className="property-location-tag">
+            <MapPin size={13} className="text-muted" />
             <span>{location}</span>
           </div>
-          <span 
-            className="verified-shimmer-badge"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-              fontSize: '0.7rem',
-              color: '#10b981',
-              background: 'rgba(16, 185, 129, 0.1)',
-              border: '1px solid rgba(16, 185, 129, 0.25)',
-              padding: '2px 8px',
-              borderRadius: '6px',
-              fontWeight: '800'
-            }}
-          >
-            <ShieldCheck size={12} style={{ color: '#10b981' }} />
-            <span>{lang === 'ar' ? 'معتمد قانونياً 100%' : '100% Verified'}</span>
+
+          <span className="verified-pill-subtle">
+            <ShieldCheck size={12} className="text-emerald" />
+            <span>{lang === 'ar' ? 'مرخص قانونياً 100%' : '100% Verified'}</span>
           </span>
         </div>
 
+        {/* Title */}
         <h3 className="property-card-title">
-          <Link to={`/properties/${property.id}`} style={{ color: 'var(--text-primary)', fontWeight: '800' }}>{title}</Link>
+          <Link to={`/properties/${property.id}`}>{title}</Link>
         </h3>
 
-        {/* Specs Grid */}
-        <div className="property-specs-grid">
-          <div className="spec-item" title={lang === 'ar' ? 'المساحة' : 'Area'}>
-            <Maximize2 size={15} style={{ color: 'var(--brand-navy-light, #0284c7)' }} />
-            <span style={{ color: 'var(--text-secondary)', fontWeight: '700' }}>{property.size} {lang === 'ar' ? 'م²' : 'sqm'}</span>
-          </div>
+        {/* Unified Clean Specs Strip */}
+        <div className="property-specs-clean">
+          <span className="spec-unit">
+            <Maximize2 size={13} className="text-muted" />
+            <span><strong>{property.size}</strong> {lang === 'ar' ? 'م²' : 'sqm'}</span>
+          </span>
           {property.bedrooms > 0 && (
-            <div className="spec-item" title={lang === 'ar' ? 'غرف النوم' : 'Bedrooms'}>
-              <BedDouble size={16} style={{ color: 'var(--accent-gold, #f59e0b)' }} />
-              <span style={{ color: 'var(--text-secondary)', fontWeight: '700' }}>{property.bedrooms} {lang === 'ar' ? 'غرف' : 'Beds'}</span>
-            </div>
+            <>
+              <span className="spec-dot">•</span>
+              <span className="spec-unit">
+                <BedDouble size={14} className="text-muted" />
+                <span><strong>{property.bedrooms}</strong> {lang === 'ar' ? 'غرف' : 'Beds'}</span>
+              </span>
+            </>
           )}
           {property.bathrooms > 0 && (
-            <div className="spec-item" title={lang === 'ar' ? 'الحمامات' : 'Bathrooms'}>
-              <Bath size={15} style={{ color: 'var(--primary-light, #38bdf8)' }} />
-              <span style={{ color: 'var(--text-secondary)', fontWeight: '700' }}>{property.bathrooms} {lang === 'ar' ? 'حمام' : 'Baths'}</span>
-            </div>
+            <>
+              <span className="spec-dot">•</span>
+              <span className="spec-unit">
+                <Bath size={13} className="text-muted" />
+                <span><strong>{property.bathrooms}</strong> {lang === 'ar' ? 'حمام' : 'Baths'}</span>
+              </span>
+            </>
           )}
         </div>
 
-        {/* 📊 Sohag District Price Benchmark Strip */}
+        {/* Sohag Benchmark (If applicable) */}
         {benchmark && (
-          <div 
-            className="card-benchmark-strip" 
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '6px 10px',
-              margin: '8px 0 10px',
-              borderRadius: '8px',
-              background: benchmark.badgeBg,
-              border: `1px solid ${benchmark.badgeColor}33`,
-              color: benchmark.badgeColor,
-              fontSize: '0.74rem',
-              fontWeight: '800'
-            }}
-            title={lang === 'ar' ? `سعر المتر المحسوب: ${benchmark.pricePerMeterFormatted}` : `Price per m²: ${benchmark.pricePerMeterFormatted}`}
-          >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+          <div className="card-benchmark-clean">
+            <span className="benchmark-tag">
               <span>{benchmark.badgeType === 'deal' ? '🔥' : benchmark.badgeType === 'premium' ? '💎' : '⚖️'}</span>
               <span>{benchmark.badgeLabel}</span>
             </span>
-            <span style={{ fontSize: '0.72rem', opacity: 0.92, direction: 'ltr', fontWeight: '800' }}>{benchmark.pricePerMeterFormatted}</span>
+            <span className="benchmark-meter">{benchmark.pricePerMeterFormatted}</span>
           </div>
         )}
 
-        {/* Payment Plan / Downpayment Summary */}
-        <div className="property-card-finance" style={{
-          background: 'var(--bg-card-hover, rgba(11, 78, 162, 0.04))',
-          border: '1px solid var(--border-color)',
-          borderRadius: '10px'
-        }}>
-          <div className="finance-mini-item">
-            <span className="finance-label" style={{ color: 'var(--text-muted)', fontWeight: '600' }}>{lang === 'ar' ? 'مقدم يبدأ من:' : 'Min Downpayment:'}</span>
-            <span className="finance-value" style={{ color: 'var(--text-primary)', fontWeight: '800' }}>{property.downPayment.toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}</span>
+        {/* Minimal Finance Info */}
+        {(property.downPayment > 0 || property.monthlyInstallment > 0) && (
+          <div className="card-finance-row">
+            {property.downPayment > 0 && (
+              <span className="fin-pill">
+                <span className="fin-lbl">{lang === 'ar' ? 'مقدم:' : 'Down:'}</span>
+                <strong>{property.downPayment.toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}</strong>
+              </span>
+            )}
+            {property.monthlyInstallment > 0 && (
+              <span className="fin-pill">
+                <span className="fin-lbl">{lang === 'ar' ? 'قسط:' : 'Monthly:'}</span>
+                <strong className="text-gold">{property.monthlyInstallment.toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}</strong>
+              </span>
+            )}
           </div>
-          <div className="finance-mini-item">
-            <span className="finance-label" style={{ color: 'var(--text-muted)', fontWeight: '600' }}>{lang === 'ar' ? 'قسط شهري:' : 'Monthly:'}</span>
-            <span className="finance-value highlight" style={{ color: 'var(--brand-gold-warm, #f59e0b)', fontWeight: '900', fontSize: '0.85rem' }}>{property.monthlyInstallment.toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}</span>
-          </div>
-        </div>
+        )}
 
-        {/* Card Footer Actions */}
-        <div className="property-card-footer" style={{ gap: '6px' }}>
-          <button
-            type="button"
-            className="btn-quick-view"
-            onClick={() => onQuickView(property)}
-            title={lang === 'ar' ? 'معاينة سريعة' : 'Quick View'}
-            style={{
-              background: '#ffffff',
-              border: '1.5px solid rgba(11, 78, 162, 0.22)',
-              color: '#0b4ea2',
-              fontWeight: '800'
-            }}
+        {/* Streamlined Footer Actions */}
+        <div className="property-card-footer-streamlined">
+          <Link 
+            to={`/properties/${property.id}`} 
+            className="btn-card-main"
           >
-            <Eye size={13} style={{ color: '#0b4ea2' }} />
-            <span>{lang === 'ar' ? 'معاينة' : 'Quick'}</span>
-          </button>
+            <span>{lang === 'ar' ? 'استعراض العقار والتفاصيل' : 'View Details & Book Tour'}</span>
+            {lang === 'ar' ? <ArrowLeft size={14} /> : <ArrowRight size={14} />}
+          </Link>
 
-          {/* WhatsApp Direct Inquire */}
+          {/* Quick WhatsApp Inquiry */}
           <button
             type="button"
+            className="btn-card-wa-icon"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -300,41 +274,10 @@ export default function PropertyCard({
                 : `Hello 1Line, inquiring about property "${title}" priced at ${property.price.toLocaleString()} EGP (ID: #${property.id}).`;
               window.open(getWhatsAppUrl(msg), '_blank');
             }}
-            style={{
-              background: '#ecfdf5',
-              border: '1px solid #10b981',
-              color: '#065f46',
-              borderRadius: 'var(--radius-sm)',
-              padding: '6px 9px',
-              fontSize: '0.78rem',
-              fontWeight: '800',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 2px 6px rgba(16, 185, 129, 0.15)'
-            }}
-            title={lang === 'ar' ? 'استفسار فوري عبر واتساب' : 'WhatsApp Inquiry'}
+            title={lang === 'ar' ? 'استفسار فوري عبر واتساب' : 'Quick WhatsApp'}
           >
-            <MessageSquare size={13} style={{ color: '#059669' }} />
-            <span>{lang === 'ar' ? 'واتساب' : 'WhatsApp'}</span>
+            <MessageSquare size={16} />
           </button>
-
-          <Link 
-            to={`/properties/${property.id}`} 
-            className="btn-view-details"
-            style={{
-              background: 'linear-gradient(135deg, #0b4ea2 0%, #073875 100%)',
-              color: '#ffffff',
-              fontWeight: '800',
-              border: '1px solid rgba(253, 203, 66, 0.25)',
-              boxShadow: '0 3px 10px rgba(11, 78, 162, 0.3)'
-            }}
-          >
-            <span>{lang === 'ar' ? 'التفاصيل' : 'Details'}</span>
-            {lang === 'ar' ? <ArrowLeft size={14} /> : <ArrowRight size={14} />}
-          </Link>
         </div>
       </div>
     </div>

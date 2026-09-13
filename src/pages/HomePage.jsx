@@ -25,18 +25,13 @@ import {
   VolumeX
 } from 'lucide-react';
 import PropertyCard from '../components/properties/PropertyCard';
-import AboutFounderSection from '../components/home/AboutFounderSection';
-import SponsoredAdsShowcase from '../components/home/SponsoredAdsShowcase';
-import MortgageRoiCalculator from '../components/calculators/MortgageRoiCalculator';
 import MarketTickerBar from '../components/home/MarketTickerBar';
-import ExpressLeadStrip from '../components/home/ExpressLeadStrip';
-import PrimeDistrictsShowcase from '../components/home/PrimeDistrictsShowcase';
 import LifestyleCollectionsSection from '../components/home/LifestyleCollectionsSection';
 import PrivateOfficeSection from '../components/home/PrivateOfficeSection';
 import GoldStandardsSection from '../components/home/GoldStandardsSection';
 import { PROPERTY_TYPES, PROPERTIES_DATA } from '../data/propertiesData';
 import { MEGA_PROJECTS } from '../data/projectsData';
-import { TESTIMONIALS, INITIAL_DEMANDS } from '../data/mockData';
+import { INITIAL_DEMANDS } from '../data/mockData';
 import { getFounderSettings, DEFAULT_FOUNDER_CMS } from '../utils/founderCmsData';
 import { getAreas } from '../utils/areasData';
 import { updatePageSeo, buildOrganizationSchema } from '../utils/seoHelper';
@@ -574,16 +569,6 @@ export default function HomePage({
       {/* 📈 REAL-TIME SOHAG PROPTECH MARKET TICKER */}
       <MarketTickerBar lang={lang} />
 
-      {/* ⚡ 1-CLICK 10-SECOND EXPRESS LEAD STRIP */}
-      <ExpressLeadStrip 
-        lang={lang} 
-        onAddNewLead={onAddNewLead} 
-        triggerToast={triggerToast} 
-      />
-
-      {/* 🏛️ SOHAG PRIME DISTRICTS & CAPITAL APPRECIATION INDEX */}
-      <PrimeDistrictsShowcase lang={lang} />
-
       {/* 🌟 SOTHEBY'S BENCHMARK: CURATED LIFESTYLE COLLECTIONS */}
       <LifestyleCollectionsSection lang={lang} />
 
@@ -830,109 +815,8 @@ export default function HomePage({
         )}
       </section>
 
-      {/* 🌟 3. LUXURY SPONSORED ADS & FEATURED DEVELOPER SHOWCASE */}
-      <SponsoredAdsShowcase lang={lang} />
-
       {/* 🛡️ THE 4 1LINE GOLDEN STANDARDS OF INSTITUTIONAL TRUST */}
       <GoldStandardsSection lang={lang} />
-
-      {/* 🧮 4. PROPTECH FINANCIAL SIMULATOR & INSTITUTIONAL TRUST HUB */}
-      <section className="homepage-section bg-surface" id="mortgage-calculator">
-        <div className="section-header-centered" style={{ marginBottom: '24px' }}>
-          <span className="section-pill">{lang === 'ar' ? 'دراسات السوق والضمان المؤسسي' : 'Market Research & Institutional Trust'}</span>
-          <h2>{lang === 'ar' ? 'أدوات الحساب المالي والضمان القانوني المعتمد' : 'Financial Simulator & Certified Legal Security'}</h2>
-
-          {/* Dual Segment Switcher (Royal Blue & Amber Palette) */}
-          <div style={{
-            display: 'inline-flex',
-            background: 'var(--bg-card, #f8fafc)',
-            padding: '5px',
-            borderRadius: 'var(--radius-pill)',
-            border: '1px solid var(--border-color)',
-            gap: '6px',
-            marginTop: '16px',
-            boxShadow: 'var(--shadow-sm)'
-          }}>
-            <button
-              type="button"
-              onClick={() => setInsightsTab('calculator')}
-              style={{
-                background: insightsTab === 'calculator' ? 'linear-gradient(135deg, #0b4ea2 0%, #073875 100%)' : 'transparent',
-                color: insightsTab === 'calculator' ? '#ffffff' : 'var(--text-secondary)',
-                border: insightsTab === 'calculator' ? '1px solid rgba(253, 203, 66, 0.35)' : 'none',
-                borderRadius: 'var(--radius-pill)',
-                padding: '9px 24px',
-                fontSize: '0.86rem',
-                fontWeight: '900',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                boxShadow: insightsTab === 'calculator' ? '0 4px 14px rgba(11, 78, 162, 0.25)' : 'none',
-                transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
-              }}
-            >
-              <Calculator size={16} style={{ color: insightsTab === 'calculator' ? '#fdcb42' : 'var(--brand-navy-light, #0284c7)' }} />
-              <span>{lang === 'ar' ? 'حاسبة التمويل والأقساط الذكية' : 'Mortgage & ROI Simulator'}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setInsightsTab('founder')}
-              style={{
-                background: insightsTab === 'founder' ? 'linear-gradient(135deg, #0b4ea2 0%, #073875 100%)' : 'transparent',
-                color: insightsTab === 'founder' ? '#ffffff' : 'var(--text-secondary)',
-                border: insightsTab === 'founder' ? '1px solid rgba(253, 203, 66, 0.35)' : 'none',
-                borderRadius: 'var(--radius-pill)',
-                padding: '9px 24px',
-                fontSize: '0.86rem',
-                fontWeight: '900',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                boxShadow: insightsTab === 'founder' ? '0 4px 14px rgba(11, 78, 162, 0.25)' : 'none',
-                transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
-              }}
-            >
-              <ShieldCheck size={16} style={{ color: insightsTab === 'founder' ? '#fdcb42' : 'var(--brand-navy-light, #0284c7)' }} />
-              <span>{lang === 'ar' ? 'عن 1Line والضمان القانوني' : 'About 1Line & Legal Pillars'}</span>
-            </button>
-          </div>
-        </div>
-
-        {insightsTab === 'calculator' ? (
-          <div style={{ maxWidth: '1060px', margin: '0 auto' }}>
-            <MortgageRoiCalculator lang={lang} />
-          </div>
-        ) : (
-          <AboutFounderSection lang={lang} />
-        )}
-      </section>
-
-      {/* 💬 5. TESTIMONIALS */}
-      <section className="homepage-section">
-        <div className="section-header-centered">
-          <span className="section-pill">{lang === 'ar' ? 'آراء العملاء' : 'Testimonials'}</span>
-          <h2>{lang === 'ar' ? 'ماذا يقول عملاؤنا عنا؟' : 'What Our Clients Say'}</h2>
-        </div>
-
-        <div className="testimonials-grid">
-          {TESTIMONIALS.map((item, idx) => (
-            <div key={idx} className="testimonial-card">
-              <div className="stars-row">★★★★★</div>
-              <p className="testimonial-text">"{lang === 'ar' ? item.text_ar : item.text_en}"</p>
-              <div className="testimonial-author">
-                <div className="author-avatar">{item.name_ar.charAt(0)}</div>
-                <div>
-                  <h4>{lang === 'ar' ? item.name_ar : item.name_en}</h4>
-                  <span>{lang === 'ar' ? item.role_ar : item.role_en}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
 
       {/* 🔒 SOTHEBY'S BENCHMARK: 1LINE PRIVATE OFFICE (OFF-MARKET POCKET LISTINGS) */}
       <PrivateOfficeSection lang={lang} />
