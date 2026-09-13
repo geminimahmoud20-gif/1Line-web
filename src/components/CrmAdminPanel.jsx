@@ -26,6 +26,12 @@ import VisitorIntelligencePanel from './crm/VisitorIntelligencePanel';
 import FounderCmsPanel from './crm/FounderCmsPanel';
 import ContractStudioModal from './crm/ContractStudioModal';
 
+export const CRM_ROLES = [
+  { id: 'super_admin', label_ar: 'المدير العام التنفيذي', label_en: 'Super Admin', agentName: 'Dr. Mahmoud Elbaz', icon: '👑', canDelete: true, canViewAgencyFinancials: true },
+  { id: 'agent_east', label_ar: 'فريق مبيعات شرق والكوثر (وسيط)', label_en: 'East Desk Broker', agentName: 'Sales Team A', icon: '🏆', canDelete: false, canViewAgencyFinancials: false },
+  { id: 'agent_new_sohag', label_ar: 'فريق مبيعات سوهاج الجديدة (وسيط)', label_en: 'New Sohag Desk Broker', agentName: 'Sales Team B', icon: '🌟', canDelete: false, canViewAgencyFinancials: false }
+];
+
 export const CrmAdminPanel = ({
   lang = 'ar',
   t = {},
@@ -64,6 +70,10 @@ export const CrmAdminPanel = ({
   const [crmAuthError, setCrmAuthError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Multi-Tenant RBAC Identity State
+  const [activeRole, setActiveRole] = useState('super_admin'); // 'super_admin' | 'agent_east' | 'agent_new_sohag'
+  const [myDealsOnly, setMyDealsOnly] = useState(false);
+
   // Enterprise Tab States
   const [adminTab, setAdminTab] = useState('dashboard');
   const [leadFilter, setLeadFilter] = useState('all');
@@ -101,6 +111,19 @@ export const CrmAdminPanel = ({
   const [viewingLogsLead, setViewingLogsLead] = useState(null);
 
   const isAr = lang === 'ar';
+
+  // Active Role Permissions and Agent Claim Helper
+  const currentRoleObj = CRM_ROLES.find(r => r.id === activeRole) || CRM_ROLES[0];
+  const isSuperAdmin = currentRoleObj.canDelete;
+
+  const handleClaimLead = (leadId) => {
+    if (onUpdateLead) {
+      onUpdateLead(leadId, { assignedTo: currentRoleObj.agentName });
+      if (triggerToast) {
+        triggerToast(isAr ? `تم استلام العميل بنجاح وتعيينه لـ ${currentRoleObj.label_ar}` : `Lead claimed by ${currentRoleObj.label_en}`, 'success');
+      }
+    }
+  };
 
   const getLocalizedPropertyType = (typeKey) => {
     if (!typeKey) return isAr ? 'عقار غير محدد' : 'N/A';
@@ -416,6 +439,11 @@ export const CrmAdminPanel = ({
 
   // Filtered Leads list with Multi-Dimensional Search
   const filteredLeads = leads.filter((l) => {
+    if (myDealsOnly && activeRole !== 'super_admin') {
+      if (l.assignedTo !== currentRoleObj.agentName && l.assignedTo !== 'Unassigned') {
+        return false;
+      }
+    }
     if (leadFilter !== 'all' && l.type !== leadFilter) return false;
     if (temperatureFilter !== 'all' && (l.temperature || 'hot') !== temperatureFilter) return false;
     if (areaFilter !== 'all' && l.details?.area !== areaFilter) return false;
@@ -536,7 +564,7 @@ export const CrmAdminPanel = ({
         border: '1px solid var(--border-light)',
         marginBottom: '16px'
       }}>
-        {/* Left / Status */}
+        {/* Left / Status & Active Role */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <div style={{
             display: 'inline-flex',
@@ -554,9 +582,55 @@ export const CrmAdminPanel = ({
             <span>{firebaseConnected ? (isAr ? 'متصل بالسحابة (Cloud Sync)' : 'Cloud Active') : (isAr ? 'وضع التخزين المحلي (Local Cache)' : 'Local Storage')}</span>
           </div>
 
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-            {isAr ? 'مركز العمليات والمطابقات الفورية لطلبات الشراء والبيع' : 'Instant CRM operations and deal matching hub'}
-          </span>
+          {/* Multi-Tenant RBAC Role Switcher */}
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            borderRadius: 'var(--radius-pill)',
+            padding: '3px 8px'
+          }}>
+            <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+              {isAr ? 'الصلاحية الحالية:' : 'Role:'}
+            </span>
+            <select
+              value={activeRole}
+              onChange={(e) => {
+                setActiveRole(e.target.value);
+                if (e.target.value === 'super_admin') setMyDealsOnly(false);
+              }}
+              style={{
+                background: 'rgba(15, 23, 42, 0.9)',
+                color: activeRole === 'super_admin' ? 'var(--accent-gold)' : '#ffffff',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                borderRadius: '12px',
+                fontSize: '0.74rem',
+                padding: '2px 8px',
+                fontWeight: 'bold',
+                cursor: 'pointer'
+              }}
+            >
+              {CRM_ROLES.map(r => (
+                <option key={r.id} value={r.id}>
+                  {r.icon} {isAr ? r.label_ar : r.label_en}
+                </option>
+              ))}
+            </select>
+
+            {activeRole !== 'super_admin' && (
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', color: myDealsOnly ? '#10b981' : '#94a3b8', cursor: 'pointer', margin: 0, paddingInlineStart: '6px' }}>
+                <input
+                  type="checkbox"
+                  checked={myDealsOnly}
+                  onChange={(e) => setMyDealsOnly(e.target.checked)}
+                  style={{ cursor: 'pointer' }}
+                />
+                <span>{isAr ? 'صفقاتي فقط' : 'My Deals Only'}</span>
+              </label>
+            )}
+          </div>
         </div>
 
         {/* Right / Actions */}
@@ -1164,16 +1238,18 @@ export const CrmAdminPanel = ({
                   <span>{isAr ? 'تصدير المحدد (CSV)' : 'Export CSV'}</span>
                 </button>
 
-                {/* Bulk Delete */}
-                <button
-                  type="button"
-                  className="btn btn-sm"
-                  onClick={handleBulkDelete}
-                  style={{ padding: '4px 10px', fontSize: '0.75rem', background: 'rgba(239, 68, 68, 0.15)', color: 'var(--rose)', border: '1px solid var(--rose)' }}
-                >
-                  <Trash2 size={13} />
-                  <span>{isAr ? 'حذف المحدد' : 'Delete'}</span>
-                </button>
+                {/* Bulk Delete (Super Admin Only) */}
+                {isSuperAdmin && (
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    onClick={handleBulkDelete}
+                    style={{ padding: '4px 10px', fontSize: '0.75rem', background: 'rgba(239, 68, 68, 0.15)', color: 'var(--rose)', border: '1px solid var(--rose)' }}
+                  >
+                    <Trash2 size={13} />
+                    <span>{isAr ? 'حذف المحدد' : 'Delete'}</span>
+                  </button>
+                )}
 
                 {/* Clear Selection */}
                 <button
@@ -1406,15 +1482,37 @@ export const CrmAdminPanel = ({
                             <Send size={13} />
                           </button>
 
-                          {/* Delete Lead */}
-                          <button 
-                            className="btn btn-sm" 
-                            onClick={() => handleDeleteLeadClick(l.id, l.name)} 
-                            style={{ padding: '5px 7px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--rose)', border: '1px solid rgba(239, 68, 68, 0.2)' }} 
-                            title={isAr ? 'حذف العميل' : 'Delete Lead'}
-                          >
-                            <Trash2 size={13} />
-                          </button>
+                          {/* 1-Click Claim Lead (Broker Mode) */}
+                          {!isSuperAdmin && l.assignedTo !== currentRoleObj.agentName && (
+                            <button
+                              type="button"
+                              className="btn btn-sm"
+                              onClick={() => handleClaimLead(l.id)}
+                              style={{ padding: '5px 7px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)' }}
+                              title={isAr ? `استلام هذا العميل وتعيينه لـ ${currentRoleObj.label_ar}` : 'Claim this lead'}
+                            >
+                              <UserPlus size={13} />
+                            </button>
+                          )}
+
+                          {/* Delete Lead (Super Admin Only) */}
+                          {isSuperAdmin ? (
+                            <button 
+                              className="btn btn-sm" 
+                              onClick={() => handleDeleteLeadClick(l.id, l.name)} 
+                              style={{ padding: '5px 7px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--rose)', border: '1px solid rgba(239, 68, 68, 0.2)' }} 
+                              title={isAr ? 'حذف العميل' : 'Delete Lead'}
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          ) : (
+                            <span 
+                              style={{ padding: '5px 7px', opacity: 0.35, cursor: 'not-allowed', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center' }} 
+                              title={isAr ? 'حذف العميل يتطلب صلاحية المدير العام' : 'Delete requires Super Admin role'}
+                            >
+                              <Lock size={13} />
+                            </span>
+                          )}
                         </div>
                       </td>
                     </tr>
