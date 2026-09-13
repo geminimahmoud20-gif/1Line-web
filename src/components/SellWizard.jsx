@@ -41,6 +41,12 @@ export const SellWizard = ({
 
   const isAr = lang === 'ar';
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('oneline_wizard_started', { detail: { type: 'sell' } }));
+    }
+  }, []);
+
   // Live Real-Time Estimated Valuation Range calculation
   const calculatedEstimate = useMemo(() => {
     const areaKey = sellerAnswers.area || 'east';

@@ -80,8 +80,8 @@ export default function LifestyleCollectionsSection({ lang = 'ar' }) {
         </h2>
         <p className="section-heading-desc">
           {isAr
-            ? 'مجموعات عقارية منتقاة بعناية فائقة لتلائم تطلعات النخبة، العائلات الراقية، والمستثمرين الاستراتيجيين بسوهاج ومغتربي الخليج.'
-            : 'Curated residential and commercial collections tailored for high-net-worth individuals, families, and Gulf investors.'}
+            ? 'مجموعات سكنية واستثمارية منتقاة بعناية فائقة لتلائم تطلعات العائلات، المشترين الجادين، والمستثمرين في سوهاج ومغتربي الخارج.'
+            : 'Curated residential and commercial collections tailored for families, home buyers, and strategic investors in Sohag.'}
         </p>
       </div>
 

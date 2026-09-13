@@ -23,7 +23,9 @@ import {
   Play,
   Volume2,
   VolumeX,
-  Zap
+  Zap,
+  MessageSquare,
+  Eye
 } from 'lucide-react';
 import PropertyCard from '../components/properties/PropertyCard';
 import MarketTickerBar from '../components/home/MarketTickerBar';
@@ -33,7 +35,7 @@ import GoldStandardsSection from '../components/home/GoldStandardsSection';
 import { PROPERTY_TYPES, PROPERTIES_DATA } from '../data/propertiesData';
 import { MEGA_PROJECTS } from '../data/projectsData';
 import { INITIAL_DEMANDS } from '../data/mockData';
-import { getFounderSettings, DEFAULT_FOUNDER_CMS } from '../utils/founderCmsData';
+import { getFounderSettings, DEFAULT_FOUNDER_CMS, getWhatsAppUrl } from '../utils/founderCmsData';
 import { getAreas } from '../utils/areasData';
 import { updatePageSeo, buildOrganizationSchema } from '../utils/seoHelper';
 import { parseSemanticQuery, SEMANTIC_SEARCH_PRESETS } from '../utils/semanticSearchEngine';
@@ -258,6 +260,14 @@ export default function HomePage({
     if (searchArea !== 'all') queryParams.set('area', searchArea);
     if (searchType !== 'all') queryParams.set('type', searchType);
     if (searchBudget !== 'all') queryParams.set('budget', searchBudget);
+
+    // 📡 Telemetry event
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('oneline_search_started', {
+        detail: { keyword: trimmed, area: searchArea, type: searchType, budget: searchBudget }
+      }));
+    }
+
     navigate(`/properties?${queryParams.toString()}`);
   };
 
@@ -273,6 +283,7 @@ export default function HomePage({
               ref={heroVideoRef}
               key={activeVideoUrl}
               autoPlay
+              preload="metadata"
               loop={heroClips.length <= 1}
               muted={videoMuted}
               playsInline
@@ -611,50 +622,41 @@ export default function HomePage({
               </button>
             </form>
 
-            {/* Clean Quick Discovery Strip */}
-            <div className="hero-quick-discovery-strip">
-              <span className="discovery-label">
-                {lang === 'ar' ? 'أبرز مناطق سوهاج:' : 'Top Locations:'}
+            {/* Subtle Secondary VIP Guide Link */}
+            <div className="hero-search-footer-nav">
+              <span className="hero-search-hint">
+                {lang === 'ar' ? 'تبحث عن مواصفات محددة أو طلبات خاصة؟' : 'Looking for custom specs or bespoke negotiation?'}
               </span>
-              <div className="discovery-chips-list">
-                {[
-                  { id: 'new_sohag', label_ar: 'سوهاج الجديدة', label_en: 'New Sohag' },
-                  { id: 'east', label_ar: 'شرق سوهاج', label_en: 'East Sohag' },
-                  { id: 'corniche', label_ar: 'الكورنيش', label_en: 'Corniche' },
-                  { id: 'nasr', label_ar: 'مدينة ناصر', label_en: 'Nasr City' },
-                  { id: 'center', label_ar: 'وسط البلد', label_en: 'City Center' }
-                ].map((area) => (
-                  <button
-                    key={area.id}
-                    type="button"
-                    onClick={() => {
-                      setSearchArea(area.id);
-                      navigate(`/properties?area=${area.id}`);
-                    }}
-                    className="discovery-chip"
-                  >
-                    <span>{lang === 'ar' ? area.label_ar : area.label_en}</span>
-                  </button>
-                ))}
-              </div>
+              <Link to="/special-requests" className="hero-secondary-guide-link">
+                <Sparkles size={13} className="text-gold" />
+                <span>{lang === 'ar' ? 'أحتاج استشارة خاصة VIP ←' : 'Request VIP Consultation →'}</span>
+              </Link>
             </div>
           </div>
 
-          {/* Quick Stats Grid - Live Dynamic & CMS Editable */}
-          <div className="hero-stats-strip">
-            {(founderSettings.heroStats || DEFAULT_FOUNDER_CMS.heroStats).map((st, idx) => {
-              // If it's the first card and user wants live count from properties
-              const displayNum = (idx === 0 && st.num_ar === '+150' && publishedProperties.length > 0)
-                ? `+${publishedProperties.length}`
-                : (lang === 'ar' ? st.num_ar : st.num_en);
+          {/* Dual Proof & Trust Verification Strip (شريط الثقة النقي - مؤشران فقط) */}
+          <div className="hero-twin-trust-strip">
+            <div className="twin-trust-item">
+              <div className="twin-trust-icon">
+                <ShieldCheck size={20} className="text-emerald" />
+              </div>
+              <div className="twin-trust-text">
+                <strong>{lang === 'ar' ? '100% فحص هندسي وتدقيق قانوني معتمد' : '100% Legally & Structurally Audited'}</strong>
+                <span>{lang === 'ar' ? 'تراخيص رسمية مفحوصة ومطابقة لسجل الأملاك' : 'All titles and municipal licenses verified'}</span>
+              </div>
+            </div>
 
-              return (
-                <div key={idx} className="stat-box">
-                  <span className="stat-num">{displayNum}</span>
-                  <span className="stat-lbl">{lang === 'ar' ? st.label_ar : st.label_en}</span>
-                </div>
-              );
-            })}
+            <div className="twin-trust-divider" />
+
+            <div className="twin-trust-item">
+              <div className="twin-trust-icon">
+                <Clock size={20} className="text-gold" />
+              </div>
+              <div className="twin-trust-text">
+                <strong>{lang === 'ar' ? 'مطابقة فورية لكبار مشتري الكاش خلال 24-48 ساعة' : 'Direct Cash Match in 24-48 Hours'}</strong>
+                <span>{lang === 'ar' ? 'سيولة جاهزة وقوة شرائية مسجلة تفوق 480 مليون ج.م' : 'Active verified purchasing power over 480M EGP'}</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -783,7 +785,7 @@ export default function HomePage({
                 </div>
                 <div>
                   <strong>{lang === 'ar' ? 'ضمان 1Line المعتمد للأمان العقاري' : '1Line Certified Trust Guarantee'}</strong>
-                  <p>{lang === 'ar' ? 'جميع الوحدات المعروضة مفحوصة هندسياً ومطابقة للتراخيص الرسمية وتخضع لإشراف قانوني كامل.' : '100% verified legal inspection on all listed units across Sohag governorate.'}</p>
+                  <p>{lang === 'ar' ? 'سواء كنت تبحث عن شقة سكنية أولى أو قصر استثماري فاخر — جميع الوحدات مفحوصة هندسياً وتخضع لإشراف قانوني كامل 100% دون تفرقة.' : 'From starter apartments to prime luxury estates — 100% verified legal inspection on all listed units across Sohag.'}</p>
                 </div>
               </div>
 
@@ -841,7 +843,7 @@ export default function HomePage({
 
             <div className="demands-grid-compact">
               {activeDemandsList.slice(0, 4).map((dem) => (
-                <div key={dem.id} className="demand-card-box">
+                <div key={dem.id} className="demand-card-box titanium-card">
                   <div className="demand-top-row">
                     <span className="demand-time-tag">{dem.timestamp}</span>
                     <span 
@@ -972,44 +974,43 @@ export default function HomePage({
           </div>
 
           <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', position: 'relative', zIndex: 2 }}>
+            {/* 1. Fast WhatsApp Inquiry */}
+            <a
+              href={getWhatsAppUrl(lang === 'ar' ? 'مرحباً 1Line، أريد استفساراً سريعاً عن فرص عقارية واستثمارية متاحة بسوهاج.' : 'Hello 1Line, inquiring about available opportunities in Sohag.')}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-cta-intent btn-cta-wa"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('oneline_whatsapp_clicked', { detail: { intent: 'vip_cta_inquiry' } }));
+                }
+              }}
+            >
+              <MessageSquare size={17} />
+              <span>{lang === 'ar' ? 'استفسار سريع واتساب' : 'Quick WhatsApp'}</span>
+            </a>
+
+            {/* 2. Book Field Inspection Tour */}
             <Link
               to="/buy"
-              className="btn btn-white-navy"
-              style={{
-                background: '#ffffff',
-                color: '#092347',
-                fontWeight: '900',
-                padding: '14px 28px',
-                borderRadius: '14px',
-                border: 'none',
-                boxShadow: '0 8px 25px rgba(0, 0, 0, 0.25)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '0.95rem'
+              className="btn btn-cta-intent btn-cta-tour"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('oneline_wizard_started', { detail: { type: 'tour_booking' } }));
+                }
               }}
             >
-              <span style={{ color: '#092347', fontWeight: '900' }}>{lang === 'ar' ? 'ابدأ معالج الشراء الآن' : 'Start Buy Wizard'}</span>
-              {lang === 'ar' ? <ArrowLeft size={16} style={{ color: '#092347' }} /> : <ArrowRight size={16} style={{ color: '#092347' }} />}
+              <Eye size={17} />
+              <span>{lang === 'ar' ? 'حجز معاينة ميدانية' : 'Book Field Tour'}</span>
             </Link>
 
+            {/* 3. Private Confidential VIP Consultation */}
             <Link
-              to="/sell"
-              className="btn btn-glass-outline"
-              style={{
-                borderColor: 'rgba(255, 255, 255, 0.65)',
-                background: 'rgba(255, 255, 255, 0.14)',
-                color: '#ffffff',
-                fontWeight: '700',
-                padding: '14px 24px',
-                borderRadius: '14px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '0.95rem'
-              }}
+              to="/special-requests"
+              className="btn btn-cta-intent btn-cta-private"
             >
-              <span style={{ color: '#ffffff' }}>{lang === 'ar' ? 'اعرض عقارك للبيع' : 'List Property'}</span>
+              <Lock size={15} className="text-gold" />
+              <span>{lang === 'ar' ? 'استشارة سرية VIP' : 'Private Consultation'}</span>
             </Link>
           </div>
         </div>

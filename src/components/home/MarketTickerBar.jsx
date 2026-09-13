@@ -45,6 +45,9 @@ export default function MarketTickerBar({ lang = 'ar' }) {
           <span style={{ fontSize: '0.76rem', fontWeight: '900', color: '#ffca28', letterSpacing: '0.3px' }}>
             {isAr ? 'مؤشر بورصة سوهاج العقارية' : 'Sohag PropTech Index'}
           </span>
+          <span style={{ fontSize: '0.66rem', color: 'rgba(255, 255, 255, 0.8)', fontWeight: '600', paddingLeft: isAr ? '0' : '6px', paddingRight: isAr ? '6px' : '0', borderLeft: isAr ? 'none' : '1px solid rgba(255, 202, 40, 0.35)', borderRight: isAr ? '1px solid rgba(255, 202, 40, 0.35)' : 'none' }}>
+            {isAr ? 'محدث: سبتمبر 2026 • توثيق 1Line الميداني' : 'Updated: Sep 2026 • 1Line Benchmark'}
+          </span>
         </div>
 
         {/* Scrolling Ticker Items */}

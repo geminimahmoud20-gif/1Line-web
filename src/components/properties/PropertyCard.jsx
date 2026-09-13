@@ -45,6 +45,32 @@ export default function PropertyCard({
   const priceData = formatCurrencyPrice(property.price, currency, lang);
   const benchmark = getPriceBenchmark(property, lang);
 
+  // 🎯 Single Contextual Priority Badge (شارة سياقية واحدة حاسمة لمنع التشتت البصري)
+  const resolvedBadge = (() => {
+    if (property.roiAnnual && property.roiAnnual > 0) {
+      return {
+        label: lang === 'ar' ? `📈 عائد استثماري ${property.roiAnnual}% سنوياً` : `📈 ${property.roiAnnual}% Annual ROI`,
+        className: 'badge-roi'
+      };
+    }
+    if (badge) {
+      return {
+        label: badge,
+        className: 'badge-custom'
+      };
+    }
+    if (property.isDeal || benchmark?.badgeType === 'deal') {
+      return {
+        label: lang === 'ar' ? '🔥 صفقة مميزة كاش' : '🔥 Prime Cash Deal',
+        className: 'badge-deal'
+      };
+    }
+    return {
+      label: lang === 'ar' ? '🛡️ مرخص قانونياً 100%' : '🛡️ 100% Verified',
+      className: 'badge-verified'
+    };
+  })();
+
   return (
     <div className="property-card-modern cinematic-card">
       {/* 16:9 Cinematic Image Container */}
@@ -60,6 +86,7 @@ export default function PropertyCard({
             setImageLoaded(true);
           }}
           loading="lazy"
+          decoding="async"
         />
 
         {/* Interactive Thumbnail Indicator Dots */}
@@ -116,18 +143,15 @@ export default function PropertyCard({
         {/* Brand Watermark Overlay */}
         <BrandWatermark size="sm" position="bottom-right" />
 
-        {/* Badges Layer */}
-        {/* Badges Layer - Clean & Minimal Luxury */}
+        {/* Single Contextual Priority Badge */}
         <div className="card-top-badges">
-          {(badge || property.featured) && (
-            <span className="property-badge gold-badge">
-              {badge || (lang === 'ar' ? 'حصري' : 'Exclusive')}
-            </span>
-          )}
+          <span className={`property-badge ${resolvedBadge.className}`}>
+            {resolvedBadge.label}
+          </span>
           {property.virtualTour && (
             <span className="property-badge tour-badge">
-              <Sparkles size={12} />
-              <span>{lang === 'ar' ? 'جولة 3D' : '3D'}</span>
+              <Sparkles size={11} />
+              <span>{lang === 'ar' ? '3D' : '3D'}</span>
             </span>
           )}
         </div>
@@ -143,6 +167,7 @@ export default function PropertyCard({
               onToggleFavorite(property.id);
             }}
             title={lang === 'ar' ? 'حفظ في المفضلة' : 'Save to Favorites'}
+            aria-label="Toggle Favorite"
           >
             <Heart size={16} fill={isFavorite ? '#ef4444' : 'none'} color={isFavorite ? '#ef4444' : '#ffffff'} />
           </button>
@@ -157,13 +182,14 @@ export default function PropertyCard({
                 onToggleCompare(property);
               }}
               title={lang === 'ar' ? 'إضافة للمقارنة' : 'Add to Compare'}
+              aria-label="Toggle Compare"
             >
               <Scale size={15} color={isCompared ? '#ffb300' : '#ffffff'} />
             </button>
           )}
         </div>
 
-        {/* Bottom Price Tag on Image with Multi-Currency Support */}
+        {/* Bottom Total Price Banner on Image */}
         <div className="card-price-overlay">
           <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '4px' }}>
             <span className="price-val">{priceData.primary}</span>
@@ -177,104 +203,119 @@ export default function PropertyCard({
         </div>
       </div>
 
-      {/* Card Content */}
+      {/* Card Body with Standardized Decision Core */}
       <div className="property-card-body">
-        {/* District & Legal Shield Tag */}
+        {/* District & Area Benchmark */}
         <div className="card-sub-header">
           <div className="property-location-tag">
             <MapPin size={13} className="text-muted" />
             <span>{location}</span>
           </div>
-
-          <span className="verified-pill-subtle">
-            <ShieldCheck size={12} className="text-emerald" />
-            <span>{lang === 'ar' ? 'مرخص قانونياً 100%' : '100% Verified'}</span>
-          </span>
+          {benchmark?.pricePerMeterFormatted && (
+            <span className="benchmark-meter-subtle" title={benchmark.badgeLabel}>
+              {benchmark.pricePerMeterFormatted}
+            </span>
+          )}
         </div>
 
         {/* Title */}
         <h3 className="property-card-title">
-          <Link to={`/properties/${property.id}`}>{title}</Link>
+          <Link 
+            to={`/properties/${property.id}`}
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('oneline_property_viewed', { detail: { id: property.id, title } }));
+              }
+            }}
+          >
+            {title}
+          </Link>
         </h3>
 
-        {/* Unified Clean Specs Strip */}
-        <div className="property-specs-clean">
-          <span className="spec-unit">
-            <Maximize2 size={13} className="text-muted" />
-            <span><strong>{property.size}</strong> {lang === 'ar' ? 'م²' : 'sqm'}</span>
-          </span>
-          {property.bedrooms > 0 && (
-            <>
-              <span className="spec-dot">•</span>
-              <span className="spec-unit">
-                <BedDouble size={14} className="text-muted" />
-                <span><strong>{property.bedrooms}</strong> {lang === 'ar' ? 'غرف' : 'Beds'}</span>
+        {/* 🏛️ STANDARDIZED DECISION CORE (نواة القرار الثابتة) */}
+        <div className="property-decision-core">
+          <div className="core-specs-row">
+            <span className="core-size-highlight">
+              <Maximize2 size={13} className="text-muted" />
+              <strong>{property.size}</strong> {lang === 'ar' ? 'م² صافي' : 'sqm'}
+            </span>
+            <span className="core-divider">•</span>
+            {property.downPayment > 0 ? (
+              <span className="core-fin-label">
+                {lang === 'ar' ? 'مقدم:' : 'Down:'} <strong>{(Number(property.downPayment) || 0).toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}</strong>
               </span>
-            </>
+            ) : (
+              <span className="core-cash-label">
+                {lang === 'ar' ? 'كاش فوري مسجل' : 'Full Cash'}
+              </span>
+            )}
+            {property.monthlyInstallment > 0 && (
+              <>
+                <span className="core-divider">•</span>
+                <span className="core-installment-label text-gold">
+                  {lang === 'ar' ? 'قسط:' : 'Monthly:'} <strong>{(Number(property.monthlyInstallment) || 0).toLocaleString()}</strong>
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Secondary Specs Strip (الغرف والحمامات والتوثيق كصف ثانوي هادئ) */}
+        <div className="property-specs-clean secondary-specs">
+          {property.bedrooms > 0 && (
+            <span className="spec-unit">
+              <BedDouble size={13} className="text-muted" />
+              <span><strong>{property.bedrooms}</strong> {lang === 'ar' ? 'غرف' : 'Beds'}</span>
+            </span>
           )}
           {property.bathrooms > 0 && (
             <>
-              <span className="spec-dot">•</span>
+              {property.bedrooms > 0 && <span className="spec-dot">•</span>}
               <span className="spec-unit">
                 <Bath size={13} className="text-muted" />
                 <span><strong>{property.bathrooms}</strong> {lang === 'ar' ? 'حمام' : 'Baths'}</span>
               </span>
             </>
           )}
+          <span className="spec-dot">•</span>
+          <span className="spec-unit text-emerald">
+            <ShieldCheck size={12} />
+            <span>{lang === 'ar' ? 'فحص قانوني معتمد' : 'Verified Title'}</span>
+          </span>
         </div>
-
-        {/* Sohag Benchmark (If applicable) */}
-        {benchmark && (
-          <div className="card-benchmark-clean">
-            <span className="benchmark-tag">
-              <span>{benchmark.badgeType === 'deal' ? '🔥' : benchmark.badgeType === 'premium' ? '💎' : '⚖️'}</span>
-              <span>{benchmark.badgeLabel}</span>
-            </span>
-            <span className="benchmark-meter">{benchmark.pricePerMeterFormatted}</span>
-          </div>
-        )}
-
-        {/* Minimal Finance Info */}
-        {(property.downPayment > 0 || property.monthlyInstallment > 0) && (
-          <div className="card-finance-row">
-            {property.downPayment > 0 && (
-              <span className="fin-pill">
-                <span className="fin-lbl">{lang === 'ar' ? 'مقدم:' : 'Down:'}</span>
-                <strong>{property.downPayment.toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}</strong>
-              </span>
-            )}
-            {property.monthlyInstallment > 0 && (
-              <span className="fin-pill">
-                <span className="fin-lbl">{lang === 'ar' ? 'قسط:' : 'Monthly:'}</span>
-                <strong className="text-gold">{property.monthlyInstallment.toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}</strong>
-              </span>
-            )}
-          </div>
-        )}
 
         {/* Streamlined Footer Actions */}
         <div className="property-card-footer-streamlined">
           <Link 
             to={`/properties/${property.id}`} 
             className="btn-card-main"
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('oneline_property_viewed', { detail: { id: property.id, title } }));
+              }
+            }}
           >
             <span>{lang === 'ar' ? 'استعراض العقار والتفاصيل' : 'View Details & Book Tour'}</span>
             {lang === 'ar' ? <ArrowLeft size={14} /> : <ArrowRight size={14} />}
           </Link>
 
-          {/* Quick WhatsApp Inquiry */}
+          {/* Quick WhatsApp Inquiry with Telemetry */}
           <button
             type="button"
             className="btn-card-wa-icon"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('oneline_whatsapp_clicked', { detail: { id: property.id, title, intent: 'property_card' } }));
+              }
               const msg = lang === 'ar'
-                ? `مرحباً 1Line، أستفسر عن عقار: "${title}" بسعر ${property.price.toLocaleString()} ج.م (كود: #${property.id}). هل هو متاح للمعاينة؟`
-                : `Hello 1Line, inquiring about property "${title}" priced at ${property.price.toLocaleString()} EGP (ID: #${property.id}).`;
+                ? `مرحباً 1Line، أستفسر عن عقار: "${title}" بسعر ${Number(property.price).toLocaleString()} ج.م (كود: #${property.id}). هل هو متاح للمعاينة الميدانية؟`
+                : `Hello 1Line, inquiring about property "${title}" priced at ${Number(property.price).toLocaleString()} EGP (ID: #${property.id}).`;
               window.open(getWhatsAppUrl(msg), '_blank');
             }}
             title={lang === 'ar' ? 'استفسار فوري عبر واتساب' : 'Quick WhatsApp'}
+            aria-label="Quick WhatsApp Inquiry"
           >
             <MessageSquare size={16} />
           </button>

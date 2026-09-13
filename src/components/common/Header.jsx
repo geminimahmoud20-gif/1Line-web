@@ -39,7 +39,7 @@ export default function Header({
   setCurrency, 
   theme = 'light',
   toggleTheme,
-  soundEnabled = true,
+  soundEnabled = false,
   toggleSound,
   onOpenShare, 
   onOpenTrackLead,

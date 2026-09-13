@@ -121,7 +121,7 @@ export default function App() {
     });
   }, []);
 
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(false);
 
   const toggleSound = useCallback(() => {
     setSoundEnabled((prev) => !prev);
