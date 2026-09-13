@@ -1,10 +1,24 @@
+import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowRight, ArrowLeft, Sparkles, ShieldCheck, Clock, Percent } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Sparkles, ShieldCheck, Clock, Percent, MessageSquare } from 'lucide-react';
 import MortgageRoiCalculator from '../components/calculators/MortgageRoiCalculator';
+import { updatePageSeo } from '../utils/seoHelper';
+import { getWhatsAppUrl } from '../utils/founderCmsData';
 
 export default function FinancingPage({ lang = 'ar' }) {
   const isAr = lang === 'ar';
   const navigate = useNavigate();
+
+  useEffect(() => {
+    updatePageSeo({
+      title: isAr ? 'حاسبة التمويل والتقسيط العقاري وحساب العائد' : 'Mortgage & Installment Calculator',
+      description: isAr 
+        ? 'احسب قسطك الشهري بدقة، خطط ميزانيتك المالية، وحلل العائد الاستثماري لصفقاتك العقارية في سوهاج مع 1Line.' 
+        : 'Calculate your exact monthly payments and analyze real estate ROI in Sohag.',
+      url: '/financing',
+      type: 'website'
+    });
+  }, [lang, isAr]);
 
   return (
     <div className="financing-page-wrapper">
@@ -81,6 +95,41 @@ export default function FinancingPage({ lang = 'ar' }) {
               <div className="fin-benefit-icon"><ShieldCheck size={24} className="text-gold" /></div>
               <h3>{isAr ? 'موافقة مبدئية خلال 48 ساعة' : 'Fast 48h Pre-Approval'}</h3>
               <p>{isAr ? 'فحص ائتماني سريع ومباشر بأقل المستندات وبدون تعقيدات أو اشتراطات بنكية مرهقة.' : 'Hassle-free pre-approval with minimal paperwork and direct consultation.'}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 🚀 Luxury Financing Call to Action Banner */}
+      <section className="financing-cta-section">
+        <div className="financing-container">
+          <div className="financing-cta-box">
+            <div className="cta-content">
+              <span className="cta-badge">
+                <Sparkles size={14} className="text-gold" />
+                {isAr ? 'فرص جاهزة للتعاقد الفوري' : 'Ready for Immediate Contracting'}
+              </span>
+              <h2>{isAr ? 'هل أنت مستعد لامتلاك وحدتك بأفضل خطة سداد؟' : 'Ready to Secure Your Property with the Best Payment Plan?'}</h2>
+              <p>
+                {isAr
+                  ? 'استعرض العقارات المتاحة حالياً بأنظمة تقسيط مباشرة حتى 7 سنوات، أو تواصل مباشرة مع مستشار التمويل العقاري المعتمد.'
+                  : 'Browse certified properties with flexible installment plans up to 7 years, or talk to our certified financial advisory team.'}
+              </p>
+            </div>
+            <div className="cta-actions">
+              <Link to="/properties?financing=true" className="btn btn-primary btn-lg">
+                <span>{isAr ? 'تصفح عقارات التقسيط المتاحة' : 'Browse Installment Properties'}</span>
+                {isAr ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
+              </Link>
+              <a
+                href={getWhatsAppUrl(isAr ? 'مرحباً 1Line، أرغب في استشارة خاصة ببرامج التمويل والتقسيط العقاري المتاحة في سوهاج.' : 'Hello 1Line, I would like a consultation regarding real estate installment plans.')}
+                target="_blank"
+                rel="noreferrer"
+                className="btn btn-outline-gold btn-lg"
+              >
+                <MessageSquare size={16} />
+                <span>{isAr ? 'استشارة تمويلية عبر واتساب' : 'WhatsApp Financial Advisor'}</span>
+              </a>
             </div>
           </div>
         </div>

@@ -1361,7 +1361,7 @@ export default function App() {
       )}
 
       {/* ⬆️ Floating Back-To-Top Button */}
-      <BackToTopButton />
+      <BackToTopButton lang={lang} />
 
       {/* 📱 Quick Multi-Channel Contact & Dial Drawer (Mobile) */}
       <QuickContactDrawer

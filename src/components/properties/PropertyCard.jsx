@@ -73,21 +73,32 @@ export default function PropertyCard({
 
   return (
     <div className="property-card-modern cinematic-card">
-      {/* 16:9 Cinematic Image Container */}
+      {/* 16:9 Cinematic Image Container (Clickable to property details) */}
       <div className="property-card-media aspect-16-9">
-        <img
-          src={imagesList[activeImageIndex] || imagesList[0] || FALLBACK_PROPERTY_IMG}
-          alt={title}
-          className={`property-card-img ${imageLoaded ? 'loaded' : 'loading'}`}
-          onLoad={() => setImageLoaded(true)}
-          onError={(e) => {
-            e.currentTarget.onerror = null;
-            e.currentTarget.src = FALLBACK_PROPERTY_IMG;
-            setImageLoaded(true);
+        <Link 
+          to={`/properties/${property.id}`}
+          className="card-media-clickable-link"
+          aria-label={title}
+          onClick={() => {
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('oneline_property_viewed', { detail: { id: property.id, title } }));
+            }
           }}
-          loading="lazy"
-          decoding="async"
-        />
+        >
+          <img
+            src={imagesList[activeImageIndex] || imagesList[0] || FALLBACK_PROPERTY_IMG}
+            alt={title}
+            className={`property-card-img ${imageLoaded ? 'loaded' : 'loading'}`}
+            onLoad={() => setImageLoaded(true)}
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = FALLBACK_PROPERTY_IMG;
+              setImageLoaded(true);
+            }}
+            loading="lazy"
+            decoding="async"
+          />
+        </Link>
 
         {/* Interactive Thumbnail Indicator Dots */}
         {imagesList.length > 1 && (

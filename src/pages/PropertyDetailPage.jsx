@@ -328,6 +328,7 @@ export default function PropertyDetailPage({
           title={title}
           virtualTour={property.virtualTour}
           lang={lang}
+          floorPlan={property.floorPlan || property.floorPlanImage}
         />
 
         {/* 📱 WhatsApp Automation, Instant PDF Brochure & Story Bar */}

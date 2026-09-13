@@ -2871,28 +2871,32 @@
   }
 }
 
+/* =============================================================
+   🌟 MARKETPLACE SWITCHER BAR (Ultra-Luxury High Contrast)
+   ============================================================= */
 .marketplace-switcher-bar {
   display: inline-flex;
+  align-items: center;
   background: #f1f5f9;
-  padding: 5px;
+  padding: 6px;
   border-radius: var(--radius-pill);
-  border: 1px solid rgba(11, 78, 162, 0.16);
-  gap: 6px;
+  border: 1.5px solid rgba(11, 78, 162, 0.16);
+  gap: 8px;
   box-shadow: 0 4px 16px rgba(11, 78, 162, 0.08);
 }
 
 .marketplace-tab-btn {
   background: transparent;
-  color: #475569;
-  border: none;
+  color: #334155;
+  border: 1px solid transparent;
   border-radius: var(--radius-pill);
-  padding: 9px 22px;
-  font-size: 0.88rem;
+  padding: 10px 22px;
+  font-size: 0.9rem;
   font-weight: 800;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -2905,22 +2909,82 @@
   background: linear-gradient(135deg, #0b4ea2 0%, #073875 100%);
   color: #ffffff;
   box-shadow: 0 6px 18px rgba(11, 78, 162, 0.35);
-  border: 1px solid rgba(253, 203, 66, 0.45);
+  border-color: rgba(253, 203, 66, 0.45);
 }
 
+/* Tab Count Badge - High Contrast in all states (Defect in Image 2 Fixed) */
 .marketplace-tab-btn .tab-count-badge {
-  background: rgba(255, 255, 255, 0.25);
-  color: #ffffff;
-  font-size: 0.72rem;
-  padding: 2px 7px;
-  border-radius: 10px;
+  background: rgba(11, 78, 162, 0.08);
+  color: #0b4ea2;
+  border: 1px solid rgba(11, 78, 162, 0.18);
+  font-size: 0.74rem;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
   font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: all 0.2s ease;
+}
+
+.marketplace-tab-btn:hover .tab-count-badge {
+  background: rgba(11, 78, 162, 0.14);
+  color: #073875;
 }
 
 .marketplace-tab-btn.active .tab-count-badge {
   background: #fdcb42;
   color: #092347;
+  border: 1px solid rgba(0, 0, 0, 0.1);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Dark Theme Support for Switcher Bar */
+.dark-theme .marketplace-switcher-bar,
+.dark .marketplace-switcher-bar {
+  background: #0b1528;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+}
+
+.dark-theme .marketplace-tab-btn,
+.dark .marketplace-tab-btn {
+  color: #94a3b8;
+}
+
+.dark-theme .marketplace-tab-btn:hover,
+.dark .marketplace-tab-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.dark-theme .marketplace-tab-btn.active,
+.dark .marketplace-tab-btn.active {
+  background: linear-gradient(135deg, #134e9e 0%, #0c3268 100%);
+  color: #ffffff;
+  border-color: rgba(253, 203, 66, 0.45);
+}
+
+.dark-theme .marketplace-tab-btn .tab-count-badge,
+.dark .marketplace-tab-btn .tab-count-badge {
+  background: rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.dark-theme .marketplace-tab-btn:hover .tab-count-badge,
+.dark .marketplace-tab-btn:hover .tab-count-badge {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+.dark-theme .marketplace-tab-btn.active .tab-count-badge,
+.dark .marketplace-tab-btn.active .tab-count-badge {
+  background: #fdcb42;
+  color: #092347;
 }
 
 .marketplace-filter-strip {
@@ -3212,6 +3276,26 @@
   aspect-ratio: 16 / 9;
   height: auto;
   min-height: 210px;
+}
+
+.card-media-clickable-link {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.card-media-clickable-link .property-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.property-card-modern:hover .card-media-clickable-link .property-card-img {
+  transform: scale(1.05);
 }
 
 /* Media Navigation Arrows */
@@ -11436,6 +11520,18 @@ body.dark,
   cursor: pointer;
   z-index: 999;
   transition: all 0.25s ease;
+  animation: fadeInScale 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 [dir="ltr"] .floating-back-to-top-btn {
@@ -17830,6 +17926,334 @@ body.dark-theme .compare-tabs-bar {
 }
 
 /* =============================================================
+   📈 CONTINUOUS REAL-TIME MARKET TICKER (Bloomberg Marquee)
+   ============================================================= */
+.market-ticker-container {
+  background: linear-gradient(90deg, #04142d 0%, #082852 50%, #04142d 100%);
+  border-bottom: 1px solid rgba(255, 202, 40, 0.25);
+  padding: 8px 0;
+  overflow: hidden;
+  position: relative;
+  z-index: 50;
+  box-shadow: 0 4px 18px rgba(5, 25, 55, 0.4);
+}
+
+.market-ticker-wrapper {
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 14px;
+}
+
+.market-ticker-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 202, 40, 0.12);
+  border: 1px solid rgba(255, 202, 40, 0.4);
+  padding: 5px 14px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 2;
+}
+
+.ticker-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ffca28;
+  box-shadow: 0 0 8px #ffca28;
+  animation: pulseTickerDot 1.8s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pulseTickerDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.85); }
+}
+
+.ticker-marquee-viewport {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  mask-image: linear-gradient(to right, transparent 0%, black 40px, black calc(100% - 40px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 40px, black calc(100% - 40px), transparent 100%);
+  direction: ltr !important;
+}
+
+.ticker-marquee-track {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: max-content;
+  white-space: nowrap;
+  animation: tickerSlideContinuous 40s linear infinite;
+  will-change: transform;
+}
+
+.ticker-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes tickerSlideContinuous {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.ticker-item-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: #e2e8f0;
+  padding: 4px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.ticker-item-card:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 202, 40, 0.45);
+  transform: translateY(-1px);
+}
+
+.ticker-change-pill {
+  color: #34d399;
+  font-weight: 800;
+  background: rgba(16, 185, 129, 0.22);
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  padding: 1px 7px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  direction: ltr !important;
+  unicode-bidi: isolate;
+}
+
+/* =============================================================
+   🏛️ 1LINE FINANCING & MORTGAGE PAGE LUXURY DESIGN SYSTEM
+   ============================================================= */
+.financing-page-wrapper {
+  background: var(--bg-primary);
+  min-height: 100vh;
+  padding-bottom: 60px;
+}
+
+.financing-hero-section {
+  background: linear-gradient(135deg, #051937 0%, #072552 50%, #00122e 100%);
+  padding: 40px 20px 64px;
+  color: #ffffff;
+  position: relative;
+  border-bottom: 1px solid rgba(253, 203, 66, 0.25);
+}
+
+.financing-hero-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.financing-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(253, 203, 66, 0.12);
+  border: 1px solid rgba(253, 203, 66, 0.35);
+  color: #fdcb42;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  margin-bottom: 18px;
+}
+
+.financing-hero-container h1 {
+  font-size: clamp(1.6rem, 3.2vw, 2.35rem);
+  font-weight: 900;
+  line-height: 1.35;
+  margin: 0 0 14px 0;
+  color: #ffffff;
+}
+
+.financing-hero-container p {
+  font-size: clamp(0.95rem, 1.6vw, 1.08rem);
+  color: #cbd5e1;
+  max-width: 800px;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.financing-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.financing-calc-section {
+  margin-top: -34px;
+  position: relative;
+  z-index: 10;
+  margin-bottom: 50px;
+}
+
+.financing-benefits-section {
+  padding: 40px 0 50px;
+  border-top: 1px solid var(--border-color);
+}
+
+.financing-benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-top: 32px;
+}
+
+.fin-benefit-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  padding: 28px 24px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fin-benefit-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(253, 203, 66, 0.45);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+}
+
+.fin-benefit-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  background: rgba(253, 203, 66, 0.12);
+  border: 1px solid rgba(253, 203, 66, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.fin-benefit-card h3 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 10px 0;
+}
+
+.fin-benefit-card p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* Luxury Financing CTA Section */
+.financing-cta-section {
+  padding: 20px 0 40px;
+}
+
+.financing-cta-box {
+  background: linear-gradient(135deg, #051937 0%, #0a2e63 100%);
+  border: 1px solid rgba(253, 203, 66, 0.3);
+  border-radius: 22px;
+  padding: 42px 38px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  box-shadow: 0 16px 40px rgba(5, 25, 55, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.financing-cta-box::before {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -20%;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(253, 203, 66, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.financing-cta-box .cta-content {
+  flex: 1;
+  position: relative;
+  z-index: 2;
+}
+
+.financing-cta-box .cta-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(253, 203, 66, 0.15);
+  color: #fdcb42;
+  padding: 4px 14px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.financing-cta-box h2 {
+  font-size: clamp(1.4rem, 2.5vw, 1.85rem);
+  font-weight: 900;
+  color: #ffffff;
+  margin: 0 0 10px 0;
+  line-height: 1.35;
+}
+
+.financing-cta-box p {
+  font-size: 0.95rem;
+  color: #cbd5e1;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 640px;
+}
+
+.financing-cta-box .cta-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+}
+
+@media (max-width: 868px) {
+  .financing-cta-box {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 30px 22px;
+    gap: 22px;
+  }
+
+  .financing-cta-box .cta-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .financing-cta-box .cta-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* =============================================================
    ♿ ACCESSIBILITY & LOW-SPEC DEVICES (Prefers-Reduced-Motion)
    ============================================================= */
 @media (prefers-reduced-motion: reduce) {
@@ -17840,3 +18264,4 @@ body.dark-theme .compare-tabs-bar {
     scroll-behavior: auto !important;
   }
 }
+

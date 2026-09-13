@@ -120,6 +120,10 @@ export default function HomePage({
   useEffect(() => {
     if (!founderSettings.heroVideoAutoCycle || heroClips.length <= 1 || !videoPlaying) return;
 
+    // Pause auto-cycle on mobile devices or slow networks for optimal performance
+    const isMobileDevice = typeof window !== 'undefined' && window.innerWidth <= 768;
+    if (isMobileDevice) return;
+
     const intervalMs = (founderSettings.heroVideoIntervalSec || 10) * 1000;
     const timer = setInterval(() => {
       setClipFade(true);
@@ -296,7 +300,7 @@ export default function HomePage({
             <div 
               className="hero-video-overlay-gradient"
               style={{
-                opacity: founderSettings.heroOverlayOpacity !== undefined ? founderSettings.heroOverlayOpacity : 0.65
+                opacity: founderSettings.heroOverlayOpacity !== undefined ? founderSettings.heroOverlayOpacity : 0.78
               }}
             />
           </div>
@@ -419,49 +423,6 @@ export default function HomePage({
 
           {/* Smart Universal Search Bar */}
           <div className="hero-search-glassbox">
-            <div className="hero-search-tabs">
-              <button
-                type="button"
-                className={`hero-tab ${searchType === 'all' ? 'active' : ''}`}
-                onClick={() => setSearchType('all')}
-              >
-                <Building size={14} />
-                <span>{lang === 'ar' ? 'جميع العقارات' : 'All'}</span>
-              </button>
-              <button
-                type="button"
-                className={`hero-tab ${searchType === 'apartment' ? 'active' : ''}`}
-                onClick={() => setSearchType('apartment')}
-              >
-                <Home size={14} />
-                <span>{lang === 'ar' ? 'شقق وسكني' : 'Residential'}</span>
-              </button>
-              <button
-                type="button"
-                className={`hero-tab ${searchType === 'commercial' ? 'active' : ''}`}
-                onClick={() => setSearchType('commercial')}
-              >
-                <Award size={14} />
-                <span>{lang === 'ar' ? 'تجاري وإداري' : 'Commercial'}</span>
-              </button>
-              <button
-                type="button"
-                className={`hero-tab ${searchType === 'villa' ? 'active' : ''}`}
-                onClick={() => setSearchType('villa')}
-              >
-                <Sparkles size={14} />
-                <span>{lang === 'ar' ? 'فيلات ودوبلكس' : 'Villas'}</span>
-              </button>
-              <button
-                type="button"
-                className={`hero-tab ${searchType === 'land' ? 'active' : ''}`}
-                onClick={() => setSearchType('land')}
-              >
-                <Landmark size={14} />
-                <span>{lang === 'ar' ? 'أراضي' : 'Lands'}</span>
-              </button>
-            </div>
-
             <form onSubmit={handleHeroSearch} className="hero-search-inputs-row">
               {/* 1. Keyword Search */}
               <div className="search-field keyword-search-field">
@@ -716,33 +677,6 @@ export default function HomePage({
         {/* Tab 1: Properties */}
         {marketplaceTab === 'properties' && (
           <div>
-            {/* Quick In-Tab District Filter Strip */}
-            <div className="marketplace-filter-strip">
-              <span className="filter-strip-label">
-                <Filter size={14} className="text-gold" />
-                <span>{lang === 'ar' ? 'تصفية سريعة بالمنطقة:' : 'Quick District Filter:'}</span>
-              </span>
-              <div className="filter-strip-chips">
-                {[
-                  { id: 'all', label_ar: 'الكل (جميع الأحياء)', label_en: 'All Districts' },
-                  { id: 'east', label_ar: 'شرق سوهاج', label_en: 'East Sohag' },
-                  { id: 'new_sohag', label_ar: 'سوهاج الجديدة', label_en: 'New Sohag' },
-                  { id: 'corniche', label_ar: 'كورنيش النيل', label_en: 'Nile Corniche' },
-                  { id: 'center', label_ar: 'وسط البلد والجامعة', label_en: 'City Center' },
-                  { id: 'kawthar', label_ar: 'حي الكوثر', label_en: 'Al-Kawthar' }
-                ].map(area => (
-                  <button
-                    key={area.id}
-                    type="button"
-                    onClick={() => setMarketplaceAreaFilter(area.id)}
-                    className={`filter-chip-btn ${marketplaceAreaFilter === area.id ? 'active' : ''}`}
-                  >
-                    {lang === 'ar' ? area.label_ar : area.label_en}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {displayProperties.length > 0 ? (
               <div className="properties-grid-4">
                 {displayProperties.map((prop) => (

@@ -15,8 +15,8 @@ import PhoneInputField from './PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { getAreas } from '../utils/areasData';
 
-// Benchmark pricing per sqm based on district and type
-const BENCHMARK_PRICING = {
+// Default fallback benchmark pricing per sqm
+const FALLBACK_BENCHMARK_PRICING = {
   east: { base: 21500, name_ar: 'شرق سوهاج (الجمهورية وسيتي)', name_en: 'East Sohag' },
   new_sohag: { base: 17800, name_ar: 'سوهاج الجديدة (الحي الأول والثاني)', name_en: 'New Sohag' },
   corniche: { base: 31000, name_ar: 'كورنيش النيل', name_en: 'Nile Corniche' },
@@ -38,6 +38,7 @@ export const SellWizard = ({
   const [whatsappCountry, setWhatsappCountry] = useState('+20');
   const [whatsappError, setWhatsappError] = useState('');
   const [sameAsPhone, setSameAsPhone] = useState(true);
+  const [districts, setDistricts] = useState(() => getAreas().filter(a => a.id !== 'all'));
 
   const isAr = lang === 'ar';
 
@@ -45,12 +46,17 @@ export const SellWizard = ({
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('oneline_wizard_started', { detail: { type: 'sell' } }));
     }
+    const handleAreasUpdate = () => setDistricts(getAreas().filter(a => a.id !== 'all'));
+    window.addEventListener('oneline_areas_updated', handleAreasUpdate);
+    return () => window.removeEventListener('oneline_areas_updated', handleAreasUpdate);
   }, []);
 
-  // Live Real-Time Estimated Valuation Range calculation
+  // Live Real-Time Estimated Valuation Range calculation dynamically tied to CMS
   const calculatedEstimate = useMemo(() => {
     const areaKey = sellerAnswers.area || 'east';
-    const areaData = BENCHMARK_PRICING[areaKey] || BENCHMARK_PRICING.east;
+    const liveArea = districts.find(d => d.id === areaKey);
+    const fallbackArea = FALLBACK_BENCHMARK_PRICING[areaKey] || FALLBACK_BENCHMARK_PRICING.east;
+    const baseM2 = liveArea?.avgPricePerMeter || fallbackArea.base || 21500;
     const size = parseInt(sellerAnswers.size) || 140;
     
     // Type multiplier
@@ -66,7 +72,7 @@ export const SellWizard = ({
     if (sellerAnswers.finishing === 'semi') finishMultiplier = 1.0;
     if (sellerAnswers.finishing === 'core') finishMultiplier = 0.88;
 
-    const baseVal = size * areaData.base * typeMultiplier * finishMultiplier;
+    const baseVal = size * baseM2 * typeMultiplier * finishMultiplier;
     const minVal = Math.round((baseVal * 0.93) / 10000) * 10000;
     const maxVal = Math.round((baseVal * 1.07) / 10000) * 10000;
 
@@ -74,9 +80,9 @@ export const SellWizard = ({
       min: minVal,
       max: maxVal,
       avg: Math.round(baseVal),
-      sqmAvg: Math.round(areaData.base * typeMultiplier * finishMultiplier)
+      sqmAvg: Math.round(baseM2 * typeMultiplier * finishMultiplier)
     };
-  }, [sellerAnswers]);
+  }, [sellerAnswers, districts]);
 
   const validateAndSubmit = (e) => {
     e.preventDefault();
@@ -132,16 +138,6 @@ export const SellWizard = ({
     { id: 'office', label_ar: 'مكتب إداري / عيادة', label_en: 'Office / Clinic', icon: Briefcase, desc_ar: 'مقرات إدارية وعيادات طبية جاهزة' },
     { id: 'land', label_ar: 'قطعة أرض', label_en: 'Land Plot', icon: MapPin, desc_ar: 'أراضي مباني وتجارية بترخيص معتمد' }
   ];
-
-  const [districts, setDistricts] = useState(() => getAreas().filter(a => a.id !== 'all'));
-
-  useEffect(() => {
-    const handleAreasUpdate = () => {
-      setDistricts(getAreas().filter(a => a.id !== 'all'));
-    };
-    window.addEventListener('oneline_areas_updated', handleAreasUpdate);
-    return () => window.removeEventListener('oneline_areas_updated', handleAreasUpdate);
-  }, []);
 
   return (
     <div className="smart-valuation-wizard-box">

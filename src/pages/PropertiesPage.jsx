@@ -24,7 +24,12 @@ export default function PropertiesPage({
   onQuickView
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [viewMode, setViewMode] = useState('split'); // 'split' | 'grid' | 'map'
+  const [viewMode, setViewMode] = useState(() => {
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+      return 'grid';
+    }
+    return 'split';
+  }); // 'split' | 'grid' | 'map'
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [hoveredPropertyId, setHoveredPropertyId] = useState(null);
   const [sortBy, setSortBy] = useState('featured'); // 'featured' | 'price_asc' | 'price_desc' | 'size_desc'
@@ -52,7 +57,7 @@ export default function PropertiesPage({
     bedrooms: searchParams.get('bedrooms') || 'all',
     completionStatus: 'all',
     finishing: 'all',
-    paymentPlan: 'all',
+    paymentPlan: searchParams.get('paymentPlan') || (searchParams.get('financing') === 'true' ? 'installments' : 'all'),
     maxInstallmentYears: 'all',
     smartTags: []
   });
@@ -65,12 +70,13 @@ export default function PropertiesPage({
     const budgetParam = searchParams.get('budget');
     const maxPrice = budgetParam ? (budgetParam === 'under_3m' ? 3000000 : budgetParam === '3m_to_6m' ? 6000000 : 15000000) : 15000000;
     const bedrooms = searchParams.get('bedrooms') || 'all';
+    const paymentPlan = searchParams.get('paymentPlan') || (searchParams.get('financing') === 'true' ? 'installments' : 'all');
 
     setFilters(prev => {
-      if (prev.query === q && prev.type === type && prev.area === area && prev.maxPrice === maxPrice && prev.bedrooms === bedrooms) {
+      if (prev.query === q && prev.type === type && prev.area === area && prev.maxPrice === maxPrice && prev.bedrooms === bedrooms && prev.paymentPlan === paymentPlan) {
         return prev;
       }
-      return { ...prev, query: q, type, area, maxPrice, bedrooms };
+      return { ...prev, query: q, type, area, maxPrice, bedrooms, paymentPlan };
     });
   }, [searchParams]);
 

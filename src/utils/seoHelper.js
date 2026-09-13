@@ -65,6 +65,9 @@ export function updatePageSeo({
   setMetaTag('property', 'og:title', finalTitle);
   setMetaTag('property', 'og:description', finalDesc);
   setMetaTag('property', 'og:image', finalImage);
+  setMetaTag('property', 'og:image:width', '1200');
+  setMetaTag('property', 'og:image:height', '630');
+  setMetaTag('property', 'og:image:alt', finalTitle);
   setMetaTag('property', 'og:url', finalUrl);
   setMetaTag('property', 'og:type', type);
   setMetaTag('property', 'og:site_name', '1Line Real Estate Solutions');
@@ -76,7 +79,16 @@ export function updatePageSeo({
   setMetaTag('name', 'twitter:description', finalDesc);
   setMetaTag('name', 'twitter:image', finalImage);
 
-  // 4. Inject Schema.org JSON-LD if provided
+  // 4. Canonical Link Tag (Guarantees no duplicate content issues)
+  let canonicalLink = document.querySelector('link[rel="canonical"]');
+  if (!canonicalLink) {
+    canonicalLink = document.createElement('link');
+    canonicalLink.setAttribute('rel', 'canonical');
+    document.head.appendChild(canonicalLink);
+  }
+  canonicalLink.setAttribute('href', finalUrl);
+
+  // 5. Inject Schema.org JSON-LD if provided
   if (schemaId && schema) {
     injectJsonLdSchema(schemaId, schema);
   }
