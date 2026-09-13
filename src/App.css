@@ -1210,6 +1210,7 @@
 }
 
 .hero-clip-dot {
+  position: relative;
   width: 6px;
   height: 6px;
   border-radius: 999px;
@@ -1217,18 +1218,67 @@
   border: none;
   cursor: pointer;
   padding: 0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
 }
 
 .hero-clip-dot:hover {
-  background: rgba(255, 255, 255, 0.75);
-  transform: scale(1.2);
+  background: rgba(255, 255, 255, 0.85);
+  transform: scale(1.15);
 }
 
 .hero-clip-dot.active {
-  width: 18px;
+  width: 26px;
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+}
+
+.hero-clip-progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 0%;
   background: var(--accent-gold, #f59e0b);
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
+  border-radius: 999px;
+  animation-name: heroClipFillAnim;
+  animation-timing-function: linear;
+  animation-iteration-count: 1;
+  animation-fill-mode: forwards;
+}
+
+[dir="rtl"] .hero-clip-progress-fill {
+  left: auto;
+  right: 0;
+}
+
+@keyframes heroClipFillAnim {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+/* Data Saver Tag in Media Controls */
+.hero-data-saver-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--accent-gold, #f59e0b);
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-right: 4px;
+}
+
+[dir="ltr"] .hero-data-saver-indicator {
+  margin-right: 0;
+  margin-left: 4px;
 }
 
 /* Ambient Mesh and Glowing Orbs */

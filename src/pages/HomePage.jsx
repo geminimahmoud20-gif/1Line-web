@@ -22,7 +22,8 @@ import {
   Pause,
   Play,
   Volume2,
-  VolumeX
+  VolumeX,
+  Zap
 } from 'lucide-react';
 import PropertyCard from '../components/properties/PropertyCard';
 import MarketTickerBar from '../components/home/MarketTickerBar';
@@ -66,7 +67,11 @@ export default function HomePage({
   const [founderSettings, setFounderSettings] = useState(() => getFounderSettings());
 
   // 🎬 Cinematic Hero Video State & Controls (Multi-clip Short Video Engine)
-  const [videoPlaying, setVideoPlaying] = useState(true);
+  const isDataSaver = typeof navigator !== 'undefined' && navigator.connection
+    ? (navigator.connection.saveData === true || ['slow-2g', '2g'].includes(navigator.connection.effectiveType))
+    : false;
+
+  const [videoPlaying, setVideoPlaying] = useState(!isDataSaver);
   const [videoMuted, setVideoMuted] = useState(true);
   const [activeClipIndex, setActiveClipIndex] = useState(0);
   const [clipFade, setClipFade] = useState(false);
@@ -332,10 +337,31 @@ export default function HomePage({
                       onClick={() => switchClip(idx)}
                       title={lang === 'ar' ? clip.title_ar : clip.title_en}
                       aria-label={`Switch to clip ${idx + 1}`}
-                    />
+                    >
+                      {idx === activeClipIndex && videoPlaying && founderSettings.heroVideoAutoCycle !== false && (
+                        <span 
+                          key={`progress-${activeClipIndex}-${videoPlaying}`}
+                          className="hero-clip-progress-fill"
+                          style={{
+                            animationDuration: `${founderSettings.heroVideoIntervalSec || 10}s`
+                          }}
+                        />
+                      )}
+                    </button>
                   ))}
                 </div>
               </div>
+            )}
+
+            {/* Subtle Data Saver indicator when active */}
+            {isDataSaver && !videoPlaying && (
+              <span 
+                className="hero-data-saver-indicator" 
+                title={lang === 'ar' ? 'وضع توفير البيانات مفعّل - انقر زر التشغيل لبدء الفيديو' : 'Data saver active - Click play to stream video'}
+              >
+                <Zap size={11} className="text-gold" />
+                <span>{lang === 'ar' ? 'توفير بيانات' : 'Data Saver'}</span>
+              </span>
             )}
           </div>
         )}
@@ -533,7 +559,7 @@ export default function HomePage({
                                 <img src={p.images[0]} alt={p.title_ar} className="sug-thumb" />
                                 <div className="sug-info">
                                   <span className="sug-title">{lang === 'ar' ? p.title_ar : p.title_en}</span>
-                                  <span className="sug-meta">{p.size} م² • {p.price.toLocaleString()} ج.م</span>
+                                  <span className="sug-meta">{p.size} {lang === 'ar' ? 'م²' : 'sqm'} • {(Number(p.price) || 0).toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}</span>
                                 </div>
                               </Link>
                             ))}
