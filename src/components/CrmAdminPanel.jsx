@@ -147,6 +147,37 @@ export const CrmAdminPanel = ({
     return areaKey;
   };
 
+  const formatLeadTypeBadge = (type) => {
+    if (isAr) {
+      const map = {
+        buyer: 'طلب شراء',
+        seller: 'عرض بيع',
+        investor: 'مستثمر VIP',
+        broker: 'وسيط عقاري',
+        callback_request: 'طلب اتصال',
+        express_buyer: 'طلب شراء سريع',
+        request: 'استفسار عام'
+      };
+      return map[type] || t[type] || type;
+    }
+    return t[type] || type;
+  };
+
+  const formatLeadSourceLabel = (src) => {
+    if (!src) return isAr ? 'الموقع المباشر' : 'Direct Web';
+    if (isAr) {
+      if (src.includes('sell')) return 'عرض عقار للبيع';
+      if (src.includes('express')) return 'الشريط السريع بالرئيسية';
+      if (src.includes('whatsapp')) return 'واتساب المنظومة';
+      if (src.includes('valuation')) return 'حاسبة التقييم';
+      if (src.includes('Facebook')) return 'إعلانات فيسبوك';
+      if (src.includes('Google')) return 'بحث جوجل المباشر';
+      if (src.includes('TikTok')) return 'حملات تيك توك';
+      if (src === 'Direct Web') return 'الموقع المباشر';
+    }
+    return src;
+  };
+
   // Bulk Selection Handlers
   const handleToggleSelectAll = (visibleLeads) => {
     if (selectedLeadIds.length === visibleLeads.length) {
@@ -749,18 +780,14 @@ export const CrmAdminPanel = ({
       {/* Enterprise Modular Navigation Strip (Segmented Modern Pills) */}
       <div className="crm-nav-segmented-strip">
         {[
-          { id: 'dashboard', icon: LayoutGrid, label_ar: 'لوحة القيادة التنفيذية', label_en: 'Executive Overview' },
+          { id: 'dashboard', icon: LayoutGrid, label_ar: 'لوحة القيادة والمتابعة', label_en: 'Executive Overview' },
+          { id: 'leads', icon: Users, label_ar: `قاعدة بيانات العملاء (${leads.length})`, label_en: `Leads Hub (${leads.length})` },
           { id: 'kanban', icon: Target, label_ar: 'مسار الصفقات (Kanban)', label_en: 'Deals Pipeline' },
           { id: 'matching', icon: Sparkles, label_ar: 'المطابقات الذكية', label_en: 'AI Match Engine' },
-          { id: 'demands_hub', icon: Zap, label_ar: `طلبات المشترين (${demands.length})`, label_en: `Buyer Demands (${demands.length})`, onAction: onSwitchToDemands },
-          { id: 'properties_hub', icon: Building, label_ar: `محفظة العقارات (${properties.length})`, label_en: `Properties (${properties.length})`, onAction: onSwitchToProperties },
-          { id: 'areas_hub', icon: MapPin, label_ar: 'المناطق والأحياء', label_en: 'Districts CMS', onAction: onSwitchToAreas },
-          { id: 'leads', icon: Users, label_ar: `قاعدة بيانات العملاء (${leads.length})`, label_en: `Leads Hub (${leads.length})` },
-          { id: 'agents', icon: Trophy, label_ar: 'تارجت وعمولات الفريق', label_en: 'Team & Commissions' },
           { id: 'financials', icon: Calculator, label_ar: 'الأقساط وإيصالات الحجز', label_en: 'Financials & Receipts' },
+          { id: 'agents', icon: Trophy, label_ar: 'تارجت وعمولات الفريق', label_en: 'Team & Commissions' },
           { id: 'retargeting', icon: Zap, label_ar: 'حملات إعادة الاستهداف', label_en: 'Retargeting' },
           { id: 'visitor_intelligence', icon: Activity, label_ar: 'تحليلات وسلوك الزوار', label_en: 'Visitor Intelligence' },
-          { id: 'founder_cms', icon: ShieldCheck, label_ar: 'بيانات الشركة والمؤسس', label_en: 'Corporate CMS' },
           { id: 'automation', icon: Bell, label_ar: 'الأتمتة والإشعارات', label_en: 'Automations' }
         ].map((tab) => {
           const IconComp = tab.icon;
@@ -1003,12 +1030,15 @@ export const CrmAdminPanel = ({
           <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '30px' }}>
             <div className="crm-table-container">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                <h3 style={{ margin: 0 }}>{isAr ? 'العملاء المسجلون حديثاً' : 'Recent Registrations'}</h3>
+                <h3 style={{ margin: 0, color: '#ffffff', fontSize: '1.05rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Users size={18} className="text-gold" />
+                  <span>{isAr ? 'العملاء المسجلون حديثاً' : 'Recent Registrations'}</span>
+                </h3>
                 <button 
                   type="button" 
-                  className="btn btn-sm btn-outline" 
+                  className="btn btn-sm" 
                   onClick={() => setAdminTab('kanban')}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', borderColor: 'var(--primary)', color: 'var(--primary)' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', background: 'rgba(37, 99, 235, 0.15)', border: '1px solid rgba(59, 130, 246, 0.4)', color: '#60a5fa', borderRadius: '8px', fontWeight: 'bold' }}
                 >
                   <span>{isAr ? 'عرض مسار الكانبان' : 'Open Pipeline'}</span>
                   {isAr ? <ArrowLeft size={13} /> : <ArrowRight size={13} />}
@@ -1027,15 +1057,15 @@ export const CrmAdminPanel = ({
                 <tbody>
                   {leads.slice(0, 5).map((l) => (
                     <tr key={l.id}>
-                      <td style={{ fontWeight: 'bold' }}>{l.name}</td>
-                      <td><span className={`badge badge-${l.type}`}>{t[l.type] || l.type}</span></td>
+                      <td style={{ fontWeight: 'bold', color: '#ffffff' }}>{l.name}</td>
+                      <td><span className={`badge badge-${l.type}`}>{formatLeadTypeBadge(l.type)}</span></td>
                       <td>
                         <span className={`lead-score-pill ${l.score >= 85 ? 'score-high' : l.score >= 60 ? 'score-medium' : 'score-low'}`}>
                           {l.score}
                         </span>
                       </td>
                       <td><span className={`badge badge-status status-${l.status}`}>{l.status?.toUpperCase()}</span></td>
-                      <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{l.source || l.landingPage || 'Direct Web'}</td>
+                      <td style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{formatLeadSourceLabel(l.source || l.landingPage)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1043,10 +1073,13 @@ export const CrmAdminPanel = ({
             </div>
 
             <div className="crm-table-container" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              <h3>{isAr ? 'سجل الإشعارات والأتمتة' : 'System Notifications'}</h3>
+              <h3 style={{ margin: 0, color: '#ffffff', fontSize: '1.05rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Bell size={18} className="text-gold" />
+                <span>{isAr ? 'سجل الإشعارات والأتمتة' : 'System Notifications'}</span>
+              </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
                 {notifications.length === 0 ? (
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{isAr ? 'لا توجد إشعارات حالية' : 'No notifications'}</p>
+                  <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>{isAr ? 'لا توجد إشعارات حالية' : 'No notifications'}</p>
                 ) : (
                   notifications.map((notif, index) => (
                     <div key={index} style={{

@@ -15987,6 +15987,14 @@ body.dark-theme .compare-tabs-bar {
   color: #ffffff !important;
 }
 
+.crm-page-wrapper .crm-table-container h3,
+.crm-page-wrapper .crm-table-container h4,
+.crm-table-container h3,
+.crm-table-container h4 {
+  color: #ffffff !important;
+  font-weight: 800 !important;
+}
+
 .crm-page-wrapper .crm-table,
 .crm-table {
   color: #f1f5f9 !important;
@@ -16032,6 +16040,34 @@ body.dark-theme .compare-tabs-bar {
   border-color: #ffca28 !important;
   box-shadow: 0 0 0 3px rgba(255, 202, 40, 0.2) !important;
   outline: none;
+}
+
+/* 🏛️ Dark Luxury Command Center Modals inside CRM */
+.crm-page-wrapper .property-form-modal-card {
+  background: linear-gradient(145deg, #091836 0%, #0d2552 100%) !important;
+  border: 1.5px solid rgba(255, 202, 40, 0.35) !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 35px rgba(11, 78, 162, 0.3) !important;
+  color: #ffffff !important;
+}
+
+.crm-page-wrapper .property-form-modal-card h3,
+.crm-page-wrapper .property-form-modal-card h4,
+.crm-page-wrapper .property-form-modal-card label {
+  color: #ffffff !important;
+}
+
+.crm-page-wrapper .property-form-modal-card small {
+  color: #94a3b8 !important;
+}
+
+.crm-page-wrapper .property-form-modal-card .modal-form-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.crm-page-wrapper .property-form-modal-card .drawer-close-btn {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
 .crm-page-wrapper select option {

@@ -389,7 +389,7 @@ export default function DemandsManagerPanel({
             <Search size={15} style={{ position: 'absolute', top: '10px', [isAr ? 'right' : 'left']: '10px', color: 'var(--text-secondary)' }} />
             <input
               type="text"
-              placeholder={isAr ? 'بحث بالنص، العميل، الهاتف، المنطقة...' : 'Search by keyword, client...'}
+              placeholder={isAr ? 'بحث سريع في الطلبات...' : 'Search demands...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
@@ -632,9 +632,20 @@ export default function DemandsManagerPanel({
                       {properties.length > 0 && (
                         <button
                           type="button"
-                          className="btn btn-sm btn-outline"
+                          className="btn btn-sm"
                           onClick={() => setMatchModalDemand(demand)}
-                          style={{ padding: '6px 10px', fontSize: '0.78rem', borderColor: 'var(--accent-gold)', color: 'var(--accent-gold)' }}
+                          style={{ 
+                            padding: '6px 10px', 
+                            fontSize: '0.78rem', 
+                            background: 'rgba(217, 119, 6, 0.15)',
+                            border: '1px solid rgba(217, 119, 6, 0.45)', 
+                            color: 'var(--accent-gold)',
+                            borderRadius: '8px',
+                            fontWeight: 'bold',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
                           title={isAr ? 'مطابقة العقارات المتوفرة مع هذا الطلب' : 'Match available units'}
                         >
                           <Sparkles size={13} />
@@ -644,9 +655,17 @@ export default function DemandsManagerPanel({
 
                       <button
                         type="button"
-                        className="btn btn-sm btn-outline"
+                        className="btn btn-sm"
                         onClick={() => handleOpenEdit(demand)}
-                        style={{ padding: '6px 10px', fontSize: '0.78rem' }}
+                        style={{ 
+                          padding: '6px 10px', 
+                          fontSize: '0.78rem',
+                          background: 'rgba(11, 78, 162, 0.25)',
+                          color: '#38bdf8',
+                          border: '1px solid rgba(56, 189, 248, 0.35)',
+                          borderRadius: '8px',
+                          fontWeight: 'bold'
+                        }}
                         title={isAr ? 'تعديل الصياغة قبل النشر' : 'Edit specs'}
                       >
                         <Edit3 size={13} />
@@ -662,7 +681,8 @@ export default function DemandsManagerPanel({
                           color: '#ef4444', 
                           border: '1px solid rgba(239, 68, 68, 0.3)',
                           padding: '6px 10px', 
-                          fontSize: '0.78rem' 
+                          fontSize: '0.78rem',
+                          borderRadius: '8px'
                         }}
                         title={isAr ? 'رفض وحذف' : 'Reject'}
                       >
@@ -673,9 +693,21 @@ export default function DemandsManagerPanel({
                     <>
                       <button
                         type="button"
-                        className="btn btn-sm btn-outline"
+                        className="btn btn-sm"
                         onClick={() => handleOpenEdit(demand)}
-                        style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.78rem' }}
+                        style={{ 
+                          flex: 1, 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          gap: '6px', 
+                          fontSize: '0.78rem',
+                          background: 'rgba(11, 78, 162, 0.25)',
+                          color: '#38bdf8',
+                          border: '1px solid rgba(56, 189, 248, 0.35)',
+                          borderRadius: '8px',
+                          fontWeight: 'bold'
+                        }}
                       >
                         <Edit3 size={13} />
                         <span>{isAr ? 'تعديل البيانات' : 'Edit Details'}</span>
@@ -684,9 +716,20 @@ export default function DemandsManagerPanel({
                       {properties.length > 0 && (
                         <button
                           type="button"
-                          className="btn btn-sm btn-outline"
+                          className="btn btn-sm"
                           onClick={() => setMatchModalDemand(demand)}
-                          style={{ padding: '6px 10px', fontSize: '0.78rem', borderColor: 'var(--accent-gold)', color: 'var(--accent-gold)' }}
+                          style={{ 
+                            padding: '6px 12px', 
+                            fontSize: '0.78rem', 
+                            background: 'rgba(217, 119, 6, 0.15)',
+                            border: '1px solid rgba(217, 119, 6, 0.45)', 
+                            color: 'var(--accent-gold)',
+                            borderRadius: '8px',
+                            fontWeight: 'bold',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '5px'
+                          }}
                           title={isAr ? 'مطابقة العقارات المتوفرة مع هذا الطلب' : 'Match available units'}
                         >
                           <Sparkles size={13} />
@@ -697,9 +740,16 @@ export default function DemandsManagerPanel({
                       {onUnpublishDemand && (
                         <button
                           type="button"
-                          className="btn btn-sm btn-outline"
+                          className="btn btn-sm"
                           onClick={() => onUnpublishDemand(demand.id)}
-                          style={{ padding: '6px 10px', fontSize: '0.78rem', color: 'var(--accent-gold)' }}
+                          style={{ 
+                            padding: '6px 10px', 
+                            fontSize: '0.78rem', 
+                            background: 'rgba(255, 255, 255, 0.06)',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            color: '#94a3b8',
+                            borderRadius: '8px'
+                          }}
                           title={isAr ? 'إلغاء النشر مؤقتاً' : 'Unpublish'}
                         >
                           <EyeOff size={13} />
@@ -715,7 +765,8 @@ export default function DemandsManagerPanel({
                           color: '#ef4444', 
                           border: '1px solid rgba(239, 68, 68, 0.3)',
                           padding: '6px 10px', 
-                          fontSize: '0.78rem' 
+                          fontSize: '0.78rem',
+                          borderRadius: '8px'
                         }}
                         title={isAr ? 'حذف' : 'Delete'}
                       >

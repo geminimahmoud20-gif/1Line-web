@@ -368,20 +368,23 @@ export default function CrmPage({
               href="/"
               target="_blank"
               rel="noreferrer"
-              className="btn btn-sm btn-outline"
               style={{
                 fontSize: '0.78rem',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
                 padding: '7px 14px',
-                borderRadius: '10px',
-                borderColor: 'rgba(255, 255, 255, 0.2)',
-                color: '#ffffff'
+                borderRadius: 'var(--radius-pill)',
+                background: 'rgba(255, 255, 255, 0.07)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                color: '#ffffff',
+                textDecoration: 'none',
+                fontWeight: 'bold',
+                transition: 'all 0.2s ease'
               }}
               title={isAr ? 'معاينة الموقع في نافذة مستقلة' : 'View Live Site'}
             >
-              <Globe size={14} />
+              <Globe size={14} style={{ color: 'var(--accent-gold)' }} />
               <span>{isAr ? 'الموقع الحي' : 'Live Site'}</span>
             </a>
 
