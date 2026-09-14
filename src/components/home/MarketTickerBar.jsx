@@ -22,20 +22,11 @@ export default function MarketTickerBar({ lang = 'ar' }) {
         {/* Fixed Title Badge (Sun Gold & Architectural Navy) */}
         <div className="market-ticker-badge">
           <span className="ticker-pulse-dot" />
-          <Activity size={13} style={{ color: '#ffca28', flexShrink: 0 }} />
-          <span style={{ fontSize: '0.78rem', fontWeight: '900', color: '#ffca28', letterSpacing: '0.2px', whiteSpace: 'nowrap' }}>
+          <Activity size={13} className="ticker-badge-icon" />
+          <span className="ticker-badge-title">
             {isAr ? 'مؤشر بورصة سوهاج' : 'Sohag PropTech Index'}
           </span>
-          <span style={{ 
-            fontSize: '0.67rem', 
-            color: 'rgba(255, 255, 255, 0.8)', 
-            fontWeight: '700', 
-            paddingLeft: isAr ? '0' : '6px', 
-            paddingRight: isAr ? '6px' : '0', 
-            borderLeft: isAr ? 'none' : '1px solid rgba(255, 202, 40, 0.35)', 
-            borderRight: isAr ? '1px solid rgba(255, 202, 40, 0.35)' : 'none',
-            whiteSpace: 'nowrap'
-          }}>
+          <span className="ticker-badge-date">
             {isAr ? 'محدث سبتمبر 2026' : 'Sep 2026'}
           </span>
         </div>
@@ -49,10 +40,10 @@ export default function MarketTickerBar({ lang = 'ar' }) {
                 className="ticker-item-card"
                 dir={isAr ? 'rtl' : 'ltr'}
               >
-                <MapPin size={12} style={{ color: '#ffca28', flexShrink: 0 }} />
-                <strong style={{ color: '#ffffff' }}>{isAr ? item.area_ar : item.area_en}:</strong>
-                <span style={{ color: '#94a3b8' }}>{isAr ? 'المتر' : 'sqm'}</span>
-                <span style={{ fontWeight: '800', color: '#ffd54f' }}>
+                <MapPin size={12} className="ticker-pin-icon" />
+                <strong className="ticker-area-name">{isAr ? item.area_ar : item.area_en}:</strong>
+                <span className="ticker-sqm-lbl">{isAr ? 'المتر' : 'sqm'}</span>
+                <span className="ticker-price-num">
                   {item.avg_meter} {isAr ? 'ج.م' : 'EGP'}
                 </span>
                 
@@ -62,7 +53,7 @@ export default function MarketTickerBar({ lang = 'ar' }) {
                   <span>{item.change}</span>
                 </span>
                 
-                <span style={{ fontSize: '0.72rem', color: '#cbd5e1', opacity: 0.9 }}>
+                <span className="ticker-note-txt">
                   ({isAr ? item.note_ar : item.note_en})
                 </span>
               </div>
