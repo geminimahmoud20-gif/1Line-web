@@ -26,8 +26,8 @@ export default function MarketTickerBar({ lang = 'ar' }) {
           <span className="ticker-badge-title">
             {isAr ? 'مؤشر بورصة سوهاج' : 'Sohag PropTech Index'}
           </span>
-          <span className="ticker-badge-date">
-            {isAr ? 'محدث سبتمبر 2026' : 'Sep 2026'}
+          <span className="ticker-badge-date" title={isAr ? 'بيانات مستمدة من تعاقدات وفحص مكتب 1Line الهندسي' : 'Derived from 1Line audited transactions'}>
+            {isAr ? 'محدث سبتمبر 2026 • صفقات 1Line المعتمدة' : 'Sep 2026 • Verified Deals'}
           </span>
         </div>
 

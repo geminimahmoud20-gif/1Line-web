@@ -13,7 +13,8 @@ import {
   Landmark,
   Handshake,
   Percent,
-  Globe
+  Globe,
+  ShieldCheck
 } from 'lucide-react';
 import { trackEvent } from '../../utils/visitorTracker';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
@@ -772,6 +773,27 @@ export default function MortgageRoiCalculator({
               </div>
             </div>
           )}
+        </div>
+
+        {/* Institutional Methodology & Recency Footnote */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '10px 16px',
+          marginTop: '16px',
+          background: 'rgba(11, 78, 162, 0.08)',
+          border: '1px solid rgba(11, 78, 162, 0.18)',
+          borderRadius: '10px',
+          fontSize: '0.74rem',
+          color: 'var(--text-secondary, #64748b)'
+        }}>
+          <ShieldCheck size={15} style={{ color: 'var(--accent-gold, #d97706)', flexShrink: 0 }} />
+          <span>
+            {isAr 
+              ? 'الحسابات استرشادية مبنية على مؤشرات أسعار وإيجارات سوق سوهاج المعتمدة لدى 1Line - تحديث سبتمبر 2026' 
+              : 'Indicative calculations based on verified Sohag market rental & valuation benchmarks - 1Line Verified Sep 2026'}
+          </span>
         </div>
       </div>
     </div>

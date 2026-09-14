@@ -31,8 +31,8 @@ export default function ZeroResultsFallback({
         <h3>{isAr ? 'لم نجد عقارات مطابقة تماماً لشروط بحثك الحالية' : 'No exact property matches found'}</h3>
         <p>
           {isAr 
-            ? 'لا تقلق! يمكنك توسيع نطاق البحث أو استكشاف أفضل الفرص العقارية البديلة المتاحة في سوهاج أدناه.' 
-            : 'Try broadening your filter criteria or explore these top recommended alternatives in Sohag.'}
+            ? 'لا تتردد في طلب استشارة خاصة؛ يمكن لمكتب 1Line توفير وحدتك المستهدفة من خلال شبكة الصفقات المغلقة (Off-Market) خلال 48 ساعة.' 
+            : 'Looking for specific criteria? 1Line Private Office can source your target asset via our Off-Market network within 48 hours.'}
         </p>
 
         <div className="zero-actions-row">
@@ -41,9 +41,14 @@ export default function ZeroResultsFallback({
             <span>{isAr ? 'عرض جميع العقارات المتاحة' : 'Show All Available Properties'}</span>
           </button>
 
-          <button type="button" className="btn btn-whatsapp-direct" onClick={handleCustomRequestWhatsApp}>
-            <MessageSquare size={16} />
-            <span>{isAr ? 'اطلب عقار بمواصفاتك (خدمة الـ VIP)' : 'Submit Custom VIP Request'}</span>
+          <button 
+            type="button" 
+            className="btn btn-whatsapp-direct" 
+            onClick={handleCustomRequestWhatsApp}
+            title={isAr ? 'طلب صفقة سرية خاصة' : 'Request Private Off-Market Deal'}
+          >
+            <Sparkles size={16} />
+            <span>{isAr ? 'طلب صفقة خاصة (Off-Market VIP)' : 'Request Private Off-Market Deal'}</span>
           </button>
         </div>
       </div>

@@ -210,12 +210,12 @@ export default function PropertyCard({
         {/* Bottom Total Price Banner on Image */}
         <div className="card-price-overlay">
           <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '4px' }}>
-            <span className="price-val">{priceData.primary}</span>
-            <span className="price-curr">{priceData.symbol}</span>
+            <bdi className="price-val">{priceData.primary}</bdi>
+            <bdi className="price-curr">{priceData.symbol}</bdi>
           </div>
           {priceData.isConverted && (
             <span className="price-converted-sub" style={{ fontSize: '0.68rem', opacity: 0.88, display: 'block' }}>
-              ≈ {priceData.originalEgp}
+              ≈ <bdi>{priceData.originalEgp}</bdi>
             </span>
           )}
         </div>
@@ -231,7 +231,7 @@ export default function PropertyCard({
           </div>
           {benchmark?.pricePerMeterFormatted && (
             <span className="benchmark-meter-subtle" title={benchmark.badgeLabel}>
-              {benchmark.pricePerMeterFormatted}
+              <bdi>{benchmark.pricePerMeterFormatted}</bdi>
             </span>
           )}
         </div>
@@ -255,7 +255,7 @@ export default function PropertyCard({
           <div className="core-specs-row core-row-top">
             <span className="core-size-highlight">
               <Maximize2 size={13} className="text-muted" />
-              <strong>{property.size}</strong> {lang === 'ar' ? 'م² صافي' : 'sqm'}
+              <strong><bdi>{property.size}</bdi></strong> {lang === 'ar' ? 'م² صافي' : 'sqm'}
             </span>
             {property.monthlyInstallment > 0 ? (
               <span className="core-payment-badge installment-badge">
@@ -271,7 +271,7 @@ export default function PropertyCard({
           <div className="core-specs-row core-row-bottom">
             {property.downPayment > 0 ? (
               <span className="core-fin-label">
-                {lang === 'ar' ? 'مقدم:' : 'Down:'} <strong>{(Number(property.downPayment) || 0).toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}</strong>
+                {lang === 'ar' ? 'مقدم:' : 'Down:'} <strong><bdi>{(Number(property.downPayment) || 0).toLocaleString()}</bdi> {lang === 'ar' ? 'ج.م' : 'EGP'}</strong>
               </span>
             ) : (
               <span className="core-cash-label">
@@ -282,7 +282,7 @@ export default function PropertyCard({
               <>
                 <span className="core-divider">•</span>
                 <span className="core-installment-label text-gold">
-                  {lang === 'ar' ? 'قسط:' : 'Monthly:'} <strong>{(Number(property.monthlyInstallment) || 0).toLocaleString()}</strong> {lang === 'ar' ? 'ج.م' : 'EGP'}
+                  {lang === 'ar' ? 'قسط:' : 'Monthly:'} <strong><bdi>{(Number(property.monthlyInstallment) || 0).toLocaleString()}</bdi></strong> {lang === 'ar' ? 'ج.م' : 'EGP'}
                 </span>
               </>
             )}
@@ -294,7 +294,7 @@ export default function PropertyCard({
           {property.bedrooms > 0 && (
             <span className="spec-unit">
               <BedDouble size={13} className="text-muted" />
-              <span><strong>{property.bedrooms}</strong> {lang === 'ar' ? 'غرف' : 'Beds'}</span>
+              <span><strong><bdi>{property.bedrooms}</bdi></strong> {lang === 'ar' ? 'غرف' : 'Beds'}</span>
             </span>
           )}
           {property.bathrooms > 0 && (
@@ -302,7 +302,7 @@ export default function PropertyCard({
               {property.bedrooms > 0 && <span className="spec-dot">•</span>}
               <span className="spec-unit">
                 <Bath size={13} className="text-muted" />
-                <span><strong>{property.bathrooms}</strong> {lang === 'ar' ? 'حمام' : 'Baths'}</span>
+                <span><strong><bdi>{property.bathrooms}</bdi></strong> {lang === 'ar' ? 'حمام' : 'Baths'}</span>
               </span>
             </>
           )}
@@ -324,7 +324,7 @@ export default function PropertyCard({
               }
             }}
           >
-            <span>{lang === 'ar' ? 'استعراض العقار والتفاصيل' : 'View Details & Book Tour'}</span>
+            <span>{lang === 'ar' ? 'طلب استشارة ومعاينة العقار' : 'Request Consultation & Tour'}</span>
             {lang === 'ar' ? <ArrowLeft size={14} /> : <ArrowRight size={14} />}
           </Link>
 

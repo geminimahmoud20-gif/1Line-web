@@ -4182,6 +4182,7 @@
 }
 
 .card-circle-btn {
+  position: relative;
   width: 38px;
   height: 38px;
   border-radius: 50%;
@@ -4197,6 +4198,13 @@
   box-shadow: 0 4px 14px rgba(11, 78, 162, 0.1);
   z-index: 16;
   color: #0b4ea2;
+}
+
+.card-circle-btn::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
 }
 
 .card-circle-btn:hover {
