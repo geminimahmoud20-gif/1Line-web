@@ -857,57 +857,21 @@ export default function HomePage({
       {/* 🔒 SOTHEBY'S BENCHMARK: 1LINE PRIVATE OFFICE (OFF-MARKET POCKET LISTINGS) */}
       <PrivateOfficeSection lang={lang} />
 
-      {/* 🌟 6. EXECUTIVE VIP CONSULTATION CTA STRIP (Architectural Royal Navy & Sun Gold) */}
+      {/* 🌟 6. EXECUTIVE VIP CONSULTATION CTA STRIP (Adaptive White Luxury / Royal Midnight) */}
       <section className="homepage-section" style={{ padding: '30px 20px 70px' }}>
-        <div style={{
-          maxWidth: '1240px',
-          margin: '0 auto',
-          background: 'linear-gradient(135deg, #092347 0%, #0d48a1 60%, #08214d 100%)',
-          borderRadius: '28px',
-          padding: '48px 44px',
-          border: '1px solid rgba(255, 202, 40, 0.35)',
-          boxShadow: '0 20px 50px rgba(9, 35, 71, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '26px',
-          position: 'relative',
-          overflow: 'hidden'
-        }}>
+        <div className="homepage-vip-cta-banner">
           {/* Ambient Warm Sun-Gold Nebula */}
-          <div style={{
-            position: 'absolute',
-            top: '-40px',
-            right: '-40px',
-            width: '260px',
-            height: '260px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255, 202, 40, 0.15) 0%, transparent 70%)',
-            pointerEvents: 'none'
-          }} />
+          <div className="homepage-vip-cta-nebula" />
 
           <div style={{ maxWidth: '680px', position: 'relative', zIndex: 2 }}>
-            <span style={{
-              background: 'rgba(255, 202, 40, 0.14)',
-              border: '1px solid rgba(255, 202, 40, 0.45)',
-              color: '#ffca28',
-              fontSize: '0.82rem',
-              fontWeight: '800',
-              padding: '6px 18px',
-              borderRadius: '999px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              marginBottom: '14px'
-            }}>
-              <Sparkles size={13} style={{ color: '#ffca28' }} />
+            <span className="homepage-vip-cta-badge">
+              <Sparkles size={13} className="text-gold" />
               <span>{lang === 'ar' ? 'استشارة عقارية وقانونية معتمدة' : 'Certified Advisory & Legal Security'}</span>
             </span>
-            <h2 style={{ fontSize: '1.9rem', color: '#ffffff', fontWeight: '900', margin: '0 0 10px 0', lineHeight: 1.3 }}>
+            <h2 className="homepage-vip-cta-title">
               {lang === 'ar' ? 'جاهز لتملك عقارك المثالي أو استثمارك القادم بسوهاج؟' : 'Ready to Secure Your Ideal Property in Sohag?'}
             </h2>
-            <p style={{ color: '#e0f2fe', fontSize: '0.95rem', margin: 0, lineHeight: 1.65, fontWeight: '500' }}>
+            <p className="homepage-vip-cta-desc">
               {lang === 'ar' 
                 ? 'فريق خبراء ومستشاري 1Line جاهز لمساعدتك في فحص صحة الأوراق والتراخيص، التفاوض، واختيار العقار الأنسب لاحتياجك وميزانيتك مجاناً.' 
                 : 'Our certified real estate advisors are ready to guide you through legal vetting, price negotiation, and financing.'}
