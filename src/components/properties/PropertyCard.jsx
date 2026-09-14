@@ -151,9 +151,6 @@ export default function PropertyCard({
           </div>
         )}
 
-        {/* Brand Watermark Overlay */}
-        <BrandWatermark size="sm" position="bottom-right" />
-
         {/* Single Contextual Priority Badge */}
         <div className="card-top-badges">
           <span className={`property-badge ${resolvedBadge.className}`}>
@@ -180,7 +177,7 @@ export default function PropertyCard({
             title={lang === 'ar' ? 'حفظ في المفضلة' : 'Save to Favorites'}
             aria-label="Toggle Favorite"
           >
-            <Heart size={16} fill={isFavorite ? '#ef4444' : 'none'} color={isFavorite ? '#ef4444' : '#ffffff'} />
+            <Heart size={16} fill={isFavorite ? '#ef4444' : 'none'} color={isFavorite ? '#ef4444' : 'currentColor'} />
           </button>
 
           {onToggleCompare && (
@@ -195,7 +192,7 @@ export default function PropertyCard({
               title={lang === 'ar' ? 'إضافة للمقارنة' : 'Add to Compare'}
               aria-label="Toggle Compare"
             >
-              <Scale size={15} color={isCompared ? '#ffb300' : '#ffffff'} />
+              <Scale size={15} color={isCompared ? '#d97706' : 'currentColor'} />
             </button>
           )}
         </div>

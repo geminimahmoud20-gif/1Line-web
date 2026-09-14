@@ -34,7 +34,16 @@ export default function PrivateOfficeSection({ lang = 'ar' }) {
           </div>
 
           <h2 className="private-office-title luxury-serif-title">
-            {isAr ? 'المكتب الخاص: صفقات سرية وحصرية (Off-Market)' : 'Discreet Off-Market Portfolio for Ultra-High-Net-Worth'}
+            {isAr ? (
+              <>
+                <span>المكتب الخاص: صفقات سرية وحصرية</span>{' '}
+                <span dir="ltr" style={{ unicodeBidi: 'isolate', display: 'inline-block', whiteSpace: 'nowrap' }}>
+                  (Off-Market)
+                </span>
+              </>
+            ) : (
+              'Discreet Off-Market Portfolio for Ultra-High-Net-Worth'
+            )}
           </h2>
 
           <p className="private-office-desc">
