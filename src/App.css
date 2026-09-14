@@ -15349,7 +15349,15 @@ body.dark-theme .compare-tabs-bar {
 @media (max-width: 768px) {
   .floating-compare-dock-wrapper {
     bottom: 74px; /* Above mobile bottom navigation bar */
-    max-width: 96vw;
+    max-width: calc(100vw - 20px);
+    z-index: 1045;
+  }
+  
+  body:has(.floating-compare-dock-wrapper) .floating-back-to-top-btn {
+    bottom: 134px !important;
+  }
+  body:has(.floating-compare-dock-wrapper) .floating-ai-advisor-trigger {
+    bottom: 134px !important;
   }
   
   .floating-compare-dock-container {
