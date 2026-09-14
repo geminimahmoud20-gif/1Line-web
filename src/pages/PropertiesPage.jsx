@@ -3,7 +3,9 @@ import { useSearchParams } from 'react-router-dom';
 import { 
   LayoutGrid, 
   Map as MapIcon, 
-  ArrowUpDown
+  ArrowUpDown,
+  ShieldCheck,
+  CheckCircle2
 } from 'lucide-react';
 import PropertyCard from '../components/properties/PropertyCard';
 import PropertyFilters from '../components/properties/PropertyFilters';
@@ -296,6 +298,32 @@ export default function PropertiesPage({
                 <span className="hide-mobile">{lang === 'ar' ? 'شبكة' : 'Grid'}</span>
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 🛡️ 1LINE CERTIFIED STANDARD EXPLAINER (إبراز الفرق الجوهري للعقار المعتمد) */}
+      <div className="properties-certified-explainer-strip">
+        <div className="certified-explainer-inner">
+          <div className="certified-badge-pill">
+            <ShieldCheck size={16} className="text-emerald" />
+            <span>{lang === 'ar' ? 'معيار 1Line العقاري المعتمد:' : '1Line Certified Standard:'}</span>
+          </div>
+          <div className="certified-points-row">
+            <span className="cert-point">
+              <CheckCircle2 size={13} className="text-gold" />
+              <span>{lang === 'ar' ? 'فحص إنشائي وهندسي معتمد' : 'Structural & Engineering Audit'}</span>
+            </span>
+            <span className="cert-dot">•</span>
+            <span className="cert-point">
+              <CheckCircle2 size={13} className="text-gold" />
+              <span>{lang === 'ar' ? 'رخصة رسمية + نموذج 10 نهائي' : 'Official License & Form 10'}</span>
+            </span>
+            <span className="cert-dot">•</span>
+            <span className="cert-point">
+              <CheckCircle2 size={13} className="text-gold" />
+              <span>{lang === 'ar' ? 'تسعير عادل مطابق لبورصة سوهاج' : 'Fair Valuation vs Market Ticker'}</span>
+            </span>
           </div>
         </div>
       </div>
