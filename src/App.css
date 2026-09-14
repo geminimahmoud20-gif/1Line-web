@@ -3337,9 +3337,9 @@
 }
 
 .bg-surface {
-  background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
-  border-top: 1px solid rgba(2, 132, 199, 0.12);
-  border-bottom: 1px solid rgba(2, 132, 199, 0.12);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%);
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
   max-width: 100%;
   padding-left: max(24px, calc((100% - 1280px) / 2));
   padding-right: max(24px, calc((100% - 1280px) / 2));
