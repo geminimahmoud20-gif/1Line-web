@@ -6737,18 +6737,32 @@
   position: absolute;
   bottom: 16px;
   right: 16px;
-  background: rgba(9, 35, 71, 0.95);
+  background: rgba(255, 255, 255, 0.94);
   padding: 10px 18px;
   border-radius: var(--radius-sm);
+  color: #091e42;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(203, 213, 225, 0.85);
+  box-shadow: 0 10px 25px rgba(11, 78, 162, 0.12);
+}
+
+.dark-theme .quickview-price-badge-floating,
+[data-theme="dark"] .quickview-price-badge-floating {
+  background: rgba(9, 35, 71, 0.95);
   color: #ffffff;
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.15);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
 }
 
 .price-tag-big {
   font-size: 1.25rem;
   font-weight: 900;
+  color: #0b4ea2;
+}
+
+.dark-theme .price-tag-big,
+[data-theme="dark"] .price-tag-big {
   color: var(--accent-gold);
 }
 
@@ -12880,32 +12894,64 @@ body.dark,
   gap: 8px;
   padding: 12px 14px;
   border-radius: var(--radius-sm);
-  border: 1.5px solid var(--border-color);
+  border: 1.5px solid rgba(203, 213, 225, 0.85);
   background: #ffffff;
   font-size: 0.84rem;
   font-weight: 800;
-  color: var(--text-secondary);
+  color: #334155;
   cursor: pointer;
-  transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .opt-pill-btn:hover {
-  border-color: var(--primary-light);
+  border-color: #0284c7;
+  color: #0b4ea2;
+  background: #f8fafc;
+  transform: translateY(-1px);
 }
 
 .opt-pill-btn.active {
-  background: var(--primary);
+  background: linear-gradient(135deg, #0b4ea2 0%, #0284c7 100%);
   color: #ffffff;
+  border-color: #0b4ea2;
+  box-shadow: 0 4px 12px rgba(11, 78, 162, 0.25);
+}
+
+.dark-theme .opt-pill-btn,
+[data-theme="dark"] .opt-pill-btn {
+  background: #1e293b;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+}
+
+.dark-theme .opt-pill-btn:hover,
+[data-theme="dark"] .opt-pill-btn:hover {
+  border-color: var(--primary-light);
+  color: #ffffff;
+}
+
+.dark-theme .opt-pill-btn.active,
+[data-theme="dark"] .opt-pill-btn.active {
+  background: var(--primary);
   border-color: var(--primary);
 }
 
-/* Live Valuation Output Certificate Card */
+/* Live Valuation Output Certificate Card (White Luxury Architectural Aesthetic) */
 .live-valuation-certificate-card {
-  background: linear-gradient(135deg, #092347 0%, #0d48a1 100%);
-  color: #ffffff;
-  border-radius: var(--radius-lg);
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #fefce8 100%);
+  color: #091e42;
+  border-radius: 20px;
   padding: 28px;
   margin-bottom: 28px;
+  border: 1.5px solid rgba(217, 119, 6, 0.28);
+  box-shadow: 0 15px 40px rgba(11, 78, 162, 0.08), inset 0 1px 0 #ffffff;
+}
+
+.dark-theme .live-valuation-certificate-card,
+[data-theme="dark"] .live-valuation-certificate-card {
+  background: linear-gradient(135deg, #092347 0%, #0d48a1 100%);
+  color: #ffffff;
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 15px 35px rgba(13, 72, 161, 0.3);
 }
@@ -12923,28 +12969,48 @@ body.dark,
   gap: 6px;
   font-size: 0.8rem;
   font-weight: 800;
+  color: #92400e;
+}
+
+.dark-theme .cert-badge,
+[data-theme="dark"] .cert-badge {
   color: var(--accent-gold);
 }
 
 .cert-date {
   font-size: 0.74rem;
+  color: #64748b;
+}
+
+.dark-theme .cert-date,
+[data-theme="dark"] .cert-date {
   color: rgba(255, 255, 255, 0.7);
 }
 
 .cert-price-range {
   text-align: center;
   padding: 14px 0 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 1px solid rgba(226, 232, 240, 0.9);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
   margin-bottom: 16px;
+}
+
+.dark-theme .cert-price-range,
+[data-theme="dark"] .cert-price-range {
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .range-lbl {
   font-size: 0.84rem;
-  color: rgba(255, 255, 255, 0.85);
+  color: #475569;
   font-weight: 700;
   display: block;
   margin-bottom: 8px;
+}
+
+.dark-theme .range-lbl,
+[data-theme="dark"] .range-lbl {
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .range-numbers {
@@ -12954,37 +13020,62 @@ body.dark,
   gap: 10px;
   font-size: 2rem;
   font-weight: 900;
+  color: #0b4ea2;
+}
+
+.dark-theme .range-numbers,
+[data-theme="dark"] .range-numbers {
   color: var(--accent-gold);
 }
 
 .range-to {
   font-size: 1.1rem;
-  color: #ffffff;
+  color: #64748b;
   font-weight: 700;
+}
+
+.dark-theme .range-to,
+[data-theme="dark"] .range-to {
+  color: #ffffff;
 }
 
 .range-curr {
   font-size: 1rem;
-  color: #ffffff;
+  color: #091e42;
   font-weight: 800;
+}
+
+.dark-theme .range-curr,
+[data-theme="dark"] .range-curr {
+  color: #ffffff;
 }
 
 .sqm-rate-sub {
   display: block;
   font-size: 0.82rem;
-  color: #93c5fd;
+  color: #0369a1;
   font-weight: 800;
   margin-top: 6px;
+}
+
+.dark-theme .sqm-rate-sub,
+[data-theme="dark"] .sqm-rate-sub {
+  color: #93c5fd;
 }
 
 .cert-perks-row {
   display: flex;
   justify-content: space-between;
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: #475569;
   font-weight: 700;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.dark-theme .cert-perks-row,
+[data-theme="dark"] .cert-perks-row {
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .cert-perk {
