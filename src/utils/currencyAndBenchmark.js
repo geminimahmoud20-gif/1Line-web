@@ -9,7 +9,9 @@ export const CURRENCY_RATES = {
   SAR: { rate: 0.076, symbol_ar: 'ر.س', symbol_en: 'SAR', flag: '🇸🇦' },
   AED: { rate: 0.075, symbol_ar: 'د.إ', symbol_en: 'AED', flag: '🇦🇪' },
   USD: { rate: 0.020, symbol_ar: '$', symbol_en: 'USD', flag: '🇺🇸' },
-  KWD: { rate: 0.0062, symbol_ar: 'د.ك', symbol_en: 'KWD', flag: '🇰🇼' }
+  KWD: { rate: 0.0062, symbol_ar: 'د.ك', symbol_en: 'KWD', flag: '🇰🇼' },
+  QAR: { rate: 0.074, symbol_ar: 'ر.ق', symbol_en: 'QAR', flag: '🇶🇦' },
+  OMR: { rate: 0.0078, symbol_ar: 'ر.ع', symbol_en: 'OMR', flag: '🇴🇲' }
 };
 
 import { getAreas } from './areasData.js';
