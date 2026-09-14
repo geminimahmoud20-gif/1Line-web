@@ -31,6 +31,7 @@
   --bg-slate: #ffffff;
   --bg-card: #ffffff;
   --bg-card-hover: #fafcff;
+  --surface: #ffffff;
   --bg-surface: linear-gradient(180deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);
   --bg-surface-warm: linear-gradient(180deg, #ffffff 0%, #fefce8 60%, #ffffff 100%);
   
@@ -89,6 +90,7 @@ body.dark,
   --bg-slate: #070b14;
   --bg-card: #0f172a;
   --bg-card-hover: #162238;
+  --surface: #0f172a;
   --bg-surface: linear-gradient(180deg, #0b1120 0%, #060913 100%);
   
   --text-primary: #f8fafc;

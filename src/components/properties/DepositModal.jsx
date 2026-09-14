@@ -158,14 +158,14 @@ export default function DepositModal({
         className="deposit-modal-card checkout-gateway-card" 
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: 'var(--surface, #0f172a)',
+          background: 'var(--surface, #ffffff)',
           border: '1px solid rgba(217, 119, 6, 0.3)',
           borderRadius: '20px',
           width: '95%',
           maxWidth: '560px',
           padding: '24px',
           color: 'var(--text-primary)',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
+          boxShadow: 'var(--shadow-luxury, 0 25px 60px -12px rgba(11, 78, 162, 0.15))',
           position: 'relative',
           maxHeight: '90vh',
           overflowY: 'auto'
@@ -180,8 +180,8 @@ export default function DepositModal({
             top: '16px',
             left: isAr ? '16px' : 'auto',
             right: isAr ? 'auto' : '16px',
-            background: 'rgba(255, 255, 255, 0.08)',
-            border: 'none',
+            background: 'var(--secondary, #f8fafc)',
+            border: '1px solid var(--border-color, rgba(203, 213, 225, 0.8))',
             borderRadius: '50%',
             width: '32px',
             height: '32px',
@@ -249,7 +249,8 @@ export default function DepositModal({
 
               {/* Receipt Specs Box */}
               <div style={{
-                background: 'rgba(0, 0, 0, 0.3)',
+                background: 'var(--secondary, #f8fafc)',
+                border: '1px solid var(--border-color, rgba(203, 213, 225, 0.8))',
                 borderRadius: '12px',
                 padding: '14px',
                 marginTop: '16px',
@@ -293,29 +294,31 @@ export default function DepositModal({
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
-                  background: 'var(--gradient-gold)',
                   padding: '12px',
-                  fontWeight: 'bold'
+                  background: 'var(--gradient-gold)',
+                  color: '#071e3d',
+                  fontWeight: 'bold',
+                  fontSize: '0.9rem',
+                  border: 'none',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 15px rgba(245, 158, 11, 0.35)'
                 }}
               >
-                <FileDown size={16} />
-                <span>{isAr ? 'تنزيل استمارة وإيصال الحجز المعتمد (PDF)' : 'Download PDF Receipt & Contract'}</span>
+                <FileDown size={18} />
+                <span>{isAr ? 'تحميل عقد واستمارة الحجز المعتمدة (PDF)' : 'Download Official Contract (PDF)'}</span>
               </button>
 
               <a
-                href={getWhatsAppUrl(isAr
-                  ? `مرحباً 1Line، قمت بإتمام حجز عقار كود (${property.id.toUpperCase()}) عبر (${receiptData.channelLabel}) بقيمة ${receiptData.amount.toLocaleString()} ج.م.\n👤 الاسم: ${receiptData.clientName}\n🔢 رقم الإيصال: ${receiptData.txnId}\nيرجى اعتماد الحجز وتأكيد موعد المعاينة وتوقيع العقد.`
-                  : `Hello 1Line, I reserved property ${property.id.toUpperCase()} via ${receiptData.channelLabel}. Amount: ${receiptData.amount} EGP. Txn ID: ${receiptData.txnId}.`)}
+                href={getWhatsAppUrl(`مرحباً أستاذ محمود، تم تأكيد سداد جدية حجز العقار ${receiptData.propertyId.toUpperCase()} بنجاح. رقم الإيصال: ${receiptData.txnId} - المبلغ: ${receiptData.amount.toLocaleString()} ج.م.`)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn"
+                className="btn btn-whatsapp"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
-                  background: '#10b981',
-                  color: '#fff',
                   padding: '12px',
                   borderRadius: '10px',
                   textDecoration: 'none',
@@ -360,7 +363,8 @@ export default function DepositModal({
               display: 'grid',
               gridTemplateColumns: 'repeat(4, 1fr)',
               gap: '6px',
-              background: 'rgba(255, 255, 255, 0.04)',
+              background: 'var(--secondary, #f8fafc)',
+              border: '1px solid var(--border-color, rgba(203, 213, 225, 0.8))',
               padding: '6px',
               borderRadius: '14px',
               marginBottom: '20px'
@@ -376,7 +380,7 @@ export default function DepositModal({
                   type="button"
                   onClick={() => setActivePaymentChannel(tab.id)}
                   style={{
-                    background: activePaymentChannel === tab.id ? 'var(--accent-gold, #d97706)' : 'transparent',
+                    background: activePaymentChannel === tab.id ? 'linear-gradient(135deg, #0b4ea2 0%, #0284c7 100%)' : 'transparent',
                     color: activePaymentChannel === tab.id ? '#fff' : 'var(--text-secondary)',
                     border: 'none',
                     borderRadius: '10px',
@@ -388,6 +392,7 @@ export default function DepositModal({
                     flexDirection: 'column',
                     alignItems: 'center',
                     gap: '4px',
+                    boxShadow: activePaymentChannel === tab.id ? '0 4px 12px rgba(11, 78, 162, 0.25)' : 'none',
                     transition: 'all 0.2s ease'
                   }}
                 >
@@ -444,8 +449,8 @@ export default function DepositModal({
             {/* CHANNEL 2: CREDIT / DEBIT CARDS & MEEZA */}
             {activePaymentChannel === 'card' && (
               <div style={{
-                background: 'rgba(30, 41, 59, 0.7)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                background: 'var(--secondary, #f8fafc)',
+                border: '1px solid var(--border-color, rgba(203, 213, 225, 0.8))',
                 borderRadius: '14px',
                 padding: '16px',
                 marginBottom: '18px'
