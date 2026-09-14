@@ -19,7 +19,8 @@ import {
   FileCheck2,
   Award,
   Plus,
-  PhoneCall
+  PhoneCall,
+  Scale
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { trackEvent } from '../../utils/visitorTracker';
@@ -161,6 +162,46 @@ export default function PropertyCompareDrawer({
     const waUrl = getWhatsAppUrl(msg);
     trackEvent('compare_booked_group_tour', { count: compareList.length });
     window.open(waUrl, '_blank');
+  };
+
+  // 1.5. Focused 1v1 Dual Comparison Duel Breakdown (When exactly 2 properties are compared)
+  const dualDiff = useMemo(() => {
+    if (compareList.length !== 2) return null;
+    const [p1, p2] = compareList;
+    const priceDiff = Math.abs(p1.price - p2.price);
+    const ppm1 = p1.pricePerMeter || (p1.size ? Math.round(p1.price / p1.size) : 0);
+    const ppm2 = p2.pricePerMeter || (p2.size ? Math.round(p2.price / p2.size) : 0);
+    const ppmDiff = Math.abs(ppm1 - ppm2);
+    const sizeDiff = Math.abs((Number(p1.size) || 0) - (Number(p2.size) || 0));
+    const monthlyDiff = Math.abs((Number(p1.monthlyInstallment) || 0) - (Number(p2.monthlyInstallment) || 0));
+
+    return {
+      priceDiff,
+      ppmDiff,
+      sizeDiff,
+      monthlyDiff,
+      cheaperId: p1.price < p2.price ? p1.id : p2.id,
+      largerId: (Number(p1.size) || 0) > (Number(p2.size) || 0) ? p1.id : p2.id,
+      betterPpmId: ppm1 < ppm2 ? p1.id : p2.id,
+      lowerMonthlyId: (Number(p1.monthlyInstallment) || Infinity) < (Number(p2.monthlyInstallment) || Infinity) ? p1.id : p2.id,
+      p1,
+      p2,
+      ppm1,
+      ppm2
+    };
+  }, [compareList]);
+
+  // Direct VIP joint viewing tour for the two compared properties
+  const handleBookDualTour = () => {
+    if (!dualDiff) return;
+    const { p1, p2 } = dualDiff;
+    const title1 = isAr ? p1.title_ar : p1.title_en;
+    const title2 = isAr ? p2.title_ar : p2.title_en;
+    const msg = isAr
+      ? `مرحباً 1Line، أرغب في حجز جولة معاينة ميدانية مشتركة للمفاضلة بين هذين العقارين:\n1. ${title1} (كود #${p1.id})\n2. ${title2} (كود #${p2.id})\n\nأرجو من المستشار العقاري التنسيق معي لاختيار الأنسب استثمارياً.`
+      : `Hello 1Line, I would like to schedule a joint viewing tour to compare these two properties:\n1. ${title1} (ID #${p1.id})\n2. ${title2} (ID #${p2.id})\n\nPlease connect me with an advisor.`;
+    window.open(getWhatsAppUrl(msg), '_blank');
+    trackEvent('compare_booked_dual_tour', { p1: p1.id, p2: p2.id });
   };
 
   return (
@@ -336,7 +377,126 @@ export default function PropertyCompareDrawer({
               </button>
             </div>
           ) : (
-            <div className="compare-grid-matrix-container">
+            <>
+              {/* 🏛️ 1v1 Dual Comparison Duel Spotlight (When exactly 2 properties are compared) */}
+              {dualDiff && (
+                <div className="compare-dual-duel-wrapper">
+                  <div className="dual-duel-header">
+                    <div className="dual-duel-badge">
+                      <Scale size={15} className="text-gold" />
+                      <h4>{isAr ? 'المفاضلة الثنائية المباشرة (وجهاً لوجه)' : 'Head-to-Head Visual Duel'}</h4>
+                    </div>
+                    <button 
+                      type="button" 
+                      className="btn-book-dual-tour"
+                      onClick={handleBookDualTour}
+                      title={isAr ? 'تنسيق معاينة مشتركة لكلا العقارين في موعد واحد' : 'Schedule joint tour'}
+                    >
+                      <Calendar size={14} />
+                      <span>{isAr ? 'حجز معاينة مشتركة للعقارين معاً' : 'Book Joint Tour for Both'}</span>
+                    </button>
+                  </div>
+
+                  <div className="dual-duel-cards-grid">
+                    {/* Property 1 Card */}
+                    <div className={`dual-property-card ${dualDiff.betterPpmId === dualDiff.p1.id ? 'highlight-winner' : ''}`}>
+                      <div className="dual-card-media">
+                        <img 
+                          src={dualDiff.p1.images?.[0] || ''} 
+                          alt={isAr ? dualDiff.p1.title_ar : dualDiff.p1.title_en} 
+                          className="dual-img"
+                        />
+                        <div className="dual-card-floating-pills">
+                          {dualDiff.cheaperId === dualDiff.p1.id && dualDiff.priceDiff > 0 && (
+                            <span className="dual-advantage-pill pill-green">
+                              {isAr ? `أوفر بـ ${(dualDiff.priceDiff).toLocaleString()} ج.م` : `Save ${(dualDiff.priceDiff).toLocaleString()} EGP`}
+                            </span>
+                          )}
+                          {dualDiff.largerId === dualDiff.p1.id && dualDiff.sizeDiff > 0 && (
+                            <span className="dual-advantage-pill pill-blue">
+                              {isAr ? `أكبر بـ ${dualDiff.sizeDiff} م²` : `+${dualDiff.sizeDiff} m² Space`}
+                            </span>
+                          )}
+                          {dualDiff.betterPpmId === dualDiff.p1.id && (
+                            <span className="dual-advantage-pill pill-gold">
+                              {isAr ? 'أفضل سعر للمتر' : 'Best m² Rate'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="dual-card-info">
+                        <h5 className="dual-card-title">{isAr ? dualDiff.p1.title_ar : dualDiff.p1.title_en}</h5>
+                        <div className="dual-card-meta">
+                          <span className="dual-price"><bdi>{(Number(dualDiff.p1.price) || 0).toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</bdi></span>
+                          <span className="dual-ppm"><bdi>{dualDiff.ppm1.toLocaleString()} {isAr ? 'ج.م/م²' : 'EGP/m²'}</bdi></span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Center "VS" Difference Capsule */}
+                    <div className="dual-duel-center-capsule">
+                      <div className="dual-vs-circle">VS</div>
+                      <div className="dual-diff-stats">
+                        {dualDiff.priceDiff > 0 && (
+                          <div className="dual-diff-stat-item">
+                            <span className="diff-lbl">{isAr ? 'فارق السعر الإجمالي:' : 'Price Difference:'}</span>
+                            <strong className="diff-val"><bdi>{dualDiff.priceDiff.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</bdi></strong>
+                          </div>
+                        )}
+                        {dualDiff.sizeDiff > 0 && (
+                          <div className="dual-diff-stat-item">
+                            <span className="diff-lbl">{isAr ? 'فارق المساحة الصافية:' : 'Space Difference:'}</span>
+                            <strong className="diff-val"><bdi>{dualDiff.sizeDiff} {isAr ? 'م²' : 'm²'}</bdi></strong>
+                          </div>
+                        )}
+                        {dualDiff.ppmDiff > 0 && (
+                          <div className="dual-diff-stat-item">
+                            <span className="diff-lbl">{isAr ? 'فارق سعر المتر:' : 'm² Rate Difference:'}</span>
+                            <strong className="diff-val"><bdi>{dualDiff.ppmDiff.toLocaleString()} {isAr ? 'ج.م/م²' : 'EGP/m²'}</bdi></strong>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Property 2 Card */}
+                    <div className={`dual-property-card ${dualDiff.betterPpmId === dualDiff.p2.id ? 'highlight-winner' : ''}`}>
+                      <div className="dual-card-media">
+                        <img 
+                          src={dualDiff.p2.images?.[0] || ''} 
+                          alt={isAr ? dualDiff.p2.title_ar : dualDiff.p2.title_en} 
+                          className="dual-img"
+                        />
+                        <div className="dual-card-floating-pills">
+                          {dualDiff.cheaperId === dualDiff.p2.id && dualDiff.priceDiff > 0 && (
+                            <span className="dual-advantage-pill pill-green">
+                              {isAr ? `أوفر بـ ${(dualDiff.priceDiff).toLocaleString()} ج.م` : `Save ${(dualDiff.priceDiff).toLocaleString()} EGP`}
+                            </span>
+                          )}
+                          {dualDiff.largerId === dualDiff.p2.id && dualDiff.sizeDiff > 0 && (
+                            <span className="dual-advantage-pill pill-blue">
+                              {isAr ? `أكبر بـ ${dualDiff.sizeDiff} م²` : `+${dualDiff.sizeDiff} m² Space`}
+                            </span>
+                          )}
+                          {dualDiff.betterPpmId === dualDiff.p2.id && (
+                            <span className="dual-advantage-pill pill-gold">
+                              {isAr ? 'أفضل سعر للمتر' : 'Best m² Rate'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="dual-card-info">
+                        <h5 className="dual-card-title">{isAr ? dualDiff.p2.title_ar : dualDiff.p2.title_en}</h5>
+                        <div className="dual-card-meta">
+                          <span className="dual-price"><bdi>{(Number(dualDiff.p2.price) || 0).toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</bdi></span>
+                          <span className="dual-ppm"><bdi>{dualDiff.ppm2.toLocaleString()} {isAr ? 'ج.م/م²' : 'EGP/m²'}</bdi></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="compare-grid-matrix-container">
               <div 
                 className="compare-grid-matrix" 
                 style={{ 
@@ -795,6 +955,7 @@ export default function PropertyCompareDrawer({
                 )}
               </div>
             </div>
+            </>
           )}
         </div>
 
