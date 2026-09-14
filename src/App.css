@@ -5158,8 +5158,16 @@
   letter-spacing: -0.5px;
 }
 
-.dark-theme .price-num-row h2 {
+.dark-theme .price-num-row h2,
+[data-theme="dark"] .price-num-row h2 {
   color: #38bdf8;
+}
+
+.dark-theme .detail-price-box,
+[data-theme="dark"] .detail-price-box {
+  background: linear-gradient(135deg, #0d1b38 0%, #081024 100%);
+  border-color: rgba(56, 189, 248, 0.25);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
 }
 
 .price-per-m {
@@ -10003,7 +10011,7 @@ body.dark,
 .detail-section-tabs-bar {
   display: flex;
   gap: 8px;
-  background: #ffffff;
+  background: var(--surface, #ffffff);
   padding: 8px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--border-color);
@@ -10014,6 +10022,13 @@ body.dark,
   top: 75px;
   z-index: 100;
   backdrop-filter: blur(10px);
+}
+
+.dark-theme .detail-section-tabs-bar,
+[data-theme="dark"] .detail-section-tabs-bar {
+  background: rgba(15, 23, 42, 0.95);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 .section-tab-btn {

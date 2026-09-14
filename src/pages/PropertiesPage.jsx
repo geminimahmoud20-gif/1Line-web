@@ -314,7 +314,7 @@ export default function PropertiesPage({
         {/* 🤖 AI Semantic Recognition Active Banner */}
         {parsedSemantic && parsedSemantic.tagsFound && parsedSemantic.tagsFound.length > 0 && (
           <div className="semantic-active-tags-banner" style={{
-            background: 'linear-gradient(90deg, rgba(217, 119, 6, 0.12), rgba(15, 23, 42, 0.4))',
+            background: 'linear-gradient(90deg, rgba(217, 119, 6, 0.12), rgba(2, 132, 199, 0.08))',
             border: '1px solid rgba(217, 119, 6, 0.3)',
             borderRadius: '12px',
             padding: '10px 16px',
