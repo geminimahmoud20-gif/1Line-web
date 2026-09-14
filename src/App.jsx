@@ -927,9 +927,6 @@ export default function App() {
       {/* Live Social Proof Activity Toast */}
       <LiveActivityToast lang={lang} />
 
-      {/* Floating Back to Top */}
-      <BackToTopButton lang={lang} />
-
       {/* Quick View Modal */}
       <QuickViewModal
         property={quickViewProperty}

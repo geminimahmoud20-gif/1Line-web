@@ -24,6 +24,19 @@ import BrandWatermark from '../common/BrandWatermark';
 
 const FALLBACK_PROPERTY_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 500' fill='%23071e3d'%3E%3Crect width='800' height='500' fill='%23071e3d'/%3E%3Cpath d='M400 130 L620 320 L180 320 Z' fill='%230b4ea2' opacity='0.7'/%3E%3Crect x='340' y='220' width='120' height='100' rx='20' fill='%23fdcb42' opacity='0.85'/%3E%3Ctext x='50%25' y='75%25' dominant-baseline='middle' text-anchor='middle' fill='%23ffffff' font-family='sans-serif' font-size='24' font-weight='bold'%3E1LINE REAL ESTATE%3C/text%3E%3Ctext x='50%25' y='85%25' dominant-baseline='middle' text-anchor='middle' fill='%23fdcb42' font-family='sans-serif' font-size='16'%3E%D8%B9%D9%82%D8%A7%D8%B1%D8%A7%D8%AA%20%D8%B3%D9%88%D9%87%D8%A7%D8%AC%20%D8%A7%D9%84%D9%85%D8%B9%D8%AA%D9%85%D8%AF%D8%A9%3C/text%3E%3C/svg%3E";
 
+// Clean formatting for card sub-header location to avoid mid-word truncation
+function formatCardLocation(loc) {
+  if (!loc) return '';
+  if (loc.includes(' - ')) {
+    const [city, detailed] = loc.split(' - ');
+    const cleanDetail = detailed
+      .split(/ (?:قرب|أمام|بجوار|خلف|بالقرب|قطاع)/)[0]
+      .trim();
+    return `${city} • ${cleanDetail}`;
+  }
+  return loc;
+}
+
 export default function PropertyCard({ 
   property, 
   lang = 'ar', 
@@ -71,79 +84,76 @@ export default function PropertyCard({
     };
   })();
 
+  const handlePrevImage = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setActiveImageIndex((prev) => (prev > 0 ? prev - 1 : imagesList.length - 1));
+  };
+
+  const handleNextImage = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setActiveImageIndex((prev) => (prev < imagesList.length - 1 ? prev + 1 : 0));
+  };
+
   return (
-    <div className="property-card-modern cinematic-card">
-      {/* 16:9 Cinematic Image Container (Clickable to property details) */}
-      <div className="property-card-media aspect-16-9">
+    <div className="property-card-modern group" data-property-id={property.id}>
+      {/* Visual Anchor: Image Header with Smart Media Actions */}
+      <div className="card-media-wrapper">
         <Link 
-          to={`/properties/${property.id}`}
-          className="card-media-clickable-link"
-          aria-label={title}
+          to={`/properties/${property.id}`} 
+          className="card-media-link"
           onClick={() => {
             if (typeof window !== 'undefined') {
               window.dispatchEvent(new CustomEvent('oneline_property_viewed', { detail: { id: property.id, title } }));
             }
           }}
         >
-          <img
-            src={imagesList[activeImageIndex] || imagesList[0] || FALLBACK_PROPERTY_IMG}
+          <img 
+            src={imagesList[activeImageIndex] || FALLBACK_PROPERTY_IMG} 
             alt={title}
             className={`property-card-img ${imageLoaded ? 'loaded' : 'loading'}`}
+            loading="lazy"
             onLoad={() => setImageLoaded(true)}
             onError={(e) => {
-              e.currentTarget.onerror = null;
               e.currentTarget.src = FALLBACK_PROPERTY_IMG;
               setImageLoaded(true);
             }}
-            loading="lazy"
-            decoding="async"
           />
         </Link>
 
-        {/* Interactive Thumbnail Indicator Dots */}
+        {/* Dynamic Multi-photo carousel indicator */}
         {imagesList.length > 1 && (
-          <div className="card-thumb-dots-container" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
-            {imagesList.slice(0, 4).map((_, idx) => (
-              <span
-                key={idx}
-                className={`card-thumb-dot ${activeImageIndex === idx ? 'active' : ''}`}
-                onMouseEnter={() => setActiveImageIndex(idx)}
+          <div className="card-thumb-dots-container">
+            {imagesList.slice(0, 5).map((_, idx) => (
+              <span 
+                key={idx} 
+                className={`card-thumb-dot ${idx === activeImageIndex ? 'active' : ''}`}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   setActiveImageIndex(idx);
                 }}
-                title={`صورة ${idx + 1}`}
               />
             ))}
           </div>
         )}
 
-        {/* Interactive Next / Prev Photo Cycling Arrows on Hover */}
+        {/* Micro Carousel Nav Arrows */}
         {imagesList.length > 1 && (
-          <div className="card-media-nav-arrows">
-            <button
-              type="button"
-              className="card-nav-arrow arrow-prev"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setActiveImageIndex((prev) => (prev > 0 ? prev - 1 : imagesList.length - 1));
-              }}
-              title={lang === 'ar' ? 'الصورة السابقة' : 'Previous photo'}
+          <div className="card-carousel-arrows">
+            <button 
+              type="button" 
+              className="carousel-arrow prev" 
+              onClick={handlePrevImage}
               aria-label="Previous photo"
             >
               {lang === 'ar' ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
             </button>
-            <button
-              type="button"
-              className="card-nav-arrow arrow-next"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setActiveImageIndex((prev) => (prev < imagesList.length - 1 ? prev + 1 : 0));
-              }}
-              title={lang === 'ar' ? 'الصورة التالية' : 'Next photo'}
+            <button 
+              type="button" 
+              className="carousel-arrow next" 
+              onClick={handleNextImage}
               aria-label="Next photo"
             >
               {lang === 'ar' ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
@@ -215,9 +225,9 @@ export default function PropertyCard({
       <div className="property-card-body">
         {/* District & Area Benchmark */}
         <div className="card-sub-header">
-          <div className="property-location-tag">
-            <MapPin size={13} className="text-muted" />
-            <span>{location}</span>
+          <div className="property-location-tag" title={location}>
+            <MapPin size={13} className="text-muted" style={{ flexShrink: 0 }} />
+            <span>{formatCardLocation(location)}</span>
           </div>
           {benchmark?.pricePerMeterFormatted && (
             <span className="benchmark-meter-subtle" title={benchmark.badgeLabel}>
@@ -242,26 +252,37 @@ export default function PropertyCard({
 
         {/* 🏛️ STANDARDIZED DECISION CORE (نواة القرار الثابتة) */}
         <div className="property-decision-core">
-          <div className="core-specs-row">
+          <div className="core-specs-row core-row-top">
             <span className="core-size-highlight">
               <Maximize2 size={13} className="text-muted" />
               <strong>{property.size}</strong> {lang === 'ar' ? 'م² صافي' : 'sqm'}
             </span>
-            <span className="core-divider">•</span>
+            {property.monthlyInstallment > 0 ? (
+              <span className="core-payment-badge installment-badge">
+                {lang === 'ar' ? 'تقسيط متاح' : 'Installments'}
+              </span>
+            ) : (
+              <span className="core-payment-badge cash-badge">
+                {lang === 'ar' ? 'كاش معتمد' : 'Full Cash'}
+              </span>
+            )}
+          </div>
+          
+          <div className="core-specs-row core-row-bottom">
             {property.downPayment > 0 ? (
               <span className="core-fin-label">
                 {lang === 'ar' ? 'مقدم:' : 'Down:'} <strong>{(Number(property.downPayment) || 0).toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}</strong>
               </span>
             ) : (
               <span className="core-cash-label">
-                {lang === 'ar' ? 'كاش فوري مسجل' : 'Full Cash'}
+                {lang === 'ar' ? 'كاش فوري مسجل' : 'Full Cash Verified'}
               </span>
             )}
             {property.monthlyInstallment > 0 && (
               <>
                 <span className="core-divider">•</span>
                 <span className="core-installment-label text-gold">
-                  {lang === 'ar' ? 'قسط:' : 'Monthly:'} <strong>{(Number(property.monthlyInstallment) || 0).toLocaleString()}</strong>
+                  {lang === 'ar' ? 'قسط:' : 'Monthly:'} <strong>{(Number(property.monthlyInstallment) || 0).toLocaleString()}</strong> {lang === 'ar' ? 'ج.م' : 'EGP'}
                 </span>
               </>
             )}
@@ -285,7 +306,7 @@ export default function PropertyCard({
               </span>
             </>
           )}
-          <span className="spec-dot">•</span>
+          {(property.bedrooms > 0 || property.bathrooms > 0) && <span className="spec-dot">•</span>}
           <span className="spec-unit text-emerald">
             <ShieldCheck size={12} />
             <span>{lang === 'ar' ? 'فحص قانوني معتمد' : 'Verified Title'}</span>
