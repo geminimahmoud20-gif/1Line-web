@@ -12,9 +12,6 @@ const MARKET_TICKER_ITEMS = [
 export default function MarketTickerBar({ lang = 'ar' }) {
   const isAr = lang === 'ar';
 
-  // Duplicate items twice to allow infinite, seamless looping marquee
-  const loopItems = [...MARKET_TICKER_ITEMS, ...MARKET_TICKER_ITEMS];
-
   return (
     <div className="market-ticker-container" aria-label="Real-time Real Estate Market Ticker">
       <div className="market-ticker-wrapper">
@@ -34,9 +31,10 @@ export default function MarketTickerBar({ lang = 'ar' }) {
         {/* Continuous Smooth Marquee Viewport with Edge Fade Masks */}
         <div className="ticker-marquee-viewport">
           <div className="ticker-marquee-track">
-            {loopItems.map((item, idx) => (
+            {/* 1. Primary Semantic Items (Extracted Once by Screen Readers & DOM Parsers) */}
+            {MARKET_TICKER_ITEMS.map((item, idx) => (
               <div 
-                key={idx}
+                key={`orig-${idx}`}
                 className="ticker-item-card"
                 dir={isAr ? 'rtl' : 'ltr'}
               >
@@ -48,6 +46,32 @@ export default function MarketTickerBar({ lang = 'ar' }) {
                 </span>
                 
                 {/* Clean Financial Gain Pill with Strict LTR */}
+                <span className="ticker-change-pill" dir="ltr">
+                  <TrendingUp size={10} />
+                  <span>{item.change}</span>
+                </span>
+                
+                <span className="ticker-note-txt">
+                  ({isAr ? item.note_ar : item.note_en})
+                </span>
+              </div>
+            ))}
+
+            {/* 2. Visual Seamless Clones (Strictly Hidden from Assistive Tech & DOM Text Extractors) */}
+            {MARKET_TICKER_ITEMS.map((item, idx) => (
+              <div 
+                key={`clone-${idx}`}
+                className="ticker-item-card ticker-item-clone"
+                dir={isAr ? 'rtl' : 'ltr'}
+                aria-hidden="true"
+              >
+                <MapPin size={12} className="ticker-pin-icon" />
+                <strong className="ticker-area-name">{isAr ? item.area_ar : item.area_en}:</strong>
+                <span className="ticker-sqm-lbl">{isAr ? 'المتر' : 'sqm'}</span>
+                <span className="ticker-price-num">
+                  {item.avg_meter} {isAr ? 'ج.م' : 'EGP'}
+                </span>
+                
                 <span className="ticker-change-pill" dir="ltr">
                   <TrendingUp size={10} />
                   <span>{item.change}</span>

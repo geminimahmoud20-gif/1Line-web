@@ -73,7 +73,11 @@ export default function HomePage({
     ? (navigator.connection.saveData === true || ['slow-2g', '2g'].includes(navigator.connection.effectiveType))
     : false;
 
-  const [videoPlaying, setVideoPlaying] = useState(!isDataSaver);
+  const isReducedMotion = typeof window !== 'undefined' && window.matchMedia
+    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    : false;
+
+  const [videoPlaying, setVideoPlaying] = useState(!isDataSaver && !isReducedMotion);
   const [videoMuted, setVideoMuted] = useState(true);
   const [activeClipIndex, setActiveClipIndex] = useState(0);
   const [clipFade, setClipFade] = useState(false);
@@ -120,9 +124,9 @@ export default function HomePage({
   useEffect(() => {
     if (!founderSettings.heroVideoAutoCycle || heroClips.length <= 1 || !videoPlaying) return;
 
-    // Pause auto-cycle on mobile devices or slow networks for optimal performance
+    // Pause auto-cycle on mobile devices, slow networks, or when user prefers reduced motion
     const isMobileDevice = typeof window !== 'undefined' && window.innerWidth <= 768;
-    if (isMobileDevice) return;
+    if (isMobileDevice || isReducedMotion) return;
 
     const intervalMs = (founderSettings.heroVideoIntervalSec || 10) * 1000;
     const timer = setInterval(() => {
@@ -595,15 +599,15 @@ export default function HomePage({
             </div>
           </div>
 
-          {/* Dual Proof & Trust Verification Strip (شريط الثقة النقي - مؤشران فقط) */}
+          {/* Dual Proof & Trust Verification Strip (شريط الثقة المؤسسي الهادئ - مؤشران حاسمان) */}
           <div className="hero-twin-trust-strip">
             <div className="twin-trust-item">
               <div className="twin-trust-icon">
                 <ShieldCheck size={20} className="text-emerald" />
               </div>
               <div className="twin-trust-text">
-                <strong>{lang === 'ar' ? '100% فحص هندسي وتدقيق قانوني معتمد' : '100% Legally & Structurally Audited'}</strong>
-                <span>{lang === 'ar' ? 'تراخيص رسمية مفحوصة ومطابقة لسجل الأملاك' : 'All titles and municipal licenses verified'}</span>
+                <strong>{lang === 'ar' ? 'فحص هندسي وتدقيق قانوني معتمد' : 'Audited Legal & Structural Verification'}</strong>
+                <span>{lang === 'ar' ? 'تراخيص رسمية مفحوصة ومطابقة لسجلات الشهر العقاري بسوهاج' : 'Verified licenses, title deeds & registry compliance in Sohag'}</span>
               </div>
             </div>
 
@@ -614,8 +618,8 @@ export default function HomePage({
                 <Clock size={20} className="text-gold" />
               </div>
               <div className="twin-trust-text">
-                <strong>{lang === 'ar' ? 'مطابقة فورية لكبار مشتري الكاش خلال 24-48 ساعة' : 'Direct Cash Match in 24-48 Hours'}</strong>
-                <span>{lang === 'ar' ? 'سيولة جاهزة وقوة شرائية مسجلة تفوق 480 مليون ج.م' : 'Active verified purchasing power over 480M EGP'}</span>
+                <strong>{lang === 'ar' ? 'شبكة مشتري كاش ومستثمرين معتمدين' : 'Verified Cash Buyers & Investor Network'}</strong>
+                <span>{lang === 'ar' ? 'مطابقة مباشرة مع طلبات جادة مسجلة دون مضاربات عشوائية' : 'Direct matching with qualified purchase demands without brokerage inflation'}</span>
               </div>
             </div>
           </div>

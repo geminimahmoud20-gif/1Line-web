@@ -58,28 +58,16 @@ export default function PropertyCard({
   const priceData = formatCurrencyPrice(property.price, currency, lang);
   const benchmark = getPriceBenchmark(property, lang);
 
-  // 🎯 Single Contextual Priority Badge (شارة سياقية واحدة حاسمة لمنع التشتت البصري)
+  // 🎯 Single Sovereign Status Badge (توحيد الشارات إلى شارة سيادية واحدة هادئة)
   const resolvedBadge = (() => {
-    if (property.roiAnnual && property.roiAnnual > 0) {
+    if (property.isOffMarket || property.isPrivateDeal) {
       return {
-        label: lang === 'ar' ? `📈 عائد استثماري ${property.roiAnnual}% سنوياً` : `📈 ${property.roiAnnual}% Annual ROI`,
-        className: 'badge-roi'
-      };
-    }
-    if (badge) {
-      return {
-        label: badge,
-        className: 'badge-custom'
-      };
-    }
-    if (property.isDeal || benchmark?.badgeType === 'deal') {
-      return {
-        label: lang === 'ar' ? '🔥 صفقة مميزة كاش' : '🔥 Prime Cash Deal',
+        label: lang === 'ar' ? '💎 صفقة خاصة (Off-Market)' : '💎 Off-Market Private',
         className: 'badge-deal'
       };
     }
     return {
-      label: lang === 'ar' ? '🛡️ مرخص قانونياً 100%' : '🛡️ 100% Verified',
+      label: lang === 'ar' ? '🛡️ معتمد رسمياً من 1Line' : '🛡️ 1Line Verified',
       className: 'badge-verified'
     };
   })();
@@ -161,17 +149,11 @@ export default function PropertyCard({
           </div>
         )}
 
-        {/* Single Contextual Priority Badge */}
+        {/* Single Sovereign Status Badge (شارة واحدة سيادية موحدة لمنع التشتت البصري) */}
         <div className="card-top-badges">
           <span className={`property-badge ${resolvedBadge.className}`}>
             {resolvedBadge.label}
           </span>
-          {property.virtualTour && (
-            <span className="property-badge tour-badge">
-              <Sparkles size={11} />
-              <span>{lang === 'ar' ? '3D' : '3D'}</span>
-            </span>
-          )}
         </div>
 
         {/* Floating Quick Action Buttons */}
@@ -311,6 +293,15 @@ export default function PropertyCard({
             <ShieldCheck size={12} />
             <span>{lang === 'ar' ? 'فحص قانوني معتمد' : 'Verified Title'}</span>
           </span>
+          {property.virtualTour && (
+            <>
+              <span className="spec-dot">•</span>
+              <span className="spec-unit text-gold">
+                <Sparkles size={11} />
+                <span>{lang === 'ar' ? 'معاينة 3D' : '3D Tour'}</span>
+              </span>
+            </>
+          )}
         </div>
 
         {/* Streamlined Footer Actions */}
@@ -324,11 +315,11 @@ export default function PropertyCard({
               }
             }}
           >
-            <span>{lang === 'ar' ? 'طلب استشارة ومعاينة العقار' : 'Request Consultation & Tour'}</span>
+            <span>{lang === 'ar' ? 'حجز معاينة وتفاصيل العقار' : 'Book Tour & Details'}</span>
             {lang === 'ar' ? <ArrowLeft size={14} /> : <ArrowRight size={14} />}
           </Link>
 
-          {/* Quick WhatsApp Inquiry with Telemetry */}
+          {/* Quick Inquiry via WhatsApp */}
           <button
             type="button"
             className="btn-card-wa-icon"
@@ -336,14 +327,14 @@ export default function PropertyCard({
               e.preventDefault();
               e.stopPropagation();
               if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('oneline_whatsapp_clicked', { detail: { id: property.id, title, intent: 'property_card' } }));
+                window.dispatchEvent(new CustomEvent('oneline_whatsapp_clicked', { detail: { id: property.id, title, intent: 'quick_inquiry' } }));
               }
               const msg = lang === 'ar'
-                ? `مرحباً 1Line، أستفسر عن عقار: "${title}" بسعر ${Number(property.price).toLocaleString()} ج.م (كود: #${property.id}). هل هو متاح للمعاينة الميدانية؟`
-                : `Hello 1Line, inquiring about property "${title}" priced at ${Number(property.price).toLocaleString()} EGP (ID: #${property.id}).`;
+                ? `مرحباً 1Line، استفسار سريع بخصوص عقار: "${title}" بسعر ${Number(property.price).toLocaleString()} ج.م (كود: #${property.id}). هل هو متاح للمعاينة؟`
+                : `Hello 1Line, quick inquiry about property "${title}" priced at ${Number(property.price).toLocaleString()} EGP (ID: #${property.id}).`;
               window.open(getWhatsAppUrl(msg), '_blank');
             }}
-            title={lang === 'ar' ? 'استفسار فوري عبر واتساب' : 'Quick WhatsApp'}
+            title={lang === 'ar' ? 'استفسار سريع عبر واتساب' : 'Quick Inquiry via WhatsApp'}
             aria-label="Quick WhatsApp Inquiry"
           >
             <MessageSquare size={16} />
