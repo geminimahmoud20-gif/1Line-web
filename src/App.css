@@ -17,11 +17,11 @@
   pointer-events: auto;
   max-width: 1420px;
   margin: 0 auto;
-  padding: 6px 24px;
+  padding: 6px 28px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
   box-sizing: border-box;
   background: rgba(255, 255, 255, 0.86);
@@ -168,6 +168,10 @@
   margin-top: 2px;
   letter-spacing: -0.1px;
   white-space: nowrap;
+}
+
+.site-header .brand-subtitle {
+  display: none !important;
 }
 
 .dark-theme .brand-subtitle,
@@ -13730,28 +13734,28 @@ body.dark,
 
 @media (max-width: 1380px) and (min-width: 1141px) {
   .header-container.glass-capsule {
-    padding: 5px 14px;
-    gap: 8px;
+    padding: 6px 22px;
+    gap: 10px;
   }
   .luxury-desktop-nav {
-    gap: 2px;
+    gap: 3px;
   }
   .luxury-nav-pill {
-    padding: 5px 7px;
-    font-size: 0.78rem;
+    padding: 5px 9px;
+    font-size: 0.8rem;
     gap: 4px;
   }
   .luxury-badge {
-    font-size: 0.58rem;
+    font-size: 0.6rem;
     padding: 1px 4px;
   }
   .header-actions {
-    gap: 6px;
+    gap: 8px;
     flex-shrink: 0;
   }
   .cta-royal-btn {
-    padding: 5px 10px;
-    font-size: 0.76rem;
+    padding: 6px 12px;
+    font-size: 0.78rem;
     gap: 5px;
     flex-shrink: 0;
   }
@@ -13766,18 +13770,18 @@ body.dark,
     font-size: 0.74rem;
   }
   .brand-title {
-    font-size: 1.18rem;
+    font-size: 1.22rem;
   }
 }
 
-@media (max-width: 1280px) and (min-width: 1141px) {
+@media (max-width: 1240px) and (min-width: 1141px) {
   .header-container.glass-capsule {
-    padding: 4px 10px;
-    gap: 5px;
+    padding: 5px 18px;
+    gap: 8px;
   }
   .luxury-nav-pill {
-    padding: 4px 5px;
-    font-size: 0.75rem;
+    padding: 4px 7px;
+    font-size: 0.77rem;
     gap: 3px;
   }
   .luxury-nav-pill .nav-pill-icon {

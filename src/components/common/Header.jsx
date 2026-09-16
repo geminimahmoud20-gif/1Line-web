@@ -131,14 +131,16 @@ export default function Header({
       id: 'properties',
       type: 'link',
       path: '/properties',
-      label: isAr ? 'العقارات المعتمدة' : 'Properties',
+      label: isAr ? 'العقارات' : 'Properties',
+      title: isAr ? 'العقارات المعتمدة' : 'Verified Properties',
       icon: Building
     },
     {
       id: 'projects',
       type: 'link',
       path: '/projects',
-      label: isAr ? 'المشروعات والكمبوندات' : 'Projects',
+      label: isAr ? 'المشروعات' : 'Projects',
+      title: isAr ? 'المشروعات والكمبوندات' : 'Projects & Compounds',
       icon: Layers
     },
     {
@@ -146,12 +148,14 @@ export default function Header({
       type: 'link',
       path: '/demands',
       label: isAr ? 'طلبات المشترين' : 'Buyer Demands',
+      title: isAr ? 'طلبات المشترين' : 'Buyer Demands',
       icon: FileText
     },
     {
       id: 'vip-services',
       type: 'dropdown',
-      label: isAr ? 'خدمات واستشارات VIP' : 'VIP & Advisory',
+      label: isAr ? 'استشارات VIP' : 'VIP Advisory',
+      title: isAr ? 'خدمات واستشارات VIP' : 'VIP Services & Advisory',
       icon: Sparkles,
       badge: 'VIP',
       badgeType: 'gold',
@@ -254,6 +258,7 @@ export default function Header({
                   key={hub.id}
                   to={hub.path}
                   className={`luxury-nav-pill ${active ? 'active' : ''}`}
+                  title={hub.title || hub.label}
                 >
                   <HubIcon size={14} className="nav-pill-icon" />
                   <span className="nav-pill-label">{hub.label}</span>
@@ -276,6 +281,7 @@ export default function Header({
                   type="button"
                   className={`luxury-nav-pill ${groupActive ? 'active' : ''} ${isOpen ? 'open' : ''} ${hub.id === 'vip-services' ? 'vip-nav-pill' : ''}`}
                   onClick={() => setActiveDropdown(isOpen ? null : hub.id)}
+                  title={hub.title || hub.label}
                   aria-expanded={isOpen}
                 >
                   <HubIcon size={14} className="nav-pill-icon" />
