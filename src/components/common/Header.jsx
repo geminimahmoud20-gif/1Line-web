@@ -210,7 +210,7 @@ export default function Header({
   ];
 
   return (
-    <header className="site-header sticky-header">
+    <header className="site-header sticky-header" dir={isAr ? 'rtl' : 'ltr'}>
       <div className="header-container glass-capsule">
         {/* Mobile One-Step Back Navigation Button */}
         {location.pathname !== '/' && (
@@ -326,29 +326,31 @@ export default function Header({
 
         {/* Streamlined, Clean Action Group */}
         <div className="header-actions">
-          {/* Active Comparison Pill */}
+          {/* Active Comparison Button (Luxury Sleek Badge) */}
           {compareCount > 0 && onOpenCompare && (
             <button
               type="button"
-              className="header-compare-pill"
+              className="header-compare-pill header-icon-badge-btn"
               onClick={onOpenCompare}
-              title={isAr ? 'عرض مقارنة العقارات المختارة' : 'View Property Comparison'}
+              title={isAr ? `عرض مقارنة العقارات المختارة (${compareCount})` : `View Property Comparison (${compareCount})`}
+              aria-label="Compare"
             >
-              <Scale size={14} />
-              <span>{isAr ? `مقارنة (${compareCount})` : `Compare (${compareCount})`}</span>
+              <Scale size={15} />
+              <span className="header-badge-count">{compareCount}</span>
             </button>
           )}
 
-          {/* Active Favorites Pill */}
+          {/* Active Favorites Button (Luxury Sleek Badge) */}
           {favoritesCount > 0 && onOpenFavorites && (
             <button
               type="button"
-              className="header-favorites-pill"
+              className="header-favorites-pill header-icon-badge-btn favorites-badge-btn"
               onClick={onOpenFavorites}
-              title={isAr ? 'عرض العقارات المحفوظة' : 'View Saved Properties'}
+              title={isAr ? `عرض العقارات المحفوظة (${favoritesCount})` : `View Saved Properties (${favoritesCount})`}
+              aria-label="Favorites"
             >
-              <Heart size={14} fill="#ef4444" color="#ef4444" />
-              <span>{isAr ? `المفضلة (${favoritesCount})` : `Saved (${favoritesCount})`}</span>
+              <Heart size={15} fill="#ef4444" color="#ef4444" />
+              <span className="header-badge-count">{favoritesCount}</span>
             </button>
           )}
 
@@ -526,6 +528,7 @@ export default function Header({
               </div>
             )}
           </div>
+        </div>
 
           {/* 💬 Royal Blue & Gold WhatsApp CTA Button with Live Advisor Pulse */}
           <a
@@ -540,7 +543,6 @@ export default function Header({
             <span className="cta-btn-text">{isAr ? 'تواصل معنا' : 'Contact Us'}</span>
             <span className="cta-btn-short-text">{isAr ? 'تواصل' : 'Contact'}</span>
           </a>
-        </div>
 
           {/* Mobile Quick Search Button */}
           {onOpenQuickSearch && (

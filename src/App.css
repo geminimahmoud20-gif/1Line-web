@@ -17,11 +17,11 @@
   pointer-events: auto;
   max-width: 1420px;
   margin: 0 auto;
-  padding: 6px 18px;
+  padding: 6px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
   box-sizing: border-box;
   background: rgba(255, 255, 255, 0.86);
@@ -12425,25 +12425,68 @@ body.dark,
    💎 20-DEFECTS MASTER PACK STYLING & MICRO-INTERACTIONS
    ============================================================= */
 
-/* 1. Header Compare Pill */
-.header-compare-pill {
+/* 1. Header Compare & Favorites Luxury Badge Icon */
+.header-compare-pill,
+.header-favorites-pill,
+.header-icon-badge-btn {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  padding: 0;
+  border-radius: 50%;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  background: var(--accent-gold-light);
-  border: 1px solid var(--accent-gold);
-  color: var(--primary);
-  border-radius: var(--radius-pill);
-  font-size: 0.82rem;
-  font-weight: 900;
+  justify-content: center;
+  background: rgba(11, 78, 162, 0.07);
+  border: 1px solid rgba(11, 78, 162, 0.16);
+  color: var(--primary, #071e3d);
   cursor: pointer;
-  animation: pulseScale 2s infinite ease-in-out;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
 }
 
-@keyframes pulseScale {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.04); }
+.header-compare-pill:hover,
+.header-icon-badge-btn:hover {
+  background: rgba(217, 119, 6, 0.14);
+  border-color: var(--accent-gold, #d97706);
+  color: var(--accent-gold, #d97706);
+  transform: translateY(-1px);
+}
+
+.header-badge-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--accent-gold, #d97706);
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+  border: 1.5px solid #ffffff;
+}
+
+.favorites-badge-btn .header-badge-count {
+  background: #ef4444;
+}
+
+.dark-theme .header-compare-pill,
+.dark-theme .header-favorites-pill,
+.dark-theme .header-icon-badge-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(56, 189, 248, 0.2);
+  color: #e2e8f0;
+}
+
+.dark-theme .header-badge-count {
+  border-color: #0b1528;
 }
 
 /* 2. Floating Back To Top Button */
