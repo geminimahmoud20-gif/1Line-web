@@ -695,6 +695,28 @@ export default function MortgageRoiCalculator({
                 </div>
               </div>
 
+              {/* Net vs Gross Yield & Methodology Disclosure */}
+              <div style={{
+                fontSize: '0.71rem',
+                color: '#cbd5e1',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                padding: '7px 12px',
+                borderRadius: '8px',
+                margin: '8px 0 10px',
+                display: 'flex',
+                gap: '8px',
+                alignItems: 'flex-start',
+                lineHeight: 1.5
+              }}>
+                <span style={{ color: '#ffca28', fontSize: '0.85rem' }}>ℹ️</span>
+                <span>
+                  {isAr 
+                    ? 'النسبة تمثل صافي العائد الإيجاري (Net Yield) بعد خصم مخصص الصيانة والتشغيل السنوي. نسب النمو الرأسمالي تقديرية مبنية على مؤشرات صفقات سوهاج السابقة.' 
+                    : 'Reflects Net Rental Yield after deducting estimated annual maintenance. Capital appreciation is indicative based on historical Sohag transactions.'}
+                </span>
+              </div>
+
               {/* 5-Year Capital Growth Simulation Timeline */}
               <div className="five-year-growth-card" style={{
                 background: 'linear-gradient(135deg, rgba(8, 18, 38, 0.95) 0%, rgba(13, 72, 161, 0.9) 100%)',

@@ -1,29 +1,19 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
-import { TRANSLATIONS } from './translations';
-import { PROPERTIES_DATA } from './data/propertiesData';
-import { MEGA_PROJECTS } from './data/projectsData';
-import { INITIAL_LEADS, INITIAL_DEMANDS } from './data/mockData';
-import { 
-  saveLead, 
-  subscribeToLeads, 
-  subscribeToDemands,
-  isFirebaseActive, 
-  saveNotification,
-  updateLeadField,
-  deleteLead,
-  saveDemand,
-  loadDemands,
-  updateDemandStatus,
-  deleteDemandDoc,
-  logoutUser,
-  monitorAuthState
-} from './firebaseService';
-import { playNotificationChime } from './utils/notificationHub';
-import { sanitizeObject, normalizePhoneNumber } from './utils/securityShield';
-import { getOrCreateSession, trackEvent, identifyVisitor, getCurrentSessionJourney } from './utils/visitorTracker';
-import { isRecordArray, readStoredJson } from './utils/browserStorage';
+
+// Context Providers & Hooks
+import { PreferencesProvider, usePreferences } from './context/PreferencesContext';
+import { UIModalProvider, useUIModal } from './context/UIModalContext';
+import { PropertiesProvider, useProperties } from './context/PropertiesContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+
+// Security & Storage Helpers
+import { sanitizeObject } from './utils/securityShield';
+import { readStoredJson } from './utils/browserStorage';
+
+// Analytics & CMS
+import { getOrCreateSession, trackEvent } from './utils/visitorTracker';
 import { initFounderCmsSync } from './utils/founderCmsData';
 import { initAreasSync } from './utils/areasData';
 
@@ -76,7 +66,7 @@ function RouteLoadingSpinner({ lang = 'ar' }) {
         height: '42px',
         borderRadius: '50%',
         border: '3px solid rgba(217, 119, 6, 0.15)',
-        borderTopColor: 'var(--accent-gold)',
+        borderTopColor: 'var(--accent-gold, #d97706)',
         animation: 'routeSpin 0.8s linear infinite'
       }} />
       <span style={{
@@ -98,52 +88,55 @@ function RouteLoadingSpinner({ lang = 'ar' }) {
 
 import './App.css';
 
-export default function App() {
-  const [lang, setLang] = useState('ar');
-  const [currency, setCurrency] = useState(() => {
-    return localStorage.getItem('oneline_currency') || 'EGP';
-  });
+/**
+ * Main Application Shell & Route Controller
+ */
+function AppContent() {
+  const { 
+    lang, setLang, t, 
+    currency, setCurrency, 
+    theme, toggleTheme, 
+    soundEnabled, toggleSound 
+  } = usePreferences();
 
-  const handleSetCurrency = useCallback((newCurr) => {
-    setCurrency(newCurr);
-    localStorage.setItem('oneline_currency', newCurr);
-  }, []);
+  const {
+    toasts, triggerToast, dismissToast,
+    quickViewProperty, handleOpenQuickView, handleCloseQuickView,
+    trackModalOpen, setTrackModalOpen,
+    shareModalOpen, setShareModalOpen,
+    callbackModalOpen, setCallbackModalOpen,
+    contactDrawerOpen, setContactDrawerOpen,
+    quickSearchOpen, setQuickSearchOpen,
+    addDemandModalOpen, setAddDemandModalOpen,
+    aboutFounderModalOpen, setAboutFounderModalOpen,
+    compareDrawerOpen, setCompareDrawerOpen,
+    favoritesDrawerOpen, setFavoritesDrawerOpen,
+    aiModalOpen, setAiModalOpen
+  } = useUIModal();
 
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('oneline_theme') || 'light';
-  });
+  const {
+    properties, handleAddProperty, handleUpdateProperty, handleDeleteProperty,
+    projects, handleAddProject, handleUpdateProject, handleDeleteProject,
+    favorites, toggleFavorite, clearFavorites,
+    compareList, toggleCompare, addToCompare, removeCompare, clearCompare,
+    leads, setLeads, handleAddNewLead, handleUpdateLead, handleDeleteLead,
+    demands, handleAddPublicDemand: contextAddPublicDemand, handleAddAdminDemand: contextAddAdminDemand, handleApproveDemand,
+    handleUpdateDemand, handleDeleteDemand, handleUnpublishDemand
+  } = useProperties();
 
-  const toggleTheme = useCallback(() => {
-    setTheme((prev) => {
-      const nextTheme = prev === 'dark' ? 'light' : 'dark';
-      localStorage.setItem('oneline_theme', nextTheme);
-      return nextTheme;
-    });
-  }, []);
+  // 🛡️ Explicit sanitizeObject wrappers for client and admin demands
+  const handleAddPublicDemand = useCallback(async (newDemand) => {
+    const sanitizedDemand = sanitizeObject(newDemand);
+    return contextAddPublicDemand(sanitizedDemand);
+  }, [contextAddPublicDemand]);
 
-  const [soundEnabled, setSoundEnabled] = useState(false);
+  const handleAddAdminDemand = useCallback((demandPayload) => {
+    const sanitizedPayload = sanitizeObject(demandPayload);
+    return contextAddAdminDemand(sanitizedPayload);
+  }, [contextAddAdminDemand]);
 
-  const toggleSound = useCallback(() => {
-    setSoundEnabled((prev) => !prev);
-  }, []);
+  const { crmAuthenticated, setCrmAuthenticated, handleCrmLogout } = useAuth();
 
-  // Synchronize theme to document root, body and mobile theme-color meta tag
-  useEffect(() => {
-    const isDark = theme === 'dark';
-    document.documentElement.setAttribute('data-theme', theme);
-    document.documentElement.classList.toggle('dark-theme', isDark);
-    document.documentElement.classList.toggle('dark', isDark);
-    document.body.setAttribute('data-theme', theme);
-    document.body.classList.toggle('dark-theme', isDark);
-    document.body.classList.toggle('dark', isDark);
-
-    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-    if (metaThemeColor) {
-      metaThemeColor.setAttribute('content', isDark ? '#070b14' : '#f8fafc');
-    }
-  }, [theme]);
-
-  const t = TRANSLATIONS[lang] || TRANSLATIONS.ar;
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -176,578 +169,6 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [navigate]);
 
-  // Toast System
-  const [toasts, setToasts] = useState([]);
-  const triggerToast = useCallback((message, type = 'info') => {
-    const id = Date.now() + Math.random();
-    setToasts((prev) => [...prev, { id, message, type }]);
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 4000);
-  }, []);
-
-  const dismissToast = useCallback((id) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
-
-  // Properties Data State (Smart Catalog Merge to ensure all verified Sohag listings are always accessible)
-  const [properties, setProperties] = useState(() => {
-    const stored = readStoredJson('oneline_properties', PROPERTIES_DATA, isRecordArray);
-    if (Array.isArray(stored) && stored.length > 0) {
-      const existingIds = new Set(stored.map(p => p.id));
-      const missing = PROPERTIES_DATA.filter(p => !existingIds.has(p.id));
-      if (missing.length > 0) {
-        const merged = [...stored, ...missing];
-        localStorage.setItem('oneline_properties', JSON.stringify(merged));
-        return merged;
-      }
-      return stored;
-    }
-    return PROPERTIES_DATA;
-  });
-
-  const handleAddProperty = useCallback((newProp) => {
-    setProperties((prev) => {
-      const updated = [newProp, ...prev];
-      localStorage.setItem('oneline_properties', JSON.stringify(updated));
-      return updated;
-    });
-  }, []);
-
-  const handleUpdateProperty = useCallback((id, updatedData) => {
-    setProperties((prev) => {
-      const updated = prev.map((p) => (p.id === id ? { ...p, ...updatedData } : p));
-      localStorage.setItem('oneline_properties', JSON.stringify(updated));
-      return updated;
-    });
-  }, []);
-
-  const handleDeleteProperty = useCallback((id) => {
-    setProperties((prev) => {
-      const updated = prev.filter((p) => p.id !== id);
-      localStorage.setItem('oneline_properties', JSON.stringify(updated));
-      return updated;
-    });
-  }, []);
-
-  // Mega Projects State (Smart Catalog Merge to ensure verified Sohag developments are always accessible)
-  const [projects, setProjects] = useState(() => {
-    const stored = readStoredJson('oneline_mega_projects', MEGA_PROJECTS, isRecordArray);
-    if (Array.isArray(stored) && stored.length > 0) {
-      const existingIds = new Set(stored.map(p => p.id));
-      const missing = MEGA_PROJECTS.filter(p => !existingIds.has(p.id));
-      if (missing.length > 0) {
-        const merged = [...stored, ...missing];
-        localStorage.setItem('oneline_mega_projects', JSON.stringify(merged));
-        return merged;
-      }
-      return stored;
-    }
-    return MEGA_PROJECTS;
-  });
-
-  const handleAddProject = useCallback((newProj) => {
-    setProjects((prev) => {
-      const updated = [newProj, ...prev];
-      localStorage.setItem('oneline_mega_projects', JSON.stringify(updated));
-      return updated;
-    });
-    triggerToast(lang === 'ar' ? 'تم إضافة المشروع بنجاح 🏢' : 'Project added!', 'success');
-  }, [lang, triggerToast]);
-
-  const handleUpdateProject = useCallback((id, updatedData) => {
-    setProjects((prev) => {
-      const updated = prev.map((p) => (p.id === id ? { ...p, ...updatedData } : p));
-      localStorage.setItem('oneline_mega_projects', JSON.stringify(updated));
-      return updated;
-    });
-    triggerToast(lang === 'ar' ? 'تم تحديث بيانات المشروع ونسب الإنجاز بنجاح 💾' : 'Project updated!', 'success');
-  }, [lang, triggerToast]);
-
-  const handleDeleteProject = useCallback((id) => {
-    setProjects((prev) => {
-      const updated = prev.filter((p) => p.id !== id);
-      localStorage.setItem('oneline_mega_projects', JSON.stringify(updated));
-      return updated;
-    });
-    triggerToast(lang === 'ar' ? 'تم حذف المشروع بنجاح 🗑️' : 'Project deleted!', 'info');
-  }, [lang, triggerToast]);
-
-  // Favorites State
-  const [favorites, setFavorites] = useState(() => {
-    return readStoredJson('oneline_favorites', [], Array.isArray);
-  });
-
-  const toggleFavorite = useCallback((propertyId) => {
-    setFavorites((prev) => {
-      const exists = prev.includes(propertyId);
-      const updated = exists ? prev.filter((id) => id !== propertyId) : [...prev, propertyId];
-      localStorage.setItem('oneline_favorites', JSON.stringify(updated));
-      triggerToast(
-        exists 
-          ? (lang === 'ar' ? 'تمت الإزالة من المفضلة' : 'Removed from favorites')
-          : (lang === 'ar' ? 'تمت الإضافة إلى المفضلة' : 'Saved to favorites'),
-        'success'
-      );
-      return updated;
-    });
-  }, [lang, triggerToast]);
-
-  const [favoritesDrawerOpen, setFavoritesDrawerOpen] = useState(false);
-
-  const clearFavorites = useCallback(() => {
-    setFavorites([]);
-    localStorage.removeItem('oneline_favorites');
-    triggerToast(lang === 'ar' ? 'تم مسح قائمة المفضلة' : 'Favorites cleared', 'info');
-  }, [lang, triggerToast]);
-
-  // Comparison State (Up to 3 properties)
-  const [compareList, setCompareList] = useState([]);
-  const [compareDrawerOpen, setCompareDrawerOpen] = useState(false);
-  const [aiModalOpen, setAiModalOpen] = useState(false);
-
-  const toggleCompare = useCallback((property) => {
-    setCompareList((prev) => {
-      const exists = prev.some((p) => p.id === property.id);
-      if (exists) {
-        triggerToast(lang === 'ar' ? 'تمت الإزالة من قائمة المقارنة' : 'Removed from comparison', 'info');
-        return prev.filter((p) => p.id !== property.id);
-      }
-      if (prev.length >= 4) {
-        triggerToast(lang === 'ar' ? 'يمكنك مقارنة 4 عقارات كحد أقصى' : 'Max 4 properties for comparison', 'error');
-        return prev;
-      }
-      triggerToast(lang === 'ar' ? 'تمت الإضافة إلى قائمة المقارنة' : 'Added to comparison', 'success');
-      return [...prev, property];
-    });
-  }, [lang, triggerToast]);
-
-  const addToCompare = useCallback((property) => {
-    setCompareList((prev) => {
-      if (prev.some((p) => p.id === property.id)) return prev;
-      if (prev.length >= 4) {
-        triggerToast(lang === 'ar' ? 'يمكنك مقارنة 4 عقارات كحد أقصى' : 'Max 4 properties for comparison', 'error');
-        return prev;
-      }
-      triggerToast(lang === 'ar' ? 'تمت الإضافة إلى قائمة المقارنة' : 'Added to comparison', 'success');
-      return [...prev, property];
-    });
-  }, [lang, triggerToast]);
-
-  const removeCompare = useCallback((propertyId) => {
-    setCompareList((prev) => prev.filter((p) => p.id !== propertyId));
-  }, []);
-
-  const clearCompare = useCallback(() => {
-    setCompareList([]);
-    setCompareDrawerOpen(false);
-  }, []);
-
-  // CRM Leads State
-  const [leads, setLeads] = useState(() => {
-    return readStoredJson('oneline_crm_leads', INITIAL_LEADS, isRecordArray);
-  });
-
-  const [demands, setDemands] = useState(() => {
-    const fallback = INITIAL_DEMANDS.map((d) => ({ ...d, status: d.status || 'published' }));
-    const stored = readStoredJson('oneline_demands', fallback, isRecordArray);
-    return Array.isArray(stored) && stored.length > 0 ? stored : fallback;
-  });
-
-  const [addDemandModalOpen, setAddDemandModalOpen] = useState(false);
-  const [aboutFounderModalOpen, setAboutFounderModalOpen] = useState(false);
-
-  // Global event listener to trigger Founder Modal from anywhere
-  useEffect(() => {
-    const handleOpenModal = () => setAboutFounderModalOpen(true);
-    window.addEventListener('oneline_open_founder_modal', handleOpenModal);
-    return () => window.removeEventListener('oneline_open_founder_modal', handleOpenModal);
-  }, []);
-
-  // Generic Lead Submission Handler with Deduplication & Auto-Merge
-  const handleAddNewLead = useCallback(async (leadData, extraData, sourceLabel) => {
-    let rawLead = leadData;
-    if (typeof leadData === 'string' && extraData && typeof extraData === 'object') {
-      rawLead = {
-        ...extraData,
-        type: extraData.type || leadData,
-        source: sourceLabel || extraData.source || 'Direct Entry'
-      };
-    }
-
-    // 🛡️ Sanitize all user-submitted data to prevent XSS attacks
-    const cleanData = sanitizeObject(rawLead || leadData);
-    sanitizeObject(leadData);
-
-    // Standardize mandatory client registration fields
-    const normalizedName = (cleanData.name || cleanData.clientName || '').trim();
-    const rawPhone = cleanData.phone || cleanData.whatsapp || '';
-    const rawWhatsapp = cleanData.whatsapp || cleanData.phone || '';
-    const normalizedPropertyType = cleanData.propertyType || cleanData.details?.propertyType || cleanData.targetType || cleanData.type || 'residential';
-    const normalizedArea = cleanData.area || cleanData.details?.area || cleanData.location || 'sohag_jadida';
-
-    const standardizedData = {
-      ...cleanData,
-      name: normalizedName || 'عميل مسجل',
-      phone: rawPhone,
-      whatsapp: rawWhatsapp,
-      propertyType: normalizedPropertyType,
-      area: normalizedArea,
-      details: {
-        ...(cleanData.details || {}),
-        propertyType: normalizedPropertyType,
-        area: normalizedArea
-      }
-    };
-
-    const incomingPhone = normalizePhoneNumber(rawPhone || rawWhatsapp);
-
-    // 🌐 Enrich Digital Visitor Session
-    identifyVisitor(standardizedData);
-    const sessionJourney = getCurrentSessionJourney();
-
-    // Play subtle audio alert for sales team if sound enabled
-    if (soundEnabled) {
-      playNotificationChime();
-    }
-
-    let finalLead = null;
-
-    // 1. Update State & LocalStorage
-    setLeads((prev) => {
-      // 🛡️ Check if phone already exists in leads database
-      const existingIndex = prev.findIndex(
-        (l) => normalizePhoneNumber(l.phone || l.whatsapp) === incomingPhone
-      );
-
-      if (existingIndex !== -1 && incomingPhone) {
-        // Customer already exists -> Merge new request into existing lead record
-        const existing = prev[existingIndex];
-        const newLog = {
-          timestamp: new Date().toISOString(),
-          action: `تسجيل اهتمام إضافي: طلب ${standardizedData.propertyType || standardizedData.type || 'جديد'}`
-        };
-
-        const mergedLead = {
-          ...existing,
-          name: existing.name || standardizedData.name,
-          whatsapp: standardizedData.whatsapp || existing.whatsapp,
-          phone: standardizedData.phone || existing.phone,
-          propertyType: standardizedData.propertyType || existing.propertyType,
-          area: standardizedData.area || existing.area,
-          score: Math.min(100, (existing.score || 80) + 10), // Boost urgency score
-          timestamp: new Date().toISOString(), // Refresh recency
-          notes: `${existing.notes ? existing.notes + ' | ' : ''}طلب إضافي: ${standardizedData.propertyType || ''} في ${standardizedData.area || ''}`,
-          details: { ...(existing.details || {}), ...(standardizedData.details || {}) },
-          activityLogs: [newLog, ...(existing.activityLogs || [])],
-          digitalJourney: (sessionJourney.events && sessionJourney.events.length > 0) ? sessionJourney.events : (existing.digitalJourney || []),
-          dwellTimeFormatted: sessionJourney.dwellTimeFormatted || existing.dwellTimeFormatted || '1د 15ث',
-          isLiveTracked: true
-        };
-
-        finalLead = mergedLead;
-        const updated = [...prev];
-        updated[existingIndex] = mergedLead;
-        localStorage.setItem('oneline_crm_leads', JSON.stringify(updated));
-        return updated;
-      } else {
-        // Brand new customer record
-        const newLead = {
-          id: 'lead-' + Date.now(),
-          timestamp: new Date().toISOString(),
-          status: 'new',
-          followUp: 'Pending Contact',
-          assignedTo: 'Sales Advisor Team',
-          score: 85,
-          temperature: 'hot',
-          activityLogs: [{
-            timestamp: new Date().toISOString(),
-            action: 'تسجيل العميل لأول مرة عبر المنصة'
-          }],
-          digitalJourney: sessionJourney.events || [],
-          dwellTimeFormatted: sessionJourney.dwellTimeFormatted || '45 ثانية',
-          dwellTimeSeconds: sessionJourney.dwellTimeSeconds || 45,
-          isLiveTracked: true,
-          ...standardizedData
-        };
-
-        finalLead = newLead;
-        const updated = [newLead, ...prev];
-        localStorage.setItem('oneline_crm_leads', JSON.stringify(updated));
-        return updated;
-      }
-    });
-
-    // 2. Push to Firebase if configured (with Offline Sync Queue resilience)
-    if (isFirebaseActive() && finalLead) {
-      if (typeof navigator !== 'undefined' && !navigator.onLine) {
-        try {
-          const queue = JSON.parse(localStorage.getItem('oneline_offline_lead_queue') || '[]');
-          queue.push(finalLead);
-          localStorage.setItem('oneline_offline_lead_queue', JSON.stringify(queue));
-          triggerToast(lang === 'ar' ? 'تم حفظ الطلب محلياً دون اتصال وسيتم رفعه تلقائياً فور توفر الإنترنت 📶' : 'Saved offline! Will sync automatically when connected.', 'info');
-        } catch (e) {}
-      } else {
-        try {
-          await saveLead(finalLead);
-          await saveNotification(`Lead update: ${finalLead.name || 'Client'}`);
-        } catch (err) {
-          console.error('Firebase save lead error:', err);
-          try {
-            const queue = JSON.parse(localStorage.getItem('oneline_offline_lead_queue') || '[]');
-            queue.push(finalLead);
-            localStorage.setItem('oneline_offline_lead_queue', JSON.stringify(queue));
-          } catch (e) {}
-        }
-      }
-    }
-
-    return finalLead;
-  }, [soundEnabled, lang, triggerToast]);
-
-  // 📶 Auto Offline Queue Synchronization when device reconnects
-  useEffect(() => {
-    const handleOnline = async () => {
-      try {
-        const queue = JSON.parse(localStorage.getItem('oneline_offline_lead_queue') || '[]');
-        if (Array.isArray(queue) && queue.length > 0 && isFirebaseActive()) {
-          for (const item of queue) {
-            await saveLead(item);
-          }
-          localStorage.removeItem('oneline_offline_lead_queue');
-          triggerToast(lang === 'ar' ? `تمت مزامنة ${queue.length} طلبات مسجلة دون اتصال بنجاح! 📶` : `Synced ${queue.length} offline leads!`, 'success');
-        }
-      } catch (err) {
-        console.error('Offline queue sync error:', err);
-      }
-    };
-
-    window.addEventListener('online', handleOnline);
-    return () => window.removeEventListener('online', handleOnline);
-  }, [lang, triggerToast]);
-
-  // Demands Management Handlers
-  const handleAddPublicDemand = useCallback(async (newDemand) => {
-    // 🛡️ Sanitize user-submitted demand payload
-    const sanitizedDemand = sanitizeObject(newDemand);
-
-    setDemands((prev) => {
-      const updated = [sanitizedDemand, ...prev];
-      localStorage.setItem('oneline_demands', JSON.stringify(updated));
-      return updated;
-    });
-
-    // Also log in CRM Leads for immediate sales tracking
-    handleAddNewLead({
-      name: sanitizedDemand.clientName || 'مشتري عقار',
-      phone: sanitizedDemand.phone,
-      whatsapp: sanitizedDemand.whatsapp,
-      source: 'طلب شراء عقار (مراجعة الإدارة)',
-      notes: `طلب شراء جديد: ${sanitizedDemand.text_ar || ''} | الميزانية: ${sanitizedDemand.budget} ج.م | المنطقة: ${sanitizedDemand.area_ar || sanitizedDemand.area}`,
-      type: 'buyer_demand',
-      status: 'new',
-      details: {
-        demandId: sanitizedDemand.id,
-        budget: sanitizedDemand.budget,
-        propertyType: sanitizedDemand.type,
-        area: sanitizedDemand.area
-      }
-    });
-
-    if (isFirebaseActive()) {
-      saveDemand(sanitizedDemand);
-    }
-  }, [handleAddNewLead]);
-
-  const handleAddAdminDemand = useCallback((demandPayload) => {
-    const sanitizedPayload = sanitizeObject(demandPayload);
-    setDemands((prev) => {
-      const updated = [sanitizedPayload, ...prev];
-      localStorage.setItem('oneline_demands', JSON.stringify(updated));
-      return updated;
-    });
-    if (isFirebaseActive()) {
-      saveDemand(sanitizedPayload);
-    }
-  }, []);
-
-  const handleApproveDemand = useCallback((demandId) => {
-    setDemands((prev) => {
-      const updated = prev.map(d => d.id === demandId ? { 
-        ...d, 
-        status: 'published', 
-        approvedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      } : d);
-      // Ensure newly approved / published demands appear at the top
-      const sorted = [...updated].sort((a, b) => {
-        const timeA = new Date(a.approvedAt || a.createdAt || a.timestamp || 0).getTime();
-        const timeB = new Date(b.approvedAt || b.createdAt || b.timestamp || 0).getTime();
-        return timeB - timeA;
-      });
-      localStorage.setItem('oneline_demands', JSON.stringify(sorted));
-      return sorted;
-    });
-    if (isFirebaseActive()) {
-      updateDemandStatus(demandId, { status: 'published', approvedAt: new Date().toISOString() });
-    }
-  }, []);
-
-  const handleUpdateDemand = useCallback((demandId, updatedData) => {
-    setDemands((prev) => {
-      const updated = prev.map(d => d.id === demandId ? { ...d, ...updatedData } : d);
-      localStorage.setItem('oneline_demands', JSON.stringify(updated));
-      return updated;
-    });
-    if (isFirebaseActive()) {
-      updateDemandStatus(demandId, updatedData);
-    }
-  }, []);
-
-  const handleDeleteDemand = useCallback((demandId) => {
-    setDemands((prev) => {
-      const updated = prev.filter(d => d.id !== demandId);
-      localStorage.setItem('oneline_demands', JSON.stringify(updated));
-      return updated;
-    });
-    if (isFirebaseActive()) {
-      deleteDemandDoc(demandId);
-    }
-  }, []);
-
-  const handleUnpublishDemand = useCallback((demandId) => {
-    setDemands((prev) => {
-      const updated = prev.map(d => d.id === demandId ? { ...d, status: 'pending' } : d);
-      localStorage.setItem('oneline_demands', JSON.stringify(updated));
-      return updated;
-    });
-    if (isFirebaseActive()) {
-      updateDemandStatus(demandId, { status: 'pending' });
-    }
-  }, []);
-
-  // CRM Auth State
-  const [crmAuthenticated, setCrmAuthenticated] = useState(false);
-
-  useEffect(() => monitorAuthState(setCrmAuthenticated), []);
-
-  const handleCrmLogout = async () => {
-    await logoutUser();
-    setCrmAuthenticated(false);
-    navigate('/');
-    triggerToast(lang === 'ar' ? 'تم تسجيل الخروج بنجاح' : 'Logged out successfully', 'info');
-  };
-
-  // Sync with Firebase if configured (Real-time Leads & Demands)
-  useEffect(() => {
-    if (isFirebaseActive()) {
-      const unsubLeads = subscribeToLeads((cloudLeads) => {
-        if (cloudLeads && cloudLeads.length > 0) {
-          setLeads(cloudLeads);
-        }
-      });
-      const unsubDemands = subscribeToDemands((cloudDemands) => {
-        if (cloudDemands && cloudDemands.length > 0) {
-          const sorted = [...cloudDemands].sort((a, b) => {
-            const timeA = new Date(a.approvedAt || a.createdAt || a.timestamp || 0).getTime();
-            const timeB = new Date(b.approvedAt || b.createdAt || b.timestamp || 0).getTime();
-            return timeB - timeA;
-          });
-          setDemands(sorted);
-        }
-      });
-      return () => { 
-        if (unsubLeads) unsubLeads(); 
-        if (unsubDemands) unsubDemands();
-      };
-    }
-  }, []);
-
-  // CRM Leads Handlers
-  const handleUpdateLead = useCallback(async (id, updatedFields) => {
-    if (isFirebaseActive()) {
-      const saved = await updateLeadField(id, updatedFields);
-      if (!saved) {
-        triggerToast(
-          lang === 'ar'
-            ? 'تعذر حفظ التعديل في Firebase. تأكد من نشر قواعد Firestore وتسجيل الدخول بحساب المدير.'
-            : 'Could not save to Firebase. Check Firestore rules and your admin sign-in.',
-          'error'
-        );
-        return false;
-      }
-    }
-
-    setLeads((prev) => {
-      const updated = prev.map((l) => {
-        if (l.id === id) {
-          const activityLogs = l.activityLogs || [];
-          const newLog = {
-            timestamp: new Date().toISOString(),
-            action: `تحديث بيانات: ${Object.keys(updatedFields).join(', ')}`
-          };
-          return { ...l, ...updatedFields, activityLogs: [newLog, ...activityLogs] };
-        }
-        return l;
-      });
-      localStorage.setItem('oneline_crm_leads', JSON.stringify(updated));
-      return updated;
-    });
-
-    return true;
-  }, [lang, triggerToast]);
-
-  const handleDeleteLead = useCallback(async (id) => {
-    setLeads((prev) => {
-      const updated = prev.filter((l) => l.id !== id);
-      localStorage.setItem('oneline_crm_leads', JSON.stringify(updated));
-      return updated;
-    });
-
-    if (isFirebaseActive()) {
-      try {
-        await deleteLead(id);
-      } catch (err) {
-        console.error('Firebase delete lead error:', err);
-      }
-    }
-  }, []);
-
-  // Modals States
-  const [quickViewProperty, setQuickViewProperty] = useState(null);
-  const [trackModalOpen, setTrackModalOpen] = useState(false);
-  const [shareModalOpen, setShareModalOpen] = useState(false);
-  const [callbackModalOpen, setCallbackModalOpen] = useState(false);
-  const [contactDrawerOpen, setContactDrawerOpen] = useState(false);
-  const [quickSearchOpen, setQuickSearchOpen] = useState(false);
-
-  // Global Keyboard Shortcut for Omnisearch (Ctrl + K / Cmd + K or '/')
-  useEffect(() => {
-    const handleGlobalSearchKey = (e) => {
-      const tag = document.activeElement?.tagName?.toLowerCase();
-      const isInput = tag === 'input' || tag === 'textarea' || document.activeElement?.isContentEditable;
-
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
-        e.preventDefault();
-        setQuickSearchOpen(prev => !prev);
-      } else if (e.key === '/' && !isInput && !(e.ctrlKey || e.metaKey || e.altKey)) {
-        e.preventDefault();
-        setQuickSearchOpen(true);
-      }
-    };
-    window.addEventListener('keydown', handleGlobalSearchKey);
-    return () => window.removeEventListener('keydown', handleGlobalSearchKey);
-  }, []);
-
-  // Quick View Handler
-  const handleOpenQuickView = (property) => {
-    setQuickViewProperty(property);
-  };
-
-  const handleCloseQuickView = () => {
-    setQuickViewProperty(null);
-  };
-
   // Callback submit handler
   const handleCallbackSubmit = (formData) => {
     handleAddNewLead({
@@ -757,10 +178,10 @@ export default function App() {
       propertyType: formData.propertyType || 'apartment',
       area: formData.area || 'sohag_jadida',
       type: 'callback_request',
-      notes: `طلب معاودة اتصال سريع (${formData.preferredTime}) | نوع العقار: ${formData.propertyType || 'سكني'} | المنطقة: ${formData.area || 'سوهاج'}`,
+      notes: `طلب استشارة ومعاودة اتصال (${formData.preferredTime || 'في أقرب وقت'}) | نوع العقار: ${formData.propertyType || 'سكني'} | المسار: ${formData.consultationTrack || 'عام'}`,
       details: formData
     });
-    triggerToast(lang === 'ar' ? 'تم إرسال طلب الاتصال بنجاح! سنتصل بك قريباً.' : 'Callback request submitted!', 'success');
+    triggerToast(lang === 'ar' ? 'تم استلام طلب الاستشارة بنجاح! سيتواصل معك مستشارك العقاري المختص.' : 'Consultation request submitted!', 'success');
   };
 
   // ===================== WIZARDS STATE MANAGEMENT =====================
@@ -826,7 +247,7 @@ export default function App() {
     setSellerStep((prev) => prev + 1);
   };
 
-  const estimatedValue = 3200000; // Calculated approximation for valuation step
+  const estimatedValue = 3200000;
 
   const submitSellerJourney = async (overrideData) => {
     const data = overrideData || sellerAnswers;
@@ -953,7 +374,7 @@ export default function App() {
         triggerToast={triggerToast}
       />
 
-      {/* Callback Modal */}
+      {/* Callback / VIP Consultation Modal */}
       <CallbackModal
         isOpen={callbackModalOpen}
         onClose={() => setCallbackModalOpen(false)}
@@ -968,7 +389,7 @@ export default function App() {
           lang={lang}
           setLang={setLang}
           currency={currency}
-          setCurrency={handleSetCurrency}
+          setCurrency={setCurrency}
           theme={theme}
           toggleTheme={toggleTheme}
           soundEnabled={soundEnabled}
@@ -988,317 +409,319 @@ export default function App() {
       <main className="main-site-content">
         <Suspense fallback={<RouteLoadingSpinner lang={lang} />}>
           <Routes>
-          {/* 1. Home Page */}
-          <Route
-            path="/"
-            element={
-              <HomePage
-                lang={lang}
-                currency={currency}
-                properties={properties}
-                demands={demands}
-                favorites={favorites}
-                onToggleFavorite={toggleFavorite}
-                compareList={compareList}
-                onToggleCompare={toggleCompare}
-                onQuickView={handleOpenQuickView}
-                onOpenAddDemand={() => setAddDemandModalOpen(true)}
-                onAddNewLead={handleAddNewLead}
-                triggerToast={triggerToast}
-              />
-            }
-          />
+            {/* 1. Home Page */}
+            <Route
+              path="/"
+              element={
+                <HomePage
+                  lang={lang}
+                  currency={currency}
+                  properties={properties}
+                  demands={demands}
+                  favorites={favorites}
+                  onToggleFavorite={toggleFavorite}
+                  compareList={compareList}
+                  onToggleCompare={toggleCompare}
+                  onQuickView={handleOpenQuickView}
+                  onOpenAddDemand={() => setAddDemandModalOpen(true)}
+                  onAddNewLead={handleAddNewLead}
+                  triggerToast={triggerToast}
+                />
+              }
+            />
 
-          {/* 2. Properties Catalog & Interactive Map */}
-          <Route
-            path="/properties"
-            element={
-              <PropertiesPage
-                lang={lang}
-                currency={currency}
-                properties={properties}
-                favorites={favorites}
-                onToggleFavorite={toggleFavorite}
-                compareList={compareList}
-                onToggleCompare={toggleCompare}
-                onQuickView={handleOpenQuickView}
-              />
-            }
-          />
+            {/* 2. Properties Catalog & Interactive Map */}
+            <Route
+              path="/properties"
+              element={
+                <PropertiesPage
+                  lang={lang}
+                  currency={currency}
+                  properties={properties}
+                  favorites={favorites}
+                  onToggleFavorite={toggleFavorite}
+                  compareList={compareList}
+                  onToggleCompare={toggleCompare}
+                  onQuickView={handleOpenQuickView}
+                />
+              }
+            />
 
-          {/* 3. Single Property Details Page */}
-          <Route
-            path="/properties/:id"
-            element={
-              <PropertyDetailPage
-                lang={lang}
-                currency={currency}
-                t={t}
-                properties={properties}
-                favorites={favorites}
-                onToggleFavorite={toggleFavorite}
-                onQuickView={handleOpenQuickView}
-                triggerToast={triggerToast}
-                onAddNewLead={handleAddNewLead}
-              />
-            }
-          />
+            {/* 3. Single Property Details Page */}
+            <Route
+              path="/properties/:id"
+              element={
+                <PropertyDetailPage
+                  lang={lang}
+                  currency={currency}
+                  t={t}
+                  properties={properties}
+                  favorites={favorites}
+                  onToggleFavorite={toggleFavorite}
+                  onQuickView={handleOpenQuickView}
+                  triggerToast={triggerToast}
+                  onAddNewLead={handleAddNewLead}
+                />
+              }
+            />
 
-          {/* 4. Financing & Mortgage Calculator Page */}
-          <Route
-            path="/financing"
-            element={<FinancingPage lang={lang} t={t} />}
-          />
+            {/* 4. Financing & Mortgage Calculator Page */}
+            <Route
+              path="/financing"
+              element={<FinancingPage lang={lang} t={t} />}
+            />
 
-          {/* 5. Specialized Business Portals & Wizards */}
-          <Route
-            path="/buy"
-            element={
-              <PortalsPage
-                portalType="buy"
-                lang={lang}
-                t={t}
-                buyerStep={buyerStep}
-                setBuyerStep={setBuyerStep}
-                buyerAnswers={buyerAnswers}
-                setBuyerAnswers={setBuyerAnswers}
-                handleBuyerChoice={handleBuyerChoice}
-                submitBuyerJourney={submitBuyerJourney}
-                triggerToast={triggerToast}
-                handleAddNewLead={handleAddNewLead}
-              />
-            }
-          />
+            {/* 5. Specialized Business Portals & Wizards */}
+            <Route
+              path="/buy"
+              element={
+                <PortalsPage
+                  portalType="buy"
+                  lang={lang}
+                  t={t}
+                  buyerStep={buyerStep}
+                  setBuyerStep={setBuyerStep}
+                  buyerAnswers={buyerAnswers}
+                  setBuyerAnswers={setBuyerAnswers}
+                  handleBuyerChoice={handleBuyerChoice}
+                  submitBuyerJourney={submitBuyerJourney}
+                  triggerToast={triggerToast}
+                  handleAddNewLead={handleAddNewLead}
+                />
+              }
+            />
 
-          <Route
-            path="/sell"
-            element={
-              <PortalsPage
-                portalType="sell"
-                lang={lang}
-                t={t}
-                sellerStep={sellerStep}
-                setSellerStep={setSellerStep}
-                sellerAnswers={sellerAnswers}
-                setSellerAnswers={setSellerAnswers}
-                handleSellerChoice={handleSellerChoice}
-                submitSellerJourney={submitSellerJourney}
-                estimatedValue={estimatedValue}
-                triggerToast={triggerToast}
-                handleAddNewLead={handleAddNewLead}
-              />
-            }
-          />
+            <Route
+              path="/sell"
+              element={
+                <PortalsPage
+                  portalType="sell"
+                  lang={lang}
+                  t={t}
+                  sellerStep={sellerStep}
+                  setSellerStep={setSellerStep}
+                  sellerAnswers={sellerAnswers}
+                  setSellerAnswers={setSellerAnswers}
+                  handleSellerChoice={handleSellerChoice}
+                  submitSellerJourney={submitSellerJourney}
+                  estimatedValue={estimatedValue}
+                  triggerToast={triggerToast}
+                  handleAddNewLead={handleAddNewLead}
+                />
+              }
+            />
 
-          <Route
-            path="/valuation"
-            element={
-              <PortalsPage
-                portalType="valuation"
-                lang={lang}
-                t={t}
-                sellerStep={sellerStep}
-                setSellerStep={setSellerStep}
-                sellerAnswers={sellerAnswers}
-                setSellerAnswers={setSellerAnswers}
-                handleSellerChoice={handleSellerChoice}
-                submitSellerJourney={submitSellerJourney}
-                estimatedValue={estimatedValue}
-                triggerToast={triggerToast}
-                handleAddNewLead={handleAddNewLead}
-              />
-            }
-          />
+            <Route
+              path="/valuation"
+              element={
+                <PortalsPage
+                  portalType="valuation"
+                  lang={lang}
+                  t={t}
+                  sellerStep={sellerStep}
+                  setSellerStep={setSellerStep}
+                  sellerAnswers={sellerAnswers}
+                  setSellerAnswers={setSellerAnswers}
+                  handleSellerChoice={handleSellerChoice}
+                  submitSellerJourney={submitSellerJourney}
+                  estimatedValue={estimatedValue}
+                  triggerToast={triggerToast}
+                  handleAddNewLead={handleAddNewLead}
+                />
+              }
+            />
 
-          <Route
-            path="/investor"
-            element={
-              <PortalsPage
-                portalType="investor"
-                lang={lang}
-                currency={currency}
-                t={t}
-                invAmount={invAmount}
-                setInvAmount={setInvAmount}
-                invPeriod={invPeriod}
-                setInvPeriod={setInvPeriod}
-                invPropType={invPropType}
-                setInvPropType={setInvPropType}
-                investorForm={investorForm}
-                setInvestorForm={setInvestorForm}
-                showInvResultForm={showInvResultForm}
-                setShowInvResultForm={setShowInvResultForm}
-                roiRes={roiRes}
-                submitInvestorForm={submitInvestorForm}
-                triggerToast={triggerToast}
-                handleAddNewLead={handleAddNewLead}
-              />
-            }
-          />
+            <Route
+              path="/investor"
+              element={
+                <PortalsPage
+                  portalType="investor"
+                  lang={lang}
+                  currency={currency}
+                  t={t}
+                  invAmount={invAmount}
+                  setInvAmount={setInvAmount}
+                  invPeriod={invPeriod}
+                  setInvPeriod={setInvPeriod}
+                  invPropType={invPropType}
+                  setInvPropType={setInvPropType}
+                  investorForm={investorForm}
+                  setInvestorForm={setInvestorForm}
+                  showInvResultForm={showInvResultForm}
+                  setShowInvResultForm={setShowInvResultForm}
+                  roiRes={roiRes}
+                  submitInvestorForm={submitInvestorForm}
+                  triggerToast={triggerToast}
+                  handleAddNewLead={handleAddNewLead}
+                />
+              }
+            />
 
-          <Route
-            path="/broker"
-            element={
-              <PortalsPage
-                portalType="broker"
-                lang={lang}
-                t={t}
-                brokerForm={brokerForm}
-                setBrokerForm={setBrokerForm}
-                handleBrokerCheckbox={handleBrokerCheckbox}
-                submitBrokerPortal={submitBrokerPortal}
-                triggerToast={triggerToast}
-                handleAddNewLead={handleAddNewLead}
-              />
-            }
-          />
+            <Route
+              path="/broker"
+              element={
+                <PortalsPage
+                  portalType="broker"
+                  lang={lang}
+                  t={t}
+                  brokerForm={brokerForm}
+                  setBrokerForm={setBrokerForm}
+                  handleBrokerCheckbox={handleBrokerCheckbox}
+                  submitBrokerPortal={submitBrokerPortal}
+                  triggerToast={triggerToast}
+                  handleAddNewLead={handleAddNewLead}
+                />
+              }
+            />
 
-          <Route
-            path="/demands"
-            element={
-              <PortalsPage
-                portalType="demands"
-                lang={lang}
-                t={t}
-                demands={demands}
-                ownerSearch={ownerSearch}
-                setOwnerSearch={setOwnerSearch}
-                isScanningMap={isScanningMap}
-                setIsScanningMap={setIsScanningMap}
-                ownerMatchesFound={ownerMatchesFound}
-                setOwnerMatchesFound={setOwnerMatchesFound}
-                scanningMessage={scanningMessage}
-                setScanningMessage={setScanningMessage}
-                navigateTo={(path) => navigate('/' + path)}
-                setSellerAnswers={setSellerAnswers}
-                triggerToast={triggerToast}
-                handleAddNewLead={handleAddNewLead}
-                onOpenAddDemand={() => setAddDemandModalOpen(true)}
-              />
-            }
-          />
+            <Route
+              path="/demands"
+              element={
+                <PortalsPage
+                  portalType="demands"
+                  lang={lang}
+                  t={t}
+                  demands={demands}
+                  ownerSearch={ownerSearch}
+                  setOwnerSearch={setOwnerSearch}
+                  isScanningMap={isScanningMap}
+                  setIsScanningMap={setIsScanningMap}
+                  ownerMatchesFound={ownerMatchesFound}
+                  setOwnerMatchesFound={setOwnerMatchesFound}
+                  scanningMessage={scanningMessage}
+                  setScanningMessage={setScanningMessage}
+                  navigateTo={(path) => navigate('/' + path)}
+                  setSellerAnswers={setSellerAnswers}
+                  triggerToast={triggerToast}
+                  handleAddNewLead={handleAddNewLead}
+                  onOpenAddDemand={() => setAddDemandModalOpen(true)}
+                />
+              }
+            />
 
-          <Route
-            path="/vault"
-            element={<Navigate to="/properties" replace />}
-          />
+            <Route
+              path="/vault"
+              element={<Navigate to="/properties" replace />}
+            />
 
-          <Route
-            path="/referral"
-            element={
-              <PortalsPage
-                portalType="referral"
-                lang={lang}
-                t={t}
-                triggerToast={triggerToast}
-                handleAddNewLead={handleAddNewLead}
-              />
-            }
-          />
+            <Route
+              path="/referral"
+              element={
+                <PortalsPage
+                  portalType="referral"
+                  lang={lang}
+                  t={t}
+                  triggerToast={triggerToast}
+                  handleAddNewLead={handleAddNewLead}
+                />
+              }
+            />
 
-          <Route
-            path="/special"
-            element={
-              <PortalsPage
-                portalType="special"
-                lang={lang}
-                t={t}
-                triggerToast={triggerToast}
-                handleAddNewLead={handleAddNewLead}
-              />
-            }
-          />
+            <Route
+              path="/special"
+              element={
+                <PortalsPage
+                  portalType="special"
+                  lang={lang}
+                  t={t}
+                  triggerToast={triggerToast}
+                  handleAddNewLead={handleAddNewLead}
+                />
+              }
+            />
 
-          <Route
-            path="/special-requests"
-            element={
-              <PortalsPage
-                portalType="special"
-                lang={lang}
-                t={t}
-                triggerToast={triggerToast}
-                handleAddNewLead={handleAddNewLead}
-              />
-            }
-          />
+            <Route
+              path="/special-requests"
+              element={
+                <PortalsPage
+                  portalType="special"
+                  lang={lang}
+                  t={t}
+                  triggerToast={triggerToast}
+                  handleAddNewLead={handleAddNewLead}
+                />
+              }
+            />
 
-          {/* 4. Mega Projects & Flagship Compounds Hub */}
-          <Route
-            path="/projects"
-            element={
-              <ProjectsPage
-                lang={lang}
-                currency={currency}
-                projects={projects}
-                triggerToast={triggerToast}
-              />
-            }
-          />
+            {/* Mega Projects & Flagship Compounds Hub */}
+            <Route
+              path="/projects"
+              element={
+                <ProjectsPage
+                  lang={lang}
+                  currency={currency}
+                  projects={projects}
+                  triggerToast={triggerToast}
+                />
+              }
+            />
 
-          {/* 5. Sohag Real Estate Market Intelligence & Price Benchmark */}
-          <Route
-            path="/market-intelligence"
-            element={
-              <MarketIntelligencePage
-                lang={lang}
-                currency={currency}
-                triggerToast={triggerToast}
-              />
-            }
-          />
+            {/* Sohag Real Estate Market Intelligence & Price Benchmark */}
+            <Route
+              path="/market-intelligence"
+              element={
+                <MarketIntelligencePage
+                  lang={lang}
+                  currency={currency}
+                  triggerToast={triggerToast}
+                />
+              }
+            />
 
-          {/* 6. CRM Admin Control Panel & Property CMS & Mega Projects & Demands CMS */}
-          <Route
-            path="/crm"
-            element={
-              <CrmPage
-                lang={lang}
-                t={t}
-                leads={leads}
-                setLeads={setLeads}
-                properties={properties}
-                onAddProperty={handleAddProperty}
-                onUpdateProperty={handleUpdateProperty}
-                onDeleteProperty={handleDeleteProperty}
-                projects={projects}
-                onAddProject={handleAddProject}
-                onUpdateProject={handleUpdateProject}
-                onDeleteProject={handleDeleteProject}
-                demands={demands}
-                onAddDemand={handleAddAdminDemand}
-                onApproveDemand={handleApproveDemand}
-                onUpdateDemand={handleUpdateDemand}
-                onDeleteDemand={handleDeleteDemand}
-                onUnpublishDemand={handleUnpublishDemand}
-                crmAuthenticated={crmAuthenticated}
-                setCrmAuthenticated={setCrmAuthenticated}
-                onLogout={handleCrmLogout}
-                triggerToast={triggerToast}
-                onUpdateLead={handleUpdateLead}
-                onDeleteLead={handleDeleteLead}
-                onAddNewLead={handleAddNewLead}
-              />
-            }
-          />
+            {/* CRM Admin Control Panel & Property CMS & Demands CMS */}
+            <Route
+              path="/crm"
+              element={
+                <CrmPage
+                  lang={lang}
+                  t={t}
+                  leads={leads}
+                  setLeads={setLeads}
+                  properties={properties}
+                  onAddProperty={handleAddProperty}
+                  onUpdateProperty={handleUpdateProperty}
+                  onDeleteProperty={handleDeleteProperty}
+                  projects={projects}
+                  onAddProject={handleAddProject}
+                  onUpdateProject={handleUpdateProject}
+                  onDeleteProject={handleDeleteProject}
+                  demands={demands}
+                  onAddDemand={handleAddAdminDemand}
+                  onApproveDemand={handleApproveDemand}
+                  onUpdateDemand={handleUpdateDemand}
+                  onDeleteDemand={handleDeleteDemand}
+                  onUnpublishDemand={handleUnpublishDemand}
+                  crmAuthenticated={crmAuthenticated}
+                  setCrmAuthenticated={setCrmAuthenticated}
+                  onLogout={handleCrmLogout}
+                  triggerToast={triggerToast}
+                  onUpdateLead={handleUpdateLead}
+                  onDeleteLead={handleDeleteLead}
+                  onAddNewLead={handleAddNewLead}
+                />
+              }
+            />
 
-          {/* Fallback wildcard to Home */}
-          <Route
-            path="*"
-            element={
-              <HomePage
-                lang={lang}
-                t={t}
-                properties={properties}
-                demands={demands}
-                favorites={favorites}
-                onToggleFavorite={toggleFavorite}
-                onQuickView={handleOpenQuickView}
-                onOpenTrackLead={() => setTrackModalOpen(true)}
-                onOpenAddDemand={() => setAddDemandModalOpen(true)}
-                triggerToast={triggerToast}
-              />
-            }
-          />
+            {/* Fallback wildcard to Home */}
+            <Route
+              path="*"
+              element={
+                <HomePage
+                  lang={lang}
+                  currency={currency}
+                  properties={properties}
+                  demands={demands}
+                  favorites={favorites}
+                  onToggleFavorite={toggleFavorite}
+                  compareList={compareList}
+                  onToggleCompare={toggleCompare}
+                  onQuickView={handleOpenQuickView}
+                  onOpenAddDemand={() => setAddDemandModalOpen(true)}
+                  onAddNewLead={handleAddNewLead}
+                  triggerToast={triggerToast}
+                />
+              }
+            />
           </Routes>
         </Suspense>
       </main>
@@ -1311,14 +734,14 @@ export default function App() {
         />
       )}
 
-      {/* 🏢 About 1Line & Founder Profile Modal */}
+      {/* About 1Line & Founder Profile Modal */}
       <AboutFounderModal
         isOpen={aboutFounderModalOpen}
         onClose={() => setAboutFounderModalOpen(false)}
         lang={lang}
       />
 
-      {/* 📝 Add Buyer Demand Modal */}
+      {/* Add Buyer Demand Modal */}
       <AddDemandModal
         isOpen={addDemandModalOpen}
         onClose={() => setAddDemandModalOpen(false)}
@@ -1327,7 +750,7 @@ export default function App() {
         triggerToast={triggerToast}
       />
 
-      {/* ⚖️ Property Comparison Drawer Matrix */}
+      {/* Property Comparison Drawer Matrix */}
       <PropertyCompareDrawer
         isOpen={compareDrawerOpen}
         onClose={() => setCompareDrawerOpen(false)}
@@ -1340,7 +763,7 @@ export default function App() {
         lang={lang}
       />
 
-      {/* ❤️ Saved Properties & Favorites Drawer */}
+      {/* Saved Properties & Favorites Drawer */}
       <FavoritesDrawer
         isOpen={favoritesDrawerOpen}
         onClose={() => setFavoritesDrawerOpen(false)}
@@ -1353,14 +776,14 @@ export default function App() {
         currency={currency}
       />
 
-      {/* 🤖 AI Virtual Real Estate Advisor Modal */}
+      {/* AI Virtual Real Estate Advisor Modal */}
       <AIPropertyAdvisorModal
         isOpen={aiModalOpen}
         onClose={() => setAiModalOpen(false)}
         lang={lang}
       />
 
-      {/* 🔍 Global Omnisearch Spotlight Modal */}
+      {/* Global Omnisearch Spotlight Modal */}
       <QuickSearchModal
         isOpen={quickSearchOpen}
         onClose={() => setQuickSearchOpen(false)}
@@ -1370,7 +793,7 @@ export default function App() {
         onOpenAddDemand={() => setAddDemandModalOpen(true)}
       />
 
-      {/* ⚖️ Floating Compare Dock Bar (Shown on all pages when units selected) */}
+      {/* Floating Compare Dock Bar */}
       {!location.pathname.startsWith('/crm') && (
         <FloatingCompareBar
           compareList={compareList}
@@ -1382,7 +805,7 @@ export default function App() {
         />
       )}
 
-      {/* 🏛️ Floating Real Estate Advisor Quick Trigger (Hidden on CRM) */}
+      {/* Floating Real Estate Advisor Quick Trigger */}
       {!location.pathname.startsWith('/crm') && (
         <button
           type="button"
@@ -1395,10 +818,10 @@ export default function App() {
         </button>
       )}
 
-      {/* ⬆️ Floating Back-To-Top Button */}
+      {/* Floating Back-To-Top Button */}
       <BackToTopButton lang={lang} />
 
-      {/* 📱 Quick Multi-Channel Contact & Dial Drawer (Mobile) */}
+      {/* Quick Multi-Channel Contact & Dial Drawer (Mobile) */}
       <QuickContactDrawer
         isOpen={contactDrawerOpen}
         onClose={() => setContactDrawerOpen(false)}
@@ -1406,7 +829,7 @@ export default function App() {
         lang={lang}
       />
 
-      {/* 📱 Mobile Floating 1-Thumb Bottom Navigation (Hidden on CRM) */}
+      {/* Mobile Floating Bottom Navigation */}
       {!location.pathname.startsWith('/crm') && (
         <MobileBottomBar
           lang={lang}
@@ -1416,5 +839,22 @@ export default function App() {
         />
       )}
     </div>
+  );
+}
+
+/**
+ * Top-Level App with Integrated Context Providers
+ */
+export default function App() {
+  return (
+    <PreferencesProvider>
+      <UIModalProvider>
+        <PropertiesProvider>
+          <AuthProvider>
+            <AppContent />
+          </AuthProvider>
+        </PropertiesProvider>
+      </UIModalProvider>
+    </PreferencesProvider>
   );
 }
