@@ -9,11 +9,15 @@ import {
   ShieldCheck, 
   CheckCircle2, 
   ArrowRight, 
-  ArrowLeft
+  ArrowLeft,
+  MessageCircle,
+  TrendingUp,
+  FileCheck
 } from 'lucide-react';
 import PhoneInputField from './PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { getAreas } from '../utils/areasData';
+import { getWhatsAppUrl } from '../utils/founderCmsData';
 
 // Default fallback benchmark pricing per sqm
 const FALLBACK_BENCHMARK_PRICING = {
@@ -178,6 +182,52 @@ export const SellWizard = ({
           <div className="step-prompt-row">
             <h3>{isAr ? 'ما هو نوع عقارك المعروض للتقييم والبيع؟' : 'What type of property are you valuing & selling?'}</h3>
             <p>{isAr ? 'اختر الفئة الأساسية لعقارك لتحديد معادلة التسعير المناسبة' : 'Select property category for accurate pricing formula'}</p>
+          </div>
+
+          {/* VIP Express WhatsApp Listing Callout */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px',
+            padding: '12px 18px',
+            borderRadius: '12px',
+            background: 'rgba(37, 211, 102, 0.08)',
+            border: '1px solid rgba(37, 211, 102, 0.25)',
+            marginBottom: '18px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <MessageCircle size={20} color="#25D366" />
+              <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                {isAr ? 'هل تفضل إدراج عقارك سريعاً وإرسال الصور مباشرة عبر واتساب؟' : 'Prefer to list fast and send photos directly via WhatsApp?'}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const msg = isAr
+                  ? 'مرحباً 1Line سوهاج، أرغب في عرض عقار للبيع / التقييم المباشر، وأود إرسال الصور والمواصفات لمستشار الإدراج المعتمد.'
+                  : 'Hello 1Line Sohag, I would like to list my property directly via WhatsApp.';
+                window.open(getWhatsAppUrl(msg), '_blank');
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '7px 14px',
+                borderRadius: '8px',
+                background: '#25D366',
+                color: '#fff',
+                border: 'none',
+                fontSize: '0.84rem',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              <span>{isAr ? 'إدراج سريع عبر واتساب المشرف' : 'Fast WhatsApp Listing'}</span>
+              {isAr ? <ArrowLeft size={14} /> : <ArrowRight size={14} />}
+            </button>
           </div>
 
           <div className="prop-types-rich-grid">
@@ -401,6 +451,26 @@ export const SellWizard = ({
               <div className="cert-perk"><CheckCircle2 size={15} className="text-success" /> <span>{isAr ? 'أكثر من 500 مشترٍ مسجل' : '500+ Qualified Buyers'}</span></div>
               <div className="cert-perk"><CheckCircle2 size={15} className="text-success" /> <span>{isAr ? 'تصوير بروشور احترافي مجاناً' : 'Free Photo Brochure'}</span></div>
               <div className="cert-perk"><CheckCircle2 size={15} className="text-success" /> <span>{isAr ? 'بدون أي عمولات على البائع' : 'Zero Seller Commission'}</span></div>
+            </div>
+
+            <div style={{
+              marginTop: '14px',
+              padding: '10px 14px',
+              background: 'rgba(15, 23, 42, 0.04)',
+              borderRadius: '8px',
+              fontSize: '0.8rem',
+              color: '#64748b',
+              lineHeight: 1.5,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <ShieldCheck size={18} color="var(--accent-gold, #d97706)" style={{ flexShrink: 0 }} />
+              <span>
+                {isAr 
+                  ? 'ملاحظة استشارية: هذا التقييم استرشادي رقمي مبني على مؤشرات صفقات سوهاج الميدانية 2026. يشمل طلبك معاينة مجانية لتدقيق الموقف القانوني والمعماري.' 
+                  : 'Advisory Note: Digital valuation benchmarked on live 2026 transactions in Sohag with free on-site engineering audit.'}
+              </span>
             </div>
           </div>
 

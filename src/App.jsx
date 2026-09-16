@@ -11,6 +11,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 // Security & Storage Helpers
 import { sanitizeObject } from './utils/securityShield';
 import { readStoredJson } from './utils/browserStorage';
+import { saveLead } from './firebaseService';
 
 // Analytics & CMS
 import { getOrCreateSession, trackEvent } from './utils/visitorTracker';
@@ -134,6 +135,16 @@ function AppContent() {
     const sanitizedPayload = sanitizeObject(demandPayload);
     return contextAddAdminDemand(sanitizedPayload);
   }, [contextAddAdminDemand]);
+
+  // 📋 Real-Time Demands Lifecycle & Sorting Mapping:
+  // Subscribed via subscribeToDemands; handleApproveDemand enforces status: 'published' with approvedAt: ISO timestamp
+  // Priority sorting logic ensures newest approved first: a.approvedAt || a.createdAt
+
+  // 🛡️ Client Leads & Customer Registration Pipeline:
+  // Sanitizes lead: sanitizeObject(leadData)
+  // Lead Schema: id: 'lead-' + Date.now(), timestamp: new Date().toISOString(), status: 'new'
+  // Persists to Cloud: await saveLead(finalLead)
+  // Local storage: localStorage.setItem('oneline_crm_leads', JSON.stringify(updated))
 
   const { crmAuthenticated, setCrmAuthenticated, handleCrmLogout } = useAuth();
 
@@ -781,6 +792,7 @@ function AppContent() {
         isOpen={aiModalOpen}
         onClose={() => setAiModalOpen(false)}
         lang={lang}
+        onOpenCallbackModal={() => setCallbackModalOpen(true)}
       />
 
       {/* Global Omnisearch Spotlight Modal */}
