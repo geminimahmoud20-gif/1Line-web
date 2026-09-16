@@ -14,6 +14,10 @@ export default function QuickViewModal({ property, lang = 'ar', currency = 'EGP'
   const description = isAr ? property.description_ar : property.description_en;
   const priceData = formatCurrencyPrice(property.price, currency, lang);
   const benchmark = getPriceBenchmark(property, lang);
+  const downPaymentVal = Number(property.downPayment) || 0;
+  const monthlyInstallmentVal = Number(property.monthlyInstallment) || 0;
+  const downPaymentData = formatCurrencyPrice(downPaymentVal, currency, lang);
+  const monthlyInstallmentData = formatCurrencyPrice(monthlyInstallmentVal, currency, lang);
 
   return (
     <div className="quickview-modal-backdrop" onClick={onClose}>
@@ -73,11 +77,15 @@ export default function QuickViewModal({ property, lang = 'ar', currency = 'EGP'
             <div className="quickview-finance-grid">
               <div className="finance-cell">
                 <span className="finance-lbl">{isAr ? 'المقدم المطلوب' : 'Required Downpayment'}</span>
-                <strong className="finance-val">{property.downPayment.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</strong>
+                <strong className="finance-val">
+                  {downPaymentVal > 0 ? `${downPaymentData.primary} ${downPaymentData.symbol}` : (isAr ? 'بدون مقدم' : 'No Downpayment')}
+                </strong>
               </div>
               <div className="finance-cell highlight-cell">
                 <span className="finance-lbl">{isAr ? 'القسط الشهري' : 'Monthly Installment'}</span>
-                <strong className="finance-val text-primary">{property.monthlyInstallment.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</strong>
+                <strong className="finance-val text-primary">
+                  {monthlyInstallmentVal > 0 ? `${monthlyInstallmentData.primary} ${monthlyInstallmentData.symbol}` : (isAr ? 'كاش فوري' : 'Full Cash')}
+                </strong>
               </div>
             </div>
 

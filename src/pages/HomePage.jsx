@@ -25,7 +25,8 @@ import {
   VolumeX,
   Zap,
   MessageSquare,
-  Eye
+  Eye,
+  X
 } from 'lucide-react';
 import PropertyCard from '../components/properties/PropertyCard';
 import MarketTickerBar from '../components/home/MarketTickerBar';
@@ -454,8 +455,9 @@ export default function HomePage({
                         setShowSuggestions(false);
                       }}
                       title={lang === 'ar' ? 'مسح البحث' : 'Clear search'}
+                      aria-label="Clear search"
                     >
-                      ✕
+                      <X size={13} />
                     </button>
                   )}
 
@@ -464,7 +466,9 @@ export default function HomePage({
                     <div className="hero-live-suggestions-dropdown">
                       <div className="suggestions-header">
                         <span>{lang === 'ar' ? 'أفضل النتائج والمقترحات' : 'Suggested Results'}</span>
-                        <button type="button" className="close-sug-btn" onClick={() => setShowSuggestions(false)}>✕</button>
+                        <button type="button" className="close-sug-btn" onClick={() => setShowSuggestions(false)} aria-label="Close suggestions">
+                          <X size={13} />
+                        </button>
                       </div>
 
                       {/* 1. Matching Districts */}

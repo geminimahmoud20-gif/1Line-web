@@ -1668,7 +1668,9 @@ export const CrmAdminPanel = ({
           <div className="property-form-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '640px' }}>
             <div className="modal-form-header">
               <h3>{isAr ? 'تعديل وتصحيح بيانات العميل' : 'Edit Lead Details'}</h3>
-              <button type="button" className="drawer-close-btn" onClick={() => setEditingLead(null)}>✕</button>
+              <button type="button" className="drawer-close-btn" onClick={() => setEditingLead(null)} aria-label="Close">
+                <X size={18} />
+              </button>
             </div>
 
             <form onSubmit={handleSaveLeadEdits} className="property-cms-form">
@@ -1817,7 +1819,9 @@ export const CrmAdminPanel = ({
                 <Clock size={18} style={{ marginInlineEnd: '6px', color: 'var(--accent-gold)' }} />
                 {isAr ? `سجل تدقيق العمليات: ${viewingLogsLead.name}` : `Activity Audit Log: ${viewingLogsLead.name}`}
               </h3>
-              <button type="button" className="drawer-close-btn" onClick={() => setViewingLogsLead(null)}>✕</button>
+              <button type="button" className="drawer-close-btn" onClick={() => setViewingLogsLead(null)} aria-label="Close">
+                <X size={18} />
+              </button>
             </div>
 
             <div style={{ padding: '16px 0', display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '350px', overflowY: 'auto' }}>

@@ -12,11 +12,13 @@ import {
   CheckCircle2, 
   ArrowRight, 
   ArrowLeft, 
-  Clock 
+  Clock,
+  MessageCircle
 } from 'lucide-react';
 import PhoneInputField from './PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { getAreas } from '../utils/areasData';
+import { getWhatsAppUrl } from '../utils/founderCmsData';
 
 export const BuyWizard = ({ 
   lang = 'ar', 
@@ -138,6 +140,52 @@ export const BuyWizard = ({
       {/* PHASE 1: Purpose, Type & Location */}
       {currentPhase === 1 && (
         <div className="wizard-step-body animate-fadeIn">
+          {/* ⚡ Express VIP 1-Click WhatsApp Buyer Option */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px',
+            padding: '12px 18px',
+            borderRadius: '12px',
+            background: 'rgba(37, 211, 102, 0.08)',
+            border: '1px solid rgba(37, 211, 102, 0.25)',
+            marginBottom: '18px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <MessageCircle size={20} color="#25D366" />
+              <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                {isAr ? 'هل تبحث عن فرصة عاجلة أو استثمار مميز وتريد التحدث مباشرة؟' : 'Looking for an urgent opportunity and prefer direct chat?'}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const msg = isAr
+                  ? 'مرحباً 1Line سوهاج، أبحث عن عقار مميز للشراء / الاستثمار، وأود التحدث مباشرة مع مستشار المشتريات المعتمد.'
+                  : 'Hello 1Line Sohag, I am looking to buy a property and would like to speak directly with an advisor.';
+                window.open(getWhatsAppUrl(msg), '_blank');
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '7px 14px',
+                borderRadius: '8px',
+                background: '#25D366',
+                color: '#fff',
+                border: 'none',
+                fontSize: '0.84rem',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              <span>{isAr ? 'طلب عاجل عبر واتساب المشرف' : 'Fast WhatsApp Request'}</span>
+              {isAr ? <ArrowLeft size={14} /> : <ArrowRight size={14} />}
+            </button>
+          </div>
+
           {/* Purpose Selector */}
           <div className="form-group-block">
             <label className="block-label">{isAr ? 'ما هو الغرض الأساسي من الشراء؟' : 'Primary Purchase Purpose'}</label>

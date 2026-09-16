@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { 
   Send, 
-  Car
+  Car,
+  X
 } from 'lucide-react';
 
 export default function SiteVisitModal({
@@ -94,7 +95,9 @@ export default function SiteVisitModal({
               {isAr ? `جدولة وتأكيد معاينة ميدانية: ${lead.name}` : `Schedule Site Visit: ${lead.name}`}
             </h3>
           </div>
-          <button type="button" className="drawer-close-btn" onClick={onClose}>✕</button>
+          <button type="button" className="drawer-close-btn" onClick={onClose} aria-label="Close">
+            <X size={18} />
+          </button>
         </div>
 
         <form onSubmit={handleConfirmSchedule} className="property-cms-form" style={{ padding: '20px' }}>
