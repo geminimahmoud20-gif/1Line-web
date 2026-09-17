@@ -62,5 +62,10 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+
+    // 💼 9. DEALS & PIPELINE (إدارة الصفقات وقمع المبيعات للمشرفين فقط)
+    match /deals/{dealId} {
+      allow read, write: if isAdmin();
+    }
   }
 }

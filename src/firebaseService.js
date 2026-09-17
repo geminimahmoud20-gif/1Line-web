@@ -244,6 +244,86 @@ export const deleteLead = async (leadId) => {
   return false;
 };
 
+// ===================== DEALS & SALES PIPELINE =====================
+
+/**
+ * Save a canonical deal to Firestore.
+ */
+export const saveDeal = async (deal) => {
+  if (isFirebaseConfigured() && db) {
+    try {
+      const docRef = await addDoc(collection(db, 'deals'), {
+        ...deal,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      return { ...deal, id: docRef.id };
+    } catch (error) {
+      console.error('Firebase saveDeal error:', error);
+      return deal;
+    }
+  }
+  return deal;
+};
+
+/**
+ * Update an existing deal.
+ */
+export const updateDealDoc = async (dealId, updates) => {
+  if (isFirebaseConfigured() && db) {
+    try {
+      const dealRef = doc(db, 'deals', dealId);
+      await setDoc(dealRef, {
+        ...updates,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      return true;
+    } catch (error) {
+      console.error('Firebase updateDealDoc error:', error);
+      return false;
+    }
+  }
+  return false;
+};
+
+/**
+ * Delete a deal from Firestore.
+ */
+export const deleteDealDoc = async (dealId) => {
+  if (isFirebaseConfigured() && db) {
+    try {
+      await deleteDoc(doc(db, 'deals', dealId));
+      return true;
+    } catch (error) {
+      console.error('Firebase deleteDealDoc error:', error);
+      return false;
+    }
+  }
+  return false;
+};
+
+/**
+ * Subscribe to real-time deals updates.
+ */
+export const subscribeToDeals = (callback) => {
+  if (isFirebaseConfigured() && db) {
+    try {
+      const q = query(collection(db, 'deals'), orderBy('updatedAt', 'desc'));
+      return onSnapshot(q, (snapshot) => {
+        const deals = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        callback(deals);
+      }, (err) => {
+        if (err && err.code === 'permission-denied') return;
+        console.warn('Firebase subscribeToDeals snapshot warning:', err);
+      });
+    } catch (error) {
+      console.error('Firebase subscribeToDeals error:', error);
+      return null;
+    }
+  }
+  return null;
+};
+
 // ===================== NOTIFICATIONS =====================
 
 /**
@@ -458,24 +538,60 @@ const isAdminUser = (user) => Boolean(user && ADMIN_USER_IDS.has(user.uid));
 // ===================== AUDIT LOGS =====================
 
 /**
- * Persist an immutable audit log entry to Firestore.
+ * Persist an immutable audit log entry to Firestore (Canonical 9-field forensic schema).
  */
-export const logAuditEvent = async ({ actionType, targetCollection, targetId, details = {}, actor = null }) => {
+export const logAuditEvent = async ({ 
+  actorId,
+  action,
+  entityType,
+  entityId,
+  before = null,
+  after = null,
+  ipHashOrMetadata = null,
+  actionType, 
+  targetCollection, 
+  targetId, 
+  details = {}, 
+  actor = null,
+  type,
+  metadata
+}) => {
   if (isFirebaseConfigured() && db) {
     try {
       const currentAuthUser = auth?.currentUser;
+      const effectiveActorId = actorId || actor?.uid || currentAuthUser?.uid || 'system';
+      const effectiveAction = action || type || actionType || 'GENERAL_ACTION';
+      const effectiveEntityType = entityType || targetCollection || 'general';
+      const effectiveEntityId = entityId || targetId || 'global';
+      const effectiveBefore = before !== undefined ? before : null;
+      const effectiveAfter = after !== undefined ? after : null;
+      const effectiveMeta = ipHashOrMetadata || metadata || details || {};
+      const nowIso = new Date().toISOString();
+
       const logDoc = {
-        actionType,
-        targetCollection: targetCollection || 'general',
-        targetId: targetId || 'system',
-        actorUid: actor?.uid || currentAuthUser?.uid || 'system',
+        // Canonical 9 Fields
+        actorId: effectiveActorId,
+        action: effectiveAction,
+        entityType: effectiveEntityType,
+        entityId: effectiveEntityId,
+        before: effectiveBefore,
+        after: effectiveAfter,
+        ipHashOrMetadata: effectiveMeta,
+        createdAt: nowIso,
+
+        // Backward-compatibility properties
+        type: effectiveAction,
+        actionType: effectiveAction,
+        targetCollection: effectiveEntityType,
+        targetId: effectiveEntityId,
+        actorUid: effectiveActorId,
         actorEmail: actor?.email || currentAuthUser?.email || 'admin@1line.com',
-        details,
-        timestamp: serverTimestamp(),
-        createdAt: new Date().toISOString()
+        details: effectiveMeta,
+        metadata: effectiveMeta,
+        timestamp: serverTimestamp()
       };
-      await addDoc(collection(db, 'audit_logs'), logDoc);
-      return true;
+      const docRef = await addDoc(collection(db, 'audit_logs'), logDoc);
+      return { ...logDoc, id: docRef.id };
     } catch (err) {
       console.warn('Audit log write notice:', err);
       return false;
