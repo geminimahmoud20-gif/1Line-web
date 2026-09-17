@@ -345,20 +345,21 @@ a:hover {
 .logo-icon {
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, #0284c7, #0369a1);
+  background: linear-gradient(135deg, var(--navy-900), var(--navy-950));
+  border: 1px solid rgba(179, 138, 69, 0.35);
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  box-shadow: 0 4px 15px rgba(2, 132, 199, 0.3);
+  box-shadow: 0 4px 15px rgba(7, 17, 31, 0.15);
 }
 .logo-icon::before {
   content: '';
   position: absolute;
   width: 70%;
   height: 4px;
-  background: var(--primary);
+  background: var(--gold);
   top: 15px;
   left: 15%;
   border-radius: var(--radius-pill);
@@ -376,8 +377,8 @@ a:hover {
 }
 .logo-sub {
   font-size: 0.65rem;
-  color: var(--accent-gold);
-  font-weight: 600;
+  color: var(--gold-dark);
+  font-weight: 700;
   letter-spacing: 1px;
 }
 
@@ -1872,4 +1873,28 @@ select:focus {
     padding-left: 10px;
     text-align: right;
   }
+}
+
+/* -------------------------------------------------------------
+   🛡️ INSTITUTIONAL COLOR UTILITIES (DESATURATED FUNCTIONAL)
+------------------------------------------------------------- */
+.text-emerald, .text-success {
+  color: var(--success) !important;
+}
+
+.text-sky, .text-info {
+  color: var(--info) !important;
+}
+
+.text-danger, .text-error {
+  color: var(--danger) !important;
+}
+
+.text-gold {
+  color: var(--gold-dark) !important;
+}
+
+.dark-theme .text-gold,
+[data-theme="dark"] .text-gold {
+  color: var(--gold) !important;
 }

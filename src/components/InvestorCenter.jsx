@@ -255,7 +255,7 @@ export const InvestorCenter = ({
           <div className="range-numbers">
             <strong>+{formatConverted(investmentSim.netProfit)}</strong>
           </div>
-          <span className="sqm-rate-sub" style={{ color: '#4ade80' }}>
+          <span className="sqm-rate-sub" style={{ color: 'var(--success)' }}>
             {isAr ? `إجمالي العائد على الاستثمار: +${investmentSim.totalRoiPercent}% خلال المدة` : `Total ROI: +${investmentSim.totalRoiPercent}%`}
           </span>
         </div>

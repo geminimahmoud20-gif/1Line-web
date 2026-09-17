@@ -112,8 +112,8 @@ export default function AgentCommissionLeaderboard({
 
         {/* Commission Rate Settings Pill */}
         <div style={{
-          background: 'rgba(255, 179, 0, 0.08)',
-          border: '1px solid var(--accent-gold-light)',
+          background: 'var(--gold-soft)',
+          border: '1px solid rgba(179, 138, 69, 0.25)',
           borderRadius: 'var(--radius-pill)',
           padding: '4px 14px',
           display: 'flex',
@@ -121,7 +121,7 @@ export default function AgentCommissionLeaderboard({
           gap: '8px',
           fontSize: '0.8rem'
         }}>
-          <span style={{ color: 'var(--accent-gold)', fontWeight: 'bold' }}>
+          <span style={{ color: 'var(--gold-dark)', fontWeight: 'bold' }}>
             💼 {isAr ? 'نسبة العمولة المعتمدة:' : 'Commission Rate:'}
           </span>
           <select
@@ -147,7 +147,7 @@ export default function AgentCommissionLeaderboard({
       {/* Summary KPI Cards */}
       <div className="crm-stats-grid" style={{ marginBottom: '24px' }}>
         <div className="crm-stat-card">
-          <div className="crm-stat-icon" style={{ background: 'var(--emerald-bg)', color: 'var(--emerald)' }}>
+          <div className="crm-stat-icon" style={{ background: 'rgba(78, 122, 104, 0.1)', color: 'var(--success)' }}>
             <DollarSign size={22} />
           </div>
           <div className="crm-stat-info">
@@ -157,7 +157,7 @@ export default function AgentCommissionLeaderboard({
         </div>
 
         <div className="crm-stat-card">
-          <div className="crm-stat-icon" style={{ background: 'var(--accent-gold-light)', color: 'var(--accent-gold)' }}>
+          <div className="crm-stat-icon" style={{ background: 'var(--gold-soft)', color: 'var(--gold-dark)' }}>
             <Award size={22} />
           </div>
           <div className="crm-stat-info">
@@ -167,7 +167,7 @@ export default function AgentCommissionLeaderboard({
         </div>
 
         <div className="crm-stat-card">
-          <div className="crm-stat-icon" style={{ background: 'var(--cyan-bg)', color: 'var(--cyan)' }}>
+          <div className="crm-stat-icon" style={{ background: 'rgba(86, 115, 138, 0.1)', color: 'var(--info)' }}>
             <Target size={22} />
           </div>
           <div className="crm-stat-info">
@@ -185,10 +185,10 @@ export default function AgentCommissionLeaderboard({
             className="agent-rank-card animate-fadeIn"
             style={{
               background: 'var(--bg-card)',
-              border: index === 0 ? '2px solid var(--accent-gold)' : '1px solid var(--border-light)',
+              border: index === 0 ? '1px solid rgba(179, 138, 69, 0.35)' : '1px solid var(--border-color)',
               borderRadius: 'var(--radius-md)',
               padding: '20px',
-              boxShadow: index === 0 ? '0 0 25px rgba(217, 119, 6, 0.15)' : 'var(--shadow-sm)'
+              boxShadow: index === 0 ? '0 4px 20px rgba(7, 17, 31, 0.06)' : 'var(--shadow-sm)'
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px', marginBottom: '14px' }}>
@@ -198,7 +198,8 @@ export default function AgentCommissionLeaderboard({
                   width: '48px',
                   height: '48px',
                   borderRadius: '50%',
-                  background: index === 0 ? 'var(--gradient-gold)' : 'var(--secondary)',
+                  background: index === 0 ? 'var(--navy-900)' : 'var(--sand)',
+                  border: index === 0 ? '1px solid rgba(179, 138, 69, 0.3)' : '1px solid var(--border-color)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -213,7 +214,7 @@ export default function AgentCommissionLeaderboard({
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <strong style={{ fontSize: '1.05rem', color: 'var(--text-primary)' }}>{agent.name}</strong>
                     {index === 0 && (
-                      <span className="badge" style={{ background: 'var(--accent-gold-light)', color: 'var(--accent-gold)', fontWeight: 'bold' }}>
+                      <span className="badge" style={{ background: 'var(--gold-soft)', color: 'var(--gold-dark)', fontWeight: 'bold', border: '1px solid rgba(179, 138, 69, 0.25)' }}>
                         ⭐ {isAr ? 'متصدر المبيعات (Top Closer)' : 'Top Closer'}
                       </span>
                     )}
@@ -230,22 +231,22 @@ export default function AgentCommissionLeaderboard({
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block' }}>
                     {isAr ? 'المبيعات المنفذة:' : 'Closed Deals:'}
                   </span>
-                  <strong style={{ fontSize: '1.1rem', color: 'var(--emerald)' }}>
+                  <strong style={{ fontSize: '1.1rem', color: 'var(--success)' }}>
                     {(agent.closedVolume / 1000000).toFixed(2)} M ج.م
                   </strong>
                 </div>
 
                 <div style={{
-                  background: 'rgba(255, 179, 0, 0.08)',
-                  border: '1px solid var(--accent-gold-light)',
+                  background: 'var(--gold-soft)',
+                  border: '1px solid rgba(179, 138, 69, 0.25)',
                   borderRadius: 'var(--radius-sm)',
                   padding: '8px 14px',
                   textAlign: isAr ? 'left' : 'right'
                 }}>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--accent-gold)', display: 'block', fontWeight: 'bold' }}>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--gold-dark)', display: 'block', fontWeight: 'bold' }}>
                     {isAr ? 'العمولة المستحقة (' + commissionRate + '%):' : 'Earned Commission:'}
                   </span>
-                  <strong style={{ fontSize: '1.05rem', color: 'var(--accent-gold)' }}>
+                  <strong style={{ fontSize: '1.05rem', color: 'var(--gold-dark)' }}>
                     {agent.earnedCommission.toLocaleString()} ج.م
                   </strong>
                 </div>
@@ -258,21 +259,21 @@ export default function AgentCommissionLeaderboard({
                 <span style={{ color: 'var(--text-secondary)' }}>
                   {isAr ? `المستهدف الشهري: ${(agent.target / 1000000).toFixed(0)} مليون ج.م` : `Monthly Target: ${(agent.target / 1000000)}M`}
                 </span>
-                <strong style={{ color: agent.targetPercent >= 80 ? 'var(--emerald)' : 'var(--accent-gold)' }}>
+                <strong style={{ color: agent.targetPercent >= 80 ? 'var(--success)' : 'var(--gold-dark)' }}>
                   {agent.targetPercent}% {isAr ? 'مكتمل' : 'Achieved'}
                 </strong>
               </div>
 
               <div style={{
                 height: '8px',
-                background: 'rgba(255,255,255,0.08)',
+                background: 'rgba(7, 17, 31, 0.08)',
                 borderRadius: '4px',
                 overflow: 'hidden'
               }}>
                 <div style={{
                   height: '100%',
                   width: `${agent.targetPercent}%`,
-                  background: agent.targetPercent >= 80 ? 'var(--gradient-emerald)' : 'var(--gradient-gold)',
+                  background: agent.targetPercent >= 80 ? 'linear-gradient(90deg, var(--success) 0%, #3d6354 100%)' : 'linear-gradient(90deg, var(--gold) 0%, var(--gold-dark) 100%)',
                   borderRadius: '4px',
                   transition: 'width 0.6s ease'
                 }} />
