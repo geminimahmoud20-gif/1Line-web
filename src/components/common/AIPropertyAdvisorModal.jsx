@@ -150,13 +150,13 @@ export default function AIPropertyAdvisorModal({
         {/* Header */}
         <div className="ai-advisor-header">
           <div className="flex-center gap-10">
-            <div className="ai-bot-avatar" style={{ background: 'linear-gradient(135deg, #0b4ea2 0%, #1e3a8a 100%)' }}>
-              <Building size={20} className="text-white" />
+            <div className="ai-bot-avatar">
+              <Building size={20} style={{ color: '#D4AF37' }} />
             </div>
             <div>
               <div className="flex-center gap-6">
                 <h3 className="ai-title">{isAr ? 'مستشار 1Line العقاري المعتمد' : '1Line Certified Property Advisor'}</h3>
-                <span className="ai-live-badge" style={{ background: '#10b981' }}>{isAr ? 'حي ومباشر' : 'Live'}</span>
+                <span className="ai-live-badge">{isAr ? 'حي ومباشر' : 'Live'}</span>
               </div>
               <span className="ai-status-sub">
                 {isAr ? 'رؤية دقيقة لمؤشرات سوق سوهاج 2026 • فحص وتدقيق قانوني' : 'Certified Market Insights & Legal Due Diligence'}
@@ -218,9 +218,9 @@ export default function AIPropertyAdvisorModal({
         <div style={{
           display: 'flex',
           gap: '8px',
-          padding: '8px 16px',
-          background: 'rgba(15, 23, 42, 0.03)',
-          borderTop: '1px solid rgba(148, 163, 184, 0.15)'
+          padding: '10px 16px',
+          background: 'rgba(10, 25, 47, 0.04)',
+          borderTop: '1px solid rgba(197, 160, 89, 0.2)'
         }}>
           {onOpenCallbackModal && (
             <button
@@ -235,14 +235,15 @@ export default function AIPropertyAdvisorModal({
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '6px',
-                padding: '8px 12px',
+                padding: '9px 12px',
                 borderRadius: '8px',
-                background: 'rgba(217, 119, 6, 0.1)',
-                color: 'var(--accent-gold, #d97706)',
-                border: '1px solid rgba(217, 119, 6, 0.3)',
+                background: 'rgba(212, 175, 55, 0.1)',
+                color: '#D4AF37',
+                border: '1px solid rgba(212, 175, 55, 0.35)',
                 fontSize: '0.82rem',
-                fontWeight: 700,
-                cursor: 'pointer'
+                fontWeight: 800,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
               }}
             >
               <PhoneCall size={14} />

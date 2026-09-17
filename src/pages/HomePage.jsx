@@ -297,7 +297,7 @@ export default function HomePage({
               muted={videoMuted}
               playsInline
               onEnded={handleVideoEnded}
-              poster={currentClip?.poster || founderSettings.heroPosterUrl || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=2000&q=85'}
+              poster={currentClip?.poster || founderSettings.heroPosterUrl || 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=2000&q=85'}
               className={`hero-cinematic-video ${clipFade ? 'clip-fading' : ''}`}
             >
               <source src={activeVideoUrl} type="video/mp4" />
