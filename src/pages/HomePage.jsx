@@ -305,7 +305,7 @@ export default function HomePage({
             <div 
               className="hero-video-overlay-gradient"
               style={{
-                opacity: founderSettings.heroOverlayOpacity !== undefined ? founderSettings.heroOverlayOpacity : 0.78
+                opacity: founderSettings.heroOverlayOpacity !== undefined ? founderSettings.heroOverlayOpacity : 0.42
               }}
             />
           </div>
