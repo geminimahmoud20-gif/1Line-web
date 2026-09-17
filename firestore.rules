@@ -4,6 +4,7 @@ service cloud.firestore {
     function isAdmin() {
       return request.auth != null && (
         request.auth.token.admin == true ||
+        request.auth.token.role in ['admin', 'super_admin'] ||
         request.auth.uid == 'dB6GM2RoPQRE0iksDnqcdvUKgXy2'
       );
     }
@@ -33,29 +34,33 @@ service cloud.firestore {
       allow write: if request.auth != null && (request.auth.token.admin == true || isAdmin());
     }
 
-    // 🔔 4. NOTIFICATIONS & AUDIT LOGS (سجل الإشعارات)
+    // 🔔 4. NOTIFICATIONS (سجل الإشعارات)
     match /notifications/{notifId} {
       allow read, write: if isAdmin();
     }
 
-    // ⚙️ 5. SITE & FOUNDER SETTINGS (إعدادات الموقع والمؤسس وأرقام التواصل الحية)
+    // 📜 5. AUDIT LOGS (سجل التدقيق المؤسسي غير القابل للتعديل)
+    match /audit_logs/{logId} {
+      allow read, create: if isAdmin();
+      allow update, delete: if false; // Strict immutability of audit records
+    }
+
+    // ⚙️ 6. SITE & FOUNDER SETTINGS (إعدادات الموقع والمؤسس وأرقام التواصل الحية)
     match /settings/{settingId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // 🏢 6. PROJECTS & MEGA DEVELOPMENTS (المشروعات والكمبوندات الكبرى)
+    // 🏢 7. PROJECTS & MEGA DEVELOPMENTS (المشروعات والكمبوندات الكبرى)
     match /projects/{projectId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // 📢 7. SPONSORED ADS & CAMPAIGNS (الحملات الإعلانية ومساحات الرعاة)
+    // 📢 8. SPONSORED ADS & CAMPAIGNS (الحملات الإعلانية ومساحات الرعاة)
     match /advertisements/{adId} {
       allow read: if true;
       allow write: if isAdmin();
     }
   }
 }
-
-

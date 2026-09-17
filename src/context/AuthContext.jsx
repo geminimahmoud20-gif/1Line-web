@@ -8,12 +8,18 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [crmAuthenticated, setCrmAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isAuthInitializing, setIsAuthInitializing] = useState(true);
   const navigate = useNavigate();
   const { lang } = usePreferences();
   const { triggerToast } = useUIModal();
 
   useEffect(() => {
-    const unsub = monitorAuthState(setCrmAuthenticated);
+    const unsub = monitorAuthState((isAuth, userProfile) => {
+      setCrmAuthenticated(Boolean(isAuth));
+      setCurrentUser(userProfile || null);
+      setIsAuthInitializing(false);
+    });
     return () => {
       if (typeof unsub === 'function') unsub();
     };
@@ -22,6 +28,7 @@ export function AuthProvider({ children }) {
   const handleCrmLogout = useCallback(async () => {
     await logoutUser();
     setCrmAuthenticated(false);
+    setCurrentUser(null);
     navigate('/');
     triggerToast(lang === 'ar' ? 'تم تسجيل الخروج بنجاح' : 'Logged out successfully', 'info');
   }, [navigate, lang, triggerToast]);
@@ -29,6 +36,9 @@ export function AuthProvider({ children }) {
   const value = {
     crmAuthenticated,
     setCrmAuthenticated,
+    currentUser,
+    userRole: currentUser?.role || 'guest',
+    isAuthInitializing,
     handleCrmLogout
   };
 

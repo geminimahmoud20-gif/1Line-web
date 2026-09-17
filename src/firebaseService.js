@@ -191,6 +191,12 @@ export const subscribeToLeads = (callback) => {
       return onSnapshot(q, (snapshot) => {
         const leads = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         callback(leads);
+      }, (err) => {
+        if (err && err.code === 'permission-denied') {
+          // Graceful fallback for unauthenticated guests
+          return;
+        }
+        console.warn('Firebase subscribeToLeads snapshot warning:', err);
       });
     } catch (error) {
       console.error('Firebase subscribeToLeads error:', error);
@@ -432,7 +438,51 @@ export const isFirebaseAuthAvailable = () => isFirebaseConfigured() && auth !== 
 // Authorization is also enforced independently by Firestore rules.
 const ADMIN_USER_IDS = new Set(['dB6GM2RoPQRE0iksDnqcdvUKgXy2']);
 
+export const checkIsAdmin = async (user) => {
+  if (!user) return false;
+  if (ADMIN_USER_IDS.has(user.uid)) return true;
+  try {
+    const tokenResult = await user.getIdTokenResult();
+    return Boolean(
+      tokenResult?.claims?.admin === true ||
+      tokenResult?.claims?.role === 'admin' ||
+      tokenResult?.claims?.role === 'super_admin'
+    );
+  } catch {
+    return false;
+  }
+};
+
 const isAdminUser = (user) => Boolean(user && ADMIN_USER_IDS.has(user.uid));
+
+// ===================== AUDIT LOGS =====================
+
+/**
+ * Persist an immutable audit log entry to Firestore.
+ */
+export const logAuditEvent = async ({ actionType, targetCollection, targetId, details = {}, actor = null }) => {
+  if (isFirebaseConfigured() && db) {
+    try {
+      const currentAuthUser = auth?.currentUser;
+      const logDoc = {
+        actionType,
+        targetCollection: targetCollection || 'general',
+        targetId: targetId || 'system',
+        actorUid: actor?.uid || currentAuthUser?.uid || 'system',
+        actorEmail: actor?.email || currentAuthUser?.email || 'admin@1line.com',
+        details,
+        timestamp: serverTimestamp(),
+        createdAt: new Date().toISOString()
+      };
+      await addDoc(collection(db, 'audit_logs'), logDoc);
+      return true;
+    } catch (err) {
+      console.warn('Audit log write notice:', err);
+      return false;
+    }
+  }
+  return false;
+};
 
 // ===================== AUTHENTICATION =====================
 
@@ -445,10 +495,21 @@ export const loginUser = async (email, password) => {
   }
 
   const credential = await signInWithEmailAndPassword(auth, email, password);
-  if (!isAdminUser(credential.user)) {
+  const authorized = await checkIsAdmin(credential.user);
+  if (!authorized) {
     await signOut(auth);
     throw new Error('This account is not authorized to access the CRM');
   }
+
+  // Record audit log entry for successful login
+  logAuditEvent({
+    actionType: 'CRM_LOGIN_SUCCESS',
+    targetCollection: 'users',
+    targetId: credential.user.uid,
+    actor: { uid: credential.user.uid, email: credential.user.email },
+    details: { loginMethod: 'email_password' }
+  });
+
   return credential;
 };
 
@@ -457,21 +518,51 @@ export const loginUser = async (email, password) => {
  */
 export const logoutUser = async () => {
   if (isFirebaseAuthAvailable()) {
+    const currentUser = auth?.currentUser;
+    if (currentUser) {
+      logAuditEvent({
+        actionType: 'CRM_LOGOUT',
+        targetCollection: 'users',
+        targetId: currentUser.uid,
+        actor: { uid: currentUser.uid, email: currentUser.email }
+      });
+    }
     return signOut(auth);
   }
 };
 
 /**
- * Monitor user authentication state changes.
+ * Monitor user authentication state changes with rich user profile.
  */
 export const monitorAuthState = (callback) => {
   if (!isFirebaseAuthAvailable()) {
-    callback(false);
+    callback(false, null);
     return () => {};
   }
 
-  return onAuthStateChanged(auth, (user) => {
-    if (!user) return callback(false);
-    callback(isAdminUser(user));
+  return onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      callback(false, null);
+      return;
+    }
+    const authorized = await checkIsAdmin(user);
+    if (!authorized) {
+      callback(false, null);
+      return;
+    }
+
+    try {
+      const tokenResult = await user.getIdTokenResult().catch(() => null);
+      const role = tokenResult?.claims?.role || 'super_admin';
+      const userProfile = {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName || user.email?.split('@')[0] || 'Admin',
+        role
+      };
+      callback(true, userProfile);
+    } catch {
+      callback(true, { uid: user.uid, email: user.email, role: 'super_admin' });
+    }
   });
 };

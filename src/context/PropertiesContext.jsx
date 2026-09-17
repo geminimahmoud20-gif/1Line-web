@@ -241,15 +241,28 @@ export function PropertiesProvider({ children }) {
           action: `تسجيل اهتمام إضافي: طلب ${standardizedData.propertyType || standardizedData.type || 'جديد'}`
         };
 
+        const nowIso = new Date().toISOString();
         const mergedLead = {
           ...existing,
           name: existing.name || standardizedData.name,
           whatsapp: standardizedData.whatsapp || existing.whatsapp,
           phone: standardizedData.phone || existing.phone,
+          email: standardizedData.email || existing.email || '',
+          source: existing.source || standardizedData.source || 'website',
+          type: standardizedData.type || existing.type || 'buyer',
+          budget: standardizedData.budget || existing.budget || existing.details?.budget || '',
           propertyType: standardizedData.propertyType || existing.propertyType,
           area: standardizedData.area || existing.area,
           score: Math.min(100, (existing.score || 80) + 10),
-          timestamp: new Date().toISOString(),
+          temperature: existing.temperature || 'hot',
+          status: existing.status || 'new',
+          assignedTo: existing.assignedTo || 'Sales Advisor Team',
+          nextFollowUpAt: standardizedData.nextFollowUpAt || existing.nextFollowUpAt || null,
+          createdAt: existing.createdAt || existing.timestamp || nowIso,
+          updatedAt: nowIso,
+          createdBy: existing.createdBy || 'online_visitor',
+          lastActivityAt: nowIso,
+          timestamp: nowIso,
           notes: `${existing.notes ? existing.notes + ' | ' : ''}طلب إضافي: ${standardizedData.propertyType || ''} في ${standardizedData.area || ''}`,
           details: { ...(existing.details || {}), ...(standardizedData.details || {}) },
           activityLogs: [newLog, ...(existing.activityLogs || [])],
@@ -264,16 +277,32 @@ export function PropertiesProvider({ children }) {
         localStorage.setItem('oneline_crm_leads', JSON.stringify(updated));
         return updated;
       } else {
+        const nowIso = new Date().toISOString();
         const newLead = {
           id: 'lead-' + Date.now(),
           timestamp: new Date().toISOString(),
           status: 'new',
+          name: standardizedData.name,
+          phone: standardizedData.phone,
+          whatsapp: standardizedData.whatsapp,
+          email: standardizedData.email || '',
+          source: standardizedData.source || 'website',
+          type: standardizedData.type || 'buyer',
+          budget: standardizedData.budget || standardizedData.details?.budget || '',
+          area: standardizedData.area || 'sohag_jadida',
+          propertyType: standardizedData.propertyType || 'apartment',
+          notes: standardizedData.notes || '',
+          temperature: standardizedData.temperature || 'hot',
+          score: typeof standardizedData.score === 'number' ? standardizedData.score : 85,
+          assignedTo: standardizedData.assignedTo || 'Sales Advisor Team',
+          nextFollowUpAt: standardizedData.nextFollowUpAt || null,
+          createdAt: nowIso,
+          updatedAt: nowIso,
+          createdBy: standardizedData.createdBy || 'online_visitor',
+          lastActivityAt: nowIso,
           followUp: 'Pending Contact',
-          assignedTo: 'Sales Advisor Team',
-          score: 85,
-          temperature: 'hot',
           activityLogs: [{
-            timestamp: new Date().toISOString(),
+            timestamp: nowIso,
             action: 'تسجيل العميل لأول مرة عبر المنصة'
           }],
           digitalJourney: sessionJourney.events || [],
@@ -460,8 +489,15 @@ export function PropertiesProvider({ children }) {
 
   // CRM Leads Handlers
   const handleUpdateLead = useCallback(async (id, updatedFields) => {
+    const nowIso = new Date().toISOString();
+    const enrichedFields = {
+      ...updatedFields,
+      updatedAt: nowIso,
+      lastActivityAt: nowIso
+    };
+
     if (isFirebaseActive()) {
-      const saved = await updateLeadField(id, updatedFields);
+      const saved = await updateLeadField(id, enrichedFields);
       if (!saved) {
         triggerToast(
           lang === 'ar'
@@ -478,10 +514,10 @@ export function PropertiesProvider({ children }) {
         if (l.id === id) {
           const activityLogs = l.activityLogs || [];
           const newLog = {
-            timestamp: new Date().toISOString(),
+            timestamp: nowIso,
             action: `تحديث بيانات: ${Object.keys(updatedFields).join(', ')}`
           };
-          return { ...l, ...updatedFields, activityLogs: [newLog, ...activityLogs] };
+          return { ...l, ...enrichedFields, activityLogs: [newLog, ...activityLogs] };
         }
         return l;
       });

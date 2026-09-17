@@ -9,6 +9,7 @@ import FounderCmsPanel from '../components/crm/FounderCmsPanel';
 import AreaManagerPanel from '../components/crm/AreaManagerPanel';
 import GoLiveWizardModal from '../components/crm/GoLiveWizardModal';
 import { isFirebaseAuthAvailable, loginUser } from '../firebaseService';
+import { useAuth } from '../context/AuthContext';
 
 export default function CrmPage({
   lang = 'ar',
@@ -37,6 +38,7 @@ export default function CrmPage({
   onDeleteDemand,
   onUnpublishDemand
 }) {
+  const { isAuthInitializing, currentUser, userRole } = useAuth();
   const [activeTab, setActiveTab] = useState('leads'); // 'leads' | 'properties' | 'projects' | 'demands'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -132,6 +134,27 @@ export default function CrmPage({
     }
   };
 
+  // 0. Smooth Session Initialization Spinner (Zero Flash of Login)
+  if (isAuthInitializing) {
+    return (
+      <div className="crm-login-fullscreen">
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+          <div style={{
+            width: '42px',
+            height: '42px',
+            borderRadius: '50%',
+            border: '3px solid rgba(179, 138, 69, 0.2)',
+            borderTopColor: 'var(--gold, #B38A45)',
+            animation: 'routeSpin 0.8s linear infinite'
+          }} />
+          <span style={{ color: 'var(--text-muted, #687386)', fontSize: '0.88rem', fontWeight: 'bold' }}>
+            {isAr ? 'جاري فحص الجلسة المشفرة...' : 'Verifying secure session...'}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   // 1. Dedicated Full-Screen Luxury Admin Login Portal (Zero Dashboard Leak)
   if (!crmAuthenticated) {
     return (
@@ -184,12 +207,12 @@ export default function CrmPage({
             </div>
 
             <div className="crm-input-group">
-              <label>{isAr ? 'رمز الدخول السري (PIN / Password)' : 'Security PIN / Password'}</label>
+              <label>{isAr ? 'كلمة المرور المشفرة' : 'Security Password'}</label>
               <div className="crm-password-input-relative">
                 <KeyRound size={18} className="input-icon-left" />
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  placeholder={isAr ? 'أدخل رمز المرور الخاص بك' : 'Enter your secure PIN'}
+                  placeholder={isAr ? 'أدخل كلمة المرور الخاصة بك' : 'Enter your secure password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="current-password"
@@ -231,7 +254,7 @@ export default function CrmPage({
                 alignItems: 'center',
                 gap: '4px'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.color = '#ffca28'}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--gold)'}
               onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
             >
               ← {isAr ? 'الرجوع إلى واجهة الموقع الرئيسية' : 'Return to Public Website'}
@@ -976,13 +999,11 @@ export default function CrmPage({
             leads={leads}
             setLeads={setLeads}
             lang={lang}
-            t={t}
             crmAuthenticated={true}
             setCrmAuthenticated={setCrmAuthenticated}
-            handleCrmLogout={() => {
-              setCrmAuthenticated(false);
-              sessionStorage.removeItem('crm_auth');
-            }}
+            currentUser={currentUser}
+            userRole={userRole}
+            handleCrmLogout={onLogout || (() => setCrmAuthenticated(false))}
             triggerToast={triggerToast}
             properties={properties}
             onConvertToProperty={handleConvertToProperty}

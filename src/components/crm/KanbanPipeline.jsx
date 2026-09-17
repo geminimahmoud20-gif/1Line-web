@@ -593,6 +593,25 @@ export default function KanbanPipeline({
                           </strong>
                         </div>
 
+                        {/* Scheduled Next Follow-up Badge if any */}
+                        {lead.nextFollowUpAt && (
+                          <div style={{
+                            background: 'rgba(56, 189, 248, 0.12)',
+                            border: '1px solid rgba(56, 189, 248, 0.35)',
+                            borderRadius: '6px',
+                            padding: '3px 8px',
+                            fontSize: '0.7rem',
+                            color: '#38bdf8',
+                            marginBottom: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '5px'
+                          }}>
+                            <Calendar size={12} />
+                            <span>{isAr ? 'متابعة قادمة:' : 'Follow-up:'} {new Date(lead.nextFollowUpAt).toLocaleString(isAr ? 'ar-EG' : 'en-US', { dateStyle: 'short', timeStyle: 'short' })}</span>
+                          </div>
+                        )}
+
                         {/* Scheduled Visit Badge if any */}
                         {lead.siteVisit && (
                           <div style={{

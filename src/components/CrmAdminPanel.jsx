@@ -9,7 +9,7 @@ import {
   UserPlus, CheckSquare, Square, Flame, Tag, Filter, Send, Activity,
   ArrowLeft, ArrowRight, MapPin
 } from 'lucide-react';
-import { loginUser } from '../firebaseService';
+import { loginUser, logAuditEvent } from '../firebaseService';
 import { exportToCsv } from '../utils/exportCsv';
 import { SOHAG_AREAS, PROPERTY_TYPES } from '../data/propertiesData';
 
@@ -44,6 +44,8 @@ export const CrmAdminPanel = ({
   handleCrmLogout,
   crmAuthenticated = true,
   setCrmAuthenticated,
+  currentUser = null,
+  userRole = 'super_admin',
   updateLeadStatus,
   updateLeadFollowUp,
   assignLeadSalesperson,
@@ -71,7 +73,7 @@ export const CrmAdminPanel = ({
   const [loading, setLoading] = useState(false);
 
   // Multi-Tenant RBAC Identity State
-  const [activeRole, setActiveRole] = useState('super_admin'); // 'super_admin' | 'agent_east' | 'agent_new_sohag'
+  const [activeRole, setActiveRole] = useState(userRole || 'super_admin'); // 'super_admin' | 'agent_east' | 'agent_new_sohag'
   const [myDealsOnly, setMyDealsOnly] = useState(false);
 
   // Enterprise Tab States
@@ -119,6 +121,13 @@ export const CrmAdminPanel = ({
   const handleClaimLead = (leadId) => {
     if (onUpdateLead) {
       onUpdateLead(leadId, { assignedTo: currentRoleObj.agentName });
+      logAuditEvent({
+        actionType: 'LEAD_CLAIMED',
+        targetCollection: 'leads',
+        targetId: leadId,
+        details: { assignedTo: currentRoleObj.agentName },
+        actor: currentUser
+      });
       if (triggerToast) {
         triggerToast(isAr ? `تم استلام العميل بنجاح وتعيينه لـ ${currentRoleObj.label_ar}` : `Lead claimed by ${currentRoleObj.label_en}`, 'success');
       }
@@ -200,6 +209,13 @@ export const CrmAdminPanel = ({
     selectedLeadIds.forEach(id => {
       if (onUpdateLead) onUpdateLead(id, { assignedTo: newAgent });
     });
+    logAuditEvent({
+      actionType: 'BULK_LEADS_ASSIGNED',
+      targetCollection: 'leads',
+      targetId: selectedLeadIds.join(','),
+      details: { newAgent, count: selectedLeadIds.length },
+      actor: currentUser
+    });
     if (triggerToast) {
       triggerToast(isAr ? `تم تعيين ${selectedLeadIds.length} عميل إلى ${newAgent}` : `Assigned ${selectedLeadIds.length} leads to ${newAgent}`, 'success');
     }
@@ -211,6 +227,13 @@ export const CrmAdminPanel = ({
     if (window.confirm(isAr ? `هل أنت متأكد من حذف ${selectedLeadIds.length} عميل محدد نهائياً؟` : `Delete ${selectedLeadIds.length} leads?`)) {
       selectedLeadIds.forEach(id => {
         if (onDeleteLead) onDeleteLead(id);
+      });
+      logAuditEvent({
+        actionType: 'BULK_LEADS_DELETED',
+        targetCollection: 'leads',
+        targetId: selectedLeadIds.join(','),
+        details: { count: selectedLeadIds.length },
+        actor: currentUser
       });
       if (triggerToast) {
         triggerToast(isAr ? `تم حذف ${selectedLeadIds.length} عميل بنجاح` : `Deleted ${selectedLeadIds.length} leads`, 'info');
@@ -235,6 +258,13 @@ export const CrmAdminPanel = ({
       budget: 'الميزانية'
     };
     exportToCsv('Selected_Leads_Export', selectedLeads, headers);
+    logAuditEvent({
+      actionType: 'LEADS_EXPORTED_CSV',
+      targetCollection: 'leads',
+      targetId: 'bulk_selection',
+      details: { count: selectedLeadIds.length },
+      actor: currentUser
+    });
     if (triggerToast) {
       triggerToast(isAr ? `تم تصدير ${selectedLeadIds.length} عميل محدد إلى CSV بنجاح!` : `Exported ${selectedLeadIds.length} leads!`, 'success');
     }
@@ -251,7 +281,6 @@ export const CrmAdminPanel = ({
       }
       await loginUser(crmEmailInput, crmPasswordInput);
       setCrmAuthenticated(true);
-      sessionStorage.setItem('crm_auth', 'true');
       triggerToast(isAr ? 'تم تسجيل الدخول بنجاح عبر السحابة!' : 'Logged in successfully via Cloud Auth!');
     } catch (err) {
       console.error(err);
@@ -269,14 +298,24 @@ export const CrmAdminPanel = ({
     const headers = {
       id: 'المعرف ID',
       name: 'اسم العميل',
-      whatsapp: 'رقم الواتساب',
       phone: 'رقم الهاتف',
+      whatsapp: 'رقم الواتساب',
+      email: 'البريد الإلكتروني',
+      source: 'مصدر العميل',
       type: 'نوع الطلب',
-      propertyType: 'نوع العقار',
-      area: 'المنطقة',
       budget: 'الميزانية',
+      area: 'المنطقة',
+      propertyType: 'نوع العقار',
+      notes: 'الملاحظات',
       status: 'حالة المتابعة',
-      timestamp: 'تاريخ التسجيل'
+      temperature: 'درجة الاهتمام',
+      score: 'التقييم',
+      assignedTo: 'المسؤول',
+      nextFollowUpAt: 'موعد المتابعة القادم',
+      createdAt: 'تاريخ الإنشاء',
+      updatedAt: 'تاريخ التحديث',
+      createdBy: 'أنشئ بواسطة',
+      lastActivityAt: 'آخر نشاط'
     };
     exportToCsv('Oneline_Leads_Report', leads || [], headers);
     if (triggerToast) {
@@ -339,15 +378,19 @@ export const CrmAdminPanel = ({
       name: lead.name || '',
       phone: lead.phone || '',
       whatsapp: lead.whatsapp || '',
+      email: lead.email || '',
+      source: lead.source || 'Direct Entry',
       type: lead.type || 'buyer',
-      status: lead.status || 'new',
-      followUp: lead.followUp || 'Pending Contact',
-      assignedTo: lead.assignedTo || 'Unassigned',
+      budget: lead.budget || details.budget || details.expectedPrice || '',
+      area: lead.area || details.area || 'east',
+      propertyType: lead.propertyType || details.propertyType || 'apartment',
       notes: lead.notes || '',
+      status: lead.status || 'new',
+      temperature: lead.temperature || 'hot',
       score: lead.score || 85,
-      budget: details.budget || details.expectedPrice || '',
-      area: details.area || 'east',
-      propertyType: details.propertyType || 'apartment'
+      assignedTo: lead.assignedTo || 'Unassigned',
+      nextFollowUpAt: lead.nextFollowUpAt ? String(lead.nextFollowUpAt).slice(0, 16) : '',
+      followUp: lead.followUp || 'Pending Contact'
     });
   };
 
@@ -377,18 +420,28 @@ export const CrmAdminPanel = ({
       return;
     }
 
+    const nowIso = new Date().toISOString();
     const updatedLeadData = {
       name: leadFormData.name.trim(),
       phone: leadFormData.phone.trim() || cleanWhatsapp,
       whatsapp: cleanWhatsapp,
-      propertyType: leadFormData.propertyType,
-      area: leadFormData.area,
+      email: (leadFormData.email || '').trim(),
+      source: leadFormData.source || editingLead.source || 'Direct Entry',
       type: leadFormData.type,
-      status: leadFormData.status,
-      followUp: leadFormData.followUp,
-      assignedTo: leadFormData.assignedTo,
+      budget: leadFormData.budget || '',
+      area: leadFormData.area,
+      propertyType: leadFormData.propertyType,
       notes: leadFormData.notes,
+      status: leadFormData.status,
+      temperature: leadFormData.temperature || editingLead.temperature || 'hot',
       score: parseInt(leadFormData.score) || 85,
+      assignedTo: leadFormData.assignedTo,
+      nextFollowUpAt: leadFormData.nextFollowUpAt ? new Date(leadFormData.nextFollowUpAt).toISOString() : null,
+      followUp: leadFormData.followUp,
+      updatedAt: nowIso,
+      lastActivityAt: nowIso,
+      createdAt: editingLead.createdAt || editingLead.timestamp || nowIso,
+      createdBy: editingLead.createdBy || 'system',
       details: {
         ...(editingLead.details || {}),
         budget: leadFormData.budget,
@@ -1768,6 +1821,49 @@ export const CrmAdminPanel = ({
                     <option value="closing">CLOSING (توقيع وحجز)</option>
                     <option value="closed">CLOSED (تم إغلاق الصفقة)</option>
                   </select>
+                </div>
+
+                <div className="form-group-item">
+                  <label>{isAr ? 'البريد الإلكتروني' : 'Email Address'}</label>
+                  <input
+                    type="email"
+                    value={leadFormData.email}
+                    onChange={(e) => setLeadFormData({ ...leadFormData, email: e.target.value })}
+                    placeholder="client@example.com"
+                    style={{ direction: 'ltr', textAlign: 'left' }}
+                  />
+                </div>
+
+                <div className="form-group-item">
+                  <label>{isAr ? 'مصدر العميل (Source)' : 'Lead Source'}</label>
+                  <input
+                    type="text"
+                    value={leadFormData.source}
+                    onChange={(e) => setLeadFormData({ ...leadFormData, source: e.target.value })}
+                    placeholder="Facebook, Direct, WhatsApp..."
+                  />
+                </div>
+
+                <div className="form-group-item">
+                  <label>{isAr ? 'درجة الاهتمام (Temperature)' : 'Temperature'}</label>
+                  <select
+                    value={leadFormData.temperature}
+                    onChange={(e) => setLeadFormData({ ...leadFormData, temperature: e.target.value })}
+                  >
+                    <option value="hot">🔥 {isAr ? 'ساخن (Hot)' : 'Hot'}</option>
+                    <option value="warm">⚡ {isAr ? 'متوسط (Warm)' : 'Warm'}</option>
+                    <option value="cold">❄️ {isAr ? 'بارد (Cold)' : 'Cold'}</option>
+                  </select>
+                </div>
+
+                <div className="form-group-item">
+                  <label>{isAr ? 'موعد المتابعة القادم' : 'Next Follow-Up Date & Time'}</label>
+                  <input
+                    type="datetime-local"
+                    value={leadFormData.nextFollowUpAt}
+                    onChange={(e) => setLeadFormData({ ...leadFormData, nextFollowUpAt: e.target.value })}
+                    style={{ direction: 'ltr' }}
+                  />
                 </div>
 
                 <div className="form-group-item">
