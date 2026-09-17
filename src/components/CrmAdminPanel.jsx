@@ -7,10 +7,11 @@ import {
   Edit3, Trash2, Database, Upload, Save, X, Clock, CheckCircle2,
   Trophy, Calculator, LayoutGrid, Wand2, Calendar, Target, Zap,
   UserPlus, CheckSquare, Square, Flame, Tag, Filter, Send, Activity,
-  ArrowLeft, ArrowRight, MapPin
+  ArrowLeft, ArrowRight, MapPin, Archive
 } from 'lucide-react';
 import { loginUser, logAuditEvent } from '../firebaseService';
 import { exportToCsv } from '../utils/exportCsv';
+import { formatTimeSinceLastSync } from '../utils/syncManager';
 import { SOHAG_AREAS, PROPERTY_TYPES } from '../data/propertiesData';
 
 // Enterprise PropTech Modules
@@ -27,9 +28,14 @@ import FounderCmsPanel from './crm/FounderCmsPanel';
 import ContractStudioModal from './crm/ContractStudioModal';
 
 export const CRM_ROLES = [
-  { id: 'super_admin', label_ar: 'المدير العام التنفيذي', label_en: 'Super Admin', agentName: 'Dr. Mahmoud Elbaz', icon: '👑', canDelete: true, canViewAgencyFinancials: true },
-  { id: 'agent_east', label_ar: 'فريق مبيعات شرق والكوثر (وسيط)', label_en: 'East Desk Broker', agentName: 'Sales Team A', icon: '🏆', canDelete: false, canViewAgencyFinancials: false },
-  { id: 'agent_new_sohag', label_ar: 'فريق مبيعات سوهاج الجديدة (وسيط)', label_en: 'New Sohag Desk Broker', agentName: 'Sales Team B', icon: '🌟', canDelete: false, canViewAgencyFinancials: false }
+  { id: 'super_admin', label_ar: 'المدير العام (Super Admin)', label_en: 'Super Admin', agentName: 'Dr. Mahmoud Elbaz', icon: '👑', canDelete: true, canViewAgencyFinancials: true },
+  { id: 'sales_manager', label_ar: 'مدير المبيعات (Sales Manager)', label_en: 'Sales Manager', agentName: 'Sales Management', icon: '💼', canDelete: false, canViewAgencyFinancials: true },
+  { id: 'sales_agent', label_ar: 'مستشار مبيعات (Sales Agent)', label_en: 'Sales Agent', agentName: 'Sales Advisor Team', icon: '🎯', canDelete: false, canViewAgencyFinancials: false },
+  { id: 'property_manager', label_ar: 'مدير العقارات (Property Manager)', label_en: 'Property Manager', agentName: 'Inventory Desk', icon: '🏢', canDelete: false, canViewAgencyFinancials: false },
+  { id: 'finance', label_ar: 'الإدارة المالية (Finance)', label_en: 'Finance', agentName: 'Finance Department', icon: '💰', canDelete: false, canViewAgencyFinancials: true },
+  { id: 'viewer', label_ar: 'مراقب / مدقق (Viewer)', label_en: 'Viewer', agentName: 'Audit Desk', icon: '👁️', canDelete: false, canViewAgencyFinancials: false },
+  { id: 'agent_east', label_ar: 'فريق شرق والكوثر (وسيط)', label_en: 'East Desk Broker', agentName: 'Sales Team A', icon: '🏆', canDelete: false, canViewAgencyFinancials: false },
+  { id: 'agent_new_sohag', label_ar: 'فريق سوهاج الجديدة (وسيط)', label_en: 'New Sohag Desk Broker', agentName: 'Sales Team B', icon: '🌟', canDelete: false, canViewAgencyFinancials: false }
 ];
 
 export const CrmAdminPanel = ({
@@ -664,6 +670,24 @@ export const CrmAdminPanel = ({
           }}>
             {firebaseConnected ? <Wifi size={12} /> : <WifiOff size={12} />}
             <span>{firebaseConnected ? (isAr ? 'متصل بالسحابة (Cloud Sync)' : 'Cloud Active') : (isAr ? 'وضع التخزين المحلي (Local Cache)' : 'Local Storage')}</span>
+          </div>
+
+          {/* Live Sync Status & Last Synced Timestamp */}
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '4px 10px',
+            borderRadius: 'var(--radius-pill)',
+            fontSize: '0.72rem',
+            background: 'rgba(255, 255, 255, 0.04)',
+            color: '#94a3b8',
+            border: '1px solid rgba(255, 255, 255, 0.1)'
+          }}>
+            <Clock size={11} style={{ color: 'var(--accent-gold)' }} />
+            <span>{firebaseConnected ? (isAr ? 'تم الحفظ والمزامنة بنجاح 🟢' : 'Synced Successfully 🟢') : (isAr ? 'تم الحفظ محلياً — بانتظار المزامنة ⏳' : 'Pending Sync ⏳')}</span>
+            <span style={{ color: '#64748b' }}>•</span>
+            <span style={{ fontSize: '0.68rem', color: '#cbd5e1' }}>{formatTimeSinceLastSync(isAr ? 'ar' : 'en')}</span>
           </div>
 
           {/* Multi-Tenant RBAC Role Switcher */}
@@ -1580,6 +1604,23 @@ export const CrmAdminPanel = ({
                               <UserPlus size={13} />
                             </button>
                           )}
+
+                          {/* Archive Lead Button */}
+                          <button
+                            type="button"
+                            className="btn btn-sm"
+                            onClick={() => {
+                              const newStatus = l.isArchived ? false : true;
+                              if (onUpdateLead) {
+                                onUpdateLead(l.id, { isArchived: newStatus });
+                              }
+                              triggerToast(isAr ? (newStatus ? 'تم نقل العميل للأرشيف 📦' : 'تم استعادة العميل من الأرشيف') : (newStatus ? 'Lead archived' : 'Lead restored'), 'info');
+                            }}
+                            style={{ padding: '5px 7px', background: 'rgba(255, 255, 255, 0.05)', color: l.isArchived ? '#f59e0b' : '#94a3b8', border: '1px solid var(--border-light)' }}
+                            title={isAr ? (l.isArchived ? 'استعادة من الأرشيف' : 'أرشفة العميل') : (l.isArchived ? 'Restore' : 'Archive')}
+                          >
+                            <Archive size={13} />
+                          </button>
 
                           {/* Delete Lead (Super Admin Only) */}
                           {isSuperAdmin ? (
