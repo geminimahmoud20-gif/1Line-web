@@ -552,14 +552,34 @@ export const CrmAdminPanel = ({
       : '0%'
   };
 
-  // Filtered Leads list with Multi-Dimensional Search
+  // Filtered Leads list with Multi-Dimensional Search & Workflow Stages
   const filteredLeads = leads.filter((l) => {
     if (myDealsOnly && activeRole !== 'super_admin') {
       if (l.assignedTo !== currentRoleObj.agentName && l.assignedTo !== 'Unassigned') {
         return false;
       }
     }
-    if (leadFilter !== 'all' && l.type !== leadFilter) return false;
+
+    // Workflow & Archive Logic
+    if (leadFilter === 'archived') {
+      if (!l.isArchived) return false;
+    } else {
+      // Hide archived leads in all normal operational filters
+      if (l.isArchived) return false;
+
+      if (leadFilter === 'new') {
+        if (l.status !== 'new' && l.status) return false;
+      } else if (leadFilter === 'due') {
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const hasDue = (l.nextFollowUpAt && l.nextFollowUpAt.slice(0, 10) <= todayStr) || (l.followUp && l.followUp.includes(todayStr));
+        if (!hasDue) return false;
+      } else if (leadFilter === 'qualified') {
+        if ((l.score || 0) < 80) return false;
+      } else if (leadFilter !== 'all' && l.type !== leadFilter) {
+        return false;
+      }
+    }
+
     if (temperatureFilter !== 'all' && (l.temperature || 'hot') !== temperatureFilter) return false;
     if (areaFilter !== 'all' && l.details?.area !== areaFilter) return false;
     if (searchQuery.trim() !== '') {
@@ -1417,14 +1437,32 @@ export const CrmAdminPanel = ({
 
           {/* Advanced Multi-Filters Toolbar */}
           <div className="crm-table-header" style={{ alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '14px' }}>
-            {/* Type Filters */}
-            <div className="table-filters" style={{ flexWrap: 'wrap' }}>
-              <button className={`table-filter-btn ${leadFilter === 'all' ? 'active' : ''}`} onClick={() => setLeadFilter('all')}>{isAr ? 'الكل' : 'All'} ({leads.length})</button>
-              <button className={`table-filter-btn ${leadFilter === 'buyer' ? 'active' : ''}`} onClick={() => setLeadFilter('buyer')}>{isAr ? 'مشترين' : 'Buyers'}</button>
-              <button className={`table-filter-btn ${leadFilter === 'seller' ? 'active' : ''}`} onClick={() => setLeadFilter('seller')}>{isAr ? 'بائعين' : 'Sellers'}</button>
-              <button className={`table-filter-btn ${leadFilter === 'investor' ? 'active' : ''}`} onClick={() => setLeadFilter('investor')}>{isAr ? 'مستثمرين' : 'Investors'}</button>
-              <button className={`table-filter-btn ${leadFilter === 'broker' ? 'active' : ''}`} onClick={() => setLeadFilter('broker')}>{isAr ? 'وسطاء' : 'Brokers'}</button>
-              <button className={`table-filter-btn ${leadFilter === 'request' ? 'active' : ''}`} onClick={() => setLeadFilter('request')}>{isAr ? 'طلبات خاصة' : 'Special'}</button>
+            {/* Stage & Workflow Quick Tabs */}
+            <div className="table-filters" style={{ flexWrap: 'wrap', gap: '6px' }}>
+              <button className={`table-filter-btn ${leadFilter === 'all' ? 'active' : ''}`} onClick={() => setLeadFilter('all')}>
+                {isAr ? 'كل العملاء' : 'All Leads'} ({leads.filter(l => !l.isArchived).length})
+              </button>
+              <button className={`table-filter-btn ${leadFilter === 'new' ? 'active' : ''}`} onClick={() => setLeadFilter('new')}>
+                ✨ {isAr ? 'عملاء جدد' : 'New Leads'} ({leads.filter(l => !l.isArchived && (l.status === 'new' || !l.status)).length})
+              </button>
+              <button className={`table-filter-btn ${leadFilter === 'due' ? 'active' : ''}`} onClick={() => setLeadFilter('due')}>
+                ⏰ {isAr ? 'متابعة اليوم' : 'Due Today'}
+              </button>
+              <button className={`table-filter-btn ${leadFilter === 'qualified' ? 'active' : ''}`} onClick={() => setLeadFilter('qualified')}>
+                🎯 {isAr ? 'مؤهلون للشراء' : 'Qualified'}
+              </button>
+              <button className={`table-filter-btn ${leadFilter === 'buyer' ? 'active' : ''}`} onClick={() => setLeadFilter('buyer')}>
+                {isAr ? 'طلبات شراء' : 'Buyers'}
+              </button>
+              <button className={`table-filter-btn ${leadFilter === 'seller' ? 'active' : ''}`} onClick={() => setLeadFilter('seller')}>
+                {isAr ? 'عروض بيع' : 'Sellers'}
+              </button>
+              <button className={`table-filter-btn ${leadFilter === 'investor' ? 'active' : ''}`} onClick={() => setLeadFilter('investor')}>
+                💎 {isAr ? 'مستثمرون VIP' : 'Investors'}
+              </button>
+              <button className={`table-filter-btn ${leadFilter === 'archived' ? 'active' : ''}`} onClick={() => setLeadFilter('archived')} style={{ color: leadFilter === 'archived' ? '#f59e0b' : undefined }}>
+                📦 {isAr ? 'المؤرشفون' : 'Archived'} ({leads.filter(l => l.isArchived).length})
+              </button>
             </div>
 
             {/* Secondary Filters (Temperature & Area) */}
@@ -1719,96 +1757,110 @@ export const CrmAdminPanel = ({
                       <td data-label={isAr ? 'الإجراءات' : 'Actions'}>
                         <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
                           {/* Open 360° Profile */}
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-primary"
-                            onClick={() => setViewingProfileLead(l)}
-                            style={{ padding: '5px 7px', background: 'var(--accent-gold-light)', color: 'var(--accent-gold)', borderColor: 'var(--accent-gold)' }}
-                            title={isAr ? 'فتح ملف العميل الشامل 360°' : 'Customer 360° Profile'}
-                          >
-                            <User size={13} />
-                          </button>
-
-                          {/* 1-Click Convert to Property */}
-                          {onConvertToProperty && (
-                            <button 
-                              className="btn btn-sm btn-outline" 
-                              onClick={() => onConvertToProperty(l)}
-                              title={isAr ? 'تحويل هذا الطلب إلى عقار معروض بالموقع فوراً' : 'Convert to Property Listing'}
-                              style={{ padding: '5px 7px' }}
-                            >
-                              <Building size={13} />
-                            </button>
-                          )}
-
-                          {/* WhatsApp Instant Direct Contact with Client */}
-                          <button 
-                            className="btn btn-sm btn-accent" 
-                            onClick={() => onWhatsAppClick(l)} 
-                            style={{ padding: '5px 7px' }} 
-                            title={isAr ? 'محادثة العميل مباشرة عبر واتساب' : 'Chat with Client on WhatsApp'}
-                          >
-                            <MessageSquare size={13} />
-                          </button>
-
-                          {/* 1-Click Dispatch Lead Details to Agent/Team via WhatsApp */}
-                          <button 
-                            className="btn btn-sm btn-outline" 
-                            onClick={() => onDispatchLeadClick(l)} 
-                            style={{ padding: '5px 7px', borderColor: 'var(--accent-gold)', color: 'var(--accent-gold)' }} 
-                            title={isAr ? 'إحالة بيانات العميل لمسؤول المبيعات عبر واتساب' : 'Dispatch Lead to Sales Agent'}
-                          >
-                            <Send size={13} />
-                          </button>
-
-                          {/* 1-Click Claim Lead (Broker Mode) */}
-                          {!isSuperAdmin && l.assignedTo !== currentRoleObj.agentName && (
-                            <button
-                              type="button"
-                              className="btn btn-sm"
-                              onClick={() => handleClaimLead(l.id)}
-                              style={{ padding: '5px 7px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)' }}
-                              title={isAr ? `استلام هذا العميل وتعيينه لـ ${currentRoleObj.label_ar}` : 'Claim this lead'}
-                            >
-                              <UserPlus size={13} />
-                            </button>
-                          )}
-
-                          {/* Archive Lead Button */}
+                          {/* Primary Action: Open 360° Profile */}
                           <button
                             type="button"
                             className="btn btn-sm"
-                            onClick={() => {
-                              const newStatus = l.isArchived ? false : true;
-                              if (onUpdateLead) {
-                                onUpdateLead(l.id, { isArchived: newStatus });
-                              }
-                              triggerToast(isAr ? (newStatus ? 'تم نقل العميل للأرشيف 📦' : 'تم استعادة العميل من الأرشيف') : (newStatus ? 'Lead archived' : 'Lead restored'), 'info');
+                            onClick={() => setViewingProfileLead(l)}
+                            style={{ 
+                              padding: '5px 9px', 
+                              background: 'rgba(217, 119, 6, 0.15)', 
+                              color: 'var(--accent-gold)', 
+                              border: '1px solid rgba(217, 119, 6, 0.35)',
+                              borderRadius: '6px',
+                              fontSize: '0.75rem',
+                              fontWeight: 'bold',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
                             }}
-                            style={{ padding: '5px 7px', background: 'rgba(255, 255, 255, 0.05)', color: l.isArchived ? '#f59e0b' : '#94a3b8', border: '1px solid var(--border-light)' }}
-                            title={isAr ? (l.isArchived ? 'استعادة من الأرشيف' : 'أرشفة العميل') : (l.isArchived ? 'Restore' : 'Archive')}
+                            title={isAr ? 'فتح ملف العميل الشامل 360°' : 'Customer 360° Profile'}
                           >
-                            <Archive size={13} />
+                            <User size={13} />
+                            <span>{isAr ? 'الملف' : 'Profile'}</span>
                           </button>
 
-                          {/* Delete Lead (Super Admin Only) */}
-                          {isSuperAdmin ? (
+                          {/* Secondary Action: WhatsApp Instant Direct Contact */}
+                          <button 
+                            type="button"
+                            className="btn btn-sm btn-accent" 
+                            onClick={() => onWhatsAppClick(l)} 
+                            style={{ padding: '5px 9px', borderRadius: '6px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }} 
+                            title={isAr ? 'محادثة العميل مباشرة عبر واتساب' : 'Chat with Client on WhatsApp'}
+                          >
+                            <MessageSquare size={13} />
+                            <span>واتساب</span>
+                          </button>
+
+                          {/* Auxiliary Tools Strip */}
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-light)', borderRadius: '6px', padding: '2px' }}>
+                            {/* 1-Click Dispatch Lead Details to Agent via WhatsApp */}
                             <button 
-                              className="btn btn-sm" 
-                              onClick={() => handleDeleteLeadClick(l.id, l.name)} 
-                              style={{ padding: '5px 7px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--rose)', border: '1px solid rgba(239, 68, 68, 0.2)' }} 
-                              title={isAr ? 'حذف العميل' : 'Delete Lead'}
+                              type="button"
+                              className="btn btn-sm btn-ghost" 
+                              onClick={() => onDispatchLeadClick(l)} 
+                              style={{ padding: '4px 6px', color: 'var(--accent-gold)', borderRadius: '4px' }} 
+                              title={isAr ? 'إحالة بيانات العميل لمسؤول المبيعات عبر واتساب' : 'Dispatch Lead to Sales Agent'}
                             >
-                              <Trash2 size={13} />
+                              <Send size={12} />
                             </button>
-                          ) : (
-                            <span 
-                              style={{ padding: '5px 7px', opacity: 0.35, cursor: 'not-allowed', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center' }} 
-                              title={isAr ? 'حذف العميل يتطلب صلاحية المدير العام' : 'Delete requires Super Admin role'}
+
+                            {/* Convert to Property */}
+                            {onConvertToProperty && (
+                              <button 
+                                type="button"
+                                className="btn btn-sm btn-ghost" 
+                                onClick={() => onConvertToProperty(l)}
+                                title={isAr ? 'تحويل هذا الطلب إلى عقار معروض بالموقع فوراً' : 'Convert to Property Listing'}
+                                style={{ padding: '4px 6px', color: '#94a3b8', borderRadius: '4px' }}
+                              >
+                                <Building size={12} />
+                              </button>
+                            )}
+
+                            {/* Claim Lead */}
+                            {!isSuperAdmin && l.assignedTo !== currentRoleObj.agentName && (
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-ghost"
+                                onClick={() => handleClaimLead(l.id)}
+                                style={{ padding: '4px 6px', color: '#10b981', borderRadius: '4px' }}
+                                title={isAr ? `استلام هذا العميل وتعيينه لـ ${currentRoleObj.label_ar}` : 'Claim this lead'}
+                              >
+                                <UserPlus size={12} />
+                              </button>
+                            )}
+
+                            {/* Archive Lead Toggle */}
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-ghost"
+                              onClick={() => {
+                                const newStatus = l.isArchived ? false : true;
+                                if (onUpdateLead) {
+                                  onUpdateLead(l.id, { isArchived: newStatus });
+                                }
+                                triggerToast(isAr ? (newStatus ? 'تم نقل العميل للأرشيف 📦' : 'تم استعادة العميل من الأرشيف') : (newStatus ? 'Lead archived' : 'Lead restored'), 'info');
+                              }}
+                              style={{ padding: '4px 6px', color: l.isArchived ? '#f59e0b' : '#64748b', borderRadius: '4px' }}
+                              title={isAr ? (l.isArchived ? 'استعادة من الأرشيف' : 'أرشفة العميل') : (l.isArchived ? 'Restore' : 'Archive')}
                             >
-                              <Lock size={13} />
-                            </span>
-                          )}
+                              <Archive size={12} />
+                            </button>
+
+                            {/* Delete Lead (Super Admin Only) */}
+                            {isSuperAdmin ? (
+                              <button 
+                                type="button"
+                                className="btn btn-sm btn-ghost" 
+                                onClick={() => handleDeleteLeadClick(l.id, l.name)} 
+                                style={{ padding: '4px 6px', color: 'var(--rose)', borderRadius: '4px' }} 
+                                title={isAr ? 'حذف العميل نهائياً' : 'Delete Lead'}
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            ) : null}
+                          </div>
                         </div>
                       </td>
                     </tr>
