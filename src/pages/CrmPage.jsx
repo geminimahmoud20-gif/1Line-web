@@ -98,24 +98,48 @@ export default function CrmPage({
       return;
     }
 
+    // Validation
+    if (!email || !email.trim()) {
+      setLoginError(isAr ? 'يرجى إدخال البريد الإلكتروني.' : 'Please enter your email.');
+      setIsVerifying(false);
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setLoginError(isAr ? 'أدخل بريداً إلكترونياً صالحاً.' : 'Please enter a valid email address.');
+      setIsVerifying(false);
+      return;
+    }
+    if (!password) {
+      setLoginError(isAr ? 'يرجى إدخال كلمة المرور.' : 'Please enter your password.');
+      setIsVerifying(false);
+      return;
+    }
+
     let res;
     if (!isFirebaseAuthAvailable()) {
       res = {
         success: false,
         message: isAr
-          ? 'لم يتم إعداد Firebase Authentication بعد. أضف إعدادات مشروع Firebase وأنشئ حساب مدير.'
-          : 'Firebase Authentication is not configured. Add your Firebase project settings and create an admin account.'
+          ? 'تعذر الاتصال بالخدمة. حاول مرة أخرى.'
+          : 'Service unavailable. Please try again.'
       };
     } else {
       try {
         await loginUser(email, password);
         res = { success: true };
-      } catch {
+      } catch (err) {
+        const errCode = err?.code || '';
+        let genericMsg = isAr 
+          ? 'تعذر تسجيل الدخول. تحقق من البيانات أو تواصل مع مدير النظام.' 
+          : 'Sign-in failed. Please verify credentials or contact system admin.';
+        if (errCode === 'auth/network-request-failed') {
+          genericMsg = isAr ? 'تعذر الاتصال بالخدمة. حاول مرة أخرى.' : 'Network connection error. Try again.';
+        } else if (err?.message?.includes('unauthorized') || err?.message?.includes('permission')) {
+          genericMsg = isAr ? 'هذا الحساب غير مصرح له بالوصول إلى لوحة الإدارة.' : 'Account unauthorized for admin access.';
+        }
         res = {
           success: false,
-          message: isAr
-            ? 'تعذر تسجيل الدخول. تأكد من البريد وكلمة المرور ومن منح الحساب صلاحية admin.'
-            : 'Sign-in failed. Check the email, password, and admin role.'
+          message: genericMsg
         };
       }
     }
@@ -124,7 +148,7 @@ export default function CrmPage({
     if (res.success) {
       setCrmAuthenticated(true);
       if (triggerToast) {
-        triggerToast(isAr ? 'تم التحقق المشفر وتسجيل الدخول بنجاح' : 'Authenticated successfully', 'success');
+        triggerToast(isAr ? 'تم الدخول بنجاح' : 'Authenticated successfully', 'success');
       }
     } else {
       setLoginError(res.message);
@@ -167,13 +191,13 @@ export default function CrmPage({
           <div className="crm-login-title-wrap">
             <span className="crm-secure-badge">
               <Lock size={13} />
-              <span>{isAr ? 'بوابة الإدارة المشفرة' : 'Encrypted Admin Portal'}</span>
+              <span>{isAr ? 'بوابة إدارة 1Line' : '1Line Management Portal'}</span>
             </span>
-            <h2>{isAr ? 'لوحة تحكم إدارة المبيعات والمنصة' : 'Executive Management Dashboard'}</h2>
+            <h2>{isAr ? 'بوابة إدارة 1Line' : '1Line Management Portal'}</h2>
             <p>
               {isAr 
-                ? 'يرجى إدخال رمز الأمان المعتمد للوصول إلى قاعدة بيانات العملاء وإدارة العقارات' 
-                : 'Enter your verified security credentials to manage leads and platform CMS'}
+                ? 'الوصول مخصص لفريق 1Line والمستخدمين المصرح لهم فقط.' 
+                : 'Access is restricted to authorized 1Line team members only.'}
             </p>
           </div>
 
@@ -191,13 +215,14 @@ export default function CrmPage({
             </div>
 
             <div className="crm-input-group">
-              <label>{isAr ? 'البريد الإلكتروني' : 'Email address'}</label>
+              <label htmlFor="crm-work-email">{isAr ? 'البريد الإلكتروني للعمل' : 'Work Email Address'}</label>
               <div className="crm-password-input-relative">
                 <KeyRound size={18} className="input-icon-left" />
                 <input
+                  id="crm-work-email"
                   type="email"
                   dir="ltr"
-                  placeholder="admin@example.com"
+                  placeholder="admin@1line.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
@@ -207,22 +232,23 @@ export default function CrmPage({
             </div>
 
             <div className="crm-input-group">
-              <label>{isAr ? 'كلمة المرور المشفرة' : 'Security Password'}</label>
+              <label htmlFor="crm-security-password">{isAr ? 'كلمة المرور' : 'Password'}</label>
               <div className="crm-password-input-relative">
                 <KeyRound size={18} className="input-icon-left" />
                 <input
+                  id="crm-security-password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder={isAr ? 'أدخل كلمة المرور الخاصة بك' : 'Enter your secure password'}
+                  placeholder={isAr ? 'أدخل كلمة المرور الخاصة بك' : 'Enter your password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="current-password"
-                  autoFocus
                   required
                 />
                 <button
                   type="button"
                   className="toggle-pwd-btn"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={isAr ? (showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور') : (showPassword ? 'Hide password' : 'Show password')}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -230,7 +256,7 @@ export default function CrmPage({
             </div>
 
             {loginError && (
-              <div className="crm-auth-error-alert">
+              <div className="crm-auth-error-alert" role="alert">
                 <AlertTriangle size={15} style={{ marginInlineEnd: '6px', verticalAlign: 'middle' }} />
                 <span>{loginError}</span>
               </div>
@@ -238,11 +264,29 @@ export default function CrmPage({
 
             <button type="submit" className="btn btn-primary btn-full crm-submit-btn" disabled={isVerifying}>
               <Sparkles size={16} />
-              <span>{isVerifying ? (isAr ? 'جاري التحقق المشفر...' : 'Verifying...') : (isAr ? 'تسجيل الدخول للوحة التحكم' : 'Authenticate & Access CRM')}</span>
+              <span>
+                {isVerifying 
+                  ? (isAr ? 'جارٍ التحقق...' : 'Verifying...') 
+                  : (loginError 
+                      ? (isAr ? 'تعذر تسجيل الدخول' : 'Sign-in Failed') 
+                      : (isAr ? 'تسجيل الدخول' : 'Sign In'))}
+              </span>
             </button>
           </form>
 
-          <div style={{ marginTop: '16px', textAlign: 'center' }}>
+          <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'center' }}>
+            <a 
+              href="mailto:support@1line.com?subject=طلب مساعدة من مدير النظام" 
+              style={{ 
+                fontSize: '0.8rem', 
+                color: 'var(--gold-dark)', 
+                textDecoration: 'none',
+                fontWeight: '600'
+              }}
+            >
+              {isAr ? 'طلب مساعدة من مدير النظام' : 'Request help from system admin'}
+            </a>
+
             <a 
               href="/" 
               style={{ 
@@ -252,12 +296,13 @@ export default function CrmPage({
                 transition: 'color 0.2s',
                 display: 'inline-flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: '4px'
               }}
               onMouseEnter={(e) => e.currentTarget.style.color = 'var(--gold)'}
               onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
             >
-              ← {isAr ? 'الرجوع إلى واجهة الموقع الرئيسية' : 'Return to Public Website'}
+              ← {isAr ? 'العودة إلى الموقع العام' : 'Return to Public Website'}
             </a>
           </div>
 

@@ -22,6 +22,27 @@
   --info: #56738A;
   --danger: #A65A5A;
 
+  /* 🏢 ENTERPRISE CRM DESIGN TOKENS */
+  --crm-navy-950: #07111F;
+  --crm-navy-900: #0B1B32;
+  --crm-navy-800: #142B49;
+
+  --crm-gold: #B38A45;
+  --crm-gold-dark: #806329;
+  --crm-gold-soft: #F3EBDD;
+
+  --crm-ivory: #FCFBF8;
+  --crm-surface: #FFFFFF;
+  --crm-border: #DCE2E8;
+
+  --crm-text: #152235;
+  --crm-muted: #687386;
+
+  --crm-success: #4E7A68;
+  --crm-warning: #9A7541;
+  --crm-danger: #A65A5A;
+  --crm-info: #56738A;
+
   /* 🏛️ SYSTEM VARIABLE MAPPINGS */
   --brand-navy: var(--navy-900);
   --brand-navy-dark: var(--navy-950);
