@@ -263,7 +263,7 @@ export default function PropertyCard({
             {property.monthlyInstallment > 0 && (
               <>
                 <span className="core-divider">•</span>
-                <span className="core-installment-label text-gold">
+                <span className="core-installment-label">
                   {lang === 'ar' ? 'قسط:' : 'Monthly:'} <strong><bdi>{(Number(property.monthlyInstallment) || 0).toLocaleString()}</bdi></strong> {lang === 'ar' ? 'ج.م' : 'EGP'}
                 </span>
               </>
@@ -271,7 +271,7 @@ export default function PropertyCard({
           </div>
         </div>
 
-        {/* Secondary Specs Strip (الغرف والحمامات والتوثيق كصف ثانوي هادئ) */}
+        {/* Secondary Specs Strip (الغرف والحمامات والتوثيق كصف ثانوي رمادي هادئ) */}
         <div className="property-specs-clean secondary-specs">
           {property.bedrooms > 0 && (
             <span className="spec-unit">
@@ -289,15 +289,15 @@ export default function PropertyCard({
             </>
           )}
           {(property.bedrooms > 0 || property.bathrooms > 0) && <span className="spec-dot">•</span>}
-          <span className="spec-unit text-emerald">
-            <ShieldCheck size={12} />
+          <span className="spec-unit">
+            <ShieldCheck size={13} className="text-muted" />
             <span>{lang === 'ar' ? 'فحص قانوني معتمد' : 'Verified Title'}</span>
           </span>
           {property.virtualTour && (
             <>
               <span className="spec-dot">•</span>
-              <span className="spec-unit text-gold">
-                <Sparkles size={11} />
+              <span className="spec-unit">
+                <Sparkles size={12} className="text-muted" />
                 <span>{lang === 'ar' ? 'معاينة 3D' : '3D Tour'}</span>
               </span>
             </>
