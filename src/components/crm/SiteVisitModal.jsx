@@ -87,15 +87,15 @@ export default function SiteVisitModal({
 
   return (
     <div className="track-modal-backdrop" onClick={onClose}>
-      <div className="property-form-modal-card animate-fadeIn" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '620px' }}>
-        <div className="modal-form-header">
+      <div className="property-form-modal-card animate-fadeIn" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '620px', background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+        <div className="modal-form-header" style={{ borderBottom: '1px solid #e2e8f0', padding: '16px 20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Car size={20} className="text-gold" />
-            <h3 style={{ margin: 0 }}>
+            <Car size={20} style={{ color: '#d97706' }} />
+            <h3 style={{ margin: 0, color: '#092347', fontSize: '1.1rem', fontWeight: '800' }}>
               {isAr ? `جدولة وتأكيد معاينة ميدانية: ${lead.name}` : `Schedule Site Visit: ${lead.name}`}
             </h3>
           </div>
-          <button type="button" className="drawer-close-btn" onClick={onClose} aria-label="Close">
+          <button type="button" className="drawer-close-btn" onClick={onClose} aria-label="Close" style={{ color: '#64748b' }}>
             <X size={18} />
           </button>
         </div>
@@ -103,9 +103,9 @@ export default function SiteVisitModal({
         <form onSubmit={handleConfirmSchedule} className="property-cms-form" style={{ padding: '20px' }}>
           {/* Client summary strip */}
           <div style={{
-            background: 'rgba(255, 179, 0, 0.08)',
-            border: '1px solid var(--accent-gold-light)',
-            borderRadius: 'var(--radius-md)',
+            background: '#fffbeb',
+            border: '1px solid #fde68a',
+            borderRadius: '8px',
             padding: '12px 16px',
             marginBottom: '18px',
             display: 'flex',
@@ -115,10 +115,10 @@ export default function SiteVisitModal({
             gap: '8px'
           }}>
             <div>
-              <strong style={{ color: 'var(--accent-gold)', display: 'block' }}>{lead.name}</strong>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{lead.phone}</span>
+              <strong style={{ color: '#092347', display: 'block', fontSize: '0.95rem' }}>{lead.name}</strong>
+              <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{lead.phone}</span>
             </div>
-            <span className="badge" style={{ background: 'var(--emerald-bg)', color: 'var(--emerald)' }}>
+            <span className="badge" style={{ background: '#ecfdf5', color: '#065f46', border: '1px solid #a7f3d0', fontWeight: 'bold' }}>
               {isAr ? 'عميل مؤكد الجدية' : 'Verified Lead'} ({lead.score || 85}%)
             </span>
           </div>
@@ -126,12 +126,12 @@ export default function SiteVisitModal({
           <div className="cms-form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
             {/* Property Select */}
             <div className="form-group-item" style={{ gridColumn: 'span 2' }}>
-              <label>{isAr ? 'العقار المراد معاينته *' : 'Target Property *'}</label>
+              <label style={{ color: '#334155', fontWeight: 'bold', fontSize: '0.8rem' }}>{isAr ? 'العقار المراد معاينته *' : 'Target Property *'}</label>
               <select
                 value={selectedPropertyId}
                 onChange={(e) => setSelectedPropertyId(e.target.value)}
                 required
-                style={{ fontWeight: 'bold' }}
+                style={{ fontWeight: 'bold', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }}
               >
                 {properties.map(p => (
                   <option key={p.id} value={p.id}>
@@ -143,32 +143,35 @@ export default function SiteVisitModal({
 
             {/* Visit Date */}
             <div className="form-group-item">
-              <label>{isAr ? 'تاريخ المعاينة *' : 'Visit Date *'}</label>
+              <label style={{ color: '#334155', fontWeight: 'bold', fontSize: '0.8rem' }}>{isAr ? 'تاريخ المعاينة *' : 'Visit Date *'}</label>
               <input
                 type="date"
                 value={visitDate}
                 onChange={(e) => setVisitDate(e.target.value)}
                 required
+                style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }}
               />
             </div>
 
             {/* Visit Time */}
             <div className="form-group-item">
-              <label>{isAr ? 'وقت المعاينة *' : 'Visit Time *'}</label>
+              <label style={{ color: '#334155', fontWeight: 'bold', fontSize: '0.8rem' }}>{isAr ? 'وقت المعاينة *' : 'Visit Time *'}</label>
               <input
                 type="time"
                 value={visitTime}
                 onChange={(e) => setVisitTime(e.target.value)}
                 required
+                style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }}
               />
             </div>
 
             {/* Assigned Consultant */}
             <div className="form-group-item">
-              <label>{isAr ? 'المستشار المرافق بالمعاينة' : 'Accompanying Advisor'}</label>
+              <label style={{ color: '#334155', fontWeight: 'bold', fontSize: '0.8rem' }}>{isAr ? 'المستشار المرافق بالمعاينة' : 'Accompanying Advisor'}</label>
               <select
                 value={agentName}
                 onChange={(e) => setAgentName(e.target.value)}
+                style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }}
               >
                 <option value="Dr. Mahmoud Elbaz">Dr. Mahmoud Elbaz</option>
                 <option value="Sales Team A - م/ أحمد عثمان">م/ أحمد عثمان (Sales A)</option>
@@ -179,33 +182,35 @@ export default function SiteVisitModal({
 
             {/* Meeting Point */}
             <div className="form-group-item">
-              <label>{isAr ? 'نقطة التجمع / اللقاء' : 'Meeting Point'}</label>
+              <label style={{ color: '#334155', fontWeight: 'bold', fontSize: '0.8rem' }}>{isAr ? 'نقطة التجمع / اللقاء' : 'Meeting Point'}</label>
               <input
                 type="text"
                 value={meetingLocation}
                 onChange={(e) => setMeetingLocation(e.target.value)}
                 placeholder="مثال: مقر 1Line أو أمام العقار مباشرة"
+                style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }}
               />
             </div>
           </div>
 
           {/* Notes */}
           <div className="form-group-item" style={{ marginTop: '14px' }}>
-            <label>{isAr ? 'ملاحظات المعاينة والتنبيهات' : 'Inspection Notes'}</label>
+            <label style={{ color: '#334155', fontWeight: 'bold', fontSize: '0.8rem' }}>{isAr ? 'ملاحظات المعاينة والتنبيهات' : 'Inspection Notes'}</label>
             <textarea
               rows="2"
               className="form-input"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="اكتب أي شروط خاصة أو استفسارات طلبها العميل..."
+              style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '6px', color: '#0f172a' }}
             />
           </div>
 
           <div className="cms-modal-actions" style={{ marginTop: '20px' }}>
-            <button type="button" className="btn btn-outline" onClick={onClose}>
+            <button type="button" className="btn btn-outline" onClick={onClose} style={{ background: '#f8fafc', border: '1px solid #cbd5e1', color: '#334155' }}>
               {isAr ? 'إلغاء' : 'Cancel'}
             </button>
-            <button type="submit" className="btn btn-primary" style={{ background: 'var(--gradient-gold)' }}>
+            <button type="submit" className="btn btn-primary" style={{ background: '#092347', color: '#ffffff', border: 'none', borderRadius: '6px', fontWeight: 'bold' }}>
               <Send size={16} />
               <span>{isAr ? 'تأكيد المعاينة وإرسال WhatsApp للعميل' : 'Confirm & Send WhatsApp'}</span>
             </button>

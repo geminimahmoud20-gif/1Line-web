@@ -159,31 +159,47 @@ export default function SmartMatchingHub({
         gap: '12px'
       }}>
         <div>
-          <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-            <Sparkles size={20} className="text-gold" />
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0, color: '#092347', fontSize: '1.15rem', fontWeight: '800' }}>
+            <Sparkles size={20} style={{ color: '#d97706' }} />
             {isAr ? 'محرك المطابقة الذكي اللحظي بين المشترين والمعروض' : 'Live Smart Deals & Buyer Matching Engine'}
           </h3>
-          <p className="section-subtitle" style={{ margin: '4px 0 0' }}>
+          <p className="section-subtitle" style={{ margin: '4px 0 0', color: '#64748b', fontSize: '0.85rem' }}>
             {isAr ? `تم العثور على ${matches.length} فرصة صفقة مؤكدة التوافق مع المشترين المسجلين` : `${matches.length} high-probability buyer-property matches found`}
           </p>
         </div>
 
         {/* Filter by Match Strength */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+          <span style={{ fontSize: '0.8rem', color: '#475569', fontWeight: '600' }}>
             {isAr ? 'الحد الأدنى للتوافق:' : 'Min Score:'}
           </span>
           <button
             type="button"
-            className={`btn btn-sm ${minMatchScore === 80 ? 'btn-primary' : 'btn-outline'}`}
+            className="btn btn-sm"
             onClick={() => setMinMatchScore(80)}
+            style={{
+              borderRadius: '8px',
+              fontSize: '0.78rem',
+              fontWeight: minMatchScore === 80 ? 'bold' : '600',
+              background: minMatchScore === 80 ? '#d97706' : '#ffffff',
+              color: minMatchScore === 80 ? '#ffffff' : '#334155',
+              border: minMatchScore === 80 ? '1px solid #d97706' : '1px solid #cbd5e1'
+            }}
           >
             🔥 80%+ {isAr ? 'مطابقة مثالية' : 'Super Match'}
           </button>
           <button
             type="button"
-            className={`btn btn-sm ${minMatchScore === 60 ? 'btn-primary' : 'btn-outline'}`}
+            className="btn btn-sm"
             onClick={() => setMinMatchScore(60)}
+            style={{
+              borderRadius: '8px',
+              fontSize: '0.78rem',
+              fontWeight: minMatchScore === 60 ? 'bold' : '600',
+              background: minMatchScore === 60 ? '#092347' : '#ffffff',
+              color: minMatchScore === 60 ? '#ffffff' : '#334155',
+              border: minMatchScore === 60 ? '1px solid #092347' : '1px solid #cbd5e1'
+            }}
           >
             ⚡ 60%+ {isAr ? 'كل الفرص' : 'All Deals'}
           </button>
@@ -195,13 +211,13 @@ export default function SmartMatchingHub({
         <div style={{
           textAlign: 'center',
           padding: '60px 20px',
-          background: 'rgba(15, 23, 42, 0.4)',
-          borderRadius: 'var(--radius-md)',
-          border: '1px dashed var(--border-light)'
+          background: '#ffffff',
+          borderRadius: '12px',
+          border: '2px dashed #cbd5e1'
         }}>
-          <Sparkles size={36} style={{ color: 'var(--accent-gold)', opacity: 0.5, marginBottom: '12px' }} />
-          <h4>{isAr ? 'لا توجد مطابقات تتجاوز هذه النسبة حالياً' : 'No matches found above this threshold'}</h4>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+          <Sparkles size={36} style={{ color: '#d97706', opacity: 0.7, marginBottom: '12px' }} />
+          <h4 style={{ color: '#092347', fontWeight: '800' }}>{isAr ? 'لا توجد مطابقات تتجاوز هذه النسبة حالياً' : 'No matches found above this threshold'}</h4>
+          <p style={{ fontSize: '0.85rem', color: '#64748b' }}>
             {isAr ? 'أضف عقارات جديدة أو قلل نسبة المطابقة لعرض الفرص القريبة' : 'Add new properties or lower threshold'}
           </p>
         </div>
@@ -215,11 +231,11 @@ export default function SmartMatchingHub({
                 key={match.id}
                 className="deal-match-card animate-fadeIn"
                 style={{
-                  background: 'var(--bg-card)',
-                  border: score >= 85 ? '1px solid var(--accent-gold-light)' : '1px solid var(--border-light)',
-                  borderRadius: 'var(--radius-md)',
+                  background: '#ffffff',
+                  border: score >= 85 ? '1px solid #fde68a' : '1px solid #e2e8f0',
+                  borderRadius: '12px',
                   padding: '16px',
-                  boxShadow: 'var(--shadow-sm)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
@@ -231,12 +247,13 @@ export default function SmartMatchingHub({
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span style={{
-                        background: score >= 85 ? 'var(--emerald-bg)' : 'var(--amber-bg)',
-                        color: score >= 85 ? 'var(--emerald)' : 'var(--amber)',
+                        background: score >= 85 ? '#ecfdf5' : '#fef3c7',
+                        color: score >= 85 ? '#065f46' : '#92400e',
+                        border: `1px solid ${score >= 85 ? '#a7f3d0' : '#fde68a'}`,
                         padding: '3px 10px',
-                        borderRadius: 'var(--radius-pill)',
+                        borderRadius: '20px',
                         fontSize: '0.8rem',
-                        fontWeight: 'bold',
+                        fontWeight: '800',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '4px'
@@ -245,7 +262,7 @@ export default function SmartMatchingHub({
                       </span>
                     </div>
 
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>
                       {lead.assignedTo}
                     </span>
                   </div>
@@ -255,39 +272,40 @@ export default function SmartMatchingHub({
                     display: 'grid',
                     gridTemplateColumns: '1fr 1fr',
                     gap: '10px',
-                    background: 'rgba(255,255,255,0.02)',
-                    padding: '10px',
-                    borderRadius: 'var(--radius-sm)',
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    padding: '12px',
+                    borderRadius: '8px',
                     marginBottom: '10px'
                   }}>
                     {/* Buyer Side */}
-                    <div style={{ borderInlineEnd: '1px solid rgba(255,255,255,0.1)', paddingInlineEnd: '10px' }}>
-                      <span style={{ fontSize: '0.72rem', color: '#38bdf8', fontWeight: 'bold', display: 'block', marginBottom: '3px' }}>
+                    <div style={{ borderInlineEnd: '1px solid #e2e8f0', paddingInlineEnd: '10px' }}>
+                      <span style={{ fontSize: '0.72rem', color: '#0284c7', fontWeight: 'bold', display: 'block', marginBottom: '3px' }}>
                         👤 {isAr ? 'المشتري الراغب:' : 'Buyer Request:'}
                       </span>
-                      <strong style={{ fontSize: '0.95rem', color: '#ffffff', fontWeight: '800', display: 'block', marginBottom: '2px' }}>
+                      <strong style={{ fontSize: '0.95rem', color: '#092347', fontWeight: '800', display: 'block', marginBottom: '2px' }}>
                         {lead.name}
                       </strong>
-                      <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', direction: 'ltr', textAlign: isAr ? 'right' : 'left' }}>
+                      <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'block', direction: 'ltr', textAlign: isAr ? 'right' : 'left' }}>
                         📱 {lead.whatsapp || lead.phone}
                       </span>
-                      <span style={{ fontSize: '0.78rem', color: '#34d399', display: 'block', marginTop: '4px', fontWeight: '700' }}>
+                      <span style={{ fontSize: '0.78rem', color: '#059669', display: 'block', marginTop: '4px', fontWeight: '700' }}>
                         💰 ميزانية: {(lead.details?.budget || lead.budget) ? parseInt(lead.details?.budget || lead.budget).toLocaleString() + ' ج.م' : '2,500,000 ج.م'}
                       </span>
                     </div>
 
                     {/* Matched Property Side */}
                     <div>
-                      <span style={{ fontSize: '0.72rem', color: '#fbbf24', fontWeight: 'bold', display: 'block', marginBottom: '3px' }}>
+                      <span style={{ fontSize: '0.72rem', color: '#d97706', fontWeight: 'bold', display: 'block', marginBottom: '3px' }}>
                         🏢 {isAr ? 'العقار المطابق:' : 'Matched Property:'}
                       </span>
-                      <strong style={{ fontSize: '0.92rem', color: '#ffffff', fontWeight: '800', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: '2px' }}>
+                      <strong style={{ fontSize: '0.92rem', color: '#092347', fontWeight: '800', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: '2px' }}>
                         {isAr ? property.title_ar : property.title_en}
                       </strong>
-                      <span style={{ fontSize: '0.75rem', color: '#cbd5e1', display: 'block' }}>
+                      <span style={{ fontSize: '0.75rem', color: '#475569', display: 'block' }}>
                         📐 {property.size} م² • 📍 {getLocalizedArea(property.areaKey)}
                       </span>
-                      <span style={{ fontSize: '0.78rem', color: '#34d399', display: 'block', marginTop: '4px', fontWeight: '800' }}>
+                      <span style={{ fontSize: '0.78rem', color: '#059669', display: 'block', marginTop: '4px', fontWeight: '800' }}>
                         💵 السعر: {property.price?.toLocaleString()} ج.م
                       </span>
                     </div>
@@ -297,10 +315,12 @@ export default function SmartMatchingHub({
                   <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                     {reasons.map((r, i) => (
                       <span key={i} style={{
-                        background: 'rgba(255,255,255,0.05)',
-                        color: 'var(--text-secondary)',
+                        background: '#ffffff',
+                        border: '1px solid #e2e8f0',
+                        color: '#475569',
                         fontSize: '0.68rem',
-                        padding: '2px 6px',
+                        fontWeight: '600',
+                        padding: '2px 8px',
                         borderRadius: '4px'
                       }}>
                         ✓ {r}
@@ -310,12 +330,12 @@ export default function SmartMatchingHub({
                 </div>
 
                 {/* Actions Footer */}
-                <div style={{ display: 'flex', gap: '8px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ display: 'flex', gap: '8px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
                   <button
                     type="button"
                     className="btn btn-sm btn-primary"
                     onClick={() => handleSendProposal(match)}
-                    style={{ flex: 1, padding: '7px 10px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                    style={{ flex: 1, padding: '7px 10px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: '#059669', color: '#ffffff', border: 'none', borderRadius: '6px', fontWeight: 'bold' }}
                   >
                     <Send size={13} />
                     <span>{isAr ? 'إرسال العرض واتساب' : 'Send WhatsApp'}</span>
@@ -323,9 +343,9 @@ export default function SmartMatchingHub({
 
                   <button
                     type="button"
-                    className="btn btn-sm btn-outline"
+                    className="btn btn-sm"
                     onClick={() => setSchedulingVisitLead({ ...lead, details: { ...lead.details, targetPropertyId: property.id } })}
-                    style={{ padding: '7px 10px', fontSize: '0.75rem', color: 'var(--accent-gold)' }}
+                    style={{ padding: '7px 10px', fontSize: '0.75rem', color: '#d97706', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '6px' }}
                     title={isAr ? 'حجز موعد معاينة' : 'Schedule Visit'}
                   >
                     <Car size={14} />
