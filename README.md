@@ -15,7 +15,7 @@
 - 🏗️ **دليل المشروعات الكبرى والكمبوندات (Flagship Projects):** متابعة حية لنسب التنفيذ الإنشائي الميداني وتحميل الكتالوجات PDF.
 - ⚖️ **مصفوفة المقارنة التفاعلية (3-Property Comparison Matrix):** مقارنة تفصيلية للمواصفات والأسعار والأقساط.
 - 💼 **مركز المستثمرين (VIP Investor Center):** محاكاة العوائد التراكمية (ROI)، خيارات مقابلات VIP وجولات الفيديو، وتوليد دراسة الجدوى المؤسسية PDF بنقرة واحدة.
-- 🛡️ **لوحة تحكم المشرف (CRM Admin Dashboard):** تتبع العملاء والطلبات وتصدير ملفات Excel بنقرة واحدة وإدارة العقارات والأحياء الحية ومسار مبيعات كانبان (Deals Kanban Pipeline).
+- 🛡️ **لوحة تحكم المشرف والـ CRM المؤسسي (Enterprise CRM Platform):** حماية متقدمة بنظام الأدوار الستة (6-Tier Enterprise RBAC)، تدقيق جنائي غير قابل للتعديل (Immutable Audit Logs)، إدارة الصفقات (Deals Kanban Pipeline) بترميز تسلسلي إنساني `DL-YYYY-XXXX`، حماية خصوصية هواتف العملاء بالقناع، ومزامنة ذكية عبر مفاتيح عدم التكرار (Idempotency Keys). [راجع دليل التشغيل المؤسسي](docs/CRM_ENTERPRISE_RUNBOOK.md).
 
 ---
 
@@ -42,11 +42,12 @@ npm run build
 ---
 
 ## 🔒 الأمان والتشفير (Enterprise Security)
-- تشفير كلمات المرور باستخدام خوارزمية **Salted SHA-256 Crypto**.
+- مصادقة سحابية حقيقية عبر **Google Firebase Authentication** مع منع التعداد (Anti-Enumeration).
+- مصفوفة صلاحيات مؤسسية **6-Tier RBAC** مع قناع أرقام هواتف العملاء (Phone Masking).
+- سجل تدقيق جنائي غير قابل للتعديل أو المسح بـ 9 حقول تفصيلية **Immutable Audit Logs**.
 - حماية ضد هجمات التخمين الآلي **Anti-Brute-Force Rate Limiter**.
 - تعقيم وتطهير المدخلات بواسطة **DOMPurify**.
-- ترويسات أمان متقدمة وحماية ضد الـ **Clickjacking** و **XSS**.
-- قواعد أمان سحابية **Google Firebase Firestore Rules**.
+- قواعد أمان سحابية **Google Firebase Firestore Rules** مؤمنة بالكامل.
 
 ---
 

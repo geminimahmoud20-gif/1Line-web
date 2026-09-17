@@ -7,10 +7,12 @@ import {
   Save, 
   Plus, 
   Send,
-  Activity
+  Activity,
+  Lock
 } from 'lucide-react';
 import { getAreas } from '../../utils/areasData';
 import { getLeadDigitalJourney } from '../../utils/visitorTracker';
+import { canViewLeadPhone, maskPhoneNumber, canEditLead } from '../../utils/rbacRules';
 
 export default function CustomerProfileModal({
   isOpen,
@@ -19,7 +21,8 @@ export default function CustomerProfileModal({
   properties = [],
   onUpdateLead,
   lang = 'ar',
-  triggerToast
+  triggerToast,
+  userRole = 'super_admin'
 }) {
   const isAr = lang === 'ar';
   const [profileTab, setProfileTab] = useState('overview'); // 'overview' | 'properties' | 'timeline' | 'actions'
@@ -264,28 +267,78 @@ export default function CustomerProfileModal({
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {/* Quick WhatsApp Action */}
-            <button
-              type="button"
-              className="btn btn-sm btn-accent"
-              onClick={() => window.open(`https://wa.me/${cleanPhone}`, '_blank')}
-              style={{ padding: '6px 12px', fontSize: '0.8rem' }}
-            >
-              <MessageSquare size={14} />
-              <span>WhatsApp</span>
-            </button>
+            {canViewLeadPhone(userRole) ? (
+              <button
+                type="button"
+                className="btn btn-sm btn-accent"
+                onClick={() => window.open(`https://wa.me/${cleanPhone}`, '_blank')}
+                style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+              >
+                <MessageSquare size={14} />
+                <span>WhatsApp</span>
+              </button>
+            ) : (
+              <span className="badge" style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)' }}>
+                <Lock size={12} style={{ display: 'inline', marginInlineEnd: '4px' }} />
+                {isAr ? 'واتساب محجوب' : 'WhatsApp Protected'}
+              </span>
+            )}
 
             {/* Quick Call Action */}
-            <button
-              type="button"
-              className="btn btn-sm btn-primary"
-              onClick={() => window.open(`tel:${formData.phone}`, '_self')}
-              style={{ padding: '6px 12px', fontSize: '0.8rem' }}
-            >
-              <Phone size={14} />
-              <span>{isAr ? 'اتصال' : 'Call'}</span>
-            </button>
+            {canViewLeadPhone(userRole) ? (
+              <button
+                type="button"
+                className="btn btn-sm btn-primary"
+                onClick={() => window.open(`tel:${formData.phone}`, '_self')}
+                style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+              >
+                <Phone size={14} />
+                <span>{isAr ? 'اتصال' : 'Call'}</span>
+              </button>
+            ) : (
+              <span className="badge" style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)' }}>
+                <Lock size={12} style={{ display: 'inline', marginInlineEnd: '4px' }} />
+                {isAr ? 'اتصال محجوب' : 'Call Protected'}
+              </span>
+            )}
 
             <button type="button" className="drawer-close-btn" onClick={onClose}>✕</button>
+          </div>
+        </div>
+
+        {/* 📇 TOP CONDENSED SNAPSHOT STRIP */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
+          gap: '8px',
+          background: 'rgba(255, 255, 255, 0.03)',
+          borderBottom: '1px solid var(--border-light)',
+          padding: '10px 20px',
+          fontSize: '0.78rem'
+        }}>
+          <div>
+            <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.68rem' }}>{isAr ? 'نوع العميل' : 'Type'}</span>
+            <span style={{ fontWeight: 'bold', color: 'var(--accent-gold)' }}>{formData.type === 'buyer' ? (isAr ? 'مشتري جاد' : 'Buyer') : (isAr ? 'بائع / معلن' : 'Seller')}</span>
+          </div>
+          <div>
+            <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.68rem' }}>{isAr ? 'الميزانية' : 'Budget'}</span>
+            <span style={{ fontWeight: 'bold' }}>{formData.budget ? `${formData.budget} ج.م` : (isAr ? 'مرنة / تفاوض' : 'Negotiable')}</span>
+          </div>
+          <div>
+            <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.68rem' }}>{isAr ? 'المنطقة المطلوبة' : 'Target Area'}</span>
+            <span style={{ fontWeight: 'bold' }}>{formData.area || 'سوهاج'}</span>
+          </div>
+          <div>
+            <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.68rem' }}>{isAr ? 'المسؤول' : 'Agent'}</span>
+            <span style={{ fontWeight: 'bold' }}>{formData.assignedTo}</span>
+          </div>
+          <div>
+            <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.68rem' }}>{isAr ? 'آخر تواصل' : 'Last Contact'}</span>
+            <span style={{ fontWeight: 'bold' }}>{lead?.lastActivityAt ? lead.lastActivityAt.slice(0, 10) : (isAr ? 'اليوم' : 'Today')}</span>
+          </div>
+          <div>
+            <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '0.68rem' }}>{isAr ? 'المتابعة القادمة' : 'Next Action'}</span>
+            <span style={{ fontWeight: 'bold', color: '#38bdf8' }}>{formData.nextActionDate || formData.nextActionNote || (isAr ? 'قريباً' : 'Soon')}</span>
           </div>
         </div>
 
@@ -349,15 +402,22 @@ export default function CustomerProfileModal({
                 <h4 style={{ margin: 0, color: 'var(--accent-gold)', fontSize: '0.95rem' }}>
                   📊 {isAr ? 'البيانات الشخصية والقدرة المالية' : 'Client Profile & Financial Capability'}
                 </h4>
-                <button
-                  type="button"
-                  className={`btn btn-sm ${isEditing ? 'btn-primary' : 'btn-outline'}`}
-                  onClick={() => setIsEditing(!isEditing)}
-                  style={{ fontSize: '0.75rem' }}
-                >
-                  <Edit3 size={13} />
-                  <span>{isEditing ? (isAr ? 'وضع العرض' : 'View Mode') : (isAr ? 'تعديل البيانات' : 'Edit Profile')}</span>
-                </button>
+                {canEditLead(userRole, lead) ? (
+                  <button
+                    type="button"
+                    className={`btn btn-sm ${isEditing ? 'btn-primary' : 'btn-outline'}`}
+                    onClick={() => setIsEditing(!isEditing)}
+                    style={{ fontSize: '0.75rem' }}
+                  >
+                    <Edit3 size={13} />
+                    <span>{isEditing ? (isAr ? 'وضع العرض' : 'View Mode') : (isAr ? 'تعديل البيانات' : 'Edit Profile')}</span>
+                  </button>
+                ) : (
+                  <span className="badge" style={{ fontSize: '0.72rem', background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}>
+                    <Lock size={11} style={{ display: 'inline', marginInlineEnd: '4px' }} />
+                    {isAr ? 'للقراءة فقط' : 'Read-only'}
+                  </span>
+                )}
               </div>
 
               {/* Tags Strip */}
@@ -399,8 +459,8 @@ export default function CustomerProfileModal({
                     <label>{isAr ? 'رقم الهاتف الأساسي:' : 'Primary Phone:'}</label>
                     <input
                       type="text"
-                      disabled={!isEditing}
-                      value={formData.phone}
+                      disabled={!isEditing || !canViewLeadPhone(userRole)}
+                      value={canViewLeadPhone(userRole) ? formData.phone : maskPhoneNumber(formData.phone, userRole)}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     />
                   </div>
@@ -410,8 +470,8 @@ export default function CustomerProfileModal({
                     <label>{isAr ? 'رقم الواتساب:' : 'WhatsApp:'}</label>
                     <input
                       type="text"
-                      disabled={!isEditing}
-                      value={formData.whatsapp}
+                      disabled={!isEditing || !canViewLeadPhone(userRole)}
+                      value={canViewLeadPhone(userRole) ? formData.whatsapp : maskPhoneNumber(formData.whatsapp, userRole)}
                       onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
                     />
                   </div>

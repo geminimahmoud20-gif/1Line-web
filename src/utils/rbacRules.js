@@ -139,3 +139,21 @@ export const canEditProperties = (role) => {
 export const canManagePayments = (role) => {
   return role === CRM_ROLES.SUPER_ADMIN || role === CRM_ROLES.FINANCE;
 };
+
+/**
+ * Validates whether a given user/role can view unmasked phone numbers
+ */
+export const canViewLeadPhone = (role) => {
+  return [CRM_ROLES.SUPER_ADMIN, CRM_ROLES.SALES_MANAGER, CRM_ROLES.SALES_AGENT, 'agent_east', 'agent_new_sohag'].includes(role);
+};
+
+/**
+ * Masks the middle digits of a phone number for unprivileged roles (e.g. viewer)
+ */
+export const maskPhoneNumber = (phone, role) => {
+  if (!phone) return '—';
+  if (canViewLeadPhone(role)) return phone;
+  const str = String(phone).trim();
+  if (str.length <= 4) return '***';
+  return str.slice(0, 3) + '****' + str.slice(-2);
+};

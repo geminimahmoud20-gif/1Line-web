@@ -12,6 +12,7 @@ import {
 import { loginUser, logAuditEvent } from '../firebaseService';
 import { exportToCsv } from '../utils/exportCsv';
 import { formatTimeSinceLastSync } from '../utils/syncManager';
+import { canExportCsv, canDeleteLead, canViewLeadPhone, maskPhoneNumber } from '../utils/rbacRules';
 import { SOHAG_AREAS, PROPERTY_TYPES } from '../data/propertiesData';
 
 // Enterprise PropTech Modules
@@ -230,6 +231,12 @@ export const CrmAdminPanel = ({
 
   const handleBulkDelete = () => {
     if (selectedLeadIds.length === 0) return;
+    if (!canDeleteLead(activeRole)) {
+      if (triggerToast) {
+        triggerToast(isAr ? 'غير مصرح لك بحذف العملاء (تتطلب صلاحية Super Admin)' : 'Unauthorized: requires Super Admin', 'error');
+      }
+      return;
+    }
     if (window.confirm(isAr ? `هل أنت متأكد من حذف ${selectedLeadIds.length} عميل محدد نهائياً؟` : `Delete ${selectedLeadIds.length} leads?`)) {
       selectedLeadIds.forEach(id => {
         if (onDeleteLead) onDeleteLead(id);
@@ -250,6 +257,12 @@ export const CrmAdminPanel = ({
 
   const handleBulkExportSelected = () => {
     if (selectedLeadIds.length === 0) return;
+    if (!canExportCsv(activeRole)) {
+      if (triggerToast) {
+        triggerToast(isAr ? 'غير مصرح لك بتصدير بيانات العملاء (تتطلب صلاحية مدير أو مالية)' : 'Unauthorized: requires Manager or Finance role', 'error');
+      }
+      return;
+    }
     const selectedLeads = leads.filter(l => selectedLeadIds.includes(l.id));
     const headers = {
       id: 'المعرف',
@@ -297,6 +310,12 @@ export const CrmAdminPanel = ({
   };
 
   const handleExportCSV = () => {
+    if (!canExportCsv(activeRole)) {
+      if (triggerToast) {
+        triggerToast(isAr ? 'غير مصرح لك بتصدير ملفات العملاء (تتطلب صلاحية مدير أو مالية)' : 'Unauthorized: requires Manager or Finance role', 'error');
+      }
+      return;
+    }
     if (exportLeadsCSV) {
       exportLeadsCSV();
       return;
@@ -331,6 +350,12 @@ export const CrmAdminPanel = ({
 
   // Full Leads Database JSON Backup
   const handleExportLeadsJson = () => {
+    if (!canExportCsv(activeRole)) {
+      if (triggerToast) {
+        triggerToast(isAr ? 'غير مصرح لك بتصدير النسخ الاحتياطية (تتطلب صلاحية Super Admin أو المالية)' : 'Unauthorized: requires Admin or Finance', 'error');
+      }
+      return;
+    }
     const backupData = {
       platform: '1Line Real Estate CRM Leads',
       timestamp: new Date().toISOString(),
@@ -786,54 +811,28 @@ export const CrmAdminPanel = ({
             <span>{isAr ? 'كاتب الإعلانات AI' : 'AI Copywriter'}</span>
           </button>
 
-          {/* JSON Backup Button */}
-          <button 
-            type="button" 
-            className="btn btn-sm" 
-            onClick={handleExportLeadsJson}
-            title={isAr ? 'تحميل نسخة احتياطية لبيانات العملاء JSON' : 'Backup Leads JSON'}
-            style={{ 
-              background: 'rgba(255, 255, 255, 0.08)', 
-              color: '#ffffff', 
-              border: '1px solid rgba(255, 255, 255, 0.2)', 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '6px',
-              fontSize: '0.8rem', 
-              padding: '6px 11px' 
-            }}
-          >
-            <Database size={13} />
-            <span>{isAr ? 'نسخ احتياطي' : 'Backup'}</span>
-          </button>
-
-          {/* Hidden Restore Input */}
-          <label 
-            className="btn btn-sm" 
-            style={{ 
-              cursor: 'pointer', 
-              margin: 0, 
-              fontSize: '0.8rem', 
-              padding: '6px 11px', 
-              background: 'rgba(255, 255, 255, 0.08)', 
-              color: '#ffffff', 
-              border: '1px solid rgba(255, 255, 255, 0.2)',
+          {/* Primary Action: Add Lead Directly */}
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={() => setShowAddLeadModal(true)}
+            style={{
+              background: 'rgba(217, 119, 6, 0.2)',
+              border: '1px solid rgba(217, 119, 6, 0.45)',
+              color: 'var(--accent-gold)',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px'
+              gap: '6px',
+              fontSize: '0.8rem',
+              padding: '6px 12px',
+              fontWeight: 'bold'
             }}
           >
-            <Upload size={13} />
-            <span>{isAr ? 'استعادة' : 'Restore'}</span>
-            <input 
-              type="file" 
-              accept=".json" 
-              onChange={handleImportLeadsJson} 
-              style={{ display: 'none' }} 
-            />
-          </label>
+            <UserPlus size={13} />
+            <span>{isAr ? '+ تسجيل عميل جديد' : '+ New Lead'}</span>
+          </button>
 
-          {/* Export CSV */}
+          {/* Secondary Action: Export CSV */}
           <button 
             className="btn btn-sm" 
             onClick={handleExportCSV}
@@ -854,44 +853,214 @@ export const CrmAdminPanel = ({
         </div>
       </div>
 
-      {/* Enterprise Modular Navigation Strip (Segmented Modern Pills) */}
-      <div className="crm-nav-segmented-strip">
-        {[
-          { id: 'dashboard', icon: LayoutGrid, label_ar: 'لوحة القيادة والمتابعة', label_en: 'Executive Overview' },
-          { id: 'leads', icon: Users, label_ar: `قاعدة بيانات العملاء (${leads.length})`, label_en: `Leads Hub (${leads.length})` },
-          { id: 'kanban', icon: Target, label_ar: 'مسار الصفقات (Kanban)', label_en: 'Deals Pipeline' },
-          { id: 'matching', icon: Sparkles, label_ar: 'المطابقات الذكية', label_en: 'AI Match Engine' },
-          { id: 'financials', icon: Calculator, label_ar: 'الأقساط وإيصالات الحجز', label_en: 'Financials & Receipts' },
-          { id: 'agents', icon: Trophy, label_ar: 'تارجت وعمولات الفريق', label_en: 'Team & Commissions' },
-          { id: 'retargeting', icon: Zap, label_ar: 'حملات إعادة الاستهداف', label_en: 'Retargeting' },
-          { id: 'visitor_intelligence', icon: Activity, label_ar: 'تحليلات وسلوك الزوار', label_en: 'Visitor Intelligence' },
-          { id: 'automation', icon: Bell, label_ar: 'الأتمتة والإشعارات', label_en: 'Automations' }
-        ].map((tab) => {
-          const IconComp = tab.icon;
-          const isActive = adminTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              className={`crm-nav-pill-btn ${isActive ? 'active' : ''}`} data-testid={`nav-pill-${tab.id}`}
-              onClick={() => {
-                if (tab.onAction) {
-                  tab.onAction();
-                } else {
-                  setAdminTab(tab.id);
-                }
-              }}
-            >
-              <IconComp size={14} className={isActive ? 'text-gold' : ''} />
-              <span>{isAr ? tab.label_ar : tab.label_en}</span>
-            </button>
-          );
-        })}
+      {/* 🧭 ENTERPRISE HIERARCHICAL NAVIGATION (5 FUNCTIONAL GROUPS) */}
+      <div className="crm-nav-segmented-strip" style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px',
+        background: 'rgba(15, 23, 42, 0.85)',
+        border: '1px solid var(--border-light)',
+        borderRadius: '12px',
+        padding: '12px 16px',
+        marginBottom: '20px',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.25)'
+      }}>
+        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
+          {[
+            {
+              id: 'daily_ops',
+              title_ar: 'العمليات اليومية',
+              title_en: 'Daily Ops',
+              tabs: [
+                { id: 'dashboard', icon: LayoutGrid, label_ar: 'نظرة عامة وقرارات اليوم', label_en: 'Decisions Overview' },
+                { id: 'leads', icon: Users, label_ar: `العملاء والطلبات (${leads.filter(l => !l.isArchived).length})`, label_en: `Leads & Inquiries (${leads.filter(l => !l.isArchived).length})` },
+                { id: 'kanban', icon: Target, label_ar: 'مسار الصفقات (Kanban)', label_en: 'Deals Pipeline' }
+              ]
+            },
+            {
+              id: 'inventory',
+              title_ar: 'المخزون العقاري',
+              title_en: 'Inventory',
+              tabs: [
+                { id: 'properties_desk', icon: Building, label_ar: `محفظة العقارات (${properties.length})`, label_en: `Properties (${properties.length})`, onAction: () => onSwitchToProperties?.() },
+                { id: 'demands_desk', icon: Zap, label_ar: `طلبات المشترين (${demands.length})`, label_en: `Buyer Demands (${demands.length})`, onAction: () => onSwitchToDemands?.() },
+                { id: 'areas_desk', icon: MapPin, label_ar: 'إدارة المناطق', label_en: 'Districts CMS', onAction: () => onSwitchToAreas?.() },
+                { id: 'matching', icon: Sparkles, label_ar: 'المطابقات الذكية', label_en: 'AI Match Engine' }
+              ]
+            },
+            {
+              id: 'financials_group',
+              title_ar: 'العمليات المالية',
+              title_en: 'Financials',
+              roles: ['super_admin', 'sales_manager', 'finance'],
+              tabs: [
+                { id: 'financials', icon: Calculator, label_ar: 'الأقساط وإيصالات الحجز', label_en: 'Installments & Receipts' },
+                { id: 'agents', icon: Trophy, label_ar: 'أهداف وعمولات الفريق', label_en: 'Team & Targets' }
+              ]
+            },
+            {
+              id: 'analytics_group',
+              title_ar: 'التحليلات والتسويق',
+              title_en: 'Intelligence',
+              tabs: [
+                { id: 'visitor_intelligence', icon: Activity, label_ar: 'تحليلات وسلوك الزوار', label_en: 'Visitor Stream' },
+                { id: 'retargeting', icon: Zap, label_ar: 'حملات إعادة الاستهداف', label_en: 'Retargeting' },
+                { id: 'automation', icon: Bell, label_ar: 'الأتمتة والإشعارات', label_en: 'Automations' }
+              ]
+            },
+            {
+              id: 'admin_group',
+              title_ar: 'إدارة المنظومة',
+              title_en: 'System Administration',
+              roles: ['super_admin', 'sales_manager'],
+              tabs: [
+                { id: 'system_backup', icon: Database, label_ar: 'البيانات والنسخ الاحتياطي', label_en: 'Backups & Restore' },
+                { id: 'founder_cms', icon: Sparkles, label_ar: 'إعدادات المؤسس CMS', label_en: 'Founder CMS' }
+              ]
+            }
+          ]
+            .filter(grp => !grp.roles || grp.roles.includes(activeRole))
+            .map(grp => (
+              <div key={grp.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.72rem', color: 'var(--accent-gold)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  {isAr ? grp.title_ar : grp.title_en}:
+                </span>
+                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                  {grp.tabs.map(tab => {
+                    const IconComp = tab.icon;
+                    const isActive = adminTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        className={`crm-nav-pill-btn ${isActive ? 'active' : ''}`}
+                        data-testid={`nav-pill-${tab.id}`}
+                        onClick={() => {
+                          if (tab.onAction) {
+                            tab.onAction();
+                          } else {
+                            setAdminTab(tab.id);
+                          }
+                        }}
+                        style={{
+                          padding: '6px 11px',
+                          fontSize: '0.78rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          borderRadius: '6px',
+                          background: isActive ? 'var(--primary)' : 'rgba(255, 255, 255, 0.04)',
+                          border: isActive ? '1px solid rgba(255, 179, 0, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)'
+                        }}
+                      >
+                        <IconComp size={13} className={isActive ? 'text-gold' : ''} />
+                        <span>{isAr ? tab.label_ar : tab.label_en}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+        </div>
       </div>
 
-      {/* 📊 TAB 1: EXECUTIVE DASHBOARD */}
+      {/* 📊 TAB 1: EXECUTIVE DECISION-BASED DASHBOARD */}
       {adminTab === 'dashboard' && (
         <div className="crm-layout">
+          {/* ☀️ MORNING DECISION BRIEFING CARD ("قائمة قرارات بداية اليوم") */}
+          {(() => {
+            const nowDayStr = new Date().toISOString().slice(0, 10);
+            const dueFollowUpsList = (leads || []).filter(l => {
+              if (l.isArchived) return false;
+              if (l.nextFollowUpAt && l.nextFollowUpAt.slice(0, 10) <= nowDayStr) return true;
+              if (l.followUp && l.followUp.includes(nowDayStr)) return true;
+              return false;
+            });
+            const dueFollowUpsCount = dueFollowUpsList.length;
+            const newLeadsCount = (leads || []).filter(l => !l.isArchived && (l.status === 'new' || !l.status)).length;
+            const stalledDealsCount = (leads || []).filter(l => !l.isArchived && (l.status === 'negotiating' || l.status === 'contacted')).length;
+            const unmatchedDemandsCount = (demands || []).filter(d => d.status === 'pending').length;
+
+            return (
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.95))',
+                border: '1px solid rgba(217, 119, 6, 0.35)',
+                borderRadius: '12px',
+                padding: '20px 24px',
+                marginBottom: '20px',
+                boxShadow: '0 8px 30px rgba(0, 0, 0, 0.3)'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '1.4rem' }}>☀️</span>
+                      <h2 style={{ margin: 0, fontSize: '1.2rem', color: '#ffffff', fontWeight: 800 }}>
+                        {isAr ? `مرحباً، ${currentRoleObj.label_ar}` : `Welcome, ${currentRoleObj.label_en}`}
+                      </h2>
+                      <span className="badge" style={{ background: 'rgba(217, 119, 6, 0.2)', color: 'var(--accent-gold)', fontSize: '0.75rem' }}>
+                        {isAr ? 'قائمة القرارات والإجراءات اليومية' : 'Daily Decision List'}
+                      </span>
+                    </div>
+                    <p style={{ margin: 0, fontSize: '0.86rem', color: 'var(--text-secondary)' }}>
+                      {isAr 
+                        ? `لديك اليوم: ${dueFollowUpsCount} متابعات مستحقة • ${newLeadsCount} عملاء جدد بحاجة للتأهيل • ${stalledDealsCount} صفقات تتطلب تدخلاً • ${unmatchedDemandsCount} طلبات لم تُطابق بعد.`
+                        : `Today: ${dueFollowUpsCount} follow-ups due • ${newLeadsCount} new leads • ${stalledDealsCount} stalled deals • ${unmatchedDemandsCount} unmatched demands.`}
+                    </p>
+                  </div>
+
+                  {/* Direct Action Buttons */}
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-accent"
+                      onClick={() => {
+                        setLeadFilter('due');
+                        setAdminTab('leads');
+                      }}
+                      style={{ fontWeight: 'bold', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <Clock size={14} />
+                      <span>{isAr ? `ابدأ المتابعة (${dueFollowUpsCount})` : `Start Follow-ups (${dueFollowUpsCount})`}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      onClick={() => {
+                        setLeadFilter('new');
+                        setAdminTab('leads');
+                      }}
+                      style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.4)', fontWeight: 'bold', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <UserPlus size={14} />
+                      <span>{isAr ? `العملاء الجدد (${newLeadsCount})` : `New Leads (${newLeadsCount})`}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      onClick={() => setAdminTab('kanban')}
+                      style={{ background: 'rgba(217, 119, 6, 0.15)', color: 'var(--accent-gold)', border: '1px solid rgba(217, 119, 6, 0.4)', fontWeight: 'bold', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <Target size={14} />
+                      <span>{isAr ? 'مسار الصفقات' : 'Deals Pipeline'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      onClick={() => onSwitchToDemands?.()}
+                      style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.4)', fontWeight: 'bold', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <Zap size={14} />
+                      <span>{isAr ? `مطابقة الطلبات (${unmatchedDemandsCount})` : `Match Demands (${unmatchedDemandsCount})`}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Quick Action Command Shortcuts */}
           <div style={{
             display: 'grid',
@@ -1699,6 +1868,87 @@ export const CrmAdminPanel = ({
         />
       )}
 
+      {/* 🛡️ TAB 9.5: SYSTEM BACKUP & RESTORE (ADMIN ONLY) */}
+      {adminTab === 'system_backup' && (
+        <div className="crm-layout">
+          <div className="crm-table-container" style={{ padding: '28px', maxWidth: '820px', margin: '0 auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', borderBottom: '1px solid var(--border-light)', paddingBottom: '16px' }}>
+              <Database size={26} className="text-gold" />
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#ffffff' }}>
+                  {isAr ? 'البيانات والنسخ الاحتياطي وإدارة المنظومة' : 'Database Backups & System Administration'}
+                </h3>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  {isAr ? 'خاص بالمدير العام — تصدير واسترجاع نسخ العملاء والبيانات الحساسة بأمان' : 'Super Admin only — Backup, export and recovery hub'}
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginTop: '16px' }}>
+              {/* Backup Box */}
+              <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-light)', borderRadius: '10px', padding: '20px' }}>
+                <h4 style={{ margin: '0 0 10px 0', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Download size={18} />
+                  <span>{isAr ? 'تنزيل نسخة احتياطية (JSON)' : 'Download Backup'}</span>
+                </h4>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.5' }}>
+                  {isAr 
+                    ? 'تصدير كامل بيانات العملاء والصفقات والطلبات كملف JSON آمن ومحمي للاحتفاظ به أو استرجاعه لاحقاً.' 
+                    : 'Export full database snapshot as a structured JSON file.'}
+                </p>
+                <button 
+                  type="button" 
+                  className="btn btn-sm btn-accent" 
+                  onClick={handleExportLeadsJson}
+                  style={{ width: '100%', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: 'bold' }}
+                >
+                  <Database size={15} />
+                  <span>{isAr ? `تحميل ملف النسخة الاحتياطية (${leads.length} عميل)` : 'Download JSON Backup'}</span>
+                </button>
+              </div>
+
+              {/* Restore Box */}
+              <div style={{ background: 'rgba(239, 68, 68, 0.03)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '10px', padding: '20px' }}>
+                <h4 style={{ margin: '0 0 10px 0', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Upload size={18} />
+                  <span>{isAr ? 'استعادة قاعدة البيانات' : 'Restore Database'}</span>
+                </h4>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.5' }}>
+                  {isAr 
+                    ? '⚠️ تحذير أمني: استيراد ملف JSON سيقوم بدمج أو تحديث بيانات العملاء الحالية. يُرجى التحقق من الملف قبل رفعه.' 
+                    : 'Warning: Importing JSON file will merge or overwrite current customer records.'}
+                </p>
+                <label 
+                  className="btn btn-sm" 
+                  style={{ 
+                    width: '100%', 
+                    padding: '10px', 
+                    cursor: 'pointer', 
+                    background: 'rgba(239, 68, 68, 0.15)', 
+                    color: '#ef4444', 
+                    border: '1px solid rgba(239, 68, 68, 0.4)', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    gap: '8px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  <Upload size={15} />
+                  <span>{isAr ? 'رفع واستعادة ملف JSON' : 'Upload & Restore JSON'}</span>
+                  <input 
+                    type="file" 
+                    accept=".json" 
+                    onChange={handleImportLeadsJson} 
+                    style={{ display: 'none' }} 
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ⚙️ TAB 10: AUTOMATION & WEBHOOKS */}
       {adminTab === 'automation' && (
         <div className="crm-table-container">
@@ -2008,6 +2258,7 @@ export const CrmAdminPanel = ({
           }}
           lang={lang}
           triggerToast={triggerToast}
+          userRole={activeRole}
         />
       )}
 
