@@ -686,18 +686,19 @@ export const CrmAdminPanel = ({
   // Enterprise Dashboard Navigation Tabs
   return (
     <div className="enterprise-crm-hub">
-      {/* Top Operations & System Actions Toolbar */}
+      {/* Top Operations & System Actions Toolbar - Crisp White Enterprise */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         flexWrap: 'wrap',
         gap: '12px',
-        background: 'rgba(15, 23, 42, 0.5)',
+        background: '#ffffff',
         padding: '10px 16px',
-        borderRadius: 'var(--radius-md)',
-        border: '1px solid var(--border-light)',
-        marginBottom: '16px'
+        borderRadius: '12px',
+        border: '1px solid #e2e8f0',
+        marginBottom: '16px',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)'
       }}>
         {/* Left / Status & Active Role */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
@@ -709,9 +710,9 @@ export const CrmAdminPanel = ({
             borderRadius: 'var(--radius-pill)',
             fontSize: '0.75rem',
             fontWeight: 'bold',
-            background: firebaseConnected ? 'rgba(16, 185, 129, 0.12)' : 'rgba(217, 119, 6, 0.12)',
-            color: firebaseConnected ? 'var(--emerald)' : 'var(--accent-gold)',
-            border: `1px solid ${firebaseConnected ? 'rgba(16, 185, 129, 0.3)' : 'rgba(217, 119, 6, 0.3)'}`
+            background: firebaseConnected ? '#ecfdf5' : '#fffbeb',
+            color: firebaseConnected ? '#059669' : '#b45309',
+            border: `1px solid ${firebaseConnected ? '#a7f3d0' : '#fde68a'}`
           }}>
             {firebaseConnected ? <Wifi size={12} /> : <WifiOff size={12} />}
             <span>{firebaseConnected ? (isAr ? 'متصل بالسحابة (Cloud Sync)' : 'Cloud Active') : (isAr ? 'وضع التخزين المحلي (Local Cache)' : 'Local Storage')}</span>
@@ -725,14 +726,14 @@ export const CrmAdminPanel = ({
             padding: '4px 10px',
             borderRadius: 'var(--radius-pill)',
             fontSize: '0.72rem',
-            background: 'rgba(255, 255, 255, 0.04)',
-            color: '#94a3b8',
-            border: '1px solid rgba(255, 255, 255, 0.1)'
+            background: '#f8fafc',
+            color: '#475569',
+            border: '1px solid #e2e8f0'
           }}>
-            <Clock size={11} style={{ color: 'var(--accent-gold)' }} />
-            <span>{firebaseConnected ? (isAr ? 'تم الحفظ والمزامنة بنجاح 🟢' : 'Synced Successfully 🟢') : (isAr ? 'تم الحفظ محلياً — بانتظار المزامنة ⏳' : 'Pending Sync ⏳')}</span>
-            <span style={{ color: '#64748b' }}>•</span>
-            <span style={{ fontSize: '0.68rem', color: '#cbd5e1' }}>{formatTimeSinceLastSync(isAr ? 'ar' : 'en')}</span>
+            <Clock size={11} style={{ color: '#d97706' }} />
+            <span style={{ fontWeight: '500' }}>{firebaseConnected ? (isAr ? 'تم الحفظ والمزامنة بنجاح 🟢' : 'Synced Successfully 🟢') : (isAr ? 'تم الحفظ محلياً — بانتظار المزامنة ⏳' : 'Pending Sync ⏳')}</span>
+            <span style={{ color: '#94a3b8' }}>•</span>
+            <span style={{ fontSize: '0.68rem', color: '#0f172a', fontWeight: 'bold' }}>{formatTimeSinceLastSync(isAr ? 'ar' : 'en')}</span>
           </div>
 
           {/* Multi-Tenant RBAC Role Switcher */}
@@ -740,12 +741,12 @@ export const CrmAdminPanel = ({
             display: 'inline-flex',
             alignItems: 'center',
             gap: '6px',
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
+            background: '#f8fafc',
+            border: '1px solid #e2e8f0',
             borderRadius: 'var(--radius-pill)',
             padding: '3px 8px'
           }}>
-            <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+            <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '600' }}>
               {isAr ? 'الصلاحية الحالية:' : 'Role:'}
             </span>
             <select
@@ -755,10 +756,10 @@ export const CrmAdminPanel = ({
                 if (e.target.value === 'super_admin') setMyDealsOnly(false);
               }}
               style={{
-                background: 'rgba(15, 23, 42, 0.9)',
-                color: activeRole === 'super_admin' ? 'var(--accent-gold)' : '#ffffff',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                borderRadius: '12px',
+                background: '#ffffff',
+                color: activeRole === 'super_admin' ? '#b45309' : '#0f172a',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
                 fontSize: '0.74rem',
                 padding: '2px 8px',
                 fontWeight: 'bold',
@@ -773,7 +774,7 @@ export const CrmAdminPanel = ({
             </select>
 
             {activeRole !== 'super_admin' && (
-              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', color: myDealsOnly ? '#10b981' : '#94a3b8', cursor: 'pointer', margin: 0, paddingInlineStart: '6px' }}>
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', color: myDealsOnly ? '#059669' : '#64748b', cursor: 'pointer', margin: 0, paddingInlineStart: '6px' }}>
                 <input
                   type="checkbox"
                   checked={myDealsOnly}
@@ -794,19 +795,20 @@ export const CrmAdminPanel = ({
             className="btn btn-sm" 
             onClick={() => setShowContractStudio(true)}
             style={{ 
-              background: 'linear-gradient(135deg, #0d48a1 0%, #1565c0 100%)', 
-              color: '#fff', 
+              background: '#092347', 
+              color: '#ffffff', 
               fontWeight: 'bold',
-              border: '1px solid rgba(255, 179, 0, 0.4)', 
+              border: '1px solid #092347', 
               display: 'flex', 
               alignItems: 'center', 
               gap: '6px',
               fontSize: '0.8rem',
               padding: '6px 12px',
-              boxShadow: '0 2px 8px rgba(13, 72, 161, 0.25)'
+              borderRadius: '8px',
+              boxShadow: '0 2px 6px rgba(9, 35, 71, 0.2)'
             }}
           >
-            <FileText size={13} className="text-gold" />
+            <FileText size={13} style={{ color: '#f59e0b' }} />
             <span>{isAr ? 'استوديو العقود' : 'Contract Studio'}</span>
           </button>
 
@@ -816,15 +818,16 @@ export const CrmAdminPanel = ({
             className="btn btn-sm" 
             onClick={() => setShowAICopywriter(true)}
             style={{ 
-              background: 'var(--gradient-gold)', 
-              color: '#092347', 
+              background: '#fffbeb', 
+              color: '#b45309', 
               fontWeight: 'bold',
-              border: 'none', 
+              border: '1px solid #fde68a', 
               display: 'flex', 
               alignItems: 'center', 
               gap: '6px',
               fontSize: '0.8rem',
-              padding: '6px 12px'
+              padding: '6px 12px',
+              borderRadius: '8px'
             }}
           >
             <Wand2 size={13} />
@@ -837,15 +840,17 @@ export const CrmAdminPanel = ({
             className="btn btn-sm"
             onClick={() => setShowAddLeadModal(true)}
             style={{
-              background: 'rgba(217, 119, 6, 0.2)',
-              border: '1px solid rgba(217, 119, 6, 0.45)',
-              color: 'var(--accent-gold)',
+              background: '#059669',
+              border: '1px solid #047857',
+              color: '#ffffff',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
               fontSize: '0.8rem',
               padding: '6px 12px',
-              fontWeight: 'bold'
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              boxShadow: '0 2px 6px rgba(5, 150, 105, 0.2)'
             }}
           >
             <UserPlus size={13} />
@@ -857,14 +862,16 @@ export const CrmAdminPanel = ({
             className="btn btn-sm" 
             onClick={handleExportCSV}
             style={{ 
-              background: 'rgba(16, 185, 129, 0.15)', 
-              color: '#10b981', 
-              border: '1px solid rgba(16, 185, 129, 0.4)', 
+              background: '#ffffff', 
+              color: '#0f172a', 
+              border: '1px solid #cbd5e1', 
               display: 'flex', 
               alignItems: 'center', 
               gap: '6px',
               fontSize: '0.8rem',
-              padding: '6px 12px'
+              padding: '6px 12px',
+              borderRadius: '8px',
+              fontWeight: '600'
             }}
           >
             <Download size={13} />
@@ -873,17 +880,17 @@ export const CrmAdminPanel = ({
         </div>
       </div>
 
-      {/* 🧭 ENTERPRISE HIERARCHICAL NAVIGATION (5 FUNCTIONAL GROUPS) */}
+      {/* 🧭 ENTERPRISE HIERARCHICAL NAVIGATION (5 FUNCTIONAL GROUPS) - Crisp White Strip */}
       <div className="crm-nav-segmented-strip" style={{
         display: 'flex',
         flexDirection: 'column',
         gap: '10px',
-        background: 'rgba(15, 23, 42, 0.85)',
-        border: '1px solid var(--border-light)',
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
         borderRadius: '12px',
         padding: '12px 16px',
         marginBottom: '20px',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.25)'
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)'
       }}>
         <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
           {[
@@ -942,7 +949,7 @@ export const CrmAdminPanel = ({
             .filter(grp => !grp.roles || grp.roles.includes(activeRole))
             .map(grp => (
               <div key={grp.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.72rem', color: 'var(--accent-gold)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <span style={{ fontSize: '0.74rem', color: '#092347', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.3px' }}>
                   {isAr ? grp.title_ar : grp.title_en}:
                 </span>
                 <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
@@ -968,12 +975,14 @@ export const CrmAdminPanel = ({
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '6px',
-                          borderRadius: '6px',
-                          background: isActive ? 'var(--primary)' : 'rgba(255, 255, 255, 0.04)',
-                          border: isActive ? '1px solid rgba(255, 179, 0, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)'
+                          borderRadius: '8px',
+                          background: isActive ? '#092347' : '#f8fafc',
+                          color: isActive ? '#ffffff' : '#475569',
+                          border: isActive ? '1px solid #092347' : '1px solid #e2e8f0',
+                          fontWeight: isActive ? 'bold' : '600'
                         }}
                       >
-                        <IconComp size={13} className={isActive ? 'text-gold' : ''} />
+                        <IconComp size={13} style={{ color: isActive ? '#f59e0b' : 'inherit' }} />
                         <span>{isAr ? tab.label_ar : tab.label_en}</span>
                       </button>
                     );
@@ -987,7 +996,7 @@ export const CrmAdminPanel = ({
       {/* 📊 TAB 1: EXECUTIVE DECISION-BASED DASHBOARD */}
       {adminTab === 'dashboard' && (
         <div className="crm-layout">
-          {/* ☀️ MORNING DECISION BRIEFING CARD ("قائمة قرارات بداية اليوم") */}
+          {/* ☀️ MORNING DECISION BRIEFING CARD ("قائمة قرارات بداية اليوم") - White Surface */}
           {(() => {
             const nowDayStr = new Date().toISOString().slice(0, 10);
             const dueFollowUpsList = (leads || []).filter(l => {
@@ -1003,25 +1012,25 @@ export const CrmAdminPanel = ({
 
             return (
               <div style={{
-                background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.95))',
-                border: '1px solid rgba(217, 119, 6, 0.35)',
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
                 borderRadius: '12px',
                 padding: '20px 24px',
                 marginBottom: '20px',
-                boxShadow: '0 8px 30px rgba(0, 0, 0, 0.3)'
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                       <span style={{ fontSize: '1.4rem' }}>☀️</span>
-                      <h2 style={{ margin: 0, fontSize: '1.2rem', color: '#ffffff', fontWeight: 800 }}>
+                      <h2 style={{ margin: 0, fontSize: '1.2rem', color: '#0f172a', fontWeight: 800 }}>
                         {isAr ? `مرحباً، ${currentRoleObj.label_ar}` : `Welcome, ${currentRoleObj.label_en}`}
                       </h2>
-                      <span className="badge" style={{ background: 'rgba(217, 119, 6, 0.2)', color: 'var(--accent-gold)', fontSize: '0.75rem' }}>
+                      <span className="badge" style={{ background: '#fffbeb', color: '#b45309', border: '1px solid #fde68a', fontSize: '0.75rem', fontWeight: 'bold' }}>
                         {isAr ? 'قائمة القرارات والإجراءات اليومية' : 'Daily Decision List'}
                       </span>
                     </div>
-                    <p style={{ margin: 0, fontSize: '0.86rem', color: 'var(--text-secondary)' }}>
+                    <p style={{ margin: 0, fontSize: '0.86rem', color: '#475569' }}>
                       {isAr 
                         ? `لديك اليوم: ${dueFollowUpsCount} متابعات مستحقة • ${newLeadsCount} عملاء جدد بحاجة للتأهيل • ${stalledDealsCount} صفقات تتطلب تدخلاً • ${unmatchedDemandsCount} طلبات لم تُطابق بعد.`
                         : `Today: ${dueFollowUpsCount} follow-ups due • ${newLeadsCount} new leads • ${stalledDealsCount} stalled deals • ${unmatchedDemandsCount} unmatched demands.`}
@@ -1032,12 +1041,12 @@ export const CrmAdminPanel = ({
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     <button
                       type="button"
-                      className="btn btn-sm btn-accent"
+                      className="btn btn-sm"
                       onClick={() => {
                         setLeadFilter('due');
                         setAdminTab('leads');
                       }}
-                      style={{ fontWeight: 'bold', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                      style={{ background: '#092347', color: '#ffffff', border: '1px solid #092347', fontWeight: 'bold', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '8px' }}
                     >
                       <Clock size={14} />
                       <span>{isAr ? `ابدأ المتابعة (${dueFollowUpsCount})` : `Start Follow-ups (${dueFollowUpsCount})`}</span>
@@ -1050,7 +1059,7 @@ export const CrmAdminPanel = ({
                         setLeadFilter('new');
                         setAdminTab('leads');
                       }}
-                      style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.4)', fontWeight: 'bold', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                      style={{ background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', fontWeight: 'bold', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '8px' }}
                     >
                       <UserPlus size={14} />
                       <span>{isAr ? `العملاء الجدد (${newLeadsCount})` : `New Leads (${newLeadsCount})`}</span>
@@ -1060,7 +1069,7 @@ export const CrmAdminPanel = ({
                       type="button"
                       className="btn btn-sm"
                       onClick={() => setAdminTab('kanban')}
-                      style={{ background: 'rgba(217, 119, 6, 0.15)', color: 'var(--accent-gold)', border: '1px solid rgba(217, 119, 6, 0.4)', fontWeight: 'bold', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                      style={{ background: '#fffbeb', color: '#b45309', border: '1px solid #fde68a', fontWeight: 'bold', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '8px' }}
                     >
                       <Target size={14} />
                       <span>{isAr ? 'مسار الصفقات' : 'Deals Pipeline'}</span>
@@ -1070,7 +1079,7 @@ export const CrmAdminPanel = ({
                       type="button"
                       className="btn btn-sm"
                       onClick={() => onSwitchToDemands?.()}
-                      style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.4)', fontWeight: 'bold', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                      style={{ background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0', fontWeight: 'bold', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '8px' }}
                     >
                       <Zap size={14} />
                       <span>{isAr ? `مطابقة الطلبات (${unmatchedDemandsCount})` : `Match Demands (${unmatchedDemandsCount})`}</span>
@@ -1081,7 +1090,7 @@ export const CrmAdminPanel = ({
             );
           })()}
 
-          {/* Quick Action Command Shortcuts */}
+          {/* Quick Action Command Shortcuts - Clean Light Cards */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -1093,15 +1102,15 @@ export const CrmAdminPanel = ({
               className="btn btn-sm"
               onClick={() => setShowAddLeadModal(true)}
               style={{
-                background: 'rgba(217, 119, 6, 0.12)',
-                border: '1px solid rgba(217, 119, 6, 0.35)',
-                color: 'var(--accent-gold)',
+                background: '#fffbeb',
+                border: '1px solid #fde68a',
+                color: '#b45309',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
                 padding: '10px 14px',
-                borderRadius: 'var(--radius-sm)',
+                borderRadius: '8px',
                 fontWeight: 'bold',
                 fontSize: '0.82rem'
               }}
@@ -1116,15 +1125,15 @@ export const CrmAdminPanel = ({
               className="btn btn-sm"
               onClick={() => onSwitchToDemands?.()} data-testid="shortcut-demand"
               style={{
-                background: 'rgba(16, 185, 129, 0.12)',
-                border: '1px solid rgba(16, 185, 129, 0.35)',
-                color: '#10b981',
+                background: '#ecfdf5',
+                border: '1px solid #a7f3d0',
+                color: '#059669',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
                 padding: '10px 14px',
-                borderRadius: 'var(--radius-sm)',
+                borderRadius: '8px',
                 fontWeight: 'bold',
                 fontSize: '0.82rem'
               }}
@@ -1139,15 +1148,15 @@ export const CrmAdminPanel = ({
               className="btn btn-sm"
               onClick={() => onSwitchToProperties?.()} data-testid="shortcut-properties"
               style={{
-                background: 'rgba(217, 119, 6, 0.12)',
-                border: '1px solid rgba(217, 119, 6, 0.35)',
-                color: 'var(--accent-gold)',
+                background: '#f8fafc',
+                border: '1px solid #cbd5e1',
+                color: '#092347',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
                 padding: '10px 14px',
-                borderRadius: 'var(--radius-sm)',
+                borderRadius: '8px',
                 fontWeight: 'bold',
                 fontSize: '0.82rem'
               }}
@@ -1162,15 +1171,15 @@ export const CrmAdminPanel = ({
               className="btn btn-sm"
               onClick={() => onSwitchToAreas?.()} data-testid="shortcut-areas"
               style={{
-                background: 'rgba(56, 189, 248, 0.12)',
-                border: '1px solid rgba(56, 189, 248, 0.35)',
-                color: '#38bdf8',
+                background: '#eff6ff',
+                border: '1px solid #bfdbfe',
+                color: '#2563eb',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
                 padding: '10px 14px',
-                borderRadius: 'var(--radius-sm)',
+                borderRadius: '8px',
                 fontWeight: 'bold',
                 fontSize: '0.82rem'
               }}
@@ -1184,15 +1193,15 @@ export const CrmAdminPanel = ({
               className="btn btn-sm"
               onClick={() => setAdminTab('kanban')}
               style={{
-                background: 'rgba(6, 182, 212, 0.1)',
-                border: '1px solid rgba(6, 182, 212, 0.3)',
-                color: '#06b6d4',
+                background: '#f0fdfa',
+                border: '1px solid #99f6e4',
+                color: '#0d9488',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
                 padding: '10px 14px',
-                borderRadius: 'var(--radius-sm)',
+                borderRadius: '8px',
                 fontWeight: 'bold',
                 fontSize: '0.82rem'
               }}
@@ -1206,15 +1215,15 @@ export const CrmAdminPanel = ({
               className="btn btn-sm"
               onClick={() => setAdminTab('retargeting')}
               style={{
-                background: 'rgba(236, 72, 153, 0.1)',
-                border: '1px solid rgba(236, 72, 153, 0.3)',
-                color: '#ec4899',
+                background: '#fdf2f8',
+                border: '1px solid #fbcfe8',
+                color: '#db2777',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
                 padding: '10px 14px',
-                borderRadius: 'var(--radius-sm)',
+                borderRadius: '8px',
                 fontWeight: 'bold',
                 fontSize: '0.82rem'
               }}
@@ -1228,15 +1237,15 @@ export const CrmAdminPanel = ({
               className="btn btn-sm"
               onClick={() => setAdminTab('visitor_intelligence')}
               style={{
-                background: 'rgba(16, 185, 129, 0.1)',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
-                color: 'var(--emerald)',
+                background: '#ecfdf5',
+                border: '1px solid #a7f3d0',
+                color: '#059669',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
                 padding: '10px 14px',
-                borderRadius: 'var(--radius-sm)',
+                borderRadius: '8px',
                 fontWeight: 'bold',
                 fontSize: '0.82rem'
               }}
@@ -1248,7 +1257,7 @@ export const CrmAdminPanel = ({
 
           <div className="crm-stats-grid">
             <div className="crm-stat-card">
-              <div className="crm-stat-icon" style={{ background: 'linear-gradient(135deg, rgba(255, 202, 40, 0.25), rgba(217, 119, 6, 0.15))', color: '#ffca28', border: '1px solid rgba(255, 202, 40, 0.4)' }}><Bell size={20} /></div>
+              <div className="crm-stat-icon" style={{ background: '#fffbeb', color: '#d97706', border: '1px solid #fde68a' }}><Bell size={20} /></div>
               <div className="crm-stat-info">
                 <span className="crm-stat-num">{crmAnalytics.todayCount}</span>
                 <span className="crm-stat-lbl">{isAr ? 'عملاء اليوم' : 'Leads Today'}</span>
@@ -1260,12 +1269,12 @@ export const CrmAdminPanel = ({
               style={{ cursor: 'pointer', transition: 'all 0.2s ease' }}
               title={isAr ? 'انقر لفتح واستعراض طلبات المشترين' : 'Click to open Buyer Demands'}
             >
-              <div className="crm-stat-icon" style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.15))', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.4)' }}><Zap size={20} /></div>
+              <div className="crm-stat-icon" style={{ background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' }}><Zap size={20} /></div>
               <div className="crm-stat-info">
                 <span className="crm-stat-num">{demands.length || crmAnalytics.buyersCount}</span>
                 <span className="crm-stat-lbl" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <span>{isAr ? 'طلبات المشترين' : 'Buyer Demands'}</span>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--accent-gold)' }}>←</span>
+                  <span style={{ fontSize: '0.7rem', color: '#b45309' }}>←</span>
                 </span>
               </div>
             </div>
@@ -1275,17 +1284,17 @@ export const CrmAdminPanel = ({
               style={{ cursor: onSwitchToProperties ? 'pointer' : 'default', transition: 'all 0.2s ease' }}
               title={isAr ? 'انقر لفتح واستعراض محفظة العقارات' : 'Click to open Properties Portfolio'}
             >
-              <div className="crm-stat-icon" style={{ background: 'linear-gradient(135deg, rgba(255, 202, 40, 0.25), rgba(245, 158, 11, 0.15))', color: '#ffca28', border: '1px solid rgba(255, 202, 40, 0.4)' }}><Building size={20} /></div>
+              <div className="crm-stat-icon" style={{ background: '#f8fafc', color: '#092347', border: '1px solid #cbd5e1' }}><Building size={20} /></div>
               <div className="crm-stat-info">
                 <span className="crm-stat-num">{properties.length || crmAnalytics.sellersCount}</span>
                 <span className="crm-stat-lbl" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <span>{isAr ? 'محفظة العقارات' : 'Properties Portfolio'}</span>
-                  {onSwitchToProperties && <span style={{ fontSize: '0.7rem', color: 'var(--accent-gold)' }}>←</span>}
+                  {onSwitchToProperties && <span style={{ fontSize: '0.7rem', color: '#b45309' }}>←</span>}
                 </span>
               </div>
             </div>
             <div className="crm-stat-card">
-              <div className="crm-stat-icon" style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.15))', color: '#34d399', border: '1px solid rgba(52, 211, 153, 0.4)' }}><Briefcase size={20} /></div>
+              <div className="crm-stat-icon" style={{ background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' }}><Briefcase size={20} /></div>
               <div className="crm-stat-info">
                 <span className="crm-stat-num">{crmAnalytics.conversionSuccess}</span>
                 <span className="crm-stat-lbl">{isAr ? 'معدل إغلاق الصفقات' : 'Conversion Rate'}</span>
@@ -1296,15 +1305,15 @@ export const CrmAdminPanel = ({
           <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '30px' }}>
             <div className="crm-table-container">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                <h3 style={{ margin: 0, color: '#ffffff', fontSize: '1.05rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Users size={18} className="text-gold" />
+                <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.05rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Users size={18} style={{ color: '#2563eb' }} />
                   <span>{isAr ? 'العملاء المسجلون حديثاً' : 'Recent Registrations'}</span>
                 </h3>
                 <button 
                   type="button" 
                   className="btn btn-sm" 
                   onClick={() => setAdminTab('kanban')}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', background: 'rgba(37, 99, 235, 0.15)', border: '1px solid rgba(59, 130, 246, 0.4)', color: '#60a5fa', borderRadius: '8px', fontWeight: 'bold' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', background: '#eff6ff', border: '1px solid #bfdbfe', color: '#2563eb', borderRadius: '8px', fontWeight: 'bold' }}
                 >
                   <span>{isAr ? 'عرض مسار الكانبان' : 'Open Pipeline'}</span>
                   {isAr ? <ArrowLeft size={13} /> : <ArrowRight size={13} />}
@@ -1323,7 +1332,7 @@ export const CrmAdminPanel = ({
                 <tbody>
                   {leads.slice(0, 5).map((l) => (
                     <tr key={l.id}>
-                      <td style={{ fontWeight: 'bold', color: '#ffffff' }}>{l.name}</td>
+                      <td style={{ fontWeight: 'bold', color: '#0f172a' }}>{l.name}</td>
                       <td><span className={`badge badge-${l.type}`}>{formatLeadTypeBadge(l.type)}</span></td>
                       <td>
                         <span className={`lead-score-pill ${l.score >= 85 ? 'score-high' : l.score >= 60 ? 'score-medium' : 'score-low'}`}>
@@ -1331,7 +1340,7 @@ export const CrmAdminPanel = ({
                         </span>
                       </td>
                       <td><span className={`badge badge-status status-${l.status}`}>{l.status?.toUpperCase()}</span></td>
-                      <td style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{formatLeadSourceLabel(l.source || l.landingPage)}</td>
+                      <td style={{ fontSize: '0.8rem', color: '#64748b' }}>{formatLeadSourceLabel(l.source || l.landingPage)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1339,8 +1348,8 @@ export const CrmAdminPanel = ({
             </div>
 
             <div className="crm-table-container" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              <h3 style={{ margin: 0, color: '#ffffff', fontSize: '1.05rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Bell size={18} className="text-gold" />
+              <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.05rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Bell size={18} style={{ color: '#d97706' }} />
                 <span>{isAr ? 'سجل الإشعارات والأتمتة' : 'System Notifications'}</span>
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>

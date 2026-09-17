@@ -316,17 +316,16 @@ export default function CrmPage({
 
   // 2. Authenticated Full Dashboard Interface
   return (
-    <div className="crm-page-wrapper" style={{ minHeight: '100vh', background: 'radial-gradient(circle at 50% 0%, #172554 0%, #0a1128 60%, #030712 100%)' }}>
-      {/* 1. Executive Presidential Topbar */}
+    <div className="crm-page-wrapper" style={{ minHeight: '100vh', background: '#f8fafc', color: '#0f172a' }}>
+      {/* 1. Executive Presidential Topbar - White Luxury */}
       <header style={{
-        background: 'rgba(10, 17, 40, 0.85)',
-        backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(217, 119, 6, 0.3)',
+        background: '#ffffff',
+        borderBottom: '1px solid #e2e8f0',
         padding: '12px 28px',
         position: 'sticky',
         top: 0,
         zIndex: 200,
-        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.4)'
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)'
       }}>
         <div style={{ maxWidth: '1500px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
           
@@ -334,23 +333,23 @@ export default function CrmPage({
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{
-                background: 'linear-gradient(135deg, rgba(255, 202, 40, 0.2), rgba(13, 72, 161, 0.5))',
+                background: 'linear-gradient(135deg, rgba(13, 72, 161, 0.08), rgba(217, 119, 6, 0.12))',
                 padding: '6px',
-                borderRadius: '12px',
-                border: '1px solid rgba(255, 202, 40, 0.45)',
-                boxShadow: '0 0 15px rgba(255, 202, 40, 0.25)'
+                borderRadius: '10px',
+                border: '1px solid rgba(13, 72, 161, 0.2)',
+                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
               }}>
                 <LogoEmblem size={30} />
               </div>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <strong style={{ fontSize: '1.2rem', color: '#ffffff', letterSpacing: '0.8px', fontWeight: '900', direction: 'ltr', display: 'inline-flex', alignItems: 'baseline', gap: '3px' }} dir="ltr">
+                  <strong style={{ fontSize: '1.25rem', color: '#092347', letterSpacing: '0.5px', fontWeight: '900', direction: 'ltr', display: 'inline-flex', alignItems: 'baseline', gap: '3px' }} dir="ltr">
                     <span className="brand-one">1</span>LINE
                   </strong>
                   <span style={{ 
                     fontSize: '0.68rem', 
-                    background: 'var(--gradient-gold)', 
-                    color: '#092347', 
+                    background: '#092347', 
+                    color: '#ffffff', 
                     padding: '2px 8px', 
                     borderRadius: '6px', 
                     fontWeight: '900',
@@ -360,8 +359,8 @@ export default function CrmPage({
                   </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
-                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }}></span>
-                  <small style={{ color: '#94a3b8', fontSize: '0.74rem' }}>
+                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px rgba(16, 185, 129, 0.6)' }}></span>
+                  <small style={{ color: '#64748b', fontSize: '0.74rem', fontWeight: '500' }}>
                     {isAr ? 'النظام مشفر ومتصل سحابياً (SHA-256 Protected)' : 'Live Encrypted Session'}
                   </small>
                 </div>
@@ -374,15 +373,15 @@ export default function CrmPage({
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
-            background: 'rgba(255, 255, 255, 0.04)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            background: '#f8fafc',
+            border: '1px solid #e2e8f0',
             padding: '6px 16px',
             borderRadius: 'var(--radius-pill)',
             fontSize: '0.8rem',
-            color: '#cbd5e1'
+            color: '#334155'
           }}>
-            <Clock size={14} className="text-gold" />
-            <span style={{ fontWeight: '500' }}>
+            <Clock size={14} style={{ color: '#d97706' }} />
+            <span style={{ fontWeight: '600' }}>
               {new Date().toLocaleDateString(isAr ? 'ar-EG' : 'en-US', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' })}
             </span>
           </div>
@@ -393,17 +392,17 @@ export default function CrmPage({
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
-              background: 'rgba(217, 119, 6, 0.08)',
-              border: '1px solid rgba(217, 119, 6, 0.25)',
+              background: '#fffbeb',
+              border: '1px solid #fde68a',
               padding: '5px 12px',
               borderRadius: 'var(--radius-pill)'
             }}>
-              <ShieldCheck size={16} style={{ color: 'var(--accent-gold)' }} />
+              <ShieldCheck size={16} style={{ color: '#d97706' }} />
               <div style={{ textAlign: isAr ? 'right' : 'left' }}>
-                <span style={{ fontSize: '0.82rem', color: '#ffffff', fontWeight: 'bold', display: 'block', lineHeight: 1.2 }}>
+                <span style={{ fontSize: '0.82rem', color: '#0f172a', fontWeight: 'bold', display: 'block', lineHeight: 1.2 }}>
                   {isAr ? 'د. محمود الباز' : 'Dr. Mahmoud Elbaz'}
                 </span>
-                <small style={{ fontSize: '0.68rem', color: 'var(--accent-gold)' }}>
+                <small style={{ fontSize: '0.68rem', color: '#b45309', fontWeight: '600' }}>
                   {isAr ? 'المدير التنفيذي للعمليات' : 'Executive Director'}
                 </small>
               </div>
@@ -414,9 +413,9 @@ export default function CrmPage({
               type="button"
               onClick={() => setShowGoLiveWizard(true)}
               style={{
-                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(6, 182, 212, 0.15))',
-                border: '1px solid rgba(16, 185, 129, 0.4)',
-                color: '#10b981',
+                background: '#ecfdf5',
+                border: '1px solid #a7f3d0',
+                color: '#059669',
                 padding: '6px 14px',
                 borderRadius: 'var(--radius-pill)',
                 fontSize: '0.78rem',
@@ -424,7 +423,8 @@ export default function CrmPage({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
               }}
               title={isAr ? 'فحص جاهزية الموقع والتحول للإنتاج الفعلي' : 'Go-Live Readiness Audit'}
             >
@@ -443,34 +443,35 @@ export default function CrmPage({
                 gap: '6px',
                 padding: '7px 14px',
                 borderRadius: 'var(--radius-pill)',
-                background: 'rgba(255, 255, 255, 0.07)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                color: '#ffffff',
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                color: '#0f172a',
                 textDecoration: 'none',
                 fontWeight: 'bold',
                 transition: 'all 0.2s ease'
               }}
               title={isAr ? 'معاينة الموقع في نافذة مستقلة' : 'View Live Site'}
             >
-              <Globe size={14} style={{ color: 'var(--accent-gold)' }} />
+              <Globe size={14} style={{ color: '#d97706' }} />
               <span>{isAr ? 'الموقع الحي' : 'Live Site'}</span>
             </a>
 
             <button 
               type="button" 
-              className="btn btn-sm btn-outline" 
+              className="btn btn-sm" 
               onClick={() => {
                 setCrmAuthenticated(false);
                 sessionStorage.removeItem('crm_auth');
                 if (onLogout) onLogout();
               }}
               style={{ 
-                borderColor: 'rgba(239, 68, 68, 0.4)', 
-                color: '#f87171', 
+                borderColor: '#fecaca', 
+                color: '#dc2626', 
                 fontSize: '0.78rem', 
                 padding: '7px 14px',
                 borderRadius: '10px',
-                background: 'rgba(239, 68, 68, 0.08)'
+                background: '#fef2f2',
+                fontWeight: 'bold'
               }}
             >
               <LogOut size={14} />
@@ -480,36 +481,37 @@ export default function CrmPage({
         </div>
       </header>
 
-      {/* 2. Global Executive HUD Summary Bar (Collapsible Live Platform Ticker) */}
+      {/* 2. Global Executive HUD Summary Bar - Crisp White Cards */}
       <div style={{
-        background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.9) 0%, rgba(10, 17, 40, 0.7) 100%)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-        padding: '16px 28px'
+        background: '#f8fafc',
+        borderBottom: '1px solid #e2e8f0',
+        padding: '14px 28px'
       }}>
         <div style={{ maxWidth: '1500px', margin: '0 auto' }}>
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '14px'
+            gap: '12px'
           }}>
             {/* Metric 1: Leads & Conversion */}
             <div 
               onClick={() => setActiveTab('leads')}
               style={{
-                background: activeTab === 'leads' ? 'rgba(37, 99, 235, 0.15)' : 'rgba(255, 255, 255, 0.03)',
-                border: activeTab === 'leads' ? '1px solid #3b82f6' : '1px solid rgba(255, 255, 255, 0.07)',
-                borderRadius: '14px',
+                background: activeTab === 'leads' ? '#eff6ff' : '#ffffff',
+                border: activeTab === 'leads' ? '2px solid #2563eb' : '1px solid #e2e8f0',
+                borderRadius: '12px',
                 padding: '12px 18px',
                 cursor: 'pointer',
-                transition: 'all 0.25s ease'
+                transition: 'all 0.2s ease',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.76rem', color: '#94a3b8' }}>{isAr ? 'العملاء والفرص' : 'Total Leads'}</span>
-                <Users size={15} style={{ color: '#3b82f6' }} />
+                <span style={{ fontSize: '0.76rem', color: '#64748b', fontWeight: '600' }}>{isAr ? 'العملاء والفرص' : 'Total Leads'}</span>
+                <Users size={16} style={{ color: '#2563eb' }} />
               </div>
-              <div style={{ fontSize: '1.45rem', fontWeight: '900', color: '#ffffff', marginTop: '4px' }}>
-                {leads.length} <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: '#94a3b8' }}>{isAr ? 'عميل' : 'leads'}</span>
+              <div style={{ fontSize: '1.45rem', fontWeight: '900', color: '#0f172a', marginTop: '4px' }}>
+                {leads.length} <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: '#64748b' }}>{isAr ? 'عميل' : 'leads'}</span>
               </div>
             </div>
 
@@ -517,20 +519,21 @@ export default function CrmPage({
             <div 
               onClick={() => setActiveTab('properties')}
               style={{
-                background: activeTab === 'properties' ? 'rgba(217, 119, 6, 0.15)' : 'rgba(255, 255, 255, 0.03)',
-                border: activeTab === 'properties' ? '1px solid var(--accent-gold)' : '1px solid rgba(255, 255, 255, 0.07)',
-                borderRadius: '14px',
+                background: activeTab === 'properties' ? '#fffbeb' : '#ffffff',
+                border: activeTab === 'properties' ? '2px solid #d97706' : '1px solid #e2e8f0',
+                borderRadius: '12px',
                 padding: '12px 18px',
                 cursor: 'pointer',
-                transition: 'all 0.25s ease'
+                transition: 'all 0.2s ease',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.76rem', color: '#94a3b8' }}>{isAr ? 'محفظة العقارات' : 'Active Units'}</span>
-                <Building size={15} style={{ color: 'var(--accent-gold)' }} />
+                <span style={{ fontSize: '0.76rem', color: '#64748b', fontWeight: '600' }}>{isAr ? 'محفظة العقارات' : 'Active Units'}</span>
+                <Building size={16} style={{ color: '#d97706' }} />
               </div>
-              <div style={{ fontSize: '1.45rem', fontWeight: '900', color: '#ffffff', marginTop: '4px' }}>
-                {properties.length} <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: 'var(--accent-gold)' }}>{isAr ? 'وحدة معتمدة' : 'units'}</span>
+              <div style={{ fontSize: '1.45rem', fontWeight: '900', color: '#0f172a', marginTop: '4px' }}>
+                {properties.length} <span style={{ fontSize: '0.75rem', fontWeight: '600', color: '#b45309' }}>{isAr ? 'وحدة معتمدة' : 'units'}</span>
               </div>
             </div>
 
@@ -538,20 +541,21 @@ export default function CrmPage({
             <div 
               onClick={() => setActiveTab('projects')}
               style={{
-                background: activeTab === 'projects' ? 'rgba(168, 85, 247, 0.15)' : 'rgba(255, 255, 255, 0.03)',
-                border: activeTab === 'projects' ? '1px solid #a855f7' : '1px solid rgba(255, 255, 255, 0.07)',
-                borderRadius: '14px',
+                background: activeTab === 'projects' ? '#faf5ff' : '#ffffff',
+                border: activeTab === 'projects' ? '2px solid #7c3aed' : '1px solid #e2e8f0',
+                borderRadius: '12px',
                 padding: '12px 18px',
                 cursor: 'pointer',
-                transition: 'all 0.25s ease'
+                transition: 'all 0.2s ease',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.76rem', color: '#94a3b8' }}>{isAr ? 'المشروعات الكبرى' : 'Mega Projects'}</span>
-                <Sparkles size={15} style={{ color: '#a855f7' }} />
+                <span style={{ fontSize: '0.76rem', color: '#64748b', fontWeight: '600' }}>{isAr ? 'المشروعات الكبرى' : 'Mega Projects'}</span>
+                <Sparkles size={16} style={{ color: '#7c3aed' }} />
               </div>
-              <div style={{ fontSize: '1.45rem', fontWeight: '900', color: '#ffffff', marginTop: '4px' }}>
-                {projects.length} <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: '#a855f7' }}>{isAr ? 'كمبوند ومشروع' : 'projects'}</span>
+              <div style={{ fontSize: '1.45rem', fontWeight: '900', color: '#0f172a', marginTop: '4px' }}>
+                {projects.length} <span style={{ fontSize: '0.75rem', fontWeight: '600', color: '#7c3aed' }}>{isAr ? 'كمبوند ومشروع' : 'projects'}</span>
               </div>
             </div>
 
@@ -560,28 +564,29 @@ export default function CrmPage({
               onClick={() => setActiveTab('demands')}
               style={{
                 background: activeTab === 'demands' 
-                  ? 'rgba(16, 185, 129, 0.15)' 
+                  ? '#ecfdf5' 
                   : pendingDemandsCount > 0 
-                    ? 'rgba(239, 68, 68, 0.1)' 
-                    : 'rgba(255, 255, 255, 0.03)',
+                    ? '#fef2f2' 
+                    : '#ffffff',
                 border: activeTab === 'demands' 
-                  ? '1px solid #10b981' 
+                  ? '2px solid #059669' 
                   : pendingDemandsCount > 0 
-                    ? '1px solid rgba(239, 68, 68, 0.4)' 
-                    : '1px solid rgba(255, 255, 255, 0.07)',
-                borderRadius: '14px',
+                    ? '1.5px solid #ef4444' 
+                    : '1px solid #e2e8f0',
+                borderRadius: '12px',
                 padding: '12px 18px',
                 cursor: 'pointer',
-                transition: 'all 0.25s ease'
+                transition: 'all 0.2s ease',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.76rem', color: pendingDemandsCount > 0 ? '#f87171' : '#94a3b8' }}>
+                <span style={{ fontSize: '0.76rem', color: pendingDemandsCount > 0 ? '#dc2626' : '#64748b', fontWeight: '600' }}>
                   {isAr ? 'طلبات المشترين' : 'Demands Flow'}
                 </span>
-                <Zap size={15} style={{ color: pendingDemandsCount > 0 ? '#ef4444' : '#10b981' }} />
+                <Zap size={16} style={{ color: pendingDemandsCount > 0 ? '#ef4444' : '#059669' }} />
               </div>
-              <div style={{ fontSize: '1.45rem', fontWeight: '900', color: '#ffffff', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ fontSize: '1.45rem', fontWeight: '900', color: '#0f172a', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span>{demands.length}</span>
                 {pendingDemandsCount > 0 && (
                   <span style={{
@@ -590,8 +595,7 @@ export default function CrmPage({
                     color: '#fff',
                     padding: '2px 8px',
                     borderRadius: '8px',
-                    fontWeight: 'bold',
-                    animation: 'pulse 2s infinite'
+                    fontWeight: 'bold'
                   }}>
                     {pendingDemandsCount} {isAr ? 'معلق يحتاج اعتماد' : 'pending'}
                   </span>
@@ -601,33 +605,34 @@ export default function CrmPage({
 
             {/* Metric 5: Total Purchasing Power */}
             <div style={{
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid rgba(255, 255, 255, 0.07)',
-              borderRadius: '14px',
-              padding: '12px 18px'
+              background: '#ffffff',
+              border: '1px solid #e2e8f0',
+              borderRadius: '12px',
+              padding: '12px 18px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.76rem', color: '#94a3b8' }}>{isAr ? 'القوة الشرائية المسجلة' : 'Market Demand Power'}</span>
-                <span style={{ color: '#10b981', fontWeight: 'bold' }}>EGP</span>
+                <span style={{ fontSize: '0.76rem', color: '#64748b', fontWeight: '600' }}>{isAr ? 'القوة الشرائية المسجلة' : 'Market Demand Power'}</span>
+                <span style={{ color: '#059669', fontWeight: 'bold' }}>EGP</span>
               </div>
-              <div style={{ fontSize: '1.45rem', fontWeight: '900', color: '#10b981', marginTop: '4px' }}>
+              <div style={{ fontSize: '1.45rem', fontWeight: '900', color: '#059669', marginTop: '4px' }}>
                 {(demands.reduce((sum, d) => sum + (typeof d.budget === 'number' ? d.budget : parseInt(String(d.budget).replace(/,/g, '')) || 0), 0) / 1000000).toFixed(1)}M
-                <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: '#94a3b8', marginInlineStart: '4px' }}>{isAr ? 'مليون ج.م' : 'EGP'}</span>
+                <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: '#64748b', marginInlineStart: '4px' }}>{isAr ? 'مليون ج.م' : 'EGP'}</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 3. Modern Segmented Command Navigation Bar */}
+      {/* 3. Modern Segmented Command Navigation Bar - Clean White Enterprise */}
       <div style={{
-        background: 'rgba(15, 23, 42, 0.95)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+        background: '#ffffff',
+        borderBottom: '1px solid #e2e8f0',
         padding: '10px 28px',
         position: 'sticky',
-        top: '65px',
+        top: '60px',
         zIndex: 150,
-        backdropFilter: 'blur(16px)'
+        boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
       }}>
         <div style={{ 
           maxWidth: '1500px', 
@@ -641,11 +646,11 @@ export default function CrmPage({
           {/* Segmented Tab Controls */}
           <nav style={{ 
             display: 'flex', 
-            background: 'rgba(10, 17, 40, 0.9)', 
-            padding: '5px', 
-            borderRadius: '14px', 
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            gap: '6px',
+            background: '#f1f5f9', 
+            padding: '4px', 
+            borderRadius: '12px', 
+            border: '1px solid #e2e8f0',
+            gap: '4px',
             overflowX: 'auto',
             maxWidth: '100%'
           }}>
@@ -657,26 +662,26 @@ export default function CrmPage({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                padding: '8px 18px',
-                borderRadius: '10px',
-                fontSize: '0.86rem',
-                fontWeight: activeTab === 'leads' ? 'bold' : '500',
-                background: activeTab === 'leads' ? 'linear-gradient(135deg, #2563eb, #1d4ed8)' : 'transparent',
-                color: activeTab === 'leads' ? '#ffffff' : '#94a3b8',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontSize: '0.84rem',
+                fontWeight: activeTab === 'leads' ? 'bold' : '600',
+                background: activeTab === 'leads' ? '#092347' : 'transparent',
+                color: activeTab === 'leads' ? '#ffffff' : '#475569',
                 border: 'none',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                boxShadow: activeTab === 'leads' ? '0 4px 15px rgba(37, 99, 235, 0.35)' : 'none'
+                boxShadow: activeTab === 'leads' ? '0 2px 8px rgba(9, 35, 71, 0.25)' : 'none'
               }}
             >
-              <Users size={16} />
+              <Users size={15} />
               <span>{isAr ? 'العملاء والمبيعات (Leads)' : 'Leads & CRM'}</span>
               <span style={{ 
-                background: activeTab === 'leads' ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.08)',
-                color: '#fff',
+                background: activeTab === 'leads' ? 'rgba(255, 255, 255, 0.2)' : '#e2e8f0',
+                color: activeTab === 'leads' ? '#fff' : '#0f172a',
                 fontSize: '0.72rem',
-                padding: '2px 7px',
-                borderRadius: '10px',
+                padding: '1px 7px',
+                borderRadius: '8px',
                 fontWeight: 'bold'
               }}>
                 {leads.length}
@@ -691,26 +696,26 @@ export default function CrmPage({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                padding: '8px 18px',
-                borderRadius: '10px',
-                fontSize: '0.86rem',
-                fontWeight: activeTab === 'properties' ? 'bold' : '500',
-                background: activeTab === 'properties' ? 'linear-gradient(135deg, #d97706, #b45309)' : 'transparent',
-                color: activeTab === 'properties' ? '#ffffff' : '#94a3b8',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontSize: '0.84rem',
+                fontWeight: activeTab === 'properties' ? 'bold' : '600',
+                background: activeTab === 'properties' ? '#d97706' : 'transparent',
+                color: activeTab === 'properties' ? '#ffffff' : '#475569',
                 border: 'none',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                boxShadow: activeTab === 'properties' ? '0 4px 15px rgba(217, 119, 6, 0.35)' : 'none'
+                boxShadow: activeTab === 'properties' ? '0 2px 8px rgba(217, 119, 6, 0.25)' : 'none'
               }}
             >
-              <Building size={16} />
+              <Building size={15} />
               <span>{isAr ? 'محفظة العقارات (CMS)' : 'Properties CMS'}</span>
               <span style={{ 
-                background: activeTab === 'properties' ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.08)',
-                color: '#fff',
+                background: activeTab === 'properties' ? 'rgba(255, 255, 255, 0.2)' : '#e2e8f0',
+                color: activeTab === 'properties' ? '#fff' : '#0f172a',
                 fontSize: '0.72rem',
-                padding: '2px 7px',
-                borderRadius: '10px',
+                padding: '1px 7px',
+                borderRadius: '8px',
                 fontWeight: 'bold'
               }}>
                 {properties.length}
@@ -725,26 +730,26 @@ export default function CrmPage({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                padding: '8px 18px',
-                borderRadius: '10px',
-                fontSize: '0.86rem',
-                fontWeight: activeTab === 'projects' ? 'bold' : '500',
-                background: activeTab === 'projects' ? 'linear-gradient(135deg, #9333ea, #7e22ce)' : 'transparent',
-                color: activeTab === 'projects' ? '#ffffff' : '#94a3b8',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontSize: '0.84rem',
+                fontWeight: activeTab === 'projects' ? 'bold' : '600',
+                background: activeTab === 'projects' ? '#7c3aed' : 'transparent',
+                color: activeTab === 'projects' ? '#ffffff' : '#475569',
                 border: 'none',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                boxShadow: activeTab === 'projects' ? '0 4px 15px rgba(147, 51, 234, 0.35)' : 'none'
+                boxShadow: activeTab === 'projects' ? '0 2px 8px rgba(124, 58, 237, 0.25)' : 'none'
               }}
             >
-              <Sparkles size={16} />
+              <Sparkles size={15} />
               <span>{isAr ? 'المشروعات الكبرى' : 'Mega Projects'}</span>
               <span style={{ 
-                background: activeTab === 'projects' ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.08)',
-                color: '#fff',
+                background: activeTab === 'projects' ? 'rgba(255, 255, 255, 0.2)' : '#e2e8f0',
+                color: activeTab === 'projects' ? '#fff' : '#0f172a',
                 fontSize: '0.72rem',
-                padding: '2px 7px',
-                borderRadius: '10px',
+                padding: '1px 7px',
+                borderRadius: '8px',
                 fontWeight: 'bold'
               }}>
                 {projects.length}
@@ -759,28 +764,27 @@ export default function CrmPage({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                padding: '8px 18px',
-                borderRadius: '10px',
-                fontSize: '0.86rem',
-                fontWeight: activeTab === 'demands' ? 'bold' : '500',
-                background: activeTab === 'demands' ? 'linear-gradient(135deg, #059669, #047857)' : 'transparent',
-                color: activeTab === 'demands' ? '#ffffff' : '#94a3b8',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontSize: '0.84rem',
+                fontWeight: activeTab === 'demands' ? 'bold' : '600',
+                background: activeTab === 'demands' ? '#059669' : 'transparent',
+                color: activeTab === 'demands' ? '#ffffff' : '#475569',
                 border: 'none',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                boxShadow: activeTab === 'demands' ? '0 4px 15px rgba(5, 150, 105, 0.35)' : 'none'
+                boxShadow: activeTab === 'demands' ? '0 2px 8px rgba(5, 150, 105, 0.25)' : 'none'
               }}
             >
-              <Zap size={16} />
+              <Zap size={15} />
               <span>{isAr ? 'طلبات المشترين (Demands)' : 'Buyer Demands'}</span>
               <span style={{ 
-                background: pendingDemandsCount > 0 ? '#ef4444' : (activeTab === 'demands' ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.08)'),
-                color: '#fff',
+                background: pendingDemandsCount > 0 ? '#ef4444' : (activeTab === 'demands' ? 'rgba(255, 255, 255, 0.2)' : '#e2e8f0'),
+                color: pendingDemandsCount > 0 || activeTab === 'demands' ? '#fff' : '#0f172a',
                 fontSize: '0.72rem',
-                padding: '2px 7px',
-                borderRadius: '10px',
-                fontWeight: '900',
-                boxShadow: pendingDemandsCount > 0 ? '0 0 10px rgba(239, 68, 68, 0.6)' : 'none'
+                padding: '1px 7px',
+                borderRadius: '8px',
+                fontWeight: '900'
               }}>
                 {pendingDemandsCount > 0 ? `${pendingDemandsCount} معلق` : demands.length}
               </span>
@@ -794,19 +798,19 @@ export default function CrmPage({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                padding: '8px 18px',
-                borderRadius: '10px',
-                fontSize: '0.86rem',
-                fontWeight: activeTab === 'corporate' ? 'bold' : '500',
-                background: activeTab === 'corporate' ? 'linear-gradient(135deg, #0284c7, #0369a1)' : 'transparent',
-                color: activeTab === 'corporate' ? '#ffffff' : '#94a3b8',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontSize: '0.84rem',
+                fontWeight: activeTab === 'corporate' ? 'bold' : '600',
+                background: activeTab === 'corporate' ? '#0284c7' : 'transparent',
+                color: activeTab === 'corporate' ? '#ffffff' : '#475569',
                 border: 'none',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                boxShadow: activeTab === 'corporate' ? '0 4px 15px rgba(2, 132, 199, 0.35)' : 'none'
+                boxShadow: activeTab === 'corporate' ? '0 2px 8px rgba(2, 132, 199, 0.25)' : 'none'
               }}
             >
-              <ShieldCheck size={16} />
+              <ShieldCheck size={15} />
               <span>{isAr ? 'هوية الشركة والإدارة (CMS)' : 'Corporate CMS'}</span>
             </button>
 
@@ -818,19 +822,19 @@ export default function CrmPage({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                padding: '8px 18px',
-                borderRadius: '10px',
-                fontSize: '0.86rem',
-                fontWeight: activeTab === 'areas' ? 'bold' : '500',
-                background: activeTab === 'areas' ? 'linear-gradient(135deg, #d97706, #b45309)' : 'transparent',
-                color: activeTab === 'areas' ? '#ffffff' : '#94a3b8',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontSize: '0.84rem',
+                fontWeight: activeTab === 'areas' ? 'bold' : '600',
+                background: activeTab === 'areas' ? '#b45309' : 'transparent',
+                color: activeTab === 'areas' ? '#ffffff' : '#475569',
                 border: 'none',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                boxShadow: activeTab === 'areas' ? '0 4px 15px rgba(217, 119, 6, 0.35)' : 'none'
+                boxShadow: activeTab === 'areas' ? '0 2px 8px rgba(180, 83, 9, 0.25)' : 'none'
               }}
             >
-              <MapPin size={16} />
+              <MapPin size={15} />
               <span>{isAr ? 'إدارة المناطق والأحياء' : 'Districts CMS'}</span>
             </button>
           </nav>
@@ -847,11 +851,11 @@ export default function CrmPage({
                 onChange={(e) => setUniversalSearch(e.target.value)}
                 style={{
                   width: '100%',
-                  background: 'rgba(10, 17, 40, 0.8)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  background: '#ffffff',
+                  border: '1px solid #cbd5e1',
                   borderRadius: '10px',
                   padding: isAr ? '7px 36px 7px 12px' : '7px 12px 7px 36px',
-                  color: '#ffffff',
+                  color: '#0f172a',
                   fontSize: '0.82rem',
                   outline: 'none'
                 }}
@@ -882,10 +886,10 @@ export default function CrmPage({
                   top: '120%',
                   [isAr ? 'right' : 'left']: 0,
                   width: '320px',
-                  background: '#0f172a',
-                  border: '1px solid rgba(217, 119, 6, 0.35)',
+                  background: '#ffffff',
+                  border: '1px solid #e2e8f0',
                   borderRadius: '12px',
-                  boxShadow: '0 12px 30px rgba(0, 0, 0, 0.6)',
+                  boxShadow: '0 12px 30px rgba(0, 0, 0, 0.12)',
                   zIndex: 300,
                   maxHeight: '360px',
                   overflowY: 'auto',
@@ -894,17 +898,17 @@ export default function CrmPage({
                   {/* Matching Leads */}
                   {leads.filter(l => (l.name || '').toLowerCase().includes(universalSearch.toLowerCase()) || (l.phone || '').includes(universalSearch)).length > 0 && (
                     <div style={{ marginBottom: '8px' }}>
-                      <span style={{ fontSize: '0.7rem', color: '#3b82f6', fontWeight: 'bold', padding: '4px 8px', display: 'block' }}>
+                      <span style={{ fontSize: '0.7rem', color: '#2563eb', fontWeight: 'bold', padding: '4px 8px', display: 'block' }}>
                         {isAr ? 'العملاء المطابقين' : 'Matching Leads'}
                       </span>
                       {leads.filter(l => (l.name || '').toLowerCase().includes(universalSearch.toLowerCase()) || (l.phone || '').includes(universalSearch)).slice(0, 3).map(l => (
                         <div 
                           key={l.id} 
                           onClick={() => { setActiveTab('leads'); setUniversalSearch(''); }}
-                          style={{ padding: '6px 10px', borderRadius: '8px', cursor: 'pointer', background: 'rgba(255,255,255,0.03)', marginBottom: '4px' }}
+                          style={{ padding: '6px 10px', borderRadius: '8px', cursor: 'pointer', background: '#f8fafc', marginBottom: '4px' }}
                         >
-                          <div style={{ color: '#fff', fontSize: '0.8rem', fontWeight: 'bold' }}>{l.name}</div>
-                          <div style={{ color: '#94a3b8', fontSize: '0.72rem' }}>{l.phone}</div>
+                          <div style={{ color: '#0f172a', fontSize: '0.8rem', fontWeight: 'bold' }}>{l.name}</div>
+                          <div style={{ color: '#64748b', fontSize: '0.72rem' }}>{l.phone}</div>
                         </div>
                       ))}
                     </div>
@@ -913,17 +917,17 @@ export default function CrmPage({
                   {/* Matching Properties */}
                   {properties.filter(p => (p.title_ar || '').toLowerCase().includes(universalSearch.toLowerCase()) || (p.locationName_ar || '').toLowerCase().includes(universalSearch.toLowerCase())).length > 0 && (
                     <div style={{ marginBottom: '8px' }}>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--accent-gold)', fontWeight: 'bold', padding: '4px 8px', display: 'block' }}>
+                      <span style={{ fontSize: '0.7rem', color: '#d97706', fontWeight: 'bold', padding: '4px 8px', display: 'block' }}>
                         {isAr ? 'العقارات المطابقة' : 'Matching Properties'}
                       </span>
                       {properties.filter(p => (p.title_ar || '').toLowerCase().includes(universalSearch.toLowerCase()) || (p.locationName_ar || '').toLowerCase().includes(universalSearch.toLowerCase())).slice(0, 3).map(p => (
                         <div 
                           key={p.id} 
                           onClick={() => { setActiveTab('properties'); setUniversalSearch(''); }}
-                          style={{ padding: '6px 10px', borderRadius: '8px', cursor: 'pointer', background: 'rgba(255,255,255,0.03)', marginBottom: '4px' }}
+                          style={{ padding: '6px 10px', borderRadius: '8px', cursor: 'pointer', background: '#f8fafc', marginBottom: '4px' }}
                         >
-                          <div style={{ color: '#fff', fontSize: '0.8rem', fontWeight: 'bold' }}>{p.title_ar}</div>
-                          <div style={{ color: '#94a3b8', fontSize: '0.72rem' }}>{p.price?.toLocaleString()} ج.م</div>
+                          <div style={{ color: '#0f172a', fontSize: '0.8rem', fontWeight: 'bold' }}>{p.title_ar}</div>
+                          <div style={{ color: '#64748b', fontSize: '0.72rem' }}>{p.price?.toLocaleString()} ج.م</div>
                         </div>
                       ))}
                     </div>
@@ -932,17 +936,17 @@ export default function CrmPage({
                   {/* Matching Demands */}
                   {demands.filter(d => (d.text_ar || '').toLowerCase().includes(universalSearch.toLowerCase()) || (d.clientName || '').toLowerCase().includes(universalSearch.toLowerCase()) || (d.phone || '').includes(universalSearch)).length > 0 && (
                     <div>
-                      <span style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 'bold', padding: '4px 8px', display: 'block' }}>
+                      <span style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 'bold', padding: '4px 8px', display: 'block' }}>
                         {isAr ? 'طلبات المشترين' : 'Matching Demands'}
                       </span>
                       {demands.filter(d => (d.text_ar || '').toLowerCase().includes(universalSearch.toLowerCase()) || (d.clientName || '').toLowerCase().includes(universalSearch.toLowerCase()) || (d.phone || '').includes(universalSearch)).slice(0, 3).map(d => (
                         <div 
                           key={d.id} 
                           onClick={() => { setActiveTab('demands'); setUniversalSearch(''); }}
-                          style={{ padding: '6px 10px', borderRadius: '8px', cursor: 'pointer', background: 'rgba(255,255,255,0.03)', marginBottom: '4px' }}
+                          style={{ padding: '6px 10px', borderRadius: '8px', cursor: 'pointer', background: '#f8fafc', marginBottom: '4px' }}
                         >
-                          <div style={{ color: '#fff', fontSize: '0.8rem', fontWeight: 'bold' }}>{d.text_ar || d.clientName}</div>
-                          <div style={{ color: '#94a3b8', fontSize: '0.72rem' }}>ميزانية: {d.budget} ج.م</div>
+                          <div style={{ color: '#0f172a', fontSize: '0.8rem', fontWeight: 'bold' }}>{d.text_ar || d.clientName}</div>
+                          <div style={{ color: '#64748b', fontSize: '0.72rem' }}>ميزانية: {d.budget} ج.م</div>
                         </div>
                       ))}
                     </div>
@@ -957,7 +961,7 @@ export default function CrmPage({
                 type="button"
                 onClick={() => setShowQuickActionMenu(!showQuickActionMenu)}
                 style={{
-                  background: 'linear-gradient(135deg, #d97706, #b45309)',
+                  background: '#092347',
                   color: '#ffffff',
                   fontWeight: 'bold',
                   fontSize: '0.82rem',
@@ -968,7 +972,7 @@ export default function CrmPage({
                   borderRadius: '10px',
                   border: 'none',
                   cursor: 'pointer',
-                  boxShadow: '0 4px 15px rgba(217, 119, 6, 0.35)'
+                  boxShadow: '0 2px 8px rgba(9, 35, 71, 0.25)'
                 }}
               >
                 <Plus size={15} />
@@ -982,10 +986,10 @@ export default function CrmPage({
                   position: 'absolute',
                   top: '115%',
                   [isAr ? 'left' : 'right']: 0,
-                  background: '#0f172a',
-                  border: '1px solid rgba(217, 119, 6, 0.4)',
+                  background: '#ffffff',
+                  border: '1px solid #e2e8f0',
                   borderRadius: '12px',
-                  boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)',
+                  boxShadow: '0 10px 25px rgba(0, 0, 0, 0.12)',
                   minWidth: '210px',
                   zIndex: 300,
                   overflow: 'hidden'
@@ -993,41 +997,41 @@ export default function CrmPage({
                   <button
                     type="button"
                     onClick={() => { setActiveTab('leads'); setShowQuickActionMenu(false); }}
-                    style={{ width: '100%', padding: '10px 14px', textAlign: isAr ? 'right' : 'left', background: 'none', border: 'none', color: '#fff', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+                    style={{ width: '100%', padding: '10px 14px', textAlign: isAr ? 'right' : 'left', background: 'none', border: 'none', color: '#0f172a', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9' }}
                   >
-                    <Users size={14} style={{ color: '#3b82f6' }} />
+                    <Users size={14} style={{ color: '#2563eb' }} />
                     <span>{isAr ? '+ تسجيل عميل جديد' : '+ New Lead'}</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => { setActiveTab('properties'); setShowQuickActionMenu(false); }}
-                    style={{ width: '100%', padding: '10px 14px', textAlign: isAr ? 'right' : 'left', background: 'none', border: 'none', color: '#fff', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+                    style={{ width: '100%', padding: '10px 14px', textAlign: isAr ? 'right' : 'left', background: 'none', border: 'none', color: '#0f172a', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9' }}
                   >
-                    <Building size={14} style={{ color: 'var(--accent-gold)' }} />
+                    <Building size={14} style={{ color: '#d97706' }} />
                     <span>{isAr ? '+ إضافة عقار جديد' : '+ New Property'}</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => { setActiveTab('demands'); setShowQuickActionMenu(false); }}
-                    style={{ width: '100%', padding: '10px 14px', textAlign: isAr ? 'right' : 'left', background: 'none', border: 'none', color: '#fff', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+                    style={{ width: '100%', padding: '10px 14px', textAlign: isAr ? 'right' : 'left', background: 'none', border: 'none', color: '#0f172a', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9' }}
                   >
-                    <Zap size={14} style={{ color: '#10b981' }} />
+                    <Zap size={14} style={{ color: '#059669' }} />
                     <span>{isAr ? '+ إضافة طلب مشترٍ' : '+ New Demand'}</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => { setActiveTab('projects'); setShowQuickActionMenu(false); }}
-                    style={{ width: '100%', padding: '10px 14px', textAlign: isAr ? 'right' : 'left', background: 'none', border: 'none', color: '#fff', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+                    style={{ width: '100%', padding: '10px 14px', textAlign: isAr ? 'right' : 'left', background: 'none', border: 'none', color: '#0f172a', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9' }}
                   >
-                    <Sparkles size={14} style={{ color: '#a855f7' }} />
+                    <Sparkles size={14} style={{ color: '#7c3aed' }} />
                     <span>{isAr ? '+ إضافة مشروع استثماري' : '+ New Project'}</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => { setActiveTab('areas'); setShowQuickActionMenu(false); }}
-                    style={{ width: '100%', padding: '10px 14px', textAlign: isAr ? 'right' : 'left', background: 'none', border: 'none', color: '#fff', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                    style={{ width: '100%', padding: '10px 14px', textAlign: isAr ? 'right' : 'left', background: 'none', border: 'none', color: '#0f172a', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
                   >
-                    <MapPin size={14} style={{ color: 'var(--accent-gold)' }} />
+                    <MapPin size={14} style={{ color: '#b45309' }} />
                     <span>{isAr ? '+ إدارة وإضافة المناطق' : '+ Districts CMS'}</span>
                   </button>
                 </div>
