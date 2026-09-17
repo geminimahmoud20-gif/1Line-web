@@ -4,44 +4,48 @@
 ------------------------------------------------------------- */
 
 :root {
-  /* 🏛️ 1LINE BRAND IDENTITY - HARMONIZED WITH LOGO EMBLEM */
-  --brand-navy: #0d48a1;          /* لون سقف وأعمدة الشعار */
-  --brand-navy-dark: #0a3880;     /* كحلي معماري موثوق */
-  --brand-navy-light: #1565c0;
+  /* 🏛️ 1LINE BRAND IDENTITY - ROYAL MIDNIGHT & CHAMPAGNE GOLD (WORLD-CLASS LUXURY) */
+  --brand-navy: #0A192F;          /* كحلي ملكي ياقوتي عميق */
+  --brand-navy-dark: #060D1A;     /* كحلي ليلي شديد الهيبة */
+  --brand-navy-light: #162B4D;
   
-  --brand-gold: #ffca28;          /* كبسولة الشعار الذهبية الأصلية */
-  --brand-gold-warm: #f59e0b;     /* كهرماني ناصع للتباين العالي */
-  --accent-gold: #f59e0b;
-  --accent-gold-hover: #d97706;
-  --accent-gold-light: rgba(255, 202, 40, 0.14);
-  --accent-gold-border: rgba(245, 158, 11, 0.4);
+  --brand-gold: #C5A059;          /* ذهب شمبانيا معدني معتق (Sotheby's Standard) */
+  --brand-gold-warm: #D4AF37;     /* ذهب كلاسيكي براق عالي التباين */
+  --brand-gold-light: #F3E5C8;
+  --brand-gold-dark: #9A7B38;
+  --accent-gold: #D4AF37;
+  --accent-gold-hover: #C5A059;
+  --accent-gold-light: rgba(197, 160, 89, 0.14);
+  --accent-gold-border: rgba(197, 160, 89, 0.38);
   
-  --gradient-gold: linear-gradient(135deg, #ffd54f 0%, #f59e0b 100%);
-  --gradient-navy: linear-gradient(135deg, #0d48a1 0%, #0a3880 100%);
+  --gradient-gold: linear-gradient(135deg, #F3E5C8 0%, #D4AF37 50%, #9A7B38 100%);
+  --gradient-gold-foil: linear-gradient(135deg, #ECC880 0%, #C5A059 30%, #F5E5BE 50%, #C5A059 75%, #947124 100%);
+  --gradient-navy: linear-gradient(135deg, #0A192F 0%, #060D1A 100%);
+  --gradient-royal: linear-gradient(135deg, #0A1E3F 0%, #162B4D 50%, #060D1A 100%);
   --gradient-sky: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
   --gradient-emerald: linear-gradient(135deg, #34d399 0%, #10b981 100%);
 
-  /* 🏛️ LUXURIOUS CHEERFUL WHITE PALETTE (أبيض فاخر مبهج للعين) */
-  --primary: #0b4ea2;
-  --primary-light: #0284c7;
-  --primary-dark: #073875;
-  --accent-sky: #38bdf8;
-  --secondary: #f8fafc;
+  /* 🏛️ LUXURIOUS WARM ALABASTER PALETTE (كانفاس رخامي عاجي فاخر) */
+  --primary: #0A1E3F;
+  --primary-light: #162B4D;
+  --primary-dark: #050E1F;
+  --accent-sky: #0284c7;
+  --secondary: #F4F1EA;
   
-  --bg-slate: #ffffff;
-  --bg-card: #ffffff;
-  --bg-card-hover: #fafcff;
-  --surface: #ffffff;
-  --bg-surface: linear-gradient(180deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);
-  --bg-surface-warm: linear-gradient(180deg, #ffffff 0%, #fefce8 60%, #ffffff 100%);
+  --bg-slate: #F8F9FA;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #FAF8F5;
+  --surface: #FFFFFF;
+  --bg-surface: linear-gradient(180deg, #FFFFFF 0%, #F9F8F5 50%, #F3EFE8 100%);
+  --bg-surface-warm: linear-gradient(180deg, #FFFFFF 0%, #FAF6EE 60%, #FFFFFF 100%);
   
-  --text-primary: #091e42;
-  --text-secondary: #334155;
-  --text-muted: #64748b;
+  --text-primary: #0A192F;
+  --text-secondary: #2C3E50;
+  --text-muted: #5A6B82;
   
-  --border-color: rgba(226, 232, 240, 0.9);
-  --border-hover: rgba(2, 132, 199, 0.4);
-  --border-light: rgba(241, 245, 249, 0.95);
+  --border-color: rgba(197, 160, 89, 0.24);
+  --border-hover: rgba(212, 175, 55, 0.58);
+  --border-light: rgba(197, 160, 89, 0.14);
   
   --emerald: #059669;
   --emerald-bg: rgba(16, 185, 129, 0.1);
@@ -49,18 +53,18 @@
   --cyan-bg: rgba(2, 132, 199, 0.1);
   --rose: #e11d48;
   --rose-bg: rgba(225, 29, 72, 0.1);
-  --amber: #d97706;
-  --amber-bg: rgba(245, 158, 11, 0.12);
+  --amber: #C5A059;
+  --amber-bg: rgba(197, 160, 89, 0.14);
 
   /* Fonts */
   --font-ar: 'Cairo', system-ui, -apple-system, sans-serif;
   --font-en: 'Outfit', system-ui, -apple-system, sans-serif;
   
-  /* High-End Diffused Shadows */
-  --shadow-sm: 0 2px 10px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-  --shadow-md: 0 10px 30px -4px rgba(11, 78, 162, 0.06), 0 2px 8px rgba(0, 0, 0, 0.02);
-  --shadow-lg: 0 20px 50px -10px rgba(11, 78, 162, 0.1), 0 4px 16px rgba(0, 0, 0, 0.03);
-  --shadow-luxury: 0 24px 60px -12px rgba(11, 78, 162, 0.12), 0 0 1px rgba(15, 23, 42, 0.1);
+  /* High-End Architectural Diffused Shadows */
+  --shadow-sm: 0 2px 10px rgba(10, 25, 47, 0.05), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-md: 0 12px 32px -4px rgba(10, 25, 47, 0.09), 0 2px 8px rgba(197, 160, 89, 0.06);
+  --shadow-lg: 0 22px 55px -10px rgba(10, 25, 47, 0.14), 0 4px 16px rgba(197, 160, 89, 0.1);
+  --shadow-luxury: 0 26px 65px -12px rgba(10, 25, 47, 0.18), 0 0 1px rgba(197, 160, 89, 0.35);
   --shadow-inset: inset 0 2px 4px 0 rgba(0, 0, 0, 0.03);
   
   /* Radius */
@@ -87,38 +91,38 @@ body.dark,
 .dark-theme,
 [data-theme="dark"] {
   /* Obsidian Architecture & Deep Midnight Surfaces */
-  --bg-slate: #070b14;
-  --bg-card: #0f172a;
-  --bg-card-hover: #162238;
-  --surface: #0f172a;
-  --bg-surface: linear-gradient(180deg, #0b1120 0%, #060913 100%);
+  --bg-slate: #050811;
+  --bg-card: #0A1124;
+  --bg-card-hover: #101B38;
+  --surface: #0A1124;
+  --bg-surface: linear-gradient(180deg, #080E1E 0%, #04070F 100%);
   
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-muted: #94a3b8;
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
   
-  --border-color: rgba(255, 255, 255, 0.1);
-  --border-hover: rgba(245, 158, 11, 0.45);
-  --border-light: rgba(255, 255, 255, 0.05);
+  --border-color: rgba(212, 175, 55, 0.22);
+  --border-hover: rgba(212, 175, 55, 0.65);
+  --border-light: rgba(255, 255, 255, 0.07);
 
-  --brand-navy: #1e3a8a;
-  --brand-navy-dark: #0a1435;
-  --brand-navy-light: #2563eb;
+  --brand-navy: #0A192F;
+  --brand-navy-dark: #040812;
+  --brand-navy-light: #162B4D;
   
-  --brand-gold: #ffca28;
-  --brand-gold-warm: #fbbf24;
-  --accent-gold: #f59e0b;
-  --accent-gold-hover: #fbbf24;
-  --accent-gold-light: rgba(245, 158, 11, 0.16);
-  --accent-gold-border: rgba(245, 158, 11, 0.5);
+  --brand-gold: #C5A059;
+  --brand-gold-warm: #D4AF37;
+  --accent-gold: #D4AF37;
+  --accent-gold-hover: #F3E5C8;
+  --accent-gold-light: rgba(212, 175, 55, 0.18);
+  --accent-gold-border: rgba(212, 175, 55, 0.45);
 
-  --secondary: #131c31;
+  --secondary: #0E172F;
 
   /* Shadows for Dark Mode */
-  --shadow-sm: 0 2px 10px -1px rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 8px 30px -4px rgba(0, 0, 0, 0.7);
-  --shadow-lg: 0 20px 50px -10px rgba(0, 0, 0, 0.9);
-  --shadow-inset: inset 0 2px 5px 0 rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 2px 10px -1px rgba(0, 0, 0, 0.6);
+  --shadow-md: 0 8px 30px -4px rgba(0, 0, 0, 0.8), 0 0 20px rgba(197, 160, 89, 0.1);
+  --shadow-lg: 0 20px 50px -10px rgba(0, 0, 0, 0.95), 0 0 35px rgba(212, 175, 55, 0.15);
+  --shadow-inset: inset 0 2px 5px 0 rgba(0, 0, 0, 0.6);
 }
 
 /* Base Resets & Layout */
@@ -144,7 +148,7 @@ html {
 }
 
 html, body {
-  background-color: #ffffff;
+  background-color: var(--bg-slate);
   color: var(--text-primary);
   font-family: var(--font-ar);
   font-size: 16px;
@@ -153,9 +157,9 @@ html, body {
   overflow-x: hidden;
   max-width: 100vw;
   background-image: 
-    radial-gradient(ellipse 90% 60% at 50% 0%, rgba(254, 243, 199, 0.22) 0%, rgba(240, 249, 255, 0.4) 45%, rgba(255, 255, 255, 0.95) 75%, #ffffff 100%),
-    radial-gradient(circle at 10% 25%, rgba(2, 132, 199, 0.03) 0%, transparent 40%),
-    radial-gradient(circle at 90% 70%, rgba(245, 158, 11, 0.03) 0%, transparent 40%);
+    radial-gradient(ellipse 90% 60% at 50% 0%, rgba(197, 160, 89, 0.12) 0%, rgba(244, 241, 234, 0.5) 45%, rgba(248, 249, 250, 0.95) 75%, #F8F9FA 100%),
+    radial-gradient(circle at 10% 25%, rgba(10, 25, 47, 0.03) 0%, transparent 40%),
+    radial-gradient(circle at 90% 70%, rgba(197, 160, 89, 0.05) 0%, transparent 40%);
   background-attachment: fixed;
   transition: background-color 0.35s cubic-bezier(0.4, 0, 0.2, 1), color 0.35s ease;
 }
@@ -164,10 +168,10 @@ html, body {
 .dark-theme body,
 [data-theme="dark"] body,
 .dark body {
-  background-color: #070b14;
+  background-color: #050811;
   background-image: 
-    radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.04) 0%, transparent 45%),
-    radial-gradient(circle at 85% 85%, rgba(13, 72, 161, 0.08) 0%, transparent 45%);
+    radial-gradient(circle at 15% 15%, rgba(212, 175, 55, 0.07) 0%, transparent 45%),
+    radial-gradient(circle at 85% 85%, rgba(10, 25, 47, 0.4) 0%, transparent 45%);
 }
 
 /* 🔤 GLOBAL STRICT FONT INHERITANCE - UNIFY ALL SYSTEM FONTS */
