@@ -60,6 +60,31 @@ export default class ErrorBoundary extends React.Component {
             تم عزل الخطأ لمنع تعطل النظام. يمكنك إعادة تحميل الصفحة للعودة للعمل بكفاءة تامة.
           </p>
 
+          {this.state.error && (
+            <div style={{
+              margin: '0 0 24px 0',
+              padding: '14px 18px',
+              background: 'rgba(0, 0, 0, 0.5)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              borderRadius: '10px',
+              color: '#f87171',
+              fontSize: '0.8rem',
+              maxWidth: '850px',
+              width: '90%',
+              textAlign: 'left',
+              direction: 'ltr',
+              overflowX: 'auto',
+              fontFamily: 'monospace'
+            }}>
+              <strong>{this.state.error.toString()}</strong>
+              {this.state.error.stack && (
+                <pre style={{ marginTop: '8px', fontSize: '0.72rem', color: '#cbd5e1', whiteSpace: 'pre-wrap', maxHeight: '200px', overflowY: 'auto' }}>
+                  {this.state.error.stack}
+                </pre>
+              )}
+            </div>
+          )}
+
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
             <button
               type="button"
