@@ -1,13 +1,13 @@
-import { jsPDF } from 'jspdf';
 import { getPriceBenchmark } from './currencyAndBenchmark';
 
 /**
  * Generate an official Property Comparison Report (PDF)
  * for selected properties in One Line Real Estate Sohag.
  */
-export const generateComparePdf = (compareList = [], lang = 'ar') => {
+export const generateComparePdf = async (compareList = [], lang = 'ar') => {
   if (!compareList || compareList.length === 0) return;
 
+  const { jsPDF } = await import('jspdf');
   const doc = new jsPDF({
     orientation: 'landscape',
     unit: 'mm',

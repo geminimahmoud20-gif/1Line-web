@@ -36,6 +36,8 @@ try {
 } catch (e) {}
 globalThis.localStorage = globalThis.window.localStorage;
 
+import { MemoryRouter } from 'react-router-dom';
+
 async function run() {
   const vite = await createServer({
     server: { middlewareMode: true },
@@ -45,7 +47,6 @@ async function run() {
   try {
     console.log('Loading /src/App.jsx via Vite SSR...');
     const { default: App } = await vite.ssrLoadModule('/src/App.jsx');
-    const { MemoryRouter } = await vite.ssrLoadModule('react-router-dom');
 
     console.log('Rendering App in MemoryRouter...');
     const html = renderToString(

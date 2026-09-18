@@ -1,10 +1,9 @@
-import { jsPDF } from 'jspdf';
-
 /**
  * Generate an official Arabic / Bilingual Unit Reservation Contract & Deposit Agreement
  * formatted according to Egyptian real estate legal standards in Sohag & New Sohag.
  */
-export const generateReservationContractPdf = (contractData) => {
+export const generateReservationContractPdf = async (contractData) => {
+  const { jsPDF } = await import('jspdf');
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',

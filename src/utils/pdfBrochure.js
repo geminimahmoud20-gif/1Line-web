@@ -1,10 +1,10 @@
-import { jsPDF } from 'jspdf';
 import { getDynamicPhone, getDynamicWhatsApp } from './founderCmsData';
 
 /**
  * Generate a luxury, professional PDF brochure for a property in Sohag.
  */
-export const generatePropertyPdf = (property) => {
+export const generatePropertyPdf = async (property) => {
+  const { jsPDF } = await import('jspdf');
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
