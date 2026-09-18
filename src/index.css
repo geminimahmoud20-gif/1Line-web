@@ -1390,42 +1390,45 @@ select:focus {
   margin-bottom: 30px;
 }
 .crm-stat-card {
-  background: linear-gradient(135deg, rgba(13, 72, 161, 0.22) 0%, rgba(10, 22, 48, 0.92) 100%) !important;
-  border: 1px solid rgba(255, 202, 40, 0.3) !important;
-  border-radius: var(--radius-lg) !important;
-  padding: 20px;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  padding: 16px 20px;
   display: flex;
   align-items: center;
   gap: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 202, 40, 0.15) !important;
-  backdrop-filter: blur(16px);
-  color: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.02) !important;
+  color: #0f172a !important;
+  transition: all 0.2s ease;
+}
+.crm-stat-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+  transform: translateY(-2px);
 }
 .crm-stat-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: var(--radius-sm);
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255, 202, 40, 0.35);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 .crm-stat-info {
   display: flex;
   flex-direction: column;
 }
 .crm-stat-num {
-  font-size: 1.7rem;
-  font-weight: 900;
+  font-size: 1.6rem;
+  font-weight: 800;
   line-height: 1.2;
-  color: #ffffff !important;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+  color: #092347 !important;
 }
 .crm-stat-lbl {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  color: #cbd5e1 !important;
+  color: #64748b !important;
 }
 
 /* CRM Pipeline and Tables */
@@ -1435,12 +1438,12 @@ select:focus {
   gap: 30px;
 }
 .crm-table-container {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   padding: 24px;
   overflow-x: auto;
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 .crm-table-header {
   display: flex;
@@ -1453,10 +1456,10 @@ select:focus {
   gap: 8px;
 }
 .table-filter-btn {
-  background: transparent;
-  color: var(--text-secondary);
-  border: 1px solid var(--border-light);
-  padding: 6px 12px;
+  background: #ffffff;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  padding: 6px 14px;
   border-radius: var(--radius-pill);
   font-size: 0.8rem;
   font-weight: 600;
@@ -1464,9 +1467,9 @@ select:focus {
   transition: var(--transition-fast);
 }
 .table-filter-btn.active, .table-filter-btn:hover {
-  background: var(--accent-gold-light);
-  border-color: var(--accent-gold);
-  color: var(--accent-gold);
+  background: #092347;
+  border-color: #092347;
+  color: #ffffff;
 }
 
 .crm-table {
@@ -1480,18 +1483,59 @@ select:focus {
 }
 .crm-table th, .crm-table td {
   padding: 14px 16px;
-  border-bottom: 1px solid var(--border-light);
+  border-bottom: 1px solid #f1f5f9;
 }
 .crm-table th {
-  color: var(--text-secondary);
-  font-weight: 600;
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: 800;
   font-size: 0.85rem;
+  border-bottom: 1px solid #e2e8f0;
 }
 .crm-table tbody tr {
   transition: var(--transition-fast);
 }
 .crm-table tbody tr:hover {
-  background: rgba(10, 17, 40, 0.02);
+  background: #f8fafc;
+}
+
+/* Admin Data Table Wrapper */
+.admin-table-wrapper {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  overflow-x: auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.02) !important;
+  margin-bottom: 20px;
+}
+
+.admin-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: right;
+  font-size: 0.86rem;
+  background: #ffffff !important;
+}
+
+.admin-data-table th {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+  font-weight: 800 !important;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.admin-data-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  background: #ffffff;
+  vertical-align: middle;
+}
+
+.admin-data-table tbody tr:hover td {
+  background: #f8fafc !important;
 }
 
 /* Badges */

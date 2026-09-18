@@ -205,40 +205,27 @@ export default function DemandsManagerPanel({
     triggerToast?.(
       isAr 
         ? `تم اعتماد الطلب ونشره فوراً في الصفحة الرئيسية وبوابة الطلبات!` 
-        : `Demand approved and published live!`, 
-      'success'
-    );
-  };
-
-  const handleQuickReject = (demandId) => {
-    if (window.confirm(isAr ? 'هل أنت متأكد من رفض وحذف هذا الطلب؟' : 'Are you sure you want to reject and delete this request?')) {
-      onDeleteDemand(demandId);
-      triggerToast?.(isAr ? 'تم حذف الطلب' : 'Demand rejected/deleted', 'info');
-    }
-  };
-
-  return (
-    <div className="demands-manager-container" style={{ animation: 'fadeIn 0.3s ease' }}>
+        : `Demand approved     <div className="demands-manager-container" style={{ animation: 'fadeIn 0.3s ease' }}>
       {/* 1. Header & KPI Metrics */}
       <div style={{
-        background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%)',
-        border: '1px solid rgba(217, 119, 6, 0.3)',
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
         borderRadius: '16px',
         padding: '24px',
         marginBottom: '24px',
-        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)'
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)'
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ padding: '8px', borderRadius: '10px', background: 'rgba(217, 119, 6, 0.15)', color: 'var(--accent-gold)' }}>
+              <div style={{ padding: '8px', borderRadius: '10px', background: '#fffbeb', color: '#d97706', border: '1px solid #fde68a' }}>
                 <Zap size={24} />
               </div>
               <div>
-                <h2 style={{ fontSize: '1.4rem', color: '#fff', margin: 0 }}>
+                <h2 style={{ fontSize: '1.3rem', color: '#092347', margin: 0, fontWeight: '800' }}>
                   {isAr ? 'إدارة طلبات المشترين واعتمادها (Market Demands CMS)' : 'Buyer Demands Management & Approval'}
                 </h2>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '4px 0 0' }}>
+                <p style={{ color: '#64748b', fontSize: '0.85rem', margin: '4px 0 0' }}>
                   {isAr 
                     ? 'راجع طلبات المشترين والمستثمرين الواردة من الموقع، ودقق مواصفاتها واعتمد نشرها مباشرة أمام البائعين.' 
                     : 'Review, verify and approve active buyer requests submitted across the platform.'}
@@ -252,7 +239,7 @@ export default function DemandsManagerPanel({
               type="button" 
               className="btn btn-outline"
               onClick={handleExportCsv}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', borderRadius: '10px', fontSize: '0.84rem' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 16px', borderRadius: '10px', fontSize: '0.84rem', background: '#ffffff', border: '1px solid #cbd5e1', color: '#334155' }}
               title={isAr ? 'تصدير جدول الطلبات إلى ملف Excel' : 'Export Demands to CSV'}
             >
               <Download size={16} />
@@ -263,7 +250,7 @@ export default function DemandsManagerPanel({
               type="button" 
               className="btn btn-primary"
               onClick={handleOpenAdd}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '10px', fontWeight: 'bold' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 20px', borderRadius: '10px', fontWeight: 'bold', background: '#092347', color: '#ffffff', border: 'none' }}
             >
               <Plus size={18} />
               <span>{isAr ? 'إضافة طلب مباشر من الإدارة' : 'Add Direct Demand'}</span>
@@ -273,44 +260,44 @@ export default function DemandsManagerPanel({
 
         {/* Quick KPI Stat Cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
-          <div style={{ background: 'rgba(255, 255, 255, 0.04)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '12px', padding: '14px 18px' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{isAr ? 'إجمالي الطلبات' : 'Total Demands'}</span>
-            <div style={{ fontSize: '1.6rem', fontWeight: '900', color: '#fff', marginTop: '4px' }}>
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '14px 18px' }}>
+            <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600' }}>{isAr ? 'إجمالي الطلبات' : 'Total Demands'}</span>
+            <div style={{ fontSize: '1.6rem', fontWeight: '900', color: '#092347', marginTop: '4px' }}>
               {totalDemandsCount}
             </div>
           </div>
 
           <div style={{ 
-            background: pendingCount > 0 ? 'rgba(217, 119, 6, 0.15)' : 'rgba(255, 255, 255, 0.04)', 
-            border: pendingCount > 0 ? '1px solid var(--accent-gold)' : '1px solid rgba(255, 255, 255, 0.08)', 
+            background: pendingCount > 0 ? '#fffbeb' : '#f8fafc', 
+            border: pendingCount > 0 ? '1px solid #fde68a' : '1px solid #e2e8f0', 
             borderRadius: '12px', 
             padding: '14px 18px' 
           }}>
-            <span style={{ fontSize: '0.8rem', color: pendingCount > 0 ? 'var(--accent-gold)' : 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '0.8rem', color: pendingCount > 0 ? '#92400e' : '#64748b', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
               <Clock size={14} />
               <span>{isAr ? 'قيد مراجعة الإدارة' : 'Pending Review'}</span>
             </span>
-            <div style={{ fontSize: '1.6rem', fontWeight: '900', color: pendingCount > 0 ? 'var(--accent-gold)' : '#fff', marginTop: '4px' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: '900', color: pendingCount > 0 ? '#b45309' : '#092347', marginTop: '4px' }}>
               {pendingCount}
             </div>
           </div>
 
-          <div style={{ background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '12px', padding: '14px 18px' }}>
-            <span style={{ fontSize: '0.8rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '12px', padding: '14px 18px' }}>
+            <span style={{ fontSize: '0.8rem', color: '#065f46', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
               <CheckCircle size={14} />
               <span>{isAr ? 'منشور نشط على الموقع' : 'Published Live'}</span>
             </span>
-            <div style={{ fontSize: '1.6rem', fontWeight: '900', color: '#10b981', marginTop: '4px' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: '900', color: '#059669', marginTop: '4px' }}>
               {publishedCount}
             </div>
           </div>
 
-          <div style={{ background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '12px', padding: '14px 18px' }}>
-            <span style={{ fontSize: '0.8rem', color: '#60a5fa', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '12px', padding: '14px 18px' }}>
+            <span style={{ fontSize: '0.8rem', color: '#0369a1', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
               <DollarSign size={14} />
               <span>{isAr ? 'القوة الشرائية الجاهزة' : 'Total Buying Power'}</span>
             </span>
-            <div style={{ fontSize: '1.4rem', fontWeight: '900', color: '#60a5fa', marginTop: '4px' }}>
+            <div style={{ fontSize: '1.4rem', fontWeight: '900', color: '#0284c7', marginTop: '4px' }}>
               {(totalPurchasingPower / 1000000).toFixed(1)} {isAr ? 'مليون ج.م' : 'M EGP'}
             </div>
           </div>
@@ -319,8 +306,8 @@ export default function DemandsManagerPanel({
 
       {/* 2. Filter Bar & Search */}
       <div style={{
-        background: 'rgba(15, 23, 42, 0.6)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
         borderRadius: '12px',
         padding: '14px 18px',
         marginBottom: '20px',
@@ -328,28 +315,38 @@ export default function DemandsManagerPanel({
         alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
-        gap: '14px'
+        gap: '14px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
       }}>
         {/* Status Tabs */}
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <button
             type="button"
-            className={`btn btn-sm ${statusFilter === 'all' ? 'btn-primary' : 'btn-outline'}`}
+            className="btn btn-sm"
             onClick={() => setStatusFilter('all')}
-            style={{ borderRadius: '20px', fontSize: '0.8rem', padding: '6px 14px' }}
+            style={{ 
+              borderRadius: '20px', 
+              fontSize: '0.8rem', 
+              padding: '6px 14px',
+              background: statusFilter === 'all' ? '#092347' : '#ffffff',
+              color: statusFilter === 'all' ? '#ffffff' : '#334155',
+              border: statusFilter === 'all' ? '1px solid #092347' : '1px solid #cbd5e1',
+              fontWeight: statusFilter === 'all' ? 'bold' : '600'
+            }}
           >
             {isAr ? 'جميع الطلبات' : 'All'} ({totalDemandsCount})
           </button>
           <button
             type="button"
-            className={`btn btn-sm ${statusFilter === 'pending' ? 'btn-primary' : 'btn-outline'}`}
+            className="btn btn-sm"
             onClick={() => setStatusFilter('pending')}
             style={{ 
               borderRadius: '20px', 
               fontSize: '0.8rem', 
               padding: '6px 14px',
-              background: statusFilter === 'pending' ? 'var(--accent-gold)' : undefined,
-              color: statusFilter === 'pending' ? '#000' : undefined,
+              background: statusFilter === 'pending' ? '#d97706' : '#ffffff',
+              color: statusFilter === 'pending' ? '#ffffff' : '#334155',
+              border: statusFilter === 'pending' ? '1px solid #d97706' : '1px solid #cbd5e1',
               fontWeight: 'bold'
             }}
           >
@@ -357,9 +354,17 @@ export default function DemandsManagerPanel({
           </button>
           <button
             type="button"
-            className={`btn btn-sm ${statusFilter === 'published' ? 'btn-primary' : 'btn-outline'}`}
+            className="btn btn-sm"
             onClick={() => setStatusFilter('published')}
-            style={{ borderRadius: '20px', fontSize: '0.8rem', padding: '6px 14px' }}
+            style={{ 
+              borderRadius: '20px', 
+              fontSize: '0.8rem', 
+              padding: '6px 14px',
+              background: statusFilter === 'published' ? '#059669' : '#ffffff',
+              color: statusFilter === 'published' ? '#ffffff' : '#334155',
+              border: statusFilter === 'published' ? '1px solid #059669' : '1px solid #cbd5e1',
+              fontWeight: statusFilter === 'published' ? 'bold' : '600'
+            }}
           >
             {isAr ? 'المنشورة لايف' : 'Published'} ({publishedCount})
           </button>
@@ -371,11 +376,11 @@ export default function DemandsManagerPanel({
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
             style={{
-              padding: '8px 12px',
+              padding: '7px 12px',
               borderRadius: '8px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              color: 'var(--text-primary)',
+              background: '#ffffff',
+              border: '1px solid #cbd5e1',
+              color: '#0f172a',
               fontSize: '0.82rem'
             }}
           >
@@ -386,7 +391,7 @@ export default function DemandsManagerPanel({
           </select>
 
           <div style={{ position: 'relative', minWidth: '220px' }}>
-            <Search size={15} style={{ position: 'absolute', top: '10px', [isAr ? 'right' : 'left']: '10px', color: 'var(--text-secondary)' }} />
+            <Search size={15} style={{ position: 'absolute', top: '10px', [isAr ? 'right' : 'left']: '10px', color: '#64748b' }} />
             <input
               type="text"
               placeholder={isAr ? 'بحث سريع في الطلبات...' : 'Search demands...'}
@@ -397,9 +402,9 @@ export default function DemandsManagerPanel({
                 padding: '7px 12px',
                 paddingInlineStart: '32px',
                 borderRadius: '8px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                color: 'var(--text-primary)',
+                background: '#ffffff',
+                border: '1px solid #cbd5e1',
+                color: '#0f172a',
                 fontSize: '0.82rem'
               }}
             />
@@ -412,15 +417,15 @@ export default function DemandsManagerPanel({
         <div style={{
           textAlign: 'center',
           padding: '60px 20px',
-          background: 'rgba(15, 23, 42, 0.4)',
-          border: '1px dashed rgba(255, 255, 255, 0.15)',
+          background: '#ffffff',
+          border: '2px dashed #cbd5e1',
           borderRadius: '16px'
         }}>
-          <Zap size={40} style={{ color: 'var(--text-secondary)', opacity: 0.4, margin: '0 auto 12px' }} />
-          <h4 style={{ color: 'var(--text-primary)', fontSize: '1.1rem', marginBottom: '6px' }}>
+          <Zap size={40} style={{ color: '#94a3b8', margin: '0 auto 12px' }} />
+          <h4 style={{ color: '#092347', fontSize: '1.1rem', marginBottom: '6px', fontWeight: '800' }}>
             {isAr ? 'لا توجد طلبات مطابقة للفلتر المحدد' : 'No demands match this filter'}
           </h4>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+          <p style={{ color: '#64748b', fontSize: '0.85rem' }}>
             {isAr ? 'يمكنك تغيير الفلاتر أو إضافة طلب جديد مباشرة.' : 'Try adjusting your filters or create a new demand.'}
           </p>
         </div>
@@ -429,21 +434,21 @@ export default function DemandsManagerPanel({
           {filteredDemands.map((demand) => {
             const isPending = demand.status === 'pending';
             const isPublished = (demand.status || 'published') === 'published';
-            const urgencyColor = demand.urgency === 'high' ? '#ef4444' : demand.urgency === 'medium' ? 'var(--accent-gold)' : '#06b6d4';
+            const urgencyColor = demand.urgency === 'high' ? '#dc2626' : demand.urgency === 'medium' ? '#d97706' : '#0284c7';
             const budgetNum = typeof demand.budget === 'number' ? demand.budget : parseInt(String(demand.budget).replace(/,/g, '')) || 0;
 
             return (
               <div 
                 key={demand.id} 
                 style={{
-                  background: isPending ? 'linear-gradient(145deg, rgba(30, 27, 75, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%)' : 'rgba(15, 23, 42, 0.75)',
-                  border: isPending ? '2px solid var(--accent-gold)' : '1px solid rgba(255, 255, 255, 0.1)',
+                  background: '#ffffff',
+                  border: isPending ? '2px solid #f59e0b' : '1px solid #e2e8f0',
                   borderRadius: '14px',
                   padding: '18px',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
-                  boxShadow: isPending ? '0 0 20px rgba(217, 119, 6, 0.2)' : '0 4px 12px rgba(0,0,0,0.2)',
+                  boxShadow: isPending ? '0 4px 16px rgba(217, 119, 6, 0.12)' : '0 2px 8px rgba(0,0,0,0.04)',
                   position: 'relative',
                   transition: 'all 0.2s ease'
                 }}
@@ -454,9 +459,9 @@ export default function DemandsManagerPanel({
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       {isPending ? (
                         <span style={{ 
-                          background: 'rgba(217, 119, 6, 0.2)', 
-                          color: 'var(--accent-gold)', 
-                          border: '1px solid var(--accent-gold)',
+                          background: '#fffbeb', 
+                          color: '#92400e', 
+                          border: '1px solid #fde68a',
                           padding: '3px 9px', 
                           borderRadius: '12px', 
                           fontSize: '0.72rem', 
@@ -470,9 +475,9 @@ export default function DemandsManagerPanel({
                         </span>
                       ) : (
                         <span style={{ 
-                          background: 'rgba(16, 185, 129, 0.15)', 
-                          color: '#10b981', 
-                          border: '1px solid rgba(16, 185, 129, 0.4)',
+                          background: '#ecfdf5', 
+                          color: '#065f46', 
+                          border: '1px solid #a7f3d0',
                           padding: '3px 9px', 
                           borderRadius: '12px', 
                           fontSize: '0.72rem', 
@@ -487,7 +492,8 @@ export default function DemandsManagerPanel({
                       )}
 
                       <span style={{ 
-                        background: 'rgba(255, 255, 255, 0.08)', 
+                        background: '#f8fafc', 
+                        border: '1px solid #e2e8f0',
                         color: urgencyColor, 
                         padding: '3px 8px', 
                         borderRadius: '12px', 
@@ -498,26 +504,26 @@ export default function DemandsManagerPanel({
                       </span>
                     </div>
 
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
                       {demand.timestamp || (demand.createdAt ? new Date(demand.createdAt).toLocaleDateString('ar-EG') : '')}
                     </span>
                   </div>
 
                   {/* Demand Text */}
-                  <h4 style={{ fontSize: '0.94rem', color: '#fff', fontWeight: '600', lineHeight: '1.6', marginBottom: '12px' }}>
+                  <h4 style={{ fontSize: '0.94rem', color: '#092347', fontWeight: '700', lineHeight: '1.6', marginBottom: '12px' }}>
                     {isAr ? demand.text_ar : demand.text_en || demand.text_ar}
                   </h4>
 
                   {/* English preview if available */}
                   {demand.text_en && demand.text_ar !== demand.text_en && (
-                    <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontStyle: 'italic', marginBottom: '12px', direction: 'ltr', textAlign: 'left' }}>
+                    <p style={{ fontSize: '0.78rem', color: '#64748b', fontStyle: 'italic', marginBottom: '12px', direction: 'ltr', textAlign: 'left' }}>
                       {demand.text_en}
                     </p>
                   )}
 
                   {/* Meta Specs Grid */}
                   <div style={{
-                    background: 'rgba(0, 0, 0, 0.25)',
+                    background: '#f8fafc',
                     borderRadius: '8px',
                     padding: '10px 12px',
                     marginBottom: '14px',
@@ -525,20 +531,20 @@ export default function DemandsManagerPanel({
                     flexWrap: 'wrap',
                     gap: '12px',
                     fontSize: '0.8rem',
-                    border: '1px solid rgba(255, 255, 255, 0.05)'
+                    border: '1px solid #e2e8f0'
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)' }}>
-                      <MapPin size={13} style={{ color: 'var(--accent-gold)' }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#334155', fontWeight: '600' }}>
+                      <MapPin size={13} style={{ color: '#d97706' }} />
                       <span>{isAr ? (demand.area_ar || demand.area) : (demand.area_en || demand.area)}</span>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#10b981', fontWeight: 'bold' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#059669', fontWeight: 'bold' }}>
                       <DollarSign size={13} />
                       <span>{budgetNum.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</span>
                     </div>
 
                     {demand.paymentMethod && (
-                      <div style={{ color: 'var(--text-secondary)' }}>
+                      <div style={{ color: '#64748b' }}>
                         <span>{demand.paymentMethod === 'cash' ? (isAr ? 'كاش فوري' : 'Cash') : (isAr ? 'تقسيط' : 'Installments')}</span>
                       </div>
                     )}
@@ -547,8 +553,8 @@ export default function DemandsManagerPanel({
                   {/* Client Confidential Contact Info (For Admin Only) */}
                   {(demand.clientName || demand.phone) && (
                     <div style={{ 
-                      background: 'rgba(217, 119, 6, 0.08)', 
-                      border: '1px dashed rgba(217, 119, 6, 0.3)', 
+                      background: '#fffbeb', 
+                      border: '1px dashed #fde68a', 
                       borderRadius: '8px', 
                       padding: '8px 12px', 
                       marginBottom: '14px',
@@ -556,11 +562,11 @@ export default function DemandsManagerPanel({
                     }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
-                          <strong style={{ color: 'var(--accent-gold)' }}>
+                          <strong style={{ color: '#092347' }}>
                             {demand.clientName || (isAr ? 'عميل بدون اسم' : 'Anonymous Buyer')}
                           </strong>
                           {demand.phone && (
-                            <div style={{ color: 'var(--text-secondary)', marginTop: '2px', direction: 'ltr', textAlign: 'right' }}>
+                            <div style={{ color: '#059669', fontWeight: 'bold', marginTop: '2px', direction: 'ltr', textAlign: 'right' }}>
                               {demand.phone}
                             </div>
                           )}
@@ -575,14 +581,15 @@ export default function DemandsManagerPanel({
                               rel="noreferrer"
                               className="btn btn-sm"
                               style={{ 
-                                background: '#25D366', 
+                                background: '#059669', 
                                 color: '#fff', 
                                 padding: '4px 8px', 
                                 borderRadius: '6px', 
-                                fontSize: '0.72rem',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px'
+                                fontSize: '0.72rem', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '4px',
+                                textDecoration: 'none'
                               }}
                               title="WhatsApp"
                             >
@@ -593,7 +600,7 @@ export default function DemandsManagerPanel({
                             <a 
                               href={`tel:${demand.phone}`}
                               className="btn btn-sm btn-outline"
-                              style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '0.72rem' }}
+                              style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '0.72rem', background: '#ffffff', border: '1px solid #cbd5e1', color: '#334155' }}
                               title="Call"
                             >
                               <Phone size={12} />
@@ -606,7 +613,7 @@ export default function DemandsManagerPanel({
                 </div>
 
                 {/* Bottom Admin Control Actions */}
-                <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   {isPending ? (
                     <>
                       <button
@@ -615,14 +622,16 @@ export default function DemandsManagerPanel({
                         onClick={() => handleQuickApprove(demand)}
                         style={{ 
                           flex: 1, 
-                          background: 'linear-gradient(135deg, #10b981, #059669)', 
-                          borderColor: '#10b981',
+                          background: '#059669', 
+                          borderColor: '#059669',
+                          color: '#ffffff',
                           display: 'flex', 
                           alignItems: 'center', 
                           justifyContent: 'center', 
                           gap: '6px',
                           fontSize: '0.78rem',
-                          fontWeight: 'bold'
+                          fontWeight: 'bold',
+                          borderRadius: '6px'
                         }}
                       >
                         <Check size={14} />
@@ -637,10 +646,10 @@ export default function DemandsManagerPanel({
                           style={{ 
                             padding: '6px 10px', 
                             fontSize: '0.78rem', 
-                            background: 'rgba(217, 119, 6, 0.15)',
-                            border: '1px solid rgba(217, 119, 6, 0.45)', 
-                            color: 'var(--accent-gold)',
-                            borderRadius: '8px',
+                            background: '#fffbeb',
+                            border: '1px solid #fde68a', 
+                            color: '#d97706',
+                            borderRadius: '6px',
                             fontWeight: 'bold',
                             display: 'flex',
                             alignItems: 'center',
@@ -660,10 +669,10 @@ export default function DemandsManagerPanel({
                         style={{ 
                           padding: '6px 10px', 
                           fontSize: '0.78rem',
-                          background: 'rgba(11, 78, 162, 0.25)',
-                          color: '#38bdf8',
-                          border: '1px solid rgba(56, 189, 248, 0.35)',
-                          borderRadius: '8px',
+                          background: '#f0f9ff',
+                          color: '#0284c7',
+                          border: '1px solid #bae6fd',
+                          borderRadius: '6px',
                           fontWeight: 'bold'
                         }}
                         title={isAr ? 'تعديل الصياغة قبل النشر' : 'Edit specs'}
@@ -677,12 +686,12 @@ export default function DemandsManagerPanel({
                         className="btn btn-sm"
                         onClick={() => handleQuickReject(demand.id)}
                         style={{ 
-                          background: 'rgba(239, 68, 68, 0.15)', 
-                          color: '#ef4444', 
-                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                          background: '#fef2f2', 
+                          color: '#dc2626', 
+                          border: '1px solid #fecaca',
                           padding: '6px 10px', 
                           fontSize: '0.78rem',
-                          borderRadius: '8px'
+                          borderRadius: '6px'
                         }}
                         title={isAr ? 'رفض وحذف' : 'Reject'}
                       >
@@ -702,10 +711,10 @@ export default function DemandsManagerPanel({
                           justifyContent: 'center', 
                           gap: '6px', 
                           fontSize: '0.78rem',
-                          background: 'rgba(11, 78, 162, 0.25)',
-                          color: '#38bdf8',
-                          border: '1px solid rgba(56, 189, 248, 0.35)',
-                          borderRadius: '8px',
+                          background: '#f0f9ff',
+                          color: '#0284c7',
+                          border: '1px solid #bae6fd',
+                          borderRadius: '6px',
                           fontWeight: 'bold'
                         }}
                       >
@@ -721,10 +730,10 @@ export default function DemandsManagerPanel({
                           style={{ 
                             padding: '6px 12px', 
                             fontSize: '0.78rem', 
-                            background: 'rgba(217, 119, 6, 0.15)',
-                            border: '1px solid rgba(217, 119, 6, 0.45)', 
-                            color: 'var(--accent-gold)',
-                            borderRadius: '8px',
+                            background: '#fffbeb',
+                            border: '1px solid #fde68a', 
+                            color: '#d97706',
+                            borderRadius: '6px',
                             fontWeight: 'bold',
                             display: 'flex',
                             alignItems: 'center',
@@ -745,12 +754,41 @@ export default function DemandsManagerPanel({
                           style={{ 
                             padding: '6px 10px', 
                             fontSize: '0.78rem', 
-                            background: 'rgba(255, 255, 255, 0.06)',
-                            border: '1px solid rgba(255, 255, 255, 0.15)',
-                            color: '#94a3b8',
-                            borderRadius: '8px'
+                            background: '#f8fafc',
+                            border: '1px solid #cbd5e1',
+                            color: '#64748b',
+                            borderRadius: '6px'
                           }}
                           title={isAr ? 'إلغاء النشر مؤقتاً' : 'Unpublish'}
+                        >
+                          <EyeOff size={13} />
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        className="btn btn-sm"
+                        onClick={() => handleQuickReject(demand.id)}
+                        style={{ 
+                          background: '#fef2f2', 
+                          color: '#dc2626', 
+                          border: '1px solid #fecaca',
+                          padding: '6px 10px', 
+                          fontSize: '0.78rem',
+                          borderRadius: '6px'
+                        }}
+                        title={isAr ? 'حذف' : 'Delete'}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}�ؤقتاً' : 'Unpublish'}
                         >
                           <EyeOff size={13} />
                         </button>
