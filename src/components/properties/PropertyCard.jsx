@@ -26,10 +26,10 @@ const FALLBACK_PROPERTY_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.or
 
 // Clean formatting for card sub-header location to avoid mid-word truncation
 function formatCardLocation(loc) {
-  if (!loc) return '';
+  if (!loc || typeof loc !== 'string') return '';
   if (loc.includes(' - ')) {
     const [city, detailed] = loc.split(' - ');
-    const cleanDetail = detailed
+    const cleanDetail = (detailed || '')
       .split(/ (?:قرب|أمام|بجوار|خلف|بالقرب|قطاع)/)[0]
       .trim();
     return `${city} • ${cleanDetail}`;
@@ -40,21 +40,23 @@ function formatCardLocation(loc) {
 export default function PropertyCard({ 
   property, 
   lang = 'ar', 
-  currency = 'EGP',
+  currency = 'EGP', 
   isFavorite = false, 
   onToggleFavorite, 
   isCompared = false, 
   onToggleCompare, 
   onQuickView 
 }) {
+  if (!property) return null;
+
   const [imageLoaded, setImageLoaded] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
-  const title = lang === 'ar' ? property.title_ar : property.title_en;
-  const location = lang === 'ar' ? property.locationName_ar : property.locationName_en;
+  const title = lang === 'ar' ? (property.title_ar || property.title_en || '') : (property.title_en || property.title_ar || '');
+  const location = lang === 'ar' ? (property.locationName_ar || property.locationName_en || '') : (property.locationName_en || property.locationName_ar || '');
   const badge = lang === 'ar' ? property.badge_ar : property.badge_en;
   const viewsCount = getPropertyViews(property.id);
-  const imagesList = property.images && property.images.length > 0 ? property.images : [FALLBACK_PROPERTY_IMG];
+  const imagesList = (Array.isArray(property.images) && property.images.length > 0) ? property.images : [FALLBACK_PROPERTY_IMG];
   const priceData = formatCurrencyPrice(property.price, currency, lang);
   const benchmark = getPriceBenchmark(property, lang);
 

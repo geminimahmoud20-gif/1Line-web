@@ -31,14 +31,15 @@ export function PropertiesProvider({ children }) {
   const [properties, setProperties] = useState(() => {
     const stored = readStoredJson('oneline_properties', PROPERTIES_DATA, isRecordArray);
     if (Array.isArray(stored) && stored.length > 0) {
-      const existingIds = new Set(stored.map(p => p.id));
-      const missing = PROPERTIES_DATA.filter(p => !existingIds.has(p.id));
+      const validStored = stored.filter(p => p && typeof p === 'object' && p.id);
+      const existingIds = new Set(validStored.map(p => p.id));
+      const missing = PROPERTIES_DATA.filter(p => p && !existingIds.has(p.id));
       if (missing.length > 0) {
-        const merged = [...stored, ...missing];
-        localStorage.setItem('oneline_properties', JSON.stringify(merged));
+        const merged = [...validStored, ...missing];
+        try { localStorage.setItem('oneline_properties', JSON.stringify(merged)); } catch (e) {}
         return merged;
       }
-      return stored;
+      return validStored.length > 0 ? validStored : PROPERTIES_DATA;
     }
     return PROPERTIES_DATA;
   });
@@ -71,14 +72,15 @@ export function PropertiesProvider({ children }) {
   const [projects, setProjects] = useState(() => {
     const stored = readStoredJson('oneline_mega_projects', MEGA_PROJECTS, isRecordArray);
     if (Array.isArray(stored) && stored.length > 0) {
-      const existingIds = new Set(stored.map(p => p.id));
-      const missing = MEGA_PROJECTS.filter(p => !existingIds.has(p.id));
+      const validStored = stored.filter(p => p && typeof p === 'object' && p.id);
+      const existingIds = new Set(validStored.map(p => p.id));
+      const missing = MEGA_PROJECTS.filter(p => p && !existingIds.has(p.id));
       if (missing.length > 0) {
-        const merged = [...stored, ...missing];
-        localStorage.setItem('oneline_mega_projects', JSON.stringify(merged));
+        const merged = [...validStored, ...missing];
+        try { localStorage.setItem('oneline_mega_projects', JSON.stringify(merged)); } catch (e) {}
         return merged;
       }
-      return stored;
+      return validStored.length > 0 ? validStored : MEGA_PROJECTS;
     }
     return MEGA_PROJECTS;
   });
@@ -112,7 +114,8 @@ export function PropertiesProvider({ children }) {
 
   // Favorites State
   const [favorites, setFavorites] = useState(() => {
-    return readStoredJson('oneline_favorites', [], Array.isArray);
+    const raw = readStoredJson('oneline_favorites', [], Array.isArray);
+    return Array.isArray(raw) ? raw.filter(id => typeof id === 'string' || typeof id === 'number') : [];
   });
 
   const toggleFavorite = useCallback((propertyId) => {
@@ -177,14 +180,16 @@ export function PropertiesProvider({ children }) {
 
   // CRM Leads State
   const [leads, setLeads] = useState(() => {
-    return readStoredJson('oneline_crm_leads', INITIAL_LEADS, isRecordArray);
+    const stored = readStoredJson('oneline_crm_leads', INITIAL_LEADS, isRecordArray);
+    return Array.isArray(stored) ? stored.filter(l => l && typeof l === 'object') : INITIAL_LEADS;
   });
 
   // Demands State
   const [demands, setDemands] = useState(() => {
     const fallback = INITIAL_DEMANDS.map((d) => ({ ...d, status: d.status || 'published' }));
     const stored = readStoredJson('oneline_demands', fallback, isRecordArray);
-    return Array.isArray(stored) && stored.length > 0 ? stored : fallback;
+    const valid = Array.isArray(stored) ? stored.filter(d => d && typeof d === 'object') : fallback;
+    return valid.length > 0 ? valid : fallback;
   });
 
   // Add New Lead Handler
@@ -467,14 +472,16 @@ export function PropertiesProvider({ children }) {
     if (isFirebaseActive()) {
       const unsubLeads = subscribeToLeads((cloudLeads) => {
         if (cloudLeads && cloudLeads.length > 0) {
-          setLeads(cloudLeads);
+          const valid = cloudLeads.filter(l => l && typeof l === 'object');
+          setLeads(valid);
         }
       });
       const unsubDemands = subscribeToDemands((cloudDemands) => {
         if (cloudDemands && cloudDemands.length > 0) {
-          const sorted = [...cloudDemands].sort((a, b) => {
-            const timeA = new Date(a.approvedAt || a.createdAt || a.timestamp || 0).getTime();
-            const timeB = new Date(b.approvedAt || b.createdAt || b.timestamp || 0).getTime();
+          const valid = cloudDemands.filter(d => d && typeof d === 'object');
+          const sorted = [...valid].sort((a, b) => {
+            const timeA = new Date(a?.approvedAt || a?.createdAt || a?.timestamp || 0).getTime();
+            const timeB = new Date(b?.approvedAt || b?.createdAt || b?.timestamp || 0).getTime();
             return timeB - timeA;
           });
           setDemands(sorted);

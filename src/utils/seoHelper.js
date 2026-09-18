@@ -46,6 +46,7 @@ export function updatePageSeo({
   description,
   image,
   url,
+  price,
   type = 'website',
   schemaId,
   schema

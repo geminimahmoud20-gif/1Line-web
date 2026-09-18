@@ -23,6 +23,14 @@ export default class ErrorBoundary extends React.Component {
     window.location.href = '/';
   };
 
+  handleResetAndReload = () => {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch (e) {}
+    window.location.href = '/';
+  };
+
   render() {
     if (this.state.hasError) {
       return (
@@ -126,6 +134,27 @@ export default class ErrorBoundary extends React.Component {
             >
               <Home size={15} />
               <span>العودة للرئيسية</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={this.handleResetAndReload}
+              style={{
+                background: 'rgba(239, 68, 68, 0.12)',
+                color: '#fca5a5',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                padding: '10px 22px',
+                borderRadius: '12px',
+                fontSize: '0.85rem',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer'
+              }}
+              title="مسح الذاكرة المحلية وإعادة ضبط بيانات الجلسة"
+            >
+              <span>إعادة ضبط ومسح الذاكرة المؤقتة</span>
             </button>
           </div>
         </div>

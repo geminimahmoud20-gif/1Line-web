@@ -179,13 +179,14 @@ export const generatePropertyPdf = async (property) => {
 /**
  * Generate Institutional Investor Deck & Feasibility Prospectus PDF
  */
-export const generateInvestorProspectusPdf = ({
+export const generateInvestorProspectusPdf = async ({
   invAmount = 3000000,
   invPeriod = 5,
   invPropType = 'commercial',
   investmentSim = {},
   currency = 'EGP'
 }) => {
+  const { jsPDF } = await import('jspdf');
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',

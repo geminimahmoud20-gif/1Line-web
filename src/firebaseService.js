@@ -374,6 +374,9 @@ export const subscribeToDemands = (callback) => {
       return onSnapshot(q, (snapshot) => {
         const demands = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         callback(demands);
+      }, (err) => {
+        if (err && err.code === 'permission-denied') return;
+        console.warn('Firebase subscribeToDemands snapshot warning:', err);
       });
     } catch (error) {
       console.error('Firebase subscribeToDemands error:', error);
