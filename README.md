@@ -72,6 +72,7 @@ npm run cypress:open
 | `crm-dashboard.cy.js` | 10 | بوابة الأمان، نموذج الدخول، Responsive |
 | `full-workflow.cy.js` | 17 | أداء التحميل، أمان Login، محتوى الصفحات، Viewports |
 | `homepage-navigation.cy.js` | 5 | تحميل الصفحة، Header، الروابط، Hero، Mobile |
+| `homepage-deep-audit.cy.js` | 8 | تدقيق الأخطاء، تكامل الصور والروابط، البحث الشامل |
 
 ---
 
