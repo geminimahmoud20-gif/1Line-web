@@ -69,6 +69,15 @@ export default function PropertyDetailPage({
     return properties.find(p => p.id === id) || properties[0];
   }, [properties, id]);
 
+  // Smart Similar Properties recommendation (Same district first, fallback to same property type)
+  const similarProperties = useMemo(() => {
+    if (!property) return [];
+    const sameArea = properties.filter((p) => p.id !== property.id && p.areaKey === property.areaKey);
+    if (sameArea.length >= 3) return sameArea.slice(0, 3);
+    const sameType = properties.filter((p) => p.id !== property.id && p.type === property.type && !sameArea.some(sa => sa.id === p.id));
+    return [...sameArea, ...sameType].slice(0, 3);
+  }, [properties, property]);
+
   const isAr = lang === 'ar';
 
   // 🌐 Inject Google Schema.org & Dynamic OpenGraph Meta Tags
@@ -190,15 +199,6 @@ export default function PropertyDetailPage({
       setIsBookingSubmitting(false);
     }
   };
-
-  // Smart Similar Properties recommendation (Same district first, fallback to same property type)
-  const similarProperties = useMemo(() => {
-    if (!property) return [];
-    const sameArea = properties.filter((p) => p.id !== property.id && p.areaKey === property.areaKey);
-    if (sameArea.length >= 3) return sameArea.slice(0, 3);
-    const sameType = properties.filter((p) => p.id !== property.id && p.type === property.type && !sameArea.some(sa => sa.id === p.id));
-    return [...sameArea, ...sameType].slice(0, 3);
-  }, [properties, property]);
 
   return (
     <div className="property-detail-page-wrapper">

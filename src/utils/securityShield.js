@@ -111,8 +111,11 @@ export async function verifyAdminCredentials(inputPassword) {
 export function sanitizeInput(input) {
   if (typeof input !== 'string') return input;
   // Strip HTML tags, scripts, and SQL characters
-  const clean = DOMPurify.sanitize(input, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
-  return clean.trim();
+  if (DOMPurify && typeof DOMPurify.sanitize === 'function') {
+    return DOMPurify.sanitize(input, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }).trim();
+  }
+  // Robust fallback for Node.js / SSR test environments
+  return input.replace(/<[^>]*>?/gm, '').trim();
 }
 
 export function sanitizeObject(obj) {

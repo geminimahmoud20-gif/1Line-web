@@ -102,7 +102,9 @@ export const markItemSynced = (queueId) => {
     const queue = getPendingSyncQueue().filter(i => i.queueId !== queueId);
     localStorage.setItem(SYNC_STORAGE_KEY, JSON.stringify(queue));
     localStorage.setItem(LAST_SYNC_TIME_KEY, new Date().toISOString());
-  } catch (e) {}
+  } catch (_e) {
+    // Ignore storage quota or disabled localStorage errors
+  }
 };
 
 /**

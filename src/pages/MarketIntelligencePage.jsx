@@ -29,7 +29,7 @@ export default function MarketIntelligencePage({ lang = 'ar', currency = 'EGP', 
   const navigate = useNavigate();
   const [selectedAssetType, setSelectedAssetType] = useState('all'); // 'all' | 'residential' | 'commercial'
   const [userBudget, setUserBudget] = useState(2500000);
-  const [, setTick] = useState(0);
+  const [tick, setTick] = useState(0);
   const isAr = lang === 'ar';
 
   // Dynamic SEO Meta Tags for Market Intelligence

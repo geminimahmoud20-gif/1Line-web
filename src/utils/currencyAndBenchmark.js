@@ -93,10 +93,10 @@ export function getPriceBenchmark(property, lang = 'ar') {
 
   const ratio = pricePerMeter / districtAvg;
 
-  let badgeType = 'fair';
-  let badgeLabel = '';
-  let badgeColor = '#0284c7';
-  let badgeBg = 'rgba(2, 132, 199, 0.12)';
+  let badgeType;
+  let badgeLabel;
+  let badgeColor;
+  let badgeBg;
 
   if (ratio < 0.92) {
     const diffPercent = Math.round((1 - ratio) * 100);
