@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-09-18T11:40:04.408Z",
+  "timestamp": "2026-09-18T14:38:14.447Z",
   "total": 32,
   "passed": 32,
   "warnings": 0,
@@ -28,7 +28,7 @@
       "scenarioId": 1,
       "testName": "Semantic Relevance Score & Ranking",
       "status": "PASS",
-      "details": "Top item scored 121 points"
+      "details": "Top item scored 113 points"
     },
     {
       "scenarioId": 1,
