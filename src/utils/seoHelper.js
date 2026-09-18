@@ -88,10 +88,57 @@ export function updatePageSeo({
   }
   canonicalLink.setAttribute('href', finalUrl);
 
-  // 5. Inject Schema.org JSON-LD if provided
+  // 5. Real Estate & Product Price Tags (WhatsApp/Social Rich Snippets)
+  if (price) {
+    setMetaTag('property', 'product:price:amount', String(price));
+    setMetaTag('property', 'product:price:currency', 'EGP');
+  }
+
+  // 6. Inject Schema.org JSON-LD if provided
   if (schemaId && schema) {
     injectJsonLdSchema(schemaId, schema);
   }
+}
+
+/**
+ * Generate formatted WhatsApp / Telegram social sharing snippet
+ * @param {Object} property - Target property
+ * @param {string} lang - 'ar' or 'en'
+ * @returns {string} Formatted markdown text
+ */
+export function generateSocialShareSnippet(property, lang = 'ar') {
+  if (!property) return '';
+  const isAr = lang === 'ar';
+  const title = isAr ? (property.title_ar || property.title) : (property.title_en || property.title);
+  const location = isAr ? (property.locationName_ar || property.areaKey) : (property.locationName_en || property.areaKey);
+  const priceFormatted = property.price ? Number(property.price).toLocaleString() + ' ج.م' : '';
+  const sizeFormatted = property.size ? `${property.size} م²` : '';
+  const propUrl = typeof window !== 'undefined' 
+    ? `${window.location.origin}/properties/${property.id}`
+    : `${BASE_URL}/properties/${property.id}`;
+
+  if (isAr) {
+    return [
+      `🏢 *${title}*`,
+      `📍 *الموقع:* ${location}`,
+      priceFormatted ? `💰 *السعر:* ${priceFormatted}` : '',
+      sizeFormatted ? `📐 *المساحة:* ${sizeFormatted}` : '',
+      property.downPayment ? `💳 *المقدم:* ${Number(property.downPayment).toLocaleString()} ج.م` : '',
+      `🔍 *معاينة تفاصيل الوحدة والتقرير القانوني:*`,
+      propUrl,
+      `\nمنصة 1Line للاستثمار العقاري المعتمد - سوهاج`
+    ].filter(Boolean).join('\n');
+  }
+
+  return [
+    `🏢 *${title}*`,
+    `📍 *Location:* ${location}`,
+    priceFormatted ? `💰 *Price:* ${priceFormatted}` : '',
+    sizeFormatted ? `📐 *Area:* ${sizeFormatted}` : '',
+    `🔍 *View verified unit details & legal report:*`,
+    propUrl,
+    `\n1Line Real Estate Solutions - Sohag`
+  ].filter(Boolean).join('\n');
 }
 
 /**

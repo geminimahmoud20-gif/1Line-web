@@ -8,6 +8,7 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   // ⬇️ ضع بيانات مشروعك من Firebase Console هنا ⬇️
@@ -28,12 +29,14 @@ export const isFirebaseConfigured = () => {
 let app = null;
 let db = null;
 let auth = null;
+let storage = null;
 
 try {
   if (isFirebaseConfigured()) {
     app = initializeApp(firebaseConfig);
     db = getFirestore(app);
     auth = getAuth(app);
+    storage = getStorage(app);
     console.log('✅ Firebase connected successfully — بيانات العملاء ستُخزن في السحابة.');
   } else {
     console.warn('⚠️ Firebase not configured — using localStorage fallback. Update src/firebase.js with your project keys.');
@@ -42,5 +45,5 @@ try {
   console.error('❌ Firebase initialization error:', error);
 }
 
-export { db, auth };
+export { db, auth, storage };
 export default app;

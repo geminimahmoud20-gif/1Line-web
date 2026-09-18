@@ -10,9 +10,9 @@ import {
   DollarSign, 
   Sparkles,
   ShieldCheck,
-  Calendar
+  Calendar,
+  Loader2
 } from 'lucide-react';
-import { generateReservationContractPdf } from '../../utils/contractPdfGenerator';
 import { trackEvent } from '../../utils/visitorTracker';
 
 /**
@@ -84,8 +84,12 @@ export default function ContractStudioModal({
     }
   };
 
-  const handleGeneratePdf = () => {
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+  const handleGeneratePdf = async () => {
+    setIsGeneratingPdf(true);
     try {
+      const { generateReservationContractPdf } = await import('../../utils/contractPdfGenerator');
       generateReservationContractPdf({
         buyerName: formData.buyerName,
         buyerPhone: formData.buyerPhone,
@@ -112,6 +116,8 @@ export default function ContractStudioModal({
     } catch (err) {
       console.error(err);
       triggerToast(isAr ? 'حدث خطأ أثناء إنشاء العقد' : 'Failed to generate agreement', 'error');
+    } finally {
+      setIsGeneratingPdf(false);
     }
   };
 
@@ -294,10 +300,20 @@ export default function ContractStudioModal({
               type="button"
               className="btn btn-primary"
               onClick={handleGeneratePdf}
+              disabled={isGeneratingPdf}
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
             >
-              <Download size={16} />
-              <span>{isAr ? 'تحميل العقد المعتمد (PDF)' : 'Download Agreement (PDF)'}</span>
+              {isGeneratingPdf ? (
+                <>
+                  <Loader2 size={16} className="spin-animation" />
+                  <span>{isAr ? 'جاري تجهيز العقد...' : 'Generating PDF...'}</span>
+                </>
+              ) : (
+                <>
+                  <Download size={16} />
+                  <span>{isAr ? 'تحميل العقد المعتمد (PDF)' : 'Download Agreement (PDF)'}</span>
+                </>
+              )}
             </button>
 
             <a

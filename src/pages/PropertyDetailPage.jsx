@@ -93,6 +93,7 @@ export default function PropertyDetailPage({
         image: property.image || (property.images && property.images[0]),
         url: `/properties/${property.id}`,
         type: 'article',
+        price: property.price,
         schemaId: 'property-jsonld-schema',
         schema: schema
       });

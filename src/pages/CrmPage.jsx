@@ -45,6 +45,10 @@ export default function CrmPage({
   const { isAuthInitializing, currentUser, userRole } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'leads' | 'kanban' | 'properties' | 'demands' | 'projects' | 'financials' | 'matching' | 'analytics' | 'system'
   const [selectedRole, setSelectedRole] = useState(userRole || 'super_admin');
+  const verifiedUserRole = currentUser?.role || userRole || 'super_admin';
+  const isSuperAdminUser = verifiedUserRole === 'super_admin';
+  const activeRole = isSuperAdminUser ? selectedRole : verifiedUserRole;
+  const isSimulationMode = isSuperAdminUser && selectedRole !== 'super_admin';
   const [systemSubTab, setSystemSubTab] = useState('areas');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -558,37 +562,57 @@ export default function CrmPage({
               )}
             </div>
 
-            {/* Role Switcher */}
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '5px',
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              padding: '4px 8px'
-            }}>
-              <ShieldCheck size={13} style={{ color: '#d97706' }} />
-              <select
-                value={selectedRole}
-                onChange={(e) => setSelectedRole(e.target.value)}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  fontSize: '0.75rem',
-                  fontWeight: 'bold',
-                  color: selectedRole === 'super_admin' ? '#b45309' : '#0f172a',
-                  cursor: 'pointer',
-                  outline: 'none'
-                }}
-              >
-                {CRM_ROLES.map(r => (
-                  <option key={r.id} value={r.id}>
-                    {r.icon} {isAr ? r.label_ar : r.label_en}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Role Display / Switcher Guard */}
+            {isSuperAdminUser ? (
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                background: isSimulationMode ? '#fffbeb' : '#f8fafc',
+                border: isSimulationMode ? '1px solid #f59e0b' : '1px solid #e2e8f0',
+                borderRadius: '8px',
+                padding: '4px 8px'
+              }}>
+                <ShieldCheck size={13} style={{ color: isSimulationMode ? '#d97706' : '#10b981' }} />
+                <select
+                  value={selectedRole}
+                  onChange={(e) => setSelectedRole(e.target.value)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    fontSize: '0.75rem',
+                    fontWeight: 'bold',
+                    color: selectedRole === 'super_admin' ? '#b45309' : '#0f172a',
+                    cursor: 'pointer',
+                    outline: 'none'
+                  }}
+                  title={isAr ? 'محاكي الأدوار (متاح للمدير العام فقط للمعاينة)' : 'Role Simulation (Super Admin preview)'}
+                >
+                  {CRM_ROLES.map(r => (
+                    <option key={r.id} value={r.id}>
+                      {r.icon} {isAr ? r.label_ar : r.label_en}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: '#f1f5f9',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
+                padding: '4px 10px',
+                fontSize: '0.75rem',
+                fontWeight: 'bold',
+                color: '#334155'
+              }}>
+                <Lock size={12} style={{ color: '#64748b' }} />
+                <span>{CRM_ROLES.find(r => r.id === verifiedUserRole)?.icon || '👤'}</span>
+                <span>{isAr ? (CRM_ROLES.find(r => r.id === verifiedUserRole)?.label_ar || verifiedUserRole) : (CRM_ROLES.find(r => r.id === verifiedUserRole)?.label_en || verifiedUserRole)}</span>
+              </div>
+            )}
 
             {/* User Persona */}
             <div style={{
@@ -964,32 +988,77 @@ export default function CrmPage({
               <span>{isAr ? 'التحليلات والتسويق' : 'Intelligence'}</span>
             </button>
 
-            {/* 10. System Administration */}
-            <button
-              type="button"
-              onClick={() => setActiveTab('system')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '7px 14px',
-                borderRadius: '7px',
-                fontSize: '0.82rem',
-                fontWeight: activeTab === 'system' ? 'bold' : '600',
-                background: activeTab === 'system' ? '#092347' : 'transparent',
-                color: activeTab === 'system' ? '#ffffff' : '#475569',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                boxShadow: activeTab === 'system' ? '0 2px 6px rgba(9, 35, 71, 0.25)' : 'none'
-              }}
-            >
-              <ShieldCheck size={14} style={{ color: activeTab === 'system' ? '#10b981' : 'inherit' }} />
-              <span>{isAr ? 'إدارة المنظومة' : 'System Admin'}</span>
-            </button>
+            {/* 10. System Administration (Super Admin Only) */}
+            {activeRole === 'super_admin' && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('system')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '7px 14px',
+                  borderRadius: '7px',
+                  fontSize: '0.82rem',
+                  fontWeight: activeTab === 'system' ? 'bold' : '600',
+                  background: activeTab === 'system' ? '#092347' : 'transparent',
+                  color: activeTab === 'system' ? '#ffffff' : '#475569',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  boxShadow: activeTab === 'system' ? '0 2px 6px rgba(9, 35, 71, 0.25)' : 'none'
+                }}
+              >
+                <ShieldCheck size={14} style={{ color: activeTab === 'system' ? '#10b981' : 'inherit' }} />
+                <span>{isAr ? 'إدارة المنظومة' : 'System Admin'}</span>
+              </button>
+            )}
           </nav>
         </div>
       </div>
+
+      {/* Role Simulation Mode Alert Banner */}
+      {isSimulationMode && (
+        <div style={{
+          background: 'linear-gradient(90deg, #fffbeb 0%, #fef3c7 100%)',
+          borderBottom: '1px solid #fde68a',
+          padding: '8px 24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontSize: '0.8rem',
+          color: '#92400e',
+          boxShadow: '0 1px 3px rgba(217, 119, 6, 0.1)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <AlertTriangle size={16} style={{ color: '#d97706' }} />
+            <span>
+              {isAr
+                ? `وضع محاكاة الصلاحيات نشط: أنت تستعرض المنظومة بصلاحيات "${CRM_ROLES.find(r => r.id === selectedRole)?.label_ar}". يتم تطبيق قيود هذا الدور عملياً.`
+                : `Role Simulation Mode: Viewing system as "${CRM_ROLES.find(r => r.id === selectedRole)?.label_en}". Real role limits applied.`}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSelectedRole('super_admin')}
+            style={{
+              background: '#d97706',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '4px 12px',
+              fontSize: '0.74rem',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+          >
+            <span>{isAr ? 'العودة لصلاحيات المدير العام 👑' : 'Return to Super Admin'}</span>
+          </button>
+        </div>
+      )}
 
       {/* 3. Main Content Area */}
       <div className="crm-container crm-content-area" style={{ maxWidth: '1600px', margin: '0 auto', padding: '16px 24px' }}>
@@ -1040,6 +1109,35 @@ export default function CrmPage({
             triggerToast={triggerToast}
           />
         ) : activeTab === 'system' ? (
+          activeRole !== 'super_admin' ? (
+            <div style={{
+              background: '#ffffff',
+              border: '1px solid #fecaca',
+              borderRadius: '12px',
+              padding: '40px 24px',
+              textAlign: 'center',
+              maxWidth: '600px',
+              margin: '40px auto'
+            }}>
+              <Lock size={48} style={{ color: '#ef4444', margin: '0 auto 16px' }} />
+              <h3 style={{ color: '#0f172a', marginBottom: '8px' }}>
+                {isAr ? 'منطقة صلاحيات مقيدة' : 'Restricted Access'}
+              </h3>
+              <p style={{ color: '#64748b', fontSize: '0.9rem' }}>
+                {isAr 
+                  ? 'هذا القسم (إدارة النظام والأحياء وهوية المؤسس) متاح حصرياً للمدير العام (Super Admin).' 
+                  : 'This section is strictly restricted to Super Admin.'}
+              </p>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setActiveTab('dashboard')}
+                style={{ marginTop: '16px' }}
+              >
+                {isAr ? 'العودة للوحة الرئيسية' : 'Return to Dashboard'}
+              </button>
+            </div>
+          ) : (
           <div className="crm-system-subcontainer">
             {/* Clean System Administration Sub-Navigation */}
             <div style={{
@@ -1136,8 +1234,8 @@ export default function CrmPage({
                 crmAuthenticated={true}
                 setCrmAuthenticated={setCrmAuthenticated}
                 currentUser={currentUser}
-                userRole={userRole}
-                activeRole={selectedRole}
+                userRole={activeRole}
+                activeRole={activeRole}
                 onRoleChange={setSelectedRole}
                 adminTab={systemSubTab === 'backup' ? 'system_backup' : 'automation'}
                 onSwitchTab={setActiveTab}
@@ -1157,6 +1255,7 @@ export default function CrmPage({
               />
             )}
           </div>
+          )
         ) : (
           /* For 'dashboard', 'leads', 'kanban', 'matching', 'financials', 'analytics' */
           <CrmAdminPanel
@@ -1166,8 +1265,8 @@ export default function CrmPage({
             crmAuthenticated={true}
             setCrmAuthenticated={setCrmAuthenticated}
             currentUser={currentUser}
-            userRole={userRole}
-            activeRole={selectedRole}
+            userRole={activeRole}
+            activeRole={activeRole}
             onRoleChange={setSelectedRole}
             adminTab={activeTab}
             onSwitchTab={setActiveTab}

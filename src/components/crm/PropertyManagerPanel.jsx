@@ -16,7 +16,8 @@ import {
   Archive,
   FileSpreadsheet,
   MessageSquare,
-  MapPin
+  MapPin,
+  Loader2
 } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { getAreas } from '../../utils/areasData';
@@ -25,6 +26,7 @@ import InteractiveMapPickerModal from './InteractiveMapPickerModal';
 import WhatsAppMatchNotifierModal from './WhatsAppMatchNotifierModal';
 import { findMatchingClientsForProperty } from '../../utils/matchingEngine';
 import { compressImageFile } from '../../utils/imageCompressor';
+import { uploadMultipleImages } from '../../utils/imageUploadService';
 
 // Accurate GPS Coordinates map for Sohag Districts
 const SOHAG_AREA_COORDINATES = {
@@ -190,19 +192,23 @@ export default function PropertyManagerPanel({
     }
   };
 
-  // Multiple File Upload Handler (FileReader) with size validation
-  const MAX_FILE_SIZE_MB = 10;
+  // Advanced Cloud Upload & Multi-Image Canvas Compressor
+  const MAX_FILE_SIZE_MB = 15;
   const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [uploadProgressText, setUploadProgressText] = useState('');
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
 
-  const handleFileUpload = (e) => {
-    const files = Array.from(e.target.files);
+  const processSelectedFiles = async (filesList) => {
+    const files = Array.from(filesList);
     if (!files.length) return;
 
-    // 🛡️ Filter out files exceeding size limit
+    // Filter out non-images or oversized files
     const validFiles = [];
     const oversizedFiles = [];
 
     files.forEach((file) => {
+      if (!file.type.startsWith('image/')) return;
       if (file.size > MAX_FILE_SIZE_BYTES) {
         oversizedFiles.push(file.name);
       } else {
@@ -214,45 +220,87 @@ export default function PropertyManagerPanel({
       triggerToast(
         isAr 
           ? `تم رفض ${oversizedFiles.length} صورة لتجاوز الحد الأقصى (${MAX_FILE_SIZE_MB}MB): ${oversizedFiles.join(', ')}`
-          : `${oversizedFiles.length} file(s) rejected (exceeds ${MAX_FILE_SIZE_MB}MB limit): ${oversizedFiles.join(', ')}`,
+          : `${oversizedFiles.length} file(s) rejected (exceeds ${MAX_FILE_SIZE_MB}MB limit)`,
         'error'
       );
     }
 
     if (validFiles.length === 0) return;
 
-    // ⚡ Automatic Canvas Compression (Downscales to max 1400px and 80% quality)
-    Promise.all(
-      validFiles.map(file => compressImageFile(file, { maxWidth: 1400, quality: 0.82 }))
-    ).then((compressedResults) => {
-      const newImages = compressedResults.map(res => res.dataUrl);
-      setForm((prev) => ({
-        ...prev,
-        images: [...newImages, ...prev.images]
-      }));
+    setIsUploadingImages(true);
+    setUploadProgressText(isAr ? `جاري ضغط ومعالجة ${validFiles.length} صورة...` : `Compressing ${validFiles.length} photos...`);
 
-      const avgRatio = compressedResults[0]?.compressionRatio || '85%';
-      triggerToast(
-        isAr 
-          ? `تم ضغط وحفظ ${validFiles.length} صورة بنجاح بجودة معمارية فائقة (توفير ${avgRatio} من المساحة) ⚡` 
-          : `${validFiles.length} images compressed & saved successfully (${avgRatio} saved)!`, 
-        'success'
+    try {
+      const propId = editingPropertyId || `prop_${Date.now()}`;
+      const uploadedUrls = await uploadMultipleImages(
+        validFiles, 
+        propId, 
+        (done, total) => {
+          setUploadProgressText(
+            isAr 
+              ? `تم رفع ومعالجة ${done} من ${total} صورة...` 
+              : `Processed ${done}/${total} photos...`
+          );
+        }
       );
-    }).catch((err) => {
-      console.error('Image compression error:', err);
-      // Fallback to FileReader if canvas compression has an unexpected issue
-      validFiles.forEach((file) => {
-        const reader = new FileReader();
-        reader.onload = (uploadEvent) => {
-          setForm((prev) => ({
-            ...prev,
-            images: [uploadEvent.target.result, ...prev.images]
-          }));
-        };
-        reader.readAsDataURL(file);
-      });
-      triggerToast(isAr ? `تمت إضافة الصور بنجاح` : `Photos added`, 'success');
+
+      if (uploadedUrls.length > 0) {
+        setForm((prev) => ({
+          ...prev,
+          images: [...uploadedUrls, ...prev.images]
+        }));
+        triggerToast(
+          isAr 
+            ? `تم ضغط ورفع ${uploadedUrls.length} صورة بنجاح بجودة معمارية فائقة ⚡` 
+            : `${uploadedUrls.length} photos compressed & saved successfully!`, 
+          'success'
+        );
+      }
+    } catch (err) {
+      console.error('Image upload failed:', err);
+      triggerToast(isAr ? 'حدث خطأ أثناء معالجة الصور' : 'Failed to process images', 'error');
+    } finally {
+      setIsUploadingImages(false);
+      setUploadProgressText('');
+    }
+  };
+
+  const handleFileUpload = (e) => {
+    processSelectedFiles(e.target.files);
+    e.target.value = '';
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOver(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOver(false);
+    if (e.dataTransfer && e.dataTransfer.files) {
+      processSelectedFiles(e.dataTransfer.files);
+    }
+  };
+
+  const handleSetPrimaryImage = (indexToPrimary) => {
+    setForm((prev) => {
+      const selected = prev.images[indexToPrimary];
+      const rest = prev.images.filter((_, idx) => idx !== indexToPrimary);
+      return {
+        ...prev,
+        images: [selected, ...rest]
+      };
     });
+    triggerToast(isAr ? 'تم تعيين الصورة كغلاف رئيسي للعقار 🌟' : 'Set as primary cover photo', 'success');
   };
 
   const handleRemoveImage = (indexToRemove) => {
@@ -797,12 +845,27 @@ export default function PropertyManagerPanel({
             <form onSubmit={handleSubmit} className="property-cms-form">
               {/* Photo Upload Section */}
               <div className="cms-image-uploader-box">
-                <label className="uploader-title">
-                  <ImageIcon size={18} />
-                  <span>{isAr ? 'صور العقار (رفع من الموبايل أو الكمبيوتر)' : 'Property Photos (Direct Device Upload)'}</span>
-                </label>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <label className="uploader-title" style={{ margin: 0 }}>
+                    <ImageIcon size={18} />
+                    <span>{isAr ? 'صور العقار (رفع من الموبايل أو الكمبيوتر)' : 'Property Photos (Direct Device Upload)'}</span>
+                  </label>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    {form.images.length} {isAr ? 'صور مرفوعة' : 'photos'}
+                  </span>
+                </div>
 
-                <div className="uploader-dropzone">
+                <div 
+                  className={`uploader-dropzone ${isDraggingOver ? 'dropzone-active' : ''}`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  style={{
+                    border: isDraggingOver ? '2px dashed var(--accent-gold)' : '2px dashed var(--border-light)',
+                    background: isDraggingOver ? 'rgba(217, 119, 6, 0.08)' : 'var(--bg-slate)',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
                   <input
                     type="file"
                     multiple
@@ -810,25 +873,118 @@ export default function PropertyManagerPanel({
                     id="property-images-file-input"
                     onChange={handleFileUpload}
                     className="hidden-file-input"
+                    disabled={isUploadingImages}
                   />
-                  <label htmlFor="property-images-file-input" className="dropzone-label">
-                    <Upload size={24} className="text-primary" />
-                    <span>{isAr ? 'انقر لاختيار عدة صور من جهازك' : 'Click to select multiple photos'}</span>
-                    <small>{isAr ? 'JPG, PNG, WebP حتى 10MB لكل صورة' : 'Supports JPG, PNG, WebP up to 10MB'}</small>
+                  <label htmlFor="property-images-file-input" className="dropzone-label" style={{ cursor: isUploadingImages ? 'wait' : 'pointer' }}>
+                    {isUploadingImages ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '12px 0' }}>
+                        <Loader2 size={30} className="spin-animation" style={{ color: 'var(--accent-gold)' }} />
+                        <span style={{ fontWeight: 'bold', color: 'var(--accent-gold)' }}>{uploadProgressText}</span>
+                      </div>
+                    ) : (
+                      <>
+                        <Upload size={26} className="text-primary" />
+                        <span>{isAr ? 'اسحب الصور وأفلتها هنا، أو انقر للاختيار' : 'Drag & drop photos here, or click to browse'}</span>
+                        <small>{isAr ? 'ضغط تلقائي فائق السرعة • JPG, PNG, WebP حتى 15MB' : 'Instant smart compression • JPG, PNG, WebP up to 15MB'}</small>
+                      </>
+                    )}
                   </label>
                 </div>
 
-                {/* Previews */}
+                {/* Previews & Primary Cover Manager */}
                 {form.images.length > 0 && (
-                  <div className="uploaded-thumbs-grid">
+                  <div className="uploaded-thumbs-grid" style={{ marginTop: '14px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '10px' }}>
                     {form.images.map((imgSrc, idx) => (
-                      <div key={idx} className="thumb-preview-item">
-                        <img src={imgSrc} alt="" />
+                      <div 
+                        key={idx} 
+                        className="thumb-preview-item"
+                        style={{
+                          position: 'relative',
+                          borderRadius: '8px',
+                          overflow: 'hidden',
+                          border: idx === 0 ? '2px solid var(--accent-gold)' : '1px solid var(--border-light)',
+                          boxShadow: idx === 0 ? '0 0 10px rgba(217, 119, 6, 0.3)' : 'none',
+                          background: 'var(--bg-card)'
+                        }}
+                      >
+                        <img 
+                          src={imgSrc} 
+                          alt={`Unit Photo ${idx + 1}`} 
+                          style={{ width: '100%', height: '90px', objectFit: 'cover', display: 'block' }}
+                        />
+
+                        {/* Primary Badge or Make Primary Button */}
+                        {idx === 0 ? (
+                          <span style={{
+                            position: 'absolute',
+                            bottom: '4px',
+                            right: '4px',
+                            left: '4px',
+                            background: 'rgba(15, 23, 42, 0.85)',
+                            color: 'var(--accent-gold)',
+                            fontSize: '0.68rem',
+                            fontWeight: 'bold',
+                            padding: '2px 4px',
+                            borderRadius: '4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px'
+                          }}>
+                            <Star size={11} fill="currentColor" />
+                            {isAr ? 'الغلاف الرئيسي' : 'Cover Photo'}
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleSetPrimaryImage(idx)}
+                            style={{
+                              position: 'absolute',
+                              bottom: '4px',
+                              right: '4px',
+                              left: '4px',
+                              background: 'rgba(0, 0, 0, 0.7)',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '4px',
+                              fontSize: '0.68rem',
+                              padding: '2px 4px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '4px',
+                              transition: 'background 0.2s'
+                            }}
+                            title={isAr ? 'تعيين هذه الصورة كغلاف رئيسي للعقار' : 'Set as primary cover'}
+                          >
+                            <Star size={10} />
+                            {isAr ? 'اجعلها غلاف' : 'Make Cover'}
+                          </button>
+                        )}
+
+                        {/* Delete Button */}
                         <button
                           type="button"
                           className="btn-del-thumb"
                           onClick={() => handleRemoveImage(idx)}
                           title={isAr ? 'إزالة الصورة' : 'Remove'}
+                          style={{
+                            position: 'absolute',
+                            top: '4px',
+                            left: '4px',
+                            background: 'rgba(239, 68, 68, 0.9)',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: '22px',
+                            height: '22px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            fontSize: '11px'
+                          }}
                         >
                           ✕
                         </button>
