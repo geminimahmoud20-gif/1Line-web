@@ -6,11 +6,11 @@ import {
   Video, 
   PhoneCall, 
   Download,
-  Sparkles
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 import PhoneInputField from './PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
-import { generateInvestorProspectusPdf } from '../utils/pdfBrochure';
 import { getAreas } from '../utils/areasData';
 
 // Dynamic ROI Yields based on property type in Sohag
@@ -130,9 +130,10 @@ export const InvestorCenter = ({
     submitInvestorForm(updatedForm);
   };
 
-  const handleDownloadProspectus = () => {
+  const handleDownloadProspectus = async () => {
     setIsDownloadingPdf(true);
     try {
+      const { generateInvestorProspectusPdf } = await import('../utils/pdfBrochure');
       generateInvestorProspectusPdf({
         invAmount,
         invPeriod,
@@ -149,7 +150,7 @@ export const InvestorCenter = ({
         triggerToast(isAr ? 'تعذر توليد ملف PDF، يرجى المحاولة لاحقاً' : 'Failed to generate PDF, please try again', 'error');
       }
     } finally {
-      setTimeout(() => setIsDownloadingPdf(false), 800);
+      setIsDownloadingPdf(false);
     }
   };
 

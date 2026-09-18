@@ -69,10 +69,12 @@ export default function MortgageRoiCalculator({
   const monthlyInstallment = useMemo(() => {
     if (loanAmount <= 0) return 0;
     const monthlyRate = (effectiveRate / 100) / 12;
-    const totalMonths = effectiveYears * 12;
+    const totalMonths = Math.max(1, effectiveYears * 12);
     if (monthlyRate === 0) return Math.round(loanAmount / totalMonths);
-    const monthly = (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) / (Math.pow(1 + monthlyRate, totalMonths) - 1);
-    return Math.round(monthly);
+    const factor = Math.pow(1 + monthlyRate, totalMonths);
+    if (factor <= 1) return Math.round(loanAmount / totalMonths);
+    const monthly = (loanAmount * monthlyRate * factor) / (factor - 1);
+    return isFinite(monthly) && monthly > 0 ? Math.round(monthly) : Math.round(loanAmount / totalMonths);
   }, [loanAmount, effectiveRate, effectiveYears]);
 
   const totalPaid = useMemo(() => {

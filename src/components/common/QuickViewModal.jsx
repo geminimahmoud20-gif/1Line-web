@@ -1,11 +1,12 @@
-import { X, MapPin, Maximize2, BedDouble, Bath, MessageSquare, ArrowLeft, ArrowRight, Download, ExternalLink } from 'lucide-react';
+import { useState } from 'react';
+import { X, MapPin, Maximize2, BedDouble, Bath, MessageSquare, ArrowLeft, ArrowRight, Download, ExternalLink, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { generatePropertyPdf } from '../../utils/pdfBrochure';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { formatCurrencyPrice, getPriceBenchmark } from '../../utils/currencyAndBenchmark';
 import BrandWatermark from './BrandWatermark';
 
 export default function QuickViewModal({ property, lang = 'ar', currency = 'EGP', onClose }) {
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   if (!property) return null;
 
   const isAr = lang === 'ar';
@@ -18,6 +19,18 @@ export default function QuickViewModal({ property, lang = 'ar', currency = 'EGP'
   const monthlyInstallmentVal = Number(property.monthlyInstallment) || 0;
   const downPaymentData = formatCurrencyPrice(downPaymentVal, currency, lang);
   const monthlyInstallmentData = formatCurrencyPrice(monthlyInstallmentVal, currency, lang);
+
+  const handleDownloadPdf = async () => {
+    setIsGeneratingPdf(true);
+    try {
+      const { generatePropertyPdf } = await import('../../utils/pdfBrochure');
+      generatePropertyPdf(property, lang);
+    } catch (err) {
+      console.error('Failed to generate PDF:', err);
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
 
   return (
     <div className="quickview-modal-backdrop" onClick={onClose}>
@@ -116,11 +129,12 @@ export default function QuickViewModal({ property, lang = 'ar', currency = 'EGP'
                 <button
                   type="button"
                   className="btn btn-pdf-action quickview-half-btn"
-                  onClick={() => generatePropertyPdf(property, lang)}
+                  onClick={handleDownloadPdf}
+                  disabled={isGeneratingPdf}
                   title={isAr ? 'تحميل بروشور العقار' : 'Download Property PDF'}
                 >
-                  <Download size={15} />
-                  <span>{isAr ? 'بروشور PDF' : 'PDF Brochure'}</span>
+                  {isGeneratingPdf ? <Loader2 size={15} className="spin-animation" /> : <Download size={15} />}
+                  <span>{isGeneratingPdf ? (isAr ? 'جاري التحميل...' : 'Loading...') : (isAr ? 'بروشور PDF' : 'PDF Brochure')}</span>
                 </button>
               </div>
             </div>

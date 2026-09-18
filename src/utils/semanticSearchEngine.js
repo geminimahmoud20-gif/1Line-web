@@ -66,30 +66,67 @@ const TYPE_SYNONYMS = {
   ]
 };
 
-// Natural language price multipliers
+/**
+ * Normalizes Arabic text: converts Eastern digits to Western, unifies Alef, Ta-Marbuta, and Ya forms.
+ */
+export function normalizeArabicText(text) {
+  if (!text || typeof text !== 'string') return '';
+  return text
+    // Convert Eastern Arabic numerals ٠١٢٣٤٥٦٧٨٩ to 0123456789
+    .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+    // Convert Persian Arabic numerals ۰۱۲۳۴۵۶۷۸۹ to 0123456789
+    .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+    // Normalize Alef forms (أ, إ, آ, ٱ -> ا)
+    .replace(/[أإآٱ]/g, 'ا')
+    // Normalize Ta Marbuta (ة -> ه)
+    .replace(/ة/g, 'ه')
+    // Normalize Alif Maqsura (ى -> ي)
+    .replace(/ى/g, 'ي')
+    // Remove Arabic diacritics / Tashkeel
+    .replace(/[\u064B-\u065F\u0670]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+// Normalized Area Synonyms Map
+const NORMALIZED_AREA_MAP = Object.entries(AREA_SYNONYMS).map(([key, list]) => ({
+  key,
+  originalName: list[0],
+  normalizedSynonyms: list.map(s => normalizeArabicText(s))
+}));
+
+// Normalized Type Synonyms Map
+const NORMALIZED_TYPE_MAP = Object.entries(TYPE_SYNONYMS).map(([key, list]) => ({
+  key,
+  originalName: list[0],
+  normalizedSynonyms: list.map(s => normalizeArabicText(s))
+}));
+
+// Natural language price multipliers (configured for normalized text)
 const PRICE_PATTERNS = [
-  // "أقل من 3 مليون", "تحت 2.5 مليون", "في حدود 4 مليون"
-  { regex: /(?:أقل من|تحت|في حدود|حدود|بسعر|بأقل من|حتى|اقل من|under|below|less than|max)\s*(\d+(?:\.\d+)?)\s*(?:مليون|ملايين|م)/i, multiplier: 1000000, type: 'max' },
   // "من 2 مليون إلى 5 مليون"
-  { regex: /(?:من|between)\s*(\d+(?:\.\d+)?)\s*(?:مليون|م)\s*(?:إلى|الي|وحتى|to|-)\s*(\d+(?:\.\d+)?)\s*(?:مليون|م)/i, isRange: true, multiplier: 1000000 },
+  { regex: /(?:من|between)\s*(\d+(?:\.\d+)?)\s*(?:مليون|م)?\s*(?:الي|وحتي|حتي|to|-)\s*(\d+(?:\.\d+)?)\s*(?:مليون|م)/i, isRange: true, multiplier: 1000000 },
+  // "أقل من 3 مليون", "تحت 2.5 مليون", "في حدود 4 مليون", "بسعر 2.5 مليون", "بـ 2.5 مليون"
+  { regex: /(?:اقل من|تحت|في حدود|حدود|بسعر|بـ?|باقل من|حتي|under|below|less than|max)\s*(\d+(?:\.\d+)?)\s*(?:مليون|ملايين|م)/i, multiplier: 1000000, type: 'max' },
   // "أكثر من 2 مليون", "فوق 3 مليون"
-  { regex: /(?:أكثر من|فوق|من أول|اكثر من|above|min|more than)\s*(\d+(?:\.\d+)?)\s*(?:مليون|ملايين|م)/i, multiplier: 1000000, type: 'min' },
+  { regex: /(?:اكثر من|فوق|من اول|above|min|more than)\s*(\d+(?:\.\d+)?)\s*(?:مليون|ملايين|م)/i, multiplier: 1000000, type: 'min' },
   // Direct numbers with "مليون"
   { regex: /(\d+(?:\.\d+)?)\s*(?:مليون|ملايين)/i, multiplier: 1000000, type: 'approx' },
-  // "500 ألف", "750 الف"
-  { regex: /(\d+)\s*(?:ألف|الف|k)/i, multiplier: 1000, type: 'approx' },
+  // "500 ألف", "بسعر 800 الف"
+  { regex: /(?:اقل من|تحت|في حدود|حدود|بسعر|باقل من|حتي|under|below|max)?\s*(\d+)\s*(?:الف|k)/i, multiplier: 1000, type: 'max' },
   // Plain numbers over 100,000 (e.g. 2500000)
   { regex: /\b([1-9]\d{5,8})\b/, multiplier: 1, type: 'approx' }
 ];
 
-// Bedrooms parser
+// Bedrooms parser (configured for normalized text)
 const BEDROOM_PATTERNS = [
-  { regex: /(\d+)\s*(?:غرف|غرفة|اوض|أوض|نوم|غرفه|beds?|bedrooms?)/i, parser: (m) => parseInt(m[1], 10) },
-  { regex: /\b(?:استوديو|studio)\b/i, parser: () => 1 },
-  { regex: /\b(?:غرفتين|اوضتين|أوضتين)\b/i, parser: () => 2 },
-  { regex: /\b(?:ثلاث|3)\s*غرف\b/i, parser: () => 3 },
-  { regex: /\b(?:أربع|اربع|4)\s*غرف\b/i, parser: () => 4 },
-  { regex: /\b(?:خمس|5)\s*غرف\b/i, parser: () => 5 }
+  { regex: /(?:استوديو|ستوديو|studio)/i, parser: () => 1 },
+  { regex: /(?:غرفتين|اوضتين|اوضتان|غرفتان)/i, parser: () => 2 },
+  { regex: /(?:ثلاث|3)\s*(?:غرف|اوض|نوم)/i, parser: () => 3 },
+  { regex: /(?:اربع|4)\s*(?:غرف|اوض|نوم)/i, parser: () => 4 },
+  { regex: /(?:خمس|5)\s*(?:غرف|اوض|نوم)/i, parser: () => 5 },
+  { regex: /(?:ست|6)\s*(?:غرف|اوض|نوم)/i, parser: () => 6 },
+  { regex: /(\d+)\s*(?:غرف|غرفه|اوض|نوم|beds?|bedrooms?)/i, parser: (m) => parseInt(m[1], 10) }
 ];
 
 /**
@@ -100,7 +137,7 @@ export function parseSemanticQuery(rawQuery) {
     return { cleanText: '', filters: {}, tagsFound: [] };
   }
 
-  const query = rawQuery.toLowerCase().trim();
+  const query = normalizeArabicText(rawQuery);
   const tagsFound = [];
   let detectedArea = null;
   let detectedType = null;
@@ -110,19 +147,19 @@ export function parseSemanticQuery(rawQuery) {
   let detectedIntent = null;
 
   // 1. Detect Districts & Neighborhoods
-  for (const [areaKey, synonyms] of Object.entries(AREA_SYNONYMS)) {
-    if (synonyms.some(s => query.includes(s))) {
-      detectedArea = areaKey;
-      tagsFound.push({ type: 'area', label_ar: synonyms[0], key: areaKey });
+  for (const item of NORMALIZED_AREA_MAP) {
+    if (item.normalizedSynonyms.some(s => query.includes(s))) {
+      detectedArea = item.key;
+      tagsFound.push({ type: 'area', label_ar: item.originalName, key: item.key });
       break;
     }
   }
 
   // 2. Detect Property Types
-  for (const [typeKey, synonyms] of Object.entries(TYPE_SYNONYMS)) {
-    if (synonyms.some(s => query.includes(s))) {
-      detectedType = typeKey;
-      tagsFound.push({ type: 'propertyType', label_ar: synonyms[0], key: typeKey });
+  for (const item of NORMALIZED_TYPE_MAP) {
+    if (item.normalizedSynonyms.some(s => query.includes(s))) {
+      detectedType = item.key;
+      tagsFound.push({ type: 'propertyType', label_ar: item.originalName, key: item.key });
       break;
     }
   }
@@ -172,16 +209,16 @@ export function parseSemanticQuery(rawQuery) {
   }
 
   // 5. Detect Commercial & Investment Intent
-  if (/\b(?:استثمار|عائد|مضمون|تجاري|ايجار|إيجار|roi|دخل)\b/i.test(query)) {
+  if (/(?:استثمار|عائد|مضمون|تجاري|ايجار|roi|دخل)/i.test(query)) {
     detectedIntent = 'investment';
     tagsFound.push({ type: 'intent', label_ar: 'عائد استثماري' });
-  } else if (/\b(?:كاش|فوري|تخليص|جاهز|سريع|فلوس جاهزة)\b/i.test(query)) {
+  } else if (/(?:كاش|فوري|تخليص|جاهز|سريع|فلوس جاهزه)/i.test(query)) {
     detectedIntent = 'cash_deal';
     tagsFound.push({ type: 'intent', label_ar: 'صفقة كاش فورية' });
-  } else if (/\b(?:تقسيط|تسهيلات|أقساط|اقساط|مقدم|مقدم بسيط|قسط مريح)\b/i.test(query)) {
+  } else if (/(?:تقسيط|تسهيلات|اقساط|مقدم|مقدم بسيط|قسط مريح)/i.test(query)) {
     detectedIntent = 'installments';
     tagsFound.push({ type: 'intent', label_ar: 'تسهيلات وتقسيط' });
-  } else if (/\b(?:لقطة|لقطه|فرصة|فرصه|رخيص|حنين|اقتصادي|مهاجر|مستعجل|سعر زمان)\b/i.test(query)) {
+  } else if (/(?:لقطه|فرصه|رخيص|حنين|اقتصادي|مهاجر|مستعجل|سعر زمان)/i.test(query)) {
     detectedIntent = 'budget';
     if (!maxPrice) maxPrice = 3000000;
     tagsFound.push({ type: 'intent', label_ar: 'عقار لقطة وفرصة' });
