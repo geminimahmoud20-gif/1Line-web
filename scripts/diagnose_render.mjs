@@ -28,10 +28,12 @@ globalThis.document = {
   head: { appendChild: () => {} },
   body: { appendChild: () => {}, style: {} }
 };
-globalThis.navigator = {
-  userAgent: 'Mozilla/5.0',
-  connection: { saveData: false, effectiveType: '4g' }
-};
+try {
+  Object.defineProperty(globalThis.navigator, 'connection', {
+    value: { saveData: false, effectiveType: '4g' },
+    configurable: true
+  });
+} catch (e) {}
 globalThis.localStorage = globalThis.window.localStorage;
 
 async function run() {
