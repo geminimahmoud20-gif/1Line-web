@@ -70,7 +70,11 @@ export const CrmAdminPanel = ({
   onSwitchToProperties,
   onSwitchToProjects,
   onSwitchToAreas,
-  onSwitchToCorporate
+  onSwitchToCorporate,
+  adminTab: propAdminTab,
+  onSwitchTab,
+  activeRole: propActiveRole,
+  onRoleChange
 }) => {
   // Local Authentication States
   const [crmPasswordInput, setCrmPasswordInput] = useState('');
@@ -80,11 +84,21 @@ export const CrmAdminPanel = ({
   const [loading, setLoading] = useState(false);
 
   // Multi-Tenant RBAC Identity State
-  const [activeRole, setActiveRole] = useState(userRole || 'super_admin'); // 'super_admin' | 'agent_east' | 'agent_new_sohag'
+  const [localActiveRole, setLocalActiveRole] = useState(userRole || 'super_admin');
+  const activeRole = propActiveRole || localActiveRole;
+  const setActiveRole = (role) => {
+    setLocalActiveRole(role);
+    if (onRoleChange) onRoleChange(role);
+  };
   const [myDealsOnly, setMyDealsOnly] = useState(false);
 
   // Enterprise Tab States
-  const [adminTab, setAdminTab] = useState('dashboard');
+  const [localAdminTab, setLocalAdminTab] = useState('dashboard');
+  const adminTab = propAdminTab || localAdminTab;
+  const setAdminTab = (tab) => {
+    setLocalAdminTab(tab);
+    if (onSwitchTab) onSwitchTab(tab);
+  };
   const [leadFilter, setLeadFilter] = useState('all');
   const [temperatureFilter, setTemperatureFilter] = useState('all');
   const [areaFilter, setAreaFilter] = useState('all');
@@ -686,317 +700,148 @@ export const CrmAdminPanel = ({
   // Enterprise Dashboard Navigation Tabs
   return (
     <div className="enterprise-crm-hub">
-      {/* Top Operations & System Actions Toolbar - Crisp White Enterprise */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: '12px',
-        background: '#ffffff',
-        padding: '10px 16px',
-        borderRadius: '12px',
-        border: '1px solid #e2e8f0',
-        marginBottom: '16px',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)'
-      }}>
-        {/* Left / Status & Active Role */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '4px 10px',
-            borderRadius: 'var(--radius-pill)',
-            fontSize: '0.75rem',
-            fontWeight: 'bold',
-            background: firebaseConnected ? '#ecfdf5' : '#fffbeb',
-            color: firebaseConnected ? '#059669' : '#b45309',
-            border: `1px solid ${firebaseConnected ? '#a7f3d0' : '#fde68a'}`
-          }}>
-            {firebaseConnected ? <Wifi size={12} /> : <WifiOff size={12} />}
-            <span>{firebaseConnected ? (isAr ? 'متصل بالسحابة (Cloud Sync)' : 'Cloud Active') : (isAr ? 'وضع التخزين المحلي (Local Cache)' : 'Local Storage')}</span>
-          </div>
-
-          {/* Live Sync Status & Last Synced Timestamp */}
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '4px 10px',
-            borderRadius: 'var(--radius-pill)',
-            fontSize: '0.72rem',
-            background: '#f8fafc',
-            color: '#475569',
-            border: '1px solid #e2e8f0'
-          }}>
-            <Clock size={11} style={{ color: '#d97706' }} />
-            <span style={{ fontWeight: '500' }}>{firebaseConnected ? (isAr ? 'تم الحفظ والمزامنة بنجاح 🟢' : 'Synced Successfully 🟢') : (isAr ? 'تم الحفظ محلياً — بانتظار المزامنة ⏳' : 'Pending Sync ⏳')}</span>
-            <span style={{ color: '#94a3b8' }}>•</span>
-            <span style={{ fontSize: '0.68rem', color: '#0f172a', fontWeight: 'bold' }}>{formatTimeSinceLastSync(isAr ? 'ar' : 'en')}</span>
-          </div>
-
-          {/* Multi-Tenant RBAC Role Switcher */}
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            background: '#f8fafc',
-            border: '1px solid #e2e8f0',
-            borderRadius: 'var(--radius-pill)',
-            padding: '3px 8px'
-          }}>
-            <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '600' }}>
-              {isAr ? 'الصلاحية الحالية:' : 'Role:'}
-            </span>
-            <select
-              value={activeRole}
-              onChange={(e) => {
-                setActiveRole(e.target.value);
-                if (e.target.value === 'super_admin') setMyDealsOnly(false);
-              }}
-              style={{
-                background: '#ffffff',
-                color: activeRole === 'super_admin' ? '#b45309' : '#0f172a',
-                border: '1px solid #cbd5e1',
-                borderRadius: '8px',
-                fontSize: '0.74rem',
-                padding: '2px 8px',
-                fontWeight: 'bold',
-                cursor: 'pointer'
-              }}
-            >
-              {CRM_ROLES.map(r => (
-                <option key={r.id} value={r.id}>
-                  {r.icon} {isAr ? r.label_ar : r.label_en}
-                </option>
-              ))}
-            </select>
-
-            {activeRole !== 'super_admin' && (
-              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', color: myDealsOnly ? '#059669' : '#64748b', cursor: 'pointer', margin: 0, paddingInlineStart: '6px' }}>
-                <input
-                  type="checkbox"
-                  checked={myDealsOnly}
-                  onChange={(e) => setMyDealsOnly(e.target.checked)}
-                  style={{ cursor: 'pointer' }}
-                />
-                <span>{isAr ? 'صفقاتي فقط' : 'My Deals Only'}</span>
-              </label>
-            )}
-          </div>
-        </div>
-
-        {/* Right / Actions */}
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-          {/* Contract Studio Launch Button */}
-          <button 
-            type="button" 
-            className="btn btn-sm" 
-            onClick={() => setShowContractStudio(true)}
-            style={{ 
-              background: '#092347', 
-              color: '#ffffff', 
-              fontWeight: 'bold',
-              border: '1px solid #092347', 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '6px',
-              fontSize: '0.8rem',
-              padding: '6px 12px',
-              borderRadius: '8px',
-              boxShadow: '0 2px 6px rgba(9, 35, 71, 0.2)'
-            }}
-          >
-            <FileText size={13} style={{ color: '#f59e0b' }} />
-            <span>{isAr ? 'استوديو العقود' : 'Contract Studio'}</span>
-          </button>
-
-          {/* AI Copywriter Launch Button */}
-          <button 
-            type="button" 
-            className="btn btn-sm" 
-            onClick={() => setShowAICopywriter(true)}
-            style={{ 
-              background: '#fffbeb', 
-              color: '#b45309', 
-              fontWeight: 'bold',
-              border: '1px solid #fde68a', 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '6px',
-              fontSize: '0.8rem',
-              padding: '6px 12px',
-              borderRadius: '8px'
-            }}
-          >
-            <Wand2 size={13} />
-            <span>{isAr ? 'كاتب الإعلانات AI' : 'AI Copywriter'}</span>
-          </button>
-
-          {/* Primary Action: Add Lead Directly */}
-          <button
-            type="button"
-            className="btn btn-sm"
-            onClick={() => setShowAddLeadModal(true)}
-            style={{
-              background: '#059669',
-              border: '1px solid #047857',
-              color: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontSize: '0.8rem',
-              padding: '6px 12px',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              boxShadow: '0 2px 6px rgba(5, 150, 105, 0.2)'
-            }}
-          >
-            <UserPlus size={13} />
-            <span>{isAr ? '+ تسجيل عميل جديد' : '+ New Lead'}</span>
-          </button>
-
-          {/* Secondary Action: Export CSV */}
-          <button 
-            className="btn btn-sm" 
-            onClick={handleExportCSV}
-            style={{ 
-              background: '#ffffff', 
-              color: '#0f172a', 
-              border: '1px solid #cbd5e1', 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '6px',
-              fontSize: '0.8rem',
-              padding: '6px 12px',
-              borderRadius: '8px',
-              fontWeight: '600'
-            }}
-          >
-            <Download size={13} />
-            <span>{isAr ? 'تصدير CSV' : 'Export CSV'}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* 🧭 ENTERPRISE HIERARCHICAL NAVIGATION (5 FUNCTIONAL GROUPS) - Crisp White Strip */}
-      <div className="crm-nav-segmented-strip" style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px',
-        background: '#ffffff',
-        border: '1px solid #e2e8f0',
-        borderRadius: '12px',
-        padding: '12px 16px',
-        marginBottom: '20px',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)'
-      }}>
-        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
-          {[
-            {
-              id: 'daily_ops',
-              title_ar: 'العمليات اليومية',
-              title_en: 'Daily Ops',
-              tabs: [
-                { id: 'dashboard', icon: LayoutGrid, label_ar: 'نظرة عامة وقرارات اليوم', label_en: 'Decisions Overview' },
-                { id: 'leads', icon: Users, label_ar: `العملاء والطلبات (${leads.filter(l => !l.isArchived).length})`, label_en: `Leads & Inquiries (${leads.filter(l => !l.isArchived).length})` },
-                { id: 'kanban', icon: Target, label_ar: 'مسار الصفقات (Kanban)', label_en: 'Deals Pipeline' }
-              ]
-            },
-            {
-              id: 'inventory',
-              title_ar: 'المخزون العقاري',
-              title_en: 'Inventory',
-              tabs: [
-                { id: 'properties_desk', icon: Building, label_ar: `محفظة العقارات (${properties.length})`, label_en: `Properties (${properties.length})`, onAction: () => onSwitchToProperties?.() },
-                { id: 'demands_desk', icon: Zap, label_ar: `طلبات المشترين (${demands.length})`, label_en: `Buyer Demands (${demands.length})`, onAction: () => onSwitchToDemands?.() },
-                { id: 'areas_desk', icon: MapPin, label_ar: 'إدارة المناطق', label_en: 'Districts CMS', onAction: () => onSwitchToAreas?.() },
-                { id: 'matching', icon: Sparkles, label_ar: 'المطابقات الذكية', label_en: 'AI Match Engine' }
-              ]
-            },
-            {
-              id: 'financials_group',
-              title_ar: 'العمليات المالية',
-              title_en: 'Financials',
-              roles: ['super_admin', 'sales_manager', 'finance'],
-              tabs: [
-                { id: 'financials', icon: Calculator, label_ar: 'الأقساط وإيصالات الحجز', label_en: 'Installments & Receipts' },
-                { id: 'agents', icon: Trophy, label_ar: 'أهداف وعمولات الفريق', label_en: 'Team & Targets' }
-              ]
-            },
-            {
-              id: 'analytics_group',
-              title_ar: 'التحليلات والتسويق',
-              title_en: 'Intelligence',
-              tabs: [
-                { id: 'visitor_intelligence', icon: Activity, label_ar: 'تحليلات وسلوك الزوار', label_en: 'Visitor Stream' },
-                { id: 'retargeting', icon: Zap, label_ar: 'حملات إعادة الاستهداف', label_en: 'Retargeting' },
-                { id: 'automation', icon: Bell, label_ar: 'الأتمتة والإشعارات', label_en: 'Automations' }
-              ]
-            },
-            {
-              id: 'admin_group',
-              title_ar: 'إدارة المنظومة',
-              title_en: 'System Administration',
-              roles: ['super_admin', 'sales_manager'],
-              tabs: [
-                { id: 'system_backup', icon: Database, label_ar: 'البيانات والنسخ الاحتياطي', label_en: 'Backups & Restore' },
-                { id: 'founder_cms', icon: Sparkles, label_ar: 'إعدادات المؤسس CMS', label_en: 'Founder CMS' }
-              ]
-            }
-          ]
-            .filter(grp => !grp.roles || grp.roles.includes(activeRole))
-            .map(grp => (
-              <div key={grp.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.74rem', color: '#092347', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.3px' }}>
-                  {isAr ? grp.title_ar : grp.title_en}:
-                </span>
-                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                  {grp.tabs.map(tab => {
-                    const IconComp = tab.icon;
-                    const isActive = adminTab === tab.id;
-                    return (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        className={`crm-nav-pill-btn ${isActive ? 'active' : ''}`}
-                        data-testid={`nav-pill-${tab.id}`}
-                        onClick={() => {
-                          if (tab.onAction) {
-                            tab.onAction();
-                          } else {
-                            setAdminTab(tab.id);
-                          }
-                        }}
-                        style={{
-                          padding: '6px 11px',
-                          fontSize: '0.78rem',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          borderRadius: '8px',
-                          background: isActive ? '#092347' : '#f8fafc',
-                          color: isActive ? '#ffffff' : '#475569',
-                          border: isActive ? '1px solid #092347' : '1px solid #e2e8f0',
-                          fontWeight: isActive ? 'bold' : '600'
-                        }}
-                      >
-                        <IconComp size={13} style={{ color: isActive ? '#f59e0b' : 'inherit' }} />
-                        <span>{isAr ? tab.label_ar : tab.label_en}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-        </div>
-      </div>
-
       {/* 📊 TAB 1: EXECUTIVE DECISION-BASED DASHBOARD */}
       {adminTab === 'dashboard' && (
         <div className="crm-layout">
-          {/* ☀️ MORNING DECISION BRIEFING CARD ("قائمة قرارات بداية اليوم") - White Surface */}
+          {/* 1. Global Executive HUD Metric Cards - Crisp High-Contrast Cards */}
+          {(() => {
+            const totalPurchasingPowerM = (
+              demands.reduce((sum, d) => sum + (typeof d.budget === 'number' ? d.budget : parseInt(String(d.budget).replace(/,/g, '')) || 0), 0) / 1000000
+            ).toFixed(1);
+            const pendingDemands = demands.filter(d => d.status === 'pending').length;
+
+            return (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+                gap: '12px',
+                marginBottom: '16px'
+              }}>
+                {/* Metric 1: Leads */}
+                <div 
+                  onClick={() => setAdminTab('leads')}
+                  style={{
+                    background: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '12px',
+                    padding: '14px 18px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.borderColor = '#2563eb'}
+                  onMouseLeave={(e) => e.currentTarget.style.borderColor = '#e2e8f0'}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600' }}>{isAr ? 'العملاء والفرص' : 'Total Leads'}</span>
+                    <Users size={16} style={{ color: '#2563eb' }} />
+                  </div>
+                  <div style={{ fontSize: '1.55rem', fontWeight: '900', color: '#0f172a', marginTop: '4px' }}>
+                    {leads.length} <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: '#64748b' }}>{isAr ? 'عميل' : 'leads'}</span>
+                  </div>
+                </div>
+
+                {/* Metric 2: Properties */}
+                <div 
+                  onClick={() => onSwitchToProperties?.()}
+                  style={{
+                    background: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '12px',
+                    padding: '14px 18px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.borderColor = '#d97706'}
+                  onMouseLeave={(e) => e.currentTarget.style.borderColor = '#e2e8f0'}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600' }}>{isAr ? 'محفظة العقارات' : 'Active Units'}</span>
+                    <Building size={16} style={{ color: '#d97706' }} />
+                  </div>
+                  <div style={{ fontSize: '1.55rem', fontWeight: '900', color: '#0f172a', marginTop: '4px' }}>
+                    {properties.length} <span style={{ fontSize: '0.75rem', fontWeight: '600', color: '#b45309' }}>{isAr ? 'وحدة معتمدة' : 'units'}</span>
+                  </div>
+                </div>
+
+                {/* Metric 3: Buyer Demands */}
+                <div 
+                  onClick={() => onSwitchToDemands?.()}
+                  style={{
+                    background: pendingDemands > 0 ? '#fef2f2' : '#ffffff',
+                    border: pendingDemands > 0 ? '1.5px solid #ef4444' : '1px solid #e2e8f0',
+                    borderRadius: '12px',
+                    padding: '14px 18px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.borderColor = '#059669'}
+                  onMouseLeave={(e) => e.currentTarget.style.borderColor = pendingDemands > 0 ? '#ef4444' : '#e2e8f0'}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.78rem', color: pendingDemands > 0 ? '#dc2626' : '#64748b', fontWeight: '600' }}>
+                      {isAr ? 'طلبات المشترين' : 'Buyer Demands'}
+                    </span>
+                    <Zap size={16} style={{ color: pendingDemands > 0 ? '#ef4444' : '#059669' }} />
+                  </div>
+                  <div style={{ fontSize: '1.55rem', fontWeight: '900', color: '#0f172a', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>{demands.length}</span>
+                    {pendingDemands > 0 && (
+                      <span style={{
+                        fontSize: '0.7rem',
+                        background: '#ef4444',
+                        color: '#fff',
+                        padding: '2px 8px',
+                        borderRadius: '6px',
+                        fontWeight: 'bold'
+                      }}>
+                        {pendingDemands} {isAr ? 'معلق' : 'pending'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Metric 4: Total Purchasing Power */}
+                <div style={{
+                  background: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '12px',
+                  padding: '14px 18px',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600' }}>{isAr ? 'القوة الشرائية المسجلة' : 'Demand Purchasing Power'}</span>
+                    <span style={{ color: '#059669', fontWeight: 'bold', fontSize: '0.85rem' }}>EGP</span>
+                  </div>
+                  <div style={{ fontSize: '1.55rem', fontWeight: '900', color: '#059669', marginTop: '4px' }}>
+                    {totalPurchasingPowerM}M
+                    <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: '#64748b', marginInlineStart: '4px' }}>{isAr ? 'مليون ج.م' : 'EGP'}</span>
+                  </div>
+                </div>
+
+                {/* Metric 5: Closing Rate */}
+                <div style={{
+                  background: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '12px',
+                  padding: '14px 18px',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600' }}>{isAr ? 'معدل إغلاق الصفقات' : 'Closing Rate'}</span>
+                    <Briefcase size={16} style={{ color: '#059669' }} />
+                  </div>
+                  <div style={{ fontSize: '1.55rem', fontWeight: '900', color: '#0f172a', marginTop: '4px' }}>
+                    {crmAnalytics.conversionSuccess || '0%'}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* 2. Morning Decision Briefing Card - Executive White Card */}
           {(() => {
             const nowDayStr = new Date().toISOString().slice(0, 10);
             const dueFollowUpsList = (leads || []).filter(l => {
@@ -1015,73 +860,69 @@ export const CrmAdminPanel = ({
                 background: '#ffffff',
                 border: '1px solid #e2e8f0',
                 borderRadius: '12px',
-                padding: '20px 24px',
-                marginBottom: '20px',
+                padding: '18px 22px',
+                marginBottom: '16px',
                 boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)'
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                      <span style={{ fontSize: '1.4rem' }}>☀️</span>
-                      <h2 style={{ margin: 0, fontSize: '1.2rem', color: '#0f172a', fontWeight: 800 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                      <span style={{ fontSize: '1.3rem' }}>☀️</span>
+                      <h2 style={{ margin: 0, fontSize: '1.15rem', color: '#0f172a', fontWeight: 800 }}>
                         {isAr ? `مرحباً، ${currentRoleObj.label_ar}` : `Welcome, ${currentRoleObj.label_en}`}
                       </h2>
-                      <span className="badge" style={{ background: '#fffbeb', color: '#b45309', border: '1px solid #fde68a', fontSize: '0.75rem', fontWeight: 'bold' }}>
-                        {isAr ? 'قائمة القرارات والإجراءات اليومية' : 'Daily Decision List'}
+                      <span className="badge" style={{ background: '#fffbeb', color: '#b45309', border: '1px solid #fde68a', fontSize: '0.72rem', fontWeight: 'bold' }}>
+                        {isAr ? 'قائمة القرارات اليومية' : 'Daily Decisions'}
                       </span>
                     </div>
-                    <p style={{ margin: 0, fontSize: '0.86rem', color: '#475569' }}>
+                    <p style={{ margin: 0, fontSize: '0.84rem', color: '#475569' }}>
                       {isAr 
-                        ? `لديك اليوم: ${dueFollowUpsCount} متابعات مستحقة • ${newLeadsCount} عملاء جدد بحاجة للتأهيل • ${stalledDealsCount} صفقات تتطلب تدخلاً • ${unmatchedDemandsCount} طلبات لم تُطابق بعد.`
-                        : `Today: ${dueFollowUpsCount} follow-ups due • ${newLeadsCount} new leads • ${stalledDealsCount} stalled deals • ${unmatchedDemandsCount} unmatched demands.`}
+                        ? `لديك اليوم: ${dueFollowUpsCount} متابعات مستحقة • ${newLeadsCount} عملاء جدد بحاجة للتأهيل • ${stalledDealsCount} صفقات قيد التفاوض • ${unmatchedDemandsCount} طلبات معلقة.`
+                        : `Today: ${dueFollowUpsCount} follow-ups due • ${newLeadsCount} new leads • ${stalledDealsCount} negotiating • ${unmatchedDemandsCount} pending demands.`}
                     </p>
                   </div>
 
-                  {/* Direct Action Buttons */}
+                  {/* Direct Filter Buttons */}
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     <button
                       type="button"
-                      className="btn btn-sm"
                       onClick={() => {
                         setLeadFilter('due');
                         setAdminTab('leads');
                       }}
-                      style={{ background: '#092347', color: '#ffffff', border: '1px solid #092347', fontWeight: 'bold', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '8px' }}
+                      style={{ background: '#092347', color: '#ffffff', border: '1px solid #092347', fontWeight: 'bold', padding: '7px 13px', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '8px', fontSize: '0.78rem', cursor: 'pointer' }}
                     >
-                      <Clock size={14} />
-                      <span>{isAr ? `ابدأ المتابعة (${dueFollowUpsCount})` : `Start Follow-ups (${dueFollowUpsCount})`}</span>
+                      <Clock size={13} />
+                      <span>{isAr ? `المتابعات (${dueFollowUpsCount})` : `Follow-ups (${dueFollowUpsCount})`}</span>
                     </button>
 
                     <button
                       type="button"
-                      className="btn btn-sm"
                       onClick={() => {
                         setLeadFilter('new');
                         setAdminTab('leads');
                       }}
-                      style={{ background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', fontWeight: 'bold', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '8px' }}
+                      style={{ background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', fontWeight: 'bold', padding: '7px 13px', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '8px', fontSize: '0.78rem', cursor: 'pointer' }}
                     >
-                      <UserPlus size={14} />
+                      <UserPlus size={13} />
                       <span>{isAr ? `العملاء الجدد (${newLeadsCount})` : `New Leads (${newLeadsCount})`}</span>
                     </button>
 
                     <button
                       type="button"
-                      className="btn btn-sm"
                       onClick={() => setAdminTab('kanban')}
-                      style={{ background: '#fffbeb', color: '#b45309', border: '1px solid #fde68a', fontWeight: 'bold', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '8px' }}
+                      style={{ background: '#fffbeb', color: '#b45309', border: '1px solid #fde68a', fontWeight: 'bold', padding: '7px 13px', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '8px', fontSize: '0.78rem', cursor: 'pointer' }}
                     >
-                      <Target size={14} />
-                      <span>{isAr ? 'مسار الصفقات' : 'Deals Pipeline'}</span>
+                      <Target size={13} />
+                      <span>{isAr ? 'مسار الصفقات' : 'Pipeline'}</span>
                     </button>
 
                     <button
                       type="button"
-                      className="btn btn-sm"
                       onClick={() => onSwitchToDemands?.()}
-                      style={{ background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0', fontWeight: 'bold', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '8px' }}
+                      style={{ background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0', fontWeight: 'bold', padding: '7px 13px', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '8px', fontSize: '0.78rem', cursor: 'pointer' }}
                     >
-                      <Zap size={14} />
+                      <Zap size={13} />
                       <span>{isAr ? `مطابقة الطلبات (${unmatchedDemandsCount})` : `Match Demands (${unmatchedDemandsCount})`}</span>
                     </button>
                   </div>
@@ -1090,215 +931,137 @@ export const CrmAdminPanel = ({
             );
           })()}
 
-          {/* Quick Action Command Shortcuts - Clean Light Cards */}
+          {/* 3. Executive Operational Tools Strip */}
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
             gap: '10px',
-            marginBottom: '4px'
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRadius: '10px',
+            padding: '10px 16px',
+            marginBottom: '16px',
+            boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)'
           }}>
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={() => setShowAddLeadModal(true)}
-              style={{
-                background: '#fffbeb',
-                border: '1px solid #fde68a',
-                color: '#b45309',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                padding: '10px 14px',
-                borderRadius: '8px',
-                fontWeight: 'bold',
-                fontSize: '0.82rem'
-              }}
-            >
-              <UserPlus size={15} />
-              <span>{isAr ? '+ تسجيل عميل هاتفي جديد' : '+ Register New Lead'}</span>
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.76rem', color: '#64748b', fontWeight: 'bold' }}>
+                {isAr ? 'أدوات العمليات السريعة:' : 'Quick Tools:'}
+              </span>
 
-            {/* Direct Shortcut to Buyer Demands */}
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={() => onSwitchToDemands?.()} data-testid="shortcut-demand"
-              style={{
-                background: '#ecfdf5',
-                border: '1px solid #a7f3d0',
-                color: '#059669',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                padding: '10px 14px',
-                borderRadius: '8px',
-                fontWeight: 'bold',
-                fontSize: '0.82rem'
-              }}
-            >
-              <Zap size={15} />
-              <span>{isAr ? `طلبات المشترين والاعتماد (${demands.length})` : `Buyer Demands (${demands.length})`}</span>
-            </button>
+              {/* Primary Action: Add Lead Directly */}
+              <button
+                type="button"
+                onClick={() => setShowAddLeadModal(true)}
+                style={{
+                  background: '#059669',
+                  border: '1px solid #047857',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '0.78rem',
+                  padding: '6px 12px',
+                  borderRadius: '7px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 4px rgba(5, 150, 105, 0.2)'
+                }}
+              >
+                <UserPlus size={13} />
+                <span>{isAr ? '+ تسجيل عميل جديد' : '+ New Lead'}</span>
+              </button>
 
-            {/* Direct Shortcut to Properties CMS */}
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={() => onSwitchToProperties?.()} data-testid="shortcut-properties"
-              style={{
-                background: '#f8fafc',
-                border: '1px solid #cbd5e1',
-                color: '#092347',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                padding: '10px 14px',
-                borderRadius: '8px',
-                fontWeight: 'bold',
-                fontSize: '0.82rem'
-              }}
-            >
-              <Building size={15} />
-              <span>{isAr ? `محفظة العقارات (${properties.length})` : `Properties (${properties.length})`}</span>
-            </button>
+              {/* Contract Studio Launch Button */}
+              <button 
+                type="button" 
+                onClick={() => setShowContractStudio(true)}
+                style={{ 
+                  background: '#092347', 
+                  color: '#ffffff', 
+                  fontWeight: 'bold',
+                  border: '1px solid #092347', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '6px',
+                  fontSize: '0.78rem',
+                  padding: '6px 12px',
+                  borderRadius: '7px',
+                  cursor: 'pointer'
+                }}
+              >
+                <FileText size={13} style={{ color: '#f59e0b' }} />
+                <span>{isAr ? 'استوديو العقود' : 'Contract Studio'}</span>
+              </button>
 
-            {/* Direct Shortcut to Districts & Areas CMS */}
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={() => onSwitchToAreas?.()} data-testid="shortcut-areas"
-              style={{
-                background: '#eff6ff',
-                border: '1px solid #bfdbfe',
-                color: '#2563eb',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                padding: '10px 14px',
-                borderRadius: '8px',
-                fontWeight: 'bold',
-                fontSize: '0.82rem'
-              }}
-            >
-              <MapPin size={15} />
-              <span>{isAr ? 'إدارة المناطق والأحياء' : 'Districts CMS'}</span>
-            </button>
+              {/* AI Copywriter Launch Button */}
+              <button 
+                type="button" 
+                onClick={() => setShowAICopywriter(true)}
+                style={{ 
+                  background: '#fffbeb', 
+                  color: '#b45309', 
+                  fontWeight: 'bold',
+                  border: '1px solid #fde68a', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '6px',
+                  fontSize: '0.78rem',
+                  padding: '6px 12px',
+                  borderRadius: '7px',
+                  cursor: 'pointer'
+                }}
+              >
+                <Wand2 size={13} />
+                <span>{isAr ? 'كاتب الإعلانات AI' : 'AI Copywriter'}</span>
+              </button>
 
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={() => setAdminTab('kanban')}
-              style={{
-                background: '#f0fdfa',
-                border: '1px solid #99f6e4',
-                color: '#0d9488',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                padding: '10px 14px',
-                borderRadius: '8px',
-                fontWeight: 'bold',
-                fontSize: '0.82rem'
-              }}
-            >
-              <Target size={15} />
-              <span>{isAr ? 'مسار الصفقات (Kanban)' : 'Deals Pipeline'}</span>
-            </button>
-
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={() => setAdminTab('retargeting')}
-              style={{
-                background: '#fdf2f8',
-                border: '1px solid #fbcfe8',
-                color: '#db2777',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                padding: '10px 14px',
-                borderRadius: '8px',
-                fontWeight: 'bold',
-                fontSize: '0.82rem'
-              }}
-            >
-              <Zap size={15} />
-              <span>{isAr ? 'حملة إعادة استهداف' : 'Launch Retargeting'}</span>
-            </button>
-
-            <button
-              type="button"
-              className="btn btn-sm"
-              onClick={() => setAdminTab('visitor_intelligence')}
-              style={{
-                background: '#ecfdf5',
-                border: '1px solid #a7f3d0',
-                color: '#059669',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                padding: '10px 14px',
-                borderRadius: '8px',
-                fontWeight: 'bold',
-                fontSize: '0.82rem'
-              }}
-            >
-              <Activity size={15} />
-              <span>{isAr ? 'تحليلات سلوك الزوار' : 'Live Visitor Stream'}</span>
-            </button>
-          </div>
-
-          <div className="crm-stats-grid">
-            <div className="crm-stat-card">
-              <div className="crm-stat-icon" style={{ background: '#fffbeb', color: '#d97706', border: '1px solid #fde68a' }}><Bell size={20} /></div>
-              <div className="crm-stat-info">
-                <span className="crm-stat-num">{crmAnalytics.todayCount}</span>
-                <span className="crm-stat-lbl">{isAr ? 'عملاء اليوم' : 'Leads Today'}</span>
-              </div>
+              {/* AI Smart Matching Shortcut */}
+              <button 
+                type="button" 
+                onClick={() => setAdminTab('matching')}
+                style={{ 
+                  background: '#eff6ff', 
+                  color: '#2563eb', 
+                  fontWeight: 'bold',
+                  border: '1px solid #bfdbfe', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '6px',
+                  fontSize: '0.78rem',
+                  padding: '6px 12px',
+                  borderRadius: '7px',
+                  cursor: 'pointer'
+                }}
+              >
+                <Sparkles size={13} />
+                <span>{isAr ? 'المطابقات الذكية AI' : 'AI Matching'}</span>
+              </button>
             </div>
-            <div 
-              className="crm-stat-card"
-              onClick={() => onSwitchToDemands?.()}
-              style={{ cursor: 'pointer', transition: 'all 0.2s ease' }}
-              title={isAr ? 'انقر لفتح واستعراض طلبات المشترين' : 'Click to open Buyer Demands'}
-            >
-              <div className="crm-stat-icon" style={{ background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' }}><Zap size={20} /></div>
-              <div className="crm-stat-info">
-                <span className="crm-stat-num">{demands.length || crmAnalytics.buyersCount}</span>
-                <span className="crm-stat-lbl" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span>{isAr ? 'طلبات المشترين' : 'Buyer Demands'}</span>
-                  <span style={{ fontSize: '0.7rem', color: '#b45309' }}>←</span>
-                </span>
-              </div>
-            </div>
-            <div 
-              className="crm-stat-card"
-              onClick={() => onSwitchToProperties?.()}
-              style={{ cursor: onSwitchToProperties ? 'pointer' : 'default', transition: 'all 0.2s ease' }}
-              title={isAr ? 'انقر لفتح واستعراض محفظة العقارات' : 'Click to open Properties Portfolio'}
-            >
-              <div className="crm-stat-icon" style={{ background: '#f8fafc', color: '#092347', border: '1px solid #cbd5e1' }}><Building size={20} /></div>
-              <div className="crm-stat-info">
-                <span className="crm-stat-num">{properties.length || crmAnalytics.sellersCount}</span>
-                <span className="crm-stat-lbl" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span>{isAr ? 'محفظة العقارات' : 'Properties Portfolio'}</span>
-                  {onSwitchToProperties && <span style={{ fontSize: '0.7rem', color: '#b45309' }}>←</span>}
-                </span>
-              </div>
-            </div>
-            <div className="crm-stat-card">
-              <div className="crm-stat-icon" style={{ background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' }}><Briefcase size={20} /></div>
-              <div className="crm-stat-info">
-                <span className="crm-stat-num">{crmAnalytics.conversionSuccess}</span>
-                <span className="crm-stat-lbl">{isAr ? 'معدل إغلاق الصفقات' : 'Conversion Rate'}</span>
-              </div>
+
+            <div>
+              {/* Secondary Action: Export CSV */}
+              <button 
+                type="button"
+                onClick={handleExportCSV}
+                style={{ 
+                  background: '#ffffff', 
+                  color: '#0f172a', 
+                  border: '1px solid #cbd5e1', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '6px',
+                  fontSize: '0.78rem',
+                  padding: '6px 12px',
+                  borderRadius: '7px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                <Download size={13} />
+                <span>{isAr ? 'تصدير CSV' : 'Export CSV'}</span>
+              </button>
             </div>
           </div>
 
