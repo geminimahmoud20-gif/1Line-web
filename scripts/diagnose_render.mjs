@@ -44,20 +44,62 @@ async function run() {
     appType: 'custom'
   });
 
+  const routesToTest = [
+    '/',
+    '/properties',
+    '/financing',
+    '/projects',
+    '/portals',
+    '/crm',
+    '/property/prop-1',
+    '/property/non-existent-id'
+  ];
+
+  const storageScenarios = [
+    { name: 'Empty localStorage', data: {} },
+    { name: 'Invalid Currency', data: { 'oneline_currency': 'XYZ_UNKNOWN' } },
+    { name: 'Corrupt properties in storage', data: { 'oneline_properties': JSON.stringify([{}, { id: 'bad' }, null]) } },
+    { name: 'Corrupt projects in storage', data: { 'oneline_mega_projects': JSON.stringify([{}, null]) } },
+    { name: 'Malformed JSON in founder CMS', data: { 'oneline_founder_cms_settings': '{invalid_json' } },
+    { name: 'Stale CMS with nulls', data: { 'oneline_founder_cms_settings': JSON.stringify({ heroVideoClips: null, stats: null, pillars: null, goldStandards: null }) } }
+  ];
+
   try {
-    console.log('Loading /src/App.jsx via Vite SSR...');
     const { default: App } = await vite.ssrLoadModule('/src/App.jsx');
 
-    console.log('Rendering App in MemoryRouter...');
-    const html = renderToString(
-      React.createElement(MemoryRouter, { initialEntries: ['/'] },
-        React.createElement(App)
-      )
-    );
-    console.log('SUCCESS! Rendered length:', html.length);
+    for (const scenario of storageScenarios) {
+      console.log(`\n--- Testing Scenario: ${scenario.name} ---`);
+      globalThis.window.localStorage = {
+        getItem: (k) => scenario.data[k] || null,
+        setItem: () => {},
+        removeItem: () => {},
+        clear: () => {}
+      };
+      globalThis.localStorage = globalThis.window.localStorage;
+
+      for (const route of routesToTest) {
+        try {
+          const html = renderToString(
+            React.createElement(MemoryRouter, { initialEntries: [route] },
+              React.createElement(App)
+            )
+          );
+          // Check if error boundary text is in the rendered html
+          if (html.includes('حدث خطأ غير متوقع')) {
+            console.error(`❌ CRASH on route ${route} under scenario "${scenario.name}"!`);
+          } else {
+            // console.log(`✓ ${route} OK`);
+          }
+        } catch (routeErr) {
+          console.error(`💥 EXCEPTION on route ${route} under scenario "${scenario.name}":`, routeErr.message);
+          console.error(routeErr.stack);
+        }
+      }
+      console.log(`✓ Scenario ${scenario.name} completed.`);
+    }
+
   } catch (err) {
-    console.error('CRASH DETECTED DURING RENDER:');
-    console.error(err);
+    console.error('CRASH DETECTED:', err);
   } finally {
     await vite.close();
   }
