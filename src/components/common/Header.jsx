@@ -25,12 +25,15 @@ import {
   Heart,
   ArrowRight,
   ArrowLeft,
-  Lock
+  Lock,
+  User,
+  ShieldCheck
 } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { playNotificationChime } from '../../utils/notificationHub';
 import { CURRENCY_RATES } from '../../utils/currencyAndBenchmark';
+import { useClientAuth } from '../../context/ClientAuthContext';
 
 export default function Header({ 
   lang = 'ar', 
@@ -57,8 +60,8 @@ export default function Header({
   const dropdownTimeoutRef = useRef(null);
   const navRef = useRef(null);
   const toolsDropdownRef = useRef(null);
-  const currencyDropdownRef = useRef(null);
   const location = useLocation();
+  const { clientUser, isClientAuthenticated } = useClientAuth();
 
   const isAr = lang === 'ar';
 
@@ -332,6 +335,25 @@ export default function Header({
 
         {/* Streamlined, Clean Action Group */}
         <div className="header-actions">
+          {/* 👤 Client Account & Favorites Portal Button */}
+          <Link
+            to="/my-account"
+            className={`header-client-account-btn ${isClientAuthenticated ? 'authenticated' : ''}`}
+            title={isAr 
+              ? (isClientAuthenticated ? `حساب العميل المعتمد: ${clientUser?.name}` : 'حساب العميل (المفضلة والمقارنة)') 
+              : 'Client Account (Favorites & Compare)'}
+          >
+            <User size={15} className="account-icon" />
+            <span className="account-text hide-mobile">
+              {isClientAuthenticated ? clientUser?.name?.split(' ')[0] : (isAr ? 'حسابي' : 'Account')}
+            </span>
+            {isClientAuthenticated && (
+              <span className="account-badge-verified">
+                <ShieldCheck size={12} />
+              </span>
+            )}
+          </Link>
+
           {/* Active Comparison Button (Luxury Sleek Badge) */}
           {compareCount > 0 && onOpenCompare && (
             <button
@@ -592,6 +614,26 @@ export default function Header({
                 <span>{isAr ? 'البحث السريع (Ctrl + K)' : 'Quick Search (Ctrl + K)'}</span>
               </button>
             )}
+
+            {/* 👤 Mobile Client Account Portal Link */}
+            <Link
+              to="/my-account"
+              className={`mobile-nav-item ${isActive('/my-account') ? 'active' : ''}`}
+              onClick={() => setMobileMenuOpen(false)}
+              style={{ background: isClientAuthenticated ? 'rgba(16, 185, 129, 0.08)' : 'rgba(20, 43, 73, 0.04)', borderRadius: '10px', marginBottom: '4px' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <User size={16} className={isClientAuthenticated ? 'text-emerald' : 'text-gold'} />
+                <span>
+                  {isClientAuthenticated 
+                    ? (isAr ? `حسابي (${clientUser.name.split(' ')[0]})` : `My Account (${clientUser.name.split(' ')[0]})`) 
+                    : (isAr ? 'حساب العميل (المفضلة والمقارنة)' : 'Client Account')}
+                </span>
+              </div>
+              <span className={`nav-badge nav-badge-${isClientAuthenticated ? 'emerald' : 'gold'}`}>
+                {isClientAuthenticated ? (isAr ? 'موثق ✅' : 'Verified') : (isAr ? 'تفعيل 🔑' : 'Activate')}
+              </span>
+            </Link>
 
             {favoritesCount > 0 && onOpenFavorites && (
               <button

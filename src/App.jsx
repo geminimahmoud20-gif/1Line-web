@@ -37,6 +37,8 @@ import QuickContactDrawer from './components/common/QuickContactDrawer';
 import BackToTopButton from './components/common/BackToTopButton';
 import AIPropertyAdvisorModal from './components/common/AIPropertyAdvisorModal';
 import QuickSearchModal from './components/common/QuickSearchModal';
+import ClientAuthModal from './components/common/ClientAuthModal';
+import { ClientAuthProvider, useClientAuth } from './context/ClientAuthContext';
 
 // Critical Landing Page (Direct Import for instant FCP)
 import HomePage from './pages/HomePage';
@@ -44,6 +46,7 @@ import HomePage from './pages/HomePage';
 // Lazy Loaded Secondary & Heavy Admin Pages (Code Splitting)
 const PropertiesPage = lazy(() => import('./pages/PropertiesPage'));
 const PropertyDetailPage = lazy(() => import('./pages/PropertyDetailPage'));
+const ClientAccountPage = lazy(() => import('./pages/ClientAccountPage'));
 const FinancingPage = lazy(() => import('./pages/FinancingPage'));
 const ProjectsPage = lazy(() => import('./pages/ProjectsPage'));
 const MarketIntelligencePage = lazy(() => import('./pages/MarketIntelligencePage'));
@@ -147,6 +150,31 @@ function AppContent() {
   // Local storage: localStorage.setItem('oneline_crm_leads', JSON.stringify(updated))
 
   const { crmAuthenticated, setCrmAuthenticated, handleCrmLogout } = useAuth();
+  const { 
+    clientUser, 
+    isClientAuthenticated, 
+    requireClientAuth, 
+    setClientAuthModalOpen 
+  } = useClientAuth();
+
+  // 🛡️ Protected Client Favorites Toggle (Requires Name, Email, WhatsApp verification)
+  const handleProtectedToggleFavorite = useCallback((propertyId) => {
+    const targetProp = properties.find(p => p.id === propertyId);
+    const propTitle = lang === 'ar' ? targetProp?.title_ar : targetProp?.title_en;
+
+    requireClientAuth(() => {
+      toggleFavorite(propertyId);
+    }, 'favorite', propTitle || '');
+  }, [properties, lang, requireClientAuth, toggleFavorite]);
+
+  // 🛡️ Protected Client Compare Toggle (Requires Name, Email, WhatsApp verification)
+  const handleProtectedToggleCompare = useCallback((property) => {
+    const propTitle = lang === 'ar' ? property?.title_ar : property?.title_en;
+
+    requireClientAuth(() => {
+      toggleCompare(property);
+    }, 'compare', propTitle || '');
+  }, [lang, requireClientAuth, toggleCompare]);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -365,7 +393,7 @@ function AppContent() {
         lang={lang}
         currency={currency}
         onClose={handleCloseQuickView}
-        onToggleFavorite={toggleFavorite}
+        onToggleFavorite={handleProtectedToggleFavorite}
         isFavorite={quickViewProperty ? favorites.includes(quickViewProperty.id) : false}
       />
 
@@ -430,9 +458,9 @@ function AppContent() {
                   properties={properties}
                   demands={demands}
                   favorites={favorites}
-                  onToggleFavorite={toggleFavorite}
+                  onToggleFavorite={handleProtectedToggleFavorite}
                   compareList={compareList}
-                  onToggleCompare={toggleCompare}
+                  onToggleCompare={handleProtectedToggleCompare}
                   onQuickView={handleOpenQuickView}
                   onOpenAddDemand={() => setAddDemandModalOpen(true)}
                   onAddNewLead={handleAddNewLead}
@@ -450,9 +478,9 @@ function AppContent() {
                   currency={currency}
                   properties={properties}
                   favorites={favorites}
-                  onToggleFavorite={toggleFavorite}
+                  onToggleFavorite={handleProtectedToggleFavorite}
                   compareList={compareList}
-                  onToggleCompare={toggleCompare}
+                  onToggleCompare={handleProtectedToggleCompare}
                   onQuickView={handleOpenQuickView}
                 />
               }
@@ -468,7 +496,7 @@ function AppContent() {
                   t={t}
                   properties={properties}
                   favorites={favorites}
-                  onToggleFavorite={toggleFavorite}
+                  onToggleFavorite={handleProtectedToggleFavorite}
                   onQuickView={handleOpenQuickView}
                   triggerToast={triggerToast}
                   onAddNewLead={handleAddNewLead}
@@ -679,6 +707,35 @@ function AppContent() {
               }
             />
 
+            {/* 👤 Verified Client Account, Saved Favorites & Smart Comparisons Hub */}
+            <Route
+              path="/my-account"
+              element={
+                <ClientAccountPage
+                  properties={properties}
+                  favorites={favorites}
+                  onToggleFavorite={handleProtectedToggleFavorite}
+                  compareList={compareList}
+                  onToggleCompare={handleProtectedToggleCompare}
+                  onClearFavorites={clearFavorites}
+                  onClearCompare={clearCompare}
+                  onOpenCompare={() => setCompareDrawerOpen(true)}
+                  lang={lang}
+                  currency={currency}
+                />
+              }
+            />
+
+            <Route
+              path="/favorites"
+              element={<Navigate to="/my-account" replace />}
+            />
+
+            <Route
+              path="/compare"
+              element={<Navigate to="/my-account" replace />}
+            />
+
             {/* CRM Admin Control Panel & Property CMS & Demands CMS */}
             <Route
               path="/crm"
@@ -723,9 +780,9 @@ function AppContent() {
                   properties={properties}
                   demands={demands}
                   favorites={favorites}
-                  onToggleFavorite={toggleFavorite}
+                  onToggleFavorite={handleProtectedToggleFavorite}
                   compareList={compareList}
-                  onToggleCompare={toggleCompare}
+                  onToggleCompare={handleProtectedToggleCompare}
                   onQuickView={handleOpenQuickView}
                   onOpenAddDemand={() => setAddDemandModalOpen(true)}
                   onAddNewLead={handleAddNewLead}
@@ -786,6 +843,9 @@ function AppContent() {
         lang={lang}
         currency={currency}
       />
+
+      {/* Client Identity & WhatsApp Security Verification Modal */}
+      <ClientAuthModal lang={lang} />
 
       {/* AI Virtual Real Estate Advisor Modal */}
       <AIPropertyAdvisorModal
@@ -855,6 +915,20 @@ function AppContent() {
 }
 
 /**
+ * Bridge Consumer to pass Parent Context values to ClientAuthProvider
+ */
+function ClientAuthConsumer({ children }) {
+  const { lang } = usePreferences();
+  const { triggerToast } = useUIModal();
+  const { handleAddNewLead } = useProperties();
+  return (
+    <ClientAuthProvider lang={lang} triggerToast={triggerToast} handleAddNewLead={handleAddNewLead}>
+      {children}
+    </ClientAuthProvider>
+  );
+}
+
+/**
  * Top-Level App with Integrated Context Providers
  */
 export default function App() {
@@ -863,7 +937,9 @@ export default function App() {
       <UIModalProvider>
         <PropertiesProvider>
           <AuthProvider>
-            <AppContent />
+            <ClientAuthConsumer>
+              <AppContent />
+            </ClientAuthConsumer>
           </AuthProvider>
         </PropertiesProvider>
       </UIModalProvider>

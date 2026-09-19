@@ -11,7 +11,8 @@ import {
   Eye, 
   Sparkles,
   ArrowRight,
-  ArrowLeft
+  ArrowLeft,
+  UserCheck
 } from 'lucide-react';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark.js';
 import { getWhatsAppUrl } from '../../utils/founderCmsData.js';
@@ -220,6 +221,31 @@ export default function FavoritesDrawer({
               <span className="budget-lbl">{isAr ? 'إجمالي قيمة العقارات المختارة:' : 'Total Portfolio Value:'}</span>
               <strong className="budget-val">{totalBudgetObj.primary} {totalBudgetObj.symbol}</strong>
             </div>
+
+            <Link
+              to="/my-account"
+              className="btn-fav-account-link"
+              onClick={onClose}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '11px 16px',
+                borderRadius: '10px',
+                background: 'rgba(212, 175, 55, 0.08)',
+                border: '1px solid rgba(212, 175, 55, 0.25)',
+                color: 'var(--luxury-gold, #d4af37)',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                textDecoration: 'none',
+                marginBottom: '8px',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <UserCheck size={16} />
+              <span>{isAr ? 'عرض وإدارة المفضلة في حسابي الخاص' : 'Manage in My Client Account'}</span>
+            </Link>
 
             <button
               type="button"

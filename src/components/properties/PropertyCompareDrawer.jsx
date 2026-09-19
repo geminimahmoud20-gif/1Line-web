@@ -230,6 +230,21 @@ export default function PropertyCompareDrawer({
           </div>
 
           <div className="compare-header-actions">
+            {/* My Account Hub Link */}
+            <Link 
+              to="/my-account" 
+              className="btn btn-sm btn-outline hide-mobile"
+              onClick={onClose}
+              title={isAr ? 'عرض في حسابي الخاص' : 'Open in My Account'}
+              style={{
+                borderColor: 'rgba(212, 175, 55, 0.35)',
+                color: 'var(--luxury-gold, #d4af37)'
+              }}
+            >
+              <Scale size={13} />
+              <span>{isAr ? 'عرض في حسابي' : 'My Account'}</span>
+            </Link>
+
             {/* Fullscreen Toggle */}
             <button
               type="button"
