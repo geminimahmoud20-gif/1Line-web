@@ -732,11 +732,11 @@ export default function HomePage({
               </div>
 
               <div className="bottom-hub-actions">
-                <Link to="/properties" className="btn btn-luxury-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 22px' }}>
+                <Link to="/properties" className="btn btn-luxury-cta">
                   <span>{lang === 'ar' ? `استعراض كامل محفظة العقارات (${activePublished.length} عقار معتمد)` : 'Explore Full Portfolio'}</span>
                   {lang === 'ar' ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
                 </Link>
-                <Link to="/special-requests" className="btn btn-glass-outline" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 20px', fontSize: '0.88rem' }}>
+                <Link to="/special-requests" className="btn btn-glass-outline">
                   <FileText size={15} style={{ color: '#ffca28' }} />
                   <span>{lang === 'ar' ? 'طلب توفير عقار خاص VIP' : 'Bespoke Request VIP'}</span>
                 </Link>

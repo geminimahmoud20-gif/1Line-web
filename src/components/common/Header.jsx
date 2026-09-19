@@ -60,6 +60,7 @@ export default function Header({
   const dropdownTimeoutRef = useRef(null);
   const navRef = useRef(null);
   const toolsDropdownRef = useRef(null);
+  const currencyDropdownRef = useRef(null);
   const location = useLocation();
   const { clientUser, isClientAuthenticated } = useClientAuth();
 
@@ -427,10 +428,10 @@ export default function Header({
               <span>{isAr ? 'EN' : 'عربي'}</span>
             </button>
 
-            <div className="utility-divider" />
+            <div className="utility-divider hide-mobile" />
 
-            {/* Currency Selector Dropdown (EGP, SAR, AED, USD, KWD) */}
-            <div className="currency-dropdown-wrapper" ref={currencyDropdownRef}>
+            {/* Currency Selector Dropdown (EGP, SAR, AED, USD, KWD) - Prominently featured in Mobile Drawer */}
+            <div className="currency-dropdown-wrapper hide-mobile" ref={currencyDropdownRef}>
               <button
                 type="button"
                 className={`utility-sub-btn currency-trigger-btn ${currencyMenuOpen ? 'active' : ''}`}
@@ -470,10 +471,10 @@ export default function Header({
               )}
             </div>
 
-            <div className="utility-divider" />
+            <div className="utility-divider hide-mobile" />
 
             {/* More Tools Dropdown */}
-            <div className="tools-dropdown-wrapper" ref={toolsDropdownRef}>
+            <div className="tools-dropdown-wrapper hide-mobile" ref={toolsDropdownRef}>
               <button
                 type="button"
                 className={`utility-sub-btn tools-trigger-btn ${toolsMenuOpen ? 'active' : ''}`}

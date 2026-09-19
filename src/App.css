@@ -1530,6 +1530,25 @@
   }
 }
 
+@media (max-width: 768px) {
+  .hero-video-controls-badge {
+    position: relative !important;
+    bottom: auto !important;
+    right: auto !important;
+    left: auto !important;
+    margin: 16px auto 6px !important;
+    max-width: fit-content !important;
+    padding: 3px 10px !important;
+    justify-content: center !important;
+  }
+  .hero-clip-title-label {
+    max-width: 120px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+}
+
 /* Data Saver Tag in Media Controls */
 .hero-data-saver-indicator {
   display: inline-flex;
@@ -2349,6 +2368,41 @@
 .dark-theme .twin-trust-divider,
 [data-theme="dark"] .twin-trust-divider {
   background: rgba(212, 175, 55, 0.35) !important;
+}
+
+@media (max-width: 768px) {
+  .hero-twin-trust-strip {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+    padding: 16px 18px !important;
+    border-radius: 16px !important;
+    margin-bottom: 24px !important;
+  }
+
+  .twin-trust-divider {
+    width: 100% !important;
+    height: 1px !important;
+    margin: 2px 0 !important;
+  }
+
+  .twin-trust-item {
+    gap: 12px !important;
+    width: 100% !important;
+  }
+
+  .twin-trust-text {
+    flex: 1;
+  }
+
+  .twin-trust-text strong {
+    font-size: 0.9rem !important;
+    line-height: 1.4 !important;
+  }
+
+  .twin-trust-text span {
+    font-size: 0.78rem !important;
+    line-height: 1.45 !important;
+  }
 }
 
 /* =============================================================
@@ -3916,6 +3970,10 @@
 }
 
 .btn-luxury-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
   background: #ffffff;
   color: #0284c7 !important;
   font-weight: 900;
@@ -3923,6 +3981,7 @@
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   transition: all 0.25s ease;
   border-radius: var(--radius-pill);
+  text-decoration: none;
 }
 
 .btn-luxury-cta:hover {
@@ -3930,6 +3989,63 @@
   background: #f0f9ff;
   color: #0369a1 !important;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.btn-glass-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  font-size: 0.88rem;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  color: #ffffff !important;
+  font-weight: 700;
+  border-radius: var(--radius-pill);
+  transition: all 0.25s ease;
+  text-decoration: none;
+}
+
+.btn-glass-outline:hover {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: #ffffff;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .marketplace-bottom-hub {
+    padding: 18px 16px !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 16px !important;
+    text-align: center !important;
+  }
+
+  .bottom-hub-trust {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    max-width: 100% !important;
+    gap: 10px !important;
+  }
+
+  .bottom-hub-actions {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 10px !important;
+  }
+
+  .bottom-hub-actions .btn-luxury-cta,
+  .bottom-hub-actions .btn-glass-outline {
+    width: 100% !important;
+    max-width: 100% !important;
+    white-space: normal !important;
+    text-align: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    padding: 11px 14px !important;
+    font-size: 0.84rem !important;
+  }
 }
 
 .demands-metrics-strip {
@@ -14045,6 +14161,70 @@ body.dark,
   .hide-mobile, .hide-tablet { display: none !important; }
   .mobile-floating-bottom-bar { display: block; }
   .mobile-detail-sticky-bar { display: flex; }
+
+  /* 🏛️ Mobile Header Capsule Ergonomics & Breathing Room */
+  .site-header {
+    padding: 6px 10px 2px !important;
+  }
+  .header-container.glass-capsule {
+    padding: 5px 12px !important;
+    gap: 8px !important;
+    justify-content: space-between !important;
+    border-radius: 999px !important;
+  }
+  .brand-logo {
+    gap: 6px !important;
+    flex-shrink: 0 !important;
+    min-width: 0 !important;
+  }
+  .brand-title {
+    font-size: 1.18rem !important;
+    letter-spacing: 0.3px !important;
+  }
+  .brand-one {
+    font-size: 1.22rem !important;
+  }
+  .brand-line {
+    font-size: 1.05rem !important;
+  }
+  .logo-emblem-svg {
+    width: 28px !important;
+    height: 26px !important;
+  }
+  .header-actions {
+    gap: 6px !important;
+    flex-shrink: 0 !important;
+  }
+  .header-utility-pill-group {
+    padding: 2px 4px !important;
+    gap: 2px !important;
+  }
+  .utility-sub-btn {
+    padding: 4px 6px !important;
+    font-size: 0.72rem !important;
+  }
+  .header-icon-badge-btn {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+  }
+  .header-client-account-btn {
+    padding: 5px !important;
+    border-radius: 50% !important;
+    min-width: 32px !important;
+    height: 32px !important;
+    justify-content: center !important;
+  }
+  .mobile-hamburger-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 4px !important;
+    width: 34px !important;
+    height: 34px !important;
+    flex-shrink: 0 !important;
+    color: var(--text-primary) !important;
+  }
   
   /* Hero & Search Mobile Ergonomics */
   .hero-section-premium { padding: 28px 14px 40px; }
@@ -18013,7 +18193,7 @@ body.dark-theme .compare-tabs-bar {
 /* =============================================================
    ❤️ FAVORITES & SAVED PROPERTIES DRAWER & PILL
    ============================================================= */
-.header-favorites-pill {
+.header-favorites-pill:not(.header-icon-badge-btn) {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -18028,7 +18208,7 @@ body.dark-theme .compare-tabs-bar {
   transition: all 0.25s ease;
 }
 
-.header-favorites-pill:hover {
+.header-favorites-pill:not(.header-icon-badge-btn):hover {
   background: rgba(239, 68, 68, 0.18);
   border-color: #ef4444;
   transform: translateY(-1px);
@@ -21496,6 +21676,9 @@ body.dark-theme .compare-tabs-bar {
 
 .compare-table-scroll {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  scrollbar-width: thin;
 }
 
 .account-quick-table {

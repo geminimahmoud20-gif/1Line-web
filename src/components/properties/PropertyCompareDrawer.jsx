@@ -113,7 +113,32 @@ export default function PropertyCompareDrawer({
     }).slice(0, 8);
   }, [availableProperties, compareList, selectorSearch]);
 
-  if (!isOpen) return null;
+  // 1.5. Focused 1v1 Dual Comparison Duel Breakdown (When exactly 2 properties are compared)
+  const dualDiff = useMemo(() => {
+    if (compareList.length !== 2) return null;
+    const [p1, p2] = compareList;
+    const priceDiff = Math.abs(p1.price - p2.price);
+    const ppm1 = p1.pricePerMeter || (p1.size ? Math.round(p1.price / p1.size) : 0);
+    const ppm2 = p2.pricePerMeter || (p2.size ? Math.round(p2.price / p2.size) : 0);
+    const ppmDiff = Math.abs(ppm1 - ppm2);
+    const sizeDiff = Math.abs((Number(p1.size) || 0) - (Number(p2.size) || 0));
+    const monthlyDiff = Math.abs((Number(p1.monthlyInstallment) || 0) - (Number(p2.monthlyInstallment) || 0));
+
+    return {
+      priceDiff,
+      ppmDiff,
+      sizeDiff,
+      monthlyDiff,
+      cheaperId: p1.price < p2.price ? p1.id : p2.id,
+      largerId: (Number(p1.size) || 0) > (Number(p2.size) || 0) ? p1.id : p2.id,
+      betterPpmId: ppm1 < ppm2 ? p1.id : p2.id,
+      lowerMonthlyId: (Number(p1.monthlyInstallment) || Infinity) < (Number(p2.monthlyInstallment) || Infinity) ? p1.id : p2.id,
+      p1,
+      p2,
+      ppm1,
+      ppm2
+    };
+  }, [compareList]);
 
   const handleDownloadPdf = () => {
     if (compareList.length === 0) return;
@@ -164,33 +189,6 @@ export default function PropertyCompareDrawer({
     window.open(waUrl, '_blank');
   };
 
-  // 1.5. Focused 1v1 Dual Comparison Duel Breakdown (When exactly 2 properties are compared)
-  const dualDiff = useMemo(() => {
-    if (compareList.length !== 2) return null;
-    const [p1, p2] = compareList;
-    const priceDiff = Math.abs(p1.price - p2.price);
-    const ppm1 = p1.pricePerMeter || (p1.size ? Math.round(p1.price / p1.size) : 0);
-    const ppm2 = p2.pricePerMeter || (p2.size ? Math.round(p2.price / p2.size) : 0);
-    const ppmDiff = Math.abs(ppm1 - ppm2);
-    const sizeDiff = Math.abs((Number(p1.size) || 0) - (Number(p2.size) || 0));
-    const monthlyDiff = Math.abs((Number(p1.monthlyInstallment) || 0) - (Number(p2.monthlyInstallment) || 0));
-
-    return {
-      priceDiff,
-      ppmDiff,
-      sizeDiff,
-      monthlyDiff,
-      cheaperId: p1.price < p2.price ? p1.id : p2.id,
-      largerId: (Number(p1.size) || 0) > (Number(p2.size) || 0) ? p1.id : p2.id,
-      betterPpmId: ppm1 < ppm2 ? p1.id : p2.id,
-      lowerMonthlyId: (Number(p1.monthlyInstallment) || Infinity) < (Number(p2.monthlyInstallment) || Infinity) ? p1.id : p2.id,
-      p1,
-      p2,
-      ppm1,
-      ppm2
-    };
-  }, [compareList]);
-
   // Direct VIP joint viewing tour for the two compared properties
   const handleBookDualTour = () => {
     if (!dualDiff) return;
@@ -203,6 +201,8 @@ export default function PropertyCompareDrawer({
     window.open(getWhatsAppUrl(msg), '_blank');
     trackEvent('compare_booked_dual_tour', { p1: p1.id, p2: p2.id });
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className={`compare-drawer-backdrop ${isFullscreen ? 'fullscreen-mode' : ''}`} onClick={onClose} dir={isAr ? 'rtl' : 'ltr'}>
