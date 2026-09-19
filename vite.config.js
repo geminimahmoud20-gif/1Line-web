@@ -31,6 +31,10 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
+            // Keep all CSS in the main stylesheet to prevent chunk preload failures
+            if (id.endsWith('.css') || id.includes('.css')) {
+              return;
+            }
             if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
               return 'vendor-react';
             }

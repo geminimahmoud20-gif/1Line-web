@@ -13,6 +13,21 @@ export default class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
+    const msg = error?.message || String(error || '');
+    if (
+      msg.includes('preload CSS') || 
+      msg.includes('dynamically imported module') || 
+      msg.includes('Loading chunk') ||
+      msg.includes('Failed to fetch')
+    ) {
+      const reloadKey = '1line_chunk_reload_attempt';
+      const lastAttempt = sessionStorage.getItem(reloadKey);
+      if (!lastAttempt || (Date.now() - Number(lastAttempt)) > 15000) {
+        sessionStorage.setItem(reloadKey, String(Date.now()));
+        window.location.reload();
+        return;
+      }
+    }
   }
 
   handleReload = () => {

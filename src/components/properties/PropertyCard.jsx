@@ -14,6 +14,7 @@ import {
   Flame,
   MessageSquare,
   ShieldCheck,
+  Building,
   ChevronRight,
   ChevronLeft
 } from 'lucide-react';
@@ -60,16 +61,18 @@ export default function PropertyCard({
   const priceData = formatCurrencyPrice(property.price, currency, lang);
   const benchmark = getPriceBenchmark(property, lang);
 
-  // 🎯 Single Sovereign Status Badge (توحيد الشارات إلى شارة سيادية واحدة هادئة)
+  // 🎯 Single Sovereign Status Badge (توحيد الشارات إلى شارة سيادية فاخرة)
   const resolvedBadge = (() => {
     if (property.isOffMarket || property.isPrivateDeal) {
       return {
-        label: lang === 'ar' ? '💎 صفقة خاصة (Off-Market)' : '💎 Off-Market Private',
+        label: lang === 'ar' ? 'صفقة خاصة' : 'Off-Market Private',
+        Icon: Sparkles,
         className: 'badge-deal'
       };
     }
     return {
-      label: lang === 'ar' ? '🛡️ معتمد رسمياً من 1Line' : '🛡️ 1Line Verified',
+      label: lang === 'ar' ? 'معتمد رسمياً من 1Line' : '1Line Verified',
+      Icon: ShieldCheck,
       className: 'badge-verified'
     };
   })();
@@ -85,6 +88,8 @@ export default function PropertyCard({
     e.stopPropagation();
     setActiveImageIndex((prev) => (prev < imagesList.length - 1 ? prev + 1 : 0));
   };
+
+  const BadgeIcon = resolvedBadge.Icon;
 
   return (
     <div className="property-card-modern group" data-property-id={property.id}>
@@ -151,10 +156,11 @@ export default function PropertyCard({
           </div>
         )}
 
-        {/* Single Sovereign Status Badge (شارة واحدة سيادية موحدة لمنع التشتت البصري) */}
+        {/* Single Sovereign Status Badge */}
         <div className="card-top-badges">
           <span className={`property-badge ${resolvedBadge.className}`}>
-            {resolvedBadge.label}
+            <BadgeIcon size={12} className="badge-svg-icon" />
+            <span>{resolvedBadge.label}</span>
           </span>
         </div>
 
@@ -273,7 +279,7 @@ export default function PropertyCard({
           </div>
         </div>
 
-        {/* Secondary Specs Strip (الغرف والحمامات والتوثيق كصف ثانوي رمادي هادئ) */}
+        {/* Secondary Specs Strip */}
         <div className="property-specs-clean secondary-specs">
           {property.bedrooms > 0 && (
             <span className="spec-unit">
@@ -290,7 +296,13 @@ export default function PropertyCard({
               </span>
             </>
           )}
-          {(property.bedrooms > 0 || property.bathrooms > 0) && <span className="spec-dot">•</span>}
+          {property.bedrooms === 0 && property.bathrooms === 0 && (
+            <span className="spec-unit">
+              <Building size={13} className="text-muted" />
+              <span>{property.type === 'land' ? (lang === 'ar' ? 'أرض استثمارية' : 'Investment Land') : (lang === 'ar' ? 'مقر استثماري' : 'Commercial Unit')}</span>
+            </span>
+          )}
+          <span className="spec-dot">•</span>
           <span className="spec-unit">
             <ShieldCheck size={13} className="text-muted" />
             <span>{lang === 'ar' ? 'فحص قانوني معتمد' : 'Verified Title'}</span>
@@ -318,7 +330,9 @@ export default function PropertyCard({
             }}
           >
             <span>{lang === 'ar' ? 'حجز معاينة وتفاصيل العقار' : 'Book Tour & Details'}</span>
-            {lang === 'ar' ? <ArrowLeft size={14} /> : <ArrowRight size={14} />}
+            <span className="btn-card-arrow">
+              {lang === 'ar' ? <ArrowLeft size={15} /> : <ArrowRight size={15} />}
+            </span>
           </Link>
 
           {/* Quick Inquiry via WhatsApp */}
@@ -339,7 +353,7 @@ export default function PropertyCard({
             title={lang === 'ar' ? 'استفسار سريع عبر واتساب' : 'Quick Inquiry via WhatsApp'}
             aria-label="Quick WhatsApp Inquiry"
           >
-            <MessageSquare size={16} />
+            <MessageSquare size={17} />
           </button>
         </div>
       </div>
