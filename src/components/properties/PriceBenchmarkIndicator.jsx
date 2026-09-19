@@ -4,8 +4,6 @@ import { getDistrictBenchmark, formatCurrencyPrice } from '../../utils/currencyA
 import { getAreaById } from '../../utils/areasData';
 
 export default function PriceBenchmarkIndicator({ property, lang = 'ar', currency = 'EGP' }) {
-  if (!property) return null;
-
   const isAr = lang === 'ar';
   const [, setTick] = useState(0);
 
@@ -16,16 +14,19 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
     return () => window.removeEventListener('oneline_areas_updated', handleUpdate);
   }, []);
 
-  const areaKey = property.areaKey || 'default';
+  const areaKey = property?.areaKey || 'default';
   const areaData = getAreaById(areaKey);
-  const districtAvg = property.customBenchmarkPrice || (areaData && areaData.avgPricePerMeter) || getDistrictBenchmark(areaKey);
+  const districtAvg = property?.customBenchmarkPrice || (areaData && areaData.avgPricePerMeter) || getDistrictBenchmark(areaKey);
 
-  const propertyPricePerM = property.pricePerMeter || Math.round((Number(property.price) || 0) / (Number(property.size) || 1));
+  const propertyPricePerM = property?.pricePerMeter || Math.round((Number(property?.price) || 0) / (Number(property?.size) || 1));
 
   const diffPercent = useMemo(() => {
+    if (!property || !districtAvg) return 0;
     const diff = ((propertyPricePerM - districtAvg) / districtAvg) * 100;
     return Math.round(diff);
-  }, [propertyPricePerM, districtAvg]);
+  }, [property, propertyPricePerM, districtAvg]);
+
+  if (!property) return null;
 
   const isBelowMarket = diffPercent < -5;
   const isFairMarket = diffPercent >= -5 && diffPercent <= 8;
