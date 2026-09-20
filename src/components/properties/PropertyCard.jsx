@@ -166,6 +166,22 @@ export default function PropertyCard({
 
         {/* Floating Quick Action Buttons */}
         <div className="card-media-actions">
+          {onQuickView && (
+            <button
+              type="button"
+              className="card-circle-btn"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onQuickView(property);
+              }}
+              title={lang === 'ar' ? 'معاينة سريعة' : 'Quick View'}
+              aria-label="Quick View"
+            >
+              <Eye size={15} />
+            </button>
+          )}
+
           <button
             type="button"
             className={`card-circle-btn ${isFavorite ? 'favorite-active' : ''}`}

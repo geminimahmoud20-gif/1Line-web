@@ -107,7 +107,7 @@ function AppContent() {
     toasts, triggerToast, dismissToast,
     quickViewProperty, handleOpenQuickView, handleCloseQuickView,
     trackModalOpen, setTrackModalOpen,
-    shareModalOpen, setShareModalOpen,
+    shareModalOpen, setShareModalOpen, shareData, handleOpenShare, handleCloseShare,
     callbackModalOpen, setCallbackModalOpen,
     contactDrawerOpen, setContactDrawerOpen,
     quickSearchOpen, setQuickSearchOpen,
@@ -395,6 +395,8 @@ function AppContent() {
         onClose={handleCloseQuickView}
         onToggleFavorite={handleProtectedToggleFavorite}
         isFavorite={quickViewProperty ? favorites.includes(quickViewProperty.id) : false}
+        onOpenShare={handleOpenShare}
+        triggerToast={triggerToast}
       />
 
       {/* Track Lead Modal */}
@@ -408,9 +410,10 @@ function AppContent() {
       {/* Share Modal */}
       <ShareModal
         isOpen={shareModalOpen}
-        onClose={() => setShareModalOpen(false)}
+        onClose={handleCloseShare}
         lang={lang}
         triggerToast={triggerToast}
+        shareData={shareData}
       />
 
       {/* Callback / VIP Consultation Modal */}
@@ -433,7 +436,7 @@ function AppContent() {
           toggleTheme={toggleTheme}
           soundEnabled={soundEnabled}
           toggleSound={toggleSound}
-          onOpenShare={() => setShareModalOpen(true)}
+          onOpenShare={() => handleOpenShare(null)}
           onOpenTrackLead={() => setTrackModalOpen(true)}
           compareCount={compareList.length}
           onOpenCompare={() => setCompareDrawerOpen(true)}

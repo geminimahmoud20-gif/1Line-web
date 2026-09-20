@@ -21,6 +21,7 @@ export function UIModalProvider({ children }) {
   const [quickViewProperty, setQuickViewProperty] = useState(null);
   const [trackModalOpen, setTrackModalOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [shareData, setShareData] = useState(null);
   const [callbackModalOpen, setCallbackModalOpen] = useState(false);
   const [contactDrawerOpen, setContactDrawerOpen] = useState(false);
   const [quickSearchOpen, setQuickSearchOpen] = useState(false);
@@ -29,6 +30,17 @@ export function UIModalProvider({ children }) {
   const [compareDrawerOpen, setCompareDrawerOpen] = useState(false);
   const [favoritesDrawerOpen, setFavoritesDrawerOpen] = useState(false);
   const [aiModalOpen, setAiModalOpen] = useState(false);
+
+  // Share Handlers
+  const handleOpenShare = useCallback((data = null) => {
+    setShareData(data);
+    setShareModalOpen(true);
+  }, []);
+
+  const handleCloseShare = useCallback(() => {
+    setShareModalOpen(false);
+    setShareData(null);
+  }, []);
 
   // Quick View Handlers
   const handleOpenQuickView = useCallback((property) => {
@@ -75,6 +87,9 @@ export function UIModalProvider({ children }) {
     setTrackModalOpen,
     shareModalOpen,
     setShareModalOpen,
+    shareData,
+    handleOpenShare,
+    handleCloseShare,
     callbackModalOpen,
     setCallbackModalOpen,
     contactDrawerOpen,

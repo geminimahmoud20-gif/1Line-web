@@ -1,11 +1,18 @@
 import { useState } from 'react';
-import { X, MapPin, Maximize2, BedDouble, Bath, MessageSquare, ArrowLeft, ArrowRight, Download, ExternalLink, Loader2 } from 'lucide-react';
+import { X, MapPin, Maximize2, BedDouble, Bath, MessageSquare, ArrowLeft, ArrowRight, Download, ExternalLink, Loader2, Share2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { formatCurrencyPrice, getPriceBenchmark } from '../../utils/currencyAndBenchmark';
 import BrandWatermark from './BrandWatermark';
 
-export default function QuickViewModal({ property, lang = 'ar', currency = 'EGP', onClose }) {
+export default function QuickViewModal({ 
+  property, 
+  lang = 'ar', 
+  currency = 'EGP', 
+  onClose,
+  onOpenShare,
+  triggerToast
+}) {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   if (!property) return null;
 
@@ -32,13 +39,56 @@ export default function QuickViewModal({ property, lang = 'ar', currency = 'EGP'
     }
   };
 
+  const handleShare = async () => {
+    const propUrl = `${window.location.origin}/properties/${property.id}`;
+    const shareText = isAr 
+      ? `تفقد هذا العقار المعتمد على منصة 1Line: ${title} بسعر ${priceData.primary} ${priceData.symbol}\n${propUrl}`
+      : `Check out this verified property on 1Line: ${title} for ${priceData.primary} ${priceData.symbol}\n${propUrl}`;
+
+    if (onOpenShare) {
+      onOpenShare({
+        url: propUrl,
+        title,
+        text: shareText,
+        subtitle: `${location} • ${priceData.primary} ${priceData.symbol}`
+      });
+    } else if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title,
+          text: shareText,
+          url: propUrl
+        });
+      } catch (err) {
+        if (err?.name !== 'AbortError') {
+          navigator.clipboard?.writeText(propUrl);
+          if (triggerToast) triggerToast(isAr ? 'تم نسخ الرابط بنجاح' : 'Link copied', 'success');
+        }
+      }
+    } else {
+      navigator.clipboard?.writeText(propUrl);
+      if (triggerToast) triggerToast(isAr ? 'تم نسخ الرابط بنجاح' : 'Link copied', 'success');
+    }
+  };
+
   return (
     <div className="quickview-modal-backdrop" onClick={onClose}>
       <div className="quickview-modal-card" onClick={(e) => e.stopPropagation()}>
-        {/* Close Button */}
-        <button type="button" className="modal-close-btn" onClick={onClose} aria-label="Close">
-          <X size={18} />
-        </button>
+        {/* Top Control Actions Bar */}
+        <div className="quickview-top-bar">
+          <button 
+            type="button" 
+            className="modal-action-round-btn" 
+            onClick={handleShare}
+            title={isAr ? 'مشاركة هذا العقار' : 'Share Property'}
+            aria-label="Share Property"
+          >
+            <Share2 size={16} />
+          </button>
+          <button type="button" className="modal-close-btn" onClick={onClose} aria-label="Close">
+            <X size={18} />
+          </button>
+        </div>
 
         <div className="quickview-grid">
           {/* Left / Top Media Section */}
