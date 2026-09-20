@@ -240,41 +240,56 @@ export default function PropertyCard({
           </Link>
         </h3>
 
-        {/* 🏛️ STANDARDIZED DECISION CORE (نواة القرار الثابتة) */}
+        {/* 🏛️ STANDARDIZED ARCHITECTURAL DECISION CORE (Quiet Luxury) */}
         <div className="property-decision-core">
-          <div className="core-specs-row core-row-top">
-            <span className="core-size-highlight">
-              <Maximize2 size={13} className="text-muted" />
-              <strong><bdi>{property.size}</bdi></strong> {lang === 'ar' ? 'م² صافي' : 'sqm'}
-            </span>
+          {/* Top Spec Header: Size & Payment Plan Tag */}
+          <div className="core-specs-header">
+            <div className="core-size-pill">
+              <Maximize2 size={13} className="core-spec-icon" />
+              <span className="core-size-val"><bdi>{property.size}</bdi></span>
+              <span className="core-size-unit">{lang === 'ar' ? 'م² صافي' : 'sqm net'}</span>
+            </div>
+
             {property.monthlyInstallment > 0 ? (
-              <span className="core-payment-badge installment-badge">
-                {lang === 'ar' ? 'تقسيط متاح' : 'Installments'}
+              <span className="core-plan-tag installment-tag">
+                <Sparkles size={11} className="plan-icon" />
+                <span>{lang === 'ar' ? 'تقسيط متاح' : 'Installments'}</span>
               </span>
             ) : (
-              <span className="core-payment-badge cash-badge">
-                {lang === 'ar' ? 'كاش معتمد' : 'Full Cash'}
+              <span className="core-plan-tag cash-tag">
+                <ShieldCheck size={11} className="plan-icon" />
+                <span>{lang === 'ar' ? 'كاش معتمد' : 'Full Cash'}</span>
               </span>
             )}
           </div>
-          
-          <div className="core-specs-row core-row-bottom">
-            {property.downPayment > 0 ? (
-              <span className="core-fin-label">
-                {lang === 'ar' ? 'مقدم:' : 'Down:'} <strong><bdi>{(Number(property.downPayment) || 0).toLocaleString()}</bdi> {lang === 'ar' ? 'ج.م' : 'EGP'}</strong>
-              </span>
-            ) : (
-              <span className="core-cash-label">
-                {lang === 'ar' ? 'كاش فوري مسجل' : 'Full Cash Verified'}
-              </span>
-            )}
-            {property.monthlyInstallment > 0 && (
+
+          {/* Financial Breakdown: Elegant Dual-Metric Grid or Certified Cash Banner */}
+          <div className="core-finance-grid">
+            {property.monthlyInstallment > 0 ? (
               <>
-                <span className="core-divider">•</span>
-                <span className="core-installment-label">
-                  {lang === 'ar' ? 'قسط:' : 'Monthly:'} <strong><bdi>{(Number(property.monthlyInstallment) || 0).toLocaleString()}</bdi></strong> {lang === 'ar' ? 'ج.م' : 'EGP'}
-                </span>
+                <div className="core-fin-col">
+                  <span className="fin-col-label">{lang === 'ar' ? 'المقدم' : 'Down Payment'}</span>
+                  <div className="fin-col-value">
+                    <bdi>{(Number(property.downPayment) || 0).toLocaleString()}</bdi>
+                    <span className="fin-col-currency">{lang === 'ar' ? 'ج.م' : 'EGP'}</span>
+                  </div>
+                </div>
+
+                <div className="core-fin-divider" aria-hidden="true" />
+
+                <div className="core-fin-col">
+                  <span className="fin-col-label">{lang === 'ar' ? 'القسط' : 'Monthly'}</span>
+                  <div className="fin-col-value highlight-installment">
+                    <bdi>{(Number(property.monthlyInstallment) || 0).toLocaleString()}</bdi>
+                    <span className="fin-col-currency">{lang === 'ar' ? 'ج.م' : 'EGP'}</span>
+                  </div>
+                </div>
               </>
+            ) : (
+              <div className="core-cash-deal-banner">
+                <ShieldCheck size={13} className="cash-shield-icon" />
+                <span>{lang === 'ar' ? 'خالص الثمن بدون أقساط • استلام فوري' : 'Fully Paid • Ready for Handover'}</span>
+              </div>
             )}
           </div>
         </div>
@@ -283,7 +298,7 @@ export default function PropertyCard({
         <div className="property-specs-clean secondary-specs">
           {property.bedrooms > 0 && (
             <span className="spec-unit">
-              <BedDouble size={13} className="text-muted" />
+              <BedDouble size={13} className="spec-icon" />
               <span><strong><bdi>{property.bedrooms}</bdi></strong> {lang === 'ar' ? 'غرف' : 'Beds'}</span>
             </span>
           )}
@@ -291,27 +306,27 @@ export default function PropertyCard({
             <>
               {property.bedrooms > 0 && <span className="spec-dot">•</span>}
               <span className="spec-unit">
-                <Bath size={13} className="text-muted" />
+                <Bath size={13} className="spec-icon" />
                 <span><strong><bdi>{property.bathrooms}</bdi></strong> {lang === 'ar' ? 'حمام' : 'Baths'}</span>
               </span>
             </>
           )}
           {property.bedrooms === 0 && property.bathrooms === 0 && (
             <span className="spec-unit">
-              <Building size={13} className="text-muted" />
+              <Building size={13} className="spec-icon" />
               <span>{property.type === 'land' ? (lang === 'ar' ? 'أرض استثمارية' : 'Investment Land') : (lang === 'ar' ? 'مقر استثماري' : 'Commercial Unit')}</span>
             </span>
           )}
           <span className="spec-dot">•</span>
-          <span className="spec-unit">
-            <ShieldCheck size={13} className="text-muted" />
+          <span className="spec-unit spec-unit-trust">
+            <ShieldCheck size={13} className="spec-trust-icon" />
             <span>{lang === 'ar' ? 'فحص قانوني معتمد' : 'Verified Title'}</span>
           </span>
           {property.virtualTour && (
             <>
               <span className="spec-dot">•</span>
               <span className="spec-unit">
-                <Sparkles size={12} className="text-muted" />
+                <Sparkles size={12} className="spec-icon text-gold" />
                 <span>{lang === 'ar' ? 'معاينة 3D' : '3D Tour'}</span>
               </span>
             </>
