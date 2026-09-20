@@ -249,27 +249,27 @@ export default function PropertiesPage({
 
   return (
     <div className="properties-page-wrapper">
-      {/* Page Header Bar */}
-      <div className="properties-page-header">
+      {/* Page Header Bar - Compact Executive Luxury */}
+      <div className="properties-page-header compact-page-header">
         <div className="page-header-container">
           <div className="page-header-titles">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-              <h1 style={{ fontSize: '1.85rem', fontWeight: '900', margin: 0 }}>
+            <div className="page-header-main-row">
+              <h1 className="page-header-title">
                 {lang === 'ar' ? 'استكشاف العقارات في سوهاج' : 'Explore Properties in Sohag'}
               </h1>
-              <span className="results-count-badge" style={{ fontSize: '0.8rem', padding: '3px 10px', fontWeight: '800' }}>
+              <span className="results-count-badge">
                 {filteredProperties.length} {lang === 'ar' ? 'عقار متاح' : 'Units'}
               </span>
             </div>
-            <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text-muted)' }}>
-              {lang === 'ar' ? 'تصفح أحدث الشقق، الفيلات، المحلات التجارية والأراضي المعروضة حصرياً' : 'Browse the latest verified apartments, commercial units, and lands'}
+            <p className="page-header-subtitle">
+              {lang === 'ar' ? 'تصفح أحدث الشقق، الفيلات، المحلات التجارية والأراضي المعروضة حصرياً والمعتمدة رسمياً' : 'Browse verified apartments, commercial units, and lands'}
             </p>
           </div>
 
           {/* View Mode Controls */}
           <div className="view-mode-controls">
             <div className="sort-selector-wrap">
-              <ArrowUpDown size={14} />
+              <ArrowUpDown size={13} />
               <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
                 <option value="featured">{lang === 'ar' ? 'المميز أولاً' : 'Featured First'}</option>
                 <option value="price_asc">{lang === 'ar' ? 'السعر: من الأقل للأعلى' : 'Price: Low to High'}</option>
@@ -285,7 +285,7 @@ export default function PropertiesPage({
                 onClick={() => setViewMode('split')}
                 title={lang === 'ar' ? 'عرض مزدوج (خريطة + قائمة)' : 'Split View'}
               >
-                <MapIcon size={16} />
+                <MapIcon size={15} />
                 <span className="hide-mobile">{lang === 'ar' ? 'خريطة وقائمة' : 'Split'}</span>
               </button>
               <button
@@ -294,7 +294,7 @@ export default function PropertiesPage({
                 onClick={() => setViewMode('grid')}
                 title={lang === 'ar' ? 'عرض شبكي' : 'Grid View'}
               >
-                <LayoutGrid size={16} />
+                <LayoutGrid size={15} />
                 <span className="hide-mobile">{lang === 'ar' ? 'شبكة' : 'Grid'}</span>
               </button>
             </div>
@@ -302,27 +302,27 @@ export default function PropertiesPage({
         </div>
       </div>
 
-      {/* 🛡️ 1LINE CERTIFIED STANDARD EXPLAINER (إبراز الفرق الجوهري للعقار المعتمد) */}
-      <div className="properties-certified-explainer-strip">
+      {/* 🛡️ 1LINE CERTIFIED STANDARD EXPLAINER (شريط المعيار المعتمد المدمج الأنيق) */}
+      <div className="properties-certified-explainer-strip compact-trust-strip">
         <div className="certified-explainer-inner">
           <div className="certified-badge-pill">
-            <ShieldCheck size={16} className="text-emerald" />
-            <span>{lang === 'ar' ? 'معيار 1Line العقاري المعتمد:' : '1Line Certified Standard:'}</span>
+            <ShieldCheck size={14} className="text-emerald" />
+            <span>{lang === 'ar' ? 'معيار 1Line المعتمد:' : '1Line Certified:'}</span>
           </div>
           <div className="certified-points-row">
             <span className="cert-point">
-              <CheckCircle2 size={13} className="text-gold" />
-              <span>{lang === 'ar' ? 'فحص إنشائي وهندسي معتمد' : 'Structural & Engineering Audit'}</span>
+              <CheckCircle2 size={12} className="text-gold" />
+              <span>{lang === 'ar' ? 'فحص إنشائي وهندسي' : 'Structural Audit'}</span>
             </span>
             <span className="cert-dot">•</span>
             <span className="cert-point">
-              <CheckCircle2 size={13} className="text-gold" />
-              <span>{lang === 'ar' ? 'رخصة رسمية + نموذج 10 نهائي' : 'Official License & Form 10'}</span>
+              <CheckCircle2 size={12} className="text-gold" />
+              <span>{lang === 'ar' ? 'رخصة رسمية + نموذج 10' : 'Official License & Form 10'}</span>
             </span>
             <span className="cert-dot">•</span>
             <span className="cert-point">
-              <CheckCircle2 size={13} className="text-gold" />
-              <span>{lang === 'ar' ? 'تسعير عادل مطابق لبورصة سوهاج' : 'Fair Valuation vs Market Ticker'}</span>
+              <CheckCircle2 size={12} className="text-gold" />
+              <span>{lang === 'ar' ? 'تسعير عادل مطابق لبورصة سوهاج' : 'Fair Market Price'}</span>
             </span>
           </div>
         </div>
