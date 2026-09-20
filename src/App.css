@@ -4248,10 +4248,10 @@
 .card-media-wrapper {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 10.2;
+  aspect-ratio: 16 / 10.5;
   height: auto;
-  min-height: 195px;
-  max-height: 215px;
+  min-height: 200px;
+  max-height: 245px;
   overflow: hidden;
   background: #0f172a;
 }
@@ -5455,18 +5455,88 @@
   border-radius: 999px;
 }
 
-/* Split View Map Layout */
+/* ==========================================================================
+   🏛️ LUXURY REAL ESTATE GRID & SPLIT VIEW ARCHITECTURE (الشبكة العقارية الذكية)
+   ========================================================================== */
+
+/* 1. Full Grid View (العرض الشبكي الفاخر المتناسق - الافتراضي) */
+.grid-view-container {
+  width: 100%;
+  animation: luxuryGridFade 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes luxuryGridFade {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.properties-grid-full {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+@media (min-width: 1440px) {
+  .properties-grid-full {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+  }
+}
+
+@media (max-width: 1120px) {
+  .properties-grid-full {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (max-width: 660px) {
+  .properties-grid-full {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+/* 2. Split View Map Layout (العرض التفاعلي: خريطة + بطاقات مدمجة) */
 .split-view-container {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.12fr 0.88fr;
   gap: 24px;
   align-items: start;
+  animation: luxuryGridFade 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .properties-grid-split {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(285px, 1fr));
+  gap: 18px;
+}
+
+@media (max-width: 1200px) {
+  .split-view-container {
+    grid-template-columns: 1fr;
+  }
+  .split-map-column {
+    height: 420px;
+    margin-bottom: 20px;
+    order: -1;
+  }
+  .properties-grid-split {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 660px) {
+  .properties-grid-split {
+    grid-template-columns: 1fr;
+  }
 }
 
 .split-map-column {

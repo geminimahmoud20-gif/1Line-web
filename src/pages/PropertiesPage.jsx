@@ -26,12 +26,7 @@ export default function PropertiesPage({
   onQuickView
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [viewMode, setViewMode] = useState(() => {
-    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
-      return 'grid';
-    }
-    return 'split';
-  }); // 'split' | 'grid' | 'map'
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' (الافتراضي الشبكي الفاخر) | 'split' (خريطة وقائمة)
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [hoveredPropertyId, setHoveredPropertyId] = useState(null);
   const [sortBy, setSortBy] = useState('featured'); // 'featured' | 'price_asc' | 'price_desc' | 'size_desc'
@@ -281,21 +276,21 @@ export default function PropertiesPage({
             <div className="view-toggle-btns">
               <button
                 type="button"
-                className={`view-btn ${viewMode === 'split' ? 'active' : ''}`}
-                onClick={() => setViewMode('split')}
-                title={lang === 'ar' ? 'عرض مزدوج (خريطة + قائمة)' : 'Split View'}
+                className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                onClick={() => setViewMode('grid')}
+                title={lang === 'ar' ? 'عرض شبكة العقارات الفاخرة' : 'Luxury Grid View'}
               >
-                <MapIcon size={15} />
-                <span className="hide-mobile">{lang === 'ar' ? 'خريطة وقائمة' : 'Split'}</span>
+                <LayoutGrid size={15} />
+                <span className="hide-mobile">{lang === 'ar' ? 'شبكة العقارات' : 'Grid'}</span>
               </button>
               <button
                 type="button"
-                className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
-                onClick={() => setViewMode('grid')}
-                title={lang === 'ar' ? 'عرض شبكي' : 'Grid View'}
+                className={`view-btn ${viewMode === 'split' ? 'active' : ''}`}
+                onClick={() => setViewMode('split')}
+                title={lang === 'ar' ? 'عرض تفاعلي (خريطة + قائمة)' : 'Split View'}
               >
-                <LayoutGrid size={15} />
-                <span className="hide-mobile">{lang === 'ar' ? 'شبكة' : 'Grid'}</span>
+                <MapIcon size={15} />
+                <span className="hide-mobile">{lang === 'ar' ? 'خريطة وقائمة' : 'Split'}</span>
               </button>
             </div>
           </div>
