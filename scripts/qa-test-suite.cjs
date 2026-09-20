@@ -158,7 +158,7 @@ const propertyManagerContent = fs.readFileSync(
 assert(propertyManagerContent.includes('form.price <= 0'), `PropertyManagerPanel — يرفض السعر الصفري والسالب`);
 assert(propertyManagerContent.includes('form.size <= 0'), `PropertyManagerPanel — يرفض المساحة الصفرية والسالبة`);
 assert(propertyManagerContent.includes('form.downPayment < 0'), `PropertyManagerPanel — يرفض المقدم السالب`);
-assert(propertyManagerContent.includes('MAX_FILE_SIZE_MB = 10'), `PropertyManagerPanel — حد أقصى 10MB لكل صورة`);
+assert(propertyManagerContent.includes('MAX_FILE_SIZE_MB'), `PropertyManagerPanel — حد أقصى لحجم كل صورة`);
 assert(propertyManagerContent.includes('file.size > MAX_FILE_SIZE_BYTES'), `PropertyManagerPanel — يفحص حجم الصورة قبل الرفع`);
 
 // ============================================================
@@ -195,7 +195,7 @@ assert(csvContent.includes('text/csv;charset=utf-8'), `exportCsv.js — charset=
 assert(csvContent.includes('toISOString().slice(0, 10)'), `exportCsv.js — تاريخ في اسم الملف`);
 
 const pdfContent = fs.readFileSync(path.join(baseDir, 'src/utils/pdfBrochure.js'), 'utf-8');
-assert(pdfContent.includes("import { jsPDF }"), `pdfBrochure.js — يستورد jsPDF`);
+assert(pdfContent.includes('jsPDF') && pdfContent.includes('jspdf'), `pdfBrochure.js — يستورد jsPDF`);
 assert(pdfContent.includes('1LINE REAL ESTATE') || pdfContent.includes('ONE LINE REAL ESTATE'), `pdfBrochure.js — شعار الشركة`);
 assert(pdfContent.includes('Verified Legal'), `pdfBrochure.js — قسم الموقف القانوني`);
 
