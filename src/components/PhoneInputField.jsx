@@ -26,31 +26,36 @@ export const PhoneInputField = ({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%', textAlign: 'right' }}>
+    <div className="phone-input-field-wrap" style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%', textAlign: 'right' }}>
       {label && (
         <label style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-primary)' }}>
           {label} {required && <span style={{ color: 'var(--rose)' }}>*</span>}
         </label>
       )}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        border: error ? '1.5px solid var(--rose)' : '1px solid var(--border-color)',
-        borderRadius: 'var(--radius-sm)',
-        background: '#ffffff',
-        padding: '2px 10px',
-        transition: 'all 0.2s ease',
-        direction: 'ltr'
-      }}>
+      <div 
+        className="phone-input-control-box"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          border: error ? '1.5px solid var(--rose, #e11d48)' : '1px solid var(--border-color, rgba(20, 43, 73, 0.15))',
+          borderRadius: 'var(--radius-sm, 8px)',
+          background: 'var(--surface-card, #ffffff)',
+          padding: '2px 10px',
+          transition: 'all 0.2s ease',
+          direction: 'ltr',
+          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)'
+        }}
+      >
         {/* Country Flag Select */}
         <select
           value={country}
           onChange={(e) => handleCountryChange(e.target.value)}
+          aria-label="Country Dial Code"
           style={{
             background: 'transparent',
             border: 'none',
             outline: 'none',
-            fontSize: '0.95rem',
+            fontSize: '0.92rem',
             cursor: 'pointer',
             padding: '8px 4px',
             color: 'var(--text-primary)',
@@ -59,14 +64,14 @@ export const PhoneInputField = ({
           }}
         >
           {SUPPORTED_COUNTRIES.map(c => (
-            <option key={c.code} value={c.code}>
+            <option key={c.code} value={c.code} style={{ background: 'var(--surface-card, #ffffff)', color: 'var(--text-primary)' }}>
               {c.flag} {c.code}
             </option>
           ))}
         </select>
         
         {/* Divider */}
-        <div style={{ width: '1px', height: '24px', background: 'var(--border-light)', margin: '0 8px' }}></div>
+        <div style={{ width: '1px', height: '24px', background: 'var(--border-color, rgba(20, 43, 73, 0.12))', margin: '0 8px' }}></div>
         
         {/* Phone Input Field */}
         <input
@@ -75,6 +80,7 @@ export const PhoneInputField = ({
           onChange={(e) => handleValChange(e.target.value)}
           placeholder={SUPPORTED_COUNTRIES.find(c => c.code === country)?.placeholder || '01XXXXXXXXX'}
           required={required}
+          aria-label="Phone Number"
           style={{
             flex: 1,
             border: 'none',
@@ -89,7 +95,7 @@ export const PhoneInputField = ({
         />
       </div>
       {error && (
-        <span style={{ color: 'var(--rose)', fontSize: '0.78rem', fontWeight: '800', marginTop: '2px' }}>
+        <span style={{ color: 'var(--rose, #e11d48)', fontSize: '0.78rem', fontWeight: '800', marginTop: '2px' }}>
           {error}
         </span>
       )}

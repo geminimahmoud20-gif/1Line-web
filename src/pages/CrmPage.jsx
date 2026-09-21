@@ -722,16 +722,21 @@ export default function CrmPage({
         boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
       }}>
         <div style={{ maxWidth: '1600px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-          <nav style={{ 
-            display: 'flex', 
-            background: '#f1f5f9', 
-            padding: '4px', 
-            borderRadius: '10px', 
-            border: '1px solid #e2e8f0',
-            gap: '3px',
-            overflowX: 'auto',
-            maxWidth: '100%'
-          }}>
+          <nav 
+            className="crm-nav-tabs-scroll"
+            style={{ 
+              display: 'flex', 
+              flexWrap: 'nowrap',
+              background: '#f1f5f9', 
+              padding: '4px', 
+              borderRadius: '10px', 
+              border: '1px solid #e2e8f0',
+              gap: '3px',
+              overflowX: 'auto',
+              WebkitOverflowScrolling: 'touch',
+              maxWidth: '100%'
+            }}
+          >
             {/* 1. Dashboard */}
             <button
               type="button"
