@@ -17,7 +17,7 @@ import {
   Eye,
   DollarSign
 } from 'lucide-react';
-import { formatCurrencyPrice, CURRENCY_RATES } from '../../utils/currencyAndBenchmark';
+import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
 
 // Fix Leaflet Default Marker Icon issues in Webpack/Vite
 delete L.Icon.Default.prototype._getIconUrl;
@@ -332,22 +332,9 @@ export default function PropertyMapView({
       const isSelected = selectedProperty?.id === prop.id;
       const isHovered = hoveredPropertyId === prop.id;
 
-      // Multi-currency price formatting for Luxury Beacon Pin
-      const priceObj = formatCurrencyPrice(prop.price, currency, lang);
-      let pinPriceLabel = '';
-      if (currency === 'EGP') {
-        pinPriceLabel = (prop.price / 1000000).toFixed(1) + (isAr ? ' م.ج' : 'M');
-      } else {
-        const rate = CURRENCY_RATES[currency]?.rate || 1;
-        const converted = Math.round(prop.price * rate);
-        if (converted >= 1000000) {
-          pinPriceLabel = (converted / 1000000).toFixed(1) + 'M ' + priceObj.symbol;
-        } else if (converted >= 1000) {
-          pinPriceLabel = Math.round(converted / 1000) + 'K ' + priceObj.symbol;
-        } else {
-          pinPriceLabel = `${converted} ${priceObj.symbol}`;
-        }
-      }
+      // Price formatting for Luxury Beacon Pin (EGP)
+      const priceObj = formatCurrencyPrice(prop.price, 'EGP', lang);
+      const pinPriceLabel = (prop.price / 1000000).toFixed(1) + (isAr ? ' م.ج' : 'M');
 
       // Luxury Beacon Pin with Pointer Needle directly hitting the property unit
       const customPinHtml = `
@@ -388,7 +375,6 @@ export default function PropertyMapView({
             <div class="popup-price-row">
               <div>
                 <strong style="color: var(--primary, #071e3d); font-size: 0.95rem;">${priceObj.primary} ${priceObj.symbol}</strong>
-                ${priceObj.isConverted ? `<div style="font-size: 0.72rem; color: #64748b; font-weight: 600;">≈ ${priceObj.originalEgp}</div>` : ''}
               </div>
               <span class="popup-size">${prop.size || ''} ${isAr ? 'م²' : 'sqm'}</span>
             </div>

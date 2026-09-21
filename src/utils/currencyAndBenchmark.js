@@ -3,16 +3,9 @@
  * Designed for Sohag, Upper Egypt, and Gulf Expat Investors.
  */
 
-// Approximate exchange rates to Egyptian Pound (Base: 1 EGP)
+// Platform currency definition (Strictly Egyptian Pound - EGP only)
 export const CURRENCY_RATES = {
-  EGP: { rate: 1, symbol_ar: 'ج.م', symbol_en: 'EGP', flag: '🇪🇬' },
-  SAR: { rate: 0.076, symbol_ar: 'ر.س', symbol_en: 'SAR', flag: '🇸🇦' },
-  AED: { rate: 0.075, symbol_ar: 'د.إ', symbol_en: 'AED', flag: '🇦🇪' },
-  USD: { rate: 0.020, symbol_ar: '$', symbol_en: 'USD', flag: '🇺🇸' },
-  EUR: { rate: 0.019, symbol_ar: '€', symbol_en: 'EUR', flag: '🇪🇺' },
-  KWD: { rate: 0.0062, symbol_ar: 'د.ك', symbol_en: 'KWD', flag: '🇰🇼' },
-  QAR: { rate: 0.074, symbol_ar: 'ر.ق', symbol_en: 'QAR', flag: '🇶🇦' },
-  OMR: { rate: 0.0078, symbol_ar: 'ر.ع', symbol_en: 'OMR', flag: '🇴🇲' }
+  EGP: { rate: 1, symbol_ar: 'ج.م', symbol_en: 'EGP', flag: '🇪🇬' }
 };
 
 import { getAreas } from './areasData.js';
@@ -49,29 +42,17 @@ export function getDistrictBenchmark(areaKey) {
 }
 
 /**
- * Formats a monetary value according to selected currency and language
+ * Formats a monetary value according to Egyptian Pound (EGP) and language
  */
 export function formatCurrencyPrice(amountInEgp, currency = 'EGP', lang = 'ar') {
   const num = Number(amountInEgp) || 0;
-  const currData = CURRENCY_RATES[currency] || CURRENCY_RATES.EGP;
+  const currData = CURRENCY_RATES.EGP;
   const isAr = lang === 'ar';
 
-  if (currency === 'EGP') {
-    return {
-      primary: num.toLocaleString(),
-      symbol: isAr ? currData.symbol_ar : currData.symbol_en,
-      isConverted: false,
-      flag: currData.flag
-    };
-  }
-
-  // Calculate converted amount
-  const converted = Math.round(num * currData.rate);
   return {
-    primary: converted.toLocaleString(),
+    primary: num.toLocaleString(),
     symbol: isAr ? currData.symbol_ar : currData.symbol_en,
-    originalEgp: `${num.toLocaleString()} ${isAr ? 'ج.م' : 'EGP'}`,
-    isConverted: true,
+    isConverted: false,
     flag: currData.flag
   };
 }

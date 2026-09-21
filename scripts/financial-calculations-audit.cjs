@@ -91,11 +91,10 @@ assert(invTest.totalRent === 2325000, 'Investor ROI: 5-year total rent is 2,325,
 assert(invTest.futureCapitalValue > 6800000, `Investor ROI: Compounded capital value > 6.8M (${invTest.futureCapitalValue})`);
 assert(invTest.totalRoiPercent > 200, `Investor ROI: Total ROI > 200% (${invTest.totalRoiPercent}%)`);
 
-// 3. Test Currency Conversion Rates Integrity
-assert(CURRENCY_RATES.USD?.rate > 0, `Currency: USD rate is valid positive number (${CURRENCY_RATES.USD?.rate})`);
-assert(CURRENCY_RATES.SAR?.rate > 0, `Currency: SAR rate is valid positive number (${CURRENCY_RATES.SAR?.rate})`);
-assert(CURRENCY_RATES.AED?.rate > 0, `Currency: AED rate is valid positive number (${CURRENCY_RATES.AED?.rate})`);
-assert(CURRENCY_RATES.EUR?.rate > 0, `Currency: EUR rate is valid positive number (${CURRENCY_RATES.EUR?.rate})`);
+// 3. Test Currency Platform Policy Integrity (EGP Only)
+assert(CURRENCY_RATES.EGP?.rate === 1, `Currency: EGP rate is exactly 1 (${CURRENCY_RATES.EGP?.rate})`);
+assert(CURRENCY_RATES.EGP?.symbol_ar === 'ج.م', `Currency: EGP symbol_ar is 'ج.م'`);
+assert(Object.keys(CURRENCY_RATES).length === 1, `Currency: EGP is the only currency supported in platform`);
 
 // 4. Test Mega Projects Dataset Financial Sanity
 MEGA_PROJECTS.forEach((proj, idx) => {

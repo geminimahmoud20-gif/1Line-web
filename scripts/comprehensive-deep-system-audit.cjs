@@ -113,16 +113,16 @@ test('محرك البحث الدلالي (semanticSearchEngine.js) يستخرج 
   assert.strictEqual(results[0].id, 'p1');
 });
 
-test('حاسبة التمويل والتقسيط وأسعار الصرف (Currency & Benchmark)', () => {
+test('حاسبة التمويل والتقسيط وعملة الجنيه المصري (Currency & Benchmark)', () => {
   const { CURRENCY_RATES, formatCurrencyPrice } = require('../src/utils/currencyAndBenchmark.js');
   assert.ok(CURRENCY_RATES.EGP.rate === 1);
-  assert.ok(CURRENCY_RATES.USD.rate > 0);
-  assert.ok(CURRENCY_RATES.SAR.rate > 0);
+  assert.strictEqual(Object.keys(CURRENCY_RATES).length, 1);
 
   const egpVal = 1000000;
-  const resUsd = formatCurrencyPrice(egpVal, 'USD');
-  assert.strictEqual(resUsd.isConverted, true);
-  assert.ok(resUsd.primary);
+  const resEgp = formatCurrencyPrice(egpVal, 'EGP', 'ar');
+  assert.strictEqual(resEgp.isConverted, false);
+  assert.strictEqual(resEgp.symbol, 'ج.م');
+  assert.ok(resEgp.primary);
 });
 
 test('محرك مطابقة العملاء مع العقارات (matchingEngine.js)', () => {

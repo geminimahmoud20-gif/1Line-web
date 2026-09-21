@@ -6,12 +6,14 @@ const PreferencesContext = createContext(null);
 export function PreferencesProvider({ children }) {
   const [lang, setLang] = useState('ar');
   const [currency, setCurrency] = useState(() => {
-    return localStorage.getItem('oneline_currency') || 'EGP';
+    try {
+      localStorage.removeItem('oneline_currency');
+    } catch (e) {}
+    return 'EGP';
   });
 
-  const handleSetCurrency = useCallback((newCurr) => {
-    setCurrency(newCurr);
-    localStorage.setItem('oneline_currency', newCurr);
+  const handleSetCurrency = useCallback(() => {
+    setCurrency('EGP');
   }, []);
 
   const [theme, setTheme] = useState(() => {

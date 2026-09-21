@@ -32,7 +32,6 @@ import {
 import LogoEmblem from '../LogoEmblem';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { playNotificationChime } from '../../utils/notificationHub';
-import { CURRENCY_RATES } from '../../utils/currencyAndBenchmark';
 import { useClientAuth } from '../../context/ClientAuthContext';
 
 export default function Header({ 
@@ -55,12 +54,10 @@ export default function Header({
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
-  const [currencyMenuOpen, setCurrencyMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const dropdownTimeoutRef = useRef(null);
   const navRef = useRef(null);
   const toolsDropdownRef = useRef(null);
-  const currencyDropdownRef = useRef(null);
   const location = useLocation();
   const { clientUser, isClientAuthenticated } = useClientAuth();
 
@@ -85,7 +82,6 @@ export default function Header({
   useEffect(() => {
     setActiveDropdown(null);
     setToolsMenuOpen(false);
-    setCurrencyMenuOpen(false);
     setMobileMenuOpen(false);
   }, [location.pathname]);
 
@@ -93,9 +89,6 @@ export default function Header({
     const handleOutsideClick = (e) => {
       if (toolsDropdownRef.current && !toolsDropdownRef.current.contains(e.target)) {
         setToolsMenuOpen(false);
-      }
-      if (currencyDropdownRef.current && !currencyDropdownRef.current.contains(e.target)) {
-        setCurrencyMenuOpen(false);
       }
       if (navRef.current && !navRef.current.contains(e.target)) {
         setActiveDropdown(null);
@@ -430,49 +423,6 @@ export default function Header({
 
             <div className="utility-divider hide-mobile" />
 
-            {/* Currency Selector Dropdown (EGP, SAR, AED, USD, KWD) - Prominently featured in Mobile Drawer */}
-            <div className="currency-dropdown-wrapper hide-mobile" ref={currencyDropdownRef}>
-              <button
-                type="button"
-                className={`utility-sub-btn currency-trigger-btn ${currencyMenuOpen ? 'active' : ''}`}
-                onClick={() => setCurrencyMenuOpen(!currencyMenuOpen)}
-                title={isAr ? `العملة الحالية: ${currency} — انقر لتغيير العملة` : `Currency: ${currency} — Click to switch`}
-                aria-label="Currency Switcher"
-              >
-                <span className="currency-flag-badge">{CURRENCY_RATES[currency]?.flag || '🇪🇬'}</span>
-                <span className="currency-code-text">{currency}</span>
-                <ChevronDown size={11} style={{ opacity: 0.75, transform: currencyMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-              </button>
-
-              {currencyMenuOpen && (
-                <div className="currency-dropdown-menu">
-                  <div className="currency-dropdown-header">
-                    {isAr ? '💱 اختر عملة العرض' : '💱 Select Display Currency'}
-                  </div>
-                  {Object.entries(CURRENCY_RATES).map(([currKey, data]) => (
-                    <button
-                      key={currKey}
-                      type="button"
-                      className={`currency-dropdown-item ${currency === currKey ? 'active' : ''}`}
-                      onClick={() => {
-                        if (setCurrency) setCurrency(currKey);
-                        setCurrencyMenuOpen(false);
-                      }}
-                    >
-                      <span className="currency-item-flag">{data.flag}</span>
-                      <span className="currency-item-title">
-                        <strong>{currKey}</strong>
-                        <span className="currency-item-sub">({isAr ? data.symbol_ar : data.symbol_en})</span>
-                      </span>
-                      {currency === currKey && <span className="currency-active-check">✓</span>}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="utility-divider hide-mobile" />
-
             {/* More Tools Dropdown */}
             <div className="tools-dropdown-wrapper hide-mobile" ref={toolsDropdownRef}>
               <button
@@ -686,49 +636,6 @@ export default function Header({
               <span>{isAr ? 'عن 1Line والمؤسس' : 'About & Founder'}</span>
             </button>
 
-            {/* Mobile Currency Selection Strip for Gulf & Expat Investors */}
-            <div className="mobile-drawer-currency" style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px',
-              padding: '12px 16px',
-              marginTop: '16px',
-              borderTop: '1px solid var(--border-color)',
-              background: 'var(--secondary)',
-              borderRadius: 'var(--radius-md)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-primary)' }}>
-                <span>{isAr ? '💱 عملة العرض (للمغتربين والمستثمرين):' : '💱 Display Currency:'}</span>
-                <span style={{ color: 'var(--accent-gold)' }}>{currency} ({CURRENCY_RATES[currency]?.flag})</span>
-              </div>
-              <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
-                {Object.entries(CURRENCY_RATES).map(([currKey, data]) => (
-                  <button
-                    key={currKey}
-                    type="button"
-                    onClick={() => setCurrency && setCurrency(currKey)}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      padding: '6px 12px',
-                      borderRadius: 'var(--radius-pill)',
-                      border: currency === currKey ? '1.5px solid var(--accent-gold)' : '1px solid var(--border-color)',
-                      background: currency === currKey ? 'rgba(217, 119, 6, 0.15)' : 'var(--card-bg, #ffffff)',
-                      color: currency === currKey ? 'var(--accent-gold)' : 'var(--text-primary)',
-                      fontSize: '0.78rem',
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0
-                    }}
-                  >
-                    <span>{data.flag}</span>
-                    <span>{currKey}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
 
             {/* Mobile Dedicated Luxury Utility Bar */}
             <div className="mobile-drawer-utilities" style={{
