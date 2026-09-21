@@ -120,7 +120,7 @@ export default function ZeroResultsFallback({
           )}
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '10px', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-            <span>🔒 {isAr ? 'سرية تامة لبياناتك' : '100% Confidential'}</span>
+            <span>🔒 {isAr ? 'أمان وخصوصية تامة لبياناتك' : '100% Private & Secure'}</span>
             <span>✨ {isAr ? '0% عمولة للمشتري على المشروعات' : '0% Buyer Commission on Projects'}</span>
           </div>
         </div>

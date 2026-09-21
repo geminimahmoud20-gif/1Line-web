@@ -480,8 +480,8 @@ export const SpecialRequests = ({
           <Lock size={18} style={{ color: '#10b981', flexShrink: 0 }} />
           <span>
             {isAr 
-              ? '🔒 خصوصية تامة: بياناتك وتفاصيل ميزانيتك محمية وتخضع لاتفاقية سرية مطلقة ولا يتم مشاركتها إلا مع المستشار المباشر المسؤول عن طلبك.' 
-              : '100% Confidential: Your data and budget details are strictly protected and never shared.'}
+              ? '🔒 خصوصية وأمان تام: بياناتك وتفاصيل ميزانيتك محمية وموثقة بأعلى المعايير ولا يتم مشاركتها إلا مع المستشار المباشر المسؤول عن طلبك.' 
+              : '100% Private & Secure: Your data and budget details are strictly protected and never shared.'}
           </span>
         </div>
 

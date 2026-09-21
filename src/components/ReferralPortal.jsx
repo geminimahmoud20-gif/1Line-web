@@ -103,7 +103,7 @@ export const ReferralPortal = ({
               <div>
                 <h4 style={{ fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: '4px' }}>{lang === 'ar' ? 'سجل بياناتك والمُحال' : 'Submit referral info'}</h4>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                  {lang === 'ar' ? 'املأ نموذج التوصية بالعميل أو مالك العقار بسرية تامة.' : 'Complete the referral form details confidentially.'}
+                  {lang === 'ar' ? 'املأ نموذج التوصية بالعميل أو مالك العقار بأعلى معايير الخصوصية والأمان.' : 'Complete the referral form details with complete privacy.'}
                 </p>
               </div>
             </div>

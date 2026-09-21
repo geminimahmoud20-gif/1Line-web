@@ -227,7 +227,7 @@ export default function ExpressLeadStrip({ lang = 'ar', onAddNewLead, triggerToa
             <div className="express-trust-bar">
               <div className="trust-item">
                 <ShieldCheck size={14} className="text-emerald" />
-                <span>{isAr ? 'بياناتك في سرية تامة 100%' : '100% Confidential'}</span>
+                <span>{isAr ? 'بياناتك في أمان وخصوصية تامة 100%' : '100% Private & Secure'}</span>
               </div>
               <div className="trust-item">
                 <MessageSquare size={14} className="text-gold" />

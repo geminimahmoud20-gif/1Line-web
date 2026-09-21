@@ -223,7 +223,7 @@ export default function AddDemandModal({
 
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.7', maxWidth: '520px', margin: '0 auto 24px' }}>
               {isAr 
-                ? 'شكراً لك! سيقوم فريق إدارة منصة 1Line بمراجعة مواصفات طلبك وتدقيقه، ثم نشره فوراً في قسم طلبات المشترين النشطة مع الحفاظ الكامل على سرية بياناتك الشخصية.'
+                ? 'شكراً لك! سيقوم فريق إدارة منصة 1Line بمراجعة مواصفات طلبك وتدقيقه، ثم نشره فوراً في قسم طلبات المشترين النشطة مع الحفاظ الكامل على خصوصية وأمان بياناتك الشخصية.'
                 : 'Thank you! The 1Line team will review your demand specs and publish it to the active market demands with full identity protection.'}
             </p>
 
@@ -438,7 +438,7 @@ export default function AddDemandModal({
               }}>
                 <h4 style={{ fontSize: '0.9rem', color: 'var(--text-primary)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <User size={15} className="text-gold" />
-                  <span>{isAr ? 'بيانات التواصل (سرية للإدارة فقط)' : 'Your Contact Details (Strictly Confidential)'}</span>
+                  <span>{isAr ? 'بيانات التواصل (خاصة ومحمية للإدارة فقط)' : 'Your Contact Details (Protected for Admin Only)'}</span>
                 </h4>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>

@@ -175,7 +175,7 @@ export default function QuickPortalLeadCard({
 
         <div className="quick-success-guarantee">
           <ShieldCheck size={14} className="text-gold" />
-          <span>{isAr ? 'خدمة مجانية 100% مع ضمان حماية وسرية بياناتك' : '100% Free & Confidential'}</span>
+          <span>{isAr ? 'خدمة مجانية 100% مع ضمان حماية وخصوصية بياناتك' : '100% Free & Private'}</span>
         </div>
       </div>
     );

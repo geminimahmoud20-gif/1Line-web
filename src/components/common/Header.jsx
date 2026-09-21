@@ -160,8 +160,8 @@ export default function Header({
       items: [
         {
           path: '/#private-office',
-          label: isAr ? 'المكتب الخاص: صفقات سرية (Off-Market)' : '1Line Private Office (Off-Market)',
-          desc: isAr ? 'عقارات وقصور مليونية حصرية بكتمان وسرية تامة' : 'Confidential multi-million acquisitions & estates',
+          label: isAr ? 'المكتب الخاص: صفقات خاصة وحصرية (Off-Market)' : '1Line Private Office (Off-Market)',
+          desc: isAr ? 'عقارات وقصور مليونية حصرية بأعلى معايير الخصوصية' : 'Exclusive multi-million acquisitions & estates',
           badge: 'Private',
           badgeType: 'gold',
           icon: Lock
@@ -169,7 +169,7 @@ export default function Header({
         {
           path: '/special-requests',
           label: isAr ? 'طلب عقار خاص VIP' : 'VIP Bespoke Requests',
-          desc: isAr ? 'طلب بمواصفات خاصة وسرية تامة' : 'Private bespoke sourcing for premium clients',
+          desc: isAr ? 'طلب بمواصفات خاصة وخصوصية تامة' : 'Private bespoke sourcing for premium clients',
           badge: 'VIP',
           badgeType: 'gold',
           icon: Sparkles

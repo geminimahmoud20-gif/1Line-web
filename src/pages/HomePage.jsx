@@ -917,13 +917,13 @@ export default function HomePage({
               <span>{lang === 'ar' ? 'حجز معاينة ميدانية' : 'Book Field Tour'}</span>
             </Link>
 
-            {/* 3. Private Confidential VIP Consultation */}
+            {/* 3. Private VIP Consultation */}
             <Link
               to="/special-requests"
               className="btn btn-cta-intent btn-cta-private"
             >
               <Lock size={15} className="text-gold" />
-              <span>{lang === 'ar' ? 'استشارة سرية VIP' : 'Private Consultation'}</span>
+              <span>{lang === 'ar' ? 'استشارة خاصة VIP' : 'Private Consultation'}</span>
             </Link>
           </div>
         </div>

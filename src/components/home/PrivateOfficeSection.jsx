@@ -8,14 +8,14 @@ export default function PrivateOfficeSection({ lang = 'ar' }) {
 
   const handleConfidentialInquiry = () => {
     const text = isAr
-      ? 'مرحباً، أرغب في التواصل مع المكتب الخاص 1Line Private Office بخصوص صفقات كبار العملاء السرية الحصرية (Off-Market).'
-      : 'Hello 1Line Private Office, I would like to inquire about confidential off-market luxury acquisitions.';
+      ? 'مرحباً، أرغب في التواصل مع المكتب الخاص 1Line Private Office بخصوص صفقات كبار العملاء الخاصة والحصرية (Off-Market).'
+      : 'Hello 1Line Private Office, I would like to inquire about exclusive off-market luxury acquisitions.';
     window.open(getWhatsAppUrl(text), '_blank');
   };
 
   const handleListOffMarket = () => {
     const text = isAr
-      ? 'مرحباً، أمتلك عقاراً فاخراً / أرضاً استراتيجية بسوهاج وأرغب في عرضها للبيع عبر المكتب الخاص (Off-Market) بسرية تامة دون نشر صور للعامة.'
+      ? 'مرحباً، أمتلك عقاراً فاخراً / أرضاً استراتيجية بسوهاج وأرغب في عرضها للبيع عبر المكتب الخاص (Off-Market) بأعلى درجات الخصوصية والأمان دون نشر صور للعامة.'
       : 'Hello, I own a prime property in Sohag and wish to discuss a discreet private off-market sale with your Private Office.';
     window.open(getWhatsAppUrl(text), '_blank');
   };
@@ -36,7 +36,7 @@ export default function PrivateOfficeSection({ lang = 'ar' }) {
           <h2 className="private-office-title luxury-serif-title">
             {isAr ? (
               <>
-                <span>المكتب الخاص: صفقات سرية وحصرية</span>{' '}
+                <span>المكتب الخاص: صفقات خاصة وحصرية</span>{' '}
                 <span dir="ltr" style={{ unicodeBidi: 'isolate', display: 'inline-block', whiteSpace: 'nowrap' }}>
                   (Off-Market)
                 </span>
@@ -59,7 +59,7 @@ export default function PrivateOfficeSection({ lang = 'ar' }) {
             <div className="pillar-icon-box">
               <EyeOff size={22} className="text-gold" />
             </div>
-            <h4>{isAr ? 'سرية تامة واتفاقيات عدم إفصاح (NDA)' : 'Strict Confidentiality & NDA'}</h4>
+            <h4>{isAr ? 'خصوصية تامة واتفاقيات حفظ الحقوق (NDA)' : 'Strict Privacy & NDA'}</h4>
             <p>
               {isAr
                 ? 'لا يتم نشر أي صور أو معلومات علنية؛ مشاركة ملفات العقارات تتم فقط مع مشترين معتمدين ومتحقق من ملاءتهم المالية.'
@@ -74,7 +74,7 @@ export default function PrivateOfficeSection({ lang = 'ar' }) {
             <h4>{isAr ? 'تدقيق قانوني وهندسي مسبق 100%' : '100% Pre-Audited Legal Deeds'}</h4>
             <p>
               {isAr
-                ? 'كافة الصفقات السرية خضعت لفحص شامل لسندات الملكية، التراخيص، وخلو النزاعات من الإدارة القانونية قبل عرضها.'
+                ? 'كافة الصفقات الحصرية خضعت لفحص شامل لسندات الملكية، التراخيص، وخلو النزاعات من الإدارة القانونية قبل عرضها.'
                 : 'Zero legal ambiguity. Every off-market asset has been vetted by senior real estate attorneys.'}
             </p>
           </div>
@@ -100,7 +100,7 @@ export default function PrivateOfficeSection({ lang = 'ar' }) {
             className="btn btn-gold-luxury"
           >
             <MessageSquare size={16} />
-            <span>{isAr ? 'طلب استشارة خاصة سرية عبر واتساب' : 'Request Private Consultation'}</span>
+            <span>{isAr ? 'طلب استشارة خاصة عبر واتساب' : 'Request Private Consultation'}</span>
           </button>
 
           <button
@@ -109,7 +109,7 @@ export default function PrivateOfficeSection({ lang = 'ar' }) {
             className="btn btn-glass-luxury"
           >
             <Lock size={15} />
-            <span>{isAr ? 'عرض عقار استثنائي للبيع السري' : 'Inquire About Private Listing'}</span>
+            <span>{isAr ? 'عرض عقار استثنائي عبر المكتب الخاص' : 'Inquire About Private Listing'}</span>
           </button>
         </div>
       </div>
