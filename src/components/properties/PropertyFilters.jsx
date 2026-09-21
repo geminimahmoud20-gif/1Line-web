@@ -93,7 +93,7 @@ export default function PropertyFilters({
       });
     }
 
-    if (filters.bedrooms && filters.bedrooms !== 'all' && filters.bedrooms !== 'any') {
+    if (filters.bedrooms && filters.bedrooms !== 'all' && filters.bedrooms !== 'any' && filters.type !== 'commercial' && filters.type !== 'land') {
       list.push({
         id: 'bedrooms',
         label: `${filters.bedrooms} ${isAr ? 'غرف' : 'Beds'}`,
@@ -207,17 +207,33 @@ export default function PropertyFilters({
         </div>
 
         {/* Property Type */}
+        {/* Property Type with Sector Grouping */}
         <div className="filter-item">
-          <label className="compact-label">{isAr ? 'نوع العقار' : 'Property Type'}</label>
+          <label className="compact-label">{isAr ? 'نوع العقار والقطاع' : 'Property Type & Sector'}</label>
           <select
             value={filters.type || 'all'}
-            onChange={(e) => onFilterChange('type', e.target.value)}
+            onChange={(e) => {
+              const newType = e.target.value;
+              onFilterChange('type', newType);
+              if (newType === 'commercial' || newType === 'land' || newType === 'office') {
+                onFilterChange('bedrooms', 'all');
+              }
+            }}
           >
-            {PROPERTY_TYPES.map((t) => (
-              <option key={t.id} value={t.id}>
-                {isAr ? t.name_ar : t.name_en}
-              </option>
-            ))}
+            <option value="all">{isAr ? 'جميع العقارات والقطاعات' : 'All Types & Sectors'}</option>
+            <optgroup label={isAr ? '🏡 القطاع السكني' : 'Residential Sector'}>
+              <option value="apartment">{isAr ? 'شقق ودوبلكس سكنية' : 'Apartments & Duplex'}</option>
+              <option value="villa">{isAr ? 'فيلات ومنازل مستقلة' : 'Villas & Townhouses'}</option>
+            </optgroup>
+            <optgroup label={isAr ? '🏬 القطاع التجاري (محلات ومعارض)' : 'Commercial Sector'}>
+              <option value="commercial">{isAr ? 'محلات ومساحات تجارية' : 'Commercial Retail Shops'}</option>
+            </optgroup>
+            <optgroup label={isAr ? '🏢 القطاع الإداري (مكاتب وعيادات)' : 'Administrative Sector'}>
+              <option value="office">{isAr ? 'مكاتب ومقرات إدارية وعيادات' : 'Admin Offices & Clinics'}</option>
+            </optgroup>
+            <optgroup label={isAr ? '📐 قطاع الأراضي والاستثمار' : 'Land & Plots'}>
+              <option value="land">{isAr ? 'أراضي ومواقع استثمارية' : 'Investment Land Plots'}</option>
+            </optgroup>
           </select>
         </div>
 
@@ -288,23 +304,48 @@ export default function PropertyFilters({
           </div>
         </div>
 
-        {/* Bedrooms Count */}
+        {/* Bedrooms Count - Smart Deactivation for Commercial & Land */}
         <div className="filter-item bedrooms-filter-item">
-          <label className="compact-label">{isAr ? 'عدد الغرف' : 'Bedrooms'}</label>
-          <div className="bedroom-pills compact-bedroom-pills">
-            {['all', '1', '2', '3', '4+'].map((beds) => (
-              <button
-                key={beds}
-                type="button"
-                className={`bedroom-pill ${
-                  (filters.bedrooms === beds || ((!filters.bedrooms || filters.bedrooms === 'any') && beds === 'all')) ? 'active' : ''
-                }`}
-                onClick={() => onFilterChange('bedrooms', beds)}
-              >
-                {beds === 'all' ? (isAr ? 'الكل' : 'All') : beds}
-              </button>
-            ))}
+          <div className="filter-label-flex" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <label className="compact-label">{isAr ? 'عدد الغرف' : 'Bedrooms'}</label>
+            {(filters.type === 'commercial' || filters.type === 'land') && (
+              <span style={{ fontSize: '0.66rem', color: '#b38a45', fontWeight: 800 }}>
+                {isAr ? 'غير منطبق' : 'N/A'}
+              </span>
+            )}
           </div>
+
+          {(filters.type === 'commercial' || filters.type === 'land') ? (
+            <div style={{
+              height: '34px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'rgba(212, 175, 55, 0.08)',
+              border: '1px dashed rgba(212, 175, 55, 0.35)',
+              borderRadius: '8px',
+              fontSize: '0.74rem',
+              fontWeight: 700,
+              color: 'var(--text-secondary)'
+            }}>
+              <span>{isAr ? '🏬 مساحة تجارية مفتوحة (بدون غرف)' : 'Open Commercial Unit (No Bedrooms)'}</span>
+            </div>
+          ) : (
+            <div className="bedroom-pills compact-bedroom-pills">
+              {['all', '1', '2', '3', '4+'].map((beds) => (
+                <button
+                  key={beds}
+                  type="button"
+                  className={`bedroom-pill ${
+                    (filters.bedrooms === beds || ((!filters.bedrooms || filters.bedrooms === 'any') && beds === 'all')) ? 'active' : ''
+                  }`}
+                  onClick={() => onFilterChange('bedrooms', beds)}
+                >
+                  {beds === 'all' ? (isAr ? 'الكل' : 'All') : beds}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

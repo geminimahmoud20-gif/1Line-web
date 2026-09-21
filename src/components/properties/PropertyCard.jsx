@@ -15,6 +15,8 @@ import {
   MessageSquare,
   ShieldCheck,
   Building,
+  Store,
+  Briefcase,
   ChevronRight,
   ChevronLeft
 } from 'lucide-react';
@@ -90,6 +92,11 @@ export default function PropertyCard({
   };
 
   const BadgeIcon = resolvedBadge.Icon;
+
+  // Sector separation logic: Strictly distinct land, commercial, office, residential
+  const isLand = property.type === 'land' || (title && title.includes('أرض'));
+  const isCommercial = !isLand && (property.type === 'commercial' || property.category === 'commercial' || (title && (title.includes('محل') || title.includes('معرض') || title.includes('ريتيل') || title.includes('تجاري'))));
+  const isOffice = !isLand && !isCommercial && (property.type === 'office' || property.category === 'administrative' || (title && (title.includes('مكتب') || title.includes('عيادة') || title.includes('إداري'))));
 
   return (
     <div className="property-card-modern group" data-property-id={property.id}>
@@ -310,41 +317,95 @@ export default function PropertyCard({
           </div>
         </div>
 
-        {/* Secondary Specs Strip */}
+        {/* Secondary Specs Strip - Strictly Differentiated by Sector */}
         <div className="property-specs-clean secondary-specs">
-          {property.bedrooms > 0 && (
-            <span className="spec-unit">
-              <BedDouble size={13} className="spec-icon" />
-              <span><strong><bdi>{property.bedrooms}</bdi></strong> {lang === 'ar' ? 'غرف' : 'Beds'}</span>
-            </span>
-          )}
-          {property.bathrooms > 0 && (
+          {/* 1. Commercial Retail Units: NO Bedrooms, NO Bathrooms */}
+          {isCommercial ? (
             <>
-              {property.bedrooms > 0 && <span className="spec-dot">•</span>}
               <span className="spec-unit">
-                <Bath size={13} className="spec-icon" />
-                <span><strong><bdi>{property.bathrooms}</bdi></strong> {lang === 'ar' ? 'حمام' : 'Baths'}</span>
+                <Store size={13} className="spec-icon text-gold" />
+                <span><strong>{property.commercialType_ar || (lang === 'ar' ? 'محل تجاري واجهة' : 'Retail Shop')}</strong></span>
               </span>
-            </>
-          )}
-          {property.bedrooms === 0 && property.bathrooms === 0 && (
-            <span className="spec-unit">
-              <Building size={13} className="spec-icon" />
-              <span>{property.type === 'land' ? (lang === 'ar' ? 'أرض استثمارية' : 'Investment Land') : (lang === 'ar' ? 'مقر استثماري' : 'Commercial Unit')}</span>
-            </span>
-          )}
-          <span className="spec-dot">•</span>
-          <span className="spec-unit spec-unit-trust">
-            <ShieldCheck size={13} className="spec-trust-icon" />
-            <span>{lang === 'ar' ? 'فحص قانوني معتمد' : 'Verified Title'}</span>
-          </span>
-          {property.virtualTour && (
-            <>
               <span className="spec-dot">•</span>
               <span className="spec-unit">
-                <Sparkles size={12} className="spec-icon text-gold" />
-                <span>{lang === 'ar' ? 'معاينة 3D' : '3D Tour'}</span>
+                <span>{property.frontage ? property.frontage : (property.floor === 0 ? (lang === 'ar' ? 'دور أرضي' : 'Ground Floor') : (lang === 'ar' ? `دور ${property.floor}` : `Floor ${property.floor}`))}</span>
               </span>
+              <span className="spec-dot">•</span>
+              <span className="spec-unit spec-unit-trust">
+                <ShieldCheck size={13} className="spec-trust-icon" />
+                <span>{lang === 'ar' ? 'ترخيص تجاري معتمد' : 'Commercial License'}</span>
+              </span>
+            </>
+          ) : isOffice ? (
+            /* 2. Administrative & Clinics: NO Bedrooms */
+            <>
+              <span className="spec-unit">
+                <Briefcase size={13} className="spec-icon text-gold" />
+                <span><strong>{property.adminType_ar || (lang === 'ar' ? 'مقر إداري / عيادة' : 'Admin Office / Clinic')}</strong></span>
+              </span>
+              {property.floor !== undefined && (
+                <>
+                  <span className="spec-dot">•</span>
+                  <span className="spec-unit">
+                    <span>{property.floor === 0 ? (lang === 'ar' ? 'أرضي' : 'Ground') : (lang === 'ar' ? `دور ${property.floor}` : `Floor ${property.floor}`)}</span>
+                  </span>
+                </>
+              )}
+              <span className="spec-dot">•</span>
+              <span className="spec-unit spec-unit-trust">
+                <ShieldCheck size={13} className="spec-trust-icon" />
+                <span>{lang === 'ar' ? 'ترخيص إداري معتمد' : 'Admin License'}</span>
+              </span>
+            </>
+          ) : isLand ? (
+            /* 3. Land Plots: NO Bedrooms, NO Bathrooms */
+            <>
+              <span className="spec-unit">
+                <Building size={13} className="spec-icon text-gold" />
+                <span><strong>{property.landType_ar || (lang === 'ar' ? 'أرض استثمارية' : 'Investment Plot')}</strong></span>
+              </span>
+              <span className="spec-dot">•</span>
+              <span className="spec-unit">
+                <span>{property.frontage ? property.frontage : (lang === 'ar' ? 'موقع متميز' : 'Prime Plot')}</span>
+              </span>
+              <span className="spec-dot">•</span>
+              <span className="spec-unit spec-unit-trust">
+                <ShieldCheck size={13} className="spec-trust-icon" />
+                <span>{lang === 'ar' ? 'ترخيص بناء رسمي' : 'Licensed Plot'}</span>
+              </span>
+            </>
+          ) : (
+            /* 4. Residential: Bedrooms & Bathrooms */
+            <>
+              {property.bedrooms > 0 && (
+                <span className="spec-unit">
+                  <BedDouble size={13} className="spec-icon" />
+                  <span><strong><bdi>{property.bedrooms}</bdi></strong> {lang === 'ar' ? 'غرف' : 'Beds'}</span>
+                </span>
+              )}
+              {property.bathrooms > 0 && (
+                <>
+                  {property.bedrooms > 0 && <span className="spec-dot">•</span>}
+                  <span className="spec-unit">
+                    <Bath size={13} className="spec-icon" />
+                    <span><strong><bdi>{property.bathrooms}</bdi></strong> {lang === 'ar' ? 'حمام' : 'Baths'}</span>
+                  </span>
+                </>
+              )}
+              <span className="spec-dot">•</span>
+              <span className="spec-unit spec-unit-trust">
+                <ShieldCheck size={13} className="spec-trust-icon" />
+                <span>{lang === 'ar' ? 'فحص قانوني معتمد' : 'Verified Title'}</span>
+              </span>
+              {property.virtualTour && (
+                <>
+                  <span className="spec-dot">•</span>
+                  <span className="spec-unit">
+                    <Sparkles size={12} className="spec-icon text-gold" />
+                    <span>{lang === 'ar' ? 'معاينة 3D' : '3D Tour'}</span>
+                  </span>
+                </>
+              )}
             </>
           )}
         </div>

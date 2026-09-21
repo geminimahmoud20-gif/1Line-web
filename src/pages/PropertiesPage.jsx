@@ -137,8 +137,11 @@ export default function PropertiesPage({
       // Max Price filter
       if (filters.maxPrice && prop.price > filters.maxPrice) return false;
 
-      // Bedrooms filter
+      // Bedrooms filter - strictly applies to residential properties only
       if (filters.bedrooms && filters.bedrooms !== 'any' && filters.bedrooms !== 'all' && String(filters.bedrooms).trim() !== '') {
+        const isNonResidential = prop.type === 'commercial' || prop.type === 'land' || prop.type === 'office' || prop.category === 'commercial' || prop.category === 'land' || prop.category === 'administrative';
+        if (isNonResidential) return false;
+
         if (filters.bedrooms === '4+') {
           if ((prop.bedrooms || 0) < 4) return false;
         } else {

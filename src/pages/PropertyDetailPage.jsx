@@ -18,7 +18,10 @@ import {
   Eye, 
   Navigation,
   ArrowRight,
-  ArrowLeft
+  ArrowLeft,
+  Store,
+  Briefcase,
+  Building
 } from 'lucide-react';
 import { incrementPropertyView, getPropertyViews } from '../utils/visitorTracker';
 import PropertyGallery from '../components/properties/PropertyGallery';
@@ -142,6 +145,11 @@ export default function PropertyDetailPage({
   const features = isAr ? property.features_ar : property.features_en;
   const priceData = formatCurrencyPrice(property.price, currency, lang);
   const benchmark = getPriceBenchmark(property, lang);
+
+  // Sector separation
+  const isLand = property.type === 'land' || (title && title.includes('أرض'));
+  const isCommercial = !isLand && (property.type === 'commercial' || property.category === 'commercial' || (title && (title.includes('محل') || title.includes('معرض') || title.includes('ريتيل') || title.includes('تجاري'))));
+  const isOffice = !isLand && !isCommercial && (property.type === 'office' || property.category === 'administrative' || (title && (title.includes('مكتب') || title.includes('عيادة') || title.includes('إداري'))));
 
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
@@ -396,42 +404,128 @@ export default function PropertyDetailPage({
                       <Maximize2 size={20} className="text-gold" />
                       <div>
                         <span className="spec-lbl">{isAr ? 'المساحة الإجمالية' : 'Total Area'}</span>
-                        <strong>{property.size} {isAr ? 'متر مربع' : 'sqm'}</strong>
+                        <strong>{property.size} {isAr ? 'متر مربع صافي' : 'sqm net'}</strong>
                       </div>
                     </div>
 
-                    {property.bedrooms > 0 && (
+                    {/* Sector-Specific Specifications */}
+                    {isLand ? (
+                      <>
+                        <div className="spec-box">
+                          <Building size={20} className="text-gold" />
+                          <div>
+                            <span className="spec-lbl">{isAr ? 'تصنيف الأرض' : 'Land Classification'}</span>
+                            <strong>{property.landType_ar || (isAr ? 'أرض استثمارية وترخيص بناء' : 'Licensed Investment Land')}</strong>
+                          </div>
+                        </div>
+                        {property.frontage && (
+                          <div className="spec-box">
+                            <Sparkles size={20} className="text-gold" />
+                            <div>
+                              <span className="spec-lbl">{isAr ? 'واجهة القطعة' : 'Plot Frontage'}</span>
+                              <strong>{property.frontage}</strong>
+                            </div>
+                          </div>
+                        )}
+                        <div className="spec-box">
+                          <ShieldCheck size={20} className="text-gold" />
+                          <div>
+                            <span className="spec-lbl">{isAr ? 'الموقف القانوني' : 'Legal Status'}</span>
+                            <strong>{isAr ? 'ترخيص بناء رسمي صادر' : 'Licensed Plot'}</strong>
+                          </div>
+                        </div>
+                      </>
+                    ) : isCommercial ? (
+                      <>
+                        <div className="spec-box">
+                          <Store size={20} className="text-gold" />
+                          <div>
+                            <span className="spec-lbl">{isAr ? 'نوع العقار التجاري' : 'Commercial Type'}</span>
+                            <strong>{property.commercialType_ar || (isAr ? 'محل تجاري واجهة' : 'Retail Shop')}</strong>
+                          </div>
+                        </div>
+                        {property.frontage && (
+                          <div className="spec-box">
+                            <Sparkles size={20} className="text-gold" />
+                            <div>
+                              <span className="spec-lbl">{isAr ? 'عرض الواجهة' : 'Storefront Width'}</span>
+                              <strong>{property.frontage}</strong>
+                            </div>
+                          </div>
+                        )}
+                        <div className="spec-box">
+                          <ShieldCheck size={20} className="text-gold" />
+                          <div>
+                            <span className="spec-lbl">{isAr ? 'الترخيص والتصريح' : 'License Status'}</span>
+                            <strong>{isAr ? 'ترخيص تجاري وسجل معتمد' : 'Commercial License'}</strong>
+                          </div>
+                        </div>
+                      </>
+                    ) : isOffice ? (
+                      <>
+                        <div className="spec-box">
+                          <Briefcase size={20} className="text-gold" />
+                          <div>
+                            <span className="spec-lbl">{isAr ? 'نوع المقر الإداري' : 'Admin Type'}</span>
+                            <strong>{property.adminType_ar || (isAr ? 'مكتب إداري / عيادة' : 'Admin Office / Clinic')}</strong>
+                          </div>
+                        </div>
+                        {property.frontage && (
+                          <div className="spec-box">
+                            <Sparkles size={20} className="text-gold" />
+                            <div>
+                              <span className="spec-lbl">{isAr ? 'الواجهة' : 'Facade'}</span>
+                              <strong>{property.frontage}</strong>
+                            </div>
+                          </div>
+                        )}
+                        <div className="spec-box">
+                          <ShieldCheck size={20} className="text-gold" />
+                          <div>
+                            <span className="spec-lbl">{isAr ? 'الترخيص الإداري' : 'License Status'}</span>
+                            <strong>{isAr ? 'ترخيص إداري وطبي رسمي' : 'Certified Administrative'}</strong>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      /* Residential Units */
+                      <>
+                        {property.bedrooms > 0 && (
+                          <div className="spec-box">
+                            <BedDouble size={20} className="text-gold" />
+                            <div>
+                              <span className="spec-lbl">{isAr ? 'غرف النوم' : 'Bedrooms'}</span>
+                              <strong>{property.bedrooms} {isAr ? 'غرف' : 'Rooms'}</strong>
+                            </div>
+                          </div>
+                        )}
+
+                        {property.bathrooms > 0 && (
+                          <div className="spec-box">
+                            <Bath size={20} className="text-gold" />
+                            <div>
+                              <span className="spec-lbl">{isAr ? 'الحمامات' : 'Bathrooms'}</span>
+                              <strong>{property.bathrooms} {isAr ? 'حمامات' : 'Baths'}</strong>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {!isLand && (
                       <div className="spec-box">
-                        <BedDouble size={20} className="text-gold" />
+                        <Layers size={20} className="text-gold" />
                         <div>
-                          <span className="spec-lbl">{isAr ? 'غرف النوم' : 'Bedrooms'}</span>
-                          <strong>{property.bedrooms} {isAr ? 'غرف' : 'Rooms'}</strong>
+                          <span className="spec-lbl">{isAr ? 'الدور / الطابق' : 'Floor'}</span>
+                          <strong>{property.floor === 0 ? (isAr ? 'أرضي' : 'Ground') : property.floor}</strong>
                         </div>
                       </div>
                     )}
-
-                    {property.bathrooms > 0 && (
-                      <div className="spec-box">
-                        <Bath size={20} className="text-gold" />
-                        <div>
-                          <span className="spec-lbl">{isAr ? 'الحمامات' : 'Bathrooms'}</span>
-                          <strong>{property.bathrooms} {isAr ? 'حمامات' : 'Baths'}</strong>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="spec-box">
-                      <Layers size={20} className="text-gold" />
-                      <div>
-                        <span className="spec-lbl">{isAr ? 'الدور / الطابق' : 'Floor'}</span>
-                        <strong>{property.floor === 0 ? (isAr ? 'أرضي' : 'Ground') : property.floor}</strong>
-                      </div>
-                    </div>
 
                     <div className="spec-box">
                       <Sparkles size={20} className="text-gold" />
                       <div>
-                        <span className="spec-lbl">{isAr ? 'مستوى التشطيب' : 'Finishing'}</span>
+                        <span className="spec-lbl">{isLand ? (isAr ? 'طبيعة التجهيز' : 'Site Readiness') : (isAr ? 'مستوى التشطيب' : 'Finishing')}</span>
                         <strong>{finishing}</strong>
                       </div>
                     </div>
@@ -439,7 +533,7 @@ export default function PropertyDetailPage({
                     <div className="spec-box">
                       <Clock size={20} className="text-gold" />
                       <div>
-                        <span className="spec-lbl">{isAr ? 'سنة التسليم' : 'Delivery'}</span>
+                        <span className="spec-lbl">{isLand ? (isAr ? 'جاهزية الحفر' : 'Excavation Permit') : (isAr ? 'سنة التسليم' : 'Delivery')}</span>
                         <strong>{property.deliveryYear || (isAr ? 'فوري' : 'Ready')}</strong>
                       </div>
                     </div>

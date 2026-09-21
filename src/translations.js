@@ -64,12 +64,14 @@ export const TRANSLATIONS = {
     // Purposes & Types
     live: 'سكن عائلي',
     investment: 'استثمار عقاري',
-    commercial: 'تجاري / إداري',
+    residential: 'سكني (شقق وفيلات)',
+    commercial: 'تجاري (محلات ومعارض)',
+    administrative: 'إداري (مكاتب وعيادات)',
     apartment: 'شقة سكنية',
     villa: 'فيلا مستقلة',
     land: 'أرض فضاء / استثمارية',
-    office: 'مكتب إداري',
-    retail: 'محل تجاري / معرض',
+    office: 'مكتب إداري / عيادة',
+    retail: 'محل تجاري / مساحة ريتيل',
     
     // Areas
     east: 'شرق سوهاج (الجمهورية، الثقافة،... )',
@@ -224,11 +226,13 @@ export const TRANSLATIONS = {
     // Purposes & Types
     live: 'Family Living',
     investment: 'Investment',
-    commercial: 'Commercial / Admin',
+    residential: 'Residential',
+    commercial: 'Commercial (Retail & Shops)',
+    administrative: 'Administrative (Offices & Clinics)',
     apartment: 'Residential Apartment',
     villa: 'Standalone Villa',
     land: 'Investment Land Plot',
-    office: 'Administrative Office',
+    office: 'Administrative Office / Clinic',
     retail: 'Commercial Shop / Retail',
     
     // Areas

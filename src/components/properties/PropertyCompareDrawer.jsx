@@ -157,9 +157,15 @@ export default function PropertyCompareDrawer({
       const loc = isAr ? p.locationName_ar : p.locationName_en;
       const ppm = p.pricePerMeter || (p.size ? Math.round(p.price / p.size) : 0);
       msg += `📌 *الوحدة ${idx + 1}: ${title}*\n`;
-      msg += `• السعر: ${p.price.toLocaleString()} ج.م\n`;
-      msg += `• سعر المتر: ${ppm.toLocaleString()} ج.م/م²\n`;
-      msg += `• المساحة: ${p.size} م² (${p.bedrooms || 0} غرف / ${p.bathrooms || 0} حمام)\n`;
+      const isLand = p.type === 'land';
+      const isCom = p.type === 'commercial' || p.category === 'commercial';
+      const isOff = p.type === 'office' || p.category === 'administrative';
+      let specsText = '';
+      if (isLand) specsText = p.landType_ar || (isAr ? 'أرض استثمارية' : 'Land Plot');
+      else if (isCom) specsText = p.commercialType_ar || (isAr ? 'محل تجاري واجهة' : 'Retail Shop');
+      else if (isOff) specsText = p.adminType_ar || (isAr ? 'مقر إداري / عيادة' : 'Office/Clinic');
+      else specsText = `${p.bedrooms || 0} ${isAr ? 'غرف' : 'Rooms'} / ${p.bathrooms || 0} ${isAr ? 'حمام' : 'Baths'}`;
+      msg += `• المساحة: ${p.size} م² (${specsText})\n`;
       msg += `• المقدم: ${p.downPayment ? `${p.downPayment.toLocaleString()} ج.م` : 'كاش'}\n`;
       msg += `• القسط: ${p.monthlyInstallment ? `${p.monthlyInstallment.toLocaleString()} ج.م/شهرياً (${p.installmentYears || 0} سنوات)` : 'كاش فقط'}\n`;
       msg += `• الموقع: ${loc}\n`;
@@ -562,7 +568,7 @@ export default function PropertyCompareDrawer({
                         <span>📐 {isAr ? 'المواصفات المعمارية' : 'Architectural Specs'}</span>
                       </div>
                       <div className="compare-cell label-cell">{isAr ? 'المساحة الصافية' : 'Total Space'}</div>
-                      <div className="compare-cell label-cell">{isAr ? 'الغرف والحمامات' : 'Bedrooms & Baths'}</div>
+                      <div className="compare-cell label-cell">{isAr ? 'التصنيف والمواصفات' : 'Rooms & Specs'}</div>
                       <div className="compare-cell label-cell">{isAr ? 'الدور والارتفاع' : 'Floor Level'}</div>
                       <div className="compare-cell label-cell">{isAr ? 'مستوى التشطيب' : 'Finishing Quality'}</div>
                       <div className="compare-cell label-cell">{isAr ? 'الواجهة والإطلالة' : 'Facade & View'}</div>
@@ -778,18 +784,34 @@ export default function PropertyCompareDrawer({
                             </div>
                           </div>
 
-                          {/* Bedrooms & Bathrooms */}
+                          {/* Bedrooms & Bathrooms / Sector Specific */}
                           <div className="compare-cell">
                             <span>
-                              {prop.bedrooms || 0} {isAr ? 'غرف' : 'Beds'} • {prop.bathrooms || 0} {isAr ? 'حمام' : 'Baths'}
+                              {prop.type === 'land' ? (
+                                prop.landType_ar || (isAr ? 'أرض استثمارية' : 'Land Plot')
+                              ) : (prop.type === 'commercial' || prop.category === 'commercial') ? (
+                                prop.commercialType_ar || (isAr ? 'محل تجاري واجهة' : 'Retail Shop')
+                              ) : (prop.type === 'office' || prop.category === 'administrative') ? (
+                                prop.adminType_ar || (isAr ? 'مقر إداري / عيادة' : 'Admin Office / Clinic')
+                              ) : (
+                                `${prop.bedrooms || 0} ${isAr ? 'غرف' : 'Beds'} • ${prop.bathrooms || 0} ${isAr ? 'حمام' : 'Baths'}`
+                              )}
                             </span>
                           </div>
 
                           {/* Floor */}
                           <div className="compare-cell">
                             <span>
-                              {prop.floor ? (isAr ? `الدور ${prop.floor}` : `Floor ${prop.floor}`) : (isAr ? 'أرضي / متكرر' : 'Typical')}
-                              {prop.totalFloors ? ` (${isAr ? `من أصل ${prop.totalFloors}` : `of ${prop.totalFloors}`})` : ''}
+                              {prop.type === 'land' ? (
+                                isAr ? 'قطعة أرض مستقلة' : 'Independent Plot'
+                              ) : prop.floor !== undefined && prop.floor !== null ? (
+                                prop.floor === 0 
+                                  ? (isAr ? 'دور أرضي' : 'Ground Floor')
+                                  : (isAr ? `الدور ${prop.floor}` : `Floor ${prop.floor}`)
+                              ) : (
+                                isAr ? 'أرضي / متكرر' : 'Typical'
+                              )}
+                              {prop.type !== 'land' && prop.totalFloors ? ` (${isAr ? `من أصل ${prop.totalFloors}` : `of ${prop.totalFloors}`})` : ''}
                             </span>
                           </div>
 

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { 
   X, MapPin, Maximize2, BedDouble, Bath, MessageSquare, ArrowLeft, ArrowRight, 
-  Download, Loader2, Share2, ChevronLeft, ChevronRight, Layers, Sparkles 
+  Download, Loader2, Share2, ChevronLeft, ChevronRight, Layers, Sparkles,
+  Store, Briefcase, Building, ShieldCheck
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
@@ -28,6 +29,11 @@ export default function QuickViewModal({
   const location = isAr ? property.locationName_ar : property.locationName_en;
   const description = isAr ? property.description_ar : property.description_en;
   const finishing = isAr ? property.finishing_ar : property.finishing_en;
+
+  // Sector classification
+  const isLand = property.type === 'land' || (title && title.includes('أرض'));
+  const isCommercial = !isLand && (property.type === 'commercial' || property.category === 'commercial' || (title && (title.includes('محل') || title.includes('معرض') || title.includes('ريتيل') || title.includes('تجاري'))));
+  const isOffice = !isLand && !isCommercial && (property.type === 'office' || property.category === 'administrative' || (title && (title.includes('مكتب') || title.includes('عيادة') || title.includes('إداري'))));
   const priceData = formatCurrencyPrice(property.price, currency, lang);
   const benchmark = getPriceBenchmark(property, lang);
   const downPaymentVal = Number(property.downPayment) || 0;
@@ -242,17 +248,57 @@ export default function QuickViewModal({
                 <Maximize2 size={14} className="text-primary" />
                 <span>{property.size} {isAr ? 'م²' : 'sqm'}</span>
               </div>
-              {property.bedrooms > 0 && (
-                <div className="spec-pill">
-                  <BedDouble size={14} className="text-primary" />
-                  <span>{property.bedrooms} {isAr ? 'غرف' : 'Beds'}</span>
-                </div>
-              )}
-              {property.bathrooms > 0 && (
-                <div className="spec-pill">
-                  <Bath size={14} className="text-primary" />
-                  <span>{property.bathrooms} {isAr ? 'حمامات' : 'Baths'}</span>
-                </div>
+              {isLand ? (
+                <>
+                  <div className="spec-pill">
+                    <Building size={14} className="text-gold" />
+                    <span>{property.landType_ar || (isAr ? 'أرض استثمارية' : 'Land Plot')}</span>
+                  </div>
+                  {property.frontage && (
+                    <div className="spec-pill">
+                      <span>{property.frontage}</span>
+                    </div>
+                  )}
+                </>
+              ) : isCommercial ? (
+                <>
+                  <div className="spec-pill">
+                    <Store size={14} className="text-gold" />
+                    <span>{property.commercialType_ar || (isAr ? 'محل تجاري' : 'Retail Shop')}</span>
+                  </div>
+                  {property.frontage && (
+                    <div className="spec-pill">
+                      <span>{property.frontage}</span>
+                    </div>
+                  )}
+                </>
+              ) : isOffice ? (
+                <>
+                  <div className="spec-pill">
+                    <Briefcase size={14} className="text-gold" />
+                    <span>{property.adminType_ar || (isAr ? 'مقر إداري' : 'Office')}</span>
+                  </div>
+                  {property.frontage && (
+                    <div className="spec-pill">
+                      <span>{property.frontage}</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  {property.bedrooms > 0 && (
+                    <div className="spec-pill">
+                      <BedDouble size={14} className="text-primary" />
+                      <span>{property.bedrooms} {isAr ? 'غرف' : 'Beds'}</span>
+                    </div>
+                  )}
+                  {property.bathrooms > 0 && (
+                    <div className="spec-pill">
+                      <Bath size={14} className="text-primary" />
+                      <span>{property.bathrooms} {isAr ? 'حمامات' : 'Baths'}</span>
+                    </div>
+                  )}
+                </>
               )}
               {finishing && (
                 <div className="spec-pill highlight-pill" title={finishing}>

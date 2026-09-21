@@ -123,11 +123,13 @@ export const SellWizard = ({
     const normalizedPhone = cleanPhone.startsWith('0') ? cleanPhone.substring(1) : cleanPhone;
     const normalizedWhatsapp = cleanWhatsapp.startsWith('0') ? cleanWhatsapp.substring(1) : cleanWhatsapp;
 
+    const isNonResidential = sellerAnswers.propertyType === 'retail' || sellerAnswers.propertyType === 'land' || sellerAnswers.propertyType === 'office';
     const updatedAnswers = {
       ...sellerAnswers,
       estimatedMin: calculatedEstimate.min,
       estimatedMax: calculatedEstimate.max,
       estimatedAvg: calculatedEstimate.avg,
+      rooms: isNonResidential ? 0 : parseInt(sellerAnswers.rooms || 3),
       phone: `${sellerCountry}${normalizedPhone}`,
       whatsapp: `${whatsappCountry}${normalizedWhatsapp}`
     };
@@ -238,7 +240,23 @@ export const SellWizard = ({
                 <div
                   key={type.id}
                   className={`prop-type-card ${isSelected ? 'selected' : ''}`}
-                  onClick={() => handleSellerChoice('propertyType', type.id)}
+                  onClick={() => {
+                    handleSellerChoice('propertyType', type.id);
+                    if (type.id === 'retail' || type.id === 'land') {
+                      setSellerAnswers(prev => ({
+                        ...prev,
+                        propertyType: type.id,
+                        rooms: 0,
+                        floor: type.id === 'land' ? 'ground' : (prev.floor || 'ground')
+                      }));
+                    } else if (type.id === 'office') {
+                      setSellerAnswers(prev => ({
+                        ...prev,
+                        propertyType: type.id,
+                        rooms: 0
+                      }));
+                    }
+                  }}
                 >
                   <div className="prop-type-icon">
                     <IconComp size={24} />
@@ -366,39 +384,183 @@ export const SellWizard = ({
             </div>
           </div>
 
-          {/* Floor & Rooms */}
-          <div className="phase-inputs-row">
-            <div className="form-group-flex">
-              <label>{isAr ? 'الدور / الطابق' : 'Floor Level'}</label>
-              <select
-                className="form-select-styled"
-                value={sellerAnswers.floor || '3'}
-                onChange={(e) => setSellerAnswers({ ...sellerAnswers, floor: e.target.value })}
-              >
-                <option value="ground">{isAr ? 'أرضي / مدخل خاص' : 'Ground Floor'}</option>
-                <option value="1">{isAr ? 'الدور الأول' : '1st Floor'}</option>
-                <option value="2">{isAr ? 'الدور الثاني' : '2nd Floor'}</option>
-                <option value="3">{isAr ? 'الدور الثالث' : '3rd Floor'}</option>
-                <option value="4">{isAr ? 'الدور الرابع' : '4th Floor'}</option>
-                <option value="top">{isAr ? 'دور أخير مع روف' : 'Top Floor + Roof'}</option>
-              </select>
-            </div>
+          {/* Differentiated Property Structure Specs */}
+          {sellerAnswers.propertyType === 'retail' ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div className="phase-inputs-row">
+                <div className="form-group-flex">
+                  <label>{isAr ? 'موقع الطابق للمحل التجاري' : 'Retail Floor Level'}</label>
+                  <select
+                    className="form-select-styled"
+                    value={sellerAnswers.retailFloor || 'ground'}
+                    onChange={(e) => setSellerAnswers({ ...sellerAnswers, retailFloor: e.target.value, rooms: 0 })}
+                  >
+                    <option value="ground">{isAr ? 'أرضي واجهة شارع مباشرة' : 'Ground Floor Street Front'}</option>
+                    <option value="mezzanine">{isAr ? 'ميزانين تجاري مرخص' : 'Licensed Mezzanine'}</option>
+                    <option value="mall_ground">{isAr ? 'أرضي داخل مول تجاري' : 'Mall Ground Floor'}</option>
+                    <option value="mall_upper">{isAr ? 'دور متكرر داخل مول' : 'Upper Floor inside Mall'}</option>
+                    <option value="basement">{isAr ? 'بدروم تجاري مرخص' : 'Licensed Commercial Basement'}</option>
+                  </select>
+                </div>
 
-            <div className="form-group-flex">
-              <label>{isAr ? 'عدد الغرف' : 'Bedrooms'}</label>
-              <select
-                className="form-select-styled"
-                value={sellerAnswers.rooms || '3'}
-                onChange={(e) => setSellerAnswers({ ...sellerAnswers, rooms: e.target.value })}
-              >
-                <option value="1">1 {isAr ? 'غرفة' : 'Room'}</option>
-                <option value="2">2 {isAr ? 'غرف' : 'Rooms'}</option>
-                <option value="3">3 {isAr ? 'غرف' : 'Rooms'}</option>
-                <option value="4">4 {isAr ? 'غرف' : 'Rooms'}</option>
-                <option value="5+">5+ {isAr ? 'غرف أو أكثر' : '5+ Rooms'}</option>
-              </select>
+                <div className="form-group-flex">
+                  <label>{isAr ? 'طبيعة الواجهة والنشاط التجاري' : 'Storefront & Commercial Activity'}</label>
+                  <select
+                    className="form-select-styled"
+                    value={sellerAnswers.frontageType || 'direct_frontage'}
+                    onChange={(e) => setSellerAnswers({ ...sellerAnswers, frontageType: e.target.value, rooms: 0 })}
+                  >
+                    <option value="direct_frontage">{isAr ? 'واجهة مباشرة على شارع رئيسي' : 'Direct Main Street Frontage'}</option>
+                    <option value="corner">{isAr ? 'محل ناصية على شارعين' : 'Corner Unit Dual Street'}</option>
+                    <option value="commercial_strip">{isAr ? 'شريط تجاري حيوي' : 'Commercial Strip'}</option>
+                    <option value="inside_mall">{isAr ? 'واجهة داخل ممر مول تجاري' : 'Inside Mall Corridor'}</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{
+                padding: '10px 14px',
+                borderRadius: '8px',
+                background: 'rgba(217, 119, 6, 0.08)',
+                border: '1px solid rgba(217, 119, 6, 0.22)',
+                fontSize: '0.82rem',
+                color: 'var(--accent-gold, #d97706)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <Store size={16} style={{ flexShrink: 0 }} />
+                <span>{isAr ? '🏬 وحدة تجارية مرخصة (مساحة نشاط مفتوحة بدون غرف نوم سكنية)' : 'Commercial retail space (Open floor plan without residential bedrooms)'}</span>
+              </div>
             </div>
-          </div>
+          ) : sellerAnswers.propertyType === 'land' ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div className="phase-inputs-row">
+                <div className="form-group-flex">
+                  <label>{isAr ? 'طبيعة الواجهة وعرض الشارع' : 'Frontage & Street Width'}</label>
+                  <select
+                    className="form-select-styled"
+                    value={sellerAnswers.landStreet || 'wide_20'}
+                    onChange={(e) => setSellerAnswers({ ...sellerAnswers, landStreet: e.target.value, rooms: 0, floor: 'ground' })}
+                  >
+                    <option value="wide_20">{isAr ? 'شارع رئيسي 20م فأكثر' : 'Main Street 20m+'}</option>
+                    <option value="corner">{isAr ? 'ناصية مميزة على شارعين' : 'Prime Corner (2 Streets)'}</option>
+                    <option value="mid_16">{isAr ? 'شارع 16 متر' : '16-Meter Street'}</option>
+                    <option value="internal_12">{isAr ? 'شارع داخلي 10 - 12 متر' : 'Internal 10-12m Street'}</option>
+                  </select>
+                </div>
+
+                <div className="form-group-flex">
+                  <label>{isAr ? 'طبيعة الاستخدام والترخيص' : 'Zoning & Usage Permit'}</label>
+                  <select
+                    className="form-select-styled"
+                    value={sellerAnswers.landZoning || 'residential_license'}
+                    onChange={(e) => setSellerAnswers({ ...sellerAnswers, landZoning: e.target.value, rooms: 0, floor: 'ground' })}
+                  >
+                    <option value="residential_license">{isAr ? 'أرض مباني سكنية مرخصة' : 'Licensed Residential Plot'}</option>
+                    <option value="commercial_mixed">{isAr ? 'سكني تجاري مختلط' : 'Mixed Commercial / Residential'}</option>
+                    <option value="investment">{isAr ? 'استثماري / إداري متكامل' : 'Commercial Investment Plot'}</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{
+                padding: '10px 14px',
+                borderRadius: '8px',
+                background: 'rgba(56, 189, 248, 0.08)',
+                border: '1px solid rgba(56, 189, 248, 0.22)',
+                fontSize: '0.82rem',
+                color: '#0284c7',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <MapPin size={16} style={{ flexShrink: 0 }} />
+                <span>{isAr ? '📐 قطعة أرض فضاء استثمارية (بدون أدوار سكنية أو غرف نوم)' : 'Investment land plot (No residential floors or bedrooms)'}</span>
+              </div>
+            </div>
+          ) : sellerAnswers.propertyType === 'office' ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div className="phase-inputs-row">
+                <div className="form-group-flex">
+                  <label>{isAr ? 'الدور / الطابق' : 'Floor Level'}</label>
+                  <select
+                    className="form-select-styled"
+                    value={sellerAnswers.floor || '2'}
+                    onChange={(e) => setSellerAnswers({ ...sellerAnswers, floor: e.target.value })}
+                  >
+                    <option value="ground">{isAr ? 'أرضي / مدخل خاص' : 'Ground Floor / Private Entrance'}</option>
+                    <option value="1">{isAr ? 'الدور الأول' : '1st Floor'}</option>
+                    <option value="2">{isAr ? 'الدور الثاني' : '2nd Floor'}</option>
+                    <option value="3">{isAr ? 'الدور الثالث' : '3rd Floor'}</option>
+                    <option value="4">{isAr ? 'الدور الرابع' : '4th Floor'}</option>
+                    <option value="5+">{isAr ? 'الدور الخامس أو أعلى' : '5th Floor or Higher'}</option>
+                  </select>
+                </div>
+
+                <div className="form-group-flex">
+                  <label>{isAr ? 'عدد الغرف الإدارية / التقسيمات' : 'Office Rooms / Divisions'}</label>
+                  <select
+                    className="form-select-styled"
+                    value={sellerAnswers.divisionCount || '2'}
+                    onChange={(e) => setSellerAnswers({ ...sellerAnswers, divisionCount: e.target.value, rooms: 0 })}
+                  >
+                    <option value="open">{isAr ? 'مساحة إدارية مفتوحة (Open Space)' : 'Open Space'}</option>
+                    <option value="1">{isAr ? 'غرفة مكتب / عيادة مستقلة' : '1 Private Room'}</option>
+                    <option value="2">{isAr ? 'غرفتان + ريسبشن استقبال' : '2 Rooms + Reception'}</option>
+                    <option value="3">{isAr ? '3 غرف + ريسبشن استقبال' : '3 Rooms + Reception'}</option>
+                    <option value="4+">{isAr ? '4 غرف إدارية فأكثر' : '4+ Administrative Rooms'}</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{
+                padding: '10px 14px',
+                borderRadius: '8px',
+                background: 'rgba(16, 185, 129, 0.08)',
+                border: '1px solid rgba(16, 185, 129, 0.22)',
+                fontSize: '0.82rem',
+                color: '#059669',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <Briefcase size={16} style={{ flexShrink: 0 }} />
+                <span>{isAr ? '💼 مقر إداري / عيادة مرخصة (تقسيمات إدارية متخصصة بدون غرف سكنية)' : 'Administrative / Medical facility (Corporate partitioning without residential rooms)'}</span>
+              </div>
+            </div>
+          ) : (
+            /* Standard Residential (Apartment / Villa) */
+            <div className="phase-inputs-row">
+              <div className="form-group-flex">
+                <label>{isAr ? 'الدور / الطابق' : 'Floor Level'}</label>
+                <select
+                  className="form-select-styled"
+                  value={sellerAnswers.floor || '3'}
+                  onChange={(e) => setSellerAnswers({ ...sellerAnswers, floor: e.target.value })}
+                >
+                  <option value="ground">{isAr ? 'أرضي / مدخل خاص' : 'Ground Floor'}</option>
+                  <option value="1">{isAr ? 'الدور الأول' : '1st Floor'}</option>
+                  <option value="2">{isAr ? 'الدور الثاني' : '2nd Floor'}</option>
+                  <option value="3">{isAr ? 'الدور الثالث' : '3rd Floor'}</option>
+                  <option value="4">{isAr ? 'الدور الرابع' : '4th Floor'}</option>
+                  <option value="top">{isAr ? 'دور أخير مع روف' : 'Top Floor + Roof'}</option>
+                </select>
+              </div>
+
+              <div className="form-group-flex">
+                <label>{isAr ? 'عدد الغرف السكنية' : 'Bedrooms'}</label>
+                <select
+                  className="form-select-styled"
+                  value={sellerAnswers.rooms || '3'}
+                  onChange={(e) => setSellerAnswers({ ...sellerAnswers, rooms: e.target.value })}
+                >
+                  <option value="1">1 {isAr ? 'غرفة' : 'Room'}</option>
+                  <option value="2">2 {isAr ? 'غرف' : 'Rooms'}</option>
+                  <option value="3">3 {isAr ? 'غرف' : 'Rooms'}</option>
+                  <option value="4">4 {isAr ? 'غرف' : 'Rooms'}</option>
+                  <option value="5+">5+ {isAr ? 'غرف أو أكثر' : '5+ Rooms'}</option>
+                </select>
+              </div>
+            </div>
+          )}
 
           <div className="wizard-actions-bar space-between">
             <button

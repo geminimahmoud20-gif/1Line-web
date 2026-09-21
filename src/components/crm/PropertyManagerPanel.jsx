@@ -138,9 +138,12 @@ export default function PropertyManagerPanel({
 
   const handleOpenEdit = (prop) => {
     setEditingPropertyId(prop.id);
+    const isCommercialOrLand = prop.type === 'commercial' || prop.type === 'land' || prop.type === 'office';
     setForm({
       ...DEFAULT_FORM_STATE,
       ...prop,
+      bedrooms: isCommercialOrLand ? 0 : (prop.bedrooms || 0),
+      bathrooms: prop.type === 'land' ? 0 : (prop.bathrooms || 0),
       status: prop.status || (prop.isArchived ? 'hidden' : 'published')
     });
     setShowAddModal(true);
@@ -441,13 +444,26 @@ export default function PropertyManagerPanel({
       lng: Number((baseCoords.lng + randomOffset).toFixed(6))
     };
 
+    // Cleanse sector-specific attributes (commercial & land have 0 bedrooms)
+    const isCommercial = form.type === 'commercial';
+    const isLand = form.type === 'land';
+    const isOffice = form.type === 'office';
+    const category = isCommercial ? 'commercial' : isOffice ? 'administrative' : isLand ? 'land' : 'residential';
+    const cleanForm = {
+      ...form,
+      category,
+      bedrooms: (isCommercial || isLand || isOffice) ? 0 : (parseInt(form.bedrooms) || 0),
+      bathrooms: isLand ? 0 : (parseInt(form.bathrooms) || 0),
+      floor: isLand ? 0 : (parseInt(form.floor) || 0)
+    };
+
     if (editingPropertyId) {
-      onUpdateProperty(editingPropertyId, { ...form, coordinates: finalCoords });
+      onUpdateProperty(editingPropertyId, { ...cleanForm, coordinates: finalCoords });
       triggerToast(isAr ? 'تم تحديث بيانات العقار وموقعه على الخريطة بنجاح!' : 'Property updated successfully!', 'success');
     } else {
       const newProp = {
         id: 'prop-' + Date.now(),
-        ...form,
+        ...cleanForm,
         coordinates: finalCoords
       };
       onAddProperty(newProp);
@@ -680,7 +696,15 @@ export default function PropertyManagerPanel({
                     </td>
 
                     <td>
-                      <span>{prop.size} م² • {prop.bedrooms || 0} غرف</span>
+                      {prop.type === 'commercial' ? (
+                        <span>{prop.size} م² • 🏬 {prop.frontage || (isAr ? 'محل تجاري' : 'Retail')}</span>
+                      ) : prop.type === 'land' ? (
+                        <span>{prop.size} م² • 📐 {isAr ? 'أرض فضاء' : 'Land'}</span>
+                      ) : prop.type === 'office' ? (
+                        <span>{prop.size} م² • 💼 {prop.divisionCount ? `${prop.divisionCount} ${isAr ? 'مكاتب' : 'Offices'}` : (isAr ? 'مقر إداري' : 'Office')}</span>
+                      ) : (
+                        <span>{prop.size} م² • {prop.bedrooms || 0} {isAr ? 'غرف' : 'Bedrooms'}</span>
+                      )}
                     </td>
 
                     {/* Quick Status Selector */}
@@ -1090,7 +1114,18 @@ export default function PropertyManagerPanel({
                   <label>{isAr ? 'نوع العقار' : 'Property Type'}</label>
                   <select
                     value={form.type}
-                    onChange={(e) => setForm({ ...form, type: e.target.value })}
+                    onChange={(e) => {
+                      const newType = e.target.value;
+                      const isCommOrLand = newType === 'commercial' || newType === 'land' || newType === 'office';
+                      setForm({
+                        ...form,
+                        type: newType,
+                        category: newType === 'commercial' ? 'commercial' : newType === 'office' ? 'administrative' : newType === 'land' ? 'land' : 'residential',
+                        bedrooms: isCommOrLand ? 0 : (form.bedrooms || 3),
+                        bathrooms: newType === 'land' ? 0 : form.bathrooms,
+                        floor: newType === 'land' ? 0 : form.floor
+                      });
+                    }}
                   >
                     {PROPERTY_TYPES.filter(t => t.id !== 'all').map(t => (
                       <option key={t.id} value={t.id}>{isAr ? t.name_ar : t.name_en}</option>
@@ -1179,34 +1214,156 @@ export default function PropertyManagerPanel({
                   />
                 </div>
 
-                {/* Bedrooms & Bathrooms */}
-                <div className="form-group-item">
-                  <label>{isAr ? 'عدد غرف النوم' : 'Bedrooms'}</label>
-                  <input
-                    type="number"
-                    value={form.bedrooms}
-                    onChange={(e) => setForm({ ...form, bedrooms: parseInt(e.target.value) || 0 })}
-                  />
-                </div>
+                {/* Differentiated Specs based on Property Type */}
+                {form.type === 'commercial' ? (
+                  <>
+                    <div className="form-group-item">
+                      <label>{isAr ? 'عرض الواجهة التجارية' : 'Commercial Frontage'}</label>
+                      <input
+                        type="text"
+                        placeholder={isAr ? 'مثال: 8م واجهة مباشرة على الشارع' : 'e.g. 8m direct frontage'}
+                        value={form.frontage || ''}
+                        onChange={(e) => setForm({ ...form, frontage: e.target.value, bedrooms: 0 })}
+                      />
+                    </div>
+                    <div className="form-group-item">
+                      <label>{isAr ? 'طبيعة النشاط والترخيص' : 'Commercial Activity'}</label>
+                      <input
+                        type="text"
+                        placeholder={isAr ? 'محل تجاري واجهة مباشرة - ترخيص تجاري' : 'Prime Retail Frontage'}
+                        value={form.commercialType_ar || ''}
+                        onChange={(e) => setForm({ ...form, commercialType_ar: e.target.value, bedrooms: 0 })}
+                      />
+                    </div>
+                    <div className="form-group-item">
+                      <label>{isAr ? 'رقم الدور' : 'Floor'}</label>
+                      <input
+                        type="number"
+                        value={form.floor}
+                        onChange={(e) => setForm({ ...form, floor: parseInt(e.target.value) || 0, bedrooms: 0 })}
+                      />
+                    </div>
+                    <div style={{
+                      gridColumn: '1 / -1',
+                      padding: '8px 12px',
+                      background: 'rgba(217, 119, 6, 0.08)',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(217, 119, 6, 0.22)',
+                      fontSize: '0.82rem',
+                      color: 'var(--accent-gold, #d97706)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <span>🏬 {isAr ? 'وحدة تجارية: مساحة نشاط مفتوحة (تم إيقاف عدد غرف النوم تلقائياً = 0).' : 'Commercial Unit: Open retail space (Bedrooms locked to 0).'}</span>
+                    </div>
+                  </>
+                ) : form.type === 'land' ? (
+                  <>
+                    <div className="form-group-item">
+                      <label>{isAr ? 'واجهة الأرض وعرض الشارع' : 'Frontage & Street Width'}</label>
+                      <input
+                        type="text"
+                        placeholder={isAr ? 'مثال: واجهة 20م على شارع رئيسي' : 'e.g. 20m frontage'}
+                        value={form.frontage || ''}
+                        onChange={(e) => setForm({ ...form, frontage: e.target.value, bedrooms: 0, bathrooms: 0, floor: 0 })}
+                      />
+                    </div>
+                    <div className="form-group-item">
+                      <label>{isAr ? 'ترخيص وتصنيف الأرض' : 'Land Classification'}</label>
+                      <input
+                        type="text"
+                        placeholder={isAr ? 'أرض مباني سكنية / تجارية مرخصة' : 'Licensed land plot'}
+                        value={form.landType_ar || ''}
+                        onChange={(e) => setForm({ ...form, landType_ar: e.target.value, bedrooms: 0, bathrooms: 0, floor: 0 })}
+                      />
+                    </div>
+                    <div style={{
+                      gridColumn: '1 / -1',
+                      padding: '8px 12px',
+                      background: 'rgba(56, 189, 248, 0.08)',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(56, 189, 248, 0.22)',
+                      fontSize: '0.82rem',
+                      color: '#0284c7',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <span>📐 {isAr ? 'أرض فضاء: بدون غرف أو حمامات أو طوابق (تم الضبط تلقائياً إلى 0).' : 'Vacant Land: No bedrooms, bathrooms or floors (Locked to 0).'}</span>
+                    </div>
+                  </>
+                ) : form.type === 'office' ? (
+                  <>
+                    <div className="form-group-item">
+                      <label>{isAr ? 'عدد التقسيمات / المكاتب' : 'Office Rooms / Divisions'}</label>
+                      <input
+                        type="number"
+                        value={form.divisionCount ?? 2}
+                        onChange={(e) => setForm({ ...form, divisionCount: parseInt(e.target.value) || 0, bedrooms: 0 })}
+                      />
+                    </div>
+                    <div className="form-group-item">
+                      <label>{isAr ? 'عدد دورات المياه' : 'Restrooms'}</label>
+                      <input
+                        type="number"
+                        value={form.bathrooms}
+                        onChange={(e) => setForm({ ...form, bathrooms: parseInt(e.target.value) || 0, bedrooms: 0 })}
+                      />
+                    </div>
+                    <div className="form-group-item">
+                      <label>{isAr ? 'رقم الدور' : 'Floor'}</label>
+                      <input
+                        type="number"
+                        value={form.floor}
+                        onChange={(e) => setForm({ ...form, floor: parseInt(e.target.value) || 0, bedrooms: 0 })}
+                      />
+                    </div>
+                    <div style={{
+                      gridColumn: '1 / -1',
+                      padding: '8px 12px',
+                      background: 'rgba(16, 185, 129, 0.08)',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(16, 185, 129, 0.22)',
+                      fontSize: '0.82rem',
+                      color: '#059669',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <span>💼 {isAr ? 'مقر إداري / عيادة: تقسيمات مكاتب مرخصة (غرف النوم السكنية = 0).' : 'Office / Clinic: Administrative partitions (Residential bedrooms = 0).'}</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="form-group-item">
+                      <label>{isAr ? 'عدد غرف النوم' : 'Bedrooms'}</label>
+                      <input
+                        type="number"
+                        value={form.bedrooms}
+                        onChange={(e) => setForm({ ...form, bedrooms: parseInt(e.target.value) || 0 })}
+                      />
+                    </div>
 
-                <div className="form-group-item">
-                  <label>{isAr ? 'عدد الحمامات' : 'Bathrooms'}</label>
-                  <input
-                    type="number"
-                    value={form.bathrooms}
-                    onChange={(e) => setForm({ ...form, bathrooms: parseInt(e.target.value) || 0 })}
-                  />
-                </div>
+                    <div className="form-group-item">
+                      <label>{isAr ? 'عدد الحمامات' : 'Bathrooms'}</label>
+                      <input
+                        type="number"
+                        value={form.bathrooms}
+                        onChange={(e) => setForm({ ...form, bathrooms: parseInt(e.target.value) || 0 })}
+                      />
+                    </div>
 
-                {/* Floor */}
-                <div className="form-group-item">
-                  <label>{isAr ? 'رقم الدور' : 'Floor'}</label>
-                  <input
-                    type="number"
-                    value={form.floor}
-                    onChange={(e) => setForm({ ...form, floor: parseInt(e.target.value) || 0 })}
-                  />
-                </div>
+                    <div className="form-group-item">
+                      <label>{isAr ? 'رقم الدور' : 'Floor'}</label>
+                      <input
+                        type="number"
+                        value={form.floor}
+                        onChange={(e) => setForm({ ...form, floor: parseInt(e.target.value) || 0 })}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* 🎯 Custom District Benchmark & Nearby Landmarks Control */}

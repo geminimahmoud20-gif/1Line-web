@@ -74,7 +74,12 @@ export default function MobileFilterBottomSheet({
                   key={t.id}
                   type="button"
                   className={`drawer-pill-btn ${filters.type === t.id ? 'active' : ''}`}
-                  onClick={() => onChange('type', t.id)}
+                  onClick={() => {
+                    onChange('type', t.id);
+                    if (t.id === 'commercial' || t.id === 'land' || t.id === 'office') {
+                      onChange('bedrooms', 'all');
+                    }
+                  }}
                 >
                   {isAr ? t.name_ar : t.name_en}
                 </button>
@@ -82,28 +87,46 @@ export default function MobileFilterBottomSheet({
             </div>
           </div>
 
-          {/* Bedrooms */}
-          <div className="drawer-field-group">
-            <label className="drawer-lbl">{isAr ? 'عدد غرف النوم' : 'Bedrooms'}</label>
-            <div className="drawer-pills-wrap">
-              {[
-                { id: 'all', label_ar: 'الكل', label_en: 'All' },
-                { id: '1', label_ar: '1 غرفة', label_en: '1 Bed' },
-                { id: '2', label_ar: '2 غرف', label_en: '2 Beds' },
-                { id: '3', label_ar: '3 غرف', label_en: '3 Beds' },
-                { id: '4', label_ar: '4+ غرف', label_en: '4+ Beds' }
-              ].map((b) => (
-                <button
-                  key={b.id}
-                  type="button"
-                  className={`drawer-pill-btn ${filters.bedrooms === b.id ? 'active' : ''}`}
-                  onClick={() => onChange('bedrooms', b.id)}
-                >
-                  {isAr ? b.label_ar : b.label_en}
-                </button>
-              ))}
+          {/* Bedrooms - Suppressed for Commercial & Land */}
+          {(filters.type === 'commercial' || filters.type === 'land') ? (
+            <div className="drawer-field-group">
+              <label className="drawer-lbl">{isAr ? 'عدد غرف النوم' : 'Bedrooms'}</label>
+              <div style={{
+                padding: '10px 14px',
+                borderRadius: '8px',
+                background: 'rgba(212, 175, 55, 0.08)',
+                border: '1px dashed rgba(212, 175, 55, 0.35)',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                color: 'var(--text-secondary)',
+                textAlign: 'center'
+              }}>
+                <span>{isAr ? '🏬 مساحات مفتوحة بدون غرف سكنية' : 'Open Commercial Space (No Bedrooms)'}</span>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="drawer-field-group">
+              <label className="drawer-lbl">{isAr ? 'عدد غرف النوم' : 'Bedrooms'}</label>
+              <div className="drawer-pills-wrap">
+                {[
+                  { id: 'all', label_ar: 'الكل', label_en: 'All' },
+                  { id: '1', label_ar: '1 غرفة', label_en: '1 Bed' },
+                  { id: '2', label_ar: '2 غرف', label_en: '2 Beds' },
+                  { id: '3', label_ar: '3 غرف', label_en: '3 Beds' },
+                  { id: '4', label_ar: '4+ غرف', label_en: '4+ Beds' }
+                ].map((b) => (
+                  <button
+                    key={b.id}
+                    type="button"
+                    className={`drawer-pill-btn ${filters.bedrooms === b.id ? 'active' : ''}`}
+                    onClick={() => onChange('bedrooms', b.id)}
+                  >
+                    {isAr ? b.label_ar : b.label_en}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Max Price Slider */}
           <div className="drawer-field-group">
