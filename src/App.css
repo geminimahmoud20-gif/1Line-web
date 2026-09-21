@@ -4026,8 +4026,10 @@
   border: 1px solid rgba(56, 189, 248, 0.35);
   border-radius: var(--radius-lg);
   color: #ffffff;
-  flex-wrap: wrap;
   box-shadow: 0 12px 35px rgba(2, 132, 199, 0.25);
+  box-sizing: border-box;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .bottom-hub-trust {
@@ -4035,6 +4037,7 @@
   align-items: center;
   gap: 14px;
   max-width: 600px;
+  min-width: 0;
 }
 
 .bottom-hub-trust .trust-icon-box {
@@ -4070,11 +4073,15 @@
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .btn-luxury-cta {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 10px 22px;
   background: #ffffff;
@@ -4085,6 +4092,8 @@
   transition: all 0.25s ease;
   border-radius: var(--radius-pill);
   text-decoration: none;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .btn-luxury-cta:hover {
@@ -4097,6 +4106,7 @@
 .btn-glass-outline {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   padding: 10px 20px;
   font-size: 0.88rem;
@@ -4107,6 +4117,8 @@
   border-radius: var(--radius-pill);
   transition: all 0.25s ease;
   text-decoration: none;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .btn-glass-outline:hover {
@@ -4115,13 +4127,17 @@
   transform: translateY(-1px);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .marketplace-bottom-hub {
-    padding: 18px 16px !important;
+    padding: 20px 16px !important;
     flex-direction: column !important;
     align-items: stretch !important;
     gap: 16px !important;
     text-align: center !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
   }
 
   .bottom-hub-trust {
@@ -4129,13 +4145,17 @@
     align-items: center !important;
     text-align: center !important;
     max-width: 100% !important;
+    width: 100% !important;
     gap: 10px !important;
   }
 
   .bottom-hub-actions {
     flex-direction: column !important;
     width: 100% !important;
+    max-width: 100% !important;
     gap: 10px !important;
+    align-items: stretch !important;
+    box-sizing: border-box !important;
   }
 
   .bottom-hub-actions .btn-luxury-cta,
@@ -4146,8 +4166,9 @@
     text-align: center !important;
     justify-content: center !important;
     box-sizing: border-box !important;
-    padding: 11px 14px !important;
-    font-size: 0.84rem !important;
+    padding: 12px 16px !important;
+    font-size: 0.88rem !important;
+    margin: 0 !important;
   }
 }
 

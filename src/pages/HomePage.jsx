@@ -733,7 +733,7 @@ export default function HomePage({
 
               <div className="bottom-hub-actions">
                 <Link to="/properties" className="btn btn-luxury-cta">
-                  <span>{lang === 'ar' ? `استعراض كامل محفظة العقارات (${activePublished.length} عقار معتمد)` : 'Explore Full Portfolio'}</span>
+                  <span>{lang === 'ar' ? `استعراض كل العقارات (${activePublished.length} عقار)` : `Explore All Properties (${activePublished.length})`}</span>
                   {lang === 'ar' ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
                 </Link>
                 <Link to="/special-requests" className="btn btn-glass-outline">
