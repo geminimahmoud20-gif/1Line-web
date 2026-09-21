@@ -822,30 +822,34 @@ function AppContent() {
       />
 
       {/* Property Comparison Drawer Matrix */}
-      <PropertyCompareDrawer
-        isOpen={compareDrawerOpen}
-        onClose={() => setCompareDrawerOpen(false)}
-        compareList={compareList}
-        onRemoveFromCompare={removeCompare}
-        onClearCompare={clearCompare}
-        onAddToCompare={addToCompare}
-        availableProperties={properties}
-        currency={currency}
-        lang={lang}
-      />
+      {compareDrawerOpen && (
+        <PropertyCompareDrawer
+          isOpen={compareDrawerOpen}
+          onClose={() => setCompareDrawerOpen(false)}
+          compareList={compareList}
+          onRemoveFromCompare={removeCompare}
+          onClearCompare={clearCompare}
+          onAddToCompare={addToCompare}
+          availableProperties={properties}
+          currency={currency}
+          lang={lang}
+        />
+      )}
 
       {/* Saved Properties & Favorites Drawer */}
-      <FavoritesDrawer
-        isOpen={favoritesDrawerOpen}
-        onClose={() => setFavoritesDrawerOpen(false)}
-        favorites={favorites}
-        properties={properties}
-        onRemoveFavorite={toggleFavorite}
-        onClearFavorites={clearFavorites}
-        onQuickView={handleOpenQuickView}
-        lang={lang}
-        currency={currency}
-      />
+      {favoritesDrawerOpen && (
+        <FavoritesDrawer
+          isOpen={favoritesDrawerOpen}
+          onClose={() => setFavoritesDrawerOpen(false)}
+          favorites={favorites}
+          properties={properties}
+          onRemoveFavorite={toggleFavorite}
+          onClearFavorites={clearFavorites}
+          onQuickView={handleOpenQuickView}
+          lang={lang}
+          currency={currency}
+        />
+      )}
 
       {/* Client Identity & WhatsApp Security Verification Modal */}
       <ClientAuthModal lang={lang} />

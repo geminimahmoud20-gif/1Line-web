@@ -45,6 +45,7 @@ export default function ContractStudioModal({
     paymentMethod: 'InstaPay (إنستاباي)',
     transactionRef: `REF-OL-${Math.floor(100000 + Math.random() * 900000)}`
   }));
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   if (!isOpen) return null;
 
@@ -83,8 +84,6 @@ export default function ContractStudioModal({
       }));
     }
   };
-
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const handleGeneratePdf = async () => {
     setIsGeneratingPdf(true);

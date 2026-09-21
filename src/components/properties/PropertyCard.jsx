@@ -48,10 +48,10 @@ export default function PropertyCard({
   onToggleCompare, 
   onQuickView 
 }) {
-  if (!property) return null;
-
   const [imageLoaded, setImageLoaded] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+  if (!property) return null;
 
   const title = lang === 'ar' ? (property.title_ar || property.title_en || '') : (property.title_en || property.title_ar || '');
   const location = lang === 'ar' ? (property.locationName_ar || property.locationName_en || '') : (property.locationName_en || property.locationName_ar || '');

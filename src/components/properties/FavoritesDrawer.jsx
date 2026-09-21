@@ -29,8 +29,6 @@ export default function FavoritesDrawer({
   lang = 'ar',
   currency = 'EGP'
 }) {
-  if (!isOpen) return null;
-
   const isAr = lang === 'ar';
 
   // Map favorite IDs to actual property objects
@@ -45,6 +43,8 @@ export default function FavoritesDrawer({
   }, [favoriteProperties]);
 
   const totalBudgetObj = formatCurrencyPrice(totalBudget, currency, lang);
+
+  if (!isOpen) return null;
 
   // Send WhatsApp consultation with all saved favorites
   const handleShareAllWhatsApp = () => {

@@ -174,8 +174,7 @@ export default function PropertyGallery({
     }
   }, [activeImageIndex, lightboxOpen]);
 
-  // Architectural Floor Plan schematic (Sharp Vector CAD Blueprint)
-  const floorPlanImage = floorPlan || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 800' fill='%23081426'%3E%3Crect width='1200' height='800' fill='%23081426'/%3E%3Cdefs%3E%3Cpattern id='cadgrid' width='40' height='40' patternUnits='userSpaceOnUse'%3E%3Cpath d='M 40 0 L 0 0 0 40' fill='none' stroke='%23142e54' stroke-width='0.8'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='1200' height='800' fill='url(%23cadgrid)'/%3E%3Crect x='100' y='80' width='1000' height='640' fill='none' stroke='%2338bdf8' stroke-width='3.5'/%3E%3Cline x1='520' y1='80' x2='520' y2='720' stroke='%2338bdf8' stroke-width='2.5'/%3E%3Cline x1='100' y1='400' x2='520' y2='400' stroke='%2338bdf8' stroke-width='2.5'/%3E%3Cline x1='520' y1='380' x2='1100' y2='380' stroke='%2338bdf8' stroke-width='2.5'/%3E%3Ctext x='310' y='220' fill='%23fdcb42' font-family='sans-serif' font-size='22' font-weight='bold' text-anchor='middle'%3Eالريسبشن المفتوح (Grand Reception)%3C/text%3E%3Ctext x='310' y='260' fill='%2394a3b8' font-family='sans-serif' font-size='16' text-anchor='middle'%3E8.5m x 5.4m • أرضيات بورسلين فاخرة%3C/text%3E%3Ctext x='310' y='530' fill='%23fdcb42' font-family='sans-serif' font-size='22' font-weight='bold' text-anchor='middle'%3Eالمطبخ والخدمات (Gourmet Kitchen)%3C/text%3E%3Ctext x='310' y='570' fill='%2394a3b8' font-family='sans-serif' font-size='16' text-anchor='middle'%3E4.2m x 3.6m + شرفة خدمات%3C/text%3E%3Ctext x='810' y='210' fill='%23fdcb42' font-family='sans-serif' font-size='22' font-weight='bold' text-anchor='middle'%3Eالجناح الرئيسي (Master Suite)%3C/text%3E%3Ctext x='810' y='250' fill='%2394a3b8' font-family='sans-serif' font-size='16' text-anchor='middle'%3E5.6m x 4.4m + Dressing + حمام خاص%3C/text%3E%3Ctext x='810' y='510' fill='%23fdcb42' font-family='sans-serif' font-size='22' font-weight='bold' text-anchor='middle'%3Eأجنحة النوم (Guest & Family Bedrooms)%3C/text%3E%3Ctext x='810' y='550' fill='%2394a3b8' font-family='sans-serif' font-size='16' text-anchor='middle'%3E4.2m x 4.0m • 4.0m x 3.8m%3C/text%3E%3Crect x='120' y='100' width='280' height='42' rx='10' fill='%230b4ea2' opacity='0.85'/%3E%3Ctext x='260' y='127' fill='%23ffffff' font-family='sans-serif' font-size='14' font-weight='bold' text-anchor='middle'%3E1LINE ARCHITECTURAL CAD SCHEMATIC%3C/text%3E%3C/svg%3E";
+  const [floorPlanError, setFloorPlanError] = useState(false);
 
   return (
     <div className="property-gallery-component">
@@ -254,7 +253,75 @@ export default function PropertyGallery({
             <Layers size={14} />
             <span>{isAr ? 'مخطط تقسيم الغرف والأبعاد الهندسية (انقر للتكبير)' : 'Architectural Room Dimensions & Layout (Click to Zoom)'}</span>
           </div>
-          <img src={floorPlanImage} alt="Floor Plan" className="floorplan-main-img" />
+          {floorPlan && !floorPlanError ? (
+            <img 
+              src={floorPlan} 
+              alt={title || "Floor Plan"} 
+              className="floorplan-main-img" 
+              onError={() => setFloorPlanError(true)}
+            />
+          ) : (
+            <div className="floorplan-svg-wrap">
+              <svg 
+                viewBox="0 0 1200 800" 
+                className="floorplan-main-svg"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect width="1200" height="800" fill="#081426" />
+                <defs>
+                  <pattern id="cadgrid" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#142e54" strokeWidth="0.8" />
+                  </pattern>
+                </defs>
+                <rect width="1200" height="800" fill="url(#cadgrid)" />
+                {/* Outer CAD Border */}
+                <rect x="100" y="80" width="1000" height="640" fill="none" stroke="#38bdf8" strokeWidth="3.5" rx="4" />
+                
+                {/* Partitions */}
+                <line x1="520" y1="80" x2="520" y2="720" stroke="#38bdf8" strokeWidth="2.5" />
+                <line x1="100" y1="400" x2="520" y2="400" stroke="#38bdf8" strokeWidth="2.5" />
+                <line x1="520" y1="380" x2="1100" y2="380" stroke="#38bdf8" strokeWidth="2.5" />
+                
+                {/* Reception */}
+                <text x="310" y="210" fill="#fdcb42" fontFamily="sans-serif" fontSize="22" fontWeight="bold" textAnchor="middle">
+                  {isAr ? 'الريسبشن المفتوح (Grand Reception)' : 'Grand Reception Area'}
+                </text>
+                <text x="310" y="250" fill="#94a3b8" fontFamily="sans-serif" fontSize="16" textAnchor="middle">
+                  8.5m x 5.4m • {isAr ? 'أرضيات رخام وبورسلين فاخرة' : 'Premium Marble Flooring'}
+                </text>
+                
+                {/* Kitchen */}
+                <text x="310" y="520" fill="#fdcb42" fontFamily="sans-serif" fontSize="22" fontWeight="bold" textAnchor="middle">
+                  {isAr ? 'المطبخ والخدمات (Gourmet Kitchen)' : 'Gourmet Kitchen & Pantry'}
+                </text>
+                <text x="310" y="560" fill="#94a3b8" fontFamily="sans-serif" fontSize="16" textAnchor="middle">
+                  4.2m x 3.6m • {isAr ? 'شرفة خدمات وتوصيلات غاز' : 'Balcony & Gas Outlets'}
+                </text>
+                
+                {/* Master Suite */}
+                <text x="810" y="200" fill="#fdcb42" fontFamily="sans-serif" fontSize="22" fontWeight="bold" textAnchor="middle">
+                  {isAr ? 'الجناح الرئيسي (Master Suite)' : 'Master Bedroom Suite'}
+                </text>
+                <text x="810" y="240" fill="#94a3b8" fontFamily="sans-serif" fontSize="16" textAnchor="middle">
+                  5.6m x 4.4m • Dressing Room • {isAr ? 'حمام خاص' : 'Ensuite Bath'}
+                </text>
+                
+                {/* Family Bedrooms */}
+                <text x="810" y="500" fill="#fdcb42" fontFamily="sans-serif" fontSize="22" fontWeight="bold" textAnchor="middle">
+                  {isAr ? 'أجنحة النوم (Family Bedrooms)' : 'Family & Guest Bedrooms'}
+                </text>
+                <text x="810" y="540" fill="#94a3b8" fontFamily="sans-serif" fontSize="16" textAnchor="middle">
+                  4.2m x 4.0m • 4.0m x 3.8m • {isAr ? 'إطلالة بحرية' : 'Open Views'}
+                </text>
+
+                {/* 1Line CAD Seal */}
+                <rect x="120" y="100" width="310" height="42" rx="10" fill="#0b4ea2" opacity="0.9" />
+                <text x="275" y="127" fill="#ffffff" fontFamily="sans-serif" fontSize="13" fontWeight="bold" textAnchor="middle">
+                  1LINE CERTIFIED CAD SCHEMATIC
+                </text>
+              </svg>
+            </div>
+          )}
         </div>
       )}
 

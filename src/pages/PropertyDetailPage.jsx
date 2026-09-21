@@ -261,25 +261,26 @@ export default function PropertyDetailPage({
               </div>
               {property.coordinates?.lat && (
                 <a
-                  href={`https://www.google.com/maps?q=${property.coordinates.lat},${property.coordinates.lng}`}
+                  href={`https://www.google.com/maps?q=${property.coordinates.lat},${property.coordinates.lng}+(${encodeURIComponent(`${title} - 1Line`)})&z=17`}
                   target="_blank"
                   rel="noreferrer"
                   className="btn btn-sm"
                   style={{
-                    padding: '3px 10px',
-                    fontSize: '0.74rem',
+                    padding: '4px 12px',
+                    fontSize: '0.78rem',
+                    fontWeight: '700',
                     background: 'rgba(217, 119, 6, 0.12)',
                     border: '1px solid rgba(217, 119, 6, 0.35)',
-                    color: 'var(--accent-gold)',
+                    color: 'var(--accent-gold, #d97706)',
                     borderRadius: 'var(--radius-pill)',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '4px',
+                    gap: '6px',
                     textDecoration: 'none'
                   }}
                   title={isAr ? 'فتح اللوكيشن الدقيق على خرائط Google' : 'Open Location in Google Maps'}
                 >
-                  <Navigation size={11} />
+                  <Navigation size={12} />
                   <span>{isAr ? '📍 عرض على خرائط Google' : 'Open in Google Maps'}</span>
                 </a>
               )}
