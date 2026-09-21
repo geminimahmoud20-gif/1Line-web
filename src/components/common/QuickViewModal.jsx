@@ -225,11 +225,9 @@ export default function QuickViewModal({
             {/* Floating Price Tag */}
             <div className="quickview-price-badge-floating">
               <span className="price-tag-big">{priceData.primary} {priceData.symbol}</span>
-              {priceData.isConverted && (
-                <span style={{ fontSize: '0.72rem', opacity: 0.9, display: 'block', fontWeight: 600 }}>
-                  ≈ {priceData.originalEgp}
-                </span>
-              )}
+              <span style={{ fontSize: '0.68rem', display: 'block', fontWeight: 800, color: '#34d399', background: 'rgba(0,0,0,0.5)', padding: '2px 6px', borderRadius: '4px', marginTop: '2px' }}>
+                ✓ {isAr ? '0% عمولة للمشتري' : '0% Commission'}
+              </span>
             </div>
           </div>
 

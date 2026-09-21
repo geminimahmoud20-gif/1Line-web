@@ -21,7 +21,10 @@ import {
   ArrowLeft,
   Store,
   Briefcase,
-  Building
+  Building,
+  Video,
+  Zap,
+  Droplets
 } from 'lucide-react';
 import { incrementPropertyView, getPropertyViews } from '../utils/visitorTracker';
 import PropertyGallery from '../components/properties/PropertyGallery';
@@ -329,6 +332,24 @@ export default function PropertyDetailPage({
                 {property.pricePerMeter.toLocaleString()} {isAr ? 'ج.م / متر' : 'EGP / sqm'}
               </span>
             )}
+
+            {/* 🛡️ 0% Buyer Commission Transparency Guarantee */}
+            <div className="buyer-commission-badge" style={{
+              marginTop: '10px',
+              padding: '6px 12px',
+              borderRadius: '8px',
+              background: 'rgba(16, 185, 129, 0.1)',
+              border: '1px solid rgba(16, 185, 129, 0.3)',
+              color: '#059669',
+              fontSize: '0.78rem',
+              fontWeight: '800',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <CheckCircle2 size={14} style={{ color: '#10b981', flexShrink: 0 }} />
+              <span>{isAr ? '0% عمولة للمشتري | تعاقد مباشر بالسعر الرسمي بدون أي رسوم خفية' : '0% Buyer Commission | Direct Official Price, No Extra Fees'}</span>
+            </div>
           </div>
         </div>
 
@@ -561,6 +582,85 @@ export default function PropertyDetailPage({
                   </div>
                 )}
 
+                {/* 🛡️ Utilities Readiness & Legal Verification Checklist */}
+                <div className="detail-card-box utilities-checklist-card">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+                    <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <ShieldCheck size={20} className="text-gold" />
+                      <span>{isAr ? 'جاهزية المرافق والضمانات القانونية للوحدة' : 'Utilities & Legal Readiness'}</span>
+                    </h3>
+                    <span style={{ fontSize: '0.74rem', background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', padding: '3px 8px', borderRadius: 'var(--radius-pill)', fontWeight: '800' }}>
+                      {isAr ? '✓ مفحوص ومعتمد ميدانياً' : '✓ Field Verified'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'var(--card-bg, #ffffff)', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
+                      <Zap size={18} style={{ color: '#eab308', flexShrink: 0 }} />
+                      <div>
+                        <strong style={{ display: 'block', fontSize: '0.84rem' }}>{isAr ? 'عداد كهرباء قانوني' : 'Official Electricity Meter'}</strong>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{isAr ? 'عداد كودي/رسمي مسجل' : 'Registered meter'}</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'var(--card-bg, #ffffff)', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
+                      <Droplets size={18} style={{ color: '#0284c7', flexShrink: 0 }} />
+                      <div>
+                        <strong style={{ display: 'block', fontSize: '0.84rem' }}>{isAr ? 'مياه وغاز متصل' : 'Water & Gas Connected'}</strong>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{isAr ? 'شبكة حكومية معتمدة' : 'Public utility grid'}</span>
+                      </div>
+                    </div>
+                    {!isLand && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'var(--card-bg, #ffffff)', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
+                        <Building size={18} style={{ color: '#8b5cf6', flexShrink: 0 }} />
+                        <div>
+                          <strong style={{ display: 'block', fontSize: '0.84rem' }}>{isAr ? 'مصعد شغال بالكامل' : 'Elevator Operational'}</strong>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{isAr ? 'صيانة دورية وكابينة إيطالية' : 'Regular maintenance'}</span>
+                        </div>
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'var(--card-bg, #ffffff)', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
+                      <ShieldCheck size={18} style={{ color: '#10b981', flexShrink: 0 }} />
+                      <div>
+                        <strong style={{ display: 'block', fontSize: '0.84rem' }}>{isAr ? 'حصة في الأرض ورخصة' : 'Undivided Land Share'}</strong>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{isAr ? 'مثبتة رسمياً بعقد البيع' : 'Deed guaranteed'}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 💼 Turnkey & Rental Management Service for Investors */}
+                <div className="investor-turnkey-banner detail-card-box" style={{
+                  background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.08), rgba(11, 78, 162, 0.06))',
+                  border: '1px solid rgba(217, 119, 6, 0.25)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '14px',
+                  padding: '16px'
+                }}>
+                  <div style={{
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '10px',
+                    background: 'var(--accent-gold, #d97706)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    <Briefcase size={22} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '0.92rem', color: 'var(--text-primary)' }}>
+                      {isAr ? '💼 خدمة التشطيب وإدارة الإيجار للمستثمرين والمغتربين' : '💼 Turnkey Finishing & Rental Management for Investors'}
+                    </h4>
+                    <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: '1.45' }}>
+                      {isAr
+                        ? 'تتولى 1Line بالنيابة عنك الإشراف الكامل على استلام الوحدة، تشطيبها بأعلى معايير السوق، تسكين مستأجر موثوق، وإيداع العائد الإيجاري في حسابك البنكي شهرياً.'
+                        : '1Line handles unit handover, turnkey furnishing, vetted tenant placement, and monthly rent direct deposit into your bank account.'}
+                    </p>
+                  </div>
+                </div>
+
                 {/* 🧭☀️ Orientation, Natural Breeze & Sunlight Compass */}
                 <SunlightCompassWidget
                   property={property}
@@ -673,6 +773,33 @@ export default function PropertyDetailPage({
                 </a>
               </div>
 
+              {/* 📹 Expat & Remote Buyer Live Video Inspection CTA */}
+              <a
+                href={getWhatsAppUrl(`مرحباً 1Line، أنا متواجد خارج سوهاج/مصر وأرغب في حجز موعد لمعاينة العقار كود: #${property.id.toUpperCase()} (${title}) عبر مكالمة فيديو حية (Live WhatsApp Video Tour) مع مستشار المعاينات.`)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="sidebar-live-video-btn"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  marginTop: '10px',
+                  padding: '9px 12px',
+                  background: 'rgba(14, 165, 233, 0.08)',
+                  border: '1px solid rgba(14, 165, 233, 0.35)',
+                  borderRadius: '8px',
+                  color: '#0284c7',
+                  fontSize: '0.8rem',
+                  fontWeight: '800',
+                  textDecoration: 'none',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <Video size={16} style={{ color: '#0284c7', flexShrink: 0 }} />
+                <span>{isAr ? '📹 معاينة فيديو مباشرة (للمغتربين)' : '📹 Live Video Tour (Expats)'}</span>
+              </a>
+
               <div className="sidebar-divider">
                 <span>{isAr ? 'أو حدد موعد معاينة ميدانية مجانية' : 'Or Book a Free Viewing Tour'}</span>
               </div>
@@ -718,6 +845,26 @@ export default function PropertyDetailPage({
                       onChange={(e) => setBookingForm({ ...bookingForm, phone: e.target.value })}
                       required
                     />
+                  </div>
+
+                  <div className="form-group-item">
+                    <label>{isAr ? 'نوع المعاينة المطلوبة' : 'Tour Format'}</label>
+                    <div className="booking-time-slot-pills">
+                      <button
+                        type="button"
+                        className={`slot-pill ${bookingForm.type !== 'video' ? 'active' : ''}`}
+                        onClick={() => setBookingForm({ ...bookingForm, type: 'field' })}
+                      >
+                        {isAr ? '🚶‍♂️ ميدانية بالموقع' : '🚶‍♂️ In-Person'}
+                      </button>
+                      <button
+                        type="button"
+                        className={`slot-pill ${bookingForm.type === 'video' ? 'active' : ''}`}
+                        onClick={() => setBookingForm({ ...bookingForm, type: 'video' })}
+                      >
+                        {isAr ? '📹 مكالمة فيديو للمغتربين' : '📹 Live Video'}
+                      </button>
+                    </div>
                   </div>
 
                   <div className="form-group-item">

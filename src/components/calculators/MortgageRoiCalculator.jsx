@@ -688,6 +688,30 @@ export default function MortgageRoiCalculator({
                 </span>
               </div>
 
+              {/* 💼 Turnkey Rental Management for Investors */}
+              <div style={{
+                background: 'rgba(217, 119, 6, 0.12)',
+                border: '1px solid rgba(217, 119, 6, 0.3)',
+                borderRadius: '8px',
+                padding: '10px 12px',
+                margin: '6px 0 10px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}>
+                <span style={{ fontSize: '1.2rem' }}>💼</span>
+                <div style={{ fontSize: '0.74rem', color: '#e2e8f0', lineHeight: 1.4 }}>
+                  <strong style={{ color: '#f59e0b', display: 'block' }}>
+                    {isAr ? 'خدمة إدارة الإيجار للمستثمرين والمغتربين' : 'Investor Turnkey & Rental Management'}
+                  </strong>
+                  <span>
+                    {isAr 
+                      ? 'تتولى 1Line تشطيب وحدتك، اختيار مستأجر موثوق، وتحصيل العائد الدوري وإيداعه بحسابك مباشرة.' 
+                      : '1Line handles furnishing, tenant vetting, and rent collection direct to your account.'}
+                  </span>
+                </div>
+              </div>
+
               {/* 5-Year Capital Growth Simulation Timeline */}
               <div className="five-year-growth-card" style={{
                 background: 'linear-gradient(135deg, rgba(8, 18, 38, 0.95) 0%, rgba(13, 72, 161, 0.9) 100%)',

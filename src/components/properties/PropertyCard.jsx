@@ -18,7 +18,8 @@ import {
   Store,
   Briefcase,
   ChevronRight,
-  ChevronLeft
+  ChevronLeft,
+  CheckCircle2
 } from 'lucide-react';
 import { getPropertyViews } from '../../utils/visitorTracker';
 import { getFounderSettings, getWhatsAppUrl } from '../../utils/founderCmsData';
@@ -163,11 +164,26 @@ export default function PropertyCard({
           </div>
         )}
 
-        {/* Single Sovereign Status Badge */}
+        {/* Sovereign Status Badges (Verified + 0% Buyer Commission) */}
         <div className="card-top-badges">
           <span className={`property-badge ${resolvedBadge.className}`}>
             <BadgeIcon size={12} className="badge-svg-icon" />
             <span>{resolvedBadge.label}</span>
+          </span>
+          <span className="property-badge badge-commission" style={{
+            background: 'rgba(16, 185, 129, 0.95)',
+            color: '#ffffff',
+            boxShadow: '0 2px 8px rgba(16, 185, 129, 0.35)',
+            fontWeight: 800,
+            fontSize: '0.69rem',
+            padding: '4px 8px',
+            borderRadius: 'var(--radius-pill)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px'
+          }}>
+            <CheckCircle2 size={11} />
+            <span>{lang === 'ar' ? '0% عمولة مشتري' : '0% Commission'}</span>
           </span>
         </div>
 
