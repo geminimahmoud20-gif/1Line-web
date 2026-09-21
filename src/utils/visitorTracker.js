@@ -12,6 +12,23 @@ const STORAGE_KEYS = {
 
 // Default baseline views for initial properties to provide rich statistics
 const INITIAL_PROPERTY_VIEWS = {
+  'prop-1': 438,
+  'prop-2': 512,
+  'prop-3': 640,
+  'prop-4': 380,
+  'prop-5': 295,
+  'prop-6': 468,
+  'prop-7': 415,
+  'prop-8': 354,
+  'prop-9': 270,
+  'prop-10': 310,
+  'prop-11': 290,
+  'prop-12': 480,
+  'prop-13': 520,
+  'prop-14': 240,
+  'prop-15': 365,
+  'prop-16': 495,
+  // legacy aliases
   'sohag-apt-01': 384,
   'sohag-villa-01': 512,
   'sohag-comm-01': 295,
@@ -19,11 +36,7 @@ const INITIAL_PROPERTY_VIEWS = {
   'sohag-land-01': 310,
   'sohag-dup-01': 468,
   'sohag-pent-01': 354,
-  'sohag-med-01': 230,
-  'sohag-res-01': 190,
-  'sohag-res-02': 215,
-  'sohag-res-03': 180,
-  'sohag-res-04': 260
+  'sohag-med-01': 230
 };
 
 /**

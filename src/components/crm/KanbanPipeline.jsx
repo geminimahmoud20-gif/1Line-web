@@ -45,8 +45,9 @@ const PROPERTY_TYPE_NAMES = {
   building: 'عمارة كاملة',
   clinic: 'عيادة طبية',
   chalet: 'شاليه',
-  commercial: 'تجاري',
-  residential: 'سكني'
+  commercial: 'تجاري (محلات ومعارض)',
+  residential: 'سكني (شقق وفيلات)',
+  administrative: 'مقر إداري / عيادة'
 };
 
 const AREA_NAMES = {
