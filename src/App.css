@@ -20324,26 +20324,57 @@ body.dark-theme .compare-tabs-bar {
 
 .lifestyle-badge {
   position: absolute;
-  top: 18px;
-  right: 18px;
+  top: 16px;
+  right: 16px;
   z-index: 3;
-  background: rgba(7, 17, 31, 0.82);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: var(--gold-soft, #F3EBDD);
-  font-size: 0.76rem;
+  background: rgba(7, 17, 31, 0.76);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  font-size: 0.74rem;
   font-weight: 700;
-  padding: 5px 12px;
+  padding: 3px 10px 3px 4px;
   border-radius: var(--radius-pill);
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+  transition: all 0.25s ease;
 }
 
 [dir="ltr"] .lifestyle-badge {
   right: auto;
-  left: 18px;
+  left: 16px;
+  padding: 3px 4px 3px 10px;
+}
+
+.lifestyle-card:hover .lifestyle-badge {
+  background: rgba(7, 17, 31, 0.9);
+  border-color: rgba(255, 213, 79, 0.45);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.lifestyle-badge-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(255, 213, 79, 0.18);
+  border: 1px solid rgba(255, 213, 79, 0.45);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffd54f !important;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px rgba(255, 213, 79, 0.2);
+  transition: transform 0.25s ease;
+}
+
+.lifestyle-card:hover .lifestyle-badge-icon {
+  transform: scale(1.1);
+  background: rgba(255, 213, 79, 0.28);
+  border-color: #ffd54f;
+  box-shadow: 0 0 12px rgba(255, 213, 79, 0.4);
 }
 
 .lifestyle-content {
@@ -20371,15 +20402,37 @@ body.dark-theme .compare-tabs-bar {
 .lifestyle-action-link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--gold-soft, #F3EBDD);
-  transition: gap 0.25s ease;
+  gap: 8px;
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #ffffff;
+  transition: all 0.25s ease;
 }
 
-.lifestyle-card:hover .lifestyle-action-link {
-  gap: 10px;
+.lifestyle-action-arrow {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffd54f;
+  flex-shrink: 0;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lifestyle-card:hover .lifestyle-action-arrow {
+  background: #ffd54f;
+  border-color: #ffd54f;
+  color: #07111F;
+  transform: translateX(-4px);
+  box-shadow: 0 0 10px rgba(255, 213, 79, 0.5);
+}
+
+[dir="ltr"] .lifestyle-card:hover .lifestyle-action-arrow {
+  transform: translateX(4px);
 }
 
 /* ============================================================

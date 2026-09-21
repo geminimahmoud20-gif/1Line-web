@@ -72,8 +72,10 @@ export default function LifestyleCollectionsSection({ lang = 'ar' }) {
     <section className="homepage-section lifestyle-collections-section">
       <div className="section-header-centered" style={{ marginBottom: '32px' }}>
         <div className="section-pill-tag">
-          <Sparkles size={14} className="text-gold" />
-          <span>{isAr ? 'تصنيفات أسلوب الحياة الفاخر (Sotheby’s Standard)' : 'Curated Luxury Lifestyles'}</span>
+          <span className="section-pill-icon">
+            <Sparkles size={11} strokeWidth={2.2} />
+          </span>
+          <span>{isAr ? 'تصنيفات أسلوب الحياة الفاخر' : 'Curated Luxury Lifestyles'}</span>
         </div>
         <h2 className="section-heading-primary luxury-serif-title">
           {isAr ? 'ابحث بأسلوب الحياة الذي تطمح إليه' : 'Search by Your Desired Lifestyle'}
@@ -106,9 +108,11 @@ export default function LifestyleCollectionsSection({ lang = 'ar' }) {
                 <div className="lifestyle-gradient-overlay" />
               </div>
 
-              {/* Floating Badge */}
+              {/* Floating Badge with Refined Micro-Icon */}
               <div className="lifestyle-badge">
-                <IconComp size={13} className="text-gold" />
+                <span className="lifestyle-badge-icon">
+                  <IconComp size={11} strokeWidth={2.2} />
+                </span>
                 <span>{isAr ? item.badge_ar : item.badge_en}</span>
               </div>
 
@@ -123,7 +127,9 @@ export default function LifestyleCollectionsSection({ lang = 'ar' }) {
 
                 <div className="lifestyle-action-link">
                   <span>{isAr ? 'استكشاف المجموعة' : 'Explore Collection'}</span>
-                  {isAr ? <ArrowLeft size={15} /> : <ArrowRight size={15} />}
+                  <span className="lifestyle-action-arrow">
+                    {isAr ? <ArrowLeft size={11} strokeWidth={2.4} /> : <ArrowRight size={11} strokeWidth={2.4} />}
+                  </span>
                 </div>
               </div>
             </Link>
