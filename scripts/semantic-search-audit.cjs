@@ -37,6 +37,14 @@ const TEST_CASES = [
   {
     query: 'عيادة طبية في شارع الجمهورية سوهاج',
     expected: { area: 'east', type: 'office' }
+  },
+  {
+    query: 'محل تجاري في طهطا شارع بورسعيد',
+    expected: { area: 'tahta', type: 'commercial' }
+  },
+  {
+    query: 'شقة في جرجا',
+    expected: { area: 'girga', type: 'apartment' }
   }
 ];
 

@@ -39,19 +39,59 @@ export default function AICopywriterModal({
   const propSize = selectedProp.size || 150;
   const propRooms = selectedProp.bedrooms || 3;
 
+  // Sector classification
+  const isLand = selectedProp.type === 'land' || (propTitle && propTitle.includes('أرض'));
+  const isCom = !isLand && (selectedProp.type === 'commercial' || selectedProp.category === 'commercial' || (propTitle && (propTitle.includes('محل') || propTitle.includes('معرض') || propTitle.includes('تجاري'))));
+  const isOff = !isLand && !isCom && (selectedProp.type === 'office' || selectedProp.category === 'administrative' || (propTitle && (propTitle.includes('مكتب') || propTitle.includes('عيادة') || propTitle.includes('إداري'))));
+
+  let sectorTitleLuxury = 'قصر السكن الراقي';
+  let sectorHookLuxury = 'هل تبحث عن السكن الفندقي والخصوصية الكاملة لك ولأسرتك؟';
+  let sectorSpaceLuxury = `بتوزيع داخلي فريد (${propRooms} غرف نوم فاخرة)`;
+  let sectorAdvantagesLuxury = 'تشطيب سوبر لوكس، أسانسير حديث، إطلالة مفتوحة ومرافق كاملة جاهزة.';
+
+  let sectorSpaceSocial = `${propSize} م² (${propRooms} غرف + ريسبشن كبير)`;
+  let sectorSpaceExpat = `${propSize} م² (${propRooms} غرف نوم بتشطيب فندقي معاصر)`;
+  let sectorSpaceEn = `${propSize} sqm | ${propRooms} Luxury Bedrooms`;
+
+  if (isLand) {
+    sectorTitleLuxury = 'أرض استثمارية استثنائية';
+    sectorHookLuxury = 'هل تبحث عن موقع استثماري نادر وتطوير عقاري بعائد رأسمالي مضاعف؟';
+    sectorSpaceLuxury = `${selectedProp.landType_ar || 'أرض استثمارية مرخصة'} ${selectedProp.frontage ? `• ${selectedProp.frontage}` : ''}`;
+    sectorAdvantagesLuxury = 'مكتملة المرافق (مياه، كهرباء، صرف)، رخصة بناء معتمدة وجاهزية تامة للحفر والبناء الفوري.';
+    sectorSpaceSocial = `${propSize} م² (${selectedProp.landType_ar || 'أرض استثمارية'} • ${selectedProp.frontage || 'واجهة عريضة'})`;
+    sectorSpaceExpat = `${propSize} م² (${selectedProp.landType_ar || 'أرض استثمارية مرخصة وموثقة'})`;
+    sectorSpaceEn = `${propSize} sqm | ${selectedProp.landType_en || 'Licensed Investment Land Plot'} ${selectedProp.frontage ? `(${selectedProp.frontage})` : ''}`;
+  } else if (isCom) {
+    sectorTitleLuxury = 'أصل تجاري بعائد استثماري فوري';
+    sectorHookLuxury = 'هل تبحث عن مقر استراتيجي لفرنشايز أو محل تجاري يدر أعلى دخل إيجاري بسوهاج؟';
+    sectorSpaceLuxury = `${selectedProp.commercialType_ar || 'محل تجاري واجهة مباشرة'} ${selectedProp.frontage ? `• ${selectedProp.frontage}` : ''}`;
+    sectorAdvantagesLuxury = 'واجهة تجارية رئيسية، رخصة وسجل تجاري معتمد، كثافة مرورية عالية ومواقف سيارات.';
+    sectorSpaceSocial = `${propSize} م² (${selectedProp.commercialType_ar || 'محل تجاري'} • ${selectedProp.frontage || 'واجهة رئيسية'})`;
+    sectorSpaceExpat = `${propSize} م² (${selectedProp.commercialType_ar || 'محل تجاري بعائد إيجاري دولاري/شهري مضمون'})`;
+    sectorSpaceEn = `${propSize} sqm | ${selectedProp.commercialType_en || 'Prime Commercial Retail Space'} ${selectedProp.frontage ? `(${selectedProp.frontage})` : ''}`;
+  } else if (isOff) {
+    sectorTitleLuxury = 'صرح إداري وطبي متكامل';
+    sectorHookLuxury = 'ارتقِ بمقر شركتك أو عيادتك التخصصية في قلب المركز الإداري والخدمي بسوهاج:';
+    sectorSpaceLuxury = `${selectedProp.adminType_ar || 'مقر إداري / عيادة طبية'} ${selectedProp.frontage ? `• ${selectedProp.frontage}` : ''}`;
+    sectorAdvantagesLuxury = 'تشطيب إداري فاخر، مدخل خاص ومصاعد حديثة، ترخيص إداري وطبي معتمد 100%.';
+    sectorSpaceSocial = `${propSize} م² (${selectedProp.adminType_ar || 'مقر إداري وطبي مجهز'})`;
+    sectorSpaceExpat = `${propSize} م² (${selectedProp.adminType_ar || 'مقر إداري وطبي فاخر'})`;
+    sectorSpaceEn = `${propSize} sqm | ${selectedProp.adminType_en || 'Executive Admin Office & Clinic'}`;
+  }
+
   // AI Generated Templates
   const generateAdContent = () => {
     if (adTone === 'luxury') {
       return (
-`✨【 قصر السكن الراقي في قلب سوهاج — ${propTitle} 】✨
+`✨【 ${sectorTitleLuxury} في قلب سوهاج — ${propTitle} 】✨
 
-💎 هل تبحث عن السكن الفندقي والخصوصية الكاملة لك ولأسرتك؟
-يسر شركة "1Line للحلول العقارية" أن تقدم لعشاق الفخامة والمغتربين أرقى المعروضات العقارية بسوهاج:
+💎 ${sectorHookLuxury}
+يسر شركة "1Line للحلول العقارية" أن تقدم لعشاق الفخامة والمستثمرين والمغتربين أرقى المعروضات العقارية بسوهاج:
 
 📍 الموقع الاستراتيجي: ${propLocation}
-📐 المساحة الملكية: ${propSize} م² بتوزيع داخلي فريد (${propRooms} غرف نوم فاخرة)
+📐 المساحة الملكية: ${propSize} م² — ${sectorSpaceLuxury}
 ⚖️ الموقف القانوني: مرخص رسمياً ومسجل شهر عقاري 100% (حصة بالأرض)
-⭐ المميزات: تشطيب سوبر لوكس، أسانسير حديث، إطلالة مفتوحة ومرافق كاملة جاهزة.
+⭐ المميزات: ${sectorAdvantagesLuxury}
 
 💰 خطة السداد والاستثمار:
 • السعر الإجمالي: ${propPrice}
@@ -72,14 +112,14 @@ export default function AICopywriterModal({
 📍 في أميز مناطق سوهاج: ${propLocation}
 
 ⚡ ليه العقار ده بالذات ميتفوتش؟
-✅ مساحة واسعة: ${propSize} م² (${propRooms} غرف + ريسبشن كبير)
+✅ مساحة واسعة: ${sectorSpaceSocial}
 ✅ مقدم يبدأ من ${propDownPayment} وقسط شهري ${propInstallment}
 ✅ خالص التراخيص ونموذج 10 وجاهز للاستلام والسكن الفوري!
 ✅ مفيش عمولة على المشتري!
 
 ⏳ العرض ساري لأسبقية الحجز فقط!
 📲 كلمنا فوراً أو ابعتلنا واتساب على: ${getDynamicPhone()}
-#عقارات_سوهاج #شقق_للبيع #سوهاج_الجديدة #1Line`);
+#عقارات_سوهاج #فرص_استثمار #سوهاج_الجديدة #1Line`);
     }
 
     if (adTone === 'investor') {
@@ -112,7 +152,7 @@ export default function AICopywriterModal({
 
 🏢 العقار: ${propTitle}
 📍 الموقع: ${propLocation}
-📐 المساحة: ${propSize} م² (${propRooms} غرف نوم بتشطيب فندقي معاصر)
+📐 المساحة والمواصفات: ${sectorSpaceExpat}
 ⚖️ الموقف القانوني: ترخيص كامل وتوثيق شهر عقاري وحصة مسجلة بالأرض (ضمان مؤسسي 100%)
 
 💰 خطة السداد المرنة وتحويل العملات:
@@ -132,7 +172,7 @@ export default function AICopywriterModal({
 
 🌟 Featured Unit: ${selectedProp.title_en || propTitle}
 📍 Prime Location: ${selectedProp.locationName_en || propLocation}
-📐 Total Area: ${propSize} sqm | ${propRooms} Luxury Bedrooms
+📐 Specifications: ${sectorSpaceEn}
 📑 Legal Status: 100% Verified Title Deed & Construction Permit
 
 💎 Payment Terms:
