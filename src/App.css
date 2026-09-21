@@ -12911,18 +12911,84 @@ body.dark,
    ============================================================= */
 .projects-page-wrapper {
   padding-bottom: 80px;
+  overflow-x: hidden;
 }
 
 .projects-hero-banner {
-  background: linear-gradient(135deg, #092347 0%, #0d48a1 60%, #1565c0 100%);
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 80%, rgba(179, 138, 69, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 20%, rgba(21, 101, 192, 0.25) 0%, transparent 50%),
+    linear-gradient(135deg, #071930 0%, #0d3a7a 45%, #1259a8 80%, #1565c0 100%);
   color: #ffffff;
-  padding: 50px 24px 60px;
+  padding: 32px 24px 40px;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(179, 138, 69, 0.18);
+}
+
+/* Geometric depth pattern */
+.projects-hero-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 15% 25%, rgba(255,255,255,0.035) 1px, transparent 1px),
+    radial-gradient(circle at 85% 75%, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 48px 48px, 64px 64px;
+  pointer-events: none;
+}
+
+/* Decorative gold accent line */
+.projects-hero-banner::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--accent-gold, #B38A45), transparent);
+  border-radius: 2px;
+}
+
+/* Override back bar colors inside dark hero */
+.projects-hero-banner .btn-back-step {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(12px);
+}
+
+.projects-hero-banner .btn-back-step:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(255, 213, 79, 0.5) !important;
+  color: #ffd54f !important;
+  box-shadow: 0 4px 14px rgba(255, 213, 79, 0.2);
+}
+
+.projects-hero-banner .page-breadcrumb-sub {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.projects-hero-banner .page-breadcrumb-sub a {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.projects-hero-banner .page-breadcrumb-sub a:hover {
+  color: #ffd54f;
+}
+
+.projects-hero-banner .page-breadcrumb-sub .crumb-current {
+  color: var(--accent-gold, #B38A45);
 }
 
 .projects-hero-container {
   max-width: 900px;
   margin: 0 auto;
+  position: relative;
+  z-index: 1;
 }
 
 .projects-badge-pill {
@@ -12935,22 +13001,26 @@ body.dark,
   border-radius: var(--radius-pill);
   font-size: 0.82rem;
   font-weight: 700;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   backdrop-filter: blur(8px);
 }
 
 .projects-hero-banner h1 {
-  font-size: 2.3rem;
+  font-size: 2.1rem;
   font-weight: 900;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   color: #ffffff;
+  letter-spacing: -0.02em;
 }
 
 .projects-hero-banner p {
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.85);
-  margin-bottom: 24px;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.82);
+  margin-bottom: 20px;
   line-height: 1.6;
+  max-width: 680px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .projects-category-pills {
@@ -13281,6 +13351,70 @@ body.dark,
 
 .projects-page-wrapper {
   padding-bottom: 100px;
+  overflow-x: hidden;
+}
+
+/* 📱 Projects Page Mobile Responsive */
+@media (max-width: 768px) {
+  .projects-hero-banner {
+    padding: 24px 16px 32px;
+  }
+
+  .projects-hero-banner h1 {
+    font-size: 1.55rem;
+  }
+
+  .projects-hero-banner p {
+    font-size: 0.88rem;
+  }
+
+  .projects-category-pills {
+    justify-content: flex-start;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+
+  .projects-category-pills::-webkit-scrollbar {
+    display: none;
+  }
+
+  .proj-cat-btn {
+    flex-shrink: 0;
+  }
+
+  .projects-list-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .page-top-back-bar {
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .project-card-footer-actions {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .projects-hero-banner h1 {
+    font-size: 1.35rem;
+  }
+
+  .projects-badge-pill {
+    font-size: 0.74rem;
+    padding: 5px 10px;
+  }
+
+  .project-metrics-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* =============================================================
