@@ -204,30 +204,31 @@ export function ClientAuthProvider({
    * Step 2: Finalize Client Verification & Activate
    * Solution 2 Handshake: Direct activation upon sending WhatsApp message without confusing code mismatch errors.
    */
-  const completeClientVerification = useCallback(async (codeEntered = '') => {
-    if (!verificationSession) {
+  const completeClientVerification = useCallback(async (codeEntered = '', explicitSession = null, options = {}) => {
+    const sessionToUse = explicitSession || verificationSession;
+    if (!sessionToUse) {
       throw new Error(isAr ? 'لا توجد جلسة تفعيل جارية، يرجى ملء البيانات أولاً' : 'No active verification session');
     }
 
     // If an explicit code was supplied and differs from session code, validate it.
     // Otherwise, allow direct handshake completion seamlessly.
     const cleanEntered = (codeEntered || '').trim().replace(/^1L-/i, '');
-    if (cleanEntered && cleanEntered !== verificationSession.code) {
+    if (cleanEntered && cleanEntered !== sessionToUse.code) {
       throw new Error(isAr ? 'رمز التأكيد غير مطابق، يرجى التأكد وإعادة المحاولة' : 'Verification code mismatch');
     }
 
     const nowIso = new Date().toISOString();
     const verifiedAccount = {
       id: `client_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      name: verificationSession.name,
-      email: verificationSession.email,
-      whatsapp: verificationSession.whatsapp,
-      phone: verificationSession.whatsapp,
-      country: verificationSession.country || '+20',
-      countryFlag: verificationSession.countryFlag || '🇪🇬',
+      name: sessionToUse.name,
+      email: sessionToUse.email,
+      whatsapp: sessionToUse.whatsapp,
+      phone: sessionToUse.whatsapp,
+      country: sessionToUse.country || '+20',
+      countryFlag: sessionToUse.countryFlag || '🇪🇬',
       verified: true,
       verifiedAt: nowIso,
-      verificationToken: verificationSession.token,
+      verificationToken: sessionToUse.token,
       verificationMethod: 'whatsapp_handshake',
       role: 'verified_client'
     };
@@ -253,7 +254,7 @@ export function ClientAuthProvider({
           phone: verifiedAccount.whatsapp,
           source: 'client_account_verified',
           type: 'buyer',
-          notes: `حساب عميل موثق عبر مصادقة الواتساب (كود: ${verifiedAccount.verificationToken} | ${verifiedAccount.countryFlag} ${verifiedAccount.country}) لتفعيل المفضلة والمقارنات الذكية`
+          notes: `حساب عميل موثق ومفعل عبر الواتساب (كود: ${verifiedAccount.verificationToken} | ${verifiedAccount.countryFlag} ${verifiedAccount.country}) لتفعيل المفضلة والمقارنات الذكية`
         }));
       } catch (err) {
         console.warn('Auto CRM lead sync warning:', err);
@@ -261,7 +262,7 @@ export function ClientAuthProvider({
     }
 
     // Restore or merge client's saved favorites
-    const phoneDigits = (verificationSession.whatsapp || '').replace(/[^0-9]/g, '');
+    const phoneDigits = (sessionToUse.whatsapp || '').replace(/[^0-9]/g, '');
     let clientSavedFavs = [];
     if (phoneDigits) {
       try {
@@ -279,16 +280,18 @@ export function ClientAuthProvider({
       restoreFavorites(mergedFavs);
     }
 
-    // Close modal
-    setClientAuthModalOpen(false);
-    setVerificationSession(null);
+    // Close modal unless caller wants to manage the success screen
+    if (!options?.keepModalOpen) {
+      setClientAuthModalOpen(false);
+      setVerificationSession(null);
+    }
 
     // Toast celebratory message
-    if (typeof triggerToast === 'function') {
+    if (!options?.silentToast && typeof triggerToast === 'function') {
       triggerToast(
         isAr 
-          ? `مرحباً بك يا ${verifiedAccount.name}! تم تأكيد حسابك بنجاح وحفظ العقار في حسابك 🌟` 
-          : `Welcome ${verifiedAccount.name}! Your account has been verified successfully.`,
+          ? `🎉 تم تفعيل الحساب مباشرة! مرحباً بك يا ${verifiedAccount.name} في منصة 1Line 🌟` 
+          : `🎉 Account activated directly! Welcome ${verifiedAccount.name} to 1Line 🌟`,
         'success'
       );
     }
@@ -306,7 +309,21 @@ export function ClientAuthProvider({
     }
 
     return verifiedAccount;
-  }, [verificationSession, isAr, handleAddNewLead, triggerToast, pendingAction, favorites, restoreFavorites]);
+  }, [verificationSession, isAr, handleAddNewLead, favorites, restoreFavorites, triggerToast, pendingAction]);
+
+  /**
+   * One-Click Direct Activation:
+   * Validates client info, sets up WhatsApp verification message, and immediately activates the account.
+   */
+  const activateClientDirectly = useCallback(async ({ name, email, whatsapp, country = '+20' }, options = {}) => {
+    const regResult = initiateClientRegistration({ name, email, whatsapp, country });
+    const verifiedAccount = await completeClientVerification('', regResult.session, options);
+    return {
+      session: regResult.session,
+      whatsappUrl: regResult.whatsappUrl,
+      verifiedAccount
+    };
+  }, [initiateClientRegistration, completeClientVerification]);
 
   /**
    * Client Logout
@@ -372,6 +389,7 @@ export function ClientAuthProvider({
     requireClientAuth,
     initiateClientRegistration,
     completeClientVerification,
+    activateClientDirectly,
     logoutClient,
     updateClientProfile
   };

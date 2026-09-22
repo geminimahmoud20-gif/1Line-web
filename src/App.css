@@ -22471,6 +22471,105 @@ body.dark-theme .compare-tabs-bar {
   color: var(--text-primary);
 }
 
+/* Direct Activation Banner & Single Step Layout */
+.direct-activated-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: linear-gradient(135deg, rgba(240, 253, 244, 0.95) 0%, rgba(220, 252, 231, 0.9) 100%);
+  border: 1.5px solid rgba(16, 185, 129, 0.35);
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.12);
+  transition: all 0.3s ease;
+}
+
+.dark-theme .direct-activated-banner,
+[data-theme="dark"] .direct-activated-banner {
+  background: linear-gradient(135deg, rgba(6, 78, 59, 0.45) 0%, rgba(4, 47, 46, 0.6) 100%);
+  border-color: rgba(52, 211, 153, 0.4);
+}
+
+.direct-activated-banner.celebration-pulse {
+  animation: celebrationPulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes celebrationPulse {
+  0% { transform: scale(1); box-shadow: 0 4px 20px rgba(16, 185, 129, 0.15); }
+  100% { transform: scale(1.02); box-shadow: 0 8px 30px rgba(16, 185, 129, 0.35); }
+}
+
+.direct-banner-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(16, 185, 129, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.direct-banner-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.direct-banner-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #065f46;
+  margin: 0;
+}
+
+.dark-theme .direct-banner-title,
+[data-theme="dark"] .direct-banner-title {
+  color: #6ee7b7;
+}
+
+.direct-banner-desc {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.direct-activation-btn-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.btn-reopen-wa {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px dashed rgba(20, 43, 73, 0.2);
+  border-radius: 10px;
+  padding: 10px 16px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.dark-theme .btn-reopen-wa,
+[data-theme="dark"] .btn-reopen-wa {
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #cbd5e1;
+}
+
+.btn-reopen-wa:hover {
+  background: rgba(37, 211, 102, 0.08);
+  border-color: #25D366;
+  color: #16a34a;
+}
+
 /* =============================================================
    🏛️ CLIENT ACCOUNT PAGE DASHBOARD (Quiet Luxury Hub)
    ============================================================= */

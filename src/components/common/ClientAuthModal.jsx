@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   X, 
   ShieldCheck, 
@@ -25,12 +25,12 @@ export default function ClientAuthModal({ lang = 'ar' }) {
     clientAuthModalOpen, 
     setClientAuthModalOpen, 
     authReasonMessage,
-    initiateClientRegistration,
+    activateClientDirectly,
     completeClientVerification,
     verificationSession
   } = useClientAuth();
 
-  const [step, setStep] = useState(1); // 1: Personal Info Input, 2: WhatsApp Handshake
+  const [step, setStep] = useState('input'); // 'input' | 'activated'
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -42,7 +42,34 @@ export default function ClientAuthModal({ lang = 'ar' }) {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [copiedCode, setCopiedCode] = useState(false);
-  const [waOpened, setWaOpened] = useState(false);
+  const [activatedClient, setActivatedClient] = useState(null);
+  const [waitingReturn, setWaitingReturn] = useState(false);
+  const [returnedCelebration, setReturnedCelebration] = useState(false);
+
+  // Return-to-site detection: when client switches back from WhatsApp to 1Line website
+  useEffect(() => {
+    if (!waitingReturn) return;
+
+    let timerId = null;
+    const handleReturn = () => {
+      if (document.visibilityState === 'visible' || document.hasFocus()) {
+        setReturnedCelebration(true);
+        // Automatically close modal after user sees the celebratory success message
+        timerId = setTimeout(() => {
+          handleClose();
+        }, 1800);
+      }
+    };
+
+    window.addEventListener('focus', handleReturn);
+    document.addEventListener('visibilitychange', handleReturn);
+
+    return () => {
+      window.removeEventListener('focus', handleReturn);
+      document.removeEventListener('visibilitychange', handleReturn);
+      if (timerId) clearTimeout(timerId);
+    };
+  }, [waitingReturn]);
 
   if (!clientAuthModalOpen) return null;
 
@@ -50,8 +77,9 @@ export default function ClientAuthModal({ lang = 'ar' }) {
     setClientAuthModalOpen(false);
     setErrorMsg('');
     setPhoneError('');
-    setStep(1);
-    setWaOpened(false);
+    setStep('input');
+    setWaitingReturn(false);
+    setReturnedCelebration(false);
   };
 
   const handleInputChange = (e) => {
@@ -60,8 +88,8 @@ export default function ClientAuthModal({ lang = 'ar' }) {
     if (errorMsg) setErrorMsg('');
   };
 
-  // Step 1: Strict Validation & Initiate Registration
-  const handleSubmitInfo = (e) => {
+  // Direct 1-Click Activation upon clicking "تفعيل"
+  const handleDirectActivate = async (e) => {
     e.preventDefault();
     setErrorMsg('');
     setPhoneError('');
@@ -86,7 +114,7 @@ export default function ClientAuthModal({ lang = 'ar' }) {
     // 3. Strict Phone Format Check according to selected country
     const countryObj = SUPPORTED_COUNTRIES.find(c => c.code === country) || SUPPORTED_COUNTRIES[0];
     if (!cleanPhone) {
-      setPhoneError(isAr ? 'رقم الواتساب مطلوب للمصادقة' : 'WhatsApp number is required');
+      setPhoneError(isAr ? 'رقم الواتساب مطلوب للمصادقة والتفعيل' : 'WhatsApp number is required');
       return;
     }
 
@@ -99,46 +127,37 @@ export default function ClientAuthModal({ lang = 'ar' }) {
       return;
     }
 
+    setLoading(true);
+
     try {
-      const result = initiateClientRegistration({
+      // 1-Click direct activation: saves account, merges favorites, registers CRM lead immediately
+      const result = await activateClientDirectly({
         name: cleanName,
         email: cleanEmail,
         whatsapp: cleanPhone,
         country
-      });
+      }, { keepModalOpen: true });
 
       setWhatsappUrl(result.whatsappUrl);
-      setStep(2);
-      setWaOpened(true);
+      setActivatedClient(result.verifiedAccount);
+      setStep('activated');
+      setWaitingReturn(true);
 
-      // Auto-open WhatsApp on desktop / mobile for seamless handshake UX
+      // Directly open WhatsApp with the pre-filled verification ticket message
       if (result.whatsappUrl) {
         window.open(result.whatsappUrl, '_blank');
       }
     } catch (err) {
-      setErrorMsg(err.message || (isAr ? 'حدث خطأ في البيانات المدخلة' : 'Validation error'));
-    }
-  };
-
-  // Step 2: Confirm Verification Handshake
-  const handleConfirmVerification = async () => {
-    setLoading(true);
-    setErrorMsg('');
-
-    try {
-      await completeClientVerification();
-      setStep(1);
-      setWaOpened(false);
-    } catch (err) {
-      setErrorMsg(err.message || (isAr ? 'فشل التحقق، يرجى المحاولة مرة أخرى' : 'Verification failed'));
+      setErrorMsg(err.message || (isAr ? 'حدث خطأ أثناء تفعيل الحساب' : 'Activation error'));
     } finally {
       setLoading(false);
     }
   };
 
   const handleCopyCode = () => {
-    if (verificationSession?.token) {
-      navigator.clipboard.writeText(verificationSession.token);
+    const token = activatedClient?.verificationToken || verificationSession?.token;
+    if (token) {
+      navigator.clipboard.writeText(token);
       setCopiedCode(true);
       setTimeout(() => setCopiedCode(false), 2000);
     }
@@ -164,27 +183,32 @@ export default function ClientAuthModal({ lang = 'ar' }) {
             <span>{isAr ? 'حساب عميل 1Line المعتمد' : '1Line Verified Client Account'}</span>
           </div>
           <h2 className="client-auth-title">
-            {step === 1 
+            {step === 'input' 
               ? (isAr ? 'تفعيل حسابك لحفظ ومقارنة العقارات' : 'Activate Your Account to Save & Compare')
-              : (isAr ? 'مصادقة وتوثيق الحساب عبر واتساب' : 'WhatsApp Verification Handshake')}
+              : (isAr ? 'تم تفعيل الحساب مباشرة' : 'Account Activated Directly')}
           </h2>
           <p className="client-auth-subtitle">
-            {authReasonMessage || (isAr 
-              ? 'احفظ عقاراتك في مفضلتك وقارن بين المشروعات بسوهاج وتلقّ إشعارات الأسعار الحصرية.'
-              : 'Save favorite properties, run smart comparisons, and get exclusive market price alerts.')}
+            {step === 'input'
+              ? (authReasonMessage || (isAr 
+                  ? 'احفظ عقاراتك في مفضلتك وقارن بين المشروعات بسوهاج وتلقّ إشعارات الأسعار الحصرية.'
+                  : 'Save favorite properties, run smart comparisons, and get exclusive market price alerts.'))
+              : (isAr
+                  ? 'تم ربط وتوثيق حسابك بنجاح. أهلاً بك في منصة 1Line العقارية.'
+                  : 'Your account is verified and ready. Welcome to 1Line Real Estate.')}
           </p>
 
-          {/* Stepper Dots */}
+          {/* Stepper Pill */}
           <div className="client-auth-stepper">
-            <div className={`stepper-pill ${step === 1 ? 'active' : 'completed'}`}>
-              <span className="step-num">1</span>
-              <span>{isAr ? 'البيانات الشخصية' : 'Personal Info'}</span>
+            <div className={`stepper-pill ${step === 'input' ? 'active' : 'completed'}`}>
+              <Sparkles size={14} className="text-gold" />
+              <span>{isAr ? 'تفعيل فوري بنقرة واحدة' : 'Instant 1-Click Activation'}</span>
             </div>
-            <span className="stepper-arrow">{isAr ? '←' : '→'}</span>
-            <div className={`stepper-pill ${step === 2 ? 'active' : ''}`}>
-              <span className="step-num">2</span>
-              <span>{isAr ? 'مصادقة واتساب' : 'WhatsApp Handshake'}</span>
-            </div>
+            {step === 'activated' && (
+              <div className="stepper-pill completed">
+                <CheckCircle2 size={14} className="text-emerald" />
+                <span>{isAr ? 'تم تفعيل الحساب مباشرة' : 'Directly Activated'}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -195,9 +219,9 @@ export default function ClientAuthModal({ lang = 'ar' }) {
           </div>
         )}
 
-        {/* Body - Step 1: User Data Input with Strict Validation */}
-        {step === 1 && (
-          <form onSubmit={handleSubmitInfo} className="client-auth-form">
+        {/* Body - Input Form: Name, Email, WhatsApp & 1-Click Activation */}
+        {step === 'input' && (
+          <form onSubmit={handleDirectActivate} className="client-auth-form">
             <div className="auth-input-group">
               <label htmlFor="client-name">
                 <User size={14} className="text-muted" />
@@ -234,10 +258,10 @@ export default function ClientAuthModal({ lang = 'ar' }) {
               />
             </div>
 
-            {/* Standard PhoneInputField with Flag & Strict Regex per Country */}
+            {/* PhoneInputField with Country Selector */}
             <div className="auth-input-group">
               <PhoneInputField
-                label={isAr ? 'رقم الواتساب للتأكيد والاستفسارات' : 'WhatsApp Number'}
+                label={isAr ? 'رقم الواتساب للتفعيل المباشر' : 'WhatsApp Number for Instant Activation'}
                 value={formData.whatsapp}
                 onChange={(val) => {
                   setFormData((prev) => ({ ...prev, whatsapp: val }));
@@ -254,7 +278,7 @@ export default function ClientAuthModal({ lang = 'ar' }) {
                 required
               />
               <span className="input-hint">
-                {isAr ? 'يتم التحقق من صحة الرقم ومطابقته لكود الدولة لضمان توثيق الحساب' : 'Phone is validated with the selected country code to ensure authentic account ownership'}
+                {isAr ? 'بنقرة واحدة سيتم فتح واتساب وتفعيل حسابك تلقائياً دون خطوات معقدة' : 'One click activates your account and launches WhatsApp automatically'}
               </span>
             </div>
 
@@ -270,19 +294,28 @@ export default function ClientAuthModal({ lang = 'ar' }) {
               </div>
               <div className="perk-item">
                 <Sparkles size={14} className="text-emerald" />
-                <span>{isAr ? 'أولوية الحجز ومعاينات VIP مباشرة مع المستشار العقاري' : 'Priority VIP Tours with Real Estate Advisor'}</span>
+                <span>{isAr ? 'أولوية الحجز ومعاينات VIP مباشرة' : 'Priority VIP Tours & Direct Support'}</span>
               </div>
             </div>
 
-            <button type="submit" className="btn-client-auth-primary">
-              <span>{isAr ? 'متابعة وتأكيد الحساب عبر واتساب' : 'Proceed to WhatsApp Confirmation'}</span>
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="btn-client-auth-primary btn-direct-activate"
+            >
+              <Sparkles size={18} />
+              <span>
+                {loading 
+                  ? (isAr ? 'جاري تفعيل الحساب...' : 'Activating Account...') 
+                  : (isAr ? 'تفعيل الحساب وإرسال الرسالة إلى واتساب مباشرة ✨' : 'Activate Account & Open WhatsApp Direct ✨')}
+              </span>
               {isAr ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
             </button>
           </form>
         )}
 
-        {/* Body - Step 2: Solution 2 WhatsApp Handshake (No Confusing Code Input) */}
-        {step === 2 && (
+        {/* Body - Activated State: Shows verification pass and direct success notification */}
+        {step === 'activated' && (
           <div className="client-auth-step2-box">
             {/* Verified Pass Card */}
             <div className="wa-security-card">
@@ -290,7 +323,7 @@ export default function ClientAuthModal({ lang = 'ar' }) {
                 <div className="wa-token-display">
                   <span className="token-label">{isAr ? 'رمز التوثيق المعتمد لحسابك:' : 'Your Official Verification Token:'}</span>
                   <div className="token-val-row">
-                    <strong className="token-text">{verificationSession?.token || '1L-****'}</strong>
+                    <strong className="token-text">{activatedClient?.verificationToken || verificationSession?.token || '1L-****'}</strong>
                     <button 
                       type="button" 
                       onClick={handleCopyCode} 
@@ -303,7 +336,7 @@ export default function ClientAuthModal({ lang = 'ar' }) {
                   </div>
                 </div>
                 <div className="wa-icon-glow">
-                  <MessageSquare size={24} />
+                  <CheckCircle2 size={26} className="text-emerald" />
                 </div>
               </div>
 
@@ -311,79 +344,62 @@ export default function ClientAuthModal({ lang = 'ar' }) {
               <div className="wa-client-details-summary">
                 <div className="wa-detail-row">
                   <span className="detail-k">{isAr ? 'الاسم:' : 'Name:'}</span>
-                  <span className="detail-v">{verificationSession?.name}</span>
+                  <span className="detail-v">{activatedClient?.name || formData.name}</span>
                 </div>
                 <div className="wa-detail-row">
                   <span className="detail-k">{isAr ? 'البريد:' : 'Email:'}</span>
-                  <span className="detail-v" dir="ltr">{verificationSession?.email}</span>
+                  <span className="detail-v" dir="ltr">{activatedClient?.email || formData.email}</span>
                 </div>
                 <div className="wa-detail-row">
                   <span className="detail-k">{isAr ? 'الواتساب:' : 'WhatsApp:'}</span>
                   <span className="detail-v wa-phone-v" dir="ltr">
-                    <span>{verificationSession?.countryFlag}</span>
-                    <span>{verificationSession?.whatsapp}</span>
+                    <span>{activatedClient?.countryFlag || verificationSession?.countryFlag}</span>
+                    <span>{activatedClient?.whatsapp || formData.whatsapp}</span>
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Handshake Step 1: Open WhatsApp */}
-            <div className="handshake-action-block">
-              <div className="handshake-step-badge">
-                <span className="badge-num">1</span>
-                <span className="badge-text">{isAr ? 'الخطوة الأولى: إرسال رسالة التوثيق' : 'Step 1: Send Verification Message'}</span>
+            {/* Direct Activation Banner — No Step 1 / Step 2 divisions */}
+            <div className={`direct-activated-banner ${returnedCelebration ? 'celebration-pulse' : ''}`}>
+              <div className="direct-banner-icon">
+                <CheckCircle2 size={32} className="text-emerald" />
               </div>
-              <p className="handshake-step-desc">
-                {isAr 
-                  ? 'ستفتح محادثة واتساب مع مستشارك العقاري في 1Line وبها رسالة جاهزة تتضمن رمز التوثيق. اضغط إرسال في واتساب فقط.'
-                  : 'WhatsApp will open with a pre-filled verification ticket message. Simply send it to 1Line support.'}
-              </p>
-              <a 
-                href={whatsappUrl} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                onClick={() => setWaOpened(true)}
-                className="btn-open-wa-direct"
-              >
-                <MessageSquare size={18} />
-                <span>{isAr ? 'فتح تطبيق واتساب وإرسال الرسالة الآن 💬' : 'Open WhatsApp & Send Message'}</span>
-                <ExternalLink size={14} style={{ opacity: 0.8 }} />
-              </a>
+              <div className="direct-banner-content">
+                <h3 className="direct-banner-title">
+                  {isAr ? 'تم تفعيل الحساب مباشرة 🎉' : 'Account Activated Directly! 🎉'}
+                </h3>
+                <p className="direct-banner-desc">
+                  {isAr 
+                    ? 'تم إرسال رسالة التوثيق إلى واتساب وتفعيل حسابك بنجاح. عقاراتك المفضلة والمقارنات أصبحت نشطة ومحفوظة.'
+                    : 'Your account is verified and ready. Saved properties and comparisons are fully active.'}
+                </p>
+              </div>
             </div>
 
-            {/* Handshake Step 2: Instant Activation */}
-            <div className="handshake-action-block">
-              <div className="handshake-step-badge">
-                <span className="badge-num">2</span>
-                <span className="badge-text">{isAr ? 'الخطوة الثانية: تأكيد وتفعيل الحساب' : 'Step 2: Activate Your Account'}</span>
-              </div>
-              <p className="handshake-step-desc">
-                {isAr
-                  ? 'بعد إرسال الرسالة في واتساب، اضغط على الزر أدناه لتفعيل حسابك فوراً وحفظ عقاراتك في مفضلتك.'
-                  : 'After sending the WhatsApp message, click below to immediately activate your account and sync your saved properties.'}
-              </p>
+            <div className="direct-activation-btn-row">
               <button 
                 type="button" 
-                onClick={handleConfirmVerification}
-                disabled={loading}
+                onClick={handleClose}
                 className="btn-client-auth-primary confirm-ready-btn"
               >
-                <CheckCircle2 size={18} />
-                <span>
-                  {loading 
-                    ? (isAr ? 'جاري تفعيل الحساب...' : 'Activating Account...') 
-                    : (isAr ? 'لقد أرسلت الرسالة — تفعيل حسابي الآن ✨' : 'I Sent The Message — Activate Now')}
-                </span>
+                <Sparkles size={18} />
+                <span>{isAr ? 'تم تفعيل الحساب — استمرار للموقع ✨' : 'Account Activated — Continue ✨'}</span>
               </button>
-            </div>
 
-            <button 
-              type="button" 
-              onClick={() => setStep(1)} 
-              className="btn-back-step"
-            >
-              {isAr ? '← تعديل البيانات الشخصية' : '← Edit Personal Info'}
-            </button>
+              {whatsappUrl && (
+                <a 
+                  href={whatsappUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="btn-reopen-wa"
+                >
+                  <MessageSquare size={16} />
+                  <span>{isAr ? 'إعادة فتح محادثة واتساب 💬' : 'Reopen WhatsApp 💬'}</span>
+                  <ExternalLink size={13} style={{ opacity: 0.7 }} />
+                </a>
+              )}
+            </div>
           </div>
         )}
       </div>
