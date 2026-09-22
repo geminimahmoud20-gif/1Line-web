@@ -23214,6 +23214,10 @@ body:has(.quick-search-backdrop) .mobile-floating-bottom-bar,
 body:has(.quick-search-backdrop) .mobile-detail-sticky-bar,
 body:has(.quick-search-backdrop) .floating-ai-advisor-trigger,
 body:has(.quick-search-backdrop) .floating-back-to-top-btn,
+body:has(.track-modal-backdrop) .mobile-floating-bottom-bar,
+body:has(.track-modal-backdrop) .mobile-detail-sticky-bar,
+body:has(.track-modal-backdrop) .floating-ai-advisor-trigger,
+body:has(.track-modal-backdrop) .floating-back-to-top-btn,
 body:has(.lightbox-overlay) .mobile-floating-bottom-bar,
 body:has(.lightbox-overlay) .mobile-detail-sticky-bar,
 body:has(.lightbox-overlay) .floating-ai-advisor-trigger,
@@ -23313,6 +23317,22 @@ body:has(.lightbox-overlay) .floating-back-to-top-btn {
     font-size: 0.76rem !important;
     padding: 6px 12px !important;
   }
+  .tour-bottom-rooms-strip {
+    justify-content: flex-start !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    padding: 4px 6px !important;
+  }
+  .tour-bottom-rooms-strip::-webkit-scrollbar {
+    display: none !important;
+  }
+  .prop-types-rich-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  .prop-type-card {
+    padding: 14px 12px !important;
+  }
 }
 
 /* 4. Kanban Pipeline Smooth Horizontal Touch Scrolling on Mobile */
@@ -23325,6 +23345,7 @@ body:has(.lightbox-overlay) .floating-back-to-top-btn {
     scroll-snap-align: start !important;
   }
 }
+
 
 
 
