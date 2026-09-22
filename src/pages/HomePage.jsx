@@ -388,42 +388,27 @@ export default function HomePage({
 
         <div className="hero-content-container">
           <div className="hero-badge">
-            <span className="hero-badge-sparkle">
-              <Sparkles size={14} />
-            </span>
-            <span>
-              {lang === 'ar' 
-                ? (founderSettings.heroBadge_ar || 'المنصة العقارية الأكثر موثوقية في سوهاج') 
-                : (founderSettings.heroBadge_en || 'Sohag’s Most Trusted Real Estate Platform')}
-            </span>
+            <span className="hero-eyebrow-text">1LINE SOLUTIONS</span>
           </div>
 
           <h1 className="hero-main-title">
             {lang === 'ar' ? (
               <>
-                <span className="hero-title-line">
-                  {founderSettings.heroTitle_ar || 'امتلك واستثمر في أرقى عقارات سوهاج'}
-                </span>
-                <span className="hero-title-line hero-title-highlight hero-title-shimmer">
-                  {founderSettings.heroHighlight_ar || 'بكل ثقة وضمان قانوني معتمد'}
-                </span>
+                <span className="hero-title-line">العقار ليس مجرد مساحة.</span>
+                <span className="hero-title-line hero-title-secondary">بل قيمة تُبنى على قرار صحيح.</span>
               </>
             ) : (
               <>
-                <span className="hero-title-line">
-                  {founderSettings.heroTitle_en || 'Own & Invest in Sohag’s Finest Properties'}
-                </span>
-                <span className="hero-title-line hero-title-highlight hero-title-shimmer">
-                  {founderSettings.heroHighlight_en || 'With Full Confidence & Legal Security'}
-                </span>
+                <span className="hero-title-line">Real Estate Is More Than Space.</span>
+                <span className="hero-title-line hero-title-secondary">It Is Value Built On The Right Decision.</span>
               </>
             )}
           </h1>
 
           <p className="hero-description">
             {lang === 'ar' 
-              ? (founderSettings.heroSubtitle_ar || 'شقق سكنية فاخرة، مقرات تجارية وإدارية، وفيلات مستقلة مسجلة ومفحوصة قانونياً مع برامج تقسيط مرنة حتى 7 سنوات.') 
-              : (founderSettings.heroSubtitle_en || 'Verified luxury apartments, retail shops, executive offices, and standalone villas with flexible financing up to 7 years.')}
+              ? 'المنصة العقارية الاستشارية المعتمدة بسوهاج. فحص قانوني وهندسي 100%، تسعير عادل وفق مؤشرات السوق الحقيقية، وإدارة صفقات بخصوصية تامة.' 
+              : 'Sohag’s premier verified real estate platform. 100% audited title deeds, market intelligence benchmarks, and discreet advisory.'}
           </p>
 
           {/* Smart Universal Search Bar */}
@@ -859,71 +844,103 @@ export default function HomePage({
         )}
       </section>
 
+      {/* 🏡 3. SELLER INVITATION SECTION (Architectural Editorial Contrast) */}
+      <section className="homepage-section seller-invitation-section">
+        <div className="seller-invitation-card">
+          <div className="seller-content-col">
+            <span className="editorial-eyebrow">
+              {lang === 'ar' ? 'إدارة الأصول وأصحاب العقارات' : 'Property Owners & Asset Advisory'}
+            </span>
+            <h2 className="seller-title">
+              {lang === 'ar' ? 'عندك عقار؟' : 'Own a Prime Property?'}
+            </h2>
+            <p className="seller-statement">
+              {lang === 'ar'
+                ? 'نساعدك تفهم قيمته السوقية الحقيقية، تقدمه بأعلى المعايير التحريرية، وتوصله للمشتري المناسب بسرعة وبدون عمولة على البائع.'
+                : 'We help you understand its true market valuation, present it with institutional quality, and match it with qualified cash buyers.'}
+            </p>
+            <div className="seller-actions-row">
+              <Link to="/sell" className="btn btn-primary seller-cta-btn">
+                <span>{lang === 'ar' ? 'اطلب تقييم عقارك' : 'Request Valuation'}</span>
+                {lang === 'ar' ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
+              </Link>
+              <Link to="/demands" className="btn btn-outline">
+                <span>{lang === 'ar' ? 'تصفح طلبات المشترين' : 'Explore Buyer Demands'}</span>
+              </Link>
+            </div>
+          </div>
+          <div className="seller-image-col">
+            <img 
+              src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1000&q=85" 
+              alt={lang === 'ar' ? 'تقييم وعرض عقارك مع 1Line' : 'Property Valuation with 1Line'} 
+              className="seller-feature-img"
+              loading="lazy"
+            />
+          </div>
+        </div>
+      </section>
+
       {/* 🛡️ THE 4 1LINE GOLDEN STANDARDS OF INSTITUTIONAL TRUST */}
       <GoldStandardsSection lang={lang} />
 
       {/* 🔒 SOTHEBY'S BENCHMARK: 1LINE PRIVATE OFFICE (OFF-MARKET POCKET LISTINGS) */}
       <PrivateOfficeSection lang={lang} />
 
-      {/* 🌟 6. EXECUTIVE VIP CONSULTATION CTA STRIP (Adaptive White Luxury / Royal Midnight) */}
-      <section className="homepage-section" style={{ padding: '30px 20px 70px' }}>
-        <div className="homepage-vip-cta-banner">
-          {/* Ambient Warm Sun-Gold Nebula */}
-          <div className="homepage-vip-cta-nebula" />
-
-          <div style={{ maxWidth: '680px', position: 'relative', zIndex: 2 }}>
-            <span className="homepage-vip-cta-badge">
-              <Sparkles size={13} className="text-gold" />
-              <span>{lang === 'ar' ? 'استشارة عقارية وقانونية معتمدة' : 'Certified Advisory & Legal Security'}</span>
+      {/* 🏛️ 6. EXECUTIVE CONSULTATION (Deep Navy Brand Authority Surface) */}
+      <section className="homepage-section consultation-authority-section">
+        <div className="consultation-navy-surface">
+          <div className="consultation-content-wrap">
+            <span className="consultation-pill-eyebrow">
+              {lang === 'ar' ? 'الاستشارة الاستراتيجية والتدقيق' : 'Strategic Advisory & Due Diligence'}
             </span>
-            <h2 className="homepage-vip-cta-title">
-              {lang === 'ar' ? 'جاهز لتملك عقارك المثالي أو استثمارك القادم بسوهاج؟' : 'Ready to Secure Your Ideal Property in Sohag?'}
+            <h2 className="consultation-main-statement">
+              {lang === 'ar' ? 'قرارك العقاري يستحق أكثر من مجرد إعلان.' : 'Your Real Estate Decision Deserves More Than Just An Ad.'}
             </h2>
-            <p className="homepage-vip-cta-desc">
+            <p className="consultation-sub-statement">
               {lang === 'ar' 
-                ? 'فريق خبراء ومستشاري 1Line جاهز لمساعدتك في فحص صحة الأوراق والتراخيص، التفاوض، واختيار العقار الأنسب لاحتياجك وميزانيتك مجاناً.' 
-                : 'Our certified real estate advisors are ready to guide you through legal vetting, price negotiation, and financing.'}
+                ? 'سواء كنت تشتري مسكنك الأول، أو تستثمر في أصل تجاري مرتفع العائد، فريق مستشاري 1Line المعتمدين يضع بين يديك حقائق السوق وتدقيق الملكية لتتخذ قرارك بثقة تامة.' 
+                : 'Whether acquiring a primary home or high-yield commercial assets, our certified advisors provide legal auditing and price benchmarks so you decide with total confidence.'}
             </p>
+            <div className="consultation-actions-row">
+              <a
+                href={getWhatsAppUrl(lang === 'ar' ? 'مرحباً 1Line، أريد استشارة عقارية متخصصة بخصوص فرصة شراء أو استثمار.' : 'Hello 1Line, I would like to schedule a property consultation.')}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-consultation-primary"
+              >
+                <MessageSquare size={16} />
+                <span>{lang === 'ar' ? 'تحدث مع مستشار' : 'Speak With An Advisor'}</span>
+              </a>
+              <Link to="/buy" className="btn btn-consultation-secondary">
+                <span>{lang === 'ar' ? 'احجز معاينة ميدانية' : 'Book Field Inspection'}</span>
+              </Link>
+            </div>
           </div>
+        </div>
+      </section>
 
-          <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', position: 'relative', zIndex: 2 }}>
-            {/* 1. Fast WhatsApp Inquiry */}
-            <a
-              href={getWhatsAppUrl(lang === 'ar' ? 'مرحباً 1Line، أريد استفساراً سريعاً عن فرص عقارية واستثمارية متاحة بسوهاج.' : 'Hello 1Line, inquiring about available opportunities in Sohag.')}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-cta-intent btn-cta-wa"
-              onClick={() => {
-                if (typeof window !== 'undefined') {
-                  window.dispatchEvent(new CustomEvent('oneline_whatsapp_clicked', { detail: { intent: 'vip_cta_inquiry' } }));
-                }
-              }}
-            >
-              <MessageSquare size={17} />
-              <span>{lang === 'ar' ? 'استفسار سريع واتساب' : 'Quick WhatsApp'}</span>
-            </a>
-
-            {/* 2. Book Field Inspection Tour */}
-            <Link
-              to="/buy"
-              className="btn btn-cta-intent btn-cta-tour"
-              onClick={() => {
-                if (typeof window !== 'undefined') {
-                  window.dispatchEvent(new CustomEvent('oneline_wizard_started', { detail: { type: 'tour_booking' } }));
-                }
-              }}
-            >
-              <Eye size={17} />
-              <span>{lang === 'ar' ? 'حجز معاينة ميدانية' : 'Book Field Tour'}</span>
-            </Link>
-
-            {/* 3. Private VIP Consultation */}
-            <Link
-              to="/special-requests"
-              className="btn btn-cta-intent btn-cta-private"
-            >
-              <Lock size={15} className="text-gold" />
-              <span>{lang === 'ar' ? 'استشارة خاصة VIP' : 'Private Consultation'}</span>
+      {/* 🏁 7. PRE-FOOTER EMOTIONAL CONCLUSION STATEMENT */}
+      <section className="pre-footer-conclusion-section">
+        <div className="conclusion-container">
+          <div className="conclusion-text-block">
+            <h3 className="conclusion-statement-title">
+              {lang === 'ar' ? (
+                <>
+                  <span>ابحث عن العقار.</span>{' '}
+                  <span>وافهم القيمة.</span>{' '}
+                  <span className="text-navy-bold">واتخذ القرار بثقة.</span>
+                </>
+              ) : (
+                <>
+                  <span>Discover The Property.</span>{' '}
+                  <span>Understand The Value.</span>{' '}
+                  <span className="text-navy-bold">Decide With Confidence.</span>
+                </>
+              )}
+            </h3>
+            <Link to="/special-requests" className="conclusion-link-action">
+              <span>{lang === 'ar' ? 'تحدث مع 1Line' : 'Connect with 1Line'}</span>
+              {lang === 'ar' ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
             </Link>
           </div>
         </div>
