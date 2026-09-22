@@ -53,6 +53,7 @@ const MarketIntelligencePage = lazy(() => import('./pages/MarketIntelligencePage
 const PortalsPage = lazy(() => import('./pages/PortalsPage'));
 const CrmPage = lazy(() => import('./pages/CrmPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
+const PrivateOfficePage = lazy(() => import('./pages/PrivateOfficePage'));
 
 // Luxury Route Transition Fallback Spinner
 function RouteLoadingSpinner({ lang = 'ar' }) {
@@ -516,6 +517,16 @@ function AppContent() {
             <Route
               path="/about-us"
               element={<AboutPage lang={lang} triggerToast={triggerToast} />}
+            />
+
+            {/* 3.8. 1Line Private Office (Off-Market Portfolio) */}
+            <Route
+              path="/private-office"
+              element={<PrivateOfficePage lang={lang} triggerToast={triggerToast} />}
+            />
+            <Route
+              path="/off-market"
+              element={<PrivateOfficePage lang={lang} triggerToast={triggerToast} />}
             />
 
             {/* 4. Financing & Mortgage Calculator Page */}

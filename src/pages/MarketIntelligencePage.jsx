@@ -10,7 +10,6 @@ import {
   Download, 
   Sparkles, 
   ShieldCheck, 
-  FileSpreadsheet,
   Layers,
   MapPin,
   CheckCircle2,
@@ -20,7 +19,6 @@ import {
   ArrowRight,
   ArrowLeft
 } from 'lucide-react';
-import { exportToCsv } from '../utils/exportCsv';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
 import { getAreas } from '../utils/areasData';
 import { updatePageSeo } from '../utils/seoHelper';
@@ -202,29 +200,6 @@ export default function MarketIntelligencePage({ lang = 'ar', currency = 'EGP', 
     }
   }, [userBudget]);
 
-  const handleExportReport = () => {
-    const headers = isAr ? [
-      { key: 'name_ar', label: 'المنطقة في سوهاج' },
-      { key: 'avgPricePerSqm', label: 'متوسط سعر المتر (ج.م)' },
-      { key: 'annualGrowth', label: 'نسبة النمو السنوي (%)' },
-      { key: 'rentalYield', label: 'العائد الإيجاري السنوي (%)' },
-      { key: 'demandLevel_ar', label: 'مستوى الطلب' },
-      { key: 'topAsset_ar', label: 'النوع الأكثر ربحية' }
-    ] : [
-      { key: 'name_en', label: 'District' },
-      { key: 'avgPricePerSqm', label: 'Avg Price / Sqm (EGP)' },
-      { key: 'annualGrowth', label: 'Annual Growth (%)' },
-      { key: 'rentalYield', label: 'Rental Yield (%)' },
-      { key: 'demandLevel_en', label: 'Demand Status' },
-      { key: 'topAsset_en', label: 'Top Profitable Asset' }
-    ];
-
-    exportToCsv('Sohag_RealEstate_Market_Intelligence_Report_2026', districtsData, headers);
-    if (triggerToast) {
-      triggerToast(isAr ? 'تم تصدير تقرير دراسة السوق العقاري الشاملة بنجاح' : 'Market intelligence report exported successfully!', 'success');
-    }
-  };
-
   return (
     <div className="market-intelligence-page-wrapper">
       {/* Hero Banner */}
@@ -265,13 +240,6 @@ export default function MarketIntelligencePage({ lang = 'ar', currency = 'EGP', 
               ? 'بيانات حية ومحدثة دورياً من واقع صفقات الشهر العقاري وتداولات السوق لمساعدة المستثمرين والمشترين في اتخاذ قرارات دقيقة.' 
               : 'Live verified transaction data, average sqm benchmarks, and projected rental yields across all Sohag districts.'}
           </p>
-
-          <div className="market-hero-actions">
-            <button type="button" className="btn btn-primary" onClick={handleExportReport}>
-              <FileSpreadsheet size={16} />
-              <span>{isAr ? 'تصدير التقرير الكامل لإكسل (Excel CSV)' : 'Export Market Report (Excel)'}</span>
-            </button>
-          </div>
         </div>
       </div>
 

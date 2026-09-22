@@ -164,10 +164,10 @@ export default function Header({
       icon: Sparkles,
       badge: 'VIP',
       badgeType: 'gold',
-      activePaths: ['/special-requests', '/market-intelligence', '/financing', '/investor'],
+      activePaths: ['/special-requests', '/market-intelligence', '/financing', '/investor', '/private-office', '/off-market'],
       items: [
         {
-          path: '/#private-office',
+          path: '/private-office',
           label: isAr ? 'المكتب الخاص: صفقات خاصة وحصرية (Off-Market)' : '1Line Private Office (Off-Market)',
           desc: isAr ? 'عقارات وقصور مليونية حصرية بأعلى معايير الخصوصية' : 'Exclusive multi-million acquisitions & estates',
           badge: 'Private',
@@ -213,6 +213,7 @@ export default function Header({
     { path: '/projects', label: isAr ? 'المشروعات والكمبوندات' : 'Projects', icon: Layers },
     { path: '/demands', label: isAr ? 'طلبات المشترين' : 'Buyer Demands', icon: FileText },
     { path: '/about', label: isAr ? 'عن الشركة والمؤسس' : 'About & Founder', icon: Award },
+    { path: '/private-office', label: isAr ? 'المكتب الخاص (Off-Market)' : 'Private Office', badge: 'Private', badgeType: 'gold', icon: Lock },
     { path: '/special-requests', label: isAr ? 'طلب عقار خاص VIP' : 'Special Requests', badge: 'VIP', badgeType: 'gold', icon: Sparkles },
     { path: '/market-intelligence', label: isAr ? 'مؤشرات أسعار السوق' : 'Market Intel', icon: TrendingUp },
     { path: '/financing', label: isAr ? 'حاسبة التمويل والأقساط' : 'Financing', icon: Landmark },
