@@ -258,16 +258,16 @@ async function runAudit() {
     recordTest(6, 'Google Schema.org Organization JSON-LD', hasOrgSchema ? 'PASS' : 'FAIL', 'Injected into <head> on HomePage');
     recordTest(6, 'Google Schema.org RealEstateListing JSON-LD', hasPropSchema ? 'PASS' : 'FAIL', 'Injected into <head> on Property Detail');
 
-    // 6.2 Firestore Rules: Public Demands Read
-    const demandsReadRule = /match\s+\/demands\/\{demandId\}\s*\{[^}]*allow\s+read:\s*if\s+true;/s.test(rulesSrc);
+    // 6.2 Firestore Rules: Public Demands Read (Hardened to published status or legacy)
+    const demandsReadRule = /match\s+\/demands\/\{demandId\}\s*\{[^}]*allow\s+read:\s*if\s+(\([^}]*status\s*==\s*['"]published['"]|true;)/s.test(rulesSrc);
     recordTest(6, 'Firestore Rules: Public Demands Read', demandsReadRule ? 'PASS' : 'FAIL', 'Public visitors can read approved demands');
 
     // 6.3 Firestore Rules: Demands Write Protection
     const demandsWriteRule = /allow\s+update,\s*delete:\s*if\s+isAdmin\(\);/.test(rulesSrc);
     recordTest(6, 'Firestore Rules: Demands Update/Delete Protection', demandsWriteRule ? 'PASS' : 'FAIL', 'Only authenticated admin can alter demands');
 
-    // 6.4 Firestore Rules: Leads Privacy
-    const leadsPrivateRule = /match\s+\/leads\/\{leadId\}\s*\{[^}]*allow\s+read,\s*update,\s*delete:\s*if\s+request\.auth\s*!=\s*null/s.test(rulesSrc);
+    // 6.4 Firestore Rules: Leads Privacy (Hardened)
+    const leadsPrivateRule = /match\s+\/leads\/\{leadId\}\s*\{[^}]*allow\s+read,\s*update,\s*delete:\s*if\s+(request\.auth\s*!=\s*null|isAdmin\(\))/s.test(rulesSrc);
     recordTest(6, 'Firestore Rules: Leads Privacy Guard', leadsPrivateRule ? 'PASS' : 'FAIL', 'Unauthenticated visitors are forbidden from reading leads');
 
     // 6.5 Firestore Rules: Notifications Admin Guard

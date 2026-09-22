@@ -16,6 +16,7 @@ import {
   setDoc,
   query,
   orderBy,
+  limit,
   onSnapshot,
   serverTimestamp
 } from 'firebase/firestore';
@@ -26,10 +27,10 @@ import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebas
 /**
  * Load all properties from Firestore (or return null for local fallback).
  */
-export const loadProperties = async () => {
+export const loadProperties = async (maxCount = 100) => {
   if (isFirebaseConfigured() && db) {
     try {
-      const q = query(collection(db, 'properties'), orderBy('createdAt', 'desc'));
+      const q = query(collection(db, 'properties'), orderBy('createdAt', 'desc'), limit(maxCount));
       const snapshot = await getDocs(q);
       return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     } catch (error) {
@@ -166,10 +167,10 @@ export const saveLead = async (lead) => {
  * Load all leads from Firestore.
  * Returns null if Firebase is not configured (use localStorage).
  */
-export const loadLeads = async () => {
+export const loadLeads = async (maxCount = 150) => {
   if (isFirebaseConfigured() && db) {
     try {
-      const q = query(collection(db, 'leads'), orderBy('createdAt', 'desc'));
+      const q = query(collection(db, 'leads'), orderBy('createdAt', 'desc'), limit(maxCount));
       const snapshot = await getDocs(q);
       return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     } catch (error) {
@@ -181,13 +182,13 @@ export const loadLeads = async () => {
 };
 
 /**
- * Subscribe to real-time lead updates from Firestore.
+ * Subscribe to real-time lead updates from Firestore (capped to prevent client memory bloat).
  * Returns an unsubscribe function, or null if Firebase isn't configured.
  */
-export const subscribeToLeads = (callback) => {
+export const subscribeToLeads = (callback, maxCount = 150) => {
   if (isFirebaseConfigured() && db) {
     try {
-      const q = query(collection(db, 'leads'), orderBy('createdAt', 'desc'));
+      const q = query(collection(db, 'leads'), orderBy('createdAt', 'desc'), limit(maxCount));
       return onSnapshot(q, (snapshot) => {
         const leads = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         callback(leads);
@@ -367,10 +368,10 @@ export const saveDemand = async (demand) => {
  * Subscribe to real-time demands updates from Firestore.
  * Returns an unsubscribe function, or null if Firebase isn't configured.
  */
-export const subscribeToDemands = (callback) => {
+export const subscribeToDemands = (callback, maxCount = 100) => {
   if (isFirebaseConfigured() && db) {
     try {
-      const q = query(collection(db, 'demands'), orderBy('createdAt', 'desc'));
+      const q = query(collection(db, 'demands'), orderBy('createdAt', 'desc'), limit(maxCount));
       return onSnapshot(q, (snapshot) => {
         const demands = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         callback(demands);
@@ -387,12 +388,12 @@ export const subscribeToDemands = (callback) => {
 };
 
 /**
- * Load all demands from Firestore.
+ * Load all demands from Firestore (capped with limit).
  */
-export const loadDemands = async () => {
+export const loadDemands = async (maxCount = 100) => {
   if (isFirebaseConfigured() && db) {
     try {
-      const q = query(collection(db, 'demands'), orderBy('createdAt', 'desc'));
+      const q = query(collection(db, 'demands'), orderBy('createdAt', 'desc'), limit(maxCount));
       const snapshot = await getDocs(q);
       return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     } catch (error) {
@@ -672,7 +673,13 @@ export const monitorAuthState = (callback) => {
 
     try {
       const tokenResult = await user.getIdTokenResult().catch(() => null);
-      const role = tokenResult?.claims?.role || 'super_admin';
+      let role = 'agent';
+      if (tokenResult?.claims?.role === 'super_admin' || tokenResult?.claims?.admin === true || ADMIN_USER_IDS.has(user.uid)) {
+        role = 'super_admin';
+      } else if (tokenResult?.claims?.role) {
+        role = tokenResult.claims.role;
+      }
+
       const userProfile = {
         uid: user.uid,
         email: user.email,
@@ -681,7 +688,8 @@ export const monitorAuthState = (callback) => {
       };
       callback(true, userProfile);
     } catch {
-      callback(true, { uid: user.uid, email: user.email, role: 'super_admin' });
+      // 🛡️ Fail-Closed Security: Never escalate to super_admin on claim evaluation error
+      callback(true, { uid: user.uid, email: user.email, role: 'agent' });
     }
   });
 };
