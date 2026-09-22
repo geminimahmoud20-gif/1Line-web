@@ -710,7 +710,7 @@ export default function HomePage({
                 <p>{lang === 'ar' ? 'يمكنك إرسال مواصفات طلبك وسيتولى فريقنا الميداني توفير أفضل وحدة لك مباشرة بأعلى عائد وأفضل سعر.' : 'Submit your request and our advisory team will find the best match for you.'}</p>
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '18px', flexWrap: 'wrap' }}>
                   <Link to="/buy" className="btn btn-primary" style={{ padding: '8px 20px', fontWeight: 'bold' }}>
-                    {lang === 'ar' ? 'بدء معالج الشراء وتوفير عقار 🚀' : 'Start Buy Wizard'}
+                    {lang === 'ar' ? 'بدء معالج الشراء وتوفير عقار' : 'Start Buy Wizard'}
                   </Link>
                   <button type="button" className="btn btn-outline" onClick={() => setMarketplaceAreaFilter('all')}>
                     {lang === 'ar' ? 'استعراض كل المناطق' : 'Reset to All Districts'}
@@ -808,7 +808,7 @@ export default function HomePage({
                         fontWeight: '800'
                       }}
                     >
-                      {dem.urgency === 'high' ? (lang === 'ar' ? '🔥 مستعجل كاش' : 'Urgent Cash') : (lang === 'ar' ? '⭐ طلب جاد' : 'Serious Buyer')}
+                      {dem.urgency === 'high' ? (lang === 'ar' ? 'مستعجل كاش' : 'Urgent Cash') : (lang === 'ar' ? 'طلب جاد' : 'Serious Buyer')}
                     </span>
                   </div>
                   <p className="demand-text" style={{ color: 'var(--text-primary)', fontWeight: '700' }}>{lang === 'ar' ? dem.text_ar : dem.text_en}</p>
@@ -847,7 +847,7 @@ export default function HomePage({
                   style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', padding: '10px 22px', fontWeight: 'bold' }}
                 >
                   <Sparkles size={15} className="text-gold" />
-                  <span>{lang === 'ar' ? '➕ أضف طلبك العقاري مجاناً' : 'Post Buyer Request'}</span>
+                  <span>{lang === 'ar' ? 'أضف طلبك العقاري مجاناً' : 'Post Buyer Request'}</span>
                 </button>
               )}
               <Link to="/demands" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>

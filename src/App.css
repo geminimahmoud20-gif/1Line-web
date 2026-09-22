@@ -21573,211 +21573,214 @@ body.dark-theme .compare-tabs-bar {
 /* =============================================================
    🏛️ 1LINE FINANCING & MORTGAGE PAGE LUXURY DESIGN SYSTEM
    ============================================================= */
-.financing-page-wrapper {
-  background: var(--bg-primary);
-  min-height: 100vh;
-  padding-bottom: 60px;
+.financing-page-refined {
+  background: var(--bg-slate, #F7F5F0);
+  min-height: calc(100vh - 120px);
+  padding-bottom: 50px;
 }
 
-.financing-hero-section {
-  background: linear-gradient(135deg, #051937 0%, #072552 50%, #00122e 100%);
-  padding: 40px 20px 64px;
-  color: #ffffff;
+.financing-header-bar {
+  background: var(--bg-card, #FFFFFF);
+  border-bottom: 1px solid var(--border-color, rgba(20, 43, 73, 0.08));
+  padding: 24px 20px 20px;
   position: relative;
-  border-bottom: 1px solid rgba(253, 203, 66, 0.25);
 }
 
-.financing-hero-container {
-  max-width: 1200px;
+.financing-header-inner {
+  max-width: 1180px;
   margin: 0 auto;
 }
 
-.financing-badge-pill {
-  display: inline-flex;
+.financing-breadcrumb-nav {
+  display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(253, 203, 66, 0.12);
-  border: 1px solid rgba(253, 203, 66, 0.35);
-  color: #fdcb42;
-  padding: 6px 16px;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  font-weight: 800;
-  margin-bottom: 18px;
+  font-size: 0.82rem;
+  color: var(--text-muted, #687386);
+  margin-bottom: 14px;
 }
 
-.financing-hero-container h1 {
-  font-size: clamp(1.6rem, 3.2vw, 2.35rem);
-  font-weight: 900;
-  line-height: 1.35;
-  margin: 0 0 14px 0;
+.btn-back-compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-slate, #F7F5F0);
+  border: 1px solid var(--border-color, rgba(20, 43, 73, 0.1));
+  color: var(--text-primary, #152235);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill, 999px);
+  cursor: pointer;
+  transition: all var(--transition-fast, 0.2s ease);
+}
+
+.btn-back-compact:hover {
+  background: var(--navy-900, #0B1B32);
   color: #ffffff;
+  border-color: var(--navy-900, #0B1B32);
 }
 
-.financing-hero-container p {
-  font-size: clamp(0.95rem, 1.6vw, 1.08rem);
-  color: #cbd5e1;
-  max-width: 800px;
-  line-height: 1.65;
+.crumb-sep {
+  opacity: 0.5;
+  font-size: 0.75rem;
+}
+
+.financing-breadcrumb-nav a {
+  color: var(--text-muted, #687386);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.financing-breadcrumb-nav a:hover {
+  color: var(--gold, #B38A45);
+}
+
+.crumb-active {
+  color: var(--text-primary, #152235);
+  font-weight: 700;
+}
+
+.financing-title-group h1 {
+  font-size: clamp(1.35rem, 2.4vw, 1.85rem);
+  font-weight: 900;
+  color: var(--navy-950, #07111F);
+  margin: 6px 0 8px;
+  line-height: 1.3;
+}
+
+.financing-title-group p {
+  font-size: 0.92rem;
+  color: var(--text-muted, #687386);
+  max-width: 720px;
+  line-height: 1.55;
   margin: 0;
 }
 
-.financing-container {
-  max-width: 1200px;
+.financing-pill-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(179, 138, 69, 0.08);
+  border: 1px solid rgba(179, 138, 69, 0.22);
+  color: var(--gold-dark, #806329);
+  padding: 4px 12px;
+  border-radius: var(--radius-pill, 999px);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.financing-main-content {
+  padding-top: 24px;
+}
+
+.financing-content-container {
+  max-width: 1180px;
   margin: 0 auto;
   padding: 0 20px;
 }
 
-.financing-calc-section {
-  margin-top: -34px;
-  position: relative;
-  z-index: 10;
-  margin-bottom: 50px;
+/* Value Ribbon Strip */
+.financing-ribbon-section {
+  margin-top: 28px;
 }
 
-.financing-benefits-section {
-  padding: 40px 0 50px;
-  border-top: 1px solid var(--border-color);
-}
-
-.financing-benefits-grid {
+.financing-ribbon-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
-  margin-top: 32px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
-.fin-benefit-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 18px;
-  padding: 28px 24px;
-  box-shadow: var(--shadow-sm);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.fin-benefit-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(253, 203, 66, 0.45);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
-}
-
-.fin-benefit-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 14px;
-  background: rgba(253, 203, 66, 0.12);
-  border: 1px solid rgba(253, 203, 66, 0.28);
+.financing-ribbon-pill {
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin-bottom: 18px;
+  gap: 14px;
+  background: var(--bg-card, #FFFFFF);
+  border: 1px solid var(--border-color, rgba(20, 43, 73, 0.08));
+  border-radius: var(--radius-md, 14px);
+  padding: 16px 20px;
+  box-shadow: var(--shadow-sm, 0 2px 8px rgba(7, 17, 31, 0.04));
+  transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
-.fin-benefit-card h3 {
-  font-size: 1.15rem;
+.financing-ribbon-pill:hover {
+  transform: translateY(-2px);
+  border-color: rgba(179, 138, 69, 0.3);
+}
+
+.ribbon-icon {
+  flex-shrink: 0;
+}
+
+.financing-ribbon-pill strong {
+  display: block;
+  font-size: 0.94rem;
   font-weight: 800;
-  color: var(--text-primary);
-  margin: 0 0 10px 0;
+  color: var(--navy-950, #07111F);
+  margin-bottom: 2px;
 }
 
-.fin-benefit-card p {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  line-height: 1.65;
-  margin: 0;
+.financing-ribbon-pill span {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-muted, #687386);
 }
 
-/* Luxury Financing CTA Section */
-.financing-cta-section {
-  padding: 20px 0 40px;
-}
-
-.financing-cta-box {
-  background: linear-gradient(135deg, #051937 0%, #0a2e63 100%);
-  border: 1px solid rgba(253, 203, 66, 0.3);
-  border-radius: 22px;
-  padding: 42px 38px;
+/* Streamlined Action Dock */
+.financing-action-dock {
+  background: var(--navy-950, #07111F);
+  border-radius: var(--radius-lg, 20px);
+  padding: 24px 28px;
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 32px;
-  box-shadow: 0 16px 40px rgba(5, 25, 55, 0.25);
-  position: relative;
-  overflow: hidden;
+  gap: 24px;
+  box-shadow: var(--shadow-md, 0 10px 25px -4px rgba(7, 17, 31, 0.07));
 }
 
-.financing-cta-box::before {
-  content: '';
-  position: absolute;
-  top: -40%;
-  right: -20%;
-  width: 320px;
-  height: 320px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(253, 203, 66, 0.15) 0%, transparent 70%);
-  pointer-events: none;
-}
-
-.financing-cta-box .cta-content {
-  flex: 1;
-  position: relative;
-  z-index: 2;
-}
-
-.financing-cta-box .cta-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(253, 203, 66, 0.15);
-  color: #fdcb42;
-  padding: 4px 14px;
-  border-radius: 999px;
-  font-size: 0.8rem;
+.action-dock-info h3 {
+  font-size: 1.12rem;
   font-weight: 800;
-  margin-bottom: 12px;
-}
-
-.financing-cta-box h2 {
-  font-size: clamp(1.4rem, 2.5vw, 1.85rem);
-  font-weight: 900;
   color: #ffffff;
-  margin: 0 0 10px 0;
-  line-height: 1.35;
+  margin: 0 0 4px;
 }
 
-.financing-cta-box p {
-  font-size: 0.95rem;
+.action-dock-info p {
+  font-size: 0.85rem;
   color: #cbd5e1;
-  line-height: 1.6;
   margin: 0;
-  max-width: 640px;
+  max-width: 540px;
+  line-height: 1.5;
 }
 
-.financing-cta-box .cta-actions {
+.action-dock-btns {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   flex-shrink: 0;
-  position: relative;
-  z-index: 2;
 }
 
-@media (max-width: 868px) {
-  .financing-cta-box {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 30px 22px;
-    gap: 22px;
+@media (max-width: 960px) {
+  .financing-ribbon-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
 
-  .financing-cta-box .cta-actions {
+  .financing-action-dock {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 20px;
+    gap: 16px;
+  }
+
+  .action-dock-btns {
     flex-direction: column;
     width: 100%;
   }
 
-  .financing-cta-box .cta-actions .btn {
+  .action-dock-btns .btn {
     width: 100%;
     justify-content: center;
   }

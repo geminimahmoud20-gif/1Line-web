@@ -621,7 +621,7 @@ export default function Header({
                 </span>
               </div>
               <span className={`nav-badge nav-badge-${isClientAuthenticated ? 'emerald' : 'gold'}`}>
-                {isClientAuthenticated ? (isAr ? 'موثق ✅' : 'Verified') : (isAr ? 'تفعيل 🔑' : 'Activate')}
+                {isClientAuthenticated ? (isAr ? 'موثق' : 'Verified') : (isAr ? 'تفعيل' : 'Activate')}
               </span>
             </Link>
 

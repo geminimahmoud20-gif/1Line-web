@@ -19,11 +19,11 @@ import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { getAreas } from '../../utils/areasData';
 
 export const SMART_FILTER_TAGS = [
-  { id: 'nile_view', label_ar: 'إطلالة نيلية 🌊', label_en: 'Nile View 🌊', icon: Waves },
-  { id: 'registered', label_ar: 'مسجل شهر عقاري 📜', label_en: 'Registered Deed 📜', icon: FileCheck },
-  { id: 'licensed', label_ar: 'ترخيص ونموذج 10 🏗️', label_en: 'Licensed Building 🏗️', icon: ShieldCheck },
-  { id: 'land_share', label_ar: 'حصة بالأرض 💎', label_en: 'Land Share 💎', icon: KeyRound },
-  { id: 'investment', label_ar: 'عائد استثماري مرتفع 📈', label_en: 'High ROI 📈', icon: PieChart },
+  { id: 'nile_view', label_ar: 'إطلالة نيلية', label_en: 'Nile View', icon: Waves },
+  { id: 'registered', label_ar: 'مسجل شهر عقاري', label_en: 'Registered Deed', icon: FileCheck },
+  { id: 'licensed', label_ar: 'ترخيص ونموذج 10', label_en: 'Licensed Building', icon: ShieldCheck },
+  { id: 'land_share', label_ar: 'حصة بالأرض', label_en: 'Land Share', icon: KeyRound },
+  { id: 'investment', label_ar: 'عائد استثماري مرتفع', label_en: 'High ROI', icon: PieChart },
 ];
 
 export default function PropertyFilters({
