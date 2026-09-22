@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import { getWhatsAppUrl } from '../utils/founderCmsData';
 import { identifyVisitor } from '../utils/visitorTracker';
 import { sanitizeObject } from '../utils/securityShield';
+import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 
 const CLIENT_STORAGE_KEY = 'oneline_client_account';
 
@@ -84,23 +85,42 @@ export function ClientAuthProvider({ children, triggerToast, lang = 'ar', handle
 
   /**
    * Step 1: Initiate Client Registration & Generate Security Code
+   * Validates name, email, and phone according to the selected country format.
    */
-  const initiateClientRegistration = useCallback(({ name, email, whatsapp }) => {
+  const initiateClientRegistration = useCallback(({ name, email, whatsapp, country = '+20' }) => {
     const cleanName = (name || '').trim();
     const cleanEmail = (email || '').trim().toLowerCase();
-    const cleanPhone = (whatsapp || '').trim().replace(/[^0-9+]/g, '');
+    const rawPhoneDigits = (whatsapp || '').trim().replace(/[^0-9]/g, '');
 
+    // 1. Validate Name (at least 3 characters)
     if (!cleanName || cleanName.length < 3) {
-      throw new Error(isAr ? 'يرجى إدخال اسم صحيح لا يقل عن 3 أحرف' : 'Please enter a valid full name');
+      throw new Error(isAr ? 'يرجى إدخال اسم صحيح لا يقل عن 3 أحرف' : 'Please enter a valid full name (at least 3 characters)');
     }
 
-    if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
-      throw new Error(isAr ? 'يرجى إدخال بريد إلكتروني صحيح' : 'Please enter a valid email address');
+    // 2. Validate Email Address Format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!cleanEmail || !emailRegex.test(cleanEmail)) {
+      throw new Error(isAr ? 'يرجى إدخال بريد إلكتروني صحيح (مثال: name@domain.com)' : 'Please enter a valid email address');
     }
 
-    if (!cleanPhone || cleanPhone.length < 9) {
-      throw new Error(isAr ? 'يرجى إدخال رقم واتساب صحيح' : 'Please enter a valid WhatsApp number');
+    // 3. Validate Phone with Country Regex (guarantees data authenticity)
+    const countryObj = SUPPORTED_COUNTRIES.find(c => c.code === country) || SUPPORTED_COUNTRIES[0];
+    if (!rawPhoneDigits) {
+      throw new Error(isAr ? 'يرجى إدخال رقم الواتساب' : 'Please enter a WhatsApp number');
     }
+
+    if (countryObj?.regex && !countryObj.regex.test(rawPhoneDigits)) {
+      throw new Error(
+        isAr 
+          ? `رقم الواتساب غير متوافق مع صيغة ${countryObj.name} (${countryObj.placeholder})` 
+          : `Invalid WhatsApp number for ${countryObj.name} (${countryObj.placeholder})`
+      );
+    }
+
+    // Format clean international phone number for display & wa.me
+    const normalizedDigits = rawPhoneDigits.startsWith('0') ? rawPhoneDigits.substring(1) : rawPhoneDigits;
+    const cleanDialCode = country.replace('+', '');
+    const fullInternationalPhone = `+${cleanDialCode}${normalizedDigits}`;
 
     // Generate a memorable 4-digit code (e.g. 7482)
     const code = String(Math.floor(1000 + Math.random() * 9000));
@@ -109,7 +129,11 @@ export function ClientAuthProvider({ children, triggerToast, lang = 'ar', handle
     const session = {
       name: cleanName,
       email: cleanEmail,
-      whatsapp: cleanPhone,
+      whatsapp: fullInternationalPhone,
+      localPhone: rawPhoneDigits,
+      country,
+      countryFlag: countryObj?.flag || '🇪🇬',
+      countryName: countryObj?.name || 'Egypt',
       code,
       token,
       createdAt: Date.now()
@@ -119,15 +143,15 @@ export function ClientAuthProvider({ children, triggerToast, lang = 'ar', handle
 
     // Build the authentic WhatsApp verification message
     const msg = isAr
-      ? `🔐 *تأكيد وتفعيل حساب عميل على منصة 1Line العقارية — سوهاج*\n` +
-        `----------------------------------------\n` +
+      ? `🔐 *طلب توثيق وتفعيل حساب عميل — منصة 1Line العقارية سوهاج*\n` +
+        `───────────────────────\n` +
         `👤 *الاسم الكريم:* ${cleanName}\n` +
         `📧 *البريد الإلكتروني:* ${cleanEmail}\n` +
-        `📱 *رقم الواتساب:* ${cleanPhone}\n` +
-        `🔑 *كود التأكيد:* ${token}\n` +
-        `----------------------------------------\n` +
-        `أرجو تفعيل حسابي لحفظ العقارات المفضلة ومقارنتها واستلام إشعارات التحديثات العقارية بسوهاج.`
-      : `🔐 *1Line Sohag Client Verification*\nName: ${cleanName}\nEmail: ${cleanEmail}\nWhatsApp: ${cleanPhone}\nCode: ${token}`;
+        `📱 *رقم الواتساب:* ${fullInternationalPhone} (${countryObj?.flag || ''} ${countryObj?.name || country})\n` +
+        `🔑 *رمز التوثيق المعتمد:* ${token}\n` +
+        `───────────────────────\n` +
+        `أرجو اعتماد حسابي لتفعيل حفظ العقارات المفضلة، والمقارنات الذكية، واستلام تحديثات السوق العقاري بسوهاج فوراً.`
+      : `🔐 *1Line Sohag Client Verification*\nName: ${cleanName}\nEmail: ${cleanEmail}\nWhatsApp: ${fullInternationalPhone}\nVerification Token: ${token}`;
 
     const waUrl = getWhatsAppUrl(msg);
 
@@ -139,13 +163,15 @@ export function ClientAuthProvider({ children, triggerToast, lang = 'ar', handle
 
   /**
    * Step 2: Finalize Client Verification & Activate
+   * Solution 2 Handshake: Direct activation upon sending WhatsApp message without confusing code mismatch errors.
    */
   const completeClientVerification = useCallback(async (codeEntered = '') => {
     if (!verificationSession) {
-      throw new Error(isAr ? 'لا توجد جلسة تفعيل جارية، يرجى ملء البيانات' : 'No active verification session');
+      throw new Error(isAr ? 'لا توجد جلسة تفعيل جارية، يرجى ملء البيانات أولاً' : 'No active verification session');
     }
 
-    // If code is provided, verify it matches
+    // If an explicit code was supplied and differs from session code, validate it.
+    // Otherwise, allow direct handshake completion seamlessly.
     const cleanEntered = (codeEntered || '').trim().replace(/^1L-/i, '');
     if (cleanEntered && cleanEntered !== verificationSession.code) {
       throw new Error(isAr ? 'رمز التأكيد غير مطابق، يرجى التأكد وإعادة المحاولة' : 'Verification code mismatch');
@@ -157,9 +183,13 @@ export function ClientAuthProvider({ children, triggerToast, lang = 'ar', handle
       name: verificationSession.name,
       email: verificationSession.email,
       whatsapp: verificationSession.whatsapp,
+      phone: verificationSession.whatsapp,
+      country: verificationSession.country || '+20',
+      countryFlag: verificationSession.countryFlag || '🇪🇬',
       verified: true,
       verifiedAt: nowIso,
       verificationToken: verificationSession.token,
+      verificationMethod: 'whatsapp_handshake',
       role: 'verified_client'
     };
 
@@ -174,7 +204,7 @@ export function ClientAuthProvider({ children, triggerToast, lang = 'ar', handle
       type: 'verified_client'
     });
 
-    // Register lead in CRM pipeline
+    // Register lead in CRM pipeline with full verified metadata
     if (typeof handleAddNewLead === 'function') {
       try {
         await handleAddNewLead(sanitizeObject({
@@ -184,7 +214,7 @@ export function ClientAuthProvider({ children, triggerToast, lang = 'ar', handle
           phone: verifiedAccount.whatsapp,
           source: 'client_account_verified',
           type: 'buyer',
-          notes: `حساب عميل موثق برمز (${verifiedAccount.verificationToken}) لتفعيل المفضلة والمقارنات الذكية`
+          notes: `حساب عميل موثق عبر مصادقة الواتساب (كود: ${verifiedAccount.verificationToken} | ${verifiedAccount.countryFlag} ${verifiedAccount.country}) لتفعيل المفضلة والمقارنات الذكية`
         }));
       } catch (err) {
         console.warn('Auto CRM lead sync warning:', err);

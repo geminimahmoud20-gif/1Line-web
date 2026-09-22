@@ -22393,51 +22393,99 @@ body.dark-theme .compare-tabs-bar {
   box-shadow: 0 6px 18px rgba(37, 211, 102, 0.45);
 }
 
-.manual-verify-row {
+/* Step 2 Client Summary & Handshake Step Blocks */
+.wa-client-details-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px dashed rgba(34, 197, 94, 0.35);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.dark-theme .wa-client-details-summary,
+[data-theme="dark"] .wa-client-details-summary {
+  background: rgba(11, 27, 50, 0.6);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.wa-detail-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  background: rgba(248, 250, 252, 0.9);
-  padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  font-size: 0.8rem;
 }
 
-.dark-theme .manual-verify-row,
-[data-theme="dark"] .manual-verify-row {
-  background: rgba(15, 27, 48, 0.5);
+.detail-k {
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.detail-v {
+  color: var(--text-primary);
+  font-weight: 800;
+}
+
+.wa-phone-v {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: monospace;
+}
+
+.handshake-action-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(248, 250, 252, 0.85);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 12px;
+  padding: 14px;
+  transition: all 0.2s ease;
+}
+
+.dark-theme .handshake-action-block,
+[data-theme="dark"] .handshake-action-block {
+  background: rgba(15, 27, 48, 0.55);
   border-color: rgba(255, 255, 255, 0.08);
 }
 
-.manual-verify-row label {
-  display: flex;
+.handshake-step-badge {
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--text-muted);
+  gap: 8px;
 }
 
-.code-input-short {
-  width: 110px;
-  height: 34px;
-  text-align: center;
-  font-family: monospace;
-  font-size: 1rem;
+.handshake-step-badge .badge-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #0b1f3a;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dark-theme .handshake-step-badge .badge-num,
+[data-theme="dark"] .handshake-step-badge .badge-num {
+  background: #3b82f6;
+}
+
+.handshake-step-badge .badge-text {
+  font-size: 0.82rem;
   font-weight: 800;
-  letter-spacing: 2px;
-  border-radius: 6px;
-  border: 1.5px solid rgba(20, 43, 73, 0.2);
-  background: #ffffff;
   color: var(--text-primary);
 }
 
-.dark-theme .code-input-short,
-[data-theme="dark"] .code-input-short {
-  background: #0B1B32;
-  border-color: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
+.handshake-step-desc {
+  font-size: 0.77rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
 }
 
 .btn-client-auth-primary.confirm-ready-btn {

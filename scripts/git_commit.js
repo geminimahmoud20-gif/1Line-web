@@ -61,7 +61,7 @@ async function run() {
       name: 'Dr. Mahmoud Elbaz / One Line Solutions',
       email: 'admin@onelinesolutions.com'
     },
-    message: 'feat: standardize client registration and upgrade CRM pipeline with localization & contrast'
+    message: 'fix(mobile): elevate toast notification above bottom bar and optimize quickview and login viewports'
   });
 
   console.log('✓ Successfully committed with SHA:', sha);
