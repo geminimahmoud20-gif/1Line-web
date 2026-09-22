@@ -145,25 +145,9 @@ export default function AboutFounderSection({ lang = 'ar' }) {
         </div>
 
         {/* 2-Column Showcase Layout */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-          gap: '30px',
-          alignItems: 'stretch',
-          marginBottom: '40px'
-        }}>
+        <div className="founder-columns-grid">
           {/* 👤 LEFT COLUMN: THE FOUNDER PROFILE CARD (Architectural Royal Navy & Sun Gold) */}
-          <div style={{
-            background: 'linear-gradient(145deg, #092347 0%, #0d48a1 60%, #0a3880 100%)',
-            border: '1px solid rgba(255, 202, 40, 0.35)',
-            borderRadius: 'var(--radius-lg, 24px)',
-            padding: '32px 26px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            boxShadow: '0 20px 45px rgba(13, 72, 161, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
-            position: 'relative'
-          }}>
+          <div className="founder-profile-card">
             {/* Top Founder Identity */}
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '22px' }}>
@@ -393,23 +377,11 @@ export default function AboutFounderSection({ lang = 'ar' }) {
         </div>
 
         {/* 📊 BOTTOM 4 STATS ROW */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '16px'
-        }}>
+        <div className="founder-stats-grid">
           {stats.map((item, idx) => (
             <div
               key={idx}
-              style={{
-                background: 'var(--bg-card, #ffffff)',
-                border: '1px solid var(--border-color, rgba(2, 132, 199, 0.15))',
-                borderRadius: 'var(--radius-md, 16px)',
-                padding: '22px 18px',
-                textAlign: 'center',
-                boxShadow: '0 4px 18px -2px rgba(2, 132, 199, 0.06)',
-                transition: 'var(--transition-normal)'
-              }}
+              className="founder-stat-card"
             >
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
                 {item.icon}

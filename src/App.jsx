@@ -909,7 +909,7 @@ function AppContent() {
       />
 
       {/* Mobile Floating Bottom Navigation */}
-      {!location.pathname.startsWith('/crm') && (
+      {!location.pathname.startsWith('/crm') && !location.pathname.startsWith('/property/') && (
         <MobileBottomBar
           lang={lang}
           compareCount={compareList.length}

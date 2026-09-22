@@ -23193,5 +23193,139 @@ body.dark-theme .compare-tabs-bar {
   border-color: rgba(255, 255, 255, 0.18) !important;
 }
 
+/* =============================================================
+   📱 GLOBAL MOBILE RESPONSIVENESS & MODAL ISOLATION UPGRADES
+   ============================================================= */
+
+/* 1. Modal & Drawer Backdrop Isolation — completely hides bottom bars and FABs when modals are active */
+body:has(.modal-backdrop-luxury) .mobile-floating-bottom-bar,
+body:has(.modal-backdrop-luxury) .mobile-detail-sticky-bar,
+body:has(.modal-backdrop-luxury) .floating-ai-advisor-trigger,
+body:has(.modal-backdrop-luxury) .floating-back-to-top-btn,
+body:has(.deposit-modal-backdrop) .mobile-floating-bottom-bar,
+body:has(.deposit-modal-backdrop) .mobile-detail-sticky-bar,
+body:has(.deposit-modal-backdrop) .floating-ai-advisor-trigger,
+body:has(.deposit-modal-backdrop) .floating-back-to-top-btn,
+body:has(.modal-backdrop-custom) .mobile-floating-bottom-bar,
+body:has(.modal-backdrop-custom) .mobile-detail-sticky-bar,
+body:has(.modal-backdrop-custom) .floating-ai-advisor-trigger,
+body:has(.modal-backdrop-custom) .floating-back-to-top-btn,
+body:has(.quick-search-backdrop) .mobile-floating-bottom-bar,
+body:has(.quick-search-backdrop) .mobile-detail-sticky-bar,
+body:has(.quick-search-backdrop) .floating-ai-advisor-trigger,
+body:has(.quick-search-backdrop) .floating-back-to-top-btn,
+body:has(.lightbox-overlay) .mobile-floating-bottom-bar,
+body:has(.lightbox-overlay) .mobile-detail-sticky-bar,
+body:has(.lightbox-overlay) .floating-ai-advisor-trigger,
+body:has(.lightbox-overlay) .floating-back-to-top-btn {
+  display: none !important;
+}
+
+/* 2. Safe Area Insets for Modern Mobile Screens (iOS Dynamic Island & Home Bar) */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .mobile-floating-bottom-bar {
+    padding-bottom: max(10px, env(safe-area-inset-bottom, 10px)) !important;
+  }
+  .mobile-detail-sticky-bar {
+    padding-bottom: max(10px, env(safe-area-inset-bottom, 10px)) !important;
+  }
+}
+
+/* 3. AboutFounderSection Responsive Grid & High-Density Mobile Stats */
+.founder-columns-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: 30px;
+  align-items: stretch;
+  margin-bottom: 40px;
+}
+.founder-profile-card {
+  background: linear-gradient(145deg, #092347 0%, #0d48a1 60%, #0a3880 100%);
+  border: 1px solid rgba(255, 202, 40, 0.35);
+  border-radius: var(--radius-lg, 24px);
+  padding: 32px 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 20px 45px rgba(13, 72, 161, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  position: relative;
+}
+.founder-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+.founder-stat-card {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, rgba(2, 132, 199, 0.15));
+  border-radius: var(--radius-md, 16px);
+  padding: 22px 18px;
+  text-align: center;
+  box-shadow: 0 4px 18px -2px rgba(2, 132, 199, 0.06);
+  transition: var(--transition-normal);
+}
+
+@media (max-width: 640px) {
+  .founder-columns-grid {
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+  }
+  .founder-profile-card {
+    padding: 22px 16px !important;
+    border-radius: 18px !important;
+  }
+  .founder-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+  .founder-stat-card {
+    padding: 14px 8px !important;
+    border-radius: 12px !important;
+  }
+  .founder-stat-card div:nth-child(2) {
+    font-size: 1.55rem !important;
+  }
+  .founder-stat-card strong {
+    font-size: 0.78rem !important;
+  }
+  .founder-stat-card small {
+    font-size: 0.68rem !important;
+  }
+  .about-founder-modal-card {
+    padding: 20px 14px !important;
+    border-radius: 18px !important;
+  }
+  .gallery-media-mode-tabs {
+    display: flex !important;
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    gap: 6px !important;
+    padding-bottom: 4px !important;
+  }
+  .gallery-media-mode-tabs::-webkit-scrollbar {
+    display: none !important;
+  }
+  .media-tab-btn {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    font-size: 0.76rem !important;
+    padding: 6px 12px !important;
+  }
+}
+
+/* 4. Kanban Pipeline Smooth Horizontal Touch Scrolling on Mobile */
+@media (max-width: 768px) {
+  .kanban-board-scroll-container {
+    -webkit-overflow-scrolling: touch !important;
+    scroll-snap-type: x proximity !important;
+  }
+  .kanban-stage-column {
+    scroll-snap-align: start !important;
+  }
+}
+
+
 
 
