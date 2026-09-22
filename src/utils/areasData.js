@@ -491,7 +491,9 @@ export function normalizeAreaKey(rawArea) {
       rawClean.includes(a.name_ar)
     );
     if (matched) return matched.id;
-  } catch (e) {}
+  } catch (_e) {
+    // Ignore matching errors and fallback to clean
+  }
 
   return clean;
 }
