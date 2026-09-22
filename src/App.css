@@ -13401,9 +13401,27 @@ body.dark,
   }
 
   .page-top-back-bar {
-    flex-direction: row-reverse;
-    justify-content: flex-end;
-    gap: 8px;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+  .rtl-dir .page-top-back-bar,
+  [dir="rtl"] .page-top-back-bar {
+    direction: rtl !important;
+    text-align: right !important;
+  }
+  .rtl-dir .detail-badges-row,
+  [dir="rtl"] .detail-badges-row {
+    justify-content: flex-start !important;
+    direction: rtl !important;
+    width: 100% !important;
+  }
+  .rtl-dir .detail-title-col,
+  [dir="rtl"] .detail-title-col {
+    text-align: right !important;
+    width: 100% !important;
   }
 
   .project-card-footer-actions {
@@ -15192,56 +15210,79 @@ body.dark,
   .mobile-detail-sticky-bar { display: flex; }
 
   /* 🏛️ Mobile Header Capsule Ergonomics & Breathing Room */
+  /* 🏛️ Mobile Header Capsule Ergonomics & Breathing Room */
   .site-header {
-    padding: 6px 10px 2px !important;
+    padding: 4px 8px 2px !important;
+    width: 100% !important;
   }
   .header-container.glass-capsule {
-    padding: 5px 12px !important;
-    gap: 8px !important;
+    padding: 4px 10px !important;
+    gap: 6px !important;
     justify-content: space-between !important;
     border-radius: 999px !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
   .brand-logo {
-    gap: 6px !important;
-    flex-shrink: 0 !important;
+    gap: 5px !important;
+    flex-shrink: 1 !important;
     min-width: 0 !important;
   }
   .brand-title {
-    font-size: 1.18rem !important;
-    letter-spacing: 0.3px !important;
+    font-size: 1.12rem !important;
+    letter-spacing: 0.2px !important;
   }
   .brand-one {
-    font-size: 1.22rem !important;
+    font-size: 1.16rem !important;
   }
   .brand-line {
-    font-size: 1.05rem !important;
+    font-size: 1rem !important;
   }
   .logo-emblem-svg {
-    width: 28px !important;
-    height: 26px !important;
+    width: 26px !important;
+    height: 24px !important;
   }
   .header-actions {
-    gap: 6px !important;
+    gap: 4px !important;
     flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
   }
   .header-utility-pill-group {
     padding: 2px 4px !important;
     gap: 2px !important;
+    border-radius: 999px !important;
   }
   .utility-sub-btn {
-    padding: 4px 6px !important;
-    font-size: 0.72rem !important;
+    padding: 3px 5px !important;
+    font-size: 0.7rem !important;
+    min-width: 24px !important;
+    height: 24px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
   .header-icon-badge-btn {
-    width: 32px !important;
-    height: 32px !important;
-    min-width: 32px !important;
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
   }
   .header-client-account-btn {
-    padding: 5px !important;
+    padding: 4px !important;
     border-radius: 50% !important;
-    min-width: 32px !important;
-    height: 32px !important;
+    min-width: 28px !important;
+    width: 28px !important;
+    height: 28px !important;
+    justify-content: center !important;
+  }
+  .mobile-quick-search-btn {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    padding: 4px !important;
+    display: inline-flex !important;
+    align-items: center !important;
     justify-content: center !important;
   }
   .mobile-hamburger-btn {
@@ -15249,10 +15290,12 @@ body.dark,
     align-items: center !important;
     justify-content: center !important;
     padding: 4px !important;
-    width: 34px !important;
-    height: 34px !important;
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
     flex-shrink: 0 !important;
     color: var(--text-primary) !important;
+    margin-inline-start: 2px !important;
   }
   
   /* Hero & Search Mobile Ergonomics */
@@ -15316,24 +15359,38 @@ body.dark,
     font-size: 0.72rem;
   }
 
-  /* Mobile Horizontal Snap Scroll for Lifestyle Collections (P1) */
+  /* Mobile Horizontal Snap Scroll & Flawless Right Alignment for Lifestyle Collections */
+  .lifestyle-collections-section {
+    padding: 36px 14px 44px !important;
+  }
+  .rtl-dir .lifestyle-collections-section .section-header-centered,
+  [dir="rtl"] .lifestyle-collections-section .section-header-centered {
+    text-align: right !important;
+    margin-bottom: 20px !important;
+  }
+  .rtl-dir .lifestyle-collections-section .section-pill-tag,
+  [dir="rtl"] .lifestyle-collections-section .section-pill-tag {
+    margin-inline-start: 0 !important;
+    display: inline-flex !important;
+  }
   .lifestyle-grid {
     display: flex !important;
     overflow-x: auto !important;
     scroll-snap-type: x mandatory !important;
     -webkit-overflow-scrolling: touch !important;
     scrollbar-width: none !important;
-    gap: 14px !important;
-    padding: 4px 4px 16px !important;
-    margin: 0 -8px !important;
+    gap: 12px !important;
+    padding: 4px 2px 16px !important;
+    margin: 0 !important;
+    width: 100% !important;
   }
   .lifestyle-grid::-webkit-scrollbar {
     display: none !important;
   }
   .lifestyle-card {
-    flex: 0 0 85% !important;
-    max-width: 85% !important;
-    scroll-snap-align: center !important;
+    flex: 0 0 86% !important;
+    max-width: 86% !important;
+    scroll-snap-align: start !important;
   }
 
   /* Responsive Phone Widths Protection (360px, 390px, 430px) */
@@ -16921,24 +16978,174 @@ body.dark-theme .compare-tabs-bar {
     font-size: 0.78rem;
   }
 
+  /* 🏛️ Mobile Property Compare Drawer Overhaul */
+  .compare-drawer-panel {
+    max-height: 94vh !important;
+    border-radius: 20px 20px 0 0 !important;
+  }
+
   .compare-drawer-header {
-    padding: 12px 16px;
+    padding: 10px 12px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    align-items: stretch !important;
+  }
+
+  .compare-drawer-header-top {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+  }
+
+  .compare-header-title {
+    gap: 8px !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .compare-header-badge-icon {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+    flex-shrink: 0 !important;
   }
 
   .compare-header-title h3 {
-    font-size: 1rem;
+    font-size: 0.94rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 
   .compare-header-sub {
-    display: none;
+    display: none !important;
+  }
+
+  .compare-count-tag {
+    padding: 2px 8px !important;
+    font-size: 0.72rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  .compare-header-actions {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    gap: 6px !important;
+  }
+
+  .btn-compare-action-pdf,
+  .btn-compare-share-wa,
+  .btn-clear-compare {
+    padding: 6px 10px !important;
+    font-size: 0.74rem !important;
+    flex: 1 !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+  }
+
+  .compare-tabs-bar {
+    display: flex !important;
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    padding: 8px 10px !important;
+    gap: 6px !important;
+    border-bottom: 1px solid var(--border-light, #e2e8f0) !important;
+  }
+  .compare-tabs-bar::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .compare-tab-btn {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    font-size: 0.76rem !important;
+    padding: 6px 10px !important;
+  }
+
+  .compare-ai-verdict-ribbon {
+    padding: 8px 10px !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 6px !important;
+  }
+
+  .verdict-chips-row {
+    display: flex !important;
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    width: 100% !important;
+    gap: 6px !important;
+  }
+
+  .verdict-chip {
+    flex-shrink: 0 !important;
+    font-size: 0.72rem !important;
+    padding: 4px 8px !important;
+  }
+
+  /* Dual Comparison Spotlight Stacked View for Mobile */
+  .compare-dual-duel-wrapper {
+    padding: 12px 10px !important;
+    margin-bottom: 14px !important;
+    border-radius: 14px !important;
+  }
+
+  .dual-duel-cards-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  .dual-card-comparison {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 10px !important;
+    box-sizing: border-box !important;
+  }
+
+  .dual-card-thumb-box {
+    width: 74px !important;
+    height: 74px !important;
+    border-radius: 10px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .dual-card-title {
+    font-size: 0.84rem !important;
+    margin-bottom: 4px !important;
+    line-height: 1.3 !important;
+  }
+
+  .dual-duel-vs-circle {
+    margin: 2px auto !important;
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 0.72rem !important;
+  }
+
+  .btn-book-dual-tour {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 10px 14px !important;
+    font-size: 0.8rem !important;
   }
 
   .compare-drawer-body {
-    padding: 14px 12px;
+    padding: 12px 10px !important;
   }
 
   .compare-drawer-footer {
-    padding: 10px 14px;
+    padding: 10px 12px !important;
   }
 }
 
@@ -18455,18 +18662,78 @@ body.dark-theme .compare-tabs-bar {
 /* =============================================================
    🎟️ OFFICIAL BOOKING CONFIRMATION RECEIPT MODAL
    ============================================================= */
+.modal-backdrop-luxury {
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(5, 16, 33, 0.78) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 100000 !important;
+  padding: 16px !important;
+  overflow-y: auto !important;
+}
+
 .booking-receipt-card {
   background: var(--bg-card, #ffffff);
   border: 1px solid var(--border-color);
   border-radius: 24px;
-  max-width: 520px;
-  width: 92%;
-  padding: 32px 28px;
+  max-width: 580px;
+  width: 100%;
+  padding: 34px 28px;
   position: relative;
-  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.4), 0 0 30px rgba(16, 185, 129, 0.15);
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.45), 0 0 30px rgba(16, 185, 129, 0.15);
   animation: receiptPopIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   color: var(--text-primary);
   text-align: center;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .modal-backdrop-luxury {
+    padding: 10px !important;
+  }
+  .booking-receipt-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 28px 18px !important;
+    border-radius: 20px !important;
+  }
+  .receipt-main-title {
+    font-size: 1.35rem !important;
+    line-height: 1.35 !important;
+    margin-bottom: 8px !important;
+  }
+  .receipt-subtitle {
+    font-size: 0.94rem !important;
+    line-height: 1.6 !important;
+    margin-bottom: 18px !important;
+  }
+  .receipt-serial-badge-box {
+    padding: 14px 16px !important;
+    margin-bottom: 16px !important;
+  }
+  .serial-code-text {
+    font-size: 1.45rem !important;
+    letter-spacing: 1px !important;
+  }
+  .copy-serial-btn {
+    padding: 6px 12px !important;
+    font-size: 0.82rem !important;
+  }
+  .receipt-details-list {
+    font-size: 0.92rem !important;
+    gap: 10px !important;
+    padding: 14px 14px !important;
+  }
+  .btn-whatsapp-confirm {
+    padding: 14px 18px !important;
+    font-size: 0.95rem !important;
+    min-height: 48px !important;
+    border-radius: 12px !important;
+  }
 }
 
 @keyframes receiptPopIn {

@@ -217,22 +217,29 @@ export default function PropertyCompareDrawer({
         onClick={(e) => e.stopPropagation()}
       >
         {/* 1. Header Bar */}
+        {/* 1. Header Bar */}
         <div className="compare-drawer-header">
-          <div className="compare-header-title">
-            <div className="compare-header-badge-icon">
-              <Award size={20} className="text-gold" />
+          <div className="compare-drawer-header-top">
+            <div className="compare-header-title">
+              <div className="compare-header-badge-icon">
+                <Award size={20} className="text-gold" />
+              </div>
+              <div>
+                <h3>{isAr ? 'أداة مقارنة العقارات الذكية' : 'Smart Property Comparison Matrix'}</h3>
+                <p className="compare-header-sub">
+                  {isAr 
+                    ? 'مقارنة تفصيلية دقيقة بين المواصفات المعمارية، أسعار المتر، خطط السداد ومؤشرات الأمان' 
+                    : 'Multi-dimensional side-by-side comparison of specs, prices, benchmarks & payment plans'}
+                </p>
+              </div>
+              <span className="compare-count-tag">
+                {compareList.length} / {maxCompare}
+              </span>
             </div>
-            <div>
-              <h3>{isAr ? 'أداة مقارنة العقارات الذكية' : 'Smart Property Comparison Matrix'}</h3>
-              <p className="compare-header-sub">
-                {isAr 
-                  ? 'مقارنة تفصيلية دقيقة بين المواصفات المعمارية، أسعار المتر، خطط السداد ومؤشرات الأمان' 
-                  : 'Multi-dimensional side-by-side comparison of specs, prices, benchmarks & payment plans'}
-              </p>
-            </div>
-            <span className="compare-count-tag">
-              {compareList.length} / {maxCompare}
-            </span>
+
+            <button type="button" className="drawer-close-btn hide-desktop" onClick={onClose} title={isAr ? 'إغلاق' : 'Close'}>
+              <X size={18} />
+            </button>
           </div>
 
           <div className="compare-header-actions">
@@ -293,7 +300,7 @@ export default function PropertyCompareDrawer({
               </button>
             )}
 
-            <button type="button" className="drawer-close-btn" onClick={onClose} title={isAr ? 'إغلاق' : 'Close'}>
+            <button type="button" className="drawer-close-btn hide-mobile" onClick={onClose} title={isAr ? 'إغلاق' : 'Close'}>
               <X size={18} />
             </button>
           </div>

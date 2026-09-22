@@ -28,10 +28,22 @@ export function PreferencesProvider({ children }) {
     });
   }, []);
 
-  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    try {
+      return localStorage.getItem('oneline_sound') !== 'false';
+    } catch (e) {
+      return true;
+    }
+  });
 
   const toggleSound = useCallback(() => {
-    setSoundEnabled((prev) => !prev);
+    setSoundEnabled((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('oneline_sound', String(next));
+      } catch (e) {}
+      return next;
+    });
   }, []);
 
   // Synchronize theme to document root, body and mobile theme-color meta tag

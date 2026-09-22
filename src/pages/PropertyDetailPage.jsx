@@ -213,7 +213,7 @@ export default function PropertyDetailPage({
   };
 
   return (
-    <div className="property-detail-page-wrapper">
+    <div className={`property-detail-page-wrapper ${isAr ? 'rtl-dir' : 'ltr-dir'}`} dir={isAr ? 'rtl' : 'ltr'}>
       <div className="detail-container">
         {/* Quick Back Navigation Bar */}
         <div className="page-top-back-bar">

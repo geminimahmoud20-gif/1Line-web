@@ -410,11 +410,34 @@ export default function Header({
 
             <div className="utility-divider" />
 
+            {/* Sound Effects Toggle (Audio Feedback) */}
+            <button
+              type="button"
+              className={`utility-sub-btn sound-toggle-btn ${soundEnabled ? 'sound-active' : ''}`}
+              onClick={() => {
+                if (toggleSound) toggleSound();
+                playNotificationChime('chime');
+              }}
+              title={isAr ? (soundEnabled ? 'التنبيهات الصوتية مفعلة (انقر للكتم)' : 'التنبيهات الصوتية مكتومة (انقر للتشغيل)') : 'Toggle Sound'}
+              aria-label="Toggle Sound"
+            >
+              {soundEnabled ? (
+                <Volume2 size={14} className="text-gold" />
+              ) : (
+                <VolumeX size={14} style={{ opacity: 0.6 }} />
+              )}
+            </button>
+
+            <div className="utility-divider" />
+
             {/* Language Switcher */}
             <button
               type="button"
               className="utility-sub-btn lang-toggle-btn"
-              onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
+              onClick={() => {
+                setLang(lang === 'ar' ? 'en' : 'ar');
+                if (soundEnabled) playNotificationChime('click');
+              }}
               title="Switch Language"
             >
               <Globe size={13} />
@@ -528,11 +551,14 @@ export default function Header({
             <button
               type="button"
               className="mobile-quick-search-btn hide-desktop"
-              onClick={onOpenQuickSearch}
+              onClick={() => {
+                onOpenQuickSearch();
+                if (soundEnabled) playNotificationChime('click');
+              }}
               title={isAr ? 'البحث السريع' : 'Quick Search'}
               aria-label="Quick Search"
             >
-              <Search size={20} />
+              <Search size={18} />
             </button>
           )}
 
@@ -540,10 +566,13 @@ export default function Header({
           <button
             type="button"
             className="mobile-hamburger-btn"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            onClick={() => {
+              setMobileMenuOpen(!mobileMenuOpen);
+              if (soundEnabled) playNotificationChime('click');
+            }}
             aria-label="Toggle Navigation Menu"
           >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
       </div>
