@@ -2610,13 +2610,12 @@
 .secondary-specs {
   display: flex;
   align-items: center;
-  gap: 7px;
-  font-size: 0.77rem;
+  gap: 6px;
+  font-size: 0.76rem;
   color: var(--text-muted, #64748b);
   margin-bottom: 12px;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
   min-height: 22px;
 }
 
@@ -3619,8 +3618,8 @@
 
 /* --- Section Containers --- */
 .homepage-section {
-  padding: 70px 24px;
-  max-width: 1280px;
+  padding: 60px 24px 84px;
+  max-width: 1340px;
   margin: 0 auto;
 }
 
@@ -3629,8 +3628,17 @@
   border-top: 1px solid rgba(226, 232, 240, 0.8);
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
   max-width: 100%;
-  padding-left: max(24px, calc((100% - 1280px) / 2));
-  padding-right: max(24px, calc((100% - 1280px) / 2));
+  padding-left: max(36px, calc((100% - 1340px) / 2));
+  padding-right: max(36px, calc((100% - 1340px) / 2));
+  padding-bottom: 84px;
+}
+
+@media (min-width: 1024px) {
+  .bg-surface,
+  .bg-gradient-subtle {
+    padding-left: max(56px, calc((100% - 1340px) / 2));
+    padding-right: max(56px, calc((100% - 1340px) / 2));
+  }
 }
 
 .dark-theme .bg-surface,
@@ -3643,8 +3651,9 @@
 .bg-gradient-subtle {
   background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
   max-width: 100%;
-  padding-left: max(24px, calc((100% - 1280px) / 2));
-  padding-right: max(24px, calc((100% - 1280px) / 2));
+  padding-left: max(36px, calc((100% - 1340px) / 2));
+  padding-right: max(36px, calc((100% - 1340px) / 2));
+  padding-bottom: 84px;
 }
 
 .section-header-centered {
@@ -4214,11 +4223,11 @@
 }
 
 /* --- Modern Property Cards --- */
-/* --- Modern Property Cards --- */
 .properties-grid-4 {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(285px, 1fr));
   gap: 22px;
+  padding-bottom: 18px;
 }
 
 @media (min-width: 1280px) {
@@ -4231,6 +4240,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 22px;
+  padding-bottom: 18px;
 }
 
 .property-card-modern {

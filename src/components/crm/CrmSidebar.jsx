@@ -3,7 +3,7 @@ import {
   LayoutGrid, Users, Target, Building, Zap, Sparkles,
   Calculator, Activity, ShieldCheck, ChevronDown, ChevronRight,
   Search, X, Moon, Sun, LogOut, MapPin, Database, Award,
-  Cpu, PanelLeftClose, PanelLeftOpen
+  Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame
 } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import { usePreferences } from '../../context/PreferencesContext';
@@ -110,6 +110,18 @@ export default function CrmSidebar({
           icon: Sparkles,
           label_ar: 'المطابقات الذكية AI',
           label_en: 'Smart AI Match'
+        },
+        {
+          id: 'agents',
+          icon: Trophy,
+          label_ar: 'فريق المبيعات والعمولات',
+          label_en: 'Agents Leaderboard'
+        },
+        {
+          id: 'retargeting',
+          icon: Flame,
+          label_ar: 'إعادة الاستهداف الذكي',
+          label_en: 'Smart Retargeting'
         }
       ]
     },
@@ -143,7 +155,7 @@ export default function CrmSidebar({
     },
     {
       label_ar: 'الذكاء والتحليلات',
-      label_en: 'Finance & Analytics',
+      label_en: 'Finance & Intelligence',
       items: [
         {
           id: 'financials',
@@ -152,10 +164,10 @@ export default function CrmSidebar({
           label_en: 'Financials & Loans'
         },
         {
-          id: 'analytics',
+          id: 'visitor_intelligence',
           icon: Activity,
-          label_ar: 'التحليلات المتقدمة',
-          label_en: 'Intelligence & BI'
+          label_ar: 'تحليلات ونشاط الزوار',
+          label_en: 'Visitor Intelligence'
         }
       ]
     }
@@ -346,6 +358,8 @@ export default function CrmSidebar({
                   }}
                   className={`crm-sidebar-item ${activeTab === 'system' || activeTab === 'areas' || activeTab === 'corporate' ? 'is-active' : ''}`}
                   data-tooltip={isAr ? 'إدارة المنظومة' : 'System Administration'}
+                  aria-expanded={systemExpanded}
+                  aria-controls="crm-sidebar-system-subnav"
                 >
                   <div className="crm-item-main">
                     <span className="crm-item-icon">
@@ -370,7 +384,7 @@ export default function CrmSidebar({
 
                 {/* Submenu for System Modules */}
                 {!collapsed && systemExpanded && (
-                  <div className="crm-sidebar-subnav">
+                  <div className="crm-sidebar-subnav" id="crm-sidebar-system-subnav" role="region" aria-label={isAr ? 'القوائم الفرعية لإدارة المنظومة' : 'System administration submodules'}>
                     <button
                       type="button"
                       onClick={() => handleSubItemClick('areas')}

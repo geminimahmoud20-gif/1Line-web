@@ -898,6 +898,100 @@
   margin: 0 auto;
 }
 
+/* Micro-Animation: Smooth Route / Tab Transition */
+@keyframes crmTabFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.crm-content-area > * {
+  animation: crmTabFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ==========================================================================
+   SKELETON LOADING SCREENS & STATES
+   ========================================================================== */
+@keyframes crmShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.crm-skeleton {
+  background: linear-gradient(90deg, rgba(226, 232, 240, 0.6) 25%, rgba(241, 245, 249, 0.9) 50%, rgba(226, 232, 240, 0.6) 75%);
+  background-size: 200% 100%;
+  animation: crmShimmer 1.6s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+[data-theme="dark"] .crm-skeleton,
+.dark-theme .crm-skeleton {
+  background: linear-gradient(90deg, rgba(30, 41, 59, 0.6) 25%, rgba(51, 65, 85, 0.8) 50%, rgba(30, 41, 59, 0.6) 75%);
+  background-size: 200% 100%;
+}
+
+.crm-skeleton-card {
+  background: #ffffff;
+  border: 1px solid var(--crm-border-light);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+[data-theme="dark"] .crm-skeleton-card,
+.dark-theme .crm-skeleton-card {
+  background: var(--crm-surface-dark);
+  border-color: var(--crm-border-dark);
+}
+
+.crm-skeleton-line {
+  height: 14px;
+  width: 100%;
+  border-radius: 4px;
+}
+
+.crm-skeleton-line.short {
+  width: 45%;
+}
+
+.crm-skeleton-line.medium {
+  width: 70%;
+}
+
+.crm-skeleton-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+}
+
+/* ==========================================================================
+   ACCESSIBILITY & KEYBOARD FOCUS RINGS
+   ========================================================================== */
+.crm-layout button:focus-visible,
+.crm-layout a:focus-visible,
+.crm-layout input:focus-visible,
+.crm-layout select:focus-visible,
+.crm-layout textarea:focus-visible {
+  outline: 2px solid var(--crm-gold, #d97706) !important;
+  outline-offset: 2px !important;
+}
+
+.crm-sidebar-item:active,
+.crm-topbar-right button:active {
+  transform: scale(0.98);
+}
+
 /* Footer */
 .crm-footer {
   padding: 16px 28px;

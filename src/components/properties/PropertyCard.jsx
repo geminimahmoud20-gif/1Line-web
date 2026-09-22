@@ -28,17 +28,52 @@ import BrandWatermark from '../common/BrandWatermark';
 
 const FALLBACK_PROPERTY_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 500' fill='%23071e3d'%3E%3Crect width='800' height='500' fill='%23071e3d'/%3E%3Cpath d='M400 130 L620 320 L180 320 Z' fill='%230b4ea2' opacity='0.7'/%3E%3Crect x='340' y='220' width='120' height='100' rx='20' fill='%23fdcb42' opacity='0.85'/%3E%3Ctext x='50%25' y='75%25' dominant-baseline='middle' text-anchor='middle' fill='%23ffffff' font-family='sans-serif' font-size='24' font-weight='bold'%3E1LINE REAL ESTATE%3C/text%3E%3Ctext x='50%25' y='85%25' dominant-baseline='middle' text-anchor='middle' fill='%23fdcb42' font-family='sans-serif' font-size='16'%3E%D8%B9%D9%82%D8%A7%D8%B1%D8%A7%D8%AA%20%D8%B3%D9%88%D9%87%D8%A7%D8%AC%20%D8%A7%D9%84%D9%85%D8%B9%D8%AA%D9%85%D8%AF%D8%A9%3C/text%3E%3C/svg%3E";
 
-// Clean formatting for card sub-header location to avoid mid-word truncation
+// Clean formatting for card sub-header location to avoid awkward clipping
 function formatCardLocation(loc) {
   if (!loc || typeof loc !== 'string') return '';
   if (loc.includes(' - ')) {
-    const [city, detailed] = loc.split(' - ');
-    const cleanDetail = (detailed || '')
-      .split(/ (?:قرب|أمام|بجوار|خلف|بالقرب|قطاع)/)[0]
+    const parts = loc.split(' - ');
+    const city = parts[0].trim();
+    let detailed = (parts[1] || '').trim();
+
+    // Strip leading prepositions like "بالقرب من", "قرب", "أمام", "بجوار", "خلف", "قطاع"
+    detailed = detailed.replace(/^(?:بالقرب من|قرب من|قرب|أمام|بجوار|خلف|قطاع)\s+/i, '');
+
+    // Extract primary landmark before secondary clauses
+    const cleanDetail = detailed
+      .split(/\s+(?:بالقرب|قرب|أمام|بجوار|خلف|ومحطة|وعلى)\s+/i)[0]
       .trim();
-    return `${city} • ${cleanDetail}`;
+
+    // Ensure concise landmark representation (<= 20 chars)
+    const finalDetail = cleanDetail.length > 20 ? cleanDetail.substring(0, 18).trim() + '…' : cleanDetail;
+    return `${city} • ${finalDetail}`;
   }
-  return loc;
+  return loc.length > 28 ? loc.substring(0, 26).trim() + '…' : loc;
+}
+
+// Concise formatters for commercial, office and land specs to guarantee 0% overflow
+function formatOfficeSpec(adminType, lang) {
+  if (!adminType) return lang === 'ar' ? 'مقر إداري' : 'Office';
+  if (lang !== 'ar') return adminType.length > 18 ? 'Medical / Clinic' : adminType;
+  if (adminType.includes('عيادة')) return 'عيادة طبية مجهزة';
+  if (adminType.includes('مكتب') || adminType.includes('مقر')) return 'مقر إداري مجهز';
+  return adminType.length > 18 ? adminType.substring(0, 16).trim() + '…' : adminType;
+}
+
+function formatCommercialSpec(commType, lang) {
+  if (!commType) return lang === 'ar' ? 'محل تجاري واجهة' : 'Retail Shop';
+  if (lang !== 'ar') return commType.length > 18 ? 'Retail Store' : commType;
+  if (commType.includes('محل')) return 'محل تجاري واجهة';
+  if (commType.includes('معرض')) return 'معرض تجاري';
+  return commType.length > 18 ? commType.substring(0, 16).trim() + '…' : commType;
+}
+
+function formatLandSpec(landType, lang) {
+  if (!landType) return lang === 'ar' ? 'أرض استثمارية' : 'Investment Plot';
+  if (lang !== 'ar') return landType.length > 18 ? 'Building Plot' : landType;
+  if (landType.includes('بناء') || landType.includes('سكنية')) return 'أرض سكنية مرخصة';
+  if (landType.includes('تجارية')) return 'أرض تجارية';
+  return landType.length > 18 ? landType.substring(0, 16).trim() + '…' : landType;
 }
 
 export default function PropertyCard({ 
@@ -164,7 +199,7 @@ export default function PropertyCard({
           </div>
         )}
 
-        {/* Sovereign Status Badges (Verified + 0% Buyer Commission) */}
+        {/* Sovereign Status Badges (Verified + 0% Buyer Commission + 3D Virtual Tour) */}
         <div className="card-top-badges">
           <span className={`property-badge ${resolvedBadge.className}`}>
             <BadgeIcon size={12} className="badge-svg-icon" />
@@ -185,6 +220,23 @@ export default function PropertyCard({
             <CheckCircle2 size={11} />
             <span>{lang === 'ar' ? '0% عمولة مشتري' : '0% Commission'}</span>
           </span>
+          {property.virtualTour && (
+            <span className="property-badge badge-virtual-tour" style={{
+              background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.95) 0%, rgba(99, 102, 241, 0.95) 100%)',
+              color: '#ffffff',
+              boxShadow: '0 2px 8px rgba(124, 58, 237, 0.35)',
+              fontWeight: 800,
+              fontSize: '0.69rem',
+              padding: '4px 8px',
+              borderRadius: 'var(--radius-pill)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              <Sparkles size={11} />
+              <span>{lang === 'ar' ? 'معاينة 3D' : '3D Tour'}</span>
+            </span>
+          )}
         </div>
 
         {/* Floating Quick Action Buttons */}
@@ -340,7 +392,7 @@ export default function PropertyCard({
             <>
               <span className="spec-unit">
                 <Store size={13} className="spec-icon text-gold" />
-                <span><strong>{property.commercialType_ar || (lang === 'ar' ? 'محل تجاري واجهة' : 'Retail Shop')}</strong></span>
+                <span><strong>{formatCommercialSpec(property.commercialType_ar, lang)}</strong></span>
               </span>
               <span className="spec-dot">•</span>
               <span className="spec-unit">
@@ -349,7 +401,7 @@ export default function PropertyCard({
               <span className="spec-dot">•</span>
               <span className="spec-unit spec-unit-trust">
                 <ShieldCheck size={13} className="spec-trust-icon" />
-                <span>{lang === 'ar' ? 'ترخيص تجاري معتمد' : 'Commercial License'}</span>
+                <span>{lang === 'ar' ? 'ترخيص تجاري' : 'Licensed'}</span>
               </span>
             </>
           ) : isOffice ? (
@@ -357,7 +409,7 @@ export default function PropertyCard({
             <>
               <span className="spec-unit">
                 <Briefcase size={13} className="spec-icon text-gold" />
-                <span><strong>{property.adminType_ar || (lang === 'ar' ? 'مقر إداري / عيادة' : 'Admin Office / Clinic')}</strong></span>
+                <span><strong>{formatOfficeSpec(property.adminType_ar, lang)}</strong></span>
               </span>
               {property.floor !== undefined && (
                 <>
@@ -370,7 +422,7 @@ export default function PropertyCard({
               <span className="spec-dot">•</span>
               <span className="spec-unit spec-unit-trust">
                 <ShieldCheck size={13} className="spec-trust-icon" />
-                <span>{lang === 'ar' ? 'ترخيص إداري معتمد' : 'Admin License'}</span>
+                <span>{lang === 'ar' ? 'ترخيص إداري' : 'Licensed'}</span>
               </span>
             </>
           ) : isLand ? (
@@ -378,7 +430,7 @@ export default function PropertyCard({
             <>
               <span className="spec-unit">
                 <Building size={13} className="spec-icon text-gold" />
-                <span><strong>{property.landType_ar || (lang === 'ar' ? 'أرض استثمارية' : 'Investment Plot')}</strong></span>
+                <span><strong>{formatLandSpec(property.landType_ar, lang)}</strong></span>
               </span>
               <span className="spec-dot">•</span>
               <span className="spec-unit">
@@ -387,7 +439,7 @@ export default function PropertyCard({
               <span className="spec-dot">•</span>
               <span className="spec-unit spec-unit-trust">
                 <ShieldCheck size={13} className="spec-trust-icon" />
-                <span>{lang === 'ar' ? 'ترخيص بناء رسمي' : 'Licensed Plot'}</span>
+                <span>{lang === 'ar' ? 'ترخيص رسمي' : 'Licensed'}</span>
               </span>
             </>
           ) : (
@@ -413,15 +465,6 @@ export default function PropertyCard({
                 <ShieldCheck size={13} className="spec-trust-icon" />
                 <span>{lang === 'ar' ? 'فحص قانوني معتمد' : 'Verified Title'}</span>
               </span>
-              {property.virtualTour && (
-                <>
-                  <span className="spec-dot">•</span>
-                  <span className="spec-unit">
-                    <Sparkles size={12} className="spec-icon text-gold" />
-                    <span>{lang === 'ar' ? 'معاينة 3D' : '3D Tour'}</span>
-                  </span>
-                </>
-              )}
             </>
           )}
         </div>

@@ -60,11 +60,14 @@ export default function CrmTopbar({
     leads: isAr ? 'العملاء والمبيعات' : 'Leads & Sales',
     kanban: isAr ? 'مسار الصفقات' : 'Pipeline Kanban',
     matching: isAr ? 'المطابقات الذكية AI' : 'Smart AI Matching',
+    agents: isAr ? 'فريق المبيعات والعمولات' : 'Sales Team & Commissions',
+    retargeting: isAr ? 'إعادة الاستهداف الذكي' : 'Smart Retargeting Hub',
     properties: isAr ? 'محفظة العقارات' : 'Properties Portfolio',
     demands: isAr ? 'طلبات المشترين' : 'Buyer Demands',
     projects: isAr ? 'المشروعات الكبرى' : 'Mega Projects',
     financials: isAr ? 'المالية والأقساط' : 'Financials & Loans',
-    analytics: isAr ? 'التحليلات والتسويق' : 'Intelligence & BI',
+    analytics: isAr ? 'تحليلات وذكاء المنصة' : 'Visitor Intelligence & Analytics',
+    visitor_intelligence: isAr ? 'تحليلات وذكاء المنصة' : 'Visitor Intelligence & Analytics',
     system: isAr ? 'إدارة المنظومة' : 'System Administration',
     areas: isAr ? 'المناطق والأحياء' : 'Districts CMS',
     corporate: isAr ? 'هوية الشركة والمؤسس' : 'Corporate CMS'
@@ -385,8 +388,54 @@ export default function CrmTopbar({
                   borderRadius: '6px'
                 }}
               >
-                <Sparkles size={14} style={{ color: '#7c3aed' }} />
+                <Building size={14} style={{ color: '#7c3aed' }} />
                 <span>{isAr ? '+ إضافة مشروع استثماري' : '+ New Project'}</span>
+              </button>
+
+              <div style={{ height: '1px', background: '#e2e8f0', margin: '4px 8px' }} />
+
+              <button
+                type="button"
+                onClick={() => { setActiveTab('matching'); setShowQuickActionMenu(false); }}
+                style={{
+                  width: '100%',
+                  padding: '9px 12px',
+                  textAlign: isAr ? 'right' : 'left',
+                  background: 'none',
+                  border: 'none',
+                  color: 'inherit',
+                  fontSize: '0.8rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  borderRadius: '6px'
+                }}
+              >
+                <Sparkles size={14} style={{ color: '#d97706' }} />
+                <span>{isAr ? '✨ فحص المطابقات الذكية AI' : '✨ Smart AI Match'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setActiveTab('retargeting'); setShowQuickActionMenu(false); }}
+                style={{
+                  width: '100%',
+                  padding: '9px 12px',
+                  textAlign: isAr ? 'right' : 'left',
+                  background: 'none',
+                  border: 'none',
+                  color: 'inherit',
+                  fontSize: '0.8rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  borderRadius: '6px'
+                }}
+              >
+                <Zap size={14} style={{ color: '#ef4444' }} />
+                <span>{isAr ? '📢 حملة إعادة استهداف' : '📢 Retargeting Campaign'}</span>
               </button>
             </div>
           )}

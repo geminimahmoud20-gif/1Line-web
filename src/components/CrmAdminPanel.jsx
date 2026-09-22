@@ -1676,7 +1676,7 @@ export const CrmAdminPanel = ({
       )}
 
       {/* 📊 TAB 8: VISITOR INTELLIGENCE & CLICKSTREAM */}
-      {adminTab === 'visitor_intelligence' && (
+      {(adminTab === 'visitor_intelligence' || adminTab === 'analytics') && (
         <VisitorIntelligencePanel
           properties={properties}
           lang={lang}
