@@ -149,6 +149,14 @@ export default function Header({
       icon: FileText
     },
     {
+      id: 'about',
+      type: 'link',
+      path: '/about',
+      label: isAr ? 'عن الشركة' : 'About Us',
+      title: isAr ? 'عن 1Line ورؤية الإدارة والمؤسس' : 'About 1Line & Leadership',
+      icon: Award
+    },
+    {
       id: 'vip-services',
       type: 'dropdown',
       label: isAr ? 'استشارات VIP' : 'VIP Advisory',
@@ -204,6 +212,7 @@ export default function Header({
     { path: '/properties', label: isAr ? 'العقارات المعتمدة' : 'Properties', icon: Building },
     { path: '/projects', label: isAr ? 'المشروعات والكمبوندات' : 'Projects', icon: Layers },
     { path: '/demands', label: isAr ? 'طلبات المشترين' : 'Buyer Demands', icon: FileText },
+    { path: '/about', label: isAr ? 'عن الشركة والمؤسس' : 'About & Founder', icon: Award },
     { path: '/special-requests', label: isAr ? 'طلب عقار خاص VIP' : 'Special Requests', badge: 'VIP', badgeType: 'gold', icon: Sparkles },
     { path: '/market-intelligence', label: isAr ? 'مؤشرات أسعار السوق' : 'Market Intel', icon: TrendingUp },
     { path: '/financing', label: isAr ? 'حاسبة التمويل والأقساط' : 'Financing', icon: Landmark },
@@ -649,23 +658,6 @@ export default function Header({
                 </Link>
               );
             })}
-            <button
-              type="button"
-              className="mobile-nav-item"
-              style={{ background: 'none', border: 'none', width: '100%', textAlign: isAr ? 'right' : 'left', cursor: 'pointer', fontFamily: 'inherit' }}
-              onClick={() => {
-                setMobileMenuOpen(false);
-                if (onOpenAboutFounder) {
-                  onOpenAboutFounder();
-                } else {
-                  window.location.href = '/#about-us';
-                }
-              }}
-            >
-              <span>{isAr ? 'عن 1Line والمؤسس' : 'About & Founder'}</span>
-            </button>
-
-
             {/* Mobile Dedicated Luxury Utility Bar */}
             <div className="mobile-drawer-utilities" style={{
               display: 'flex',
