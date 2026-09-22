@@ -38,13 +38,13 @@ import NearbyAmenities from '../components/properties/NearbyAmenities';
 import { getWhatsAppUrl, getPhoneCallUrl } from '../utils/founderCmsData';
 import SunlightCompassWidget from '../components/properties/SunlightCompassWidget';
 import HistoricalPriceChart from '../components/properties/HistoricalPriceChart';
-import LegalTaxCalculator from '../components/calculators/LegalTaxCalculator';
 import SocialStoryCardModal from '../components/properties/SocialStoryCardModal';
 import { updatePageSeo, buildPropertySchema } from '../utils/seoHelper';
 import { checkFormSpamProtection } from '../utils/securityShield';
 import { formatCurrencyPrice, getPriceBenchmark } from '../utils/currencyAndBenchmark';
 import BookingConfirmationModal from '../components/common/BookingConfirmationModal';
 import { saveLead } from '../firebaseService';
+import { useClientAuth } from '../context/ClientAuthContext';
 
 export default function PropertyDetailPage({
   lang,
@@ -118,17 +118,31 @@ export default function PropertyDetailPage({
     }
   }, [property?.id, property]);
 
-  // Booking Form State
+  const { clientUser, isClientAuthenticated } = useClientAuth();
+
+  // Booking Form State - auto-populated for verified clients
   const [bookingForm, setBookingForm] = useState({
-    name: '',
-    phone: '',
+    name: clientUser?.name || '',
+    phone: clientUser?.whatsapp || clientUser?.phone || '',
+    type: 'field', // 'field' | 'video'
     date: '',
-    timeSlot: 'evening',
+    slot: 'evening',
     notes: ''
   });
   const [bookingSubmitted, setBookingSubmitted] = useState(false);
   const [isBookingSubmitting, setIsBookingSubmitting] = useState(false);
   const [hpField, setHpField] = useState('');
+
+  // Sync clientUser details if authenticated
+  useEffect(() => {
+    if (clientUser) {
+      setBookingForm((prev) => ({
+        ...prev,
+        name: prev.name || clientUser.name || '',
+        phone: prev.phone || clientUser.whatsapp || clientUser.phone || ''
+      }));
+    }
+  }, [clientUser]);
 
   if (!property) {
     return (
@@ -406,7 +420,7 @@ export default function PropertyDetailPage({
             onClick={() => setActiveTab('financing')}
           >
             <Calculator size={16} />
-            <span>{isAr ? 'حاسبة الأقساط والضرائب' : 'Financing & Taxes'}</span>
+            <span>{isAr ? 'حاسبة الأقساط والتمويل' : 'Payment & Financing'}</span>
           </button>
         </div>
 
@@ -706,15 +720,9 @@ export default function PropertyDetailPage({
               </div>
             )}
 
-            {/* TAB 4: FINANCING, ROI & TAX BREAKDOWN */}
+            {/* TAB 4: FINANCING & ROI CALCULATOR */}
             {activeTab === 'financing' && (
               <div className="tab-pane-content">
-                {/* ⚖️ Transparent Government Taxes & Ownership Breakdown */}
-                <LegalTaxCalculator
-                  price={property.price}
-                  lang={lang}
-                />
-
                 {/* Customized Mortgage Calculator for this property */}
                 <div className="detail-card-box">
                   <h3>{isAr ? 'حاسبة القسط والتمويل لهذا العقار' : 'Payment & Financing Calculator'}</h3>
@@ -732,6 +740,7 @@ export default function PropertyDetailPage({
           {/* Right / Sticky Agent & Booking Sidebar */}
           <div className="detail-sidebar-col">
             <div className="sticky-booking-card">
+              {/* 1. Agent Profile Header */}
               <div className="agent-profile-header">
                 <div className="agent-avatar-circle">1L</div>
                 <div>
@@ -743,68 +752,47 @@ export default function PropertyDetailPage({
                 </div>
               </div>
 
-              {/* VIP Hold Pill */}
-              <div className="sidebar-deposit-banner" onClick={() => setDepositModalOpen(true)}>
-                <div className="deposit-banner-left">
-                  <ShieldCheck size={18} className="text-gold" />
-                  <div>
-                    <strong>{isAr ? 'تثبيت العقار وحجزه 24 ساعة' : 'Lock & Reserve Property (24h)'}</strong>
-                    <span>{isAr ? 'عبر InstaPay لمنع حجز الوحدة لمشترٍ آخر' : 'Via InstaPay to prevent competing offers'}</span>
-                  </div>
-                </div>
-                <span className="btn-hold-badge">{isAr ? 'حجز' : 'Hold'}</span>
-              </div>
-
-              {/* Instant Contact Direct Row */}
+              {/* 2. Direct Instant Contact Hub (Top Priority) */}
               <div className="sidebar-instant-contact-row">
                 <a
                   href={getWhatsAppUrl(`مرحباً 1Line، أريد الاستفسار عن كود العقار: ${property.id.toUpperCase()} (${title})`)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-whatsapp-half"
+                  title={isAr ? 'تواصل فوري عبر واتساب' : 'Direct WhatsApp'}
                 >
                   <MessageSquare size={16} />
-                  <span>{isAr ? 'واتساب' : 'WhatsApp'}</span>
+                  <span>{isAr ? 'واتساب فوري' : 'WhatsApp'}</span>
                 </a>
 
-                <a href={getPhoneCallUrl()} className="btn btn-call-half">
+                <a 
+                  href={getPhoneCallUrl()} 
+                  className="btn btn-call-half"
+                  title={isAr ? 'اتصال هاتفي مباشر' : 'Direct Phone Call'}
+                >
                   <Phone size={16} />
-                  <span>{isAr ? 'اتصال فوري' : 'Call Agent'}</span>
+                  <span>{isAr ? 'اتصال هاتفي' : 'Call Agent'}</span>
                 </a>
               </div>
 
-              {/* 📹 Expat & Remote Buyer Live Video Inspection CTA */}
+              {/* 📹 Expat & Remote Buyer Live Video Tour */}
               <a
                 href={getWhatsAppUrl(`مرحباً 1Line، أنا متواجد خارج سوهاج/مصر وأرغب في حجز موعد لمعاينة العقار كود: #${property.id.toUpperCase()} (${title}) عبر مكالمة فيديو حية (Live WhatsApp Video Tour) مع مستشار المعاينات.`)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="sidebar-live-video-btn"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  marginTop: '10px',
-                  padding: '9px 12px',
-                  background: 'rgba(14, 165, 233, 0.08)',
-                  border: '1px solid rgba(14, 165, 233, 0.35)',
-                  borderRadius: '8px',
-                  color: '#0284c7',
-                  fontSize: '0.8rem',
-                  fontWeight: '800',
-                  textDecoration: 'none',
-                  transition: 'all 0.2s ease'
-                }}
+                title={isAr ? 'معاينة فيديو حية للمغتربين خارج سوهاج' : 'Live WhatsApp video inspection'}
               >
-                <Video size={16} style={{ color: '#0284c7', flexShrink: 0 }} />
-                <span>{isAr ? '📹 معاينة فيديو مباشرة (للمغتربين)' : '📹 Live Video Tour (Expats)'}</span>
+                <Video size={16} className="text-sky" />
+                <span>{isAr ? 'معاينة فيديو حية (للمغتربين والمسافرين)' : 'Live Video Tour (Expats)'}</span>
               </a>
 
+              {/* Section Divider */}
               <div className="sidebar-divider">
-                <span>{isAr ? 'أو حدد موعد معاينة ميدانية مجانية' : 'Or Book a Free Viewing Tour'}</span>
+                <span>{isAr ? 'أو احجز موعد معاينة مجانية' : 'Or Schedule Free Viewing'}</span>
               </div>
 
-              {/* Booking Form */}
+              {/* 3. Free Viewing Booking Form */}
               {bookingSubmitted ? (
                 <div className="booking-success-box">
                   <CheckCircle2 size={36} className="text-success" />
@@ -826,7 +814,15 @@ export default function PropertyDetailPage({
                   </div>
 
                   <div className="form-group-item">
-                    <label>{isAr ? 'الاسم بالكامل * (إلزامي)' : 'Full Name * (Required)'}</label>
+                    <label>
+                      <span>{isAr ? 'الاسم بالكامل *' : 'Full Name *'}</span>
+                      {isClientAuthenticated && (
+                        <span className="client-auto-badge">
+                          <ShieldCheck size={11} />
+                          <span>{isAr ? 'معتمد' : 'Verified'}</span>
+                        </span>
+                      )}
+                    </label>
                     <input
                       type="text"
                       placeholder={isAr ? 'مثال: محمد السيد' : 'John Doe'}
@@ -837,7 +833,7 @@ export default function PropertyDetailPage({
                   </div>
 
                   <div className="form-group-item">
-                    <label>{isAr ? 'رقم الواتساب * (إلزامي لتأكيد المعاينة والموقع)' : 'WhatsApp Number * (Required)'}</label>
+                    <label>{isAr ? 'رقم الواتساب * (لتأكيد المعاينة والموقع)' : 'WhatsApp Number *'}</label>
                     <input
                       type="tel"
                       placeholder="01012345678"
@@ -848,65 +844,80 @@ export default function PropertyDetailPage({
                   </div>
 
                   <div className="form-group-item">
-                    <label>{isAr ? 'نوع المعاينة المطلوبة' : 'Tour Format'}</label>
-                    <div className="booking-time-slot-pills">
+                    <label>{isAr ? 'طريقة المعاينة المطلوبة' : 'Tour Format'}</label>
+                    <div className="booking-type-toggle">
                       <button
                         type="button"
-                        className={`slot-pill ${bookingForm.type !== 'video' ? 'active' : ''}`}
+                        className={`type-toggle-btn ${bookingForm.type !== 'video' ? 'active' : ''}`}
                         onClick={() => setBookingForm({ ...bookingForm, type: 'field' })}
                       >
-                        {isAr ? '🚶‍♂️ ميدانية بالموقع' : '🚶‍♂️ In-Person'}
+                        <span>🚶‍♂️ {isAr ? 'ميدانية بالموقع' : 'On-Site'}</span>
                       </button>
                       <button
                         type="button"
-                        className={`slot-pill ${bookingForm.type === 'video' ? 'active' : ''}`}
+                        className={`type-toggle-btn ${bookingForm.type === 'video' ? 'active' : ''}`}
                         onClick={() => setBookingForm({ ...bookingForm, type: 'video' })}
                       >
-                        {isAr ? '📹 مكالمة فيديو للمغتربين' : '📹 Live Video'}
+                        <span>📹 {isAr ? 'فيديو حية' : 'Live Video'}</span>
                       </button>
                     </div>
                   </div>
 
-                  <div className="form-group-item">
-                    <label>{isAr ? 'تاريخ المعاينة المفضل' : 'Preferred Date'}</label>
-                    <input
-                      type="date"
-                      value={bookingForm.date}
-                      onChange={(e) => setBookingForm({ ...bookingForm, date: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="form-group-item">
-                    <label>{isAr ? 'الفترة الزمنية المفضلة للمعاينة' : 'Preferred Time Slot'}</label>
-                    <div className="booking-time-slot-pills">
-                      <button
-                        type="button"
-                        className={`slot-pill ${bookingForm.slot === 'morning' ? 'active' : ''}`}
-                        onClick={() => setBookingForm({ ...bookingForm, slot: 'morning' })}
-                      >
-                        {isAr ? '☀️ صباحاً (10 ص - 2 ظ)' : '☀️ Morning (10AM - 2PM)'}
-                      </button>
-                      <button
-                        type="button"
-                        className={`slot-pill ${bookingForm.slot === 'evening' || !bookingForm.slot ? 'active' : ''}`}
-                        onClick={() => setBookingForm({ ...bookingForm, slot: 'evening' })}
-                      >
-                        {isAr ? '🌙 مساءً (5 م - 9 م)' : '🌙 Evening (5PM - 9PM)'}
-                      </button>
+                  <div className="form-row-2col">
+                    <div className="form-group-item">
+                      <label>{isAr ? 'تاريخ المعاينة' : 'Preferred Date'}</label>
+                      <input
+                        type="date"
+                        value={bookingForm.date}
+                        onChange={(e) => setBookingForm({ ...bookingForm, date: e.target.value })}
+                      />
+                    </div>
+                    <div className="form-group-item">
+                      <label>{isAr ? 'الفترة' : 'Time Slot'}</label>
+                      <div className="booking-time-slot-pills">
+                        <button
+                          type="button"
+                          className={`slot-pill ${bookingForm.slot === 'morning' ? 'active' : ''}`}
+                          onClick={() => setBookingForm({ ...bookingForm, slot: 'morning' })}
+                          title={isAr ? '10 ص - 2 ظ' : 'Morning'}
+                        >
+                          {isAr ? '☀️ صباحاً' : 'Morning'}
+                        </button>
+                        <button
+                          type="button"
+                          className={`slot-pill ${bookingForm.slot === 'evening' || !bookingForm.slot ? 'active' : ''}`}
+                          onClick={() => setBookingForm({ ...bookingForm, slot: 'evening' })}
+                          title={isAr ? '5 م - 9 م' : 'Evening'}
+                        >
+                          {isAr ? '🌙 مساءً' : 'Evening'}
+                        </button>
+                      </div>
                     </div>
                   </div>
 
-                  <button type="submit" className="btn btn-primary btn-full" disabled={isBookingSubmitting}>
+                  <button type="submit" className="btn btn-primary btn-full btn-confirm-booking" disabled={isBookingSubmitting}>
                     <Calendar size={16} />
                     <span>{isBookingSubmitting ? (isAr ? 'جاري تأكيد الموعد...' : 'Confirming...') : (isAr ? 'تأكيد طلب المعاينة مجاناً' : 'Confirm Free Viewing')}</span>
                   </button>
                 </form>
               )}
 
-              {/* Safe Legal Guarantee */}
+              {/* 4. VIP 24-Hour Hold Banner (Positioned as a dedicated reservation guarantee) */}
+              <div className="sidebar-deposit-banner" onClick={() => setDepositModalOpen(true)}>
+                <div className="deposit-banner-left">
+                  <ShieldCheck size={18} className="text-gold" />
+                  <div>
+                    <strong>{isAr ? 'تثبيت العقار وحجزه 24 ساعة' : 'Lock & Reserve Property (24h)'}</strong>
+                    <span>{isAr ? 'عبر InstaPay لتجميد الوحدة ومنع حجزها لمشترٍ آخر' : 'Via InstaPay to freeze the unit before your viewing'}</span>
+                  </div>
+                </div>
+                <span className="btn-hold-badge">{isAr ? 'حجز' : 'Hold'}</span>
+              </div>
+
+              {/* 5. Safe Legal Guarantee Seal */}
               <div className="sidebar-legal-guarantee">
-                <ShieldCheck size={16} className="text-gold" />
-                <span>{isAr ? 'معاينة مجانية بدون أي رسوم أو عمولات خفية' : 'Free inspection with zero hidden fees'}</span>
+                <ShieldCheck size={15} className="text-gold" />
+                <span>{isAr ? 'معاينة مجانية 100% | 0% عمولة على المشتري' : '100% Free Inspection | Zero Buyer Commission'}</span>
               </div>
             </div>
           </div>

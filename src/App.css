@@ -9915,100 +9915,7 @@
   color: var(--text-muted);
 }
 
-/* --- Legal & Tax Breakdown Table --- */
-.legal-tax-calculator-card {
-  background: #ffffff;
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  margin-bottom: 24px;
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-sm);
-}
 
-.tax-calc-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 18px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.tax-icon-glow {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: var(--primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(13, 72, 161, 0.3);
-}
-
-.tax-calc-header h4 {
-  font-size: 1.12rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  margin-bottom: 2px;
-}
-
-.tax-calc-header p {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin: 0;
-}
-
-.tax-breakdown-table {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.breakdown-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background: #f8fafc;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-light);
-}
-
-.breakdown-row.highlight-free {
-  background: #f0fdf4;
-  border-color: #bbf7d0;
-}
-
-.breakdown-row.grand-total-row {
-  background: var(--secondary);
-  border: 2px solid var(--primary);
-  margin-top: 6px;
-}
-
-.row-label span {
-  display: block;
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.row-label small {
-  display: block;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  margin-top: 2px;
-}
-
-.row-value {
-  font-size: 0.95rem;
-  font-weight: 800;
-}
-
-.grand-total-price {
-  font-size: 1.3rem;
-  font-weight: 900;
-  color: var(--primary);
-}
 
 /* --- Sunlight & Compass Widget --- */
 .sunlight-compass-card {
@@ -10443,7 +10350,6 @@ body.dark,
 .dark-theme .nearby-amenities-card,
 .dark-theme .price-benchmark-card,
 .dark-theme .historical-price-chart-card,
-.dark-theme .legal-tax-calculator-card,
 .dark-theme .sunlight-compass-card,
 .dark-theme .sticky-booking-card,
 .dark-theme .property-manager-panel,
@@ -10480,7 +10386,6 @@ body.dark,
 [data-theme="dark"] .nearby-amenities-card,
 [data-theme="dark"] .price-benchmark-card,
 [data-theme="dark"] .historical-price-chart-card,
-[data-theme="dark"] .legal-tax-calculator-card,
 [data-theme="dark"] .sunlight-compass-card,
 [data-theme="dark"] .sticky-booking-card,
 [data-theme="dark"] .property-manager-panel,
@@ -21396,23 +21301,23 @@ body.dark-theme .compare-tabs-bar {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #0A192F;
-  border: 1px solid rgba(212, 175, 55, 0.45);
-  color: #F3E5C8;
-  padding: 5px 14px;
+  background: linear-gradient(135deg, #07152B 0%, #0D264E 100%);
+  border: 1px solid rgba(236, 200, 117, 0.55);
+  color: #F8FAFC;
+  padding: 6px 14px;
   border-radius: 999px;
   flex-shrink: 0;
-  box-shadow: 0 2px 10px rgba(10, 25, 47, 0.2);
+  box-shadow: 0 4px 14px rgba(7, 21, 43, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
   z-index: 2;
   font-weight: 800;
 }
 
 .dark-theme .market-ticker-badge,
 [data-theme="dark"] .market-ticker-badge {
-  background: rgba(10, 25, 47, 0.95);
-  border-color: rgba(212, 175, 55, 0.5);
-  color: #D4AF37;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+  background: linear-gradient(135deg, #050E1D 0%, #091C38 100%);
+  border-color: rgba(236, 200, 117, 0.65);
+  color: #F8FAFC;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .ticker-pulse-dot {
@@ -21525,41 +21430,44 @@ body.dark-theme .compare-tabs-bar {
 
 /* 🌟 Ticker High-Contrast Elements (Solves White-on-White Regression) */
 .ticker-badge-icon {
-  color: #D4AF37;
+  color: #ECC875;
   flex-shrink: 0;
+  filter: drop-shadow(0 0 4px rgba(236, 200, 117, 0.5));
 }
 
 .ticker-badge-title {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 900;
-  color: #92400e;
+  color: #ECC875 !important;
   letter-spacing: 0.2px;
   white-space: nowrap;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 .ticker-badge-date {
-  font-size: 0.67rem;
-  color: #78350f;
+  font-size: 0.7rem;
+  color: #F8FAFC !important;
   font-weight: 700;
-  padding-inline-start: 6px;
-  border-inline-start: 1px solid rgba(217, 119, 6, 0.35);
+  padding-inline-start: 8px;
+  border-inline-start: 1px solid rgba(236, 200, 117, 0.45);
   white-space: nowrap;
+  opacity: 0.92;
 }
 
 .dark-theme .ticker-badge-icon,
 [data-theme="dark"] .ticker-badge-icon {
-  color: #ffca28;
+  color: #ECC875;
 }
 
 .dark-theme .ticker-badge-title,
 [data-theme="dark"] .ticker-badge-title {
-  color: #ffca28;
+  color: #ECC875 !important;
 }
 
 .dark-theme .ticker-badge-date,
 [data-theme="dark"] .ticker-badge-date {
-  color: rgba(255, 255, 255, 0.85);
-  border-inline-start-color: rgba(255, 202, 40, 0.35);
+  color: #F8FAFC !important;
+  border-inline-start-color: rgba(236, 200, 117, 0.45);
 }
 
 .ticker-pin-icon {

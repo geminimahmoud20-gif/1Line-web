@@ -205,38 +205,18 @@ export default function PropertyCard({
             <BadgeIcon size={12} className="badge-svg-icon" />
             <span>{resolvedBadge.label}</span>
           </span>
-          <span className="property-badge badge-commission" style={{
-            background: 'rgba(16, 185, 129, 0.95)',
-            color: '#ffffff',
-            boxShadow: '0 2px 8px rgba(16, 185, 129, 0.35)',
-            fontWeight: 800,
-            fontSize: '0.69rem',
-            padding: '4px 8px',
-            borderRadius: 'var(--radius-pill)',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '4px'
-          }}>
-            <CheckCircle2 size={11} />
-            <span>{lang === 'ar' ? '0% عمولة مشتري' : '0% Commission'}</span>
-          </span>
-          {property.virtualTour && (
-            <span className="property-badge badge-virtual-tour" style={{
-              background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.95) 0%, rgba(99, 102, 241, 0.95) 100%)',
-              color: '#ffffff',
-              boxShadow: '0 2px 8px rgba(124, 58, 237, 0.35)',
-              fontWeight: 800,
-              fontSize: '0.69rem',
-              padding: '4px 8px',
-              borderRadius: 'var(--radius-pill)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px'
-            }}>
-              <Sparkles size={11} />
-              <span>{lang === 'ar' ? 'معاينة 3D' : '3D Tour'}</span>
+          <div className="card-secondary-badges">
+            <span className="property-badge badge-commission">
+              <CheckCircle2 size={11} />
+              <span>{lang === 'ar' ? '0% عمولة' : '0% Fee'}</span>
             </span>
-          )}
+            {property.virtualTour && (
+              <span className="property-badge badge-virtual-tour">
+                <Sparkles size={11} />
+                <span>{lang === 'ar' ? 'معاينة 3D' : '3D Tour'}</span>
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Floating Quick Action Buttons */}
