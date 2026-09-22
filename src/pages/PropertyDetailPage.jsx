@@ -186,7 +186,7 @@ export default function PropertyDetailPage({
         whatsapp: cleanWhatsapp,
         phone: bookingForm.phone || cleanWhatsapp,
         propertyType: property.type || 'residential',
-        area: property.areaKey || 'sohag_jadida',
+        area: property.areaKey || 'new_sohag',
         serialCode,
         propertyId: property.id,
         propertyTitle: title,

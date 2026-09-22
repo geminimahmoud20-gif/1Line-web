@@ -2,6 +2,8 @@
 //  1LINE SOLUTIONS CRM - ENTERPRISE CANONICAL LEAD SCHEMA
 // =============================================================
 
+import { normalizeAreaKey } from './areasData.js';
+
 export const CANONICAL_LEAD_FIELDS = [
   'id',
   'name',
@@ -40,7 +42,8 @@ export const normalizeCanonicalLead = (raw = {}, options = {}) => {
   const source = raw.source || raw.sourceLabel || 'website';
   const type = raw.type || 'buyer';
   const budget = raw.budget || details.budget || details.expectedPrice || '';
-  const area = raw.area || details.area || raw.location || 'sohag_jadida';
+  const rawArea = raw.area || details.area || raw.location || 'new_sohag';
+  const area = normalizeAreaKey(rawArea);
   const propertyType = raw.propertyType || details.propertyType || raw.targetType || 'apartment';
   const notes = raw.notes || '';
   const status = raw.status || 'new';

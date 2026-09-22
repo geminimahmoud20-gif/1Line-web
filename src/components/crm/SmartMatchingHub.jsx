@@ -14,7 +14,7 @@ import {
   Flame
 } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
-import { getAreas } from '../../utils/areasData';
+import { getAreas, normalizeAreaKey } from '../../utils/areasData';
 
 export default function SmartMatchingHub({
   leads = [],
@@ -31,11 +31,12 @@ export default function SmartMatchingHub({
 
   const getLocalizedArea = (areaKey) => {
     if (!areaKey) return isAr ? 'سوهاج' : 'Sohag';
-    const cleanKey = String(areaKey).trim().toLowerCase();
+    const cleanKey = normalizeAreaKey(areaKey);
     const map = {
       thakafa: 'حي الثقافة',
       east: 'حي شرق',
       west: 'حي غرب',
+      center: 'وسط البلد',
       new_sohag: 'سوهاج الجديدة',
       corniche: 'كورنيش النيل',
       city: 'سيتي والشبان',
@@ -59,19 +60,21 @@ export default function SmartMatchingHub({
 
     buyerLeads.forEach(lead => {
       const details = lead.details || {};
-      const leadArea = (lead.area || details.area || lead.location || '').toLowerCase();
+      const rawLeadArea = lead.area || details.area || lead.location || '';
+      const leadArea = normalizeAreaKey(rawLeadArea);
       const leadType = (lead.propertyType || details.propertyType || '').toLowerCase();
       const leadBudget = parseInt(lead.budget) || parseInt(details.budget) || parseInt(details.investmentAmount) || 2500000;
 
       liveProps.forEach(prop => {
         let score = 0;
         const reasons = [];
+        const propArea = normalizeAreaKey(prop.areaKey);
 
-        // 1. Area match (35 pts)
-        if (leadArea && (prop.areaKey === leadArea || leadArea === 'all')) {
+        // 1. Area match (35 pts) - Normalized comparison
+        if (leadArea && (propArea === leadArea || leadArea === 'all' || propArea === 'all')) {
           score += 35;
           reasons.push(isAr ? 'نفس المنطقة المستهدفة' : 'Area match');
-        } else if (!leadArea) {
+        } else if (!rawLeadArea) {
           score += 20;
         }
 
@@ -114,18 +117,21 @@ export default function SmartMatchingHub({
     return results.sort((a, b) => b.score - a.score);
   }, [leads, properties, minMatchScore, isAr]);
 
+  // Dispatch proposal directly to buyer via WhatsApp
   const handleSendProposal = (match) => {
     const { lead, property } = match;
-    const cleanPhone = (lead.whatsapp || lead.phone || '').replace(/[^0-9]/g, '');
+    const phone = lead.whatsapp || lead.phone;
+    const cleanPhone = phone?.replace(/[^0-9]/g, '');
+
     const propTitle = isAr ? property.title_ar : property.title_en;
-    const propLoc = isAr ? property.locationName_ar : property.locationName_en;
     const propPrice = property.price?.toLocaleString();
+    const propLoc = getLocalizedArea(property.areaKey);
 
     const waText = isAr
-      ? `🏛️ *شركة 1Line للحلول العقارية — عرض خاص ومطابق لطلبك*\n\n` +
-        `أهلاً أ. *${lead.name}*،\n` +
-        `بناءً على طلبكم المسجل لدينا، يسعدنا أن نرشح لكم هذه الوحدة المطابقة لاهتمامكم بنسبة ${match.score}%:\n\n` +
-        `🏢 *العقار:* ${propTitle}\n` +
+      ? `🏛️ *شركة 1Line للحلول العقارية — عرض عقاري مخصص لطلبكم (${match.score}% نسبة توافق)*\n\n` +
+        `أهلاً بك أ. *${lead.name}*،\n` +
+        `بناءً على طلبكم المسجل لدينا، وجدنا لك وحدة عقارية استثنائية تطابق معاييرك تماماً:\n\n` +
+        `🏢 *الوحدة:* ${propTitle}\n` +
         `📍 *الموقع:* ${propLoc}\n` +
         `📐 *المساحة:* ${property.size} م² (${property.bedrooms || 0} غرف)\n` +
         `💰 *السعر الإجمالي:* ${propPrice} ج.م\n` +
@@ -140,7 +146,7 @@ export default function SmartMatchingHub({
         `Would you like to schedule a site visit?`;
 
     if (cleanPhone) {
-      window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(waText)}`, '_blank');
+      window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(waText)}`, '_blank', 'noopener,noreferrer');
     }
 
     if (triggerToast) {

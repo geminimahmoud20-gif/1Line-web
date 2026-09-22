@@ -53,7 +53,7 @@ export const BrokerPortal = ({
       return;
     }
 
-    const targetArea = brokerForm.area || 'sohag_jadida';
+    const targetArea = brokerForm.area || 'new_sohag';
     const targetType = brokerForm.propertyType || 'apartment';
 
     const normalizedPhone = cleanPhone.startsWith('0') ? cleanPhone.substring(1) : cleanPhone;
@@ -142,7 +142,7 @@ export const BrokerPortal = ({
             <label>{isAr ? 'الموقع / منطقة نشاطك الأساسية بسوهاج * (إلزامي)' : 'Primary District in Sohag * (Required)'}</label>
             <select
               className="form-select-styled"
-              value={brokerForm.area || 'sohag_jadida'}
+              value={brokerForm.area || 'new_sohag'}
               onChange={(e) => setBrokerForm({ ...brokerForm, area: e.target.value })}
               required
             >

@@ -215,7 +215,7 @@ function AppContent() {
       phone: formData.phone,
       whatsapp: formData.whatsapp || formData.phone,
       propertyType: formData.propertyType || 'apartment',
-      area: formData.area || 'sohag_jadida',
+      area: formData.area || 'new_sohag',
       type: 'callback_request',
       notes: `طلب استشارة ومعاودة اتصال (${formData.preferredTime || 'في أقرب وقت'}) | نوع العقار: ${formData.propertyType || 'سكني'} | المسار: ${formData.consultationTrack || 'عام'}`,
       details: formData
@@ -257,7 +257,7 @@ function AppContent() {
       phone: buyerAnswers.phone,
       whatsapp: buyerAnswers.whatsapp || buyerAnswers.phone,
       propertyType: buyerAnswers.propertyType || 'apartment',
-      area: buyerAnswers.area || 'sohag_jadida',
+      area: buyerAnswers.area || 'new_sohag',
       type: 'buyer',
       landingPage: '/buy',
       notes: `طلب شراء ${buyerAnswers.propertyType} في منطقة ${buyerAnswers.area} بميزانية ${buyerAnswers.budget}`,
@@ -295,7 +295,7 @@ function AppContent() {
       phone: data.phone,
       whatsapp: data.whatsapp || data.phone,
       propertyType: data.propertyType || 'apartment',
-      area: data.area || 'sohag_jadida',
+      area: data.area || 'new_sohag',
       type: 'seller',
       landingPage: '/sell',
       notes: `عرض بيع ${data.propertyType} في ${data.area} بمساحة ${data.size || ''}م`,
@@ -308,7 +308,7 @@ function AppContent() {
   const [invAmount, setInvAmount] = useState(5000000);
   const [invPeriod, setInvPeriod] = useState(5);
   const [invPropType, setInvPropType] = useState('commercial');
-  const [investorForm, setInvestorForm] = useState({ name: '', phone: '', whatsapp: '', email: '', area: 'sohag_jadida' });
+  const [investorForm, setInvestorForm] = useState({ name: '', phone: '', whatsapp: '', email: '', area: 'new_sohag' });
   const [showInvResultForm, setShowInvResultForm] = useState(false);
 
   const roiRes = {
@@ -324,12 +324,12 @@ function AppContent() {
       phone: data.phone,
       whatsapp: data.whatsapp || data.phone,
       propertyType: data.propertyType || data.targetType || invPropType,
-      area: data.area || 'sohag_jadida',
+      area: data.area || 'new_sohag',
       email: data.email,
       type: 'investor',
       landingPage: '/investor',
       notes: `طلب دراسة جدوى استثمارية بمبلغ ${(data.budget || invAmount).toLocaleString()} ج.م لفترة ${data.investmentHorizon || invPeriod} سنوات`,
-      details: { invAmount: data.budget || invAmount, invPeriod: data.investmentHorizon || invPeriod, invPropType: data.propertyType || invPropType, area: data.area || 'sohag_jadida', ...data }
+      details: { invAmount: data.budget || invAmount, invPeriod: data.investmentHorizon || invPeriod, invPropType: data.propertyType || invPropType, area: data.area || 'new_sohag', ...data }
     });
     triggerToast(lang === 'ar' ? 'تم إرسال طلب دراسة الجدوى الاستثمارية بنجاح!' : 'Investment study requested!', 'success');
   };
@@ -360,7 +360,7 @@ function AppContent() {
       phone: data.phone,
       whatsapp: data.whatsapp || data.phone,
       propertyType: data.propertyType || (data.categories && data.categories[0]) || 'all_types',
-      area: data.area || (data.areas && data.areas[0]) || 'sohag_jadida',
+      area: data.area || (data.areas && data.areas[0]) || 'new_sohag',
       type: 'broker',
       landingPage: '/broker',
       notes: `طلب انضمام وسيط عقاري (خبرة ${data.experience} سنوات) - المنطقة: ${data.area || 'سوهاج'}`,

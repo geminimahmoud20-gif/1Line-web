@@ -18,6 +18,7 @@ import { playNotificationChime } from '../utils/notificationHub';
 import { sanitizeObject, normalizePhoneNumber } from '../utils/securityShield';
 import { identifyVisitor, getCurrentSessionJourney } from '../utils/visitorTracker';
 import { isRecordArray, readStoredJson } from '../utils/browserStorage';
+import { normalizeAreaKey } from '../utils/areasData';
 import { usePreferences } from './PreferencesContext';
 import { useUIModal } from './UIModalContext';
 
@@ -208,7 +209,8 @@ export function PropertiesProvider({ children }) {
     const rawPhone = cleanData.phone || cleanData.whatsapp || '';
     const rawWhatsapp = cleanData.whatsapp || cleanData.phone || '';
     const normalizedPropertyType = cleanData.propertyType || cleanData.details?.propertyType || cleanData.targetType || cleanData.type || 'residential';
-    const normalizedArea = cleanData.area || cleanData.details?.area || cleanData.location || 'sohag_jadida';
+    const rawArea = cleanData.area || cleanData.details?.area || cleanData.location || 'new_sohag';
+    const normalizedArea = normalizeAreaKey(rawArea);
 
     const standardizedData = {
       ...cleanData,
@@ -294,7 +296,7 @@ export function PropertiesProvider({ children }) {
           source: standardizedData.source || 'website',
           type: standardizedData.type || 'buyer',
           budget: standardizedData.budget || standardizedData.details?.budget || '',
-          area: standardizedData.area || 'sohag_jadida',
+          area: standardizedData.area || 'new_sohag',
           propertyType: standardizedData.propertyType || 'apartment',
           notes: standardizedData.notes || '',
           temperature: standardizedData.temperature || 'hot',

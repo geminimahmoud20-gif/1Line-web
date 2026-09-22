@@ -271,7 +271,7 @@ export default function CustomerProfileModal({
               <button
                 type="button"
                 className="btn btn-sm"
-                onClick={() => window.open(`https://wa.me/${cleanPhone}`, '_blank')}
+                onClick={() => window.open(`https://wa.me/${cleanPhone}`, '_blank', 'noopener,noreferrer')}
                 style={{ padding: '6px 12px', fontSize: '0.8rem', background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0', fontWeight: 'bold' }}
               >
                 <MessageSquare size={14} />
@@ -776,7 +776,7 @@ export default function CustomerProfileModal({
                       className="btn btn-sm btn-primary"
                       onClick={() => {
                         const waText = `أهلاً أ. ${formData.name}، بخصوص طلبك العقاري، نود ترشيح وحدة ${isAr ? prop.title_ar : prop.title_en} بسعر ${prop.price?.toLocaleString()} ج.م. هل نحدد موعداً للمعاينة؟`;
-                        window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(waText)}`, '_blank');
+                        window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(waText)}`, '_blank', 'noopener,noreferrer');
                       }}
                       style={{ padding: '6px 10px', fontSize: '0.75rem', background: '#092347', color: '#ffffff', borderRadius: '6px' }}
                       title={isAr ? 'إرسال بروشور الوحدة على الواتساب' : 'Send WhatsApp Brochure'}

@@ -59,7 +59,7 @@ export const ReferralPortal = ({
         phone: `${referralCountry}${referralForm.referralPhone}`,
         whatsapp: `${referralCountry}${referralForm.referralPhone}`,
         propertyType: referralForm.referralType || 'residential',
-        area: 'sohag_jadida',
+        area: 'new_sohag',
         type: 'referral',
         source: 'برنامج الإحالة والشركاء',
         notes: `إحالة من: ${referralForm.referrerName} (${referrerCountry}${referralForm.referrerPhone}) - صلة القرابة: ${referralForm.relationship}`,

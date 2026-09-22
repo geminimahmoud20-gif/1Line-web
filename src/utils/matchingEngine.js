@@ -3,6 +3,7 @@
 // =============================================================
 
 import { SOHAG_AREAS } from '../data/propertiesData.js';
+import { normalizeAreaKey } from './areasData.js';
 
 /**
  * Normalizes phone number for WhatsApp URL
@@ -30,7 +31,7 @@ export function findMatchingClientsForProperty(property, leads = [], demands = [
 
   const matched = [];
   const propertyPrice = typeof property.price === 'number' ? property.price : parseInt(String(property.price).replace(/,/g, '')) || 0;
-  const propertyArea = property.areaKey || '';
+  const propertyArea = normalizeAreaKey(property.areaKey);
   const propertyType = property.type || '';
 
   // 1. Match with CRM Leads
@@ -40,12 +41,13 @@ export function findMatchingClientsForProperty(property, leads = [], demands = [
 
     let score = 50; // base score
     const details = lead.details || {};
-    const leadArea = details.area || lead.area || '';
+    const rawLeadArea = details.area || lead.area || '';
+    const leadArea = normalizeAreaKey(rawLeadArea);
     const leadType = details.propertyType || lead.type || '';
     const leadBudget = parseInt(String(details.budget || details.expectedPrice || lead.budget || 0).replace(/[^0-9]/g, '')) || 0;
 
     // Area Match (+30)
-    if (leadArea && (leadArea === propertyArea || leadArea === 'all')) {
+    if (leadArea && (leadArea === propertyArea || leadArea === 'all' || propertyArea === 'all')) {
       score += 30;
     }
 
@@ -86,11 +88,12 @@ export function findMatchingClientsForProperty(property, leads = [], demands = [
     if (demand.status !== 'published' && demand.status !== 'pending') return;
 
     let score = 50;
-    const demandArea = demand.area || '';
+    const rawDemandArea = demand.area || '';
+    const demandArea = normalizeAreaKey(rawDemandArea);
     const demandType = demand.type || '';
     const demandBudget = typeof demand.budget === 'number' ? demand.budget : parseInt(String(demand.budget).replace(/,/g, '')) || 0;
 
-    if (demandArea && (demandArea === propertyArea || demandArea === 'all')) {
+    if (demandArea && (demandArea === propertyArea || demandArea === 'all' || propertyArea === 'all')) {
       score += 30;
     }
     if (demandType && (demandType === propertyType || demandType === 'all')) {

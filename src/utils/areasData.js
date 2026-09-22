@@ -360,6 +360,143 @@ export function getAreaById(areaId) {
 }
 
 /**
+ * 🗺️ Canonical Area Normalizer
+ * Unifies Arabic district names, English variations, and legacy keys (e.g. 'sohag_jadida')
+ * into the standard system area ID (e.g. 'new_sohag').
+ */
+export function normalizeAreaKey(rawArea) {
+  if (!rawArea) return 'new_sohag';
+  if (typeof rawArea !== 'string') return String(rawArea);
+
+  const clean = rawArea.trim().toLowerCase().replace(/[\s\-_]+/g, '_');
+
+  // Direct canonical map
+  const aliases = {
+    // New Sohag
+    'sohag_jadida': 'new_sohag',
+    'sohag_gadida': 'new_sohag',
+    'new_sohag': 'new_sohag',
+    'newsohag': 'new_sohag',
+    'sohag_new': 'new_sohag',
+    'سوهاج_الجديدة': 'new_sohag',
+    'سوهاج_الجديده': 'new_sohag',
+    'الجديدة': 'new_sohag',
+    'الجديده': 'new_sohag',
+    'مدينة_سوهاج_الجديدة': 'new_sohag',
+    
+    // East Sohag & Gomhoureya
+    'east': 'east',
+    'east_sohag': 'east',
+    'شرق': 'east',
+    'شرق_سوهاج': 'east',
+    'حي_شرق': 'east',
+    'الجمهورية': 'east',
+    'شارع_الجمهورية': 'east',
+
+    // Corniche
+    'corniche': 'corniche',
+    'nile_corniche': 'corniche',
+    'الكورنيش': 'corniche',
+    'كورنيش': 'corniche',
+    'كورنيش_النيل': 'corniche',
+
+    // West Sohag
+    'west': 'west',
+    'west_sohag': 'west',
+    'غرب': 'west',
+    'غرب_سوهاج': 'west',
+    'حي_غرب': 'west',
+    'المحطة': 'west',
+    'الشهيد': 'west',
+
+    // City Center
+    'center': 'center',
+    'city_center': 'center',
+    'downtown': 'center',
+    'وسط': 'center',
+    'وسط_البلد': 'center',
+    'وسط_سوهاج': 'center',
+    'العارف': 'center',
+    'ميدان_العارف': 'center',
+    'الشارع_الجديد': 'center',
+
+    // Thakafa
+    'thakafa': 'thakafa',
+    'el_thakafa': 'thakafa',
+    'الثقافة': 'thakafa',
+    'منطقة_الثقافة': 'thakafa',
+    'حي_الثقافة': 'thakafa',
+    'ميدان_الثقافة': 'thakafa',
+    'المخبز_الآلي': 'thakafa',
+
+    // City & Shoban
+    'city': 'city',
+    'سيتي': 'city',
+    'سيتي_والشبان': 'city',
+    'الشبان': 'city',
+
+    // Kawthar
+    'kawthar': 'kawthar',
+    'al_kawthar': 'kawthar',
+    'alkawthar': 'kawthar',
+    'الكوثر': 'kawthar',
+    'حي_الكوثر': 'kawthar',
+    'مدينة_الكوثر': 'kawthar',
+
+    // Akhmeem
+    'akhmeem': 'akhmeem',
+    'akhmim': 'akhmeem',
+    'أخميم': 'akhmeem',
+    'اخميم': 'akhmeem',
+
+    // Tahta
+    'tahta': 'tahta',
+    'طهطا': 'tahta',
+
+    // Girga
+    'girga': 'girga',
+    'جرجا': 'girga',
+
+    // Araba Abydos
+    'araba': 'araba',
+    'عرابة': 'araba',
+    'عرابة_أبيدوس': 'araba',
+    'عرابه': 'araba',
+
+    // All
+    'all': 'all',
+    'all_areas': 'all',
+    'الكل': 'all',
+    'كل_المناطق': 'all',
+    'جميع_المناطق': 'all',
+    'أي_منطقة': 'all',
+    'اي_منطقه': 'all'
+  };
+
+  if (aliases[clean]) return aliases[clean];
+
+  // Try checking raw string without underscore replacement
+  const rawClean = rawArea.trim();
+  if (aliases[rawClean]) return aliases[rawClean];
+
+  // Check against dynamic areas list from getAreas()
+  try {
+    const currentAreas = getAreas();
+    const matched = currentAreas.find(a => 
+      a.id === clean || 
+      a.id === rawArea ||
+      a.name_ar === rawClean || 
+      a.name_en?.toLowerCase() === rawArea.toLowerCase() ||
+      a.label_ar === rawClean ||
+      rawClean.includes(a.name_ar)
+    );
+    if (matched) return matched.id;
+  } catch (e) {}
+
+  return clean;
+}
+
+/**
  * Save custom areas locally and sync to Firestore
  */
 export async function saveAreas(areasList) {

@@ -122,7 +122,7 @@ export default function WhatsAppMatchNotifierModal({
     
     // Mark as sent in state
     setSentLeadIds(prev => [...new Set([...prev, client.id])]);
-    window.open(whatsappUrl, '_blank');
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
 
     if (triggerToast) {
       triggerToast(isAr ? `جاري فتح محادثة واتساب مع ${client.name}` : `Opening WhatsApp for ${client.name}`, 'info');

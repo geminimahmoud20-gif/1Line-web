@@ -254,6 +254,18 @@ export function getWhatsAppUrl(text = '', customNumber = null) {
 }
 
 /**
+ * Safely opens a WhatsApp conversation in a secure new tab
+ * without hijacking or breaking the user's ongoing session.
+ */
+export function openWhatsAppSafely(text = '', customNumber = null) {
+  const url = getWhatsAppUrl(text, customNumber);
+  if (typeof window !== 'undefined') {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+  return url;
+}
+
+/**
  * Generates a full tel: URL with dynamic contact number
  */
 export function getPhoneCallUrl(customNumber = null) {

@@ -107,7 +107,7 @@ export const InvestorCenter = ({
       return;
     }
 
-    const targetArea = investorForm.area || 'sohag_jadida';
+    const targetArea = investorForm.area || 'new_sohag';
     const normalizedPhone = cleanPhone.startsWith('0') ? cleanPhone.substring(1) : cleanPhone;
     const normalizedWhatsapp = cleanWhatsapp.startsWith('0') ? cleanWhatsapp.substring(1) : cleanWhatsapp;
 
@@ -344,7 +344,7 @@ export const InvestorCenter = ({
             <label>{isAr ? 'الموقع / المنطقة المستهدفة بسوهاج * (إلزامي)' : 'Target Area in Sohag * (Required)'}</label>
             <select
               className="form-input-styled"
-              value={investorForm.area || 'sohag_jadida'}
+              value={investorForm.area || 'new_sohag'}
               onChange={(e) => setInvestorForm({ ...investorForm, area: e.target.value })}
               required
             >
