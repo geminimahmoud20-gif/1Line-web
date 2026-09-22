@@ -97,71 +97,32 @@ export default function ShareModal({ isOpen, onClose, lang = 'ar', triggerToast,
           </div>
         )}
 
-        {/* 1-Click Native Mobile Share (If Supported) */}
-        {canNativeShare && (
-          <div className="share-native-row">
-            <button 
-              type="button" 
-              className="btn btn-native-share" 
-              onClick={handleNativeShare}
-              title={isAr ? 'مشاركة عبر تطبيقات هاتفك' : 'Share via Device Apps'}
-            >
-              <Share2 size={16} />
-              <span>{isAr ? 'مشاركة مباشرة عبر تطبيقات هاتفك' : 'Share via Device Apps'}</span>
-            </button>
-          </div>
-        )}
-
-        {/* Multi-Platform Social Share Grid */}
-        <div className="share-links-grid">
-          {/* WhatsApp */}
+        {/* WhatsApp Direct Share Action */}
+        <div className="share-single-wa-action" style={{ margin: '18px 0 16px' }}>
           <a
             href={`https://wa.me/?text=${encodeURIComponent(waShareText)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="social-share-btn share-wa"
-            title="WhatsApp"
+            style={{
+              width: '100%',
+              height: '48px',
+              fontSize: '0.96rem',
+              fontWeight: 800,
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              textDecoration: 'none',
+              background: '#25D366',
+              color: '#ffffff',
+              boxShadow: '0 4px 16px rgba(37, 211, 102, 0.32)'
+            }}
+            title={isAr ? 'مشاركة عبر واتساب' : 'Share via WhatsApp'}
           >
-            <MessageSquare size={17} />
-            <span>{isAr ? 'واتساب' : 'WhatsApp'}</span>
-          </a>
-
-          {/* Telegram */}
-          <a
-            href={`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(waShareText)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="social-share-btn share-tg"
-            title="Telegram"
-          >
-            <Send size={16} />
-            <span>{isAr ? 'تيليجرام' : 'Telegram'}</span>
-          </a>
-
-          {/* Facebook */}
-          <a
-            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="social-share-btn share-fb"
-            title="Facebook"
-          >
-            <ExternalLink size={16} />
-            <span>فيسبوك</span>
-          </a>
-
-          {/* LinkedIn */}
-          <a
-            href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="social-share-btn share-in"
-            title="LinkedIn"
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
-            </svg>
-            <span>LinkedIn</span>
+            <MessageSquare size={19} />
+            <span>{isAr ? 'مشاركة عبر تطبيق واتساب 💬' : 'Share via WhatsApp'}</span>
           </a>
         </div>
 
