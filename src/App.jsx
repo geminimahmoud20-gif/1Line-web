@@ -723,6 +723,8 @@ function AppContent() {
                   onClearFavorites={clearFavorites}
                   onClearCompare={clearCompare}
                   onOpenCompare={() => setCompareDrawerOpen(true)}
+                  leads={leads}
+                  demands={demands}
                   lang={lang}
                   currency={currency}
                 />
@@ -927,9 +929,23 @@ function AppContent() {
 function ClientAuthConsumer({ children }) {
   const { lang } = usePreferences();
   const { triggerToast } = useUIModal();
-  const { handleAddNewLead } = useProperties();
+  const { 
+    handleAddNewLead, 
+    clearFavorites, 
+    clearCompare, 
+    restoreFavorites, 
+    favorites 
+  } = useProperties();
   return (
-    <ClientAuthProvider lang={lang} triggerToast={triggerToast} handleAddNewLead={handleAddNewLead}>
+    <ClientAuthProvider 
+      lang={lang} 
+      triggerToast={triggerToast} 
+      handleAddNewLead={handleAddNewLead}
+      clearFavorites={clearFavorites}
+      clearCompare={clearCompare}
+      restoreFavorites={restoreFavorites}
+      favorites={favorites}
+    >
       {children}
     </ClientAuthProvider>
   );

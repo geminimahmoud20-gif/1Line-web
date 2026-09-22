@@ -8,7 +8,16 @@ const CLIENT_STORAGE_KEY = 'oneline_client_account';
 
 const ClientAuthContext = createContext(null);
 
-export function ClientAuthProvider({ children, triggerToast, lang = 'ar', handleAddNewLead }) {
+export function ClientAuthProvider({ 
+  children, 
+  triggerToast, 
+  lang = 'ar', 
+  handleAddNewLead,
+  clearFavorites,
+  clearCompare,
+  restoreFavorites,
+  favorites = []
+}) {
   const isAr = lang === 'ar';
 
   // Client User State
@@ -40,6 +49,36 @@ export function ClientAuthProvider({ children, triggerToast, lang = 'ar', handle
       localStorage.setItem(CLIENT_STORAGE_KEY, JSON.stringify(clientUser));
     } else {
       localStorage.removeItem(CLIENT_STORAGE_KEY);
+    }
+  }, [clientUser]);
+
+  // Continuously sync active favorites to client-isolated backup storage
+  useEffect(() => {
+    if (clientUser && Array.isArray(favorites)) {
+      const phoneDigits = (clientUser.whatsapp || clientUser.phone || clientUser.id || '').replace(/[^0-9]/g, '');
+      if (phoneDigits) {
+        try {
+          localStorage.setItem(`oneline_client_favorites_${phoneDigits}`, JSON.stringify(favorites));
+        } catch (e) {}
+      }
+    }
+  }, [clientUser, favorites]);
+
+  // Restore saved favorites on initial mount if client is already logged in
+  useEffect(() => {
+    if (clientUser && (!favorites || favorites.length === 0) && typeof restoreFavorites === 'function') {
+      const phoneDigits = (clientUser.whatsapp || clientUser.phone || clientUser.id || '').replace(/[^0-9]/g, '');
+      if (phoneDigits) {
+        try {
+          const raw = localStorage.getItem(`oneline_client_favorites_${phoneDigits}`);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              restoreFavorites(parsed);
+            }
+          }
+        } catch (e) {}
+      }
     }
   }, [clientUser]);
 
@@ -221,6 +260,25 @@ export function ClientAuthProvider({ children, triggerToast, lang = 'ar', handle
       }
     }
 
+    // Restore or merge client's saved favorites
+    const phoneDigits = (verificationSession.whatsapp || '').replace(/[^0-9]/g, '');
+    let clientSavedFavs = [];
+    if (phoneDigits) {
+      try {
+        const raw = localStorage.getItem(`oneline_client_favorites_${phoneDigits}`);
+        if (raw) clientSavedFavs = JSON.parse(raw);
+      } catch (e) {}
+    }
+
+    const mergedFavs = Array.from(new Set([
+      ...(Array.isArray(clientSavedFavs) ? clientSavedFavs : []),
+      ...(Array.isArray(favorites) ? favorites : [])
+    ]));
+
+    if (mergedFavs.length > 0 && typeof restoreFavorites === 'function') {
+      restoreFavorites(mergedFavs);
+    }
+
     // Close modal
     setClientAuthModalOpen(false);
     setVerificationSession(null);
@@ -248,18 +306,41 @@ export function ClientAuthProvider({ children, triggerToast, lang = 'ar', handle
     }
 
     return verifiedAccount;
-  }, [verificationSession, isAr, handleAddNewLead, triggerToast, pendingAction]);
+  }, [verificationSession, isAr, handleAddNewLead, triggerToast, pendingAction, favorites, restoreFavorites]);
 
   /**
    * Client Logout
    */
   const logoutClient = useCallback(() => {
+    // 1. Back up client favorites before clearing
+    if (clientUser) {
+      const phoneDigits = (clientUser.whatsapp || clientUser.phone || clientUser.id || '').replace(/[^0-9]/g, '');
+      if (phoneDigits && Array.isArray(favorites)) {
+        try {
+          localStorage.setItem(`oneline_client_favorites_${phoneDigits}`, JSON.stringify(favorites));
+        } catch (e) {}
+      }
+    }
+
+    // 2. Clear client session
     setClientUser(null);
     localStorage.removeItem(CLIENT_STORAGE_KEY);
+
+    // 3. Purge active browser favorites & comparisons immediately
+    if (typeof clearFavorites === 'function') {
+      clearFavorites(true);
+    }
+    if (typeof clearCompare === 'function') {
+      clearCompare();
+    }
+    try {
+      localStorage.removeItem('oneline_favorites');
+    } catch (e) {}
+
     if (typeof triggerToast === 'function') {
       triggerToast(isAr ? 'تم تسجيل خروج حساب العميل بنجاح' : 'Client logged out', 'info');
     }
-  }, [triggerToast, isAr]);
+  }, [clientUser, favorites, clearFavorites, clearCompare, triggerToast, isAr]);
 
   /**
    * Update Client Profile Details

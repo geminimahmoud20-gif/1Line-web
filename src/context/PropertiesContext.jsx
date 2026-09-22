@@ -134,11 +134,23 @@ export function PropertiesProvider({ children }) {
     });
   }, [lang, triggerToast]);
 
-  const clearFavorites = useCallback(() => {
+  const clearFavorites = useCallback((silent = false) => {
     setFavorites([]);
     localStorage.removeItem('oneline_favorites');
-    triggerToast(lang === 'ar' ? 'تم مسح قائمة المفضلة' : 'Favorites cleared', 'info');
+    if (!silent) {
+      triggerToast(lang === 'ar' ? 'تم مسح قائمة المفضلة' : 'Favorites cleared', 'info');
+    }
   }, [lang, triggerToast]);
+
+  const restoreFavorites = useCallback((newFavs = []) => {
+    if (Array.isArray(newFavs)) {
+      const sanitized = newFavs.filter(id => typeof id === 'string' || typeof id === 'number');
+      setFavorites(sanitized);
+      try {
+        localStorage.setItem('oneline_favorites', JSON.stringify(sanitized));
+      } catch (e) {}
+    }
+  }, []);
 
   // Compare List State (Up to 4 properties)
   const [compareList, setCompareList] = useState([]);
@@ -565,6 +577,7 @@ export function PropertiesProvider({ children }) {
     favorites,
     toggleFavorite,
     clearFavorites,
+    restoreFavorites,
     compareList,
     toggleCompare,
     addToCompare,
