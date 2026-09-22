@@ -130,6 +130,11 @@ export async function compressImage(file, options = {}) {
 }
 
 /**
+ * Export alias for backward compatibility
+ */
+export const compressImageFile = compressImage;
+
+/**
  * Batch compress an array of image files
  */
 export async function compressImages(files = [], options = {}) {
