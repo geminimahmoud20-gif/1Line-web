@@ -655,13 +655,49 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
             </div>
 
             <div className="form-group-item">
-              <label>{isAr ? 'رابط الصورة الشخصية للمؤسس (اختياري):' : 'Founder Photo URL (Optional):'}</label>
+              <label>{isAr ? 'رابط الصورة الشخصية للمؤسس:' : 'Founder Photo URL:'}</label>
               <input
                 type="text"
-                placeholder="https://... (اتركه فارغاً لاستخدام الشعار الذهبي الفاخر)"
+                placeholder="/founder-dr-mahmoud-elbaz.jpg"
                 value={formData.founderPhoto || ''}
                 onChange={(e) => setFormData({ ...formData, founderPhoto: e.target.value })}
               />
+              {/* Photo Live Preview */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
+                <div style={{
+                  width: '56px',
+                  height: '68px',
+                  borderRadius: '10px',
+                  overflow: 'hidden',
+                  border: '1.5px solid rgba(212, 175, 55, 0.6)',
+                  boxShadow: '0 4px 10px rgba(0, 0, 0, 0.25)',
+                  background: '#07172F',
+                  flexShrink: 0
+                }}>
+                  <img
+                    src={formData.founderPhoto || '/founder-dr-mahmoud-elbaz.jpg'}
+                    alt="Founder Preview"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 12%' }}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = "/founder-dr-mahmoud-elbaz.jpg";
+                    }}
+                  />
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.78rem', color: '#10b981', fontWeight: 700, display: 'block' }}>
+                    {isAr ? '✓ صورة المؤسس د. محمود الباز معتمدة' : '✓ Accredited Founder Portrait'}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn btn-xs btn-ghost"
+                    onClick={() => setFormData({ ...formData, founderPhoto: '/founder-dr-mahmoud-elbaz.jpg' })}
+                    style={{ fontSize: '0.72rem', color: 'var(--accent-gold)', marginTop: '2px', padding: '0' }}
+                  >
+                    {isAr ? 'استعادة الصورة الرسمية' : 'Restore Official Photo'}
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div className="form-group-item">

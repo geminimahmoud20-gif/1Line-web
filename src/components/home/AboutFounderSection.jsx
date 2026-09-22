@@ -148,60 +148,54 @@ export default function AboutFounderSection({ lang = 'ar' }) {
         <div className="founder-columns-grid">
           {/* 👤 LEFT COLUMN: THE FOUNDER PROFILE CARD (Architectural Royal Navy & Sun Gold) */}
           <div className="founder-profile-card">
-            {/* Top Founder Identity */}
+            {/* Top Founder Executive Showcase */}
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '22px' }}>
-                <div style={{
-                  width: '70px',
-                  height: '70px',
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #ffca28, #ffffff)',
-                  padding: '3px',
-                  boxShadow: '0 4px 18px rgba(0, 0, 0, 0.25)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0
-                }}>
-                  {cms.founderPhoto ? (
-                    <img 
-                      src={cms.founderPhoto} 
-                      alt={cms.founderName_ar} 
-                      style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} 
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='100' fill='%23092347'/%3E%3Cpath d='M70 140 C70 115, 130 115, 130 140 Z M100 65 A20 20 0 1 0 100 105 A20 20 0 1 0 100 65' fill='%23fdcb42'/%3E%3C/svg%3E";
-                      }}
-                    />
-                  ) : (
-                    <div style={{
-                      width: '100%',
-                      height: '100%',
-                      borderRadius: '50%',
-                      background: '#092347',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#ffffff'
-                    }}>
-                      <LogoEmblem size={36} />
-                    </div>
-                  )}
+              <div className="founder-executive-showcase">
+                {/* Luxury Portrait Frame with Gold Edge and Verified Seal */}
+                <div className="founder-portrait-frame">
+                  <img 
+                    src={cms.founderPhoto || '/founder-dr-mahmoud-elbaz.jpg'} 
+                    alt={isAr ? (cms.founderName_ar || 'د. محمود الباز') : (cms.founderName_en || 'Dr. Mahmoud Elbaz')} 
+                    className="founder-portrait-img"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = "/founder-dr-mahmoud-elbaz.jpg";
+                    }}
+                  />
+                  <div className="founder-portrait-seal">
+                    <ShieldCheck size={12} className="seal-icon" />
+                    <span>{isAr ? 'موثق رسمياً' : 'Verified'}</span>
+                  </div>
                 </div>
 
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <h3 style={{ margin: 0, fontSize: '1.35rem', color: '#ffffff', fontWeight: 'bold' }}>
+                {/* Executive Credentials & Titles */}
+                <div className="founder-info-column">
+                  <div className="founder-title-row">
+                    <h3 className="founder-title-name">
                       {isAr ? (cms.founderName_ar || 'د. محمود الباز') : (cms.founderName_en || 'Dr. Mahmoud Elbaz')}
                     </h3>
-                    <CheckCircle2 size={18} style={{ color: '#ffca28' }} />
+                    <span className="founder-cert-pill">
+                      <CheckCircle2 size={13} />
+                      <span>{isAr ? 'مستشار معتمد' : 'Accredited'}</span>
+                    </span>
                   </div>
-                  <span style={{ fontSize: '0.84rem', color: '#ffd54f', display: 'block', marginTop: '3px', fontWeight: '700' }}>
+
+                  <span className="founder-role-badge">
                     {isAr ? (cms.founderRole_ar || 'مؤسس ورئيس مجلس إدارة 1Line') : (cms.founderRole_en || 'Founder & Chairman of 1Line')}
                   </span>
-                  <small style={{ color: '#e0f2fe', fontSize: '0.78rem', display: 'block', marginTop: '2px' }}>
+
+                  <small className="founder-sub-desc">
                     {isAr ? (cms.founderSub_ar || 'استشاري التقييم والتطوير العقاري بسوهاج') : (cms.founderSub_en || 'Real Estate Valuation Consultant')}
                   </small>
+
+                  {/* Accreditations Badges */}
+                  <div className="founder-badges-list">
+                    {(cms.badges || []).map((b, idx) => (
+                      <span key={idx} className="founder-luxury-badge">
+                        {isAr ? b.ar : b.en}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -225,27 +219,6 @@ export default function AboutFounderSection({ lang = 'ar' }) {
                 }}>
                   {isAr ? cms.founderQuote_ar : cms.founderQuote_en}
                 </p>
-              </div>
-
-              {/* Founder Accreditations */}
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '24px' }}>
-                {(cms.badges || []).map((b, idx) => (
-                  <span 
-                    key={idx} 
-                    className="badge" 
-                    style={{ 
-                      background: 'rgba(255, 202, 40, 0.12)', 
-                      color: '#ffca28', 
-                      border: '1px solid rgba(255, 202, 40, 0.35)', 
-                      fontSize: '0.78rem',
-                      fontWeight: '700',
-                      padding: '5px 12px',
-                      borderRadius: '8px'
-                    }}
-                  >
-                    {isAr ? b.ar : b.en}
-                  </span>
-                ))}
               </div>
             </div>
 

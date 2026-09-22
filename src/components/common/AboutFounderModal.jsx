@@ -198,79 +198,51 @@ export default function AboutFounderModal({ isOpen, onClose, lang = 'ar' }) {
           </span>
         </div>
 
-        {/* Founder Profile Core Hero */}
-        <div style={{
-          display: 'flex',
-          gap: '20px',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          background: 'rgba(255, 255, 255, 0.03)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          borderRadius: '18px',
-          padding: '20px',
-          marginBottom: '22px'
-        }}>
-          {/* Avatar / Emblem */}
-          <div style={{
-            width: '80px',
-            height: '80px',
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #d97706, #b45309)',
-            padding: '3px',
-            boxShadow: '0 4px 20px rgba(217, 119, 6, 0.45)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0
-          }}>
-            {cms.founderPhoto ? (
-              <img 
-                src={cms.founderPhoto} 
-                alt={cms.founderName_ar} 
-                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} 
-              />
-            ) : (
-              <div style={{
-                width: '100%',
-                height: '100%',
-                borderRadius: '50%',
-                background: '#0a1128',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#fbbf24'
-              }}>
-                <LogoEmblem size={40} />
-              </div>
-            )}
+        {/* Founder Profile Core Hero - Luxury Executive Showcase */}
+        <div className="founder-modal-executive-card">
+          {/* Executive Portrait Frame with Gold Edge and Verified Seal */}
+          <div className="founder-modal-portrait-frame">
+            <img 
+              src={cms.founderPhoto || '/founder-dr-mahmoud-elbaz.jpg'} 
+              alt={isAr ? (cms.founderName_ar || 'د. محمود الباز') : (cms.founderName_en || 'Dr. Mahmoud Elbaz')} 
+              className="founder-modal-portrait-img"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = "/founder-dr-mahmoud-elbaz.jpg";
+              }}
+            />
+            <div className="founder-modal-portrait-seal">
+              <ShieldCheck size={12} style={{ color: '#10B981' }} />
+              <span>{isAr ? 'موثق' : 'Verified'}</span>
+            </div>
           </div>
 
           {/* Details */}
           <div style={{ flex: 1, minWidth: '240px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <h2 style={{ margin: 0, fontSize: '1.45rem', color: '#ffffff', fontWeight: '800' }}>
+              <h2 style={{ margin: 0, fontSize: '1.48rem', color: '#ffffff', fontWeight: '900', letterSpacing: '-0.3px' }}>
                 {isAr ? (cms.founderName_ar || 'د. محمود الباز') : (cms.founderName_en || 'Dr. Mahmoud Elbaz')}
               </h2>
               <span style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '4px',
-                fontSize: '0.72rem',
+                fontSize: '0.74rem',
                 background: 'rgba(16, 185, 129, 0.18)',
                 color: '#34d399',
-                border: '1px solid rgba(16, 185, 129, 0.4)',
-                borderRadius: '6px',
-                padding: '2px 8px',
-                fontWeight: 'bold'
+                border: '1px solid rgba(16, 185, 129, 0.45)',
+                borderRadius: '999px',
+                padding: '2px 9px',
+                fontWeight: '800'
               }}>
-                <CheckCircle2 size={12} />
+                <CheckCircle2 size={13} />
                 <span>{isAr ? 'موثق ومعتمد' : 'Verified'}</span>
               </span>
             </div>
-            <div style={{ fontSize: '0.92rem', color: '#fbbf24', fontWeight: '700', marginTop: '4px' }}>
+            <div style={{ fontSize: '0.94rem', color: '#ECC875', fontWeight: '800', marginTop: '5px' }}>
               {isAr ? (cms.founderRole_ar || 'مؤسس ورئيس مجلس إدارة 1Line') : (cms.founderRole_en || 'Founder & Chairman of 1Line')}
             </div>
-            <div style={{ color: '#94a3b8', fontSize: '0.82rem', marginTop: '2px' }}>
+            <div style={{ color: '#CBD5E1', fontSize: '0.84rem', marginTop: '3px', fontWeight: '500', lineHeight: 1.45 }}>
               {isAr ? (cms.founderSub_ar || 'استشاري التقييم والتطوير العقاري بسوهاج') : (cms.founderSub_en || 'Real Estate Valuation & Investment Consultant')}
             </div>
 
@@ -280,13 +252,13 @@ export default function AboutFounderModal({ isOpen, onClose, lang = 'ar' }) {
                 <span 
                   key={idx} 
                   style={{ 
-                    background: idx === 0 ? 'rgba(217, 119, 6, 0.2)' : idx === 1 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(6, 182, 212, 0.2)', 
-                    color: idx === 0 ? '#fbbf24' : idx === 1 ? '#34d399' : '#38bdf8', 
-                    border: `1px solid ${idx === 0 ? 'rgba(217, 119, 6, 0.45)' : idx === 1 ? 'rgba(16, 185, 129, 0.45)' : 'rgba(6, 182, 212, 0.45)'}`, 
+                    background: 'rgba(212, 175, 55, 0.12)', 
+                    color: '#ECC875', 
+                    border: '1px solid rgba(212, 175, 55, 0.4)', 
                     fontSize: '0.75rem',
-                    fontWeight: '600',
-                    padding: '3px 9px',
-                    borderRadius: '6px'
+                    fontWeight: '700',
+                    padding: '3px 10px',
+                    borderRadius: '7px'
                   }}
                 >
                   {isAr ? b.ar : b.en}

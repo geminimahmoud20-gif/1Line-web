@@ -14,7 +14,7 @@ export const DEFAULT_FOUNDER_CMS = {
   founderRole_en: 'Founder & Chairman of 1Line',
   founderSub_ar: 'استشاري التقييم والتطوير العقاري بسوهاج',
   founderSub_en: 'Real Estate Valuation & Investment Consultant',
-  founderPhoto: '', // Optional URL, if empty fallback to Gold Logo Emblem
+  founderPhoto: '/founder-dr-mahmoud-elbaz.jpg', // Professional executive portrait of Dr. Mahmoud Elbaz
   
   // Founder Message & Vision
   founderQuote_ar: '«هدفنا في 1Line ليس مجرد إتمام صفقات بيع وشراء، بل بناء منظومة حماية واستثمار حقيقية تحمي مدخرات أهالينا والمغتربين بالخارج، وتضمن حصول كل عميل على أعلى قيمة عقارية بأمان قانوني لا يقبل الشك.»',
@@ -310,6 +310,7 @@ export function getFounderSettings() {
     if (parsed.founderRole_en) parsed.founderRole_en = parsed.founderRole_en.replace(/One\s*Line/gi, '1Line');
     if (parsed.founderQuote_ar) parsed.founderQuote_ar = parsed.founderQuote_ar.replace(/One\s*Line/gi, '1Line');
     if (parsed.founderQuote_en) parsed.founderQuote_en = parsed.founderQuote_en.replace(/One\s*Line/gi, '1Line');
+    if (!parsed.founderPhoto) parsed.founderPhoto = DEFAULT_FOUNDER_CMS.founderPhoto;
     return parsed;
   } catch (err) {
     console.error('Failed to parse founder CMS settings:', err);
