@@ -20474,18 +20474,18 @@ body.dark-theme .compare-tabs-bar {
 .gold-standard-card {
   background: #ffffff;
   border: 1px solid var(--border-color);
-  border-radius: 20px;
-  padding: 26px 22px;
+  border-radius: var(--radius-lg);
+  padding: 28px 24px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 20px rgba(7, 17, 31, 0.04);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--shadow-subtle);
+  transition: all var(--transition-normal);
 }
 
 .gold-standard-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(179, 138, 69, 0.35);
-  box-shadow: 0 14px 32px rgba(7, 17, 31, 0.08);
+  transform: translateY(-3px);
+  border-color: rgba(11, 27, 50, 0.18);
+  box-shadow: var(--shadow-elevated);
 }
 
 .dark-theme .gold-standard-card {
@@ -20495,8 +20495,8 @@ body.dark-theme .compare-tabs-bar {
 
 .dark-theme .gold-standard-card:hover {
   background: var(--navy-800);
-  border-color: rgba(179, 138, 69, 0.4);
-  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35);
+  border-color: rgba(179, 138, 69, 0.3);
+  box-shadow: var(--shadow-elevated);
 }
 
 .standard-card-header {

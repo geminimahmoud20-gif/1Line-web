@@ -37,35 +37,7 @@ export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
 
   return (
     <footer className="site-footer">
-      {/* Top Quick Consultation CTA Banner */}
-      <div className="footer-top-cta">
-        <div className="footer-cta-container">
-          <div className="footer-cta-text">
-            <h3>{isAr ? 'استشارة عقارية مجانية ومعتمدة' : 'Free Certified Consultation'}</h3>
-            <p>{isAr ? 'مستشارونا متاحون لمساعدتك في اختيار العقار الأنسب في سوهاج' : 'Our experts help you find the best property in Sohag'}</p>
-          </div>
-          <div className="footer-cta-actions">
-            <a 
-              href={getWhatsAppUrl(isAr ? 'مرحباً 1Line، أريد استشارة عقارية مجانية بخصوص المشروعات المتاحة.' : 'Hello 1Line, I would like a certified consultation.')} 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="btn btn-whatsapp"
-            >
-              <MessageSquare size={16} />
-              <span>{isAr ? 'واتساب مبيعات' : 'WhatsApp'}</span>
-            </a>
-            <a 
-              href={getPhoneCallUrl()} 
-              className="btn btn-call"
-            >
-              <Phone size={16} />
-              <span>{isAr ? 'اتصال مباشر' : 'Direct Call'}</span>
-            </a>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Clean Grid */}
+      {/* Main Architectural Clean Grid */}
       <div className="footer-main-container">
         <div className="footer-grid">
           {/* Brand Column */}

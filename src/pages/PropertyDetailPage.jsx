@@ -14,6 +14,7 @@ import {
   ShieldCheck, 
   Clock, 
   TrendingUp, 
+  TrendingDown,
   Calculator, 
   Eye, 
   Navigation,
@@ -24,7 +25,11 @@ import {
   Building,
   Video,
   Zap,
-  Droplets
+  Droplets,
+  Copy,
+  Sun,
+  Moon,
+  Scale
 } from 'lucide-react';
 import { incrementPropertyView, getPropertyViews } from '../utils/visitorTracker';
 import PropertyGallery from '../components/properties/PropertyGallery';
@@ -275,7 +280,7 @@ export default function PropertyDetailPage({
                 title={isAr ? 'انقر لنسخ كود العقار' : 'Click to copy property ID'}
               >
                 <span>{property.id.toUpperCase()}</span>
-                <span className="copy-icon-txt">📋</span>
+                <span className="copy-icon-txt"><Copy size={12} /></span>
               </button>
             </div>
             <h1 className="detail-main-title">{title}</h1>
@@ -294,9 +299,9 @@ export default function PropertyDetailPage({
                     padding: '4px 12px',
                     fontSize: '0.78rem',
                     fontWeight: '700',
-                    background: 'rgba(217, 119, 6, 0.12)',
-                    border: '1px solid rgba(217, 119, 6, 0.35)',
-                    color: 'var(--accent-gold, #d97706)',
+                    background: 'rgba(11, 27, 50, 0.06)',
+                    border: '1px solid var(--border-color)',
+                    color: 'var(--navy-900)',
                     borderRadius: 'var(--radius-pill)',
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -306,7 +311,7 @@ export default function PropertyDetailPage({
                   title={isAr ? 'فتح اللوكيشن الدقيق على خرائط Google' : 'Open Location in Google Maps'}
                 >
                   <Navigation size={12} />
-                  <span>{isAr ? '📍 عرض على خرائط Google' : 'Open in Google Maps'}</span>
+                  <span>{isAr ? 'عرض على خرائط Google' : 'Open in Google Maps'}</span>
                 </a>
               )}
             </div>
@@ -337,7 +342,7 @@ export default function PropertyDetailPage({
                 fontWeight: '800',
                 border: `1px solid ${benchmark.badgeColor}33`
               }}>
-                <span>{benchmark.badgeType === 'deal' ? '🔥' : benchmark.badgeType === 'premium' ? '💎' : '⚖️'}</span>
+                {benchmark.badgeType === 'deal' ? <TrendingDown size={13} /> : benchmark.badgeType === 'premium' ? <Sparkles size={13} /> : <Scale size={13} />}
                 <span>{benchmark.badgeLabel}</span>
               </div>
             )}
@@ -851,14 +856,16 @@ export default function PropertyDetailPage({
                         className={`type-toggle-btn ${bookingForm.type !== 'video' ? 'active' : ''}`}
                         onClick={() => setBookingForm({ ...bookingForm, type: 'field' })}
                       >
-                        <span>🚶‍♂️ {isAr ? 'ميدانية بالموقع' : 'On-Site'}</span>
+                        <MapPin size={14} />
+                        <span>{isAr ? 'معاينة ميدانية بالموقع' : 'On-Site Tour'}</span>
                       </button>
                       <button
                         type="button"
                         className={`type-toggle-btn ${bookingForm.type === 'video' ? 'active' : ''}`}
                         onClick={() => setBookingForm({ ...bookingForm, type: 'video' })}
                       >
-                        <span>📹 {isAr ? 'فيديو حية' : 'Live Video'}</span>
+                        <Video size={14} />
+                        <span>{isAr ? 'معاينة فيديو حية' : 'Live Video Tour'}</span>
                       </button>
                     </div>
                   </div>
@@ -881,7 +888,8 @@ export default function PropertyDetailPage({
                           onClick={() => setBookingForm({ ...bookingForm, slot: 'morning' })}
                           title={isAr ? '10 ص - 2 ظ' : 'Morning'}
                         >
-                          {isAr ? '☀️ صباحاً' : 'Morning'}
+                          <Sun size={13} />
+                          <span>{isAr ? 'صباحاً' : 'Morning'}</span>
                         </button>
                         <button
                           type="button"
@@ -889,7 +897,8 @@ export default function PropertyDetailPage({
                           onClick={() => setBookingForm({ ...bookingForm, slot: 'evening' })}
                           title={isAr ? '5 م - 9 م' : 'Evening'}
                         >
-                          {isAr ? '🌙 مساءً' : 'Evening'}
+                          <Moon size={13} />
+                          <span>{isAr ? 'مساءً' : 'Evening'}</span>
                         </button>
                       </div>
                     </div>

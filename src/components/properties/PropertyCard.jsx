@@ -460,7 +460,7 @@ export default function PropertyCard({
               }
             }}
           >
-            <span>{lang === 'ar' ? 'حجز معاينة وتفاصيل العقار' : 'Book Tour & Details'}</span>
+            <span>{lang === 'ar' ? 'اطلب تفاصيل الوحدة' : 'Request Details'}</span>
             <span className="btn-card-arrow">
               {lang === 'ar' ? <ArrowLeft size={15} /> : <ArrowRight size={15} />}
             </span>
