@@ -306,7 +306,7 @@ export default function HomePage({
             <div 
               className="hero-video-overlay-gradient"
               style={{
-                opacity: founderSettings.heroOverlayOpacity !== undefined ? founderSettings.heroOverlayOpacity : 0.42
+                opacity: founderSettings.heroOverlayOpacity !== undefined ? founderSettings.heroOverlayOpacity : 0.58
               }}
             />
           </div>
@@ -408,8 +408,8 @@ export default function HomePage({
 
           <p className="hero-description">
             {lang === 'ar' 
-              ? 'المنصة العقارية الاستشارية المعتمدة بسوهاج. فحص قانوني وهندسي 100%، تسعير عادل وفق مؤشرات السوق الحقيقية، وإدارة صفقات بخصوصية تامة.' 
-              : 'Sohag’s premier verified real estate platform. 100% audited title deeds, market intelligence benchmarks, and discreet advisory.'}
+              ? 'المنصة العقارية الاستشارية المعتمدة بسوهاج • فحص قانوني وهندسي 100% • تسعير عادل وفق مؤشرات السوق الحقيقية، وإدارة صفقات بخصوصية تامة.' 
+              : 'Sohag’s premier verified real estate platform • 100% audited title deeds • Market intelligence benchmarks & discreet advisory.'}
           </p>
 
           {/* Smart Universal Search Bar */}
