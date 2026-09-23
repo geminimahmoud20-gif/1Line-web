@@ -72,7 +72,7 @@ export default function GoldStandardsSection({ lang = 'ar' }) {
                 <div className="standard-icon-box">
                   <IconComp size={24} />
                 </div>
-                <span className="standard-number">{std.number || `0${idx + 1}`}</span>
+                <span className="standard-number">#{std.number ? std.number.replace('#', '') : `0${idx + 1}`}</span>
               </div>
 
               <h3 className="standard-card-title">

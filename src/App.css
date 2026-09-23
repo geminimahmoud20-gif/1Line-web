@@ -11786,16 +11786,16 @@ body.dark,
 }
 
 .footer-main-container {
-  max-width: 1240px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 48px 24px 24px;
+  padding: 36px 24px 18px;
 }
 
 .footer-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1.5fr;
-  gap: 36px;
-  margin-bottom: 40px;
+  grid-template-columns: 1.6fr 1fr 1.1fr 1.3fr;
+  gap: 32px;
+  margin-bottom: 24px;
 }
 
 .footer-logo {
