@@ -32,51 +32,55 @@ export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
 
   const currentPhone = cleanPhoneNumber(cms.phoneNumber || '+201223222956');
   const hqText = isAr 
-    ? (cms.headquarters_ar || 'سوهاج - شارع الجمهورية / سوهاج الجديدة')
-    : (cms.headquarters_en || 'Sohag - Republic St. / New Sohag');
+    ? (cms.headquarters_ar || 'محافظة سوهاج - شارع الجمهورية / برج أحمد حلمي الشريف')
+    : (cms.headquarters_en || 'Sohag - El Gomhoria St. / Ahmed Helmy El Sherif Tower');
 
   return (
     <footer className="site-footer">
-      {/* Main Architectural Clean Grid */}
-      <div className="footer-main-container">
+      <div className="footer-container">
+        {/* Main 4-Column Balanced Grid */}
         <div className="footer-grid">
-          {/* Brand Column */}
-          <div className="footer-col brand-col">
-            <div className="footer-logo">
-              <LogoEmblem size={36} />
+          {/* Col 1: Brand & Sovereign Trust */}
+          <div className="footer-col footer-col-brand">
+            <div className="footer-brand-header">
+              <LogoEmblem size={34} />
               <div className="footer-brand-text">
                 <span className="footer-brand-name" dir="ltr">
                   <span className="brand-one">1</span>
                   <span className="brand-line-footer">LINE</span>
                 </span>
-                <span className="footer-brand-sub">{isAr ? 'للاستشارات و التسويق العقاري' : 'Real Estate Consulting & Marketing'}</span>
+                <span className="footer-brand-sub">
+                  {isAr ? 'للاستشارات والتسويق العقاري المعتمد' : 'Certified Real Estate Advisory'}
+                </span>
               </div>
             </div>
+
             <p className="footer-desc">
               {isAr 
-                ? 'المنصة العقارية الأولى المعتمدة في سوهاج وسوهاج الجديدة.' 
-                : 'The premier certified real estate platform in Sohag.'}
+                ? 'المنصة العقارية المؤسسية المعتمدة في سوهاج وسوهاج الجديدة. بيع وشراء وتثمين رسمي معتمد بأعلى معايير الأمان القانوني 100%.' 
+                : 'The premier institutional real estate advisory and marketplace in Sohag & New Sohag.'}
             </p>
-            <div className="trust-badge-pill">
-              <ShieldCheck size={14} className="text-gold" />
-              <span>{isAr ? 'عقارات مفحوصة ومسجلة 100%' : '100% Verified'}</span>
+
+            <div className="footer-trust-badge">
+              <ShieldCheck size={15} className="trust-shield-icon" />
+              <span>{isAr ? 'عقارات مفحوصة ومسجلة 100% • ترخيص قانوني' : '100% Verified Legal Titles'}</span>
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Col 2: Properties & Portals */}
           <div className="footer-col">
-            <h4>{isAr ? 'العقارات والمشروعات' : 'Properties & Projects'}</h4>
+            <h4 className="footer-col-title">{isAr ? 'العقارات والمشروعات' : 'Properties & Portals'}</h4>
             <ul className="footer-links">
-              <li><Link to="/properties">{isAr ? 'استكشاف العقارات' : 'Explore All'}</Link></li>
-              <li><Link to="/projects">{isAr ? 'دليل المشروعات والكمبوندات' : 'Mega Projects Hub'}</Link></li>
-              <li><Link to="/market-intelligence">{isAr ? 'مركز مؤشرات أسعار السوق' : 'Market Intelligence'}</Link></li>
-              <li><Link to="/financing">{isAr ? 'حاسبة التمويل والأقساط' : 'Financing'}</Link></li>
+              <li><Link to="/properties">{isAr ? 'استكشاف كافة العقارات' : 'Explore Properties'}</Link></li>
+              <li><Link to="/projects">{isAr ? 'المشروعات والكمبوندات' : 'Mega Projects Hub'}</Link></li>
+              <li><Link to="/market-intelligence">{isAr ? 'مؤشرات أسعار السوق' : 'Market Intelligence'}</Link></li>
+              <li><Link to="/financing">{isAr ? 'حاسبة التمويل والأقساط' : 'Financing & Mortgage'}</Link></li>
             </ul>
           </div>
 
-          {/* Portals */}
+          {/* Col 3: Advisory & Services */}
           <div className="footer-col">
-            <h4>{isAr ? 'الخدمات والمؤسسة' : 'Services & Company'}</h4>
+            <h4 className="footer-col-title">{isAr ? 'الخدمات والمؤسسة' : 'Advisory & Services'}</h4>
             <ul className="footer-links">
               <li>
                 <button
@@ -88,67 +92,78 @@ export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
                       window.location.href = '/#about-us';
                     }
                   }}
-                  style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', font: 'inherit', cursor: 'pointer', textAlign: 'inherit' }}
+                  className="footer-btn-link"
                 >
                   {isAr ? 'عن 1Line ورؤية المؤسس' : 'About & Founder'}
                 </button>
               </li>
-              <li><Link to="/investor">{isAr ? 'مركز المستثمرين (VIP)' : 'Investors Desk'}</Link></li>
+              <li><Link to="/private-office">{isAr ? 'المكتب الخاص VIP' : 'Private Office VIP'}</Link></li>
+              <li><Link to="/investor">{isAr ? 'مركز المستثمرين' : 'Investor Desk'}</Link></li>
               <li><Link to="/special-requests">{isAr ? 'الطلبات العقارية الخاصة' : 'Bespoke Requests'}</Link></li>
-              <li><Link to="/broker">{isAr ? 'شبكة الوسطاء والشركاء' : 'Brokers'}</Link></li>
-              <li><Link to="/financing">{isAr ? 'حاسبة التمويل والأقساط' : 'Mortgage & Financing'}</Link></li>
+              <li><Link to="/broker">{isAr ? 'شبكة الوسطاء والشركاء' : 'Brokers Network'}</Link></li>
             </ul>
           </div>
 
-          {/* Contact */}
-          <div className="footer-col contact-col">
-            <h4>{isAr ? 'التواصل' : 'Contact'}</h4>
-            <div className="contact-item">
-              <MapPin size={15} />
+          {/* Col 4: Official Contact & Immediate Advisory */}
+          <div className="footer-col footer-col-contact">
+            <h4 className="footer-col-title">{isAr ? 'التواصل المباشر والمقر' : 'Official Contact & HQ'}</h4>
+            <div className="footer-contact-item">
+              <MapPin size={15} className="contact-icon" />
               <span>{hqText}</span>
             </div>
-            <div className="contact-item">
-              <Phone size={15} />
-              <span dir="ltr">{currentPhone}</span>
+            <div className="footer-contact-item">
+              <Phone size={15} className="contact-icon" />
+              <a href={getPhoneCallUrl(currentPhone)} dir="ltr" className="contact-link">{currentPhone}</a>
             </div>
-            <div className="contact-item">
-              <Mail size={15} />
-              <span>contact@oneline-sohag.com</span>
+            <div className="footer-contact-item">
+              <Mail size={15} className="contact-icon" />
+              <a href="mailto:contact@oneline-sohag.com" className="contact-link">contact@oneline-sohag.com</a>
             </div>
+
+            <a
+              href={getWhatsAppUrl(isAr ? 'مرحباً 1Line، أود الحصول على استشارة عقارية سريعة.' : 'Hello 1Line, quick inquiry about your real estate services.')}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="footer-wa-pill"
+            >
+              <MessageSquare size={14} />
+              <span>{isAr ? 'استشارة فورية عبر واتساب' : 'Direct WhatsApp Advisory'}</span>
+            </a>
           </div>
         </div>
 
         {/* Footer Bottom Bar */}
-        <div className="footer-bottom">
-          <p>
-            © {new Date().getFullYear()} 1Line Real Estate. {isAr ? 'جميع الحقوق محفوظة' : 'All rights reserved.'}
+        <div className="footer-bottom-bar">
+          <div className="footer-copyright">
+            <span>© {new Date().getFullYear()} 1Line Real Estate. {isAr ? 'جميع الحقوق محفوظة' : 'All rights reserved.'}</span>
             <Link 
               to="/crm" 
-              style={{ 
-                opacity: 0.08, 
-                color: 'inherit', 
-                textDecoration: 'none', 
-                marginInlineStart: '8px', 
-                fontSize: '0.65rem',
-                cursor: 'default' 
-              }} 
+              className="footer-crm-lock"
               tabIndex="-1"
               title=""
             >
               🔒
             </Link>
-          </p>
-          <button 
-            type="button" 
-            className="scroll-top-btn"
-            onClick={scrollToTop}
-            title={isAr ? 'للأعلى' : 'Top'}
-          >
-            <ArrowUp size={16} />
-          </button>
+          </div>
+
+          <div className="footer-bottom-meta">
+            <span className="footer-slogan">
+              {isAr ? 'الريادة والنزاهة في سوق عقارات سوهاج' : 'Integrity & Excellence in Sohag Real Estate'}
+            </span>
+            <button 
+              type="button" 
+              className="footer-scroll-top-btn"
+              onClick={scrollToTop}
+              title={isAr ? 'العودة للأعلى' : 'Top'}
+              aria-label="Scroll to top"
+            >
+              <ArrowUp size={15} />
+            </button>
+          </div>
         </div>
       </div>
     </footer>
   );
 }
+
 
