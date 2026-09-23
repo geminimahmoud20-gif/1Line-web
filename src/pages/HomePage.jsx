@@ -909,6 +909,34 @@ export default function HomePage({
         </section>
       </ScrollReveal>
 
+      {/* 🏁 7. PRE-FOOTER EMOTIONAL CONCLUSION STATEMENT */}
+      <ScrollReveal>
+        <section className="pre-footer-conclusion-section">
+          <div className="conclusion-container">
+            <div className="conclusion-text-block">
+              <h3 className="conclusion-statement-title">
+                {lang === 'ar' ? (
+                  <>
+                    <span>ابحث عن العقار.</span>{' '}
+                    <span>وافهم القيمة.</span>{' '}
+                    <span className="text-navy-bold">واتخذ القرار بثقة.</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Discover The Property.</span>{' '}
+                    <span>Understand The Value.</span>{' '}
+                    <span className="text-navy-bold">Decide With Confidence.</span>
+                  </>
+                )}
+              </h3>
+              <Link to="/special-requests" className="conclusion-link-action">
+                <span>{lang === 'ar' ? 'تحدث مع 1Line' : 'Connect with 1Line'}</span>
+                {lang === 'ar' ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
+              </Link>
+            </div>
+          </div>
+        </section>
+      </ScrollReveal>
     </div>
   );
 }

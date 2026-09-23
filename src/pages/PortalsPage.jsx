@@ -151,16 +151,21 @@ export default function PortalsPage({
                 className={`portal-mode-btn ${!fastMode ? 'active' : ''}`}
                 onClick={() => setFastMode(false)}
               >
-                <CheckCircle2 size={18} className="toggle-icon-check" />
-                <span>{isAr ? 'المعالج التفاعلي خطوة بخطوة' : 'Step-by-Step Advisory'}</span>
+                <span className="mode-btn-icon-box advisory-icon-box">
+                  <CheckCircle2 size={18} strokeWidth={2.4} />
+                </span>
+                <span className="mode-btn-text">{isAr ? 'المعالج التفاعلي خطوة بخطوة' : 'Step-by-Step Advisory'}</span>
               </button>
+
               <button
                 type="button"
                 className={`portal-mode-btn ${fastMode ? 'active' : ''}`}
                 onClick={() => setFastMode(true)}
               >
-                <Zap size={18} className="toggle-icon-zap" />
-                <span>{isAr ? 'طلب فوري ومباشر (دقيقة واحدة)' : 'Fast 1-Minute Request'}</span>
+                <span className="mode-btn-icon-box fast-icon-box">
+                  <Zap size={18} strokeWidth={2.5} fill="currentColor" />
+                </span>
+                <span className="mode-btn-text">{isAr ? 'طلب فوري ومباشر (دقيقة واحدة)' : 'Fast 1-Step Request (1 min)'}</span>
               </button>
             </div>
           )}

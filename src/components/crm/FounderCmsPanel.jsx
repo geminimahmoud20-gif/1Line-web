@@ -100,37 +100,12 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
     setFormData({ ...formData, pillars: updatedPillars });
   };
 
-  // Helper for updating the Gold Standards (Edit, Add, Delete)
+  // Helper for updating the 4 Gold Standards
   const handleGoldStandardChange = (idx, field, value) => {
     const updated = [...(formData.goldStandards || DEFAULT_FOUNDER_CMS.goldStandards)];
     if (!updated[idx]) updated[idx] = {};
     updated[idx][field] = value;
     setFormData({ ...formData, goldStandards: updated });
-  };
-
-  const handleAddGoldStandard = () => {
-    const list = [...(formData.goldStandards || DEFAULT_FOUNDER_CMS.goldStandards)];
-    list.push({
-      number: list.length < 9 ? `0${list.length + 1}` : `${list.length + 1}`,
-      title_ar: 'معيار أمان جديد',
-      title_en: 'New Security Standard',
-      desc_ar: 'تفاصيل وضمانات هذا المعيار المعتمد لحماية مصالح العملاء.',
-      desc_en: 'Details and protections guaranteed to our clients.',
-      badge_ar: 'ضمان مؤسسي معتمد',
-      badge_en: 'Guaranteed Standard',
-      icon: 'ShieldCheck'
-    });
-    setFormData({ ...formData, goldStandards: list });
-  };
-
-  const handleDeleteGoldStandard = (idx) => {
-    const list = [...(formData.goldStandards || DEFAULT_FOUNDER_CMS.goldStandards)];
-    if (list.length <= 1) {
-      alert(isAr ? 'يجب الإبقاء على معيار أمان واحد على الأقل.' : 'Must have at least one standard.');
-      return;
-    }
-    list.splice(idx, 1);
-    setFormData({ ...formData, goldStandards: list });
   };
 
   // Upload short video directly from device (MP4 / WebM / MOV)
@@ -1022,23 +997,6 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                         <option value="FileCheck">📑 FileCheck (فحص مستندات)</option>
                         <option value="Lock">🔒 Lock (أمان وحماية)</option>
                       </select>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteGoldStandard(idx)}
-                        style={{
-                          background: 'rgba(239, 68, 68, 0.12)',
-                          color: '#ef4444',
-                          border: '1px solid rgba(239, 68, 68, 0.3)',
-                          borderRadius: '6px',
-                          padding: '5px 12px',
-                          fontSize: '0.78rem',
-                          fontWeight: 'bold',
-                          cursor: 'pointer'
-                        }}
-                        title={isAr ? 'حذف هذا المعيار' : 'Delete Standard'}
-                      >
-                        {isAr ? 'حذف' : 'Delete'}
-                      </button>
                     </div>
                   </div>
 
@@ -1119,27 +1077,6 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                   </div>
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={handleAddGoldStandard}
-                style={{
-                  background: 'rgba(217, 119, 6, 0.08)',
-                  border: '1.5px dashed var(--accent-gold)',
-                  color: 'var(--accent-gold)',
-                  padding: '12px 20px',
-                  borderRadius: '10px',
-                  fontSize: '0.9rem',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                + {isAr ? 'إضافة معيار أمان جديد' : 'Add New Security Standard'}
-              </button>
             </div>
           </div>
         )}
