@@ -11,7 +11,6 @@ import {
   ArrowLeft,
   Eye,
   Scale,
-  Flame,
   MessageSquare,
   ShieldCheck,
   Building,
@@ -22,9 +21,8 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { getPropertyViews } from '../../utils/visitorTracker';
-import { getFounderSettings, getWhatsAppUrl } from '../../utils/founderCmsData';
+import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { formatCurrencyPrice, getPriceBenchmark } from '../../utils/currencyAndBenchmark';
-import BrandWatermark from '../common/BrandWatermark';
 
 const FALLBACK_PROPERTY_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 500' fill='%23071e3d'%3E%3Crect width='800' height='500' fill='%23071e3d'/%3E%3Cpath d='M400 130 L620 320 L180 320 Z' fill='%230b4ea2' opacity='0.7'/%3E%3Crect x='340' y='220' width='120' height='100' rx='20' fill='%23fdcb42' opacity='0.85'/%3E%3Ctext x='50%25' y='75%25' dominant-baseline='middle' text-anchor='middle' fill='%23ffffff' font-family='sans-serif' font-size='24' font-weight='bold'%3E1LINE REAL ESTATE%3C/text%3E%3Ctext x='50%25' y='85%25' dominant-baseline='middle' text-anchor='middle' fill='%23fdcb42' font-family='sans-serif' font-size='16'%3E%D8%B9%D9%82%D8%A7%D8%B1%D8%A7%D8%AA%20%D8%B3%D9%88%D9%87%D8%A7%D8%AC%20%D8%A7%D9%84%D9%85%D8%B9%D8%AA%D9%85%D8%AF%D8%A9%3C/text%3E%3C/svg%3E";
 
@@ -44,14 +42,14 @@ function formatCardLocation(loc) {
       .split(/\s+(?:بالقرب|قرب|أمام|بجوار|خلف|ومحطة|وعلى)\s+/i)[0]
       .trim();
 
-    // Ensure concise landmark representation (<= 20 chars)
-    const finalDetail = cleanDetail.length > 20 ? cleanDetail.substring(0, 18).trim() + '…' : cleanDetail;
+    // Ensure concise landmark representation (<= 22 chars)
+    const finalDetail = cleanDetail.length > 22 ? cleanDetail.substring(0, 20).trim() + '…' : cleanDetail;
     return `${city} • ${finalDetail}`;
   }
   return loc.length > 28 ? loc.substring(0, 26).trim() + '…' : loc;
 }
 
-// Concise formatters for commercial, office and land specs to guarantee 0% overflow
+// Concise formatters for commercial, office and land specs
 function formatOfficeSpec(adminType, lang) {
   if (!adminType) return lang === 'ar' ? 'مقر إداري' : 'Office';
   if (lang !== 'ar') return adminType.length > 18 ? 'Medical / Clinic' : adminType;
@@ -93,17 +91,15 @@ export default function PropertyCard({
 
   const title = lang === 'ar' ? (property.title_ar || property.title_en || '') : (property.title_en || property.title_ar || '');
   const location = lang === 'ar' ? (property.locationName_ar || property.locationName_en || '') : (property.locationName_en || property.locationName_ar || '');
-  const badge = lang === 'ar' ? property.badge_ar : property.badge_en;
-  const viewsCount = getPropertyViews(property.id);
   const imagesList = (Array.isArray(property.images) && property.images.length > 0) ? property.images : [FALLBACK_PROPERTY_IMG];
   const priceData = formatCurrencyPrice(property.price, currency, lang);
   const benchmark = getPriceBenchmark(property, lang);
 
-  // 🎯 Single Sovereign Status Badge (توحيد الشارات إلى شارة سيادية فاخرة)
+  // 🎯 Sovereign Status Badge (معتمد رسمياً من 1Line أو صفقة خاصة)
   const resolvedBadge = (() => {
     if (property.isOffMarket || property.isPrivateDeal) {
       return {
-        label: lang === 'ar' ? 'صفقة خاصة' : 'Off-Market Private',
+        label: lang === 'ar' ? 'صفقة خاصة' : 'Private Deal',
         Icon: Sparkles,
         className: 'badge-deal'
       };
@@ -134,9 +130,17 @@ export default function PropertyCard({
   const isCommercial = !isLand && (property.type === 'commercial' || property.category === 'commercial' || (title && (title.includes('محل') || title.includes('معرض') || title.includes('ريتيل') || title.includes('تجاري'))));
   const isOffice = !isLand && !isCommercial && (property.type === 'office' || property.category === 'administrative' || (title && (title.includes('مكتب') || title.includes('عيادة') || title.includes('إداري'))));
 
+  const sectorLabel = isCommercial 
+    ? (lang === 'ar' ? 'تجاري' : 'Commercial') 
+    : isOffice 
+      ? (lang === 'ar' ? 'إداري' : 'Office') 
+      : isLand 
+        ? (lang === 'ar' ? 'أرض' : 'Land') 
+        : (lang === 'ar' ? 'سكني' : 'Residential');
+
   return (
     <div className="property-card-modern group" data-property-id={property.id}>
-      {/* Visual Anchor: Image Header with Smart Media Actions */}
+      {/* 1. Cinematic Media Container */}
       <div className="card-media-wrapper">
         <Link 
           to={`/properties/${property.id}`} 
@@ -199,7 +203,7 @@ export default function PropertyCard({
           </div>
         )}
 
-        {/* Sovereign Status Badges (Verified + 0% Buyer Commission + 3D Virtual Tour) */}
+        {/* Sovereign Status Badges */}
         <div className="card-top-badges">
           <span className={`property-badge ${resolvedBadge.className}`}>
             <BadgeIcon size={12} className="badge-svg-icon" />
@@ -268,33 +272,38 @@ export default function PropertyCard({
           )}
         </div>
 
-        {/* Bottom Total Price Banner on Image */}
+        {/* 🌟 Seamless Integrated Price Scrim (Full Bleed Gradient) */}
         <div className="card-price-overlay">
-          <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: '4px' }}>
-            <bdi className="price-val">{priceData.primary}</bdi>
-            <bdi className="price-curr">{priceData.symbol}</bdi>
+          <div className="price-hero-stack">
+            <div className="price-main-display">
+              <bdi className="price-val">{priceData.primary}</bdi>
+              <span className="price-curr">{priceData.symbol}</span>
+            </div>
+            {priceData.isConverted && (
+              <span className="price-converted-sub">
+                ≈ <bdi>{priceData.originalEgp}</bdi>
+              </span>
+            )}
           </div>
-          {priceData.isConverted && (
-            <span className="price-converted-sub" style={{ fontSize: '0.68rem', opacity: 0.88, display: 'block' }}>
-              ≈ <bdi>{priceData.originalEgp}</bdi>
-            </span>
+
+          {/* Integrated Benchmark / Price per m² inside the media scrim */}
+          {benchmark?.pricePerMeterFormatted && (
+            <div className="price-meter-chip" title={benchmark.badgeLabel}>
+              <bdi>{benchmark.pricePerMeterFormatted}</bdi>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Card Body with Standardized Decision Core */}
+      {/* 2. Card Body: Architectural Editorial Hierarchy */}
       <div className="property-card-body">
-        {/* District & Area Benchmark */}
+        {/* District & Sector Tag */}
         <div className="card-sub-header">
           <div className="property-location-tag" title={location}>
-            <MapPin size={13} className="text-muted" style={{ flexShrink: 0 }} />
+            <MapPin size={13} className="loc-pin-icon" />
             <span>{formatCardLocation(location)}</span>
           </div>
-          {benchmark?.pricePerMeterFormatted && (
-            <span className="benchmark-meter-subtle" title={benchmark.badgeLabel}>
-              <bdi>{benchmark.pricePerMeterFormatted}</bdi>
-            </span>
-          )}
+          <span className="property-sector-pill">{sectorLabel}</span>
         </div>
 
         {/* Title */}
@@ -311,145 +320,125 @@ export default function PropertyCard({
           </Link>
         </h3>
 
-        {/* 🏛️ STANDARDIZED ARCHITECTURAL DECISION CORE (Quiet Luxury) */}
-        <div className="property-decision-core">
-          {/* Top Spec Header: Size & Payment Plan Tag */}
-          <div className="core-specs-header">
-            <div className="core-size-pill">
-              <Maximize2 size={13} className="core-spec-icon" />
-              <span className="core-size-val"><bdi>{property.size}</bdi></span>
-              <span className="core-size-unit">{lang === 'ar' ? 'م² صافي' : 'sqm net'}</span>
-            </div>
-
-            {property.monthlyInstallment > 0 ? (
-              <span className="core-plan-tag installment-tag">
-                <Sparkles size={11} className="plan-icon" />
-                <span>{lang === 'ar' ? 'تقسيط متاح' : 'Installments'}</span>
-              </span>
-            ) : (
-              <span className="core-plan-tag cash-tag">
-                <ShieldCheck size={11} className="plan-icon" />
-                <span>{lang === 'ar' ? 'كاش معتمد' : 'Full Cash'}</span>
-              </span>
-            )}
+        {/* 📐 Clean Architectural Specifications Strip (No Box Clutter) */}
+        <div className="property-specs-clean">
+          {/* Size is universal */}
+          <div className="spec-unit">
+            <Maximize2 size={13} className="spec-icon text-gold" />
+            <span><strong><bdi>{property.size}</bdi></strong> {lang === 'ar' ? 'م² صافي' : 'sqm net'}</span>
           </div>
 
-          {/* Financial Breakdown: Elegant Dual-Metric Grid or Certified Cash Banner */}
-          <div className="core-finance-grid">
-            {property.monthlyInstallment > 0 ? (
-              <>
-                <div className="core-fin-col">
-                  <span className="fin-col-label">{lang === 'ar' ? 'المقدم' : 'Down Payment'}</span>
-                  <div className="fin-col-value">
-                    <bdi>{(Number(property.downPayment) || 0).toLocaleString()}</bdi>
-                    <span className="fin-col-currency">{lang === 'ar' ? 'ج.م' : 'EGP'}</span>
-                  </div>
-                </div>
-
-                <div className="core-fin-divider" aria-hidden="true" />
-
-                <div className="core-fin-col">
-                  <span className="fin-col-label">{lang === 'ar' ? 'القسط' : 'Monthly'}</span>
-                  <div className="fin-col-value highlight-installment">
-                    <bdi>{(Number(property.monthlyInstallment) || 0).toLocaleString()}</bdi>
-                    <span className="fin-col-currency">{lang === 'ar' ? 'ج.م' : 'EGP'}</span>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="core-cash-deal-banner">
-                <ShieldCheck size={13} className="cash-shield-icon" />
-                <span>{lang === 'ar' ? 'خالص الثمن بدون أقساط • استلام فوري' : 'Fully Paid • Ready for Handover'}</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Secondary Specs Strip - Strictly Differentiated by Sector */}
-        <div className="property-specs-clean secondary-specs">
-          {/* 1. Commercial Retail Units: NO Bedrooms, NO Bathrooms */}
+          {/* Sector-Specific Specifications */}
           {isCommercial ? (
             <>
-              <span className="spec-unit">
-                <Store size={13} className="spec-icon text-gold" />
-                <span><strong>{formatCommercialSpec(property.commercialType_ar, lang)}</strong></span>
-              </span>
               <span className="spec-dot">•</span>
-              <span className="spec-unit">
-                <span>{property.frontage ? property.frontage : (property.floor === 0 ? (lang === 'ar' ? 'دور أرضي' : 'Ground Floor') : (lang === 'ar' ? `دور ${property.floor}` : `Floor ${property.floor}`))}</span>
-              </span>
+              <div className="spec-unit">
+                <Store size={13} className="spec-icon" />
+                <span>{formatCommercialSpec(property.commercialType_ar, lang)}</span>
+              </div>
               <span className="spec-dot">•</span>
-              <span className="spec-unit spec-unit-trust">
-                <ShieldCheck size={13} className="spec-trust-icon" />
-                <span>{lang === 'ar' ? 'ترخيص تجاري' : 'Licensed'}</span>
-              </span>
+              <div className="spec-unit">
+                <span>{property.frontage || (property.floor === 0 ? (lang === 'ar' ? 'أرضي' : 'Ground') : (lang === 'ar' ? `دور ${property.floor}` : `F${property.floor}`))}</span>
+              </div>
             </>
           ) : isOffice ? (
-            /* 2. Administrative & Clinics: NO Bedrooms */
             <>
-              <span className="spec-unit">
-                <Briefcase size={13} className="spec-icon text-gold" />
-                <span><strong>{formatOfficeSpec(property.adminType_ar, lang)}</strong></span>
-              </span>
+              <span className="spec-dot">•</span>
+              <div className="spec-unit">
+                <Briefcase size={13} className="spec-icon" />
+                <span>{formatOfficeSpec(property.adminType_ar, lang)}</span>
+              </div>
               {property.floor !== undefined && (
                 <>
                   <span className="spec-dot">•</span>
-                  <span className="spec-unit">
-                    <span>{property.floor === 0 ? (lang === 'ar' ? 'أرضي' : 'Ground') : (lang === 'ar' ? `دور ${property.floor}` : `Floor ${property.floor}`)}</span>
-                  </span>
+                  <div className="spec-unit">
+                    <span>{property.floor === 0 ? (lang === 'ar' ? 'أرضي' : 'Ground') : (lang === 'ar' ? `دور ${property.floor}` : `F${property.floor}`)}</span>
+                  </div>
                 </>
               )}
-              <span className="spec-dot">•</span>
-              <span className="spec-unit spec-unit-trust">
-                <ShieldCheck size={13} className="spec-trust-icon" />
-                <span>{lang === 'ar' ? 'ترخيص إداري' : 'Licensed'}</span>
-              </span>
             </>
           ) : isLand ? (
-            /* 3. Land Plots: NO Bedrooms, NO Bathrooms */
             <>
-              <span className="spec-unit">
-                <Building size={13} className="spec-icon text-gold" />
-                <span><strong>{formatLandSpec(property.landType_ar, lang)}</strong></span>
-              </span>
               <span className="spec-dot">•</span>
-              <span className="spec-unit">
-                <span>{property.frontage ? property.frontage : (lang === 'ar' ? 'موقع متميز' : 'Prime Plot')}</span>
-              </span>
+              <div className="spec-unit">
+                <Building size={13} className="spec-icon" />
+                <span>{formatLandSpec(property.landType_ar, lang)}</span>
+              </div>
               <span className="spec-dot">•</span>
-              <span className="spec-unit spec-unit-trust">
-                <ShieldCheck size={13} className="spec-trust-icon" />
-                <span>{lang === 'ar' ? 'ترخيص رسمي' : 'Licensed'}</span>
-              </span>
+              <div className="spec-unit">
+                <span>{property.frontage || (lang === 'ar' ? 'موقع متميز' : 'Prime Plot')}</span>
+              </div>
             </>
           ) : (
-            /* 4. Residential: Bedrooms & Bathrooms */
+            /* Residential */
             <>
               {property.bedrooms > 0 && (
-                <span className="spec-unit">
-                  <BedDouble size={13} className="spec-icon" />
-                  <span><strong><bdi>{property.bedrooms}</bdi></strong> {lang === 'ar' ? 'غرف' : 'Beds'}</span>
-                </span>
+                <>
+                  <span className="spec-dot">•</span>
+                  <div className="spec-unit">
+                    <BedDouble size={13} className="spec-icon" />
+                    <span><strong><bdi>{property.bedrooms}</bdi></strong> {lang === 'ar' ? 'غرف' : 'Beds'}</span>
+                  </div>
+                </>
               )}
               {property.bathrooms > 0 && (
                 <>
-                  {property.bedrooms > 0 && <span className="spec-dot">•</span>}
-                  <span className="spec-unit">
+                  <span className="spec-dot">•</span>
+                  <div className="spec-unit">
                     <Bath size={13} className="spec-icon" />
                     <span><strong><bdi>{property.bathrooms}</bdi></strong> {lang === 'ar' ? 'حمام' : 'Baths'}</span>
-                  </span>
+                  </div>
                 </>
               )}
-              <span className="spec-dot">•</span>
-              <span className="spec-unit spec-unit-trust">
-                <ShieldCheck size={13} className="spec-trust-icon" />
-                <span>{lang === 'ar' ? 'فحص قانوني معتمد' : 'Verified Title'}</span>
-              </span>
             </>
+          )}
+
+          {/* Subtle Verified Legal Title Tag */}
+          <span className="spec-dot">•</span>
+          <div className="spec-unit spec-unit-trust" title={lang === 'ar' ? 'تم الفحص القانوني المعتمد' : 'Legally Verified'}>
+            <ShieldCheck size={13} className="spec-trust-icon" />
+            <span>{lang === 'ar' ? 'فحص معتمد' : 'Verified'}</span>
+          </div>
+        </div>
+
+        {/* 🏛️ MODERN ARCHITECTURAL FINANCIAL CORE (Single Unified Surface) */}
+        <div className="property-decision-core">
+          {property.monthlyInstallment > 0 ? (
+            <div className="core-finance-grid">
+              <div className="core-fin-col">
+                <span className="fin-col-label">{lang === 'ar' ? 'المقدم' : 'Down Payment'}</span>
+                <div className="fin-col-value">
+                  <bdi>{(Number(property.downPayment) || 0).toLocaleString()}</bdi>
+                  <span className="fin-col-currency">{lang === 'ar' ? 'ج.م' : 'EGP'}</span>
+                </div>
+              </div>
+
+              <div className="core-fin-divider" aria-hidden="true" />
+
+              <div className="core-fin-col">
+                <span className="fin-col-label">{lang === 'ar' ? 'القسط الشهري' : 'Monthly'}</span>
+                <div className="fin-col-value highlight-installment">
+                  <bdi>{(Number(property.monthlyInstallment) || 0).toLocaleString()}</bdi>
+                  <span className="fin-col-currency">{lang === 'ar' ? 'ج.م' : 'EGP'}</span>
+                </div>
+              </div>
+
+              <div className="core-fin-tag-col">
+                <span className="core-plan-tag installment-tag">
+                  <Sparkles size={11} className="plan-icon" />
+                  <span>{lang === 'ar' ? 'تقسيط متاح' : 'Installments'}</span>
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="core-cash-deal-banner">
+              <ShieldCheck size={14} className="cash-shield-icon" />
+              <span>{lang === 'ar' ? 'خالص الثمن بدون أقساط • استلام فوري ومعاينة' : 'Fully Paid • Ready for Immediate Handover'}</span>
+            </div>
           )}
         </div>
 
-        {/* Streamlined Footer Actions */}
+        {/* 3. Luxury Integrated Action Suite */}
         <div className="property-card-footer-streamlined">
           <Link 
             to={`/properties/${property.id}`} 
@@ -491,3 +480,4 @@ export default function PropertyCard({
     </div>
   );
 }
+
