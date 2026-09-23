@@ -16,7 +16,6 @@ import {
   Lock, 
   Filter, 
   Clock, 
-  FileText,
   Home,
   Landmark,
   Pause,
@@ -708,29 +707,6 @@ export default function HomePage({
               </div>
             )}
 
-            {/* Executive Bottom Hub & Certified Trust Bar */}
-            <div className="marketplace-bottom-hub">
-              <div className="bottom-hub-trust">
-                <div className="trust-icon-box">
-                  <ShieldCheck size={22} className="text-gold" />
-                </div>
-                <div>
-                  <strong>{lang === 'ar' ? 'ضمان 1Line المعتمد للأمان العقاري' : '1Line Certified Trust Guarantee'}</strong>
-                  <p>{lang === 'ar' ? 'سواء كنت تبحث عن شقة سكنية أولى أو قصر استثماري فاخر — جميع الوحدات مفحوصة هندسياً وتخضع لإشراف قانوني كامل 100% دون تفرقة.' : 'From starter apartments to prime luxury estates — 100% verified legal inspection on all listed units across Sohag.'}</p>
-                </div>
-              </div>
-
-              <div className="bottom-hub-actions">
-                <Link to="/properties" className="btn btn-luxury-cta">
-                  <span>{lang === 'ar' ? `استعراض كل العقارات (${activePublished.length} عقار)` : `Explore All Properties (${activePublished.length})`}</span>
-                  {lang === 'ar' ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
-                </Link>
-                <Link to="/special-requests" className="btn btn-glass-outline">
-                  <FileText size={15} style={{ color: '#ffca28' }} />
-                  <span>{lang === 'ar' ? 'طلب توفير عقار خاص VIP' : 'Bespoke Request VIP'}</span>
-                </Link>
-              </div>
-            </div>
           </div>
         )}
 
