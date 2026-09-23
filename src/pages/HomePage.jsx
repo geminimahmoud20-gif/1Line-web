@@ -707,6 +707,13 @@ export default function HomePage({
               </div>
             )}
 
+            {/* Clean, Refined Navigation Action */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '28px' }}>
+              <Link to="/properties" className="btn btn-outline" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 24px', fontWeight: 'bold' }}>
+                <span>{lang === 'ar' ? `استعراض كل العقارات المتاحة (${activePublished.length} عقار)` : `Explore All Properties (${activePublished.length})`}</span>
+                {lang === 'ar' ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
+              </Link>
+            </div>
           </div>
         )}
 
