@@ -417,7 +417,7 @@ a {
 }
 
 a:hover {
-  color: var(--accent-gold);
+  color: var(--navy-800);
 }
 
 @media (max-width: 768px) {
@@ -892,15 +892,15 @@ a:hover {
 .btn-primary {
   background: var(--navy-900);
   color: #ffffff;
-  border: 1px solid rgba(179, 138, 69, 0.15);
-  box-shadow: 0 4px 14px rgba(7, 17, 31, 0.2);
+  border: none;
+  box-shadow: 0 4px 12px rgba(7, 17, 31, 0.15);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(7, 17, 31, 0.3);
+  box-shadow: 0 8px 20px rgba(7, 17, 31, 0.25);
   background: var(--navy-950);
-  color: var(--gold-soft);
+  color: #ffffff;
 }
 
 /* 🏷️ UNIFIED LUXURY BADGE DESIGN SYSTEM */
