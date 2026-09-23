@@ -1993,9 +1993,8 @@ select:focus {
 .footer-container {
   max-width: var(--container-max);
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 30px;
+  display: block;
+  width: 100%;
 }
 
 .footer-column {
@@ -2172,9 +2171,6 @@ select:focus {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .footer-container {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 
 @media (max-width: 768px) {
@@ -2204,9 +2200,6 @@ select:focus {
     grid-template-columns: 1fr;
   }
 
-  .footer-container {
-    grid-template-columns: 1fr;
-  }
 
   .pwa-banner {
     flex-direction: column;

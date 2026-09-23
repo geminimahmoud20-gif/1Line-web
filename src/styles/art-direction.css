@@ -1841,18 +1841,21 @@
 }
 
 .footer-container {
+    display: block !important;
     max-width: 1280px;
     margin: 0 auto;
     padding: 0 24px;
     width: 100%;
+    box-sizing: border-box;
 }
 
 .footer-grid {
-    display: grid;
-    grid-template-columns: 1.6fr 1fr 1fr 1.3fr;
-    gap: 40px;
+    display: grid !important;
+    grid-template-columns: 1.6fr 1fr 1fr 1.3fr !important;
+    gap: 40px !important;
     align-items: start;
-    width: 100%;
+    width: 100% !important;
+    box-sizing: border-box;
 }
 
 @media (max-width: 1024px) {

@@ -11787,10 +11787,12 @@ body.dark,
 
 .footer-container,
 .footer-main-container {
+  display: block !important;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 44px 24px 20px;
+  padding: 0 24px;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .footer-grid {
