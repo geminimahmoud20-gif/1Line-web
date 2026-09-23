@@ -19882,118 +19882,48 @@ body.dark-theme .compare-tabs-bar {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: rgba(7, 24, 48, 0.95);
-  border: 1px solid rgba(212, 175, 55, 0.35);
-  padding: 6px;
-  border-radius: 16px;
-  margin-bottom: 28px;
-  max-width: 620px;
+  background: rgba(13, 72, 161, 0.05);
+  border: 1px solid rgba(13, 72, 161, 0.14);
+  padding: 4px;
+  border-radius: 14px;
+  margin-bottom: 24px;
+  max-width: 520px;
   margin-left: auto;
   margin-right: auto;
-  box-shadow: 0 10px 30px -4px rgba(7, 24, 48, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
 }
 
 .portal-mode-btn {
   flex: 1;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 10px 16px;
-  border: 1px solid transparent;
+  gap: 8px;
+  padding: 10px 14px;
+  border: none;
   background: transparent;
-  border-radius: 12px;
-  font-size: 0.88rem;
-  font-weight: 800;
-  color: #E2E8F0;
+  border-radius: 10px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--text-muted);
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  white-space: nowrap;
-}
-
-.portal-mode-btn:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.08);
-  color: #FFFFFF;
-  border-color: rgba(255, 255, 255, 0.15);
-}
-
-.portal-mode-btn.active {
-  background: #FFFFFF;
-  color: #071E3D;
-  border-color: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
-}
-
-.dark-theme .portal-mode-toggle-strip,
-[data-theme="dark"] .portal-mode-toggle-strip {
-  background: rgba(4, 14, 28, 0.96);
-  border-color: rgba(212, 175, 55, 0.38);
-}
-
-.dark-theme .portal-mode-btn.active,
-[data-theme="dark"] .portal-mode-btn.active {
-  background: linear-gradient(135deg, #0F2544 0%, #163660 100%);
-  color: #FFFFFF;
-  border-color: rgba(212, 175, 55, 0.55);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 0 12px rgba(212, 175, 55, 0.2);
-}
-
-/* Crisp Icon Box Styling for 100% Clarity */
-.mode-btn-icon-box {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
   transition: all 0.2s ease;
 }
 
-/* Fast Mode Icon (Amber/Gold Lightning Bolt) */
-.fast-icon-box {
-  background: rgba(245, 158, 11, 0.18);
-  color: #D97706;
-  border: 1px solid rgba(245, 158, 11, 0.35);
+.portal-mode-btn.active {
+  background: #ffffff;
+  color: #0d48a1;
+  box-shadow: 0 4px 14px rgba(13, 72, 161, 0.12);
 }
 
-.portal-mode-btn.active .fast-icon-box {
-  background: #F59E0B;
-  color: #FFFFFF;
-  border-color: #F59E0B;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.45);
+.dark-theme .portal-mode-toggle-strip {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
-.portal-mode-btn:not(.active) .fast-icon-box {
-  background: rgba(245, 158, 11, 0.25);
-  color: #FBBF24;
-  border-color: rgba(245, 158, 11, 0.5);
-}
-
-/* Advisory Mode Icon (Cyan/Sky Blue Check Badge) */
-.advisory-icon-box {
-  background: rgba(14, 165, 233, 0.15);
-  color: #0284C7;
-  border: 1px solid rgba(14, 165, 233, 0.3);
-}
-
-.portal-mode-btn.active .advisory-icon-box {
-  background: #0284C7;
-  color: #FFFFFF;
-  border-color: #0284C7;
-  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
-}
-
-.portal-mode-btn:not(.active) .advisory-icon-box {
-  background: rgba(56, 189, 248, 0.2);
-  color: #38BDF8;
-  border-color: rgba(56, 189, 248, 0.45);
-}
-
-.mode-btn-text {
-  letter-spacing: -0.2px;
+.dark-theme .portal-mode-btn.active {
+  background: #1e293b;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
 .quick-portal-lead-card {
