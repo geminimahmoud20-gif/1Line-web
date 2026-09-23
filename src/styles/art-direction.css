@@ -621,8 +621,8 @@
 
 .scroll-reveal {
     opacity: 0;
-    transform: translateY(24px);
-    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: translateY(20px);
+    transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .scroll-reveal.visible {
@@ -630,35 +630,35 @@
     transform: translateY(0);
 }
 
-/* Staggered children */
+/* Staggered children (standard 75ms rhythm) */
 .scroll-reveal-stagger>*:nth-child(1) {
-    transition-delay: 0.05s;
+    transition-delay: 0.075s;
 }
 
 .scroll-reveal-stagger>*:nth-child(2) {
-    transition-delay: 0.1s;
-}
-
-.scroll-reveal-stagger>*:nth-child(3) {
     transition-delay: 0.15s;
 }
 
+.scroll-reveal-stagger>*:nth-child(3) {
+    transition-delay: 0.225s;
+}
+
 .scroll-reveal-stagger>*:nth-child(4) {
-    transition-delay: 0.2s;
+    transition-delay: 0.3s;
 }
 
 .scroll-reveal-stagger>*:nth-child(5) {
-    transition-delay: 0.25s;
+    transition-delay: 0.375s;
 }
 
 .scroll-reveal-stagger>*:nth-child(6) {
-    transition-delay: 0.3s;
+    transition-delay: 0.45s;
 }
 
 .scroll-reveal-stagger>* {
     opacity: 0;
     transform: translateY(20px);
-    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .scroll-reveal-stagger>*.visible {
@@ -826,6 +826,26 @@
     display: flex;
     gap: 4px;
     margin-top: 4px;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    pointer-events: none;
+}
+
+.property-card:hover .card-secondary-badges,
+.editorial-card:hover .card-secondary-badges,
+.property-card-luxury:hover .card-secondary-badges {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+@media (max-width: 768px) {
+    .card-secondary-badges {
+        opacity: 0.9;
+        transform: none;
+        pointer-events: auto;
+    }
 }
 
 .badge-commission,
@@ -911,10 +931,11 @@
 }
 
 .card-price-overlay .price-val {
-    font-size: 1.25rem;
-    font-weight: 800;
+    font-size: 1.35rem;
+    font-weight: 900;
     color: #FFFFFF;
-    line-height: 1.2;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
 }
 
 .card-price-overlay .price-curr {
@@ -1286,10 +1307,10 @@
     background: var(--navy-900) !important;
     color: #FFFFFF !important;
     border: none !important;
-    border-radius: var(--radius-sm, 8px) !important;
+    border-radius: 10px !important;
     padding: 13px 32px !important;
-    min-height: 48px !important;
-    font-size: 0.9rem !important;
+    min-height: 50px !important;
+    font-size: 0.92rem !important;
     font-weight: 700 !important;
     min-width: auto !important;
     box-shadow: 0 4px 14px rgba(7, 17, 31, 0.15);
@@ -1984,11 +2005,11 @@
         min-height: 78vh;
     }
 
-    /* Mobile section spacing (§47) */
+    /* Mobile section spacing (§47): generous breathing room */
     .homepage-section,
     .editorial-section,
     .section-major {
-        padding: var(--space-16, 64px) 0;
+        padding: var(--space-18, 72px) 0;
     }
 
     /* One card per row on mobile (§44) */

@@ -40,6 +40,7 @@ import { getFounderSettings, DEFAULT_FOUNDER_CMS, getWhatsAppUrl } from '../util
 import { getAreas } from '../utils/areasData';
 import { updatePageSeo, buildOrganizationSchema } from '../utils/seoHelper';
 import { parseSemanticQuery, SEMANTIC_SEARCH_PRESETS } from '../utils/semanticSearchEngine';
+import ScrollReveal from '../components/common/ScrollReveal';
 
 export default function HomePage({ 
   lang, 
@@ -619,25 +620,28 @@ export default function HomePage({
       <MarketTickerBar lang={lang} />
 
       {/* 🌟 SOTHEBY'S BENCHMARK: CURATED LIFESTYLE COLLECTIONS */}
-      <LifestyleCollectionsSection lang={lang} />
+      <ScrollReveal>
+        <LifestyleCollectionsSection lang={lang} />
+      </ScrollReveal>
 
       {/* 🏢 2. SOHAG LIVE MARKETPLACE HUB (Consolidated Segmented Discovery) */}
       <section className="homepage-section bg-surface" id="marketplace-hub">
-        <div className="section-header-flex" style={{ marginBottom: '22px' }}>
-          <div>
-            <div style={{ marginBottom: '8px' }}>
-              <span className="section-pill" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                <span className="live-pulse-dot" />
-                {lang === 'ar' ? 'سوق سوهاج العقاري المعتمد' : 'Verified Sohag Marketplace'}
-              </span>
+        <ScrollReveal>
+          <div className="section-header-flex mb-6">
+            <div>
+              <div className="mb-2">
+                <span className="section-pill-tag">
+                  <span className="live-pulse-dot" />
+                  {lang === 'ar' ? 'سوق سوهاج العقاري المعتمد' : 'Verified Sohag Marketplace'}
+                </span>
+              </div>
+              <h2 className="section-heading-primary m-0">
+                {lang === 'ar' ? 'أحدث العقارات والطلبات الاستثمارية الحية' : 'Featured Properties & Live Demands'}
+              </h2>
+              <p className="section-heading-desc mt-2 mb-0" style={{ marginInline: 0 }}>
+                {lang === 'ar' ? 'تصفح أحدث الوحدات المفحوصة هندسياً وقانونياً أو طابق عقارك مع مشتري الكاش الجاهزين فوراً' : 'Certified properties & instant matching with serious cash buyers in Sohag'}
+              </p>
             </div>
-            <h2 style={{ fontSize: '1.75rem', fontWeight: '900', color: 'var(--text-primary)', margin: 0 }}>
-              {lang === 'ar' ? 'أحدث العقارات والطلبات الاستثمارية الحية' : 'Featured Properties & Live Demands'}
-            </h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '6px', marginBottom: 0 }}>
-              {lang === 'ar' ? 'تصفح أحدث الوحدات المفحوصة هندسياً وقانونياً أو طابق عقارك مع مشتري الكاش الجاهزين فوراً' : 'Certified properties & instant matching with serious cash buyers in Sohag'}
-            </p>
-          </div>
 
           {/* Interactive Switcher Tabs (Ultra High Contrast Navy & Gold) */}
           <div className="marketplace-switcher-bar">
@@ -842,109 +846,120 @@ export default function HomePage({
             </div>
           </div>
         )}
+        </ScrollReveal>
       </section>
 
       {/* 🏡 3. SELLER INVITATION SECTION (Architectural Editorial Contrast) */}
-      <section className="homepage-section seller-invitation-section">
-        <div className="seller-invitation-card">
-          <div className="seller-content-col">
-            <span className="editorial-eyebrow">
-              {lang === 'ar' ? 'إدارة الأصول وأصحاب العقارات' : 'Property Owners & Asset Advisory'}
-            </span>
-            <h2 className="seller-title">
-              {lang === 'ar' ? 'عندك عقار؟' : 'Own a Prime Property?'}
-            </h2>
-            <p className="seller-statement">
-              {lang === 'ar'
-                ? 'نساعدك تفهم قيمته السوقية الحقيقية، تقدمه بأعلى المعايير التحريرية، وتوصله للمشتري المناسب بسرعة وبدون عمولة على البائع.'
-                : 'We help you understand its true market valuation, present it with institutional quality, and match it with qualified cash buyers.'}
-            </p>
-            <div className="seller-actions-row">
-              <Link to="/sell" className="btn btn-primary seller-cta-btn">
-                <span>{lang === 'ar' ? 'اطلب تقييم عقارك' : 'Request Valuation'}</span>
-                {lang === 'ar' ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
-              </Link>
-              <Link to="/demands" className="btn btn-outline">
-                <span>{lang === 'ar' ? 'تصفح طلبات المشترين' : 'Explore Buyer Demands'}</span>
-              </Link>
+      <ScrollReveal>
+        <section className="homepage-section seller-invitation-section">
+          <div className="seller-invitation-card">
+            <div className="seller-content-col">
+              <span className="editorial-eyebrow">
+                {lang === 'ar' ? 'إدارة الأصول وأصحاب العقارات' : 'Property Owners & Asset Advisory'}
+              </span>
+              <h2 className="seller-title">
+                {lang === 'ar' ? 'عندك عقار؟' : 'Own a Prime Property?'}
+              </h2>
+              <p className="seller-statement">
+                {lang === 'ar'
+                  ? 'نساعدك تفهم قيمته السوقية الحقيقية، تقدمه بأعلى المعايير التحريرية، وتوصله للمشتري المناسب بسرعة وبدون عمولة على البائع.'
+                  : 'We help you understand its true market valuation, present it with institutional quality, and match it with qualified cash buyers.'}
+              </p>
+              <div className="seller-actions-row">
+                <Link to="/sell" className="btn btn-primary seller-cta-btn">
+                  <span>{lang === 'ar' ? 'اطلب تقييم عقارك' : 'Request Valuation'}</span>
+                  {lang === 'ar' ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
+                </Link>
+                <Link to="/demands" className="btn btn-outline">
+                  <span>{lang === 'ar' ? 'تصفح طلبات المشترين' : 'Explore Buyer Demands'}</span>
+                </Link>
+              </div>
+            </div>
+            <div className="seller-image-col">
+              <img 
+                src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1000&q=85" 
+                alt={lang === 'ar' ? 'تقييم وععرض عقارك مع 1Line' : 'Property Valuation with 1Line'} 
+                className="seller-feature-img"
+                loading="lazy"
+              />
             </div>
           </div>
-          <div className="seller-image-col">
-            <img 
-              src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1000&q=85" 
-              alt={lang === 'ar' ? 'تقييم وعرض عقارك مع 1Line' : 'Property Valuation with 1Line'} 
-              className="seller-feature-img"
-              loading="lazy"
-            />
-          </div>
-        </div>
-      </section>
+        </section>
+      </ScrollReveal>
 
       {/* 🛡️ THE 4 1LINE GOLDEN STANDARDS OF INSTITUTIONAL TRUST */}
-      <GoldStandardsSection lang={lang} />
+      <ScrollReveal>
+        <GoldStandardsSection lang={lang} />
+      </ScrollReveal>
 
       {/* 🔒 SOTHEBY'S BENCHMARK: 1LINE PRIVATE OFFICE (OFF-MARKET POCKET LISTINGS) */}
-      <PrivateOfficeSection lang={lang} />
+      <ScrollReveal>
+        <PrivateOfficeSection lang={lang} />
+      </ScrollReveal>
 
       {/* 🏛️ 6. EXECUTIVE CONSULTATION (Deep Navy Brand Authority Surface) */}
-      <section className="homepage-section consultation-authority-section">
-        <div className="consultation-navy-surface">
-          <div className="consultation-content-wrap">
-            <span className="consultation-pill-eyebrow">
-              {lang === 'ar' ? 'الاستشارة الاستراتيجية والتدقيق' : 'Strategic Advisory & Due Diligence'}
-            </span>
-            <h2 className="consultation-main-statement">
-              {lang === 'ar' ? 'قرارك العقاري يستحق أكثر من مجرد إعلان.' : 'Your Real Estate Decision Deserves More Than Just An Ad.'}
-            </h2>
-            <p className="consultation-sub-statement">
-              {lang === 'ar' 
-                ? 'سواء كنت تشتري مسكنك الأول، أو تستثمر في أصل تجاري مرتفع العائد، فريق مستشاري 1Line المعتمدين يضع بين يديك حقائق السوق وتدقيق الملكية لتتخذ قرارك بثقة تامة.' 
-                : 'Whether acquiring a primary home or high-yield commercial assets, our certified advisors provide legal auditing and price benchmarks so you decide with total confidence.'}
-            </p>
-            <div className="consultation-actions-row">
-              <a
-                href={getWhatsAppUrl(lang === 'ar' ? 'مرحباً 1Line، أريد استشارة عقارية متخصصة بخصوص فرصة شراء أو استثمار.' : 'Hello 1Line, I would like to schedule a property consultation.')}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-consultation-primary"
-              >
-                <MessageSquare size={16} />
-                <span>{lang === 'ar' ? 'تحدث مع مستشار' : 'Speak With An Advisor'}</span>
-              </a>
-              <Link to="/buy" className="btn btn-consultation-secondary">
-                <span>{lang === 'ar' ? 'احجز معاينة ميدانية' : 'Book Field Inspection'}</span>
+      <ScrollReveal>
+        <section className="homepage-section consultation-authority-section">
+          <div className="consultation-navy-surface">
+            <div className="consultation-content-wrap">
+              <span className="consultation-pill-eyebrow">
+                {lang === 'ar' ? 'الاستشارة الاستراتيجية والتدقيق' : 'Strategic Advisory & Due Diligence'}
+              </span>
+              <h2 className="consultation-main-statement">
+                {lang === 'ar' ? 'قرارك العقاري يستحق أكثر من مجرد إعلان.' : 'Your Real Estate Decision Deserves More Than Just An Ad.'}
+              </h2>
+              <p className="consultation-sub-statement">
+                {lang === 'ar' 
+                  ? 'سواء كنت تشتري مسكنك الأول، أو تستثمر في أصل تجاري مرتفع العائد، فريق مستشاري 1Line المعتمدين يضع بين يديك حقائق السوق وتدقيق الملكية لتتخذ قرارك بثقة تامة.' 
+                  : 'Whether acquiring a primary home or high-yield commercial assets, our certified advisors provide legal auditing and price benchmarks so you decide with total confidence.'}
+              </p>
+              <div className="consultation-actions-row">
+                <a
+                  href={getWhatsAppUrl(lang === 'ar' ? 'مرحباً 1Line، أريد استشارة عقارية متخصصة بخصوص فرصة شراء أو استثمار.' : 'Hello 1Line, I would like to schedule a property consultation.')}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-consultation-primary"
+                >
+                  <MessageSquare size={16} />
+                  <span>{lang === 'ar' ? 'تحدث مع مستشار' : 'Speak With An Advisor'}</span>
+                </a>
+                <Link to="/buy" className="btn btn-consultation-secondary">
+                  <span>{lang === 'ar' ? 'احجز معاينة ميدانية' : 'Book Field Inspection'}</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      </ScrollReveal>
+
+      {/* 🏁 7. PRE-FOOTER EMOTIONAL CONCLUSION STATEMENT */}
+      <ScrollReveal>
+        <section className="pre-footer-conclusion-section">
+          <div className="conclusion-container">
+            <div className="conclusion-text-block">
+              <h3 className="conclusion-statement-title">
+                {lang === 'ar' ? (
+                  <>
+                    <span>ابحث عن العقار.</span>{' '}
+                    <span>وافهم القيمة.</span>{' '}
+                    <span className="text-navy-bold">واتخذ القرار بثقة.</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Discover The Property.</span>{' '}
+                    <span>Understand The Value.</span>{' '}
+                    <span className="text-navy-bold">Decide With Confidence.</span>
+                  </>
+                )}
+              </h3>
+              <Link to="/special-requests" className="conclusion-link-action">
+                <span>{lang === 'ar' ? 'تحدث مع 1Line' : 'Connect with 1Line'}</span>
+                {lang === 'ar' ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
               </Link>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* 🏁 7. PRE-FOOTER EMOTIONAL CONCLUSION STATEMENT */}
-      <section className="pre-footer-conclusion-section">
-        <div className="conclusion-container">
-          <div className="conclusion-text-block">
-            <h3 className="conclusion-statement-title">
-              {lang === 'ar' ? (
-                <>
-                  <span>ابحث عن العقار.</span>{' '}
-                  <span>وافهم القيمة.</span>{' '}
-                  <span className="text-navy-bold">واتخذ القرار بثقة.</span>
-                </>
-              ) : (
-                <>
-                  <span>Discover The Property.</span>{' '}
-                  <span>Understand The Value.</span>{' '}
-                  <span className="text-navy-bold">Decide With Confidence.</span>
-                </>
-              )}
-            </h3>
-            <Link to="/special-requests" className="conclusion-link-action">
-              <span>{lang === 'ar' ? 'تحدث مع 1Line' : 'Connect with 1Line'}</span>
-              {lang === 'ar' ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
-            </Link>
-          </div>
-        </div>
-      </section>
+        </section>
+      </ScrollReveal>
     </div>
   );
 }
