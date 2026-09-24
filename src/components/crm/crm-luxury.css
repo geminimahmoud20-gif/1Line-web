@@ -342,3 +342,71 @@
   background: transparent;
 }
 
+/* ── CRM modal (areas CMS and other panels) ──
+   Without these rules the modal rendered inline at the bottom of the page,
+   so "تعديل" / "حذف" looked like dead buttons. */
+.crm-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(6, 12, 22, 0.62);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: crmModalFade 0.16s ease-out;
+}
+
+/* The panels style their modal content with light text, so the card stays dark in both themes. */
+.crm-modal-card,
+.dark-theme .crm-modal-card,
+[data-theme="dark"] .crm-modal-card {
+  width: 100%;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: #0f1b2d !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(201, 169, 110, 0.28) !important;
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.6) !important;
+  animation: crmModalRise 0.18s ease-out;
+}
+
+.crm-modal-card input:focus-visible,
+.crm-modal-card textarea:focus-visible,
+.crm-modal-card button:focus-visible {
+  outline: 2px solid #C9A96E;
+  outline-offset: 2px;
+}
+
+.crm-modal-card small { color: #94a3b8 !important; }
+
+.crm-modal-card .btn-ghost {
+  background: transparent !important;
+  color: #cbd5e1 !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border-radius: 10px;
+}
+.crm-modal-card .btn-ghost:hover { background: rgba(255, 255, 255, 0.06) !important; }
+
+.crm-modal-card button[type="submit"].btn-primary {
+  background: linear-gradient(135deg, #C9A96E, #A8864A) !important;
+  color: #0B1B32 !important;
+  border: none !important;
+}
+.crm-modal-card button[type="submit"].btn-primary:hover { filter: brightness(1.06); }
+.crm-modal-card button:disabled { opacity: 0.6; cursor: wait; }
+
+@keyframes crmModalFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes crmModalRise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+@media (max-width: 600px) {
+  .crm-modal-backdrop { align-items: flex-end; padding: 0; }
+  .crm-modal-card { max-width: none !important; border-radius: 16px 16px 0 0; max-height: 92vh; padding: 18px 16px; }
+  .crm-modal-card form > div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+}
+

@@ -14,6 +14,7 @@ import AreaManagerPanel from '../components/crm/AreaManagerPanel';
 import GoLiveWizardModal from '../components/crm/GoLiveWizardModal';
 import CrmSidebar from '../components/crm/CrmSidebar';
 import CrmTopbar from '../components/crm/CrmTopbar';
+import CrmCommandPalette from '../components/crm/CrmCommandPalette';
 import '../components/crm/CrmLayout.css';
 import '../components/crm/crm-luxury.css';
 import { isFirebaseAuthAvailable, loginUser } from '../firebaseService';
@@ -71,6 +72,7 @@ export default function CrmPage({
   const [universalSearch, setUniversalSearch] = useState('');
   const [showQuickActionMenu, setShowQuickActionMenu] = useState(false);
   const [showGoLiveWizard, setShowGoLiveWizard] = useState(false);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
 
   // Sidebar Layout State (Width, Collapsed, Mobile Drawer)
   const [sidebarWidth, setSidebarWidth] = useState(() => {
@@ -115,6 +117,9 @@ export default function CrmPage({
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
         e.preventDefault();
         handleToggleCollapse();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setShowCommandPalette(prev => !prev);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -457,6 +462,7 @@ export default function CrmPage({
           showGoLiveWizard={showGoLiveWizard}
           setShowGoLiveWizard={setShowGoLiveWizard}
           onToggleMobileSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+          onOpenCommandPalette={() => setShowCommandPalette(true)}
         />
 
         {/* Role Simulation Mode Alert Banner */}
@@ -756,6 +762,42 @@ export default function CrmPage({
           triggerToast={triggerToast}
         />
       )}
+
+      {/* 6. Global Command Center (Ctrl + K / Cmd + K) */}
+      <CrmCommandPalette
+        isOpen={showCommandPalette}
+        onClose={() => setShowCommandPalette(false)}
+        leads={leads}
+        properties={properties}
+        demands={demands}
+        isAr={isAr}
+        onSelectLead={(l) => {
+          setActiveTab('leads');
+          setShowCommandPalette(false);
+        }}
+        onSelectProperty={(p) => {
+          setActiveTab('properties');
+          setShowCommandPalette(false);
+        }}
+        onSelectDemand={(d) => {
+          setActiveTab('demands');
+          setShowCommandPalette(false);
+        }}
+        onAction={(actionType, payload) => {
+          setShowCommandPalette(false);
+          if (actionType === 'switch_tab') {
+            setActiveTab(payload);
+          } else if (actionType === 'add_lead') {
+            setActiveTab('leads');
+          } else if (actionType === 'add_property') {
+            setActiveTab('properties');
+          } else if (actionType === 'add_demand') {
+            setActiveTab('demands');
+          } else if (actionType === 'open_contract_studio') {
+            setActiveTab('dashboard');
+          }
+        }}
+      />
     </div>
   );
 }

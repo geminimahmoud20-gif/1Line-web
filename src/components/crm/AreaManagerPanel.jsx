@@ -58,9 +58,33 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
     const handleUpdate = () => {
       setAreas(getAreas());
     };
+    const handleSyncFailed = () => {
+      if (triggerToast) triggerToast(isAr ? 'تم الحفظ على هذا الجهاز فقط — تعذّرت المزامنة السحابية، تحقق من الاتصال وأعد الحفظ' : 'Saved locally only — cloud sync failed', 'error');
+    };
     window.addEventListener('oneline_areas_updated', handleUpdate);
-    return () => window.removeEventListener('oneline_areas_updated', handleUpdate);
-  }, []);
+    window.addEventListener('oneline_areas_sync_failed', handleSyncFailed);
+    return () => {
+      window.removeEventListener('oneline_areas_updated', handleUpdate);
+      window.removeEventListener('oneline_areas_sync_failed', handleSyncFailed);
+    };
+  }, [triggerToast, isAr]);
+
+  // Esc closes whichever modal is open; lock page scroll behind it
+  useEffect(() => {
+    if (!modalMode && !deleteConfirmId) return undefined;
+    const onKey = (e) => {
+      if (e.key !== 'Escape' || isSaving) return;
+      setModalMode(null);
+      setDeleteConfirmId(null);
+    };
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [modalMode, deleteConfirmId, isSaving]);
 
   // Filtered areas
   const filteredAreas = useMemo(() => {
@@ -109,12 +133,12 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
       name_en: area.name_en || '',
       label_ar: area.label_ar || '',
       label_en: area.label_en || '',
-      lat: area.center?.lat || 26.5569,
-      lng: area.center?.lng || 31.7001,
-      zoom: area.zoom || 14,
+      lat: area.center?.lat ?? 26.5569,
+      lng: area.center?.lng ?? 31.7001,
+      zoom: area.zoom ?? 14,
       description_ar: area.description_ar || '',
-      avgPricePerMeter: area.avgPricePerMeter || 15000,
-      annualGrowthRate: area.annualGrowthRate || 75
+      avgPricePerMeter: area.avgPricePerMeter ?? 15000,
+      annualGrowthRate: area.annualGrowthRate ?? 0
     });
     setModalMode('edit');
   };
@@ -124,6 +148,23 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
     e.preventDefault();
     if (!formData.name_ar.trim()) {
       if (triggerToast) triggerToast(isAr ? 'يرجى إدخال اسم المنطقة بالعربية' : 'Please enter Arabic name', 'error');
+      return;
+    }
+    const lat = Number(formData.lat);
+    const lng = Number(formData.lng);
+    const price = Number(formData.avgPricePerMeter);
+    const growth = Number(formData.annualGrowthRate);
+    // Egypt bounding box — catches swapped or mistyped coordinates before they reach the public map
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < 22 || lat > 32 || lng < 24.5 || lng > 37) {
+      if (triggerToast) triggerToast(isAr ? 'الإحداثيات خارج مصر — تأكد من خط العرض (22–32) وخط الطول (24.5–37)' : 'Coordinates must be inside Egypt', 'error');
+      return;
+    }
+    if (!Number.isFinite(price) || price < 1000 || price > 1000000) {
+      if (triggerToast) triggerToast(isAr ? 'متوسط سعر المتر يجب أن يكون بين 1,000 و 1,000,000 ج.م' : 'Price per m² must be 1,000–1,000,000 EGP', 'error');
+      return;
+    }
+    if (!Number.isFinite(growth) || growth < 0 || growth > 500) {
+      if (triggerToast) triggerToast(isAr ? 'نسبة النمو يجب أن تكون بين 0 و 500%' : 'Growth must be 0–500%', 'error');
       return;
     }
 
@@ -136,26 +177,26 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
           name_en: formData.name_en || formData.name_ar,
           label_ar: formData.label_ar || formData.name_ar,
           label_en: formData.label_en || formData.name_en || formData.name_ar,
-          center: { lat: parseFloat(formData.lat) || 26.5569, lng: parseFloat(formData.lng) || 31.7001 },
+          center: { lat, lng },
           zoom: parseInt(formData.zoom, 10) || 14,
           description_ar: formData.description_ar,
-          avgPricePerMeter: Number(formData.avgPricePerMeter) || 15000,
-          annualGrowthRate: Number(formData.annualGrowthRate) || 75
+          avgPricePerMeter: price,
+          annualGrowthRate: growth
         });
-        if (triggerToast) triggerToast(isAr ? 'تمت إضافة المنطقة بنجاح وتحديث أسعارها ومؤشراتها! 🎉' : 'Area added successfully!', 'success');
+        if (triggerToast) triggerToast(isAr ? 'تمت إضافة المنطقة' : 'Area added', 'success');
       } else if (modalMode === 'edit' && activeArea) {
         await updateArea(activeArea.id, {
-          name_ar: formData.name_ar,
-          name_en: formData.name_en,
-          label_ar: formData.label_ar,
-          label_en: formData.label_en,
-          center: { lat: parseFloat(formData.lat) || 26.5569, lng: parseFloat(formData.lng) || 31.7001 },
+          name_ar: formData.name_ar.trim(),
+          name_en: formData.name_en.trim(),
+          label_ar: formData.label_ar.trim(),
+          label_en: formData.label_en.trim(),
+          center: { lat, lng },
           zoom: parseInt(formData.zoom, 10) || 14,
-          description_ar: formData.description_ar,
-          avgPricePerMeter: Number(formData.avgPricePerMeter) || 15000,
-          annualGrowthRate: Number(formData.annualGrowthRate) || 75
+          description_ar: formData.description_ar.trim(),
+          avgPricePerMeter: price,
+          annualGrowthRate: growth
         });
-        if (triggerToast) triggerToast(isAr ? 'تم تحديث بيانات المنطقة ومتوسط سعر المتر ونسب النمو سحابياً! ✏️' : 'Area updated successfully!', 'success');
+        if (triggerToast) triggerToast(isAr ? 'تم حفظ تعديلات المنطقة' : 'Area updated', 'success');
       }
       setAreas(getAreas());
       setModalMode(null);
@@ -457,17 +498,19 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                     color: 'var(--crm-positive)',
                     border: '1px solid rgba(16, 185, 129, 0.25)'
                   }}>
-                    {isAr ? `نمو: +${area.annualGrowthRate || 75}%` : `Growth: +${area.annualGrowthRate || 75}%`}
+                    {isAr ? `نمو: +${area.annualGrowthRate ?? 0}%` : `Growth: +${area.annualGrowthRate ?? 0}%`}
                   </span>
-                  <span style={{
-                    fontSize: '0.75rem',
-                    padding: '3px 8px',
-                    borderRadius: '6px',
-                    background: 'rgba(56, 189, 248, 0.1)',
-                    color: '#38bdf8'
-                  }}>
-                    {isAr ? `${area.amenities?.length || 5} معالم حيوية` : `${area.amenities?.length || 5} Amenities`}
-                  </span>
+                  {area.amenities?.length > 0 && (
+                    <span style={{
+                      fontSize: '0.75rem',
+                      padding: '3px 8px',
+                      borderRadius: '6px',
+                      background: 'rgba(56, 189, 248, 0.1)',
+                      color: '#38bdf8'
+                    }}>
+                      {isAr ? `${area.amenities.length} معالم حيوية` : `${area.amenities.length} Amenities`}
+                    </span>
+                  )}
                 </div>
 
                 {/* Coordinates & Geo Info */}
@@ -481,7 +524,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                     marginBottom: '14px' 
                   }}>
                     <Navigation size={12} style={{ color: 'var(--accent-gold)' }} />
-                    <span>Lat: {area.center.lat.toFixed(4)}, Lng: {area.center.lng.toFixed(4)}</span>
+                    <span dir="ltr">Lat: {Number(area.center.lat).toFixed(4)}, Lng: {Number(area.center.lng).toFixed(4)}</span>
                   </div>
                 )}
               </div>
@@ -499,6 +542,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                   type="button"
                   className="btn-action-mini"
                   onClick={() => handleOpenEdit(area)}
+                  aria-label={isAr ? `تعديل ${area.name_ar}` : `Edit ${area.name_en || area.id}`}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -521,6 +565,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                     type="button"
                     className="btn-action-mini"
                     onClick={() => setDeleteConfirmId(area.id)}
+                    aria-label={isAr ? `حذف ${area.name_ar}` : `Delete ${area.name_en || area.id}`}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -555,8 +600,8 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
 
       {/* MODAL: Add / Edit Area */}
       {modalMode && (
-        <div className="crm-modal-backdrop" onClick={() => setModalMode(null)}>
-          <div className="crm-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '540px' }}>
+        <div className="crm-modal-backdrop" onClick={() => !isSaving && setModalMode(null)}>
+          <div className="crm-modal-card" role="dialog" aria-modal="true" aria-labelledby="area-modal-title" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '540px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{ 
@@ -568,7 +613,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                   {modalMode === 'add' ? <Plus size={20} /> : <Edit3 size={20} />}
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#fff' }}>
+                  <h3 id="area-modal-title" style={{ margin: 0, fontSize: '1.15rem', color: '#fff' }}>
                     {modalMode === 'add' ? (isAr ? 'إضافة حي أو منطقة جديدة' : 'Add New District') : (isAr ? 'تعديل بيانات المنطقة' : 'Edit District')}
                   </h3>
                   <small style={{ color: 'var(--crm-faint)' }}>
@@ -576,10 +621,11 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                   </small>
                 </div>
               </div>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setModalMode(null)}
-                style={{ background: 'transparent', border: 'none', color: 'var(--crm-faint)', cursor: 'pointer' }}
+                aria-label={isAr ? 'إغلاق' : 'Close'}
+                style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
               >
                 <X size={20} />
               </button>
@@ -616,6 +662,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                   <input
                     type="text"
                     placeholder="e.g. Tahta or Al Salam"
+                    dir="ltr"
                     value={formData.name_en}
                     onChange={(e) => setFormData({ ...formData, name_en: e.target.value })}
                     style={{
@@ -816,8 +863,8 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
 
       {/* MODAL: Delete Confirmation */}
       {deleteConfirmId && (
-        <div className="crm-modal-backdrop" onClick={() => setDeleteConfirmId(null)}>
-          <div className="crm-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px', textAlign: 'center' }}>
+        <div className="crm-modal-backdrop" onClick={() => !isSaving && setDeleteConfirmId(null)}>
+          <div className="crm-modal-card" role="alertdialog" aria-modal="true" aria-labelledby="area-delete-title" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px', textAlign: 'center' }}>
             <div style={{
               width: '56px',
               height: '56px',
@@ -832,14 +879,23 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
               <AlertTriangle size={28} />
             </div>
 
-            <h3 style={{ margin: '0 0 8px 0', color: '#fff', fontSize: '1.15rem' }}>
-              {isAr ? 'تأكيد حذف المنطقة' : 'Confirm District Deletion'}
+            <h3 id="area-delete-title" style={{ margin: '0 0 8px 0', color: '#fff', fontSize: '1.15rem' }}>
+              {isAr
+                ? `حذف «${areas.find((a) => a.id === deleteConfirmId)?.name_ar || deleteConfirmId}»؟`
+                : 'Confirm District Deletion'}
             </h3>
-            <p style={{ color: 'var(--crm-faint)', fontSize: '0.88rem', marginBottom: '20px' }}>
-              {isAr 
-                ? 'هل أنت متأكد من رغبتك في حذف هذا الحي؟ سيتم إزالته من جميع فلاتر الموقع ومعالجات البحث.' 
-                : 'Are you sure you want to delete this district from all search filters?'}
+            <p style={{ color: '#cbd5e1', fontSize: '0.88rem', marginBottom: getAreaPropertiesCount(deleteConfirmId) > 0 ? '10px' : '20px' }}>
+              {isAr
+                ? 'سيتم إزالة الحي من فلاتر البحث ونماذج البيع والشراء في الموقع.'
+                : 'The district will be removed from all search filters.'}
             </p>
+            {getAreaPropertiesCount(deleteConfirmId) > 0 && (
+              <p style={{ color: '#fca5a5', fontSize: '0.84rem', fontWeight: 700, background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', padding: '8px 10px', marginBottom: '18px' }}>
+                {isAr
+                  ? `تنبيه: ${getAreaPropertiesCount(deleteConfirmId)} عقار مرتبط بهذا الحي وسيظهر بدون اسم منطقة. انقلها لحي آخر أولاً.`
+                  : `${getAreaPropertiesCount(deleteConfirmId)} listings use this district.`}
+              </p>
+            )}
 
             <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
               <button

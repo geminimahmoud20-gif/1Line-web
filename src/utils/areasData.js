@@ -514,15 +514,19 @@ export async function saveAreas(areasList) {
     console.error('Error saving areas to localStorage:', err);
   }
 
-  // 2. Cloud Firestore Persistence
-  try {
-    await saveSettings(SETTING_DOC_KEY, {
-      areas: areasList,
-      updatedAt: new Date().toISOString()
-    });
-  } catch (err) {
-    console.warn('Firestore cloud sync for areas deferred (offline/cached):', err);
-  }
+  // 2. Cloud Firestore Persistence — runs in the background. Firestore only resolves
+  // after the server acks, so awaiting it froze the CMS modal on slow or offline links.
+  saveSettings(SETTING_DOC_KEY, {
+    areas: areasList,
+    updatedAt: new Date().toISOString()
+  }).then((ok) => {
+    if (ok === false) throw new Error('saveSettings returned false');
+  }).catch((err) => {
+    console.warn('Firestore cloud sync for areas failed:', err);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('oneline_areas_sync_failed', { detail: String(err?.code || err?.message || err) }));
+    }
+  });
 }
 
 /**
