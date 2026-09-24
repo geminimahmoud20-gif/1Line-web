@@ -2,105 +2,109 @@
 <html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>1Line Solutions | وساطة واستشارات عقارية في سوهاج والقاهرة الكبرى</title>
+    <meta name="description" content="ون لاين للاستشارات والتسويق العقاري: بيع وشراء وتقييم الأراضي والوحدات عالية القيمة في سوهاج والقاهرة الكبرى، مع مراجعة قانونية للمستندات قبل التعاقد، بإشراف د. محمود الباز." />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="%VITE_SITE_URL%/" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#070b14" />
-    <meta name="description" content="1Line Solutions - المنصة العقارية الذكية الأولى في سوهاج. حلول متكاملة لبيع وشراء العقارات، تقييم أسعار الأراضي والشقق، واستشارات استثمارية مع الدكتور محمود الباز." />
-    
-    <!-- 🌙 Ultra-Luxury Dark Mode Pre-Hydration Sync (Zero FOUC) -->
+    <meta name="theme-color" content="#0B1B32" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+    <!-- Theme pre-hydration (prevents flash of wrong theme) -->
     <script>
       (function() {
         try {
           var saved = localStorage.getItem('oneline_theme');
           var theme = saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-          if (theme === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            document.documentElement.classList.add('dark-theme', 'dark');
-          } else {
-            document.documentElement.setAttribute('data-theme', 'light');
-            document.documentElement.classList.remove('dark-theme', 'dark');
-          }
+          document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.classList.toggle('dark-theme', theme === 'dark');
+          document.documentElement.classList.toggle('dark', theme === 'dark');
         } catch (e) {}
       })();
     </script>
-    
-    <!-- 🛡️ Commercial Security Headers & Policies -->
-    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-    <meta http-equiv="X-Frame-Options" content="SAMEORIGIN" />
-    <meta name="referrer" content="strict-origin-when-cross-origin" />
-    
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="1Line Solutions | المنصة العقارية الذكية بسوهاج" />
-    <meta property="og:description" content="ابحث، قيم، استثمر، واعرض عقارك بذكاء في سوهاج مع 1Line Solutions تحت إشراف د. محمود الباز." />
-    <meta property="og:image" content="/og-image.jpg" />
 
-    <!-- Apple Web App Meta -->
+    <!-- Open Graph / social previews -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="1Line Solutions" />
+    <meta property="og:locale" content="ar_EG" />
+    <meta property="og:url" content="%VITE_SITE_URL%/" />
+    <meta property="og:title" content="1Line Solutions | وساطة واستشارات عقارية في سوهاج والقاهرة الكبرى" />
+    <meta property="og:description" content="بيع وشراء وتقييم الأصول العقارية عالية القيمة مع مراجعة قانونية للمستندات قبل التعاقد." />
+    <meta property="og:image" content="%VITE_SITE_URL%/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="1Line" />
 
-    <!-- 🌟 Schema.org RealEstateAgent JSON-LD for Google Rich Results & Local SEO -->
-    <script type="application/ld+json">
+    <!-- Organization structured data (replaced in place by the SPA via id="org-schema") -->
+    <script type="application/ld+json" id="org-schema">
     {
       "@context": "https://schema.org",
       "@type": "RealEstateAgent",
-      "name": "1Line Solutions Real Estate",
-      "alternateName": "ون لاين للاستشارات والتسويق العقاري بسوهاج",
-      "description": "المنصة العقارية الذكية الأولى المعتمدة في سوهاج ومحافظات الصعيد. بيع وشراء وتقييم عقاري واستشارات استثمارية معتمدة.",
-      "image": "https://onelinesohag.com/og-image.jpg",
-      "telephone": "+201017772633",
-      "priceRange": "$$$",
+      "@id": "%VITE_SITE_URL%/#organization",
+      "name": "1Line Solutions",
+      "alternateName": "ون لاين للاستشارات والتسويق العقاري",
+      "url": "%VITE_SITE_URL%",
+      "logo": "%VITE_SITE_URL%/icon-512.png",
+      "image": "%VITE_SITE_URL%/og-image.jpg",
+      "description": "وساطة واستشارات عقارية للأصول عالية القيمة في سوهاج والقاهرة الكبرى: بيع، شراء، تقييم، ومراجعة قانونية للمستندات قبل التعاقد.",
+      "telephone": "+201223222956",
+      "email": "contact@oneline-sohag.com",
       "address": {
         "@type": "PostalAddress",
-        "streetAddress": "شارع الجمهورية - كورنيش النيل الغربي",
+        "streetAddress": "برج أحمد حلمي الشريف، شارع الجمهورية",
         "addressLocality": "سوهاج",
-        "addressRegion": "سوهاج",
-        "postalCode": "82511",
+        "addressRegion": "محافظة سوهاج",
         "addressCountry": "EG"
       },
-      "geo": {
-        "@type": "GeoCoordinates",
-        "latitude": 26.5569,
-        "longitude": 31.6948
-      },
-      "founder": {
-        "@type": "Person",
-        "name": "د. محمود الباز",
-        "jobTitle": "المؤسس والرئيس التنفيذي"
-      },
+      "geo": { "@type": "GeoCoordinates", "latitude": 26.5569, "longitude": 31.6948 },
+      "openingHoursSpecification": [{
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"],
+        "opens": "10:00",
+        "closes": "22:00"
+      }],
+      "founder": { "@type": "Person", "name": "د. محمود الباز", "alternateName": "Dr. Mahmoud Elbaz", "jobTitle": "المؤسس والرئيس التنفيذي" },
       "areaServed": [
-        "سوهاج الجديدة",
-        "كورنيش النيل سوهاج",
-        "حي شرق سوهاج",
-        "حي غرب سوهاج",
-        "مدينة الكوثر",
-        "طهطا",
-        "جرجا",
-        "أخميم"
-      ]
+        { "@type": "AdministrativeArea", "name": "محافظة سوهاج" },
+        { "@type": "AdministrativeArea", "name": "القاهرة الكبرى" }
+      ],
+      "knowsLanguage": ["ar", "en"],
+      "priceRange": "EGP 1,000,000+"
     }
     </script>
-    
-    <!-- Google Fonts: Cairo (Arabic) & Outfit (English) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "1Line Solutions",
+      "url": "%VITE_SITE_URL%",
+      "inLanguage": "ar-EG",
+      "publisher": { "@id": "%VITE_SITE_URL%/#organization" },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "%VITE_SITE_URL%/properties?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+
+    <!-- Fonts: IBM Plex Sans Arabic (Arabic + Latin in one family) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    
-    <!-- Microsoft Clarity Analytics -->
-    <script type="text/javascript">
-        (function(c,l,a,r,i,t,y){
-            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-        })(window, document, "clarity", "script", "ykuhk4dxes");
-    </script>
-    
-    <title>1Line Solutions | المنصة العقارية الذكية الأولى بسوهاج</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   </head>
   <body>
+    <noscript>
+      <h1>1Line Solutions — وساطة واستشارات عقارية في سوهاج والقاهرة الكبرى</h1>
+      <p>للتواصل: +201223222956 — contact@oneline-sohag.com — برج أحمد حلمي الشريف، شارع الجمهورية، سوهاج.</p>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
@@ -112,4 +116,3 @@
     </script>
   </body>
 </html>
-

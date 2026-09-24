@@ -4,10 +4,13 @@
  * and injects Google-compliant Schema.org RealEstateListing & Organization schemas.
  */
 
-const BASE_URL = 'https://1line-sohag.com';
-const DEFAULT_TITLE = '1Line | المنصة العقارية الذكية بسوهاج | التطوير والاستثمار العقاري المعتمد';
-const DEFAULT_DESC = 'المنصة العقارية الأولى المعتمدة بسوهاج وسوهاج الجديدة برؤية د. محمود الباز. عقارات مفحوصة هندسياً وقانونياً 100%، طلبات كاش فورية، ومؤشرات السوق المعتمدة.';
-const DEFAULT_IMAGE = '/logo.png';
+import { SITE_URL, BRAND, CONTACT, SERVICE_AREAS } from '../config/siteConfig';
+import { getDynamicPhone } from './founderCmsData';
+
+const BASE_URL = SITE_URL;
+const DEFAULT_TITLE = '1Line Solutions | وساطة واستشارات عقارية في سوهاج والقاهرة الكبرى';
+const DEFAULT_DESC = 'ون لاين للاستشارات والتسويق العقاري: بيع وشراء وتقييم الأراضي والوحدات عالية القيمة في سوهاج والقاهرة الكبرى، مع مراجعة قانونية للمستندات قبل التعاقد، بإشراف د. محمود الباز.';
+const DEFAULT_IMAGE = '/og-image.jpg';
 
 /**
  * Set or update a meta tag in document head
@@ -49,14 +52,18 @@ export function updatePageSeo({
   price,
   type = 'website',
   schemaId,
-  schema
+  schema,
+  noindex = false
 }) {
   if (typeof document === 'undefined') return;
+
+  setMetaTag('name', 'robots', noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large');
 
   const finalTitle = title ? `${title} | 1Line سوهاج` : DEFAULT_TITLE;
   const finalDesc = description || DEFAULT_DESC;
   const finalImage = image ? (image.startsWith('http') ? image : `${BASE_URL}${image}`) : `${BASE_URL}${DEFAULT_IMAGE}`;
-  const finalUrl = url ? `${BASE_URL}${url}` : (typeof window !== 'undefined' ? window.location.href : BASE_URL);
+  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/';
+  const finalUrl = `${BASE_URL}${url || currentPath}`;
 
   // 1. Standard HTML Title & Description
   document.title = finalTitle;
@@ -158,7 +165,7 @@ export function buildPropertySchema(property, lang = 'ar') {
     '@type': 'RealEstateListing',
     name: title,
     description: desc,
-    url: typeof window !== 'undefined' ? window.location.href : `${BASE_URL}/properties/${property.id}`,
+    url: `${BASE_URL}/properties/${property.id}`,
     image: Array.isArray(property.images) && property.images.length > 0 ? property.images : [property.image],
     offers: {
       '@type': 'Offer',
@@ -192,34 +199,43 @@ export function buildOrganizationSchema() {
   return {
     '@context': 'https://schema.org',
     '@type': 'RealEstateAgent',
-    name: '1Line للتطوير والاستثمار العقاري',
-    alternateName: '1Line Real Estate Solutions',
+    '@id': `${BASE_URL}/#organization`,
+    name: BRAND.name_en,
+    alternateName: BRAND.name_ar,
     url: BASE_URL,
-    logo: `${BASE_URL}/logo.png`,
+    logo: `${BASE_URL}/icon-512.png`,
+    image: `${BASE_URL}${DEFAULT_IMAGE}`,
     description: DEFAULT_DESC,
+    telephone: getDynamicPhone(),
+    email: CONTACT.email,
     founder: {
       '@type': 'Person',
-      name: 'د. محمود الباز',
-      jobTitle: 'المؤسس ورئيس مجلس الإدارة'
+      name: BRAND.founder_ar,
+      alternateName: BRAND.founder_en,
+      jobTitle: 'المؤسس والرئيس التنفيذي'
     },
     address: {
       '@type': 'PostalAddress',
-      streetAddress: 'شارع الجمهورية الرئيسي، برج 1Line الإداري',
+      streetAddress: CONTACT.address_ar,
       addressLocality: 'سوهاج',
-      addressRegion: 'سوهاج',
-      postalCode: '82511',
+      addressRegion: 'محافظة سوهاج',
       addressCountry: 'EG'
     },
+    geo: { '@type': 'GeoCoordinates', latitude: CONTACT.geo.lat, longitude: CONTACT.geo.lng },
+    hasMap: CONTACT.mapsUrl,
+    openingHoursSpecification: [{
+      '@type': 'OpeningHoursSpecification',
+      dayOfWeek: ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'],
+      opens: '10:00',
+      closes: '22:00'
+    }],
     areaServed: [
-      'شرق سوهاج',
-      'سوهاج الجديدة',
-      'كورنيش النيل',
-      'مدينة ناصر',
-      'حي الكوثر',
-      'طهطا',
-      'جرجا',
-      'أخميم'
+      { '@type': 'AdministrativeArea', name: 'محافظة سوهاج' },
+      { '@type': 'AdministrativeArea', name: 'القاهرة الكبرى' },
+      ...SERVICE_AREAS.sohag_ar.map((name) => ({ '@type': 'Place', name })),
+      ...SERVICE_AREAS.cairo_ar.map((name) => ({ '@type': 'Place', name }))
     ],
-    priceRange: 'EGP 500,000 - EGP 50,000,000'
+    knowsLanguage: ['ar', 'en'],
+    priceRange: 'EGP 1,000,000+'
   };
 }

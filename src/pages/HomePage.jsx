@@ -155,13 +155,13 @@ export default function HomePage({
     
     // 🌐 Update Homepage SEO & Organization Schema
     updatePageSeo({
-      title: lang === 'ar' ? 'المنصة العقارية الذكية بسوهاج' : 'Smart Real Estate in Sohag',
-      description: lang === 'ar' 
-        ? 'المنصة العقارية الأولى المعتمدة بسوهاج وسوهاج الجديدة برؤية د. محمود الباز. عقارات مفحوصة هندسياً وقانونياً 100%، طلبات كاش فورية، ومؤشرات السوق المعتمدة.'
-        : 'Sohag premier verified real estate portal by Dr. Mahmoud Elbaz. 100% legally audited properties, cash buyer matching, and certified price benchmarks.',
+      title: lang === 'ar' ? 'وساطة واستشارات عقارية في سوهاج والقاهرة الكبرى' : 'Real Estate Brokerage & Advisory in Sohag and Greater Cairo',
+      description: lang === 'ar'
+        ? 'ون لاين للاستشارات والتسويق العقاري: بيع وشراء وتقييم الأراضي والوحدات عالية القيمة في سوهاج والقاهرة الكبرى، مع مراجعة قانونية للمستندات قبل التعاقد، بإشراف د. محمود الباز.'
+        : '1Line Solutions: buying, selling and valuing high-value land and property in Sohag and Greater Cairo, with legal document review before contract, led by Dr. Mahmoud Elbaz.',
       url: '/',
       type: 'website',
-      schemaId: 'organization-jsonld-schema',
+      schemaId: 'org-schema',
       schema: buildOrganizationSchema()
     });
 
