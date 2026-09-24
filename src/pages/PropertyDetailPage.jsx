@@ -38,6 +38,7 @@ import PropertyCard from '../components/properties/PropertyCard';
 import LegalAuditCard from '../components/properties/LegalAuditCard';
 import WhatsAppAutomationBar from '../components/properties/WhatsAppAutomationBar';
 import DepositModal from '../components/properties/DepositModal';
+import NotFoundPage from './NotFoundPage';
 import PriceBenchmarkIndicator from '../components/properties/PriceBenchmarkIndicator';
 import NearbyAmenities from '../components/properties/NearbyAmenities';
 import { getWhatsAppUrl, getPhoneCallUrl } from '../utils/founderCmsData';
@@ -77,7 +78,7 @@ export default function PropertyDetailPage({
 
   // Find Property
   const property = useMemo(() => {
-    return properties.find(p => p.id === id) || properties[0];
+    return properties.find(p => p.id === id) || null;
   }, [properties, id]);
 
   // Smart Similar Properties recommendation (Same district first, fallback to same property type)
@@ -150,14 +151,7 @@ export default function PropertyDetailPage({
   }, [clientUser]);
 
   if (!property) {
-    return (
-      <div className="property-not-found-container">
-        <h2>{lang === 'ar' ? 'العقار غير موجود' : 'Property Not Found'}</h2>
-        <Link to="/properties" className="btn btn-primary">
-          {lang === 'ar' ? 'العودة لقائمة العقارات' : 'Back to Properties'}
-        </Link>
-      </div>
-    );
+    return <NotFoundPage lang={lang} variant="property" />;
   }
 
   const title = isAr ? property.title_ar : property.title_en;

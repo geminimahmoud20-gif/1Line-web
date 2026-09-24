@@ -196,6 +196,10 @@ export function PropertiesProvider({ children }) {
     const stored = readStoredJson('oneline_crm_leads', INITIAL_LEADS, isRecordArray);
     return Array.isArray(stored) ? stored.filter(l => l && typeof l === 'object') : INITIAL_LEADS;
   });
+  const leadsRef = useRef(leads);
+  useEffect(() => {
+    leadsRef.current = leads;
+  }, [leads]);
 
   // Demands State
   const [demands, setDemands] = useState(() => {
@@ -246,9 +250,10 @@ export function PropertiesProvider({ children }) {
       playNotificationChime();
     }
 
-    let finalLead = null;
-
-    setLeads((prev) => {
+    // Compute the lead synchronously from the latest list (a setState updater may run later,
+    // which previously left finalLead null and skipped the cloud save).
+    const buildNextLeads = (prev) => {
+      let finalLead = null;
       const existingIndex = prev.findIndex(
         (l) => normalizePhoneNumber(l.phone || l.whatsapp) === incomingPhone
       );
@@ -293,8 +298,7 @@ export function PropertiesProvider({ children }) {
         finalLead = mergedLead;
         const updated = [...prev];
         updated[existingIndex] = mergedLead;
-        localStorage.setItem('oneline_crm_leads', JSON.stringify(updated));
-        return updated;
+        return { updated, finalLead };
       } else {
         const nowIso = new Date().toISOString();
         const newLead = {
@@ -333,10 +337,18 @@ export function PropertiesProvider({ children }) {
 
         finalLead = newLead;
         const updated = [newLead, ...prev];
-        localStorage.setItem('oneline_crm_leads', JSON.stringify(updated));
-        return updated;
+        return { updated, finalLead };
       }
-    });
+    };
+
+    const { updated: nextLeads, finalLead } = buildNextLeads(leadsRef.current);
+    leadsRef.current = nextLeads;
+    setLeads(nextLeads);
+    try {
+      localStorage.setItem('oneline_crm_leads', JSON.stringify(nextLeads));
+    } catch {
+      // Storage full or blocked; the cloud save below still runs
+    }
 
     if (isFirebaseActive() && finalLead) {
       if (typeof navigator !== 'undefined' && !navigator.onLine) {
@@ -347,16 +359,21 @@ export function PropertiesProvider({ children }) {
           triggerToast(lang === 'ar' ? 'تم حفظ الطلب محلياً دون اتصال وسيتم رفعه تلقائياً فور توفر الإنترنت 📶' : 'Saved offline! Will sync automatically when connected.', 'info');
         } catch (e) {}
       } else {
+        let savedToCloud = false;
         try {
           await saveLead(finalLead);
-          await saveNotification(`Lead update: ${finalLead.name || 'Client'}`);
+          savedToCloud = true;
         } catch (err) {
           console.error('Firebase save lead error:', err);
           try {
             const queue = JSON.parse(localStorage.getItem('oneline_offline_lead_queue') || '[]');
-            queue.push(finalLead);
+            if (!queue.some((q) => q && q.id === finalLead.id)) queue.push(finalLead);
             localStorage.setItem('oneline_offline_lead_queue', JSON.stringify(queue));
           } catch (e) {}
+        }
+        // Notifications are admin-only in Firestore rules; a failure here must never re-queue the lead.
+        if (savedToCloud) {
+          saveNotification(`Lead update: ${finalLead.name || 'Client'}`).catch(() => {});
         }
       }
     }

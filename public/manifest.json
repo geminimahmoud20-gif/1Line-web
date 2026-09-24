@@ -1,19 +1,16 @@
 {
-  "short_name": "OneLine Sohag",
-  "name": "One Line Real Estate - Sohag Platform",
-  "description": "The Premier Verified Real Estate Platform in Sohag and Upper Egypt",
+  "short_name": "1Line",
+  "name": "1Line Solutions — وساطة واستشارات عقارية",
+  "description": "وساطة واستشارات عقارية للأصول عالية القيمة في سوهاج والقاهرة الكبرى",
   "icons": [
-    {
-      "src": "/favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    }
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "theme_color": "#0d48a1",
-  "background_color": "#ffffff",
-  "orientation": "portrait-primary",
+  "theme_color": "#0B1B32",
+  "background_color": "#F7F5F0",
   "lang": "ar",
   "dir": "rtl"
 }
