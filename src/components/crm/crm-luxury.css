@@ -301,3 +301,44 @@
 @media (prefers-reduced-motion: reduce) {
   .crm-layout *, .crm-layout *::before, .crm-layout *::after { transition: none !important; animation: none !important; }
 }
+
+/* ── Side Drawer Animations & Scrollbars ── */
+@keyframes drawerSlideInRtl {
+  from {
+    transform: translateX(-100%);
+    opacity: 0.85;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes drawerSlideInLtr {
+  from {
+    transform: translateX(100%);
+    opacity: 0.85;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.crm-lead-drawer *::-webkit-scrollbar,
+.crm-table-container::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.crm-lead-drawer *::-webkit-scrollbar-thumb,
+.crm-table-container::-webkit-scrollbar-thumb {
+  background: var(--crm-line-strong, #D5CEC2);
+  border-radius: 999px;
+}
+
+.crm-lead-drawer *::-webkit-scrollbar-track,
+.crm-table-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+

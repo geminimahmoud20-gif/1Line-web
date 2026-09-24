@@ -25,7 +25,8 @@ export default function CrmTopbar({
   onLogout,
   showGoLiveWizard,
   setShowGoLiveWizard,
-  onToggleMobileSidebar
+  onToggleMobileSidebar,
+  onOpenCommandPalette
 }) {
   const [showQuickActionMenu, setShowQuickActionMenu] = useState(false);
   const [showNotifMenu, setShowNotifMenu] = useState(false);
@@ -146,29 +147,54 @@ export default function CrmTopbar({
         />
         <input
           type="text"
-          placeholder={isAr ? 'ابحث عن عميل أو عقار أو رقم…' : 'Search clients, properties, phones…'}
+          placeholder={isAr ? 'ابحث أو اضغط (Ctrl + K) للأوامر…' : 'Search or press (Ctrl + K)...'}
           value={universalSearch}
           onChange={(e) => setUniversalSearch(e.target.value)}
           className="crm-topbar-search-input"
         />
-        {universalSearch && (
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          [isAr ? 'left' : 'right']: '10px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px'
+        }}>
+          {universalSearch && (
+            <button
+              type="button"
+              onClick={() => setUniversalSearch('')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--crm-faint)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <X size={13} />
+            </button>
+          )}
           <button
             type="button"
-            onClick={() => setUniversalSearch('')}
+            onClick={() => onOpenCommandPalette?.()}
+            title={isAr ? 'لوحة الأوامر السريعة (Ctrl + K)' : 'Command Palette (Ctrl + K)'}
             style={{
-              position: 'absolute',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              [isAr ? 'left' : 'right']: '10px',
-              background: 'none',
-              border: 'none',
-              color: 'var(--crm-faint)',
+              background: 'var(--crm-subtle, #f9f8f5)',
+              border: '1px solid var(--crm-line, #e2e8f0)',
+              borderRadius: '5px',
+              padding: '2px 6px',
+              fontSize: '0.68rem',
+              color: 'var(--crm-muted)',
+              fontWeight: 700,
               cursor: 'pointer'
             }}
           >
-            <X size={13} />
+            ⌘K
           </button>
-        )}
+        </div>
 
         {/* Live Search Instant Results Dropdown */}
         {universalSearch.trim() && (
