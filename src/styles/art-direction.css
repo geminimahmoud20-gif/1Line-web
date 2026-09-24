@@ -2489,3 +2489,28 @@
         transform: scale(0.92);
     }
 }
+
+/* ─────────────────────────────────────
+   §22. WCAG AA CONTRAST & LEGIBILITY POLISH
+   ───────────────────────────────────── */
+[data-theme="dark"] .property-specs-clean span,
+[data-theme="dark"] .spec-unit,
+[data-theme="dark"] .demand-text,
+[data-theme="dark"] .consultation-sub-statement,
+[data-theme="dark"] .seller-statement,
+[data-theme="dark"] .section-heading-desc,
+.dark-theme .property-specs-clean span,
+.dark-theme .spec-unit,
+.dark-theme .demand-text,
+.dark-theme .consultation-sub-statement,
+.dark-theme .seller-statement,
+.dark-theme .section-heading-desc {
+    color: #CBD5E1 !important;
+}
+
+[data-theme="dark"] .loc-pin-icon,
+[data-theme="dark"] .spec-icon,
+.dark-theme .loc-pin-icon,
+.dark-theme .spec-icon {
+    color: #ECC875 !important;
+}
