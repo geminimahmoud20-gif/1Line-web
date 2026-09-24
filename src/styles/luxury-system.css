@@ -425,6 +425,11 @@ button.sidebar-deposit-banner .deposit-banner-left > span { display: flex; flex-
   .smart-valuation-wizard-box { padding-inline: 16px !important; }
 }
 
+/* Phone field: the number input must shrink inside its flex row */
+.phone-input-control-box { max-width: 100%; box-sizing: border-box; }
+.phone-input-control-box input { min-width: 0 !important; flex: 1 1 auto; width: 100% !important; }
+.phone-input-control-box select { flex: none; }
+
 /* Touch targets on mobile */
 @media (pointer: coarse) {
   .card-circle-btn, .carousel-arrow, .utility-sub-btn, .modal-close-btn, .drawer-close-btn {

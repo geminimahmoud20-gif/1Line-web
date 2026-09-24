@@ -56,7 +56,11 @@ export default function ClientAuthModal({ lang = 'ar' }) {
         setReturnedCelebration(true);
         // Automatically close modal after user sees the celebratory success message
         timerId = setTimeout(() => {
-          handleClose();
+          // Inline close: handleClose is declared after the early return below
+          setClientAuthModalOpen(false);
+          setStep('input');
+          setWaitingReturn(false);
+          setReturnedCelebration(false);
         }, 1800);
       }
     };

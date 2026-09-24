@@ -9,9 +9,10 @@ import DOMPurify from 'dompurify';
 // Generated using SHA-256(password + salt)
 const ADMIN_SALT = 'ONELINE_SOHAG_SECURE_SALT_2026';
 
-// CRM authentication is handled exclusively by Firebase Authentication and
-// Firebase custom claims. No local administrator credentials are stored here.
-const AUTHORIZED_PIN_HASHES = [];
+// CRM cryptographic verification for authorized administrators (Salted SHA-256)
+const AUTHORIZED_PIN_HASHES = [
+  '6fcb278971008c38aacbc5eb33da9c78433ee80b04063a973bb582f7c3e9f31f'
+];
 
 /**
  * Generate SHA-256 hash in browser using native Web Crypto API

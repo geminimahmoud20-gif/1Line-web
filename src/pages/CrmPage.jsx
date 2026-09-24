@@ -17,6 +17,7 @@ import CrmTopbar from '../components/crm/CrmTopbar';
 import '../components/crm/CrmLayout.css';
 import { isFirebaseAuthAvailable, loginUser } from '../firebaseService';
 import { useAuth } from '../context/AuthContext';
+import { verifyAdminCredentials } from '../utils/securityShield';
 
 export default function CrmPage({
   lang = 'ar',
@@ -179,15 +180,16 @@ export default function CrmPage({
 
     let res;
     if (!isFirebaseAuthAvailable()) {
-      // Local development or offline admin access
-      if ((email.trim().toLowerCase() === 'admin@1line.com' && (password === '1line2026' || password === 'admin123')) || password === '1line2026') {
+      // 🔒 Cryptographically secure salted SHA-256 verification with brute-force rate limiter
+      const verifyRes = await verifyAdminCredentials(password);
+      if (verifyRes.success) {
         res = { success: true };
       } else {
         res = {
           success: false,
-          message: isAr
-            ? 'بيانات الدخول غير صحيحة. يرجى التأكد من البريد وكلمة المرور (admin@1line.com / 1line2026).'
-            : 'Invalid credentials. Please use admin credentials (admin@1line.com / 1line2026).'
+          message: verifyRes.message || (isAr
+            ? 'بيانات الدخول غير صحيحة أو تم تقييد المحاولات مؤقتاً لحماية النظام.'
+            : 'Invalid credentials or rate limit reached.')
         };
       }
     } else {

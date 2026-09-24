@@ -331,3 +331,95 @@ function hashString(str) {
   }
   return hash;
 }
+
+/**
+ * 🎯 UTM & Marketing Attribution Engine
+ * Extracts UTM parameters (source, medium, campaign, content, term) + Referrer
+ */
+const STORAGE_KEY_ATTRIBUTION = 'oneline_lead_attribution';
+
+export function captureMarketingAttribution() {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const utmSource = urlParams.get('utm_source');
+    const utmCampaign = urlParams.get('utm_campaign');
+    const utmMedium = urlParams.get('utm_medium');
+    const utmTerm = urlParams.get('utm_term');
+    const utmContent = urlParams.get('utm_content');
+    const referrer = document.referrer || '';
+
+    // If new UTM found, record it as current attribution
+    if (utmSource || utmCampaign) {
+      const attribution = {
+        source: utmSource || 'direct',
+        medium: utmMedium || 'none',
+        campaign: utmCampaign || 'organic',
+        term: utmTerm || '',
+        content: utmContent || '',
+        referrer: referrer ? new URL(referrer).hostname : 'مباشر (Direct)',
+        landingPage: window.location.pathname,
+        capturedAt: new Date().toISOString()
+      };
+      sessionStorage.setItem(STORAGE_KEY_ATTRIBUTION, JSON.stringify(attribution));
+      return attribution;
+    }
+
+    // Fallback: check existing
+    const existing = sessionStorage.getItem(STORAGE_KEY_ATTRIBUTION);
+    if (existing) return JSON.parse(existing);
+
+    // Initial organic referral guess
+    if (referrer) {
+      let sourceName = 'موقع خارجي';
+      try {
+        const hostname = new URL(referrer).hostname;
+        if (hostname.includes('facebook') || hostname.includes('fb.')) sourceName = 'Facebook';
+        else if (hostname.includes('instagram')) sourceName = 'Instagram';
+        else if (hostname.includes('google')) sourceName = 'Google Search';
+        else if (hostname.includes('tiktok')) sourceName = 'TikTok';
+        else if (hostname.includes('linkedin')) sourceName = 'LinkedIn';
+        else sourceName = hostname;
+      } catch (e) {}
+
+      const organicAttribution = {
+        source: sourceName,
+        medium: 'referral',
+        campaign: 'organic_referral',
+        referrer: referrer,
+        landingPage: window.location.pathname,
+        capturedAt: new Date().toISOString()
+      };
+      sessionStorage.setItem(STORAGE_KEY_ATTRIBUTION, JSON.stringify(organicAttribution));
+      return organicAttribution;
+    }
+
+    return {
+      source: 'مباشر (Direct / Organic)',
+      medium: 'none',
+      campaign: 'direct_visit',
+      landingPage: window.location.pathname,
+      capturedAt: new Date().toISOString()
+    };
+  } catch (err) {
+    return { source: 'مباشر', medium: 'none', campaign: 'direct' };
+  }
+}
+
+export function getAttributionData() {
+  if (typeof window === 'undefined') return { source: 'direct', campaign: 'none' };
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY_ATTRIBUTION);
+    return raw ? JSON.parse(raw) : captureMarketingAttribution();
+  } catch (e) {
+    return { source: 'direct', campaign: 'none' };
+  }
+}
+
+// Auto-run attribution capture on load
+if (typeof window !== 'undefined') {
+  try {
+    captureMarketingAttribution();
+  } catch (e) {}
+}

@@ -379,7 +379,7 @@ export default function CustomerProfileModal({
               borderRadius: '8px'
             }}
           >
-            🌐 {isAr ? 'رحلة ونقرات الزائر' : 'Digital Journey'} ({digitalJourney.length})
+            🌐 {isAr ? 'رحلة ونقرات الزائر' : 'Digital Journey'} ({journeyEvents.length})
           </button>
           <button
             type="button"

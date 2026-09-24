@@ -359,22 +359,21 @@ export function PropertiesProvider({ children }) {
           triggerToast(lang === 'ar' ? 'تم حفظ الطلب محلياً دون اتصال وسيتم رفعه تلقائياً فور توفر الإنترنت 📶' : 'Saved offline! Will sync automatically when connected.', 'info');
         } catch { /* storage unavailable */ }
       } else {
-        let savedToCloud = false;
-        try {
-          await saveLead(finalLead);
-          savedToCloud = true;
-        } catch (err) {
-          console.error('Firebase save lead error:', err);
-          try {
-            const queue = JSON.parse(localStorage.getItem('oneline_offline_lead_queue') || '[]');
-            if (!queue.some((q) => q && q.id === finalLead.id)) queue.push(finalLead);
-            localStorage.setItem('oneline_offline_lead_queue', JSON.stringify(queue));
-          } catch { /* storage unavailable */ }
-        }
-        // Notifications are admin-only in Firestore rules; a failure here must never re-queue the lead.
-        if (savedToCloud) {
-          saveNotification(`Lead update: ${finalLead.name || 'Client'}`).catch(() => {});
-        }
+        // Save in the background: Firestore's addDoc waits for a server ack, which can hang on a
+        // weak connection, so the visitor's confirmation must not depend on it.
+        saveLead(finalLead)
+          .then(() => {
+            // Notifications are admin-only in Firestore rules; a failure here must never re-queue the lead.
+            saveNotification(`Lead update: ${finalLead.name || 'Client'}`).catch(() => {});
+          })
+          .catch((err) => {
+            console.error('Firebase save lead error:', err);
+            try {
+              const queue = JSON.parse(localStorage.getItem('oneline_offline_lead_queue') || '[]');
+              if (!queue.some((q) => q && q.id === finalLead.id)) queue.push(finalLead);
+              localStorage.setItem('oneline_offline_lead_queue', JSON.stringify(queue));
+            } catch { /* storage unavailable */ }
+          });
       }
     }
 
