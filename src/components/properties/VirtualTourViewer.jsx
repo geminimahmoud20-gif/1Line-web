@@ -46,7 +46,7 @@ export default function VirtualTourViewer({
       name_ar: 'غرفة النوم الرئيسية (Master Suite)',
       name_en: 'Master Bedroom Suite',
       image: propertyImages[1] || 'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=1920&q=80',
-      nightImage: 'https://images.unsplash.com/photo-1540518614846-7ede433c4570?auto=format&fit=crop&w=1920&q=80',
+      nightImage: 'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=1920&q=80',
       hotspots: [
         { id: 'h3', x: 25, y: 50, title_ar: 'حمام ماستر ملحق وغرفة ملابس', title_en: 'En-Suite Bathroom & Dressing', targetRoom: null },
         { id: 'h4', x: 80, y: 50, title_ar: 'انتقل إلى: الشرفة والإطلالة 🌿', title_en: 'Go to Balcony & View 🌿', targetRoom: 'balcony' }

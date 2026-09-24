@@ -450,7 +450,7 @@ export const PROPERTIES_DATA = [
     badge_en: 'Best Value',
     images: [
       'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1502005229762-ee1b2b814a09?auto=format&fit=crop&w=800&q=80'
+      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'
     ],
     features_ar: [
       'مصعد حديث من الجراج للأدوار',
@@ -977,8 +977,8 @@ export const PROPERTIES_DATA = [
     badge_ar: 'دخل إيجاري فوري',
     badge_en: 'Immediate Rental Income',
     images: [
-      'https://images.unsplash.com/photo-1541888946425-d0fbb1861593?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80'
+      'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80'
     ],
     features_ar: [
       '2 محل تجاري بالدور الأرضي مؤجران لكبرى التوكيلات بدخل شهري ثابت',
