@@ -1,91 +1,103 @@
-import { TrendingUp, Activity, MapPin } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { MapPin, Zap, ShieldCheck } from 'lucide-react';
+import { getAreas } from '../../utils/areasData';
 
-const MARKET_TICKER_ITEMS = [
-  { area_ar: 'شرق سوهاج', area_en: 'East Sohag', avg_meter: '18,500', change: '+4.5%', trend: 'up', note_ar: 'إقبال مرتفع', note_en: 'High Demand' },
-  { area_ar: 'سوهاج الجديدة', area_en: 'New Sohag', avg_meter: '9,400', change: '+7.2%', trend: 'up', note_ar: 'أعلى وتيرة نمو', note_en: 'Fastest Growth' },
-  { area_ar: 'الكورنيش الغربي', area_en: 'West Corniche', avg_meter: '26,500', change: '+3.1%', trend: 'up', note_ar: 'إطلالات نيلية نادرة', note_en: 'Prime Nile View' },
-  { area_ar: 'مدينة ناصر', area_en: 'Nasr City', avg_meter: '15,800', change: '+3.8%', trend: 'up', note_ar: 'طلب سكني مستقر', note_en: 'Stable Residential' },
-  { area_ar: 'الشارع التجاري (15)', area_en: '15th St. Commercial', avg_meter: '45,000', change: '+8.0%', trend: 'up', note_ar: 'عائد تجاري 15%', note_en: '15% ROI' },
-  { area_ar: 'محيط جامعة سوهاج', area_en: 'University Hub', avg_meter: '12,200', change: '+5.5%', trend: 'up', note_ar: 'إيجار طلابي مضمون', note_en: 'Guaranteed Rental' },
-];
+// Every figure here comes from data the 1Line team maintains — nothing is hard-coded:
+//  • price per m²  → Areas CMS in the CRM (avgPricePerMeter per district)
+//  • buyer demand  → latest published demand (admin-approved)
+const toNumber = (v) => (typeof v === 'number' ? v : parseInt(String(v || '').replace(/[^\d]/g, ''), 10) || 0);
+// Latin digits everywhere, matching prices on the rest of the site
+const fmt = (n) => n.toLocaleString('en-US');
+const fmtMillions = (n, isAr) => {
+  const s = (Math.round((n / 1_000_000) * 10) / 10).toLocaleString('en-US');
+  return isAr ? `${s} مليون ج.م` : `EGP ${s}M`;
+};
 
-export default function MarketTickerBar({ lang = 'ar' }) {
+export default function MarketTickerBar({ lang = 'ar', demands = [] }) {
   const isAr = lang === 'ar';
+  const [areas, setAreas] = useState(() => getAreas());
+
+  useEffect(() => {
+    const onUpdate = () => setAreas(getAreas());
+    window.addEventListener('oneline_areas_updated', onUpdate);
+    return () => window.removeEventListener('oneline_areas_updated', onUpdate);
+  }, []);
+
+  const items = useMemo(() => {
+    const priced = areas
+      .filter((a) => a.id !== 'all' && toNumber(a.avgPricePerMeter) > 0)
+      .sort((a, b) => toNumber(b.avgPricePerMeter) - toNumber(a.avgPricePerMeter))
+      .slice(0, 6)
+      .map((a) => ({
+        key: `area-${a.id}`,
+        icon: MapPin,
+        to: `/properties?area=${encodeURIComponent(a.id)}`,
+        label: isAr ? `متوسط سعر المتر — ${a.name_ar}` : `Avg. price / m² — ${a.name_en || a.name_ar}`,
+        value: isAr ? `${fmt(toNumber(a.avgPricePerMeter), true)} ج.م` : `EGP ${fmt(toNumber(a.avgPricePerMeter), false)}`,
+      }));
+
+    const latestDemand = demands
+      .filter((d) => (d.status || 'published') === 'published' && toNumber(d.budget) > 0)
+      .sort((a, b) => new Date(b.approvedAt || b.createdAt || 0) - new Date(a.approvedAt || a.createdAt || 0))[0];
+
+    const out = [...priced];
+    if (latestDemand) {
+      const text = (isAr ? latestDemand.text_ar : latestDemand.text_en || latestDemand.text_ar) || '';
+      out.splice(Math.min(2, out.length), 0, {
+        key: `demand-${latestDemand.id}`,
+        icon: Zap,
+        tone: 'live',
+        to: '/demands',
+        label: isAr ? 'طلب شراء منشور' : 'Live buyer demand',
+        value: `${text.length > 60 ? text.slice(0, 58).trim() + '…' : text} — ${fmtMillions(toNumber(latestDemand.budget), isAr)}`,
+      });
+    }
+    out.push({
+      key: 'guarantee',
+      icon: ShieldCheck,
+      tone: 'trust',
+      to: '/about',
+      label: isAr ? 'ضمان 1Line' : '1Line guarantee',
+      value: isAr ? 'نراجع مستندات الملكية قبل نشر أي عقار' : 'Title documents reviewed before any listing goes live',
+    });
+    return out;
+  }, [areas, demands, isAr]);
+
+  if (items.length === 0) return null;
+
+  const renderItem = (item, clone = false) => {
+    const Icon = item.icon;
+    return (
+      <Link
+        key={(clone ? 'c-' : '') + item.key}
+        to={item.to}
+        className={`hx-tick ${item.tone ? `hx-tick--${item.tone}` : ''}`}
+        tabIndex={clone ? -1 : undefined}
+        aria-hidden={clone || undefined}
+      >
+        <Icon size={13} strokeWidth={1.75} aria-hidden="true" />
+        <span className="hx-tick-label">{item.label}:</span>
+        <bdi className="hx-tick-value">{item.value}</bdi>
+      </Link>
+    );
+  };
 
   return (
-    <div className="market-ticker-container" aria-label="متوسطات أسعار المتر الاسترشادية">
-      <div className="market-ticker-wrapper">
-        
-        {/* Fixed Title Badge (Sun Gold & Architectural Navy) */}
-        <div className="market-ticker-badge">
-          <span className="ticker-pulse-dot" />
-          <Activity size={13} className="ticker-badge-icon" />
-          <span className="ticker-badge-title">
-            {isAr ? 'مؤشر بورصة سوهاج' : 'Sohag PropTech Index'}
-          </span>
-          <span className="ticker-badge-date" title={isAr ? 'بيانات مستمدة من تعاقدات وفحص مكتب 1Line الهندسي' : 'Derived from 1Line audited transactions'}>
-            {isAr ? 'متوسطات استرشادية لسعر المتر — تقديرات 1Line، سبتمبر 2026' : 'Indicative price per m² — 1Line estimates, Sep 2026'}
-          </span>
-        </div>
-
-        {/* Continuous Smooth Marquee Viewport with Edge Fade Masks */}
-        <div className="ticker-marquee-viewport">
-          <div className="ticker-marquee-track">
-            {/* 1. Primary Semantic Items (Extracted Once by Screen Readers & DOM Parsers) */}
-            {MARKET_TICKER_ITEMS.map((item, idx) => (
-              <div 
-                key={`orig-${idx}`}
-                className="ticker-item-card"
-                dir={isAr ? 'rtl' : 'ltr'}
-              >
-                <MapPin size={12} className="ticker-pin-icon" />
-                <strong className="ticker-area-name">{isAr ? item.area_ar : item.area_en}:</strong>
-                <span className="ticker-sqm-lbl">{isAr ? 'المتر' : 'sqm'}</span>
-                <span className="ticker-price-num">
-                  {item.avg_meter} {isAr ? 'ج.م' : 'EGP'}
-                </span>
-                
-                {/* Clean Financial Gain Pill with Strict LTR */}
-                <span className="ticker-change-pill" dir="ltr">
-                  <TrendingUp size={10} />
-                  <span>{item.change}</span>
-                </span>
-                
-                <span className="ticker-note-txt">
-                  ({isAr ? item.note_ar : item.note_en})
-                </span>
-              </div>
-            ))}
-
-            {/* 2. Visual Seamless Clones (Strictly Hidden from Assistive Tech & DOM Text Extractors) */}
-            {MARKET_TICKER_ITEMS.map((item, idx) => (
-              <div 
-                key={`clone-${idx}`}
-                className="ticker-item-card ticker-item-clone"
-                dir={isAr ? 'rtl' : 'ltr'}
-                aria-hidden="true"
-              >
-                <MapPin size={12} className="ticker-pin-icon" />
-                <strong className="ticker-area-name">{isAr ? item.area_ar : item.area_en}:</strong>
-                <span className="ticker-sqm-lbl">{isAr ? 'المتر' : 'sqm'}</span>
-                <span className="ticker-price-num">
-                  {item.avg_meter} {isAr ? 'ج.م' : 'EGP'}
-                </span>
-                
-                <span className="ticker-change-pill" dir="ltr">
-                  <TrendingUp size={10} />
-                  <span>{item.change}</span>
-                </span>
-                
-                <span className="ticker-note-txt">
-                  ({isAr ? item.note_ar : item.note_en})
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
+    <section className="hx-ticker" aria-label={isAr ? 'مؤشرات السوق' : 'Market pulse'}>
+      <div className="hx-ticker-tag">
+        <span className="hx-live-dot" aria-hidden="true" />
+        <span>{isAr ? 'نبض السوق' : 'Market pulse'}</span>
+        <small title={isAr ? 'متوسطات استرشادية يحدّثها فريق 1Line من لوحة التحكم' : 'Indicative averages maintained by the 1Line team'}>
+          {isAr ? 'متوسطات استرشادية' : 'Indicative'}
+        </small>
       </div>
-    </div>
+      <div className="hx-ticker-viewport">
+        <div className="hx-ticker-track">
+          {items.map((it) => renderItem(it))}
+          {items.map((it) => renderItem(it, true))}
+        </div>
+      </div>
+    </section>
   );
 }

@@ -270,11 +270,16 @@ async function runAudit() {
     recordTest(6, 'Firestore Rules: Demands Update/Delete Protection', demandsWriteRule ? 'PASS' : 'FAIL', 'Only authenticated admin can alter demands');
 
     // 6.4 Firestore Rules: Leads Privacy (Hardened)
-    const leadsPrivateRule = /match\s+\/leads\/\{leadId\}\s*\{[^}]*allow\s+read,\s*update,\s*delete:\s*if\s+(request\.auth\s*!=\s*null|isAdmin\(\))/s.test(rulesSrc);
+    // Staff-role model: reads gated by isStaff() (claim-checked), never public
+  const leadsBlock = (rulesSrc.match(/match\s+\/leads\/\{leadId\}\s*\{[^}]*\}/s) || [''])[0];
+  const leadsPrivateRule = /allow\s+read(,\s*update,\s*delete)?:\s*if\s+(request\.auth\s*!=\s*null|isAdmin\(\)|isStaff\(\))/.test(leadsBlock)
+    && !/allow\s+(read|update|delete)[^;]*:\s*if\s+true/.test(leadsBlock);
     recordTest(6, 'Firestore Rules: Leads Privacy Guard', leadsPrivateRule ? 'PASS' : 'FAIL', 'Unauthenticated visitors are forbidden from reading leads');
 
     // 6.5 Firestore Rules: Notifications Admin Guard
-    const notifsGuard = /match\s+\/notifications\/\{notifId\}\s*\{[^}]*allow\s+read,\s*write:\s*if\s+isAdmin\(\);/s.test(rulesSrc);
+    const notifsBlock = (rulesSrc.match(/match\s+\/notifications\/\{notifId\}\s*\{[^}]*\}/s) || [''])[0];
+  const notifsGuard = /allow\s+read(,\s*(write|create))?:\s*if\s+(isAdmin|isStaff)\(\);/.test(notifsBlock)
+    && !/:\s*if\s+true/.test(notifsBlock);
     recordTest(6, 'Firestore Rules: Internal Audit Logs Guard', notifsGuard ? 'PASS' : 'FAIL', 'Notifications collection is locked to admin only');
 
   } catch (err) {

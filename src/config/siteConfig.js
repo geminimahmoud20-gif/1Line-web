@@ -49,6 +49,17 @@ export const VERIFIED_STATS = {
   yearsActive: 8,
 };
 
+/**
+ * Seller-banner proof points. Buyer counts are computed live from published demands;
+ * the rest are business facts the owner must confirm — null hides the tile.
+ *   avgDaysToClose: median days from listing to signed contract (from your CRM records)
+ *   sellerCommissionPct: brokerage fee charged to the seller (the site already states "no seller commission")
+ */
+export const SELLER_PROOF = {
+  avgDaysToClose: null,
+  sellerCommissionPct: 0,
+};
+
 /** Commercial registry / tax card numbers, shown in footer & About once filled. */
 export const LEGAL_IDS = {
   commercialRegistry: null,

@@ -126,13 +126,17 @@ section('القسم 4: الأمان — قواعد Firestore (ثغرة #4)');
 
 const firestoreRules = fs.readFileSync(path.join(baseDir, 'firestore.rules'), 'utf-8');
 
+// Role model: super admin via the `admin` custom claim; staff via the `role` claim (scripts/set-crm-role.mjs)
 assert(
-  firestoreRules.includes('request.auth.token.admin == true'),
+  /request\.auth\.token(\.admin\s*==\s*true|\.get\('admin',\s*false\)\s*==\s*true)/.test(firestoreRules),
   `firestore.rules — يتطلب Admin Custom Claims`
 );
 
+// Property writes must go through a claim-checked role function, never a bare `if true` / signed-in check
+const propertiesBlock = (firestoreRules.match(/match \/properties\/\{propId\}\s*\{[^}]*\}/) || [''])[0];
 assert(
-  /properties[\s\S]*?request\.auth\.token\.admin\s*==\s*true/.test(firestoreRules),
+  /allow (write|create, update):\s*if (isAdmin|isInventoryEditor)\(\)/.test(propertiesBlock)
+    && !/allow (write|create|update|delete)[^;]*:\s*if true/.test(propertiesBlock),
   `firestore.rules — يتطلب Admin Claims لتعديل العقارات`
 );
 

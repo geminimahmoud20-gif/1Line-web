@@ -145,27 +145,45 @@ export default function PropertyCard({
     <div className="property-card-modern group" data-property-id={property.id}>
       {/* 1. Cinematic Media Container */}
       <div className="card-media-wrapper">
-        <Link 
-          to={`/properties/${property.id}`} 
-          className="card-media-link"
-          onClick={() => {
-            if (typeof window !== 'undefined') {
-              window.dispatchEvent(new CustomEvent('oneline_property_viewed', { detail: { id: property.id, title } }));
-            }
-          }}
-        >
-          <img 
-            src={imagesList[activeImageIndex] || FALLBACK_PROPERTY_IMG} 
-            alt={title}
-            className={`property-card-img ${imageLoaded ? 'loaded' : 'loading'}`}
-            loading="lazy"
-            onLoad={() => setImageLoaded(true)}
-            onError={(e) => {
-              e.currentTarget.src = FALLBACK_PROPERTY_IMG;
-              setImageLoaded(true);
-            }}
-          />
-        </Link>
+        {(() => {
+          const img = (
+            <img
+              src={imagesList[activeImageIndex] || FALLBACK_PROPERTY_IMG}
+              alt={title}
+              className={`property-card-img ${imageLoaded ? 'loaded' : 'loading'}`}
+              loading="lazy"
+              decoding="async"
+              onLoad={() => setImageLoaded(true)}
+              onError={(e) => {
+                e.currentTarget.src = FALLBACK_PROPERTY_IMG;
+                setImageLoaded(true);
+              }}
+            />
+          );
+          // Photo opens the quick view in place when available; the title still links to the full page
+          return onQuickView ? (
+            <button
+              type="button"
+              className="card-media-link card-media-quickview"
+              onClick={() => onQuickView(property)}
+              aria-label={lang === 'ar' ? `معاينة سريعة: ${title}` : `Quick view: ${title}`}
+            >
+              {img}
+            </button>
+          ) : (
+            <Link
+              to={`/properties/${property.id}`}
+              className="card-media-link"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('oneline_property_viewed', { detail: { id: property.id, title } }));
+                }
+              }}
+            >
+              {img}
+            </Link>
+          );
+        })()}
 
         {/* Dynamic Multi-photo carousel indicator */}
         {imagesList.length > 1 && (
@@ -274,35 +292,30 @@ export default function PropertyCard({
           )}
         </div>
 
-        {/* 🌟 Seamless Integrated Price Scrim (Full Bleed Gradient) */}
-        <div className="card-price-overlay">
-          <div className="price-hero-stack">
-            <div className="price-main-display">
-              <bdi className="price-val">{priceData.primary}</bdi>
-              <span className="price-curr">{priceData.symbol}</span>
-            </div>
-            {priceData.isConverted && (
-              <span className="price-converted-sub">
-                ≈ <bdi>{priceData.originalEgp}</bdi>
-              </span>
-            )}
-          </div>
-
-          {/* Integrated Benchmark / Price per m² inside the media scrim */}
-          {benchmark?.pricePerMeterFormatted && (
-            <div className="price-meter-chip" title={benchmark.badgeLabel}>
-              <bdi>{benchmark.pricePerMeterFormatted}</bdi>
-            </div>
-          )}
-        </div>
       </div>
 
       {/* 2. Card Body: Architectural Editorial Hierarchy */}
       <div className="property-card-body">
+        {/* Price sits under the photo — no dark scrim over the architecture */}
+        <div className="card-price-row">
+          <div className="card-price-main">
+            <bdi className="card-price-val">{priceData.primary}</bdi>
+            <span className="card-price-curr">{priceData.symbol}</span>
+          </div>
+          {benchmark?.pricePerMeterFormatted && (
+            <span className="card-price-meter" title={benchmark.badgeLabel}>
+              <bdi>{benchmark.pricePerMeterFormatted}</bdi>
+            </span>
+          )}
+          {priceData.isConverted && (
+            <span className="card-price-converted">≈ <bdi>{priceData.originalEgp}</bdi></span>
+          )}
+        </div>
+
         {/* District & Sector Tag */}
         <div className="card-sub-header">
           <div className="property-location-tag" title={location}>
-            <MapPin size={13} className="loc-pin-icon" />
+            <MapPin size={14} strokeWidth={1.5} className="loc-pin-icon" />
             <span>{formatCardLocation(location)}</span>
           </div>
           <span className="property-sector-pill">{sectorLabel}</span>
@@ -326,7 +339,7 @@ export default function PropertyCard({
         <div className="property-specs-clean">
           {/* Size is universal */}
           <div className="spec-unit">
-            <Maximize2 size={13} className="spec-icon text-gold" />
+            <Maximize2 size={14} strokeWidth={1.5} className="spec-icon text-gold" />
             <span><strong><bdi>{property.size}</bdi></strong> {lang === 'ar' ? 'م² صافي' : 'sqm net'}</span>
           </div>
 
@@ -335,7 +348,7 @@ export default function PropertyCard({
             <>
               <span className="spec-dot">•</span>
               <div className="spec-unit">
-                <Store size={13} className="spec-icon" />
+                <Store size={14} strokeWidth={1.5} className="spec-icon" />
                 <span>{formatCommercialSpec(property.commercialType_ar, lang)}</span>
               </div>
               <span className="spec-dot">•</span>
@@ -347,7 +360,7 @@ export default function PropertyCard({
             <>
               <span className="spec-dot">•</span>
               <div className="spec-unit">
-                <Briefcase size={13} className="spec-icon" />
+                <Briefcase size={14} strokeWidth={1.5} className="spec-icon" />
                 <span>{formatOfficeSpec(property.adminType_ar, lang)}</span>
               </div>
               {property.floor !== undefined && (
@@ -363,7 +376,7 @@ export default function PropertyCard({
             <>
               <span className="spec-dot">•</span>
               <div className="spec-unit">
-                <Building size={13} className="spec-icon" />
+                <Building size={14} strokeWidth={1.5} className="spec-icon" />
                 <span>{formatLandSpec(property.landType_ar, lang)}</span>
               </div>
               <span className="spec-dot">•</span>
@@ -378,7 +391,7 @@ export default function PropertyCard({
                 <>
                   <span className="spec-dot">•</span>
                   <div className="spec-unit">
-                    <BedDouble size={13} className="spec-icon" />
+                    <BedDouble size={14} strokeWidth={1.5} className="spec-icon" />
                     <span><strong><bdi>{property.bedrooms}</bdi></strong> {lang === 'ar' ? 'غرف' : 'Beds'}</span>
                   </div>
                 </>
@@ -387,20 +400,13 @@ export default function PropertyCard({
                 <>
                   <span className="spec-dot">•</span>
                   <div className="spec-unit">
-                    <Bath size={13} className="spec-icon" />
+                    <Bath size={14} strokeWidth={1.5} className="spec-icon" />
                     <span><strong><bdi>{property.bathrooms}</bdi></strong> {lang === 'ar' ? 'حمام' : 'Baths'}</span>
                   </div>
                 </>
               )}
             </>
           )}
-
-          {/* Subtle Verified Legal Title Tag */}
-          <span className="spec-dot">•</span>
-          <div className="spec-unit spec-unit-trust" title={lang === 'ar' ? 'تم الفحص القانوني المعتمد' : 'Legally Verified'}>
-            <ShieldCheck size={13} className="spec-trust-icon" />
-            <span>{lang === 'ar' ? 'فحص معتمد' : 'Verified'}</span>
-          </div>
         </div>
 
         {/* 🏛️ MODERN ARCHITECTURAL FINANCIAL CORE (Single Unified Surface) */}
@@ -427,14 +433,14 @@ export default function PropertyCard({
 
               <div className="core-fin-tag-col">
                 <span className="core-plan-tag installment-tag">
-                  <Sparkles size={11} className="plan-icon" />
-                  <span>{lang === 'ar' ? 'تقسيط متاح' : 'Installments'}</span>
+                  <Sparkles size={11} strokeWidth={1.5} className="plan-icon" />
+                  <span>{lang === 'ar' ? 'متاح تقسيط' : 'Installments'}</span>
                 </span>
               </div>
             </div>
           ) : (
             <div className="core-cash-deal-banner">
-              <ShieldCheck size={14} className="cash-shield-icon" />
+              <ShieldCheck size={14} strokeWidth={1.5} className="cash-shield-icon" />
               <span>{lang === 'ar' ? 'خالص الثمن بدون أقساط • استلام فوري ومعاينة' : 'Fully Paid • Ready for Immediate Handover'}</span>
             </div>
           )}

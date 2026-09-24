@@ -88,7 +88,7 @@ test('ملف Service Worker (public/sw.js) سليم ويعالج التخزين 
 test('قواعد Firestore (firestore.rules) تحمي العملاء والطلبات والتنبيهات', () => {
   const rules = fs.readFileSync('firestore.rules', 'utf8');
   assert.ok(rules.includes('request.auth'), 'Requires auth');
-  assert.ok(rules.includes('token.role'), 'Requires admin role');
+  assert.ok(rules.includes('token.role') || rules.includes("token.get('role'"), 'Requires admin role');
   assert.ok(rules.includes('match /demands/{demandId}'), 'Demands rule defined');
 });
 
