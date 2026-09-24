@@ -48,9 +48,15 @@ export default function CrmPage({
 }) {
   const { isAuthInitializing, currentUser, userRole } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'leads' | 'kanban' | 'properties' | 'demands' | 'projects' | 'financials' | 'matching' | 'analytics' | 'system'
-  const [selectedRole, setSelectedRole] = useState(userRole || 'super_admin');
-  const verifiedUserRole = currentUser?.role || userRole || 'super_admin';
+  // Roles outside CRM_ROLES (e.g. 'guest' while auth is still resolving) map to super_admin for
+  // the local-password session, instead of leaking "undefined" into the UI.
+  const knownRole = (r) => (CRM_ROLES.some((x) => x.id === r) ? r : null);
+  const verifiedUserRole = knownRole(currentUser?.role) || knownRole(userRole) || 'super_admin';
   const isSuperAdminUser = verifiedUserRole === 'super_admin';
+  // null = "no simulation": follows the verified role until the super admin picks another one
+  const [simulatedRole, setSimulatedRole] = useState(null);
+  const selectedRole = isSuperAdminUser && knownRole(simulatedRole) ? simulatedRole : verifiedUserRole;
+  const setSelectedRole = (r) => setSimulatedRole(r === 'super_admin' ? null : r);
   const activeRole = isSuperAdminUser ? selectedRole : verifiedUserRole;
   const isSimulationMode = isSuperAdminUser && selectedRole !== 'super_admin';
   const [systemSubTab, setSystemSubTab] = useState('areas');
@@ -404,6 +410,7 @@ export default function CrmPage({
         leads={leads}
         properties={properties}
         demands={demands}
+        pendingDemandsBadge={pendingDemandsCount > 0 ? `${pendingDemandsCount} معلق` : null}
         projects={projects}
         activeRole={activeRole}
         collapsed={sidebarCollapsed}
