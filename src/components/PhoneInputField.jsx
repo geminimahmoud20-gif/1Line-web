@@ -29,7 +29,7 @@ export const PhoneInputField = ({
     <div className="phone-input-field-wrap" style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%', textAlign: 'right' }}>
       {label && (
         <label style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-primary)' }}>
-          {label} {required && <span style={{ color: 'var(--rose)' }}>*</span>}
+          {String(label).replace(/\s*\*+\s*/g, ' ').trim()} {required && <span style={{ color: 'var(--rose)' }} aria-hidden="true">*</span>}
         </label>
       )}
       <div 
@@ -50,7 +50,7 @@ export const PhoneInputField = ({
         <select
           value={country}
           onChange={(e) => handleCountryChange(e.target.value)}
-          aria-label="Country Dial Code"
+          aria-label="كود الدولة"
           style={{
             background: 'transparent',
             border: 'none',
@@ -80,7 +80,7 @@ export const PhoneInputField = ({
           onChange={(e) => handleValChange(e.target.value)}
           placeholder={SUPPORTED_COUNTRIES.find(c => c.code === country)?.placeholder || '01XXXXXXXXX'}
           required={required}
-          aria-label="Phone Number"
+          aria-label={label ? String(label).replace(/\s*\*+\s*/g, ' ').trim() : 'رقم الهاتف'}
           style={{
             flex: 1,
             border: 'none',

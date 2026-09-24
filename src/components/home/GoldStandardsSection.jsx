@@ -63,8 +63,8 @@ export default function GoldStandardsSection({ lang = 'ar' }) {
         {standards.map((std, idx) => {
           const IconComp = ICON_MAP[std.icon] || ShieldCheck;
           const badgeText = isAr 
-            ? (std.badge_ar || 'ضمان مؤسسي معتمد') 
-            : (std.badge_en || 'Guaranteed Standard');
+            ? std.badge_ar 
+            : std.badge_en;
 
           return (
             <div key={idx} className="gold-standard-card">
@@ -83,10 +83,12 @@ export default function GoldStandardsSection({ lang = 'ar' }) {
                 {isAr ? std.desc_ar : (std.desc_en || std.desc_ar)}
               </p>
 
-              <div className="standard-card-badge">
-                <CheckCircle2 size={13} className="text-emerald" />
-                <span>{badgeText}</span>
-              </div>
+              {badgeText && (
+                <div className="standard-card-badge">
+                  <CheckCircle2 size={13} className="text-emerald" />
+                  <span>{badgeText}</span>
+                </div>
+              )}
             </div>
           );
         })}

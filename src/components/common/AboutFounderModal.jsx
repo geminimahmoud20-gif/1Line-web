@@ -23,7 +23,8 @@ import {
   cleanWhatsAppNumber, 
   cleanPhoneNumber, 
   getWhatsAppUrl, 
-  getPhoneCallUrl 
+  getPhoneCallUrl,
+  DEFAULT_FOUNDER_CMS
 } from '../../utils/founderCmsData';
 
 export default function AboutFounderModal({ isOpen, onClose, lang = 'ar' }) {
@@ -60,27 +61,27 @@ export default function AboutFounderModal({ isOpen, onClose, lang = 'ar' }) {
 
   const stats = [
     {
-      num: isAr ? (cms.stats?.[0]?.num_ar || '+500') : (cms.stats?.[0]?.num_en || '500+'),
-      label: isAr ? (cms.stats?.[0]?.label_ar || 'صفقة عقارية ناجحة') : (cms.stats?.[0]?.label_en || 'Successful Deals'),
-      sub: isAr ? (cms.stats?.[0]?.sub_ar || 'موثقة ومسجلة رسمياً') : (cms.stats?.[0]?.sub_en || 'Officially Verified'),
+      num: isAr ? (cms.stats?.[0]?.num_ar || DEFAULT_FOUNDER_CMS.stats[0].num_ar) : (cms.stats?.[0]?.num_en || DEFAULT_FOUNDER_CMS.stats[0].num_en),
+      label: isAr ? (cms.stats?.[0]?.label_ar || DEFAULT_FOUNDER_CMS.stats[0].label_ar) : (cms.stats?.[0]?.label_en || DEFAULT_FOUNDER_CMS.stats[0].label_en),
+      sub: isAr ? (cms.stats?.[0]?.sub_ar || DEFAULT_FOUNDER_CMS.stats[0].sub_ar) : (cms.stats?.[0]?.sub_en || DEFAULT_FOUNDER_CMS.stats[0].sub_en),
       icon: <FileCheck size={18} className="text-gold" />
     },
     {
-      num: isAr ? (cms.stats?.[1]?.num_ar || '+1.2B') : (cms.stats?.[1]?.num_en || '$25M+'),
-      label: isAr ? (cms.stats?.[1]?.label_ar || 'جنيه حجم تداولات') : (cms.stats?.[1]?.label_en || 'Trading Volume'),
-      sub: isAr ? (cms.stats?.[1]?.sub_ar || 'أصول واستثمارات مدارة') : (cms.stats?.[1]?.sub_en || 'Managed Assets'),
+      num: isAr ? (cms.stats?.[1]?.num_ar || DEFAULT_FOUNDER_CMS.stats[1].num_ar) : (cms.stats?.[1]?.num_en || DEFAULT_FOUNDER_CMS.stats[1].num_en),
+      label: isAr ? (cms.stats?.[1]?.label_ar || DEFAULT_FOUNDER_CMS.stats[1].label_ar) : (cms.stats?.[1]?.label_en || DEFAULT_FOUNDER_CMS.stats[1].label_en),
+      sub: isAr ? (cms.stats?.[1]?.sub_ar || DEFAULT_FOUNDER_CMS.stats[1].sub_ar) : (cms.stats?.[1]?.sub_en || DEFAULT_FOUNDER_CMS.stats[1].sub_en),
       icon: <TrendingUp size={18} className="text-gold" />
     },
     {
-      num: isAr ? (cms.stats?.[2]?.num_ar || '100%') : (cms.stats?.[2]?.num_en || '100%'),
-      label: isAr ? (cms.stats?.[2]?.label_ar || 'فحص وتدقيق قانوني') : (cms.stats?.[2]?.label_en || 'Legal Compliance'),
-      sub: isAr ? (cms.stats?.[2]?.sub_ar || 'تراخيص وملكية معتمدة') : (cms.stats?.[2]?.sub_en || 'Valid Title Deeds'),
+      num: isAr ? (cms.stats?.[2]?.num_ar || DEFAULT_FOUNDER_CMS.stats[2].num_ar) : (cms.stats?.[2]?.num_en || DEFAULT_FOUNDER_CMS.stats[2].num_en),
+      label: isAr ? (cms.stats?.[2]?.label_ar || DEFAULT_FOUNDER_CMS.stats[2].label_ar) : (cms.stats?.[2]?.label_en || DEFAULT_FOUNDER_CMS.stats[2].label_en),
+      sub: isAr ? (cms.stats?.[2]?.sub_ar || DEFAULT_FOUNDER_CMS.stats[2].sub_ar) : (cms.stats?.[2]?.sub_en || DEFAULT_FOUNDER_CMS.stats[2].sub_en),
       icon: <ShieldCheck size={18} className="text-gold" />
     },
     {
-      num: isAr ? (cms.stats?.[3]?.num_ar || '+12K') : (cms.stats?.[3]?.num_en || '12K+'),
-      label: isAr ? (cms.stats?.[3]?.label_ar || 'عميل ومستثمر يثقون بنا') : (cms.stats?.[3]?.label_en || 'Trusted Clients'),
-      sub: isAr ? (cms.stats?.[3]?.sub_ar || 'بسوهاج ومغتربي الخليج') : (cms.stats?.[3]?.sub_en || 'Egypt & Expats'),
+      num: isAr ? (cms.stats?.[3]?.num_ar || DEFAULT_FOUNDER_CMS.stats[3].num_ar) : (cms.stats?.[3]?.num_en || DEFAULT_FOUNDER_CMS.stats[3].num_en),
+      label: isAr ? (cms.stats?.[3]?.label_ar || DEFAULT_FOUNDER_CMS.stats[3].label_ar) : (cms.stats?.[3]?.label_en || DEFAULT_FOUNDER_CMS.stats[3].label_en),
+      sub: isAr ? (cms.stats?.[3]?.sub_ar || DEFAULT_FOUNDER_CMS.stats[3].sub_ar) : (cms.stats?.[3]?.sub_en || DEFAULT_FOUNDER_CMS.stats[3].sub_en),
       icon: <Users size={18} className="text-gold" />
     }
   ];

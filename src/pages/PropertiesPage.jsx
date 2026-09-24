@@ -15,6 +15,20 @@ import { PROPERTIES_DATA } from '../data/propertiesData';
 import { updatePageSeo } from '../utils/seoHelper';
 import { searchPropertiesSemantic, parseSemanticQuery } from '../utils/semanticSearchEngine';
 
+// Slider ceiling; a maxPrice at the cap means "no upper limit"
+const MAX_PRICE_CAP = 15000000;
+
+// Budget keys used by the hero search, lifestyle links and quick filters
+function budgetRange(key) {
+  switch (key) {
+    case 'under_3m': return { minPrice: 0, maxPrice: 3000000 };
+    case '3m_to_6m': return { minPrice: 3000000, maxPrice: 6000000 };
+    case 'over_6m':
+    case 'above_6m': return { minPrice: 6000000, maxPrice: MAX_PRICE_CAP };
+    default: return { minPrice: 0, maxPrice: MAX_PRICE_CAP };
+  }
+}
+
 export default function PropertiesPage({
   lang,
   currency = 'EGP',
@@ -50,7 +64,7 @@ export default function PropertiesPage({
     query: searchParams.get('q') || '',
     type: searchParams.get('type') || 'all',
     area: searchParams.get('area') || 'all',
-    maxPrice: searchParams.get('budget') ? (searchParams.get('budget') === 'under_3m' ? 3000000 : searchParams.get('budget') === '3m_to_6m' ? 6000000 : 15000000) : 15000000,
+    ...budgetRange(searchParams.get('budget')),
     bedrooms: searchParams.get('bedrooms') || 'all',
     completionStatus: 'all',
     finishing: 'all',
@@ -64,16 +78,15 @@ export default function PropertiesPage({
     const q = searchParams.get('q') || '';
     const type = searchParams.get('type') || 'all';
     const area = searchParams.get('area') || 'all';
-    const budgetParam = searchParams.get('budget');
-    const maxPrice = budgetParam ? (budgetParam === 'under_3m' ? 3000000 : budgetParam === '3m_to_6m' ? 6000000 : 15000000) : 15000000;
+    const { minPrice, maxPrice } = budgetRange(searchParams.get('budget'));
     const bedrooms = searchParams.get('bedrooms') || 'all';
     const paymentPlan = searchParams.get('paymentPlan') || (searchParams.get('financing') === 'true' ? 'installments' : 'all');
 
     setFilters(prev => {
-      if (prev.query === q && prev.type === type && prev.area === area && prev.maxPrice === maxPrice && prev.bedrooms === bedrooms && prev.paymentPlan === paymentPlan) {
+      if (prev.query === q && prev.type === type && prev.area === area && prev.maxPrice === maxPrice && prev.minPrice === minPrice && prev.bedrooms === bedrooms && prev.paymentPlan === paymentPlan) {
         return prev;
       }
-      return { ...prev, query: q, type, area, maxPrice, bedrooms, paymentPlan };
+      return { ...prev, query: q, type, area, minPrice, maxPrice, bedrooms, paymentPlan };
     });
   }, [searchParams]);
 
@@ -93,7 +106,8 @@ export default function PropertiesPage({
       query: '',
       type: 'all',
       area: 'all',
-      maxPrice: 15000000,
+      minPrice: 0,
+      maxPrice: MAX_PRICE_CAP,
       bedrooms: 'all',
       completionStatus: 'all',
       finishing: 'all',
@@ -135,7 +149,8 @@ export default function PropertiesPage({
       if (filters.area && filters.area !== 'all' && prop.areaKey !== filters.area) return false;
 
       // Max Price filter
-      if (filters.maxPrice && prop.price > filters.maxPrice) return false;
+      if (filters.maxPrice && filters.maxPrice < MAX_PRICE_CAP && prop.price > filters.maxPrice) return false;
+      if (filters.minPrice && prop.price < filters.minPrice) return false;
 
       // Bedrooms filter - strictly applies to residential properties only
       if (filters.bedrooms && filters.bedrooms !== 'any' && filters.bedrooms !== 'all' && String(filters.bedrooms).trim() !== '') {

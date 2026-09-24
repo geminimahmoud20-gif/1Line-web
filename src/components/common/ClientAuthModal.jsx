@@ -171,7 +171,7 @@ export default function ClientAuthModal({ lang = 'ar' }) {
           type="button" 
           className="client-auth-close-btn" 
           onClick={handleClose}
-          aria-label="Close"
+          aria-label="إغلاق"
         >
           <X size={18} />
         </button>

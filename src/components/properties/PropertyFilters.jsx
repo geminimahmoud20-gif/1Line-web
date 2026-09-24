@@ -198,7 +198,7 @@ export default function PropertyFilters({
                 type="button"
                 className="filter-clear-input-btn"
                 onClick={() => onFilterChange('query', '')}
-                aria-label="Clear input"
+                aria-label="مسح النص"
               >
                 <X size={12} />
               </button>
@@ -477,7 +477,7 @@ export default function PropertyFilters({
                   className="chip-remove-btn"
                   onClick={chip.onRemove}
                   title={isAr ? 'إلغاء هذا الفلتر' : 'Remove filter'}
-                  aria-label="Remove filter"
+                  aria-label="إزالة الفلتر"
                 >
                   <X size={11} />
                 </button>

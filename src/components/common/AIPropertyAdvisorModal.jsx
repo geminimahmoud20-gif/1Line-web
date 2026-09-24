@@ -55,7 +55,7 @@ export default function AIPropertyAdvisorModal({
     {
       sender: 'bot',
       text: isAr 
-        ? 'أهلاً بك في منصة 1Line للاستشارات العقارية المعتمدة بسوهاج 🏛️.\nأنا مستشارك الذكي المباشر، ومزود بأحدث مؤشرات أسعار المتر، المشروعات الكبرى، وتدقيق الموقف القانوني لعام 2026. كيف أستطيع مساعدتك اليوم؟'
+        ? 'أهلاً بك في منصة 1Line للاستشارات العقارية في سوهاج والقاهرة الكبرى.\nأنا مستشارك الذكي المباشر، ومزود بأحدث مؤشرات أسعار المتر، المشروعات الكبرى، وتدقيق الموقف القانوني لعام 2026. كيف أستطيع مساعدتك اليوم؟'
         : 'Welcome to 1Line Certified Real Estate Advisory in Sohag 🏛️. How can I assist you with market valuations, legal checks, or investment yields today?',
       time: 'الآن'
     }
@@ -104,7 +104,7 @@ export default function AIPropertyAdvisorModal({
           : 'East Sohag remains the most prestigious and liquid residential district in Sohag.';
       } else if (lower.includes('بيع') || lower.includes('اعرض') || lower.includes('تقييم')) {
         reply = isAr
-          ? 'إذا كنت ترغب في عرض عقارك للبيع أو الحصول على تقييم سوقي دقيق، يمكنك استخدام معالج التقييم الفوري بالموقع، أو إرسال تفاصيل الوحدة مباشرة لنقوم بتصويرها وعرضها على أكثر من 500 مشترٍ مسجل بدون عمولات على البائع.'
+          ? 'إذا كنت ترغب في عرض عقارك للبيع أو الحصول على تقييم سوقي دقيق، يمكنك استخدام معالج التقييم الفوري بالموقع، أو إرسال تفاصيل الوحدة مباشرة لنراجعها ونعرضها أولاً على المشترين المسجلين لدينا بطلبات مطابقة.'
           : 'If you want to list or value a property, use our instant valuation engine or contact our sales team.';
       } else {
         reply = isAr
@@ -164,7 +164,7 @@ export default function AIPropertyAdvisorModal({
             </div>
           </div>
 
-          <button type="button" className="drawer-close-btn" onClick={onClose} aria-label="Close">
+          <button type="button" className="drawer-close-btn" onClick={onClose} aria-label="إغلاق">
             <X size={20} />
           </button>
         </div>
@@ -288,7 +288,7 @@ export default function AIPropertyAdvisorModal({
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
             />
-            <button type="submit" className="ai-send-btn" disabled={!userInput.trim()} aria-label="Send">
+            <button type="submit" className="ai-send-btn" disabled={!userInput.trim()} aria-label="إرسال">
               <Send size={16} />
             </button>
           </form>

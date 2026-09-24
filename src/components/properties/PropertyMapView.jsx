@@ -638,7 +638,7 @@ export default function PropertyMapView({
               type="button"
               className="hud-close-btn"
               onClick={() => setDistrictHudInfo(null)}
-              aria-label="Close HUD"
+              aria-label="إغلاق"
             >
               <X size={14} />
             </button>

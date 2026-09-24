@@ -30,145 +30,126 @@ export const DEFAULT_FOUNDER_CMS = {
   badges: [
     { ar: '🏅 خبرة +8 سنوات بالسوق العقاري', en: '8+ Years Market Leadership' },
     { ar: '🏛️ مستشار كبار المستثمرين', en: 'Prime Investors Advisor' },
-    { ar: '📜 اعتماد التقييم والتسعير العادل', en: 'Certified Valuation Expert' }
+    { ar: '📜 متخصص في التقييم والتسعير', en: 'Valuation & pricing specialist' }
   ],
 
-  // 4 Top Stats
+  // 4 Top Stats — only facts that can be documented. Edit from the CRM (Founder CMS);
+  // replace with real deal counts / volumes once you have records to back them.
   stats: [
     {
-      num_ar: '+500',
-      num_en: '500+',
-      label_ar: 'صفقة عقارية ناجحة',
-      label_en: 'Successful Deals',
-      sub_ar: 'موثقة ومسجلة رسمياً',
-      sub_en: 'Officially Verified'
+      num_ar: '+8',
+      num_en: '8+',
+      label_ar: 'سنوات خبرة المؤسس',
+      label_en: 'Years of founder experience',
+      sub_ar: 'في سوق العقارات بسوهاج',
+      sub_en: 'in the Sohag property market'
     },
     {
-      num_ar: '+1.2B',
-      num_en: '$25M+',
-      label_ar: 'جنيه حجم تداولات',
-      label_en: 'Trading Volume',
-      sub_ar: 'أصول واستثمارات مدارة',
-      sub_en: 'Managed Real Estate Assets'
+      num_ar: '2',
+      num_en: '2',
+      label_ar: 'نطاقا خدمة',
+      label_en: 'Service regions',
+      sub_ar: 'سوهاج والقاهرة الكبرى',
+      sub_en: 'Sohag and Greater Cairo'
     },
     {
-      num_ar: '100%',
-      num_en: '100%',
-      label_ar: 'فحص وتدقيق قانوني',
-      label_en: 'Legal Compliance',
-      sub_ar: 'تراخيص وملكية معتمدة',
-      sub_en: 'Valid Title Deeds'
+      num_ar: '3',
+      num_en: '3',
+      label_ar: 'مراجعات قبل العرض',
+      label_en: 'Checks before listing',
+      sub_ar: 'الملكية • الترخيص • السعر',
+      sub_en: 'Title • Permits • Price'
     },
     {
-      num_ar: '+12K',
-      num_en: '12K+',
-      label_ar: 'عميل ومستثمر يثقون بنا',
-      label_en: 'Trusted Clients',
-      sub_ar: 'بسوهاج ومغتربي الخليج',
-      sub_en: 'In Egypt & Gulf Expats'
+      num_ar: '1',
+      num_en: '1',
+      label_ar: 'مستشار مسؤول لكل عميل',
+      label_en: 'Dedicated advisor per client',
+      sub_ar: 'من أول مكالمة حتى التسجيل',
+      sub_en: 'From first call to registration'
     }
   ],
 
   // 4 Hero Stats Strip (Top of Homepage)
   heroStats: [
-    {
-      num_ar: '+150',
-      num_en: '150+',
-      label_ar: 'عقار مفحوص ومعتمد',
-      label_en: 'Verified Properties'
-    },
-    {
-      num_ar: '100%',
-      num_en: '100%',
-      label_ar: 'سلامة قانونية وتراخيص',
-      label_en: 'Legal Compliance'
-    },
-    {
-      num_ar: '+12 M',
-      num_en: '12M+',
-      label_ar: 'حجم مبيعات سنوي',
-      label_en: 'Annual Volume'
-    },
-    {
-      num_ar: '7 سنوات',
-      num_en: '7 Yrs',
-      label_ar: 'أطول فترة تقسيط',
-      label_en: 'Max Installment'
-    }
+    { num_ar: '+8', num_en: '8+', label_ar: 'سنوات خبرة', label_en: 'Years experience' },
+    { num_ar: '3', num_en: '3', label_ar: 'مراجعات قبل العرض', label_en: 'Pre-listing checks' },
+    { num_ar: '2', num_en: '2', label_ar: 'سوهاج والقاهرة', label_en: 'Sohag & Cairo' },
+    { num_ar: '7 سنوات', num_en: '7 Yrs', label_ar: 'أطول تقسيط متاح', label_en: 'Longest installment' }
   ],
 
   // 3 Corporate Pillars
   pillars: [
     {
-      title_ar: 'الأمان القانوني المطلق',
-      title_en: 'Absolute Legal Security',
-      desc_ar: 'لا يتم عرض أو تسويق أي وحدة عقارية إلا بعد مراجعة شاملة لتسلسل الملكية، وتراخيص البناء، ومطابقة المخططات الهندسية من الإدارة القانونية.',
-      desc_en: 'Every property undergoes thorough title deed review and building permit verification before listing.'
+      title_ar: 'مراجعة قانونية قبل العرض',
+      title_en: 'Legal review before listing',
+      desc_ar: 'نراجع تسلسل الملكية والتراخيص والتوكيلات لكل عقار قبل عرضه، ونطلعك على نتيجة المراجعة كتابياً قبل التعاقد.',
+      desc_en: 'We review title chain, permits and powers of attorney before listing, and share the findings in writing before contract.'
     },
     {
-      title_ar: 'التقييم السعري العادل والمعتمد',
-      title_en: 'Certified Fair Valuation',
-      desc_ar: 'نعتمد على دراسات ميدانية وتقييم هندسي دقيق يرصد سعر المتر الفعلي في كل منطقة بسوهاج لمنع أي مغالاة أو تسعير عشوائي يحمي أموال المشترين.',
-      desc_en: 'Accurate field studies and certified engineering valuations tracking fair meter prices across Sohag to protect buyer capital.'
+      title_ar: 'تسعير مبني على مقارنات فعلية',
+      title_en: 'Pricing from real comparables',
+      desc_ar: 'نحدد السعر بمقارنة عروض وصفقات فعلية في نفس المنطقة ومعاينة ميدانية، لا بأرقام عامة.',
+      desc_en: 'We price from actual listings and deals in the same area plus a site visit — not generic figures.'
     },
     {
-      title_ar: 'برنامج رعاية المستثمرين والمغتربين',
-      title_en: 'Expats & Investors Care',
-      desc_ar: 'إدارة متكاملة مخصصة للمغتربين بالخليج تتولى المعاينات الحية بالفيديو، وتسهيلات السداد والتوكيلات، وتحقيق أعلى عائد استثماري وإيجاري.',
-      desc_en: 'Dedicated services for Gulf expats including live video tours, verified legal procedures, and high ROI deals.'
+      title_ar: 'خدمة المغتربين عن بُعد',
+      title_en: 'Remote service for expats',
+      desc_ar: 'معاينات فيديو مباشرة، ومتابعة التوكيلات والإجراءات، وتقارير مكتوبة في كل مرحلة حتى الاستلام.',
+      desc_en: 'Live video viewings, power-of-attorney follow-up, and written updates at each stage until handover.'
     }
   ],
 
-  // 🛡️ The 4 1Line Golden Standards of Institutional Trust
-  goldStandardsTitle_ar: 'معايير الأمان الأربعة المعتمدة في 1Line',
-  goldStandardsTitle_en: 'The 4 1Line Golden Standards',
-  goldStandardsDesc_ar: 'لماذا يأتمننا مئات المستثمرين والأسر بسوهاج ومغتربي الخليج على صفقاتهم العقارية الكبرى؟',
-  goldStandardsDesc_en: 'Why leading investors, families, and Gulf expats trust 1Line for high-value property transactions.',
+  // The 4 1Line standards
+  goldStandardsTitle_ar: 'أربعة التزامات نعمل بها في كل صفقة',
+  goldStandardsTitle_en: 'Four commitments on every deal',
+  goldStandardsDesc_ar: 'لماذا يختار الملاك والمستثمرون 1Line لصفقاتهم الكبيرة؟',
+  goldStandardsDesc_en: 'Why owners and investors choose 1Line for high-value transactions.',
   goldStandards: [
     {
       number: '01',
       icon: 'ShieldCheck',
-      title_ar: 'التدقيق القانوني الصارم 100%',
-      title_en: '100% Verified Legal Audit',
-      desc_ar: 'فحص هندسي وقانوني شامل لتسلسل الملكية وتراخيص البناء وصحة التوكيلات من الإدارة القانونية قبل عرض أي عقار.',
-      desc_en: 'Comprehensive title deed review, municipal permits verification, and zero legal disputes before any listing.',
-      badge_ar: 'ضمان مؤسسي معتمد',
-      badge_en: 'Guaranteed Standard'
+      title_ar: 'مراجعة المستندات قبل العرض',
+      title_en: 'Documents reviewed before listing',
+      desc_ar: 'تسلسل الملكية وتراخيص البناء وصحة التوكيلات تُراجع قبل عرض أي عقار، ونسلمك ملخص المراجعة قبل التعاقد.',
+      desc_en: 'Title chain, building permits and powers of attorney are reviewed before listing; you get the summary before contract.',
+      badge_ar: '',
+      badge_en: ''
     },
     {
       number: '02',
       icon: 'Scale',
-      title_ar: 'التقييم السعري العادل والمعتمد',
-      title_en: 'Certified Fair Valuation',
-      desc_ar: 'مؤشرات سعرية لحظية مبنية على صفقات حقيقية منفذة بسوهاج، تضمن حماية مدخرات المشتري من أي مغالاة تسعيرية.',
-      desc_en: 'Real-time market price benchmarks rooted in closed deals to protect buyer capital from artificial inflation.',
-      badge_ar: 'ضمان مؤسسي معتمد',
-      badge_en: 'Guaranteed Standard'
+      title_ar: 'سعر عادل بمقارنات حقيقية',
+      title_en: 'Fair price from real comparables',
+      desc_ar: 'تقرير سعر مبني على عروض وصفقات فعلية في نفس المنطقة ومعاينة ميدانية، يحمي البائع من البيع بأقل والمشتري من المغالاة.',
+      desc_en: 'A price report based on real listings, deals and a site visit — protecting sellers from underpricing and buyers from overpaying.',
+      badge_ar: '',
+      badge_en: ''
     },
     {
       number: '03',
       icon: 'Award',
-      title_ar: 'صفر عمولة على البائع ومطابقة فورية',
-      title_en: 'Zero Seller Fees & Fast Match',
-      desc_ar: 'تسويق احترافي مجاني بالكامل لأصحاب العقارات، مع مطابقة مباشرة وفورية مع أكثر من 500 مشترٍ ومستثمر كاش جاهزين.',
-      desc_en: 'Free professional marketing for sellers with direct matching to 500+ pre-qualified cash buyers.',
-      badge_ar: 'ضمان مؤسسي معتمد',
-      badge_en: 'Guaranteed Standard'
+      title_ar: 'تسويق هادئ لمشترين جادين',
+      title_en: 'Discreet marketing to serious buyers',
+      desc_ar: 'نعرض عقارك على المشترين المسجلين لدينا بطلبات مطابقة أولاً، ونرتب المعاينات لمن تم التحقق من جديتهم فقط.',
+      desc_en: 'We present your property to registered buyers with matching briefs first, and arrange viewings only for qualified buyers.',
+      badge_ar: '',
+      badge_en: ''
     },
     {
       number: '04',
       icon: 'Video',
-      title_ar: 'منظومة رعاية مغتربي الخليج',
-      title_en: 'Gulf Expats Concierge Desk',
-      desc_ar: 'معاينات فيديو حية 4K، وتسهيلات التحويلات البنكية الرسمية، ومتابعة الإجراءات والتوكيلات حتى تسليم مفتاح الوحدة.',
-      desc_en: 'Live 4K video walk-throughs, certified power of attorney facilitation, and complete remote ownership procedures.',
-      badge_ar: 'ضمان مؤسسي معتمد',
-      badge_en: 'Guaranteed Standard'
+      title_ar: 'خدمة المغتربين حتى الاستلام',
+      title_en: 'Expat service through handover',
+      desc_ar: 'معاينات فيديو مباشرة، ومتابعة التوكيلات والتحويلات البنكية الرسمية، وتحديثات مكتوبة حتى تسليم المفتاح.',
+      desc_en: 'Live video viewings, power-of-attorney and official bank transfer follow-up, and written updates until keys.',
+      badge_ar: '',
+      badge_en: ''
     }
   ],
-
   // 🎬 Cinematic Hero Video & Visual Engine (The Agency & Sotheby's Style)
-  heroVideoEnabled: true,
+  // Stock video host blocks hot-linking (ERR_BLOCKED_BY_ORB); use a self-hosted clip before re-enabling.
+  heroVideoEnabled: false,
   heroVideoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-modern-architecture-buildings-and-skyscrapers-41551-large.mp4',
   heroVideoAutoCycle: true,
   heroVideoIntervalSec: 10,
@@ -178,27 +159,27 @@ export const DEFAULT_FOUNDER_CMS = {
       title_ar: '🏢 أبراج معمارية حديثة وواجهات زجاجية',
       title_en: 'Modern Skyscrapers & Architecture',
       url: 'https://assets.mixkit.co/videos/preview/mixkit-modern-architecture-buildings-and-skyscrapers-41551-large.mp4',
-      poster: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=2000&q=85'
+      poster: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1600&q=70'
     },
     {
       id: 'clip-2',
       title_ar: '🏡 فلل فارهة ومنتجع مائي خاص',
       title_en: 'Luxury Pool Resort & Signature Villas',
       url: 'https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-a-luxury-pool-resort-41553-large.mp4',
-      poster: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=2000&q=85'
+      poster: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1600&q=70'
     },
     {
       id: 'clip-3',
       title_ar: '🌳 كمبوند سكني ومساحات خضراء بالدرون',
       title_en: 'Residential Compound & Drone Landscapes',
       url: 'https://assets.mixkit.co/videos/preview/mixkit-drone-view-of-a-modern-residential-neighborhood-41555-large.mp4',
-      poster: 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=2000&q=85'
+      poster: 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1600&q=70'
     }
   ],
-  heroPosterUrl: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=2000&q=85',
+  heroPosterUrl: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1600&q=70',
   heroOverlayOpacity: 0.8,
-  heroBadge_ar: 'المنصة العقارية الأكثر موثوقية في سوهاج',
-  heroBadge_en: 'Sohag’s Most Trusted Real Estate Platform',
+  heroBadge_ar: 'وساطة واستشارات عقارية — سوهاج والقاهرة الكبرى',
+  heroBadge_en: 'Real estate brokerage & advisory — Sohag and Greater Cairo',
   heroTitle_ar: 'امتلك واستثمر في أرقى عقارات سوهاج',
   heroTitle_en: 'Own & Invest in Sohag’s Finest Properties',
   heroHighlight_ar: 'بكل ثقة وضمان قانوني معتمد',

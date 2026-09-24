@@ -32,7 +32,7 @@ export default function BackToTopButton({ lang = 'ar' }) {
       className="floating-back-to-top-btn"
       onClick={scrollToTop}
       title={lang === 'ar' ? 'الرجوع لأعلى الصفحة' : 'Scroll to top'}
-      aria-label="Back to Top"
+      aria-label="العودة لأعلى الصفحة"
     >
       <ArrowUp size={18} />
     </button>

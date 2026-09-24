@@ -6,8 +6,10 @@ import {
   Mail, 
   MessageSquare, 
   ShieldCheck, 
-  ArrowUp
+  ArrowUp,
+  Clock
 } from 'lucide-react';
+import { BRAND, CONTACT, LEGAL_IDS } from '../../config/siteConfig';
 import LogoEmblem from '../LogoEmblem';
 import { 
   getFounderSettings, 
@@ -50,20 +52,20 @@ export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
                   <span className="brand-line-footer">LINE</span>
                 </span>
                 <span className="footer-brand-sub">
-                  {isAr ? 'للاستشارات والتسويق العقاري المعتمد' : 'Certified Real Estate Advisory'}
+                  {isAr ? 'للاستشارات والتسويق العقاري' : 'Real Estate Advisory & Brokerage'}
                 </span>
               </div>
             </div>
 
             <p className="footer-desc">
               {isAr 
-                ? 'المنصة العقارية المؤسسية المعتمدة في سوهاج وسوهاج الجديدة. بيع وشراء وتثمين رسمي معتمد بأعلى معايير الأمان القانوني 100%.' 
-                : 'The premier institutional real estate advisory and marketplace in Sohag & New Sohag.'}
+                ? 'وساطة واستشارات للأصول العقارية عالية القيمة في سوهاج والقاهرة الكبرى: بيع، شراء، تقييم، ومراجعة قانونية للمستندات قبل التعاقد.' 
+                : 'Brokerage and advisory for high-value real estate in Sohag and Greater Cairo: selling, buying, valuation and legal document review before contract.'}
             </p>
 
             <div className="footer-trust-badge">
               <ShieldCheck size={15} className="trust-shield-icon" />
-              <span>{isAr ? 'عقارات مفحوصة ومسجلة 100% • ترخيص قانوني' : '100% Verified Legal Titles'}</span>
+              <span>{isAr ? 'مراجعة المستندات قبل العرض • سرية تامة' : 'Documents reviewed before listing • Full confidentiality'}</span>
             </div>
           </div>
 
@@ -101,6 +103,7 @@ export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
               <li><Link to="/investor">{isAr ? 'مركز المستثمرين' : 'Investor Desk'}</Link></li>
               <li><Link to="/special-requests">{isAr ? 'الطلبات العقارية الخاصة' : 'Bespoke Requests'}</Link></li>
               <li><Link to="/broker">{isAr ? 'شبكة الوسطاء والشركاء' : 'Brokers Network'}</Link></li>
+              <li><Link to="/about">{isAr ? 'عن الشركة' : 'About us'}</Link></li>
             </ul>
           </div>
 
@@ -117,7 +120,11 @@ export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
             </div>
             <div className="footer-contact-item">
               <Mail size={15} className="contact-icon" />
-              <a href="mailto:contact@oneline-sohag.com" className="contact-link">contact@oneline-sohag.com</a>
+              <a href={`mailto:${CONTACT.email}`} className="contact-link">{CONTACT.email}</a>
+            </div>
+            <div className="footer-contact-item">
+              <Clock size={15} className="contact-icon" />
+              <span>{isAr ? CONTACT.hours_ar : CONTACT.hours_en}</span>
             </div>
 
             <a
@@ -135,12 +142,21 @@ export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
         {/* Footer Bottom Bar */}
         <div className="footer-bottom-bar">
           <div className="footer-copyright">
-            <span>© {new Date().getFullYear()} 1Line Real Estate. {isAr ? 'جميع الحقوق محفوظة' : 'All rights reserved.'}</span>
+            <span>© {new Date().getFullYear()} {BRAND.legalName}. {isAr ? 'جميع الحقوق محفوظة' : 'All rights reserved.'}</span>
+            {LEGAL_IDS.commercialRegistry && (
+              <span>{isAr ? 'سجل تجاري' : 'CR'} <bdi>{LEGAL_IDS.commercialRegistry}</bdi></span>
+            )}
+            {LEGAL_IDS.taxCard && (
+              <span>{isAr ? 'بطاقة ضريبية' : 'Tax ID'} <bdi>{LEGAL_IDS.taxCard}</bdi></span>
+            )}
+            <Link to="/privacy" className="footer-legal-link">{isAr ? 'سياسة الخصوصية' : 'Privacy policy'}</Link>
             <Link 
               to="/crm" 
               className="footer-crm-lock"
               tabIndex="-1"
               title=""
+              rel="nofollow"
+              aria-label={isAr ? 'دخول الإدارة' : 'Admin sign-in'}
             >
               🔒
             </Link>
@@ -148,14 +164,14 @@ export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
 
           <div className="footer-bottom-meta">
             <span className="footer-slogan">
-              {isAr ? 'الريادة والنزاهة في سوق عقارات سوهاج' : 'Integrity & Excellence in Sohag Real Estate'}
+              {isAr ? 'سوهاج • القاهرة الكبرى' : 'Sohag • Greater Cairo'}
             </span>
             <button 
               type="button" 
               className="footer-scroll-top-btn"
               onClick={scrollToTop}
               title={isAr ? 'العودة للأعلى' : 'Top'}
-              aria-label="Scroll to top"
+              aria-label="العودة لأعلى الصفحة"
             >
               <ArrowUp size={15} />
             </button>

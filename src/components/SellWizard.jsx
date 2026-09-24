@@ -641,7 +641,7 @@ export const SellWizard = ({
             </div>
 
             <div className="cert-perks-row">
-              <div className="cert-perk"><CheckCircle2 size={15} className="text-success" /> <span>{isAr ? 'أكثر من 500 مشترٍ مسجل' : '500+ Qualified Buyers'}</span></div>
+              <div className="cert-perk"><CheckCircle2 size={15} className="text-success" /> <span>{isAr ? 'عرض أولي على المشترين المسجلين بطلبات مطابقة' : 'First shown to registered matching buyers'}</span></div>
               <div className="cert-perk"><CheckCircle2 size={15} className="text-success" /> <span>{isAr ? 'تصوير بروشور احترافي مجاناً' : 'Free Photo Brochure'}</span></div>
               <div className="cert-perk"><CheckCircle2 size={15} className="text-success" /> <span>{isAr ? 'بدون أي عمولات على البائع' : 'Zero Seller Commission'}</span></div>
             </div>

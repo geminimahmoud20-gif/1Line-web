@@ -407,7 +407,7 @@ export default function HomePage({
 
           <p className="hero-description">
             {lang === 'ar' 
-              ? 'المنصة العقارية الاستشارية المعتمدة بسوهاج • فحص قانوني وهندسي 100% • تسعير عادل وفق مؤشرات السوق الحقيقية، وإدارة صفقات بخصوصية تامة.' 
+              ? 'وساطة واستشارات للأصول العقارية عالية القيمة في سوهاج والقاهرة الكبرى: مراجعة المستندات قبل العرض، تسعير بمقارنات حقيقية، وإدارة الصفقة بسرية تامة.' 
               : 'Sohag’s premier verified real estate platform • 100% audited title deeds • Market intelligence benchmarks & discreet advisory.'}
           </p>
 
@@ -596,7 +596,7 @@ export default function HomePage({
               </div>
               <div className="twin-trust-text">
                 <strong>{lang === 'ar' ? 'فحص هندسي وتدقيق قانوني معتمد' : 'Audited Legal & Structural Verification'}</strong>
-                <span>{lang === 'ar' ? 'تراخيص رسمية مفحوصة ومطابقة لسجلات الشهر العقاري بسوهاج' : 'Verified licenses, title deeds & registry compliance in Sohag'}</span>
+                <span>{lang === 'ar' ? 'نراجع الملكية والتراخيص والتوكيلات قبل عرض أي عقار' : 'Title, permits and powers of attorney reviewed before listing'}</span>
               </div>
             </div>
 

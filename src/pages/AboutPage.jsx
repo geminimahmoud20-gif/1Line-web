@@ -25,7 +25,8 @@ import {
   getFounderSettings, 
   cleanWhatsAppNumber, 
   cleanPhoneNumber, 
-  getWhatsAppUrl 
+  getWhatsAppUrl,
+  DEFAULT_FOUNDER_CMS
 } from '../utils/founderCmsData';
 import { updatePageSeo } from '../utils/seoHelper';
 
@@ -63,27 +64,27 @@ export default function AboutPage({ lang = 'ar', triggerToast }) {
 
   const stats = [
     {
-      num: isAr ? (cms.stats?.[0]?.num_ar || '+500') : (cms.stats?.[0]?.num_en || '500+'),
-      label: isAr ? (cms.stats?.[0]?.label_ar || 'صفقة عقارية ناجحة') : (cms.stats?.[0]?.label_en || 'Successful Deals'),
-      sub: isAr ? (cms.stats?.[0]?.sub_ar || 'موثقة ومسجلة رسمياً') : (cms.stats?.[0]?.sub_en || 'Officially Verified'),
+      num: isAr ? (cms.stats?.[0]?.num_ar || DEFAULT_FOUNDER_CMS.stats[0].num_ar) : (cms.stats?.[0]?.num_en || DEFAULT_FOUNDER_CMS.stats[0].num_en),
+      label: isAr ? (cms.stats?.[0]?.label_ar || DEFAULT_FOUNDER_CMS.stats[0].label_ar) : (cms.stats?.[0]?.label_en || DEFAULT_FOUNDER_CMS.stats[0].label_en),
+      sub: isAr ? (cms.stats?.[0]?.sub_ar || DEFAULT_FOUNDER_CMS.stats[0].sub_ar) : (cms.stats?.[0]?.sub_en || DEFAULT_FOUNDER_CMS.stats[0].sub_en),
       icon: <FileCheck size={20} className="text-gold" />
     },
     {
-      num: isAr ? (cms.stats?.[1]?.num_ar || '+1.2B') : (cms.stats?.[1]?.num_en || '$25M+'),
-      label: isAr ? (cms.stats?.[1]?.label_ar || 'جنيه حجم تداولات') : (cms.stats?.[1]?.label_en || 'Trading Volume'),
-      sub: isAr ? (cms.stats?.[1]?.sub_ar || 'أصول واستثمارات مدارة') : (cms.stats?.[1]?.sub_en || 'Managed Assets'),
+      num: isAr ? (cms.stats?.[1]?.num_ar || DEFAULT_FOUNDER_CMS.stats[1].num_ar) : (cms.stats?.[1]?.num_en || DEFAULT_FOUNDER_CMS.stats[1].num_en),
+      label: isAr ? (cms.stats?.[1]?.label_ar || DEFAULT_FOUNDER_CMS.stats[1].label_ar) : (cms.stats?.[1]?.label_en || DEFAULT_FOUNDER_CMS.stats[1].label_en),
+      sub: isAr ? (cms.stats?.[1]?.sub_ar || DEFAULT_FOUNDER_CMS.stats[1].sub_ar) : (cms.stats?.[1]?.sub_en || DEFAULT_FOUNDER_CMS.stats[1].sub_en),
       icon: <TrendingUp size={20} className="text-gold" />
     },
     {
-      num: isAr ? (cms.stats?.[2]?.num_ar || '100%') : (cms.stats?.[2]?.num_en || '100%'),
-      label: isAr ? (cms.stats?.[2]?.label_ar || 'فحص وتدقيق قانوني') : (cms.stats?.[2]?.label_en || 'Legal Compliance'),
-      sub: isAr ? (cms.stats?.[2]?.sub_ar || 'تراخيص وملكية معتمدة') : (cms.stats?.[2]?.sub_en || 'Valid Title Deeds'),
+      num: isAr ? (cms.stats?.[2]?.num_ar || DEFAULT_FOUNDER_CMS.stats[2].num_ar) : (cms.stats?.[2]?.num_en || DEFAULT_FOUNDER_CMS.stats[2].num_en),
+      label: isAr ? (cms.stats?.[2]?.label_ar || DEFAULT_FOUNDER_CMS.stats[2].label_ar) : (cms.stats?.[2]?.label_en || DEFAULT_FOUNDER_CMS.stats[2].label_en),
+      sub: isAr ? (cms.stats?.[2]?.sub_ar || DEFAULT_FOUNDER_CMS.stats[2].sub_ar) : (cms.stats?.[2]?.sub_en || DEFAULT_FOUNDER_CMS.stats[2].sub_en),
       icon: <ShieldCheck size={20} className="text-gold" />
     },
     {
-      num: isAr ? (cms.stats?.[3]?.num_ar || '+12K') : (cms.stats?.[3]?.num_en || '12K+'),
-      label: isAr ? (cms.stats?.[3]?.label_ar || 'عميل ومستثمر يثقون بنا') : (cms.stats?.[3]?.label_en || 'Trusted Clients'),
-      sub: isAr ? (cms.stats?.[3]?.sub_ar || 'بسوهاج ومغتربي الخليج') : (cms.stats?.[3]?.sub_en || 'Egypt & Expats'),
+      num: isAr ? (cms.stats?.[3]?.num_ar || DEFAULT_FOUNDER_CMS.stats[3].num_ar) : (cms.stats?.[3]?.num_en || DEFAULT_FOUNDER_CMS.stats[3].num_en),
+      label: isAr ? (cms.stats?.[3]?.label_ar || DEFAULT_FOUNDER_CMS.stats[3].label_ar) : (cms.stats?.[3]?.label_en || DEFAULT_FOUNDER_CMS.stats[3].label_en),
+      sub: isAr ? (cms.stats?.[3]?.sub_ar || DEFAULT_FOUNDER_CMS.stats[3].sub_ar) : (cms.stats?.[3]?.sub_en || DEFAULT_FOUNDER_CMS.stats[3].sub_en),
       icon: <Users size={20} className="text-gold" />
     }
   ];
@@ -92,19 +93,19 @@ export default function AboutPage({ lang = 'ar', triggerToast }) {
     {
       num: '01',
       icon: <ShieldCheck size={24} className="gold-std-icon text-emerald" />,
-      title_ar: 'التدقيق القانوني الصارم 100%',
-      title_en: '100% Verified Legal Audit',
+      title_ar: 'مراجعة المستندات قبل العرض',
+      title_en: 'Documents reviewed before listing',
       desc_ar: 'فحص شامل لتسلسل الملكية، تراخيص البناء، ومراجعة العقود والتوكيلات من الإدارة القانونية قبل عرض أي عقار.',
       desc_en: 'Comprehensive title deed review, municipal permits verification, and zero legal disputes before any listing.',
-      badge_ar: 'أمان قانوني قطعي',
-      badge_en: 'Absolute Security'
+      badge_ar: 'قبل التعاقد',
+      badge_en: 'Before contract'
     },
     {
       num: '02',
       icon: <Scale size={24} className="gold-std-icon text-gold" />,
-      title_ar: 'التقييم السعري العادل والمعتمد',
-      title_en: 'Certified Fair Valuation',
-      desc_ar: 'مؤشرات سعرية لحظية مبنية على صفقات حقيقية منفذة بسوهاج، تضمن حماية مدخرات المشتري من أي مغالاة تسعيرية.',
+      title_ar: 'سعر عادل بمقارنات حقيقية',
+      title_en: 'Fair price from real comparables',
+      desc_ar: 'تقرير سعر مبني على عروض وصفقات فعلية في نفس المنطقة ومعاينة ميدانية، يحمي البائع من البيع بأقل والمشتري من المغالاة.',
       desc_en: 'Real-time market price benchmarks rooted in closed deals to protect buyer capital from artificial inflation.',
       badge_ar: 'مؤشر سعر المتر',
       badge_en: 'Price Benchmark'
@@ -114,8 +115,8 @@ export default function AboutPage({ lang = 'ar', triggerToast }) {
       icon: <Award size={24} className="gold-std-icon text-gold" />,
       title_ar: 'صفر عمولة على البائع ومطابقة فورية',
       title_en: 'Zero Seller Fees & Fast Match',
-      desc_ar: 'تسويق احترافي مجاني بالكامل لأصحاب العقارات، مع مطابقة مباشرة مع أكثر من 500 مشترٍ ومستثمر كاش جاهزين.',
-      desc_en: 'Free professional marketing for sellers with direct matching to 500+ pre-qualified cash buyers.',
+      desc_ar: 'تسويق احترافي لأصحاب العقارات، مع عرض العقار أولاً على المشترين المسجلين لدينا بطلبات مطابقة.',
+      desc_en: 'Professional marketing, presenting your property first to registered buyers with matching briefs.',
       badge_ar: '0% عمولة بائع',
       badge_en: '0% Commission'
     },
@@ -124,7 +125,7 @@ export default function AboutPage({ lang = 'ar', triggerToast }) {
       icon: <Video size={24} className="gold-std-icon text-sky" />,
       title_ar: 'منظومة رعاية مغتربي الخليج',
       title_en: 'Gulf Expats Concierge Desk',
-      desc_ar: 'معاينات فيديو حية 4K، وتسهيلات التحويلات البنكية الرسمية، ومتابعة الإجراءات والتوكيلات حتى تسليم مفتاح الوحدة.',
+      desc_ar: 'معاينات فيديو مباشرة، ومتابعة التوكيلات والتحويلات البنكية الرسمية، وتحديثات مكتوبة حتى تسليم المفتاح.',
       desc_en: 'Live 4K video walk-throughs, certified power of attorney facilitation, and complete remote ownership procedures.',
       badge_ar: 'خدمة كبار المغتربين',
       badge_en: 'Expats VIP'
@@ -169,7 +170,7 @@ export default function AboutPage({ lang = 'ar', triggerToast }) {
           {/* Institutional Badge */}
           <div className="about-hero-badge">
             <Building2 size={15} className="text-gold" />
-            <span>{isAr ? 'المنظومة العقارية الأولى المعتمدة بسوهاج' : 'Sohag’s Premier Accredited Platform'}</span>
+            <span>{isAr ? 'وساطة واستشارات عقارية — سوهاج والقاهرة الكبرى' : 'Brokerage & advisory — Sohag and Greater Cairo'}</span>
           </div>
 
           {/* Monumental Headline */}
@@ -214,7 +215,7 @@ export default function AboutPage({ lang = 'ar', triggerToast }) {
               />
               <div className="about-portrait-seal">
                 <ShieldCheck size={14} className="seal-emerald-icon" />
-                <span>{isAr ? 'موثق ومعتمد رسمياً' : 'Officially Accredited'}</span>
+                <span>{isAr ? 'التزاماتنا في كل صفقة' : 'Our commitments'}</span>
               </div>
             </div>
 
@@ -294,7 +295,7 @@ export default function AboutPage({ lang = 'ar', triggerToast }) {
             <span>{isAr ? 'معايير 1Line المعتمدة' : 'Institutional Standards'}</span>
           </span>
           <h2 className="about-section-h2">
-            {isAr ? 'لماذا يأتمننا مئات المستثمرين وأهالينا بسوهاج والخليج؟' : 'Why Prime Investors & Expat Families Trust 1Line'}
+            {isAr ? 'لماذا يختار الملاك والمستثمرون 1Line؟' : 'Why Prime Investors & Expat Families Trust 1Line'}
           </h2>
           <p className="about-section-desc">
             {isAr 

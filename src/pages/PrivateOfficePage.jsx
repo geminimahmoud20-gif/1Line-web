@@ -16,7 +16,7 @@ import {
   KeyRound,
   Compass
 } from 'lucide-react';
-import { getWhatsAppUrl, getFounderSettings } from '../utils/founderCmsData';
+import { getWhatsAppUrl, getFounderSettings, getPhoneCallUrl } from '../utils/founderCmsData';
 import PrivateOfficeSection from '../components/home/PrivateOfficeSection';
 
 export default function PrivateOfficePage({ lang = 'ar', triggerToast }) {
@@ -219,7 +219,7 @@ export default function PrivateOfficePage({ lang = 'ar', triggerToast }) {
               <span>{isAr ? 'محادثة مشفرة عبر واتساب' : 'Encrypted WhatsApp Desk'}</span>
             </button>
             <a
-              href="tel:+201012345678"
+              href={getPhoneCallUrl()}
               className="btn btn-secondary"
               style={{ padding: '12px 28px', fontSize: '0.92rem' }}
             >

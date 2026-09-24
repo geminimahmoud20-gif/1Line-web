@@ -90,7 +90,7 @@ export default function CallbackModal({ isOpen, onClose, lang = 'ar', onSubmitCa
   return (
     <div className="track-modal-backdrop" onClick={onClose}>
       <div className="track-modal-card luxury-consultation-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '620px' }}>
-        <button type="button" className="modal-close-btn" onClick={onClose} aria-label="Close">
+        <button type="button" className="modal-close-btn" onClick={onClose} aria-label="إغلاق">
           <X size={20} />
         </button>
 

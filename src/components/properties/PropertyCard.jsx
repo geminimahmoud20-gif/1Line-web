@@ -95,20 +95,23 @@ export default function PropertyCard({
   const priceData = formatCurrencyPrice(property.price, currency, lang);
   const benchmark = getPriceBenchmark(property, lang);
 
-  // 🎯 Sovereign Status Badge (معتمد رسمياً من 1Line أو صفقة خاصة)
+  // One restrained status badge at most: private deal, or documents reviewed (only when the listing has a legal record)
   const resolvedBadge = (() => {
     if (property.isOffMarket || property.isPrivateDeal) {
       return {
-        label: lang === 'ar' ? 'صفقة خاصة' : 'Private Deal',
+        label: lang === 'ar' ? 'صفقة خاصة' : 'Private deal',
         Icon: Sparkles,
         className: 'badge-deal'
       };
     }
-    return {
-      label: lang === 'ar' ? 'معتمد رسمياً من 1Line' : '1Line Verified',
-      Icon: ShieldCheck,
-      className: 'badge-verified'
-    };
+    if (property.legalStatus) {
+      return {
+        label: lang === 'ar' ? 'مستندات مراجَعة' : 'Documents reviewed',
+        Icon: ShieldCheck,
+        className: 'badge-verified'
+      };
+    }
+    return null;
   })();
 
   const handlePrevImage = (e) => {
@@ -123,7 +126,7 @@ export default function PropertyCard({
     setActiveImageIndex((prev) => (prev < imagesList.length - 1 ? prev + 1 : 0));
   };
 
-  const BadgeIcon = resolvedBadge.Icon;
+  const BadgeIcon = resolvedBadge?.Icon;
 
   // Sector separation logic: Strictly distinct land, commercial, office, residential
   const isLand = property.type === 'land' || (title && title.includes('أرض'));
@@ -188,7 +191,7 @@ export default function PropertyCard({
               type="button" 
               className="carousel-arrow prev" 
               onClick={handlePrevImage}
-              aria-label="Previous photo"
+              aria-label={lang === 'ar' ? 'الصورة السابقة' : 'Previous photo'}
             >
               {lang === 'ar' ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
             </button>
@@ -196,7 +199,7 @@ export default function PropertyCard({
               type="button" 
               className="carousel-arrow next" 
               onClick={handleNextImage}
-              aria-label="Next photo"
+              aria-label={lang === 'ar' ? 'الصورة التالية' : 'Next photo'}
             >
               {lang === 'ar' ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
             </button>
@@ -205,22 +208,19 @@ export default function PropertyCard({
 
         {/* Sovereign Status Badges */}
         <div className="card-top-badges">
-          <span className={`property-badge ${resolvedBadge.className}`}>
-            <BadgeIcon size={12} className="badge-svg-icon" />
-            <span>{resolvedBadge.label}</span>
-          </span>
-          <div className="card-secondary-badges">
-            <span className="property-badge badge-commission">
-              <CheckCircle2 size={11} />
-              <span>{lang === 'ar' ? '0% عمولة' : '0% Fee'}</span>
+          {resolvedBadge && (
+            <span className={`property-badge ${resolvedBadge.className}`}>
+              <BadgeIcon size={12} className="badge-svg-icon" aria-hidden="true" />
+              <span>{resolvedBadge.label}</span>
             </span>
-            {property.virtualTour && (
+          )}
+          {property.virtualTour && (
+            <div className="card-secondary-badges">
               <span className="property-badge badge-virtual-tour">
-                <Sparkles size={11} />
-                <span>{lang === 'ar' ? 'معاينة 3D' : '3D Tour'}</span>
+                <span>{lang === 'ar' ? 'جولة 360°' : '360° tour'}</span>
               </span>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Floating Quick Action Buttons */}
@@ -235,7 +235,7 @@ export default function PropertyCard({
                 onQuickView(property);
               }}
               title={lang === 'ar' ? 'معاينة سريعة' : 'Quick View'}
-              aria-label="Quick View"
+              aria-label={lang === 'ar' ? 'معاينة سريعة' : 'Quick view'}
             >
               <Eye size={15} />
             </button>
@@ -250,7 +250,8 @@ export default function PropertyCard({
               onToggleFavorite(property.id);
             }}
             title={lang === 'ar' ? 'حفظ في المفضلة' : 'Save to Favorites'}
-            aria-label="Toggle Favorite"
+            aria-label={lang === 'ar' ? 'حفظ في المفضلة' : 'Save to favorites'}
+            aria-pressed={!!isFavorite}
           >
             <Heart size={16} fill={isFavorite ? '#ef4444' : 'none'} color={isFavorite ? '#ef4444' : 'currentColor'} />
           </button>
@@ -265,7 +266,8 @@ export default function PropertyCard({
                 onToggleCompare(property);
               }}
               title={lang === 'ar' ? 'إضافة للمقارنة' : 'Add to Compare'}
-              aria-label="Toggle Compare"
+              aria-label={lang === 'ar' ? 'إضافة للمقارنة' : 'Add to compare'}
+              aria-pressed={!!isCompared}
             >
               <Scale size={15} color={isCompared ? '#d97706' : 'currentColor'} />
             </button>
@@ -471,7 +473,7 @@ export default function PropertyCard({
               window.open(getWhatsAppUrl(msg), '_blank');
             }}
             title={lang === 'ar' ? 'استفسار سريع عبر واتساب' : 'Quick Inquiry via WhatsApp'}
-            aria-label="Quick WhatsApp Inquiry"
+            aria-label={lang === 'ar' ? 'استفسار سريع عبر واتساب' : 'WhatsApp inquiry'}
           >
             <MessageSquare size={17} />
           </button>

@@ -196,7 +196,7 @@ export default function AddDemandModal({
           boxShadow: '0 25px 50px -12px rgba(9, 35, 71, 0.5)' 
         }}
       >
-        <button type="button" className="modal-close-btn" onClick={handleResetAndClose} aria-label="Close">
+        <button type="button" className="modal-close-btn" onClick={handleResetAndClose} aria-label="إغلاق">
           <X size={20} />
         </button>
 

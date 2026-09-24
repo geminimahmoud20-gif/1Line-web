@@ -112,7 +112,7 @@ export default function QuickViewModal({
             className="modal-action-round-btn" 
             onClick={handleShare}
             title={isAr ? 'مشاركة هذا العقار' : 'Share Property'}
-            aria-label="Share Property"
+            aria-label="مشاركة العقار"
           >
             <Share2 size={16} />
           </button>
@@ -141,7 +141,7 @@ export default function QuickViewModal({
                       type="button" 
                       className="quickview-nav-btn prev-btn" 
                       onClick={isAr ? handleNextImage : handlePrevImage}
-                      aria-label="Previous image"
+                      aria-label="الصورة السابقة"
                     >
                       <ChevronRight size={18} />
                     </button>
@@ -149,7 +149,7 @@ export default function QuickViewModal({
                       type="button" 
                       className="quickview-nav-btn next-btn" 
                       onClick={isAr ? handlePrevImage : handleNextImage}
-                      aria-label="Next image"
+                      aria-label="الصورة التالية"
                     >
                       <ChevronLeft size={18} />
                     </button>

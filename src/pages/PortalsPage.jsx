@@ -72,9 +72,9 @@ export default function PortalsPage({
       case 'sell':
       case 'valuation':
         return {
-          badge: isAr ? 'منظومة التقييم العقاري المعتمدة بسوهاج 2026' : 'Sohag Certified Real Estate Valuation System',
+          badge: isAr ? 'تقييم استرشادي خلال دقيقتين' : 'Indicative valuation in two minutes',
           title: isAr ? 'بوابة تقييم وعرض العقار للبيع الفوري' : 'Property Valuation & Instant Listing Portal',
-          subtitle: isAr ? 'احسب القيمة السوقية العادلة لعقارك واعرضه لأكثر من 500 مشترٍ ومستثمر جاد مجاناً وبدون عمولات على البائع.' : 'Calculate fair market value and showcase your property to 500+ ready buyers with zero seller fees.'
+          subtitle: isAr ? 'احصل على نطاق سعري استرشادي لعقارك، ثم مراجعة ميدانية للمستندات وخطة عرض قبل أي تسويق.' : 'Get an indicative price range, then an on-site document review and a marketing plan before any listing.'
         };
       case 'investor':
         return {

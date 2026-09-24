@@ -13,7 +13,7 @@ export default function MarketTickerBar({ lang = 'ar' }) {
   const isAr = lang === 'ar';
 
   return (
-    <div className="market-ticker-container" aria-label="Real-time Real Estate Market Ticker">
+    <div className="market-ticker-container" aria-label="متوسطات أسعار المتر الاسترشادية">
       <div className="market-ticker-wrapper">
         
         {/* Fixed Title Badge (Sun Gold & Architectural Navy) */}
@@ -24,7 +24,7 @@ export default function MarketTickerBar({ lang = 'ar' }) {
             {isAr ? 'مؤشر بورصة سوهاج' : 'Sohag PropTech Index'}
           </span>
           <span className="ticker-badge-date" title={isAr ? 'بيانات مستمدة من تعاقدات وفحص مكتب 1Line الهندسي' : 'Derived from 1Line audited transactions'}>
-            {isAr ? 'محدث سبتمبر 2026 • صفقات 1Line المعتمدة' : 'Sep 2026 • Verified Deals'}
+            {isAr ? 'متوسطات استرشادية لسعر المتر — تقديرات 1Line، سبتمبر 2026' : 'Indicative price per m² — 1Line estimates, Sep 2026'}
           </span>
         </div>
 

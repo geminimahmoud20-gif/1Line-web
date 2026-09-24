@@ -365,7 +365,7 @@ export default function Header({
               className="header-compare-pill header-icon-badge-btn"
               onClick={onOpenCompare}
               title={isAr ? `عرض مقارنة العقارات المختارة (${compareCount})` : `View Property Comparison (${compareCount})`}
-              aria-label="Compare"
+              aria-label="المقارنة"
             >
               <Scale size={15} />
               <span className="header-badge-count">{compareCount}</span>
@@ -379,7 +379,7 @@ export default function Header({
               className="header-favorites-pill header-icon-badge-btn favorites-badge-btn"
               onClick={onOpenFavorites}
               title={isAr ? `عرض العقارات المحفوظة (${favoritesCount})` : `View Saved Properties (${favoritesCount})`}
-              aria-label="Favorites"
+              aria-label="المفضلة"
             >
               <Heart size={15} fill="#ef4444" color="#ef4444" />
               <span className="header-badge-count">{favoritesCount}</span>
@@ -409,7 +409,7 @@ export default function Header({
               className="utility-sub-btn theme-toggle-btn"
               onClick={handleThemeToggle}
               title={isAr ? (theme === 'dark' ? 'الوضع الليلي مفعّل — انقر للتبديل للنهاري' : 'الوضع النهاري مفعّل — انقر لتفعيل الوضع الليلي الفاخر') : 'Toggle Luxury Theme'}
-              aria-label="Toggle Luxury Theme"
+              aria-label="تبديل الوضع الليلي"
             >
               {theme === 'dark' ? (
                 <Sun size={15} className="text-gold theme-icon-rotate" />
@@ -429,7 +429,7 @@ export default function Header({
                 playNotificationChime('chime');
               }}
               title={isAr ? (soundEnabled ? 'التنبيهات الصوتية مفعلة (انقر للكتم)' : 'التنبيهات الصوتية مكتومة (انقر للتشغيل)') : 'Toggle Sound'}
-              aria-label="Toggle Sound"
+              aria-label="تشغيل/إيقاف الصوت"
             >
               {soundEnabled ? (
                 <Volume2 size={14} className="text-gold" />
@@ -566,7 +566,7 @@ export default function Header({
                 if (soundEnabled) playNotificationChime('click');
               }}
               title={isAr ? 'البحث السريع' : 'Quick Search'}
-              aria-label="Quick Search"
+              aria-label="بحث سريع"
             >
               <Search size={18} />
             </button>
@@ -580,7 +580,7 @@ export default function Header({
               setMobileMenuOpen(!mobileMenuOpen);
               if (soundEnabled) playNotificationChime('click');
             }}
-            aria-label="Toggle Navigation Menu"
+            aria-label="القائمة"
           >
             {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
