@@ -138,15 +138,33 @@ export function sanitizeObject(obj) {
  * 📱 Normalize phone numbers to eliminate spaces, dashes, and international prefixes
  * e.g. "+20 101-234-5678" -> "01012345678"
  */
+const toLatinDigits = (value) => String(value)
+  .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660))
+  .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06F0));
+
 export function normalizePhoneNumber(phone) {
   if (!phone || typeof phone !== 'string') return '';
-  let clean = phone.replace(/[^0-9]/g, '');
+  let clean = toLatinDigits(phone).replace(/[^0-9]/g, '');
   if (clean.startsWith('20') && clean.length === 12) {
     clean = '0' + clean.slice(2);
   } else if (clean.startsWith('0020') && clean.length === 14) {
     clean = '0' + clean.slice(4);
   }
   return clean;
+}
+
+/**
+ * Egyptian mobile (010/011/012/015 + 8 digits) or an international number written
+ * with + / 00 (Gulf expats, 8–15 digits per E.164). Accepts Arabic-Indic digits.
+ */
+export function isValidPhoneNumber(phone) {
+  if (!phone || typeof phone !== 'string') return false;
+  const raw = toLatinDigits(phone).trim();
+  if (/[^0-9+\s\-().]/.test(raw)) return false;
+  const local = normalizePhoneNumber(raw);
+  if (/^01[0125]\d{8}$/.test(local)) return true;
+  const intl = raw.replace(/[^0-9+]/g, '').replace(/^00/, '+');
+  return /^\+(?!20)[1-9]\d{7,14}$/.test(intl);
 }
 
 /**

@@ -14,6 +14,7 @@ import { exportToCsv } from '../utils/exportCsv';
 import { formatTimeSinceLastSync } from '../utils/syncManager';
 import { canExportCsv, canDeleteLead, canViewLeadPhone, maskPhoneNumber } from '../utils/rbacRules';
 import { SOHAG_AREAS, PROPERTY_TYPES } from '../data/propertiesData';
+import { getAreas } from '../utils/areasData';
 
 // Enterprise PropTech Modules
 import KanbanPipeline from './crm/KanbanPipeline';
@@ -25,6 +26,7 @@ import RetargetingHub from './crm/RetargetingHub';
 import CustomerProfileModal from './crm/CustomerProfileModal';
 import AddLeadModal from './crm/AddLeadModal';
 import VisitorIntelligencePanel from './crm/VisitorIntelligencePanel';
+import FounderCmsPanel from './crm/FounderCmsPanel';
 import ContractStudioModal from './crm/ContractStudioModal';
 import LeadQuickDrawer from './crm/LeadQuickDrawer';
 import CrmExecutiveDashboard from './crm/CrmExecutiveDashboard';
@@ -174,7 +176,8 @@ export const CrmAdminPanel = ({
 
   const getLocalizedArea = (areaKey) => {
     if (!areaKey) return isAr ? 'سوهاج' : 'Sohag';
-    const found = SOHAG_AREAS.find(a => a.id === areaKey);
+    // getAreas() includes Cairo and CMS-added districts; SOHAG_AREAS is the static fallback
+    const found = getAreas().find(a => a.id === areaKey) || SOHAG_AREAS.find(a => a.id === areaKey);
     if (found) return isAr ? found.name_ar : found.name_en;
     return areaKey;
   };
@@ -287,38 +290,79 @@ export const CrmAdminPanel = ({
     }
   };
 
-  const handleBulkExportSelected = () => {
-    if (selectedLeadIds.length === 0) return;
+  // Leads keep area/budget/propertyType under `details`; exporting the raw objects left those columns empty.
+  const LEAD_EXPORT_HEADERS = {
+    id: 'المعرف',
+    name: 'اسم العميل',
+    phone: 'رقم الهاتف',
+    whatsapp: 'رقم الواتساب',
+    email: 'البريد الإلكتروني',
+    type: 'نوع الطلب',
+    propertyType: 'نوع العقار',
+    area: 'المنطقة',
+    budget: 'الميزانية',
+    status: 'الحالة',
+    temperature: 'درجة الاهتمام',
+    score: 'التقييم',
+    assignedTo: 'المسؤول',
+    source: 'المصدر',
+    nextFollowUpAt: 'المتابعة القادمة',
+    createdAt: 'تاريخ الإنشاء',
+    notes: 'الملاحظات'
+  };
+
+  const toLeadExportRow = (l) => {
+    const d = l.details || {};
+    const areaKey = l.area || d.area || d.district;
+    const typeKey = l.propertyType || d.propertyType;
+    return {
+      id: l.id,
+      name: l.name,
+      phone: l.phone,
+      whatsapp: l.whatsapp,
+      email: l.email || d.email || '',
+      type: formatLeadTypeBadge(l.type),
+      propertyType: typeKey ? getLocalizedPropertyType(typeKey) : '',
+      area: areaKey ? getLocalizedArea(areaKey) : '',
+      budget: l.budget || d.budget || d.expectedPrice || '',
+      status: formatLeadStatus(l.status),
+      temperature: { hot: 'ساخن', warm: 'دافئ', cold: 'بارد' }[l.temperature] || '',
+      score: l.score ?? '',
+      assignedTo: l.assignedTo || '',
+      source: l.source || '',
+      nextFollowUpAt: l.nextFollowUpAt || '',
+      createdAt: l.createdAt || l.timestamp || '',
+      notes: l.notes || ''
+    };
+  };
+
+  const exportLeadRows = (rows, fileName, scope) => {
     if (!canExportCsv(activeRole)) {
       if (triggerToast) {
         triggerToast(isAr ? 'غير مصرح لك بتصدير بيانات العملاء (تتطلب صلاحية مدير أو مالية)' : 'Unauthorized: requires Manager or Finance role', 'error');
       }
       return;
     }
-    const selectedLeads = leads.filter(l => selectedLeadIds.includes(l.id));
-    const headers = {
-      id: 'المعرف',
-      name: 'اسم العميل',
-      whatsapp: 'رقم الواتساب',
-      phone: 'رقم الهاتف',
-      propertyType: 'نوع العقار',
-      area: 'المنطقة',
-      type: 'النوع',
-      status: 'الحالة',
-      assignedTo: 'المسؤول',
-      budget: 'الميزانية'
-    };
-    exportToCsv('Selected_Leads_Export', selectedLeads, headers);
+    if (!rows.length) {
+      if (triggerToast) triggerToast(isAr ? 'لا يوجد عملاء لتصديرهم في العرض الحالي' : 'Nothing to export', 'error');
+      return;
+    }
+    exportToCsv(fileName, rows.map(toLeadExportRow), LEAD_EXPORT_HEADERS);
     logAuditEvent({
       actionType: 'LEADS_EXPORTED_CSV',
       targetCollection: 'leads',
-      targetId: 'bulk_selection',
-      details: { count: selectedLeadIds.length },
+      targetId: scope,
+      details: { count: rows.length },
       actor: currentUser
     });
     if (triggerToast) {
-      triggerToast(isAr ? `تم تصدير ${selectedLeadIds.length} عميل محدد إلى CSV بنجاح!` : `Exported ${selectedLeadIds.length} leads!`, 'success');
+      triggerToast(isAr ? `تم تصدير ${rows.length} عميل إلى ملف Excel (CSV)` : `Exported ${rows.length} leads`, 'success');
     }
+  };
+
+  const handleBulkExportSelected = () => {
+    if (selectedLeadIds.length === 0) return;
+    exportLeadRows(leads.filter(l => selectedLeadIds.includes(l.id)), 'Selected_Leads_Export', 'bulk_selection');
   };
 
   const handleLoginSubmit = async (e) => {
@@ -341,43 +385,12 @@ export const CrmAdminPanel = ({
     }
   };
 
-  const handleExportCSV = () => {
-    if (!canExportCsv(activeRole)) {
-      if (triggerToast) {
-        triggerToast(isAr ? 'غير مصرح لك بتصدير ملفات العملاء (تتطلب صلاحية مدير أو مالية)' : 'Unauthorized: requires Manager or Finance role', 'error');
-      }
-      return;
-    }
-    if (exportLeadsCSV) {
+  const handleExportCSV = (rows = leads || []) => {
+    if (exportLeadsCSV && canExportCsv(activeRole)) {
       exportLeadsCSV();
       return;
     }
-    const headers = {
-      id: 'المعرف ID',
-      name: 'اسم العميل',
-      phone: 'رقم الهاتف',
-      whatsapp: 'رقم الواتساب',
-      email: 'البريد الإلكتروني',
-      source: 'مصدر العميل',
-      type: 'نوع الطلب',
-      budget: 'الميزانية',
-      area: 'المنطقة',
-      propertyType: 'نوع العقار',
-      notes: 'الملاحظات',
-      status: 'حالة المتابعة',
-      temperature: 'درجة الاهتمام',
-      score: 'التقييم',
-      assignedTo: 'المسؤول',
-      nextFollowUpAt: 'موعد المتابعة القادم',
-      createdAt: 'تاريخ الإنشاء',
-      updatedAt: 'تاريخ التحديث',
-      createdBy: 'أنشئ بواسطة',
-      lastActivityAt: 'آخر نشاط'
-    };
-    exportToCsv('Oneline_Leads_Report', leads || [], headers);
-    if (triggerToast) {
-      triggerToast(isAr ? 'تم تنزيل ملف العملاء Excel/CSV بنجاح!' : 'Exported leads successfully!', 'success');
-    }
+    exportLeadRows(rows, 'Oneline_Leads_Report', rows === leads ? 'all_leads' : 'filtered_view');
   };
 
   // Full Leads Database JSON Backup
@@ -807,6 +820,19 @@ export const CrmAdminPanel = ({
                 <UserPlus size={15} />
                 <span>{isAr ? 'إضافة عميل جديد ➕' : 'Add New Lead ➕'}</span>
               </button>
+              {canExportCsv(activeRole) && (
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline"
+                  onClick={() => handleExportCSV(filteredLeads)}
+                  disabled={filteredLeads.length === 0}
+                  title={isAr ? 'تصدير العملاء الظاهرين حالياً (حسب الفلتر والبحث)' : 'Export the current filtered view'}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <Download size={15} />
+                  <span>{isAr ? `تصدير Excel (${filteredLeads.length})` : `Export (${filteredLeads.length})`}</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -957,7 +983,8 @@ export const CrmAdminPanel = ({
           )}
 
           {/* Leads Table */}
-          <table className="crm-table">
+          <div className="crm-table-scroll-wrapper" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
+            <table className="crm-table">
             <thead>
               <tr>
                 <th style={{ width: '36px', textAlign: 'center' }}>
@@ -1010,8 +1037,8 @@ export const CrmAdminPanel = ({
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <strong 
                               style={{ color: 'var(--text-primary)', cursor: 'pointer', textDecoration: 'underline' }}
-                              onClick={() => setViewingProfileLead(l)}
-                              title={isAr ? 'فتح ملف العميل الشامل 360°' : 'Open 360 Profile'}
+                              onClick={() => setQuickDrawerLead(l)}
+                              title={isAr ? 'فتح المعاينة السريعة وتسجيل المكالمة' : 'Open Quick Drawer'}
                             >
                               {l.name}
                             </strong>
@@ -1131,6 +1158,29 @@ export const CrmAdminPanel = ({
                       {/* Actions */}
                       <td data-label={isAr ? 'الإجراءات' : 'Actions'}>
                         <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                          {/* Quick Drawer Fast Inspection */}
+                          <button
+                            type="button"
+                            className="btn btn-sm"
+                            onClick={() => setQuickDrawerLead(l)}
+                            style={{ 
+                              padding: '5px 9px', 
+                              background: 'rgba(37, 99, 235, 0.12)', 
+                              color: '#2563eb', 
+                              border: '1px solid rgba(37, 99, 235, 0.3)',
+                              borderRadius: '6px',
+                              fontSize: '0.75rem',
+                              fontWeight: 'bold',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                            title={isAr ? 'معاينة سريعة وتسجيل مكالمة' : 'Quick Drawer & Log Call'}
+                          >
+                            <Zap size={13} />
+                            <span>{isAr ? 'سريع' : 'Quick'}</span>
+                          </button>
+
                           {/* Open 360° Profile */}
                           {/* Primary Action: Open 360° Profile */}
                           <button
@@ -1245,7 +1295,8 @@ export const CrmAdminPanel = ({
             </tbody>
           </table>
         </div>
-      )}
+      </div>
+    )}
 
       {/* 🏆 TAB 5: TEAM COMMISSIONS & LEADERBOARD */}
       {adminTab === 'agents' && (
@@ -1717,6 +1768,27 @@ export const CrmAdminPanel = ({
           triggerToast={triggerToast}
         />
       )}
+
+      {/* ⚡ DRAWER: HIGH-VELOCITY LEAD QUICK DRAWER */}
+      <LeadQuickDrawer
+        lead={quickDrawerLead}
+        onClose={() => setQuickDrawerLead(null)}
+        onUpdateLead={(leadId, updatedData) => {
+          if (onUpdateLead) onUpdateLead(leadId, updatedData);
+          setQuickDrawerLead(prev => prev && prev.id === leadId ? { ...prev, ...updatedData } : prev);
+        }}
+        onDeleteLead={onDeleteLead}
+        onConvertToProperty={onConvertToProperty}
+        onOpenFullProfile={(l) => {
+          setViewingProfileLead(l);
+          setQuickDrawerLead(null);
+        }}
+        properties={properties}
+        filteredLeads={filteredLeads}
+        isAr={isAr}
+        triggerToast={triggerToast}
+        activeRole={activeRole}
+      />
     </div>
   );
 };

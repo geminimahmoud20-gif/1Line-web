@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { getAreas } from '../../utils/areasData';
+import { isValidPhoneNumber } from '../../utils/securityShield';
 
 export default function AddLeadModal({
   isOpen,
@@ -74,6 +75,16 @@ export default function AddLeadModal({
 
     if (!whatsappTrimmed) {
       if (triggerToast) triggerToast(isAr ? 'الرجاء إدخال رقم الواتساب (إلزامي للتواصل وإرسال العروض)!' : 'WhatsApp number is required!', 'error');
+      return;
+    }
+
+    const badPhone = [
+      [formData.phone, isAr ? 'رقم الهاتف الأساسي' : 'Primary phone'],
+      [formData.whatsapp, isAr ? 'رقم الواتساب' : 'WhatsApp'],
+      [formData.altPhone, isAr ? 'الرقم البديل' : 'Alternate phone']
+    ].find(([value]) => value && value.trim() && !isValidPhoneNumber(value));
+    if (badPhone) {
+      if (triggerToast) triggerToast(isAr ? `${badPhone[1]} غير صحيح — اكتب موبايل مصري (01xxxxxxxxx) أو رقماً دولياً يبدأ بـ +` : `${badPhone[1]} is invalid`, 'error');
       return;
     }
 
@@ -157,7 +168,11 @@ export default function AddLeadModal({
             <div className="form-group-item">
               <label>{isAr ? 'رقم الهاتف الأساسي *' : 'Primary Phone *'}</label>
               <input
-                type="text"
+                type="tel"
+                inputMode="tel"
+                dir="ltr"
+                autoComplete="off"
+                maxLength={20}
                 required
                 placeholder="010XXXXXXXX"
                 value={formData.phone}
@@ -169,7 +184,11 @@ export default function AddLeadModal({
             <div className="form-group-item">
               <label>{isAr ? 'رقم الواتساب * (إلزامي للتواصل وإرسال العروض):' : 'WhatsApp Number * (Required):'}</label>
               <input
-                type="text"
+                type="tel"
+                inputMode="tel"
+                dir="ltr"
+                autoComplete="off"
+                maxLength={20}
                 required
                 placeholder="010XXXXXXXX"
                 value={formData.whatsapp}

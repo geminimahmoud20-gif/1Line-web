@@ -19,6 +19,7 @@ import '../components/crm/CrmLayout.css';
 import '../components/crm/crm-luxury.css';
 import { isFirebaseAuthAvailable, loginUser } from '../firebaseService';
 import { useAuth } from '../context/AuthContext';
+import { canEditProperties } from '../utils/rbacRules';
 import { verifyAdminCredentials } from '../utils/securityShield';
 
 export default function CrmPage({
@@ -50,10 +51,16 @@ export default function CrmPage({
 }) {
   const { isAuthInitializing, currentUser, userRole } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'leads' | 'kanban' | 'properties' | 'demands' | 'projects' | 'financials' | 'matching' | 'analytics' | 'system'
-  // Roles outside CRM_ROLES (e.g. 'guest' while auth is still resolving) map to super_admin for
-  // the local-password session, instead of leaking "undefined" into the UI.
+  // Fail closed: a signed-in account whose role is unknown (e.g. 'agent' from a claims error)
+  // gets read-only 'viewer'. Only the local-password session (no Firebase user) is super_admin.
   const knownRole = (r) => (CRM_ROLES.some((x) => x.id === r) ? r : null);
-  const verifiedUserRole = knownRole(currentUser?.role) || knownRole(userRole) || 'super_admin';
+  const ROLE_ALIASES = { admin: 'super_admin' };
+  const resolveRole = (r) => knownRole(ROLE_ALIASES[r] || r);
+  const hasLocalSessionFlag = (!isFirebaseAuthAvailable() || import.meta.env.DEV)
+    && typeof window !== 'undefined' && sessionStorage.getItem('crm_auth') === 'true';
+  const verifiedUserRole = currentUser
+    ? (resolveRole(currentUser.role) || 'viewer')
+    : (resolveRole(userRole) || (hasLocalSessionFlag ? 'super_admin' : 'viewer'));
   const isSuperAdminUser = verifiedUserRole === 'super_admin';
   // null = "no simulation": follows the verified role until the super admin picks another one
   const [simulatedRole, setSimulatedRole] = useState(null);
@@ -61,6 +68,23 @@ export default function CrmPage({
   const setSelectedRole = (r) => setSimulatedRole(r === 'super_admin' ? null : r);
   const activeRole = isSuperAdminUser ? selectedRole : verifiedUserRole;
   const isSimulationMode = isSuperAdminUser && selectedRole !== 'super_admin';
+
+  // Permission enforcement on the mutation handlers themselves — the panels only render
+  // buttons, so hiding UI alone would leave viewer/finance able to edit inventory.
+  const can = {
+    editInventory: canEditProperties(activeRole),
+    deleteInventory: activeRole === 'super_admin' || activeRole === 'property_manager',
+    manageDemands: ['super_admin', 'sales_manager', 'property_manager'].includes(activeRole),
+    // viewer / finance / property_manager read leads but don't change their pipeline
+    editLeads: ['super_admin', 'sales_manager', 'sales_agent', 'agent_east', 'agent_new_sohag'].includes(activeRole)
+  };
+  const guard = (allowed, fn) => (...args) => {
+    if (!allowed) {
+      if (triggerToast) triggerToast(lang === 'ar' ? 'صلاحياتك الحالية لا تسمح بهذا الإجراء' : 'Your role does not allow this action', 'error');
+      return undefined;
+    }
+    return fn ? fn(...args) : undefined;
+  };
   const [systemSubTab, setSystemSubTab] = useState('areas');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -515,9 +539,9 @@ export default function CrmPage({
               properties={properties}
               leads={leads}
               demands={demands}
-              onAddProperty={onAddProperty}
-              onUpdateProperty={onUpdateProperty}
-              onDeleteProperty={onDeleteProperty}
+              onAddProperty={guard(can.editInventory, onAddProperty)}
+              onUpdateProperty={guard(can.editInventory, onUpdateProperty)}
+              onDeleteProperty={guard(can.deleteInventory, onDeleteProperty)}
               lang={lang}
               triggerToast={triggerToast}
               externalNewPropertyData={externalPropertyData}
@@ -527,36 +551,36 @@ export default function CrmPage({
             <DemandsManagerPanel
               demands={demands}
               properties={properties}
-              onAddDemand={onAddDemand}
-              onApproveDemand={onApproveDemand}
-              onUpdateDemand={onUpdateDemand}
-              onDeleteDemand={onDeleteDemand}
-              onUnpublishDemand={onUnpublishDemand}
+              onAddDemand={guard(can.manageDemands, onAddDemand)}
+              onApproveDemand={guard(can.manageDemands, onApproveDemand)}
+              onUpdateDemand={guard(can.manageDemands, onUpdateDemand)}
+              onDeleteDemand={guard(activeRole === 'super_admin', onDeleteDemand)}
+              onUnpublishDemand={guard(can.manageDemands, onUnpublishDemand)}
               lang={lang}
               triggerToast={triggerToast}
             />
           ) : activeTab === 'projects' ? (
             <MegaProjectsManagerPanel
               projects={projects}
-              onAddProject={onAddProject}
-              onUpdateProject={onUpdateProject}
-              onDeleteProject={onDeleteProject}
+              onAddProject={guard(can.editInventory, onAddProject)}
+              onUpdateProject={guard(can.editInventory, onUpdateProject)}
+              onDeleteProject={guard(can.deleteInventory, onDeleteProject)}
               lang={lang}
               triggerToast={triggerToast}
             />
-          ) : activeTab === 'areas' ? (
+          ) : activeTab === 'areas' && activeRole === 'super_admin' ? (
             <AreaManagerPanel
               lang={lang}
               triggerToast={triggerToast}
               properties={properties}
               leads={leads}
             />
-          ) : activeTab === 'corporate' ? (
+          ) : activeTab === 'corporate' && activeRole === 'super_admin' ? (
             <FounderCmsPanel
               lang={lang}
               triggerToast={triggerToast}
             />
-          ) : activeTab === 'system' ? (
+          ) : ['system', 'areas', 'corporate'].includes(activeTab) ? (
             activeRole !== 'super_admin' ? (
               <div style={{
                 background: 'var(--crm-surface-light, #ffffff)',
@@ -691,8 +715,8 @@ export default function CrmPage({
                     triggerToast={triggerToast}
                     properties={properties}
                     onConvertToProperty={handleConvertToProperty}
-                    onUpdateLead={onUpdateLead}
-                    onDeleteLead={onDeleteLead}
+                    onUpdateLead={guard(can.editLeads, onUpdateLead)}
+                    onDeleteLead={guard(activeRole === 'super_admin', onDeleteLead)}
                     onAddNewLead={onAddNewLead}
                     demands={demands}
                     onSwitchToDemands={() => setActiveTab('demands')}
@@ -722,8 +746,8 @@ export default function CrmPage({
               triggerToast={triggerToast}
               properties={properties}
               onConvertToProperty={handleConvertToProperty}
-              onUpdateLead={onUpdateLead}
-              onDeleteLead={onDeleteLead}
+              onUpdateLead={guard(can.editLeads, onUpdateLead)}
+              onDeleteLead={guard(activeRole === 'super_admin', onDeleteLead)}
               onAddNewLead={onAddNewLead}
               demands={demands}
               onSwitchToDemands={() => setActiveTab('demands')}

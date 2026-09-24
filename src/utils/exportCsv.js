@@ -17,8 +17,12 @@ export const exportToCsv = (filename, dataArray, columnHeaders) => {
         let val = item[k];
         if (val === undefined || val === null) val = '';
         if (typeof val === 'object') val = JSON.stringify(val);
+        let str = String(val);
+        // CSV/formula injection: public forms feed these cells, and Excel executes
+        // text starting with = + - @ (e.g. =HYPERLINK(...)). Prefixing ' keeps it as text.
+        if (typeof val !== 'number' && /^[=+\-@\t\r]/.test(str)) str = `'${str}`;
         // Escape double quotes
-        const str = String(val).replace(/"/g, '""');
+        str = str.replace(/"/g, '""');
         return `"${str}"`;
       })
       .join(',');
@@ -34,5 +38,6 @@ export const exportToCsv = (filename, dataArray, columnHeaders) => {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  // Revoking synchronously can cancel the download in Safari/Firefox
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
