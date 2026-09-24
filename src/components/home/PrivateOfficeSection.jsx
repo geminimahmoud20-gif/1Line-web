@@ -59,7 +59,7 @@ export default function PrivateOfficeSection({ lang = 'ar' }) {
             <div className="pillar-icon-box">
               <EyeOff size={22} className="text-gold" />
             </div>
-            <h4>{isAr ? 'خصوصية تامة واتفاقيات حفظ الحقوق (NDA)' : 'Strict Privacy & NDA'}</h4>
+            <h3>{isAr ? 'خصوصية تامة واتفاقيات حفظ الحقوق (NDA)' : 'Strict Privacy & NDA'}</h3>
             <p>
               {isAr
                 ? 'لا يتم نشر أي صور أو معلومات علنية؛ مشاركة ملفات العقارات تتم فقط مع مشترين معتمدين ومتحقق من ملاءتهم المالية.'
@@ -71,7 +71,7 @@ export default function PrivateOfficeSection({ lang = 'ar' }) {
             <div className="pillar-icon-box">
               <ShieldCheck size={22} className="text-emerald" />
             </div>
-            <h4>{isAr ? 'تدقيق قانوني وهندسي مسبق 100%' : '100% Pre-Audited Legal Deeds'}</h4>
+            <h3>{isAr ? 'تدقيق قانوني وهندسي مسبق 100%' : '100% Pre-Audited Legal Deeds'}</h3>
             <p>
               {isAr
                 ? 'كافة الصفقات الحصرية خضعت لفحص شامل لسندات الملكية، التراخيص، وخلو النزاعات من الإدارة القانونية قبل عرضها.'
@@ -83,7 +83,7 @@ export default function PrivateOfficeSection({ lang = 'ar' }) {
             <div className="pillar-icon-box">
               <Award size={22} className="text-gold" />
             </div>
-            <h4>{isAr ? 'مستشار ثروات عقارية مخصص VIP' : 'Dedicated Private Wealth Advisor'}</h4>
+            <h3>{isAr ? 'مستشار ثروات عقارية مخصص VIP' : 'Dedicated Private Wealth Advisor'}</h3>
             <p>
               {isAr
                 ? 'مستشار تنفيذي يتولى ترتيب المعاينات الخاصة، التفاوض المالي المباشر، وتسهيلات مغتربي الخليج والتوكيلات الرسمية.'

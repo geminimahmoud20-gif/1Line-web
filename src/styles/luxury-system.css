@@ -384,7 +384,7 @@ button.sidebar-deposit-banner .deposit-banner-left > span { display: flex; flex-
   line-height: 1.7;
 }
 .lx-consent p { margin: 0; color: #E5E7EB !important; }
-.lx-consent a { color: #D9B97E; }
+.lx-consent a { color: #D9B97E; text-decoration: underline; text-underline-offset: 3px; } /* WCAG 1.4.1: not colour alone */
 .lx-consent-actions { display: flex; gap: 8px; flex: none; }
 .lx-consent .lx-btn-primary { background: #D9B97E; color: var(--navy-950); }
 .lx-consent .lx-btn-ghost { color: #E5E7EB; border-color: rgba(255, 255, 255, 0.28); }
