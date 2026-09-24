@@ -43,6 +43,9 @@ import { parseSemanticQuery, SEMANTIC_SEARCH_PRESETS } from '../utils/semanticSe
 import ScrollReveal from '../components/common/ScrollReveal';
 import { SELLER_PROOF } from '../config/siteConfig';
 
+// Keep in sync with the <link rel="preload"> in index.html
+const HERO_POSTER_DEFAULT = 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1600&q=70';
+
 export default function HomePage({ 
   lang, 
   currency = 'EGP',
@@ -319,15 +322,27 @@ export default function HomePage({
           </div>
         ) : (
           <div className="hero-cinematic-video-wrap" aria-hidden="true">
-            <img
-              src={founderSettings.heroPosterUrl || 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1600&q=70'}
-              alt=""
-              className="hero-cinematic-video"
-              fetchPriority="high"
-              decoding="async"
-              width="1600"
-              height="1067"
-            />
+            {(() => {
+              // LCP image: phones get a 640/960px file instead of the 1600px one.
+              // index.html preloads the default poster with the same srcset.
+              const src = founderSettings.heroPosterUrl || HERO_POSTER_DEFAULT;
+              const sized = (w) => src.replace(/([?&])w=\d+/, `$1w=${w}`);
+              const srcSet = /images\.unsplash\.com/.test(src) && /[?&]w=\d+/.test(src)
+                ? `${sized(640)} 640w, ${sized(960)} 960w, ${sized(1600)} 1600w`
+                : undefined;
+              return (
+                <img
+                  src={src}
+                  srcSet={srcSet}
+                  sizes="100vw"
+                  alt=""
+                  className="hero-cinematic-video"
+                  fetchPriority="high"
+                  width="1600"
+                  height="1067"
+                />
+              );
+            })()}
             <div
               className="hx-vignette"
               style={{
@@ -414,7 +429,9 @@ export default function HomePage({
             {lang === 'ar' ? (
               <>
                 <span>العقار ليس مجرد مساحة..</span>
-                <span>بل <em>قيمة</em> تُبنى على <em>قرار</em> صحيح.</span>
+                {/* Fixed break on phones: the fallback font and IBM Plex wrap this line differently,
+                    which shifted the search capsule 40px when the web font arrived (CLS 0.26). */}
+                <span>بل <em>قيمة</em> تُبنى <span className="hx-title-break">على <em>قرار</em> صحيح.</span></span>
               </>
             ) : (
               <>

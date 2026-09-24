@@ -28,6 +28,25 @@
       })();
     </script>
 
+    <!-- Homepage LCP: start the hero poster download before the lazy HomePage chunk runs.
+         Same srcset as HERO_POSTER_DEFAULT in src/pages/HomePage.jsx. Other routes skip it. -->
+    <!-- no crossorigin: <img> requests are no-cors, a CORS preconnect would not be reused -->
+    <link rel="preconnect" href="https://images.unsplash.com" />
+    <script>
+      (function() {
+        if (location.pathname !== '/') return;
+        // URLs must match the <img srcset> byte-for-byte or the image downloads twice
+        var u = function (w) { return 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=' + w + '&q=70'; };
+        var l = document.createElement('link');
+        l.rel = 'preload';
+        l.as = 'image';
+        l.setAttribute('fetchpriority', 'high');
+        l.setAttribute('imagesrcset', u(640) + ' 640w, ' + u(960) + ' 960w, ' + u(1600) + ' 1600w');
+        l.setAttribute('imagesizes', '100vw');
+        document.head.appendChild(l);
+      })();
+    </script>
+
     <!-- Open Graph / social previews -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="1Line Solutions" />

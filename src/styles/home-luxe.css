@@ -127,7 +127,10 @@
   text-shadow: 0 2px 28px rgba(7, 19, 34, 0.45);
   text-wrap: balance;
 }
-.hx-title span { display: block; }
+.hx-title > span { display: block; }
+@media (max-width: 480px) {
+  .hx-title .hx-title-break { display: block; }
+}
 .hx-title em {
   font-style: normal;
   background: var(--hx-gold-grad);
