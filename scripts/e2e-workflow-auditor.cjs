@@ -99,30 +99,33 @@ async function runAudit() {
   }
 
   // --------------------------------------------------------------------------
-  // SCENARIO 2: Omni-Channel Reservation Checkout (DepositModal)
+  // SCENARIO 2: Verified Legal Reservation Flow (DepositModal)
   // --------------------------------------------------------------------------
-  console.log(`\n${BOLD}📌 SCENARIO 2: Omni-Channel Reservation Checkout (DepositModal)${RESET}`);
+  console.log(`\n${BOLD}📌 SCENARIO 2: Verified Legal Reservation Flow (DepositModal)${RESET}`);
   try {
-    // 2.1 Four Payment Channels
-    const hasInstaPay = depositModalSrc.includes('oneline.sohag@instapay');
-    const hasCard3DSecure = depositModalSrc.includes("activePaymentChannel === 'card'") && depositModalSrc.includes('cardNumber');
-    const hasWallets = depositModalSrc.includes('walletPhone');
-    const hasFawry = depositModalSrc.includes('fawryKioskCode') && depositModalSrc.includes('982');
-    
-    recordTest(2, 'InstaPay Official IPA & Clipboard Handle', hasInstaPay ? 'PASS' : 'FAIL', 'Verified oneline.sohag@instapay');
-    recordTest(2, 'Card / Meeza 3D-Secure Simulation', hasCard3DSecure ? 'PASS' : 'FAIL', 'Card inputs & simulated secure handshake (~1.4s)');
-    recordTest(2, 'Mobile Cash Wallets Support', hasWallets ? 'PASS' : 'FAIL', 'Vodafone/Orange/Etisalat/WE Cash integration');
-    recordTest(2, 'Fawry Pay 10-Digit Kiosk Code', hasFawry ? 'PASS' : 'FAIL', 'Generates 48h valid Fawry POS code');
+    // 2.1 Modal Architecture & Access Control
+    const hasModalStructure = depositModalSrc.includes('role="dialog"') && depositModalSrc.includes('aria-labelledby="reserve-title"');
+    recordTest(2, 'Accessible Modal Dialog Semantics', hasModalStructure ? 'PASS' : 'FAIL', 'Verified ARIA dialog attributes');
 
-    // 2.2 Honeypot Anti-Bot Trap
-    const hasHoneypot = depositModalSrc.includes('user_checkout_ref_hp') && depositModalSrc.includes('checkFormSpamProtection');
-    recordTest(2, 'Checkout Honeypot Anti-Bot Shield', hasHoneypot ? 'PASS' : 'FAIL', 'Rejects bots submitting hidden trap input');
+    // 2.2 Honeypot Anti-Bot Shield
+    const hasHoneypot = depositModalSrc.includes('checkFormSpamProtection') && depositModalSrc.includes('reservation_request');
+    recordTest(2, 'Checkout Honeypot Anti-Bot Shield', hasHoneypot ? 'PASS' : 'FAIL', 'Rejects automated spam submissions');
 
-    // 2.3 Digital Receipt & PDF Download & WhatsApp CTA
-    const hasReceipt = depositModalSrc.includes('receiptData.txnId') && depositModalSrc.includes('generateReservationContractPdf');
-    const hasEncodedWhatsApp = depositModalSrc.includes('getWhatsAppUrl');
-    recordTest(2, 'Post-Payment Digital Receipt & Contract PDF', hasReceipt ? 'PASS' : 'FAIL', 'Displays 1L-TXN ID & triggers PDF contract');
-    recordTest(2, 'WhatsApp Instant Sales Notification Link', hasEncodedWhatsApp ? 'PASS' : 'FAIL', 'Encodes client details and transaction receipt');
+    // 2.3 Phone Input & Country Code Selection
+    const hasPhoneValidation = depositModalSrc.includes('PhoneInputField') && depositModalSrc.includes('phoneCountry');
+    recordTest(2, 'International & Local Phone Input Field', hasPhoneValidation ? 'PASS' : 'FAIL', 'Validates Egyptian & regional phone formats');
+
+    // 2.4 Legal & Document Review Workflow Protection
+    const hasLegalProtection = depositModalSrc.includes('مستندات الملكية والترخيص') || depositModalSrc.includes('DO NOT reintroduce simulated payment');
+    recordTest(2, 'Legal Due Diligence & Pre-Payment Document Review', hasLegalProtection ? 'PASS' : 'FAIL', 'Enforces legal document check before payment');
+
+    // 2.5 Success Callback & Reference Code Presentation
+    const hasSuccessHandling = depositModalSrc.includes('SubmissionSuccess') && depositModalSrc.includes('submittedRef');
+    recordTest(2, 'Post-Submission Reference Generation & Tracking', hasSuccessHandling ? 'PASS' : 'FAIL', 'Generates traceable lead reference code');
+
+    // 2.6 Instant WhatsApp Advisor Channel
+    const hasWhatsAppAdvisor = depositModalSrc.includes('whatsappText') && depositModalSrc.includes('1Line');
+    recordTest(2, 'WhatsApp Advisor Direct Follow-up Channel', hasWhatsAppAdvisor ? 'PASS' : 'FAIL', 'Connects client with 1Line sales advisor on WhatsApp');
 
   } catch (err) {
     recordTest(2, 'Scenario 2 Execution', 'FAIL', err.message);

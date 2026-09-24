@@ -12,7 +12,10 @@ import {
   deleteLead,
   saveDemand,
   updateDemandStatus,
-  deleteDemandDoc
+  deleteDemandDoc,
+  subscribeToCatalog,
+  upsertCatalogItem,
+  deleteCatalogItem
 } from '../firebaseLazy';
 import { playNotificationChime } from '../utils/notificationHub';
 import { sanitizeObject, normalizePhoneNumber } from '../utils/securityShield';
@@ -46,29 +49,50 @@ export function PropertiesProvider({ children }) {
     return PROPERTIES_DATA;
   });
 
+  // Cloud write results → one honest toast. Local state is already updated, so the UI never waits.
+  const reportCatalogSync = useCallback((promise) => {
+    Promise.resolve(promise).then((res) => {
+      if (res?.ok) return;
+      const isAr = lang === 'ar';
+      const msg = res?.reason === 'too-large'
+        ? (isAr ? 'لم يُنشر على الموقع: حجم البيانات/الصور المضمّنة أكبر من الحد المسموح (1MB). ارفع الصور كروابط بدلاً من تضمينها.' : 'Not published: item exceeds 1MB — use image URLs.')
+        : res?.reason === 'permission-denied'
+          ? (isAr ? 'تم الحفظ على هذا الجهاز فقط — حسابك لا يملك صلاحية النشر السحابي.' : 'Saved on this device only — no cloud permission.')
+          : (isAr ? 'تم الحفظ على هذا الجهاز فقط — تعذّر النشر السحابي، أعد المحاولة عند توفر الاتصال.' : 'Saved on this device only — cloud sync failed.');
+      triggerToast(msg, 'error');
+    }).catch(() => {});
+  }, [lang, triggerToast]);
+
+  const propertiesRef = useRef(properties);
+  propertiesRef.current = properties;
+
+  const persistProperties = (list) => {
+    try { localStorage.setItem('oneline_properties', JSON.stringify(list)); } catch { /* quota / private mode */ }
+  };
+
   const handleAddProperty = useCallback((newProp) => {
-    setProperties((prev) => {
-      const updated = [newProp, ...prev];
-      localStorage.setItem('oneline_properties', JSON.stringify(updated));
-      return updated;
-    });
-  }, []);
+    const updated = [newProp, ...propertiesRef.current];
+    setProperties(updated);
+    persistProperties(updated);
+    reportCatalogSync(upsertCatalogItem('properties', newProp));
+  }, [reportCatalogSync]);
 
   const handleUpdateProperty = useCallback((id, updatedData) => {
-    setProperties((prev) => {
-      const updated = prev.map((p) => (p.id === id ? { ...p, ...updatedData } : p));
-      localStorage.setItem('oneline_properties', JSON.stringify(updated));
-      return updated;
-    });
-  }, []);
+    const current = propertiesRef.current.find((p) => p.id === id);
+    if (!current) return;
+    const merged = { ...current, ...updatedData };
+    const updated = propertiesRef.current.map((p) => (p.id === id ? merged : p));
+    setProperties(updated);
+    persistProperties(updated);
+    reportCatalogSync(upsertCatalogItem('properties', merged));
+  }, [reportCatalogSync]);
 
   const handleDeleteProperty = useCallback((id) => {
-    setProperties((prev) => {
-      const updated = prev.filter((p) => p.id !== id);
-      localStorage.setItem('oneline_properties', JSON.stringify(updated));
-      return updated;
-    });
-  }, []);
+    const updated = propertiesRef.current.filter((p) => p.id !== id);
+    setProperties(updated);
+    persistProperties(updated);
+    reportCatalogSync(deleteCatalogItem('properties', id));
+  }, [reportCatalogSync]);
 
   // Mega Projects State
   const [projects, setProjects] = useState(() => {
@@ -87,32 +111,64 @@ export function PropertiesProvider({ children }) {
     return MEGA_PROJECTS;
   });
 
+  const projectsRef = useRef(projects);
+  projectsRef.current = projects;
+
+  const persistProjects = (list) => {
+    try { localStorage.setItem('oneline_mega_projects', JSON.stringify(list)); } catch { /* quota / private mode */ }
+  };
+
   const handleAddProject = useCallback((newProj) => {
-    setProjects((prev) => {
-      const updated = [newProj, ...prev];
-      localStorage.setItem('oneline_mega_projects', JSON.stringify(updated));
-      return updated;
-    });
-    triggerToast(lang === 'ar' ? 'تم إضافة المشروع بنجاح 🏢' : 'Project added!', 'success');
-  }, [lang, triggerToast]);
+    const updated = [newProj, ...projectsRef.current];
+    setProjects(updated);
+    persistProjects(updated);
+    reportCatalogSync(upsertCatalogItem('projects', newProj));
+    triggerToast(lang === 'ar' ? 'تم إضافة المشروع' : 'Project added', 'success');
+  }, [lang, triggerToast, reportCatalogSync]);
 
   const handleUpdateProject = useCallback((id, updatedData) => {
-    setProjects((prev) => {
-      const updated = prev.map((p) => (p.id === id ? { ...p, ...updatedData } : p));
-      localStorage.setItem('oneline_mega_projects', JSON.stringify(updated));
-      return updated;
-    });
-    triggerToast(lang === 'ar' ? 'تم تحديث بيانات المشروع ونسب الإنجاز بنجاح 💾' : 'Project updated!', 'success');
-  }, [lang, triggerToast]);
+    const current = projectsRef.current.find((p) => p.id === id);
+    if (!current) return;
+    const merged = { ...current, ...updatedData };
+    const updated = projectsRef.current.map((p) => (p.id === id ? merged : p));
+    setProjects(updated);
+    persistProjects(updated);
+    reportCatalogSync(upsertCatalogItem('projects', merged));
+    triggerToast(lang === 'ar' ? 'تم تحديث بيانات المشروع' : 'Project updated', 'success');
+  }, [lang, triggerToast, reportCatalogSync]);
 
   const handleDeleteProject = useCallback((id) => {
-    setProjects((prev) => {
-      const updated = prev.filter((p) => p.id !== id);
-      localStorage.setItem('oneline_mega_projects', JSON.stringify(updated));
-      return updated;
-    });
-    triggerToast(lang === 'ar' ? 'تم حذف المشروع بنجاح 🗑️' : 'Project deleted!', 'info');
-  }, [lang, triggerToast]);
+    const updated = projectsRef.current.filter((p) => p.id !== id);
+    setProjects(updated);
+    persistProjects(updated);
+    reportCatalogSync(deleteCatalogItem('projects', id));
+    triggerToast(lang === 'ar' ? 'تم حذف المشروع' : 'Project deleted', 'info');
+  }, [lang, triggerToast, reportCatalogSync]);
+
+  // Live catalog from Firestore for every visitor: cloud docs override the bundled seed
+  // by id, tombstones remove items, cloud-only items (added in the CRM) go first.
+  useEffect(() => {
+    const applyCloud = (setter, storageKey) => (cloudDocs) => {
+      if (!Array.isArray(cloudDocs) || cloudDocs.length === 0) return;
+      setter((prev) => {
+        const byId = new Map(prev.map((p) => [String(p.id), p]));
+        const fresh = [];
+        for (const docItem of cloudDocs) {
+          const key = String(docItem.id);
+          if (docItem.deleted) { byId.delete(key); continue; }
+          if (byId.has(key)) byId.set(key, { ...byId.get(key), ...docItem });
+          else fresh.push(docItem);
+        }
+        fresh.sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
+        const next = [...fresh, ...byId.values()];
+        try { localStorage.setItem(storageKey, JSON.stringify(next)); } catch { /* storage unavailable */ }
+        return next;
+      });
+    };
+    const unsubProps = subscribeToCatalog('properties', applyCloud(setProperties, 'oneline_properties'));
+    const unsubProjects = subscribeToCatalog('projects', applyCloud(setProjects, 'oneline_mega_projects'));
+    return () => { unsubProps(); unsubProjects(); };
+  }, []);
 
   // Favorites State
   const [favorites, setFavorites] = useState(() => {
@@ -508,15 +564,33 @@ export function PropertiesProvider({ children }) {
   // Firebase Real-time subscriptions
   useEffect(() => {
     if (isFirebaseActive()) {
-      const unsubLeads = subscribeToLeads((cloudLeads) => {
+      const unsubLeads = subscribeToLeads((cloudLeads, meta) => {
         if (cloudLeads && cloudLeads.length > 0) {
           const valid = cloudLeads.filter(l => l && typeof l === 'object');
-          setLeads(valid);
+          if (meta?.fromCache) {
+            // Cache-only snapshot (offline / first paint): merge, never shrink the list to it
+            setLeads((prev) => {
+              const byId = new Map(prev.map((l) => [String(l.id), l]));
+              valid.forEach((l) => byId.set(String(l.id), { ...byId.get(String(l.id)), ...l }));
+              const fresh = valid.filter((l) => !prev.some((p) => String(p.id) === String(l.id)));
+              return [...fresh, ...prev.map((p) => byId.get(String(p.id)))];
+            });
+          } else {
+            setLeads(valid);
+          }
         }
       });
-      const unsubDemands = subscribeToDemands((cloudDemands) => {
+      const unsubDemands = subscribeToDemands((cloudDemands, meta) => {
         if (cloudDemands && cloudDemands.length > 0) {
           const valid = cloudDemands.filter(d => d && typeof d === 'object');
+          if (meta?.fromCache) {
+            // Cache-only snapshot: add/refresh, never shrink the list to this device's pending writes
+            setDemands((prev) => {
+              const ids = new Set(valid.map((d) => String(d.id)));
+              return [...valid, ...prev.filter((d) => !ids.has(String(d.id)))];
+            });
+            return;
+          }
           const sorted = [...valid].sort((a, b) => {
             const timeA = new Date(a?.approvedAt || a?.createdAt || a?.timestamp || 0).getTime();
             const timeB = new Date(b?.approvedAt || b?.createdAt || b?.timestamp || 0).getTime();

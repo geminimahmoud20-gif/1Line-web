@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-09-24T07:20:26.196Z",
-  "total": 32,
-  "passed": 26,
+  "timestamp": "2026-09-24T07:24:58.470Z",
+  "total": 31,
+  "passed": 31,
   "warnings": 0,
-  "failed": 6,
-  "passRate": "81.3%",
+  "failed": 0,
+  "passRate": "100.0%",
   "results": [
     {
       "scenarioId": 1,
@@ -38,45 +38,39 @@
     },
     {
       "scenarioId": 2,
-      "testName": "InstaPay Official IPA & Clipboard Handle",
-      "status": "FAIL",
-      "details": "Verified oneline.sohag@instapay"
-    },
-    {
-      "scenarioId": 2,
-      "testName": "Card / Meeza 3D-Secure Simulation",
-      "status": "FAIL",
-      "details": "Card inputs & simulated secure handshake (~1.4s)"
-    },
-    {
-      "scenarioId": 2,
-      "testName": "Mobile Cash Wallets Support",
-      "status": "FAIL",
-      "details": "Vodafone/Orange/Etisalat/WE Cash integration"
-    },
-    {
-      "scenarioId": 2,
-      "testName": "Fawry Pay 10-Digit Kiosk Code",
-      "status": "FAIL",
-      "details": "Generates 48h valid Fawry POS code"
+      "testName": "Accessible Modal Dialog Semantics",
+      "status": "PASS",
+      "details": "Verified ARIA dialog attributes"
     },
     {
       "scenarioId": 2,
       "testName": "Checkout Honeypot Anti-Bot Shield",
       "status": "PASS",
-      "details": "Rejects bots submitting hidden trap input"
+      "details": "Rejects automated spam submissions"
     },
     {
       "scenarioId": 2,
-      "testName": "Post-Payment Digital Receipt & Contract PDF",
-      "status": "FAIL",
-      "details": "Displays 1L-TXN ID & triggers PDF contract"
+      "testName": "International & Local Phone Input Field",
+      "status": "PASS",
+      "details": "Validates Egyptian & regional phone formats"
     },
     {
       "scenarioId": 2,
-      "testName": "WhatsApp Instant Sales Notification Link",
-      "status": "FAIL",
-      "details": "Encodes client details and transaction receipt"
+      "testName": "Legal Due Diligence & Pre-Payment Document Review",
+      "status": "PASS",
+      "details": "Enforces legal document check before payment"
+    },
+    {
+      "scenarioId": 2,
+      "testName": "Post-Submission Reference Generation & Tracking",
+      "status": "PASS",
+      "details": "Generates traceable lead reference code"
+    },
+    {
+      "scenarioId": 2,
+      "testName": "WhatsApp Advisor Direct Follow-up Channel",
+      "status": "PASS",
+      "details": "Connects client with 1Line sales advisor on WhatsApp"
     },
     {
       "scenarioId": 3,

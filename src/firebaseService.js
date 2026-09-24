@@ -15,6 +15,7 @@ import {
   doc,
   setDoc,
   query,
+  where,
   orderBy,
   limit,
   onSnapshot,
@@ -32,7 +33,7 @@ export const loadProperties = async (maxCount = 100) => {
     try {
       const q = query(collection(db, 'properties'), orderBy('createdAt', 'desc'), limit(maxCount));
       const snapshot = await getDocs(q);
-      return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      return snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
     } catch (error) {
       console.error('Firebase loadProperties error:', error);
       return null;
@@ -58,6 +59,70 @@ export const saveProperty = async (property) => {
     }
   }
   return property;
+};
+
+// ===================== CATALOG SYNC (properties / projects) =====================
+// One document per item, keyed by the item's own id so the static seed data and the
+// cloud copy line up. Deletes write a tombstone ({ deleted: true }) so seed items
+// removed by the admin don't reappear from the bundled data on the next load.
+
+const CATALOG_COLLECTIONS = new Set(['properties', 'projects']);
+const MAX_DOC_BYTES = 900 * 1024; // Firestore hard limit is 1 MiB per document
+
+/** Strips undefined/functions (Firestore rejects them) and measures the payload. */
+const toFirestorePayload = (item) => {
+  const json = JSON.stringify(item);
+  return { data: JSON.parse(json), bytes: new Blob([json]).size };
+};
+
+/**
+ * Real-time listener for a catalog collection. Returns an unsubscribe function or null.
+ * callback receives [{ id, ...data }] including tombstones.
+ */
+export const subscribeToCatalog = (collectionName, callback) => {
+  if (!CATALOG_COLLECTIONS.has(collectionName) || !isFirebaseConfigured() || !db) return null;
+  try {
+    return onSnapshot(collection(db, collectionName), (snapshot) => {
+      callback(snapshot.docs.map((d) => ({ ...d.data(), id: d.data().id ?? d.id })));
+    }, (err) => {
+      console.warn(`Firebase subscribeToCatalog [${collectionName}] warning:`, err);
+    });
+  } catch (error) {
+    console.error(`Firebase subscribeToCatalog [${collectionName}] error:`, error);
+    return null;
+  }
+};
+
+/**
+ * Create or replace one catalog item. Resolves { ok, reason }:
+ * reason = 'not-configured' | 'too-large' | Firestore error code.
+ */
+export const upsertCatalogItem = async (collectionName, item) => {
+  if (!CATALOG_COLLECTIONS.has(collectionName) || !item || item.id === undefined || item.id === null) {
+    return { ok: false, reason: 'invalid' };
+  }
+  if (!isFirebaseConfigured() || !db) return { ok: false, reason: 'not-configured' };
+  const { data, bytes } = toFirestorePayload({ ...item, deleted: false, updatedAt: new Date().toISOString() });
+  if (bytes > MAX_DOC_BYTES) return { ok: false, reason: 'too-large' };
+  try {
+    await setDoc(doc(db, collectionName, String(item.id)), data);
+    return { ok: true };
+  } catch (error) {
+    console.error(`Firebase upsertCatalogItem [${collectionName}] error:`, error);
+    return { ok: false, reason: error?.code || 'error' };
+  }
+};
+
+export const deleteCatalogItem = async (collectionName, id) => {
+  if (!CATALOG_COLLECTIONS.has(collectionName) || id === undefined || id === null) return { ok: false, reason: 'invalid' };
+  if (!isFirebaseConfigured() || !db) return { ok: false, reason: 'not-configured' };
+  try {
+    await setDoc(doc(db, collectionName, String(id)), { id, deleted: true, updatedAt: new Date().toISOString() });
+    return { ok: true };
+  } catch (error) {
+    console.error(`Firebase deleteCatalogItem [${collectionName}] error:`, error);
+    return { ok: false, reason: error?.code || 'error' };
+  }
 };
 
 // ===================== LEADS & OFFLINE SYNC QUEUE =====================
@@ -148,10 +213,19 @@ if (typeof window !== 'undefined') {
 export const saveLead = async (lead) => {
   if (isFirebaseConfigured() && db) {
     try {
-      const docRef = await addDoc(collection(db, 'leads'), {
-        ...lead,
-        createdAt: serverTimestamp()
-      });
+      const payload = { ...lead, createdAt: serverTimestamp() };
+      // Document id = app lead id, so updateLeadField/deleteLead (which use lead.id) reach it.
+      if (lead.id !== undefined && lead.id !== null && lead.id !== '') {
+        try {
+          await setDoc(doc(db, 'leads', String(lead.id)), payload);
+          return lead;
+        } catch (error) {
+          // A visitor re-submitting (merged into an existing lead id) is an update, which the
+          // rules reserve for admins — store it as a fresh inquiry instead of dropping it.
+          if (error?.code !== 'permission-denied') throw error;
+        }
+      }
+      const docRef = await addDoc(collection(db, 'leads'), payload);
       return { ...lead, id: docRef.id };
     } catch (error) {
       console.error('Firebase saveLead error, enqueuing for background retry:', error);
@@ -172,7 +246,7 @@ export const loadLeads = async (maxCount = 150) => {
     try {
       const q = query(collection(db, 'leads'), orderBy('createdAt', 'desc'), limit(maxCount));
       const snapshot = await getDocs(q);
-      return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      return snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
     } catch (error) {
       console.error('Firebase loadLeads error:', error);
       return null;
@@ -190,8 +264,9 @@ export const subscribeToLeads = (callback, maxCount = 150) => {
     try {
       const q = query(collection(db, 'leads'), orderBy('createdAt', 'desc'), limit(maxCount));
       return onSnapshot(q, (snapshot) => {
-        const leads = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-        callback(leads);
+        const leads = snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
+        // fromCache snapshots can hold only this device's pending writes — not the full list
+        callback(leads, { fromCache: snapshot.metadata.fromCache });
       }, (err) => {
         if (err && err.code === 'permission-denied') {
           // Graceful fallback for unauthenticated guests
@@ -311,7 +386,7 @@ export const subscribeToDeals = (callback) => {
     try {
       const q = query(collection(db, 'deals'), orderBy('updatedAt', 'desc'));
       return onSnapshot(q, (snapshot) => {
-        const deals = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        const deals = snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
         callback(deals);
       }, (err) => {
         if (err && err.code === 'permission-denied') return;
@@ -351,10 +426,15 @@ export const saveNotification = async (text) => {
 export const saveDemand = async (demand) => {
   if (isFirebaseConfigured() && db) {
     try {
-      const docRef = await addDoc(collection(db, 'demands'), {
-        ...demand,
-        createdAt: serverTimestamp()
-      });
+      // The rules require `name`; the public form sends `clientName`.
+      const payload = { ...demand, name: demand.name || demand.clientName || '', createdAt: serverTimestamp() };
+      // Keep the document id equal to the app's demand id, so approve/unpublish/delete
+      // (which address the doc by that id) hit the same document instead of a random addDoc id.
+      if (demand.id !== undefined && demand.id !== null && demand.id !== '') {
+        await setDoc(doc(db, 'demands', String(demand.id)), payload);
+        return demand;
+      }
+      const docRef = await addDoc(collection(db, 'demands'), payload);
       return { ...demand, id: docRef.id };
     } catch (error) {
       console.error('Firebase saveDemand error:', error);
@@ -371,14 +451,20 @@ export const saveDemand = async (demand) => {
 export const subscribeToDemands = (callback, maxCount = 100) => {
   if (isFirebaseConfigured() && db) {
     try {
+      let unsubscribe = () => {};
+      const toDemands = (snapshot) => snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
       const q = query(collection(db, 'demands'), orderBy('createdAt', 'desc'), limit(maxCount));
-      return onSnapshot(q, (snapshot) => {
-        const demands = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-        callback(demands);
-      }, (err) => {
-        if (err && err.code === 'permission-denied') return;
+      unsubscribe = onSnapshot(q, (snapshot) => callback(toDemands(snapshot), { fromCache: snapshot.metadata.fromCache }), (err) => {
+        if (err && err.code === 'permission-denied') {
+          // Visitors may only list published demands; the rules reject an unfiltered query.
+          // Single-field equality filter → no composite index needed.
+          const publicQ = query(collection(db, 'demands'), where('status', '==', 'published'), limit(maxCount));
+          unsubscribe = onSnapshot(publicQ, (snapshot) => callback(toDemands(snapshot), { fromCache: snapshot.metadata.fromCache }), () => {});
+          return;
+        }
         console.warn('Firebase subscribeToDemands snapshot warning:', err);
       });
+      return () => unsubscribe();
     } catch (error) {
       console.error('Firebase subscribeToDemands error:', error);
       return null;
@@ -395,7 +481,7 @@ export const loadDemands = async (maxCount = 100) => {
     try {
       const q = query(collection(db, 'demands'), orderBy('createdAt', 'desc'), limit(maxCount));
       const snapshot = await getDocs(q);
-      return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      return snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
     } catch (error) {
       console.error('Firebase loadDemands error:', error);
       return null;

@@ -10,13 +10,24 @@ service cloud.firestore {
     }
     
     // 🛡️ 1. LEADS & CUSTOMER INQUIRIES (حماية بيانات العملاء ومنع التلاعب بالحقول)
+    // Public forms may only create "new" records of bounded size — no self-assigned status,
+    // no privilege fields, no oversized payloads used to exhaust storage/quota.
+    function boundedText(data, field, maxLen) {
+      return !(field in data) || (data[field] is string && data[field].size() <= maxLen);
+    }
+
     match /leads/{leadId} {
-      allow create: if request.resource.data.phone is string 
+      allow create: if request.resource.data.phone is string
                     && request.resource.data.phone.size() >= 10
                     && request.resource.data.phone.size() <= 25
                     && request.resource.data.name is string
                     && request.resource.data.name.size() >= 2
                     && request.resource.data.name.size() <= 100
+                    && request.resource.data.keys().size() <= 60
+                    && boundedText(request.resource.data, 'notes', 2000)
+                    && boundedText(request.resource.data, 'message', 2000)
+                    && boundedText(request.resource.data, 'email', 120)
+                    && (!('status' in request.resource.data) || request.resource.data.status == 'new' || isAdmin())
                     && (!('role' in request.resource.data))
                     && (!('isAdmin' in request.resource.data));
       allow read, update, delete: if isAdmin();
@@ -27,9 +38,14 @@ service cloud.firestore {
       allow create: if request.resource.data.name is string 
                     && request.resource.data.name.size() >= 2
                     && request.resource.data.name.size() <= 100
-                    && request.resource.data.phone is string 
+                    && request.resource.data.phone is string
                     && request.resource.data.phone.size() >= 10
-                    && request.resource.data.phone.size() <= 25;
+                    && request.resource.data.phone.size() <= 25
+                    && request.resource.data.keys().size() <= 60
+                    && boundedText(request.resource.data, 'notes', 2000)
+                    && boundedText(request.resource.data, 'description', 3000)
+                    // A visitor cannot publish their own demand; only the admin approves it
+                    && (isAdmin() || !('status' in request.resource.data) || request.resource.data.status == 'pending');
       // 🔒 للعامة: قراءة الطلبات المنشورة فقط، وللمشرف قراءة كافة الطلبات المعلقة
       allow read: if (resource != null && resource.data.status == 'published') || isAdmin();
       allow update, delete: if isAdmin();

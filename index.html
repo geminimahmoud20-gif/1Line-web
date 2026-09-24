@@ -12,6 +12,8 @@
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <meta name="theme-color" content="#0B1B32" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <!-- X-Frame-Options / X-Content-Type-Options are ignored in <meta> (and XFO logs a console error).
+         They are sent as real HTTP headers from vercel.json. Do not re-add them here. -->
 
     <!-- Theme pre-hydration (prevents flash of wrong theme) -->
     <script>

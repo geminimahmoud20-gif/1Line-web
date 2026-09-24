@@ -53,8 +53,11 @@ export const deleteDemandDoc = lazyCall('deleteDemandDoc');
 export const logoutUser = lazyCall('logoutUser');
 export const saveSettings = lazyCall('saveSettings');
 export const loadSettings = lazyCall('loadSettings');
+export const upsertCatalogItem = lazyCall('upsertCatalogItem');
+export const deleteCatalogItem = lazyCall('deleteCatalogItem');
 
 export const subscribeToLeads = lazySubscribe('subscribeToLeads');
 export const subscribeToDemands = lazySubscribe('subscribeToDemands');
 export const monitorAuthState = lazySubscribe('monitorAuthState');
 export const subscribeToSettings = lazySubscribe('subscribeToSettings');
+export const subscribeToCatalog = lazySubscribe('subscribeToCatalog');
