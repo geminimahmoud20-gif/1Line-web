@@ -43,7 +43,11 @@ export default function MarketTickerBar({ lang = 'ar', demands = [] }) {
 
     const out = [...priced];
     if (latestDemand) {
-      const text = (isAr ? latestDemand.text_ar : latestDemand.text_en || latestDemand.text_ar) || '';
+      // Budget is appended separately, so drop the "بميزانية …" tail the demand text often carries
+      const text = ((isAr ? latestDemand.text_ar : latestDemand.text_en || latestDemand.text_ar) || '')
+        // (no \b: JS word boundaries are ASCII-only and never match after Arabic letters)
+        .split(/\s+(?:بميزانية|ميزانية|with a budget|budget)(?=\s|$)/i)[0]
+        .trim();
       out.splice(Math.min(2, out.length), 0, {
         key: `demand-${latestDemand.id}`,
         icon: Zap,

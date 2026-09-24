@@ -100,6 +100,7 @@ function RouteLoadingSpinner({ lang = 'ar' }) {
 
 import './App.css';
 import './styles/luxury-system.css';
+import './styles/home-luxe.css';
 
 /**
  * Main Application Shell & Route Controller
