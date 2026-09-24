@@ -8,11 +8,14 @@ import {
   Plus, 
   Send,
   Activity,
-  Lock
+  Lock,
+  Calendar,
+  Download
 } from 'lucide-react';
 import { getAreas } from '../../utils/areasData';
 import { getLeadDigitalJourney } from '../../utils/visitorTracker';
 import { canViewLeadPhone, maskPhoneNumber, canEditLead } from '../../utils/rbacRules';
+import { generateGoogleCalendarUrl, downloadIcsFile } from '../../utils/calendarSync';
 
 export default function CustomerProfileModal({
   isOpen,
@@ -302,6 +305,51 @@ export default function CustomerProfileModal({
               </span>
             )}
 
+            {/* Quick Google Calendar Sync */}
+            <button
+              type="button"
+              className="btn btn-sm"
+              title={isAr ? 'إضافة موعد معاينة في تقويم Google' : 'Sync viewing to Google Calendar'}
+              onClick={() => {
+                const calUrl = generateGoogleCalendarUrl({
+                  title: `${isAr ? 'معاينة عقارية 1Line' : '1Line Property Viewing'}: ${formData.name}`,
+                  description: `العميل: ${formData.name}\nالهاتف: ${formData.phone}\nنوع العقار: ${formData.propertyType}\nالملاحظات: ${formData.nextActionNote || (lead?.notes || 'معاينة ميدانية')}`,
+                  location: `محافظة سوهاج - ${formData.area || 'المقر الرئيسي'}`,
+                  startTime: formData.nextActionDate || new Date(Date.now() + 24 * 3600 * 1000)
+                });
+                window.open(calUrl, '_blank', 'noopener,noreferrer');
+                if (triggerToast) {
+                  triggerToast(isAr ? 'جاري فتح تقويم Google لجدولة الموعد...' : 'Opening Google Calendar...', 'info');
+                }
+              }}
+              style={{ padding: '6px 12px', fontSize: '0.8rem', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', fontWeight: 'bold' }}
+            >
+              <Calendar size={14} />
+              <span>{isAr ? 'تقويم Google' : 'Google Cal'}</span>
+            </button>
+
+            {/* Download .ics for Apple / Outlook */}
+            <button
+              type="button"
+              className="btn btn-sm"
+              title={isAr ? 'تنزيل ملف موعد .ics لأجهزة iPhone و Outlook' : 'Download .ics for Apple/Outlook'}
+              onClick={() => {
+                downloadIcsFile({
+                  title: `معاينة عقارية 1Line: ${formData.name}`,
+                  description: `العميل: ${formData.name} (${formData.phone})\nالملاحظات: ${formData.nextActionNote || (lead?.notes || 'معاينة عقارية')}`,
+                  location: `محافظة سوهاج - ${formData.area || 'المقر'}`,
+                  startTime: formData.nextActionDate || new Date(Date.now() + 24 * 3600 * 1000)
+                }, `1Line-${formData.name || 'Viewing'}.ics`);
+                if (triggerToast) {
+                  triggerToast(isAr ? 'تم تنزيل ملف الموعد لتقويم هاتفك بنجاح!' : 'Calendar file (.ics) downloaded!', 'success');
+                }
+              }}
+              style={{ padding: '6px 10px', fontSize: '0.8rem', background: '#f8fafc', color: '#475569', border: '1px solid #cbd5e1' }}
+            >
+              <Download size={13} />
+              <span>.ICS</span>
+            </button>
+
             <button type="button" className="drawer-close-btn" onClick={onClose} style={{ background: '#f1f5f9', color: '#0f172a', border: '1px solid #cbd5e1' }}>✕</button>
           </div>
         </div>
@@ -333,8 +381,10 @@ export default function CustomerProfileModal({
             <span style={{ fontWeight: 'bold', color: '#0f172a' }}>{formData.assignedTo}</span>
           </div>
           <div>
-            <span style={{ color: '#64748b', display: 'block', fontSize: '0.68rem', fontWeight: '600' }}>{isAr ? 'آخر تواصل' : 'Last Contact'}</span>
-            <span style={{ fontWeight: 'bold', color: '#0f172a' }}>{lead?.lastActivityAt ? lead.lastActivityAt.slice(0, 10) : (isAr ? 'اليوم' : 'Today')}</span>
+            <span style={{ color: '#64748b', display: 'block', fontSize: '0.68rem', fontWeight: '600' }}>{isAr ? 'مصدر الحملة' : 'Source'}</span>
+            <span style={{ fontWeight: 'bold', color: '#7c3aed', fontSize: '0.74rem' }}>
+              {lead?.marketingAttribution?.source || lead?.utmSource || (isAr ? 'مباشر (Organic)' : 'Direct')}
+            </span>
           </div>
           <div>
             <span style={{ color: '#64748b', display: 'block', fontSize: '0.68rem', fontWeight: '600' }}>{isAr ? 'المتابعة القادمة' : 'Next Action'}</span>

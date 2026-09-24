@@ -29,28 +29,16 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
+        // Only split stable, always-needed vendors. jsPDF/html2canvas and leaflet are left to the
+        // natural split so they load on demand instead of being preloaded on first paint
+        // (a catch-all "vendor-libs" chunk previously dragged the 527KB PDF bundle into every page load).
         manualChunks(id) {
-          if (id.includes('node_modules')) {
-            // Keep all CSS in the main stylesheet to prevent chunk preload failures
-            if (id.endsWith('.css') || id.includes('.css')) {
-              return;
-            }
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
-              return 'vendor-react';
-            }
-            if (id.includes('leaflet')) {
-              return 'vendor-leaflet';
-            }
-            if (id.includes('jspdf') || id.includes('html2canvas')) {
-              return 'vendor-pdf';
-            }
-            if (id.includes('firebase')) {
-              return 'vendor-firebase';
-            }
-            if (id.includes('lucide-react')) {
-              return 'vendor-icons';
-            }
-            return 'vendor-libs';
+          if (!id.includes('node_modules') || id.includes('.css')) return;
+          if (/[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/.test(id)) {
+            return 'vendor-react';
+          }
+          if (id.includes('firebase')) {
+            return 'vendor-firebase';
           }
         }
       }

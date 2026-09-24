@@ -16,7 +16,8 @@ import {
 } from '../firebaseService';
 import { playNotificationChime } from '../utils/notificationHub';
 import { sanitizeObject, normalizePhoneNumber } from '../utils/securityShield';
-import { identifyVisitor, getCurrentSessionJourney } from '../utils/visitorTracker';
+import { identifyVisitor, getCurrentSessionJourney, getAttributionData } from '../utils/visitorTracker';
+import { routeLeadAutomatically } from '../utils/leadRoutingEngine';
 import { isRecordArray, readStoredJson } from '../utils/browserStorage';
 import { normalizeAreaKey } from '../utils/areasData';
 import { usePreferences } from './PreferencesContext';
@@ -301,7 +302,8 @@ export function PropertiesProvider({ children }) {
         return { updated, finalLead };
       } else {
         const nowIso = new Date().toISOString();
-        const newLead = {
+        const attribution = getAttributionData();
+        const rawNewLead = {
           id: 'lead-' + Date.now(),
           timestamp: new Date().toISOString(),
           status: 'new',
@@ -317,7 +319,7 @@ export function PropertiesProvider({ children }) {
           notes: standardizedData.notes || '',
           temperature: standardizedData.temperature || 'hot',
           score: typeof standardizedData.score === 'number' ? standardizedData.score : 85,
-          assignedTo: standardizedData.assignedTo || 'Sales Advisor Team',
+          assignedTo: standardizedData.assignedTo || 'Unassigned',
           nextFollowUpAt: standardizedData.nextFollowUpAt || null,
           createdAt: nowIso,
           updatedAt: nowIso,
@@ -332,8 +334,14 @@ export function PropertiesProvider({ children }) {
           dwellTimeFormatted: sessionJourney.dwellTimeFormatted || '45 ثانية',
           dwellTimeSeconds: sessionJourney.dwellTimeSeconds || 45,
           isLiveTracked: true,
+          marketingAttribution: attribution,
+          utmSource: attribution?.source || 'مباشر',
+          utmCampaign: attribution?.campaign || 'direct',
           ...standardizedData
         };
+
+        // 🤖 Automated Lead Routing & Round-Robin Load Balance
+        const newLead = routeLeadAutomatically(rawNewLead, prev);
 
         finalLead = newLead;
         const updated = [newLead, ...prev];
