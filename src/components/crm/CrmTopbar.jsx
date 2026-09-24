@@ -207,8 +207,8 @@ export default function CrmTopbar({
                       <div style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>{l.name}</div>
                       <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{l.phone}</div>
                     </div>
-                    <span style={{ fontSize: '0.68rem', padding: '2px 6px', background: '#e2e8f0', borderRadius: '4px' }}>
-                      {l.status}
+                    <span style={{ fontSize: '0.72rem', padding: '2px 6px', background: '#e2e8f0', borderRadius: '4px', color: '#334155' }}>
+                      {isAr ? ({ new: 'جديد', contacted: 'تم التواصل', site_visit: 'معاينة', negotiating: 'تفاوض', closing: 'توقيع', closed: 'ناجحة' }[l.status] || 'جديد') : (l.status || 'new')}
                     </span>
                   </div>
                 ))}
@@ -530,6 +530,8 @@ export default function CrmTopbar({
           }}>
             <ShieldCheck size={13} style={{ color: isSimulationMode ? '#d97706' : '#10b981' }} />
             <select
+              className="crm-role-select"
+              aria-label={isAr ? 'محاكي الأدوار' : 'Role simulator'}
               value={selectedRole}
               onChange={(e) => setSelectedRole(e.target.value)}
               style={{

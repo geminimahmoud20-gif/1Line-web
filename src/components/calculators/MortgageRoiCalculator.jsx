@@ -242,6 +242,7 @@ export default function MortgageRoiCalculator({
                         value={downpaymentPercent}
                         onChange={(e) => setDownpaymentPercent(Math.min(80, Math.max(1, parseInt(e.target.value) || 1)))}
                         className="direct-num-input"
+                        aria-label={isAr ? 'نسبة الدفعة الأولى بالمائة' : 'Downpayment percentage'}
                         title={isAr ? 'اكتب نسبة المقدم مباشرة' : 'Type downpayment percentage'}
                       />
                       <span className="direct-curr-tag">%</span>
@@ -256,6 +257,7 @@ export default function MortgageRoiCalculator({
                         value={downPaymentAmount}
                         onChange={(e) => handleDownpaymentAmountChange(e.target.value)}
                         className="direct-num-input"
+                        aria-label={isAr ? 'قيمة الدفعة الأولى بالجنيه' : 'Downpayment amount in EGP'}
                         title={isAr ? 'اكتب قيمة المقدم بالجنيه مباشرة' : 'Type downpayment amount in EGP'}
                       />
                       <span className="direct-curr-tag">{isAr ? 'ج.م' : 'EGP'}</span>
@@ -327,6 +329,7 @@ export default function MortgageRoiCalculator({
                         }
                       }}
                       className="direct-num-input"
+                      aria-label={isAr ? 'عدد سنوات التقسيط' : 'Duration in years'}
                       title={isAr ? 'اكتب عدد السنوات مباشرة' : 'Type duration in years'}
                     />
                     <span className="direct-curr-tag">{isAr ? 'سنوات' : 'Yrs'}</span>
@@ -397,6 +400,7 @@ export default function MortgageRoiCalculator({
                         }
                       }}
                       className="direct-num-input"
+                      aria-label={isAr ? 'معدل الفائدة أو المرابحة' : 'Interest rate'}
                       title={isAr ? 'اكتب نسبة الفائدة أو المرابحة مباشرة' : 'Type interest rate'}
                     />
                     <span className="direct-curr-tag">%</span>
@@ -463,6 +467,7 @@ export default function MortgageRoiCalculator({
                       value={monthlyRent}
                       onChange={(e) => setMonthlyRent(Math.max(0, parseInt(e.target.value) || 0))}
                       className="direct-num-input"
+                      aria-label={isAr ? 'الإيجار الشهري المتوقع بالجنيه' : 'Expected monthly rent'}
                     />
                     <span className="direct-curr-tag">{isAr ? 'ج.م' : 'EGP'}</span>
                   </div>
@@ -515,6 +520,7 @@ export default function MortgageRoiCalculator({
                       value={annualAppreciation}
                       onChange={(e) => setAnnualAppreciation(Math.min(50, Math.max(1, parseInt(e.target.value) || 1)))}
                       className="direct-num-input"
+                      aria-label={isAr ? 'معدل نمو سعر العقار السنوي' : 'Annual appreciation rate'}
                     />
                     <span className="direct-curr-tag">%</span>
                   </div>

@@ -7,7 +7,7 @@ import {
   Edit3, Trash2, Database, Upload, Save, X, Clock, CheckCircle2,
   Trophy, Calculator, LayoutGrid, Wand2, Calendar, Target, Zap,
   UserPlus, CheckSquare, Square, Flame, Tag, Filter, Send, Activity,
-  ArrowLeft, ArrowRight, MapPin, Archive
+  ArrowLeft, ArrowRight, MapPin, Archive, Wallet
 } from 'lucide-react';
 import { loginUser, logAuditEvent } from '../firebaseService';
 import { exportToCsv } from '../utils/exportCsv';
@@ -29,12 +29,12 @@ import FounderCmsPanel from './crm/FounderCmsPanel';
 import ContractStudioModal from './crm/ContractStudioModal';
 
 export const CRM_ROLES = [
-  { id: 'super_admin', label_ar: 'المدير العام (Super Admin)', label_en: 'Super Admin', agentName: 'Dr. Mahmoud Elbaz', icon: '👑', canDelete: true, canViewAgencyFinancials: true },
-  { id: 'sales_manager', label_ar: 'مدير المبيعات (Sales Manager)', label_en: 'Sales Manager', agentName: 'Sales Management', icon: '💼', canDelete: false, canViewAgencyFinancials: true },
-  { id: 'sales_agent', label_ar: 'مستشار مبيعات (Sales Agent)', label_en: 'Sales Agent', agentName: 'Sales Advisor Team', icon: '🎯', canDelete: false, canViewAgencyFinancials: false },
-  { id: 'property_manager', label_ar: 'مدير العقارات (Property Manager)', label_en: 'Property Manager', agentName: 'Inventory Desk', icon: '🏢', canDelete: false, canViewAgencyFinancials: false },
-  { id: 'finance', label_ar: 'الإدارة المالية (Finance)', label_en: 'Finance', agentName: 'Finance Department', icon: '💰', canDelete: false, canViewAgencyFinancials: true },
-  { id: 'viewer', label_ar: 'مراقب / مدقق (Viewer)', label_en: 'Viewer', agentName: 'Audit Desk', icon: '👁️', canDelete: false, canViewAgencyFinancials: false },
+  { id: 'super_admin', label_ar: 'المدير العام', label_en: 'Super Admin', agentName: 'Dr. Mahmoud Elbaz', icon: '👑', canDelete: true, canViewAgencyFinancials: true },
+  { id: 'sales_manager', label_ar: 'مدير المبيعات', label_en: 'Sales Manager', agentName: 'Sales Management', icon: '💼', canDelete: false, canViewAgencyFinancials: true },
+  { id: 'sales_agent', label_ar: 'مستشار مبيعات', label_en: 'Sales Agent', agentName: 'Sales Advisor Team', icon: '🎯', canDelete: false, canViewAgencyFinancials: false },
+  { id: 'property_manager', label_ar: 'مدير العقارات', label_en: 'Property Manager', agentName: 'Inventory Desk', icon: '🏢', canDelete: false, canViewAgencyFinancials: false },
+  { id: 'finance', label_ar: 'الإدارة المالية', label_en: 'Finance', agentName: 'Finance Department', icon: '💰', canDelete: false, canViewAgencyFinancials: true },
+  { id: 'viewer', label_ar: 'مراقب / مدقق', label_en: 'Viewer', agentName: 'Audit Desk', icon: '👁️', canDelete: false, canViewAgencyFinancials: false },
   { id: 'agent_east', label_ar: 'فريق شرق والكوثر (وسيط)', label_en: 'East Desk Broker', agentName: 'Sales Team A', icon: '🏆', canDelete: false, canViewAgencyFinancials: false },
   { id: 'agent_new_sohag', label_ar: 'فريق سوهاج الجديدة (وسيط)', label_en: 'New Sohag Desk Broker', agentName: 'Sales Team B', icon: '🌟', canDelete: false, canViewAgencyFinancials: false }
 ];
@@ -177,11 +177,27 @@ export const CrmAdminPanel = ({
     return areaKey;
   };
 
+  const formatLeadStatus = (status) => {
+    const map = {
+      new: ['جديد', 'New'],
+      contacted: ['تم التواصل', 'Contacted'],
+      site_visit: ['معاينة مجدولة', 'Site visit'],
+      negotiating: ['قيد التفاوض', 'Negotiating'],
+      closing: ['توقيع وحجز', 'Closing'],
+      closed: ['صفقة ناجحة', 'Closed won'],
+      lost: ['مفقود', 'Lost']
+    };
+    const hit = map[status] || map.new;
+    return isAr ? hit[0] : hit[1];
+  };
+
   const formatLeadTypeBadge = (type) => {
     if (isAr) {
       const map = {
         buyer: 'طلب شراء',
         seller: 'عرض بيع',
+        reservation_request: 'طلب حجز مبدئي',
+        viewing_request: 'طلب معاينة',
         investor: 'مستثمر VIP',
         broker: 'وسيط عقاري',
         callback_request: 'طلب اتصال',
@@ -702,7 +718,7 @@ export const CrmAdminPanel = ({
     <div className="enterprise-crm-hub">
       {/* 📊 TAB 1: EXECUTIVE DECISION-BASED DASHBOARD */}
       {adminTab === 'dashboard' && (
-        <div className="crm-layout">
+        <div className="crm-dashboard-stack">
           {/* 1. Global Executive HUD Metric Cards - Crisp High-Contrast Cards */}
           {(() => {
             const totalPurchasingPowerM = (
@@ -813,11 +829,11 @@ export const CrmAdminPanel = ({
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600' }}>{isAr ? 'القوة الشرائية المسجلة' : 'Demand Purchasing Power'}</span>
-                    <span style={{ color: '#059669', fontWeight: 'bold', fontSize: '0.85rem' }}>EGP</span>
+                    <Wallet size={16} style={{ color: '#047857' }} aria-hidden="true" />
                   </div>
                   <div style={{ fontSize: '1.55rem', fontWeight: '900', color: '#059669', marginTop: '4px' }}>
-                    {totalPurchasingPowerM}M
-                    <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: '#64748b', marginInlineStart: '4px' }}>{isAr ? 'مليون ج.م' : 'EGP'}</span>
+                    <bdi>{totalPurchasingPowerM}</bdi>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: '#64748b', marginInlineStart: '4px' }}>{isAr ? 'مليون ج.م' : 'M EGP'}</span>
                   </div>
                 </div>
 
@@ -1065,7 +1081,7 @@ export const CrmAdminPanel = ({
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '30px' }}>
+          <div className="crm-dashboard-split">
             <div className="crm-table-container">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                 <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.05rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1095,14 +1111,14 @@ export const CrmAdminPanel = ({
                 <tbody>
                   {leads.slice(0, 5).map((l) => (
                     <tr key={l.id}>
-                      <td style={{ fontWeight: 'bold', color: '#0f172a' }}>{l.name}</td>
+                      <td style={{ fontWeight: 'bold', color: '#0f172a', whiteSpace: 'nowrap' }}><bdi>{l.name}</bdi></td>
                       <td><span className={`badge badge-${l.type}`}>{formatLeadTypeBadge(l.type)}</span></td>
                       <td>
                         <span className={`lead-score-pill ${l.score >= 85 ? 'score-high' : l.score >= 60 ? 'score-medium' : 'score-low'}`}>
                           {l.score}
                         </span>
                       </td>
-                      <td><span className={`badge badge-status status-${l.status}`}>{l.status?.toUpperCase()}</span></td>
+                      <td><span className={`badge badge-status status-${l.status}`}>{formatLeadStatus(l.status)}</span></td>
                       <td style={{ fontSize: '0.8rem', color: '#64748b' }}>{formatLeadSourceLabel(l.source || l.landingPage)}</td>
                     </tr>
                   ))}
@@ -1694,12 +1710,12 @@ export const CrmAdminPanel = ({
 
       {/* 🛡️ TAB 9.5: SYSTEM BACKUP & RESTORE (ADMIN ONLY) */}
       {adminTab === 'system_backup' && (
-        <div className="crm-layout">
+        <div className="crm-dashboard-stack">
           <div className="crm-table-container" style={{ padding: '28px', maxWidth: '820px', margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', borderBottom: '1px solid var(--border-light)', paddingBottom: '16px' }}>
               <Database size={26} className="text-gold" />
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#ffffff' }}>
+                <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#0f172a' }}>
                   {isAr ? 'البيانات والنسخ الاحتياطي وإدارة المنظومة' : 'Database Backups & System Administration'}
                 </h3>
                 <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
@@ -1929,12 +1945,12 @@ export const CrmAdminPanel = ({
                     value={leadFormData.status}
                     onChange={(e) => setLeadFormData({ ...leadFormData, status: e.target.value })}
                   >
-                    <option value="new">NEW (جديد)</option>
-                    <option value="contacted">CONTACTED (تم التواصل)</option>
-                    <option value="site_visit">SITE VISIT (معاينة مجدولة)</option>
-                    <option value="negotiating">NEGOTIATING (قيد التفاوض)</option>
-                    <option value="closing">CLOSING (توقيع وحجز)</option>
-                    <option value="closed">CLOSED (تم إغلاق الصفقة)</option>
+                    <option value="new">{isAr ? 'جديد' : 'New'}</option>
+                    <option value="contacted">{isAr ? 'تم التواصل' : 'Contacted'}</option>
+                    <option value="site_visit">{isAr ? 'معاينة مجدولة' : 'Site visit'}</option>
+                    <option value="negotiating">{isAr ? 'قيد التفاوض' : 'Negotiating'}</option>
+                    <option value="closing">{isAr ? 'توقيع وحجز' : 'Closing'}</option>
+                    <option value="closed">{isAr ? 'صفقة ناجحة' : 'Closed won'}</option>
                   </select>
                 </div>
 

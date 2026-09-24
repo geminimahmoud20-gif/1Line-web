@@ -230,7 +230,7 @@ export default function CrmSidebar({
                 <LogoEmblem size={24} />
               </div>
               <div className="crm-brand-title">
-                <span className="crm-brand-text">
+                <span className="crm-brand-text" dir="ltr">
                   <span style={{ color: '#d97706' }}>1</span>LINE
                 </span>
                 <span className="crm-brand-badge">PRO COMMAND</span>
@@ -242,7 +242,7 @@ export default function CrmSidebar({
               className="crm-sidebar-collapse-btn"
               onClick={onToggleCollapse}
               title={collapsed ? (isAr ? 'توسيع القائمة (Ctrl+B)' : 'Expand Sidebar') : (isAr ? 'طي القائمة (Ctrl+B)' : 'Collapse Sidebar')}
-              aria-label="Toggle Sidebar Collapse"
+              aria-label={isAr ? 'طي/توسيع القائمة' : 'Toggle sidebar'}
             >
               {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
             </button>
