@@ -18,6 +18,7 @@ import PhoneInputField from './PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { getAreas } from '../utils/areasData';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
+import SubmissionSuccess from './common/SubmissionSuccess';
 
 // Default fallback benchmark pricing per sqm
 const FALLBACK_BENCHMARK_PRICING = {
@@ -43,6 +44,8 @@ export const SellWizard = ({
   const [whatsappError, setWhatsappError] = useState('');
   const [sameAsPhone, setSameAsPhone] = useState(true);
   const [districts, setDistricts] = useState(() => getAreas().filter(a => a.id !== 'all'));
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittedRef, setSubmittedRef] = useState(null);
 
   const isAr = lang === 'ar';
 
@@ -88,7 +91,7 @@ export const SellWizard = ({
     };
   }, [sellerAnswers, districts]);
 
-  const validateAndSubmit = (e) => {
+  const validateAndSubmit = async (e) => {
     e.preventDefault();
 
     const cleanPhone = (sellerAnswers.phone || '').trim().replace(/[\s\-()]/g, '');
@@ -134,7 +137,15 @@ export const SellWizard = ({
       whatsapp: `${whatsappCountry}${normalizedWhatsapp}`
     };
 
-    submitSellerJourney(updatedAnswers);
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const lead = await submitSellerJourney(updatedAnswers);
+      setSubmittedRef(lead?.id || `lead-${Date.now()}`);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const propertyTypes = [
@@ -144,6 +155,26 @@ export const SellWizard = ({
     { id: 'office', label_ar: 'مكتب إداري / عيادة', label_en: 'Office / Clinic', icon: Briefcase, desc_ar: 'مقرات إدارية وعيادات طبية جاهزة' },
     { id: 'land', label_ar: 'قطعة أرض', label_en: 'Land Plot', icon: MapPin, desc_ar: 'أراضي مباني وتجارية بترخيص معتمد' }
   ];
+
+  if (submittedRef) {
+    return (
+      <div className="smart-valuation-wizard-box">
+        <SubmissionSuccess
+          lang={lang}
+          reference={submittedRef}
+          title_ar="استلمنا بيانات عقارك"
+          title_en="We have your property details"
+          steps={[
+            { ar: 'يراجع مستشار التقييم البيانات ويتصل بك خلال يوم عمل.', en: 'A valuation advisor reviews your details and calls you within one business day.' },
+            { ar: 'نحدد موعد معاينة لمراجعة المستندات والحالة الفعلية للعقار.', en: 'We schedule a visit to review documents and the actual condition.' },
+            { ar: 'تستلم تقريراً بسعر مقترح واستراتيجية عرض قبل أي تسويق.', en: 'You receive a price recommendation and marketing plan before any listing.' },
+          ]}
+          whatsappText={isAr ? 'مرحباً 1Line، أرسلت بيانات عقاري للتقييم وأود المتابعة' : 'Hello 1Line, I submitted my property for valuation'}
+          secondaryLink={{ to: '/demands', ar: 'اطلع على طلبات المشترين الحالية', en: 'See current buyer requests' }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="smart-valuation-wizard-box">
@@ -724,9 +755,15 @@ export const SellWizard = ({
               <button
                 type="submit"
                 className="btn btn-primary btn-submit-valuation"
+                disabled={isSubmitting}
+                aria-busy={isSubmitting}
               >
                 <Sparkles size={16} />
-                <span>{isAr ? 'اعتماد التقييم وعرض عقاري للبيع مجاناً' : 'Confirm Valuation & List Property Free'}</span>
+                <span>
+                  {isSubmitting
+                    ? (isAr ? 'جارٍ الإرسال…' : 'Sending…')
+                    : (isAr ? 'أرسل عقاري للتقييم والمراجعة' : 'Send my property for valuation')}
+                </span>
               </button>
             </div>
           </form>

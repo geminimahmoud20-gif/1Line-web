@@ -19,6 +19,7 @@ import PhoneInputField from './PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { getAreas } from '../utils/areasData';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
+import SubmissionSuccess from './common/SubmissionSuccess';
 
 export const BuyWizard = ({ 
   lang = 'ar', 
@@ -33,6 +34,8 @@ export const BuyWizard = ({
   const [whatsappCountry, setWhatsappCountry] = useState('+20');
   const [whatsappError, setWhatsappError] = useState('');
   const [sameAsPhone, setSameAsPhone] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittedRef, setSubmittedRef] = useState(null);
 
   const isAr = lang === 'ar';
 
@@ -42,7 +45,7 @@ export const BuyWizard = ({
     }
   }, []);
 
-  const validateAndSubmit = (e) => {
+  const validateAndSubmit = async (e) => {
     e.preventDefault();
 
     const cleanPhone = (buyerAnswers.phone || '').trim().replace(/[\s\-()]/g, '');
@@ -83,7 +86,15 @@ export const BuyWizard = ({
       whatsapp: `${whatsappCountry}${normalizedWhatsapp}`
     };
 
-    submitBuyerJourney(updatedAnswers);
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const lead = await submitBuyerJourney(updatedAnswers);
+      setSubmittedRef(lead?.id || `lead-${Date.now()}`);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const propertyTypes = [
@@ -103,6 +114,26 @@ export const BuyWizard = ({
     window.addEventListener('oneline_areas_updated', handleAreasUpdate);
     return () => window.removeEventListener('oneline_areas_updated', handleAreasUpdate);
   }, []);
+
+  if (submittedRef) {
+    return (
+      <div className="smart-valuation-wizard-box">
+        <SubmissionSuccess
+          lang={lang}
+          reference={submittedRef}
+          title_ar="استلمنا طلبك وبدأنا المطابقة"
+          title_en="Request received — matching has started"
+          steps={[
+            { ar: 'نطابق طلبك مع المعروض المتاح والعقارات غير المعلنة لدى المكتب.', en: 'We match your brief against listed and off-market inventory.' },
+            { ar: 'يرسل لك مستشارك قائمة مختصرة بالوحدات المناسبة فقط عبر واتساب.', en: 'Your advisor sends a short list of suitable units on WhatsApp.' },
+            { ar: 'نرتب المعاينة ونراجع مستندات الوحدة التي تختارها قبل أي التزام.', en: 'We arrange viewings and review documents before any commitment.' },
+          ]}
+          whatsappText={isAr ? 'مرحباً 1Line، أرسلت طلب شراء وأود المتابعة' : 'Hello 1Line, I submitted a buying request'}
+          secondaryLink={{ to: '/properties', ar: 'تصفح العقارات المتاحة الآن', en: 'Browse current listings' }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="smart-valuation-wizard-box">
@@ -501,9 +532,15 @@ export const BuyWizard = ({
               <button
                 type="submit"
                 className="btn btn-primary btn-submit-valuation"
+                disabled={isSubmitting}
+                aria-busy={isSubmitting}
               >
                 <Sparkles size={16} />
-                <span>{isAr ? 'إرسال العقارات المطابقة وتحديد موعد معاينة' : 'Receive Matching Units & Book Tour'}</span>
+                <span>
+                  {isSubmitting
+                    ? (isAr ? 'جارٍ الإرسال…' : 'Sending…')
+                    : (isAr ? 'أرسل طلبي واستلم الوحدات المطابقة' : 'Send my brief & get matches')}
+                </span>
               </button>
             </div>
           </form>

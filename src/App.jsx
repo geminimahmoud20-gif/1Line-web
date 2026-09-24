@@ -13,6 +13,10 @@ import { sanitizeObject } from './utils/securityShield';
 import { readStoredJson } from './utils/browserStorage';
 import { saveLead } from './firebaseService';
 
+// SEO
+import { updatePageSeo } from './utils/seoHelper';
+import { ROUTE_SEO } from './config/routeSeo';
+
 // Analytics & CMS
 import { getOrCreateSession, trackEvent } from './utils/visitorTracker';
 import { initFounderCmsSync } from './utils/founderCmsData';
@@ -32,7 +36,7 @@ import AboutFounderModal from './components/common/AboutFounderModal';
 import PropertyCompareDrawer from './components/properties/PropertyCompareDrawer';
 import FloatingCompareBar from './components/properties/FloatingCompareBar';
 import FavoritesDrawer from './components/properties/FavoritesDrawer';
-import LiveActivityToast from './components/common/LiveActivityToast';
+import ConsentBanner from './components/common/ConsentBanner';
 import QuickContactDrawer from './components/common/QuickContactDrawer';
 import BackToTopButton from './components/common/BackToTopButton';
 import AIPropertyAdvisorModal from './components/common/AIPropertyAdvisorModal';
@@ -54,6 +58,8 @@ const PortalsPage = lazy(() => import('./pages/PortalsPage'));
 const CrmPage = lazy(() => import('./pages/CrmPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const PrivateOfficePage = lazy(() => import('./pages/PrivateOfficePage'));
+const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 // Luxury Route Transition Fallback Spinner
 function RouteLoadingSpinner({ lang = 'ar' }) {
@@ -188,6 +194,19 @@ function AppContent() {
     trackEvent('page_view', { path: location.pathname });
   }, [location.pathname]);
 
+  // Titles/descriptions for routes whose page components don't manage their own SEO
+  useEffect(() => {
+    const seo = ROUTE_SEO[location.pathname];
+    if (!seo) return;
+    const isAr = lang === 'ar';
+    updatePageSeo({
+      title: isAr ? seo.title_ar : seo.title_en,
+      description: isAr ? seo.desc_ar : seo.desc_en,
+      url: location.pathname,
+      noindex: !!seo.noindex
+    });
+  }, [location.pathname, lang]);
+
   // Real-time Cloud Settings, Founder CMS & Areas Synchronization
   useEffect(() => {
     const unsubFounder = initFounderCmsSync();
@@ -253,20 +272,19 @@ function AppContent() {
     setBuyerStep((prev) => prev + 1);
   };
 
-  const submitBuyerJourney = async () => {
-    await handleAddNewLead({
-      name: buyerAnswers.name,
-      phone: buyerAnswers.phone,
-      whatsapp: buyerAnswers.whatsapp || buyerAnswers.phone,
-      propertyType: buyerAnswers.propertyType || 'apartment',
-      area: buyerAnswers.area || 'new_sohag',
+  const submitBuyerJourney = async (overrideData) => {
+    const data = overrideData || buyerAnswers;
+    return handleAddNewLead({
+      name: data.name,
+      phone: data.phone,
+      whatsapp: data.whatsapp || data.phone,
+      propertyType: data.propertyType || 'apartment',
+      area: data.area || 'new_sohag',
       type: 'buyer',
       landingPage: '/buy',
-      notes: `طلب شراء ${buyerAnswers.propertyType} في منطقة ${buyerAnswers.area} بميزانية ${buyerAnswers.budget}`,
-      details: buyerAnswers
+      notes: `طلب شراء ${data.propertyType} في منطقة ${data.area} بميزانية ${data.budget}`,
+      details: data
     });
-    triggerToast(lang === 'ar' ? 'تم استلام طلب الشراء بنجاح! سيتم مطابقة عقاراتك فورياً.' : 'Buyer request submitted!', 'success');
-    navigate('/properties');
   };
 
   // Seller Wizard
@@ -292,7 +310,7 @@ function AppContent() {
 
   const submitSellerJourney = async (overrideData) => {
     const data = overrideData || sellerAnswers;
-    await handleAddNewLead({
+    return handleAddNewLead({
       name: data.name,
       phone: data.phone,
       whatsapp: data.whatsapp || data.phone,
@@ -303,7 +321,6 @@ function AppContent() {
       notes: `عرض بيع ${data.propertyType} في ${data.area} بمساحة ${data.size || ''}م`,
       details: data
     });
-    triggerToast(lang === 'ar' ? 'تم إرسال بيانات العقار بنجاح! سنراجع التقييم ونتواصل معك.' : 'Property listed for valuation!', 'success');
   };
 
   // Investor Center
@@ -386,8 +403,8 @@ function AppContent() {
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
-      {/* Live Social Proof Activity Toast */}
-      <LiveActivityToast lang={lang} />
+      {/* Privacy notice & analytics consent (loads Clarity only after acceptance) */}
+      <ConsentBanner lang={lang} />
 
       {/* Quick View Modal */}
       <QuickViewModal
@@ -797,26 +814,12 @@ function AppContent() {
               }
             />
 
-            {/* Fallback wildcard to Home */}
-            <Route
-              path="*"
-              element={
-                <HomePage
-                  lang={lang}
-                  currency={currency}
-                  properties={properties}
-                  demands={demands}
-                  favorites={favorites}
-                  onToggleFavorite={handleProtectedToggleFavorite}
-                  compareList={compareList}
-                  onToggleCompare={handleProtectedToggleCompare}
-                  onQuickView={handleOpenQuickView}
-                  onOpenAddDemand={() => setAddDemandModalOpen(true)}
-                  onAddNewLead={handleAddNewLead}
-                  triggerToast={triggerToast}
-                />
-              }
-            />
+            {/* Privacy policy & data handling */}
+            <Route path="/privacy" element={<PrivacyPage lang={lang} />} />
+            <Route path="/terms" element={<Navigate to="/privacy" replace />} />
+
+            {/* Unknown paths: real not-found view (served with HTTP 404 by Vercel) */}
+            <Route path="*" element={<NotFoundPage lang={lang} />} />
           </Routes>
         </Suspense>
       </main>

@@ -906,16 +906,16 @@ export default function PropertyDetailPage({
               )}
 
               {/* 4. VIP 24-Hour Hold Banner (Positioned as a dedicated reservation guarantee) */}
-              <div className="sidebar-deposit-banner" onClick={() => setDepositModalOpen(true)}>
-                <div className="deposit-banner-left">
-                  <ShieldCheck size={18} className="text-gold" />
-                  <div>
-                    <strong>{isAr ? 'تثبيت العقار وحجزه 24 ساعة' : 'Lock & Reserve Property (24h)'}</strong>
-                    <span>{isAr ? 'عبر InstaPay لتجميد الوحدة ومنع حجزها لمشترٍ آخر' : 'Via InstaPay to freeze the unit before your viewing'}</span>
-                  </div>
-                </div>
-                <span className="btn-hold-badge">{isAr ? 'حجز' : 'Hold'}</span>
-              </div>
+              <button type="button" className="sidebar-deposit-banner" onClick={() => setDepositModalOpen(true)}>
+                <span className="deposit-banner-left">
+                  <ShieldCheck size={18} className="text-gold" aria-hidden="true" />
+                  <span>
+                    <strong>{isAr ? 'طلب حجز مبدئي' : 'Request a reservation'}</strong>
+                    <span>{isAr ? 'نؤكد الإتاحة ونراجع المستندات قبل أي سداد' : 'We confirm availability and documents before any payment'}</span>
+                  </span>
+                </span>
+                <span className="btn-hold-badge">{isAr ? 'اطلب' : 'Request'}</span>
+              </button>
 
               {/* 5. Safe Legal Guarantee Seal */}
               <div className="sidebar-legal-guarantee">
@@ -959,6 +959,7 @@ export default function PropertyDetailPage({
           property={property}
           lang={lang}
           triggerToast={triggerToast}
+          onConfirmDeposit={onAddNewLead}
         />
 
         {/* 📱 Instagram & Facebook 9:16 Social Story Card Modal */}
@@ -991,7 +992,7 @@ export default function PropertyDetailPage({
               type="button"
               className="btn btn-deposit-mini"
               onClick={() => setDepositModalOpen(true)}
-              title={isAr ? 'حجز بإنستاباي' : 'Reserve'}
+              title={isAr ? 'طلب حجز مبدئي' : 'Request reservation'}
             >
               <ShieldCheck size={16} />
               <span>{isAr ? 'حجز' : 'Reserve'}</span>
