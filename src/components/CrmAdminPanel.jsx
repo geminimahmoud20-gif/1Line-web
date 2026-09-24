@@ -765,6 +765,7 @@ export const CrmAdminPanel = ({
           onUpdateLead={onUpdateLead}
           onDeleteLead={onDeleteLead}
           onOpenEditLead={handleOpenEditLead}
+          onOpenLead={(lead) => setQuickDrawerLead(lead)}
           lang={lang}
           triggerToast={triggerToast}
         />
@@ -776,6 +777,7 @@ export const CrmAdminPanel = ({
           leads={leads}
           properties={properties}
           onUpdateLead={onUpdateLead}
+          onOpenLead={(lead) => setQuickDrawerLead(lead)}
           lang={lang}
           triggerToast={triggerToast}
         />

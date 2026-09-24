@@ -62,12 +62,13 @@ console.log('📦 1. بنية التكوين، PWA، الأمان والميتا
 
 test('ملف index.html يحتوي على Schema.org RealEstateAgent و SEO وميتا الأمان', () => {
   const html = fs.readFileSync('index.html', 'utf8');
+  const vercel = fs.readFileSync('vercel.json', 'utf8');
   assert.ok(html.includes('application/ld+json'), 'Schema JSON-LD tag exists');
   assert.ok(html.includes('RealEstateAgent'), 'RealEstateAgent schema exists');
   assert.ok(html.includes('د. محمود الباز'), 'Founder mentioned in schema');
   assert.ok(html.includes('manifest.json'), 'PWA manifest linked');
-  assert.ok(html.includes('nosniff'), 'X-Content-Type-Options security header present');
-  assert.ok(html.includes('SAMEORIGIN'), 'X-Frame-Options security header present');
+  assert.ok(html.includes('nosniff') || vercel.includes('nosniff'), 'X-Content-Type-Options security header present');
+  assert.ok(html.includes('SAMEORIGIN') || vercel.includes('SAMEORIGIN'), 'X-Frame-Options security header present');
 });
 
 test('ملف public/manifest.json سليم ويتضمن أيقونات التطبيق والاسم', () => {

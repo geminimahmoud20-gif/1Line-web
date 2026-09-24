@@ -22,7 +22,8 @@ import {
   MapPin,
   Tag,
   Search,
-  X
+  X,
+  Zap
 } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
 import { getAreas } from '../../utils/areasData';
@@ -70,6 +71,7 @@ export default function KanbanPipeline({
   onUpdateLead,
   onDeleteLead,
   onOpenEditLead,
+  onOpenLead,
   lang = 'ar',
   triggerToast
 }) {
@@ -560,7 +562,18 @@ export default function KanbanPipeline({
 
                         {/* Name + Lead Quality Score */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                          <strong style={{ fontSize: '0.96rem', color: '#092347', fontWeight: 700, letterSpacing: '-0.2px' }}>
+                          <strong 
+                            onClick={() => onOpenLead ? onOpenLead(lead) : onOpenEditLead?.(lead)}
+                            style={{ 
+                              fontSize: '0.96rem', 
+                              color: '#092347', 
+                              fontWeight: 700, 
+                              letterSpacing: '-0.2px',
+                              cursor: (onOpenLead || onOpenEditLead) ? 'pointer' : 'default',
+                              textDecoration: onOpenLead ? 'underline' : 'none'
+                            }}
+                            title={isAr ? 'فتح المعاينة السريعة للعميل' : 'Open Lead Quick Drawer'}
+                          >
                             {lead.name || (isAr ? 'عميل بدون اسم' : 'Unnamed Lead')}
                           </strong>
                           
@@ -691,6 +704,32 @@ export default function KanbanPipeline({
                         }}>
                           {/* Quick Actions */}
                           <div style={{ display: 'flex', gap: '5px' }}>
+                            {/* Quick Drawer Button */}
+                            {onOpenLead && (
+                              <button
+                                type="button"
+                                className="btn btn-sm"
+                                onClick={() => onOpenLead(lead)}
+                                style={{ 
+                                  padding: '5px 8px', 
+                                  fontSize: '0.72rem',
+                                  background: '#eff6ff',
+                                  color: '#2563eb',
+                                  border: '1px solid #bfdbfe',
+                                  borderRadius: '6px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '3px',
+                                  cursor: 'pointer',
+                                  fontWeight: 'bold'
+                                }}
+                                title={isAr ? 'معاينة سريعة وتسجيل مكالمة' : 'Quick Drawer'}
+                              >
+                                <Zap size={13} />
+                                <span>{isAr ? 'سريع' : 'Quick'}</span>
+                              </button>
+                            )}
+
                             {/* WhatsApp Button */}
                             <button
                               type="button"

@@ -40,6 +40,9 @@ export default function AddLeadModal({
     propertyType: 'apartment',
     financing: 'cash',
     assignedTo: 'Sales Advisor Team',
+    source: 'اتصال مباشر / هاتف',
+    nextActionNote: 'مكالمة هاتفية لتأكيد المواصفات والميزانية',
+    nextFollowUpAt: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
     notes: '',
     tags: ['💎 VIP كاش', '🔥 مستعجل للشراء']
   });
@@ -112,7 +115,11 @@ export default function AddLeadModal({
       financing: formData.financing,
       tags: formData.tags,
       notes: formData.notes,
-      source: 'Direct CRM Entry',
+      source: formData.source || 'اتصال مباشر / هاتف',
+      nextActionNote: formData.nextActionNote || 'مكالمة متابعة أولية',
+      nextFollowUpAt: formData.nextFollowUpAt,
+      followUp: formData.nextActionNote || 'مكالمة متابعة أولية',
+      timestamp: new Date().toISOString(),
       details: {
         budget: formData.budget,
         expectedPrice: formData.budget,
@@ -286,6 +293,44 @@ export default function AddLeadModal({
                 <option value="Sales Team B">Sales Team B (سوهاج الجديدة)</option>
                 <option value="Sales Advisor Team">Sales Advisor Team</option>
               </select>
+            </div>
+
+            {/* Lead Source */}
+            <div className="form-group-item">
+              <label>{isAr ? 'مصدر العميل (Source):' : 'Lead Source:'}</label>
+              <select
+                value={formData.source}
+                onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+              >
+                <option value="اتصال مباشر / هاتف">{isAr ? '📞 اتصال مباشر / هاتف' : 'Direct Call'}</option>
+                <option value="واتساب مباشر">{isAr ? '💬 واتساب مباشر' : 'Direct WhatsApp'}</option>
+                <option value="إعلان فيسبوك / انستغرام">{isAr ? '📱 إعلان فيسبوك / انستغرام' : 'Social Media Ad'}</option>
+                <option value="زيارة مقر الشركة">{isAr ? '🏢 زيارة مقر الشركة' : 'Office Walk-in'}</option>
+                <option value="ترشيح عميل سابق">{isAr ? '🤝 ترشيح عميل سابق' : 'Referral'}</option>
+                <option value="الموقع الإلكتروني">{isAr ? '🌐 استمارة الموقع' : 'Website Form'}</option>
+              </select>
+            </div>
+
+            {/* Next Action Note */}
+            <div className="form-group-item" style={{ gridColumn: 'span 2' }}>
+              <label>{isAr ? 'الإجراء القادم المباشر (Next Action) *:' : 'Next Action *:'}</label>
+              <input
+                type="text"
+                required
+                placeholder={isAr ? 'مثال: مكالمة لتحديد موعد معاينة ميدانية' : 'e.g. Call to schedule viewing'}
+                value={formData.nextActionNote}
+                onChange={(e) => setFormData({ ...formData, nextActionNote: e.target.value })}
+              />
+            </div>
+
+            {/* Next Action Date */}
+            <div className="form-group-item">
+              <label>{isAr ? 'تاريخ المتابعة القادمة:' : 'Follow-up Date:'}</label>
+              <input
+                type="date"
+                value={formData.nextFollowUpAt}
+                onChange={(e) => setFormData({ ...formData, nextFollowUpAt: e.target.value })}
+              />
             </div>
           </div>
 

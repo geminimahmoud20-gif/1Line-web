@@ -11,7 +11,8 @@ import {
   TrendingUp, 
   DollarSign,
   Filter,
-  Flame
+  Flame,
+  Zap
 } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
 import { getAreas, normalizeAreaKey } from '../../utils/areasData';
@@ -20,6 +21,7 @@ export default function SmartMatchingHub({
   leads = [],
   properties = [],
   onUpdateLead,
+  onOpenLead,
   lang = 'ar',
   triggerToast
 }) {
@@ -289,7 +291,19 @@ export default function SmartMatchingHub({
                       <span style={{ fontSize: '0.72rem', color: 'var(--crm-info)', fontWeight: 'bold', display: 'block', marginBottom: '3px' }}>
                         👤 {isAr ? 'المشتري الراغب:' : 'Buyer Request:'}
                       </span>
-                      <strong style={{ fontSize: '0.95rem', color: '#092347', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
+                      <strong 
+                        onClick={() => onOpenLead?.(lead)}
+                        style={{ 
+                          fontSize: '0.95rem', 
+                          color: '#092347', 
+                          fontWeight: 700, 
+                          display: 'block', 
+                          marginBottom: '2px',
+                          cursor: onOpenLead ? 'pointer' : 'default',
+                          textDecoration: onOpenLead ? 'underline' : 'none'
+                        }}
+                        title={isAr ? 'فتح المعاينة السريعة للعميل' : 'Open Lead Quick Drawer'}
+                      >
                         {lead.name}
                       </strong>
                       <span style={{ fontSize: '0.75rem', color: 'var(--crm-muted)', display: 'block', direction: 'ltr', textAlign: isAr ? 'right' : 'left' }}>
@@ -337,6 +351,18 @@ export default function SmartMatchingHub({
 
                 {/* Actions Footer */}
                 <div style={{ display: 'flex', gap: '8px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
+                  {onOpenLead && (
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      onClick={() => onOpenLead(lead)}
+                      style={{ padding: '7px 10px', fontSize: '0.75rem', color: '#2563eb', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px' }}
+                      title={isAr ? 'معاينة العميل وتعديل مرحلته' : 'Quick Drawer'}
+                    >
+                      <Zap size={14} />
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     className="btn btn-sm btn-primary"
