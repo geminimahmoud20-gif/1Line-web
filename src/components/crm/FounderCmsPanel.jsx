@@ -232,7 +232,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
           onClick={() => setActiveSubTab('hero_video')}
         >
           <Film size={14} />
-          <span>{isAr ? '🎬 الفيديو والهيرو السينمائي (The Agency)' : 'Hero Video & Media'}</span>
+          <span>{isAr ? '🎬 الفيديو والهيرو السينمائي' : 'Hero Video & Media'}</span>
         </button>
 
         <button
@@ -307,7 +307,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                     : 'Display full luxury video loop behind the hero section.'}
                 </span>
               </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 800 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 700 }}>
                 <input
                   type="checkbox"
                   checked={formData.heroVideoEnabled !== false}
@@ -336,8 +336,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
               <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-gold)' }}>
                 <Upload size={24} />
               </div>
-              <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: 800 }}>
-                {isAr ? 'رفع فيديو قصير من جهازك مباشرة (MP4 / WebM / MOV)' : 'Upload Short Video from Your Device'}
+              <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: 700 }}>
+                {isAr ? 'رفع فيديو قصير من جهازك مباشرة' : 'Upload Short Video from Your Device'}
               </h4>
               <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.82rem', maxWidth: '480px' }}>
                 {isAr
@@ -371,7 +371,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                 <div>
                   <h4 style={{ margin: '0 0 4px 0', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Film size={18} />
-                    <span>{isAr ? 'قائمة الفيديوهات القصيرة المتعاقبة (Short Videos Playlist)' : 'Short Videos Playlist'}</span>
+                    <span>{isAr ? 'قائمة الفيديوهات القصيرة المتعاقبة' : 'Short Videos Playlist'}</span>
                   </h4>
                   <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-muted)' }}>
                     {isAr
@@ -423,14 +423,14 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ background: 'rgba(212, 175, 55, 0.2)', color: 'var(--accent-gold)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.78rem', fontWeight: 800 }}>
+                          <span style={{ background: 'rgba(212, 175, 55, 0.2)', color: 'var(--accent-gold)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.78rem', fontWeight: 700 }}>
                             #{idx + 1}
                           </span>
                           <strong style={{ fontSize: '0.92rem', color: 'var(--text-primary)' }}>
                             {isAr ? clip.title_ar : (clip.title_en || clip.title_ar)}
                           </strong>
                           {isActive && (
-                            <span style={{ fontSize: '0.72rem', color: '#10b981', background: 'rgba(16, 185, 129, 0.12)', padding: '2px 8px', borderRadius: '4px', fontWeight: 800 }}>
+                            <span style={{ fontSize: '0.72rem', color: 'var(--crm-positive)', background: 'rgba(16, 185, 129, 0.12)', padding: '2px 8px', borderRadius: '4px', fontWeight: 700 }}>
                               {isAr ? '● المقطع النشط حالياً' : 'Active Clip'}
                             </span>
                           )}
@@ -484,7 +484,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
               <div className="form-group-item" style={{ gridColumn: '1 / -1' }}>
                 <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span>{isAr ? 'رابط الفيديو الأساسي الحالي (MP4 / WebM Direct URL):' : 'Current Active Video URL:'}</span>
+                  <span>{isAr ? 'رابط الفيديو الأساسي الحالي:' : 'Current Active Video URL:'}</span>
                   <small style={{ color: 'var(--accent-gold)' }}>{isAr ? 'فيديو مباشر عالي الوضوح' : 'HD direct stream'}</small>
                 </label>
                 <input
@@ -531,7 +531,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
               </div>
 
               <div className="form-group-item" style={{ gridColumn: '1 / -1' }}>
-                <label>{isAr ? 'رابط صورة البوستر البديلة (Fallback Poster Image):' : 'Fallback Poster Image URL:'}</label>
+                <label>{isAr ? 'رابط صورة البوستر البديلة:' : 'Fallback Poster Image URL:'}</label>
                 <input
                   type="url"
                   value={formData.heroPosterUrl || ''}
@@ -546,7 +546,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
               {/* Overlay Opacity Slider */}
               <div className="form-group-item" style={{ gridColumn: '1 / -1' }}>
                 <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span>{isAr ? 'نسبة تعتيم التظليل الملكي (Dark Vignette Opacity):' : 'Dark Overlay Opacity:'}</span>
+                  <span>{isAr ? 'نسبة تعتيم التظليل الملكي:' : 'Dark Overlay Opacity:'}</span>
                   <strong style={{ color: 'var(--accent-gold)' }}>
                     {Math.round((Number(formData.heroOverlayOpacity ?? 0.65)) * 100)}%
                   </strong>
@@ -685,7 +685,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                   />
                 </div>
                 <div>
-                  <span style={{ fontSize: '0.78rem', color: '#10b981', fontWeight: 700, display: 'block' }}>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--crm-positive)', fontWeight: 700, display: 'block' }}>
                     {isAr ? '✓ صورة المؤسس د. محمود الباز معتمدة' : '✓ Accredited Founder Portrait'}
                   </span>
                   <button

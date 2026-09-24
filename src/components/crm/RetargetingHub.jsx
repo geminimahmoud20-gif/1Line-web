@@ -202,7 +202,7 @@ export default function RetargetingHub({
         <div>
           <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
             <Zap size={22} className="text-gold" />
-            {isAr ? 'مركز حملات إعادة الاستهداف والذكاء التسويقي (Smart Retargeting Engine)' : 'Smart Lead Retargeting & Nurturing Engine'}
+            {isAr ? 'مركز حملات إعادة الاستهداف والذكاء التسويقي' : 'Smart Lead Retargeting & Nurturing Engine'}
           </h3>
           <p className="section-subtitle" style={{ margin: '4px 0 0' }}>
             {isAr ? 'تقسيم العملاء حسب القوة الشرائية وتنشيطهم بحملات WhatsApp ديناميكية بنقرة واحدة' : 'Segment leads by purchasing power & trigger 1-click personalized WhatsApp campaigns'}
@@ -265,7 +265,7 @@ export default function RetargetingHub({
           style={{ padding: '12px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
         >
           <span style={{ fontSize: '1rem' }}>📈</span>
-          <strong>{isAr ? 'المستثمرون (ROI)' : 'Investors'}</strong>
+          <strong>{isAr ? 'المستثمرون' : 'Investors'}</strong>
           <small style={{ opacity: 0.8 }}>({segmentedLeads.investors.length} {isAr ? 'عميل' : 'leads'})</small>
         </button>
 

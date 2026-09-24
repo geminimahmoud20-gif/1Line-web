@@ -141,12 +141,12 @@ export default function CrmTopbar({
             top: '50%',
             transform: 'translateY(-50%)',
             [isAr ? 'right' : 'left']: '12px',
-            color: '#94a3b8'
+            color: 'var(--crm-faint)'
           }}
         />
         <input
           type="text"
-          placeholder={isAr ? 'بحث فوري (عميل، عقار، هاتف)...' : 'Instant Universal Search...'}
+          placeholder={isAr ? 'ابحث عن عميل أو عقار أو رقم…' : 'Search clients, properties, phones…'}
           value={universalSearch}
           onChange={(e) => setUniversalSearch(e.target.value)}
           className="crm-topbar-search-input"
@@ -162,7 +162,7 @@ export default function CrmTopbar({
               [isAr ? 'left' : 'right']: '10px',
               background: 'none',
               border: 'none',
-              color: '#94a3b8',
+              color: 'var(--crm-faint)',
               cursor: 'pointer'
             }}
           >
@@ -185,7 +185,7 @@ export default function CrmTopbar({
             {/* Matching Leads */}
             {leads.filter(l => (l.name || '').toLowerCase().includes(universalSearch.toLowerCase()) || (l.phone || '').includes(universalSearch)).length > 0 && (
               <div style={{ marginBottom: '10px' }}>
-                <span style={{ fontSize: '0.72rem', color: '#2563eb', fontWeight: '800', display: 'block', marginBottom: '4px' }}>
+                <span style={{ fontSize: '0.72rem', color: 'var(--crm-info)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
                   {isAr ? 'العملاء المطابقين' : 'Matching Leads'}
                 </span>
                 {leads.filter(l => (l.name || '').toLowerCase().includes(universalSearch.toLowerCase()) || (l.phone || '').includes(universalSearch)).slice(0, 3).map(l => (
@@ -205,9 +205,9 @@ export default function CrmTopbar({
                   >
                     <div>
                       <div style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>{l.name}</div>
-                      <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{l.phone}</div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--crm-muted)' }}>{l.phone}</div>
                     </div>
-                    <span style={{ fontSize: '0.72rem', padding: '2px 6px', background: '#e2e8f0', borderRadius: '4px', color: '#334155' }}>
+                    <span style={{ fontSize: '0.72rem', padding: '2px 6px', background: '#e2e8f0', borderRadius: '4px', color: 'var(--crm-body)' }}>
                       {isAr ? ({ new: 'جديد', contacted: 'تم التواصل', site_visit: 'معاينة', negotiating: 'تفاوض', closing: 'توقيع', closed: 'ناجحة' }[l.status] || 'جديد') : (l.status || 'new')}
                     </span>
                   </div>
@@ -218,7 +218,7 @@ export default function CrmTopbar({
             {/* Matching Properties */}
             {properties.filter(p => (p.title_ar || '').toLowerCase().includes(universalSearch.toLowerCase()) || (p.locationName_ar || '').toLowerCase().includes(universalSearch.toLowerCase())).length > 0 && (
               <div style={{ marginBottom: '10px' }}>
-                <span style={{ fontSize: '0.72rem', color: '#d97706', fontWeight: '800', display: 'block', marginBottom: '4px' }}>
+                <span style={{ fontSize: '0.72rem', color: 'var(--crm-accent-text)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
                   {isAr ? 'العقارات المطابقة' : 'Matching Properties'}
                 </span>
                 {properties.filter(p => (p.title_ar || '').toLowerCase().includes(universalSearch.toLowerCase()) || (p.locationName_ar || '').toLowerCase().includes(universalSearch.toLowerCase())).slice(0, 3).map(p => (
@@ -234,7 +234,7 @@ export default function CrmTopbar({
                     }}
                   >
                     <div style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>{p.title_ar}</div>
-                    <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{p.price?.toLocaleString()} ج.م</div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--crm-muted)' }}>{p.price?.toLocaleString()} ج.م</div>
                   </div>
                 ))}
               </div>
@@ -243,7 +243,7 @@ export default function CrmTopbar({
             {/* Matching Demands */}
             {demands.filter(d => (d.text_ar || '').toLowerCase().includes(universalSearch.toLowerCase()) || (d.clientName || '').toLowerCase().includes(universalSearch.toLowerCase()) || (d.phone || '').includes(universalSearch)).length > 0 && (
               <div>
-                <span style={{ fontSize: '0.72rem', color: '#059669', fontWeight: '800', display: 'block', marginBottom: '4px' }}>
+                <span style={{ fontSize: '0.72rem', color: 'var(--crm-positive)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
                   {isAr ? 'طلبات المشترين' : 'Matching Demands'}
                 </span>
                 {demands.filter(d => (d.text_ar || '').toLowerCase().includes(universalSearch.toLowerCase()) || (d.clientName || '').toLowerCase().includes(universalSearch.toLowerCase()) || (d.phone || '').includes(universalSearch)).slice(0, 3).map(d => (
@@ -259,7 +259,7 @@ export default function CrmTopbar({
                     }}
                   >
                     <div style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>{d.text_ar || d.clientName}</div>
-                    <div style={{ fontSize: '0.72rem', color: '#64748b' }}>ميزانية: {d.budget} ج.م</div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--crm-muted)' }}>ميزانية: {d.budget} ج.م</div>
                   </div>
                 ))}
               </div>
@@ -322,7 +322,7 @@ export default function CrmTopbar({
                   borderRadius: '6px'
                 }}
               >
-                <Users size={14} style={{ color: '#2563eb' }} />
+                <Users size={14} style={{ color: 'var(--crm-info)' }} />
                 <span>{isAr ? '+ تسجيل عميل جديد' : '+ New Lead'}</span>
               </button>
 
@@ -344,7 +344,7 @@ export default function CrmTopbar({
                   borderRadius: '6px'
                 }}
               >
-                <Building size={14} style={{ color: '#d97706' }} />
+                <Building size={14} style={{ color: 'var(--crm-accent-text)' }} />
                 <span>{isAr ? '+ إضافة عقار جديد' : '+ New Property'}</span>
               </button>
 
@@ -366,7 +366,7 @@ export default function CrmTopbar({
                   borderRadius: '6px'
                 }}
               >
-                <Zap size={14} style={{ color: '#059669' }} />
+                <Zap size={14} style={{ color: 'var(--crm-positive)' }} />
                 <span>{isAr ? '+ إضافة طلب مشترٍ' : '+ New Demand'}</span>
               </button>
 
@@ -412,7 +412,7 @@ export default function CrmTopbar({
                   borderRadius: '6px'
                 }}
               >
-                <Sparkles size={14} style={{ color: '#d97706' }} />
+                <Sparkles size={14} style={{ color: 'var(--crm-accent-text)' }} />
                 <span>{isAr ? '✨ فحص المطابقات الذكية AI' : '✨ Smart AI Match'}</span>
               </button>
 
@@ -466,7 +466,7 @@ export default function CrmTopbar({
                 <span style={{ fontSize: '0.82rem', fontWeight: 'bold' }}>
                   {isAr ? 'مركز الإشعارات الحية' : 'Live Notifications'}
                 </span>
-                <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--crm-muted)' }}>
                   {totalNotifications} {isAr ? 'تنبيه' : 'alerts'}
                 </span>
               </div>
@@ -487,12 +487,12 @@ export default function CrmTopbar({
                       <AlertTriangle size={13} />
                       <span>{isAr ? `يوجد ${pendingDemands.length} طلب مشترٍ بحاجة للمراجعة!` : `${pendingDemands.length} pending demands awaiting approval`}</span>
                     </div>
-                    <small style={{ color: '#64748b', fontSize: '0.68rem', display: 'block', marginTop: '2px' }}>
+                    <small style={{ color: 'var(--crm-muted)', fontSize: '0.68rem', display: 'block', marginTop: '2px' }}>
                       {isAr ? 'انقر للذهاب لصفحة الطلبات واعتمادها' : 'Click to review and approve'}
                     </small>
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#10b981', fontSize: '0.75rem', padding: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--crm-positive)', fontSize: '0.75rem', padding: '6px' }}>
                     <CheckCircle2 size={14} />
                     <span>{isAr ? 'جميع طلبات المشترين معتمدة ومحدثة' : 'All buyer demands approved'}</span>
                   </div>
@@ -504,11 +504,11 @@ export default function CrmTopbar({
                   border: '1px solid rgba(16, 185, 129, 0.2)',
                   borderRadius: '8px'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#059669', fontWeight: 'bold', fontSize: '0.76rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--crm-positive)', fontWeight: 'bold', fontSize: '0.76rem' }}>
                     <CheckCircle2 size={13} />
                     <span>{isAr ? 'جلسة التشفير والسحابة نشطة' : 'Encrypted Cloud Sync Active'}</span>
                   </div>
-                  <small style={{ color: '#64748b', fontSize: '0.68rem', display: 'block', marginTop: '2px' }}>
+                  <small style={{ color: 'var(--crm-muted)', fontSize: '0.68rem', display: 'block', marginTop: '2px' }}>
                     {isAr ? 'تمت مزامنة البيانات مع Firebase بنجاح' : 'Data synchronized with Firestore'}
                   </small>
                 </div>
@@ -557,15 +557,15 @@ export default function CrmTopbar({
             display: 'inline-flex',
             alignItems: 'center',
             gap: '6px',
-            background: '#f1f5f9',
-            border: '1px solid #cbd5e1',
+            background: 'var(--crm-subtle-2)',
+            border: '1px solid var(--crm-line-strong)',
             borderRadius: '8px',
             padding: '4px 8px',
             fontSize: '0.74rem',
             fontWeight: 'bold',
-            color: '#334155'
+            color: 'var(--crm-body)'
           }}>
-            <Lock size={12} style={{ color: '#64748b' }} />
+            <Lock size={12} style={{ color: 'var(--crm-muted)' }} />
             <span>{CRM_ROLES.find(r => r.id === activeRole)?.icon || '👤'}</span>
             <span>{isAr ? (CRM_ROLES.find(r => r.id === activeRole)?.label_ar || activeRole) : (CRM_ROLES.find(r => r.id === activeRole)?.label_en || activeRole)}</span>
           </div>
@@ -578,7 +578,7 @@ export default function CrmTopbar({
           style={{
             background: '#ecfdf5',
             border: '1px solid #a7f3d0',
-            color: '#059669',
+            color: 'var(--crm-positive)',
             padding: '6px 10px',
             borderRadius: '8px',
             fontSize: '0.75rem',
@@ -589,9 +589,11 @@ export default function CrmTopbar({
             cursor: 'pointer'
           }}
           title={isAr ? 'فحص جاهزية الموقع والتحول للإنتاج الفعلي' : 'Go-Live Readiness Audit'}
+          aria-label={isAr ? 'جاهزية الإطلاق' : 'Go-live audit'}
+          className="crm-top-chip"
         >
           <Rocket size={13} />
-          <span>{isAr ? 'جاهزية الإطلاق' : 'Audit'}</span>
+          <span className="crm-top-chip-label">{isAr ? 'جاهزية الإطلاق' : 'Audit'}</span>
         </button>
 
         {/* Live Site Link */}
@@ -606,16 +608,18 @@ export default function CrmTopbar({
             gap: '5px',
             padding: '6px 10px',
             borderRadius: '8px',
-            background: '#f8fafc',
-            border: '1px solid #e2e8f0',
-            color: '#0f172a',
+            background: 'var(--crm-subtle)',
+            border: '1px solid var(--crm-line)',
+            color: 'var(--crm-ink)',
             textDecoration: 'none',
             fontWeight: 'bold'
           }}
           title={isAr ? 'معاينة الموقع في نافذة مستقلة' : 'View Live Site'}
+          aria-label={isAr ? 'فتح الموقع' : 'Open site'}
+          className="crm-top-chip"
         >
-          <Globe size={13} style={{ color: '#d97706' }} />
-          <span>{isAr ? 'الموقع' : 'Site'}</span>
+          <Globe size={13} style={{ color: 'var(--crm-accent-text)' }} />
+          <span className="crm-top-chip-label">{isAr ? 'الموقع' : 'Site'}</span>
         </a>
 
         {/* Quick Logout button in topbar */}
@@ -637,9 +641,11 @@ export default function CrmTopbar({
             gap: '4px'
           }}
           title={isAr ? 'تسجيل الخروج' : 'Logout'}
+          aria-label={isAr ? 'تسجيل الخروج' : 'Logout'}
+          className="crm-top-chip"
         >
           <LogOut size={13} />
-          <span>{isAr ? 'خروج' : 'Exit'}</span>
+          <span className="crm-top-chip-label">{isAr ? 'خروج' : 'Exit'}</span>
         </button>
       </div>
     </header>

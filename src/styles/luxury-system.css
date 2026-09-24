@@ -37,6 +37,53 @@
   --lx-focus: 0 0 0 3px var(--ivory), 0 0 0 5px var(--gold-dark);
 }
 
+/* Shared UI tokens (CRM + calculators). Every text token passes WCAG AA on --crm-card and --crm-subtle. */
+:root {
+  --crm-canvas: #F6F4EF;
+  --crm-card: #FFFFFF;
+  --crm-subtle: #F9F8F5;
+  --crm-subtle-2: #F2F0EA;
+  --crm-line: #E6E1D8;
+  --crm-line-strong: #D5CEC2;
+  --crm-ink: #101B2D;
+  --crm-body: #3A4557;
+  --crm-muted: #5B6573;
+  --crm-faint: #6B7280;
+  --crm-accent: #A9824A;
+  --crm-accent-text: #7C5E30;
+  --crm-accent-soft: #F3EBDD;
+  --crm-positive: #047857;
+  --crm-positive-solid: #047857;
+  --crm-warn: #A1510A;
+  --crm-info: #1D4ED8;
+  --crm-violet: #6D28D9;
+  --crm-danger: #B42318;
+  --crm-shadow: 0 1px 2px rgba(16, 27, 45, 0.04), 0 8px 24px -16px rgba(16, 27, 45, 0.18);
+  --success: #3F6B58; /* was #4E7A68: 4.4:1 on ivory, now 5.7:1 */
+}
+
+:root[data-theme="dark"],
+.dark-theme {
+  --crm-canvas: #070E1A;
+  --crm-card: #0D1A2D;
+  --crm-subtle: #102038;
+  --crm-subtle-2: #13263F;
+  --crm-line: rgba(255, 255, 255, 0.09);
+  --crm-line-strong: rgba(255, 255, 255, 0.16);
+  --crm-ink: #F3F4F6;
+  --crm-body: #D1D5DB;
+  --crm-muted: #A7B0BE;
+  --crm-faint: #9AA4B2;
+  --crm-accent-text: #D9B97E;
+  --crm-accent-soft: rgba(217, 185, 126, 0.12);
+  --crm-positive: #34D399;
+  --crm-positive-solid: #047857;
+  --crm-warn: #FBBF24;
+  --crm-info: #93C5FD;
+  --crm-violet: #C4B5FD;
+  --crm-danger: #FCA5A5;
+}
+
 :root[data-theme="dark"],
 .dark-theme {
   --muted: #A3AEBD;

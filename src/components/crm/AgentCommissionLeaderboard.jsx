@@ -215,7 +215,7 @@ export default function AgentCommissionLeaderboard({
                     <strong style={{ fontSize: '1.05rem', color: 'var(--text-primary)' }}>{agent.name}</strong>
                     {index === 0 && (
                       <span className="badge" style={{ background: 'var(--gold-soft)', color: 'var(--gold-dark)', fontWeight: 'bold', border: '1px solid rgba(179, 138, 69, 0.25)' }}>
-                        ⭐ {isAr ? 'متصدر المبيعات (Top Closer)' : 'Top Closer'}
+                        ⭐ {isAr ? 'متصدر المبيعات' : 'Top Closer'}
                       </span>
                     )}
                   </div>

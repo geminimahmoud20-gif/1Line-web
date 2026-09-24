@@ -264,7 +264,7 @@ export default function MegaProjectsManagerPanel({
                   </td>
                   <td>
                     <div style={{ minWidth: '140px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: '800', marginBottom: '3px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 700, marginBottom: '3px' }}>
                         <span>{isAr ? 'الإجمالي:' : 'Total:'}</span>
                         <span className="text-emerald">{p.progress}%</span>
                       </div>
@@ -277,7 +277,7 @@ export default function MegaProjectsManagerPanel({
                     </div>
                   </td>
                   <td>
-                    <span style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--emerald)' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--emerald)' }}>
                       {p.availableUnits} / {p.totalUnits || '-'}
                     </span>
                   </td>
@@ -331,7 +331,7 @@ export default function MegaProjectsManagerPanel({
             <form onSubmit={handleSubmit} className="deposit-modal-body" style={{ maxHeight: '72vh', overflowY: 'auto' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '10px', marginBottom: '10px' }}>
                 <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: '800' }}>{isAr ? 'اسم المشروع (عربي) *' : 'Project Title (Arabic)'}</label>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>{isAr ? 'اسم المشروع (عربي) *' : 'Project Title (Arabic)'}</label>
                   <input
                     type="text"
                     required
@@ -343,7 +343,7 @@ export default function MegaProjectsManagerPanel({
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: '800' }}>{isAr ? 'الشارة التجارية (Brand Tag)' : 'Brand Tag'}</label>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>{isAr ? 'الشارة التجارية' : 'Brand Tag'}</label>
                   <input
                     type="text"
                     placeholder="مثال: Pearl Compound"
@@ -356,7 +356,7 @@ export default function MegaProjectsManagerPanel({
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
                 <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: '800' }}>{isAr ? 'الشركة المطورة (عربي)' : 'Developer'}</label>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>{isAr ? 'الشركة المطورة (عربي)' : 'Developer'}</label>
                   <input
                     type="text"
                     value={formData.developer_ar}
@@ -366,7 +366,7 @@ export default function MegaProjectsManagerPanel({
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: '800' }}>{isAr ? 'الموقع الجغرافي' : 'Location'}</label>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>{isAr ? 'الموقع الجغرافي' : 'Location'}</label>
                   <input
                     type="text"
                     value={formData.location_ar}
@@ -420,14 +420,14 @@ export default function MegaProjectsManagerPanel({
               </div>
 
               {/* Live Construction Milestones Sliders Box */}
-              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', marginBottom: '12px' }}>
+              <div style={{ background: 'var(--crm-subtle)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', marginBottom: '12px' }}>
                 <strong style={{ fontSize: '0.84rem', color: 'var(--primary)', display: 'block', marginBottom: '8px' }}>
-                  🏗️ {isAr ? 'نسب التنفيذ الميداني للمشروع (Construction Milestones)' : 'Construction Milestones'}
+                  🏗️ {isAr ? 'نسب التنفيذ الميداني للمشروع' : 'Construction Milestones'}
                 </strong>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: '800' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 700 }}>
                       <span>{isAr ? 'نسبة الإنجاز الإجمالية:' : 'Overall Progress:'}</span>
                       <strong className="text-emerald">{formData.progress}%</strong>
                     </div>
@@ -442,7 +442,7 @@ export default function MegaProjectsManagerPanel({
                   </div>
 
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: '800' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 700 }}>
                       <span>{isAr ? 'نسبة الخرسانات:' : 'Concrete:'}</span>
                       <strong>{formData.progressBreakdown?.concrete || 0}%</strong>
                     </div>
@@ -460,7 +460,7 @@ export default function MegaProjectsManagerPanel({
                   </div>
 
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: '800' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 700 }}>
                       <span>{isAr ? 'نسبة المباني والحوائط:' : 'Masonry:'}</span>
                       <strong>{formData.progressBreakdown?.masonry || 0}%</strong>
                     </div>
@@ -478,7 +478,7 @@ export default function MegaProjectsManagerPanel({
                   </div>
 
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: '800' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 700 }}>
                       <span>{isAr ? 'نسبة التشطيبات:' : 'Finishing:'}</span>
                       <strong>{formData.progressBreakdown?.finishing || 0}%</strong>
                     </div>

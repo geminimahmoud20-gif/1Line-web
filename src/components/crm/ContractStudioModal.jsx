@@ -158,11 +158,11 @@ export default function ContractStudioModal({
           {/* Fast Auto-Fill Selectors Row */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
             <div className="form-group-item">
-              <label style={{ fontSize: '0.8rem', fontWeight: '800' }}>{isAr ? 'اختر العميل (تعبئة تلقائية)' : 'Select Lead'}</label>
+              <label style={{ fontSize: '0.8rem', fontWeight: 700 }}>{isAr ? 'اختر العميل (تعبئة تلقائية)' : 'Select Lead'}</label>
               <select 
                 value={selectedLeadId} 
                 onChange={handleLeadSelect}
-                style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', background: '#fff' }}
+                style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', background: 'var(--crm-card)' }}
               >
                 <option value="">{isAr ? '-- اختر عميل من الـ CRM --' : '-- Choose from CRM --'}</option>
                 {leads.map((l) => (
@@ -172,11 +172,11 @@ export default function ContractStudioModal({
             </div>
 
             <div className="form-group-item">
-              <label style={{ fontSize: '0.8rem', fontWeight: '800' }}>{isAr ? 'اختر العقار (تعبئة تلقائية)' : 'Select Property'}</label>
+              <label style={{ fontSize: '0.8rem', fontWeight: 700 }}>{isAr ? 'اختر العقار (تعبئة تلقائية)' : 'Select Property'}</label>
               <select 
                 value={selectedPropertyId} 
                 onChange={handlePropertySelect}
-                style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', background: '#fff' }}
+                style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', background: 'var(--crm-card)' }}
               >
                 <option value="">{isAr ? '-- اختر عقار من الكتالوج --' : '-- Choose Property --'}</option>
                 {properties.map((p) => (
@@ -189,7 +189,7 @@ export default function ContractStudioModal({
           {/* Detailed Form */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {/* Buyer Details */}
-            <div style={{ background: '#f8fafc', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+            <div style={{ background: 'var(--crm-subtle)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
               <strong style={{ fontSize: '0.84rem', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: 'var(--primary)' }}>
                 <User size={14} />
                 <span>{isAr ? 'بيانات المشتري والحاجز' : 'Buyer Information'}</span>
@@ -231,7 +231,7 @@ export default function ContractStudioModal({
             </div>
 
             {/* Property & Financial Details */}
-            <div style={{ background: '#f8fafc', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+            <div style={{ background: 'var(--crm-subtle)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
               <strong style={{ fontSize: '0.84rem', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: 'var(--primary)' }}>
                 <Building2 size={14} />
                 <span>{isAr ? 'بيانات الوحدة والماليات' : 'Property & Pricing'}</span>
@@ -281,7 +281,7 @@ export default function ContractStudioModal({
                   <select
                     value={formData.paymentMethod}
                     onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
-                    style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', background: '#fff' }}
+                    style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', background: 'var(--crm-card)' }}
                   >
                     <option value="InstaPay (إنستاباي)">InstaPay (إنستاباي)</option>
                     <option value="Vodafone Cash (فودافون كاش)">Vodafone Cash (فودافون كاش)</option>

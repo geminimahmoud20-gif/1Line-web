@@ -86,6 +86,8 @@ export function getOrCreateSession() {
  */
 export function trackEvent(eventType, metadata = {}) {
   if (typeof window === 'undefined') return;
+  // Staff activity inside the CRM is not visitor behaviour; recording it skews the analytics.
+  if (window.location.pathname.startsWith('/crm')) return;
 
   try {
     const session = getOrCreateSession();

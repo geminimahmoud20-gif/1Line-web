@@ -102,7 +102,7 @@ export default function CrmSidebar({
         {
           id: 'kanban',
           icon: Target,
-          label_ar: 'مسار الصفقات (Kanban)',
+          label_ar: 'مسار الصفقات',
           label_en: 'Deals Pipeline'
         },
         {
@@ -241,7 +241,7 @@ export default function CrmSidebar({
               type="button"
               className="crm-sidebar-collapse-btn"
               onClick={onToggleCollapse}
-              title={collapsed ? (isAr ? 'توسيع القائمة (Ctrl+B)' : 'Expand Sidebar') : (isAr ? 'طي القائمة (Ctrl+B)' : 'Collapse Sidebar')}
+              title={collapsed ? (isAr ? 'توسيع القائمة' : 'Expand Sidebar') : (isAr ? 'طي القائمة' : 'Collapse Sidebar')}
               aria-label={isAr ? 'طي/توسيع القائمة' : 'Toggle sidebar'}
             >
               {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}

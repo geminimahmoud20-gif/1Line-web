@@ -402,7 +402,7 @@ export const CrmAdminPanel = ({
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    triggerToast(isAr ? 'تم تنزيل ملف النسخة الاحتياطية لبيانات العملاء (JSON) بنجاح!' : 'Leads backup downloaded!', 'success');
+    triggerToast(isAr ? 'تم تنزيل ملف النسخة الاحتياطية لبيانات العملاء بنجاح!' : 'Leads backup downloaded!', 'success');
   };
 
   // Full Leads Database JSON Restore
@@ -729,7 +729,7 @@ export const CrmAdminPanel = ({
             return (
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
                 gap: '12px',
                 marginBottom: '16px'
               }}>
@@ -737,8 +737,8 @@ export const CrmAdminPanel = ({
                 <div 
                   onClick={() => setAdminTab('leads')}
                   style={{
-                    background: '#ffffff',
-                    border: '1px solid #e2e8f0',
+                    background: 'var(--crm-card)',
+                    border: '1px solid var(--crm-line)',
                     borderRadius: '12px',
                     padding: '14px 18px',
                     cursor: 'pointer',
@@ -749,11 +749,11 @@ export const CrmAdminPanel = ({
                   onMouseLeave={(e) => e.currentTarget.style.borderColor = '#e2e8f0'}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600' }}>{isAr ? 'العملاء والفرص' : 'Total Leads'}</span>
-                    <Users size={16} style={{ color: '#2563eb' }} />
+                    <span style={{ fontSize: '0.78rem', color: 'var(--crm-muted)', fontWeight: '600' }}>{isAr ? 'العملاء والفرص' : 'Total Leads'}</span>
+                    <Users size={16} style={{ color: 'var(--crm-info)' }} />
                   </div>
-                  <div style={{ fontSize: '1.55rem', fontWeight: '900', color: '#0f172a', marginTop: '4px' }}>
-                    {leads.length} <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: '#64748b' }}>{isAr ? 'عميل' : 'leads'}</span>
+                  <div style={{ fontSize: '1.55rem', fontWeight: 700, color: 'var(--crm-ink)', marginTop: '4px' }}>
+                    {leads.length} <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: 'var(--crm-muted)' }}>{isAr ? 'عميل' : 'leads'}</span>
                   </div>
                 </div>
 
@@ -761,8 +761,8 @@ export const CrmAdminPanel = ({
                 <div 
                   onClick={() => onSwitchToProperties?.()}
                   style={{
-                    background: '#ffffff',
-                    border: '1px solid #e2e8f0',
+                    background: 'var(--crm-card)',
+                    border: '1px solid var(--crm-line)',
                     borderRadius: '12px',
                     padding: '14px 18px',
                     cursor: 'pointer',
@@ -773,10 +773,10 @@ export const CrmAdminPanel = ({
                   onMouseLeave={(e) => e.currentTarget.style.borderColor = '#e2e8f0'}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600' }}>{isAr ? 'محفظة العقارات' : 'Active Units'}</span>
-                    <Building size={16} style={{ color: '#d97706' }} />
+                    <span style={{ fontSize: '0.78rem', color: 'var(--crm-muted)', fontWeight: '600' }}>{isAr ? 'محفظة العقارات' : 'Active Units'}</span>
+                    <Building size={16} style={{ color: 'var(--crm-accent-text)' }} />
                   </div>
-                  <div style={{ fontSize: '1.55rem', fontWeight: '900', color: '#0f172a', marginTop: '4px' }}>
+                  <div style={{ fontSize: '1.55rem', fontWeight: 700, color: 'var(--crm-ink)', marginTop: '4px' }}>
                     {properties.length} <span style={{ fontSize: '0.75rem', fontWeight: '600', color: '#b45309' }}>{isAr ? 'وحدة معتمدة' : 'units'}</span>
                   </div>
                 </div>
@@ -802,7 +802,7 @@ export const CrmAdminPanel = ({
                     </span>
                     <Zap size={16} style={{ color: pendingDemands > 0 ? '#ef4444' : '#059669' }} />
                   </div>
-                  <div style={{ fontSize: '1.55rem', fontWeight: '900', color: '#0f172a', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ fontSize: '1.55rem', fontWeight: 700, color: 'var(--crm-ink)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span>{demands.length}</span>
                     {pendingDemands > 0 && (
                       <span style={{
@@ -821,35 +821,35 @@ export const CrmAdminPanel = ({
 
                 {/* Metric 4: Total Purchasing Power */}
                 <div style={{
-                  background: '#ffffff',
-                  border: '1px solid #e2e8f0',
+                  background: 'var(--crm-card)',
+                  border: '1px solid var(--crm-line)',
                   borderRadius: '12px',
                   padding: '14px 18px',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600' }}>{isAr ? 'القوة الشرائية المسجلة' : 'Demand Purchasing Power'}</span>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--crm-muted)', fontWeight: '600' }}>{isAr ? 'القوة الشرائية المسجلة' : 'Demand Purchasing Power'}</span>
                     <Wallet size={16} style={{ color: '#047857' }} aria-hidden="true" />
                   </div>
-                  <div style={{ fontSize: '1.55rem', fontWeight: '900', color: '#059669', marginTop: '4px' }}>
+                  <div style={{ fontSize: '1.55rem', fontWeight: 700, color: 'var(--crm-positive)', marginTop: '4px' }}>
                     <bdi>{totalPurchasingPowerM}</bdi>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: '#64748b', marginInlineStart: '4px' }}>{isAr ? 'مليون ج.م' : 'M EGP'}</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: 'var(--crm-muted)', marginInlineStart: '4px' }}>{isAr ? 'مليون ج.م' : 'M EGP'}</span>
                   </div>
                 </div>
 
                 {/* Metric 5: Closing Rate */}
                 <div style={{
-                  background: '#ffffff',
-                  border: '1px solid #e2e8f0',
+                  background: 'var(--crm-card)',
+                  border: '1px solid var(--crm-line)',
                   borderRadius: '12px',
                   padding: '14px 18px',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600' }}>{isAr ? 'معدل إغلاق الصفقات' : 'Closing Rate'}</span>
-                    <Briefcase size={16} style={{ color: '#059669' }} />
+                    <span style={{ fontSize: '0.78rem', color: 'var(--crm-muted)', fontWeight: '600' }}>{isAr ? 'معدل إغلاق الصفقات' : 'Closing Rate'}</span>
+                    <Briefcase size={16} style={{ color: 'var(--crm-positive)' }} />
                   </div>
-                  <div style={{ fontSize: '1.55rem', fontWeight: '900', color: '#0f172a', marginTop: '4px' }}>
+                  <div style={{ fontSize: '1.55rem', fontWeight: 700, color: 'var(--crm-ink)', marginTop: '4px' }}>
                     {crmAnalytics.conversionSuccess || '0%'}
                   </div>
                 </div>
@@ -873,8 +873,8 @@ export const CrmAdminPanel = ({
 
             return (
               <div style={{
-                background: '#ffffff',
-                border: '1px solid #e2e8f0',
+                background: 'var(--crm-card)',
+                border: '1px solid var(--crm-line)',
                 borderRadius: '12px',
                 padding: '18px 22px',
                 marginBottom: '16px',
@@ -884,14 +884,14 @@ export const CrmAdminPanel = ({
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                       <span style={{ fontSize: '1.3rem' }}>☀️</span>
-                      <h2 style={{ margin: 0, fontSize: '1.15rem', color: '#0f172a', fontWeight: 800 }}>
+                      <h2 style={{ margin: 0, fontSize: '1.15rem', color: 'var(--crm-ink)', fontWeight: 700 }}>
                         {isAr ? `مرحباً، ${currentRoleObj.label_ar}` : `Welcome, ${currentRoleObj.label_en}`}
                       </h2>
                       <span className="badge" style={{ background: '#fffbeb', color: '#b45309', border: '1px solid #fde68a', fontSize: '0.72rem', fontWeight: 'bold' }}>
                         {isAr ? 'قائمة القرارات اليومية' : 'Daily Decisions'}
                       </span>
                     </div>
-                    <p style={{ margin: 0, fontSize: '0.84rem', color: '#475569' }}>
+                    <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--crm-body)' }}>
                       {isAr 
                         ? `لديك اليوم: ${dueFollowUpsCount} متابعات مستحقة • ${newLeadsCount} عملاء جدد بحاجة للتأهيل • ${stalledDealsCount} صفقات قيد التفاوض • ${unmatchedDemandsCount} طلبات معلقة.`
                         : `Today: ${dueFollowUpsCount} follow-ups due • ${newLeadsCount} new leads • ${stalledDealsCount} negotiating • ${unmatchedDemandsCount} pending demands.`}
@@ -918,7 +918,7 @@ export const CrmAdminPanel = ({
                         setLeadFilter('new');
                         setAdminTab('leads');
                       }}
-                      style={{ background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', fontWeight: 'bold', padding: '7px 13px', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '8px', fontSize: '0.78rem', cursor: 'pointer' }}
+                      style={{ background: '#eff6ff', color: 'var(--crm-info)', border: '1px solid #bfdbfe', fontWeight: 'bold', padding: '7px 13px', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '8px', fontSize: '0.78rem', cursor: 'pointer' }}
                     >
                       <UserPlus size={13} />
                       <span>{isAr ? `العملاء الجدد (${newLeadsCount})` : `New Leads (${newLeadsCount})`}</span>
@@ -936,7 +936,7 @@ export const CrmAdminPanel = ({
                     <button
                       type="button"
                       onClick={() => onSwitchToDemands?.()}
-                      style={{ background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0', fontWeight: 'bold', padding: '7px 13px', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '8px', fontSize: '0.78rem', cursor: 'pointer' }}
+                      style={{ background: '#ecfdf5', color: 'var(--crm-positive)', border: '1px solid #a7f3d0', fontWeight: 'bold', padding: '7px 13px', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '8px', fontSize: '0.78rem', cursor: 'pointer' }}
                     >
                       <Zap size={13} />
                       <span>{isAr ? `مطابقة الطلبات (${unmatchedDemandsCount})` : `Match Demands (${unmatchedDemandsCount})`}</span>
@@ -954,15 +954,15 @@ export const CrmAdminPanel = ({
             justifyContent: 'space-between',
             flexWrap: 'wrap',
             gap: '10px',
-            background: '#ffffff',
-            border: '1px solid #e2e8f0',
+            background: 'var(--crm-card)',
+            border: '1px solid var(--crm-line)',
             borderRadius: '10px',
             padding: '10px 16px',
             marginBottom: '16px',
             boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '0.76rem', color: '#64748b', fontWeight: 'bold' }}>
+              <span style={{ fontSize: '0.76rem', color: 'var(--crm-muted)', fontWeight: 'bold' }}>
                 {isAr ? 'أدوات العمليات السريعة:' : 'Quick Tools:'}
               </span>
 
@@ -971,7 +971,7 @@ export const CrmAdminPanel = ({
                 type="button"
                 onClick={() => setShowAddLeadModal(true)}
                 style={{
-                  background: '#059669',
+                  background: 'var(--crm-positive-solid)',
                   border: '1px solid #047857',
                   color: '#ffffff',
                   display: 'flex',
@@ -1007,7 +1007,7 @@ export const CrmAdminPanel = ({
                   cursor: 'pointer'
                 }}
               >
-                <FileText size={13} style={{ color: '#f59e0b' }} />
+                <FileText size={13} style={{ color: 'var(--crm-warn)' }} />
                 <span>{isAr ? 'استوديو العقود' : 'Contract Studio'}</span>
               </button>
 
@@ -1039,7 +1039,7 @@ export const CrmAdminPanel = ({
                 onClick={() => setAdminTab('matching')}
                 style={{ 
                   background: '#eff6ff', 
-                  color: '#2563eb', 
+                  color: 'var(--crm-info)', 
                   fontWeight: 'bold',
                   border: '1px solid #bfdbfe', 
                   display: 'flex', 
@@ -1062,9 +1062,9 @@ export const CrmAdminPanel = ({
                 type="button"
                 onClick={handleExportCSV}
                 style={{ 
-                  background: '#ffffff', 
-                  color: '#0f172a', 
-                  border: '1px solid #cbd5e1', 
+                  background: 'var(--crm-card)', 
+                  color: 'var(--crm-ink)', 
+                  border: '1px solid var(--crm-line-strong)', 
                   display: 'flex', 
                   alignItems: 'center', 
                   gap: '6px',
@@ -1084,15 +1084,15 @@ export const CrmAdminPanel = ({
           <div className="crm-dashboard-split">
             <div className="crm-table-container">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.05rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Users size={18} style={{ color: '#2563eb' }} />
+                <h3 style={{ margin: 0, color: 'var(--crm-ink)', fontSize: '1.05rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Users size={18} style={{ color: 'var(--crm-info)' }} />
                   <span>{isAr ? 'العملاء المسجلون حديثاً' : 'Recent Registrations'}</span>
                 </h3>
                 <button 
                   type="button" 
                   className="btn btn-sm" 
                   onClick={() => setAdminTab('kanban')}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', background: '#eff6ff', border: '1px solid #bfdbfe', color: '#2563eb', borderRadius: '8px', fontWeight: 'bold' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', background: '#eff6ff', border: '1px solid #bfdbfe', color: 'var(--crm-info)', borderRadius: '8px', fontWeight: 'bold' }}
                 >
                   <span>{isAr ? 'عرض مسار الكانبان' : 'Open Pipeline'}</span>
                   {isAr ? <ArrowLeft size={13} /> : <ArrowRight size={13} />}
@@ -1111,7 +1111,7 @@ export const CrmAdminPanel = ({
                 <tbody>
                   {leads.slice(0, 5).map((l) => (
                     <tr key={l.id}>
-                      <td style={{ fontWeight: 'bold', color: '#0f172a', whiteSpace: 'nowrap' }}><bdi>{l.name}</bdi></td>
+                      <td style={{ fontWeight: 'bold', color: 'var(--crm-ink)', whiteSpace: 'nowrap' }}><bdi>{l.name}</bdi></td>
                       <td><span className={`badge badge-${l.type}`}>{formatLeadTypeBadge(l.type)}</span></td>
                       <td>
                         <span className={`lead-score-pill ${l.score >= 85 ? 'score-high' : l.score >= 60 ? 'score-medium' : 'score-low'}`}>
@@ -1119,7 +1119,7 @@ export const CrmAdminPanel = ({
                         </span>
                       </td>
                       <td><span className={`badge badge-status status-${l.status}`}>{formatLeadStatus(l.status)}</span></td>
-                      <td style={{ fontSize: '0.8rem', color: '#64748b' }}>{formatLeadSourceLabel(l.source || l.landingPage)}</td>
+                      <td style={{ fontSize: '0.8rem', color: 'var(--crm-muted)' }}>{formatLeadSourceLabel(l.source || l.landingPage)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1127,13 +1127,13 @@ export const CrmAdminPanel = ({
             </div>
 
             <div className="crm-table-container" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.05rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Bell size={18} style={{ color: '#d97706' }} />
+              <h3 style={{ margin: 0, color: 'var(--crm-ink)', fontSize: '1.05rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Bell size={18} style={{ color: 'var(--crm-accent-text)' }} />
                 <span>{isAr ? 'سجل الإشعارات والأتمتة' : 'System Notifications'}</span>
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
                 {notifications.length === 0 ? (
-                  <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>{isAr ? 'لا توجد إشعارات حالية' : 'No notifications'}</p>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--crm-faint)' }}>{isAr ? 'لا توجد إشعارات حالية' : 'No notifications'}</p>
                 ) : (
                   notifications.map((notif, index) => (
                     <div key={index} style={{
@@ -1196,7 +1196,7 @@ export const CrmAdminPanel = ({
             <div>
               <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Users size={20} className="text-gold" />
-                {isAr ? 'قاعدة بيانات العملاء الشاملة (Customer 360° Hub)' : 'Customer 360° Database'}
+                {isAr ? 'قاعدة بيانات العملاء الشاملة' : 'Customer 360° Database'}
               </h3>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                 {isAr ? `إجمالي العملاء: ${leads.length} عميل | المطابق للفلتر: ${filteredLeads.length}` : `Total Leads: ${leads.length} | Filtered: ${filteredLeads.length}`}
@@ -1263,9 +1263,9 @@ export const CrmAdminPanel = ({
                 style={{ padding: '6px 10px', fontSize: '0.75rem', borderRadius: 'var(--radius-pill)', width: 'auto' }}
               >
                 <option value="all">🌡️ {isAr ? 'كل درجات الحرارة' : 'All Temperatures'}</option>
-                <option value="hot">🔥 {isAr ? 'ساخن جداً (Hot)' : 'Hot'}</option>
-                <option value="warm">⚡ {isAr ? 'دافئ (Warm)' : 'Warm'}</option>
-                <option value="cold">❄️ {isAr ? 'بارد (Cold)' : 'Cold'}</option>
+                <option value="hot">🔥 {isAr ? 'ساخن جداً' : 'Hot'}</option>
+                <option value="warm">⚡ {isAr ? 'دافئ' : 'Warm'}</option>
+                <option value="cold">❄️ {isAr ? 'بارد' : 'Cold'}</option>
               </select>
 
               {/* Area Filter */}
@@ -1600,7 +1600,7 @@ export const CrmAdminPanel = ({
                                 className="btn btn-sm btn-ghost" 
                                 onClick={() => onConvertToProperty(l)}
                                 title={isAr ? 'تحويل هذا الطلب إلى عقار معروض بالموقع فوراً' : 'Convert to Property Listing'}
-                                style={{ padding: '4px 6px', color: '#94a3b8', borderRadius: '4px' }}
+                                style={{ padding: '4px 6px', color: 'var(--crm-faint)', borderRadius: '4px' }}
                               >
                                 <Building size={12} />
                               </button>
@@ -1612,7 +1612,7 @@ export const CrmAdminPanel = ({
                                 type="button"
                                 className="btn btn-sm btn-ghost"
                                 onClick={() => handleClaimLead(l.id)}
-                                style={{ padding: '4px 6px', color: '#10b981', borderRadius: '4px' }}
+                                style={{ padding: '4px 6px', color: 'var(--crm-positive)', borderRadius: '4px' }}
                                 title={isAr ? `استلام هذا العميل وتعيينه لـ ${currentRoleObj.label_ar}` : 'Claim this lead'}
                               >
                                 <UserPlus size={12} />
@@ -1715,7 +1715,7 @@ export const CrmAdminPanel = ({
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', borderBottom: '1px solid var(--border-light)', paddingBottom: '16px' }}>
               <Database size={26} className="text-gold" />
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#0f172a' }}>
+                <h3 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--crm-ink)' }}>
                   {isAr ? 'البيانات والنسخ الاحتياطي وإدارة المنظومة' : 'Database Backups & System Administration'}
                 </h3>
                 <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
@@ -1729,7 +1729,7 @@ export const CrmAdminPanel = ({
               <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-light)', borderRadius: '10px', padding: '20px' }}>
                 <h4 style={{ margin: '0 0 10px 0', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Download size={18} />
-                  <span>{isAr ? 'تنزيل نسخة احتياطية (JSON)' : 'Download Backup'}</span>
+                  <span>{isAr ? 'تنزيل نسخة احتياطية' : 'Download Backup'}</span>
                 </h4>
                 <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.5' }}>
                   {isAr 
@@ -1895,11 +1895,11 @@ export const CrmAdminPanel = ({
                     value={leadFormData.type}
                     onChange={(e) => setLeadFormData({ ...leadFormData, type: e.target.value })}
                   >
-                    <option value="buyer">{isAr ? 'طلب شراء (Buyer)' : 'Buyer'}</option>
-                    <option value="seller">{isAr ? 'عرض بيع (Seller)' : 'Seller'}</option>
-                    <option value="broker">{isAr ? 'وسيط عقاري (Broker)' : 'Broker'}</option>
-                    <option value="investor">{isAr ? 'مستثمر (Investor)' : 'Investor'}</option>
-                    <option value="request">{isAr ? 'طلب مخصص (Special)' : 'Special Request'}</option>
+                    <option value="buyer">{isAr ? 'طلب شراء' : 'Buyer'}</option>
+                    <option value="seller">{isAr ? 'عرض بيع' : 'Seller'}</option>
+                    <option value="broker">{isAr ? 'وسيط عقاري' : 'Broker'}</option>
+                    <option value="investor">{isAr ? 'مستثمر' : 'Investor'}</option>
+                    <option value="request">{isAr ? 'طلب مخصص' : 'Special Request'}</option>
                   </select>
                 </div>
 
@@ -1966,7 +1966,7 @@ export const CrmAdminPanel = ({
                 </div>
 
                 <div className="form-group-item">
-                  <label>{isAr ? 'مصدر العميل (Source)' : 'Lead Source'}</label>
+                  <label>{isAr ? 'مصدر العميل' : 'Lead Source'}</label>
                   <input
                     type="text"
                     value={leadFormData.source}
@@ -1976,14 +1976,14 @@ export const CrmAdminPanel = ({
                 </div>
 
                 <div className="form-group-item">
-                  <label>{isAr ? 'درجة الاهتمام (Temperature)' : 'Temperature'}</label>
+                  <label>{isAr ? 'درجة الاهتمام' : 'Temperature'}</label>
                   <select
                     value={leadFormData.temperature}
                     onChange={(e) => setLeadFormData({ ...leadFormData, temperature: e.target.value })}
                   >
-                    <option value="hot">🔥 {isAr ? 'ساخن (Hot)' : 'Hot'}</option>
-                    <option value="warm">⚡ {isAr ? 'متوسط (Warm)' : 'Warm'}</option>
-                    <option value="cold">❄️ {isAr ? 'بارد (Cold)' : 'Cold'}</option>
+                    <option value="hot">🔥 {isAr ? 'ساخن' : 'Hot'}</option>
+                    <option value="warm">⚡ {isAr ? 'متوسط' : 'Warm'}</option>
+                    <option value="cold">❄️ {isAr ? 'بارد' : 'Cold'}</option>
                   </select>
                 </div>
 

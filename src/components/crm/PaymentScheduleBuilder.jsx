@@ -118,7 +118,7 @@ export default function PaymentScheduleBuilder({
           style={{ background: 'var(--gradient-gold)', display: 'flex', alignItems: 'center', gap: '6px' }}
         >
           <FileText size={16} />
-          <span>{isAr ? 'إصدار إيصال حجز رسمي (E-Receipt)' : 'Issue Official E-Receipt'}</span>
+          <span>{isAr ? 'إصدار إيصال حجز رسمي' : 'Issue Official E-Receipt'}</span>
         </button>
       </div>
 
@@ -361,8 +361,8 @@ export default function PaymentScheduleBuilder({
 
             {/* Printable Receipt Paper Body */}
             <div id="printable-receipt-area" style={{
-              background: '#ffffff',
-              color: '#0f172a',
+              background: 'var(--crm-card)',
+              color: 'var(--crm-ink)',
               padding: '28px',
               borderRadius: 'var(--radius-sm)',
               margin: '16px',
@@ -372,34 +372,34 @@ export default function PaymentScheduleBuilder({
               {/* Receipt Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #d97706', paddingBottom: '14px', marginBottom: '18px' }}>
                 <div>
-                  <h2 style={{ margin: 0, color: '#0f172a', fontSize: '1.3rem' }}>شركة 1Line للحلول العقارية</h2>
-                  <span style={{ fontSize: '0.8rem', color: '#64748b' }}>1LINE REAL ESTATE SOLUTIONS — SOHAG HQ</span>
+                  <h2 style={{ margin: 0, color: 'var(--crm-ink)', fontSize: '1.3rem' }}>شركة 1Line للحلول العقارية</h2>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--crm-muted)' }}>1LINE REAL ESTATE SOLUTIONS — SOHAG HQ</span>
                 </div>
                 <div style={{ textAlign: isAr ? 'left' : 'right' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#d97706', display: 'block' }}>رقم الإيصال الإلكتروني:</span>
-                  <strong style={{ fontSize: '0.9rem', color: '#0f172a' }}>{receiptSerial}</strong>
-                  <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'block' }}>التاريخ: {new Date().toLocaleDateString('ar-EG')}</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--crm-accent-text)', display: 'block' }}>رقم الإيصال الإلكتروني:</span>
+                  <strong style={{ fontSize: '0.9rem', color: 'var(--crm-ink)' }}>{receiptSerial}</strong>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--crm-muted)', display: 'block' }}>التاريخ: {new Date().toLocaleDateString('ar-EG')}</span>
                 </div>
               </div>
 
               {/* Receipt Details Box */}
-              <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '6px', marginBottom: '16px', fontSize: '0.9rem', lineHeight: '1.8' }}>
+              <div style={{ background: 'var(--crm-subtle)', padding: '16px', borderRadius: '6px', marginBottom: '16px', fontSize: '0.9rem', lineHeight: '1.8' }}>
                 <p style={{ margin: 0 }}>
-                  استلمنا من السيد / السيدة: <strong style={{ color: '#0f172a', textDecoration: 'underline' }}>{selectedLead.name || 'العميل الموقر'}</strong>
+                  استلمنا من السيد / السيدة: <strong style={{ color: 'var(--crm-ink)', textDecoration: 'underline' }}>{selectedLead.name || 'العميل الموقر'}</strong>
                 </p>
                 <p style={{ margin: 0 }}>
                   رقم الهاتف: <strong>{selectedLead.phone || '010XXXXXXXX'}</strong>
                 </p>
                 <p style={{ margin: 0 }}>
-                  مبلغ وقدره: <strong style={{ color: '#16a34a', fontSize: '1.1rem' }}>{receiptDepositAmount.toLocaleString()} ج.م</strong> (فقط خمسون ألف جنيهاً مصرياً لا غير).
+                  مبلغ وقدره: <strong style={{ color: 'var(--crm-positive)', fontSize: '1.1rem' }}>{receiptDepositAmount.toLocaleString()} ج.م</strong> (فقط خمسون ألف جنيهاً مصرياً لا غير).
                 </p>
                 <p style={{ margin: 0 }}>
                   طريقة السداد: <strong>{paymentMethod === 'cash' ? 'نقداً بخزينة الشركة' : paymentMethod === 'bank_transfer' ? 'تحويل بنكي رسمي' : 'فودافون كاش / إنستاباي'}</strong>
                 </p>
                 <p style={{ margin: 0 }}>
-                  وذلك كجدية حجز مبدئي للوحدة: <strong style={{ color: '#d97706' }}>{isAr ? selectedProp.title_ar : selectedProp.title_en}</strong>
+                  وذلك كجدية حجز مبدئي للوحدة: <strong style={{ color: 'var(--crm-accent-text)' }}>{isAr ? selectedProp.title_ar : selectedProp.title_en}</strong>
                 </p>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--crm-muted)' }}>
                   بالموقع: {isAr ? selectedProp.locationName_ar : selectedProp.locationName_en} — بإجمالي سعر: {totalPrice.toLocaleString()} ج.م.
                 </p>
               </div>
@@ -410,17 +410,17 @@ export default function PaymentScheduleBuilder({
                   <div style={{ padding: '6px', background: '#0f172a', borderRadius: '6px', color: '#ffffff' }}>
                     <QrCode size={44} />
                   </div>
-                  <span style={{ fontSize: '0.7rem', color: '#64748b', maxWidth: '140px' }}>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--crm-muted)', maxWidth: '140px' }}>
                     رمز QR للتحقق الرقمي من صحة الإيصال في النظام المركزي
                   </span>
                 </div>
 
                 <div style={{ textAlign: 'center' }}>
-                  <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'block' }}>خاتم وتوقيع الإدارة المالية:</span>
-                  <div style={{ marginTop: '6px', color: '#d97706', fontWeight: 'bold', fontSize: '0.85rem' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--crm-muted)', display: 'block' }}>خاتم وتوقيع الإدارة المالية:</span>
+                  <div style={{ marginTop: '6px', color: 'var(--crm-accent-text)', fontWeight: 'bold', fontSize: '0.85rem' }}>
                     شركة 1Line للاستثمار العقاري
                   </div>
-                  <span style={{ fontSize: '0.65rem', color: '#16a34a' }}>✓ تم السداد والاعتماد إلكترونياً</span>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--crm-positive)' }}>✓ تم السداد والاعتماد إلكترونياً</span>
                 </div>
               </div>
             </div>
@@ -437,7 +437,7 @@ export default function PaymentScheduleBuilder({
                 style={{ background: 'var(--gradient-gold)', display: 'flex', alignItems: 'center', gap: '6px' }}
               >
                 <Printer size={16} />
-                <span>{isAr ? 'طباعة الإيصال الفوري (Print PDF)' : 'Print Official Receipt'}</span>
+                <span>{isAr ? 'طباعة الإيصال الفوري' : 'Print Official Receipt'}</span>
               </button>
             </div>
           </div>

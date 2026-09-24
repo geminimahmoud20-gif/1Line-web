@@ -385,7 +385,7 @@ export default function PropertyManagerPanel({
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    triggerToast(isAr ? 'تم تنزيل ملف النسخة الاحتياطية الكاملة (JSON) بنجاح!' : 'Full backup downloaded successfully!', 'success');
+    triggerToast(isAr ? 'تم تنزيل ملف النسخة الاحتياطية الكاملة بنجاح!' : 'Full backup downloaded successfully!', 'success');
   };
 
   // Full Database JSON Restore
@@ -530,7 +530,7 @@ export default function PropertyManagerPanel({
       {/* Header & Main Actions */}
       <div className="panel-top-bar">
         <div>
-          <h3>{isAr ? 'إدارة العقارات والوحدات المعروضة (CMS)' : 'Property Catalog Management (CMS)'}</h3>
+          <h3>{isAr ? 'إدارة العقارات والوحدات المعروضة' : 'Property Catalog Management'}</h3>
           <p className="panel-sub">
             {isAr 
               ? `إجمالي المعروض النشط: ${activeCount} عقاراً • المخفي: ${hiddenCount} • تحت التفاوض: ${negotiationCount}` 
@@ -683,8 +683,12 @@ export default function PropertyManagerPanel({
 
                     <td>
                       <div className="table-cell-multi">
-                        <span className="badge-type">{prop.type}</span>
-                        <span className="text-muted">{prop.areaKey}</span>
+                        <span className="badge-type">
+                          {(() => { const t = PROPERTY_TYPES.find(x => x.id === prop.type); return t ? (isAr ? t.name_ar : t.name_en) : prop.type; })()}
+                        </span>
+                        <span className="text-muted">
+                          {(() => { const a = areas.find(x => x.id === prop.areaKey); return a ? (isAr ? a.name_ar : a.name_en) : prop.areaKey; })()}
+                        </span>
                       </div>
                     </td>
 
@@ -788,7 +792,7 @@ export default function PropertyManagerPanel({
                               style={{
                                 background: 'rgba(16, 185, 129, 0.12)',
                                 border: '1px solid rgba(16, 185, 129, 0.35)',
-                                color: '#10b981',
+                                color: 'var(--crm-positive)',
                                 padding: '4px 8px',
                                 borderRadius: '8px',
                                 fontSize: '0.72rem',
@@ -1049,7 +1053,7 @@ export default function PropertyManagerPanel({
 
                   {/* Badge Preset Dropdown */}
                   <div className="form-group-item">
-                    <label>{isAr ? 'شارة الترويج (Badge)' : 'Marketing Badge'}</label>
+                    <label>{isAr ? 'شارة الترويج' : 'Marketing Badge'}</label>
                     <select
                       value={form.badge_ar || ''}
                       onChange={(e) => {
@@ -1078,7 +1082,7 @@ export default function PropertyManagerPanel({
                       style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                     />
                     <label htmlFor="featured-checkbox" style={{ cursor: 'pointer', margin: 0, fontWeight: 'bold' }}>
-                      ⭐ {isAr ? 'تمييز في صدارة الموقع (Featured)' : 'Featured on Homepage'}
+                      ⭐ {isAr ? 'تمييز في صدارة الموقع' : 'Featured on Homepage'}
                     </label>
                   </div>
                 </div>
@@ -1285,7 +1289,7 @@ export default function PropertyManagerPanel({
                       borderRadius: '8px',
                       border: '1px solid rgba(56, 189, 248, 0.22)',
                       fontSize: '0.82rem',
-                      color: '#0284c7',
+                      color: 'var(--crm-info)',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px'
@@ -1326,7 +1330,7 @@ export default function PropertyManagerPanel({
                       borderRadius: '8px',
                       border: '1px solid rgba(16, 185, 129, 0.22)',
                       fontSize: '0.82rem',
-                      color: '#059669',
+                      color: 'var(--crm-positive)',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px'
@@ -1475,7 +1479,7 @@ export default function PropertyManagerPanel({
                     ))}
                   </div>
                 ) : (
-                  <p style={{ margin: 0, fontSize: '0.78rem', color: '#94a3b8' }}>
+                  <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--crm-faint)' }}>
                     {isAr ? 'يتم حالياً عرض المعالم الحيوية الافتراضية للحي تلقائياً. يمكنك إضافة معالم مخصصة للعقار بالنقر على الزر أعلاه.' : 'Default district amenities are automatically displayed. Click above to add custom landmarks.'}
                   </p>
                 )}

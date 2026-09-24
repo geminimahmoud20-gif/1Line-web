@@ -15,6 +15,7 @@ import GoLiveWizardModal from '../components/crm/GoLiveWizardModal';
 import CrmSidebar from '../components/crm/CrmSidebar';
 import CrmTopbar from '../components/crm/CrmTopbar';
 import '../components/crm/CrmLayout.css';
+import '../components/crm/crm-luxury.css';
 import { isFirebaseAuthAvailable, loginUser } from '../firebaseService';
 import { useAuth } from '../context/AuthContext';
 import { verifyAdminCredentials } from '../utils/securityShield';
@@ -256,7 +257,10 @@ export default function CrmPage({
   }
 
   // 1. Dedicated Full-Screen Luxury Admin Login Portal (Zero Dashboard Leak)
-  const isLocalSession = typeof window !== 'undefined' && sessionStorage.getItem('crm_auth') === 'true';
+  // The local-password session flag is only trusted when Firebase Auth is unavailable (offline/local
+  // setups) or in development. Otherwise anyone could open the dashboard by setting it in DevTools.
+  const allowLocalSession = !isFirebaseAuthAvailable() || import.meta.env.DEV;
+  const isLocalSession = allowLocalSession && typeof window !== 'undefined' && sessionStorage.getItem('crm_auth') === 'true';
   if (!crmAuthenticated && !isLocalSession) {
     return (
       <div className="crm-login-fullscreen">
@@ -368,7 +372,7 @@ export default function CrmPage({
               href="/" 
               style={{ 
                 fontSize: '0.82rem', 
-                color: '#94a3b8', 
+                color: 'var(--crm-faint)', 
                 textDecoration: 'none', 
                 transition: 'color 0.2s',
                 display: 'inline-flex',
@@ -469,7 +473,7 @@ export default function CrmPage({
             boxShadow: '0 1px 3px rgba(217, 119, 6, 0.1)'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <AlertTriangle size={16} style={{ color: '#d97706' }} />
+              <AlertTriangle size={16} style={{ color: 'var(--crm-accent-text)' }} />
               <span>
                 {isAr
                   ? `وضع محاكاة الصلاحيات نشط: أنت تستعرض المنظومة بصلاحيات "${CRM_ROLES.find(r => r.id === selectedRole)?.label_ar}". يتم تطبيق قيود هذا الدور عملياً.`
@@ -558,12 +562,12 @@ export default function CrmPage({
                 margin: '40px auto'
               }}>
                 <Lock size={48} style={{ color: '#ef4444', margin: '0 auto 16px' }} />
-                <h3 style={{ color: '#0f172a', marginBottom: '8px' }}>
+                <h3 style={{ color: 'var(--crm-ink)', marginBottom: '8px' }}>
                   {isAr ? 'منطقة صلاحيات مقيدة' : 'Restricted Access'}
                 </h3>
-                <p style={{ color: '#64748b', fontSize: '0.9rem' }}>
+                <p style={{ color: 'var(--crm-muted)', fontSize: '0.9rem' }}>
                   {isAr 
-                    ? 'هذا القسم (إدارة النظام والأحياء وهوية المؤسس) متاح حصرياً للمدير العام (Super Admin).' 
+                    ? 'هذا القسم (إدارة النظام والأحياء وهوية المؤسس) متاح حصرياً للمدير العام.' 
                     : 'This section is strictly restricted to Super Admin.'}
                 </p>
                 <button
@@ -583,8 +587,8 @@ export default function CrmPage({
                   alignItems: 'center',
                   gap: '8px',
                   marginBottom: '16px',
-                  background: '#ffffff',
-                  border: '1px solid #e2e8f0',
+                  background: 'var(--crm-card)',
+                  border: '1px solid var(--crm-line)',
                   padding: '8px 14px',
                   borderRadius: '10px',
                   flexWrap: 'wrap'

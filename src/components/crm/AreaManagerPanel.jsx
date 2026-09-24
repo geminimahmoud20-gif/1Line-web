@@ -229,10 +229,10 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                 <MapPin size={22} />
               </div>
               <div>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#fff', margin: 0 }}>
-                  {isAr ? '🗺️ إدارة المناطق والأحياء (Sohag Districts CMS)' : '🗺️ Sohag Districts & Areas CMS'}
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', margin: 0 }}>
+                  {isAr ? '🗺️ إدارة المناطق والأحياء' : '🗺️ Sohag Districts & Areas CMS'}
                 </h2>
-                <span style={{ fontSize: '0.82rem', color: '#94a3b8' }}>
+                <span style={{ fontSize: '0.82rem', color: 'var(--crm-faint)' }}>
                   {isAr ? 'إضافة وتعديل وحذف مناطق محافظة سوهاج مع المزامنة السحابية الفورية لكافة شاشات وفلاتر الموقع' : 'Manage all districts & sync real-time across platform'}
                 </span>
               </div>
@@ -249,11 +249,11 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
               fontSize: '0.78rem',
               fontWeight: '700',
               background: 'rgba(16, 185, 129, 0.15)',
-              color: '#10b981',
+              color: 'var(--crm-positive)',
               border: '1px solid rgba(16, 185, 129, 0.3)'
             }}>
               <CheckCircle2 size={13} />
-              {isAr ? 'مزامنة سحابية حية (Firestore)' : 'Live Cloud Sync'}
+              {isAr ? 'مزامنة سحابية حية' : 'Live Cloud Sync'}
             </span>
 
             <button
@@ -307,15 +307,15 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
           borderTop: '1px solid rgba(255, 255, 255, 0.08)'
         }}>
           <div style={{ background: 'rgba(0, 0, 0, 0.25)', padding: '10px 14px', borderRadius: '10px' }}>
-            <span style={{ fontSize: '0.76rem', color: '#94a3b8' }}>{isAr ? 'إجمالي المناطق والأحياء' : 'Total Districts'}</span>
+            <span style={{ fontSize: '0.76rem', color: 'var(--crm-faint)' }}>{isAr ? 'إجمالي المناطق والأحياء' : 'Total Districts'}</span>
             <strong style={{ display: 'block', fontSize: '1.2rem', color: '#fff', marginTop: '2px' }}>{stats.total} {isAr ? 'منطقة' : 'Areas'}</strong>
           </div>
           <div style={{ background: 'rgba(0, 0, 0, 0.25)', padding: '10px 14px', borderRadius: '10px' }}>
-            <span style={{ fontSize: '0.76rem', color: '#94a3b8' }}>{isAr ? 'الأحياء المخصصة المضافة' : 'Custom Added Districts'}</span>
+            <span style={{ fontSize: '0.76rem', color: 'var(--crm-faint)' }}>{isAr ? 'الأحياء المخصصة المضافة' : 'Custom Added Districts'}</span>
             <strong style={{ display: 'block', fontSize: '1.2rem', color: 'var(--accent-gold)', marginTop: '2px' }}>{stats.custom} {isAr ? 'حي إضافي' : 'Custom'}</strong>
           </div>
           <div style={{ background: 'rgba(0, 0, 0, 0.25)', padding: '10px 14px', borderRadius: '10px' }}>
-            <span style={{ fontSize: '0.76rem', color: '#94a3b8' }}>{isAr ? 'الأحياء الأساسية الرسمية' : 'System Districts'}</span>
+            <span style={{ fontSize: '0.76rem', color: 'var(--crm-faint)' }}>{isAr ? 'الأحياء الأساسية الرسمية' : 'System Districts'}</span>
             <strong style={{ display: 'block', fontSize: '1.2rem', color: '#38bdf8', marginTop: '2px' }}>{stats.system} {isAr ? 'مناطق رئيسية' : 'Core'}</strong>
           </div>
         </div>
@@ -324,7 +324,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
       {/* Search & Filter Bar */}
       <div className="crm-card" style={{ marginBottom: '20px', padding: '14px 18px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Search size={18} style={{ color: '#94a3b8' }} />
+          <Search size={18} style={{ color: 'var(--crm-faint)' }} />
           <input
             type="text"
             value={searchQuery}
@@ -343,7 +343,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
             <button 
               type="button" 
               onClick={() => setSearchQuery('')}
-              style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+              style={{ background: 'transparent', border: 'none', color: 'var(--crm-faint)', cursor: 'pointer' }}
             >
               <X size={16} />
             </button>
@@ -382,7 +382,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                      <h3 style={{ fontSize: '1.05rem', fontWeight: '800', color: '#fff', margin: 0 }}>
+                      <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0 }}>
                         {area.name_ar}
                       </h3>
                       <span style={{ 
@@ -396,7 +396,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                         #{area.id}
                       </span>
                     </div>
-                    <span style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px', display: 'block' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--crm-faint)', marginTop: '2px', display: 'block' }}>
                       {area.name_en || area.id}
                     </span>
                   </div>
@@ -454,7 +454,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                     padding: '3px 8px',
                     borderRadius: '6px',
                     background: 'rgba(16, 185, 129, 0.12)',
-                    color: '#10b981',
+                    color: 'var(--crm-positive)',
                     border: '1px solid rgba(16, 185, 129, 0.25)'
                   }}>
                     {isAr ? `نمو: +${area.annualGrowthRate || 75}%` : `Growth: +${area.annualGrowthRate || 75}%`}
@@ -477,7 +477,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                     alignItems: 'center', 
                     gap: '6px', 
                     fontSize: '0.75rem', 
-                    color: '#64748b',
+                    color: 'var(--crm-muted)',
                     marginBottom: '14px' 
                   }}>
                     <Navigation size={12} style={{ color: 'var(--accent-gold)' }} />
@@ -546,7 +546,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
 
       {/* Empty State */}
       {filteredAreas.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '50px 20px', color: '#94a3b8' }}>
+        <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--crm-faint)' }}>
           <MapPin size={40} style={{ opacity: 0.3, marginBottom: '12px' }} />
           <h4>{isAr ? 'لم يتم العثور على مناطق مطابقة لبحثك' : 'No matching districts found'}</h4>
           <p style={{ fontSize: '0.85rem' }}>{isAr ? 'جرب البحث بكلمات أخرى أو أضف الحي الجديد الآن.' : 'Try another query or add a new district.'}</p>
@@ -571,7 +571,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                   <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#fff' }}>
                     {modalMode === 'add' ? (isAr ? 'إضافة حي أو منطقة جديدة' : 'Add New District') : (isAr ? 'تعديل بيانات المنطقة' : 'Edit District')}
                   </h3>
-                  <small style={{ color: '#94a3b8' }}>
+                  <small style={{ color: 'var(--crm-faint)' }}>
                     {isAr ? 'تحديث ونشر فوري على كافة فلاتر ومعالجات الموقع' : 'Instant live update across platform'}
                   </small>
                 </div>
@@ -579,7 +579,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
               <button 
                 type="button" 
                 onClick={() => setModalMode(null)}
-                style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+                style={{ background: 'transparent', border: 'none', color: 'var(--crm-faint)', cursor: 'pointer' }}
               >
                 <X size={20} />
               </button>
@@ -611,7 +611,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
 
                 <div className="form-group-item">
                   <label style={{ display: 'block', fontSize: '0.82rem', color: '#cbd5e1', marginBottom: '6px' }}>
-                    {isAr ? 'الاسم بالإنجليزية (English)' : 'District Name (English)'}
+                    {isAr ? 'الاسم بالإنجليزية' : 'District Name (English)'}
                   </label>
                   <input
                     type="text"
@@ -657,7 +657,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
                 <div className="form-group-item">
                   <label style={{ display: 'block', fontSize: '0.82rem', color: '#cbd5e1', marginBottom: '6px' }}>
-                    {isAr ? 'خط العرض (Latitude)' : 'Latitude'}
+                    {isAr ? 'خط العرض' : 'Latitude'}
                   </label>
                   <input
                     type="number"
@@ -678,7 +678,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
 
                 <div className="form-group-item">
                   <label style={{ display: 'block', fontSize: '0.82rem', color: '#cbd5e1', marginBottom: '6px' }}>
-                    {isAr ? 'خط الطول (Longitude)' : 'Longitude'}
+                    {isAr ? 'خط الطول' : 'Longitude'}
                   </label>
                   <input
                     type="number"
@@ -722,7 +722,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                       fontSize: '0.88rem'
                     }}
                   />
-                  <small style={{ color: '#94a3b8', fontSize: '0.72rem', display: 'block', marginTop: '4px' }}>
+                  <small style={{ color: 'var(--crm-faint)', fontSize: '0.72rem', display: 'block', marginTop: '4px' }}>
                     {isAr ? 'يحدد معيار عدالة الأسعار التلقائي للحي' : 'Sets valuation benchmark for district'}
                   </small>
                 </div>
@@ -744,12 +744,12 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                       border: '1px solid rgba(16, 185, 129, 0.4)',
                       padding: '10px 12px',
                       borderRadius: '8px',
-                      color: '#10b981',
+                      color: 'var(--crm-positive)',
                       fontWeight: 'bold',
                       fontSize: '0.88rem'
                     }}
                   />
-                  <small style={{ color: '#94a3b8', fontSize: '0.72rem', display: 'block', marginTop: '4px' }}>
+                  <small style={{ color: 'var(--crm-faint)', fontSize: '0.72rem', display: 'block', marginTop: '4px' }}>
                     {isAr ? 'النسبة المعروضة على الرسم البياني' : 'Displayed in historical growth chart'}
                   </small>
                 </div>
@@ -835,7 +835,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
             <h3 style={{ margin: '0 0 8px 0', color: '#fff', fontSize: '1.15rem' }}>
               {isAr ? 'تأكيد حذف المنطقة' : 'Confirm District Deletion'}
             </h3>
-            <p style={{ color: '#94a3b8', fontSize: '0.88rem', marginBottom: '20px' }}>
+            <p style={{ color: 'var(--crm-faint)', fontSize: '0.88rem', marginBottom: '20px' }}>
               {isAr 
                 ? 'هل أنت متأكد من رغبتك في حذف هذا الحي؟ سيتم إزالته من جميع فلاتر الموقع ومعالجات البحث.' 
                 : 'Are you sure you want to delete this district from all search filters?'}

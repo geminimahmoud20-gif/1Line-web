@@ -28,12 +28,12 @@ import SiteVisitModal from './SiteVisitModal';
 import { getAreas } from '../../utils/areasData';
 
 const PIPELINE_STAGES = [
-  { id: 'new', title_ar: 'طلبات جديدة', title_en: 'New Inquiries', color: '#0284c7', bg: '#e0f2fe' },
+  { id: 'new', title_ar: 'طلبات جديدة', title_en: 'New Inquiries', color: 'var(--crm-info)', bg: '#e0f2fe' },
   { id: 'contacted', title_ar: 'تم التواصل الأولي', title_en: 'Contacted', color: '#7c3aed', bg: '#f5f3ff' },
-  { id: 'site_visit', title_ar: 'معاينات مجدولة', title_en: 'Site Visits', color: '#d97706', bg: '#fef3c7' },
-  { id: 'negotiating', title_ar: 'قيد التفاوض والتقييم', title_en: 'Negotiation', color: '#ea580c', bg: '#ffedd5' },
-  { id: 'closing', title_ar: 'توقيع عقود وحجز', title_en: 'Closing / Deposit', color: '#059669', bg: '#d1fae5' },
-  { id: 'closed', title_ar: 'صفقات ناجحة', title_en: 'Closed Won', color: '#16a34a', bg: '#dcfce7' }
+  { id: 'site_visit', title_ar: 'معاينات مجدولة', title_en: 'Site Visits', color: 'var(--crm-accent-text)', bg: '#fef3c7' },
+  { id: 'negotiating', title_ar: 'قيد التفاوض والتقييم', title_en: 'Negotiation', color: 'var(--crm-warn)', bg: '#ffedd5' },
+  { id: 'closing', title_ar: 'توقيع عقود وحجز', title_en: 'Closing / Deposit', color: 'var(--crm-positive)', bg: '#d1fae5' },
+  { id: 'closed', title_ar: 'صفقات ناجحة', title_en: 'Closed Won', color: 'var(--crm-positive)', bg: '#dcfce7' }
 ];
 
 const PROPERTY_TYPE_NAMES = {
@@ -272,9 +272,9 @@ export default function KanbanPipeline({
         gap: '12px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Sparkles size={18} style={{ color: '#d97706' }} />
-          <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '800', color: '#092347' }}>
-            {isAr ? 'مسار الصفقات والمبيعات المرئي (Deals Kanban Pipeline)' : 'Visual Sales Deals Pipeline'}
+          <Sparkles size={18} style={{ color: 'var(--crm-accent-text)' }} />
+          <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: '#092347' }}>
+            {isAr ? 'مسار الصفقات والمبيعات المرئي' : 'Visual Sales Deals Pipeline'}
           </h3>
           <span className="badge" style={{ background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a', fontSize: '0.75rem', fontWeight: 'bold' }}>
             {filteredLeads.length} {isAr ? 'صفقة' : 'deals'}
@@ -284,7 +284,7 @@ export default function KanbanPipeline({
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
           {/* Live Search Input */}
           <div style={{ position: 'relative', width: '220px' }}>
-            <Search size={14} style={{ position: 'absolute', [isAr ? 'right' : 'left']: '10px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
+            <Search size={14} style={{ position: 'absolute', [isAr ? 'right' : 'left']: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--crm-muted)' }} />
             <input
               type="text"
               value={searchQuery}
@@ -299,9 +299,9 @@ export default function KanbanPipeline({
                 [isAr ? 'paddingLeft' : 'paddingRight']: searchQuery ? '24px' : '10px',
                 fontSize: '0.78rem',
                 borderRadius: '8px',
-                background: '#ffffff',
-                border: '1px solid #cbd5e1',
-                color: '#0f172a'
+                background: 'var(--crm-card)',
+                border: '1px solid var(--crm-line-strong)',
+                color: 'var(--crm-ink)'
               }}
             />
             {searchQuery && (
@@ -315,7 +315,7 @@ export default function KanbanPipeline({
                   transform: 'translateY(-50%)',
                   background: 'transparent',
                   border: 'none',
-                  color: '#64748b',
+                  color: 'var(--crm-muted)',
                   cursor: 'pointer',
                   padding: '2px'
                 }}
@@ -325,7 +325,7 @@ export default function KanbanPipeline({
             )}
           </div>
 
-          <span style={{ fontSize: '0.8rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '600' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--crm-body)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '600' }}>
             <Filter size={13} /> {isAr ? 'النوع:' : 'Type:'}
           </span>
           <button 
@@ -432,8 +432,8 @@ export default function KanbanPipeline({
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, stage.id)}
               style={{
-                background: '#f8fafc',
-                border: '1px solid #e2e8f0',
+                background: 'var(--crm-subtle)',
+                border: '1px solid var(--crm-line)',
                 borderTop: `4px solid ${stage.color}`,
                 borderRadius: '12px',
                 padding: '14px',
@@ -445,7 +445,7 @@ export default function KanbanPipeline({
             >
               {/* Stage Header */}
               <div style={{
-                borderBottom: '1px solid #e2e8f0',
+                borderBottom: '1px solid var(--crm-line)',
                 paddingBottom: '10px',
                 marginBottom: '14px',
                 display: 'flex',
@@ -453,10 +453,10 @@ export default function KanbanPipeline({
                 alignItems: 'center'
               }}>
                 <div>
-                  <h4 style={{ margin: 0, fontSize: '0.92rem', color: stage.color, fontWeight: '800' }}>
+                  <h4 style={{ margin: 0, fontSize: '0.92rem', color: stage.color, fontWeight: 700 }}>
                     {isAr ? stage.title_ar : stage.title_en}
                   </h4>
-                  <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '600' }}>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--crm-muted)', fontWeight: '600' }}>
                     {(totalVolume / 1000000).toFixed(1)} {isAr ? 'مليون ج.م حجم الصفقات' : 'M EGP'}
                   </span>
                 </div>
@@ -467,7 +467,7 @@ export default function KanbanPipeline({
                   padding: '2px 10px',
                   borderRadius: '20px',
                   fontSize: '0.78rem',
-                  fontWeight: '800'
+                  fontWeight: 700
                 }}>
                   {count}
                 </span>
@@ -481,7 +481,7 @@ export default function KanbanPipeline({
                     textAlign: 'center',
                     border: '2px dashed #cbd5e1',
                     borderRadius: '10px',
-                    color: '#94a3b8',
+                    color: 'var(--crm-faint)',
                     fontSize: '0.78rem'
                   }}>
                     {isAr ? 'اسحب بطاقة عميل إلى هنا' : 'Drop leads here'}
@@ -508,14 +508,14 @@ export default function KanbanPipeline({
                         onDragStart={(e) => handleDragStart(e, lead.id)}
                         className="kanban-lead-card animate-fadeIn"
                         style={{
-                          background: '#ffffff',
+                          background: 'var(--crm-card)',
                           border: isOverdue ? '1px solid #f43f5e' : '1px solid #e2e8f0',
                           borderRadius: '10px',
                           padding: '13px',
                           boxShadow: isOverdue ? '0 0 12px rgba(244, 63, 94, 0.25)' : '0 2px 6px rgba(0, 0, 0, 0.04)',
                           cursor: 'grab',
                           transition: 'all 0.2s ease',
-                          color: '#0f172a'
+                          color: 'var(--crm-ink)'
                         }}
                       >
                         {/* Overdue Warning Pill */}
@@ -552,7 +552,7 @@ export default function KanbanPipeline({
                             {typeBadge.label}
                           </span>
 
-                          <span style={{ fontSize: '0.68rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                          <span style={{ fontSize: '0.68rem', color: 'var(--crm-muted)', display: 'flex', alignItems: 'center', gap: '3px' }}>
                             <Clock size={11} />
                             <span>{timeAgoText}</span>
                           </span>
@@ -560,7 +560,7 @@ export default function KanbanPipeline({
 
                         {/* Name + Lead Quality Score */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                          <strong style={{ fontSize: '0.96rem', color: '#092347', fontWeight: '800', letterSpacing: '-0.2px' }}>
+                          <strong style={{ fontSize: '0.96rem', color: '#092347', fontWeight: 700, letterSpacing: '-0.2px' }}>
                             {lead.name || (isAr ? 'عميل بدون اسم' : 'Unnamed Lead')}
                           </strong>
                           
@@ -587,20 +587,20 @@ export default function KanbanPipeline({
                         {/* Localized Property Type & Area */}
                         <div style={{ 
                           fontSize: '0.8rem', 
-                          color: '#334155', 
+                          color: 'var(--crm-body)', 
                           marginBottom: '8px',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '6px',
-                          background: '#f8fafc',
-                          border: '1px solid #e2e8f0',
+                          background: 'var(--crm-subtle)',
+                          border: '1px solid var(--crm-line)',
                           padding: '5px 8px',
                           borderRadius: '6px'
                         }}>
-                          <Building size={13} style={{ color: '#d97706', flexShrink: 0 }} />
+                          <Building size={13} style={{ color: 'var(--crm-accent-text)', flexShrink: 0 }} />
                           <span style={{ fontWeight: '700' }}>{propType}</span>
                           <span style={{ color: '#cbd5e1' }}>•</span>
-                          <MapPin size={12} style={{ color: '#0284c7', flexShrink: 0 }} />
+                          <MapPin size={12} style={{ color: 'var(--crm-info)', flexShrink: 0 }} />
                           <span>{area}</span>
                         </div>
 
@@ -610,15 +610,15 @@ export default function KanbanPipeline({
                           alignItems: 'center',
                           gap: '6px',
                           fontSize: '0.78rem',
-                          color: '#64748b',
+                          color: 'var(--crm-muted)',
                           marginBottom: '8px',
                           direction: 'ltr',
                           justifyContent: 'flex-end'
                         }}>
-                          <span style={{ fontFamily: 'monospace', color: '#0f172a', fontWeight: '700' }}>
+                          <span style={{ fontFamily: 'monospace', color: 'var(--crm-ink)', fontWeight: '700' }}>
                             {phoneDisplay}
                           </span>
-                          <Phone size={12} style={{ color: '#059669' }} />
+                          <Phone size={12} style={{ color: 'var(--crm-positive)' }} />
                         </div>
 
                         {/* Prominent Budget Pill */}
@@ -635,7 +635,7 @@ export default function KanbanPipeline({
                           <span style={{ fontSize: '0.72rem', color: '#065f46', fontWeight: '600' }}>
                             {isAr ? 'قيمة الصفقة المتوقعة:' : 'Deal Budget:'}
                           </span>
-                          <strong style={{ fontSize: '0.86rem', color: '#047857', fontWeight: '800' }}>
+                          <strong style={{ fontSize: '0.86rem', color: '#047857', fontWeight: 700 }}>
                             💰 {budget.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}
                           </strong>
                         </div>
@@ -699,7 +699,7 @@ export default function KanbanPipeline({
                               style={{ 
                                 padding: '5px 8px', 
                                 fontSize: '0.72rem',
-                                background: '#059669',
+                                background: 'var(--crm-positive-solid)',
                                 color: '#ffffff',
                                 border: 'none',
                                 borderRadius: '6px',
@@ -723,7 +723,7 @@ export default function KanbanPipeline({
                               style={{ 
                                 padding: '5px 7px', 
                                 fontSize: '0.72rem', 
-                                color: '#d97706',
+                                color: 'var(--crm-accent-text)',
                                 background: '#fffbeb',
                                 border: '1px solid #fde68a',
                                 borderRadius: '6px'
@@ -743,9 +743,9 @@ export default function KanbanPipeline({
                                   padding: '5px 7px', 
                                   fontSize: '0.72rem', 
                                   borderRadius: '6px',
-                                  background: '#f8fafc',
-                                  border: '1px solid #cbd5e1',
-                                  color: '#334155'
+                                  background: 'var(--crm-subtle)',
+                                  border: '1px solid var(--crm-line-strong)',
+                                  color: 'var(--crm-body)'
                                 }}
                                 title={isAr ? 'تعديل بيانات العميل' : 'Edit Lead'}
                               >
@@ -785,9 +785,9 @@ export default function KanbanPipeline({
                                 padding: '4px 6px', 
                                 fontSize: '0.7rem', 
                                 borderRadius: '6px',
-                                border: '1px solid #cbd5e1',
-                                background: '#ffffff',
-                                color: '#334155'
+                                border: '1px solid var(--crm-line-strong)',
+                                background: 'var(--crm-card)',
+                                color: 'var(--crm-body)'
                               }}
                               title={isAr ? 'إرجاع للمرحلة السابقة' : 'Previous Stage'}
                             >
@@ -839,18 +839,18 @@ export default function KanbanPipeline({
       {/* Delete Confirmation Modal */}
       {leadToDelete && (
         <div className="track-modal-backdrop" onClick={() => setLeadToDelete(null)}>
-          <div className="property-form-modal-card animate-fadeIn" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px', width: '90%', background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
-            <div className="modal-form-header" style={{ borderBottom: '1px solid #e2e8f0', padding: '16px 20px' }}>
+          <div className="property-form-modal-card animate-fadeIn" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px', width: '90%', background: 'var(--crm-card)', border: '1px solid var(--crm-line)', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+            <div className="modal-form-header" style={{ borderBottom: '1px solid var(--crm-line)', padding: '16px 20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Trash2 size={20} style={{ color: '#dc2626' }} />
-                <h3 style={{ margin: 0, color: '#092347', fontSize: '1.1rem', fontWeight: '800' }}>
+                <h3 style={{ margin: 0, color: '#092347', fontSize: '1.1rem', fontWeight: 700 }}>
                   {isAr ? 'تأكيد حذف العميل' : 'Confirm Delete Lead'}
                 </h3>
               </div>
               <button type="button" className="drawer-close-btn" onClick={() => setLeadToDelete(null)}>✕</button>
             </div>
             <div style={{ padding: '20px' }}>
-              <p style={{ color: '#475569', fontSize: '0.9rem', lineHeight: '1.6', margin: '0 0 20px 0' }}>
+              <p style={{ color: 'var(--crm-body)', fontSize: '0.9rem', lineHeight: '1.6', margin: '0 0 20px 0' }}>
                 {isAr 
                   ? `هل أنت متأكد من رغبتك في حذف العميل "${leadToDelete.name || 'بدون اسم'}" نهائياً من خط أنابيب المبيعات؟ لا يمكن التراجع عن هذا الإجراء.`
                   : `Are you sure you want to permanently delete lead "${leadToDelete.name || 'Unnamed'}"? This action cannot be undone.`}
@@ -860,7 +860,7 @@ export default function KanbanPipeline({
                   type="button"
                   className="btn btn-outline"
                   onClick={() => setLeadToDelete(null)}
-                  style={{ background: '#f8fafc', border: '1px solid #cbd5e1', color: '#334155' }}
+                  style={{ background: 'var(--crm-subtle)', border: '1px solid var(--crm-line-strong)', color: 'var(--crm-body)' }}
                 >
                   {isAr ? 'إلغاء' : 'Cancel'}
                 </button>

@@ -574,7 +574,7 @@ export default function MortgageRoiCalculator({
                   {formatCurrency(monthlyInstallment)} <span className="curr">{isAr ? '/ شهر' : '/ mo'}</span>
                 </h2>
                 {currency !== 'EGP' && (
-                  <div style={{ fontSize: '0.74rem', color: '#94a3b8', marginTop: '4px' }}>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--crm-faint)', marginTop: '4px' }}>
                     ({monthlyInstallment.toLocaleString()} ج.م / شهر)
                   </div>
                 )}
@@ -707,7 +707,7 @@ export default function MortgageRoiCalculator({
               }}>
                 <span style={{ fontSize: '1.2rem' }}>💼</span>
                 <div style={{ fontSize: '0.74rem', color: '#e2e8f0', lineHeight: 1.4 }}>
-                  <strong style={{ color: '#f59e0b', display: 'block' }}>
+                  <strong style={{ color: 'var(--crm-warn)', display: 'block' }}>
                     {isAr ? 'خدمة إدارة الإيجار للمستثمرين والمغتربين' : 'Investor Turnkey & Rental Management'}
                   </strong>
                   <span>
@@ -728,7 +728,7 @@ export default function MortgageRoiCalculator({
                 border: '1px solid rgba(255, 202, 40, 0.3)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: '800' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 700 }}>
                     <Sparkles size={14} style={{ color: '#ffca28' }} />
                     <span>{isAr ? 'نمو رأس المال التراكمي (5 سنوات)' : '5-Year Wealth Forecast'}</span>
                   </span>
@@ -739,7 +739,7 @@ export default function MortgageRoiCalculator({
                     padding: '2px 8px',
                     borderRadius: '4px',
                     fontSize: '0.72rem',
-                    fontWeight: '900'
+                    fontWeight: 700
                   }}>
                     +{Math.round(((estimatedValueAfter5Years - price) / price) * 100)}% {isAr ? 'عائد رأسمالي' : 'Gain'}
                   </span>
@@ -751,8 +751,8 @@ export default function MortgageRoiCalculator({
                     const yrVal = Math.round(price * Math.pow(1 + (annualAppreciation / 100), yr));
                     return (
                       <div key={yr} style={{ background: 'rgba(255, 255, 255, 0.08)', borderRadius: '6px', padding: '6px 2px' }}>
-                        <div style={{ fontSize: '0.66rem', color: '#94a3b8' }}>{isAr ? `سنة ${yr}` : `Yr ${yr}`}</div>
-                        <div style={{ fontSize: '0.72rem', fontWeight: '800', color: '#ffca28', marginTop: '2px' }}>
+                        <div style={{ fontSize: '0.66rem', color: 'var(--crm-faint)' }}>{isAr ? `سنة ${yr}` : `Yr ${yr}`}</div>
+                        <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#ffca28', marginTop: '2px' }}>
                           {formatCurrency(yrVal)}
                         </div>
                       </div>
@@ -769,7 +769,7 @@ export default function MortgageRoiCalculator({
                   fontSize: '0.76rem'
                 }}>
                   <span style={{ color: '#cbd5e1' }}>{isAr ? 'صافي الربح التراكمي المتوقع:' : 'Net Capital Profit:'}</span>
-                  <strong style={{ color: '#10b981', fontWeight: '900' }}>+{formatCurrency(estimatedValueAfter5Years - price)}</strong>
+                  <strong style={{ color: 'var(--crm-positive)', fontWeight: 700 }}>+{formatCurrency(estimatedValueAfter5Years - price)}</strong>
                 </div>
               </div>
 

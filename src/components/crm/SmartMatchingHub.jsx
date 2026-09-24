@@ -165,18 +165,18 @@ export default function SmartMatchingHub({
         gap: '12px'
       }}>
         <div>
-          <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0, color: '#092347', fontSize: '1.15rem', fontWeight: '800' }}>
-            <Sparkles size={20} style={{ color: '#d97706' }} />
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0, color: '#092347', fontSize: '1.15rem', fontWeight: 700 }}>
+            <Sparkles size={20} style={{ color: 'var(--crm-accent-text)' }} />
             {isAr ? 'محرك المطابقة الذكي اللحظي بين المشترين والمعروض' : 'Live Smart Deals & Buyer Matching Engine'}
           </h3>
-          <p className="section-subtitle" style={{ margin: '4px 0 0', color: '#64748b', fontSize: '0.85rem' }}>
+          <p className="section-subtitle" style={{ margin: '4px 0 0', color: 'var(--crm-muted)', fontSize: '0.85rem' }}>
             {isAr ? `تم العثور على ${matches.length} فرصة صفقة مؤكدة التوافق مع المشترين المسجلين` : `${matches.length} high-probability buyer-property matches found`}
           </p>
         </div>
 
         {/* Filter by Match Strength */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '0.8rem', color: '#475569', fontWeight: '600' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--crm-body)', fontWeight: '600' }}>
             {isAr ? 'الحد الأدنى للتوافق:' : 'Min Score:'}
           </span>
           <button
@@ -217,13 +217,13 @@ export default function SmartMatchingHub({
         <div style={{
           textAlign: 'center',
           padding: '60px 20px',
-          background: '#ffffff',
+          background: 'var(--crm-card)',
           borderRadius: '12px',
           border: '2px dashed #cbd5e1'
         }}>
-          <Sparkles size={36} style={{ color: '#d97706', opacity: 0.7, marginBottom: '12px' }} />
-          <h4 style={{ color: '#092347', fontWeight: '800' }}>{isAr ? 'لا توجد مطابقات تتجاوز هذه النسبة حالياً' : 'No matches found above this threshold'}</h4>
-          <p style={{ fontSize: '0.85rem', color: '#64748b' }}>
+          <Sparkles size={36} style={{ color: 'var(--crm-accent-text)', opacity: 0.7, marginBottom: '12px' }} />
+          <h4 style={{ color: '#092347', fontWeight: 700 }}>{isAr ? 'لا توجد مطابقات تتجاوز هذه النسبة حالياً' : 'No matches found above this threshold'}</h4>
+          <p style={{ fontSize: '0.85rem', color: 'var(--crm-muted)' }}>
             {isAr ? 'أضف عقارات جديدة أو قلل نسبة المطابقة لعرض الفرص القريبة' : 'Add new properties or lower threshold'}
           </p>
         </div>
@@ -237,7 +237,7 @@ export default function SmartMatchingHub({
                 key={match.id}
                 className="deal-match-card animate-fadeIn"
                 style={{
-                  background: '#ffffff',
+                  background: 'var(--crm-card)',
                   border: score >= 85 ? '1px solid #fde68a' : '1px solid #e2e8f0',
                   borderRadius: '12px',
                   padding: '16px',
@@ -259,7 +259,7 @@ export default function SmartMatchingHub({
                         padding: '3px 10px',
                         borderRadius: '20px',
                         fontSize: '0.8rem',
-                        fontWeight: '800',
+                        fontWeight: 700,
                         display: 'flex',
                         alignItems: 'center',
                         gap: '4px'
@@ -268,7 +268,7 @@ export default function SmartMatchingHub({
                       </span>
                     </div>
 
-                    <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--crm-muted)', fontWeight: '600' }}>
                       {lead.assignedTo}
                     </span>
                   </div>
@@ -278,40 +278,40 @@ export default function SmartMatchingHub({
                     display: 'grid',
                     gridTemplateColumns: '1fr 1fr',
                     gap: '10px',
-                    background: '#f8fafc',
-                    border: '1px solid #e2e8f0',
+                    background: 'var(--crm-subtle)',
+                    border: '1px solid var(--crm-line)',
                     padding: '12px',
                     borderRadius: '8px',
                     marginBottom: '10px'
                   }}>
                     {/* Buyer Side */}
                     <div style={{ borderInlineEnd: '1px solid #e2e8f0', paddingInlineEnd: '10px' }}>
-                      <span style={{ fontSize: '0.72rem', color: '#0284c7', fontWeight: 'bold', display: 'block', marginBottom: '3px' }}>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--crm-info)', fontWeight: 'bold', display: 'block', marginBottom: '3px' }}>
                         👤 {isAr ? 'المشتري الراغب:' : 'Buyer Request:'}
                       </span>
-                      <strong style={{ fontSize: '0.95rem', color: '#092347', fontWeight: '800', display: 'block', marginBottom: '2px' }}>
+                      <strong style={{ fontSize: '0.95rem', color: '#092347', fontWeight: 700, display: 'block', marginBottom: '2px' }}>
                         {lead.name}
                       </strong>
-                      <span style={{ fontSize: '0.75rem', color: '#64748b', display: 'block', direction: 'ltr', textAlign: isAr ? 'right' : 'left' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--crm-muted)', display: 'block', direction: 'ltr', textAlign: isAr ? 'right' : 'left' }}>
                         📱 {lead.whatsapp || lead.phone}
                       </span>
-                      <span style={{ fontSize: '0.78rem', color: '#059669', display: 'block', marginTop: '4px', fontWeight: '700' }}>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--crm-positive)', display: 'block', marginTop: '4px', fontWeight: '700' }}>
                         💰 ميزانية: {(lead.details?.budget || lead.budget) ? parseInt(lead.details?.budget || lead.budget).toLocaleString() + ' ج.م' : '2,500,000 ج.م'}
                       </span>
                     </div>
 
                     {/* Matched Property Side */}
                     <div>
-                      <span style={{ fontSize: '0.72rem', color: '#d97706', fontWeight: 'bold', display: 'block', marginBottom: '3px' }}>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--crm-accent-text)', fontWeight: 'bold', display: 'block', marginBottom: '3px' }}>
                         🏢 {isAr ? 'العقار المطابق:' : 'Matched Property:'}
                       </span>
-                      <strong style={{ fontSize: '0.92rem', color: '#092347', fontWeight: '800', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: '2px' }}>
+                      <strong style={{ fontSize: '0.92rem', color: '#092347', fontWeight: 700, display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: '2px' }}>
                         {isAr ? property.title_ar : property.title_en}
                       </strong>
-                      <span style={{ fontSize: '0.75rem', color: '#475569', display: 'block' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--crm-body)', display: 'block' }}>
                         📐 {property.size} م² • 📍 {getLocalizedArea(property.areaKey)}
                       </span>
-                      <span style={{ fontSize: '0.78rem', color: '#059669', display: 'block', marginTop: '4px', fontWeight: '800' }}>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--crm-positive)', display: 'block', marginTop: '4px', fontWeight: 700 }}>
                         💵 السعر: {property.price?.toLocaleString()} ج.م
                       </span>
                     </div>
@@ -321,9 +321,9 @@ export default function SmartMatchingHub({
                   <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                     {reasons.map((r, i) => (
                       <span key={i} style={{
-                        background: '#ffffff',
-                        border: '1px solid #e2e8f0',
-                        color: '#475569',
+                        background: 'var(--crm-card)',
+                        border: '1px solid var(--crm-line)',
+                        color: 'var(--crm-body)',
                         fontSize: '0.68rem',
                         fontWeight: '600',
                         padding: '2px 8px',
@@ -341,7 +341,7 @@ export default function SmartMatchingHub({
                     type="button"
                     className="btn btn-sm btn-primary"
                     onClick={() => handleSendProposal(match)}
-                    style={{ flex: 1, padding: '7px 10px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: '#059669', color: '#ffffff', border: 'none', borderRadius: '6px', fontWeight: 'bold' }}
+                    style={{ flex: 1, padding: '7px 10px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: 'var(--crm-positive-solid)', color: '#ffffff', border: 'none', borderRadius: '6px', fontWeight: 'bold' }}
                   >
                     <Send size={13} />
                     <span>{isAr ? 'إرسال العرض واتساب' : 'Send WhatsApp'}</span>
@@ -351,7 +351,7 @@ export default function SmartMatchingHub({
                     type="button"
                     className="btn btn-sm"
                     onClick={() => setSchedulingVisitLead({ ...lead, details: { ...lead.details, targetPropertyId: property.id } })}
-                    style={{ padding: '7px 10px', fontSize: '0.75rem', color: '#d97706', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '6px' }}
+                    style={{ padding: '7px 10px', fontSize: '0.75rem', color: 'var(--crm-accent-text)', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '6px' }}
                     title={isAr ? 'حجز موعد معاينة' : 'Schedule Visit'}
                   >
                     <Car size={14} />

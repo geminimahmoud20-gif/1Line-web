@@ -227,7 +227,7 @@ export default function InteractiveMapPickerModal({
             <MapPin size={22} className="text-gold" />
             <div>
               <h3 style={{ margin: 0 }}>
-                {isAr ? 'تحديد الموقع الدقيق على سطح المبنى (GIS Rooftop Pin-Picker)' : 'Pin-Point Rooftop GPS Picker'}
+                {isAr ? 'تحديد الموقع الدقيق على سطح المبنى' : 'Pin-Point Rooftop GPS Picker'}
               </h3>
               <small style={{ color: 'var(--text-secondary)' }}>
                 {isAr ? 'اسحب الدبوس أو انقر على سطح العمارة لتحديد موقع العقار بدقة متناهية' : 'Drag pin or click directly on building rooftop'}
@@ -306,7 +306,7 @@ export default function InteractiveMapPickerModal({
             paddingBottom: '8px',
             marginBottom: '10px'
           }}>
-            <span style={{ fontSize: '0.72rem', color: '#94a3b8', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '3px' }}>
+            <span style={{ fontSize: '0.72rem', color: 'var(--crm-faint)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '3px' }}>
               <Sparkles size={11} className="text-gold" />
               {isAr ? 'معالم سوهاج:' : 'Hotspots:'}
             </span>

@@ -205,7 +205,7 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Wand2 size={20} className="text-gold" />
             <h3 style={{ margin: 0 }}>
-              {isAr ? 'مُولّد الإعلانات التسويقية بالذكاء الاصطناعي (AI Real Estate Copywriter)' : 'AI Real Estate Copywriter'}
+              {isAr ? 'مُولّد الإعلانات التسويقية بالذكاء الاصطناعي' : 'AI Real Estate Copywriter'}
             </h3>
           </div>
           <button type="button" className="drawer-close-btn" onClick={onClose}>✕</button>
@@ -234,7 +234,7 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
 
             <div>
               <label style={{ fontSize: '0.8rem', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
-                {isAr ? 'نبرة وأسلوب الإعلان (Tone):' : 'Campaign Tone:'}
+                {isAr ? 'نبرة وأسلوب الإعلان:' : 'Campaign Tone:'}
               </label>
               <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
                 <button
