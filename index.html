@@ -35,12 +35,26 @@
     <script>
       (function() {
         if (location.pathname !== '/') return;
-        // URLs must match the <img srcset> byte-for-byte or the image downloads twice
-        var u = function (w) { return 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=' + w + '&q=70'; };
         var l = document.createElement('link');
         l.rel = 'preload';
         l.as = 'image';
         l.setAttribute('fetchpriority', 'high');
+        // A live hero campaign (cached by src/utils/adCampaigns.js) replaces the default poster
+        try {
+          var now = Date.now(), day = function (v, end) { if (!v) return null; var p = String(v).split('-'); return new Date(+p[0], p[1] - 1, +p[2], end ? 23 : 0, end ? 59 : 0).getTime(); };
+          var ads = JSON.parse(localStorage.getItem('oneline_ad_campaigns') || '[]').filter(function (c) {
+            return c && c.active && c.placement === 'hero' && /^https:/.test(c.imageDesktop || '') &&
+              (!c.startAt || now >= day(c.startAt)) && (!c.endAt || now <= day(c.endAt, true));
+          }).sort(function (a, b) { return (b.priority || 0) - (a.priority || 0); });
+          if (ads[0]) {
+            var mobile = ads[0].imageMobile && window.matchMedia('(max-width: 700px)').matches;
+            l.href = mobile ? ads[0].imageMobile : ads[0].imageDesktop;
+            document.head.appendChild(l);
+            return;
+          }
+        } catch (e) {}
+        // URLs must match the <img srcset> byte-for-byte or the image downloads twice
+        var u = function (w) { return 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=' + w + '&q=70'; };
         l.setAttribute('imagesrcset', u(640) + ' 640w, ' + u(960) + ' 960w, ' + u(1600) + ' 1600w');
         l.setAttribute('imagesizes', '100vw');
         document.head.appendChild(l);

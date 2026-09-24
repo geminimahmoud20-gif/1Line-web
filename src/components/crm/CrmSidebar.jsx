@@ -3,7 +3,7 @@ import {
   LayoutGrid, Users, Target, Building, Zap, Sparkles,
   Calculator, Activity, ShieldCheck, ChevronDown, ChevronRight,
   Search, X, Moon, Sun, LogOut, MapPin, Database, Award,
-  Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame
+  Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame, Megaphone
 } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import { usePreferences } from '../../context/PreferencesContext';
@@ -150,7 +150,14 @@ export default function CrmSidebar({
           label_ar: 'المشروعات الكبرى',
           label_en: 'Mega Projects',
           badge: projects.length
-        }
+        },
+        // Paid placements = revenue: super admin only (also enforced in CrmPage and firestore.rules)
+        ...(activeRole === 'super_admin' ? [{
+          id: 'ads',
+          icon: Megaphone,
+          label_ar: 'الإعلانات والحملات',
+          label_en: 'Ads & Campaigns'
+        }] : [])
       ]
     },
     {
@@ -171,7 +178,7 @@ export default function CrmSidebar({
         }
       ]
     }
-  ], [leads.length, properties.length, pendingDemandsCount, demands.length, projects.length]);
+  ], [leads.length, properties.length, pendingDemandsCount, demands.length, projects.length, activeRole]);
 
   const handleItemClick = (id) => {
     setActiveTab(id);

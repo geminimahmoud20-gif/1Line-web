@@ -43,6 +43,8 @@ import { parseSemanticQuery, SEMANTIC_SEARCH_PRESETS } from '../utils/semanticSe
 import ScrollReveal from '../components/common/ScrollReveal';
 import { SELLER_PROOF } from '../config/siteConfig';
 import { getHomepageSlots } from '../utils/featuredSlots';
+import { useAdCampaigns, pickHeroCampaign, getInlineCampaigns } from '../utils/adCampaigns';
+import { HeroSponsorChip, SponsoredStrip } from '../components/home/SponsoredPlacements';
 
 // Keep in sync with the <link rel="preload"> in index.html
 const HERO_POSTER_DEFAULT = 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1600&q=70';
@@ -98,6 +100,12 @@ export default function HomePage({
         title_ar: 'واجهات وأبراج معمارية حديثة',
         title_en: 'Modern Architecture & Glass Towers'
       }];
+
+  // Paid placements managed from CRM → الإعلانات (scheduled, labelled "مُموَّل")
+  const { campaigns: adCampaigns, now: adNow } = useAdCampaigns();
+  const heroAd = useMemo(() => pickHeroCampaign(adCampaigns, adNow), [adCampaigns, adNow]);
+  const inlineAds = useMemo(() => getInlineCampaigns(adCampaigns, adNow), [adCampaigns, adNow]);
+  const showHeroVideo = !heroAd && founderSettings.heroVideoEnabled !== false;
 
   const currentClip = heroClips[activeClipIndex] || heroClips[0];
   const activeVideoUrl = currentClip?.url || founderSettings.heroVideoUrl;
@@ -301,7 +309,7 @@ export default function HomePage({
       {/* 🌟 1. HERO SECTION (The Agency RE Cinematic Luxury Experience) */}
       <section className="hx-hero" aria-label={lang === 'ar' ? 'البحث عن عقار' : 'Property search'}>
         {/* Cinematic Video Background Engine */}
-        {founderSettings.heroVideoEnabled !== false ? (
+        {showHeroVideo ? (
           <div className="hero-cinematic-video-wrap" aria-hidden="true">
             <video
               ref={heroVideoRef}
@@ -329,22 +337,27 @@ export default function HomePage({
             {(() => {
               // LCP image: phones get a 640/960px file instead of the 1600px one.
               // index.html preloads the default poster with the same srcset.
-              const src = founderSettings.heroPosterUrl || HERO_POSTER_DEFAULT;
+              // An active hero campaign (CRM → الإعلانات) replaces the poster; headline and search stay ours
+              const src = heroAd?.imageDesktop || founderSettings.heroPosterUrl || HERO_POSTER_DEFAULT;
               const sized = (w) => src.replace(/([?&])w=\d+/, `$1w=${w}`);
-              const srcSet = /images\.unsplash\.com/.test(src) && /[?&]w=\d+/.test(src)
+              // Campaign images are served as uploaded (index.html preloads that exact URL)
+              const srcSet = !heroAd && /images\.unsplash\.com/.test(src) && /[?&]w=\d+/.test(src)
                 ? `${sized(640)} 640w, ${sized(960)} 960w, ${sized(1600)} 1600w`
                 : undefined;
               return (
-                <img
-                  src={src}
-                  srcSet={srcSet}
-                  sizes="100vw"
-                  alt=""
-                  className="hero-cinematic-video"
-                  fetchPriority="high"
-                  width="1600"
-                  height="1067"
-                />
+                <picture>
+                  {heroAd?.imageMobile && <source media="(max-width: 700px)" srcSet={heroAd.imageMobile} />}
+                  <img
+                    src={src}
+                    srcSet={srcSet}
+                    sizes="100vw"
+                    alt=""
+                    className="hero-cinematic-video"
+                    fetchPriority="high"
+                    width="1600"
+                    height="1067"
+                  />
+                </picture>
               );
             })()}
             <div
@@ -357,7 +370,7 @@ export default function HomePage({
         )}
 
         {/* Video Playback & Sound Control Badge */}
-        {founderSettings.heroVideoEnabled !== false && (
+        {showHeroVideo && (
           <div className="hero-video-controls-badge">
             <button
               type="button"
@@ -669,6 +682,8 @@ export default function HomePage({
               </Link>
             ))}
           </nav>
+
+          <HeroSponsorChip campaign={heroAd} lang={lang} />
         </div>
       </section>
 
@@ -883,6 +898,9 @@ export default function HomePage({
         )}
         </ScrollReveal>
       </section>
+
+      {/* 📢 Sponsored banners (CRM → الإعلانات, placement "inline"); renders nothing when no campaign is live */}
+      <SponsoredStrip campaigns={inlineAds} lang={lang} />
 
       {/* 🏡 3. SELLER INVITATION SECTION (Architectural Editorial Contrast) */}
       <ScrollReveal>

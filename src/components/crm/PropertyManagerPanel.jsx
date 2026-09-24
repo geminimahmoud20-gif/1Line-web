@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { getAreas } from '../../utils/areasData';
+import HomepageSlotsBoard, { FeaturedSlotModal, FeaturedPeriodLabel } from './HomepageSlotsBoard';
+import { toDayInput, addDays } from '../../utils/featuredSlots';
 import { exportToCsv } from '../../utils/exportCsv';
 import InteractiveMapPickerModal from './InteractiveMapPickerModal';
 import WhatsAppMatchNotifierModal from './WhatsAppMatchNotifierModal';
@@ -101,6 +103,7 @@ export default function PropertyManagerPanel({
   const [notifierProperty, setNotifierProperty] = useState(null);
   const [notifierEventType, setNotifierEventType] = useState('new_unit');
   const [areas, setAreas] = useState(() => getAreas());
+  const [slotEditing, setSlotEditing] = useState(null); // property being scheduled for the homepage
 
   useEffect(() => {
     const handleUpdate = () => setAreas(getAreas());
@@ -576,6 +579,23 @@ export default function PropertyManagerPanel({
         </div>
       </div>
 
+      {/* What visitors see on the homepage right now: featured slots, periods, order */}
+      <HomepageSlotsBoard properties={properties} onUpdateProperty={onUpdateProperty} isAr={isAr} />
+      {slotEditing && (
+        <FeaturedSlotModal
+          property={slotEditing}
+          isAr={isAr}
+          nextOrder={properties.filter((p) => p.featured).length + 1}
+          onClose={() => setSlotEditing(null)}
+          onSave={(patch) => {
+            if (onUpdateProperty(slotEditing.id, patch) !== false) {
+              triggerToast(isAr ? 'تم جدولة التمييز في الصفحة الرئيسية' : 'Homepage feature scheduled', 'success');
+            }
+            setSlotEditing(null);
+          }}
+        />
+      )}
+
       {/* Status Filter Tabs & Search Bar */}
       <div className="crm-table-header" style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div className="table-filters">
@@ -747,22 +767,36 @@ export default function PropertyManagerPanel({
 
                     {/* Featured Star Toggle */}
                     <td>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onUpdateProperty(prop.id, { featured: !prop.featured });
-                          triggerToast(prop.featured ? (isAr ? 'تم إلغاء التمييز' : 'Unfeatured') : (isAr ? 'تم تمييز العقار في الصدارة!' : 'Featured in Top!'), 'success');
-                        }}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          color: prop.featured ? '#f59e0b' : 'var(--text-muted)'
-                        }}
-                        title={prop.featured ? (isAr ? 'عقار مميز' : 'Featured') : (isAr ? 'عادي' : 'Standard')}
-                      >
-                        <Star size={18} fill={prop.featured ? '#f59e0b' : 'none'} />
-                      </button>
+                      <div className="hs-star-cell">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (prop.featured) {
+                              if (onUpdateProperty(prop.id, { featured: false }) !== false) {
+                                triggerToast(isAr ? 'تم إلغاء التمييز — خرج من الصفحة الرئيسية' : 'Removed from homepage', 'success');
+                              }
+                            } else {
+                              setSlotEditing(prop);
+                            }
+                          }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: prop.featured ? '#f59e0b' : 'var(--text-muted)'
+                          }}
+                          title={prop.featured ? (isAr ? 'مميز — اضغط لإلغاء التمييز' : 'Featured — click to remove') : (isAr ? 'تمييز في الصفحة الرئيسية لمدة محددة' : 'Feature on homepage')}
+                          aria-label={prop.featured ? (isAr ? 'إلغاء التمييز' : 'Unfeature') : (isAr ? 'تمييز في الصفحة الرئيسية' : 'Feature on homepage')}
+                          aria-pressed={!!prop.featured}
+                        >
+                          <Star size={18} fill={prop.featured ? '#f59e0b' : 'none'} />
+                        </button>
+                        {prop.featured && (
+                          <button type="button" className="hs-link-btn" onClick={() => setSlotEditing(prop)} title={isAr ? 'تعديل مدة التمييز' : 'Edit period'}>
+                            <FeaturedPeriodLabel property={prop} isAr={isAr} />
+                          </button>
+                        )}
+                      </div>
                     </td>
 
                     {/* Actions */}
@@ -1078,13 +1112,31 @@ export default function PropertyManagerPanel({
                       type="checkbox"
                       id="featured-checkbox"
                       checked={form.featured || false}
-                      onChange={(e) => setForm({ ...form, featured: e.target.checked })}
+                      onChange={(e) => setForm({
+                        ...form,
+                        featured: e.target.checked,
+                        // default period when switching on: today → +30 days
+                        featuredFrom: e.target.checked ? (form.featuredFrom || toDayInput(Date.now())) : form.featuredFrom,
+                        featuredUntil: e.target.checked && !form.featuredFrom ? addDays(29) : form.featuredUntil
+                      })}
                       style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                     />
                     <label htmlFor="featured-checkbox" style={{ cursor: 'pointer', margin: 0, fontWeight: 'bold' }}>
-                      ⭐ {isAr ? 'تمييز في صدارة الموقع' : 'Featured on Homepage'}
+                      ⭐ {isAr ? 'تمييز في الصفحة الرئيسية' : 'Featured on Homepage'}
                     </label>
                   </div>
+                  {form.featured && (
+                    <>
+                      <div className="form-group-item">
+                        <label htmlFor="featured-from">{isAr ? 'التمييز من يوم' : 'Featured from'}</label>
+                        <input id="featured-from" type="date" value={form.featuredFrom || ''} onChange={(e) => setForm({ ...form, featuredFrom: e.target.value })} />
+                      </div>
+                      <div className="form-group-item">
+                        <label htmlFor="featured-until">{isAr ? 'حتى يوم (فارغ = بدون نهاية)' : 'Until (empty = open-ended)'}</label>
+                        <input id="featured-until" type="date" value={form.featuredUntil || ''} min={form.featuredFrom || undefined} onChange={(e) => setForm({ ...form, featuredUntil: e.target.value || null })} />
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 

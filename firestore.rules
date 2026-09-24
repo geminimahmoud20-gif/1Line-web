@@ -113,6 +113,23 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // 📊 8b. AD CAMPAIGN COUNTERS — visitors may only add +1 to impressions or clicks.
+    // Campaign definitions live in settings/ad_campaigns (admin write).
+    match /ad_stats/{adId} {
+      allow read: if isStaff();
+      allow create: if adId.matches('^[A-Za-z0-9_-]{3,64}$')
+                    && request.resource.data.keys().hasOnly(['impressions', 'clicks'])
+                    && request.resource.data.impressions is int && request.resource.data.clicks is int
+                    && request.resource.data.impressions >= 0 && request.resource.data.impressions <= 1
+                    && request.resource.data.clicks >= 0 && request.resource.data.clicks <= 1;
+      allow update: if request.resource.data.keys().hasOnly(['impressions', 'clicks'])
+                    && request.resource.data.impressions >= resource.data.impressions
+                    && request.resource.data.impressions <= resource.data.impressions + 1
+                    && request.resource.data.clicks >= resource.data.clicks
+                    && request.resource.data.clicks <= resource.data.clicks + 1;
+      allow delete: if isAdmin();
+    }
+
     // 💼 9. DEALS & PIPELINE
     match /deals/{dealId} {
       allow read: if hasRole(['sales_manager', 'finance', 'viewer']) || isLeadEditor();

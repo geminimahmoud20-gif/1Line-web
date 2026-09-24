@@ -25,8 +25,8 @@ allJsxFiles.forEach(filePath => {
   // Extract all imported identifiers (including multi-line)
   const importedIdentifiers = new Set();
 
-  // Multi-line named imports: import { ... } from '...'
-  const namedRegex = /import\s*\{([^}]+)\}\s*from/gs;
+  // Multi-line named imports: import { ... } from '...' or import Foo, { ... } from '...'
+  const namedRegex = /import\s*(?:[\w\d_$]+,\s*)?\{([^}]+)\}\s*from/gs;
   let match;
   while ((match = namedRegex.exec(content)) !== null) {
     match[1].split(',').forEach(item => {

@@ -1059,7 +1059,48 @@ export const CrmAdminPanel = ({
                             )}
                           </div>
 
-                          <span style={{ fontSize: '0.75rem',                       {/* Status */}
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{l.phone}</span>
+
+                          {/* Tags Display */}
+                          {l.tags && l.tags.length > 0 && (
+                            <div style={{ display: 'flex', gap: '4px', marginTop: '3px', flexWrap: 'wrap' }}>
+                              {l.tags.slice(0, 2).map((t, i) => (
+                                <span key={i} style={{ fontSize: '0.65rem', background: 'rgba(255,255,255,0.05)', padding: '1px 5px', borderRadius: '3px', color: 'var(--accent-gold)' }}>
+                                  {t}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Requirements */}
+                      <td data-label={isAr ? 'المواصفات' : 'Requirements'}>
+                        <div style={{ fontSize: '0.8rem', maxWidth: '280px', whiteSpace: 'normal' }}>
+                          {l.details?.budget && (
+                            <strong style={{ color: 'var(--emerald)', display: 'block', marginBottom: '2px' }}>
+                              💰 {typeof l.details.budget === 'number' ? l.details.budget.toLocaleString() + ' ج.م' : l.details.budget + ' EGP'}
+                            </strong>
+                          )}
+                          <span style={{ color: 'var(--text-secondary)' }}>
+                            {getLocalizedPropertyType(l.propertyType || l.details?.propertyType || l.type)} • {getLocalizedArea(l.area || l.details?.area || l.details?.district || 'east')}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Score & Temperature */}
+                      <td data-label={isAr ? 'الجدية والحرارة' : 'Score & Temp'}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span className={`lead-score-pill ${l.score >= 85 ? 'score-high' : 'score-medium'}`}>
+                            {l.score || 85}%
+                          </span>
+                          <span title={temp === 'hot' ? 'عميل ساخن للشراء' : temp === 'warm' ? 'عميل دافئ' : 'عميل مستكشف'}>
+                            {temp === 'hot' ? '🔥' : temp === 'warm' ? '⚡' : '❄️'}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Status */}
                       <td data-label={isAr ? 'الحالة' : 'Status'}>
                         <div className={`crm-status-select-wrap status-pill-${l.status || 'new'}`}>
                           <span className="crm-status-dot" />
@@ -1229,56 +1270,6 @@ export const CrmAdminPanel = ({
                               <Trash2 size={12} />
                             </button>
                           )}
-                        </div>
-                      </td>derRadius: '4px' }}
-                              >
-                                <Building size={12} />
-                              </button>
-                            )}
-
-                            {/* Claim Lead */}
-                            {!isSuperAdmin && l.assignedTo !== currentRoleObj.agentName && (
-                              <button
-                                type="button"
-                                className="btn btn-sm btn-ghost"
-                                onClick={() => handleClaimLead(l.id)}
-                                style={{ padding: '4px 6px', color: 'var(--crm-positive)', borderRadius: '4px' }}
-                                title={isAr ? `استلام هذا العميل وتعيينه لـ ${currentRoleObj.label_ar}` : 'Claim this lead'}
-                              >
-                                <UserPlus size={12} />
-                              </button>
-                            )}
-
-                            {/* Archive Lead Toggle */}
-                            <button
-                              type="button"
-                              className="btn btn-sm btn-ghost"
-                              onClick={() => {
-                                const newStatus = l.isArchived ? false : true;
-                                if (onUpdateLead) {
-                                  onUpdateLead(l.id, { isArchived: newStatus });
-                                }
-                                triggerToast(isAr ? (newStatus ? 'تم نقل العميل للأرشيف 📦' : 'تم استعادة العميل من الأرشيف') : (newStatus ? 'Lead archived' : 'Lead restored'), 'info');
-                              }}
-                              style={{ padding: '4px 6px', color: l.isArchived ? '#f59e0b' : '#64748b', borderRadius: '4px' }}
-                              title={isAr ? (l.isArchived ? 'استعادة من الأرشيف' : 'أرشفة العميل') : (l.isArchived ? 'Restore' : 'Archive')}
-                            >
-                              <Archive size={12} />
-                            </button>
-
-                            {/* Delete Lead (Super Admin Only) */}
-                            {isSuperAdmin ? (
-                              <button 
-                                type="button"
-                                className="btn btn-sm btn-ghost" 
-                                onClick={() => handleDeleteLeadClick(l.id, l.name)} 
-                                style={{ padding: '4px 6px', color: 'var(--rose)', borderRadius: '4px' }} 
-                                title={isAr ? 'حذف العميل نهائياً' : 'Delete Lead'}
-                              >
-                                <Trash2 size={12} />
-                              </button>
-                            ) : null}
-                          </div>
                         </div>
                       </td>
                     </tr>

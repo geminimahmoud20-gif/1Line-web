@@ -11,6 +11,7 @@ import MegaProjectsManagerPanel from '../components/crm/MegaProjectsManagerPanel
 import DemandsManagerPanel from '../components/crm/DemandsManagerPanel';
 import FounderCmsPanel from '../components/crm/FounderCmsPanel';
 import AreaManagerPanel from '../components/crm/AreaManagerPanel';
+import AdCampaignsPanel from '../components/crm/AdCampaignsPanel';
 import GoLiveWizardModal from '../components/crm/GoLiveWizardModal';
 import CrmSidebar from '../components/crm/CrmSidebar';
 import CrmTopbar from '../components/crm/CrmTopbar';
@@ -569,6 +570,8 @@ export default function CrmPage({
               lang={lang}
               triggerToast={triggerToast}
             />
+          ) : activeTab === 'ads' && activeRole === 'super_admin' ? (
+            <AdCampaignsPanel lang={lang} triggerToast={triggerToast} />
           ) : activeTab === 'areas' && activeRole === 'super_admin' ? (
             <AreaManagerPanel
               lang={lang}
@@ -581,7 +584,7 @@ export default function CrmPage({
               lang={lang}
               triggerToast={triggerToast}
             />
-          ) : ['system', 'areas', 'corporate'].includes(activeTab) ? (
+          ) : ['system', 'areas', 'corporate', 'ads'].includes(activeTab) ? (
             activeRole !== 'super_admin' ? (
               <div style={{
                 background: 'var(--crm-surface-light, #ffffff)',
