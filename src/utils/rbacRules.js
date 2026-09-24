@@ -113,6 +113,13 @@ export const canEditLead = (role, lead, userIdentifier) => {
 };
 
 /**
+ * Roles that work the sales pipeline (status, assignment, notes). Viewer / finance /
+ * property_manager read leads only.
+ */
+export const LEAD_EDITOR_ROLES = [CRM_ROLES.SUPER_ADMIN, CRM_ROLES.SALES_MANAGER, CRM_ROLES.SALES_AGENT, 'agent_east', 'agent_new_sohag'];
+export const canEditLeadsRole = (role) => LEAD_EDITOR_ROLES.includes(role);
+
+/**
  * Validates whether a given user/role can delete a lead
  */
 export const canDeleteLead = (role) => {

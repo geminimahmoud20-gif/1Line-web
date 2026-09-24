@@ -12,7 +12,7 @@ import {
 import { loginUser, logAuditEvent } from '../firebaseService';
 import { exportToCsv } from '../utils/exportCsv';
 import { formatTimeSinceLastSync } from '../utils/syncManager';
-import { canExportCsv, canDeleteLead, canViewLeadPhone, maskPhoneNumber } from '../utils/rbacRules';
+import { canExportCsv, canDeleteLead, canViewLeadPhone, maskPhoneNumber, canEditLeadsRole } from '../utils/rbacRules';
 import { SOHAG_AREAS, PROPERTY_TYPES } from '../data/propertiesData';
 import { getAreas } from '../utils/areasData';
 
@@ -248,6 +248,10 @@ export const CrmAdminPanel = ({
 
   const handleBulkAssign = (newAgent) => {
     if (selectedLeadIds.length === 0 || !newAgent) return;
+    if (!canEditLeadsRole(activeRole)) {
+      if (triggerToast) triggerToast(isAr ? 'صلاحياتك الحالية لا تسمح بتعيين العملاء' : 'Your role cannot assign leads', 'error');
+      return;
+    }
     selectedLeadIds.forEach(id => {
       if (onUpdateLead) onUpdateLead(id, { assignedTo: newAgent });
     });
@@ -540,6 +544,10 @@ export const CrmAdminPanel = ({
 
   // Delete Lead
   const handleDeleteLeadClick = (leadId, leadName) => {
+    if (!canDeleteLead(activeRole)) {
+      if (triggerToast) triggerToast(isAr ? 'حذف العملاء متاح للمدير العام فقط — يمكنك أرشفة العميل بدلاً من ذلك' : 'Only Super Admin can delete leads', 'error');
+      return;
+    }
     if (window.confirm(isAr ? `هل أنت متأكد من حذف بيانات العميل (${leadName || ''})؟` : `Delete lead ${leadName}?`)) {
       if (onDeleteLead) {
         onDeleteLead(leadId);
@@ -933,7 +941,7 @@ export const CrmAdminPanel = ({
 
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                 {/* Bulk Assign Agent Dropdown */}
-                <select
+                {canEditLeadsRole(activeRole) && <select
                   onChange={(e) => {
                     if (e.target.value) handleBulkAssign(e.target.value);
                   }}
@@ -945,7 +953,7 @@ export const CrmAdminPanel = ({
                   <option value="Dr. Mahmoud Elbaz">Dr. Mahmoud Elbaz</option>
                   <option value="Sales Team A">Sales Team A (شرق سوهاج)</option>
                   <option value="Sales Team B">Sales Team B (سوهاج الجديدة)</option>
-                </select>
+                </select>}
 
                 {/* Bulk Export */}
                 <button
@@ -1733,8 +1741,10 @@ export const CrmAdminPanel = ({
           properties={properties}
           onClose={() => setViewingProfileLead(null)}
           onUpdateLead={(leadId, updatedData) => {
-            if (onUpdateLead) onUpdateLead(leadId, updatedData);
+            const result = onUpdateLead ? onUpdateLead(leadId, updatedData) : undefined;
+            if (result === false) return false; // blocked by role — don't show an edit that didn't happen
             setViewingProfileLead(prev => prev ? { ...prev, ...updatedData } : null);
+            return result;
           }}
           lang={lang}
           triggerToast={triggerToast}

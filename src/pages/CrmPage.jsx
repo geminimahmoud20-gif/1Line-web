@@ -19,7 +19,7 @@ import '../components/crm/CrmLayout.css';
 import '../components/crm/crm-luxury.css';
 import { isFirebaseAuthAvailable, loginUser } from '../firebaseService';
 import { useAuth } from '../context/AuthContext';
-import { canEditProperties } from '../utils/rbacRules';
+import { canEditProperties, canEditLeadsRole } from '../utils/rbacRules';
 import { verifyAdminCredentials } from '../utils/securityShield';
 
 export default function CrmPage({
@@ -76,12 +76,13 @@ export default function CrmPage({
     deleteInventory: activeRole === 'super_admin' || activeRole === 'property_manager',
     manageDemands: ['super_admin', 'sales_manager', 'property_manager'].includes(activeRole),
     // viewer / finance / property_manager read leads but don't change their pipeline
-    editLeads: ['super_admin', 'sales_manager', 'sales_agent', 'agent_east', 'agent_new_sohag'].includes(activeRole)
+    editLeads: canEditLeadsRole(activeRole)
   };
+  // Returns false when blocked so callers that check `=== false` don't report success
   const guard = (allowed, fn) => (...args) => {
     if (!allowed) {
       if (triggerToast) triggerToast(lang === 'ar' ? 'صلاحياتك الحالية لا تسمح بهذا الإجراء' : 'Your role does not allow this action', 'error');
-      return undefined;
+      return false;
     }
     return fn ? fn(...args) : undefined;
   };
