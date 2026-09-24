@@ -49,7 +49,7 @@ import { updatePageSeo, buildPropertySchema } from '../utils/seoHelper';
 import { checkFormSpamProtection } from '../utils/securityShield';
 import { formatCurrencyPrice, getPriceBenchmark } from '../utils/currencyAndBenchmark';
 import BookingConfirmationModal from '../components/common/BookingConfirmationModal';
-import { saveLead } from '../firebaseService';
+import { saveLead } from '../firebaseLazy';
 import { useClientAuth } from '../context/ClientAuthContext';
 
 export default function PropertyDetailPage({

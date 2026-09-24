@@ -11,7 +11,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 // Security & Storage Helpers
 import { sanitizeObject } from './utils/securityShield';
 import { readStoredJson } from './utils/browserStorage';
-import { saveLead } from './firebaseService';
+import { saveLead } from './firebaseLazy';
 
 // SEO
 import { updatePageSeo } from './utils/seoHelper';

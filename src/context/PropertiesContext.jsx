@@ -13,7 +13,7 @@ import {
   saveDemand,
   updateDemandStatus,
   deleteDemandDoc
-} from '../firebaseService';
+} from '../firebaseLazy';
 import { playNotificationChime } from '../utils/notificationHub';
 import { sanitizeObject, normalizePhoneNumber } from '../utils/securityShield';
 import { identifyVisitor, getCurrentSessionJourney, getAttributionData } from '../utils/visitorTracker';

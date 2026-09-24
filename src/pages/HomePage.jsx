@@ -586,6 +586,39 @@ export default function HomePage({
               </button>
             </form>
 
+            {/* Quick Filter Tags Strip (Instant One-Touch Discovery) */}
+            <div className="hero-quick-chips-strip">
+              <span className="quick-chips-label">{lang === 'ar' ? 'الأكثر طلباً:' : 'Popular:'}</span>
+              <button 
+                type="button" 
+                className="hero-quick-chip" 
+                onClick={() => { setSearchArea('new_sohag'); navigate('/properties?area=new_sohag'); }}
+              >
+                📍 {lang === 'ar' ? 'سوهاج الجديدة' : 'New Sohag'}
+              </button>
+              <button 
+                type="button" 
+                className="hero-quick-chip" 
+                onClick={() => { setSearchArea('east'); navigate('/properties?area=east'); }}
+              >
+                📍 {lang === 'ar' ? 'شارع الجمهورية وحي شرق' : 'Republic St. & East'}
+              </button>
+              <button 
+                type="button" 
+                className="hero-quick-chip" 
+                onClick={() => { navigate('/properties?installments=true'); }}
+              >
+                💳 {lang === 'ar' ? 'شقق تقسيط مباشر' : 'Installment Units'}
+              </button>
+              <button 
+                type="button" 
+                className="hero-quick-chip" 
+                onClick={() => { navigate('/properties?type=commercial'); }}
+              >
+                🏬 {lang === 'ar' ? 'محلات وتجاري' : 'Commercial'}
+              </button>
+            </div>
+
             {/* Subtle Secondary VIP Guide Link */}
             <div className="hero-search-footer-nav">
               <span className="hero-search-hint">

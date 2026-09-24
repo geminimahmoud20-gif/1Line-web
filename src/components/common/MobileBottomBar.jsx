@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Building, Calculator, MessageSquare, Scale } from 'lucide-react';
 
@@ -9,6 +10,23 @@ export default function MobileBottomBar({
 }) {
   const location = useLocation();
   const isAr = lang === 'ar';
+  const [isScrolledDown, setIsScrolledDown] = useState(false);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentY = window.scrollY;
+      if (currentY > 180 && currentY > lastScrollY.current + 10) {
+        setIsScrolledDown(true);
+      } else if (currentY < lastScrollY.current - 15 || currentY <= 80) {
+        setIsScrolledDown(false);
+      }
+      lastScrollY.current = currentY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const isActive = (path) => {
     if (path === '/' && location.pathname === '/') return true;
@@ -17,7 +35,7 @@ export default function MobileBottomBar({
   };
 
   return (
-    <div className="mobile-floating-bottom-bar">
+    <div className={`mobile-floating-bottom-bar ${isScrolledDown ? 'mob-bar-hidden' : ''}`}>
       <div className="mobile-bar-inner">
         {/* 1. Home */}
         <Link to="/" className={`mob-tab-btn ${isActive('/') ? 'active' : ''}`}>

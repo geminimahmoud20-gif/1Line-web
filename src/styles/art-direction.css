@@ -538,6 +538,74 @@
     opacity: 0.9;
 }
 
+/* Quick Filter Tags Strip (Instant One-Touch Discovery) */
+.hero-quick-chips-strip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    white-space: nowrap;
+}
+
+.hero-quick-chips-strip::-webkit-scrollbar {
+    display: none;
+}
+
+.dark-theme .hero-quick-chips-strip {
+    border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+.quick-chips-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #64748B;
+    flex-shrink: 0;
+}
+
+.dark-theme .quick-chips-label {
+    color: #94A3B8;
+}
+
+.hero-quick-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 9999px;
+    padding: 4px 12px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.dark-theme .hero-quick-chip {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #CBD5E1;
+}
+
+.hero-quick-chip:hover {
+    background: #092347;
+    color: #ECC875;
+    border-color: rgba(236, 200, 117, 0.4);
+    transform: translateY(-1px);
+}
+
+.dark-theme .hero-quick-chip:hover {
+    background: rgba(212, 175, 55, 0.15);
+    color: #ECC875;
+    border-color: #ECC875;
+}
+
 /* Hero secondary CTA */
 .hero-secondary-guide-link {
     display: inline-flex;
@@ -2394,4 +2462,30 @@
     direction: ltr;
     unicode-bidi: embed;
     text-align: left;
+}
+
+/* ─────────────────────────────────────
+   §21. QUIET LUXURY MOBILE DE-CLUTTERING
+   ───────────────────────────────────── */
+.mobile-floating-bottom-bar {
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+}
+
+.mobile-floating-bottom-bar.mob-bar-hidden {
+    transform: translateY(125%) !important;
+    pointer-events: none;
+}
+
+@media (max-width: 768px) {
+    /* Hide redundant floating AI button on mobile since middle bottom tab handles contact */
+    .floating-ai-advisor-trigger {
+        display: none !important;
+    }
+
+    /* Position back-to-top button neatly above bottom bar without overlap */
+    .floating-back-to-top-btn {
+        bottom: 80px !important;
+        opacity: 0.88;
+        transform: scale(0.92);
+    }
 }

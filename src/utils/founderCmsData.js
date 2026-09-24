@@ -4,7 +4,7 @@
  * Supports local caching + Real-time Firebase Firestore cloud persistence
  */
 
-import { saveSettings, subscribeToSettings, isFirebaseActive } from '../firebaseService.js';
+import { saveSettings, subscribeToSettings, isFirebaseActive } from '../firebaseLazy.js';
 
 export const DEFAULT_FOUNDER_CMS = {
   // Founder Information

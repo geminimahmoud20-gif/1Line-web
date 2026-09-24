@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { logoutUser, monitorAuthState } from '../firebaseService';
+import { logoutUser, monitorAuthState } from '../firebaseLazy';
 import { usePreferences } from './PreferencesContext';
 import { useUIModal } from './UIModalContext';
 
