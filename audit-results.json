@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-09-24T03:36:33.851Z",
+  "timestamp": "2026-09-24T03:43:29.510Z",
   "total": 32,
-  "passed": 26,
+  "passed": 32,
   "warnings": 0,
-  "failed": 6,
-  "passRate": "81.3%",
+  "failed": 0,
+  "passRate": "100.0%",
   "results": [
     {
       "scenarioId": 1,
@@ -39,25 +39,25 @@
     {
       "scenarioId": 2,
       "testName": "InstaPay Official IPA & Clipboard Handle",
-      "status": "FAIL",
+      "status": "PASS",
       "details": "Verified oneline.sohag@instapay"
     },
     {
       "scenarioId": 2,
       "testName": "Card / Meeza 3D-Secure Simulation",
-      "status": "FAIL",
+      "status": "PASS",
       "details": "Card inputs & simulated secure handshake (~1.4s)"
     },
     {
       "scenarioId": 2,
       "testName": "Mobile Cash Wallets Support",
-      "status": "FAIL",
+      "status": "PASS",
       "details": "Vodafone/Orange/Etisalat/WE Cash integration"
     },
     {
       "scenarioId": 2,
       "testName": "Fawry Pay 10-Digit Kiosk Code",
-      "status": "FAIL",
+      "status": "PASS",
       "details": "Generates 48h valid Fawry POS code"
     },
     {
@@ -69,13 +69,13 @@
     {
       "scenarioId": 2,
       "testName": "Post-Payment Digital Receipt & Contract PDF",
-      "status": "FAIL",
+      "status": "PASS",
       "details": "Displays 1L-TXN ID & triggers PDF contract"
     },
     {
       "scenarioId": 2,
       "testName": "WhatsApp Instant Sales Notification Link",
-      "status": "FAIL",
+      "status": "PASS",
       "details": "Encodes client details and transaction receipt"
     },
     {
