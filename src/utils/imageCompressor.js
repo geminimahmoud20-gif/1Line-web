@@ -101,3 +101,5 @@ export async function compressMultipleImages(fileList, options = {}) {
 
   return results;
 }
+
+export const compressImageFile = compressImage;
