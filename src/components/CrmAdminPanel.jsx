@@ -5,7 +5,7 @@ import {
   Building, Users, User, Briefcase, Inbox, 
   MessageSquare, FileText, Sparkles,
   Edit3, Trash2, Database, Upload, Save, X, Clock, CheckCircle2,
-  Trophy, Calculator, LayoutGrid, Wand2, Calendar, Target, Zap,
+  Trophy, Calculator, LayoutGrid, Wand2, Calendar, Target, Zap, Plus,
   UserPlus, CheckSquare, Square, Flame, Tag, Filter, Send, Activity,
   ArrowLeft, ArrowRight, MapPin, Archive, Wallet
 } from 'lucide-react';
@@ -1059,195 +1059,178 @@ export const CrmAdminPanel = ({
                             )}
                           </div>
 
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{l.phone}</span>
-
-                          {/* Tags Display */}
-                          {l.tags && l.tags.length > 0 && (
-                            <div style={{ display: 'flex', gap: '4px', marginTop: '3px', flexWrap: 'wrap' }}>
-                              {l.tags.slice(0, 2).map((t, i) => (
-                                <span key={i} style={{ fontSize: '0.65rem', background: 'rgba(255,255,255,0.05)', padding: '1px 5px', borderRadius: '3px', color: 'var(--accent-gold)' }}>
-                                  {t}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Requirements */}
-                      <td data-label={isAr ? 'المواصفات' : 'Requirements'}>
-                        <div style={{ fontSize: '0.8rem', maxWidth: '280px', whiteSpace: 'normal' }}>
-                          {l.details?.budget && (
-                            <strong style={{ color: 'var(--emerald)', display: 'block', marginBottom: '2px' }}>
-                              💰 {typeof l.details.budget === 'number' ? l.details.budget.toLocaleString() + ' ج.م' : l.details.budget + ' EGP'}
-                            </strong>
-                          )}
-                          <span style={{ color: 'var(--text-secondary)' }}>
-                            {getLocalizedPropertyType(l.propertyType || l.details?.propertyType || l.type)} • {getLocalizedArea(l.area || l.details?.area || l.details?.district || 'east')}
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* Score & Temperature */}
-                      <td data-label={isAr ? 'الجدية والحرارة' : 'Score & Temp'}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span className={`lead-score-pill ${l.score >= 85 ? 'score-high' : 'score-medium'}`}>
-                            {l.score || 85}%
-                          </span>
-                          <span title={temp === 'hot' ? 'عميل ساخن للشراء' : temp === 'warm' ? 'عميل دافئ' : 'عميل مستكشف'}>
-                            {temp === 'hot' ? '🔥' : temp === 'warm' ? '⚡' : '❄️'}
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* Status */}
+                          <span style={{ fontSize: '0.75rem',                       {/* Status */}
                       <td data-label={isAr ? 'الحالة' : 'Status'}>
-                        <select 
-                          value={l.status || 'new'} 
-                          onChange={(e) => {
-                            if (onUpdateLead) onUpdateLead(l.id, { status: e.target.value });
-                          }}
-                          style={{
-                            background: 'var(--secondary)',
-                            color: 'var(--text-primary)',
-                            border: '1px solid var(--border-light)',
-                            borderRadius: '4px',
-                            padding: '4px',
-                            fontSize: '0.8rem'
-                          }}
-                        >
-                          <option value="new">{isAr ? 'طلب جديد' : 'New'}</option>
-                          <option value="contacted">{isAr ? 'تم التواصل' : 'Contacted'}</option>
-                          <option value="site_visit">{isAr ? 'معاينة مجدولة' : 'Site Visit'}</option>
-                          <option value="negotiating">{isAr ? 'قيد التفاوض' : 'Negotiating'}</option>
-                          <option value="closing">{isAr ? 'توقيع وحجز' : 'Closing'}</option>
-                          <option value="closed">{isAr ? 'صفقة ناجحة' : 'Closed Won'}</option>
-                        </select>
+                        <div className={`crm-status-select-wrap status-pill-${l.status || 'new'}`}>
+                          <span className="crm-status-dot" />
+                          <select 
+                            value={l.status || 'new'} 
+                            onChange={(e) => {
+                              if (onUpdateLead) onUpdateLead(l.id, { status: e.target.value });
+                            }}
+                            className="crm-status-select"
+                            title={isAr ? 'تغيير مرحلة العميل' : 'Change Status'}
+                          >
+                            <option value="new">{isAr ? 'طلب جديد' : 'New'}</option>
+                            <option value="contacted">{isAr ? 'تم التواصل' : 'Contacted'}</option>
+                            <option value="site_visit">{isAr ? 'معاينة مجدولة' : 'Site Visit'}</option>
+                            <option value="negotiating">{isAr ? 'قيد التفاوض' : 'Negotiating'}</option>
+                            <option value="closing">{isAr ? 'توقيع وحجز' : 'Closing'}</option>
+                            <option value="closed">{isAr ? 'صفقة ناجحة' : 'Closed Won'}</option>
+                          </select>
+                        </div>
                       </td>
 
                       {/* Next Action / Follow-up */}
                       <td data-label={isAr ? 'المتابعة القادمة' : 'Next Action'}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <input 
-                            type="text" 
-                            value={l.nextActionNote || l.followUp || ''} 
-                            placeholder={isAr ? 'سجل الإجراء القادم...' : 'Next action...'}
-                            onChange={(e) => {
-                              if (onUpdateLead) onUpdateLead(l.id, { nextActionNote: e.target.value, followUp: e.target.value });
-                            }}
-                            className="form-input" 
-                            style={{ padding: '4px 8px', fontSize: '0.78rem', width: '130px' }}
-                          />
+                        <div 
+                          className="crm-next-action-cell"
+                          onClick={() => setQuickDrawerLead(l)}
+                          title={isAr ? 'انقر لتحديث المتابعة والمعاينة السريعة' : 'Click to update next action'}
+                        >
+                          {l.nextActionNote || l.followUp ? (
+                            <div className="crm-next-action-pill">
+                              <Clock size={12} className="crm-next-action-icon" />
+                              <span className="crm-next-action-text">{l.nextActionNote || l.followUp}</span>
+                            </div>
+                          ) : (
+                            <span className="crm-next-action-empty">
+                              <Plus size={11} /> {isAr ? 'جدولة متابعة' : 'Add action'}
+                            </span>
+                          )}
                         </div>
                       </td>
 
                       {/* Agent */}
                       <td data-label={isAr ? 'المسؤول' : 'Agent'}>
-                        <select 
-                          value={l.assignedTo || 'Unassigned'} 
-                          onChange={(e) => {
-                            if (onUpdateLead) onUpdateLead(l.id, { assignedTo: e.target.value });
-                          }}
-                          style={{
-                            background: 'var(--secondary)',
-                            color: 'var(--text-primary)',
-                            border: '1px solid var(--border-light)',
-                            borderRadius: '4px',
-                            padding: '4px',
-                            fontSize: '0.8rem'
-                          }}
-                        >
-                          <option value="Dr. Mahmoud Elbaz">{isAr ? 'د. محمود الباز' : 'Dr. Mahmoud Elbaz'}</option>
-                          <option value="Sales Team A">{isAr ? 'فريق المبيعات (أ)' : 'Sales Team A'}</option>
-                          <option value="Sales Team B">{isAr ? 'فريق المبيعات (ب)' : 'Sales Team B'}</option>
-                          <option value="Sales Advisor Team">{isAr ? 'مستشار المبيعات' : 'Sales Advisor Team'}</option>
-                          <option value="Unassigned">{isAr ? 'غير مسند' : 'Unassigned'}</option>
-                        </select>
+                        <div className="crm-agent-select-wrap">
+                          <div className="crm-agent-avatar-sm">
+                            {l.assignedTo && l.assignedTo !== 'Unassigned' ? l.assignedTo.charAt(0) : '—'}
+                          </div>
+                          <select 
+                            value={l.assignedTo || 'Unassigned'} 
+                            onChange={(e) => {
+                              if (onUpdateLead) onUpdateLead(l.id, { assignedTo: e.target.value });
+                            }}
+                            className="crm-agent-select"
+                            title={isAr ? 'تعيين مسؤول المبيعات' : 'Assign Agent'}
+                          >
+                            <option value="Dr. Mahmoud Elbaz">{isAr ? 'د. محمود الباز' : 'Dr. Mahmoud Elbaz'}</option>
+                            <option value="Sales Team A">{isAr ? 'فريق المبيعات (أ)' : 'Sales Team A'}</option>
+                            <option value="Sales Team B">{isAr ? 'فريق المبيعات (ب)' : 'Sales Team B'}</option>
+                            <option value="Sales Advisor Team">{isAr ? 'مستشار المبيعات' : 'Sales Advisor Team'}</option>
+                            <option value="Unassigned">{isAr ? 'غير مسند' : 'Unassigned'}</option>
+                          </select>
+                        </div>
                       </td>
 
                       {/* Actions */}
                       <td data-label={isAr ? 'الإجراءات' : 'Actions'}>
-                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                        <div className="crm-action-group">
                           {/* Quick Drawer Fast Inspection */}
                           <button
                             type="button"
-                            className="btn btn-sm"
+                            className="crm-btn-quick"
                             onClick={() => setQuickDrawerLead(l)}
-                            style={{ 
-                              padding: '5px 9px', 
-                              background: 'rgba(37, 99, 235, 0.12)', 
-                              color: '#2563eb', 
-                              border: '1px solid rgba(37, 99, 235, 0.3)',
-                              borderRadius: '6px',
-                              fontSize: '0.75rem',
-                              fontWeight: 'bold',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '4px'
-                            }}
-                            title={isAr ? 'معاينة سريعة وتسجيل مكالمة' : 'Quick Drawer & Log Call'}
+                            title={isAr ? 'معاينة سريعة وتسجيل مكالمة' : 'Quick Drawer'}
                           >
                             <Zap size={13} />
                             <span>{isAr ? 'سريع' : 'Quick'}</span>
                           </button>
 
-                          {/* Open 360° Profile */}
-                          {/* Primary Action: Open 360° Profile */}
-                          <button
-                            type="button"
-                            className="btn btn-sm"
-                            onClick={() => setViewingProfileLead(l)}
-                            style={{ 
-                              padding: '5px 9px', 
-                              background: 'rgba(217, 119, 6, 0.15)', 
-                              color: 'var(--accent-gold)', 
-                              border: '1px solid rgba(217, 119, 6, 0.35)',
-                              borderRadius: '6px',
-                              fontSize: '0.75rem',
-                              fontWeight: 'bold',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '4px'
-                            }}
-                            title={isAr ? 'فتح ملف العميل الشامل 360°' : 'Customer 360° Profile'}
-                          >
-                            <User size={13} />
-                            <span>{isAr ? 'الملف' : 'Profile'}</span>
-                          </button>
-
-                          {/* Secondary Action: WhatsApp Instant Direct Contact */}
+                          {/* WhatsApp Direct Contact */}
                           <button 
                             type="button"
-                            className="btn btn-sm btn-accent" 
+                            className="crm-icon-btn is-whatsapp" 
                             onClick={() => onWhatsAppClick(l)} 
-                            style={{ padding: '5px 9px', borderRadius: '6px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }} 
-                            title={isAr ? 'محادثة العميل مباشرة عبر واتساب' : 'Chat with Client on WhatsApp'}
+                            title={isAr ? 'محادثة العميل مباشرة عبر واتساب' : 'WhatsApp'}
                           >
                             <MessageSquare size={13} />
-                            <span>واتساب</span>
                           </button>
 
-                          {/* Auxiliary Tools Strip */}
-                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-light)', borderRadius: '6px', padding: '2px' }}>
-                            {/* 1-Click Dispatch Lead Details to Agent via WhatsApp */}
+                          {/* 360° Profile */}
+                          <button
+                            type="button"
+                            className="crm-icon-btn"
+                            onClick={() => setViewingProfileLead(l)}
+                            title={isAr ? 'فتح ملف العميل الشامل 360°' : 'Profile 360°'}
+                          >
+                            <User size={13} />
+                          </button>
+
+                          {/* Edit Modal */}
+                          <button
+                            type="button"
+                            className="crm-icon-btn"
+                            onClick={() => handleOpenEditLead(l)}
+                            title={isAr ? 'تعديل بيانات العميل' : 'Edit'}
+                          >
+                            <Edit3 size={13} />
+                          </button>
+
+                          {/* Dispatch Lead via WhatsApp */}
+                          <button 
+                            type="button"
+                            className="crm-icon-btn" 
+                            onClick={() => onDispatchLeadClick(l)} 
+                            title={isAr ? 'إحالة بيانات العميل لمسؤول المبيعات عبر واتساب' : 'Dispatch'}
+                          >
+                            <Send size={12} />
+                          </button>
+
+                          {/* Convert to Property */}
+                          {onConvertToProperty && (
                             <button 
                               type="button"
-                              className="btn btn-sm btn-ghost" 
-                              onClick={() => onDispatchLeadClick(l)} 
-                              style={{ padding: '4px 6px', color: 'var(--accent-gold)', borderRadius: '4px' }} 
-                              title={isAr ? 'إحالة بيانات العميل لمسؤول المبيعات عبر واتساب' : 'Dispatch Lead to Sales Agent'}
+                              className="crm-icon-btn" 
+                              onClick={() => onConvertToProperty(l)}
+                              title={isAr ? 'تحويل لعقار معروض بالموقع' : 'Convert'}
                             >
-                              <Send size={12} />
+                              <Building size={12} />
                             </button>
+                          )}
 
-                            {/* Convert to Property */}
-                            {onConvertToProperty && (
-                              <button 
-                                type="button"
-                                className="btn btn-sm btn-ghost" 
-                                onClick={() => onConvertToProperty(l)}
-                                title={isAr ? 'تحويل هذا الطلب إلى عقار معروض بالموقع فوراً' : 'Convert to Property Listing'}
-                                style={{ padding: '4px 6px', color: 'var(--crm-faint)', borderRadius: '4px' }}
+                          {/* Claim Lead */}
+                          {!isSuperAdmin && l.assignedTo !== currentRoleObj.agentName && (
+                            <button
+                              type="button"
+                              className="crm-icon-btn"
+                              onClick={() => handleClaimLead(l.id)}
+                              title={isAr ? `استلام هذا العميل وتعيينه لـ ${currentRoleObj.label_ar}` : 'Claim'}
+                            >
+                              <UserPlus size={12} />
+                            </button>
+                          )}
+
+                          {/* Archive Lead Toggle */}
+                          <button
+                            type="button"
+                            className="crm-icon-btn"
+                            onClick={() => {
+                              const newStatus = l.isArchived ? false : true;
+                              if (onUpdateLead) {
+                                onUpdateLead(l.id, { isArchived: newStatus });
+                              }
+                              triggerToast(isAr ? (newStatus ? 'تم نقل العميل للأرشيف 📦' : 'تم استعادة العميل من الأرشيف') : (newStatus ? 'Lead archived' : 'Lead restored'), 'info');
+                            }}
+                            title={l.isArchived ? (isAr ? 'استعادة من الأرشيف' : 'Unarchive') : (isAr ? 'أرشفة العميل' : 'Archive')}
+                          >
+                            <Archive size={12} />
+                          </button>
+
+                          {/* Delete Lead (Super Admin Only) */}
+                          {isSuperAdmin && (
+                            <button 
+                              type="button"
+                              className="crm-icon-btn is-danger" 
+                              onClick={() => handleDeleteLeadClick(l.id, l.name)} 
+                              title={isAr ? 'حذف العميل نهائياً' : 'Delete'}
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          )}
+                        </div>
+                      </td>derRadius: '4px' }}
                               >
                                 <Building size={12} />
                               </button>

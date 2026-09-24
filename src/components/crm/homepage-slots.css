@@ -1,0 +1,94 @@
+/* Homepage slots board + featured schedule dialog (CRM). Uses --crm-* tokens from luxury-system.css. */
+
+.hs-board {
+  margin-bottom: 18px;
+  padding: 18px;
+  border-radius: 16px;
+  background: var(--crm-card, #fff);
+  border: 1px solid var(--crm-line, #E7E1D6);
+}
+.hs-board-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.hs-board-head h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; font-size: 1rem; color: var(--crm-ink, #0B1B32); }
+.hs-board-head p { margin: 0; font-size: 0.82rem; color: var(--crm-muted, #56616F); }
+.hs-meter { display: flex; gap: 5px; }
+.hs-meter span { width: 26px; height: 8px; border-radius: 4px; background: var(--crm-line, #E7E1D6); }
+.hs-meter span.is-on { background: linear-gradient(90deg, #E9D29A, #C5A059); }
+
+.hs-slots { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+.hs-slot {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 56px minmax(0, 1fr);
+  grid-template-areas: 'num img body' 'actions actions actions';
+  align-items: center;
+  gap: 8px 10px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--crm-line, #E7E1D6);
+  background: var(--crm-canvas, #FBFAF7);
+  transition: border-color 0.2s, box-shadow 0.2s, opacity 0.2s;
+}
+.hs-slot.is-featured { border-color: rgba(197, 160, 89, 0.55); box-shadow: inset 3px 0 0 #C5A059; }
+[dir="rtl"] .hs-slot.is-featured { box-shadow: inset -3px 0 0 #C5A059; }
+.hs-slot.is-featured[draggable="true"] { cursor: grab; }
+.hs-slot.is-dragging { opacity: 0.45; }
+.hs-slot.is-auto { border-style: dashed; }
+.hs-slot-num { grid-area: num; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #0B1B32; color: #E9D29A; font-size: 0.75rem; font-weight: 800; }
+.hs-slot img { grid-area: img; width: 56px; height: 44px; object-fit: cover; border-radius: 8px; }
+.hs-slot-body { grid-area: body; min-width: 0; }
+.hs-slot-body strong { display: block; font-size: 0.84rem; color: var(--crm-ink, #0B1B32); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hs-slot-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+.hs-slot-actions { grid-area: actions; display: flex; align-items: center; justify-content: flex-end; gap: 4px; border-top: 1px solid var(--crm-line, #E7E1D6); padding-top: 6px; }
+.hs-grip { color: var(--crm-faint, #94A3B8); margin-inline-end: auto; }
+
+.hs-tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 0.7rem; font-weight: 700; background: rgba(11, 27, 50, 0.06); color: var(--crm-muted, #56616F); }
+.hs-tag--featured { background: rgba(197, 160, 89, 0.16); color: var(--crm-accent-text, #7C5E30); }
+.hs-period { display: inline-flex; padding: 2px 8px; border-radius: 999px; font-size: 0.7rem; font-weight: 700; }
+.hs-period--active { background: rgba(16, 185, 129, 0.12); color: var(--crm-positive, #047857); }
+.hs-period--scheduled { background: rgba(59, 130, 246, 0.12); color: #1D4ED8; }
+.hs-period--expired { background: rgba(239, 68, 68, 0.1); color: #B91C1C; }
+
+.hs-icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--crm-line, #E7E1D6);
+  background: var(--crm-card, #fff);
+  color: var(--crm-ink, #0B1B32);
+  cursor: pointer;
+}
+.hs-icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.hs-icon-btn:not(:disabled):hover { border-color: #C5A059; }
+.hs-link-btn { display: inline-flex; align-items: center; gap: 5px; border: 0; background: none; color: var(--crm-accent-text, #7C5E30); font: inherit; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
+
+.hs-queue { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--crm-line, #E7E1D6); display: grid; gap: 6px; font-size: 0.8rem; color: var(--crm-muted, #56616F); }
+.hs-queue p { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.hs-queue-item { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--crm-line, #E7E1D6); background: var(--crm-card, #fff); color: var(--crm-ink, #0B1B32); font: inherit; font-size: 0.78rem; cursor: pointer; }
+.hs-queue-item.is-expired { color: #B91C1C; }
+
+/* Star cell under the table */
+.hs-star-cell { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+
+/* Schedule dialog (inside the dark .crm-modal-card) */
+.hs-modal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 16px; }
+.hs-modal-head h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; font-size: 1.1rem; color: #fff; }
+.hs-modal-head small { color: #94A3B8; }
+.hs-modal .hs-icon-btn { background: transparent; border-color: rgba(255, 255, 255, 0.15); color: #CBD5E1; }
+.hs-presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.hs-chip { padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.18); background: transparent; color: #CBD5E1; font: inherit; font-size: 0.8rem; cursor: pointer; }
+.hs-chip.is-active { background: #D9B97E; border-color: #D9B97E; color: #0B1B32; font-weight: 700; }
+.hs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.hs-grid label { display: flex; flex-direction: column; gap: 6px; font-size: 0.8rem; color: #CBD5E1; }
+.hs-grid label:last-child { grid-column: 1 / -1; }
+.hs-grid input { padding: 9px 12px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(0, 0, 0, 0.3); color: #fff; font: inherit; color-scheme: dark; }
+.hs-grid input:disabled { opacity: 0.4; }
+.hs-note { margin: 14px 0 0; font-size: 0.78rem; line-height: 1.7; color: #94A3B8; }
+.hs-error { margin: 10px 0 0; color: #FCA5A5; font-size: 0.82rem; font-weight: 700; }
+.hs-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+
+@media (max-width: 600px) {
+  .hs-grid { grid-template-columns: 1fr; }
+  .hs-slots { grid-template-columns: 1fr; }
+}

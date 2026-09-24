@@ -42,6 +42,7 @@ import FaqSection from '../components/home/FaqSection';
 import { parseSemanticQuery, SEMANTIC_SEARCH_PRESETS } from '../utils/semanticSearchEngine';
 import ScrollReveal from '../components/common/ScrollReveal';
 import { SELLER_PROOF } from '../config/siteConfig';
+import { getHomepageSlots } from '../utils/featuredSlots';
 
 // Keep in sync with the <link rel="preload"> in index.html
 const HERO_POSTER_DEFAULT = 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1600&q=70';
@@ -215,8 +216,11 @@ export default function HomePage({
     [activePublished]
   );
 
-  const featuredProperties = filteredMarketplaceProps.filter(p => p.featured);
-  const displayProperties = featuredProperties.length > 0 ? featuredProperties.slice(0, 4) : filteredMarketplaceProps.slice(0, 4);
+  // Homepage slots: scheduled/ordered featured listings from the CRM first, then newest listings
+  const displayProperties = useMemo(
+    () => getHomepageSlots(filteredMarketplaceProps).map((s) => s.property),
+    [filteredMarketplaceProps]
+  );
 
   // Active Demands List sorted with newest approved/published first
   const activeDemandsList = useMemo(() => {

@@ -72,6 +72,7 @@ export function PropertiesProvider({ children }) {
 
   const handleAddProperty = useCallback((newProp) => {
     const updated = [newProp, ...propertiesRef.current];
+    propertiesRef.current = updated; // back-to-back updates (slot reordering) must see each other
     setProperties(updated);
     persistProperties(updated);
     reportCatalogSync(upsertCatalogItem('properties', newProp));
@@ -82,6 +83,7 @@ export function PropertiesProvider({ children }) {
     if (!current) return;
     const merged = { ...current, ...updatedData };
     const updated = propertiesRef.current.map((p) => (p.id === id ? merged : p));
+    propertiesRef.current = updated; // back-to-back updates (slot reordering) must see each other
     setProperties(updated);
     persistProperties(updated);
     reportCatalogSync(upsertCatalogItem('properties', merged));
@@ -89,6 +91,7 @@ export function PropertiesProvider({ children }) {
 
   const handleDeleteProperty = useCallback((id) => {
     const updated = propertiesRef.current.filter((p) => p.id !== id);
+    propertiesRef.current = updated; // back-to-back updates (slot reordering) must see each other
     setProperties(updated);
     persistProperties(updated);
     reportCatalogSync(deleteCatalogItem('properties', id));
@@ -120,6 +123,7 @@ export function PropertiesProvider({ children }) {
 
   const handleAddProject = useCallback((newProj) => {
     const updated = [newProj, ...projectsRef.current];
+    projectsRef.current = updated;
     setProjects(updated);
     persistProjects(updated);
     reportCatalogSync(upsertCatalogItem('projects', newProj));
@@ -131,6 +135,7 @@ export function PropertiesProvider({ children }) {
     if (!current) return;
     const merged = { ...current, ...updatedData };
     const updated = projectsRef.current.map((p) => (p.id === id ? merged : p));
+    projectsRef.current = updated;
     setProjects(updated);
     persistProjects(updated);
     reportCatalogSync(upsertCatalogItem('projects', merged));
@@ -139,6 +144,7 @@ export function PropertiesProvider({ children }) {
 
   const handleDeleteProject = useCallback((id) => {
     const updated = projectsRef.current.filter((p) => p.id !== id);
+    projectsRef.current = updated;
     setProjects(updated);
     persistProjects(updated);
     reportCatalogSync(deleteCatalogItem('projects', id));

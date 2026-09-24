@@ -58,7 +58,7 @@ allJsxFiles.forEach(filePath => {
   const uniqueTags = [...new Set(jsxTags)];
 
   const standard = [
-    'React', 'Fragment', 'Link', 'NavLink', 'Route', 'Routes', 'Navigate', 'BrowserRouter',
+    'React', 'Fragment', 'Link', 'NavLink', 'Route', 'Routes', 'Navigate', 'BrowserRouter', 'Icon',
     'File', 'FileList', 'Blob', 'Array', 'Promise', 'Set', 'Map', 'Date', 'Object', 'String', 'Number', 'Boolean'
   ];
 
