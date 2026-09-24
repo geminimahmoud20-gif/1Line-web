@@ -80,8 +80,8 @@ export const BuyWizard = ({
     const updatedAnswers = {
       ...buyerAnswers,
       propertyType: buyerAnswers.propertyType || 'apartment',
-      area: buyerAnswers.district || 'new_sohag',
-      location: buyerAnswers.district || 'new_sohag',
+      area: buyerAnswers.area || buyerAnswers.district || 'east',
+      location: buyerAnswers.area || buyerAnswers.district || 'east',
       phone: `${buyerCountry}${normalizedPhone}`,
       whatsapp: `${whatsappCountry}${normalizedWhatsapp}`
     };
@@ -276,17 +276,26 @@ export const BuyWizard = ({
 
           {/* Location Selector */}
           <div className="form-group-block">
-            <label className="block-label">{isAr ? 'المنطقة المفضلة داخل محافظة سوهاج' : 'Preferred District in Sohag'}</label>
+            <label className="block-label">{isAr ? 'المنطقة المفضلة' : 'Preferred area'}</label>
             <select
               className="form-select-styled"
               value={buyerAnswers.area || 'east'}
               onChange={(e) => handleBuyerChoice('area', e.target.value)}
             >
-              {districts.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {isAr ? (d.label_ar || d.name_ar) : (d.label_en || d.name_en)}
-                </option>
-              ))}
+              <optgroup label={isAr ? 'محافظة سوهاج' : 'Sohag'}>
+                {districts.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {isAr ? (d.label_ar || d.name_ar) : (d.label_en || d.name_en)}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label={isAr ? 'القاهرة الكبرى' : 'Greater Cairo'}>
+                <option value="cairo_new_cairo">{isAr ? 'القاهرة الجديدة والتجمع' : 'New Cairo'}</option>
+                <option value="cairo_zayed">{isAr ? 'الشيخ زايد' : 'Sheikh Zayed'}</option>
+                <option value="cairo_october">{isAr ? 'السادس من أكتوبر' : '6th of October'}</option>
+                <option value="cairo_capital">{isAr ? 'العاصمة الإدارية' : 'New Administrative Capital'}</option>
+                <option value="cairo_other">{isAr ? 'منطقة أخرى بالقاهرة الكبرى' : 'Other Greater Cairo area'}</option>
+              </optgroup>
             </select>
           </div>
 

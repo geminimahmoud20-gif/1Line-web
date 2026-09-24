@@ -65,40 +65,40 @@ export default function PortalsPage({
     switch (portalType) {
       case 'buy':
         return {
-          badge: isAr ? 'دليل ومطابقة متطلبات المشترين المعتمد' : 'Verified Property Buyer Advisory',
-          title: isAr ? 'اعثر على عقارك المثالي في سوهاج بمواصفاتك الخاصة' : 'Find Your Ideal Property in Sohag Tailored to You',
-          subtitle: isAr ? 'حدد متطلباتك وميزانيتك وسنقوم بمطابقتها فورياً مع أفضل الوحدات والفرص المتاحة.' : 'Specify your preferences and budget for instant matching with top verified units.'
+          badge: isAr ? 'مطابقة شخصية للمشترين' : 'Personal buyer matching',
+          title: isAr ? 'صف العقار الذي تبحث عنه، ونعود إليك بما يطابقه' : 'Describe what you need — we come back with matches',
+          subtitle: isAr ? 'في سوهاج أو القاهرة الكبرى: حدد الغرض والمنطقة والميزانية، ويرسل لك مستشارك قائمة مختصرة بعد مراجعة مستنداتها.' : 'In Sohag or Greater Cairo: set purpose, area and budget; your advisor sends a short list with documents reviewed.'
         };
       case 'sell':
       case 'valuation':
         return {
           badge: isAr ? 'تقييم استرشادي خلال دقيقتين' : 'Indicative valuation in two minutes',
-          title: isAr ? 'بوابة تقييم وعرض العقار للبيع الفوري' : 'Property Valuation & Instant Listing Portal',
+          title: isAr ? 'اعرف قيمة عقارك قبل أن تعرضه' : 'Know your property’s value before you list',
           subtitle: isAr ? 'احصل على نطاق سعري استرشادي لعقارك، ثم مراجعة ميدانية للمستندات وخطة عرض قبل أي تسويق.' : 'Get an indicative price range, then an on-site document review and a marketing plan before any listing.'
         };
       case 'investor':
         return {
-          badge: isAr ? 'نادي 1Line لكبار المستثمرين (VIP)' : '1Line VIP Investors Club',
-          title: isAr ? 'مركز الفرص الاستثمارية عالية العائد بسوهاج' : 'High-Yield Property Investment Center',
-          subtitle: isAr ? 'محفظة حصرية من المشروعات التجارية والمقرات الإدارية بعوائد إيجارية تتجاوز 14% سنوياً.' : 'Exclusive commercial portfolios with projected rental yields exceeding 14% annually.'
+          badge: isAr ? 'مركز المستثمرين' : '1Line VIP Investors Club',
+          title: isAr ? 'دراسة عائد مبدئية قبل أن تستثمر' : 'A preliminary yield study before you invest',
+          subtitle: isAr ? 'أصول سكنية وتجارية وأراضٍ في سوهاج والقاهرة الكبرى، مع تقدير للعائد الإيجاري وسيناريوهات الخروج. الأرقام تقديرية وتختلف حسب الأصل والسوق.' : 'Residential, commercial and land assets with estimated rental yield and exit scenarios. Figures are estimates and vary by asset and market.'
         };
       case 'broker':
         return {
-          badge: isAr ? 'شبكة الوسطاء والشركاء المعتمدين' : 'Certified Brokers & Partners Network',
+          badge: isAr ? 'شراكة الوسطاء' : 'Broker partnership',
           title: isAr ? 'انضم لشبكة شركاء 1Line العقارية' : 'Join 1Line Broker Partner Network',
-          subtitle: isAr ? 'احصل على عمولات مجزية وتسهيلات حصرية وحوافز فورية على كل صفقة ناجحة.' : 'Access verified inventory, high commission rates, and instant closing bonuses.'
+          subtitle: isAr ? 'تعاون معنا على صفقات موثقة بعمولة واضحة ومكتوبة قبل البدء.' : 'Access verified inventory, high commission rates, and instant closing bonuses.'
         };
       case 'demands':
         return {
-          badge: isAr ? 'طلبات السوق العقاري الحية واللحظية' : 'Live Real Estate Market Demands',
+          badge: isAr ? 'طلبات المشترين' : 'Live Real Estate Market Demands',
           title: isAr ? 'طلبات حقيقية لمشترين يبحثون عن عقارات الآن' : 'Active Buyer Requests Looking for Sellers',
-          subtitle: isAr ? 'تصفح طلبات الشراء الكاش الفورية وقدم عقارك للمطابقة والبيع السريع.' : 'Browse active cash buyers and match your property for fast closing.'
+          subtitle: isAr ? 'إن كان لديك عقار يطابق أحد هذه الطلبات، اعرضه ليصل مباشرة للمشتري.' : 'Browse active cash buyers and match your property for fast closing.'
         };
       case 'referral':
         return {
           badge: isAr ? 'برنامج المكافآت والإحالة العقارية' : 'Referral Rewards Program',
-          title: isAr ? 'رشح مشترياً أو بائعاً واحصل على مكافأة نقدية فورية' : 'Refer a Buyer or Seller & Earn Cash Rewards',
-          subtitle: isAr ? 'شارك رابط ترشيحك واكسب مكافآت تصاعدية عند إتمام أي صفقة عقارية.' : 'Share your referral code and earn instant bonuses on successful closings.'
+          title: isAr ? 'رشّح مالكاً أو مشترياً واحصل على مكافأة عند إتمام الصفقة' : 'Refer a Buyer or Seller & Earn Cash Rewards',
+          subtitle: isAr ? 'تُصرف المكافأة بعد تسجيل الصفقة ووفق شروط مكتوبة نرسلها لك قبل الترشيح.' : 'Share your referral code and earn instant bonuses on successful closings.'
         };
       case 'special':
         return {
@@ -160,7 +160,7 @@ export default function PortalsPage({
                 onClick={() => setFastMode(true)}
               >
                 <Zap size={16} className="text-gold" />
-                <span>{isAr ? 'طلب فوري ومباشر (دقيقة واحدة ⚡)' : '1-Step Fast Request ⚡'}</span>
+                <span>{isAr ? 'طلب سريع في خطوة واحدة' : 'One-step quick request'}</span>
               </button>
             </div>
           )}

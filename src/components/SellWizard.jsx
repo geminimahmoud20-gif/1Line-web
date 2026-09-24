@@ -20,6 +20,15 @@ import { getAreas } from '../utils/areasData';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
 import SubmissionSuccess from './common/SubmissionSuccess';
 
+// Greater Cairo coverage: no automated benchmark yet, valued manually
+const CAIRO_AREAS = [
+  { id: 'cairo_new_cairo', ar: 'القاهرة الجديدة والتجمع', en: 'New Cairo' },
+  { id: 'cairo_zayed', ar: 'الشيخ زايد', en: 'Sheikh Zayed' },
+  { id: 'cairo_october', ar: 'السادس من أكتوبر', en: '6th of October' },
+  { id: 'cairo_capital', ar: 'العاصمة الإدارية', en: 'New Administrative Capital' },
+  { id: 'cairo_other', ar: 'منطقة أخرى بالقاهرة الكبرى', en: 'Other Greater Cairo area' }
+];
+
 // Default fallback benchmark pricing per sqm
 const FALLBACK_BENCHMARK_PRICING = {
   east: { base: 21500, name_ar: 'شرق سوهاج (الجمهورية وسيتي)', name_en: 'East Sohag' },
@@ -59,6 +68,7 @@ export const SellWizard = ({
   }, []);
 
   // Live Real-Time Estimated Valuation Range calculation dynamically tied to CMS
+  const isCairo = String(sellerAnswers.area || '').startsWith('cairo_');
   const calculatedEstimate = useMemo(() => {
     const areaKey = sellerAnswers.area || 'east';
     const liveArea = districts.find(d => d.id === areaKey);
@@ -129,8 +139,8 @@ export const SellWizard = ({
     const isNonResidential = sellerAnswers.propertyType === 'retail' || sellerAnswers.propertyType === 'land' || sellerAnswers.propertyType === 'office';
     const updatedAnswers = {
       ...sellerAnswers,
-      estimatedMin: calculatedEstimate.min,
-      estimatedMax: calculatedEstimate.max,
+      estimatedMin: isCairo ? null : calculatedEstimate.min,
+      estimatedMax: isCairo ? null : calculatedEstimate.max,
       estimatedAvg: calculatedEstimate.avg,
       rooms: isNonResidential ? 0 : parseInt(sellerAnswers.rooms || 3),
       phone: `${sellerCountry}${normalizedPhone}`,
@@ -304,17 +314,24 @@ export const SellWizard = ({
           <div className="phase-inputs-row">
             {/* District Selector */}
             <div className="form-group-flex">
-              <label>{isAr ? 'موقع وعنوان العقار في سوهاج' : 'Property Location in Sohag'}</label>
+              <label>{isAr ? 'موقع العقار' : 'Property location'}</label>
               <select
                 className="form-select-styled"
                 value={sellerAnswers.area || 'east'}
                 onChange={(e) => handleSellerChoice('area', e.target.value)}
               >
-                {districts.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {isAr ? (d.label_ar || d.name_ar) : (d.label_en || d.name_en)}
-                  </option>
-                ))}
+                <optgroup label={isAr ? 'محافظة سوهاج' : 'Sohag'}>
+                  {districts.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {isAr ? (d.label_ar || d.name_ar) : (d.label_en || d.name_en)}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label={isAr ? 'القاهرة الكبرى' : 'Greater Cairo'}>
+                  {CAIRO_AREAS.map((c) => (
+                    <option key={c.id} value={c.id}>{isAr ? c.ar : c.en}</option>
+                  ))}
+                </optgroup>
               </select>
             </div>
 
@@ -622,13 +639,22 @@ export const SellWizard = ({
             <div className="cert-header">
               <div className="cert-badge">
                 <Sparkles size={16} className="text-gold" />
-                <span>{isAr ? 'شهادة التقييم السوقي التقديري المبدئي' : 'Preliminary Certified Market Valuation'}</span>
+                <span>{isAr ? 'تقدير سعري استرشادي' : 'Indicative price estimate'}</span>
               </div>
-              <span className="cert-date">{isAr ? 'ساري لعام 2026' : 'Valid for 2026'}</span>
+              <span className="cert-date">{isAr ? 'تقدير آلي — ليس تقييماً رسمياً' : 'Automated — not a formal valuation'}</span>
             </div>
 
+            {isCairo ? (
             <div className="cert-price-range">
-              <span className="range-lbl">{isAr ? 'نطاق السعر العادل المتوقع لعقارك:' : 'Estimated Fair Market Value Range:'}</span>
+              <span className="range-lbl">
+                {isAr
+                  ? 'عقارات القاهرة الكبرى نقيّمها يدوياً بمقارنات من نفس الكمبوند أو الحي. سجّل بياناتك ويتواصل معك مستشار التقييم.'
+                  : 'Greater Cairo properties are valued manually against comparables in the same compound or district. Leave your details and a valuation advisor will call.'}
+              </span>
+            </div>
+            ) : (
+            <div className="cert-price-range">
+              <span className="range-lbl">{isAr ? 'نطاق السعر المتوقع لعقارك:' : 'Estimated price range:'}</span>
               <div className="range-numbers">
                 <strong>{calculatedEstimate.min.toLocaleString()}</strong>
                 <span className="range-to">{isAr ? 'إلى' : 'to'}</span>
@@ -639,6 +665,7 @@ export const SellWizard = ({
                 {isAr ? `متوسط سعر المتر المقدر: ${calculatedEstimate.sqmAvg.toLocaleString()} ج.م / م²` : `Est. ${calculatedEstimate.sqmAvg.toLocaleString()} EGP/sqm`}
               </span>
             </div>
+            )}
 
             <div className="cert-perks-row">
               <div className="cert-perk"><CheckCircle2 size={15} className="text-success" /> <span>{isAr ? 'عرض أولي على المشترين المسجلين بطلبات مطابقة' : 'First shown to registered matching buyers'}</span></div>

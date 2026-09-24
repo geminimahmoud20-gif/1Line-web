@@ -1,0 +1,444 @@
+/* =============================================================
+   1LINE — LUXURY SYSTEM LAYER (loaded last)
+   Direction: quiet institutional luxury. One Arabic type family,
+   lighter weights, more air, gold used as a hairline accent only,
+   honest components (no badges that shout), visible focus.
+   ============================================================= */
+
+/* ── §1 Tokens ─────────────────────────────────────────────── */
+:root {
+  --font-ar: 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, system-ui, sans-serif;
+  --font-en: 'IBM Plex Sans Arabic', 'Segoe UI', system-ui, sans-serif;
+  --font-number: 'IBM Plex Sans Arabic', 'Segoe UI', system-ui, sans-serif;
+
+  /* Palette: ink navy, warm ivory, champagne hairline gold */
+  --navy-950: #081221;
+  --navy-900: #0B1B32;
+  --navy-800: #16294A;
+  --gold: #A9824A;            /* accent, lines, small caps */
+  --gold-dark: #7C5E30;       /* gold text on light: 5.6:1 on ivory */
+  --gold-soft: #F1E9DA;
+  --ivory: #FBFAF7;
+  --sand: #F6F3EE;
+  --stone: #E7E1D7;
+  --text: #13213A;
+  --muted: #56616F;           /* 5.9:1 on sand (was 4.3:1) */
+  --muted-dark: #4B5563;
+
+  --accent-gold: var(--gold);
+  --accent-gold-hover: var(--gold-dark);
+  --text-muted: var(--muted);
+
+  --lx-radius: 14px;
+  --lx-radius-sm: 10px;
+  --lx-hairline: 1px solid rgba(19, 33, 58, 0.10);
+  --lx-shadow: 0 1px 2px rgba(8, 18, 33, 0.04), 0 12px 32px -12px rgba(8, 18, 33, 0.14);
+  --lx-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --lx-focus: 0 0 0 3px var(--ivory), 0 0 0 5px var(--gold-dark);
+}
+
+:root[data-theme="dark"],
+.dark-theme {
+  --muted: #A3AEBD;
+  --text-muted: #A3AEBD;
+  --lx-hairline: 1px solid rgba(255, 255, 255, 0.10);
+  --lx-focus: 0 0 0 3px var(--navy-950), 0 0 0 5px #D9B97E;
+}
+
+/* ── §2 Typography: Arabic never gets letter-spacing; calmer weights ── */
+html, body {
+  font-family: var(--font-ar);
+  font-feature-settings: "kern" 1;
+  text-rendering: optimizeLegibility;
+}
+
+[dir="rtl"] :is(h1, h2, h3, h4, h5, h6, p, span, a, button, label, li, strong) {
+  letter-spacing: 0 !important;
+}
+
+:is(h1, h2) {
+  font-weight: 600 !important;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+:is(h3, h4) {
+  font-weight: 600 !important;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* Tabular figures for prices and stats */
+.price-val, .price-main-display, [class*="price"] bdi, [class*="stat"] strong, [class*="ticker"] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── §3 Focus: restore a visible keyboard indicator (index.css sets outline:none on *) ── */
+:focus-visible {
+  outline: none !important;
+  box-shadow: var(--lx-focus) !important;
+  border-radius: 8px;
+}
+
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  box-shadow: 0 0 0 3px rgba(169, 130, 74, 0.35) !important;
+  border-color: var(--gold-dark) !important;
+}
+
+.lx-skip-link {
+  position: absolute;
+  inset-inline-start: 16px;
+  top: -60px;
+  z-index: 20000;
+  background: var(--navy-900);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: top 160ms var(--lx-ease);
+}
+.lx-skip-link:focus { top: 12px; }
+
+/* ── §4 Header: calm, never clipped ───────────────────────── */
+.site-header .header-container {
+  max-width: min(1320px, calc(100vw - 32px));
+  box-sizing: border-box;
+}
+.site-header .luxury-desktop-nav {
+  min-width: 0;
+  flex-shrink: 1;
+}
+.site-header .luxury-desktop-nav .nav-pill-icon,
+.site-header .search-kbd-shortcut,
+.site-header [aria-label="تشغيل/إيقاف الصوت"],
+.site-header [aria-label="تشغيل/إيقاف الصوت"] + .utility-divider {
+  display: none !important;
+}
+.site-header .nav-pill-label,
+.site-header .cta-btn-text {
+  white-space: nowrap;
+}
+@media (max-width: 1440px) {
+  .site-header .search-btn-label { display: none; }
+  .site-header .header-actions { gap: 6px; }
+}
+@media (max-width: 1280px) {
+  .site-header .account-text { display: none; }
+}
+
+/* ── §5 Buttons (new components) ──────────────────────────── */
+.lx-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 12px 22px;
+  border-radius: 999px;
+  font: 500 0.98rem/1.2 var(--font-ar);
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background-color 180ms var(--lx-ease), color 180ms var(--lx-ease), border-color 180ms var(--lx-ease), transform 180ms var(--lx-ease);
+  white-space: normal;
+  text-align: center;
+}
+.lx-btn:active { transform: translateY(1px); }
+.lx-btn[disabled] { opacity: 0.6; cursor: progress; }
+.lx-btn-primary { background: var(--navy-900); color: #fff; }
+.lx-btn-primary:hover { background: var(--navy-800); color: #fff; }
+.lx-btn-ghost { background: transparent; color: var(--text); border-color: rgba(19, 33, 58, 0.2); }
+.lx-btn-ghost:hover { border-color: var(--gold); color: var(--gold-dark); }
+.lx-btn-link { background: none; color: var(--gold-dark); padding-inline: 8px; }
+.lx-btn-block { width: 100%; }
+.lx-btn-sm { min-height: 40px; padding: 8px 16px; font-size: 0.9rem; }
+.dark-theme .lx-btn-primary { background: #D9B97E; color: var(--navy-950); }
+.dark-theme .lx-btn-ghost { color: #F3F4F6; border-color: rgba(255, 255, 255, 0.24); }
+
+.lx-eyebrow {
+  display: inline-block;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--gold-dark);
+  padding-bottom: 6px;
+  border-bottom: 1px solid currentColor;
+  margin-bottom: 18px;
+}
+.dark-theme .lx-eyebrow { color: #D9B97E; }
+
+/* ── §6 Submission success ────────────────────────────────── */
+.lx-success {
+  text-align: center;
+  padding: 40px 24px;
+  max-width: 560px;
+  margin-inline: auto;
+}
+.lx-success-icon { color: #3F7A63; margin-bottom: 12px; }
+.lx-success-title { font-size: 1.5rem; margin: 0 0 8px; color: var(--text); }
+.lx-success-ref {
+  display: inline-block;
+  font-size: 0.95rem;
+  color: var(--muted);
+  background: var(--sand);
+  border: var(--lx-hairline);
+  border-radius: 999px;
+  padding: 6px 14px;
+  margin-bottom: 20px;
+}
+.lx-success-ref bdi { font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+.lx-success-steps {
+  text-align: start;
+  margin: 0 auto 28px;
+  padding: 0;
+  list-style: none;
+  counter-reset: lxstep;
+  display: grid;
+  gap: 14px;
+}
+.lx-success-steps li {
+  counter-increment: lxstep;
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 12px;
+  align-items: start;
+  line-height: 1.7;
+  color: var(--text);
+}
+.lx-success-steps li::before {
+  content: counter(lxstep);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--gold);
+  color: var(--gold-dark);
+  display: grid;
+  place-items: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.lx-success-actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+.dark-theme .lx-success-title, .dark-theme .lx-success-steps li, .dark-theme .lx-success-ref bdi { color: #F3F4F6; }
+.dark-theme .lx-success-ref { background: rgba(255, 255, 255, 0.04); }
+
+/* ── §7 Modal, forms ──────────────────────────────────────── */
+.lx-modal {
+  position: relative;
+  width: min(520px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+  background: var(--ivory);
+  color: var(--text);
+  border: var(--lx-hairline);
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 30px 80px -20px rgba(8, 18, 33, 0.35);
+  box-sizing: border-box;
+}
+.dark-theme .lx-modal { background: var(--navy-900); color: #F3F4F6; }
+.lx-modal-close {
+  position: absolute;
+  top: 14px;
+  inset-inline-end: 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: var(--lx-hairline);
+  background: transparent;
+  color: inherit;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.lx-modal-head { display: flex; gap: 14px; align-items: center; margin-bottom: 18px; padding-inline-end: 44px; }
+.lx-modal-head h3 { margin: 0; font-size: 1.25rem; }
+.lx-modal-head p { margin: 4px 0 0; color: var(--muted); font-size: 0.9rem; }
+.lx-modal-icon {
+  width: 48px; height: 48px; flex: none;
+  border-radius: 14px;
+  display: grid; place-items: center;
+  background: var(--gold-soft); color: var(--gold-dark);
+}
+.lx-callout {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: var(--sand);
+  border-inline-start: 2px solid var(--gold);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  font-size: 0.92rem;
+  line-height: 1.7;
+}
+.lx-callout svg { flex: none; margin-top: 3px; color: var(--gold-dark); }
+.lx-callout p { margin: 0; }
+.dark-theme .lx-callout { background: rgba(255, 255, 255, 0.04); }
+
+.lx-form { display: grid; gap: 16px; }
+.lx-field { display: grid; gap: 6px; border: 0; padding: 0; margin: 0; min-width: 0; }
+.lx-field > span, .lx-field > legend { font-size: 0.9rem; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+.dark-theme .lx-field > span, .dark-theme .lx-field > legend { color: #E5E7EB; }
+.lx-field input, .lx-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 48px;
+  padding: 12px 14px;
+  font: 400 1rem/1.5 var(--font-ar);
+  color: var(--text);
+  background: #fff;
+  border: 1px solid rgba(19, 33, 58, 0.18);
+  border-radius: var(--lx-radius-sm);
+}
+.dark-theme .lx-field input, .dark-theme .lx-field textarea { background: rgba(255, 255, 255, 0.04); color: #F3F4F6; border-color: rgba(255, 255, 255, 0.16); }
+.lx-segmented { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.lx-segmented button {
+  min-height: 44px;
+  border-radius: var(--lx-radius-sm);
+  border: 1px solid rgba(19, 33, 58, 0.16);
+  background: transparent;
+  color: inherit;
+  font: 500 0.92rem var(--font-ar);
+  cursor: pointer;
+}
+.lx-segmented button.is-active { background: var(--navy-900); color: #fff; border-color: var(--navy-900); }
+.dark-theme .lx-segmented button.is-active { background: #D9B97E; color: var(--navy-950); border-color: #D9B97E; }
+.lx-form-note { font-size: 0.82rem; color: var(--muted); text-align: center; margin: 0; }
+.lx-form-note a { color: var(--gold-dark); }
+
+/* Property page reservation banner is now a <button> */
+button.sidebar-deposit-banner {
+  appearance: none;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+button.sidebar-deposit-banner .deposit-banner-left > span { display: flex; flex-direction: column; }
+
+/* ── §8 Consent bar ───────────────────────────────────────── */
+.lx-consent {
+  position: fixed;
+  inset-inline: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 11000;
+  max-width: 720px;
+  margin-inline: auto;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--navy-950);
+  color: #E5E7EB;
+  border-radius: 16px;
+  padding: 14px 18px;
+  box-shadow: 0 20px 50px -12px rgba(8, 18, 33, 0.45);
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+.lx-consent p { margin: 0; color: #E5E7EB !important; }
+.lx-consent a { color: #D9B97E; }
+.lx-consent-actions { display: flex; gap: 8px; flex: none; }
+.lx-consent .lx-btn-primary { background: #D9B97E; color: var(--navy-950); }
+.lx-consent .lx-btn-ghost { color: #E5E7EB; border-color: rgba(255, 255, 255, 0.28); }
+@media (max-width: 768px) {
+  .lx-consent { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px 14px; font-size: 0.84rem; line-height: 1.6; bottom: calc(84px + env(safe-area-inset-bottom)); }
+  .lx-consent-actions > * { flex: 1; }
+}
+
+/* ── §9 Not found & legal pages ───────────────────────────── */
+.lx-notfound, .lx-legal {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: clamp(120px, 16vh, 180px) 24px 96px;
+  box-sizing: border-box;
+}
+.lx-notfound-title { font-size: clamp(1.75rem, 3.2vw, 2.5rem); margin: 0 0 16px; color: var(--text); }
+.lx-notfound-lead { font-size: 1.1rem; line-height: 1.9; color: var(--muted); margin: 0 0 32px; }
+.lx-notfound-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.lx-legal h1 { font-size: clamp(1.75rem, 3vw, 2.25rem); margin: 0 0 8px; color: var(--text); }
+.lx-legal-meta { color: var(--muted); margin-bottom: 40px; }
+.lx-legal section { padding: 22px 0; border-top: var(--lx-hairline); }
+.lx-legal h2 { font-size: 1.15rem; margin: 0 0 8px; color: var(--text); }
+.lx-legal p { margin: 0; line-height: 1.95; color: var(--text); }
+.lx-legal a { color: var(--gold-dark); }
+.dark-theme :is(.lx-notfound-title, .lx-legal h1, .lx-legal h2, .lx-legal p) { color: #F3F4F6; }
+
+.footer-legal-link { color: inherit; opacity: 0.85; text-decoration: underline; text-underline-offset: 3px; }
+
+/* ── §10 FAQ (answer-engine friendly) ─────────────────────── */
+.lx-faq { max-width: 880px; margin: 0 auto; padding: 96px 24px; box-sizing: border-box; }
+.lx-faq h2 { font-size: clamp(1.75rem, 3vw, 2.375rem); margin: 0 0 12px; color: var(--text); }
+.lx-faq-lead { color: var(--muted); margin: 0 0 36px; line-height: 1.8; }
+.lx-faq details { border-top: var(--lx-hairline); }
+.lx-faq details:last-of-type { border-bottom: var(--lx-hairline); }
+.lx-faq summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 22px 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 1.08rem;
+  font-weight: 500;
+  color: var(--text);
+}
+.lx-faq summary::-webkit-details-marker { display: none; }
+.lx-faq summary::after {
+  content: '+';
+  flex: none;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--gold);
+  color: var(--gold-dark);
+  display: grid; place-items: center;
+  font-weight: 400;
+  transition: transform 220ms var(--lx-ease);
+}
+.lx-faq details[open] summary::after { transform: rotate(45deg); }
+.lx-faq details p { margin: 0 0 22px; line-height: 1.95; color: var(--muted); max-width: 70ch; }
+.dark-theme :is(.lx-faq h2, .lx-faq summary) { color: #F3F4F6; }
+
+/* ── §11 Cards: restrained badges ─────────────────────────── */
+.property-card-modern .property-badge {
+  font-weight: 500 !important;
+  backdrop-filter: blur(6px);
+}
+.property-card-modern .property-badge.badge-verified {
+  background: rgba(8, 18, 33, 0.72) !important;
+  color: #F3EBDD !important;
+  border: 1px solid rgba(217, 185, 126, 0.35) !important;
+}
+
+/* ── §12 Mobile: wizard actions never overflow the viewport ── */
+.wizard-actions-bar { flex-wrap: wrap; gap: 12px; }
+.btn-submit-valuation {
+  white-space: normal !important;
+  min-width: 0;
+  max-width: 100%;
+  font-weight: 600 !important;
+  line-height: 1.4;
+}
+@media (max-width: 640px) {
+  .wizard-actions-bar { flex-direction: column-reverse; align-items: stretch; }
+  .wizard-actions-bar > * { width: 100%; }
+  .smart-valuation-wizard-box { padding-inline: 16px !important; }
+}
+
+/* Touch targets on mobile */
+@media (pointer: coarse) {
+  .card-circle-btn, .carousel-arrow, .utility-sub-btn, .modal-close-btn, .drawer-close-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* ── §13 Motion: respect reduced motion ───────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

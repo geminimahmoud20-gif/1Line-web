@@ -29,9 +29,13 @@ export default function NotFoundPage({ lang = 'ar', variant = 'page' }) {
           : (isAr ? 'لم نجد الصفحة التي تبحث عنها.' : "We couldn't find that page.")}
       </h1>
       <p className="lx-notfound-lead">
-        {isAr
-          ? 'قد يكون العقار قد بيع أو سُحب بطلب مالكه. يمكنك تصفح المعروض الحالي أو ترك طلبك وسنطابقه لك.'
-          : 'It may have been sold or withdrawn by its owner. Browse current listings or tell us what you need.'}
+        {isProperty
+          ? (isAr
+            ? 'قد يكون العقار قد بيع أو سُحب بطلب مالكه. يمكنك تصفح المعروض الحالي أو ترك طلبك وسنطابقه لك.'
+            : 'It may have been sold or withdrawn by its owner. Browse current listings or tell us what you need.')
+          : (isAr
+            ? 'ربما تغيّر الرابط أو كُتب بشكل غير صحيح. هذه أقرب الوجهات لما تبحث عنه.'
+            : 'The link may have changed or been mistyped. These are the closest places to what you need.')}
       </p>
       <div className="lx-notfound-actions">
         <Link to="/properties" className="lx-btn lx-btn-primary">

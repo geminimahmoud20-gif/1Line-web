@@ -38,6 +38,7 @@ import { INITIAL_DEMANDS } from '../data/mockData';
 import { getFounderSettings, DEFAULT_FOUNDER_CMS, getWhatsAppUrl } from '../utils/founderCmsData';
 import { getAreas } from '../utils/areasData';
 import { updatePageSeo, buildOrganizationSchema } from '../utils/seoHelper';
+import FaqSection from '../components/home/FaqSection';
 import { parseSemanticQuery, SEMANTIC_SEARCH_PRESETS } from '../utils/semanticSearchEngine';
 import ScrollReveal from '../components/common/ScrollReveal';
 
@@ -310,14 +311,23 @@ export default function HomePage({
             />
           </div>
         ) : (
-          <>
-            <div className="hero-ambient-mesh" aria-hidden="true">
-              <div className="hero-orb hero-orb-1" />
-              <div className="hero-orb hero-orb-2" />
-              <div className="hero-orb hero-orb-3" />
-            </div>
-            <div className="hero-backdrop-gradient" />
-          </>
+          <div className="hero-cinematic-video-wrap" aria-hidden="true">
+            <img
+              src={founderSettings.heroPosterUrl || 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1600&q=70'}
+              alt=""
+              className="hero-cinematic-video"
+              fetchPriority="high"
+              decoding="async"
+              width="1600"
+              height="1067"
+            />
+            <div
+              className="hero-video-overlay-gradient"
+              style={{
+                opacity: founderSettings.heroOverlayOpacity !== undefined ? founderSettings.heroOverlayOpacity : 0.58
+              }}
+            />
+          </div>
         )}
 
         {/* Video Playback & Sound Control Badge */}
@@ -893,8 +903,8 @@ export default function HomePage({
               </h2>
               <p className="consultation-sub-statement">
                 {lang === 'ar' 
-                  ? 'سواء كنت تشتري مسكنك الأول، أو تستثمر في أصل تجاري مرتفع العائد، فريق مستشاري 1Line المعتمدين يضع بين يديك حقائق السوق وتدقيق الملكية لتتخذ قرارك بثقة تامة.' 
-                  : 'Whether acquiring a primary home or high-yield commercial assets, our certified advisors provide legal auditing and price benchmarks so you decide with total confidence.'}
+                  ? 'سواء كنت تبيع أرضاً، أو تشتري مسكن العائلة، أو تستثمر في أصل تجاري، يضع مستشارو 1Line بين يديك مقارنات السوق ونتيجة مراجعة المستندات لتتخذ قرارك على أساس واضح.'
+                  : 'Whether selling land, buying a family home or investing in a commercial asset, 1Line advisors give you market comparables and a document review so you decide on solid ground.'}
               </p>
               <div className="consultation-actions-row">
                 <a
@@ -914,6 +924,9 @@ export default function HomePage({
           </div>
         </section>
       </ScrollReveal>
+
+      {/* FAQ — answer-engine friendly, with FAQPage schema */}
+      <FaqSection lang={lang} />
 
       {/* 🏁 7. PRE-FOOTER EMOTIONAL CONCLUSION STATEMENT */}
       <ScrollReveal>

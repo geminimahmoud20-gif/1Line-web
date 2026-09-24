@@ -99,6 +99,7 @@ function RouteLoadingSpinner({ lang = 'ar' }) {
 }
 
 import './App.css';
+import './styles/luxury-system.css';
 
 /**
  * Main Application Shell & Route Controller
@@ -400,6 +401,8 @@ function AppContent() {
       dir={lang === 'ar' ? 'rtl' : 'ltr'}
       data-theme={theme}
     >
+      <a href="#main-content" className="lx-skip-link">{lang === 'ar' ? 'انتقل إلى المحتوى' : 'Skip to content'}</a>
+
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
@@ -467,7 +470,7 @@ function AppContent() {
       )}
 
       {/* Application Main Routes with Lazy Suspense Code Splitting */}
-      <main className="main-site-content">
+      <main className="main-site-content" id="main-content" tabIndex={-1}>
         <Suspense fallback={<RouteLoadingSpinner lang={lang} />}>
           <Routes>
             {/* 1. Home Page */}

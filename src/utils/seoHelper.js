@@ -59,7 +59,7 @@ export function updatePageSeo({
 
   setMetaTag('name', 'robots', noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large');
 
-  const finalTitle = title ? `${title} | 1Line سوهاج` : DEFAULT_TITLE;
+  const finalTitle = title ? `${title} | 1Line Solutions` : DEFAULT_TITLE;
   const finalDesc = description || DEFAULT_DESC;
   const finalImage = image ? (image.startsWith('http') ? image : `${BASE_URL}${image}`) : `${BASE_URL}${DEFAULT_IMAGE}`;
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/';

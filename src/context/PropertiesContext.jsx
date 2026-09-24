@@ -37,7 +37,7 @@ export function PropertiesProvider({ children }) {
       const missing = PROPERTIES_DATA.filter(p => p && !existingIds.has(p.id));
       if (missing.length > 0) {
         const merged = [...validStored, ...missing];
-        try { localStorage.setItem('oneline_properties', JSON.stringify(merged)); } catch (e) {}
+        try { localStorage.setItem('oneline_properties', JSON.stringify(merged)); } catch { /* storage unavailable */ }
         return merged;
       }
       return validStored.length > 0 ? validStored : PROPERTIES_DATA;
@@ -78,7 +78,7 @@ export function PropertiesProvider({ children }) {
       const missing = MEGA_PROJECTS.filter(p => p && !existingIds.has(p.id));
       if (missing.length > 0) {
         const merged = [...validStored, ...missing];
-        try { localStorage.setItem('oneline_mega_projects', JSON.stringify(merged)); } catch (e) {}
+        try { localStorage.setItem('oneline_mega_projects', JSON.stringify(merged)); } catch { /* storage unavailable */ }
         return merged;
       }
       return validStored.length > 0 ? validStored : MEGA_PROJECTS;
@@ -148,7 +148,7 @@ export function PropertiesProvider({ children }) {
       setFavorites(sanitized);
       try {
         localStorage.setItem('oneline_favorites', JSON.stringify(sanitized));
-      } catch (e) {}
+      } catch { /* storage unavailable */ }
     }
   }, []);
 
@@ -253,7 +253,7 @@ export function PropertiesProvider({ children }) {
     // Compute the lead synchronously from the latest list (a setState updater may run later,
     // which previously left finalLead null and skipped the cloud save).
     const buildNextLeads = (prev) => {
-      let finalLead = null;
+      let finalLead;
       const existingIndex = prev.findIndex(
         (l) => normalizePhoneNumber(l.phone || l.whatsapp) === incomingPhone
       );
@@ -357,7 +357,7 @@ export function PropertiesProvider({ children }) {
           queue.push(finalLead);
           localStorage.setItem('oneline_offline_lead_queue', JSON.stringify(queue));
           triggerToast(lang === 'ar' ? 'تم حفظ الطلب محلياً دون اتصال وسيتم رفعه تلقائياً فور توفر الإنترنت 📶' : 'Saved offline! Will sync automatically when connected.', 'info');
-        } catch (e) {}
+        } catch { /* storage unavailable */ }
       } else {
         let savedToCloud = false;
         try {
@@ -369,7 +369,7 @@ export function PropertiesProvider({ children }) {
             const queue = JSON.parse(localStorage.getItem('oneline_offline_lead_queue') || '[]');
             if (!queue.some((q) => q && q.id === finalLead.id)) queue.push(finalLead);
             localStorage.setItem('oneline_offline_lead_queue', JSON.stringify(queue));
-          } catch (e) {}
+          } catch { /* storage unavailable */ }
         }
         // Notifications are admin-only in Firestore rules; a failure here must never re-queue the lead.
         if (savedToCloud) {
