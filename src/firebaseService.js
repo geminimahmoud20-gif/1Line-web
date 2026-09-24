@@ -625,6 +625,26 @@ export const checkIsAdmin = async (user) => {
 
 const isAdminUser = (user) => Boolean(user && ADMIN_USER_IDS.has(user.uid));
 
+// Staff roles are Firebase custom claims ({ role: 'sales_agent' }), set server-side with
+// scripts/set-crm-role.mjs — a user cannot change their own claims. Must match firestore.rules.
+export const CRM_STAFF_ROLES = ['sales_manager', 'sales_agent', 'property_manager', 'finance', 'viewer', 'agent_east', 'agent_new_sohag'];
+
+/**
+ * Resolves the CRM role for a signed-in user: 'super_admin', a staff role, or null (no CRM access).
+ */
+export const getCrmRole = async (user) => {
+  if (!user) return null;
+  if (ADMIN_USER_IDS.has(user.uid)) return 'super_admin';
+  try {
+    const claims = (await user.getIdTokenResult())?.claims || {};
+    if (claims.admin === true || claims.role === 'admin' || claims.role === 'super_admin') return 'super_admin';
+    if (CRM_STAFF_ROLES.includes(claims.role)) return claims.role;
+    return null;
+  } catch {
+    return null; // fail closed
+  }
+};
+
 // ===================== AUDIT LOGS =====================
 
 /**
@@ -701,10 +721,11 @@ export const loginUser = async (email, password) => {
   }
 
   const credential = await signInWithEmailAndPassword(auth, email, password);
-  const authorized = await checkIsAdmin(credential.user);
-  if (!authorized) {
+  const role = await getCrmRole(credential.user);
+  if (!role) {
     await signOut(auth);
-    throw new Error('This account is not authorized to access the CRM');
+    // "unauthorized" is matched by the CRM login screen to show the no-access message
+    throw new Error('unauthorized: this account has no CRM role');
   }
 
   // Record audit log entry for successful login
@@ -751,31 +772,17 @@ export const monitorAuthState = (callback) => {
       callback(false, null);
       return;
     }
-    const authorized = await checkIsAdmin(user);
-    if (!authorized) {
+    // Fail closed: no recognised role (or a claims error) → no CRM session at all
+    const role = await getCrmRole(user);
+    if (!role) {
       callback(false, null);
       return;
     }
-
-    try {
-      const tokenResult = await user.getIdTokenResult().catch(() => null);
-      let role = 'agent';
-      if (tokenResult?.claims?.role === 'super_admin' || tokenResult?.claims?.admin === true || ADMIN_USER_IDS.has(user.uid)) {
-        role = 'super_admin';
-      } else if (tokenResult?.claims?.role) {
-        role = tokenResult.claims.role;
-      }
-
-      const userProfile = {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName || user.email?.split('@')[0] || 'Admin',
-        role
-      };
-      callback(true, userProfile);
-    } catch {
-      // 🛡️ Fail-Closed Security: Never escalate to super_admin on claim evaluation error
-      callback(true, { uid: user.uid, email: user.email, role: 'agent' });
-    }
+    callback(true, {
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName || user.email?.split('@')[0] || 'Admin',
+      role
+    });
   });
 };

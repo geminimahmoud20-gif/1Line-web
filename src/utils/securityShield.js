@@ -9,10 +9,12 @@ import DOMPurify from 'dompurify';
 // Generated using SHA-256(password + salt)
 const ADMIN_SALT = 'ONELINE_SOHAG_SECURE_SALT_2026';
 
-// CRM cryptographic verification for authorized administrators (Salted SHA-256)
-const AUTHORIZED_PIN_HASHES = [
-  '6fcb278971008c38aacbc5eb33da9c78433ee80b04063a973bb582f7c3e9f31f'
-];
+// Local PIN fallback — DEVELOPMENT ONLY. A fast SHA-256 of a short PIN shipped in a public
+// bundle is crackable offline, so production builds contain no hash (Vite folds
+// import.meta.env.DEV to false and the literal is dropped). Production sign-in is Firebase Auth.
+const AUTHORIZED_PIN_HASHES = import.meta.env?.DEV
+  ? ['6fcb278971008c38aacbc5eb33da9c78433ee80b04063a973bb582f7c3e9f31f']
+  : [];
 
 /**
  * Generate SHA-256 hash in browser using native Web Crypto API
@@ -78,6 +80,9 @@ export async function verifyAdminCredentials(inputPassword) {
   const rateLimitStatus = checkRateLimit();
   if (rateLimitStatus.isLocked) {
     return { success: false, rateLimited: true, message: rateLimitStatus.message_ar };
+  }
+  if (AUTHORIZED_PIN_HASHES.length === 0) {
+    return { success: false, message: 'خدمة تسجيل الدخول غير متاحة حالياً — تحقق من الاتصال وأعد المحاولة.' };
   }
 
   try {

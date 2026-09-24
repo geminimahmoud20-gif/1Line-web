@@ -13,6 +13,10 @@ dist-ssr
 *.local
 build_log.txt
 
+# Firebase Admin credentials (scripts/set-crm-role.mjs) — never commit
+service-account*.json
+*-firebase-adminsdk-*.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

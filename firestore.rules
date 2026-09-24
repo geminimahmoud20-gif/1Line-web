@@ -1,21 +1,40 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // ── Roles ───────────────────────────────────────────────────────────────
+    // Staff roles are Firebase custom claims ({ role: '<id>' }) set only server-side by
+    // scripts/set-crm-role.mjs. Keep this list in sync with CRM_STAFF_ROLES in src/firebaseService.js.
+    function role() {
+      return request.auth == null ? '' : request.auth.token.get('role', '');
+    }
     function isAdmin() {
       return request.auth != null && (
-        request.auth.token.admin == true ||
-        request.auth.token.role in ['admin', 'super_admin'] ||
+        request.auth.token.get('admin', false) == true ||
+        role() in ['admin', 'super_admin'] ||
         request.auth.uid == 'dB6GM2RoPQRE0iksDnqcdvUKgXy2'
       );
     }
-    
-    // 🛡️ 1. LEADS & CUSTOMER INQUIRIES (حماية بيانات العملاء ومنع التلاعب بالحقول)
+    function hasRole(roles) {
+      return isAdmin() || (request.auth != null && role() in roles);
+    }
+    function isStaff() {
+      return hasRole(['sales_manager', 'sales_agent', 'property_manager', 'finance', 'viewer', 'agent_east', 'agent_new_sohag']);
+    }
+    function isLeadEditor() {
+      return hasRole(['sales_manager', 'sales_agent', 'agent_east', 'agent_new_sohag']);
+    }
+    function isInventoryEditor() {
+      return hasRole(['sales_manager', 'property_manager']);
+    }
+
     // Public forms may only create "new" records of bounded size — no self-assigned status,
     // no privilege fields, no oversized payloads used to exhaust storage/quota.
     function boundedText(data, field, maxLen) {
       return !(field in data) || (data[field] is string && data[field].size() <= maxLen);
     }
 
+    // 🛡️ 1. LEADS & CUSTOMER INQUIRIES
     match /leads/{leadId} {
       allow create: if request.resource.data.phone is string
                     && request.resource.data.phone.size() >= 10
@@ -27,15 +46,17 @@ service cloud.firestore {
                     && boundedText(request.resource.data, 'notes', 2000)
                     && boundedText(request.resource.data, 'message', 2000)
                     && boundedText(request.resource.data, 'email', 120)
-                    && (!('status' in request.resource.data) || request.resource.data.status == 'new' || isAdmin())
+                    && (!('status' in request.resource.data) || request.resource.data.status == 'new' || isLeadEditor())
                     && (!('role' in request.resource.data))
                     && (!('isAdmin' in request.resource.data));
-      allow read, update, delete: if isAdmin();
+      allow read: if isStaff();
+      allow update: if isLeadEditor();
+      allow delete: if isAdmin();
     }
-    
-    // 📋 2. DEMANDS & CLIENT REQUESTS (حماية خصوصية المشترين وعزل الطلبات المعلقة)
+
+    // 📋 2. DEMANDS & CLIENT REQUESTS
     match /demands/{demandId} {
-      allow create: if request.resource.data.name is string 
+      allow create: if request.resource.data.name is string
                     && request.resource.data.name.size() >= 2
                     && request.resource.data.name.size() <= 100
                     && request.resource.data.phone is string
@@ -44,51 +65,59 @@ service cloud.firestore {
                     && request.resource.data.keys().size() <= 60
                     && boundedText(request.resource.data, 'notes', 2000)
                     && boundedText(request.resource.data, 'description', 3000)
-                    // A visitor cannot publish their own demand; only the admin approves it
-                    && (isAdmin() || !('status' in request.resource.data) || request.resource.data.status == 'pending');
-      // 🔒 للعامة: قراءة الطلبات المنشورة فقط، وللمشرف قراءة كافة الطلبات المعلقة
-      allow read: if (resource != null && resource.data.status == 'published') || isAdmin();
+                    // A visitor cannot publish their own demand; staff approve it
+                    && (isInventoryEditor() || !('status' in request.resource.data) || request.resource.data.status == 'pending');
+      // Public: published demands only. Staff: everything (pending review queue).
+      allow read: if (resource != null && resource.data.status == 'published') || isStaff();
+      allow update: if isInventoryEditor();
+      allow delete: if isAdmin();
+    }
+
+    // 🏠 3. PROPERTIES INVENTORY
+    match /properties/{propId} {
+      allow read: if true;
+      allow create, update: if isInventoryEditor();
+      allow delete: if hasRole(['property_manager']);
+    }
+
+    // 🔔 4. NOTIFICATIONS
+    match /notifications/{notifId} {
+      // Not public-writable (spam vector); staff see new public leads via the leads listener.
+      allow read, create: if isStaff();
       allow update, delete: if isAdmin();
     }
 
-    // 🏠 3. PROPERTIES INVENTORY (مخزون العقارات)
-    match /properties/{propId} {
-      allow read: if true;
-      allow write: if request.auth != null && (request.auth.token.admin == true || isAdmin());
-    }
-
-    // 🔔 4. NOTIFICATIONS (سجل الإشعارات الداخلي)
-    match /notifications/{notifId} {
-      allow read, write: if isAdmin();
-    }
-
-    // 📜 5. AUDIT LOGS (سجل التدقيق الجنائي غير القابل للتعديل أو الحذف)
+    // 📜 5. AUDIT LOGS (immutable)
     match /audit_logs/{logId} {
-      allow read, create: if isAdmin();
-      allow update, delete: if false; // Strict immutability of audit records
+      allow create: if isStaff();
+      allow read: if isAdmin();
+      allow update, delete: if false;
     }
 
-    // ⚙️ 6. SITE & FOUNDER SETTINGS (إعدادات الموقع والمؤسس الحية)
+    // ⚙️ 6. SITE & FOUNDER SETTINGS (areas CMS, founder CMS)
     match /settings/{settingId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // 🏢 7. PROJECTS & MEGA DEVELOPMENTS (المشروعات والكمبوندات الكبرى)
+    // 🏢 7. PROJECTS & MEGA DEVELOPMENTS
     match /projects/{projectId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create, update: if isInventoryEditor();
+      allow delete: if hasRole(['property_manager']);
     }
 
-    // 📢 8. SPONSORED ADS & CAMPAIGNS (الحملات الإعلانية ومساحات الرعاة)
+    // 📢 8. SPONSORED ADS & CAMPAIGNS
     match /advertisements/{adId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // 💼 9. DEALS & PIPELINE (إدارة الصفقات وقمع المبيعات للمشرفين فقط)
+    // 💼 9. DEALS & PIPELINE
     match /deals/{dealId} {
-      allow read, write: if isAdmin();
+      allow read: if hasRole(['sales_manager', 'finance', 'viewer']) || isLeadEditor();
+      allow create, update: if isLeadEditor() || hasRole(['finance']);
+      allow delete: if isAdmin();
     }
   }
 }
