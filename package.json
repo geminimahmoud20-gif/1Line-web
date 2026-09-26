@@ -12,8 +12,10 @@
     "cypress:run": "cypress run"
   },
   "dependencies": {
+    "@vercel/blob": "^2.8.0",
     "dompurify": "^3.4.14",
     "firebase": "^12.15.0",
+    "jose": "^6.2.12",
     "jspdf": "^4.2.1",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.21.0",

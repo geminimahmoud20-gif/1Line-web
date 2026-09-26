@@ -136,7 +136,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
     setFormData({ ...formData, goldStandards: updated });
   };
 
-  // Upload short video to Firebase Storage; settings keep only the resulting https URL.
+  // Upload short video to Vercel Blob (via /api/cms-upload); settings keep only the resulting https URL.
   // (The old version embedded the whole file as a base64 data URL in the settings: a WhatsApp
   // clip became ~20MB of text, froze the form, and could not be saved to localStorage or Firestore.)
   const [uploadProgress, setUploadProgress] = useState(null); // null | 0..100
@@ -144,7 +144,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
   const [uploadPhase, setUploadPhase] = useState('uploading'); // 'uploading' | 'optimising'
   const [canCancelUpload, setCanCancelUpload] = useState(false);
   const [pastedVideoUrl, setPastedVideoUrl] = useState('');
-  // DEV saves into public/videos; production needs Firebase Storage, so check it before offering the picker
+  // DEV saves into public/videos; production needs a Blob store connected in Vercel, so check before offering the picker
   const [storageStatus, setStorageStatus] = useState(import.meta.env.DEV ? 'local' : 'checking'); // local | checking | ready | unknown | unavailable
   useEffect(() => {
     if (import.meta.env.DEV) return undefined;
@@ -156,7 +156,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
   }, []);
   const uploadLocked = storageStatus === 'unavailable';
 
-  // Works without Firebase Storage: any public https video (mp4/webm) can be added by URL
+  // Works without any upload service: any public https video (mp4/webm) can be added by URL
   const handleAddVideoByUrl = async () => {
     const url = pastedVideoUrl.trim();
     // https URLs, or files shipped with the site itself (public/videos → "/videos/name.mp4")
@@ -185,8 +185,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
 
     const mb = (file.size / 1024 / 1024).toFixed(1);
     setUploadProgress(0);
-    // Local dev server: save into the site's own public/videos (Firebase Storage isn't enabled).
-    // Production keeps the Storage path, which starts working once Storage is enabled.
+    // Local dev server (no /api routes): save into the site's own public/videos.
+    // Production uploads straight from the browser to Vercel Blob.
     const res = import.meta.env.DEV
       ? await uploadToLocalSite(file, (p) => setUploadProgress(p), (cancel) => { cancelUploadRef.current = cancel; setCanCancelUpload(true); }, () => setUploadPhase('optimising'))
       : await uploadCmsMedia(file, 'video', (p) => setUploadProgress(p), (cancel) => { cancelUploadRef.current = cancel; setCanCancelUpload(true); });
@@ -198,27 +198,26 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
     if (!res.ok) {
       const reasons = {
         'bucket-unavailable': isAr
-          ? 'خدمة التخزين (Firebase Storage) غير مفعّلة في مشروعك، لذلك لا يمكن رفع ملفات. فعّلها من Firebase Console ← Storage، أو الصق رابط فيديو جاهز في الخانة أدناه.'
-          : 'Firebase Storage is not enabled for this project. Enable it in the console, or paste a video URL below.',
+          ? 'مساحة التخزين (Vercel Blob) غير مربوطة بالمشروع. أنشئها من لوحة Vercel ← Storage ← Blob واربطها بالمشروع، أو الصق رابط فيديو جاهز في الخانة أدناه.'
+          : 'No Vercel Blob store is connected to this project. Connect one in Vercel, or paste a video URL below.',
         unauthenticated: isAr
           ? 'رفع الملفات يتطلب تسجيل الدخول بحساب المدير في Firebase (الدخول برمز المرور المحلي لا يكفي). يمكنك لصق رابط فيديو بدلاً من ذلك.'
           : 'Uploading requires signing in with the admin Firebase account. You can paste a video URL instead.',
         offline: isAr ? 'لا يوجد اتصال بالإنترنت — أعد المحاولة بعد عودة الاتصال.' : 'You are offline.',
         stalled: isAr
-          ? 'لم يبدأ الرفع خلال 20 ثانية فتم إلغاؤه. غالباً خدمة التخزين غير متاحة أو الاتصال ضعيف جداً.'
-          : 'The upload did not start within 20s and was cancelled.',
+          ? 'لم يبدأ الرفع خلال 30 ثانية فتم إلغاؤه. غالباً الاتصال ضعيف جداً — أعد المحاولة.'
+          : 'The upload did not start within 30s and was cancelled.',
         'storage/canceled': isAr ? 'تم إلغاء الرفع.' : 'Upload cancelled.',
         'local-server': isAr ? 'تعذّر الاتصال بخادم التطوير المحلي — تأكد أن npm run dev ما زال يعمل.' : 'Local dev server not reachable.',
         'needs-ffmpeg': isAr ? 'هذا النوع يحتاج تحويلاً إلى MP4 لكن ffmpeg غير متاح. ارفع ملف MP4 أو شغّل npm install.' : 'Needs ffmpeg to convert — upload an MP4.',
         type: isAr ? 'نوع الملف غير مدعوم — استخدم MP4 أو WebM أو MOV.' : 'Unsupported file — use MP4, WebM or MOV.',
         size: isAr ? `حجم الفيديو ${mb} ميجابايت والحد الأقصى 60. اختر مقطعاً أقصر (10–15 ثانية تكفي للخلفية).` : `Video is ${mb}MB; the limit is 60MB.`,
-        'storage/unauthorized': isAr ? 'حسابك لا يملك صلاحية رفع الملفات — سجّل الدخول بحساب المدير وتأكد من نشر قواعد Storage.' : 'Not authorised to upload — sign in as admin and deploy storage rules.',
-        'storage/unauthenticated': isAr ? 'سجّل الدخول بحساب المدير أولاً لرفع الفيديو.' : 'Sign in as admin to upload.',
-        'not-configured': isAr ? 'خدمة التخزين غير مفعّلة في Firebase.' : 'Firebase Storage is not configured.'
+        'storage/unauthorized': isAr ? 'حسابك لا يملك صلاحية رفع الملفات — الرفع متاح لحساب المدير فقط.' : 'Not authorised to upload — admin accounts only.',
+        'storage/unauthenticated': isAr ? 'سجّل الدخول بحساب المدير أولاً لرفع الفيديو.' : 'Sign in as admin to upload.'
       };
       const msg = reasons[res.reason] || (isAr
-        ? `تعذّر رفع الفيديو (${res.reason}). تأكد من تفعيل Firebase Storage في المشروع ومن الاتصال بالإنترنت.`
-        : `Upload failed (${res.reason}). Check that Firebase Storage is enabled.`);
+        ? `تعذّر رفع الفيديو (${res.reason}). تأكد من الاتصال بالإنترنت وأعد المحاولة.`
+        : `Upload failed (${res.reason}). Check your connection and retry.`);
       if (triggerToast) triggerToast(msg, 'error');
       return;
     }
@@ -457,8 +456,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                     ? 'MP4 أو WebM أو MOV. يُضغط تلقائياً (720p بدون صوت) ويُحفظ داخل ملفات الموقع في public/videos، ويظهر للزوار بعد نشر الموقع.'
                     : 'MP4, WebM or MOV. Compressed (720p, muted) into public/videos; live after the next deploy.')
                   : (isAr
-                    ? 'MP4 أو WebM أو MOV حتى 60 ميجابايت. يُرفع على التخزين السحابي (يتطلب تفعيل Firebase Storage). للخلفية يكفي مقطع 10–15 ثانية.'
-                    : 'MP4, WebM or MOV up to 60MB. Uploaded to Firebase Storage (must be enabled).')}
+                    ? 'MP4 أو WebM أو MOV حتى 60 ميجابايت. يُرفع مباشرة إلى التخزين السحابي ويظهر للزوار فوراً. للخلفية يكفي مقطع 10–15 ثانية.'
+                    : 'MP4, WebM or MOV up to 60MB. Uploaded straight to cloud storage; live immediately.')}
               </p>
               {storageStatus === 'checking' && (
                 <span role="status" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 'var(--crm-text-sm)', color: 'var(--text-muted)' }}>
@@ -473,8 +472,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                   </strong>
                   <div>
                     {isAr
-                      ? 'خدمة Firebase Storage غير مفعّلة لهذا المشروع، فلن يصل أي ملف. لإضافة فيديو الآن:'
-                      : 'Firebase Storage is not enabled for this project, so no file can arrive. To add a video now:'}
+                      ? 'لم تُربط مساحة تخزين (Vercel Blob) بالمشروع بعد. من لوحة Vercel: Storage ← Create ← Blob (وصول Public) ← Connect بالمشروع، ثم أعد النشر. وحتى يتم ذلك:'
+                      : 'No Vercel Blob store is connected yet. In Vercel: Storage → Create → Blob (Public) → Connect to the project, then redeploy. Until then:'}
                   </div>
                   <ol style={{ margin: '4px 0 0', paddingInlineStart: '20px' }}>
                     <li>{isAr ? 'الصق رابط الفيديو (https) أو مساره داخل الموقع مثل /videos/hero.mp4 في الخانة بالأسفل.' : 'Paste an https link or a site path like /videos/hero.mp4 below.'}</li>

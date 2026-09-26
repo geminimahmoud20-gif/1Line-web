@@ -1,11 +1,10 @@
 /**
  * 📷 ONELINE PROPTECH - IMAGE COMPRESSION & CLOUD UPLOAD SERVICE
  * Compresses large mobile phone photos (8-15MB) into lightweight high-res WebP/JPEGs (~150-250KB)
- * and uploads them directly to Firebase Storage with an offline fallback.
+ * and uploads them to Vercel Blob (via /api/cms-upload) with an offline fallback.
  */
 
-import { storage } from '../firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { uploadCmsMedia } from '../firebaseLazy';
 
 /**
  * Compresses an image File or Blob using native HTML Canvas
@@ -75,7 +74,7 @@ export async function compressImage(file, options = {}) {
 }
 
 /**
- * Uploads a single property image to Firebase Storage (with offline base64 fallback)
+ * Uploads a single property image to cloud storage (with offline base64 fallback)
  * @param {File} file - Image file
  * @param {string} propertyId - Property ID identifier
  * @returns {Promise<{ url: string, isCloud: boolean, sizeKb: number }>}
@@ -83,31 +82,14 @@ export async function compressImage(file, options = {}) {
 export async function uploadPropertyImage(file, propertyId = 'general') {
   const compressed = await compressImage(file);
 
-  // Attempt Firebase Storage Upload if configured
-  if (storage) {
-    try {
-      const cleanFileName = (file.name || 'photo.jpg').replace(/[^a-zA-Z0-9._-]/g, '_');
-      const storagePath = `properties/${propertyId}/${Date.now()}_${cleanFileName}`;
-      const storageRef = ref(storage, storagePath);
-
-      const snapshot = await uploadBytes(storageRef, compressed.blob, {
-        contentType: compressed.blob.type || 'image/jpeg',
-        customMetadata: {
-          originalName: file.name,
-          uploadedAt: new Date().toISOString(),
-          compressedSizeKb: String(compressed.sizeKb)
-        }
-      });
-
-      const downloadUrl = await getDownloadURL(snapshot.ref);
-      return {
-        url: downloadUrl,
-        isCloud: true,
-        sizeKb: compressed.sizeKb
-      };
-    } catch (err) {
-      console.warn('Firebase Storage upload notice (falling back to secure local data URL):', err);
-    }
+  // The local dev server has no /api routes, so only production tries the cloud
+  if (!import.meta.env.DEV) {
+    const type = compressed.blob.type || 'image/jpeg';
+    const base = (file.name || 'photo').replace(/\.[^.]+$/, '');
+    const upload = new File([compressed.blob], `${propertyId}-${base}.${type === 'image/webp' ? 'webp' : 'jpg'}`, { type });
+    const res = await uploadCmsMedia(upload, 'image');
+    if (res.ok) return { url: res.url, isCloud: true, sizeKb: compressed.sizeKb };
+    console.warn('Cloud image upload skipped (falling back to local data URL):', res.reason);
   }
 
   // Graceful Offline / Local fallback: Return the high-quality compressed Base64 Data URL

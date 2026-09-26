@@ -4,7 +4,7 @@
 //  Falls back to localStorage if Firebase is not configured.
 // =============================================================
 
-import { db, auth, storage, isFirebaseConfigured } from './firebase.js';
+import { db, auth, isFirebaseConfigured } from './firebase.js';
 import {
   collection,
   addDoc,
@@ -136,83 +136,79 @@ export const CMS_MEDIA_LIMITS = {
   image: { maxBytes: 5 * 1024 * 1024, types: ['image/jpeg', 'image/png', 'image/webp'] }
 };
 
+// Files go to Vercel Blob (Firebase Storage was never enabled for this project: its bucket
+// answers 404 and needs the Blaze plan). /api/cms-upload signs each upload for admins only.
+const CMS_UPLOAD_ROUTE = '/api/cms-upload';
+
 /**
- * Upload a CMS media file. onProgress(0..100). Resolves { ok, url } or { ok: false, reason }:
- * reason = 'type' | 'size' | 'not-configured' | Firebase error code (e.g. 'storage/unauthorized').
+ * For the CMS to decide up front whether the device-upload box can work at all.
+ * 'ready' | 'unavailable' (no Blob store connected) | 'unknown' (offline / timeout).
  */
-/**
- * Is the Storage bucket provisioned? When Storage was never enabled in the console the
- * bucket answers 404 (measured on line-c9601.firebasestorage.app, 2026-09-26) and the SDK
- * kept retrying the upload at 0%. An existing bucket answers 200/401/403 to this
- * unauthenticated list call. Resolves true | false, or null when unreachable (offline / timeout).
- */
-const probeStorageBucket = async () => {
-  const bucket = storage?.app?.options?.storageBucket;
-  if (!bucket) return false;
+export const getCmsStorageStatus = async () => {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 8000);
   try {
-    const res = await fetch(`https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}/o?maxResults=1`, { signal: ctrl.signal, cache: 'no-store' });
-    return res.status !== 404;
+    const res = await fetch(CMS_UPLOAD_ROUTE, { signal: ctrl.signal, cache: 'no-store' });
+    if (!res.ok) return res.status === 404 || res.status === 503 ? 'unavailable' : 'unknown';
+    return (await res.json())?.ok ? 'ready' : 'unavailable';
   } catch {
-    return null;
+    return 'unknown';
   } finally {
     clearTimeout(timer);
   }
 };
 
-/** For the CMS to decide up front whether the device-upload box can work at all. */
-export const getCmsStorageStatus = async () => {
-  if (!isFirebaseConfigured() || !storage) return 'unavailable';
-  const probe = await probeStorageBucket();
-  if (probe === false) return 'unavailable';
-  return probe === null ? 'unknown' : 'ready';
-};
-
 /**
- * onStart(cancel) hands the caller a cancel function once bytes start moving.
- * Extra reasons: 'unauthenticated' | 'offline' | 'bucket-unavailable' | 'stalled' | 'storage/canceled'.
+ * Upload a CMS media file. onProgress(0..100); onStart(cancel) hands back a cancel function.
+ * Resolves { ok, url, path } or { ok: false, reason }: 'type' | 'size' | 'offline' |
+ * 'unauthenticated' | 'storage/unauthorized' | 'bucket-unavailable' | 'stalled' | 'storage/canceled' | 'error'.
  */
 export const uploadCmsMedia = async (file, kind = 'video', onProgress, onStart) => {
   const limits = CMS_MEDIA_LIMITS[kind];
   if (!file || !limits) return { ok: false, reason: 'type' };
   if (!limits.types.includes(file.type)) return { ok: false, reason: 'type' };
   if (file.size > limits.maxBytes) return { ok: false, reason: 'size' };
-  if (!isFirebaseConfigured() || !storage) return { ok: false, reason: 'not-configured' };
   if (typeof navigator !== 'undefined' && navigator.onLine === false) return { ok: false, reason: 'offline' };
-  // The rules only accept signed-in admins; the local PIN session has no Firebase user
+  // The route only signs uploads for signed-in admins; the local PIN session has no Firebase user
   if (!auth?.currentUser) return { ok: false, reason: 'unauthenticated' };
-  if ((await probeStorageBucket()) === false) return { ok: false, reason: 'bucket-unavailable' };
 
-  const { ref, uploadBytesResumable, getDownloadURL } = await import('firebase/storage');
-  // Default retry window is 10 minutes — on a dead connection the admin would watch 0% that long
-  storage.maxUploadRetryTime = 90 * 1000;
-  const safeName = file.name.normalize('NFKD').replace(/[^\w.-]+/g, '-').slice(-80) || `${kind}`;
+  let idToken;
+  try { idToken = await auth.currentUser.getIdToken(); } catch { return { ok: false, reason: 'unauthenticated' }; }
+  const { upload } = await import('@vercel/blob/client');
+  const safeName = file.name.normalize('NFKD').replace(/[^\w.-]+/g, '-').slice(-80) || kind;
   const path = `cms/${kind}s/${Date.now()}-${safeName}`;
-  const task = uploadBytesResumable(ref(storage, path), file, {
-    contentType: file.type,
-    cacheControl: 'public, max-age=31536000, immutable'
-  });
-  onStart?.(() => task.cancel());
+  const ctrl = new AbortController();
+  let moved = false;
+  let cancelled = false;
+  onStart?.(() => { cancelled = true; ctrl.abort(); });
+  // Watchdog: nothing transferred in 30s means the upload is not going to start
+  const stallTimer = setTimeout(() => { if (!moved) ctrl.abort(); }, 30 * 1000);
 
-  return new Promise((resolve) => {
-    let settled = false;
-    const finish = (res) => { if (!settled) { settled = true; clearTimeout(stallTimer); resolve(res); } };
-    // Watchdog: nothing transferred in 20s means the upload is not going to start
-    const stallTimer = setTimeout(() => {
-      if (task.snapshot.bytesTransferred === 0) { task.cancel(); finish({ ok: false, reason: 'stalled' }); }
-    }, 20 * 1000);
-    task.on('state_changed',
-      (snap) => onProgress?.(Math.round((snap.bytesTransferred / snap.totalBytes) * 100)),
-      (error) => finish({ ok: false, reason: error?.code || 'error' }),
-      async () => {
-        try {
-          finish({ ok: true, url: await getDownloadURL(task.snapshot.ref), path });
-        } catch (error) {
-          finish({ ok: false, reason: error?.code || 'error' });
-        }
-      });
-  });
+  try {
+    const blob = await upload(path, file, {
+      access: 'public',
+      handleUploadUrl: CMS_UPLOAD_ROUTE,
+      clientPayload: JSON.stringify({ kind, idToken }),
+      contentType: file.type,
+      multipart: file.size > 8 * 1024 * 1024,
+      abortSignal: ctrl.signal,
+      onUploadProgress: ({ loaded, percentage }) => {
+        if (loaded > 0) moved = true;
+        onProgress?.(Math.min(100, Math.round(percentage)));
+      }
+    });
+    return { ok: true, url: blob.url, path: blob.pathname };
+  } catch (error) {
+    if (cancelled) return { ok: false, reason: 'storage/canceled' };
+    if (ctrl.signal.aborted) return { ok: false, reason: 'stalled' };
+    const msg = String(error?.message || error);
+    if (/unauthori[sz]ed|403/i.test(msg)) return { ok: false, reason: 'storage/unauthorized' };
+    if (/not-configured|503|404/i.test(msg)) return { ok: false, reason: 'bucket-unavailable' };
+    console.warn('CMS upload failed:', msg);
+    return { ok: false, reason: 'error' };
+  } finally {
+    clearTimeout(stallTimer);
+  }
 };
 
 // ===================== AD CAMPAIGN STATS =====================
