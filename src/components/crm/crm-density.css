@@ -74,3 +74,23 @@
 @media (max-width: 760px) {
   .crm-layout :is(.crm-table, .admin-data-table) :is(th, td) { position: static !important; box-shadow: none !important; }
 }
+
+/* Legacy App.css badges still at 11.5px (property code, section counters) — lift to the 12px floor */
+.crm-layout :is(.prop-id-tag, .count-badge-gold) { font-size: var(--crm-text-xs) !important; }
+
+/* ── DEF-20: layering instead of white-on-white (light mode, CRM only) ──
+   Warm ivory canvas under white cards: the cards read as surfaces and the canvas no longer glares.
+   Scoped to .crm-layout because --crm-canvas is shared with the public calculators. */
+html:not(.dark-theme):not([data-theme="dark"]) .crm-layout { --crm-canvas: #F5F3EE; }
+
+/* ── DEF-17 / DEF-22: row click + keyboard triage ── */
+.crm-layout .crm-table tbody tr.crm-lead-row { cursor: pointer; }
+.crm-layout .crm-table tbody tr.crm-lead-row.is-kbd-active td { background: var(--crm-accent-soft) !important; }
+.crm-layout .crm-table tbody tr.crm-lead-row.is-kbd-active td:first-child { box-shadow: inset -3px 0 0 var(--crm-accent); }
+.crm-layout.ltr-dir .crm-table tbody tr.crm-lead-row.is-kbd-active td:first-child { box-shadow: inset 3px 0 0 var(--crm-accent); }
+.crm-kbd-hint {
+  margin: 0 0 8px;
+  font-size: var(--crm-text-xs);
+  color: var(--crm-muted);
+}
+@media (hover: none) { .crm-kbd-hint { display: none; } } /* no keyboard on touch devices */

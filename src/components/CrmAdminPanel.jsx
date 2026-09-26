@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Lock, Eye, EyeOff, ShieldCheck, AlertCircle, 
   Wifi, WifiOff, Download, LogOut, Bell, 
@@ -560,6 +560,38 @@ export const CrmAdminPanel = ({
   };
 
   // Quick Action Handler (WhatsApp Direct Contact)
+  // ── Keyboard triage for the leads table (audit DEF-22) ──
+  // J/K move, Enter opens the drawer, W WhatsApp, S focuses the status chip.
+  // Uses e.code so it works on the Arabic keyboard layout (J types "ت").
+  const [kbdIndex, setKbdIndex] = useState(-1);
+  const kbdRef = useRef({ list: [], index: -1, wa: null });
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (!document.querySelector('.crm-table[data-kbd="leads"]')) return;
+      if (document.querySelector('.crm-lead-drawer, .crm-modal-backdrop, .track-modal-backdrop, .crm-command-modal')) return;
+      const t = e.target;
+      if (t?.closest?.('input, textarea, select, [contenteditable="true"]')) return;
+      const { list, index, wa } = kbdRef.current;
+      if (!list.length) return;
+      const lead = list[index] || null;
+      if (e.code === 'KeyJ') { e.preventDefault(); setKbdIndex((i) => Math.min(list.length - 1, i + 1)); }
+      else if (e.code === 'KeyK') { e.preventDefault(); setKbdIndex((i) => Math.max(0, i - 1)); }
+      else if (e.code === 'Enter' && lead && !t?.closest?.('button, a, summary')) { e.preventDefault(); setQuickDrawerLead(lead); }
+      else if (e.code === 'KeyW' && lead) { e.preventDefault(); wa?.(lead); }
+      else if (e.code === 'KeyS' && lead) {
+        e.preventDefault();
+        document.querySelector(`.crm-table tr[data-lead-id="${CSS.escape(String(lead.id))}"] .crm-status-select`)?.focus();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+  useEffect(() => {
+    if (kbdIndex < 0) return;
+    document.querySelectorAll('.crm-table[data-kbd="leads"] tbody tr')[kbdIndex]?.scrollIntoView({ block: 'nearest' });
+  }, [kbdIndex]);
+
   const onWhatsAppClick = (lead) => {
     if (handleWhatsAppAction) {
       handleWhatsAppAction(lead);
@@ -649,6 +681,11 @@ export const CrmAdminPanel = ({
   });
 
   // Login Gate
+  // Hooks stay above the early return below. Keep the keyboard handler's view of the table current (read in the window keydown listener)
+  useEffect(() => {
+    kbdRef.current = { list: filteredLeads, index: kbdIndex, wa: onWhatsAppClick };
+  });
+
   if (!crmAuthenticated) {
     return (
       <div style={{ maxWidth: '420px', margin: '60px auto', textAlign: 'center' }}>
@@ -997,8 +1034,11 @@ export const CrmAdminPanel = ({
           )}
 
           {/* Leads Table */}
+          <p className="crm-kbd-hint" aria-hidden="true">
+            {isAr ? 'اختصارات: J / K للتنقل · Enter للمعاينة · W واتساب · S الحالة' : 'Shortcuts: J / K move · Enter open · W WhatsApp · S status'}
+          </p>
           <div className="crm-table-scroll-wrapper" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
-            <table className="crm-table">
+            <table className="crm-table" data-kbd="leads">
             <thead>
               <tr>
                 <th style={{ width: '36px', textAlign: 'center' }}>
@@ -1030,12 +1070,24 @@ export const CrmAdminPanel = ({
                   </td>
                 </tr>
               ) : (
-                filteredLeads.map((l) => {
+                filteredLeads.map((l, rowIndex) => {
                   const isSelected = selectedLeadIds.includes(l.id);
                   const temp = l.temperature || 'hot';
 
                   return (
-                    <tr key={l.id} style={{ background: isSelected ? 'rgba(217, 119, 6, 0.05)' : undefined }}>
+                    <tr
+                      key={l.id}
+                      data-lead-id={l.id}
+                      className={`crm-lead-row ${rowIndex === kbdIndex ? 'is-kbd-active' : ''}`}
+                      aria-current={rowIndex === kbdIndex ? 'true' : undefined}
+                      style={{ background: isSelected ? 'rgba(217, 119, 6, 0.05)' : undefined }}
+                      onClick={(e) => {
+                        // Row click opens the quick drawer (not the full-screen profile); controls keep their own behaviour
+                        if (e.target.closest('button, a, input, select, label, summary, details')) return;
+                        setKbdIndex(rowIndex);
+                        setQuickDrawerLead(l);
+                      }}
+                    >
                       {/* Checkbox */}
                       <td style={{ textAlign: 'center' }}>
                         <input

@@ -83,3 +83,19 @@
   background: rgba(96, 165, 250, 0.14) !important;
   color: #93C5FD !important;
 }
+
+/* App.css:18025-18104 ("Crisp White Tables") pins containers, headings and inputs to light colours
+   even under .dark-theme with !important — the root cause of DEF-02. Same specificity here,
+   loaded later (CRM chunk), so these win without editing the shared App.css. */
+:is(.dark-theme, [data-theme="dark"]) .crm-layout .crm-table-container {
+  background: var(--crm-card) !important;
+  border-color: var(--crm-line) !important;
+  color: var(--crm-body) !important;
+  box-shadow: var(--crm-shadow) !important;
+}
+:is(.dark-theme, [data-theme="dark"]) .crm-layout .crm-table-container :is(h3, h4) { color: var(--crm-ink) !important; }
+:is(.dark-theme, [data-theme="dark"]) .crm-layout :is(select:not(.crm-status-select):not(.crm-agent-select), input[type="text"], input[type="number"], input[type="search"], textarea) {
+  background-color: var(--crm-subtle) !important;
+  border-color: var(--crm-line-strong) !important;
+  color: var(--crm-ink) !important;
+}

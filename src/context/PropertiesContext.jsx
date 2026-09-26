@@ -63,8 +63,9 @@ export function PropertiesProvider({ children }) {
     }).catch(() => {});
   }, [lang, triggerToast]);
 
+  // Synced after each render; handlers also set it immediately so back-to-back updates see each other
   const propertiesRef = useRef(properties);
-  propertiesRef.current = properties;
+  useEffect(() => { propertiesRef.current = properties; }, [properties]);
 
   const persistProperties = (list) => {
     try { localStorage.setItem('oneline_properties', JSON.stringify(list)); } catch { /* quota / private mode */ }
@@ -115,7 +116,7 @@ export function PropertiesProvider({ children }) {
   });
 
   const projectsRef = useRef(projects);
-  projectsRef.current = projects;
+  useEffect(() => { projectsRef.current = projects; }, [projects]);
 
   const persistProjects = (list) => {
     try { localStorage.setItem('oneline_mega_projects', JSON.stringify(list)); } catch { /* quota / private mode */ }
@@ -621,34 +622,39 @@ export function PropertiesProvider({ children }) {
       lastActivityAt: nowIso
     };
 
-    if (isFirebaseActive()) {
-      const saved = await updateLeadField(id, enrichedFields);
-      if (!saved) {
-        triggerToast(
-          lang === 'ar'
-            ? 'تعذر حفظ التعديل في Firebase. تأكد من نشر قواعد Firestore وتسجيل الدخول بحساب المدير.'
-            : 'Could not save to Firebase. Check Firestore rules and your admin sign-in.',
-          'error'
-        );
-        return false;
-      }
-    }
+    // Optimistic update: the UI changes now and Firestore saves in the background.
+    // Firestore only resolves once the server acks — on a weak connection the old
+    // "await first" version left the kanban card unmoved while the caller had already
+    // shown "moved successfully". On a real failure only the changed fields roll back.
+    const previousValues = {};
+    const current = leadsRef.current.find((l) => l.id === id);
+    if (current) Object.keys(enrichedFields).forEach((k) => { previousValues[k] = current[k]; });
 
-    setLeads((prev) => {
-      const updated = prev.map((l) => {
-        if (l.id === id) {
-          const activityLogs = l.activityLogs || [];
-          const newLog = {
-            timestamp: nowIso,
-            action: `تحديث بيانات: ${Object.keys(updatedFields).join(', ')}`
-          };
-          return { ...l, ...enrichedFields, activityLogs: [newLog, ...activityLogs] };
-        }
-        return l;
-      });
-      localStorage.setItem('oneline_crm_leads', JSON.stringify(updated));
+    const applyToLeads = (mutate) => setLeads((prev) => {
+      const updated = prev.map((l) => (l.id === id ? mutate(l) : l));
+      try { localStorage.setItem('oneline_crm_leads', JSON.stringify(updated)); } catch { /* storage full / private mode */ }
+      leadsRef.current = updated;
       return updated;
     });
+
+    applyToLeads((l) => ({
+      ...l,
+      ...enrichedFields,
+      activityLogs: [{ timestamp: nowIso, action: `تحديث بيانات: ${Object.keys(updatedFields).join(', ')}` }, ...(l.activityLogs || [])]
+    }));
+
+    if (isFirebaseActive()) {
+      updateLeadField(id, enrichedFields).then((saved) => {
+        if (saved !== false) return;
+        applyToLeads((l) => ({ ...l, ...previousValues }));
+        triggerToast(
+          lang === 'ar'
+            ? 'تعذر حفظ التعديل في Firebase فتم التراجع عنه. تأكد من الاتصال وصلاحية حسابك.'
+            : 'Could not save to Firebase — the change was reverted. Check your connection and permissions.',
+          'error'
+        );
+      }).catch(() => {});
+    }
 
     return true;
   }, [lang, triggerToast]);

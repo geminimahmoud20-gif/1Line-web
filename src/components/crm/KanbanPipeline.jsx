@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   Building, 
   Phone, 
@@ -23,9 +23,11 @@ import {
   Tag,
   Search,
   X,
-  Zap
+  Zap,
+  MoreHorizontal
 } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
+import './crm-kanban.css';
 import { getAreas } from '../../utils/areasData';
 
 const PIPELINE_STAGES = [
@@ -135,7 +137,8 @@ export default function KanbanPipeline({
       if (!isNaN(num) && num > 0) return num;
     }
     if (lead.estimatedAvg) return lead.estimatedAvg;
-    return 2500000;
+    // Unknown budget stays 0 — the old 2,500,000 default inflated stage totals with invented money
+    return 0;
   };
 
   // Lead Type Badge
@@ -154,6 +157,20 @@ export default function KanbanPipeline({
     }
   };
 
+  // "More" menus are <details> disclosures: close them on outside click or Esc
+  useEffect(() => {
+    const closeAll = (e) => {
+      document.querySelectorAll('.kb-more[open]').forEach((d) => {
+        if (e.type === 'keydown' ? e.key === 'Escape' : !d.contains(e.target)) d.removeAttribute('open');
+      });
+    };
+    document.addEventListener('click', closeAll);
+    document.addEventListener('keydown', closeAll);
+    return () => {
+      document.removeEventListener('click', closeAll);
+      document.removeEventListener('keydown', closeAll);
+    };
+  }, []);
   const filteredLeads = useMemo(() => {
     return leads.filter(l => {
       if (filterType !== 'all' && l.type !== filterType) return false;
@@ -437,7 +454,7 @@ export default function KanbanPipeline({
               style={{
                 background: 'var(--crm-subtle)',
                 border: '1px solid var(--crm-line)',
-                borderTop: `4px solid ${stage.color}`,
+                borderTop: `3px solid ${stage.color}`,
                 borderRadius: '12px',
                 padding: '14px',
                 minHeight: '560px',
@@ -456,7 +473,7 @@ export default function KanbanPipeline({
                 alignItems: 'center'
               }}>
                 <div>
-                  <h4 style={{ margin: 0, fontSize: 'var(--crm-text-md)', color: stage.color, fontWeight: 700 }}>
+                  <h4 style={{ margin: 0, fontSize: 'var(--crm-text-md)', color: 'var(--crm-ink)', fontWeight: 700 }}>
                     {isAr ? stage.title_ar : stage.title_en}
                   </h4>
                   <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: '600' }}>
@@ -464,9 +481,9 @@ export default function KanbanPipeline({
                   </span>
                 </div>
                 <span style={{
-                  background: stage.bg,
-                  color: stage.color,
-                  border: `1px solid ${stage.color}35`,
+                  background: 'var(--crm-card)',
+                  color: 'var(--crm-body)',
+                  border: '1px solid var(--crm-line)',
                   padding: '2px 10px',
                   borderRadius: '20px',
                   fontSize: 'var(--crm-text-xs)',
@@ -498,362 +515,111 @@ export default function KanbanPipeline({
                     const area = getLocalizedArea(areaRaw);
                     const typeBadge = getLeadTypeBadge(lead);
                     const timeAgoText = formatTimeAgo(lead.timestamp || lead.createdAt);
-                    const phoneDisplay = lead.whatsapp || lead.phone || 'غير مسجل';
 
                     // 🚨 Check if inquiry is pending contact > 24 hours
                     const isOverdue = (lead.status === 'new' || !lead.status) && 
                       lead.timestamp && (Date.now() - new Date(lead.timestamp).getTime() > 24 * 60 * 60 * 1000);
 
+                    const stageIndex = PIPELINE_STAGES.findIndex(s => s.id === (lead.status || 'new'));
+                    const closeMenu = (e) => e.currentTarget.closest('details')?.removeAttribute('open');
+                    const leadName = lead.name?.trim() || (isAr ? 'عميل بدون اسم' : 'Unnamed lead');
+
+                    // Neutral card (audit DEF-10): the stage colour lives only on the column rule;
+                    // state that needs attention is a single icon line, not another coloured box.
                     return (
-                      <div
+                      <article
                         key={lead.id}
                         draggable
                         onDragStart={(e) => handleDragStart(e, lead.id)}
-                        className="kanban-lead-card animate-fadeIn"
-                        style={{
-                          background: 'var(--crm-card)',
-                          border: isOverdue ? '1px solid #f43f5e' : '1px solid #e2e8f0',
-                          borderRadius: '10px',
-                          padding: '13px',
-                          boxShadow: isOverdue ? '0 0 12px rgba(244, 63, 94, 0.25)' : '0 2px 6px rgba(0, 0, 0, 0.04)',
-                          cursor: 'grab',
-                          transition: 'all 0.2s ease',
-                          color: 'var(--crm-ink)'
-                        }}
+                        className={`kb-card animate-fadeIn ${isOverdue ? 'is-overdue' : ''}`}
+                        aria-label={`${leadName} — ${isAr ? stage.title_ar : stage.title_en}`}
                       >
-                        {/* Overdue Warning Pill */}
-                        {isOverdue && (
-                          <div style={{
-                            background: '#fef2f2',
-                            border: '1px solid #fecaca',
-                            color: '#991b1b',
-                            borderRadius: '6px',
-                            padding: '4px 8px',
-                            fontSize: 'var(--crm-text-xs)',
-                            fontWeight: 'bold',
-                            marginBottom: '8px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '5px'
-                          }}>
-                            <AlertTriangle size={13} style={{ color: '#dc2626' }} />
-                            <span>{isAr ? '🚨 متأخر عن الاتصال (> 24 ساعة)' : '🚨 Overdue Contact (> 24h)'}</span>
-                          </div>
-                        )}
-
-                        {/* Card Top Meta: Type Badge + Time Ago */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                          <span style={{
-                            background: typeBadge.bg,
-                            color: typeBadge.color,
-                            border: `1px solid ${typeBadge.border}`,
-                            padding: '2px 7px',
-                            borderRadius: '6px',
-                            fontSize: 'var(--crm-text-xs)',
-                            fontWeight: '700'
-                          }}>
-                            {typeBadge.label}
-                          </span>
-
-                          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                            <Clock size={11} />
-                            <span>{timeAgoText}</span>
-                          </span>
+                        <div className="kb-card-top">
+                          <span className="kb-type">{typeBadge.label}</span>
+                          <span className="kb-time"><Clock size={11} aria-hidden="true" />{timeAgoText}</span>
                         </div>
 
-                        {/* Name + Lead Quality Score */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                          <strong 
-                            onClick={() => onOpenLead ? onOpenLead(lead) : onOpenEditLead?.(lead)}
-                            style={{ 
-                              fontSize: 'var(--crm-text-md)', 
-                              color: '#092347', 
-                              fontWeight: 700, 
-                              letterSpacing: '-0.2px',
-                              cursor: (onOpenLead || onOpenEditLead) ? 'pointer' : 'default',
-                              textDecoration: onOpenLead ? 'underline' : 'none'
-                            }}
-                            title={isAr ? 'فتح المعاينة السريعة للعميل' : 'Open Lead Quick Drawer'}
-                          >
-                            {lead.name || (isAr ? 'عميل بدون اسم' : 'Unnamed Lead')}
-                          </strong>
-                          
-                          <span 
-                            title={isAr ? 'درجة جودة واكتمال العميل' : 'Lead Quality Score'}
-                            style={{ 
-                              background: '#ecfdf5',
-                              color: '#065f46',
-                              border: '1px solid #a7f3d0',
-                              borderRadius: '20px',
-                              padding: '2px 7px',
-                              fontSize: 'var(--crm-text-xs)',
-                              fontWeight: '700',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '3px'
-                            }}
-                          >
-                            <Sparkles size={10} />
-                            <span>{lead.score || 95}% {isAr ? 'جودة' : ''}</span>
-                          </span>
-                        </div>
+                        <button
+                          type="button"
+                          className="kb-name"
+                          onClick={() => (onOpenLead ? onOpenLead(lead) : onOpenEditLead?.(lead))}
+                          title={isAr ? 'فتح المعاينة السريعة للعميل' : 'Open lead'}
+                        >
+                          {leadName}
+                        </button>
 
-                        {/* Localized Property Type & Area */}
-                        <div style={{ 
-                          fontSize: 'var(--crm-text-sm)', 
-                          color: 'var(--crm-body)', 
-                          marginBottom: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          background: 'var(--crm-subtle)',
-                          border: '1px solid var(--crm-line)',
-                          padding: '5px 8px',
-                          borderRadius: '6px'
-                        }}>
-                          <Building size={13} style={{ color: 'var(--crm-accent-text)', flexShrink: 0 }} />
-                          <span style={{ fontWeight: '700' }}>{propType}</span>
-                          <span style={{ color: '#cbd5e1' }}>•</span>
-                          <MapPin size={12} style={{ color: 'var(--crm-info)', flexShrink: 0 }} />
+                        <p className="kb-meta">
+                          <span>{propType}</span>
+                          <span aria-hidden="true">·</span>
                           <span>{area}</span>
+                          {lead.score ? <><span aria-hidden="true">·</span><span>{isAr ? `جودة ${lead.score}%` : `${lead.score}% fit`}</span></> : null}
+                        </p>
+
+                        <div className="kb-value">
+                          {budget > 0 ? (
+                            <><bdi>{budget.toLocaleString('en-US')}</bdi><small>{isAr ? 'ج.م' : 'EGP'}</small></>
+                          ) : (
+                            <span className="kb-value-empty">{isAr ? 'لم تُحدَّد الميزانية' : 'Budget not set'}</span>
+                          )}
+                          <bdi className="kb-phone">{lead.whatsapp || lead.phone || '—'}</bdi>
                         </div>
 
-                        {/* Direct Phone / WhatsApp display */}
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          fontSize: 'var(--crm-text-xs)',
-                          color: 'var(--crm-muted)',
-                          marginBottom: '8px',
-                          direction: 'ltr',
-                          justifyContent: 'flex-end'
-                        }}>
-                          <span style={{ fontFamily: 'monospace', color: 'var(--crm-ink)', fontWeight: '700' }}>
-                            {phoneDisplay}
-                          </span>
-                          <Phone size={12} style={{ color: 'var(--crm-positive)' }} />
-                        </div>
-
-                        {/* Prominent Budget Pill */}
-                        <div style={{
-                          background: '#ecfdf5',
-                          border: '1px solid #a7f3d0',
-                          borderRadius: '6px',
-                          padding: '5px 9px',
-                          marginBottom: '10px',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center'
-                        }}>
-                          <span style={{ fontSize: 'var(--crm-text-xs)', color: '#065f46', fontWeight: '600' }}>
-                            {isAr ? 'قيمة الصفقة المتوقعة:' : 'Deal Budget:'}
-                          </span>
-                          <strong style={{ fontSize: 'var(--crm-text-base)', color: '#047857', fontWeight: 700 }}>
-                            💰 {budget.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}
-                          </strong>
-                        </div>
-
-                        {/* Scheduled Next Follow-up Badge if any */}
+                        {isOverdue && (
+                          <p className="kb-flag kb-flag--danger"><AlertTriangle size={13} aria-hidden="true" />{isAr ? 'متأخر عن الاتصال أكثر من 24 ساعة' : 'Not contacted for 24h+'}</p>
+                        )}
                         {lead.nextFollowUpAt && (
-                          <div style={{
-                            background: '#f0f9ff',
-                            border: '1px solid #bae6fd',
-                            borderRadius: '6px',
-                            padding: '4px 8px',
-                            fontSize: 'var(--crm-text-xs)',
-                            color: '#0369a1',
-                            fontWeight: '600',
-                            marginBottom: '8px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '5px'
-                          }}>
-                            <Calendar size={12} />
-                            <span>{isAr ? 'متابعة قادمة:' : 'Follow-up:'} {new Date(lead.nextFollowUpAt).toLocaleString(isAr ? 'ar-EG' : 'en-US', { dateStyle: 'short', timeStyle: 'short' })}</span>
-                          </div>
+                          <p className="kb-flag"><Calendar size={13} aria-hidden="true" />{isAr ? 'متابعة:' : 'Follow-up:'} {new Date(lead.nextFollowUpAt).toLocaleString(isAr ? 'ar-EG' : 'en-US', { dateStyle: 'short', timeStyle: 'short' })}</p>
                         )}
-
-                        {/* Scheduled Visit Badge if any */}
                         {lead.siteVisit && (
-                          <div style={{
-                            background: '#fef3c7',
-                            border: '1px solid #fde68a',
-                            borderRadius: '6px',
-                            padding: '4px 8px',
-                            fontSize: 'var(--crm-text-xs)',
-                            color: '#92400e',
-                            fontWeight: '600',
-                            marginBottom: '10px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '5px'
-                          }}>
-                            <Car size={13} />
-                            <span>{isAr ? 'موعد معاينة:' : 'Visit:'} {lead.siteVisit.visitDate} ({lead.siteVisit.visitTime})</span>
-                          </div>
+                          <p className="kb-flag"><Car size={13} aria-hidden="true" />{isAr ? 'معاينة:' : 'Visit:'} {lead.siteVisit.visitDate} ({lead.siteVisit.visitTime})</p>
                         )}
 
-                        {/* Card Actions Footer */}
-                        <div style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          borderTop: '1px solid #f1f5f9',
-                          paddingTop: '9px',
-                          marginTop: '6px'
-                        }}>
-                          {/* Quick Actions */}
-                          <div style={{ display: 'flex', gap: '5px' }}>
-                            {/* Quick Drawer Button */}
-                            {onOpenLead && (
-                              <button
-                                type="button"
-                                className="btn btn-sm"
-                                onClick={() => onOpenLead(lead)}
-                                style={{ 
-                                  padding: '5px 8px', 
-                                  fontSize: 'var(--crm-text-xs)',
-                                  background: '#eff6ff',
-                                  color: '#2563eb',
-                                  border: '1px solid #bfdbfe',
-                                  borderRadius: '6px',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '3px',
-                                  cursor: 'pointer',
-                                  fontWeight: 'bold'
-                                }}
-                                title={isAr ? 'معاينة سريعة وتسجيل مكالمة' : 'Quick Drawer'}
-                              >
-                                <Zap size={13} />
-                                <span>{isAr ? 'سريع' : 'Quick'}</span>
+                        <div className="kb-actions">
+                          <button type="button" className="kb-btn kb-btn--wa" onClick={() => onWhatsAppClick(lead)} title={isAr ? 'محادثة فورية عبر واتساب' : 'WhatsApp'}>
+                            <MessageSquare size={14} aria-hidden="true" /><span>{isAr ? 'واتساب' : 'WhatsApp'}</span>
+                          </button>
+                          {onOpenLead && (
+                            <button type="button" className="kb-btn" onClick={() => onOpenLead(lead)} title={isAr ? 'معاينة سريعة وتسجيل مكالمة' : 'Quick view'}>
+                              <Zap size={14} aria-hidden="true" /><span>{isAr ? 'معاينة' : 'Open'}</span>
+                            </button>
+                          )}
+
+                          <details className="kb-more">
+                            <summary className="kb-btn kb-btn--icon" aria-label={isAr ? 'إجراءات أخرى' : 'More actions'}>
+                              <MoreHorizontal size={16} aria-hidden="true" />
+                            </summary>
+                            <div className="kb-menu">
+                              <button type="button" onClick={(e) => { closeMenu(e); setSchedulingVisitLead(lead); }}>
+                                <Car size={14} aria-hidden="true" />{isAr ? 'حجز موعد معاينة' : 'Schedule visit'}
                               </button>
-                            )}
-
-                            {/* WhatsApp Button */}
-                            <button
-                              type="button"
-                              className="btn btn-sm"
-                              onClick={() => onWhatsAppClick(lead)}
-                              style={{ 
-                                padding: '5px 8px', 
-                                fontSize: 'var(--crm-text-xs)',
-                                background: 'var(--crm-positive-solid)',
-                                color: '#ffffff',
-                                border: 'none',
-                                borderRadius: '6px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '3px',
-                                cursor: 'pointer',
-                                fontWeight: 'bold'
-                              }}
-                              title={isAr ? 'محادثة فورية عبر واتساب' : 'WhatsApp Chat'}
-                            >
-                              <MessageSquare size={13} />
-                              <span>واتساب</span>
-                            </button>
-
-                            {/* Schedule Site Visit */}
-                            <button
-                              type="button"
-                              className="btn btn-sm"
-                              onClick={() => setSchedulingVisitLead(lead)}
-                              style={{ 
-                                padding: '5px 7px', 
-                                fontSize: 'var(--crm-text-xs)', 
-                                color: 'var(--crm-accent-text)',
-                                background: '#fffbeb',
-                                border: '1px solid #fde68a',
-                                borderRadius: '6px'
-                              }}
-                              title={isAr ? 'حجز موعد معاينة ميدانية' : 'Schedule Site Visit'}
-                            >
-                              <Car size={13} />
-                            </button>
-
-                            {/* Edit Lead */}
-                            {onOpenEditLead && (
-                              <button
-                                type="button"
-                                className="btn btn-sm"
-                                onClick={() => onOpenEditLead(lead)}
-                                style={{ 
-                                  padding: '5px 7px', 
-                                  fontSize: 'var(--crm-text-xs)', 
-                                  borderRadius: '6px',
-                                  background: 'var(--crm-subtle)',
-                                  border: '1px solid var(--crm-line-strong)',
-                                  color: 'var(--crm-body)'
-                                }}
-                                title={isAr ? 'تعديل بيانات العميل' : 'Edit Lead'}
-                              >
-                                <Edit3 size={13} />
+                              {onOpenEditLead && (
+                                <button type="button" onClick={(e) => { closeMenu(e); onOpenEditLead(lead); }}>
+                                  <Edit3 size={14} aria-hidden="true" />{isAr ? 'تعديل البيانات' : 'Edit'}
+                                </button>
+                              )}
+                              <button type="button" disabled={stageIndex <= 0} onClick={(e) => { closeMenu(e); handleMoveToPrevStage(lead); }}>
+                                {isAr ? <ChevronRight size={14} aria-hidden="true" /> : <ChevronLeft size={14} aria-hidden="true" />}{isAr ? 'إرجاع للمرحلة السابقة' : 'Previous stage'}
                               </button>
-                            )}
+                              {onDeleteLead && (
+                                <button type="button" className="is-danger" onClick={(e) => { closeMenu(e); setLeadToDelete(lead); }}>
+                                  <Trash2 size={14} aria-hidden="true" />{isAr ? 'حذف العميل' : 'Delete'}
+                                </button>
+                              )}
+                            </div>
+                          </details>
 
-                            {/* Delete Lead */}
-                            {onDeleteLead && (
-                              <button
-                                type="button"
-                                className="btn btn-sm"
-                                onClick={() => setLeadToDelete(lead)}
-                                style={{ 
-                                  padding: '5px 7px', 
-                                  fontSize: 'var(--crm-text-xs)', 
-                                  borderRadius: '6px',
-                                  border: '1px solid #fecaca',
-                                  background: '#fef2f2',
-                                  color: '#dc2626'
-                                }}
-                                title={isAr ? 'حذف العميل' : 'Delete Lead'}
-                              >
-                                <Trash2 size={13} />
-                              </button>
-                            )}
-                          </div>
-
-                          {/* RTL/LTR Intuitive Stage Transitions */}
-                          <div style={{ display: 'flex', gap: '3px' }}>
-                            {/* Move to Previous Stage */}
-                            <button
-                              type="button"
-                              className="btn btn-sm"
-                              onClick={() => handleMoveToPrevStage(lead)}
-                              style={{ 
-                                padding: '4px 6px', 
-                                fontSize: 'var(--crm-text-xs)', 
-                                borderRadius: '6px',
-                                border: '1px solid var(--crm-line-strong)',
-                                background: 'var(--crm-card)',
-                                color: 'var(--crm-body)'
-                              }}
-                              title={isAr ? 'إرجاع للمرحلة السابقة' : 'Previous Stage'}
-                            >
-                              {isAr ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
-                            </button>
-
-                            {/* Move to Next Stage */}
-                            <button
-                              type="button"
-                              className="btn btn-sm"
-                              onClick={() => handleMoveToNextStage(lead)}
-                              style={{ 
-                                padding: '4px 6px', 
-                                fontSize: 'var(--crm-text-xs)', 
-                                borderRadius: '6px',
-                                border: '1px solid #fde68a',
-                                background: '#fffbeb',
-                                color: '#b45309'
-                              }}
-                              title={isAr ? 'ترقية للمرحلة التالية' : 'Next Stage'}
-                            >
-                              {isAr ? <ChevronLeft size={13} /> : <ChevronRight size={13} />}
-                            </button>
-                          </div>
+                          <button
+                            type="button"
+                            className="kb-btn kb-btn--icon kb-next"
+                            onClick={() => handleMoveToNextStage(lead)}
+                            disabled={stageIndex >= PIPELINE_STAGES.length - 1}
+                            aria-label={isAr ? `نقل إلى: ${PIPELINE_STAGES[stageIndex + 1]?.title_ar || ''}` : `Move to: ${PIPELINE_STAGES[stageIndex + 1]?.title_en || ''}`}
+                            title={isAr ? 'نقل للمرحلة التالية' : 'Next stage'}
+                          >
+                            {isAr ? <ChevronLeft size={16} aria-hidden="true" /> : <ChevronRight size={16} aria-hidden="true" />}
+                          </button>
                         </div>
-                      </div>
+                      </article>
                     );
                   })
                 )}

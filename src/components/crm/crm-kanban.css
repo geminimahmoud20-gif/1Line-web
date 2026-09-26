@@ -1,0 +1,134 @@
+/* =============================================================
+   Kanban card — audit phase 3 (DEF-10, DEF-21), 2026-09-26
+   One neutral surface; stage colour only on the column's top rule.
+   Every colour is a theme token, so light and dark need no overrides.
+   ============================================================= */
+
+.kb-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 13px;
+  border-radius: 10px;
+  background: var(--crm-card);
+  border: 1px solid var(--crm-line);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  color: var(--crm-ink);
+  cursor: grab;
+  transition: border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.kb-card:hover { border-color: var(--crm-line-strong); box-shadow: 0 6px 18px -10px rgba(15, 23, 42, 0.25); }
+.kb-card:active { cursor: grabbing; }
+.kb-card.is-overdue { border-inline-start: 3px solid var(--crm-danger); }
+
+.kb-card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.kb-type { font-size: var(--crm-text-xs); font-weight: 600; color: var(--crm-muted); }
+.kb-time { display: inline-flex; align-items: center; gap: 4px; font-size: var(--crm-text-xs); color: var(--crm-muted); }
+
+.kb-name {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--crm-text-md);
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--crm-ink);
+  text-align: start;
+  cursor: pointer;
+}
+.kb-name:hover { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--crm-accent); }
+
+.kb-meta { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 6px; font-size: var(--crm-text-sm); color: var(--crm-body); }
+.kb-meta span[aria-hidden] { color: var(--crm-faint); }
+
+.kb-value { display: flex; align-items: baseline; gap: 5px; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.kb-value bdi:first-child { font-size: var(--crm-text-lg); font-weight: 800; color: var(--crm-ink); letter-spacing: -0.01em; }
+.kb-value small { font-size: var(--crm-text-xs); font-weight: 600; color: var(--crm-muted); }
+.kb-value-empty { font-size: var(--crm-text-sm); color: var(--crm-muted); font-style: normal; }
+.kb-phone { margin-inline-start: auto; font-size: var(--crm-text-xs); color: var(--crm-muted); }
+
+.kb-flag { margin: 0; display: flex; align-items: center; gap: 6px; font-size: var(--crm-text-xs); color: var(--crm-body); }
+.kb-flag svg { color: var(--crm-muted); flex: none; }
+.kb-flag--danger { color: var(--crm-danger); font-weight: 600; }
+.kb-flag--danger svg { color: var(--crm-danger); }
+
+.kb-actions { display: flex; align-items: center; gap: 6px; margin-top: 6px; padding-top: 9px; border-top: 1px solid var(--crm-line); }
+.kb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--crm-line-strong);
+  background: var(--crm-card);
+  color: var(--crm-body);
+  font: inherit;
+  font-size: var(--crm-text-xs);
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.kb-btn::-webkit-details-marker { display: none; }
+.kb-btn:hover:not(:disabled) { border-color: var(--crm-accent); color: var(--crm-ink); }
+.kb-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.kb-btn:focus-visible, .kb-name:focus-visible, .kb-menu button:focus-visible { outline: 2px solid var(--crm-accent); outline-offset: 2px; }
+/* WhatsApp keeps its recognisable green: the one coloured action on the card */
+.kb-btn--wa { background: var(--crm-positive-solid); border-color: var(--crm-positive-solid); color: #fff; }
+.kb-btn--wa:hover:not(:disabled) { color: #fff; border-color: var(--crm-positive-solid); filter: brightness(1.08); }
+.kb-btn--icon { width: 30px; padding: 0; }
+.kb-next { margin-inline-start: auto; }
+
+.kb-more { position: relative; }
+.kb-more[open] > summary { border-color: var(--crm-accent); color: var(--crm-ink); }
+.kb-menu {
+  position: absolute;
+  z-index: 20;
+  inset-block-end: calc(100% + 6px);
+  inset-inline-start: 0;
+  min-width: 200px;
+  padding: 6px;
+  border-radius: 10px;
+  background: var(--crm-card);
+  border: 1px solid var(--crm-line-strong);
+  box-shadow: 0 16px 40px -16px rgba(15, 23, 42, 0.45);
+  display: grid;
+  gap: 2px;
+}
+.kb-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--crm-body);
+  font: inherit;
+  font-size: var(--crm-text-sm);
+  text-align: start;
+  cursor: pointer;
+}
+.kb-menu button:hover:not(:disabled) { background: var(--crm-subtle); color: var(--crm-ink); }
+.kb-menu button:disabled { opacity: 0.4; cursor: not-allowed; }
+.kb-menu button.is-danger { color: var(--crm-danger); }
+
+/* DEF-21: the board scrolls sideways — fade the edges and snap to columns so it reads as "more" */
+.kanban-board-scroll-container {
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: 8px;
+  -webkit-mask-image: linear-gradient(to left, transparent 0, #000 28px, #000 calc(100% - 28px), transparent 100%);
+  mask-image: linear-gradient(to left, transparent 0, #000 28px, #000 calc(100% - 28px), transparent 100%);
+  padding-inline: 8px;
+}
+.kanban-board-scroll-container > .kanban-stage-column { scroll-snap-align: start; }
+
+@media (prefers-reduced-motion: reduce) {
+  .kb-card, .kb-btn { transition: none; }
+}

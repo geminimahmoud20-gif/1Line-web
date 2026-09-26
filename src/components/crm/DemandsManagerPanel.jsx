@@ -385,6 +385,7 @@ export default function DemandsManagerPanel({
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', flex: 1, justifyContent: 'flex-end' }}>
           <select
             value={typeFilter}
+            aria-label={isAr ? 'تصفية حسب نوع العقار' : 'Filter by property type'}
             onChange={(e) => setTypeFilter(e.target.value)}
             style={{
               padding: '8px 12px',
@@ -884,6 +885,7 @@ export default function DemandsManagerPanel({
                   <label>{isAr ? 'نوع العقار' : 'Property Type'}</label>
                   <select
                     value={formData.type}
+                    aria-label={isAr ? 'نوع العقار' : 'Property type'}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                   >
                     {PROP_TYPE_OPTIONS.map(t => (
@@ -896,6 +898,7 @@ export default function DemandsManagerPanel({
                   <label>{isAr ? 'المنطقة' : 'District'}</label>
                   <select
                     value={formData.area}
+                    aria-label={isAr ? 'المنطقة' : 'Area'}
                     onChange={(e) => setFormData({ ...formData, area: e.target.value })}
                   >
                     {AREA_OPTIONS.map(a => (
@@ -922,6 +925,7 @@ export default function DemandsManagerPanel({
                   <label>{isAr ? 'درجة الجدية / الاستعجال' : 'Urgency'}</label>
                   <select
                     value={formData.urgency}
+                    aria-label={isAr ? 'درجة الاستعجال' : 'Urgency'}
                     onChange={(e) => setFormData({ ...formData, urgency: e.target.value })}
                   >
                     <option value="high">{isAr ? 'مستعجل كاش (عالي الأولوية)' : 'Urgent Cash'}</option>
@@ -936,6 +940,7 @@ export default function DemandsManagerPanel({
                 <label>{isAr ? 'حالة النشر والظهور على الموقع' : 'Listing Status'}</label>
                 <select
                   value={formData.status}
+                  aria-label={isAr ? 'حالة الطلب' : 'Status'}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                   style={{ fontWeight: 'bold' }}
                 >
