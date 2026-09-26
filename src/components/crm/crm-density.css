@@ -99,3 +99,10 @@ html:not(.dark-theme):not([data-theme="dark"]) .crm-layout { --crm-canvas: #F5F3
 @keyframes crm-spin { to { transform: rotate(360deg); } }
 .crm-layout .spin { animation: crm-spin 0.9s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .crm-layout .spin { animation: none; } }
+
+/* Founder CMS: cancel + add-by-URL row under the video upload box */
+.crm-layout .fcms-video-tools { display: flex; flex-direction: column; gap: 10px; margin: 12px 0 18px; }
+.crm-layout .fcms-video-tools > button { align-self: center; }
+.crm-layout .fcms-url-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.crm-layout .fcms-url-row label { font-size: var(--crm-text-sm); font-weight: 600; color: var(--crm-body); }
+.crm-layout .fcms-url-row input { flex: 1 1 260px; min-width: 0; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--crm-line-strong); background: var(--crm-card); color: var(--crm-ink); font: inherit; font-size: var(--crm-text-sm); min-height: 0 !important; }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Building, 
   User, 
@@ -113,6 +113,28 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
   // (The old version embedded the whole file as a base64 data URL in the settings: a WhatsApp
   // clip became ~20MB of text, froze the form, and could not be saved to localStorage or Firestore.)
   const [uploadProgress, setUploadProgress] = useState(null); // null | 0..100
+  const cancelUploadRef = useRef(null);
+  const [canCancelUpload, setCanCancelUpload] = useState(false);
+  const [pastedVideoUrl, setPastedVideoUrl] = useState('');
+
+  // Works without Firebase Storage: any public https video (mp4/webm) can be added by URL
+  const handleAddVideoByUrl = async () => {
+    const url = pastedVideoUrl.trim();
+    let valid;
+    try { valid = new URL(url).protocol === 'https:'; } catch { valid = false; }
+    if (!valid) {
+      if (triggerToast) triggerToast(isAr ? 'الرابط يجب أن يبدأ بـ https:// ويشير مباشرة لملف الفيديو (.mp4 أو .webm).' : 'Enter a direct https:// video URL (.mp4/.webm).', 'error');
+      return;
+    }
+    const name = decodeURIComponent(url.split('/').pop()?.split('?')[0] || '').replace(/\.[^/.]+$/, '') || (isAr ? 'فيديو من رابط' : 'Linked video');
+    const newClip = { id: `link-${Date.now()}`, title_ar: name, title_en: name, url, poster: formData.heroPosterUrl || '' };
+    const currentClips = formData.heroVideoClips || DEFAULT_FOUNDER_CMS.heroVideoClips;
+    const next = { ...formData, heroVideoUrl: url, heroVideoClips: [newClip, ...currentClips] };
+    setFormData(next);
+    setPastedVideoUrl('');
+    await saveFounderSettings(next);
+    if (triggerToast) triggerToast(isAr ? 'تمت إضافة الفيديو من الرابط وحفظه ✔' : 'Video added from URL and saved', 'success');
+  };
   const handleVideoFileUpload = async (e) => {
     const input = e.target;
     const file = input.files?.[0];
@@ -121,11 +143,24 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
 
     const mb = (file.size / 1024 / 1024).toFixed(1);
     setUploadProgress(0);
-    const res = await uploadCmsMedia(file, 'video', (p) => setUploadProgress(p));
+    const res = await uploadCmsMedia(file, 'video', (p) => setUploadProgress(p), (cancel) => { cancelUploadRef.current = cancel; setCanCancelUpload(true); });
+    cancelUploadRef.current = null;
+    setCanCancelUpload(false);
     setUploadProgress(null);
 
     if (!res.ok) {
       const reasons = {
+        'bucket-unavailable': isAr
+          ? 'خدمة التخزين (Firebase Storage) غير مفعّلة في مشروعك، لذلك لا يمكن رفع ملفات. فعّلها من Firebase Console ← Storage، أو الصق رابط فيديو جاهز في الخانة أدناه.'
+          : 'Firebase Storage is not enabled for this project. Enable it in the console, or paste a video URL below.',
+        unauthenticated: isAr
+          ? 'رفع الملفات يتطلب تسجيل الدخول بحساب المدير في Firebase (الدخول برمز المرور المحلي لا يكفي). يمكنك لصق رابط فيديو بدلاً من ذلك.'
+          : 'Uploading requires signing in with the admin Firebase account. You can paste a video URL instead.',
+        offline: isAr ? 'لا يوجد اتصال بالإنترنت — أعد المحاولة بعد عودة الاتصال.' : 'You are offline.',
+        stalled: isAr
+          ? 'لم يبدأ الرفع خلال 20 ثانية فتم إلغاؤه. غالباً خدمة التخزين غير متاحة أو الاتصال ضعيف جداً.'
+          : 'The upload did not start within 20s and was cancelled.',
+        'storage/canceled': isAr ? 'تم إلغاء الرفع.' : 'Upload cancelled.',
         type: isAr ? 'نوع الملف غير مدعوم — استخدم MP4 أو WebM أو MOV.' : 'Unsupported file — use MP4, WebM or MOV.',
         size: isAr ? `حجم الفيديو ${mb} ميجابايت والحد الأقصى 60. اختر مقطعاً أقصر (10–15 ثانية تكفي للخلفية).` : `Video is ${mb}MB; the limit is 60MB.`,
         'storage/unauthorized': isAr ? 'حسابك لا يملك صلاحية رفع الملفات — سجّل الدخول بحساب المدير وتأكد من نشر قواعد Storage.' : 'Not authorised to upload — sign in as admin and deploy storage rules.',
@@ -394,6 +429,32 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                 }}
                 title={isAr ? 'انقر لاختيار فيديو' : 'Choose video'}
               />
+            </div>
+
+            {/* Upload controls that must sit outside the click-to-choose overlay above */}
+            <div className="fcms-video-tools">
+              {uploadProgress !== null && (
+                <button type="button" className="btn btn-sm btn-outline" onClick={() => cancelUploadRef.current?.()} disabled={!canCancelUpload}>
+                  {isAr ? 'إلغاء الرفع' : 'Cancel upload'}
+                </button>
+              )}
+              {/* Not a <form>: this sits inside the panel's Save form, and nested forms are invalid HTML */}
+              <div className="fcms-url-row" role="group" aria-labelledby="fcms-video-url-label">
+                <label id="fcms-video-url-label" htmlFor="fcms-video-url">{isAr ? 'أو أضف فيديو من رابط مباشر:' : 'Or add a video by direct link:'}</label>
+                <input
+                  id="fcms-video-url"
+                  type="url"
+                  dir="ltr"
+                  inputMode="url"
+                  placeholder="https://…/video.mp4"
+                  value={pastedVideoUrl}
+                  onChange={(e) => setPastedVideoUrl(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddVideoByUrl(); } }}
+                />
+                <button type="button" className="btn btn-sm btn-primary" onClick={handleAddVideoByUrl} disabled={!pastedVideoUrl.trim()}>
+                  {isAr ? 'إضافة الرابط' : 'Add link'}
+                </button>
+              </div>
             </div>
 
             {/* 🎞️ Short Videos Playlist Engine */}

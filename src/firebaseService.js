@@ -140,12 +140,41 @@ export const CMS_MEDIA_LIMITS = {
  * Upload a CMS media file. onProgress(0..100). Resolves { ok, url } or { ok: false, reason }:
  * reason = 'type' | 'size' | 'not-configured' | Firebase error code (e.g. 'storage/unauthorized').
  */
-export const uploadCmsMedia = async (file, kind = 'video', onProgress) => {
+/**
+ * Is the Storage bucket provisioned? When Storage was never enabled in the console the
+ * bucket answers 404 (measured on line-c9601.firebasestorage.app, 2026-09-26) and the SDK
+ * kept retrying the upload at 0%. An existing bucket answers 200/401/403 to this
+ * unauthenticated list call. Resolves true | false, or null when unreachable (offline / timeout).
+ */
+const probeStorageBucket = async () => {
+  const bucket = storage?.app?.options?.storageBucket;
+  if (!bucket) return false;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 8000);
+  try {
+    const res = await fetch(`https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}/o?maxResults=1`, { signal: ctrl.signal, cache: 'no-store' });
+    return res.status !== 404;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
+/**
+ * onStart(cancel) hands the caller a cancel function once bytes start moving.
+ * Extra reasons: 'unauthenticated' | 'offline' | 'bucket-unavailable' | 'stalled' | 'storage/canceled'.
+ */
+export const uploadCmsMedia = async (file, kind = 'video', onProgress, onStart) => {
   const limits = CMS_MEDIA_LIMITS[kind];
   if (!file || !limits) return { ok: false, reason: 'type' };
   if (!limits.types.includes(file.type)) return { ok: false, reason: 'type' };
   if (file.size > limits.maxBytes) return { ok: false, reason: 'size' };
   if (!isFirebaseConfigured() || !storage) return { ok: false, reason: 'not-configured' };
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return { ok: false, reason: 'offline' };
+  // The rules only accept signed-in admins; the local PIN session has no Firebase user
+  if (!auth?.currentUser) return { ok: false, reason: 'unauthenticated' };
+  if ((await probeStorageBucket()) === false) return { ok: false, reason: 'bucket-unavailable' };
 
   const { ref, uploadBytesResumable, getDownloadURL } = await import('firebase/storage');
   // Default retry window is 10 minutes — on a dead connection the admin would watch 0% that long
@@ -156,15 +185,23 @@ export const uploadCmsMedia = async (file, kind = 'video', onProgress) => {
     contentType: file.type,
     cacheControl: 'public, max-age=31536000, immutable'
   });
+  onStart?.(() => task.cancel());
+
   return new Promise((resolve) => {
+    let settled = false;
+    const finish = (res) => { if (!settled) { settled = true; clearTimeout(stallTimer); resolve(res); } };
+    // Watchdog: nothing transferred in 20s means the upload is not going to start
+    const stallTimer = setTimeout(() => {
+      if (task.snapshot.bytesTransferred === 0) { task.cancel(); finish({ ok: false, reason: 'stalled' }); }
+    }, 20 * 1000);
     task.on('state_changed',
       (snap) => onProgress?.(Math.round((snap.bytesTransferred / snap.totalBytes) * 100)),
-      (error) => resolve({ ok: false, reason: error?.code || 'error' }),
+      (error) => finish({ ok: false, reason: error?.code || 'error' }),
       async () => {
         try {
-          resolve({ ok: true, url: await getDownloadURL(task.snapshot.ref), path });
+          finish({ ok: true, url: await getDownloadURL(task.snapshot.ref), path });
         } catch (error) {
-          resolve({ ok: false, reason: error?.code || 'error' });
+          finish({ ok: false, reason: error?.code || 'error' });
         }
       });
   });
