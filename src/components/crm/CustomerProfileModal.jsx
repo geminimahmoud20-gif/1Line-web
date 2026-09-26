@@ -311,9 +311,10 @@ export default function CustomerProfileModal({
               className="btn btn-sm"
               title={isAr ? 'إضافة موعد معاينة في تقويم Google' : 'Sync viewing to Google Calendar'}
               onClick={() => {
+                const displayPhone = canViewLeadPhone(userRole) ? formData.phone : maskPhoneNumber(formData.phone, userRole);
                 const calUrl = generateGoogleCalendarUrl({
                   title: `${isAr ? 'معاينة عقارية 1Line' : '1Line Property Viewing'}: ${formData.name}`,
-                  description: `العميل: ${formData.name}\nالهاتف: ${formData.phone}\nنوع العقار: ${formData.propertyType}\nالملاحظات: ${formData.nextActionNote || (lead?.notes || 'معاينة ميدانية')}`,
+                  description: `العميل: ${formData.name}\nالهاتف: ${displayPhone}\nنوع العقار: ${formData.propertyType}\nالملاحظات: ${formData.nextActionNote || (lead?.notes || 'معاينة ميدانية')}`,
                   location: `محافظة سوهاج - ${formData.area || 'المقر الرئيسي'}`,
                   startTime: formData.nextActionDate || new Date(Date.now() + 24 * 3600 * 1000)
                 });
@@ -334,9 +335,10 @@ export default function CustomerProfileModal({
               className="btn btn-sm"
               title={isAr ? 'تنزيل ملف موعد .ics لأجهزة iPhone و Outlook' : 'Download .ics for Apple/Outlook'}
               onClick={() => {
+                const displayPhone = canViewLeadPhone(userRole) ? formData.phone : maskPhoneNumber(formData.phone, userRole);
                 downloadIcsFile({
                   title: `معاينة عقارية 1Line: ${formData.name}`,
-                  description: `العميل: ${formData.name} (${formData.phone})\nالملاحظات: ${formData.nextActionNote || (lead?.notes || 'معاينة عقارية')}`,
+                  description: `العميل: ${formData.name} (${displayPhone})\nالملاحظات: ${formData.nextActionNote || (lead?.notes || 'معاينة عقارية')}`,
                   location: `محافظة سوهاج - ${formData.area || 'المقر'}`,
                   startTime: formData.nextActionDate || new Date(Date.now() + 24 * 3600 * 1000)
                 }, `1Line-${formData.name || 'Viewing'}.ics`);
@@ -573,9 +575,9 @@ export default function CustomerProfileModal({
                     <label>{isAr ? 'رقم هاتف بديل / قريب:' : 'Alternative Phone:'}</label>
                     <input
                       type="text"
-                      disabled={!isEditing}
+                      disabled={!isEditing || !canViewLeadPhone(userRole)}
                       placeholder="010XXXXXXXX"
-                      value={formData.altPhone}
+                      value={canViewLeadPhone(userRole) ? formData.altPhone : maskPhoneNumber(formData.altPhone, userRole)}
                       onChange={(e) => setFormData({ ...formData, altPhone: e.target.value })}
                     />
                   </div>

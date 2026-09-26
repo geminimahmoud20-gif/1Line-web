@@ -55,7 +55,16 @@ export default function PrimeDistrictsShowcase({ lang = 'ar' }) {
             <div
               key={district.id}
               className="prime-district-card"
+              role="button"
+              tabIndex={0}
+              aria-label={isAr ? `استعراض عقارات ${district.name_ar || district.label_ar}` : `Explore properties in ${district.name_en || district.label_en}`}
               onClick={() => navigate(`/properties?area=${district.id}`)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  navigate(`/properties?area=${district.id}`);
+                }
+              }}
               style={{ backgroundImage: `url(${bgImg})` }}
             >
               <div className="district-card-overlay" />

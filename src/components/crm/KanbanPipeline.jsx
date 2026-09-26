@@ -247,9 +247,16 @@ export default function KanbanPipeline({
     }
   };
 
-  // Auto distribute leads across stages for realistic demo
+  // Auto distribute leads across stages for realistic demo (with confirmation safeguard)
   const handleAutoDistributeStages = () => {
     if (!onUpdateLead || leads.length === 0) return;
+    const confirmed = typeof window !== 'undefined' && window.confirm(
+      isAr 
+        ? `⚠️ تنبيه تشغيلي:\nهل أنت متأكد من رغبتك في إعادة توزيع حالات جميع العملاء (${leads.length} عميل) على مراحل المسار تجريبياً؟\nسيؤدي ذلك إلى تعديل مراحل الصفقات الحالية.`
+        : `⚠️ Operational Warning:\nAre you sure you want to test-redistribute all ${leads.length} leads across pipeline stages? This will update their active deal stages.`
+    );
+    if (!confirmed) return;
+
     const stages = ['new', 'contacted', 'site_visit', 'negotiating', 'closing'];
     leads.forEach((lead, idx) => {
       const assignedStage = stages[idx % stages.length];

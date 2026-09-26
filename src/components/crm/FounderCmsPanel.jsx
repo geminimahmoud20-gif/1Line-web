@@ -31,6 +31,33 @@ import {
 } from '../../utils/founderCmsData';
 import { uploadCmsMedia } from '../../firebaseLazy';
 
+/**
+ * DEV ONLY: send the file to the Vite dev-server endpoint (scripts/vite-local-media.mjs), which
+ * compresses it with ffmpeg into public/videos and returns "/videos/<name>.mp4".
+ * Same result shape as uploadCmsMedia. onOptimising fires once all bytes are sent.
+ */
+function uploadToLocalSite(file, onProgress, onStart, onOptimising) {
+  return new Promise((resolve) => {
+    if (!['video/mp4', 'video/webm', 'video/quicktime'].includes(file.type)) return resolve({ ok: false, reason: 'type' });
+    if (file.size > 200 * 1024 * 1024) return resolve({ ok: false, reason: 'size' });
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/__local-media-upload');
+    xhr.setRequestHeader('Content-Type', file.type);
+    xhr.setRequestHeader('X-File-Name', encodeURIComponent(file.name));
+    xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress?.(Math.round((e.loaded / e.total) * 100)); };
+    xhr.upload.onload = () => onOptimising?.();
+    xhr.onload = () => {
+      let body = {};
+      try { body = JSON.parse(xhr.responseText); } catch { /* non-JSON */ }
+      resolve(xhr.status === 200 && body.ok ? { ok: true, url: body.url, bytesOut: body.bytesOut, optimised: body.optimised } : { ok: false, reason: body.reason || `http-${xhr.status}` });
+    };
+    xhr.onerror = () => resolve({ ok: false, reason: 'local-server' });
+    xhr.onabort = () => resolve({ ok: false, reason: 'storage/canceled' });
+    onStart?.(() => xhr.abort());
+    xhr.send(file);
+  });
+}
+
 export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
   const isAr = lang === 'ar';
   const [formData, setFormData] = useState(() => getFounderSettings());
@@ -114,6 +141,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
   // clip became ~20MB of text, froze the form, and could not be saved to localStorage or Firestore.)
   const [uploadProgress, setUploadProgress] = useState(null); // null | 0..100
   const cancelUploadRef = useRef(null);
+  const [uploadPhase, setUploadPhase] = useState('uploading'); // 'uploading' | 'optimising'
   const [canCancelUpload, setCanCancelUpload] = useState(false);
   const [pastedVideoUrl, setPastedVideoUrl] = useState('');
 
@@ -146,7 +174,12 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
 
     const mb = (file.size / 1024 / 1024).toFixed(1);
     setUploadProgress(0);
-    const res = await uploadCmsMedia(file, 'video', (p) => setUploadProgress(p), (cancel) => { cancelUploadRef.current = cancel; setCanCancelUpload(true); });
+    // Local dev server: save into the site's own public/videos (Firebase Storage isn't enabled).
+    // Production keeps the Storage path, which starts working once Storage is enabled.
+    const res = import.meta.env.DEV
+      ? await uploadToLocalSite(file, (p) => setUploadProgress(p), (cancel) => { cancelUploadRef.current = cancel; setCanCancelUpload(true); }, () => setUploadPhase('optimising'))
+      : await uploadCmsMedia(file, 'video', (p) => setUploadProgress(p), (cancel) => { cancelUploadRef.current = cancel; setCanCancelUpload(true); });
+    setUploadPhase('uploading');
     cancelUploadRef.current = null;
     setCanCancelUpload(false);
     setUploadProgress(null);
@@ -164,6 +197,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
           ? 'لم يبدأ الرفع خلال 20 ثانية فتم إلغاؤه. غالباً خدمة التخزين غير متاحة أو الاتصال ضعيف جداً.'
           : 'The upload did not start within 20s and was cancelled.',
         'storage/canceled': isAr ? 'تم إلغاء الرفع.' : 'Upload cancelled.',
+        'local-server': isAr ? 'تعذّر الاتصال بخادم التطوير المحلي — تأكد أن npm run dev ما زال يعمل.' : 'Local dev server not reachable.',
+        'needs-ffmpeg': isAr ? 'هذا النوع يحتاج تحويلاً إلى MP4 لكن ffmpeg غير متاح. ارفع ملف MP4 أو شغّل npm install.' : 'Needs ffmpeg to convert — upload an MP4.',
         type: isAr ? 'نوع الملف غير مدعوم — استخدم MP4 أو WebM أو MOV.' : 'Unsupported file — use MP4, WebM or MOV.',
         size: isAr ? `حجم الفيديو ${mb} ميجابايت والحد الأقصى 60. اختر مقطعاً أقصر (10–15 ثانية تكفي للخلفية).` : `Video is ${mb}MB; the limit is 60MB.`,
         'storage/unauthorized': isAr ? 'حسابك لا يملك صلاحية رفع الملفات — سجّل الدخول بحساب المدير وتأكد من نشر قواعد Storage.' : 'Not authorised to upload — sign in as admin and deploy storage rules.',
@@ -191,7 +226,12 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
     // Persist straight away so a finished upload is never lost if the admin forgets to press Save
     await saveFounderSettings(next);
     if (triggerToast) {
-      triggerToast(isAr ? `تم رفع الفيديو (${mb} ميجابايت) وحفظه ✔` : `Video uploaded (${mb}MB) and saved`, 'success');
+      const outMb = res.bytesOut ? (res.bytesOut / 1024 / 1024).toFixed(1) : null;
+      triggerToast(res.url.startsWith('/videos/')
+        ? (isAr
+          ? `تم حفظ الفيديو في ملفات الموقع (${res.url})${outMb ? ` — تم ضغطه من ${mb} إلى ${outMb} ميجابايت` : ''}. سيظهر للزوار بعد نشر الموقع.`
+          : `Saved to the site at ${res.url}. Visible after the next deploy.`)
+        : (isAr ? `تم رفع الفيديو (${mb} ميجابايت) وحفظه ✔` : `Video uploaded (${mb}MB) and saved`), 'success');
     }
   };
 
@@ -412,7 +452,9 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                   </div>
                   <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginTop: '6px', fontSize: 'var(--crm-text-sm)', fontWeight: 700, color: 'var(--crm-ink)' }}>
                     <Loader2 size={14} className="spin" />
-                    {isAr ? `جاري الرفع… ${uploadProgress}%` : `Uploading… ${uploadProgress}%`}
+                    {uploadPhase === 'optimising'
+                      ? (isAr ? 'جاري ضغط الفيديو وتجهيزه للويب… (قد يستغرق دقيقة)' : 'Optimising video for the web…')
+                      : (isAr ? `جاري الرفع… ${uploadProgress}%` : `Uploading… ${uploadProgress}%`)}
                   </span>
                 </div>
               )}

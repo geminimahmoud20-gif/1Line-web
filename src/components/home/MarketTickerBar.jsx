@@ -34,7 +34,7 @@ export default function MarketTickerBar({ lang = 'ar', demands = [] }) {
         icon: MapPin,
         to: `/properties?area=${encodeURIComponent(a.id)}`,
         label: isAr ? `متوسط سعر المتر — ${a.name_ar}` : `Avg. price / m² — ${a.name_en || a.name_ar}`,
-        value: isAr ? `${fmt(toNumber(a.avgPricePerMeter), true)} ج.م` : `EGP ${fmt(toNumber(a.avgPricePerMeter), false)}`,
+        value: isAr ? `${fmt(toNumber(a.avgPricePerMeter))} ج.م` : `EGP ${fmt(toNumber(a.avgPricePerMeter))}`,
       }));
 
     const latestDemand = demands

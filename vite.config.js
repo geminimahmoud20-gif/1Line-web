@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import { execSync } from 'node:child_process'
 import path from 'node:path'
 import react from '@vitejs/plugin-react'
+import localMediaUpload from './scripts/vite-local-media.mjs'
 
 function getSafeOutDir() {
   if (process.platform === 'win32') {
@@ -22,7 +23,8 @@ function getSafeOutDir() {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  // localMediaUpload: dev-server-only endpoint that saves CRM video uploads into public/videos
+  plugins: [react(), localMediaUpload()],
   build: {
     outDir: getSafeOutDir(),
     emptyOutDir: false,

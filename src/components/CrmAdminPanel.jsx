@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Lock, Eye, EyeOff, ShieldCheck, AlertCircle, 
   Wifi, WifiOff, Download, LogOut, Bell, 
@@ -623,62 +623,82 @@ export const CrmAdminPanel = ({
     window.open(`https://wa.me/?text=${encodeURIComponent(dispatchText)}`, '_blank');
   };
 
-  // CRM Analytics Metrics
-  const crmAnalytics = {
-    todayCount: leads.filter(
-      (l) => new Date(l.timestamp).toDateString() === new Date().toDateString()
-    ).length,
-    buyersCount: leads.filter((l) => l.type === 'buyer').length,
-    sellersCount: leads.filter((l) => l.type === 'seller').length,
-    brokersCount: leads.filter((l) => l.type === 'broker').length,
-    requestsCount: leads.filter((l) => l.type === 'request').length,
-    closedCount: leads.filter((l) => l.status === 'closed').length,
-    conversionSuccess: leads.length > 0 
-      ? Math.round((leads.filter((l) => l.status === 'closed').length / leads.length) * 100) + '%'
-      : '0%'
-  };
+  // CRM Analytics Metrics (Memoized)
+  const crmAnalytics = useMemo(() => {
+    const todayStr = new Date().toDateString();
+    let todayCount = 0;
+    let buyersCount = 0;
+    let sellersCount = 0;
+    let brokersCount = 0;
+    let requestsCount = 0;
+    let closedCount = 0;
 
-  // Filtered Leads list with Multi-Dimensional Search & Workflow Stages
-  const filteredLeads = leads.filter((l) => {
-    if (myDealsOnly && activeRole !== 'super_admin') {
-      if (l.assignedTo !== currentRoleObj.agentName && l.assignedTo !== 'Unassigned') {
-        return false;
+    for (let i = 0; i < leads.length; i++) {
+      const l = leads[i];
+      if (l.timestamp && new Date(l.timestamp).toDateString() === todayStr) todayCount++;
+      if (l.type === 'buyer') buyersCount++;
+      else if (l.type === 'seller') sellersCount++;
+      else if (l.type === 'broker') brokersCount++;
+      else if (l.type === 'request') requestsCount++;
+      if (l.status === 'closed') closedCount++;
+    }
+
+    return {
+      todayCount,
+      buyersCount,
+      sellersCount,
+      brokersCount,
+      requestsCount,
+      closedCount,
+      conversionSuccess: leads.length > 0 
+        ? Math.round((leads.filter((l) => l.status === 'closed').length / leads.length) * 100) + '%'
+        : '0%'
+    };
+  }, [leads]);
+
+  // Filtered Leads list with Multi-Dimensional Search & Workflow Stages (Memoized)
+  const filteredLeads = useMemo(() => {
+    return leads.filter((l) => {
+      if (myDealsOnly && activeRole !== 'super_admin') {
+        if (l.assignedTo !== currentRoleObj.agentName && l.assignedTo !== 'Unassigned') {
+          return false;
+        }
       }
-    }
 
-    // Workflow & Archive Logic
-    if (leadFilter === 'archived') {
-      if (!l.isArchived) return false;
-    } else {
-      // Hide archived leads in all normal operational filters
-      if (l.isArchived) return false;
+      // Workflow & Archive Logic
+      if (leadFilter === 'archived') {
+        if (!l.isArchived) return false;
+      } else {
+        // Hide archived leads in all normal operational filters
+        if (l.isArchived) return false;
 
-      if (leadFilter === 'new') {
-        if (l.status !== 'new' && l.status) return false;
-      } else if (leadFilter === 'due') {
-        const todayStr = new Date().toISOString().slice(0, 10);
-        const hasDue = (l.nextFollowUpAt && l.nextFollowUpAt.slice(0, 10) <= todayStr) || (l.followUp && l.followUp.includes(todayStr));
-        if (!hasDue) return false;
-      } else if (leadFilter === 'qualified') {
-        if ((l.score || 0) < 80) return false;
-      } else if (leadFilter !== 'all' && l.type !== leadFilter) {
-        return false;
+        if (leadFilter === 'new') {
+          if (l.status !== 'new' && l.status) return false;
+        } else if (leadFilter === 'due') {
+          const todayStr = new Date().toISOString().slice(0, 10);
+          const hasDue = (l.nextFollowUpAt && l.nextFollowUpAt.slice(0, 10) <= todayStr) || (l.followUp && l.followUp.includes(todayStr));
+          if (!hasDue) return false;
+        } else if (leadFilter === 'qualified') {
+          if ((l.score || 0) < 80) return false;
+        } else if (leadFilter !== 'all' && l.type !== leadFilter) {
+          return false;
+        }
       }
-    }
 
-    if (temperatureFilter !== 'all' && (l.temperature || 'hot') !== temperatureFilter) return false;
-    if (areaFilter !== 'all' && l.details?.area !== areaFilter) return false;
-    if (searchQuery.trim() !== '') {
-      const q = searchQuery.toLowerCase();
-      const matchName = (l.name || '').toLowerCase().includes(q);
-      const matchPhone = (l.phone || '').includes(q);
-      const matchNotes = (l.notes && l.notes.toLowerCase().includes(q));
-      const matchCity = (l.cityOrExpat && l.cityOrExpat.toLowerCase().includes(q));
-      const matchTags = (l.tags && l.tags.some(t => t.toLowerCase().includes(q)));
-      if (!matchName && !matchPhone && !matchNotes && !matchCity && !matchTags) return false;
-    }
-    return true;
-  });
+      if (temperatureFilter !== 'all' && (l.temperature || 'hot') !== temperatureFilter) return false;
+      if (areaFilter !== 'all' && l.details?.area !== areaFilter) return false;
+      if (searchQuery.trim() !== '') {
+        const q = searchQuery.toLowerCase();
+        const matchName = (l.name || '').toLowerCase().includes(q);
+        const matchPhone = (l.phone || '').includes(q);
+        const matchNotes = (l.notes && l.notes.toLowerCase().includes(q));
+        const matchCity = (l.cityOrExpat && l.cityOrExpat.toLowerCase().includes(q));
+        const matchTags = (l.tags && l.tags.some(t => t.toLowerCase().includes(q)));
+        if (!matchName && !matchPhone && !matchNotes && !matchCity && !matchTags) return false;
+      }
+      return true;
+    });
+  }, [leads, myDealsOnly, activeRole, currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter, searchQuery]);
 
   // Login Gate
   // Hooks stay above the early return below. Keep the keyboard handler's view of the table current (read in the window keydown listener)

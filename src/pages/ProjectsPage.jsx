@@ -64,11 +64,17 @@ export default function ProjectsPage({
 
   const handleDownloadBrochure = (project) => {
     const title = isAr ? project.title_ar : project.title_en;
+    const brochureUrl = (Array.isArray(project.images) && project.images.length > 0) ? project.images[0] : null;
+    if (!brochureUrl) {
+      if (triggerToast) {
+        triggerToast(isAr ? 'بروشور المشروع قيد التجهيز والاعتماد' : 'Brochure is being prepared by developer', 'info');
+      }
+      return;
+    }
     if (triggerToast) {
       triggerToast(isAr ? `جاري تجهيز وتحميل بروشور مشروع ${title}...` : `Downloading brochure for ${title}...`, 'success');
     }
-    // Direct open/download brochure mock
-    window.open(project.images[0], '_blank');
+    window.open(brochureUrl, '_blank');
   };
 
   return (
@@ -147,7 +153,11 @@ export default function ProjectsPage({
               <div key={project.id} className="mega-project-card">
                 {/* Media & Progress Badge */}
                 <div className="project-card-media-wrap">
-                  <img src={project.images[0]} alt={title} className="project-card-img" />
+                  <img 
+                    src={(Array.isArray(project.images) && project.images[0]) || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80'} 
+                    alt={title} 
+                    className="project-card-img" 
+                  />
                   <div className="project-overlay-gradient" />
 
                   {/* Brand Watermark Overlay */}
