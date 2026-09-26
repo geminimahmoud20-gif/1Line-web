@@ -144,13 +144,19 @@ const CMS_UPLOAD_ROUTE = '/api/cms-upload';
  * For the CMS to decide up front whether the device-upload box can work at all.
  * 'ready' | 'unavailable' (no Blob store connected) | 'unknown' (offline / timeout).
  */
+// 'presigned' (store connected via BLOB_STORE_ID + OIDC) or 'token' (BLOB_READ_WRITE_TOKEN)
+let cmsUploadMode = null;
+
 export const getCmsStorageStatus = async () => {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 8000);
   try {
     const res = await fetch(CMS_UPLOAD_ROUTE, { signal: ctrl.signal, cache: 'no-store' });
     if (!res.ok) return res.status === 404 || res.status === 503 ? 'unavailable' : 'unknown';
-    return (await res.json())?.ok ? 'ready' : 'unavailable';
+    const info = await res.json();
+    if (!info?.ok) return 'unavailable';
+    cmsUploadMode = info.mode;
+    return 'ready';
   } catch {
     return 'unknown';
   } finally {
@@ -174,7 +180,9 @@ export const uploadCmsMedia = async (file, kind = 'video', onProgress, onStart) 
 
   let idToken;
   try { idToken = await auth.currentUser.getIdToken(); } catch { return { ok: false, reason: 'unauthenticated' }; }
-  const { upload } = await import('@vercel/blob/client');
+  if (!cmsUploadMode) await getCmsStorageStatus();
+  const blobClient = await import('@vercel/blob/client');
+  const upload = cmsUploadMode === 'token' ? blobClient.upload : blobClient.uploadPresigned;
   const safeName = file.name.normalize('NFKD').replace(/[^\w.-]+/g, '-').slice(-80) || kind;
   const path = `cms/${kind}s/${Date.now()}-${safeName}`;
   const ctrl = new AbortController();
