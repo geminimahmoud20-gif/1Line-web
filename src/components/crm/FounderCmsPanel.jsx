@@ -120,10 +120,13 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
   // Works without Firebase Storage: any public https video (mp4/webm) can be added by URL
   const handleAddVideoByUrl = async () => {
     const url = pastedVideoUrl.trim();
-    let valid;
-    try { valid = new URL(url).protocol === 'https:'; } catch { valid = false; }
+    // https URLs, or files shipped with the site itself (public/videos → "/videos/name.mp4")
+    let valid = /^\/videos\/[\w.-]+\.(mp4|webm)$/i.test(url);
     if (!valid) {
-      if (triggerToast) triggerToast(isAr ? 'الرابط يجب أن يبدأ بـ https:// ويشير مباشرة لملف الفيديو (.mp4 أو .webm).' : 'Enter a direct https:// video URL (.mp4/.webm).', 'error');
+      try { valid = new URL(url).protocol === 'https:'; } catch { valid = false; }
+    }
+    if (!valid) {
+      if (triggerToast) triggerToast(isAr ? 'اكتب رابطاً يبدأ بـ https:// أو مسار فيديو من ملفات الموقع مثل /videos/hero.mp4' : 'Enter an https:// URL or a site path like /videos/hero.mp4', 'error');
       return;
     }
     const name = decodeURIComponent(url.split('/').pop()?.split('?')[0] || '').replace(/\.[^/.]+$/, '') || (isAr ? 'فيديو من رابط' : 'Linked video');

@@ -26,6 +26,10 @@
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     },
     {
+      "source": "/videos/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800" }]
+    },
+    {
       "source": "/(crm|my-account)(.*)",
       "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
     }
