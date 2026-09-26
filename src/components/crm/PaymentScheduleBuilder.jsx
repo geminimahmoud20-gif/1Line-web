@@ -124,13 +124,15 @@ export default function PaymentScheduleBuilder({
 
       {/* Plan Customizer Form */}
       <div style={{
-        background: 'rgba(15, 23, 42, 0.6)',
-        border: '1px solid var(--border-light)',
+        // Theme tokens: the old rgba(15,23,42,.6) slab rendered as flat grey (#6C727E) in light mode,
+        // leaving the gold heading at 1.06:1 contrast
+        background: 'var(--crm-subtle)',
+        border: '1px solid var(--crm-line)',
         borderRadius: 'var(--radius-md)',
         padding: '20px',
         marginBottom: '24px'
       }}>
-        <h4 style={{ fontSize: '0.9rem', marginBottom: '16px', color: 'var(--accent-gold)' }}>
+        <h4 style={{ fontSize: '0.9rem', marginBottom: '16px', color: 'var(--crm-accent-text)' }}>
           ⚙️ {isAr ? 'تخصيص معايير الخطة المالية للوحدة' : 'Payment Plan Parameters'}
         </h4>
 

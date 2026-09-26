@@ -72,6 +72,9 @@ export default function CrmExecutiveDashboard({
       pipelineValueM: (totalPipelineValue / 1000000).toFixed(1),
       purchasingPowerM: (totalPurchasingPower / 1000000).toFixed(1),
       commissionM: (expectedCommission / 1000000).toFixed(2),
+      // Under 1M the commission reads better as a full amount (87,500 ج.م) than as '0.09 مليون'
+      commissionIsMillions: expectedCommission >= 1000000,
+      commissionFull: Math.round(expectedCommission).toLocaleString('en-US'),
       newLeadsCount: newLeads.length,
       qualifiedCount: qualifiedLeads.length,
       closingCount: closingDeals.length,
@@ -116,7 +119,7 @@ export default function CrmExecutiveDashboard({
               padding: '2px 8px',
               borderRadius: '999px',
               background: 'rgba(169, 130, 74, 0.12)',
-              color: 'var(--crm-accent, #A9824A)',
+              color: 'var(--crm-accent-text)',
               border: '1px solid rgba(169, 130, 74, 0.25)'
             }}>
               1Line Real Estate OS
@@ -231,7 +234,7 @@ export default function CrmExecutiveDashboard({
             </span>
             <TrendingUp size={16} style={{ color: 'var(--crm-positive, #059669)' }} />
           </div>
-          <div style={{ fontSize: '1.65rem', fontWeight: 900, color: 'var(--crm-ink)', marginTop: '6px', fontFamily: 'monospace' }}>
+          <div style={{ fontSize: '1.65rem', fontWeight: 900, color: 'var(--crm-ink)', marginTop: '6px', fontVariantNumeric: 'tabular-nums' }}>
             <bdi>{metrics.pipelineValueM}</bdi>
             <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--crm-muted)', marginInlineStart: '6px' }}>
               {isAr ? 'مليون ج.م' : 'M EGP'}
@@ -258,10 +261,10 @@ export default function CrmExecutiveDashboard({
             </span>
             <Award size={16} style={{ color: 'var(--crm-accent-text)' }} />
           </div>
-          <div style={{ fontSize: '1.65rem', fontWeight: 900, color: 'var(--crm-accent-text, #8A6828)', marginTop: '6px', fontFamily: 'monospace' }}>
-            <bdi>{metrics.commissionM}</bdi>
+          <div style={{ fontSize: '1.65rem', fontWeight: 900, color: 'var(--crm-accent-text, #8A6828)', marginTop: '6px', fontVariantNumeric: 'tabular-nums' }}>
+            <bdi>{metrics.commissionIsMillions ? metrics.commissionM : metrics.commissionFull}</bdi>
             <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--crm-muted)', marginInlineStart: '6px' }}>
-              {isAr ? 'مليون ج.م' : 'M EGP'}
+              {metrics.commissionIsMillions ? (isAr ? 'مليون ج.م' : 'M EGP') : (isAr ? 'ج.م' : 'EGP')}
             </span>
           </div>
           <span style={{ fontSize: '0.72rem', color: 'var(--crm-muted)', marginTop: '2px', display: 'block' }}>
@@ -288,7 +291,7 @@ export default function CrmExecutiveDashboard({
             </span>
             <Zap size={16} style={{ color: 'var(--crm-positive, #059669)' }} />
           </div>
-          <div style={{ fontSize: '1.65rem', fontWeight: 900, color: 'var(--crm-ink)', marginTop: '6px', fontFamily: 'monospace' }}>
+          <div style={{ fontSize: '1.65rem', fontWeight: 900, color: 'var(--crm-ink)', marginTop: '6px', fontVariantNumeric: 'tabular-nums' }}>
             <bdi>{metrics.purchasingPowerM}</bdi>
             <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--crm-muted)', marginInlineStart: '6px' }}>
               {isAr ? 'مليون ج.م' : 'M EGP'}
@@ -315,7 +318,7 @@ export default function CrmExecutiveDashboard({
             </span>
             <Briefcase size={16} style={{ color: 'var(--crm-info, #2563EB)' }} />
           </div>
-          <div style={{ fontSize: '1.65rem', fontWeight: 900, color: 'var(--crm-ink)', marginTop: '6px', fontFamily: 'monospace' }}>
+          <div style={{ fontSize: '1.65rem', fontWeight: 900, color: 'var(--crm-ink)', marginTop: '6px', fontVariantNumeric: 'tabular-nums' }}>
             {crmAnalytics.conversionSuccess || '0%'}
           </div>
           <span style={{ fontSize: '0.72rem', color: 'var(--crm-muted)', marginTop: '2px', display: 'block' }}>
@@ -499,7 +502,7 @@ export default function CrmExecutiveDashboard({
               style={{
                 background: 'none',
                 border: 'none',
-                color: 'var(--crm-accent, #A9824A)',
+                color: 'var(--crm-accent-text)',
                 fontSize: '0.76rem',
                 fontWeight: 700,
                 cursor: 'pointer'
@@ -540,7 +543,7 @@ export default function CrmExecutiveDashboard({
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <strong style={{ fontSize: '0.84rem', color: 'var(--crm-ink)' }}>{leadItem.name}</strong>
                         {leadItem.score && (
-                          <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--crm-accent)' }}>
+                          <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--crm-accent-text)' }}>
                             ⚡ {leadItem.score}%
                           </span>
                         )}
@@ -599,7 +602,7 @@ export default function CrmExecutiveDashboard({
               style={{
                 background: 'none',
                 border: 'none',
-                color: 'var(--crm-accent, #A9824A)',
+                color: 'var(--crm-accent-text)',
                 fontSize: '0.76rem',
                 fontWeight: 700,
                 cursor: 'pointer'

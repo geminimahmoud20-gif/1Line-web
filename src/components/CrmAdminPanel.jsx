@@ -1045,13 +1045,15 @@ export const CrmAdminPanel = ({
                       <td data-label={isAr ? 'الاسم والملف' : 'Name & Profile'}>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <strong 
-                              style={{ color: 'var(--text-primary)', cursor: 'pointer', textDecoration: 'underline' }}
+                            {/* Real button: keyboard reachable, and never an invisible empty link when the name is missing */}
+                            <button
+                              type="button"
+                              className="crm-lead-name-btn"
                               onClick={() => setQuickDrawerLead(l)}
                               title={isAr ? 'فتح المعاينة السريعة وتسجيل المكالمة' : 'Open Quick Drawer'}
                             >
-                              {l.name}
-                            </strong>
+                              {l.name?.trim() || <span className="crm-empty-value">{isAr ? 'عميل بدون اسم' : 'Unnamed lead'}</span>}
+                            </button>
                             {l.cityOrExpat && l.cityOrExpat !== 'سوهاج' && (
                               <span style={{ fontSize: '0.68rem', color: 'var(--cyan)', background: 'var(--cyan-bg)', padding: '1px 5px', borderRadius: '4px' }}>
                                 ✈️ {l.cityOrExpat}
@@ -1059,7 +1061,7 @@ export const CrmAdminPanel = ({
                             )}
                           </div>
 
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{l.phone}</span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}><bdi>{l.phone || l.whatsapp || '—'}</bdi></span>
 
                           {/* Tags Display */}
                           {l.tags && l.tags.length > 0 && (

@@ -75,6 +75,7 @@
   --crm-body: #CBD5E1;
   --crm-muted: #94A3B8;
   --crm-faint: #8B98AB;        /* 6.3:1 on #0F172A (was #64748B, 3.8:1) */
+  --success: #34D399;          /* .text-emerald / --emerald on dark surfaces (the light-mode #047857 is 3.2:1 here) */
   --crm-accent: #D4AF37;
   --crm-accent-text: #E5C384;
   --crm-accent-soft: rgba(212, 175, 55, 0.12);

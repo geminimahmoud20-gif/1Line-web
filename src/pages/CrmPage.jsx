@@ -18,6 +18,7 @@ import CrmTopbar from '../components/crm/CrmTopbar';
 import CrmCommandPalette from '../components/crm/CrmCommandPalette';
 import '../components/crm/CrmLayout.css';
 import '../components/crm/crm-luxury.css';
+import '../components/crm/crm-dark-surfaces.css';
 import { isFirebaseAuthAvailable, loginUser } from '../firebaseService';
 import { useAuth } from '../context/AuthContext';
 import { canEditProperties, canEditLeadsRole } from '../utils/rbacRules';
