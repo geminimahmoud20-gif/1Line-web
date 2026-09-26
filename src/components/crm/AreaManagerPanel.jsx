@@ -625,7 +625,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                 type="button"
                 onClick={() => setModalMode(null)}
                 aria-label={isAr ? 'إغلاق' : 'Close'}
-                style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+                style={{ background: 'transparent', border: 'none', color: 'var(--crm-faint)', cursor: 'pointer' }}
               >
                 <X size={20} />
               </button>

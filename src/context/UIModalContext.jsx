@@ -61,6 +61,8 @@ export function UIModalProvider({ children }) {
   // Global Keyboard Shortcut for Omnisearch (Ctrl + K / Cmd + K or '/')
   useEffect(() => {
     const handleGlobalSearchKey = (e) => {
+      // The CRM has its own command palette on Ctrl+K; opening the public search too stacked two dialogs
+      if (window.location.pathname.startsWith('/crm')) return;
       const tag = document.activeElement?.tagName?.toLowerCase();
       const isInput = tag === 'input' || tag === 'textarea' || document.activeElement?.isContentEditable;
 

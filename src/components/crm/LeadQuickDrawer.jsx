@@ -37,6 +37,30 @@ export default function LeadQuickDrawer({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
+  // Smart Context Matching Properties for this Lead
+  const matchedProperties = useMemo(() => {
+    if (!lead || !properties || properties.length === 0) return [];
+    const leadBudgetNum = parseInt(String(lead.budget || lead.details?.budget || 0).replace(/[^0-9]/g, '')) || 0;
+    const targetArea = lead.area || lead.details?.area || '';
+    const targetType = lead.propertyType || lead.details?.propertyType || '';
+
+    return properties.map(prop => {
+      let score = 0;
+      if (targetArea && prop.areaKey === targetArea) score += 40;
+      if (targetType && prop.type === targetType) score += 35;
+      if (leadBudgetNum > 0 && prop.price) {
+        const diffRatio = Math.abs(prop.price - leadBudgetNum) / leadBudgetNum;
+        if (diffRatio <= 0.15) score += 25;
+        else if (diffRatio <= 0.3) score += 15;
+      }
+      return { ...prop, _matchScore: score };
+    })
+    .filter(p => p._matchScore > 20)
+    .sort((a, b) => b._matchScore - a._matchScore)
+    .slice(0, 4);
+  }, [properties, lead]);
+
+  // Every hook above runs on each render; the early return must stay after them (React rules of hooks)
   if (!lead) return null;
 
   // Next / Prev lead navigation index
@@ -52,10 +76,10 @@ export default function LeadQuickDrawer({
   const stages = [
     { id: 'new', label_ar: 'جديد', label_en: 'New', color: '#3b82f6' },
     { id: 'contacted', label_ar: 'تم التواصل', label_en: 'Contacted', color: '#8b5cf6' },
-    { id: 'site_visit', label_ar: 'معاينة', label_en: 'Viewing', color: '#d97706' },
+    { id: 'site_visit', label_ar: 'معاينة', label_en: 'Viewing', color: 'var(--crm-warn)' },
     { id: 'negotiating', label_ar: 'تفاوض', label_en: 'Negotiating', color: '#f59e0b' },
-    { id: 'closing', label_ar: 'توقيع وحجز', label_en: 'Closing', color: '#10b981' },
-    { id: 'closed', label_ar: 'صفقة ناجحة', label_en: 'Closed', color: '#059669' },
+    { id: 'closing', label_ar: 'توقيع وحجز', label_en: 'Closing', color: 'var(--crm-positive)' },
+    { id: 'closed', label_ar: 'صفقة ناجحة', label_en: 'Closed', color: 'var(--crm-positive)' },
     { id: 'lost', label_ar: 'مفقود', label_en: 'Lost', color: '#ef4444' }
   ];
 
@@ -162,28 +186,6 @@ export default function LeadQuickDrawer({
     }
   ];
 
-  // Smart Context Matching Properties for this Lead
-  const matchedProperties = useMemo(() => {
-    if (!properties || properties.length === 0) return [];
-    const leadBudgetNum = parseInt(String(lead.budget || lead.details?.budget || 0).replace(/[^0-9]/g, '')) || 0;
-    const targetArea = lead.area || lead.details?.area || '';
-    const targetType = lead.propertyType || lead.details?.propertyType || '';
-
-    return properties.map(prop => {
-      let score = 0;
-      if (targetArea && prop.areaKey === targetArea) score += 40;
-      if (targetType && prop.type === targetType) score += 35;
-      if (leadBudgetNum > 0 && prop.price) {
-        const diffRatio = Math.abs(prop.price - leadBudgetNum) / leadBudgetNum;
-        if (diffRatio <= 0.15) score += 25;
-        else if (diffRatio <= 0.3) score += 15;
-      }
-      return { ...prop, _matchScore: score };
-    })
-    .filter(p => p._matchScore > 20)
-    .sort((a, b) => b._matchScore - a._matchScore)
-    .slice(0, 4);
-  }, [properties, lead]);
 
   return (
     <>
@@ -512,7 +514,7 @@ export default function LeadQuickDrawer({
 
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                   {[
-                    { label: isAr ? 'لم يرد' : 'No Answer', color: '#64748b' },
+                    { label: isAr ? 'لم يرد' : 'No Answer', color: 'var(--crm-muted)' },
                     { label: isAr ? 'طلب مهلة للاتصال' : 'Callback', color: '#f59e0b' },
                     { label: isAr ? 'مهتم ويبحث بجدية' : 'Interested', color: '#047857' },
                     { label: isAr ? 'تم تحديد موعد معاينة' : 'Viewing Set', color: '#2563eb' },

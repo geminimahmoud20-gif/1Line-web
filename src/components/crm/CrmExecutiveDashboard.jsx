@@ -256,7 +256,7 @@ export default function CrmExecutiveDashboard({
             <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--crm-muted, #64748b)' }}>
               {isAr ? 'العمولة المتوقعة (2.5%)' : 'Expected Commission'}
             </span>
-            <Award size={16} style={{ color: 'var(--crm-accent, #B38A45)' }} />
+            <Award size={16} style={{ color: 'var(--crm-accent-text)' }} />
           </div>
           <div style={{ fontSize: '1.65rem', fontWeight: 900, color: 'var(--crm-accent-text, #8A6828)', marginTop: '6px', fontFamily: 'monospace' }}>
             <bdi>{metrics.commissionM}</bdi>
@@ -335,7 +335,7 @@ export default function CrmExecutiveDashboard({
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <AlertTriangle size={16} style={{ color: '#D97706' }} />
+              <AlertTriangle size={16} style={{ color: 'var(--crm-warn)' }} />
               <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 800, color: 'var(--crm-ink)' }}>
                 {isAr ? 'تنبيهات العمليات التنفيذية المباشرة' : 'Executive Operational Alerts'}
               </h3>
@@ -402,14 +402,14 @@ export default function CrmExecutiveDashboard({
                 }}
               >
                 <div>
-                  <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#D97706' }}>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--crm-warn)' }}>
                     {metrics.unassignedCount} {isAr ? 'عملاء بدون مسؤول مبيعات' : 'Unassigned Leads'}
                   </div>
                   <div style={{ fontSize: '0.72rem', color: 'var(--crm-muted)', marginTop: '2px' }}>
                     {isAr ? 'تعيين لمستشار لمنع تسرب العميل' : 'Assign to sales rep'}
                   </div>
                 </div>
-                <ArrowRight size={14} style={{ color: '#D97706' }} />
+                <ArrowRight size={14} style={{ color: 'var(--crm-warn)' }} />
               </div>
             )}
 

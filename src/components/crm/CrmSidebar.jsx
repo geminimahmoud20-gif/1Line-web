@@ -278,7 +278,7 @@ export default function CrmSidebar({
                       [isAr ? 'left' : 'right']: '8px',
                       background: 'none',
                       border: 'none',
-                      color: '#94a3b8',
+                      color: '#94a3b8', /* sidebar is always dark — fixed light tone, not a theme token */
                       cursor: 'pointer',
                       padding: 0,
                       display: 'flex'
@@ -383,7 +383,7 @@ export default function CrmSidebar({
                       style={{
                         transform: systemExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
                         transition: 'transform 0.2s ease',
-                        color: '#64748b'
+                        color: '#94a3b8' /* always-dark sidebar */
                       }}
                     />
                   )}

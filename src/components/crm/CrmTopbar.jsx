@@ -319,7 +319,7 @@ export default function CrmTopbar({
           >
             <Plus size={14} style={{ color: 'var(--crm-accent)' }} />
             <span>{isAr ? 'إجراء سريع' : 'Action'}</span>
-            <ChevronDown size={12} style={{ color: '#94A3B8' }} />
+            <ChevronDown size={12} style={{ color: 'var(--crm-faint)' }} />
           </button>
 
           {showQuickActionMenu && (
