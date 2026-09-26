@@ -39,33 +39,33 @@ export function findMatchingClientsForProperty(property, leads = [], demands = [
     // Only target active buyers or special requests
     if (lead.status === 'closed' || lead.status === 'lost') return;
 
-    let score = 50; // base score
+    let score = 0;
     const details = lead.details || {};
     const rawLeadArea = details.area || lead.area || '';
     const leadArea = normalizeAreaKey(rawLeadArea);
     const leadType = details.propertyType || lead.type || '';
     const leadBudget = parseInt(String(details.budget || details.expectedPrice || lead.budget || 0).replace(/[^0-9]/g, '')) || 0;
 
-    // Area Match (+30)
+    // Area Match (+40)
     if (leadArea && (leadArea === propertyArea || leadArea === 'all' || propertyArea === 'all')) {
+      score += 40;
+    }
+
+    // Property Type Match (+30)
+    if (leadType && (leadType === propertyType || leadType === 'all')) {
       score += 30;
     }
 
-    // Property Type Match (+20)
-    if (leadType && (leadType === propertyType || leadType === 'all')) {
-      score += 20;
-    }
-
-    // Budget Tolerance (within ±25%) (+20)
+    // Budget Tolerance (within ±25%) (+30)
     if (leadBudget > 0 && propertyPrice > 0) {
       const minBudget = propertyPrice * 0.75;
       const maxBudget = propertyPrice * 1.25;
       if (leadBudget >= minBudget && leadBudget <= maxBudget) {
-        score += 20;
+        score += 30;
       }
     }
 
-    // Must have a valid phone number
+    // Must have a valid phone number and at least 60% match (requires multiple criteria)
     const contactPhone = lead.whatsapp || lead.phone;
     if (score >= 60 && contactPhone) {
       matched.push({
@@ -87,23 +87,23 @@ export function findMatchingClientsForProperty(property, leads = [], demands = [
   demands.forEach((demand) => {
     if (demand.status !== 'published' && demand.status !== 'pending') return;
 
-    let score = 50;
+    let score = 0;
     const rawDemandArea = demand.area || '';
     const demandArea = normalizeAreaKey(rawDemandArea);
     const demandType = demand.type || '';
     const demandBudget = typeof demand.budget === 'number' ? demand.budget : parseInt(String(demand.budget).replace(/,/g, '')) || 0;
 
     if (demandArea && (demandArea === propertyArea || demandArea === 'all' || propertyArea === 'all')) {
-      score += 30;
+      score += 40;
     }
     if (demandType && (demandType === propertyType || demandType === 'all')) {
-      score += 20;
+      score += 30;
     }
     if (demandBudget > 0 && propertyPrice > 0) {
       const minBudget = propertyPrice * 0.75;
       const maxBudget = propertyPrice * 1.25;
       if (demandBudget >= minBudget && demandBudget <= maxBudget) {
-        score += 20;
+        score += 30;
       }
     }
 
@@ -146,7 +146,8 @@ export function generateWhatsAppMessage(eventType, client, property, alternative
   const priceFormatted = (property.price || 0).toLocaleString();
   const downPaymentFormatted = (property.downPayment || Math.round((property.price || 0) * 0.2)).toLocaleString();
   const installmentFormatted = (property.monthlyInstallment || Math.round(((property.price || 0) * 0.8) / 60)).toLocaleString();
-  const propertyUrl = `${window.location.origin}/properties/${property.id}`;
+  const origin = (typeof window !== 'undefined' && window.location?.origin) ? window.location.origin : 'https://1-line-qkzp9.vercel.app';
+  const propertyUrl = `${origin}/properties/${property.id}`;
 
   if (eventType === 'new_unit') {
     return `مرحباً أ. ${clientName} 🌸،
@@ -172,7 +173,7 @@ ${propertyUrl}
     if (alternativeProperties.length > 0) {
       altText = `\n\nولكن يسعدنا إخبارك بتوفر وحدات بديلة ممتازة بنفس المنطقة والمواصفات:\n` +
         alternativeProperties.slice(0, 2).map((alt, i) => `🔹 ${alt.title_ar} - بسعر ${(alt.price || 0).toLocaleString()} ج.م`).join('\n') +
-        `\n\nتصفح البدائل: ${window.location.origin}/properties`;
+        `\n\nتصفح البدائل: ${origin}/properties`;
     }
 
     return `مرحباً أ. ${clientName}،

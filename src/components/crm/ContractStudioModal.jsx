@@ -34,7 +34,7 @@ export default function ContractStudioModal({
 
   const [formData, setFormData] = useState(() => ({
     buyerName: 'محمد أحمد علي',
-    buyerPhone: '+20 101 234 5678',
+    buyerPhone: '+20 122 322 2956',
     buyerNationalId: '29001012600000',
     buyerAddress: 'سوهاج - شارع الجمهورية',
     propertyTitle: 'شقة فاخرة ناصية بحرية',
@@ -129,7 +129,7 @@ export default function ContractStudioModal({
     `• إجمالي الثمن: ${formData.propertyPrice.toLocaleString()} ج.م\n` +
     `• مبلغ جدية الحجز المؤكد: ${formData.depositAmount.toLocaleString()} ج.م (${formData.paymentMethod})\n` +
     `• الرقم المرجعي: ${formData.transactionRef}\n` +
-    `📞 للاستفسار والتواصل مع الإدارة القانونية: +20 101 234 5678`
+    `📞 للاستفسار والتواصل مع الإدارة القانونية: +20 122 322 2956`
   );
 
   return (

@@ -174,8 +174,8 @@ export default function PropertyCompareDrawer({
     });
 
     msg += isAr 
-      ? `🏛️ صادر عن منصة 1Line Solutions العقارية بسوهاج\n📞 للاستفسار وحجز معاينة مجمعة: +20 101 234 5678` 
-      : `🏛️ Issued by 1Line Solutions Sohag\n📞 For Inquiries & Group Tour: +20 101 234 5678`;
+      ? `🏛️ صادر عن منصة 1Line Solutions العقارية بسوهاج\n📞 للاستفسار وحجز معاينة مجمعة: +20 122 322 2956` 
+      : `🏛️ Issued by 1Line Solutions Sohag\n📞 For Inquiries & Group Tour: +20 122 322 2956`;
 
     trackEvent('compare_shared_whatsapp', { count: compareList.length });
     const waUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`;

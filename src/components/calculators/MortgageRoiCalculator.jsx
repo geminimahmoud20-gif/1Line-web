@@ -35,7 +35,10 @@ export default function MortgageRoiCalculator({
   
   // ROI States
   const [monthlyRent, setMonthlyRent] = useState(18000);
-  const annualMaintenance = 10000;
+  const annualMaintenance = useMemo(() => {
+    // 0.5% من قيمة الوحدة سنوياً بحد أدنى 6,000 ج.م وحد أقصى 35,000 ج.م
+    return Math.min(35000, Math.max(6000, Math.round(price * 0.005)));
+  }, [price]);
   const [annualAppreciation, setAnnualAppreciation] = useState(15); // Capital growth %
   const isAr = lang === 'ar';
 
@@ -112,14 +115,15 @@ export default function MortgageRoiCalculator({
         `• مدة التقسيط: ${years} سنوات (${years * 12} شهر)\n` +
         `• معدل الفائدة/المرابحة: ${interestRate}%\n` +
         `• إجمالي المبلغ المسترد: ${formatCurrency(totalPaid)}\n` +
-        `📞 للاستفسار وحجز الوحدة: +20 101 234 5678`
+        `📞 للاستفسار وحجز الوحدة: +20 122 322 2956`
       : `🏢 Mortgage & Payment Plan - 1Line Real Estate (${currency})\n` +
         `• Price: ${formatCurrency(price)}\n` +
         `• Downpayment (${downpaymentPercent}%): ${formatCurrency(downPaymentAmount)}\n` +
         `• Monthly Installment: ${formatCurrency(monthlyInstallment)}\n` +
         `• Duration: ${years} Years\n` +
         `• Rate: ${interestRate}%\n` +
-        `• Total Repayment: ${formatCurrency(totalPaid)}`;
+        `• Total Repayment: ${formatCurrency(totalPaid)}\n` +
+        `📞 Hotline & Booking: +20 122 322 2956`;
     navigator.clipboard.writeText(text);
     setCopied(true);
     trackEvent('calculator_used', { price, monthlyInstallment, type: activeTab });

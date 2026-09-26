@@ -12,7 +12,7 @@ export const generateReservationContractPdf = async (contractData) => {
 
   const {
     buyerName = 'العميل الفاضل / المستثمر',
-    buyerPhone = '+20 101 234 5678',
+    buyerPhone = '+20 122 322 2956',
     buyerNationalId = '29001012600000',
     buyerAddress = 'سوهاج - جمهورية مصر العربية',
     property = {},
@@ -214,7 +214,7 @@ export const generateReservationContractPdf = async (contractData) => {
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.text('1Line Real Estate Development & Brokerage - Sohag & New Sohag, Egypt', 15, 287);
-  doc.text('Hotline: +20 101 234 5678  |  Website: www.oneline-egypt.com  |  CR: 489201', 15, 292);
+  doc.text('Hotline: +20 122 322 2956  |  Website: www.oneline-egypt.com  |  CR: 489201', 15, 292);
 
   // Save the PDF file
   const filename = `1Line_Contract_${transactionRef}_${new Date().toISOString().slice(0, 10)}.pdf`;

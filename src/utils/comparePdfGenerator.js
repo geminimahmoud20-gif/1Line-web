@@ -38,7 +38,7 @@ export const generateComparePdf = async (compareList = [], lang = 'ar') => {
   doc.setFontSize(8);
   doc.setTextColor(200, 220, 240);
   doc.text(`Report Date: ${reportDate} | Ref: CMP-OL-${Math.floor(1000 + Math.random() * 9000)}`, 205, 15);
-  doc.text('Certified Listings | Sohag & New Sohag | Hotline: +20 101 234 5678', 190, 23);
+  doc.text('Certified Listings | Sohag & New Sohag | Hotline: +20 122 322 2956', 190, 23);
 
   // 2. Comparison Table Grid Setup
   const startY = 44;

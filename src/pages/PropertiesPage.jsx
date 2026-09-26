@@ -297,6 +297,7 @@ export default function PropertiesPage({
                 className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
                 onClick={() => setViewMode('grid')}
                 title={lang === 'ar' ? 'عرض شبكة العقارات الفاخرة' : 'Luxury Grid View'}
+                aria-label={lang === 'ar' ? 'عرض شبكة العقارات الفاخرة' : 'Luxury Grid View'}
               >
                 <LayoutGrid size={15} />
                 <span className="hide-mobile">{lang === 'ar' ? 'شبكة العقارات' : 'Grid'}</span>
@@ -306,6 +307,7 @@ export default function PropertiesPage({
                 className={`view-btn ${viewMode === 'split' ? 'active' : ''}`}
                 onClick={() => setViewMode('split')}
                 title={lang === 'ar' ? 'عرض تفاعلي (خريطة + قائمة)' : 'Split View'}
+                aria-label={lang === 'ar' ? 'عرض تفاعلي (خريطة + قائمة)' : 'Split View'}
               >
                 <MapIcon size={15} />
                 <span className="hide-mobile">{lang === 'ar' ? 'خريطة وقائمة' : 'Split'}</span>
