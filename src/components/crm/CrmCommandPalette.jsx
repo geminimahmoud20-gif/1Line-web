@@ -5,6 +5,7 @@ import {
   ChevronRight, Phone, DollarSign, Command
 } from 'lucide-react';
 import { usePreferences } from '../../context/PreferencesContext';
+import { canViewLeadPhone, maskPhoneNumber } from '../../utils/rbacRules';
 
 export default function CrmCommandPalette({
   isOpen,
@@ -16,6 +17,7 @@ export default function CrmCommandPalette({
   onSelectProperty,
   onSelectDemand,
   onAction,
+  userRole = 'super_admin',
   isAr = true
 }) {
   const [query, setQuery] = useState('');
@@ -105,23 +107,28 @@ export default function CrmCommandPalette({
       (a.title_en && a.title_en.toLowerCase().includes(q))
     );
 
+    const canViewPhone = canViewLeadPhone(userRole);
+
     const filteredLeads = leads
       .filter(l =>
         (l.name && l.name.toLowerCase().includes(q)) ||
-        (l.phone && l.phone.includes(q)) ||
+        (canViewPhone && l.phone && l.phone.includes(q)) ||
         (l.area && l.area.toLowerCase().includes(q))
       )
       .slice(0, 5)
-      .map(l => ({
-        id: `lead_${l.id}`,
-        title_ar: `${l.name} (${l.phone || ''})`,
-        title_en: `${l.name} (${l.phone || ''})`,
-        sub_ar: `${l.budget ? l.budget + ' ج.م' : ''} • ${l.status || 'new'}`,
-        sub_en: `${l.budget ? l.budget + ' EGP' : ''} • ${l.status || 'new'}`,
-        category: 'leads',
-        data: l,
-        action: () => onSelectLead?.(l)
-      }));
+      .map(l => {
+        const displayPhone = l.phone ? (canViewPhone ? l.phone : maskPhoneNumber(l.phone, userRole)) : '';
+        return {
+          id: `lead_${l.id}`,
+          title_ar: `${l.name} ${displayPhone ? `(${displayPhone})` : ''}`,
+          title_en: `${l.name} ${displayPhone ? `(${displayPhone})` : ''}`,
+          sub_ar: `${l.budget ? l.budget + ' ج.م' : ''} • ${l.status || 'new'}`,
+          sub_en: `${l.budget ? l.budget + ' EGP' : ''} • ${l.status || 'new'}`,
+          category: 'leads',
+          data: l,
+          action: () => onSelectLead?.(l)
+        };
+      });
 
     const filteredProperties = properties
       .filter(p =>

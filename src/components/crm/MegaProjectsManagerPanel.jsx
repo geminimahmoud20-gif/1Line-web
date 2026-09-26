@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { 
   Building2, 
   Plus, 
@@ -126,7 +126,9 @@ export default function MegaProjectsManagerPanel({
 
     if (editingProjectId) {
       if (onUpdateProject) {
-        onUpdateProject(editingProjectId, payload);
+        const res = onUpdateProject(editingProjectId, payload);
+        if (res === false) return;
+        triggerToast(isAr ? 'تم تحديث المشروع بنجاح' : 'Project updated successfully', 'success');
       }
     } else {
       const newProj = {
@@ -134,7 +136,9 @@ export default function MegaProjectsManagerPanel({
         ...payload
       };
       if (onAddProject) {
-        onAddProject(newProj);
+        const res = onAddProject(newProj);
+        if (res === false) return;
+        triggerToast(isAr ? 'تمت إضافة المشروع بنجاح' : 'Project added successfully', 'success');
       }
     }
 
@@ -147,17 +151,29 @@ export default function MegaProjectsManagerPanel({
   const handleDelete = (projId, title) => {
     if (window.confirm(isAr ? `هل أنت متأكد من حذف مشروع: ${title}؟` : `Are you sure you want to delete ${title}?`)) {
       if (onDeleteProject) {
-        onDeleteProject(projId);
+        const res = onDeleteProject(projId);
+        if (res !== false) {
+          triggerToast(isAr ? 'تم حذف المشروع بنجاح' : 'Project deleted successfully', 'info');
+        }
       }
     }
   };
 
-  const filteredProjects = projects.filter(p => {
-    const title = isAr ? p.title_ar : p.title_en;
-    const matchSearch = !searchQuery || title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchCat = selectedCategory === 'all' || p.category === selectedCategory;
-    return matchSearch && matchCat;
-  });
+  const filteredProjects = useMemo(() => {
+    return projects.filter(p => {
+      const titleAr = (p.title_ar || '').toLowerCase();
+      const titleEn = (p.title_en || '').toLowerCase();
+      const devAr = (p.developer_ar || '').toLowerCase();
+      const devEn = (p.developer_en || '').toLowerCase();
+      const locAr = (p.location_ar || '').toLowerCase();
+      const locEn = (p.location_en || '').toLowerCase();
+      const q = searchQuery.trim().toLowerCase();
+
+      const matchSearch = !q || titleAr.includes(q) || titleEn.includes(q) || devAr.includes(q) || devEn.includes(q) || locAr.includes(q) || locEn.includes(q);
+      const matchCat = selectedCategory === 'all' || p.category === selectedCategory;
+      return matchSearch && matchCat;
+    });
+  }, [projects, searchQuery, selectedCategory]);
 
   return (
     <div className="crm-prop-manager-wrapper">

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Menu, Search, X, Plus, ChevronDown, Bell, ShieldCheck,
   Lock, Rocket, Globe, LogOut, Users, Building, Zap,
@@ -51,8 +51,8 @@ export default function CrmTopbar({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const pendingDemands = demands.filter(d => d.status === 'pending');
-  const recentLeads = leads.slice(0, 3);
+  const pendingDemands = useMemo(() => demands.filter(d => d.status === 'pending'), [demands]);
+  const recentLeads = useMemo(() => leads.slice(0, 3), [leads]);
   const totalNotifications = pendingDemands.length + (recentLeads.length > 0 ? 1 : 0);
 
   // Dynamic breadcrumb labels

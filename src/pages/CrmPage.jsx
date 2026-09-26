@@ -561,6 +561,7 @@ export default function CrmPage({
               onDeleteDemand={guard(activeRole === 'super_admin', onDeleteDemand)}
               onUnpublishDemand={guard(can.manageDemands, onUnpublishDemand)}
               lang={lang}
+              userRole={activeRole}
               triggerToast={triggerToast}
             />
           ) : activeTab === 'projects' ? (
@@ -800,6 +801,7 @@ export default function CrmPage({
         leads={leads}
         properties={properties}
         demands={demands}
+        userRole={activeRole}
         isAr={isAr}
         onSelectLead={(l) => {
           setActiveTab('leads');

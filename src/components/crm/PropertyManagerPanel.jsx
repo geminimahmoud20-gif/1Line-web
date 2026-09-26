@@ -491,39 +491,65 @@ export default function PropertyManagerPanel({
     setShowAddModal(false);
   };
 
-  // Filtered Properties for Display
-  const filteredProperties = properties.filter((prop) => {
-    // 1. Trash vs Active
-    const isTrash = prop.isDeleted || prop.status === 'trash';
-    if (statusFilter === 'trash') {
-      return isTrash;
-    }
-    if (isTrash) return false;
+  // Memoized status counts in a single pass $O(N)$
+  const { activeCount, hiddenCount, negotiationCount, soldCount, trashCount } = useMemo(() => {
+    let active = 0;
+    let hidden = 0;
+    let negotiation = 0;
+    let sold = 0;
+    let trash = 0;
 
-    // 2. Status Filters
-    const propStatus = prop.status || (prop.isArchived ? 'hidden' : 'published');
-    if (statusFilter === 'published' && propStatus !== 'published') return false;
-    if (statusFilter === 'hidden' && propStatus !== 'hidden') return false;
-    if (statusFilter === 'under_negotiation' && propStatus !== 'under_negotiation') return false;
-    if (statusFilter === 'sold' && propStatus !== 'sold') return false;
-
-    // 3. Search Query
-    if (searchQuery.trim() !== '') {
-      const q = searchQuery.toLowerCase();
-      const matchTitle = (prop.title_ar || '').toLowerCase().includes(q) || (prop.title_en || '').toLowerCase().includes(q);
-      const matchId = (prop.id || '').toLowerCase().includes(q);
-      const matchArea = (prop.areaKey || '').toLowerCase().includes(q);
-      if (!matchTitle && !matchId && !matchArea) return false;
+    for (let i = 0; i < properties.length; i++) {
+      const p = properties[i];
+      if (p.isDeleted || p.status === 'trash') {
+        trash++;
+      } else {
+        const st = p.status || (p.isArchived ? 'hidden' : 'published');
+        if (st === 'published') active++;
+        else if (st === 'hidden') hidden++;
+        else if (st === 'under_negotiation') negotiation++;
+        else if (st === 'sold') sold++;
+      }
     }
 
-    return true;
-  });
+    return {
+      activeCount: active,
+      hiddenCount: hidden,
+      negotiationCount: negotiation,
+      soldCount: sold,
+      trashCount: trash
+    };
+  }, [properties]);
 
-  const activeCount = properties.filter(p => !p.isDeleted && (p.status === 'published' || !p.status)).length;
-  const hiddenCount = properties.filter(p => !p.isDeleted && p.status === 'hidden').length;
-  const negotiationCount = properties.filter(p => !p.isDeleted && p.status === 'under_negotiation').length;
-  const soldCount = properties.filter(p => !p.isDeleted && p.status === 'sold').length;
-  const trashCount = properties.filter(p => p.isDeleted || p.status === 'trash').length;
+  // Filtered Properties for Display (Memoized)
+  const filteredProperties = useMemo(() => {
+    return properties.filter((prop) => {
+      // 1. Trash vs Active
+      const isTrash = prop.isDeleted || prop.status === 'trash';
+      if (statusFilter === 'trash') {
+        return isTrash;
+      }
+      if (isTrash) return false;
+
+      // 2. Status Filters
+      const propStatus = prop.status || (prop.isArchived ? 'hidden' : 'published');
+      if (statusFilter === 'published' && propStatus !== 'published') return false;
+      if (statusFilter === 'hidden' && propStatus !== 'hidden') return false;
+      if (statusFilter === 'under_negotiation' && propStatus !== 'under_negotiation') return false;
+      if (statusFilter === 'sold' && propStatus !== 'sold') return false;
+
+      // 3. Search Query
+      if (searchQuery.trim() !== '') {
+        const q = searchQuery.toLowerCase();
+        const matchTitle = (prop.title_ar || '').toLowerCase().includes(q) || (prop.title_en || '').toLowerCase().includes(q);
+        const matchId = (prop.id || '').toLowerCase().includes(q);
+        const matchArea = (prop.areaKey || '').toLowerCase().includes(q);
+        if (!matchTitle && !matchId && !matchArea) return false;
+      }
+
+      return true;
+    });
+  }, [properties, statusFilter, searchQuery]);
 
   const badgePresets = [
     { ar: 'عرض مميز', en: 'Featured Deal' },
