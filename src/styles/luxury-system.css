@@ -53,12 +53,12 @@
   --crm-accent: #B38A45;       /* fills, icons, rules only — never text */
   --crm-accent-text: #7C5E30;  /* 6.3:1 white · 5.3:1 on beige chips */
   --crm-accent-soft: #FAF5EA;
-  --crm-positive: #047857;     /* 5.5:1 white (was #059669, 3.8:1) */
+  --crm-positive: #065F46;     /* 7.7:1 white, ≥5.5:1 on tinted green chips (was #059669, 3.8:1) */
   --crm-positive-solid: #065F46;
   --crm-warn: #B45309;         /* 5.0:1 white (was #D97706, 3.2:1) */
-  --crm-info: #2563EB;
+  --crm-info: #1D4ED8;         /* 6.7:1 white, ≥5:1 on tinted blue chips (was #2563EB: 3.9:1 on chips) */
   --crm-violet: #7C3AED;
-  --crm-danger: #DC2626;
+  --crm-danger: #B91C1C;       /* 6.5:1 white, ≥5.3:1 on tinted red chips (was #DC2626: 4.1:1 on chips) */
   --crm-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 4px 14px -2px rgba(15, 23, 42, 0.05);
   --success: #047857;
 

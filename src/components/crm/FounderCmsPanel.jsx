@@ -307,8 +307,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                     : 'Display full luxury video loop behind the hero section.'}
                 </span>
               </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 700 }}>
-                <input
+              <label htmlFor="fcms-field-1" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 700 }}>
+                <input id="fcms-field-1"
                   type="checkbox"
                   checked={formData.heroVideoEnabled !== false}
                   onChange={(e) => setFormData({ ...formData, heroVideoEnabled: e.target.checked })}
@@ -381,8 +381,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 'var(--crm-text-base)', cursor: 'pointer', fontWeight: 700 }}>
-                    <input
+                  <label htmlFor="fcms-field-2" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 'var(--crm-text-base)', cursor: 'pointer', fontWeight: 700 }}>
+                    <input id="fcms-field-2"
                       type="checkbox"
                       checked={formData.heroVideoAutoCycle !== false}
                       onChange={(e) => setFormData({ ...formData, heroVideoAutoCycle: e.target.checked })}
@@ -483,11 +483,11 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
               <div className="form-group-item" style={{ gridColumn: '1 / -1' }}>
-                <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label htmlFor="fcms-field-3" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span>{isAr ? 'رابط الفيديو الأساسي الحالي:' : 'Current Active Video URL:'}</span>
                   <small style={{ color: 'var(--accent-gold)' }}>{isAr ? 'فيديو مباشر عالي الوضوح' : 'HD direct stream'}</small>
                 </label>
-                <input
+                <input id="fcms-field-3"
                   type="url"
                   value={formData.heroVideoUrl || ''}
                   onChange={(e) => setFormData({ ...formData, heroVideoUrl: e.target.value })}
@@ -531,8 +531,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
               </div>
 
               <div className="form-group-item" style={{ gridColumn: '1 / -1' }}>
-                <label>{isAr ? 'رابط صورة البوستر البديلة:' : 'Fallback Poster Image URL:'}</label>
-                <input
+                <label htmlFor="fcms-field-4">{isAr ? 'رابط صورة البوستر البديلة:' : 'Fallback Poster Image URL:'}</label>
+                <input id="fcms-field-4"
                   type="url"
                   value={formData.heroPosterUrl || ''}
                   onChange={(e) => setFormData({ ...formData, heroPosterUrl: e.target.value })}
@@ -567,8 +567,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
 
               {/* Slogan and Highlight Titles */}
               <div className="form-group-item">
-                <label>{isAr ? 'شارة الهيرو العليا (بالعربية):' : 'Hero Badge (Arabic):'}</label>
-                <input
+                <label htmlFor="fcms-field-5">{isAr ? 'شارة الهيرو العليا (بالعربية):' : 'Hero Badge (Arabic):'}</label>
+                <input id="fcms-field-5"
                   type="text"
                   value={formData.heroBadge_ar || ''}
                   onChange={(e) => setFormData({ ...formData, heroBadge_ar: e.target.value })}
@@ -576,8 +576,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
               </div>
 
               <div className="form-group-item">
-                <label>{isAr ? 'شارة الهيرو العليا (بالإنجليزية):' : 'Hero Badge (English):'}</label>
-                <input
+                <label htmlFor="fcms-field-6">{isAr ? 'شارة الهيرو العليا (بالإنجليزية):' : 'Hero Badge (English):'}</label>
+                <input id="fcms-field-6"
                   type="text"
                   value={formData.heroBadge_en || ''}
                   onChange={(e) => setFormData({ ...formData, heroBadge_en: e.target.value })}
@@ -585,8 +585,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
               </div>
 
               <div className="form-group-item">
-                <label>{isAr ? 'العنوان الرئيسي السطر الأول (بالعربية):' : 'Main Title Line 1 (Arabic):'}</label>
-                <input
+                <label htmlFor="fcms-field-7">{isAr ? 'العنوان الرئيسي السطر الأول (بالعربية):' : 'Main Title Line 1 (Arabic):'}</label>
+                <input id="fcms-field-7"
                   type="text"
                   value={formData.heroTitle_ar || ''}
                   onChange={(e) => setFormData({ ...formData, heroTitle_ar: e.target.value })}
@@ -594,8 +594,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
               </div>
 
               <div className="form-group-item">
-                <label>{isAr ? 'العبارة الذهبية المميزة (بالعربية):' : 'Golden Highlight (Arabic):'}</label>
-                <input
+                <label htmlFor="fcms-field-8">{isAr ? 'العبارة الذهبية المميزة (بالعربية):' : 'Golden Highlight (Arabic):'}</label>
+                <input id="fcms-field-8"
                   type="text"
                   value={formData.heroHighlight_ar || ''}
                   onChange={(e) => setFormData({ ...formData, heroHighlight_ar: e.target.value })}
@@ -603,8 +603,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
               </div>
 
               <div className="form-group-item" style={{ gridColumn: '1 / -1' }}>
-                <label>{isAr ? 'النص الوصفي للهيرو (بالعربية):' : 'Hero Subtitle (Arabic):'}</label>
-                <textarea
+                <label htmlFor="fcms-field-9">{isAr ? 'النص الوصفي للهيرو (بالعربية):' : 'Hero Subtitle (Arabic):'}</label>
+                <textarea id="fcms-field-9"
                   rows={2}
                   value={formData.heroSubtitle_ar || ''}
                   onChange={(e) => setFormData({ ...formData, heroSubtitle_ar: e.target.value })}
@@ -618,8 +618,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
         {activeSubTab === 'founder' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
             <div className="form-group-item">
-              <label>{isAr ? 'اسم المؤسس (بالعربية):' : 'Founder Name (Arabic):'}</label>
-              <input
+              <label htmlFor="fcms-field-10">{isAr ? 'اسم المؤسس (بالعربية):' : 'Founder Name (Arabic):'}</label>
+              <input id="fcms-field-10"
                 type="text"
                 value={formData.founderName_ar || ''}
                 onChange={(e) => setFormData({ ...formData, founderName_ar: e.target.value })}
@@ -628,8 +628,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
             </div>
 
             <div className="form-group-item">
-              <label>{isAr ? 'اسم المؤسس (بالإنجليزية):' : 'Founder Name (English):'}</label>
-              <input
+              <label htmlFor="fcms-field-11">{isAr ? 'اسم المؤسس (بالإنجليزية):' : 'Founder Name (English):'}</label>
+              <input id="fcms-field-11"
                 type="text"
                 value={formData.founderName_en || ''}
                 onChange={(e) => setFormData({ ...formData, founderName_en: e.target.value })}
@@ -637,8 +637,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
             </div>
 
             <div className="form-group-item">
-              <label>{isAr ? 'المنصب والصفة (بالعربية):' : 'Founder Role (Arabic):'}</label>
-              <input
+              <label htmlFor="fcms-field-12">{isAr ? 'المنصب والصفة (بالعربية):' : 'Founder Role (Arabic):'}</label>
+              <input id="fcms-field-12"
                 type="text"
                 value={formData.founderRole_ar || ''}
                 onChange={(e) => setFormData({ ...formData, founderRole_ar: e.target.value })}
@@ -646,8 +646,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
             </div>
 
             <div className="form-group-item">
-              <label>{isAr ? 'اللقب المهني الإضافي (بالعربية):' : 'Professional Title (Arabic):'}</label>
-              <input
+              <label htmlFor="fcms-field-13">{isAr ? 'اللقب المهني الإضافي (بالعربية):' : 'Professional Title (Arabic):'}</label>
+              <input id="fcms-field-13"
                 type="text"
                 value={formData.founderSub_ar || ''}
                 onChange={(e) => setFormData({ ...formData, founderSub_ar: e.target.value })}
@@ -655,8 +655,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
             </div>
 
             <div className="form-group-item">
-              <label>{isAr ? 'رابط الصورة الشخصية للمؤسس:' : 'Founder Photo URL:'}</label>
-              <input
+              <label htmlFor="fcms-field-14">{isAr ? 'رابط الصورة الشخصية للمؤسس:' : 'Founder Photo URL:'}</label>
+              <input id="fcms-field-14"
                 type="text"
                 placeholder="/founder-dr-mahmoud-elbaz.jpg"
                 value={formData.founderPhoto || ''}
@@ -701,8 +701,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
             </div>
 
             <div className="form-group-item">
-              <label>{isAr ? 'رقم واتساب استشارات المؤسس:' : 'Founder WhatsApp Number:'}</label>
-              <input
+              <label htmlFor="fcms-field-15">{isAr ? 'رقم واتساب استشارات المؤسس:' : 'Founder WhatsApp Number:'}</label>
+              <input id="fcms-field-15"
                 type="text"
                 placeholder="مثال: 01223222956"
                 value={formData.whatsappNumber || ''}
@@ -711,8 +711,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
             </div>
 
             <div className="form-group-item">
-              <label>{isAr ? 'رقم هاتف مكتب الإدارة:' : 'Office Phone Number:'}</label>
-              <input
+              <label htmlFor="fcms-field-16">{isAr ? 'رقم هاتف مكتب الإدارة:' : 'Office Phone Number:'}</label>
+              <input id="fcms-field-16"
                 type="text"
                 placeholder="+201223222956 أو 01223222956"
                 value={formData.phoneNumber || ''}
@@ -721,8 +721,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
             </div>
 
             <div className="form-group-item">
-              <label>{isAr ? 'عنوان المقر الرئيسي والسجل التجاري:' : 'HQ & Commercial Reg Title:'}</label>
-              <input
+              <label htmlFor="fcms-field-17">{isAr ? 'عنوان المقر الرئيسي والسجل التجاري:' : 'HQ & Commercial Reg Title:'}</label>
+              <input id="fcms-field-17"
                 type="text"
                 value={formData.headquarters_ar || ''}
                 onChange={(e) => setFormData({ ...formData, headquarters_ar: e.target.value })}
@@ -735,11 +735,11 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
         {activeSubTab === 'quote' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div className="form-group-item">
-              <label style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <label htmlFor="fcms-field-18" style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span>{isAr ? 'نص كلمة ورسالة المؤسس (بالعربية):' : 'Founder Statement / Quote (Arabic):'}</span>
                 <small style={{ color: 'var(--text-secondary)' }}>{(formData.founderQuote_ar || '').length} حرف</small>
               </label>
-              <textarea
+              <textarea id="fcms-field-18"
                 rows={5}
                 style={{ width: '100%', padding: '14px', borderRadius: 'var(--radius-sm)', background: 'rgba(0,0,0,0.25)', color: '#fff', border: '1px solid var(--border-light)', lineHeight: 1.8, fontSize: 'var(--crm-text-md)' }}
                 value={formData.founderQuote_ar || ''}
@@ -748,10 +748,10 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
             </div>
 
             <div className="form-group-item">
-              <label style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <label htmlFor="fcms-field-19" style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span>{isAr ? 'نص كلمة المؤسس (بالإنجليزية):' : 'Founder Statement / Quote (English):'}</span>
               </label>
-              <textarea
+              <textarea id="fcms-field-19"
                 rows={4}
                 style={{ width: '100%', padding: '14px', borderRadius: 'var(--radius-sm)', background: 'rgba(0,0,0,0.25)', color: '#fff', border: '1px solid var(--border-light)', lineHeight: 1.8, fontSize: 'var(--crm-text-md)' }}
                 value={formData.founderQuote_en || ''}
@@ -786,8 +786,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                     </span>
 
                     <div className="form-group-item" style={{ marginBottom: '8px' }}>
-                      <label style={{ fontSize: 'var(--crm-text-xs)' }}>{isAr ? 'الرقم / النسبة الظاهرة:' : 'Value:'}</label>
-                      <input
+                      <label htmlFor="fcms-field-20" style={{ fontSize: 'var(--crm-text-xs)' }}>{isAr ? 'الرقم / النسبة الظاهرة:' : 'Value:'}</label>
+                      <input id="fcms-field-20"
                         type="text"
                         value={hs.num_ar || ''}
                         onChange={(e) => handleHeroStatChange(idx, 'num_ar', e.target.value)}
@@ -796,8 +796,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                     </div>
 
                     <div className="form-group-item">
-                      <label style={{ fontSize: 'var(--crm-text-xs)' }}>{isAr ? 'التسمية والوصف:' : 'Label:'}</label>
-                      <input
+                      <label htmlFor="fcms-field-21" style={{ fontSize: 'var(--crm-text-xs)' }}>{isAr ? 'التسمية والوصف:' : 'Label:'}</label>
+                      <input id="fcms-field-21"
                         type="text"
                         value={hs.label_ar || ''}
                         onChange={(e) => handleHeroStatChange(idx, 'label_ar', e.target.value)}
@@ -826,8 +826,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                     </div>
 
                     <div className="form-group-item" style={{ marginBottom: '8px' }}>
-                      <label style={{ fontSize: 'var(--crm-text-xs)' }}>{isAr ? 'الرقم / النسبة:' : 'Number / Metric:'}</label>
-                      <input
+                      <label htmlFor="fcms-field-22" style={{ fontSize: 'var(--crm-text-xs)' }}>{isAr ? 'الرقم / النسبة:' : 'Number / Metric:'}</label>
+                      <input id="fcms-field-22"
                         type="text"
                         value={st.num_ar || ''}
                         onChange={(e) => handleStatChange(idx, 'num_ar', e.target.value)}
@@ -835,8 +835,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                     </div>
 
                     <div className="form-group-item" style={{ marginBottom: '8px' }}>
-                      <label style={{ fontSize: 'var(--crm-text-xs)' }}>{isAr ? 'العنوان الرئيسي:' : 'Label (Arabic):'}</label>
-                      <input
+                      <label htmlFor="fcms-field-23" style={{ fontSize: 'var(--crm-text-xs)' }}>{isAr ? 'العنوان الرئيسي:' : 'Label (Arabic):'}</label>
+                      <input id="fcms-field-23"
                         type="text"
                         value={st.label_ar || ''}
                         onChange={(e) => handleStatChange(idx, 'label_ar', e.target.value)}
@@ -844,8 +844,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                     </div>
 
                     <div className="form-group-item">
-                      <label style={{ fontSize: 'var(--crm-text-xs)' }}>{isAr ? 'النص التوضيحي:' : 'Subtitle (Arabic):'}</label>
-                      <input
+                      <label htmlFor="fcms-field-24" style={{ fontSize: 'var(--crm-text-xs)' }}>{isAr ? 'النص التوضيحي:' : 'Subtitle (Arabic):'}</label>
+                      <input id="fcms-field-24"
                         type="text"
                         value={st.sub_ar || ''}
                         onChange={(e) => handleStatChange(idx, 'sub_ar', e.target.value)}
@@ -869,8 +869,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                   </h4>
 
                   <div className="form-group-item" style={{ marginBottom: '12px' }}>
-                    <label>{isAr ? 'عنوان الركيزة:' : 'Title:'}</label>
-                    <input
+                    <label htmlFor="fcms-field-25">{isAr ? 'عنوان الركيزة:' : 'Title:'}</label>
+                    <input id="fcms-field-25"
                       type="text"
                       value={pl.title_ar || ''}
                       onChange={(e) => handlePillarChange(idx, 'title_ar', e.target.value)}
@@ -878,8 +878,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                   </div>
 
                   <div className="form-group-item">
-                    <label>{isAr ? 'الوصف والتفاصيل:' : 'Description:'}</label>
-                    <textarea
+                    <label htmlFor="fcms-field-26">{isAr ? 'الوصف والتفاصيل:' : 'Description:'}</label>
+                    <textarea id="fcms-field-26"
                       rows={3}
                       style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius-sm)', background: 'rgba(0,0,0,0.25)', color: '#fff', border: '1px solid var(--border-light)' }}
                       value={pl.desc_ar || ''}
@@ -915,8 +915,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
             {/* Section Main Titles */}
             <div className="form-grid-2">
               <div className="form-group-item">
-                <label>{isAr ? 'عنوان القسم الرئيسي (بالعربي):' : 'Section Main Title (AR):'}</label>
-                <input
+                <label htmlFor="fcms-field-27">{isAr ? 'عنوان القسم الرئيسي (بالعربي):' : 'Section Main Title (AR):'}</label>
+                <input id="fcms-field-27"
                   type="text"
                   value={formData.goldStandardsTitle_ar || ''}
                   onChange={(e) => setFormData({ ...formData, goldStandardsTitle_ar: e.target.value })}
@@ -925,8 +925,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
               </div>
 
               <div className="form-group-item">
-                <label>{isAr ? 'عنوان القسم (بالإنجليزي):' : 'Section Main Title (EN):'}</label>
-                <input
+                <label htmlFor="fcms-field-28">{isAr ? 'عنوان القسم (بالإنجليزي):' : 'Section Main Title (EN):'}</label>
+                <input id="fcms-field-28"
                   type="text"
                   value={formData.goldStandardsTitle_en || ''}
                   onChange={(e) => setFormData({ ...formData, goldStandardsTitle_en: e.target.value })}
@@ -937,8 +937,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
 
             <div className="form-grid-2">
               <div className="form-group-item">
-                <label>{isAr ? 'الوصف التعريفي للقسم (بالعربي):' : 'Section Subtitle / Description (AR):'}</label>
-                <input
+                <label htmlFor="fcms-field-29">{isAr ? 'الوصف التعريفي للقسم (بالعربي):' : 'Section Subtitle / Description (AR):'}</label>
+                <input id="fcms-field-29"
                   type="text"
                   value={formData.goldStandardsDesc_ar || ''}
                   onChange={(e) => setFormData({ ...formData, goldStandardsDesc_ar: e.target.value })}
@@ -947,8 +947,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
               </div>
 
               <div className="form-group-item">
-                <label>{isAr ? 'الوصف التعريفي للقسم (بالإنجليزي):' : 'Section Subtitle / Description (EN):'}</label>
-                <input
+                <label htmlFor="fcms-field-30">{isAr ? 'الوصف التعريفي للقسم (بالإنجليزي):' : 'Section Subtitle / Description (EN):'}</label>
+                <input id="fcms-field-30"
                   type="text"
                   value={formData.goldStandardsDesc_en || ''}
                   onChange={(e) => setFormData({ ...formData, goldStandardsDesc_en: e.target.value })}
@@ -982,10 +982,10 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                     </h4>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <label style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--text-secondary)' }}>
+                      <label htmlFor="fcms-field-31" style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--text-secondary)' }}>
                         {isAr ? 'الأيقونة:' : 'Icon:'}
                       </label>
-                      <select
+                      <select id="fcms-field-31"
                         value={std.icon || 'ShieldCheck'}
                         onChange={(e) => handleGoldStandardChange(idx, 'icon', e.target.value)}
                         style={{ padding: '6px 10px', fontSize: 'var(--crm-text-sm)', borderRadius: '4px', background: 'var(--bg-input, #1e293b)', color: '#fff', border: '1px solid var(--border-light)' }}
@@ -1002,8 +1002,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
 
                   <div className="form-grid-3" style={{ marginBottom: '12px' }}>
                     <div className="form-group-item">
-                      <label>{isAr ? 'رقم المعيار:' : 'Number badge:'}</label>
-                      <input
+                      <label htmlFor="fcms-field-32">{isAr ? 'رقم المعيار:' : 'Number badge:'}</label>
+                      <input id="fcms-field-32"
                         type="text"
                         value={std.number || ''}
                         onChange={(e) => handleGoldStandardChange(idx, 'number', e.target.value)}
@@ -1012,8 +1012,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                     </div>
 
                     <div className="form-group-item">
-                      <label>{isAr ? 'شارة الاعتماد (بالعربي):' : 'Badge (AR):'}</label>
-                      <input
+                      <label htmlFor="fcms-field-33">{isAr ? 'شارة الاعتماد (بالعربي):' : 'Badge (AR):'}</label>
+                      <input id="fcms-field-33"
                         type="text"
                         value={std.badge_ar || ''}
                         onChange={(e) => handleGoldStandardChange(idx, 'badge_ar', e.target.value)}
@@ -1022,8 +1022,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                     </div>
 
                     <div className="form-group-item">
-                      <label>{isAr ? 'شارة الاعتماد (بالإنجليزي):' : 'Badge (EN):'}</label>
-                      <input
+                      <label htmlFor="fcms-field-34">{isAr ? 'شارة الاعتماد (بالإنجليزي):' : 'Badge (EN):'}</label>
+                      <input id="fcms-field-34"
                         type="text"
                         value={std.badge_en || ''}
                         onChange={(e) => handleGoldStandardChange(idx, 'badge_en', e.target.value)}
@@ -1034,8 +1034,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
 
                   <div className="form-grid-2" style={{ marginBottom: '12px' }}>
                     <div className="form-group-item">
-                      <label>{isAr ? 'عنوان المعيار (بالعربي):' : 'Title (Arabic):'}</label>
-                      <input
+                      <label htmlFor="fcms-field-35">{isAr ? 'عنوان المعيار (بالعربي):' : 'Title (Arabic):'}</label>
+                      <input id="fcms-field-35"
                         type="text"
                         value={std.title_ar || ''}
                         onChange={(e) => handleGoldStandardChange(idx, 'title_ar', e.target.value)}
@@ -1044,8 +1044,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                     </div>
 
                     <div className="form-group-item">
-                      <label>{isAr ? 'عنوان المعيار (بالإنجليزي):' : 'Title (English):'}</label>
-                      <input
+                      <label htmlFor="fcms-field-36">{isAr ? 'عنوان المعيار (بالإنجليزي):' : 'Title (English):'}</label>
+                      <input id="fcms-field-36"
                         type="text"
                         value={std.title_en || ''}
                         onChange={(e) => handleGoldStandardChange(idx, 'title_en', e.target.value)}
@@ -1056,8 +1056,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
 
                   <div className="form-grid-2">
                     <div className="form-group-item">
-                      <label>{isAr ? 'نص الشرح والضمان (بالعربي):' : 'Description (Arabic):'}</label>
-                      <textarea
+                      <label htmlFor="fcms-field-37">{isAr ? 'نص الشرح والضمان (بالعربي):' : 'Description (Arabic):'}</label>
+                      <textarea id="fcms-field-37"
                         rows={3}
                         style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', background: 'rgba(0,0,0,0.25)', color: '#fff', border: '1px solid var(--border-light)', fontSize: 'var(--crm-text-base)' }}
                         value={std.desc_ar || ''}
@@ -1066,8 +1066,8 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                     </div>
 
                     <div className="form-group-item">
-                      <label>{isAr ? 'نص الشرح والضمان (بالإنجليزي):' : 'Description (English):'}</label>
-                      <textarea
+                      <label htmlFor="fcms-field-38">{isAr ? 'نص الشرح والضمان (بالإنجليزي):' : 'Description (English):'}</label>
+                      <textarea id="fcms-field-38"
                         rows={3}
                         style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', background: 'rgba(0,0,0,0.25)', color: '#fff', border: '1px solid var(--border-light)', fontSize: 'var(--crm-text-base)' }}
                         value={std.desc_en || ''}

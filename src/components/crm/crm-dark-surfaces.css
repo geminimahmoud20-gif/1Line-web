@@ -99,3 +99,23 @@
   border-color: var(--crm-line-strong) !important;
   color: var(--crm-ink) !important;
 }
+
+/* Always-navy surfaces (e.g. var(--primary) cards in the automation screen): re-scope the text
+   tokens so anything inside reads as on-dark in BOTH themes. Found when darkening the light
+   tokens made ink/positive text vanish on these cards. */
+.crm-surface-navy {
+  --crm-ink: #F8FAFC;
+  --crm-body: #CBD5E1;
+  --crm-muted: #A3AEBD;
+  --crm-faint: #8B98AB;
+  --crm-positive: #6EE7B7;
+  --crm-info: #93C5FD;
+  --crm-danger: #FCA5A5;
+  --crm-accent-text: #E9D29A;
+  --crm-line: rgba(255, 255, 255, 0.12);
+  color: var(--crm-body);
+}
+
+/* App.css pins `.crm-table-container h3/h4 { color: #0f172a !important }`, which beats even inline
+   colours — headings on navy cards stayed near-black (1.03:1). Higher specificity + !important. */
+.crm-layout .crm-table-container .crm-surface-navy :is(h3, h4) { color: var(--crm-accent-text) !important; }

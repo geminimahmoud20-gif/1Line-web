@@ -1483,8 +1483,8 @@ export const CrmAdminPanel = ({
           </p>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-            <div style={{ background: 'var(--primary)', padding: '20px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
-              <h4 style={{ marginBottom: '10px', color: 'var(--accent-gold)' }}>
+            <div className="crm-surface-navy" style={{ background: 'var(--primary)', padding: '20px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
+              <h4 style={{ marginBottom: '10px', color: '#E9D29A' /* light gold: this card is always navy (var(--primary)) */ }}>
                 📱 {isAr ? 'التنبيه الفوري عبر الواتساب والتيليجرام' : 'Instant Webhook / WhatsApp Push'}
               </h4>
               <p style={{ fontSize: 'var(--crm-text-base)', color: 'var(--text-secondary)', marginBottom: '16px' }}>
@@ -1502,7 +1502,7 @@ export const CrmAdminPanel = ({
               </button>
             </div>
 
-            <div style={{ background: 'var(--primary)', padding: '20px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
+            <div className="crm-surface-navy" style={{ background: 'var(--primary)', padding: '20px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
               <h4 style={{ marginBottom: '10px', color: 'var(--emerald)' }}>
                 🎯 {isAr ? 'قواعد التوزيع الذكي للعملاء' : 'Smart Auto-Assignment'}
               </h4>
