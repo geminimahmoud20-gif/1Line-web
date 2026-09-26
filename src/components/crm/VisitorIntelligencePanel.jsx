@@ -307,7 +307,7 @@ export default function VisitorIntelligencePanel({
               <MousePointerClick size={18} style={{ color: 'var(--accent-gold)' }} />
               <span>{isAr ? 'شريط أحداث وتفاعل الزوار المباشر' : 'Live Clickstream Feed'}</span>
             </h3>
-            <span className="badge" style={{ background: 'rgba(255,255,255,0.06)', fontSize: '0.72rem' }}>
+            <span className="badge" style={{ background: 'var(--crm-subtle)', color: 'var(--crm-body)', fontSize: '0.75rem' }}>
               {summary.recentEvents?.length || 0} {isAr ? 'حدث مسجل' : 'events'}
             </span>
           </div>

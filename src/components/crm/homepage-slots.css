@@ -142,3 +142,7 @@
   .ad-row img { width: 84px; height: 56px; }
   .ad-row-stats, .ad-row-actions { grid-column: 1 / -1; justify-content: flex-end; }
 }
+
+/* Period label under the star in the properties table: keep on one line in the narrow column */
+.hs-star-cell .hs-period { white-space: nowrap; }
+.hs-star-cell .hs-link-btn { padding: 0; }
