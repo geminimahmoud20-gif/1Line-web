@@ -66,6 +66,7 @@ export default function CrmTopbar({
     properties: isAr ? 'محفظة العقارات' : 'Properties Portfolio',
     demands: isAr ? 'طلبات المشترين' : 'Buyer Demands',
     projects: isAr ? 'المشروعات الكبرى' : 'Mega Projects',
+    ads: isAr ? 'الإعلانات والحملات' : 'Ads & Campaigns',
     financials: isAr ? 'المالية والأقساط' : 'Financials & Loans',
     analytics: isAr ? 'تحليلات وذكاء المنصة' : 'Visitor Intelligence & Analytics',
     visitor_intelligence: isAr ? 'تحليلات وذكاء المنصة' : 'Visitor Intelligence & Analytics',
@@ -302,23 +303,23 @@ export default function CrmTopbar({
             type="button"
             onClick={() => setShowQuickActionMenu(!showQuickActionMenu)}
             style={{
-              background: 'linear-gradient(135deg, #092347 0%, #173b6c 100%)',
-              color: '#ffffff',
-              fontWeight: 'bold',
+              background: '#0F172A',
+              color: '#FFFFFF',
+              fontWeight: '700',
               fontSize: '0.76rem',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '6px 12px',
+              padding: '7px 13px',
               borderRadius: '8px',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              border: '1px solid #1E293B',
               cursor: 'pointer',
-              boxShadow: '0 2px 6px rgba(9, 35, 71, 0.25)'
+              transition: 'all 0.15s ease'
             }}
           >
-            <Plus size={14} />
+            <Plus size={14} style={{ color: 'var(--crm-accent)' }} />
             <span>{isAr ? 'إجراء سريع' : 'Action'}</span>
-            <ChevronDown size={12} />
+            <ChevronDown size={12} style={{ color: '#94A3B8' }} />
           </button>
 
           {showQuickActionMenu && (
@@ -548,13 +549,13 @@ export default function CrmTopbar({
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '5px',
-            background: isSimulationMode ? '#fffbeb' : '#f8fafc',
-            border: isSimulationMode ? '1px solid #f59e0b' : '1px solid #e2e8f0',
+            gap: '6px',
+            background: 'var(--crm-subtle)',
+            border: isSimulationMode ? '1px solid var(--crm-warn)' : '1px solid var(--crm-line)',
             borderRadius: '8px',
-            padding: '4px 8px'
+            padding: '4px 10px'
           }}>
-            <ShieldCheck size={13} style={{ color: isSimulationMode ? '#d97706' : '#10b981' }} />
+            <ShieldCheck size={14} style={{ color: isSimulationMode ? 'var(--crm-warn)' : 'var(--crm-accent)' }} />
             <select
               className="crm-role-select"
               aria-label={isAr ? 'محاكي الأدوار' : 'Role simulator'}
@@ -564,8 +565,8 @@ export default function CrmTopbar({
                 background: 'transparent',
                 border: 'none',
                 fontSize: '0.74rem',
-                fontWeight: 'bold',
-                color: selectedRole === 'super_admin' ? '#b45309' : '#0f172a',
+                fontWeight: '700',
+                color: selectedRole === 'super_admin' ? 'var(--crm-ink)' : 'var(--crm-accent-text)',
                 cursor: 'pointer',
                 outline: 'none'
               }}
@@ -583,12 +584,12 @@ export default function CrmTopbar({
             display: 'inline-flex',
             alignItems: 'center',
             gap: '6px',
-            background: 'var(--crm-subtle-2)',
-            border: '1px solid var(--crm-line-strong)',
+            background: 'var(--crm-subtle)',
+            border: '1px solid var(--crm-line)',
             borderRadius: '8px',
-            padding: '4px 8px',
+            padding: '4px 10px',
             fontSize: '0.74rem',
-            fontWeight: 'bold',
+            fontWeight: '600',
             color: 'var(--crm-body)'
           }}>
             <Lock size={12} style={{ color: 'var(--crm-muted)' }} />
@@ -602,23 +603,24 @@ export default function CrmTopbar({
           type="button"
           onClick={() => setShowGoLiveWizard(true)}
           style={{
-            background: '#ecfdf5',
-            border: '1px solid #a7f3d0',
-            color: 'var(--crm-positive)',
-            padding: '6px 10px',
+            background: 'var(--crm-subtle)',
+            border: '1px solid var(--crm-line)',
+            color: 'var(--crm-body)',
+            padding: '6px 12px',
             borderRadius: '8px',
             fontSize: '0.75rem',
-            fontWeight: 'bold',
+            fontWeight: '600',
             display: 'flex',
             alignItems: 'center',
-            gap: '5px',
-            cursor: 'pointer'
+            gap: '6px',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease'
           }}
           title={isAr ? 'فحص جاهزية الموقع والتحول للإنتاج الفعلي' : 'Go-Live Readiness Audit'}
           aria-label={isAr ? 'جاهزية الإطلاق' : 'Go-live audit'}
           className="crm-top-chip"
         >
-          <Rocket size={13} />
+          <Rocket size={13} style={{ color: 'var(--crm-accent)' }} />
           <span className="crm-top-chip-label">{isAr ? 'جاهزية الإطلاق' : 'Audit'}</span>
         </button>
 
@@ -631,20 +633,21 @@ export default function CrmTopbar({
             fontSize: '0.75rem',
             display: 'flex',
             alignItems: 'center',
-            gap: '5px',
-            padding: '6px 10px',
+            gap: '6px',
+            padding: '6px 12px',
             borderRadius: '8px',
             background: 'var(--crm-subtle)',
             border: '1px solid var(--crm-line)',
             color: 'var(--crm-ink)',
             textDecoration: 'none',
-            fontWeight: 'bold'
+            fontWeight: '600',
+            transition: 'all 0.15s ease'
           }}
           title={isAr ? 'معاينة الموقع في نافذة مستقلة' : 'View Live Site'}
           aria-label={isAr ? 'فتح الموقع' : 'Open site'}
           className="crm-top-chip"
         >
-          <Globe size={13} style={{ color: 'var(--crm-accent-text)' }} />
+          <Globe size={13} style={{ color: 'var(--crm-muted)' }} />
           <span className="crm-top-chip-label">{isAr ? 'الموقع' : 'Site'}</span>
         </a>
 
@@ -653,18 +656,18 @@ export default function CrmTopbar({
           type="button"
           onClick={onLogout}
           style={{
-            borderColor: '#fecaca',
-            color: '#dc2626',
+            color: '#DC2626',
             fontSize: '0.75rem',
-            padding: '6px 10px',
+            padding: '6px 12px',
             borderRadius: '8px',
-            border: '1px solid #fecaca',
-            background: '#fef2f2',
-            fontWeight: 'bold',
+            border: '1px solid #FECACA',
+            background: '#FEF2F2',
+            fontWeight: '600',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: '4px'
+            gap: '5px',
+            transition: 'all 0.15s ease'
           }}
           title={isAr ? 'تسجيل الخروج' : 'Logout'}
           aria-label={isAr ? 'تسجيل الخروج' : 'Logout'}
