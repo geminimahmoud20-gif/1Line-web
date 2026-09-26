@@ -9,13 +9,10 @@ import {
   DollarSign, 
   ArrowRight, 
   ArrowLeft, 
-  ShieldCheck, 
-  Sparkles, 
-  Calculator, 
-  Award, 
-  Lock, 
-  Filter, 
-  Clock, 
+  ShieldCheck,
+  Sparkles,
+  Calculator,
+  Clock,
   Home,
   Landmark,
   Pause,
@@ -24,22 +21,19 @@ import {
   VolumeX,
   Zap,
   MessageSquare,
-  Eye,
   X
 } from 'lucide-react';
 import PropertyCard from '../components/properties/PropertyCard';
 import MarketTickerBar from '../components/home/MarketTickerBar';
-import LifestyleCollectionsSection from '../components/home/LifestyleCollectionsSection';
-import PrivateOfficeSection from '../components/home/PrivateOfficeSection';
 import GoldStandardsSection from '../components/home/GoldStandardsSection';
 import { PROPERTY_TYPES, PROPERTIES_DATA } from '../data/propertiesData';
 import { MEGA_PROJECTS } from '../data/projectsData';
 import { INITIAL_DEMANDS } from '../data/mockData';
-import { getFounderSettings, DEFAULT_FOUNDER_CMS, getWhatsAppUrl } from '../utils/founderCmsData';
+import { getFounderSettings, getWhatsAppUrl } from '../utils/founderCmsData';
 import { getAreas } from '../utils/areasData';
 import { updatePageSeo, buildOrganizationSchema } from '../utils/seoHelper';
 import FaqSection from '../components/home/FaqSection';
-import { parseSemanticQuery, SEMANTIC_SEARCH_PRESETS } from '../utils/semanticSearchEngine';
+import { parseSemanticQuery } from '../utils/semanticSearchEngine';
 import ScrollReveal from '../components/common/ScrollReveal';
 import { SELLER_PROOF } from '../config/siteConfig';
 import { getHomepageSlots } from '../utils/featuredSlots';
@@ -211,7 +205,6 @@ export default function HomePage({
 
   // Compact Hub Navigation Tabs
   const [marketplaceTab, setMarketplaceTab] = useState('properties'); // 'properties' | 'demands'
-  const [insightsTab, setInsightsTab] = useState('calculator'); // 'calculator' | 'founder'
   const [marketplaceAreaFilter, setMarketplaceAreaFilter] = useState('all');
 
   // Safe fallback to default verified catalog if parent state was ever empty
@@ -683,7 +676,9 @@ export default function HomePage({
           <nav className="hx-pills" aria-label={lang === 'ar' ? 'اختصارات البحث' : 'Quick searches'}>
             {[
               { ar: 'سوهاج الجديدة', en: 'New Sohag', to: '/properties?area=new_sohag', icon: MapPin },
+              { ar: 'كورنيش النيل', en: 'Nile Corniche', to: '/properties?area=corniche', icon: MapPin },
               { ar: 'شارع الجمهورية', en: 'El-Gomhoreya St.', to: `/properties?q=${encodeURIComponent('الجمهورية')}`, icon: Landmark },
+              { ar: 'فيلات مستقلة', en: 'Villas', to: '/properties?type=villa', icon: Home },
               { ar: 'كاش فوري', en: 'Cash deals', to: '/properties?paymentPlan=cash', icon: Zap },
               {
                 ar: maxInstallmentYears ? `تقسيط حتى ${maxInstallmentYears} سنوات` : 'تقسيط مباشر',
@@ -707,11 +702,6 @@ export default function HomePage({
       {/* 📈 REAL-TIME SOHAG PROPTECH MARKET TICKER */}
       <MarketTickerBar lang={lang} demands={activeDemandsList} />
 
-      {/* 🌟 SOTHEBY'S BENCHMARK: CURATED LIFESTYLE COLLECTIONS */}
-      <ScrollReveal>
-        <LifestyleCollectionsSection lang={lang} />
-      </ScrollReveal>
-
       {/* 🏢 2. SOHAG LIVE MARKETPLACE HUB (Consolidated Segmented Discovery) */}
       <section className="homepage-section bg-surface" id="marketplace-hub">
         <ScrollReveal>
@@ -727,7 +717,7 @@ export default function HomePage({
                 {lang === 'ar' ? 'أحدث العقارات والطلبات الاستثمارية الحية' : 'Featured Properties & Live Demands'}
               </h2>
               <p className="section-heading-desc mt-2 mb-0" style={{ marginInline: 0 }}>
-                {lang === 'ar' ? 'تصفح أحدث الوحدات المفحوصة هندسياً وقانونياً أو طابق عقارك مع مشتري الكاش الجاهزين فوراً' : 'Certified properties & instant matching with serious cash buyers in Sohag'}
+                {lang === 'ar' ? 'أحدث الوحدات المعروضة، وطلبات شراء منشورة من مشترين جادين يمكنك مطابقة عقارك معها.' : 'The latest listings, plus published buyer demands you can match your property against.'}
               </p>
             </div>
 
@@ -757,7 +747,7 @@ export default function HomePage({
         {marketplaceTab === 'properties' && (
           <div>
             {displayProperties.length > 0 ? (
-              <div className="properties-grid-4">
+              <div className="properties-grid-4 hx-market-rail">
                 {displayProperties.map((prop) => (
                   <PropertyCard
                     key={prop.id}
@@ -990,26 +980,25 @@ export default function HomePage({
         <GoldStandardsSection lang={lang} />
       </ScrollReveal>
 
-      {/* 🔒 SOTHEBY'S BENCHMARK: 1LINE PRIVATE OFFICE (OFF-MARKET POCKET LISTINGS) */}
-      <ScrollReveal>
-        <PrivateOfficeSection lang={lang} />
-      </ScrollReveal>
+      {/* FAQ — answer-engine friendly, with FAQPage schema */}
+      <FaqSection lang={lang} />
 
-      {/* 🏛️ 6. EXECUTIVE CONSULTATION (Deep Navy Brand Authority Surface) */}
+      {/* Closing call to action — the only one at the bottom of the page.
+          Off-market / Private Office lives on /private-office (linked from header and footer). */}
       <ScrollReveal>
         <section className="homepage-section consultation-authority-section">
           <div className="consultation-navy-surface">
             <div className="consultation-content-wrap">
               <span className="consultation-pill-eyebrow">
-                {lang === 'ar' ? 'الاستشارة الاستراتيجية والتدقيق' : 'Strategic Advisory & Due Diligence'}
+                {lang === 'ar' ? 'استشارة مباشرة' : 'Talk to an advisor'}
               </span>
               <h2 className="consultation-main-statement">
                 {lang === 'ar' ? 'قرارك العقاري يستحق أكثر من مجرد إعلان.' : 'Your Real Estate Decision Deserves More Than Just An Ad.'}
               </h2>
               <p className="consultation-sub-statement">
-                {lang === 'ar' 
-                  ? 'سواء كنت تبيع أرضاً، أو تشتري مسكن العائلة، أو تستثمر في أصل تجاري، يضع مستشارو 1Line بين يديك مقارنات السوق ونتيجة مراجعة المستندات لتتخذ قرارك على أساس واضح.'
-                  : 'Whether selling land, buying a family home or investing in a commercial asset, 1Line advisors give you market comparables and a document review so you decide on solid ground.'}
+                {lang === 'ar'
+                  ? 'سواء كنت تبيع أرضاً، أو تشتري مسكن العائلة، أو تستثمر في أصل تجاري، أو تبحث عن صفقة خاصة غير معلنة — تحدث مع مستشار 1Line لتقرر على أساس واضح.'
+                  : 'Selling land, buying a family home, investing in a commercial asset or looking for a discreet off-market deal — talk to a 1Line advisor and decide on solid ground.'}
               </p>
               <div className="consultation-actions-row">
                 <a
@@ -1021,42 +1010,10 @@ export default function HomePage({
                   <MessageSquare size={16} />
                   <span>{lang === 'ar' ? 'تحدث مع مستشار' : 'Speak With An Advisor'}</span>
                 </a>
-                <Link to="/buy" className="btn btn-consultation-secondary">
-                  <span>{lang === 'ar' ? 'احجز معاينة ميدانية' : 'Book Field Inspection'}</span>
+                <Link to="/private-office" className="btn btn-consultation-secondary">
+                  <span>{lang === 'ar' ? 'الصفقات الخاصة (Off-Market)' : 'Private Office (Off-Market)'}</span>
                 </Link>
               </div>
-            </div>
-          </div>
-        </section>
-      </ScrollReveal>
-
-      {/* FAQ — answer-engine friendly, with FAQPage schema */}
-      <FaqSection lang={lang} />
-
-      {/* 🏁 7. PRE-FOOTER EMOTIONAL CONCLUSION STATEMENT */}
-      <ScrollReveal>
-        <section className="pre-footer-conclusion-section">
-          <div className="conclusion-container">
-            <div className="conclusion-text-block">
-              <h3 className="conclusion-statement-title">
-                {lang === 'ar' ? (
-                  <>
-                    <span>ابحث عن العقار.</span>{' '}
-                    <span>وافهم القيمة.</span>{' '}
-                    <span className="text-navy-bold">واتخذ القرار بثقة.</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Discover The Property.</span>{' '}
-                    <span>Understand The Value.</span>{' '}
-                    <span className="text-navy-bold">Decide With Confidence.</span>
-                  </>
-                )}
-              </h3>
-              <Link to="/special-requests" className="conclusion-link-action">
-                <span>{lang === 'ar' ? 'تحدث مع 1Line' : 'Connect with 1Line'}</span>
-                {lang === 'ar' ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
-              </Link>
             </div>
           </div>
         </section>

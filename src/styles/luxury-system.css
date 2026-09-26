@@ -402,9 +402,14 @@ button.sidebar-deposit-banner .deposit-banner-left > span { display: flex; flex-
 .lx-consent-actions { display: flex; gap: 8px; flex: none; }
 .lx-consent .lx-btn-primary { background: #D9B97E; color: var(--navy-950); }
 .lx-consent .lx-btn-ghost { color: #E5E7EB; border-color: rgba(255, 255, 255, 0.28); }
+.lx-consent-short { display: none; }
 @media (max-width: 768px) {
-  .lx-consent { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px 14px; font-size: 0.84rem; line-height: 1.6; bottom: calc(84px + env(safe-area-inset-bottom)); }
-  .lx-consent-actions > * { flex: 1; }
+  /* Compact single bar: the old 3-line card covered the hero search fields on phones */
+  .lx-consent { inset-inline: 10px; flex-wrap: wrap; gap: 8px 10px; padding: 10px 12px; border-radius: 14px; font-size: 0.8rem; line-height: 1.5; bottom: calc(80px + env(safe-area-inset-bottom)); }
+  .lx-consent p { flex: 1 1 160px; }
+  .lx-consent-long { display: none; }
+  .lx-consent-short { display: inline; }
+  .lx-consent .lx-btn-sm { min-height: 40px; padding: 6px 12px; font-size: 0.78rem; }
 }
 
 /* ── §9 Not found & legal pages ───────────────────────────── */

@@ -48,9 +48,15 @@ export default function ConsentBanner({ lang = 'ar' }) {
   return (
     <div className="lx-consent" role="region" aria-label={isAr ? 'إشعار الخصوصية' : 'Privacy notice'} dir={isAr ? 'rtl' : 'ltr'}>
       <p>
-        {isAr
-          ? 'نستخدم أدوات قياس لتحسين تجربة الموقع، ولا نشغّلها إلا بموافقتك. بياناتك في النماذج تُستخدم فقط للرد على طلبك.'
-          : 'We use analytics to improve the site and only run them with your consent. Form data is used only to respond to your request.'}{' '}
+        {/* Full sentence on desktop; one line on phones so the banner doesn't cover the hero search */}
+        <span className="lx-consent-long">
+          {isAr
+            ? 'نستخدم أدوات قياس لتحسين تجربة الموقع، ولا نشغّلها إلا بموافقتك. بياناتك في النماذج تُستخدم فقط للرد على طلبك.'
+            : 'We use analytics to improve the site and only run them with your consent. Form data is used only to respond to your request.'}
+        </span>
+        <span className="lx-consent-short">
+          {isAr ? 'نشغّل أدوات القياس بموافقتك فقط.' : 'Analytics run only with your consent.'}
+        </span>{' '}
         <Link to="/privacy">{isAr ? 'سياسة الخصوصية' : 'Privacy policy'}</Link>
       </p>
       <div className="lx-consent-actions">

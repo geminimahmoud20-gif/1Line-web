@@ -68,6 +68,12 @@
   object-fit: cover;
   transition: opacity 0.4s var(--hx-ease);
 }
+.hx-hero .hero-cinematic-video.fit-contain {
+  object-fit: contain !important;
+}
+.hx-hero .hero-cinematic-video.fit-cover {
+  object-fit: cover !important;
+}
 .hx-hero .hero-cinematic-video.clip-fading { opacity: 0; }
 
 /* Soft ambient vignette — top and bottom only, plus a faint centre veil for type legibility */
@@ -928,3 +934,113 @@
   .hx-ad-media { min-height: 200px; }
 }
 @media (prefers-reduced-motion: reduce) { .hx-ad-card { animation: none; } }
+
+/* 🎬 Hero Video Theater Modal (Full uncropped HD viewing) */
+.hero-video-theater-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(7, 17, 31, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(12px, 3vw, 28px);
+  animation: hxTheaterFadeIn 0.25s ease-out;
+}
+
+@keyframes hxTheaterFadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.hero-video-theater-box {
+  width: min(1180px, 100%);
+  background: var(--navy-900, #0B1B32);
+  border: 1px solid rgba(179, 138, 69, 0.4);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-video-theater-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 22px;
+  background: rgba(7, 17, 31, 0.75);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hero-video-theater-header h4 {
+  margin: 0;
+  color: var(--gold, #B38A45);
+  font-size: 1.05rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hero-video-theater-close {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.hero-video-theater-close:hover {
+  background: rgba(212, 175, 55, 0.2);
+  color: var(--gold, #B38A45);
+  border-color: var(--gold, #B38A45);
+}
+
+.hero-video-theater-viewport {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 75vh;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-video-theater-player {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ── Homepage marketplace: swipeable rail on phones ──────────
+   Four stacked cards were ~2,900px tall on a 390px screen. */
+@media (max-width: 700px) {
+  .homepage-wrapper .properties-grid-4.hx-market-rail {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 16px;
+    margin-inline: -16px;
+    padding: 4px 16px 18px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .homepage-wrapper .properties-grid-4.hx-market-rail::-webkit-scrollbar { display: none; }
+  .homepage-wrapper .properties-grid-4.hx-market-rail > * {
+    flex: 0 0 84%;
+    max-width: 84%;
+    min-width: 0;
+    scroll-snap-align: start;
+  }
+}

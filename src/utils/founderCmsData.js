@@ -178,6 +178,9 @@ export const DEFAULT_FOUNDER_CMS = {
   ],
   heroPosterUrl: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1600&q=70',
   heroOverlayOpacity: 0.8,
+  heroVideoFit: 'cover', // 'cover' = full bleed fill | 'contain' = full frame uncropped
+  heroVideoPosition: 'center', // 'center' | 'top' | 'bottom'
+  heroVideoCycleOnEnd: false, // true = cycle only after the video finishes playing completely
   heroBadge_ar: 'وساطة واستشارات عقارية — سوهاج والقاهرة الكبرى',
   heroBadge_en: 'Real estate brokerage & advisory — Sohag and Greater Cairo',
   heroTitle_ar: 'امتلك واستثمر في أرقى عقارات سوهاج',
