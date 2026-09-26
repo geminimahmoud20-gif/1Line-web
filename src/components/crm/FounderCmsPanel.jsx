@@ -29,7 +29,7 @@ import {
   resetFounderSettings, 
   DEFAULT_FOUNDER_CMS 
 } from '../../utils/founderCmsData';
-import { uploadCmsMedia } from '../../firebaseLazy';
+import { uploadCmsMedia, getCmsStorageStatus } from '../../firebaseLazy';
 
 /**
  * DEV ONLY: send the file to the Vite dev-server endpoint (scripts/vite-local-media.mjs), which
@@ -144,6 +144,17 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
   const [uploadPhase, setUploadPhase] = useState('uploading'); // 'uploading' | 'optimising'
   const [canCancelUpload, setCanCancelUpload] = useState(false);
   const [pastedVideoUrl, setPastedVideoUrl] = useState('');
+  // DEV saves into public/videos; production needs Firebase Storage, so check it before offering the picker
+  const [storageStatus, setStorageStatus] = useState(import.meta.env.DEV ? 'local' : 'checking'); // local | checking | ready | unknown | unavailable
+  useEffect(() => {
+    if (import.meta.env.DEV) return undefined;
+    let alive = true;
+    getCmsStorageStatus()
+      .then((s) => { if (alive) setStorageStatus(s); })
+      .catch(() => { if (alive) setStorageStatus('unknown'); });
+    return () => { alive = false; };
+  }, []);
+  const uploadLocked = storageStatus === 'unavailable';
 
   // Works without Firebase Storage: any public https video (mp4/webm) can be added by URL
   const handleAddVideoByUrl = async () => {
@@ -422,7 +433,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
             {/* 📁 Direct File Upload Box */}
             <div style={{
               background: 'rgba(255, 255, 255, 0.03)',
-              border: '1.5px dashed rgba(212, 175, 55, 0.4)',
+              border: uploadLocked ? '1.5px dashed var(--crm-line)' : '1.5px dashed rgba(212, 175, 55, 0.4)',
               borderRadius: '16px',
               padding: '24px 20px',
               textAlign: 'center',
@@ -431,7 +442,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
               alignItems: 'center',
               justifyContent: 'center',
               gap: '10px',
-              cursor: 'pointer',
+              cursor: uploadLocked ? 'default' : 'pointer',
               position: 'relative'
             }}>
               <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-gold)' }}>
@@ -449,6 +460,28 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                     ? 'MP4 أو WebM أو MOV حتى 60 ميجابايت. يُرفع على التخزين السحابي (يتطلب تفعيل Firebase Storage). للخلفية يكفي مقطع 10–15 ثانية.'
                     : 'MP4, WebM or MOV up to 60MB. Uploaded to Firebase Storage (must be enabled).')}
               </p>
+              {storageStatus === 'checking' && (
+                <span role="status" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 'var(--crm-text-sm)', color: 'var(--text-muted)' }}>
+                  <Loader2 size={14} className="spin" />
+                  {isAr ? 'جاري التحقق من خدمة التخزين…' : 'Checking storage…'}
+                </span>
+              )}
+              {uploadLocked && (
+                <div role="alert" style={{ maxWidth: '520px', textAlign: 'start', background: 'var(--crm-card)', border: '1px solid var(--crm-warn)', borderRadius: '12px', padding: '12px 14px', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-ink)', lineHeight: 1.7 }}>
+                  <strong style={{ color: 'var(--crm-warn)' }}>
+                    {isAr ? 'الرفع من الجهاز متوقف على الموقع المنشور' : 'Device upload is off on the live site'}
+                  </strong>
+                  <div>
+                    {isAr
+                      ? 'خدمة Firebase Storage غير مفعّلة لهذا المشروع، فلن يصل أي ملف. لإضافة فيديو الآن:'
+                      : 'Firebase Storage is not enabled for this project, so no file can arrive. To add a video now:'}
+                  </div>
+                  <ol style={{ margin: '4px 0 0', paddingInlineStart: '20px' }}>
+                    <li>{isAr ? 'الصق رابط الفيديو (https) أو مساره داخل الموقع مثل /videos/hero.mp4 في الخانة بالأسفل.' : 'Paste an https link or a site path like /videos/hero.mp4 below.'}</li>
+                    <li>{isAr ? 'أو ارفعه من نسخة التطوير على جهازك (npm run dev) فيُضغط ويُحفظ في public/videos، ثم انشر الموقع.' : 'Or upload it from the local dev build (npm run dev) into public/videos, then deploy.'}</li>
+                  </ol>
+                </div>
+              )}
               {uploadProgress !== null && (
                 <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={uploadProgress} aria-label={isAr ? 'تقدّم رفع الفيديو' : 'Upload progress'} style={{ width: 'min(420px, 100%)' }}>
                   <div style={{ height: '8px', borderRadius: '4px', background: 'var(--crm-line)', overflow: 'hidden' }}>
@@ -466,9 +499,10 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                 type="file"
                 accept="video/mp4,video/webm,video/quicktime"
                 onChange={handleVideoFileUpload}
-                disabled={uploadProgress !== null}
+                disabled={uploadProgress !== null || uploadLocked || storageStatus === 'checking'}
                 aria-label={isAr ? 'اختيار فيديو للرفع' : 'Choose a video to upload'}
                 style={{
+                  display: uploadLocked ? 'none' : undefined,
                   position: 'absolute',
                   inset: 0,
                   opacity: 0,

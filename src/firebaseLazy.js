@@ -57,6 +57,7 @@ export const upsertCatalogItem = lazyCall('upsertCatalogItem');
 export const deleteCatalogItem = lazyCall('deleteCatalogItem');
 export const incrementAdStat = lazyCall('incrementAdStat');
 export const uploadCmsMedia = lazyCall('uploadCmsMedia');
+export const getCmsStorageStatus = lazyCall('getCmsStorageStatus');
 
 export const subscribeToLeads = lazySubscribe('subscribeToLeads');
 export const subscribeToDemands = lazySubscribe('subscribeToDemands');

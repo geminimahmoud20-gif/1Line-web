@@ -161,6 +161,14 @@ const probeStorageBucket = async () => {
   }
 };
 
+/** For the CMS to decide up front whether the device-upload box can work at all. */
+export const getCmsStorageStatus = async () => {
+  if (!isFirebaseConfigured() || !storage) return 'unavailable';
+  const probe = await probeStorageBucket();
+  if (probe === false) return 'unavailable';
+  return probe === null ? 'unknown' : 'ready';
+};
+
 /**
  * onStart(cancel) hands the caller a cancel function once bytes start moving.
  * Extra reasons: 'unauthenticated' | 'offline' | 'bucket-unavailable' | 'stalled' | 'storage/canceled'.
