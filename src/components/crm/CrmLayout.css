@@ -157,7 +157,7 @@
 }
 
 .crm-brand-badge {
-  font-size: 0.6rem;
+  font-size: var(--crm-text-xs);
   font-weight: 800;
   letter-spacing: 0.8px;
   color: var(--crm-gold);
@@ -201,7 +201,7 @@
   border-radius: 8px;
   padding: 7px 34px 7px 10px;
   color: #f1f5f9;
-  font-size: 0.78rem;
+  font-size: var(--crm-text-xs);
   outline: none;
   transition: all 0.2s ease;
 }
@@ -238,7 +238,7 @@
 
 /* Section Title */
 .crm-sidebar-section-label {
-  font-size: 0.68rem;
+  font-size: var(--crm-text-xs);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.8px;
@@ -268,7 +268,7 @@
   background: transparent;
   border: 1px solid transparent;
   color: #94a3b8;
-  font-size: 0.82rem;
+  font-size: var(--crm-text-sm);
   font-weight: 600;
   cursor: pointer;
   text-decoration: none;
@@ -350,7 +350,7 @@
 
 /* Badges */
 .crm-item-badge {
-  font-size: 0.68rem;
+  font-size: var(--crm-text-xs);
   font-weight: 800;
   padding: 2px 7px;
   border-radius: 10px;
@@ -413,7 +413,7 @@
   background: transparent;
   border: 1px solid transparent;
   color: #94a3b8;
-  font-size: 0.78rem;
+  font-size: var(--crm-text-xs);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -459,7 +459,7 @@
   color: #cbd5e1;
   padding: 6px 12px;
   border-radius: 8px;
-  font-size: 0.74rem;
+  font-size: var(--crm-text-xs);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -500,7 +500,7 @@
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  font-size: 0.85rem;
+  font-size: var(--crm-text-base);
   flex-shrink: 0;
   border: 1px solid rgba(255, 255, 255, 0.2);
   position: relative;
@@ -525,7 +525,7 @@
 }
 
 .crm-user-name {
-  font-size: 0.78rem;
+  font-size: var(--crm-text-xs);
   font-weight: 700;
   color: #ffffff;
   overflow: hidden;
@@ -533,7 +533,7 @@
 }
 
 .crm-user-role-label {
-  font-size: 0.65rem;
+  font-size: var(--crm-text-xs);
   color: var(--crm-gold);
   font-weight: 600;
 }
@@ -623,7 +623,7 @@
   color: #ffffff;
   padding: 5px 10px;
   border-radius: 6px;
-  font-size: 0.75rem;
+  font-size: var(--crm-text-xs);
   font-weight: 600;
   white-space: nowrap;
   z-index: 1050;
@@ -733,7 +733,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.82rem;
+  font-size: var(--crm-text-sm);
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -751,7 +751,7 @@
 
 .crm-breadcrumb-separator {
   color: #94a3b8;
-  font-size: 0.75rem;
+  font-size: var(--crm-text-xs);
 }
 
 .crm-breadcrumb-current {
@@ -777,7 +777,7 @@
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   padding: 7px 34px 7px 12px;
-  font-size: 0.8rem;
+  font-size: var(--crm-text-sm);
   color: #0f172a;
   outline: none;
   transition: all 0.2s ease;
@@ -997,7 +997,7 @@
   padding: 16px 28px;
   border-top: 1px solid var(--crm-border-light);
   background: rgba(255, 255, 255, 0.6);
-  font-size: 0.75rem;
+  font-size: var(--crm-text-xs);
   color: #64748b;
   display: flex;
   align-items: center;

@@ -273,7 +273,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                 <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', margin: 0 }}>
                   {isAr ? '🗺️ إدارة المناطق والأحياء' : '🗺️ Sohag Districts & Areas CMS'}
                 </h2>
-                <span style={{ fontSize: '0.82rem', color: 'var(--crm-faint)' }}>
+                <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-faint)' }}>
                   {isAr ? 'إضافة وتعديل وحذف مناطق محافظة سوهاج مع المزامنة السحابية الفورية لكافة شاشات وفلاتر الموقع' : 'Manage all districts & sync real-time across platform'}
                 </span>
               </div>
@@ -287,7 +287,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
               gap: '6px',
               padding: '6px 12px',
               borderRadius: '20px',
-              fontSize: '0.78rem',
+              fontSize: 'var(--crm-text-xs)',
               fontWeight: '700',
               background: 'rgba(16, 185, 129, 0.15)',
               color: 'var(--crm-positive)',
@@ -310,7 +310,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                 padding: '9px 16px',
                 borderRadius: '10px',
                 fontWeight: 'bold',
-                fontSize: '0.88rem'
+                fontSize: 'var(--crm-text-base)'
               }}
             >
               <Plus size={16} />
@@ -327,7 +327,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                 alignItems: 'center',
                 gap: '6px',
                 padding: '9px 14px',
-                fontSize: '0.82rem',
+                fontSize: 'var(--crm-text-sm)',
                 color: '#cbd5e1',
                 borderColor: 'rgba(255, 255, 255, 0.15)'
               }}
@@ -348,15 +348,15 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
           borderTop: '1px solid rgba(255, 255, 255, 0.08)'
         }}>
           <div style={{ background: 'rgba(0, 0, 0, 0.25)', padding: '10px 14px', borderRadius: '10px' }}>
-            <span style={{ fontSize: '0.76rem', color: 'var(--crm-faint)' }}>{isAr ? 'إجمالي المناطق والأحياء' : 'Total Districts'}</span>
+            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)' }}>{isAr ? 'إجمالي المناطق والأحياء' : 'Total Districts'}</span>
             <strong style={{ display: 'block', fontSize: '1.2rem', color: '#fff', marginTop: '2px' }}>{stats.total} {isAr ? 'منطقة' : 'Areas'}</strong>
           </div>
           <div style={{ background: 'rgba(0, 0, 0, 0.25)', padding: '10px 14px', borderRadius: '10px' }}>
-            <span style={{ fontSize: '0.76rem', color: 'var(--crm-faint)' }}>{isAr ? 'الأحياء المخصصة المضافة' : 'Custom Added Districts'}</span>
+            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)' }}>{isAr ? 'الأحياء المخصصة المضافة' : 'Custom Added Districts'}</span>
             <strong style={{ display: 'block', fontSize: '1.2rem', color: 'var(--accent-gold)', marginTop: '2px' }}>{stats.custom} {isAr ? 'حي إضافي' : 'Custom'}</strong>
           </div>
           <div style={{ background: 'rgba(0, 0, 0, 0.25)', padding: '10px 14px', borderRadius: '10px' }}>
-            <span style={{ fontSize: '0.76rem', color: 'var(--crm-faint)' }}>{isAr ? 'الأحياء الأساسية الرسمية' : 'System Districts'}</span>
+            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)' }}>{isAr ? 'الأحياء الأساسية الرسمية' : 'System Districts'}</span>
             <strong style={{ display: 'block', fontSize: '1.2rem', color: '#38bdf8', marginTop: '2px' }}>{stats.system} {isAr ? 'مناطق رئيسية' : 'Core'}</strong>
           </div>
         </div>
@@ -376,7 +376,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
               background: 'transparent',
               border: 'none',
               color: '#fff',
-              fontSize: '0.9rem',
+              fontSize: 'var(--crm-text-base)',
               outline: 'none'
             }}
           />
@@ -427,7 +427,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                         {area.name_ar}
                       </h3>
                       <span style={{ 
-                        fontSize: '0.72rem', 
+                        fontSize: 'var(--crm-text-xs)', 
                         padding: '2px 8px', 
                         borderRadius: '6px', 
                         background: isSystem ? 'rgba(56, 189, 248, 0.15)' : 'rgba(217, 119, 6, 0.15)',
@@ -437,13 +437,13 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                         #{area.id}
                       </span>
                     </div>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--crm-faint)', marginTop: '2px', display: 'block' }}>
+                    <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-faint)', marginTop: '2px', display: 'block' }}>
                       {area.name_en || area.id}
                     </span>
                   </div>
 
                   <span style={{
-                    fontSize: '0.75rem',
+                    fontSize: 'var(--crm-text-xs)',
                     fontWeight: 'bold',
                     padding: '4px 10px',
                     borderRadius: '8px',
@@ -457,14 +457,14 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                 {/* Description / Landmarks */}
                 {area.label_ar && area.label_ar !== area.name_ar && (
                   <div style={{ 
-                    fontSize: '0.82rem', 
+                    fontSize: 'var(--crm-text-sm)', 
                     color: '#cbd5e1', 
                     background: 'rgba(0, 0, 0, 0.2)', 
                     padding: '8px 10px', 
                     borderRadius: '8px',
                     marginBottom: '10px'
                   }}>
-                    <strong style={{ color: 'var(--accent-gold)', fontSize: '0.75rem', display: 'block', marginBottom: '2px' }}>
+                    <strong style={{ color: 'var(--accent-gold)', fontSize: 'var(--crm-text-xs)', display: 'block', marginBottom: '2px' }}>
                       {isAr ? 'التفاصيل والمعالم:' : 'Details & Landmarks:'}
                     </strong>
                     {area.label_ar}
@@ -479,7 +479,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                   marginBottom: '12px'
                 }}>
                   <span style={{
-                    fontSize: '0.75rem',
+                    fontSize: 'var(--crm-text-xs)',
                     fontWeight: '700',
                     padding: '3px 8px',
                     borderRadius: '6px',
@@ -490,7 +490,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                     {isAr ? `متوسط: ${(area.avgPricePerMeter || 15000).toLocaleString()} ج.م/م²` : `Avg: ${(area.avgPricePerMeter || 15000).toLocaleString()} EGP/m²`}
                   </span>
                   <span style={{
-                    fontSize: '0.75rem',
+                    fontSize: 'var(--crm-text-xs)',
                     fontWeight: '700',
                     padding: '3px 8px',
                     borderRadius: '6px',
@@ -502,7 +502,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                   </span>
                   {area.amenities?.length > 0 && (
                     <span style={{
-                      fontSize: '0.75rem',
+                      fontSize: 'var(--crm-text-xs)',
                       padding: '3px 8px',
                       borderRadius: '6px',
                       background: 'rgba(56, 189, 248, 0.1)',
@@ -519,7 +519,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                     display: 'flex', 
                     alignItems: 'center', 
                     gap: '6px', 
-                    fontSize: '0.75rem', 
+                    fontSize: 'var(--crm-text-xs)', 
                     color: 'var(--crm-muted)',
                     marginBottom: '14px' 
                   }}>
@@ -549,7 +549,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                     gap: '5px',
                     padding: '6px 12px',
                     borderRadius: '8px',
-                    fontSize: '0.8rem',
+                    fontSize: 'var(--crm-text-sm)',
                     background: 'rgba(255, 255, 255, 0.08)',
                     color: '#fff',
                     border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -572,7 +572,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                       gap: '5px',
                       padding: '6px 12px',
                       borderRadius: '8px',
-                      fontSize: '0.8rem',
+                      fontSize: 'var(--crm-text-sm)',
                       background: 'rgba(239, 68, 68, 0.12)',
                       color: '#f87171',
                       border: '1px solid rgba(239, 68, 68, 0.25)',
@@ -594,7 +594,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
         <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--crm-faint)' }}>
           <MapPin size={40} style={{ opacity: 0.3, marginBottom: '12px' }} />
           <h4>{isAr ? 'لم يتم العثور على مناطق مطابقة لبحثك' : 'No matching districts found'}</h4>
-          <p style={{ fontSize: '0.85rem' }}>{isAr ? 'جرب البحث بكلمات أخرى أو أضف الحي الجديد الآن.' : 'Try another query or add a new district.'}</p>
+          <p style={{ fontSize: 'var(--crm-text-base)' }}>{isAr ? 'جرب البحث بكلمات أخرى أو أضف الحي الجديد الآن.' : 'Try another query or add a new district.'}</p>
         </div>
       )}
 
@@ -634,7 +634,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
             <form onSubmit={handleSubmitForm}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
                 <div className="form-group-item">
-                  <label style={{ display: 'block', fontSize: '0.82rem', color: '#cbd5e1', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: 'var(--crm-text-sm)', color: '#cbd5e1', marginBottom: '6px' }}>
                     {isAr ? 'اسم الحي / المنطقة (عربي) *' : 'District Name (Arabic) *'}
                   </label>
                   <input
@@ -650,13 +650,13 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                       padding: '10px 12px',
                       borderRadius: '8px',
                       color: '#fff',
-                      fontSize: '0.88rem'
+                      fontSize: 'var(--crm-text-base)'
                     }}
                   />
                 </div>
 
                 <div className="form-group-item">
-                  <label style={{ display: 'block', fontSize: '0.82rem', color: '#cbd5e1', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: 'var(--crm-text-sm)', color: '#cbd5e1', marginBottom: '6px' }}>
                     {isAr ? 'الاسم بالإنجليزية' : 'District Name (English)'}
                   </label>
                   <input
@@ -672,7 +672,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                       padding: '10px 12px',
                       borderRadius: '8px',
                       color: '#fff',
-                      fontSize: '0.88rem'
+                      fontSize: 'var(--crm-text-base)'
                     }}
                   />
                 </div>
@@ -680,7 +680,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
 
               {/* Detailed Label for Dropdowns */}
               <div className="form-group-item" style={{ marginBottom: '14px' }}>
-                <label style={{ display: 'block', fontSize: '0.82rem', color: '#cbd5e1', marginBottom: '6px' }}>
+                <label style={{ display: 'block', fontSize: 'var(--crm-text-sm)', color: '#cbd5e1', marginBottom: '6px' }}>
                   {isAr ? 'التسمية التوضيحية في القوائم المنسدلة والمعالم (عربي)' : 'Dropdown Label & Landmarks'}
                 </label>
                 <input
@@ -695,7 +695,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                     padding: '10px 12px',
                     borderRadius: '8px',
                     color: '#fff',
-                    fontSize: '0.88rem'
+                    fontSize: 'var(--crm-text-base)'
                   }}
                 />
               </div>
@@ -703,7 +703,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
               {/* Coordinates: Lat & Lng */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
                 <div className="form-group-item">
-                  <label style={{ display: 'block', fontSize: '0.82rem', color: '#cbd5e1', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: 'var(--crm-text-sm)', color: '#cbd5e1', marginBottom: '6px' }}>
                     {isAr ? 'خط العرض' : 'Latitude'}
                   </label>
                   <input
@@ -718,13 +718,13 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                       padding: '10px 12px',
                       borderRadius: '8px',
                       color: '#fff',
-                      fontSize: '0.88rem'
+                      fontSize: 'var(--crm-text-base)'
                     }}
                   />
                 </div>
 
                 <div className="form-group-item">
-                  <label style={{ display: 'block', fontSize: '0.82rem', color: '#cbd5e1', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: 'var(--crm-text-sm)', color: '#cbd5e1', marginBottom: '6px' }}>
                     {isAr ? 'خط الطول' : 'Longitude'}
                   </label>
                   <input
@@ -739,7 +739,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                       padding: '10px 12px',
                       borderRadius: '8px',
                       color: '#fff',
-                      fontSize: '0.88rem'
+                      fontSize: 'var(--crm-text-base)'
                     }}
                   />
                 </div>
@@ -748,7 +748,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
               {/* Market Benchmark: Avg Price Per Meter & Growth Rate */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
                 <div className="form-group-item">
-                  <label style={{ display: 'block', fontSize: '0.82rem', color: '#cbd5e1', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: 'var(--crm-text-sm)', color: '#cbd5e1', marginBottom: '6px' }}>
                     {isAr ? 'متوسط سعر المتر (ج.م/م²) *' : 'Avg Price/m² (EGP) *'}
                   </label>
                   <input
@@ -766,16 +766,16 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                       borderRadius: '8px',
                       color: 'var(--accent-gold)',
                       fontWeight: 'bold',
-                      fontSize: '0.88rem'
+                      fontSize: 'var(--crm-text-base)'
                     }}
                   />
-                  <small style={{ color: 'var(--crm-faint)', fontSize: '0.72rem', display: 'block', marginTop: '4px' }}>
+                  <small style={{ color: 'var(--crm-faint)', fontSize: 'var(--crm-text-xs)', display: 'block', marginTop: '4px' }}>
                     {isAr ? 'يحدد معيار عدالة الأسعار التلقائي للحي' : 'Sets valuation benchmark for district'}
                   </small>
                 </div>
 
                 <div className="form-group-item">
-                  <label style={{ display: 'block', fontSize: '0.82rem', color: '#cbd5e1', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: 'var(--crm-text-sm)', color: '#cbd5e1', marginBottom: '6px' }}>
                     {isAr ? 'مؤشر النمو التراكمي للأسعار (%)' : 'Capital Growth Rate (%)'}
                   </label>
                   <input
@@ -793,10 +793,10 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                       borderRadius: '8px',
                       color: 'var(--crm-positive)',
                       fontWeight: 'bold',
-                      fontSize: '0.88rem'
+                      fontSize: 'var(--crm-text-base)'
                     }}
                   />
-                  <small style={{ color: 'var(--crm-faint)', fontSize: '0.72rem', display: 'block', marginTop: '4px' }}>
+                  <small style={{ color: 'var(--crm-faint)', fontSize: 'var(--crm-text-xs)', display: 'block', marginTop: '4px' }}>
                     {isAr ? 'النسبة المعروضة على الرسم البياني' : 'Displayed in historical growth chart'}
                   </small>
                 </div>
@@ -804,7 +804,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
 
               {/* Description */}
               <div className="form-group-item" style={{ marginBottom: '18px' }}>
-                <label style={{ display: 'block', fontSize: '0.82rem', color: '#cbd5e1', marginBottom: '6px' }}>
+                <label style={{ display: 'block', fontSize: 'var(--crm-text-sm)', color: '#cbd5e1', marginBottom: '6px' }}>
                   {isAr ? 'نبذة مختصرة عن الحي / المنطقة' : 'Short Description'}
                 </label>
                 <textarea
@@ -819,7 +819,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                     padding: '10px 12px',
                     borderRadius: '8px',
                     color: '#fff',
-                    fontSize: '0.88rem',
+                    fontSize: 'var(--crm-text-base)',
                     resize: 'none'
                   }}
                 />
@@ -884,13 +884,13 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                 ? `حذف «${areas.find((a) => a.id === deleteConfirmId)?.name_ar || deleteConfirmId}»؟`
                 : 'Confirm District Deletion'}
             </h3>
-            <p style={{ color: '#cbd5e1', fontSize: '0.88rem', marginBottom: getAreaPropertiesCount(deleteConfirmId) > 0 ? '10px' : '20px' }}>
+            <p style={{ color: '#cbd5e1', fontSize: 'var(--crm-text-base)', marginBottom: getAreaPropertiesCount(deleteConfirmId) > 0 ? '10px' : '20px' }}>
               {isAr
                 ? 'سيتم إزالة الحي من فلاتر البحث ونماذج البيع والشراء في الموقع.'
                 : 'The district will be removed from all search filters.'}
             </p>
             {getAreaPropertiesCount(deleteConfirmId) > 0 && (
-              <p style={{ color: '#fca5a5', fontSize: '0.84rem', fontWeight: 700, background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', padding: '8px 10px', marginBottom: '18px' }}>
+              <p style={{ color: '#fca5a5', fontSize: 'var(--crm-text-sm)', fontWeight: 700, background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', padding: '8px 10px', marginBottom: '18px' }}>
                 {isAr
                   ? `تنبيه: ${getAreaPropertiesCount(deleteConfirmId)} عقار مرتبط بهذا الحي وسيظهر بدون اسم منطقة. انقلها لحي آخر أولاً.`
                   : `${getAreaPropertiesCount(deleteConfirmId)} listings use this district.`}

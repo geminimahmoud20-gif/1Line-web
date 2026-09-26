@@ -169,7 +169,7 @@ export default function GoLiveWizardModal({
             <h2 style={{ fontSize: '1.3rem', color: '#ffffff', fontWeight: 'bold', margin: 0 }}>
               {isAr ? 'معالج الجاهزية والتحول للإنتاج الفعلي' : 'Production Readiness & Go-Live Wizard'}
             </h2>
-            <small style={{ color: 'var(--crm-faint)', fontSize: '0.8rem' }}>
+            <small style={{ color: 'var(--crm-faint)', fontSize: 'var(--crm-text-sm)' }}>
               {isAr ? 'تحويل النظام من المرحلة التجريبية إلى الإطلاق التجاري الفعلي لسوق سوهاج' : 'Transition from demo prototype to live production in Sohag'}
             </small>
           </div>
@@ -184,7 +184,7 @@ export default function GoLiveWizardModal({
           marginBottom: '24px'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '0.85rem', color: '#e2e8f0', fontWeight: 'bold' }}>
+            <span style={{ fontSize: 'var(--crm-text-base)', color: '#e2e8f0', fontWeight: 'bold' }}>
               {isAr ? 'مؤشر الجاهزية الإجمالي للإطلاق:' : 'Total Go-Live Readiness:'}
             </span>
             <strong style={{
@@ -222,7 +222,7 @@ export default function GoLiveWizardModal({
                 color: activeStep === tab.id ? 'var(--accent-gold)' : '#94a3b8',
                 padding: '6px 14px',
                 borderRadius: '10px',
-                fontSize: '0.8rem',
+                fontSize: 'var(--crm-text-sm)',
                 fontWeight: 'bold',
                 cursor: 'pointer'
               }}
@@ -245,16 +245,16 @@ export default function GoLiveWizardModal({
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {isPhoneDefault ? <AlertTriangle size={16} color="#ef4444" /> : <CheckCircle2 size={16} color="#10b981" />}
-                  <strong style={{ color: '#fff', fontSize: '0.92rem' }}>
+                  <strong style={{ color: '#fff', fontSize: 'var(--crm-text-md)' }}>
                     {isAr ? '1. رقم هاتف وواتساب المكتب الحقيقي' : '1. Official Office Phone & WhatsApp'}
                   </strong>
                 </div>
-                <span style={{ fontSize: '0.72rem', color: isPhoneDefault ? '#ef4444' : '#10b981', fontWeight: 'bold' }}>
+                <span style={{ fontSize: 'var(--crm-text-xs)', color: isPhoneDefault ? '#ef4444' : '#10b981', fontWeight: 'bold' }}>
                   {isPhoneDefault ? (isAr ? 'افتراضي حالياً' : 'Default') : (isAr ? 'مخصص ومعتمد' : 'Configured')}
                 </span>
               </div>
 
-              <p style={{ fontSize: '0.78rem', color: 'var(--crm-faint)', margin: '0 0 12px 0' }}>
+              <p style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)', margin: '0 0 12px 0' }}>
                 {isAr 
                   ? 'رقم الهاتف هو البوابة التي يتواصل عبرها المشتري. يجب كتابة رقم هاتفك الفعلي مسبوقاً بكود الدولة (مثال: 2010XXXXXXXX).' 
                   : 'Enter your real WhatsApp number with country code.'}
@@ -273,7 +273,7 @@ export default function GoLiveWizardModal({
                     padding: '8px 12px',
                     borderRadius: '8px',
                     color: '#fff',
-                    fontSize: '0.85rem'
+                    fontSize: 'var(--crm-text-base)'
                   }}
                 />
                 <button
@@ -284,7 +284,7 @@ export default function GoLiveWizardModal({
                     borderRadius: '8px',
                     color: '#fff',
                     padding: '8px 16px',
-                    fontSize: '0.8rem',
+                    fontSize: 'var(--crm-text-sm)',
                     fontWeight: 'bold',
                     cursor: 'pointer'
                   }}
@@ -307,15 +307,15 @@ export default function GoLiveWizardModal({
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <CheckCircle2 size={16} color="#10b981" />
-                  <strong style={{ color: '#fff', fontSize: '0.92rem' }}>
+                  <strong style={{ color: '#fff', fontSize: 'var(--crm-text-md)' }}>
                     {isAr ? '2. سرعة الموقع وتجزئة الكود' : '2. Speed & Code Splitting'}
                   </strong>
                 </div>
-                <small style={{ color: 'var(--crm-faint)', fontSize: '0.78rem', display: 'block', marginTop: '2px' }}>
+                <small style={{ color: 'var(--crm-faint)', fontSize: 'var(--crm-text-xs)', display: 'block', marginTop: '2px' }}>
                   {isAr ? 'تم تقليص حجم الحزمة الأولية إلى 225KB وتسريع الموقع للضعف على شبكات 3G.' : 'Optimized to 225KB initial payload.'}
                 </small>
               </div>
-              <span style={{ fontSize: '0.74rem', color: 'var(--crm-positive)', fontWeight: 'bold' }}>100% {isAr ? 'مكتمل' : 'Passed'}</span>
+              <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', fontWeight: 'bold' }}>100% {isAr ? 'مكتمل' : 'Passed'}</span>
             </div>
 
             {/* Item 3: Image Auto-Compressor */}
@@ -331,15 +331,15 @@ export default function GoLiveWizardModal({
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <CheckCircle2 size={16} color="#10b981" />
-                  <strong style={{ color: '#fff', fontSize: '0.92rem' }}>
+                  <strong style={{ color: '#fff', fontSize: 'var(--crm-text-md)' }}>
                     {isAr ? '3. محرك ضغط وتأمين صور العقارات' : '3. Canvas Image Compressor'}
                   </strong>
                 </div>
-                <small style={{ color: 'var(--crm-faint)', fontSize: '0.78rem', display: 'block', marginTop: '2px' }}>
+                <small style={{ color: 'var(--crm-faint)', fontSize: 'var(--crm-text-xs)', display: 'block', marginTop: '2px' }}>
                   {isAr ? 'أي صورة تُرفع تُضغط تلقائياً لتوفير 85% من الذاكرة وتفادي امتلاء المتصفح.' : 'Automatic 85% storage saving per image.'}
                 </small>
               </div>
-              <span style={{ fontSize: '0.74rem', color: 'var(--crm-positive)', fontWeight: 'bold' }}>100% {isAr ? 'مكتمل' : 'Active'}</span>
+              <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', fontWeight: 'bold' }}>100% {isAr ? 'مكتمل' : 'Active'}</span>
             </div>
 
             {/* Item 4: QA & Security Audit */}
@@ -355,15 +355,15 @@ export default function GoLiveWizardModal({
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <CheckCircle2 size={16} color="#10b981" />
-                  <strong style={{ color: '#fff', fontSize: '0.92rem' }}>
+                  <strong style={{ color: '#fff', fontSize: 'var(--crm-text-md)' }}>
                     {isAr ? '4. الفحص الأمني ومقاومة الاختراق' : '4. Security Audit'}
                   </strong>
                 </div>
-                <small style={{ color: 'var(--crm-faint)', fontSize: '0.78rem', display: 'block', marginTop: '2px' }}>
+                <small style={{ color: 'var(--crm-faint)', fontSize: 'var(--crm-text-xs)', display: 'block', marginTop: '2px' }}>
                   {isAr ? 'اجتاز النظام كافة اختبارات الـ 81 فحص أمني بنسبة نجاح 100%.' : '81 / 81 QA and security tests passed.'}
                 </small>
               </div>
-              <span style={{ fontSize: '0.74rem', color: 'var(--crm-positive)', fontWeight: 'bold' }}>100% {isAr ? 'مؤمن' : 'Secured'}</span>
+              <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', fontWeight: 'bold' }}>100% {isAr ? 'مؤمن' : 'Secured'}</span>
             </div>
           </div>
         )}
@@ -372,10 +372,10 @@ export default function GoLiveWizardModal({
         {activeStep === 'cleanse' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '16px', padding: '18px' }}>
-              <h4 style={{ color: '#fff', margin: '0 0 8px 0', fontSize: '0.95rem' }}>
+              <h4 style={{ color: '#fff', margin: '0 0 8px 0', fontSize: 'var(--crm-text-md)' }}>
                 {isAr ? 'الخطوة 1: تنزيل نسخة احتياطية كاملة' : 'Step 1: Download Full Backup'}
               </h4>
-              <p style={{ color: 'var(--crm-faint)', fontSize: '0.8rem', marginBottom: '14px' }}>
+              <p style={{ color: 'var(--crm-faint)', fontSize: 'var(--crm-text-sm)', marginBottom: '14px' }}>
                 {isAr 
                   ? 'قبل إجراء أي تصفير للعملاء التجريبيين، حمّل ملف النسخة الاحتياطية حتى يمكنك استرجاع أي بيانات في أي وقت بنقرة زر واحدة.' 
                   : 'Always export a complete JSON snapshot before purging demo data.'}
@@ -389,7 +389,7 @@ export default function GoLiveWizardModal({
                   color: 'var(--accent-gold)',
                   padding: '8px 16px',
                   borderRadius: '10px',
-                  fontSize: '0.82rem',
+                  fontSize: 'var(--crm-text-sm)',
                   fontWeight: 'bold',
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -403,10 +403,10 @@ export default function GoLiveWizardModal({
             </div>
 
             <div style={{ background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '16px', padding: '18px' }}>
-              <h4 style={{ color: '#ef4444', margin: '0 0 8px 0', fontSize: '0.95rem' }}>
+              <h4 style={{ color: '#ef4444', margin: '0 0 8px 0', fontSize: 'var(--crm-text-md)' }}>
                 {isAr ? 'الخطوة 2: تصفير قاعدة بيانات العملاء التجريبيين' : 'Step 2: Purge Demo Leads'}
               </h4>
-              <p style={{ color: 'var(--crm-faint)', fontSize: '0.8rem', marginBottom: '14px' }}>
+              <p style={{ color: 'var(--crm-faint)', fontSize: 'var(--crm-text-sm)', marginBottom: '14px' }}>
                 {isAr 
                   ? 'سيتم حذف كل أسماء العملاء الافتراضية والبدء بجدول عملاء نظيف تماماً لاستقبال طلبات الزوار الحقيقيين فور إطلاق الحملات التسويقية.' 
                   : 'Clear mock leads to prepare the CRM for real incoming buyers.'}
@@ -420,7 +420,7 @@ export default function GoLiveWizardModal({
                   color: '#ef4444',
                   padding: '8px 16px',
                   borderRadius: '10px',
-                  fontSize: '0.82rem',
+                  fontSize: 'var(--crm-text-sm)',
                   fontWeight: 'bold',
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -439,10 +439,10 @@ export default function GoLiveWizardModal({
         {activeStep === 'domain' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '16px', padding: '18px' }}>
-              <h4 style={{ color: '#fff', margin: '0 0 8px 0', fontSize: '0.95rem' }}>
+              <h4 style={{ color: '#fff', margin: '0 0 8px 0', fontSize: 'var(--crm-text-md)' }}>
                 🌐 {isAr ? 'كيفية ربط الموقع بدومينكم الرسمي' : 'How to deploy to your official domain'}
               </h4>
-              <ol style={{ color: '#cbd5e1', fontSize: '0.82rem', lineHeight: 1.8, paddingRight: '20px' }}>
+              <ol style={{ color: '#cbd5e1', fontSize: 'var(--crm-text-sm)', lineHeight: 1.8, paddingRight: '20px' }}>
                 <li>قم بتشغيل أمر البناء النهائي: <code>npm run build</code> ليتم إنشاء مجلد <code>dist</code> جاهز للرفع.</li>
                 <li>ارفع محتويات مجلد <code>dist</code> إلى استضافتكم السحابية (مثل Hostinger, Vercel, Netlify, أو cPanel).</li>
                 <li>اربط الدومين الخاص بشركتكم بالـ DNS واستمتع بأول وأسرع منصة عقارية ذكية في سوهاج!</li>
@@ -462,7 +462,7 @@ export default function GoLiveWizardModal({
           flexWrap: 'wrap',
           gap: '10px'
         }}>
-          <span style={{ fontSize: '0.74rem', color: 'var(--crm-muted)' }}>
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
             {isAr ? '1Line Solutions — معايير جودة وأمان معتمدة 2026' : '1Line Solutions — Certified Standards 2026'}
           </span>
 
@@ -470,7 +470,7 @@ export default function GoLiveWizardModal({
             type="button"
             className="btn btn-sm btn-ghost"
             onClick={onClose}
-            style={{ fontSize: '0.82rem', color: '#cbd5e1' }}
+            style={{ fontSize: 'var(--crm-text-sm)', color: '#cbd5e1' }}
           >
             {isAr ? 'إغلاق المعالج' : 'Close'}
           </button>

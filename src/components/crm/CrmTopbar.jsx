@@ -187,7 +187,7 @@ export default function CrmTopbar({
               border: '1px solid var(--crm-line, #e2e8f0)',
               borderRadius: '5px',
               padding: '2px 6px',
-              fontSize: '0.68rem',
+              fontSize: 'var(--crm-text-xs)',
               color: 'var(--crm-muted)',
               fontWeight: 700,
               cursor: 'pointer'
@@ -212,7 +212,7 @@ export default function CrmTopbar({
             {/* Matching Leads */}
             {leads.filter(l => (l.name || '').toLowerCase().includes(universalSearch.toLowerCase()) || (l.phone || '').includes(universalSearch)).length > 0 && (
               <div style={{ marginBottom: '10px' }}>
-                <span style={{ fontSize: '0.72rem', color: 'var(--crm-info)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-info)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
                   {isAr ? 'العملاء المطابقين' : 'Matching Leads'}
                 </span>
                 {leads.filter(l => (l.name || '').toLowerCase().includes(universalSearch.toLowerCase()) || (l.phone || '').includes(universalSearch)).slice(0, 3).map(l => (
@@ -231,10 +231,10 @@ export default function CrmTopbar({
                     }}
                   >
                     <div>
-                      <div style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>{l.name}</div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--crm-muted)' }}>{l.phone}</div>
+                      <div style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold' }}>{l.name}</div>
+                      <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{l.phone}</div>
                     </div>
-                    <span style={{ fontSize: '0.72rem', padding: '2px 6px', background: '#e2e8f0', borderRadius: '4px', color: 'var(--crm-body)' }}>
+                    <span style={{ fontSize: 'var(--crm-text-xs)', padding: '2px 6px', background: '#e2e8f0', borderRadius: '4px', color: 'var(--crm-body)' }}>
                       {isAr ? ({ new: 'جديد', contacted: 'تم التواصل', site_visit: 'معاينة', negotiating: 'تفاوض', closing: 'توقيع', closed: 'ناجحة' }[l.status] || 'جديد') : (l.status || 'new')}
                     </span>
                   </div>
@@ -245,7 +245,7 @@ export default function CrmTopbar({
             {/* Matching Properties */}
             {properties.filter(p => (p.title_ar || '').toLowerCase().includes(universalSearch.toLowerCase()) || (p.locationName_ar || '').toLowerCase().includes(universalSearch.toLowerCase())).length > 0 && (
               <div style={{ marginBottom: '10px' }}>
-                <span style={{ fontSize: '0.72rem', color: 'var(--crm-accent-text)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
                   {isAr ? 'العقارات المطابقة' : 'Matching Properties'}
                 </span>
                 {properties.filter(p => (p.title_ar || '').toLowerCase().includes(universalSearch.toLowerCase()) || (p.locationName_ar || '').toLowerCase().includes(universalSearch.toLowerCase())).slice(0, 3).map(p => (
@@ -260,8 +260,8 @@ export default function CrmTopbar({
                       marginBottom: '4px'
                     }}
                   >
-                    <div style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>{p.title_ar}</div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--crm-muted)' }}>{p.price?.toLocaleString()} ج.م</div>
+                    <div style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold' }}>{p.title_ar}</div>
+                    <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{p.price?.toLocaleString()} ج.م</div>
                   </div>
                 ))}
               </div>
@@ -270,7 +270,7 @@ export default function CrmTopbar({
             {/* Matching Demands */}
             {demands.filter(d => (d.text_ar || '').toLowerCase().includes(universalSearch.toLowerCase()) || (d.clientName || '').toLowerCase().includes(universalSearch.toLowerCase()) || (d.phone || '').includes(universalSearch)).length > 0 && (
               <div>
-                <span style={{ fontSize: '0.72rem', color: 'var(--crm-positive)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
                   {isAr ? 'طلبات المشترين' : 'Matching Demands'}
                 </span>
                 {demands.filter(d => (d.text_ar || '').toLowerCase().includes(universalSearch.toLowerCase()) || (d.clientName || '').toLowerCase().includes(universalSearch.toLowerCase()) || (d.phone || '').includes(universalSearch)).slice(0, 3).map(d => (
@@ -285,8 +285,8 @@ export default function CrmTopbar({
                       marginBottom: '4px'
                     }}
                   >
-                    <div style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>{d.text_ar || d.clientName}</div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--crm-muted)' }}>ميزانية: {d.budget} ج.م</div>
+                    <div style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold' }}>{d.text_ar || d.clientName}</div>
+                    <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>ميزانية: {d.budget} ج.م</div>
                   </div>
                 ))}
               </div>
@@ -306,7 +306,7 @@ export default function CrmTopbar({
               background: '#0F172A',
               color: '#FFFFFF',
               fontWeight: '700',
-              fontSize: '0.76rem',
+              fontSize: 'var(--crm-text-xs)',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
@@ -341,7 +341,7 @@ export default function CrmTopbar({
                   background: 'none',
                   border: 'none',
                   color: 'inherit',
-                  fontSize: '0.8rem',
+                  fontSize: 'var(--crm-text-sm)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
@@ -363,7 +363,7 @@ export default function CrmTopbar({
                   background: 'none',
                   border: 'none',
                   color: 'inherit',
-                  fontSize: '0.8rem',
+                  fontSize: 'var(--crm-text-sm)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
@@ -385,7 +385,7 @@ export default function CrmTopbar({
                   background: 'none',
                   border: 'none',
                   color: 'inherit',
-                  fontSize: '0.8rem',
+                  fontSize: 'var(--crm-text-sm)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
@@ -407,7 +407,7 @@ export default function CrmTopbar({
                   background: 'none',
                   border: 'none',
                   color: 'inherit',
-                  fontSize: '0.8rem',
+                  fontSize: 'var(--crm-text-sm)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
@@ -431,7 +431,7 @@ export default function CrmTopbar({
                   background: 'none',
                   border: 'none',
                   color: 'inherit',
-                  fontSize: '0.8rem',
+                  fontSize: 'var(--crm-text-sm)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
@@ -453,7 +453,7 @@ export default function CrmTopbar({
                   background: 'none',
                   border: 'none',
                   color: 'inherit',
-                  fontSize: '0.8rem',
+                  fontSize: 'var(--crm-text-sm)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
@@ -490,10 +490,10 @@ export default function CrmTopbar({
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <span style={{ fontSize: '0.82rem', fontWeight: 'bold' }}>
+                <span style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold' }}>
                   {isAr ? 'مركز الإشعارات الحية' : 'Live Notifications'}
                 </span>
-                <span style={{ fontSize: '0.7rem', color: 'var(--crm-muted)' }}>
+                <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
                   {totalNotifications} {isAr ? 'تنبيه' : 'alerts'}
                 </span>
               </div>
@@ -510,16 +510,16 @@ export default function CrmTopbar({
                       cursor: 'pointer'
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#ef4444', fontWeight: 'bold', fontSize: '0.76rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#ef4444', fontWeight: 'bold', fontSize: 'var(--crm-text-xs)' }}>
                       <AlertTriangle size={13} />
                       <span>{isAr ? `يوجد ${pendingDemands.length} طلب مشترٍ بحاجة للمراجعة!` : `${pendingDemands.length} pending demands awaiting approval`}</span>
                     </div>
-                    <small style={{ color: 'var(--crm-muted)', fontSize: '0.68rem', display: 'block', marginTop: '2px' }}>
+                    <small style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-xs)', display: 'block', marginTop: '2px' }}>
                       {isAr ? 'انقر للذهاب لصفحة الطلبات واعتمادها' : 'Click to review and approve'}
                     </small>
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--crm-positive)', fontSize: '0.75rem', padding: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--crm-positive)', fontSize: 'var(--crm-text-xs)', padding: '6px' }}>
                     <CheckCircle2 size={14} />
                     <span>{isAr ? 'جميع طلبات المشترين معتمدة ومحدثة' : 'All buyer demands approved'}</span>
                   </div>
@@ -531,11 +531,11 @@ export default function CrmTopbar({
                   border: '1px solid rgba(16, 185, 129, 0.2)',
                   borderRadius: '8px'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--crm-positive)', fontWeight: 'bold', fontSize: '0.76rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--crm-positive)', fontWeight: 'bold', fontSize: 'var(--crm-text-xs)' }}>
                     <CheckCircle2 size={13} />
                     <span>{isAr ? 'جلسة التشفير والسحابة نشطة' : 'Encrypted Cloud Sync Active'}</span>
                   </div>
-                  <small style={{ color: 'var(--crm-muted)', fontSize: '0.68rem', display: 'block', marginTop: '2px' }}>
+                  <small style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-xs)', display: 'block', marginTop: '2px' }}>
                     {isAr ? 'تمت مزامنة البيانات مع Firebase بنجاح' : 'Data synchronized with Firestore'}
                   </small>
                 </div>
@@ -564,7 +564,7 @@ export default function CrmTopbar({
               style={{
                 background: 'transparent',
                 border: 'none',
-                fontSize: '0.74rem',
+                fontSize: 'var(--crm-text-xs)',
                 fontWeight: '700',
                 color: selectedRole === 'super_admin' ? 'var(--crm-ink)' : 'var(--crm-accent-text)',
                 cursor: 'pointer',
@@ -588,7 +588,7 @@ export default function CrmTopbar({
             border: '1px solid var(--crm-line)',
             borderRadius: '8px',
             padding: '4px 10px',
-            fontSize: '0.74rem',
+            fontSize: 'var(--crm-text-xs)',
             fontWeight: '600',
             color: 'var(--crm-body)'
           }}>
@@ -608,7 +608,7 @@ export default function CrmTopbar({
             color: 'var(--crm-body)',
             padding: '6px 12px',
             borderRadius: '8px',
-            fontSize: '0.75rem',
+            fontSize: 'var(--crm-text-xs)',
             fontWeight: '600',
             display: 'flex',
             alignItems: 'center',
@@ -630,7 +630,7 @@ export default function CrmTopbar({
           target="_blank"
           rel="noreferrer"
           style={{
-            fontSize: '0.75rem',
+            fontSize: 'var(--crm-text-xs)',
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
@@ -657,7 +657,7 @@ export default function CrmTopbar({
           onClick={onLogout}
           style={{
             color: '#DC2626',
-            fontSize: '0.75rem',
+            fontSize: 'var(--crm-text-xs)',
             padding: '6px 12px',
             borderRadius: '8px',
             border: '1px solid #FECACA',

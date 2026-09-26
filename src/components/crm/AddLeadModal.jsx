@@ -25,7 +25,8 @@ export default function AddLeadModal({
 }) {
   const isAr = lang === 'ar';
 
-  const [formData, setFormData] = useState({
+  // Lazy initialiser: the default follow-up date is computed once, not on every render
+  const [formData, setFormData] = useState(() => ({
     name: '',
     phone: '',
     whatsapp: '',
@@ -45,7 +46,7 @@ export default function AddLeadModal({
     nextFollowUpAt: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
     notes: '',
     tags: ['💎 VIP كاش', '🔥 مستعجل للشراء']
-  });
+  }));
 
   if (!isOpen) return null;
 
@@ -336,7 +337,7 @@ export default function AddLeadModal({
 
           {/* Tags */}
           <div style={{ marginTop: '14px' }}>
-            <label style={{ fontSize: '0.8rem', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
+            <label style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
               🏷️ {isAr ? 'الوسوم وتصنيف العميل:' : 'Tags:'}
             </label>
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
@@ -353,7 +354,7 @@ export default function AddLeadModal({
                       border: isSelected ? '1px solid var(--accent-gold)' : '1px solid var(--border-light)',
                       borderRadius: 'var(--radius-pill)',
                       padding: '4px 10px',
-                      fontSize: '0.75rem',
+                      fontSize: 'var(--crm-text-xs)',
                       cursor: 'pointer'
                     }}
                   >

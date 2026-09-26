@@ -648,7 +648,7 @@ export default function PropertyManagerPanel({
             type="text" 
             placeholder={isAr ? 'بحث بالاسم، الكود، أو المنطقة...' : 'Search title, code, area...'} 
             className="form-input" 
-            style={{ padding: '6px 14px', fontSize: '0.85rem', width: '220px', borderRadius: 'var(--radius-pill)' }}
+            style={{ padding: '6px 14px', fontSize: 'var(--crm-text-base)', width: '220px', borderRadius: 'var(--radius-pill)' }}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -692,7 +692,7 @@ export default function PropertyManagerPanel({
                           <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '2px' }}>
                             <span className="prop-id-tag">{prop.id.toUpperCase()}</span>
                             {prop.badge_ar && (
-                              <span style={{ fontSize: '0.65rem', background: 'var(--accent-gold-light)', color: 'var(--accent-gold)', padding: '1px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
+                              <span style={{ fontSize: 'var(--crm-text-xs)', background: 'var(--accent-gold-light)', color: 'var(--accent-gold)', padding: '1px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
                                 {isAr ? prop.badge_ar : prop.badge_en}
                               </span>
                             )}
@@ -736,11 +736,12 @@ export default function PropertyManagerPanel({
                       {!isTrash ? (
                         <select
                           value={propStatus}
+                          aria-label={isAr ? `حالة العرض: ${prop.title_ar || prop.id}` : `Display status: ${prop.title_en || prop.id}`}
                           onChange={(e) => handleStatusChange(prop.id, e.target.value)}
                           style={{
                             padding: '4px 8px',
                             borderRadius: 'var(--radius-pill)',
-                            fontSize: '0.75rem',
+                            fontSize: 'var(--crm-text-xs)',
                             fontWeight: 'bold',
                             border: '1px solid var(--border-light)',
                             background: 
@@ -829,7 +830,7 @@ export default function PropertyManagerPanel({
                                 color: 'var(--crm-positive)',
                                 padding: '4px 8px',
                                 borderRadius: '8px',
-                                fontSize: '0.72rem',
+                                fontSize: 'var(--crm-text-xs)',
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 gap: '4px',
@@ -912,7 +913,7 @@ export default function PropertyManagerPanel({
                     <ImageIcon size={18} />
                     <span>{isAr ? 'صور العقار (رفع من الموبايل أو الكمبيوتر)' : 'Property Photos (Direct Device Upload)'}</span>
                   </label>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--text-muted)' }}>
                     {form.images.length} {isAr ? 'صور مرفوعة' : 'photos'}
                   </span>
                 </div>
@@ -984,7 +985,7 @@ export default function PropertyManagerPanel({
                             left: '4px',
                             background: 'rgba(15, 23, 42, 0.85)',
                             color: 'var(--accent-gold)',
-                            fontSize: '0.68rem',
+                            fontSize: 'var(--crm-text-xs)',
                             fontWeight: 'bold',
                             padding: '2px 4px',
                             borderRadius: '4px',
@@ -1009,7 +1010,7 @@ export default function PropertyManagerPanel({
                               color: '#fff',
                               border: 'none',
                               borderRadius: '4px',
-                              fontSize: '0.68rem',
+                              fontSize: 'var(--crm-text-xs)',
                               padding: '2px 4px',
                               cursor: 'pointer',
                               display: 'flex',
@@ -1045,7 +1046,7 @@ export default function PropertyManagerPanel({
                             alignItems: 'center',
                             justifyContent: 'center',
                             cursor: 'pointer',
-                            fontSize: '11px'
+                            fontSize: 'var(--crm-text-xs)'
                           }}
                         >
                           ✕
@@ -1064,7 +1065,7 @@ export default function PropertyManagerPanel({
                 padding: '16px', 
                 marginBottom: '20px' 
               }}>
-                <h4 style={{ fontSize: '0.9rem', marginBottom: '12px', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <h4 style={{ fontSize: 'var(--crm-text-base)', marginBottom: '12px', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Sparkles size={16} />
                   {isAr ? 'إعدادات العرض والأولوية والتسويق' : 'Display Priority & Marketing Settings'}
                 </h4>
@@ -1210,7 +1211,7 @@ export default function PropertyManagerPanel({
                       type="button"
                       className="btn btn-sm btn-outline"
                       onClick={() => setShowMapPicker(true)}
-                      style={{ padding: '2px 8px', fontSize: '0.7rem', color: 'var(--accent-gold)', borderColor: 'var(--accent-gold-light)' }}
+                      style={{ padding: '2px 8px', fontSize: 'var(--crm-text-xs)', color: 'var(--accent-gold)', borderColor: 'var(--accent-gold-light)' }}
                     >
                       📍 {isAr ? 'تحديد دقيق على الخريطة' : 'Pin on Map'}
                     </button>
@@ -1222,7 +1223,7 @@ export default function PropertyManagerPanel({
                     placeholder="مثال: شارع الجمهورية - أمام الجامعة"
                   />
                   {form.coordinates?.lat && (
-                    <span style={{ fontSize: '0.7rem', color: 'var(--emerald)', display: 'block', marginTop: '3px' }}>
+                    <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--emerald)', display: 'block', marginTop: '3px' }}>
                       ✓ {isAr ? `إحداثيات GPS المحددة: ${form.coordinates.lat}, ${form.coordinates.lng}` : `GPS: ${form.coordinates.lat}, ${form.coordinates.lng}`}
                     </span>
                   )}
@@ -1305,7 +1306,7 @@ export default function PropertyManagerPanel({
                       background: 'rgba(217, 119, 6, 0.08)',
                       borderRadius: '8px',
                       border: '1px solid rgba(217, 119, 6, 0.22)',
-                      fontSize: '0.82rem',
+                      fontSize: 'var(--crm-text-sm)',
                       color: 'var(--accent-gold, #d97706)',
                       display: 'flex',
                       alignItems: 'center',
@@ -1340,7 +1341,7 @@ export default function PropertyManagerPanel({
                       background: 'rgba(56, 189, 248, 0.08)',
                       borderRadius: '8px',
                       border: '1px solid rgba(56, 189, 248, 0.22)',
-                      fontSize: '0.82rem',
+                      fontSize: 'var(--crm-text-sm)',
                       color: 'var(--crm-info)',
                       display: 'flex',
                       alignItems: 'center',
@@ -1381,7 +1382,7 @@ export default function PropertyManagerPanel({
                       background: 'rgba(16, 185, 129, 0.08)',
                       borderRadius: '8px',
                       border: '1px solid rgba(16, 185, 129, 0.22)',
-                      fontSize: '0.82rem',
+                      fontSize: 'var(--crm-text-sm)',
                       color: 'var(--crm-positive)',
                       display: 'flex',
                       alignItems: 'center',
@@ -1432,7 +1433,7 @@ export default function PropertyManagerPanel({
                 marginBottom: '16px'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                  <h4 style={{ fontSize: '0.9rem', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}>
+                  <h4 style={{ fontSize: 'var(--crm-text-base)', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}>
                     <MapPin size={16} />
                     {isAr ? 'المعالم والخدمات الحيوية وسعر المتر المقارن (ذكاء السوق)' : 'Market Intelligence & Custom Amenities'}
                   </h4>
@@ -1448,7 +1449,7 @@ export default function PropertyManagerPanel({
                       border: '1px solid rgba(56, 189, 248, 0.3)',
                       padding: '4px 10px',
                       borderRadius: '6px',
-                      fontSize: '0.78rem',
+                      fontSize: 'var(--crm-text-xs)',
                       cursor: 'pointer',
                       fontWeight: 'bold'
                     }}
@@ -1460,7 +1461,7 @@ export default function PropertyManagerPanel({
 
                 {/* Custom Benchmark Price Override */}
                 <div className="form-group-item" style={{ marginBottom: '12px' }}>
-                  <label style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>
+                  <label style={{ fontSize: 'var(--crm-text-sm)', color: '#cbd5e1' }}>
                     {isAr ? 'تخصيص متوسط سعر المتر المقارن لهذا العقار (ج.م/م² - اختياري)' : 'Custom Benchmark Price/m² (Optional Override)'}
                   </label>
                   <input
@@ -1476,7 +1477,7 @@ export default function PropertyManagerPanel({
                       padding: '8px 12px',
                       borderRadius: '8px',
                       color: '#fff',
-                      fontSize: '0.85rem'
+                      fontSize: 'var(--crm-text-base)'
                     }}
                   />
                 </div>
@@ -1500,12 +1501,12 @@ export default function PropertyManagerPanel({
                           placeholder={isAr ? 'اسم المعلم (مثال: مدرسة اللغات)' : 'Landmark name'}
                           value={am.name_ar || ''}
                           onChange={(e) => handleUpdateCustomAmenity(idx, 'name_ar', e.target.value)}
-                          style={{ background: 'transparent', border: '1px solid rgba(255, 255, 255, 0.15)', padding: '6px', borderRadius: '6px', color: '#fff', fontSize: '0.8rem' }}
+                          style={{ background: 'transparent', border: '1px solid rgba(255, 255, 255, 0.15)', padding: '6px', borderRadius: '6px', color: '#fff', fontSize: 'var(--crm-text-sm)' }}
                         />
                         <select
                           value={am.category || 'education'}
                           onChange={(e) => handleUpdateCustomAmenity(idx, 'category', e.target.value)}
-                          style={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(255, 255, 255, 0.15)', padding: '6px', borderRadius: '6px', color: '#fff', fontSize: '0.8rem' }}
+                          style={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(255, 255, 255, 0.15)', padding: '6px', borderRadius: '6px', color: '#fff', fontSize: 'var(--crm-text-sm)' }}
                         >
                           <option value="education">{isAr ? 'تعليم' : 'Education'}</option>
                           <option value="health">{isAr ? 'صحة' : 'Health'}</option>
@@ -1518,7 +1519,7 @@ export default function PropertyManagerPanel({
                           placeholder={isAr ? 'المسافة (مثال: 300 متر)' : 'Distance (e.g. 300m)'}
                           value={am.distance || ''}
                           onChange={(e) => handleUpdateCustomAmenity(idx, 'distance', e.target.value)}
-                          style={{ background: 'transparent', border: '1px solid rgba(255, 255, 255, 0.15)', padding: '6px', borderRadius: '6px', color: '#fff', fontSize: '0.8rem' }}
+                          style={{ background: 'transparent', border: '1px solid rgba(255, 255, 255, 0.15)', padding: '6px', borderRadius: '6px', color: '#fff', fontSize: 'var(--crm-text-sm)' }}
                         />
                         <button
                           type="button"
@@ -1531,7 +1532,7 @@ export default function PropertyManagerPanel({
                     ))}
                   </div>
                 ) : (
-                  <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--crm-faint)' }}>
+                  <p style={{ margin: 0, fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)' }}>
                     {isAr ? 'يتم حالياً عرض المعالم الحيوية الافتراضية للحي تلقائياً. يمكنك إضافة معالم مخصصة للعقار بالنقر على الزر أعلاه.' : 'Default district amenities are automatically displayed. Click above to add custom landmarks.'}
                   </p>
                 )}

@@ -29,8 +29,8 @@ export function FeaturedPeriodLabel({ property, isAr }) {
 
 /** Schedule dialog used by the star button and the board */
 export function FeaturedSlotModal({ property, isAr, onSave, onClose, nextOrder }) {
-  const [from, setFrom] = useState(property.featuredFrom || toDayInput(Date.now()));
-  const [until, setUntil] = useState(property.featuredUntil || addDays(29));
+  const [from, setFrom] = useState(() => property.featuredFrom || toDayInput(Date.now()));
+  const [until, setUntil] = useState(() => property.featuredUntil || addDays(29));
   const [openEnded, setOpenEnded] = useState(property.featured && !property.featuredUntil);
   const [order, setOrder] = useState(property.featuredOrder ?? nextOrder);
   const [error, setError] = useState('');
@@ -117,7 +117,7 @@ export default function HomepageSlotsBoard({ properties = [], onUpdateProperty, 
   const [editing, setEditing] = useState(null);
   const [dragId, setDragId] = useState(null);
   // Re-evaluate periods at midnight without a reload
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 60 * 1000);
     return () => clearInterval(t);

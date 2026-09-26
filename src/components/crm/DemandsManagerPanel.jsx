@@ -238,7 +238,7 @@ export default function DemandsManagerPanel({
                 <h2 style={{ fontSize: '1.3rem', color: '#092347', margin: 0, fontWeight: 700 }}>
                   {isAr ? 'إدارة طلبات المشترين واعتمادها' : 'Buyer Demands Management & Approval'}
                 </h2>
-                <p style={{ color: 'var(--crm-muted)', fontSize: '0.85rem', margin: '4px 0 0' }}>
+                <p style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-base)', margin: '4px 0 0' }}>
                   {isAr 
                     ? 'راجع طلبات المشترين والمستثمرين الواردة من الموقع، ودقق مواصفاتها واعتمد نشرها مباشرة أمام البائعين.' 
                     : 'Review, verify and approve active buyer requests submitted across the platform.'}
@@ -252,7 +252,7 @@ export default function DemandsManagerPanel({
               type="button" 
               className="btn btn-outline"
               onClick={handleExportCsv}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 16px', borderRadius: '10px', fontSize: '0.84rem', background: 'var(--crm-card)', border: '1px solid var(--crm-line-strong)', color: 'var(--crm-body)' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 16px', borderRadius: '10px', fontSize: 'var(--crm-text-sm)', background: 'var(--crm-card)', border: '1px solid var(--crm-line-strong)', color: 'var(--crm-body)' }}
               title={isAr ? 'تصدير جدول الطلبات إلى ملف Excel' : 'Export Demands to CSV'}
             >
               <Download size={16} />
@@ -274,7 +274,7 @@ export default function DemandsManagerPanel({
         {/* Quick KPI Stat Cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
           <div style={{ background: 'var(--crm-subtle)', border: '1px solid var(--crm-line)', borderRadius: '12px', padding: '14px 18px' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--crm-muted)', fontWeight: '600' }}>{isAr ? 'إجمالي الطلبات' : 'Total Demands'}</span>
+            <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)', fontWeight: '600' }}>{isAr ? 'إجمالي الطلبات' : 'Total Demands'}</span>
             <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#092347', marginTop: '4px' }}>
               {totalDemandsCount}
             </div>
@@ -286,7 +286,7 @@ export default function DemandsManagerPanel({
             borderRadius: '12px', 
             padding: '14px 18px' 
           }}>
-            <span style={{ fontSize: '0.8rem', color: pendingCount > 0 ? '#b45309' : '#64748b', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: 'var(--crm-text-sm)', color: pendingCount > 0 ? '#b45309' : '#64748b', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Clock size={14} />
               <span>{isAr ? 'قيد مراجعة الإدارة' : 'Pending Review'}</span>
             </span>
@@ -296,7 +296,7 @@ export default function DemandsManagerPanel({
           </div>
 
           <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', padding: '14px 18px' }}>
-            <span style={{ fontSize: '0.8rem', color: '#15803d', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: 'var(--crm-text-sm)', color: '#15803d', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <CheckCircle size={14} />
               <span>{isAr ? 'منشور نشط على الموقع' : 'Published Live'}</span>
             </span>
@@ -306,7 +306,7 @@ export default function DemandsManagerPanel({
           </div>
 
           <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px', padding: '14px 18px' }}>
-            <span style={{ fontSize: '0.8rem', color: '#1d4ed8', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: 'var(--crm-text-sm)', color: '#1d4ed8', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <DollarSign size={14} />
               <span>{isAr ? 'القوة الشرائية الجاهزة' : 'Total Buying Power'}</span>
             </span>
@@ -339,7 +339,7 @@ export default function DemandsManagerPanel({
             onClick={() => setStatusFilter('all')}
             style={{ 
               borderRadius: '20px', 
-              fontSize: '0.8rem', 
+              fontSize: 'var(--crm-text-sm)', 
               padding: '6px 14px',
               background: statusFilter === 'all' ? '#092347' : '#ffffff',
               color: statusFilter === 'all' ? '#ffffff' : '#334155',
@@ -354,7 +354,7 @@ export default function DemandsManagerPanel({
             onClick={() => setStatusFilter('pending')}
             style={{ 
               borderRadius: '20px', 
-              fontSize: '0.8rem', 
+              fontSize: 'var(--crm-text-sm)', 
               padding: '6px 14px',
               background: statusFilter === 'pending' ? '#d97706' : '#ffffff',
               color: statusFilter === 'pending' ? '#ffffff' : '#b45309',
@@ -370,7 +370,7 @@ export default function DemandsManagerPanel({
             onClick={() => setStatusFilter('published')}
             style={{ 
               borderRadius: '20px', 
-              fontSize: '0.8rem', 
+              fontSize: 'var(--crm-text-sm)', 
               padding: '6px 14px',
               background: statusFilter === 'published' ? '#16a34a' : '#ffffff',
               color: statusFilter === 'published' ? '#ffffff' : '#15803d',
@@ -392,7 +392,7 @@ export default function DemandsManagerPanel({
               background: 'var(--crm-card)',
               border: '1px solid var(--crm-line-strong)',
               color: 'var(--crm-ink)',
-              fontSize: '0.82rem'
+              fontSize: 'var(--crm-text-sm)'
             }}
           >
             <option value="all">{isAr ? 'كل أنواع العقارات' : 'All Types'}</option>
@@ -416,7 +416,7 @@ export default function DemandsManagerPanel({
                 background: 'var(--crm-card)',
                 border: '1px solid var(--crm-line-strong)',
                 color: 'var(--crm-ink)',
-                fontSize: '0.82rem'
+                fontSize: 'var(--crm-text-sm)'
               }}
             />
           </div>
@@ -436,7 +436,7 @@ export default function DemandsManagerPanel({
           <h4 style={{ color: '#092347', fontSize: '1.1rem', marginBottom: '6px', fontWeight: '700' }}>
             {isAr ? 'لا توجد طلبات مطابقة للفلتر المحدد' : 'No demands match this filter'}
           </h4>
-          <p style={{ color: 'var(--crm-muted)', fontSize: '0.85rem' }}>
+          <p style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-base)' }}>
             {isAr ? 'يمكنك تغيير الفلاتر أو إضافة طلب جديد مباشرة.' : 'Try adjusting your filters or create a new demand.'}
           </p>
         </div>
@@ -475,7 +475,7 @@ export default function DemandsManagerPanel({
                           border: '1px solid #fde68a',
                           padding: '3px 9px', 
                           borderRadius: '12px', 
-                          fontSize: '0.72rem', 
+                          fontSize: 'var(--crm-text-xs)', 
                           fontWeight: 'bold',
                           display: 'flex',
                           alignItems: 'center',
@@ -491,7 +491,7 @@ export default function DemandsManagerPanel({
                           border: '1px solid #bbf7d0',
                           padding: '3px 9px', 
                           borderRadius: '12px', 
-                          fontSize: '0.72rem', 
+                          fontSize: 'var(--crm-text-xs)', 
                           fontWeight: 'bold',
                           display: 'flex',
                           alignItems: 'center',
@@ -507,26 +507,26 @@ export default function DemandsManagerPanel({
                         color: urgencyColor, 
                         padding: '3px 8px', 
                         borderRadius: '12px', 
-                        fontSize: '0.7rem', 
+                        fontSize: 'var(--crm-text-xs)', 
                         fontWeight: 'bold' 
                       }}>
                         {demand.urgency === 'high' ? (isAr ? 'مستعجل كاش' : 'Urgent Cash') : (isAr ? 'طلب جاد' : 'Serious Buyer')}
                       </span>
                     </div>
 
-                    <span style={{ fontSize: '0.72rem', color: 'var(--crm-muted)' }}>
+                    <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
                       {demand.timestamp || (demand.createdAt ? new Date(demand.createdAt).toLocaleDateString('ar-EG') : '')}
                     </span>
                   </div>
 
                   {/* Demand Text */}
-                  <h4 style={{ fontSize: '0.94rem', color: '#092347', fontWeight: '700', lineHeight: '1.6', marginBottom: '12px' }}>
+                  <h4 style={{ fontSize: 'var(--crm-text-md)', color: '#092347', fontWeight: '700', lineHeight: '1.6', marginBottom: '12px' }}>
                     {isAr ? demand.text_ar : demand.text_en || demand.text_ar}
                   </h4>
 
                   {/* English preview if available */}
                   {demand.text_en && demand.text_ar !== demand.text_en && (
-                    <p style={{ fontSize: '0.78rem', color: 'var(--crm-muted)', fontStyle: 'italic', marginBottom: '12px', direction: 'ltr', textAlign: 'left' }}>
+                    <p style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontStyle: 'italic', marginBottom: '12px', direction: 'ltr', textAlign: 'left' }}>
                       {demand.text_en}
                     </p>
                   )}
@@ -540,7 +540,7 @@ export default function DemandsManagerPanel({
                     display: 'flex',
                     flexWrap: 'wrap',
                     gap: '12px',
-                    fontSize: '0.8rem',
+                    fontSize: 'var(--crm-text-sm)',
                     border: '1px solid var(--crm-line)'
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--crm-body)' }}>
@@ -568,7 +568,7 @@ export default function DemandsManagerPanel({
                       borderRadius: '8px', 
                       padding: '8px 12px', 
                       marginBottom: '14px',
-                      fontSize: '0.78rem'
+                      fontSize: 'var(--crm-text-xs)'
                     }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
@@ -595,7 +595,7 @@ export default function DemandsManagerPanel({
                                 color: '#fff', 
                                 padding: '4px 8px', 
                                 borderRadius: '6px', 
-                                fontSize: '0.72rem',
+                                fontSize: 'var(--crm-text-xs)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '4px'
@@ -609,7 +609,7 @@ export default function DemandsManagerPanel({
                             <a 
                               href={`tel:${demand.phone}`}
                               className="btn btn-sm btn-outline"
-                              style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '0.72rem' }}
+                              style={{ padding: '4px 8px', borderRadius: '6px', fontSize: 'var(--crm-text-xs)' }}
                               title="Call"
                             >
                               <Phone size={12} />
@@ -638,7 +638,7 @@ export default function DemandsManagerPanel({
                           alignItems: 'center', 
                           justifyContent: 'center', 
                           gap: '6px',
-                          fontSize: '0.78rem',
+                          fontSize: 'var(--crm-text-xs)',
                           fontWeight: 'bold',
                           borderRadius: '8px'
                         }}
@@ -654,7 +654,7 @@ export default function DemandsManagerPanel({
                           onClick={() => setMatchModalDemand(demand)}
                           style={{ 
                             padding: '6px 10px', 
-                            fontSize: '0.78rem', 
+                            fontSize: 'var(--crm-text-xs)', 
                             background: '#fffbeb',
                             border: '1px solid #fde68a', 
                             color: '#b45309',
@@ -677,7 +677,7 @@ export default function DemandsManagerPanel({
                         onClick={() => handleOpenEdit(demand)}
                         style={{ 
                           padding: '6px 10px', 
-                          fontSize: '0.78rem',
+                          fontSize: 'var(--crm-text-xs)',
                           background: '#eff6ff',
                           color: 'var(--crm-info)',
                           border: '1px solid #bfdbfe',
@@ -699,7 +699,7 @@ export default function DemandsManagerPanel({
                           color: '#dc2626', 
                           border: '1px solid #fecaca',
                           padding: '6px 10px', 
-                          fontSize: '0.78rem',
+                          fontSize: 'var(--crm-text-xs)',
                           borderRadius: '8px'
                         }}
                         title={isAr ? 'رفض وحذف' : 'Reject'}
@@ -719,7 +719,7 @@ export default function DemandsManagerPanel({
                           alignItems: 'center', 
                           justifyContent: 'center', 
                           gap: '6px', 
-                          fontSize: '0.78rem',
+                          fontSize: 'var(--crm-text-xs)',
                           background: '#eff6ff',
                           color: 'var(--crm-info)',
                           border: '1px solid #bfdbfe',
@@ -738,7 +738,7 @@ export default function DemandsManagerPanel({
                           onClick={() => setMatchModalDemand(demand)}
                           style={{ 
                             padding: '6px 12px', 
-                            fontSize: '0.78rem', 
+                            fontSize: 'var(--crm-text-xs)', 
                             background: '#fffbeb',
                             border: '1px solid #fde68a', 
                             color: '#b45309',
@@ -762,7 +762,7 @@ export default function DemandsManagerPanel({
                           onClick={() => onUnpublishDemand(demand.id)}
                           style={{ 
                             padding: '6px 10px', 
-                            fontSize: '0.78rem', 
+                            fontSize: 'var(--crm-text-xs)', 
                             background: 'rgba(255, 255, 255, 0.06)',
                             border: '1px solid rgba(255, 255, 255, 0.15)',
                             color: 'var(--crm-faint)',
@@ -783,7 +783,7 @@ export default function DemandsManagerPanel({
                           color: '#ef4444', 
                           border: '1px solid rgba(239, 68, 68, 0.3)',
                           padding: '6px 10px', 
-                          fontSize: '0.78rem',
+                          fontSize: 'var(--crm-text-xs)',
                           borderRadius: '8px'
                         }}
                         title={isAr ? 'حذف' : 'Delete'}
@@ -851,7 +851,7 @@ export default function DemandsManagerPanel({
                     background: 'rgba(255,255,255,0.05)',
                     border: '1px solid rgba(255,255,255,0.15)',
                     color: 'var(--text-primary)',
-                    fontSize: '0.88rem'
+                    fontSize: 'var(--crm-text-base)'
                   }}
                 />
               </div>
@@ -871,7 +871,7 @@ export default function DemandsManagerPanel({
                     background: 'rgba(255,255,255,0.05)',
                     border: '1px solid rgba(255,255,255,0.15)',
                     color: 'var(--text-primary)',
-                    fontSize: '0.88rem',
+                    fontSize: 'var(--crm-text-base)',
                     direction: 'ltr',
                     textAlign: 'left'
                   }}
@@ -1025,7 +1025,7 @@ export default function DemandsManagerPanel({
               borderRadius: '12px',
               padding: '12px 16px',
               marginBottom: '20px',
-              fontSize: '0.85rem'
+              fontSize: 'var(--crm-text-base)'
             }}>
               <strong style={{ color: 'var(--accent-gold)', display: 'block', marginBottom: '4px' }}>
                 {isAr ? 'الطلب المستهدف للمطابقة:' : 'Target Demand:'} {matchModalDemand.clientName ? `(${matchModalDemand.clientName})` : ''}
@@ -1033,7 +1033,7 @@ export default function DemandsManagerPanel({
               <p style={{ margin: 0, color: 'var(--text-primary)' }}>
                 {isAr ? matchModalDemand.text_ar : matchModalDemand.text_en || matchModalDemand.text_ar}
               </p>
-              <div style={{ display: 'flex', gap: '14px', marginTop: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              <div style={{ display: 'flex', gap: '14px', marginTop: '8px', fontSize: 'var(--crm-text-sm)', color: 'var(--text-secondary)' }}>
                 <span>📍 {isAr ? (matchModalDemand.area_ar || matchModalDemand.area) : matchModalDemand.area}</span>
                 <span>💰 {(typeof matchModalDemand.budget === 'number' ? matchModalDemand.budget : parseInt(String(matchModalDemand.budget).replace(/,/g, '')) || 0).toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</span>
               </div>
@@ -1046,7 +1046,7 @@ export default function DemandsManagerPanel({
                 <h4 style={{ color: '#fff', marginBottom: '6px' }}>
                   {isAr ? 'لم يتم العثور على وحدات مطابقة حالياً' : 'No exact matching units found'}
                 </h4>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.84rem' }}>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--crm-text-sm)' }}>
                   {isAr 
                     ? 'يمكنك مراجعة الأقسام الأخرى أو تسجيل عقار جديد من قسم إدارة العقارات.' 
                     : 'Consider expanding your price filter or listing a new property in the CMS.'}
@@ -1077,21 +1077,21 @@ export default function DemandsManagerPanel({
                           alt={p.title_ar} 
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
-                        <span style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(15,23,42,0.85)', color: 'var(--accent-gold)', fontSize: '0.7rem', padding: '2px 8px', borderRadius: '8px', fontWeight: 'bold' }}>
+                        <span style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(15,23,42,0.85)', color: 'var(--accent-gold)', fontSize: 'var(--crm-text-xs)', padding: '2px 8px', borderRadius: '8px', fontWeight: 'bold' }}>
                           {p.price.toLocaleString()} ج.م
                         </span>
                       </div>
 
                       <div style={{ padding: '12px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                         <div>
-                          <h4 style={{ fontSize: '0.88rem', color: '#fff', margin: '0 0 6px', fontWeight: 'bold', lineHeight: '1.4' }}>
+                          <h4 style={{ fontSize: 'var(--crm-text-base)', color: '#fff', margin: '0 0 6px', fontWeight: 'bold', lineHeight: '1.4' }}>
                             {isAr ? p.title_ar : p.title_en || p.title_ar}
                           </h4>
                           <small style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <MapPin size={11} className="text-gold" />
                             <span>{isAr ? (p.locationName_ar || p.areaKey) : (p.locationName_en || p.areaKey)}</span>
                           </small>
-                          <div style={{ display: 'flex', gap: '10px', marginTop: '8px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                          <div style={{ display: 'flex', gap: '10px', marginTop: '8px', fontSize: 'var(--crm-text-xs)', color: 'var(--text-secondary)' }}>
                             {p.size && <span>📐 {p.size} م²</span>}
                             {p.bedrooms && <span>🛏️ {p.bedrooms} غرف</span>}
                           </div>
@@ -1112,7 +1112,7 @@ export default function DemandsManagerPanel({
                               alignItems: 'center', 
                               justifyContent: 'center', 
                               gap: '6px',
-                              fontSize: '0.76rem',
+                              fontSize: 'var(--crm-text-xs)',
                               fontWeight: 'bold',
                               padding: '8px'
                             }}
@@ -1121,7 +1121,7 @@ export default function DemandsManagerPanel({
                             <span>{isAr ? 'إرسال العرض للعميل (واتساب)' : 'Send Deal via WhatsApp'}</span>
                           </a>
                         ) : (
-                          <div style={{ marginTop: '10px', fontSize: '0.72rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+                          <div style={{ marginTop: '10px', fontSize: 'var(--crm-text-xs)', color: 'var(--text-secondary)', textAlign: 'center' }}>
                             {isAr ? 'رقم العميل غير متاح للمراسلة' : 'No direct client phone recorded'}
                           </div>
                         )}

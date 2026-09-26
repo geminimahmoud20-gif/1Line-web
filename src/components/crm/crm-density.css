@@ -1,0 +1,76 @@
+/* =============================================================
+   CRM table density & ergonomics — audit phase 2 (2026-09-26)
+   DEF-06 sticky columns · DEF-07 inline selects · DEF-18 spec clamp
+   ============================================================= */
+
+/* ── DEF-07: in-row selects read as light chips, not form fields ──
+   index.css forces `select { min-height: 52px !important }` (touch targets for public
+   forms); inside table rows that made every status/owner chip 60px tall. */
+.crm-layout .crm-table :is(.crm-status-select, .crm-agent-select) {
+  min-height: 0 !important;
+  height: auto !important;
+  line-height: 1.5 !important;
+}
+.crm-layout .crm-status-select-wrap,
+.crm-layout .crm-agent-select-wrap {
+  padding-block: 4px !important;
+  min-height: 28px;
+}
+/* The selects set outline:none — give the chip a visible keyboard focus instead */
+.crm-layout :is(.crm-status-select-wrap, .crm-agent-select-wrap):focus-within {
+  box-shadow: 0 0 0 2px var(--crm-card), 0 0 0 4px var(--crm-accent);
+}
+
+/* ── DEF-18: requirements cell capped at two lines ── */
+.crm-layout .crm-table td[data-label="المواصفات"] > div,
+.crm-layout .crm-table td[data-label="Requirements"] > div {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;          /* budget line + type/area line */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 260px;
+}
+
+/* ── DEF-06: identity and actions stay visible while the table scrolls sideways ──
+   column 1 = checkbox (44px), column 2 = client name, last = actions */
+.crm-layout .crm-table { border-collapse: separate; border-spacing: 0; }
+.crm-layout .crm-table :is(th, td):first-child {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: 2;
+  width: 44px;
+  min-width: 44px;
+  background: var(--crm-card);
+}
+.crm-layout .crm-table :is(th, td):nth-child(2) {
+  position: sticky;
+  inset-inline-start: 44px;
+  z-index: 2;
+  background: var(--crm-card);
+}
+.crm-layout .crm-table :is(th, td):last-child {
+  position: sticky;
+  inset-inline-end: 0;
+  z-index: 2;
+  background: var(--crm-card);
+  box-shadow: 10px 0 14px -12px rgba(15, 23, 42, 0.28);
+}
+.crm-layout.rtl-dir .crm-table :is(th, td):last-child { box-shadow: -10px 0 14px -12px rgba(15, 23, 42, 0.28); }
+.crm-layout .crm-table thead :is(th:first-child, th:nth-child(2), th:last-child) { z-index: 3; background: var(--crm-subtle); }
+.crm-layout .crm-table tbody tr:hover :is(td:first-child, td:nth-child(2), td:last-child) { background: var(--crm-subtle); }
+
+/* Same for the property / finance tables: pin the actions column */
+.crm-layout .admin-data-table { border-collapse: separate; border-spacing: 0; }
+.crm-layout .admin-data-table :is(th, td):last-child {
+  position: sticky;
+  inset-inline-end: 0;
+  z-index: 2;
+  background: var(--crm-card);
+}
+.crm-layout.rtl-dir .admin-data-table :is(th, td):last-child { box-shadow: -10px 0 14px -12px rgba(15, 23, 42, 0.28); }
+.crm-layout .admin-data-table thead th:last-child { background: var(--crm-subtle); z-index: 3; }
+
+/* Mobile card layout (data-label rows) must not keep desktop sticky offsets */
+@media (max-width: 760px) {
+  .crm-layout :is(.crm-table, .admin-data-table) :is(th, td) { position: static !important; box-shadow: none !important; }
+}

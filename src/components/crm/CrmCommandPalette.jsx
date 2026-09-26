@@ -215,7 +215,7 @@ export default function CrmCommandPalette({
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label="Command Palette"
+        aria-label={isAr ? 'لوحة الأوامر والبحث' : 'Command palette'}
         dir={isAr ? 'rtl' : 'ltr'}
         style={{
           width: '100%',
@@ -250,7 +250,12 @@ export default function CrmCommandPalette({
             }}
             onKeyDown={handleKeyDown}
             placeholder={isAr ? 'ابحث في العملاء، العقارات، الأوامر السريعة (Ctrl+K)...' : 'Type a command or search (Ctrl+K)...'}
-            aria-label="Universal Search Input"
+            aria-label={isAr ? 'ابحث في العملاء والعقارات والأوامر' : 'Search leads, properties and commands'}
+            role="combobox"
+            aria-expanded={searchResults.length > 0}
+            aria-controls="crm-cmdk-list"
+            aria-autocomplete="list"
+            aria-activedescendant={searchResults[selectedIndex] ? `crm-cmdk-opt-${selectedIndex}` : undefined}
             style={{
               flex: 1,
               background: 'transparent',
@@ -262,7 +267,7 @@ export default function CrmCommandPalette({
             }}
           />
           <kbd style={{
-            fontSize: '0.72rem',
+            fontSize: 'var(--crm-text-xs)',
             padding: '3px 7px',
             borderRadius: '6px',
             background: 'var(--crm-card, #ffffff)',
@@ -277,6 +282,9 @@ export default function CrmCommandPalette({
         {/* Results List */}
         <div
           ref={listRef}
+          id="crm-cmdk-list"
+          role="listbox"
+          aria-label={isAr ? 'النتائج' : 'Results'}
           style={{
             maxHeight: '380px',
             overflowY: 'auto',
@@ -286,7 +294,7 @@ export default function CrmCommandPalette({
           {searchResults.length === 0 ? (
             <div style={{ padding: '36px 20px', textAlign: 'center', color: 'var(--crm-muted, #64748b)' }}>
               <Search size={32} style={{ margin: '0 auto 10px', opacity: 0.4 }} />
-              <p style={{ margin: 0, fontSize: '0.88rem' }}>
+              <p style={{ margin: 0, fontSize: 'var(--crm-text-base)' }}>
                 {isAr ? `لم يتم العثور على نتائج تطابق "${query}"` : `No results found for "${query}"`}
               </p>
             </div>
@@ -301,6 +309,9 @@ export default function CrmCommandPalette({
               return (
                 <div
                   key={item.id}
+                  id={`crm-cmdk-opt-${idx}`}
+                  role="option"
+                  aria-selected={isSelected}
                   onClick={() => {
                     item.action?.();
                     onClose();
@@ -336,7 +347,7 @@ export default function CrmCommandPalette({
 
                     <div style={{ minWidth: 0 }}>
                       <div style={{
-                        fontSize: '0.86rem',
+                        fontSize: 'var(--crm-text-base)',
                         fontWeight: 700,
                         color: 'var(--crm-ink)',
                         overflow: 'hidden',
@@ -347,7 +358,7 @@ export default function CrmCommandPalette({
                       </div>
                       {(item.sub_ar || item.sub_en) && (
                         <div style={{
-                          fontSize: '0.74rem',
+                          fontSize: 'var(--crm-text-xs)',
                           color: 'var(--crm-muted)',
                           marginTop: '2px',
                           overflow: 'hidden',
@@ -363,7 +374,7 @@ export default function CrmCommandPalette({
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                     {item.shortcut && (
                       <kbd style={{
-                        fontSize: '0.7rem',
+                        fontSize: 'var(--crm-text-xs)',
                         padding: '2px 6px',
                         borderRadius: '4px',
                         background: 'var(--crm-subtle, #f9f8f5)',
@@ -375,7 +386,7 @@ export default function CrmCommandPalette({
                       </kbd>
                     )}
                     {isSelected && (
-                      <span style={{ fontSize: '0.72rem', color: 'var(--crm-accent)', fontWeight: 700 }}>
+                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent)', fontWeight: 700 }}>
                         {isAr ? 'اضغط Enter ↵' : 'Enter ↵'}
                       </span>
                     )}
@@ -394,7 +405,7 @@ export default function CrmCommandPalette({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          fontSize: '0.74rem',
+          fontSize: 'var(--crm-text-xs)',
           color: 'var(--crm-muted, #64748b)'
         }}>
           <div style={{ display: 'flex', gap: '14px' }}>

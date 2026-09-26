@@ -109,12 +109,12 @@ export default function VisitorIntelligencePanel({
               <h2 style={{ margin: 0, fontSize: '1.25rem' }}>
                 {isAr ? 'محرك تتبع سلوك الزوار وتحليلات الاهتمام اللحظية' : 'Visitor Intelligence & Real-Time Tracking'}
               </h2>
-              <span className="badge" style={{ background: 'rgba(16, 185, 129, 0.15)', color: 'var(--crm-positive)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem' }}>
+              <span className="badge" style={{ background: 'rgba(16, 185, 129, 0.15)', color: 'var(--crm-positive)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: 'var(--crm-text-xs)' }}>
                 <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--emerald)', display: 'inline-block' }}></span>
                 {isAr ? 'تتبع مباشر' : 'Live'}
               </span>
             </div>
-            <p style={{ margin: '3px 0 0 0', fontSize: '0.8rem', color: 'var(--crm-muted)' }}>
+            <p style={{ margin: '3px 0 0 0', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
               {isAr ? 'تتبع مسار كل زائر، وقت التصفح المستهلك، ونسب المشاهدات لكل وحدة عقارية' : 'Track dwell time, clickstream, and top viewed properties.'}
             </p>
           </div>
@@ -126,7 +126,7 @@ export default function VisitorIntelligencePanel({
             className="btn btn-sm btn-outline"
             onClick={refreshData}
             disabled={isRefreshing}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 'var(--crm-text-sm)' }}
           >
             <RefreshCw size={13} className={isRefreshing ? 'animate-spin' : ''} />
             <span>{isAr ? 'تحديث لحظي' : 'Refresh'}</span>
@@ -143,7 +143,7 @@ export default function VisitorIntelligencePanel({
         {/* KPI 1: Total Views */}
         <div className="crm-stat-card" style={{ borderLeft: '4px solid #06b6d4' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--crm-muted)' }}>
+            <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
               {isAr ? 'إجمالي مشاهدات العقارات' : 'Total Property Views'}
             </span>
             <Eye size={18} style={{ color: 'var(--crm-info)' }} />
@@ -151,7 +151,7 @@ export default function VisitorIntelligencePanel({
           <div style={{ fontSize: '1.8rem', fontWeight: 'bold', margin: '8px 0 4px 0', color: 'var(--crm-info)' }}>
             {summary.totalPropertyViews?.toLocaleString()}
           </div>
-          <span style={{ fontSize: '0.72rem', color: 'var(--emerald)' }}>
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--emerald)' }}>
             ↑ +18.4% {isAr ? 'نمو مقارنة بالأسبوع الماضي' : 'vs last week'}
           </span>
         </div>
@@ -159,7 +159,7 @@ export default function VisitorIntelligencePanel({
         {/* KPI 2: Average Dwell Time */}
         <div className="crm-stat-card" style={{ borderLeft: '4px solid var(--accent-gold)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--crm-muted)' }}>
+            <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
               {isAr ? 'متوسط وقت بقاء الزائر' : 'Average Dwell Time'}
             </span>
             <Clock size={18} style={{ color: 'var(--accent-gold)' }} />
@@ -167,7 +167,7 @@ export default function VisitorIntelligencePanel({
           <div style={{ fontSize: '1.8rem', fontWeight: 'bold', margin: '8px 0 4px 0', color: 'var(--accent-gold)' }}>
             {summary.avgDwellTimeFormatted || '3د 45ث'}
           </div>
-          <span style={{ fontSize: '0.72rem', color: 'var(--crm-muted)' }}>
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
             ⏱️ {isAr ? 'معدل انتباه وقراءة مرتفع' : 'High engagement rate'}
           </span>
         </div>
@@ -175,7 +175,7 @@ export default function VisitorIntelligencePanel({
         {/* KPI 3: WhatsApp Conversion Clicks */}
         <div className="crm-stat-card" style={{ borderLeft: '4px solid var(--emerald)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--crm-muted)' }}>
+            <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
               {isAr ? 'نقرات الواتساب المباشرة' : 'WhatsApp Lead Clicks'}
             </span>
             <MessageSquare size={18} style={{ color: 'var(--emerald)' }} />
@@ -183,7 +183,7 @@ export default function VisitorIntelligencePanel({
           <div style={{ fontSize: '1.8rem', fontWeight: 'bold', margin: '8px 0 4px 0', color: 'var(--emerald)' }}>
             {summary.whatsappClicks} {isAr ? 'نقرة' : 'Clicks'}
           </div>
-          <span style={{ fontSize: '0.72rem', color: 'var(--emerald)' }}>
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--emerald)' }}>
             🔥 {isAr ? 'أعلى قناة تحويل للصفقات' : 'Top converting channel'}
           </span>
         </div>
@@ -191,7 +191,7 @@ export default function VisitorIntelligencePanel({
         {/* KPI 4: Financial Calculator Uses */}
         <div className="crm-stat-card" style={{ borderLeft: '4px solid #f59e0b' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--crm-muted)' }}>
+            <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
               {isAr ? 'تجارب حاسبة التمويل' : 'Calculator Simulations'}
             </span>
             <Calculator size={18} style={{ color: 'var(--crm-warn)' }} />
@@ -199,7 +199,7 @@ export default function VisitorIntelligencePanel({
           <div style={{ fontSize: '1.8rem', fontWeight: 'bold', margin: '8px 0 4px 0', color: 'var(--crm-warn)' }}>
             {summary.calculatorUses} {isAr ? 'حسبة' : 'Runs'}
           </div>
-          <span style={{ fontSize: '0.72rem', color: 'var(--crm-muted)' }}>
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
             📈 {isAr ? 'مشترين جادين يبحثون عن خطط دفع' : 'High-intent payment seekers'}
           </span>
         </div>
@@ -226,12 +226,12 @@ export default function VisitorIntelligencePanel({
               <Flame size={18} style={{ color: '#BE123C' }} />
               <span>{isAr ? 'العقارات الأكثر طلباً ومشاهدة' : 'Top Viewed Properties'}</span>
             </h3>
-            <span style={{ fontSize: '0.75rem', color: 'var(--crm-muted)' }}>
+            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
               {trendingProperties.length} {isAr ? 'عقار مرصود' : 'tracked'}
             </span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '420px', overflowY: 'auto' }}>
+          <div tabIndex={0} role="region" aria-label={isAr ? 'قائمة العقارات الأكثر مشاهدة' : 'Most viewed properties'} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '420px', overflowY: 'auto' }}>
             {trendingProperties.slice(0, 6).map((prop, idx) => (
               <div
                 key={prop.id}
@@ -256,17 +256,17 @@ export default function VisitorIntelligencePanel({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '0.75rem',
+                    fontSize: 'var(--crm-text-xs)',
                     fontWeight: 'bold'
                   }}>
                     #{idx + 1}
                   </span>
 
                   <div>
-                    <strong style={{ fontSize: '0.85rem', display: 'block' }}>
+                    <strong style={{ fontSize: 'var(--crm-text-base)', display: 'block' }}>
                       {isAr ? prop.title_ar : prop.title_en}
                     </strong>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--crm-muted)' }}>
+                    <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
                       📍 {(getAreas().find(a => a.id === prop.areaKey)?.[isAr ? 'name_ar' : 'name_en']) || prop.areaKey || 'سوهاج'} • 💰 {prop.price?.toLocaleString()} ج.م
                     </span>
                   </div>
@@ -276,13 +276,13 @@ export default function VisitorIntelligencePanel({
                   <span className="badge" style={{
                     background: prop.isTrending ? 'rgba(244, 63, 94, 0.15)' : 'rgba(6, 182, 212, 0.15)',
                     color: prop.isTrending ? '#BE123C' : '#06b6d4',
-                    fontSize: '0.75rem',
+                    fontSize: 'var(--crm-text-xs)',
                     fontWeight: 'bold'
                   }}>
                     👁️ {prop.viewCount} {isAr ? 'مشاهدة' : 'Views'}
                   </span>
                   {prop.isTrending && (
-                    <small style={{ color: '#BE123C', fontSize: '0.68rem', fontWeight: 'bold' }}>
+                    <small style={{ color: '#BE123C', fontSize: 'var(--crm-text-xs)', fontWeight: 'bold' }}>
                       🔥 {isAr ? 'رائج جداً' : 'Hot Demand'}
                     </small>
                   )}
@@ -307,12 +307,12 @@ export default function VisitorIntelligencePanel({
               <MousePointerClick size={18} style={{ color: 'var(--accent-gold)' }} />
               <span>{isAr ? 'شريط أحداث وتفاعل الزوار المباشر' : 'Live Clickstream Feed'}</span>
             </h3>
-            <span className="badge" style={{ background: 'var(--crm-subtle)', color: 'var(--crm-body)', fontSize: '0.75rem' }}>
+            <span className="badge" style={{ background: 'var(--crm-subtle)', color: 'var(--crm-body)', fontSize: 'var(--crm-text-xs)' }}>
               {summary.recentEvents?.length || 0} {isAr ? 'حدث مسجل' : 'events'}
             </span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '420px', overflowY: 'auto' }}>
+          <div tabIndex={0} role="region" aria-label={isAr ? 'سجل نشاط الزوار' : 'Visitor activity log'} style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '420px', overflowY: 'auto' }}>
             {(!summary.recentEvents || summary.recentEvents.length === 0) ? (
               <p style={{ textAlign: 'center', color: 'var(--crm-muted)', padding: '30px' }}>
                 {isAr ? 'جاري استقبال أحداث ونقرات الزوار لحظياً...' : 'Waiting for incoming events...'}
@@ -329,7 +329,7 @@ export default function VisitorIntelligencePanel({
                       borderInlineStart: `3px solid ${badge.color}`,
                       borderRadius: 'var(--radius-sm)',
                       padding: '8px 12px',
-                      fontSize: '0.8rem',
+                      fontSize: 'var(--crm-text-sm)',
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center'
@@ -337,22 +337,22 @@ export default function VisitorIntelligencePanel({
                   >
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
-                        <span style={{ background: badge.bg, color: badge.color, padding: '1px 6px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold' }}>
+                        <span style={{ background: badge.bg, color: badge.color, padding: '1px 6px', borderRadius: '4px', fontSize: 'var(--crm-text-xs)', fontWeight: 'bold' }}>
                           {badge.label}
                         </span>
                         {evt.identifiedUser?.name && (
-                          <strong style={{ color: 'var(--accent-gold)', fontSize: '0.75rem' }}>
+                          <strong style={{ color: 'var(--accent-gold)', fontSize: 'var(--crm-text-xs)' }}>
                             👤 {evt.identifiedUser.name}
                           </strong>
                         )}
                       </div>
 
-                      <span style={{ fontSize: '0.75rem', color: 'var(--crm-muted)' }}>
+                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
                         {evt.metadata?.title || evt.metadata?.propertyId || evt.url}
                       </span>
                     </div>
 
-                    <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                    <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-muted)' }}>
                       {new Date(evt.timestamp).toLocaleTimeString(isAr ? 'ar-EG' : 'en-US')}
                     </span>
                   </div>
@@ -370,13 +370,13 @@ export default function VisitorIntelligencePanel({
         borderRadius: 'var(--radius-md)',
         padding: '20px'
       }}>
-        <h3 style={{ margin: '0 0 14px 0', fontSize: '0.95rem', color: 'var(--accent-gold)' }}>
+        <h3 style={{ margin: '0 0 14px 0', fontSize: 'var(--crm-text-md)', color: 'var(--accent-gold)' }}>
           📊 {isAr ? 'توزيع اهتمامات ونقرات المشترين' : 'Visitor Intent & Action Heatmap'}
         </h3>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
           <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: 'var(--radius-sm)' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--crm-muted)', display: 'block' }}>
+            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'block' }}>
               💬 {isAr ? 'الاستفسار المباشر (واتساب)' : 'WhatsApp Inquiries'}
             </span>
             <strong style={{ fontSize: '1.2rem', color: 'var(--emerald)' }}>42%</strong>
@@ -384,7 +384,7 @@ export default function VisitorIntelligencePanel({
           </div>
 
           <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: 'var(--radius-sm)' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--crm-muted)', display: 'block' }}>
+            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'block' }}>
               🧮 {isAr ? 'حاسبة التمويل والأقساط' : 'Calculators & ROI'}
             </span>
             <strong style={{ fontSize: '1.2rem', color: 'var(--crm-warn)' }}>28%</strong>
@@ -392,7 +392,7 @@ export default function VisitorIntelligencePanel({
           </div>
 
           <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: 'var(--radius-sm)' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--crm-muted)', display: 'block' }}>
+            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'block' }}>
               ⚖️ {isAr ? 'مقارنة الوحدات والمفضلة' : 'Compare & Favorites'}
             </span>
             <strong style={{ fontSize: '1.2rem', color: 'var(--crm-violet)' }}>18%</strong>
@@ -400,7 +400,7 @@ export default function VisitorIntelligencePanel({
           </div>
 
           <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: 'var(--radius-sm)' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--crm-muted)', display: 'block' }}>
+            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'block' }}>
               📑 {isAr ? 'تحميل البروشور PDF' : 'Brochure Downloads'}
             </span>
             <strong style={{ fontSize: '1.2rem', color: '#BE185D' }}>12%</strong>

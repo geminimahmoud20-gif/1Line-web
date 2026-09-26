@@ -61,6 +61,16 @@
   --crm-danger: #DC2626;
   --crm-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 4px 14px -2px rgba(15, 23, 42, 0.05);
   --success: #047857;
+
+  /* CRM type scale (audit DEF-14): 7 steps replace the 8–13 ad-hoc sizes per screen.
+     12px is the floor — Arabic letterforms with dots need it to stay legible. */
+  --crm-text-xs: 0.75rem;     /* 12px — meta, badges, captions */
+  --crm-text-sm: 0.8125rem;   /* 13px — table cells, secondary text */
+  --crm-text-base: 0.875rem;  /* 14px — body, buttons */
+  --crm-text-md: 0.9375rem;   /* 15px — emphasised body */
+  --crm-text-lg: 1.125rem;    /* 18px — card titles */
+  --crm-text-xl: 1.5rem;      /* 24px — KPI figures */
+  --crm-text-2xl: 2rem;       /* 32px — page titles */
 }
 
 :root[data-theme="dark"],

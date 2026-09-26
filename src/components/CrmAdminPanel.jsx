@@ -15,6 +15,7 @@ import { formatTimeSinceLastSync } from '../utils/syncManager';
 import { canExportCsv, canDeleteLead, canViewLeadPhone, maskPhoneNumber, canEditLeadsRole } from '../utils/rbacRules';
 import { SOHAG_AREAS, PROPERTY_TYPES } from '../data/propertiesData';
 import { getAreas } from '../utils/areasData';
+import { formatFollowUp, formatBudget, formatLeadType } from '../utils/crmLabels';
 
 // Enterprise PropTech Modules
 import KanbanPipeline from './crm/KanbanPipeline';
@@ -171,7 +172,7 @@ export const CrmAdminPanel = ({
       land: 'قطعة أرض',
       building: 'عمارة سكنية'
     };
-    return fallbackMap[typeKey.toLowerCase()] || typeKey;
+    return fallbackMap[typeKey.toLowerCase()] || formatLeadType(typeKey, isAr);
   };
 
   const getLocalizedArea = (areaKey) => {
@@ -662,7 +663,7 @@ export const CrmAdminPanel = ({
           <h2 style={{ marginBottom: '8px' }}>
             {isAr ? 'لوحة تحكم الإدارة' : 'Admin CRM Login'}
           </h2>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '24px' }}>
+          <p style={{ fontSize: 'var(--crm-text-base)', color: 'var(--text-secondary)', marginBottom: '24px' }}>
             {firebaseConnected 
               ? (isAr ? 'قم بتسجيل الدخول باستخدام حساب المشرف العقاري المعتمد.' : 'Login with certified admin credentials.')
               : (isAr ? 'أدخل كلمة المرور للوصول إلى وضع عدم الاتصال.' : 'Enter password to access offline mode.')}
@@ -671,7 +672,7 @@ export const CrmAdminPanel = ({
           <form onSubmit={handleLoginSubmit}>
             {firebaseConnected && (
               <div style={{ marginBottom: '16px', textAlign: 'right' }}>
-                <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>
+                <label style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold', color: 'var(--text-secondary)' }}>
                   {isAr ? 'البريد الإلكتروني' : 'Email Address'}
                 </label>
                 <input 
@@ -687,7 +688,7 @@ export const CrmAdminPanel = ({
             )}
 
             <div style={{ marginBottom: '16px', textAlign: 'right' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>
+              <label style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold', color: 'var(--text-secondary)' }}>
                 {isAr ? 'كلمة المرور' : 'Password'}
               </label>
               <div style={{ position: 'relative', marginTop: '4px' }}>
@@ -720,7 +721,7 @@ export const CrmAdminPanel = ({
             </div>
 
             {crmAuthError && (
-              <p style={{ color: 'var(--rose)', fontSize: '0.85rem', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
+              <p style={{ color: 'var(--rose)', fontSize: 'var(--crm-text-base)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
                 <AlertCircle size={14} />
                 {crmAuthError}
               </p>
@@ -808,7 +809,7 @@ export const CrmAdminPanel = ({
                 <Users size={20} className="text-gold" />
                 {isAr ? 'قاعدة بيانات العملاء الشاملة' : 'Customer 360° Database'}
               </h3>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+              <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-secondary)' }}>
                 {isAr ? `إجمالي العملاء: ${leads.length} عميل | المطابق للفلتر: ${filteredLeads.length}` : `Total Leads: ${leads.length} | Filtered: ${filteredLeads.length}`}
               </span>
             </div>
@@ -881,9 +882,10 @@ export const CrmAdminPanel = ({
               {/* Temperature Filter */}
               <select
                 value={temperatureFilter}
+                aria-label={isAr ? 'تصفية حسب درجة الاهتمام' : 'Filter by temperature'}
                 onChange={(e) => setTemperatureFilter(e.target.value)}
                 className="form-input"
-                style={{ padding: '6px 10px', fontSize: '0.75rem', borderRadius: 'var(--radius-pill)', width: 'auto' }}
+                style={{ padding: '6px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
               >
                 <option value="all">🌡️ {isAr ? 'كل درجات الحرارة' : 'All Temperatures'}</option>
                 <option value="hot">🔥 {isAr ? 'ساخن جداً' : 'Hot'}</option>
@@ -894,9 +896,10 @@ export const CrmAdminPanel = ({
               {/* Area Filter */}
               <select
                 value={areaFilter}
+                aria-label={isAr ? 'تصفية حسب المنطقة' : 'Filter by area'}
                 onChange={(e) => setAreaFilter(e.target.value)}
                 className="form-input"
-                style={{ padding: '6px 10px', fontSize: '0.75rem', borderRadius: 'var(--radius-pill)', width: 'auto' }}
+                style={{ padding: '6px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
               >
                 <option value="all">📍 {isAr ? 'كل مناطق سوهاج' : 'All Areas'}</option>
                 {SOHAG_AREAS.filter(a => a.id !== 'all').map(a => (
@@ -909,7 +912,7 @@ export const CrmAdminPanel = ({
                 type="text" 
                 placeholder={isAr ? 'بحث بالاسم، الهاتف، الوسم، الاغتراب...' : 'Search name/phone/tag...'} 
                 className="form-input" 
-                style={{ padding: '6px 14px', fontSize: '0.8rem', width: '220px', borderRadius: 'var(--radius-pill)' }}
+                style={{ padding: '6px 14px', fontSize: 'var(--crm-text-sm)', width: '220px', borderRadius: 'var(--radius-pill)' }}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -934,7 +937,7 @@ export const CrmAdminPanel = ({
                 <span className="badge" style={{ background: 'var(--accent-gold)', color: '#000', fontWeight: 'bold' }}>
                   {selectedLeadIds.length} {isAr ? 'عميل محدد' : 'selected'}
                 </span>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-primary)' }}>
+                <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--text-primary)' }}>
                   {isAr ? 'إجراءات جماعية فورية:' : 'Bulk Actions:'}
                 </span>
               </div>
@@ -942,11 +945,12 @@ export const CrmAdminPanel = ({
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                 {/* Bulk Assign Agent Dropdown */}
                 {canEditLeadsRole(activeRole) && <select
+                  aria-label={isAr ? 'تعيين مسؤول للعملاء المحددين' : 'Assign selected leads'}
                   onChange={(e) => {
                     if (e.target.value) handleBulkAssign(e.target.value);
                   }}
                   className="form-input"
-                  style={{ padding: '4px 8px', fontSize: '0.75rem', width: 'auto' }}
+                  style={{ padding: '4px 8px', fontSize: 'var(--crm-text-xs)', width: 'auto' }}
                   defaultValue=""
                 >
                   <option value="" disabled>👥 {isAr ? 'تعيين مسؤول جماعي...' : 'Assign Agent...'}</option>
@@ -960,7 +964,7 @@ export const CrmAdminPanel = ({
                   type="button"
                   className="btn btn-sm btn-outline"
                   onClick={handleBulkExportSelected}
-                  style={{ padding: '4px 10px', fontSize: '0.75rem' }}
+                  style={{ padding: '4px 10px', fontSize: 'var(--crm-text-xs)' }}
                 >
                   <Download size={13} />
                   <span>{isAr ? 'تصدير المحدد (CSV)' : 'Export CSV'}</span>
@@ -972,7 +976,7 @@ export const CrmAdminPanel = ({
                     type="button"
                     className="btn btn-sm"
                     onClick={handleBulkDelete}
-                    style={{ padding: '4px 10px', fontSize: '0.75rem', background: 'rgba(239, 68, 68, 0.15)', color: 'var(--rose)', border: '1px solid var(--rose)' }}
+                    style={{ padding: '4px 10px', fontSize: 'var(--crm-text-xs)', background: 'rgba(239, 68, 68, 0.15)', color: 'var(--rose)', border: '1px solid var(--rose)' }}
                   >
                     <Trash2 size={13} />
                     <span>{isAr ? 'حذف المحدد' : 'Delete'}</span>
@@ -984,7 +988,7 @@ export const CrmAdminPanel = ({
                   type="button"
                   className="btn btn-sm btn-ghost"
                   onClick={() => setSelectedLeadIds([])}
-                  style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                  style={{ padding: '4px 8px', fontSize: 'var(--crm-text-xs)' }}
                 >
                   ✕ {isAr ? 'إلغاء التحديد' : 'Clear'}
                 </button>
@@ -1001,6 +1005,7 @@ export const CrmAdminPanel = ({
                   <input
                     type="checkbox"
                     checked={selectedLeadIds.length > 0 && selectedLeadIds.length === filteredLeads.length}
+                    aria-label={isAr ? 'تحديد كل العملاء الظاهرين' : 'Select all visible leads'}
                     onChange={() => handleToggleSelectAll(filteredLeads)}
                     style={{ cursor: 'pointer' }}
                   />
@@ -1020,7 +1025,7 @@ export const CrmAdminPanel = ({
                   <td colSpan="8" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
                       <Inbox size={32} style={{ color: 'var(--accent-gold)' }} />
-                      <span style={{ fontSize: '0.9rem' }}>{isAr ? 'لم يتم العثور على أي عملاء يطابقون خيارات البحث الحالية.' : 'No leads found.'}</span>
+                      <span style={{ fontSize: 'var(--crm-text-base)' }}>{isAr ? 'لم يتم العثور على أي عملاء يطابقون خيارات البحث الحالية.' : 'No leads found.'}</span>
                     </div>
                   </td>
                 </tr>
@@ -1037,6 +1042,7 @@ export const CrmAdminPanel = ({
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => handleToggleSelectOne(l.id)}
+                          aria-label={isAr ? `تحديد ${l.name || 'العميل'}` : `Select ${l.name || 'lead'}`}
                           style={{ cursor: 'pointer' }}
                         />
                       </td>
@@ -1055,19 +1061,19 @@ export const CrmAdminPanel = ({
                               {l.name?.trim() || <span className="crm-empty-value">{isAr ? 'عميل بدون اسم' : 'Unnamed lead'}</span>}
                             </button>
                             {l.cityOrExpat && l.cityOrExpat !== 'سوهاج' && (
-                              <span style={{ fontSize: '0.68rem', color: 'var(--cyan)', background: 'var(--cyan-bg)', padding: '1px 5px', borderRadius: '4px' }}>
+                              <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--cyan)', background: 'var(--cyan-bg)', padding: '1px 5px', borderRadius: '4px' }}>
                                 ✈️ {l.cityOrExpat}
                               </span>
                             )}
                           </div>
 
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}><bdi>{l.phone || l.whatsapp || '—'}</bdi></span>
+                          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-secondary)' }}><bdi>{l.phone || l.whatsapp || '—'}</bdi></span>
 
                           {/* Tags Display */}
                           {l.tags && l.tags.length > 0 && (
                             <div style={{ display: 'flex', gap: '4px', marginTop: '3px', flexWrap: 'wrap' }}>
                               {l.tags.slice(0, 2).map((t, i) => (
-                                <span key={i} style={{ fontSize: '0.65rem', background: 'rgba(255,255,255,0.05)', padding: '1px 5px', borderRadius: '3px', color: 'var(--accent-gold)' }}>
+                                <span key={i} style={{ fontSize: 'var(--crm-text-xs)', background: 'rgba(255,255,255,0.05)', padding: '1px 5px', borderRadius: '3px', color: 'var(--accent-gold)' }}>
                                   {t}
                                 </span>
                               ))}
@@ -1078,10 +1084,10 @@ export const CrmAdminPanel = ({
 
                       {/* Requirements */}
                       <td data-label={isAr ? 'المواصفات' : 'Requirements'}>
-                        <div style={{ fontSize: '0.8rem', maxWidth: '280px', whiteSpace: 'normal' }}>
+                        <div style={{ fontSize: 'var(--crm-text-sm)', maxWidth: '280px', whiteSpace: 'normal' }}>
                           {l.details?.budget && (
                             <strong style={{ color: 'var(--emerald)', display: 'block', marginBottom: '2px' }}>
-                              💰 {typeof l.details.budget === 'number' ? l.details.budget.toLocaleString() + ' ج.م' : l.details.budget + ' EGP'}
+                              <bdi>{formatBudget(l.details.budget, isAr)}</bdi>
                             </strong>
                           )}
                           <span style={{ color: 'var(--text-secondary)' }}>
@@ -1108,6 +1114,8 @@ export const CrmAdminPanel = ({
                           <span className="crm-status-dot" />
                           <select 
                             value={l.status || 'new'} 
+                            aria-label={isAr ? `حالة ${l.name || 'العميل'}` : `Status of ${l.name || 'lead'}`}
+                            data-status={l.status || 'new'}
                             onChange={(e) => {
                               if (onUpdateLead) onUpdateLead(l.id, { status: e.target.value });
                             }}
@@ -1134,7 +1142,7 @@ export const CrmAdminPanel = ({
                           {l.nextActionNote || l.followUp ? (
                             <div className="crm-next-action-pill">
                               <Clock size={12} className="crm-next-action-icon" />
-                              <span className="crm-next-action-text">{l.nextActionNote || l.followUp}</span>
+                              <span className="crm-next-action-text" title={formatFollowUp(l.nextActionNote || l.followUp, isAr)}>{formatFollowUp(l.nextActionNote || l.followUp, isAr)}</span>
                             </div>
                           ) : (
                             <span className="crm-next-action-empty">
@@ -1152,6 +1160,7 @@ export const CrmAdminPanel = ({
                           </div>
                           <select 
                             value={l.assignedTo || 'Unassigned'} 
+                            aria-label={isAr ? `المسؤول عن ${l.name || 'العميل'}` : `Owner of ${l.name || 'lead'}`}
                             onChange={(e) => {
                               if (onUpdateLead) onUpdateLead(l.id, { assignedTo: e.target.value });
                             }}
@@ -1342,7 +1351,7 @@ export const CrmAdminPanel = ({
                 <h3 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--crm-ink)' }}>
                   {isAr ? 'البيانات والنسخ الاحتياطي وإدارة المنظومة' : 'Database Backups & System Administration'}
                 </h3>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                <p style={{ margin: 0, fontSize: 'var(--crm-text-base)', color: 'var(--text-secondary)' }}>
                   {isAr ? 'خاص بالمدير العام — تصدير واسترجاع نسخ العملاء والبيانات الحساسة بأمان' : 'Super Admin only — Backup, export and recovery hub'}
                 </p>
               </div>
@@ -1355,7 +1364,7 @@ export const CrmAdminPanel = ({
                   <Download size={18} />
                   <span>{isAr ? 'تنزيل نسخة احتياطية' : 'Download Backup'}</span>
                 </h4>
-                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.5' }}>
+                <p style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.5' }}>
                   {isAr 
                     ? 'تصدير كامل بيانات العملاء والصفقات والطلبات كملف JSON آمن ومحمي للاحتفاظ به أو استرجاعه لاحقاً.' 
                     : 'Export full database snapshot as a structured JSON file.'}
@@ -1377,7 +1386,7 @@ export const CrmAdminPanel = ({
                   <Upload size={18} />
                   <span>{isAr ? 'استعادة قاعدة البيانات' : 'Restore Database'}</span>
                 </h4>
-                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.5' }}>
+                <p style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.5' }}>
                   {isAr 
                     ? '⚠️ تحذير أمني: استيراد ملف JSON سيقوم بدمج أو تحديث بيانات العملاء الحالية. يُرجى التحقق من الملف قبل رفعه.' 
                     : 'Warning: Importing JSON file will merge or overwrite current customer records.'}
@@ -1426,7 +1435,7 @@ export const CrmAdminPanel = ({
               <h4 style={{ marginBottom: '10px', color: 'var(--accent-gold)' }}>
                 📱 {isAr ? 'التنبيه الفوري عبر الواتساب والتيليجرام' : 'Instant Webhook / WhatsApp Push'}
               </h4>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+              <p style={{ fontSize: 'var(--crm-text-base)', color: 'var(--text-secondary)', marginBottom: '16px' }}>
                 {isAr ? 'عند تسجيل أي عميل مهتم على الموقع، يُرسل النظام إشعاراً فورياً على هاتف المدير يتضمن (الاسم، الهاتف، الميزانية، ونقاط الجدية).' : 'Pushes lead info to management phone instantly.'}
               </p>
               
@@ -1445,7 +1454,7 @@ export const CrmAdminPanel = ({
               <h4 style={{ marginBottom: '10px', color: 'var(--emerald)' }}>
                 🎯 {isAr ? 'قواعد التوزيع الذكي للعملاء' : 'Smart Auto-Assignment'}
               </h4>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+              <p style={{ fontSize: 'var(--crm-text-base)', color: 'var(--text-secondary)', marginBottom: '16px' }}>
                 {isAr ? 'توجيه العملاء أصحاب الميزانيات المرتفعة (> 5 مليون) مباشرة للدكتور محمود الباز، وتوزيع باقي الطلبات بالتساوي على Sales Team A و B.' : 'Auto distributes VIP leads.'}
               </p>
               <button className="btn btn-accent" onClick={() => {
@@ -1517,6 +1526,7 @@ export const CrmAdminPanel = ({
                   <label>{isAr ? 'نوع الطلب' : 'Lead Type'}</label>
                   <select
                     value={leadFormData.type}
+                    aria-label={isAr ? 'نوع الطلب' : 'Request type'}
                     onChange={(e) => setLeadFormData({ ...leadFormData, type: e.target.value })}
                   >
                     <option value="buyer">{isAr ? 'طلب شراء' : 'Buyer'}</option>
@@ -1531,6 +1541,7 @@ export const CrmAdminPanel = ({
                   <label>{isAr ? 'الموقع / المنطقة بسوهاج * (إلزامي)' : 'Target Area in Sohag * (Required)'}</label>
                   <select
                     value={leadFormData.area}
+                    aria-label={isAr ? 'المنطقة' : 'Area'}
                     onChange={(e) => setLeadFormData({ ...leadFormData, area: e.target.value })}
                     required
                   >
@@ -1544,6 +1555,7 @@ export const CrmAdminPanel = ({
                   <label>{isAr ? 'العقارات المهتم بها / نوع العقار * (إلزامي)' : 'Interested Property Type * (Required)'}</label>
                   <select
                     value={leadFormData.propertyType}
+                    aria-label={isAr ? 'نوع العقار' : 'Property type'}
                     onChange={(e) => setLeadFormData({ ...leadFormData, propertyType: e.target.value })}
                     required
                   >
@@ -1567,6 +1579,7 @@ export const CrmAdminPanel = ({
                   <label>{isAr ? 'حالة المتابعة' : 'Status'}</label>
                   <select
                     value={leadFormData.status}
+                    aria-label={isAr ? 'الحالة' : 'Status'}
                     onChange={(e) => setLeadFormData({ ...leadFormData, status: e.target.value })}
                   >
                     <option value="new">{isAr ? 'جديد' : 'New'}</option>
@@ -1603,6 +1616,7 @@ export const CrmAdminPanel = ({
                   <label>{isAr ? 'درجة الاهتمام' : 'Temperature'}</label>
                   <select
                     value={leadFormData.temperature}
+                    aria-label={isAr ? 'درجة الاهتمام' : 'Temperature'}
                     onChange={(e) => setLeadFormData({ ...leadFormData, temperature: e.target.value })}
                   >
                     <option value="hot">🔥 {isAr ? 'ساخن' : 'Hot'}</option>
@@ -1625,6 +1639,7 @@ export const CrmAdminPanel = ({
                   <label>{isAr ? 'المستشار المسؤول' : 'Assigned Agent'}</label>
                   <select
                     value={leadFormData.assignedTo}
+                    aria-label={isAr ? 'المسؤول' : 'Owner'}
                     onChange={(e) => setLeadFormData({ ...leadFormData, assignedTo: e.target.value })}
                   >
                     <option value="Dr. Mahmoud Elbaz">Dr. Mahmoud Elbaz</option>
@@ -1687,11 +1702,11 @@ export const CrmAdminPanel = ({
                     background: 'rgba(255,255,255,0.03)',
                     border: '1px solid var(--border-light)',
                     borderRadius: 'var(--radius-sm)',
-                    fontSize: '0.85rem'
+                    fontSize: 'var(--crm-text-base)'
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                       <strong style={{ color: 'var(--emerald)' }}>{log.action}</strong>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-muted)' }}>
                         {new Date(log.timestamp).toLocaleTimeString(isAr ? 'ar-EG' : 'en-US')} - {new Date(log.timestamp).toLocaleDateString(isAr ? 'ar-EG' : 'en-US')}
                       </span>
                     </div>

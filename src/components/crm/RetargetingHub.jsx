@@ -211,14 +211,14 @@ export default function RetargetingHub({
 
         {/* Target Property Switcher for Campaigns */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+          <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--text-secondary)' }}>
             🏢 {isAr ? 'العقار المروج له:' : 'Promoted Property:'}
           </span>
           <select
             value={selectedPropertyId}
             onChange={(e) => setSelectedPropertyId(e.target.value)}
             className="form-input"
-            style={{ padding: '6px 12px', fontSize: '0.8rem', fontWeight: 'bold' }}
+            style={{ padding: '6px 12px', fontSize: 'var(--crm-text-sm)', fontWeight: 'bold' }}
           >
             {properties.map(p => (
               <option key={p.id} value={p.id}>
@@ -307,7 +307,7 @@ export default function RetargetingHub({
       }}>
         <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
           <div>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block' }}>
+            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-secondary)', display: 'block' }}>
               {isAr ? 'حجم القوة الشرائية في الشريحة:' : 'Total Segment Purchasing Power:'}
             </span>
             <strong style={{ fontSize: '1.2rem', color: 'var(--emerald)' }}>
@@ -316,7 +316,7 @@ export default function RetargetingHub({
           </div>
 
           <div>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block' }}>
+            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-secondary)', display: 'block' }}>
               {isAr ? 'العملاء المؤهلون للحملة:' : 'Eligible Audience:'}
             </span>
             <strong style={{ fontSize: '1.2rem', color: 'var(--accent-gold)' }}>
@@ -326,7 +326,7 @@ export default function RetargetingHub({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span className="badge" style={{ background: 'var(--emerald-bg)', color: 'var(--emerald)', fontSize: '0.8rem' }}>
+          <span className="badge" style={{ background: 'var(--emerald-bg)', color: 'var(--emerald)', fontSize: 'var(--crm-text-sm)' }}>
             ✓ {isAr ? 'تم توليد قوالب واتساب المخصصة آلياً' : 'Automated WhatsApp copy active'}
           </span>
         </div>
@@ -358,7 +358,7 @@ export default function RetargetingHub({
                   <tr key={lead.id}>
                     <td>
                       <strong>{lead.name}</strong>
-                      <span className={`lead-score-pill ${lead.score >= 85 ? 'score-high' : 'score-medium'}`} style={{ marginInlineStart: '6px', fontSize: '0.65rem' }}>
+                      <span className={`lead-score-pill ${lead.score >= 85 ? 'score-high' : 'score-medium'}`} style={{ marginInlineStart: '6px', fontSize: 'var(--crm-text-xs)' }}>
                         {lead.score || 85}%
                       </span>
                     </td>
@@ -366,14 +366,14 @@ export default function RetargetingHub({
                       {lead.phone}
                     </td>
                     <td>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--emerald)', fontWeight: 'bold', display: 'block' }}>
+                      <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--emerald)', fontWeight: 'bold', display: 'block' }}>
                         💰 {lead.details?.budget ? parseInt(lead.details.budget).toLocaleString() + ' ج.م' : 'مرنة'}
                       </span>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-secondary)' }}>
                         📍 {lead.details?.area || 'سوهاج'}
                       </span>
                     </td>
-                    <td style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                    <td style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-secondary)' }}>
                       {lead.lastRetargeted 
                         ? (isAr ? `أرسلت حملة في ${new Date(lead.lastRetargeted).toLocaleDateString('ar-EG')}` : `Retargeted on ${new Date(lead.lastRetargeted).toLocaleDateString()}`)
                         : (isAr ? 'لم يُرسل له سابقاً' : 'Not retargeted yet')}
@@ -392,7 +392,7 @@ export default function RetargetingHub({
                             alignItems: 'center',
                             gap: '4px',
                             padding: '6px 12px',
-                            fontSize: '0.75rem',
+                            fontSize: 'var(--crm-text-xs)',
                             boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)'
                           }}
                         >
@@ -405,7 +405,7 @@ export default function RetargetingHub({
                           type="button"
                           className="btn btn-sm btn-outline"
                           onClick={() => handleCopyText(lead)}
-                          style={{ padding: '6px 8px', fontSize: '0.75rem' }}
+                          style={{ padding: '6px 8px', fontSize: 'var(--crm-text-xs)' }}
                           title={isAr ? 'نسخ نص الرسالة' : 'Copy Message'}
                         >
                           {copiedId === lead.id ? <Check size={13} className="text-success" /> : <Copy size={13} />}

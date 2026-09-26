@@ -132,15 +132,15 @@ export default function PaymentScheduleBuilder({
         padding: '20px',
         marginBottom: '24px'
       }}>
-        <h4 style={{ fontSize: '0.9rem', marginBottom: '16px', color: 'var(--crm-accent-text)' }}>
+        <h4 style={{ fontSize: 'var(--crm-text-base)', marginBottom: '16px', color: 'var(--crm-accent-text)' }}>
           ⚙️ {isAr ? 'تخصيص معايير الخطة المالية للوحدة' : 'Payment Plan Parameters'}
         </h4>
 
         <div className="cms-form-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
           {/* Select Property */}
           <div className="form-group-item">
-            <label>{isAr ? 'العقار المستهدف:' : 'Property:'}</label>
-            <select
+            <label htmlFor="psb-field-1">{isAr ? 'العقار المستهدف:' : 'Property:'}</label>
+            <select id="psb-field-1"
               value={selectedPropertyId}
               onChange={(e) => {
                 setSelectedPropertyId(e.target.value);
@@ -159,8 +159,8 @@ export default function PaymentScheduleBuilder({
 
           {/* Select Lead / Client */}
           <div className="form-group-item">
-            <label>{isAr ? 'العميل المستهدف للإيصال:' : 'Client:'}</label>
-            <select
+            <label htmlFor="psb-field-2">{isAr ? 'العميل المستهدف للإيصال:' : 'Client:'}</label>
+            <select id="psb-field-2"
               value={selectedLeadId}
               onChange={(e) => setSelectedLeadId(e.target.value)}
               style={{ fontWeight: 'bold' }}
@@ -175,8 +175,8 @@ export default function PaymentScheduleBuilder({
 
           {/* Custom Price */}
           <div className="form-group-item">
-            <label>{isAr ? 'السعر الإجمالي المتفق عليه (ج.م):' : 'Total Price (EGP):'}</label>
-            <input
+            <label htmlFor="psb-field-3">{isAr ? 'السعر الإجمالي المتفق عليه (ج.م):' : 'Total Price (EGP):'}</label>
+            <input id="psb-field-3"
               type="number"
               value={customPrice}
               onChange={(e) => setCustomPrice(parseInt(e.target.value) || 0)}
@@ -185,8 +185,8 @@ export default function PaymentScheduleBuilder({
 
           {/* Down Payment % */}
           <div className="form-group-item">
-            <label>{isAr ? `المقدم (${downPaymentPercent}%):` : `Down Payment (${downPaymentPercent}%):`}</label>
-            <select
+            <label htmlFor="psb-field-4">{isAr ? `المقدم (${downPaymentPercent}%):` : `Down Payment (${downPaymentPercent}%):`}</label>
+            <select id="psb-field-4"
               value={downPaymentPercent}
               onChange={(e) => setDownPaymentPercent(parseInt(e.target.value))}
             >
@@ -202,8 +202,8 @@ export default function PaymentScheduleBuilder({
 
           {/* Years */}
           <div className="form-group-item">
-            <label>{isAr ? 'مدة التقسيط:' : 'Installment Years:'}</label>
-            <select
+            <label htmlFor="psb-field-5">{isAr ? 'مدة التقسيط:' : 'Installment Years:'}</label>
+            <select id="psb-field-5"
               value={years}
               onChange={(e) => setYears(parseInt(e.target.value))}
             >
@@ -219,8 +219,8 @@ export default function PaymentScheduleBuilder({
 
           {/* Frequency */}
           <div className="form-group-item">
-            <label>{isAr ? 'دورية سداد الأقساط:' : 'Payment Frequency:'}</label>
-            <select
+            <label htmlFor="psb-field-6">{isAr ? 'دورية سداد الأقساط:' : 'Payment Frequency:'}</label>
+            <select id="psb-field-6"
               value={frequency}
               onChange={(e) => setFrequency(e.target.value)}
             >
@@ -233,8 +233,8 @@ export default function PaymentScheduleBuilder({
 
           {/* Maintenance Deposit % */}
           <div className="form-group-item">
-            <label>{isAr ? `وديعة الصيانة (${maintenancePercent}%):` : `Maintenance (${maintenancePercent}%):`}</label>
-            <select
+            <label htmlFor="psb-field-7">{isAr ? `وديعة الصيانة (${maintenancePercent}%):` : `Maintenance (${maintenancePercent}%):`}</label>
+            <select id="psb-field-7"
               value={maintenancePercent}
               onChange={(e) => setMaintenancePercent(parseInt(e.target.value))}
             >
@@ -284,7 +284,7 @@ export default function PaymentScheduleBuilder({
 
       {/* Schedule Table Preview */}
       <div className="admin-table-wrapper">
-        <h4 style={{ margin: '0 0 14px 0', fontSize: '0.95rem' }}>
+        <h4 style={{ margin: '0 0 14px 0', fontSize: 'var(--crm-text-md)' }}>
           📑 {isAr ? 'جدول الدفعات والاستحقاقات المالية المعتمد:' : 'Certified Payment Schedule:'}
         </h4>
         <table className="admin-data-table">
@@ -335,10 +335,10 @@ export default function PaymentScheduleBuilder({
             {/* Receipt Parameters Controls */}
             <div style={{ display: 'flex', gap: '14px', padding: '12px 16px 0', flexWrap: 'wrap' }}>
               <div style={{ flex: 1, minWidth: '160px' }}>
-                <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                <label htmlFor="psb-field-8" style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
                   {isAr ? 'مبلغ جدية الحجز (ج.م):' : 'Deposit (EGP):'}
                 </label>
-                <input
+                <input id="psb-field-8"
                   type="number"
                   value={receiptDepositAmount}
                   onChange={(e) => setReceiptDepositAmount(parseInt(e.target.value) || 0)}
@@ -346,10 +346,10 @@ export default function PaymentScheduleBuilder({
                 />
               </div>
               <div style={{ flex: 1, minWidth: '160px' }}>
-                <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                <label htmlFor="psb-field-9" style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
                   {isAr ? 'طريقة السداد:' : 'Payment Method:'}
                 </label>
-                <select
+                <select id="psb-field-9"
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value)}
                   style={{ width: '100%', padding: '6px 10px', borderRadius: '4px' }}
@@ -375,17 +375,17 @@ export default function PaymentScheduleBuilder({
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #d97706', paddingBottom: '14px', marginBottom: '18px' }}>
                 <div>
                   <h2 style={{ margin: 0, color: 'var(--crm-ink)', fontSize: '1.3rem' }}>شركة 1Line للحلول العقارية</h2>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--crm-muted)' }}>1LINE REAL ESTATE SOLUTIONS — SOHAG HQ</span>
+                  <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>1LINE REAL ESTATE SOLUTIONS — SOHAG HQ</span>
                 </div>
                 <div style={{ textAlign: isAr ? 'left' : 'right' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--crm-accent-text)', display: 'block' }}>رقم الإيصال الإلكتروني:</span>
-                  <strong style={{ fontSize: '0.9rem', color: 'var(--crm-ink)' }}>{receiptSerial}</strong>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--crm-muted)', display: 'block' }}>التاريخ: {new Date().toLocaleDateString('ar-EG')}</span>
+                  <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 'bold', color: 'var(--crm-accent-text)', display: 'block' }}>رقم الإيصال الإلكتروني:</span>
+                  <strong style={{ fontSize: 'var(--crm-text-base)', color: 'var(--crm-ink)' }}>{receiptSerial}</strong>
+                  <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'block' }}>التاريخ: {new Date().toLocaleDateString('ar-EG')}</span>
                 </div>
               </div>
 
               {/* Receipt Details Box */}
-              <div style={{ background: 'var(--crm-subtle)', padding: '16px', borderRadius: '6px', marginBottom: '16px', fontSize: '0.9rem', lineHeight: '1.8' }}>
+              <div style={{ background: 'var(--crm-subtle)', padding: '16px', borderRadius: '6px', marginBottom: '16px', fontSize: 'var(--crm-text-base)', lineHeight: '1.8' }}>
                 <p style={{ margin: 0 }}>
                   استلمنا من السيد / السيدة: <strong style={{ color: 'var(--crm-ink)', textDecoration: 'underline' }}>{selectedLead.name || 'العميل الموقر'}</strong>
                 </p>
@@ -401,7 +401,7 @@ export default function PaymentScheduleBuilder({
                 <p style={{ margin: 0 }}>
                   وذلك كجدية حجز مبدئي للوحدة: <strong style={{ color: 'var(--crm-accent-text)' }}>{isAr ? selectedProp.title_ar : selectedProp.title_en}</strong>
                 </p>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--crm-muted)' }}>
+                <p style={{ margin: 0, fontSize: 'var(--crm-text-base)', color: 'var(--crm-muted)' }}>
                   بالموقع: {isAr ? selectedProp.locationName_ar : selectedProp.locationName_en} — بإجمالي سعر: {totalPrice.toLocaleString()} ج.م.
                 </p>
               </div>
@@ -412,17 +412,17 @@ export default function PaymentScheduleBuilder({
                   <div style={{ padding: '6px', background: '#0f172a', borderRadius: '6px', color: '#ffffff' }}>
                     <QrCode size={44} />
                   </div>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--crm-muted)', maxWidth: '140px' }}>
+                  <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', maxWidth: '140px' }}>
                     رمز QR للتحقق الرقمي من صحة الإيصال في النظام المركزي
                   </span>
                 </div>
 
                 <div style={{ textAlign: 'center' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--crm-muted)', display: 'block' }}>خاتم وتوقيع الإدارة المالية:</span>
-                  <div style={{ marginTop: '6px', color: 'var(--crm-accent-text)', fontWeight: 'bold', fontSize: '0.85rem' }}>
+                  <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'block' }}>خاتم وتوقيع الإدارة المالية:</span>
+                  <div style={{ marginTop: '6px', color: 'var(--crm-accent-text)', fontWeight: 'bold', fontSize: 'var(--crm-text-base)' }}>
                     شركة 1Line للاستثمار العقاري
                   </div>
-                  <span style={{ fontSize: '0.65rem', color: 'var(--crm-positive)' }}>✓ تم السداد والاعتماد إلكترونياً</span>
+                  <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)' }}>✓ تم السداد والاعتماد إلكترونياً</span>
                 </div>
               </div>
             </div>

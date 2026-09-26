@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, Search, Clock, AlertCircle } from 'lucide-react';
+import { formatFollowUp } from '../../utils/crmLabels';
 
 export default function TrackLeadModal({ isOpen, onClose, leads = [], lang }) {
   const [searchPhone, setSearchPhone] = useState('');
@@ -66,7 +67,7 @@ export default function TrackLeadModal({ isOpen, onClose, leads = [], lang }) {
                     <h4>{lead.name}</h4>
                     <p className="lead-followup-text">
                       <Clock size={14} className="text-gold" />
-                      <span>{lead.followUp || lead.notes || (lang === 'ar' ? 'قيد المتابعة والتجهيز' : 'Under review')}</span>
+                      <span>{formatFollowUp(lead.followUp, lang === 'ar') || lead.notes || (lang === 'ar' ? 'قيد المتابعة والتجهيز' : 'Under review')}</span>
                     </p>
                     {lead.assignedTo && (
                       <div className="lead-advisor-tag">

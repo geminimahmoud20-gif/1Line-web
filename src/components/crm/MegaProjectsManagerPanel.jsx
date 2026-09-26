@@ -242,42 +242,42 @@ export default function MegaProjectsManagerPanel({
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <img src={p.images[0]} alt={title} style={{ width: '56px', height: '42px', borderRadius: '6px', objectFit: 'cover' }} />
                       <div>
-                        <strong style={{ fontSize: '0.88rem', color: 'var(--text-primary)', display: 'block' }}>{title}</strong>
-                        {p.brandTag && <span style={{ fontSize: '0.7rem', color: 'var(--accent-gold)', fontWeight: 'bold' }}>{p.brandTag}</span>}
+                        <strong style={{ fontSize: 'var(--crm-text-base)', color: 'var(--text-primary)', display: 'block' }}>{title}</strong>
+                        {p.brandTag && <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--accent-gold)', fontWeight: 'bold' }}>{p.brandTag}</span>}
                       </div>
                     </div>
                   </td>
                   <td>
-                    <div style={{ fontSize: '0.8rem' }}>
+                    <div style={{ fontSize: 'var(--crm-text-sm)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-muted)' }}>
                         <MapPin size={12} />
                         <span>{location}</span>
                       </div>
-                      <span style={{ fontSize: '0.72rem', color: 'var(--primary)', fontWeight: '700' }}>{dev}</span>
+                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--primary)', fontWeight: '700' }}>{dev}</span>
                     </div>
                   </td>
                   <td>
-                    <div style={{ fontSize: '0.82rem' }}>
+                    <div style={{ fontSize: 'var(--crm-text-sm)' }}>
                       <strong className="text-primary">{p.startPrice.toLocaleString()} ج.م</strong>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{p.downPaymentPercent}% مقدم • {p.installmentYears} سنوات</div>
+                      <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-muted)' }}>{p.downPaymentPercent}% مقدم • {p.installmentYears} سنوات</div>
                     </div>
                   </td>
                   <td>
                     <div style={{ minWidth: '140px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 700, marginBottom: '3px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--crm-text-xs)', fontWeight: 700, marginBottom: '3px' }}>
                         <span>{isAr ? 'الإجمالي:' : 'Total:'}</span>
                         <span className="text-emerald">{p.progress}%</span>
                       </div>
                       <div style={{ height: '6px', background: '#e2e8f0', borderRadius: '10px', overflow: 'hidden', marginBottom: '4px' }}>
                         <div style={{ width: `${p.progress}%`, height: '100%', background: 'linear-gradient(90deg, #10b981, #059669)' }} />
                       </div>
-                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'flex', gap: '4px' }}>
+                      <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-muted)', display: 'flex', gap: '4px' }}>
                         <span>خ:{bk.concrete}%</span>|<span>م:{bk.masonry}%</span>|<span>ت:{bk.finishing}%</span>
                       </div>
                     </div>
                   </td>
                   <td>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--emerald)' }}>
+                    <span style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 700, color: 'var(--emerald)' }}>
                       {p.availableUnits} / {p.totalUnits || '-'}
                     </span>
                   </td>
@@ -331,7 +331,7 @@ export default function MegaProjectsManagerPanel({
             <form onSubmit={handleSubmit} className="deposit-modal-body" style={{ maxHeight: '72vh', overflowY: 'auto' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '10px', marginBottom: '10px' }}>
                 <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>{isAr ? 'اسم المشروع (عربي) *' : 'Project Title (Arabic)'}</label>
+                  <label style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 700 }}>{isAr ? 'اسم المشروع (عربي) *' : 'Project Title (Arabic)'}</label>
                   <input
                     type="text"
                     required
@@ -343,7 +343,7 @@ export default function MegaProjectsManagerPanel({
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>{isAr ? 'الشارة التجارية' : 'Brand Tag'}</label>
+                  <label style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 700 }}>{isAr ? 'الشارة التجارية' : 'Brand Tag'}</label>
                   <input
                     type="text"
                     placeholder="مثال: Pearl Compound"
@@ -356,7 +356,7 @@ export default function MegaProjectsManagerPanel({
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
                 <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>{isAr ? 'الشركة المطورة (عربي)' : 'Developer'}</label>
+                  <label style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 700 }}>{isAr ? 'الشركة المطورة (عربي)' : 'Developer'}</label>
                   <input
                     type="text"
                     value={formData.developer_ar}
@@ -366,7 +366,7 @@ export default function MegaProjectsManagerPanel({
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>{isAr ? 'الموقع الجغرافي' : 'Location'}</label>
+                  <label style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 700 }}>{isAr ? 'الموقع الجغرافي' : 'Location'}</label>
                   <input
                     type="text"
                     value={formData.location_ar}
@@ -379,7 +379,7 @@ export default function MegaProjectsManagerPanel({
               {/* Financials Row */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '8px', marginBottom: '10px' }}>
                 <div>
-                  <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{isAr ? 'يبدأ من (ج.م)' : 'Start Price'}</label>
+                  <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-muted)' }}>{isAr ? 'يبدأ من (ج.م)' : 'Start Price'}</label>
                   <input
                     type="number"
                     value={formData.startPrice}
@@ -389,7 +389,7 @@ export default function MegaProjectsManagerPanel({
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{isAr ? 'نسبة المقدم %' : 'Downpayment %'}</label>
+                  <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-muted)' }}>{isAr ? 'نسبة المقدم %' : 'Downpayment %'}</label>
                   <input
                     type="number"
                     value={formData.downPaymentPercent}
@@ -399,7 +399,7 @@ export default function MegaProjectsManagerPanel({
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{isAr ? 'سنوات التقسيط' : 'Years'}</label>
+                  <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-muted)' }}>{isAr ? 'سنوات التقسيط' : 'Years'}</label>
                   <input
                     type="number"
                     value={formData.installmentYears}
@@ -409,7 +409,7 @@ export default function MegaProjectsManagerPanel({
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{isAr ? 'موعد التسليم' : 'Delivery'}</label>
+                  <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-muted)' }}>{isAr ? 'موعد التسليم' : 'Delivery'}</label>
                   <input
                     type="text"
                     value={formData.deliveryDate_ar}
@@ -421,13 +421,13 @@ export default function MegaProjectsManagerPanel({
 
               {/* Live Construction Milestones Sliders Box */}
               <div style={{ background: 'var(--crm-subtle)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', marginBottom: '12px' }}>
-                <strong style={{ fontSize: '0.84rem', color: 'var(--primary)', display: 'block', marginBottom: '8px' }}>
+                <strong style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--primary)', display: 'block', marginBottom: '8px' }}>
                   🏗️ {isAr ? 'نسب التنفيذ الميداني للمشروع' : 'Construction Milestones'}
                 </strong>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 700 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--crm-text-xs)', fontWeight: 700 }}>
                       <span>{isAr ? 'نسبة الإنجاز الإجمالية:' : 'Overall Progress:'}</span>
                       <strong className="text-emerald">{formData.progress}%</strong>
                     </div>
@@ -442,7 +442,7 @@ export default function MegaProjectsManagerPanel({
                   </div>
 
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 700 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--crm-text-xs)', fontWeight: 700 }}>
                       <span>{isAr ? 'نسبة الخرسانات:' : 'Concrete:'}</span>
                       <strong>{formData.progressBreakdown?.concrete || 0}%</strong>
                     </div>
@@ -460,7 +460,7 @@ export default function MegaProjectsManagerPanel({
                   </div>
 
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 700 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--crm-text-xs)', fontWeight: 700 }}>
                       <span>{isAr ? 'نسبة المباني والحوائط:' : 'Masonry:'}</span>
                       <strong>{formData.progressBreakdown?.masonry || 0}%</strong>
                     </div>
@@ -478,7 +478,7 @@ export default function MegaProjectsManagerPanel({
                   </div>
 
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 700 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--crm-text-xs)', fontWeight: 700 }}>
                       <span>{isAr ? 'نسبة التشطيبات:' : 'Finishing:'}</span>
                       <strong>{formData.progressBreakdown?.finishing || 0}%</strong>
                     </div>
@@ -500,7 +500,7 @@ export default function MegaProjectsManagerPanel({
               {/* Units & Image URL */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: '8px', marginBottom: '10px' }}>
                 <div>
-                  <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{isAr ? 'إجمالي الوحدات' : 'Total Units'}</label>
+                  <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-muted)' }}>{isAr ? 'إجمالي الوحدات' : 'Total Units'}</label>
                   <input
                     type="number"
                     value={formData.totalUnits}
@@ -510,7 +510,7 @@ export default function MegaProjectsManagerPanel({
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{isAr ? 'الوحدات المتاحة' : 'Available'}</label>
+                  <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-muted)' }}>{isAr ? 'الوحدات المتاحة' : 'Available'}</label>
                   <input
                     type="number"
                     value={formData.availableUnits}
@@ -520,7 +520,7 @@ export default function MegaProjectsManagerPanel({
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{isAr ? 'رابط الصورة الرئيسية' : 'Image URL'}</label>
+                  <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-muted)' }}>{isAr ? 'رابط الصورة الرئيسية' : 'Image URL'}</label>
                   <input
                     type="text"
                     value={formData.images[0] || ''}
@@ -532,7 +532,7 @@ export default function MegaProjectsManagerPanel({
 
               {/* Description */}
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{isAr ? 'وصف المشروع والمميزات' : 'Description'}</label>
+                <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-muted)' }}>{isAr ? 'وصف المشروع والمميزات' : 'Description'}</label>
                 <textarea
                   rows="2"
                   value={formData.description_ar}

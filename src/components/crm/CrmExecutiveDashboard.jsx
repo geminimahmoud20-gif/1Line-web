@@ -61,6 +61,7 @@ export default function CrmExecutiveDashboard({
     const pendingDemands = demands.filter(d => d.status === 'pending');
 
     // Stale leads (over 48h without activity)
+    // eslint-disable-next-line react-hooks/purity -- "48h" window is relative to the moment the dashboard renders
     const twoDaysAgo = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
     const staleLeads = leads.filter(l => {
       if (l.isArchived || l.status === 'closed' || l.status === 'lost') return false;
@@ -114,7 +115,7 @@ export default function CrmExecutiveDashboard({
                 : (isSuperAdmin ? 'Executive Command Center' : `Welcome, ${currentRoleObj.label_en || 'Sales Advisor'}`)}
             </h1>
             <span style={{
-              fontSize: '0.72rem',
+              fontSize: 'var(--crm-text-xs)',
               fontWeight: 700,
               padding: '2px 8px',
               borderRadius: '999px',
@@ -126,7 +127,7 @@ export default function CrmExecutiveDashboard({
             </span>
           </div>
 
-          <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--crm-muted, #64748b)' }}>
+          <p style={{ margin: 0, fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted, #64748b)' }}>
             {isAr
               ? `موجز العمليات: لديك اليوم ${metrics.dueTodayCount} متابعات مجدولة • ${metrics.newLeadsCount} عملاء جدد بحاجة للتأهيل • ${metrics.pendingDemandsCount} طلبات معلقة.`
               : `Today's Brief: ${metrics.dueTodayCount} follow-ups due • ${metrics.newLeadsCount} new leads to qualify • ${metrics.pendingDemandsCount} pending demands.`}
@@ -147,7 +148,7 @@ export default function CrmExecutiveDashboard({
               color: '#FFFFFF',
               padding: '8px 14px',
               borderRadius: '8px',
-              fontSize: '0.78rem',
+              fontSize: 'var(--crm-text-xs)',
               fontWeight: 700,
               display: 'flex',
               alignItems: 'center',
@@ -173,7 +174,7 @@ export default function CrmExecutiveDashboard({
               border: '1px solid var(--crm-line)',
               padding: '8px 14px',
               borderRadius: '8px',
-              fontSize: '0.78rem',
+              fontSize: 'var(--crm-text-xs)',
               fontWeight: 600,
               display: 'flex',
               alignItems: 'center',
@@ -195,7 +196,7 @@ export default function CrmExecutiveDashboard({
               border: '1px solid var(--crm-line)',
               padding: '8px 14px',
               borderRadius: '8px',
-              fontSize: '0.78rem',
+              fontSize: 'var(--crm-text-xs)',
               fontWeight: 600,
               display: 'flex',
               alignItems: 'center',
@@ -229,18 +230,18 @@ export default function CrmExecutiveDashboard({
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--crm-muted, #64748b)' }}>
+            <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted, #64748b)' }}>
               {isAr ? 'قيمة مسار الصفقات النشط' : 'Active Pipeline Value'}
             </span>
             <TrendingUp size={16} style={{ color: 'var(--crm-positive, #059669)' }} />
           </div>
           <div style={{ fontSize: '1.65rem', fontWeight: 900, color: 'var(--crm-ink)', marginTop: '6px', fontVariantNumeric: 'tabular-nums' }}>
             <bdi>{metrics.pipelineValueM}</bdi>
-            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--crm-muted)', marginInlineStart: '6px' }}>
+            <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted)', marginInlineStart: '6px' }}>
               {isAr ? 'مليون ج.م' : 'M EGP'}
             </span>
           </div>
-          <span style={{ fontSize: '0.72rem', color: 'var(--crm-muted)', marginTop: '2px', display: 'block' }}>
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px', display: 'block' }}>
             {isAr ? `${leads.length} عميل في مسار المبيعات` : `${leads.length} active leads in pipeline`}
           </span>
         </div>
@@ -256,18 +257,18 @@ export default function CrmExecutiveDashboard({
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--crm-muted, #64748b)' }}>
+            <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted, #64748b)' }}>
               {isAr ? 'العمولة المتوقعة (2.5%)' : 'Expected Commission'}
             </span>
             <Award size={16} style={{ color: 'var(--crm-accent-text)' }} />
           </div>
           <div style={{ fontSize: '1.65rem', fontWeight: 900, color: 'var(--crm-accent-text, #8A6828)', marginTop: '6px', fontVariantNumeric: 'tabular-nums' }}>
             <bdi>{metrics.commissionIsMillions ? metrics.commissionM : metrics.commissionFull}</bdi>
-            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--crm-muted)', marginInlineStart: '6px' }}>
+            <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted)', marginInlineStart: '6px' }}>
               {metrics.commissionIsMillions ? (isAr ? 'مليون ج.م' : 'M EGP') : (isAr ? 'ج.م' : 'EGP')}
             </span>
           </div>
-          <span style={{ fontSize: '0.72rem', color: 'var(--crm-muted)', marginTop: '2px', display: 'block' }}>
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px', display: 'block' }}>
             {isAr ? 'بناءً على الصفقات قيد التفاوض' : 'Based on ongoing negotiations'}
           </span>
         </div>
@@ -286,18 +287,18 @@ export default function CrmExecutiveDashboard({
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--crm-muted, #64748b)' }}>
+            <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted, #64748b)' }}>
               {isAr ? 'القوة الشرائية المسجلة' : 'Demand Purchasing Power'}
             </span>
             <Zap size={16} style={{ color: 'var(--crm-positive, #059669)' }} />
           </div>
           <div style={{ fontSize: '1.65rem', fontWeight: 900, color: 'var(--crm-ink)', marginTop: '6px', fontVariantNumeric: 'tabular-nums' }}>
             <bdi>{metrics.purchasingPowerM}</bdi>
-            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--crm-muted)', marginInlineStart: '6px' }}>
+            <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted)', marginInlineStart: '6px' }}>
               {isAr ? 'مليون ج.م' : 'M EGP'}
             </span>
           </div>
-          <span style={{ fontSize: '0.72rem', color: 'var(--crm-muted)', marginTop: '2px', display: 'block' }}>
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px', display: 'block' }}>
             {isAr ? `${demands.length} طلب مشتري معتمد` : `${demands.length} certified buyer demands`}
           </span>
         </div>
@@ -313,7 +314,7 @@ export default function CrmExecutiveDashboard({
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--crm-muted, #64748b)' }}>
+            <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted, #64748b)' }}>
               {isAr ? 'معدل إغلاق الصفقات' : 'Closing Rate'}
             </span>
             <Briefcase size={16} style={{ color: 'var(--crm-info, #2563EB)' }} />
@@ -321,7 +322,7 @@ export default function CrmExecutiveDashboard({
           <div style={{ fontSize: '1.65rem', fontWeight: 900, color: 'var(--crm-ink)', marginTop: '6px', fontVariantNumeric: 'tabular-nums' }}>
             {crmAnalytics.conversionSuccess || '0%'}
           </div>
-          <span style={{ fontSize: '0.72rem', color: 'var(--crm-muted)', marginTop: '2px', display: 'block' }}>
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px', display: 'block' }}>
             {isAr ? `${metrics.wonCount} صفقة ناجحة مكتملة` : `${metrics.wonCount} won deals closed`}
           </span>
         </div>
@@ -339,12 +340,12 @@ export default function CrmExecutiveDashboard({
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <AlertTriangle size={16} style={{ color: 'var(--crm-warn)' }} />
-              <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 800, color: 'var(--crm-ink)' }}>
+              <h3 style={{ margin: 0, fontSize: 'var(--crm-text-md)', fontWeight: 800, color: 'var(--crm-ink)' }}>
                 {isAr ? 'تنبيهات العمليات التنفيذية المباشرة' : 'Executive Operational Alerts'}
               </h3>
             </div>
             <span style={{
-              fontSize: '0.72rem',
+              fontSize: 'var(--crm-text-xs)',
               fontWeight: 600,
               padding: '2px 8px',
               borderRadius: '999px',
@@ -375,10 +376,10 @@ export default function CrmExecutiveDashboard({
                 }}
               >
                 <div>
-                  <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#DC2626' }}>
+                  <div style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 700, color: '#DC2626' }}>
                     {metrics.overdueCount} {isAr ? 'متابعات متأخرة تجاوزت موعدها' : 'Overdue Follow-ups'}
                   </div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--crm-muted)', marginTop: '2px' }}>
+                  <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px' }}>
                     {isAr ? 'انقر لفتح العملاء والتواصل الفوري' : 'Click to review & contact'}
                   </div>
                 </div>
@@ -405,10 +406,10 @@ export default function CrmExecutiveDashboard({
                 }}
               >
                 <div>
-                  <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--crm-warn)' }}>
+                  <div style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 700, color: 'var(--crm-warn)' }}>
                     {metrics.unassignedCount} {isAr ? 'عملاء بدون مسؤول مبيعات' : 'Unassigned Leads'}
                   </div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--crm-muted)', marginTop: '2px' }}>
+                  <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px' }}>
                     {isAr ? 'تعيين لمستشار لمنع تسرب العميل' : 'Assign to sales rep'}
                   </div>
                 </div>
@@ -432,10 +433,10 @@ export default function CrmExecutiveDashboard({
                 }}
               >
                 <div>
-                  <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--crm-info)' }}>
+                  <div style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 700, color: 'var(--crm-info)' }}>
                     {metrics.pendingDemandsCount} {isAr ? 'طلبات مشترين بحاجة للاعتماد' : 'Pending Buyer Demands'}
                   </div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--crm-muted)', marginTop: '2px' }}>
+                  <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px' }}>
                     {isAr ? 'مراجعة ونشر للمطابقة الفورية' : 'Review and approve to match'}
                   </div>
                 </div>
@@ -462,10 +463,10 @@ export default function CrmExecutiveDashboard({
                 }}
               >
                 <div>
-                  <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--crm-ink)' }}>
+                  <div style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 700, color: 'var(--crm-ink)' }}>
                     {metrics.staleLeadsCount} {isAr ? 'عملاء في وضع الركود (>48h)' : 'Stale Leads (>48h)'}
                   </div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--crm-muted)', marginTop: '2px' }}>
+                  <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px' }}>
                     {isAr ? 'إعادة تنشيط ومتابعة' : 'Reactivate lead'}
                   </div>
                 </div>
@@ -489,7 +490,7 @@ export default function CrmExecutiveDashboard({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Clock size={16} style={{ color: 'var(--crm-accent, #A9824A)' }} />
-              <h3 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 800, color: 'var(--crm-ink)' }}>
+              <h3 style={{ margin: 0, fontSize: 'var(--crm-text-md)', fontWeight: 800, color: 'var(--crm-ink)' }}>
                 {isAr ? 'قائمة متابعات اليوم المستحقة' : "Today's Actionable Follow-ups"}
               </h3>
             </div>
@@ -503,7 +504,7 @@ export default function CrmExecutiveDashboard({
                 background: 'none',
                 border: 'none',
                 color: 'var(--crm-accent-text)',
-                fontSize: '0.76rem',
+                fontSize: 'var(--crm-text-xs)',
                 fontWeight: 700,
                 cursor: 'pointer'
               }}
@@ -515,7 +516,7 @@ export default function CrmExecutiveDashboard({
           {metrics.dueTodayList.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '30px 10px', color: 'var(--crm-muted)' }}>
               <CheckCircle2 size={32} style={{ color: 'var(--crm-positive, #047857)', margin: '0 auto 8px', opacity: 0.8 }} />
-              <p style={{ margin: 0, fontSize: '0.84rem' }}>
+              <p style={{ margin: 0, fontSize: 'var(--crm-text-sm)' }}>
                 {isAr ? 'ممتاز! تم إنجاز كافة المتابعات المجدولة لليوم حتى الآن.' : 'All scheduled follow-ups are up to date!'}
               </p>
             </div>
@@ -541,14 +542,14 @@ export default function CrmExecutiveDashboard({
                   >
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <strong style={{ fontSize: '0.84rem', color: 'var(--crm-ink)' }}>{leadItem.name}</strong>
+                        <strong style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-ink)' }}>{leadItem.name}</strong>
                         {leadItem.score && (
-                          <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--crm-accent-text)' }}>
+                          <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 700, color: 'var(--crm-accent-text)' }}>
                             ⚡ {leadItem.score}%
                           </span>
                         )}
                       </div>
-                      <div style={{ fontSize: '0.74rem', color: 'var(--crm-muted)', marginTop: '2px' }}>
+                      <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px' }}>
                         {leadItem.phone} • {leadItem.area || 'سوهاج'}
                       </div>
                     </div>
@@ -592,7 +593,7 @@ export default function CrmExecutiveDashboard({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Building size={16} style={{ color: 'var(--crm-accent, #A9824A)' }} />
-              <h3 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 800, color: 'var(--crm-ink)' }}>
+              <h3 style={{ margin: 0, fontSize: 'var(--crm-text-md)', fontWeight: 800, color: 'var(--crm-ink)' }}>
                 {isAr ? 'جاهزية الأصول والمشروعات' : 'Inventory & Projects'}
               </h3>
             </div>
@@ -603,7 +604,7 @@ export default function CrmExecutiveDashboard({
                 background: 'none',
                 border: 'none',
                 color: 'var(--crm-accent-text)',
-                fontSize: '0.76rem',
+                fontSize: 'var(--crm-text-xs)',
                 fontWeight: 700,
                 cursor: 'pointer'
               }}
@@ -622,14 +623,14 @@ export default function CrmExecutiveDashboard({
             gap: '12px'
           }}>
             <div>
-              <span style={{ fontSize: '0.74rem', color: 'var(--crm-muted)' }}>{isAr ? 'إجمالي الوحدات المعروضة' : 'Active Units'}</span>
+              <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{isAr ? 'إجمالي الوحدات المعروضة' : 'Active Units'}</span>
               <div style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--crm-ink)', marginTop: '2px' }}>
                 {properties.length}
               </div>
             </div>
 
             <div>
-              <span style={{ fontSize: '0.74rem', color: 'var(--crm-muted)' }}>{isAr ? 'المشروعات الكبرى' : 'Mega Projects'}</span>
+              <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{isAr ? 'المشروعات الكبرى' : 'Mega Projects'}</span>
               <div style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--crm-ink)', marginTop: '2px' }}>
                 {projects.length}
               </div>
@@ -645,7 +646,7 @@ export default function CrmExecutiveDashboard({
               style={{
                 padding: '9px 12px',
                 borderRadius: '8px',
-                fontSize: '0.76rem',
+                fontSize: 'var(--crm-text-xs)',
                 fontWeight: 700,
                 display: 'flex',
                 alignItems: 'center',
@@ -664,7 +665,7 @@ export default function CrmExecutiveDashboard({
               style={{
                 padding: '9px 12px',
                 borderRadius: '8px',
-                fontSize: '0.76rem',
+                fontSize: 'var(--crm-text-xs)',
                 fontWeight: 700,
                 display: 'flex',
                 alignItems: 'center',

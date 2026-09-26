@@ -115,8 +115,8 @@ export default function SiteVisitModal({
             gap: '8px'
           }}>
             <div>
-              <strong style={{ color: '#092347', display: 'block', fontSize: '0.95rem' }}>{lead.name}</strong>
-              <span style={{ fontSize: '0.8rem', color: 'var(--crm-muted)' }}>{lead.phone}</span>
+              <strong style={{ color: '#092347', display: 'block', fontSize: 'var(--crm-text-md)' }}>{lead.name}</strong>
+              <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>{lead.phone}</span>
             </div>
             <span className="badge" style={{ background: '#ecfdf5', color: '#065f46', border: '1px solid #a7f3d0', fontWeight: 'bold' }}>
               {isAr ? 'عميل مؤكد الجدية' : 'Verified Lead'} ({lead.score || 85}%)
@@ -126,7 +126,7 @@ export default function SiteVisitModal({
           <div className="cms-form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
             {/* Property Select */}
             <div className="form-group-item" style={{ gridColumn: 'span 2' }}>
-              <label style={{ color: 'var(--crm-body)', fontWeight: 'bold', fontSize: '0.8rem' }}>{isAr ? 'العقار المراد معاينته *' : 'Target Property *'}</label>
+              <label style={{ color: 'var(--crm-body)', fontWeight: 'bold', fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'العقار المراد معاينته *' : 'Target Property *'}</label>
               <select
                 value={selectedPropertyId}
                 onChange={(e) => setSelectedPropertyId(e.target.value)}
@@ -143,7 +143,7 @@ export default function SiteVisitModal({
 
             {/* Visit Date */}
             <div className="form-group-item">
-              <label style={{ color: 'var(--crm-body)', fontWeight: 'bold', fontSize: '0.8rem' }}>{isAr ? 'تاريخ المعاينة *' : 'Visit Date *'}</label>
+              <label style={{ color: 'var(--crm-body)', fontWeight: 'bold', fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'تاريخ المعاينة *' : 'Visit Date *'}</label>
               <input
                 type="date"
                 value={visitDate}
@@ -155,7 +155,7 @@ export default function SiteVisitModal({
 
             {/* Visit Time */}
             <div className="form-group-item">
-              <label style={{ color: 'var(--crm-body)', fontWeight: 'bold', fontSize: '0.8rem' }}>{isAr ? 'وقت المعاينة *' : 'Visit Time *'}</label>
+              <label style={{ color: 'var(--crm-body)', fontWeight: 'bold', fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'وقت المعاينة *' : 'Visit Time *'}</label>
               <input
                 type="time"
                 value={visitTime}
@@ -167,7 +167,7 @@ export default function SiteVisitModal({
 
             {/* Assigned Consultant */}
             <div className="form-group-item">
-              <label style={{ color: 'var(--crm-body)', fontWeight: 'bold', fontSize: '0.8rem' }}>{isAr ? 'المستشار المرافق بالمعاينة' : 'Accompanying Advisor'}</label>
+              <label style={{ color: 'var(--crm-body)', fontWeight: 'bold', fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'المستشار المرافق بالمعاينة' : 'Accompanying Advisor'}</label>
               <select
                 value={agentName}
                 onChange={(e) => setAgentName(e.target.value)}
@@ -182,7 +182,7 @@ export default function SiteVisitModal({
 
             {/* Meeting Point */}
             <div className="form-group-item">
-              <label style={{ color: 'var(--crm-body)', fontWeight: 'bold', fontSize: '0.8rem' }}>{isAr ? 'نقطة التجمع / اللقاء' : 'Meeting Point'}</label>
+              <label style={{ color: 'var(--crm-body)', fontWeight: 'bold', fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'نقطة التجمع / اللقاء' : 'Meeting Point'}</label>
               <input
                 type="text"
                 value={meetingLocation}
@@ -195,7 +195,7 @@ export default function SiteVisitModal({
 
           {/* Notes */}
           <div className="form-group-item" style={{ marginTop: '14px' }}>
-            <label style={{ color: 'var(--crm-body)', fontWeight: 'bold', fontSize: '0.8rem' }}>{isAr ? 'ملاحظات المعاينة والتنبيهات' : 'Inspection Notes'}</label>
+            <label style={{ color: 'var(--crm-body)', fontWeight: 'bold', fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'ملاحظات المعاينة والتنبيهات' : 'Inspection Notes'}</label>
             <textarea
               rows="2"
               className="form-input"

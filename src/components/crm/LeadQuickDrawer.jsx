@@ -254,7 +254,7 @@ export default function LeadQuickDrawer({
               {isAr ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
             </button>
 
-            <span style={{ fontSize: '0.78rem', color: 'var(--crm-muted, #64748b)', fontWeight: 600 }}>
+            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted, #64748b)', fontWeight: 600 }}>
               {currentIndex + 1} / {filteredLeads.length || 1}
             </span>
 
@@ -287,7 +287,7 @@ export default function LeadQuickDrawer({
                 type="button"
                 onClick={() => onConvertToProperty(lead)}
                 className="btn btn-sm btn-outline"
-                style={{ fontSize: '0.74rem', padding: '5px 10px', borderRadius: '8px' }}
+                style={{ fontSize: 'var(--crm-text-xs)', padding: '5px 10px', borderRadius: '8px' }}
                 title={isAr ? 'تحويل العميل إلى وحدة عقارية معروضة' : 'Convert to Property'}
               >
                 <Building size={13} />
@@ -336,7 +336,7 @@ export default function LeadQuickDrawer({
                   </h2>
                   {lead.score && (
                     <span style={{
-                      fontSize: '0.72rem',
+                      fontSize: 'var(--crm-text-xs)',
                       fontWeight: 700,
                       padding: '2px 8px',
                       borderRadius: '999px',
@@ -348,7 +348,7 @@ export default function LeadQuickDrawer({
                   )}
                   {lead.temperature && (
                     <span style={{
-                      fontSize: '0.72rem',
+                      fontSize: 'var(--crm-text-xs)',
                       fontWeight: 700,
                       padding: '2px 8px',
                       borderRadius: '999px',
@@ -361,10 +361,10 @@ export default function LeadQuickDrawer({
                 </div>
 
                 {/* Subtitle Contact & Source */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px', fontSize: '0.82rem', color: 'var(--crm-muted, #64748b)', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted, #64748b)', flexWrap: 'wrap' }}>
                   <span>{lead.phone}</span>
                   {lead.source && (
-                    <span style={{ background: 'var(--crm-subtle-2, #f2f0ea)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.72rem' }}>
+                    <span style={{ background: 'var(--crm-subtle-2, #f2f0ea)', padding: '2px 6px', borderRadius: '4px', fontSize: 'var(--crm-text-xs)' }}>
                       {lead.source}
                     </span>
                   )}
@@ -419,11 +419,11 @@ export default function LeadQuickDrawer({
             {/* Stepper / Stage Selector */}
             <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid var(--crm-line, #e2e8f0)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--crm-muted, #64748b)' }}>
+                <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 700, color: 'var(--crm-muted, #64748b)' }}>
                   {isAr ? 'مرحلة الصفقة الحالية:' : 'Current Pipeline Stage:'}
                 </span>
                 <span style={{
-                  fontSize: '0.75rem',
+                  fontSize: 'var(--crm-text-xs)',
                   fontWeight: 800,
                   color: stages[currentStageIndex]?.color || 'var(--crm-accent)'
                 }}>
@@ -443,7 +443,7 @@ export default function LeadQuickDrawer({
                       style={{
                         padding: '6px 4px',
                         borderRadius: '8px',
-                        fontSize: '0.72rem',
+                        fontSize: 'var(--crm-text-xs)',
                         fontWeight: isActive ? 800 : 600,
                         background: isActive ? st.color : 'var(--crm-subtle, #f9f8f5)',
                         color: isActive ? '#ffffff' : 'var(--crm-muted, #64748b)',
@@ -483,7 +483,7 @@ export default function LeadQuickDrawer({
                   flex: 1,
                   padding: '7px 10px',
                   borderRadius: '7px',
-                  fontSize: '0.78rem',
+                  fontSize: 'var(--crm-text-xs)',
                   fontWeight: activeTab === tab.id ? 800 : 600,
                   background: activeTab === tab.id ? 'var(--crm-card, #ffffff)' : 'transparent',
                   color: activeTab === tab.id ? 'var(--crm-ink, #0f172a)' : 'var(--crm-muted, #64748b)',
@@ -509,7 +509,7 @@ export default function LeadQuickDrawer({
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
                   <Phone size={15} style={{ color: 'var(--crm-accent, #A9824A)' }} />
-                  <strong style={{ fontSize: '0.84rem' }}>{isAr ? 'تسجيل نتيجة مكالمة سريعة بنقرة واحدة:' : 'Log Call Outcome (1-Click):'}</strong>
+                  <strong style={{ fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'تسجيل نتيجة مكالمة سريعة بنقرة واحدة:' : 'Log Call Outcome (1-Click):'}</strong>
                 </div>
 
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
@@ -527,7 +527,7 @@ export default function LeadQuickDrawer({
                       style={{
                         padding: '6px 10px',
                         borderRadius: '6px',
-                        fontSize: '0.74rem',
+                        fontSize: 'var(--crm-text-xs)',
                         fontWeight: 600,
                         background: 'var(--crm-subtle, #f9f8f5)',
                         border: '1px solid var(--crm-line, #e2e8f0)',
@@ -551,7 +551,7 @@ export default function LeadQuickDrawer({
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
                   <MessageSquare size={15} style={{ color: '#25D366' }} />
-                  <strong style={{ fontSize: '0.84rem' }}>{isAr ? 'رسائل واتساب تسويقية جاهزة للإرسال:' : 'Instant WhatsApp Pitches:'}</strong>
+                  <strong style={{ fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'رسائل واتساب تسويقية جاهزة للإرسال:' : 'Instant WhatsApp Pitches:'}</strong>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -572,8 +572,8 @@ export default function LeadQuickDrawer({
                         }}
                       >
                         <div>
-                          <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--crm-ink)' }}>{tpl.title}</div>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--crm-muted)', marginTop: '2px', lineClamp: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '320px' }}>
+                          <div style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 700, color: 'var(--crm-ink)' }}>{tpl.title}</div>
+                          <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px', lineClamp: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '320px' }}>
                             {tpl.msg}
                           </div>
                         </div>
@@ -588,7 +588,7 @@ export default function LeadQuickDrawer({
                             color: '#ffffff',
                             padding: '4px 10px',
                             borderRadius: '6px',
-                            fontSize: '0.74rem',
+                            fontSize: 'var(--crm-text-xs)',
                             fontWeight: 700,
                             textDecoration: 'none',
                             flexShrink: 0
@@ -613,7 +613,7 @@ export default function LeadQuickDrawer({
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Calendar size={15} style={{ color: 'var(--crm-accent, #A9824A)' }} />
-                    <strong style={{ fontSize: '0.84rem' }}>{isAr ? 'جدولة موعد معاينة ميدانية:' : 'Schedule Property Viewing:'}</strong>
+                    <strong style={{ fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'جدولة موعد معاينة ميدانية:' : 'Schedule Property Viewing:'}</strong>
                   </div>
 
                   <button
@@ -624,7 +624,7 @@ export default function LeadQuickDrawer({
                       border: 'none',
                       color: 'var(--crm-accent, #A9824A)',
                       fontWeight: 700,
-                      fontSize: '0.76rem',
+                      fontSize: 'var(--crm-text-xs)',
                       cursor: 'pointer'
                     }}
                   >
@@ -635,7 +635,7 @@ export default function LeadQuickDrawer({
                 {showViewingForm && (
                   <form onSubmit={handleScheduleViewing} style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 600, marginBottom: '4px' }}>
+                      <label style={{ display: 'block', fontSize: 'var(--crm-text-xs)', fontWeight: 600, marginBottom: '4px' }}>
                         {isAr ? 'اختر الوحدة المراد معاينتها:' : 'Select Property:'}
                       </label>
                       <select
@@ -643,7 +643,7 @@ export default function LeadQuickDrawer({
                         onChange={(e) => setSelectedViewingPropId(e.target.value)}
                         required
                         className="form-input"
-                        style={{ width: '100%', padding: '6px 10px', fontSize: '0.78rem', borderRadius: '8px' }}
+                        style={{ width: '100%', padding: '6px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: '8px' }}
                       >
                         <option value="">{isAr ? '-- اختر العقار من المحفظة --' : '-- Choose Property --'}</option>
                         {properties.map(p => (
@@ -655,7 +655,7 @@ export default function LeadQuickDrawer({
                     </div>
 
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 600, marginBottom: '4px' }}>
+                      <label style={{ display: 'block', fontSize: 'var(--crm-text-xs)', fontWeight: 600, marginBottom: '4px' }}>
                         {isAr ? 'تاريخ ووقت المعاينة المفضل:' : 'Date & Time:'}
                       </label>
                       <input
@@ -664,7 +664,7 @@ export default function LeadQuickDrawer({
                         onChange={(e) => setViewingDateTime(e.target.value)}
                         required
                         className="form-input"
-                        style={{ width: '100%', padding: '6px 10px', fontSize: '0.78rem', borderRadius: '8px' }}
+                        style={{ width: '100%', padding: '6px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: '8px' }}
                       />
                     </div>
 
@@ -674,7 +674,7 @@ export default function LeadQuickDrawer({
                       style={{
                         padding: '8px 14px',
                         borderRadius: '8px',
-                        fontSize: '0.8rem',
+                        fontSize: 'var(--crm-text-sm)',
                         fontWeight: 700,
                         background: 'var(--crm-accent, #A9824A)',
                         color: '#ffffff',
@@ -698,7 +698,7 @@ export default function LeadQuickDrawer({
                 border: '1px solid rgba(169, 130, 74, 0.25)',
                 borderRadius: '10px',
                 padding: '10px 14px',
-                fontSize: '0.78rem',
+                fontSize: 'var(--crm-text-xs)',
                 color: 'var(--crm-ink)'
               }}>
                 <Sparkles size={15} style={{ color: 'var(--crm-accent)', marginInlineEnd: '6px', verticalAlign: 'middle' }} />
@@ -712,7 +712,7 @@ export default function LeadQuickDrawer({
               {matchedProperties.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '30px', color: 'var(--crm-muted)' }}>
                   <Building size={32} style={{ margin: '0 auto 8px', opacity: 0.4 }} />
-                  <p style={{ margin: 0, fontSize: '0.82rem' }}>
+                  <p style={{ margin: 0, fontSize: 'var(--crm-text-sm)' }}>
                     {isAr ? 'لا توجد وحدات مطابقة تماماً حالياً بالمحفظة. جرب توسيع معايير البحث.' : 'No direct property matches found.'}
                   </p>
                 </div>
@@ -755,7 +755,7 @@ export default function LeadQuickDrawer({
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{
-                            fontSize: '0.68rem',
+                            fontSize: 'var(--crm-text-xs)',
                             fontWeight: 700,
                             padding: '1px 6px',
                             borderRadius: '4px',
@@ -764,13 +764,13 @@ export default function LeadQuickDrawer({
                           }}>
                             {p._matchScore}% {isAr ? 'تطابق' : 'Match'}
                           </span>
-                          <strong style={{ fontSize: '0.84rem', color: 'var(--crm-accent)' }}>
+                          <strong style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-accent)' }}>
                             {p.price?.toLocaleString()} ج.م
                           </strong>
                         </div>
 
                         <div style={{
-                          fontSize: '0.82rem',
+                          fontSize: 'var(--crm-text-sm)',
                           fontWeight: 700,
                           marginTop: '3px',
                           overflow: 'hidden',
@@ -780,7 +780,7 @@ export default function LeadQuickDrawer({
                           {p.title_ar || p.title_en}
                         </div>
 
-                        <div style={{ fontSize: '0.72rem', color: 'var(--crm-muted)', marginTop: '2px' }}>
+                        <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px' }}>
                           {p.locationName_ar || p.areaKey} • {p.area} م²
                         </div>
 
@@ -796,7 +796,7 @@ export default function LeadQuickDrawer({
                               color: '#ffffff',
                               padding: '3px 8px',
                               borderRadius: '6px',
-                              fontSize: '0.72rem',
+                              fontSize: 'var(--crm-text-xs)',
                               textDecoration: 'none',
                               display: 'flex',
                               alignItems: 'center',
@@ -815,7 +815,7 @@ export default function LeadQuickDrawer({
                             style={{
                               padding: '3px 8px',
                               borderRadius: '6px',
-                              fontSize: '0.72rem',
+                              fontSize: 'var(--crm-text-xs)',
                               textDecoration: 'none',
                               color: 'var(--crm-ink)'
                             }}
@@ -843,7 +843,7 @@ export default function LeadQuickDrawer({
                   value={newNote}
                   onChange={(e) => setNewNote(e.target.value)}
                   className="form-input"
-                  style={{ width: '100%', padding: '8px 12px', fontSize: '0.8rem', borderRadius: '8px' }}
+                  style={{ width: '100%', padding: '8px 12px', fontSize: 'var(--crm-text-sm)', borderRadius: '8px' }}
                 />
                 <button
                   type="submit"
@@ -853,7 +853,7 @@ export default function LeadQuickDrawer({
                     alignSelf: 'flex-start',
                     padding: '6px 14px',
                     borderRadius: '7px',
-                    fontSize: '0.78rem',
+                    fontSize: 'var(--crm-text-xs)',
                     fontWeight: 700,
                     background: 'var(--crm-accent, #A9824A)',
                     color: '#ffffff',
@@ -874,7 +874,7 @@ export default function LeadQuickDrawer({
                 borderRadius: '12px',
                 padding: '14px'
               }}>
-                <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--crm-ink)', marginBottom: '10px' }}>
+                <div style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 800, color: 'var(--crm-ink)', marginBottom: '10px' }}>
                   {isAr ? 'سجل النشاط والملاحظات:' : 'Activity History:'}
                 </div>
 
@@ -884,7 +884,7 @@ export default function LeadQuickDrawer({
                       <div
                         key={idx}
                         style={{
-                          fontSize: '0.76rem',
+                          fontSize: 'var(--crm-text-xs)',
                           padding: '8px 10px',
                           borderRadius: '6px',
                           background: 'var(--crm-subtle, #f9f8f5)',
@@ -897,7 +897,7 @@ export default function LeadQuickDrawer({
                     ))}
                   </div>
                 ) : (
-                  <div style={{ fontSize: '0.76rem', color: 'var(--crm-muted)' }}>
+                  <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
                     {isAr ? 'لا توجد ملاحظات سابقة مسجلة لهذا العميل.' : 'No notes recorded yet.'}
                   </div>
                 )}
@@ -922,7 +922,7 @@ export default function LeadQuickDrawer({
             style={{
               padding: '7px 14px',
               borderRadius: '8px',
-              fontSize: '0.78rem',
+              fontSize: 'var(--crm-text-xs)',
               fontWeight: 700,
               display: 'flex',
               alignItems: 'center',
@@ -946,7 +946,7 @@ export default function LeadQuickDrawer({
                 background: 'none',
                 border: 'none',
                 color: '#ef4444',
-                fontSize: '0.75rem',
+                fontSize: 'var(--crm-text-xs)',
                 fontWeight: 600,
                 cursor: 'pointer',
                 display: 'flex',

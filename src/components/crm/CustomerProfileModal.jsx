@@ -258,11 +258,11 @@ export default function CustomerProfileModal({
                 <span className={`lead-score-pill ${formData.score >= 85 ? 'score-high' : 'score-medium'}`}>
                   {formData.score}% {isAr ? 'جدية' : 'Score'}
                 </span>
-                <span className="badge" style={{ background: 'var(--crm-subtle-2)', color: 'var(--crm-body)', border: '1px solid var(--crm-line-strong)', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                <span className="badge" style={{ background: 'var(--crm-subtle-2)', color: 'var(--crm-body)', border: '1px solid var(--crm-line-strong)', fontSize: 'var(--crm-text-xs)', fontWeight: 'bold' }}>
                   {formData.status?.toUpperCase()}
                 </span>
               </div>
-              <span style={{ fontSize: '0.8rem', color: 'var(--crm-muted)' }}>
+              <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
                 📍 {formData.cityOrExpat} • {isAr ? 'المسؤول:' : 'Agent:'} {formData.assignedTo}
               </span>
             </div>
@@ -275,13 +275,13 @@ export default function CustomerProfileModal({
                 type="button"
                 className="btn btn-sm"
                 onClick={() => window.open(`https://wa.me/${cleanPhone}`, '_blank', 'noopener,noreferrer')}
-                style={{ padding: '6px 12px', fontSize: '0.8rem', background: '#ecfdf5', color: 'var(--crm-positive)', border: '1px solid #a7f3d0', fontWeight: 'bold' }}
+                style={{ padding: '6px 12px', fontSize: 'var(--crm-text-sm)', background: '#ecfdf5', color: 'var(--crm-positive)', border: '1px solid #a7f3d0', fontWeight: 'bold' }}
               >
                 <MessageSquare size={14} />
                 <span>WhatsApp</span>
               </button>
             ) : (
-              <span className="badge" style={{ fontSize: '0.75rem', background: 'var(--crm-subtle)', color: 'var(--crm-muted)', border: '1px solid var(--crm-line)' }}>
+              <span className="badge" style={{ fontSize: 'var(--crm-text-xs)', background: 'var(--crm-subtle)', color: 'var(--crm-muted)', border: '1px solid var(--crm-line)' }}>
                 <Lock size={12} style={{ display: 'inline', marginInlineEnd: '4px' }} />
                 {isAr ? 'واتساب محجوب' : 'WhatsApp Protected'}
               </span>
@@ -293,13 +293,13 @@ export default function CustomerProfileModal({
                 type="button"
                 className="btn btn-sm"
                 onClick={() => window.open(`tel:${formData.phone}`, '_self')}
-                style={{ padding: '6px 12px', fontSize: '0.8rem', background: '#092347', color: '#ffffff', border: '1px solid #092347', fontWeight: 'bold' }}
+                style={{ padding: '6px 12px', fontSize: 'var(--crm-text-sm)', background: '#092347', color: '#ffffff', border: '1px solid #092347', fontWeight: 'bold' }}
               >
                 <Phone size={14} />
                 <span>{isAr ? 'اتصال' : 'Call'}</span>
               </button>
             ) : (
-              <span className="badge" style={{ fontSize: '0.75rem', background: 'var(--crm-subtle)', color: 'var(--crm-muted)', border: '1px solid var(--crm-line)' }}>
+              <span className="badge" style={{ fontSize: 'var(--crm-text-xs)', background: 'var(--crm-subtle)', color: 'var(--crm-muted)', border: '1px solid var(--crm-line)' }}>
                 <Lock size={12} style={{ display: 'inline', marginInlineEnd: '4px' }} />
                 {isAr ? 'اتصال محجوب' : 'Call Protected'}
               </span>
@@ -322,7 +322,7 @@ export default function CustomerProfileModal({
                   triggerToast(isAr ? 'جاري فتح تقويم Google لجدولة الموعد...' : 'Opening Google Calendar...', 'info');
                 }
               }}
-              style={{ padding: '6px 12px', fontSize: '0.8rem', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', fontWeight: 'bold' }}
+              style={{ padding: '6px 12px', fontSize: 'var(--crm-text-sm)', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', fontWeight: 'bold' }}
             >
               <Calendar size={14} />
               <span>{isAr ? 'تقويم Google' : 'Google Cal'}</span>
@@ -344,7 +344,7 @@ export default function CustomerProfileModal({
                   triggerToast(isAr ? 'تم تنزيل ملف الموعد لتقويم هاتفك بنجاح!' : 'Calendar file (.ics) downloaded!', 'success');
                 }
               }}
-              style={{ padding: '6px 10px', fontSize: '0.8rem', background: 'var(--crm-subtle)', color: 'var(--crm-body)', border: '1px solid var(--crm-line-strong)' }}
+              style={{ padding: '6px 10px', fontSize: 'var(--crm-text-sm)', background: 'var(--crm-subtle)', color: 'var(--crm-body)', border: '1px solid var(--crm-line-strong)' }}
             >
               <Download size={13} />
               <span>.ICS</span>
@@ -362,32 +362,32 @@ export default function CustomerProfileModal({
           background: 'var(--crm-subtle)',
           borderBottom: '1px solid var(--crm-line)',
           padding: '10px 20px',
-          fontSize: '0.78rem'
+          fontSize: 'var(--crm-text-xs)'
         }}>
           <div>
-            <span style={{ color: 'var(--crm-muted)', display: 'block', fontSize: '0.68rem', fontWeight: '600' }}>{isAr ? 'نوع العميل' : 'Type'}</span>
+            <span style={{ color: 'var(--crm-muted)', display: 'block', fontSize: 'var(--crm-text-xs)', fontWeight: '600' }}>{isAr ? 'نوع العميل' : 'Type'}</span>
             <span style={{ fontWeight: 'bold', color: '#b45309' }}>{formData.type === 'buyer' ? (isAr ? 'مشتري جاد' : 'Buyer') : (isAr ? 'بائع / معلن' : 'Seller')}</span>
           </div>
           <div>
-            <span style={{ color: 'var(--crm-muted)', display: 'block', fontSize: '0.68rem', fontWeight: '600' }}>{isAr ? 'الميزانية' : 'Budget'}</span>
+            <span style={{ color: 'var(--crm-muted)', display: 'block', fontSize: 'var(--crm-text-xs)', fontWeight: '600' }}>{isAr ? 'الميزانية' : 'Budget'}</span>
             <span style={{ fontWeight: 'bold', color: 'var(--crm-ink)' }}>{formData.budget ? `${formData.budget} ج.م` : (isAr ? 'مرنة / تفاوض' : 'Negotiable')}</span>
           </div>
           <div>
-            <span style={{ color: 'var(--crm-muted)', display: 'block', fontSize: '0.68rem', fontWeight: '600' }}>{isAr ? 'المنطقة المطلوبة' : 'Target Area'}</span>
+            <span style={{ color: 'var(--crm-muted)', display: 'block', fontSize: 'var(--crm-text-xs)', fontWeight: '600' }}>{isAr ? 'المنطقة المطلوبة' : 'Target Area'}</span>
             <span style={{ fontWeight: 'bold', color: 'var(--crm-ink)' }}>{formData.area || 'سوهاج'}</span>
           </div>
           <div>
-            <span style={{ color: 'var(--crm-muted)', display: 'block', fontSize: '0.68rem', fontWeight: '600' }}>{isAr ? 'المسؤول' : 'Agent'}</span>
+            <span style={{ color: 'var(--crm-muted)', display: 'block', fontSize: 'var(--crm-text-xs)', fontWeight: '600' }}>{isAr ? 'المسؤول' : 'Agent'}</span>
             <span style={{ fontWeight: 'bold', color: 'var(--crm-ink)' }}>{formData.assignedTo}</span>
           </div>
           <div>
-            <span style={{ color: 'var(--crm-muted)', display: 'block', fontSize: '0.68rem', fontWeight: '600' }}>{isAr ? 'مصدر الحملة' : 'Source'}</span>
-            <span style={{ fontWeight: 'bold', color: '#7c3aed', fontSize: '0.74rem' }}>
+            <span style={{ color: 'var(--crm-muted)', display: 'block', fontSize: 'var(--crm-text-xs)', fontWeight: '600' }}>{isAr ? 'مصدر الحملة' : 'Source'}</span>
+            <span style={{ fontWeight: 'bold', color: '#7c3aed', fontSize: 'var(--crm-text-xs)' }}>
               {lead?.marketingAttribution?.source || lead?.utmSource || (isAr ? 'مباشر' : 'Direct')}
             </span>
           </div>
           <div>
-            <span style={{ color: 'var(--crm-muted)', display: 'block', fontSize: '0.68rem', fontWeight: '600' }}>{isAr ? 'المتابعة القادمة' : 'Next Action'}</span>
+            <span style={{ color: 'var(--crm-muted)', display: 'block', fontSize: 'var(--crm-text-xs)', fontWeight: '600' }}>{isAr ? 'المتابعة القادمة' : 'Next Action'}</span>
             <span style={{ fontWeight: 'bold', color: 'var(--crm-info)' }}>{formData.nextActionDate || formData.nextActionNote || (isAr ? 'قريباً' : 'Soon')}</span>
           </div>
         </div>
@@ -406,7 +406,7 @@ export default function CustomerProfileModal({
             className="btn btn-sm"
             onClick={() => setProfileTab('overview')}
             style={{
-              fontSize: '0.8rem',
+              fontSize: 'var(--crm-text-sm)',
               fontWeight: profileTab === 'overview' ? 'bold' : '600',
               background: profileTab === 'overview' ? '#092347' : '#f8fafc',
               color: profileTab === 'overview' ? '#ffffff' : '#475569',
@@ -421,7 +421,7 @@ export default function CustomerProfileModal({
             className="btn btn-sm"
             onClick={() => setProfileTab('journey')}
             style={{
-              fontSize: '0.8rem',
+              fontSize: 'var(--crm-text-sm)',
               fontWeight: profileTab === 'journey' ? 'bold' : '600',
               background: profileTab === 'journey' ? '#0284c7' : '#f8fafc',
               color: profileTab === 'journey' ? '#ffffff' : '#475569',
@@ -436,7 +436,7 @@ export default function CustomerProfileModal({
             className="btn btn-sm"
             onClick={() => setProfileTab('properties')}
             style={{
-              fontSize: '0.8rem',
+              fontSize: 'var(--crm-text-sm)',
               fontWeight: profileTab === 'properties' ? 'bold' : '600',
               background: profileTab === 'properties' ? '#d97706' : '#f8fafc',
               color: profileTab === 'properties' ? '#ffffff' : '#475569',
@@ -451,7 +451,7 @@ export default function CustomerProfileModal({
             className="btn btn-sm"
             onClick={() => setProfileTab('timeline')}
             style={{
-              fontSize: '0.8rem',
+              fontSize: 'var(--crm-text-sm)',
               fontWeight: profileTab === 'timeline' ? 'bold' : '600',
               background: profileTab === 'timeline' ? '#7c3aed' : '#f8fafc',
               color: profileTab === 'timeline' ? '#ffffff' : '#475569',
@@ -466,7 +466,7 @@ export default function CustomerProfileModal({
             className="btn btn-sm"
             onClick={() => setProfileTab('actions')}
             style={{
-              fontSize: '0.8rem',
+              fontSize: 'var(--crm-text-sm)',
               fontWeight: profileTab === 'actions' ? 'bold' : '600',
               background: profileTab === 'actions' ? '#059669' : '#f8fafc',
               color: profileTab === 'actions' ? '#ffffff' : '#475569',
@@ -493,7 +493,7 @@ export default function CustomerProfileModal({
                     className="btn btn-sm"
                     onClick={() => setIsEditing(!isEditing)}
                     style={{
-                      fontSize: '0.75rem',
+                      fontSize: 'var(--crm-text-xs)',
                       fontWeight: 'bold',
                       background: isEditing ? '#092347' : '#f8fafc',
                       color: isEditing ? '#ffffff' : '#092347',
@@ -505,7 +505,7 @@ export default function CustomerProfileModal({
                     <span>{isEditing ? (isAr ? 'وضع العرض' : 'View Mode') : (isAr ? 'تعديل البيانات' : 'Edit Profile')}</span>
                   </button>
                 ) : (
-                  <span className="badge" style={{ fontSize: '0.72rem', background: 'var(--crm-subtle)', color: 'var(--crm-muted)', border: '1px solid var(--crm-line)' }}>
+                  <span className="badge" style={{ fontSize: 'var(--crm-text-xs)', background: 'var(--crm-subtle)', color: 'var(--crm-muted)', border: '1px solid var(--crm-line)' }}>
                     <Lock size={11} style={{ display: 'inline', marginInlineEnd: '4px' }} />
                     {isAr ? 'للقراءة فقط' : 'Read-only'}
                   </span>
@@ -514,7 +514,7 @@ export default function CustomerProfileModal({
 
               {/* Tags Strip */}
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ fontSize: '0.75rem', color: 'var(--crm-body)', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
+                <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-body)', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
                   🏷️ {isAr ? 'وسوم وتصنيف العميل:' : 'Client Tags:'}
                 </label>
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
@@ -531,7 +531,7 @@ export default function CustomerProfileModal({
                           border: isSelected ? '1px solid #3b82f6' : '1px solid #cbd5e1',
                           borderRadius: 'var(--radius-pill)',
                           padding: '4px 10px',
-                          fontSize: '0.75rem',
+                          fontSize: 'var(--crm-text-xs)',
                           fontWeight: isSelected ? 'bold' : 'normal',
                           cursor: isEditing ? 'pointer' : 'default'
                         }}
@@ -689,7 +689,7 @@ export default function CustomerProfileModal({
                 gap: '10px'
               }}>
                 <div>
-                  <h4 style={{ margin: 0, color: isLiveTracked ? '#059669' : '#0284c7', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700 }}>
+                  <h4 style={{ margin: 0, color: isLiveTracked ? '#059669' : '#0284c7', fontSize: 'var(--crm-text-md)', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700 }}>
                     <Activity size={16} />
                     <span>{isAr ? 'البصمة الرقمية وسلوك التصفح الفعلي للعميل' : 'Customer Digital Footprint & Dwell Time'}</span>
                   </h4>
@@ -706,7 +706,7 @@ export default function CustomerProfileModal({
                     color: isLiveTracked ? '#065f46' : '#92400e',
                     fontWeight: 'bold',
                     border: `1px solid ${isLiveTracked ? '#6ee7b7' : '#fde68a'}`,
-                    fontSize: '0.74rem'
+                    fontSize: 'var(--crm-text-xs)'
                   }}>
                     {isLiveTracked ? '🟢 ' + (isAr ? 'رصد حي ومباشر 100%' : '100% Live Tracked') : '🟡 ' + (isAr ? 'نموذج محاكاة استرشادي' : 'Demo Simulation')}
                   </span>
@@ -766,21 +766,21 @@ export default function CustomerProfileModal({
                             border: `1px solid ${badgeInfo.border}`,
                             padding: '2px 8px',
                             borderRadius: '4px',
-                            fontSize: '0.72rem',
+                            fontSize: 'var(--crm-text-xs)',
                             fontWeight: 'bold'
                           }}>
                             {badgeInfo.text}
                           </span>
-                          <strong style={{ fontSize: '0.85rem', color: 'var(--crm-ink)' }}>
+                          <strong style={{ fontSize: 'var(--crm-text-base)', color: 'var(--crm-ink)' }}>
                             {title}
                           </strong>
                         </div>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--crm-muted)' }}>
+                        <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
                           📍 {formData.cityOrExpat || 'سوهاج'} • {isAr ? 'عبر متصفح الهاتف / الويب' : 'Mobile / Web'}
                         </span>
                       </div>
 
-                      <span style={{ fontSize: '0.72rem', color: 'var(--crm-faint)', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)', whiteSpace: 'nowrap' }}>
                         {new Date(evt.timestamp).toLocaleTimeString(isAr ? 'ar-EG' : 'en-US')}
                       </span>
                     </div>
@@ -793,7 +793,7 @@ export default function CustomerProfileModal({
           {/* TAB 2: MATCHED & INSPECTED PROPERTIES */}
           {profileTab === 'properties' && (
             <div>
-              <h4 style={{ margin: '0 0 14px 0', color: '#092347', fontSize: '0.95rem', fontWeight: 700 }}>
+              <h4 style={{ margin: '0 0 14px 0', color: '#092347', fontSize: 'var(--crm-text-md)', fontWeight: 700 }}>
                 🏢 {isAr ? 'العقارات والوحدات المقترحة لهذا العميل:' : 'Matched & Recommended Units:'}
               </h4>
 
@@ -813,10 +813,10 @@ export default function CustomerProfileModal({
                     }}
                   >
                     <div>
-                      <strong style={{ fontSize: '0.85rem', display: 'block', color: 'var(--crm-ink)' }}>
+                      <strong style={{ fontSize: 'var(--crm-text-base)', display: 'block', color: 'var(--crm-ink)' }}>
                         {isAr ? prop.title_ar : prop.title_en}
                       </strong>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--crm-positive)', fontWeight: 'bold' }}>
+                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', fontWeight: 'bold' }}>
                         💰 {prop.price?.toLocaleString()} ج.م • {prop.size} م²
                       </span>
                     </div>
@@ -828,7 +828,7 @@ export default function CustomerProfileModal({
                         const waText = `أهلاً أ. ${formData.name}، بخصوص طلبك العقاري، نود ترشيح وحدة ${isAr ? prop.title_ar : prop.title_en} بسعر ${prop.price?.toLocaleString()} ج.م. هل نحدد موعداً للمعاينة؟`;
                         window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(waText)}`, '_blank', 'noopener,noreferrer');
                       }}
-                      style={{ padding: '6px 10px', fontSize: '0.75rem', background: '#092347', color: '#ffffff', borderRadius: '6px' }}
+                      style={{ padding: '6px 10px', fontSize: 'var(--crm-text-xs)', background: '#092347', color: '#ffffff', borderRadius: '6px' }}
                       title={isAr ? 'إرسال بروشور الوحدة على الواتساب' : 'Send WhatsApp Brochure'}
                     >
                       <Send size={13} />
@@ -851,7 +851,7 @@ export default function CustomerProfileModal({
                 marginBottom: '20px',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
               }}>
-                <label style={{ fontSize: '0.8rem', fontWeight: 'bold', display: 'block', marginBottom: '8px', color: 'var(--crm-ink)' }}>
+                <label style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold', display: 'block', marginBottom: '8px', color: 'var(--crm-ink)' }}>
                   ✍️ {isAr ? 'تسجيل ملاحظة اتصال أو نتيجة مكالمة جديدة:' : 'Log Call / Meeting Notes:'}
                 </label>
 
@@ -860,7 +860,7 @@ export default function CustomerProfileModal({
                     value={newLogType}
                     onChange={(e) => setNewLogType(e.target.value)}
                     className="form-input"
-                    style={{ padding: '6px 10px', fontSize: '0.8rem', width: '160px', background: 'var(--crm-subtle)', border: '1px solid var(--crm-line-strong)', borderRadius: '6px', color: 'var(--crm-ink)' }}
+                    style={{ padding: '6px 10px', fontSize: 'var(--crm-text-sm)', width: '160px', background: 'var(--crm-subtle)', border: '1px solid var(--crm-line-strong)', borderRadius: '6px', color: 'var(--crm-ink)' }}
                   >
                     <option value="call">📞 مكالمة هاتفية</option>
                     <option value="whatsapp">💬 محادثة واتساب</option>
@@ -874,7 +874,7 @@ export default function CustomerProfileModal({
                     value={newLogText}
                     onChange={(e) => setNewLogText(e.target.value)}
                     className="form-input"
-                    style={{ flex: 1, fontSize: '0.85rem', background: 'var(--crm-card)', border: '1px solid var(--crm-line-strong)', borderRadius: '6px', color: 'var(--crm-ink)' }}
+                    style={{ flex: 1, fontSize: 'var(--crm-text-base)', background: 'var(--crm-card)', border: '1px solid var(--crm-line-strong)', borderRadius: '6px', color: 'var(--crm-ink)' }}
                     required
                   />
 
@@ -901,13 +901,13 @@ export default function CustomerProfileModal({
                         borderInlineStart: '4px solid #092347',
                         borderRadius: '8px',
                         padding: '10px 14px',
-                        fontSize: '0.85rem',
+                        fontSize: 'var(--crm-text-base)',
                         boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                         <strong style={{ color: 'var(--crm-ink)' }}>{log.action}</strong>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--crm-muted)' }}>
+                        <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
                           {new Date(log.timestamp).toLocaleTimeString(isAr ? 'ar-EG' : 'en-US')} - {new Date(log.timestamp).toLocaleDateString(isAr ? 'ar-EG' : 'en-US')}
                         </span>
                       </div>
@@ -930,13 +930,13 @@ export default function CustomerProfileModal({
               padding: '20px',
               boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
             }}>
-              <h4 style={{ margin: '0 0 14px 0', color: '#092347', fontSize: '0.95rem', fontWeight: 700 }}>
+              <h4 style={{ margin: '0 0 14px 0', color: '#092347', fontSize: 'var(--crm-text-md)', fontWeight: 700 }}>
                 📅 {isAr ? 'جدولة الإجراء القادم وموعد المتابعة' : 'Scheduled Next Action'}
               </h4>
 
               <div className="cms-form-grid" style={{ gridTemplateColumns: '1fr 1.5fr', gap: '14px', marginBottom: '16px' }}>
                 <div className="form-group-item">
-                  <label style={{ color: 'var(--crm-body)', fontWeight: 'bold', fontSize: '0.8rem' }}>{isAr ? 'تاريخ ووقت المتابعة القادمة:' : 'Follow-up Date:'}</label>
+                  <label style={{ color: 'var(--crm-body)', fontWeight: 'bold', fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'تاريخ ووقت المتابعة القادمة:' : 'Follow-up Date:'}</label>
                   <input
                     type="date"
                     value={formData.nextActionDate}
@@ -946,7 +946,7 @@ export default function CustomerProfileModal({
                 </div>
 
                 <div className="form-group-item">
-                  <label style={{ color: 'var(--crm-body)', fontWeight: 'bold', fontSize: '0.8rem' }}>{isAr ? 'تفاصيل الإجراء المطلوب:' : 'Action Details:'}</label>
+                  <label style={{ color: 'var(--crm-body)', fontWeight: 'bold', fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'تفاصيل الإجراء المطلوب:' : 'Action Details:'}</label>
                   <input
                     type="text"
                     placeholder="مثال: الاتصال للتفاوض النهائي على مقدم شقة الكوثر"

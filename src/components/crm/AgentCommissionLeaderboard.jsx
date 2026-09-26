@@ -119,7 +119,7 @@ export default function AgentCommissionLeaderboard({
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
-          fontSize: '0.8rem'
+          fontSize: 'var(--crm-text-sm)'
         }}>
           <span style={{ color: 'var(--gold-dark)', fontWeight: 'bold' }}>
             💼 {isAr ? 'نسبة العمولة المعتمدة:' : 'Commission Rate:'}
@@ -219,7 +219,7 @@ export default function AgentCommissionLeaderboard({
                       </span>
                     )}
                   </div>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--text-secondary)' }}>
                     {isAr ? agent.title_ar : agent.title_en}
                   </span>
                 </div>
@@ -228,7 +228,7 @@ export default function AgentCommissionLeaderboard({
               {/* Volume & Commission Badges */}
               <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <div style={{ textAlign: isAr ? 'left' : 'right' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block' }}>
+                  <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-secondary)', display: 'block' }}>
                     {isAr ? 'المبيعات المنفذة:' : 'Closed Deals:'}
                   </span>
                   <strong style={{ fontSize: '1.1rem', color: 'var(--success)' }}>
@@ -243,7 +243,7 @@ export default function AgentCommissionLeaderboard({
                   padding: '8px 14px',
                   textAlign: isAr ? 'left' : 'right'
                 }}>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--gold-dark)', display: 'block', fontWeight: 'bold' }}>
+                  <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--gold-dark)', display: 'block', fontWeight: 'bold' }}>
                     {isAr ? 'العمولة المستحقة (' + commissionRate + '%):' : 'Earned Commission:'}
                   </span>
                   <strong style={{ fontSize: '1.05rem', color: 'var(--gold-dark)' }}>
@@ -255,7 +255,7 @@ export default function AgentCommissionLeaderboard({
 
             {/* Target Progress Bar */}
             <div style={{ marginTop: '10px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', marginBottom: '6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--crm-text-xs)', marginBottom: '6px' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>
                   {isAr ? `المستهدف الشهري: ${(agent.target / 1000000).toFixed(0)} مليون ج.م` : `Monthly Target: ${(agent.target / 1000000)}M`}
                 </span>
@@ -287,7 +287,7 @@ export default function AgentCommissionLeaderboard({
               marginTop: '12px',
               paddingTop: '10px',
               borderTop: '1px solid rgba(255,255,255,0.05)',
-              fontSize: '0.75rem',
+              fontSize: 'var(--crm-text-xs)',
               color: 'var(--text-secondary)'
             }}>
               <span>👥 {isAr ? 'إجمالي العملاء:' : 'Leads:'} <strong>{agent.totalLeads}</strong></span>

@@ -215,7 +215,7 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
           {/* Controls Bar */}
           <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '14px', marginBottom: '18px' }}>
             <div>
-              <label style={{ fontSize: '0.8rem', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
+              <label style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
                 {isAr ? 'اختر العقار المراد كتابة إعلان له:' : 'Select Property:'}
               </label>
               <select
@@ -233,7 +233,7 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
             </div>
 
             <div>
-              <label style={{ fontSize: '0.8rem', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
+              <label style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
                 {isAr ? 'نبرة وأسلوب الإعلان:' : 'Campaign Tone:'}
               </label>
               <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
@@ -241,7 +241,7 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
                   type="button"
                   className={`btn btn-sm ${adTone === 'luxury' ? 'btn-primary' : 'btn-outline'}`}
                   onClick={() => setAdTone('luxury')}
-                  style={{ flex: '1 1 auto', padding: '5px 6px', fontSize: '0.72rem' }}
+                  style={{ flex: '1 1 auto', padding: '5px 6px', fontSize: 'var(--crm-text-xs)' }}
                 >
                   👑 {isAr ? 'فندقي' : 'Luxury'}
                 </button>
@@ -249,7 +249,7 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
                   type="button"
                   className={`btn btn-sm ${adTone === 'social' ? 'btn-primary' : 'btn-outline'}`}
                   onClick={() => setAdTone('social')}
-                  style={{ flex: '1 1 auto', padding: '5px 6px', fontSize: '0.72rem' }}
+                  style={{ flex: '1 1 auto', padding: '5px 6px', fontSize: 'var(--crm-text-xs)' }}
                 >
                   🔥 {isAr ? 'سوشيال' : 'Viral'}
                 </button>
@@ -257,7 +257,7 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
                   type="button"
                   className={`btn btn-sm ${adTone === 'investor' ? 'btn-primary' : 'btn-outline'}`}
                   onClick={() => setAdTone('investor')}
-                  style={{ flex: '1 1 auto', padding: '5px 6px', fontSize: '0.72rem' }}
+                  style={{ flex: '1 1 auto', padding: '5px 6px', fontSize: 'var(--crm-text-xs)' }}
                 >
                   📈 {isAr ? 'استثماري' : 'Investor'}
                 </button>
@@ -265,7 +265,7 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
                   type="button"
                   className={`btn btn-sm ${adTone === 'expat' ? 'btn-primary' : 'btn-outline'}`}
                   onClick={() => setAdTone('expat')}
-                  style={{ flex: '1 1 auto', padding: '5px 6px', fontSize: '0.72rem' }}
+                  style={{ flex: '1 1 auto', padding: '5px 6px', fontSize: 'var(--crm-text-xs)' }}
                 >
                   ✈️ {isAr ? 'مغتربين' : 'Expats'}
                 </button>
@@ -273,7 +273,7 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
                   type="button"
                   className={`btn btn-sm ${adTone === 'english' ? 'btn-primary' : 'btn-outline'}`}
                   onClick={() => setAdTone('english')}
-                  style={{ flex: '1 1 auto', padding: '5px 6px', fontSize: '0.72rem' }}
+                  style={{ flex: '1 1 auto', padding: '5px 6px', fontSize: 'var(--crm-text-xs)' }}
                 >
                   🌐 EN
                 </button>
@@ -290,7 +290,7 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
             position: 'relative'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}>
+              <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}>
                 <Sparkles size={14} /> {isAr ? 'تم الصياغة بواسطة الذكاء الاصطناعي العقاري' : 'AI Generated Content'}
               </span>
 
@@ -299,7 +299,7 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
                   type="button"
                   className="btn btn-sm btn-outline"
                   onClick={handleCopy}
-                  style={{ padding: '4px 10px', fontSize: '0.75rem' }}
+                  style={{ padding: '4px 10px', fontSize: 'var(--crm-text-xs)' }}
                 >
                   {copied ? <Check size={14} className="text-success" /> : <Copy size={14} />}
                   <span>{copied ? (isAr ? 'تم النسخ!' : 'Copied!') : (isAr ? 'نسخ النص' : 'Copy')}</span>
@@ -308,7 +308,7 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
                   type="button"
                   className="btn btn-sm btn-accent"
                   onClick={handleSendToWhatsApp}
-                  style={{ padding: '4px 10px', fontSize: '0.75rem' }}
+                  style={{ padding: '4px 10px', fontSize: 'var(--crm-text-xs)' }}
                 >
                   <Send size={14} />
                   <span>{isAr ? 'مشاركة واتساب' : 'Share WhatsApp'}</span>
@@ -327,7 +327,7 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
                 border: 'none',
                 color: 'var(--text-primary)',
                 lineHeight: '1.7',
-                fontSize: '0.85rem',
+                fontSize: 'var(--crm-text-base)',
                 resize: 'none',
                 fontFamily: 'inherit'
               }}

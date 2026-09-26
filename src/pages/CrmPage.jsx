@@ -19,6 +19,7 @@ import CrmCommandPalette from '../components/crm/CrmCommandPalette';
 import '../components/crm/CrmLayout.css';
 import '../components/crm/crm-luxury.css';
 import '../components/crm/crm-dark-surfaces.css';
+import '../components/crm/crm-density.css';
 import { isFirebaseAuthAvailable, loginUser } from '../firebaseService';
 import { useAuth } from '../context/AuthContext';
 import { canEditProperties, canEditLeadsRole } from '../utils/rbacRules';
@@ -126,7 +127,7 @@ export default function CrmPage({
       const next = !prev;
       try {
         localStorage.setItem('oneline_crm_sidebar_collapsed', String(next));
-      } catch (e) {}
+      } catch { /* storage unavailable (private mode) — preference just isn't remembered */ }
       return next;
     });
   }, []);
@@ -135,7 +136,7 @@ export default function CrmPage({
     setSidebarWidth(newWidth);
     try {
       localStorage.setItem('oneline_crm_sidebar_width', String(newWidth));
-    } catch (e) {}
+    } catch { /* storage unavailable — width isn't remembered */ }
   }, []);
 
   // Keyboard shortcut Ctrl+B or Cmd+B to toggle sidebar collapse
@@ -280,7 +281,7 @@ export default function CrmPage({
             borderTopColor: 'var(--gold, #B38A45)',
             animation: 'routeSpin 0.8s linear infinite'
           }} />
-          <span style={{ color: 'var(--text-muted, #687386)', fontSize: '0.88rem', fontWeight: 'bold' }}>
+          <span style={{ color: 'var(--text-muted, #687386)', fontSize: 'var(--crm-text-base)', fontWeight: 'bold' }}>
             {isAr ? 'جاري فحص الجلسة المشفرة...' : 'Verifying secure session...'}
           </span>
         </div>
@@ -391,7 +392,7 @@ export default function CrmPage({
             <a 
               href="mailto:contact@oneline-sohag.com?subject=طلب مساعدة من مدير النظام" 
               style={{ 
-                fontSize: '0.8rem', 
+                fontSize: 'var(--crm-text-sm)', 
                 color: 'var(--gold-dark)', 
                 textDecoration: 'none',
                 fontWeight: '600'
@@ -403,7 +404,7 @@ export default function CrmPage({
             <a 
               href="/" 
               style={{ 
-                fontSize: '0.82rem', 
+                fontSize: 'var(--crm-text-sm)', 
                 color: 'var(--crm-faint)', 
                 textDecoration: 'none', 
                 transition: 'color 0.2s',
@@ -501,7 +502,7 @@ export default function CrmPage({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            fontSize: '0.8rem',
+            fontSize: 'var(--crm-text-sm)',
             color: '#92400e',
             boxShadow: '0 1px 3px rgba(217, 119, 6, 0.1)'
           }}>
@@ -522,7 +523,7 @@ export default function CrmPage({
                 border: 'none',
                 borderRadius: '6px',
                 padding: '4px 12px',
-                fontSize: '0.74rem',
+                fontSize: 'var(--crm-text-xs)',
                 fontWeight: 'bold',
                 cursor: 'pointer',
                 display: 'flex',
@@ -600,7 +601,7 @@ export default function CrmPage({
                 <h3 style={{ color: 'var(--crm-ink)', marginBottom: '8px' }}>
                   {isAr ? 'منطقة صلاحيات مقيدة' : 'Restricted Access'}
                 </h3>
-                <p style={{ color: 'var(--crm-muted)', fontSize: '0.9rem' }}>
+                <p style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-base)' }}>
                   {isAr 
                     ? 'هذا القسم (إدارة النظام والأحياء وهوية المؤسس) متاح حصرياً للمدير العام.' 
                     : 'This section is strictly restricted to Super Admin.'}
@@ -628,7 +629,7 @@ export default function CrmPage({
                   borderRadius: '10px',
                   flexWrap: 'wrap'
                 }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#092347', marginInlineEnd: '8px' }}>
+                  <span style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold', color: '#092347', marginInlineEnd: '8px' }}>
                     {isAr ? 'أقسام إدارة المنظومة:' : 'System Modules:'}
                   </span>
                   <button
@@ -637,7 +638,7 @@ export default function CrmPage({
                     style={{
                       padding: '6px 14px',
                       borderRadius: '7px',
-                      fontSize: '0.8rem',
+                      fontSize: 'var(--crm-text-sm)',
                       fontWeight: systemSubTab === 'areas' ? 'bold' : '600',
                       background: systemSubTab === 'areas' ? '#092347' : '#f8fafc',
                       color: systemSubTab === 'areas' ? '#ffffff' : '#475569',
@@ -653,7 +654,7 @@ export default function CrmPage({
                     style={{
                       padding: '6px 14px',
                       borderRadius: '7px',
-                      fontSize: '0.8rem',
+                      fontSize: 'var(--crm-text-sm)',
                       fontWeight: systemSubTab === 'corporate' ? 'bold' : '600',
                       background: systemSubTab === 'corporate' ? '#092347' : '#f8fafc',
                       color: systemSubTab === 'corporate' ? '#ffffff' : '#475569',
@@ -669,7 +670,7 @@ export default function CrmPage({
                     style={{
                       padding: '6px 14px',
                       borderRadius: '7px',
-                      fontSize: '0.8rem',
+                      fontSize: 'var(--crm-text-sm)',
                       fontWeight: systemSubTab === 'backup' ? 'bold' : '600',
                       background: systemSubTab === 'backup' ? '#092347' : '#f8fafc',
                       color: systemSubTab === 'backup' ? '#ffffff' : '#475569',
@@ -685,7 +686,7 @@ export default function CrmPage({
                     style={{
                       padding: '6px 14px',
                       borderRadius: '7px',
-                      fontSize: '0.8rem',
+                      fontSize: 'var(--crm-text-sm)',
                       fontWeight: systemSubTab === 'automation' ? 'bold' : '600',
                       background: systemSubTab === 'automation' ? '#092347' : '#f8fafc',
                       color: systemSubTab === 'automation' ? '#ffffff' : '#475569',
