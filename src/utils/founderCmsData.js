@@ -310,7 +310,13 @@ export function getFounderSettings() {
     if (parsed.founderQuote_ar) parsed.founderQuote_ar = parsed.founderQuote_ar.replace(/One\s*Line/gi, '1Line');
     if (parsed.founderQuote_en) parsed.founderQuote_en = parsed.founderQuote_en.replace(/One\s*Line/gi, '1Line');
     if (!parsed.founderPhoto) parsed.founderPhoto = DEFAULT_FOUNDER_CMS.founderPhoto;
-    return stripInlineMedia(parsed);
+    const cleaned = stripInlineMedia(parsed);
+    // One-time cleanup: rewrite storage without the embedded videos so every later read
+    // stops parsing megabytes of base64 (the settings are read on many screens)
+    if (raw.length > 200 * 1024 && raw.includes('"data:')) {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned)); } catch { /* ignore */ }
+    }
+    return cleaned;
   } catch (err) {
     console.error('Failed to parse founder CMS settings:', err);
     return DEFAULT_FOUNDER_CMS;
@@ -374,7 +380,7 @@ export function initFounderCmsSync() {
   return subscribeToSettings('founder_cms', (cloudData) => {
     if (cloudData && typeof cloudData === 'object') {
       try {
-        const merged = { ...DEFAULT_FOUNDER_CMS, ...cloudData };
+        const merged = stripInlineMedia({ ...DEFAULT_FOUNDER_CMS, ...cloudData });
         localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         window.dispatchEvent(new CustomEvent('oneline_founder_cms_updated', { detail: merged }));
       } catch (e) {

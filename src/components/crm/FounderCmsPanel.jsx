@@ -29,6 +29,7 @@ import {
   resetFounderSettings, 
   DEFAULT_FOUNDER_CMS 
 } from '../../utils/founderCmsData';
+import { uploadCmsMedia } from '../../firebaseLazy';
 
 export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
   const isAr = lang === 'ar';
@@ -108,39 +109,61 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
     setFormData({ ...formData, goldStandards: updated });
   };
 
-  // Upload short video directly from device (MP4 / WebM / MOV)
-  const handleVideoFileUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Upload short video to Firebase Storage; settings keep only the resulting https URL.
+  // (The old version embedded the whole file as a base64 data URL in the settings: a WhatsApp
+  // clip became ~20MB of text, froze the form, and could not be saved to localStorage or Firestore.)
+  const [uploadProgress, setUploadProgress] = useState(null); // null | 0..100
+  const handleVideoFileUpload = async (e) => {
+    const input = e.target;
+    const file = input.files?.[0];
+    input.value = ''; // allow re-selecting the same file after an error
+    if (!file || uploadProgress !== null) return;
 
-    if (file.size > 50 * 1024 * 1024) {
-      if (!window.confirm(isAr ? 'حجم الفيديو أكبر من 50 ميجابايت، يفضل اختيار فيديو أقصر لتسريع التحميل للزوار. هل تود المتابعة؟' : 'File is > 50MB. Continue?')) {
-        return;
-      }
+    const mb = (file.size / 1024 / 1024).toFixed(1);
+    setUploadProgress(0);
+    const res = await uploadCmsMedia(file, 'video', (p) => setUploadProgress(p));
+    setUploadProgress(null);
+
+    if (!res.ok) {
+      const reasons = {
+        type: isAr ? 'نوع الملف غير مدعوم — استخدم MP4 أو WebM أو MOV.' : 'Unsupported file — use MP4, WebM or MOV.',
+        size: isAr ? `حجم الفيديو ${mb} ميجابايت والحد الأقصى 60. اختر مقطعاً أقصر (10–15 ثانية تكفي للخلفية).` : `Video is ${mb}MB; the limit is 60MB.`,
+        'storage/unauthorized': isAr ? 'حسابك لا يملك صلاحية رفع الملفات — سجّل الدخول بحساب المدير وتأكد من نشر قواعد Storage.' : 'Not authorised to upload — sign in as admin and deploy storage rules.',
+        'storage/unauthenticated': isAr ? 'سجّل الدخول بحساب المدير أولاً لرفع الفيديو.' : 'Sign in as admin to upload.',
+        'not-configured': isAr ? 'خدمة التخزين غير مفعّلة في Firebase.' : 'Firebase Storage is not configured.'
+      };
+      const msg = reasons[res.reason] || (isAr
+        ? `تعذّر رفع الفيديو (${res.reason}). تأكد من تفعيل Firebase Storage في المشروع ومن الاتصال بالإنترنت.`
+        : `Upload failed (${res.reason}). Check that Firebase Storage is enabled.`);
+      if (triggerToast) triggerToast(msg, 'error');
+      return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target.result;
-      const newClip = {
-        id: `uploaded-${Date.now()}`,
-        title_ar: file.name.replace(/\.[^/.]+$/, ''),
-        title_en: file.name.replace(/\.[^/.]+$/, ''),
-        url: dataUrl,
-        poster: formData.heroPosterUrl || ''
-      };
-      const currentClips = formData.heroVideoClips || DEFAULT_FOUNDER_CMS.heroVideoClips;
-      setFormData({
-        ...formData,
-        heroVideoUrl: dataUrl,
-        heroVideoClips: [newClip, ...currentClips]
-      });
-      if (triggerToast) {
-        triggerToast(isAr ? 'تم رفع الفيديو بنجاح! اضغط "حفظ ونشر التعديلات" لتعميمه فوراً 🚀' : 'Video uploaded! Click Save to publish.', 'success');
-      }
+    const newClip = {
+      id: `uploaded-${Date.now()}`,
+      title_ar: file.name.replace(/\.[^/.]+$/, ''),
+      title_en: file.name.replace(/\.[^/.]+$/, ''),
+      url: res.url,
+      storagePath: res.path,
+      poster: formData.heroPosterUrl || ''
     };
-    reader.readAsDataURL(file);
+    const currentClips = formData.heroVideoClips || DEFAULT_FOUNDER_CMS.heroVideoClips;
+    const next = { ...formData, heroVideoUrl: res.url, heroVideoClips: [newClip, ...currentClips] };
+    setFormData(next);
+    // Persist straight away so a finished upload is never lost if the admin forgets to press Save
+    await saveFounderSettings(next);
+    if (triggerToast) {
+      triggerToast(isAr ? `تم رفع الفيديو (${mb} ميجابايت) وحفظه ✔` : `Video uploaded (${mb}MB) and saved`, 'success');
+    }
   };
+
+  useEffect(() => {
+    const onSyncFailed = () => {
+      if (triggerToast) triggerToast(isAr ? 'تم الحفظ على هذا الجهاز فقط — تعذّرت المزامنة السحابية. تحقق من الاتصال وصلاحية حسابك.' : 'Saved on this device only — cloud sync failed.', 'error');
+    };
+    window.addEventListener('oneline_founder_cms_sync_failed', onSyncFailed);
+    return () => window.removeEventListener('oneline_founder_cms_sync_failed', onSyncFailed);
+  }, [triggerToast, isAr]);
 
   // Add new clip to playlist
   const handleAddClip = () => {
@@ -341,13 +364,26 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
               </h4>
               <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 'var(--crm-text-sm)', maxWidth: '480px' }}>
                 {isAr
-                  ? 'اختر فيديو من هاتفك أو حاسوبك، سيتم قراءته وتعيينه كخلفية سينمائية للواجهة فوراً مع إمكانية إضافته لقائمة الفيديوهات المتعاقبة.'
-                  : 'Select a short architectural video from your computer or phone to stream as a background.'}
+                  ? 'MP4 أو WebM أو MOV حتى 60 ميجابايت. يُرفع على التخزين السحابي ويُحفظ رابطه تلقائياً. للخلفية يكفي مقطع 10–15 ثانية.'
+                  : 'MP4, WebM or MOV up to 60MB. Uploaded to cloud storage and saved automatically.'}
               </p>
+              {uploadProgress !== null && (
+                <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={uploadProgress} aria-label={isAr ? 'تقدّم رفع الفيديو' : 'Upload progress'} style={{ width: 'min(420px, 100%)' }}>
+                  <div style={{ height: '8px', borderRadius: '4px', background: 'var(--crm-line)', overflow: 'hidden' }}>
+                    <div style={{ width: `${uploadProgress}%`, height: '100%', background: 'var(--crm-accent)', transition: 'width 0.2s' }} />
+                  </div>
+                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginTop: '6px', fontSize: 'var(--crm-text-sm)', fontWeight: 700, color: 'var(--crm-ink)' }}>
+                    <Loader2 size={14} className="spin" />
+                    {isAr ? `جاري الرفع… ${uploadProgress}%` : `Uploading… ${uploadProgress}%`}
+                  </span>
+                </div>
+              )}
               <input
                 type="file"
                 accept="video/mp4,video/webm,video/quicktime"
                 onChange={handleVideoFileUpload}
+                disabled={uploadProgress !== null}
+                aria-label={isAr ? 'اختيار فيديو للرفع' : 'Choose a video to upload'}
                 style={{
                   position: 'absolute',
                   inset: 0,

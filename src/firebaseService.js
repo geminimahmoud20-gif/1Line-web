@@ -148,6 +148,8 @@ export const uploadCmsMedia = async (file, kind = 'video', onProgress) => {
   if (!isFirebaseConfigured() || !storage) return { ok: false, reason: 'not-configured' };
 
   const { ref, uploadBytesResumable, getDownloadURL } = await import('firebase/storage');
+  // Default retry window is 10 minutes — on a dead connection the admin would watch 0% that long
+  storage.maxUploadRetryTime = 90 * 1000;
   const safeName = file.name.normalize('NFKD').replace(/[^\w.-]+/g, '-').slice(-80) || `${kind}`;
   const path = `cms/${kind}s/${Date.now()}-${safeName}`;
   const task = uploadBytesResumable(ref(storage, path), file, {

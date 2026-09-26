@@ -94,3 +94,8 @@ html:not(.dark-theme):not([data-theme="dark"]) .crm-layout { --crm-canvas: #F5F3
   color: var(--crm-muted);
 }
 @media (hover: none) { .crm-kbd-hint { display: none; } } /* no keyboard on touch devices */
+
+/* Loading spinner used by the CMS upload progress */
+@keyframes crm-spin { to { transform: rotate(360deg); } }
+.crm-layout .spin { animation: crm-spin 0.9s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .crm-layout .spin { animation: none; } }
