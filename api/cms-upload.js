@@ -29,10 +29,15 @@ const INVENTORY_ROLES = ['sales_manager', 'property_manager'];
 
 // Videos (homepage hero): admins only. Images (property photos): admins + inventory editors.
 const verifyUploader = async (idToken, kind) => {
-  const { payload } = await jwtVerify(idToken, firebaseKeys, {
-    issuer: `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`,
-    audience: FIREBASE_PROJECT_ID
-  });
+  let payload;
+  try {
+    ({ payload } = await jwtVerify(idToken, firebaseKeys, {
+      issuer: `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`,
+      audience: FIREBASE_PROJECT_ID
+    }));
+  } catch {
+    throw new Error('not-admin'); // bad signature, expired, wrong project, malformed…
+  }
   const isAdmin = ADMIN_USER_IDS.has(payload.sub) || payload.admin === true || payload.role === 'admin' || payload.role === 'super_admin';
   const allowed = isAdmin || (kind === 'image' && INVENTORY_ROLES.includes(payload.role));
   if (!allowed) throw new Error('not-admin');
@@ -71,8 +76,7 @@ export async function POST(request) {
     });
     return json(200, result);
   } catch (error) {
-    const msg = String(error?.message || error);
-    const denied = /not-admin|JWT|JWS|token|signature|exp/i.test(msg);
+    const denied = /not-admin/.test(String(error?.message || error));
     return json(denied ? 403 : 400, { error: denied ? 'unauthorized' : 'upload-refused' });
   }
 }
