@@ -91,6 +91,18 @@ export default function HomePage({
   const [activeClipIndex, setActiveClipIndex] = useState(0);
   const [clipFade, setClipFade] = useState(false);
   const heroVideoRef = useRef(null);
+  const omniboxRef = useRef(null);
+
+  // Close omnibox live suggestions on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (omniboxRef.current && !omniboxRef.current.contains(e.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
 
   const heroClips = (founderSettings.heroVideoClips && founderSettings.heroVideoClips.length > 0)
     ? founderSettings.heroVideoClips
@@ -515,7 +527,7 @@ export default function HomePage({
               <form onSubmit={handleHeroSearch} className="hx-capsule-row" role="tabpanel">
                 <div className="hx-field hx-field--keyword">
                   <span className="hx-field-label" id="hx-kw-label">{lang === 'ar' ? 'البحث الذكي' : 'Smart search'}</span>
-                  <div className="hero-input-relative">
+                  <div className="hero-input-relative" ref={omniboxRef}>
                     <input
                       type="text"
                       aria-labelledby="hx-kw-label"
@@ -605,7 +617,12 @@ export default function HomePage({
                             <div className="suggestions-list">
                               {matchingProperties.map((p) => (
                                 <Link key={p.id} to={`/properties/${p.id}`} className="sug-item-row" onClick={() => setShowSuggestions(false)}>
-                                  <img src={p.images?.[0]} alt="" className="sug-thumb" loading="lazy" />
+                                  <img 
+                                    src={p.images?.[0] || 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=400&q=75'} 
+                                    alt="" 
+                                    className="sug-thumb" 
+                                    loading="lazy" 
+                                  />
                                   <div className="sug-info">
                                     <span className="sug-title">{lang === 'ar' ? p.title_ar : p.title_en}</span>
                                     <span className="sug-meta">{p.size} {lang === 'ar' ? 'م²' : 'sqm'} • {(Number(p.price) || 0).toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}</span>

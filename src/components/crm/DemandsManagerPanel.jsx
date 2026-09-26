@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { 
   Zap, 
   Plus, 
@@ -29,6 +29,7 @@ import {
   Share2
 } from 'lucide-react';
 import { exportToCsv } from '../../utils/exportCsv';
+import { canViewLeadPhone, maskPhoneNumber } from '../../utils/rbacRules';
 
 const AREA_OPTIONS = [
   { value: 'east', label_ar: 'شرق سوهاج', label_en: 'East Sohag' },
@@ -57,9 +58,11 @@ export default function DemandsManagerPanel({
   onDeleteDemand,
   onUnpublishDemand,
   lang = 'ar',
+  userRole = 'super_admin',
   triggerToast
 }) {
   const isAr = lang === 'ar';
+  const canViewPhone = canViewLeadPhone(userRole);
 
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'pending' | 'published' | 'archived'
   const [typeFilter, setTypeFilter] = useState('all');
@@ -92,7 +95,11 @@ export default function DemandsManagerPanel({
       urgency: isAr ? 'الاستعجال' : 'Urgency',
       text_ar: isAr ? 'نص الطلب' : 'Details'
     };
-    exportToCsv('OneLine_Buyer_Demands', filteredDemands, headers);
+    const exportedData = filteredDemands.map(d => ({
+      ...d,
+      phone: canViewPhone ? (d.phone || '—') : maskPhoneNumber(d.phone, userRole)
+    }));
+    exportToCsv('OneLine_Buyer_Demands', exportedData, headers);
     triggerToast?.(isAr ? 'تم تصدير الطلبات بنجاح إلى ملف Excel!' : 'Demands exported to CSV!', 'success');
   };
 
@@ -114,31 +121,48 @@ export default function DemandsManagerPanel({
     status: 'published'
   });
 
-  // Calculate KPIs
-  const totalDemandsCount = demands.length;
-  const pendingCount = demands.filter(d => (d.status === 'pending')).length;
-  const publishedCount = demands.filter(d => (d.status || 'published') === 'published').length;
-  const totalPurchasingPower = demands
-    .filter(d => (d.status || 'published') === 'published')
-    .reduce((sum, d) => sum + (typeof d.budget === 'number' ? d.budget : parseInt(String(d.budget).replace(/,/g, '')) || 0), 0);
-
-  // Filtered List
-  const filteredDemands = demands.filter(demand => {
-    const currentStatus = demand.status || 'published';
-    if (statusFilter !== 'all' && currentStatus !== statusFilter) return false;
-    if (typeFilter !== 'all' && demand.type !== typeFilter) return false;
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const textAr = (demand.text_ar || '').toLowerCase();
-      const textEn = (demand.text_en || '').toLowerCase();
-      const client = (demand.clientName || '').toLowerCase();
-      const phone = (demand.phone || '').toLowerCase();
-      const area = (demand.area_ar || demand.area_en || demand.area || '').toLowerCase();
-      return textAr.includes(q) || textEn.includes(q) || client.includes(q) || phone.includes(q) || area.includes(q);
+  // Calculate KPIs in a single memoized pass
+  const { totalDemandsCount, pendingCount, publishedCount, totalPurchasingPower } = useMemo(() => {
+    let pending = 0;
+    let published = 0;
+    let purchasingPower = 0;
+    for (let i = 0; i < demands.length; i++) {
+      const d = demands[i];
+      const st = d.status || 'published';
+      if (d.status === 'pending') pending++;
+      if (st === 'published') {
+        published++;
+        const b = typeof d.budget === 'number' ? d.budget : parseInt(String(d.budget).replace(/,/g, ''), 10) || 0;
+        purchasingPower += b;
+      }
     }
-    return true;
-  });
+    return {
+      totalDemandsCount: demands.length,
+      pendingCount: pending,
+      publishedCount: published,
+      totalPurchasingPower: purchasingPower
+    };
+  }, [demands]);
+
+  // Memoized Filtered List
+  const filteredDemands = useMemo(() => {
+    return demands.filter(demand => {
+      const currentStatus = demand.status || 'published';
+      if (statusFilter !== 'all' && currentStatus !== statusFilter) return false;
+      if (typeFilter !== 'all' && demand.type !== typeFilter) return false;
+
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const textAr = (demand.text_ar || '').toLowerCase();
+        const textEn = (demand.text_en || '').toLowerCase();
+        const client = (demand.clientName || '').toLowerCase();
+        const phone = (demand.phone || '').toLowerCase();
+        const area = (demand.area_ar || demand.area_en || demand.area || '').toLowerCase();
+        return textAr.includes(q) || textEn.includes(q) || client.includes(q) || phone.includes(q) || area.includes(q);
+      }
+      return true;
+    });
+  }, [demands, statusFilter, typeFilter, searchQuery]);
 
   const handleOpenAdd = () => {
     setFormData({
@@ -189,10 +213,12 @@ export default function DemandsManagerPanel({
     };
 
     if (editingDemand) {
-      onUpdateDemand(editingDemand.id, demandPayload);
+      const res = onUpdateDemand?.(editingDemand.id, demandPayload);
+      if (res === false) return;
       triggerToast?.(isAr ? 'تم تعديل بيانات الطلب بنجاح' : 'Demand updated successfully', 'success');
     } else {
-      onAddDemand(demandPayload);
+      const res = onAddDemand?.(demandPayload);
+      if (res === false) return;
       triggerToast?.(isAr ? 'تمت إضافة ونشر الطلب بنجاح' : 'New demand published successfully', 'success');
     }
 
@@ -201,7 +227,8 @@ export default function DemandsManagerPanel({
   };
 
   const handleQuickApprove = (demand) => {
-    onApproveDemand(demand.id);
+    const res = onApproveDemand?.(demand.id);
+    if (res === false) return;
     triggerToast?.(
       isAr 
         ? `تم اعتماد الطلب ونشره فوراً في الصفحة الرئيسية وبوابة الطلبات!` 
@@ -212,7 +239,8 @@ export default function DemandsManagerPanel({
 
   const handleQuickReject = (demandId) => {
     if (window.confirm(isAr ? 'هل أنت متأكد من رفض وحذف هذا الطلب؟' : 'Are you sure you want to reject and delete this request?')) {
-      onDeleteDemand(demandId);
+      const res = onDeleteDemand?.(demandId);
+      if (res === false) return;
       triggerToast?.(isAr ? 'تم حذف الطلب' : 'Demand rejected/deleted', 'info');
     }
   };
@@ -561,7 +589,7 @@ export default function DemandsManagerPanel({
                     )}
                   </div>
 
-                  {/* Client Confidential Contact Info (For Admin Only) */}
+                  {/* Client Confidential Contact Info (For Authorized Roles Only) */}
                   {(demand.clientName || demand.phone) && (
                     <div style={{ 
                       background: '#fffbeb', 
@@ -578,13 +606,13 @@ export default function DemandsManagerPanel({
                           </strong>
                           {demand.phone && (
                             <div style={{ color: 'var(--crm-muted)', marginTop: '2px', direction: 'ltr', textAlign: 'right' }}>
-                              {demand.phone}
+                              {canViewPhone ? demand.phone : maskPhoneNumber(demand.phone, userRole)}
                             </div>
                           )}
                         </div>
 
-                        {/* Direct WhatsApp / Call Buttons for Admin */}
-                        {demand.phone && (
+                        {/* Direct WhatsApp / Call Buttons for Authorized Roles */}
+                        {demand.phone && canViewPhone && (
                           <div style={{ display: 'flex', gap: '6px' }}>
                             <a 
                               href={`https://wa.me/${demand.whatsapp ? demand.whatsapp.replace(/[^0-9]/g, '') : demand.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`أهلاً بك أستاذ ${demand.clientName || ''}، بخصوص طلبك العقاري في منصة 1Line (${demand.text_ar || ''})`)}`}
@@ -760,7 +788,12 @@ export default function DemandsManagerPanel({
                         <button
                           type="button"
                           className="btn btn-sm"
-                          onClick={() => onUnpublishDemand(demand.id)}
+                          onClick={() => {
+                            const res = onUnpublishDemand(demand.id);
+                            if (res !== false) {
+                              triggerToast?.(isAr ? 'تم إيقاف نشر الطلب بنجاح' : 'Demand unpublished', 'info');
+                            }
+                          }}
                           style={{ 
                             padding: '6px 10px', 
                             fontSize: 'var(--crm-text-xs)', 
@@ -1060,7 +1093,8 @@ export default function DemandsManagerPanel({
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '14px' }}>
                 {getMatchingProperties(matchModalDemand).map((p) => {
-                  const shareText = `أهلاً بك أستاذ ${matchModalDemand.clientName || 'العميل'}، بخصوص طلبك العقاري في منصة 1Line: يسعدنا ترشيح هذا العقار المطابق لطلبك تماماً:\n"${p.title_ar || p.title}"\nالسعر: ${p.price.toLocaleString()} ج.م في ${p.locationName_ar || p.areaKey}\nالمعاينة والتفاصيل: ${window.location.origin}/properties/${p.id}`;
+                  const siteOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://1linesohag.com';
+                  const shareText = `أهلاً بك أستاذ ${matchModalDemand.clientName || 'العميل'}، بخصوص طلبك العقاري في منصة 1Line: يسعدنا ترشيح هذا العقار المطابق لطلبك تماماً:\n"${p.title_ar || p.title}"\nالسعر: ${p.price.toLocaleString()} ج.م في ${p.locationName_ar || p.areaKey}\nالمعاينة والتفاصيل: ${siteOrigin}/properties/${p.id}`;
                   const cleanPhone = matchModalDemand.phone ? matchModalDemand.phone.replace(/[^0-9]/g, '') : '';
 
                   return (
@@ -1103,7 +1137,7 @@ export default function DemandsManagerPanel({
                         </div>
 
                         {/* WhatsApp Pitch Share Button */}
-                        {cleanPhone ? (
+                        {cleanPhone && canViewPhone ? (
                           <a
                             href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(shareText)}`}
                             target="_blank"
@@ -1127,7 +1161,7 @@ export default function DemandsManagerPanel({
                           </a>
                         ) : (
                           <div style={{ marginTop: '10px', fontSize: 'var(--crm-text-xs)', color: 'var(--text-secondary)', textAlign: 'center' }}>
-                            {isAr ? 'رقم العميل غير متاح للمراسلة' : 'No direct client phone recorded'}
+                            {!canViewPhone ? (isAr ? '🔒 الهاتف محجوب للمراقبين' : '🔒 Phone hidden for viewers') : (isAr ? 'رقم العميل غير متاح للمراسلة' : 'No direct client phone recorded')}
                           </div>
                         )}
                       </div>

@@ -441,9 +441,13 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                 {isAr ? 'رفع فيديو قصير من جهازك مباشرة' : 'Upload Short Video from Your Device'}
               </h4>
               <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 'var(--crm-text-sm)', maxWidth: '480px' }}>
-                {isAr
-                  ? 'MP4 أو WebM أو MOV حتى 60 ميجابايت. يُرفع على التخزين السحابي ويُحفظ رابطه تلقائياً. للخلفية يكفي مقطع 10–15 ثانية.'
-                  : 'MP4, WebM or MOV up to 60MB. Uploaded to cloud storage and saved automatically.'}
+                {import.meta.env.DEV
+                  ? (isAr
+                    ? 'MP4 أو WebM أو MOV. يُضغط تلقائياً (720p بدون صوت) ويُحفظ داخل ملفات الموقع في public/videos، ويظهر للزوار بعد نشر الموقع.'
+                    : 'MP4, WebM or MOV. Compressed (720p, muted) into public/videos; live after the next deploy.')
+                  : (isAr
+                    ? 'MP4 أو WebM أو MOV حتى 60 ميجابايت. يُرفع على التخزين السحابي (يتطلب تفعيل Firebase Storage). للخلفية يكفي مقطع 10–15 ثانية.'
+                    : 'MP4, WebM or MOV up to 60MB. Uploaded to Firebase Storage (must be enabled).')}
               </p>
               {uploadProgress !== null && (
                 <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={uploadProgress} aria-label={isAr ? 'تقدّم رفع الفيديو' : 'Upload progress'} style={{ width: 'min(420px, 100%)' }}>

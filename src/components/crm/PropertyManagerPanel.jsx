@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { 
   Building, 
   Plus, 
@@ -156,7 +156,8 @@ export default function PropertyManagerPanel({
   const handleToggleVisibility = (prop) => {
     const currentStatus = prop.status || 'published';
     const newStatus = currentStatus === 'published' ? 'hidden' : 'published';
-    onUpdateProperty(prop.id, { status: newStatus });
+    const res = onUpdateProperty(prop.id, { status: newStatus });
+    if (res === false) return;
     triggerToast(
       newStatus === 'published' 
         ? (isAr ? 'تم تفعيل وإظهار العقار على الموقع للزوار' : 'Property is now Published live')
@@ -167,7 +168,8 @@ export default function PropertyManagerPanel({
 
   // Quick Status Change from Table Row
   const handleStatusChange = (propId, newStatus) => {
-    onUpdateProperty(propId, { status: newStatus });
+    const res = onUpdateProperty(propId, { status: newStatus });
+    if (res === false) return;
     const targetProp = properties.find(p => p.id === propId);
     if (newStatus === 'sold' && targetProp) {
       setNotifierProperty(targetProp);
@@ -179,22 +181,28 @@ export default function PropertyManagerPanel({
   // Soft Delete (Move to Trash)
   const handleSoftDelete = (propId) => {
     if (window.confirm(isAr ? 'نقل هذا العقار إلى سلة المهملات؟ (يمكنك استرجاعه لاحقاً)' : 'Move to Trash? (Can be restored)')) {
-      onUpdateProperty(propId, { isDeleted: true, status: 'trash' });
-      triggerToast(isAr ? 'تم نقل العقار إلى سلة المهملات' : 'Property moved to Trash', 'info');
+      const res = onUpdateProperty(propId, { isDeleted: true, status: 'trash' });
+      if (res !== false) {
+        triggerToast(isAr ? 'تم نقل العقار إلى سلة المهملات' : 'Property moved to Trash', 'info');
+      }
     }
   };
 
   // Restore from Trash
   const handleRestore = (propId) => {
-    onUpdateProperty(propId, { isDeleted: false, status: 'published' });
-    triggerToast(isAr ? 'تم استرجاع العقار وإعادة نشره بنجاح!' : 'Property restored and published!', 'success');
+    const res = onUpdateProperty(propId, { isDeleted: false, status: 'published' });
+    if (res !== false) {
+      triggerToast(isAr ? 'تم استرجاع العقار وإعادة نشره بنجاح!' : 'Property restored and published!', 'success');
+    }
   };
 
   // Permanent Hard Delete
   const handlePermanentDelete = (propId) => {
     if (window.confirm(isAr ? 'تحذير: هل أنت متأكد من الحذف النهائي؟ لن يمكن استرجاع العقار أبداً.' : 'Warning: Delete permanently? Cannot be undone.')) {
-      onDeleteProperty(propId);
-      triggerToast(isAr ? 'تم الحذف النهائي للعقار' : 'Property permanently deleted', 'info');
+      const res = onDeleteProperty(propId);
+      if (res !== false) {
+        triggerToast(isAr ? 'تم الحذف النهائي للعقار' : 'Property permanently deleted', 'info');
+      }
     }
   };
 
