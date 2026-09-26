@@ -4,7 +4,7 @@
 //  Falls back to localStorage if Firebase is not configured.
 // =============================================================
 
-import { db, auth, isFirebaseConfigured } from './firebase.js';
+import { db, auth, storage, isFirebaseConfigured } from './firebase.js';
 import {
   collection,
   addDoc,
@@ -124,6 +124,48 @@ export const deleteCatalogItem = async (collectionName, id) => {
     console.error(`Firebase deleteCatalogItem [${collectionName}] error:`, error);
     return { ok: false, reason: error?.code || 'error' };
   }
+};
+
+// ===================== CMS MEDIA (Firebase Storage) =====================
+// Hero videos used to be read as base64 data URLs and stored inside the settings doc:
+// a 15MB clip became ~20MB of text — over localStorage (~5MB) and Firestore (1MB per doc)
+// limits, and it froze the CMS form. Files now go to Storage; settings keep only the URL.
+
+export const CMS_MEDIA_LIMITS = {
+  video: { maxBytes: 60 * 1024 * 1024, types: ['video/mp4', 'video/webm', 'video/quicktime'] },
+  image: { maxBytes: 5 * 1024 * 1024, types: ['image/jpeg', 'image/png', 'image/webp'] }
+};
+
+/**
+ * Upload a CMS media file. onProgress(0..100). Resolves { ok, url } or { ok: false, reason }:
+ * reason = 'type' | 'size' | 'not-configured' | Firebase error code (e.g. 'storage/unauthorized').
+ */
+export const uploadCmsMedia = async (file, kind = 'video', onProgress) => {
+  const limits = CMS_MEDIA_LIMITS[kind];
+  if (!file || !limits) return { ok: false, reason: 'type' };
+  if (!limits.types.includes(file.type)) return { ok: false, reason: 'type' };
+  if (file.size > limits.maxBytes) return { ok: false, reason: 'size' };
+  if (!isFirebaseConfigured() || !storage) return { ok: false, reason: 'not-configured' };
+
+  const { ref, uploadBytesResumable, getDownloadURL } = await import('firebase/storage');
+  const safeName = file.name.normalize('NFKD').replace(/[^\w.-]+/g, '-').slice(-80) || `${kind}`;
+  const path = `cms/${kind}s/${Date.now()}-${safeName}`;
+  const task = uploadBytesResumable(ref(storage, path), file, {
+    contentType: file.type,
+    cacheControl: 'public, max-age=31536000, immutable'
+  });
+  return new Promise((resolve) => {
+    task.on('state_changed',
+      (snap) => onProgress?.(Math.round((snap.bytesTransferred / snap.totalBytes) * 100)),
+      (error) => resolve({ ok: false, reason: error?.code || 'error' }),
+      async () => {
+        try {
+          resolve({ ok: true, url: await getDownloadURL(task.snapshot.ref), path });
+        } catch (error) {
+          resolve({ ok: false, reason: error?.code || 'error' });
+        }
+      });
+  });
 };
 
 // ===================== AD CAMPAIGN STATS =====================

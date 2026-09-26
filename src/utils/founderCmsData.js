@@ -271,6 +271,24 @@ export function getDynamicPhone() {
 }
 
 /**
+ * Drop media embedded as data: URLs. The old uploader stored whole videos as base64 inside
+ * these settings (~20MB of text for a WhatsApp clip) — over the localStorage (~5MB) and
+ * Firestore (1MB) limits, so saving failed and the CMS form froze. Media now lives in
+ * Firebase Storage and settings keep only its https URL.
+ */
+export function stripInlineMedia(settings) {
+  if (!settings || typeof settings !== 'object') return settings;
+  const isInline = (v) => typeof v === 'string' && v.startsWith('data:');
+  const out = { ...settings };
+  if (Array.isArray(out.heroVideoClips)) {
+    out.heroVideoClips = out.heroVideoClips.filter((c) => c && !isInline(c.url)).map((c) => (isInline(c.poster) ? { ...c, poster: '' } : c));
+  }
+  if (isInline(out.heroVideoUrl)) out.heroVideoUrl = out.heroVideoClips?.[0]?.url || '';
+  if (isInline(out.heroPosterUrl) && out.heroPosterUrl.length > 300 * 1024) out.heroPosterUrl = DEFAULT_FOUNDER_CMS.heroPosterUrl;
+  return out;
+}
+
+/**
  * Read founder settings from localStorage or default fallback
  */
 export function getFounderSettings() {
@@ -292,7 +310,7 @@ export function getFounderSettings() {
     if (parsed.founderQuote_ar) parsed.founderQuote_ar = parsed.founderQuote_ar.replace(/One\s*Line/gi, '1Line');
     if (parsed.founderQuote_en) parsed.founderQuote_en = parsed.founderQuote_en.replace(/One\s*Line/gi, '1Line');
     if (!parsed.founderPhoto) parsed.founderPhoto = DEFAULT_FOUNDER_CMS.founderPhoto;
-    return parsed;
+    return stripInlineMedia(parsed);
   } catch (err) {
     console.error('Failed to parse founder CMS settings:', err);
     return DEFAULT_FOUNDER_CMS;
@@ -305,18 +323,20 @@ export function getFounderSettings() {
 export async function saveFounderSettings(data) {
   try {
     const current = getFounderSettings();
-    const merged = { ...current, ...data };
-    
+    const merged = stripInlineMedia({ ...current, ...data });
+
     // 1. Save locally for instant availability
     localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
     window.dispatchEvent(new CustomEvent('oneline_founder_cms_updated', { detail: merged }));
 
-    // 2. Persist to Firestore cloud database
-    try {
-      await saveSettings('founder_cms', merged);
-    } catch (cloudErr) {
-      console.warn('Could not persist founder settings to Firebase Firestore:', cloudErr);
-    }
+    // 2. Persist to Firestore in the background — awaiting the server ack froze the Save
+    //    button on slow links. A rejected write (rules, size) is reported to the CMS panel.
+    saveSettings('founder_cms', merged)
+      .then((ok) => { if (ok === false) throw new Error('saveSettings returned false'); })
+      .catch((cloudErr) => {
+        console.warn('Could not persist founder settings to Firebase Firestore:', cloudErr);
+        window.dispatchEvent(new CustomEvent('oneline_founder_cms_sync_failed'));
+      });
 
     return true;
   } catch (err) {
