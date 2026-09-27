@@ -339,19 +339,20 @@ export default function PropertiesPage({
             <span>{lang === 'ar' ? 'معيار 1Line المعتمد:' : '1Line Certified:'}</span>
           </div>
           <div className="certified-points-row">
+            {/* Process commitments (what 1Line does), not per-listing certifications */}
             <span className="cert-point">
               <CheckCircle2 size={12} className="text-gold" />
-              <span>{lang === 'ar' ? 'فحص إنشائي وهندسي' : 'Structural Audit'}</span>
+              <span>{lang === 'ar' ? 'مراجعة المستندات قبل العرض' : 'Documents reviewed before listing'}</span>
             </span>
             <span className="cert-dot">•</span>
             <span className="cert-point">
               <CheckCircle2 size={12} className="text-gold" />
-              <span>{lang === 'ar' ? 'رخصة رسمية + نموذج 10' : 'Official License & Form 10'}</span>
+              <span>{lang === 'ar' ? 'تسعير بمقارنات فعلية في المنطقة' : 'Priced from local comparables'}</span>
             </span>
             <span className="cert-dot">•</span>
             <span className="cert-point">
               <CheckCircle2 size={12} className="text-gold" />
-              <span>{lang === 'ar' ? 'تسعير عادل مطابق لبورصة سوهاج' : 'Fair Market Price'}</span>
+              <span>{lang === 'ar' ? 'كل التكاليف مكتوبة قبل الحجز' : 'All costs in writing before reserving'}</span>
             </span>
           </div>
         </div>

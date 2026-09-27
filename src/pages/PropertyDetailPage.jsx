@@ -56,6 +56,7 @@ import FinancialBreakdown from '../components/properties/FinancialBreakdown';
 import FamilyCostSplitter from '../components/family/FamilyCostSplitter';
 import CommercialInsightsCard from '../components/commercial/CommercialInsightsCard';
 import { getFamilyInfo } from '../utils/propertyInsights';
+import { PROPERTY_TYPES } from '../data/propertiesData';
 import { Users } from 'lucide-react';
 import '../styles/expat-suite.css';
 
@@ -267,11 +268,19 @@ export default function PropertyDetailPage({
         <div className="detail-header-block">
           <div className="detail-title-col">
             <div className="detail-badges-row">
-              <span className="status-pill-badge">
-                <CheckCircle2 size={13} />
-                {isAr ? 'مفحوص ومعتمد قانونياً' : 'Legally Verified'}
+              {/* Only listings with a legal record carry the badge */}
+              {property.legalStatus && (
+                <span className="status-pill-badge">
+                  <CheckCircle2 size={13} />
+                  {isAr ? 'مستندات مراجَعة' : 'Documents reviewed'}
+                </span>
+              )}
+              <span className="type-pill-badge">
+                {(() => {
+                  const t = PROPERTY_TYPES.find((x) => x.id === property.type);
+                  return t ? (isAr ? t.name_ar : t.name_en) : property.type;
+                })()}
               </span>
-              <span className="type-pill-badge">{property.type}</span>
               {property.badge_ar && <span className="gold-pill-badge">{isAr ? property.badge_ar : property.badge_en}</span>}
               <button 
                 type="button" 
@@ -955,7 +964,7 @@ export default function PropertyDetailPage({
               {/* 5. Safe Legal Guarantee Seal */}
               <div className="sidebar-legal-guarantee">
                 <ShieldCheck size={15} className="text-gold" />
-                <span>{isAr ? 'معاينة مجانية 100% | 0% عمولة على المشتري' : '100% Free Inspection | Zero Buyer Commission'}</span>
+                <span>{isAr ? 'معاينة مجانية | 0% عمولة على المشتري' : 'Free viewing | Zero buyer commission'}</span>
               </div>
             </div>
           </div>
@@ -1038,12 +1047,13 @@ export default function PropertyDetailPage({
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-whatsapp-mini"
+              aria-label={isAr ? 'استفسار عبر واتساب' : 'Ask on WhatsApp'}
             >
-              <MessageSquare size={16} />
+              <MessageSquare size={16} aria-hidden="true" />
             </a>
 
-            <a href={getPhoneCallUrl()} className="btn btn-call-mini">
-              <Phone size={16} />
+            <a href={getPhoneCallUrl()} className="btn btn-call-mini" aria-label={isAr ? 'اتصال هاتفي' : 'Call'}>
+              <Phone size={16} aria-hidden="true" />
             </a>
           </div>
         </div>

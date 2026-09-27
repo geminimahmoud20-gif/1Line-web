@@ -281,8 +281,8 @@ export default function MarketIntelligencePage({ lang = 'ar', currency = 'EGP', 
               <ShieldCheck size={22} />
             </div>
             <div>
-              <span className="stat-lbl">{isAr ? 'نسبة الأمان القانوني للصفقات' : 'Legal Safety Index'}</span>
-              <strong className="stat-num">100% {isAr ? 'معتمد' : 'Verified'}</strong>
+              <span className="stat-lbl">{isAr ? 'قبل أي نشر أو تعاقد' : 'Before listing or contract'}</span>
+              <strong className="stat-num">{isAr ? 'مراجعة المستندات' : 'Document review'}</strong>
             </div>
           </div>
         </div>

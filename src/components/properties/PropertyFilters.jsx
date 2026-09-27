@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { getAreas } from '../../utils/areasData';
+import './property-filters-mobile.css';
 
 export const SMART_FILTER_TAGS = [
   { id: 'nile_view', label_ar: 'إطلالة نيلية', label_en: 'Nile View', icon: Waves },
@@ -35,6 +36,8 @@ export default function PropertyFilters({
 }) {
   const [areas, setAreas] = useState(() => getAreas());
   const [showAdvanced, setShowAdvanced] = useState(false);
+  // Phones: filters fold behind one button so listings start right under the search box
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     const handleUpdate = () => {
@@ -142,7 +145,21 @@ export default function PropertyFilters({
   }, [filters, areas, isAr]);
 
   return (
-    <div className="properties-filters-card luxury-filters-container compact-filters-card">
+    <div className={`properties-filters-card luxury-filters-container compact-filters-card ${mobileOpen ? 'pf-open' : 'pf-folded'}`}>
+      {/* Phones only: one toggle for all filters, with the active count */}
+      <button
+        type="button"
+        className="pf-mobile-toggle"
+        onClick={() => setMobileOpen((o) => !o)}
+        aria-expanded={mobileOpen}
+      >
+        <SlidersHorizontal size={16} aria-hidden="true" />
+        <span>{isAr ? (mobileOpen ? 'إخفاء الفلاتر' : 'الفلاتر والتصفية') : (mobileOpen ? 'Hide filters' : 'Filters')}</span>
+        {activeChips.length > 0 && <b className="pf-count">{activeChips.length}</b>}
+        <span className="pf-results">{totalResults} {isAr ? 'عقار' : 'results'}</span>
+        {mobileOpen ? <ChevronUp size={15} aria-hidden="true" /> : <ChevronDown size={15} aria-hidden="true" />}
+      </button>
+
       {/* Top Header Bar - Streamlined */}
       <div className="filter-header-bar compact-header-bar">
         <div className="filter-title-wrap">

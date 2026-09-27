@@ -189,7 +189,7 @@ export default function AboutPage({ lang = 'ar', triggerToast }) {
 
           <p className="about-hero-subtitle">
             {isAr 
-              ? 'تأسست 1Line Solutions لتكون المؤسسة العقارية الأكثر احترافية وأماناً؛ نجمع بين الخبرة الميدانية المتراكمة، التدقيق القانوني الصارم 100%، والتقييم السعري العادل لضمان نجاح كل قرار استثماري.' 
+              ? 'تأسست 1Line Solutions لتكون المؤسسة العقارية الأكثر احترافية وأماناً؛ نجمع بين الخبرة الميدانية المتراكمة، التدقيق القانوني الصارم، والتقييم السعري العادل لضمان نجاح كل قرار استثماري.' 
               : 'Founded to lead Upper Egypt’s real estate landscape through uncompromising legal compliance, fair pricing benchmarks, and bespoke investor advisory.'}
           </p>
 

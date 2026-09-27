@@ -314,9 +314,9 @@ export default function PropertyCard({
               <span>{isAr ? 'معاينة الغربة' : 'Remote tour'}</span>
             </button>
             {property.virtualTour && (
-              <span className="pcx-chip pcx-chip--glass">
+              <span className="pcx-chip pcx-chip--glass" title={isAr ? 'جولة افتراضية 360°' : '360° virtual tour'}>
                 <Rotate3d size={12} strokeWidth={2} aria-hidden="true" />
-                <span>{isAr ? 'جولة 360°' : '360° tour'}</span>
+                <span>360°</span>
               </span>
             )}
           </div>

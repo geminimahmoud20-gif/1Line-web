@@ -260,14 +260,15 @@ export default function HomePage({
   }, [safeDemands]);
 
   // Total buyer capital liquidity represented in published demands
+  // Budgets arrive as numbers or strings like "3,000,000"
   const totalDemandLiquidity = useMemo(() => {
-    return activeDemandsList.reduce((acc, d) => acc + (Number(d.budget) || 0), 0);
+    return activeDemandsList.reduce((acc, d) => acc + (Number(String(d.budget ?? '').replace(/[^\d.]/g, '')) || 0), 0);
   }, [activeDemandsList]);
 
+  // null hides the tile — never show a placeholder figure
   const demandLiquidityMillions = useMemo(() => {
-    if (!totalDemandLiquidity || totalDemandLiquidity <= 0) return '15+';
-    const inMillions = totalDemandLiquidity / 1000000;
-    return inMillions >= 1 ? inMillions.toFixed(1) : totalDemandLiquidity.toLocaleString();
+    if (!(totalDemandLiquidity >= 1000000)) return null;
+    return (Math.round((totalDemandLiquidity / 1000000) * 10) / 10).toLocaleString('en-US');
   }, [totalDemandLiquidity]);
 
   // Categorized Omnibox Search Matchers (Districts, Projects, and Properties)
@@ -1033,13 +1034,15 @@ export default function HomePage({
                   <dd>{lang === 'ar' ? 'طلب شراء كاش مسجل الآن' : 'registered buyer demands active'}</dd>
                 </div>
               )}
-              <div>
-                <dt>
-                  <bdi>{demandLiquidityMillions}+</bdi>
-                  <span className="hx-proof-unit">{lang === 'ar' ? 'مليون ج.م' : 'M EGP'}</span>
-                </dt>
-                <dd>{lang === 'ar' ? 'سيولة كاش جاهزة للتنفيذ فوراً' : 'active cash liquidity ready'}</dd>
-              </div>
+              {demandLiquidityMillions && (
+                <div>
+                  <dt>
+                    <bdi>{demandLiquidityMillions}</bdi>
+                    <span className="hx-proof-unit">{lang === 'ar' ? 'مليون ج.م' : 'M EGP'}</span>
+                  </dt>
+                  <dd>{lang === 'ar' ? 'إجمالي ميزانيات طلبات الشراء المنشورة' : 'combined budgets of published buyer demands'}</dd>
+                </div>
+              )}
               {SELLER_PROOF.avgDaysToClose && (
                 <div>
                   <dt>
@@ -1109,7 +1112,7 @@ export default function HomePage({
               </div>
               <div className="hx-seller-float-info">
                 <div className="hx-seller-float-title">
-                  {lang === 'ar' ? 'اعتماد قانوني وهندسي 100%' : '100% Legal & Tech Audit'}
+                  {lang === 'ar' ? 'مراجعة قانونية وهندسية' : 'Legal & technical review'}
                 </div>
                 <div className="hx-seller-float-sub">
                   {lang === 'ar' ? 'فحص تسلسل الملكية وتراخيص البناء' : 'Title deed & permits verified'}

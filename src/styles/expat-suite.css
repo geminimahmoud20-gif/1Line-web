@@ -764,6 +764,87 @@
 .xs-trade-banner-text small { font-size: 0.82rem; color: var(--xs-muted); line-height: 1.6; }
 .xs-trade-banner-cta { flex: none; font-weight: 800; color: var(--xs-gold-text); font-size: 0.88rem; }
 
+/* ── Listing share toolbar (replaces the old navy "automation" banner) ── */
+.xs-share {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 14px 0 18px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: var(--xs-surface);
+  border: 1px solid var(--xs-line);
+  box-shadow: var(--xs-shadow);
+}
+.xs-share-label { padding-inline: 6px; font-size: 0.82rem; font-weight: 800; color: var(--xs-ink); }
+.xs-share-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-inline-start: auto; }
+.xs-share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--xs-line);
+  background: var(--xs-soft);
+  color: var(--xs-ink);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s var(--xs-ease), border-color 0.2s, background 0.2s, color 0.2s;
+}
+.xs-share-btn:hover { transform: translateY(-1px); border-color: rgba(197, 160, 89, 0.6); }
+.xs-share-btn:disabled { opacity: 0.6; cursor: progress; }
+.xs-share-btn.is-gold { background: var(--xs-gold-grad); border-color: transparent; color: #0B1B32; }
+.xs-share-btn.is-wa { color: var(--xs-green); }
+.xs-share-btn.is-wa:hover { background: var(--xs-green); color: #FFFFFF; border-color: var(--xs-green); }
+.xs-spin { animation: xs-spin 0.9s linear infinite; }
+@keyframes xs-spin { to { transform: rotate(360deg); } }
+@media (max-width: 640px) {
+  .xs-share { padding: 10px; gap: 8px; }
+  .xs-share-label { display: none; }
+  .xs-share-actions { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; }
+  .xs-share-btn { justify-content: center; }
+}
+
+/* Sticky mobile bar on listings: icons were drawn in the button colour and vanished */
+.mobile-detail-sticky-bar .btn-whatsapp-mini,
+.mobile-detail-sticky-bar .btn-call-mini { display: inline-grid !important; place-items: center; color: #FFFFFF !important; }
+.mobile-detail-sticky-bar .btn-whatsapp-mini svg,
+.mobile-detail-sticky-bar .btn-call-mini svg { color: #FFFFFF !important; stroke: currentColor !important; width: 18px; height: 18px; }
+
+/* Listing key specs: two columns on phones instead of seven full-width rows */
+@media (max-width: 640px) {
+  .detail-card-box .specs-detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; }
+  .detail-card-box .specs-detail-grid .spec-box { padding: 10px !important; gap: 8px !important; align-items: flex-start !important; min-width: 0; }
+  .detail-card-box .specs-detail-grid .spec-box strong { font-size: 0.84rem !important; line-height: 1.4; overflow-wrap: anywhere; }
+  .detail-card-box .specs-detail-grid .spec-lbl { font-size: 0.68rem !important; }
+}
+
+/* Header on phones: the switcher collapses to its flag so the logo keeps its room */
+@media (max-width: 560px) {
+  .xs-cur--compact .xs-cur-code,
+  .xs-cur--compact .xs-cur-trigger > svg { display: none; }
+  .xs-cur--compact .xs-cur-trigger { padding: 0 6px; height: 30px; }
+  .xs-cur--compact + .utility-divider { display: none; }
+}
+
+/* Family chips scroll sideways on phones instead of wrapping into three rows */
+@media (max-width: 640px) {
+  .xs-family-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-inline: -16px;
+    padding: 2px 16px 6px;
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+  }
+  .xs-family-chips::-webkit-scrollbar { display: none; }
+  .xs-family-chips > * { flex: none; scroll-snap-align: start; }
+}
+
 /* ── Responsive ─────────────────────────────────────────────── */
 @media (max-width: 1024px) {
   .xs-family-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
