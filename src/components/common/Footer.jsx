@@ -91,7 +91,7 @@ export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
                     if (onOpenAboutFounder) {
                       onOpenAboutFounder();
                     } else {
-                      window.location.href = '/#about-us';
+                      window.location.href = '/about';
                     }
                   }}
                   className="footer-btn-link"

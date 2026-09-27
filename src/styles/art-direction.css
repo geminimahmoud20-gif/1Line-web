@@ -1926,17 +1926,23 @@
     box-sizing: border-box;
 }
 
+/* The base rule above uses !important, so the breakpoints must too —
+   without it phones got 4 squeezed columns and the contact column fell off-screen. */
 @media (max-width: 1024px) {
     .footer-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 32px;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 32px !important;
     }
 }
 
 @media (max-width: 640px) {
     .footer-grid {
-        grid-template-columns: 1fr;
-        gap: 28px;
+        gap: 28px 20px !important;
+    }
+    /* Two link columns side by side; brand and contact span the full width */
+    .footer-grid > :first-child,
+    .footer-grid > .footer-col-contact {
+        grid-column: 1 / -1;
     }
 }
 

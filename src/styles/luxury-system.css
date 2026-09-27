@@ -406,7 +406,9 @@ button.sidebar-deposit-banner .deposit-banner-left > span { display: flex; flex-
 @media (max-width: 768px) {
   /* Compact single bar: the old 3-line card covered the hero search fields on phones */
   .lx-consent { inset-inline: 10px; flex-wrap: wrap; gap: 8px 10px; padding: 10px 12px; border-radius: 14px; font-size: 0.8rem; line-height: 1.5; bottom: calc(80px + env(safe-area-inset-bottom)); }
-  .lx-consent p { flex: 1 1 160px; }
+  .lx-consent p { flex: 1 1 100%; }
+  .lx-consent-actions { flex: 1 1 100%; }
+  .lx-consent-actions > * { flex: 1; }
   .lx-consent-long { display: none; }
   .lx-consent-short { display: inline; }
   .lx-consent .lx-btn-sm { min-height: 40px; padding: 6px 12px; font-size: 0.78rem; }

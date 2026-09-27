@@ -530,7 +530,7 @@ export default function Header({
                     if (onOpenAboutFounder) {
                       onOpenAboutFounder();
                     } else {
-                      window.location.href = '/#about-us';
+                      window.location.href = '/about';
                     }
                   }}
                 >

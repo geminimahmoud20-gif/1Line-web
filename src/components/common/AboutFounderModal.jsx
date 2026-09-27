@@ -110,18 +110,10 @@ export default function AboutFounderModal({ isOpen, onClose, lang = 'ar' }) {
     }
   ];
 
+  // The homepage no longer renders an #about-us section; the full story lives on /about
   const handleScrollToSection = () => {
     onClose();
-    if (window.location.pathname !== '/') {
-      window.location.href = '/#about-us';
-    } else {
-      const el = document.getElementById('about-us');
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth' });
-        el.classList.add('section-highlight-pulse');
-        setTimeout(() => el.classList.remove('section-highlight-pulse'), 3000);
-      }
-    }
+    window.location.href = '/about';
   };
 
   return (
