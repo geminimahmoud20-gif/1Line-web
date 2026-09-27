@@ -21,7 +21,8 @@ import {
   Upload,
   Trash2,
   Plus,
-  Play
+  Play,
+  Maximize2
 } from 'lucide-react';
 import { 
   getFounderSettings, 
@@ -277,6 +278,23 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
     const currentClips = [...(formData.heroVideoClips || DEFAULT_FOUNDER_CMS.heroVideoClips)];
     currentClips.splice(idx, 1);
     setFormData({ ...formData, heroVideoClips: currentClips });
+  };
+
+  const handleKeepOnlyActiveClip = () => {
+    const active = (formData.heroVideoClips || []).find((c) => c.url === formData.heroVideoUrl) || {
+      id: `clip-${Date.now()}`,
+      title_ar: isAr ? 'الفيديو الأساسي' : 'Main Video',
+      title_en: 'Main Video',
+      url: formData.heroVideoUrl
+    };
+    setFormData({
+      ...formData,
+      heroVideoClips: [active],
+      heroVideoAutoCycle: false
+    });
+    if (triggerToast) {
+      triggerToast(isAr ? 'تم الإبقاء على الفيديو الحالي فقط وتعطيل التبديل للمقاطع الافتراضية ✔' : 'Set active video as sole hero clip', 'success');
+    }
   };
 
   return (
@@ -539,6 +557,137 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
               </div>
             </div>
 
+            {/* 📐 Video Fit & Presentation Mode (طريقة ملاءمة الفيديو والأبعاد) */}
+            <div style={{
+              background: 'var(--bg-card, rgba(255,255,255,0.03))',
+              border: '1px solid var(--border-light)',
+              borderRadius: '16px',
+              padding: '18px 20px',
+              margin: '16px 0'
+            }}>
+              <div style={{ marginBottom: '12px' }}>
+                <h4 style={{ margin: '0 0 4px 0', color: 'var(--text-primary)', fontSize: '0.98rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Maximize2 size={16} style={{ color: 'var(--accent-gold)' }} />
+                  <span>{isAr ? 'طريقة ظهور وأبعاد الفيديو على الواجهة' : 'Video Fit & Framing'}</span>
+                </h4>
+                <p style={{ margin: 0, fontSize: 'var(--crm-text-sm)', color: 'var(--text-muted)' }}>
+                  {isAr 
+                    ? 'اختر ما إذا كنت تفضل أن يملأ الفيديو كامل خلفية الشاشة (Cover)، أو إظهار كامل إطار الفيديو الأصلي بدون أي قص نهائياً (Contain).' 
+                    : 'Choose between full-bleed cinematic fill (cover) or full-frame uncropped view (contain).'}
+                </p>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px', marginBottom: '14px' }}>
+                {/* Option 1: Cover */}
+                <div
+                  onClick={() => setFormData({ ...formData, heroVideoFit: 'cover' })}
+                  style={{
+                    border: (formData.heroVideoFit || 'cover') === 'cover' ? '1.5px solid var(--accent-gold)' : '1px solid var(--border-light)',
+                    background: (formData.heroVideoFit || 'cover') === 'cover' ? 'rgba(212, 175, 55, 0.08)' : 'rgba(255,255,255,0.02)',
+                    borderRadius: '12px',
+                    padding: '14px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                    <input
+                      type="radio"
+                      name="heroVideoFit"
+                      checked={(formData.heroVideoFit || 'cover') === 'cover'}
+                      onChange={() => setFormData({ ...formData, heroVideoFit: 'cover' })}
+                      style={{ accentColor: 'var(--accent-gold)' }}
+                    />
+                    <strong style={{ color: 'var(--text-primary)', fontSize: '0.95rem' }}>
+                      {isAr ? '🔳 تغطية سينمائية كاملة (Cover)' : 'Cinematic Fill (Cover)'}
+                    </strong>
+                  </div>
+                  <small style={{ color: 'var(--text-muted)', display: 'block', paddingInlineStart: '24px', lineHeight: 1.5 }}>
+                    {isAr ? 'يملأ كامل مساحة الهيرو كخلفية سينمائية فخمة بدون هوامش (قد تُقص أطراف الفيديو لتناسب الشاشة).' : 'Fills the entire hero section edge-to-edge as a background.'}
+                  </small>
+                </div>
+
+                {/* Option 2: Contain */}
+                <div
+                  onClick={() => setFormData({ ...formData, heroVideoFit: 'contain' })}
+                  style={{
+                    border: formData.heroVideoFit === 'contain' ? '1.5px solid var(--accent-gold)' : '1px solid var(--border-light)',
+                    background: formData.heroVideoFit === 'contain' ? 'rgba(212, 175, 55, 0.08)' : 'rgba(255,255,255,0.02)',
+                    borderRadius: '12px',
+                    padding: '14px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                    <input
+                      type="radio"
+                      name="heroVideoFit"
+                      checked={formData.heroVideoFit === 'contain'}
+                      onChange={() => setFormData({ ...formData, heroVideoFit: 'contain' })}
+                      style={{ accentColor: 'var(--accent-gold)' }}
+                    />
+                    <strong style={{ color: 'var(--text-primary)', fontSize: '0.95rem' }}>
+                      {isAr ? '🖼️ إظهار كامل إطار الفيديو 100% (Contain)' : 'Full Frame (Contain)'}
+                    </strong>
+                  </div>
+                  <small style={{ color: 'var(--text-muted)', display: 'block', paddingInlineStart: '24px', lineHeight: 1.5 }}>
+                    {isAr ? 'يظهر الفيديو بأبعاده الأصلية كاملة 100% بدون أي قص للأطراف نهائياً، مع خلفية كحلية داكنة فخمة.' : 'Shows 100% of the video frame uncropped with dark luxury borders.'}
+                  </small>
+                </div>
+              </div>
+
+              {/* Sub-options: Focus position + Cycle options */}
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid var(--border-light)' }}>
+                {/* Focus position (if cover) */}
+                {(formData.heroVideoFit || 'cover') === 'cover' && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--text-muted)' }}>
+                      {isAr ? 'موضع تركيز الفيديو:' : 'Focus Position:'}
+                    </span>
+                    <select
+                      value={formData.heroVideoPosition || 'center'}
+                      onChange={(e) => setFormData({ ...formData, heroVideoPosition: e.target.value })}
+                      style={{ padding: '4px 8px', borderRadius: '6px', fontSize: 'var(--crm-text-sm)', background: 'var(--crm-card)', color: 'var(--text-primary)', border: '1px solid var(--border-light)' }}
+                    >
+                      <option value="center">{isAr ? 'الوسط (متوازن)' : 'Center'}</option>
+                      <option value="top">{isAr ? 'الأعلى (تركيز على الواجهة العلوية)' : 'Top'}</option>
+                      <option value="bottom">{isAr ? 'الأسفل' : 'Bottom'}</option>
+                    </select>
+                  </div>
+                )}
+
+                {/* Cycle mode: end of video vs seconds */}
+                {formData.heroVideoAutoCycle !== false && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: 'var(--crm-text-sm)', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={formData.heroVideoCycleOnEnd === true}
+                        onChange={(e) => setFormData({ ...formData, heroVideoCycleOnEnd: e.target.checked })}
+                        style={{ accentColor: 'var(--accent-gold)' }}
+                      />
+                      <span>{isAr ? 'انتظار نهاية المقطع بالكامل قبل التبديل (بدون قطعه)' : 'Wait for video to finish before cycling'}</span>
+                    </label>
+
+                    {!formData.heroVideoCycleOnEnd && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginInlineStart: '10px' }}>
+                        <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-muted)' }}>{isAr ? 'مدة المقطع (ثوانٍ):' : 'Seconds per clip:'}</span>
+                        <input
+                          type="number"
+                          min="5"
+                          max="120"
+                          value={formData.heroVideoIntervalSec || 10}
+                          onChange={(e) => setFormData({ ...formData, heroVideoIntervalSec: Math.max(5, parseInt(e.target.value, 10) || 10) })}
+                          style={{ width: '60px', padding: '2px 6px', fontSize: 'var(--crm-text-xs)', borderRadius: '6px', border: '1px solid var(--border-light)' }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* 🎞️ Short Videos Playlist Engine */}
             <div style={{
               background: 'var(--bg-card, rgba(255,255,255,0.03))',
@@ -559,7 +708,19 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                   </p>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  {(formData.heroVideoClips || []).length > 1 && (
+                    <button
+                      type="button"
+                      className="btn btn-xs btn-outline"
+                      onClick={handleKeepOnlyActiveClip}
+                      title={isAr ? 'إلغاء المقاطع الافتراضية وتشغيل المقطع الأساسي فقط' : 'Keep only active clip'}
+                      style={{ color: 'var(--accent-gold)', borderColor: 'rgba(212, 175, 55, 0.4)' }}
+                    >
+                      {isAr ? '⭐ تشغيل مقطعي فقط (حذف الافتراضية)' : 'Keep My Video Only'}
+                    </button>
+                  )}
+
                   <label htmlFor="fcms-field-2" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 'var(--crm-text-base)', cursor: 'pointer', fontWeight: 700 }}>
                     <input id="fcms-field-2"
                       type="checkbox"
@@ -567,7 +728,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                       onChange={(e) => setFormData({ ...formData, heroVideoAutoCycle: e.target.checked })}
                       style={{ width: '18px', height: '18px', accentColor: '#0d48a1' }}
                     />
-                    <span>{isAr ? 'تبديل تلقائي سلس كل 10 ثوانٍ' : 'Auto-cycle clips'}</span>
+                    <span>{isAr ? 'تبديل تلقائي سلس' : 'Auto-cycle clips'}</span>
                   </label>
 
                   <button

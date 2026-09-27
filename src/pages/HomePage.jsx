@@ -21,6 +21,7 @@ import {
   VolumeX,
   Zap,
   MessageSquare,
+  Maximize2,
   X
 } from 'lucide-react';
 import PropertyCard from '../components/properties/PropertyCard';
@@ -84,6 +85,7 @@ export default function HomePage({
   const [videoMuted, setVideoMuted] = useState(true);
   const [activeClipIndex, setActiveClipIndex] = useState(0);
   const [clipFade, setClipFade] = useState(false);
+  const [showTheaterModal, setShowTheaterModal] = useState(false);
   const heroVideoRef = useRef(null);
   const omniboxRef = useRef(null);
 
@@ -149,6 +151,9 @@ export default function HomePage({
     const isMobileDevice = typeof window !== 'undefined' && window.innerWidth <= 768;
     if (isMobileDevice || isReducedMotion) return;
 
+    // If cycle-on-end is active, do not cut off before video finishes
+    if (founderSettings.heroVideoCycleOnEnd) return;
+
     const intervalMs = (founderSettings.heroVideoIntervalSec || 10) * 1000;
     const timer = setInterval(() => {
       setClipFade(true);
@@ -159,11 +164,15 @@ export default function HomePage({
     }, intervalMs);
 
     return () => clearInterval(timer);
-  }, [founderSettings.heroVideoAutoCycle, founderSettings.heroVideoIntervalSec, heroClips.length, videoPlaying]);
+  }, [founderSettings.heroVideoAutoCycle, founderSettings.heroVideoIntervalSec, founderSettings.heroVideoCycleOnEnd, heroClips.length, videoPlaying, isReducedMotion]);
 
   const handleVideoEnded = () => {
-    if (heroClips.length > 1) {
+    if (heroClips.length > 1 && founderSettings.heroVideoAutoCycle !== false) {
       switchClip((activeClipIndex + 1) % heroClips.length);
+    } else if (heroVideoRef.current) {
+      // Loop the same video smoothly
+      heroVideoRef.current.currentTime = 0;
+      heroVideoRef.current.play().catch(() => {});
     }
   };
 
@@ -321,12 +330,16 @@ export default function HomePage({
               key={activeVideoUrl}
               autoPlay
               preload="metadata"
-              loop={heroClips.length <= 1}
+              loop={heroClips.length <= 1 || !founderSettings.heroVideoAutoCycle}
               muted={videoMuted}
               playsInline
               onEnded={handleVideoEnded}
               poster={currentClip?.poster || founderSettings.heroPosterUrl || 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=2000&q=85'}
-              className={`hero-cinematic-video ${clipFade ? 'clip-fading' : ''}`}
+              className={`hero-cinematic-video ${clipFade ? 'clip-fading' : ''} fit-${founderSettings.heroVideoFit === 'contain' ? 'contain' : 'cover'}`}
+              style={{
+                objectFit: founderSettings.heroVideoFit || 'cover',
+                objectPosition: founderSettings.heroVideoPosition || 'center'
+              }}
             >
               <source src={activeVideoUrl} type="video/mp4" />
             </video>
@@ -394,6 +407,15 @@ export default function HomePage({
               aria-label="Toggle Video Sound"
             >
               {videoMuted ? <VolumeX size={13} /> : <Volume2 size={13} />}
+            </button>
+            <button
+              type="button"
+              className="hero-media-ctrl-btn"
+              onClick={() => setShowTheaterModal(true)}
+              title={lang === 'ar' ? 'مشاهدة كامل الفيديو بدقة عالية' : 'Watch Full Video HD'}
+              aria-label="Watch Full Video HD"
+            >
+              <Maximize2 size={13} />
             </button>
 
             {/* Short video clips playlist indicator & selector */}
@@ -1018,6 +1040,41 @@ export default function HomePage({
           </div>
         </section>
       </ScrollReveal>
+
+      {/* 🎬 Hero Video Theater Modal (Full uncropped HD viewing) */}
+      {showTheaterModal && (
+        <div 
+          className="hero-video-theater-modal" 
+          role="dialog" 
+          aria-modal="true"
+          onClick={() => setShowTheaterModal(false)}
+        >
+          <div className="hero-video-theater-box" onClick={(e) => e.stopPropagation()}>
+            <div className="hero-video-theater-header">
+              <h4>
+                <span>{lang === 'ar' ? (currentClip?.title_ar || 'الفيديو التعريفي الرسمي — 1Line Solutions') : (currentClip?.title_en || 'Official Showcase Video — 1Line Solutions')}</span>
+              </h4>
+              <button 
+                type="button" 
+                className="hero-video-theater-close"
+                onClick={() => setShowTheaterModal(false)}
+                aria-label={lang === 'ar' ? 'إغلاق' : 'Close'}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="hero-video-theater-viewport">
+              <video
+                src={activeVideoUrl}
+                autoPlay
+                controls
+                playsInline
+                className="hero-video-theater-player"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
