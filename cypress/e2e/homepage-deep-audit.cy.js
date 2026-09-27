@@ -99,17 +99,17 @@ describe('Homepage Exhaustive Deep Audit', () => {
   it('7. Property Card Interactive Features & Action Triggers', () => {
     // Test favorite button on first card
     cy.get('.property-card-modern').first().scrollIntoView().within(() => {
-      cy.get('.card-circle-btn').first().click({ force: true });
-      cy.get('.card-circle-btn').first().should('have.class', 'favorite-active');
+      cy.get('.pcx-fav').click({ force: true });
+      cy.get('.pcx-fav').should('have.class', 'is-on').and('have.attr', 'aria-pressed', 'true');
       // Un-favorite
-      cy.get('.card-circle-btn').first().click({ force: true });
-      cy.get('.card-circle-btn').first().should('not.have.class', 'favorite-active');
+      cy.get('.pcx-fav').click({ force: true });
+      cy.get('.pcx-fav').should('not.have.class', 'is-on');
 
-      // Check WhatsApp button has valid protocol
+      // WhatsApp quick inquiry button
       cy.contains('button', /واتساب|WhatsApp/).should('exist');
 
-      // Check Details link
-      cy.get('.btn-view-details').should('have.attr', 'href').and('include', '/properties/');
+      // Details link
+      cy.get('.pcx-btn-main').should('have.attr', 'href').and('include', '/properties/');
     });
   });
 
