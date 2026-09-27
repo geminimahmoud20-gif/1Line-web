@@ -2860,4 +2860,378 @@
   box-shadow: 0 4px 14px rgba(197, 160, 89, 0.4) !important;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   🏛️ ULTRA-LUXURY PROPERTIES CATALOG (HEADER & SMART FILTER CONSOLE)
+   ══════════════════════════════════════════════════════════════════ */
+.properties-page-header {
+  background: linear-gradient(180deg, #071324 0%, #030812 100%) !important;
+  border-bottom: 1px solid rgba(197, 160, 89, 0.22) !important;
+  color: #FFFFFF !important;
+  padding: 18px 24px !important;
+  position: relative !important;
+}
+
+.properties-page-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  max-width: 100%;
+  height: 100%;
+  background: radial-gradient(ellipse at 50% 0%, rgba(197, 160, 89, 0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.compact-page-header .page-header-title {
+  color: #F8FAFC !important;
+  font-size: 1.45rem !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.015em !important;
+}
+
+.compact-page-header .results-count-badge {
+  background: rgba(197, 160, 89, 0.15) !important;
+  border: 1px solid rgba(197, 160, 89, 0.38) !important;
+  color: #ECC875 !important;
+  font-size: 0.76rem !important;
+  font-weight: 800 !important;
+  padding: 3px 10px !important;
+  border-radius: 999px !important;
+}
+
+.compact-page-header .page-header-subtitle {
+  color: #94A3B8 !important;
+  font-size: 0.84rem !important;
+}
+
+/* View Mode Controls */
+.view-mode-controls .sort-selector-wrap {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(197, 160, 89, 0.25) !important;
+  border-radius: 999px !important;
+  color: #ECC875 !important;
+  padding: 0 12px !important;
+}
+
+.view-mode-controls .sort-selector-wrap select {
+  background: transparent !important;
+  color: #E2E8F0 !important;
+  border: none !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+}
+
+.view-mode-controls .sort-selector-wrap select option {
+  background: #0B1728 !important;
+  color: #FFFFFF !important;
+}
+
+.view-toggle-btns {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(197, 160, 89, 0.25) !important;
+  border-radius: 999px !important;
+  padding: 3px !important;
+}
+
+.view-btn {
+  background: transparent !important;
+  border: none !important;
+  color: #94A3B8 !important;
+  font-size: 0.80rem !important;
+  font-weight: 700 !important;
+  padding: 6px 14px !important;
+  border-radius: 999px !important;
+  transition: all 0.2s ease !important;
+}
+
+.view-btn.active {
+  background: linear-gradient(135deg, #ECC875 0%, #C5A059 100%) !important;
+  color: #040913 !important;
+  font-weight: 800 !important;
+  box-shadow: 0 2px 10px rgba(197, 160, 89, 0.35) !important;
+}
+
+/* Certified Standard Explainer Strip */
+.properties-certified-explainer-strip {
+  background: linear-gradient(90deg, #050D19 0%, #0A1628 50%, #050D19 100%) !important;
+  border-bottom: 1px solid rgba(197, 160, 89, 0.18) !important;
+  box-shadow: none !important;
+  color: #CBD5E1 !important;
+  padding: 8px 24px !important;
+}
+
+.certified-badge-pill {
+  background: rgba(16, 185, 129, 0.1) !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+  color: #34D399 !important;
+  font-size: 0.78rem !important;
+  font-weight: 800 !important;
+  padding: 4px 12px !important;
+  border-radius: 999px !important;
+}
+
+.certified-points-row .cert-point {
+  color: #E2E8F0 !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+}
+
+.certified-points-row .cert-dot {
+  color: rgba(197, 160, 89, 0.4) !important;
+}
+
+/* Smart Property Search & Filters Card */
+.compact-filters-card {
+  background: linear-gradient(145deg, rgba(14, 27, 48, 0.94) 0%, rgba(7, 15, 28, 0.97) 100%) !important;
+  border: 1px solid rgba(197, 160, 89, 0.28) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 16px 45px -10px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  padding: 20px 24px !important;
+  margin-bottom: 24px !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  color: #FFFFFF !important;
+}
+
+.filter-header-bar {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding-bottom: 12px !important;
+  margin-bottom: 16px !important;
+}
+
+.filter-title-icon-badge {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 8px !important;
+  background: rgba(197, 160, 89, 0.14) !important;
+  border: 1px solid rgba(197, 160, 89, 0.3) !important;
+  color: #ECC875 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.filter-main-title {
+  color: #F8FAFC !important;
+  font-size: 0.98rem !important;
+  font-weight: 800 !important;
+}
+
+.filter-inline-badge {
+  background: rgba(197, 160, 89, 0.12) !important;
+  border: 1px solid rgba(197, 160, 89, 0.3) !important;
+  color: #ECC875 !important;
+  font-size: 0.74rem !important;
+  font-weight: 700 !important;
+  padding: 3px 10px !important;
+}
+
+.filter-toggle-adv-btn {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #CBD5E1 !important;
+  padding: 6px 14px !important;
+  border-radius: 999px !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  transition: all 0.2s ease !important;
+}
+
+.filter-toggle-adv-btn:hover,
+.filter-toggle-adv-btn.active {
+  background: rgba(197, 160, 89, 0.15) !important;
+  border-color: #ECC875 !important;
+  color: #ECC875 !important;
+}
+
+.filter-reset-btn {
+  color: #94A3B8 !important;
+  font-size: 0.78rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.filter-reset-btn:hover {
+  color: #EF4444 !important;
+}
+
+.filter-item label,
+.compact-label {
+  color: #94A3B8 !important;
+  font-size: 0.76rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 4px !important;
+}
+
+.filter-input-with-icon input {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #FFFFFF !important;
+  border-radius: 10px !important;
+  height: 40px !important;
+  font-size: 0.86rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.filter-input-with-icon input:focus {
+  border-color: #ECC875 !important;
+  box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.18) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.filter-item select {
+  background: #0B1728 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #FFFFFF !important;
+  border-radius: 10px !important;
+  height: 40px !important;
+  font-size: 0.84rem !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+}
+
+.filter-item select:focus {
+  border-color: #ECC875 !important;
+  box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.18) !important;
+}
+
+.filter-item select option,
+.filter-item select optgroup {
+  background: #0B1728 !important;
+  color: #FFFFFF !important;
+}
+
+.price-tag-value {
+  color: #ECC875 !important;
+  font-size: 0.8rem !important;
+  font-weight: 800 !important;
+  font-family: var(--font-number, inherit) !important;
+}
+
+.compact-range-slider {
+  accent-color: #ECC875 !important;
+}
+
+.quick-price-pills-grid .price-mini-pill {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #94A3B8 !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  border-radius: 6px !important;
+  padding: 4px 0 !important;
+}
+
+.quick-price-pills-grid .price-mini-pill:hover {
+  background: rgba(197, 160, 89, 0.15) !important;
+  border-color: #ECC875 !important;
+  color: #ECC875 !important;
+}
+
+.quick-price-pills-grid .price-mini-pill.active {
+  background: linear-gradient(135deg, #ECC875 0%, #C5A059 100%) !important;
+  color: #040913 !important;
+  border-color: #ECC875 !important;
+  font-weight: 800 !important;
+}
+
+.compact-bedroom-pills {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 10px !important;
+  height: 40px !important;
+}
+
+.bedroom-pill {
+  color: #94A3B8 !important;
+  font-size: 0.80rem !important;
+  font-weight: 700 !important;
+}
+
+.bedroom-pill:hover {
+  color: #ECC875 !important;
+  background: rgba(197, 160, 89, 0.12) !important;
+}
+
+.bedroom-pill.active {
+  background: linear-gradient(135deg, #ECC875 0%, #C5A059 100%) !important;
+  color: #040913 !important;
+  font-weight: 800 !important;
+}
+
+/* Toolbar Rows (Quick Areas, Features, Family Hub) */
+.filter-unified-toolbar {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  border-radius: 12px !important;
+  padding: 10px 14px !important;
+  gap: 8px !important;
+}
+
+.toolbar-section-label {
+  color: #94A3B8 !important;
+  font-size: 0.74rem !important;
+  font-weight: 800 !important;
+}
+
+.compact-location-chip,
+.compact-tag-chip {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #CBD5E1 !important;
+  font-size: 0.74rem !important;
+  font-weight: 600 !important;
+  padding: 4px 12px !important;
+  border-radius: 999px !important;
+  transition: all 0.2s ease !important;
+}
+
+.compact-location-chip:hover,
+.compact-tag-chip:hover {
+  background: rgba(197, 160, 89, 0.12) !important;
+  border-color: #ECC875 !important;
+  color: #ECC875 !important;
+}
+
+.compact-location-chip.active,
+.compact-tag-chip.active {
+  background: linear-gradient(135deg, #ECC875 0%, #C5A059 100%) !important;
+  color: #040913 !important;
+  border-color: #ECC875 !important;
+  font-weight: 800 !important;
+}
+
+.family-hub-strip {
+  background: rgba(197, 160, 89, 0.04) !important;
+  border: 1px solid rgba(197, 160, 89, 0.2) !important;
+  border-radius: 12px !important;
+  padding: 8px 14px !important;
+}
+
+.family-hub-pill {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #CBD5E1 !important;
+  font-size: 0.76rem !important;
+  font-weight: 700 !important;
+  padding: 5px 12px !important;
+  border-radius: 999px !important;
+  transition: all 0.2s ease !important;
+}
+
+.family-hub-pill:hover {
+  border-color: #ECC875 !important;
+  color: #ECC875 !important;
+}
+
+.family-hub-pill.active {
+  background: linear-gradient(135deg, #ECC875 0%, #C5A059 100%) !important;
+  color: #040913 !important;
+  border-color: #ECC875 !important;
+  font-weight: 800 !important;
+}
+
+
 

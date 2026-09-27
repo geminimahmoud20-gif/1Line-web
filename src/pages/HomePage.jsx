@@ -20,13 +20,11 @@ import {
   Volume2,
   VolumeX,
   Zap,
-  MessageSquare,
   Maximize2,
   X,
   CheckCircle2,
   Lock,
-  Target,
-  Phone
+  Target
 } from 'lucide-react';
 import PropertyCard from '../components/properties/PropertyCard';
 import MarketTickerBar from '../components/home/MarketTickerBar';
@@ -35,7 +33,7 @@ import FamilyLegacySection from '../components/family/FamilyLegacySection';
 import { PROPERTY_TYPES, PROPERTIES_DATA } from '../data/propertiesData';
 import { MEGA_PROJECTS } from '../data/projectsData';
 import { INITIAL_DEMANDS } from '../data/mockData';
-import { getFounderSettings, getWhatsAppUrl, getPhoneCallUrl, cleanPhoneNumber } from '../utils/founderCmsData';
+import { getFounderSettings } from '../utils/founderCmsData';
 import { getAreas } from '../utils/areasData';
 import { updatePageSeo, buildOrganizationSchema } from '../utils/seoHelper';
 import FaqSection from '../components/home/FaqSection';
@@ -1141,135 +1139,6 @@ export default function HomePage({
 
       {/* FAQ — answer-engine friendly, with FAQPage schema */}
       <FaqSection lang={lang} />
-
-      {/* 🏛️ Sovereign Closing Consultation & Private Advisory Authority */}
-      <ScrollReveal>
-        <section 
-          className="homepage-section consultation-authority-section"
-          aria-label={lang === 'ar' ? 'استشارة عقارية متخصصة' : 'Executive Property Consultation'}
-        >
-          <div className="consultation-ambient-backdrop" aria-hidden="true" />
-          <div className="consultation-navy-surface">
-            <div className="consultation-watermark-emblem" aria-hidden="true">1L</div>
-            <div className="consultation-content-wrap">
-              <div className="consultation-pill-eyebrow">
-                <span className="consultation-beacon-dot" aria-hidden="true">
-                  <span className="consultation-beacon-ping" />
-                </span>
-                <span>
-                  {lang === 'ar'
-                    ? 'استشارة عقارية معتمدة • مستشار الصفقات متصل الآن'
-                    : 'Certified Real Estate Advisory • Deal Advisor Online'}
-                </span>
-              </div>
-
-              <h2 className="consultation-main-statement">
-                {lang === 'ar' ? (
-                  <>
-                    قرارك العقاري يستحق{' '}
-                    <span className="consultation-gold-gradient">أكثر من مجرد إعلان.</span>
-                  </>
-                ) : (
-                  <>
-                    Your Real Estate Decision Deserves{' '}
-                    <span className="consultation-gold-gradient">More Than Just An Ad.</span>
-                  </>
-                )}
-              </h2>
-
-              <p className="consultation-sub-statement">
-                {lang === 'ar'
-                  ? 'سواء كنت تبيع أصلاً استراتيجياً، تبحث عن مسكن استثنائي، أو تدير محفظتك العقارية بسرية — نضع بين يديك خبرة متكاملة في التقييم والتدقيق الفني والتفاوض المالي لتقرر بثقة تامة.'
-                  : 'Selling a strategic asset, seeking a trophy residence, or deploying private capital — partner with a dedicated 1Line advisor for institutional clarity, technical auditing, and fair market valuation.'}
-              </p>
-
-              {/* 3 Pillars of Trust */}
-              <div className="consultation-pillars-grid">
-                <div className="consultation-pillar-item">
-                  <div className="consultation-pillar-icon-box">
-                    <ShieldCheck size={18} />
-                  </div>
-                  <div className="consultation-pillar-info">
-                    <span className="consultation-pillar-title">
-                      {lang === 'ar' ? 'فحص وتدقيق قانوني' : 'Legal Due Diligence'}
-                    </span>
-                    <span className="consultation-pillar-desc">
-                      {lang === 'ar' ? 'مراجعة التراخيص وتسلسل الملكية' : 'Full title deeds & permits audit'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="consultation-pillar-item">
-                  <div className="consultation-pillar-icon-box">
-                    <Lock size={18} />
-                  </div>
-                  <div className="consultation-pillar-info">
-                    <span className="consultation-pillar-title">
-                      {lang === 'ar' ? 'صفقات خاصة Off-Market' : 'Discreet Off-Market'}
-                    </span>
-                    <span className="consultation-pillar-desc">
-                      {lang === 'ar' ? 'فرص كبرى بسرية وحماية للمالك' : 'Prime opportunities with privacy'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="consultation-pillar-item">
-                  <div className="consultation-pillar-icon-box">
-                    <CheckCircle2 size={18} />
-                  </div>
-                  <div className="consultation-pillar-info">
-                    <span className="consultation-pillar-title">
-                      {lang === 'ar' ? 'تسعير هندسي عادل' : 'Fair Engineering Pricing'}
-                    </span>
-                    <span className="consultation-pillar-desc">
-                      {lang === 'ar' ? 'دراسة مقارنات سوقية وميدانية' : 'Real market comps & data models'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons Row */}
-              <div className="consultation-actions-row">
-                <a
-                  href={getWhatsAppUrl(lang === 'ar' ? 'مرحباً 1Line، أريد استشارة عقارية متخصصة بخصوص فرصة شراء أو استثمار.' : 'Hello 1Line, I would like to schedule a property consultation.')}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-consultation-primary hx-btn--glow"
-                >
-                  <MessageSquare size={18} />
-                  <span>{lang === 'ar' ? 'تحدث مع مستشار الصفقات' : 'Speak With An Advisor'}</span>
-                  {lang === 'ar' ? <ArrowLeft size={16} className="consultation-btn-arrow" /> : <ArrowRight size={16} className="consultation-btn-arrow" />}
-                </a>
-
-                <Link to="/private-office" className="btn btn-consultation-secondary">
-                  <Lock size={16} />
-                  <span>{lang === 'ar' ? 'الصفقات الخاصة (Off-Market VIP)' : 'Private Office (Off-Market VIP)'}</span>
-                </Link>
-              </div>
-
-              {/* Direct Hotline Strip */}
-              <div className="consultation-hotline-strip">
-                <span className="consultation-hotline-label">
-                  <Phone size={13} />
-                  <span>{lang === 'ar' ? 'أو عبر الاتصال الهاتفي المباشر:' : 'Or Direct Phone Hotline:'}</span>
-                </span>
-                <a 
-                  href={getPhoneCallUrl(cleanPhoneNumber(founderSettings.phoneNumber || '+201223222956'))} 
-                  dir="ltr" 
-                  className="consultation-hotline-link"
-                >
-                  {cleanPhoneNumber(founderSettings.phoneNumber || '+201223222956')}
-                </a>
-                <span className="consultation-hotline-divider">•</span>
-                <span className="consultation-hotline-hours">
-                  <Clock size={12} />
-                  <span>{lang === 'ar' ? 'متاح يومياً 9 ص - 10 م' : 'Daily 9 AM - 10 PM'}</span>
-                </span>
-              </div>
-            </div>
-          </div>
-        </section>
-      </ScrollReveal>
 
       {/* 🎬 Hero Video Theater Modal (Full uncropped HD viewing) */}
       {showTheaterModal && (

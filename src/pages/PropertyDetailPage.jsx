@@ -366,20 +366,21 @@ export default function PropertyDetailPage({
 
             {/* 🛡️ Free viewing + written fees (1Line charges commission — never claim 0%) */}
             <div className="buyer-commission-badge" style={{
-              marginTop: '10px',
-              padding: '6px 12px',
-              borderRadius: '8px',
-              background: 'rgba(16, 185, 129, 0.1)',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
-              color: '#059669',
+              marginTop: '12px',
+              padding: '7px 14px',
+              borderRadius: '999px',
+              background: 'rgba(16, 185, 129, 0.12)',
+              border: '1px solid rgba(16, 185, 129, 0.35)',
+              color: '#34D399',
               fontSize: '0.78rem',
               fontWeight: '800',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '6px'
+              gap: '7px',
+              backdropFilter: 'blur(8px)'
             }}>
-              <CheckCircle2 size={14} style={{ color: '#10b981', flexShrink: 0 }} />
-              <span>{isAr ? 'معاينة ميدانية مجانية للموقع | كل الأتعاب والرسوم مكتوبة قبل التعاقد' : 'Free on-site viewing | All fees in writing before contract'}</span>
+              <CheckCircle2 size={14} style={{ color: '#34D399', flexShrink: 0 }} />
+              <span>{isAr ? 'معاينة ميدانية مجانية للموقع • كل الأتعاب والرسوم مكتوبة قبل التعاقد' : 'Free on-site viewing • All fees in writing before contract'}</span>
             </div>
           </div>
         </div>
