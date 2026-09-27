@@ -308,8 +308,8 @@ export default function AboutPage({ lang = 'ar', triggerToast }) {
           </h2>
           <p className="about-section-desc">
             {isAr 
-              ? 'صممنا منظومة عمل صارمة تضمن أعلى درجات الحماية والربحية، وتلغي تماماً أي مخاطر في شراء وبيع العقارات.' 
-              : 'Our institutional safeguards eliminate speculative risks and guarantee secure ownership.'}
+              ? 'صممنا منظومة عمل صارمة تقلل مخاطر الشراء والبيع: مراجعة المستندات قبل العرض، وتسعير بمقارنات فعلية، واتفاقات مكتوبة.' 
+              : 'Our process reduces buying and selling risk: documents reviewed before listing, comparable-based pricing and written agreements.'}
           </p>
         </div>
 

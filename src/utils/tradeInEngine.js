@@ -52,8 +52,9 @@ export const reachBudget = (t) => {
 const wantMatchesOffer = (want, other) => {
   const w = WANT_TYPES.find((x) => x.id === want.wantType);
   if (!w || !w.matchOffer.includes(other.offerType)) return false;
-  // "Bigger apartment" must actually be bigger
-  if (want.wantType === 'bigger_apartment' && Number(want.offerSize) && Number(other.offerSize)) {
+  // "Bigger apartment" must be bigger than the apartment being traded in (a villa owner
+  // asking for an apartment is not comparing against the villa's size)
+  if (want.wantType === 'bigger_apartment' && want.offerType === 'apartment' && Number(want.offerSize) && Number(other.offerSize)) {
     return Number(other.offerSize) > Number(want.offerSize);
   }
   if (Number(want.wantSize) && Number(other.offerSize) && Number(other.offerSize) < Number(want.wantSize) * 0.85) return false;
@@ -100,7 +101,7 @@ export function matchInventory(request, properties = [], limit = 6) {
   return properties
     .filter((p) => !p.isDeleted && !['trash', 'hidden', 'draft', 'sold'].includes(p.status))
     .filter((p) => w.matchProperty(p))
-    .filter((p) => !(request.wantType === 'bigger_apartment' && Number(request.offerSize) && Number(p.size) <= Number(request.offerSize)))
+    .filter((p) => !(request.wantType === 'bigger_apartment' && request.offerType === 'apartment' && Number(request.offerSize) && Number(p.size) <= Number(request.offerSize)))
     .filter((p) => !budget || Number(p.price) <= budget * 1.15)
     .map((p) => ({ property: p, fit: priceFit(budget, Number(p.price)) }))
     .sort((a, b) => b.fit - a.fit)

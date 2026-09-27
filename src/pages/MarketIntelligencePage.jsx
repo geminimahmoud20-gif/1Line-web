@@ -73,8 +73,8 @@ export default function MarketIntelligencePage({ lang = 'ar', currency = 'EGP', 
       },
       new_sohag: {
         rentalYield: 14.2,
-        demandLevel_ar: 'أعلى عائد رأسمالي في الصعيد',
-        demandLevel_en: 'Highest Capital Growth in Upper Egypt',
+        demandLevel_ar: 'نمو عمراني سريع',
+        demandLevel_en: 'Fast urban growth',
         topAsset_ar: 'محلات ومقرات تجارية وكمبوندات',
         topAsset_en: 'Retail Shops & Gated Villas',
         category: 'commercial'
@@ -185,8 +185,8 @@ export default function MarketIntelligencePage({ lang = 'ar', currency = 'EGP', 
       return {
         district_ar: 'سوهاج الجديدة (الحي الثاني أو المحور المركزي)',
         district_en: 'New Sohag (Central Axis / 2nd District)',
-        strategy_ar: 'محل تجاري أو عيادة طبية بمقدم 20% وتقسيط حتى 5 سنوات لتحقيق عائد رأسمالي متوقع +32% سنوياً.',
-        strategy_en: 'Prime commercial/medical unit with 20% downpayment to capture 32%+ annual capital appreciation.',
+        strategy_ar: 'محل تجاري أو عيادة طبية بمقدم 20% وتقسيط حتى 5 سنوات — العائد الفعلي يتحدد بالموقع والإيجارات المقارنة قبل الشراء.',
+        strategy_en: 'Commercial/medical unit with 20% down — actual return depends on location and comparable rents.',
         estAnnualYield: (userBudget * 0.14).toLocaleString()
       };
     } else {
@@ -422,7 +422,7 @@ export default function MarketIntelligencePage({ lang = 'ar', currency = 'EGP', 
               </li>
               <li>
                 <CheckCircle2 size={16} className="text-success" />
-                <span>{isAr ? 'المقرات الإدارية والعيادات في شرق سوهاج تحقق أسرع وأعلى عائد إيجاري فوري بمتوسط 14% سنوياً.' : 'Medical and executive clinics in East Sohag yield the highest immediate rental cash flow.'}</span>
+                <span>{isAr ? 'المقرات الإدارية والعيادات في شرق سوهاج من أكثر الوحدات طلباً للإيجار — اطلب إيجارات مقارنة فعلية قبل القرار.' : 'Clinics and offices in East Sohag are in high rental demand — ask for real comparable rents first.'}</span>
               </li>
               <li>
                 <CheckCircle2 size={16} className="text-success" />

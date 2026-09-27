@@ -1,0 +1,40 @@
+# Runs on every push / pull request to main: unit tests, production build, then the
+# Cypress smoke specs against the built site. Cypress blocks all Firestore write channels
+# (see cypress/e2e/homepage-deep-audit.cy.js), so CI never writes production data.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Unit tests (finance, yield, trade-in matching)
+        run: npm run test:unit
+
+      - name: Production build
+        run: npm run build
+
+      - name: Cypress smoke tests (against vite preview)
+        uses: cypress-io/github-action@v6
+        with:
+          install: false
+          start: npx vite preview --port 4173 --strictPort
+          wait-on: 'http://localhost:4173'
+          wait-on-timeout: 60
+          spec: cypress/e2e/homepage-deep-audit.cy.js,cypress/e2e/homepage-navigation.cy.js,cypress/e2e/buyer-demands.cy.js
+          config: baseUrl=http://localhost:4173,video=false

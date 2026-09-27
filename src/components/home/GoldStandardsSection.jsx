@@ -245,7 +245,7 @@ export default function GoldStandardsSection({ lang = 'ar' }) {
       <header className="hx-section-head">
         <span className="hx-kicker">
           <Sparkles size={13} strokeWidth={1.75} aria-hidden="true" />
-          {isAr ? 'الضمان المؤسسي' : 'Institutional Guarantee'}
+          {isAr ? 'التزامات 1Line' : '1Line commitments'}
         </span>
         <h2 id="hx-bento-title">{sectionTitle}</h2>
         {sectionDesc && <p>{sectionDesc}</p>}

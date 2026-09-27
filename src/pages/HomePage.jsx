@@ -815,7 +815,7 @@ export default function HomePage({
                   <Building size={30} className="text-gold" />
                 </div>
                 <h3>{lang === 'ar' ? 'لا توجد وحدات معروضة حالياً في هذه المنطقة' : 'No properties in this district right now'}</h3>
-                <p>{lang === 'ar' ? 'يمكنك إرسال مواصفات طلبك وسيتولى فريقنا الميداني توفير أفضل وحدة لك مباشرة بأعلى عائد وأفضل سعر.' : 'Submit your request and our advisory team will find the best match for you.'}</p>
+                <p>{lang === 'ar' ? 'أرسل مواصفات طلبك ويبحث فريقنا الميداني عن الوحدات المناسبة لك.' : 'Submit your request and our advisory team will find the best match for you.'}</p>
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '18px', flexWrap: 'wrap' }}>
                   <Link to="/buy" className="btn btn-primary" style={{ padding: '8px 20px', fontWeight: 'bold' }}>
                     {lang === 'ar' ? 'بدء معالج الشراء وتوفير عقار' : 'Start Buy Wizard'}

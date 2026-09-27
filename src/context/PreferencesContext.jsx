@@ -4,7 +4,21 @@ import { TRANSLATIONS } from '../translations';
 const PreferencesContext = createContext(null);
 
 export function PreferencesProvider({ children }) {
-  const [lang, setLang] = useState('ar');
+  // Remember the visitor's language; keep <html lang/dir> in sync for screen readers and search engines
+  const [lang, setLang] = useState(() => {
+    try {
+      const saved = localStorage.getItem('oneline_lang');
+      return saved === 'en' || saved === 'ar' ? saved : 'ar';
+    } catch {
+      return 'ar';
+    }
+  });
+
+  useEffect(() => {
+    try { localStorage.setItem('oneline_lang', lang); } catch { /* storage blocked */ }
+    document.documentElement.setAttribute('lang', lang === 'ar' ? 'ar' : 'en');
+    document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+  }, [lang]);
   // Display currency lives in CurrencyContext (EGP stays the contract currency)
 
   const [theme, setTheme] = useState(() => {
@@ -32,7 +46,7 @@ export function PreferencesProvider({ children }) {
       const next = !prev;
       try {
         localStorage.setItem('oneline_sound', String(next));
-      } catch (e) {}
+      } catch { /* storage blocked */ }
       return next;
     });
   }, []);

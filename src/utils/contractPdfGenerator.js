@@ -174,7 +174,7 @@ export const generateReservationContractPdf = async (contractData) => {
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(71, 85, 105);
   doc.text('1. This preliminary reservation holds the specified unit for (15) calendar days to complete final contract signing.', 15, 204);
-  doc.text('2. 1Line guarantees legal title deed audit, building license validity, and zero municipal encumbrances.', 15, 209);
+  doc.text('2. 1Line reviews the title chain and building licence and shares a written summary before the final contract.', 15, 209);
   doc.text('3. The reservation deposit is officially credited toward the unit downpayment upon final contract execution.', 15, 214);
   doc.text('4. All transactions are backed by Dr. Mahmoud Elbaz legal advisory and registered brokerage charter in Sohag.', 15, 219);
 

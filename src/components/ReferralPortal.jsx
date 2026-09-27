@@ -87,8 +87,8 @@ export const ReferralPortal = ({
         <h2>{lang === 'ar' ? 'برنامج شركاء النجاح وعمولات الإحالة' : 'Referral Reward Partner Program'}</h2>
         <p style={{ marginTop: '10px', fontSize: '0.95rem', opacity: 0.9 }}>
           {lang === 'ar'
-            ? 'أوصِ ببائع، مشتري، مستثمر، أو وسيط عقاري في سوهاج، واحصل على عمولة مضمونة فور إتمام الصفقة.'
-            : 'Refer buyers, sellers, or investors and earn a guaranteed percentage upon deal completion.'}
+            ? 'أوصِ ببائع، مشتري، مستثمر، أو وسيط عقاري في سوهاج، واحصل على مكافأة عند إتمام الصفقة وفق شروط مكتوبة.'
+            : 'Refer buyers, sellers or investors and earn a reward when the deal closes, under written terms.'}
         </p>
       </div>
 
@@ -121,9 +121,9 @@ export const ReferralPortal = ({
             <div style={{ display: 'flex', gap: '15px' }}>
               <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary)', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.9rem', flexShrink: 0 }}>٣</div>
               <div>
-                <h4 style={{ fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: '4px' }}>{lang === 'ar' ? 'احصل على عمولتك المضمونة' : 'Get paid rewards'}</h4>
+                <h4 style={{ fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: '4px' }}>{lang === 'ar' ? 'مكافأتك بشروط مكتوبة' : 'Get paid rewards'}</h4>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                  {lang === 'ar' ? 'تستلم ما يصل لـ 20% من عمولة المنفذ فورياً بمجرد استلام الأرباح.' : 'Receive your share of brokerage revenues immediately.'}
+                  {lang === 'ar' ? 'نسبة المكافأة وموعد صرفها يُتفق عليهما كتابياً عند تسجيل الإحالة.' : 'Receive your share of brokerage revenues immediately.'}
                 </p>
               </div>
             </div>

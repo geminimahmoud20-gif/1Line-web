@@ -95,7 +95,7 @@ export const PROPERTIES_DATA = [
     finishing_ar: 'نصف تشطيب / محارة وأرضيات خرسانية',
     finishing_en: 'Core & Shell',
     featured: true,
-    badge_ar: 'عائد استثماري 14%',
+    badge_ar: 'فرصة استثمارية',
     badge_en: '14% Projected ROI',
     images: [
       'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80',
@@ -716,7 +716,7 @@ export const PROPERTIES_DATA = [
     virtualTour: true,
     completionStatus: 'ready',
     projectYear: 2024,
-    description_ar: 'مقر تجاري مميز أول نمرة على المحور المركزي بسوهاج الجديدة، موقع لا يتكرر لراغبي العائد المالي المضمون وتأجير المحل لكبرى التوكيلات والشركات.',
+    description_ar: 'مقر تجاري مميز أول نمرة على المحور المركزي بسوهاج الجديدة، موقع لا يتكرر لراغبي الاستثمار وتأجير المحل لكبرى التوكيلات والشركات.',
     description_en: 'Prime front-row retail commercial space on the New Sohag Central Axis with high footfall potential and double-height ceiling.'
   },
   {

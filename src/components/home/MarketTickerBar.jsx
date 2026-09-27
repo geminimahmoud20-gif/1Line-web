@@ -62,7 +62,7 @@ export default function MarketTickerBar({ lang = 'ar', demands = [] }) {
       icon: ShieldCheck,
       tone: 'trust',
       to: '/about',
-      label: isAr ? 'ضمان 1Line' : '1Line guarantee',
+      label: isAr ? 'التزام 1Line' : '1Line commitment',
       value: isAr ? 'نراجع مستندات الملكية قبل نشر أي عقار' : 'Title documents reviewed before any listing goes live',
     });
     return out;

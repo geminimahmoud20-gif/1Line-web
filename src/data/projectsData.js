@@ -74,8 +74,8 @@ export const MEGA_PROJECTS = [
     ],
     features_ar: ['أكبر مجمع توكيلات وبنوك', 'عيادات طبية مجهزة', 'جراج إلكتروني ذكي 3 أدوار', 'مصاعد بانورامية وسلالم كهربائية', 'إدارة تشغيل احترافية'],
     features_en: ['Retail & Banking Hub', 'Medical Suites', '3-Level Smart Parking', 'Panoramic Elevators', 'Facility Management'],
-    description_ar: 'الوجهة التجارية الأولى للأعمال والاستثمار في سوهاج الجديدة مع أعلى عائد إيجاري سنوي مضمون يصل إلى 14.5%.',
-    description_en: 'Prime commercial and medical destination in New Sohag with high projected annual rental yields up to 14.5%.'
+    description_ar: 'الوجهة التجارية الأولى للأعمال والاستثمار في سوهاج الجديدة — العائد الإيجاري يُحسب بإيجارات مقارنة فعلية عند الطلب.',
+    description_en: 'Commercial and medical destination in New Sohag — rental yield is worked out from real comparable rents on request.'
   },
   {
     id: 'proj-3',

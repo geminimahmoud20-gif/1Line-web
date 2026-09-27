@@ -62,7 +62,7 @@ export default function ZeroResultsFallback({
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: 'var(--text-primary)' }}>
             <Sparkles size={18} style={{ color: 'var(--accent-gold)' }} />
             <strong style={{ fontSize: '0.92rem' }}>
-              {isAr ? 'سجّل طلبك العقاري الآن (سنوفره لك خلال 48 ساعة)' : 'Register Your Custom Demand (Sourced in 48h)'}
+              {isAr ? 'سجّل طلبك العقاري الآن ونبحث لك عنه' : 'Register your request and we will search for it'}
             </strong>
           </div>
 
