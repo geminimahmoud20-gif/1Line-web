@@ -64,8 +64,8 @@ export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
             </p>
 
             <div className="footer-trust-badge">
-              <ShieldCheck size={15} className="trust-shield-icon" />
-              <span>{isAr ? 'مراجعة المستندات قبل العرض • سرية تامة' : 'Documents reviewed before listing • Full confidentiality'}</span>
+              <ShieldCheck size={16} className="trust-shield-icon" />
+              <span>{isAr ? 'وساطة واستشارات مرخصة • مراجعة المستندات قبل التعاقد' : 'Licensed Advisory • Document Audit Before Contract'}</span>
             </div>
           </div>
 
@@ -164,7 +164,7 @@ export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
 
           <div className="footer-bottom-meta">
             <span className="footer-slogan">
-              {isAr ? 'سوهاج • القاهرة الكبرى' : 'Sohag • Greater Cairo'}
+              {isAr ? 'سوهاج • القاهرة الكبرى • خدمة المغتربين' : 'Sohag • Greater Cairo • Expat Desk'}
             </span>
             <button 
               type="button" 

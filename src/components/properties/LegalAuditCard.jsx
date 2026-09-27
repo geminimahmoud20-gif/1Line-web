@@ -1,174 +1,104 @@
-import { useState } from 'react';
-import { ShieldCheck, CheckCircle2, FileText, Award, UserCheck } from 'lucide-react';
+import { ShieldCheck, CheckCircle2, FileText, UserCheck, Clock, MessageCircle, Info } from 'lucide-react';
 import { generatePropertyPdf } from '../../utils/pdfBrochure';
+import { getWhatsAppUrl } from '../../utils/founderCmsData';
+import '../../styles/expat-suite.css';
+
+/**
+ * Legal review summary for a listing.
+ * Shows only what the team recorded after an actual review (CRM → الموقف القانوني).
+ * Reviewer / reference / date use the new fields (reviewedBy, reportRef, reviewDate) only —
+ * legacy seed fields (verifiedByLawyer, inspectionReportId, safetyScore) are ignored on purpose.
+ */
+const ITEMS = [
+  { key: 'ownershipType', ar: 'سند الملكية والشهر العقاري', en: 'Title & registry' },
+  { key: 'licenseStatus', ar: 'ترخيص البناء', en: 'Building licence' },
+  { key: 'reconciliationStatus', ar: 'موقف التصالح (نموذج 10)', en: 'Reconciliation (Form 10)' },
+  { key: 'landShare', ar: 'حصة الأرض', en: 'Land share' },
+  { key: 'municipalityStatus', ar: 'جهاز المدينة والضرائب', en: 'Municipality & taxes' }
+];
 
 export default function LegalAuditCard({ property, lang = 'ar' }) {
-  const [showCertificateModal, setShowCertificateModal] = useState(false);
-  const legal = property.legalStatus || {
-    ownershipType_ar: 'عقد مسجل شهر عقاري موثق (حصة بالأرض مسجلة)',
-    ownershipType_en: 'Officially Registered Real Estate Deed (Land Share Included)',
-    licenseStatus_ar: 'ترخيص بناء رسمي صادر من الحي برقم معتمد',
-    licenseStatus_en: 'Official Municipal Building License on file',
-    reconciliationStatus_ar: 'نموذج 10 النهائي للتصالح معتمد وساري',
-    reconciliationStatus_en: 'Final Approved Form 10 Reconciliation Certificate',
-    landShare_ar: 'حصة شائعة في الأرض بنسبة مساحة الوحدة مسجلة',
-    landShare_en: 'Proportional undivided registered land ownership',
-    municipalityStatus_ar: 'خالص كافة الضرائب العقارية ورسوم جهاز المدينة حتى تاريخه',
-    municipalityStatus_en: 'Zero tax arrears and fully cleared municipal fees',
-    inspectionReportId: `LAW-SOH-2026-${property.id.replace('prop-', '')}`,
-    verifiedByLawyer: 'أ.د/ محمود عبد اللطيف - استشاري التوثيق والشهر العقاري بسوهاج',
-    lawyerDate: '2026-08-15',
-    safetyScore: 100
-  };
-
   const isAr = lang === 'ar';
+  const L = (ar, en) => (isAr ? ar : en);
+  const legal = property.legalStatus || null;
+  const code = String(property.id || '').toUpperCase();
+
+  const rows = legal
+    ? ITEMS.map((it) => ({ ...it, value: isAr ? legal[`${it.key}_ar`] : (legal[`${it.key}_en`] || legal[`${it.key}_ar`]) })).filter((r) => r.value)
+    : [];
+
+  const askUrl = getWhatsAppUrl(L(
+    `مرحباً 1Line، أريد ملخص المراجعة القانونية للعقار كود #${code}.`,
+    `Hello 1Line, I would like the legal review summary for property #${code}.`
+  ));
+
+  if (!legal || rows.length === 0) {
+    return (
+      <section className="xs-legal xs-legal--pending" aria-labelledby="xs-legal-title">
+        <header className="xs-fin-head">
+          <span className="xs-fin-icon"><Clock size={20} aria-hidden="true" /></span>
+          <div>
+            <h3 id="xs-legal-title">{L('المراجعة القانونية لم تُنشر بعد', 'Legal review not published yet')}</h3>
+            <p>{L('نراجع المستندات معك قبل أي حجز أو تعاقد، ونسلمك ملخص المراجعة كتابياً.', 'We review the documents with you before any reservation or contract and give you a written summary.')}</p>
+          </div>
+        </header>
+        <ul className="xs-legal-list is-todo">
+          {ITEMS.map((it) => (
+            <li key={it.key}><span className="xs-legal-dot" aria-hidden="true" />{isAr ? it.ar : it.en}</li>
+          ))}
+        </ul>
+        <a className="xs-btn xs-btn--royal" href={askUrl} target="_blank" rel="noopener noreferrer">
+          <MessageCircle size={16} aria-hidden="true" /> {L('اطلب ملخص المراجعة', 'Request the review summary')}
+        </a>
+      </section>
+    );
+  }
 
   return (
-    <div className="legal-audit-card-container">
-      {/* Top Banner with Score */}
-      <div className="legal-audit-header">
-        <div className="legal-badge-icon-wrap">
-          <ShieldCheck size={28} className="text-success" />
+    <section className="xs-legal" aria-labelledby="xs-legal-title">
+      <header className="xs-fin-head">
+        <span className="xs-fin-icon"><ShieldCheck size={20} aria-hidden="true" /></span>
+        <div>
+          <h3 id="xs-legal-title">{L('ملخص المراجعة القانونية', 'Legal review summary')}</h3>
+          <p>
+            {legal.reportRef ? L(`مرجع المراجعة: ${legal.reportRef}`, `Review reference: ${legal.reportRef}`) : L('البنود التي راجعها فريق 1Line لهذا العقار.', 'Items the 1Line team reviewed for this listing.')}
+          </p>
         </div>
-        <div className="legal-header-titles">
-          <div className="legal-top-pill">
-            <Award size={13} />
-            <span>{isAr ? 'تقرير الفحص والتدقيق القانوني المعتمد' : 'Certified Legal Audit Report'}</span>
-          </div>
-          <h4>{isAr ? 'العقار مفحوص ومطابق للاشتراطات القانونية بنسبة 100%' : '100% Legally Verified & Safe'}</h4>
-          <span className="legal-report-code">
-            {isAr ? 'رقم تقرير الفحص:' : 'Audit Report ID:'} <strong>{legal.inspectionReportId}</strong>
-          </span>
-        </div>
-        <div className="legal-safety-score">
-          <span className="score-num">100%</span>
-          <span className="score-lbl">{isAr ? 'أمان قانوني' : 'Safety Score'}</span>
-        </div>
-      </div>
+      </header>
 
-      {/* 5-Pillar Legal Checklist for Sohag Market */}
-      <div className="legal-checklist-grid">
-        {/* 1. Ownership & Deed */}
-        <div className="legal-check-item">
-          <div className="check-icon-circle"><CheckCircle2 size={16} /></div>
-          <div>
-            <strong>{isAr ? 'سند الملكية والشهر العقاري' : 'Title Deed & Registry'}</strong>
-            <p>{isAr ? legal.ownershipType_ar : legal.ownershipType_en}</p>
-          </div>
-        </div>
+      <ul className="xs-legal-list">
+        {rows.map((r) => (
+          <li key={r.key}>
+            <CheckCircle2 size={16} aria-hidden="true" />
+            <div>
+              <strong>{isAr ? r.ar : r.en}</strong>
+              <span>{r.value}</span>
+            </div>
+          </li>
+        ))}
+      </ul>
 
-        {/* 2. Building License */}
-        <div className="legal-check-item">
-          <div className="check-icon-circle"><CheckCircle2 size={16} /></div>
-          <div>
-            <strong>{isAr ? 'ترخيص البناء والأدوار القانونية' : 'Construction License'}</strong>
-            <p>{isAr ? legal.licenseStatus_ar : legal.licenseStatus_en}</p>
-          </div>
-        </div>
+      {(legal.reviewedBy || legal.reviewDate) && (
+        <p className="xs-legal-by">
+          <UserCheck size={15} aria-hidden="true" />
+          {legal.reviewedBy && <span>{L('تمت المراجعة بمعرفة: ', 'Reviewed by: ')}<strong>{legal.reviewedBy}</strong></span>}
+          {legal.reviewDate && <span>{L(' — بتاريخ ', ' — on ')}<bdi>{legal.reviewDate}</bdi></span>}
+        </p>
+      )}
 
-        {/* 3. Form 10 Reconciliation */}
-        <div className="legal-check-item">
-          <div className="check-icon-circle"><CheckCircle2 size={16} /></div>
-          <div>
-            <strong>{isAr ? 'موقف التصالح (نموذج 10)' : 'Form 10 Reconciliation'}</strong>
-            <p>{isAr ? legal.reconciliationStatus_ar : legal.reconciliationStatus_en}</p>
-          </div>
-        </div>
-
-        {/* 4. Land Share */}
-        <div className="legal-check-item">
-          <div className="check-icon-circle"><CheckCircle2 size={16} /></div>
-          <div>
-            <strong>{isAr ? 'حصة الأرض المسجلة' : 'Registered Land Share'}</strong>
-            <p>{isAr ? legal.landShare_ar : legal.landShare_en}</p>
-          </div>
-        </div>
-
-        {/* 5. Municipality & Tax Clearances */}
-        <div className="legal-check-item">
-          <div className="check-icon-circle"><CheckCircle2 size={16} /></div>
-          <div>
-            <strong>{isAr ? 'موقف جهاز المدينة والضرائب' : 'Municipality Clearances'}</strong>
-            <p>{isAr ? legal.municipalityStatus_ar : legal.municipalityStatus_en}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Lawyer Stamp & Verification Footer */}
-      <div className="legal-audit-footer">
-        <div className="lawyer-verification-tag">
-          <UserCheck size={16} className="text-gold" />
-          <span>
-            {isAr ? 'تم التدقيق بمعرفة: ' : 'Audited by: '}
-            <strong>{legal.verifiedByLawyer}</strong>
-          </span>
-        </div>
-
-        <button
-          type="button"
-          className="btn-view-certificate"
-          onClick={() => setShowCertificateModal(true)}
-        >
-          <FileText size={14} />
-          <span>{isAr ? 'عرض شهادة الضمان القانوني' : 'View Safety Certificate'}</span>
+      <div className="xs-legal-actions">
+        <a className="xs-btn xs-btn--ghost" href={askUrl} target="_blank" rel="noopener noreferrer">
+          <MessageCircle size={16} aria-hidden="true" /> {L('اطلب المستندات والملخص الكامل', 'Request documents & full summary')}
+        </a>
+        <button type="button" className="xs-btn xs-btn--ghost" onClick={() => generatePropertyPdf(property, lang)}>
+          <FileText size={16} aria-hidden="true" /> {L('بروشور العقار PDF', 'Property PDF')}
         </button>
       </div>
 
-      {/* Certificate Modal */}
-      {showCertificateModal && (
-        <div className="track-modal-backdrop" onClick={() => setShowCertificateModal(false)}>
-          <div className="legal-certificate-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="certificate-border-box">
-              <div className="cert-header">
-                <ShieldCheck size={48} className="text-success" />
-                <h2>{isAr ? 'شهادة ضمان الفحص القانوني المعتمدة' : 'Official Legal Verification Certificate'}</h2>
-                <span className="cert-sub">{isAr ? 'صادرة من الإدارة القانونية لمنصة 1Line العقارية' : 'Issued by 1Line Real Estate Legal Board'}</span>
-              </div>
-
-              <div className="cert-body">
-                <p>
-                  {isAr 
-                    ? `تشهد منصة 1Line العقارية ومستشاروها القانونيون بسوهاج أن العقار كود (${property.id.toUpperCase()}) قد تم فحصه ميدانياً ومراجعة كافة مستندات ملكيته وتراخيصه وسجلاته العقارية وخلوه التام من أية نزاعات قضائية أو مخالفات بنائية.`
-                    : `This certifies that property code (${property.id.toUpperCase()}) has undergone full legal due diligence, title deed clearance, building permit validation, and is guaranteed 100% compliant.`}
-                </p>
-
-                <div className="cert-signatures-row">
-                  <div>
-                    <span>{isAr ? 'المستشار القانوني المعتمد' : 'Senior Legal Advisor'}</span>
-                    <strong>{legal.verifiedByLawyer}</strong>
-                  </div>
-                  <div>
-                    <span>{isAr ? 'تاريخ المراجعة' : 'Audit Date'}</span>
-                    <strong>{legal.lawyerDate}</strong>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
-                <button
-                  type="button"
-                  className="btn btn-primary btn-full"
-                  onClick={() => {
-                    generatePropertyPdf(property);
-                  }}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                >
-                  <FileText size={16} />
-                  <span>{isAr ? 'تحميل التقرير والبروشور القانوني المعتمد (PDF)' : 'Download Certified Legal PDF'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  onClick={() => setShowCertificateModal(false)}
-                >
-                  {isAr ? 'إغلاق الشهادة' : 'Close Certificate'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      <p className="xs-fin-foot">
+        <Info size={13} aria-hidden="true" />
+        {L('المراجعة لا تغني عن محاميك الخاص أو إجراءات الشهر العقاري، ونشجعك على الاستعانة بهما.', 'This review does not replace your own lawyer or registry procedures.')}
+      </p>
+    </section>
   );
 }

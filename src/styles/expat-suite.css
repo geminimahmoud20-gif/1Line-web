@@ -764,6 +764,34 @@
 .xs-trade-banner-text small { font-size: 0.82rem; color: var(--xs-muted); line-height: 1.6; }
 .xs-trade-banner-cta { flex: none; font-weight: 800; color: var(--xs-gold-text); font-size: 0.88rem; }
 
+/* ── Legal review summary (listing "legal" tab) ── */
+.xs-legal {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  border-radius: var(--xs-radius);
+  background: var(--xs-surface);
+  border: 1px solid var(--xs-line);
+  box-shadow: var(--xs-shadow);
+  color: var(--xs-ink);
+}
+.xs-legal--pending .xs-fin-icon { background: rgba(245, 158, 11, 0.12); color: #B45309; }
+.xs-legal-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.xs-legal-list li { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; background: var(--xs-soft); }
+.xs-legal-list li > svg { color: var(--xs-green); flex: none; margin-top: 2px; }
+.xs-legal-list li div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.xs-legal-list li strong { font-size: 0.84rem; }
+.xs-legal-list li span { font-size: 0.8rem; line-height: 1.6; color: var(--xs-muted); }
+.xs-legal-list.is-todo li { align-items: center; font-size: 0.84rem; font-weight: 600; color: var(--xs-muted); }
+.xs-legal-dot { width: 8px; height: 8px; flex: none; border-radius: 50%; border: 2px solid var(--xs-gold); }
+.xs-legal-by { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 0; font-size: 0.82rem; color: var(--xs-muted); }
+.xs-legal-by svg { color: var(--xs-gold); margin-inline-end: 4px; }
+.xs-legal-by strong { color: var(--xs-ink); }
+.xs-legal-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.xs-legal .xs-btn { min-height: 44px; font-size: 0.86rem; }
+.xs-legal--pending > .xs-btn { align-self: flex-start; }
+
 /* ── Listing share toolbar (replaces the old navy "automation" banner) ── */
 .xs-share {
   display: flex;

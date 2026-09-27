@@ -13,6 +13,7 @@ import {
   Wand2
 } from 'lucide-react';
 import { getDynamicPhone, getWhatsAppUrl } from '../../utils/founderCmsData';
+import { computeRentalYield } from '../../utils/propertyInsights';
 
 export default function AICopywriterModal({
   isOpen,
@@ -36,8 +37,20 @@ export default function AICopywriterModal({
   const propPrice = selectedProp.price ? selectedProp.price.toLocaleString() + ' ج.م' : 'سعر مميز';
   const propDownPayment = selectedProp.downPayment ? selectedProp.downPayment.toLocaleString() + ' ج.م' : 'مقدم ميسر';
   const propInstallment = selectedProp.monthlyInstallment ? selectedProp.monthlyInstallment.toLocaleString() + ' ج.م' : 'أقساط مرنة';
-  const propSize = selectedProp.size || 150;
-  const propRooms = selectedProp.bedrooms || 3;
+  const propSize = selectedProp.size || '—';
+  const propRooms = selectedProp.bedrooms || 0;
+
+  // Every factual line comes from the listing itself — posts get published as-is.
+  const legal = selectedProp.legalStatus || null;
+  const legalLineAr = legal
+    ? [legal.ownershipType_ar, legal.licenseStatus_ar].filter(Boolean).join(' • ')
+    : 'نراجع معك المستندات وموقفها القانوني قبل التعاقد';
+  const legalLineEn = legal
+    ? [legal.ownershipType_en || legal.ownershipType_ar, legal.licenseStatus_en].filter(Boolean).join(' • ')
+    : 'Documents reviewed with you before contract';
+  const rentPerSqm = Number(selectedProp.commercial?.rentPerSqm) || 0;
+  const yieldStudy = rentPerSqm ? computeRentalYield({ price: selectedProp.price, size: selectedProp.size, rentPerSqm }) : null;
+  const roomsAr = propRooms ? ` (${propRooms} غرف)` : '';
 
   // Sector classification
   const isLand = selectedProp.type === 'land' || (propTitle && propTitle.includes('أرض'));
@@ -46,18 +59,18 @@ export default function AICopywriterModal({
 
   let sectorTitleLuxury = 'قصر السكن الراقي';
   let sectorHookLuxury = 'هل تبحث عن السكن الفندقي والخصوصية الكاملة لك ولأسرتك؟';
-  let sectorSpaceLuxury = `بتوزيع داخلي فريد (${propRooms} غرف نوم فاخرة)`;
-  let sectorAdvantagesLuxury = 'تشطيب سوبر لوكس، أسانسير حديث، إطلالة مفتوحة ومرافق كاملة جاهزة.';
+  let sectorSpaceLuxury = propRooms ? `بتوزيع داخلي (${propRooms} غرف نوم)` : 'بتوزيع داخلي مدروس';
+  let sectorAdvantagesLuxury = selectedProp.finishing_ar ? `تشطيب ${selectedProp.finishing_ar}.` : 'التفاصيل الكاملة والصور في صفحة العقار.';
 
-  let sectorSpaceSocial = `${propSize} م² (${propRooms} غرف + ريسبشن كبير)`;
-  let sectorSpaceExpat = `${propSize} م² (${propRooms} غرف نوم بتشطيب فندقي معاصر)`;
-  let sectorSpaceEn = `${propSize} sqm | ${propRooms} Luxury Bedrooms`;
+  let sectorSpaceSocial = `${propSize} م²${roomsAr}`;
+  let sectorSpaceExpat = `${propSize} م²${roomsAr}${selectedProp.finishing_ar ? ` — ${selectedProp.finishing_ar}` : ''}`;
+  let sectorSpaceEn = `${propSize} sqm${propRooms ? ` | ${propRooms} bedrooms` : ''}`;
 
   if (isLand) {
     sectorTitleLuxury = 'أرض استثمارية استثنائية';
     sectorHookLuxury = 'هل تبحث عن موقع استثماري نادر وتطوير عقاري بعائد رأسمالي مضاعف؟';
     sectorSpaceLuxury = `${selectedProp.landType_ar || 'أرض استثمارية مرخصة'} ${selectedProp.frontage ? `• ${selectedProp.frontage}` : ''}`;
-    sectorAdvantagesLuxury = 'مكتملة المرافق (مياه، كهرباء، صرف)، رخصة بناء معتمدة وجاهزية تامة للحفر والبناء الفوري.';
+    sectorAdvantagesLuxury = selectedProp.frontage ? `${selectedProp.frontage}.` : 'موقف المرافق والترخيص نوضحه لك كتابياً قبل التعاقد.';
     sectorSpaceSocial = `${propSize} م² (${selectedProp.landType_ar || 'أرض استثمارية'} • ${selectedProp.frontage || 'واجهة عريضة'})`;
     sectorSpaceExpat = `${propSize} م² (${selectedProp.landType_ar || 'أرض استثمارية مرخصة وموثقة'})`;
     sectorSpaceEn = `${propSize} sqm | ${selectedProp.landType_en || 'Licensed Investment Land Plot'} ${selectedProp.frontage ? `(${selectedProp.frontage})` : ''}`;
@@ -65,15 +78,15 @@ export default function AICopywriterModal({
     sectorTitleLuxury = 'أصل تجاري بعائد استثماري فوري';
     sectorHookLuxury = 'هل تبحث عن مقر استراتيجي لفرنشايز أو محل تجاري يدر أعلى دخل إيجاري بسوهاج؟';
     sectorSpaceLuxury = `${selectedProp.commercialType_ar || 'محل تجاري واجهة مباشرة'} ${selectedProp.frontage ? `• ${selectedProp.frontage}` : ''}`;
-    sectorAdvantagesLuxury = 'واجهة تجارية رئيسية، رخصة وسجل تجاري معتمد، كثافة مرورية عالية ومواقف سيارات.';
+    sectorAdvantagesLuxury = [selectedProp.frontage, selectedProp.commercialType_ar].filter(Boolean).join(' • ') || 'موقع تجاري — التفاصيل في صفحة العقار.';
     sectorSpaceSocial = `${propSize} م² (${selectedProp.commercialType_ar || 'محل تجاري'} • ${selectedProp.frontage || 'واجهة رئيسية'})`;
-    sectorSpaceExpat = `${propSize} م² (${selectedProp.commercialType_ar || 'محل تجاري بعائد إيجاري دولاري/شهري مضمون'})`;
+    sectorSpaceExpat = `${propSize} م² (${selectedProp.commercialType_ar || 'محل تجاري'})`;
     sectorSpaceEn = `${propSize} sqm | ${selectedProp.commercialType_en || 'Prime Commercial Retail Space'} ${selectedProp.frontage ? `(${selectedProp.frontage})` : ''}`;
   } else if (isOff) {
     sectorTitleLuxury = 'صرح إداري وطبي متكامل';
     sectorHookLuxury = 'ارتقِ بمقر شركتك أو عيادتك التخصصية في قلب المركز الإداري والخدمي بسوهاج:';
     sectorSpaceLuxury = `${selectedProp.adminType_ar || 'مقر إداري / عيادة طبية'} ${selectedProp.frontage ? `• ${selectedProp.frontage}` : ''}`;
-    sectorAdvantagesLuxury = 'تشطيب إداري فاخر، مدخل خاص ومصاعد حديثة، ترخيص إداري وطبي معتمد 100%.';
+    sectorAdvantagesLuxury = selectedProp.finishing_ar ? `تشطيب ${selectedProp.finishing_ar}.` : 'مقر إداري / طبي — التفاصيل في صفحة العقار.';
     sectorSpaceSocial = `${propSize} م² (${selectedProp.adminType_ar || 'مقر إداري وطبي مجهز'})`;
     sectorSpaceExpat = `${propSize} م² (${selectedProp.adminType_ar || 'مقر إداري وطبي فاخر'})`;
     sectorSpaceEn = `${propSize} sqm | ${selectedProp.adminType_en || 'Executive Admin Office & Clinic'}`;
@@ -90,7 +103,7 @@ export default function AICopywriterModal({
 
 📍 الموقع الاستراتيجي: ${propLocation}
 📐 المساحة الملكية: ${propSize} م² — ${sectorSpaceLuxury}
-⚖️ الموقف القانوني: مرخص رسمياً ومسجل شهر عقاري 100% (حصة بالأرض)
+⚖️ الموقف القانوني: ${legalLineAr}
 ⭐ المميزات: ${sectorAdvantagesLuxury}
 
 💰 خطة السداد والاستثمار:
@@ -101,7 +114,7 @@ export default function AICopywriterModal({
 📞 للتواصل المباشر وحجز موعد المعاينة الخاصة:
 مستشارك العقاري: ${getDynamicPhone()}
 واتساب فوري: ${getWhatsAppUrl()}
-شركة 1Line — استثمارك المضمون في سوهاج.`);
+شركة 1Line — قرارك العقاري بوضوح في سوهاج.`);
     }
 
     if (adTone === 'social') {
@@ -114,8 +127,8 @@ export default function AICopywriterModal({
 ⚡ ليه العقار ده بالذات ميتفوتش؟
 ✅ مساحة واسعة: ${sectorSpaceSocial}
 ✅ مقدم يبدأ من ${propDownPayment} وقسط شهري ${propInstallment}
-✅ خالص التراخيص ونموذج 10 وجاهز للاستلام والسكن الفوري!
-✅ مفيش عمولة على المشتري!
+✅ ${legalLineAr}
+✅ معاينة مجانية للموقع قبل أي التزام!
 
 ⏳ العرض ساري لأسبقية الحجز فقط!
 📲 كلمنا فوراً أو ابعتلنا واتساب على: ${getDynamicPhone()}
@@ -124,20 +137,21 @@ export default function AICopywriterModal({
 
     if (adTone === 'investor') {
       return (
-`📊【 دراسة جدوى استثمارية عالية العائد — 1LINE INVEST 】📊
+`📊【 فرصة استثمارية — 1LINE INVEST 】📊
 
 🏢 الأصل العقاري: ${propTitle}
 📍 الموقع: ${propLocation}
 💵 السعر الإجمالي: ${propPrice}
 
-📈 مؤشرات الجدوى والأرباح المتوقعة:
-• العائد الإيجاري السنوي المتوقع (Rental Yield): 12.5% - 15% سنوياً
-• معدل نمو القيمة الرأسمالية (Capital Appreciation): 25% سنوياً في هذه المنطقة
-• فترة استرداد رأس المال: قياسية بفضل الموقع التجاري والحيوي
-• التسهيلات: مقدم ${propDownPayment} والباقي على أقساط مريحة.
+📈 مؤشرات الجدوى:
+${yieldStudy
+  ? `• العائد الإجمالي التقديري: ${Math.round(yieldStudy.grossYieldPct * 10) / 10}% سنوياً (على إيجار متوقع ${rentPerSqm.toLocaleString('en-US')} ج.م للمتر شهرياً)
+• فترة استرداد رأس المال التقديرية: ${Math.round(yieldStudy.paybackYears * 10) / 10} سنة قبل الضرائب`
+  : '• نجهز لك دراسة عائد بإيجارات مقارنة فعلية في نفس الشارع قبل القرار'}
+• التسهيلات: مقدم ${propDownPayment} والباقي على أقساط.
 
-🛡️ الفحص والتدقيق القانوني:
-العقار معتمد ومفحوص بواسطة الإدارة القانونية لمنصة 1Line مع حصة مسجلة في الأرض وخلو تام من أي نزاعات.
+🛡️ الموقف القانوني:
+${legalLineAr}
 
 💼 لطلب الملف الاستثماري الكامل وجدول التدفقات النقدية:
 تواصل مع مكتب كبار المستثمرين: ${getDynamicPhone()}`);
@@ -153,10 +167,11 @@ export default function AICopywriterModal({
 🏢 العقار: ${propTitle}
 📍 الموقع: ${propLocation}
 📐 المساحة والمواصفات: ${sectorSpaceExpat}
-⚖️ الموقف القانوني: ترخيص كامل وتوثيق شهر عقاري وحصة مسجلة بالأرض (ضمان مؤسسي 100%)
+⚖️ الموقف القانوني: ${legalLineAr}
+🎥 معاينة عن بُعد بالفيديو الحي قبل أي قرار
 
-💰 خطة السداد المرنة وتحويل العملات:
-• السعر الإجمالي: ${propPrice} (مع إمكانية السداد بتحويلات بنكية مباشرة معتمدة بالريال/الدرهم/الدولار)
+💰 خطة السداد:
+• السعر الإجمالي: ${propPrice} (التعاقد بالجنيه المصري، والسداد بتحويلات بنكية رسمية)
 • مقدم التعاقد: ${propDownPayment}
 • قسط شهري ميسر: ${propInstallment}
 • خدمة "إدارة وتأجير العقار" نيابة عنك لتحقيق عائد إيجاري أثناء فترة سفرك!
@@ -173,7 +188,7 @@ export default function AICopywriterModal({
 🌟 Featured Unit: ${selectedProp.title_en || propTitle}
 📍 Prime Location: ${selectedProp.locationName_en || propLocation}
 📐 Specifications: ${sectorSpaceEn}
-📑 Legal Status: 100% Verified Title Deed & Construction Permit
+📑 Legal Status: ${legalLineEn}
 
 💎 Payment Terms:
 • Total Value: ${propPrice}

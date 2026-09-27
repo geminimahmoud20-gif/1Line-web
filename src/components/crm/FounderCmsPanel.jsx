@@ -1389,7 +1389,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                         type="text"
                         value={std.title_en || ''}
                         onChange={(e) => handleGoldStandardChange(idx, 'title_en', e.target.value)}
-                        placeholder="100% Verified Legal Audit"
+                        placeholder="Documents reviewed before listing"
                       />
                     </div>
                   </div>

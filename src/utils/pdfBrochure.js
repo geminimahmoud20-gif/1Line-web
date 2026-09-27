@@ -36,7 +36,7 @@ export const generatePropertyPdf = async (property) => {
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(255, 224, 130);
   doc.text('SOHAG & NEW SOHAG REAL ESTATE INTELLIGENCE', 15, 28);
-  doc.text('Verified Property & Legal Audit Brochure', 15, 34);
+  doc.text('Property Brochure & Legal Review Summary', 15, 34);
 
   // Property ID Tag
   doc.setFontSize(10);
@@ -133,24 +133,30 @@ export const generatePropertyPdf = async (property) => {
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(16, 185, 129);
-  doc.text('2. Verified Legal Audit & Safety Certificate (100% Guaranteed)', 20, yPos + 8);
+  doc.text('2. Legal Review Summary', 20, yPos + 8);
 
   doc.setFontSize(8.5);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(30, 41, 59);
 
+  // Only what the listing's legal record contains — no default "verified" text.
+  // Reviewer uses the CRM field reviewedBy (legacy seed names are ignored).
   const legalItems = [
-    `Title Deed: ${legal.ownershipType_en || 'Officially Registered Real Estate Deed with Land Share'}`,
-    `Building Permit: ${legal.licenseStatus_en || 'Full Building Permit approved by Municipality'}`,
-    `Form 10 Reconciliation: ${legal.reconciliationStatus_en || 'Form 10 final certificate validated'}`,
-    `Land Share: ${legal.landShare_en || 'Undivided registered land share included in title'}`,
-    `Municipal Clearances: ${legal.municipalityStatus_en || 'Zero debts and municipal fees cleared'}`,
-    `Legal Advisor: ${legal.verifiedByLawyer || '1Line Legal Consulting Board'}`
-  ];
+    legal.ownershipType_en && `Title Deed: ${legal.ownershipType_en}`,
+    legal.licenseStatus_en && `Building Permit: ${legal.licenseStatus_en}`,
+    legal.reconciliationStatus_en && `Form 10 Reconciliation: ${legal.reconciliationStatus_en}`,
+    legal.landShare_en && `Land Share: ${legal.landShare_en}`,
+    legal.municipalityStatus_en && `Municipal Clearances: ${legal.municipalityStatus_en}`,
+    legal.reviewedBy && `Reviewed by: ${legal.reviewedBy}${legal.reviewDate ? ` (${legal.reviewDate})` : ''}`
+  ].filter(Boolean);
+  if (legalItems.length === 0) {
+    legalItems.push('Legal review summary available on request before any reservation.');
+  }
+  legalItems.push('This review does not replace your own lawyer or registry procedures.');
 
   let legalY = yPos + 16;
-  legalItems.forEach(item => {
-    doc.text(`[✓] ${item}`, 22, legalY);
+  legalItems.forEach((item, i) => {
+    doc.text(`${i < legalItems.length - 1 ? '- ' : ''}${item}`, 22, legalY);
     legalY += 6;
   });
 
@@ -282,13 +288,14 @@ export const generateInvestorProspectusPdf = async ({
   doc.setTextColor(13, 72, 161);
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
-  doc.text('3. 1Line Institutional Safety & Governance', 15, 204);
+  doc.text('3. How 1Line Works With You', 15, 204);
 
+  // Service commitments only — no guarantees about any specific asset
   const pillars = [
-    '[✓] 100% Verified Title Deeds with Notary Public Clearance (الشهر العقاري).',
-    '[✓] Building Permits & Form 10 Municipality Certification fully reconciled.',
-    '[✓] Mandatory High-Yield Tenancy Placement managed by 1Line Facility Desk.',
-    '[✓] Full Inflation-Hedge asset backing with direct land equity allocation.'
+    '- Title documents and permits reviewed before listing; written summary before contract.',
+    '- Brokerage fees and all costs agreed in writing before any service starts.',
+    '- Tenant placement and rental management available on request.',
+    '- Free on-site viewing before any commitment.'
   ];
 
   let pY = 214;

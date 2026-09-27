@@ -41,13 +41,13 @@ function CertificateArt({ isAr }) {
             <FileCheck size={16} strokeWidth={2.2} />
           </div>
           <div>
-            <span className="hx-cert-main-title">{isAr ? 'سجل التدقيق القانوني المعتمد' : 'Institutional Legal Audit'}</span>
-            <span className="hx-cert-sub-id">1LINE-DUE-DILIGENCE • SO-2026</span>
+            <span className="hx-cert-main-title">{isAr ? 'ملخص المراجعة القانونية' : 'Legal review summary'}</span>
+            <span className="hx-cert-sub-id">{isAr ? 'يُسلَّم لك قبل التعاقد' : 'Shared with you before contract'}</span>
           </div>
         </div>
         <div className="hx-cert-status-badge">
           <span className="hx-cert-dot" />
-          <span>{isAr ? 'أمان قانوني 100%' : '100% Secure'}</span>
+          <span>{isAr ? 'قبل العرض' : 'Before listing'}</span>
         </div>
       </div>
 

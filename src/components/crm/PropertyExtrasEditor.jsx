@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Receipt, Users, Stethoscope, ChevronDown } from 'lucide-react';
+import { Receipt, Users, Stethoscope, ChevronDown, Scale } from 'lucide-react';
 import { FAMILY_KINDS, FOOT_TRAFFIC_TAGS, ACCESS_POINTS, PARKING_OPTIONS } from '../../utils/propertyInsights';
 import './property-extras.css';
 
@@ -51,6 +51,13 @@ export default function PropertyExtrasEditor({ form, setForm, isAr = true }) {
   const commercial = form.commercial || {};
   const isCommercial = ['commercial', 'office'].includes(form.type);
 
+  const legal = form.legalStatus || {};
+  // Empty legal record = null, so the listing shows "review not published" instead of a badge
+  const setLegal = (k, v) => setForm((f) => {
+    const next = { ...(f.legalStatus || {}), [k]: v };
+    const hasAny = Object.values(next).some((x) => String(x ?? '').trim() !== '');
+    return { ...f, legalStatus: hasAny ? next : null };
+  });
   const setFinance = (k, v) => setForm((f) => ({ ...f, finance: { ...(f.finance || {}), [k]: v } }));
   const setFamily = (k, v) => setForm((f) => ({ ...f, family: { ...(f.family || {}), [k]: v } }));
   const setCommercial = (k, v) => setForm((f) => ({ ...f, commercial: { ...(f.commercial || {}), [k]: v } }));
@@ -77,6 +84,20 @@ export default function PropertyExtrasEditor({ form, setForm, isAr = true }) {
 
   return (
     <div className="pxe">
+      <Section icon={Scale} title={L('الموقف القانوني (بعد المراجعة الفعلية فقط)', 'Legal status (after an actual review only)')} hint={form.legalStatus ? L('يظهر كـ«مستندات مراجَعة»', 'Shows as "Documents reviewed"') : L('فارغ = «المراجعة لم تُنشر بعد»', 'Empty = "review not published"')}>
+        <p className="pxe-note">{L('اكتب فقط ما راجعته فعلاً من مستندات. أي خانة فارغة لا تظهر، ولو كل الخانات فاضية العقار يظهر بدون شارة «مستندات مراجَعة».', 'Only record what you actually reviewed. Empty fields stay hidden; if all are empty the listing shows no "Documents reviewed" badge.')}</p>
+        <div className="pxe-grid">
+          <TextField label={L('سند الملكية', 'Title')} value={legal.ownershipType_ar} onChange={(v) => setLegal('ownershipType_ar', v)} placeholder={L('مثال: عقد مسجل شهر عقاري', 'e.g. Registered deed')} />
+          <TextField label={L('ترخيص البناء', 'Building licence')} value={legal.licenseStatus_ar} onChange={(v) => setLegal('licenseStatus_ar', v)} placeholder={L('مثال: ترخيص رقم … صادر من الحي', 'e.g. Licence no. … from the district')} />
+          <TextField label={L('موقف التصالح (نموذج 10)', 'Reconciliation (Form 10)')} value={legal.reconciliationStatus_ar} onChange={(v) => setLegal('reconciliationStatus_ar', v)} />
+          <TextField label={L('حصة الأرض', 'Land share')} value={legal.landShare_ar} onChange={(v) => setLegal('landShare_ar', v)} />
+          <TextField label={L('جهاز المدينة والضرائب', 'Municipality & taxes')} value={legal.municipalityStatus_ar} onChange={(v) => setLegal('municipalityStatus_ar', v)} />
+          <TextField label={L('تمت المراجعة بمعرفة', 'Reviewed by')} value={legal.reviewedBy} onChange={(v) => setLegal('reviewedBy', v)} placeholder={L('اسم المحامي/المراجع الفعلي', 'Actual lawyer / reviewer')} />
+          <TextField label={L('تاريخ المراجعة', 'Review date')} value={legal.reviewDate} onChange={(v) => setLegal('reviewDate', v)} placeholder="2026-09-27" maxLength={20} />
+          <TextField label={L('مرجع ملف المراجعة (اختياري)', 'Review file reference (optional)')} value={legal.reportRef} onChange={(v) => setLegal('reportRef', v)} maxLength={40} />
+        </div>
+      </Section>
+
       <Section icon={Receipt} title={L('مصفوفة التكاليف الشفافة', 'Transparent cost breakdown')} hint={L('تظهر في صفحة العقار', 'Shown on the listing page')}>
         <p className="pxe-note">{L('اترك أي خانة فارغة لو البند غير موجود — لن يظهر للعميل.', 'Leave a field empty if it does not apply — it stays hidden.')}</p>
         {planCheck && (

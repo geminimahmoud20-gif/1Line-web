@@ -69,17 +69,8 @@ const DEFAULT_FORM_STATE = {
   description_en: 'Luxury unit in a vibrant prime location with complete utilities.',
   virtualTour: true,
   isDeleted: false,
-  legalStatus: {
-    ownershipType_ar: 'عقد مسجل شهر عقاري',
-    ownershipType_en: 'Registered Title Deed',
-    licenseStatus_ar: 'ترخيص بناء رسمي صادر من الحي',
-    licenseStatus_en: 'Official Municipal Permit',
-    reconciliationStatus_ar: 'نموذج 10 النهائي للتصالح معتمد',
-    reconciliationStatus_en: 'Approved Form 10 Reconciliation',
-    inspectionReportId: 'LAW-SOH-2026',
-    verifiedByLawyer: 'الإدارة القانونية لمنصة 1Line',
-    safetyScore: 100
-  },
+  // No legal record until the team actually reviews the documents (CRM → الموقف القانوني)
+  legalStatus: null,
   customBenchmarkPrice: '',
   nearbyAmenities: []
 };

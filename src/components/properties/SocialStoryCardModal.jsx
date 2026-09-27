@@ -71,7 +71,11 @@ export default function SocialStoryCardModal({ isOpen, onClose, property, lang =
 
               <div className="story-legal-footer">
                 <ShieldCheck size={14} className="text-success" />
-                <span>{isAr ? 'عقار مسجل ومفحوص قانونياً 100%' : '100% Verified Title Deed'}</span>
+                <span>
+                  {property.legalStatus
+                    ? (isAr ? 'مستندات مراجَعة من 1Line' : 'Documents reviewed by 1Line')
+                    : (isAr ? 'معاينة مجانية للموقع' : 'Free on-site viewing')}
+                </span>
               </div>
             </div>
           </div>

@@ -87,7 +87,8 @@ export default function PropertyCompareDrawer({
       }
 
       // Legal Score
-      const legalScore = p.legalStatus?.safetyScore || (p.legalStatus?.ownershipType_ar?.includes('مسجل') ? 100 : 80);
+      // Rank by what the legal record actually contains (registered title > any reviewed record > none)
+      const legalScore = p.legalStatus?.ownershipType_ar?.includes('مسجل') ? 2 : p.legalStatus ? 1 : 0;
       if (legalScore > maxLegalScore) {
         maxLegalScore = legalScore;
         topLegalId = p.id;
@@ -857,7 +858,7 @@ export default function PropertyCompareDrawer({
                           <div className="compare-cell text-emerald">
                             <div className="cell-legal-item">
                               <ShieldCheck size={14} className="legal-icon" />
-                              <span>{prop.legalStatus?.ownershipType_ar || (isAr ? 'مسجل شهر عقاري موثق' : 'Certified Notary Deed')}</span>
+                              <span>{prop.legalStatus?.ownershipType_ar || (isAr ? 'تحت المراجعة' : 'Under review')}</span>
                             </div>
                           </div>
 
@@ -865,19 +866,19 @@ export default function PropertyCompareDrawer({
                           <div className="compare-cell">
                             <div className="cell-legal-item">
                               <FileCheck2 size={14} className="legal-icon text-gold" />
-                              <span>{prop.legalStatus?.licenseStatus_ar || (isAr ? 'ترخيص رسمي + نموذج 10' : 'Licensed & Form 10')}</span>
+                              <span>{prop.legalStatus?.licenseStatus_ar || '—'}</span>
                             </div>
                           </div>
 
                           {/* Land Share */}
                           <div className="compare-cell">
-                            <span>{prop.legalStatus?.landShare_ar || (isAr ? 'حصة شائعة في الأرض مسجلة' : 'Proportional Land Share')}</span>
+                            <span>{prop.legalStatus?.landShare_ar || '—'}</span>
                           </div>
 
                           {/* Safety Score */}
                           <div className="compare-cell">
                             <span className="legal-score-pill">
-                              🛡️ {prop.legalStatus?.safetyScore || 100}% {isAr ? 'أمان قانوني تام' : 'Legal Clearance'}
+                              🛡️ {prop.legalStatus ? (isAr ? 'مستندات مراجَعة' : 'Documents reviewed') : (isAr ? 'المراجعة عند الطلب' : 'Review on request')}
                             </span>
                           </div>
                         </>
