@@ -764,6 +764,122 @@
 .xs-trade-banner-text small { font-size: 0.82rem; color: var(--xs-muted); line-height: 1.6; }
 .xs-trade-banner-cta { flex: none; font-weight: 800; color: var(--xs-gold-text); font-size: 0.88rem; }
 
+/* ═══ Listing page (pd-*) ═══════════════════════════════════════ */
+
+/* Back button: App.css forces navy text with !important — unreadable on the navy hero */
+.property-detail-hero-stage .btn-back-step { color: #E2E8F0 !important; }
+.property-detail-hero-stage .btn-back-step:hover { color: #ECC875 !important; background: rgba(197, 160, 89, 0.16); }
+
+/* Price comparison pill: readable tones on the dark hero (colours no longer inline) */
+.property-detail-hero-stage .benchmark-hero-pill { border: 1px solid transparent; }
+.property-detail-hero-stage .benchmark-hero-pill.is-deal { color: #6EE7B7; background: rgba(16, 185, 129, 0.14); border-color: rgba(110, 231, 183, 0.35); }
+.property-detail-hero-stage .benchmark-hero-pill.is-fair { color: #BFDBFE; background: rgba(147, 197, 253, 0.12); border-color: rgba(191, 219, 254, 0.3); }
+.property-detail-hero-stage .benchmark-hero-pill.is-premium { color: #FCD34D; background: rgba(252, 211, 77, 0.12); border-color: rgba(252, 211, 77, 0.3); }
+
+/* Phones: the title column's 540px flex-basis became a 540px HEIGHT in the column layout */
+@media (max-width: 900px) {
+  .property-detail-hero-stage .detail-title-col { flex: 0 0 auto; }
+}
+
+/* Office-hours status */
+.agent-status-badge.is-off-hours { color: #94A3B8 !important; }
+.pd-off-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #94A3B8; margin-inline-end: 6px; }
+
+/* Legal status at a glance (overview tab) */
+.pd-legal-glance {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin: 0 0 20px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--xs-line);
+  background: var(--xs-surface);
+  color: var(--xs-ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.2s var(--xs-ease);
+}
+.pd-legal-glance:hover { transform: translateY(-1px); border-color: rgba(197, 160, 89, 0.6); }
+.pd-legal-glance > svg { flex: none; }
+.pd-legal-glance.is-reviewed > svg { color: var(--xs-green); }
+.pd-legal-glance.is-pending > svg { color: #D97706; }
+.pd-legal-glance > span:nth-child(2) { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pd-legal-glance strong { font-size: 0.9rem; }
+.pd-legal-glance small { font-size: 0.78rem; color: var(--xs-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pd-legal-glance-cta { margin-inline-start: auto; flex: none; font-size: 0.8rem; font-weight: 800; color: var(--xs-gold-text); }
+
+/* Utilities (data-driven) */
+.pd-utilities-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.pd-utilities-head h3 { display: flex; align-items: center; gap: 8px; margin: 0; }
+.pd-utilities-verified { font-size: 0.74rem; font-weight: 800; padding: 3px 9px; border-radius: 999px; background: rgba(16, 185, 129, 0.12); color: #047857; }
+.dark-theme .pd-utilities-verified { color: #6EE7B7; }
+.pd-utilities-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.pd-utilities-grid li { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--xs-line); background: var(--xs-soft); }
+.pd-utilities-grid li > svg { color: var(--xs-gold); flex: none; margin-top: 2px; }
+.pd-utilities-grid strong { display: block; font-size: 0.84rem; }
+.pd-utilities-grid span { font-size: 0.78rem; color: var(--xs-muted); }
+
+.pd-calc-note { margin: -4px 0 14px; padding: 10px 12px; border-radius: 10px; background: var(--xs-gold-soft); font-size: 0.82rem; line-height: 1.6; color: var(--xs-ink); }
+
+/* Viewing request: opener, fields, toggles */
+.pd-book-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin: 10px 0 4px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 0;
+  background: var(--xs-navy);
+  color: #FFFFFF;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: transform 0.2s var(--xs-ease), box-shadow 0.25s;
+}
+.pd-book-toggle:hover { transform: translateY(-1px); box-shadow: 0 14px 28px -16px rgba(11, 27, 50, 0.8); }
+.pd-book-toggle > svg { color: #E9D29A; flex: none; }
+.pd-book-toggle > span { display: flex; flex-direction: column; gap: 2px; }
+.pd-book-toggle strong { font-size: 0.92rem; }
+.pd-book-toggle small { font-size: 0.74rem; color: rgba(255, 255, 255, 0.72); }
+.dark-theme .pd-book-toggle { background: var(--xs-gold-grad); color: #0B1B32; }
+.dark-theme .pd-book-toggle > svg, .dark-theme .pd-book-toggle small { color: #0B1B32; }
+
+.pd-fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+.pd-fieldset legend { padding: 0; margin-bottom: 6px; font-size: 0.82rem; font-weight: 700; color: var(--text-primary, var(--xs-ink)); }
+.pd-field-error { display: block; margin-top: 5px; font-size: 0.74rem; font-weight: 600; color: var(--xs-red); }
+.dark-theme .pd-field-error { color: #FCA5A5; }
+.pd-book-fine { margin: 8px 0 0; font-size: 0.72rem; text-align: center; color: var(--xs-muted); }
+
+.booking-type-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.type-toggle-btn,
+.slot-pill {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--xs-line);
+  background: var(--xs-surface);
+  color: var(--xs-ink);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.type-toggle-btn svg, .slot-pill svg { flex: none; }
+.type-toggle-btn.active,
+.slot-pill.active { background: var(--xs-navy); border-color: var(--xs-navy); color: #FFFFFF; }
+.dark-theme .type-toggle-btn.active, .dark-theme .slot-pill.active { background: var(--xs-gold); border-color: var(--xs-gold); color: #0B1B32; }
+
 /* ── Legal review summary (listing "legal" tab) ── */
 .xs-legal {
   display: flex;

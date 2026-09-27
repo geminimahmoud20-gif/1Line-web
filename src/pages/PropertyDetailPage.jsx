@@ -56,7 +56,7 @@ import { useUIModal } from '../context/UIModalContext';
 import FinancialBreakdown from '../components/properties/FinancialBreakdown';
 import FamilyCostSplitter from '../components/family/FamilyCostSplitter';
 import CommercialInsightsCard from '../components/commercial/CommercialInsightsCard';
-import { getFamilyInfo } from '../utils/propertyInsights';
+import { getFamilyInfo, computeFinanceBreakdown } from '../utils/propertyInsights';
 import { PROPERTY_TYPES } from '../data/propertiesData';
 import { Users } from 'lucide-react';
 import '../styles/expat-suite.css';
@@ -117,7 +117,7 @@ export default function PropertyDetailPage({
   const property = useMemo(() => {
     const found = properties.find(p => p.id === id) || null;
     return isPublicListing(found) ? found : null;
-  }, [properties, id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [properties, id]);
 
   // Smart Similar Properties recommendation (Same district first, fallback to same property type)
   const similarProperties = useMemo(() => {
@@ -215,6 +215,7 @@ export default function PropertyDetailPage({
         ? (isAr ? 'تحت الإنشاء' : 'Under construction')
         : '';
   const officeOpen = isOfficeOpenNow();
+  const financePlan = computeFinanceBreakdown(property)?.plan || null;
   const util = property.utilities || {};
   const utilityItems = [
     { key: 'electricity', Icon: Zap, label: isAr ? 'الكهرباء' : 'Electricity', value: util.electricity_ar },
@@ -822,9 +823,13 @@ export default function PropertyDetailPage({
                   <h3>{isAr ? 'حاسبة القسط والتمويل لهذا العقار' : 'Payment & Financing Calculator'}</h3>
                   {Number(property.monthlyInstallment) > 0 && (
                     <p className="pd-calc-note">
-                      {isAr
-                        ? 'الحاسبة تبدأ بنظام السداد المسجل لهذا العقار (تقسيط مباشر بدون فوائد). غيّر النسبة لو هتمول من بنك.'
-                        : 'The calculator starts from this listing\'s own plan (direct, interest-free). Change the rate if you finance through a bank.'}
+                      {financePlan?.incomplete
+                        ? (isAr
+                          ? `الحاسبة توزّع كل المبلغ المتبقي على أقساط شهرية متساوية بدون فوائد، لذلك يختلف القسط هنا عن القسط المسجل (${Number(property.monthlyInstallment).toLocaleString('en-US')} ج.م) الذي يصاحبه رصيد غير مجدول — راجع مصفوفة التكاليف.`
+                          : `The calculator spreads the whole remaining amount over equal interest-free months, so it differs from the listed installment (${Number(property.monthlyInstallment).toLocaleString('en-US')} EGP), which comes with an unscheduled balance — see the cost breakdown.`)
+                        : (isAr
+                          ? 'الحاسبة تبدأ بنظام السداد المسجل لهذا العقار (تقسيط مباشر بدون فوائد). غيّر النسبة لو هتمول من بنك.'
+                          : 'The calculator starts from this listing\'s own plan (direct, interest-free). Change the rate if you finance through a bank.')}
                     </p>
                   )}
                   <MortgageRoiCalculator
@@ -899,20 +904,23 @@ export default function PropertyDetailPage({
                 </span>
               </button>
 
-              {/* Section Divider */}
-              <div className="sidebar-divider">
-                <span>{isAr ? 'أو احجز موعد معاينة مجانية' : 'Or Schedule Free Viewing'}</span>
-              </div>
-
-              {/* 3. Free Viewing Booking Form */}
+              {/* 3. Free viewing request — opens on demand to keep the sidebar focused */}
               {bookingSubmitted ? (
-                <div className="booking-success-box">
+                <div className="booking-success-box" role="status">
                   <CheckCircle2 size={36} className="text-success" />
-                  <h4>{isAr ? 'تم تأكيد موعدك بنجاح' : 'Viewing Booked Successfully'}</h4>
-                  <p>{isAr ? 'سيتواصل معك فريق المعاينات قبل الموعد لتأكيد موقع وتفاصيل الزيارة.' : 'Our team will contact you to confirm directions.'}</p>
+                  <h4>{isAr ? 'استلمنا طلب المعاينة' : 'Viewing request received'}</h4>
+                  <p>{isAr ? 'سيتواصل معك فريق المعاينات على واتساب لتأكيد الموعد والعنوان.' : 'Our team will contact you on WhatsApp to confirm the time and address.'}</p>
                 </div>
+              ) : !showBookingForm ? (
+                <button type="button" className="pd-book-toggle" onClick={() => setShowBookingForm(true)} aria-expanded="false" aria-controls="pd-booking-form">
+                  <Calendar size={17} aria-hidden="true" />
+                  <span>
+                    <strong>{isAr ? 'احجز معاينة مجانية للموقع' : 'Book a free on-site viewing'}</strong>
+                    <small>{isAr ? 'اختر اليوم والفترة — نؤكد معك على واتساب' : 'Pick a day and time — we confirm on WhatsApp'}</small>
+                  </span>
+                </button>
               ) : (
-                <form onSubmit={handleBookingSubmit} className="booking-form-wrap">
+                <form onSubmit={handleBookingSubmit} className="booking-form-wrap" id="pd-booking-form" noValidate>
                   {/* 🍯 Invisible Honeypot Anti-Bot Shield */}
                   <div style={{ position: 'absolute', opacity: 0, zIndex: -1, pointerEvents: 'none', height: 0, overflow: 'hidden' }} aria-hidden="true">
                     <input
@@ -926,18 +934,21 @@ export default function PropertyDetailPage({
                   </div>
 
                   <div className="form-group-item">
-                    <label>
-                      <span>{isAr ? 'الاسم بالكامل *' : 'Full Name *'}</span>
+                    <label htmlFor="pd-book-name">
+                      <span>{isAr ? 'الاسم *' : 'Name *'}</span>
                       {isClientAuthenticated && (
                         <span className="client-auto-badge">
                           <ShieldCheck size={11} />
-                          <span>{isAr ? 'معتمد' : 'Verified'}</span>
+                          <span>{isAr ? 'من حسابك' : 'From your account'}</span>
                         </span>
                       )}
                     </label>
                     <input
+                      id="pd-book-name"
                       type="text"
-                      placeholder={isAr ? 'مثال: محمد السيد' : 'John Doe'}
+                      autoComplete="name"
+                      maxLength={100}
+                      placeholder={isAr ? 'مثال: محمد السيد' : 'e.g. John Doe'}
                       value={bookingForm.name}
                       onChange={(e) => setBookingForm({ ...bookingForm, name: e.target.value })}
                       required
@@ -945,76 +956,94 @@ export default function PropertyDetailPage({
                   </div>
 
                   <div className="form-group-item">
-                    <label>{isAr ? 'رقم الواتساب * (لتأكيد المعاينة والموقع)' : 'WhatsApp Number *'}</label>
+                    <label htmlFor="pd-book-phone">{isAr ? 'رقم الواتساب *' : 'WhatsApp number *'}</label>
                     <input
+                      id="pd-book-phone"
                       type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      dir="ltr"
                       placeholder="01012345678"
                       value={bookingForm.phone}
-                      onChange={(e) => setBookingForm({ ...bookingForm, phone: e.target.value })}
+                      aria-invalid={Boolean(phoneError)}
+                      aria-describedby={phoneError ? 'pd-book-phone-err' : undefined}
+                      onChange={(e) => { setBookingForm({ ...bookingForm, phone: e.target.value }); if (phoneError) setPhoneError(''); }}
                       required
                     />
+                    {phoneError && <span id="pd-book-phone-err" className="pd-field-error" role="alert">{phoneError}</span>}
                   </div>
 
-                  <div className="form-group-item">
-                    <label>{isAr ? 'طريقة المعاينة المطلوبة' : 'Tour Format'}</label>
-                    <div className="booking-type-toggle">
+                  <fieldset className="form-group-item pd-fieldset">
+                    <legend>{isAr ? 'نوع المعاينة' : 'Viewing type'}</legend>
+                    <div className="booking-type-toggle" role="radiogroup">
                       <button
                         type="button"
-                        className={`type-toggle-btn ${bookingForm.type !== 'video' ? 'active' : ''}`}
-                        onClick={() => setBookingForm({ ...bookingForm, type: 'field' })}
+                        role="radio"
+                        aria-checked={bookingForm.tourType !== 'video'}
+                        className={`type-toggle-btn ${bookingForm.tourType !== 'video' ? 'active' : ''}`}
+                        onClick={() => setBookingForm({ ...bookingForm, tourType: 'field' })}
                       >
-                        <MapPin size={14} />
-                        <span>{isAr ? 'معاينة ميدانية بالموقع' : 'On-Site Tour'}</span>
+                        <MapPin size={14} aria-hidden="true" />
+                        <span>{isAr ? 'ميدانية بالموقع' : 'On site'}</span>
                       </button>
                       <button
                         type="button"
-                        className={`type-toggle-btn ${bookingForm.type === 'video' ? 'active' : ''}`}
-                        onClick={() => setBookingForm({ ...bookingForm, type: 'video' })}
+                        role="radio"
+                        aria-checked={bookingForm.tourType === 'video'}
+                        className={`type-toggle-btn ${bookingForm.tourType === 'video' ? 'active' : ''}`}
+                        onClick={() => setBookingForm({ ...bookingForm, tourType: 'video' })}
                       >
-                        <Video size={14} />
-                        <span>{isAr ? 'معاينة فيديو حية' : 'Live Video Tour'}</span>
+                        <Video size={14} aria-hidden="true" />
+                        <span>{isAr ? 'فيديو حي' : 'Live video'}</span>
                       </button>
                     </div>
-                  </div>
+                  </fieldset>
 
                   <div className="form-row-2col">
                     <div className="form-group-item">
-                      <label>{isAr ? 'تاريخ المعاينة' : 'Preferred Date'}</label>
+                      <label htmlFor="pd-book-date">{isAr ? 'اليوم المفضل' : 'Preferred day'}</label>
                       <input
+                        id="pd-book-date"
                         type="date"
+                        min={todayIso()}
                         value={bookingForm.date}
                         onChange={(e) => setBookingForm({ ...bookingForm, date: e.target.value })}
                       />
                     </div>
-                    <div className="form-group-item">
-                      <label>{isAr ? 'الفترة' : 'Time Slot'}</label>
-                      <div className="booking-time-slot-pills">
+                    <fieldset className="form-group-item pd-fieldset">
+                      <legend>{isAr ? 'الفترة' : 'Time'}</legend>
+                      <div className="booking-time-slot-pills" role="radiogroup">
                         <button
                           type="button"
+                          role="radio"
+                          aria-checked={bookingForm.slot === 'morning'}
                           className={`slot-pill ${bookingForm.slot === 'morning' ? 'active' : ''}`}
                           onClick={() => setBookingForm({ ...bookingForm, slot: 'morning' })}
-                          title={isAr ? '10 ص - 2 ظ' : 'Morning'}
+                          title={isAr ? '10 ص – 2 م' : '10:00–14:00'}
                         >
-                          <Sun size={13} />
+                          <Sun size={13} aria-hidden="true" />
                           <span>{isAr ? 'صباحاً' : 'Morning'}</span>
                         </button>
                         <button
                           type="button"
-                          className={`slot-pill ${bookingForm.slot === 'evening' || !bookingForm.slot ? 'active' : ''}`}
+                          role="radio"
+                          aria-checked={bookingForm.slot !== 'morning'}
+                          className={`slot-pill ${bookingForm.slot !== 'morning' ? 'active' : ''}`}
                           onClick={() => setBookingForm({ ...bookingForm, slot: 'evening' })}
-                          title={isAr ? '5 م - 9 م' : 'Evening'}
+                          title={isAr ? '5 م – 9 م' : '17:00–21:00'}
                         >
-                          <Moon size={13} />
+                          <Moon size={13} aria-hidden="true" />
                           <span>{isAr ? 'مساءً' : 'Evening'}</span>
                         </button>
                       </div>
-                    </div>
+                    </fieldset>
                   </div>
 
                   <button type="submit" className="btn btn-primary btn-full btn-confirm-booking" disabled={isBookingSubmitting}>
-                    <Calendar size={16} />
-                    <span>{isBookingSubmitting ? (isAr ? 'جاري تأكيد الموعد...' : 'Confirming...') : (isAr ? 'تأكيد طلب المعاينة مجاناً' : 'Confirm Free Viewing')}</span>
+                    <Calendar size={16} aria-hidden="true" />
+                    <span>{isBookingSubmitting ? (isAr ? 'جارٍ الإرسال…' : 'Sending…') : (isAr ? 'أرسل طلب المعاينة' : 'Send viewing request')}</span>
                   </button>
+                  <p className="pd-book-fine">{isAr ? 'المعاينة الميدانية مجانية، والموعد يتأكد معك على واتساب.' : 'On-site viewings are free; the time is confirmed with you on WhatsApp.'}</p>
                 </form>
               )}
 

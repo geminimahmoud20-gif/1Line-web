@@ -39,6 +39,8 @@
 }
 .pxe-check.is-ok { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.35); }
 .pxe-check.is-warn { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.4); }
+.pxe-check-row { display: flex; align-items: center; gap: 8px; font-size: var(--crm-text-sm, 0.8rem); color: var(--crm-ink, inherit); cursor: pointer; }
+.pxe-check-row input { width: 16px; height: 16px; accent-color: var(--accent-gold, #C5A059); }
 .pxe-sub { font-size: var(--crm-text-sm, 0.8rem); font-weight: 700; color: var(--crm-ink, inherit); margin-top: 4px; }
 
 .pxe-grid {

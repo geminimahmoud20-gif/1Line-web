@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Receipt, Users, Stethoscope, ChevronDown, Scale } from 'lucide-react';
+import { Receipt, Users, Stethoscope, ChevronDown, Scale, Zap, Compass } from 'lucide-react';
 import { FAMILY_KINDS, FOOT_TRAFFIC_TAGS, ACCESS_POINTS, PARKING_OPTIONS } from '../../utils/propertyInsights';
 import './property-extras.css';
 
@@ -59,6 +59,13 @@ export default function PropertyExtrasEditor({ form, setForm, isAr = true }) {
     return { ...f, legalStatus: hasAny ? next : null };
   });
   const setFinance = (k, v) => setForm((f) => ({ ...f, finance: { ...(f.finance || {}), [k]: v } }));
+  const utilities = form.utilities || {};
+  const setUtility = (k, v) => setForm((f) => ({ ...f, utilities: { ...(f.utilities || {}), [k]: v } }));
+  const orientation = form.orientation || {};
+  const setOrientation = (k, v) => setForm((f) => {
+    const next = { ...(f.orientation || {}), [k]: v };
+    return { ...f, orientation: String(next.direction_ar || '').trim() ? next : (Object.values(next).some((x) => String(x ?? '').trim()) ? next : null) };
+  });
   const setFamily = (k, v) => setForm((f) => ({ ...f, family: { ...(f.family || {}), [k]: v } }));
   const setCommercial = (k, v) => setForm((f) => ({ ...f, commercial: { ...(f.commercial || {}), [k]: v } }));
 
@@ -95,6 +102,30 @@ export default function PropertyExtrasEditor({ form, setForm, isAr = true }) {
           <TextField label={L('تمت المراجعة بمعرفة', 'Reviewed by')} value={legal.reviewedBy} onChange={(v) => setLegal('reviewedBy', v)} placeholder={L('اسم المحامي/المراجع الفعلي', 'Actual lawyer / reviewer')} />
           <TextField label={L('تاريخ المراجعة', 'Review date')} value={legal.reviewDate} onChange={(v) => setLegal('reviewDate', v)} placeholder="2026-09-27" maxLength={20} />
           <TextField label={L('مرجع ملف المراجعة (اختياري)', 'Review file reference (optional)')} value={legal.reportRef} onChange={(v) => setLegal('reportRef', v)} maxLength={40} />
+        </div>
+      </Section>
+
+      <Section icon={Zap} title={L('المرافق والخدمات (كما عاينتها)', 'Utilities (as checked)')} hint={L('تظهر في صفحة العقار', 'Shown on the listing')}>
+        <p className="pxe-note">{L('اكتب الحالة الفعلية فقط، مثال: «عداد كودي» أو «متصل بالشبكة» أو «لا يوجد». الخانات الفارغة لا تظهر.', 'Record the actual state only, e.g. "coded meter", "connected", "none". Empty fields stay hidden.')}</p>
+        <div className="pxe-grid">
+          <TextField label={L('الكهرباء', 'Electricity')} value={utilities.electricity_ar} onChange={(v) => setUtility('electricity_ar', v)} placeholder={L('مثال: عداد كودي مسجل', 'e.g. registered meter')} />
+          <TextField label={L('المياه', 'Water')} value={utilities.water_ar} onChange={(v) => setUtility('water_ar', v)} />
+          <TextField label={L('الغاز', 'Gas')} value={utilities.gas_ar} onChange={(v) => setUtility('gas_ar', v)} placeholder={L('متصل / غير متصل', 'connected / not')} />
+          <TextField label={L('المصعد', 'Elevator')} value={utilities.elevator_ar} onChange={(v) => setUtility('elevator_ar', v)} placeholder={L('اتركه فارغاً لو لا يوجد', 'leave empty if none')} />
+          <TextField label={L('الجراج / الركن', 'Parking')} value={utilities.parking_ar} onChange={(v) => setUtility('parking_ar', v)} />
+          <TextField label={L('تاريخ المعاينة الميدانية', 'Site check date')} value={utilities.verifiedDate} onChange={(v) => setUtility('verifiedDate', v)} placeholder="2026-09-27" maxLength={20} />
+        </div>
+        <label className="pxe-check-row">
+          <input type="checkbox" checked={Boolean(utilities.verifiedOnSite)} onChange={(e) => setUtility('verifiedOnSite', e.target.checked)} />
+          <span>{L('عاينّا المرافق ميدانياً (يظهر للعميل «تمت المعاينة ميدانياً»)', 'We checked these on site (shows "Checked on site")')}</span>
+        </label>
+      </Section>
+
+      <Section icon={Compass} title={L('اتجاه الوحدة والإضاءة', 'Orientation & light')} hint={L('يُظهر بطاقة البوصلة', 'Shows the compass card')}>
+        <div className="pxe-grid">
+          <TextField label={L('اتجاه الواجهة', 'Facing')} value={orientation.direction_ar} onChange={(v) => setOrientation('direction_ar', v)} placeholder={L('مثال: بحري شرقي', 'e.g. north-east')} />
+          <NumField label={L('ساعات الشمس المباشرة', 'Direct sun hours')} value={orientation.sunlightHours} onChange={(v) => setOrientation('sunlightHours', v)} />
+          <TextField label={L('التهوية', 'Ventilation')} value={orientation.ventilationRating_ar} onChange={(v) => setOrientation('ventilationRating_ar', v)} placeholder={L('مثال: تهوية من واجهتين', 'e.g. cross ventilation')} />
         </div>
       </Section>
 
