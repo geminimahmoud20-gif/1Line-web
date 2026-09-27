@@ -764,6 +764,34 @@
 .xs-trade-banner-text small { font-size: 0.82rem; color: var(--xs-muted); line-height: 1.6; }
 .xs-trade-banner-cta { flex: none; font-weight: 800; color: var(--xs-gold-text); font-size: 0.88rem; }
 
+/* Demo (sample) content label — shipped examples, never presented as live data */
+.xs-demo-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #6D28D9;
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px dashed rgba(139, 92, 246, 0.5);
+}
+.dark-theme .xs-demo-tag { color: #C4B5FD; }
+.pd-demo-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px dashed rgba(196, 181, 253, 0.6);
+  background: rgba(139, 92, 246, 0.14);
+  color: #EDE9FE;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
 /* ═══ Listing page (pd-*) ═══════════════════════════════════════ */
 
 /* Back button: App.css forces navy text with !important — unreadable on the navy hero */

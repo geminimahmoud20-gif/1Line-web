@@ -8,6 +8,7 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 // Files go to Vercel Blob via /api/cms-upload (Firebase Storage was never enabled), so no Storage SDK here.
 
 const firebaseConfig = {
@@ -33,6 +34,14 @@ let auth = null;
 try {
   if (isFirebaseConfigured()) {
     app = initializeApp(firebaseConfig);
+    // App Check (anti-spam for public forms): active only when VITE_RECAPTCHA_SITE_KEY is set in
+    // Vercel. With it on, turn on "Enforce" for Firestore in Firebase Console → App Check, so
+    // scripts that skip the site can no longer write leads/requests directly.
+    const appCheckKey = import.meta.env?.VITE_RECAPTCHA_SITE_KEY;
+    if (appCheckKey && typeof window !== 'undefined') {
+      if (import.meta.env?.DEV) self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+      initializeAppCheck(app, { provider: new ReCaptchaV3Provider(appCheckKey), isTokenAutoRefreshEnabled: true });
+    }
     db = getFirestore(app);
     auth = getAuth(app);
     console.log('✅ Firebase connected successfully — بيانات العملاء ستُخزن في السحابة.');

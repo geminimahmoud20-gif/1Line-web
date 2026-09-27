@@ -242,7 +242,12 @@ export default function PropertyCard({
         {/* Top row: status (start) · actions (end) */}
         <div className="pcx-top">
           <div className="pcx-chips">
-            {statusBadge && (
+            {property.isDemo && (
+              <span className="pcx-chip pcx-chip--demo" title={isAr ? 'عقار توضيحي لعرض إمكانيات المنصة — ليس معروضاً للبيع' : 'Sample listing — not for sale'}>
+                {isAr ? 'مثال توضيحي' : 'Sample'}
+              </span>
+            )}
+            {!property.isDemo && statusBadge && (
               <span className={`pcx-chip pcx-chip--${statusBadge.tone}`}>
                 <statusBadge.Icon size={12} strokeWidth={2} aria-hidden="true" />
                 <span>{statusBadge.label}</span>

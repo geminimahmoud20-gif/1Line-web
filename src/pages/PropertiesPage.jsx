@@ -14,7 +14,7 @@ import PropertyCard from '../components/properties/PropertyCard';
 import PropertyFilters from '../components/properties/PropertyFilters';
 import PropertyMapView from '../components/properties/PropertyMapView';
 import ZeroResultsFallback from '../components/properties/ZeroResultsFallback';
-import { PROPERTIES_DATA } from '../data/propertiesData';
+import { DEMO_PROPERTIES } from '../data/demoData';
 import { updatePageSeo } from '../utils/seoHelper';
 import { searchPropertiesSemantic, parseSemanticQuery } from '../utils/semanticSearchEngine';
 
@@ -130,7 +130,7 @@ export default function PropertiesPage({
   };
 
   // Safe properties pool fallback to ensure verified catalog is never empty
-  const safeProperties = (Array.isArray(properties) && properties.length > 0) ? properties : PROPERTIES_DATA;
+  const safeProperties = (Array.isArray(properties) && properties.length > 0) ? properties : DEMO_PROPERTIES;
 
   // Parse semantic query tags if query is present
   const parsedSemantic = useMemo(() => {

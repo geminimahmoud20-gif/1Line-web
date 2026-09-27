@@ -30,9 +30,9 @@ import PropertyCard from '../components/properties/PropertyCard';
 import MarketTickerBar from '../components/home/MarketTickerBar';
 import GoldStandardsSection from '../components/home/GoldStandardsSection';
 import FamilyLegacySection from '../components/family/FamilyLegacySection';
-import { PROPERTY_TYPES, PROPERTIES_DATA } from '../data/propertiesData';
+import { PROPERTY_TYPES } from '../data/propertiesData';
 import { MEGA_PROJECTS } from '../data/projectsData';
-import { INITIAL_DEMANDS } from '../data/mockData';
+import { DEMO_PROPERTIES, DEMO_DEMANDS, isRealItem } from '../data/demoData';
 import { getFounderSettings } from '../utils/founderCmsData';
 import { getAreas } from '../utils/areasData';
 import { updatePageSeo, buildOrganizationSchema } from '../utils/seoHelper';
@@ -227,14 +227,14 @@ export default function HomePage({
   const [marketplaceAreaFilter, setMarketplaceAreaFilter] = useState('all');
 
   // Safe fallback to default verified catalog if parent state was ever empty
-  const safeProperties = (Array.isArray(properties) && properties.length > 0) ? properties : PROPERTIES_DATA;
-  const safeDemands = (Array.isArray(demands) && demands.length > 0) ? demands : INITIAL_DEMANDS;
+  const safeProperties = (Array.isArray(properties) && properties.length > 0) ? properties : DEMO_PROPERTIES;
+  const safeDemands = (Array.isArray(demands) && demands.length > 0) ? demands : DEMO_DEMANDS;
 
   // Exclude hidden, draft, and deleted properties from public homepage
   const publishedProperties = safeProperties.filter(
     (p) => !p.isDeleted && p.status !== 'trash' && p.status !== 'hidden' && p.status !== 'draft'
   );
-  const activePublished = publishedProperties.length > 0 ? publishedProperties : PROPERTIES_DATA;
+  const activePublished = publishedProperties.length > 0 ? publishedProperties : DEMO_PROPERTIES;
 
   // In-Tab Quick District Filter for Marketplace Properties
   const filteredMarketplaceProps = useMemo(() => {
@@ -265,11 +265,14 @@ export default function HomePage({
       });
   }, [safeDemands]);
 
+  // Demo (sample) demands are shown with a label but never counted or totalled
+  const realDemands = useMemo(() => activeDemandsList.filter(isRealItem), [activeDemandsList]);
+
   // Total buyer capital liquidity represented in published demands
   // Budgets arrive as numbers or strings like "3,000,000"
   const totalDemandLiquidity = useMemo(() => {
-    return activeDemandsList.reduce((acc, d) => acc + (Number(String(d.budget ?? '').replace(/[^\d.]/g, '')) || 0), 0);
-  }, [activeDemandsList]);
+    return realDemands.reduce((acc, d) => acc + (Number(String(d.budget ?? '').replace(/[^\d.]/g, '')) || 0), 0);
+  }, [realDemands]);
 
   // null hides the tile — never show a placeholder figure
   const demandLiquidityMillions = useMemo(() => {
@@ -744,7 +747,7 @@ export default function HomePage({
       </section>
 
       {/* 📈 REAL-TIME SOHAG PROPTECH MARKET TICKER */}
-      <MarketTickerBar lang={lang} demands={activeDemandsList} />
+      <MarketTickerBar lang={lang} demands={realDemands} />
 
       {/* 🏢 2. SOHAG LIVE MARKETPLACE HUB (Consolidated Segmented Discovery) */}
       <section className="homepage-section bg-surface" id="marketplace-hub">
@@ -769,7 +772,7 @@ export default function HomePage({
           <div className="hx-seg" role="tablist" aria-label={lang === 'ar' ? 'نوع العرض' : 'Listing view'}>
             {[
               { id: 'properties', icon: Building, ar: 'العقارات المعروضة', en: 'Properties', count: activePublished.length },
-              { id: 'demands', icon: Users, ar: 'طلبات المشترين الكاش', en: 'Cash buyer demands', count: activeDemandsList.length }
+              { id: 'demands', icon: Users, ar: 'طلبات المشترين الكاش', en: 'Cash buyer demands', count: realDemands.length }
             ].map(({ id, icon: Icon, ar, en, count }) => (
               <button
                 key={id}
@@ -846,7 +849,7 @@ export default function HomePage({
                 <div className="metric-info">
                   <span>{lang === 'ar' ? 'إجمالي القوة الشرائية المسجلة' : 'Total Purchasing Power'}</span>
                   <strong>
-                    {(activeDemandsList.reduce((sum, d) => sum + (typeof d.budget === 'number' ? d.budget : parseInt(String(d.budget).replace(/,/g, '')) || 0), 0) / 1000000).toFixed(1)}M {lang === 'ar' ? 'مليون ج.م' : 'EGP'}
+                    {(realDemands.reduce((sum, d) => sum + (typeof d.budget === 'number' ? d.budget : parseInt(String(d.budget).replace(/,/g, '')) || 0), 0) / 1000000).toFixed(1)}M {lang === 'ar' ? 'مليون ج.م' : 'EGP'}
                   </strong>
                 </div>
               </div>
@@ -858,7 +861,7 @@ export default function HomePage({
                 </div>
                 <div className="metric-info">
                   <span>{lang === 'ar' ? 'طلبات شراء منشورة الآن' : 'Published buyer demands'}</span>
-                  <strong>{activeDemandsList.length} {lang === 'ar' ? 'طلب' : 'demands'}</strong>
+                  <strong>{realDemands.length} {lang === 'ar' ? 'طلب' : 'demands'}</strong>
                 </div>
               </div>
 
@@ -883,8 +886,10 @@ export default function HomePage({
                   title={lang === 'ar' ? 'انقر للانتقال إلى بوابة طلبات المشترين' : 'Click to view in Demands Portal'}
                 >
                   <div className="demand-top-row">
-                    <span className="demand-time-tag">{dem.timestamp}</span>
-                    <span 
+                    {dem.isDemo
+                      ? <span className="xs-demo-tag">{lang === 'ar' ? 'مثال توضيحي' : 'Sample'}</span>
+                      : <span className="demand-time-tag">{dem.timestamp}</span>}
+                    <span
                       className="urgency-badge"
                       style={dem.urgency === 'high' ? {
                         background: '#fee2e2',
@@ -941,7 +946,7 @@ export default function HomePage({
                 </button>
               )}
               <Link to="/demands" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span>{lang === 'ar' ? `استعراض كل طلبات المشترين (${activeDemandsList.length})` : 'All Demands'}</span>
+                <span>{lang === 'ar' ? `استعراض كل طلبات المشترين (${realDemands.length})` : 'All Demands'}</span>
                 {lang === 'ar' ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
               </Link>
             </div>
@@ -1034,9 +1039,9 @@ export default function HomePage({
                   <dd>{lang === 'ar' ? 'عمولة تسويق أو وساطة على البائع' : 'brokerage fee to the seller'}</dd>
                 </div>
               )}
-              {activeDemandsList.length > 0 && (
+              {realDemands.length > 0 && (
                 <div>
-                  <dt><bdi>{activeDemandsList.length}</bdi></dt>
+                  <dt><bdi>{realDemands.length}</bdi></dt>
                   <dd>{lang === 'ar' ? 'طلب شراء كاش مسجل الآن' : 'registered buyer demands active'}</dd>
                 </div>
               )}
@@ -1067,8 +1072,8 @@ export default function HomePage({
               </Link>
               <Link to="/demands" className="hx-btn hx-btn--line">
                 <span>{lang === 'ar' ? 'تصفح طلبات المشترين' : 'Browse buyer demands'}</span>
-                {activeDemandsList.length > 0 && (
-                  <span className="hx-btn-demands-count">{activeDemandsList.length}</span>
+                {realDemands.length > 0 && (
+                  <span className="hx-btn-demands-count">{realDemands.length}</span>
                 )}
                 {lang === 'ar' ? <ArrowLeft size={16} strokeWidth={2} /> : <ArrowRight size={16} strokeWidth={2} />}
               </Link>

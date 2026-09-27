@@ -1,7 +1,12 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { PROPERTIES_DATA } from '../data/propertiesData';
 import { MEGA_PROJECTS } from '../data/projectsData';
-import { INITIAL_LEADS, INITIAL_DEMANDS } from '../data/mockData';
+import { INITIAL_LEADS } from '../data/mockData';
+import { DEMO_PROPERTIES, DEMO_DEMANDS, tagDemoProperty, tagDemoDemand, isRealItem } from '../data/demoData';
+
+const CATALOG_LIVE_KEY = 'oneline_catalog_live';
+const readCatalogLive = () => {
+  try { return localStorage.getItem(CATALOG_LIVE_KEY) === '1'; } catch { return false; }
+};
 import {
   saveLead,
   subscribeToLeads,
@@ -33,20 +38,22 @@ export function PropertiesProvider({ children }) {
   const { triggerToast } = useUIModal();
 
   // Properties State
+  // Demo listings (isDemo) only fill an empty catalog. Once the real catalog has loaded on this
+  // device (CATALOG_LIVE_KEY), demos are never re-added — and the cloud snapshot prunes them.
   const [properties, setProperties] = useState(() => {
-    const stored = readStoredJson('oneline_properties', PROPERTIES_DATA, isRecordArray);
+    const catalogLive = readCatalogLive();
+    const stored = readStoredJson('oneline_properties', DEMO_PROPERTIES, isRecordArray);
     if (Array.isArray(stored) && stored.length > 0) {
-      const validStored = stored.filter(p => p && typeof p === 'object' && p.id);
-      const existingIds = new Set(validStored.map(p => p.id));
-      const missing = PROPERTIES_DATA.filter(p => p && !existingIds.has(p.id));
-      if (missing.length > 0) {
-        const merged = [...validStored, ...missing];
-        try { localStorage.setItem('oneline_properties', JSON.stringify(merged)); } catch { /* storage unavailable */ }
-        return merged;
+      const validStored = stored.filter(p => p && typeof p === 'object' && p.id).map(tagDemoProperty);
+      if (catalogLive) {
+        const realOnly = validStored.filter(isRealItem);
+        return realOnly.length > 0 ? realOnly : validStored;
       }
-      return validStored.length > 0 ? validStored : PROPERTIES_DATA;
+      const existingIds = new Set(validStored.map(p => String(p.id)));
+      const missing = DEMO_PROPERTIES.filter(p => !existingIds.has(String(p.id)));
+      return missing.length > 0 ? [...validStored, ...missing] : (validStored.length > 0 ? validStored : DEMO_PROPERTIES);
     }
-    return PROPERTIES_DATA;
+    return DEMO_PROPERTIES;
   });
 
   // Cloud write results → one honest toast. Local state is already updated, so the UI never waits.
@@ -155,16 +162,26 @@ export function PropertiesProvider({ children }) {
   // Live catalog from Firestore for every visitor: cloud docs override the bundled seed
   // by id, tombstones remove items, cloud-only items (added in the CRM) go first.
   useEffect(() => {
-    const applyCloud = (setter, storageKey) => (cloudDocs) => {
+    const applyCloud = (setter, storageKey, pruneDemos = false) => (cloudDocs) => {
       if (!Array.isArray(cloudDocs) || cloudDocs.length === 0) return;
+      const liveDocs = cloudDocs.filter((d) => !d.deleted);
+      if (pruneDemos && liveDocs.length > 0) {
+        try { localStorage.setItem(CATALOG_LIVE_KEY, '1'); } catch { /* storage unavailable */ }
+      }
       setter((prev) => {
-        const byId = new Map(prev.map((p) => [String(p.id), p]));
+        const cloudIds = new Set(cloudDocs.map((d) => String(d.id)));
+        // Real catalog present → drop bundled demo items the database doesn't have
+        const base = pruneDemos && liveDocs.length > 0
+          ? prev.filter((p) => !p.isDemo || cloudIds.has(String(p.id)))
+          : prev;
+        const byId = new Map(base.map((p) => [String(p.id), p]));
         const fresh = [];
         for (const docItem of cloudDocs) {
           const key = String(docItem.id);
           if (docItem.deleted) { byId.delete(key); continue; }
-          if (byId.has(key)) byId.set(key, { ...byId.get(key), ...docItem });
-          else fresh.push(docItem);
+          // A record that exists in the database is real, even if it shares a demo id
+          if (byId.has(key)) byId.set(key, { ...byId.get(key), ...docItem, isDemo: false });
+          else fresh.push({ ...docItem, isDemo: false });
         }
         fresh.sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
         const next = [...fresh, ...byId.values()];
@@ -172,7 +189,7 @@ export function PropertiesProvider({ children }) {
         return next;
       });
     };
-    const unsubProps = subscribeToCatalog('properties', applyCloud(setProperties, 'oneline_properties'));
+    const unsubProps = subscribeToCatalog('properties', applyCloud(setProperties, 'oneline_properties', true));
     const unsubProjects = subscribeToCatalog('projects', applyCloud(setProjects, 'oneline_mega_projects'));
     return () => { unsubProps(); unsubProjects(); };
   }, []);
@@ -267,10 +284,11 @@ export function PropertiesProvider({ children }) {
 
   // Demands State
   const [demands, setDemands] = useState(() => {
-    const fallback = INITIAL_DEMANDS.map((d) => ({ ...d, status: d.status || 'published' }));
-    const stored = readStoredJson('oneline_demands', fallback, isRecordArray);
-    const valid = Array.isArray(stored) ? stored.filter(d => d && typeof d === 'object') : fallback;
-    return valid.length > 0 ? valid : fallback;
+    // Demo demands (isDemo) are labelled in the UI and excluded from counts/totals;
+    // the first real snapshot from Firestore replaces them.
+    const stored = readStoredJson('oneline_demands', DEMO_DEMANDS, isRecordArray);
+    const valid = Array.isArray(stored) ? stored.filter(d => d && typeof d === 'object').map(tagDemoDemand) : DEMO_DEMANDS;
+    return valid.length > 0 ? valid : DEMO_DEMANDS;
   });
 
   // Add New Lead Handler

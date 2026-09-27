@@ -155,6 +155,7 @@
 .pcx-chip--verified svg { color: #D9B97E; }
 .pcx-chip--deal { background: linear-gradient(100deg, #EFD9A3, #C5A059); color: #0B1B32; border-color: transparent; }
 .pcx-chip--glass { background: rgba(255, 255, 255, 0.16); }
+.pcx-chip--demo { background: rgba(91, 33, 182, 0.72); border: 1px dashed rgba(221, 214, 254, 0.8); color: #F5F3FF; }
 
 /* "معاينة الغربة" — the one interactive chip on the photo */
 .pcx-chip--remote {

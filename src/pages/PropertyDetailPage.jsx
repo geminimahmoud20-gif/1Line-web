@@ -330,6 +330,13 @@ export default function PropertyDetailPage({
             </div>
           </div>
 
+          {property.isDemo && (
+            <div className="pd-demo-banner" role="note">
+              <Sparkles size={16} aria-hidden="true" />
+              <span>{isAr ? 'هذا عقار توضيحي لعرض إمكانيات المنصة، وليس معروضاً للبيع. تصفح العقارات المتاحة أو اطلب عقاراً بمواصفاتك.' : 'This is a sample listing that shows what the platform can do — it is not for sale.'}</span>
+            </div>
+          )}
+
           {/* Main Title & Price Header Banner */}
           <div className="detail-header-block">
             <div className="detail-title-col">

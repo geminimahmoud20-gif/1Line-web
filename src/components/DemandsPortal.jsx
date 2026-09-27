@@ -387,6 +387,7 @@ export const DemandsPortal = ({
                   <TypeIcon size={14} style={{ color: '#ffd700', flexShrink: 0 }} />
                   <span>{typeBadge.label}</span>
                 </span>
+                {dem.isDemo && <span className="xs-demo-tag">{lang === 'ar' ? 'مثال توضيحي' : 'Sample'}</span>}
 
                 <span className={`demand-urgency-pill ${urgencyBadge.className}`}>
                   {urgencyBadge.hasPulse ? (
