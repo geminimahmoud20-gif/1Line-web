@@ -778,7 +778,8 @@
 
 /* Phones: the title column's 540px flex-basis became a 540px HEIGHT in the column layout */
 @media (max-width: 900px) {
-  .property-detail-hero-stage .detail-title-col { flex: 0 0 auto; }
+  /* extra class for specificity: this file can load before home-luxe.css */
+  .property-detail-hero-stage .detail-header-block .detail-title-col { flex: 0 0 auto; }
 }
 
 /* Office-hours status */
