@@ -10,7 +10,7 @@
 //   4. None → conversion hidden, EGP only
 // =============================================================
 
-import { subscribeToSettings } from '../firebaseLazy';
+import { subscribeToSettings } from '../firebaseLazy.js';
 
 export const CURRENCY_META = {
   EGP: { code: 'EGP', flag: '🇪🇬', symbol_ar: 'ج.م', symbol_en: 'EGP', name_ar: 'جنيه مصري', name_en: 'Egyptian Pound' },

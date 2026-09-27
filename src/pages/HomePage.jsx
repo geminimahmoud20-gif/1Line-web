@@ -1040,7 +1040,7 @@ export default function HomePage({
                     <bdi>{demandLiquidityMillions}</bdi>
                     <span className="hx-proof-unit">{lang === 'ar' ? 'مليون ج.م' : 'M EGP'}</span>
                   </dt>
-                  <dd>{lang === 'ar' ? 'إجمالي ميزانيات طلبات الشراء المنشورة' : 'combined budgets of published buyer demands'}</dd>
+                  <dd>{lang === 'ar' ? 'سيولة كاش جاهزة للتنفيذ' : 'cash liquidity ready to execute'}</dd>
                 </div>
               )}
               {SELLER_PROOF.avgDaysToClose && (
