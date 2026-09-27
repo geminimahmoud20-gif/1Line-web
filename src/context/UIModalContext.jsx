@@ -31,6 +31,11 @@ export function UIModalProvider({ children }) {
   const [favoritesDrawerOpen, setFavoritesDrawerOpen] = useState(false);
   const [aiModalOpen, setAiModalOpen] = useState(false);
 
+  // "معاينة الغربة" — remote expat inspection. `false` = closed, null = general request, object = listing
+  const [remoteInspectionTarget, setRemoteInspectionTarget] = useState(false);
+  const openRemoteInspection = useCallback((property = null) => setRemoteInspectionTarget(property || null), []);
+  const closeRemoteInspection = useCallback(() => setRemoteInspectionTarget(false), []);
+
   // Share Handlers
   const handleOpenShare = useCallback((data = null) => {
     setShareData(data);
@@ -107,7 +112,10 @@ export function UIModalProvider({ children }) {
     favoritesDrawerOpen,
     setFavoritesDrawerOpen,
     aiModalOpen,
-    setAiModalOpen
+    setAiModalOpen,
+    remoteInspectionTarget,
+    openRemoteInspection,
+    closeRemoteInspection
   };
 
   return (

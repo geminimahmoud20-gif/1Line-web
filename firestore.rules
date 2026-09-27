@@ -130,6 +130,76 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // 🌍 10. EXPAT REMOTE INSPECTIONS (live video / drone / street footage requests)
+    // Public create with a fixed field list; staff triage in the CRM.
+    function isStr(data, field, minLen, maxLen) {
+      return data[field] is string && data[field].size() >= minLen && data[field].size() <= maxLen;
+    }
+    function optStr(data, field, maxLen) {
+      return !(field in data) || (data[field] is string && data[field].size() <= maxLen);
+    }
+    function optNum(data, field, maxVal) {
+      return !(field in data) || ((data[field] is int || data[field] is float) && data[field] >= 0 && data[field] <= maxVal);
+    }
+    match /remote_inspections/{reqId} {
+      allow create: if request.resource.data.keys().hasOnly([
+                        'name', 'phone', 'country', 'countryCode', 'coverage', 'preferredDate', 'preferredSlot',
+                        'notes', 'propertyId', 'propertyTitle', 'propertyArea', 'source', 'lang', 'vip',
+                        'submittedAt', 'status', 'createdAt'])
+                    && isStr(request.resource.data, 'name', 2, 100)
+                    && isStr(request.resource.data, 'phone', 8, 25)
+                    && isStr(request.resource.data, 'country', 2, 40)
+                    && optStr(request.resource.data, 'countryCode', 8)
+                    && request.resource.data.coverage is list
+                    && request.resource.data.coverage.size() >= 1 && request.resource.data.coverage.size() <= 3
+                    && optStr(request.resource.data, 'preferredDate', 20)
+                    && optStr(request.resource.data, 'preferredSlot', 40)
+                    && optStr(request.resource.data, 'notes', 1000)
+                    && optStr(request.resource.data, 'propertyId', 80)
+                    && optStr(request.resource.data, 'propertyTitle', 200)
+                    && optStr(request.resource.data, 'propertyArea', 60)
+                    && optStr(request.resource.data, 'source', 40)
+                    && optStr(request.resource.data, 'lang', 4)
+                    && optStr(request.resource.data, 'submittedAt', 40)
+                    && request.resource.data.status == 'new'
+                    && request.resource.data.createdAt == request.time;
+      allow read: if isStaff();
+      allow update: if isLeadEditor();
+      allow delete: if isAdmin();
+    }
+
+    // 🔁 11. REAL ESTATE TRADE-IN (swap) REQUESTS
+    match /trade_ins/{reqId} {
+      allow create: if request.resource.data.keys().hasOnly([
+                        'name', 'phone', 'country', 'offerType', 'offerGovernorate', 'offerLocation', 'offerSize',
+                        'offerValue', 'offerLegal', 'wantType', 'wantArea', 'wantSize', 'wantNotes', 'diffMode',
+                        'diffAmount', 'notes', 'source', 'lang', 'submittedAt', 'status', 'createdAt'])
+                    && isStr(request.resource.data, 'name', 2, 100)
+                    && isStr(request.resource.data, 'phone', 8, 25)
+                    && optStr(request.resource.data, 'country', 40)
+                    && isStr(request.resource.data, 'offerType', 2, 30)
+                    && isStr(request.resource.data, 'offerGovernorate', 2, 30)
+                    && optStr(request.resource.data, 'offerLocation', 200)
+                    && optNum(request.resource.data, 'offerSize', 1000000)
+                    && optNum(request.resource.data, 'offerValue', 10000000000)
+                    && optStr(request.resource.data, 'offerLegal', 40)
+                    && isStr(request.resource.data, 'wantType', 2, 30)
+                    && optStr(request.resource.data, 'wantArea', 60)
+                    && optNum(request.resource.data, 'wantSize', 1000000)
+                    && optStr(request.resource.data, 'wantNotes', 500)
+                    && request.resource.data.diffMode in ['pay', 'receive', 'even']
+                    && optNum(request.resource.data, 'diffAmount', 10000000000)
+                    && optStr(request.resource.data, 'notes', 1000)
+                    && optStr(request.resource.data, 'source', 40)
+                    && optStr(request.resource.data, 'lang', 4)
+                    && optStr(request.resource.data, 'submittedAt', 40)
+                    && request.resource.data.status == 'new'
+                    && request.resource.data.createdAt == request.time;
+      allow read: if isStaff();
+      allow update: if isLeadEditor();
+      allow delete: if isAdmin();
+    }
+
     // 💼 9. DEALS & PIPELINE
     match /deals/{dealId} {
       allow read: if hasRole(['sales_manager', 'finance', 'viewer']) || isLeadEditor();

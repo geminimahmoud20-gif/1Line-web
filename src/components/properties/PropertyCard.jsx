@@ -21,10 +21,13 @@ import {
   Rotate3d,
   Images,
   TrendingDown,
-  Wallet
+  Wallet,
+  Video
 } from 'lucide-react';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { formatCurrencyPrice, getPriceBenchmark } from '../../utils/currencyAndBenchmark';
+import { formatApprox } from '../../utils/fxRates';
+import { useUIModal } from '../../context/UIModalContext';
 import '../../styles/property-card.css';
 
 const FALLBACK_PROPERTY_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 500' fill='%23071e3d'%3E%3Crect width='800' height='500' fill='%23071e3d'/%3E%3Cpath d='M400 130 L620 320 L180 320 Z' fill='%230b4ea2' opacity='0.7'/%3E%3Crect x='340' y='220' width='120' height='100' rx='20' fill='%23fdcb42' opacity='0.85'/%3E%3Ctext x='50%25' y='75%25' dominant-baseline='middle' text-anchor='middle' fill='%23ffffff' font-family='sans-serif' font-size='24' font-weight='bold'%3E1LINE REAL ESTATE%3C/text%3E%3Ctext x='50%25' y='85%25' dominant-baseline='middle' text-anchor='middle' fill='%23fdcb42' font-family='sans-serif' font-size='16'%3E%D8%B9%D9%82%D8%A7%D8%B1%D8%A7%D8%AA%20%D8%B3%D9%88%D9%87%D8%A7%D8%AC%20%D8%A7%D9%84%D9%85%D8%B9%D8%AA%D9%85%D8%AF%D8%A9%3C/text%3E%3C/svg%3E";
@@ -97,6 +100,7 @@ export default function PropertyCard({
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const touchStartX = useRef(null);
   const swiped = useRef(false);
+  const { openRemoteInspection } = useUIModal();
 
   if (!property) return null;
 
@@ -299,6 +303,16 @@ export default function PropertyCard({
         <div className="pcx-bottom">
           <div className="pcx-chips">
             <span className="pcx-chip pcx-chip--glass">{sectorLabel}</span>
+            {/* معاينة الغربة — expat remote inspection */}
+            <button
+              type="button"
+              className="pcx-chip pcx-chip--remote"
+              onClick={(e) => { stop(e); openRemoteInspection(property); }}
+              title={isAr ? 'طلب معاينة الغربة: فيديو حي أو جولة درون' : 'Remote inspection: live video or drone tour'}
+            >
+              <Video size={12} strokeWidth={2} aria-hidden="true" />
+              <span>{isAr ? 'معاينة الغربة' : 'Remote tour'}</span>
+            </button>
             {property.virtualTour && (
               <span className="pcx-chip pcx-chip--glass">
                 <Rotate3d size={12} strokeWidth={2} aria-hidden="true" />
@@ -337,6 +351,12 @@ export default function PropertyCard({
           )}
         </div>
 
+        {priceData.approx && (
+          <span className="pcx-fx" title={isAr ? 'سعر استرشادي بعملة العرض المختارة — التعاقد بالجنيه' : 'Indicative, in your display currency — contract in EGP'}>
+            <bdi>{priceData.approx}</bdi>
+          </span>
+        )}
+
         {belowAvgPct > 0 && (
           <span className="pcx-insight" title={isAr ? 'مقارنة استرشادية بمتوسط سعر المتر في المنطقة' : 'Indicative, vs. the district average price per m²'}>
             <TrendingDown size={13} strokeWidth={2} aria-hidden="true" />
@@ -370,6 +390,9 @@ export default function PropertyCard({
             <div className="pcx-fin-cell">
               <span className="pcx-fin-label">{isAr ? 'المقدم' : 'Down payment'}</span>
               <span className="pcx-fin-val"><bdi>{fmt(property.downPayment)}</bdi> <small>{isAr ? 'ج.م' : 'EGP'}</small></span>
+              {currency !== 'EGP' && formatApprox(property.downPayment, currency, lang) && (
+                <span className="pcx-fin-fx"><bdi>{formatApprox(property.downPayment, currency, lang)}</bdi></span>
+              )}
             </div>
             <div className="pcx-fin-cell pcx-fin-cell--accent">
               <span className="pcx-fin-label">
@@ -377,6 +400,9 @@ export default function PropertyCard({
                 {installmentYears > 0 && <em>{isAr ? `${installmentYears} سنوات` : `${installmentYears} yrs`}</em>}
               </span>
               <span className="pcx-fin-val"><bdi>{fmt(property.monthlyInstallment)}</bdi> <small>{isAr ? 'ج.م' : 'EGP'}</small></span>
+              {currency !== 'EGP' && formatApprox(property.monthlyInstallment, currency, lang) && (
+                <span className="pcx-fin-fx"><bdi>{formatApprox(property.monthlyInstallment, currency, lang)}</bdi></span>
+              )}
             </div>
           </div>
         ) : (

@@ -5,16 +5,7 @@ const PreferencesContext = createContext(null);
 
 export function PreferencesProvider({ children }) {
   const [lang, setLang] = useState('ar');
-  const [currency, setCurrency] = useState(() => {
-    try {
-      localStorage.removeItem('oneline_currency');
-    } catch (e) {}
-    return 'EGP';
-  });
-
-  const handleSetCurrency = useCallback(() => {
-    setCurrency('EGP');
-  }, []);
+  // Display currency lives in CurrencyContext (EGP stays the contract currency)
 
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('oneline_theme') || 'light';
@@ -68,8 +59,6 @@ export function PreferencesProvider({ children }) {
     lang,
     setLang,
     t,
-    currency,
-    setCurrency: handleSetCurrency,
     theme,
     toggleTheme,
     soundEnabled,

@@ -30,6 +30,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
+import CurrencySwitcher from './CurrencySwitcher';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { playNotificationChime } from '../../utils/notificationHub';
 import { useClientAuth } from '../../context/ClientAuthContext';
@@ -403,6 +404,11 @@ export default function Header({
 
           {/* Unified Glassmorphic Utility Control Group */}
           <div className="header-utility-pill-group">
+            {/* Display currency for expats (indicative "≈" equivalents; contracts stay in EGP) */}
+            <CurrencySwitcher lang={lang} compact />
+
+            <div className="utility-divider" />
+
             {/* Theme Toggle (Sun/Moon) with Luxury Rotation Effect */}
             <button
               type="button"

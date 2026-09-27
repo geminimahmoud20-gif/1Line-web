@@ -3,12 +3,13 @@
  * Designed for Sohag, Upper Egypt, and Gulf Expat Investors.
  */
 
-// Platform currency definition (Strictly Egyptian Pound - EGP only)
+// Contract currency is always EGP. Other currencies are display-only "≈" equivalents (see utils/fxRates.js).
 export const CURRENCY_RATES = {
   EGP: { rate: 1, symbol_ar: 'ج.م', symbol_en: 'EGP', flag: '🇪🇬' }
 };
 
 import { getAreas } from './areasData.js';
+import { formatApprox } from './fxRates.js';
 
 // Fallback District average price per m² benchmarks in Sohag (EGP / m²)
 export const SOHAG_DISTRICT_BENCHMARKS = {
@@ -42,17 +43,23 @@ export function getDistrictBenchmark(areaKey) {
 }
 
 /**
- * Formats a monetary value according to Egyptian Pound (EGP) and language
+ * Formats an EGP amount. `primary` is always EGP (the contract currency).
+ * When a display currency is chosen and a rate is known, `approx` holds "≈ 75,400 ر.س";
+ * `isConverted`/`originalEgp` mirror it for screens that already render that pair.
  */
 export function formatCurrencyPrice(amountInEgp, currency = 'EGP', lang = 'ar') {
   const num = Number(amountInEgp) || 0;
   const currData = CURRENCY_RATES.EGP;
   const isAr = lang === 'ar';
+  const approx = currency && currency !== 'EGP' ? formatApprox(num, currency, lang) : '';
 
   return {
-    primary: num.toLocaleString(),
+    primary: num.toLocaleString('en-US'),
     symbol: isAr ? currData.symbol_ar : currData.symbol_en,
-    isConverted: false,
+    isConverted: Boolean(approx),
+    approx,
+    // Legacy field name: screens render "≈ {originalEgp}" — it now carries the foreign equivalent
+    originalEgp: approx.replace(/^≈\s*/, ''),
     flag: currData.flag
   };
 }

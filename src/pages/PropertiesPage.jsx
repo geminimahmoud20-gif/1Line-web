@@ -5,8 +5,11 @@ import {
   Map as MapIcon, 
   ArrowUpDown,
   ShieldCheck,
-  CheckCircle2
+  CheckCircle2,
+  Users
 } from 'lucide-react';
+import { FAMILY_KINDS } from '../utils/propertyInsights';
+import '../styles/expat-suite.css';
 import PropertyCard from '../components/properties/PropertyCard';
 import PropertyFilters from '../components/properties/PropertyFilters';
 import PropertyMapView from '../components/properties/PropertyMapView';
@@ -72,6 +75,14 @@ export default function PropertiesPage({
     maxInstallmentYears: 'all',
     smartTags: []
   });
+
+  // بيت العيلة filter lives in the URL only (?family=full_building …), set from the homepage hub or the chips below
+  const familyFilter = searchParams.get('family') || 'all';
+  const setFamilyFilter = (kind) => {
+    const next = new URLSearchParams(searchParams);
+    if (!kind || kind === 'all') next.delete('family'); else next.set('family', kind);
+    setSearchParams(next);
+  };
 
   // Synchronize URL search params (e.g. from Omnisearch or external links) with active filters
   useEffect(() => {
@@ -142,6 +153,9 @@ export default function PropertiesPage({
 
     // 3. Apply manual dropdown filters
     return list.filter((prop) => {
+      // Family hub filter
+      if (familyFilter !== 'all' && prop.family?.kind !== familyFilter) return false;
+
       // Type filter
       if (filters.type && filters.type !== 'all' && prop.type !== filters.type) return false;
 
@@ -258,7 +272,7 @@ export default function PropertiesPage({
       }
       return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
     });
-  }, [safeProperties, filters, sortBy]);
+  }, [safeProperties, filters, sortBy, familyFilter]);
 
   return (
     <div className="properties-page-wrapper">
@@ -353,6 +367,19 @@ export default function PropertiesPage({
           onResetFilters={handleResetFilters}
           totalResults={filteredProperties.length}
         />
+
+        {/* بيت العيلة — family-sized categories */}
+        <nav className="xs-family-chips" aria-label={lang === 'ar' ? 'تصنيفات بيت العيلة' : 'Family categories'}>
+          <span className="xs-family-chips-label"><Users size={14} aria-hidden="true" /> {lang === 'ar' ? 'بيت العيلة:' : 'Family hub:'}</span>
+          <button type="button" className={familyFilter === 'all' ? 'is-on' : ''} onClick={() => setFamilyFilter('all')} aria-pressed={familyFilter === 'all'}>
+            {lang === 'ar' ? 'الكل' : 'All'}
+          </button>
+          {FAMILY_KINDS.map((k) => (
+            <button key={k.id} type="button" className={familyFilter === k.id ? 'is-on' : ''} onClick={() => setFamilyFilter(k.id)} aria-pressed={familyFilter === k.id}>
+              {lang === 'ar' ? k.ar : k.en}
+            </button>
+          ))}
+        </nav>
 
         {/* 🤖 AI Semantic Recognition Active Banner */}
         {parsedSemantic && parsedSemantic.tagsFound && parsedSemantic.tagsFound.length > 0 && (

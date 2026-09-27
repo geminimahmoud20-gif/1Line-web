@@ -27,6 +27,7 @@ import {
 import PropertyCard from '../components/properties/PropertyCard';
 import MarketTickerBar from '../components/home/MarketTickerBar';
 import GoldStandardsSection from '../components/home/GoldStandardsSection';
+import FamilyLegacySection from '../components/family/FamilyLegacySection';
 import { PROPERTY_TYPES, PROPERTIES_DATA } from '../data/propertiesData';
 import { MEGA_PROJECTS } from '../data/projectsData';
 import { INITIAL_DEMANDS } from '../data/mockData';
@@ -930,6 +931,11 @@ export default function HomePage({
 
       {/* 📢 Sponsored banners (CRM → الإعلانات, placement "inline"); renders nothing when no campaign is live */}
       <SponsoredStrip campaigns={inlineAds} lang={lang} />
+
+      {/* 👨‍👩‍👧‍👦 بيت العيلة — family-sized listings + cost split calculator */}
+      <ScrollReveal>
+        <FamilyLegacySection lang={lang} currency={currency} properties={activePublished} />
+      </ScrollReveal>
 
       {/* 🏡 3. SELLER INVITATION SECTION (Architectural Editorial Contrast) */}
       <ScrollReveal>

@@ -58,6 +58,8 @@ export const deleteCatalogItem = lazyCall('deleteCatalogItem');
 export const incrementAdStat = lazyCall('incrementAdStat');
 export const uploadCmsMedia = lazyCall('uploadCmsMedia');
 export const getCmsStorageStatus = lazyCall('getCmsStorageStatus');
+export const submitIntakeRecord = lazyCall('submitIntakeRecord');
+export const updateIntakeRecord = lazyCall('updateIntakeRecord');
 
 export const subscribeToLeads = lazySubscribe('subscribeToLeads');
 export const subscribeToDemands = lazySubscribe('subscribeToDemands');
@@ -65,3 +67,4 @@ export const monitorAuthState = lazySubscribe('monitorAuthState');
 export const subscribeToSettings = lazySubscribe('subscribeToSettings');
 export const subscribeToCatalog = lazySubscribe('subscribeToCatalog');
 export const subscribeToAdStats = lazySubscribe('subscribeToAdStats');
+export const subscribeToIntake = lazySubscribe('subscribeToIntake');

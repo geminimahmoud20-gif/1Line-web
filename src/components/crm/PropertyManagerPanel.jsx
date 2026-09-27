@@ -29,6 +29,7 @@ import WhatsAppMatchNotifierModal from './WhatsAppMatchNotifierModal';
 import { findMatchingClientsForProperty } from '../../utils/matchingEngine';
 import { compressImageFile } from '../../utils/imageCompressor';
 import { uploadMultipleImages } from '../../utils/imageUploadService';
+import PropertyExtrasEditor from './PropertyExtrasEditor';
 
 // Accurate GPS Coordinates map for Sohag Districts
 const SOHAG_AREA_COORDINATES = {
@@ -1456,6 +1457,9 @@ export default function PropertyManagerPanel({
                   </>
                 )}
               </div>
+
+              {/* Transparent costs, family hub tag and commercial/medical indicators (all optional) */}
+              <PropertyExtrasEditor form={form} setForm={setForm} isAr={isAr} />
 
               {/* 🎯 Custom District Benchmark & Nearby Landmarks Control */}
               <div style={{

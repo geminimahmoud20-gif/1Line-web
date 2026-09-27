@@ -4,6 +4,7 @@ import { MessageSquare } from 'lucide-react';
 
 // Context Providers & Hooks
 import { PreferencesProvider, usePreferences } from './context/PreferencesContext';
+import { CurrencyProvider, useCurrency } from './context/CurrencyContext';
 import { UIModalProvider, useUIModal } from './context/UIModalContext';
 import { PropertiesProvider, useProperties } from './context/PropertiesContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -42,6 +43,7 @@ import BackToTopButton from './components/common/BackToTopButton';
 import AIPropertyAdvisorModal from './components/common/AIPropertyAdvisorModal';
 import QuickSearchModal from './components/common/QuickSearchModal';
 import ClientAuthModal from './components/common/ClientAuthModal';
+import RemoteInspectionModal from './components/expat/RemoteInspectionModal';
 import { ClientAuthProvider, useClientAuth } from './context/ClientAuthContext';
 
 // Critical Landing Page (Direct Import for instant FCP)
@@ -106,12 +108,12 @@ import './styles/home-luxe.css';
  * Main Application Shell & Route Controller
  */
 function AppContent() {
-  const { 
-    lang, setLang, t, 
-    currency, setCurrency, 
-    theme, toggleTheme, 
-    soundEnabled, toggleSound 
+  const {
+    lang, setLang, t,
+    theme, toggleTheme,
+    soundEnabled, toggleSound
   } = usePreferences();
+  const { currency, setCurrency } = useCurrency();
 
   const {
     toasts, triggerToast, dismissToast,
@@ -125,7 +127,8 @@ function AppContent() {
     aboutFounderModalOpen, setAboutFounderModalOpen,
     compareDrawerOpen, setCompareDrawerOpen,
     favoritesDrawerOpen, setFavoritesDrawerOpen,
-    aiModalOpen, setAiModalOpen
+    aiModalOpen, setAiModalOpen,
+    remoteInspectionTarget, closeRemoteInspection
   } = useUIModal();
 
   const {
@@ -445,6 +448,16 @@ function AppContent() {
         onClose={() => setCallbackModalOpen(false)}
         lang={lang}
         onSubmitCallback={handleCallbackSubmit}
+        triggerToast={triggerToast}
+      />
+
+      {/* "معاينة الغربة" — expat remote inspection (opened from cards, listing page and hubs) */}
+      <RemoteInspectionModal
+        isOpen={remoteInspectionTarget !== false}
+        property={remoteInspectionTarget || null}
+        onClose={closeRemoteInspection}
+        lang={lang}
+        onCreateLead={handleAddNewLead}
         triggerToast={triggerToast}
       />
 
@@ -986,15 +999,17 @@ function ClientAuthConsumer({ children }) {
 export default function App() {
   return (
     <PreferencesProvider>
-      <UIModalProvider>
-        <PropertiesProvider>
-          <AuthProvider>
-            <ClientAuthConsumer>
-              <AppContent />
-            </ClientAuthConsumer>
-          </AuthProvider>
-        </PropertiesProvider>
-      </UIModalProvider>
+      <CurrencyProvider>
+        <UIModalProvider>
+          <PropertiesProvider>
+            <AuthProvider>
+              <ClientAuthConsumer>
+                <AppContent />
+              </ClientAuthConsumer>
+            </AuthProvider>
+          </PropertiesProvider>
+        </UIModalProvider>
+      </CurrencyProvider>
     </PreferencesProvider>
   );
 }
