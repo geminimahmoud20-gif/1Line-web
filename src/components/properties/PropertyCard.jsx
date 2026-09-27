@@ -136,19 +136,19 @@ export default function PropertyCard({
         ? (isAr ? 'أرض' : 'Land')
         : (isAr ? 'سكني' : 'Residential');
 
-  // Up to three specs, laid out as an even grid
+  // Residential: up to three cells (area, beds, baths); others: two wider cells
   const specs = [
     { key: 'size', Icon: Maximize2, value: fmt(property.size), unit: isAr ? 'م²' : 'm²', label: isAr ? 'المساحة' : 'Area' }
   ];
+  // Non-residential: two wide cells (the sector chip on the photo already names the category)
   if (isCommercial) {
-    specs.push({ key: 'kind', Icon: Store, value: formatCommercialSpec(property.commercialType_ar, lang), label: isAr ? 'النوع' : 'Type' });
-    specs.push({ key: 'floor', Icon: Layers, value: property.frontage || floorLabel(property.floor ?? 0, isAr), label: isAr ? 'الواجهة / الدور' : 'Frontage' });
-  } else if (isOffice) {
-    specs.push({ key: 'kind', Icon: Briefcase, value: formatOfficeSpec(property.adminType_ar, lang), label: isAr ? 'النوع' : 'Type' });
-    if (property.floor !== undefined) specs.push({ key: 'floor', Icon: Layers, value: floorLabel(property.floor, isAr), label: isAr ? 'الدور' : 'Floor' });
-  } else if (isLand) {
-    specs.push({ key: 'kind', Icon: Building, value: formatLandSpec(property.landType_ar, lang), label: isAr ? 'النوع' : 'Type' });
     if (property.frontage) specs.push({ key: 'front', Icon: Layers, value: property.frontage, label: isAr ? 'الواجهة' : 'Frontage' });
+    else specs.push({ key: 'kind', Icon: Store, value: formatCommercialSpec(property.commercialType_ar, lang), label: floorLabel(property.floor ?? 0, isAr) });
+  } else if (isOffice) {
+    specs.push({ key: 'kind', Icon: Briefcase, value: formatOfficeSpec(property.adminType_ar, lang), label: property.floor !== undefined ? floorLabel(property.floor, isAr) : (isAr ? 'النوع' : 'Type') });
+  } else if (isLand) {
+    if (property.frontage) specs.push({ key: 'front', Icon: Layers, value: property.frontage, label: isAr ? 'الواجهة' : 'Frontage' });
+    else specs.push({ key: 'kind', Icon: Building, value: formatLandSpec(property.landType_ar, lang), label: isAr ? 'النوع' : 'Type' });
   } else {
     if (property.bedrooms > 0) specs.push({ key: 'beds', Icon: BedDouble, value: property.bedrooms, label: isAr ? 'غرف' : 'Beds' });
     if (property.bathrooms > 0) specs.push({ key: 'baths', Icon: Bath, value: property.bathrooms, label: isAr ? 'حمام' : 'Baths' });
@@ -357,7 +357,7 @@ export default function PropertyCard({
 
         <ul className="pcx-specs" style={{ '--pcx-cols': specs.length }}>
           {specs.map(({ key, Icon, value, unit, label }) => (
-            <li key={key} className="pcx-spec">
+            <li key={key} className="pcx-spec" title={`${label}: ${value}${unit ? ' ' + unit : ''}`}>
               <Icon size={15} strokeWidth={1.75} aria-hidden="true" />
               <span className="pcx-spec-val"><bdi>{value}</bdi>{unit && <small> {unit}</small>}</span>
               <span className="pcx-spec-label">{label}</span>
@@ -374,7 +374,7 @@ export default function PropertyCard({
             <div className="pcx-fin-cell pcx-fin-cell--accent">
               <span className="pcx-fin-label">
                 {isAr ? 'القسط الشهري' : 'Monthly'}
-                {installmentYears > 0 && <em>{isAr ? ` · ${installmentYears} سنوات` : ` · ${installmentYears} yrs`}</em>}
+                {installmentYears > 0 && <em>{isAr ? `${installmentYears} سنوات` : `${installmentYears} yrs`}</em>}
               </span>
               <span className="pcx-fin-val"><bdi>{fmt(property.monthlyInstallment)}</bdi> <small>{isAr ? 'ج.م' : 'EGP'}</small></span>
             </div>
