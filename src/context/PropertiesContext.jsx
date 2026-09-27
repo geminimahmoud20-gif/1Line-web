@@ -351,7 +351,8 @@ export function PropertiesProvider({ children }) {
           createdBy: existing.createdBy || 'online_visitor',
           lastActivityAt: nowIso,
           timestamp: nowIso,
-          notes: `${existing.notes ? existing.notes + ' | ' : ''}طلب إضافي: ${standardizedData.propertyType || ''} في ${standardizedData.area || ''}`,
+          // Keep the new request's own note (e.g. remote inspection / trade-in summary) instead of a generic line
+          notes: `${existing.notes ? existing.notes + ' | ' : ''}${standardizedData.notes ? `طلب إضافي: ${standardizedData.notes}` : `طلب إضافي: ${standardizedData.propertyType || ''} في ${standardizedData.area || ''}`}`,
           details: { ...(existing.details || {}), ...(standardizedData.details || {}) },
           activityLogs: [newLog, ...(existing.activityLogs || [])],
           digitalJourney: (sessionJourney.events && sessionJourney.events.length > 0) ? sessionJourney.events : (existing.digitalJourney || []),

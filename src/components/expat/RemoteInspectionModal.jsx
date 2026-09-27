@@ -57,11 +57,9 @@ export default function RemoteInspectionModal({ property, isOpen, onClose, lang 
     return () => clearInterval(t);
   }, [isOpen]);
 
-  // Reset when reopened for another listing; Escape closes; focus the dialog
+  // Escape closes; focus the dialog. (App mounts a fresh instance per opening, so no state reset is needed.)
   useEffect(() => {
     if (!isOpen) return undefined;
-    setSent(null);
-    setError('');
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', onKey);
     dialogRef.current?.focus();

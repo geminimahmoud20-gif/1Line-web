@@ -1,4 +1,5 @@
 import { getPriceBenchmark } from './currencyAndBenchmark';
+import { computeFinanceBreakdown } from './propertyInsights';
 
 /**
  * Generate an official Property Comparison Report (PDF)
@@ -48,19 +49,23 @@ export const generateComparePdf = async (compareList = [], lang = 'ar') => {
   const tableWidth = labelColWidth + numProps * colWidth;
 
   // Labels Column Configuration
+  // Row heights are tuned so 15 rows + footer fit one landscape A4 page
   const rows = [
-    { label: 'Property Title / Unit', key: 'title', height: 14 },
-    { label: 'Total Price (EGP)', key: 'price', height: 11 },
-    { label: 'Price Per SqM (EGP/m2)', key: 'ppm', height: 11 },
-    { label: 'District Price Benchmark', key: 'benchmark', height: 11 },
-    { label: 'Downpayment Plan', key: 'downPayment', height: 11 },
-    { label: 'Monthly Installment', key: 'monthly', height: 11 },
-    { label: 'Total Area (sqm)', key: 'size', height: 11 },
-    { label: 'Bedrooms & Bathrooms', key: 'rooms', height: 11 },
-    { label: 'Finishing Quality', key: 'finishing', height: 11 },
-    { label: 'Handover / Delivery', key: 'handover', height: 11 },
-    { label: 'Location / District', key: 'location', height: 11 },
-    { label: 'Legal Audit & Form 10', key: 'legal', height: 12 }
+    { label: 'Property Title / Unit', key: 'title', height: 12 },
+    { label: 'Listed Price (EGP)', key: 'price', height: 9 },
+    { label: 'Net Cash Price', key: 'cash', height: 9 },
+    { label: 'Price Per SqM (EGP/m2)', key: 'ppm', height: 9 },
+    { label: 'District Price Benchmark', key: 'benchmark', height: 9 },
+    { label: 'Downpayment Plan', key: 'downPayment', height: 9 },
+    { label: 'Monthly Installment', key: 'monthly', height: 9 },
+    { label: 'Total Installment Price', key: 'planTotal', height: 9 },
+    { label: 'Maintenance / Over-price / Fees', key: 'extras', height: 9 },
+    { label: 'Total Area (sqm)', key: 'size', height: 9 },
+    { label: 'Bedrooms & Bathrooms', key: 'rooms', height: 9 },
+    { label: 'Finishing Quality', key: 'finishing', height: 9 },
+    { label: 'Handover / Delivery', key: 'handover', height: 9 },
+    { label: 'Location / District', key: 'location', height: 9 },
+    { label: 'Legal Documents', key: 'legal', height: 9 }
   ];
 
   let currentY = startY;
@@ -125,29 +130,50 @@ export const generateComparePdf = async (compareList = [], lang = 'ar') => {
       } else if (row.key === 'monthly') {
         doc.setTextColor(16, 185, 129);
         valStr = prop.monthlyInstallment ? `${prop.monthlyInstallment.toLocaleString()} EGP/mo (${prop.installmentYears || 0} yrs)` : 'Cash on delivery';
+      } else if (row.key === 'cash') {
+        const fb = computeFinanceBreakdown(prop);
+        valStr = fb ? `${Math.round(fb.cashPrice).toLocaleString('en-US')} EGP${fb.cashDiscountPct > 0 ? ` (-${Math.round(fb.cashDiscountPct * 10) / 10}%)` : ''}` : '-';
+      } else if (row.key === 'planTotal') {
+        const plan = computeFinanceBreakdown(prop)?.plan;
+        valStr = plan ? `${Math.round(plan.total).toLocaleString('en-US')} EGP (+${Math.round(plan.premiumPct * 10) / 10}% vs cash)` : 'Cash only';
+      } else if (row.key === 'extras') {
+        const fb = computeFinanceBreakdown(prop);
+        const parts = [];
+        if (fb?.maintenance) parts.push(`Maint. ${Math.round(fb.maintenance.amount).toLocaleString('en-US')}`);
+        if (fb?.overPrice?.overPrice) parts.push(`Over-price ${Math.round(fb.overPrice.overPrice).toLocaleString('en-US')}`);
+        if (fb?.fees) parts.push(`Fees ${Math.round((fb.fees.utilities || 0) + (fb.fees.transfer || 0)).toLocaleString('en-US')}`);
+        valStr = parts.length ? parts.join(' | ') : 'Not listed - confirm in writing';
       } else if (row.key === 'size') {
         valStr = `${prop.size || 0} sqm`;
       } else if (row.key === 'rooms') {
         valStr = `${prop.bedrooms || 0} Beds / ${prop.bathrooms || 0} Baths`;
       } else if (row.key === 'finishing') {
-        valStr = prop.finishing_en || prop.finishing_ar || 'Ultra Super Lux';
+        valStr = prop.finishing_en || prop.finishing_ar || '-';
       } else if (row.key === 'handover') {
-        valStr = prop.completionStatus === 'ready' ? 'Immediate Handover (Ready)' : 'Under Construction';
+        valStr = prop.completionStatus === 'ready'
+          ? 'Immediate Handover (Ready)'
+          : (prop.completionStatus === 'under_construction' || prop.completionStatus === 'off_plan') ? 'Under Construction' : '-';
       } else if (row.key === 'location') {
         valStr = prop.locationName_en || prop.locationName_ar || 'Sohag';
       } else if (row.key === 'legal') {
-        doc.setTextColor(16, 185, 129);
-        valStr = '100% Certified Legal Deed & Form 10';
+        // Only what the listing's legal record supports — no blanket certification claims
+        if (prop.legalStatus) {
+          doc.setTextColor(16, 185, 129);
+          valStr = prop.legalStatus.ownershipType_en || 'Documents reviewed by 1Line';
+        } else {
+          valStr = 'Review on request';
+        }
       }
 
-      doc.text(doc.splitTextToSize(valStr, colWidth - 8), cellX + 4, currentY + 6.5);
+      // One line per cell keeps the grid on a single page
+      doc.text(doc.splitTextToSize(valStr, colWidth - 8).slice(0, row.height > 10 ? 2 : 1), cellX + 4, currentY + 6);
     });
 
     currentY += row.height;
   });
 
   // Footer Note
-  const footerY = Math.max(currentY + 6, 186);
+  const footerY = Math.min(Math.max(currentY + 4, 184), 196);
   doc.setFillColor(241, 245, 249);
   doc.rect(14, footerY, tableWidth, 12, 'F');
   doc.setFontSize(7.5);

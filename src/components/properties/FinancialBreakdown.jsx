@@ -11,7 +11,7 @@ function Money({ value, currency, lang, strong = false, muted = false }) {
   const fx = currency !== 'EGP' ? formatApprox(value, currency, lang) : '';
   return (
     <span className={`xs-money ${strong ? 'is-strong' : ''} ${muted ? 'is-muted' : ''}`}>
-      <bdi>{fmt(value)}</bdi> <small>{isAr ? 'ج.م' : 'EGP'}</small>
+      <span className="xs-money-main"><bdi>{fmt(value)}</bdi> <small>{isAr ? 'ج.م' : 'EGP'}</small></span>
       {fx && <em><bdi>{fx}</bdi></em>}
     </span>
   );
@@ -76,7 +76,7 @@ export default function FinancialBreakdown({ property, lang = 'ar', currency = '
           {plan.monthly > 0 && <Row label={L('القسط الشهري', 'Monthly installment')}><Money value={plan.monthly} {...m} /></Row>}
           {plan.quarterly > 0 && <Row label={L('القسط الربع سنوي', 'Quarterly installment')}><Money value={plan.quarterly} {...m} /></Row>}
           <Row label={L('فترة السداد', 'Term')}>
-            <span className="xs-money"><bdi>{plan.months}</bdi> <small>{L('شهر', 'months')}</small> <em>({plan.years} {L('سنوات', 'years')})</em></span>
+            <span className="xs-money"><span className="xs-money-main"><bdi>{plan.months}</bdi> <small>{L('شهر', 'months')}</small></span> <em>({plan.years} {L('سنوات', 'years')})</em></span>
           </Row>
           {plan.handover > 0 && <Row label={L('دفعة الاستلام', 'Handover payment')}><Money value={plan.handover} {...m} /></Row>}
 
@@ -95,8 +95,18 @@ export default function FinancialBreakdown({ property, lang = 'ar', currency = '
             </div>
           )}
 
-          <Row label={L('إجمالي سعر التقسيط', 'Total installment price')}><Money value={plan.total} strong {...m} /></Row>
-          {plan.premiumOverCash > 0 && (
+          {plan.incomplete ? (
+            <p className="xs-fin-note xs-fin-note--warn">
+              <Info size={13} aria-hidden="true" />
+              {L(
+                'مجموع الدفعات المسجلة أقل من سعر العقار، يعني جدول السداد هنا مختصر. اطلب الجدول الرسمي الكامل من المستشار قبل الحجز.',
+                'The listed payments add up to less than the price, so this schedule is partial. Ask for the full official schedule before reserving.'
+              )}
+            </p>
+          ) : (
+            <Row label={L('إجمالي سعر التقسيط', 'Total installment price')}><Money value={plan.total} strong {...m} /></Row>
+          )}
+          {!plan.incomplete && plan.premiumOverCash > 0 && (
             <Row label={L('الفرق عن الكاش', 'Difference vs cash')} hint={L(`+${pct(plan.premiumPct)}`, `+${pct(plan.premiumPct)}`)}>
               <Money value={plan.premiumOverCash} muted {...m} />
             </Row>

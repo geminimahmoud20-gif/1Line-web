@@ -32,9 +32,9 @@ export function CurrencyProvider({ children }) {
   const [fx, setFx] = useState(getFxState);
 
   useEffect(() => {
-    const stop = initFxRates();
+    // Subscribe first so the cached/live rates loaded by init reach state through the listener
     const unsub = subscribeFx(setFx);
-    setFx(getFxState());
+    const stop = initFxRates();
     return () => { unsub(); stop(); };
   }, []);
 

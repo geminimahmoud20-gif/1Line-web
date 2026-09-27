@@ -454,14 +454,17 @@ function AppContent() {
       />
 
       {/* "معاينة الغربة" — expat remote inspection (opened from cards, listing page and hubs) */}
-      <RemoteInspectionModal
-        isOpen={remoteInspectionTarget !== false}
-        property={remoteInspectionTarget || null}
-        onClose={closeRemoteInspection}
-        lang={lang}
-        onCreateLead={handleAddNewLead}
-        triggerToast={triggerToast}
-      />
+      {remoteInspectionTarget !== false && (
+        <RemoteInspectionModal
+          key={remoteInspectionTarget?.id || 'general'}
+          isOpen
+          property={remoteInspectionTarget || null}
+          onClose={closeRemoteInspection}
+          lang={lang}
+          onCreateLead={handleAddNewLead}
+          triggerToast={triggerToast}
+        />
+      )}
 
       {/* Site Header Navigation (Hidden on CRM for clean enterprise workspace) */}
       {!location.pathname.startsWith('/crm') && (

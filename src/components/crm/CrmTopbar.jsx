@@ -63,6 +63,8 @@ export default function CrmTopbar({
     matching: isAr ? 'المطابقات الذكية AI' : 'Smart AI Matching',
     agents: isAr ? 'فريق المبيعات والعمولات' : 'Sales Team & Commissions',
     retargeting: isAr ? 'إعادة الاستهداف الذكي' : 'Smart Retargeting Hub',
+    expat: isAr ? 'خدمات المغتربين VIP' : 'Expat VIP Desk',
+    trade_ins: isAr ? 'صفقات التبادل العقاري' : 'Trade-in Deals',
     properties: isAr ? 'محفظة العقارات' : 'Properties Portfolio',
     demands: isAr ? 'طلبات المشترين' : 'Buyer Demands',
     projects: isAr ? 'المشروعات الكبرى' : 'Mega Projects',

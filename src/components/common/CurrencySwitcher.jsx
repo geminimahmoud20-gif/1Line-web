@@ -3,6 +3,54 @@ import { ChevronDown, Check, Info } from 'lucide-react';
 import { useCurrency } from '../../context/CurrencyContext';
 import '../../styles/expat-suite.css';
 
+// 🌟 Pixel-perfect vector flag emblems (avoids Windows regional indicator text bug: EGEGP, SASAR, etc.)
+const FLAG_ICONS = {
+  EGP: (
+    <svg viewBox="0 0 640 480" width="22" height="15" style={{ borderRadius: '3px', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', flexShrink: 0 }}>
+      <path fill="#CE1126" d="M0 0h640v160H0z"/>
+      <path fill="#FFF" d="M0 160h640v160H0z"/>
+      <path fill="#000" d="M0 320h640v160H0z"/>
+      <circle cx="320" cy="240" r="28" fill="#C69214"/>
+    </svg>
+  ),
+  SAR: (
+    <svg viewBox="0 0 640 480" width="22" height="15" style={{ borderRadius: '3px', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', flexShrink: 0 }}>
+      <path fill="#006C35" d="M0 0h640v480H0z"/>
+      <path fill="#FFF" d="M190 320h260v12H190zM280 200h80v20h-80z"/>
+    </svg>
+  ),
+  AED: (
+    <svg viewBox="0 0 640 480" width="22" height="15" style={{ borderRadius: '3px', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', flexShrink: 0 }}>
+      <path fill="#00732F" d="M0 0h640v160H0z"/>
+      <path fill="#FFF" d="M0 160h640v160H0z"/>
+      <path fill="#000" d="M0 320h640v160H0z"/>
+      <path fill="#FF0000" d="M0 0h170v480H0z"/>
+    </svg>
+  ),
+  KWD: (
+    <svg viewBox="0 0 640 480" width="22" height="15" style={{ borderRadius: '3px', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', flexShrink: 0 }}>
+      <path fill="#007A3D" d="M0 0h640v160H0z"/>
+      <path fill="#FFF" d="M0 160h640v160H0z"/>
+      <path fill="#CE1126" d="M0 320h640v160H0z"/>
+      <path fill="#000" d="M0 0l160 160v160L0 480z"/>
+    </svg>
+  ),
+  QAR: (
+    <svg viewBox="0 0 640 480" width="22" height="15" style={{ borderRadius: '3px', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', flexShrink: 0 }}>
+      <path fill="#8D1B3D" d="M0 0h640v480H0z"/>
+      <path fill="#FFF" d="M0 0h180l50 30-50 30 50 30-50 30 50 30-50 30 50 30-50 30 50 30-50 30 50 30-50 30 50 30-50 30 50 30-50 30H0z"/>
+    </svg>
+  ),
+  USD: (
+    <svg viewBox="0 0 640 480" width="22" height="15" style={{ borderRadius: '3px', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', flexShrink: 0 }}>
+      <path fill="#B22234" d="M0 0h640v480H0z"/>
+      <path fill="#FFF" d="M0 40h640v37H0zm0 74h640v37H0zm0 74h640v37H0zm0 74h640v37H0zm0 74h640v37H0zm0 74h640v37H0z"/>
+      <path fill="#3C3B6E" d="M0 0h280v260H0z"/>
+      <circle cx="140" cy="130" r="35" fill="#FFF"/>
+    </svg>
+  )
+};
+
 const fmtDate = (iso, isAr) => {
   if (!iso) return '';
   try {
@@ -50,9 +98,13 @@ export default function CurrencySwitcher({ lang = 'ar', compact = false }) {
         aria-expanded={isOpen}
         title={isAr ? 'عرض الأسعار بعملة بلد إقامتك (استرشادي)' : 'Show prices in your currency (indicative)'}
       >
-        <span className="xs-cur-flag" aria-hidden="true">{current.flag}</span>
+        <span className="xs-cur-flag">{FLAG_ICONS[current.code] || current.code}</span>
         <span className="xs-cur-code">{current.code}</span>
-        <ChevronDown size={12} className={isOpen ? 'is-rot' : ''} aria-hidden="true" />
+        <ChevronDown 
+          size={12} 
+          style={{ transition: 'transform 0.2s ease', transform: isOpen ? 'rotate(180deg)' : 'none' }} 
+          aria-hidden="true" 
+        />
       </button>
 
       {isOpen && (
@@ -61,6 +113,7 @@ export default function CurrencySwitcher({ lang = 'ar', compact = false }) {
             <strong>{isAr ? 'عملة العرض' : 'Display currency'}</strong>
             <span>{isAr ? 'التعاقد دائماً بالجنيه المصري' : 'Contracts are always in EGP'}</span>
           </div>
+
           <div className="xs-cur-list">
             {supported.map((code) => {
               const m = meta[code];
@@ -76,18 +129,19 @@ export default function CurrencySwitcher({ lang = 'ar', compact = false }) {
                   className={`xs-cur-opt ${active ? 'is-active' : ''}`}
                   onClick={() => { setCurrency(code); setIsOpen(false); }}
                 >
-                  <span className="xs-cur-flag" aria-hidden="true">{m.flag}</span>
-                  <span className="xs-cur-opt-text">
+                  <span className="xs-cur-flag">{FLAG_ICONS[m.code] || m.code}</span>
+                  <div className="xs-cur-opt-text">
                     <strong>{m.code}</strong>
                     <small>{isAr ? m.name_ar : m.name_en}</small>
-                  </span>
-                  {active && <Check size={15} aria-hidden="true" />}
+                  </div>
+                  {active && <Check size={16} className="xs-cur-check" aria-hidden="true" />}
                 </button>
               );
             })}
           </div>
+
           <div className="xs-cur-foot">
-            <Info size={13} aria-hidden="true" />
+            <Info size={14} aria-hidden="true" />
             {fx.ready ? (
               <span>
                 {rate ? (
@@ -98,12 +152,12 @@ export default function CurrencySwitcher({ lang = 'ar', compact = false }) {
                 ) : null}
                 {isAr ? 'سعر استرشادي' : 'Indicative rate'}
                 {fx.updatedAt ? ` · ${isAr ? 'تحديث' : 'updated'} ${fmtDate(fx.updatedAt, isAr)}` : ''}
-                {fx.source === 'manual' ? (isAr ? ' · يحدده فريق 1Line' : ' · set by 1Line') : ''}
               </span>
             ) : (
               <span>{isAr ? 'جاري تحميل أسعار الصرف… الأسعار معروضة بالجنيه مؤقتاً.' : 'Loading exchange rates… showing EGP for now.'}</span>
             )}
           </div>
+
           {waiting && fx.ready && (
             <div className="xs-cur-warn">{isAr ? 'لا يتوفر سعر لهذه العملة الآن.' : 'No rate available for this currency right now.'}</div>
           )}

@@ -160,22 +160,31 @@ export default function AboutPage({ lang = 'ar', triggerToast }) {
         <div className="about-hero-glow" aria-hidden="true" />
 
         <div className="about-hero-content section-container">
-          {/* Breadcrumb navigation */}
-          <nav className="about-breadcrumb" aria-label="Breadcrumb">
-            <Link to="/" className="breadcrumb-link">{isAr ? 'الرئيسية' : 'Home'}</Link>
-            <span className="breadcrumb-sep">{isAr ? '‹' : '›'}</span>
-            <span className="breadcrumb-current">{isAr ? 'عن الشركة' : 'About Us'}</span>
-          </nav>
+          {/* Breadcrumbs & Institutional Badge Container */}
+          <div className="about-hero-top-badges">
+            <nav className="about-breadcrumb" aria-label="Breadcrumb">
+              <Link to="/" className="breadcrumb-link">{isAr ? 'الرئيسية' : 'Home'}</Link>
+              <span className="breadcrumb-sep">{isAr ? '‹' : '›'}</span>
+              <span className="breadcrumb-current">{isAr ? 'عن الشركة' : 'About Us'}</span>
+            </nav>
 
-          {/* Institutional Badge */}
-          <div className="about-hero-badge">
-            <Building2 size={15} className="text-gold" />
-            <span>{isAr ? 'وساطة واستشارات عقارية — سوهاج والقاهرة الكبرى' : 'Brokerage & advisory — Sohag and Greater Cairo'}</span>
+            <div className="about-hero-badge">
+              <Building2 size={16} className="text-gold" />
+              <span>{isAr ? 'وساطة واستشارات عقارية معتمدة — سوهاج والقاهرة الكبرى' : 'Certified brokerage & advisory — Sohag & Greater Cairo'}</span>
+            </div>
           </div>
 
           {/* Monumental Headline */}
           <h1 className="about-hero-title">
-            {isAr ? 'عن 1Line • نصنع معايير الثقة والأمان العقاري في سوهاج' : 'About 1Line • Engineering Trust in Real Estate'}
+            {isAr ? (
+              <>
+                عن <span className="about-title-brand">1Line</span> • نصنع معايير الثقة والأمان العقاري في سوهاج
+              </>
+            ) : (
+              <>
+                About <span className="about-title-brand">1Line</span> • Engineering Trust & Security in Real Estate
+              </>
+            )}
           </h1>
 
           <p className="about-hero-subtitle">
