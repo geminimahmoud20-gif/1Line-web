@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Maximize2, 
+  Minimize2,
   X, 
   ChevronRight, 
   ChevronLeft, 
@@ -10,8 +11,7 @@ import {
   ZoomIn, 
   ZoomOut, 
   RotateCw, 
-  RefreshCw, 
-  Download 
+  RefreshCw 
 } from 'lucide-react';
 import { trackEvent } from '../../utils/visitorTracker';
 import BrandWatermark from '../common/BrandWatermark';
@@ -58,7 +58,32 @@ export default function PropertyGallery({
     trackEvent('property_gallery_opened', { index, title });
   };
 
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleFullscreen = useCallback(() => {
+    if (typeof document === 'undefined') return;
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.().catch(() => {});
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen?.().catch(() => {});
+      setIsFullscreen(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const handleFsChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
+
   const handleCloseLightbox = useCallback(() => {
+    if (typeof document !== 'undefined' && document.fullscreenElement) {
+      document.exitFullscreen?.().catch(() => {});
+    }
     setLightboxOpen(false);
     resetTransform();
   }, [resetTransform]);
@@ -349,8 +374,11 @@ export default function PropertyGallery({
           {/* Top Floating Control Bar */}
           <div className="lightbox-top-toolbar" onClick={(e) => e.stopPropagation()}>
             <div className="lightbox-title-counter">
-              <strong>{title}</strong>
-              <span className="lightbox-counter-pill">
+              <span className="lightbox-cam-icon">
+                <ImageIcon size={15} />
+              </span>
+              <strong className="lightbox-title-text">{title}</strong>
+              <span className="lightbox-counter-pill" dir="ltr">
                 {activeImageIndex + 1} / {images.length}
               </span>
             </div>
@@ -363,6 +391,7 @@ export default function PropertyGallery({
                 onClick={handleZoomIn}
                 title={isAr ? 'تكبير الصورة (+)' : 'Zoom In (+)'}
                 disabled={zoomLevel >= 3.5}
+                aria-label="Zoom in"
               >
                 <ZoomIn size={16} />
               </button>
@@ -375,17 +404,21 @@ export default function PropertyGallery({
                 onClick={handleZoomOut}
                 title={isAr ? 'تصغير الصورة (-)' : 'Zoom Out (-)'}
                 disabled={zoomLevel <= 1}
+                aria-label="Zoom out"
               >
                 <ZoomOut size={16} />
               </button>
+
+              <span className="lightbox-tool-sep" aria-hidden="true" />
 
               <button 
                 type="button" 
                 className="lightbox-tool-btn" 
                 onClick={resetTransform}
                 title={isAr ? 'إعادة ضبط الحجم الطبيعي (0)' : 'Reset Zoom'}
+                aria-label="Reset zoom"
               >
-                <RefreshCw size={15} />
+                <RefreshCw size={14} />
               </button>
 
               <button 
@@ -393,28 +426,31 @@ export default function PropertyGallery({
                 className="lightbox-tool-btn" 
                 onClick={handleRotate}
                 title={isAr ? 'تدوير 90 درجة' : 'Rotate'}
+                aria-label="Rotate"
               >
-                <RotateCw size={15} />
+                <RotateCw size={14} />
               </button>
 
-              <a
-                href={images[activeImageIndex]}
-                target="_blank"
-                rel="noopener noreferrer"
-                download
-                className="lightbox-tool-btn"
-                title={isAr ? 'فتح أو تحميل الصورة بدقة أصلية' : 'Download Full HD'}
+              <button 
+                type="button" 
+                className="lightbox-tool-btn" 
+                onClick={toggleFullscreen}
+                title={isAr ? (isFullscreen ? 'إنهاء ملء الشاشة' : 'ملء الشاشة') : (isFullscreen ? 'Exit Fullscreen' : 'Fullscreen')}
+                aria-label="Toggle Fullscreen"
               >
-                <Download size={15} />
-              </a>
+                {isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+              </button>
+
+              <span className="lightbox-tool-sep" aria-hidden="true" />
 
               <button
                 type="button"
                 className="lightbox-tool-btn lightbox-close-tool"
                 onClick={handleCloseLightbox}
                 title={isAr ? 'إغلاق (Esc)' : 'Close (Esc)'}
+                aria-label="Close"
               >
-                <X size={18} />
+                <X size={17} />
               </button>
             </div>
           </div>
@@ -425,8 +461,9 @@ export default function PropertyGallery({
             className="lightbox-nav-btn prev-btn" 
             onClick={handlePrev}
             title={isAr ? 'الصورة السابقة' : 'Previous'}
+            aria-label="Previous image"
           >
-            {isAr ? <ChevronRight size={32} /> : <ChevronLeft size={32} />}
+            {isAr ? <ChevronRight size={24} /> : <ChevronLeft size={24} />}
           </button>
 
           {/* Center Stage Image Viewer */}
@@ -436,6 +473,7 @@ export default function PropertyGallery({
             onClick={(e) => e.stopPropagation()}
             onMouseDown={handleMouseDown}
             onDoubleClick={handleDoubleClick}
+            onContextMenu={(e) => e.preventDefault()}
             style={{
               cursor: zoomLevel > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default'
             }}
@@ -445,6 +483,7 @@ export default function PropertyGallery({
               alt={title} 
               className="lightbox-active-img"
               draggable={false}
+              onContextMenu={(e) => e.preventDefault()}
               style={{
                 transform: `translate(${panPosition.x}px, ${panPosition.y}px) scale(${zoomLevel}) rotate(${rotation}deg)`,
                 transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1)'
@@ -466,8 +505,9 @@ export default function PropertyGallery({
             className="lightbox-nav-btn next-btn" 
             onClick={handleNext}
             title={isAr ? 'الصورة التالية' : 'Next'}
+            aria-label="Next image"
           >
-            {isAr ? <ChevronLeft size={32} /> : <ChevronRight size={32} />}
+            {isAr ? <ChevronLeft size={24} /> : <ChevronRight size={24} />}
           </button>
 
           {/* Bottom Thumbnails Strip */}
