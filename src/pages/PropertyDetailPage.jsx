@@ -29,7 +29,8 @@ import {
   Copy,
   Sun,
   Moon,
-  Scale
+  Scale,
+  Flame
 } from 'lucide-react';
 import { incrementPropertyView, getPropertyViews } from '../utils/visitorTracker';
 import PropertyGallery from '../components/properties/PropertyGallery';
@@ -214,6 +215,14 @@ export default function PropertyDetailPage({
         ? (isAr ? 'تحت الإنشاء' : 'Under construction')
         : '';
   const officeOpen = isOfficeOpenNow();
+  const util = property.utilities || {};
+  const utilityItems = [
+    { key: 'electricity', Icon: Zap, label: isAr ? 'الكهرباء' : 'Electricity', value: util.electricity_ar },
+    { key: 'water', Icon: Droplets, label: isAr ? 'المياه' : 'Water', value: util.water_ar },
+    { key: 'gas', Icon: Flame, label: isAr ? 'الغاز' : 'Gas', value: util.gas_ar },
+    { key: 'elevator', Icon: Building, label: isAr ? 'المصعد' : 'Elevator', value: util.elevator_ar },
+    { key: 'parking', Icon: MapPin, label: isAr ? 'الجراج / الركن' : 'Parking', value: util.parking_ar }
+  ].filter((u) => String(u.value || '').trim() !== '');
   const benchmark = getPriceBenchmark(property, lang);
 
   // Sector separation
@@ -726,8 +735,8 @@ export default function PropertyDetailPage({
                   </div>
                 )}
 
-                {/* 💼 Turnkey & Rental Management Service for Investors */}
-                <div className="investor-turnkey-banner detail-card-box" style={{
+                {/* 💼 Optional turnkey / rental management service (not shown for land) */}
+                {!isLand && <div className="investor-turnkey-banner detail-card-box" style={{
                   background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.08), rgba(11, 78, 162, 0.06))',
                   border: '1px solid rgba(217, 119, 6, 0.25)',
                   display: 'flex',
@@ -750,15 +759,15 @@ export default function PropertyDetailPage({
                   </div>
                   <div style={{ flex: 1 }}>
                     <h4 style={{ margin: '0 0 4px 0', fontSize: '0.92rem', color: 'var(--text-primary)' }}>
-                      {isAr ? '💼 خدمة التشطيب وإدارة الإيجار للمستثمرين والمغتربين' : '💼 Turnkey Finishing & Rental Management for Investors'}
+                      {isAr ? 'خدمة اختيارية: الاستلام والتشطيب وإدارة الإيجار' : 'Optional service: handover, finishing & rental management'}
                     </h4>
                     <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: '1.45' }}>
                       {isAr
-                        ? 'تتولى 1Line بالنيابة عنك الإشراف الكامل على استلام الوحدة، تشطيبها بأعلى معايير السوق، تسكين مستأجر موثوق، وإيداع العائد الإيجاري في حسابك البنكي شهرياً.'
-                        : '1Line handles unit handover, turnkey furnishing, vetted tenant placement, and monthly rent direct deposit into your bank account.'}
+                        ? 'لو مقيم بعيد، نقدر نتابع الاستلام والتشطيب ونبحث لك عن مستأجر وندير الإيجار. نطاق الخدمة وأتعابها في اتفاق مكتوب منفصل.'
+                        : 'If you live away, we can handle handover, finishing, tenant search and rent management. Scope and fees go in a separate written agreement.'}
                     </p>
                   </div>
-                </div>
+                </div>}
 
                 {/* 🧭☀️ Orientation, Natural Breeze & Sunlight Compass */}
                 <SunlightCompassWidget
@@ -811,11 +820,25 @@ export default function PropertyDetailPage({
                 {/* Customized Mortgage Calculator for this property */}
                 <div className="detail-card-box">
                   <h3>{isAr ? 'حاسبة القسط والتمويل لهذا العقار' : 'Payment & Financing Calculator'}</h3>
+                  {Number(property.monthlyInstallment) > 0 && (
+                    <p className="pd-calc-note">
+                      {isAr
+                        ? 'الحاسبة تبدأ بنظام السداد المسجل لهذا العقار (تقسيط مباشر بدون فوائد). غيّر النسبة لو هتمول من بنك.'
+                        : 'The calculator starts from this listing\'s own plan (direct, interest-free). Change the rate if you finance through a bank.'}
+                    </p>
+                  )}
                   <MortgageRoiCalculator
                     lang={lang}
                     initialPrice={property.price}
-                    initialDownpaymentPercent={Math.round((property.downPayment / property.price) * 100) || 20}
+                    // exact share (not rounded) so the down payment matches the listing to the pound
+                    initialDownpaymentPercent={property.downPayment && property.price ? Math.round((property.downPayment / property.price) * 10000) / 100 : 20}
                     initialYears={property.installmentYears || 5}
+                    // the listing's own plan is interest-free; a bank rate is the visitor's choice
+                    initialInterestRate={Number(property.monthlyInstallment) > 0 ? 0 : 12}
+                    initialMonthlyRent={Number(property.commercial?.rentPerSqm) > 0 && Number(property.size) > 0
+                      ? Math.round(Number(property.commercial.rentPerSqm) * Number(property.size))
+                      : 18000}
+                    rentIsEstimate={!(Number(property.commercial?.rentPerSqm) > 0)}
                   />
                 </div>
               </div>
@@ -830,9 +853,12 @@ export default function PropertyDetailPage({
                 <div className="agent-avatar-circle">1L</div>
                 <div>
                   <h4>{isAr ? 'مستشار 1Line العقاري' : '1Line Real Estate Advisor'}</h4>
-                  <span className="agent-status-badge">
-                    <span className="green-dot" />
-                    {isAr ? 'متاح للرد الفوري' : 'Online & Ready'}
+                  {/* Real office hours (siteConfig CONTACT), Cairo time */}
+                  <span className={`agent-status-badge ${officeOpen ? '' : 'is-off-hours'}`}>
+                    <span className={officeOpen ? 'green-dot' : 'pd-off-dot'} />
+                    {officeOpen
+                      ? (isAr ? 'متاحون الآن — يومياً 10 ص – 10 م' : 'Available now — daily 10:00–22:00')
+                      : (isAr ? 'خارج مواعيد العمل — نرد من 10 صباحاً (عدا الجمعة)' : 'Outside office hours — we reply from 10:00 (closed Friday)')}
                   </span>
                 </div>
               </div>
