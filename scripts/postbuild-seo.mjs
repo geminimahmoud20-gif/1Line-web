@@ -24,6 +24,8 @@ const staticRoutes = [
   ['/valuation', '0.8', 'monthly'],
   ['/buy', '0.8', 'monthly'],
   ['/private-office', '0.8', 'monthly'],
+  ['/trade-in', '0.8', 'monthly'],
+  ['/commercial-hub', '0.8', 'weekly'],
   ['/investor', '0.7', 'monthly'],
   ['/market-intelligence', '0.7', 'weekly'],
   ['/projects', '0.7', 'weekly'],

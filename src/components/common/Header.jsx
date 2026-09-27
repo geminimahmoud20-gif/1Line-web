@@ -27,7 +27,9 @@ import {
   ArrowLeft,
   Lock,
   User,
-  ShieldCheck
+  ShieldCheck,
+  Repeat2,
+  Stethoscope
 } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import CurrencySwitcher from './CurrencySwitcher';
@@ -165,8 +167,22 @@ export default function Header({
       icon: Sparkles,
       badge: 'VIP',
       badgeType: 'gold',
-      activePaths: ['/special-requests', '/market-intelligence', '/financing', '/investor', '/private-office', '/off-market'],
+      activePaths: ['/special-requests', '/market-intelligence', '/financing', '/investor', '/private-office', '/off-market', '/trade-in', '/commercial-hub'],
       items: [
+        {
+          path: '/trade-in',
+          label: isAr ? 'بدّل عقارك (البدل العقاري)' : 'Trade in your property',
+          desc: isAr ? 'شقة بفيلا، أرض بعمارة — بفرق كاش أو رأس برأس' : 'Swap with or without a cash difference',
+          badge: isAr ? 'جديد' : 'New',
+          badgeType: 'gold',
+          icon: Repeat2
+        },
+        {
+          path: '/commercial-hub',
+          label: isAr ? 'عيادات ومحلات ومكاتب' : 'Clinics, shops & offices',
+          desc: isAr ? 'مؤشرات الكثافة والركن وحاسبة العائد' : 'Traffic, parking & yield indicators',
+          icon: Stethoscope
+        },
         {
           path: '/private-office',
           label: isAr ? 'المكتب الخاص: صفقات خاصة وحصرية (Off-Market)' : '1Line Private Office (Off-Market)',
@@ -213,6 +229,8 @@ export default function Header({
     { path: '/properties', label: isAr ? 'العقارات المعتمدة' : 'Properties', icon: Building },
     { path: '/projects', label: isAr ? 'المشروعات والكمبوندات' : 'Projects', icon: Layers },
     { path: '/demands', label: isAr ? 'طلبات المشترين' : 'Buyer Demands', icon: FileText },
+    { path: '/trade-in', label: isAr ? 'بدّل عقارك' : 'Trade-in', badge: isAr ? 'جديد' : 'New', badgeType: 'gold', icon: Repeat2 },
+    { path: '/commercial-hub', label: isAr ? 'عيادات ومحلات ومكاتب' : 'Commercial hub', icon: Stethoscope },
     { path: '/about', label: isAr ? 'عن الشركة والمؤسس' : 'About & Founder', icon: Award },
     { path: '/private-office', label: isAr ? 'المكتب الخاص (Off-Market)' : 'Private Office', badge: 'Private', badgeType: 'gold', icon: Lock },
     { path: '/special-requests', label: isAr ? 'طلب عقار خاص VIP' : 'Special Requests', badge: 'VIP', badgeType: 'gold', icon: Sparkles },

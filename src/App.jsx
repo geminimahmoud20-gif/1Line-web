@@ -61,6 +61,8 @@ const CrmPage = lazy(() => import('./pages/CrmPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const PrivateOfficePage = lazy(() => import('./pages/PrivateOfficePage'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
+const CommercialHubPage = lazy(() => import('./pages/CommercialHubPage'));
+const TradeInPortal = lazy(() => import('./components/tradein/TradeInPortal'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 // Luxury Route Transition Fallback Spinner
@@ -832,6 +834,36 @@ function AppContent() {
             />
 
             {/* Privacy policy & data handling */}
+            {/* مركز الاستثمار الطبي والتجاري */}
+            <Route
+              path="/commercial-hub"
+              element={
+                <CommercialHubPage
+                  lang={lang}
+                  currency={currency}
+                  properties={properties}
+                  favorites={favorites}
+                  onToggleFavorite={handleProtectedToggleFavorite}
+                  compareList={compareList}
+                  onToggleCompare={handleProtectedToggleCompare}
+                  onQuickView={handleOpenQuickView}
+                />
+              }
+            />
+
+            {/* منصة البدل العقاري */}
+            <Route
+              path="/trade-in"
+              element={
+                <TradeInPortal
+                  lang={lang}
+                  properties={properties}
+                  onCreateLead={handleAddNewLead}
+                  triggerToast={triggerToast}
+                />
+              }
+            />
+
             <Route path="/privacy" element={<PrivacyPage lang={lang} />} />
             <Route path="/terms" element={<Navigate to="/privacy" replace />} />
 

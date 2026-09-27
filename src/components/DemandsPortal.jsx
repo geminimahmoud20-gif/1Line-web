@@ -15,9 +15,12 @@ import {
   Compass,
   Users,
   Coins,
-  Flame
+  Flame,
+  Repeat2
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { getAreas } from '../utils/areasData';
+import '../styles/expat-suite.css';
 
 export const DemandsPortal = ({
   lang,
@@ -176,6 +179,16 @@ export const DemandsPortal = ({
           </button>
         )}
       </div>
+
+      {/* 🔁 Trade-in entry: owners who want to swap rather than sell */}
+      <Link to="/trade-in" className="xs-trade-banner">
+        <span className="xs-trade-banner-icon"><Repeat2 size={22} aria-hidden="true" /></span>
+        <span className="xs-trade-banner-text">
+          <strong>{lang === 'ar' ? 'مش عايز تبيع؟ بدّل عقارك' : 'Rather swap than sell?'}</strong>
+          <small>{lang === 'ar' ? 'شقتك بفيلا، أرضك بعمارة للعيلة — نطابقك مع عروض بدل حقيقية بفرق كاش أو رأس برأس.' : 'Your apartment for a villa, land for a family building — matched with real swap offers.'}</small>
+        </span>
+        <span className="xs-trade-banner-cta">{lang === 'ar' ? 'ابدأ البدل ←' : 'Start →'}</span>
+      </Link>
 
       {/* Owner Matching Search Widget */}
       <div style={{ 
