@@ -44,8 +44,8 @@ export default function ZeroResultsFallback({
         <h3>{isAr ? 'لم نجد عقارات مطابقة تماماً لشروط بحثك الحالية' : 'No exact property matches found'}</h3>
         <p>
           {isAr 
-            ? 'لا تتردد في تسجيل طلبك الخاص؛ يمتلك مكتب 1Line شبكة علاقات مع كبار المطورين والملاك في سوهاج لتوفير صفقات حصرية (Off-Market) غير معلنة خلال 48 ساعة وبدون أي عمولة على المشروعات.' 
-            : 'Looking for specific criteria? 1Line Private Office can source your target asset via our Off-Market network within 48 hours.'}
+            ? 'لا تتردد في تسجيل طلبك الخاص؛ يمتلك مكتب 1Line شبكة علاقات مع كبار المطورين والملاك في سوهاج لتوفير صفقات حصرية (Off-Market) غير معلنة تناسب طلبك.' 
+            : 'Looking for specific criteria? 1Line Private Office can source your target asset through our off-market network.'}
         </p>
 
         {/* 📋 Interactive Quick Demand Register Box */}
@@ -120,8 +120,8 @@ export default function ZeroResultsFallback({
           )}
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '10px', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-            <span>🔒 {isAr ? 'أمان وخصوصية تامة لبياناتك' : '100% Private & Secure'}</span>
-            <span>✨ {isAr ? '0% عمولة للمشتري على المشروعات' : '0% Buyer Commission on Projects'}</span>
+            <span>🔒 {isAr ? 'بياناتك للرد على طلبك فقط' : 'Your details are used only for your request'}</span>
+            <span>✨ {isAr ? 'معاينة مجانية للموقع' : 'Free on-site viewing'}</span>
           </div>
         </div>
 

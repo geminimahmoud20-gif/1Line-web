@@ -229,7 +229,7 @@ export default function QuickViewModal({
             <div className="quickview-price-badge-floating">
               <span className="price-tag-big">{priceData.primary} {priceData.symbol}</span>
               <span style={{ fontSize: '0.68rem', display: 'block', fontWeight: 800, color: '#34d399', background: 'rgba(0,0,0,0.5)', padding: '2px 6px', borderRadius: '4px', marginTop: '2px' }}>
-                ✓ {isAr ? '0% عمولة للمشتري' : '0% Commission'}
+                ✓ {isAr ? 'معاينة مجانية للموقع' : 'Free on-site viewing'}
               </span>
             </div>
           </div>

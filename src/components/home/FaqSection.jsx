@@ -121,9 +121,9 @@ export default function FaqSection({ lang = 'ar' }) {
       icon: Coins,
       question: isAr ? 'كيف تُحدَّد الأتعاب وهل أدفع شيئاً عبر الموقع الإلكتروني؟' : 'How are brokerage fees determined, and are there online payments?',
       answer: isAr
-        ? 'الأتعاب واضحة ومحددة كتابياً قبل بدء أي خدمة؛ ونلتزم بـ 0% عمولة تسويق على البائع. موقع 1Line منصة استشارية آمنة ولا يقبل أي مدفوعات إلكترونية عبر البطاقات. أي مقدمات حجز أو سداد صفقات تتم حصراً عبر حسابات بنكية رسمية وبخطابات حجز وإيصالات معتمدة من الشركة.'
-        : 'Our fee structure is completely transparent and in writing before engagement — with 0% marketing commission charged to sellers. Our platform processes no online card payments; deposits occur strictly through verified official bank channels.',
-      highlight: isAr ? '0% عمولة على البائع وبدون دفع إلكتروني' : '0% seller fee & zero online card charges',
+        ? 'أتعاب الوساطة للبائع والمشتري تُحدَّد وتُكتب في اتفاق واضح قبل بدء أي خدمة، والمعاينة الميدانية للموقع مجانية. موقع 1Line لا يقبل أي مدفوعات إلكترونية عبر البطاقات، وأي مقدمات حجز أو سداد تتم حصراً عبر حسابات بنكية رسمية وبخطابات حجز وإيصالات معتمدة من الشركة.'
+        : 'Brokerage fees for sellers and buyers are agreed in writing before any service starts, and on-site viewings are free. The website takes no card payments; deposits go only through official bank accounts with company reservation letters and receipts.',
+      highlight: isAr ? 'أتعاب مكتوبة مسبقاً • معاينة مجانية • بدون دفع إلكتروني' : 'Written fees upfront • free viewing • no online payments',
       action: null
     },
     {

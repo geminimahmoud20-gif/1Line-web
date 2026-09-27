@@ -113,12 +113,12 @@ export default function AboutPage({ lang = 'ar', triggerToast }) {
     {
       num: '03',
       icon: <Award size={24} className="gold-std-icon text-gold" />,
-      title_ar: 'صفر عمولة على البائع ومطابقة فورية',
-      title_en: 'Zero Seller Fees & Fast Match',
+      title_ar: 'أتعاب مكتوبة ومطابقة فورية',
+      title_en: 'Written Fees & Fast Match',
       desc_ar: 'تسويق احترافي لأصحاب العقارات، مع عرض العقار أولاً على المشترين المسجلين لدينا بطلبات مطابقة.',
       desc_en: 'Professional marketing, presenting your property first to registered buyers with matching briefs.',
-      badge_ar: '0% عمولة بائع',
-      badge_en: '0% Commission'
+      badge_ar: 'معاينة مجانية للموقع',
+      badge_en: 'Free on-site viewing'
     },
     {
       num: '04',

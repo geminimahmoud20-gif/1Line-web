@@ -364,7 +364,7 @@ export default function PropertyDetailPage({
               </span>
             )}
 
-            {/* 🛡️ 0% Buyer Commission Transparency Guarantee */}
+            {/* 🛡️ Free viewing + written fees (1Line charges commission — never claim 0%) */}
             <div className="buyer-commission-badge" style={{
               marginTop: '10px',
               padding: '6px 12px',
@@ -964,7 +964,7 @@ export default function PropertyDetailPage({
               {/* 5. Safe Legal Guarantee Seal */}
               <div className="sidebar-legal-guarantee">
                 <ShieldCheck size={15} className="text-gold" />
-                <span>{isAr ? 'معاينة مجانية | 0% عمولة على المشتري' : 'Free viewing | Zero buyer commission'}</span>
+                <span>{isAr ? 'معاينة مجانية للموقع | الأتعاب مكتوبة قبل التعاقد' : 'Free on-site viewing | Fees in writing before contract'}</span>
               </div>
             </div>
           </div>
