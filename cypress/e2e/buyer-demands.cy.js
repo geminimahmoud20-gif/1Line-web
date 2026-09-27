@@ -17,8 +17,8 @@ describe('Buyer Demands Navigation Flow', () => {
         .should('exist');
     });
 
-    it('displays encrypted admin portal title', () => {
-      cy.contains(/بوابة الإدارة المشفرة|Encrypted Admin Portal/i, { timeout: 10000 })
+    it('displays the admin portal title', () => {
+      cy.contains(/بوابة إدارة 1Line|1Line Management Portal/i, { timeout: 10000 })
         .should('be.visible');
     });
 

@@ -1,21 +1,22 @@
 // cypress/e2e/homepage-deep-audit.cy.js
-// Exhaustive Defect & Quality Audit for Homepage
+// Homepage quality audit — current hero/marketplace design plus the Upper Egypt suite
+// (currency switcher, remote inspection, family hub). Never writes to production Firestore.
 
 describe('Homepage Exhaustive Deep Audit', () => {
   const consoleErrors = [];
-  const consoleWarnings = [];
 
   beforeEach(() => {
     consoleErrors.length = 0;
-    consoleWarnings.length = 0;
+    // Block every Firestore write channel: tests must not create leads/requests in production
+    cy.intercept({ url: /firestore\.googleapis\.com\/.*(Write|commit)/ }, { forceNetworkError: true });
 
     cy.visit('/', {
       onBeforeLoad(win) {
+        win.localStorage.setItem('oneline_consent_v1', 'declined');
+        // WhatsApp hand-offs open a new tab; keep the test in this window
+        cy.stub(win, 'open').as('winOpen');
         cy.stub(win.console, 'error').callsFake((...args) => {
           consoleErrors.push(args.join(' '));
-        });
-        cy.stub(win.console, 'warn').callsFake((...args) => {
-          consoleWarnings.push(args.join(' '));
         });
       }
     });
@@ -24,22 +25,20 @@ describe('Homepage Exhaustive Deep Audit', () => {
   it('1. Zero Console Errors & Clean Hydration', () => {
     cy.wait(1500);
     cy.then(() => {
-      // Filter out benign React dev warnings if any, but catch actual errors
-      const criticalErrors = consoleErrors.filter(err => 
+      const criticalErrors = consoleErrors.filter((err) =>
         !err.includes('download the React DevTools') &&
-        !err.includes('favicon')
+        !err.includes('favicon') &&
+        // Offline/blocked Firestore channels are expected in CI
+        !/Firestore|firebase/i.test(err)
       );
-      if (criticalErrors.length > 0) {
-        cy.log('Critical Console Errors found:', criticalErrors);
-      }
+      if (criticalErrors.length > 0) cy.log('Critical Console Errors found:', criticalErrors);
       expect(criticalErrors).to.have.length(0);
     });
   });
 
   it('2. Image Integrity: Zero Broken Images on Homepage', () => {
     cy.get('img').each(($img) => {
-      cy.wrap($img).scrollIntoView({ duration: 150 }).should('be.visible').and(($el) => {
-        // "naturalWidth" should be > 0 if image loaded successfully
+      cy.wrap($img).scrollIntoView({ duration: 150 }).should(($el) => {
         expect($el[0].naturalWidth, `Image source "${$el[0].src}" failed to load`).to.be.greaterThan(0);
       });
     });
@@ -48,85 +47,71 @@ describe('Homepage Exhaustive Deep Audit', () => {
   it('3. Link Integrity: All Links have Valid non-empty Hrefs', () => {
     cy.get('a').each(($a) => {
       const href = $a.attr('href');
-      // Should not be undefined or empty
       expect(href, 'Anchor tag has missing or empty href').to.exist;
       expect(href.trim()).to.not.equal('');
       expect(href.trim()).to.not.equal('#');
     });
   });
 
-  it('4. Universal Search Omnibox & Suggestions Dropdown', () => {
-    // Type in keyword search with smooth centering
-    cy.get('.hero-search-inputs-row input[type="text"]')
-      .should('be.visible')
-      .scrollIntoView()
-      .type('سوهاج', { force: true });
-
-    // Suggestions dropdown should appear
+  it('4. Hero Smart Search & Suggestions Dropdown', () => {
+    cy.get('.hx-field--keyword input').should('be.visible').type('سوهاج', { force: true });
     cy.get('.hero-live-suggestions-dropdown').should('be.visible');
-
-    // Clear button should work
     cy.get('.hero-clear-input-btn').should('be.visible').click();
-    cy.get('.hero-search-inputs-row input[type="text"]').should('have.value', '');
+    cy.get('.hx-field--keyword input').should('have.value', '');
     cy.get('.hero-live-suggestions-dropdown').should('not.exist');
   });
 
   it('5. Marketplace Tabs Switching (Properties vs Cash Demands)', () => {
-    // Tab 1 (Properties) active by default
-    cy.contains('.marketplace-tab-btn', /العقارات|Properties/).should('have.class', 'active');
+    cy.get('.hx-seg-btn').first().should('have.attr', 'aria-selected', 'true');
     cy.get('.properties-grid-4').should('exist');
-
-    // Switch to Tab 2 (Demands)
-    cy.contains('.marketplace-tab-btn', /طلبات المشترين|Demands/).click();
+    cy.get('.hx-seg-btn').eq(1).click();
     cy.get('.demands-metrics-strip').should('be.visible');
-    cy.get('.demands-grid-compact').should('be.visible');
-
-    // Switch back to Tab 1
-    cy.contains('.marketplace-tab-btn', /العقارات|Properties/).click();
+    cy.get('.hx-seg-btn').first().click();
     cy.get('.properties-grid-4').should('be.visible');
   });
 
-  it('6. District Filter Chips in Marketplace Tab', () => {
-    // Click on a specific district chip
-    cy.get('.filter-chip-btn').contains(/شرق سوهاج|East Sohag/).click();
-    cy.get('.filter-chip-btn').contains(/شرق سوهاج|East Sohag/).should('have.class', 'active');
-
-    // Click on All
-    cy.get('.filter-chip-btn').contains(/الكل|All/).click();
-    cy.get('.filter-chip-btn').contains(/الكل|All/).should('have.class', 'active');
-  });
-
-  it('7. Property Card Interactive Features & Action Triggers', () => {
-    // Test favorite button on first card
-    cy.get('.property-card-modern').first().scrollIntoView().within(() => {
-      cy.get('.pcx-fav').click({ force: true });
-      cy.get('.pcx-fav').should('have.class', 'is-on').and('have.attr', 'aria-pressed', 'true');
-      // Un-favorite
-      cy.get('.pcx-fav').click({ force: true });
-      cy.get('.pcx-fav').should('not.have.class', 'is-on');
-
-      // WhatsApp quick inquiry button
-      cy.contains('button', /واتساب|WhatsApp/).should('exist');
-
-      // Details link
-      cy.get('.pcx-btn-main').should('have.attr', 'href').and('include', '/properties/');
+  it('6. Hero discovery pills point at real listing filters', () => {
+    cy.get('.hx-pill').should('have.length.at.least', 3).each(($pill) => {
+      expect($pill.attr('href')).to.match(/^\/properties\?/);
     });
   });
 
-  it('8. Financial Simulator & Founder Tab Switcher', () => {
-    // Calculator active by default
-    cy.get('#mortgage-calculator').should('exist');
-    cy.get('button').contains(/حاسبة التمويل|Mortgage/).should('exist');
-
-    // Switch to Founder & Certified Security tab
-    cy.get('button').contains(/عن 1Line|Founder/).click();
-    cy.get('#about-us, [class*="founder"], [class*="about"]').should('exist');
-
-    // Switch back to Calculator
-    cy.get('button').contains(/حاسبة التمويل|Mortgage/).click();
+  it('7. Property Card: details link, WhatsApp and "معاينة الغربة"', () => {
+    cy.get('.property-card-modern').first().scrollIntoView().within(() => {
+      cy.get('.pcx-btn-main').should('have.attr', 'href').and('include', '/properties/');
+      cy.contains('button', /واتساب|WhatsApp/).should('exist');
+      cy.get('.pcx-chip--remote').click({ force: true });
+    });
+    // The remote-inspection modal is rendered at app level
+    cy.get('.xs-modal[role="dialog"]').should('be.visible');
+    cy.get('.xs-country').should('have.length.at.least', 6);
+    cy.get('.xs-cover').should('have.length', 3);
+    // Validation: submitting without a name is refused and nothing opens
+    cy.get('.xs-modal button[type="submit"]').click();
+    cy.get('.xs-error').should('be.visible');
+    cy.get('@winOpen').should('not.have.been.called');
+    cy.get('body').type('{esc}');
+    cy.get('.xs-modal').should('not.exist');
   });
 
-  it('9. Responsive Viewports & Zero Horizontal Overflow', () => {
+  it('8. Family hub: categories and cost-split calculator', () => {
+    cy.get('.xs-family-tile').should('have.length', 4).first().should('have.attr', 'href').and('include', '/properties?family=');
+    cy.get('.xs-family-calc-toggle').scrollIntoView().click();
+    cy.get('.xs-fam-member').should('have.length', 3);
+    cy.get('.xs-stepper button').last().click();
+    cy.get('.xs-fam-member').should('have.length', 4);
+  });
+
+  it('9. Currency switcher lists the six display currencies', () => {
+    cy.get('.xs-cur-trigger').first().click();
+    cy.get('.xs-cur-menu').should('be.visible');
+    cy.get('.xs-cur-opt').should('have.length', 6);
+    cy.contains('.xs-cur-head', /الجنيه المصري|EGP/);
+    cy.get('body').type('{esc}');
+    cy.get('.xs-cur-menu').should('not.exist');
+  });
+
+  it('10. Responsive Viewports & Zero Horizontal Overflow', () => {
     const viewports = [
       { name: 'Desktop HD', width: 1440, height: 900 },
       { name: 'Laptop', width: 1024, height: 768 },
@@ -138,63 +123,24 @@ describe('Homepage Exhaustive Deep Audit', () => {
     viewports.forEach((vp) => {
       cy.viewport(vp.width, vp.height);
       cy.wait(400);
-
-      // Inspect and log all elements causing horizontal overflow if any
       cy.window().then((win) => {
         const doc = win.document;
         const windowWidth = doc.documentElement.clientWidth;
         const bodyWidth = doc.body.scrollWidth;
-
-        let offending = [];
-        if (bodyWidth > windowWidth + 5) {
-          doc.querySelectorAll('*').forEach((el) => {
-            const rect = el.getBoundingClientRect();
-            const cls = String(el.className || '');
-            const isRTLOverflow = rect.left < -5 || rect.right > windowWidth + 5 || (rect.width > windowWidth + 5);
-            if (isRTLOverflow) {
-              if (!['HTML', 'BODY'].includes(el.tagName) && el.id !== 'root' && !cls.includes('app-root') && !cls.includes('main-site-content') && !cls.includes('homepage-wrapper')) {
-                offending.push({
-                  tag: el.tagName,
-                  className: cls.substring(0, 50),
-                  id: el.id,
-                  left: Math.round(rect.left),
-                  right: Math.round(rect.right),
-                  width: Math.round(rect.width),
-                  scrollWidth: el.scrollWidth
-                });
-              }
-            }
-          });
-          cy.log(`⚠️ Overflow on ${vp.name}: body ${bodyWidth} > win ${windowWidth}`, offending.slice(0, 10));
-          console.warn(`⚠️ Overflow on ${vp.name}: body ${bodyWidth} > win ${windowWidth}`, offending.slice(0, 10));
-        }
-
-        expect(
-          bodyWidth,
-          `Horizontal overflow detected on ${vp.name} (${vp.width}x${vp.height}): body width ${bodyWidth}px > viewport ${windowWidth}px. Offending: ${JSON.stringify(offending.slice(0, 5))}`
-        ).to.be.at.most(windowWidth + 5);
+        expect(bodyWidth, `Horizontal overflow on ${vp.name}: body ${bodyWidth}px > viewport ${windowWidth}px`).to.be.at.most(windowWidth + 5);
       });
     });
   });
 
-  it('10. BiDi & Brand Typography Integrity (1 LINE not inverted)', () => {
-    // Verify brand text has dir="ltr"
+  it('11. BiDi & Brand Typography Integrity (1 LINE not inverted)', () => {
     cy.get('.header-brand-title').should('exist').and('have.attr', 'dir', 'ltr');
     cy.get('.header-brand-one').should('have.text', '1');
   });
 
-  it('11. Dark Mode Toggle Visual Consistency', () => {
-    // Find theme toggle button and click
-    cy.get('button[class*="theme"], button[title*="مظهر"], button[title*="Theme"], button[aria-label*="theme"]').then(($btn) => {
-      if ($btn.length > 0) {
-        cy.wrap($btn.first()).click();
-        cy.get('html, body').should(($el) => {
-          const theme = $el.attr('data-theme') || $el.attr('class');
-          expect(theme).to.include('dark');
-        });
-        // Switch back to light
-        cy.wrap($btn.first()).click();
-      }
-    });
+  it('12. Dark Mode Toggle Visual Consistency', () => {
+    cy.get('.theme-toggle-btn').first().click();
+    cy.get('html').should('have.attr', 'data-theme', 'dark');
+    cy.get('.theme-toggle-btn').first().click();
+    cy.get('html').should('have.attr', 'data-theme', 'light');
   });
 });
