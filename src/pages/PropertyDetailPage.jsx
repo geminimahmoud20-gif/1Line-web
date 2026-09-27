@@ -51,6 +51,13 @@ import { formatCurrencyPrice, getPriceBenchmark } from '../utils/currencyAndBenc
 import BookingConfirmationModal from '../components/common/BookingConfirmationModal';
 import { saveLead } from '../firebaseLazy';
 import { useClientAuth } from '../context/ClientAuthContext';
+import { useUIModal } from '../context/UIModalContext';
+import FinancialBreakdown from '../components/properties/FinancialBreakdown';
+import FamilyCostSplitter from '../components/family/FamilyCostSplitter';
+import CommercialInsightsCard from '../components/commercial/CommercialInsightsCard';
+import { getFamilyInfo } from '../utils/propertyInsights';
+import { Users } from 'lucide-react';
+import '../styles/expat-suite.css';
 
 export default function PropertyDetailPage({
   lang,
@@ -63,6 +70,7 @@ export default function PropertyDetailPage({
   onAddNewLead
 }) {
   const { id } = useParams();
+  const { openRemoteInspection } = useUIModal();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'legal' | 'valuation' | 'financing'
   const [depositModalOpen, setDepositModalOpen] = useState(false);
@@ -160,6 +168,7 @@ export default function PropertyDetailPage({
   const description = isAr ? property.description_ar : property.description_en;
   const features = isAr ? property.features_ar : property.features_en;
   const priceData = formatCurrencyPrice(property.price, currency, lang);
+  const familyInfo = getFamilyInfo(property);
   const benchmark = getPriceBenchmark(property, lang);
 
   // Sector separation
@@ -574,6 +583,31 @@ export default function PropertyDetailPage({
                   </div>
                 </div>
 
+                {/* 🧾 مصفوفة الشفافية المالية — every cost from the listing's own data */}
+                <FinancialBreakdown property={property} lang={lang} currency={currency} />
+
+                {/* 👨‍👩‍👧 بيت العيلة — only for listings tagged in the CRM */}
+                {familyInfo && (
+                  <section className="xs-fam-card" aria-labelledby="xs-fam-card-title">
+                    <header className="xs-fin-head">
+                      <span className="xs-fin-icon"><Users size={20} aria-hidden="true" /></span>
+                      <div>
+                        <h3 id="xs-fam-card-title">{isAr ? `بيت العيلة: ${familyInfo.kind.ar}` : `Family hub: ${familyInfo.kind.en}`}</h3>
+                        <p>
+                          {familyInfo.units > 0
+                            ? (isAr ? `${familyInfo.units} وحدة قابلة للفرز` : `${familyInfo.units} units that can be split`)
+                            : (isAr ? familyInfo.kind.desc_ar : familyInfo.kind.desc_en)}
+                          {(isAr ? familyInfo.note_ar : familyInfo.note_en || familyInfo.note_ar) ? ` — ${isAr ? familyInfo.note_ar : familyInfo.note_en || familyInfo.note_ar}` : ''}
+                        </p>
+                      </div>
+                    </header>
+                    <FamilyCostSplitter property={property} lang={lang} currency={currency} compact />
+                  </section>
+                )}
+
+                {/* 🏥 مؤشرات القرار للعقار التجاري/الطبي + حاسبة العائد */}
+                <CommercialInsightsCard property={property} lang={lang} currency={currency} />
+
                 {/* Description Box */}
                 <div className="detail-card-box">
                   <h3>{isAr ? 'وصف العقار وتفاصيل الموقع' : 'Property Description'}</h3>
@@ -774,17 +808,18 @@ export default function PropertyDetailPage({
                 </a>
               </div>
 
-              {/* 📹 Expat & Remote Buyer Live Video Tour */}
-              <a
-                href={getWhatsAppUrl(`مرحباً 1Line، أنا متواجد خارج سوهاج/مصر وأرغب في حجز موعد لمعاينة العقار كود: #${property.id.toUpperCase()} (${title}) عبر مكالمة فيديو حية (Live WhatsApp Video Tour) مع مستشار المعاينات.`)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="sidebar-live-video-btn"
-                title={isAr ? 'معاينة فيديو حية للمغتربين خارج سوهاج' : 'Live WhatsApp video inspection'}
+              {/* 📹 معاينة الغربة — expat remote inspection (live video / street footage / drone) */}
+              <button
+                type="button"
+                className="xs-remote-cta"
+                onClick={() => openRemoteInspection(property)}
               >
-                <Video size={16} className="text-sky" />
-                <span>{isAr ? 'معاينة فيديو حية (للمغتربين والمسافرين)' : 'Live Video Tour (Expats)'}</span>
-              </a>
+                <span className="xs-remote-cta-icon"><Video size={18} aria-hidden="true" /></span>
+                <span className="xs-remote-cta-text">
+                  <strong>{isAr ? 'طلب معاينة الغربة' : 'Book a remote inspection'}</strong>
+                  <small>{isAr ? 'فيديو حي / شارع وجيران / درون جوي' : 'Live video · street · drone'}</small>
+                </span>
+              </button>
 
               {/* Section Divider */}
               <div className="sidebar-divider">

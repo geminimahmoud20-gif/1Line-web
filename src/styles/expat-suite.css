@@ -1,0 +1,757 @@
+/* 🏛️ 1Line Solutions — Expat, Family Legacy, Trade-In & Commercial Suite 2026 */
+
+/* ==========================================================================
+   1. CURRENCY SWITCHER (Gulf Currencies & USD Converter)
+   ========================================================================== */
+.xs-cur {
+  position: relative;
+  display: inline-block;
+  font-family: inherit;
+  z-index: 40;
+}
+
+.xs-cur-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid rgba(13, 72, 161, 0.15);
+  border-radius: 12px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.xs-cur-trigger:hover,
+.xs-cur-trigger[aria-expanded="true"] {
+  border-color: var(--brand-navy, #0d48a1);
+  background: #f8fafc;
+  box-shadow: 0 4px 12px rgba(13, 72, 161, 0.12);
+}
+
+.xs-cur-trigger.is-foreign {
+  background: linear-gradient(135deg, rgba(255, 202, 40, 0.15) 0%, rgba(13, 72, 161, 0.08) 100%);
+  border-color: rgba(217, 119, 6, 0.4);
+  color: #b45309;
+}
+
+.xs-cur-flag {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.xs-cur-code {
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.xs-cur-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 240px;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid rgba(13, 72, 161, 0.14);
+  border-radius: 16px;
+  padding: 8px;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.14);
+  list-style: none;
+  margin: 0;
+  animation: fadeIn 0.18s ease-out;
+  z-index: 100;
+}
+
+[dir="rtl"] .xs-cur-menu {
+  left: auto;
+  right: 0;
+}
+
+.xs-cur-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary, #1e293b);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: start;
+}
+
+.xs-cur-item:hover {
+  background: #f1f5f9;
+  color: #0d48a1;
+}
+
+.xs-cur-item.is-selected {
+  background: linear-gradient(135deg, rgba(13, 72, 161, 0.08) 0%, rgba(255, 202, 40, 0.12) 100%);
+  font-weight: 800;
+  color: #0d48a1;
+}
+
+.xs-cur-meta {
+  padding: 8px 12px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 0.72rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   2. REMOTE INSPECTION MODAL ("معاينة الغربة")
+   ========================================================================== */
+.xs-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 25, 47, 0.65);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 999;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.xs-modal-card {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid rgba(13, 72, 161, 0.16);
+  border-radius: 24px;
+  max-width: 620px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 32px 28px;
+  position: relative;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+  animation: slideUp 0.25s ease-out;
+}
+
+.xs-modal-close {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s ease;
+}
+
+[dir="rtl"] .xs-modal-close {
+  left: auto;
+  right: auto;
+  left: 20px;
+}
+
+.xs-modal-close:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.xs-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #b45309;
+  background: #fef3c7;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  margin-bottom: 8px;
+}
+
+.xs-prop-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-top: 10px;
+}
+
+.xs-coverage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.xs-coverage-card {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: start;
+}
+
+.xs-coverage-card:hover {
+  border-color: #93c5fd;
+  background: #f8fafc;
+}
+
+.xs-coverage-card.is-checked {
+  border-color: #0d48a1;
+  background: linear-gradient(135deg, rgba(13, 72, 161, 0.04) 0%, rgba(255, 202, 40, 0.08) 100%);
+  box-shadow: 0 4px 14px rgba(13, 72, 161, 0.1);
+}
+
+.xs-slots-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 16px;
+}
+
+.xs-slot-chip {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.xs-slot-chip.is-active {
+  background: #0d48a1;
+  color: #ffffff;
+  border-color: #0d48a1;
+}
+
+.xs-clocks-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  color: #475569;
+  margin-bottom: 16px;
+}
+
+/* ==========================================================================
+   3. FAMILY LEGACY SECTION ("بيت العيلة واستثمار المستقبل")
+   ========================================================================== */
+.xs-family {
+  padding: 48px 0;
+}
+
+.xs-section-head {
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto 36px;
+}
+
+.xs-section-head h2 {
+  font-size: 1.85rem;
+  font-weight: 900;
+  color: var(--text-primary, #0f172a);
+  letter-spacing: -0.5px;
+  margin: 10px 0;
+}
+
+.xs-section-head h2 em {
+  font-style: normal;
+  color: #0d48a1;
+  background: linear-gradient(135deg, #0d48a1 0%, #d97706 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.xs-section-head p {
+  font-size: 0.98rem;
+  color: var(--text-secondary, #475569);
+  line-height: 1.6;
+}
+
+.xs-family-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.xs-family-tile {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid rgba(13, 72, 161, 0.12);
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.xs-family-tile:hover {
+  transform: translateY(-4px);
+  border-color: rgba(13, 72, 161, 0.35);
+  box-shadow: 0 16px 32px rgba(13, 72, 161, 0.12);
+}
+
+.xs-family-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(13, 72, 161, 0.1) 0%, rgba(255, 202, 40, 0.18) 100%);
+  color: #0d48a1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.xs-family-tile strong {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-primary, #0f172a);
+}
+
+.xs-family-tile small {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #64748b);
+  line-height: 1.5;
+  flex-grow: 1;
+}
+
+.xs-family-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #0d48a1;
+}
+
+.xs-family-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0 24px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+}
+
+.xs-family-chips-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #0d48a1;
+}
+
+.xs-family-chip {
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.xs-family-chip.is-active,
+.xs-family-chip:hover {
+  background: #0d48a1;
+  color: #ffffff;
+  border-color: #0d48a1;
+}
+
+/* ==========================================================================
+   4. FINANCIAL TRANSPARENCY BREAKDOWN ("مصفوفة الشفافية المالية")
+   ========================================================================== */
+.xs-fin {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid rgba(13, 72, 161, 0.12);
+  border-radius: 20px;
+  padding: 24px;
+  margin: 24px 0;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+}
+
+.xs-fin-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.xs-fin-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #eff6ff;
+  color: #0d48a1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.xs-fin-head h3 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-primary, #0f172a);
+  margin: 0 0 4px;
+}
+
+.xs-fin-head p {
+  font-size: 0.84rem;
+  color: var(--text-secondary, #64748b);
+  margin: 0;
+}
+
+.xs-fin-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px dashed #e2e8f0;
+  font-size: 0.92rem;
+}
+
+.xs-fin-row:last-child {
+  border-bottom: none;
+}
+
+.xs-fin-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-weight: 700;
+  color: var(--text-primary, #1e293b);
+}
+
+.xs-fin-label small {
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.xs-money {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-weight: 700;
+}
+
+.xs-money.is-strong {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #0d48a1;
+}
+
+.xs-money em {
+  font-style: normal;
+  font-size: 0.8rem;
+  color: #b45309;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   5. TRADE-IN PLATFORM ("منصة البدل العقاري")
+   ========================================================================== */
+.xs-trade {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+}
+
+.xs-hub-hero {
+  text-align: center;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, #092347 0%, #0d48a1 60%, #0a3880 100%);
+  color: #ffffff;
+  border-radius: 24px;
+  margin-bottom: 32px;
+  border: 1px solid rgba(255, 202, 40, 0.35);
+  box-shadow: 0 20px 40px rgba(13, 72, 161, 0.25);
+}
+
+.xs-hub-hero h1 {
+  font-size: 2rem;
+  font-weight: 900;
+  margin: 12px 0;
+  letter-spacing: -0.5px;
+}
+
+.xs-hub-hero h1 em {
+  font-style: normal;
+  color: #ffd700;
+}
+
+.xs-hub-hero p {
+  max-width: 640px;
+  margin: 0 auto;
+  font-size: 0.96rem;
+  opacity: 0.92;
+  line-height: 1.6;
+}
+
+.xs-steps {
+  display: flex;
+  justify-content: space-between;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 28px;
+  position: relative;
+}
+
+.xs-steps li {
+  flex: 1;
+  text-align: center;
+}
+
+.xs-steps li button {
+  background: none;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.84rem;
+  color: #94a3b8;
+}
+
+.xs-step-dot {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.xs-steps li.is-current .xs-step-dot {
+  background: #0d48a1;
+  color: #ffffff;
+  border-color: #0d48a1;
+  box-shadow: 0 0 0 4px rgba(13, 72, 161, 0.15);
+}
+
+.xs-steps li.is-done .xs-step-dot {
+  background: #10b981;
+  color: #ffffff;
+  border-color: #10b981;
+}
+
+.xs-steps li.is-current button {
+  color: #0d48a1;
+}
+
+.xs-wizard {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid rgba(13, 72, 161, 0.12);
+  border-radius: 24px;
+  padding: 32px 28px;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.05);
+}
+
+.xs-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin: 16px 0 24px;
+}
+
+.xs-choice {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.xs-choice:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.xs-choice.is-on {
+  background: linear-gradient(135deg, rgba(13, 72, 161, 0.06) 0%, rgba(255, 202, 40, 0.12) 100%);
+  border-color: #0d48a1;
+  color: #0d48a1;
+  font-weight: 800;
+}
+
+/* ==========================================================================
+   6. COMMERCIAL HUB & METRICS ("مركز الاستثمار التجاري والطبي")
+   ========================================================================== */
+.xs-com {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid rgba(13, 72, 161, 0.12);
+  border-radius: 20px;
+  padding: 24px;
+  margin: 24px 0;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+}
+
+.xs-com-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.xs-com-cell {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.xs-com-cell h4 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #0d48a1;
+  margin: 0 0 10px;
+}
+
+.xs-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.xs-tag {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.xs-access {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.xs-access li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.xs-access li b {
+  color: #0f172a;
+}
+
+.xs-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 0.94rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.xs-btn--wa {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+}
+
+.xs-btn--wa:hover {
+  background: #047857;
+  transform: translateY(-2px);
+}
+
+.xs-btn--ghost {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.xs-btn--ghost:hover {
+  background: #e2e8f0;
+}
+
+.xs-btn--primary {
+  background: linear-gradient(135deg, #0d48a1 0%, #1565c0 100%);
+  color: #ffffff;
+}
+
+.xs-success {
+  text-align: center;
+  padding: 36px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.xs-success svg {
+  color: #10b981;
+}

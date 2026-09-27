@@ -3,7 +3,7 @@ import {
   LayoutGrid, Users, Target, Building, Zap, Sparkles,
   Calculator, Activity, ShieldCheck, ChevronDown, ChevronRight,
   Search, X, Moon, Sun, LogOut, MapPin, Database, Award,
-  Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame, Megaphone
+  Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame, Megaphone, Globe2, Repeat2
 } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import { usePreferences } from '../../context/PreferencesContext';
@@ -122,6 +122,18 @@ export default function CrmSidebar({
           icon: Flame,
           label_ar: 'إعادة الاستهداف الذكي',
           label_en: 'Smart Retargeting'
+        },
+        {
+          id: 'expat',
+          icon: Globe2,
+          label_ar: 'خدمات المغتربين VIP',
+          label_en: 'Expat VIP Desk'
+        },
+        {
+          id: 'trade_ins',
+          icon: Repeat2,
+          label_ar: 'صفقات التبادل العقاري',
+          label_en: 'Trade-in Deals'
         }
       ]
     },

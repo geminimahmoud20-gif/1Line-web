@@ -12,6 +12,7 @@ import DemandsManagerPanel from '../components/crm/DemandsManagerPanel';
 import FounderCmsPanel from '../components/crm/FounderCmsPanel';
 import AreaManagerPanel from '../components/crm/AreaManagerPanel';
 import AdCampaignsPanel from '../components/crm/AdCampaignsPanel';
+import { RemoteInspectionsPanel, TradeInsPanel } from '../components/crm/ExpatIntakePanels';
 import GoLiveWizardModal from '../components/crm/GoLiveWizardModal';
 import CrmSidebar from '../components/crm/CrmSidebar';
 import CrmTopbar from '../components/crm/CrmTopbar';
@@ -571,6 +572,19 @@ export default function CrmPage({
               onUpdateProject={guard(can.editInventory, onUpdateProject)}
               onDeleteProject={guard(can.deleteInventory, onDeleteProject)}
               lang={lang}
+              triggerToast={triggerToast}
+            />
+          ) : activeTab === 'expat' ? (
+            <RemoteInspectionsPanel
+              properties={properties}
+              canEdit={can.editLeads}
+              isSuperAdmin={activeRole === 'super_admin'}
+              triggerToast={triggerToast}
+            />
+          ) : activeTab === 'trade_ins' ? (
+            <TradeInsPanel
+              properties={properties}
+              canEdit={can.editLeads}
               triggerToast={triggerToast}
             />
           ) : activeTab === 'ads' && activeRole === 'super_admin' ? (
