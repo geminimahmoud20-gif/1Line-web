@@ -90,19 +90,21 @@ export function getPriceBenchmark(property, lang = 'ar') {
   if (ratio < 0.92) {
     const diffPercent = Math.round((1 - ratio) * 100);
     badgeType = 'deal';
-    badgeLabel = isAr 
-      ? `سعر لقطة (أقل ${diffPercent}% عن متوسط الحي)` 
-      : `Hot Deal (-${diffPercent}% below avg)`;
+    // Measured difference only — no "hot deal" / "rare location" verdicts
+    badgeLabel = isAr
+      ? `أقل ${diffPercent}% من متوسط سعر الحي`
+      : `${diffPercent}% below area average`;
     badgeColor = '#10b981';
     badgeBg = 'rgba(16, 185, 129, 0.12)';
   } else if (ratio <= 1.08) {
     badgeType = 'fair';
-    badgeLabel = isAr ? 'سعر عادل لمتوسط الحي' : 'Fair Market Price';
+    badgeLabel = isAr ? 'قريب من متوسط سعر الحي' : 'Close to area average';
     badgeColor = '#0b4ea2';
     badgeBg = 'rgba(11, 78, 162, 0.1)';
   } else {
     badgeType = 'premium';
-    badgeLabel = isAr ? 'عقار بريميوم / تشطيب وموقع نادر' : 'Prime Luxury / Rare Location';
+    const abovePercent = Math.round((ratio - 1) * 100);
+    badgeLabel = isAr ? `أعلى ${abovePercent}% من متوسط سعر الحي` : `${abovePercent}% above area average`;
     badgeColor = '#d97706';
     badgeBg = 'rgba(245, 158, 11, 0.14)';
   }

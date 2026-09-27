@@ -60,6 +60,34 @@ import { PROPERTY_TYPES } from '../data/propertiesData';
 import { Users } from 'lucide-react';
 import '../styles/expat-suite.css';
 
+const todayIso = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+// "01012345678" / "1012345678" → +201012345678; "+9665…" / "009665…" kept international. null if invalid.
+const normalizeBookingPhone = (raw) => {
+  const s = String(raw || '')
+    .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660))
+    .replace(/[\s\-().]/g, '');
+  if (/^(\+|00)\d{8,15}$/.test(s)) return `+${s.replace(/^(\+|00)/, '')}`;
+  if (/^01[0125]\d{8}$/.test(s)) return `+20${s.slice(1)}`;
+  if (/^1[0125]\d{8}$/.test(s)) return `+20${s}`;
+  return null;
+};
+
+// Office hours from siteConfig CONTACT: daily 10:00–22:00 Cairo time, closed Friday
+const isOfficeOpenNow = () => {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Africa/Cairo', weekday: 'short', hour: 'numeric', hourCycle: 'h23' }).formatToParts(new Date());
+    const day = parts.find((p) => p.type === 'weekday')?.value;
+    const hour = Number(parts.find((p) => p.type === 'hour')?.value);
+    return day !== 'Fri' && hour >= 10 && hour < 22;
+  } catch {
+    return false;
+  }
+};
+
 export default function PropertyDetailPage({
   lang,
   currency = 'EGP',
@@ -78,24 +106,25 @@ export default function PropertyDetailPage({
   const [storyModalOpen, setStoryModalOpen] = useState(false);
   const [bookingConfirmationOpen, setBookingConfirmationOpen] = useState(false);
   const [confirmedBookingData, setConfirmedBookingData] = useState(null);
-  const [viewsCount, setViewsCount] = useState(() => {
-    if (id) {
-      return getPropertyViews(id) || 150;
-    }
-    return 150;
-  });
+  // Real counter only (no invented baseline)
+  const [, setViewsCount] = useState(() => (id ? getPropertyViews(id) || 0 : 0));
+
+  // Deleted / hidden / draft listings are not public, even by direct link
+  const isPublicListing = (p) => p && !p.isDeleted && !['trash', 'hidden', 'draft'].includes(p.status);
 
   // Find Property
   const property = useMemo(() => {
-    return properties.find(p => p.id === id) || null;
-  }, [properties, id]);
+    const found = properties.find(p => p.id === id) || null;
+    return isPublicListing(found) ? found : null;
+  }, [properties, id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Smart Similar Properties recommendation (Same district first, fallback to same property type)
   const similarProperties = useMemo(() => {
     if (!property) return [];
-    const sameArea = properties.filter((p) => p.id !== property.id && p.areaKey === property.areaKey);
+    const pool = properties.filter((p) => p.id !== property.id && isPublicListing(p) && p.status !== 'sold');
+    const sameArea = pool.filter((p) => p.areaKey === property.areaKey);
     if (sameArea.length >= 3) return sameArea.slice(0, 3);
-    const sameType = properties.filter((p) => p.id !== property.id && p.type === property.type && !sameArea.some(sa => sa.id === p.id));
+    const sameType = pool.filter((p) => p.type === property.type && !sameArea.some(sa => sa.id === p.id));
     return [...sameArea, ...sameType].slice(0, 3);
   }, [properties, property]);
 
@@ -139,7 +168,7 @@ export default function PropertyDetailPage({
   const [bookingForm, setBookingForm] = useState({
     name: clientUser?.name || '',
     phone: clientUser?.whatsapp || clientUser?.phone || '',
-    type: 'field', // 'field' | 'video'
+    tourType: 'field', // 'field' | 'video'
     date: '',
     slot: 'evening',
     notes: ''
@@ -147,6 +176,9 @@ export default function PropertyDetailPage({
   const [bookingSubmitted, setBookingSubmitted] = useState(false);
   const [isBookingSubmitting, setIsBookingSubmitting] = useState(false);
   const [hpField, setHpField] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  // The viewing form opens on demand so the sidebar leads with two clear actions
+  const [showBookingForm, setShowBookingForm] = useState(false);
 
   // Sync clientUser details if authenticated
   useEffect(() => {
@@ -170,6 +202,18 @@ export default function PropertyDetailPage({
   const features = isAr ? property.features_ar : property.features_en;
   const priceData = formatCurrencyPrice(property.price, currency, lang);
   const familyInfo = getFamilyInfo(property);
+  // Licence line only from the reviewed legal record (CRM → الموقف القانوني)
+  const licenseText = property.legalStatus
+    ? (isAr ? property.legalStatus.licenseStatus_ar : (property.legalStatus.licenseStatus_en || property.legalStatus.licenseStatus_ar)) || ''
+    : '';
+  const deliveryText = property.deliveryYear
+    ? String(property.deliveryYear)
+    : property.completionStatus === 'ready'
+      ? (isAr ? 'فوري — جاهز للاستلام' : 'Ready now')
+      : (property.completionStatus === 'under_construction' || property.completionStatus === 'off_plan')
+        ? (isAr ? 'تحت الإنشاء' : 'Under construction')
+        : '';
+  const officeOpen = isOfficeOpenNow();
   const benchmark = getPriceBenchmark(property, lang);
 
   // Sector separation
@@ -188,26 +232,34 @@ export default function PropertyDetailPage({
       return;
     }
 
-    const cleanWhatsapp = (bookingForm.whatsapp || bookingForm.phone || '').trim().replace(/[\s\-()]/g, '');
-
-    if (!bookingForm.name || !bookingForm.name.trim()) {
-      triggerToast(isAr ? 'الرجاء إدخال اسمك بالكامل (إلزامي)' : 'Full name is required', 'error');
+    if (!bookingForm.name || bookingForm.name.trim().length < 2) {
+      triggerToast(isAr ? 'الرجاء إدخال اسمك (إلزامي)' : 'Please enter your name', 'error');
       return;
     }
 
-    if (!cleanWhatsapp) {
-      triggerToast(isAr ? 'الرجاء إدخال رقم الواتساب (إلزامي لتأكيد المعاينة والموقع)' : 'WhatsApp number is required', 'error');
+    const fullPhone = normalizeBookingPhone(bookingForm.phone);
+    if (!fullPhone) {
+      setPhoneError(isAr ? 'اكتب رقم واتساب صحيح: 01XXXXXXXXX أو رقم دولي يبدأ بـ +' : 'Enter a valid WhatsApp number: 01XXXXXXXXX or an international number starting with +');
+      return;
+    }
+    setPhoneError('');
+
+    if (bookingForm.date && bookingForm.date < todayIso()) {
+      triggerToast(isAr ? 'اختر تاريخاً من اليوم فصاعداً' : 'Pick today or a later date', 'error');
       return;
     }
 
     setIsBookingSubmitting(true);
     try {
-      const serialCode = `1LINE-BK-${Math.floor(1000 + Math.random() * 9000)}`;
+      // Time-based reference: readable, and unique enough to find the request in the CRM
+      const serialCode = `1L-${Date.now().toString(36).toUpperCase()}`;
+      const isVideo = bookingForm.tourType === 'video';
+      const slotAr = bookingForm.slot === 'morning' ? 'صباحاً (10 ص – 2 م)' : 'مساءً (5 م – 9 م)';
       const fullBookingRecord = {
         ...bookingForm,
         name: bookingForm.name.trim(),
-        whatsapp: cleanWhatsapp,
-        phone: bookingForm.phone || cleanWhatsapp,
+        whatsapp: fullPhone,
+        phone: fullPhone,
         propertyType: property.type || 'residential',
         area: property.areaKey || 'new_sohag',
         serialCode,
@@ -215,8 +267,9 @@ export default function PropertyDetailPage({
         propertyTitle: title,
         propertyPrice: property.price,
         type: 'viewing_request',
-        source: 'حجز معاينة عقار (صفحة العقار)',
-        notes: `طلب حجز معاينة ميدانية للعقار: ${title} (كود ${property.id.toUpperCase()}) | التاريخ: ${bookingForm.date || 'أقرب موعد'} | الفترة: ${bookingForm.slot === 'morning' ? 'صباحاً' : 'مساءً'}`,
+        tourType: isVideo ? 'video' : 'field',
+        source: 'طلب معاينة (صفحة العقار)',
+        notes: `طلب ${isVideo ? 'معاينة فيديو حية' : 'معاينة ميدانية'} للعقار: ${title} (كود ${property.id.toUpperCase()}) | التاريخ: ${bookingForm.date || 'أقرب موعد'} | الفترة: ${slotAr} | المرجع: ${serialCode}`,
         createdAt: new Date().toISOString()
       };
 
@@ -296,9 +349,13 @@ export default function PropertyDetailPage({
                 <button 
                   type="button" 
                   className="code-copy-pill-btn" 
-                  onClick={() => {
-                    navigator.clipboard.writeText(property.id.toUpperCase());
-                    triggerToast(isAr ? `تم نسخ كود العقار: ${property.id.toUpperCase()}` : `Copied ID: ${property.id.toUpperCase()}`, 'success');
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(property.id.toUpperCase());
+                      triggerToast(isAr ? `تم نسخ كود العقار: ${property.id.toUpperCase()}` : `Copied ID: ${property.id.toUpperCase()}`, 'success');
+                    } catch {
+                      triggerToast(isAr ? `كود العقار: ${property.id.toUpperCase()}` : `Property ID: ${property.id.toUpperCase()}`, 'info');
+                    }
                   }}
                   title={isAr ? 'انقر لنسخ كود العقار' : 'Click to copy property ID'}
                 >
@@ -339,18 +396,15 @@ export default function PropertyDetailPage({
                 </span>
               )}
               {benchmark && (
-                <div className="benchmark-hero-pill" style={{
-                  background: benchmark.badgeBg,
-                  color: benchmark.badgeColor,
-                  border: `1px solid ${benchmark.badgeColor}40`
-                }}>
+                <div className={`benchmark-hero-pill is-${benchmark.badgeType}`}>
                   {benchmark.badgeType === 'deal' ? <TrendingDown size={13} /> : benchmark.badgeType === 'premium' ? <Sparkles size={13} /> : <Scale size={13} />}
                   <span>{benchmark.badgeLabel}</span>
                 </div>
               )}
-              {property.pricePerMeter && (
+              {Number(property.size) > 0 && (
+                // price ÷ size — same figure as the listing card and the valuation tab
                 <span className="price-per-m">
-                  {property.pricePerMeter.toLocaleString()} {isAr ? 'ج.م / متر' : 'EGP / sqm'}
+                  <bdi>{Math.round(Number(property.price) / Number(property.size)).toLocaleString('en-US')}</bdi> {isAr ? 'ج.م / م²' : 'EGP / m²'}
                 </span>
               )}
 
@@ -386,48 +440,44 @@ export default function PropertyDetailPage({
         />
 
         {/* 🎯 Sticky Compact Section Tabs (Solves Scrolling & Overload) */}
-        <div className="detail-section-tabs-bar">
-          <button
-            type="button"
-            className={`section-tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
-            onClick={() => setActiveTab('overview')}
-          >
-            <Layers size={16} />
-            <span>{isAr ? 'المواصفات والوصف' : 'Specs & Overview'}</span>
-          </button>
-
-          <button
-            type="button"
-            className={`section-tab-btn ${activeTab === 'legal' ? 'active' : ''}`}
-            onClick={() => setActiveTab('legal')}
-          >
-            <ShieldCheck size={16} />
-            <span>{isAr ? 'التوثيق والفحص القانوني' : 'Legal Verification'}</span>
-          </button>
-
-          <button
-            type="button"
-            className={`section-tab-btn ${activeTab === 'valuation' ? 'active' : ''}`}
-            onClick={() => setActiveTab('valuation')}
-          >
-            <TrendingUp size={16} />
-            <span>{isAr ? 'التقييم وتاريخ الأسعار والخدمات' : 'Valuation & Amenities'}</span>
-          </button>
-
-          <button
-            type="button"
-            className={`section-tab-btn ${activeTab === 'financing' ? 'active' : ''}`}
-            onClick={() => setActiveTab('financing')}
-          >
-            <Calculator size={16} />
-            <span>{isAr ? 'حاسبة الأقساط والتمويل' : 'Payment & Financing'}</span>
-          </button>
+        <div className="detail-section-tabs-bar" role="tablist" aria-label={isAr ? 'أقسام تفاصيل العقار' : 'Listing sections'}>
+          {[
+            { id: 'overview', Icon: Layers, ar: 'المواصفات والتكاليف', en: 'Specs & costs' },
+            { id: 'legal', Icon: ShieldCheck, ar: 'الموقف القانوني', en: 'Legal status' },
+            { id: 'valuation', Icon: TrendingUp, ar: 'السعر والمنطقة', en: 'Price & area' },
+            { id: 'financing', Icon: Calculator, ar: 'حاسبة التمويل', en: 'Financing calculator' }
+          ].map(({ id: tabId, Icon, ar, en }, idx, all) => (
+            <button
+              key={tabId}
+              type="button"
+              role="tab"
+              id={`pd-tab-${tabId}`}
+              aria-selected={activeTab === tabId}
+              aria-controls="pd-tabpanel"
+              tabIndex={activeTab === tabId ? 0 : -1}
+              className={`section-tab-btn ${activeTab === tabId ? 'active' : ''}`}
+              onClick={() => setActiveTab(tabId)}
+              onKeyDown={(e) => {
+                // Arrow keys move between tabs (reading direction aware)
+                const fwd = isAr ? 'ArrowLeft' : 'ArrowRight';
+                const back = isAr ? 'ArrowRight' : 'ArrowLeft';
+                if (e.key !== fwd && e.key !== back) return;
+                e.preventDefault();
+                const next = all[(idx + (e.key === fwd ? 1 : all.length - 1)) % all.length].id;
+                setActiveTab(next);
+                document.getElementById(`pd-tab-${next}`)?.focus();
+              }}
+            >
+              <Icon size={16} aria-hidden="true" />
+              <span>{isAr ? ar : en}</span>
+            </button>
+          ))}
         </div>
 
         {/* 2-Column Content Grid */}
         <div className="detail-content-grid">
           {/* Left / Main Details Column */}
-          <div className="detail-main-col">
+          <div className="detail-main-col" role="tabpanel" id="pd-tabpanel" aria-labelledby={`pd-tab-${activeTab}`}>
             {/* TAB 1: OVERVIEW & SPECS */}
             {activeTab === 'overview' && (
               <div className="tab-pane-content">
@@ -446,13 +496,15 @@ export default function PropertyDetailPage({
                     {/* Sector-Specific Specifications */}
                     {isLand ? (
                       <>
-                        <div className="spec-box">
-                          <Building size={20} className="text-gold" />
-                          <div>
-                            <span className="spec-lbl">{isAr ? 'تصنيف الأرض' : 'Land Classification'}</span>
-                            <strong>{property.landType_ar || (isAr ? 'أرض استثمارية وترخيص بناء' : 'Licensed Investment Land')}</strong>
+                        {property.landType_ar && (
+                          <div className="spec-box">
+                            <Building size={20} className="text-gold" />
+                            <div>
+                              <span className="spec-lbl">{isAr ? 'تصنيف الأرض' : 'Land Classification'}</span>
+                              <strong>{isAr ? property.landType_ar : (property.landType_en || property.landType_ar)}</strong>
+                            </div>
                           </div>
-                        </div>
+                        )}
                         {property.frontage && (
                           <div className="spec-box">
                             <Sparkles size={20} className="text-gold" />
@@ -462,13 +514,15 @@ export default function PropertyDetailPage({
                             </div>
                           </div>
                         )}
-                        <div className="spec-box">
-                          <ShieldCheck size={20} className="text-gold" />
-                          <div>
-                            <span className="spec-lbl">{isAr ? 'الموقف القانوني' : 'Legal Status'}</span>
-                            <strong>{isAr ? 'ترخيص بناء رسمي صادر' : 'Licensed Plot'}</strong>
+                        {licenseText && (
+                          <div className="spec-box">
+                            <ShieldCheck size={20} className="text-gold" />
+                            <div>
+                              <span className="spec-lbl">{isAr ? 'الترخيص (من المراجعة)' : 'Licence (reviewed)'}</span>
+                              <strong>{licenseText}</strong>
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </>
                     ) : isCommercial ? (
                       <>
@@ -488,13 +542,15 @@ export default function PropertyDetailPage({
                             </div>
                           </div>
                         )}
-                        <div className="spec-box">
-                          <ShieldCheck size={20} className="text-gold" />
-                          <div>
-                            <span className="spec-lbl">{isAr ? 'الترخيص والتصريح' : 'License Status'}</span>
-                            <strong>{isAr ? 'ترخيص تجاري وسجل معتمد' : 'Commercial License'}</strong>
+                        {licenseText && (
+                          <div className="spec-box">
+                            <ShieldCheck size={20} className="text-gold" />
+                            <div>
+                              <span className="spec-lbl">{isAr ? 'الترخيص (من المراجعة)' : 'Licence (reviewed)'}</span>
+                              <strong>{licenseText}</strong>
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </>
                     ) : isOffice ? (
                       <>
@@ -514,13 +570,15 @@ export default function PropertyDetailPage({
                             </div>
                           </div>
                         )}
-                        <div className="spec-box">
-                          <ShieldCheck size={20} className="text-gold" />
-                          <div>
-                            <span className="spec-lbl">{isAr ? 'الترخيص الإداري' : 'License Status'}</span>
-                            <strong>{isAr ? 'ترخيص إداري وطبي رسمي' : 'Certified Administrative'}</strong>
+                        {licenseText && (
+                          <div className="spec-box">
+                            <ShieldCheck size={20} className="text-gold" />
+                            <div>
+                              <span className="spec-lbl">{isAr ? 'الترخيص (من المراجعة)' : 'Licence (reviewed)'}</span>
+                              <strong>{licenseText}</strong>
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </>
                     ) : (
                       /* Residential Units */
@@ -547,31 +605,35 @@ export default function PropertyDetailPage({
                       </>
                     )}
 
-                    {!isLand && (
+                    {!isLand && property.floor !== undefined && property.floor !== null && property.floor !== '' && (
                       <div className="spec-box">
                         <Layers size={20} className="text-gold" />
                         <div>
                           <span className="spec-lbl">{isAr ? 'الدور / الطابق' : 'Floor'}</span>
-                          <strong>{property.floor === 0 ? (isAr ? 'أرضي' : 'Ground') : property.floor}</strong>
+                          <strong>{Number(property.floor) === 0 ? (isAr ? 'أرضي' : 'Ground') : property.floor}</strong>
                         </div>
                       </div>
                     )}
 
-                    <div className="spec-box">
-                      <Sparkles size={20} className="text-gold" />
-                      <div>
-                        <span className="spec-lbl">{isLand ? (isAr ? 'طبيعة التجهيز' : 'Site Readiness') : (isAr ? 'مستوى التشطيب' : 'Finishing')}</span>
-                        <strong>{finishing}</strong>
+                    {finishing && (
+                      <div className="spec-box">
+                        <Sparkles size={20} className="text-gold" />
+                        <div>
+                          <span className="spec-lbl">{isLand ? (isAr ? 'طبيعة التجهيز' : 'Site Readiness') : (isAr ? 'مستوى التشطيب' : 'Finishing')}</span>
+                          <strong>{finishing}</strong>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
-                    <div className="spec-box">
-                      <Clock size={20} className="text-gold" />
-                      <div>
-                        <span className="spec-lbl">{isLand ? (isAr ? 'جاهزية الحفر' : 'Excavation Permit') : (isAr ? 'سنة التسليم' : 'Delivery')}</span>
-                        <strong>{property.deliveryYear || (isAr ? 'فوري' : 'Ready')}</strong>
+                    {deliveryText && (
+                      <div className="spec-box">
+                        <Clock size={20} className="text-gold" />
+                        <div>
+                          <span className="spec-lbl">{isAr ? 'الاستلام' : 'Delivery'}</span>
+                          <strong>{deliveryText}</strong>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
 
@@ -621,50 +683,48 @@ export default function PropertyDetailPage({
                   </div>
                 )}
 
-                {/* 🛡️ Utilities Readiness & Legal Verification Checklist */}
-                <div className="detail-card-box utilities-checklist-card">
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
-                    <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <ShieldCheck size={20} className="text-gold" />
-                      <span>{isAr ? 'جاهزية المرافق والضمانات القانونية للوحدة' : 'Utilities & Legal Readiness'}</span>
-                    </h3>
-                    <span style={{ fontSize: '0.74rem', background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', padding: '3px 8px', borderRadius: 'var(--radius-pill)', fontWeight: '800' }}>
-                      {isAr ? '✓ مفحوص ومعتمد ميدانياً' : '✓ Field Verified'}
-                    </span>
+                {/* ⚖️ Legal status at a glance (full summary lives in the legal tab) */}
+                <button type="button" className={`pd-legal-glance ${property.legalStatus ? 'is-reviewed' : 'is-pending'}`} onClick={() => setActiveTab('legal')}>
+                  <ShieldCheck size={18} aria-hidden="true" />
+                  <span>
+                    <strong>{property.legalStatus ? (isAr ? 'المستندات مراجَعة' : 'Documents reviewed') : (isAr ? 'المراجعة القانونية لم تُنشر بعد' : 'Legal review not published yet')}</strong>
+                    <small>
+                      {property.legalStatus
+                        ? ((isAr ? property.legalStatus.ownershipType_ar : (property.legalStatus.ownershipType_en || property.legalStatus.ownershipType_ar)) || (isAr ? 'اعرض ملخص المراجعة' : 'See the review summary'))
+                        : (isAr ? 'نراجع المستندات معك قبل أي حجز' : 'We review documents with you before any reservation')}
+                    </small>
+                  </span>
+                  <span className="pd-legal-glance-cta">{isAr ? 'التفاصيل ←' : 'Details →'}</span>
+                </button>
+
+                {/* 🔌 Utilities — only what the team recorded for this unit (CRM → المرافق) */}
+                {utilityItems.length > 0 && (
+                  <div className="detail-card-box pd-utilities">
+                    <div className="pd-utilities-head">
+                      <h3>
+                        <Zap size={20} className="text-gold" aria-hidden="true" />
+                        <span>{isAr ? 'المرافق والخدمات' : 'Utilities'}</span>
+                      </h3>
+                      {property.utilities?.verifiedOnSite && (
+                        <span className="pd-utilities-verified">
+                          {isAr ? '✓ تمت المعاينة ميدانياً' : '✓ Checked on site'}
+                          {property.utilities?.verifiedDate ? ` — ${property.utilities.verifiedDate}` : ''}
+                        </span>
+                      )}
+                    </div>
+                    <ul className="pd-utilities-grid">
+                      {utilityItems.map(({ key, Icon, label, value }) => (
+                        <li key={key}>
+                          <Icon size={18} aria-hidden="true" />
+                          <div>
+                            <strong>{label}</strong>
+                            <span>{value}</span>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'var(--card-bg, #ffffff)', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
-                      <Zap size={18} style={{ color: '#eab308', flexShrink: 0 }} />
-                      <div>
-                        <strong style={{ display: 'block', fontSize: '0.84rem' }}>{isAr ? 'عداد كهرباء قانوني' : 'Official Electricity Meter'}</strong>
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{isAr ? 'عداد كودي/رسمي مسجل' : 'Registered meter'}</span>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'var(--card-bg, #ffffff)', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
-                      <Droplets size={18} style={{ color: '#0284c7', flexShrink: 0 }} />
-                      <div>
-                        <strong style={{ display: 'block', fontSize: '0.84rem' }}>{isAr ? 'مياه وغاز متصل' : 'Water & Gas Connected'}</strong>
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{isAr ? 'شبكة حكومية معتمدة' : 'Public utility grid'}</span>
-                      </div>
-                    </div>
-                    {!isLand && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'var(--card-bg, #ffffff)', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
-                        <Building size={18} style={{ color: '#8b5cf6', flexShrink: 0 }} />
-                        <div>
-                          <strong style={{ display: 'block', fontSize: '0.84rem' }}>{isAr ? 'مصعد شغال بالكامل' : 'Elevator Operational'}</strong>
-                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{isAr ? 'صيانة دورية وكابينة إيطالية' : 'Regular maintenance'}</span>
-                        </div>
-                      </div>
-                    )}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'var(--card-bg, #ffffff)', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
-                      <ShieldCheck size={18} style={{ color: '#10b981', flexShrink: 0 }} />
-                      <div>
-                        <strong style={{ display: 'block', fontSize: '0.84rem' }}>{isAr ? 'حصة في الأرض ورخصة' : 'Undivided Land Share'}</strong>
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{isAr ? 'مثبتة رسمياً بعقد البيع' : 'Deed guaranteed'}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                )}
 
                 {/* 💼 Turnkey & Rental Management Service for Investors */}
                 <div className="investor-turnkey-banner detail-card-box" style={{
