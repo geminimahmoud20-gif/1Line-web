@@ -240,7 +240,12 @@ export default function PropertyGallery({
         <div className="property-gallery-grid">
           {/* Main Large Hero Image */}
           <div className="gallery-main-item" onClick={() => handleOpenLightbox(0)}>
-            <img src={images[0]} alt={title} />
+            <img 
+              src={images[0]} 
+              alt={title} 
+              draggable={false}
+              onContextMenu={(e) => e.preventDefault()}
+            />
             <BrandWatermark size="md" position="bottom-right" />
             <div className="gallery-hover-overlay">
               <div className="view-all-pill">
@@ -258,7 +263,12 @@ export default function PropertyGallery({
                 className="gallery-sub-item gallery-thumb-item"
                 onClick={() => handleOpenLightbox(idx + 1)}
               >
-                <img src={imgUrl} alt={`${title} ${idx + 2}`} />
+                <img 
+                  src={imgUrl} 
+                  alt={`${title} ${idx + 2}`} 
+                  draggable={false}
+                  onContextMenu={(e) => e.preventDefault()}
+                />
                 <BrandWatermark size="sm" position="bottom-right" variant="emblem-only" />
                 {idx === 2 && images.length > 4 && (
                   <div className="gallery-more-overlay">

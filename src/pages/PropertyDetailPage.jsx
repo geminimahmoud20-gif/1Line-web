@@ -237,162 +237,144 @@ export default function PropertyDetailPage({
 
   return (
     <div className={`property-detail-page-wrapper ${isAr ? 'rtl-dir' : 'ltr-dir'}`} dir={isAr ? 'rtl' : 'ltr'}>
-      <div className="detail-container">
-        {/* Quick Back Navigation Bar */}
-        <div className="page-top-back-bar">
-          <button
-            type="button"
-            className="btn-back-step"
-            onClick={() => {
-              if (window.history.length > 1) {
-                navigate(-1);
-              } else {
-                navigate('/properties');
-              }
-            }}
-            title={isAr ? 'الرجوع خطوة للخلف' : 'Go back one step'}
-          >
-            {isAr ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
-            <span>{isAr ? 'رجوع خطوة للخلف' : 'Back'}</span>
-          </button>
-          <div className="page-breadcrumb-sub">
-            <Link to="/">{isAr ? 'الرئيسية' : 'Home'}</Link>
-            <span>/</span>
-            <Link to="/properties">{isAr ? 'العقارات' : 'Properties'}</Link>
-            <span>/</span>
-            <span className="crumb-current">{property.id.toUpperCase()}</span>
+      {/* 🌟 SOVEREIGN DARK HERO SHOWCASE STAGE */}
+      <section className="property-detail-hero-stage" aria-label={title}>
+        <div className="detail-hero-ambient" aria-hidden="true" />
+        <div className="detail-container">
+          {/* Quick Back Navigation Bar */}
+          <div className="page-top-back-bar">
+            <button
+              type="button"
+              className="btn-back-step"
+              onClick={() => {
+                if (window.history.length > 1) {
+                  navigate(-1);
+                } else {
+                  navigate('/properties');
+                }
+              }}
+              title={isAr ? 'الرجوع خطوة للخلف' : 'Go back one step'}
+            >
+              {isAr ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
+              <span>{isAr ? 'رجوع خطوة للخلف' : 'Back'}</span>
+            </button>
+            <div className="page-breadcrumb-sub">
+              <Link to="/">{isAr ? 'الرئيسية' : 'Home'}</Link>
+              <span className="crumb-sep">/</span>
+              <Link to="/properties">{isAr ? 'العقارات' : 'Properties'}</Link>
+              <span className="crumb-sep">/</span>
+              <span className="crumb-current">{property.id.toUpperCase()}</span>
+            </div>
           </div>
-        </div>
 
-        {/* Main Title & Price Header Banner */}
-        <div className="detail-header-block">
-          <div className="detail-title-col">
-            <div className="detail-badges-row">
-              {/* Only listings with a legal record carry the badge */}
-              {property.legalStatus && (
-                <span className="status-pill-badge">
-                  <CheckCircle2 size={13} />
-                  {isAr ? 'مستندات مراجَعة' : 'Documents reviewed'}
+          {/* Main Title & Price Header Banner */}
+          <div className="detail-header-block">
+            <div className="detail-title-col">
+              <div className="detail-badges-row">
+                {/* Only listings with a legal record carry the badge */}
+                {property.legalStatus && (
+                  <span className="status-pill-badge">
+                    <CheckCircle2 size={13} style={{ flexShrink: 0 }} />
+                    <span>{isAr ? 'مستندات مراجَعة' : 'Documents reviewed'}</span>
+                  </span>
+                )}
+                <span className="type-pill-badge">
+                  <Building size={13} style={{ flexShrink: 0 }} />
+                  <span>
+                    {(() => {
+                      const t = PROPERTY_TYPES.find((x) => x.id === property.type);
+                      return t ? (isAr ? t.name_ar : t.name_en) : property.type;
+                    })()}
+                  </span>
+                </span>
+                {property.badge_ar && (
+                  <span className="gold-pill-badge">
+                    <Sparkles size={13} style={{ flexShrink: 0 }} />
+                    <span>{isAr ? property.badge_ar : property.badge_en}</span>
+                  </span>
+                )}
+                <button 
+                  type="button" 
+                  className="code-copy-pill-btn" 
+                  onClick={() => {
+                    navigator.clipboard.writeText(property.id.toUpperCase());
+                    triggerToast(isAr ? `تم نسخ كود العقار: ${property.id.toUpperCase()}` : `Copied ID: ${property.id.toUpperCase()}`, 'success');
+                  }}
+                  title={isAr ? 'انقر لنسخ كود العقار' : 'Click to copy property ID'}
+                >
+                  <span className="code-id-txt">{property.id.toUpperCase()}</span>
+                  <span className="copy-icon-txt"><Copy size={12} /></span>
+                </button>
+              </div>
+              <h1 className="detail-main-title">{title}</h1>
+              <div className="detail-location-text">
+                <div className="detail-loc-label">
+                  <MapPin size={16} className="loc-icon-gold" />
+                  <span>{location}</span>
+                </div>
+                {property.coordinates?.lat && (
+                  <a
+                    href={`https://www.google.com/maps?q=${property.coordinates.lat},${property.coordinates.lng}+(${encodeURIComponent(`${title} - 1Line`)})&z=17`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="detail-maps-pill"
+                    title={isAr ? 'فتح اللوكيشن الدقيق على خرائط Google' : 'Open Location in Google Maps'}
+                  >
+                    <Navigation size={13} />
+                    <span>{isAr ? 'عرض على خرائط Google' : 'Open in Google Maps'}</span>
+                  </a>
+                )}
+              </div>
+            </div>
+
+            <div className="detail-price-box">
+              <span className="price-tag-sub">{isAr ? 'السعر الإجمالي' : 'Total Price'}</span>
+              <div className="price-num-row">
+                <h2>{priceData.primary}</h2>
+                <span className="curr">{priceData.symbol}</span>
+              </div>
+              {priceData.isConverted && (
+                <span className="price-converted-sub">
+                  ≈ {priceData.originalEgp}
                 </span>
               )}
-              <span className="type-pill-badge">
-                {(() => {
-                  const t = PROPERTY_TYPES.find((x) => x.id === property.type);
-                  return t ? (isAr ? t.name_ar : t.name_en) : property.type;
-                })()}
-              </span>
-              {property.badge_ar && <span className="gold-pill-badge">{isAr ? property.badge_ar : property.badge_en}</span>}
-              <button 
-                type="button" 
-                className="code-copy-pill-btn" 
-                onClick={() => {
-                  navigator.clipboard.writeText(property.id.toUpperCase());
-                  triggerToast(isAr ? `تم نسخ كود العقار: ${property.id.toUpperCase()}` : `Copied ID: ${property.id.toUpperCase()}`, 'success');
-                }}
-                title={isAr ? 'انقر لنسخ كود العقار' : 'Click to copy property ID'}
-              >
-                <span>{property.id.toUpperCase()}</span>
-                <span className="copy-icon-txt"><Copy size={12} /></span>
-              </button>
-            </div>
-            <h1 className="detail-main-title">{title}</h1>
-            <div className="detail-location-text" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <MapPin size={16} />
-                <span>{location}</span>
-              </div>
-              {property.coordinates?.lat && (
-                <a
-                  href={`https://www.google.com/maps?q=${property.coordinates.lat},${property.coordinates.lng}+(${encodeURIComponent(`${title} - 1Line`)})&z=17`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn btn-sm"
-                  style={{
-                    padding: '4px 12px',
-                    fontSize: '0.78rem',
-                    fontWeight: '700',
-                    background: 'rgba(11, 27, 50, 0.06)',
-                    border: '1px solid var(--border-color)',
-                    color: 'var(--navy-900)',
-                    borderRadius: 'var(--radius-pill)',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    textDecoration: 'none'
-                  }}
-                  title={isAr ? 'فتح اللوكيشن الدقيق على خرائط Google' : 'Open Location in Google Maps'}
-                >
-                  <Navigation size={12} />
-                  <span>{isAr ? 'عرض على خرائط Google' : 'Open in Google Maps'}</span>
-                </a>
+              {benchmark && (
+                <div className="benchmark-hero-pill" style={{
+                  background: benchmark.badgeBg,
+                  color: benchmark.badgeColor,
+                  border: `1px solid ${benchmark.badgeColor}40`
+                }}>
+                  {benchmark.badgeType === 'deal' ? <TrendingDown size={13} /> : benchmark.badgeType === 'premium' ? <Sparkles size={13} /> : <Scale size={13} />}
+                  <span>{benchmark.badgeLabel}</span>
+                </div>
               )}
-            </div>
-          </div>
+              {property.pricePerMeter && (
+                <span className="price-per-m">
+                  {property.pricePerMeter.toLocaleString()} {isAr ? 'ج.م / متر' : 'EGP / sqm'}
+                </span>
+              )}
 
-          <div className="detail-price-box">
-            <span className="price-tag-sub">{isAr ? 'السعر الإجمالي' : 'Total Price'}</span>
-            <div className="price-num-row">
-              <h2>{priceData.primary}</h2>
-              <span className="curr">{priceData.symbol}</span>
-            </div>
-            {priceData.isConverted && (
-              <span className="price-converted-sub" style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: '700', display: 'block', marginTop: '2px' }}>
-                ≈ {priceData.originalEgp}
-              </span>
-            )}
-            {benchmark && (
-              <div style={{
-                marginTop: '8px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '4px 10px',
-                borderRadius: '6px',
-                background: benchmark.badgeBg,
-                color: benchmark.badgeColor,
-                fontSize: '0.74rem',
-                fontWeight: '800',
-                border: `1px solid ${benchmark.badgeColor}33`
-              }}>
-                {benchmark.badgeType === 'deal' ? <TrendingDown size={13} /> : benchmark.badgeType === 'premium' ? <Sparkles size={13} /> : <Scale size={13} />}
-                <span>{benchmark.badgeLabel}</span>
+              {/* 🛡️ Free viewing + written fees (1Line charges commission — never claim 0%) */}
+              <div className="buyer-commission-badge">
+                <CheckCircle2 size={14} style={{ color: '#34D399', flexShrink: 0 }} />
+                <span>{isAr ? 'معاينة ميدانية مجانية للموقع • كل الأتعاب والرسوم مكتوبة قبل التعاقد' : 'Free on-site viewing • All fees in writing before contract'}</span>
               </div>
-            )}
-            {property.pricePerMeter && (
-              <span className="price-per-m" style={{ marginTop: '6px' }}>
-                {property.pricePerMeter.toLocaleString()} {isAr ? 'ج.م / متر' : 'EGP / sqm'}
-              </span>
-            )}
-
-            {/* 🛡️ Free viewing + written fees (1Line charges commission — never claim 0%) */}
-            <div className="buyer-commission-badge" style={{
-              marginTop: '12px',
-              padding: '7px 14px',
-              borderRadius: '999px',
-              background: 'rgba(16, 185, 129, 0.12)',
-              border: '1px solid rgba(16, 185, 129, 0.35)',
-              color: '#34D399',
-              fontSize: '0.78rem',
-              fontWeight: '800',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '7px',
-              backdropFilter: 'blur(8px)'
-            }}>
-              <CheckCircle2 size={14} style={{ color: '#34D399', flexShrink: 0 }} />
-              <span>{isAr ? 'معاينة ميدانية مجانية للموقع • كل الأتعاب والرسوم مكتوبة قبل التعاقد' : 'Free on-site viewing • All fees in writing before contract'}</span>
             </div>
           </div>
-        </div>
 
-        {/* 📸 Gallery Component */}
-        <PropertyGallery
-          images={property.images}
-          title={title}
-          virtualTour={property.virtualTour}
-          lang={lang}
-          floorPlan={property.floorPlan || property.floorPlanImage}
-        />
+          {/* 📸 Gallery Component */}
+          <PropertyGallery
+            images={property.images}
+            title={title}
+            virtualTour={property.virtualTour}
+            lang={lang}
+            floorPlan={property.floorPlan || property.floorPlanImage}
+          />
+        </div>
+      </section>
+
+      {/* Main Page Lower Container */}
+      <div className="detail-container">
 
         {/* 📱 WhatsApp Automation, Instant PDF Brochure & Story Bar */}
         <WhatsAppAutomationBar
