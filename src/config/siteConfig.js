@@ -53,11 +53,12 @@ export const VERIFIED_STATS = {
  * Seller-banner proof points. Buyer counts are computed live from published demands;
  * the rest are business facts the owner must confirm — null hides the tile.
  *   avgDaysToClose: median days from listing to signed contract (from your CRM records)
- *   sellerCommissionPct: brokerage fee charged to the seller (the site already states "no seller commission")
+ *   sellerCommissionPct: brokerage fee charged to the seller. 1Line does charge commission (buyer and
+ *   seller), so never set this to 0 — leave null unless showing the actual agreed rate.
  */
 export const SELLER_PROOF = {
   avgDaysToClose: null,
-  sellerCommissionPct: 0,
+  sellerCommissionPct: null,
 };
 
 /** Commercial registry / tax card numbers, shown in footer & About once filled. */

@@ -379,7 +379,7 @@ export default function PropertyDetailPage({
               gap: '6px'
             }}>
               <CheckCircle2 size={14} style={{ color: '#10b981', flexShrink: 0 }} />
-              <span>{isAr ? '0% عمولة للمشتري | تعاقد مباشر بالسعر الرسمي بدون أي رسوم خفية' : '0% Buyer Commission | Direct Official Price, No Extra Fees'}</span>
+              <span>{isAr ? 'معاينة ميدانية مجانية للموقع | كل الأتعاب والرسوم مكتوبة قبل التعاقد' : 'Free on-site viewing | All fees in writing before contract'}</span>
             </div>
           </div>
         </div>

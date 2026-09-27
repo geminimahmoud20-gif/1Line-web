@@ -544,7 +544,7 @@ export default function HomePage({
               <div className="hx-capsule-row hx-capsule-row--sell" role="tabpanel">
                 <div className="hx-sell-copy">
                   <strong>{lang === 'ar' ? 'اعرف القيمة العادلة لعقارك قبل أن تعرضه' : 'Know your fair price before you list'}</strong>
-                  <span>{lang === 'ar' ? 'تقييم من صفقات فعلية في منطقتك، ومراجعة للمستندات — بدون أي التزام وبدون عمولة على البائع.' : 'Priced from real deals nearby, documents reviewed — no obligation, no seller commission.'}</span>
+                  <span>{lang === 'ar' ? 'تقييم من صفقات فعلية في منطقتك، ومراجعة للمستندات — بدون أي التزام.' : 'Priced from real deals nearby, documents reviewed — no obligation.'}</span>
                 </div>
                 <Link to="/valuation" className="hx-go hx-go--wide">
                   <Calculator size={17} strokeWidth={1.75} aria-hidden="true" />
@@ -983,10 +983,10 @@ export default function HomePage({
                 </div>
                 <div className="hx-pillar-content">
                   <strong className="hx-pillar-title">
-                    {lang === 'ar' ? '0% عمولة على البائع' : '0% Seller Commission'}
+                    {lang === 'ar' ? 'أتعاب واضحة ومكتوبة' : 'Clear written fees'}
                   </strong>
                   <p className="hx-pillar-desc">
-                    {lang === 'ar' ? 'تسويق واحتساب كامل بدون أي استقطاع من قيمة عقارك الصافية.' : 'Full professional marketing with zero deduction from your payout.'}
+                    {lang === 'ar' ? 'تعرف أتعاب الوساطة كتابياً قبل ما نبدأ تسويق عقارك — بدون أي مفاجآت.' : 'Brokerage fees agreed in writing before marketing starts — no surprises.'}
                   </p>
                 </div>
               </div>
@@ -1080,21 +1080,21 @@ export default function HomePage({
             />
             <div className="hx-seller-media-overlay" aria-hidden="true" />
 
-            {/* Floating Glass Card 1: Top (Deal Closed / 0% Commission) */}
+            {/* Floating Glass Card 1: free on-site viewing (a real offer — no invented deals or fee claims) */}
             <div className="hx-seller-float-card hx-seller-float-card--top">
               <div className="hx-seller-float-icon hx-seller-float-icon--success">
                 <CheckCircle2 size={20} strokeWidth={2.2} />
               </div>
               <div className="hx-seller-float-info">
                 <div className="hx-seller-float-title">
-                  {lang === 'ar' ? 'صفقة نُفذت بنجاح' : 'Deal Closed Successfully'}
+                  {lang === 'ar' ? 'معاينة ميدانية للموقع' : 'On-site viewing'}
                 </div>
                 <div className="hx-seller-float-sub">
-                  {lang === 'ar' ? 'سوهاج الجديدة • خلال 14 يوماً' : 'New Sohag • In 14 days'}
+                  {lang === 'ar' ? 'قبل أي التزام' : 'Before any commitment'}
                 </div>
               </div>
               <span className="hx-seller-float-badge hx-seller-float-badge--gold">
-                {lang === 'ar' ? '0% عمولة بائع' : '0% Fee'}
+                {lang === 'ar' ? 'مجاناً' : 'Free'}
               </span>
             </div>
 

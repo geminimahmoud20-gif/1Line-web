@@ -41,8 +41,8 @@ export const DemandsPortal = ({
   onOpenAddDemand
 }) => {
   const publishedDemands = useMemo(() => {
-    const published = demands.filter(d => (d.status || 'published') === 'published');
-    return published.sort((a, b) => {
+    const publishedDemands = demands.filter(d => (d.status || 'published') === 'published');
+    return publishedDemands.sort((a, b) => {
       const timeA = new Date(a.approvedAt || a.createdAt || a.timestamp || 0).getTime();
       const timeB = new Date(b.approvedAt || b.createdAt || b.timestamp || 0).getTime();
       return timeB - timeA;
