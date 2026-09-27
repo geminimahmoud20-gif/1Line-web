@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { 
   X, MapPin, Maximize2, BedDouble, Bath, MessageSquare, ArrowLeft, ArrowRight, 
   Download, Loader2, Share2, ChevronLeft, ChevronRight, Layers, Sparkles,
-  Store, Briefcase, Building, ShieldCheck
+  Store, Briefcase, Building, ShieldCheck, Video
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useUIModal } from '../../context/UIModalContext';
+import '../../styles/expat-suite.css';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { formatCurrencyPrice, getPriceBenchmark } from '../../utils/currencyAndBenchmark';
 import BrandWatermark from './BrandWatermark';
@@ -21,6 +23,7 @@ export default function QuickViewModal({
   const [viewMode, setViewMode] = useState('photos'); // 'photos' | 'floorplan'
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const { openRemoteInspection } = useUIModal();
 
   if (!property) return null;
 
@@ -335,6 +338,19 @@ export default function QuickViewModal({
                 <span>{isAr ? 'عرض كامل تفاصيل العقار والمخطط' : 'View Full Property Details'}</span>
                 {isAr ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
               </Link>
+
+              {/* معاينة الغربة — hands this listing over to the remote-inspection modal */}
+              <button
+                type="button"
+                className="xs-remote-cta"
+                onClick={() => { onClose?.(); openRemoteInspection(property); }}
+              >
+                <span className="xs-remote-cta-icon"><Video size={18} aria-hidden="true" /></span>
+                <span className="xs-remote-cta-text">
+                  <strong>{isAr ? 'طلب معاينة الغربة' : 'Book a remote inspection'}</strong>
+                  <small>{isAr ? 'فيديو حي / شارع وجيران / درون جوي' : 'Live video · street · drone'}</small>
+                </span>
+              </button>
 
               {/* Secondary 2-Column Actions */}
               <div className="quickview-secondary-actions-row">

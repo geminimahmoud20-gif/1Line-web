@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Phone, MessageSquare, ShieldCheck, Clock, X, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Phone, MessageSquare, ShieldCheck, Clock, X, Sparkles, ChevronLeft, ChevronRight, Video } from 'lucide-react';
+import { useUIModal } from '../../context/UIModalContext';
 import { 
   getFounderSettings, 
   getWhatsAppUrl, 
@@ -15,6 +16,7 @@ export default function QuickContactDrawer({
 }) {
   const isAr = lang === 'ar';
   const [cms, setCms] = useState(() => getFounderSettings());
+  const { openRemoteInspection } = useUIModal();
 
   useEffect(() => {
     const handleUpdate = () => setCms(getFounderSettings());
@@ -98,6 +100,24 @@ export default function QuickContactDrawer({
                 <strong>{isAr ? 'مكتب المستثمرين والمغتربين (VIP Desk)' : 'VIP Expat & Investor Desk'}</strong>
               </div>
               <span className="channel-sub">{isAr ? 'فرص استثمارية وحصص تجارية بعوائد دولارية' : 'High ROI commercial & residential portfolios'}</span>
+            </div>
+            {isAr ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+          </button>
+
+          {/* 3b. معاينة الغربة — remote inspection request (no specific listing) */}
+          <button
+            type="button"
+            className="contact-channel-item channel-vip"
+            onClick={() => { onClose(); openRemoteInspection(null); }}
+          >
+            <div className="channel-icon-circle bg-gold">
+              <Video size={20} />
+            </div>
+            <div className="channel-info-text">
+              <div className="channel-title-badge">
+                <strong>{isAr ? 'معاينة الغربة (للمقيمين بالخارج)' : 'Remote inspection (expats)'}</strong>
+              </div>
+              <span className="channel-sub">{isAr ? 'فيديو حي أو لقطات الشارع والجيران أو جولة درون' : 'Live video, street footage or a drone tour'}</span>
             </div>
             {isAr ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
           </button>

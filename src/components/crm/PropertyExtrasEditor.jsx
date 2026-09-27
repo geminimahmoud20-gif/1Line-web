@@ -63,10 +63,34 @@ export default function PropertyExtrasEditor({ form, setForm, isAr = true }) {
   const L = (ar, en) => (isAr ? ar : en);
   const EGP = L('ج.م', 'EGP');
 
+  // Live check: does down + installments + handover add up to the listed price?
+  const planCheck = (() => {
+    const price = Number(form.price) || 0;
+    const months = (Number(form.installmentYears) || 0) * 12;
+    const monthly = Number(form.monthlyInstallment) || 0;
+    const quarterly = Number(finance.quarterlyInstallment) || 0;
+    if (!price || !months || !(monthly || quarterly)) return null;
+    const handover = Number(finance.handoverPayment) || 0;
+    const total = (Number(form.downPayment) || 0) + monthly * months + quarterly * Math.floor(months / 3) + handover;
+    return { price, months, handover, total, pct: Math.round((total / price) * 100), gap: Math.max(0, price - total), ok: total >= price * 0.98 };
+  })();
+
   return (
     <div className="pxe">
       <Section icon={Receipt} title={L('مصفوفة التكاليف الشفافة', 'Transparent cost breakdown')} hint={L('تظهر في صفحة العقار', 'Shown on the listing page')}>
         <p className="pxe-note">{L('اترك أي خانة فارغة لو البند غير موجود — لن يظهر للعميل.', 'Leave a field empty if it does not apply — it stays hidden.')}</p>
+        {planCheck && (
+          <div className={`pxe-check ${planCheck.ok ? 'is-ok' : 'is-warn'}`} role="status">
+            <strong>{L('مراجعة خطة السداد:', 'Plan check:')}</strong>{' '}
+            {L(
+              `المقدم + ${planCheck.months} قسط${planCheck.handover ? ' + الاستلام' : ''} = ${planCheck.total.toLocaleString('en-US')} ج.م من سعر ${planCheck.price.toLocaleString('en-US')} (${planCheck.pct}%)`,
+              `Down + ${planCheck.months} installments${planCheck.handover ? ' + handover' : ''} = ${planCheck.total.toLocaleString('en-US')} of ${planCheck.price.toLocaleString('en-US')} (${planCheck.pct}%)`
+            )}
+            {!planCheck.ok && (
+              <span> — {L(`ناقص ${planCheck.gap.toLocaleString('en-US')} ج.م هيظهر للعميل كـ«رصيد غير مجدول». أضف دفعة الاستلام أو صحّح القسط/المدة.`, `${planCheck.gap.toLocaleString('en-US')} missing will show as "unscheduled balance". Add a handover payment or fix the installment/term.`)}</span>
+            )}
+          </div>
+        )}
         <div className="pxe-grid">
           <NumField label={L('سعر الكاش الصافي (بعد الخصم)', 'Net cash price (after discount)')} value={finance.cashPrice} onChange={(v) => setFinance('cashPrice', v)} placeholder={L('نفس السعر الإجمالي لو مفيش خصم', 'Same as total price if no discount')} suffix={EGP} />
           <NumField label={L('قسط ربع سنوي (إن وجد)', 'Quarterly installment (if any)')} value={finance.quarterlyInstallment} onChange={(v) => setFinance('quarterlyInstallment', v)} suffix={EGP} />

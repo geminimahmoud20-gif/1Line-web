@@ -30,6 +30,15 @@
 
 .pxe-sec-body { padding: 4px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
 .pxe-note { margin: 0; font-size: var(--crm-text-xs, 0.74rem); color: var(--crm-muted, #64748b); }
+.pxe-check {
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: var(--crm-text-xs, 0.76rem);
+  line-height: 1.6;
+  color: var(--crm-ink, inherit);
+}
+.pxe-check.is-ok { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.35); }
+.pxe-check.is-warn { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.4); }
 .pxe-sub { font-size: var(--crm-text-sm, 0.8rem); font-weight: 700; color: var(--crm-ink, inherit); margin-top: 4px; }
 
 .pxe-grid {
