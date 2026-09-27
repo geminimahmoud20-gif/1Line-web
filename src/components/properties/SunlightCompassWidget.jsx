@@ -3,17 +3,22 @@ import { Sun, Compass, Wind, Eye, Navigation } from 'lucide-react';
 export default function SunlightCompassWidget({ property, lang = 'ar' }) {
   const isAr = lang === 'ar';
 
-  // Default orientation data for property
-  const orientationData = property?.orientation || {
-    direction_ar: 'بحري شرقي (أفضل اتجاه لصعيد مصر)',
-    direction_en: 'North-East (Optimal Natural Cooling)',
-    sunlightHours: 6.5,
-    ventilationRating_ar: 'ممتازة (تيار هواء طبيعي دائم)',
-    ventilationRating_en: 'Excellent (Natural Cross Breeze)',
-    viewType_ar: 'إطلالة مفتوحة غير مجروحة',
-    viewType_en: 'Open Unobstructed Street View',
-    qiblaDegree: '138° جنوب شرق'
-  };
+  // Orientation is unit-specific: without recorded data there is nothing true to show.
+  const orientationData = property?.orientation;
+  if (!orientationData || !(orientationData.direction_ar || orientationData.direction_en)) return null;
+
+  // Great-circle bearing to the Kaaba from the unit's coordinates (Sohag centre as fallback)
+  const qibla = (() => {
+    const toRad = (d) => (d * Math.PI) / 180;
+    const lat1 = toRad(Number(property?.coordinates?.lat) || 26.5569);
+    const lon1 = toRad(Number(property?.coordinates?.lng) || 31.6948);
+    const lat2 = toRad(21.4225);
+    const lon2 = toRad(39.8262);
+    const dLon = lon2 - lon1;
+    const y = Math.sin(dLon) * Math.cos(lat2);
+    const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+    return Math.round(((Math.atan2(y, x) * 180) / Math.PI + 360) % 360);
+  })();
 
   return (
     <div className="sunlight-compass-card">
@@ -37,7 +42,7 @@ export default function SunlightCompassWidget({ property, lang = 'ar' }) {
           </div>
           <div>
             <span className="feat-lbl">{isAr ? 'اتجاه الواجهة' : 'Unit Facing'}</span>
-            <strong className="feat-val">{isAr ? orientationData.direction_ar : orientationData.direction_en}</strong>
+            <strong className="feat-val">{isAr ? orientationData.direction_ar : (orientationData.direction_en || orientationData.direction_ar)}</strong>
           </div>
         </div>
 
@@ -48,7 +53,7 @@ export default function SunlightCompassWidget({ property, lang = 'ar' }) {
           </div>
           <div>
             <span className="feat-lbl">{isAr ? 'ساعات الشمس اليومية' : 'Daily Sunlight'}</span>
-            <strong className="feat-val">{orientationData.sunlightHours} {isAr ? 'ساعات إضاءة طبيعية' : 'Hours direct sun'}</strong>
+            <strong className="feat-val">{orientationData.sunlightHours ? `${orientationData.sunlightHours} ${isAr ? 'ساعات إضاءة طبيعية' : 'Hours direct sun'}` : '—'}</strong>
           </div>
         </div>
 
@@ -59,7 +64,7 @@ export default function SunlightCompassWidget({ property, lang = 'ar' }) {
           </div>
           <div>
             <span className="feat-lbl">{isAr ? 'التهوية ودوران الهواء' : 'Natural Ventilation'}</span>
-            <strong className="feat-val">{isAr ? orientationData.ventilationRating_ar : orientationData.ventilationRating_en}</strong>
+            <strong className="feat-val">{(isAr ? orientationData.ventilationRating_ar : (orientationData.ventilationRating_en || orientationData.ventilationRating_ar)) || '—'}</strong>
           </div>
         </div>
 
@@ -70,7 +75,9 @@ export default function SunlightCompassWidget({ property, lang = 'ar' }) {
           </div>
           <div>
             <span className="feat-lbl">{isAr ? 'اتجاه القبلة الشريفة' : 'Qibla Direction'}</span>
-            <strong className="feat-val text-primary">{isAr ? '138° جنوب شرق (سوهاج)' : '138° South-East'}</strong>
+            <strong className="feat-val text-primary">
+              <bdi>{qibla}°</bdi> {isAr ? 'من الشمال باتجاه عقارب الساعة' : 'clockwise from north'}
+            </strong>
           </div>
         </div>
       </div>

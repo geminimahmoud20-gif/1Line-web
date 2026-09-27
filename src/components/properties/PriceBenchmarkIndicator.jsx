@@ -18,7 +18,8 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
   const areaData = getAreaById(areaKey);
   const districtAvg = property?.customBenchmarkPrice || (areaData && areaData.avgPricePerMeter) || getDistrictBenchmark(areaKey);
 
-  const propertyPricePerM = property?.pricePerMeter || Math.round((Number(property?.price) || 0) / (Number(property?.size) || 1));
+  // Always price ÷ size, so this matches the listing card and header (a stored pricePerMeter can drift)
+  const propertyPricePerM = Math.round((Number(property?.price) || 0) / (Number(property?.size) || 1));
 
   const diffPercent = useMemo(() => {
     if (!property || !districtAvg) return 0;
@@ -52,7 +53,7 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
           {isBelowMarket ? (
             <>
               <TrendingDown size={14} />
-              <span>{isAr ? `أقل من متوسط الحي بـ ${Math.abs(diffPercent)}% (سعر لقطة)` : `${Math.abs(diffPercent)}% Below Avg (Hot Deal)`}</span>
+              <span>{isAr ? `أقل من متوسط الحي بـ ${Math.abs(diffPercent)}%` : `${Math.abs(diffPercent)}% below area average`}</span>
             </>
           ) : isFairMarket ? (
             <>
@@ -62,7 +63,7 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
           ) : (
             <>
               <TrendingUp size={14} />
-              <span>{isAr ? `أعلى من المتوسط بـ ${diffPercent}% (تشطيب فاخر / موقع استثنائي)` : `${diffPercent}% Above Avg (Prime Luxury)`}</span>
+              <span>{isAr ? `أعلى من متوسط الحي بـ ${diffPercent}%` : `${diffPercent}% above area average`}</span>
             </>
           )}
         </span>
@@ -138,9 +139,10 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
         </div>
 
         <div className="benchmark-metric-box">
-          <span className="metric-lbl">{isAr ? 'الجدوى الاستثمارية الميدانية' : 'Investment Viability'}</span>
+          {/* A measured difference, not a verdict on the investment */}
+          <span className="metric-lbl">{isAr ? 'الفرق عن متوسط المنطقة' : 'Difference vs area average'}</span>
           <strong className={`metric-val ${isBelowMarket ? 'text-success' : 'text-primary'}`}>
-            {isBelowMarket ? (isAr ? '🔥 فرصة ممتازة (طلب مرتفع)' : '🔥 High Demand') : (isAr ? '🛡️ استثمار آمن ومستقر' : '🛡️ Safe Stable Investment')}
+            <bdi>{diffPercent > 0 ? '+' : ''}{diffPercent}%</bdi>
           </strong>
         </div>
       </div>
@@ -160,8 +162,8 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
         <ShieldCheck size={14} className="text-gold" style={{ flexShrink: 0 }} />
         <span>
           {isAr
-            ? 'البيانات الاسترشادية مستخرجة من دراسات الصفقات المبرمة الفعلية بسوهاج لعام 2025/2026 بواسطة فريق 1Line الميداني.'
-            : 'Benchmarks sourced from verified actual transactions in Sohag by 1Line Field Advisory Team.'}
+            ? 'متوسط سعر المتر في المنطقة رقم استرشادي يحدّثه فريق 1Line من لوحة التحكم، ويختلف حسب الدور والتشطيب والواجهة.'
+            : 'The area average is an indicative figure maintained by the 1Line team; floor, finishing and frontage change it.'}
         </span>
       </div>
     </div>

@@ -22,19 +22,24 @@ import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
 export default function MortgageRoiCalculator({ 
   lang = 'ar', 
   currency = 'EGP',
-  initialPrice = 3500000, 
+  initialPrice = 3500000,
   initialDownpaymentPercent = 20,
-  initialYears = 5 
+  initialYears = 5,
+  // Listing pages pass 0 when the seller/developer plan is interest-free, so the calculator
+  // opens on the same monthly figure the listing shows instead of inventing a 12% bank rate.
+  initialInterestRate = 12,
+  initialMonthlyRent = 18000,
+  rentIsEstimate = true
 }) {
   const [activeTab, setActiveTab] = useState('mortgage'); // 'mortgage' | 'roi'
   const [price, setPrice] = useState(initialPrice);
   const [downpaymentPercent, setDownpaymentPercent] = useState(initialDownpaymentPercent);
   const [years, setYears] = useState(initialYears);
-  const [interestRate, setInterestRate] = useState(12); // Annual rate in % (step 1%)
+  const [interestRate, setInterestRate] = useState(initialInterestRate); // Annual rate in % (step 1%)
   const [copied, setCopied] = useState(false);
-  
+
   // ROI States
-  const [monthlyRent, setMonthlyRent] = useState(18000);
+  const [monthlyRent, setMonthlyRent] = useState(initialMonthlyRent);
   const annualMaintenance = useMemo(() => {
     // 0.5% من قيمة الوحدة سنوياً بحد أدنى 6,000 ج.م وحد أقصى 35,000 ج.م
     return Math.min(35000, Math.max(6000, Math.round(price * 0.005)));
@@ -693,7 +698,7 @@ export default function MortgageRoiCalculator({
                 <span style={{ color: '#ffca28', fontSize: '0.85rem' }}>ℹ️</span>
                 <span>
                   {isAr 
-                    ? 'النسبة تمثل صافي العائد الإيجاري (Net Yield) بعد خصم مخصص الصيانة والتشغيل السنوي. نسب النمو الرأسمالي تقديرية مبنية على مؤشرات صفقات سوهاج السابقة.' 
+                    ? 'النسبة تمثل صافي العائد الإيجاري (Net Yield) بعد خصم مخصص الصيانة والتشغيل السنوي. نسبة النمو الرأسمالي افتراض تختاره أنت وليست توقعاً مضموناً.' 
                     : 'Reflects Net Rental Yield after deducting estimated annual maintenance. Capital appreciation is indicative based on historical Sohag transactions.'}
                 </span>
               </div>
@@ -818,8 +823,8 @@ export default function MortgageRoiCalculator({
           <ShieldCheck size={15} style={{ color: 'var(--accent-gold, #d97706)', flexShrink: 0 }} />
           <span>
             {isAr 
-              ? 'الحسابات استرشادية مبنية على مؤشرات أسعار وإيجارات سوق سوهاج المعتمدة لدى 1Line - تحديث سبتمبر 2026' 
-              : 'Indicative calculations based on verified Sohag market rental & valuation benchmarks - 1Line Verified Sep 2026'}
+              ? `حسابات استرشادية للتوضيح فقط — القيم قابلة للتعديل${rentIsEstimate ? '، والإيجار ونسبة النمو افتراضات ابدأ منها ثم عدّلها' : ''}. نظام السداد الرسمي يُسلَّم لك كتابياً قبل الحجز.`
+              : `Indicative only — every value is editable${rentIsEstimate ? '; rent and growth are starting assumptions' : ''}. The official payment schedule is given in writing before reservation.`}
           </span>
         </div>
       </div>

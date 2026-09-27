@@ -37,18 +37,29 @@ export default function NearbyAmenities({ property, lang = 'ar' }) {
 
   const areaData = getAreaById(property?.areaKey);
 
-  // Dynamic Resolution: Property-specific overrides -> Area amenities from CRM -> Fallback defaults
-  const rawAmenities = (Array.isArray(property?.nearbyAmenities) && property.nearbyAmenities.length > 0)
-    ? property.nearbyAmenities
-    : (Array.isArray(areaData?.amenities) && areaData.amenities.length > 0)
-      ? areaData.amenities
-      : [
-          { id: 1, category: 'lifestyle', name_ar: 'كورنيش النيل والحدائق العامة', name_en: 'Nile Corniche Promenade', distance: '500 متر', timeWalk: '6 دقائق', timeDrive: '1 دقيقة' },
-          { id: 2, category: 'education', name_ar: 'المجمعات التعليمية والمدارس النموذجية', name_en: 'Schools & Educational Hubs', distance: '800 متر', timeWalk: '10 دقائق', timeDrive: '2 دقيقة' },
-          { id: 3, category: 'health', name_ar: 'المستشفيات والعيادات الطبية التخصصية', name_en: 'Specialized Medical Centers', distance: '1.0 كم', timeWalk: '12 دقيقة', timeDrive: '3 دقائق' },
-          { id: 4, category: 'transport', name_ar: 'محطات النقل والمحاور الرئيسية', name_en: 'Transit Terminals & Main Arteries', distance: '900 متر', timeWalk: '11 دقيقة', timeDrive: '2 دقيقة' },
-          { id: 5, category: 'shopping', name_ar: 'المراكز التجارية وسلاسل التجزئة', name_en: 'Retail & Shopping Centers', distance: '600 متر', timeWalk: '7 دقائق', timeDrive: '2 دقيقة' }
-        ];
+  // Listing landmarks first, then the area's landmarks from the CRM. No built-in generic list:
+  // a New Sohag villa must not claim to be 500 m from the Corniche.
+  const fromListing = Array.isArray(property?.nearbyAmenities) && property.nearbyAmenities.length > 0;
+  const fromArea = !fromListing && Array.isArray(areaData?.amenities) && areaData.amenities.length > 0;
+  const rawAmenities = fromListing ? property.nearbyAmenities : fromArea ? areaData.amenities : [];
+
+  if (rawAmenities.length === 0) {
+    return (
+      <div className="nearby-amenities-card">
+        <div className="amenities-header">
+          <div className="amenities-title-wrap">
+            <div className="amenities-icon-glow">
+              <MapPin size={22} className="text-white" />
+            </div>
+            <div>
+              <h3>{isAr ? 'المعالم والخدمات القريبة' : 'Nearby amenities'}</h3>
+              <p>{isAr ? 'لم تُضف المعالم القريبة لهذا العقار بعد. افتح الموقع على خرائط Google أو اسأل المستشار.' : 'Nearby landmarks have not been added yet. Open the location in Google Maps or ask an advisor.'}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const amenities = rawAmenities.map((item, idx) => ({
     ...item,
@@ -69,7 +80,11 @@ export default function NearbyAmenities({ property, lang = 'ar' }) {
           </div>
           <div>
             <h3>{isAr ? 'الخدمات الحيوية والمعالم القريبة' : 'Nearby Amenities & Key Landmarks'}</h3>
-            <p>{isAr ? 'استكشف أهم المرافق والمستشفيات والمدارس المحيطة بهذا العقار' : 'Discover schools, hospitals, and transit points near this unit'}</p>
+            <p>
+              {fromArea
+                ? (isAr ? 'معالم المنطقة — المسافات تقريبية من مركز المنطقة وليست من الوحدة نفسها' : 'Area landmarks — distances are approximate from the area centre, not from this unit')
+                : (isAr ? 'أهم المرافق والمستشفيات والمدارس المحيطة بهذا العقار' : 'Schools, hospitals and transit points near this unit')}
+            </p>
           </div>
         </div>
 

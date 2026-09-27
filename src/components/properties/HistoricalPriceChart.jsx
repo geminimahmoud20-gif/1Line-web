@@ -16,22 +16,35 @@ export default function HistoricalPriceChart({ areaKey = 'east', customPoints = 
 
   const areaData = getAreaById(areaKey);
 
-  // Dynamic points resolution: custom -> areaData -> fallbacks
-  const points = customPoints || (areaData && areaData.historicalPrices && areaData.historicalPrices.length > 0
-    ? areaData.historicalPrices
-    : [
-        { year: '2023 Q1', price: 9500 },
-        { year: '2023 Q3', price: 11000 },
-        { year: '2024 Q1', price: 12800 },
-        { year: '2024 Q3', price: 14200 },
-        { year: '2025 Q1', price: 15400 },
-        { year: '2025 Q3', price: 16200 },
-        { year: '2026 (الآن)', price: 17500 }
-      ]);
+  // Points come from the listing or the area data kept in the CRM — never from a built-in series
+  const points = (Array.isArray(customPoints) && customPoints.length > 1)
+    ? customPoints
+    : (areaData?.historicalPrices?.length > 1 ? areaData.historicalPrices : null);
+
+  if (!points) {
+    return (
+      <div className="historical-price-chart-card">
+        <div className="chart-header">
+          <div className="chart-title-wrap">
+            <div className="chart-icon-glow">
+              <TrendingUp size={20} className="text-white" />
+            </div>
+            <div>
+              <h4>{isAr ? 'تاريخ أسعار المنطقة' : 'Area price history'}</h4>
+              <p>{isAr ? 'لا توجد بيانات تاريخية منشورة لهذه المنطقة بعد. اطلب من المستشار صفقات مقارنة حديثة.' : 'No published price history for this area yet. Ask an advisor for recent comparable deals.'}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const startPrice = points[0]?.price || 1;
   const currentPrice = points[points.length - 1]?.price || startPrice;
-  const totalGrowthPercent = areaData?.annualGrowthRate || Math.round(((currentPrice - startPrice) / startPrice) * 100);
+  // Change across the plotted points (not a separate "annual rate" relabelled as cumulative)
+  const totalGrowthPercent = Math.round(((currentPrice - startPrice) / startPrice) * 100);
+  const firstLabel = String(points[0]?.year || '');
+  const lastLabel = String(points[points.length - 1]?.year || '');
 
   // SVG Chart Dimensions
   const width = 580;
@@ -60,14 +73,14 @@ export default function HistoricalPriceChart({ areaKey = 'east', customPoints = 
             <TrendingUp size={20} className="text-white" />
           </div>
           <div>
-            <h4>{isAr ? 'مؤشر نمو الأسعار وتاريخ العائد الرأسمالي' : 'Historical Price Trends & Capital Growth'}</h4>
-            <p>{isAr ? 'تطور متوسط سعر المتر في هذه المنطقة من 2023 حتى 2026' : 'Average price per sqm evolution (2023 - 2026)'}</p>
+            <h4>{isAr ? 'تاريخ متوسط سعر المتر في المنطقة' : 'Area average price per m² over time'}</h4>
+            <p>{isAr ? `من ${firstLabel} إلى ${lastLabel}` : `From ${firstLabel} to ${lastLabel}`}</p>
           </div>
         </div>
 
         <div className="growth-summary-badge">
           <ArrowUpRight size={18} />
-          <span>+{totalGrowthPercent}% {isAr ? 'نمو رأسمالي تراكمي' : 'Growth (3 Yrs)'}</span>
+          <span><bdi>{totalGrowthPercent > 0 ? '+' : ''}{totalGrowthPercent}%</bdi> {isAr ? 'تغيّر خلال الفترة' : 'change over the period'}</span>
         </div>
       </div>
 
@@ -110,7 +123,7 @@ export default function HistoricalPriceChart({ areaKey = 'east', customPoints = 
 
       <div className="chart-footer-note">
         <Award size={14} className="text-gold" />
-        <span>{isAr ? 'بيانات معتمدة ومحدثة دورياً وفق أحدث صفقات الشهر العقاري وتداولات السوق بسوهاج.' : 'Official transaction ledger data updated for Sohag real estate market.'}</span>
+        <span>{isAr ? 'متوسطات استرشادية يدخلها فريق 1Line في بيانات المنطقة، وليست سجلاً رسمياً للصفقات. الأداء السابق لا يضمن نمواً مستقبلياً.' : 'Indicative averages entered by the 1Line team — not an official transaction ledger. Past changes do not guarantee future growth.'}</span>
       </div>
     </div>
   );
