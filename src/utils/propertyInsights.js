@@ -149,7 +149,9 @@ export function computeFinanceBreakdown(p) {
       total: installmentTotal,
       // Down + installments + handover below the cash price means the listing only carries part of
       // the schedule (e.g. a balloon payment is missing) — never present that sum as the total.
-      incomplete: installmentTotal < cashPrice * 0.98,
+      incomplete: installmentTotal < price * 0.98,
+      // Balance the listing doesn't schedule (balloon / extra payments) — shown as its own line
+      unscheduled: installmentTotal < price * 0.98 ? price - installmentTotal : 0,
       premiumOverCash: installmentTotal - cashPrice,
       premiumPct: cashPrice ? ((installmentTotal - cashPrice) / cashPrice) * 100 : 0
     } : null,

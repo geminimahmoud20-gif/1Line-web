@@ -135,7 +135,11 @@ export const generateComparePdf = async (compareList = [], lang = 'ar') => {
         valStr = fb ? `${Math.round(fb.cashPrice).toLocaleString('en-US')} EGP${fb.cashDiscountPct > 0 ? ` (-${Math.round(fb.cashDiscountPct * 10) / 10}%)` : ''}` : '-';
       } else if (row.key === 'planTotal') {
         const plan = computeFinanceBreakdown(prop)?.plan;
-        valStr = plan ? `${Math.round(plan.total).toLocaleString('en-US')} EGP (+${Math.round(plan.premiumPct * 10) / 10}% vs cash)` : 'Cash only';
+        valStr = !plan
+          ? 'Cash only'
+          : plan.incomplete
+            ? `Scheduled ${Math.round(plan.total).toLocaleString('en-US')} + ${Math.round(plan.unscheduled).toLocaleString('en-US')} unscheduled`
+            : `${Math.round(plan.total).toLocaleString('en-US')} EGP (+${Math.round(plan.premiumPct * 10) / 10}% vs cash)`;
       } else if (row.key === 'extras') {
         const fb = computeFinanceBreakdown(prop);
         const parts = [];

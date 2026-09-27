@@ -435,6 +435,9 @@
 .dark-theme :is(.xs-fin-bar, .xs-fin-legend) .is-down { background: #E9D29A; }
 :is(.xs-fin-bar, .xs-fin-legend) .is-inst { background: var(--xs-gold); }
 :is(.xs-fin-bar, .xs-fin-legend) .is-hand { background: #6B8CAE; }
+:is(.xs-fin-bar, .xs-fin-legend) .is-rest {
+  background: repeating-linear-gradient(135deg, rgba(148, 163, 184, 0.55) 0 4px, rgba(148, 163, 184, 0.2) 4px 8px);
+}
 .xs-fin-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 4px; font-size: 0.72rem; color: var(--xs-muted); }
 .xs-fin-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-inline-end: 5px; }
 .xs-fin-total { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; border-radius: 12px; background: var(--xs-navy); color: #FFFFFF; }

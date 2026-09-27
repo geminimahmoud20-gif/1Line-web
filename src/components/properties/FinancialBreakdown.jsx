@@ -44,8 +44,10 @@ export default function FinancialBreakdown({ property, lang = 'ar', currency = '
   const parts = plan ? [
     { key: 'down', label: L('المقدم', 'Down payment'), value: plan.down, cls: 'is-down' },
     { key: 'inst', label: L('الأقساط', 'Installments'), value: plan.total - plan.down - plan.handover, cls: 'is-inst' },
-    { key: 'hand', label: L('دفعة الاستلام', 'Handover'), value: plan.handover, cls: 'is-hand' }
+    { key: 'hand', label: L('دفعة الاستلام', 'Handover'), value: plan.handover, cls: 'is-hand' },
+    { key: 'rest', label: L('غير مجدول', 'Unscheduled'), value: plan.unscheduled, cls: 'is-rest' }
   ].filter((p) => p.value > 0) : [];
+  const barTotal = parts.reduce((s, p) => s + p.value, 0) || 1;
 
   const hasExtras = fb.maintenance || fb.overPrice || fb.fees;
 
@@ -81,7 +83,7 @@ export default function FinancialBreakdown({ property, lang = 'ar', currency = '
           {plan.handover > 0 && <Row label={L('دفعة الاستلام', 'Handover payment')}><Money value={plan.handover} {...m} /></Row>}
 
           {parts.length > 1 && (
-            <div className="xs-fin-bar" role="img" aria-label={parts.map((p) => `${p.label} ${pct((p.value / plan.total) * 100)}`).join('، ')}>
+            <div className="xs-fin-bar" role="img" aria-label={parts.map((p) => `${p.label} ${pct((p.value / barTotal) * 100)}`).join('، ')}>
               {parts.map((p) => (
                 <span key={p.key} className={p.cls} style={{ flexGrow: p.value }} title={`${p.label}: ${fmt(p.value)}`} />
               ))}
@@ -90,19 +92,25 @@ export default function FinancialBreakdown({ property, lang = 'ar', currency = '
           {parts.length > 1 && (
             <div className="xs-fin-legend">
               {parts.map((p) => (
-                <span key={p.key}><i className={p.cls} />{p.label} <bdi>{pct((p.value / plan.total) * 100)}</bdi></span>
+                <span key={p.key}><i className={p.cls} />{p.label} <bdi>{pct((p.value / barTotal) * 100)}</bdi></span>
               ))}
             </div>
           )}
 
           {plan.incomplete ? (
-            <p className="xs-fin-note xs-fin-note--warn">
-              <Info size={13} aria-hidden="true" />
-              {L(
-                'مجموع الدفعات المسجلة أقل من سعر العقار، يعني جدول السداد هنا مختصر. اطلب الجدول الرسمي الكامل من المستشار قبل الحجز.',
-                'The listed payments add up to less than the price, so this schedule is partial. Ask for the full official schedule before reserving.'
-              )}
-            </p>
+            <>
+              <Row
+                label={L('رصيد غير مجدول', 'Unscheduled balance')}
+                hint={L('دفعات إضافية أو عند الاستلام حسب الجدول الرسمي', 'Extra or handover payments per the official schedule')}
+              >
+                <Money value={plan.unscheduled} {...m} />
+              </Row>
+              <Row label={L('إجمالي سعر التقسيط (على الأقل)', 'Total installment price (at least)')}><Money value={fb.price} strong {...m} /></Row>
+              <p className="xs-fin-note">
+                <Info size={13} aria-hidden="true" />
+                {L('نرسل لك الجدول الرسمي بمواعيد كل دفعة قبل الحجز.', 'We send the official schedule with every due date before reservation.')}
+              </p>
+            </>
           ) : (
             <Row label={L('إجمالي سعر التقسيط', 'Total installment price')}><Money value={plan.total} strong {...m} /></Row>
           )}
