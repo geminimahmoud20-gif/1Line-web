@@ -130,7 +130,7 @@ export function trackAd(campaignId, kind) {
 /** Live campaign list for components; re-evaluates schedules every minute */
 export function useAdCampaigns() {
   const [campaigns, setCampaigns] = useState(getCampaigns);
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => subscribeToCampaigns(setCampaigns), []);
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 60 * 1000);

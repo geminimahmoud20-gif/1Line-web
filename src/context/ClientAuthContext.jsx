@@ -59,7 +59,7 @@ export function ClientAuthProvider({
       if (phoneDigits) {
         try {
           localStorage.setItem(`oneline_client_favorites_${phoneDigits}`, JSON.stringify(favorites));
-        } catch (e) {}
+        } catch { /* storage unavailable — non-fatal */ }
       }
     }
   }, [clientUser, favorites]);
@@ -77,7 +77,7 @@ export function ClientAuthProvider({
               restoreFavorites(parsed);
             }
           }
-        } catch (e) {}
+        } catch { /* storage unavailable — non-fatal */ }
       }
     }
   }, [clientUser]);
@@ -98,7 +98,7 @@ export function ClientAuthProvider({
     // Prepare pending action
     setPendingAction(() => actionCallback);
 
-    let reason = '';
+    let reason;
     if (actionType === 'favorite') {
       reason = isAr
         ? propertyTitle 
@@ -268,7 +268,7 @@ export function ClientAuthProvider({
       try {
         const raw = localStorage.getItem(`oneline_client_favorites_${phoneDigits}`);
         if (raw) clientSavedFavs = JSON.parse(raw);
-      } catch (e) {}
+      } catch { /* storage unavailable — non-fatal */ }
     }
 
     const mergedFavs = Array.from(new Set([
@@ -335,7 +335,7 @@ export function ClientAuthProvider({
       if (phoneDigits && Array.isArray(favorites)) {
         try {
           localStorage.setItem(`oneline_client_favorites_${phoneDigits}`, JSON.stringify(favorites));
-        } catch (e) {}
+        } catch { /* storage unavailable — non-fatal */ }
       }
     }
 
@@ -352,7 +352,7 @@ export function ClientAuthProvider({
     }
     try {
       localStorage.removeItem('oneline_favorites');
-    } catch (e) {}
+    } catch { /* storage unavailable — non-fatal */ }
 
     if (typeof triggerToast === 'function') {
       triggerToast(isAr ? 'تم تسجيل خروج حساب العميل بنجاح' : 'Client logged out', 'info');

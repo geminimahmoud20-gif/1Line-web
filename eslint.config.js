@@ -31,6 +31,13 @@ export default defineConfig([
     },
   },
   {
+    // Cypress specs run on Mocha + Chai with the cy/Cypress globals
+    files: ['cypress/**/*.js'],
+    languageOptions: {
+      globals: { ...globals.mocha, cy: 'readonly', Cypress: 'readonly', expect: 'readonly', assert: 'readonly' },
+    },
+  },
+  {
     // CRM design-system guard (UX audit DEF-14, 2026-09-26): ~600 hard-coded colours and ad-hoc
     // font sizes bypassed the theme tokens and caused the dark-mode and contrast failures.
     // Warn (not error) so existing code still builds; new code should use the tokens.

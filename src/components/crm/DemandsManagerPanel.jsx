@@ -83,6 +83,26 @@ export default function DemandsManagerPanel({
     });
   };
 
+  // Memoized Filtered List
+  const filteredDemands = useMemo(() => {
+    return demands.filter(demand => {
+      const currentStatus = demand.status || 'published';
+      if (statusFilter !== 'all' && currentStatus !== statusFilter) return false;
+      if (typeFilter !== 'all' && demand.type !== typeFilter) return false;
+
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const textAr = (demand.text_ar || '').toLowerCase();
+        const textEn = (demand.text_en || '').toLowerCase();
+        const client = (demand.clientName || '').toLowerCase();
+        const phone = (demand.phone || '').toLowerCase();
+        const area = (demand.area_ar || demand.area_en || demand.area || '').toLowerCase();
+        return textAr.includes(q) || textEn.includes(q) || client.includes(q) || phone.includes(q) || area.includes(q);
+      }
+      return true;
+    });
+  }, [demands, statusFilter, typeFilter, searchQuery]);
+
   const handleExportCsv = () => {
     const headers = {
       id: isAr ? 'المعرف' : 'ID',
@@ -143,26 +163,6 @@ export default function DemandsManagerPanel({
       totalPurchasingPower: purchasingPower
     };
   }, [demands]);
-
-  // Memoized Filtered List
-  const filteredDemands = useMemo(() => {
-    return demands.filter(demand => {
-      const currentStatus = demand.status || 'published';
-      if (statusFilter !== 'all' && currentStatus !== statusFilter) return false;
-      if (typeFilter !== 'all' && demand.type !== typeFilter) return false;
-
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const textAr = (demand.text_ar || '').toLowerCase();
-        const textEn = (demand.text_en || '').toLowerCase();
-        const client = (demand.clientName || '').toLowerCase();
-        const phone = (demand.phone || '').toLowerCase();
-        const area = (demand.area_ar || demand.area_en || demand.area || '').toLowerCase();
-        return textAr.includes(q) || textEn.includes(q) || client.includes(q) || phone.includes(q) || area.includes(q);
-      }
-      return true;
-    });
-  }, [demands, statusFilter, typeFilter, searchQuery]);
 
   const handleOpenAdd = () => {
     setFormData({

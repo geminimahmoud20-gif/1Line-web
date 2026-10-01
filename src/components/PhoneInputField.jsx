@@ -24,7 +24,7 @@ const normalizePhoneInput = (val) => {
       continue;
     }
     // Allow digits, plus, hyphens, and spaces
-    if (/[\d\s+\-]/.test(ch)) {
+    if (/[\d\s+-]/.test(ch)) {
       res += ch;
     }
   }

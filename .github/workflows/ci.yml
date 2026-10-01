@@ -23,6 +23,9 @@ jobs:
 
       - run: npm ci
 
+      - name: Lint (errors fail the build; warnings are reported only)
+        run: npm run lint
+
       - name: Unit tests (finance, yield, trade-in matching)
         run: npm run test:unit
 

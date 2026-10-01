@@ -161,7 +161,7 @@ export default function PropertyCompareDrawer({
       const isLand = p.type === 'land';
       const isCom = p.type === 'commercial' || p.category === 'commercial';
       const isOff = p.type === 'office' || p.category === 'administrative';
-      let specsText = '';
+      let specsText;
       if (isLand) specsText = p.landType_ar || (isAr ? 'أرض استثمارية' : 'Land Plot');
       else if (isCom) specsText = p.commercialType_ar || (isAr ? 'محل تجاري واجهة' : 'Retail Shop');
       else if (isOff) specsText = p.adminType_ar || (isAr ? 'مقر إداري / عيادة' : 'Office/Clinic');
