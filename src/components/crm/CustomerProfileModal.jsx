@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { getAreas } from '../../utils/areasData';
 import { getLeadDigitalJourney } from '../../utils/visitorTracker';
+import DeskOptions from './DeskOptions';
 import { canViewLeadPhone, maskPhoneNumber, canEditLead } from '../../utils/rbacRules';
 import { generateGoogleCalendarUrl, downloadIcsFile } from '../../utils/calendarSync';
 
@@ -655,10 +656,7 @@ export default function CustomerProfileModal({
                       value={formData.assignedTo}
                       onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
                     >
-                      <option value="Dr. Mahmoud Elbaz">Dr. Mahmoud Elbaz</option>
-                      <option value="Sales Team A">Sales Team A (شرق سوهاج والكوثر)</option>
-                      <option value="Sales Team B">Sales Team B (سوهاج الجديدة)</option>
-                      <option value="Sales Advisor Team">Sales Advisor Team</option>
+                      <DeskOptions role={userRole} current={formData.assignedTo} lang={lang} />
                     </select>
                   </div>
                 </div>

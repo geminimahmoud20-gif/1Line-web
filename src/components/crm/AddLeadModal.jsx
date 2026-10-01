@@ -15,13 +15,16 @@ import {
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { getAreas } from '../../utils/areasData';
 import { isValidPhoneNumber } from '../../utils/securityShield';
+import DeskOptions from './DeskOptions';
+import { DESK_BY_ROLE } from '../../utils/rbacRules';
 
 export default function AddLeadModal({
   isOpen,
   onClose,
   onAddLead,
   lang = 'ar',
-  triggerToast
+  triggerToast,
+  userRole = 'super_admin'
 }) {
   const isAr = lang === 'ar';
 
@@ -40,7 +43,7 @@ export default function AddLeadModal({
     area: 'east',
     propertyType: 'apartment',
     financing: 'cash',
-    assignedTo: 'Sales Advisor Team',
+    assignedTo: DESK_BY_ROLE[userRole] || 'Sales Advisor Team',
     source: 'اتصال مباشر / هاتف',
     nextActionNote: 'مكالمة هاتفية لتأكيد المواصفات والميزانية',
     nextFollowUpAt: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
@@ -289,10 +292,7 @@ export default function AddLeadModal({
                 value={formData.assignedTo}
                 onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
               >
-                <option value="Dr. Mahmoud Elbaz">Dr. Mahmoud Elbaz</option>
-                <option value="Sales Team A">Sales Team A (شرق سوهاج والكوثر)</option>
-                <option value="Sales Team B">Sales Team B (سوهاج الجديدة)</option>
-                <option value="Sales Advisor Team">Sales Advisor Team</option>
+                <DeskOptions role={userRole} current={formData.assignedTo} lang={lang} />
               </select>
             </div>
 

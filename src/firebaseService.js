@@ -5,6 +5,7 @@
 // =============================================================
 
 import { db, auth, isFirebaseConfigured } from './firebase.js';
+import { DESK_BY_ROLE, UNASSIGNED_DESK } from './utils/rbacRules.js';
 import {
   collection,
   addDoc,
@@ -384,12 +385,6 @@ export const loadLeads = async (maxCount = 150) => {
 
 // Desk agents may only read their own queue (firestore.rules → leadDesk()), so their listener
 // must ask for exactly that slice; an unfiltered query would be rejected as a whole.
-export const LEAD_QUEUE_BY_ROLE = {
-  sales_agent: 'Sales Advisor Team',
-  agent_east: 'Sales Team A',
-  agent_new_sohag: 'Sales Team B'
-};
-
 /**
  * Subscribe to real-time lead updates from Firestore (capped to prevent client memory bloat).
  * Follows the signed-in user: re-subscribes on login/logout with the query their role may read.
@@ -403,7 +398,7 @@ export const subscribeToLeads = (callback, maxCount = 150) => {
   const listen = (desk) => {
     const base = collection(db, 'leads');
     const q = desk
-      ? query(base, where('assignedTo', 'in', [desk, 'Unassigned']), orderBy('createdAt', 'desc'), limit(maxCount))
+      ? query(base, where('assignedTo', 'in', [desk, UNASSIGNED_DESK]), orderBy('createdAt', 'desc'), limit(maxCount))
       : query(base, orderBy('createdAt', 'desc'), limit(maxCount));
     return onSnapshot(q, (snapshot) => {
       const leads = snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
@@ -435,7 +430,7 @@ export const subscribeToLeads = (callback, maxCount = 150) => {
         role = (await user.getIdTokenResult()).claims?.role || '';
       } catch { /* treat as no desk; rules decide */ }
       if (version !== authVersion) return; // a newer auth change already took over
-      unsubSnapshot = listen(LEAD_QUEUE_BY_ROLE[role] || null);
+      unsubSnapshot = listen(DESK_BY_ROLE[role] || null);
     });
     return () => {
       authVersion++;
@@ -547,10 +542,13 @@ export const deleteDealDoc = async (dealId) => {
 /**
  * Subscribe to real-time deals updates.
  */
-export const subscribeToDeals = (callback) => {
+export const subscribeToDeals = (callback, desk = null) => {
   if (isFirebaseConfigured() && db) {
     try {
-      const q = query(collection(db, 'deals'), orderBy('updatedAt', 'desc'));
+      // Desk agents may only list their own desk's deals (firestore.rules) — callers pass their desk
+      const q = desk
+        ? query(collection(db, 'deals'), where('assignedTo', 'in', [desk, UNASSIGNED_DESK]))
+        : query(collection(db, 'deals'), orderBy('updatedAt', 'desc'));
       return onSnapshot(q, (snapshot) => {
         const deals = snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
         callback(deals);

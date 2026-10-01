@@ -12,7 +12,7 @@ import {
 import { loginUser, logAuditEvent } from '../firebaseService';
 import { exportToCsv } from '../utils/exportCsv';
 import { formatTimeSinceLastSync } from '../utils/syncManager';
-import { canExportCsv, canDeleteLead, canViewLeadPhone, maskPhoneNumber, canEditLeadsRole } from '../utils/rbacRules';
+import { canExportCsv, canDeleteLead, canViewLeadPhone, maskPhoneNumber, canEditLeadsRole, assignableDesks } from '../utils/rbacRules';
 import { SOHAG_AREAS, PROPERTY_TYPES } from '../data/propertiesData';
 import { getAreas } from '../utils/areasData';
 import { formatFollowUp, formatBudget, formatLeadType } from '../utils/crmLabels';
@@ -25,6 +25,7 @@ import AgentCommissionLeaderboard from './crm/AgentCommissionLeaderboard';
 import PaymentScheduleBuilder from './crm/PaymentScheduleBuilder';
 import RetargetingHub from './crm/RetargetingHub';
 import CustomerProfileModal from './crm/CustomerProfileModal';
+import DeskOptions from './crm/DeskOptions';
 import AddLeadModal from './crm/AddLeadModal';
 import VisitorIntelligencePanel from './crm/VisitorIntelligencePanel';
 import FounderCmsPanel from './crm/FounderCmsPanel';
@@ -144,6 +145,21 @@ export const CrmAdminPanel = ({
   const currentRoleObj = CRM_ROLES.find(r => r.id === activeRole) || CRM_ROLES[0];
   const isSuperAdmin = currentRoleObj.canDelete;
 
+  // Leads saved before desk scoping may lack assignedTo; desk agents' queue queries can't see
+  // them. A manager's session files them into the shared pool once (only cloud-synced leads).
+  const canAssignAll = userRole === 'super_admin' || userRole === 'sales_manager';
+  useEffect(() => {
+    if (!canAssignAll || !onUpdateLead || !firebaseConnected) return;
+    // Firestore auto-ids only — never push device-local or sample leads to the cloud
+    const orphans = leads.filter((l) => /^[A-Za-z0-9]{20}$/.test(String(l?.id || '')) && !l.assignedTo);
+    if (orphans.length === 0) return;
+    try {
+      if (sessionStorage.getItem('oneline_lead_desk_backfill')) return;
+      sessionStorage.setItem('oneline_lead_desk_backfill', '1');
+    } catch { /* storage unavailable — still backfill */ }
+    orphans.forEach((l) => onUpdateLead(l.id, { assignedTo: 'Unassigned' }));
+  }, [canAssignAll, onUpdateLead, firebaseConnected, leads]);
+
   const handleClaimLead = (leadId) => {
     if (onUpdateLead) {
       onUpdateLead(leadId, { assignedTo: currentRoleObj.agentName });
@@ -249,7 +265,7 @@ export const CrmAdminPanel = ({
 
   const handleBulkAssign = (newAgent) => {
     if (selectedLeadIds.length === 0 || !newAgent) return;
-    if (!canEditLeadsRole(activeRole)) {
+    if (!canEditLeadsRole(activeRole) || !assignableDesks(activeRole).some((d) => d.value === newAgent)) {
       if (triggerToast) triggerToast(isAr ? 'صلاحياتك الحالية لا تسمح بتعيين العملاء' : 'Your role cannot assign leads', 'error');
       return;
     }
@@ -1011,9 +1027,7 @@ export const CrmAdminPanel = ({
                   defaultValue=""
                 >
                   <option value="" disabled>👥 {isAr ? 'تعيين مسؤول جماعي...' : 'Assign Agent...'}</option>
-                  <option value="Dr. Mahmoud Elbaz">Dr. Mahmoud Elbaz</option>
-                  <option value="Sales Team A">Sales Team A (شرق سوهاج)</option>
-                  <option value="Sales Team B">Sales Team B (سوهاج الجديدة)</option>
+                  <DeskOptions role={activeRole} lang={lang} />
                 </select>}
 
                 {/* Bulk Export */}
@@ -1239,11 +1253,7 @@ export const CrmAdminPanel = ({
                             className="crm-agent-select"
                             title={isAr ? 'تعيين مسؤول المبيعات' : 'Assign Agent'}
                           >
-                            <option value="Dr. Mahmoud Elbaz">{isAr ? 'د. محمود الباز' : 'Dr. Mahmoud Elbaz'}</option>
-                            <option value="Sales Team A">{isAr ? 'فريق المبيعات (أ)' : 'Sales Team A'}</option>
-                            <option value="Sales Team B">{isAr ? 'فريق المبيعات (ب)' : 'Sales Team B'}</option>
-                            <option value="Sales Advisor Team">{isAr ? 'مستشار المبيعات' : 'Sales Advisor Team'}</option>
-                            <option value="Unassigned">{isAr ? 'غير مسند' : 'Unassigned'}</option>
+                            <DeskOptions role={activeRole} current={l.assignedTo || 'Unassigned'} lang={lang} />
                           </select>
                         </div>
                       </td>
@@ -1829,6 +1839,7 @@ export const CrmAdminPanel = ({
           }}
           lang={lang}
           triggerToast={triggerToast}
+          userRole={activeRole}
         />
       )}
 

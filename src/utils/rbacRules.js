@@ -80,36 +80,53 @@ export const ROLE_DEFINITIONS = {
   }
 };
 
+// ── Lead desks ───────────────────────────────────────────────────────────────
+// Leads are assigned to a desk by name. Desk agents work only their desk's queue plus the
+// 'Unassigned' pool — enforced server-side by leadDesk()/inMyLeadQueue() in firestore.rules.
+export const UNASSIGNED_DESK = 'Unassigned';
+export const LEAD_DESKS = [
+  { value: 'Dr. Mahmoud Elbaz', label_ar: 'د. محمود الباز', label_en: 'Dr. Mahmoud Elbaz' },
+  { value: 'Sales Team A', label_ar: 'فريق المبيعات (أ) — شرق سوهاج والكوثر', label_en: 'Sales Team A (East Sohag)' },
+  { value: 'Sales Team B', label_ar: 'فريق المبيعات (ب) — سوهاج الجديدة', label_en: 'Sales Team B (New Sohag)' },
+  { value: 'Sales Advisor Team', label_ar: 'مستشار المبيعات', label_en: 'Sales Advisor Team' },
+  { value: UNASSIGNED_DESK, label_ar: 'غير مسند', label_en: 'Unassigned' }
+];
+export const DESK_BY_ROLE = {
+  [CRM_ROLES.SALES_AGENT]: 'Sales Advisor Team',
+  agent_east: 'Sales Team A',
+  agent_new_sohag: 'Sales Team B'
+};
+const FULL_LEAD_ROLES = [CRM_ROLES.SUPER_ADMIN, CRM_ROLES.SALES_MANAGER];
+
+const inDeskQueue = (role, lead) => {
+  const desk = DESK_BY_ROLE[role];
+  return Boolean(desk && lead) && [desk, UNASSIGNED_DESK].includes(lead.assignedTo);
+};
+
+/** Desks this role may assign a lead to (empty: cannot assign). */
+export const assignableDesks = (role) => {
+  if (FULL_LEAD_ROLES.includes(role)) return LEAD_DESKS;
+  const desk = DESK_BY_ROLE[role];
+  return desk ? LEAD_DESKS.filter((d) => d.value === desk || d.value === UNASSIGNED_DESK) : [];
+};
+
 /**
  * Validates whether a given user/role can view a specific lead
  */
-export const canViewLead = (role, lead, userIdentifier) => {
+export const canViewLead = (role, lead) => {
   if (!role) return false;
-  if (role === CRM_ROLES.SUPER_ADMIN || role === CRM_ROLES.SALES_MANAGER) return true;
-  if (role === CRM_ROLES.PROPERTY_MANAGER || role === CRM_ROLES.VIEWER) return true;
-  if (role === CRM_ROLES.FINANCE) return true; // Can view financial context
-  if (role === CRM_ROLES.SALES_AGENT) {
-    if (!lead) return false;
-    const assigned = (lead.assignedTo || '').toLowerCase();
-    const user = (userIdentifier || '').toLowerCase();
-    return assigned === user || assigned === 'unassigned' || !lead.assignedTo;
-  }
-  return false;
+  if (FULL_LEAD_ROLES.includes(role)) return true;
+  if ([CRM_ROLES.PROPERTY_MANAGER, CRM_ROLES.VIEWER, CRM_ROLES.FINANCE].includes(role)) return true;
+  return inDeskQueue(role, lead);
 };
 
 /**
  * Validates whether a given user/role can modify a specific lead
  */
-export const canEditLead = (role, lead, userIdentifier) => {
+export const canEditLead = (role, lead) => {
   if (!role) return false;
-  if (role === CRM_ROLES.SUPER_ADMIN || role === CRM_ROLES.SALES_MANAGER) return true;
-  if (role === CRM_ROLES.SALES_AGENT) {
-    if (!lead) return false;
-    const assigned = (lead.assignedTo || '').toLowerCase();
-    const user = (userIdentifier || '').toLowerCase();
-    return assigned === user || assigned === 'unassigned';
-  }
-  return false;
+  if (FULL_LEAD_ROLES.includes(role)) return true;
+  return inDeskQueue(role, lead);
 };
 
 /**

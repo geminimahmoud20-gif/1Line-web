@@ -29,8 +29,8 @@ service cloud.firestore {
     }
 
     // Lead visibility. Desk agents work only their own queue: leads assigned to their desk plus the
-    // shared 'Unassigned' pool. Desk names match ROLES in CrmAdminPanel.jsx and LEAD_QUEUE_BY_ROLE
-    // in src/firebaseService.js. Managers, admins and the read-only roles see every lead.
+    // shared 'Unassigned' pool. Desk names match ROLES in CrmAdminPanel.jsx and DESK_BY_ROLE
+    // in src/utils/rbacRules.js. Managers, admins and the read-only roles see every lead.
     function leadDesk() {
       return {'sales_agent': 'Sales Advisor Team', 'agent_east': 'Sales Team A', 'agent_new_sohag': 'Sales Team B'}.get(role(), '');
     }
@@ -229,9 +229,14 @@ service cloud.firestore {
     }
 
     // 💼 9. DEALS & PIPELINE
+    // Same desk scoping as leads: agents see and edit only their desk's deals (and the pool).
     match /deals/{dealId} {
-      allow read: if hasRole(['sales_manager', 'finance', 'viewer']) || isLeadEditor();
-      allow create, update: if isLeadEditor() || hasRole(['finance']);
+      allow read: if hasRole(['sales_manager', 'finance', 'viewer'])
+                  || (isDeskAgent() && inMyLeadQueue(resource.data));
+      allow create: if hasRole(['sales_manager', 'finance'])
+                    || (isDeskAgent() && inMyLeadQueue(request.resource.data));
+      allow update: if hasRole(['sales_manager', 'finance'])
+                    || (isDeskAgent() && inMyLeadQueue(resource.data) && inMyLeadQueue(request.resource.data));
       allow delete: if isAdmin();
     }
   }
