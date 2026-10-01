@@ -423,14 +423,16 @@ export default function Header({
           {/* Unified Glassmorphic Utility Control Group */}
           <div className="header-utility-pill-group">
             {/* Display currency for expats (indicative "≈" equivalents; contracts stay in EGP) */}
-            <CurrencySwitcher lang={lang} compact />
+            <div className="header-currency-wrap hide-mobile-sm">
+              <CurrencySwitcher lang={lang} compact />
+            </div>
 
-            <div className="utility-divider" />
+            <div className="utility-divider hide-mobile-sm" />
 
             {/* Theme Toggle (Sun/Moon) with Luxury Rotation Effect */}
             <button
               type="button"
-              className="utility-sub-btn theme-toggle-btn"
+              className="utility-sub-btn theme-toggle-btn hide-mobile-sm"
               onClick={handleThemeToggle}
               title={isAr ? (theme === 'dark' ? 'الوضع الليلي مفعّل — انقر للتبديل للنهاري' : 'الوضع النهاري مفعّل — انقر لتفعيل الوضع الليلي الفاخر') : 'Toggle Luxury Theme'}
               aria-label="تبديل الوضع الليلي"
@@ -442,12 +444,12 @@ export default function Header({
               )}
             </button>
 
-            <div className="utility-divider" />
+            <div className="utility-divider hide-mobile" />
 
             {/* Sound Effects Toggle (Audio Feedback) */}
             <button
               type="button"
-              className={`utility-sub-btn sound-toggle-btn ${soundEnabled ? 'sound-active' : ''}`}
+              className={`utility-sub-btn sound-toggle-btn hide-mobile ${soundEnabled ? 'sound-active' : ''}`}
               onClick={() => {
                 if (toggleSound) toggleSound();
                 playNotificationChime('chime');
@@ -462,7 +464,7 @@ export default function Header({
               )}
             </button>
 
-            <div className="utility-divider" />
+            <div className="utility-divider hide-mobile" />
 
             {/* Language Switcher */}
             <button
@@ -715,6 +717,11 @@ export default function Header({
                 {theme === 'dark' ? <Sun size={18} className="text-gold" /> : <Moon size={18} />}
                 <span>{isAr ? (theme === 'dark' ? 'الوضع النهاري' : 'الوضع الليلي الفاخر') : (theme === 'dark' ? 'Day Pearl' : 'Midnight Luxury')}</span>
               </button>
+
+              {/* Currency Switcher for Mobile Drawer */}
+              <div className="mobile-drawer-currency" style={{ display: 'flex', alignItems: 'center' }}>
+                <CurrencySwitcher lang={lang} compact={false} />
+              </div>
 
               {/* Language Switch */}
               <button
