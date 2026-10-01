@@ -382,31 +382,70 @@ export const loadLeads = async (maxCount = 150) => {
   return null; // signal to use localStorage
 };
 
+// Desk agents may only read their own queue (firestore.rules → leadDesk()), so their listener
+// must ask for exactly that slice; an unfiltered query would be rejected as a whole.
+export const LEAD_QUEUE_BY_ROLE = {
+  sales_agent: 'Sales Advisor Team',
+  agent_east: 'Sales Team A',
+  agent_new_sohag: 'Sales Team B'
+};
+
 /**
  * Subscribe to real-time lead updates from Firestore (capped to prevent client memory bloat).
+ * Follows the signed-in user: re-subscribes on login/logout with the query their role may read.
  * Returns an unsubscribe function, or null if Firebase isn't configured.
  */
 export const subscribeToLeads = (callback, maxCount = 150) => {
-  if (isFirebaseConfigured() && db) {
-    try {
-      const q = query(collection(db, 'leads'), orderBy('createdAt', 'desc'), limit(maxCount));
-      return onSnapshot(q, (snapshot) => {
-        const leads = snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
-        // fromCache snapshots can hold only this device's pending writes — not the full list
-        callback(leads, { fromCache: snapshot.metadata.fromCache });
-      }, (err) => {
-        if (err && err.code === 'permission-denied') {
-          // Graceful fallback for unauthenticated guests
-          return;
-        }
-        console.warn('Firebase subscribeToLeads snapshot warning:', err);
-      });
-    } catch (error) {
-      console.error('Firebase subscribeToLeads error:', error);
-      return null;
+  if (!isFirebaseConfigured() || !db) return null;
+  let unsubSnapshot = null;
+  let authVersion = 0;
+
+  const listen = (desk) => {
+    const base = collection(db, 'leads');
+    const q = desk
+      ? query(base, where('assignedTo', 'in', [desk, 'Unassigned']), orderBy('createdAt', 'desc'), limit(maxCount))
+      : query(base, orderBy('createdAt', 'desc'), limit(maxCount));
+    return onSnapshot(q, (snapshot) => {
+      const leads = snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
+      // fromCache snapshots can hold only this device's pending writes — not the full list
+      callback(leads, { fromCache: snapshot.metadata.fromCache });
+    }, (err) => {
+      // Guests and non-CRM accounts have no lead access — expected, stay quiet
+      if (err && err.code === 'permission-denied') return;
+      console.warn('Firebase subscribeToLeads snapshot warning:', err);
+    });
+  };
+
+  const stopSnapshot = () => {
+    if (unsubSnapshot) unsubSnapshot();
+    unsubSnapshot = null;
+  };
+
+  try {
+    if (!auth) {
+      unsubSnapshot = listen(null);
+      return stopSnapshot;
     }
+    const unsubAuth = onAuthStateChanged(auth, async (user) => {
+      const version = ++authVersion;
+      stopSnapshot();
+      if (!user) return;
+      let role = '';
+      try {
+        role = (await user.getIdTokenResult()).claims?.role || '';
+      } catch { /* treat as no desk; rules decide */ }
+      if (version !== authVersion) return; // a newer auth change already took over
+      unsubSnapshot = listen(LEAD_QUEUE_BY_ROLE[role] || null);
+    });
+    return () => {
+      authVersion++;
+      unsubAuth();
+      stopSnapshot();
+    };
+  } catch (error) {
+    console.error('Firebase subscribeToLeads error:', error);
+    return null;
   }
-  return null;
 };
 
 /**

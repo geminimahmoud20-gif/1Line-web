@@ -28,6 +28,19 @@ service cloud.firestore {
       return hasRole(['sales_manager', 'property_manager']);
     }
 
+    // Lead visibility. Desk agents work only their own queue: leads assigned to their desk plus the
+    // shared 'Unassigned' pool. Desk names match ROLES in CrmAdminPanel.jsx and LEAD_QUEUE_BY_ROLE
+    // in src/firebaseService.js. Managers, admins and the read-only roles see every lead.
+    function leadDesk() {
+      return {'sales_agent': 'Sales Advisor Team', 'agent_east': 'Sales Team A', 'agent_new_sohag': 'Sales Team B'}.get(role(), '');
+    }
+    function isDeskAgent() {
+      return request.auth != null && !isAdmin() && role() in ['sales_agent', 'agent_east', 'agent_new_sohag'];
+    }
+    function inMyLeadQueue(data) {
+      return data.assignedTo in [leadDesk(), 'Unassigned'];
+    }
+
     // Public forms may only create "new" records of bounded size — no self-assigned status,
     // no privilege fields, no oversized payloads used to exhaust storage/quota.
     function boundedText(data, field, maxLen) {
@@ -49,8 +62,11 @@ service cloud.firestore {
                     && (!('status' in request.resource.data) || request.resource.data.status == 'new' || isLeadEditor())
                     && (!('role' in request.resource.data))
                     && (!('isAdmin' in request.resource.data));
-      allow read: if isStaff();
-      allow update: if isLeadEditor();
+      // Agents can claim a pool lead or hand it back, but only managers move leads between desks
+      allow read: if hasRole(['sales_manager', 'property_manager', 'finance', 'viewer'])
+                  || (isDeskAgent() && inMyLeadQueue(resource.data));
+      allow update: if hasRole(['sales_manager'])
+                    || (isDeskAgent() && inMyLeadQueue(resource.data) && inMyLeadQueue(request.resource.data));
       allow delete: if isAdmin();
     }
 
