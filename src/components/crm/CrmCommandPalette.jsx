@@ -229,14 +229,14 @@ export default function CrmCommandPalette({
         style={{
           width: '100%',
           maxWidth: '640px',
-          background: 'var(--crm-card, #ffffff)',
-          border: '1px solid var(--crm-line, #e2e8f0)',
+          background: 'var(--crm-card)',
+          border: '1px solid var(--crm-line)',
           borderRadius: '16px',
           boxShadow: '0 20px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.08)',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          color: 'var(--crm-ink, #0f172a)'
+          color: 'var(--crm-ink)'
         }}
       >
         {/* Search Input Bar */}
@@ -245,10 +245,10 @@ export default function CrmCommandPalette({
           alignItems: 'center',
           gap: '12px',
           padding: '16px 20px',
-          borderBottom: '1px solid var(--crm-line, #e2e8f0)',
-          background: 'var(--crm-subtle, #f9f8f5)'
+          borderBottom: '1px solid var(--crm-line)',
+          background: 'var(--crm-subtle)'
         }}>
-          <Search size={20} style={{ color: 'var(--crm-accent, #A9824A)', flexShrink: 0 }} />
+          <Search size={20} style={{ color: 'var(--crm-accent, var(--crm-accent-text))', flexShrink: 0 }} />
           <input
             ref={inputRef}
             type="text"
@@ -270,8 +270,8 @@ export default function CrmCommandPalette({
               background: 'transparent',
               border: 'none',
               outline: 'none',
-              fontSize: '1rem',
-              color: 'var(--crm-ink, #0f172a)',
+              fontSize: 'var(--crm-text-md)',
+              color: 'var(--crm-ink)',
               fontFamily: 'inherit'
             }}
           />
@@ -279,9 +279,9 @@ export default function CrmCommandPalette({
             fontSize: 'var(--crm-text-xs)',
             padding: '3px 7px',
             borderRadius: '6px',
-            background: 'var(--crm-card, #ffffff)',
-            border: '1px solid var(--crm-line, #e2e8f0)',
-            color: 'var(--crm-muted, #64748b)',
+            background: 'var(--crm-card)',
+            border: '1px solid var(--crm-line)',
+            color: 'var(--crm-muted, var(--crm-faint))',
             fontWeight: 700
           }}>
             ESC
@@ -301,7 +301,7 @@ export default function CrmCommandPalette({
           }}
         >
           {searchResults.length === 0 ? (
-            <div style={{ padding: '36px 20px', textAlign: 'center', color: 'var(--crm-muted, #64748b)' }}>
+            <div style={{ padding: '36px 20px', textAlign: 'center', color: 'var(--crm-muted, var(--crm-faint))' }}>
               <Search size={32} style={{ margin: '0 auto 10px', opacity: 0.4 }} />
               <p style={{ margin: 0, fontSize: 'var(--crm-text-base)' }}>
                 {isAr ? `لم يتم العثور على نتائج تطابق "${query}"` : `No results found for "${query}"`}
@@ -332,8 +332,8 @@ export default function CrmCommandPalette({
                     padding: '10px 14px',
                     borderRadius: '10px',
                     cursor: 'pointer',
-                    background: isSelected ? 'var(--crm-subtle-2, #f2f0ea)' : 'transparent',
-                    border: isSelected ? '1px solid var(--crm-line, #e2e8f0)' : '1px solid transparent',
+                    background: isSelected ? 'var(--crm-subtle-2, var(--crm-subtle))' : 'transparent',
+                    border: isSelected ? '1px solid var(--crm-line)' : '1px solid transparent',
                     transition: 'all 0.1s ease',
                     marginBottom: '2px'
                   }}
@@ -348,7 +348,7 @@ export default function CrmCommandPalette({
                       justifyContent: 'center',
                       flexShrink: 0,
                       background: isAction ? 'rgba(169, 130, 74, 0.12)' : isLead ? 'rgba(59, 130, 246, 0.12)' : isProp ? 'rgba(16, 185, 129, 0.12)' : 'rgba(234, 179, 8, 0.12)',
-                      color: isAction ? 'var(--crm-accent)' : isLead ? '#2563eb' : isProp ? '#059669' : '#d97706'
+                      color: isAction ? 'var(--crm-accent)' : isLead ? 'var(--crm-info)' : isProp ? 'var(--crm-positive)' : 'var(--crm-warn)'
                     }}>
                       {isAction ? <Command size={16} /> : isLead ? <Phone size={16} /> : isProp ? <Building size={16} /> : <Zap size={16} />}
                     </div>
@@ -385,9 +385,9 @@ export default function CrmCommandPalette({
                         fontSize: 'var(--crm-text-xs)',
                         padding: '2px 6px',
                         borderRadius: '4px',
-                        background: 'var(--crm-subtle, #f9f8f5)',
-                        border: '1px solid var(--crm-line, #e2e8f0)',
-                        color: 'var(--crm-muted, #64748b)',
+                        background: 'var(--crm-subtle)',
+                        border: '1px solid var(--crm-line)',
+                        color: 'var(--crm-muted, var(--crm-faint))',
                         fontWeight: 700
                       }}>
                         {item.shortcut}
@@ -408,13 +408,13 @@ export default function CrmCommandPalette({
         {/* Footer shortcuts hint */}
         <div style={{
           padding: '10px 18px',
-          borderTop: '1px solid var(--crm-line, #e2e8f0)',
-          background: 'var(--crm-subtle, #f9f8f5)',
+          borderTop: '1px solid var(--crm-line)',
+          background: 'var(--crm-subtle)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           fontSize: 'var(--crm-text-xs)',
-          color: 'var(--crm-muted, #64748b)'
+          color: 'var(--crm-muted, var(--crm-faint))'
         }}>
           <div style={{ display: 'flex', gap: '14px' }}>
             <span><kbd style={{ fontWeight: 700 }}>↑↓</kbd> للتنقل</span>

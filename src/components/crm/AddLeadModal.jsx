@@ -141,7 +141,7 @@ export default function AddLeadModal({
               <h3 style={{ margin: 0 }}>
                 {isAr ? 'إضافة عميل جديد يدوياً إلى قاعدة البيانات' : 'Register New Lead Manually'}
               </h3>
-              <small style={{ color: 'var(--text-secondary)' }}>
+              <small style={{ color: 'var(--crm-muted)' }}>
                 {isAr ? 'تسجيل بيانات العملاء القادمين عبر الاتصال المباشر أو زيارة المقر' : 'Add walk-in / direct call client to CRM'}
               </small>
             </div>
@@ -337,9 +337,9 @@ export default function AddLeadModal({
                     type="button"
                     onClick={() => handleToggleTag(tagObj.name_ar)}
                     style={{
-                      background: isSelected ? 'var(--accent-gold-light)' : 'rgba(255,255,255,0.04)',
-                      color: isSelected ? 'var(--accent-gold)' : 'var(--text-secondary)',
-                      border: isSelected ? '1px solid var(--accent-gold)' : '1px solid var(--border-light)',
+                      background: isSelected ? 'var(--crm-accent-soft)' : 'rgba(255,255,255,0.04)',
+                      color: isSelected ? 'var(--crm-accent-text)' : 'var(--crm-muted)',
+                      border: isSelected ? '1px solid var(--crm-accent)' : '1px solid var(--border-light)',
                       borderRadius: 'var(--radius-pill)',
                       padding: '4px 10px',
                       fontSize: 'var(--crm-text-xs)',

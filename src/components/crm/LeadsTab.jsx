@@ -60,7 +60,7 @@ export default function LeadsTab({
             <Users size={20} className="text-gold" />
             {isAr ? 'قاعدة بيانات العملاء الشاملة' : 'Customer 360° Database'}
           </h3>
-          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-secondary)' }}>
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
             {isAr ? `إجمالي العملاء: ${leads.length} عميل | المطابق للفلتر: ${filteredLeads.length}` : `Total Leads: ${leads.length} | Filtered: ${filteredLeads.length}`}
           </span>
         </div>
@@ -123,7 +123,7 @@ export default function LeadsTab({
           <button className={`table-filter-btn ${leadFilter === 'investor' ? 'active' : ''}`} onClick={() => setLeadFilter('investor')}>
             💎 {isAr ? 'مستثمرون VIP' : 'Investors'}
           </button>
-          <button className={`table-filter-btn ${leadFilter === 'archived' ? 'active' : ''}`} onClick={() => setLeadFilter('archived')} style={{ color: leadFilter === 'archived' ? '#f59e0b' : undefined }}>
+          <button className={`table-filter-btn ${leadFilter === 'archived' ? 'active' : ''}`} onClick={() => setLeadFilter('archived')} style={{ color: leadFilter === 'archived' ? 'var(--crm-warn)' : undefined }}>
             📦 {isAr ? 'المؤرشفون' : 'Archived'} ({leads.filter(l => l.isArchived).length})
           </button>
         </div>
@@ -174,7 +174,7 @@ export default function LeadsTab({
       {selectedLeadIds.length > 0 && (
         <div style={{
           background: 'rgba(217, 119, 6, 0.12)',
-          border: '1px solid var(--accent-gold)',
+          border: '1px solid var(--crm-accent)',
           borderRadius: 'var(--radius-sm)',
           padding: '10px 16px',
           marginBottom: '14px',
@@ -185,10 +185,10 @@ export default function LeadsTab({
           gap: '10px'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span className="badge" style={{ background: 'var(--accent-gold)', color: '#000', fontWeight: 'bold' }}>
+            <span className="badge" style={{ background: 'var(--crm-accent)', color: 'var(--crm-on-accent)', fontWeight: 'bold' }}>
               {selectedLeadIds.length} {isAr ? 'عميل محدد' : 'selected'}
             </span>
-            <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--text-primary)' }}>
+            <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-ink)' }}>
               {isAr ? 'إجراءات جماعية فورية:' : 'Bulk Actions:'}
             </span>
           </div>
@@ -274,9 +274,9 @@ export default function LeadsTab({
         <tbody>
           {filteredLeads.length === 0 ? (
             <tr>
-              <td colSpan="8" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+              <td colSpan="8" style={{ textAlign: 'center', padding: '40px', color: 'var(--crm-muted)' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
-                  <Inbox size={32} style={{ color: 'var(--accent-gold)' }} />
+                  <Inbox size={32} style={{ color: 'var(--crm-accent-text)' }} />
                   <span style={{ fontSize: 'var(--crm-text-base)' }}>{isAr ? 'لم يتم العثور على أي عملاء يطابقون خيارات البحث الحالية.' : 'No leads found.'}</span>
                 </div>
               </td>
@@ -331,13 +331,13 @@ export default function LeadsTab({
                         )}
                       </div>
 
-                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-secondary)' }}><bdi>{l.phone || l.whatsapp || '—'}</bdi></span>
+                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}><bdi>{l.phone || l.whatsapp || '—'}</bdi></span>
 
                       {/* Tags Display */}
                       {l.tags && l.tags.length > 0 && (
                         <div style={{ display: 'flex', gap: '4px', marginTop: '3px', flexWrap: 'wrap' }}>
                           {l.tags.slice(0, 2).map((t, i) => (
-                            <span key={i} style={{ fontSize: 'var(--crm-text-xs)', background: 'rgba(255,255,255,0.05)', padding: '1px 5px', borderRadius: '3px', color: 'var(--accent-gold)' }}>
+                            <span key={i} style={{ fontSize: 'var(--crm-text-xs)', background: 'rgba(255,255,255,0.05)', padding: '1px 5px', borderRadius: '3px', color: 'var(--crm-accent-text)' }}>
                               {t}
                             </span>
                           ))}
@@ -350,11 +350,11 @@ export default function LeadsTab({
                   <td data-label={isAr ? 'المواصفات' : 'Requirements'}>
                     <div style={{ fontSize: 'var(--crm-text-sm)', maxWidth: '280px', whiteSpace: 'normal' }}>
                       {l.details?.budget && (
-                        <strong style={{ color: 'var(--emerald)', display: 'block', marginBottom: '2px' }}>
+                        <strong style={{ color: 'var(--crm-positive)', display: 'block', marginBottom: '2px' }}>
                           <bdi>{formatBudget(l.details.budget, isAr)}</bdi>
                         </strong>
                       )}
-                      <span style={{ color: 'var(--text-secondary)' }}>
+                      <span style={{ color: 'var(--crm-muted)' }}>
                         {getLocalizedPropertyType(l.propertyType || l.details?.propertyType || l.type)} • {getLocalizedArea(l.area || l.details?.area || l.details?.district || 'east')}
                       </span>
                     </div>

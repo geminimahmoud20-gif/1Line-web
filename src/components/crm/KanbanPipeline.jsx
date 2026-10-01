@@ -5,12 +5,12 @@ import './crm-kanban.css';
 import { getAreas } from '../../utils/areasData';
 
 const PIPELINE_STAGES = [
-  { id: 'new', title_ar: 'طلبات جديدة', title_en: 'New Inquiries', color: 'var(--crm-info)', bg: '#e0f2fe' },
-  { id: 'contacted', title_ar: 'تم التواصل الأولي', title_en: 'Contacted', color: '#7c3aed', bg: '#f5f3ff' },
-  { id: 'site_visit', title_ar: 'معاينات مجدولة', title_en: 'Site Visits', color: 'var(--crm-accent-text)', bg: '#fef3c7' },
-  { id: 'negotiating', title_ar: 'قيد التفاوض والتقييم', title_en: 'Negotiation', color: 'var(--crm-warn)', bg: '#ffedd5' },
-  { id: 'closing', title_ar: 'توقيع عقود وحجز', title_en: 'Closing / Deposit', color: 'var(--crm-positive)', bg: '#d1fae5' },
-  { id: 'closed', title_ar: 'صفقات ناجحة', title_en: 'Closed Won', color: 'var(--crm-positive)', bg: '#dcfce7' }
+  { id: 'new', title_ar: 'طلبات جديدة', title_en: 'New Inquiries', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)' },
+  { id: 'contacted', title_ar: 'تم التواصل الأولي', title_en: 'Contacted', color: 'var(--crm-violet)', bg: 'var(--crm-violet-soft)' },
+  { id: 'site_visit', title_ar: 'معاينات مجدولة', title_en: 'Site Visits', color: 'var(--crm-accent-text)', bg: 'var(--crm-warn-soft)' },
+  { id: 'negotiating', title_ar: 'قيد التفاوض والتقييم', title_en: 'Negotiation', color: 'var(--crm-warn)', bg: 'var(--crm-warn-soft)' },
+  { id: 'closing', title_ar: 'توقيع عقود وحجز', title_en: 'Closing / Deposit', color: 'var(--crm-positive)', bg: 'var(--crm-positive-soft)' },
+  { id: 'closed', title_ar: 'صفقات ناجحة', title_en: 'Closed Won', color: 'var(--crm-positive)', bg: 'var(--crm-positive-soft)' }
 ];
 
 const PROPERTY_TYPE_NAMES = {
@@ -120,14 +120,14 @@ export default function KanbanPipeline({
     const type = lead.type || 'buyer';
     switch (type) {
       case 'seller':
-        return { label: isAr ? 'بائع (عرض عقار)' : 'Seller', bg: '#fef3c7', color: '#92400e', border: '#fde68a' };
+        return { label: isAr ? 'بائع (عرض عقار)' : 'Seller', bg: 'var(--crm-warn-soft)', color: 'var(--crm-warn)', border: 'var(--crm-warn-line)' };
       case 'investor':
-        return { label: isAr ? 'مستثمر' : 'Investor', bg: '#f5f3ff', color: '#6b21a8', border: '#ddd6fe' };
+        return { label: isAr ? 'مستثمر' : 'Investor', bg: 'var(--crm-violet-soft)', color: 'var(--crm-violet)', border: 'var(--crm-violet-line)' };
       case 'broker':
-        return { label: isAr ? 'وسيط عقاري' : 'Broker', bg: '#eff6ff', color: '#1e40af', border: '#bfdbfe' };
+        return { label: isAr ? 'وسيط عقاري' : 'Broker', bg: 'var(--crm-info-soft)', color: 'var(--crm-info)', border: 'var(--crm-info-line)' };
       case 'buyer':
       default:
-        return { label: isAr ? 'مشتري' : 'Buyer', bg: '#f0f9ff', color: '#0369a1', border: '#bae6fd' };
+        return { label: isAr ? 'مشتري' : 'Buyer', bg: 'var(--crm-info-soft)', color: 'var(--crm-info)', border: 'var(--crm-info-line)' };
     }
   };
 
@@ -274,10 +274,10 @@ export default function KanbanPipeline({
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <Sparkles size={18} style={{ color: 'var(--crm-accent-text)' }} />
-          <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: '#092347' }}>
+          <h3 style={{ margin: 0, fontSize: 'var(--crm-text-lg)', fontWeight: 700, color: 'var(--crm-ink)' }}>
             {isAr ? 'مسار الصفقات والمبيعات المرئي' : 'Visual Sales Deals Pipeline'}
           </h3>
-          <span className="badge" style={{ background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a', fontSize: 'var(--crm-text-xs)', fontWeight: 'bold' }}>
+          <span className="badge" style={{ background: 'var(--crm-warn-soft)', color: 'var(--crm-warn)', border: '1px solid var(--crm-warn-line)', fontSize: 'var(--crm-text-xs)', fontWeight: 'bold' }}>
             {filteredLeads.length} {isAr ? 'صفقة' : 'deals'}
           </span>
         </div>
@@ -337,9 +337,9 @@ export default function KanbanPipeline({
               borderRadius: '8px',
               fontSize: 'var(--crm-text-xs)',
               fontWeight: filterType === 'all' ? 'bold' : '600',
-              background: filterType === 'all' ? '#092347' : '#ffffff',
-              color: filterType === 'all' ? '#ffffff' : '#334155',
-              border: filterType === 'all' ? '1px solid #092347' : '1px solid #cbd5e1'
+              background: filterType === 'all' ? 'var(--crm-brand-navy)' : 'var(--crm-card)',
+              color: filterType === 'all' ? 'var(--crm-on-dark)' : 'var(--crm-body)',
+              border: filterType === 'all' ? '1px solid var(--crm-brand-navy)' : '1px solid var(--crm-line-strong)'
             }}
           >
             {isAr ? 'الكل' : 'All'}
@@ -352,9 +352,9 @@ export default function KanbanPipeline({
               borderRadius: '8px',
               fontSize: 'var(--crm-text-xs)',
               fontWeight: filterType === 'buyer' ? 'bold' : '600',
-              background: filterType === 'buyer' ? '#0284c7' : '#ffffff',
-              color: filterType === 'buyer' ? '#ffffff' : '#334155',
-              border: filterType === 'buyer' ? '1px solid #0284c7' : '1px solid #cbd5e1'
+              background: filterType === 'buyer' ? 'var(--crm-info-solid)' : 'var(--crm-card)',
+              color: filterType === 'buyer' ? 'var(--crm-on-dark)' : 'var(--crm-body)',
+              border: filterType === 'buyer' ? '1px solid var(--crm-info)' : '1px solid var(--crm-line-strong)'
             }}
           >
             {isAr ? 'مشترين' : 'Buyers'}
@@ -367,9 +367,9 @@ export default function KanbanPipeline({
               borderRadius: '8px',
               fontSize: 'var(--crm-text-xs)',
               fontWeight: filterType === 'seller' ? 'bold' : '600',
-              background: filterType === 'seller' ? '#d97706' : '#ffffff',
-              color: filterType === 'seller' ? '#ffffff' : '#334155',
-              border: filterType === 'seller' ? '1px solid #d97706' : '1px solid #cbd5e1'
+              background: filterType === 'seller' ? 'var(--crm-warn-solid)' : 'var(--crm-card)',
+              color: filterType === 'seller' ? 'var(--crm-on-dark)' : 'var(--crm-body)',
+              border: filterType === 'seller' ? '1px solid var(--crm-warn)' : '1px solid var(--crm-line-strong)'
             }}
           >
             {isAr ? 'بائعين' : 'Sellers'}
@@ -382,9 +382,9 @@ export default function KanbanPipeline({
               borderRadius: '8px',
               fontSize: 'var(--crm-text-xs)',
               fontWeight: filterType === 'investor' ? 'bold' : '600',
-              background: filterType === 'investor' ? '#7c3aed' : '#ffffff',
-              color: filterType === 'investor' ? '#ffffff' : '#334155',
-              border: filterType === 'investor' ? '1px solid #7c3aed' : '1px solid #cbd5e1'
+              background: filterType === 'investor' ? 'var(--crm-violet-solid)' : 'var(--crm-card)',
+              color: filterType === 'investor' ? 'var(--crm-on-dark)' : 'var(--crm-body)',
+              border: filterType === 'investor' ? '1px solid var(--crm-violet)' : '1px solid var(--crm-line-strong)'
             }}
           >
             {isAr ? 'مستثمرين' : 'Investors'}
@@ -399,9 +399,9 @@ export default function KanbanPipeline({
             style={{
               borderRadius: '8px',
               fontSize: 'var(--crm-text-xs)',
-              background: '#fffbeb',
-              border: '1px solid #fde68a',
-              color: '#b45309',
+              background: 'var(--crm-warn-soft)',
+              border: '1px solid var(--crm-warn-line)',
+              color: 'var(--crm-warn)',
               fontWeight: 'bold',
               display: 'inline-flex',
               alignItems: 'center',
@@ -480,7 +480,7 @@ export default function KanbanPipeline({
                   <div style={{
                     padding: '40px 10px',
                     textAlign: 'center',
-                    border: '2px dashed #cbd5e1',
+                    border: '2px dashed var(--crm-line-strong)',
                     borderRadius: '10px',
                     color: 'var(--crm-faint)',
                     fontSize: 'var(--crm-text-xs)'
@@ -629,8 +629,8 @@ export default function KanbanPipeline({
           <div className="property-form-modal-card animate-fadeIn" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px', width: '90%', background: 'var(--crm-card)', border: '1px solid var(--crm-line)', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
             <div className="modal-form-header" style={{ borderBottom: '1px solid var(--crm-line)', padding: '16px 20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Trash2 size={20} style={{ color: '#dc2626' }} />
-                <h3 style={{ margin: 0, color: '#092347', fontSize: '1.1rem', fontWeight: 700 }}>
+                <Trash2 size={20} style={{ color: 'var(--crm-danger)' }} />
+                <h3 style={{ margin: 0, color: 'var(--crm-ink)', fontSize: 'var(--crm-text-lg)', fontWeight: 700 }}>
                   {isAr ? 'تأكيد حذف العميل' : 'Confirm Delete Lead'}
                 </h3>
               </div>
@@ -663,7 +663,7 @@ export default function KanbanPipeline({
                     }
                     setLeadToDelete(null);
                   }}
-                  style={{ background: '#dc2626', color: '#ffffff', border: 'none' }}
+                  style={{ background: 'var(--crm-danger-solid)', color: 'var(--crm-on-dark)', border: 'none' }}
                 >
                   <Trash2 size={15} />
                   <span>{isAr ? 'تأكيد الحذف' : 'Delete'}</span>

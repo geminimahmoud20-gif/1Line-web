@@ -243,19 +243,19 @@ export default function CustomerProfileModal({
               width: '46px',
               height: '46px',
               borderRadius: '50%',
-              background: formData.temperature === 'hot' ? '#fee2e2' : formData.temperature === 'warm' ? '#fef3c7' : '#e0f2fe',
-              color: formData.temperature === 'hot' ? '#dc2626' : formData.temperature === 'warm' ? '#d97706' : '#0284c7',
+              background: formData.temperature === 'hot' ? 'var(--crm-danger-soft)' : formData.temperature === 'warm' ? 'var(--crm-warn-soft)' : 'var(--crm-info-soft)',
+              color: formData.temperature === 'hot' ? 'var(--crm-danger)' : formData.temperature === 'warm' ? 'var(--crm-warn)' : 'var(--crm-info)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '22px'
+              fontSize: 'var(--crm-text-xl)'
             }}>
               {formData.temperature === 'hot' ? '🔥' : formData.temperature === 'warm' ? '⚡' : '❄️'}
             </div>
 
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--crm-ink)', fontWeight: 700 }}>{formData.name}</h3>
+                <h3 style={{ margin: 0, fontSize: 'var(--crm-text-lg)', color: 'var(--crm-ink)', fontWeight: 700 }}>{formData.name}</h3>
                 <span className={`lead-score-pill ${formData.score >= 85 ? 'score-high' : 'score-medium'}`}>
                   {formData.score}% {isAr ? 'جدية' : 'Score'}
                 </span>
@@ -276,7 +276,7 @@ export default function CustomerProfileModal({
                 type="button"
                 className="btn btn-sm"
                 onClick={() => window.open(`https://wa.me/${cleanPhone}`, '_blank', 'noopener,noreferrer')}
-                style={{ padding: '6px 12px', fontSize: 'var(--crm-text-sm)', background: '#ecfdf5', color: 'var(--crm-positive)', border: '1px solid #a7f3d0', fontWeight: 'bold' }}
+                style={{ padding: '6px 12px', fontSize: 'var(--crm-text-sm)', background: 'var(--crm-positive-soft)', color: 'var(--crm-positive)', border: '1px solid var(--crm-positive-line)', fontWeight: 'bold' }}
               >
                 <MessageSquare size={14} />
                 <span>WhatsApp</span>
@@ -294,7 +294,7 @@ export default function CustomerProfileModal({
                 type="button"
                 className="btn btn-sm"
                 onClick={() => window.open(`tel:${formData.phone}`, '_self')}
-                style={{ padding: '6px 12px', fontSize: 'var(--crm-text-sm)', background: '#092347', color: '#ffffff', border: '1px solid #092347', fontWeight: 'bold' }}
+                style={{ padding: '6px 12px', fontSize: 'var(--crm-text-sm)', background: 'var(--crm-brand-navy)', color: 'var(--crm-on-dark)', border: '1px solid var(--crm-brand-navy)', fontWeight: 'bold' }}
               >
                 <Phone size={14} />
                 <span>{isAr ? 'اتصال' : 'Call'}</span>
@@ -324,7 +324,7 @@ export default function CustomerProfileModal({
                   triggerToast(isAr ? 'جاري فتح تقويم Google لجدولة الموعد...' : 'Opening Google Calendar...', 'info');
                 }
               }}
-              style={{ padding: '6px 12px', fontSize: 'var(--crm-text-sm)', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', fontWeight: 'bold' }}
+              style={{ padding: '6px 12px', fontSize: 'var(--crm-text-sm)', background: 'var(--crm-info-soft)', color: 'var(--crm-info)', border: '1px solid var(--crm-info-line)', fontWeight: 'bold' }}
             >
               <Calendar size={14} />
               <span>{isAr ? 'تقويم Google' : 'Google Cal'}</span>
@@ -369,7 +369,7 @@ export default function CustomerProfileModal({
         }}>
           <div>
             <span style={{ color: 'var(--crm-muted)', display: 'block', fontSize: 'var(--crm-text-xs)', fontWeight: '600' }}>{isAr ? 'نوع العميل' : 'Type'}</span>
-            <span style={{ fontWeight: 'bold', color: '#b45309' }}>{formData.type === 'buyer' ? (isAr ? 'مشتري جاد' : 'Buyer') : (isAr ? 'بائع / معلن' : 'Seller')}</span>
+            <span style={{ fontWeight: 'bold', color: 'var(--crm-warn)' }}>{formData.type === 'buyer' ? (isAr ? 'مشتري جاد' : 'Buyer') : (isAr ? 'بائع / معلن' : 'Seller')}</span>
           </div>
           <div>
             <span style={{ color: 'var(--crm-muted)', display: 'block', fontSize: 'var(--crm-text-xs)', fontWeight: '600' }}>{isAr ? 'الميزانية' : 'Budget'}</span>
@@ -385,7 +385,7 @@ export default function CustomerProfileModal({
           </div>
           <div>
             <span style={{ color: 'var(--crm-muted)', display: 'block', fontSize: 'var(--crm-text-xs)', fontWeight: '600' }}>{isAr ? 'مصدر الحملة' : 'Source'}</span>
-            <span style={{ fontWeight: 'bold', color: '#7c3aed', fontSize: 'var(--crm-text-xs)' }}>
+            <span style={{ fontWeight: 'bold', color: 'var(--crm-violet)', fontSize: 'var(--crm-text-xs)' }}>
               {lead?.marketingAttribution?.source || lead?.utmSource || (isAr ? 'مباشر' : 'Direct')}
             </span>
           </div>
@@ -411,9 +411,9 @@ export default function CustomerProfileModal({
             style={{
               fontSize: 'var(--crm-text-sm)',
               fontWeight: profileTab === 'overview' ? 'bold' : '600',
-              background: profileTab === 'overview' ? '#092347' : '#f8fafc',
-              color: profileTab === 'overview' ? '#ffffff' : '#475569',
-              border: profileTab === 'overview' ? '1px solid #092347' : '1px solid #e2e8f0',
+              background: profileTab === 'overview' ? 'var(--crm-brand-navy)' : 'var(--crm-subtle)',
+              color: profileTab === 'overview' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
+              border: profileTab === 'overview' ? '1px solid var(--crm-brand-navy)' : '1px solid var(--crm-line)',
               borderRadius: '8px'
             }}
           >
@@ -426,9 +426,9 @@ export default function CustomerProfileModal({
             style={{
               fontSize: 'var(--crm-text-sm)',
               fontWeight: profileTab === 'journey' ? 'bold' : '600',
-              background: profileTab === 'journey' ? '#0284c7' : '#f8fafc',
-              color: profileTab === 'journey' ? '#ffffff' : '#475569',
-              border: profileTab === 'journey' ? '1px solid #0284c7' : '1px solid #e2e8f0',
+              background: profileTab === 'journey' ? 'var(--crm-info-solid)' : 'var(--crm-subtle)',
+              color: profileTab === 'journey' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
+              border: profileTab === 'journey' ? '1px solid var(--crm-info)' : '1px solid var(--crm-line)',
               borderRadius: '8px'
             }}
           >
@@ -441,9 +441,9 @@ export default function CustomerProfileModal({
             style={{
               fontSize: 'var(--crm-text-sm)',
               fontWeight: profileTab === 'properties' ? 'bold' : '600',
-              background: profileTab === 'properties' ? '#d97706' : '#f8fafc',
-              color: profileTab === 'properties' ? '#ffffff' : '#475569',
-              border: profileTab === 'properties' ? '1px solid #d97706' : '1px solid #e2e8f0',
+              background: profileTab === 'properties' ? 'var(--crm-warn-solid)' : 'var(--crm-subtle)',
+              color: profileTab === 'properties' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
+              border: profileTab === 'properties' ? '1px solid var(--crm-warn)' : '1px solid var(--crm-line)',
               borderRadius: '8px'
             }}
           >
@@ -456,9 +456,9 @@ export default function CustomerProfileModal({
             style={{
               fontSize: 'var(--crm-text-sm)',
               fontWeight: profileTab === 'timeline' ? 'bold' : '600',
-              background: profileTab === 'timeline' ? '#7c3aed' : '#f8fafc',
-              color: profileTab === 'timeline' ? '#ffffff' : '#475569',
-              border: profileTab === 'timeline' ? '1px solid #7c3aed' : '1px solid #e2e8f0',
+              background: profileTab === 'timeline' ? 'var(--crm-violet-solid)' : 'var(--crm-subtle)',
+              color: profileTab === 'timeline' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
+              border: profileTab === 'timeline' ? '1px solid var(--crm-violet)' : '1px solid var(--crm-line)',
               borderRadius: '8px'
             }}
           >
@@ -471,9 +471,9 @@ export default function CustomerProfileModal({
             style={{
               fontSize: 'var(--crm-text-sm)',
               fontWeight: profileTab === 'actions' ? 'bold' : '600',
-              background: profileTab === 'actions' ? '#059669' : '#f8fafc',
-              color: profileTab === 'actions' ? '#ffffff' : '#475569',
-              border: profileTab === 'actions' ? '1px solid #059669' : '1px solid #e2e8f0',
+              background: profileTab === 'actions' ? 'var(--crm-positive-solid)' : 'var(--crm-subtle)',
+              color: profileTab === 'actions' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
+              border: profileTab === 'actions' ? '1px solid var(--crm-positive)' : '1px solid var(--crm-line)',
               borderRadius: '8px'
             }}
           >
@@ -487,7 +487,7 @@ export default function CustomerProfileModal({
           {profileTab === 'overview' && (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h4 style={{ margin: 0, color: '#092347', fontSize: '1rem', fontWeight: 700 }}>
+                <h4 style={{ margin: 0, color: 'var(--crm-ink)', fontSize: 'var(--crm-text-md)', fontWeight: 700 }}>
                   📊 {isAr ? 'البيانات الشخصية والقدرة المالية' : 'Client Profile & Financial Capability'}
                 </h4>
                 {canEditLead(userRole, lead) ? (
@@ -498,8 +498,8 @@ export default function CustomerProfileModal({
                     style={{
                       fontSize: 'var(--crm-text-xs)',
                       fontWeight: 'bold',
-                      background: isEditing ? '#092347' : '#f8fafc',
-                      color: isEditing ? '#ffffff' : '#092347',
+                      background: isEditing ? 'var(--crm-brand-navy)' : 'var(--crm-subtle)',
+                      color: isEditing ? 'var(--crm-on-dark)' : 'var(--crm-ink)',
                       border: '1px solid var(--crm-line-strong)',
                       borderRadius: '8px'
                     }}
@@ -529,9 +529,9 @@ export default function CustomerProfileModal({
                         type="button"
                         onClick={() => isEditing && handleToggleTag(tagObj.name_ar)}
                         style={{
-                          background: isSelected ? '#eff6ff' : '#f8fafc',
-                          color: isSelected ? '#2563eb' : '#64748b',
-                          border: isSelected ? '1px solid #3b82f6' : '1px solid #cbd5e1',
+                          background: isSelected ? 'var(--crm-info-soft)' : 'var(--crm-subtle)',
+                          color: isSelected ? 'var(--crm-info)' : 'var(--crm-faint)',
+                          border: isSelected ? '1px solid var(--crm-info)' : '1px solid var(--crm-line-strong)',
                           borderRadius: 'var(--radius-pill)',
                           padding: '4px 10px',
                           fontSize: 'var(--crm-text-xs)',
@@ -677,8 +677,8 @@ export default function CustomerProfileModal({
           {profileTab === 'journey' && (
             <div>
               <div style={{
-                background: isLiveTracked ? '#ecfdf5' : '#f0f9ff',
-                border: `1px solid ${isLiveTracked ? '#a7f3d0' : '#bae6fd'}`,
+                background: isLiveTracked ? 'var(--crm-positive-soft)' : 'var(--crm-info-soft)',
+                border: `1px solid ${isLiveTracked ? 'var(--crm-positive-line)' : 'var(--crm-info-line)'}`,
                 borderRadius: '8px',
                 padding: '14px 18px',
                 marginBottom: '16px',
@@ -689,7 +689,7 @@ export default function CustomerProfileModal({
                 gap: '10px'
               }}>
                 <div>
-                  <h4 style={{ margin: 0, color: isLiveTracked ? '#059669' : '#0284c7', fontSize: 'var(--crm-text-md)', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700 }}>
+                  <h4 style={{ margin: 0, color: isLiveTracked ? 'var(--crm-positive)' : 'var(--crm-info)', fontSize: 'var(--crm-text-md)', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700 }}>
                     <Activity size={16} />
                     <span>{isAr ? 'البصمة الرقمية وسلوك التصفح الفعلي للعميل' : 'Customer Digital Footprint & Dwell Time'}</span>
                   </h4>
@@ -702,16 +702,16 @@ export default function CustomerProfileModal({
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                   <span className="badge" style={{
-                    background: isLiveTracked ? '#d1fae5' : '#fef3c7',
-                    color: isLiveTracked ? '#065f46' : '#92400e',
+                    background: isLiveTracked ? 'var(--crm-positive-soft)' : 'var(--crm-warn-soft)',
+                    color: isLiveTracked ? 'var(--crm-positive)' : 'var(--crm-warn)',
                     fontWeight: 'bold',
-                    border: `1px solid ${isLiveTracked ? '#6ee7b7' : '#fde68a'}`,
+                    border: `1px solid ${isLiveTracked ? 'var(--crm-positive)' : 'var(--crm-warn-line)'}`,
                     fontSize: 'var(--crm-text-xs)'
                   }}>
                     {isLiveTracked ? '🟢 ' + (isAr ? 'رصد حي ومباشر 100%' : '100% Live Tracked') : '🟡 ' + (isAr ? 'نموذج محاكاة استرشادي' : 'Demo Simulation')}
                   </span>
 
-                  <span className="badge" style={{ background: '#e0f2fe', color: '#0369a1', fontWeight: 'bold', border: '1px solid #bae6fd' }}>
+                  <span className="badge" style={{ background: 'var(--crm-info-soft)', color: 'var(--crm-info)', fontWeight: 'bold', border: '1px solid var(--crm-info-line)' }}>
                     ⏱️ {isAr ? `مدة الجلسة: ${dwellTimeLabel}` : `Dwell Time: ${dwellTimeLabel}`}
                   </span>
                 </div>
@@ -723,19 +723,19 @@ export default function CustomerProfileModal({
                   const getEventLabel = (type) => {
                     switch (type) {
                       case 'whatsapp_click':
-                        return { text: isAr ? '💬 نقرة واتساب' : '💬 WhatsApp Click', color: 'var(--crm-positive)', bg: '#ecfdf5', border: '#a7f3d0' };
+                        return { text: isAr ? '💬 نقرة واتساب' : '💬 WhatsApp Click', color: 'var(--crm-positive)', bg: 'var(--crm-positive-soft)', border: 'var(--crm-positive-line)' };
                       case 'calculator_used':
-                        return { text: isAr ? '🧮 حاسبة التمويل' : '🧮 Calculator Used', color: 'var(--crm-info)', bg: '#eff6ff', border: '#bfdbfe' };
+                        return { text: isAr ? '🧮 حاسبة التمويل' : '🧮 Calculator Used', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)', border: 'var(--crm-info-line)' };
                       case 'property_view':
-                        return { text: isAr ? '👁️ تصفح عقار' : '👁️ Listing Viewed', color: 'var(--crm-accent-text)', bg: '#fffbeb', border: '#fde68a' };
+                        return { text: isAr ? '👁️ تصفح عقار' : '👁️ Listing Viewed', color: 'var(--crm-accent-text)', bg: 'var(--crm-warn-soft)', border: 'var(--crm-warn-line)' };
                       case 'compare_added':
-                        return { text: isAr ? '⚖️ إضافة للمقارنة' : '⚖️ Added to Compare', color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' };
+                        return { text: isAr ? '⚖️ إضافة للمقارنة' : '⚖️ Added to Compare', color: 'var(--crm-violet)', bg: 'var(--crm-violet-soft)', border: 'var(--crm-violet-line)' };
                       case 'favorite_added':
-                        return { text: isAr ? '❤️ إضافة للمفضلة' : '❤️ Favorited', color: '#dc2626', bg: '#fef2f2', border: '#fecaca' };
+                        return { text: isAr ? '❤️ إضافة للمفضلة' : '❤️ Favorited', color: 'var(--crm-danger)', bg: 'var(--crm-danger-soft)', border: 'var(--crm-danger-line)' };
                       case 'brochure_download':
-                        return { text: isAr ? '📑 تنزيل بروشور' : '📑 PDF Brochure', color: '#0891b2', bg: '#ecfeff', border: '#a5f3fc' };
+                        return { text: isAr ? '📑 تنزيل بروشور' : '📑 PDF Brochure', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)', border: 'var(--crm-info-line)' };
                       default:
-                        return { text: isAr ? '🌐 تصفح الموقع' : '🌐 Page View', color: 'var(--crm-info)', bg: '#f0f9ff', border: '#bae6fd' };
+                        return { text: isAr ? '🌐 تصفح الموقع' : '🌐 Page View', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)', border: 'var(--crm-info-line)' };
                     }
                   };
 
@@ -793,7 +793,7 @@ export default function CustomerProfileModal({
           {/* TAB 2: MATCHED & INSPECTED PROPERTIES */}
           {profileTab === 'properties' && (
             <div>
-              <h4 style={{ margin: '0 0 14px 0', color: '#092347', fontSize: 'var(--crm-text-md)', fontWeight: 700 }}>
+              <h4 style={{ margin: '0 0 14px 0', color: 'var(--crm-ink)', fontSize: 'var(--crm-text-md)', fontWeight: 700 }}>
                 🏢 {isAr ? 'العقارات والوحدات المقترحة لهذا العميل:' : 'Matched & Recommended Units:'}
               </h4>
 
@@ -828,7 +828,7 @@ export default function CustomerProfileModal({
                         const waText = `أهلاً أ. ${formData.name}، بخصوص طلبك العقاري، نود ترشيح وحدة ${isAr ? prop.title_ar : prop.title_en} بسعر ${prop.price?.toLocaleString()} ج.م. هل نحدد موعداً للمعاينة؟`;
                         window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(waText)}`, '_blank', 'noopener,noreferrer');
                       }}
-                      style={{ padding: '6px 10px', fontSize: 'var(--crm-text-xs)', background: '#092347', color: '#ffffff', borderRadius: '6px' }}
+                      style={{ padding: '6px 10px', fontSize: 'var(--crm-text-xs)', background: 'var(--crm-brand-navy)', color: 'var(--crm-on-dark)', borderRadius: '6px' }}
                       title={isAr ? 'إرسال بروشور الوحدة على الواتساب' : 'Send WhatsApp Brochure'}
                     >
                       <Send size={13} />
@@ -878,7 +878,7 @@ export default function CustomerProfileModal({
                     required
                   />
 
-                  <button type="submit" className="btn btn-sm btn-primary" style={{ padding: '6px 14px', background: '#092347', color: '#ffffff', borderRadius: '6px', fontWeight: 'bold' }}>
+                  <button type="submit" className="btn btn-sm btn-primary" style={{ padding: '6px 14px', background: 'var(--crm-brand-navy)', color: 'var(--crm-on-dark)', borderRadius: '6px', fontWeight: 'bold' }}>
                     <Plus size={14} />
                     <span>{isAr ? 'إضافة' : 'Add'}</span>
                   </button>
@@ -898,7 +898,7 @@ export default function CustomerProfileModal({
                       style={{
                         background: 'var(--crm-card)',
                         border: '1px solid var(--crm-line)',
-                        borderInlineStart: '4px solid #092347',
+                        borderInlineStart: '4px solid var(--crm-brand-navy)',
                         borderRadius: '8px',
                         padding: '10px 14px',
                         fontSize: 'var(--crm-text-base)',
@@ -930,7 +930,7 @@ export default function CustomerProfileModal({
               padding: '20px',
               boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
             }}>
-              <h4 style={{ margin: '0 0 14px 0', color: '#092347', fontSize: 'var(--crm-text-md)', fontWeight: 700 }}>
+              <h4 style={{ margin: '0 0 14px 0', color: 'var(--crm-ink)', fontSize: 'var(--crm-text-md)', fontWeight: 700 }}>
                 📅 {isAr ? 'جدولة الإجراء القادم وموعد المتابعة' : 'Scheduled Next Action'}
               </h4>
 
@@ -961,7 +961,7 @@ export default function CustomerProfileModal({
                 type="button"
                 className="btn btn-primary"
                 onClick={handleSaveProfile}
-                style={{ background: 'var(--crm-positive-solid)', color: '#ffffff', border: 'none', borderRadius: '6px', fontWeight: 'bold' }}
+                style={{ background: 'var(--crm-positive-solid)', color: 'var(--crm-on-dark)', border: 'none', borderRadius: '6px', fontWeight: 'bold' }}
               >
                 <CheckCircle2 size={16} />
                 <span>{isAr ? 'اعتماد وحفظ موعد التذكير' : 'Save Reminder'}</span>

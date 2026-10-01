@@ -221,7 +221,7 @@ export default function InteractiveMapPickerModal({
               <h3 style={{ margin: 0 }}>
                 {isAr ? 'تحديد الموقع الدقيق على سطح المبنى' : 'Pin-Point Rooftop GPS Picker'}
               </h3>
-              <small style={{ color: 'var(--text-secondary)' }}>
+              <small style={{ color: 'var(--crm-muted)' }}>
                 {isAr ? 'اسحب الدبوس أو انقر على سطح العمارة لتحديد موقع العقار بدقة متناهية' : 'Drag pin or click directly on building rooftop'}
               </small>
             </div>
@@ -241,7 +241,7 @@ export default function InteractiveMapPickerModal({
           }}>
             {/* Area Jump Dropdown */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--text-secondary)' }}>
+              <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
                 {isAr ? 'الانتقال السريع لمنطقة:' : 'Jump to District:'}
               </span>
               <select
@@ -261,7 +261,7 @@ export default function InteractiveMapPickerModal({
                 type="button"
                 className="btn btn-sm btn-outline"
                 onClick={handleLocateMe}
-                style={{ padding: '4px 10px', fontSize: 'var(--crm-text-xs)', borderColor: 'rgba(16, 185, 129, 0.5)', color: '#34d399' }}
+                style={{ padding: '4px 10px', fontSize: 'var(--crm-text-xs)', borderColor: 'rgba(16, 185, 129, 0.5)', color: 'var(--crm-positive)' }}
                 title={isAr ? 'تحديد موقعي الميداني الحالي بواسطة GPS' : 'Locate my current position'}
               >
                 <Crosshair size={13} />
@@ -310,7 +310,7 @@ export default function InteractiveMapPickerModal({
                 style={{
                   background: 'rgba(255, 255, 255, 0.06)',
                   border: '1px solid rgba(255, 255, 255, 0.12)',
-                  color: '#e2e8f0',
+                  color: 'var(--crm-body)',
                   padding: '2px 8px',
                   borderRadius: '12px',
                   fontSize: 'var(--crm-text-xs)',
@@ -354,7 +354,7 @@ export default function InteractiveMapPickerModal({
           }}>
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', fontSize: 'var(--crm-text-sm)' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ color: 'var(--accent-gold)', fontWeight: 'bold' }}>Lat:</span>
+                <span style={{ color: 'var(--crm-accent-text)', fontWeight: 'bold' }}>Lat:</span>
                 <input
                   type="number"
                   step="0.000001"
@@ -366,7 +366,7 @@ export default function InteractiveMapPickerModal({
               </label>
 
               <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ color: 'var(--accent-gold)', fontWeight: 'bold' }}>Lng:</span>
+                <span style={{ color: 'var(--crm-accent-text)', fontWeight: 'bold' }}>Lng:</span>
                 <input
                   type="number"
                   step="0.000001"
@@ -378,7 +378,7 @@ export default function InteractiveMapPickerModal({
               </label>
             </div>
 
-            <span className="badge" style={{ background: 'var(--emerald-bg)', color: 'var(--emerald)', fontSize: 'var(--crm-text-xs)' }}>
+            <span className="badge" style={{ background: 'var(--crm-positive-soft)', color: 'var(--crm-positive)', fontSize: 'var(--crm-text-xs)' }}>
               ✓ {isAr ? 'إحداثيات عالية الدقة جاهزة للربط' : 'High Precision GPS Ready'}
             </span>
           </div>

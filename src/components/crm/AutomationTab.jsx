@@ -13,11 +13,11 @@ export default function AutomationTab({
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-        <div className="crm-surface-navy" style={{ background: 'var(--primary)', padding: '20px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
-          <h4 style={{ marginBottom: '10px', color: '#E9D29A' /* light gold: this card is always navy (var(--primary)) */ }}>
+        <div className="crm-surface-navy" style={{ background: 'var(--crm-brand-navy)', padding: '20px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
+          <h4 style={{ marginBottom: '10px', color: 'var(--crm-gold-on-dark)' /* light gold: this card is always navy (var(--crm-ink)) */ }}>
             📱 {isAr ? 'التنبيه الفوري عبر الواتساب والتيليجرام' : 'Instant Webhook / WhatsApp Push'}
           </h4>
-          <p style={{ fontSize: 'var(--crm-text-base)', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+          <p style={{ fontSize: 'var(--crm-text-base)', color: 'var(--crm-muted)', marginBottom: '16px' }}>
             {isAr ? 'عند تسجيل أي عميل مهتم على الموقع، يُرسل النظام إشعاراً فورياً على هاتف المدير يتضمن (الاسم، الهاتف، الميزانية، ونقاط الجدية).' : 'Pushes lead info to management phone instantly.'}
           </p>
           
@@ -32,11 +32,11 @@ export default function AutomationTab({
           </button>
         </div>
 
-        <div className="crm-surface-navy" style={{ background: 'var(--primary)', padding: '20px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
-          <h4 style={{ marginBottom: '10px', color: 'var(--emerald)' }}>
+        <div className="crm-surface-navy" style={{ background: 'var(--crm-brand-navy)', padding: '20px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
+          <h4 style={{ marginBottom: '10px', color: 'var(--crm-positive)' }}>
             🎯 {isAr ? 'قواعد التوزيع الذكي للعملاء' : 'Smart Auto-Assignment'}
           </h4>
-          <p style={{ fontSize: 'var(--crm-text-base)', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+          <p style={{ fontSize: 'var(--crm-text-base)', color: 'var(--crm-muted)', marginBottom: '16px' }}>
             {isAr ? 'توجيه العملاء أصحاب الميزانيات المرتفعة (> 5 مليون) مباشرة للدكتور محمود الباز، وتوزيع باقي الطلبات بالتساوي على Sales Team A و B.' : 'Auto distributes VIP leads.'}
           </p>
           <button className="btn btn-accent" onClick={() => {

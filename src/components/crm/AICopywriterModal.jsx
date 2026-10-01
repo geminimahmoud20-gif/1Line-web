@@ -292,7 +292,7 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
             position: 'relative'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-              <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}>
+              <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}>
                 <Sparkles size={14} /> {isAr ? 'تم الصياغة بواسطة الذكاء الاصطناعي العقاري' : 'AI Generated Content'}
               </span>
 
@@ -327,7 +327,7 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
                 width: '100%',
                 background: 'transparent',
                 border: 'none',
-                color: 'var(--text-primary)',
+                color: 'var(--crm-ink)',
                 lineHeight: '1.7',
                 fontSize: 'var(--crm-text-base)',
                 resize: 'none',

@@ -227,14 +227,14 @@ export default function AdCampaignsPanel({ lang = 'ar', triggerToast }) {
       {confirmDelete && (
         <div className="crm-modal-backdrop" onClick={() => setConfirmDelete(null)}>
           <div className="crm-modal-card" role="alertdialog" aria-modal="true" aria-labelledby="ad-del-title" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420, textAlign: 'center' }}>
-            <h3 id="ad-del-title" style={{ color: '#fff', marginTop: 0 }}>حذف حملة «{confirmDelete.title_ar}»؟</h3>
-            <p style={{ color: '#cbd5e1' }}>تختفي من الموقع فوراً. إحصائياتها تبقى محفوظة. لإيقافها مؤقتاً استخدم زر الإيقاف بدلاً من الحذف.</p>
+            <h3 id="ad-del-title" style={{ color: 'var(--crm-on-dark)', marginTop: 0 }}>حذف حملة «{confirmDelete.title_ar}»؟</h3>
+            <p style={{ color: 'var(--crm-on-dark-muted)' }}>تختفي من الموقع فوراً. إحصائياتها تبقى محفوظة. لإيقافها مؤقتاً استخدم زر الإيقاف بدلاً من الحذف.</p>
             <div className="hs-modal-actions" style={{ justifyContent: 'center' }}>
               <button type="button" className="btn btn-ghost" onClick={() => setConfirmDelete(null)}>تراجع</button>
               <button
                 type="button"
                 className="btn"
-                style={{ background: '#dc2626', color: '#fff', border: 0 }}
+                style={{ background: 'var(--crm-danger-solid)', color: 'var(--crm-on-dark)', border: 0 }}
                 onClick={() => { persist(campaigns.filter((x) => x.id !== confirmDelete.id), 'تم حذف الحملة'); setConfirmDelete(null); }}
               >
                 نعم، احذف

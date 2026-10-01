@@ -615,7 +615,7 @@ export default function PropertyManagerPanel({
           <button 
             className={`table-filter-btn ${statusFilter === 'published' ? 'active' : ''}`} 
             onClick={() => setStatusFilter('published')}
-            style={{ color: statusFilter === 'published' ? 'var(--emerald)' : undefined }}
+            style={{ color: statusFilter === 'published' ? 'var(--crm-positive)' : undefined }}
           >
             <Eye size={13} style={{ marginInlineEnd: '4px' }} />
             {isAr ? 'النشطة والمعروضة' : 'Published Live'} ({activeCount})
@@ -679,7 +679,7 @@ export default function PropertyManagerPanel({
           <tbody>
             {filteredProperties.length === 0 ? (
               <tr>
-                <td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+                <td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: 'var(--crm-muted)' }}>
                   <Building size={32} style={{ marginBottom: '8px', opacity: 0.5 }} />
                   <p>{isAr ? 'لا توجد عقارات مطابقة للفلتر المحدد' : 'No properties found in this tab'}</p>
                 </td>
@@ -699,7 +699,7 @@ export default function PropertyManagerPanel({
                           <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '2px' }}>
                             <span className="prop-id-tag">{prop.id.toUpperCase()}</span>
                             {prop.badge_ar && (
-                              <span style={{ fontSize: 'var(--crm-text-xs)', background: 'var(--accent-gold-light)', color: 'var(--accent-gold)', padding: '1px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
+                              <span style={{ fontSize: 'var(--crm-text-xs)', background: 'var(--crm-accent-soft)', color: 'var(--crm-accent-text)', padding: '1px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
                                 {isAr ? prop.badge_ar : prop.badge_en}
                               </span>
                             )}
@@ -752,13 +752,13 @@ export default function PropertyManagerPanel({
                             fontWeight: 'bold',
                             border: '1px solid var(--border-light)',
                             background: 
-                              propStatus === 'published' ? 'var(--emerald-bg)' :
-                              propStatus === 'hidden' ? 'var(--secondary)' :
-                              propStatus === 'under_negotiation' ? 'var(--amber-bg)' : 'rgba(239, 68, 68, 0.1)',
+                              propStatus === 'published' ? 'var(--crm-positive-soft)' :
+                              propStatus === 'hidden' ? 'var(--crm-subtle-2)' :
+                              propStatus === 'under_negotiation' ? 'var(--crm-warn-soft)' : 'var(--crm-danger-soft)',
                             color:
-                              propStatus === 'published' ? 'var(--emerald)' :
-                              propStatus === 'hidden' ? 'var(--text-secondary)' :
-                              propStatus === 'under_negotiation' ? 'var(--amber)' : 'var(--rose)'
+                              propStatus === 'published' ? 'var(--crm-positive)' :
+                              propStatus === 'hidden' ? 'var(--crm-muted)' :
+                              propStatus === 'under_negotiation' ? 'var(--crm-warn)' : 'var(--crm-danger)'
                           }}
                         >
                           <option value="published">🟢 {isAr ? 'منشور نشط' : 'Published'}</option>
@@ -791,7 +791,7 @@ export default function PropertyManagerPanel({
                             background: 'none',
                             border: 'none',
                             cursor: 'pointer',
-                            color: prop.featured ? '#f59e0b' : 'var(--text-muted)'
+                            color: prop.featured ? 'var(--crm-warn)' : 'var(--crm-muted)'
                           }}
                           title={prop.featured ? (isAr ? 'مميز — اضغط لإلغاء التمييز' : 'Featured — click to remove') : (isAr ? 'تمييز في الصفحة الرئيسية لمدة محددة' : 'Feature on homepage')}
                           aria-label={prop.featured ? (isAr ? 'إلغاء التمييز' : 'Unfeature') : (isAr ? 'تمييز في الصفحة الرئيسية' : 'Feature on homepage')}
@@ -818,7 +818,7 @@ export default function PropertyManagerPanel({
                               className="icon-action-table-btn"
                               onClick={() => handleToggleVisibility(prop)}
                               title={propStatus === 'published' ? (isAr ? 'إخفاء العقار' : 'Hide') : (isAr ? 'إظهار العقار' : 'Publish')}
-                              style={{ color: propStatus === 'published' ? 'var(--emerald)' : 'var(--text-muted)' }}
+                              style={{ color: propStatus === 'published' ? 'var(--crm-positive)' : 'var(--crm-muted)' }}
                             >
                               {propStatus === 'published' ? <Eye size={16} /> : <EyeOff size={16} />}
                             </button>
@@ -877,7 +877,7 @@ export default function PropertyManagerPanel({
                               className="icon-action-table-btn"
                               onClick={() => handleRestore(prop.id)}
                               title={isAr ? 'استرجاع ونشر العقار' : 'Restore'}
-                              style={{ color: 'var(--emerald)' }}
+                              style={{ color: 'var(--crm-positive)' }}
                             >
                               <RotateCcw size={15} />
                             </button>

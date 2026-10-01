@@ -282,7 +282,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
         marginBottom: '20px'
       }}>
         <div>
-          <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-gold)' }}>
+          <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--crm-accent-text)' }}>
             <Building size={20} />
             <span>{isAr ? 'إدارة قسم الشركة وملف المؤسس (د. محمود الباز)' : 'Corporate & Founder CMS'}</span>
           </h3>
@@ -398,10 +398,10 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
               gap: '12px'
             }}>
               <div>
-                <strong style={{ display: 'block', fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '4px' }}>
+                <strong style={{ display: 'block', fontSize: 'var(--crm-text-md)', color: 'var(--crm-ink)', marginBottom: '4px' }}>
                   {isAr ? 'تفعيل خلفية الفيديو السينمائي في الواجهة الرئيسية' : 'Enable Cinematic Background Video'}
                 </strong>
-                <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--text-muted)' }}>
+                <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
                   {isAr 
                     ? 'عند تفعيله، سيتم تشغيل لقطات فيديو معمارية راقية بالخلفية مستوحاة من The Agency RE.' 
                     : 'Display full luxury video loop behind the hero section.'}
@@ -412,7 +412,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                   type="checkbox"
                   checked={formData.heroVideoEnabled !== false}
                   onChange={(e) => setFormData({ ...formData, heroVideoEnabled: e.target.checked })}
-                  style={{ width: '20px', height: '20px', accentColor: '#0d48a1' }}
+                  style={{ width: '20px', height: '20px', accentColor: 'var(--crm-info-solid)' }}
                 />
                 <span>{formData.heroVideoEnabled !== false ? (isAr ? 'مفعّل 🟢' : 'Enabled') : (isAr ? 'معطّل ⚪' : 'Disabled')}</span>
               </label>
@@ -433,13 +433,13 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
               cursor: uploadLocked ? 'default' : 'pointer',
               position: 'relative'
             }}>
-              <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-gold)' }}>
+              <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--crm-accent-text)' }}>
                 <Upload size={24} />
               </div>
-              <h4 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: 700 }}>
+              <h4 style={{ margin: 0, color: 'var(--crm-ink)', fontSize: 'var(--crm-text-lg)', fontWeight: 700 }}>
                 {isAr ? 'رفع فيديو قصير من جهازك مباشرة' : 'Upload Short Video from Your Device'}
               </h4>
-              <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 'var(--crm-text-sm)', maxWidth: '480px' }}>
+              <p style={{ margin: 0, color: 'var(--crm-muted)', fontSize: 'var(--crm-text-sm)', maxWidth: '480px' }}>
                 {import.meta.env.DEV
                   ? (isAr
                     ? 'MP4 أو WebM أو MOV. يُضغط تلقائياً (720p بدون صوت) ويُحفظ داخل ملفات الموقع في public/videos، ويظهر للزوار بعد نشر الموقع.'
@@ -449,7 +449,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                     : 'MP4, WebM or MOV up to 60MB. Uploaded straight to cloud storage; live immediately.')}
               </p>
               {storageStatus === 'checking' && (
-                <span role="status" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 'var(--crm-text-sm)', color: 'var(--text-muted)' }}>
+                <span role="status" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
                   <Loader2 size={14} className="spin" />
                   {isAr ? 'جاري التحقق من خدمة التخزين…' : 'Checking storage…'}
                 </span>
@@ -530,18 +530,18 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
 
             {/* 📐 Video Fit & Presentation Mode (طريقة ملاءمة الفيديو والأبعاد) */}
             <div style={{
-              background: 'var(--bg-card, rgba(255,255,255,0.03))',
+              background: 'var(--crm-subtle)',
               border: '1px solid var(--border-light)',
               borderRadius: '16px',
               padding: '18px 20px',
               margin: '16px 0'
             }}>
               <div style={{ marginBottom: '12px' }}>
-                <h4 style={{ margin: '0 0 4px 0', color: 'var(--text-primary)', fontSize: '0.98rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Maximize2 size={16} style={{ color: 'var(--accent-gold)' }} />
+                <h4 style={{ margin: '0 0 4px 0', color: 'var(--crm-ink)', fontSize: 'var(--crm-text-md)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Maximize2 size={16} style={{ color: 'var(--crm-accent-text)' }} />
                   <span>{isAr ? 'طريقة ظهور وأبعاد الفيديو على الواجهة' : 'Video Fit & Framing'}</span>
                 </h4>
-                <p style={{ margin: 0, fontSize: 'var(--crm-text-sm)', color: 'var(--text-muted)' }}>
+                <p style={{ margin: 0, fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
                   {isAr 
                     ? 'اختر ما إذا كنت تفضل أن يملأ الفيديو كامل خلفية الشاشة (Cover)، أو إظهار كامل إطار الفيديو الأصلي بدون أي قص نهائياً (Contain).' 
                     : 'Choose between full-bleed cinematic fill (cover) or full-frame uncropped view (contain).'}
@@ -553,7 +553,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                 <div
                   onClick={() => setFormData({ ...formData, heroVideoFit: 'cover' })}
                   style={{
-                    border: (formData.heroVideoFit || 'cover') === 'cover' ? '1.5px solid var(--accent-gold)' : '1px solid var(--border-light)',
+                    border: (formData.heroVideoFit || 'cover') === 'cover' ? '1.5px solid var(--crm-accent)' : '1px solid var(--border-light)',
                     background: (formData.heroVideoFit || 'cover') === 'cover' ? 'rgba(212, 175, 55, 0.08)' : 'rgba(255,255,255,0.02)',
                     borderRadius: '12px',
                     padding: '14px',
@@ -569,11 +569,11 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                       onChange={() => setFormData({ ...formData, heroVideoFit: 'cover' })}
                       style={{ accentColor: 'var(--accent-gold)' }}
                     />
-                    <strong style={{ color: 'var(--text-primary)', fontSize: '0.95rem' }}>
+                    <strong style={{ color: 'var(--crm-ink)', fontSize: 'var(--crm-text-md)' }}>
                       {isAr ? '🔳 تغطية سينمائية كاملة (Cover)' : 'Cinematic Fill (Cover)'}
                     </strong>
                   </div>
-                  <small style={{ color: 'var(--text-muted)', display: 'block', paddingInlineStart: '24px', lineHeight: 1.5 }}>
+                  <small style={{ color: 'var(--crm-muted)', display: 'block', paddingInlineStart: '24px', lineHeight: 1.5 }}>
                     {isAr ? 'يملأ كامل مساحة الهيرو كخلفية سينمائية فخمة بدون هوامش (قد تُقص أطراف الفيديو لتناسب الشاشة).' : 'Fills the entire hero section edge-to-edge as a background.'}
                   </small>
                 </div>
@@ -582,7 +582,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                 <div
                   onClick={() => setFormData({ ...formData, heroVideoFit: 'contain' })}
                   style={{
-                    border: formData.heroVideoFit === 'contain' ? '1.5px solid var(--accent-gold)' : '1px solid var(--border-light)',
+                    border: formData.heroVideoFit === 'contain' ? '1.5px solid var(--crm-accent)' : '1px solid var(--border-light)',
                     background: formData.heroVideoFit === 'contain' ? 'rgba(212, 175, 55, 0.08)' : 'rgba(255,255,255,0.02)',
                     borderRadius: '12px',
                     padding: '14px',
@@ -598,11 +598,11 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                       onChange={() => setFormData({ ...formData, heroVideoFit: 'contain' })}
                       style={{ accentColor: 'var(--accent-gold)' }}
                     />
-                    <strong style={{ color: 'var(--text-primary)', fontSize: '0.95rem' }}>
+                    <strong style={{ color: 'var(--crm-ink)', fontSize: 'var(--crm-text-md)' }}>
                       {isAr ? '🖼️ إظهار كامل إطار الفيديو 100% (Contain)' : 'Full Frame (Contain)'}
                     </strong>
                   </div>
-                  <small style={{ color: 'var(--text-muted)', display: 'block', paddingInlineStart: '24px', lineHeight: 1.5 }}>
+                  <small style={{ color: 'var(--crm-muted)', display: 'block', paddingInlineStart: '24px', lineHeight: 1.5 }}>
                     {isAr ? 'يظهر الفيديو بأبعاده الأصلية كاملة 100% بدون أي قص للأطراف نهائياً، مع خلفية كحلية داكنة فخمة.' : 'Shows 100% of the video frame uncropped with dark luxury borders.'}
                   </small>
                 </div>
@@ -613,13 +613,13 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                 {/* Focus position (if cover) */}
                 {(formData.heroVideoFit || 'cover') === 'cover' && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--text-muted)' }}>
+                    <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
                       {isAr ? 'موضع تركيز الفيديو:' : 'Focus Position:'}
                     </span>
                     <select
                       value={formData.heroVideoPosition || 'center'}
                       onChange={(e) => setFormData({ ...formData, heroVideoPosition: e.target.value })}
-                      style={{ padding: '4px 8px', borderRadius: '6px', fontSize: 'var(--crm-text-sm)', background: 'var(--crm-card)', color: 'var(--text-primary)', border: '1px solid var(--border-light)' }}
+                      style={{ padding: '4px 8px', borderRadius: '6px', fontSize: 'var(--crm-text-sm)', background: 'var(--crm-card)', color: 'var(--crm-ink)', border: '1px solid var(--border-light)' }}
                     >
                       <option value="center">{isAr ? 'الوسط (متوازن)' : 'Center'}</option>
                       <option value="top">{isAr ? 'الأعلى (تركيز على الواجهة العلوية)' : 'Top'}</option>
@@ -643,7 +643,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
 
                     {!formData.heroVideoCycleOnEnd && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginInlineStart: '10px' }}>
-                        <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-muted)' }}>{isAr ? 'مدة المقطع (ثوانٍ):' : 'Seconds per clip:'}</span>
+                        <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{isAr ? 'مدة المقطع (ثوانٍ):' : 'Seconds per clip:'}</span>
                         <input
                           type="number"
                           min="5"
@@ -661,18 +661,18 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
 
             {/* 🎞️ Short Videos Playlist Engine */}
             <div style={{
-              background: 'var(--bg-card, rgba(255,255,255,0.03))',
+              background: 'var(--crm-subtle)',
               border: '1px solid var(--border-light)',
               borderRadius: '16px',
               padding: '20px'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
                 <div>
-                  <h4 style={{ margin: '0 0 4px 0', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <h4 style={{ margin: '0 0 4px 0', color: 'var(--crm-accent-text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Film size={18} />
                     <span>{isAr ? 'قائمة الفيديوهات القصيرة المتعاقبة' : 'Short Videos Playlist'}</span>
                   </h4>
-                  <p style={{ margin: 0, fontSize: 'var(--crm-text-sm)', color: 'var(--text-muted)' }}>
+                  <p style={{ margin: 0, fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
                     {isAr
                       ? 'يمكنك إضافة عدة فيديوهات قصيرة (10-15 ثانية) ليقوم الموقع بالتبديل بينها بسلاسة وفخامة كأنها لقطات سينمائية مستمرة.'
                       : 'Add multiple short clips to auto-cycle smoothly like a continuous luxury documentary.'}
@@ -686,7 +686,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                       className="btn btn-xs btn-outline"
                       onClick={handleKeepOnlyActiveClip}
                       title={isAr ? 'إلغاء المقاطع الافتراضية وتشغيل المقطع الأساسي فقط' : 'Keep only active clip'}
-                      style={{ color: 'var(--accent-gold)', borderColor: 'rgba(212, 175, 55, 0.4)' }}
+                      style={{ color: 'var(--crm-accent-text)', borderColor: 'rgba(212, 175, 55, 0.4)' }}
                     >
                       {isAr ? '⭐ تشغيل مقطعي فقط (حذف الافتراضية)' : 'Keep My Video Only'}
                     </button>
@@ -697,7 +697,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                       type="checkbox"
                       checked={formData.heroVideoAutoCycle !== false}
                       onChange={(e) => setFormData({ ...formData, heroVideoAutoCycle: e.target.checked })}
-                      style={{ width: '18px', height: '18px', accentColor: '#0d48a1' }}
+                      style={{ width: '18px', height: '18px', accentColor: 'var(--crm-info-solid)' }}
                     />
                     <span>{isAr ? 'تبديل تلقائي سلس' : 'Auto-cycle clips'}</span>
                   </label>
@@ -734,10 +734,10 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ background: 'rgba(212, 175, 55, 0.2)', color: 'var(--accent-gold)', padding: '2px 8px', borderRadius: '4px', fontSize: 'var(--crm-text-xs)', fontWeight: 700 }}>
+                          <span style={{ background: 'rgba(212, 175, 55, 0.2)', color: 'var(--crm-accent-text)', padding: '2px 8px', borderRadius: '4px', fontSize: 'var(--crm-text-xs)', fontWeight: 700 }}>
                             #{idx + 1}
                           </span>
-                          <strong style={{ fontSize: 'var(--crm-text-md)', color: 'var(--text-primary)' }}>
+                          <strong style={{ fontSize: 'var(--crm-text-md)', color: 'var(--crm-ink)' }}>
                             {isAr ? clip.title_ar : (clip.title_en || clip.title_ar)}
                           </strong>
                           {isActive && (
@@ -796,7 +796,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
               <div className="form-group-item" style={{ gridColumn: '1 / -1' }}>
                 <label htmlFor="fcms-field-3" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span>{isAr ? 'رابط الفيديو الأساسي الحالي:' : 'Current Active Video URL:'}</span>
-                  <small style={{ color: 'var(--accent-gold)' }}>{isAr ? 'فيديو مباشر عالي الوضوح' : 'HD direct stream'}</small>
+                  <small style={{ color: 'var(--crm-accent-text)' }}>{isAr ? 'فيديو مباشر عالي الوضوح' : 'HD direct stream'}</small>
                 </label>
                 <input id="fcms-field-3"
                   type="url"
@@ -807,7 +807,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                 />
                 {/* Presets */}
                 <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-muted)' }}>{isAr ? 'مقترحات سريعة:' : 'Presets:'}</span>
+                  <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{isAr ? 'مقترحات سريعة:' : 'Presets:'}</span>
                   <button
                     type="button"
                     className="btn btn-xs btn-ghost"
@@ -849,7 +849,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                   onChange={(e) => setFormData({ ...formData, heroPosterUrl: e.target.value })}
                   placeholder="https://images.unsplash.com/photo-..."
                 />
-                <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: '4px' }}>
+                <small style={{ color: 'var(--crm-muted)', display: 'block', marginTop: '4px' }}>
                   {isAr ? 'تظهر في أول أجزاء من الثانية لضمان سرعة التحميل أو على الأجهزة التي تعطل تشغيل الفيديو التلقائي.' : 'Shown before video loads or on power-save devices.'}
                 </small>
               </div>
@@ -858,7 +858,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
               <div className="form-group-item" style={{ gridColumn: '1 / -1' }}>
                 <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span>{isAr ? 'نسبة تعتيم التظليل الملكي:' : 'Dark Overlay Opacity:'}</span>
-                  <strong style={{ color: 'var(--accent-gold)' }}>
+                  <strong style={{ color: 'var(--crm-accent-text)' }}>
                     {Math.round((Number(formData.heroOverlayOpacity ?? 0.65)) * 100)}%
                   </strong>
                 </label>
@@ -869,9 +869,9 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                   step="0.05"
                   value={formData.heroOverlayOpacity ?? 0.65}
                   onChange={(e) => setFormData({ ...formData, heroOverlayOpacity: parseFloat(e.target.value) })}
-                  style={{ width: '100%', cursor: 'pointer', accentColor: '#0d48a1' }}
+                  style={{ width: '100%', cursor: 'pointer', accentColor: 'var(--crm-info-solid)' }}
                 />
-                <small style={{ color: 'var(--text-muted)' }}>
+                <small style={{ color: 'var(--crm-muted)' }}>
                   {isAr ? 'زيادة النسبة تزيد من سواد وظلمة الفيديو لجعل النصوص البيضاء مقروءة وواضحة جداً.' : 'Higher opacity guarantees crisp text readability over bright footage.'}
                 </small>
               </div>
@@ -982,7 +982,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                   overflow: 'hidden',
                   border: '1.5px solid rgba(212, 175, 55, 0.6)',
                   boxShadow: '0 4px 10px rgba(0, 0, 0, 0.25)',
-                  background: '#07172F',
+                  background: 'var(--crm-surface-ink-deep)',
                   flexShrink: 0
                 }}>
                   <img
@@ -1003,7 +1003,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                     type="button"
                     className="btn btn-xs btn-ghost"
                     onClick={() => setFormData({ ...formData, founderPhoto: '/founder-dr-mahmoud-elbaz.jpg' })}
-                    style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--accent-gold)', marginTop: '2px', padding: '0' }}
+                    style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', marginTop: '2px', padding: '0' }}
                   >
                     {isAr ? 'استعادة الصورة الرسمية' : 'Restore Official Photo'}
                   </button>
@@ -1048,11 +1048,11 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
             <div className="form-group-item">
               <label htmlFor="fcms-field-18" style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span>{isAr ? 'نص كلمة ورسالة المؤسس (بالعربية):' : 'Founder Statement / Quote (Arabic):'}</span>
-                <small style={{ color: 'var(--text-secondary)' }}>{(formData.founderQuote_ar || '').length} حرف</small>
+                <small style={{ color: 'var(--crm-muted)' }}>{(formData.founderQuote_ar || '').length} حرف</small>
               </label>
               <textarea id="fcms-field-18"
                 rows={5}
-                style={{ width: '100%', padding: '14px', borderRadius: 'var(--radius-sm)', background: 'rgba(0,0,0,0.25)', color: '#fff', border: '1px solid var(--border-light)', lineHeight: 1.8, fontSize: 'var(--crm-text-md)' }}
+                style={{ width: '100%', padding: '14px', borderRadius: 'var(--radius-sm)', background: 'rgba(0,0,0,0.25)', color: 'var(--crm-on-dark)', border: '1px solid var(--border-light)', lineHeight: 1.8, fontSize: 'var(--crm-text-md)' }}
                 value={formData.founderQuote_ar || ''}
                 onChange={(e) => setFormData({ ...formData, founderQuote_ar: e.target.value })}
               />
@@ -1064,7 +1064,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
               </label>
               <textarea id="fcms-field-19"
                 rows={4}
-                style={{ width: '100%', padding: '14px', borderRadius: 'var(--radius-sm)', background: 'rgba(0,0,0,0.25)', color: '#fff', border: '1px solid var(--border-light)', lineHeight: 1.8, fontSize: 'var(--crm-text-md)' }}
+                style={{ width: '100%', padding: '14px', borderRadius: 'var(--radius-sm)', background: 'rgba(0,0,0,0.25)', color: 'var(--crm-on-dark)', border: '1px solid var(--border-light)', lineHeight: 1.8, fontSize: 'var(--crm-text-md)' }}
                 value={formData.founderQuote_en || ''}
                 onChange={(e) => setFormData({ ...formData, founderQuote_en: e.target.value })}
               />
@@ -1078,12 +1078,12 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
             {/* 1. HERO STATS CARDS (TOP OF HOMEPAGE) */}
             <div style={{ background: 'rgba(217, 119, 6, 0.05)', border: '1px solid rgba(217, 119, 6, 0.25)', borderRadius: 'var(--radius-lg)', padding: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                <Sparkles size={18} style={{ color: 'var(--accent-gold)' }} />
-                <h4 style={{ margin: 0, color: '#ffffff', fontSize: '1rem' }}>
+                <Sparkles size={18} style={{ color: 'var(--crm-accent-text)' }} />
+                <h4 style={{ margin: 0, color: 'var(--crm-on-dark)', fontSize: 'var(--crm-text-md)' }}>
                   {isAr ? 'أرقام شريط الواجهة الرئيسية (Hero Stats Strip - أعلى الموقع)' : 'Hero Stats Strip (Top of Homepage)'}
                 </h4>
               </div>
-              <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--crm-text-sm)', margin: '0 0 16px 0' }}>
+              <p style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-sm)', margin: '0 0 16px 0' }}>
                 {isAr 
                   ? 'هذه هي الأرقام الأربعة الظاهرة مباشرة أسفل شريط البحث الرئيسي في صدر الصفحة الرئيسية (قابلة للتعديل بالكامل):' 
                   : 'These are the 4 cards displayed directly below the main search bar on the homepage:'}
@@ -1092,7 +1092,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
                 {(formData.heroStats || DEFAULT_FOUNDER_CMS.heroStats).map((hs, idx) => (
                   <div key={idx} style={{ background: 'rgba(0, 0, 0, 0.3)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: 'var(--radius-md)', padding: '14px' }}>
-                    <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--accent-gold)', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
+                    <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
                       البطاقة #{idx + 1}
                     </span>
 
@@ -1122,17 +1122,17 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
 
             {/* 2. FOUNDER STATS */}
             <div>
-              <h4 style={{ margin: '0 0 6px 0', color: '#ffffff', fontSize: 'var(--crm-text-md)' }}>
+              <h4 style={{ margin: '0 0 6px 0', color: 'var(--crm-on-dark)', fontSize: 'var(--crm-text-md)' }}>
                 {isAr ? 'المؤشرات الرقمية لقسم المؤسس د. محمود الباز' : 'Founder Section Stats'}
               </h4>
-              <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--crm-text-sm)', marginBottom: '16px' }}>
+              <p style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-sm)', marginBottom: '16px' }}>
                 {isAr ? 'تعديل المؤشرات الرقمية الأربعة التي تظهر في أسفل قسم المؤسس لتعزيز ثقة المستثمرين:' : 'Edit the 4 key statistical achievement metrics:'}
               </p>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
                 {(formData.stats || []).map((st, idx) => (
                   <div key={idx} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-md)', padding: '14px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: 'var(--accent-gold)', fontWeight: 'bold' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: 'var(--crm-accent-text)', fontWeight: 'bold' }}>
                       <span>المؤشر #{idx + 1}</span>
                     </div>
 
@@ -1175,7 +1175,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {(formData.pillars || []).map((pl, idx) => (
                 <div key={idx} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
-                  <h4 style={{ margin: '0 0 12px 0', color: 'var(--accent-gold)' }}>
+                  <h4 style={{ margin: '0 0 12px 0', color: 'var(--crm-accent-text)' }}>
                     {isAr ? `الركيزة #${idx + 1}:` : `Pillar #${idx + 1}:`} {pl.title_ar}
                   </h4>
 
@@ -1192,7 +1192,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                     <label htmlFor="fcms-field-26">{isAr ? 'الوصف والتفاصيل:' : 'Description:'}</label>
                     <textarea id="fcms-field-26"
                       rows={3}
-                      style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius-sm)', background: 'rgba(0,0,0,0.25)', color: '#fff', border: '1px solid var(--border-light)' }}
+                      style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius-sm)', background: 'rgba(0,0,0,0.25)', color: 'var(--crm-on-dark)', border: '1px solid var(--border-light)' }}
                       value={pl.desc_ar || ''}
                       onChange={(e) => handlePillarChange(idx, 'desc_ar', e.target.value)}
                     />
@@ -1212,11 +1212,11 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
               padding: '16px',
               borderRadius: 'var(--radius-md)'
             }}>
-              <h4 style={{ margin: '0 0 8px 0', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h4 style={{ margin: '0 0 8px 0', color: 'var(--crm-accent-text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Award size={18} />
                 <span>{isAr ? 'معايير الأمان الأربعة المعتمدة في 1Line (الصفحة الرئيسية)' : 'The 4 1Line Golden Standards (Homepage)'}</span>
               </h4>
-              <p style={{ margin: 0, fontSize: 'var(--crm-text-base)', color: 'var(--text-secondary)' }}>
+              <p style={{ margin: 0, fontSize: 'var(--crm-text-base)', color: 'var(--crm-muted)' }}>
                 {isAr
                   ? 'هذا القسم يظهر في الصفحة الرئيسية لبناء أعلى درجات الموثوقية والمصداقية مع المستثمرين والمشترين ومغتربي الخليج. يمكنك تعديل العناوين، الشروحات، والأرقام لكل معيار وسيتم التحديث فوراً في الموقع.'
                   : 'This section appears on the homepage to instill institutional trust with buyers and Gulf expats. Modify titles, descriptions, and badges directly.'}
@@ -1272,16 +1272,16 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '10px' }}>
               {(formData.goldStandards || DEFAULT_FOUNDER_CMS.goldStandards).map((std, idx) => (
                 <div key={idx} style={{
-                  background: 'var(--bg-card, rgba(255,255,255,0.03))',
+                  background: 'var(--crm-subtle)',
                   border: '1px solid var(--border-light)',
                   borderRadius: 'var(--radius-md)',
                   padding: '16px'
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', borderBottom: '1px solid var(--border-light)', paddingBottom: '8px', flexWrap: 'wrap', gap: '10px' }}>
-                    <h4 style={{ margin: 0, color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <h4 style={{ margin: 0, color: 'var(--crm-accent-text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ 
                         background: 'rgba(217, 119, 6, 0.15)', 
-                        color: 'var(--accent-gold)', 
+                        color: 'var(--crm-accent-text)', 
                         padding: '2px 8px', 
                         borderRadius: '4px',
                         fontSize: 'var(--crm-text-base)',
@@ -1293,13 +1293,13 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                     </h4>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <label htmlFor="fcms-field-31" style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--text-secondary)' }}>
+                      <label htmlFor="fcms-field-31" style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
                         {isAr ? 'الأيقونة:' : 'Icon:'}
                       </label>
                       <select id="fcms-field-31"
                         value={std.icon || 'ShieldCheck'}
                         onChange={(e) => handleGoldStandardChange(idx, 'icon', e.target.value)}
-                        style={{ padding: '6px 10px', fontSize: 'var(--crm-text-sm)', borderRadius: '4px', background: 'var(--bg-input, #1e293b)', color: '#fff', border: '1px solid var(--border-light)' }}
+                        style={{ padding: '6px 10px', fontSize: 'var(--crm-text-sm)', borderRadius: '4px', background: 'var(--crm-subtle)', color: 'var(--crm-on-dark)', border: '1px solid var(--border-light)' }}
                       >
                         <option value="ShieldCheck">🛡️ ShieldCheck (درع الأمان)</option>
                         <option value="Scale">⚖️ Scale (ميزان العدالة والتقييم)</option>
@@ -1370,7 +1370,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                       <label htmlFor="fcms-field-37">{isAr ? 'نص الشرح والضمان (بالعربي):' : 'Description (Arabic):'}</label>
                       <textarea id="fcms-field-37"
                         rows={3}
-                        style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', background: 'rgba(0,0,0,0.25)', color: '#fff', border: '1px solid var(--border-light)', fontSize: 'var(--crm-text-base)' }}
+                        style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', background: 'rgba(0,0,0,0.25)', color: 'var(--crm-on-dark)', border: '1px solid var(--border-light)', fontSize: 'var(--crm-text-base)' }}
                         value={std.desc_ar || ''}
                         onChange={(e) => handleGoldStandardChange(idx, 'desc_ar', e.target.value)}
                       />
@@ -1380,7 +1380,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
                       <label htmlFor="fcms-field-38">{isAr ? 'نص الشرح والضمان (بالإنجليزي):' : 'Description (English):'}</label>
                       <textarea id="fcms-field-38"
                         rows={3}
-                        style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', background: 'rgba(0,0,0,0.25)', color: '#fff', border: '1px solid var(--border-light)', fontSize: 'var(--crm-text-base)' }}
+                        style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', background: 'rgba(0,0,0,0.25)', color: 'var(--crm-on-dark)', border: '1px solid var(--border-light)', fontSize: 'var(--crm-text-base)' }}
                         value={std.desc_en || ''}
                         onChange={(e) => handleGoldStandardChange(idx, 'desc_en', e.target.value)}
                       />

@@ -211,7 +211,7 @@ export default function RetargetingHub({
 
         {/* Target Property Switcher for Campaigns */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--text-secondary)' }}>
+          <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
             🏢 {isAr ? 'العقار المروج له:' : 'Promoted Property:'}
           </span>
           <select
@@ -242,7 +242,7 @@ export default function RetargetingHub({
           onClick={() => setActiveSegment('vip_cash')}
           style={{ padding: '12px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
         >
-          <span style={{ fontSize: '1rem' }}>💎</span>
+          <span style={{ fontSize: 'var(--crm-text-md)' }}>💎</span>
           <strong>{isAr ? 'عملاء VIP كاش' : 'VIP Cash'}</strong>
           <small style={{ opacity: 0.8 }}>({segmentedLeads.vip_cash.length} {isAr ? 'عميل' : 'leads'})</small>
         </button>
@@ -253,7 +253,7 @@ export default function RetargetingHub({
           onClick={() => setActiveSegment('installment')}
           style={{ padding: '12px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
         >
-          <span style={{ fontSize: '1rem' }}>🏦</span>
+          <span style={{ fontSize: 'var(--crm-text-md)' }}>🏦</span>
           <strong>{isAr ? 'باحثو الأقساط' : 'Installments'}</strong>
           <small style={{ opacity: 0.8 }}>({segmentedLeads.installment.length} {isAr ? 'عميل' : 'leads'})</small>
         </button>
@@ -264,7 +264,7 @@ export default function RetargetingHub({
           onClick={() => setActiveSegment('investors')}
           style={{ padding: '12px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
         >
-          <span style={{ fontSize: '1rem' }}>📈</span>
+          <span style={{ fontSize: 'var(--crm-text-md)' }}>📈</span>
           <strong>{isAr ? 'المستثمرون' : 'Investors'}</strong>
           <small style={{ opacity: 0.8 }}>({segmentedLeads.investors.length} {isAr ? 'عميل' : 'leads'})</small>
         </button>
@@ -275,7 +275,7 @@ export default function RetargetingHub({
           onClick={() => setActiveSegment('price_drop')}
           style={{ padding: '12px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
         >
-          <span style={{ fontSize: '1rem' }}>⚡</span>
+          <span style={{ fontSize: 'var(--crm-text-md)' }}>⚡</span>
           <strong>{isAr ? 'تخفيض الأسعار' : 'Price Drops'}</strong>
           <small style={{ opacity: 0.8 }}>({segmentedLeads.price_drop.length} {isAr ? 'مهتم' : 'leads'})</small>
         </button>
@@ -286,7 +286,7 @@ export default function RetargetingHub({
           onClick={() => setActiveSegment('dormant')}
           style={{ padding: '12px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
         >
-          <span style={{ fontSize: '1rem' }}>❄️</span>
+          <span style={{ fontSize: 'var(--crm-text-md)' }}>❄️</span>
           <strong>{isAr ? 'عملاء باردون خاملون' : 'Dormant (>30d)'}</strong>
           <small style={{ opacity: 0.8 }}>({segmentedLeads.dormant.length} {isAr ? 'عميل' : 'leads'})</small>
         </button>
@@ -294,8 +294,8 @@ export default function RetargetingHub({
 
       {/* Segment Metrics Card */}
       <div style={{
-        background: 'rgba(15, 23, 42, 0.7)',
-        border: '1px solid var(--border-light)',
+        background: 'var(--crm-subtle)',
+        border: '1px solid var(--crm-line)',
         borderRadius: 'var(--radius-md)',
         padding: '16px 20px',
         marginBottom: '20px',
@@ -307,26 +307,26 @@ export default function RetargetingHub({
       }}>
         <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
           <div>
-            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-secondary)', display: 'block' }}>
+            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'block' }}>
               {isAr ? 'حجم القوة الشرائية في الشريحة:' : 'Total Segment Purchasing Power:'}
             </span>
-            <strong style={{ fontSize: '1.2rem', color: 'var(--emerald)' }}>
+            <strong style={{ fontSize: 'var(--crm-text-lg)', color: 'var(--crm-positive)' }}>
               {(segmentTotalVolume / 1000000).toFixed(1)} {isAr ? 'مليون جنيه مصري' : 'M EGP'}
             </strong>
           </div>
 
           <div>
-            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-secondary)', display: 'block' }}>
+            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'block' }}>
               {isAr ? 'العملاء المؤهلون للحملة:' : 'Eligible Audience:'}
             </span>
-            <strong style={{ fontSize: '1.2rem', color: 'var(--accent-gold)' }}>
+            <strong style={{ fontSize: 'var(--crm-text-lg)', color: 'var(--crm-accent-text)' }}>
               {currentList.length} {isAr ? 'عميل مسجل' : 'Leads'}
             </strong>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span className="badge" style={{ background: 'var(--emerald-bg)', color: 'var(--emerald)', fontSize: 'var(--crm-text-sm)' }}>
+          <span className="badge" style={{ background: 'var(--crm-positive-soft)', color: 'var(--crm-positive)', fontSize: 'var(--crm-text-sm)' }}>
             ✓ {isAr ? 'تم توليد قوالب واتساب المخصصة آلياً' : 'Automated WhatsApp copy active'}
           </span>
         </div>
@@ -347,7 +347,7 @@ export default function RetargetingHub({
           <tbody>
             {currentList.length === 0 ? (
               <tr>
-                <td colSpan="5" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+                <td colSpan="5" style={{ textAlign: 'center', padding: '40px', color: 'var(--crm-muted)' }}>
                   <Users size={32} style={{ marginBottom: '8px', opacity: 0.5 }} />
                   <p>{isAr ? 'لا يوجد عملاء يطابقون هذه الشريحة حالياً' : 'No leads found in this segment'}</p>
                 </td>
@@ -366,14 +366,14 @@ export default function RetargetingHub({
                       {lead.phone}
                     </td>
                     <td>
-                      <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--emerald)', fontWeight: 'bold', display: 'block' }}>
+                      <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-positive)', fontWeight: 'bold', display: 'block' }}>
                         💰 {lead.details?.budget ? parseInt(lead.details.budget).toLocaleString() + ' ج.م' : 'مرنة'}
                       </span>
-                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-secondary)' }}>
+                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
                         📍 {lead.details?.area || 'سوهاج'}
                       </span>
                     </td>
-                    <td style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-secondary)' }}>
+                    <td style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
                       {lead.lastRetargeted 
                         ? (isAr ? `أرسلت حملة في ${new Date(lead.lastRetargeted).toLocaleDateString('ar-EG')}` : `Retargeted on ${new Date(lead.lastRetargeted).toLocaleDateString()}`)
                         : (isAr ? 'لم يُرسل له سابقاً' : 'Not retargeted yet')}
@@ -386,7 +386,7 @@ export default function RetargetingHub({
                           className="btn btn-sm btn-primary"
                           onClick={() => handleLaunchWhatsApp(lead)}
                           style={{
-                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                            background: 'linear-gradient(135deg, var(--crm-positive-solid) 0%, var(--crm-positive-solid) 100%)',
                             border: 'none',
                             display: 'flex',
                             alignItems: 'center',

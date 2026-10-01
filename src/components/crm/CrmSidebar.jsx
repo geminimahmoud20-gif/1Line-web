@@ -245,7 +245,7 @@ export default function CrmSidebar({
               </div>
               <div className="crm-brand-title">
                 <span className="crm-brand-text" dir="ltr">
-                  <span style={{ color: '#d97706' }}>1</span>LINE
+                  <span style={{ color: 'var(--crm-warn)' }}>1</span>LINE
                 </span>
                 <span className="crm-brand-badge">PRO COMMAND</span>
               </div>
@@ -285,7 +285,7 @@ export default function CrmSidebar({
                       [isAr ? 'left' : 'right']: '8px',
                       background: 'none',
                       border: 'none',
-                      color: '#94a3b8', /* sidebar is always dark — fixed light tone, not a theme token */
+                      color: 'var(--crm-on-dark-faint)', /* sidebar is always dark — fixed light tone, not a theme token */
                       cursor: 'pointer',
                       padding: 0,
                       display: 'flex'
@@ -390,7 +390,7 @@ export default function CrmSidebar({
                       style={{
                         transform: systemExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
                         transition: 'transform 0.2s ease',
-                        color: '#94a3b8' /* always-dark sidebar */
+                        color: 'var(--crm-on-dark-faint)' /* always-dark sidebar */
                       }}
                     />
                   )}
@@ -458,7 +458,7 @@ export default function CrmSidebar({
                 className="crm-sidebar-theme-btn"
                 title={isAr ? (theme === 'dark' ? 'تبديل للوضع النهاري' : 'تبديل للوضع الليلي الفاخر') : 'Toggle Theme'}
               >
-                {theme === 'dark' ? <Sun size={15} style={{ color: '#f59e0b' }} /> : <Moon size={15} style={{ color: '#93c5fd' }} />}
+                {theme === 'dark' ? <Sun size={15} style={{ color: 'var(--crm-warn)' }} /> : <Moon size={15} style={{ color: 'var(--crm-info)' }} />}
                 <span>
                   {isAr ? (theme === 'dark' ? 'الوضع النهاري' : 'الوضع الليلي') : (theme === 'dark' ? 'Light Mode' : 'Dark Mode')}
                 </span>

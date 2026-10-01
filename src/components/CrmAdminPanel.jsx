@@ -691,17 +691,17 @@ export const CrmAdminPanel = ({
     return (
       <div style={{ maxWidth: '420px', margin: '60px auto', textAlign: 'center' }}>
         <div style={{ 
-          background: 'var(--bg-card)', 
+          background: 'var(--crm-card)', 
           border: '1px solid var(--border-light)', 
           borderRadius: 'var(--radius-lg)', 
           padding: '40px 30px',
           boxShadow: 'var(--shadow-lg)'
         }}>
-          <Lock size={40} style={{ color: 'var(--accent-gold)', marginBottom: '16px' }} />
+          <Lock size={40} style={{ color: 'var(--crm-accent-text)', marginBottom: '16px' }} />
           <h2 style={{ marginBottom: '8px' }}>
             {isAr ? 'لوحة تحكم الإدارة' : 'Admin CRM Login'}
           </h2>
-          <p style={{ fontSize: 'var(--crm-text-base)', color: 'var(--text-secondary)', marginBottom: '24px' }}>
+          <p style={{ fontSize: 'var(--crm-text-base)', color: 'var(--crm-muted)', marginBottom: '24px' }}>
             {firebaseConnected 
               ? (isAr ? 'قم بتسجيل الدخول باستخدام حساب المشرف العقاري المعتمد.' : 'Login with certified admin credentials.')
               : (isAr ? 'أدخل كلمة المرور للوصول إلى وضع عدم الاتصال.' : 'Enter password to access offline mode.')}
@@ -710,7 +710,7 @@ export const CrmAdminPanel = ({
           <form onSubmit={handleLoginSubmit}>
             {firebaseConnected && (
               <div style={{ marginBottom: '16px', textAlign: 'right' }}>
-                <label style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold', color: 'var(--text-secondary)' }}>
+                <label style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold', color: 'var(--crm-muted)' }}>
                   {isAr ? 'البريد الإلكتروني' : 'Email Address'}
                 </label>
                 <input 
@@ -726,7 +726,7 @@ export const CrmAdminPanel = ({
             )}
 
             <div style={{ marginBottom: '16px', textAlign: 'right' }}>
-              <label style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold', color: 'var(--text-secondary)' }}>
+              <label style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold', color: 'var(--crm-muted)' }}>
                 {isAr ? 'كلمة المرور' : 'Password'}
               </label>
               <div style={{ position: 'relative', marginTop: '4px' }}>
@@ -740,7 +740,7 @@ export const CrmAdminPanel = ({
                   style={{ 
                     paddingInlineEnd: '40px', 
                     textAlign: firebaseConnected ? 'left' : 'center', 
-                    fontSize: '1.1rem', 
+                    fontSize: 'var(--crm-text-lg)', 
                     letterSpacing: firebaseConnected ? 'normal' : '2px' 
                   }}
                 />
@@ -750,7 +750,7 @@ export const CrmAdminPanel = ({
                   style={{ 
                     position: 'absolute', top: '50%', transform: 'translateY(-50%)',
                     [isAr ? 'left' : 'right']: '12px',
-                    background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)'
+                    background: 'none', border: 'none', cursor: 'pointer', color: 'var(--crm-muted)'
                   }}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -1157,7 +1157,7 @@ export const CrmAdminPanel = ({
           <div className="property-form-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '540px' }}>
             <div className="modal-form-header">
               <h3>
-                <Clock size={18} style={{ marginInlineEnd: '6px', color: 'var(--accent-gold)' }} />
+                <Clock size={18} style={{ marginInlineEnd: '6px', color: 'var(--crm-accent-text)' }} />
                 {isAr ? `سجل تدقيق العمليات: ${viewingLogsLead.name}` : `Activity Audit Log: ${viewingLogsLead.name}`}
               </h3>
               <button type="button" className="drawer-close-btn" onClick={() => setViewingLogsLead(null)} aria-label="Close">
@@ -1167,7 +1167,7 @@ export const CrmAdminPanel = ({
 
             <div style={{ padding: '16px 0', display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '350px', overflowY: 'auto' }}>
               {(!viewingLogsLead.activityLogs || viewingLogsLead.activityLogs.length === 0) ? (
-                <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '20px' }}>
+                <p style={{ textAlign: 'center', color: 'var(--crm-muted)', padding: '20px' }}>
                   {isAr ? 'لا توجد سجلات تدقيق سابقة لهذا العميل' : 'No recorded activity logs'}
                 </p>
               ) : (
@@ -1180,8 +1180,8 @@ export const CrmAdminPanel = ({
                     fontSize: 'var(--crm-text-base)'
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                      <strong style={{ color: 'var(--emerald)' }}>{log.action}</strong>
-                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-muted)' }}>
+                      <strong style={{ color: 'var(--crm-positive)' }}>{log.action}</strong>
+                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
                         {new Date(log.timestamp).toLocaleTimeString(isAr ? 'ar-EG' : 'en-US')} - {new Date(log.timestamp).toLocaleDateString(isAr ? 'ar-EG' : 'en-US')}
                       </span>
                     </div>

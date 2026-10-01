@@ -23,8 +23,8 @@ jobs:
 
       - run: npm ci
 
-      - name: Lint (errors fail the build; warnings are reported only)
-        run: npm run lint
+      - name: Lint (zero warnings: includes the CRM design-token guard)
+        run: npm run lint -- --max-warnings=0
 
       - name: Unit tests (finance, yield, trade-in matching)
         run: npm run test:unit

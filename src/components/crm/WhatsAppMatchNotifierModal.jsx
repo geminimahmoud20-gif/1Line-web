@@ -157,7 +157,7 @@ export default function WhatsAppMatchNotifierModal({
     >
       <div 
         style={{
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+          background: 'linear-gradient(135deg, var(--crm-surface-ink) 0%, var(--crm-surface-ink) 100%)',
           border: '1px solid rgba(16, 185, 129, 0.4)',
           borderRadius: '24px',
           padding: '28px',
@@ -184,7 +184,7 @@ export default function WhatsAppMatchNotifierModal({
             borderRadius: '50%',
             width: '32px',
             height: '32px',
-            color: '#fff',
+            color: 'var(--crm-on-dark)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -212,7 +212,7 @@ export default function WhatsAppMatchNotifierModal({
 
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h2 style={{ fontSize: '1.25rem', color: '#ffffff', fontWeight: 'bold', margin: 0 }}>
+              <h2 style={{ fontSize: 'var(--crm-text-lg)', color: 'var(--crm-on-dark)', fontWeight: 'bold', margin: 0 }}>
                 {isAr ? 'إرسال إشعارات الواتساب للعملاء المهتمين' : 'WhatsApp Retargeting & Matched Leads'}
               </h2>
               <span style={{
@@ -247,8 +247,8 @@ export default function WhatsAppMatchNotifierModal({
         }}>
           <div>
             <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)', display: 'block' }}>{isAr ? 'العقار المستهدف للإشعار' : 'Target Property'}</span>
-            <strong style={{ fontSize: 'var(--crm-text-md)', color: '#ffffff' }}>{property.title_ar || property.title_en}</strong>
-            <div style={{ display: 'flex', gap: '12px', marginTop: '4px', fontSize: 'var(--crm-text-xs)', color: '#cbd5e1' }}>
+            <strong style={{ fontSize: 'var(--crm-text-md)', color: 'var(--crm-on-dark)' }}>{property.title_ar || property.title_en}</strong>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '4px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-on-dark-muted)' }}>
               <span>📍 {property.locationName_ar || 'سوهاج'}</span>
               <span>💰 {(property.price || 0).toLocaleString()} ج.م</span>
               <span>📐 {property.size} م²</span>
@@ -261,8 +261,8 @@ export default function WhatsAppMatchNotifierModal({
               type="button"
               onClick={() => setEventType('new_unit')}
               style={{
-                background: eventType === 'new_unit' ? '#10b981' : 'transparent',
-                color: '#fff',
+                background: eventType === 'new_unit' ? 'var(--crm-positive-solid)' : 'transparent',
+                color: 'var(--crm-on-dark)',
                 fontSize: 'var(--crm-text-xs)',
                 padding: '5px 12px',
                 borderRadius: '8px',
@@ -277,8 +277,8 @@ export default function WhatsAppMatchNotifierModal({
               type="button"
               onClick={() => setEventType('sold_unit')}
               style={{
-                background: eventType === 'sold_unit' ? '#ef4444' : 'transparent',
-                color: '#fff',
+                background: eventType === 'sold_unit' ? 'var(--crm-danger-solid)' : 'transparent',
+                color: 'var(--crm-on-dark)',
                 fontSize: 'var(--crm-text-xs)',
                 padding: '5px 12px',
                 borderRadius: '8px',
@@ -293,8 +293,8 @@ export default function WhatsAppMatchNotifierModal({
               type="button"
               onClick={() => setEventType('price_drop')}
               style={{
-                background: eventType === 'price_drop' ? '#f59e0b' : 'transparent',
-                color: '#fff',
+                background: eventType === 'price_drop' ? 'var(--crm-warn-solid)' : 'transparent',
+                color: 'var(--crm-on-dark)',
                 fontSize: 'var(--crm-text-xs)',
                 padding: '5px 12px',
                 borderRadius: '8px',
@@ -311,8 +311,8 @@ export default function WhatsAppMatchNotifierModal({
         {/* Matched Clients List */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-            <h4 style={{ fontSize: 'var(--crm-text-base)', color: '#e2e8f0', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Users size={15} style={{ color: '#3b82f6' }} />
+            <h4 style={{ fontSize: 'var(--crm-text-base)', color: 'var(--crm-on-dark-soft)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Users size={15} style={{ color: 'var(--crm-on-dark-info)' }} />
               <span>{isAr ? 'قائمة العملاء الموصى بإشعارهم فوراً:' : 'Recommended Clients to Notify:'}</span>
             </h4>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -323,7 +323,7 @@ export default function WhatsAppMatchNotifierModal({
                   style={{
                     background: showApiPayloadModal ? 'rgba(59, 130, 246, 0.25)' : 'rgba(59, 130, 246, 0.12)',
                     border: '1px solid rgba(59, 130, 246, 0.35)',
-                    color: '#60a5fa',
+                    color: 'var(--crm-on-dark-info)',
                     fontSize: 'var(--crm-text-xs)',
                     padding: '4px 10px',
                     borderRadius: '8px',
@@ -357,7 +357,7 @@ export default function WhatsAppMatchNotifierModal({
               direction: 'ltr'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', direction: isAr ? 'rtl' : 'ltr' }}>
-                <span style={{ fontSize: 'var(--crm-text-sm)', color: '#93c5fd', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-on-dark-info)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Code2 size={14} />
                   <span>{isAr ? 'حزمة Meta WhatsApp Cloud API الجاهزة للأتمتة:' : 'Meta WhatsApp Cloud API Payload:'}</span>
                 </span>
@@ -368,7 +368,7 @@ export default function WhatsAppMatchNotifierModal({
                     style={{
                       background: 'rgba(255, 255, 255, 0.08)',
                       border: '1px solid rgba(255, 255, 255, 0.15)',
-                      color: '#ffffff',
+                      color: 'var(--crm-on-dark)',
                       fontSize: 'var(--crm-text-xs)',
                       padding: '4px 10px',
                       borderRadius: '6px',
@@ -405,7 +405,7 @@ export default function WhatsAppMatchNotifierModal({
               <pre style={{
                 margin: 0,
                 fontSize: 'var(--crm-text-xs)',
-                color: '#cbd5e1',
+                color: 'var(--crm-on-dark-muted)',
                 background: 'rgba(0, 0, 0, 0.4)',
                 padding: '12px',
                 borderRadius: '8px',
@@ -457,11 +457,11 @@ export default function WhatsAppMatchNotifierModal({
                     {/* Client Info */}
                     <div style={{ flex: 1, minWidth: '220px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <strong style={{ color: '#ffffff', fontSize: 'var(--crm-text-md)' }}>{client.name}</strong>
+                        <strong style={{ color: 'var(--crm-on-dark)', fontSize: 'var(--crm-text-md)' }}>{client.name}</strong>
                         <span style={{
                           fontSize: 'var(--crm-text-xs)',
                           background: client.score >= 80 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(217, 119, 6, 0.2)',
-                          color: client.score >= 80 ? '#10b981' : 'var(--accent-gold)',
+                          color: client.score >= 80 ? 'var(--crm-on-dark-positive)' : 'var(--crm-gold-on-dark)',
                           padding: '2px 7px',
                           borderRadius: '6px',
                           fontWeight: 'bold'
@@ -504,7 +504,7 @@ export default function WhatsAppMatchNotifierModal({
                         style={{
                           background: 'rgba(255, 255, 255, 0.06)',
                           border: '1px solid rgba(255, 255, 255, 0.15)',
-                          color: '#cbd5e1',
+                          color: 'var(--crm-on-dark-muted)',
                           padding: '8px 12px',
                           borderRadius: '10px',
                           fontSize: 'var(--crm-text-xs)',
@@ -523,8 +523,8 @@ export default function WhatsAppMatchNotifierModal({
                         type="button"
                         onClick={() => handleSendWhatsApp(client)}
                         style={{
-                          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                          color: '#ffffff',
+                          background: 'linear-gradient(135deg, var(--crm-positive-solid) 0%, var(--crm-positive-solid) 100%)',
+                          color: 'var(--crm-on-dark)',
                           fontWeight: 'bold',
                           padding: '8px 16px',
                           borderRadius: '10px',
@@ -569,7 +569,7 @@ export default function WhatsAppMatchNotifierModal({
             type="button"
             className="btn btn-sm btn-ghost"
             onClick={onClose}
-            style={{ fontSize: 'var(--crm-text-sm)', color: '#cbd5e1' }}
+            style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-on-dark-muted)' }}
           >
             {isAr ? 'إغلاق النافذة' : 'Close'}
           </button>

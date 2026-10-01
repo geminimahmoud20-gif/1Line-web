@@ -42,7 +42,7 @@ export default function PropertyFormModal({
                 <ImageIcon size={18} />
                 <span>{isAr ? 'صور العقار (رفع من الموبايل أو الكمبيوتر)' : 'Property Photos (Direct Device Upload)'}</span>
               </label>
-              <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--text-muted)' }}>
+              <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
                 {form.images.length} {isAr ? 'صور مرفوعة' : 'photos'}
               </span>
             </div>
@@ -53,7 +53,7 @@ export default function PropertyFormModal({
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               style={{
-                border: isDraggingOver ? '2px dashed var(--accent-gold)' : '2px dashed var(--border-light)',
+                border: isDraggingOver ? '2px dashed var(--crm-accent)' : '2px dashed var(--border-light)',
                 background: isDraggingOver ? 'rgba(217, 119, 6, 0.08)' : 'var(--bg-slate)',
                 transition: 'all 0.2s ease'
               }}
@@ -70,8 +70,8 @@ export default function PropertyFormModal({
               <label htmlFor="property-images-file-input" className="dropzone-label" style={{ cursor: isUploadingImages ? 'wait' : 'pointer' }}>
                 {isUploadingImages ? (
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '12px 0' }}>
-                    <Loader2 size={30} className="spin-animation" style={{ color: 'var(--accent-gold)' }} />
-                    <span style={{ fontWeight: 'bold', color: 'var(--accent-gold)' }}>{uploadProgressText}</span>
+                    <Loader2 size={30} className="spin-animation" style={{ color: 'var(--crm-accent-text)' }} />
+                    <span style={{ fontWeight: 'bold', color: 'var(--crm-accent-text)' }}>{uploadProgressText}</span>
                   </div>
                 ) : (
                   <>
@@ -94,9 +94,9 @@ export default function PropertyFormModal({
                       position: 'relative',
                       borderRadius: '8px',
                       overflow: 'hidden',
-                      border: idx === 0 ? '2px solid var(--accent-gold)' : '1px solid var(--border-light)',
+                      border: idx === 0 ? '2px solid var(--crm-accent)' : '1px solid var(--border-light)',
                       boxShadow: idx === 0 ? '0 0 10px rgba(217, 119, 6, 0.3)' : 'none',
-                      background: 'var(--bg-card)'
+                      background: 'var(--crm-card)'
                     }}
                   >
                     <img 
@@ -113,7 +113,7 @@ export default function PropertyFormModal({
                         right: '4px',
                         left: '4px',
                         background: 'rgba(15, 23, 42, 0.85)',
-                        color: 'var(--accent-gold)',
+                        color: 'var(--crm-gold-on-dark)',
                         fontSize: 'var(--crm-text-xs)',
                         fontWeight: 'bold',
                         padding: '2px 4px',
@@ -136,7 +136,7 @@ export default function PropertyFormModal({
                           right: '4px',
                           left: '4px',
                           background: 'rgba(0, 0, 0, 0.7)',
-                          color: '#fff',
+                          color: 'var(--crm-on-dark)',
                           border: 'none',
                           borderRadius: '4px',
                           fontSize: 'var(--crm-text-xs)',
@@ -166,7 +166,7 @@ export default function PropertyFormModal({
                         top: '4px',
                         left: '4px',
                         background: 'rgba(239, 68, 68, 0.9)',
-                        color: '#fff',
+                        color: 'var(--crm-on-dark)',
                         border: 'none',
                         borderRadius: '50%',
                         width: '22px',
@@ -189,12 +189,12 @@ export default function PropertyFormModal({
           {/* 🎛️ Display Status, Featured & Priority Controls */}
           <div style={{ 
             background: 'rgba(255, 179, 0, 0.05)', 
-            border: '1px solid var(--accent-gold-light)', 
+            border: '1px solid var(--crm-accent)', 
             borderRadius: 'var(--radius-md)', 
             padding: '16px', 
             marginBottom: '20px' 
           }}>
-            <h4 style={{ fontSize: 'var(--crm-text-base)', marginBottom: '12px', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <h4 style={{ fontSize: 'var(--crm-text-base)', marginBottom: '12px', color: 'var(--crm-accent-text)', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Sparkles size={16} />
               {isAr ? 'إعدادات العرض والأولوية والتسويق' : 'Display Priority & Marketing Settings'}
             </h4>
@@ -340,7 +340,7 @@ export default function PropertyFormModal({
                   type="button"
                   className="btn btn-sm btn-outline"
                   onClick={() => setShowMapPicker(true)}
-                  style={{ padding: '2px 8px', fontSize: 'var(--crm-text-xs)', color: 'var(--accent-gold)', borderColor: 'var(--accent-gold-light)' }}
+                  style={{ padding: '2px 8px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', borderColor: 'var(--crm-accent)' }}
                 >
                   📍 {isAr ? 'تحديد دقيق على الخريطة' : 'Pin on Map'}
                 </button>
@@ -352,7 +352,7 @@ export default function PropertyFormModal({
                 placeholder="مثال: شارع الجمهورية - أمام الجامعة"
               />
               {form.coordinates?.lat && (
-                <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--emerald)', display: 'block', marginTop: '3px' }}>
+                <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', display: 'block', marginTop: '3px' }}>
                   ✓ {isAr ? `إحداثيات GPS المحددة: ${form.coordinates.lat}, ${form.coordinates.lng}` : `GPS: ${form.coordinates.lat}, ${form.coordinates.lng}`}
                 </span>
               )}
@@ -436,7 +436,7 @@ export default function PropertyFormModal({
                   borderRadius: '8px',
                   border: '1px solid rgba(217, 119, 6, 0.22)',
                   fontSize: 'var(--crm-text-sm)',
-                  color: 'var(--accent-gold, #d97706)',
+                  color: 'var(--crm-accent-text)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px'
@@ -565,7 +565,7 @@ export default function PropertyFormModal({
             marginBottom: '16px'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <h4 style={{ fontSize: 'var(--crm-text-base)', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}>
+              <h4 style={{ fontSize: 'var(--crm-text-base)', color: 'var(--crm-info)', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}>
                 <MapPin size={16} />
                 {isAr ? 'المعالم والخدمات الحيوية وسعر المتر المقارن (ذكاء السوق)' : 'Market Intelligence & Custom Amenities'}
               </h4>
@@ -577,7 +577,7 @@ export default function PropertyFormModal({
                   alignItems: 'center',
                   gap: '5px',
                   background: 'rgba(56, 189, 248, 0.15)',
-                  color: '#38bdf8',
+                  color: 'var(--crm-info)',
                   border: '1px solid rgba(56, 189, 248, 0.3)',
                   padding: '4px 10px',
                   borderRadius: '6px',
@@ -593,7 +593,7 @@ export default function PropertyFormModal({
 
             {/* Custom Benchmark Price Override */}
             <div className="form-group-item" style={{ marginBottom: '12px' }}>
-              <label style={{ fontSize: 'var(--crm-text-sm)', color: '#cbd5e1' }}>
+              <label style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
                 {isAr ? 'تخصيص متوسط سعر المتر المقارن لهذا العقار (ج.م/م² - اختياري)' : 'Custom Benchmark Price/m² (Optional Override)'}
               </label>
               <input
@@ -608,7 +608,7 @@ export default function PropertyFormModal({
                   border: '1px solid rgba(255, 255, 255, 0.15)',
                   padding: '8px 12px',
                   borderRadius: '8px',
-                  color: '#fff',
+                  color: 'var(--crm-on-dark)',
                   fontSize: 'var(--crm-text-base)'
                 }}
               />
@@ -633,12 +633,12 @@ export default function PropertyFormModal({
                       placeholder={isAr ? 'اسم المعلم (مثال: مدرسة اللغات)' : 'Landmark name'}
                       value={am.name_ar || ''}
                       onChange={(e) => handleUpdateCustomAmenity(idx, 'name_ar', e.target.value)}
-                      style={{ background: 'transparent', border: '1px solid rgba(255, 255, 255, 0.15)', padding: '6px', borderRadius: '6px', color: '#fff', fontSize: 'var(--crm-text-sm)' }}
+                      style={{ background: 'transparent', border: '1px solid rgba(255, 255, 255, 0.15)', padding: '6px', borderRadius: '6px', color: 'var(--crm-on-dark)', fontSize: 'var(--crm-text-sm)' }}
                     />
                     <select
                       value={am.category || 'education'}
                       onChange={(e) => handleUpdateCustomAmenity(idx, 'category', e.target.value)}
-                      style={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(255, 255, 255, 0.15)', padding: '6px', borderRadius: '6px', color: '#fff', fontSize: 'var(--crm-text-sm)' }}
+                      style={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(255, 255, 255, 0.15)', padding: '6px', borderRadius: '6px', color: 'var(--crm-on-dark)', fontSize: 'var(--crm-text-sm)' }}
                     >
                       <option value="education">{isAr ? 'تعليم' : 'Education'}</option>
                       <option value="health">{isAr ? 'صحة' : 'Health'}</option>
@@ -651,12 +651,12 @@ export default function PropertyFormModal({
                       placeholder={isAr ? 'المسافة (مثال: 300 متر)' : 'Distance (e.g. 300m)'}
                       value={am.distance || ''}
                       onChange={(e) => handleUpdateCustomAmenity(idx, 'distance', e.target.value)}
-                      style={{ background: 'transparent', border: '1px solid rgba(255, 255, 255, 0.15)', padding: '6px', borderRadius: '6px', color: '#fff', fontSize: 'var(--crm-text-sm)' }}
+                      style={{ background: 'transparent', border: '1px solid rgba(255, 255, 255, 0.15)', padding: '6px', borderRadius: '6px', color: 'var(--crm-on-dark)', fontSize: 'var(--crm-text-sm)' }}
                     />
                     <button
                       type="button"
                       onClick={() => handleRemoveCustomAmenity(idx)}
-                      style={{ background: 'rgba(239, 68, 68, 0.2)', border: 'none', color: '#ef4444', padding: '6px 8px', borderRadius: '6px', cursor: 'pointer' }}
+                      style={{ background: 'rgba(239, 68, 68, 0.2)', border: 'none', color: 'var(--crm-danger)', padding: '6px 8px', borderRadius: '6px', cursor: 'pointer' }}
                     >
                       ✕
                     </button>

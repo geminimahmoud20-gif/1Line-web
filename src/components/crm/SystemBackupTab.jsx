@@ -12,10 +12,10 @@ export default function SystemBackupTab({
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', borderBottom: '1px solid var(--border-light)', paddingBottom: '16px' }}>
           <Database size={26} className="text-gold" />
           <div>
-            <h3 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--crm-ink)' }}>
+            <h3 style={{ margin: 0, fontSize: 'var(--crm-text-lg)', color: 'var(--crm-ink)' }}>
               {isAr ? 'البيانات والنسخ الاحتياطي وإدارة المنظومة' : 'Database Backups & System Administration'}
             </h3>
-            <p style={{ margin: 0, fontSize: 'var(--crm-text-base)', color: 'var(--text-secondary)' }}>
+            <p style={{ margin: 0, fontSize: 'var(--crm-text-base)', color: 'var(--crm-muted)' }}>
               {isAr ? 'خاص بالمدير العام — تصدير واسترجاع نسخ العملاء والبيانات الحساسة بأمان' : 'Super Admin only — Backup, export and recovery hub'}
             </p>
           </div>
@@ -24,11 +24,11 @@ export default function SystemBackupTab({
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginTop: '16px' }}>
           {/* Backup Box */}
           <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-light)', borderRadius: '10px', padding: '20px' }}>
-            <h4 style={{ margin: '0 0 10px 0', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h4 style={{ margin: '0 0 10px 0', color: 'var(--crm-accent-text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Download size={18} />
               <span>{isAr ? 'تنزيل نسخة احتياطية' : 'Download Backup'}</span>
             </h4>
-            <p style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.5' }}>
+            <p style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)', marginBottom: '16px', lineHeight: '1.5' }}>
               {isAr 
                 ? 'تصدير كامل بيانات العملاء والصفقات والطلبات كملف JSON آمن ومحمي للاحتفاظ به أو استرجاعه لاحقاً.' 
                 : 'Export full database snapshot as a structured JSON file.'}
@@ -46,11 +46,11 @@ export default function SystemBackupTab({
 
           {/* Restore Box */}
           <div style={{ background: 'rgba(239, 68, 68, 0.03)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '10px', padding: '20px' }}>
-            <h4 style={{ margin: '0 0 10px 0', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h4 style={{ margin: '0 0 10px 0', color: 'var(--crm-danger)', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Upload size={18} />
               <span>{isAr ? 'استعادة قاعدة البيانات' : 'Restore Database'}</span>
             </h4>
-            <p style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.5' }}>
+            <p style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)', marginBottom: '16px', lineHeight: '1.5' }}>
               {isAr 
                 ? '⚠️ تحذير أمني: استيراد ملف JSON سيقوم بدمج أو تحديث بيانات العملاء الحالية. يُرجى التحقق من الملف قبل رفعه.' 
                 : 'Warning: Importing JSON file will merge or overwrite current customer records.'}
@@ -62,7 +62,7 @@ export default function SystemBackupTab({
                 padding: '10px', 
                 cursor: 'pointer', 
                 background: 'rgba(239, 68, 68, 0.15)', 
-                color: '#ef4444', 
+                color: 'var(--crm-danger)', 
                 border: '1px solid rgba(239, 68, 68, 0.4)', 
                 display: 'flex', 
                 alignItems: 'center', 
