@@ -1,33 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { 
-  Zap, 
-  Plus, 
-  Check, 
-  X, 
-  Trash2, 
-  Edit3, 
-  Clock, 
-  MapPin, 
-  DollarSign, 
-  Phone, 
-  MessageSquare, 
-  Search, 
-  Filter, 
-  CheckCircle, 
-  AlertCircle, 
-  ShieldCheck, 
-  Globe, 
-  Eye, 
-  EyeOff, 
-  Sparkles, 
-  Send,
-  Building2,
-  Calendar,
-  Layers,
-  Download,
-  Home,
-  Share2
-} from 'lucide-react';
+import { Zap, Plus, Check, X, Trash2, Edit3, Clock, MapPin, DollarSign, Phone, MessageSquare, Search, CheckCircle, AlertCircle, EyeOff, Sparkles, Download, Home, Share2 } from 'lucide-react';
 import { exportToCsv } from '../../utils/exportCsv';
 import { canViewLeadPhone, maskPhoneNumber, canEditProperties } from '../../utils/rbacRules';
 import { reconcilePublicDemands } from '../../firebaseLazy';
@@ -488,7 +460,6 @@ export default function DemandsManagerPanel({
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '18px' }}>
           {filteredDemands.map((demand) => {
             const isPending = demand.status === 'pending';
-            const isPublished = (demand.status || 'published') === 'published';
             const urgencyColor = demand.urgency === 'high' ? '#B42318' : demand.urgency === 'medium' ? '#8A4B08' : '#1D4ED8';
             const budgetNum = typeof demand.budget === 'number' ? demand.budget : parseInt(String(demand.budget).replace(/,/g, '')) || 0;
 

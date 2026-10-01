@@ -1,9 +1,8 @@
-import { Send } from 'lucide-react';
+
 
 export default function AutomationTab({
   addNotification,
   isAr,
-  leads,
   triggerToast
 }) {
   return (

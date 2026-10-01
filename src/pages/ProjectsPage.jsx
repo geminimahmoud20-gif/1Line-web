@@ -1,23 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { 
-  Building2, 
-  MapPin, 
-  Layers, 
-  Calendar, 
-  Percent, 
-  CheckCircle2, 
-  Download, 
-  MessageSquare, 
-  ArrowUpRight, 
-  ShieldCheck, 
-  Clock,
-  Sparkles,
-  TrendingUp,
-  FileDown,
-  ArrowRight,
-  ArrowLeft
-} from 'lucide-react';
+import { Building2, MapPin, CheckCircle2, MessageSquare, Sparkles, FileDown, ArrowRight, ArrowLeft } from 'lucide-react';
 import { MEGA_PROJECTS } from '../data/projectsData';
 import BrandWatermark from '../components/common/BrandWatermark';
 import { getWhatsAppUrl } from '../utils/founderCmsData';

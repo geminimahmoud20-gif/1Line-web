@@ -1,9 +1,5 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import {
-  Search, X, UserPlus, Building, Zap, Calendar, Target,
-  Sparkles, FileText, Moon, Sun, ArrowRight, ArrowLeft,
-  ChevronRight, Phone, DollarSign, Command
-} from 'lucide-react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { Search, Building, Zap, Phone, Command } from 'lucide-react';
 import { usePreferences } from '../../context/PreferencesContext';
 import { canViewLeadPhone, maskPhoneNumber } from '../../utils/rbacRules';
 
@@ -311,7 +307,6 @@ export default function CrmCommandPalette({
               const isAction = item.category === 'actions';
               const isLead = item.category === 'leads';
               const isProp = item.category === 'properties';
-              const isDemand = item.category === 'demands';
 
               return (
                 <div

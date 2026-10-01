@@ -1,17 +1,5 @@
 import { useState } from 'react';
-import { 
-  UserPlus, 
-  Phone, 
-  MessageSquare, 
-  Building, 
-  DollarSign, 
-  MapPin, 
-  Tag, 
-  ShieldCheck, 
-  Sparkles, 
-  X, 
-  Save 
-} from 'lucide-react';
+import { UserPlus, Save } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { getAreas } from '../../utils/areasData';
 import { isValidPhoneNumber } from '../../utils/securityShield';

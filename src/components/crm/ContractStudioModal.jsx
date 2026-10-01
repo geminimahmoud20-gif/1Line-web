@@ -1,18 +1,5 @@
 import { useState } from 'react';
-import { 
-  X, 
-  FileText, 
-  Download, 
-  Send, 
-  CheckCircle2, 
-  Building2, 
-  User, 
-  DollarSign, 
-  Sparkles,
-  ShieldCheck,
-  Calendar,
-  Loader2
-} from 'lucide-react';
+import { X, FileText, Download, Send, Building2, User, Loader2 } from 'lucide-react';
 import { trackEvent } from '../../utils/visitorTracker';
 
 /**

@@ -1,28 +1,7 @@
 import { useState, useEffect } from 'react';
-import { 
-  Activity, 
-  Eye, 
-  Clock, 
-  MessageSquare, 
-  Calculator, 
-  Flame, 
-  TrendingUp, 
-  Compass, 
-  FileText, 
-  Sparkles, 
-  Smartphone, 
-  MapPin, 
-  RefreshCw, 
-  CheckCircle2, 
-  ExternalLink,
-  Users,
-  MousePointerClick
-} from 'lucide-react';
+import { Activity, Eye, Clock, MessageSquare, Calculator, Flame, RefreshCw, MousePointerClick } from 'lucide-react';
 import { getAreas } from '../../utils/areasData';
-import { 
-  getLiveAnalyticsSummary, 
-  getTopViewedProperties 
-} from '../../utils/visitorTracker';
+import { getLiveAnalyticsSummary, getTopViewedProperties } from '../../utils/visitorTracker';
 
 export default function VisitorIntelligencePanel({
   properties = [],
@@ -33,7 +12,6 @@ export default function VisitorIntelligencePanel({
   const [summary, setSummary] = useState(() => getLiveAnalyticsSummary());
   const [trendingProperties, setTrendingProperties] = useState(() => getTopViewedProperties(properties));
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [filterPeriod, setFilterPeriod] = useState('today'); // 'today' | 'week' | 'all'
 
   const refreshData = () => {
     setIsRefreshing(true);

@@ -1,19 +1,5 @@
 import { useState, useMemo } from 'react';
-import { 
-  Sparkles, 
-  Building, 
-  User, 
-  MessageSquare, 
-  Send, 
-  CheckCircle2, 
-  ArrowRight, 
-  Car, 
-  TrendingUp, 
-  DollarSign,
-  Filter,
-  Flame,
-  Zap
-} from 'lucide-react';
+import { Sparkles, Send, CheckCircle2, Car, Zap } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
 import { getAreas, normalizeAreaKey } from '../../utils/areasData';
 

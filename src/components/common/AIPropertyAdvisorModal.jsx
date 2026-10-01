@@ -1,16 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { 
-  Building, 
-  Sparkles, 
-  X, 
-  Send, 
-  PhoneCall, 
-  ShieldCheck, 
-  TrendingUp, 
-  Compass,
-  ArrowRight,
-  ArrowLeft
-} from 'lucide-react';
+import { Building, Sparkles, X, Send, PhoneCall, ArrowRight, ArrowLeft } from 'lucide-react';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 
 const SOHAG_AI_KNOWLEDGE = [

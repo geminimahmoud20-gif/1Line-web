@@ -1,36 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  MessageSquare, 
-  Menu, 
-  X, 
-  Search, 
-  Globe, 
-  Share2, 
-  Sun, 
-  Moon, 
-  Volume2, 
-  VolumeX, 
-  MoreHorizontal, 
-  Scale, 
-  Building,
-  Sparkles,
-  FileText,
-  ChevronDown,
-  Home,
-  TrendingUp,
-  Landmark,
-  Award,
-  Layers,
-  Heart,
-  ArrowRight,
-  ArrowLeft,
-  Lock,
-  User,
-  ShieldCheck,
-  Repeat2,
-  Stethoscope
-} from 'lucide-react';
+import { MessageSquare, Menu, X, Search, Globe, Share2, Sun, Moon, Volume2, VolumeX, MoreHorizontal, Scale, Building, Sparkles, FileText, ChevronDown, Home, TrendingUp, Landmark, Award, Layers, Heart, ArrowRight, ArrowLeft, Lock, User, ShieldCheck, Repeat2, Stethoscope } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import CurrencySwitcher from './CurrencySwitcher';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
@@ -40,8 +10,6 @@ import { useClientAuth } from '../../context/ClientAuthContext';
 export default function Header({ 
   lang = 'ar', 
   setLang, 
-  currency = 'EGP', 
-  setCurrency, 
   theme = 'light',
   toggleTheme,
   soundEnabled = false,

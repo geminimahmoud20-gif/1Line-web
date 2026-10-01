@@ -1,4 +1,4 @@
-import { Sun, Compass, Wind, Eye, Navigation } from 'lucide-react';
+import { Sun, Compass, Wind, Navigation } from 'lucide-react';
 
 export default function SunlightCompassWidget({ property, lang = 'ar' }) {
   const isAr = lang === 'ar';

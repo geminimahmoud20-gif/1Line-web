@@ -73,8 +73,7 @@ export const playNotificationChime = (type = 'chime') => {
 /**
  * Generate a formatted alert message for Telegram/WhatsApp sales broadcast
  */
-export const formatSalesAlert = (lead, lang = 'ar') => {
-  const isAr = lang === 'ar';
+export const formatSalesAlert = (lead, _lang = 'ar') => { // staff alerts are Arabic-only; lang kept for callers
   const typeMap = {
     buyer: 'طلب شراء عقار',
     seller: 'طلب بيع / تقييم عقار',

@@ -1,22 +1,6 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import L from 'leaflet';
-import { 
-  Layers, 
-  Satellite, 
-  Map as MapIcon, 
-  Maximize2, 
-  Minimize2, 
-  X, 
-  Navigation, 
-  TrendingUp, 
-  Sparkles, 
-  Building2,
-  Landmark,
-  Compass,
-  Filter,
-  Eye,
-  DollarSign
-} from 'lucide-react';
+import { Layers, Satellite, Map as MapIcon, Maximize2, Minimize2, X, Navigation, TrendingUp, Sparkles, Landmark, Filter } from 'lucide-react';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
 
 // Fix Leaflet Default Marker Icon issues in Webpack/Vite

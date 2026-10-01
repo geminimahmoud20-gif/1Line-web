@@ -1,19 +1,5 @@
 import { useState, useEffect } from 'react';
-import { 
-  ShieldCheck, 
-  Scale, 
-  Award, 
-  Video, 
-  FileCheck, 
-  Check, 
-  Lock, 
-  EyeOff, 
-  Globe2, 
-  Sparkles,
-  Compass,
-  Radio,
-  FileText
-} from 'lucide-react';
+import { ShieldCheck, Scale, Award, Video, FileCheck, Check, Lock, EyeOff, Globe2, Sparkles, Compass, Radio } from 'lucide-react';
 import { getFounderSettings, DEFAULT_FOUNDER_CMS } from '../../utils/founderCmsData';
 
 // Map icon names from CMS to Lucide React components

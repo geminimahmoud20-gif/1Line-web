@@ -1,20 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Search, 
-  X, 
-  Building, 
-  MapPin, 
-  Layers, 
-  Calculator, 
-  TrendingUp, 
-  Lock, 
-  FileText, 
-  ArrowRight,
-  ArrowLeft,
-  CornerDownLeft,
-  Sparkles
-} from 'lucide-react';
+import { Search, X, Building, MapPin, Layers, Calculator, TrendingUp, FileText, ArrowRight, ArrowLeft, CornerDownLeft, Sparkles } from 'lucide-react';
 import { getAreas } from '../../utils/areasData.js';
 import { MEGA_PROJECTS } from '../../data/projectsData.js';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark.js';

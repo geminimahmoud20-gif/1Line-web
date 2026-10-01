@@ -1,20 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { 
-  Search, 
-  SlidersHorizontal, 
-  RotateCcw, 
-  X, 
-  Sparkles, 
-  ShieldCheck, 
-  FileCheck, 
-  Waves, 
-  PieChart, 
-  ChevronDown, 
-  ChevronUp,
-  CreditCard,
-  KeyRound,
-  Check
-} from 'lucide-react';
+import { Search, SlidersHorizontal, RotateCcw, X, Sparkles, ShieldCheck, FileCheck, Waves, PieChart, ChevronDown, ChevronUp, KeyRound, Check } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { getAreas } from '../../utils/areasData';
 import './property-filters-mobile.css';

@@ -1,31 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { 
-  Building, 
-  Phone, 
-  MessageSquare, 
-  Calendar, 
-  Car, 
-  ArrowRight, 
-  ArrowLeft, 
-  CheckCircle2, 
-  Clock, 
-  Sparkles, 
-  DollarSign, 
-  User, 
-  Edit3, 
-  Trash2,
-  ChevronRight,
-  ChevronLeft,
-  Filter,
-  AlertTriangle,
-  Shuffle,
-  MapPin,
-  Tag,
-  Search,
-  X,
-  Zap,
-  MoreHorizontal
-} from 'lucide-react';
+import { MessageSquare, Calendar, Car, Clock, Sparkles, Edit3, Trash2, ChevronRight, ChevronLeft, Filter, AlertTriangle, Shuffle, Search, X, Zap, MoreHorizontal } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
 import './crm-kanban.css';
 import { getAreas } from '../../utils/areasData';

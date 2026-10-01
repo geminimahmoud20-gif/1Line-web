@@ -11,8 +11,6 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 
 // Security & Storage Helpers
 import { sanitizeObject } from './utils/securityShield';
-import { readStoredJson } from './utils/browserStorage';
-import { saveLead } from './firebaseLazy';
 
 // SEO
 import { updatePageSeo } from './utils/seoHelper';
@@ -138,7 +136,7 @@ function AppContent() {
     toasts, triggerToast, dismissToast,
     quickViewProperty, handleOpenQuickView, handleCloseQuickView,
     trackModalOpen, setTrackModalOpen,
-    shareModalOpen, setShareModalOpen, shareData, handleOpenShare, handleCloseShare,
+    shareModalOpen, shareData, handleOpenShare, handleCloseShare,
     callbackModalOpen, setCallbackModalOpen,
     contactDrawerOpen, setContactDrawerOpen,
     quickSearchOpen, setQuickSearchOpen,
@@ -182,11 +180,8 @@ function AppContent() {
   // Local storage: localStorage.setItem('oneline_crm_leads', JSON.stringify(updated))
 
   const { crmAuthenticated, setCrmAuthenticated, handleCrmLogout } = useAuth();
-  const { 
-    clientUser, 
-    isClientAuthenticated, 
-    requireClientAuth, 
-    setClientAuthModalOpen,
+  const {
+    requireClientAuth,
     clientAuthModalOpen
   } = useClientAuth();
 

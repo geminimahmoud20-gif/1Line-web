@@ -1,17 +1,5 @@
 import { useState } from 'react';
-import { 
-  Sparkles, 
-  Copy, 
-  Check, 
-  Send, 
-  Building, 
-  Flame, 
-  Globe, 
-  TrendingUp, 
-  X,
-  MessageSquare,
-  Wand2
-} from 'lucide-react';
+import { Sparkles, Copy, Check, Send, Wand2 } from 'lucide-react';
 import { getDynamicPhone, getWhatsAppUrl } from '../../utils/founderCmsData';
 import { computeRentalYield } from '../../utils/propertyInsights';
 
@@ -26,7 +14,6 @@ export default function AICopywriterModal({
   const [selectedPropertyId, setSelectedPropertyId] = useState(properties[0]?.id || '');
   const [adTone, setAdTone] = useState('luxury'); // 'luxury' | 'social' | 'investor' | 'english'
   const [copied, setCopied] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
 
   if (!isOpen) return null;
 

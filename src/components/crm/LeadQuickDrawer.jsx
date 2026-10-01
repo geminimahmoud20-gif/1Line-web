@@ -1,10 +1,5 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import {
-  X, Phone, MessageSquare, Calendar, Building, Sparkles,
-  CheckCircle2, Clock, User, Tag, ArrowRight, ArrowLeft,
-  ChevronRight, ChevronLeft, ExternalLink, ShieldCheck,
-  Send, Edit3, Trash2, AlertCircle, Plus, Eye, Share2
-} from 'lucide-react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { X, Phone, MessageSquare, Calendar, Building, Sparkles, ChevronRight, ChevronLeft, ExternalLink, Send, Trash2, Plus, Eye, Share2 } from 'lucide-react';
 import { SOHAG_AREAS, PROPERTY_TYPES } from '../../data/propertiesData';
 import { trackEvent } from '../../utils/visitorTracker';
 
@@ -185,7 +180,6 @@ export default function LeadQuickDrawer({
       msg: `تحياتنا أستاذ ${lead.name}، يتوفر لدينا حالياً أنظمة سداد ميسرة وتقسيط مباشر بدون فوائد بنكية لوحدات في ${areaName}. يمكنك استعراض التفاصيل الكاملة معنا فوراً.`
     }
   ];
-
 
   return (
     <>

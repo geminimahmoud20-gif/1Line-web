@@ -1,15 +1,5 @@
 import { useState, useEffect } from 'react';
-import { 
-  School, 
-  Hospital, 
-  ShoppingBag, 
-  Coffee, 
-  Train, 
-  MapPin, 
-  Clock, 
-  Navigation,
-  Sparkles
-} from 'lucide-react';
+import { School, Hospital, ShoppingBag, Coffee, Train, MapPin, Clock, Navigation } from 'lucide-react';
 import { getAreaById } from '../../utils/areasData';
 
 const getCategoryIcon = (category) => {

@@ -1,31 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Building, 
-  Search, 
-  TrendingUp, 
-  Users, 
-  MapPin, 
-  DollarSign, 
-  ArrowRight, 
-  ArrowLeft, 
-  ShieldCheck,
-  Sparkles,
-  Calculator,
-  Clock,
-  Home,
-  Landmark,
-  Pause,
-  Play,
-  Volume2,
-  VolumeX,
-  Zap,
-  Maximize2,
-  X,
-  CheckCircle2,
-  Lock,
-  Target
-} from 'lucide-react';
+import { Building, Search, TrendingUp, Users, MapPin, DollarSign, ArrowRight, ArrowLeft, ShieldCheck, Sparkles, Calculator, Clock, Home, Landmark, Pause, Play, Volume2, VolumeX, Zap, Maximize2, X, CheckCircle2, Lock, Target } from 'lucide-react';
 import PropertyCard from '../components/properties/PropertyCard';
 import MarketTickerBar from '../components/home/MarketTickerBar';
 import GoldStandardsSection from '../components/home/GoldStandardsSection';
@@ -58,9 +33,7 @@ export default function HomePage({
   compareList = [],
   onToggleCompare,
   onQuickView,
-  onOpenAddDemand,
-  onAddNewLead,
-  triggerToast
+  onOpenAddDemand
 }) {
   const navigate = useNavigate();
 

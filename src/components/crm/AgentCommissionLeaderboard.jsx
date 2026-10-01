@@ -1,27 +1,12 @@
 import { useState } from 'react';
-import { 
-  Trophy, 
-  Award, 
-  TrendingUp, 
-  DollarSign, 
-  Users, 
-  CheckCircle2, 
-  Target, 
-  Sparkles, 
-  Star,
-  Flame,
-  ArrowUpRight
-} from 'lucide-react';
+import { Trophy, Award, DollarSign, Target } from 'lucide-react';
 
 export default function AgentCommissionLeaderboard({
   leads = [],
-  properties = [],
-  lang = 'ar',
-  triggerToast
+  lang = 'ar'
 }) {
   const isAr = lang === 'ar';
   const [commissionRate, setCommissionRate] = useState(2.0); // 2% default commission
-  const [monthlyTarget, setMonthlyTarget] = useState(15000000); // 15 Million EGP target
 
   // Define Team Agents
   const agentsList = [

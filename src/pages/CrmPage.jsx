@@ -1,10 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { 
-  Lock, ShieldCheck, LogOut, Users, Building, Sparkles, KeyRound, Eye, EyeOff, 
-  AlertTriangle, Globe, Zap, Search, X, ChevronDown, Plus, Clock, Rocket, MapPin,
-  LayoutGrid, Target, Calculator, Activity, Database
-} from 'lucide-react';
-import LogoEmblem from '../components/LogoEmblem';
+import { Lock, ShieldCheck, Sparkles, KeyRound, Eye, EyeOff, AlertTriangle } from 'lucide-react';
+
 import CrmAdminPanel, { CRM_ROLES } from '../components/CrmAdminPanel';
 import PropertyManagerPanel from '../components/crm/PropertyManagerPanel';
 import MegaProjectsManagerPanel from '../components/crm/MegaProjectsManagerPanel';
@@ -28,7 +24,6 @@ import { verifyAdminCredentials, checkRateLimit, recordFailedAttempt, resetFaile
 
 export default function CrmPage({
   lang = 'ar',
-  t,
   leads = [],
   setLeads,
   properties = [],
@@ -99,7 +94,6 @@ export default function CrmPage({
   const [isVerifying, setIsVerifying] = useState(false);
   const [externalPropertyData, setExternalPropertyData] = useState(null);
   const [universalSearch, setUniversalSearch] = useState('');
-  const [showQuickActionMenu, setShowQuickActionMenu] = useState(false);
   const [showGoLiveWizard, setShowGoLiveWizard] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
 
@@ -827,15 +821,15 @@ export default function CrmPage({
         demands={demands}
         userRole={activeRole}
         isAr={isAr}
-        onSelectLead={(l) => {
+        onSelectLead={() => {
           setActiveTab('leads');
           setShowCommandPalette(false);
         }}
-        onSelectProperty={(p) => {
+        onSelectProperty={() => {
           setActiveTab('properties');
           setShowCommandPalette(false);
         }}
-        onSelectDemand={(d) => {
+        onSelectDemand={() => {
           setActiveTab('demands');
           setShowCommandPalette(false);
         }}

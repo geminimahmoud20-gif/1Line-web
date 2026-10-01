@@ -1,23 +1,5 @@
 import { useState, useMemo } from 'react';
-import { 
-  Building2, 
-  Plus, 
-  Edit3, 
-  Trash2, 
-  Sparkles, 
-  CheckCircle2, 
-  Percent, 
-  MapPin, 
-  Calendar, 
-  Layers, 
-  DollarSign, 
-  Save, 
-  X, 
-  Image as ImageIcon,
-  Search,
-  Flame,
-  ArrowUpRight
-} from 'lucide-react';
+import { Building2, Plus, Edit3, Trash2, MapPin, Save, X, Search } from 'lucide-react';
 
 /**
  * MegaProjectsManagerPanel Component

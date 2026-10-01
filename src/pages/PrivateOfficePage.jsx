@@ -1,40 +1,17 @@
-import React from 'react';
+
 import { useNavigate, Link } from 'react-router-dom';
-import { 
-  ShieldCheck, 
-  Lock, 
-  EyeOff, 
-  Award, 
-  MessageSquare, 
-  PhoneCall, 
-  Sparkles, 
-  ArrowRight, 
-  ArrowLeft,
-  Building,
-  CheckCircle2,
-  FileCheck,
-  KeyRound,
-  Compass
-} from 'lucide-react';
-import { getWhatsAppUrl, getFounderSettings, getPhoneCallUrl } from '../utils/founderCmsData';
+import { ShieldCheck, MessageSquare, PhoneCall, ArrowRight, ArrowLeft, Building, KeyRound, Compass } from 'lucide-react';
+import { getWhatsAppUrl, getPhoneCallUrl } from '../utils/founderCmsData';
 import PrivateOfficeSection from '../components/home/PrivateOfficeSection';
 
-export default function PrivateOfficePage({ lang = 'ar', triggerToast }) {
+export default function PrivateOfficePage({ lang = 'ar' }) {
   const isAr = lang === 'ar';
   const navigate = useNavigate();
-  const cms = getFounderSettings();
 
   const handleConfidentialInquiry = () => {
     const text = isAr
       ? 'مرحباً، أرغب في التواصل مع المكتب الخاص 1Line Private Office بخصوص صفقات كبار العملاء الخاصة والحصرية (Off-Market).'
       : 'Hello 1Line Private Office, I would like to inquire about exclusive off-market luxury acquisitions.';
-    window.open(getWhatsAppUrl(text), '_blank');
-  };
-
-  const handleListOffMarket = () => {
-    const text = isAr
-      ? 'مرحباً، أمتلك عقاراً فاخراً / أرضاً استراتيجية بسوهاج وأرغب في عرضها للبيع عبر المكتب الخاص (Off-Market) بأعلى درجات الخصوصية والأمان دون نشر صور للعامة.'
-      : 'Hello, I own a prime property in Sohag and wish to discuss a discreet private off-market sale with your Private Office.';
     window.open(getWhatsAppUrl(text), '_blank');
   };
 

@@ -1,10 +1,5 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
-import {
-  LayoutGrid, Users, Target, Building, Zap, Sparkles,
-  Calculator, Activity, ShieldCheck, ChevronDown, ChevronRight,
-  Search, X, Moon, Sun, LogOut, MapPin, Database, Award,
-  Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame, Megaphone, Globe2, Repeat2
-} from 'lucide-react';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { LayoutGrid, Users, Target, Building, Zap, Sparkles, Calculator, Activity, ShieldCheck, ChevronDown, Search, X, Moon, Sun, LogOut, MapPin, Database, Award, Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame, Megaphone, Globe2, Repeat2 } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import { usePreferences } from '../../context/PreferencesContext';
 

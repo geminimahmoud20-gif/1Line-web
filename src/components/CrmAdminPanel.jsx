@@ -45,21 +45,14 @@ export const CrmAdminPanel = ({
   leads = [],
   setLeads,
   properties = [],
-  activeMatches = [],
   exportLeadsCSV,
-  handleCrmLogout,
   crmAuthenticated = true,
   setCrmAuthenticated,
   currentUser = null,
   userRole = 'super_admin',
-  updateLeadStatus,
-  updateLeadFollowUp,
-  assignLeadSalesperson,
   handleWhatsAppAction,
-  updateLeadNotes,
   triggerToast,
   addNotification = () => {},
-  notifications = [],
   onConvertToProperty,
   onUpdateLead,
   onDeleteLead,
@@ -68,12 +61,9 @@ export const CrmAdminPanel = ({
   onSwitchToDemands,
   onSwitchToProperties,
   onSwitchToProjects,
-  onSwitchToAreas,
-  onSwitchToCorporate,
   adminTab: propAdminTab,
   onSwitchTab,
-  activeRole: propActiveRole,
-  onRoleChange
+  activeRole: propActiveRole
 }) => {
   // Local Authentication States
   const [crmPasswordInput, setCrmPasswordInput] = useState('');
@@ -83,13 +73,8 @@ export const CrmAdminPanel = ({
   const [loading, setLoading] = useState(false);
 
   // Multi-Tenant RBAC Identity State
-  const [localActiveRole, setLocalActiveRole] = useState(userRole || 'super_admin');
-  const activeRole = propActiveRole || localActiveRole;
-  const setActiveRole = (role) => {
-    setLocalActiveRole(role);
-    if (onRoleChange) onRoleChange(role);
-  };
-  const [myDealsOnly, setMyDealsOnly] = useState(false);
+  const activeRole = propActiveRole || userRole || 'super_admin';
+  const myDealsOnly = false; // "my deals only" filter: not exposed in the UI yet
 
   // Enterprise Tab States
   const [localAdminTab, setLocalAdminTab] = useState('dashboard');
@@ -234,21 +219,6 @@ export const CrmAdminPanel = ({
       return map[type] || t[type] || type;
     }
     return t[type] || type;
-  };
-
-  const formatLeadSourceLabel = (src) => {
-    if (!src) return isAr ? 'الموقع المباشر' : 'Direct Web';
-    if (isAr) {
-      if (src.includes('sell')) return 'عرض عقار للبيع';
-      if (src.includes('express')) return 'الشريط السريع بالرئيسية';
-      if (src.includes('whatsapp')) return 'واتساب المنظومة';
-      if (src.includes('valuation')) return 'حاسبة التقييم';
-      if (src.includes('Facebook')) return 'إعلانات فيسبوك';
-      if (src.includes('Google')) return 'بحث جوجل المباشر';
-      if (src.includes('TikTok')) return 'حملات تيك توك';
-      if (src === 'Direct Web') return 'الموقع المباشر';
-    }
-    return src;
   };
 
   // Bulk Selection Handlers

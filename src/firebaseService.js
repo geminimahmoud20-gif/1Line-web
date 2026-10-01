@@ -7,26 +7,7 @@
 import { db, auth, isFirebaseConfigured } from './firebase.js';
 import { DESK_BY_ROLE, UNASSIGNED_DESK } from './utils/rbacRules.js';
 import { enqueuePendingLead, readPendingLeads, writePendingLeads } from './utils/leadQueue.js';
-import {
-  collection,
-  addDoc,
-  getDocs,
-  getDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  setDoc,
-  query,
-  where,
-  orderBy,
-  limit,
-  onSnapshot,
-  serverTimestamp,
-  increment,
-  writeBatch,
-  deleteField,
-  documentId
-} from 'firebase/firestore';
+import { collection, addDoc, getDocs, getDoc, updateDoc, deleteDoc, doc, setDoc, query, where, orderBy, limit, onSnapshot, serverTimestamp, increment, writeBatch, deleteField, documentId } from 'firebase/firestore';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
 // ===================== PROPERTIES =====================
@@ -1165,8 +1146,6 @@ export const checkIsAdmin = async (user) => {
     return false;
   }
 };
-
-const isAdminUser = (user) => Boolean(user && ADMIN_USER_IDS.has(user.uid));
 
 // Staff roles are Firebase custom claims ({ role: 'sales_agent' }), set server-side with
 // scripts/set-crm-role.mjs — a user cannot change their own claims. Must match firestore.rules.

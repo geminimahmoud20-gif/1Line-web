@@ -1,19 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { 
-  Building, 
-  Home, 
-  Store, 
-  Briefcase, 
-  MapPin, 
-  Sparkles, 
-  ShieldCheck, 
-  CheckCircle2, 
-  ArrowRight, 
-  ArrowLeft,
-  MessageCircle,
-  TrendingUp,
-  FileCheck
-} from 'lucide-react';
+import { Building, Home, Store, Briefcase, MapPin, Sparkles, ShieldCheck, CheckCircle2, ArrowRight, ArrowLeft, MessageCircle } from 'lucide-react';
 import PhoneInputField from './PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { getAreas } from '../utils/areasData';

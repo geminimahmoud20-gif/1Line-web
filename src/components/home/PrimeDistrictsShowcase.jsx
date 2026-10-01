@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { MapPin, TrendingUp, Sparkles, ArrowLeft, ArrowRight, Building2, ShieldCheck } from 'lucide-react';
+import { MapPin, TrendingUp, Sparkles, ArrowLeft, ArrowRight } from 'lucide-react';
 import { getAreas } from '../../utils/areasData';
 
 const PRIME_DISTRICT_IMAGES = {

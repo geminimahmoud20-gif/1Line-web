@@ -1,4 +1,4 @@
-import { Download, Building, Users, User, Inbox, MessageSquare, Edit3, Trash2, Database, Clock, Zap, Plus, UserPlus, Filter, Send, Archive } from 'lucide-react';
+import { Download, Building, Users, User, Inbox, MessageSquare, Edit3, Trash2, Clock, Zap, Plus, UserPlus, Send, Archive } from 'lucide-react';
 import { canExportCsv, canEditLeadsRole } from '../../utils/rbacRules';
 import { SOHAG_AREAS } from '../../data/propertiesData';
 import { formatFollowUp, formatBudget } from '../../utils/crmLabels';
@@ -41,7 +41,6 @@ export default function LeadsTab({
   setShowAddLeadModal,
   setTemperatureFilter,
   setViewingProfileLead,
-  t,
   temperatureFilter,
   triggerToast
 }) {

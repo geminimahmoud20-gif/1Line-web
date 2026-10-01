@@ -1,37 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { 
-  MapPin, 
-  BedDouble, 
-  Bath, 
-  Maximize2, 
-  Sparkles, 
-  CheckCircle2, 
-  Layers, 
-  Calendar, 
-  Phone, 
-  MessageSquare, 
-  ShieldCheck, 
-  Clock, 
-  TrendingUp, 
-  TrendingDown,
-  Calculator, 
-  Eye, 
-  Navigation,
-  ArrowRight,
-  ArrowLeft,
-  Store,
-  Briefcase,
-  Building,
-  Video,
-  Zap,
-  Droplets,
-  Copy,
-  Sun,
-  Moon,
-  Scale,
-  Flame
-} from 'lucide-react';
+import { MapPin, BedDouble, Bath, Maximize2, Sparkles, CheckCircle2, Layers, Calendar, Phone, MessageSquare, ShieldCheck, Clock, TrendingUp, TrendingDown, Calculator, Navigation, ArrowRight, ArrowLeft, Store, Briefcase, Building, Video, Zap, Droplets, Copy, Sun, Moon, Scale, Flame } from 'lucide-react';
 import { incrementPropertyView, getPropertyViews } from '../utils/visitorTracker';
 import PropertyGallery from '../components/properties/PropertyGallery';
 import MortgageRoiCalculator from '../components/calculators/MortgageRoiCalculator';

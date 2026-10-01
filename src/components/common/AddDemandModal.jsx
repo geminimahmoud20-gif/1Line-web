@@ -1,20 +1,5 @@
 import { useState } from 'react';
-import { 
-  X, 
-  Send, 
-  Sparkles, 
-  Building2, 
-  MapPin, 
-  DollarSign, 
-  Clock, 
-  ShieldCheck, 
-  User, 
-  Phone, 
-  CheckCircle, 
-  FileText, 
-  Zap, 
-  Info 
-} from 'lucide-react';
+import { X, Send, Building2, MapPin, DollarSign, Clock, ShieldCheck, User, CheckCircle, FileText, Zap } from 'lucide-react';
 import PhoneInputField from '../PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../../utils/phoneCountries';
 import { getAreas } from '../../utils/areasData';

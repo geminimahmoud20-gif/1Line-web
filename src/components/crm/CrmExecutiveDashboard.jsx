@@ -1,10 +1,5 @@
-import React, { useMemo } from 'react';
-import {
-  Users, Building, Zap, Briefcase, Clock, Target,
-  AlertTriangle, CheckCircle2, TrendingUp, Calendar,
-  ArrowUpRight, Phone, MessageSquare, Flame, Sparkles,
-  ChevronRight, ShieldAlert, Award, FileText, ArrowRight
-} from 'lucide-react';
+import { useMemo } from 'react';
+import { Users, Building, Zap, Briefcase, Clock, Target, AlertTriangle, CheckCircle2, TrendingUp, Phone, Sparkles, Award, FileText, ArrowRight } from 'lucide-react';
 
 export default function CrmExecutiveDashboard({
   leads = [],
@@ -17,7 +12,6 @@ export default function CrmExecutiveDashboard({
   isAr = true,
   onSwitchTab,
   onOpenLead,
-  onOpenDemand,
   onFilterLeads
 }) {
   const isSuperAdmin = activeRole === 'super_admin';

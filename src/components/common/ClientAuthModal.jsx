@@ -1,20 +1,5 @@
 import { useState, useEffect } from 'react';
-import { 
-  X, 
-  ShieldCheck, 
-  Heart, 
-  Scale, 
-  MessageSquare, 
-  CheckCircle2, 
-  ArrowLeft, 
-  ArrowRight, 
-  Copy, 
-  Check, 
-  Sparkles,
-  User,
-  Mail,
-  ExternalLink
-} from 'lucide-react';
+import { X, ShieldCheck, Heart, Scale, MessageSquare, CheckCircle2, ArrowLeft, ArrowRight, Copy, Check, Sparkles, User, Mail, ExternalLink } from 'lucide-react';
 import { useClientAuth } from '../../context/ClientAuthContext';
 import PhoneInputField from '../PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../../utils/phoneCountries';
@@ -26,7 +11,6 @@ export default function ClientAuthModal({ lang = 'ar' }) {
     setClientAuthModalOpen, 
     authReasonMessage,
     activateClientDirectly,
-    completeClientVerification,
     verificationSession
   } = useClientAuth();
 

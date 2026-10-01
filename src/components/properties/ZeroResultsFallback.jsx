@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RotateCcw, Sparkles, MessageSquare, SearchX, CheckCircle2, Send, PhoneCall, ShieldCheck } from 'lucide-react';
+import { RotateCcw, Sparkles, SearchX, CheckCircle2, Send } from 'lucide-react';
 import PropertyCard from './PropertyCard';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 

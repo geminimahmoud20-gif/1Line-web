@@ -1,20 +1,5 @@
 import { useState, useMemo } from 'react';
-import { 
-  Rocket, 
-  CheckCircle2, 
-  AlertTriangle, 
-  X, 
-  ShieldCheck, 
-  Phone, 
-  Image as ImageIcon, 
-  Database, 
-  Download, 
-  Trash2, 
-  Sparkles, 
-  ExternalLink,
-  ChevronRight,
-  RefreshCw
-} from 'lucide-react';
+import { Rocket, CheckCircle2, AlertTriangle, X, Download, Trash2 } from 'lucide-react';
 import { getFounderSettings, saveFounderSettings } from '../../utils/founderCmsData';
 
 export default function GoLiveWizardModal({
@@ -33,7 +18,6 @@ export default function GoLiveWizardModal({
 
   // Audit Calculations
   const isPhoneDefault = !founderSettings.whatsappNumber || founderSettings.whatsappNumber === '201012345678' || founderSettings.whatsappNumber === '01012345678';
-  const isFounderDefault = founderSettings.founderName_ar === 'د. محمود الباز';
   const hasDemoLeads = leads.some(l => l.id?.startsWith('lead-'));
   const totalProperties = properties.length;
 

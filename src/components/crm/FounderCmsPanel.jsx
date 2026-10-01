@@ -1,35 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Building, 
-  User, 
-  Quote, 
-  TrendingUp, 
-  ShieldCheck, 
-  Save, 
-  RotateCcw, 
-  CheckCircle2, 
-  Phone, 
-  MessageSquare, 
-  Image, 
-  MapPin, 
-  Sparkles,
-  Award,
-  Eye,
-  Loader2,
-  Film,
-  Sliders,
-  Upload,
-  Trash2,
-  Plus,
-  Play,
-  Maximize2
-} from 'lucide-react';
-import { 
-  getFounderSettings, 
-  saveFounderSettings, 
-  resetFounderSettings, 
-  DEFAULT_FOUNDER_CMS 
-} from '../../utils/founderCmsData';
+import { useState, useEffect, useRef } from 'react';
+import { Building, User, Quote, TrendingUp, ShieldCheck, Save, RotateCcw, Sparkles, Award, Loader2, Film, Upload, Trash2, Plus, Play, Maximize2 } from 'lucide-react';
+import { getFounderSettings, saveFounderSettings, resetFounderSettings, DEFAULT_FOUNDER_CMS } from '../../utils/founderCmsData';
 import { uploadCmsMedia, getCmsStorageStatus } from '../../firebaseLazy';
 
 /**

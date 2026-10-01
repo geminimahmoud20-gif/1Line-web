@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Link } from 'react-router-dom';
 import { Waves, Crown, Landmark, Building2, TrendingUp, ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
 

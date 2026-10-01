@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, Award, Calendar, DollarSign, ArrowUpRight } from 'lucide-react';
+import { TrendingUp, Award, ArrowUpRight } from 'lucide-react';
 import { getAreaById } from '../../utils/areasData';
 
 export default function HistoricalPriceChart({ areaKey = 'east', customPoints = null, lang = 'ar' }) {
-  const [selectedPeriod, setSelectedPeriod] = useState('3y'); // '1y' | '3y' | '5y'
   const [, setTick] = useState(0);
   const isAr = lang === 'ar';
 

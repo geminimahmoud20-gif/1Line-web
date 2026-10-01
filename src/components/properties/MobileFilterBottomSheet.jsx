@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, SlidersHorizontal, Check, RotateCcw } from 'lucide-react';
+import { X, SlidersHorizontal, RotateCcw } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { getAreas } from '../../utils/areasData';
 

@@ -1,14 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
-import { 
-  MapPin, 
-  Satellite, 
-  Map as MapIcon, 
-  Check,
-  Navigation,
-  Crosshair,
-  Sparkles
-} from 'lucide-react';
+import { MapPin, Satellite, Map as MapIcon, Check, Crosshair, Sparkles } from 'lucide-react';
 import { getAreas } from '../../utils/areasData';
 
 const SOHAG_HOTSPOTS = [

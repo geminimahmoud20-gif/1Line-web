@@ -1,30 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { 
-  Sparkles, 
-  MapPin, 
-  DollarSign, 
-  Calendar, 
-  CheckCircle2, 
-  ArrowLeft, 
-  ArrowRight, 
-  MessageSquare, 
-  PhoneCall, 
-  ShieldCheck, 
-  Flame, 
-  Info, 
-  Send,
-  X,
-  Megaphone,
-  ChevronLeft,
-  ChevronRight
-} from 'lucide-react';
+import { Sparkles, MapPin, CheckCircle2, MessageSquare, ShieldCheck, Flame, Info, Send, X, Megaphone, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getSponsoredAds } from '../../data/advertisementsData';
 import { getWhatsAppUrl, cleanWhatsAppNumber } from '../../utils/founderCmsData';
 
 const FALLBACK_AD_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600' viewBox='0 0 800 600'%3E%3Crect width='800' height='600' fill='%23092347'/%3E%3Cpath d='M250 500 L250 220 L400 120 L550 220 L550 500 Z' fill='%230e3366' stroke='%23fdcb42' stroke-width='6'/%3E%3Ctext x='50%25' y='540' fill='%23fdcb42' font-size='26' font-family='sans-serif' font-weight='bold' text-anchor='middle'%3E1LINE LUXURY REAL ESTATE%3C/text%3E%3C/svg%3E";
 
 export default function SponsoredAdsShowcase({ lang = 'ar' }) {
-  const [ads, setAds] = useState(getSponsoredAds);
+  const [ads] = useState(getSponsoredAds);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [showAdvertiseModal, setShowAdvertiseModal] = useState(false);

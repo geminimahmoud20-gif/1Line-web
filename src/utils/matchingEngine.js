@@ -2,7 +2,6 @@
 //  ONE LINE REAL ESTATE - SMART WHATSAPP MATCH & RETARGETING ENGINE
 // =============================================================
 
-import { SOHAG_AREAS } from '../data/propertiesData.js';
 import { normalizeAreaKey } from './areasData.js';
 
 /**
@@ -172,7 +171,7 @@ ${propertyUrl}
     let altText = '';
     if (alternativeProperties.length > 0) {
       altText = `\n\nولكن يسعدنا إخبارك بتوفر وحدات بديلة ممتازة بنفس المنطقة والمواصفات:\n` +
-        alternativeProperties.slice(0, 2).map((alt, i) => `🔹 ${alt.title_ar} - بسعر ${(alt.price || 0).toLocaleString()} ج.م`).join('\n') +
+        alternativeProperties.slice(0, 2).map((alt) => `🔹 ${alt.title_ar} - بسعر ${(alt.price || 0).toLocaleString()} ج.م`).join('\n') +
         `\n\nتصفح البدائل: ${origin}/properties`;
     }
 

@@ -1,29 +1,11 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { 
-  TrendingUp, 
-  BarChart3, 
-  DollarSign, 
-  Percent, 
-  Building, 
-  ArrowUpRight, 
-  Download, 
-  Sparkles, 
-  ShieldCheck, 
-  Layers,
-  MapPin,
-  CheckCircle2,
-  Calendar,
-  Calculator,
-  Compass,
-  ArrowRight,
-  ArrowLeft
-} from 'lucide-react';
+import { TrendingUp, DollarSign, Percent, Building, Sparkles, ShieldCheck, MapPin, CheckCircle2, Calculator, ArrowRight, ArrowLeft } from 'lucide-react';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
 import { getAreas } from '../utils/areasData';
 import { updatePageSeo } from '../utils/seoHelper';
 
-export default function MarketIntelligencePage({ lang = 'ar', currency = 'EGP', triggerToast }) {
+export default function MarketIntelligencePage({ lang = 'ar' }) {
   const navigate = useNavigate();
   const [selectedAssetType, setSelectedAssetType] = useState('all'); // 'all' | 'residential' | 'commercial'
   const [userBudget, setUserBudget] = useState(2500000);

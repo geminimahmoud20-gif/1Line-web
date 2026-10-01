@@ -1,35 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import { 
-  MapPin, 
-  Plus, 
-  Edit3, 
-  Trash2, 
-  Save, 
-  RotateCcw, 
-  Search, 
-  CheckCircle2, 
-  ShieldCheck, 
-  Globe, 
-  Sparkles, 
-  Navigation, 
-  Layers, 
-  X,
-  AlertTriangle,
-  Compass,
-  Building,
-  Check
-} from 'lucide-react';
-import { 
-  getAreas, 
-  saveAreas, 
-  addArea, 
-  updateArea, 
-  deleteArea, 
-  resetAreasToDefault, 
-  DEFAULT_SOHAG_AREAS 
-} from '../../utils/areasData';
+import { MapPin, Plus, Edit3, Trash2, Save, RotateCcw, Search, CheckCircle2, Navigation, X, AlertTriangle } from 'lucide-react';
+import { getAreas, addArea, updateArea, deleteArea, resetAreasToDefault } from '../../utils/areasData';
 
-export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties = [], leads = [] }) {
+export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties = [] }) {
   const isAr = lang === 'ar';
   const [areas, setAreas] = useState(() => getAreas());
   const [searchQuery, setSearchQuery] = useState('');

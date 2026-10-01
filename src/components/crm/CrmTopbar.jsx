@@ -1,13 +1,8 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
-import {
-  Menu, Search, X, Plus, ChevronDown, Bell, ShieldCheck,
-  Lock, Rocket, Globe, LogOut, Users, Building, Zap,
-  Sparkles, CheckCircle2, AlertTriangle, Clock, ArrowRight, ArrowLeft
-} from 'lucide-react';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { Menu, Search, X, Plus, ChevronDown, Bell, ShieldCheck, Lock, Rocket, Globe, LogOut, Users, Building, Zap, Sparkles, CheckCircle2, AlertTriangle, ArrowRight, ArrowLeft } from 'lucide-react';
 import { CRM_ROLES } from '../CrmAdminPanel';
 
 export default function CrmTopbar({
-  lang = 'ar',
   isAr = true,
   leads = [],
   properties = [],
@@ -23,7 +18,6 @@ export default function CrmTopbar({
   setActiveTab,
   systemSubTab,
   onLogout,
-  showGoLiveWizard,
   setShowGoLiveWizard,
   onToggleMobileSidebar,
   onOpenCommandPalette

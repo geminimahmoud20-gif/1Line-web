@@ -1,20 +1,5 @@
 import { useState, useMemo } from 'react';
-import { 
-  Calculator, 
-  TrendingUp, 
-  Sparkles, 
-  PieChart, 
-  ArrowRight, 
-  CheckCircle2, 
-  Copy, 
-  Check, 
-  FileText,
-  Building2,
-  Landmark,
-  Handshake,
-  Percent,
-  ShieldCheck
-} from 'lucide-react';
+import { Calculator, TrendingUp, Sparkles, Copy, Check, Building2, Landmark, Handshake, ShieldCheck } from 'lucide-react';
 import { trackEvent } from '../../utils/visitorTracker';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';

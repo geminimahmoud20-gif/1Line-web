@@ -1,34 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Heart, 
-  Scale, 
-  ShieldCheck, 
-  User, 
-  Mail, 
-  Phone, 
-  LogOut, 
-  Building, 
-  Sparkles, 
-  Share2, 
-  FileText, 
-  Trash2, 
-  ArrowLeft, 
-  ArrowRight, 
-  MapPin, 
-  ExternalLink, 
-  MessageSquare, 
-  CheckCircle2, 
-  Calendar, 
-  Clock, 
-  Car, 
-  Edit3, 
-  X, 
-  Search, 
-  HelpCircle,
-  TrendingUp,
-  Tag
-} from 'lucide-react';
+import { Heart, Scale, ShieldCheck, Mail, Phone, LogOut, Building, Sparkles, FileText, Trash2, ArrowLeft, ArrowRight, MapPin, ExternalLink, MessageSquare, CheckCircle2, Calendar, Clock, Car, Edit3, X, Tag } from 'lucide-react';
 import { useClientAuth } from '../context/ClientAuthContext';
 import PropertyCard from '../components/properties/PropertyCard';
 import { formatCurrencyPrice } from '../utils/currencyAndBenchmark';

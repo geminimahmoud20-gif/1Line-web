@@ -1,23 +1,5 @@
-import React, { useMemo } from 'react';
-import { 
-  Zap, 
-  Search, 
-  Sparkles, 
-  CheckCircle, 
-  CheckCircle2,
-  AlertCircle, 
-  MapPin, 
-  Clock,
-  Building2,
-  Home,
-  Store,
-  Briefcase,
-  Compass,
-  Users,
-  Coins,
-  Flame,
-  Repeat2
-} from 'lucide-react';
+import { useMemo } from 'react';
+import { Zap, Search, Sparkles, CheckCircle, CheckCircle2, AlertCircle, MapPin, Clock, Building2, Home, Store, Briefcase, Compass, Users, Coins, Flame, Repeat2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getAreas } from '../utils/areasData';
 import '../styles/expat-suite.css';

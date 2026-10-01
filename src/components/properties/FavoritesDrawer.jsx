@@ -1,19 +1,6 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  X, 
-  Trash2, 
-  Heart, 
-  Building, 
-  MapPin, 
-  ExternalLink, 
-  MessageSquare, 
-  Eye, 
-  Sparkles,
-  ArrowRight,
-  ArrowLeft,
-  UserCheck
-} from 'lucide-react';
+import { X, Trash2, Heart, Building, MapPin, MessageSquare, Eye, ArrowRight, ArrowLeft, UserCheck } from 'lucide-react';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark.js';
 import { getWhatsAppUrl } from '../../utils/founderCmsData.js';
 import { trackEvent } from '../../utils/visitorTracker.js';

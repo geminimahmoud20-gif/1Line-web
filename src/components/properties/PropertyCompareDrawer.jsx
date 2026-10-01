@@ -1,31 +1,9 @@
 import { useState, useMemo } from 'react';
-import { 
-  X, 
-  Trash2, 
-  ShieldCheck, 
-  ExternalLink, 
-  Share2, 
-  Star, 
-  Download,
-  Check,
-  Building2,
-  Calendar,
-  Maximize2,
-  Minimize2,
-  Calculator,
-  Sliders,
-  Sparkles,
-  MapPin,
-  FileCheck2,
-  Award,
-  Plus,
-  PhoneCall,
-  Scale
-} from 'lucide-react';
+import { X, Trash2, ShieldCheck, ExternalLink, Share2, Star, Download, Building2, Calendar, Maximize2, Minimize2, Calculator, Sparkles, MapPin, FileCheck2, Award, Plus, PhoneCall, Scale } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { trackEvent } from '../../utils/visitorTracker';
 import { generateComparePdf } from '../../utils/comparePdfGenerator';
-import { formatCurrencyPrice, getPriceBenchmark, getDistrictBenchmark } from '../../utils/currencyAndBenchmark';
+import { formatCurrencyPrice, getPriceBenchmark } from '../../utils/currencyAndBenchmark';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 
 export default function PropertyCompareDrawer({
@@ -156,7 +134,6 @@ export default function PropertyCompareDrawer({
     compareList.forEach((p, idx) => {
       const title = isAr ? p.title_ar : p.title_en;
       const loc = isAr ? p.locationName_ar : p.locationName_en;
-      const ppm = p.pricePerMeter || (p.size ? Math.round(p.price / p.size) : 0);
       msg += `📌 *الوحدة ${idx + 1}: ${title}*\n`;
       const isLand = p.type === 'land';
       const isCom = p.type === 'commercial' || p.category === 'commercial';
@@ -616,7 +593,6 @@ export default function PropertyCompareDrawer({
                   const isBestPpm = prop.id === verdicts.bestPpmId;
                   const isLargest = prop.id === verdicts.largestAreaId;
                   const isLowestMonthly = prop.id === verdicts.lowestMonthlyId;
-                  const isTopLegal = prop.id === verdicts.topLegalId;
 
                   // Simulator Math
                   const simDownVal = Math.round((prop.price * customDownPercent) / 100);
