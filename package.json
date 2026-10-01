@@ -8,9 +8,10 @@
     "build": "vite build && node scripts/postbuild-seo.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:unit": "node --test tests/unit/insights.test.mjs",
+    "test:unit": "node --test tests/unit/*.test.mjs",
     "cypress:open": "cypress open",
-    "cypress:run": "cypress run"
+    "cypress:run": "cypress run",
+    "test:rules": "npx -y firebase-tools@15 emulators:exec --only firestore --project demo-1line-rules \"node --test tests/rules/*.test.mjs\""
   },
   "dependencies": {
     "@vercel/blob": "^2.8.0",
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",

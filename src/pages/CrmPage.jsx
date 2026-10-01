@@ -24,7 +24,7 @@ import '../components/crm/crm-density.css';
 import { isFirebaseAuthAvailable, loginUser } from '../firebaseService';
 import { useAuth } from '../context/AuthContext';
 import { canEditProperties, canEditLeadsRole } from '../utils/rbacRules';
-import { verifyAdminCredentials } from '../utils/securityShield';
+import { verifyAdminCredentials, checkRateLimit, recordFailedAttempt, resetFailedAttempts } from '../utils/securityShield';
 
 export default function CrmPage({
   lang = 'ar',
@@ -234,16 +234,26 @@ export default function CrmPage({
         };
       }
     } else {
+      const lock = checkRateLimit();
+      if (lock.isLocked) {
+        setIsVerifying(false);
+        setLoginError(isAr ? lock.message_ar : lock.message_en);
+        return;
+      }
       try {
         await loginUser(email, password);
+        resetFailedAttempts();
         res = { success: true };
       } catch (err) {
         const errCode = err?.code || '';
+        if (errCode !== 'auth/network-request-failed') recordFailedAttempt();
         let genericMsg = isAr 
           ? 'تعذر تسجيل الدخول. تحقق من البيانات أو تواصل مع مدير النظام.' 
           : 'Sign-in failed. Please verify credentials or contact system admin.';
         if (errCode === 'auth/network-request-failed') {
           genericMsg = isAr ? 'تعذر الاتصال بالخدمة. حاول مرة أخرى.' : 'Network connection error. Try again.';
+        } else if (errCode === 'auth/too-many-requests') {
+          genericMsg = isAr ? 'محاولات كثيرة. تم إيقاف الدخول مؤقتاً، حاول بعد قليل.' : 'Too many attempts. Sign-in is paused — try again later.';
         } else if (err?.message?.includes('unauthorized') || err?.message?.includes('permission')) {
           genericMsg = isAr ? 'هذا الحساب غير مصرح له بالوصول إلى لوحة الإدارة.' : 'Account unauthorized for admin access.';
         }

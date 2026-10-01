@@ -86,6 +86,7 @@ export const ROLE_DEFINITIONS = {
 export const UNASSIGNED_DESK = 'Unassigned';
 export const LEAD_DESKS = [
   { value: 'Dr. Mahmoud Elbaz', label_ar: 'د. محمود الباز', label_en: 'Dr. Mahmoud Elbaz' },
+  { value: 'Sales Management', label_ar: 'إدارة المبيعات', label_en: 'Sales Management' },
   { value: 'Sales Team A', label_ar: 'فريق المبيعات (أ) — شرق سوهاج والكوثر', label_en: 'Sales Team A (East Sohag)' },
   { value: 'Sales Team B', label_ar: 'فريق المبيعات (ب) — سوهاج الجديدة', label_en: 'Sales Team B (New Sohag)' },
   { value: 'Sales Advisor Team', label_ar: 'مستشار المبيعات', label_en: 'Sales Advisor Team' },
