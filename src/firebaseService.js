@@ -690,6 +690,122 @@ export const saveNotification = async (text) => {
   }
 };
 
+// ── Request contacts (demands, remote inspections, trade-ins) ───────────────────
+// The client's phone/whatsapp/email go to request_contacts/{kind}__{id}, readable only by roles
+// that may see client phones (firestore.rules seesClientContacts); the request itself keeps the
+// rest, which every CRM role can read. Written in one batch with the request.
+export const REQUEST_CONTACT_FIELDS = ['phone', 'whatsapp', 'email'];
+const CONTACT_ROLES = ['admin', 'super_admin', 'sales_manager', 'sales_agent', 'agent_east', 'agent_new_sohag'];
+const MANAGER_ROLES = ['admin', 'super_admin', 'sales_manager'];
+
+const requestContactRef = (kind, id) => doc(db, 'request_contacts', `${kind}__${id}`);
+
+const splitRequestFields = (record) => {
+  const rest = {};
+  const contact = {};
+  for (const [key, value] of Object.entries(record || {})) {
+    if (value === undefined) continue;
+    if (REQUEST_CONTACT_FIELDS.includes(key)) {
+      if (value !== null && value !== '') contact[key] = String(value);
+    } else {
+      rest[key] = value;
+    }
+  }
+  return { rest, contact };
+};
+
+/** The signed-in user's CRM claims: { seesContacts, isManager }. */
+const contactAccess = async () => {
+  const user = auth?.currentUser;
+  if (!user) return { seesContacts: false, isManager: false };
+  try {
+    const claims = (await user.getIdTokenResult()).claims || {};
+    const isManager = claims.admin === true || ADMIN_USER_IDS.has(user.uid) || MANAGER_ROLES.includes(claims.role);
+    return { seesContacts: isManager || CONTACT_ROLES.includes(claims.role), isManager };
+  } catch {
+    return { seesContacts: false, isManager: false };
+  }
+};
+
+/** Create a request and its contact doc together; returns the id used. */
+const createRequestWithContact = async (kind, id, record) => {
+  const { rest, contact } = splitRequestFields(record);
+  const batch = writeBatch(db);
+  batch.set(doc(db, kind, id), rest);
+  batch.set(requestContactRef(kind, id), { kind, parentId: id, ...contact });
+  await batch.commit();
+  return id;
+};
+
+/** Contact edits made from the CRM go to the contact doc (best effort: roles that can't see phones can't write them either). */
+const updateRequestContact = async (kind, id, contact) => {
+  if (Object.keys(contact).length === 0) return;
+  try {
+    await setDoc(requestContactRef(kind, id), { kind, parentId: String(id), ...contact }, { merge: true });
+  } catch (error) {
+    if (error?.code !== 'permission-denied') console.error(`Firebase request contact [${kind}] error:`, error);
+  }
+};
+
+/**
+ * Wrap a staff list listener: merge contact docs in for roles allowed to see them, and let a
+ * manager's session move phones still stored on the request (older records, older builds)
+ * into request_contacts. `start(emit)` must start the list listener and return its unsubscribe.
+ */
+const withRequestContacts = (kind, callback, start) => {
+  let items = null;
+  let meta = {};
+  let contacts = new Map();
+  let unsubContacts = null;
+  let access = { seesContacts: false, isManager: false };
+  const migrated = new Set();
+
+  const emit = () => items && callback(items.map((r) => {
+    const c = contacts.get(String(r.id));
+    if (!c) return r;
+    const merged = { ...r };
+    REQUEST_CONTACT_FIELDS.forEach((f) => { if (c[f]) merged[f] = c[f]; });
+    return merged;
+  }), meta);
+
+  const migrateInline = (list) => {
+    if (!access.isManager) return;
+    list.filter((r) => REQUEST_CONTACT_FIELDS.some((f) => f in r) && !migrated.has(r.id)).forEach((r) => {
+      migrated.add(r.id);
+      const { contact } = splitRequestFields(r);
+      const batch = writeBatch(db);
+      batch.set(requestContactRef(kind, String(r.id)), { kind, parentId: String(r.id), ...contact }, { merge: true });
+      batch.update(doc(db, kind, String(r.id)), Object.fromEntries(REQUEST_CONTACT_FIELDS.filter((f) => f in r).map((f) => [f, deleteField()])));
+      batch.commit().catch((error) => console.error(`Firebase migrate [${kind}] contacts error:`, error));
+    });
+  };
+
+  const unsubList = start((list, listMeta = {}) => {
+    items = list;
+    meta = listMeta;
+    if (!listMeta.fromCache && !listMeta.error) migrateInline(list);
+    emit();
+  });
+
+  let stopped = false;
+  contactAccess().then((a) => {
+    access = a;
+    if (stopped || !a.seesContacts) return;
+    unsubContacts = onSnapshot(
+      query(collection(db, 'request_contacts'), where('kind', '==', kind), limit(1000)),
+      (snap) => { contacts = new Map(snap.docs.map((d) => [d.data().parentId, d.data()])); emit(); },
+      (err) => { if (err?.code !== 'permission-denied') console.warn(`Firebase request contacts [${kind}] warning:`, err); }
+    );
+    if (items) migrateInline(items);
+  });
+
+  return () => {
+    stopped = true;
+    if (typeof unsubList === 'function') unsubList();
+    if (unsubContacts) unsubContacts();
+  };
+};
+
 // ===================== DEMANDS =====================
 
 /**
@@ -700,16 +816,14 @@ export const saveDemand = async (demand) => {
     try {
       // The rules require `name`; the public form sends `clientName`.
       const payload = { ...demand, name: demand.name || demand.clientName || '', createdAt: serverTimestamp() };
+      delete payload.id;
       // Keep the document id equal to the app's demand id, so approve/unpublish/delete
-      // (which address the doc by that id) hit the same document instead of a random addDoc id.
-      if (demand.id !== undefined && demand.id !== null && demand.id !== '') {
-        await setDoc(doc(db, 'demands', String(demand.id)), payload);
-        if (payload.status === 'published') await syncPublicDemand(String(demand.id));
-        return demand;
-      }
-      const docRef = await addDoc(collection(db, 'demands'), payload);
-      if (payload.status === 'published') await syncPublicDemand(docRef.id);
-      return { ...demand, id: docRef.id };
+      // (which address the doc by that id) hit the same document instead of a random id.
+      const hasId = demand.id !== undefined && demand.id !== null && demand.id !== '';
+      const id = hasId ? String(demand.id) : doc(collection(db, 'demands')).id;
+      await createRequestWithContact('demands', id, payload);
+      if (payload.status === 'published') await syncPublicDemand(id);
+      return { ...demand, id };
     } catch (error) {
       console.error('Firebase saveDemand error:', error);
       return demand;
@@ -792,18 +906,22 @@ export const subscribeToDemands = (callback, maxCount = 100) => {
     (snapshot) => callback(toDemands(snapshot), { fromCache: snapshot.metadata.fromCache, isPublic: true }),
     (err) => console.warn('Firebase public demands warning:', err)
   );
-  const listenStaff = (version) => onSnapshot(
+  const listenStaff = (version) => withRequestContacts('demands', callback, (emit) => onSnapshot(
     query(collection(db, 'demands'), orderBy('createdAt', 'desc'), limit(maxCount)),
-    (snapshot) => callback(toDemands(snapshot), { fromCache: snapshot.metadata.fromCache }),
+    { includeMetadataChanges: true },
+    (snapshot) => emit(toDemands(snapshot), { fromCache: snapshot.metadata.fromCache }),
     (err) => {
       // Signed in without a CRM role → fall back to the public list
       if (err && err.code === 'permission-denied') {
-        if (version === authVersion) unsubSnapshot = listenPublic();
+        if (version === authVersion) {
+          if (unsubSnapshot) unsubSnapshot();
+          unsubSnapshot = listenPublic();
+        }
         return;
       }
       console.warn('Firebase subscribeToDemands snapshot warning:', err);
     }
-  );
+  ));
   const stopSnapshot = () => {
     if (unsubSnapshot) unsubSnapshot();
     unsubSnapshot = null;
@@ -854,10 +972,13 @@ export const updateDemandStatus = async (demandId, updates) => {
   if (isFirebaseConfigured() && db) {
     try {
       const demandRef = doc(db, 'demands', demandId);
+      const { rest, contact } = splitRequestFields(updates);
+      delete rest.id;
       await updateDoc(demandRef, {
-        ...updates,
+        ...rest,
         updatedAt: serverTimestamp()
       });
+      await updateRequestContact('demands', demandId, contact);
       await syncPublicDemand(demandId);
       return true;
     } catch (error) {
@@ -874,7 +995,10 @@ export const updateDemandStatus = async (demandId, updates) => {
 export const deleteDemandDoc = async (demandId) => {
   if (isFirebaseConfigured() && db) {
     try {
-      await deleteDoc(doc(db, 'demands', demandId));
+      const batch = writeBatch(db);
+      batch.delete(doc(db, 'demands', String(demandId)));
+      batch.delete(requestContactRef('demands', String(demandId)));
+      await batch.commit();
       await deleteDoc(doc(db, 'public_demands', String(demandId)));
       return true;
     } catch (error) {
@@ -898,8 +1022,8 @@ export const submitIntakeRecord = async (collectionName, record) => {
   if (!INTAKE_COLLECTIONS.has(collectionName) || !isFirebaseConfigured() || !db) return null;
   try {
     const payload = { ...record, status: 'new', createdAt: serverTimestamp() };
-    const ref = await addDoc(collection(db, collectionName), payload);
-    return { ...record, id: ref.id, status: 'new' };
+    const id = await createRequestWithContact(collectionName, doc(collection(db, collectionName)).id, payload);
+    return { ...record, id, status: 'new' };
   } catch (error) {
     console.error(`Firebase submitIntakeRecord [${collectionName}] error:`, error);
     return null;
@@ -911,8 +1035,8 @@ export const subscribeToIntake = (collectionName, callback, maxCount = 200) => {
   if (!INTAKE_COLLECTIONS.has(collectionName) || !isFirebaseConfigured() || !db) return null;
   try {
     const q = query(collection(db, collectionName), orderBy('createdAt', 'desc'), limit(maxCount));
-    return onSnapshot(q, (snapshot) => {
-      callback(snapshot.docs.map((d) => {
+    return withRequestContacts(collectionName, callback, (emit) => onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
+      emit(snapshot.docs.map((d) => {
         const data = d.data();
         const ts = data.createdAt;
         return {
@@ -920,11 +1044,11 @@ export const subscribeToIntake = (collectionName, callback, maxCount = 200) => {
           id: d.id,
           createdAtIso: ts && typeof ts.toDate === 'function' ? ts.toDate().toISOString() : (data.submittedAt || null)
         };
-      }));
+      }), { fromCache: snapshot.metadata.fromCache });
     }, (err) => {
       if (err?.code !== 'permission-denied') console.warn(`Firebase subscribeToIntake [${collectionName}] warning:`, err);
-      callback([], { error: err?.code || 'error' });
-    });
+      emit([], { error: err?.code || 'error' });
+    }));
   } catch (error) {
     console.error(`Firebase subscribeToIntake [${collectionName}] error:`, error);
     return null;
@@ -935,7 +1059,9 @@ export const subscribeToIntake = (collectionName, callback, maxCount = 200) => {
 export const updateIntakeRecord = async (collectionName, id, updates) => {
   if (!INTAKE_COLLECTIONS.has(collectionName) || !isFirebaseConfigured() || !db) return false;
   try {
-    await updateDoc(doc(db, collectionName, String(id)), { ...updates, updatedAt: serverTimestamp() });
+    const { rest, contact } = splitRequestFields(updates);
+    await updateDoc(doc(db, collectionName, String(id)), { ...rest, updatedAt: serverTimestamp() });
+    await updateRequestContact(collectionName, id, contact);
     return true;
   } catch (error) {
     console.error(`Firebase updateIntakeRecord [${collectionName}] error:`, error);

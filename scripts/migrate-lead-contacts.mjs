@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 // =============================================================
-//  1Line CRM — one-time move of client contacts out of lead documents
+//  1Line CRM — one-time move of client contacts out of CRM documents
 //
-//  Leads saved before lead_contacts existed carry phone / whatsapp / email / altPhone on the
-//  lead itself, where every CRM role (viewer, finance, property_manager) can read them.
-//  This copies those fields into lead_contacts/{leadId} (with the lead's desk in assignedTo)
-//  and deletes them from the lead. Safe to re-run: leads without inline contacts are skipped.
-//  Managers' CRM sessions also do this for the newest leads they load; this script covers all.
+//  Records saved before the contact split carry the client's phone / whatsapp / email on the
+//  record itself, where every CRM role (viewer, finance, property_manager) can read them.
+//    leads                                 → lead_contacts/{leadId} (+ the lead's desk in assignedTo)
+//    demands, remote_inspections, trade_ins → request_contacts/{kind}__{id}
+//  The fields are copied there and deleted from the record. Safe to re-run: records without
+//  inline contacts are skipped. Managers' CRM sessions also migrate what they load; this covers all.
 //
 //  Setup: same as scripts/set-crm-role.mjs (firebase-admin + ./service-account.json).
 //
@@ -39,8 +40,6 @@ admin.initializeApp({ credential: admin.credential.cert(JSON.parse(fs.readFileSy
 const db = admin.firestore();
 const { FieldValue } = admin.firestore;
 
-let scanned = 0;
-let toMove = 0;
 let batch = db.batch();
 let inBatch = 0;
 const flush = async () => {
@@ -49,28 +48,45 @@ const flush = async () => {
   inBatch = 0;
 };
 
-let last = null;
-for (;;) {
-  let q = db.collection('leads').orderBy(admin.firestore.FieldPath.documentId()).limit(300);
-  if (last) q = q.startAfter(last);
-  const page = await q.get();
-  if (page.empty) break;
-  for (const snap of page.docs) {
-    scanned++;
-    const data = snap.data();
-    const inline = CONTACT_FIELDS.filter((f) => f in data);
-    if (inline.length === 0) continue;
-    toMove++;
-    const contact = { assignedTo: data.assignedTo || 'Unassigned' };
-    for (const f of inline) if (data[f] !== null && data[f] !== '') contact[f] = String(data[f]);
-    batch.set(db.collection('lead_contacts').doc(snap.id), contact, { merge: true });
-    batch.update(snap.ref, Object.fromEntries(inline.map((f) => [f, FieldValue.delete()])));
-    inBatch += 2;
-    if (inBatch >= 400) await flush();
+// Keep in sync with REQUEST_CONTACT_FIELDS in src/firebaseService.js
+const REQUEST_FIELDS = ['phone', 'whatsapp', 'email'];
+const JOBS = [
+  { coll: 'leads', fields: CONTACT_FIELDS, target: (id, data) => [db.collection('lead_contacts').doc(id), { assignedTo: data.assignedTo || 'Unassigned' }] },
+  ...['demands', 'remote_inspections', 'trade_ins'].map((kind) => ({
+    coll: kind, fields: REQUEST_FIELDS, target: (id) => [db.collection('request_contacts').doc(`${kind}__${id}`), { kind, parentId: id }]
+  }))
+];
+
+let scanned = 0;
+let toMove = 0;
+for (const job of JOBS) {
+  let moved = 0;
+  let last = null;
+  for (;;) {
+    let q = db.collection(job.coll).orderBy(admin.firestore.FieldPath.documentId()).limit(300);
+    if (last) q = q.startAfter(last);
+    const page = await q.get();
+    if (page.empty) break;
+    for (const snap of page.docs) {
+      scanned++;
+      const data = snap.data();
+      const inline = job.fields.filter((f) => f in data);
+      if (inline.length === 0) continue;
+      moved++;
+      const [ref, base] = job.target(snap.id, data);
+      const contact = { ...base };
+      for (const f of inline) if (data[f] !== null && data[f] !== '') contact[f] = String(data[f]);
+      batch.set(ref, contact, { merge: true });
+      batch.update(snap.ref, Object.fromEntries(inline.map((f) => [f, FieldValue.delete()])));
+      inBatch += 2;
+      if (inBatch >= 400) await flush();
+    }
+    last = page.docs[page.docs.length - 1];
   }
-  last = page.docs[page.docs.length - 1];
+  console.log(`${job.coll}: ${moved} with inline contacts`);
+  toMove += moved;
 }
 await flush();
 
-console.log(`${scanned} leads scanned, ${toMove} with inline contacts ${apply ? 'moved to lead_contacts' : 'would be moved (dry run — add --apply)'}.`);
+console.log(`${scanned} records scanned, ${toMove} with inline contacts ${apply ? 'moved' : 'would be moved (dry run — add --apply)'}.`);
 process.exit(0);

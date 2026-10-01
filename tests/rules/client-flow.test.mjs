@@ -95,3 +95,44 @@ test('a manager session migrates an inline (legacy) phone', async () => {
   assert.equal((await raw('leads/legacy-1')).phone, undefined);
   assert.equal((await raw('lead_contacts/legacy-1')).phone, '+201055555555');
 });
+
+const nextList = (subscribe, pred) => new Promise((resolve, reject) => {
+  const timer = setTimeout(() => { unsub?.(); reject(new Error('timed out waiting for list')); }, 8000);
+  const unsub = subscribe((list, meta) => {
+    if (meta?.fromCache || meta?.error || !pred(list)) return;
+    clearTimeout(timer); unsub?.(); resolve(list);
+  });
+});
+
+test('a visitor\'s demand and trade-in keep the phone in request_contacts', async () => {
+  await signOut(auth);
+  await svc.saveDemand({ id: 'dem-flow-1', clientName: 'مشتري', phone: '+201022222222', whatsapp: '+201022222222', status: 'pending', text_ar: 'شقة' });
+  assert.equal((await raw('demands/dem-flow-1')).phone, undefined);
+  assert.equal((await raw('request_contacts/demands__dem-flow-1')).phone, '+201022222222');
+  const t = await svc.submitIntakeRecord('trade_ins', { name: 'بدل', phone: '+201033333333', country: 'EG', offerType: 'apartment', offerGovernorate: 'sohag', wantType: 'villa', diffMode: 'even' });
+  assert.ok(t?.id, 'trade-in saved');
+  assert.equal((await raw(`trade_ins/${t.id}`)).phone, undefined);
+  assert.equal((await raw(`request_contacts/trade_ins__${t.id}`)).phone, '+201033333333');
+});
+
+test('sales roles get request phones merged in; viewers do not', async () => {
+  await signInAs('agent-east-1', { role: 'agent_east' });
+  const forAgent = await nextList((cb) => svc.subscribeToIntake('trade_ins', cb), (l) => l.some((r) => r.phone));
+  assert.equal(forAgent[0].phone, '+201033333333');
+  await signInAs('viewer-1', { role: 'viewer' });
+  const forViewer = await nextList((cb) => svc.subscribeToIntake('trade_ins', cb), (l) => l.length > 0);
+  assert.ok(forViewer.every((r) => !r.phone));
+});
+
+test('a manager session migrates inline request phones automatically', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    const { setDoc } = await import('firebase/firestore');
+    await setDoc(doc(ctx.firestore(), 'remote_inspections/old-ri'), { name: 'قديم', phone: '+201044444444', country: 'SA', coverage: ['video'], status: 'new', createdAt: 1 });
+  });
+  await signInAs('manager-1', { role: 'sales_manager' });
+  const list = await nextList((cb) => svc.subscribeToIntake('remote_inspections', cb), (l) => l.some((r) => r.id === 'old-ri' && r.phone));
+  assert.equal(list.find((r) => r.id === 'old-ri').phone, '+201044444444');
+  for (let i = 0; i < 40 && (await raw('remote_inspections/old-ri')).phone; i++) await new Promise((r) => setTimeout(r, 100));
+  assert.equal((await raw('remote_inspections/old-ri')).phone, undefined);
+  assert.equal((await raw('request_contacts/remote_inspections__old-ri')).phone, '+201044444444');
+});

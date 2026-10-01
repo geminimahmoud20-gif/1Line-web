@@ -188,7 +188,9 @@ export function RemoteInspectionsPanel({ properties = [], canEdit = false, isSup
                   {r.notes && <p className="cxi-notes">{r.notes}</p>}
                 </div>
                 <div className="cxi-row-actions">
-                  <a className="cxi-btn cxi-btn--wa" href={waLink(r.phone, msg)} target="_blank" rel="noopener noreferrer"><MessageCircle size={14} /> <span dir="ltr">{r.phone}</span></a>
+                  {r.phone
+                    ? <a className="cxi-btn cxi-btn--wa" href={waLink(r.phone, msg)} target="_blank" rel="noopener noreferrer"><MessageCircle size={14} /> <span dir="ltr">{r.phone}</span></a>
+                    : <span className="cxi-btn" title="الرقم متاح لفريق المبيعات فقط">🔒 الرقم محجوب</span>}
                   <StatusSelect list={STATUSES} value={r.status || 'new'} disabled={!canEdit} onChange={(s) => setStatus(r, s)} />
                 </div>
               </article>
@@ -263,8 +265,8 @@ export function TradeInsPanel({ properties = [], canEdit = false, triggerToast }
                   {m.a.offerValue && m.b.offerValue ? (
                     <span className="cxi-chip">فرق القيمة التقريبي: {fmt(Math.abs(m.cashGap))} ج.م {m.cashGap > 0 ? `لصالح ${m.a.name}` : m.cashGap < 0 ? `لصالح ${m.b.name}` : ''}</span>
                   ) : null}
-                  <a className="cxi-btn cxi-btn--wa" href={waLink(m.a.phone, `مرحباً ${m.a.name}، معك 1Line بخصوص طلب البدل. عندنا عرض ممكن يناسبك: ${describeOffer(m.b)}. نرتب معاينة؟`)} target="_blank" rel="noopener noreferrer"><MessageCircle size={13} /> {m.a.name}</a>
-                  <a className="cxi-btn cxi-btn--wa" href={waLink(m.b.phone, `مرحباً ${m.b.name}، معك 1Line بخصوص طلب البدل. عندنا عرض ممكن يناسبك: ${describeOffer(m.a)}. نرتب معاينة؟`)} target="_blank" rel="noopener noreferrer"><MessageCircle size={13} /> {m.b.name}</a>
+                  {m.a.phone && (<a className="cxi-btn cxi-btn--wa" href={waLink(m.a.phone, `مرحباً ${m.a.name}، معك 1Line بخصوص طلب البدل. عندنا عرض ممكن يناسبك: ${describeOffer(m.b)}. نرتب معاينة؟`)} target="_blank" rel="noopener noreferrer"><MessageCircle size={13} /> {m.a.name}</a>)}
+                  {m.b.phone && (<a className="cxi-btn cxi-btn--wa" href={waLink(m.b.phone, `مرحباً ${m.b.name}، معك 1Line بخصوص طلب البدل. عندنا عرض ممكن يناسبك: ${describeOffer(m.a)}. نرتب معاينة؟`)} target="_blank" rel="noopener noreferrer"><MessageCircle size={13} /> {m.b.name}</a>)}
                 </div>
               </article>
             ))}
@@ -308,7 +310,9 @@ export function TradeInsPanel({ properties = [], canEdit = false, triggerToast }
                   )}
                 </div>
                 <div className="cxi-row-actions">
-                  <a className="cxi-btn cxi-btn--wa" href={waLink(r.phone, `مرحباً ${r.name} 👋 معك 1Line بخصوص طلب البدل العقاري.`)} target="_blank" rel="noopener noreferrer"><MessageCircle size={14} /> <span dir="ltr">{r.phone}</span></a>
+                  {r.phone
+                    ? <a className="cxi-btn cxi-btn--wa" href={waLink(r.phone, `مرحباً ${r.name} 👋 معك 1Line بخصوص طلب البدل العقاري.`)} target="_blank" rel="noopener noreferrer"><MessageCircle size={14} /> <span dir="ltr">{r.phone}</span></a>
+                    : <span className="cxi-btn" title="الرقم متاح لفريق المبيعات فقط">🔒 الرقم محجوب</span>}
                   <StatusSelect list={TRADE_STATUSES} value={r.status || 'new'} disabled={!canEdit} onChange={(s) => setStatus(r, s)} />
                 </div>
               </article>

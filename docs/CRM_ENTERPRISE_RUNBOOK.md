@@ -88,6 +88,7 @@ async function assignUserRole(email, role) {
    - يقراها بس: المدير العام، مدير المبيعات، ومستشار الفريق المسؤول عن العميل (أو العملاء غير المسندين). أدوار `viewer` و`finance` و`property_manager` بتشوف العميل من غير أرقام خالص.
    - كل مستشار (`sales_agent` / `agent_east` / `agent_new_sohag`) يشوف ويعدّل عملاء فريقه + العملاء غير المسندين بس، ونقل عميل لفريق تاني من صلاحية المدير.
    - طلبات الشراء المنشورة للزوار في `public_demands` من غير أي بيانات تواصل؛ `demands` الأصلية للموظفين بس.
+   - نفس الفكرة لطلبات الشراء وطلبات المغتربين والبدل: الأرقام في `request_contacts/{النوع}__{id}` ويقراها الأدمن ومدير المبيعات والمستشارين بس.
    - بيانات العملاء اللي جاية من السحابة مش بتتحفظ في متصفح الموظف، وبتتمسح من الذاكرة عند تسجيل الخروج.
 2. **منع هجمات التخمين وتعداد المستخدمين (Anti-Enumeration):**
    - بوابة الدخول تعتمد رسالة خطأ واحدة موحدة عند فشل الدخول: *"بيانات الدخول غير صحيحة، يرجى التحقق من البريد وكلمة المرور والمحاولة مجدداً."*
@@ -110,7 +111,7 @@ async function assignUserRole(email, role) {
 ```bash
 # أمر النسخ الاحتياطي التلقائي لمجموعات CRM الحساسة
 gcloud firestore export gs://oneline-crm-backups/$(date +%Y-%m-%d) \
-  --collection-ids='leads','lead_contacts','deals','audit_logs','demands','public_demands'
+  --collection-ids='leads','lead_contacts','request_contacts','remote_inspections','trade_ins','deals','audit_logs','demands','public_demands'
 ```
 
 ### ج. خطة استعادة البيانات في حالات الطوارئ (Emergency Recovery Plan)
@@ -151,5 +152,5 @@ npm run build
    node scripts/migrate-lead-contacts.mjs          # تجربة: بيعدّ بس
    node scripts/migrate-lead-contacts.mjs --apply  # تنفيذ
    ```
-   جلسات المدير في الـ CRM بتنقل أرقام أحدث العملاء تلقائياً كمان، لكن السكربت بيغطي الكل.
+   السكربت بينقل أرقام العملاء والطلبات والمغتربين والبدل. جلسات المدير في الـ CRM بتنقل اللي بتحمّله تلقائياً كمان، لكن السكربت بيغطي الكل.
 4. **App Check:** مفتاح reCAPTCHA v3 ← تسجيله في Firebase App Check ← `VITE_RECAPTCHA_SITE_KEY` في Vercel ← بعد ما الطلبات تظهر "verified" فعّل Enforce على Firestore.

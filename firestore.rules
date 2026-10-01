@@ -66,6 +66,17 @@ service cloud.firestore {
       return contactFields().toSet().intersection(request.resource.data.keys().toSet())
                .difference(resource.data.diff(request.resource.data).unchangedKeys()).size() == 0;
     }
+    // Who may see a client's phone: admins, sales managers and the sales desks (rbacRules canViewLeadPhone)
+    function seesClientContacts() {
+      return hasRole(['sales_manager', 'sales_agent', 'agent_east', 'agent_new_sohag']);
+    }
+    // Demands and expat/trade-in requests keep their phone in request_contacts/{kind}__{id}
+    function requestContactPath(kind, id) {
+      return /databases/$(database)/documents/request_contacts/$(kind + '__' + id);
+    }
+    function hasRequestContact(kind, id) {
+      return existsAfter(requestContactPath(kind, id));
+    }
     function validLeadBasics(data) {
       return data.name is string && data.name.size() >= 2 && data.name.size() <= 100
           && data.keys().size() <= 60
@@ -128,20 +139,23 @@ service cloud.firestore {
 
     // 📋 2. DEMANDS & CLIENT REQUESTS
     match /demands/{demandId} {
+      // Current format: phone/whatsapp/email in request_contacts (same batch). Legacy inline phone
+      // stays accepted for browsers on an older build; it is migrated out afterwards.
       allow create: if request.resource.data.name is string
                     && request.resource.data.name.size() >= 2
                     && request.resource.data.name.size() <= 100
-                    && request.resource.data.phone is string
-                    && request.resource.data.phone.size() >= 10
-                    && request.resource.data.phone.size() <= 25
+                    && ((!request.resource.data.keys().hasAny(contactFields()) && hasRequestContact('demands', demandId))
+                        || (request.resource.data.phone is string
+                            && request.resource.data.phone.size() >= 10
+                            && request.resource.data.phone.size() <= 25))
                     && request.resource.data.keys().size() <= 60
                     && boundedText(request.resource.data, 'notes', 2000)
                     && boundedText(request.resource.data, 'description', 3000)
                     // A visitor cannot publish their own demand; staff approve it
                     && (isInventoryEditor() || !('status' in request.resource.data) || request.resource.data.status == 'pending');
-      // Staff only: these hold the buyer's name and phone. Visitors read public_demands.
+      // Staff only. Visitors read public_demands; phones are in request_contacts.
       allow read: if isStaff();
-      allow update: if isInventoryEditor();
+      allow update: if isInventoryEditor() && keepsContactFields();
       allow delete: if isAdmin();
     }
 
@@ -231,7 +245,8 @@ service cloud.firestore {
                         'notes', 'propertyId', 'propertyTitle', 'propertyArea', 'source', 'lang', 'vip',
                         'submittedAt', 'status', 'createdAt'])
                     && isStr(request.resource.data, 'name', 2, 100)
-                    && isStr(request.resource.data, 'phone', 8, 25)
+                    && (isStr(request.resource.data, 'phone', 8, 25)
+                        || (!('phone' in request.resource.data) && hasRequestContact('remote_inspections', reqId)))
                     && isStr(request.resource.data, 'country', 2, 40)
                     && optStr(request.resource.data, 'countryCode', 8)
                     && request.resource.data.coverage is list
@@ -248,7 +263,7 @@ service cloud.firestore {
                     && request.resource.data.status == 'new'
                     && request.resource.data.createdAt == request.time;
       allow read: if isStaff();
-      allow update: if isLeadEditor();
+      allow update: if isLeadEditor() && keepsContactFields();
       allow delete: if isAdmin();
     }
 
@@ -259,7 +274,8 @@ service cloud.firestore {
                         'offerValue', 'offerLegal', 'wantType', 'wantArea', 'wantSize', 'wantNotes', 'diffMode',
                         'diffAmount', 'notes', 'source', 'lang', 'submittedAt', 'status', 'createdAt'])
                     && isStr(request.resource.data, 'name', 2, 100)
-                    && isStr(request.resource.data, 'phone', 8, 25)
+                    && (isStr(request.resource.data, 'phone', 8, 25)
+                        || (!('phone' in request.resource.data) && hasRequestContact('trade_ins', reqId)))
                     && optStr(request.resource.data, 'country', 40)
                     && isStr(request.resource.data, 'offerType', 2, 30)
                     && isStr(request.resource.data, 'offerGovernorate', 2, 30)
@@ -280,7 +296,37 @@ service cloud.firestore {
                     && request.resource.data.status == 'new'
                     && request.resource.data.createdAt == request.time;
       allow read: if isStaff();
-      allow update: if isLeadEditor();
+      allow update: if isLeadEditor() && keepsContactFields();
+      allow delete: if isAdmin();
+    }
+
+    // 🔒 12. REQUEST CONTACTS — phone / whatsapp / email of demands and expat/trade-in requests.
+    // Doc id "<kind>__<request id>"; written with the request in one batch.
+    match /request_contacts/{contactId} {
+      function requestKinds() {
+        return ['demands', 'remote_inspections', 'trade_ins'];
+      }
+      function parentPath(data) {
+        return /databases/$(database)/documents/$(data.kind)/$(data.parentId);
+      }
+      function validRequestContact(data) {
+        return data.keys().hasOnly(['kind', 'parentId', 'phone', 'whatsapp', 'email'])
+            && data.kind in requestKinds()
+            && data.parentId is string
+            && contactId == data.kind + '__' + data.parentId
+            && (!('phone' in data) || (data.phone is string && data.phone.size() >= 8 && data.phone.size() <= 25))
+            && (!('whatsapp' in data) || (data.whatsapp is string && data.whatsapp.size() <= 25))
+            && boundedText(data, 'email', 120);
+      }
+      allow read: if seesClientContacts();
+      // Anyone together with a brand-new request; managers when migrating an existing one
+      allow create: if validRequestContact(request.resource.data)
+                    && existsAfter(parentPath(request.resource.data))
+                    && (!exists(parentPath(request.resource.data)) || hasRole(['sales_manager']));
+      allow update: if validRequestContact(request.resource.data)
+                    && request.resource.data.kind == resource.data.kind
+                    && request.resource.data.parentId == resource.data.parentId
+                    && seesClientContacts();
       allow delete: if isAdmin();
     }
 

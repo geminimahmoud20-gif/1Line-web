@@ -1,7 +1,7 @@
 // Firestore security rules tests. Needs the Firestore emulator (Java 11+):
 //   npm run test:rules
 import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
-import { doc, getDoc, setDoc, deleteDoc, collection, query, where, orderBy, getDocs, writeBatch, deleteField, documentId } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, collection, query, where, orderBy, getDocs, writeBatch, deleteField, documentId, serverTimestamp } from 'firebase/firestore';
 import fs from 'node:fs';
 import { test, before, after, beforeEach } from 'node:test';
 
@@ -181,4 +181,58 @@ test('contacts: a manager migrates an inline phone into lead_contacts', async ()
 
 test('contacts: legacy-format submissions from old builds are still accepted', async () => {
   await assertSucceeds(setDoc(doc(guest(), 'leads/old1'), { name: 'Old build', phone: '01000000030', status: 'new' }));
+});
+
+// ── Request contacts (demands, remote inspections, trade-ins) ───────────────
+const newRequestBatch = (db, kind, id, record, contact) => {
+  const b = writeBatch(db);
+  b.set(doc(db, kind, id), record);
+  b.set(doc(db, 'request_contacts', `${kind}__${id}`), { kind, parentId: id, ...contact });
+  return b.commit();
+};
+const tradeIn = { name: 'Guest', country: 'EG', offerType: 'apartment', offerGovernorate: 'sohag', wantType: 'villa', diffMode: 'even', status: 'new' };
+
+test('request contacts: guests submit demands / trade-ins with the phone in request_contacts', async () => {
+  const g = guest();
+  await assertSucceeds(newRequestBatch(g, 'demands', 'd1', { name: 'Buyer', status: 'pending' }, { phone: '01000000040' }));
+  await assertFails(setDoc(doc(g, 'demands/d2'), { name: 'Buyer', status: 'pending' })); // no phone anywhere
+  await assertFails(newRequestBatch(g, 'demands', 'd3', { name: 'Buyer', status: 'pending' }, { phone: '01000000040', notes: 'x' }));
+  // contact id must match kind + parent
+  const b = writeBatch(g);
+  b.set(doc(g, 'demands/d4'), { name: 'Buyer', status: 'pending' });
+  b.set(doc(g, 'request_contacts/demands__other'), { kind: 'demands', parentId: 'd4', phone: '01000000040' });
+  await assertFails(b.commit());
+  // cannot attach a contact to an existing request
+  await assertFails(setDoc(doc(g, 'request_contacts/demands__p1'), { kind: 'demands', parentId: 'p1', phone: '01099999999' }));
+});
+
+test('request contacts: only sales roles read them; read-only roles do not', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'trade_ins/t1'), tradeIn);
+    await setDoc(doc(ctx.firestore(), 'request_contacts/trade_ins__t1'), { kind: 'trade_ins', parentId: 't1', phone: '01000000050' });
+  });
+  for (const role of ['viewer', 'finance', 'property_manager']) {
+    await assertFails(getDoc(doc(as(role), 'request_contacts/trade_ins__t1')));
+  }
+  for (const role of ['sales_manager', 'agent_east', 'sales_agent']) {
+    await assertSucceeds(getDocs(query(collection(as(role), 'request_contacts'), where('kind', '==', 'trade_ins'))));
+  }
+  await assertSucceeds(getDoc(doc(as('viewer'), 'trade_ins/t1')));
+});
+
+test('request contacts: a trade-in without a phone needs its contact doc; updates cannot add a phone', async () => {
+  const g = guest();
+  await assertSucceeds(newRequestBatch(g, 'trade_ins', 't2', { ...tradeIn, createdAt: serverTimestamp() }, { phone: '01000000060' }));
+  await assertFails(setDoc(doc(g, 'trade_ins/t3'), { ...tradeIn, createdAt: serverTimestamp() }));
+  await assertFails(setDoc(doc(as('agent_east'), 'trade_ins/t2'), { phone: '01011111111' }, { merge: true }));
+  await assertSucceeds(setDoc(doc(as('agent_east'), 'trade_ins/t2'), { status: 'contacted' }, { merge: true }));
+  await assertFails(setDoc(doc(as('property_manager'), 'demands/p1'), { phone: '01011111111' }, { merge: true }));
+});
+
+test('request contacts: a manager migrates an inline demand phone', async () => {
+  const mgr = as('sales_manager');
+  const b = writeBatch(mgr);
+  b.set(doc(mgr, 'request_contacts/demands__p1'), { kind: 'demands', parentId: 'p1', phone: '01000000005' });
+  b.update(doc(mgr, 'demands/p1'), { phone: deleteField() });
+  await assertSucceeds(b.commit());
 });
