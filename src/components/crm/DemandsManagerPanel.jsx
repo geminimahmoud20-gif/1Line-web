@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   Zap, 
   Plus, 
@@ -29,7 +29,8 @@ import {
   Share2
 } from 'lucide-react';
 import { exportToCsv } from '../../utils/exportCsv';
-import { canViewLeadPhone, maskPhoneNumber } from '../../utils/rbacRules';
+import { canViewLeadPhone, maskPhoneNumber, canEditProperties } from '../../utils/rbacRules';
+import { reconcilePublicDemands } from '../../firebaseLazy';
 
 const AREA_OPTIONS = [
   { value: 'east', label_ar: 'شرق سوهاج', label_en: 'East Sohag' },
@@ -70,6 +71,20 @@ export default function DemandsManagerPanel({
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingDemand, setEditingDemand] = useState(null);
   const [matchModalDemand, setMatchModalDemand] = useState(null);
+
+  // Once per session, an editor brings public_demands (the contact-free copies visitors read)
+  // in line with the published demands — covers demands published before the copies existed.
+  const canPublish = canEditProperties(userRole);
+  const hasDemands = demands.length > 0;
+  useEffect(() => {
+    if (!canPublish || !hasDemands) return;
+    try {
+      if (sessionStorage.getItem('oneline_public_demands_synced')) return;
+      sessionStorage.setItem('oneline_public_demands_synced', '1');
+    } catch { /* storage unavailable — still sync */ }
+    reconcilePublicDemands(demands).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once, when the list first arrives
+  }, [canPublish, hasDemands]);
 
   // Auto-matching properties algorithm
   const getMatchingProperties = (demand) => {

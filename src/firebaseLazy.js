@@ -50,6 +50,7 @@ export const deleteLead = lazyCall('deleteLead');
 export const saveDemand = lazyCall('saveDemand');
 export const updateDemandStatus = lazyCall('updateDemandStatus');
 export const deleteDemandDoc = lazyCall('deleteDemandDoc');
+export const reconcilePublicDemands = lazyCall('reconcilePublicDemands');
 export const logoutUser = lazyCall('logoutUser');
 export const saveSettings = lazyCall('saveSettings');
 export const loadSettings = lazyCall('loadSettings');

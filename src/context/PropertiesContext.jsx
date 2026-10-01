@@ -26,7 +26,7 @@ import { playNotificationChime } from '../utils/notificationHub';
 import { sanitizeObject, normalizePhoneNumber } from '../utils/securityShield';
 import { identifyVisitor, getCurrentSessionJourney, getAttributionData } from '../utils/visitorTracker';
 import { routeLeadAutomatically } from '../utils/leadRoutingEngine';
-import { isRecordArray, readStoredJson } from '../utils/browserStorage';
+import { isRecordArray, readStoredJson, rememberMyDemand } from '../utils/browserStorage';
 import { normalizeAreaKey } from '../utils/areasData';
 import { usePreferences } from './PreferencesContext';
 import { useUIModal } from './UIModalContext';
@@ -494,6 +494,7 @@ export function PropertiesProvider({ children }) {
   // Demands Handlers
   const handleAddPublicDemand = useCallback(async (newDemand) => {
     const sanitizedDemand = sanitizeObject(newDemand);
+    rememberMyDemand(sanitizedDemand);
     setDemands((prev) => {
       const updated = [sanitizedDemand, ...prev];
       localStorage.setItem('oneline_demands', JSON.stringify(updated));

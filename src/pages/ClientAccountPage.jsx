@@ -36,6 +36,7 @@ import { getWhatsAppUrl } from '../utils/founderCmsData';
 import { generateComparePdf } from '../utils/comparePdfGenerator';
 import { normalizePhoneNumber } from '../utils/securityShield';
 import { getAreas, normalizeAreaKey } from '../utils/areasData';
+import { readMyDemands } from '../utils/browserStorage';
 
 function getAreaDisplayName(areaKey, lang = 'ar') {
   if (!areaKey) return lang === 'ar' ? 'سوهاج' : 'Sohag';
@@ -151,14 +152,15 @@ export default function ClientAccountPage({
     return clientLeads.filter(lead => lead.siteVisit || lead.status === 'site_visit');
   }, [clientLeads]);
 
-  // Client's submitted demands
+  // Client's submitted demands: the ones sent from this device for this phone (the public list
+  // has no contact details), with their live status from the published list when available
   const clientDemands = useMemo(() => {
     if (!clientUser?.whatsapp && !clientUser?.phone) return [];
     const clientPhone = clientUser.whatsapp || clientUser.phone;
-    return (demands || []).filter(d => {
-      const dPhone = d.whatsapp || d.phone;
-      return phonesMatch(dPhone, clientPhone);
-    });
+    const liveById = new Map((demands || []).map((d) => [String(d.id), d]));
+    return readMyDemands()
+      .filter((d) => phonesMatch(d.whatsapp || d.phone, clientPhone))
+      .map((d) => ({ ...d, ...(liveById.get(String(d.id)) || {}) }));
   }, [demands, clientUser]);
 
   // Aggregate stats

@@ -83,10 +83,22 @@ service cloud.firestore {
                     && boundedText(request.resource.data, 'description', 3000)
                     // A visitor cannot publish their own demand; staff approve it
                     && (isInventoryEditor() || !('status' in request.resource.data) || request.resource.data.status == 'pending');
-      // Public: published demands only. Staff: everything (pending review queue).
-      allow read: if (resource != null && resource.data.status == 'published') || isStaff();
+      // Staff only: these hold the buyer's name and phone. Visitors read public_demands.
+      allow read: if isStaff();
       allow update: if isInventoryEditor();
       allow delete: if isAdmin();
+    }
+
+    // 📋 2b. PUBLISHED DEMANDS — contact-free copies the site shows. Written by editors when they
+    // publish/unpublish (syncPublicDemand in src/firebaseService.js; same field list there).
+    match /public_demands/{demandId} {
+      allow read: if true;
+      allow create, update: if isInventoryEditor()
+                            && request.resource.data.keys().hasOnly([
+                              'text_ar', 'text_en', 'area', 'area_ar', 'area_en', 'type', 'budget', 'paymentMethod',
+                              'timeframe', 'urgency', 'minSize', 'status', 'timestamp', 'createdAt', 'approvedAt', 'updatedAt'])
+                            && request.resource.data.status == 'published';
+      allow delete: if isInventoryEditor();
     }
 
     // 🏠 3. PROPERTIES INVENTORY
