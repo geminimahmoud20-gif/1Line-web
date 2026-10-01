@@ -43,6 +43,7 @@ import { SELLER_PROOF } from '../config/siteConfig';
 import { getHomepageSlots } from '../utils/featuredSlots';
 import { useAdCampaigns, pickHeroCampaign, getInlineCampaigns } from '../utils/adCampaigns';
 import { HeroSponsorChip, SponsoredStrip } from '../components/home/SponsoredPlacements';
+import LogoEmblem from '../components/LogoEmblem';
 
 // Keep in sync with the <link rel="preload"> in index.html
 const HERO_POSTER_DEFAULT = 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1600&q=70';
@@ -489,6 +490,7 @@ export default function HomePage({
 
         <div className="hx-hero-inner">
           <p className="hx-eyebrow">
+            <LogoEmblem size={22} className="hx-eyebrow-emblem" />
             <span dir="ltr">1LINE REAL ESTATE SOLUTIONS</span>
             <i aria-hidden="true" />
             <span>{lang === 'ar' ? 'سوهاج • القاهرة الكبرى' : 'SOHAG • GREATER CAIRO'}</span>
