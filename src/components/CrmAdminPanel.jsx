@@ -1,12 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Lock, Eye, EyeOff, ShieldCheck, AlertCircle, X, Clock } from 'lucide-react';
+import { X, Clock } from 'lucide-react';
 import { loginUser, logAuditEvent, migrateInlineLeadContacts } from '../firebaseService';
 import { exportToCsv } from '../utils/exportCsv';
 
 import { canExportCsv, canDeleteLead, canEditLeadsRole, assignableDesks } from '../utils/rbacRules';
-import { SOHAG_AREAS, PROPERTY_TYPES } from '../data/propertiesData';
-import { getAreas } from '../utils/areasData';
-import { formatLeadType } from '../utils/crmLabels';
 
 // Enterprise PropTech Modules
 import KanbanPipeline from './crm/KanbanPipeline';
@@ -28,6 +25,8 @@ import LeadQuickDrawer from './crm/LeadQuickDrawer';
 import CrmExecutiveDashboard from './crm/CrmExecutiveDashboard';
 import { CRM_ROLES } from './crm/crmRoles';
 import EditLeadModal from './crm/EditLeadModal';
+import { LEAD_EXPORT_HEADERS, makeLeadFormatters } from './crm/leadFormatters';
+import CrmLoginGate from './crm/CrmLoginGate';
 
 export const CrmAdminPanel = ({
   lang = 'ar',
@@ -157,60 +156,7 @@ export const CrmAdminPanel = ({
     }
   };
 
-  const getLocalizedPropertyType = (typeKey) => {
-    if (!typeKey) return isAr ? 'عقار غير محدد' : 'N/A';
-    const found = PROPERTY_TYPES.find(t => t.id === typeKey);
-    if (found) return isAr ? found.name_ar : found.name_en;
-    const fallbackMap = {
-      apartment: 'شقة سكنية',
-      retail: 'محل تجاري',
-      villa: 'فيلا / تاون هاوس',
-      office: 'مكتب إداري / عيادة',
-      land: 'قطعة أرض',
-      building: 'عمارة سكنية'
-    };
-    return fallbackMap[typeKey.toLowerCase()] || formatLeadType(typeKey, isAr);
-  };
-
-  const getLocalizedArea = (areaKey) => {
-    if (!areaKey) return isAr ? 'سوهاج' : 'Sohag';
-    // getAreas() includes Cairo and CMS-added districts; SOHAG_AREAS is the static fallback
-    const found = getAreas().find(a => a.id === areaKey) || SOHAG_AREAS.find(a => a.id === areaKey);
-    if (found) return isAr ? found.name_ar : found.name_en;
-    return areaKey;
-  };
-
-  const formatLeadStatus = (status) => {
-    const map = {
-      new: ['جديد', 'New'],
-      contacted: ['تم التواصل', 'Contacted'],
-      site_visit: ['معاينة مجدولة', 'Site visit'],
-      negotiating: ['قيد التفاوض', 'Negotiating'],
-      closing: ['توقيع وحجز', 'Closing'],
-      closed: ['صفقة ناجحة', 'Closed won'],
-      lost: ['مفقود', 'Lost']
-    };
-    const hit = map[status] || map.new;
-    return isAr ? hit[0] : hit[1];
-  };
-
-  const formatLeadTypeBadge = (type) => {
-    if (isAr) {
-      const map = {
-        buyer: 'طلب شراء',
-        seller: 'عرض بيع',
-        reservation_request: 'طلب حجز مبدئي',
-        viewing_request: 'طلب معاينة',
-        investor: 'مستثمر VIP',
-        broker: 'وسيط عقاري',
-        callback_request: 'طلب اتصال',
-        express_buyer: 'طلب شراء سريع',
-        request: 'استفسار عام'
-      };
-      return map[type] || t[type] || type;
-    }
-    return t[type] || type;
-  };
+  const { getLocalizedPropertyType, getLocalizedArea, toLeadExportRow } = makeLeadFormatters(isAr, t);
 
   // Bulk Selection Handlers
   const handleToggleSelectAll = (visibleLeads) => {
@@ -275,52 +221,6 @@ export const CrmAdminPanel = ({
       }
       setSelectedLeadIds([]);
     }
-  };
-
-  // Leads keep area/budget/propertyType under `details`; exporting the raw objects left those columns empty.
-  const LEAD_EXPORT_HEADERS = {
-    id: 'المعرف',
-    name: 'اسم العميل',
-    phone: 'رقم الهاتف',
-    whatsapp: 'رقم الواتساب',
-    email: 'البريد الإلكتروني',
-    type: 'نوع الطلب',
-    propertyType: 'نوع العقار',
-    area: 'المنطقة',
-    budget: 'الميزانية',
-    status: 'الحالة',
-    temperature: 'درجة الاهتمام',
-    score: 'التقييم',
-    assignedTo: 'المسؤول',
-    source: 'المصدر',
-    nextFollowUpAt: 'المتابعة القادمة',
-    createdAt: 'تاريخ الإنشاء',
-    notes: 'الملاحظات'
-  };
-
-  const toLeadExportRow = (l) => {
-    const d = l.details || {};
-    const areaKey = l.area || d.area || d.district;
-    const typeKey = l.propertyType || d.propertyType;
-    return {
-      id: l.id,
-      name: l.name,
-      phone: l.phone,
-      whatsapp: l.whatsapp,
-      email: l.email || d.email || '',
-      type: formatLeadTypeBadge(l.type),
-      propertyType: typeKey ? getLocalizedPropertyType(typeKey) : '',
-      area: areaKey ? getLocalizedArea(areaKey) : '',
-      budget: l.budget || d.budget || d.expectedPrice || '',
-      status: formatLeadStatus(l.status),
-      temperature: { hot: 'ساخن', warm: 'دافئ', cold: 'بارد' }[l.temperature] || '',
-      score: l.score ?? '',
-      assignedTo: l.assignedTo || '',
-      source: l.source || '',
-      nextFollowUpAt: l.nextFollowUpAt || '',
-      createdAt: l.createdAt || l.timestamp || '',
-      notes: l.notes || ''
-    };
   };
 
   const exportLeadRows = (rows, fileName, scope) => {
@@ -690,89 +590,19 @@ export const CrmAdminPanel = ({
 
   if (!crmAuthenticated) {
     return (
-      <div style={{ maxWidth: '420px', margin: '60px auto', textAlign: 'center' }}>
-        <div style={{ 
-          background: 'var(--crm-card)', 
-          border: '1px solid var(--border-light)', 
-          borderRadius: 'var(--radius-lg)', 
-          padding: '40px 30px',
-          boxShadow: 'var(--shadow-lg)'
-        }}>
-          <Lock size={40} style={{ color: 'var(--crm-accent-text)', marginBottom: '16px' }} />
-          <h2 style={{ marginBottom: '8px' }}>
-            {isAr ? 'لوحة تحكم الإدارة' : 'Admin CRM Login'}
-          </h2>
-          <p style={{ fontSize: 'var(--crm-text-base)', color: 'var(--crm-muted)', marginBottom: '24px' }}>
-            {firebaseConnected 
-              ? (isAr ? 'قم بتسجيل الدخول باستخدام حساب المشرف العقاري المعتمد.' : 'Login with certified admin credentials.')
-              : (isAr ? 'أدخل كلمة المرور للوصول إلى وضع عدم الاتصال.' : 'Enter password to access offline mode.')}
-          </p>
-          
-          <form onSubmit={handleLoginSubmit}>
-            {firebaseConnected && (
-              <div style={{ marginBottom: '16px', textAlign: 'right' }}>
-                <label style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold', color: 'var(--crm-muted)' }}>
-                  {isAr ? 'البريد الإلكتروني' : 'Email Address'}
-                </label>
-                <input 
-                  type="email"
-                  required
-                  className="form-input"
-                  placeholder="admin@oneline.com"
-                  value={crmEmailInput} data-testid="login-email"
-                  onChange={(e) => setCrmEmailInput(e.target.value)}
-                  style={{ marginTop: '4px', textAlign: 'left', direction: 'ltr' }}
-                />
-              </div>
-            )}
-
-            <div style={{ marginBottom: '16px', textAlign: 'right' }}>
-              <label style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold', color: 'var(--crm-muted)' }}>
-                {isAr ? 'كلمة المرور' : 'Password'}
-              </label>
-              <div style={{ position: 'relative', marginTop: '4px' }}>
-                <input 
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  className="form-input"
-                  placeholder={isAr ? 'كلمة المرور' : 'Password'}
-                  value={crmPasswordInput} data-testid="login-password"
-                  onChange={(e) => setCrmPasswordInput(e.target.value)}
-                  style={{ 
-                    paddingInlineEnd: '40px', 
-                    textAlign: firebaseConnected ? 'left' : 'center', 
-                    fontSize: 'var(--crm-text-lg)', 
-                    letterSpacing: firebaseConnected ? 'normal' : '2px' 
-                  }}
-                />
-                <button 
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{ 
-                    position: 'absolute', top: '50%', transform: 'translateY(-50%)',
-                    [isAr ? 'left' : 'right']: '12px',
-                    background: 'none', border: 'none', cursor: 'pointer', color: 'var(--crm-muted)'
-                  }}
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-            </div>
-
-            {crmAuthError && (
-              <p style={{ color: 'var(--rose)', fontSize: 'var(--crm-text-base)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
-                <AlertCircle size={14} />
-                {crmAuthError}
-              </p>
-            )}
-
-            <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
-              <ShieldCheck size={16} />
-              {loading ? (isAr ? 'جاري التحقق...' : 'Verifying...') : (isAr ? 'دخول لوحة التحكم' : 'Login to CRM')}
-            </button>
-          </form>
-        </div>
-      </div>
+      <CrmLoginGate
+        crmAuthError={crmAuthError}
+        crmEmailInput={crmEmailInput}
+        crmPasswordInput={crmPasswordInput}
+        firebaseConnected={firebaseConnected}
+        handleLoginSubmit={handleLoginSubmit}
+        isAr={isAr}
+        loading={loading}
+        setCrmEmailInput={setCrmEmailInput}
+        setCrmPasswordInput={setCrmPasswordInput}
+        setShowPassword={setShowPassword}
+        showPassword={showPassword}
+      />
     );
   }
 

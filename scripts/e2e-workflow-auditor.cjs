@@ -31,7 +31,7 @@ async function runAudit() {
   console.log(`${CYAN}${BOLD}==============================================================================${RESET}\n`);
 
   // Shared file references
-  const homePageSrc = fs.readFileSync(path.join(__dirname, '../src/pages/HomePage.jsx'), 'utf8');
+  const homePageSrc = ['../src/pages/HomePage.jsx', '../src/components/home/HomeHero.jsx', '../src/components/home/HomeMarketplace.jsx'].map((f) => fs.readFileSync(path.join(__dirname, f), 'utf8')).join('\n');
   const propsPageSrc = fs.readFileSync(path.join(__dirname, '../src/pages/PropertiesPage.jsx'), 'utf8');
   const appSrc = fs.readFileSync(path.join(__dirname, '../src/App.jsx'), 'utf8');
   const demandsPortalSrc = fs.readFileSync(path.join(__dirname, '../src/components/DemandsPortal.jsx'), 'utf8');
