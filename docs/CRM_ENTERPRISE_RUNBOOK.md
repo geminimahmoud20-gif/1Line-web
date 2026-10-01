@@ -153,4 +153,4 @@ npm run build
    node scripts/migrate-lead-contacts.mjs --apply  # تنفيذ
    ```
    السكربت بينقل أرقام العملاء والطلبات والمغتربين والبدل. جلسات المدير في الـ CRM بتنقل اللي بتحمّله تلقائياً كمان، لكن السكربت بيغطي الكل.
-4. **App Check:** مفتاح reCAPTCHA v3 ← تسجيله في Firebase App Check ← `VITE_RECAPTCHA_SITE_KEY` في Vercel ← بعد ما الطلبات تظهر "verified" فعّل Enforce على Firestore.
+4. **App Check:** مفتاح reCAPTCHA Enterprise (Google Cloud → Security → reCAPTCHA، نوع Website، بدون checkbox) ← تسجيله في Firebase App Check تبويب reCAPTCHA Enterprise ← `VITE_RECAPTCHA_SITE_KEY` في Vercel ← بعد ما الطلبات تظهر "verified" فعّل Enforce على Firestore.
