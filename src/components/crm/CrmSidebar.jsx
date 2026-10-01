@@ -33,11 +33,11 @@ export default function CrmSidebar({
   }, [demands]);
 
   // Keep system group open if active tab is related
-  useEffect(() => {
-    if (activeTab === 'system' || activeTab === 'areas' || activeTab === 'corporate') {
-      setSystemExpanded(true);
-    }
-  }, [activeTab]);
+  const [sidebarTab, setSidebarTab] = useState(activeTab);
+  if (sidebarTab !== activeTab) {
+    setSidebarTab(activeTab);
+    if (activeTab === 'system' || activeTab === 'areas' || activeTab === 'corporate') setSystemExpanded(true);
+  }
 
   // Drag resizer handler
   useEffect(() => {

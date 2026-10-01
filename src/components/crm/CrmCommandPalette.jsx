@@ -23,12 +23,18 @@ export default function CrmCommandPalette({
   const { theme, toggleTheme } = usePreferences();
 
   // Focus input whenever opened
-  useEffect(() => {
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (wasOpen !== isOpen) {
+    setWasOpen(isOpen);
     if (isOpen) {
       setQuery('');
       setSelectedIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
     }
+  }
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const t = setTimeout(() => inputRef.current?.focus(), 60);
+    return () => clearTimeout(t);
   }, [isOpen]);
 
   // Static action commands
@@ -168,7 +174,7 @@ export default function CrmCommandPalette({
       ...filteredProperties,
       ...filteredDemands
     ];
-  }, [query, quickActions, leads, properties, demands, onSelectLead, onSelectProperty, onSelectDemand]);
+  }, [query, userRole, quickActions, leads, properties, demands, onSelectLead, onSelectProperty, onSelectDemand]);
 
   // Keyboard navigation inside list
   const handleKeyDown = (e) => {

@@ -93,7 +93,7 @@ export function SponsoredStrip({ campaigns = [], lang = 'ar' }) {
   const count = campaigns.length;
   const reduceMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-  useEffect(() => { if (index >= count) setIndex(0); }, [count, index]);
+  if (count > 0 && index >= count) setIndex(0); // list shrank: restart (adjusted during render)
   useEffect(() => {
     if (count <= 1 || paused || reduceMotion) return undefined;
     const t = setInterval(() => setIndex((i) => (i + 1) % count), 8000);

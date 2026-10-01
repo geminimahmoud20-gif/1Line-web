@@ -49,12 +49,14 @@ export default function Header({
     return paths.some(p => isActive(p));
   };
 
-  // Close menus on outside click or route change
-  useEffect(() => {
+  // Close menus on route change (adjusted during render, not in an effect)
+  const [menuPath, setMenuPath] = useState(location.pathname);
+  if (menuPath !== location.pathname) {
+    setMenuPath(location.pathname);
     setActiveDropdown(null);
     setToolsMenuOpen(false);
     setMobileMenuOpen(false);
-  }, [location.pathname]);
+  }
 
   useEffect(() => {
     const handleOutsideClick = (e) => {

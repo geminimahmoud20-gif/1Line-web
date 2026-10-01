@@ -150,8 +150,10 @@ export default function PropertyDetailPage({
   // The viewing form opens on demand so the sidebar leads with two clear actions
   const [showBookingForm, setShowBookingForm] = useState(false);
 
-  // Sync clientUser details if authenticated
-  useEffect(() => {
+  // Prefill the booking form when the client signs in (adjusted during render, not in an effect)
+  const [prefilledFor, setPrefilledFor] = useState(clientUser);
+  if (prefilledFor !== clientUser) {
+    setPrefilledFor(clientUser);
     if (clientUser) {
       setBookingForm((prev) => ({
         ...prev,
@@ -159,7 +161,7 @@ export default function PropertyDetailPage({
         phone: prev.phone || clientUser.whatsapp || clientUser.phone || ''
       }));
     }
-  }, [clientUser]);
+  }
 
   if (!property) {
     return <NotFoundPage lang={lang} variant="property" />;

@@ -1,10 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, SlidersHorizontal, RotateCcw, X, Sparkles, ShieldCheck, FileCheck, Waves, PieChart, ChevronDown, ChevronUp, KeyRound, Check } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { getAreas } from '../../utils/areasData';
 import './property-filters-mobile.css';
 
-export const SMART_FILTER_TAGS = [
+const SMART_FILTER_TAGS = [
   { id: 'nile_view', label_ar: 'إطلالة نيلية', label_en: 'Nile View', icon: Waves },
   { id: 'registered', label_ar: 'مسجل شهر عقاري', label_en: 'Registered Deed', icon: FileCheck },
   { id: 'licensed', label_ar: 'ترخيص ونموذج 10', label_en: 'Licensed Building', icon: ShieldCheck },
@@ -44,7 +44,7 @@ export default function PropertyFilters({
   };
 
   // Build active filter badges for the Active Chips bar
-  const activeChips = useMemo(() => {
+  const activeChips = (() => {
     const list = [];
 
     if (filters.query && filters.query.trim()) {
@@ -127,7 +127,7 @@ export default function PropertyFilters({
     }
 
     return list;
-  }, [filters, areas, isAr]);
+  })();
 
   return (
     <div className={`properties-filters-card luxury-filters-container compact-filters-card ${mobileOpen ? 'pf-open' : 'pf-folded'}`}>

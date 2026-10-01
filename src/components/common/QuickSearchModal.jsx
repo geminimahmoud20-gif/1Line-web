@@ -21,14 +21,18 @@ export default function QuickSearchModal({
   const isAr = lang === 'ar';
 
   // Auto-focus input when modal opens
-  useEffect(() => {
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (wasOpen !== isOpen) {
+    setWasOpen(isOpen);
     if (isOpen) {
       setQuery('');
       setSelectedIndex(0);
-      setTimeout(() => {
-        if (inputRef.current) inputRef.current.focus();
-      }, 60);
     }
+  }
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const t = setTimeout(() => inputRef.current?.focus(), 60);
+    return () => clearTimeout(t);
   }, [isOpen]);
 
   const areas = useMemo(() => {

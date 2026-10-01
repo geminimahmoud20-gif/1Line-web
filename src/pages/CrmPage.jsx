@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Lock, ShieldCheck, Sparkles, KeyRound, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 
-import CrmAdminPanel, { CRM_ROLES } from '../components/CrmAdminPanel';
+import CrmAdminPanel from '../components/CrmAdminPanel';
+import { CRM_ROLES } from '../components/crm/crmRoles';
 import PropertyManagerPanel from '../components/crm/PropertyManagerPanel';
 import MegaProjectsManagerPanel from '../components/crm/MegaProjectsManagerPanel';
 import DemandsManagerPanel from '../components/crm/DemandsManagerPanel';

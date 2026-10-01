@@ -29,7 +29,7 @@ service cloud.firestore {
     }
 
     // Lead visibility. Desk agents work only their own queue: leads assigned to their desk plus the
-    // shared 'Unassigned' pool. Desk names match ROLES in CrmAdminPanel.jsx and DESK_BY_ROLE
+    // shared 'Unassigned' pool. Desk names match CRM_ROLES in components/crm/crmRoles.js and DESK_BY_ROLE
     // in src/utils/rbacRules.js. Managers, admins and the read-only roles see every lead.
     function leadDesk() {
       return {'sales_agent': 'Sales Advisor Team', 'agent_east': 'Sales Team A', 'agent_new_sohag': 'Sales Team B'}.get(role(), '');

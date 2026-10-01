@@ -57,7 +57,7 @@ export default function ClientAuthModal({ lang = 'ar' }) {
       document.removeEventListener('visibilitychange', handleReturn);
       if (timerId) clearTimeout(timerId);
     };
-  }, [waitingReturn]);
+  }, [waitingReturn, setClientAuthModalOpen]);
 
   if (!clientAuthModalOpen) return null;
 

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
 import { identifyVisitor } from '../utils/visitorTracker';
 import { sanitizeObject } from '../utils/securityShield';
@@ -64,8 +64,12 @@ export function ClientAuthProvider({
     }
   }, [clientUser, favorites]);
 
-  // Restore saved favorites on initial mount if client is already logged in
+  // Restore saved favorites once per signed-in client (on load or right after verification)
+  const restoredForRef = useRef(null);
   useEffect(() => {
+    const clientKey = clientUser ? (clientUser.whatsapp || clientUser.phone || clientUser.id || '') : null;
+    if (restoredForRef.current === clientKey) return;
+    restoredForRef.current = clientKey;
     if (clientUser && (!favorites || favorites.length === 0) && typeof restoreFavorites === 'function') {
       const phoneDigits = (clientUser.whatsapp || clientUser.phone || clientUser.id || '').replace(/[^0-9]/g, '');
       if (phoneDigits) {
@@ -80,7 +84,7 @@ export function ClientAuthProvider({
         } catch { /* storage unavailable — non-fatal */ }
       }
     }
-  }, [clientUser]);
+  }, [clientUser, favorites, restoreFavorites]);
 
   /**
    * Guarded Action Wrapper:

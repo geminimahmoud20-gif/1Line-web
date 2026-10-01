@@ -27,7 +27,10 @@ const ScrollReveal = ({
   ...rest
 }) => {
   const ref = useRef(null);
-  const [visible, setVisible] = useState(false);
+  // Reduced motion or no IntersectionObserver → visible from the first render, no effect needed
+  const [visible, setVisible] = useState(() => typeof window === 'undefined'
+    || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    || !window.IntersectionObserver);
 
   // Calculate transform based on direction
   let transformStr = 'none';
@@ -35,21 +38,9 @@ const ScrollReveal = ({
   if (direction === 'down') transformStr = `translateY(-${distance}px)`;
 
   useEffect(() => {
-    // Respect prefers-reduced-motion — if user disabled motion, show immediately
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduced) {
-      setVisible(true);
-      return;
-    }
-
     const node = ref.current;
-    if (!node) return;
-
-    // If IntersectionObserver isn't supported, just show immediately
-    if (!window.IntersectionObserver) {
-      setVisible(true);
-      return;
-    }
+    // Already shown from the first render (see useState above) — nothing to observe
+    if (!node || !window.IntersectionObserver || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
 
     const observer = new IntersectionObserver(
       (entries) => {

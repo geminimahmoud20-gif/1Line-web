@@ -26,7 +26,12 @@ export default defineConfig([
         varsIgnorePattern: '^_', 
         caughtErrors: 'none' 
       }],
-      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      // Context modules export their Provider plus the matching use*() hook — the standard pattern;
+      // an edit there does a full reload instead of a hot swap, which is fine for providers.
+      'react-refresh/only-export-components': ['warn', {
+        allowConstantExport: true,
+        allowExportNames: ['useAuth', 'useClientAuth', 'useCurrency', 'usePreferences', 'useProperties', 'useUIModal']
+      }],
       'react-hooks/set-state-in-effect': 'warn',
     },
   },

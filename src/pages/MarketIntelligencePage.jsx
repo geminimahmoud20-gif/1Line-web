@@ -9,7 +9,7 @@ export default function MarketIntelligencePage({ lang = 'ar' }) {
   const navigate = useNavigate();
   const [selectedAssetType, setSelectedAssetType] = useState('all'); // 'all' | 'residential' | 'commercial'
   const [userBudget, setUserBudget] = useState(2500000);
-  const [tick, setTick] = useState(0);
+  const [areas, setAreas] = useState(getAreas);
   const isAr = lang === 'ar';
 
   // Dynamic SEO Meta Tags for Market Intelligence
@@ -26,14 +26,14 @@ export default function MarketIntelligencePage({ lang = 'ar' }) {
 
   // Live listen for area data updates from CRM
   useEffect(() => {
-    const handleUpdate = () => setTick(t => t + 1);
+    const handleUpdate = () => setAreas(getAreas());
     window.addEventListener('oneline_areas_updated', handleUpdate);
     return () => window.removeEventListener('oneline_areas_updated', handleUpdate);
   }, []);
 
   // Live Sohag District Price Benchmark & Rental Yield Intelligence Data
   const districtsData = useMemo(() => {
-    const rawAreas = getAreas().filter(a => a.id !== 'all');
+    const rawAreas = areas.filter(a => a.id !== 'all');
     
     // Metadata presets per district ID to enrich dynamic prices
     const districtMeta = {
@@ -147,7 +147,7 @@ export default function MarketIntelligencePage({ lang = 'ar' }) {
         category: meta.category
       };
     });
-  }, [tick]);
+  }, [areas]);
 
   const filteredDistricts = selectedAssetType === 'all' 
     ? districtsData 
