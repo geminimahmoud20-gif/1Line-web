@@ -20,7 +20,8 @@ import {
   deleteDemandDoc,
   subscribeToCatalog,
   upsertCatalogItem,
-  deleteCatalogItem
+  deleteCatalogItem,
+  syncPendingLeads
 } from '../firebaseLazy';
 import { playNotificationChime } from '../utils/notificationHub';
 import { sanitizeObject, normalizePhoneNumber } from '../utils/securityShield';
@@ -28,8 +29,47 @@ import { identifyVisitor, getCurrentSessionJourney, getAttributionData } from '.
 import { routeLeadAutomatically } from '../utils/leadRoutingEngine';
 import { isRecordArray, readStoredJson, rememberMyDemand } from '../utils/browserStorage';
 import { normalizeAreaKey } from '../utils/areasData';
+import { enqueuePendingLead, pendingLeadCount } from '../utils/leadQueue';
 import { usePreferences } from './PreferencesContext';
 import { useUIModal } from './UIModalContext';
+
+// ── Browser cache of leads/demands ───────────────────────────────────────────
+// The cache keeps only what this device created (a visitor's own requests, offline drafts).
+// Leads that came from Firestore (_cloud, set by the snapshot below) are CRM data with client contacts: they live in
+// memory only and are dropped on sign-out, so a shared computer keeps no client list.
+const SAMPLE_LEAD_IDS = new Set(INITIAL_LEADS.map((l) => String(l.id)));
+const LEAD_CACHE_VERSION_KEY = 'oneline_crm_leads_v';
+const LEAD_CACHE_VERSION = '2';
+const isCloudLead = (l) => Boolean(l?._cloud);
+const persistLeads = (list) => {
+  try {
+    localStorage.setItem('oneline_crm_leads', JSON.stringify(list.filter((l) => !isCloudLead(l))));
+    localStorage.setItem(LEAD_CACHE_VERSION_KEY, LEAD_CACHE_VERSION);
+  } catch { /* storage full or blocked — cloud copy is the source of truth */ }
+};
+// Caches written before v2 may hold a whole CRM client list; they can't be told apart from a
+// visitor's own requests, so they are discarded once.
+const readLeadCache = () => {
+  try {
+    if (localStorage.getItem(LEAD_CACHE_VERSION_KEY) !== LEAD_CACHE_VERSION) {
+      localStorage.removeItem('oneline_crm_leads');
+      localStorage.setItem(LEAD_CACHE_VERSION_KEY, LEAD_CACHE_VERSION);
+      return [];
+    }
+  } catch { return []; }
+  return readStoredJson('oneline_crm_leads', [], isRecordArray);
+};
+const DEMAND_CONTACT_FIELDS = ['phone', 'whatsapp', 'email', 'clientName', 'name'];
+const persistDemands = (list) => {
+  try {
+    const safe = list.map((d) => {
+      const copy = { ...d };
+      DEMAND_CONTACT_FIELDS.forEach((k) => delete copy[k]);
+      return copy;
+    });
+    persistDemands(safe);
+  } catch { /* storage full or blocked */ }
+};
 
 const PropertiesContext = createContext(null);
 
@@ -274,8 +314,8 @@ export function PropertiesProvider({ children }) {
 
   // CRM Leads State
   const [leads, setLeads] = useState(() => {
-    const stored = readStoredJson('oneline_crm_leads', INITIAL_LEADS, isRecordArray);
-    return Array.isArray(stored) ? stored.filter(l => l && typeof l === 'object') : INITIAL_LEADS;
+    // Sample leads and cloud leads cached by older versions are dropped (see persistLeads)
+    return readLeadCache().filter((l) => l && typeof l === 'object' && !SAMPLE_LEAD_IDS.has(String(l.id)) && !isCloudLead(l));
   });
   const leadsRef = useRef(leads);
   useEffect(() => {
@@ -434,20 +474,12 @@ export function PropertiesProvider({ children }) {
     const { updated: nextLeads, finalLead } = buildNextLeads(leadsRef.current);
     leadsRef.current = nextLeads;
     setLeads(nextLeads);
-    try {
-      localStorage.setItem('oneline_crm_leads', JSON.stringify(nextLeads));
-    } catch {
-      // Storage full or blocked; the cloud save below still runs
-    }
+    persistLeads(nextLeads);
 
     if (isFirebaseActive() && finalLead) {
       if (typeof navigator !== 'undefined' && !navigator.onLine) {
-        try {
-          const queue = JSON.parse(localStorage.getItem('oneline_offline_lead_queue') || '[]');
-          queue.push(finalLead);
-          localStorage.setItem('oneline_offline_lead_queue', JSON.stringify(queue));
-          triggerToast(lang === 'ar' ? 'تم حفظ الطلب محلياً دون اتصال وسيتم رفعه تلقائياً فور توفر الإنترنت 📶' : 'Saved offline! Will sync automatically when connected.', 'info');
-        } catch { /* storage unavailable */ }
+        enqueuePendingLead(finalLead);
+        triggerToast(lang === 'ar' ? 'تم حفظ الطلب محلياً دون اتصال وسيتم رفعه تلقائياً فور توفر الإنترنت 📶' : 'Saved offline! Will sync automatically when connected.', 'info');
       } else {
         // Save in the background: Firestore's addDoc waits for a server ack, which can hang on a
         // weak connection, so the visitor's confirmation must not depend on it.
@@ -457,12 +489,9 @@ export function PropertiesProvider({ children }) {
             saveNotification(`Lead update: ${finalLead.name || 'Client'}`).catch(() => {});
           })
           .catch((err) => {
+            // e.g. the Firebase chunk itself failed to download — keep the lead for the next visit
             console.error('Firebase save lead error:', err);
-            try {
-              const queue = JSON.parse(localStorage.getItem('oneline_offline_lead_queue') || '[]');
-              if (!queue.some((q) => q && q.id === finalLead.id)) queue.push(finalLead);
-              localStorage.setItem('oneline_offline_lead_queue', JSON.stringify(queue));
-            } catch { /* storage unavailable */ }
+            enqueuePendingLead(finalLead);
           });
       }
     }
@@ -470,17 +499,14 @@ export function PropertiesProvider({ children }) {
     return finalLead;
   }, [soundEnabled, lang, triggerToast]);
 
-  // Offline queue recovery
+  // Offline queue recovery: upload on reconnect and tell the visitor
   useEffect(() => {
     const handleOnline = async () => {
+      if (pendingLeadCount() === 0 || !isFirebaseActive()) return;
       try {
-        const queue = JSON.parse(localStorage.getItem('oneline_offline_lead_queue') || '[]');
-        if (Array.isArray(queue) && queue.length > 0 && isFirebaseActive()) {
-          for (const item of queue) {
-            await saveLead(item);
-          }
-          localStorage.removeItem('oneline_offline_lead_queue');
-          triggerToast(lang === 'ar' ? `تمت مزامنة ${queue.length} طلبات مسجلة دون اتصال بنجاح! 📶` : `Synced ${queue.length} offline leads!`, 'success');
+        const synced = await syncPendingLeads();
+        if (synced > 0) {
+          triggerToast(lang === 'ar' ? `تمت مزامنة ${synced} طلبات مسجلة دون اتصال بنجاح! 📶` : `Synced ${synced} offline leads!`, 'success');
         }
       } catch (err) {
         console.error('Offline queue sync error:', err);
@@ -497,7 +523,7 @@ export function PropertiesProvider({ children }) {
     rememberMyDemand(sanitizedDemand);
     setDemands((prev) => {
       const updated = [sanitizedDemand, ...prev];
-      localStorage.setItem('oneline_demands', JSON.stringify(updated));
+      persistDemands(updated);
       return updated;
     });
 
@@ -526,7 +552,7 @@ export function PropertiesProvider({ children }) {
     const sanitizedPayload = sanitizeObject(demandPayload);
     setDemands((prev) => {
       const updated = [sanitizedPayload, ...prev];
-      localStorage.setItem('oneline_demands', JSON.stringify(updated));
+      persistDemands(updated);
       return updated;
     });
     if (isFirebaseActive()) {
@@ -547,7 +573,7 @@ export function PropertiesProvider({ children }) {
         const timeB = new Date(b.approvedAt || b.createdAt || b.timestamp || 0).getTime();
         return timeB - timeA;
       });
-      localStorage.setItem('oneline_demands', JSON.stringify(sorted));
+      persistDemands(sorted);
       return sorted;
     });
     if (isFirebaseActive()) {
@@ -558,7 +584,7 @@ export function PropertiesProvider({ children }) {
   const handleUpdateDemand = useCallback((demandId, updatedData) => {
     setDemands((prev) => {
       const updated = prev.map(d => d.id === demandId ? { ...d, ...updatedData } : d);
-      localStorage.setItem('oneline_demands', JSON.stringify(updated));
+      persistDemands(updated);
       return updated;
     });
     if (isFirebaseActive()) {
@@ -569,7 +595,7 @@ export function PropertiesProvider({ children }) {
   const handleDeleteDemand = useCallback((demandId) => {
     setDemands((prev) => {
       const updated = prev.filter(d => d.id !== demandId);
-      localStorage.setItem('oneline_demands', JSON.stringify(updated));
+      persistDemands(updated);
       return updated;
     });
     if (isFirebaseActive()) {
@@ -580,7 +606,7 @@ export function PropertiesProvider({ children }) {
   const handleUnpublishDemand = useCallback((demandId) => {
     setDemands((prev) => {
       const updated = prev.map(d => d.id === demandId ? { ...d, status: 'pending' } : d);
-      localStorage.setItem('oneline_demands', JSON.stringify(updated));
+      persistDemands(updated);
       return updated;
     });
     if (isFirebaseActive()) {
@@ -592,8 +618,14 @@ export function PropertiesProvider({ children }) {
   useEffect(() => {
     if (isFirebaseActive()) {
       const unsubLeads = subscribeToLeads((cloudLeads, meta) => {
-        if (cloudLeads && cloudLeads.length > 0) {
-          const valid = cloudLeads.filter(l => l && typeof l === 'object');
+        if (meta?.signedOut) {
+          // Signed out: drop every CRM lead from memory, keep only this device's own requests
+          setLeads((prev) => prev.filter((l) => !isCloudLead(l)));
+          return;
+        }
+        // A server snapshot is the full list for this role — empty included (an agent's empty queue)
+        if (cloudLeads && (cloudLeads.length > 0 || !meta?.fromCache)) {
+          const valid = cloudLeads.filter(l => l && typeof l === 'object').map((l) => ({ ...l, _cloud: true }));
           if (meta?.fromCache) {
             // Cache-only snapshot (offline / first paint): merge, never shrink the list to it
             setLeads((prev) => {
@@ -608,6 +640,11 @@ export function PropertiesProvider({ children }) {
         }
       });
       const unsubDemands = subscribeToDemands((cloudDemands, meta) => {
+        // No published demands yet → show the labelled samples (also clears a signed-out staff list)
+        if (meta?.isPublic && !meta.fromCache && cloudDemands?.length === 0) {
+          setDemands(DEMO_DEMANDS);
+          return;
+        }
         if (cloudDemands && cloudDemands.length > 0) {
           const valid = cloudDemands.filter(d => d && typeof d === 'object');
           if (meta?.fromCache) {
@@ -652,7 +689,7 @@ export function PropertiesProvider({ children }) {
 
     const applyToLeads = (mutate) => setLeads((prev) => {
       const updated = prev.map((l) => (l.id === id ? mutate(l) : l));
-      try { localStorage.setItem('oneline_crm_leads', JSON.stringify(updated)); } catch { /* storage full / private mode */ }
+      persistLeads(updated);
       leadsRef.current = updated;
       return updated;
     });
@@ -682,7 +719,7 @@ export function PropertiesProvider({ children }) {
   const handleDeleteLead = useCallback(async (id) => {
     setLeads((prev) => {
       const updated = prev.filter((l) => l.id !== id);
-      localStorage.setItem('oneline_crm_leads', JSON.stringify(updated));
+      persistLeads(updated);
       return updated;
     });
 

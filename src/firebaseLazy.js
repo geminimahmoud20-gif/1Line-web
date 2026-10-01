@@ -44,6 +44,7 @@ const lazySubscribe = (name) => (...args) => {
 export const isFirebaseActive = () => true;
 
 export const saveLead = lazyCall('saveLead');
+export const syncPendingLeads = lazyCall('syncPendingLeads');
 export const saveNotification = lazyCall('saveNotification');
 export const updateLeadField = lazyCall('updateLeadField');
 export const deleteLead = lazyCall('deleteLead');

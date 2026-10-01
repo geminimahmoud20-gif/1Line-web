@@ -6,6 +6,7 @@
 
 import { db, auth, isFirebaseConfigured } from './firebase.js';
 import { DESK_BY_ROLE, UNASSIGNED_DESK } from './utils/rbacRules.js';
+import { enqueuePendingLead, readPendingLeads, writePendingLeads } from './utils/leadQueue.js';
 import {
   collection,
   addDoc,
@@ -255,83 +256,68 @@ export const subscribeToAdStats = (callback) => {
 
 // ===================== LEADS & OFFLINE SYNC QUEUE =====================
 
-const PENDING_LEADS_KEY = 'oneline_pending_leads_queue';
-
 // Guard against concurrent background synchronization tasks
 let isSyncingPendingLeads = false;
 
-/**
- * Enqueues a lead locally if network or Firebase is unavailable (with deduplication).
- */
-export const enqueuePendingLead = (lead) => {
-  try {
-    const raw = localStorage.getItem(PENDING_LEADS_KEY);
-    const list = raw ? JSON.parse(raw) : [];
-
-    // Prevent duplicate lead submission within 30 seconds for identical phone & property
-    const isDuplicate = list.some(item => 
-      item.phone === lead.phone && 
-      item.propertyId === lead.propertyId && 
-      Math.abs(Date.now() - (item.queuedAt || 0)) < 30000
-    );
-
-    if (isDuplicate) {
-      console.warn('🛡️ Duplicate lead submission prevented.');
-      return;
+// One Firestore write for a lead. Document id = app lead id, so updateLeadField/deleteLead
+// (which use lead.id) reach it, and a retried write lands on the same doc instead of a duplicate.
+const writeLead = async (lead, extra = {}) => {
+  const { _cloud, queuedAt: _queuedAt, ...clean } = lead || {};
+  const payload = { ...clean, ...extra, createdAt: serverTimestamp() };
+  if (clean.id !== undefined && clean.id !== null && clean.id !== '') {
+    try {
+      await setDoc(doc(db, 'leads', String(clean.id)), payload);
+      return clean;
+    } catch (error) {
+      // A visitor re-submitting (merged into an existing lead id) is an update, which the
+      // rules reserve for staff — store it as a fresh inquiry instead of dropping it.
+      if (error?.code !== 'permission-denied') throw error;
     }
-
-    list.push({ ...lead, queuedAt: Date.now() });
-    localStorage.setItem(PENDING_LEADS_KEY, JSON.stringify(list));
-    console.warn('⚠️ Lead enqueued locally for automatic background synchronization.');
-  } catch (err) {
-    console.error('Failed to enqueue pending lead:', err);
   }
+  const docRef = await addDoc(collection(db, 'leads'), payload);
+  return { ...clean, id: docRef.id };
 };
 
 /**
  * Synchronizes all locally queued leads to Firebase Firestore when connection is live.
- * Guarded against duplicate concurrent task executions.
+ * Guarded against duplicate concurrent task executions. A lead the rules reject outright
+ * (permission-denied / invalid-argument) can never succeed, so it is dropped instead of
+ * blocking the queue on every visit; anything else stays for the next attempt.
  */
 export const syncPendingLeads = async () => {
-  if (!isFirebaseConfigured() || !db || isSyncingPendingLeads) return;
+  if (!isFirebaseConfigured() || !db || isSyncingPendingLeads) return 0;
   isSyncingPendingLeads = true;
+  let synced = 0;
   try {
-    const raw = localStorage.getItem(PENDING_LEADS_KEY);
-    if (!raw) return;
-    const list = JSON.parse(raw);
-    if (!Array.isArray(list) || list.length === 0) return;
+    const list = readPendingLeads();
+    if (list.length === 0) return 0;
 
     const remaining = [];
     for (const lead of list) {
       try {
-        await addDoc(collection(db, 'leads'), {
-          ...lead,
-          createdAt: serverTimestamp(),
-          syncedFromOfflineQueue: true
-        });
-      } catch {
-        remaining.push(lead);
+        await writeLead(lead, { syncedFromOfflineQueue: true });
+        synced++;
+      } catch (error) {
+        if (['permission-denied', 'invalid-argument'].includes(error?.code)) {
+          console.error('Dropping queued lead the server rejects:', error.code);
+        } else {
+          remaining.push(lead);
+        }
       }
     }
 
-    if (remaining.length > 0) {
-      localStorage.setItem(PENDING_LEADS_KEY, JSON.stringify(remaining));
-    } else {
-      localStorage.removeItem(PENDING_LEADS_KEY);
-      console.log('✅ All offline pending leads synchronized to Cloud.');
-    }
+    writePendingLeads(remaining);
   } catch (err) {
     console.error('Error syncing pending leads:', err);
   } finally {
     isSyncingPendingLeads = false;
   }
+  return synced;
 };
 
-// Automatic network recovery listener
+// Retry on every page load: a visitor may have closed the tab while offline.
+// Reconnects are handled by PropertiesContext, which also tells the visitor.
 if (typeof window !== 'undefined') {
-  window.addEventListener('online', () => {
-    syncPendingLeads();
-  });
   setTimeout(syncPendingLeads, 4000);
 }
 
@@ -341,20 +327,7 @@ if (typeof window !== 'undefined') {
 export const saveLead = async (lead) => {
   if (isFirebaseConfigured() && db) {
     try {
-      const payload = { ...lead, createdAt: serverTimestamp() };
-      // Document id = app lead id, so updateLeadField/deleteLead (which use lead.id) reach it.
-      if (lead.id !== undefined && lead.id !== null && lead.id !== '') {
-        try {
-          await setDoc(doc(db, 'leads', String(lead.id)), payload);
-          return lead;
-        } catch (error) {
-          // A visitor re-submitting (merged into an existing lead id) is an update, which the
-          // rules reserve for admins — store it as a fresh inquiry instead of dropping it.
-          if (error?.code !== 'permission-denied') throw error;
-        }
-      }
-      const docRef = await addDoc(collection(db, 'leads'), payload);
-      return { ...lead, id: docRef.id };
+      return await writeLead(lead);
     } catch (error) {
       console.error('Firebase saveLead error, enqueuing for background retry:', error);
       enqueuePendingLead(lead);
@@ -424,7 +397,10 @@ export const subscribeToLeads = (callback, maxCount = 150) => {
     const unsubAuth = onAuthStateChanged(auth, async (user) => {
       const version = ++authVersion;
       stopSnapshot();
-      if (!user) return;
+      if (!user) {
+        callback([], { signedOut: true });
+        return;
+      }
       let role = '';
       try {
         role = (await user.getIdTokenResult()).claims?.role || '';
@@ -450,10 +426,11 @@ export const updateLeadField = async (leadId, fieldUpdates) => {
   if (isFirebaseConfigured() && db) {
     try {
       const leadRef = doc(db, 'leads', leadId);
+      const { _cloud, id: _id, ...fields } = fieldUpdates || {}; // client-side markers, never stored
       // merge also supports leads that were created locally before Firebase
       // was connected, instead of failing because the document does not exist.
       await setDoc(leadRef, {
-        ...fieldUpdates,
+        ...fields,
         updatedAt: serverTimestamp()
       }, { merge: true });
       return true;

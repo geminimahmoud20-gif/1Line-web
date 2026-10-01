@@ -150,8 +150,8 @@ export const CrmAdminPanel = ({
   const canAssignAll = userRole === 'super_admin' || userRole === 'sales_manager';
   useEffect(() => {
     if (!canAssignAll || !onUpdateLead || !firebaseConnected) return;
-    // Firestore auto-ids only — never push device-local or sample leads to the cloud
-    const orphans = leads.filter((l) => /^[A-Za-z0-9]{20}$/.test(String(l?.id || '')) && !l.assignedTo);
+    // Cloud leads only — never push device-local or sample leads to Firestore
+    const orphans = leads.filter((l) => l?._cloud && l.id && !l.assignedTo);
     if (orphans.length === 0) return;
     try {
       if (sessionStorage.getItem('oneline_lead_desk_backfill')) return;
