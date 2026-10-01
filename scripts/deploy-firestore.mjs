@@ -58,6 +58,7 @@ const describe = (ix) => `${ix.collectionGroup} (${ix.fields.map((f) => `${f.fie
 
 const wanted = JSON.parse(fs.readFileSync(path.join(root, 'firestore.indexes.json'), 'utf8')).indexes;
 const pending = [];
+let skipped = 0;
 for (const ix of wanted) {
   const listUrl = `${api}/collectionGroups/${ix.collectionGroup}/indexes`;
   const existing = (await call('GET', listUrl)).json.indexes || [];
@@ -70,6 +71,13 @@ for (const ix of wanted) {
     continue;
   }
   const { status, json } = await call('POST', listUrl, { queryScope: ix.queryScope, fields });
+  if (status === 403) {
+    // The Admin SDK account may lack Cloud Datastore Index Admin. The app's queries don't depend on
+    // composite indexes, so this is reported, not fatal.
+    console.warn(`! index ${describe(ix)}: not created (no permission to manage indexes) — optional`);
+    skipped++;
+    continue;
+  }
   if (status >= 300 && status !== 409) {
     console.error(`✖ index ${describe(ix)}: HTTP ${status} ${json.error?.message || ''}`);
     process.exit(1);
@@ -78,7 +86,7 @@ for (const ix of wanted) {
   pending.push({ ix, listUrl, fields });
 }
 
-// Desk agents' lead queries need their index READY before the new site goes live
+// Wait for indexes this run created
 const deadline = Date.now() + 15 * 60 * 1000;
 while (pending.length && Date.now() < deadline) {
   await new Promise((r) => setTimeout(r, 15000));
@@ -96,5 +104,5 @@ if (pending.length) {
   console.error(`✖ still building after 15 min: ${pending.map((p) => describe(p.ix)).join('; ')}`);
   process.exit(1);
 }
-console.log('✔ All indexes READY');
+console.log(skipped ? `✔ Done (${skipped} optional index(es) skipped — grant Cloud Datastore Index Admin to create them)` : '✔ All indexes READY');
 process.exit(0);

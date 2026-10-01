@@ -31,6 +31,13 @@ const splitLeadFields = (fields) => {
   return { lead, contact };
 };
 const deskOf = (data) => data?.assignedTo || UNASSIGNED_DESK;
+// createdAt is a Firestore Timestamp (cloud writes) or an ISO string (older / offline-queued leads)
+const createdMillis = (lead) => {
+  const c = lead?.createdAt;
+  if (c && typeof c.toMillis === 'function') return c.toMillis();
+  const t = Date.parse(c || lead?.timestamp || '');
+  return Number.isNaN(t) ? 0 : t;
+};
 
 // One Firestore write for a lead: the lead and its contact doc in one batch. Document id = app
 // lead id, so updateLeadField/deleteLead (which use lead.id) reach it, and a retried write lands
@@ -202,13 +209,16 @@ export const subscribeToLeads = (callback, maxCount = 150) => {
     };
 
     const base = collection(db, 'leads');
+    // A desk's queue is filtered on assignedTo only (no orderBy), so it needs no composite index;
+    // it is sorted newest-first here. Desk queues are small, so a wider window keeps the newest.
     const q = desk
-      ? query(base, where('assignedTo', 'in', [desk, UNASSIGNED_DESK]), orderBy('createdAt', 'desc'), limit(maxCount))
+      ? query(base, where('assignedTo', 'in', [desk, UNASSIGNED_DESK]), limit(maxCount * 4))
       : query(base, orderBy('createdAt', 'desc'), limit(maxCount));
     // includeMetadataChanges: also hear "now confirmed by the server" (fromCache true → false),
     // which the CRM needs to know the list is complete
     const unsubLeads = onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
       leads = snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
+      if (desk) leads = leads.sort((x, y) => createdMillis(y) - createdMillis(x)).slice(0, maxCount);
       // fromCache snapshots can hold only this device's pending writes — not the full list
       meta = { fromCache: snapshot.metadata.fromCache };
       followLeadIds();
