@@ -77,13 +77,14 @@
 .hx-hero .hero-cinematic-video.clip-fading { opacity: 0; }
 
 /* Soft ambient vignette — top and bottom only, plus a faint centre veil for type legibility */
+/* Deep ambient vignette — protects text contrast 100% against light and white video backgrounds */
 .hx-vignette {
   position: absolute;
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(11, 27, 50, 0.62) 0%, rgba(11, 27, 50, 0.1) 30%, rgba(11, 27, 50, 0.1) 62%, rgba(11, 27, 50, 0.78) 100%),
-    radial-gradient(ellipse 70% 55% at 50% 42%, rgba(11, 27, 50, 0.45), rgba(11, 27, 50, 0) 72%);
+    linear-gradient(180deg, rgba(6, 17, 33, 0.78) 0%, rgba(7, 19, 34, 0.52) 24%, rgba(7, 19, 34, 0.68) 58%, rgba(6, 15, 29, 0.94) 100%),
+    radial-gradient(ellipse 85% 72% at 50% 44%, rgba(6, 17, 33, 0.74) 0%, rgba(6, 17, 33, 0.35) 80%);
 }
 
 .hx-hero .hero-video-controls-badge {
@@ -111,10 +112,17 @@
   gap: 8px 14px;
   margin: 0 0 22px;
   font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.24em;
-  color: rgba(255, 255, 255, 0.88);
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: #FFFFFF;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85);
   text-transform: uppercase;
+}
+.hx-eyebrow .hx-eyebrow-emblem {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
 }
 .hx-eyebrow span:last-child { letter-spacing: 0.08em; }
 .hx-eyebrow i {
@@ -126,11 +134,11 @@
 .hx-title {
   margin: 0;
   font-size: clamp(2.05rem, 4.4vw, 3.9rem);
-  font-weight: 700;
-  line-height: 1.22;
+  font-weight: 800;
+  line-height: 1.24;
   letter-spacing: -0.01em;
   color: #fff;
-  text-shadow: 0 2px 28px rgba(7, 19, 34, 0.45);
+  text-shadow: 0 3px 20px rgba(0, 0, 0, 0.85), 0 5px 35px rgba(7, 19, 34, 0.95);
   text-wrap: balance;
 }
 .hx-title > span { display: block; }
@@ -147,14 +155,26 @@
 }
 
 .hx-lede {
-  max-width: 760px;
+  max-width: 820px;
   margin: 20px auto 36px;
-  font-size: clamp(1rem, 1.25vw, 1.12rem);
+  font-size: clamp(0.96rem, 1.25vw, 1.15rem);
   line-height: 1.95;
-  color: rgba(255, 255, 255, 0.9);
-  text-shadow: 0 1px 14px rgba(7, 19, 34, 0.5);
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
 }
-.hx-lede span { display: block; }
+.hx-lede span {
+  display: inline-block;
+  padding: 6px 18px;
+  margin: 3px auto;
+  border-radius: 999px;
+  background: rgba(7, 19, 34, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+  color: #ffffff;
+  font-weight: 500;
+}
 
 /* Floating glass capsule */
 .hx-capsule {
@@ -407,9 +427,24 @@
 @media (max-width: 600px) {
   .hx-hero { min-height: auto; }
   .hx-hero-inner { width: calc(100% - 24px); padding-block: 36px 32px; }
-  .hx-eyebrow { font-size: 0.64rem; letter-spacing: 0.16em; margin-bottom: 16px; }
+  .hx-eyebrow { font-size: 0.68rem; letter-spacing: 0.16em; margin-bottom: 16px; gap: 8px; }
+  .hx-eyebrow .hx-eyebrow-emblem { width: 20px; height: 20px; }
   .hx-eyebrow i { display: none; }
-  .hx-lede { margin: 14px auto 24px; line-height: 1.85; }
+  .hx-lede { margin: 14px auto 24px; line-height: 1.8; }
+  .hx-lede span {
+    font-size: 0.88rem;
+    padding: 8px 18px;
+    border-radius: 999px;
+    background: rgba(6, 17, 33, 0.82);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(197, 160, 89, 0.45);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.55);
+    color: #ffffff !important;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+    max-width: 98%;
+    font-weight: 600;
+  }
   .hx-lede span + span { display: none; }
   .hx-capsule { border-radius: 22px; padding: 6px; }
   .hx-intent { padding: 8px 12px; font-size: 0.84rem; }
