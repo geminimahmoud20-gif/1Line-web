@@ -1,11 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { 
-  Lock, ShieldCheck, LogOut, Users, Building, Sparkles, KeyRound, Eye, EyeOff, 
-  AlertTriangle, Globe, Zap, Search, X, ChevronDown, Plus, Clock, Rocket, MapPin,
-  LayoutGrid, Target, Calculator, Activity, Database
-} from 'lucide-react';
-import LogoEmblem from '../components/LogoEmblem';
-import CrmAdminPanel, { CRM_ROLES } from '../components/CrmAdminPanel';
+import { Lock, ShieldCheck, Sparkles, KeyRound, Eye, EyeOff, AlertTriangle } from 'lucide-react';
+
+import CrmAdminPanel from '../components/CrmAdminPanel';
+import { CRM_ROLES } from '../components/crm/crmRoles';
 import PropertyManagerPanel from '../components/crm/PropertyManagerPanel';
 import MegaProjectsManagerPanel from '../components/crm/MegaProjectsManagerPanel';
 import DemandsManagerPanel from '../components/crm/DemandsManagerPanel';
@@ -24,11 +21,10 @@ import '../components/crm/crm-density.css';
 import { isFirebaseAuthAvailable, loginUser } from '../firebaseService';
 import { useAuth } from '../context/AuthContext';
 import { canEditProperties, canEditLeadsRole } from '../utils/rbacRules';
-import { verifyAdminCredentials } from '../utils/securityShield';
+import { verifyAdminCredentials, checkRateLimit, recordFailedAttempt, resetFailedAttempts } from '../utils/securityShield';
 
 export default function CrmPage({
   lang = 'ar',
-  t,
   leads = [],
   setLeads,
   properties = [],
@@ -99,7 +95,6 @@ export default function CrmPage({
   const [isVerifying, setIsVerifying] = useState(false);
   const [externalPropertyData, setExternalPropertyData] = useState(null);
   const [universalSearch, setUniversalSearch] = useState('');
-  const [showQuickActionMenu, setShowQuickActionMenu] = useState(false);
   const [showGoLiveWizard, setShowGoLiveWizard] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
 
@@ -234,16 +229,26 @@ export default function CrmPage({
         };
       }
     } else {
+      const lock = checkRateLimit();
+      if (lock.isLocked) {
+        setIsVerifying(false);
+        setLoginError(isAr ? lock.message_ar : lock.message_en);
+        return;
+      }
       try {
         await loginUser(email, password);
+        resetFailedAttempts();
         res = { success: true };
       } catch (err) {
         const errCode = err?.code || '';
+        if (errCode !== 'auth/network-request-failed') recordFailedAttempt();
         let genericMsg = isAr 
           ? 'تعذر تسجيل الدخول. تحقق من البيانات أو تواصل مع مدير النظام.' 
           : 'Sign-in failed. Please verify credentials or contact system admin.';
         if (errCode === 'auth/network-request-failed') {
           genericMsg = isAr ? 'تعذر الاتصال بالخدمة. حاول مرة أخرى.' : 'Network connection error. Try again.';
+        } else if (errCode === 'auth/too-many-requests') {
+          genericMsg = isAr ? 'محاولات كثيرة. تم إيقاف الدخول مؤقتاً، حاول بعد قليل.' : 'Too many attempts. Sign-in is paused — try again later.';
         } else if (err?.message?.includes('unauthorized') || err?.message?.includes('permission')) {
           genericMsg = isAr ? 'هذا الحساب غير مصرح له بالوصول إلى لوحة الإدارة.' : 'Account unauthorized for admin access.';
         }
@@ -282,7 +287,7 @@ export default function CrmPage({
             borderTopColor: 'var(--gold, #B38A45)',
             animation: 'routeSpin 0.8s linear infinite'
           }} />
-          <span style={{ color: 'var(--text-muted, #687386)', fontSize: 'var(--crm-text-base)', fontWeight: 'bold' }}>
+          <span style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-base)', fontWeight: 'bold' }}>
             {isAr ? 'جاري فحص الجلسة المشفرة...' : 'Verifying secure session...'}
           </span>
         </div>
@@ -394,7 +399,7 @@ export default function CrmPage({
               href="mailto:contact@oneline-sohag.com?subject=طلب مساعدة من مدير النظام" 
               style={{ 
                 fontSize: 'var(--crm-text-sm)', 
-                color: 'var(--gold-dark)', 
+                color: 'var(--crm-accent-text)', 
                 textDecoration: 'none',
                 fontWeight: '600'
               }}
@@ -415,7 +420,7 @@ export default function CrmPage({
                 gap: '4px'
               }}
               onMouseEnter={(e) => e.currentTarget.style.color = 'var(--gold)'}
-              onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--crm-on-dark-faint)'}
             >
               ← {isAr ? 'العودة إلى الموقع العام' : 'Return to Public Website'}
             </a>
@@ -497,14 +502,14 @@ export default function CrmPage({
         {/* Role Simulation Mode Alert Banner */}
         {isSimulationMode && (
           <div style={{
-            background: 'linear-gradient(90deg, #fffbeb 0%, #fef3c7 100%)',
-            borderBottom: '1px solid #fde68a',
+            background: 'linear-gradient(90deg, var(--crm-warn-soft) 0%, var(--crm-warn-soft) 100%)',
+            borderBottom: '1px solid var(--crm-warn-line)',
             padding: '8px 24px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             fontSize: 'var(--crm-text-sm)',
-            color: '#92400e',
+            color: 'var(--crm-warn)',
             boxShadow: '0 1px 3px rgba(217, 119, 6, 0.1)'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -519,8 +524,8 @@ export default function CrmPage({
               type="button"
               onClick={() => setSelectedRole('super_admin')}
               style={{
-                background: '#d97706',
-                color: '#ffffff',
+                background: 'var(--crm-warn-solid)',
+                color: 'var(--crm-on-dark)',
                 border: 'none',
                 borderRadius: '6px',
                 padding: '4px 12px',
@@ -604,15 +609,15 @@ export default function CrmPage({
           ) : ['system', 'areas', 'corporate', 'ads'].includes(activeTab) ? (
             activeRole !== 'super_admin' ? (
               <div style={{
-                background: 'var(--crm-surface-light, #ffffff)',
-                border: '1px solid #fecaca',
+                background: 'var(--crm-surface-light, var(--crm-card))',
+                border: '1px solid var(--crm-danger-line)',
                 borderRadius: '12px',
                 padding: '40px 24px',
                 textAlign: 'center',
                 maxWidth: '600px',
                 margin: '40px auto'
               }}>
-                <Lock size={48} style={{ color: '#ef4444', margin: '0 auto 16px' }} />
+                <Lock size={48} style={{ color: 'var(--crm-danger)', margin: '0 auto 16px' }} />
                 <h3 style={{ color: 'var(--crm-ink)', marginBottom: '8px' }}>
                   {isAr ? 'منطقة صلاحيات مقيدة' : 'Restricted Access'}
                 </h3>
@@ -644,7 +649,7 @@ export default function CrmPage({
                   borderRadius: '10px',
                   flexWrap: 'wrap'
                 }}>
-                  <span style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold', color: '#092347', marginInlineEnd: '8px' }}>
+                  <span style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold', color: 'var(--crm-ink)', marginInlineEnd: '8px' }}>
                     {isAr ? 'أقسام إدارة المنظومة:' : 'System Modules:'}
                   </span>
                   <button
@@ -655,9 +660,9 @@ export default function CrmPage({
                       borderRadius: '7px',
                       fontSize: 'var(--crm-text-sm)',
                       fontWeight: systemSubTab === 'areas' ? 'bold' : '600',
-                      background: systemSubTab === 'areas' ? '#092347' : '#f8fafc',
-                      color: systemSubTab === 'areas' ? '#ffffff' : '#475569',
-                      border: systemSubTab === 'areas' ? '1px solid #092347' : '1px solid #e2e8f0',
+                      background: systemSubTab === 'areas' ? 'var(--crm-brand-navy)' : 'var(--crm-subtle)',
+                      color: systemSubTab === 'areas' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
+                      border: systemSubTab === 'areas' ? '1px solid var(--crm-brand-navy)' : '1px solid var(--crm-line)',
                       cursor: 'pointer'
                     }}
                   >
@@ -671,9 +676,9 @@ export default function CrmPage({
                       borderRadius: '7px',
                       fontSize: 'var(--crm-text-sm)',
                       fontWeight: systemSubTab === 'corporate' ? 'bold' : '600',
-                      background: systemSubTab === 'corporate' ? '#092347' : '#f8fafc',
-                      color: systemSubTab === 'corporate' ? '#ffffff' : '#475569',
-                      border: systemSubTab === 'corporate' ? '1px solid #092347' : '1px solid #e2e8f0',
+                      background: systemSubTab === 'corporate' ? 'var(--crm-brand-navy)' : 'var(--crm-subtle)',
+                      color: systemSubTab === 'corporate' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
+                      border: systemSubTab === 'corporate' ? '1px solid var(--crm-brand-navy)' : '1px solid var(--crm-line)',
                       cursor: 'pointer'
                     }}
                   >
@@ -687,9 +692,9 @@ export default function CrmPage({
                       borderRadius: '7px',
                       fontSize: 'var(--crm-text-sm)',
                       fontWeight: systemSubTab === 'backup' ? 'bold' : '600',
-                      background: systemSubTab === 'backup' ? '#092347' : '#f8fafc',
-                      color: systemSubTab === 'backup' ? '#ffffff' : '#475569',
-                      border: systemSubTab === 'backup' ? '1px solid #092347' : '1px solid #e2e8f0',
+                      background: systemSubTab === 'backup' ? 'var(--crm-brand-navy)' : 'var(--crm-subtle)',
+                      color: systemSubTab === 'backup' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
+                      border: systemSubTab === 'backup' ? '1px solid var(--crm-brand-navy)' : '1px solid var(--crm-line)',
                       cursor: 'pointer'
                     }}
                   >
@@ -703,9 +708,9 @@ export default function CrmPage({
                       borderRadius: '7px',
                       fontSize: 'var(--crm-text-sm)',
                       fontWeight: systemSubTab === 'automation' ? 'bold' : '600',
-                      background: systemSubTab === 'automation' ? '#092347' : '#f8fafc',
-                      color: systemSubTab === 'automation' ? '#ffffff' : '#475569',
-                      border: systemSubTab === 'automation' ? '1px solid #092347' : '1px solid #e2e8f0',
+                      background: systemSubTab === 'automation' ? 'var(--crm-brand-navy)' : 'var(--crm-subtle)',
+                      color: systemSubTab === 'automation' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
+                      border: systemSubTab === 'automation' ? '1px solid var(--crm-brand-navy)' : '1px solid var(--crm-line)',
                       cursor: 'pointer'
                     }}
                   >
@@ -783,7 +788,7 @@ export default function CrmPage({
         {/* 4. Minimal Executive Footer */}
         <footer className="crm-footer">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px rgba(16, 185, 129, 0.6)' }} />
+            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'var(--crm-positive-solid)', boxShadow: '0 0 6px rgba(16, 185, 129, 0.6)' }} />
             <span>{isAr ? '1Line PropTech Suite v2.4 Enterprise — منصة عقارية ذكية مؤمنة' : '1Line PropTech Suite v2.4 Enterprise — Secure Intelligent Platform'}</span>
           </div>
 
@@ -817,15 +822,15 @@ export default function CrmPage({
         demands={demands}
         userRole={activeRole}
         isAr={isAr}
-        onSelectLead={(l) => {
+        onSelectLead={() => {
           setActiveTab('leads');
           setShowCommandPalette(false);
         }}
-        onSelectProperty={(p) => {
+        onSelectProperty={() => {
           setActiveTab('properties');
           setShowCommandPalette(false);
         }}
-        onSelectDemand={(d) => {
+        onSelectDemand={() => {
           setActiveTab('demands');
           setShowCommandPalette(false);
         }}

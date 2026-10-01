@@ -1,25 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Building2, 
-  MapPin, 
-  Calculator, 
-  ShieldCheck, 
-  Globe, 
-  Coins, 
-  PhoneCall, 
-  MessageSquare, 
-  Search, 
-  ChevronDown, 
-  Sparkles, 
-  ArrowLeft, 
-  ArrowRight, 
-  Clock, 
-  CheckCircle2, 
-  X,
-  FileCheck2,
-  ExternalLink
-} from 'lucide-react';
+import { Building2, MapPin, Calculator, ShieldCheck, Globe, Coins, PhoneCall, MessageSquare, Search, ChevronDown, Sparkles, ArrowLeft, ArrowRight, Clock, CheckCircle2, X, FileCheck2 } from 'lucide-react';
 import { injectJsonLdSchema } from '../../utils/seoHelper';
 import { CONTACT, SERVICE_AREAS } from '../../config/siteConfig';
 import { getDynamicPhone, getWhatsAppUrl } from '../../utils/founderCmsData';

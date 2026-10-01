@@ -1,19 +1,5 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { 
-  Rotate3d, 
-  Compass, 
-  Maximize2, 
-  Minimize2, 
-  Sun, 
-  Moon, 
-  Play, 
-  Pause, 
-  Info, 
-  Eye,
-  ChevronRight,
-  ChevronLeft,
-  Sparkles
-} from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Rotate3d, Compass, Maximize2, Minimize2, Sun, Moon, Play, Pause, Info, Sparkles } from 'lucide-react';
 import BrandWatermark from '../common/BrandWatermark';
 import { trackEvent } from '../../utils/visitorTracker';
 

@@ -201,7 +201,7 @@ assert(csvContent.includes('toISOString().slice(0, 10)'), `exportCsv.js — تا
 const pdfContent = fs.readFileSync(path.join(baseDir, 'src/utils/pdfBrochure.js'), 'utf-8');
 assert(pdfContent.includes('jsPDF') && pdfContent.includes('jspdf'), `pdfBrochure.js — يستورد jsPDF`);
 assert(pdfContent.includes('1LINE REAL ESTATE') || pdfContent.includes('ONE LINE REAL ESTATE'), `pdfBrochure.js — شعار الشركة`);
-assert(pdfContent.includes('Verified Legal'), `pdfBrochure.js — قسم الموقف القانوني`);
+assert(pdfContent.includes('Legal Review Summary'), `pdfBrochure.js — قسم الموقف القانوني`);
 
 // ============================================================
 //  TEST SECTION 8: RATE LIMITER
@@ -210,7 +210,7 @@ section('القسم 8: الأمان — Rate Limiter (ثغرة #3)');
 
 assert(securityShieldContent.includes('MAX_ATTEMPTS = 5'), `securityShield.js — الحد الأقصى 5 محاولات`);
 assert(securityShieldContent.includes('5 * 60 * 1000'), `securityShield.js — مدة الحظر 5 دقائق`);
-assert(securityShieldContent.includes("sessionStorage.getItem('oneline_auth_shield')"), `securityShield.js — يخزن في sessionStorage`);
+assert(securityShieldContent.includes("SHIELD_KEY = 'oneline_auth_shield'") && securityShieldContent.includes('localStorage.getItem(SHIELD_KEY)'), `securityShield.js — يخزن في localStorage (يصمد بين التبويبات)`);
 
 // ============================================================
 //  TEST SECTION 9: DATA INTEGRITY

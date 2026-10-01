@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Phone, Sparkles, ShieldCheck, TrendingUp, Home, Calendar, Clock, Video, Building2 } from 'lucide-react';
+import { X, Phone, Sparkles, ShieldCheck, TrendingUp, Home, Clock, Video, Building2 } from 'lucide-react';
 import { checkFormSpamProtection } from '../../utils/securityShield';
 import { getAreas } from '../../utils/areasData';
 import PhoneInputField from '../PhoneInputField';

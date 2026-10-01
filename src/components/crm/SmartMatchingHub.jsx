@@ -1,19 +1,5 @@
 import { useState, useMemo } from 'react';
-import { 
-  Sparkles, 
-  Building, 
-  User, 
-  MessageSquare, 
-  Send, 
-  CheckCircle2, 
-  ArrowRight, 
-  Car, 
-  TrendingUp, 
-  DollarSign,
-  Filter,
-  Flame,
-  Zap
-} from 'lucide-react';
+import { Sparkles, Send, CheckCircle2, Car, Zap } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
 import { getAreas, normalizeAreaKey } from '../../utils/areasData';
 
@@ -167,7 +153,7 @@ export default function SmartMatchingHub({
         gap: '12px'
       }}>
         <div>
-          <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0, color: '#092347', fontSize: '1.15rem', fontWeight: 700 }}>
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0, color: 'var(--crm-ink)', fontSize: 'var(--crm-text-lg)', fontWeight: 700 }}>
             <Sparkles size={20} style={{ color: 'var(--crm-accent-text)' }} />
             {isAr ? 'محرك المطابقة الذكي اللحظي بين المشترين والمعروض' : 'Live Smart Deals & Buyer Matching Engine'}
           </h3>
@@ -189,9 +175,9 @@ export default function SmartMatchingHub({
               borderRadius: '8px',
               fontSize: 'var(--crm-text-xs)',
               fontWeight: minMatchScore === 80 ? 'bold' : '600',
-              background: minMatchScore === 80 ? '#d97706' : '#ffffff',
-              color: minMatchScore === 80 ? '#ffffff' : '#334155',
-              border: minMatchScore === 80 ? '1px solid #d97706' : '1px solid #cbd5e1'
+              background: minMatchScore === 80 ? 'var(--crm-warn-solid)' : 'var(--crm-card)',
+              color: minMatchScore === 80 ? 'var(--crm-on-dark)' : 'var(--crm-body)',
+              border: minMatchScore === 80 ? '1px solid var(--crm-warn)' : '1px solid var(--crm-line-strong)'
             }}
           >
             🔥 80%+ {isAr ? 'مطابقة مثالية' : 'Super Match'}
@@ -204,9 +190,9 @@ export default function SmartMatchingHub({
               borderRadius: '8px',
               fontSize: 'var(--crm-text-xs)',
               fontWeight: minMatchScore === 60 ? 'bold' : '600',
-              background: minMatchScore === 60 ? '#092347' : '#ffffff',
-              color: minMatchScore === 60 ? '#ffffff' : '#334155',
-              border: minMatchScore === 60 ? '1px solid #092347' : '1px solid #cbd5e1'
+              background: minMatchScore === 60 ? 'var(--crm-brand-navy)' : 'var(--crm-card)',
+              color: minMatchScore === 60 ? 'var(--crm-on-dark)' : 'var(--crm-body)',
+              border: minMatchScore === 60 ? '1px solid var(--crm-brand-navy)' : '1px solid var(--crm-line-strong)'
             }}
           >
             ⚡ 60%+ {isAr ? 'كل الفرص' : 'All Deals'}
@@ -221,10 +207,10 @@ export default function SmartMatchingHub({
           padding: '60px 20px',
           background: 'var(--crm-card)',
           borderRadius: '12px',
-          border: '2px dashed #cbd5e1'
+          border: '2px dashed var(--crm-line-strong)'
         }}>
           <Sparkles size={36} style={{ color: 'var(--crm-accent-text)', opacity: 0.7, marginBottom: '12px' }} />
-          <h4 style={{ color: '#092347', fontWeight: 700 }}>{isAr ? 'لا توجد مطابقات تتجاوز هذه النسبة حالياً' : 'No matches found above this threshold'}</h4>
+          <h4 style={{ color: 'var(--crm-ink)', fontWeight: 700 }}>{isAr ? 'لا توجد مطابقات تتجاوز هذه النسبة حالياً' : 'No matches found above this threshold'}</h4>
           <p style={{ fontSize: 'var(--crm-text-base)', color: 'var(--crm-muted)' }}>
             {isAr ? 'أضف عقارات جديدة أو قلل نسبة المطابقة لعرض الفرص القريبة' : 'Add new properties or lower threshold'}
           </p>
@@ -240,7 +226,7 @@ export default function SmartMatchingHub({
                 className="deal-match-card animate-fadeIn"
                 style={{
                   background: 'var(--crm-card)',
-                  border: score >= 85 ? '1px solid #fde68a' : '1px solid #e2e8f0',
+                  border: score >= 85 ? '1px solid var(--crm-warn-line)' : '1px solid var(--crm-line)',
                   borderRadius: '12px',
                   padding: '16px',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
@@ -255,9 +241,9 @@ export default function SmartMatchingHub({
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span style={{
-                        background: score >= 85 ? '#ecfdf5' : '#fef3c7',
-                        color: score >= 85 ? '#065f46' : '#92400e',
-                        border: `1px solid ${score >= 85 ? '#a7f3d0' : '#fde68a'}`,
+                        background: score >= 85 ? 'var(--crm-positive-soft)' : 'var(--crm-warn-soft)',
+                        color: score >= 85 ? 'var(--crm-positive)' : 'var(--crm-warn)',
+                        border: `1px solid ${score >= 85 ? 'var(--crm-positive-line)' : 'var(--crm-warn-line)'}`,
                         padding: '3px 10px',
                         borderRadius: '20px',
                         fontSize: 'var(--crm-text-sm)',
@@ -287,7 +273,7 @@ export default function SmartMatchingHub({
                     marginBottom: '10px'
                   }}>
                     {/* Buyer Side */}
-                    <div style={{ borderInlineEnd: '1px solid #e2e8f0', paddingInlineEnd: '10px' }}>
+                    <div style={{ borderInlineEnd: '1px solid var(--crm-line)', paddingInlineEnd: '10px' }}>
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-info)', fontWeight: 'bold', display: 'block', marginBottom: '3px' }}>
                         👤 {isAr ? 'المشتري الراغب:' : 'Buyer Request:'}
                       </span>
@@ -295,7 +281,7 @@ export default function SmartMatchingHub({
                         onClick={() => onOpenLead?.(lead)}
                         style={{ 
                           fontSize: 'var(--crm-text-md)', 
-                          color: '#092347', 
+                          color: 'var(--crm-ink)', 
                           fontWeight: 700, 
                           display: 'block', 
                           marginBottom: '2px',
@@ -319,7 +305,7 @@ export default function SmartMatchingHub({
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', fontWeight: 'bold', display: 'block', marginBottom: '3px' }}>
                         🏢 {isAr ? 'العقار المطابق:' : 'Matched Property:'}
                       </span>
-                      <strong style={{ fontSize: 'var(--crm-text-md)', color: '#092347', fontWeight: 700, display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: '2px' }}>
+                      <strong style={{ fontSize: 'var(--crm-text-md)', color: 'var(--crm-ink)', fontWeight: 700, display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: '2px' }}>
                         {isAr ? property.title_ar : property.title_en}
                       </strong>
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-body)', display: 'block' }}>
@@ -350,13 +336,13 @@ export default function SmartMatchingHub({
                 </div>
 
                 {/* Actions Footer */}
-                <div style={{ display: 'flex', gap: '8px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
+                <div style={{ display: 'flex', gap: '8px', paddingTop: '10px', borderTop: '1px solid var(--crm-line)' }}>
                   {onOpenLead && (
                     <button
                       type="button"
                       className="btn btn-sm"
                       onClick={() => onOpenLead(lead)}
-                      style={{ padding: '7px 10px', fontSize: 'var(--crm-text-xs)', color: '#2563eb', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px' }}
+                      style={{ padding: '7px 10px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-info)', background: 'var(--crm-info-soft)', border: '1px solid var(--crm-info-line)', borderRadius: '6px' }}
                       title={isAr ? 'معاينة العميل وتعديل مرحلته' : 'Quick Drawer'}
                     >
                       <Zap size={14} />
@@ -367,7 +353,7 @@ export default function SmartMatchingHub({
                     type="button"
                     className="btn btn-sm btn-primary"
                     onClick={() => handleSendProposal(match)}
-                    style={{ flex: 1, padding: '7px 10px', fontSize: 'var(--crm-text-xs)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: 'var(--crm-positive-solid)', color: '#ffffff', border: 'none', borderRadius: '6px', fontWeight: 'bold' }}
+                    style={{ flex: 1, padding: '7px 10px', fontSize: 'var(--crm-text-xs)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: 'var(--crm-positive-solid)', color: 'var(--crm-on-dark)', border: 'none', borderRadius: '6px', fontWeight: 'bold' }}
                   >
                     <Send size={13} />
                     <span>{isAr ? 'إرسال العرض واتساب' : 'Send WhatsApp'}</span>
@@ -377,7 +363,7 @@ export default function SmartMatchingHub({
                     type="button"
                     className="btn btn-sm"
                     onClick={() => setSchedulingVisitLead({ ...lead, details: { ...lead.details, targetPropertyId: property.id } })}
-                    style={{ padding: '7px 10px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '6px' }}
+                    style={{ padding: '7px 10px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', background: 'var(--crm-warn-soft)', border: '1px solid var(--crm-warn-line)', borderRadius: '6px' }}
                     title={isAr ? 'حجز موعد معاينة' : 'Schedule Visit'}
                   >
                     <Car size={14} />

@@ -383,7 +383,7 @@ export function captureMarketingAttribution() {
         else if (hostname.includes('tiktok')) sourceName = 'TikTok';
         else if (hostname.includes('linkedin')) sourceName = 'LinkedIn';
         else sourceName = hostname;
-      } catch (e) {}
+      } catch { /* storage unavailable — non-fatal */ }
 
       const organicAttribution = {
         source: sourceName,
@@ -423,5 +423,5 @@ export function getAttributionData() {
 if (typeof window !== 'undefined') {
   try {
     captureMarketingAttribution();
-  } catch (e) {}
+  } catch { /* storage unavailable — non-fatal */ }
 }

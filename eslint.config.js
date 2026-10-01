@@ -26,8 +26,20 @@ export default defineConfig([
         varsIgnorePattern: '^_', 
         caughtErrors: 'none' 
       }],
-      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      // Context modules export their Provider plus the matching use*() hook — the standard pattern;
+      // an edit there does a full reload instead of a hot swap, which is fine for providers.
+      'react-refresh/only-export-components': ['warn', {
+        allowConstantExport: true,
+        allowExportNames: ['useAuth', 'useClientAuth', 'useCurrency', 'usePreferences', 'useProperties', 'useUIModal']
+      }],
       'react-hooks/set-state-in-effect': 'warn',
+    },
+  },
+  {
+    // Cypress specs run on Mocha + Chai with the cy/Cypress globals
+    files: ['cypress/**/*.js'],
+    languageOptions: {
+      globals: { ...globals.mocha, cy: 'readonly', Cypress: 'readonly', expect: 'readonly', assert: 'readonly' },
     },
   },
   {
@@ -43,7 +55,17 @@ export default defineConfig([
           message: "Use a CRM type token: fontSize: 'var(--crm-text-xs|sm|base|md|lg|xl|2xl)'."
         },
         {
-          selector: "Property[key.name=/^(color|background|backgroundColor|borderColor)$/][value.value=/^#[0-9a-fA-F]{3,8}$/]",
+          // any hex colour inside a colour/background/border style value — direct, in a ternary, or in a shorthand string
+          selector: "Property[key.name=/^(color|background|backgroundColor|borderColor|border|borderTop|borderBottom|borderLeft|borderRight|borderInlineStart|borderInlineEnd|outline|boxShadow|fill|stroke)$/] Literal[value=/#[0-9a-fA-F]{3,8}\\b/]",
+          message: "Use a theme token (var(--crm-ink), var(--crm-muted), var(--crm-card)…) so light and dark mode both work."
+        },
+        {
+          // site-wide variables that don't switch with the CRM theme (navy text, fixed greys, fixed gold)
+          selector: "Property[key.name=/^(color|background|backgroundColor|borderColor|border|borderTop|borderBottom|borderLeft|borderRight)$/] Literal[value=/var\\(--(primary|accent-gold|accent-gold-light|gold|gold-dark|gold-soft|text-primary|text-secondary|text-muted|emerald|emerald-bg|success|border-color|bg-card|bg-input|navy-[0-9]+)\\b/]",
+          message: "Use a --crm-* token (ink, muted, accent-text, positive, line, card…): site variables don't follow the CRM dark theme."
+        },
+        {
+          selector: "Property[key.name=/^(color|background|backgroundColor|borderColor|border|borderTop|borderBottom|borderLeft|borderRight)$/] TemplateElement[value.raw=/#[0-9a-fA-F]{3,8}\\b/]",
           message: "Use a theme token (var(--crm-ink), var(--crm-muted), var(--crm-card)…) so light and dark mode both work."
         }
       ]

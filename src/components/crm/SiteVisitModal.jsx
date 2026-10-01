@@ -91,7 +91,7 @@ export default function SiteVisitModal({
         <div className="modal-form-header" style={{ borderBottom: '1px solid var(--crm-line)', padding: '16px 20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Car size={20} style={{ color: 'var(--crm-accent-text)' }} />
-            <h3 style={{ margin: 0, color: '#092347', fontSize: '1.1rem', fontWeight: 700 }}>
+            <h3 style={{ margin: 0, color: 'var(--crm-ink)', fontSize: 'var(--crm-text-lg)', fontWeight: 700 }}>
               {isAr ? `جدولة وتأكيد معاينة ميدانية: ${lead.name}` : `Schedule Site Visit: ${lead.name}`}
             </h3>
           </div>
@@ -103,8 +103,8 @@ export default function SiteVisitModal({
         <form onSubmit={handleConfirmSchedule} className="property-cms-form" style={{ padding: '20px' }}>
           {/* Client summary strip */}
           <div style={{
-            background: '#fffbeb',
-            border: '1px solid #fde68a',
+            background: 'var(--crm-warn-soft)',
+            border: '1px solid var(--crm-warn-line)',
             borderRadius: '8px',
             padding: '12px 16px',
             marginBottom: '18px',
@@ -115,10 +115,10 @@ export default function SiteVisitModal({
             gap: '8px'
           }}>
             <div>
-              <strong style={{ color: '#092347', display: 'block', fontSize: 'var(--crm-text-md)' }}>{lead.name}</strong>
+              <strong style={{ color: 'var(--crm-ink)', display: 'block', fontSize: 'var(--crm-text-md)' }}>{lead.name}</strong>
               <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>{lead.phone}</span>
             </div>
-            <span className="badge" style={{ background: '#ecfdf5', color: '#065f46', border: '1px solid #a7f3d0', fontWeight: 'bold' }}>
+            <span className="badge" style={{ background: 'var(--crm-positive-soft)', color: 'var(--crm-positive)', border: '1px solid var(--crm-positive-line)', fontWeight: 'bold' }}>
               {isAr ? 'عميل مؤكد الجدية' : 'Verified Lead'} ({lead.score || 85}%)
             </span>
           </div>
@@ -210,7 +210,7 @@ export default function SiteVisitModal({
             <button type="button" className="btn btn-outline" onClick={onClose} style={{ background: 'var(--crm-subtle)', border: '1px solid var(--crm-line-strong)', color: 'var(--crm-body)' }}>
               {isAr ? 'إلغاء' : 'Cancel'}
             </button>
-            <button type="submit" className="btn btn-primary" style={{ background: '#092347', color: '#ffffff', border: 'none', borderRadius: '6px', fontWeight: 'bold' }}>
+            <button type="submit" className="btn btn-primary" style={{ background: 'var(--crm-brand-navy)', color: 'var(--crm-on-dark)', border: 'none', borderRadius: '6px', fontWeight: 'bold' }}>
               <Send size={16} />
               <span>{isAr ? 'تأكيد المعاينة وإرسال WhatsApp للعميل' : 'Confirm & Send WhatsApp'}</span>
             </button>

@@ -1,10 +1,9 @@
-import React from 'react';
-import { ShieldCheck, Lock, EyeOff, Award, MessageSquare, PhoneCall, Sparkles } from 'lucide-react';
-import { getWhatsAppUrl, getFounderSettings } from '../../utils/founderCmsData';
+
+import { ShieldCheck, Lock, EyeOff, Award, MessageSquare } from 'lucide-react';
+import { getWhatsAppUrl } from '../../utils/founderCmsData';
 
 export default function PrivateOfficeSection({ lang = 'ar' }) {
   const isAr = lang === 'ar';
-  const cms = getFounderSettings();
 
   const handleConfidentialInquiry = () => {
     const text = isAr

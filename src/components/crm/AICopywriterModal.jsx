@@ -1,17 +1,5 @@
 import { useState } from 'react';
-import { 
-  Sparkles, 
-  Copy, 
-  Check, 
-  Send, 
-  Building, 
-  Flame, 
-  Globe, 
-  TrendingUp, 
-  X,
-  MessageSquare,
-  Wand2
-} from 'lucide-react';
+import { Sparkles, Copy, Check, Send, Wand2 } from 'lucide-react';
 import { getDynamicPhone, getWhatsAppUrl } from '../../utils/founderCmsData';
 import { computeRentalYield } from '../../utils/propertyInsights';
 
@@ -26,7 +14,6 @@ export default function AICopywriterModal({
   const [selectedPropertyId, setSelectedPropertyId] = useState(properties[0]?.id || '');
   const [adTone, setAdTone] = useState('luxury'); // 'luxury' | 'social' | 'investor' | 'english'
   const [copied, setCopied] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
 
   if (!isOpen) return null;
 
@@ -305,7 +292,7 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
             position: 'relative'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-              <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}>
+              <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}>
                 <Sparkles size={14} /> {isAr ? 'تم الصياغة بواسطة الذكاء الاصطناعي العقاري' : 'AI Generated Content'}
               </span>
 
@@ -340,7 +327,7 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
                 width: '100%',
                 background: 'transparent',
                 border: 'none',
-                color: 'var(--text-primary)',
+                color: 'var(--crm-ink)',
                 lineHeight: '1.7',
                 fontSize: 'var(--crm-text-base)',
                 resize: 'none',

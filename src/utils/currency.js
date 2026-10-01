@@ -9,7 +9,7 @@ export const CURRENCIES = {
 /**
  * Format a price strictly in Egyptian Pound (EGP)
  */
-export const formatCurrency = (amountInEgp, currencyCode = 'EGP', lang = 'ar') => {
+export const formatCurrency = (amountInEgp, _currencyCode = 'EGP', lang = 'ar') => { // always EGP; the code argument is kept for callers
   if (!amountInEgp || isNaN(amountInEgp)) return '0';
   const symbol = lang === 'ar' ? 'ج.م' : 'EGP';
   return `${Math.round(amountInEgp).toLocaleString()} ${symbol}`;

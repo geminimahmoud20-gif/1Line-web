@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Check, Copy, MessageSquare, ExternalLink, Share2, Send } from 'lucide-react';
+import { X, Check, Copy, MessageSquare, Share2 } from 'lucide-react';
 
 export default function ShareModal({ isOpen, onClose, lang = 'ar', triggerToast, shareData }) {
   const [copied, setCopied] = useState(false);
@@ -20,22 +20,6 @@ export default function ShareModal({ isOpen, onClose, lang = 'ar', triggerToast,
       ? `اكتشف أرقى العقارات والفرص الاستثمارية بسوهاج على منصة 1Line:\n${shareData?.title ? `📌 ${shareData.title}\n` : ''}${url}`
       : `Explore top verified properties in Sohag on 1Line:\n${shareData?.title ? `📌 ${shareData.title}\n` : ''}${url}`
   );
-
-  const canNativeShare = typeof navigator !== 'undefined' && !!navigator.share;
-
-  const handleNativeShare = async () => {
-    try {
-      await navigator.share({
-        title: shareData?.title || '1Line Real Estate Solutions',
-        text: waShareText,
-        url: url
-      });
-    } catch (err) {
-      if (err?.name !== 'AbortError') {
-        handleCopy();
-      }
-    }
-  };
 
   const handleCopy = async () => {
     let success = false;

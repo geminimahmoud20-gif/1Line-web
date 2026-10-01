@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { TrendingDown, TrendingUp, Sparkles, CheckCircle2, ShieldCheck, BarChart3 } from 'lucide-react';
+import { TrendingDown, TrendingUp, CheckCircle2, ShieldCheck, BarChart3 } from 'lucide-react';
 import { getDistrictBenchmark, formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
 import { getAreaById } from '../../utils/areasData';
 
@@ -31,7 +31,6 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
 
   const isBelowMarket = diffPercent < -5;
   const isFairMarket = diffPercent >= -5 && diffPercent <= 8;
-  const isPremium = diffPercent > 8;
 
   // Calculate pointer position on 0-100% scale
   // 0% = -25% below avg, 50% = exactly avg, 100% = +25% above avg

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Zap, Send, Phone, MessageSquare, CheckCircle2, ShieldCheck, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Zap, Send, Phone, MessageSquare, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { getWhatsAppUrl, getPhoneCallUrl } from '../../utils/founderCmsData';
 import { checkFormSpamProtection, normalizePhoneNumber } from '../../utils/securityShield';
 

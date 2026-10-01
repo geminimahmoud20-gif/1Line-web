@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
 import { identifyVisitor } from '../utils/visitorTracker';
 import { sanitizeObject } from '../utils/securityShield';
@@ -59,13 +59,17 @@ export function ClientAuthProvider({
       if (phoneDigits) {
         try {
           localStorage.setItem(`oneline_client_favorites_${phoneDigits}`, JSON.stringify(favorites));
-        } catch (e) {}
+        } catch { /* storage unavailable — non-fatal */ }
       }
     }
   }, [clientUser, favorites]);
 
-  // Restore saved favorites on initial mount if client is already logged in
+  // Restore saved favorites once per signed-in client (on load or right after verification)
+  const restoredForRef = useRef(null);
   useEffect(() => {
+    const clientKey = clientUser ? (clientUser.whatsapp || clientUser.phone || clientUser.id || '') : null;
+    if (restoredForRef.current === clientKey) return;
+    restoredForRef.current = clientKey;
     if (clientUser && (!favorites || favorites.length === 0) && typeof restoreFavorites === 'function') {
       const phoneDigits = (clientUser.whatsapp || clientUser.phone || clientUser.id || '').replace(/[^0-9]/g, '');
       if (phoneDigits) {
@@ -77,10 +81,10 @@ export function ClientAuthProvider({
               restoreFavorites(parsed);
             }
           }
-        } catch (e) {}
+        } catch { /* storage unavailable — non-fatal */ }
       }
     }
-  }, [clientUser]);
+  }, [clientUser, favorites, restoreFavorites]);
 
   /**
    * Guarded Action Wrapper:
@@ -98,7 +102,7 @@ export function ClientAuthProvider({
     // Prepare pending action
     setPendingAction(() => actionCallback);
 
-    let reason = '';
+    let reason;
     if (actionType === 'favorite') {
       reason = isAr
         ? propertyTitle 
@@ -268,7 +272,7 @@ export function ClientAuthProvider({
       try {
         const raw = localStorage.getItem(`oneline_client_favorites_${phoneDigits}`);
         if (raw) clientSavedFavs = JSON.parse(raw);
-      } catch (e) {}
+      } catch { /* storage unavailable — non-fatal */ }
     }
 
     const mergedFavs = Array.from(new Set([
@@ -335,7 +339,7 @@ export function ClientAuthProvider({
       if (phoneDigits && Array.isArray(favorites)) {
         try {
           localStorage.setItem(`oneline_client_favorites_${phoneDigits}`, JSON.stringify(favorites));
-        } catch (e) {}
+        } catch { /* storage unavailable — non-fatal */ }
       }
     }
 
@@ -352,7 +356,7 @@ export function ClientAuthProvider({
     }
     try {
       localStorage.removeItem('oneline_favorites');
-    } catch (e) {}
+    } catch { /* storage unavailable — non-fatal */ }
 
     if (typeof triggerToast === 'function') {
       triggerToast(isAr ? 'تم تسجيل خروج حساب العميل بنجاح' : 'Client logged out', 'info');

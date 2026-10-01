@@ -28,14 +28,25 @@ export async function sha256Hash(message) {
 }
 
 /**
- * Anti-Brute-Force Rate Limiter
- * Tracks failed login attempts and temporarily locks out abusers
+ * Anti-Brute-Force Rate Limiter (client-side friction only)
+ * Tracks failed login attempts in localStorage, so the lock holds across tabs and reloads.
+ * The real limit is server-side: Firebase Auth throttles with auth/too-many-requests.
  */
+const SHIELD_KEY = 'oneline_auth_shield';
+const readShield = () => {
+  try { return JSON.parse(localStorage.getItem(SHIELD_KEY) || '{}') || {}; } catch { return {}; }
+};
+const writeShield = (data) => {
+  try {
+    if (data) localStorage.setItem(SHIELD_KEY, JSON.stringify(data));
+    else localStorage.removeItem(SHIELD_KEY);
+  } catch { /* storage unavailable — server-side throttling still applies */ }
+};
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 
 export function checkRateLimit() {
-  const attemptsData = JSON.parse(sessionStorage.getItem('oneline_auth_shield') || '{}');
+  const attemptsData = readShield();
   const now = Date.now();
 
   if (attemptsData.lockedUntil && now < attemptsData.lockedUntil) {
@@ -50,26 +61,26 @@ export function checkRateLimit() {
 
   if (attemptsData.lockedUntil && now >= attemptsData.lockedUntil) {
     // Reset lockout
-    sessionStorage.removeItem('oneline_auth_shield');
+    writeShield(null);
   }
 
   return { isLocked: false, remainingAttempts: MAX_ATTEMPTS - (attemptsData.count || 0) };
 }
 
 export function recordFailedAttempt() {
-  const attemptsData = JSON.parse(sessionStorage.getItem('oneline_auth_shield') || '{"count": 0}');
+  const attemptsData = readShield();
   const newCount = (attemptsData.count || 0) + 1;
 
   if (newCount >= MAX_ATTEMPTS) {
     const lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
-    sessionStorage.setItem('oneline_auth_shield', JSON.stringify({ count: newCount, lockedUntil }));
+    writeShield({ count: newCount, lockedUntil });
   } else {
-    sessionStorage.setItem('oneline_auth_shield', JSON.stringify({ count: newCount }));
+    writeShield({ count: newCount });
   }
 }
 
 export function resetFailedAttempts() {
-  sessionStorage.removeItem('oneline_auth_shield');
+  writeShield(null);
 }
 
 /**

@@ -1,4 +1,4 @@
-import { saveSettings, loadSettings, subscribeToSettings } from '../firebaseLazy.js';
+import { saveSettings, subscribeToSettings } from '../firebaseLazy.js';
 
 export const DEFAULT_SOHAG_AREAS = [
   {

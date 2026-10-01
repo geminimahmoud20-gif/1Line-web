@@ -1,20 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Search, 
-  X, 
-  Building, 
-  MapPin, 
-  Layers, 
-  Calculator, 
-  TrendingUp, 
-  Lock, 
-  FileText, 
-  ArrowRight,
-  ArrowLeft,
-  CornerDownLeft,
-  Sparkles
-} from 'lucide-react';
+import { Search, X, Building, MapPin, Layers, Calculator, TrendingUp, FileText, ArrowRight, ArrowLeft, CornerDownLeft, Sparkles } from 'lucide-react';
 import { getAreas } from '../../utils/areasData.js';
 import { MEGA_PROJECTS } from '../../data/projectsData.js';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark.js';
@@ -35,14 +21,18 @@ export default function QuickSearchModal({
   const isAr = lang === 'ar';
 
   // Auto-focus input when modal opens
-  useEffect(() => {
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (wasOpen !== isOpen) {
+    setWasOpen(isOpen);
     if (isOpen) {
       setQuery('');
       setSelectedIndex(0);
-      setTimeout(() => {
-        if (inputRef.current) inputRef.current.focus();
-      }, 60);
     }
+  }
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const t = setTimeout(() => inputRef.current?.focus(), 60);
+    return () => clearTimeout(t);
   }, [isOpen]);
 
   const areas = useMemo(() => {

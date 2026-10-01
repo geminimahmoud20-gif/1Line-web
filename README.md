@@ -29,6 +29,8 @@
 ```bash
 # 1. تثبيت الحزم البرمجية
 npm install
+# لو فشل تحميل Cypress (شبكة بطيئة/محجوبة) ومش محتاج اختبارات المتصفح:
+# CYPRESS_INSTALL_BINARY=0 npm install
 
 # 2. تشغيل خادم التطوير المحلي
 npm run dev

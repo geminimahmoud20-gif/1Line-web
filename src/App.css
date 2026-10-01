@@ -9718,7 +9718,7 @@
 .dropzone-label span {
   font-size: 0.9rem;
   font-weight: 800;
-  color: var(--primary);
+  color: var(--crm-ink);
 }
 
 .dropzone-label small {
@@ -17774,7 +17774,7 @@ body.dark-theme .compare-tabs-bar {
 .enterprise-crm-hub {
   width: 100%;
   animation: fadeIn 0.3s ease;
-  color: #0f172a;
+  color: var(--crm-ink);
 }
 
 /* CRM Segmented Modern Navigation Pills - White Light Luxury */

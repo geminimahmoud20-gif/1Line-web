@@ -1,13 +1,8 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
-import {
-  Menu, Search, X, Plus, ChevronDown, Bell, ShieldCheck,
-  Lock, Rocket, Globe, LogOut, Users, Building, Zap,
-  Sparkles, CheckCircle2, AlertTriangle, Clock, ArrowRight, ArrowLeft
-} from 'lucide-react';
-import { CRM_ROLES } from '../CrmAdminPanel';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { Menu, Search, X, Plus, ChevronDown, Bell, ShieldCheck, Lock, Rocket, Globe, LogOut, Users, Building, Zap, Sparkles, CheckCircle2, AlertTriangle, ArrowRight, ArrowLeft } from 'lucide-react';
+import { CRM_ROLES } from './crmRoles';
 
 export default function CrmTopbar({
-  lang = 'ar',
   isAr = true,
   leads = [],
   properties = [],
@@ -23,7 +18,6 @@ export default function CrmTopbar({
   setActiveTab,
   systemSubTab,
   onLogout,
-  showGoLiveWizard,
   setShowGoLiveWizard,
   onToggleMobileSidebar,
   onOpenCommandPalette
@@ -185,8 +179,8 @@ export default function CrmTopbar({
             onClick={() => onOpenCommandPalette?.()}
             title={isAr ? 'لوحة الأوامر السريعة (Ctrl + K)' : 'Command Palette (Ctrl + K)'}
             style={{
-              background: 'var(--crm-subtle, #f9f8f5)',
-              border: '1px solid var(--crm-line, #e2e8f0)',
+              background: 'var(--crm-subtle)',
+              border: '1px solid var(--crm-line)',
               borderRadius: '5px',
               padding: '2px 6px',
               fontSize: 'var(--crm-text-xs)',
@@ -236,7 +230,7 @@ export default function CrmTopbar({
                       <div style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold' }}>{l.name}</div>
                       <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{l.phone}</div>
                     </div>
-                    <span style={{ fontSize: 'var(--crm-text-xs)', padding: '2px 6px', background: '#e2e8f0', borderRadius: '4px', color: 'var(--crm-body)' }}>
+                    <span style={{ fontSize: 'var(--crm-text-xs)', padding: '2px 6px', background: 'var(--crm-subtle-2)', borderRadius: '4px', color: 'var(--crm-body)' }}>
                       {isAr ? ({ new: 'جديد', contacted: 'تم التواصل', site_visit: 'معاينة', negotiating: 'تفاوض', closing: 'توقيع', closed: 'ناجحة' }[l.status] || 'جديد') : (l.status || 'new')}
                     </span>
                   </div>
@@ -305,8 +299,8 @@ export default function CrmTopbar({
             type="button"
             onClick={() => setShowQuickActionMenu(!showQuickActionMenu)}
             style={{
-              background: '#0F172A',
-              color: '#FFFFFF',
+              background: 'var(--crm-surface-ink)',
+              color: 'var(--crm-on-dark)',
               fontWeight: '700',
               fontSize: 'var(--crm-text-xs)',
               display: 'flex',
@@ -314,7 +308,7 @@ export default function CrmTopbar({
               gap: '6px',
               padding: '7px 13px',
               borderRadius: '8px',
-              border: '1px solid #1E293B',
+              border: '1px solid var(--crm-brand-navy)',
               cursor: 'pointer',
               transition: 'all 0.15s ease'
             }}
@@ -417,11 +411,11 @@ export default function CrmTopbar({
                   borderRadius: '6px'
                 }}
               >
-                <Building size={14} style={{ color: '#7c3aed' }} />
+                <Building size={14} style={{ color: 'var(--crm-violet)' }} />
                 <span>{isAr ? '+ إضافة مشروع استثماري' : '+ New Project'}</span>
               </button>
 
-              <div style={{ height: '1px', background: '#e2e8f0', margin: '4px 8px' }} />
+              <div style={{ height: '1px', background: 'var(--crm-subtle-2)', margin: '4px 8px' }} />
 
               <button
                 type="button"
@@ -463,7 +457,7 @@ export default function CrmTopbar({
                   borderRadius: '6px'
                 }}
               >
-                <Zap size={14} style={{ color: '#ef4444' }} />
+                <Zap size={14} style={{ color: 'var(--crm-danger)' }} />
                 <span>{isAr ? '📢 حملة إعادة استهداف' : '📢 Retargeting Campaign'}</span>
               </button>
             </div>
@@ -512,7 +506,7 @@ export default function CrmTopbar({
                       cursor: 'pointer'
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#ef4444', fontWeight: 'bold', fontSize: 'var(--crm-text-xs)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--crm-danger)', fontWeight: 'bold', fontSize: 'var(--crm-text-xs)' }}>
                       <AlertTriangle size={13} />
                       <span>{isAr ? `يوجد ${pendingDemands.length} طلب مشترٍ بحاجة للمراجعة!` : `${pendingDemands.length} pending demands awaiting approval`}</span>
                     </div>
@@ -658,12 +652,12 @@ export default function CrmTopbar({
           type="button"
           onClick={onLogout}
           style={{
-            color: '#DC2626',
+            color: 'var(--crm-danger)',
             fontSize: 'var(--crm-text-xs)',
             padding: '6px 12px',
             borderRadius: '8px',
-            border: '1px solid #FECACA',
-            background: '#FEF2F2',
+            border: '1px solid var(--crm-danger-line)',
+            background: 'var(--crm-danger-soft)',
             fontWeight: '600',
             cursor: 'pointer',
             display: 'flex',

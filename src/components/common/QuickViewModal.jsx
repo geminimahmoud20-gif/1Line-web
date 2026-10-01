@@ -1,14 +1,10 @@
 import { useState } from 'react';
-import { 
-  X, MapPin, Maximize2, BedDouble, Bath, MessageSquare, ArrowLeft, ArrowRight, 
-  Download, Loader2, Share2, ChevronLeft, ChevronRight, Layers, Sparkles,
-  Store, Briefcase, Building, ShieldCheck, Video
-} from 'lucide-react';
+import { X, MapPin, Maximize2, BedDouble, Bath, MessageSquare, ArrowLeft, ArrowRight, Download, Loader2, Share2, ChevronLeft, ChevronRight, Layers, Sparkles, Store, Briefcase, Building, Video } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useUIModal } from '../../context/UIModalContext';
 import '../../styles/expat-suite.css';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
-import { formatCurrencyPrice, getPriceBenchmark } from '../../utils/currencyAndBenchmark';
+import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
 import BrandWatermark from './BrandWatermark';
 
 export default function QuickViewModal({ 
@@ -38,7 +34,6 @@ export default function QuickViewModal({
   const isCommercial = !isLand && (property.type === 'commercial' || property.category === 'commercial' || (title && (title.includes('محل') || title.includes('معرض') || title.includes('ريتيل') || title.includes('تجاري'))));
   const isOffice = !isLand && !isCommercial && (property.type === 'office' || property.category === 'administrative' || (title && (title.includes('مكتب') || title.includes('عيادة') || title.includes('إداري'))));
   const priceData = formatCurrencyPrice(property.price, currency, lang);
-  const benchmark = getPriceBenchmark(property, lang);
   const downPaymentVal = Number(property.downPayment) || 0;
   const monthlyInstallmentVal = Number(property.monthlyInstallment) || 0;
   const downPaymentData = formatCurrencyPrice(downPaymentVal, currency, lang);

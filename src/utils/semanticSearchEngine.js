@@ -248,7 +248,7 @@ export function parseSemanticQuery(rawQuery) {
 /**
  * Executes Semantic Natural Language Search across property listings
  */
-export function searchPropertiesSemantic(properties = [], queryText = '', options = {}) {
+export function searchPropertiesSemantic(properties = [], queryText = '') {
   if (!Array.isArray(properties) || properties.length === 0) return [];
   if (!queryText || queryText.trim() === '') return properties;
 

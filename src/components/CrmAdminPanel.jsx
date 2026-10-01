@@ -1,21 +1,9 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { 
-  Lock, Eye, EyeOff, ShieldCheck, AlertCircle, 
-  Wifi, WifiOff, Download, LogOut, Bell, 
-  Building, Users, User, Briefcase, Inbox, 
-  MessageSquare, FileText, Sparkles,
-  Edit3, Trash2, Database, Upload, Save, X, Clock, CheckCircle2,
-  Trophy, Calculator, LayoutGrid, Wand2, Calendar, Target, Zap, Plus,
-  UserPlus, CheckSquare, Square, Flame, Tag, Filter, Send, Activity,
-  ArrowLeft, ArrowRight, MapPin, Archive, Wallet
-} from 'lucide-react';
-import { loginUser, logAuditEvent } from '../firebaseService';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { X, Clock } from 'lucide-react';
+import { loginUser, logAuditEvent, migrateInlineLeadContacts } from '../firebaseService';
 import { exportToCsv } from '../utils/exportCsv';
-import { formatTimeSinceLastSync } from '../utils/syncManager';
-import { canExportCsv, canDeleteLead, canViewLeadPhone, maskPhoneNumber, canEditLeadsRole } from '../utils/rbacRules';
-import { SOHAG_AREAS, PROPERTY_TYPES } from '../data/propertiesData';
-import { getAreas } from '../utils/areasData';
-import { formatFollowUp, formatBudget, formatLeadType } from '../utils/crmLabels';
+
+import { canExportCsv, canDeleteLead, canEditLeadsRole, assignableDesks } from '../utils/rbacRules';
 
 // Enterprise PropTech Modules
 import KanbanPipeline from './crm/KanbanPipeline';
@@ -25,23 +13,20 @@ import AgentCommissionLeaderboard from './crm/AgentCommissionLeaderboard';
 import PaymentScheduleBuilder from './crm/PaymentScheduleBuilder';
 import RetargetingHub from './crm/RetargetingHub';
 import CustomerProfileModal from './crm/CustomerProfileModal';
+
+import LeadsTab from './crm/LeadsTab';
+import SystemBackupTab from './crm/SystemBackupTab';
+import AutomationTab from './crm/AutomationTab';
 import AddLeadModal from './crm/AddLeadModal';
 import VisitorIntelligencePanel from './crm/VisitorIntelligencePanel';
 import FounderCmsPanel from './crm/FounderCmsPanel';
 import ContractStudioModal from './crm/ContractStudioModal';
 import LeadQuickDrawer from './crm/LeadQuickDrawer';
 import CrmExecutiveDashboard from './crm/CrmExecutiveDashboard';
-
-export const CRM_ROLES = [
-  { id: 'super_admin', label_ar: 'المدير العام', label_en: 'Super Admin', agentName: 'Dr. Mahmoud Elbaz', icon: '👑', canDelete: true, canViewAgencyFinancials: true },
-  { id: 'sales_manager', label_ar: 'مدير المبيعات', label_en: 'Sales Manager', agentName: 'Sales Management', icon: '💼', canDelete: false, canViewAgencyFinancials: true },
-  { id: 'sales_agent', label_ar: 'مستشار مبيعات', label_en: 'Sales Agent', agentName: 'Sales Advisor Team', icon: '🎯', canDelete: false, canViewAgencyFinancials: false },
-  { id: 'property_manager', label_ar: 'مدير العقارات', label_en: 'Property Manager', agentName: 'Inventory Desk', icon: '🏢', canDelete: false, canViewAgencyFinancials: false },
-  { id: 'finance', label_ar: 'الإدارة المالية', label_en: 'Finance', agentName: 'Finance Department', icon: '💰', canDelete: false, canViewAgencyFinancials: true },
-  { id: 'viewer', label_ar: 'مراقب / مدقق', label_en: 'Viewer', agentName: 'Audit Desk', icon: '👁️', canDelete: false, canViewAgencyFinancials: false },
-  { id: 'agent_east', label_ar: 'فريق شرق والكوثر (وسيط)', label_en: 'East Desk Broker', agentName: 'Sales Team A', icon: '🏆', canDelete: false, canViewAgencyFinancials: false },
-  { id: 'agent_new_sohag', label_ar: 'فريق سوهاج الجديدة (وسيط)', label_en: 'New Sohag Desk Broker', agentName: 'Sales Team B', icon: '🌟', canDelete: false, canViewAgencyFinancials: false }
-];
+import { CRM_ROLES } from './crm/crmRoles';
+import EditLeadModal from './crm/EditLeadModal';
+import { LEAD_EXPORT_HEADERS, makeLeadFormatters } from './crm/leadFormatters';
+import CrmLoginGate from './crm/CrmLoginGate';
 
 export const CrmAdminPanel = ({
   lang = 'ar',
@@ -50,21 +35,14 @@ export const CrmAdminPanel = ({
   leads = [],
   setLeads,
   properties = [],
-  activeMatches = [],
   exportLeadsCSV,
-  handleCrmLogout,
   crmAuthenticated = true,
   setCrmAuthenticated,
   currentUser = null,
   userRole = 'super_admin',
-  updateLeadStatus,
-  updateLeadFollowUp,
-  assignLeadSalesperson,
   handleWhatsAppAction,
-  updateLeadNotes,
   triggerToast,
   addNotification = () => {},
-  notifications = [],
   onConvertToProperty,
   onUpdateLead,
   onDeleteLead,
@@ -73,12 +51,9 @@ export const CrmAdminPanel = ({
   onSwitchToDemands,
   onSwitchToProperties,
   onSwitchToProjects,
-  onSwitchToAreas,
-  onSwitchToCorporate,
   adminTab: propAdminTab,
   onSwitchTab,
-  activeRole: propActiveRole,
-  onRoleChange
+  activeRole: propActiveRole
 }) => {
   // Local Authentication States
   const [crmPasswordInput, setCrmPasswordInput] = useState('');
@@ -88,13 +63,8 @@ export const CrmAdminPanel = ({
   const [loading, setLoading] = useState(false);
 
   // Multi-Tenant RBAC Identity State
-  const [localActiveRole, setLocalActiveRole] = useState(userRole || 'super_admin');
-  const activeRole = propActiveRole || localActiveRole;
-  const setActiveRole = (role) => {
-    setLocalActiveRole(role);
-    if (onRoleChange) onRoleChange(role);
-  };
-  const [myDealsOnly, setMyDealsOnly] = useState(false);
+  const activeRole = propActiveRole || userRole || 'super_admin';
+  const myDealsOnly = false; // "my deals only" filter: not exposed in the UI yet
 
   // Enterprise Tab States
   const [localAdminTab, setLocalAdminTab] = useState('dashboard');
@@ -144,6 +114,32 @@ export const CrmAdminPanel = ({
   const currentRoleObj = CRM_ROLES.find(r => r.id === activeRole) || CRM_ROLES[0];
   const isSuperAdmin = currentRoleObj.canDelete;
 
+  // Leads saved before desk scoping may lack assignedTo; desk agents' queue queries can't see
+  // them. A manager's session files them into the shared pool once (only cloud-synced leads).
+  const canAssignAll = userRole === 'super_admin' || userRole === 'sales_manager';
+  useEffect(() => {
+    if (!canAssignAll || !onUpdateLead || !firebaseConnected) return;
+    // Cloud leads only — never push device-local or sample leads to Firestore
+    const orphans = leads.filter((l) => l?._cloud && l.id && !l.assignedTo);
+    if (orphans.length === 0) return;
+    try {
+      if (sessionStorage.getItem('oneline_lead_desk_backfill')) return;
+      sessionStorage.setItem('oneline_lead_desk_backfill', '1');
+    } catch { /* storage unavailable — still backfill */ }
+    orphans.forEach((l) => onUpdateLead(l.id, { assignedTo: 'Unassigned' }));
+  }, [canAssignAll, onUpdateLead, firebaseConnected, leads]);
+
+  // Phones still stored on the lead doc (saved before lead_contacts, or by a browser on an old
+  // build) are readable by every CRM role; a manager's session moves them into lead_contacts.
+  const contactMigrationTried = useRef(new Set());
+  useEffect(() => {
+    if (!canAssignAll || !firebaseConnected) return;
+    const pending = leads.filter((l) => l?._cloud && l._inlineContact && !contactMigrationTried.current.has(l.id));
+    if (pending.length === 0) return;
+    pending.forEach((l) => contactMigrationTried.current.add(l.id));
+    migrateInlineLeadContacts(pending).catch(() => {});
+  }, [canAssignAll, firebaseConnected, leads]);
+
   const handleClaimLead = (leadId) => {
     if (onUpdateLead) {
       onUpdateLead(leadId, { assignedTo: currentRoleObj.agentName });
@@ -160,75 +156,7 @@ export const CrmAdminPanel = ({
     }
   };
 
-  const getLocalizedPropertyType = (typeKey) => {
-    if (!typeKey) return isAr ? 'عقار غير محدد' : 'N/A';
-    const found = PROPERTY_TYPES.find(t => t.id === typeKey);
-    if (found) return isAr ? found.name_ar : found.name_en;
-    const fallbackMap = {
-      apartment: 'شقة سكنية',
-      retail: 'محل تجاري',
-      villa: 'فيلا / تاون هاوس',
-      office: 'مكتب إداري / عيادة',
-      land: 'قطعة أرض',
-      building: 'عمارة سكنية'
-    };
-    return fallbackMap[typeKey.toLowerCase()] || formatLeadType(typeKey, isAr);
-  };
-
-  const getLocalizedArea = (areaKey) => {
-    if (!areaKey) return isAr ? 'سوهاج' : 'Sohag';
-    // getAreas() includes Cairo and CMS-added districts; SOHAG_AREAS is the static fallback
-    const found = getAreas().find(a => a.id === areaKey) || SOHAG_AREAS.find(a => a.id === areaKey);
-    if (found) return isAr ? found.name_ar : found.name_en;
-    return areaKey;
-  };
-
-  const formatLeadStatus = (status) => {
-    const map = {
-      new: ['جديد', 'New'],
-      contacted: ['تم التواصل', 'Contacted'],
-      site_visit: ['معاينة مجدولة', 'Site visit'],
-      negotiating: ['قيد التفاوض', 'Negotiating'],
-      closing: ['توقيع وحجز', 'Closing'],
-      closed: ['صفقة ناجحة', 'Closed won'],
-      lost: ['مفقود', 'Lost']
-    };
-    const hit = map[status] || map.new;
-    return isAr ? hit[0] : hit[1];
-  };
-
-  const formatLeadTypeBadge = (type) => {
-    if (isAr) {
-      const map = {
-        buyer: 'طلب شراء',
-        seller: 'عرض بيع',
-        reservation_request: 'طلب حجز مبدئي',
-        viewing_request: 'طلب معاينة',
-        investor: 'مستثمر VIP',
-        broker: 'وسيط عقاري',
-        callback_request: 'طلب اتصال',
-        express_buyer: 'طلب شراء سريع',
-        request: 'استفسار عام'
-      };
-      return map[type] || t[type] || type;
-    }
-    return t[type] || type;
-  };
-
-  const formatLeadSourceLabel = (src) => {
-    if (!src) return isAr ? 'الموقع المباشر' : 'Direct Web';
-    if (isAr) {
-      if (src.includes('sell')) return 'عرض عقار للبيع';
-      if (src.includes('express')) return 'الشريط السريع بالرئيسية';
-      if (src.includes('whatsapp')) return 'واتساب المنظومة';
-      if (src.includes('valuation')) return 'حاسبة التقييم';
-      if (src.includes('Facebook')) return 'إعلانات فيسبوك';
-      if (src.includes('Google')) return 'بحث جوجل المباشر';
-      if (src.includes('TikTok')) return 'حملات تيك توك';
-      if (src === 'Direct Web') return 'الموقع المباشر';
-    }
-    return src;
-  };
+  const { getLocalizedPropertyType, getLocalizedArea, toLeadExportRow } = makeLeadFormatters(isAr, t);
 
   // Bulk Selection Handlers
   const handleToggleSelectAll = (visibleLeads) => {
@@ -249,7 +177,7 @@ export const CrmAdminPanel = ({
 
   const handleBulkAssign = (newAgent) => {
     if (selectedLeadIds.length === 0 || !newAgent) return;
-    if (!canEditLeadsRole(activeRole)) {
+    if (!canEditLeadsRole(activeRole) || !assignableDesks(activeRole).some((d) => d.value === newAgent)) {
       if (triggerToast) triggerToast(isAr ? 'صلاحياتك الحالية لا تسمح بتعيين العملاء' : 'Your role cannot assign leads', 'error');
       return;
     }
@@ -293,52 +221,6 @@ export const CrmAdminPanel = ({
       }
       setSelectedLeadIds([]);
     }
-  };
-
-  // Leads keep area/budget/propertyType under `details`; exporting the raw objects left those columns empty.
-  const LEAD_EXPORT_HEADERS = {
-    id: 'المعرف',
-    name: 'اسم العميل',
-    phone: 'رقم الهاتف',
-    whatsapp: 'رقم الواتساب',
-    email: 'البريد الإلكتروني',
-    type: 'نوع الطلب',
-    propertyType: 'نوع العقار',
-    area: 'المنطقة',
-    budget: 'الميزانية',
-    status: 'الحالة',
-    temperature: 'درجة الاهتمام',
-    score: 'التقييم',
-    assignedTo: 'المسؤول',
-    source: 'المصدر',
-    nextFollowUpAt: 'المتابعة القادمة',
-    createdAt: 'تاريخ الإنشاء',
-    notes: 'الملاحظات'
-  };
-
-  const toLeadExportRow = (l) => {
-    const d = l.details || {};
-    const areaKey = l.area || d.area || d.district;
-    const typeKey = l.propertyType || d.propertyType;
-    return {
-      id: l.id,
-      name: l.name,
-      phone: l.phone,
-      whatsapp: l.whatsapp,
-      email: l.email || d.email || '',
-      type: formatLeadTypeBadge(l.type),
-      propertyType: typeKey ? getLocalizedPropertyType(typeKey) : '',
-      area: areaKey ? getLocalizedArea(areaKey) : '',
-      budget: l.budget || d.budget || d.expectedPrice || '',
-      status: formatLeadStatus(l.status),
-      temperature: { hot: 'ساخن', warm: 'دافئ', cold: 'بارد' }[l.temperature] || '',
-      score: l.score ?? '',
-      assignedTo: l.assignedTo || '',
-      source: l.source || '',
-      nextFollowUpAt: l.nextFollowUpAt || '',
-      createdAt: l.createdAt || l.timestamp || '',
-      notes: l.notes || ''
-    };
   };
 
   const exportLeadRows = (rows, fileName, scope) => {
@@ -708,89 +590,19 @@ export const CrmAdminPanel = ({
 
   if (!crmAuthenticated) {
     return (
-      <div style={{ maxWidth: '420px', margin: '60px auto', textAlign: 'center' }}>
-        <div style={{ 
-          background: 'var(--bg-card)', 
-          border: '1px solid var(--border-light)', 
-          borderRadius: 'var(--radius-lg)', 
-          padding: '40px 30px',
-          boxShadow: 'var(--shadow-lg)'
-        }}>
-          <Lock size={40} style={{ color: 'var(--accent-gold)', marginBottom: '16px' }} />
-          <h2 style={{ marginBottom: '8px' }}>
-            {isAr ? 'لوحة تحكم الإدارة' : 'Admin CRM Login'}
-          </h2>
-          <p style={{ fontSize: 'var(--crm-text-base)', color: 'var(--text-secondary)', marginBottom: '24px' }}>
-            {firebaseConnected 
-              ? (isAr ? 'قم بتسجيل الدخول باستخدام حساب المشرف العقاري المعتمد.' : 'Login with certified admin credentials.')
-              : (isAr ? 'أدخل كلمة المرور للوصول إلى وضع عدم الاتصال.' : 'Enter password to access offline mode.')}
-          </p>
-          
-          <form onSubmit={handleLoginSubmit}>
-            {firebaseConnected && (
-              <div style={{ marginBottom: '16px', textAlign: 'right' }}>
-                <label style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold', color: 'var(--text-secondary)' }}>
-                  {isAr ? 'البريد الإلكتروني' : 'Email Address'}
-                </label>
-                <input 
-                  type="email"
-                  required
-                  className="form-input"
-                  placeholder="admin@oneline.com"
-                  value={crmEmailInput} data-testid="login-email"
-                  onChange={(e) => setCrmEmailInput(e.target.value)}
-                  style={{ marginTop: '4px', textAlign: 'left', direction: 'ltr' }}
-                />
-              </div>
-            )}
-
-            <div style={{ marginBottom: '16px', textAlign: 'right' }}>
-              <label style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold', color: 'var(--text-secondary)' }}>
-                {isAr ? 'كلمة المرور' : 'Password'}
-              </label>
-              <div style={{ position: 'relative', marginTop: '4px' }}>
-                <input 
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  className="form-input"
-                  placeholder={isAr ? 'كلمة المرور' : 'Password'}
-                  value={crmPasswordInput} data-testid="login-password"
-                  onChange={(e) => setCrmPasswordInput(e.target.value)}
-                  style={{ 
-                    paddingInlineEnd: '40px', 
-                    textAlign: firebaseConnected ? 'left' : 'center', 
-                    fontSize: '1.1rem', 
-                    letterSpacing: firebaseConnected ? 'normal' : '2px' 
-                  }}
-                />
-                <button 
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{ 
-                    position: 'absolute', top: '50%', transform: 'translateY(-50%)',
-                    [isAr ? 'left' : 'right']: '12px',
-                    background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)'
-                  }}
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-            </div>
-
-            {crmAuthError && (
-              <p style={{ color: 'var(--rose)', fontSize: 'var(--crm-text-base)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
-                <AlertCircle size={14} />
-                {crmAuthError}
-              </p>
-            )}
-
-            <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
-              <ShieldCheck size={16} />
-              {loading ? (isAr ? 'جاري التحقق...' : 'Verifying...') : (isAr ? 'دخول لوحة التحكم' : 'Login to CRM')}
-            </button>
-          </form>
-        </div>
-      </div>
+      <CrmLoginGate
+        crmAuthError={crmAuthError}
+        crmEmailInput={crmEmailInput}
+        crmPasswordInput={crmPasswordInput}
+        firebaseConnected={firebaseConnected}
+        handleLoginSubmit={handleLoginSubmit}
+        isAr={isAr}
+        loading={loading}
+        setCrmEmailInput={setCrmEmailInput}
+        setCrmPasswordInput={setCrmPasswordInput}
+        setShowPassword={setShowPassword}
+        showPassword={showPassword}
+      />
     );
   }
 
@@ -851,519 +663,47 @@ export const CrmAdminPanel = ({
 
       {/* 👥 TAB 4: LEADS HUB (ENTERPRISE CUSTOMER 360° DATABASE) */}
       {adminTab === 'leads' && (
-        <div className="crm-table-container">
-          {/* Top Control Strip */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '16px',
-            flexWrap: 'wrap',
-            gap: '12px'
-          }}>
-            <div>
-              <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Users size={20} className="text-gold" />
-                {isAr ? 'قاعدة بيانات العملاء الشاملة' : 'Customer 360° Database'}
-              </h3>
-              <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-secondary)' }}>
-                {isAr ? `إجمالي العملاء: ${leads.length} عميل | المطابق للفلتر: ${filteredLeads.length}` : `Total Leads: ${leads.length} | Filtered: ${filteredLeads.length}`}
-              </span>
-            </div>
-
-            {/* Quick Add Lead & Export Actions */}
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <button
-                type="button"
-                className="btn btn-sm btn-primary"
-                onClick={() => setShowAddLeadModal(true)}
-                style={{
-                  background: 'var(--gradient-gold)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  boxShadow: '0 2px 10px rgba(217, 119, 6, 0.3)'
-                }}
-              >
-                <UserPlus size={15} />
-                <span>{isAr ? 'إضافة عميل جديد ➕' : 'Add New Lead ➕'}</span>
-              </button>
-              {canExportCsv(activeRole) && (
-                <button
-                  type="button"
-                  className="btn btn-sm btn-outline"
-                  onClick={() => handleExportCSV(filteredLeads)}
-                  disabled={filteredLeads.length === 0}
-                  title={isAr ? 'تصدير العملاء الظاهرين حالياً (حسب الفلتر والبحث)' : 'Export the current filtered view'}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-                >
-                  <Download size={15} />
-                  <span>{isAr ? `تصدير Excel (${filteredLeads.length})` : `Export (${filteredLeads.length})`}</span>
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Advanced Multi-Filters Toolbar */}
-          <div className="crm-table-header" style={{ alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '14px' }}>
-            {/* Stage & Workflow Quick Tabs */}
-            <div className="table-filters" style={{ flexWrap: 'wrap', gap: '6px' }}>
-              <button className={`table-filter-btn ${leadFilter === 'all' ? 'active' : ''}`} onClick={() => setLeadFilter('all')}>
-                {isAr ? 'كل العملاء' : 'All Leads'} ({leads.filter(l => !l.isArchived).length})
-              </button>
-              <button className={`table-filter-btn ${leadFilter === 'new' ? 'active' : ''}`} onClick={() => setLeadFilter('new')}>
-                ✨ {isAr ? 'عملاء جدد' : 'New Leads'} ({leads.filter(l => !l.isArchived && (l.status === 'new' || !l.status)).length})
-              </button>
-              <button className={`table-filter-btn ${leadFilter === 'due' ? 'active' : ''}`} onClick={() => setLeadFilter('due')}>
-                ⏰ {isAr ? 'متابعة اليوم' : 'Due Today'}
-              </button>
-              <button className={`table-filter-btn ${leadFilter === 'qualified' ? 'active' : ''}`} onClick={() => setLeadFilter('qualified')}>
-                🎯 {isAr ? 'مؤهلون للشراء' : 'Qualified'}
-              </button>
-              <button className={`table-filter-btn ${leadFilter === 'buyer' ? 'active' : ''}`} onClick={() => setLeadFilter('buyer')}>
-                {isAr ? 'طلبات شراء' : 'Buyers'}
-              </button>
-              <button className={`table-filter-btn ${leadFilter === 'seller' ? 'active' : ''}`} onClick={() => setLeadFilter('seller')}>
-                {isAr ? 'عروض بيع' : 'Sellers'}
-              </button>
-              <button className={`table-filter-btn ${leadFilter === 'investor' ? 'active' : ''}`} onClick={() => setLeadFilter('investor')}>
-                💎 {isAr ? 'مستثمرون VIP' : 'Investors'}
-              </button>
-              <button className={`table-filter-btn ${leadFilter === 'archived' ? 'active' : ''}`} onClick={() => setLeadFilter('archived')} style={{ color: leadFilter === 'archived' ? '#f59e0b' : undefined }}>
-                📦 {isAr ? 'المؤرشفون' : 'Archived'} ({leads.filter(l => l.isArchived).length})
-              </button>
-            </div>
-
-            {/* Secondary Filters (Temperature & Area) */}
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-              {/* Temperature Filter */}
-              <select
-                value={temperatureFilter}
-                aria-label={isAr ? 'تصفية حسب درجة الاهتمام' : 'Filter by temperature'}
-                onChange={(e) => setTemperatureFilter(e.target.value)}
-                className="form-input"
-                style={{ padding: '6px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
-              >
-                <option value="all">🌡️ {isAr ? 'كل درجات الحرارة' : 'All Temperatures'}</option>
-                <option value="hot">🔥 {isAr ? 'ساخن جداً' : 'Hot'}</option>
-                <option value="warm">⚡ {isAr ? 'دافئ' : 'Warm'}</option>
-                <option value="cold">❄️ {isAr ? 'بارد' : 'Cold'}</option>
-              </select>
-
-              {/* Area Filter */}
-              <select
-                value={areaFilter}
-                aria-label={isAr ? 'تصفية حسب المنطقة' : 'Filter by area'}
-                onChange={(e) => setAreaFilter(e.target.value)}
-                className="form-input"
-                style={{ padding: '6px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
-              >
-                <option value="all">📍 {isAr ? 'كل مناطق سوهاج' : 'All Areas'}</option>
-                {SOHAG_AREAS.filter(a => a.id !== 'all').map(a => (
-                  <option key={a.id} value={a.id}>{isAr ? a.name_ar : a.name_en}</option>
-                ))}
-              </select>
-
-              {/* Text Search */}
-              <input 
-                type="text" 
-                placeholder={isAr ? 'بحث بالاسم، الهاتف، الوسم، الاغتراب...' : 'Search name/phone/tag...'} 
-                className="form-input" 
-                style={{ padding: '6px 14px', fontSize: 'var(--crm-text-sm)', width: '220px', borderRadius: 'var(--radius-pill)' }}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* ⚡ BULK ACTIONS FLOATING TOOLBAR */}
-          {selectedLeadIds.length > 0 && (
-            <div style={{
-              background: 'rgba(217, 119, 6, 0.12)',
-              border: '1px solid var(--accent-gold)',
-              borderRadius: 'var(--radius-sm)',
-              padding: '10px 16px',
-              marginBottom: '14px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '10px'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span className="badge" style={{ background: 'var(--accent-gold)', color: '#000', fontWeight: 'bold' }}>
-                  {selectedLeadIds.length} {isAr ? 'عميل محدد' : 'selected'}
-                </span>
-                <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--text-primary)' }}>
-                  {isAr ? 'إجراءات جماعية فورية:' : 'Bulk Actions:'}
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                {/* Bulk Assign Agent Dropdown */}
-                {canEditLeadsRole(activeRole) && <select
-                  aria-label={isAr ? 'تعيين مسؤول للعملاء المحددين' : 'Assign selected leads'}
-                  onChange={(e) => {
-                    if (e.target.value) handleBulkAssign(e.target.value);
-                  }}
-                  className="form-input"
-                  style={{ padding: '4px 8px', fontSize: 'var(--crm-text-xs)', width: 'auto' }}
-                  defaultValue=""
-                >
-                  <option value="" disabled>👥 {isAr ? 'تعيين مسؤول جماعي...' : 'Assign Agent...'}</option>
-                  <option value="Dr. Mahmoud Elbaz">Dr. Mahmoud Elbaz</option>
-                  <option value="Sales Team A">Sales Team A (شرق سوهاج)</option>
-                  <option value="Sales Team B">Sales Team B (سوهاج الجديدة)</option>
-                </select>}
-
-                {/* Bulk Export */}
-                <button
-                  type="button"
-                  className="btn btn-sm btn-outline"
-                  onClick={handleBulkExportSelected}
-                  style={{ padding: '4px 10px', fontSize: 'var(--crm-text-xs)' }}
-                >
-                  <Download size={13} />
-                  <span>{isAr ? 'تصدير المحدد (CSV)' : 'Export CSV'}</span>
-                </button>
-
-                {/* Bulk Delete (Super Admin Only) */}
-                {isSuperAdmin && (
-                  <button
-                    type="button"
-                    className="btn btn-sm"
-                    onClick={handleBulkDelete}
-                    style={{ padding: '4px 10px', fontSize: 'var(--crm-text-xs)', background: 'rgba(239, 68, 68, 0.15)', color: 'var(--rose)', border: '1px solid var(--rose)' }}
-                  >
-                    <Trash2 size={13} />
-                    <span>{isAr ? 'حذف المحدد' : 'Delete'}</span>
-                  </button>
-                )}
-
-                {/* Clear Selection */}
-                <button
-                  type="button"
-                  className="btn btn-sm btn-ghost"
-                  onClick={() => setSelectedLeadIds([])}
-                  style={{ padding: '4px 8px', fontSize: 'var(--crm-text-xs)' }}
-                >
-                  ✕ {isAr ? 'إلغاء التحديد' : 'Clear'}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Leads Table */}
-          <p className="crm-kbd-hint" aria-hidden="true">
-            {isAr ? 'اختصارات: J / K للتنقل · Enter للمعاينة · W واتساب · S الحالة' : 'Shortcuts: J / K move · Enter open · W WhatsApp · S status'}
-          </p>
-          <div className="crm-table-scroll-wrapper" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
-            <table className="crm-table" data-kbd="leads">
-            <thead>
-              <tr>
-                <th style={{ width: '36px', textAlign: 'center' }}>
-                  <input
-                    type="checkbox"
-                    checked={selectedLeadIds.length > 0 && selectedLeadIds.length === filteredLeads.length}
-                    aria-label={isAr ? 'تحديد كل العملاء الظاهرين' : 'Select all visible leads'}
-                    onChange={() => handleToggleSelectAll(filteredLeads)}
-                    style={{ cursor: 'pointer' }}
-                  />
-                </th>
-                <th>{isAr ? 'العميل والملف الشخصي' : 'Client Profile'}</th>
-                <th>{isAr ? 'المواصفات والميزانية' : 'Requirements'}</th>
-                <th>{isAr ? 'الجدية والحرارة' : 'Score & Temp'}</th>
-                <th>{isAr ? 'الحالة' : 'Status'}</th>
-                <th>{isAr ? 'المتابعة القادمة' : 'Next Action'}</th>
-                <th>{isAr ? 'المسؤول' : 'Agent'}</th>
-                <th>{isAr ? 'الإجراءات' : 'Actions'}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredLeads.length === 0 ? (
-                <tr>
-                  <td colSpan="8" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
-                      <Inbox size={32} style={{ color: 'var(--accent-gold)' }} />
-                      <span style={{ fontSize: 'var(--crm-text-base)' }}>{isAr ? 'لم يتم العثور على أي عملاء يطابقون خيارات البحث الحالية.' : 'No leads found.'}</span>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                filteredLeads.map((l, rowIndex) => {
-                  const isSelected = selectedLeadIds.includes(l.id);
-                  const temp = l.temperature || 'hot';
-
-                  return (
-                    <tr
-                      key={l.id}
-                      data-lead-id={l.id}
-                      className={`crm-lead-row ${rowIndex === kbdIndex ? 'is-kbd-active' : ''}`}
-                      aria-current={rowIndex === kbdIndex ? 'true' : undefined}
-                      style={{ background: isSelected ? 'rgba(217, 119, 6, 0.05)' : undefined }}
-                      onClick={(e) => {
-                        // Row click opens the quick drawer (not the full-screen profile); controls keep their own behaviour
-                        if (e.target.closest('button, a, input, select, label, summary, details')) return;
-                        setKbdIndex(rowIndex);
-                        setQuickDrawerLead(l);
-                      }}
-                    >
-                      {/* Checkbox */}
-                      <td style={{ textAlign: 'center' }}>
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => handleToggleSelectOne(l.id)}
-                          aria-label={isAr ? `تحديد ${l.name || 'العميل'}` : `Select ${l.name || 'lead'}`}
-                          style={{ cursor: 'pointer' }}
-                        />
-                      </td>
-
-                      {/* Client Info + 360 Trigger */}
-                      <td data-label={isAr ? 'الاسم والملف' : 'Name & Profile'}>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            {/* Real button: keyboard reachable, and never an invisible empty link when the name is missing */}
-                            <button
-                              type="button"
-                              className="crm-lead-name-btn"
-                              onClick={() => setQuickDrawerLead(l)}
-                              title={isAr ? 'فتح المعاينة السريعة وتسجيل المكالمة' : 'Open Quick Drawer'}
-                            >
-                              {l.name?.trim() || <span className="crm-empty-value">{isAr ? 'عميل بدون اسم' : 'Unnamed lead'}</span>}
-                            </button>
-                            {l.cityOrExpat && l.cityOrExpat !== 'سوهاج' && (
-                              <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--cyan)', background: 'var(--cyan-bg)', padding: '1px 5px', borderRadius: '4px' }}>
-                                ✈️ {l.cityOrExpat}
-                              </span>
-                            )}
-                          </div>
-
-                          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-secondary)' }}><bdi>{l.phone || l.whatsapp || '—'}</bdi></span>
-
-                          {/* Tags Display */}
-                          {l.tags && l.tags.length > 0 && (
-                            <div style={{ display: 'flex', gap: '4px', marginTop: '3px', flexWrap: 'wrap' }}>
-                              {l.tags.slice(0, 2).map((t, i) => (
-                                <span key={i} style={{ fontSize: 'var(--crm-text-xs)', background: 'rgba(255,255,255,0.05)', padding: '1px 5px', borderRadius: '3px', color: 'var(--accent-gold)' }}>
-                                  {t}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Requirements */}
-                      <td data-label={isAr ? 'المواصفات' : 'Requirements'}>
-                        <div style={{ fontSize: 'var(--crm-text-sm)', maxWidth: '280px', whiteSpace: 'normal' }}>
-                          {l.details?.budget && (
-                            <strong style={{ color: 'var(--emerald)', display: 'block', marginBottom: '2px' }}>
-                              <bdi>{formatBudget(l.details.budget, isAr)}</bdi>
-                            </strong>
-                          )}
-                          <span style={{ color: 'var(--text-secondary)' }}>
-                            {getLocalizedPropertyType(l.propertyType || l.details?.propertyType || l.type)} • {getLocalizedArea(l.area || l.details?.area || l.details?.district || 'east')}
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* Score & Temperature */}
-                      <td data-label={isAr ? 'الجدية والحرارة' : 'Score & Temp'}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span className={`lead-score-pill ${l.score >= 85 ? 'score-high' : 'score-medium'}`}>
-                            {l.score || 85}%
-                          </span>
-                          <span title={temp === 'hot' ? 'عميل ساخن للشراء' : temp === 'warm' ? 'عميل دافئ' : 'عميل مستكشف'}>
-                            {temp === 'hot' ? '🔥' : temp === 'warm' ? '⚡' : '❄️'}
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* Status */}
-                      <td data-label={isAr ? 'الحالة' : 'Status'}>
-                        <div className={`crm-status-select-wrap status-pill-${l.status || 'new'}`}>
-                          <span className="crm-status-dot" />
-                          <select 
-                            value={l.status || 'new'} 
-                            aria-label={isAr ? `حالة ${l.name || 'العميل'}` : `Status of ${l.name || 'lead'}`}
-                            data-status={l.status || 'new'}
-                            onChange={(e) => {
-                              if (onUpdateLead) onUpdateLead(l.id, { status: e.target.value });
-                            }}
-                            className="crm-status-select"
-                            title={isAr ? 'تغيير مرحلة العميل' : 'Change Status'}
-                          >
-                            <option value="new">{isAr ? 'طلب جديد' : 'New'}</option>
-                            <option value="contacted">{isAr ? 'تم التواصل' : 'Contacted'}</option>
-                            <option value="site_visit">{isAr ? 'معاينة مجدولة' : 'Site Visit'}</option>
-                            <option value="negotiating">{isAr ? 'قيد التفاوض' : 'Negotiating'}</option>
-                            <option value="closing">{isAr ? 'توقيع وحجز' : 'Closing'}</option>
-                            <option value="closed">{isAr ? 'صفقة ناجحة' : 'Closed Won'}</option>
-                          </select>
-                        </div>
-                      </td>
-
-                      {/* Next Action / Follow-up */}
-                      <td data-label={isAr ? 'المتابعة القادمة' : 'Next Action'}>
-                        <div 
-                          className="crm-next-action-cell"
-                          onClick={() => setQuickDrawerLead(l)}
-                          title={isAr ? 'انقر لتحديث المتابعة والمعاينة السريعة' : 'Click to update next action'}
-                        >
-                          {l.nextActionNote || l.followUp ? (
-                            <div className="crm-next-action-pill">
-                              <Clock size={12} className="crm-next-action-icon" />
-                              <span className="crm-next-action-text" title={formatFollowUp(l.nextActionNote || l.followUp, isAr)}>{formatFollowUp(l.nextActionNote || l.followUp, isAr)}</span>
-                            </div>
-                          ) : (
-                            <span className="crm-next-action-empty">
-                              <Plus size={11} /> {isAr ? 'جدولة متابعة' : 'Add action'}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Agent */}
-                      <td data-label={isAr ? 'المسؤول' : 'Agent'}>
-                        <div className="crm-agent-select-wrap">
-                          <div className="crm-agent-avatar-sm">
-                            {l.assignedTo && l.assignedTo !== 'Unassigned' ? l.assignedTo.charAt(0) : '—'}
-                          </div>
-                          <select 
-                            value={l.assignedTo || 'Unassigned'} 
-                            aria-label={isAr ? `المسؤول عن ${l.name || 'العميل'}` : `Owner of ${l.name || 'lead'}`}
-                            onChange={(e) => {
-                              if (onUpdateLead) onUpdateLead(l.id, { assignedTo: e.target.value });
-                            }}
-                            className="crm-agent-select"
-                            title={isAr ? 'تعيين مسؤول المبيعات' : 'Assign Agent'}
-                          >
-                            <option value="Dr. Mahmoud Elbaz">{isAr ? 'د. محمود الباز' : 'Dr. Mahmoud Elbaz'}</option>
-                            <option value="Sales Team A">{isAr ? 'فريق المبيعات (أ)' : 'Sales Team A'}</option>
-                            <option value="Sales Team B">{isAr ? 'فريق المبيعات (ب)' : 'Sales Team B'}</option>
-                            <option value="Sales Advisor Team">{isAr ? 'مستشار المبيعات' : 'Sales Advisor Team'}</option>
-                            <option value="Unassigned">{isAr ? 'غير مسند' : 'Unassigned'}</option>
-                          </select>
-                        </div>
-                      </td>
-
-                      {/* Actions */}
-                      <td data-label={isAr ? 'الإجراءات' : 'Actions'}>
-                        <div className="crm-action-group">
-                          {/* Quick Drawer Fast Inspection */}
-                          <button
-                            type="button"
-                            className="crm-btn-quick"
-                            onClick={() => setQuickDrawerLead(l)}
-                            title={isAr ? 'معاينة سريعة وتسجيل مكالمة' : 'Quick Drawer'}
-                          >
-                            <Zap size={13} />
-                            <span>{isAr ? 'سريع' : 'Quick'}</span>
-                          </button>
-
-                          {/* WhatsApp Direct Contact */}
-                          <button 
-                            type="button"
-                            className="crm-icon-btn is-whatsapp" 
-                            onClick={() => onWhatsAppClick(l)} 
-                            title={isAr ? 'محادثة العميل مباشرة عبر واتساب' : 'WhatsApp'}
-                          >
-                            <MessageSquare size={13} />
-                          </button>
-
-                          {/* 360° Profile */}
-                          <button
-                            type="button"
-                            className="crm-icon-btn"
-                            onClick={() => setViewingProfileLead(l)}
-                            title={isAr ? 'فتح ملف العميل الشامل 360°' : 'Profile 360°'}
-                          >
-                            <User size={13} />
-                          </button>
-
-                          {/* Edit Modal */}
-                          <button
-                            type="button"
-                            className="crm-icon-btn"
-                            onClick={() => handleOpenEditLead(l)}
-                            title={isAr ? 'تعديل بيانات العميل' : 'Edit'}
-                          >
-                            <Edit3 size={13} />
-                          </button>
-
-                          {/* Dispatch Lead via WhatsApp */}
-                          <button 
-                            type="button"
-                            className="crm-icon-btn" 
-                            onClick={() => onDispatchLeadClick(l)} 
-                            title={isAr ? 'إحالة بيانات العميل لمسؤول المبيعات عبر واتساب' : 'Dispatch'}
-                          >
-                            <Send size={12} />
-                          </button>
-
-                          {/* Convert to Property */}
-                          {onConvertToProperty && (
-                            <button 
-                              type="button"
-                              className="crm-icon-btn" 
-                              onClick={() => onConvertToProperty(l)}
-                              title={isAr ? 'تحويل لعقار معروض بالموقع' : 'Convert'}
-                            >
-                              <Building size={12} />
-                            </button>
-                          )}
-
-                          {/* Claim Lead */}
-                          {!isSuperAdmin && l.assignedTo !== currentRoleObj.agentName && (
-                            <button
-                              type="button"
-                              className="crm-icon-btn"
-                              onClick={() => handleClaimLead(l.id)}
-                              title={isAr ? `استلام هذا العميل وتعيينه لـ ${currentRoleObj.label_ar}` : 'Claim'}
-                            >
-                              <UserPlus size={12} />
-                            </button>
-                          )}
-
-                          {/* Archive Lead Toggle */}
-                          <button
-                            type="button"
-                            className="crm-icon-btn"
-                            onClick={() => {
-                              const newStatus = l.isArchived ? false : true;
-                              if (onUpdateLead) {
-                                onUpdateLead(l.id, { isArchived: newStatus });
-                              }
-                              triggerToast(isAr ? (newStatus ? 'تم نقل العميل للأرشيف 📦' : 'تم استعادة العميل من الأرشيف') : (newStatus ? 'Lead archived' : 'Lead restored'), 'info');
-                            }}
-                            title={l.isArchived ? (isAr ? 'استعادة من الأرشيف' : 'Unarchive') : (isAr ? 'أرشفة العميل' : 'Archive')}
-                          >
-                            <Archive size={12} />
-                          </button>
-
-                          {/* Delete Lead (Super Admin Only) */}
-                          {isSuperAdmin && (
-                            <button 
-                              type="button"
-                              className="crm-icon-btn is-danger" 
-                              onClick={() => handleDeleteLeadClick(l.id, l.name)} 
-                              title={isAr ? 'حذف العميل نهائياً' : 'Delete'}
-                            >
-                              <Trash2 size={12} />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    )}
+        <LeadsTab
+          activeRole={activeRole}
+          areaFilter={areaFilter}
+          currentRoleObj={currentRoleObj}
+          filteredLeads={filteredLeads}
+          getLocalizedArea={getLocalizedArea}
+          getLocalizedPropertyType={getLocalizedPropertyType}
+          handleBulkAssign={handleBulkAssign}
+          handleBulkDelete={handleBulkDelete}
+          handleBulkExportSelected={handleBulkExportSelected}
+          handleClaimLead={handleClaimLead}
+          handleDeleteLeadClick={handleDeleteLeadClick}
+          handleExportCSV={handleExportCSV}
+          handleOpenEditLead={handleOpenEditLead}
+          handleToggleSelectAll={handleToggleSelectAll}
+          handleToggleSelectOne={handleToggleSelectOne}
+          isAr={isAr}
+          isSuperAdmin={isSuperAdmin}
+          kbdIndex={kbdIndex}
+          lang={lang}
+          leadFilter={leadFilter}
+          leads={leads}
+          onConvertToProperty={onConvertToProperty}
+          onDispatchLeadClick={onDispatchLeadClick}
+          onUpdateLead={onUpdateLead}
+          onWhatsAppClick={onWhatsAppClick}
+          searchQuery={searchQuery}
+          selectedLeadIds={selectedLeadIds}
+          setAreaFilter={setAreaFilter}
+          setKbdIndex={setKbdIndex}
+          setLeadFilter={setLeadFilter}
+          setQuickDrawerLead={setQuickDrawerLead}
+          setSearchQuery={setSearchQuery}
+          setSelectedLeadIds={setSelectedLeadIds}
+          setShowAddLeadModal={setShowAddLeadModal}
+          setTemperatureFilter={setTemperatureFilter}
+          setViewingProfileLead={setViewingProfileLead}
+          temperatureFilter={temperatureFilter}
+          triggerToast={triggerToast}
+        />
+      )}
 
       {/* 🏆 TAB 5: TEAM COMMISSIONS & LEADERBOARD */}
       {adminTab === 'agents' && (
@@ -1415,129 +755,22 @@ export const CrmAdminPanel = ({
 
       {/* 🛡️ TAB 9.5: SYSTEM BACKUP & RESTORE (ADMIN ONLY) */}
       {adminTab === 'system_backup' && (
-        <div className="crm-dashboard-stack">
-          <div className="crm-table-container" style={{ padding: '28px', maxWidth: '820px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', borderBottom: '1px solid var(--border-light)', paddingBottom: '16px' }}>
-              <Database size={26} className="text-gold" />
-              <div>
-                <h3 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--crm-ink)' }}>
-                  {isAr ? 'البيانات والنسخ الاحتياطي وإدارة المنظومة' : 'Database Backups & System Administration'}
-                </h3>
-                <p style={{ margin: 0, fontSize: 'var(--crm-text-base)', color: 'var(--text-secondary)' }}>
-                  {isAr ? 'خاص بالمدير العام — تصدير واسترجاع نسخ العملاء والبيانات الحساسة بأمان' : 'Super Admin only — Backup, export and recovery hub'}
-                </p>
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginTop: '16px' }}>
-              {/* Backup Box */}
-              <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-light)', borderRadius: '10px', padding: '20px' }}>
-                <h4 style={{ margin: '0 0 10px 0', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Download size={18} />
-                  <span>{isAr ? 'تنزيل نسخة احتياطية' : 'Download Backup'}</span>
-                </h4>
-                <p style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.5' }}>
-                  {isAr 
-                    ? 'تصدير كامل بيانات العملاء والصفقات والطلبات كملف JSON آمن ومحمي للاحتفاظ به أو استرجاعه لاحقاً.' 
-                    : 'Export full database snapshot as a structured JSON file.'}
-                </p>
-                <button 
-                  type="button" 
-                  className="btn btn-sm btn-accent" 
-                  onClick={handleExportLeadsJson}
-                  style={{ width: '100%', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: 'bold' }}
-                >
-                  <Database size={15} />
-                  <span>{isAr ? `تحميل ملف النسخة الاحتياطية (${leads.length} عميل)` : 'Download JSON Backup'}</span>
-                </button>
-              </div>
-
-              {/* Restore Box */}
-              <div style={{ background: 'rgba(239, 68, 68, 0.03)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '10px', padding: '20px' }}>
-                <h4 style={{ margin: '0 0 10px 0', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Upload size={18} />
-                  <span>{isAr ? 'استعادة قاعدة البيانات' : 'Restore Database'}</span>
-                </h4>
-                <p style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.5' }}>
-                  {isAr 
-                    ? '⚠️ تحذير أمني: استيراد ملف JSON سيقوم بدمج أو تحديث بيانات العملاء الحالية. يُرجى التحقق من الملف قبل رفعه.' 
-                    : 'Warning: Importing JSON file will merge or overwrite current customer records.'}
-                </p>
-                <label 
-                  className="btn btn-sm" 
-                  style={{ 
-                    width: '100%', 
-                    padding: '10px', 
-                    cursor: 'pointer', 
-                    background: 'rgba(239, 68, 68, 0.15)', 
-                    color: '#ef4444', 
-                    border: '1px solid rgba(239, 68, 68, 0.4)', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    gap: '8px',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  <Upload size={15} />
-                  <span>{isAr ? 'رفع واستعادة ملف JSON' : 'Upload & Restore JSON'}</span>
-                  <input 
-                    type="file" 
-                    accept=".json" 
-                    onChange={handleImportLeadsJson} 
-                    style={{ display: 'none' }} 
-                  />
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
+        <SystemBackupTab
+          handleExportLeadsJson={handleExportLeadsJson}
+          handleImportLeadsJson={handleImportLeadsJson}
+          isAr={isAr}
+          leads={leads}
+        />
       )}
 
       {/* ⚙️ TAB 10: AUTOMATION & WEBHOOKS */}
       {adminTab === 'automation' && (
-        <div className="crm-table-container">
-          <h3>{isAr ? 'إعدادات الأتمتة والتنبيهات الفورية' : 'Automation & Instant Alert Hub'}</h3>
-          <p className="section-subtitle" style={{ marginBottom: '24px' }}>
-            {isAr ? 'قم بإعداد قنوات التنبيه الفوري لمالك الموقع فور تسجيل أي طلب جديد لسرعة إغلاق الصفقات.' : 'Configure instant notification channels'}
-          </p>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-            <div className="crm-surface-navy" style={{ background: 'var(--primary)', padding: '20px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
-              <h4 style={{ marginBottom: '10px', color: '#E9D29A' /* light gold: this card is always navy (var(--primary)) */ }}>
-                📱 {isAr ? 'التنبيه الفوري عبر الواتساب والتيليجرام' : 'Instant Webhook / WhatsApp Push'}
-              </h4>
-              <p style={{ fontSize: 'var(--crm-text-base)', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-                {isAr ? 'عند تسجيل أي عميل مهتم على الموقع، يُرسل النظام إشعاراً فورياً على هاتف المدير يتضمن (الاسم، الهاتف، الميزانية، ونقاط الجدية).' : 'Pushes lead info to management phone instantly.'}
-              </p>
-              
-              <button 
-                className="btn btn-primary" 
-                onClick={() => {
-                  triggerToast(isAr ? 'تم إرسال إشعار تجريبي فوري لهاتف الإدارة بنجاح! 🔔' : 'Test notification sent to management phone!');
-                  addNotification('إشعار فوري: عميل جديد مهتم بشراء شقة في شرق سوهاج بميزانية 3.5M ج.م (جدية 95%)');
-                }}
-              >
-                {isAr ? 'اختبار إرسال إشعار تجريبي للإدارة' : 'Send Test Notification'}
-              </button>
-            </div>
-
-            <div className="crm-surface-navy" style={{ background: 'var(--primary)', padding: '20px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
-              <h4 style={{ marginBottom: '10px', color: 'var(--emerald)' }}>
-                🎯 {isAr ? 'قواعد التوزيع الذكي للعملاء' : 'Smart Auto-Assignment'}
-              </h4>
-              <p style={{ fontSize: 'var(--crm-text-base)', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-                {isAr ? 'توجيه العملاء أصحاب الميزانيات المرتفعة (> 5 مليون) مباشرة للدكتور محمود الباز، وتوزيع باقي الطلبات بالتساوي على Sales Team A و B.' : 'Auto distributes VIP leads.'}
-              </p>
-              <button className="btn btn-accent" onClick={() => {
-                triggerToast(isAr ? 'تم تطبيق قواعد التوزيع التلقائي على جميع العملاء الجدد بنجاح!' : 'Auto assignment applied!');
-                addNotification('تم إعادة توزيع 3 عملاء متوقعي الجدية للـ Sales Team تلقائياً.');
-              }}>
-                {isAr ? 'تفعيل وتوزيع العملاء الآن' : 'Run Auto Assignment'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <AutomationTab
+          addNotification={addNotification}
+          isAr={isAr}
+          leads={leads}
+          triggerToast={triggerToast}
+        />
       )}
 
       {/* 🤖 AI COPYWRITER MODAL */}
@@ -1553,199 +786,14 @@ export const CrmAdminPanel = ({
 
       {/* ✏️ EDIT LEAD DETAILS MODAL */}
       {editingLead && (
-        <div className="track-modal-backdrop" onClick={() => setEditingLead(null)}>
-          <div className="property-form-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '640px' }}>
-            <div className="modal-form-header">
-              <h3>{isAr ? 'تعديل وتصحيح بيانات العميل' : 'Edit Lead Details'}</h3>
-              <button type="button" className="drawer-close-btn" onClick={() => setEditingLead(null)} aria-label="Close">
-                <X size={18} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveLeadEdits} className="property-cms-form">
-              <div className="cms-form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                <div className="form-group-item">
-                  <label>{isAr ? 'اسم العميل *' : 'Full Name *'}</label>
-                  <input
-                    type="text"
-                    value={leadFormData.name}
-                    onChange={(e) => setLeadFormData({ ...leadFormData, name: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="form-group-item">
-                  <label>{isAr ? 'رقم الهاتف الأساسي *' : 'Phone *'}</label>
-                  <input
-                    type="text"
-                    value={leadFormData.phone}
-                    onChange={(e) => setLeadFormData({ ...leadFormData, phone: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="form-group-item">
-                  <label>{isAr ? 'رقم الواتساب * (إلزامي)' : 'WhatsApp * (Required)'}</label>
-                  <input
-                    type="text"
-                    value={leadFormData.whatsapp}
-                    onChange={(e) => setLeadFormData({ ...leadFormData, whatsapp: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="form-group-item">
-                  <label>{isAr ? 'نوع الطلب' : 'Lead Type'}</label>
-                  <select
-                    value={leadFormData.type}
-                    aria-label={isAr ? 'نوع الطلب' : 'Request type'}
-                    onChange={(e) => setLeadFormData({ ...leadFormData, type: e.target.value })}
-                  >
-                    <option value="buyer">{isAr ? 'طلب شراء' : 'Buyer'}</option>
-                    <option value="seller">{isAr ? 'عرض بيع' : 'Seller'}</option>
-                    <option value="broker">{isAr ? 'وسيط عقاري' : 'Broker'}</option>
-                    <option value="investor">{isAr ? 'مستثمر' : 'Investor'}</option>
-                    <option value="request">{isAr ? 'طلب مخصص' : 'Special Request'}</option>
-                  </select>
-                </div>
-
-                <div className="form-group-item">
-                  <label>{isAr ? 'الموقع / المنطقة بسوهاج * (إلزامي)' : 'Target Area in Sohag * (Required)'}</label>
-                  <select
-                    value={leadFormData.area}
-                    aria-label={isAr ? 'المنطقة' : 'Area'}
-                    onChange={(e) => setLeadFormData({ ...leadFormData, area: e.target.value })}
-                    required
-                  >
-                    {SOHAG_AREAS.filter(a => a.id !== 'all').map(a => (
-                      <option key={a.id} value={a.id}>{isAr ? a.name_ar : a.name_en}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-group-item">
-                  <label>{isAr ? 'العقارات المهتم بها / نوع العقار * (إلزامي)' : 'Interested Property Type * (Required)'}</label>
-                  <select
-                    value={leadFormData.propertyType}
-                    aria-label={isAr ? 'نوع العقار' : 'Property type'}
-                    onChange={(e) => setLeadFormData({ ...leadFormData, propertyType: e.target.value })}
-                    required
-                  >
-                    {PROPERTY_TYPES.filter(t => t.id !== 'all').map(t => (
-                      <option key={t.id} value={t.id}>{isAr ? t.name_ar : t.name_en}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-group-item">
-                  <label>{isAr ? 'الميزانية / السعر المتوقع (ج.م)' : 'Budget / Price (EGP)'}</label>
-                  <input
-                    type="text"
-                    value={leadFormData.budget}
-                    onChange={(e) => setLeadFormData({ ...leadFormData, budget: e.target.value })}
-                    placeholder="مثال: 3,000,000"
-                  />
-                </div>
-
-                <div className="form-group-item">
-                  <label>{isAr ? 'حالة المتابعة' : 'Status'}</label>
-                  <select
-                    value={leadFormData.status}
-                    aria-label={isAr ? 'الحالة' : 'Status'}
-                    onChange={(e) => setLeadFormData({ ...leadFormData, status: e.target.value })}
-                  >
-                    <option value="new">{isAr ? 'جديد' : 'New'}</option>
-                    <option value="contacted">{isAr ? 'تم التواصل' : 'Contacted'}</option>
-                    <option value="site_visit">{isAr ? 'معاينة مجدولة' : 'Site visit'}</option>
-                    <option value="negotiating">{isAr ? 'قيد التفاوض' : 'Negotiating'}</option>
-                    <option value="closing">{isAr ? 'توقيع وحجز' : 'Closing'}</option>
-                    <option value="closed">{isAr ? 'صفقة ناجحة' : 'Closed won'}</option>
-                  </select>
-                </div>
-
-                <div className="form-group-item">
-                  <label>{isAr ? 'البريد الإلكتروني' : 'Email Address'}</label>
-                  <input
-                    type="email"
-                    value={leadFormData.email}
-                    onChange={(e) => setLeadFormData({ ...leadFormData, email: e.target.value })}
-                    placeholder="client@example.com"
-                    style={{ direction: 'ltr', textAlign: 'left' }}
-                  />
-                </div>
-
-                <div className="form-group-item">
-                  <label>{isAr ? 'مصدر العميل' : 'Lead Source'}</label>
-                  <input
-                    type="text"
-                    value={leadFormData.source}
-                    onChange={(e) => setLeadFormData({ ...leadFormData, source: e.target.value })}
-                    placeholder="Facebook, Direct, WhatsApp..."
-                  />
-                </div>
-
-                <div className="form-group-item">
-                  <label>{isAr ? 'درجة الاهتمام' : 'Temperature'}</label>
-                  <select
-                    value={leadFormData.temperature}
-                    aria-label={isAr ? 'درجة الاهتمام' : 'Temperature'}
-                    onChange={(e) => setLeadFormData({ ...leadFormData, temperature: e.target.value })}
-                  >
-                    <option value="hot">🔥 {isAr ? 'ساخن' : 'Hot'}</option>
-                    <option value="warm">⚡ {isAr ? 'متوسط' : 'Warm'}</option>
-                    <option value="cold">❄️ {isAr ? 'بارد' : 'Cold'}</option>
-                  </select>
-                </div>
-
-                <div className="form-group-item">
-                  <label>{isAr ? 'موعد المتابعة القادم' : 'Next Follow-Up Date & Time'}</label>
-                  <input
-                    type="datetime-local"
-                    value={leadFormData.nextFollowUpAt}
-                    onChange={(e) => setLeadFormData({ ...leadFormData, nextFollowUpAt: e.target.value })}
-                    style={{ direction: 'ltr' }}
-                  />
-                </div>
-
-                <div className="form-group-item">
-                  <label>{isAr ? 'المستشار المسؤول' : 'Assigned Agent'}</label>
-                  <select
-                    value={leadFormData.assignedTo}
-                    aria-label={isAr ? 'المسؤول' : 'Owner'}
-                    onChange={(e) => setLeadFormData({ ...leadFormData, assignedTo: e.target.value })}
-                  >
-                    <option value="Dr. Mahmoud Elbaz">Dr. Mahmoud Elbaz</option>
-                    <option value="Sales Team A">Sales Team A</option>
-                    <option value="Sales Team B">Sales Team B</option>
-                    <option value="Unassigned">Unassigned</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-group-item" style={{ marginTop: '12px' }}>
-                <label>{isAr ? 'ملاحظات العقد والاتصال' : 'Notes'}</label>
-                <textarea
-                  rows="3"
-                  className="form-input"
-                  style={{ width: '100%', resize: 'vertical' }}
-                  value={leadFormData.notes}
-                  onChange={(e) => setLeadFormData({ ...leadFormData, notes: e.target.value })}
-                  placeholder="سجل نتائج المكالمات وملاحظات العميل هنا..."
-                />
-              </div>
-
-              <div className="cms-modal-actions" style={{ marginTop: '20px' }}>
-                <button type="button" className="btn btn-outline" onClick={() => setEditingLead(null)}>
-                  {isAr ? 'إلغاء' : 'Cancel'}
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  <Save size={16} />
-                  <span>{isAr ? 'حفظ التعديلات' : 'Save Changes'}</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <EditLeadModal
+          handleSaveLeadEdits={handleSaveLeadEdits}
+          isAr={isAr}
+          leadFormData={leadFormData}
+          setEditingLead={setEditingLead}
+          setLeadFormData={setLeadFormData}
+          t={t}
+        />
       )}
 
       {/* 🕒 ACTIVITY LOG VIEWER MODAL */}
@@ -1754,7 +802,7 @@ export const CrmAdminPanel = ({
           <div className="property-form-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '540px' }}>
             <div className="modal-form-header">
               <h3>
-                <Clock size={18} style={{ marginInlineEnd: '6px', color: 'var(--accent-gold)' }} />
+                <Clock size={18} style={{ marginInlineEnd: '6px', color: 'var(--crm-accent-text)' }} />
                 {isAr ? `سجل تدقيق العمليات: ${viewingLogsLead.name}` : `Activity Audit Log: ${viewingLogsLead.name}`}
               </h3>
               <button type="button" className="drawer-close-btn" onClick={() => setViewingLogsLead(null)} aria-label="Close">
@@ -1764,7 +812,7 @@ export const CrmAdminPanel = ({
 
             <div style={{ padding: '16px 0', display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '350px', overflowY: 'auto' }}>
               {(!viewingLogsLead.activityLogs || viewingLogsLead.activityLogs.length === 0) ? (
-                <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '20px' }}>
+                <p style={{ textAlign: 'center', color: 'var(--crm-muted)', padding: '20px' }}>
                   {isAr ? 'لا توجد سجلات تدقيق سابقة لهذا العميل' : 'No recorded activity logs'}
                 </p>
               ) : (
@@ -1777,8 +825,8 @@ export const CrmAdminPanel = ({
                     fontSize: 'var(--crm-text-base)'
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                      <strong style={{ color: 'var(--emerald)' }}>{log.action}</strong>
-                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-muted)' }}>
+                      <strong style={{ color: 'var(--crm-positive)' }}>{log.action}</strong>
+                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
                         {new Date(log.timestamp).toLocaleTimeString(isAr ? 'ar-EG' : 'en-US')} - {new Date(log.timestamp).toLocaleDateString(isAr ? 'ar-EG' : 'en-US')}
                       </span>
                     </div>
@@ -1829,6 +877,7 @@ export const CrmAdminPanel = ({
           }}
           lang={lang}
           triggerToast={triggerToast}
+          userRole={activeRole}
         />
       )}
 

@@ -4,7 +4,7 @@ service cloud.firestore {
 
     // ── Roles ───────────────────────────────────────────────────────────────
     // Staff roles are Firebase custom claims ({ role: '<id>' }) set only server-side by
-    // scripts/set-crm-role.mjs. Keep this list in sync with CRM_STAFF_ROLES in src/firebaseService.js.
+    // scripts/set-crm-role.mjs. Keep this list in sync with CRM_STAFF_ROLES in src/services/auth.js.
     function role() {
       return request.auth == null ? '' : request.auth.token.get('role', '');
     }
@@ -28,49 +28,147 @@ service cloud.firestore {
       return hasRole(['sales_manager', 'property_manager']);
     }
 
+    // Lead visibility. Desk agents work only their own queue: leads assigned to their desk plus the
+    // shared 'Unassigned' pool. Desk names match CRM_ROLES in components/crm/crmRoles.js and DESK_BY_ROLE
+    // in src/utils/rbacRules.js. Managers, admins and the read-only roles see every lead.
+    function leadDesk() {
+      return {'sales_agent': 'Sales Advisor Team', 'agent_east': 'Sales Team A', 'agent_new_sohag': 'Sales Team B'}.get(role(), '');
+    }
+    function isDeskAgent() {
+      return request.auth != null && !isAdmin() && role() in ['sales_agent', 'agent_east', 'agent_new_sohag'];
+    }
+    function inMyLeadQueue(data) {
+      return data.assignedTo in [leadDesk(), 'Unassigned'];
+    }
+
     // Public forms may only create "new" records of bounded size — no self-assigned status,
     // no privilege fields, no oversized payloads used to exhaust storage/quota.
     function boundedText(data, field, maxLen) {
       return !(field in data) || (data[field] is string && data[field].size() <= maxLen);
     }
 
+    // Client contact fields live in lead_contacts/{leadId}, readable only by managers and the
+    // lead's desk. Keep in sync with LEAD_CONTACT_FIELDS in src/services/leads.js.
+    function contactFields() {
+      return ['phone', 'whatsapp', 'email', 'altPhone'];
+    }
+    function contactPath(leadId) {
+      return /databases/$(database)/documents/lead_contacts/$(leadId);
+    }
+    function leadPath(leadId) {
+      return /databases/$(database)/documents/leads/$(leadId);
+    }
+    function deskOf(data) {
+      return data.get('assignedTo', 'Unassigned');
+    }
+    // An update may keep or drop an existing contact field, never add or change one
+    function keepsContactFields() {
+      return contactFields().toSet().intersection(request.resource.data.keys().toSet())
+               .difference(resource.data.diff(request.resource.data).unchangedKeys()).size() == 0;
+    }
+    // Who may see a client's phone: admins, sales managers and the sales desks (rbacRules canViewLeadPhone)
+    function seesClientContacts() {
+      return hasRole(['sales_manager', 'sales_agent', 'agent_east', 'agent_new_sohag']);
+    }
+    // Demands and expat/trade-in requests keep their phone in request_contacts/{kind}__{id}
+    function requestContactPath(kind, id) {
+      return /databases/$(database)/documents/request_contacts/$(kind + '__' + id);
+    }
+    function hasRequestContact(kind, id) {
+      return existsAfter(requestContactPath(kind, id));
+    }
+    function validLeadBasics(data) {
+      return data.name is string && data.name.size() >= 2 && data.name.size() <= 100
+          && data.keys().size() <= 60
+          && boundedText(data, 'notes', 2000)
+          && boundedText(data, 'message', 2000)
+          && (!('status' in data) || data.status == 'new' || isLeadEditor())
+          && !('role' in data)
+          && !('isAdmin' in data);
+    }
+
     // 🛡️ 1. LEADS & CUSTOMER INQUIRIES
     match /leads/{leadId} {
-      allow create: if request.resource.data.phone is string
-                    && request.resource.data.phone.size() >= 10
-                    && request.resource.data.phone.size() <= 25
-                    && request.resource.data.name is string
-                    && request.resource.data.name.size() >= 2
-                    && request.resource.data.name.size() <= 100
-                    && request.resource.data.keys().size() <= 60
-                    && boundedText(request.resource.data, 'notes', 2000)
-                    && boundedText(request.resource.data, 'message', 2000)
-                    && boundedText(request.resource.data, 'email', 120)
-                    && (!('status' in request.resource.data) || request.resource.data.status == 'new' || isLeadEditor())
-                    && (!('role' in request.resource.data))
-                    && (!('isAdmin' in request.resource.data));
-      allow read: if isStaff();
-      allow update: if isLeadEditor();
+      // Current format: no contact fields here, its lead_contacts doc written in the same batch.
+      // Legacy format (phone inline) stays accepted so browsers still on an older build never lose
+      // a lead; managers' CRM sessions and scripts/migrate-lead-contacts.mjs move those phones out.
+      allow create: if validLeadBasics(request.resource.data)
+                    && (
+                      (!request.resource.data.keys().hasAny(contactFields()) && existsAfter(contactPath(leadId)))
+                      || (request.resource.data.phone is string
+                          && request.resource.data.phone.size() >= 10
+                          && request.resource.data.phone.size() <= 25
+                          && boundedText(request.resource.data, 'email', 120))
+                    );
+      // Agents can claim a pool lead or hand it back, but only managers move leads between desks.
+      // A desk change must move the contact doc with it (same batch), or the old desk keeps the phone.
+      allow read: if hasRole(['sales_manager', 'property_manager', 'finance', 'viewer'])
+                  || (isDeskAgent() && inMyLeadQueue(resource.data));
+      allow update: if (hasRole(['sales_manager'])
+                       || (isDeskAgent() && inMyLeadQueue(resource.data) && inMyLeadQueue(request.resource.data)))
+                    && keepsContactFields()
+                    && (!exists(contactPath(leadId)) || deskOf(getAfter(contactPath(leadId)).data) == deskOf(request.resource.data));
+      allow delete: if isAdmin();
+    }
+
+    // 🛡️ 1b. LEAD CONTACTS — phone / WhatsApp / email per lead (doc id = lead id).
+    // assignedTo mirrors the lead's desk so agents' queue queries can be checked by the rules.
+    match /lead_contacts/{leadId} {
+      function validContact(data) {
+        return data.keys().hasOnly(contactFields().concat(['assignedTo']))
+            && data.assignedTo is string
+            && data.assignedTo == deskOf(getAfter(leadPath(leadId)).data)
+            && (!('phone' in data) || (data.phone is string && data.phone.size() >= 8 && data.phone.size() <= 25))
+            && (!('whatsapp' in data) || (data.whatsapp is string && data.whatsapp.size() <= 25))
+            && (!('altPhone' in data) || (data.altPhone is string && data.altPhone.size() <= 25))
+            && boundedText(data, 'email', 120);
+      }
+      allow read: if hasRole(['sales_manager'])
+                  || (isDeskAgent() && inMyLeadQueue(resource.data));
+      // Anyone, together with a brand-new lead (the public forms); staff for a lead they may edit
+      allow create: if existsAfter(leadPath(leadId))
+                    && validContact(request.resource.data)
+                    && (!exists(leadPath(leadId))
+                        || hasRole(['sales_manager'])
+                        || (isDeskAgent() && inMyLeadQueue(request.resource.data)));
+      allow update: if validContact(request.resource.data)
+                    && (hasRole(['sales_manager'])
+                        || (isDeskAgent() && inMyLeadQueue(resource.data) && inMyLeadQueue(request.resource.data)));
       allow delete: if isAdmin();
     }
 
     // 📋 2. DEMANDS & CLIENT REQUESTS
     match /demands/{demandId} {
+      // Current format: phone/whatsapp/email in request_contacts (same batch). Legacy inline phone
+      // stays accepted for browsers on an older build; it is migrated out afterwards.
       allow create: if request.resource.data.name is string
                     && request.resource.data.name.size() >= 2
                     && request.resource.data.name.size() <= 100
-                    && request.resource.data.phone is string
-                    && request.resource.data.phone.size() >= 10
-                    && request.resource.data.phone.size() <= 25
+                    && ((!request.resource.data.keys().hasAny(contactFields()) && hasRequestContact('demands', demandId))
+                        || (request.resource.data.phone is string
+                            && request.resource.data.phone.size() >= 10
+                            && request.resource.data.phone.size() <= 25))
                     && request.resource.data.keys().size() <= 60
                     && boundedText(request.resource.data, 'notes', 2000)
                     && boundedText(request.resource.data, 'description', 3000)
                     // A visitor cannot publish their own demand; staff approve it
                     && (isInventoryEditor() || !('status' in request.resource.data) || request.resource.data.status == 'pending');
-      // Public: published demands only. Staff: everything (pending review queue).
-      allow read: if (resource != null && resource.data.status == 'published') || isStaff();
-      allow update: if isInventoryEditor();
+      // Staff only. Visitors read public_demands; phones are in request_contacts.
+      allow read: if isStaff();
+      allow update: if isInventoryEditor() && keepsContactFields();
       allow delete: if isAdmin();
+    }
+
+    // 📋 2b. PUBLISHED DEMANDS — contact-free copies the site shows. Written by editors when they
+    // publish/unpublish (syncPublicDemand in src/services/demands.js; same field list there).
+    match /public_demands/{demandId} {
+      allow read: if true;
+      allow create, update: if isInventoryEditor()
+                            && request.resource.data.keys().hasOnly([
+                              'text_ar', 'text_en', 'area', 'area_ar', 'area_en', 'type', 'budget', 'paymentMethod',
+                              'timeframe', 'urgency', 'minSize', 'status', 'timestamp', 'createdAt', 'approvedAt', 'updatedAt'])
+                            && request.resource.data.status == 'published';
+      allow delete: if isInventoryEditor();
     }
 
     // 🏠 3. PROPERTIES INVENTORY
@@ -147,7 +245,8 @@ service cloud.firestore {
                         'notes', 'propertyId', 'propertyTitle', 'propertyArea', 'source', 'lang', 'vip',
                         'submittedAt', 'status', 'createdAt'])
                     && isStr(request.resource.data, 'name', 2, 100)
-                    && isStr(request.resource.data, 'phone', 8, 25)
+                    && (isStr(request.resource.data, 'phone', 8, 25)
+                        || (!('phone' in request.resource.data) && hasRequestContact('remote_inspections', reqId)))
                     && isStr(request.resource.data, 'country', 2, 40)
                     && optStr(request.resource.data, 'countryCode', 8)
                     && request.resource.data.coverage is list
@@ -164,7 +263,7 @@ service cloud.firestore {
                     && request.resource.data.status == 'new'
                     && request.resource.data.createdAt == request.time;
       allow read: if isStaff();
-      allow update: if isLeadEditor();
+      allow update: if isLeadEditor() && keepsContactFields();
       allow delete: if isAdmin();
     }
 
@@ -175,7 +274,8 @@ service cloud.firestore {
                         'offerValue', 'offerLegal', 'wantType', 'wantArea', 'wantSize', 'wantNotes', 'diffMode',
                         'diffAmount', 'notes', 'source', 'lang', 'submittedAt', 'status', 'createdAt'])
                     && isStr(request.resource.data, 'name', 2, 100)
-                    && isStr(request.resource.data, 'phone', 8, 25)
+                    && (isStr(request.resource.data, 'phone', 8, 25)
+                        || (!('phone' in request.resource.data) && hasRequestContact('trade_ins', reqId)))
                     && optStr(request.resource.data, 'country', 40)
                     && isStr(request.resource.data, 'offerType', 2, 30)
                     && isStr(request.resource.data, 'offerGovernorate', 2, 30)
@@ -196,14 +296,49 @@ service cloud.firestore {
                     && request.resource.data.status == 'new'
                     && request.resource.data.createdAt == request.time;
       allow read: if isStaff();
-      allow update: if isLeadEditor();
+      allow update: if isLeadEditor() && keepsContactFields();
+      allow delete: if isAdmin();
+    }
+
+    // 🔒 12. REQUEST CONTACTS — phone / whatsapp / email of demands and expat/trade-in requests.
+    // Doc id "<kind>__<request id>"; written with the request in one batch.
+    match /request_contacts/{contactId} {
+      function requestKinds() {
+        return ['demands', 'remote_inspections', 'trade_ins'];
+      }
+      function parentPath(data) {
+        return /databases/$(database)/documents/$(data.kind)/$(data.parentId);
+      }
+      function validRequestContact(data) {
+        return data.keys().hasOnly(['kind', 'parentId', 'phone', 'whatsapp', 'email'])
+            && data.kind in requestKinds()
+            && data.parentId is string
+            && contactId == data.kind + '__' + data.parentId
+            && (!('phone' in data) || (data.phone is string && data.phone.size() >= 8 && data.phone.size() <= 25))
+            && (!('whatsapp' in data) || (data.whatsapp is string && data.whatsapp.size() <= 25))
+            && boundedText(data, 'email', 120);
+      }
+      allow read: if seesClientContacts();
+      // Anyone together with a brand-new request; managers when migrating an existing one
+      allow create: if validRequestContact(request.resource.data)
+                    && existsAfter(parentPath(request.resource.data))
+                    && (!exists(parentPath(request.resource.data)) || hasRole(['sales_manager']));
+      allow update: if validRequestContact(request.resource.data)
+                    && request.resource.data.kind == resource.data.kind
+                    && request.resource.data.parentId == resource.data.parentId
+                    && seesClientContacts();
       allow delete: if isAdmin();
     }
 
     // 💼 9. DEALS & PIPELINE
+    // Same desk scoping as leads: agents see and edit only their desk's deals (and the pool).
     match /deals/{dealId} {
-      allow read: if hasRole(['sales_manager', 'finance', 'viewer']) || isLeadEditor();
-      allow create, update: if isLeadEditor() || hasRole(['finance']);
+      allow read: if hasRole(['sales_manager', 'finance', 'viewer'])
+                  || (isDeskAgent() && inMyLeadQueue(resource.data));
+      allow create: if hasRole(['sales_manager', 'finance'])
+                    || (isDeskAgent() && inMyLeadQueue(request.resource.data));
+      allow update: if hasRole(['sales_manager', 'finance'])
+                    || (isDeskAgent() && inMyLeadQueue(resource.data) && inMyLeadQueue(request.resource.data));
       allow delete: if isAdmin();
     }
   }

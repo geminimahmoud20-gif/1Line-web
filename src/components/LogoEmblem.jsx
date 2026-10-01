@@ -1,4 +1,4 @@
-import React from 'react';
+
 import emblemImg from '../assets/logo-emblem-transparent.png';
 
 /**

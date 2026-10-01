@@ -1,33 +1,15 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { 
-  TrendingUp, 
-  BarChart3, 
-  DollarSign, 
-  Percent, 
-  Building, 
-  ArrowUpRight, 
-  Download, 
-  Sparkles, 
-  ShieldCheck, 
-  Layers,
-  MapPin,
-  CheckCircle2,
-  Calendar,
-  Calculator,
-  Compass,
-  ArrowRight,
-  ArrowLeft
-} from 'lucide-react';
+import { TrendingUp, DollarSign, Percent, Building, Sparkles, ShieldCheck, MapPin, CheckCircle2, Calculator, ArrowRight, ArrowLeft } from 'lucide-react';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
 import { getAreas } from '../utils/areasData';
 import { updatePageSeo } from '../utils/seoHelper';
 
-export default function MarketIntelligencePage({ lang = 'ar', currency = 'EGP', triggerToast }) {
+export default function MarketIntelligencePage({ lang = 'ar' }) {
   const navigate = useNavigate();
   const [selectedAssetType, setSelectedAssetType] = useState('all'); // 'all' | 'residential' | 'commercial'
   const [userBudget, setUserBudget] = useState(2500000);
-  const [tick, setTick] = useState(0);
+  const [areas, setAreas] = useState(getAreas);
   const isAr = lang === 'ar';
 
   // Dynamic SEO Meta Tags for Market Intelligence
@@ -44,14 +26,14 @@ export default function MarketIntelligencePage({ lang = 'ar', currency = 'EGP', 
 
   // Live listen for area data updates from CRM
   useEffect(() => {
-    const handleUpdate = () => setTick(t => t + 1);
+    const handleUpdate = () => setAreas(getAreas());
     window.addEventListener('oneline_areas_updated', handleUpdate);
     return () => window.removeEventListener('oneline_areas_updated', handleUpdate);
   }, []);
 
   // Live Sohag District Price Benchmark & Rental Yield Intelligence Data
   const districtsData = useMemo(() => {
-    const rawAreas = getAreas().filter(a => a.id !== 'all');
+    const rawAreas = areas.filter(a => a.id !== 'all');
     
     // Metadata presets per district ID to enrich dynamic prices
     const districtMeta = {
@@ -165,7 +147,7 @@ export default function MarketIntelligencePage({ lang = 'ar', currency = 'EGP', 
         category: meta.category
       };
     });
-  }, [tick]);
+  }, [areas]);
 
   const filteredDistricts = selectedAssetType === 'all' 
     ? districtsData 

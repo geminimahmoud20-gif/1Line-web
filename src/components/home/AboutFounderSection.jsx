@@ -1,30 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  ShieldCheck, 
-  Award, 
-  Building, 
-  Users, 
-  MessageSquare, 
-  Phone, 
-  TrendingUp, 
-  FileCheck, 
-  Sparkles, 
-  CheckCircle2, 
-  Quote, 
-  ExternalLink,
-  MapPin,
-  Clock,
-  Briefcase
-} from 'lucide-react';
-import LogoEmblem from '../LogoEmblem';
-import { 
-  getFounderSettings, 
-  cleanWhatsAppNumber, 
-  cleanPhoneNumber, 
-  getWhatsAppUrl, 
-  getPhoneCallUrl,
-  DEFAULT_FOUNDER_CMS
-} from '../../utils/founderCmsData';
+import { useState, useEffect } from 'react';
+import { ShieldCheck, Building, Users, MessageSquare, Phone, TrendingUp, FileCheck, CheckCircle2, Quote, MapPin, Briefcase } from 'lucide-react';
+
+import { getFounderSettings, cleanWhatsAppNumber, cleanPhoneNumber, DEFAULT_FOUNDER_CMS } from '../../utils/founderCmsData';
 
 export default function AboutFounderSection({ lang = 'ar' }) {
   const isAr = lang === 'ar';

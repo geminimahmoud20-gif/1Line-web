@@ -84,8 +84,11 @@ export default function PropertiesPage({
     setSearchParams(next);
   };
 
-  // Synchronize URL search params (e.g. from Omnisearch or external links) with active filters
-  useEffect(() => {
+  // Synchronize URL search params (e.g. from Omnisearch or external links) with active filters.
+  // Adjusted during render when the URL changes, so the list never renders once with stale filters.
+  const [syncedParams, setSyncedParams] = useState(searchParams);
+  if (syncedParams !== searchParams) {
+    setSyncedParams(searchParams);
     const q = searchParams.get('q') || '';
     const type = searchParams.get('type') || 'all';
     const area = searchParams.get('area') || 'all';
@@ -99,7 +102,7 @@ export default function PropertiesPage({
       }
       return { ...prev, query: q, type, area, minPrice, maxPrice, bedrooms, paymentPlan };
     });
-  }, [searchParams]);
+  }
 
   // Reset pagination on filter or sort change without cascading effect renders
   const [prevFilterState, setPrevFilterState] = useState({ filters, sortBy });

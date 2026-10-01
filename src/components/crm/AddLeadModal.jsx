@@ -1,27 +1,18 @@
 import { useState } from 'react';
-import { 
-  UserPlus, 
-  Phone, 
-  MessageSquare, 
-  Building, 
-  DollarSign, 
-  MapPin, 
-  Tag, 
-  ShieldCheck, 
-  Sparkles, 
-  X, 
-  Save 
-} from 'lucide-react';
+import { UserPlus, Save } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { getAreas } from '../../utils/areasData';
 import { isValidPhoneNumber } from '../../utils/securityShield';
+import DeskOptions from './DeskOptions';
+import { DESK_BY_ROLE } from '../../utils/rbacRules';
 
 export default function AddLeadModal({
   isOpen,
   onClose,
   onAddLead,
   lang = 'ar',
-  triggerToast
+  triggerToast,
+  userRole = 'super_admin'
 }) {
   const isAr = lang === 'ar';
 
@@ -40,7 +31,7 @@ export default function AddLeadModal({
     area: 'east',
     propertyType: 'apartment',
     financing: 'cash',
-    assignedTo: 'Sales Advisor Team',
+    assignedTo: DESK_BY_ROLE[userRole] || 'Sales Advisor Team',
     source: 'اتصال مباشر / هاتف',
     nextActionNote: 'مكالمة هاتفية لتأكيد المواصفات والميزانية',
     nextFollowUpAt: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
@@ -150,7 +141,7 @@ export default function AddLeadModal({
               <h3 style={{ margin: 0 }}>
                 {isAr ? 'إضافة عميل جديد يدوياً إلى قاعدة البيانات' : 'Register New Lead Manually'}
               </h3>
-              <small style={{ color: 'var(--text-secondary)' }}>
+              <small style={{ color: 'var(--crm-muted)' }}>
                 {isAr ? 'تسجيل بيانات العملاء القادمين عبر الاتصال المباشر أو زيارة المقر' : 'Add walk-in / direct call client to CRM'}
               </small>
             </div>
@@ -289,10 +280,7 @@ export default function AddLeadModal({
                 value={formData.assignedTo}
                 onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
               >
-                <option value="Dr. Mahmoud Elbaz">Dr. Mahmoud Elbaz</option>
-                <option value="Sales Team A">Sales Team A (شرق سوهاج والكوثر)</option>
-                <option value="Sales Team B">Sales Team B (سوهاج الجديدة)</option>
-                <option value="Sales Advisor Team">Sales Advisor Team</option>
+                <DeskOptions role={userRole} current={formData.assignedTo} lang={lang} />
               </select>
             </div>
 
@@ -349,9 +337,9 @@ export default function AddLeadModal({
                     type="button"
                     onClick={() => handleToggleTag(tagObj.name_ar)}
                     style={{
-                      background: isSelected ? 'var(--accent-gold-light)' : 'rgba(255,255,255,0.04)',
-                      color: isSelected ? 'var(--accent-gold)' : 'var(--text-secondary)',
-                      border: isSelected ? '1px solid var(--accent-gold)' : '1px solid var(--border-light)',
+                      background: isSelected ? 'var(--crm-accent-soft)' : 'rgba(255,255,255,0.04)',
+                      color: isSelected ? 'var(--crm-accent-text)' : 'var(--crm-muted)',
+                      border: isSelected ? '1px solid var(--crm-accent)' : '1px solid var(--border-light)',
                       borderRadius: 'var(--radius-pill)',
                       padding: '4px 10px',
                       fontSize: 'var(--crm-text-xs)',

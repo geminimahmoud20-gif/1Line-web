@@ -1,16 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { 
-  ArrowRight, 
-  ArrowLeft, 
-  Landmark, 
-  ShieldCheck, 
-  Clock, 
-  Percent, 
-  MessageSquare,
-  Sparkles,
-  Building
-} from 'lucide-react';
+import { ArrowRight, ArrowLeft, Landmark, ShieldCheck, Clock, Percent, MessageSquare, Building } from 'lucide-react';
 import MortgageRoiCalculator from '../components/calculators/MortgageRoiCalculator';
 import { updatePageSeo } from '../utils/seoHelper';
 import { getWhatsAppUrl } from '../utils/founderCmsData';

@@ -30,9 +30,9 @@ export function routeLeadAutomatically(leadData, existingLeads = []) {
   const leadType = String(leadData.type || leadData.leadType || '').toLowerCase();
   const notes = String(leadData.notes || leadData.message || leadData.details?.notes || '').toLowerCase();
 
-  let assignedTo = 'Sales Advisor Team';
-  let routingReason_ar = 'توزيع ذكي لمستشار مبيعات معتمد';
-  let routingReason_en = 'Auto-assigned to Certified Sales Advisor';
+  let assignedTo;
+  let routingReason_ar;
+  let routingReason_en;
 
   // 1. VIP / Private Office / High Budget Tier
   if (budget >= 5000000 || leadType === 'investor' || leadType === 'vip' || notes.includes('مكتب خاص') || notes.includes('vip')) {

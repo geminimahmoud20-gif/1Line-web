@@ -1,22 +1,6 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import L from 'leaflet';
-import { 
-  Layers, 
-  Satellite, 
-  Map as MapIcon, 
-  Maximize2, 
-  Minimize2, 
-  X, 
-  Navigation, 
-  TrendingUp, 
-  Sparkles, 
-  Building2,
-  Landmark,
-  Compass,
-  Filter,
-  Eye,
-  DollarSign
-} from 'lucide-react';
+import { Layers, Satellite, Map as MapIcon, Maximize2, Minimize2, X, Navigation, TrendingUp, Sparkles, Landmark, Filter } from 'lucide-react';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
 
 // Fix Leaflet Default Marker Icon issues in Webpack/Vite
@@ -27,7 +11,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-export const SOHAG_DISTRICTS = [
+const SOHAG_DISTRICTS = [
   { 
     id: 'all', 
     label_ar: 'جميع المناطق', 
@@ -151,7 +135,7 @@ export const SOHAG_DISTRICTS = [
   }
 ];
 
-export const SOHAG_LANDMARKS = [
+const SOHAG_LANDMARKS = [
   {
     id: 'univ_new',
     name_ar: 'جامعة سوهاج الجديدة (الكوامل)',
@@ -409,7 +393,7 @@ export default function PropertyMapView({
     if (bounds.length > 0 && mapInstanceRef.current && !selectedProperty && activeDistrict === 'all') {
       mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
     }
-  }, [visibleMapProperties, isAr, selectedProperty, hoveredPropertyId, onSelectProperty, onHoverProperty, activeDistrict, currency]);
+  }, [visibleMapProperties, isAr, lang, selectedProperty, hoveredPropertyId, onSelectProperty, onHoverProperty, activeDistrict, currency]);
 
   // Landmarks Layer
   useEffect(() => {

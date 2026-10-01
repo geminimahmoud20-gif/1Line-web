@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
-import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
 
 // Context Providers & Hooks
@@ -11,8 +11,6 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 
 // Security & Storage Helpers
 import { sanitizeObject } from './utils/securityShield';
-import { readStoredJson } from './utils/browserStorage';
-import { saveLead } from './firebaseLazy';
 
 // SEO
 import { updatePageSeo } from './utils/seoHelper';
@@ -28,42 +26,44 @@ import Header from './components/common/Header';
 import Footer from './components/common/Footer';
 import MobileBottomBar from './components/common/MobileBottomBar';
 import ToastContainer from './components/common/ToastContainer';
-import QuickViewModal from './components/common/QuickViewModal';
-import TrackLeadModal from './components/common/TrackLeadModal';
-import ShareModal from './components/common/ShareModal';
-import CallbackModal from './components/common/CallbackModal';
-import AddDemandModal from './components/common/AddDemandModal';
-import AboutFounderModal from './components/common/AboutFounderModal';
-import PropertyCompareDrawer from './components/properties/PropertyCompareDrawer';
 import FloatingCompareBar from './components/properties/FloatingCompareBar';
-import FavoritesDrawer from './components/properties/FavoritesDrawer';
 import ConsentBanner from './components/common/ConsentBanner';
 import QuickContactDrawer from './components/common/QuickContactDrawer';
 import BackToTopButton from './components/common/BackToTopButton';
-import AIPropertyAdvisorModal from './components/common/AIPropertyAdvisorModal';
-import QuickSearchModal from './components/common/QuickSearchModal';
-import ClientAuthModal from './components/common/ClientAuthModal';
-import RemoteInspectionModal from './components/expat/RemoteInspectionModal';
 import { ClientAuthProvider, useClientAuth } from './context/ClientAuthContext';
 
 // Critical Landing Page (Direct Import for instant FCP)
-import HomePage from './pages/HomePage';
 
 // Lazy Loaded Secondary & Heavy Admin Pages (Code Splitting)
-const PropertiesPage = lazy(() => import('./pages/PropertiesPage'));
-const PropertyDetailPage = lazy(() => import('./pages/PropertyDetailPage'));
-const ClientAccountPage = lazy(() => import('./pages/ClientAccountPage'));
-const FinancingPage = lazy(() => import('./pages/FinancingPage'));
-const ProjectsPage = lazy(() => import('./pages/ProjectsPage'));
-const MarketIntelligencePage = lazy(() => import('./pages/MarketIntelligencePage'));
-const PortalsPage = lazy(() => import('./pages/PortalsPage'));
-const CrmPage = lazy(() => import('./pages/CrmPage'));
-const AboutPage = lazy(() => import('./pages/AboutPage'));
-const PrivateOfficePage = lazy(() => import('./pages/PrivateOfficePage'));
-const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
-const CommercialHubPage = lazy(() => import('./pages/CommercialHubPage'));
-const TradeInPortal = lazy(() => import('./components/tradein/TradeInPortal'));
-const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+// Overlays (modals, drawers) render nothing until opened, so they load on demand instead of
+// shipping in the first-paint bundle; prefetchOverlays() warms them once the browser is idle.
+const OVERLAY_LOADERS = {
+  QuickViewModal: () => import('./components/common/QuickViewModal'),
+  TrackLeadModal: () => import('./components/common/TrackLeadModal'),
+  ShareModal: () => import('./components/common/ShareModal'),
+  CallbackModal: () => import('./components/common/CallbackModal'),
+  AddDemandModal: () => import('./components/common/AddDemandModal'),
+  AboutFounderModal: () => import('./components/common/AboutFounderModal'),
+  PropertyCompareDrawer: () => import('./components/properties/PropertyCompareDrawer'),
+  FavoritesDrawer: () => import('./components/properties/FavoritesDrawer'),
+  AIPropertyAdvisorModal: () => import('./components/common/AIPropertyAdvisorModal'),
+  QuickSearchModal: () => import('./components/common/QuickSearchModal'),
+  ClientAuthModal: () => import('./components/common/ClientAuthModal'),
+  RemoteInspectionModal: () => import('./components/expat/RemoteInspectionModal'),
+};
+const QuickViewModal = lazy(OVERLAY_LOADERS.QuickViewModal);
+const TrackLeadModal = lazy(OVERLAY_LOADERS.TrackLeadModal);
+const ShareModal = lazy(OVERLAY_LOADERS.ShareModal);
+const CallbackModal = lazy(OVERLAY_LOADERS.CallbackModal);
+const AddDemandModal = lazy(OVERLAY_LOADERS.AddDemandModal);
+const AboutFounderModal = lazy(OVERLAY_LOADERS.AboutFounderModal);
+const PropertyCompareDrawer = lazy(OVERLAY_LOADERS.PropertyCompareDrawer);
+const FavoritesDrawer = lazy(OVERLAY_LOADERS.FavoritesDrawer);
+const AIPropertyAdvisorModal = lazy(OVERLAY_LOADERS.AIPropertyAdvisorModal);
+const QuickSearchModal = lazy(OVERLAY_LOADERS.QuickSearchModal);
+const ClientAuthModal = lazy(OVERLAY_LOADERS.ClientAuthModal);
+const RemoteInspectionModal = lazy(OVERLAY_LOADERS.RemoteInspectionModal);
+const prefetchOverlays = () => Object.values(OVERLAY_LOADERS).forEach((load) => load().catch(() => {}));
 
 // Luxury Route Transition Fallback Spinner
 function RouteLoadingSpinner({ lang = 'ar' }) {
@@ -105,6 +105,7 @@ function RouteLoadingSpinner({ lang = 'ar' }) {
 import './App.css';
 import './styles/luxury-system.css';
 import './styles/home-luxe.css';
+import AppRoutes from './AppRoutes';
 
 /**
  * Main Application Shell & Route Controller
@@ -121,7 +122,7 @@ function AppContent() {
     toasts, triggerToast, dismissToast,
     quickViewProperty, handleOpenQuickView, handleCloseQuickView,
     trackModalOpen, setTrackModalOpen,
-    shareModalOpen, setShareModalOpen, shareData, handleOpenShare, handleCloseShare,
+    shareModalOpen, shareData, handleOpenShare, handleCloseShare,
     callbackModalOpen, setCallbackModalOpen,
     contactDrawerOpen, setContactDrawerOpen,
     quickSearchOpen, setQuickSearchOpen,
@@ -165,11 +166,9 @@ function AppContent() {
   // Local storage: localStorage.setItem('oneline_crm_leads', JSON.stringify(updated))
 
   const { crmAuthenticated, setCrmAuthenticated, handleCrmLogout } = useAuth();
-  const { 
-    clientUser, 
-    isClientAuthenticated, 
-    requireClientAuth, 
-    setClientAuthModalOpen 
+  const {
+    requireClientAuth,
+    clientAuthModalOpen
   } = useClientAuth();
 
   // 🛡️ Protected Client Favorites Toggle (Requires Name, Email, WhatsApp verification)
@@ -195,6 +194,17 @@ function AppContent() {
   const location = useLocation();
 
   // Scroll to top on page navigation & Track Visitor Intelligence
+  // Warm the on-demand overlays after first paint so opening one never waits on the network
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    if ('requestIdleCallback' in window) {
+      const id = window.requestIdleCallback(prefetchOverlays, { timeout: 5000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const t = setTimeout(prefetchOverlays, 3000);
+    return () => clearTimeout(t);
+  }, []);
+
   useEffect(() => {
     window.scrollTo(0, 0);
     getOrCreateSession();
@@ -416,54 +426,72 @@ function AppContent() {
       <ConsentBanner lang={lang} />
 
       {/* Quick View Modal */}
-      <QuickViewModal
-        property={quickViewProperty}
-        lang={lang}
-        currency={currency}
-        onClose={handleCloseQuickView}
-        onToggleFavorite={handleProtectedToggleFavorite}
-        isFavorite={quickViewProperty ? favorites.includes(quickViewProperty.id) : false}
-        onOpenShare={handleOpenShare}
-        triggerToast={triggerToast}
-      />
+      {quickViewProperty && (
+        <Suspense fallback={null}>
+          <QuickViewModal
+            property={quickViewProperty}
+            lang={lang}
+            currency={currency}
+            onClose={handleCloseQuickView}
+            onToggleFavorite={handleProtectedToggleFavorite}
+            isFavorite={quickViewProperty ? favorites.includes(quickViewProperty.id) : false}
+            onOpenShare={handleOpenShare}
+            triggerToast={triggerToast}
+          />
+        </Suspense>
+      )}
 
       {/* Track Lead Modal */}
-      <TrackLeadModal
-        isOpen={trackModalOpen}
-        onClose={() => setTrackModalOpen(false)}
-        leads={leads}
-        lang={lang}
-      />
+      {trackModalOpen && (
+        <Suspense fallback={null}>
+          <TrackLeadModal
+            isOpen={trackModalOpen}
+            onClose={() => setTrackModalOpen(false)}
+            leads={leads}
+            lang={lang}
+          />
+        </Suspense>
+      )}
 
       {/* Share Modal */}
-      <ShareModal
-        isOpen={shareModalOpen}
-        onClose={handleCloseShare}
-        lang={lang}
-        triggerToast={triggerToast}
-        shareData={shareData}
-      />
+      {shareModalOpen && (
+        <Suspense fallback={null}>
+          <ShareModal
+            isOpen={shareModalOpen}
+            onClose={handleCloseShare}
+            lang={lang}
+            triggerToast={triggerToast}
+            shareData={shareData}
+          />
+        </Suspense>
+      )}
 
       {/* Callback / VIP Consultation Modal */}
-      <CallbackModal
-        isOpen={callbackModalOpen}
-        onClose={() => setCallbackModalOpen(false)}
-        lang={lang}
-        onSubmitCallback={handleCallbackSubmit}
-        triggerToast={triggerToast}
-      />
+      {callbackModalOpen && (
+        <Suspense fallback={null}>
+          <CallbackModal
+            isOpen={callbackModalOpen}
+            onClose={() => setCallbackModalOpen(false)}
+            lang={lang}
+            onSubmitCallback={handleCallbackSubmit}
+            triggerToast={triggerToast}
+          />
+        </Suspense>
+      )}
 
       {/* "معاينة الغربة" — expat remote inspection (opened from cards, listing page and hubs) */}
       {remoteInspectionTarget !== false && (
-        <RemoteInspectionModal
-          key={remoteInspectionTarget?.id || 'general'}
-          isOpen
-          property={remoteInspectionTarget || null}
-          onClose={closeRemoteInspection}
-          lang={lang}
-          onCreateLead={handleAddNewLead}
-          triggerToast={triggerToast}
-        />
+        <Suspense fallback={null}>
+          <RemoteInspectionModal
+            key={remoteInspectionTarget?.id || 'general'}
+            isOpen
+            property={remoteInspectionTarget || null}
+            onClose={closeRemoteInspection}
+            lang={lang}
+            onCreateLead={handleAddNewLead}
+            triggerToast={triggerToast}
+          />
+        </Suspense>
       )}
 
       {/* Site Header Navigation (Hidden on CRM for clean enterprise workspace) */}
@@ -491,388 +519,81 @@ function AppContent() {
       {/* Application Main Routes with Lazy Suspense Code Splitting */}
       <main className="main-site-content" id="main-content" tabIndex={-1}>
         <Suspense fallback={<RouteLoadingSpinner lang={lang} />}>
-          <Routes>
-            {/* 1. Home Page */}
-            <Route
-              path="/"
-              element={
-                <HomePage
-                  lang={lang}
-                  currency={currency}
-                  properties={properties}
-                  demands={demands}
-                  favorites={favorites}
-                  onToggleFavorite={handleProtectedToggleFavorite}
-                  compareList={compareList}
-                  onToggleCompare={handleProtectedToggleCompare}
-                  onQuickView={handleOpenQuickView}
-                  onOpenAddDemand={() => setAddDemandModalOpen(true)}
-                  onAddNewLead={handleAddNewLead}
-                  triggerToast={triggerToast}
-                />
-              }
-            />
-
-            {/* 2. Properties Catalog & Interactive Map */}
-            <Route
-              path="/properties"
-              element={
-                <PropertiesPage
-                  lang={lang}
-                  currency={currency}
-                  properties={properties}
-                  favorites={favorites}
-                  onToggleFavorite={handleProtectedToggleFavorite}
-                  compareList={compareList}
-                  onToggleCompare={handleProtectedToggleCompare}
-                  onQuickView={handleOpenQuickView}
-                />
-              }
-            />
-
-            {/* 3. Single Property Details Page */}
-            <Route
-              path="/properties/:id"
-              element={
-                <PropertyDetailPage
-                  lang={lang}
-                  currency={currency}
-                  t={t}
-                  properties={properties}
-                  favorites={favorites}
-                  onToggleFavorite={handleProtectedToggleFavorite}
-                  onQuickView={handleOpenQuickView}
-                  triggerToast={triggerToast}
-                  onAddNewLead={handleAddNewLead}
-                />
-              }
-            />
-
-            {/* 3.5. About 1Line & Leadership Page */}
-            <Route
-              path="/about"
-              element={<AboutPage lang={lang} triggerToast={triggerToast} />}
-            />
-            <Route
-              path="/about-us"
-              element={<AboutPage lang={lang} triggerToast={triggerToast} />}
-            />
-
-            {/* 3.8. 1Line Private Office (Off-Market Portfolio) */}
-            <Route
-              path="/private-office"
-              element={<PrivateOfficePage lang={lang} triggerToast={triggerToast} />}
-            />
-            <Route
-              path="/off-market"
-              element={<PrivateOfficePage lang={lang} triggerToast={triggerToast} />}
-            />
-
-            {/* 4. Financing & Mortgage Calculator Page */}
-            <Route
-              path="/financing"
-              element={<FinancingPage lang={lang} t={t} />}
-            />
-
-            {/* 5. Specialized Business Portals & Wizards */}
-            <Route
-              path="/buy"
-              element={
-                <PortalsPage
-                  portalType="buy"
-                  lang={lang}
-                  t={t}
-                  buyerStep={buyerStep}
-                  setBuyerStep={setBuyerStep}
-                  buyerAnswers={buyerAnswers}
-                  setBuyerAnswers={setBuyerAnswers}
-                  handleBuyerChoice={handleBuyerChoice}
-                  submitBuyerJourney={submitBuyerJourney}
-                  triggerToast={triggerToast}
-                  handleAddNewLead={handleAddNewLead}
-                />
-              }
-            />
-
-            <Route
-              path="/sell"
-              element={
-                <PortalsPage
-                  portalType="sell"
-                  lang={lang}
-                  t={t}
-                  sellerStep={sellerStep}
-                  setSellerStep={setSellerStep}
-                  sellerAnswers={sellerAnswers}
-                  setSellerAnswers={setSellerAnswers}
-                  handleSellerChoice={handleSellerChoice}
-                  submitSellerJourney={submitSellerJourney}
-                  estimatedValue={estimatedValue}
-                  triggerToast={triggerToast}
-                  handleAddNewLead={handleAddNewLead}
-                />
-              }
-            />
-
-            <Route
-              path="/valuation"
-              element={
-                <PortalsPage
-                  portalType="valuation"
-                  lang={lang}
-                  t={t}
-                  sellerStep={sellerStep}
-                  setSellerStep={setSellerStep}
-                  sellerAnswers={sellerAnswers}
-                  setSellerAnswers={setSellerAnswers}
-                  handleSellerChoice={handleSellerChoice}
-                  submitSellerJourney={submitSellerJourney}
-                  estimatedValue={estimatedValue}
-                  triggerToast={triggerToast}
-                  handleAddNewLead={handleAddNewLead}
-                />
-              }
-            />
-
-            <Route
-              path="/investor"
-              element={
-                <PortalsPage
-                  portalType="investor"
-                  lang={lang}
-                  currency={currency}
-                  t={t}
-                  invAmount={invAmount}
-                  setInvAmount={setInvAmount}
-                  invPeriod={invPeriod}
-                  setInvPeriod={setInvPeriod}
-                  invPropType={invPropType}
-                  setInvPropType={setInvPropType}
-                  investorForm={investorForm}
-                  setInvestorForm={setInvestorForm}
-                  showInvResultForm={showInvResultForm}
-                  setShowInvResultForm={setShowInvResultForm}
-                  roiRes={roiRes}
-                  submitInvestorForm={submitInvestorForm}
-                  triggerToast={triggerToast}
-                  handleAddNewLead={handleAddNewLead}
-                />
-              }
-            />
-
-            <Route
-              path="/broker"
-              element={
-                <PortalsPage
-                  portalType="broker"
-                  lang={lang}
-                  t={t}
-                  brokerForm={brokerForm}
-                  setBrokerForm={setBrokerForm}
-                  handleBrokerCheckbox={handleBrokerCheckbox}
-                  submitBrokerPortal={submitBrokerPortal}
-                  triggerToast={triggerToast}
-                  handleAddNewLead={handleAddNewLead}
-                />
-              }
-            />
-
-            <Route
-              path="/demands"
-              element={
-                <PortalsPage
-                  portalType="demands"
-                  lang={lang}
-                  t={t}
-                  demands={demands}
-                  ownerSearch={ownerSearch}
-                  setOwnerSearch={setOwnerSearch}
-                  isScanningMap={isScanningMap}
-                  setIsScanningMap={setIsScanningMap}
-                  ownerMatchesFound={ownerMatchesFound}
-                  setOwnerMatchesFound={setOwnerMatchesFound}
-                  scanningMessage={scanningMessage}
-                  setScanningMessage={setScanningMessage}
-                  navigateTo={(path) => navigate('/' + path)}
-                  setSellerAnswers={setSellerAnswers}
-                  triggerToast={triggerToast}
-                  handleAddNewLead={handleAddNewLead}
-                  onOpenAddDemand={() => setAddDemandModalOpen(true)}
-                />
-              }
-            />
-
-            <Route
-              path="/vault"
-              element={<Navigate to="/properties" replace />}
-            />
-
-            <Route
-              path="/referral"
-              element={
-                <PortalsPage
-                  portalType="referral"
-                  lang={lang}
-                  t={t}
-                  triggerToast={triggerToast}
-                  handleAddNewLead={handleAddNewLead}
-                />
-              }
-            />
-
-            <Route
-              path="/special"
-              element={
-                <PortalsPage
-                  portalType="special"
-                  lang={lang}
-                  t={t}
-                  triggerToast={triggerToast}
-                  handleAddNewLead={handleAddNewLead}
-                />
-              }
-            />
-
-            <Route
-              path="/special-requests"
-              element={
-                <PortalsPage
-                  portalType="special"
-                  lang={lang}
-                  t={t}
-                  triggerToast={triggerToast}
-                  handleAddNewLead={handleAddNewLead}
-                />
-              }
-            />
-
-            {/* Mega Projects & Flagship Compounds Hub */}
-            <Route
-              path="/projects"
-              element={
-                <ProjectsPage
-                  lang={lang}
-                  currency={currency}
-                  projects={projects}
-                  triggerToast={triggerToast}
-                />
-              }
-            />
-
-            {/* Sohag Real Estate Market Intelligence & Price Benchmark */}
-            <Route
-              path="/market-intelligence"
-              element={
-                <MarketIntelligencePage
-                  lang={lang}
-                  currency={currency}
-                  triggerToast={triggerToast}
-                />
-              }
-            />
-
-            {/* 👤 Verified Client Account, Saved Favorites & Smart Comparisons Hub */}
-            <Route
-              path="/my-account"
-              element={
-                <ClientAccountPage
-                  properties={properties}
-                  favorites={favorites}
-                  onToggleFavorite={handleProtectedToggleFavorite}
-                  compareList={compareList}
-                  onToggleCompare={handleProtectedToggleCompare}
-                  onClearFavorites={clearFavorites}
-                  onClearCompare={clearCompare}
-                  onOpenCompare={() => setCompareDrawerOpen(true)}
-                  leads={leads}
-                  demands={demands}
-                  lang={lang}
-                  currency={currency}
-                />
-              }
-            />
-
-            <Route
-              path="/favorites"
-              element={<Navigate to="/my-account" replace />}
-            />
-
-            <Route
-              path="/compare"
-              element={<Navigate to="/my-account" replace />}
-            />
-
-            {/* CRM Admin Control Panel & Property CMS & Demands CMS */}
-            <Route
-              path="/crm"
-              element={
-                <CrmPage
-                  lang={lang}
-                  t={t}
-                  leads={leads}
-                  setLeads={setLeads}
-                  properties={properties}
-                  onAddProperty={handleAddProperty}
-                  onUpdateProperty={handleUpdateProperty}
-                  onDeleteProperty={handleDeleteProperty}
-                  projects={projects}
-                  onAddProject={handleAddProject}
-                  onUpdateProject={handleUpdateProject}
-                  onDeleteProject={handleDeleteProject}
-                  demands={demands}
-                  onAddDemand={handleAddAdminDemand}
-                  onApproveDemand={handleApproveDemand}
-                  onUpdateDemand={handleUpdateDemand}
-                  onDeleteDemand={handleDeleteDemand}
-                  onUnpublishDemand={handleUnpublishDemand}
-                  crmAuthenticated={crmAuthenticated}
-                  setCrmAuthenticated={setCrmAuthenticated}
-                  onLogout={handleCrmLogout}
-                  triggerToast={triggerToast}
-                  onUpdateLead={handleUpdateLead}
-                  onDeleteLead={handleDeleteLead}
-                  onAddNewLead={handleAddNewLead}
-                />
-              }
-            />
-
-            {/* Privacy policy & data handling */}
-            {/* مركز الاستثمار الطبي والتجاري */}
-            <Route
-              path="/commercial-hub"
-              element={
-                <CommercialHubPage
-                  lang={lang}
-                  currency={currency}
-                  properties={properties}
-                  favorites={favorites}
-                  onToggleFavorite={handleProtectedToggleFavorite}
-                  compareList={compareList}
-                  onToggleCompare={handleProtectedToggleCompare}
-                  onQuickView={handleOpenQuickView}
-                />
-              }
-            />
-
-            {/* منصة البدل العقاري */}
-            <Route
-              path="/trade-in"
-              element={
-                <TradeInPortal
-                  lang={lang}
-                  properties={properties}
-                  onCreateLead={handleAddNewLead}
-                  triggerToast={triggerToast}
-                />
-              }
-            />
-
-            <Route path="/privacy" element={<PrivacyPage lang={lang} />} />
-            <Route path="/terms" element={<Navigate to="/privacy" replace />} />
-
-            {/* Unknown paths: real not-found view (served with HTTP 404 by Vercel) */}
-            <Route path="*" element={<NotFoundPage lang={lang} />} />
-          </Routes>
+          <AppRoutes
+            brokerForm={brokerForm}
+            buyerAnswers={buyerAnswers}
+            buyerStep={buyerStep}
+            clearCompare={clearCompare}
+            clearFavorites={clearFavorites}
+            compareList={compareList}
+            crmAuthenticated={crmAuthenticated}
+            currency={currency}
+            demands={demands}
+            estimatedValue={estimatedValue}
+            favorites={favorites}
+            handleAddAdminDemand={handleAddAdminDemand}
+            handleAddNewLead={handleAddNewLead}
+            handleAddProject={handleAddProject}
+            handleAddProperty={handleAddProperty}
+            handleApproveDemand={handleApproveDemand}
+            handleBrokerCheckbox={handleBrokerCheckbox}
+            handleBuyerChoice={handleBuyerChoice}
+            handleCrmLogout={handleCrmLogout}
+            handleDeleteDemand={handleDeleteDemand}
+            handleDeleteLead={handleDeleteLead}
+            handleDeleteProject={handleDeleteProject}
+            handleDeleteProperty={handleDeleteProperty}
+            handleOpenQuickView={handleOpenQuickView}
+            handleProtectedToggleCompare={handleProtectedToggleCompare}
+            handleProtectedToggleFavorite={handleProtectedToggleFavorite}
+            handleSellerChoice={handleSellerChoice}
+            handleUnpublishDemand={handleUnpublishDemand}
+            handleUpdateDemand={handleUpdateDemand}
+            handleUpdateLead={handleUpdateLead}
+            handleUpdateProject={handleUpdateProject}
+            handleUpdateProperty={handleUpdateProperty}
+            invAmount={invAmount}
+            invPeriod={invPeriod}
+            invPropType={invPropType}
+            investorForm={investorForm}
+            isScanningMap={isScanningMap}
+            lang={lang}
+            leads={leads}
+            navigate={navigate}
+            ownerMatchesFound={ownerMatchesFound}
+            ownerSearch={ownerSearch}
+            projects={projects}
+            properties={properties}
+            roiRes={roiRes}
+            scanningMessage={scanningMessage}
+            sellerAnswers={sellerAnswers}
+            sellerStep={sellerStep}
+            setAddDemandModalOpen={setAddDemandModalOpen}
+            setBrokerForm={setBrokerForm}
+            setBuyerAnswers={setBuyerAnswers}
+            setBuyerStep={setBuyerStep}
+            setCompareDrawerOpen={setCompareDrawerOpen}
+            setCrmAuthenticated={setCrmAuthenticated}
+            setInvAmount={setInvAmount}
+            setInvPeriod={setInvPeriod}
+            setInvPropType={setInvPropType}
+            setInvestorForm={setInvestorForm}
+            setIsScanningMap={setIsScanningMap}
+            setLeads={setLeads}
+            setOwnerMatchesFound={setOwnerMatchesFound}
+            setOwnerSearch={setOwnerSearch}
+            setScanningMessage={setScanningMessage}
+            setSellerAnswers={setSellerAnswers}
+            setSellerStep={setSellerStep}
+            setShowInvResultForm={setShowInvResultForm}
+            showInvResultForm={showInvResultForm}
+            submitBrokerPortal={submitBrokerPortal}
+            submitBuyerJourney={submitBuyerJourney}
+            submitInvestorForm={submitInvestorForm}
+            submitSellerJourney={submitSellerJourney}
+            t={t}
+            triggerToast={triggerToast}
+          />
         </Suspense>
       </main>
 
@@ -885,71 +606,95 @@ function AppContent() {
       )}
 
       {/* About 1Line & Founder Profile Modal */}
-      <AboutFounderModal
-        isOpen={aboutFounderModalOpen}
-        onClose={() => setAboutFounderModalOpen(false)}
-        lang={lang}
-      />
+      {aboutFounderModalOpen && (
+        <Suspense fallback={null}>
+          <AboutFounderModal
+            isOpen={aboutFounderModalOpen}
+            onClose={() => setAboutFounderModalOpen(false)}
+            lang={lang}
+          />
+        </Suspense>
+      )}
 
       {/* Add Buyer Demand Modal */}
-      <AddDemandModal
-        isOpen={addDemandModalOpen}
-        onClose={() => setAddDemandModalOpen(false)}
-        lang={lang}
-        onSubmitDemand={handleAddPublicDemand}
-        triggerToast={triggerToast}
-      />
+      {addDemandModalOpen && (
+        <Suspense fallback={null}>
+          <AddDemandModal
+            isOpen={addDemandModalOpen}
+            onClose={() => setAddDemandModalOpen(false)}
+            lang={lang}
+            onSubmitDemand={handleAddPublicDemand}
+            triggerToast={triggerToast}
+          />
+        </Suspense>
+      )}
 
       {/* Property Comparison Drawer Matrix */}
       {compareDrawerOpen && (
-        <PropertyCompareDrawer
-          isOpen={compareDrawerOpen}
-          onClose={() => setCompareDrawerOpen(false)}
-          compareList={compareList}
-          onRemoveFromCompare={removeCompare}
-          onClearCompare={clearCompare}
-          onAddToCompare={addToCompare}
-          availableProperties={properties}
-          currency={currency}
-          lang={lang}
-        />
+        <Suspense fallback={null}>
+          <PropertyCompareDrawer
+            isOpen={compareDrawerOpen}
+            onClose={() => setCompareDrawerOpen(false)}
+            compareList={compareList}
+            onRemoveFromCompare={removeCompare}
+            onClearCompare={clearCompare}
+            onAddToCompare={addToCompare}
+            availableProperties={properties}
+            currency={currency}
+            lang={lang}
+          />
+        </Suspense>
       )}
 
       {/* Saved Properties & Favorites Drawer */}
       {favoritesDrawerOpen && (
-        <FavoritesDrawer
-          isOpen={favoritesDrawerOpen}
-          onClose={() => setFavoritesDrawerOpen(false)}
-          favorites={favorites}
-          properties={properties}
-          onRemoveFavorite={toggleFavorite}
-          onClearFavorites={clearFavorites}
-          onQuickView={handleOpenQuickView}
-          lang={lang}
-          currency={currency}
-        />
+        <Suspense fallback={null}>
+          <FavoritesDrawer
+            isOpen={favoritesDrawerOpen}
+            onClose={() => setFavoritesDrawerOpen(false)}
+            favorites={favorites}
+            properties={properties}
+            onRemoveFavorite={toggleFavorite}
+            onClearFavorites={clearFavorites}
+            onQuickView={handleOpenQuickView}
+            lang={lang}
+            currency={currency}
+          />
+        </Suspense>
       )}
 
       {/* Client Identity & WhatsApp Security Verification Modal */}
-      <ClientAuthModal lang={lang} />
+      {clientAuthModalOpen && (
+        <Suspense fallback={null}>
+          <ClientAuthModal lang={lang} />
+        </Suspense>
+      )}
 
       {/* AI Virtual Real Estate Advisor Modal */}
-      <AIPropertyAdvisorModal
-        isOpen={aiModalOpen}
-        onClose={() => setAiModalOpen(false)}
-        lang={lang}
-        onOpenCallbackModal={() => setCallbackModalOpen(true)}
-      />
+      {aiModalOpen && (
+        <Suspense fallback={null}>
+          <AIPropertyAdvisorModal
+            isOpen={aiModalOpen}
+            onClose={() => setAiModalOpen(false)}
+            lang={lang}
+            onOpenCallbackModal={() => setCallbackModalOpen(true)}
+          />
+        </Suspense>
+      )}
 
       {/* Global Omnisearch Spotlight Modal */}
-      <QuickSearchModal
-        isOpen={quickSearchOpen}
-        onClose={() => setQuickSearchOpen(false)}
-        properties={properties}
-        lang={lang}
-        currency={currency}
-        onOpenAddDemand={() => setAddDemandModalOpen(true)}
-      />
+      {quickSearchOpen && (
+        <Suspense fallback={null}>
+          <QuickSearchModal
+            isOpen={quickSearchOpen}
+            onClose={() => setQuickSearchOpen(false)}
+            properties={properties}
+            lang={lang}
+            currency={currency}
+            onOpenAddDemand={() => setAddDemandModalOpen(true)}
+          />
+        </Suspense>
+      )}
 
       {/* Floating Compare Dock Bar */}
       {!location.pathname.startsWith('/crm') && (

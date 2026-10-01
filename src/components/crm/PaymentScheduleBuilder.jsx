@@ -250,7 +250,7 @@ export default function PaymentScheduleBuilder({
       {/* Financial Breakdown KPIs */}
       <div className="crm-stats-grid" style={{ marginBottom: '24px' }}>
         <div className="crm-stat-card">
-          <div className="crm-stat-icon" style={{ background: 'var(--emerald-bg)', color: 'var(--emerald)' }}>
+          <div className="crm-stat-icon" style={{ background: 'var(--crm-positive-soft)', color: 'var(--crm-positive)' }}>
             <DollarSign size={20} />
           </div>
           <div className="crm-stat-info">
@@ -260,7 +260,7 @@ export default function PaymentScheduleBuilder({
         </div>
 
         <div className="crm-stat-card">
-          <div className="crm-stat-icon" style={{ background: 'var(--accent-gold-light)', color: 'var(--accent-gold)' }}>
+          <div className="crm-stat-icon" style={{ background: 'var(--crm-accent-soft)', color: 'var(--crm-accent-text)' }}>
             <Calendar size={20} />
           </div>
           <div className="crm-stat-info">
@@ -303,11 +303,11 @@ export default function PaymentScheduleBuilder({
                 <td style={{ fontWeight: 'bold' }}>{row.number}</td>
                 <td><strong>{row.type}</strong></td>
                 <td>{row.date}</td>
-                <td><strong style={{ color: 'var(--emerald)' }}>{row.amount.toLocaleString()} ج.م</strong></td>
+                <td><strong style={{ color: 'var(--crm-positive)' }}>{row.amount.toLocaleString()} ج.م</strong></td>
                 <td>
                   <span className="badge" style={{
-                    background: row.number === 1 ? 'var(--emerald-bg)' : 'rgba(255,255,255,0.05)',
-                    color: row.number === 1 ? 'var(--emerald)' : 'var(--text-secondary)'
+                    background: row.number === 1 ? 'var(--crm-positive-soft)' : 'rgba(255,255,255,0.05)',
+                    color: row.number === 1 ? 'var(--crm-positive)' : 'var(--crm-muted)'
                   }}>
                     {row.status}
                   </span>
@@ -335,7 +335,7 @@ export default function PaymentScheduleBuilder({
             {/* Receipt Parameters Controls */}
             <div style={{ display: 'flex', gap: '14px', padding: '12px 16px 0', flexWrap: 'wrap' }}>
               <div style={{ flex: 1, minWidth: '160px' }}>
-                <label htmlFor="psb-field-8" style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                <label htmlFor="psb-field-8" style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'block', marginBottom: '4px' }}>
                   {isAr ? 'مبلغ جدية الحجز (ج.م):' : 'Deposit (EGP):'}
                 </label>
                 <input id="psb-field-8"
@@ -346,7 +346,7 @@ export default function PaymentScheduleBuilder({
                 />
               </div>
               <div style={{ flex: 1, minWidth: '160px' }}>
-                <label htmlFor="psb-field-9" style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                <label htmlFor="psb-field-9" style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'block', marginBottom: '4px' }}>
                   {isAr ? 'طريقة السداد:' : 'Payment Method:'}
                 </label>
                 <select id="psb-field-9"
@@ -368,13 +368,13 @@ export default function PaymentScheduleBuilder({
               padding: '28px',
               borderRadius: 'var(--radius-sm)',
               margin: '16px',
-              border: '2px solid #e2e8f0',
+              border: '2px solid var(--crm-line)',
               fontFamily: 'Cairo, sans-serif'
             }}>
               {/* Receipt Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #d97706', paddingBottom: '14px', marginBottom: '18px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid var(--crm-warn)', paddingBottom: '14px', marginBottom: '18px' }}>
                 <div>
-                  <h2 style={{ margin: 0, color: 'var(--crm-ink)', fontSize: '1.3rem' }}>شركة 1Line للحلول العقارية</h2>
+                  <h2 style={{ margin: 0, color: 'var(--crm-ink)', fontSize: 'var(--crm-text-lg)' }}>شركة 1Line للحلول العقارية</h2>
                   <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>1LINE REAL ESTATE SOLUTIONS — SOHAG HQ</span>
                 </div>
                 <div style={{ textAlign: isAr ? 'left' : 'right' }}>
@@ -393,7 +393,7 @@ export default function PaymentScheduleBuilder({
                   رقم الهاتف: <strong>{selectedLead.phone || '010XXXXXXXX'}</strong>
                 </p>
                 <p style={{ margin: 0 }}>
-                  مبلغ وقدره: <strong style={{ color: 'var(--crm-positive)', fontSize: '1.1rem' }}>{receiptDepositAmount.toLocaleString()} ج.م</strong> (فقط خمسون ألف جنيهاً مصرياً لا غير).
+                  مبلغ وقدره: <strong style={{ color: 'var(--crm-positive)', fontSize: 'var(--crm-text-lg)' }}>{receiptDepositAmount.toLocaleString()} ج.م</strong> (فقط خمسون ألف جنيهاً مصرياً لا غير).
                 </p>
                 <p style={{ margin: 0 }}>
                   طريقة السداد: <strong>{paymentMethod === 'cash' ? 'نقداً بخزينة الشركة' : paymentMethod === 'bank_transfer' ? 'تحويل بنكي رسمي' : 'فودافون كاش / إنستاباي'}</strong>
@@ -407,9 +407,9 @@ export default function PaymentScheduleBuilder({
               </div>
 
               {/* QR Verification & Signatures */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '16px', borderTop: '1px solid #cbd5e1' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '16px', borderTop: '1px solid var(--crm-line-strong)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ padding: '6px', background: '#0f172a', borderRadius: '6px', color: '#ffffff' }}>
+                  <div style={{ padding: '6px', background: 'var(--crm-surface-ink)', borderRadius: '6px', color: 'var(--crm-on-dark)' }}>
                     <QrCode size={44} />
                   </div>
                   <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', maxWidth: '140px' }}>

@@ -71,6 +71,43 @@
   --crm-text-lg: 1.125rem;    /* 18px — card titles */
   --crm-text-xl: 1.5rem;      /* 24px — KPI figures */
   --crm-text-2xl: 2rem;       /* 32px — page titles */
+
+  /* Tinted chip / callout backgrounds and solid fills (white text on top) */
+  --crm-warn-soft: #FFFBEB;
+  --crm-info-soft: #EFF6FF;
+  --crm-danger-soft: #FEF2F2;
+  --crm-positive-soft: #ECFDF5;
+  --crm-violet-soft: #F5F3FF;
+  --crm-info-line: #BFDBFE;
+  --crm-warn-line: #FDE68A;
+  --crm-danger-line: #FECACA;
+  --crm-positive-line: #A7F3D0;
+  --crm-violet-line: #DDD6FE;
+  --crm-danger-solid: #DC2626;
+  --crm-warn-solid: #B45309;
+  --crm-violet-solid: #7C3AED;
+  --crm-info-solid: #0369A1;
+  --crm-pink: #BE185D;
+  --crm-pink-solid: #BE185D;
+  --crm-brand-navy: #092347;   /* primary button fill */
+
+  /* Same in both themes: text and fills on surfaces that are always dark (.crm-modal-card,
+     navy cards, the sidebar) or on solid colour fills. Never use these on --crm-card. */
+  --crm-on-dark: #FFFFFF;
+  --crm-on-dark-soft: #E2E8F0;
+  --crm-on-dark-muted: #CBD5E1;
+  --crm-on-dark-faint: #94A3B8;
+  --crm-gold-on-dark: #E9D29A;
+  --crm-on-dark-danger: #FCA5A5;
+  --crm-on-dark-warn: #FCD34D;
+  --crm-on-dark-violet: #C4B5FD;
+  --crm-on-dark-info: #93C5FD;
+  --crm-on-dark-positive: #6EE7B7;
+  --crm-on-accent: #000000;     /* text on the gold accent fill */
+  --crm-surface-ink: #0F172A;   /* always-dark panels (code previews, KPI hero) */
+  --crm-surface-ink-deep: #07172F;
+  --brand-whatsapp: #25D366;
+  --brand-whatsapp-solid: #075E54; /* WhatsApp dark teal: 7.6:1 with white text (the bright green is 2:1) */
 }
 
 :root[data-theme="dark"],
@@ -96,6 +133,18 @@
   --crm-violet: #A78BFA;
   --crm-danger: #F87171;
   --crm-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.25), 0 8px 24px -4px rgba(0, 0, 0, 0.35);
+  --crm-warn-soft: rgba(251, 191, 36, 0.12);
+  --crm-info-soft: rgba(96, 165, 250, 0.12);
+  --crm-danger-soft: rgba(248, 113, 113, 0.12);
+  --crm-positive-soft: rgba(52, 211, 153, 0.12);
+  --crm-violet-soft: rgba(167, 139, 250, 0.14);
+  --crm-info-line: rgba(96, 165, 250, 0.35);
+  --crm-warn-line: rgba(251, 191, 36, 0.35);
+  --crm-danger-line: rgba(248, 113, 113, 0.35);
+  --crm-positive-line: rgba(52, 211, 153, 0.35);
+  --crm-violet-line: rgba(167, 139, 250, 0.35);
+  --crm-pink: #F472B6;
+  --crm-brand-navy: #1E3A8A;   /* lifted so the button still reads on the dark card */
 }
 
 :root[data-theme="dark"],

@@ -5,7 +5,7 @@ import { computeFinanceBreakdown } from './propertyInsights';
  * Generate an official Property Comparison Report (PDF)
  * for selected properties in One Line Real Estate Sohag.
  */
-export const generateComparePdf = async (compareList = [], lang = 'ar') => {
+export const generateComparePdf = async (compareList = [], _lang = 'ar') => { // the PDF is bilingual; lang kept for callers
   if (!compareList || compareList.length === 0) return;
 
   const { jsPDF } = await import('jspdf');
@@ -15,7 +15,6 @@ export const generateComparePdf = async (compareList = [], lang = 'ar') => {
     format: 'a4'
   });
 
-  const isAr = lang === 'ar';
   const reportDate = new Date().toLocaleDateString('en-GB');
 
   // 1. Header Banner (Royal Navy & Gold)

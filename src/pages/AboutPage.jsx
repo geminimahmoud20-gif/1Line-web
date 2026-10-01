@@ -1,36 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Building2, 
-  ShieldCheck, 
-  CheckCircle2, 
-  Quote, 
-  MessageSquare, 
-  Phone, 
-  MapPin, 
-  TrendingUp, 
-  FileCheck, 
-  Users, 
-  Sparkles,
-  ArrowRight,
-  ArrowLeft,
-  Briefcase,
-  Award,
-  Scale,
-  Video,
-  Clock
-} from 'lucide-react';
+import { Building2, ShieldCheck, CheckCircle2, Quote, MessageSquare, Phone, MapPin, TrendingUp, FileCheck, Users, Sparkles, ArrowRight, ArrowLeft, Award, Scale, Video, Clock } from 'lucide-react';
 import LogoEmblem from '../components/LogoEmblem';
-import { 
-  getFounderSettings, 
-  cleanWhatsAppNumber, 
-  cleanPhoneNumber, 
-  getWhatsAppUrl,
-  DEFAULT_FOUNDER_CMS
-} from '../utils/founderCmsData';
+import { getFounderSettings, cleanPhoneNumber, getWhatsAppUrl, DEFAULT_FOUNDER_CMS } from '../utils/founderCmsData';
 import { updatePageSeo } from '../utils/seoHelper';
 
-export default function AboutPage({ lang = 'ar', triggerToast }) {
+export default function AboutPage({ lang = 'ar' }) {
   const isAr = lang === 'ar';
   const [cms, setCms] = useState(() => getFounderSettings());
 
@@ -59,7 +34,6 @@ export default function AboutPage({ lang = 'ar', triggerToast }) {
     };
   }, []);
 
-  const cleanWhatsApp = cleanWhatsAppNumber(cms.whatsappNumber);
   const cleanPhone = cleanPhoneNumber(cms.phoneNumber);
 
   const stats = [

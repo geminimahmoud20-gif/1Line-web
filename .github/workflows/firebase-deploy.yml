@@ -1,0 +1,89 @@
+# Deploys Firestore rules/indexes and runs the contact migration from GitHub, so nobody needs the
+# Firebase CLI on their own machine. Needs one repository secret:
+#   FIREBASE_SERVICE_ACCOUNT — the JSON key from Firebase Console → Project settings → Service accounts
+#
+# How to run (pushing a branch is the trigger, so it works before this file reaches main):
+#   deploy/firebase-rules    → rules tests on the emulator, then publish rules + indexes (scripts/deploy-firestore.mjs)
+#   deploy/firebase-migrate  → migration dry run, then move inline phones into lead/request contacts
+# Once on main it can also be started from the Actions tab (Run workflow).
+name: Firebase deploy
+
+on:
+  push:
+    branches: ['deploy/firebase-rules', 'deploy/firebase-migrate']
+  workflow_dispatch:
+    inputs:
+      task:
+        description: What to run
+        type: choice
+        options: [rules, migrate]
+        default: rules
+
+concurrency:
+  group: firebase-deploy
+  cancel-in-progress: false
+
+env:
+  FIREBASE_PROJECT: line-c9601
+  TASK: ${{ github.event_name == 'workflow_dispatch' && inputs.task || (github.ref_name == 'deploy/firebase-migrate' && 'migrate' || 'rules') }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        if: env.TASK == 'rules'
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - run: npm ci
+        env:
+          CYPRESS_INSTALL_BINARY: 0
+
+      - name: Service account
+        env:
+          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$SERVICE_ACCOUNT" ]; then
+            echo "::error::Repository secret FIREBASE_SERVICE_ACCOUNT is missing (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+          printf '%s' "$SERVICE_ACCOUNT" > "$RUNNER_TEMP/service-account.json"
+          node -e "const k=require(process.argv[1]); if(k.project_id!==process.env.FIREBASE_PROJECT){console.error('::error::Key is for project '+k.project_id+', expected '+process.env.FIREBASE_PROJECT);process.exit(1)} console.log('Key for', k.client_email)" "$RUNNER_TEMP/service-account.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/service-account.json" >> "$GITHUB_ENV"
+
+      # Never publish rules that fail their own tests
+      - name: Rules tests (emulator)
+        if: env.TASK == 'rules'
+        run: npm run test:rules
+
+      # Admin SDK instead of `firebase deploy`: the CLI first reads Service Usage to check the API is
+      # enabled, which the Firebase Admin SDK service account isn't granted
+      - name: Publish Firestore rules and indexes
+        if: env.TASK == 'rules'
+        run: |
+          npm install --no-save firebase-admin@13
+          node scripts/deploy-firestore.mjs
+
+      - name: Migration (dry run)
+        if: env.TASK == 'migrate'
+        run: |
+          npm install --no-save firebase-admin@13
+          node scripts/migrate-lead-contacts.mjs
+
+      - name: Migration (apply)
+        if: env.TASK == 'migrate'
+        run: node scripts/migrate-lead-contacts.mjs --apply
+
+      - name: Remove key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/service-account.json"

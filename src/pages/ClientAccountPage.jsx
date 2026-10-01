@@ -1,88 +1,21 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Heart, 
-  Scale, 
-  ShieldCheck, 
-  User, 
-  Mail, 
-  Phone, 
-  LogOut, 
-  Building, 
-  Sparkles, 
-  Share2, 
-  FileText, 
-  Trash2, 
-  ArrowLeft, 
-  ArrowRight, 
-  MapPin, 
-  ExternalLink, 
-  MessageSquare, 
-  CheckCircle2, 
-  Calendar, 
-  Clock, 
-  Car, 
-  Edit3, 
-  X, 
-  Search, 
-  HelpCircle,
-  TrendingUp,
-  Tag
-} from 'lucide-react';
+import { Heart, Scale, ShieldCheck, Mail, Phone, LogOut, Trash2, ArrowLeft, ArrowRight, MessageSquare, CheckCircle2, Calendar, Edit3, X } from 'lucide-react';
 import { useClientAuth } from '../context/ClientAuthContext';
 import PropertyCard from '../components/properties/PropertyCard';
 import { formatCurrencyPrice } from '../utils/currencyAndBenchmark';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
-import { generateComparePdf } from '../utils/comparePdfGenerator';
-import { normalizePhoneNumber } from '../utils/securityShield';
-import { getAreas, normalizeAreaKey } from '../utils/areasData';
 
-function getAreaDisplayName(areaKey, lang = 'ar') {
-  if (!areaKey) return lang === 'ar' ? 'سوهاج' : 'Sohag';
-  const normKey = normalizeAreaKey(areaKey);
-  const areas = getAreas();
-  const found = areas.find(a => a.id === normKey || a.id === areaKey);
-  if (found) {
-    return lang === 'ar' ? (found.name_ar || found.label_ar) : (found.name_en || found.label_en);
-  }
-  return areaKey;
-}
+import { normalizePhoneNumber } from '../utils/securityShield';
+
+import { readMyDemands } from '../utils/browserStorage';
+import AccountInquiriesTab from '../components/account/AccountInquiriesTab';
+import AccountCompareTab from '../components/account/AccountCompareTab';
+import { LEAD_TYPE_NAMES } from './ClientAccountPageData';
 
 /**
  * Lead Stages & Color Scheme
  */
-const STAGE_CONFIG = {
-  new: { ar: 'طلب جديد (قيد التعيين)', en: 'New Inquiry', color: '#0284c7', bg: 'rgba(2, 132, 199, 0.12)' },
-  contacted: { ar: 'تم التواصل الأولي', en: 'Contacted', color: '#7c3aed', bg: 'rgba(124, 58, 237, 0.12)' },
-  site_visit: { ar: 'معاينة مجدولة مؤكدة 🚗', en: 'Site Visit Scheduled', color: '#d97706', bg: 'rgba(217, 119, 6, 0.14)' },
-  negotiating: { ar: 'قيد التفاوض والتقييم', en: 'Negotiation', color: '#ea580c', bg: 'rgba(234, 88, 12, 0.14)' },
-  closing: { ar: 'إجراءات حجز وتعاقد', en: 'Closing / Deposit', color: '#059669', bg: 'rgba(5, 150, 105, 0.14)' },
-  closed: { ar: 'صفقة ناجحة ومكتملة 🎉', en: 'Completed', color: '#16a34a', bg: 'rgba(22, 163, 74, 0.14)' }
-};
-
-const PROPERTY_TYPE_NAMES = {
-  apartment: 'شقة سكنية',
-  retail: 'محل تجاري',
-  villa: 'فيلا / تاون هاوس',
-  office: 'مكتب إداري / عيادة',
-  land: 'قطعة أرض',
-  building: 'عمارة سكنية / تجارية',
-  clinic: 'عيادة طبية',
-  chalet: 'شاليه',
-  commercial: 'تجاري',
-  residential: 'سكني',
-  administrative: 'إداري'
-};
-
-const LEAD_TYPE_NAMES = {
-  buyer: 'شراء عقار',
-  seller: 'عرض عقار للبيع',
-  investor: 'استثمار عقاري VIP',
-  bespoke_request: 'طلب عقار خاص VIP',
-  financing: 'استفسار تمويل وتقسيط',
-  valuation: 'طلب تقييم عقاري',
-  client_account_verified: 'تفعيل حساب عميل'
-};
 
 /**
  * Fuzzy phone number comparison (handles +20, 010, spaces, and international formats)
@@ -151,14 +84,15 @@ export default function ClientAccountPage({
     return clientLeads.filter(lead => lead.siteVisit || lead.status === 'site_visit');
   }, [clientLeads]);
 
-  // Client's submitted demands
+  // Client's submitted demands: the ones sent from this device for this phone (the public list
+  // has no contact details), with their live status from the published list when available
   const clientDemands = useMemo(() => {
     if (!clientUser?.whatsapp && !clientUser?.phone) return [];
     const clientPhone = clientUser.whatsapp || clientUser.phone;
-    return (demands || []).filter(d => {
-      const dPhone = d.whatsapp || d.phone;
-      return phonesMatch(dPhone, clientPhone);
-    });
+    const liveById = new Map((demands || []).map((d) => [String(d.id), d]));
+    return readMyDemands()
+      .filter((d) => phonesMatch(d.whatsapp || d.phone, clientPhone))
+      .map((d) => ({ ...d, ...(liveById.get(String(d.id)) || {}) }));
   }, [demands, clientUser]);
 
   // Aggregate stats
@@ -500,417 +434,31 @@ export default function ClientAccountPage({
 
         {/* Tab 2: Compare Properties View */}
         {activeTab === 'compare' && (
-          <div className="account-tab-content">
-            {compareList.length > 0 ? (
-              <div>
-                {/* Compare Control Header */}
-                <div className="account-actions-bar">
-                  <div className="actions-info">
-                    <strong>{compareList.length}</strong> {isAr ? 'من أصل 4 عقارات مضافة للمقارنة' : 'of 4 properties in comparison'}
-                  </div>
-                  <div className="actions-btns-group">
-                    {onOpenCompare && (
-                      <button 
-                        type="button" 
-                        onClick={onOpenCompare}
-                        className="btn-account-action btn-open-compare"
-                      >
-                        <Scale size={15} />
-                        <span>{isAr ? 'فتح المقارنة الشاملة 4-Way' : 'Open 4-Way Compare'}</span>
-                      </button>
-                    )}
-                    <button 
-                      type="button" 
-                      onClick={() => generateComparePdf(compareList, lang)}
-                      className="btn-account-action btn-pdf-export"
-                    >
-                      <FileText size={15} />
-                      <span>{isAr ? 'تصدير تقرير المقارنة (PDF)' : 'Export PDF'}</span>
-                    </button>
-                    {onClearCompare && (
-                      <button 
-                        type="button" 
-                        onClick={onClearCompare} 
-                        className="btn-account-action btn-clear"
-                      >
-                        <Trash2 size={14} />
-                        <span>{isAr ? 'تفريغ' : 'Clear'}</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Compared Cards Grid */}
-                <div className="properties-grid-4">
-                  {compareList.map((prop) => (
-                    <PropertyCard
-                      key={prop.id}
-                      property={prop}
-                      lang={lang}
-                      currency={currency}
-                      isFavorite={favorites.includes(prop.id)}
-                      onToggleFavorite={onToggleFavorite}
-                      isCompared={true}
-                      onToggleCompare={onToggleCompare}
-                    />
-                  ))}
-                </div>
-
-                {/* Side-by-Side Quick Comparison Table */}
-                <div className="account-compare-table-wrap">
-                  <h3 className="compare-table-title">
-                    <Scale size={17} className="text-gold" />
-                    <span>{isAr ? 'جدول المقارنة الفنية والمالية السريعة' : 'Technical & Financial Quick Table'}</span>
-                  </h3>
-                  <div className="compare-table-scroll">
-                    <table className="account-quick-table">
-                      <thead>
-                        <tr>
-                          <th>{isAr ? 'المعيار / العقار' : 'Metric'}</th>
-                          {compareList.map(prop => (
-                            <th key={prop.id}>
-                              <Link to={`/properties/${prop.id}`} className="table-prop-link">
-                                {isAr ? prop.title_ar : prop.title_en}
-                              </Link>
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td className="row-label">{isAr ? 'السعر الإجمالي' : 'Total Price'}</td>
-                          {compareList.map(prop => (
-                            <td key={prop.id} className="row-val price-highlight">
-                              <strong>{Number(prop.price).toLocaleString()}</strong> {isAr ? 'ج.م' : 'EGP'}
-                            </td>
-                          ))}
-                        </tr>
-                        <tr>
-                          <td className="row-label">{isAr ? 'المساحة الصافية' : 'Area (Sqm)'}</td>
-                          {compareList.map(prop => (
-                            <td key={prop.id} className="row-val">
-                              {prop.size} {isAr ? 'م²' : 'sqm'}
-                            </td>
-                          ))}
-                        </tr>
-                        <tr>
-                          <td className="row-label">{isAr ? 'سعر المتر' : 'Price / Sqm'}</td>
-                          {compareList.map(prop => (
-                            <td key={prop.id} className="row-val">
-                              {prop.pricePerMeter ? `${Number(prop.pricePerMeter).toLocaleString()} ج.م/م²` : '—'}
-                            </td>
-                          ))}
-                        </tr>
-                        <tr>
-                          <td className="row-label">{isAr ? 'المقدم' : 'Down Payment'}</td>
-                          {compareList.map(prop => (
-                            <td key={prop.id} className="row-val">
-                              {prop.downPayment > 0 ? `${Number(prop.downPayment).toLocaleString()} ج.م` : (isAr ? 'كاش كامل' : 'Full Cash')}
-                            </td>
-                          ))}
-                        </tr>
-                        <tr>
-                          <td className="row-label">{isAr ? 'القسط الشهري' : 'Monthly Installment'}</td>
-                          {compareList.map(prop => (
-                            <td key={prop.id} className="row-val">
-                              {prop.monthlyInstallment > 0 ? `${Number(prop.monthlyInstallment).toLocaleString()} ج.م` : '—'}
-                            </td>
-                          ))}
-                        </tr>
-                        <tr>
-                          <td className="row-label">{isAr ? 'الموقف القانوني' : 'Legal Status'}</td>
-                          {compareList.map(prop => (
-                            <td key={prop.id} className="row-val">
-                              <span className="legal-check-pill">
-                                <ShieldCheck size={13} className="text-emerald" />
-                                <span>{isAr ? 'مرخص ومعتمد رسمياً' : 'Licensed'}</span>
-                              </span>
-                            </td>
-                          ))}
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="account-empty-state">
-                <div className="empty-state-icon">
-                  <Scale size={36} className="text-muted" />
-                </div>
-                <h3>{isAr ? 'لم تقم بإضافة عقارات للمقارنة بعد' : 'No properties in comparison'}</h3>
-                <p>
-                  {isAr 
-                    ? 'اضغط على علامة الميزان في أي بطاقة عقار لإضافتها للمقارنة والاطلاع على الفروقات المالية والفنية.'
-                    : 'Tap the compare icon on any property to compare specifications.'}
-                </p>
-                <Link to="/properties" className="btn-browse-properties">
-                  <span>{isAr ? 'استعراض العقارات للمقارنة ⚖️' : 'Browse & Compare'}</span>
-                </Link>
-              </div>
-            )}
-          </div>
+          <AccountCompareTab
+            compareList={compareList}
+            currency={currency}
+            favorites={favorites}
+            isAr={isAr}
+            lang={lang}
+            onClearCompare={onClearCompare}
+            onOpenCompare={onOpenCompare}
+            onToggleCompare={onToggleCompare}
+            onToggleFavorite={onToggleFavorite}
+          />
         )}
 
         {/* Tab 3: My Inquiries, Site Visits & Demands View */}
         {activeTab === 'inquiries' && (
-          <div className="account-tab-content inquiries-tab-view">
-            {/* Section 1: Scheduled Site Visits */}
-            <div className="inquiries-section">
-              <div className="section-head">
-                <div className="section-title-wrap">
-                  <Car size={20} className="text-gold" />
-                  <div>
-                    <h3>{isAr ? 'المعاينات الميدانية المجدولة (VIP Site Visits)' : 'Scheduled VIP Site Visits'}</h3>
-                    <p>{isAr ? 'جولات المعاينة الميدانية المنظمة مع مستشارك العقاري وسيارات النقل المخصصة' : 'Your on-site property tours with 1Line advisors and private transport'}</p>
-                  </div>
-                </div>
-                <span className="section-count-badge">{clientSiteVisits.length}</span>
-              </div>
-
-              {clientSiteVisits.length > 0 ? (
-                <div className="site-visits-cards-grid">
-                  {clientSiteVisits.map((lead) => {
-                    const visit = lead.siteVisit || {};
-                    const targetProp = properties.find(p => p.id === (visit.propertyId || lead.targetPropertyId));
-                    return (
-                      <div key={lead.id} className="client-visit-card">
-                        <div className="visit-card-header">
-                          <span className="visit-status-badge">
-                            <Clock size={13} />
-                            <span>{isAr ? 'معاينة مجدولة ومؤكدة' : 'Confirmed Visit'}</span>
-                          </span>
-                          <span className="visit-code">#{lead.id}</span>
-                        </div>
-
-                        <div className="visit-card-body">
-                          {targetProp && (
-                            <div className="visit-prop-preview">
-                              <Building size={16} className="text-gold" />
-                              <Link to={`/properties/${targetProp.id}`} className="visit-prop-title">
-                                {isAr ? targetProp.title_ar : targetProp.title_en}
-                              </Link>
-                            </div>
-                          )}
-
-                          <div className="visit-details-row">
-                            <div className="visit-detail-item">
-                              <Calendar size={14} className="text-emerald" />
-                              <span>{visit.date || (isAr ? 'قيد التحديد' : 'TBD')}</span>
-                            </div>
-                            {visit.time && (
-                              <div className="visit-detail-item">
-                                <Clock size={14} className="text-emerald" />
-                                <span>{visit.time}</span>
-                              </div>
-                            )}
-                            <div className="visit-detail-item">
-                              <MapPin size={14} className="text-muted" />
-                              <span>{getAreaDisplayName(lead.area || targetProp?.area || 'new_sohag', lang)}</span>
-                            </div>
-                          </div>
-
-                          {visit.notes && (
-                            <div className="visit-notes-box">
-                              <p>💡 {visit.notes}</p>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="visit-card-footer">
-                          <button
-                            type="button"
-                            className="btn-visit-whatsapp"
-                            onClick={() => handleSiteVisitWhatsApp(lead)}
-                          >
-                            <MessageSquare size={14} />
-                            <span>{isAr ? 'تأكيد الموعد عبر واتساب' : 'Confirm via WhatsApp'}</span>
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="empty-sub-section">
-                  <p>
-                    {isAr 
-                      ? 'ليس لديك معاينات ميدانية مجدولة حالياً. يمكنك طلب معاينة مجانية لأي عقار من بطاقته أو بالتواصل المباشر مع مستشارك.' 
-                      : 'No scheduled site visits yet. You can request a free on-site tour from any property card.'}
-                  </p>
-                  <Link to="/properties" className="btn-book-visit-cta">
-                    <Car size={15} />
-                    <span>{isAr ? 'استعراض العقارات وحجز معاينة مجانية' : 'Browse & Book Free Tour'}</span>
-                  </Link>
-                </div>
-              )}
-            </div>
-
-            {/* Section 2: General Inquiries & Consultations */}
-            <div className="inquiries-section">
-              <div className="section-head">
-                <div className="section-title-wrap">
-                  <FileText size={20} className="text-gold" />
-                  <div>
-                    <h3>{isAr ? 'استشاراتي وطلباتي العقارية المسجلة' : 'My Inquiries & Consultations'}</h3>
-                    <p>{isAr ? 'تتبع مسار طلبك ومرحلته في خط سير مستشاري 1Line بسوهاج' : 'Live tracking of your inquiries within 1Line CRM pipeline'}</p>
-                  </div>
-                </div>
-                <span className="section-count-badge">{clientLeads.length}</span>
-              </div>
-
-              {clientLeads.length > 0 ? (
-                <div className="client-inquiries-table-wrap">
-                  <div className="client-inquiries-grid">
-                    {clientLeads.map((lead) => {
-                      const stage = STAGE_CONFIG[lead.status] || STAGE_CONFIG.new;
-                      const typeLabel = LEAD_TYPE_NAMES[lead.type] || lead.type || (isAr ? 'استشارة' : 'Inquiry');
-                      const areaName = getAreaDisplayName(lead.area || 'new_sohag', lang);
-                      const propTypeLabel = PROPERTY_TYPE_NAMES[lead.propertyType] || lead.propertyType || '';
-
-                      return (
-                        <div key={lead.id} className="client-lead-card">
-                          <div className="lead-card-top">
-                            <div className="lead-type-tag">
-                              <Sparkles size={13} className="text-gold" />
-                              <span>{typeLabel}</span>
-                            </div>
-                            <span 
-                              className="lead-stage-pill"
-                              style={{ color: stage.color, background: stage.bg }}
-                            >
-                              {isAr ? stage.ar : stage.en}
-                            </span>
-                          </div>
-
-                          <div className="lead-card-body">
-                            <div className="lead-info-row">
-                              <span className="lead-info-label">{isAr ? 'المنطقة:' : 'Area:'}</span>
-                              <span className="lead-info-val"><MapPin size={12} /> {areaName}</span>
-                            </div>
-
-                            {propTypeLabel && (
-                              <div className="lead-info-row">
-                                <span className="lead-info-label">{isAr ? 'نوع العقار:' : 'Type:'}</span>
-                                <span className="lead-info-val"><Building size={12} /> {propTypeLabel}</span>
-                              </div>
-                            )}
-
-                            {lead.budget && (
-                              <div className="lead-info-row">
-                                <span className="lead-info-label">{isAr ? 'الميزانية المستهدفة:' : 'Budget:'}</span>
-                                <span className="lead-info-val text-gold">{lead.budget} {isAr ? 'ج.م' : 'EGP'}</span>
-                              </div>
-                            )}
-
-                            <div className="lead-info-row">
-                              <span className="lead-info-label">{isAr ? 'تاريخ التسجيل:' : 'Date:'}</span>
-                              <span className="lead-info-val text-muted">
-                                {lead.createdAt || lead.timestamp 
-                                  ? new Date(lead.createdAt || lead.timestamp).toLocaleDateString(isAr ? 'ar-EG' : 'en-US') 
-                                  : (isAr ? 'مؤخراً' : 'Recent')}
-                              </span>
-                            </div>
-
-                            {lead.notes && (
-                              <div className="lead-notes-snippet">
-                                <p>{lead.notes}</p>
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="lead-card-footer">
-                            <button
-                              type="button"
-                              className="btn-lead-action btn-wa"
-                              onClick={() => handleInquiryWhatsApp(lead)}
-                            >
-                              <MessageSquare size={13} />
-                              <span>{isAr ? 'متابعة مع المستشار' : 'Follow up on WhatsApp'}</span>
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : (
-                <div className="empty-sub-section">
-                  <p>
-                    {isAr 
-                      ? 'لا توجد طلبات استشارة مسجلة برقم هاتفك بعد. يمكنك تقديم طلب عقار خاص أو حجز استشارة مجانية مع مستشارينا.' 
-                      : 'No recorded inquiries found for your phone number yet.'}
-                  </p>
-                  <Link to="/special-requests" className="btn-book-visit-cta">
-                    <Sparkles size={15} />
-                    <span>{isAr ? 'تقديم طلب عقار خاص VIP' : 'Submit Bespoke Request'}</span>
-                  </Link>
-                </div>
-              )}
-            </div>
-
-            {/* Section 3: Submitted Demands */}
-            <div className="inquiries-section">
-              <div className="section-head">
-                <div className="section-title-wrap">
-                  <Tag size={20} className="text-gold" />
-                  <div>
-                    <h3>{isAr ? 'طلبات الشراء المعلنة بسوق العقارات (Demands)' : 'My Published Demands'}</h3>
-                    <p>{isAr ? 'طلباتك المعروضة على شبكة وسطاء وملاك سوهاج لاستقبال العروض المباشرة' : 'Your demands posted to the public brokers network'}</p>
-                  </div>
-                </div>
-                <span className="section-count-badge">{clientDemands.length}</span>
-              </div>
-
-              {clientDemands.length > 0 ? (
-                <div className="client-demands-grid">
-                  {clientDemands.map((demand) => (
-                    <div key={demand.id} className="client-demand-card">
-                      <div className="demand-card-header">
-                        <h4>{isAr ? demand.title_ar || demand.title : demand.title_en || demand.title}</h4>
-                        <span className={`demand-status-badge ${demand.status === 'published' ? 'published' : 'pending'}`}>
-                          {demand.status === 'published' 
-                            ? (isAr ? 'معتمد ومنشور ✅' : 'Published') 
-                            : (isAr ? 'قيد المراجعة الإدارية ⏳' : 'Pending Review')}
-                        </span>
-                      </div>
-
-                      <div className="demand-card-details">
-                        <div className="demand-detail-item">
-                          <MapPin size={13} className="text-muted" />
-                          <span>{getAreaDisplayName(demand.area, lang)}</span>
-                        </div>
-                        {demand.budgetMax && (
-                          <div className="demand-detail-item">
-                            <span className="text-gold font-bold">{Number(demand.budgetMax).toLocaleString()} {isAr ? 'ج.م كحد أقصى' : 'EGP max'}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="demand-card-footer">
-                        <Link to="/demands" className="btn-view-demand">
-                          <ExternalLink size={13} />
-                          <span>{isAr ? 'عرض في لوحة طلبات السوق' : 'View in Demands Board'}</span>
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="empty-sub-section">
-                  <p>
-                    {isAr 
-                      ? 'هل تبحث عن مواصفات عقارية معينة ولا تجدها؟ انشر طلبك في بورصة طلبات سوهاج وسيقوم الوسطاء المعتمدون بعرض وحداتهم عليك.' 
-                      : 'Looking for a specific property? Publish your demand on the Sohag real estate exchange board.'}
-                  </p>
-                  <Link to="/demands" className="btn-book-visit-cta">
-                    <Tag size={15} />
-                    <span>{isAr ? 'نشر طلب شراء جديد' : 'Publish Buyer Demand'}</span>
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
+          <AccountInquiriesTab
+            clientDemands={clientDemands}
+            clientLeads={clientLeads}
+            clientSiteVisits={clientSiteVisits}
+            handleInquiryWhatsApp={handleInquiryWhatsApp}
+            handleSiteVisitWhatsApp={handleSiteVisitWhatsApp}
+            isAr={isAr}
+            lang={lang}
+            properties={properties}
+          />
         )}
       </div>
 

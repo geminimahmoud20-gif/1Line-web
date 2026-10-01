@@ -1,14 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { 
-  Building2, 
-  Store, 
-  Briefcase, 
-  Video, 
-  PhoneCall, 
-  Download,
-  Sparkles,
-  Loader2
-} from 'lucide-react';
+import { Building2, Store, Briefcase, Video, PhoneCall, Download, Sparkles } from 'lucide-react';
 import PhoneInputField from './PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { getAreas } from '../utils/areasData';

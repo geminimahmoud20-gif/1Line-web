@@ -1,18 +1,5 @@
 import { useState } from 'react';
-import { 
-  X, 
-  FileText, 
-  Download, 
-  Send, 
-  CheckCircle2, 
-  Building2, 
-  User, 
-  DollarSign, 
-  Sparkles,
-  ShieldCheck,
-  Calendar,
-  Loader2
-} from 'lucide-react';
+import { X, FileText, Download, Send, Building2, User, Loader2 } from 'lucide-react';
 import { trackEvent } from '../../utils/visitorTracker';
 
 /**
@@ -146,7 +133,7 @@ export default function ContractStudioModal({
         {/* Modal Header */}
         <div className="deposit-modal-header">
           <div className="deposit-icon-glow" style={{ background: 'var(--gradient-gold)' }}>
-            <FileText size={24} style={{ color: '#092347' }} />
+            <FileText size={24} style={{ color: 'var(--crm-ink)' }} />
           </div>
           <div>
             <h3>{isAr ? 'استوديو إصدار عقود الحجز والاتفاقيات الرسمية' : 'Official Reservation Contract Studio'}</h3>
@@ -162,7 +149,7 @@ export default function ContractStudioModal({
               <select 
                 value={selectedLeadId} 
                 onChange={handleLeadSelect}
-                style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', background: 'var(--crm-card)' }}
+                style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)', background: 'var(--crm-card)' }}
               >
                 <option value="">{isAr ? '-- اختر عميل من الـ CRM --' : '-- Choose from CRM --'}</option>
                 {leads.map((l) => (
@@ -176,7 +163,7 @@ export default function ContractStudioModal({
               <select 
                 value={selectedPropertyId} 
                 onChange={handlePropertySelect}
-                style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', background: 'var(--crm-card)' }}
+                style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)', background: 'var(--crm-card)' }}
               >
                 <option value="">{isAr ? '-- اختر عقار من الكتالوج --' : '-- Choose Property --'}</option>
                 {properties.map((p) => (
@@ -189,8 +176,8 @@ export default function ContractStudioModal({
           {/* Detailed Form */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {/* Buyer Details */}
-            <div style={{ background: 'var(--crm-subtle)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-              <strong style={{ fontSize: 'var(--crm-text-sm)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: 'var(--primary)' }}>
+            <div style={{ background: 'var(--crm-subtle)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}>
+              <strong style={{ fontSize: 'var(--crm-text-sm)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: 'var(--crm-ink)' }}>
                 <User size={14} />
                 <span>{isAr ? 'بيانات المشتري والحاجز' : 'Buyer Information'}</span>
               </strong>
@@ -201,7 +188,7 @@ export default function ContractStudioModal({
                   placeholder={isAr ? 'اسم العميل بالكامل' : 'Full Name'}
                   value={formData.buyerName}
                   onChange={(e) => setFormData({ ...formData, buyerName: e.target.value })}
-                  style={{ padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}
+                  style={{ padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}
                 />
 
                 <input
@@ -209,7 +196,7 @@ export default function ContractStudioModal({
                   placeholder={isAr ? 'رقم الهاتف / الواتساب' : 'Phone'}
                   value={formData.buyerPhone}
                   onChange={(e) => setFormData({ ...formData, buyerPhone: e.target.value })}
-                  style={{ padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}
+                  style={{ padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}
                 />
 
                 <input
@@ -217,7 +204,7 @@ export default function ContractStudioModal({
                   placeholder={isAr ? 'الرقم القومي (14 رقم)' : 'National ID'}
                   value={formData.buyerNationalId}
                   onChange={(e) => setFormData({ ...formData, buyerNationalId: e.target.value })}
-                  style={{ padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}
+                  style={{ padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}
                 />
 
                 <input
@@ -225,14 +212,14 @@ export default function ContractStudioModal({
                   placeholder={isAr ? 'محل الإقامة / العنوان' : 'Address'}
                   value={formData.buyerAddress}
                   onChange={(e) => setFormData({ ...formData, buyerAddress: e.target.value })}
-                  style={{ padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}
+                  style={{ padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}
                 />
               </div>
             </div>
 
             {/* Property & Financial Details */}
-            <div style={{ background: 'var(--crm-subtle)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-              <strong style={{ fontSize: 'var(--crm-text-sm)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: 'var(--primary)' }}>
+            <div style={{ background: 'var(--crm-subtle)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}>
+              <strong style={{ fontSize: 'var(--crm-text-sm)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: 'var(--crm-ink)' }}>
                 <Building2 size={14} />
                 <span>{isAr ? 'بيانات الوحدة والماليات' : 'Property & Pricing'}</span>
               </strong>
@@ -243,7 +230,7 @@ export default function ContractStudioModal({
                   placeholder={isAr ? 'اسم ومواصفات الوحدة' : 'Property Title'}
                   value={formData.propertyTitle}
                   onChange={(e) => setFormData({ ...formData, propertyTitle: e.target.value })}
-                  style={{ padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}
+                  style={{ padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}
                 />
 
                 <input
@@ -251,37 +238,37 @@ export default function ContractStudioModal({
                   placeholder={isAr ? 'المنطقة والمدينة' : 'Location'}
                   value={formData.propertyLocation}
                   onChange={(e) => setFormData({ ...formData, propertyLocation: e.target.value })}
-                  style={{ padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}
+                  style={{ padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}
                 />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
                 <div>
-                  <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-muted)' }}>{isAr ? 'إجمالي الثمن (ج.م)' : 'Total Price'}</label>
+                  <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{isAr ? 'إجمالي الثمن (ج.م)' : 'Total Price'}</label>
                   <input
                     type="number"
                     value={formData.propertyPrice}
                     onChange={(e) => setFormData({ ...formData, propertyPrice: parseInt(e.target.value) || 0 })}
-                    style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}
+                    style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-muted)' }}>{isAr ? 'مبلغ جدية الحجز (ج.م)' : 'Deposit (EGP)'}</label>
+                  <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{isAr ? 'مبلغ جدية الحجز (ج.م)' : 'Deposit (EGP)'}</label>
                   <input
                     type="number"
                     value={formData.depositAmount}
                     onChange={(e) => setFormData({ ...formData, depositAmount: parseInt(e.target.value) || 0 })}
-                    style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}
+                    style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--text-muted)' }}>{isAr ? 'طريقة الدفع' : 'Payment Method'}</label>
+                  <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{isAr ? 'طريقة الدفع' : 'Payment Method'}</label>
                   <select
                     value={formData.paymentMethod}
                     onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
-                    style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', background: 'var(--crm-card)' }}
+                    style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)', background: 'var(--crm-card)' }}
                   >
                     <option value="InstaPay (إنستاباي)">InstaPay (إنستاباي)</option>
                     <option value="Vodafone Cash (فودافون كاش)">Vodafone Cash (فودافون كاش)</option>
@@ -320,7 +307,7 @@ export default function ContractStudioModal({
               target="_blank"
               rel="noopener noreferrer"
               className="btn"
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'var(--emerald)', color: '#fff' }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'var(--crm-positive-solid)', color: 'var(--crm-on-dark)' }}
             >
               <Send size={15} />
               <span>{isAr ? 'إرسال بيانات العقد واتساب' : 'Send on WhatsApp'}</span>
