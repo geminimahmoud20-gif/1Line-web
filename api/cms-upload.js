@@ -15,7 +15,7 @@ const firebaseKeys = createRemoteJWKSet(
   new URL('https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com')
 );
 
-// Keep in step with CMS_MEDIA_LIMITS in src/firebaseService.js
+// Keep in step with CMS_MEDIA_LIMITS in src/services/cmsMedia.js
 const LIMITS = {
   video: { maxBytes: 60 * 1024 * 1024, types: ['video/mp4', 'video/webm', 'video/quicktime'] },
   image: { maxBytes: 5 * 1024 * 1024, types: ['image/jpeg', 'image/png', 'image/webp'] }
@@ -34,7 +34,7 @@ const uploadMode = () => {
   return null;
 };
 
-// Same tests as firestore.rules isAdmin() / isInventoryEditor() and ADMIN_USER_IDS in src/firebaseService.js
+// Same tests as firestore.rules isAdmin() / isInventoryEditor() and ADMIN_USER_IDS in src/services/auth.js
 const ADMIN_USER_IDS = new Set(['dB6GM2RoPQRE0iksDnqcdvUKgXy2']);
 const INVENTORY_ROLES = ['sales_manager', 'property_manager'];
 

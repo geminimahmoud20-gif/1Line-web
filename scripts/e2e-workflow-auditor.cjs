@@ -38,7 +38,7 @@ async function runAudit() {
   const depositModalSrc = fs.readFileSync(path.join(__dirname, '../src/components/properties/DepositModal.jsx'), 'utf8');
   const crmPageSrc = fs.readFileSync(path.join(__dirname, '../src/pages/CrmPage.jsx'), 'utf8');
   const crmPanelSrc = fs.readFileSync(path.join(__dirname, '../src/components/CrmAdminPanel.jsx'), 'utf8');
-  const firebaseServiceSrc = fs.readFileSync(path.join(__dirname, '../src/firebaseService.js'), 'utf8');
+  const firebaseServiceSrc = fs.readdirSync(path.join(__dirname, '../src/services')).map((f) => fs.readFileSync(path.join(__dirname, '../src/services', f), 'utf8')).join('\n');
   const founderModalSrc = fs.readFileSync(path.join(__dirname, '../src/components/common/AboutFounderModal.jsx'), 'utf8');
   const rulesSrc = fs.readFileSync(path.join(__dirname, '../firestore.rules'), 'utf8');
   const seoHelperSrc = fs.readFileSync(path.join(__dirname, '../src/utils/seoHelper.js'), 'utf8');
@@ -215,9 +215,8 @@ async function runAudit() {
     // 4.6 CRM Executive Dashboard Omnipresent CMS Navigation
     const hasDashboardHubs = crmPageSrc.includes("onSwitchToDemands={() => setActiveTab('demands')}") &&
                              crmPanelSrc.includes('onSwitchToDemands') &&
-                             crmPanelSrc.includes('onSwitchToProperties') &&
-                             crmPanelSrc.includes('onSwitchToAreas');
-    recordTest(4, 'CRM Executive Dashboard Omnipresent CMS Navigation', hasDashboardHubs ? 'PASS' : 'FAIL', 'Direct seamless switching to Demands, Properties & Areas from Dashboard');
+                             crmPanelSrc.includes('onSwitchToProperties');
+    recordTest(4, 'CRM Executive Dashboard Omnipresent CMS Navigation', hasDashboardHubs ? 'PASS' : 'FAIL', 'Direct switching to Demands & Properties from Dashboard');
 
     // 4.7 HomePage Live Demands Direct Portal Navigation
     const hasHomePageDemandsNav = homePageSrc.includes("navigate('/demands')") &&

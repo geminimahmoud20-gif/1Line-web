@@ -20,7 +20,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
-// Keep in sync with CRM_STAFF_ROLES in src/firebaseService.js and firestore.rules
+// Keep in sync with CRM_STAFF_ROLES in src/services/auth.js and firestore.rules
 const ROLES = {
   super_admin: 'المدير العام — كل الصلاحيات',
   sales_manager: 'مدير المبيعات — العملاء والطلبات والعقارات',

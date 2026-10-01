@@ -258,13 +258,13 @@ runTest('Persistence & Collision', 'فحص التخزين المحلي (LocalSto
   const parsed = JSON.parse(validJson);
   assert.strictEqual(parsed.length, 1);
 
-  // Corrupted JSON recovery check in App.jsx
-  const appCode = fs.readFileSync(path.join(__dirname, '../src/App.jsx'), 'utf-8');
-  assert.ok(appCode.includes('readStoredJson') || appCode.includes('JSON.parse'), 'حماية كود App.jsx من تلف الـ JSON');
+  // Corrupted JSON recovery: stored lists are read through readStoredJson (src/utils/browserStorage.js)
+  const ctxCode = fs.readFileSync(path.join(__dirname, '../src/context/PropertiesContext.jsx'), 'utf-8');
+  assert.ok(ctxCode.includes('readStoredJson'), 'حماية البيانات المحفوظة من تلف الـ JSON');
 });
 
 runTest('Persistence & Collision', 'فحص مزامنة Firebase Firestore: توفر دوال الحفظ والاستدعاء والتعديل والحذف', () => {
-  const fbCode = fs.readFileSync(path.join(__dirname, '../src/firebaseService.js'), 'utf-8');
+  const fbCode = fs.readdirSync(path.join(__dirname, '../src/services')).map((f) => fs.readFileSync(path.join(__dirname, '../src/services', f), 'utf-8')).join('\n');
   assert.ok(fbCode.includes('export const saveDemand ='), 'دالة saveDemand موجودة');
   assert.ok(fbCode.includes('export const loadDemands ='), 'دالة loadDemands موجودة');
   assert.ok(fbCode.includes('export const updateDemandStatus ='), 'دالة updateDemandStatus موجودة');

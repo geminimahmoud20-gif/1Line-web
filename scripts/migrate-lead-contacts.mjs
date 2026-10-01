@@ -19,7 +19,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-// Keep in sync with LEAD_CONTACT_FIELDS in src/firebaseService.js and contactFields() in firestore.rules
+// Keep in sync with LEAD_CONTACT_FIELDS in src/services/leads.js and contactFields() in firestore.rules
 const CONTACT_FIELDS = ['phone', 'whatsapp', 'email', 'altPhone'];
 const apply = process.argv.includes('--apply');
 
@@ -48,7 +48,7 @@ const flush = async () => {
   inBatch = 0;
 };
 
-// Keep in sync with REQUEST_CONTACT_FIELDS in src/firebaseService.js
+// Keep in sync with REQUEST_CONTACT_FIELDS in src/services/requestContacts.js
 const REQUEST_FIELDS = ['phone', 'whatsapp', 'email'];
 const JOBS = [
   { coll: 'leads', fields: CONTACT_FIELDS, target: (id, data) => [db.collection('lead_contacts').doc(id), { assignedTo: data.assignedTo || 'Unassigned' }] },

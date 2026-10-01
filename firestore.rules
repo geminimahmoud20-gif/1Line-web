@@ -4,7 +4,7 @@ service cloud.firestore {
 
     // ── Roles ───────────────────────────────────────────────────────────────
     // Staff roles are Firebase custom claims ({ role: '<id>' }) set only server-side by
-    // scripts/set-crm-role.mjs. Keep this list in sync with CRM_STAFF_ROLES in src/firebaseService.js.
+    // scripts/set-crm-role.mjs. Keep this list in sync with CRM_STAFF_ROLES in src/services/auth.js.
     function role() {
       return request.auth == null ? '' : request.auth.token.get('role', '');
     }
@@ -48,7 +48,7 @@ service cloud.firestore {
     }
 
     // Client contact fields live in lead_contacts/{leadId}, readable only by managers and the
-    // lead's desk. Keep in sync with LEAD_CONTACT_FIELDS in src/firebaseService.js.
+    // lead's desk. Keep in sync with LEAD_CONTACT_FIELDS in src/services/leads.js.
     function contactFields() {
       return ['phone', 'whatsapp', 'email', 'altPhone'];
     }
@@ -160,7 +160,7 @@ service cloud.firestore {
     }
 
     // 📋 2b. PUBLISHED DEMANDS — contact-free copies the site shows. Written by editors when they
-    // publish/unpublish (syncPublicDemand in src/firebaseService.js; same field list there).
+    // publish/unpublish (syncPublicDemand in src/services/demands.js; same field list there).
     match /public_demands/{demandId} {
       allow read: if true;
       allow create, update: if isInventoryEditor()

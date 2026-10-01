@@ -275,9 +275,9 @@ test('ملف PropertyDetailPage.jsx لا يحتوي على استدعاء useMem
   assert.ok(similarPropIdx < earlyReturnIdx, 'similarProperties hook is declared BEFORE early return');
 });
 
-test('ملف MarketIntelligencePage.jsx يعلن متغير tick بشكل سليم في useState', () => {
+test('ملف MarketIntelligencePage.jsx يحدّث بيانات المناطق فور تعديلها من الـ CRM', () => {
   const code = fs.readFileSync('src/pages/MarketIntelligencePage.jsx', 'utf8');
-  assert.ok(code.includes('const [tick, setTick] = useState(0);'), 'tick state is properly declared');
+  assert.ok(code.includes('const [areas, setAreas] = useState(getAreas);') && code.includes("addEventListener('oneline_areas_updated'"), 'areas state refreshes on oneline_areas_updated');
 });
 
 // -----------------------------------------------------------------------------
