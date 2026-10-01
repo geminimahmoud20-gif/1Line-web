@@ -261,9 +261,10 @@ async function runAudit() {
     recordTest(6, 'Google Schema.org Organization JSON-LD', hasOrgSchema ? 'PASS' : 'FAIL', 'Injected into <head> on HomePage');
     recordTest(6, 'Google Schema.org RealEstateListing JSON-LD', hasPropSchema ? 'PASS' : 'FAIL', 'Injected into <head> on Property Detail');
 
-    // 6.2 Firestore Rules: Public Demands Read (Hardened to published status or legacy)
-    const demandsReadRule = /match\s+\/demands\/\{demandId\}\s*\{[^}]*allow\s+read:\s*if\s+(\([^}]*status\s*==\s*['"]published['"]|true;)/s.test(rulesSrc);
-    recordTest(6, 'Firestore Rules: Public Demands Read', demandsReadRule ? 'PASS' : 'FAIL', 'Public visitors can read approved demands');
+    // 6.2 Firestore Rules: visitors read contact-free public_demands; demands (with phones) stay staff-only
+    const publicDemandsRead = /match\s+\/public_demands\/\{demandId\}\s*\{[^}]*allow\s+read:\s*if\s+true;/s.test(rulesSrc)
+      && /match\s+\/demands\/\{demandId\}\s*\{[^}]*allow\s+read:\s*if\s+isStaff\(\);/s.test(rulesSrc);
+    recordTest(6, 'Firestore Rules: Public Demands Read', publicDemandsRead ? 'PASS' : 'FAIL', 'Visitors read public_demands; buyer contacts stay staff-only');
 
     // 6.3 Firestore Rules: Demands Write Protection
     const demandsWriteRule = /allow\s+update,\s*delete:\s*if\s+isAdmin\(\);/.test(rulesSrc);
@@ -272,7 +273,7 @@ async function runAudit() {
     // 6.4 Firestore Rules: Leads Privacy (Hardened)
     // Staff-role model: reads gated by isStaff() (claim-checked), never public
   const leadsBlock = (rulesSrc.match(/match\s+\/leads\/\{leadId\}\s*\{[^}]*\}/s) || [''])[0];
-  const leadsPrivateRule = /allow\s+read(,\s*update,\s*delete)?:\s*if\s+(request\.auth\s*!=\s*null|isAdmin\(\)|isStaff\(\))/.test(leadsBlock)
+  const leadsPrivateRule = /allow\s+read(,\s*update,\s*delete)?:\s*if\s+(request\.auth\s*!=\s*null|isAdmin\(\)|isStaff\(\)|hasRole\()/.test(leadsBlock)
     && !/allow\s+(read|update|delete)[^;]*:\s*if\s+true/.test(leadsBlock);
     recordTest(6, 'Firestore Rules: Leads Privacy Guard', leadsPrivateRule ? 'PASS' : 'FAIL', 'Unauthenticated visitors are forbidden from reading leads');
 

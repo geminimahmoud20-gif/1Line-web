@@ -33,3 +33,9 @@ service-account*.json
 1Line/
 1Line Solutions/
 ERP/
+
+# Generated test output — reproduce locally, don't commit
+audit-results.json
+build_output.txt
+cypress/videos/
+cypress/screenshots/

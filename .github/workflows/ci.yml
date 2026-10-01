@@ -60,6 +60,8 @@ jobs:
           java-version: 21
 
       - run: npm ci
+        env:
+          CYPRESS_INSTALL_BINARY: 0  # this job runs no browser tests
 
       - name: Firestore rules tests
         run: npm run test:rules
