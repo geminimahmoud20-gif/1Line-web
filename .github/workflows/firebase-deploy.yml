@@ -3,7 +3,7 @@
 #   FIREBASE_SERVICE_ACCOUNT — the JSON key from Firebase Console → Project settings → Service accounts
 #
 # How to run (pushing a branch is the trigger, so it works before this file reaches main):
-#   deploy/firebase-rules    → rules tests on the emulator, then `firebase deploy --only firestore`
+#   deploy/firebase-rules    → rules tests on the emulator, then publish rules + indexes (scripts/deploy-firestore.mjs)
 #   deploy/firebase-migrate  → migration dry run, then move inline phones into lead/request contacts
 # Once on main it can also be started from the Actions tab (Run workflow).
 name: Firebase deploy
@@ -66,9 +66,13 @@ jobs:
         if: env.TASK == 'rules'
         run: npm run test:rules
 
-      - name: Deploy Firestore rules and indexes
+      # Admin SDK instead of `firebase deploy`: the CLI first reads Service Usage to check the API is
+      # enabled, which the Firebase Admin SDK service account isn't granted
+      - name: Publish Firestore rules and indexes
         if: env.TASK == 'rules'
-        run: npx -y firebase-tools@15 deploy --only firestore --project "$FIREBASE_PROJECT" --non-interactive
+        run: |
+          npm install --no-save firebase-admin@13
+          node scripts/deploy-firestore.mjs
 
       - name: Migration (dry run)
         if: env.TASK == 'migrate'
