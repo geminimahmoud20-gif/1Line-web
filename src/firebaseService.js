@@ -22,7 +22,10 @@ import {
   limit,
   onSnapshot,
   serverTimestamp,
-  increment
+  increment,
+  writeBatch,
+  deleteField,
+  documentId
 } from 'firebase/firestore';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
@@ -259,23 +262,52 @@ export const subscribeToAdStats = (callback) => {
 // Guard against concurrent background synchronization tasks
 let isSyncingPendingLeads = false;
 
-// One Firestore write for a lead. Document id = app lead id, so updateLeadField/deleteLead
-// (which use lead.id) reach it, and a retried write lands on the same doc instead of a duplicate.
-const writeLead = async (lead, extra = {}) => {
-  const { _cloud, queuedAt: _queuedAt, ...clean } = lead || {};
-  const payload = { ...clean, ...extra, createdAt: serverTimestamp() };
-  if (clean.id !== undefined && clean.id !== null && clean.id !== '') {
+// ── Lead contacts ────────────────────────────────────────────────────────────
+// Client phone/WhatsApp/email live in lead_contacts/{leadId} (managers + the lead's desk only),
+// not on the lead itself, which read-only roles can list. Keep in sync with contactFields() in
+// firestore.rules. The contact doc mirrors the lead's desk in assignedTo.
+export const LEAD_CONTACT_FIELDS = ['phone', 'whatsapp', 'email', 'altPhone'];
+const CLIENT_ONLY_FIELDS = ['_cloud', '_inlineContact', 'queuedAt', 'id'];
+
+const splitLeadFields = (fields) => {
+  const lead = {};
+  const contact = {};
+  for (const [key, value] of Object.entries(fields || {})) {
+    if (CLIENT_ONLY_FIELDS.includes(key) || value === undefined) continue;
+    if (LEAD_CONTACT_FIELDS.includes(key)) {
+      if (value !== null && value !== '') contact[key] = String(value);
+    } else {
+      lead[key] = value;
+    }
+  }
+  return { lead, contact };
+};
+const deskOf = (data) => data?.assignedTo || UNASSIGNED_DESK;
+
+// One Firestore write for a lead: the lead and its contact doc in one batch. Document id = app
+// lead id, so updateLeadField/deleteLead (which use lead.id) reach it, and a retried write lands
+// on the same doc instead of a duplicate.
+const writeLead = async (rawLead, extra = {}) => {
+  const { lead, contact } = splitLeadFields(rawLead);
+  const payload = { ...lead, ...extra, createdAt: serverTimestamp() };
+  const write = async (id) => {
+    const batch = writeBatch(db);
+    batch.set(doc(db, 'leads', id), payload);
+    batch.set(doc(db, 'lead_contacts', id), { ...contact, assignedTo: deskOf(payload) });
+    await batch.commit();
+    return { ...rawLead, id };
+  };
+  const appId = rawLead?.id;
+  if (appId !== undefined && appId !== null && appId !== '') {
     try {
-      await setDoc(doc(db, 'leads', String(clean.id)), payload);
-      return clean;
+      return await write(String(appId));
     } catch (error) {
       // A visitor re-submitting (merged into an existing lead id) is an update, which the
       // rules reserve for staff — store it as a fresh inquiry instead of dropping it.
       if (error?.code !== 'permission-denied') throw error;
     }
   }
-  const docRef = await addDoc(collection(db, 'leads'), payload);
-  return { ...clean, id: docRef.id };
+  return write(doc(collection(db, 'leads')).id);
 };
 
 /**
@@ -368,20 +400,77 @@ export const subscribeToLeads = (callback, maxCount = 150) => {
   let unsubSnapshot = null;
   let authVersion = 0;
 
-  const listen = (desk) => {
+  // Leads + (for roles allowed to see them) their contact docs, merged into one list.
+  // contactsMode: 'desk' → the desk's contact docs by assignedTo; 'all' → contact docs of the
+  // listed leads by id (30 per query); null → none (read-only roles never receive phones).
+  const listen = (desk, contactsMode) => {
+    let leads = null; // null until the first leads snapshot — never emit contacts alone
+    let meta = { fromCache: true };
+    let contacts = new Map();
+    let contactUnsubs = [];
+    let contactIdsKey = '';
+    const stopContacts = () => { contactUnsubs.forEach((u) => u()); contactUnsubs = []; };
+
+    const emit = () => leads && callback(leads.map((l) => {
+      const merged = { ...l };
+      if (LEAD_CONTACT_FIELDS.some((f) => f in l)) merged._inlineContact = true;
+      const c = contacts.get(String(l.id));
+      if (c) LEAD_CONTACT_FIELDS.forEach((f) => { if (c[f]) merged[f] = c[f]; });
+      return merged;
+    }), meta);
+
+    const onContactsError = (err) => {
+      if (err?.code !== 'permission-denied') console.warn('Firebase lead contacts warning:', err);
+    };
+
+    if (contactsMode === 'desk') {
+      contactUnsubs.push(onSnapshot(
+        query(collection(db, 'lead_contacts'), where('assignedTo', 'in', [desk, UNASSIGNED_DESK]), limit(maxCount * 4)),
+        (snap) => { contacts = new Map(snap.docs.map((d) => [d.id, d.data()])); emit(); },
+        onContactsError
+      ));
+    }
+
+    const followLeadIds = () => {
+      if (contactsMode !== 'all') return;
+      const ids = leads.map((l) => String(l.id)).sort();
+      const key = ids.join('|');
+      if (key === contactIdsKey) return;
+      contactIdsKey = key;
+      stopContacts();
+      contacts = new Map();
+      for (let i = 0; i < ids.length; i += 30) {
+        const chunk = ids.slice(i, i + 30);
+        contactUnsubs.push(onSnapshot(
+          query(collection(db, 'lead_contacts'), where(documentId(), 'in', chunk)),
+          (snap) => {
+            chunk.forEach((id) => contacts.delete(id));
+            snap.docs.forEach((d) => contacts.set(d.id, d.data()));
+            emit();
+          },
+          onContactsError
+        ));
+      }
+    };
+
     const base = collection(db, 'leads');
     const q = desk
       ? query(base, where('assignedTo', 'in', [desk, UNASSIGNED_DESK]), orderBy('createdAt', 'desc'), limit(maxCount))
       : query(base, orderBy('createdAt', 'desc'), limit(maxCount));
-    return onSnapshot(q, (snapshot) => {
-      const leads = snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
+    // includeMetadataChanges: also hear "now confirmed by the server" (fromCache true → false),
+    // which the CRM needs to know the list is complete
+    const unsubLeads = onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
+      leads = snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
       // fromCache snapshots can hold only this device's pending writes — not the full list
-      callback(leads, { fromCache: snapshot.metadata.fromCache });
+      meta = { fromCache: snapshot.metadata.fromCache };
+      followLeadIds();
+      emit();
     }, (err) => {
       // Guests and non-CRM accounts have no lead access — expected, stay quiet
       if (err && err.code === 'permission-denied') return;
       console.warn('Firebase subscribeToLeads snapshot warning:', err);
     });
+    return () => { unsubLeads(); stopContacts(); };
   };
 
   const stopSnapshot = () => {
@@ -391,7 +480,7 @@ export const subscribeToLeads = (callback, maxCount = 150) => {
 
   try {
     if (!auth) {
-      unsubSnapshot = listen(null);
+      unsubSnapshot = listen(null, null);
       return stopSnapshot;
     }
     const unsubAuth = onAuthStateChanged(auth, async (user) => {
@@ -401,12 +490,15 @@ export const subscribeToLeads = (callback, maxCount = 150) => {
         callback([], { signedOut: true });
         return;
       }
-      let role = '';
+      let claims = {};
       try {
-        role = (await user.getIdTokenResult()).claims?.role || '';
+        claims = (await user.getIdTokenResult()).claims || {};
       } catch { /* treat as no desk; rules decide */ }
       if (version !== authVersion) return; // a newer auth change already took over
-      unsubSnapshot = listen(DESK_BY_ROLE[role] || null);
+      const desk = DESK_BY_ROLE[claims.role] || null;
+      const seesAllContacts = claims.admin === true || ADMIN_USER_IDS.has(user.uid)
+        || ['admin', 'super_admin', 'sales_manager'].includes(claims.role);
+      unsubSnapshot = listen(desk, desk ? 'desk' : (seesAllContacts ? 'all' : null));
     });
     return () => {
       authVersion++;
@@ -426,13 +518,22 @@ export const updateLeadField = async (leadId, fieldUpdates) => {
   if (isFirebaseConfigured() && db) {
     try {
       const leadRef = doc(db, 'leads', leadId);
-      const { _cloud, id: _id, ...fields } = fieldUpdates || {}; // client-side markers, never stored
+      const { lead, contact } = splitLeadFields(fieldUpdates);
+      const touchesContact = Object.keys(contact).length > 0 || 'assignedTo' in lead;
+      const batch = writeBatch(db);
       // merge also supports leads that were created locally before Firebase
       // was connected, instead of failing because the document does not exist.
-      await setDoc(leadRef, {
-        ...fields,
-        updatedAt: serverTimestamp()
-      }, { merge: true });
+      batch.set(leadRef, { ...lead, updatedAt: serverTimestamp() }, { merge: true });
+      if (touchesContact) {
+        // The contact doc follows the lead's desk (rules check both in the same batch)
+        let desk = lead.assignedTo;
+        if (desk === undefined) {
+          const snap = await getDoc(leadRef);
+          desk = deskOf(snap.exists() ? snap.data() : {});
+        }
+        batch.set(doc(db, 'lead_contacts', leadId), { ...contact, assignedTo: desk || UNASSIGNED_DESK }, { merge: true });
+      }
+      await batch.commit();
       return true;
     } catch (error) {
       console.error('Firebase updateLeadField error:', error);
@@ -443,12 +544,42 @@ export const updateLeadField = async (leadId, fieldUpdates) => {
 };
 
 /**
+ * Move contact fields still stored on lead docs (written before the split, or by an older
+ * build) into lead_contacts. Managers' CRM sessions call this; returns how many were moved.
+ */
+export const migrateInlineLeadContacts = async (leads) => {
+  if (!isFirebaseConfigured() || !db || !Array.isArray(leads)) return 0;
+  let moved = 0;
+  for (const item of leads) {
+    if (!item?._inlineContact || !item.id) continue;
+    try {
+      const leadRef = doc(db, 'leads', String(item.id));
+      const snap = await getDoc(leadRef);
+      if (!snap.exists()) continue;
+      const data = snap.data();
+      const { contact } = splitLeadFields(data);
+      const batch = writeBatch(db);
+      batch.set(doc(db, 'lead_contacts', String(item.id)), { ...contact, assignedTo: deskOf(data) }, { merge: true });
+      batch.update(leadRef, Object.fromEntries(LEAD_CONTACT_FIELDS.filter((f) => f in data).map((f) => [f, deleteField()])));
+      await batch.commit();
+      moved++;
+    } catch (error) {
+      console.error('Firebase migrateInlineLeadContacts error:', error);
+    }
+  }
+  return moved;
+};
+
+/**
  * Delete a lead from Firestore.
  */
 export const deleteLead = async (leadId) => {
   if (isFirebaseConfigured() && db) {
     try {
-      await deleteDoc(doc(db, 'leads', leadId));
+      const batch = writeBatch(db);
+      batch.delete(doc(db, 'leads', leadId));
+      batch.delete(doc(db, 'lead_contacts', leadId));
+      await batch.commit();
       return true;
     } catch (error) {
       console.error('Firebase deleteLead error:', error);

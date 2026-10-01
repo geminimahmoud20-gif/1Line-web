@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Lock, Eye, EyeOff, ShieldCheck, AlertCircle, Save, X, Clock } from 'lucide-react';
-import { loginUser, logAuditEvent } from '../firebaseService';
+import { loginUser, logAuditEvent, migrateInlineLeadContacts } from '../firebaseService';
 import { exportToCsv } from '../utils/exportCsv';
 
 import { canExportCsv, canDeleteLead, canEditLeadsRole, assignableDesks } from '../utils/rbacRules';
@@ -153,6 +153,17 @@ export const CrmAdminPanel = ({
     } catch { /* storage unavailable — still backfill */ }
     orphans.forEach((l) => onUpdateLead(l.id, { assignedTo: 'Unassigned' }));
   }, [canAssignAll, onUpdateLead, firebaseConnected, leads]);
+
+  // Phones still stored on the lead doc (saved before lead_contacts, or by a browser on an old
+  // build) are readable by every CRM role; a manager's session moves them into lead_contacts.
+  const contactMigrationTried = useRef(new Set());
+  useEffect(() => {
+    if (!canAssignAll || !firebaseConnected) return;
+    const pending = leads.filter((l) => l?._cloud && l._inlineContact && !contactMigrationTried.current.has(l.id));
+    if (pending.length === 0) return;
+    pending.forEach((l) => contactMigrationTried.current.add(l.id));
+    migrateInlineLeadContacts(pending).catch(() => {});
+  }, [canAssignAll, firebaseConnected, leads]);
 
   const handleClaimLead = (leadId) => {
     if (onUpdateLead) {

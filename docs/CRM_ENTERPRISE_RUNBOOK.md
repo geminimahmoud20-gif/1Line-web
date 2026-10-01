@@ -83,9 +83,12 @@ async function assignUserRole(email, role) {
 
 ## 4. سياسة أمان البيانات وحماية الخصوصية (Data Privacy & Masking Policy)
 
-1. **قناع رقم الهاتف (Phone Masking):**
-   - يتم تطبيق دالة `maskPhoneNumber` تلقائياً لأي مستخدم يحمل دور `viewer` أو `finance` أو `property_manager`.
-   - يتم إخفاء 4 أرقام من منتصف رقم الهاتف (مثل: `010****5678`) لمنع تسريب أرقام عملاء المنصة خارج فريق المبيعات المصرح له.
+1. **أرقام العملاء محمية على السيرفر مش في الشاشة بس:**
+   - تليفون وواتساب وإيميل العميل محفوظين في `lead_contacts/{leadId}` مش في وثيقة العميل نفسها.
+   - يقراها بس: المدير العام، مدير المبيعات، ومستشار الفريق المسؤول عن العميل (أو العملاء غير المسندين). أدوار `viewer` و`finance` و`property_manager` بتشوف العميل من غير أرقام خالص.
+   - كل مستشار (`sales_agent` / `agent_east` / `agent_new_sohag`) يشوف ويعدّل عملاء فريقه + العملاء غير المسندين بس، ونقل عميل لفريق تاني من صلاحية المدير.
+   - طلبات الشراء المنشورة للزوار في `public_demands` من غير أي بيانات تواصل؛ `demands` الأصلية للموظفين بس.
+   - بيانات العملاء اللي جاية من السحابة مش بتتحفظ في متصفح الموظف، وبتتمسح من الذاكرة عند تسجيل الخروج.
 2. **منع هجمات التخمين وتعداد المستخدمين (Anti-Enumeration):**
    - بوابة الدخول تعتمد رسالة خطأ واحدة موحدة عند فشل الدخول: *"بيانات الدخول غير صحيحة، يرجى التحقق من البريد وكلمة المرور والمحاولة مجدداً."*
    - لا يتم إفشاء ما إذا كان البريد الإلكتروني مسجلاً بالخدمة أم لا.
@@ -97,17 +100,17 @@ async function assignUserRole(email, role) {
 
 ## 5. إجراءات المزامنة والتعافي من الكوارث (Disaster Recovery & Backup Procedures)
 
-### أ. طابور العمليات غير المتصل (Offline Queue & Idempotency)
-- عند انقطاع الاتصال بالشبكة، يتم حفظ العمليات في طابور محلي مشفر مع إنشاء مفتاح عدم تكرار فريد (`crm-idemp-[action]-[entityId]-[timestamp]-[nonce]`).
-- فور عودة الاتصال، يقوم `syncManager` بمحاولة المزامنة التلقائية مع تراجع أسي (Exponential Backoff: 1s, 2s, 4s, 8s...).
-- إذا استنفدت المحاولات، تظهر حالة المزامنة بلون أحمر تحذيري مع زر `إعادة المزامنة يدوياً`.
+### أ. طابور الطلبات غير المتصل (Offline Lead Queue)
+- لو الزائر بعت طلب والنت مقطوع، الطلب بيتحفظ في طابور محلي واحد (`src/utils/leadQueue.js`).
+- الطابور بيترفع تلقائياً مع كل فتح للموقع ومع رجوع النت، وبيتكتب على نفس رقم العميل فمفيش تكرار.
+- الطلب اللي قواعد Firestore بترفضه نهائياً بيتشال من الطابور بدل ما يفضل يتعاد للأبد.
 
 ### ب. النسخ الاحتياطي السحابي اليومي (Daily Automated Backups)
 يتم تصدير قاعدة بيانات Firestore دورياً عبر Cloud Scheduler و Google Cloud Storage:
 ```bash
 # أمر النسخ الاحتياطي التلقائي لمجموعات CRM الحساسة
 gcloud firestore export gs://oneline-crm-backups/$(date +%Y-%m-%d) \
-  --collection-ids='leads','deals','audit_logs','demands'
+  --collection-ids='leads','lead_contacts','deals','audit_logs','demands','public_demands'
 ```
 
 ### ج. خطة استعادة البيانات في حالات الطوارئ (Emergency Recovery Plan)
@@ -123,17 +126,30 @@ gcloud firestore import gs://oneline-crm-backups/[BACKUP_DATE_FOLDER]
 
 ## 6. خطوات التحقق والاختبار الدوري (Continuous Verification)
 
-يجب تشغيل حزمة الاختبارات الآلية قبل أي عملية رفع (Deploy) إلى الإنتاج:
+الـ CI بيشغّل كل ده تلقائياً مع كل push، ويقدر يتشغّل محلياً:
 
 ```bash
-# 1. اختبارات الجودة والأمان ووظائف CRM الـ 63
-node scripts/qa-test-suite.cjs
-
-# 2. فحص سيناريوهات سير العمل الشامل والـ E2E الـ 32
-node scripts/e2e-workflow-auditor.cjs
-
-# 3. بناء نسخة الإنتاج والتحقق من عدم وجود أخطاء في التجميع
+npm run lint          # أي خطأ يوقف الـ CI
+npm run test:unit     # الصلاحيات، توزيع العملاء، الحسابات المالية، طابور الطلبات
+npm run test:rules    # قواعد Firestore على المحاكي (محتاج Java 11+)
 npm run build
 ```
 
-يجب أن تحقق كافة الاختبارات نسبة نجاح **100%** لضمان الجاهزية التشغيلية للمنصة.
+---
+
+## 7. نشر التحديث الأمني (ترتيب الخطوات مهم)
+
+1. **القواعد والـ indexes الأول:**
+   ```bash
+   firebase deploy --only firestore
+   ```
+   القواعد الجديدة بتقبل الطلبات بالشكل القديم والجديد، فالمتصفحات اللي لسه على النسخة القديمة مش هتخسر أي طلب.
+   استنى لحد ما index ‏`leads (assignedTo, createdAt)` يخلص في Firebase Console ← Firestore ← Indexes.
+2. **بعد كده الموقع:** دمج الـ PR ونشره على Vercel. لو اتعكس الترتيب، طلبات الزوار هتترفض وتستنى في الطابور لحد ما الزائر يرجع.
+3. **نقل الأرقام القديمة:** (مرة واحدة)
+   ```bash
+   node scripts/migrate-lead-contacts.mjs          # تجربة: بيعدّ بس
+   node scripts/migrate-lead-contacts.mjs --apply  # تنفيذ
+   ```
+   جلسات المدير في الـ CRM بتنقل أرقام أحدث العملاء تلقائياً كمان، لكن السكربت بيغطي الكل.
+4. **App Check:** مفتاح reCAPTCHA v3 ← تسجيله في Firebase App Check ← `VITE_RECAPTCHA_SITE_KEY` في Vercel ← بعد ما الطلبات تظهر "verified" فعّل Enforce على Firestore.
