@@ -219,16 +219,25 @@ export default function QuickPortalLeadCard({
               <strong className="required-star">*</strong>
             </label>
             <PhoneInputField
+              id="quick-portal-whatsapp-input"
+              value={whatsapp}
               phone={whatsapp}
-              onChangePhone={(val) => {
+              onChange={(val) => {
                 setWhatsapp(val);
                 if (phoneError) setPhoneError('');
               }}
+              setPhone={(val) => {
+                setWhatsapp(val);
+                if (phoneError) setPhoneError('');
+              }}
+              country={whatsappCountry}
               countryCode={whatsappCountry}
-              onChangeCountry={setWhatsappCountry}
+              onCountryChange={setWhatsappCountry}
+              setCountry={setWhatsappCountry}
               isAr={isAr}
               error={phoneError}
-              placeholder={isAr ? 'أدخل رقم الواتساب' : 'Enter WhatsApp Number'}
+              placeholder={isAr ? 'مثال: 01012345678' : 'e.g. 01012345678'}
+              required
             />
           </div>
 
