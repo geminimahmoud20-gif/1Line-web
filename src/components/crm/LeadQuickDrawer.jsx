@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { X, Phone, MessageSquare, Calendar, Building, Sparkles, ChevronRight, ChevronLeft, ExternalLink, Send, Trash2, Plus, Eye, Share2 } from 'lucide-react';
+import { X, Phone, MessageSquare, Building, ChevronRight, ChevronLeft, Trash2, Plus, Eye } from 'lucide-react';
 import { SOHAG_AREAS, PROPERTY_TYPES } from '../../data/propertiesData';
 import { trackEvent } from '../../utils/visitorTracker';
+import LeadDrawerOverview from './lead-profile/LeadDrawerOverview';
+import LeadDrawerMatching from './lead-profile/LeadDrawerMatching';
 
 export default function LeadQuickDrawer({
   lead,
@@ -494,337 +496,31 @@ export default function LeadQuickDrawer({
 
           {/* TAB 1: OPERATIONS & QUICK ACTIONS */}
           {activeTab === 'overview' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {/* 1. Quick Call Logger */}
-              <div style={{
-                background: 'var(--crm-card)',
-                border: '1px solid var(--crm-line)',
-                borderRadius: '12px',
-                padding: '14px'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
-                  <Phone size={15} style={{ color: 'var(--crm-accent, var(--crm-accent-text))' }} />
-                  <strong style={{ fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'تسجيل نتيجة مكالمة سريعة بنقرة واحدة:' : 'Log Call Outcome (1-Click):'}</strong>
-                </div>
-
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                  {[
-                    { label: isAr ? 'لم يرد' : 'No Answer', color: 'var(--crm-muted)' },
-                    { label: isAr ? 'طلب مهلة للاتصال' : 'Callback', color: 'var(--crm-warn)' },
-                    { label: isAr ? 'مهتم ويبحث بجدية' : 'Interested', color: 'var(--crm-positive)' },
-                    { label: isAr ? 'تم تحديد موعد معاينة' : 'Viewing Set', color: 'var(--crm-info)' },
-                    { label: isAr ? 'غير مناسب / ميزانية أقل' : 'Not Match', color: 'var(--crm-danger)' }
-                  ].map((btn, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => handleLogCall(btn.label)}
-                      style={{
-                        padding: '6px 10px',
-                        borderRadius: '6px',
-                        fontSize: 'var(--crm-text-xs)',
-                        fontWeight: 600,
-                        background: 'var(--crm-subtle)',
-                        border: '1px solid var(--crm-line)',
-                        color: btn.color,
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease'
-                      }}
-                    >
-                      {btn.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 2. WhatsApp Pre-formatted Pitches */}
-              <div style={{
-                background: 'var(--crm-card)',
-                border: '1px solid var(--crm-line)',
-                borderRadius: '12px',
-                padding: '14px'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
-                  <MessageSquare size={15} style={{ color: 'var(--brand-whatsapp)' }} />
-                  <strong style={{ fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'رسائل واتساب تسويقية جاهزة للإرسال:' : 'Instant WhatsApp Pitches:'}</strong>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {whatsappTemplates.map((tpl, i) => {
-                    const waHref = `https://wa.me/${egWhatsapp}?text=${encodeURIComponent(tpl.msg)}`;
-                    return (
-                      <div
-                        key={i}
-                        style={{
-                          background: 'var(--crm-subtle)',
-                          border: '1px solid var(--crm-line)',
-                          borderRadius: '8px',
-                          padding: '10px 12px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: '10px'
-                        }}
-                      >
-                        <div>
-                          <div style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 700, color: 'var(--crm-ink)' }}>{tpl.title}</div>
-                          <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px', lineClamp: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '320px' }}>
-                            {tpl.msg}
-                          </div>
-                        </div>
-
-                        <a
-                          href={waHref}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn btn-sm"
-                          style={{
-                            background: 'var(--brand-whatsapp-solid)',
-                            color: 'var(--crm-on-dark)',
-                            padding: '4px 10px',
-                            borderRadius: '6px',
-                            fontSize: 'var(--crm-text-xs)',
-                            fontWeight: 700,
-                            textDecoration: 'none',
-                            flexShrink: 0
-                          }}
-                        >
-                          <Send size={12} />
-                          <span>{isAr ? 'إرسال' : 'Send'}</span>
-                        </a>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* 3. Schedule Viewing Toggle / Form */}
-              <div style={{
-                background: 'var(--crm-card)',
-                border: '1px solid var(--crm-line)',
-                borderRadius: '12px',
-                padding: '14px'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Calendar size={15} style={{ color: 'var(--crm-accent, var(--crm-accent-text))' }} />
-                    <strong style={{ fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'جدولة موعد معاينة ميدانية:' : 'Schedule Property Viewing:'}</strong>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowViewingForm(!showViewingForm)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--crm-accent, var(--crm-accent-text))',
-                      fontWeight: 700,
-                      fontSize: 'var(--crm-text-xs)',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {showViewingForm ? (isAr ? 'إلغاء' : 'Cancel') : (isAr ? '+ جدولة الآن' : '+ Schedule')}
-                  </button>
-                </div>
-
-                {showViewingForm && (
-                  <form onSubmit={handleScheduleViewing} style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: 'var(--crm-text-xs)', fontWeight: 600, marginBottom: '4px' }}>
-                        {isAr ? 'اختر الوحدة المراد معاينتها:' : 'Select Property:'}
-                      </label>
-                      <select
-                        value={selectedViewingPropId}
-                        onChange={(e) => setSelectedViewingPropId(e.target.value)}
-                        required
-                        className="form-input"
-                        style={{ width: '100%', padding: '6px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: '8px' }}
-                      >
-                        <option value="">{isAr ? '-- اختر العقار من المحفظة --' : '-- Choose Property --'}</option>
-                        {properties.map(p => (
-                          <option key={p.id} value={p.id}>
-                            {p.id.toUpperCase()} — {p.title_ar || p.title_en} ({p.price?.toLocaleString()} ج.م)
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label style={{ display: 'block', fontSize: 'var(--crm-text-xs)', fontWeight: 600, marginBottom: '4px' }}>
-                        {isAr ? 'تاريخ ووقت المعاينة المفضل:' : 'Date & Time:'}
-                      </label>
-                      <input
-                        type="datetime-local"
-                        value={viewingDateTime}
-                        onChange={(e) => setViewingDateTime(e.target.value)}
-                        required
-                        className="form-input"
-                        style={{ width: '100%', padding: '6px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: '8px' }}
-                      />
-                    </div>
-
-                    <button
-                      type="submit"
-                      className="btn btn-primary"
-                      style={{
-                        padding: '8px 14px',
-                        borderRadius: '8px',
-                        fontSize: 'var(--crm-text-sm)',
-                        fontWeight: 700,
-                        background: 'var(--crm-accent)',
-                        color: 'var(--crm-on-dark)',
-                        border: 'none',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {isAr ? 'تأكيد المعاينة وجدولة التنبيه' : 'Confirm Viewing Schedule'}
-                    </button>
-                  </form>
-                )}
-              </div>
-            </div>
+            <LeadDrawerOverview
+              egWhatsapp={egWhatsapp}
+              handleLogCall={handleLogCall}
+              handleScheduleViewing={handleScheduleViewing}
+              isAr={isAr}
+              selectedViewingPropId={selectedViewingPropId}
+              setSelectedViewingPropId={setSelectedViewingPropId}
+              setShowViewingForm={setShowViewingForm}
+              setViewingDateTime={setViewingDateTime}
+              showViewingForm={showViewingForm}
+              viewingDateTime={viewingDateTime}
+              whatsappTemplates={whatsappTemplates}
+            />
           )}
 
           {/* TAB 2: SMART MATCHING IN CONTEXT */}
           {activeTab === 'matching' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{
-                background: 'rgba(169, 130, 74, 0.08)',
-                border: '1px solid rgba(169, 130, 74, 0.25)',
-                borderRadius: '10px',
-                padding: '10px 14px',
-                fontSize: 'var(--crm-text-xs)',
-                color: 'var(--crm-ink)'
-              }}>
-                <Sparkles size={15} style={{ color: 'var(--crm-accent)', marginInlineEnd: '6px', verticalAlign: 'middle' }} />
-                <span>
-                  {isAr 
-                    ? `وحدات معتمدة مطابقة لميزانية (${lead.budget || lead.details?.budget || 'غير محددة'}) ومنطقة (${areaName}):` 
-                    : `Matching properties for budget and area:`}
-                </span>
-              </div>
-
-              {matchedProperties.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '30px', color: 'var(--crm-muted)' }}>
-                  <Building size={32} style={{ margin: '0 auto 8px', opacity: 0.4 }} />
-                  <p style={{ margin: 0, fontSize: 'var(--crm-text-sm)' }}>
-                    {isAr ? 'لا توجد وحدات مطابقة تماماً حالياً بالمحفظة. جرب توسيع معايير البحث.' : 'No direct property matches found.'}
-                  </p>
-                </div>
-              ) : (
-                matchedProperties.map(p => {
-                  const propShareMsg = encodeURIComponent(
-                    `أهلاً بك أستاذ ${lead.name}، بناءً على طلبك أرشح لك وحدة مميزة بمحفظة 1Line:\n` +
-                    `🏢 ${p.title_ar || p.title_en}\n` +
-                    `📍 الموقع: ${p.locationName_ar || p.areaKey}\n` +
-                    `💰 السعر: ${p.price?.toLocaleString()} ج.م\n` +
-                    `🔗 تفاصيل الوحدة: https://1-line-qkzp9.vercel.app/properties/${p.id}`
-                  );
-                  const shareHref = `https://wa.me/${egWhatsapp}?text=${propShareMsg}`;
-
-                  return (
-                    <div
-                      key={p.id}
-                      style={{
-                        background: 'var(--crm-card)',
-                        border: '1px solid var(--crm-line)',
-                        borderRadius: '12px',
-                        padding: '12px',
-                        display: 'flex',
-                        gap: '12px',
-                        alignItems: 'center'
-                      }}
-                    >
-                      <img
-                        src={p.images?.[0] || '/og-image.jpg'}
-                        alt={p.title_ar || 'Property'}
-                        style={{
-                          width: '74px',
-                          height: '74px',
-                          borderRadius: '8px',
-                          objectFit: 'cover',
-                          flexShrink: 0
-                        }}
-                      />
-
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{
-                            fontSize: 'var(--crm-text-xs)',
-                            fontWeight: 700,
-                            padding: '1px 6px',
-                            borderRadius: '4px',
-                            background: 'rgba(4, 120, 87, 0.1)',
-                            color: 'var(--crm-positive)'
-                          }}>
-                            {p._matchScore}% {isAr ? 'تطابق' : 'Match'}
-                          </span>
-                          <strong style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-accent)' }}>
-                            {p.price?.toLocaleString()} ج.م
-                          </strong>
-                        </div>
-
-                        <div style={{
-                          fontSize: 'var(--crm-text-sm)',
-                          fontWeight: 700,
-                          marginTop: '3px',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap'
-                        }}>
-                          {p.title_ar || p.title_en}
-                        </div>
-
-                        <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px' }}>
-                          {p.locationName_ar || p.areaKey} • {p.area} م²
-                        </div>
-
-                        {/* Direct Match Action */}
-                        <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
-                          <a
-                            href={shareHref}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn btn-sm"
-                            style={{
-                              background: 'var(--brand-whatsapp-solid)',
-                              color: 'var(--crm-on-dark)',
-                              padding: '3px 8px',
-                              borderRadius: '6px',
-                              fontSize: 'var(--crm-text-xs)',
-                              textDecoration: 'none',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px'
-                            }}
-                          >
-                            <Share2 size={12} />
-                            <span>{isAr ? 'إرسال للعميل عبر واتساب' : 'Share via WA'}</span>
-                          </a>
-
-                          <a
-                            href={`/properties/${p.id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn btn-sm btn-outline"
-                            style={{
-                              padding: '3px 8px',
-                              borderRadius: '6px',
-                              fontSize: 'var(--crm-text-xs)',
-                              textDecoration: 'none',
-                              color: 'var(--crm-ink)'
-                            }}
-                          >
-                            <ExternalLink size={12} />
-                            <span>{isAr ? 'معاينة' : 'View'}</span>
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
+            <LeadDrawerMatching
+              areaName={areaName}
+              egWhatsapp={egWhatsapp}
+              isAr={isAr}
+              lead={lead}
+              matchedProperties={matchedProperties}
+              properties={properties}
+            />
           )}
 
           {/* TAB 3: TIMELINE & ACTIVITY LOG */}
