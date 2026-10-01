@@ -23,7 +23,7 @@ jobs:
 
       - run: npm ci
 
-      - name: Lint (zero warnings: includes the CRM design-token guard)
+      - name: "Lint (zero warnings, includes the CRM design-token guard)"
         run: npm run lint -- --max-warnings=0
 
       - name: Unit tests (finance, yield, trade-in matching)
@@ -65,3 +65,19 @@ jobs:
 
       - name: Firestore rules tests
         run: npm run test:rules
+
+  commits:
+    # Every new commit needs a subject that says what it does (scripts/check-commit-message.mjs)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Commit messages
+        env:
+          RANGE: ${{ github.event_name == 'pull_request' && format('{0}..{1}', github.event.pull_request.base.sha, github.event.pull_request.head.sha) || format('{0}..{1}', github.event.before, github.sha) }}
+        run: |
+          case "$RANGE" in 0000000000000000000000000000000000000000..*) echo "New branch: nothing to compare"; exit 0;; esac
+          node scripts/check-commit-message.mjs --range "$RANGE"

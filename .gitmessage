@@ -1,0 +1,5 @@
+# <What this commit does, in one line — e.g. "Fix lost leads when submitting offline">
+#
+# <Why, if it isn't obvious: the problem, and anything a reviewer should know>
+#
+# "update", "fix", "wip" and other one-word subjects are rejected by .githooks/commit-msg.
