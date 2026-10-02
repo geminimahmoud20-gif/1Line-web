@@ -1,0 +1,58 @@
+# Daily encrypted backup of the whole Firestore database (scripts/backup-firestore.mjs).
+# Kept as a workflow artifact for 30 days. This repository is public, so the file is
+# AES-256-GCM encrypted with BACKUP_PASSPHRASE — without it the artifact is unreadable.
+#
+# Needs two repository secrets: FIREBASE_SERVICE_ACCOUNT (already used by firebase-deploy.yml)
+# and BACKUP_PASSPHRASE (12+ characters; keep a copy somewhere safe — it's the only way to restore).
+# Restore steps: docs/CRM_ENTERPRISE_RUNBOOK.md §5.
+name: Firestore backup
+
+on:
+  schedule:
+    - cron: '17 1 * * *'   # 03:17 / 04:17 Cairo time, every day
+  workflow_dispatch:
+  push:
+    branches: ['deploy/firebase-backup']   # run one now without waiting for the schedule
+
+concurrency:
+  group: firebase-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Secrets
+        env:
+          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          if [ -z "$SERVICE_ACCOUNT" ]; then echo "::error::Repository secret FIREBASE_SERVICE_ACCOUNT is missing."; exit 1; fi
+          if [ ${#BACKUP_PASSPHRASE} -lt 12 ]; then echo "::error::Add the repository secret BACKUP_PASSPHRASE (12+ characters) — Settings → Secrets and variables → Actions."; exit 1; fi
+          printf '%s' "$SERVICE_ACCOUNT" > "$RUNNER_TEMP/service-account.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/service-account.json" >> "$GITHUB_ENV"
+
+      - name: Back up
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
+          node scripts/backup-firestore.mjs backups
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: firestore-backup-${{ github.run_id }}
+          path: backups/*.1lbk
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Remove key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/service-account.json"

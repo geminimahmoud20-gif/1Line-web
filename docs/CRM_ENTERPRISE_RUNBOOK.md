@@ -106,22 +106,24 @@ async function assignUserRole(email, role) {
 - الطابور بيترفع تلقائياً مع كل فتح للموقع ومع رجوع النت، وبيتكتب على نفس رقم العميل فمفيش تكرار.
 - الطلب اللي قواعد Firestore بترفضه نهائياً بيتشال من الطابور بدل ما يفضل يتعاد للأبد.
 
-### ب. النسخ الاحتياطي السحابي اليومي (Daily Automated Backups)
-يتم تصدير قاعدة بيانات Firestore دورياً عبر Cloud Scheduler و Google Cloud Storage:
-```bash
-# أمر النسخ الاحتياطي التلقائي لمجموعات CRM الحساسة
-gcloud firestore export gs://oneline-crm-backups/$(date +%Y-%m-%d) \
-  --collection-ids='leads','lead_contacts','request_contacts','remote_inspections','trade_ins','deals','audit_logs','demands','public_demands'
-```
+### ب. النسخ الاحتياطي اليومي (مشفّر)
+- كل يوم الساعة ~3 الفجر بتوقيت القاهرة، GitHub Actions (`.github/workflows/backup.yml`) بياخد نسخة كاملة من قاعدة البيانات بـ `scripts/backup-firestore.mjs` — كل الـ collections، وأنواع البيانات محفوظة (التواريخ، المواقع، المراجع).
+- النسخة **مشفّرة AES-256** بكلمة سر `BACKUP_PASSPHRASE` (سر في GitHub). الـ repo عام، وأي حد عنده حساب GitHub يقدر ينزّل ملفات الـ Actions، فمن غير كلمة السر الملف مالوش أي قيمة.
+- كل نسخة بتتحفظ 30 يوم: GitHub ← Actions ← Firestore backup ← آخر تشغيل ← Artifacts.
+- **احتفظ بنسخة من كلمة السر برّه GitHub** (مدير كلمات سر أو ورقة في مكان آمن): GitHub مش بيوريك السر بعد ما تحطه، ومن غيره مفيش استرجاع.
+- تشغيل فوري من غير ما تستنى الميعاد: Actions ← Firestore backup ← Run workflow.
 
-### ج. خطة استعادة البيانات في حالات الطوارئ (Emergency Recovery Plan)
-1. في حال حدوث تلاعب بقاعدة البيانات، يتم تفعيل وضع الصيانة المؤقت عبر المتغير البيئي `VITE_MAINTENANCE_MODE=true`.
-2. فحص سجلات `/audit_logs` لتحديد وقت العملية الضارة ومعرّف الفاعل (`actorId`).
-3. استعادة النسخة الاحتياطية السليمة من `gs://oneline-crm-backups/` باستخدام:
-```bash
-gcloud firestore import gs://oneline-crm-backups/[BACKUP_DATE_FOLDER]
-```
-4. إعادة تعيين كلمات المرور والتوكنات لكافة الحسابات المشتبه بها عبر Firebase Auth Admin.
+### ج. استرجاع البيانات
+1. نزّل ملف النسخة (`.1lbk`) من الـ Artifacts وفك الـ zip.
+2. تجربة من غير كتابة (بتطبع عدد المستندات في كل collection):
+   ```bash
+   npm install --no-save firebase-admin@13
+   BACKUP_PASSPHRASE='…' GOOGLE_APPLICATION_CREDENTIALS=service-account.json \
+     node scripts/restore-firestore.mjs firestore-….1lbk
+   ```
+3. الاسترجاع الفعلي: نفس الأمر + `--apply`. ولاسترجاع جزء بس: `--only=leads,lead_contacts`.
+   كل مستند في النسخة بيرجع زي ما كان (فوق النسخة الحالية منه)؛ المستندات اللي اتعملت بعد النسخة ما بتتمسحش.
+4. لو فيه عبث بالبيانات: راجع `/audit_logs` (الفاعل مربوط بحسابه الحقيقي ووقت السيرفر) لتحديد التوقيت، واختار نسخة قبله، وغيّر كلمات سر الحسابات المشتبه فيها من Firebase Auth.
 
 ---
 
