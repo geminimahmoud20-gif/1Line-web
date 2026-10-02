@@ -421,9 +421,6 @@
 .xs-money { display: inline-flex; flex-direction: column; align-items: flex-end; font-weight: 700; font-size: 0.92rem; font-variant-numeric: tabular-nums; color: var(--xs-ink); }
 .xs-money-main { display: inline-flex; align-items: baseline; gap: 4px; white-space: nowrap; }
 .xs-money small { font-size: 0.7rem; color: var(--xs-muted); font-weight: 600; }
-.xs-fin-note--warn { padding: 9px 12px; margin: 6px 0 2px; border-radius: 10px; background: rgba(245, 158, 11, 0.1); color: #92400E; }
-.dark-theme .xs-fin-note--warn { color: #FCD34D; }
-.xs-fin-note--warn svg { color: #D97706; }
 .xs-money em { font-style: normal; font-size: 0.7rem; font-weight: 600; color: var(--xs-gold-text); }
 .xs-money.is-strong { font-size: 1.08rem; font-weight: 800; }
 .xs-money.is-muted { color: var(--xs-muted); }

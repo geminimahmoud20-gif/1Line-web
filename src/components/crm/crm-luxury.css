@@ -326,7 +326,6 @@
 
 /* ── Badges & pills: calm, readable, never uppercase shouting ── */
 .crm-layout .badge,
-.crm-layout .badge-status,
 .crm-layout .lead-score-pill {
   font-size: var(--crm-text-xs) !important;
   font-weight: 600 !important;
@@ -338,7 +337,6 @@
 }
 .crm-layout .lead-score-pill.score-high { background: #ECFDF5 !important; color: #047857 !important; border: 1px solid #A7F3D0 !important; }
 .crm-layout .lead-score-pill.score-medium { background: #FFFBEB !important; color: #B45309 !important; border: 1px solid #FDE68A !important; }
-.crm-layout .lead-score-pill.score-low { background: #F8FAFC !important; color: #64748B !important; border: 1px solid #E2E8F0 !important; }
 
 /* Minimum readable size across the CRM */
 .crm-content-area [style*="font-size: 0.6"],
@@ -373,12 +371,6 @@
   max-width: 100%;
 }
 .kanban-stage-column { min-width: 280px !important; flex: 0 0 280px !important; }
-.kanban-lead-card {
-  background: var(--crm-card) !important;
-  border: 1px solid var(--crm-line) !important;
-  border-radius: 14px !important;
-  box-shadow: var(--crm-shadow) !important;
-}
 
 /* ── Sidebar: ink navy, champagne active state ── */
 .crm-sidebar {
