@@ -96,7 +96,7 @@ jobs:
         with:
           install: false
           # start is a comma-separated list, so the emulator command (which itself has a comma) lives in package.json
-          start: npm run emulators:journey, npx vite preview --outDir dist-journey --port 4174 --strictPort
+          start: npm run emulators:journey, npx vite preview --outDir dist-journey --host 127.0.0.1 --port 4174 --strictPort
           wait-on: 'http://127.0.0.1:8080, http://127.0.0.1:9099, http://127.0.0.1:4174'
           wait-on-timeout: 120
           spec: cypress/e2e/lead-journey.cy.js
