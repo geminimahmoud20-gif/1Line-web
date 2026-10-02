@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css'; // only map pages pay for it (overrides in App.css are more specific)
 import { MapPin, Satellite, Map as MapIcon, Check, Crosshair, Sparkles } from 'lucide-react';
 import { getAreas } from '../../utils/areasData';
 
