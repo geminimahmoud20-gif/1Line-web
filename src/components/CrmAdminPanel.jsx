@@ -27,6 +27,8 @@ import { CRM_ROLES } from './crm/crmRoles';
 import EditLeadModal from './crm/EditLeadModal';
 import { LEAD_EXPORT_HEADERS, makeLeadFormatters } from './crm/leadFormatters';
 import CrmLoginGate from './crm/CrmLoginGate';
+import useLeadKeyboardTriage from './crm/useLeadKeyboardTriage';
+import { computeCrmAnalytics, filterLeads } from '../utils/crmLeadViews';
 
 export const CrmAdminPanel = ({
   lang = 'ar',
@@ -442,37 +444,6 @@ export const CrmAdminPanel = ({
   };
 
   // Quick Action Handler (WhatsApp Direct Contact)
-  // ── Keyboard triage for the leads table (audit DEF-22) ──
-  // J/K move, Enter opens the drawer, W WhatsApp, S focuses the status chip.
-  // Uses e.code so it works on the Arabic keyboard layout (J types "ت").
-  const [kbdIndex, setKbdIndex] = useState(-1);
-  const kbdRef = useRef({ list: [], index: -1, wa: null });
-  useEffect(() => {
-    const onKey = (e) => {
-      if (e.ctrlKey || e.metaKey || e.altKey) return;
-      if (!document.querySelector('.crm-table[data-kbd="leads"]')) return;
-      if (document.querySelector('.crm-lead-drawer, .crm-modal-backdrop, .track-modal-backdrop, .crm-command-modal')) return;
-      const t = e.target;
-      if (t?.closest?.('input, textarea, select, [contenteditable="true"]')) return;
-      const { list, index, wa } = kbdRef.current;
-      if (!list.length) return;
-      const lead = list[index] || null;
-      if (e.code === 'KeyJ') { e.preventDefault(); setKbdIndex((i) => Math.min(list.length - 1, i + 1)); }
-      else if (e.code === 'KeyK') { e.preventDefault(); setKbdIndex((i) => Math.max(0, i - 1)); }
-      else if (e.code === 'Enter' && lead && !t?.closest?.('button, a, summary')) { e.preventDefault(); setQuickDrawerLead(lead); }
-      else if (e.code === 'KeyW' && lead) { e.preventDefault(); wa?.(lead); }
-      else if (e.code === 'KeyS' && lead) {
-        e.preventDefault();
-        document.querySelector(`.crm-table tr[data-lead-id="${CSS.escape(String(lead.id))}"] .crm-status-select`)?.focus();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
-  useEffect(() => {
-    if (kbdIndex < 0) return;
-    document.querySelectorAll('.crm-table[data-kbd="leads"] tbody tr')[kbdIndex]?.scrollIntoView({ block: 'nearest' });
-  }, [kbdIndex]);
 
   const onWhatsAppClick = (lead) => {
     if (handleWhatsAppAction) {
@@ -506,87 +477,16 @@ export const CrmAdminPanel = ({
   };
 
   // CRM Analytics Metrics (Memoized)
-  const crmAnalytics = useMemo(() => {
-    const todayStr = new Date().toDateString();
-    let todayCount = 0;
-    let buyersCount = 0;
-    let sellersCount = 0;
-    let brokersCount = 0;
-    let requestsCount = 0;
-    let closedCount = 0;
-
-    for (let i = 0; i < leads.length; i++) {
-      const l = leads[i];
-      if (l.timestamp && new Date(l.timestamp).toDateString() === todayStr) todayCount++;
-      if (l.type === 'buyer') buyersCount++;
-      else if (l.type === 'seller') sellersCount++;
-      else if (l.type === 'broker') brokersCount++;
-      else if (l.type === 'request') requestsCount++;
-      if (l.status === 'closed') closedCount++;
-    }
-
-    return {
-      todayCount,
-      buyersCount,
-      sellersCount,
-      brokersCount,
-      requestsCount,
-      closedCount,
-      conversionSuccess: leads.length > 0 
-        ? Math.round((leads.filter((l) => l.status === 'closed').length / leads.length) * 100) + '%'
-        : '0%'
-    };
-  }, [leads]);
+  const crmAnalytics = useMemo(() => computeCrmAnalytics(leads), [leads]);
 
   // Filtered Leads list with Multi-Dimensional Search & Workflow Stages (Memoized)
-  const filteredLeads = useMemo(() => {
-    return leads.filter((l) => {
-      if (myDealsOnly && activeRole !== 'super_admin') {
-        if (l.assignedTo !== currentRoleObj.agentName && l.assignedTo !== 'Unassigned') {
-          return false;
-        }
-      }
-
-      // Workflow & Archive Logic
-      if (leadFilter === 'archived') {
-        if (!l.isArchived) return false;
-      } else {
-        // Hide archived leads in all normal operational filters
-        if (l.isArchived) return false;
-
-        if (leadFilter === 'new') {
-          if (l.status !== 'new' && l.status) return false;
-        } else if (leadFilter === 'due') {
-          const todayStr = new Date().toISOString().slice(0, 10);
-          const hasDue = (l.nextFollowUpAt && l.nextFollowUpAt.slice(0, 10) <= todayStr) || (l.followUp && l.followUp.includes(todayStr));
-          if (!hasDue) return false;
-        } else if (leadFilter === 'qualified') {
-          if ((l.score || 0) < 80) return false;
-        } else if (leadFilter !== 'all' && l.type !== leadFilter) {
-          return false;
-        }
-      }
-
-      if (temperatureFilter !== 'all' && (l.temperature || 'hot') !== temperatureFilter) return false;
-      if (areaFilter !== 'all' && l.details?.area !== areaFilter) return false;
-      if (searchQuery.trim() !== '') {
-        const q = searchQuery.toLowerCase();
-        const matchName = (l.name || '').toLowerCase().includes(q);
-        const matchPhone = (l.phone || '').includes(q);
-        const matchNotes = (l.notes && l.notes.toLowerCase().includes(q));
-        const matchCity = (l.cityOrExpat && l.cityOrExpat.toLowerCase().includes(q));
-        const matchTags = (l.tags && l.tags.some(t => t.toLowerCase().includes(q)));
-        if (!matchName && !matchPhone && !matchNotes && !matchCity && !matchTags) return false;
-      }
-      return true;
-    });
-  }, [leads, myDealsOnly, activeRole, currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter, searchQuery]);
+  const filteredLeads = useMemo(() => filterLeads(leads, {
+    myDealsOnly, activeRole, agentName: currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter, searchQuery
+  }), [leads, myDealsOnly, activeRole, currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter, searchQuery]);
 
   // Login Gate
-  // Hooks stay above the early return below. Keep the keyboard handler's view of the table current (read in the window keydown listener)
-  useEffect(() => {
-    kbdRef.current = { list: filteredLeads, index: kbdIndex, wa: onWhatsAppClick };
-  });
+  // Hooks stay above the early return below (keyboard triage reads the visible rows)
+  const [kbdIndex, setKbdIndex] = useLeadKeyboardTriage({ list: filteredLeads, onOpen: setQuickDrawerLead, onWhatsApp: onWhatsAppClick });
 
   if (!crmAuthenticated) {
     return (

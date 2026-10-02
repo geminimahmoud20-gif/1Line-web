@@ -181,7 +181,7 @@ p {
 }
 
 /* Tabular figures for prices and stats */
-.price-val, [class*="price"] bdi, [class*="stat"] strong, [class*="ticker"] {
+[class*="price"] bdi, [class*="stat"] strong, [class*="ticker"] {
   font-variant-numeric: tabular-nums;
 }
 

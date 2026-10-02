@@ -6,8 +6,8 @@
 // =============================================================
 
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { getFirestore, initializeFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 // Files go to Vercel Blob via /api/cms-upload (Firebase Storage was never enabled), so no Storage SDK here.
 
@@ -31,6 +31,12 @@ let app = null;
 let db = null;
 let auth = null;
 
+// End-to-end tests (cypress/e2e/lead-journey.cy.js) build the site with VITE_FIREBASE_EMULATORS=true
+// so it talks to local Firestore/Auth emulators. Also requires a localhost page, so a production
+// build can never be pointed at the emulators by mistake.
+const useEmulators = import.meta.env?.VITE_FIREBASE_EMULATORS === 'true'
+  && typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname);
+
 try {
   if (isFirebaseConfigured()) {
     app = initializeApp(firebaseConfig);
@@ -38,12 +44,18 @@ try {
     // Enterprise site key — classic v3 keys are deprecated) is set. With it on, turn on "Enforce" for Firestore in Firebase Console → App Check, so
     // scripts that skip the site can no longer write leads/requests directly.
     const appCheckKey = import.meta.env?.VITE_RECAPTCHA_SITE_KEY;
-    if (appCheckKey && typeof window !== 'undefined') {
+    if (appCheckKey && typeof window !== 'undefined' && !useEmulators) {
       if (import.meta.env?.DEV) self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
       initializeAppCheck(app, { provider: new ReCaptchaEnterpriseProvider(appCheckKey), isTokenAutoRefreshEnabled: true });
     }
-    db = getFirestore(app);
+    // Cypress proxies the browser's traffic, which breaks Firestore's streaming channel; long polling
+    // goes through it. Test builds only — production keeps the default transport.
+    db = useEmulators ? initializeFirestore(app, { experimentalForceLongPolling: true }) : getFirestore(app);
     auth = getAuth(app);
+    if (useEmulators) {
+      connectFirestoreEmulator(db, '127.0.0.1', 8080);
+      connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+    }
     console.log('✅ Firebase connected successfully — بيانات العملاء ستُخزن في السحابة.');
   } else {
     console.warn('⚠️ Firebase not configured — using localStorage fallback. Update src/firebase.js with your project keys.');

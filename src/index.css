@@ -504,11 +504,6 @@ a:hover {
 
 /* Trust Indicators */
 
-.trust-item {
-  display: flex;
-  flex-direction: column;
-}
-
 /* 🔘 PREMIUM BUTTON DESIGN SYSTEM (§27-28: Buttons must feel premium) */
 .btn {
   display: inline-flex;
@@ -655,54 +650,6 @@ a:hover {
 }
 
 /* 🏛️ 1Line Luxury Button Variants (High-Contrast & WCAG AAA Compliant) */
-.btn-white-navy {
-  background: #ffffff !important;
-  color: #092347 !important;
-  border: none !important;
-  font-weight: 900 !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
-  transition: var(--transition-normal);
-}
-
-.btn-white-navy:hover {
-  background: #f8fafc !important;
-  color: #0d48a1 !important;
-  transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28) !important;
-}
-
-.btn-white-navy span,
-.btn-white-navy svg {
-  color: #092347 !important;
-}
-
-.btn-white-navy:hover span,
-.btn-white-navy:hover svg {
-  color: #0d48a1 !important;
-}
-
-.btn-glass-outline {
-  background: rgba(255, 255, 255, 0.12) !important;
-  color: #ffffff !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.65) !important;
-  font-weight: 700 !important;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
-  transition: var(--transition-normal);
-}
-
-.btn-glass-outline:hover {
-  background: rgba(255, 255, 255, 0.22) !important;
-  color: #ffffff !important;
-  border-color: #ffffff !important;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22) !important;
-}
-
-.btn-glass-outline span,
-.btn-glass-outline svg {
-  color: #ffffff !important;
-}
 
 .btn-accent {
   background: var(--emerald);

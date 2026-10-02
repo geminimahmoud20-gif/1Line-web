@@ -1,4 +1,4 @@
-import { db, isFirebaseConfigured } from '../firebase.js';
+import { db, auth, isFirebaseConfigured } from '../firebase.js';
 
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -8,7 +8,9 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
  * Save a notification/activity log entry.
  */
 export const saveNotification = async (text) => {
-  if (isFirebaseConfigured() && db) {
+  // Only staff may write notifications (firestore.rules); a visitor's request already reaches the
+  // team through the leads listener and api/notify.js, so don't send a write that will be refused.
+  if (isFirebaseConfigured() && db && auth?.currentUser) {
     try {
       await addDoc(collection(db, 'notifications'), {
         text,

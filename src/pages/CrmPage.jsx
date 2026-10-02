@@ -9,7 +9,7 @@ import DemandsManagerPanel from '../components/crm/DemandsManagerPanel';
 import FounderCmsPanel from '../components/crm/FounderCmsPanel';
 import AreaManagerPanel from '../components/crm/AreaManagerPanel';
 import AdCampaignsPanel from '../components/crm/AdCampaignsPanel';
-import ClientErrorsPanel from '../components/crm/ClientErrorsPanel';
+import SystemSection, { RestrictedSection } from '../components/crm/SystemSection';
 import { announceNewLeads } from '../utils/newLeadAlerts';
 import { RemoteInspectionsPanel, TradeInsPanel } from '../components/crm/ExpatIntakePanels';
 import GoLiveWizardModal from '../components/crm/GoLiveWizardModal';
@@ -615,142 +615,16 @@ export default function CrmPage({
             />
           ) : ['system', 'areas', 'corporate', 'ads'].includes(activeTab) ? (
             activeRole !== 'super_admin' ? (
-              <div style={{
-                background: 'var(--crm-surface-light, var(--crm-card))',
-                border: '1px solid var(--crm-danger-line)',
-                borderRadius: '12px',
-                padding: '40px 24px',
-                textAlign: 'center',
-                maxWidth: '600px',
-                margin: '40px auto'
-              }}>
-                <Lock size={48} style={{ color: 'var(--crm-danger)', margin: '0 auto 16px' }} />
-                <h3 style={{ color: 'var(--crm-ink)', marginBottom: '8px' }}>
-                  {isAr ? 'منطقة صلاحيات مقيدة' : 'Restricted Access'}
-                </h3>
-                <p style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-base)' }}>
-                  {isAr 
-                    ? 'هذا القسم (إدارة النظام والأحياء وهوية المؤسس) متاح حصرياً للمدير العام.' 
-                    : 'This section is strictly restricted to Super Admin.'}
-                </p>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => setActiveTab('dashboard')}
-                  style={{ marginTop: '16px' }}
-                >
-                  {isAr ? 'العودة للوحة الرئيسية' : 'Return to Dashboard'}
-                </button>
-              </div>
+              <RestrictedSection isAr={isAr} onBack={() => setActiveTab('dashboard')} />
             ) : (
-              <div className="crm-system-subcontainer">
-                {/* Clean System Administration Sub-Navigation */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '16px',
-                  background: 'var(--crm-card)',
-                  border: '1px solid var(--crm-line)',
-                  padding: '8px 14px',
-                  borderRadius: '10px',
-                  flexWrap: 'wrap'
-                }}>
-                  <span style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold', color: 'var(--crm-ink)', marginInlineEnd: '8px' }}>
-                    {isAr ? 'أقسام إدارة المنظومة:' : 'System Modules:'}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setSystemSubTab('areas')}
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: '7px',
-                      fontSize: 'var(--crm-text-sm)',
-                      fontWeight: systemSubTab === 'areas' ? 'bold' : '600',
-                      background: systemSubTab === 'areas' ? 'var(--crm-brand-navy)' : 'var(--crm-subtle)',
-                      color: systemSubTab === 'areas' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
-                      border: systemSubTab === 'areas' ? '1px solid var(--crm-brand-navy)' : '1px solid var(--crm-line)',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {isAr ? 'إدارة المناطق والأحياء' : 'Districts CMS'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSystemSubTab('corporate')}
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: '7px',
-                      fontSize: 'var(--crm-text-sm)',
-                      fontWeight: systemSubTab === 'corporate' ? 'bold' : '600',
-                      background: systemSubTab === 'corporate' ? 'var(--crm-brand-navy)' : 'var(--crm-subtle)',
-                      color: systemSubTab === 'corporate' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
-                      border: systemSubTab === 'corporate' ? '1px solid var(--crm-brand-navy)' : '1px solid var(--crm-line)',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {isAr ? 'هوية الشركة والمؤسس (CMS)' : 'Founder & Corporate CMS'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSystemSubTab('backup')}
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: '7px',
-                      fontSize: 'var(--crm-text-sm)',
-                      fontWeight: systemSubTab === 'backup' ? 'bold' : '600',
-                      background: systemSubTab === 'backup' ? 'var(--crm-brand-navy)' : 'var(--crm-subtle)',
-                      color: systemSubTab === 'backup' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
-                      border: systemSubTab === 'backup' ? '1px solid var(--crm-brand-navy)' : '1px solid var(--crm-line)',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {isAr ? 'النسخ الاحتياطي والبيانات' : 'Backups & Restore'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSystemSubTab('automation')}
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: '7px',
-                      fontSize: 'var(--crm-text-sm)',
-                      fontWeight: systemSubTab === 'automation' ? 'bold' : '600',
-                      background: systemSubTab === 'automation' ? 'var(--crm-brand-navy)' : 'var(--crm-subtle)',
-                      color: systemSubTab === 'automation' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
-                      border: systemSubTab === 'automation' ? '1px solid var(--crm-brand-navy)' : '1px solid var(--crm-line)',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {isAr ? 'الأتمتة والتنبيهات' : 'Automations'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSystemSubTab('errors')}
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: '7px',
-                      fontSize: 'var(--crm-text-sm)',
-                      fontWeight: systemSubTab === 'errors' ? 'bold' : '600',
-                      background: systemSubTab === 'errors' ? 'var(--crm-brand-navy)' : 'var(--crm-subtle)',
-                      color: systemSubTab === 'errors' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
-                      border: systemSubTab === 'errors' ? '1px solid var(--crm-brand-navy)' : '1px solid var(--crm-line)',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {isAr ? 'أخطاء الموقع' : 'Site errors'}
-                  </button>
-                </div>
-
-                {systemSubTab === 'areas' && (
-                  <AreaManagerPanel lang={lang} triggerToast={triggerToast} properties={properties} leads={leads} />
-                )}
-                {systemSubTab === 'corporate' && (
-                  <FounderCmsPanel lang={lang} triggerToast={triggerToast} />
-                )}
-                {systemSubTab === 'errors' && (
-                  <ClientErrorsPanel lang={lang} triggerToast={triggerToast} />
-                )}
-                {(systemSubTab === 'backup' || systemSubTab === 'automation') && (
+              <SystemSection
+                lang={lang}
+                triggerToast={triggerToast}
+                properties={properties}
+                leads={leads}
+                subTab={systemSubTab}
+                setSubTab={setSystemSubTab}
+                renderAdminPanel={(adminTab) => (
                   <CrmAdminPanel
                     leads={leads}
                     setLeads={setLeads}
@@ -761,7 +635,7 @@ export default function CrmPage({
                     userRole={activeRole}
                     activeRole={activeRole}
                     onRoleChange={setSelectedRole}
-                    adminTab={systemSubTab === 'backup' ? 'system_backup' : 'automation'}
+                    adminTab={adminTab}
                     onSwitchTab={setActiveTab}
                     handleCrmLogout={onLogout || (() => setCrmAuthenticated(false))}
                     triggerToast={triggerToast}
@@ -778,7 +652,7 @@ export default function CrmPage({
                     onSwitchToCorporate={() => setActiveTab('corporate')}
                   />
                 )}
-              </div>
+              />
             )
           ) : (
             /* For 'dashboard', 'leads', 'kanban', 'matching', 'financials', 'analytics' */

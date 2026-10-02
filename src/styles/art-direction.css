@@ -720,10 +720,6 @@
     box-shadow: var(--shadow-subtle);
 }
 
-.section-pill-tag .section-pill-icon {
-    color: var(--gold) !important;
-}
-
 .dark-theme .section-pill-tag {
     background: rgba(255, 255, 255, 0.08);
     border-color: rgba(179, 138, 69, 0.2);
@@ -831,8 +827,7 @@
 }
 
 /* Numerals in Arabic context should use Eastern Arabic or Western consistently */
-[dir="rtl"] .price-num-row,
-[dir="rtl"] .price-val {
+[dir="rtl"] .price-num-row {
     direction: ltr;
     unicode-bidi: embed;
     text-align: left;
