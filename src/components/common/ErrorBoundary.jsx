@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import { reportError } from '../../utils/errorReporter';
 
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -28,6 +29,8 @@ export default class ErrorBoundary extends React.Component {
         return;
       }
     }
+    // A crash that shows the fallback screen to a visitor (stale chunks after a deploy reload above)
+    reportError('crash', { message: msg, stack: `${error?.stack || ''}\n--- component stack ---${errorInfo?.componentStack || ''}` });
   }
 
   handleReload = () => {

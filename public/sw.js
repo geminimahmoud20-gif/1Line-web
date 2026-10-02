@@ -2,7 +2,7 @@
 //  1LINE SOLUTIONS SOHAG - SERVICE WORKER (PWA & OFFLINE RESILIENCE)
 // =============================================================
 
-const CACHE_NAME = 'oneline-sohag-v11';
+const CACHE_NAME = 'oneline-sohag-v12';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
@@ -38,13 +38,10 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
 
-  // Skip cross-origin Firebase, analytics, real-time Firestore, or Storage requests
-  if (url.origin.includes('firestore.googleapis.com') || 
-      url.origin.includes('firebaseio.com') ||
-      url.origin.includes('identitytoolkit.googleapis.com') ||
-      url.origin.includes('firebasestorage.googleapis.com')) {
-    return;
-  }
+  // Same-origin only. Cross-origin responses (Firebase, images, fonts, analytics, reCAPTCHA) are
+  // never cached below anyway (type !== 'basic'), and proxying them through the worker would put
+  // them under the worker's own fetch policy instead of the page's.
+  if (url.origin !== self.location.origin) return;
 
   // Network-first strategy for navigation (HTML pages) to ensure instant updates
   if (event.request.mode === 'navigate') {

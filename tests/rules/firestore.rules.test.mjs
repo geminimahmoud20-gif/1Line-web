@@ -292,3 +292,20 @@ test('ad stats: +1 steps only, and only for published campaigns', async () => {
   });
   await assertSucceeds(setDoc(doc(g, 'ad_stats/ad-2'), { impressions: 1, clicks: 0 }));
 });
+
+// ── Site error log ───────────────────────────────────────────────────────
+test('client errors: anyone files a bounded entry; only the admin reads or clears', async () => {
+  const entry = { kind: 'error', message: 'x is not a function', source: 'https://site/assets/a.js', line: 1, col: 2,
+    stack: 'at a', path: '/sell', ua: 'UA', release: 'abc123', createdAt: serverTimestamp() };
+  const g = guest();
+  await assertSucceeds(setDoc(doc(g, 'client_errors/e1'), entry));
+  await assertFails(setDoc(doc(g, 'client_errors/e2'), { ...entry, kind: 'other' }));
+  await assertFails(setDoc(doc(g, 'client_errors/e3'), { ...entry, message: 'm'.repeat(501) }));
+  await assertFails(setDoc(doc(g, 'client_errors/e4'), { ...entry, phone: '01000000000' }));
+  await assertFails(setDoc(doc(g, 'client_errors/e5'), { ...entry, createdAt: new Date('2020-01-01') }));
+  await assertFails(setDoc(doc(g, 'client_errors/e1'), { ...entry, message: 'edited' }));
+  await assertFails(getDoc(doc(g, 'client_errors/e1')));
+  await assertFails(getDoc(doc(as('sales_manager'), 'client_errors/e1')));
+  await assertSucceeds(getDoc(doc(asAdmin(), 'client_errors/e1')));
+  await assertSucceeds(deleteDoc(doc(asAdmin(), 'client_errors/e1')));
+});

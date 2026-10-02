@@ -10,6 +10,7 @@
 export * from './services/catalog.js';
 export * from './services/cmsMedia.js';
 export * from './services/adStats.js';
+export * from './services/clientErrors.js';
 export * from './services/leads.js';
 export * from './services/deals.js';
 export * from './services/notifications.js';
