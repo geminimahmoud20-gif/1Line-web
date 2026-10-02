@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Menu, Search, X, Plus, ChevronDown, Bell, ShieldCheck, Lock, Rocket, Globe, LogOut, Users, Building, Zap, Sparkles, CheckCircle2, AlertTriangle, ArrowRight, ArrowLeft } from 'lucide-react';
 import { CRM_ROLES } from './crmRoles';
+import { desktopAlertsSupported, desktopAlertsEnabled, enableDesktopAlerts } from '../../utils/newLeadAlerts';
 
 export default function CrmTopbar({
   isAr = true,
@@ -24,6 +25,7 @@ export default function CrmTopbar({
 }) {
   const [showQuickActionMenu, setShowQuickActionMenu] = useState(false);
   const [showNotifMenu, setShowNotifMenu] = useState(false);
+  const [desktopAlerts, setDesktopAlerts] = useState(desktopAlertsEnabled);
   const quickActionRef = useRef(null);
   const notifRef = useRef(null);
   const searchRef = useRef(null);
@@ -496,6 +498,16 @@ export default function CrmTopbar({
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {desktopAlertsSupported() && !desktopAlerts && (
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    onClick={async () => setDesktopAlerts(await enableDesktopAlerts())}
+                    style={{ justifyContent: 'center', fontSize: 'var(--crm-text-xs)' }}
+                  >
+                    <Bell size={13} /> {isAr ? 'فعّل إشعار سطح المكتب للعملاء الجدد' : 'Turn on desktop alerts for new leads'}
+                  </button>
+                )}
                 {pendingDemands.length > 0 ? (
                   <div
                     onClick={() => { setActiveTab('demands'); setShowNotifMenu(false); }}

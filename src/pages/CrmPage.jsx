@@ -10,6 +10,7 @@ import FounderCmsPanel from '../components/crm/FounderCmsPanel';
 import AreaManagerPanel from '../components/crm/AreaManagerPanel';
 import AdCampaignsPanel from '../components/crm/AdCampaignsPanel';
 import ClientErrorsPanel from '../components/crm/ClientErrorsPanel';
+import { announceNewLeads } from '../utils/newLeadAlerts';
 import { RemoteInspectionsPanel, TradeInsPanel } from '../components/crm/ExpatIntakePanels';
 import GoLiveWizardModal from '../components/crm/GoLiveWizardModal';
 import CrmSidebar from '../components/crm/CrmSidebar';
@@ -135,6 +136,11 @@ export default function CrmPage({
       localStorage.setItem('oneline_crm_sidebar_width', String(newWidth));
     } catch { /* storage unavailable — width isn't remembered */ }
   }, []);
+
+  // New lead in the live list → chime, toast and (if allowed) a desktop notification
+  useEffect(() => {
+    if (crmAuthenticated) announceNewLeads(leads, { isAr: lang === 'ar', toast: triggerToast });
+  }, [leads, crmAuthenticated, lang, triggerToast]);
 
   // Keyboard shortcut Ctrl+B or Cmd+B to toggle sidebar collapse
   useEffect(() => {

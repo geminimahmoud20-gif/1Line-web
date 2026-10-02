@@ -4,6 +4,7 @@ import { enqueuePendingLead, readPendingLeads, writePendingLeads } from '../util
 import { collection, getDocs, getDoc, doc, query, where, orderBy, limit, onSnapshot, serverTimestamp, writeBatch, deleteField, documentId } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { getUserClaims } from './auth.js';
+import { notifyStaff } from './staffNotify.js';
 
 // ===================== LEADS & OFFLINE SYNC QUEUE =====================
 
@@ -50,6 +51,7 @@ const writeLead = async (rawLead, extra = {}) => {
     batch.set(doc(db, 'leads', id), payload);
     batch.set(doc(db, 'lead_contacts', id), { ...contact, assignedTo: deskOf(payload) });
     await batch.commit();
+    notifyStaff('leads', id);
     return { ...rawLead, id };
   };
   const appId = rawLead?.id;
