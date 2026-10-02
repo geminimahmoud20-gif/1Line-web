@@ -2,7 +2,7 @@ import { db, auth } from '../firebase.js';
 
 import { collection, doc, setDoc, query, where, limit, onSnapshot, writeBatch, deleteField } from 'firebase/firestore';
 
-import { ADMIN_USER_IDS } from './auth.js';
+import { getUserClaims } from './auth.js';
 
 // ── Request contacts (demands, remote inspections, trade-ins) ───────────────────
 // The client's phone/whatsapp/email go to request_contacts/{kind}__{id}, readable only by roles
@@ -33,8 +33,8 @@ export const contactAccess = async () => {
   const user = auth?.currentUser;
   if (!user) return { seesContacts: false, isManager: false };
   try {
-    const claims = (await user.getIdTokenResult()).claims || {};
-    const isManager = claims.admin === true || ADMIN_USER_IDS.has(user.uid) || MANAGER_ROLES.includes(claims.role);
+    const claims = await getUserClaims(user);
+    const isManager = claims.admin === true || MANAGER_ROLES.includes(claims.role);
     return { seesContacts: isManager || CONTACT_ROLES.includes(claims.role), isManager };
   } catch {
     return { seesContacts: false, isManager: false };

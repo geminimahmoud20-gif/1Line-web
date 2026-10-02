@@ -3,7 +3,7 @@ import { DESK_BY_ROLE, UNASSIGNED_DESK } from '../utils/rbacRules.js';
 import { enqueuePendingLead, readPendingLeads, writePendingLeads } from '../utils/leadQueue.js';
 import { collection, getDocs, getDoc, doc, query, where, orderBy, limit, onSnapshot, serverTimestamp, writeBatch, deleteField, documentId } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
-import { ADMIN_USER_IDS } from './auth.js';
+import { getUserClaims } from './auth.js';
 
 // ===================== LEADS & OFFLINE SYNC QUEUE =====================
 
@@ -250,11 +250,11 @@ export const subscribeToLeads = (callback, maxCount = 150) => {
       }
       let claims = {};
       try {
-        claims = (await user.getIdTokenResult()).claims || {};
+        claims = await getUserClaims(user);
       } catch { /* treat as no desk; rules decide */ }
       if (version !== authVersion) return; // a newer auth change already took over
       const desk = DESK_BY_ROLE[claims.role] || null;
-      const seesAllContacts = claims.admin === true || ADMIN_USER_IDS.has(user.uid)
+      const seesAllContacts = claims.admin === true
         || ['admin', 'super_admin', 'sales_manager'].includes(claims.role);
       unsubSnapshot = listen(desk, desk ? 'desk' : (seesAllContacts ? 'all' : null));
     });

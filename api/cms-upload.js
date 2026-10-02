@@ -34,8 +34,7 @@ const uploadMode = () => {
   return null;
 };
 
-// Same tests as firestore.rules isAdmin() / isInventoryEditor() and ADMIN_USER_IDS in src/services/auth.js
-const ADMIN_USER_IDS = new Set(['dB6GM2RoPQRE0iksDnqcdvUKgXy2']);
+// Same tests as firestore.rules isAdmin() / isInventoryEditor() (custom claims only)
 const INVENTORY_ROLES = ['sales_manager', 'property_manager'];
 
 // Videos (homepage hero): admins only. Images (property photos): admins + inventory editors.
@@ -49,7 +48,7 @@ const verifyUploader = async (idToken, kind) => {
   } catch {
     throw new Error('not-admin'); // bad signature, expired, wrong project, malformed…
   }
-  const isAdmin = ADMIN_USER_IDS.has(payload.sub) || payload.admin === true || payload.role === 'admin' || payload.role === 'super_admin';
+  const isAdmin = payload.admin === true || payload.role === 'admin' || payload.role === 'super_admin';
   const allowed = isAdmin || (kind === 'image' && INVENTORY_ROLES.includes(payload.role));
   if (!allowed) throw new Error('not-admin');
   return payload.sub;

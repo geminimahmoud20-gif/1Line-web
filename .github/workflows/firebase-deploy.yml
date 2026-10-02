@@ -5,18 +5,19 @@
 # How to run (pushing a branch is the trigger, so it works before this file reaches main):
 #   deploy/firebase-rules    → rules tests on the emulator, then publish rules + indexes (scripts/deploy-firestore.mjs)
 #   deploy/firebase-migrate  → migration dry run, then move inline phones into lead/request contacts
+#   deploy/firebase-admin    → give the owner account the super_admin claim (scripts/ensure-admin-claim.mjs)
 # Once on main it can also be started from the Actions tab (Run workflow).
 name: Firebase deploy
 
 on:
   push:
-    branches: ['deploy/firebase-rules', 'deploy/firebase-migrate']
+    branches: ['deploy/firebase-rules', 'deploy/firebase-migrate', 'deploy/firebase-admin']
   workflow_dispatch:
     inputs:
       task:
         description: What to run
         type: choice
-        options: [rules, migrate]
+        options: [rules, migrate, admin]
         default: rules
 
 concurrency:
@@ -25,7 +26,9 @@ concurrency:
 
 env:
   FIREBASE_PROJECT: line-c9601
-  TASK: ${{ github.event_name == 'workflow_dispatch' && inputs.task || (github.ref_name == 'deploy/firebase-migrate' && 'migrate' || 'rules') }}
+  TASK: ${{ github.event_name == 'workflow_dispatch' && inputs.task || (github.ref_name == 'deploy/firebase-migrate' && 'migrate' || (github.ref_name == 'deploy/firebase-admin' && 'admin' || 'rules')) }}
+  # Owner account (Firebase Auth user ID — an identifier, not a secret)
+  ADMIN_UID: dB6GM2RoPQRE0iksDnqcdvUKgXy2
 
 jobs:
   deploy:
@@ -83,6 +86,12 @@ jobs:
       - name: Migration (apply)
         if: env.TASK == 'migrate'
         run: node scripts/migrate-lead-contacts.mjs --apply
+
+      - name: Owner admin claim
+        if: env.TASK == 'admin'
+        run: |
+          npm install --no-save firebase-admin@13
+          node scripts/ensure-admin-claim.mjs
 
       - name: Remove key
         if: always()
