@@ -2,6 +2,7 @@ import { db, auth, isFirebaseConfigured } from '../firebase.js';
 
 import { collection, getDocs, getDoc, updateDoc, deleteDoc, doc, setDoc, query, orderBy, limit, onSnapshot, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
+import { notifyStaff } from './staffNotify.js';
 import { createRequestWithContact, splitRequestFields, updateRequestContact, withRequestContacts, requestContactRef } from './requestContacts.js';
 
 // ===================== DEMANDS =====================
@@ -20,6 +21,7 @@ export const saveDemand = async (demand) => {
       const hasId = demand.id !== undefined && demand.id !== null && demand.id !== '';
       const id = hasId ? String(demand.id) : doc(collection(db, 'demands')).id;
       await createRequestWithContact('demands', id, payload);
+      notifyStaff('demands', id);
       if (payload.status === 'published') await syncPublicDemand(id);
       return { ...demand, id };
     } catch (error) {

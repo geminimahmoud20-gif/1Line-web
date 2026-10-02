@@ -2,6 +2,7 @@ import { db, isFirebaseConfigured } from '../firebase.js';
 
 import { collection, updateDoc, doc, query, orderBy, limit, onSnapshot, serverTimestamp } from 'firebase/firestore';
 
+import { notifyStaff } from './staffNotify.js';
 import { createRequestWithContact, splitRequestFields, updateRequestContact, withRequestContacts } from './requestContacts.js';
 
 // ===================== EXPAT & TRADE-IN INTAKE =====================
@@ -18,6 +19,7 @@ export const submitIntakeRecord = async (collectionName, record) => {
   try {
     const payload = { ...record, status: 'new', createdAt: serverTimestamp() };
     const id = await createRequestWithContact(collectionName, doc(collection(db, collectionName)).id, payload);
+    notifyStaff(collectionName, id);
     return { ...record, id, status: 'new' };
   } catch (error) {
     console.error(`Firebase submitIntakeRecord [${collectionName}] error:`, error);

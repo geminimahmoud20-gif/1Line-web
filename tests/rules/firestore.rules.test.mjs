@@ -309,3 +309,20 @@ test('client errors: anyone files a bounded entry; only the admin reads or clear
   await assertSucceeds(getDoc(doc(asAdmin(), 'client_errors/e1')));
   await assertSucceeds(deleteDoc(doc(asAdmin(), 'client_errors/e1')));
 });
+
+// ── api/notify.js against the emulator (REST reads + once-only claim) ──
+test('notify: reads the stored record over REST and claims each record once', async () => {
+  const { firestore } = await import('../../api/notify.js');
+  const db = firestore({ project_id: 'demo-1line-rules' });
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'leads/n1'), { name: 'نادر', type: 'buyer', assignedTo: 'Sales Team A', details: { area: 'الكوثر', budget: 2000000 }, createdAt: serverTimestamp() });
+  });
+  const rec = await db.readRecord('leads', 'n1');
+  if (rec.data.name !== 'نادر' || rec.data.details.area !== 'الكوثر' || rec.data.details.budget !== 2000000) throw new Error(`decoded ${JSON.stringify(rec.data)}`);
+  if (!(Date.now() - rec.createdAtMs < 60_000)) throw new Error(`createdAtMs ${rec.createdAtMs}`);
+  if ((await db.readRecord('leads', 'missing')) !== null) throw new Error('missing record should be null');
+  if ((await db.claimOnce('leads', 'n1')) !== true) throw new Error('first claim should win');
+  if ((await db.claimOnce('leads', 'n1')) !== false) throw new Error('second claim should lose');
+  // nobody reaches the log through the SDK
+  await assertFails(getDoc(doc(asAdmin(), 'notify_log/leads__n1')));
+});
