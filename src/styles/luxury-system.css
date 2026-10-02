@@ -181,7 +181,7 @@ p {
 }
 
 /* Tabular figures for prices and stats */
-.price-val, .price-main-display, [class*="price"] bdi, [class*="stat"] strong, [class*="ticker"] {
+.price-val, [class*="price"] bdi, [class*="stat"] strong, [class*="ticker"] {
   font-variant-numeric: tabular-nums;
 }
 
@@ -1035,15 +1035,6 @@ button.sidebar-deposit-banner .deposit-banner-left > span { display: flex; flex-
 }
 
 /* ── §11 Cards: restrained badges ─────────────────────────── */
-.property-card-modern .property-badge {
-  font-weight: 500 !important;
-  backdrop-filter: blur(6px);
-}
-.property-card-modern .property-badge.badge-verified {
-  background: rgba(8, 18, 33, 0.72) !important;
-  color: #F3EBDD !important;
-  border: 1px solid rgba(217, 185, 126, 0.35) !important;
-}
 
 /* ── §12 Mobile: wizard actions never overflow the viewport ── */
 .wizard-actions-bar { flex-wrap: wrap; gap: 12px; }
@@ -1067,7 +1058,7 @@ button.sidebar-deposit-banner .deposit-banner-left > span { display: flex; flex-
 
 /* Touch targets on mobile */
 @media (pointer: coarse) {
-  .card-circle-btn, .carousel-arrow, .utility-sub-btn, .modal-close-btn, .drawer-close-btn {
+  .utility-sub-btn, .modal-close-btn, .drawer-close-btn {
     min-width: 44px;
     min-height: 44px;
   }

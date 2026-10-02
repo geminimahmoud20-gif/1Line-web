@@ -236,3 +236,56 @@ test('request contacts: a manager migrates an inline demand phone', async () => 
   b.update(doc(mgr, 'demands/p1'), { phone: deleteField() });
   await assertSucceeds(b.commit());
 });
+
+// ── Audit logs ───────────────────────────────────────────────────────────
+const auditEntry = (uid, email, overrides = {}) => {
+  const base = {
+    actorId: uid, actorUid: uid, actorEmail: email,
+    action: 'LEAD_CLAIMED', type: 'LEAD_CLAIMED', actionType: 'LEAD_CLAIMED',
+    entityType: 'leads', targetCollection: 'leads', entityId: 'a', targetId: 'a',
+    before: null, after: null, ipHashOrMetadata: {}, details: {}, metadata: {},
+    createdAt: new Date().toISOString(), timestamp: serverTimestamp()
+  };
+  return { ...base, ...overrides };
+};
+
+test('audit logs: staff log only as themselves, with the server time, and never edit', async () => {
+  const email = 'east@1line.test';
+  const east = env.authenticatedContext('u-east', { role: 'agent_east', email }).firestore();
+  await assertSucceeds(setDoc(doc(east, 'audit_logs/ok'), auditEntry('u-east', email)));
+  // someone else's name, a made-up email, a back-dated time, extra fields
+  await assertFails(setDoc(doc(east, 'audit_logs/x1'), auditEntry('u-other', email)));
+  await assertFails(setDoc(doc(east, 'audit_logs/x2'), auditEntry('u-east', email, { actorUid: 'u-other' })));
+  await assertFails(setDoc(doc(east, 'audit_logs/x3'), auditEntry('u-east', 'admin@1line.com')));
+  await assertFails(setDoc(doc(east, 'audit_logs/x4'), auditEntry('u-east', email, { timestamp: new Date('2020-01-01') })));
+  await assertFails(setDoc(doc(east, 'audit_logs/x5'), auditEntry('u-east', email, { forged: true })));
+  await assertFails(setDoc(doc(east, 'audit_logs/x6'), auditEntry('u-east', email, { type: 'OTHER' })));
+  // immutable, admin-only reads, no guests
+  await assertFails(setDoc(doc(east, 'audit_logs/ok'), { action: 'X' }, { merge: true }));
+  await assertFails(deleteDoc(doc(east, 'audit_logs/ok')));
+  await assertFails(getDoc(doc(east, 'audit_logs/ok')));
+  await assertFails(setDoc(doc(guest(), 'audit_logs/g'), auditEntry('anon', '')));
+  await assertSucceeds(getDoc(doc(env.authenticatedContext(ADMIN_UID, {}).firestore(), 'audit_logs/ok')));
+});
+
+// ── Ad stats ─────────────────────────────────────────────────────────────
+test('ad stats: +1 steps only, and only for published campaigns', async () => {
+  const g = guest();
+  // no campaigns published yet → nothing to count
+  await assertFails(setDoc(doc(g, 'ad_stats/ad-1'), { impressions: 1, clicks: 0 }));
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'settings/ad_campaigns'), { campaigns: [{ id: 'ad-1' }], campaignIds: ['ad-1'] });
+  });
+  await assertSucceeds(setDoc(doc(g, 'ad_stats/ad-1'), { impressions: 1, clicks: 0 }));
+  await assertSucceeds(setDoc(doc(g, 'ad_stats/ad-1'), { impressions: 2, clicks: 1 }));
+  await assertFails(setDoc(doc(g, 'ad_stats/ad-1'), { impressions: 500, clicks: 1 }));
+  await assertFails(setDoc(doc(g, 'ad_stats/ad-1'), { impressions: 1, clicks: 1 }));
+  await assertFails(setDoc(doc(g, 'ad_stats/junk-id'), { impressions: 1, clicks: 0 }));
+  await assertFails(getDoc(doc(g, 'ad_stats/ad-1')));
+  await assertSucceeds(getDoc(doc(as('viewer'), 'ad_stats/ad-1')));
+  // settings saved by an older build (no campaignIds) still count
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'settings/ad_campaigns'), { campaigns: [{ id: 'ad-2' }] });
+  });
+  await assertSucceeds(setDoc(doc(g, 'ad_stats/ad-2'), { impressions: 1, clicks: 0 }));
+});

@@ -186,8 +186,29 @@ service cloud.firestore {
     }
 
     // 📜 5. AUDIT LOGS (immutable)
+    // Entries can't be forged in someone else's name or back-dated: the actor is the signed-in
+    // account (uid + token email) and `timestamp` is the server's clock. Written by logAuditEvent()
+    // in src/services/auth.js.
     match /audit_logs/{logId} {
-      allow create: if isStaff();
+      function auditCode(data, field, maxLen) {
+        return data[field] is string && data[field].size() > 0 && data[field].size() <= maxLen;
+      }
+      function validAuditEntry(data) {
+        return data.keys().hasOnly(['actorId', 'actorUid', 'actorEmail', 'action', 'type', 'actionType',
+                                    'entityType', 'targetCollection', 'entityId', 'targetId',
+                                    'before', 'after', 'ipHashOrMetadata', 'details', 'metadata',
+                                    'createdAt', 'timestamp'])
+          && data.actorId == request.auth.uid
+          && data.actorUid == request.auth.uid
+          && data.actorEmail == request.auth.token.get('email', '')
+          && data.timestamp == request.time
+          && auditCode(data, 'action', 64) && data.action.matches('^[A-Z0-9_]+$')
+          && data.type == data.action && data.actionType == data.action
+          && auditCode(data, 'entityType', 64) && data.targetCollection == data.entityType
+          && auditCode(data, 'entityId', 20000) && data.targetId == data.entityId
+          && data.createdAt is string && data.createdAt.size() <= 40;
+      }
+      allow create: if isStaff() && validAuditEntry(request.resource.data);
       allow read: if isAdmin();
       allow update, delete: if false;
     }
@@ -213,14 +234,26 @@ service cloud.firestore {
 
     // 📊 8b. AD CAMPAIGN COUNTERS — visitors may only add +1 to impressions or clicks.
     // Campaign definitions live in settings/ad_campaigns (admin write).
+    // Counters exist only for campaigns the admin has published: saveCampaigns() writes their ids to
+    // settings/ad_campaigns.campaignIds (docs saved before that field existed accept any id until the
+    // next save). Repeat counting from one browser is held back client-side (trackAd); scripts that
+    // skip the site are what App Check enforcement blocks.
     match /ad_stats/{adId} {
+      function adSettings() {
+        return /databases/$(database)/documents/settings/ad_campaigns;
+      }
+      function isPublishedCampaign() {
+        return exists(adSettings())
+            && (!('campaignIds' in get(adSettings()).data) || adId in get(adSettings()).data.campaignIds);
+      }
       allow read: if isStaff();
-      allow create: if adId.matches('^[A-Za-z0-9_-]{3,64}$')
+      allow create: if adId.matches('^[A-Za-z0-9_-]{3,64}$') && isPublishedCampaign()
                     && request.resource.data.keys().hasOnly(['impressions', 'clicks'])
                     && request.resource.data.impressions is int && request.resource.data.clicks is int
                     && request.resource.data.impressions >= 0 && request.resource.data.impressions <= 1
                     && request.resource.data.clicks >= 0 && request.resource.data.clicks <= 1;
-      allow update: if request.resource.data.keys().hasOnly(['impressions', 'clicks'])
+      allow update: if isPublishedCampaign()
+                    && request.resource.data.keys().hasOnly(['impressions', 'clicks'])
                     && request.resource.data.impressions >= resource.data.impressions
                     && request.resource.data.impressions <= resource.data.impressions + 1
                     && request.resource.data.clicks >= resource.data.clicks

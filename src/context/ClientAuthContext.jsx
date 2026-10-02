@@ -233,7 +233,9 @@ export function ClientAuthProvider({
       verified: true,
       verifiedAt: nowIso,
       verificationToken: sessionToUse.token,
-      verificationMethod: 'whatsapp_handshake',
+      // Nothing has checked the number yet: the team confirms it when the WhatsApp message with
+      // this code arrives from the same number. `verified` only unlocks favourites on this device.
+      verificationMethod: 'whatsapp_pending',
       role: 'verified_client'
     };
 
@@ -256,9 +258,9 @@ export function ClientAuthProvider({
           email: verifiedAccount.email,
           whatsapp: verifiedAccount.whatsapp,
           phone: verifiedAccount.whatsapp,
-          source: 'client_account_verified',
+          source: 'client_account',
           type: 'buyer',
-          notes: `حساب عميل موثق ومفعل عبر الواتساب (كود: ${verifiedAccount.verificationToken} | ${verifiedAccount.countryFlag} ${verifiedAccount.country}) لتفعيل المفضلة والمقارنات الذكية`
+          notes: `سجّل حساب عميل على الموقع (المفضلة والمقارنات). الرقم لسه متأكدش: لو وصلت رسالة واتساب فيها الكود ${verifiedAccount.verificationToken} من نفس الرقم يبقى الرقم صحيح. (${verifiedAccount.countryFlag} ${verifiedAccount.country})`
         }));
       } catch (err) {
         console.warn('Auto CRM lead sync warning:', err);

@@ -606,38 +606,6 @@
   background: none;
   cursor: zoom-in;
 }
-.card-price-overlay { display: none !important; }
-
-.card-price-row {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 2px 12px;
-  margin-bottom: 10px;
-}
-.card-price-main { display: inline-flex; align-items: baseline; gap: 6px; }
-.card-price-val {
-  font-size: 1.38rem;
-  font-weight: 800;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-  color: var(--hx-navy);
-}
-.card-price-curr { font-size: 0.82rem; font-weight: 600; color: var(--hx-muted); }
-.card-price-meter { font-size: 0.8rem; color: #64748B; font-weight: 500; }
-.card-price-converted { flex-basis: 100%; font-size: 0.76rem; color: var(--hx-muted); }
-:root[data-theme="dark"] .card-price-val,
-.dark-theme .card-price-val { color: #F8FAFC; }
-:root[data-theme="dark"] .card-price-meter,
-.dark-theme .card-price-meter { color: #94A3B8; }
-
-.property-card-modern .property-decision-core {
-  background: #F8FAFC;
-  border: 1px solid var(--hx-line);
-  border-radius: 12px;
-}
-:root[data-theme="dark"] .property-card-modern .property-decision-core,
-.dark-theme .property-card-modern .property-decision-core { background: rgba(255, 255, 255, 0.04); }
 
 .property-card-modern {
   transition: box-shadow var(--hx-dur) var(--hx-ease), transform var(--hx-dur) var(--hx-ease), border-color var(--hx-dur) var(--hx-ease);
@@ -2079,325 +2047,11 @@
 /* ══════════════════════════════════════════════════════════════════
    🏛️ SOVEREIGN CONSULTATION AUTHORITY & PRIVATE DESK SECTION
    ══════════════════════════════════════════════════════════════════ */
-.consultation-authority-section {
-  background: #030812;
-  color: #FFFFFF;
-  padding: 80px 0 100px;
-  position: relative;
-  overflow: hidden;
-}
-
-.consultation-ambient-backdrop {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 900px;
-  max-width: 100%;
-  height: 400px;
-  background: radial-gradient(ellipse at 50% 0%, rgba(197, 160, 89, 0.16) 0%, rgba(11, 23, 40, 0) 70%);
-  pointer-events: none;
-  z-index: 1;
-}
-
-.consultation-navy-surface {
-  max-width: 1140px;
-  margin: 0 auto;
-  padding: 56px 48px;
-  border-radius: 28px;
-  background: linear-gradient(145deg, rgba(14, 27, 48, 0.94) 0%, rgba(7, 15, 28, 0.98) 100%);
-  border: 1px solid rgba(197, 160, 89, 0.28);
-  box-shadow: 0 24px 60px -15px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 0 45px rgba(197, 160, 89, 0.08);
-  position: relative;
-  z-index: 2;
-  overflow: hidden;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-}
-
-.consultation-watermark-emblem {
-  position: absolute;
-  bottom: -25px;
-  left: -10px;
-  font-size: 140px;
-  font-weight: 900;
-  color: rgba(197, 160, 89, 0.035);
-  user-select: none;
-  pointer-events: none;
-  font-family: var(--font-number, 'Outfit', 'Inter', sans-serif);
-  line-height: 1;
-}
-
-[dir="ltr"] .consultation-watermark-emblem {
-  left: auto;
-  right: -10px;
-}
-
-.consultation-content-wrap {
-  position: relative;
-  z-index: 2;
-  max-width: 860px;
-  margin: 0;
-  text-align: start;
-}
-
-.consultation-pill-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  padding: 7px 18px;
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.32);
-  border-radius: 999px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: #34D399;
-  margin-bottom: 22px;
-  width: fit-content;
-  backdrop-filter: blur(8px);
-}
-
-.consultation-beacon-dot {
-  position: relative;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #10B981;
-  flex-shrink: 0;
-}
-
-.consultation-beacon-ping {
-  position: absolute;
-  inset: -3px;
-  border-radius: 50%;
-  background: rgba(16, 185, 129, 0.6);
-  animation: beaconPulse 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-}
 
 @keyframes beaconPulse {
   0% { transform: scale(1); opacity: 0.9; }
   70% { transform: scale(2.4); opacity: 0; }
   100% { transform: scale(2.4); opacity: 0; }
-}
-
-.consultation-main-statement {
-  font-size: clamp(1.85rem, 3.8vw, 2.65rem);
-  font-weight: 900;
-  line-height: 1.25;
-  color: #FFFFFF;
-  margin-bottom: 18px;
-  letter-spacing: -0.015em;
-}
-
-.consultation-gold-gradient {
-  background: linear-gradient(135deg, #F8ECD1 0%, #ECC875 50%, #C5A059 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  display: inline;
-}
-
-.consultation-sub-statement {
-  font-size: 1.05rem;
-  color: #94A3B8;
-  line-height: 1.8;
-  max-width: 760px;
-  margin-bottom: 32px;
-}
-
-.consultation-pillars-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  margin-bottom: 34px;
-}
-
-.consultation-pillar-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  transition: all 0.25s ease;
-}
-
-.consultation-pillar-item:hover {
-  background: rgba(197, 160, 89, 0.06);
-  border-color: rgba(197, 160, 89, 0.35);
-  transform: translateY(-2px);
-}
-
-.consultation-pillar-icon-box {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: rgba(197, 160, 89, 0.12);
-  border: 1px solid rgba(197, 160, 89, 0.28);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ECC875;
-  flex-shrink: 0;
-}
-
-.consultation-pillar-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  text-align: start;
-  min-width: 0;
-}
-
-.consultation-pillar-title {
-  font-size: 0.88rem;
-  font-weight: 800;
-  color: #F1F5F9;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.consultation-pillar-desc {
-  font-size: 0.74rem;
-  font-weight: 500;
-  color: #94A3B8;
-  line-height: 1.35;
-}
-
-.consultation-actions-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
-}
-
-.consultation-actions-row .btn-consultation-primary {
-  background: linear-gradient(135deg, #ECC875 0%, #C5A059 100%) !important;
-  color: #060E1A !important;
-  font-weight: 800;
-  font-size: 0.96rem;
-  padding: 14px 28px;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(197, 160, 89, 0.32);
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.consultation-actions-row .btn-consultation-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(197, 160, 89, 0.45);
-}
-
-.consultation-actions-row .btn-consultation-secondary {
-  background: rgba(255, 255, 255, 0.04) !important;
-  border: 1px solid rgba(197, 160, 89, 0.35) !important;
-  color: #F8ECD1 !important;
-  font-weight: 700;
-  font-size: 0.94rem;
-  padding: 14px 26px;
-  border-radius: 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  backdrop-filter: blur(8px);
-  transition: all 0.25s ease;
-}
-
-.consultation-actions-row .btn-consultation-secondary:hover {
-  background: rgba(197, 160, 89, 0.12) !important;
-  border-color: rgba(197, 160, 89, 0.6) !important;
-  color: #FFFFFF !important;
-  transform: translateY(-2px);
-}
-
-.consultation-btn-arrow {
-  transition: transform 0.2s ease;
-}
-
-.consultation-actions-row .btn-consultation-primary:hover .consultation-btn-arrow {
-  transform: translateX(-4px);
-}
-
-[dir="ltr"] .consultation-actions-row .btn-consultation-primary:hover .consultation-btn-arrow {
-  transform: translateX(4px);
-}
-
-.consultation-hotline-strip {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 18px;
-  padding: 7px 18px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 0.82rem;
-  color: #94A3B8;
-  flex-wrap: wrap;
-}
-
-.consultation-hotline-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #94A3B8;
-}
-
-.consultation-hotline-link {
-  color: #ECC875;
-  font-weight: 700;
-  text-decoration: none;
-  font-family: var(--font-number, monospace);
-  transition: color 0.2s;
-}
-
-.consultation-hotline-link:hover {
-  color: #FFFFFF;
-  text-decoration: underline;
-}
-
-.consultation-hotline-divider {
-  color: rgba(255, 255, 255, 0.2);
-}
-
-.consultation-hotline-hours {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: #64748B;
-  font-size: 0.78rem;
-}
-
-@media (max-width: 900px) {
-  .consultation-pillars-grid {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-}
-
-@media (max-width: 640px) {
-  .consultation-navy-surface {
-    padding: 36px 20px;
-    border-radius: 20px;
-  }
-  .consultation-actions-row {
-    flex-direction: column;
-    width: 100%;
-  }
-  .consultation-actions-row > * {
-    width: 100%;
-    justify-content: center;
-  }
-  .consultation-hotline-strip {
-    width: 100%;
-    justify-content: center;
-  }
 }
 
 /* ── LUXURY FLOATING MOBILE DOCK ──────────────────────────── */
@@ -3595,8 +3249,7 @@
   font-weight: 800 !important;
 }
 
-.compact-location-chip,
-.compact-tag-chip {
+.compact-location-chip {
   background: rgba(255, 255, 255, 0.04) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: #CBD5E1 !important;
@@ -3607,50 +3260,17 @@
   transition: all 0.2s ease !important;
 }
 
-.compact-location-chip:hover,
-.compact-tag-chip:hover {
+.compact-location-chip:hover {
   background: rgba(197, 160, 89, 0.12) !important;
   border-color: #ECC875 !important;
   color: #ECC875 !important;
 }
 
-.compact-location-chip.active,
-.compact-tag-chip.active {
+.compact-location-chip.active {
   background: linear-gradient(135deg, #ECC875 0%, #C5A059 100%) !important;
   color: #040913 !important;
   border-color: #ECC875 !important;
   font-weight: 800 !important;
 }
-
-.family-hub-strip {
-  background: rgba(197, 160, 89, 0.04) !important;
-  border: 1px solid rgba(197, 160, 89, 0.2) !important;
-  border-radius: 12px !important;
-  padding: 8px 14px !important;
-}
-
-.family-hub-pill {
-  background: rgba(255, 255, 255, 0.04) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  color: #CBD5E1 !important;
-  font-size: 0.76rem !important;
-  font-weight: 700 !important;
-  padding: 5px 12px !important;
-  border-radius: 999px !important;
-  transition: all 0.2s ease !important;
-}
-
-.family-hub-pill:hover {
-  border-color: #ECC875 !important;
-  color: #ECC875 !important;
-}
-
-.family-hub-pill.active {
-  background: linear-gradient(135deg, #ECC875 0%, #C5A059 100%) !important;
-  color: #040913 !important;
-  border-color: #ECC875 !important;
-  font-weight: 800 !important;
-}
-
 
 
