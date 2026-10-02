@@ -19,6 +19,13 @@ const field = (doc, name) => {
   return v && (v.stringValue ?? v.integerValue ?? v.booleanValue ?? v.timestampValue);
 };
 
+// The submitted lead as stored in the emulator, or undefined after ~15 s
+const waitForLead = (attempt = 0) => cy.request({ url: `${FS}/leads?pageSize=50`, headers: OWNER }).then(({ body }) => {
+  const doc = (body.documents || []).find((d) => field(d, 'name') === LEAD_NAME);
+  if (!doc && attempt < 15) return cy.wait(1000).then(() => waitForLead(attempt + 1));
+  return doc;
+});
+
 describe('Lead journey: public form → Firestore → CRM', () => {
   before(() => {
     // Fresh emulator state and one sales manager account (role via custom claim, like production)
@@ -51,22 +58,21 @@ describe('Lead journey: public form → Firestore → CRM', () => {
       cy.get('button[type="submit"]').click();
     });
     cy.contains('h3', 'تم استلام طلبك بنجاح', { timeout: 15000 }).should('be.visible');
-    cy.wait(3000);
-    cy.window().then((win) => cy.task('log', {
-      page: win.location.href,
-      offlineQueue: win.localStorage.getItem('oneline_pending_leads_queue'),
-      errors: win.__journeyErrors
-    }));
+    // Stay on the page until the write has landed: Cypress resets the page between tests, which
+    // would cut off a Firestore write still in flight. If it never lands, print why.
+    waitForLead().then((doc) => {
+      if (doc) return;
+      cy.window().then((win) => cy.task('log', {
+        page: win.location.href,
+        offlineQueue: win.localStorage.getItem('oneline_pending_leads_queue'),
+        errors: win.__journeyErrors
+      }));
+    });
   });
 
   it('stores the lead without its phone, and the phone in lead_contacts', () => {
-    const findLead = (attempt = 0) => cy.request({ url: `${FS}/leads?pageSize=50`, headers: OWNER }).then(({ body }) => {
-      const doc = (body.documents || []).find((d) => field(d, 'name') === LEAD_NAME);
-      if (!doc && attempt < 10) return cy.wait(1000).then(() => findLead(attempt + 1));
-      expect(doc, 'lead document').to.exist;
-      return doc;
-    });
-    findLead().then((lead) => {
+    waitForLead().then((lead) => {
+      expect(lead, 'lead document').to.exist;
       const id = lead.name.split('/').pop();
       for (const f of ['phone', 'whatsapp', 'email']) expect(lead.fields, `lead.${f}`).not.to.have.property(f);
       expect(field(lead, 'assignedTo'), 'routed to a desk').to.be.a('string').and.not.be.empty;
