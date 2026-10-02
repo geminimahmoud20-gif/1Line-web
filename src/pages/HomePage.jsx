@@ -1,17 +1,14 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DollarSign, ArrowRight, ArrowLeft, ShieldCheck, Sparkles, Calculator, X, CheckCircle2, Lock, Target } from 'lucide-react';
 
 import MarketTickerBar from '../components/home/MarketTickerBar';
-import GoldStandardsSection from '../components/home/GoldStandardsSection';
-import FamilyLegacySection from '../components/family/FamilyLegacySection';
 
 import { MEGA_PROJECTS } from '../data/projectsData';
 import { DEMO_PROPERTIES, DEMO_DEMANDS, isRealItem } from '../data/demoData';
 import { getFounderSettings } from '../utils/founderCmsData';
 import { getAreas } from '../utils/areasData';
 import { updatePageSeo, buildOrganizationSchema } from '../utils/seoHelper';
-import FaqSection from '../components/home/FaqSection';
 import { parseSemanticQuery } from '../utils/semanticSearchEngine';
 import ScrollReveal from '../components/common/ScrollReveal';
 import { SELLER_PROOF } from '../config/siteConfig';
@@ -21,6 +18,11 @@ import { SponsoredStrip } from '../components/home/SponsoredPlacements';
 
 import HomeHero from '../components/home/HomeHero';
 import HomeMarketplace from '../components/home/HomeMarketplace';
+
+// Below the fold: their own chunks, fetched right after the hero renders instead of in the entry bundle
+const FamilyLegacySection = lazy(() => import('../components/family/FamilyLegacySection'));
+const GoldStandardsSection = lazy(() => import('../components/home/GoldStandardsSection'));
+const FaqSection = lazy(() => import('../components/home/FaqSection'));
 
 // Keep in sync with the <link rel="preload"> in index.html
 
@@ -390,7 +392,9 @@ export default function HomePage({
 
       {/* 👨‍👩‍👧‍👦 بيت العيلة — family-sized listings + cost split calculator */}
       <ScrollReveal>
-        <FamilyLegacySection lang={lang} currency={currency} properties={activePublished} />
+        <Suspense fallback={null}>
+          <FamilyLegacySection lang={lang} currency={currency} properties={activePublished} />
+        </Suspense>
       </ScrollReveal>
 
       {/* 🏡 3. SELLER INVITATION SECTION (Architectural Editorial Contrast & Proof Showcase) */}
@@ -569,11 +573,15 @@ export default function HomePage({
 
       {/* 🛡️ THE 4 1LINE GOLDEN STANDARDS OF INSTITUTIONAL TRUST */}
       <ScrollReveal>
-        <GoldStandardsSection lang={lang} />
+        <Suspense fallback={null}>
+          <GoldStandardsSection lang={lang} />
+        </Suspense>
       </ScrollReveal>
 
       {/* FAQ — answer-engine friendly, with FAQPage schema */}
-      <FaqSection lang={lang} />
+      <Suspense fallback={null}>
+        <FaqSection lang={lang} />
+      </Suspense>
 
       {/* 🎬 Hero Video Theater Modal (Full uncropped HD viewing) */}
       {showTheaterModal && (

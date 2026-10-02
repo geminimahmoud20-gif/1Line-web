@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css'; // only map pages pay for it (overrides in App.css are more specific)
 import { Layers, Satellite, Map as MapIcon, Maximize2, Minimize2, X, Navigation, TrendingUp, Sparkles, Landmark, Filter } from 'lucide-react';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
 
