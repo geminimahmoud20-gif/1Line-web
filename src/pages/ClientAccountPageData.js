@@ -8,7 +8,8 @@ export const LEAD_TYPE_NAMES = {
   bespoke_request: 'طلب عقار خاص VIP',
   financing: 'استفسار تمويل وتقسيط',
   valuation: 'طلب تقييم عقاري',
-  client_account_verified: 'تفعيل حساب عميل'
+  client_account: 'تسجيل حساب عميل',
+  client_account_verified: 'تفعيل حساب عميل' // older leads
 };
 
 export const PROPERTY_TYPE_NAMES = {

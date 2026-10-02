@@ -235,7 +235,7 @@ export default function ClientAccountPage({
                 <h2>{clientUser.name}</h2>
                 <span className="verified-status-tag">
                   <ShieldCheck size={14} className="text-emerald" />
-                  <span>{isAr ? 'عميل معتمد رسمي' : 'Verified Client'}</span>
+                  <span>{isAr ? 'عميل 1Line' : '1Line Client'}</span>
                 </span>
                 <button
                   type="button"
@@ -422,7 +422,7 @@ export default function ClientAccountPage({
                 <p>
                   {isAr 
                     ? 'تصفح المشروعات والوحدات العقارية المعتمدة بسوهاج، واضغط على علامة القلب في أي بطاقة لحفظها هنا في حسابك.'
-                    : 'Browse properties and tap the heart icon on any card to save it here to your verified account.'}
+                    : 'Browse properties and tap the heart icon on any card to save it here to your account.'}
                 </p>
                 <Link to="/properties" className="btn-browse-properties">
                   <span>{isAr ? 'استعراض العقارات المتاحة الآن 🏢' : 'Browse Properties'}</span>
@@ -506,16 +506,16 @@ export default function ClientAccountPage({
               </div>
 
               <div className="form-group">
-                <label>{isAr ? 'رقم الواتساب الموثق' : 'Verified WhatsApp Number'}</label>
+                <label>{isAr ? 'رقم الواتساب' : 'WhatsApp Number'}</label>
                 <div className="verified-phone-display">
                   <span>{clientUser.whatsapp || clientUser.phone}</span>
                   <span className="badge-locked">
                     <ShieldCheck size={13} className="text-emerald" />
-                    <span>{isAr ? 'موثق' : 'Verified'}</span>
+                    <span>{isAr ? 'ثابت' : 'Locked'}</span>
                   </span>
                 </div>
                 <small className="field-hint">
-                  {isAr ? 'رقم الواتساب هو هوية الحساب المعتمدة لضمان أمان المفضلة' : 'WhatsApp number serves as your verified account ID'}
+                  {isAr ? 'رقم الواتساب هو هوية حسابك، ومينفعش يتغير من هنا' : 'Your WhatsApp number is your account ID and can\'t be changed here'}
                 </small>
               </div>
 

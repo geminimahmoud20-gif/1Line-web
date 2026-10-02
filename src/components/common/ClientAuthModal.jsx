@@ -168,7 +168,7 @@ export default function ClientAuthModal({ lang = 'ar' }) {
         <div className="client-auth-header">
           <div className="client-auth-badge-pill">
             <ShieldCheck size={14} className="text-emerald" />
-            <span>{isAr ? 'حساب عميل 1Line المعتمد' : '1Line Verified Client Account'}</span>
+            <span>{isAr ? 'حساب عميل 1Line' : '1Line Client Account'}</span>
           </div>
           <h2 className="client-auth-title">
             {step === 'input' 
@@ -181,8 +181,8 @@ export default function ClientAuthModal({ lang = 'ar' }) {
                   ? 'احفظ عقاراتك في مفضلتك وقارن بين المشروعات بسوهاج وتلقّ إشعارات الأسعار الحصرية.'
                   : 'Save favorite properties, run smart comparisons, and get exclusive market price alerts.'))
               : (isAr
-                  ? 'تم ربط وتوثيق حسابك بنجاح. أهلاً بك في منصة 1Line العقارية.'
-                  : 'Your account is verified and ready. Welcome to 1Line Real Estate.')}
+                  ? 'تم تفعيل حسابك على هذا الجهاز. أهلاً بك في منصة 1Line العقارية.'
+                  : 'Your account is active on this device. Welcome to 1Line Real Estate.')}
           </p>
 
           {/* Stepper Pill */}
@@ -309,7 +309,7 @@ export default function ClientAuthModal({ lang = 'ar' }) {
             <div className="wa-security-card">
               <div className="wa-security-top">
                 <div className="wa-token-display">
-                  <span className="token-label">{isAr ? 'رمز التوثيق المعتمد لحسابك:' : 'Your Official Verification Token:'}</span>
+                  <span className="token-label">{isAr ? 'كود التأكيد عبر واتساب:' : 'Your WhatsApp confirmation code:'}</span>
                   <div className="token-val-row">
                     <strong className="token-text">{activatedClient?.verificationToken || verificationSession?.token || '1L-****'}</strong>
                     <button 
@@ -359,8 +359,8 @@ export default function ClientAuthModal({ lang = 'ar' }) {
                 </h3>
                 <p className="direct-banner-desc">
                   {isAr 
-                    ? 'تم إرسال رسالة التوثيق إلى واتساب وتفعيل حسابك بنجاح. عقاراتك المفضلة والمقارنات أصبحت نشطة ومحفوظة.'
-                    : 'Your account is verified and ready. Saved properties and comparisons are fully active.'}
+                    ? 'حسابك اتفعّل والمفضلة والمقارنات شغالة. ابعت رسالة الواتساب بالكود عشان فريقنا يأكد رقمك ويتواصل معاك.'
+                    : 'Your account is active. Send the WhatsApp message with your code so our team can confirm your number.'}
                 </p>
               </div>
             </div>
