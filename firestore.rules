@@ -234,14 +234,26 @@ service cloud.firestore {
 
     // 📊 8b. AD CAMPAIGN COUNTERS — visitors may only add +1 to impressions or clicks.
     // Campaign definitions live in settings/ad_campaigns (admin write).
+    // Counters exist only for campaigns the admin has published: saveCampaigns() writes their ids to
+    // settings/ad_campaigns.campaignIds (docs saved before that field existed accept any id until the
+    // next save). Repeat counting from one browser is held back client-side (trackAd); scripts that
+    // skip the site are what App Check enforcement blocks.
     match /ad_stats/{adId} {
+      function adSettings() {
+        return /databases/$(database)/documents/settings/ad_campaigns;
+      }
+      function isPublishedCampaign() {
+        return exists(adSettings())
+            && (!('campaignIds' in get(adSettings()).data) || adId in get(adSettings()).data.campaignIds);
+      }
       allow read: if isStaff();
-      allow create: if adId.matches('^[A-Za-z0-9_-]{3,64}$')
+      allow create: if adId.matches('^[A-Za-z0-9_-]{3,64}$') && isPublishedCampaign()
                     && request.resource.data.keys().hasOnly(['impressions', 'clicks'])
                     && request.resource.data.impressions is int && request.resource.data.clicks is int
                     && request.resource.data.impressions >= 0 && request.resource.data.impressions <= 1
                     && request.resource.data.clicks >= 0 && request.resource.data.clicks <= 1;
-      allow update: if request.resource.data.keys().hasOnly(['impressions', 'clicks'])
+      allow update: if isPublishedCampaign()
+                    && request.resource.data.keys().hasOnly(['impressions', 'clicks'])
                     && request.resource.data.impressions >= resource.data.impressions
                     && request.resource.data.impressions <= resource.data.impressions + 1
                     && request.resource.data.clicks >= resource.data.clicks

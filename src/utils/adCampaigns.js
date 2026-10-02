@@ -84,7 +84,9 @@ const cacheLocally = (list) => {
 /** Local first, cloud in the background; failures raise SYNC_FAILED_EVENT for the CRM toast */
 export function saveCampaigns(list) {
   cacheLocally(list);
-  return saveSettings(ADS_SETTINGS_KEY, { campaigns: list })
+  // campaignIds: the rules accept ad_stats counters only for these ids
+  const campaignIds = (Array.isArray(list) ? list : []).map((c) => String(c?.id || '')).filter(Boolean);
+  return saveSettings(ADS_SETTINGS_KEY, { campaigns: list, campaignIds })
     .then((ok) => { if (ok === false) throw new Error('saveSettings returned false'); return true; })
     .catch((err) => {
       console.warn('Ad campaigns cloud sync failed:', err);
@@ -114,16 +116,21 @@ export const onCampaignSyncFailed = (fn) => {
   return () => window.removeEventListener(SYNC_FAILED_EVENT, fn);
 };
 
-/** One impression per campaign per browser session; clicks always count. Never tracks inside the CRM. */
+// Already counted in this tab session, so repeat views/clicks (or someone clicking an ad over and
+// over) don't inflate the campaign report. Fallback when sessionStorage is blocked: this page load.
+const countedThisSession = new Set();
+
+/** One impression and one click per campaign per browser session. Never tracks inside the CRM. */
 export function trackAd(campaignId, kind) {
   if (typeof window === 'undefined' || window.location.pathname.startsWith('/crm')) return;
-  if (kind === 'impressions') {
-    const key = `oneline_ad_seen_${campaignId}`;
-    try {
-      if (sessionStorage.getItem(key)) return;
-      sessionStorage.setItem(key, '1');
-    } catch { /* private mode: still count once per page load */ }
-  }
+  if (kind !== 'impressions' && kind !== 'clicks') return;
+  const key = kind === 'impressions' ? `oneline_ad_seen_${campaignId}` : `oneline_ad_clicked_${campaignId}`;
+  if (countedThisSession.has(key)) return;
+  countedThisSession.add(key);
+  try {
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, '1');
+  } catch { /* private mode: the in-memory set still limits it to once per page load */ }
   incrementAdStat(campaignId, kind).catch(() => {});
 }
 

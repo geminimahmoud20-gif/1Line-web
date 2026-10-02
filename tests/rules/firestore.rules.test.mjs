@@ -267,3 +267,25 @@ test('audit logs: staff log only as themselves, with the server time, and never 
   await assertFails(setDoc(doc(guest(), 'audit_logs/g'), auditEntry('anon', '')));
   await assertSucceeds(getDoc(doc(env.authenticatedContext(ADMIN_UID, {}).firestore(), 'audit_logs/ok')));
 });
+
+// ── Ad stats ─────────────────────────────────────────────────────────────
+test('ad stats: +1 steps only, and only for published campaigns', async () => {
+  const g = guest();
+  // no campaigns published yet → nothing to count
+  await assertFails(setDoc(doc(g, 'ad_stats/ad-1'), { impressions: 1, clicks: 0 }));
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'settings/ad_campaigns'), { campaigns: [{ id: 'ad-1' }], campaignIds: ['ad-1'] });
+  });
+  await assertSucceeds(setDoc(doc(g, 'ad_stats/ad-1'), { impressions: 1, clicks: 0 }));
+  await assertSucceeds(setDoc(doc(g, 'ad_stats/ad-1'), { impressions: 2, clicks: 1 }));
+  await assertFails(setDoc(doc(g, 'ad_stats/ad-1'), { impressions: 500, clicks: 1 }));
+  await assertFails(setDoc(doc(g, 'ad_stats/ad-1'), { impressions: 1, clicks: 1 }));
+  await assertFails(setDoc(doc(g, 'ad_stats/junk-id'), { impressions: 1, clicks: 0 }));
+  await assertFails(getDoc(doc(g, 'ad_stats/ad-1')));
+  await assertSucceeds(getDoc(doc(as('viewer'), 'ad_stats/ad-1')));
+  // settings saved by an older build (no campaignIds) still count
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'settings/ad_campaigns'), { campaigns: [{ id: 'ad-2' }] });
+  });
+  await assertSucceeds(setDoc(doc(g, 'ad_stats/ad-2'), { impressions: 1, clicks: 0 }));
+});
