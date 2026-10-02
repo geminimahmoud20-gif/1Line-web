@@ -58,8 +58,7 @@ export const getCrmRole = async (user) => {
 /**
  * Persist an immutable audit log entry to Firestore (Canonical 9-field forensic schema).
  */
-export const logAuditEvent = async ({ 
-  actorId,
+export const logAuditEvent = async ({
   action,
   entityType,
   entityId,
@@ -69,18 +68,19 @@ export const logAuditEvent = async ({
   actionType, 
   targetCollection, 
   targetId, 
-  details = {}, 
-  actor = null,
+  details = {},
   type,
   metadata
 }) => {
-  if (isFirebaseConfigured() && db) {
+  // The rules only accept entries whose actor is the signed-in account, so identity always comes
+  // from auth.currentUser (the actor/actorId arguments are kept for older callers but not trusted).
+  const currentAuthUser = auth?.currentUser;
+  if (isFirebaseConfigured() && db && currentAuthUser) {
     try {
-      const currentAuthUser = auth?.currentUser;
-      const effectiveActorId = actorId || actor?.uid || currentAuthUser?.uid || 'system';
-      const effectiveAction = action || type || actionType || 'GENERAL_ACTION';
-      const effectiveEntityType = entityType || targetCollection || 'general';
-      const effectiveEntityId = entityId || targetId || 'global';
+      const effectiveActorId = currentAuthUser.uid;
+      const effectiveAction = String(action || type || actionType || 'GENERAL_ACTION').toUpperCase().replace(/[^A-Z0-9_]/g, '_').slice(0, 64);
+      const effectiveEntityType = String(entityType || targetCollection || 'general').slice(0, 64);
+      const effectiveEntityId = String(entityId || targetId || 'global').slice(0, 20000);
       const effectiveBefore = before !== undefined ? before : null;
       const effectiveAfter = after !== undefined ? after : null;
       const effectiveMeta = ipHashOrMetadata || metadata || details || {};
@@ -103,7 +103,7 @@ export const logAuditEvent = async ({
         targetCollection: effectiveEntityType,
         targetId: effectiveEntityId,
         actorUid: effectiveActorId,
-        actorEmail: actor?.email || currentAuthUser?.email || 'admin@1line.com',
+        actorEmail: currentAuthUser.email || '',
         details: effectiveMeta,
         metadata: effectiveMeta,
         timestamp: serverTimestamp()
@@ -155,12 +155,11 @@ export const logoutUser = async () => {
   if (isFirebaseAuthAvailable()) {
     const currentUser = auth?.currentUser;
     if (currentUser) {
-      logAuditEvent({
-        actionType: 'CRM_LOGOUT',
-        targetCollection: 'users',
-        targetId: currentUser.uid,
-        actor: { uid: currentUser.uid, email: currentUser.email }
-      });
+      // Sent before signing out (afterwards the rules reject it), but never holds logout up for long
+      await Promise.race([
+        logAuditEvent({ actionType: 'CRM_LOGOUT', targetCollection: 'users', targetId: currentUser.uid }),
+        new Promise((resolve) => setTimeout(resolve, 3000))
+      ]);
     }
     return signOut(auth);
   }
