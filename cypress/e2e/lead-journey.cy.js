@@ -45,7 +45,7 @@ describe('Lead journey: public form → Firestore → CRM', () => {
       cy.get('input[placeholder*="0101234"]').type(PHONE);
       cy.get('button[type="submit"]').click();
     });
-    cy.contains(/تم|نجاح/, { timeout: 15000 }).should('exist');
+    cy.contains('h3', 'تم استلام طلبك بنجاح', { timeout: 15000 }).should('be.visible');
   });
 
   it('stores the lead without its phone, and the phone in lead_contacts', () => {

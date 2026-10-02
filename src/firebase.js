@@ -6,7 +6,7 @@
 // =============================================================
 
 import { initializeApp } from 'firebase/app';
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { getFirestore, initializeFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 // Files go to Vercel Blob via /api/cms-upload (Firebase Storage was never enabled), so no Storage SDK here.
@@ -48,7 +48,9 @@ try {
       if (import.meta.env?.DEV) self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
       initializeAppCheck(app, { provider: new ReCaptchaEnterpriseProvider(appCheckKey), isTokenAutoRefreshEnabled: true });
     }
-    db = getFirestore(app);
+    // Cypress proxies the browser's traffic, which breaks Firestore's streaming channel; long polling
+    // goes through it. Test builds only — production keeps the default transport.
+    db = useEmulators ? initializeFirestore(app, { experimentalForceLongPolling: true }) : getFirestore(app);
     auth = getAuth(app);
     if (useEmulators) {
       connectFirestoreEmulator(db, '127.0.0.1', 8080);
