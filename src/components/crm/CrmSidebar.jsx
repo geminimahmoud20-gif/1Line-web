@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { LayoutGrid, Users, Target, Building, Zap, Sparkles, Calculator, Activity, ShieldCheck, ChevronDown, Search, X, Moon, Sun, LogOut, MapPin, Database, Award, Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame, Megaphone, Globe2, Repeat2 } from 'lucide-react';
+import { LayoutGrid, Users, Target, Building, Zap, Sparkles, Calculator, Activity, ShieldCheck, ChevronDown, Search, X, Moon, Sun, LogOut, MapPin, Database, Award, Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame, Megaphone, Globe2, Repeat2, Bug } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import { usePreferences } from '../../context/PreferencesContext';
 
@@ -440,6 +440,17 @@ export default function CrmSidebar({
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Cpu size={13} />
                         <span>{isAr ? 'الأتمتة والتنبيهات' : 'System Automations'}</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSubItemClick('errors')}
+                      className={`crm-sidebar-subitem ${activeTab === 'system' && systemSubTab === 'errors' ? 'is-active' : ''}`}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Bug size={13} />
+                        <span>{isAr ? 'أخطاء الموقع' : 'Site errors'}</span>
                       </div>
                     </button>
                   </div>

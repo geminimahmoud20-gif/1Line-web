@@ -9,6 +9,7 @@ import DemandsManagerPanel from '../components/crm/DemandsManagerPanel';
 import FounderCmsPanel from '../components/crm/FounderCmsPanel';
 import AreaManagerPanel from '../components/crm/AreaManagerPanel';
 import AdCampaignsPanel from '../components/crm/AdCampaignsPanel';
+import ClientErrorsPanel from '../components/crm/ClientErrorsPanel';
 import { RemoteInspectionsPanel, TradeInsPanel } from '../components/crm/ExpatIntakePanels';
 import GoLiveWizardModal from '../components/crm/GoLiveWizardModal';
 import CrmSidebar from '../components/crm/CrmSidebar';
@@ -716,6 +717,22 @@ export default function CrmPage({
                   >
                     {isAr ? 'الأتمتة والتنبيهات' : 'Automations'}
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setSystemSubTab('errors')}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '7px',
+                      fontSize: 'var(--crm-text-sm)',
+                      fontWeight: systemSubTab === 'errors' ? 'bold' : '600',
+                      background: systemSubTab === 'errors' ? 'var(--crm-brand-navy)' : 'var(--crm-subtle)',
+                      color: systemSubTab === 'errors' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
+                      border: systemSubTab === 'errors' ? '1px solid var(--crm-brand-navy)' : '1px solid var(--crm-line)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {isAr ? 'أخطاء الموقع' : 'Site errors'}
+                  </button>
                 </div>
 
                 {systemSubTab === 'areas' && (
@@ -723,6 +740,9 @@ export default function CrmPage({
                 )}
                 {systemSubTab === 'corporate' && (
                   <FounderCmsPanel lang={lang} triggerToast={triggerToast} />
+                )}
+                {systemSubTab === 'errors' && (
+                  <ClientErrorsPanel lang={lang} triggerToast={triggerToast} />
                 )}
                 {(systemSubTab === 'backup' || systemSubTab === 'automation') && (
                   <CrmAdminPanel

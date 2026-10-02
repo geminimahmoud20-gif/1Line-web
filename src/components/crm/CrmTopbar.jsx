@@ -75,7 +75,8 @@ export default function CrmTopbar({
     areas: isAr ? 'المناطق والأحياء' : 'Districts CMS',
     corporate: isAr ? 'هوية المؤسس والشركة' : 'Corporate & Founder CMS',
     backup: isAr ? 'النسخ الاحتياطي والبيانات' : 'Backups & Restore',
-    automation: isAr ? 'الأتمتة والتنبيهات' : 'Automations'
+    automation: isAr ? 'الأتمتة والتنبيهات' : 'Automations',
+    errors: isAr ? 'أخطاء الموقع' : 'Site errors'
   };
 
   const currentTabName = tabTitles[activeTab] || activeTab;

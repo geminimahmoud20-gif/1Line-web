@@ -260,6 +260,25 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // 🩺 8c. SITE ERROR LOG — visitors' browsers report JS errors / crashes / CSP violations
+    // (src/utils/errorReporter.js). Bounded write-only entries; only the admin reads or clears them.
+    match /client_errors/{errId} {
+      function validClientError(data) {
+        return data.keys().hasOnly(['kind', 'message', 'source', 'line', 'col', 'stack', 'path', 'ua', 'release', 'createdAt'])
+          && data.kind in ['error', 'rejection', 'csp', 'crash']
+          && isStr(data, 'message', 1, 500)
+          && isStr(data, 'source', 0, 300)
+          && isStr(data, 'stack', 0, 2000)
+          && isStr(data, 'path', 0, 200)
+          && isStr(data, 'ua', 0, 300)
+          && isStr(data, 'release', 0, 40)
+          && data.line is int && data.col is int
+          && data.createdAt == request.time;
+      }
+      allow create: if validClientError(request.resource.data);
+      allow read, delete: if isAdmin();
+    }
+
     // 🌍 10. EXPAT REMOTE INSPECTIONS (live video / drone / street footage requests)
     // Public create with a fixed field list; staff triage in the CRM.
     function isStr(data, field, minLen, maxLen) {

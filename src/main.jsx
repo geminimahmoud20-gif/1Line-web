@@ -6,6 +6,10 @@ import './index.css'
 import './styles/art-direction.css'
 import App from './App.jsx'
 import ErrorBoundary from './components/common/ErrorBoundary.jsx'
+import { installErrorReporter } from './utils/errorReporter.js'
+
+// Visitors' errors and CSP violations → CRM → System → Site errors
+installErrorReporter()
 
 // Auto-heal new deployments when CSS/JS chunks are updated on the server
 window.addEventListener('vite:preloadError', (event) => {
