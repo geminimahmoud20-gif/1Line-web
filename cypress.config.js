@@ -12,7 +12,8 @@ export default defineConfig({
     video: true,
     screenshotOnRunFailure: true,
     setupNodeEvents(on, config) {
-      // Add node event listeners here if needed
+      // cy.task('log', …) prints to the terminal (CI log), e.g. the browser errors a spec collected
+      on('task', { log(message) { console.log(typeof message === 'string' ? message : JSON.stringify(message, null, 2)); return null; } });
       return config;
     },
   },

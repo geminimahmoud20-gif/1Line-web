@@ -37,6 +37,11 @@ describe('Lead journey: public form → Firestore → CRM', () => {
     cy.visit('/buy', {
       onBeforeLoad(win) {
         cy.stub(win, 'open').as('windowOpen'); // the form hands over to WhatsApp afterwards
+        // Keep the page's errors so a failure below can print why the lead didn't arrive
+        win.__journeyErrors = [];
+        const keep = (orig) => (...args) => { win.__journeyErrors.push(args.map(String).join(' ').slice(0, 400)); orig.apply(win.console, args); };
+        win.console.error = keep(win.console.error);
+        win.console.warn = keep(win.console.warn);
       }
     });
     cy.contains('button', 'طلب سريع في خطوة واحدة', { timeout: 15000 }).click();
@@ -46,6 +51,12 @@ describe('Lead journey: public form → Firestore → CRM', () => {
       cy.get('button[type="submit"]').click();
     });
     cy.contains('h3', 'تم استلام طلبك بنجاح', { timeout: 15000 }).should('be.visible');
+    cy.wait(3000);
+    cy.window().then((win) => cy.task('log', {
+      page: win.location.href,
+      offlineQueue: win.localStorage.getItem('oneline_pending_leads_queue'),
+      errors: win.__journeyErrors
+    }));
   });
 
   it('stores the lead without its phone, and the phone in lead_contacts', () => {
