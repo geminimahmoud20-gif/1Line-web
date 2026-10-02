@@ -66,6 +66,41 @@ jobs:
       - name: Firestore rules tests
         run: npm run test:rules
 
+  journey:
+    # Public form → Firestore → CRM, end to end, against the Firestore + Auth emulators
+    # (cypress/e2e/lead-journey.cy.js). The site is built pointing at the emulators; no production data.
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - run: npm ci
+
+      - name: Build against the emulators
+        run: npx vite build --outDir dist-journey
+        env:
+          VITE_FIREBASE_EMULATORS: 'true'
+
+      - name: Lead journey (Cypress)
+        uses: cypress-io/github-action@v7
+        with:
+          install: false
+          start: npx -y firebase-tools@15 emulators:start --only firestore,auth --project line-c9601, npx vite preview --outDir dist-journey --port 4174 --strictPort
+          wait-on: 'http://127.0.0.1:8080, http://127.0.0.1:9099, http://127.0.0.1:4174'
+          wait-on-timeout: 120
+          spec: cypress/e2e/lead-journey.cy.js
+          config: baseUrl=http://127.0.0.1:4174,video=false
+
   commits:
     # Every new commit needs a subject that says what it does (scripts/check-commit-message.mjs)
     runs-on: ubuntu-latest
