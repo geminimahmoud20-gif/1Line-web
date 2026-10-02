@@ -5,7 +5,8 @@ import { doc, getDoc, setDoc, deleteDoc, collection, query, where, orderBy, getD
 import fs from 'node:fs';
 import { test, before, after, beforeEach } from 'node:test';
 
-const ADMIN_UID = 'dB6GM2RoPQRE0iksDnqcdvUKgXy2';
+const ADMIN_UID = 'dB6GM2RoPQRE0iksDnqcdvUKgXy2'; // the owner account; admin only through its claim
+const asAdmin = () => env.authenticatedContext(ADMIN_UID, { role: 'super_admin', admin: true }).firestore();
 let env;
 
 before(async () => {
@@ -70,7 +71,9 @@ test('leads: managers, read-only roles and admins', async () => {
   await assertSucceeds(getDocs(collection(as('viewer'), 'leads')));
   await assertFails(setDoc(doc(as('viewer'), 'leads/b'), { status: 'x' }, { merge: true }));
   await assertSucceeds(getDocs(collection(as('admin'), 'leads')));
-  await assertSucceeds(getDocs(collection(env.authenticatedContext(ADMIN_UID, {}).firestore(), 'leads')));
+  await assertSucceeds(getDocs(collection(asAdmin(), 'leads')));
+  // the owner's user ID alone no longer grants anything — only the claim does
+  await assertFails(getDocs(collection(env.authenticatedContext(ADMIN_UID, {}).firestore(), 'leads')));
   await assertFails(getDocs(collection(as('some_unknown_role'), 'leads')));
 });
 
@@ -265,7 +268,7 @@ test('audit logs: staff log only as themselves, with the server time, and never 
   await assertFails(deleteDoc(doc(east, 'audit_logs/ok')));
   await assertFails(getDoc(doc(east, 'audit_logs/ok')));
   await assertFails(setDoc(doc(guest(), 'audit_logs/g'), auditEntry('anon', '')));
-  await assertSucceeds(getDoc(doc(env.authenticatedContext(ADMIN_UID, {}).firestore(), 'audit_logs/ok')));
+  await assertSucceeds(getDoc(doc(asAdmin(), 'audit_logs/ok')));
 });
 
 // ── Ad stats ─────────────────────────────────────────────────────────────

@@ -11,8 +11,7 @@ service cloud.firestore {
     function isAdmin() {
       return request.auth != null && (
         request.auth.token.get('admin', false) == true ||
-        role() in ['admin', 'super_admin'] ||
-        request.auth.uid == 'dB6GM2RoPQRE0iksDnqcdvUKgXy2'
+        role() in ['admin', 'super_admin']
       );
     }
     function hasRole(roles) {

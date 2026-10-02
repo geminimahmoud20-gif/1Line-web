@@ -14,20 +14,32 @@ export const isFirebaseActive = () => {
 
 export const isFirebaseAuthAvailable = () => isFirebaseConfigured() && auth !== null;
 
-// Firebase Authentication user IDs approved to access the internal CRM.
-// Authorization is also enforced independently by Firestore rules.
-export const ADMIN_USER_IDS = new Set(['dB6GM2RoPQRE0iksDnqcdvUKgXy2']);
+// Admin access comes from the ID token like every other CRM role: { role: 'super_admin', admin: true },
+// set server-side (scripts/set-crm-role.mjs, scripts/ensure-admin-claim.mjs). Firestore rules check
+// the same claims.
+const hasRoleClaim = (claims) => claims.admin === true || typeof claims.role === 'string';
+const refreshedFor = new Set();
+
+/**
+ * The user's custom claims. A role granted after sign-in only reaches the browser with a new token,
+ * so when the cached token carries no role it is refreshed once per account per page load.
+ */
+export const getUserClaims = async (user) => {
+  if (!user) return {};
+  let claims = (await user.getIdTokenResult())?.claims || {};
+  if (!hasRoleClaim(claims) && !refreshedFor.has(user.uid)) {
+    refreshedFor.add(user.uid);
+    claims = (await user.getIdTokenResult(true))?.claims || {};
+  }
+  return claims;
+};
+
+const isAdminClaims = (claims) => claims.admin === true || claims.role === 'admin' || claims.role === 'super_admin';
 
 export const checkIsAdmin = async (user) => {
   if (!user) return false;
-  if (ADMIN_USER_IDS.has(user.uid)) return true;
   try {
-    const tokenResult = await user.getIdTokenResult();
-    return Boolean(
-      tokenResult?.claims?.admin === true ||
-      tokenResult?.claims?.role === 'admin' ||
-      tokenResult?.claims?.role === 'super_admin'
-    );
+    return isAdminClaims(await getUserClaims(user));
   } catch {
     return false;
   }
@@ -42,10 +54,9 @@ export const CRM_STAFF_ROLES = ['sales_manager', 'sales_agent', 'property_manage
  */
 export const getCrmRole = async (user) => {
   if (!user) return null;
-  if (ADMIN_USER_IDS.has(user.uid)) return 'super_admin';
   try {
-    const claims = (await user.getIdTokenResult())?.claims || {};
-    if (claims.admin === true || claims.role === 'admin' || claims.role === 'super_admin') return 'super_admin';
+    const claims = await getUserClaims(user);
+    if (isAdminClaims(claims)) return 'super_admin';
     if (CRM_STAFF_ROLES.includes(claims.role)) return claims.role;
     return null;
   } catch {

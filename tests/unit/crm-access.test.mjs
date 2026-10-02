@@ -49,9 +49,9 @@ test('lead routing always lands on a known desk', () => {
   }
 });
 
-test('hard-coded admin UIDs are identical everywhere they appear', () => {
-  const files = ['firestore.rules', 'storage.rules', 'api/cms-upload.js', 'src/services/auth.js'];
-  const sets = files.map((f) => [...read(f).matchAll(/'([A-Za-z0-9]{28})'/g)].map((m) => m[1]).sort().join(','));
-  assert.ok(sets[0], 'no admin UID found in firestore.rules');
-  for (let i = 1; i < files.length; i++) assert.equal(sets[i], sets[0], `${files[i]} admin UIDs differ from firestore.rules`);
+test('admin access comes only from token claims — no user IDs written into rules or code', () => {
+  const files = ['firestore.rules', 'storage.rules', 'api/cms-upload.js', 'src/services/auth.js', 'src/services/leads.js', 'src/services/requestContacts.js'];
+  for (const f of files) {
+    assert.doesNotMatch(read(f), /auth\.uid\s*==\s*'|ADMIN_USER_IDS|'[A-Za-z0-9]{28}'/, `${f} grants access by user ID`);
+  }
 });
