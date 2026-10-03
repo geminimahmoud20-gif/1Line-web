@@ -81,7 +81,7 @@ export default function CompareColumn({ prop, isAr, lang, currency, verdicts, cu
           {/* Price Per SqM */}
           <div className="compare-cell">
             <span className={`cell-ppm-val ${isBestPpm ? 'text-gold fw-bold' : ''}`}>
-              {ppm.toLocaleString()} {isAr ? 'ج.م / م²' : 'EGP / m²'}
+              {ppm.toLocaleString('en-US')} {isAr ? 'ج.م / م²' : 'EGP / m²'}
             </span>
           </div>
 
@@ -103,7 +103,7 @@ export default function CompareColumn({ prop, isAr, lang, currency, verdicts, cu
           <div className="compare-cell">
             {prop.downPayment ? (
               <span className="fw-semibold">
-                {prop.downPayment.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}
+                {prop.downPayment.toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}
                 <span className="text-muted" style={{ fontSize: '0.75rem', marginRight: '4px' }}>
                   ({Math.round((prop.downPayment / prop.price) * 100)}%)
                 </span>
@@ -117,7 +117,7 @@ export default function CompareColumn({ prop, isAr, lang, currency, verdicts, cu
           <div className="compare-cell highlight-blue">
             {prop.monthlyInstallment ? (
               <strong className="text-emerald">
-                {prop.monthlyInstallment.toLocaleString()} {isAr ? 'ج.م/شهر' : 'EGP/mo'}
+                {prop.monthlyInstallment.toLocaleString('en-US')} {isAr ? 'ج.م/شهر' : 'EGP/mo'}
               </strong>
             ) : (
               <span className="text-muted">{isAr ? 'غير متاح (كاش)' : 'N/A (Cash only)'}</span>
@@ -142,7 +142,7 @@ export default function CompareColumn({ prop, isAr, lang, currency, verdicts, cu
 
           <div className="compare-cell highlight-simulator" style={{ minHeight: '62px' }}>
             <div className="sim-cell-box">
-              <span className="sim-down-val">{simDownVal.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</span>
+              <span className="sim-down-val">{simDownVal.toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}</span>
               <div className="sim-slider-wrap">
                 <span className="sim-slider-pct">{customDownPercent}%</span>
                 <input 
@@ -161,7 +161,7 @@ export default function CompareColumn({ prop, isAr, lang, currency, verdicts, cu
 
           <div className="compare-cell highlight-simulator" style={{ minHeight: '62px' }}>
             <div className="sim-cell-box">
-              <span className="sim-monthly-val">~ {simMonthlyVal.toLocaleString()} {isAr ? 'ج.م/شهر' : 'EGP/mo'}</span>
+              <span className="sim-monthly-val">~ {simMonthlyVal.toLocaleString('en-US')} {isAr ? 'ج.م/شهر' : 'EGP/mo'}</span>
               <span className="sim-sub-note">
                 {isAr ? `على ${simYears} سنوات` : `over ${simYears} yrs`}
               </span>

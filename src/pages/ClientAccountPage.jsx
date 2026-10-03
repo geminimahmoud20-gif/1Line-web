@@ -118,7 +118,7 @@ export default function ClientAccountPage({
       const loc = isAr ? p.locationName_ar : p.locationName_en;
       msg += `\n🏠 *${idx + 1}. ${title}* (كود: #${p.id})\n`;
       msg += `📍 ${loc}\n`;
-      msg += `💰 ${Number(p.price).toLocaleString()} ج.م\n`;
+      msg += `💰 ${Number(p.price).toLocaleString('en-US')} ج.م\n`;
       msg += `🔗 ${window.location.origin}/properties/${p.id}\n`;
     });
 

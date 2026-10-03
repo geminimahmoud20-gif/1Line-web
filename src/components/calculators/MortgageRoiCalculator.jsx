@@ -210,7 +210,7 @@ export default function MortgageRoiCalculator({
                   className={`calc-chip-btn ${price === pVal ? 'active' : ''}`}
                   onClick={() => setPrice(pVal)}
                 >
-                  {(pVal / 1000000).toLocaleString()} {isAr ? 'مليون' : 'M'}
+                  {(pVal / 1000000).toLocaleString('en-US')} {isAr ? 'مليون' : 'M'}
                 </button>
               ))}
             </div>
@@ -495,7 +495,7 @@ export default function MortgageRoiCalculator({
                       className={`calc-chip-btn ${monthlyRent === rVal ? 'active' : ''}`}
                       onClick={() => setMonthlyRent(rVal)}
                     >
-                      {rVal.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}
+                      {rVal.toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}
                     </button>
                   ))}
                 </div>
@@ -569,7 +569,7 @@ export default function MortgageRoiCalculator({
                 </h2>
                 {currency !== 'EGP' && (
                   <div style={{ fontSize: '0.74rem', color: 'var(--crm-faint)', marginTop: '4px' }}>
-                    ({monthlyInstallment.toLocaleString()} ج.م / شهر)
+                    ({monthlyInstallment.toLocaleString('en-US')} ج.م / شهر)
                   </div>
                 )}
                 <div className="result-center-gold-line" />

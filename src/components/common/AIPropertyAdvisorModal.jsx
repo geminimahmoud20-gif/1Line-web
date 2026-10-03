@@ -251,7 +251,7 @@ export default function AIPropertyAdvisorModal({
               gap: '6px',
               padding: '8px 12px',
               borderRadius: '8px',
-              background: '#25D366',
+              background: '#128C4A',
               color: '#ffffff',
               border: 'none',
               fontSize: '0.82rem',

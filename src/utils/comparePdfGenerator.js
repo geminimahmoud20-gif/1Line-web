@@ -117,18 +117,18 @@ export const generateComparePdf = async (compareList = [], _lang = 'ar') => { //
       } else if (row.key === 'price') {
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(180, 83, 9);
-        valStr = `${(prop.price || 0).toLocaleString()} EGP`;
+        valStr = `${(prop.price || 0).toLocaleString('en-US')} EGP`;
       } else if (row.key === 'ppm') {
         const ppm = prop.pricePerMeter || (prop.size ? Math.round(prop.price / prop.size) : 0);
-        valStr = `${ppm.toLocaleString()} EGP / sqm`;
+        valStr = `${ppm.toLocaleString('en-US')} EGP / sqm`;
       } else if (row.key === 'benchmark') {
         const bench = getPriceBenchmark(prop, 'en');
         valStr = bench ? (bench.badgeLabel || 'Fair Market Value') : 'Standard Market Rate';
       } else if (row.key === 'downPayment') {
-        valStr = prop.downPayment ? `${prop.downPayment.toLocaleString()} EGP (${Math.round((prop.downPayment / prop.price) * 100)}%)` : 'Cash / Negotiation';
+        valStr = prop.downPayment ? `${prop.downPayment.toLocaleString('en-US')} EGP (${Math.round((prop.downPayment / prop.price) * 100)}%)` : 'Cash / Negotiation';
       } else if (row.key === 'monthly') {
         doc.setTextColor(16, 185, 129);
-        valStr = prop.monthlyInstallment ? `${prop.monthlyInstallment.toLocaleString()} EGP/mo (${prop.installmentYears || 0} yrs)` : 'Cash on delivery';
+        valStr = prop.monthlyInstallment ? `${prop.monthlyInstallment.toLocaleString('en-US')} EGP/mo (${prop.installmentYears || 0} yrs)` : 'Cash on delivery';
       } else if (row.key === 'cash') {
         const fb = computeFinanceBreakdown(prop);
         valStr = fb ? `${Math.round(fb.cashPrice).toLocaleString('en-US')} EGP${fb.cashDiscountPct > 0 ? ` (-${Math.round(fb.cashDiscountPct * 10) / 10}%)` : ''}` : '-';

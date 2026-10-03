@@ -99,7 +99,7 @@ export default function ShareModal({ isOpen, onClose, lang = 'ar', triggerToast,
               justifyContent: 'center',
               gap: '10px',
               textDecoration: 'none',
-              background: '#25D366',
+              background: '#128C4A',
               color: '#ffffff',
               boxShadow: '0 4px 16px rgba(37, 211, 102, 0.32)'
             }}

@@ -129,24 +129,24 @@ export const generateReservationContractPdf = async (contractData) => {
   // Financial Items
   doc.text('Total Agreed Price:', 20, 161);
   doc.setFont('helvetica', 'bold');
-  doc.text(`${propertyPrice.toLocaleString()} EGP`, 75, 161);
+  doc.text(`${propertyPrice.toLocaleString('en-US')} EGP`, 75, 161);
 
   doc.setFont('helvetica', 'normal');
   doc.text('Reservation Deposit Paid:', 20, 168);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(16, 185, 129); // Emerald
-  doc.text(`${depositAmount.toLocaleString()} EGP (CONFIRMED)`, 75, 168);
+  doc.text(`${depositAmount.toLocaleString('en-US')} EGP (CONFIRMED)`, 75, 168);
 
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(30, 41, 59);
   doc.text('Remaining Downpayment:', 20, 175);
   doc.setFont('helvetica', 'bold');
-  doc.text(`${Math.max(0, propertyDownpayment - depositAmount).toLocaleString()} EGP`, 75, 175);
+  doc.text(`${Math.max(0, propertyDownpayment - depositAmount).toLocaleString('en-US')} EGP`, 75, 175);
 
   doc.setFont('helvetica', 'normal');
   doc.text('Estimated Monthly Installment:', 20, 182);
   doc.setFont('helvetica', 'bold');
-  doc.text(`${propertyMonthly.toLocaleString()} EGP / Month`, 75, 182);
+  doc.text(`${propertyMonthly.toLocaleString('en-US')} EGP / Month`, 75, 182);
 
   // Right Side Financial Verification Stamp Box
   doc.setFillColor(255, 255, 255);
@@ -159,7 +159,7 @@ export const generateReservationContractPdf = async (contractData) => {
   doc.setFont('helvetica', 'bold');
   doc.text('OFFICIAL VERIFIED DEPOSIT', 130, 165);
   doc.setFontSize(11);
-  doc.text(`${depositAmount.toLocaleString()} EGP`, 130, 172);
+  doc.text(`${depositAmount.toLocaleString('en-US')} EGP`, 130, 172);
   doc.setFontSize(7);
   doc.setTextColor(100, 116, 139);
   doc.text(`Receipt: ${transactionRef}`, 130, 178);

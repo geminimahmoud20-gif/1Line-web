@@ -47,7 +47,7 @@ export default function FavoritesDrawer({
       const loc = isAr ? p.locationName_ar : p.locationName_en;
       msg += `\n🏠 *${idx + 1}. ${title}* (كود: #${p.id})\n`;
       msg += `📍 *الموقع:* ${loc}\n`;
-      msg += `💰 *السعر:* ${p.price?.toLocaleString()} ج.م\n`;
+      msg += `💰 *السعر:* ${p.price?.toLocaleString('en-US')} ج.م\n`;
       msg += `🔗 ${window.location.origin}/properties/${p.id}\n`;
     });
 
@@ -163,7 +163,7 @@ export default function FavoritesDrawer({
                         <strong className="fav-price-val">{priceObj.primary} {priceObj.symbol}</strong>
                         {p.monthlyInstallment && (
                           <span className="fav-installment-pill">
-                            {p.monthlyInstallment.toLocaleString()} {isAr ? 'ج.م/ش' : 'EGP/mo'}
+                            {p.monthlyInstallment.toLocaleString('en-US')} {isAr ? 'ج.م/ش' : 'EGP/mo'}
                           </span>
                         )}
                       </div>

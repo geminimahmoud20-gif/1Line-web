@@ -161,7 +161,7 @@ export default function MarketIntelligencePage({ lang = 'ar' }) {
         district_en: 'New Sohag + Nile Corniche',
         strategy_ar: 'توزيع المحفظة بين مقر تجاري بسوهاج الجديدة وشقة فاخرة على الكورنيش لتعظيم العائد الإيجاري وحفظ القيمة.',
         strategy_en: 'Split allocation between commercial retail in New Sohag and Nilefront luxury residence.',
-        estAnnualYield: (userBudget * 0.135).toLocaleString()
+        estAnnualYield: (userBudget * 0.135).toLocaleString('en-US')
       };
     } else if (userBudget >= 2000000) {
       return {
@@ -169,7 +169,7 @@ export default function MarketIntelligencePage({ lang = 'ar' }) {
         district_en: 'New Sohag (Central Axis / 2nd District)',
         strategy_ar: 'محل تجاري أو عيادة طبية بمقدم 20% وتقسيط حتى 5 سنوات — العائد الفعلي يتحدد بالموقع والإيجارات المقارنة قبل الشراء.',
         strategy_en: 'Commercial/medical unit with 20% down — actual return depends on location and comparable rents.',
-        estAnnualYield: (userBudget * 0.14).toLocaleString()
+        estAnnualYield: (userBudget * 0.14).toLocaleString('en-US')
       };
     } else {
       return {
@@ -177,7 +177,7 @@ export default function MarketIntelligencePage({ lang = 'ar' }) {
         district_en: 'East Sohag or Thakafa (Ready Residence)',
         strategy_ar: 'شقة سكنية مسجلة 120-150م² بموقع حيوي بتشطيب سوبر لوكس للإيجار السكني الفوري المستقر.',
         strategy_en: 'Serviced 120-150 sqm residential apartment for steady long-term rental income.',
-        estAnnualYield: (userBudget * 0.095).toLocaleString()
+        estAnnualYield: (userBudget * 0.095).toLocaleString('en-US')
       };
     }
   }, [userBudget]);
@@ -369,7 +369,7 @@ export default function MarketIntelligencePage({ lang = 'ar' }) {
                       </div>
                     </td>
                     <td>
-                      <strong className="cell-price">{d.avgPricePerSqm.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</strong>
+                      <strong className="cell-price">{d.avgPricePerSqm.toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}</strong>
                     </td>
                     <td>
                       <span className="growth-badge">+{d.annualGrowth}%</span>

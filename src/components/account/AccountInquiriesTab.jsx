@@ -241,7 +241,7 @@ export default function AccountInquiriesTab({
                   </div>
                   {(demand.budgetMax || demand.budget) && (
                     <div className="demand-detail-item">
-                      <span className="text-gold font-bold">{Number(demand.budgetMax || demand.budget).toLocaleString()} {isAr ? 'ج.م كحد أقصى' : 'EGP max'}</span>
+                      <span className="text-gold font-bold">{Number(demand.budgetMax || demand.budget).toLocaleString('en-US')} {isAr ? 'ج.م كحد أقصى' : 'EGP max'}</span>
                     </div>
                   )}
                 </div>

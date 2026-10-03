@@ -13,9 +13,9 @@ export const generatePropertyPdf = async (property) => {
 
   const title = property.title_en || property.title_ar;
   const location = property.locationName_en || property.locationName_ar;
-  const priceFormatted = `${property.price.toLocaleString()} EGP`;
-  const downPayment = `${property.downPayment?.toLocaleString() || 0} EGP`;
-  const monthly = `${property.monthlyInstallment?.toLocaleString() || 0} EGP / month`;
+  const priceFormatted = `${property.price.toLocaleString('en-US')} EGP`;
+  const downPayment = `${property.downPayment?.toLocaleString('en-US') || 0} EGP`;
+  const monthly = `${property.monthlyInstallment?.toLocaleString('en-US') || 0} EGP / month`;
   const legal = property.legalStatus || {};
 
   // Background Header Banner
@@ -248,7 +248,7 @@ export const generateInvestorProspectusPdf = async ({
 
   doc.setTextColor(15, 23, 42);
   doc.text(invPropType.toUpperCase(), 85, 82);
-  doc.text(`${invAmount.toLocaleString()} ${currency}`, 85, 92);
+  doc.text(`${invAmount.toLocaleString('en-US')} ${currency}`, 85, 92);
   doc.text(`${invPeriod} Years Horizon`, 85, 102);
 
   doc.setTextColor(16, 185, 129); // Emerald Green
@@ -261,10 +261,10 @@ export const generateInvestorProspectusPdf = async ({
   doc.text('2. Financial Breakdown & Cumulative Yields', 15, 138);
 
   const breakdownRows = [
-    ['Estimated Annual Rental Income:', `${(investmentSim.annualRent || 0).toLocaleString()} ${currency} / Year`],
-    ['Total Rental Income over Period:', `${(investmentSim.totalRentOverPeriod || 0).toLocaleString()} ${currency}`],
-    ['Projected Future Asset Value:', `${(investmentSim.futureCapitalValue || 0).toLocaleString()} ${currency}`],
-    ['Net Capital Profit & Rental Gain:', `+${(investmentSim.netProfit || 0).toLocaleString()} ${currency}`]
+    ['Estimated Annual Rental Income:', `${(investmentSim.annualRent || 0).toLocaleString('en-US')} ${currency} / Year`],
+    ['Total Rental Income over Period:', `${(investmentSim.totalRentOverPeriod || 0).toLocaleString('en-US')} ${currency}`],
+    ['Projected Future Asset Value:', `${(investmentSim.futureCapitalValue || 0).toLocaleString('en-US')} ${currency}`],
+    ['Net Capital Profit & Rental Gain:', `+${(investmentSim.netProfit || 0).toLocaleString('en-US')} ${currency}`]
   ];
 
   let currentY = 148;

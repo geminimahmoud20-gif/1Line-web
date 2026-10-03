@@ -246,7 +246,7 @@ export const SellWizard = ({
                 gap: '6px',
                 padding: '7px 14px',
                 borderRadius: '8px',
-                background: '#25D366',
+                background: '#128C4A',
                 color: '#fff',
                 border: 'none',
                 fontSize: '0.84rem',
@@ -642,13 +642,13 @@ export const SellWizard = ({
             <div className="cert-price-range">
               <span className="range-lbl">{isAr ? 'نطاق السعر المتوقع لعقارك:' : 'Estimated price range:'}</span>
               <div className="range-numbers">
-                <strong>{calculatedEstimate.min.toLocaleString()}</strong>
+                <strong>{calculatedEstimate.min.toLocaleString('en-US')}</strong>
                 <span className="range-to">{isAr ? 'إلى' : 'to'}</span>
-                <strong>{calculatedEstimate.max.toLocaleString()}</strong>
+                <strong>{calculatedEstimate.max.toLocaleString('en-US')}</strong>
                 <span className="range-curr">{isAr ? 'ج.م كاش' : 'EGP'}</span>
               </div>
               <span className="sqm-rate-sub">
-                {isAr ? `متوسط سعر المتر المقدر: ${calculatedEstimate.sqmAvg.toLocaleString()} ج.م / م²` : `Est. ${calculatedEstimate.sqmAvg.toLocaleString()} EGP/sqm`}
+                {isAr ? `متوسط سعر المتر المقدر: ${calculatedEstimate.sqmAvg.toLocaleString('en-US')} ج.م / م²` : `Est. ${calculatedEstimate.sqmAvg.toLocaleString('en-US')} EGP/sqm`}
               </span>
             </div>
             )}

@@ -111,7 +111,7 @@ export default function HistoricalPriceChart({ areaKey = 'east', customPoints = 
                 </text>
                 {idx === points.length - 1 && (
                   <text x={cx} y={cy - 10} textAnchor="middle" fontSize="11" fill="#0f172a" fontWeight="800">
-                    {pt.price.toLocaleString()} ج.م
+                    {pt.price.toLocaleString('en-US')} ج.م
                   </text>
                 )}
               </g>

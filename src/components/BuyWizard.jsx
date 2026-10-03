@@ -204,7 +204,7 @@ export const BuyWizard = ({
                 gap: '6px',
                 padding: '7px 14px',
                 borderRadius: '8px',
-                background: '#25D366',
+                background: '#128C4A',
                 color: '#fff',
                 border: 'none',
                 fontSize: '0.84rem',

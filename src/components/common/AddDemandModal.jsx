@@ -122,8 +122,8 @@ export default function AddDemandModal({
     const typeObj = PROP_TYPE_OPTIONS.find(t => t.value === formData.type) || PROP_TYPE_OPTIONS[0];
     const budgetNum = parseInt(String(formData.budget).replace(/,/g, '')) || 2500000;
     
-    const textAr = `مطلوب ${typeObj.label_ar} في ${areaMapped.label_ar} بميزانية ${budgetNum.toLocaleString()} جنيه ${formData.paymentMethod === 'cash' ? 'كاش' : 'تسهيلات'}${formData.minSize ? ` بمساحة لا تقل عن ${formData.minSize} متر` : ''}. ${formData.notes ? `(${formData.notes})` : ''}`;
-    const textEn = `Wanted: ${typeObj.label_en} in ${areaMapped.label_en} with a budget of ${budgetNum.toLocaleString()} EGP (${formData.paymentMethod})${formData.minSize ? `, min size ${formData.minSize} sqm` : ''}. ${formData.notes || ''}`;
+    const textAr = `مطلوب ${typeObj.label_ar} في ${areaMapped.label_ar} بميزانية ${budgetNum.toLocaleString('en-US')} جنيه ${formData.paymentMethod === 'cash' ? 'كاش' : 'تسهيلات'}${formData.minSize ? ` بمساحة لا تقل عن ${formData.minSize} متر` : ''}. ${formData.notes ? `(${formData.notes})` : ''}`;
+    const textEn = `Wanted: ${typeObj.label_en} in ${areaMapped.label_en} with a budget of ${budgetNum.toLocaleString('en-US')} EGP (${formData.paymentMethod})${formData.minSize ? `, min size ${formData.minSize} sqm` : ''}. ${formData.notes || ''}`;
 
     const newDemandPayload = {
       id: `dem-pub-${Date.now()}-${Math.random().toString(36).slice(2, 10)}-${Math.random().toString(36).slice(2, 8)}`,

@@ -35,7 +35,7 @@ export default function CompareDuel({
             <div className="dual-card-floating-pills">
               {dualDiff.cheaperId === dualDiff.p1.id && dualDiff.priceDiff > 0 && (
                 <span className="dual-advantage-pill pill-green">
-                  {isAr ? `أوفر بـ ${(dualDiff.priceDiff).toLocaleString()} ج.م` : `Save ${(dualDiff.priceDiff).toLocaleString()} EGP`}
+                  {isAr ? `أوفر بـ ${(dualDiff.priceDiff).toLocaleString('en-US')} ج.م` : `Save ${(dualDiff.priceDiff).toLocaleString('en-US')} EGP`}
                 </span>
               )}
               {dualDiff.largerId === dualDiff.p1.id && dualDiff.sizeDiff > 0 && (
@@ -53,8 +53,8 @@ export default function CompareDuel({
           <div className="dual-card-info">
             <h5 className="dual-card-title">{isAr ? dualDiff.p1.title_ar : dualDiff.p1.title_en}</h5>
             <div className="dual-card-meta">
-              <span className="dual-price"><bdi>{(Number(dualDiff.p1.price) || 0).toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</bdi></span>
-              <span className="dual-ppm"><bdi>{dualDiff.ppm1.toLocaleString()} {isAr ? 'ج.م/م²' : 'EGP/m²'}</bdi></span>
+              <span className="dual-price"><bdi>{(Number(dualDiff.p1.price) || 0).toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}</bdi></span>
+              <span className="dual-ppm"><bdi>{dualDiff.ppm1.toLocaleString('en-US')} {isAr ? 'ج.م/م²' : 'EGP/m²'}</bdi></span>
             </div>
           </div>
         </div>
@@ -66,7 +66,7 @@ export default function CompareDuel({
             {dualDiff.priceDiff > 0 && (
               <div className="dual-diff-stat-item">
                 <span className="diff-lbl">{isAr ? 'فارق السعر الإجمالي:' : 'Price Difference:'}</span>
-                <strong className="diff-val"><bdi>{dualDiff.priceDiff.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</bdi></strong>
+                <strong className="diff-val"><bdi>{dualDiff.priceDiff.toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}</bdi></strong>
               </div>
             )}
             {dualDiff.sizeDiff > 0 && (
@@ -78,7 +78,7 @@ export default function CompareDuel({
             {dualDiff.ppmDiff > 0 && (
               <div className="dual-diff-stat-item">
                 <span className="diff-lbl">{isAr ? 'فارق سعر المتر:' : 'm² Rate Difference:'}</span>
-                <strong className="diff-val"><bdi>{dualDiff.ppmDiff.toLocaleString()} {isAr ? 'ج.م/م²' : 'EGP/m²'}</bdi></strong>
+                <strong className="diff-val"><bdi>{dualDiff.ppmDiff.toLocaleString('en-US')} {isAr ? 'ج.م/م²' : 'EGP/m²'}</bdi></strong>
               </div>
             )}
           </div>
@@ -95,7 +95,7 @@ export default function CompareDuel({
             <div className="dual-card-floating-pills">
               {dualDiff.cheaperId === dualDiff.p2.id && dualDiff.priceDiff > 0 && (
                 <span className="dual-advantage-pill pill-green">
-                  {isAr ? `أوفر بـ ${(dualDiff.priceDiff).toLocaleString()} ج.م` : `Save ${(dualDiff.priceDiff).toLocaleString()} EGP`}
+                  {isAr ? `أوفر بـ ${(dualDiff.priceDiff).toLocaleString('en-US')} ج.م` : `Save ${(dualDiff.priceDiff).toLocaleString('en-US')} EGP`}
                 </span>
               )}
               {dualDiff.largerId === dualDiff.p2.id && dualDiff.sizeDiff > 0 && (
@@ -113,8 +113,8 @@ export default function CompareDuel({
           <div className="dual-card-info">
             <h5 className="dual-card-title">{isAr ? dualDiff.p2.title_ar : dualDiff.p2.title_en}</h5>
             <div className="dual-card-meta">
-              <span className="dual-price"><bdi>{(Number(dualDiff.p2.price) || 0).toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</bdi></span>
-              <span className="dual-ppm"><bdi>{dualDiff.ppm2.toLocaleString()} {isAr ? 'ج.م/م²' : 'EGP/m²'}</bdi></span>
+              <span className="dual-price"><bdi>{(Number(dualDiff.p2.price) || 0).toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}</bdi></span>
+              <span className="dual-ppm"><bdi>{dualDiff.ppm2.toLocaleString('en-US')} {isAr ? 'ج.م/م²' : 'EGP/m²'}</bdi></span>
             </div>
           </div>
         </div>
