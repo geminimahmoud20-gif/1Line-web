@@ -129,12 +129,17 @@ export default function PropertyManagerPanel({
 
   // Quick Toggle Visibility (Active / Hidden)
   const handleToggleVisibility = (prop) => {
-    const currentStatus = prop.status || 'published';
-    const newStatus = currentStatus === 'published' ? 'hidden' : 'published';
-    const res = onUpdateProperty(prop.id, { status: newStatus });
+    // Anything the site shows (published, under negotiation, sold…) is hidden; hidden/draft is published.
+    // It used to compare with 'published' only, so the eye on an "under negotiation" listing
+    // published it instead of hiding it.
+    const currentStatus = prop.status || (prop.isArchived ? 'hidden' : 'published');
+    const hiding = !['hidden', 'draft'].includes(currentStatus);
+    // Showing it again restores what it was before (e.g. still "under negotiation")
+    const newStatus = hiding ? 'hidden' : (prop.statusBeforeHide || 'published');
+    const res = onUpdateProperty(prop.id, { status: newStatus, statusBeforeHide: hiding ? currentStatus : null });
     if (res === false) return;
     triggerToast(
-      newStatus === 'published' 
+      !hiding
         ? (isAr ? 'تم تفعيل وإظهار العقار على الموقع للزوار' : 'Property is now Published live')
         : (isAr ? 'تم إخفاء العقار مؤقتاً من الموقع' : 'Property is now Hidden from website'),
       'info'
