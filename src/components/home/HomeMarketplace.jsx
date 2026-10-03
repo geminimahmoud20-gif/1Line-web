@@ -3,6 +3,15 @@ import { Building, Users, MapPin, DollarSign, ArrowRight, ArrowLeft, ShieldCheck
 import PropertyCard from '../properties/PropertyCard';
 import ScrollReveal from '../common/ScrollReveal';
 
+const toBudget = (b) => (typeof b === 'number' ? b : Number(String(b ?? '').replace(/[^\d.]/g, '')) || 0);
+
+/** 3200000 → "3.2 مليون ج.م" / "EGP 3.2M" (one unit, not "3.2M مليون") */
+const formatMillions = (n, lang) => {
+  const m = n / 1e6;
+  const num = m >= 100 ? Math.round(m).toLocaleString('en-US') : String(Math.round(m * 10) / 10);
+  return lang === 'ar' ? `${num} مليون ج.م` : `EGP ${num}M`;
+};
+
 export default function HomeMarketplace({
   activeDemandsList,
   activePublished,
@@ -33,10 +42,14 @@ export default function HomeMarketplace({
               </span>
             </div>
             <h2 className="section-heading-primary m-0">
-              {lang === 'ar' ? 'أحدث العقارات والطلبات الاستثمارية الحية' : 'Featured Properties & Live Demands'}
+              {realDemands.length > 0
+                ? (lang === 'ar' ? 'أحدث العقارات والطلبات الاستثمارية الحية' : 'Featured Properties & Live Demands')
+                : (lang === 'ar' ? 'أحدث العقارات وطلبات المشترين' : 'Featured Properties & Buyer Demands')}
             </h2>
             <p className="section-heading-desc mt-2 mb-0" style={{ marginInline: 0 }}>
-              {lang === 'ar' ? 'أحدث الوحدات المعروضة، وطلبات شراء منشورة من مشترين جادين يمكنك مطابقة عقارك معها.' : 'The latest listings, plus published buyer demands you can match your property against.'}
+              {realDemands.length > 0
+                ? (lang === 'ar' ? 'أحدث الوحدات المعروضة، وطلبات شراء منشورة من مشترين جادين يمكنك مطابقة عقارك معها.' : 'The latest listings, plus published buyer demands you can match your property against.')
+                : (lang === 'ar' ? 'أحدث الوحدات المعروضة، ومساحة ينشر فيها المشترون طلباتهم لنطابقها مع العقارات المتاحة.' : 'The latest listings, and a place for buyers to post what they want so we can match it.')}
             </p>
           </div>
 
@@ -113,47 +126,56 @@ export default function HomeMarketplace({
       {/* Tab 2: Buyer Demands */}
       {marketplaceTab === 'demands' && (
         <div>
-          {/* Live Demands Metrics Strip */}
-          <div className="demands-metrics-strip">
-            <div className="demand-metric-card">
-              <div className="metric-icon" style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981' }}>
-                <DollarSign size={20} />
+          {/* Live Demands Metrics Strip — only once real demands are published (zeros read as an empty market) */}
+          {realDemands.length > 0 ? (
+            <div className="demands-metrics-strip">
+              <div className="demand-metric-card">
+                <div className="metric-icon" style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981' }}>
+                  <DollarSign size={20} />
+                </div>
+                <div className="metric-info">
+                  <span>{lang === 'ar' ? 'إجمالي القوة الشرائية المسجلة' : 'Total Purchasing Power'}</span>
+                  <strong>{formatMillions(realDemands.reduce((sum, d) => sum + toBudget(d.budget), 0), lang)}</strong>
+                </div>
               </div>
-              <div className="metric-info">
-                <span>{lang === 'ar' ? 'إجمالي القوة الشرائية المسجلة' : 'Total Purchasing Power'}</span>
-                <strong>
-                  {(realDemands.reduce((sum, d) => sum + (typeof d.budget === 'number' ? d.budget : parseInt(String(d.budget).replace(/,/g, '')) || 0), 0) / 1000000).toFixed(1)}M {lang === 'ar' ? 'مليون ج.م' : 'EGP'}
-                </strong>
-              </div>
-            </div>
 
-            {/* Figures below are computed from published demands — no fixed marketing numbers */}
-            <div className="demand-metric-card">
-              <div className="metric-icon" style={{ background: 'rgba(169, 130, 74, 0.14)', color: 'var(--gold-dark, #7C5E30)' }}>
-                <Users size={20} />
+              {/* Figures below are computed from published demands — no fixed marketing numbers */}
+              <div className="demand-metric-card">
+                <div className="metric-icon" style={{ background: 'rgba(169, 130, 74, 0.14)', color: 'var(--gold-dark, #7C5E30)' }}>
+                  <Users size={20} />
+                </div>
+                <div className="metric-info">
+                  <span>{lang === 'ar' ? 'طلبات شراء منشورة الآن' : 'Published buyer demands'}</span>
+                  <strong>{realDemands.length} {lang === 'ar' ? 'طلب' : 'demands'}</strong>
+                </div>
               </div>
-              <div className="metric-info">
-                <span>{lang === 'ar' ? 'طلبات شراء منشورة الآن' : 'Published buyer demands'}</span>
-                <strong>{realDemands.length} {lang === 'ar' ? 'طلب' : 'demands'}</strong>
-              </div>
-            </div>
 
-            <div className="demand-metric-card">
-              <div className="metric-icon" style={{ background: 'rgba(13, 72, 161, 0.12)', color: '#0d48a1' }}>
-                <ShieldCheck size={20} />
-              </div>
-              <div className="metric-info">
-                <span>{lang === 'ar' ? 'مراجعة قبل النشر' : 'Reviewed before publishing'}</span>
-                <strong>{lang === 'ar' ? 'كل طلب يراجعه فريقنا' : 'Every demand is vetted'}</strong>
+              <div className="demand-metric-card">
+                <div className="metric-icon" style={{ background: 'rgba(13, 72, 161, 0.12)', color: '#0d48a1' }}>
+                  <ShieldCheck size={20} />
+                </div>
+                <div className="metric-info">
+                  <span>{lang === 'ar' ? 'مراجعة قبل النشر' : 'Reviewed before publishing'}</span>
+                  <strong>{lang === 'ar' ? 'كل طلب يراجعه فريقنا' : 'Every demand is vetted'}</strong>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="demands-empty-invite">
+              <Sparkles size={18} className="text-gold" aria-hidden="true" />
+              <p>
+                {lang === 'ar'
+                  ? 'كن أول مشترٍ ينشر طلبه — نراجعه ثم نطابقه مع العقارات المتاحة ونتواصل معك. الكروت التالية أمثلة توضيحية لشكل الطلب.'
+                  : 'Be the first buyer to post a request — we review it, match it with available properties and get back to you. The cards below are examples.'}
+              </p>
+            </div>
+          )}
 
           <div className="demands-grid-compact">
             {activeDemandsList.slice(0, 4).map((dem) => (
               <div 
                 key={dem.id} 
-                className="demand-card-box titanium-card"
+                className={`demand-card-box titanium-card${dem.isDemo ? ' is-sample' : ''}`}
                 onClick={() => navigate('/demands')}
                 style={{ cursor: 'pointer' }}
                 title={lang === 'ar' ? 'انقر للانتقال إلى بوابة طلبات المشترين' : 'Click to view in Demands Portal'}
@@ -162,7 +184,8 @@ export default function HomeMarketplace({
                   {dem.isDemo
                     ? <span className="xs-demo-tag">{lang === 'ar' ? 'مثال توضيحي' : 'Sample'}</span>
                     : <span className="demand-time-tag">{dem.timestamp}</span>}
-                  <span
+                  {/* "Urgent cash" / "serious buyer" describe a real person — never on a sample */}
+                  {!dem.isDemo && <span
                     className="urgency-badge"
                     style={dem.urgency === 'high' ? {
                       background: '#fee2e2',
@@ -177,7 +200,7 @@ export default function HomeMarketplace({
                     }}
                   >
                     {dem.urgency === 'high' ? (lang === 'ar' ? 'مستعجل كاش' : 'Urgent Cash') : (lang === 'ar' ? 'طلب جاد' : 'Serious Buyer')}
-                  </span>
+                  </span>}
                 </div>
                 <p className="demand-text" style={{ color: 'var(--text-primary)', fontWeight: '700' }}>{lang === 'ar' ? dem.text_ar : dem.text_en}</p>
                 <div className="demand-footer-clean">
@@ -198,7 +221,8 @@ export default function HomeMarketplace({
                     className="btn-match-demand-full"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <span>{lang === 'ar' ? 'عقاري يطابق هذا الطلب' : 'Match My Property'}</span>
+                    {/* A sample has no buyer behind it, so it can't be "matched" */}
+                    <span>{dem.isDemo ? (lang === 'ar' ? 'اعرض عقارك للبيع' : 'List your property') : (lang === 'ar' ? 'عقاري يطابق هذا الطلب' : 'Match My Property')}</span>
                     <span className="btn-match-arrow">{lang === 'ar' ? '←' : '→'}</span>
                   </Link>
                 </div>

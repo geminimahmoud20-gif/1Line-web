@@ -249,7 +249,8 @@ export const DemandsPortal = ({
               setTimeout(() => {
                 setScanningMessage(lang === 'ar' ? 'تحليل متطلبات المشترين النشطين بمخزن البيانات...' : 'Analyzing active buyer profiles...');
                 setTimeout(() => {
-                  const matchedCount = demands.filter(d => {
+                  // Real published demands only; samples aren't buyers. Zero is reported as zero.
+                  const matchedCount = demands.filter(d => !d.isDemo && (d.status || 'published') === 'published').filter(d => {
                     const matchType = !ownerSearch.propertyType || d.type === ownerSearch.propertyType;
                     const matchArea = !ownerSearch.area || 
                       d.area === ownerSearch.area || 
@@ -260,7 +261,7 @@ export const DemandsPortal = ({
                       (ownerSearch.area === 'center' && (d.area_ar?.includes('البلد') || d.area_ar?.includes('الجامعة')));
                     return matchType && matchArea;
                   }).length;
-                  setOwnerMatchesFound(matchedCount > 0 ? matchedCount : 1);
+                  setOwnerMatchesFound(matchedCount);
                   setIsScanningMap(false);
                 }, 1000);
               }, 1000);
@@ -356,12 +357,14 @@ export const DemandsPortal = ({
           return (
             <div key={dem.id} className="demand-card">
               {/* Dynamic Urgency Top Accent Bar */}
-              <div 
-                className="demand-card-accent-bar" 
-                style={{ 
-                  background: `linear-gradient(90deg, ${urgencyBadge.accentColor} 0%, transparent 100%)` 
-                }} 
-              />
+              {!dem.isDemo && (
+                <div 
+                  className="demand-card-accent-bar" 
+                  style={{ 
+                    background: `linear-gradient(90deg, ${urgencyBadge.accentColor} 0%, transparent 100%)` 
+                  }} 
+                />
+              )}
 
               {/* Card Header: Property Type Tag + Urgency Pill */}
               <div className="demand-card-header">
@@ -371,7 +374,7 @@ export const DemandsPortal = ({
                 </span>
                 {dem.isDemo && <span className="xs-demo-tag">{lang === 'ar' ? 'مثال توضيحي' : 'Sample'}</span>}
 
-                <span className={`demand-urgency-pill ${urgencyBadge.className}`}>
+                {!dem.isDemo && <span className={`demand-urgency-pill ${urgencyBadge.className}`}>
                   {urgencyBadge.hasPulse ? (
                     <span 
                       className="demand-pulse-dot" 
@@ -381,7 +384,7 @@ export const DemandsPortal = ({
                     <Flame size={12} style={{ color: urgencyBadge.accentColor, flexShrink: 0 }} />
                   )}
                   <span>{urgencyBadge.label}</span>
-                </span>
+                </span>}
               </div>
 
               {/* Card Body: Demand Text in a stylized box */}
@@ -404,17 +407,34 @@ export const DemandsPortal = ({
                     <span>{formattedBudget} {lang === 'ar' ? 'ج.م' : 'EGP'}</span>
                   </div>
 
-                  <div 
-                    className="demand-meta-spec-item" 
-                    style={{ fontSize: '0.78rem', color: '#64748b' }}
-                    title={lang === 'ar' ? 'تاريخ النشر' : 'Published'}
-                  >
-                    <Clock size={13} style={{ flexShrink: 0 }} />
-                    <span>{dem.timestamp || (lang === 'ar' ? 'حديثاً' : 'Recent')}</span>
-                  </div>
+                  {/* A sample was never published, so it has no "2 hours ago" */}
+                  {!dem.isDemo && (
+                    <div 
+                      className="demand-meta-spec-item" 
+                      style={{ fontSize: '0.78rem', color: '#64748b' }}
+                      title={lang === 'ar' ? 'تاريخ النشر' : 'Published'}
+                    >
+                      <Clock size={13} style={{ flexShrink: 0 }} />
+                      <span>{dem.timestamp || (lang === 'ar' ? 'حديثاً' : 'Recent')}</span>
+                    </div>
+                  )}
                 </div>
 
-                {/* Interactive Action Buttons */}
+                {/* Interactive Action Buttons — a sample has no buyer to match or refer an owner to */}
+                {dem.isDemo ? (
+                  <div className="demand-action-buttons">
+                    <button className="btn-match-property-modern" onClick={() => navigateTo('valuation')}>
+                      <CheckCircle2 size={16} />
+                      <span>{lang === 'ar' ? 'اعرض عقارك للبيع' : 'List your property'}</span>
+                    </button>
+                    {onOpenAddDemand && (
+                      <button className="btn-refer-owner-modern" onClick={onOpenAddDemand}>
+                        <Sparkles size={15} />
+                        <span>{lang === 'ar' ? 'أضف طلبك' : 'Post a request'}</span>
+                      </button>
+                    )}
+                  </div>
+                ) : (
                 <div className="demand-action-buttons">
                   <button 
                     className="btn-match-property-modern"
@@ -446,6 +466,7 @@ export const DemandsPortal = ({
                     <span>{lang === 'ar' ? 'أعرف مالكاً' : 'Refer Owner'}</span>
                   </button>
                 </div>
+                )}
               </div>
             </div>
           );
