@@ -3,6 +3,10 @@ import { canExportCsv, canEditLeadsRole } from '../../utils/rbacRules';
 import { SOHAG_AREAS } from '../../data/propertiesData';
 import { formatFollowUp, formatBudget } from '../../utils/crmLabels';
 import DeskOptions from './DeskOptions';
+import ExportMenu from './ExportMenu';
+import DataImportModal from './DataImportModal';
+import { getAreas } from '../../utils/areasData';
+import { useState } from 'react';
 
 export default function LeadsTab({
   activeRole,
@@ -29,6 +33,7 @@ export default function LeadsTab({
   onConvertToProperty,
   onDispatchLeadClick,
   onUpdateLead,
+  onImportLeads,
   onWhatsAppClick,
   searchQuery,
   selectedLeadIds,
@@ -44,8 +49,18 @@ export default function LeadsTab({
   temperatureFilter,
   triggerToast
 }) {
+  const [importOpen, setImportOpen] = useState(false);
   return (
     <div className="crm-table-container">
+      {importOpen && (
+        <DataImportModal
+          entity="leads"
+          existingLeads={leads}
+          areas={getAreas()}
+          onImport={(plan) => onImportLeads(plan.items.filter((x) => x.action === 'new').map((x) => x.lead))}
+          onClose={() => setImportOpen(false)}
+        />
+      )}
       {/* Top Control Strip */}
       <div style={{
         display: 'flex',
@@ -82,18 +97,25 @@ export default function LeadsTab({
             <UserPlus size={15} />
             <span>{isAr ? 'إضافة عميل جديد ➕' : 'Add New Lead ➕'}</span>
           </button>
-          {canExportCsv(activeRole) && (
+          {onImportLeads && (
             <button
               type="button"
               className="btn btn-sm btn-outline"
-              onClick={() => handleExportCSV(filteredLeads)}
-              disabled={filteredLeads.length === 0}
-              title={isAr ? 'تصدير العملاء الظاهرين حالياً (حسب الفلتر والبحث)' : 'Export the current filtered view'}
+              onClick={() => setImportOpen(true)}
+              title={isAr ? 'استيراد عملاء من Excel أو CSV أو JSON' : 'Import clients from a file'}
               style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
-              <Download size={15} />
-              <span>{isAr ? `تصدير Excel (${filteredLeads.length})` : `Export (${filteredLeads.length})`}</span>
+              <Download size={15} style={{ transform: 'rotate(180deg)' }} />
+              <span>{isAr ? 'استيراد' : 'Import'}</span>
             </button>
+          )}
+          {canExportCsv(activeRole) && (
+            // Exports what is on screen (current filter and search)
+            <ExportMenu
+              label={isAr ? `تصدير (${filteredLeads.length})` : `Export (${filteredLeads.length})`}
+              disabled={filteredLeads.length === 0}
+              onExport={(format) => handleExportCSV(filteredLeads, format)}
+            />
           )}
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { db, isFirebaseConfigured } from '../firebase.js';
 
-import { collection, addDoc, getDocs, doc, setDoc, query, orderBy, limit, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, setDoc, query, orderBy, limit, onSnapshot, serverTimestamp, writeBatch } from 'firebase/firestore';
 
 // ===================== PROPERTIES =====================
 
@@ -101,5 +101,37 @@ export const deleteCatalogItem = async (collectionName, id) => {
   } catch (error) {
     console.error(`Firebase deleteCatalogItem [${collectionName}] error:`, error);
     return { ok: false, reason: error?.code || 'error' };
+  }
+};
+
+/**
+ * Many catalog items in batched writes (file import). Items over the size limit are skipped.
+ * Returns { ok, written, skipped: [{ id, reason }], reason? } — one report for the whole import.
+ */
+export const upsertCatalogItems = async (collectionName, items = []) => {
+  if (!CATALOG_COLLECTIONS.has(collectionName)) return { ok: false, written: 0, skipped: [], reason: 'invalid' };
+  if (!isFirebaseConfigured() || !db) return { ok: false, written: 0, skipped: [], reason: 'not-configured' };
+  const now = new Date().toISOString();
+  const skipped = [];
+  const docs = [];
+  for (const item of items) {
+    if (!item || item.id === undefined || item.id === null) { skipped.push({ id: item?.id, reason: 'invalid' }); continue; }
+    const { data, bytes } = toFirestorePayload({ ...item, deleted: false, updatedAt: now });
+    if (bytes > MAX_DOC_BYTES) { skipped.push({ id: item.id, reason: 'too-large' }); continue; }
+    docs.push([String(item.id), data]);
+  }
+  let written = 0;
+  try {
+    // A batch takes up to 500 writes; stay well under for large documents
+    for (let i = 0; i < docs.length; i += 200) {
+      const batch = writeBatch(db);
+      for (const [id, data] of docs.slice(i, i + 200)) batch.set(doc(db, collectionName, id), data);
+      await batch.commit();
+      written += Math.min(200, docs.length - i);
+    }
+    return { ok: true, written, skipped };
+  } catch (error) {
+    console.error(`Firebase upsertCatalogItems [${collectionName}] error:`, error);
+    return { ok: false, written, skipped, reason: error?.code || 'error' };
   }
 };

@@ -20,6 +20,8 @@ import {
   deleteDemandDoc,
   subscribeToCatalog,
   upsertCatalogItem,
+  upsertCatalogItems,
+  importLeads,
   deleteCatalogItem,
   syncPendingLeads
 } from '../firebaseLazy';
@@ -136,6 +138,22 @@ export function PropertiesProvider({ children }) {
     persistProperties(updated);
     reportCatalogSync(upsertCatalogItem('properties', merged));
   }, [reportCatalogSync]);
+
+  /**
+   * File import: new and updated properties in one go (one batched cloud write, one result).
+   * items: full property objects; an id that exists is replaced by the merged version.
+   * Resolves to the cloud result so the import screen can report it.
+   */
+  const handleImportProperties = useCallback(async (items = []) => {
+    const byId = new Map(propertiesRef.current.map((p) => [String(p.id), p]));
+    const merged = items.map((item) => ({ ...(byId.get(String(item.id)) || {}), ...item, isDemo: false }));
+    const changed = new Set(merged.map((p) => String(p.id)));
+    const updated = [...merged.filter((p) => !byId.has(String(p.id))), ...propertiesRef.current.map((p) => (changed.has(String(p.id)) ? merged.find((m) => String(m.id) === String(p.id)) : p))];
+    propertiesRef.current = updated;
+    setProperties(updated);
+    persistProperties(updated);
+    return upsertCatalogItems('properties', merged);
+  }, []);
 
   const handleDeleteProperty = useCallback((id) => {
     const updated = propertiesRef.current.filter((p) => p.id !== id);
@@ -737,9 +755,15 @@ export function PropertiesProvider({ children }) {
     }
   }, []);
 
+  // File import of clients: saved straight to the cloud (contacts in lead_contacts); the leads
+  // listener brings them into the list. No sound / staff alert per row.
+  const handleImportLeads = useCallback((list = []) => importLeads(list), []);
+
   const value = {
     properties,
     handleAddProperty,
+    handleImportProperties,
+    handleImportLeads,
     handleUpdateProperty,
     handleDeleteProperty,
     projects,

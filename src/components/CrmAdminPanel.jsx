@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { X, Clock } from 'lucide-react';
 import { loginUser, logAuditEvent, migrateInlineLeadContacts } from '../firebaseService';
 import { exportToCsv } from '../utils/exportCsv';
+import { exportRows } from '../utils/transfer/exportTable';
+import { leadToRow } from '../utils/transfer/leadSchema';
 
 import { canExportCsv, canDeleteLead, canEditLeadsRole, assignableDesks } from '../utils/rbacRules';
 
@@ -49,6 +51,7 @@ export const CrmAdminPanel = ({
   onUpdateLead,
   onDeleteLead,
   onAddNewLead,
+  onImportLeads,
   demands = [],
   onSwitchToDemands,
   onSwitchToProperties,
@@ -225,7 +228,7 @@ export const CrmAdminPanel = ({
     }
   };
 
-  const exportLeadRows = (rows, fileName, scope) => {
+  const exportLeadRows = (rows, fileName, scope, format = 'csv') => {
     if (!canExportCsv(activeRole)) {
       if (triggerToast) {
         triggerToast(isAr ? 'غير مصرح لك بتصدير بيانات العملاء (تتطلب صلاحية مدير أو مالية)' : 'Unauthorized: requires Manager or Finance role', 'error');
@@ -236,16 +239,34 @@ export const CrmAdminPanel = ({
       if (triggerToast) triggerToast(isAr ? 'لا يوجد عملاء لتصديرهم في العرض الحالي' : 'Nothing to export', 'error');
       return;
     }
-    exportToCsv(fileName, rows.map(toLeadExportRow), LEAD_EXPORT_HEADERS);
+    if (format === 'legacy-csv') {
+      exportToCsv(fileName, rows.map(toLeadExportRow), LEAD_EXPORT_HEADERS);
+    } else {
+      // Same columns the importer reads, with readable type / area names
+      const sheetRows = rows.map((l) => {
+        const row = leadToRow(l);
+        const typeKey = l.propertyType || l.details?.propertyType;
+        const areaKey = l.area || l.details?.area;
+        if (typeKey) row['نوع العقار المطلوب'] = getLocalizedPropertyType(typeKey) || typeKey;
+        if (areaKey) row['المنطقة'] = getLocalizedArea(areaKey) || areaKey;
+        return row;
+      });
+      exportRows(sheetRows, {
+        format,
+        baseName: fileName,
+        sheetName: 'العملاء',
+        jsonPayload: { platform: '1Line Real Estate CRM Leads', timestamp: new Date().toISOString(), leadsCount: rows.length, leads: rows.map(({ _cloud, ...l }) => l) }
+      }).catch(() => triggerToast?.(isAr ? 'تعذّر تجهيز الملف' : 'Export failed', 'error'));
+    }
     logAuditEvent({
-      actionType: 'LEADS_EXPORTED_CSV',
+      actionType: format === 'excel' ? 'LEADS_EXPORTED_XLSX' : format === 'json' ? 'LEADS_EXPORTED_JSON' : 'LEADS_EXPORTED_CSV',
       targetCollection: 'leads',
       targetId: scope,
       details: { count: rows.length },
       actor: currentUser
     });
     if (triggerToast) {
-      triggerToast(isAr ? `تم تصدير ${rows.length} عميل إلى ملف Excel (CSV)` : `Exported ${rows.length} leads`, 'success');
+      triggerToast(isAr ? `تم تصدير ${rows.length} عميل (${format === 'excel' ? 'Excel' : format === 'json' ? 'JSON' : 'CSV'})` : `Exported ${rows.length} leads`, 'success');
     }
   };
 
@@ -274,12 +295,12 @@ export const CrmAdminPanel = ({
     }
   };
 
-  const handleExportCSV = (rows = leads || []) => {
-    if (exportLeadsCSV && canExportCsv(activeRole)) {
+  const handleExportCSV = (rows = leads || [], format = 'csv') => {
+    if (format === 'csv' && exportLeadsCSV && canExportCsv(activeRole)) {
       exportLeadsCSV();
       return;
     }
-    exportLeadRows(rows, 'Oneline_Leads_Report', rows === leads ? 'all_leads' : 'filtered_view');
+    exportLeadRows(rows, '1Line_Clients', rows === leads ? 'all_leads' : 'filtered_view', format);
   };
 
   // Full Leads Database JSON Backup
@@ -576,6 +597,7 @@ export const CrmAdminPanel = ({
           handleClaimLead={handleClaimLead}
           handleDeleteLeadClick={handleDeleteLeadClick}
           handleExportCSV={handleExportCSV}
+          onImportLeads={onImportLeads}
           handleOpenEditLead={handleOpenEditLead}
           handleToggleSelectAll={handleToggleSelectAll}
           handleToggleSelectOne={handleToggleSelectOne}
