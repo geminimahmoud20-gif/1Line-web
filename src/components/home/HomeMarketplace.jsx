@@ -56,7 +56,8 @@ export default function HomeMarketplace({
             >
               <Icon size={15} strokeWidth={1.75} aria-hidden="true" />
               <span>{lang === 'ar' ? ar : en}</span>
-              <span className="hx-seg-count"><span className="hx-live-dot" aria-hidden="true" />{count}</span>
+              {/* A "0" next to the tab reads as an empty marketplace; show the count once there is one */}
+              {count > 0 && <span className="hx-seg-count"><span className="hx-live-dot" aria-hidden="true" />{count}</span>}
             </button>
           ))}
         </div>
@@ -218,7 +219,7 @@ export default function HomeMarketplace({
               </button>
             )}
             <Link to="/demands" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span>{lang === 'ar' ? `استعراض كل طلبات المشترين (${realDemands.length})` : 'All Demands'}</span>
+              <span>{lang === 'ar' ? `استعراض كل طلبات المشترين${realDemands.length > 0 ? ` (${realDemands.length})` : ''}` : 'All Demands'}</span>
               {lang === 'ar' ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
             </Link>
           </div>
