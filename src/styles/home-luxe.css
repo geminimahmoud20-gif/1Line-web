@@ -1623,7 +1623,7 @@
 
 .hx-radar-viewport {
   position: relative;
-  height: 130px;
+  height: 150px;
   border-radius: 14px;
   background: radial-gradient(circle at 50% 50%, rgba(197, 160, 89, 0.08), transparent 75%), #070D18;
   border: 1px solid rgba(197, 160, 89, 0.2);
@@ -1701,9 +1701,22 @@
   white-space: nowrap;
 }
 
-.hx-blip--1 { top: 16px; inset-inline-end: 18px; }
-.hx-blip--2 { bottom: 18px; inset-inline-start: 16px; }
-.hx-blip--3 { top: 48px; inset-inline-start: 14px; }
+.hx-blip--1 { top: 12px; inset-inline-start: 12px; }
+.hx-blip--2 { top: 12px; inset-inline-end: 12px; }
+.hx-blip--3 { top: 50%; transform: translateY(-50%); inset-inline-start: 12px; }
+.hx-blip--4 { bottom: 12px; inset-inline-end: 12px; }
+.hx-blip--5 { bottom: 12px; inset-inline-start: 12px; }
+
+/* Narrow cards: one chip per row, alternating sides, so the five areas never overlap */
+@media (max-width: 640px) {
+  .hx-radar-viewport { height: 166px; }
+  .hx-radar-blip { top: auto; bottom: auto; inset-inline: auto; transform: none; }
+  .hx-blip--1 { top: 8px; inset-inline-start: 10px; }
+  .hx-blip--2 { top: 38px; inset-inline-end: 10px; }
+  .hx-blip--3 { top: 68px; inset-inline-start: 10px; }
+  .hx-blip--4 { top: 98px; inset-inline-end: 10px; }
+  .hx-blip--5 { top: 128px; inset-inline-start: 10px; }
+}
 
 .hx-radar-footer {
   display: flex;

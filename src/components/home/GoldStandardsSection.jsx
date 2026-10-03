@@ -2,6 +2,14 @@ import { useState, useEffect } from 'react';
 import { ShieldCheck, Scale, Award, Video, FileCheck, Check, Lock, EyeOff, Globe2, Sparkles, Compass, Radio } from 'lucide-react';
 import { getFounderSettings, DEFAULT_FOUNDER_CMS } from '../../utils/founderCmsData';
 
+const RADAR_BLIPS = [
+  { ar: 'مستثمر كاش • شارع الجمهورية', en: 'Cash buyer • El Gomhoria St.' },
+  { ar: 'مغترب • حدائق أكتوبر', en: 'Expat • Hadayek October' },
+  { ar: 'مشتري معتمد • سوهاج الجديدة', en: 'Vetted • New Sohag' },
+  { ar: 'عائلة • الكورنيش الشرقي', en: 'Family • East Corniche' },
+  { ar: 'مستثمر • الزهراء', en: 'Investor • El Zahraa' }
+];
+
 // Map icon names from CMS to Lucide React components
 const ICON_MAP = { ShieldCheck, Scale, Award, Video, FileCheck, Check, Lock, EyeOff, Globe2 };
 
@@ -130,19 +138,13 @@ function OffMarketArt({ isAr }) {
           <Lock size={15} strokeWidth={2.4} />
         </div>
 
-        {/* Active qualified buyer blips */}
-        <div className="hx-radar-blip hx-blip--1">
-          <span className="hx-blip-dot" />
-          <span className="hx-blip-label">{isAr ? 'مستثمر كاش • سوهاج' : 'Cash Buyer • Sohag'}</span>
-        </div>
-        <div className="hx-radar-blip hx-blip--2">
-          <span className="hx-blip-dot" />
-          <span className="hx-blip-label">{isAr ? 'طبيب مغترب • جدة' : 'Expat • Jeddah'}</span>
-        </div>
-        <div className="hx-radar-blip hx-blip--3">
-          <span className="hx-blip-dot" />
-          <span className="hx-blip-label">{isAr ? 'مشتري معتمد • الكوثر' : 'Vetted • Kawthar'}</span>
-        </div>
+        {/* Active qualified buyer blips, one per area we cover */}
+        {RADAR_BLIPS.map((b, n) => (
+          <div key={b.en} className={`hx-radar-blip hx-blip--${n + 1}`}>
+            <span className="hx-blip-dot" />
+            <span className="hx-blip-label">{isAr ? b.ar : b.en}</span>
+          </div>
+        ))}
       </div>
 
       <div className="hx-radar-footer">
@@ -201,6 +203,7 @@ function ExpatTourArt({ isAr }) {
 }
 
 const DEFAULT_ICONS = [ShieldCheck, Scale, Award, Video];
+
 
 export default function GoldStandardsSection({ lang = 'ar' }) {
   const isAr = lang === 'ar';
