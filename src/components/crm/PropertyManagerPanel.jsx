@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Building, Plus, Trash2, Upload, Eye, EyeOff, Database, Archive, FileSpreadsheet } from 'lucide-react';
+import { Building, Plus, Trash2, Upload, Eye, EyeOff, Archive } from 'lucide-react';
 import { getAreas } from '../../utils/areasData';
 import HomepageSlotsBoard, { FeaturedSlotModal } from './HomepageSlotsBoard';
 
-import { exportToCsv } from '../../utils/exportCsv';
+import DataImportModal from './DataImportModal';
+import ExportMenu from './ExportMenu';
+import { propertyToRow } from '../../utils/transfer/propertySchema';
 import InteractiveMapPickerModal from './InteractiveMapPickerModal';
 import WhatsAppMatchNotifierModal from './WhatsAppMatchNotifierModal';
 import { findMatchingClientsForProperty } from '../../utils/matchingEngine';
@@ -64,6 +66,8 @@ export default function PropertyManagerPanel({
   onAddProperty,
   onUpdateProperty,
   onDeleteProperty,
+  onImportProperties,
+  onImportLeads,
   lang = 'ar',
   triggerToast,
   externalNewPropertyData = null,
@@ -79,6 +83,7 @@ export default function PropertyManagerPanel({
   const [areas, setAreas] = useState(() => getAreas());
   const [slotEditing, setSlotEditing] = useState(null); // property being scheduled for the homepage
   const [offerEditing, setOfferEditing] = useState(null); // property whose limited-time offer is being edited
+  const [importOpen, setImportOpen] = useState(false);
 
   useEffect(() => {
     const handleUpdate = () => setAreas(getAreas());
@@ -336,75 +341,6 @@ export default function PropertyManagerPanel({
     }));
   };
 
-  // Export to CSV
-  const handleExportCsv = () => {
-    const exportData = properties.map(p => ({
-      ...p,
-      statusLabel: p.status === 'hidden' ? 'مخفي' : p.status === 'under_negotiation' ? 'تحت التفاوض' : p.status === 'sold' ? 'تم البيع' : 'منشور'
-    }));
-
-    exportToCsv('OneLine_Properties_Sohag', exportData, {
-      id: 'كود العقار',
-      title_ar: 'اسم العقار',
-      type: 'النوع',
-      areaKey: 'المنطقة',
-      price: 'السعر الإجمالي (ج.م)',
-      downPayment: 'المقدم (ج.م)',
-      monthlyInstallment: 'القسط الشهري (ج.م)',
-      size: 'المساحة (م²)',
-      statusLabel: 'حالة العرض',
-      featured: 'مميز'
-    });
-    triggerToast(isAr ? 'تم تصدير كشف العقارات إلى Excel بنجاح' : 'Exported to Excel successfully', 'success');
-  };
-
-  // Full Database JSON Backup Export
-  const handleExportJsonBackup = () => {
-    const backupData = {
-      platform: '1Line Real Estate',
-      timestamp: new Date().toISOString(),
-      propertiesCount: properties.length,
-      properties: properties
-    };
-    const jsonStr = JSON.stringify(backupData, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `OneLine_Properties_Backup_${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    triggerToast(isAr ? 'تم تنزيل ملف النسخة الاحتياطية الكاملة بنجاح!' : 'Full backup downloaded successfully!', 'success');
-  };
-
-  // Full Database JSON Restore
-  const handleImportJsonBackup = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const parsed = JSON.parse(event.target.result);
-        const importedProperties = parsed.properties || parsed;
-        if (Array.isArray(importedProperties) && importedProperties.length > 0) {
-          if (window.confirm(isAr ? `هل تريد استيراد ${importedProperties.length} عقاراً من ملف النسخة الاحتياطية؟` : `Import ${importedProperties.length} properties?`)) {
-            localStorage.setItem('oneline_properties', JSON.stringify(importedProperties));
-            window.location.reload();
-          }
-        } else {
-          throw new Error('Invalid structure');
-        }
-      } catch (err) {
-        console.error(err);
-        triggerToast(isAr ? 'ملف النسخة الاحتياطية غير صالح!' : 'Invalid backup file format', 'error');
-      }
-    };
-    reader.readAsText(file);
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!form.title_ar || !form.price || !form.size) {
@@ -556,34 +492,24 @@ export default function PropertyManagerPanel({
         </div>
 
         <div className="panel-actions-row">
-          {/* JSON Backup Button */}
-          <button 
-            type="button" 
-            className="btn btn-outline" 
-            onClick={handleExportJsonBackup}
-            title={isAr ? 'تحميل نسخة احتياطية كاملة JSON' : 'Download JSON Backup'}
-          >
-            <Database size={15} />
-            <span>{isAr ? 'نسخ احتياطي' : 'Backup JSON'}</span>
-          </button>
+          {/* Import: Excel / CSV / JSON from any system, with column matching and a review step */}
+          {onImportProperties && (
+            <button type="button" className="btn btn-outline" onClick={() => setImportOpen(true)}>
+              <Upload size={15} />
+              <span>{isAr ? 'استيراد' : 'Import'}</span>
+            </button>
+          )}
 
-          {/* Hidden File Input for Restore */}
-          <label className="btn btn-outline" style={{ cursor: 'pointer', margin: 0 }}>
-            <Upload size={15} />
-            <span>{isAr ? 'استعادة' : 'Restore'}</span>
-            <input 
-              type="file" 
-              accept=".json" 
-              onChange={handleImportJsonBackup} 
-              style={{ display: 'none' }} 
-            />
-          </label>
-
-          {/* Export CSV */}
-          <button type="button" className="btn btn-outline" onClick={handleExportCsv}>
-            <FileSpreadsheet size={15} />
-            <span>{isAr ? 'تصدير Excel' : 'Export CSV'}</span>
-          </button>
+          {/* Export: Excel / CSV / full JSON backup */}
+          <ExportMenu
+            label={isAr ? 'تصدير' : 'Export'}
+            baseName="1Line_Properties"
+            sheetName="العقارات"
+            getRows={() => properties.filter((p) => !p.isDemo).map((p) => propertyToRow(p, areas))}
+            getJson={() => ({ platform: '1Line Real Estate', timestamp: new Date().toISOString(), propertiesCount: properties.length, properties: properties.filter((p) => !p.isDemo) })}
+            disabled={!properties.some((p) => !p.isDemo)}
+            onDone={(format, ok) => triggerToast(ok ? (isAr ? 'تم تجهيز الملف وتنزيله' : 'File downloaded') : (isAr ? 'تعذّر تجهيز الملف' : 'Export failed'), ok ? 'success' : 'error')}
+          />
 
           {/* Add New Property */}
           <button type="button" className="btn btn-primary" onClick={handleOpenAdd}>
@@ -592,6 +518,19 @@ export default function PropertyManagerPanel({
           </button>
         </div>
       </div>
+
+      {importOpen && (
+        <DataImportModal
+          entity="properties"
+          existing={properties}
+          existingLeads={leads}
+          areas={areas}
+          canImportOwners={!!onImportLeads}
+          onImport={(plan) => onImportProperties(plan.items.filter((x) => x.action !== 'skip').map((x) => x.property))}
+          onImportOwners={onImportLeads}
+          onClose={() => setImportOpen(false)}
+        />
+      )}
 
       {/* What visitors see on the homepage right now: featured slots, periods, order */}
       <HomepageSlotsBoard properties={properties} onUpdateProperty={onUpdateProperty} isAr={isAr} />

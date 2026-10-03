@@ -348,3 +348,34 @@ export const deleteLead = async (leadId) => {
   }
   return false;
 };
+
+/**
+ * Staff file import: many leads, each with its contact doc, in batched writes. Unlike saveLead
+ * (public forms) it sends no staff alert per lead — an import of 200 clients isn't 200 new
+ * inquiries. Returns { ok, written, ids, reason? }.
+ */
+export const importLeads = async (leads = []) => {
+  if (!isFirebaseConfigured() || !db) return { ok: false, written: 0, ids: [], reason: 'not-configured' };
+  const ids = [];
+  let written = 0;
+  try {
+    // 2 writes per lead (lead + contact); 200 leads per batch stays under the 500-write limit
+    for (let i = 0; i < leads.length; i += 200) {
+      const batch = writeBatch(db);
+      for (const raw of leads.slice(i, i + 200)) {
+        const { lead, contact } = splitLeadFields(raw);
+        const id = doc(collection(db, 'leads')).id;
+        const payload = { ...lead, createdBy: auth?.currentUser?.uid || 'import', createdAt: serverTimestamp() };
+        batch.set(doc(db, 'leads', id), payload);
+        batch.set(doc(db, 'lead_contacts', id), { ...contact, assignedTo: deskOf(payload) });
+        ids.push(id);
+      }
+      await batch.commit();
+      written = ids.length;
+    }
+    return { ok: true, written, ids };
+  } catch (error) {
+    console.error('Firebase importLeads error:', error);
+    return { ok: false, written, ids: ids.slice(0, written), reason: error?.code || 'error' };
+  }
+};

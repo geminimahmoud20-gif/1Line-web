@@ -23,6 +23,7 @@ import '../components/crm/crm-dark-surfaces.css';
 import '../components/crm/crm-density.css';
 import { isFirebaseAuthAvailable, loginUser, requestPasswordReset } from '../firebaseService';
 import { useAuth } from '../context/AuthContext';
+import { useProperties } from '../context/PropertiesContext';
 import { canEditProperties, canEditLeadsRole } from '../utils/rbacRules';
 import { verifyAdminCredentials, checkRateLimit, recordFailedAttempt, resetFailedAttempts } from '../utils/securityShield';
 
@@ -53,6 +54,7 @@ export default function CrmPage({
   onUnpublishDemand
 }) {
   const { isAuthInitializing, currentUser, userRole } = useAuth();
+  const { handleImportProperties, handleImportLeads } = useProperties();
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'leads' | 'kanban' | 'properties' | 'demands' | 'projects' | 'financials' | 'matching' | 'analytics' | 'system'
   // Fail closed: a signed-in account whose role is unknown (e.g. 'agent' from a claims error)
   // gets read-only 'viewer'. Only the local-password session (no Firebase user) is super_admin.
@@ -79,7 +81,9 @@ export default function CrmPage({
     deleteInventory: activeRole === 'super_admin' || activeRole === 'property_manager',
     manageDemands: ['super_admin', 'sales_manager', 'property_manager'].includes(activeRole),
     // viewer / finance / property_manager read leads but don't change their pipeline
-    editLeads: canEditLeadsRole(activeRole)
+    editLeads: canEditLeadsRole(activeRole),
+    // Bulk file import of clients (and owners from a property file): managers only
+    importLeads: activeRole === 'super_admin' || activeRole === 'sales_manager'
   };
   // Returns false when blocked so callers that check `=== false` don't report success
   const guard = (allowed, fn) => (...args) => {
@@ -633,6 +637,8 @@ export default function CrmPage({
               onAddProperty={guard(can.editInventory, onAddProperty)}
               onUpdateProperty={guard(can.editInventory, onUpdateProperty)}
               onDeleteProperty={guard(can.deleteInventory, onDeleteProperty)}
+              onImportProperties={can.editInventory ? handleImportProperties : undefined}
+              onImportLeads={can.importLeads ? handleImportLeads : undefined}
               lang={lang}
               triggerToast={triggerToast}
               externalNewPropertyData={externalPropertyData}
@@ -718,6 +724,7 @@ export default function CrmPage({
                     onUpdateLead={guard(can.editLeads, onUpdateLead)}
                     onDeleteLead={guard(activeRole === 'super_admin', onDeleteLead)}
                     onAddNewLead={onAddNewLead}
+                    onImportLeads={can.importLeads ? handleImportLeads : undefined}
                     demands={demands}
                     onSwitchToDemands={() => setActiveTab('demands')}
                     onSwitchToProperties={() => setActiveTab('properties')}
@@ -749,6 +756,7 @@ export default function CrmPage({
               onUpdateLead={guard(can.editLeads, onUpdateLead)}
               onDeleteLead={guard(activeRole === 'super_admin', onDeleteLead)}
               onAddNewLead={onAddNewLead}
+              onImportLeads={can.importLeads ? handleImportLeads : undefined}
               demands={demands}
               onSwitchToDemands={() => setActiveTab('demands')}
               onSwitchToProperties={() => setActiveTab('properties')}
