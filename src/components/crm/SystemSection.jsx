@@ -2,11 +2,13 @@ import { Lock } from 'lucide-react';
 import AreaManagerPanel from './AreaManagerPanel';
 import FounderCmsPanel from './FounderCmsPanel';
 import ClientErrorsPanel from './ClientErrorsPanel';
+import TeamPanel from './TeamPanel';
 
 // CRM → System administration (super admin only): sub-navigation + the module for each sub-tab.
 // Backups and automations live in CrmAdminPanel, which the page renders through renderAdminPanel.
 
 const SUB_TABS = [
+  { id: 'team', ar: 'الفريق والصلاحيات', en: 'Team & roles' },
   { id: 'areas', ar: 'إدارة المناطق والأحياء', en: 'Districts CMS' },
   { id: 'corporate', ar: 'هوية الشركة والمؤسس (CMS)', en: 'Founder & Corporate CMS' },
   { id: 'backup', ar: 'النسخ الاحتياطي والبيانات', en: 'Backups & Restore' },
@@ -84,6 +86,7 @@ export default function SystemSection({ lang, triggerToast, properties, leads, s
         })}
       </div>
 
+      {subTab === 'team' && <TeamPanel lang={lang} triggerToast={triggerToast} />}
       {subTab === 'areas' && <AreaManagerPanel lang={lang} triggerToast={triggerToast} properties={properties} leads={leads} />}
       {subTab === 'corporate' && <FounderCmsPanel lang={lang} triggerToast={triggerToast} />}
       {subTab === 'errors' && <ClientErrorsPanel lang={lang} triggerToast={triggerToast} />}

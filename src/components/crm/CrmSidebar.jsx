@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { LayoutGrid, Users, Target, Building, Zap, Sparkles, Calculator, Activity, ShieldCheck, ChevronDown, Search, X, Moon, Sun, LogOut, MapPin, Database, Award, Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame, Megaphone, Globe2, Repeat2, Bug } from 'lucide-react';
+import { LayoutGrid, Users, Target, Building, Zap, Sparkles, Calculator, Activity, ShieldCheck, ChevronDown, Search, X, Moon, Sun, LogOut, MapPin, Database, Award, Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame, Megaphone, Globe2, Repeat2, Bug, UserCog } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import { usePreferences } from '../../context/PreferencesContext';
 
@@ -399,6 +399,17 @@ export default function CrmSidebar({
                 {/* Submenu for System Modules */}
                 {!collapsed && systemExpanded && (
                   <div className="crm-sidebar-subnav" id="crm-sidebar-system-subnav" role="region" aria-label={isAr ? 'القوائم الفرعية لإدارة المنظومة' : 'System administration submodules'}>
+                    <button
+                      type="button"
+                      onClick={() => handleSubItemClick('team')}
+                      className={`crm-sidebar-subitem ${activeTab === 'system' && systemSubTab === 'team' ? 'is-active' : ''}`}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <UserCog size={13} />
+                        <span>{isAr ? 'الفريق والصلاحيات' : 'Team & roles'}</span>
+                      </div>
+                    </button>
+
                     <button
                       type="button"
                       onClick={() => handleSubItemClick('areas')}
