@@ -87,9 +87,9 @@ export default function FaqSection({ lang = 'ar' }) {
       icon: Globe,
       question: isAr ? 'هل يمكنني البيع أو الشراء وأنا خارج مصر؟' : 'Can I buy or sell while living abroad?',
       answer: isAr
-        ? 'بالتأكيد. طوّرنا خدمة "معاينة الغربة" للمصريين بالخارج، والتي تتضمن جولات فيديو مباشرة عبر واتساب من أرض الموقع، وتصوير درون تفصيلي للشارع ومستوى الجيران ومراحل البناء، ومتابعة دقيقة لإجراءات التوكيلات القنصلية والتحويلات البنكية الرسمية حتى تسليم المفتاح.'
-        : 'Absolutely. We designed our Expat Remote Service offering live WhatsApp video walkthroughs, 4K drone neighborhood surveys, power-of-attorney coordination, and verified official bank transfers until key handover.',
-      highlight: isAr ? 'معاينة فيديو حية + تصوير درون للمغتربين' : 'Live WhatsApp tours + Drone footage',
+        ? 'بالتأكيد. طوّرنا خدمة "معاينة الغربة" للمصريين بالخارج، والتي تتضمن جولات فيديو مباشرة عبر واتساب من أرض الموقع، وتصوير فيديو تفصيلي للشارع ومستوى الجيران ومراحل البناء، ومتابعة دقيقة لإجراءات التوكيلات القنصلية والتحويلات البنكية الرسمية حتى تسليم المفتاح.'
+        : 'Absolutely. We designed our Expat Remote Service offering live WhatsApp video walkthroughs, street and neighbourhood video footage, power-of-attorney coordination, and verified official bank transfers until key handover.',
+      highlight: isAr ? 'معاينة فيديو حية + تصوير الشارع والجيران للمغتربين' : 'Live WhatsApp tours + street footage',
       action: {
         isWhatsApp: true,
         label: isAr ? 'طلب معاينة فيديو حية للغربة' : 'Request Expat Video Tour',

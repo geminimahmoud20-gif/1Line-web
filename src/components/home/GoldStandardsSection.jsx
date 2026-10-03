@@ -160,7 +160,7 @@ function OffMarketArt({ isAr }) {
   );
 }
 
-/** 04 — Live WhatsApp / Drone Expat Remote Tour Widget */
+/** 04 — Live WhatsApp Expat Remote Tour Widget */
 function ExpatTourArt({ isAr }) {
   return (
     <div className="hx-expat-modern" aria-label={isAr ? 'معاينة الغربة الحية' : 'Live expat remote inspection'}>

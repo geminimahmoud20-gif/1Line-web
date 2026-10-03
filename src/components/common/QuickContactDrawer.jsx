@@ -117,7 +117,7 @@ export default function QuickContactDrawer({
               <div className="channel-title-badge">
                 <strong>{isAr ? 'معاينة الغربة (للمقيمين بالخارج)' : 'Remote inspection (expats)'}</strong>
               </div>
-              <span className="channel-sub">{isAr ? 'فيديو حي أو لقطات الشارع والجيران أو جولة درون' : 'Live video, street footage or a drone tour'}</span>
+              <span className="channel-sub">{isAr ? 'فيديو حي أو لقطات الشارع والجيران' : 'Live video or street footage'}</span>
             </div>
             {isAr ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
           </button>
