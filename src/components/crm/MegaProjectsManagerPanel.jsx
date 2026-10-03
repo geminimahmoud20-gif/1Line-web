@@ -54,11 +54,14 @@ export default function MegaProjectsManagerPanel({
     ],
     features_ar: 'أمن وحراسة 24 ساعة, لاندسكيب وبحيرات صناعية, مول تجاري خاص',
     features_en: '24/7 Security, Landscape & Water Features, Private Mall',
-    description_ar: 'مشروع متميز في أرقى مواقع سوهاج بتصميمات معمارية حديثة وتقسيط مريح.',
-    description_en: 'Premier development in prime Sohag location with flexible payment terms.'
+    description_ar: '',
+    description_en: '',
+    brochureUrl: ''
   };
 
   const [formData, setFormData] = useState(initialForm);
+  // Empty field → default; 0 stays 0 (sold out / not started)
+  const numOr = (v, fallback) => (v === '' || v == null || !Number.isFinite(Number(v)) ? fallback : Number(v));
 
   const handleOpenAddModal = () => {
     setEditingProjectId(null);
@@ -95,9 +98,11 @@ export default function MegaProjectsManagerPanel({
       startPrice: Number(formData.startPrice) || 2000000,
       downPaymentPercent: Number(formData.downPaymentPercent) || 15,
       installmentYears: Number(formData.installmentYears) || 5,
-      progress: Number(formData.progress) || 50,
-      totalUnits: Number(formData.totalUnits) || 100,
-      availableUnits: Number(formData.availableUnits) || 20,
+      progress: numOr(formData.progress, 50),
+      totalUnits: numOr(formData.totalUnits, 100),
+      availableUnits: numOr(formData.availableUnits, 20),
+      // Saving a sample from here makes it the admin's own project
+      isDemo: false,
       features_ar: typeof formData.features_ar === 'string' 
         ? formData.features_ar.split(',').map(s => s.trim()).filter(Boolean)
         : formData.features_ar,
@@ -242,6 +247,11 @@ export default function MegaProjectsManagerPanel({
                       <div>
                         <strong style={{ fontSize: 'var(--crm-text-base)', color: 'var(--crm-ink)', display: 'block' }}>{title}</strong>
                         {p.brandTag && <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', fontWeight: 'bold' }}>{p.brandTag}</span>}
+                        {p.isDemo && (
+                          <span title={isAr ? 'مشروع مثال يظهر للزوار بشارة "مثال توضيحي". احذفه أو عدّله واحفظه ليصبح مشروعك.' : 'Sample project, labelled on the site. Delete it, or edit and save to make it yours.'} style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-warn)', fontWeight: 'bold', marginInlineStart: 6 }}>
+                            {isAr ? 'مثال توضيحي' : 'Sample'}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </td>
@@ -523,6 +533,18 @@ export default function MegaProjectsManagerPanel({
                     type="text"
                     value={formData.images[0] || ''}
                     onChange={(e) => setFormData({ ...formData, images: [e.target.value] })}
+                    style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{isAr ? 'رابط الكتالوج PDF (اختياري — بدونه لا يظهر الزر)' : 'Brochure PDF link (optional — no link, no button)'}</label>
+                  <input
+                    type="url"
+                    dir="ltr"
+                    placeholder="https://…/brochure.pdf"
+                    value={formData.brochureUrl || ''}
+                    onChange={(e) => setFormData({ ...formData, brochureUrl: e.target.value.trim() })}
                     style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}
                   />
                 </div>

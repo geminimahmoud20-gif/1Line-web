@@ -7,11 +7,13 @@ import { getWhatsAppUrl } from '../utils/founderCmsData';
 import { updatePageSeo } from '../utils/seoHelper';
 import { formatCurrencyPrice } from '../utils/currencyAndBenchmark';
 
+// Brochure links are typed in the CRM: only web links are opened
+const safeBrochureUrl = (url) => (/^https?:\/\/\S+$/i.test(String(url || '').trim()) ? String(url).trim() : null);
+
 export default function ProjectsPage({ 
   projects = [],
   lang = 'ar', 
-  currency = 'EGP',
-  triggerToast 
+  currency = 'EGP'
 }) {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const navigate = useNavigate();
@@ -39,26 +41,21 @@ export default function ProjectsPage({
 
   const handleInquireProject = (project) => {
     const title = isAr ? project.title_ar : project.title_en;
+    // A sample project can't be visited: ask about real projects of the same kind instead
+    if (project.isDemo) {
+      const kind = isAr ? (project.type_ar || 'مشروع') : (project.type_en || 'project');
+      window.open(getWhatsAppUrl(isAr
+        ? `مرحباً 1Line، أبحث عن ${kind} في سوهاج. ما المشروعات المتاحة حالياً؟`
+        : `Hello 1Line, I'm looking for a ${kind} in Sohag. Which projects are available now?`), '_blank');
+      return;
+    }
     const msg = isAr 
       ? `مرحباً 1Line، أريد حجز موعد معاينة ميدانية ومعرفة الوحدات المتاحة في مشروع: ${title}`
       : `Hello 1Line, I would like to book a viewing tour and request unit availability for: ${title}`;
     window.open(getWhatsAppUrl(msg), '_blank');
   };
 
-  const handleDownloadBrochure = (project) => {
-    const title = isAr ? project.title_ar : project.title_en;
-    const brochureUrl = (Array.isArray(project.images) && project.images.length > 0) ? project.images[0] : null;
-    if (!brochureUrl) {
-      if (triggerToast) {
-        triggerToast(isAr ? 'بروشور المشروع قيد التجهيز والاعتماد' : 'Brochure is being prepared by developer', 'info');
-      }
-      return;
-    }
-    if (triggerToast) {
-      triggerToast(isAr ? `جاري تجهيز وتحميل بروشور مشروع ${title}...` : `Downloading brochure for ${title}...`, 'success');
-    }
-    window.open(brochureUrl, '_blank');
-  };
+
 
   return (
     <div className="projects-page-wrapper">
@@ -93,7 +90,7 @@ export default function ProjectsPage({
             <Sparkles size={16} className="text-gold" />
             <span>{isAr ? 'دليل المشروعات والكمبوندات الكبرى في سوهاج' : 'Mega Projects & Flagship Compounds'}</span>
           </div>
-          <h1>{isAr ? 'أضخم المشروعات العقارية والتجارية بسوهاج 2026' : 'Premier Real Estate Developments in Sohag'}</h1>
+          <h1>{isAr ? 'المشروعات العقارية والتجارية في سوهاج' : 'Premier Real Estate Developments in Sohag'}</h1>
           <p>
             {isAr 
               ? 'تصفح الكمبوندات السكنية المغلقة، المولات التجارية، والأبراج الإدارية مع متابعة حية لنسب الإنجاز الإنشائي الميداني.' 
@@ -131,6 +128,7 @@ export default function ProjectsPage({
             const desc = isAr ? project.description_ar : project.description_en;
             const feats = isAr ? project.features_ar : project.features_en;
             const priceData = formatCurrencyPrice(project.startPrice, currency, lang);
+            const brochureUrl = safeBrochureUrl(project.brochureUrl);
 
             return (
               <div key={project.id} className="mega-project-card">
@@ -145,6 +143,8 @@ export default function ProjectsPage({
 
                   {/* Brand Watermark Overlay */}
                   <BrandWatermark size="md" position="bottom-right" />
+
+                  {project.isDemo && <span className="xs-demo-tag project-demo-tag">{isAr ? 'مثال توضيحي' : 'Sample'}</span>}
 
                   {/* Progress Tag Badge */}
                   <div className="project-progress-badge">
@@ -166,8 +166,8 @@ export default function ProjectsPage({
                       <MapPin size={14} className="text-gold" />
                       <span>{location}</span>
                     </div>
+                    <h3 className="project-title-text" title={title}>{title}</h3>
                     <div className="project-title-row">
-                      <h3 className="project-title-text">{title}</h3>
                       {project.brandTag && (
                         <span className="project-brand-pill">{project.brandTag}</span>
                       )}
@@ -185,9 +185,9 @@ export default function ProjectsPage({
                       <div className="prog-fill" style={{ width: `${project.progress}%` }} />
                     </div>
                     <div className="prog-milestones-row">
-                      <span className="milestone-chip"><strong>100%</strong> {isAr ? 'خرسانات' : 'Structure'}</span>
-                      <span className="milestone-chip"><strong>{project.progressBreakdown.masonry}%</strong> {isAr ? 'مباني' : 'Masonry'}</span>
-                      <span className="milestone-chip"><strong>{project.progressBreakdown.finishing}%</strong> {isAr ? 'تشطيب' : 'Finishing'}</span>
+                      <span className="milestone-chip"><strong>{project.progressBreakdown?.concrete ?? 0}%</strong> {isAr ? 'خرسانات' : 'Structure'}</span>
+                      <span className="milestone-chip"><strong>{project.progressBreakdown?.masonry ?? 0}%</strong> {isAr ? 'مباني' : 'Masonry'}</span>
+                      <span className="milestone-chip"><strong>{project.progressBreakdown?.finishing ?? 0}%</strong> {isAr ? 'تشطيب' : 'Finishing'}</span>
                     </div>
                   </div>
 
@@ -195,7 +195,7 @@ export default function ProjectsPage({
                   <div className="project-metrics-grid">
                     <div className="proj-metric-item">
                       <span className="metric-lbl">{isAr ? 'يبدأ من' : 'Starting From'}</span>
-                      <strong className="metric-val text-primary">{priceData.primary} {priceData.symbol}</strong>
+                      <strong className="metric-val metric-val--key">{priceData.primary} {priceData.symbol}</strong>
                       {priceData.isConverted && (
                         <small style={{ fontSize: '0.68rem', color: 'var(--text-muted)', display: 'block', fontWeight: '700' }}>
                           ≈ {priceData.originalEgp}
@@ -204,11 +204,11 @@ export default function ProjectsPage({
                     </div>
 
                     <div className="proj-metric-item">
-                      <span className="metric-lbl">{isAr ? 'مقدم ونظام التقسيط' : 'Downpayment & Plan'}</span>
+                      <span className="metric-lbl">{isAr ? 'المقدم والتقسيط' : 'Down & plan'}</span>
                       <strong className="metric-val">
-                        {isAr 
-                          ? `${project.downPaymentPercent}% مقدم • ${project.installmentYears} سنوات` 
-                          : `${project.downPaymentPercent}% Down • ${project.installmentYears} Yrs`}
+                        {isAr
+                          ? `${project.downPaymentPercent}% • ${project.installmentYears} ${project.installmentYears > 10 ? 'سنة' : 'سنوات'}`
+                          : `${project.downPaymentPercent}% • ${project.installmentYears} yrs`}
                       </strong>
                     </div>
 
@@ -217,10 +217,18 @@ export default function ProjectsPage({
                       <strong className="metric-val">{delivery}</strong>
                     </div>
 
-                    <div className="proj-metric-item">
-                      <span className="metric-lbl">{isAr ? 'الوحدات المتاحة' : 'Available Units'}</span>
-                      <strong className="metric-val text-success">{project.availableUnits} {isAr ? 'وحدة متبقية' : 'Units'}</strong>
-                    </div>
+                    {/* A sample has no units for sale: show what kind of project it is instead */}
+                    {project.isDemo || !Number(project.availableUnits) ? (
+                      <div className="proj-metric-item">
+                        <span className="metric-lbl">{isAr ? 'نوع المشروع' : 'Project type'}</span>
+                        <strong className="metric-val">{isAr ? project.type_ar : project.type_en}</strong>
+                      </div>
+                    ) : (
+                      <div className="proj-metric-item">
+                        <span className="metric-lbl">{isAr ? 'الوحدات المتاحة' : 'Available Units'}</span>
+                        <strong className="metric-val">{project.availableUnits} {isAr ? 'وحدة متاحة' : 'units'}</strong>
+                      </div>
+                    )}
                   </div>
 
                   {/* Features List */}
@@ -234,24 +242,32 @@ export default function ProjectsPage({
                   </div>
 
                   {/* Card Actions */}
-                  <div className="project-card-footer-actions">
+                  <div className={`project-card-footer-actions ${brochureUrl ? '' : 'is-single'}`}>
                     <button
                       type="button"
                       className="btn btn-primary btn-project-cta"
                       onClick={() => handleInquireProject(project)}
                     >
                       <MessageSquare size={15} />
-                      <span>{isAr ? 'حجز معاينة ميدانية' : 'Book Viewing Tour'}</span>
+                      <span>
+                        {project.isDemo
+                          ? (isAr ? 'اسأل عن مشروعات مشابهة' : 'Ask about similar projects')
+                          : (isAr ? 'حجز معاينة ميدانية' : 'Book Viewing Tour')}
+                      </span>
                     </button>
 
-                    <button
-                      type="button"
-                      className="btn btn-outline btn-project-brochure"
-                      onClick={() => handleDownloadBrochure(project)}
-                    >
-                      <FileDown size={15} />
-                      <span>{isAr ? 'الكتالوج PDF' : 'Brochure PDF'}</span>
-                    </button>
+                    {/* Only when the project has an actual brochure file */}
+                    {brochureUrl && (
+                      <a
+                        className="btn btn-outline btn-project-brochure"
+                        href={brochureUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <FileDown size={15} />
+                        <span>{isAr ? 'الكتالوج PDF' : 'Brochure PDF'}</span>
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>

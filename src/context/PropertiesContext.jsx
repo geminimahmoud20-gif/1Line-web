@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { MEGA_PROJECTS } from '../data/projectsData';
+import { MEGA_PROJECTS, tagDemoProject } from '../data/projectsData';
 import { INITIAL_LEADS } from '../data/mockData';
 import { DEMO_PROPERTIES, DEMO_DEMANDS, tagDemoProperty, tagDemoDemand, isRealItem } from '../data/demoData';
 
@@ -149,7 +149,12 @@ export function PropertiesProvider({ children }) {
   const [projects, setProjects] = useState(() => {
     const stored = readStoredJson('oneline_mega_projects', MEGA_PROJECTS, isRecordArray);
     if (Array.isArray(stored) && stored.length > 0) {
-      const validStored = stored.filter(p => p && typeof p === 'object' && p.id);
+      // Untouched sample copies saved earlier are refreshed to the current sample text; a sample
+      // saved to the cloud from the CRM comes back as a real project (isDemo: false)
+      const freshSample = new Map(MEGA_PROJECTS.map((p) => [String(p.id), p]));
+      const validStored = stored
+        .filter(p => p && typeof p === 'object' && p.id)
+        .map((p) => (tagDemoProject(p).isDemo ? freshSample.get(String(p.id)) || p : p));
       const existingIds = new Set(validStored.map(p => p.id));
       const missing = MEGA_PROJECTS.filter(p => p && !existingIds.has(p.id));
       if (missing.length > 0) {
