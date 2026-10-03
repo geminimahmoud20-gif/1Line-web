@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { MessageSquare, Menu, X, Search, Globe, Share2, Sun, Moon, Volume2, VolumeX, MoreHorizontal, Scale, Building, Sparkles, FileText, ChevronDown, Home, TrendingUp, Landmark, Award, Layers, Heart, ArrowRight, ArrowLeft, Lock, User, ShieldCheck, Repeat2, Stethoscope } from 'lucide-react';
+import { MessageSquare, Menu, X, Search, Globe, Share2, Sun, Moon, Volume2, VolumeX, MoreHorizontal, Scale, Building, Sparkles, FileText, ChevronDown, Home, TrendingUp, Award, Layers, Heart, ArrowRight, ArrowLeft, Lock, User, ShieldCheck, Repeat2, Stethoscope } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import CurrencySwitcher from './CurrencySwitcher';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
@@ -176,12 +176,6 @@ export default function Header({
           icon: TrendingUp
         },
         {
-          path: '/financing',
-          label: isAr ? 'حاسبة التمويل والأقساط' : 'Financing & Installments',
-          desc: isAr ? 'محاكاة القسط حتى 7 سنوات' : 'Mortgage & installment calculator',
-          icon: Landmark
-        },
-        {
           path: '/investor',
           label: isAr ? 'بوابة كبار المستثمرين' : 'Investor Portal',
           desc: isAr ? 'محافظ عقارية وأراضي كبرى' : 'High-yield portfolios & lands',
@@ -205,7 +199,6 @@ export default function Header({
     { path: '/private-office', label: isAr ? 'المكتب الخاص (Off-Market)' : 'Private Office', badge: 'Private', badgeType: 'gold', icon: Lock },
     { path: '/special-requests', label: isAr ? 'طلب عقار خاص VIP' : 'Special Requests', badge: 'VIP', badgeType: 'gold', icon: Sparkles },
     { path: '/market-intelligence', label: isAr ? 'مؤشرات أسعار السوق' : 'Market Intel', icon: TrendingUp },
-    { path: '/financing', label: isAr ? 'حاسبة التمويل والأقساط' : 'Financing', icon: Landmark },
     { path: '/investor', label: isAr ? 'بوابة المستثمرين' : 'Investors', icon: Award }
   ];
 

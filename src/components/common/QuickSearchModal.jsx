@@ -69,7 +69,7 @@ export default function QuickSearchModal({
     {
       id: 'tool-financing',
       type: 'tool',
-      title: isAr ? 'حاسبة التمويل والأقساط العقارية' : 'Financing & Mortgage Calculator',
+      title: isAr ? 'حاسبة تقسيط المشروعات' : 'Project installment calculator',
       desc: isAr ? 'احسب قسطك الشهري والدفعة المقدمة وجدول السداد' : 'Calculate monthly installments and down payment',
       icon: Calculator,
       action: () => { navigate('/financing'); onClose(); }

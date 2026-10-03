@@ -196,6 +196,8 @@ export default function PropertyDetailPage({
         : '';
   const officeOpen = isOfficeOpenNow();
   const financePlan = computeFinanceBreakdown(property)?.plan || null;
+  // Most units sell cash: the installment calculator only shows on a listing that has its own plan
+  const hasInstallments = Number(property.installmentYears) > 0 || Number(property.monthlyInstallment) > 0;
   const util = property.utilities || {};
   const utilityItems = [
     { key: 'electricity', Icon: Zap, label: isAr ? 'الكهرباء' : 'Electricity', value: util.electricity_ar },
@@ -469,7 +471,7 @@ export default function PropertyDetailPage({
             { id: 'overview', Icon: Layers, ar: 'المواصفات والتكاليف', en: 'Specs & costs' },
             { id: 'legal', Icon: ShieldCheck, ar: 'الموقف القانوني', en: 'Legal status' },
             { id: 'valuation', Icon: TrendingUp, ar: 'السعر والمنطقة', en: 'Price & area' },
-            { id: 'financing', Icon: Calculator, ar: 'حاسبة التمويل', en: 'Financing calculator' }
+            ...(hasInstallments ? [{ id: 'financing', Icon: Calculator, ar: 'خطة التقسيط', en: 'Installment plan' }] : [])
           ].map(({ id: tabId, Icon, ar, en }, idx, all) => (
             <button
               key={tabId}
@@ -562,7 +564,7 @@ export default function PropertyDetailPage({
             )}
 
             {/* TAB 4: FINANCING & ROI CALCULATOR */}
-            {activeTab === 'financing' && (
+            {activeTab === 'financing' && hasInstallments && (
               <div className="tab-pane-content">
                 {/* Customized Mortgage Calculator for this property */}
                 <div className="detail-card-box">

@@ -153,7 +153,7 @@ export const BuyWizard = ({
           <div className="phase-circle">{currentPhase > 2 ? '✓' : '2'}</div>
           <div className="phase-text">
             <span className="phase-title">{isAr ? 'الميزانية وطريقة الدفع' : 'Budget & Financing'}</span>
-            <span className="phase-sub">{isAr ? 'كاش أو تقسيط' : 'Cash or Installments'}</span>
+            <span className="phase-sub">{isAr ? 'كاش أساساً' : 'Mostly cash'}</span>
           </div>
         </div>
 
@@ -360,7 +360,7 @@ export const BuyWizard = ({
                 onClick={() => setBuyerAnswers({ ...buyerAnswers, paymentMethod: 'cash' })}
               >
                 <DollarSign size={16} className="text-success" />
-                <span>{isAr ? 'كاش فوري (للحصول على أعلى خصم)' : 'Cash Handover'}</span>
+                <span>{isAr ? 'كاش (معظم وحداتنا بتتباع كاش)' : 'Cash (how most of our units sell)'}</span>
               </button>
               <button
                 type="button"
@@ -368,7 +368,7 @@ export const BuyWizard = ({
                 onClick={() => setBuyerAnswers({ ...buyerAnswers, paymentMethod: 'installment' })}
               >
                 <CreditCard size={16} className="text-primary" />
-                <span>{isAr ? 'تقسيط مريح (مقدم وأقساط حتى 7 سنوات)' : 'Installments up to 7 Yrs'}</span>
+                <span>{isAr ? 'تقسيط (في المشروعات اللي متاح فيها)' : 'Installments (where a project offers them)'}</span>
               </button>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import { HERO_POSTER_DEFAULT } from '../../pages/HomePageData';
 import { Link } from 'react-router-dom';
-import { Building, Search, TrendingUp, MapPin, Sparkles, Calculator, Clock, Home, Landmark, Pause, Play, Volume2, VolumeX, Zap, Maximize2, X } from 'lucide-react';
+import { Building, Search, TrendingUp, MapPin, Sparkles, Calculator, Home, Landmark, Pause, Play, Volume2, VolumeX, Zap, Maximize2, X } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { HeroSponsorChip } from './SponsoredPlacements';
 import LogoEmblem from '../LogoEmblem';
@@ -22,7 +22,6 @@ export default function HomeHero({
   matchingDistricts,
   matchingProjects,
   matchingProperties,
-  maxInstallmentYears,
   navigate,
   omniboxRef,
   searchArea,
@@ -423,17 +422,11 @@ export default function HomeHero({
         {/* One-tap discovery pills — each maps to a filter the listings page actually supports */}
         <nav className="hx-pills" aria-label={lang === 'ar' ? 'اختصارات البحث' : 'Quick searches'}>
           {[
+            { ar: 'بيع كاش مباشر', en: 'Direct cash sale', to: '/properties?paymentPlan=cash', icon: Zap },
             { ar: 'سوهاج الجديدة', en: 'New Sohag', to: '/properties?area=new_sohag', icon: MapPin },
             { ar: 'كورنيش النيل', en: 'Nile Corniche', to: '/properties?area=corniche', icon: MapPin },
             { ar: 'شارع الجمهورية', en: 'El-Gomhoreya St.', to: `/properties?q=${encodeURIComponent('الجمهورية')}`, icon: Landmark },
             { ar: 'فيلات مستقلة', en: 'Villas', to: '/properties?type=villa', icon: Home },
-            { ar: 'كاش فوري', en: 'Cash deals', to: '/properties?paymentPlan=cash', icon: Zap },
-            {
-              ar: maxInstallmentYears ? `تقسيط حتى ${maxInstallmentYears} سنوات` : 'تقسيط مباشر',
-              en: maxInstallmentYears ? `Up to ${maxInstallmentYears}-yr installments` : 'Installments',
-              to: '/properties?paymentPlan=installments',
-              icon: Clock
-            },
             { ar: 'محلات تجارية', en: 'Retail shops', to: '/properties?type=commercial', icon: Building }
           ].map(({ ar, en, to, icon: Icon }) => (
             <Link key={to} to={to} className="hx-pill">

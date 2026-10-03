@@ -388,14 +388,14 @@ export default function PropertyFilters({
                 value={filters.paymentPlan || 'all'}
                 onChange={(e) => onFilterChange('paymentPlan', e.target.value)}
               >
-                <option value="all">{isAr ? 'كاش أو تقسيط' : 'Cash or Installments'}</option>
-                <option value="installments">{isAr ? 'تقسيط فقط' : 'Installments Only'}</option>
-                <option value="cash">{isAr ? 'كاش فقط' : 'Cash Only'}</option>
+                <option value="all">{isAr ? 'كل طرق الدفع' : 'Any payment'}</option>
+                <option value="cash">{isAr ? 'كاش' : 'Cash'}</option>
+                <option value="installments">{isAr ? 'متاح تقسيط' : 'Installments available'}</option>
               </select>
             </div>
 
-            {/* Installment Years (Visible when installments chosen or all) */}
-            {filters.paymentPlan !== 'cash' && (
+            {/* Installment Years (only when the visitor asks for installments) */}
+            {filters.paymentPlan === 'installments' && (
               <div className="filter-item">
                 <label className="compact-label">{isAr ? 'فترة التقسيط المتاحة' : 'Installment Period'}</label>
                 <select

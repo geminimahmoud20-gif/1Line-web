@@ -220,12 +220,6 @@ export default function HomePage({
     return activePublished.filter(p => p.areaKey === marketplaceAreaFilter || (p.locationName_ar || '').includes(marketplaceAreaFilter));
   }, [activePublished, marketplaceAreaFilter]);
 
-  // Longest installment plan actually on offer — the discovery pill quotes it instead of a fixed number
-  const maxInstallmentYears = useMemo(
-    () => activePublished.reduce((max, p) => (Number(p.monthlyInstallment) > 0 ? Math.max(max, Number(p.installmentYears) || 0) : max), 0),
-    [activePublished]
-  );
-
   // Homepage slots: scheduled/ordered featured listings from the CRM first, then newest listings
   const displayProperties = useMemo(
     () => getHomepageSlots(filteredMarketplaceProps).map((s) => s.property),
@@ -341,7 +335,6 @@ export default function HomePage({
         matchingDistricts={matchingDistricts}
         matchingProjects={matchingProjects}
         matchingProperties={matchingProperties}
-        maxInstallmentYears={maxInstallmentYears}
         navigate={navigate}
         omniboxRef={omniboxRef}
         searchArea={searchArea}
