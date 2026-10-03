@@ -24,6 +24,9 @@ export default function PropertyTableRow({
 }) {
   const propStatus = prop.status || (prop.isArchived ? 'hidden' : 'published');
   const isTrash = prop.isDeleted || prop.status === 'trash';
+  // Same rule as the public site: only hidden / draft / trash listings are off the site
+  // ("under negotiation" and "sold" ones are still shown there)
+  const isOnSite = !isTrash && !['hidden', 'draft'].includes(propStatus);
 
   return (
     <tr style={{ opacity: isTrash ? 0.6 : 1 }}>
@@ -177,10 +180,11 @@ export default function PropertyTableRow({
                 type="button"
                 className="icon-action-table-btn"
                 onClick={() => handleToggleVisibility(prop)}
-                title={propStatus === 'published' ? (isAr ? 'إخفاء العقار' : 'Hide') : (isAr ? 'إظهار العقار' : 'Publish')}
-                style={{ color: propStatus === 'published' ? 'var(--crm-positive)' : 'var(--crm-muted)' }}
+                title={isOnSite ? (isAr ? 'إخفاء العقار من الموقع' : 'Hide from site') : (isAr ? 'إظهار العقار على الموقع' : 'Show on site')}
+                aria-pressed={isOnSite}
+                style={{ color: isOnSite ? 'var(--crm-positive)' : 'var(--crm-muted)' }}
               >
-                {propStatus === 'published' ? <Eye size={16} /> : <EyeOff size={16} />}
+                {isOnSite ? <Eye size={16} /> : <EyeOff size={16} />}
               </button>
 
               {/* WhatsApp Retargeting / Match Broadcast Button */}
