@@ -29,9 +29,9 @@ export default function RetargetingHub({
 
   const propTitle = isAr ? selectedProperty.title_ar : selectedProperty.title_en;
   const propLocation = isAr ? selectedProperty.locationName_ar : selectedProperty.locationName_en;
-  const propPrice = selectedProperty.price ? selectedProperty.price.toLocaleString() + ' ج.م' : 'سعر مميز';
-  const propDownPayment = selectedProperty.downPayment ? selectedProperty.downPayment.toLocaleString() + ' ج.م' : 'مقدم ميسر';
-  const propInstallment = selectedProperty.monthlyInstallment ? selectedProperty.monthlyInstallment.toLocaleString() + ' ج.م' : 'أقساط مرنة';
+  const propPrice = selectedProperty.price ? selectedProperty.price.toLocaleString('en-US') + ' ج.م' : 'سعر مميز';
+  const propDownPayment = selectedProperty.downPayment ? selectedProperty.downPayment.toLocaleString('en-US') + ' ج.م' : 'مقدم ميسر';
+  const propInstallment = selectedProperty.monthlyInstallment ? selectedProperty.monthlyInstallment.toLocaleString('en-US') + ' ج.م' : 'أقساط مرنة';
 
   // Dynamic Segmentation Engine
   const segmentedLeads = useMemo(() => {
@@ -222,7 +222,7 @@ export default function RetargetingHub({
           >
             {properties.map(p => (
               <option key={p.id} value={p.id}>
-                {isAr ? p.title_ar : p.title_en} ({p.price?.toLocaleString()} ج.م)
+                {isAr ? p.title_ar : p.title_en} ({p.price?.toLocaleString('en-US')} ج.م)
               </option>
             ))}
           </select>
@@ -367,7 +367,7 @@ export default function RetargetingHub({
                     </td>
                     <td>
                       <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-positive)', fontWeight: 'bold', display: 'block' }}>
-                        💰 {lead.details?.budget ? parseInt(lead.details.budget).toLocaleString() + ' ج.م' : 'مرنة'}
+                        💰 {lead.details?.budget ? parseInt(lead.details.budget).toLocaleString('en-US') + ' ج.م' : 'مرنة'}
                       </span>
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
                         📍 {lead.details?.area || 'سوهاج'}
@@ -375,7 +375,7 @@ export default function RetargetingHub({
                     </td>
                     <td style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
                       {lead.lastRetargeted 
-                        ? (isAr ? `أرسلت حملة في ${new Date(lead.lastRetargeted).toLocaleDateString('ar-EG')}` : `Retargeted on ${new Date(lead.lastRetargeted).toLocaleDateString()}`)
+                        ? (isAr ? `أرسلت حملة في ${new Date(lead.lastRetargeted).toLocaleDateString('ar-EG-u-nu-latn')}` : `Retargeted on ${new Date(lead.lastRetargeted).toLocaleDateString('en-GB')}`)
                         : (isAr ? 'لم يُرسل له سابقاً' : 'Not retargeted yet')}
                     </td>
                     <td>

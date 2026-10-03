@@ -57,7 +57,7 @@ export default function PaymentScheduleBuilder({
     rows.push({
       number: 1,
       type: isAr ? 'دفعة التعاقد والمقدم' : 'Contract Down Payment',
-      date: startDate.toLocaleDateString(isAr ? 'ar-EG' : 'en-US'),
+      date: startDate.toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US'),
       amount: downPaymentAmount,
       status: isAr ? 'مستحق فوراً' : 'Due Now'
     });
@@ -75,7 +75,7 @@ export default function PaymentScheduleBuilder({
       rows.push({
         number: i + 1,
         type: isAr ? `القسط رقم (${i}) - ${frequency === 'quarterly' ? 'ربع سنوي' : 'شهري'}` : `Installment #${i}`,
-        date: installDate.toLocaleDateString(isAr ? 'ar-EG' : 'en-US'),
+        date: installDate.toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US'),
         amount: installmentAmount,
         status: isAr ? 'مجدول' : 'Scheduled'
       });
@@ -151,7 +151,7 @@ export default function PaymentScheduleBuilder({
             >
               {properties.map(p => (
                 <option key={p.id} value={p.id}>
-                  {isAr ? p.title_ar : p.title_en} ({p.price?.toLocaleString()} ج.م)
+                  {isAr ? p.title_ar : p.title_en} ({p.price?.toLocaleString('en-US')} ج.م)
                 </option>
               ))}
             </select>
@@ -190,13 +190,13 @@ export default function PaymentScheduleBuilder({
               value={downPaymentPercent}
               onChange={(e) => setDownPaymentPercent(parseInt(e.target.value))}
             >
-              <option value="10">10% ({((totalPrice * 0.1)).toLocaleString()} ج.م)</option>
-              <option value="15">15% ({((totalPrice * 0.15)).toLocaleString()} ج.م)</option>
-              <option value="20">20% ({((totalPrice * 0.2)).toLocaleString()} ج.م)</option>
-              <option value="25">25% ({((totalPrice * 0.25)).toLocaleString()} ج.م)</option>
-              <option value="30">30% ({((totalPrice * 0.3)).toLocaleString()} ج.م)</option>
-              <option value="40">40% ({((totalPrice * 0.4)).toLocaleString()} ج.م)</option>
-              <option value="50">50% ({((totalPrice * 0.5)).toLocaleString()} ج.م)</option>
+              <option value="10">10% ({((totalPrice * 0.1)).toLocaleString('en-US')} ج.م)</option>
+              <option value="15">15% ({((totalPrice * 0.15)).toLocaleString('en-US')} ج.م)</option>
+              <option value="20">20% ({((totalPrice * 0.2)).toLocaleString('en-US')} ج.م)</option>
+              <option value="25">25% ({((totalPrice * 0.25)).toLocaleString('en-US')} ج.م)</option>
+              <option value="30">30% ({((totalPrice * 0.3)).toLocaleString('en-US')} ج.م)</option>
+              <option value="40">40% ({((totalPrice * 0.4)).toLocaleString('en-US')} ج.م)</option>
+              <option value="50">50% ({((totalPrice * 0.5)).toLocaleString('en-US')} ج.م)</option>
             </select>
           </div>
 
@@ -238,10 +238,10 @@ export default function PaymentScheduleBuilder({
               value={maintenancePercent}
               onChange={(e) => setMaintenancePercent(parseInt(e.target.value))}
             >
-              <option value="5">5% ({((totalPrice * 0.05)).toLocaleString()} ج.م)</option>
-              <option value="7">7% ({((totalPrice * 0.07)).toLocaleString()} ج.م)</option>
-              <option value="8">8% ({((totalPrice * 0.08)).toLocaleString()} ج.م)</option>
-              <option value="10">10% ({((totalPrice * 0.1)).toLocaleString()} ج.م)</option>
+              <option value="5">5% ({((totalPrice * 0.05)).toLocaleString('en-US')} ج.م)</option>
+              <option value="7">7% ({((totalPrice * 0.07)).toLocaleString('en-US')} ج.م)</option>
+              <option value="8">8% ({((totalPrice * 0.08)).toLocaleString('en-US')} ج.م)</option>
+              <option value="10">10% ({((totalPrice * 0.1)).toLocaleString('en-US')} ج.م)</option>
             </select>
           </div>
         </div>
@@ -254,7 +254,7 @@ export default function PaymentScheduleBuilder({
             <DollarSign size={20} />
           </div>
           <div className="crm-stat-info">
-            <span className="crm-stat-num">{downPaymentAmount.toLocaleString()}</span>
+            <span className="crm-stat-num">{downPaymentAmount.toLocaleString('en-US')}</span>
             <span className="crm-stat-lbl">{isAr ? 'مقدم التعاقد المطلوب (ج.م)' : 'Required Down Payment'}</span>
           </div>
         </div>
@@ -264,7 +264,7 @@ export default function PaymentScheduleBuilder({
             <Calendar size={20} />
           </div>
           <div className="crm-stat-info">
-            <span className="crm-stat-num">{installmentAmount.toLocaleString()}</span>
+            <span className="crm-stat-num">{installmentAmount.toLocaleString('en-US')}</span>
             <span className="crm-stat-lbl">
               {isAr ? `قيمة القسط (${frequency === 'quarterly' ? 'الربع سنوي' : 'الشهري'})` : 'Installment Value'}
             </span>
@@ -276,7 +276,7 @@ export default function PaymentScheduleBuilder({
             <ShieldCheck size={20} />
           </div>
           <div className="crm-stat-info">
-            <span className="crm-stat-num">{maintenanceAmount.toLocaleString()}</span>
+            <span className="crm-stat-num">{maintenanceAmount.toLocaleString('en-US')}</span>
             <span className="crm-stat-lbl">{isAr ? 'وديعة الصيانة عند الاستلام (ج.م)' : 'Maintenance Deposit'}</span>
           </div>
         </div>
@@ -303,7 +303,7 @@ export default function PaymentScheduleBuilder({
                 <td style={{ fontWeight: 'bold' }}>{row.number}</td>
                 <td><strong>{row.type}</strong></td>
                 <td>{row.date}</td>
-                <td><strong style={{ color: 'var(--crm-positive)' }}>{row.amount.toLocaleString()} ج.م</strong></td>
+                <td><strong style={{ color: 'var(--crm-positive)' }}>{row.amount.toLocaleString('en-US')} ج.م</strong></td>
                 <td>
                   <span className="badge" style={{
                     background: row.number === 1 ? 'var(--crm-positive-soft)' : 'rgba(255,255,255,0.05)',
@@ -369,7 +369,7 @@ export default function PaymentScheduleBuilder({
               borderRadius: 'var(--radius-sm)',
               margin: '16px',
               border: '2px solid var(--crm-line)',
-              fontFamily: 'Cairo, sans-serif'
+              fontFamily: 'inherit'
             }}>
               {/* Receipt Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid var(--crm-warn)', paddingBottom: '14px', marginBottom: '18px' }}>
@@ -380,7 +380,7 @@ export default function PaymentScheduleBuilder({
                 <div style={{ textAlign: isAr ? 'left' : 'right' }}>
                   <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 'bold', color: 'var(--crm-accent-text)', display: 'block' }}>رقم الإيصال الإلكتروني:</span>
                   <strong style={{ fontSize: 'var(--crm-text-base)', color: 'var(--crm-ink)' }}>{receiptSerial}</strong>
-                  <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'block' }}>التاريخ: {new Date().toLocaleDateString('ar-EG')}</span>
+                  <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'block' }}>التاريخ: {new Date().toLocaleDateString('ar-EG-u-nu-latn')}</span>
                 </div>
               </div>
 
@@ -393,7 +393,7 @@ export default function PaymentScheduleBuilder({
                   رقم الهاتف: <strong>{selectedLead.phone || '010XXXXXXXX'}</strong>
                 </p>
                 <p style={{ margin: 0 }}>
-                  مبلغ وقدره: <strong style={{ color: 'var(--crm-positive)', fontSize: 'var(--crm-text-lg)' }}>{receiptDepositAmount.toLocaleString()} ج.م</strong> (فقط خمسون ألف جنيهاً مصرياً لا غير).
+                  مبلغ وقدره: <strong style={{ color: 'var(--crm-positive)', fontSize: 'var(--crm-text-lg)' }}>{receiptDepositAmount.toLocaleString('en-US')} ج.م</strong> (فقط خمسون ألف جنيهاً مصرياً لا غير).
                 </p>
                 <p style={{ margin: 0 }}>
                   طريقة السداد: <strong>{paymentMethod === 'cash' ? 'نقداً بخزينة الشركة' : paymentMethod === 'bank_transfer' ? 'تحويل بنكي رسمي' : 'فودافون كاش / إنستاباي'}</strong>
@@ -402,7 +402,7 @@ export default function PaymentScheduleBuilder({
                   وذلك كجدية حجز مبدئي للوحدة: <strong style={{ color: 'var(--crm-accent-text)' }}>{isAr ? selectedProp.title_ar : selectedProp.title_en}</strong>
                 </p>
                 <p style={{ margin: 0, fontSize: 'var(--crm-text-base)', color: 'var(--crm-muted)' }}>
-                  بالموقع: {isAr ? selectedProp.locationName_ar : selectedProp.locationName_en} — بإجمالي سعر: {totalPrice.toLocaleString()} ج.م.
+                  بالموقع: {isAr ? selectedProp.locationName_ar : selectedProp.locationName_en} — بإجمالي سعر: {totalPrice.toLocaleString('en-US')} ج.م.
                 </p>
               </div>
 

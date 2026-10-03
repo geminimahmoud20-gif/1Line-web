@@ -517,7 +517,7 @@ export default function DemandsManagerPanel({
                     </div>
 
                     <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
-                      {demand.timestamp || (demand.createdAt ? new Date(demand.createdAt).toLocaleDateString('ar-EG') : '')}
+                      {demand.timestamp || (demand.createdAt ? new Date(demand.createdAt).toLocaleDateString('ar-EG-u-nu-latn') : '')}
                     </span>
                   </div>
 
@@ -552,7 +552,7 @@ export default function DemandsManagerPanel({
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--crm-positive)', fontWeight: 'bold' }}>
                       <DollarSign size={13} />
-                      <span>{budgetNum.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</span>
+                      <span>{budgetNum.toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}</span>
                     </div>
 
                     {demand.paymentMethod && (

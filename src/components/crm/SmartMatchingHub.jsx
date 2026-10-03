@@ -112,7 +112,7 @@ export default function SmartMatchingHub({
     const cleanPhone = phone?.replace(/[^0-9]/g, '');
 
     const propTitle = isAr ? property.title_ar : property.title_en;
-    const propPrice = property.price?.toLocaleString();
+    const propPrice = property.price?.toLocaleString('en-US');
     const propLoc = getLocalizedArea(property.areaKey);
 
     const waText = isAr
@@ -123,7 +123,7 @@ export default function SmartMatchingHub({
         `📍 *الموقع:* ${propLoc}\n` +
         `📐 *المساحة:* ${property.size} م² (${property.bedrooms || 0} غرف)\n` +
         `💰 *السعر الإجمالي:* ${propPrice} ج.م\n` +
-        `💳 *المقدم:* ${property.downPayment?.toLocaleString()} ج.م وقسط شهري: ${property.monthlyInstallment?.toLocaleString()} ج.م\n\n` +
+        `💳 *المقدم:* ${property.downPayment?.toLocaleString('en-US')} ج.م وقسط شهري: ${property.monthlyInstallment?.toLocaleString('en-US')} ج.م\n\n` +
         `📲 هل يناسبكم حجز موعد لمعاينة العقار على الطبيعة اليوم أو غداً؟`
       : `🏛️ *1Line Real Estate — Tailored Property Match (${match.score}%)*\n\n` +
         `Dear Mr/Ms *${lead.name}*,\n` +
@@ -296,7 +296,7 @@ export default function SmartMatchingHub({
                         📱 {lead.whatsapp || lead.phone}
                       </span>
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', display: 'block', marginTop: '4px', fontWeight: '700' }}>
-                        💰 ميزانية: {(lead.details?.budget || lead.budget) ? parseInt(lead.details?.budget || lead.budget).toLocaleString() + ' ج.م' : '2,500,000 ج.م'}
+                        💰 ميزانية: {(lead.details?.budget || lead.budget) ? parseInt(lead.details?.budget || lead.budget).toLocaleString('en-US') + ' ج.م' : '2,500,000 ج.م'}
                       </span>
                     </div>
 
@@ -312,7 +312,7 @@ export default function SmartMatchingHub({
                         📐 {property.size} م² • 📍 {getLocalizedArea(property.areaKey)}
                       </span>
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', display: 'block', marginTop: '4px', fontWeight: 700 }}>
-                        💵 السعر: {property.price?.toLocaleString()} ج.م
+                        💵 السعر: {property.price?.toLocaleString('en-US')} ج.م
                       </span>
                     </div>
                   </div>

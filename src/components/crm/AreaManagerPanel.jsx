@@ -461,7 +461,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                     color: 'var(--crm-accent-text)',
                     border: '1px solid rgba(217, 119, 6, 0.25)'
                   }}>
-                    {isAr ? `متوسط: ${(area.avgPricePerMeter || 15000).toLocaleString()} ج.م/م²` : `Avg: ${(area.avgPricePerMeter || 15000).toLocaleString()} EGP/m²`}
+                    {isAr ? `متوسط: ${(area.avgPricePerMeter || 15000).toLocaleString('en-US')} ج.م/م²` : `Avg: ${(area.avgPricePerMeter || 15000).toLocaleString('en-US')} EGP/m²`}
                   </span>
                   <span style={{
                     fontSize: 'var(--crm-text-xs)',

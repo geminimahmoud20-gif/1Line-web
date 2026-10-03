@@ -103,64 +103,15 @@ export const DemandsPortal = ({
 
   return (
     <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '10px 0' }}>
-      {/* Hero Banner */}
-      <div 
-        className="investment-hero" 
-        style={{ 
-          background: 'linear-gradient(135deg, #092347 0%, #0d48a1 60%, #0a3880 100%)', 
-          color: 'white', 
-          padding: '38px 24px', 
-          borderRadius: '24px', 
-          marginBottom: '32px', 
-          textAlign: 'center', 
-          border: '1px solid rgba(255, 202, 40, 0.35)', 
-          boxShadow: '0 20px 40px rgba(13, 72, 161, 0.25)',
-          position: 'relative',
-          overflow: 'hidden'
-        }}
-      >
-        <div style={{
-          position: 'absolute',
-          top: '-50px',
-          right: '-50px',
-          width: '180px',
-          height: '180px',
-          background: 'radial-gradient(circle, rgba(255, 202, 40, 0.15) 0%, transparent 70%)',
-          borderRadius: '50%',
-          pointerEvents: 'none'
-        }} />
-
-        <Zap size={42} className="text-gold" style={{ marginBottom: '14px' }} />
-        <h2 style={{ fontSize: '1.85rem', fontWeight: '900', letterSpacing: '-0.5px', marginBottom: '8px' }}>
-          {lang === 'ar' ? 'طلبات الشراء النشطة بسوهاج' : 'Active Market Demands in Sohag'}
-        </h2>
-        <p style={{ marginTop: '8px', fontSize: '1rem', opacity: 0.92, maxWidth: '640px', margin: '8px auto 22px', lineHeight: 1.6 }}>
-          {lang === 'ar'
-            ? 'قاعدة بيانات حية بمتطلبات المشترين والمستثمرين الفعليين الجادين لمطابقتها مع عقارك فوراً.'
-            : 'A live directory of serious buyers looking for immediate property acquisitions.'}
-        </p>
-
-        {onOpenAddDemand && (
-          <button 
-            type="button" 
-            className="btn btn-primary" 
-            onClick={onOpenAddDemand}
-            style={{ 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              gap: '8px', 
-              padding: '12px 26px', 
-              fontWeight: '800', 
-              fontSize: '0.95rem',
-              borderRadius: '12px',
-              boxShadow: '0 8px 20px rgba(255, 202, 40, 0.35)'
-            }}
-          >
-            <Sparkles size={17} className="text-gold" />
+      {/* The page header above already titles this portal: only the call to action here */}
+      {onOpenAddDemand && (
+        <div className="demands-add-cta">
+          <button type="button" className="btn btn-primary" onClick={onOpenAddDemand}>
+            <Sparkles size={17} aria-hidden="true" />
             <span>{lang === 'ar' ? 'أضف طلبك العقاري الآن (مجاناً)' : 'Post Your Buyer Request Now'}</span>
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* 🔁 Trade-in entry: owners who want to swap rather than sell */}
       <Link to="/trade-in" className="xs-trade-banner">

@@ -151,7 +151,7 @@ export const PhoneInputField = ({
             fontSize: '1rem',
             color: 'var(--text-primary, #0f172a)',
             fontWeight: '700',
-            fontFamily: 'var(--font-en, "Outfit", system-ui, sans-serif)',
+            fontFamily: 'inherit',
             letterSpacing: '0.5px'
           }}
         />

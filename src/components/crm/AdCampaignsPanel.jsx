@@ -152,7 +152,7 @@ export default function AdCampaignsPanel({ lang = 'ar', triggerToast }) {
     setEditing(null);
   };
 
-  const fmt = (v) => (v ? new Date(`${v}T12:00:00`).toLocaleDateString('ar-EG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
+  const fmt = (v) => (v ? new Date(`${v}T12:00:00`).toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
 
   return (
     <div className="ad-panel">

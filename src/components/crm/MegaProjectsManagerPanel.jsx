@@ -256,7 +256,7 @@ export default function MegaProjectsManagerPanel({
                   </td>
                   <td>
                     <div style={{ fontSize: 'var(--crm-text-sm)' }}>
-                      <strong className="text-primary">{p.startPrice.toLocaleString()} ج.م</strong>
+                      <strong className="text-primary">{p.startPrice.toLocaleString('en-US')} ج.م</strong>
                       <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{p.downPaymentPercent}% مقدم • {p.installmentYears} سنوات</div>
                     </div>
                   </td>

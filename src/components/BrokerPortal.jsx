@@ -85,7 +85,7 @@ export const BrokerPortal = ({
       {/* Commission Tiers Strip */}
       <div className="step-prompt-row">
         <h3>{isAr ? 'باقات وحوافز شبكة وسطاء 1Line بسوهاج' : 'Broker Commission Tiers & Partner Benefits'}</h3>
-        <p>{isAr ? 'انضم لأكثر من 120 وسيطاً معتمداً واستفد من أسرع نظام صرف عمولات في الصعيد' : 'Join 120+ verified brokers with instant payouts'}</p>
+        <p>{isAr ? 'عمولة مكتوبة ومتفق عليها قبل أي صفقة، وتُصرف عند إتمام التعاقد' : 'A written commission agreed before any deal, paid on closing'}</p>
       </div>
 
       <div className="prop-types-rich-grid" style={{ marginBottom: '32px' }}>

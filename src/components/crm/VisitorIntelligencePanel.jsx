@@ -127,7 +127,7 @@ export default function VisitorIntelligencePanel({
             <Eye size={18} style={{ color: 'var(--crm-info)' }} />
           </div>
           <div style={{ fontSize: 'var(--crm-text-2xl)', fontWeight: 'bold', margin: '8px 0 4px 0', color: 'var(--crm-info)' }}>
-            {summary.totalPropertyViews?.toLocaleString()}
+            {summary.totalPropertyViews?.toLocaleString('en-US')}
           </div>
           <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)' }}>
             ↑ +18.4% {isAr ? 'نمو مقارنة بالأسبوع الماضي' : 'vs last week'}
@@ -245,7 +245,7 @@ export default function VisitorIntelligencePanel({
                       {isAr ? prop.title_ar : prop.title_en}
                     </strong>
                     <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
-                      📍 {(getAreas().find(a => a.id === prop.areaKey)?.[isAr ? 'name_ar' : 'name_en']) || prop.areaKey || 'سوهاج'} • 💰 {prop.price?.toLocaleString()} ج.م
+                      📍 {(getAreas().find(a => a.id === prop.areaKey)?.[isAr ? 'name_ar' : 'name_en']) || prop.areaKey || 'سوهاج'} • 💰 {prop.price?.toLocaleString('en-US')} ج.م
                     </span>
                   </div>
                 </div>
@@ -331,7 +331,7 @@ export default function VisitorIntelligencePanel({
                     </div>
 
                     <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
-                      {new Date(evt.timestamp).toLocaleTimeString(isAr ? 'ar-EG' : 'en-US')}
+                      {new Date(evt.timestamp).toLocaleTimeString(isAr ? 'ar-EG-u-nu-latn' : 'en-US')}
                     </span>
                   </div>
                 );

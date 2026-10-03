@@ -260,7 +260,7 @@ export default function CrmTopbar({
                     }}
                   >
                     <div style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold' }}>{p.title_ar}</div>
-                    <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{p.price?.toLocaleString()} ج.م</div>
+                    <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{p.price?.toLocaleString('en-US')} ج.م</div>
                   </div>
                 ))}
               </div>

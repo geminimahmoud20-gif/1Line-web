@@ -11,7 +11,7 @@ import {
 } from '../../utils/featuredSlots';
 import './homepage-slots.css';
 
-const fmtDay = (v, isAr) => (v ? new Date(`${v}T12:00:00`).toLocaleDateString(isAr ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short' }) : '');
+const fmtDay = (v, isAr) => (v ? new Date(`${v}T12:00:00`).toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-GB', { day: 'numeric', month: 'short' }) : '');
 
 export function FeaturedPeriodLabel({ property, isAr }) {
   const state = featuredState(property);

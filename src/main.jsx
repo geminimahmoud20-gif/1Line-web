@@ -6,9 +6,13 @@ import './styles/art-direction.css'
 import App from './App.jsx'
 import ErrorBoundary from './components/common/ErrorBoundary.jsx'
 import { installErrorReporter } from './utils/errorReporter.js'
+import { installLatinDigits } from './utils/latinDigits.js'
 
 // Visitors' errors and CSP violations → CRM → System → Site errors
 installErrorReporter()
+
+// One digit style everywhere (0-9), including text from the database typed with ٠-٩
+installLatinDigits()
 
 // Auto-heal new deployments when CSS/JS chunks are updated on the server
 window.addEventListener('vite:preloadError', (event) => {

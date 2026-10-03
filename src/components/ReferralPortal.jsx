@@ -99,7 +99,7 @@ export const ReferralPortal = ({
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ display: 'flex', gap: '15px' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary)', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.9rem', flexShrink: 0 }}>١</div>
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary)', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.9rem', flexShrink: 0 }}>1</div>
               <div>
                 <h4 style={{ fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: '4px' }}>{lang === 'ar' ? 'سجل بياناتك والمُحال' : 'Submit referral info'}</h4>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
@@ -109,7 +109,7 @@ export const ReferralPortal = ({
             </div>
 
             <div style={{ display: 'flex', gap: '15px' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary)', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.9rem', flexShrink: 0 }}>٢</div>
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary)', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.9rem', flexShrink: 0 }}>2</div>
               <div>
                 <h4 style={{ fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: '4px' }}>{lang === 'ar' ? 'يقوم فريقنا بالعمل والمطابقة' : 'We contact & close'}</h4>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
@@ -119,7 +119,7 @@ export const ReferralPortal = ({
             </div>
 
             <div style={{ display: 'flex', gap: '15px' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary)', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.9rem', flexShrink: 0 }}>٣</div>
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary)', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.9rem', flexShrink: 0 }}>3</div>
               <div>
                 <h4 style={{ fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: '4px' }}>{lang === 'ar' ? 'مكافأتك بشروط مكتوبة' : 'Get paid rewards'}</h4>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>

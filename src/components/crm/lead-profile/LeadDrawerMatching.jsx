@@ -38,7 +38,7 @@ export default function LeadDrawerMatching({
             `أهلاً بك أستاذ ${lead.name}، بناءً على طلبك أرشح لك وحدة مميزة بمحفظة 1Line:\n` +
             `🏢 ${p.title_ar || p.title_en}\n` +
             `📍 الموقع: ${p.locationName_ar || p.areaKey}\n` +
-            `💰 السعر: ${p.price?.toLocaleString()} ج.م\n` +
+            `💰 السعر: ${p.price?.toLocaleString('en-US')} ج.م\n` +
             `🔗 تفاصيل الوحدة: https://1-line-qkzp9.vercel.app/properties/${p.id}`
           );
           const shareHref = `https://wa.me/${egWhatsapp}?text=${propShareMsg}`;
@@ -81,7 +81,7 @@ export default function LeadDrawerMatching({
                     {p._matchScore}% {isAr ? 'تطابق' : 'Match'}
                   </span>
                   <strong style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-accent)' }}>
-                    {p.price?.toLocaleString()} ج.م
+                    {p.price?.toLocaleString('en-US')} ج.م
                   </strong>
                 </div>
 

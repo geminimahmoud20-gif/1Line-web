@@ -166,7 +166,7 @@ export default function AccountInquiriesTab({
                         <span className="lead-info-label">{isAr ? 'تاريخ التسجيل:' : 'Date:'}</span>
                         <span className="lead-info-val text-muted">
                           {lead.createdAt || lead.timestamp 
-                            ? new Date(lead.createdAt || lead.timestamp).toLocaleDateString(isAr ? 'ar-EG' : 'en-US') 
+                            ? new Date(lead.createdAt || lead.timestamp).toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US') 
                             : (isAr ? 'مؤخراً' : 'Recent')}
                         </span>
                       </div>
