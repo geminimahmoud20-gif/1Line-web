@@ -8,6 +8,8 @@ import PropertyCard from '../components/properties/PropertyCard';
 import LegalAuditCard from '../components/properties/LegalAuditCard';
 import WhatsAppAutomationBar from '../components/properties/WhatsAppAutomationBar';
 import DepositModal from '../components/properties/DepositModal';
+import OfferCountdown from '../components/properties/OfferCountdown';
+import { getActiveOffer } from '../utils/propertyOffers';
 import NotFoundPage from './NotFoundPage';
 import PriceBenchmarkIndicator from '../components/properties/PriceBenchmarkIndicator';
 import NearbyAmenities from '../components/properties/NearbyAmenities';
@@ -172,6 +174,14 @@ export default function PropertyDetailPage({
   const description = isAr ? property.description_ar : property.description_en;
   const features = isAr ? property.features_ar : property.features_en;
   const priceData = formatCurrencyPrice(property.price, currency, lang);
+  // Running limited-time offer (CRM → العقارات → العرض); samples never carry one
+  const offer = property.isDemo ? null : getActiveOffer(property);
+  const offerPriceData = offer ? formatCurrencyPrice(offer.price, currency, lang) : null;
+  const offerEndDay = offer ? new Date(offer.endsAt).toLocaleDateString(isAr ? 'ar-EG' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) : '';
+  const offerTerms = offer ? (isAr ? offer.terms_ar : (offer.terms_en || offer.terms_ar)) : '';
+  const waText = offer
+    ? `مرحباً 1Line، أريد الاستفادة من عرض الكاش على كود العقار: ${property.id.toUpperCase()} (${title}) بسعر ${offer.price.toLocaleString('en-US')} ج.م`
+    : `مرحباً 1Line، أريد الاستفسار عن كود العقار: ${property.id.toUpperCase()} (${title})`;
   const familyInfo = getFamilyInfo(property);
   // Licence line only from the reviewed legal record (CRM → الموقف القانوني)
   const licenseText = property.legalStatus
@@ -248,8 +258,9 @@ export default function PropertyDetailPage({
         propertyPrice: property.price,
         type: 'viewing_request',
         tourType: isVideo ? 'video' : 'field',
-        source: 'طلب معاينة (صفحة العقار)',
-        notes: `طلب ${isVideo ? 'معاينة فيديو حية' : 'معاينة ميدانية'} للعقار: ${title} (كود ${property.id.toUpperCase()}) | التاريخ: ${bookingForm.date || 'أقرب موعد'} | الفترة: ${slotAr} | المرجع: ${serialCode}`,
+        source: offer ? 'طلب معاينة — عرض كاش لفترة محدودة' : 'طلب معاينة (صفحة العقار)',
+        ...(offer ? { offerType: offer.type, offerPrice: offer.price, offerUntil: property.offer.until } : {}),
+        notes: `طلب ${isVideo ? 'معاينة فيديو حية' : 'معاينة ميدانية'} للعقار: ${title} (كود ${property.id.toUpperCase()}) | التاريخ: ${bookingForm.date || 'أقرب موعد'} | الفترة: ${slotAr} | المرجع: ${serialCode}${offer ? ` | 🔥 عرض كاش: ${offer.price.toLocaleString('en-US')} ج.م بدلاً من ${offer.basePrice.toLocaleString('en-US')} حتى ${property.offer.until}` : ''}`,
         createdAt: new Date().toISOString()
       };
 
@@ -393,6 +404,33 @@ export default function PropertyDetailPage({
                 <span className="price-per-m">
                   <bdi>{Math.round(Number(property.price) / Number(property.size)).toLocaleString('en-US')}</bdi> {isAr ? 'ج.م / م²' : 'EGP / m²'}
                 </span>
+              )}
+
+              {offer && (
+                <div className="pd-offer-box" role="note">
+                  <div className="pd-offer-head">
+                    <Flame size={16} aria-hidden="true" />
+                    <strong>{isAr ? 'عرض كاش لفترة محدودة' : 'Limited-time cash offer'}</strong>
+                    <bdi dir="ltr" className="pd-offer-pct">−{offer.pct}%</bdi>
+                  </div>
+                  <div className="pd-offer-price">
+                    <bdi>{offerPriceData.primary}</bdi> <span>{offerPriceData.symbol}</span>
+                    <small>{isAr ? 'للدفع كاش' : 'paid in cash'}</small>
+                  </div>
+                  <p className="pd-offer-was">
+                    {isAr ? 'بدلاً من ' : 'Instead of '}<del><bdi>{offer.basePrice.toLocaleString('en-US')}</bdi></del>{isAr ? ' ج.م' : ' EGP'}
+                    {' · '}<span className="pd-offer-save">{isAr ? `وفّر ${offer.savings.toLocaleString('en-US')} ج.م` : `Save ${offer.savings.toLocaleString('en-US')} EGP`}</span>
+                  </p>
+                  <div className="pd-offer-meta">
+                    <OfferCountdown endsAt={offer.endsAt} isAr={isAr} className="pd-offer-timer" />
+                    <span>{isAr ? `آخر يوم: ${offerEndDay}` : `Last day: ${offerEndDay}`}</span>
+                    {offer.extended && <span className="pd-offer-extended">{isAr ? 'تم تمديد العرض' : 'Offer extended'}</span>}
+                  </div>
+                  {offerTerms && <p className="pd-offer-terms"><strong>{isAr ? 'الشروط: ' : 'Terms: '}</strong>{offerTerms}</p>}
+                  <a href={getWhatsAppUrl(waText)} target="_blank" rel="noopener noreferrer" className="pd-offer-cta">
+                    {isAr ? 'احجز بسعر العرض' : 'Book at the offer price'}
+                  </a>
+                </div>
               )}
 
               {/* 🛡️ Free viewing + written fees (1Line charges commission — never claim 0%) */}
@@ -579,7 +617,7 @@ export default function PropertyDetailPage({
               {/* 2. Direct Instant Contact Hub (Top Priority) */}
               <div className="sidebar-instant-contact-row">
                 <a
-                  href={getWhatsAppUrl(`مرحباً 1Line، أريد الاستفسار عن كود العقار: ${property.id.toUpperCase()} (${title})`)}
+                  href={getWhatsAppUrl(waText)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-whatsapp-half"
@@ -833,8 +871,8 @@ export default function PropertyDetailPage({
         {/* 📱 Sticky Mobile Quick Action Bar (Solves Scrolling on Phones) */}
         <div className="mobile-detail-sticky-bar">
           <div className="mobile-sticky-price">
-            <span className="mob-lbl">{isAr ? 'السعر' : 'Price'}</span>
-            <strong>{priceData.primary} {priceData.symbol}</strong>
+            <span className="mob-lbl">{offer ? (isAr ? `عرض كاش −${offer.pct}%` : `Cash offer −${offer.pct}%`) : (isAr ? 'السعر' : 'Price')}</span>
+            <strong>{(offerPriceData || priceData).primary} {(offerPriceData || priceData).symbol}</strong>
           </div>
 
           <div className="mobile-sticky-actions">
@@ -849,7 +887,7 @@ export default function PropertyDetailPage({
             </button>
 
             <a
-              href={getWhatsAppUrl(`مرحباً 1Line، أريد الاستفسار عن كود: ${property.id.toUpperCase()}`)}
+              href={getWhatsAppUrl(waText)}
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-whatsapp-mini"

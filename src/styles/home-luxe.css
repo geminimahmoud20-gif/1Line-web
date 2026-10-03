@@ -3362,3 +3362,34 @@
 .hx-hero:has(> .hero-video-controls-badge) .hx-hero-inner {
   padding-block-end: calc(clamp(48px, 7vh, 80px) + 28px);
 }
+
+/* ── Limited-time offers ─────────────────────────────────────────── */
+.hx-offers {
+  margin-block: 28px 0;
+  padding-block: 36px 40px;
+  border-radius: 28px;
+  background: linear-gradient(180deg, #FFF7ED 0%, rgba(255, 247, 237, 0.35) 100%);
+  border: 1px solid rgba(194, 65, 12, 0.14);
+}
+@media (max-width: 700px) {
+  .hx-offers { margin-inline: 12px; padding: 26px 14px 30px; border-radius: 22px; }
+}
+.hx-offers-head { margin-bottom: 22px; }
+.hx-offers-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #9A3412;
+  background: #FFEDD5;
+  border: 1px solid rgba(194, 65, 12, 0.25);
+}
+.hx-offers .section-heading-desc { max-width: 720px; margin-inline: 0; }
+.dark-theme .hx-offers, :root[data-theme="dark"] .hx-offers {
+  background: linear-gradient(180deg, rgba(194, 65, 12, 0.12) 0%, transparent 100%);
+}
+.dark-theme .hx-offers-pill, :root[data-theme="dark"] .hx-offers-pill { color: #FDBA74; background: rgba(251, 146, 60, 0.14); }

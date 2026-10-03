@@ -13,6 +13,7 @@ import { uploadMultipleImages } from '../../utils/imageUploadService';
 // Accurate GPS Coordinates map for Sohag Districts
 import PropertyFormModal from './PropertyFormModal';
 import PropertyTableRow from './PropertyTableRow';
+import OfferModal from './OfferModal';
 const SOHAG_AREA_COORDINATES = {
   east: { lat: 26.5569, lng: 31.7001 },
   new_sohag: { lat: 26.4715, lng: 31.6620 },
@@ -77,6 +78,7 @@ export default function PropertyManagerPanel({
   const [notifierEventType, setNotifierEventType] = useState('new_unit');
   const [areas, setAreas] = useState(() => getAreas());
   const [slotEditing, setSlotEditing] = useState(null); // property being scheduled for the homepage
+  const [offerEditing, setOfferEditing] = useState(null); // property whose limited-time offer is being edited
 
   useEffect(() => {
     const handleUpdate = () => setAreas(getAreas());
@@ -603,6 +605,24 @@ export default function PropertyManagerPanel({
         />
       )}
 
+      {offerEditing && (
+        <OfferModal
+          property={offerEditing}
+          isAr={isAr}
+          onClose={() => setOfferEditing(null)}
+          onSave={(patch, extended, removed) => {
+            if (onUpdateProperty(offerEditing.id, patch) !== false) {
+              triggerToast(removed
+                ? (isAr ? 'تم إنهاء العرض — رجع السعر كما كان' : 'Offer ended — price back to normal')
+                : extended
+                  ? (isAr ? 'تم تمديد العرض — سيظهر للعملاء "تم تمديد العرض"' : 'Offer extended — visitors will see "Offer extended"')
+                  : (isAr ? 'تم حفظ العرض — يظهر في موعده وينتهي تلقائياً' : 'Offer saved — it starts on time and ends automatically'), 'success');
+            }
+            setOfferEditing(null);
+          }}
+        />
+      )}
+
       {/* Status Filter Tabs & Search Bar */}
       <div className="crm-table-header" style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div className="table-filters">
@@ -701,6 +721,7 @@ export default function PropertyManagerPanel({
                     onUpdateProperty={onUpdateProperty}
                     triggerToast={triggerToast}
                     setSlotEditing={setSlotEditing}
+                    setOfferEditing={setOfferEditing}
                     setNotifierProperty={setNotifierProperty}
                     setNotifierEventType={setNotifierEventType}
                   />

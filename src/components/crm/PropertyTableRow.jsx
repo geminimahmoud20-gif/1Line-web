@@ -1,4 +1,5 @@
-import { Edit3, Eye, EyeOff, MessageSquare, RotateCcw, Star, Trash2 } from 'lucide-react';
+import { Edit3, Eye, EyeOff, Flame, MessageSquare, RotateCcw, Star, Trash2 } from 'lucide-react';
+import { offerState, formatTimeLeft, getActiveOffer } from '../../utils/propertyOffers';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { FeaturedPeriodLabel } from './HomepageSlotsBoard';
 
@@ -17,6 +18,7 @@ export default function PropertyTableRow({
   onUpdateProperty,
   triggerToast,
   setSlotEditing,
+  setOfferEditing,
   setNotifierProperty,
   setNotifierEventType
 }) {
@@ -139,6 +141,30 @@ export default function PropertyTableRow({
             </button>
           )}
         </div>
+        {/* Limited-time cash offer */}
+        {setOfferEditing && !isTrash && (() => {
+          const state = offerState(prop);
+          const live = getActiveOffer(prop);
+          const label = {
+            none: isAr ? 'إضافة عرض' : 'Add offer',
+            invalid: isAr ? 'عرض غير صالح — راجعه' : 'Invalid offer — review',
+            scheduled: isAr ? `عرض يبدأ ${prop.offer?.from}` : `Offer starts ${prop.offer?.from}`,
+            active: live ? (isAr ? `عرض −${live.pct}% · باقي ${formatTimeLeft(live.msLeft)}` : `Offer −${live.pct}% · ${formatTimeLeft(live.msLeft, false)} left`) : '',
+            expired: isAr ? 'العرض انتهى' : 'Offer ended'
+          }[state];
+          return (
+            <button
+              type="button"
+              className="hs-link-btn"
+              onClick={() => setOfferEditing(prop)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6, color: state === 'active' ? 'var(--crm-warn)' : state === 'invalid' ? 'var(--crm-danger)' : 'var(--crm-muted)', fontWeight: state === 'active' ? 800 : 600 }}
+              title={isAr ? 'عرض كاش لفترة محدودة' : 'Limited-time cash offer'}
+            >
+              <Flame size={14} fill={state === 'active' ? 'currentColor' : 'none'} />
+              <span>{label}</span>
+            </button>
+          );
+        })()}
       </td>
 
       {/* Actions */}
