@@ -1,7 +1,7 @@
 import { db, auth, isFirebaseConfigured } from '../firebase.js';
 
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth';
 
 // ===================== UTILITY =====================
 
@@ -157,6 +157,22 @@ export const loginUser = async (email, password) => {
   });
 
   return credential;
+};
+
+/**
+ * Email a password-reset link (Firebase's own page sets the new password).
+ * Resolves the same way whether or not the address has an account, so the login screen never
+ * tells a stranger which emails exist. Only a malformed address or rate limiting rejects.
+ */
+export const requestPasswordReset = async (email, lang = 'ar') => {
+  if (!isFirebaseAuthAvailable()) throw new Error('Firebase Auth is not configured');
+  auth.languageCode = lang === 'ar' ? 'ar' : 'en';
+  try {
+    await sendPasswordResetEmail(auth, String(email || '').trim());
+  } catch (error) {
+    if (error?.code === 'auth/user-not-found') return;
+    throw error;
+  }
 };
 
 /**

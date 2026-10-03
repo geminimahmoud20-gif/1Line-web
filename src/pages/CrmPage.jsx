@@ -21,7 +21,7 @@ import '../components/crm/CrmLayout.css';
 import '../components/crm/crm-luxury.css';
 import '../components/crm/crm-dark-surfaces.css';
 import '../components/crm/crm-density.css';
-import { isFirebaseAuthAvailable, loginUser } from '../firebaseService';
+import { isFirebaseAuthAvailable, loginUser, requestPasswordReset } from '../firebaseService';
 import { useAuth } from '../context/AuthContext';
 import { canEditProperties, canEditLeadsRole } from '../utils/rbacRules';
 import { verifyAdminCredentials, checkRateLimit, recordFailedAttempt, resetFailedAttempts } from '../utils/securityShield';
@@ -96,6 +96,9 @@ export default function CrmPage({
   const [honeypot, setHoneypot] = useState('');
   const [loginError, setLoginError] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
+  const [resetNotice, setResetNotice] = useState(null); // { ok: boolean, text: string }
+  const [resetSending, setResetSending] = useState(false);
+  const [resetCooldownUntil, setResetCooldownUntil] = useState(0);
   const [externalPropertyData, setExternalPropertyData] = useState(null);
   const [universalSearch, setUniversalSearch] = useState('');
   const [showGoLiveWizard, setShowGoLiveWizard] = useState(false);
@@ -212,6 +215,36 @@ export default function CrmPage({
     setActiveTab('properties');
     if (triggerToast) {
       triggerToast(isAr ? 'تم استيراد بيانات العميل بنجاح! راجع البيانات ثم اضغط نشر.' : 'Lead data converted to property draft!', 'info');
+    }
+  };
+
+  // "Forgot password": Firebase emails a reset link for the address typed in the email field.
+  // The same message shows whether or not that address has an account.
+  const handleForgotPassword = async () => {
+    setLoginError('');
+    const target = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target)) {
+      setResetNotice({ ok: false, text: isAr ? 'اكتب بريدك الإلكتروني في الخانة أعلاه أولاً، ثم اضغط «نسيت كلمة السر؟»' : 'Type your email address above first, then press "Forgot password?"' });
+      return;
+    }
+    if (Date.now() < resetCooldownUntil) {
+      setResetNotice({ ok: false, text: isAr ? 'تم إرسال رابط منذ قليل — انتظر دقيقة قبل طلب رابط جديد' : 'A link was just sent — wait a minute before asking again' });
+      return;
+    }
+    setResetSending(true);
+    try {
+      await requestPasswordReset(target, lang);
+      setResetCooldownUntil(Date.now() + 60 * 1000);
+      setResetNotice({ ok: true, text: isAr ? `إذا كان ${target} مسجلاً لدينا، سيصلك خلال دقائق رابط لتعيين كلمة سر جديدة (راجع البريد غير المرغوب أيضاً).` : `If ${target} has an account, a link to set a new password arrives within minutes (check spam too).` });
+    } catch (err) {
+      const code = err?.code || '';
+      setResetNotice({ ok: false, text: code === 'auth/too-many-requests'
+        ? (isAr ? 'طلبات كثيرة — حاول بعد قليل' : 'Too many requests — try again shortly')
+        : code === 'auth/invalid-email'
+          ? (isAr ? 'صيغة البريد الإلكتروني غير صحيحة' : 'That email address is not valid')
+          : (isAr ? 'تعذّر إرسال الرابط الآن — تحقق من الاتصال وحاول مرة أخرى' : 'Could not send the link — check your connection and try again') });
+    } finally {
+      setResetSending(false);
     }
   };
 
@@ -404,6 +437,24 @@ export default function CrmPage({
                 </button>
               </div>
             </div>
+
+            <div style={{ textAlign: 'end', marginTop: '-4px' }}>
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={resetSending}
+                style={{ background: 'none', border: 0, padding: '2px 0', cursor: 'pointer', fontSize: 'var(--crm-text-sm)', fontWeight: 600, color: 'var(--crm-accent-text)', textDecoration: 'underline', textUnderlineOffset: '3px' }}
+              >
+                {resetSending ? (isAr ? 'جارٍ الإرسال...' : 'Sending...') : (isAr ? 'نسيت كلمة السر؟' : 'Forgot password?')}
+              </button>
+            </div>
+
+            {resetNotice && (
+              <div className={resetNotice.ok ? 'crm-auth-info-alert' : 'crm-auth-error-alert'} role="status" aria-live="polite"
+                style={resetNotice.ok ? { padding: '10px 12px', borderRadius: '10px', fontSize: 'var(--crm-text-sm)', lineHeight: 1.6, background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.35)', color: 'var(--crm-text, inherit)' } : undefined}>
+                <span>{resetNotice.text}</span>
+              </div>
+            )}
 
             {loginError && (
               <div className="crm-auth-error-alert" role="alert">
