@@ -64,7 +64,7 @@ function RevealSaving({ amount, isAr }) {
     <div className="gx-win" role="note">
       <Sparkles size={18} aria-hidden="true" className="gx-win-icon" />
       <span className="gx-win-text">
-        <small>{isAr ? 'قيمة الخصم المباشر على السعر' : 'Direct discount on the price'}</small>
+        <small>{isAr ? 'قيمة الخصم المباشر' : 'Direct discount'}</small>
         <b><bdi>{v.toLocaleString('en-US')}</bdi> {isAr ? 'ج.م' : 'EGP'}</b>
       </span>
     </div>
