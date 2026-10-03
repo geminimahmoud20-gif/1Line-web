@@ -24,11 +24,13 @@ export default function HomeOffers({ properties = [], lang = 'ar', currency }) {
     <section className="homepage-section gx-section" id="limited-offers" aria-labelledby="gx-title">
       <div className="gx-head">
         <span className="gx-kicker"><Gift size={15} aria-hidden="true" />{isAr ? 'لفترة محدودة' : 'Limited time'}</span>
-        <h2 id="gx-title" className="gx-heading">{isAr ? 'عروض حصرية مستنياك' : 'Exclusive offers waiting for you'}</h2>
+        <h2 id="gx-title" className="gx-heading">
+          {isAr ? <>هدايا كاش <span className="gx-heading-gold">مستنياك</span></> : <>Cash gifts <span className="gx-heading-gold">waiting for you</span></>}
+        </h2>
         <p className="gx-sub">
           {isAr
-            ? 'كل هدية فيها سعر كاش مخفّض على وحدة مختارة. افتحها قبل ما الوقت يخلص.'
-            : 'Each gift holds a reduced cash price on a selected unit. Open it before time runs out.'}
+            ? 'جوه كل هدية مبلغ هتوفّره كاش على وحدة مختارة. افتح هديتك واعرف هتكسب قد إيه، قبل ما العداد يخلص.'
+            : 'Each gift hides a cash saving on a selected unit. Open yours and see how much you keep, before the clock runs out.'}
         </p>
       </div>
       <div className={`gx-grid ${offers.length === 1 ? 'gx-grid--one' : ''}`}>

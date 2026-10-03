@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { offerState, getActiveOffer, getOfferListings, formatTimeLeft, validateOffer, isExtension } from '../../src/utils/propertyOffers.js';
+import { offerState, getActiveOffer, getOfferListings, formatTimeLeft, validateOffer, isExtension, savingsHeadline } from '../../src/utils/propertyOffers.js';
 
 const at = (s) => new Date(s).getTime();
 const NOW = at('2026-10-10T12:00:00');
@@ -79,4 +79,11 @@ test('moving a running offer\'s end later counts as an extension', () => {
   assert.equal(isExtension(cash(), cash({ until: '2026-10-12' }), NOW), false);
   assert.equal(isExtension(cash({ from: '2026-10-11' }), cash({ from: '2026-10-11', until: '2026-10-20' }), NOW), false); // not started yet
   assert.equal(isExtension(null, cash(), NOW), false);
+});
+
+test('savingsHeadline: short, rounded-down saving for the gift tag', () => {
+  assert.deepEqual(savingsHeadline(450000, true), { value: '450', unit: 'ألف ج.م' });
+  assert.deepEqual(savingsHeadline(1259999, true), { value: '1.25', unit: 'مليون ج.م' });
+  assert.deepEqual(savingsHeadline(12560, false), { value: '12.5', unit: 'K EGP' });
+  assert.deepEqual(savingsHeadline(9500, true), { value: '9,500', unit: 'ج.م' });
 });
