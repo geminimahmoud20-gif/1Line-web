@@ -87,11 +87,94 @@
     radial-gradient(ellipse 85% 72% at 50% 44%, rgba(6, 17, 33, 0.74) 0%, rgba(6, 17, 33, 0.35) 80%);
 }
 
-.hx-hero .hero-video-controls-badge {
+/* Video controls: one compact glass pill centred at the bottom of the hero.
+   (App.css pins it to a corner with right/left, which together with the logical insets used to
+   stretch it across the whole hero.) */
+.hx-hero .hero-video-controls-badge,
+.hx-hero .hero-video-controls-badge[class] {
   position: absolute;
-  inset-block-end: 20px;
-  inset-inline-end: 20px;
+  inset: auto auto 18px 50%;
+  transform: translateX(-50%);
   z-index: 3;
+  margin: 0;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(8, 18, 36, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+}
+
+.hx-hero .hero-media-ctrl-btn {
+  width: 28px;
+  height: 28px;
+  color: #fff;
+  background: transparent;
+  opacity: 0.85;
+}
+
+.hx-hero .hero-media-ctrl-btn:hover,
+.hx-hero .hero-media-ctrl-btn:focus-visible {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  opacity: 1;
+  transform: none;
+}
+
+.hx-hero .hero-clips-switcher,
+[dir="rtl"] .hx-hero .hero-clips-switcher {
+  margin: 0;
+  padding: 0 8px;
+  border: 0;
+  border-inline-start: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* The clip name stays available as the dots' tooltip; the pill shows only the dots */
+.hx-hero .hero-clip-title-label {
+  display: none;
+}
+
+.hx-hero .hero-clip-dots {
+  gap: 5px;
+}
+
+.hx-hero .hero-clip-dot {
+  width: 6px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.hx-hero .hero-clip-dot:hover {
+  background: rgba(255, 255, 255, 0.8);
+  transform: none;
+}
+
+.hx-hero .hero-clip-dot.active {
+  width: 22px;
+  background: rgba(255, 255, 255, 0.28);
+  box-shadow: none;
+}
+
+.hx-hero .hero-clip-progress-fill {
+  background: var(--accent-gold, #d4a24c);
+}
+
+@media (max-width: 768px) {
+  .hx-hero .hero-video-controls-badge,
+  .hx-hero .hero-video-controls-badge[class] {
+    position: absolute !important;
+    inset: auto auto 12px 50% !important;
+    margin: 0 !important;
+    padding: 3px !important;
+  }
+  .hx-hero .hero-media-ctrl-btn {
+    width: 26px;
+    height: 26px;
+  }
 }
 
 .hx-hero-inner {
@@ -3274,3 +3357,8 @@
 }
 
 
+
+/* Room under the search chips for the controls pill */
+.hx-hero:has(> .hero-video-controls-badge) .hx-hero-inner {
+  padding-block-end: calc(clamp(48px, 7vh, 80px) + 28px);
+}
