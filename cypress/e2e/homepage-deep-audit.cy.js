@@ -89,7 +89,7 @@ describe('Homepage Exhaustive Deep Audit', () => {
     // The remote-inspection modal is rendered at app level
     cy.get('.xs-modal[role="dialog"]').should('be.visible');
     cy.get('.xs-country').should('have.length.at.least', 6);
-    cy.get('.xs-cover').should('have.length', 3);
+    cy.get('.xs-cover').should('have.length', 2); // live video + street footage (no drone)
     // Validation: submitting without a name is refused and nothing opens
     cy.get('.xs-modal button[type="submit"]').click();
     cy.get('.xs-error').should('be.visible');
