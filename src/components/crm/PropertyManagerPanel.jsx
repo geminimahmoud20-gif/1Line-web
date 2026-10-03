@@ -689,7 +689,7 @@ export default function PropertyManagerPanel({
 
       {/* Properties Table */}
       <div className="admin-table-wrapper">
-        <table className="admin-data-table">
+        <table className="admin-data-table crm-props-table">
           <thead>
             <tr>
               <th>{isAr ? 'العقار' : 'Property'}</th>

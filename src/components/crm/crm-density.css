@@ -106,3 +106,16 @@ html:not(.dark-theme):not([data-theme="dark"]) .crm-layout { --crm-canvas: #F5F3
 .crm-layout .fcms-url-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .crm-layout .fcms-url-row label { font-size: var(--crm-text-sm); font-weight: 600; color: var(--crm-body); }
 .crm-layout .fcms-url-row input { flex: 1 1 260px; min-width: 0; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--crm-line-strong); background: var(--crm-card); color: var(--crm-ink); font: inherit; font-size: var(--crm-text-sm); min-height: 0 !important; }
+
+/* Properties table: fit more on screen so status and featured aren't pushed off to the side.
+   Specs may wrap (a long frontage note stretched the whole column), cells are a bit tighter. */
+.admin-data-table.crm-props-table { min-width: 0; }
+.crm-layout .admin-data-table.crm-props-table :is(th, td) { padding-inline: 8px !important; }
+.crm-props-table td:nth-child(4) { white-space: normal; min-width: 96px; max-width: 170px; }
+.crm-props-table td:nth-child(5) select { max-width: 126px; }
+.crm-props-table .hs-star-cell .hs-link-btn { white-space: normal; text-align: center; max-width: 110px; }
+.crm-props-table .table-actions-cell { flex-wrap: wrap; gap: 6px; max-width: 156px; }
+.crm-props-table td:first-child { min-width: 150px; }
+.crm-props-table td:last-child { min-width: 142px; }
+.crm-props-table .hs-star-cell .hs-period { white-space: normal; }
+.crm-props-table td:nth-child(6) { max-width: 104px; }
