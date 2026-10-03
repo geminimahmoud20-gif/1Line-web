@@ -11,6 +11,7 @@ import AreaManagerPanel from '../components/crm/AreaManagerPanel';
 import AdCampaignsPanel from '../components/crm/AdCampaignsPanel';
 import SystemSection, { RestrictedSection } from '../components/crm/SystemSection';
 import { announceNewLeads } from '../utils/newLeadAlerts';
+import { pushLocalSettingsMissingFromCloud } from '../utils/settingsCloudSync';
 import { RemoteInspectionsPanel, TradeInsPanel } from '../components/crm/ExpatIntakePanels';
 import GoLiveWizardModal from '../components/crm/GoLiveWizardModal';
 import CrmSidebar from '../components/crm/CrmSidebar';
@@ -141,6 +142,28 @@ export default function CrmPage({
   useEffect(() => {
     if (crmAuthenticated) announceNewLeads(leads, { isAr: lang === 'ar', toast: triggerToast });
   }, [leads, crmAuthenticated, lang, triggerToast]);
+
+  // Settings saved only in this browser (cloud write failed earlier) never reach visitors:
+  // upload whatever Firestore doesn't have yet, once per CRM visit of a signed-in super admin.
+  const settingsAdminUid = crmAuthenticated && currentUser && isSuperAdminUser ? currentUser.uid : null;
+  useEffect(() => {
+    if (!settingsAdminUid) return;
+    let cancelled = false;
+    pushLocalSettingsMissingFromCloud().then(({ uploaded, failed }) => {
+      if (cancelled || !triggerToast) return;
+      if (failed.length) {
+        triggerToast(lang === 'ar'
+          ? 'إعدادات الموقع (الفيديو/الإعلانات) محفوظة على جهازك فقط ولم تُرفع للسحابة — العملاء لا يرونها. التفاصيل في النظام ← أخطاء الموقع'
+          : 'Site settings (video/ads) are saved on this device only and did not reach the cloud — visitors cannot see them. Details: System → Site errors', 'error');
+      } else if (uploaded.length) {
+        triggerToast(lang === 'ar'
+          ? 'تم رفع إعدادات الموقع المحفوظة على جهازك للسحابة — أصبحت تظهر لكل الزوار'
+          : 'Site settings saved on this device were uploaded — every visitor sees them now', 'success');
+      }
+    });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settingsAdminUid]);
 
   // Keyboard shortcut Ctrl+B or Cmd+B to toggle sidebar collapse
   useEffect(() => {
