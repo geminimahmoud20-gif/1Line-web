@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Flame } from 'lucide-react';
-import PropertyCard from '../properties/PropertyCard';
+import { Gift } from 'lucide-react';
+import GiftOffer from './GiftOffer';
 import { getOfferListings } from '../../utils/propertyOffers';
+import './home-offers-gift.css';
 
 /**
- * "عروض لفترة محدودة" — listings with a running offer (CRM → العقارات → العرض), ending soonest first.
- * Renders nothing when no offer is running, and drops an offer the minute its last day ends.
+ * "عروض حصرية" — listings with a running offer (CRM → العقارات → العرض), ending soonest first,
+ * each wrapped as a gift with its own live countdown. Renders nothing when no offer is running;
+ * an offer drops out the second its last day ends.
  */
-export default function HomeOffers({ properties = [], lang = 'ar', currency, favorites = [], compareList = [], onToggleFavorite, onToggleCompare, onQuickView }) {
+export default function HomeOffers({ properties = [], lang = 'ar', currency }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 60 * 1000);
@@ -19,31 +21,26 @@ export default function HomeOffers({ properties = [], lang = 'ar', currency, fav
 
   const isAr = lang === 'ar';
   return (
-    <section className="homepage-section hx-offers" id="limited-offers" aria-labelledby="hx-offers-title">
-      <div className="hx-offers-head">
-        <span className="hx-offers-pill"><Flame size={14} aria-hidden="true" /> {isAr ? 'لفترة محدودة' : 'Limited time'}</span>
-        <h2 id="hx-offers-title" className="section-heading-primary m-0">{isAr ? 'عروض لفترة محدودة' : 'Limited-time offers'}</h2>
-        <p className="section-heading-desc mt-2 mb-0">
+    <section className="homepage-section gx-section" id="limited-offers" aria-labelledby="gx-title">
+      <div className="gx-head">
+        <span className="gx-kicker"><Gift size={15} aria-hidden="true" />{isAr ? 'لفترة محدودة' : 'Limited time'}</span>
+        <h2 id="gx-title" className="gx-heading">{isAr ? 'عروض حصرية مستنياك' : 'Exclusive offers waiting for you'}</h2>
+        <p className="gx-sub">
           {isAr
-            ? 'أسعار كاش مخفّضة على وحدات مختارة حتى تاريخ محدد. السعر الأصلي هو سعر العرض المعتاد للوحدة، والعرض ينتهي تلقائياً في موعده.'
-            : 'Reduced cash prices on selected units until a set date. The "was" price is the unit\'s usual asking price, and each offer ends automatically on its date.'}
+            ? 'كل هدية فيها سعر كاش مخفّض على وحدة مختارة. افتحها قبل ما الوقت يخلص.'
+            : 'Each gift holds a reduced cash price on a selected unit. Open it before time runs out.'}
         </p>
       </div>
-      <div className="properties-grid-4 hx-market-rail">
-        {offers.slice(0, 8).map(({ property }) => (
-          <PropertyCard
-            key={property.id}
-            property={property}
-            lang={lang}
-            currency={currency}
-            isFavorite={favorites.includes(property.id)}
-            onToggleFavorite={onToggleFavorite}
-            isCompared={compareList.some((c) => c.id === property.id)}
-            onToggleCompare={onToggleCompare}
-            onQuickView={onQuickView}
-          />
+      <div className={`gx-grid ${offers.length === 1 ? 'gx-grid--one' : ''}`}>
+        {offers.slice(0, 8).map(({ property, offer }, i) => (
+          <GiftOffer key={property.id} property={property} offer={offer} lang={lang} currency={currency} index={i} />
         ))}
       </div>
+      <p className="gx-note">
+        {isAr
+          ? 'السعر قبل الخصم هو سعر الوحدة المعلن، وكل عرض ينتهي تلقائياً في موعده.'
+          : 'The "was" price is the unit\'s listed price; each offer ends automatically on its date.'}
+      </p>
     </section>
   );
 }
