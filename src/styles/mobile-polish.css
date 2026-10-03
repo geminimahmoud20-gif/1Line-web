@@ -1,0 +1,158 @@
+/* =============================================================
+   Mobile & dark-mode polish — from a page-by-page audit at 360px (light and dark).
+   Loaded after the other stylesheets; selectors start with `html` so components whose CSS is
+   lazy-loaded later (property card, expat suite…) can't win on order alone.
+   Grouped by problem: readable text in dark mode, low-contrast text, touch targets, small text,
+   things wider than the screen.
+   ============================================================= */
+
+/* ── 1. Text that was navy on navy in dark mode ─────────────────────────────
+   These use var(--primary) or a fixed navy for text, and both stay dark in dark mode. */
+html.dark-theme .detail-card-box h3,
+html.dark-theme .financing-header-bar h1,
+html.dark-theme .financing-ribbon-pill strong,
+html.dark-theme .calc-program-card .prog-name,
+html.dark-theme .milestone-chip strong,
+html.dark-theme .cell-price,
+html.dark-theme .crm-secure-badge span { color: #F1F5F9; }
+html.dark-theme .calc-program-card .prog-desc { color: #94A3B8; }
+html.dark-theme .financing-pill-tag span { color: #E9D29A; }
+html.dark-theme .calc-breakdown-glass-row .text-sky { color: #7DD3FC !important; }
+/* Special requests: section headings are inline-styled with var(--primary) */
+html.dark-theme .wizard-container h4,
+html.dark-theme form h4[style] { color: #93C5FD !important; }
+
+/* ── 2. Low-contrast text in light mode ───────────────────────────────────── */
+/* Market page: the advisor card is dark but its title inherited the dark heading colour */
+html .advisor-title-wrap h4 { color: #FFFFFF; }
+/* Outline buttons placed on dark panels kept navy text: invisible */
+html .calc-card-footer .btn-outline,
+html .action-dock-btns .btn-outline-gold,
+html .cta-consult-card .btn,
+html .insight-card .btn-whatsapp {
+  color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.45);
+}
+/* Investor calculator: "glass" rows were designed for a dark panel but sit on a light card */
+html:not(.dark-theme) .live-valuation-certificate-card .calc-breakdown-glass-row {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+  color: #0F172A;
+}
+html:not(.dark-theme) .live-valuation-certificate-card .glass-row-lbl { color: #334155; }
+html:not(.dark-theme) .live-valuation-certificate-card .text-sky { color: #0369A1 !important; }
+html:not(.dark-theme) .live-valuation-certificate-card .text-gold { color: #7C5E30; }
+/* Market page summary: yellow figures on white */
+html:not(.dark-theme) .summary-stat-box .stat-num { color: #B45309; }
+html:not(.dark-theme) .summary-stat-box .stat-num.text-primary { color: #0D48A1; }
+/* About page standards cards */
+html:not(.dark-theme) .about-standard-card .standard-num-badge { color: #8A6A2F; }
+html:not(.dark-theme) .about-standard-card .standard-pill-badge { color: #047857; }
+/* Hero search: inactive intent tabs */
+html:not(.dark-theme) .hx-intent:not(.is-active) { color: #475569; }
+/* Footer small print on the dark footer */
+html .site-footer .footer-desc { color: #CBD5E1; }
+html .site-footer .footer-brand-sub,
+html .site-footer .footer-copyright,
+html .site-footer .footer-legal-link,
+html .site-footer .footer-slogan { color: #94A3B8; }
+/* CRM login "back to site" link, client-account badge */
+html .crm-login-card a[href="/"] { color: #475569 !important; }
+html.dark-theme .crm-login-card a[href="/"] { color: #CBD5E1 !important; }
+html .unauth-badge-pill { color: #B45309; }
+/* Listing page sticky bar label */
+html .mobile-sticky-price .mob-lbl { color: #64748B; }
+/* WhatsApp-green buttons: white on #25D366 is ~2:1. A deeper WhatsApp green keeps the brand cue. */
+html .btn-whatsapp-half,
+html .lx-concierge-btn,
+html .btn-founder-whatsapp { background: #128C4A; }
+html .btn-whatsapp-half:hover,
+html .lx-concierge-btn:hover,
+html .btn-founder-whatsapp:hover { background: #0E7A40; }
+html .lx-concierge-btn .lx-concierge-phone-num { color: #FFFFFF; }
+
+/* ── 3. Touch targets (aim: 44px) ────────────────────────────────────────────
+   Header and card icons can't grow without crowding a 360px row, so their tap area is widened
+   with an invisible layer instead. */
+html .header-client-account-btn,
+html .mobile-quick-search-btn,
+html .mobile-hamburger-btn,
+html .mobile-header-back-btn,
+html .utility-sub-btn,
+html .pcx-icon-btn,
+html .toggle-pwd-btn,
+html .footer-crm-lock { position: relative; }
+html .header-client-account-btn::after,
+html .mobile-quick-search-btn::after,
+html .mobile-hamburger-btn::after,
+html .mobile-header-back-btn::after,
+html .utility-sub-btn::after,
+html .pcx-icon-btn::after,
+html .toggle-pwd-btn::after,
+html .footer-crm-lock::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+}
+@media (max-width: 768px) {
+  /* Chips and pills: same look, taller hit area */
+  html .calc-chip-btn,
+  html .lx-faq-pill,
+  html .mat-btn,
+  html .location-chip,
+  html .code-copy-pill-btn,
+  html .btn-back-compact,
+  html .pcx-chip--remote,
+  html .media-tab-btn,
+  html .detail-maps-pill { min-height: 38px; }
+  /* Footer and inline text links: stack with breathing room */
+  html .site-footer a,
+  html .site-footer .footer-btn-link,
+  html .contact-link,
+  html .breadcrumb-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+  }
+}
+
+/* ── 4. Text too small to read on a phone (was 10–11px) ──────────────────── */
+@media (max-width: 768px) {
+  html .pcx-spec-label,
+  html .pcx-fin-label,
+  html .spec-lbl,
+  html .metric-lbl,
+  html .prog-desc,
+  html .legend-item { font-size: 0.75rem; }
+  html .pcx-fin-label em { font-size: 0.7rem; }
+  html .pcx-ppm small,
+  html .pcx-spec-val small { font-size: 0.72rem; }
+  html .mobile-sticky-price .mob-lbl { font-size: 0.75rem; }
+  html .xs-demo-tag { font-size: 0.74rem; }
+}
+
+/* ── 5. Wider than the screen ───────────────────────────────────────────── */
+@media (max-width: 480px) {
+  /* Long button labels ("استعراض كل العقارات المتاحة (16 عقار)") wrap instead of overflowing */
+  html .btn { max-width: 100%; white-space: normal; text-align: center; }
+  /* Hero search intents: all three fit on a 360px phone */
+  html .hx-intents { gap: 2px; padding-inline: 2px; }
+  html .hx-intent { padding: 8px 10px; gap: 5px; font-size: 0.84rem; }
+}
+
+/* Market page on phones: summary boxes stack their icon, the table gets tighter cells and
+   prices stay on one line, insight cards stop overflowing the grid */
+@media (max-width: 480px) {
+  html .market-summary-stats-grid { gap: 10px; }
+  html .market-summary-stats-grid > *,
+  html .market-insights-grid > * { min-width: 0; }
+  html .summary-stat-box { flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px; }
+  html .market-data-table th,
+  html .market-data-table td { padding: 10px 6px; font-size: 0.8rem; }
+  html .market-data-table .cell-price { white-space: nowrap; font-size: 0.85rem; }
+  html .insight-card { padding: 18px 16px; }
+}
+
+/* Financing results panel is dark in both themes: its gold figures need the light gold */
+html .calc-results-column .calc-breakdown-glass-row .text-gold { color: #E9D29A !important; }
+html .calc-results-column .total-highlight-row .glass-row-val { color: #6EE7B7 !important; }

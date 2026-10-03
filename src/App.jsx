@@ -105,6 +105,7 @@ function RouteLoadingSpinner({ lang = 'ar' }) {
 import './App.css';
 import './styles/luxury-system.css';
 import './styles/home-luxe.css';
+import './styles/mobile-polish.css';
 import AppRoutes from './AppRoutes';
 
 /**
@@ -349,8 +350,8 @@ function AppContent() {
 
   const roiRes = {
     annualYield: '14.5%',
-    totalProfit: ((invAmount * 0.145 * invPeriod) + (invAmount * 0.5)).toLocaleString() + ' EGP',
-    exitValue: Math.round(invAmount * 1.6).toLocaleString() + ' EGP'
+    totalProfit: ((invAmount * 0.145 * invPeriod) + (invAmount * 0.5)).toLocaleString('en-US') + ' EGP',
+    exitValue: Math.round(invAmount * 1.6).toLocaleString('en-US') + ' EGP'
   };
 
   const submitInvestorForm = async (overrideData) => {
@@ -364,7 +365,7 @@ function AppContent() {
       email: data.email,
       type: 'investor',
       landingPage: '/investor',
-      notes: `طلب دراسة جدوى استثمارية بمبلغ ${(data.budget || invAmount).toLocaleString()} ج.م لفترة ${data.investmentHorizon || invPeriod} سنوات`,
+      notes: `طلب دراسة جدوى استثمارية بمبلغ ${(data.budget || invAmount).toLocaleString('en-US')} ج.م لفترة ${data.investmentHorizon || invPeriod} سنوات`,
       details: { invAmount: data.budget || invAmount, invPeriod: data.investmentHorizon || invPeriod, invPropType: data.propertyType || invPropType, area: data.area || 'new_sohag', ...data }
     });
     triggerToast(lang === 'ar' ? 'تم إرسال طلب دراسة الجدوى الاستثمارية بنجاح!' : 'Investment study requested!', 'success');

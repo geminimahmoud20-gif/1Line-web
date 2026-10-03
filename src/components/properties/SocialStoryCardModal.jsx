@@ -10,8 +10,8 @@ export default function SocialStoryCardModal({ isOpen, onClose, property, lang =
 
   const title = isAr ? property.title_ar : property.title_en;
   const location = isAr ? property.locationName_ar : property.locationName_en;
-  const priceFormatted = `${property.price.toLocaleString()} ${isAr ? 'ج.م' : 'EGP'}`;
-  const downPayment = property.downPayment ? `${property.downPayment.toLocaleString()} ${isAr ? 'ج.م' : 'EGP'}` : '-';
+  const priceFormatted = `${property.price.toLocaleString('en-US')} ${isAr ? 'ج.م' : 'EGP'}`;
+  const downPayment = property.downPayment ? `${property.downPayment.toLocaleString('en-US')} ${isAr ? 'ج.م' : 'EGP'}` : '-';
 
   const handleDownloadStory = () => {
     setDownloading(true);

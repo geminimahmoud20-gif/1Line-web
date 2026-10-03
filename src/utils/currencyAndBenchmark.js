@@ -111,7 +111,7 @@ export function getPriceBenchmark(property, lang = 'ar') {
 
   return {
     pricePerMeter,
-    pricePerMeterFormatted: `${pricePerMeter.toLocaleString()} ${isAr ? 'ج.م/م²' : 'EGP/m²'}`,
+    pricePerMeterFormatted: `${pricePerMeter.toLocaleString('en-US')} ${isAr ? 'ج.م/م²' : 'EGP/m²'}`,
     badgeType,
     badgeLabel,
     badgeColor,

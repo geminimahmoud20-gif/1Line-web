@@ -45,7 +45,7 @@ export const InvestorCenter = ({
   const isAr = lang === 'ar';
 
   const formatConverted = (valEgp) => {
-    return `${valEgp.toLocaleString()} ${isAr ? 'ج.م' : 'EGP'}`;
+    return `${valEgp.toLocaleString('en-US')} ${isAr ? 'ج.م' : 'EGP'}`;
   };
 
   const selectedYield = YIELD_RATES[invPropType] || YIELD_RATES.commercial;

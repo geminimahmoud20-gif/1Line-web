@@ -146,8 +146,8 @@ export default function PropertyCompareDrawer({
       else if (isOff) specsText = p.adminType_ar || (isAr ? 'مقر إداري / عيادة' : 'Office/Clinic');
       else specsText = `${p.bedrooms || 0} ${isAr ? 'غرف' : 'Rooms'} / ${p.bathrooms || 0} ${isAr ? 'حمام' : 'Baths'}`;
       msg += `• المساحة: ${p.size} م² (${specsText})\n`;
-      msg += `• المقدم: ${p.downPayment ? `${p.downPayment.toLocaleString()} ج.م` : 'كاش'}\n`;
-      msg += `• القسط: ${p.monthlyInstallment ? `${p.monthlyInstallment.toLocaleString()} ج.م/شهرياً (${p.installmentYears || 0} سنوات)` : 'كاش فقط'}\n`;
+      msg += `• المقدم: ${p.downPayment ? `${p.downPayment.toLocaleString('en-US')} ج.م` : 'كاش'}\n`;
+      msg += `• القسط: ${p.monthlyInstallment ? `${p.monthlyInstallment.toLocaleString('en-US')} ج.م/شهرياً (${p.installmentYears || 0} سنوات)` : 'كاش فقط'}\n`;
       msg += `• الموقع: ${loc}\n`;
       msg += `• الموقف القانوني: عقد مسجل وشهر عقاري معتمد 100%\n`;
       msg += `• الرابط: ${window.location.origin}/properties/${p.id}\n\n`;
@@ -355,7 +355,7 @@ export default function PropertyCompareDrawer({
                 <div className="verdict-chip lowest-installment">
                   <Calendar size={12} />
                   <span>
-                    {isAr ? 'أسهل قسط شهري:' : 'Lowest Monthly:'} <strong>{compareList.find(p => p.id === verdicts.lowestMonthlyId)?.monthlyInstallment?.toLocaleString()} ج.م</strong>
+                    {isAr ? 'أسهل قسط شهري:' : 'Lowest Monthly:'} <strong>{compareList.find(p => p.id === verdicts.lowestMonthlyId)?.monthlyInstallment?.toLocaleString('en-US')} ج.م</strong>
                   </span>
                 </div>
               )}
@@ -540,7 +540,7 @@ export default function PropertyCompareDrawer({
                                   <div className="sel-item-info">
                                     <h5 className="sel-item-title">{t}</h5>
                                     <span className="sel-item-price">
-                                      {p.price.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}
+                                      {p.price.toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}
                                     </span>
                                     <span className="sel-item-loc">{loc}</span>
                                   </div>

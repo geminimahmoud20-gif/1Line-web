@@ -95,10 +95,10 @@ export const DemandsPortal = ({
   // Helper for formatting budget neatly
   const formatBudget = (budget) => {
     if (typeof budget === 'number') {
-      return budget.toLocaleString();
+      return budget.toLocaleString('en-US');
     }
     const parsed = parseInt(String(budget || 0).replace(/,/g, ''), 10);
-    return isNaN(parsed) ? budget : parsed.toLocaleString();
+    return isNaN(parsed) ? budget : parsed.toLocaleString('en-US');
   };
 
   return (

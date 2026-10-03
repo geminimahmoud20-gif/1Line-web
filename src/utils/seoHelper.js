@@ -119,7 +119,7 @@ export function generateSocialShareSnippet(property, lang = 'ar') {
   const isAr = lang === 'ar';
   const title = isAr ? (property.title_ar || property.title) : (property.title_en || property.title);
   const location = isAr ? (property.locationName_ar || property.areaKey) : (property.locationName_en || property.areaKey);
-  const priceFormatted = property.price ? Number(property.price).toLocaleString() + ' ج.م' : '';
+  const priceFormatted = property.price ? Number(property.price).toLocaleString('en-US') + ' ج.م' : '';
   const sizeFormatted = property.size ? `${property.size} م²` : '';
   const propUrl = typeof window !== 'undefined' 
     ? `${window.location.origin}/properties/${property.id}`
@@ -131,7 +131,7 @@ export function generateSocialShareSnippet(property, lang = 'ar') {
       `📍 *الموقع:* ${location}`,
       priceFormatted ? `💰 *السعر:* ${priceFormatted}` : '',
       sizeFormatted ? `📐 *المساحة:* ${sizeFormatted}` : '',
-      property.downPayment ? `💳 *المقدم:* ${Number(property.downPayment).toLocaleString()} ج.م` : '',
+      property.downPayment ? `💳 *المقدم:* ${Number(property.downPayment).toLocaleString('en-US')} ج.م` : '',
       `🔍 *معاينة تفاصيل الوحدة والتقرير القانوني:*`,
       propUrl,
       `\nمنصة 1Line للاستثمار العقاري المعتمد - سوهاج`

@@ -142,9 +142,9 @@ export function generateWhatsAppMessage(eventType, client, property, alternative
   const clientName = client.name || 'عزيزي العميل';
   const propertyTitle = property.title_ar || property.title_en || 'وحدة عقارية مميزة';
   const areaName = property.locationName_ar || property.locationName_en || 'سوهاج';
-  const priceFormatted = (property.price || 0).toLocaleString();
-  const downPaymentFormatted = (property.downPayment || Math.round((property.price || 0) * 0.2)).toLocaleString();
-  const installmentFormatted = (property.monthlyInstallment || Math.round(((property.price || 0) * 0.8) / 60)).toLocaleString();
+  const priceFormatted = (property.price || 0).toLocaleString('en-US');
+  const downPaymentFormatted = (property.downPayment || Math.round((property.price || 0) * 0.2)).toLocaleString('en-US');
+  const installmentFormatted = (property.monthlyInstallment || Math.round(((property.price || 0) * 0.8) / 60)).toLocaleString('en-US');
   const origin = (typeof window !== 'undefined' && window.location?.origin) ? window.location.origin : 'https://1-line-qkzp9.vercel.app';
   const propertyUrl = `${origin}/properties/${property.id}`;
 
@@ -171,7 +171,7 @@ ${propertyUrl}
     let altText = '';
     if (alternativeProperties.length > 0) {
       altText = `\n\nولكن يسعدنا إخبارك بتوفر وحدات بديلة ممتازة بنفس المنطقة والمواصفات:\n` +
-        alternativeProperties.slice(0, 2).map((alt) => `🔹 ${alt.title_ar} - بسعر ${(alt.price || 0).toLocaleString()} ج.م`).join('\n') +
+        alternativeProperties.slice(0, 2).map((alt) => `🔹 ${alt.title_ar} - بسعر ${(alt.price || 0).toLocaleString('en-US')} ج.م`).join('\n') +
         `\n\nتصفح البدائل: ${origin}/properties`;
     }
 

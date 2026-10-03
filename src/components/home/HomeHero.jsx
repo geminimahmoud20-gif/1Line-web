@@ -366,7 +366,7 @@ export default function HomeHero({
                                 />
                                 <div className="sug-info">
                                   <span className="sug-title">{lang === 'ar' ? p.title_ar : p.title_en}</span>
-                                  <span className="sug-meta">{p.size} {lang === 'ar' ? 'م²' : 'sqm'} • {(Number(p.price) || 0).toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}</span>
+                                  <span className="sug-meta">{p.size} {lang === 'ar' ? 'م²' : 'sqm'} • {(Number(p.price) || 0).toLocaleString('en-US')} {lang === 'ar' ? 'ج.م' : 'EGP'}</span>
                                 </div>
                               </Link>
                             ))}

@@ -467,7 +467,7 @@ export default function PropertyMapView({
       const tooltipContent = `
         <div style="font-family: Cairo, sans-serif; text-align: ${isAr ? 'right' : 'left'}; direction: ${isAr ? 'rtl' : 'ltr'}; padding: 4px;">
           <strong style="color: #081226; font-size: 0.85rem; display: block; margin-bottom: 2px;">📍 ${isAr ? dist.label_ar : dist.label_en}</strong>
-          <div style="color: #475569; font-size: 0.75rem;">${isAr ? 'متوسط سعر المتر:' : 'Avg Sqm:'} <strong style="color: #0d48a1;">${dist.avgPricePerSqm.toLocaleString()} ${isAr ? 'ج.م' : 'EGP'}</strong></div>
+          <div style="color: #475569; font-size: 0.75rem;">${isAr ? 'متوسط سعر المتر:' : 'Avg Sqm:'} <strong style="color: #0d48a1;">${dist.avgPricePerSqm.toLocaleString('en-US')} ${isAr ? 'ج.م' : 'EGP'}</strong></div>
           <div style="color: #10b981; font-size: 0.75rem; font-weight: bold;">${isAr ? 'معدل النمو السنوي:' : 'Annual Growth:'} ${dist.appreciation} 📈</div>
         </div>
       `;
@@ -632,7 +632,7 @@ export default function PropertyMapView({
           <div className="hud-metrics-grid">
             <div className="hud-metric-box">
               <span className="hud-metric-label">{isAr ? 'متوسط المتر' : 'Avg Sqm'}</span>
-              <strong className="hud-metric-val">{districtHudInfo.avgPricePerSqm.toLocaleString()} ج.م</strong>
+              <strong className="hud-metric-val">{districtHudInfo.avgPricePerSqm.toLocaleString('en-US')} ج.م</strong>
             </div>
             <div className="hud-metric-box growth-box">
               <span className="hud-metric-label">{isAr ? 'النمو السنوي' : 'Growth'}</span>

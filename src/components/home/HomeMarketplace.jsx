@@ -212,7 +212,7 @@ export default function HomeMarketplace({
                     <div className="demand-meta-item">
                       <DollarSign size={14} className="text-gold" />
                       <span style={{ color: 'var(--brand-gold-warm, #f59e0b)', fontWeight: '900', fontSize: '0.94rem' }}>
-                        {(typeof dem.budget === 'number' ? dem.budget : parseInt(String(dem.budget).replace(/,/g, ''))).toLocaleString()} {lang === 'ar' ? 'ج.م' : 'EGP'}
+                        {(typeof dem.budget === 'number' ? dem.budget : parseInt(String(dem.budget).replace(/,/g, ''))).toLocaleString('en-US')} {lang === 'ar' ? 'ج.م' : 'EGP'}
                       </span>
                     </div>
                   </div>
