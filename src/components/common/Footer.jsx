@@ -76,7 +76,7 @@ export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
               <li><Link to="/properties">{isAr ? 'استكشاف كافة العقارات' : 'Explore Properties'}</Link></li>
               <li><Link to="/projects">{isAr ? 'المشروعات والكمبوندات' : 'Mega Projects Hub'}</Link></li>
               <li><Link to="/market-intelligence">{isAr ? 'مؤشرات أسعار السوق' : 'Market Intelligence'}</Link></li>
-              <li><Link to="/financing">{isAr ? 'حاسبة التمويل والأقساط' : 'Financing & Mortgage'}</Link></li>
+              <li><Link to="/financing">{isAr ? 'حاسبة تقسيط المشروعات' : 'Project installment calculator'}</Link></li>
             </ul>
           </div>
 

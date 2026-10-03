@@ -147,3 +147,17 @@ export function isExtension(previous, next, now = Date.now()) {
   const started = now >= prevStart;
   return started && parseDay(next.until, true) > prevEnd;
 }
+
+const trim = (n, digits) => String(Number(n.toFixed(digits)));
+
+/**
+ * The saving as a headline: "450" + "ألف ج.م", "1.25" + "مليون ج.م".
+ * Rounded down so the headline never promises more than the real saving.
+ */
+export function savingsHeadline(amount, isAr) {
+  const n = Math.max(0, Number(amount) || 0);
+  const cur = isAr ? 'ج.م' : 'EGP';
+  if (n >= 1e6) return { value: trim(Math.floor(n / 1e4) / 100, 2), unit: isAr ? `مليون ${cur}` : `M ${cur}` };
+  if (n >= 1e4) return { value: trim(Math.floor(n / 100) / 10, 1), unit: isAr ? `ألف ${cur}` : `K ${cur}` };
+  return { value: n.toLocaleString('en-US'), unit: cur };
+}

@@ -46,7 +46,16 @@
   line-height: 1.3;
   color: #FFFFFF;
 }
-.gx-sub { margin: 0; font-size: 1rem; line-height: 1.8; color: rgba(255, 255, 255, 0.75); }
+.gx-heading-gold {
+  background: linear-gradient(100deg, #E9D29A 0%, #FFF4D6 25%, #D4AF6A 50%, #FFF4D6 75%, #E9D29A 100%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gx-shine 4s linear infinite;
+}
+@keyframes gx-shine { to { background-position: -220% 0; } }
+.gx-sub { margin: 0 auto; max-width: 34em; font-size: 1rem; line-height: 1.8; color: rgba(255, 255, 255, 0.78); white-space: normal; overflow-wrap: anywhere; }
 .gx-note { margin: 28px auto 0; max-width: 560px; text-align: center; font-size: 0.8rem; line-height: 1.7; color: rgba(255, 255, 255, 0.55); }
 
 /* ── Grid ──────────────────────────────────────────────────────────────── */
@@ -158,6 +167,9 @@
   box-shadow: 0 10px 24px -12px rgba(0, 0, 0, 0.6);
 }
 .gx-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   padding: 3px 10px;
   border-radius: 999px;
   background: rgba(169, 130, 74, 0.14);
@@ -165,9 +177,33 @@
   font-size: 0.74rem;
   font-weight: 700;
 }
-.gx-pct { display: inline-flex; align-items: baseline; gap: 6px; line-height: 1; }
-.gx-pct small { font-size: 1rem; font-weight: 700; color: var(--gx-gold-dark); }
-.gx-pct b { font-size: 2.9rem; font-weight: 700; color: var(--gx-navy); direction: ltr; }
+.gx-tag.is-hot { background: #FDE8E4; color: #C2410C; animation: gx-hot 1.6s ease-in-out infinite; }
+@keyframes gx-hot { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+
+/* The saving is the headline: "وفّر كاش  450 ألف ج.م" */
+.gx-save-kicker { margin-top: 2px; font-size: 0.86rem; font-weight: 700; color: #2F7A5B; }
+.gx-save { display: inline-flex; align-items: baseline; justify-content: center; flex-wrap: wrap; gap: 2px 8px; line-height: 1; }
+.gx-save b {
+  font-size: clamp(2.6rem, 9vw, 3.1rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(100deg, #1E6B4C 0%, #2F9E6E 30%, #7FD6AE 50%, #2F9E6E 70%, #1E6B4C 100%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gx-shine 3.2s linear infinite;
+  font-variant-numeric: tabular-nums;
+}
+.gx-save small { font-size: 1rem; font-weight: 700; color: var(--gx-navy); }
+.gx-pct-chip {
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px dashed rgba(124, 94, 48, 0.45);
+  color: var(--gx-gold-dark);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
 .gx-what {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -186,10 +222,10 @@
   gap: 7px;
   padding: 8px 14px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.35);
-  color: #F3E3BA;
-  font-size: 0.85rem;
-  font-weight: 700;
+  background: linear-gradient(90deg, #D4AF6A, #F3E3BA, #D4AF6A);
+  color: var(--gx-navy);
+  font-size: 0.9rem;
+  font-weight: 800;
   animation: gx-pulse 2.2s ease-in-out infinite;
 }
 @keyframes gx-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(233, 210, 154, 0.45); } 50% { box-shadow: 0 0 0 8px rgba(233, 210, 154, 0); } }
@@ -241,12 +277,14 @@
   background: #E9D29A;
   opacity: 0;
   animation: gx-spark 0.9s var(--gx-ease) both;
-  --a: calc(var(--k) * 36deg);
+  --a: calc(var(--k) * 22.5deg);
 }
 .gx-burst i:nth-child(odd) { background: #FFFFFF; border-radius: 50%; }
+.gx-burst i:nth-child(3n) { background: #34D399; }
+.gx-burst i:nth-child(4n) { background: #F59E0B; width: 6px; height: 12px; }
 @keyframes gx-spark {
   0% { opacity: 1; transform: rotate(var(--a)) translateY(0) scale(1); }
-  100% { opacity: 0; transform: rotate(var(--a)) translateY(-120px) scale(0.4); }
+  100% { opacity: 0; transform: rotate(var(--a)) translateY(-150px) rotate(180deg) scale(0.4); }
 }
 
 .gx-photo { position: relative; aspect-ratio: 16 / 10; background: linear-gradient(135deg, #16294A, #081221); }
@@ -257,10 +295,11 @@
   inset-inline-start: 12px;
   padding: 5px 11px;
   border-radius: 999px;
-  background: #E9D29A;
-  color: var(--gx-navy);
+  background: linear-gradient(135deg, #2F9E6E, #1E6B4C);
+  color: #FFFFFF;
   font-size: 0.9rem;
-  font-weight: 700;
+  font-weight: 800;
+  box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.5);
 }
 .gx-close {
   position: absolute;
@@ -289,11 +328,41 @@
   color: var(--gx-navy);
 }
 .gx-loc { display: flex; align-items: center; gap: 5px; margin: 0; font-size: 0.82rem; color: #5B6577; }
-.gx-prices { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-top: 2px; }
+.gx-win {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0 2px;
+  padding: 10px 14px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #0B1B32, #1B3561);
+  color: #FFFFFF;
+  animation: gx-pop 0.6s var(--gx-ease) 0.15s both;
+}
+.gx-win::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.22) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: gx-sweep 2.8s ease-in-out 0.8s infinite;
+}
+@keyframes gx-sweep { 0% { transform: translateX(-100%); } 45%, 100% { transform: translateX(100%); } }
+.gx-win-icon { flex-shrink: 0; color: #E9D29A; }
+.gx-win-text { display: flex; flex-direction: column; line-height: 1.25; }
+.gx-win-text small { font-size: 0.78rem; color: rgba(255, 255, 255, 0.75); }
+.gx-win-text { min-width: 0; }
+.gx-win-text b { font-size: clamp(1.1rem, 4.6vw, 1.4rem); font-weight: 800; color: #E9D29A; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.gx-prices { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; margin-top: 4px; }
+.gx-price-label { flex-basis: 100%; font-size: 0.78rem; color: #5B6577; }
+.gx-was { font-size: 0.85rem; color: #8A94A6; white-space: nowrap; }
+.gx-ends { margin: 6px 0 0; font-size: 0.8rem; font-weight: 700; color: #C2410C; }
 .gx-prices strong { font-size: 1.5rem; font-weight: 700; color: var(--gx-navy); white-space: nowrap; }
 .gx-prices strong small { font-size: 0.55em; font-weight: 600; color: #5B6577; }
 .gx-prices del { font-size: 0.9rem; color: #8A94A6; white-space: nowrap; }
-.gx-saved { margin: 0 0 4px; font-size: 0.86rem; font-weight: 700; color: #2F7A5B; }
 .gx-reveal .gx-count { justify-content: flex-start; }
 .gx-cta {
   display: inline-flex;
@@ -303,24 +372,37 @@
   min-height: 48px;
   margin-top: auto;
   border-radius: 12px;
-  background: var(--gx-navy);
-  color: #FFFFFF !important;
-  font-weight: 700;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #D4AF6A, #F3E3BA 50%, #C9A15A);
+  color: var(--gx-navy) !important;
+  font-weight: 800;
   text-decoration: none;
-  transition: background 0.25s;
+  box-shadow: 0 10px 22px -10px rgba(169, 130, 74, 0.8);
+  transition: transform 0.25s var(--gx-ease), box-shadow 0.25s;
 }
-.gx-cta:hover { background: #16294A; }
-.gx-info .gx-count { margin: 6px 0 12px; }
+.gx-cta::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.55) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: gx-sweep 3s ease-in-out 1.4s infinite;
+}
+.gx-cta:hover { transform: translateY(-2px); box-shadow: 0 14px 26px -10px rgba(169, 130, 74, 0.9); }
+.gx-info .gx-count { margin: 2px 0 12px; }
 
 .dark-theme .gx-reveal { background: #0F1B2D; color: #F1F5F9; }
 .dark-theme .gx-title,
 .dark-theme .gx-prices strong { color: #F1F5F9; }
 .dark-theme .gx-loc,
 .dark-theme .gx-prices strong small { color: #9AA6B8; }
-.dark-theme .gx-saved { color: #6EE7B7; }
+.dark-theme .gx-price-label,
+.dark-theme .gx-was { color: #9AA6B8; }
+.dark-theme .gx-ends { color: #FDBA74; }
 .dark-theme .gx-reveal .gx-count-cell { background: #1B3561; }
-.dark-theme .gx-cta { background: #E9D29A; color: #0B1B32 !important; }
-.dark-theme .gx-cta:hover { background: #F3E3BA; }
+.dark-theme .gx-win { background: linear-gradient(135deg, #1B3561, #24467A); }
 
 /* ── Phones: one row you swipe through ─────────────────────────────────── */
 @media (max-width: 640px) {
@@ -347,6 +429,12 @@
   .gx-item,
   .gx-gift,
   .gx-hint,
+  .gx-tag.is-hot,
+  .gx-heading-gold,
+  .gx-save b,
+  .gx-win,
+  .gx-win::after,
+  .gx-cta::after,
   .gx-reveal,
   .gx-burst i { animation: none; }
   .gx-burst { display: none; }

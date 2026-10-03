@@ -1,11 +1,38 @@
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Gift, MapPin, ArrowLeft, ArrowRight, RotateCcw } from 'lucide-react';
+import { Gift, MapPin, ArrowLeft, ArrowRight, RotateCcw, Flame, Sparkles } from 'lucide-react';
 import GiftCountdown from './GiftCountdown';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
+import { savingsHeadline } from '../../utils/propertyOffers';
 
 const TYPE_AR = { apartment: 'شقة', villa: 'فيلا', land: 'أرض', commercial: 'محل تجاري', office: 'مكتب إداري', building: 'عمارة', duplex: 'دوبلكس' };
 const TYPE_EN = { apartment: 'Apartment', villa: 'Villa', land: 'Land', commercial: 'Shop', office: 'Office', building: 'Building', duplex: 'Duplex' };
+
+/** Counts a number up once when it first shows (skipped for reduced motion) */
+function useCountUp(target, ms = 900) {
+  const [v, setV] = useState(() => (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? target : 0));
+  useEffect(() => {
+    if (v === target) return undefined;
+    let raf;
+    const start = performance.now();
+    const tick = (t) => {
+      const k = Math.min(1, (t - start) / ms);
+      setV(Math.round(target * (1 - (1 - k) ** 3)));
+      if (k < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target]); // eslint-disable-line react-hooks/exhaustive-deps
+  return v;
+}
+
+/** How urgent the offer is, for the badge on the box */
+const urgency = (msLeft, isAr) => {
+  const days = Math.ceil(msLeft / 86400000);
+  if (msLeft <= 86400000) return { hot: true, text: isAr ? 'اليوم الأخير للعرض' : 'Final day' };
+  if (days <= 3) return { hot: true, text: isAr ? `ينتهي خلال ${days === 2 ? 'يومين' : `${days} أيام`}` : `Ends in ${days} days` };
+  return { hot: false, text: isAr ? 'عرض حصري' : 'Exclusive' };
+};
 
 /** The bow on top of the box */
 function Bow() {
@@ -30,6 +57,20 @@ function Bow() {
   );
 }
 
+/** The saving, counted up when the gift opens */
+function RevealSaving({ amount, isAr }) {
+  const v = useCountUp(amount);
+  return (
+    <div className="gx-win" role="note">
+      <Sparkles size={18} aria-hidden="true" className="gx-win-icon" />
+      <span className="gx-win-text">
+        <small>{isAr ? 'قيمة الخصم المباشر على السعر' : 'Direct discount on the price'}</small>
+        <b><bdi>{v.toLocaleString('en-US')}</bdi> {isAr ? 'ج.م' : 'EGP'}</b>
+      </span>
+    </div>
+  );
+}
+
 /**
  * One limited-time offer as a wrapped gift: the discount and the countdown are on the box;
  * tapping it opens the lid and shows the unit, the prices and the link to its page.
@@ -47,7 +88,8 @@ export default function GiftOffer({ property, offer, lang = 'ar', currency, inde
   const image = Array.isArray(property.images) ? property.images.find(Boolean) : null;
   const now = formatCurrencyPrice(offer.price, currency, lang);
   const was = formatCurrencyPrice(offer.basePrice, currency, lang);
-  const saved = formatCurrencyPrice(offer.savings, currency, lang);
+  const head = savingsHeadline(offer.savings, isAr);
+  const badge = urgency(offer.msLeft, isAr);
   const Arrow = isAr ? ArrowLeft : ArrowRight;
   // Lid lifts first, then the offer appears (no wait when the visitor prefers reduced motion)
   const unwrap = () => {
@@ -67,44 +109,50 @@ export default function GiftOffer({ property, offer, lang = 'ar', currency, inde
           onClick={unwrap}
           disabled={opening}
           aria-expanded="false"
-          aria-label={isAr ? `افتح العرض: خصم ${offer.pct}% على ${teaser}` : `Open the offer: ${offer.pct}% off a ${teaser}`}
+          aria-label={isAr ? `اعرض التفاصيل: خصم ${head.value} ${head.unit} على ${teaser}` : `View the offer: ${head.value}${head.unit} off a ${teaser}`}
         >
           <Bow />
           <span className="gx-lid" aria-hidden="true" />
           <span className="gx-body">
             <span className="gx-label">
-              <span className="gx-tag">{isAr ? 'عرض حصري' : 'Exclusive'}</span>
-              <span className="gx-pct">
-                <small>{isAr ? 'خصم' : 'Save'}</small>
-                <b>{offer.pct}%</b>
+              <span className={`gx-tag ${badge.hot ? 'is-hot' : ''}`}>
+                {badge.hot && <Flame size={13} aria-hidden="true" />}{badge.text}
               </span>
+              <span className="gx-save-kicker">{isAr ? 'خصم مباشر' : 'Direct discount'}</span>
+              <span className="gx-save">
+                <b><bdi>{head.value}</bdi></b>
+                <small>{head.unit}</small>
+              </span>
+              <span className="gx-pct-chip">{isAr ? `${offer.pct}% من سعر الوحدة` : `${offer.pct}% of the listed price`}</span>
               <span className="gx-what">{teaser}</span>
               <GiftCountdown endsAt={offer.endsAt} isAr={isAr} compact onEnd={() => setEnded(true)} />
             </span>
-            <span className="gx-hint"><Gift size={16} aria-hidden="true" />{isAr ? 'افتح الهدية وشوف العرض' : 'Open to see the offer'}</span>
+            <span className="gx-hint"><Gift size={16} aria-hidden="true" />{isAr ? 'اكتشف تفاصيل العرض' : 'View offer details'}</span>
           </span>
         </button>
       ) : (
         <div className="gx-reveal" role="region" aria-label={title}>
-          <span className="gx-burst" aria-hidden="true">{Array.from({ length: 10 }, (_, i) => <i key={i} style={{ '--k': i }} />)}</span>
+          <span className="gx-burst" aria-hidden="true">{Array.from({ length: 16 }, (_, i) => <i key={i} style={{ '--k': i }} />)}</span>
           <div className="gx-photo">
             {image && <img src={image} alt={title} loading="lazy" decoding="async" />}
-            <span className="gx-photo-pct">{isAr ? `خصم ${offer.pct}%` : `${offer.pct}% off`}</span>
-            <button type="button" className="gx-close" onClick={() => setOpen(false)} aria-label={isAr ? 'اقفل الهدية' : 'Close the gift'}>
+            <span className="gx-photo-pct">{isAr ? `خصم ${head.value} ${head.unit}` : `${head.value}${head.unit} off`}</span>
+            <button type="button" className="gx-close" onClick={() => setOpen(false)} aria-label={isAr ? 'إغلاق' : 'Close'}>
               <RotateCcw size={15} aria-hidden="true" />
             </button>
           </div>
           <div className="gx-info">
             <h3 className="gx-title" title={title}>{title}</h3>
             {location && <p className="gx-loc"><MapPin size={13} aria-hidden="true" />{location}</p>}
+            <RevealSaving amount={offer.savings} isAr={isAr} />
             <div className="gx-prices">
+              <span className="gx-price-label">{isAr ? 'سعر الوحدة بعد الخصم (كاش)' : 'Unit price after discount (cash)'}</span>
               <strong>{now.primary} <small>{now.symbol}</small></strong>
-              <del>{was.primary} {was.symbol}</del>
+              <span className="gx-was">{isAr ? 'بدلاً من' : 'instead of'} <del>{was.primary} {was.symbol}</del></span>
             </div>
-            <p className="gx-saved">{isAr ? `توفّر ${saved.primary} ${saved.symbol} كاش` : `You save ${saved.primary} ${saved.symbol} cash`}</p>
+            <p className="gx-ends">{isAr ? 'ينتهي العرض خلال' : 'Offer ends in'}</p>
             <GiftCountdown endsAt={offer.endsAt} isAr={isAr} onEnd={() => setEnded(true)} />
             <Link to={`/properties/${property.id}`} className="gx-cta">
-              <span>{isAr ? 'شوف تفاصيل العرض' : 'See the offer'}</span>
+              <span>{isAr ? 'تفاصيل الوحدة وحجز معاينة' : 'Unit details & viewing'}</span>
               <Arrow size={17} aria-hidden="true" />
             </Link>
           </div>
