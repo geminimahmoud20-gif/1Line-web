@@ -18268,3 +18268,27 @@ body:has(.lightbox-overlay) .floating-back-to-top-btn {
 
 /* 4. Pre-Footer Conclusion Statement */
 
+
+/* ── Phone-width overflow fixes ─────────────────────────────────────
+   Grid items default to min-width:auto, so a wide child (inputs, tabs, long numbers) pushed whole
+   columns past the screen edge on phones (financing calculator, listing page). */
+.calc-main-grid > *,
+.detail-content-grid > * { min-width: 0; }
+.property-detail-hero-stage .gallery-media-mode-tabs { max-width: 100% !important; overflow-x: auto !important; }
+
+/* 360px phones: the header row was 4px wider than the screen (hamburger clipped) */
+@media (max-width: 380px) {
+  .site-header .header-container.glass-capsule { padding: 6px 8px !important; gap: 4px !important; }
+  .site-header .header-actions { gap: 3px !important; }
+}
+
+/* Investor / seller portal mode switch: it overlaps the dark hero, so it needs its own surface */
+.portal-mode-toggle-strip {
+  background: #ffffff;
+  border-color: rgba(13, 72, 161, 0.16);
+  box-shadow: 0 10px 28px rgba(6, 17, 33, 0.18);
+}
+.portal-mode-btn { color: #334155; }
+.portal-mode-btn.active { background: #EEF4FF; }
+.dark-theme .portal-mode-toggle-strip, [data-theme="dark"] .portal-mode-toggle-strip { background: #0F1B2E; border-color: rgba(255, 255, 255, 0.14); }
+.dark-theme .portal-mode-btn, [data-theme="dark"] .portal-mode-btn { color: #CBD5E1; }

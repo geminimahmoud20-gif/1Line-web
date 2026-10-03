@@ -389,7 +389,8 @@
 }
 .xs-remote-cta:hover { transform: translateY(-2px); box-shadow: 0 14px 28px -16px rgba(197, 160, 89, 0.9); }
 .xs-remote-cta-icon { display: grid; place-items: center; width: 40px; height: 40px; flex: none; border-radius: 12px; background: var(--xs-gold-grad); color: #0B1B32; }
-.xs-remote-cta-text { display: flex; flex-direction: column; gap: 2px; }
+.xs-remote-cta-text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.xs-remote-cta-text small { white-space: normal; overflow-wrap: anywhere; }
 .xs-remote-cta-text strong { font-size: 0.9rem; }
 .xs-remote-cta-text small { font-size: 0.72rem; color: var(--xs-muted); }
 
