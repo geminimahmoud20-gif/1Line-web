@@ -5,6 +5,14 @@ import { FeaturedPeriodLabel } from './HomepageSlotsBoard';
 
 // One row of the CRM properties table (PropertyManagerPanel): status selector, homepage star,
 // WhatsApp match notifier and the edit / trash / restore actions.
+// Short time left for the offer button: "6 أيام" / "5 ساعات" (full text is in its tooltip)
+const shortLeft = (ms, isAr) => {
+  const d = Math.floor(ms / 86400000);
+  if (d >= 1) return isAr ? (d === 1 ? 'يوم' : d === 2 ? 'يومين' : `${d} ${d <= 10 ? 'أيام' : 'يوم'}`) : `${d}d`;
+  const h = Math.max(1, Math.floor(ms / 3600000));
+  return isAr ? (h === 1 ? 'ساعة' : h === 2 ? 'ساعتين' : `${h} ${h <= 10 ? 'ساعات' : 'ساعة'}`) : `${h}h`;
+};
+
 export default function PropertyTableRow({
   prop,
   isAr,
@@ -100,8 +108,8 @@ export default function PropertyTableRow({
                 propStatus === 'under_negotiation' ? 'var(--crm-warn)' : 'var(--crm-danger)'
             }}
           >
-            <option value="published">🟢 {isAr ? 'منشور نشط' : 'Published'}</option>
-            <option value="hidden">⚪ {isAr ? 'مخفي مؤقتاً' : 'Hidden'}</option>
+            <option value="published">🟢 {isAr ? 'منشور' : 'Published'}</option>
+            <option value="hidden">⚪ {isAr ? 'مخفي' : 'Hidden'}</option>
             <option value="under_negotiation">🟡 {isAr ? 'تحت التفاوض' : 'Negotiating'}</option>
             <option value="sold">🔴 {isAr ? 'تم البيع' : 'Sold'}</option>
           </select>
@@ -144,30 +152,6 @@ export default function PropertyTableRow({
             </button>
           )}
         </div>
-        {/* Limited-time cash offer */}
-        {setOfferEditing && !isTrash && (() => {
-          const state = offerState(prop);
-          const live = getActiveOffer(prop);
-          const label = {
-            none: isAr ? 'إضافة عرض' : 'Add offer',
-            invalid: isAr ? 'عرض غير صالح — راجعه' : 'Invalid offer — review',
-            scheduled: isAr ? `عرض يبدأ ${prop.offer?.from}` : `Offer starts ${prop.offer?.from}`,
-            active: live ? (isAr ? `عرض −${live.pct}% · باقي ${formatTimeLeft(live.msLeft)}` : `Offer −${live.pct}% · ${formatTimeLeft(live.msLeft, false)} left`) : '',
-            expired: isAr ? 'العرض انتهى' : 'Offer ended'
-          }[state];
-          return (
-            <button
-              type="button"
-              className="hs-link-btn"
-              onClick={() => setOfferEditing(prop)}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6, color: state === 'active' ? 'var(--crm-warn)' : state === 'invalid' ? 'var(--crm-danger)' : 'var(--crm-muted)', fontWeight: state === 'active' ? 800 : 600 }}
-              title={isAr ? 'عرض كاش لفترة محدودة' : 'Limited-time cash offer'}
-            >
-              <Flame size={14} fill={state === 'active' ? 'currentColor' : 'none'} />
-              <span>{label}</span>
-            </button>
-          );
-        })()}
       </td>
 
       {/* Actions */}
@@ -187,6 +171,47 @@ export default function PropertyTableRow({
                 {isOnSite ? <Eye size={16} /> : <EyeOff size={16} />}
               </button>
 
+              {/* Limited-time cash offer: in the actions column so it is always on screen */}
+              {setOfferEditing && (() => {
+                const state = offerState(prop);
+                const live = getActiveOffer(prop);
+                const label = {
+                  none: isAr ? 'عرض' : 'Offer',
+                  invalid: isAr ? 'راجع العرض' : 'Fix offer',
+                  scheduled: isAr ? 'عرض مجدول' : 'Scheduled',
+                  active: live ? `−${live.pct}% · ${shortLeft(live.msLeft, isAr)}` : (isAr ? 'عرض' : 'Offer'),
+                  expired: isAr ? 'العرض انتهى' : 'Ended'
+                }[state];
+                const tone = state === 'active' ? 'var(--crm-warn)' : state === 'invalid' ? 'var(--crm-danger)' : 'var(--crm-ink)';
+                return (
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    onClick={() => setOfferEditing(prop)}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '4px 10px',
+                      borderRadius: '8px',
+                      fontSize: 'var(--crm-text-xs)',
+                      fontWeight: state === 'active' ? 800 : 700,
+                      whiteSpace: 'nowrap',
+                      cursor: 'pointer',
+                      color: tone,
+                      background: state === 'active' ? 'var(--crm-warn-soft)' : 'transparent',
+                      border: `1px solid ${state === 'active' ? 'var(--crm-warn)' : 'var(--crm-line)'}`
+                    }}
+                    title={isAr
+                      ? (state === 'none' ? 'إضافة عرض كاش لفترة محدودة — يظهر كهدية في الصفحة الرئيسية' : `تعديل العرض أو إنهاؤه${live ? ` — ينتهي خلال ${formatTimeLeft(live.msLeft)}` : ''}`)
+                      : (state === 'none' ? 'Add a limited-time cash offer' : `Edit or end the offer${live ? ` — ends in ${formatTimeLeft(live.msLeft, false)}` : ''}`)}
+                  >
+                    <Flame size={14} fill={state === 'active' ? 'currentColor' : 'none'} />
+                    <span>{label}</span>
+                  </button>
+                );
+              })()}
+
               {/* WhatsApp Retargeting / Match Broadcast Button */}
               <button
                 type="button"
@@ -199,18 +224,19 @@ export default function PropertyTableRow({
                   background: 'rgba(16, 185, 129, 0.12)',
                   border: '1px solid rgba(16, 185, 129, 0.35)',
                   color: 'var(--crm-positive)',
-                  padding: '4px 8px',
+                  width: '32px',
+                  height: '32px',
+                  padding: 0,
                   borderRadius: '8px',
-                  fontSize: 'var(--crm-text-xs)',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '4px',
+                  justifyContent: 'center',
                   cursor: 'pointer'
                 }}
                 title={isAr ? 'إرسال إشعارات واتساب للعملاء المهتمين بهذه الوحدة' : 'Notify Matched Leads via WhatsApp'}
+                aria-label={isAr ? 'إشعار واتساب للعملاء المهتمين' : 'Notify matched leads via WhatsApp'}
               >
-                <MessageSquare size={13} />
-                <span>{isAr ? 'إشعار واتساب' : 'Notify'}</span>
+                <MessageSquare size={15} />
               </button>
 
               {/* Edit */}
