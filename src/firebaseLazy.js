@@ -55,6 +55,7 @@ export const reconcilePublicDemands = lazyCall('reconcilePublicDemands');
 export const logoutUser = lazyCall('logoutUser');
 export const saveSettings = lazyCall('saveSettings');
 export const loadSettings = lazyCall('loadSettings');
+export const settingsExist = lazyCall('settingsExist');
 export const upsertCatalogItem = lazyCall('upsertCatalogItem');
 export const deleteCatalogItem = lazyCall('deleteCatalogItem');
 export const incrementAdStat = lazyCall('incrementAdStat');
