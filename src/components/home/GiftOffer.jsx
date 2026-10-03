@@ -29,8 +29,8 @@ function useCountUp(target, ms = 900) {
 /** How urgent the offer is, for the badge on the box */
 const urgency = (msLeft, isAr) => {
   const days = Math.ceil(msLeft / 86400000);
-  if (msLeft <= 86400000) return { hot: true, text: isAr ? 'آخر يوم!' : 'Last day!' };
-  if (days <= 3) return { hot: true, text: isAr ? `باقي ${days} أيام بس` : `Only ${days} days left` };
+  if (msLeft <= 86400000) return { hot: true, text: isAr ? 'اليوم الأخير للعرض' : 'Final day' };
+  if (days <= 3) return { hot: true, text: isAr ? `ينتهي خلال ${days === 2 ? 'يومين' : `${days} أيام`}` : `Ends in ${days} days` };
   return { hot: false, text: isAr ? 'عرض حصري' : 'Exclusive' };
 };
 
@@ -64,7 +64,7 @@ function RevealSaving({ amount, isAr }) {
     <div className="gx-win" role="note">
       <Sparkles size={18} aria-hidden="true" className="gx-win-icon" />
       <span className="gx-win-text">
-        <small>{isAr ? 'مبروك! هتوفّر كاش' : 'Congrats! You save'}</small>
+        <small>{isAr ? 'قيمة الخصم عند السداد الكاش' : 'Discount for cash payment'}</small>
         <b><bdi>{v.toLocaleString('en-US')}</bdi> {isAr ? 'ج.م' : 'EGP'}</b>
       </span>
     </div>
@@ -109,7 +109,7 @@ export default function GiftOffer({ property, offer, lang = 'ar', currency, inde
           onClick={unwrap}
           disabled={opening}
           aria-expanded="false"
-          aria-label={isAr ? `افتح العرض: وفّر ${head.value} ${head.unit} على ${teaser}` : `Open the offer: save ${head.value}${head.unit} on a ${teaser}`}
+          aria-label={isAr ? `اعرض التفاصيل: خصم ${head.value} ${head.unit} على ${teaser}` : `View the offer: ${head.value}${head.unit} off a ${teaser}`}
         >
           <Bow />
           <span className="gx-lid" aria-hidden="true" />
@@ -118,16 +118,16 @@ export default function GiftOffer({ property, offer, lang = 'ar', currency, inde
               <span className={`gx-tag ${badge.hot ? 'is-hot' : ''}`}>
                 {badge.hot && <Flame size={13} aria-hidden="true" />}{badge.text}
               </span>
-              <span className="gx-save-kicker">{isAr ? 'وفّر كاش' : 'Save in cash'}</span>
+              <span className="gx-save-kicker">{isAr ? 'خصم السداد الكاش' : 'Cash payment discount'}</span>
               <span className="gx-save">
                 <b><bdi>{head.value}</bdi></b>
                 <small>{head.unit}</small>
               </span>
-              <span className="gx-pct-chip">{isAr ? `يعني خصم ${offer.pct}% من السعر` : `That's ${offer.pct}% off`}</span>
+              <span className="gx-pct-chip">{isAr ? `${offer.pct}% من سعر الوحدة` : `${offer.pct}% of the listed price`}</span>
               <span className="gx-what">{teaser}</span>
               <GiftCountdown endsAt={offer.endsAt} isAr={isAr} compact onEnd={() => setEnded(true)} />
             </span>
-            <span className="gx-hint"><Gift size={16} aria-hidden="true" />{isAr ? 'افتح هديتك 🎁' : 'Open your gift 🎁'}</span>
+            <span className="gx-hint"><Gift size={16} aria-hidden="true" />{isAr ? 'اكتشف تفاصيل العرض' : 'View offer details'}</span>
           </span>
         </button>
       ) : (
@@ -135,8 +135,8 @@ export default function GiftOffer({ property, offer, lang = 'ar', currency, inde
           <span className="gx-burst" aria-hidden="true">{Array.from({ length: 16 }, (_, i) => <i key={i} style={{ '--k': i }} />)}</span>
           <div className="gx-photo">
             {image && <img src={image} alt={title} loading="lazy" decoding="async" />}
-            <span className="gx-photo-pct">{isAr ? `وفّر ${head.value} ${head.unit}` : `Save ${head.value}${head.unit}`}</span>
-            <button type="button" className="gx-close" onClick={() => setOpen(false)} aria-label={isAr ? 'اقفل الهدية' : 'Close the gift'}>
+            <span className="gx-photo-pct">{isAr ? `خصم ${head.value} ${head.unit}` : `${head.value}${head.unit} off`}</span>
+            <button type="button" className="gx-close" onClick={() => setOpen(false)} aria-label={isAr ? 'إغلاق' : 'Close'}>
               <RotateCcw size={15} aria-hidden="true" />
             </button>
           </div>
@@ -145,14 +145,14 @@ export default function GiftOffer({ property, offer, lang = 'ar', currency, inde
             {location && <p className="gx-loc"><MapPin size={13} aria-hidden="true" />{location}</p>}
             <RevealSaving amount={offer.savings} isAr={isAr} />
             <div className="gx-prices">
-              <span className="gx-price-label">{isAr ? 'سعر العرض كاش' : 'Cash offer price'}</span>
+              <span className="gx-price-label">{isAr ? 'السعر بعد الخصم (كاش)' : 'Price after discount (cash)'}</span>
               <strong>{now.primary} <small>{now.symbol}</small></strong>
-              <span className="gx-was">{isAr ? 'بدل' : 'instead of'} <del>{was.primary} {was.symbol}</del></span>
+              <span className="gx-was">{isAr ? 'بدلاً من' : 'instead of'} <del>{was.primary} {was.symbol}</del></span>
             </div>
-            <p className="gx-ends">{isAr ? 'العرض بيخلص خلال' : 'Offer ends in'}</p>
+            <p className="gx-ends">{isAr ? 'ينتهي العرض خلال' : 'Offer ends in'}</p>
             <GiftCountdown endsAt={offer.endsAt} isAr={isAr} onEnd={() => setEnded(true)} />
             <Link to={`/properties/${property.id}`} className="gx-cta">
-              <span>{isAr ? 'احجز العرض قبل ما يخلص' : 'Grab it before it ends'}</span>
+              <span>{isAr ? 'تفاصيل الوحدة وحجز معاينة' : 'Unit details & viewing'}</span>
               <Arrow size={17} aria-hidden="true" />
             </Link>
           </div>
