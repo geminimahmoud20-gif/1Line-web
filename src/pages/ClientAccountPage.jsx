@@ -271,7 +271,7 @@ export default function ClientAccountPage({
                 {clientUser.verifiedAt && (
                   <span className="contact-tag hide-mobile">
                     <Calendar size={13} className="text-muted" />
-                    <span>{isAr ? 'عضو منذ: ' : 'Member since: '} {new Date(clientUser.verifiedAt).toLocaleDateString(isAr ? 'ar-EG' : 'en-US')}</span>
+                    <span>{isAr ? 'عضو منذ: ' : 'Member since: '} {new Date(clientUser.verifiedAt).toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US')}</span>
                   </span>
                 )}
               </div>

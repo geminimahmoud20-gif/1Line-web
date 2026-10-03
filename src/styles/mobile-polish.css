@@ -156,3 +156,82 @@ html .footer-crm-lock::after {
 /* Financing results panel is dark in both themes: its gold figures need the light gold */
 html .calc-results-column .calc-breakdown-glass-row .text-gold { color: #E9D29A !important; }
 html .calc-results-column .total-highlight-row .glass-row-val { color: #6EE7B7 !important; }
+
+/* ── 6. One typeface everywhere ─────────────────────────────────────────────
+   Only IBM Plex Sans Arabic is loaded (index.html). Rules naming Outfit, Playfair, Montserrat,
+   Cairo or monospace fell back to whatever the phone has, so the logo, prices, codes and phone
+   numbers each looked different. They all use the site font now, with even-width digits where
+   numbers line up. Weights above 700 don't exist in the font: no faux-bold smearing. */
+html {
+  --font-ar: 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, system-ui, sans-serif;
+  --font-en: var(--font-ar);
+  --font-number: var(--font-ar);
+  --font-display: var(--font-ar);
+  font-synthesis-weight: none;
+}
+html body,
+html :where(button, input, select, textarea, optgroup) { font-family: var(--font-ar); }
+html .brand-title,
+html .brand-subtitle,
+html .footer-brand-name,
+html .luxury-serif-title,
+html .serial-code-text,
+html .token-text,
+html .wa-phone-v,
+html .hx-cert-sub-id,
+html .zoom-level-tag,
+html .lx-concierge-phone-num,
+html .standard-num-badge { font-family: var(--font-ar) !important; }
+html :where(.serial-code-text, .token-text, .wa-phone-v, .lx-concierge-phone-num, .hx-cert-sub-id) {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* ── 7. Second phone pass ───────────────────────────────────────────────── */
+/* Footer had its own "back to top" next to the floating one: keep the floating button only */
+html .footer-scroll-top-btn { display: none; }
+
+/* Property cards in narrow columns: the spec icons pushed "60 م²" into "60…" */
+@media (max-width: 480px) {
+  html .pcx-spec { grid-template-columns: 1fr; padding-inline: 6px; }
+  html .pcx-spec svg { display: none; }
+}
+/* Card titles are links: some page styles painted them gold. Same ink everywhere. */
+html .pcx-title a:not(:hover) { color: var(--pcx-ink); }
+
+/* Projects: the 1 LINE mark sat on top of the developer name — move it to the free corner */
+html .project-card-media-wrap .brand-watermark-overlay {
+  top: 14px;
+  left: 14px;
+  bottom: auto;
+  right: auto;
+}
+
+/* Calculators: label and value were touching ("رأس المال المستثمر5,000,000") */
+html .form-group-flex .flex-between { gap: 10px; flex-wrap: wrap; }
+/* Slider end labels never wrap into each other */
+html .calc-range-limits-ltr { gap: 8px; }
+/* Each label keeps its own reading order: "500 ألف", not "ألف 500", inside the left-to-right row */
+html .calc-range-limits-ltr > span { white-space: nowrap; unicode-bidi: isolate; }
+html[dir="rtl"] .calc-range-limits-ltr > span,
+html [dir="rtl"] .calc-range-limits-ltr > span { direction: rtl; }
+/* "ج.م / شهر" under the big monthly figure is a unit, not a second figure */
+html .result-primary-number .curr { font-size: 0.42em; font-weight: 600; opacity: 0.85; }
+
+/* Demands portal: the add-request button that replaced the second hero */
+html .demands-add-cta { display: flex; justify-content: center; margin: 4px 0 24px; }
+html .demands-add-cta .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 26px; border-radius: 12px; font-weight: 800; }
+
+@media (max-width: 480px) {
+  /* Demand card buttons: full width, one per row, label never cut */
+  html .demand-action-buttons { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  html .demand-action-buttons > button { width: 100%; justify-content: center; white-space: normal; min-height: 44px; }
+  /* Account activation button: long Arabic label wraps instead of spilling out of a fixed 48px */
+  html .btn-activate-account-cta { height: auto; min-height: 48px; padding: 12px 18px; width: 100%; justify-content: center; text-align: center; white-space: normal; line-height: 1.5; }
+  /* Trade-in banner: text takes the row beside the icon, the link goes under it */
+  html .xs-trade-banner-text { flex: 1 1 calc(100% - 70px); min-width: 0; }
+  html .xs-trade-banner-cta { flex-basis: 100%; text-align: end; }
+  /* Form selects fill their column */
+  html .portal-content-wrapper select,
+  html .wizard-container select { width: 100%; max-width: 100%; }
+}

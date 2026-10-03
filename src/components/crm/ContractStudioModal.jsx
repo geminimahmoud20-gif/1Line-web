@@ -113,8 +113,8 @@ export default function ContractStudioModal({
     `تم إصدار استمارة وعقد حجز وحدتكم العقارية وسند الاستلام المبدئي:\n` +
     `• الوحدة: ${formData.propertyTitle}\n` +
     `• الموقع: ${formData.propertyLocation}\n` +
-    `• إجمالي الثمن: ${formData.propertyPrice.toLocaleString()} ج.م\n` +
-    `• مبلغ جدية الحجز المؤكد: ${formData.depositAmount.toLocaleString()} ج.م (${formData.paymentMethod})\n` +
+    `• إجمالي الثمن: ${formData.propertyPrice.toLocaleString('en-US')} ج.م\n` +
+    `• مبلغ جدية الحجز المؤكد: ${formData.depositAmount.toLocaleString('en-US')} ج.م (${formData.paymentMethod})\n` +
     `• الرقم المرجعي: ${formData.transactionRef}\n` +
     `📞 للاستفسار والتواصل مع الإدارة القانونية: +20 122 322 2956`
   );
@@ -167,7 +167,7 @@ export default function ContractStudioModal({
               >
                 <option value="">{isAr ? '-- اختر عقار من الكتالوج --' : '-- Choose Property --'}</option>
                 {properties.map((p) => (
-                  <option key={p.id} value={p.id}>{isAr ? p.title_ar : p.title_en} ({p.price.toLocaleString()} ج.م)</option>
+                  <option key={p.id} value={p.id}>{isAr ? p.title_ar : p.title_en} ({p.price.toLocaleString('en-US')} ج.م)</option>
                 ))}
               </select>
             </div>

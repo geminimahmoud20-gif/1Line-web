@@ -42,7 +42,7 @@ export default function PrivateOfficePage({ lang = 'ar' }) {
       </div>
 
       {/* Main Dedicated Private Office Showcase */}
-      <PrivateOfficeSection lang={lang} />
+      <PrivateOfficeSection lang={lang} asPage />
 
       {/* Deep-Dive Off-Market Categories & Protocols */}
       <div className="private-office-details-container" style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 20px 80px' }}>

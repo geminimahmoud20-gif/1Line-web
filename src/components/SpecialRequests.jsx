@@ -131,7 +131,7 @@ export const SpecialRequests = ({
       type: 'special_request',
       status: 'pending',
       createdAt: new Date().toISOString(),
-      timestamp: new Date().toLocaleDateString(isAr ? 'ar-EG' : 'en-US')
+      timestamp: new Date().toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US')
     };
 
     try {

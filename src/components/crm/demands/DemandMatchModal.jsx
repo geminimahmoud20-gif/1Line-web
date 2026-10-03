@@ -54,7 +54,7 @@ export default function DemandMatchModal({
           </p>
           <div style={{ display: 'flex', gap: '14px', marginTop: '8px', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
             <span>📍 {isAr ? (matchModalDemand.area_ar || matchModalDemand.area) : matchModalDemand.area}</span>
-            <span>💰 {(typeof matchModalDemand.budget === 'number' ? matchModalDemand.budget : parseInt(String(matchModalDemand.budget).replace(/,/g, '')) || 0).toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</span>
+            <span>💰 {(typeof matchModalDemand.budget === 'number' ? matchModalDemand.budget : parseInt(String(matchModalDemand.budget).replace(/,/g, '')) || 0).toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}</span>
           </div>
         </div>
 
@@ -75,7 +75,7 @@ export default function DemandMatchModal({
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '14px' }}>
             {getMatchingProperties(matchModalDemand).map((p) => {
               const siteOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://1linesohag.com';
-              const shareText = `أهلاً بك أستاذ ${matchModalDemand.clientName || 'العميل'}، بخصوص طلبك العقاري في منصة 1Line: يسعدنا ترشيح هذا العقار المطابق لطلبك تماماً:\n"${p.title_ar || p.title}"\nالسعر: ${p.price.toLocaleString()} ج.م في ${p.locationName_ar || p.areaKey}\nالمعاينة والتفاصيل: ${siteOrigin}/properties/${p.id}`;
+              const shareText = `أهلاً بك أستاذ ${matchModalDemand.clientName || 'العميل'}، بخصوص طلبك العقاري في منصة 1Line: يسعدنا ترشيح هذا العقار المطابق لطلبك تماماً:\n"${p.title_ar || p.title}"\nالسعر: ${p.price.toLocaleString('en-US')} ج.م في ${p.locationName_ar || p.areaKey}\nالمعاينة والتفاصيل: ${siteOrigin}/properties/${p.id}`;
               const cleanPhone = matchModalDemand.phone ? matchModalDemand.phone.replace(/[^0-9]/g, '') : '';
 
               return (
@@ -98,7 +98,7 @@ export default function DemandMatchModal({
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                     <span style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(15,23,42,0.85)', color: 'var(--crm-accent-text)', fontSize: 'var(--crm-text-xs)', padding: '2px 8px', borderRadius: '8px', fontWeight: 'bold' }}>
-                      {p.price.toLocaleString()} ج.م
+                      {p.price.toLocaleString('en-US')} ج.م
                     </span>
                   </div>
 

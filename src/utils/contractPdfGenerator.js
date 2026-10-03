@@ -19,7 +19,7 @@ export const generateReservationContractPdf = async (contractData) => {
     depositAmount = 50000,
     paymentMethod = 'تحويل بنكي / إنستاباي (InstaPay)',
     transactionRef = `REF-OL-${Math.floor(100000 + Math.random() * 900000)}`,
-    contractDate = new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })
+    contractDate = new Date().toLocaleDateString('ar-EG-u-nu-latn', { year: 'numeric', month: 'long', day: 'numeric' })
   } = contractData;
 
   const propertyTitle = property.title_ar || property.title_en || 'وحدة سكنية فاخرة';

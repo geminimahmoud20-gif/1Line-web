@@ -195,9 +195,9 @@ export default function MortgageRoiCalculator({
                 }}
               />
               <div className="calc-range-limits-ltr">
-                <span>{isAr ? '500 ألف ج.م' : '500K'}</span>
+                <span>{isAr ? '500 ألف' : '500K'}</span>
                 <span>{isAr ? '10 مليون' : '10M'}</span>
-                <span>{isAr ? '20 مليون ج.م' : '20M EGP'}</span>
+                <span>{isAr ? '20 مليون' : '20M'}</span>
               </div>
             </div>
             
@@ -274,9 +274,9 @@ export default function MortgageRoiCalculator({
                     }}
                   />
                   <div className="calc-range-limits-ltr">
-                    <span>10% ({isAr ? 'أدنى مقدم' : 'Min'})</span>
+                    <span>10%</span>
                     <span>40%</span>
-                    <span>80% ({isAr ? 'أقصى مقدم' : 'Max'})</span>
+                    <span>80%</span>
                   </div>
                 </div>
 
@@ -416,9 +416,9 @@ export default function MortgageRoiCalculator({
                     }}
                   />
                   <div className="calc-range-limits-ltr">
-                    <span>0% ({isAr ? 'بدون فوائد' : '0%'})</span>
+                    <span>0%</span>
                     <span>12%</span>
-                    <span>24% ({isAr ? 'أقصى نسبة' : '24% Max'})</span>
+                    <span>24%</span>
                   </div>
                 </div>
 
@@ -481,9 +481,9 @@ export default function MortgageRoiCalculator({
                     }}
                   />
                   <div className="calc-range-limits-ltr">
-                    <span>2,000 {isAr ? 'ج.م' : 'EGP'}</span>
+                    <span>2,000</span>
                     <span>50,000</span>
-                    <span>100,000 {isAr ? 'ج.م' : 'EGP'}</span>
+                    <span>100,000</span>
                   </div>
                 </div>
 
@@ -534,9 +534,9 @@ export default function MortgageRoiCalculator({
                     }}
                   />
                   <div className="calc-range-limits-ltr">
-                    <span>3% ({isAr ? 'متحفظ' : 'Conservative'})</span>
-                    <span>18% ({isAr ? 'متوسط سوهاج' : 'Avg'})</span>
-                    <span>35% ({isAr ? 'سوهاج الجديدة' : 'Max'})</span>
+                    <span>3%</span>
+                    <span>18%</span>
+                    <span>35%</span>
                   </div>
                 </div>
 
@@ -565,7 +565,7 @@ export default function MortgageRoiCalculator({
               <div className="result-highlight-box">
                 <span className="result-label">{isAr ? 'القسط الشهري التقديري' : 'Estimated Monthly Payment'}</span>
                 <h2 className="result-primary-number">
-                  {formatCurrency(monthlyInstallment)} <span className="curr">{isAr ? '/ شهر' : '/ mo'}</span>
+                  {formatCurrencyPrice(monthlyInstallment, 'EGP', lang).primary} <span className="curr">{formatCurrencyPrice(monthlyInstallment, 'EGP', lang).symbol} {isAr ? '/ شهر' : '/ mo'}</span>
                 </h2>
                 {currency !== 'EGP' && (
                   <div style={{ fontSize: '0.74rem', color: 'var(--crm-faint)', marginTop: '4px' }}>

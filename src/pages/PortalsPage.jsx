@@ -91,7 +91,7 @@ export default function PortalsPage({
       case 'demands':
         return {
           badge: isAr ? 'طلبات المشترين' : 'Live Real Estate Market Demands',
-          title: isAr ? 'طلبات حقيقية لمشترين يبحثون عن عقارات الآن' : 'Active Buyer Requests Looking for Sellers',
+          title: isAr ? 'طلبات المشترين: عندك عقار يطابق طلب؟' : 'Buyer requests: have a matching property?',
           subtitle: isAr ? 'إن كان لديك عقار يطابق أحد هذه الطلبات، اعرضه ليصل مباشرة للمشتري.' : 'Browse active cash buyers and match your property for fast closing.'
         };
       case 'referral':

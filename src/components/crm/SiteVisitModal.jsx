@@ -135,7 +135,7 @@ export default function SiteVisitModal({
               >
                 {properties.map(p => (
                   <option key={p.id} value={p.id}>
-                    {isAr ? p.title_ar : p.title_en} — {p.price?.toLocaleString()} ج.م ({p.areaKey})
+                    {isAr ? p.title_ar : p.title_en} — {p.price?.toLocaleString('en-US')} ج.م ({p.areaKey})
                   </option>
                 ))}
               </select>

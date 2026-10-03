@@ -2,8 +2,10 @@
 import { ShieldCheck, Lock, EyeOff, Award, MessageSquare } from 'lucide-react';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 
-export default function PrivateOfficeSection({ lang = 'ar' }) {
+export default function PrivateOfficeSection({ lang = 'ar', asPage = false }) {
   const isAr = lang === 'ar';
+  // On /off-market this is the page's main heading
+  const Title = asPage ? 'h1' : 'h2';
 
   const handleConfidentialInquiry = () => {
     const text = isAr
@@ -32,7 +34,7 @@ export default function PrivateOfficeSection({ lang = 'ar' }) {
             <span>{isAr ? '1Line Private Office • صفقات كبار المستثمرين' : '1Line Private Office • Confidential Acquisitions'}</span>
           </div>
 
-          <h2 className="private-office-title luxury-serif-title">
+          <Title className="private-office-title luxury-serif-title">
             {isAr ? (
               <>
                 <span>المكتب الخاص: صفقات خاصة وحصرية</span>{' '}
@@ -43,7 +45,7 @@ export default function PrivateOfficeSection({ lang = 'ar' }) {
             ) : (
               'Discreet Off-Market Portfolio for Ultra-High-Net-Worth'
             )}
-          </h2>
+          </Title>
 
           <p className="private-office-desc">
             {isAr
@@ -70,11 +72,11 @@ export default function PrivateOfficeSection({ lang = 'ar' }) {
             <div className="pillar-icon-box">
               <ShieldCheck size={22} className="text-emerald" />
             </div>
-            <h3>{isAr ? 'تدقيق قانوني وهندسي مسبق 100%' : '100% Pre-Audited Legal Deeds'}</h3>
+            <h3>{isAr ? 'تدقيق قانوني وهندسي قبل العرض' : 'Legal & engineering review first'}</h3>
             <p>
               {isAr
                 ? 'كافة الصفقات الحصرية خضعت لفحص شامل لسندات الملكية، التراخيص، وخلو النزاعات من الإدارة القانونية قبل عرضها.'
-                : 'Zero legal ambiguity. Every off-market asset has been vetted by senior real estate attorneys.'}
+                : 'Every off-market asset goes through a title, permit and dispute check before it is shared.'}
             </p>
           </div>
 

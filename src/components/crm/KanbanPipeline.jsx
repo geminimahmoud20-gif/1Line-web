@@ -549,7 +549,7 @@ export default function KanbanPipeline({
                           <p className="kb-flag kb-flag--danger"><AlertTriangle size={13} aria-hidden="true" />{isAr ? 'متأخر عن الاتصال أكثر من 24 ساعة' : 'Not contacted for 24h+'}</p>
                         )}
                         {lead.nextFollowUpAt && (
-                          <p className="kb-flag"><Calendar size={13} aria-hidden="true" />{isAr ? 'متابعة:' : 'Follow-up:'} {new Date(lead.nextFollowUpAt).toLocaleString(isAr ? 'ar-EG' : 'en-US', { dateStyle: 'short', timeStyle: 'short' })}</p>
+                          <p className="kb-flag"><Calendar size={13} aria-hidden="true" />{isAr ? 'متابعة:' : 'Follow-up:'} {new Date(lead.nextFollowUpAt).toLocaleString(isAr ? 'ar-EG-u-nu-latn' : 'en-US', { dateStyle: 'short', timeStyle: 'short' })}</p>
                         )}
                         {lead.siteVisit && (
                           <p className="kb-flag"><Car size={13} aria-hidden="true" />{isAr ? 'معاينة:' : 'Visit:'} {lead.siteVisit.visitDate} ({lead.siteVisit.visitTime})</p>

@@ -470,7 +470,7 @@ export const CrmAdminPanel = ({
     const notes = lead.notes || lead.details?.notes || 'لا توجد ملاحظات إضافية';
 
     const dispatchText = isAr
-      ? `🚨 *إحالة عميل جديد - منصة 1Line العقارية*\n👤 *العميل:* ${clientName}\n📞 *الهاتف:* ${phone}\n🏢 *التصنيف:* ${type}\n📍 *المنطقة:* ${area}\n💰 *الميزانية/السعر:* ${budget}\n📝 *الملاحظات:* ${notes}\n📅 *الوقت:* ${new Date().toLocaleDateString('ar-EG')}\n⚡ *الإجراء المطلوب:* يرجى سرعة التواصل والمتابعة فوراً.`
+      ? `🚨 *إحالة عميل جديد - منصة 1Line العقارية*\n👤 *العميل:* ${clientName}\n📞 *الهاتف:* ${phone}\n🏢 *التصنيف:* ${type}\n📍 *المنطقة:* ${area}\n💰 *الميزانية/السعر:* ${budget}\n📝 *الملاحظات:* ${notes}\n📅 *الوقت:* ${new Date().toLocaleDateString('ar-EG-u-nu-latn')}\n⚡ *الإجراء المطلوب:* يرجى سرعة التواصل والمتابعة فوراً.`
       : `🚨 *New 1Line Lead Dispatch*\n👤 *Client:* ${clientName}\n📞 *Phone:* ${phone}\n🏢 *Type:* ${type}\n📍 *Area:* ${area}\n💰 *Budget:* ${budget}\n📝 *Notes:* ${notes}`;
 
     window.open(`https://wa.me/?text=${encodeURIComponent(dispatchText)}`, '_blank');
@@ -727,7 +727,7 @@ export const CrmAdminPanel = ({
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                       <strong style={{ color: 'var(--crm-positive)' }}>{log.action}</strong>
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
-                        {new Date(log.timestamp).toLocaleTimeString(isAr ? 'ar-EG' : 'en-US')} - {new Date(log.timestamp).toLocaleDateString(isAr ? 'ar-EG' : 'en-US')}
+                        {new Date(log.timestamp).toLocaleTimeString(isAr ? 'ar-EG-u-nu-latn' : 'en-US')} - {new Date(log.timestamp).toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US')}
                       </span>
                     </div>
                   </div>

@@ -146,7 +146,7 @@ export default function AgentCommissionLeaderboard({
             <Award size={22} />
           </div>
           <div className="crm-stat-info">
-            <span className="crm-stat-num">{totalCompanyCommission.toLocaleString()}</span>
+            <span className="crm-stat-num">{totalCompanyCommission.toLocaleString('en-US')}</span>
             <span className="crm-stat-lbl">{isAr ? 'إجمالي العمولات المستحقة (ج.م)' : 'Total Commissions (EGP)'}</span>
           </div>
         </div>
@@ -232,7 +232,7 @@ export default function AgentCommissionLeaderboard({
                     {isAr ? 'العمولة المستحقة (' + commissionRate + '%):' : 'Earned Commission:'}
                   </span>
                   <strong style={{ fontSize: 'var(--crm-text-lg)', color: 'var(--crm-accent-text)' }}>
-                    {agent.earnedCommission.toLocaleString()} ج.م
+                    {agent.earnedCommission.toLocaleString('en-US')} ج.م
                   </strong>
                 </div>
               </div>

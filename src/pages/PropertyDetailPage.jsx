@@ -177,7 +177,7 @@ export default function PropertyDetailPage({
   // Running limited-time offer (CRM → العقارات → العرض); samples never carry one
   const offer = property.isDemo ? null : getActiveOffer(property);
   const offerPriceData = offer ? formatCurrencyPrice(offer.price, currency, lang) : null;
-  const offerEndDay = offer ? new Date(offer.endsAt).toLocaleDateString(isAr ? 'ar-EG' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) : '';
+  const offerEndDay = offer ? new Date(offer.endsAt).toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) : '';
   const offerTerms = offer ? (isAr ? offer.terms_ar : (offer.terms_en || offer.terms_ar)) : '';
   const waText = offer
     ? `مرحباً 1Line، أريد الاستفادة من عرض الكاش على كود العقار: ${property.id.toUpperCase()} (${title}) بسعر ${offer.price.toLocaleString('en-US')} ج.م`

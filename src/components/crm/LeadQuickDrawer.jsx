@@ -85,7 +85,7 @@ export default function LeadQuickDrawer({
   const handleUpdateStatus = (newStatus) => {
     if (!onUpdateLead) return;
     const stageObj = stages.find(s => s.id === newStatus);
-    const timeStr = new Date().toLocaleTimeString(isAr ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' });
+    const timeStr = new Date().toLocaleTimeString(isAr ? 'ar-EG-u-nu-latn' : 'en-US', { hour: '2-digit', minute: '2-digit' });
     const noteEntry = `[${timeStr}] تم تحديث المرحلة إلى: "${isAr ? stageObj?.label_ar : stageObj?.label_en}"`;
     const updatedNotes = lead.notes ? `${noteEntry}\n${lead.notes}` : noteEntry;
 
@@ -101,8 +101,8 @@ export default function LeadQuickDrawer({
   // Quick Call Outcome Logger
   const handleLogCall = (outcome) => {
     if (!onUpdateLead) return;
-    const dateStr = new Date().toLocaleDateString(isAr ? 'ar-EG' : 'en-US');
-    const timeStr = new Date().toLocaleTimeString(isAr ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' });
+    const dateStr = new Date().toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US');
+    const timeStr = new Date().toLocaleTimeString(isAr ? 'ar-EG-u-nu-latn' : 'en-US', { hour: '2-digit', minute: '2-digit' });
     const callEntry = `📞 [اتصال هاتف ${dateStr} ${timeStr}]: ${outcome}`;
     const updatedNotes = lead.notes ? `${callEntry}\n${lead.notes}` : callEntry;
 
@@ -123,8 +123,8 @@ export default function LeadQuickDrawer({
   const handleAddNote = (e) => {
     e.preventDefault();
     if (!newNote.trim() || !onUpdateLead) return;
-    const dateStr = new Date().toLocaleDateString(isAr ? 'ar-EG' : 'en-US');
-    const timeStr = new Date().toLocaleTimeString(isAr ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' });
+    const dateStr = new Date().toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US');
+    const timeStr = new Date().toLocaleTimeString(isAr ? 'ar-EG-u-nu-latn' : 'en-US', { hour: '2-digit', minute: '2-digit' });
     const noteEntry = `📝 [ملاحظة ${dateStr} ${timeStr}]: ${newNote.trim()}`;
     const updatedNotes = lead.notes ? `${noteEntry}\n${lead.notes}` : noteEntry;
 
@@ -145,7 +145,7 @@ export default function LeadQuickDrawer({
       return;
     }
     const matchedProp = properties.find(p => p.id === selectedViewingPropId);
-    const dateFormatted = new Date(viewingDateTime).toLocaleString(isAr ? 'ar-EG' : 'en-US');
+    const dateFormatted = new Date(viewingDateTime).toLocaleString(isAr ? 'ar-EG-u-nu-latn' : 'en-US');
     const viewingEntry = `📍 [معاينة مجدولة ${dateFormatted}]: عقار ${matchedProp?.id} — ${matchedProp?.title_ar || matchedProp?.title_en}`;
     const updatedNotes = lead.notes ? `${viewingEntry}\n${lead.notes}` : viewingEntry;
 

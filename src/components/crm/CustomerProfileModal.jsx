@@ -597,7 +597,7 @@ export default function CustomerProfileModal({
                       </div>
 
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)', whiteSpace: 'nowrap' }}>
-                        {new Date(evt.timestamp).toLocaleTimeString(isAr ? 'ar-EG' : 'en-US')}
+                        {new Date(evt.timestamp).toLocaleTimeString(isAr ? 'ar-EG-u-nu-latn' : 'en-US')}
                       </span>
                     </div>
                   );
@@ -633,7 +633,7 @@ export default function CustomerProfileModal({
                         {isAr ? prop.title_ar : prop.title_en}
                       </strong>
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', fontWeight: 'bold' }}>
-                        💰 {prop.price?.toLocaleString()} ج.م • {prop.size} م²
+                        💰 {prop.price?.toLocaleString('en-US')} ج.م • {prop.size} م²
                       </span>
                     </div>
 
@@ -641,7 +641,7 @@ export default function CustomerProfileModal({
                       type="button"
                       className="btn btn-sm btn-primary"
                       onClick={() => {
-                        const waText = `أهلاً أ. ${formData.name}، بخصوص طلبك العقاري، نود ترشيح وحدة ${isAr ? prop.title_ar : prop.title_en} بسعر ${prop.price?.toLocaleString()} ج.م. هل نحدد موعداً للمعاينة؟`;
+                        const waText = `أهلاً أ. ${formData.name}، بخصوص طلبك العقاري، نود ترشيح وحدة ${isAr ? prop.title_ar : prop.title_en} بسعر ${prop.price?.toLocaleString('en-US')} ج.م. هل نحدد موعداً للمعاينة؟`;
                         window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(waText)}`, '_blank', 'noopener,noreferrer');
                       }}
                       style={{ padding: '6px 10px', fontSize: 'var(--crm-text-xs)', background: 'var(--crm-brand-navy)', color: 'var(--crm-on-dark)', borderRadius: '6px' }}
@@ -724,7 +724,7 @@ export default function CustomerProfileModal({
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                         <strong style={{ color: 'var(--crm-ink)' }}>{log.action}</strong>
                         <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
-                          {new Date(log.timestamp).toLocaleTimeString(isAr ? 'ar-EG' : 'en-US')} - {new Date(log.timestamp).toLocaleDateString(isAr ? 'ar-EG' : 'en-US')}
+                          {new Date(log.timestamp).toLocaleTimeString(isAr ? 'ar-EG-u-nu-latn' : 'en-US')} - {new Date(log.timestamp).toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US')}
                         </span>
                       </div>
                       {log.agent && (

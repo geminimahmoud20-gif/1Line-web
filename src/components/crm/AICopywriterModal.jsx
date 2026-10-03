@@ -21,9 +21,9 @@ export default function AICopywriterModal({
 
   const propTitle = isAr ? selectedProp.title_ar : selectedProp.title_en;
   const propLocation = isAr ? selectedProp.locationName_ar : selectedProp.locationName_en;
-  const propPrice = selectedProp.price ? selectedProp.price.toLocaleString() + ' ج.م' : 'سعر مميز';
-  const propDownPayment = selectedProp.downPayment ? selectedProp.downPayment.toLocaleString() + ' ج.م' : 'مقدم ميسر';
-  const propInstallment = selectedProp.monthlyInstallment ? selectedProp.monthlyInstallment.toLocaleString() + ' ج.م' : 'أقساط مرنة';
+  const propPrice = selectedProp.price ? selectedProp.price.toLocaleString('en-US') + ' ج.م' : 'سعر مميز';
+  const propDownPayment = selectedProp.downPayment ? selectedProp.downPayment.toLocaleString('en-US') + ' ج.م' : 'مقدم ميسر';
+  const propInstallment = selectedProp.monthlyInstallment ? selectedProp.monthlyInstallment.toLocaleString('en-US') + ' ج.م' : 'أقساط مرنة';
   const propSize = selectedProp.size || '—';
   const propRooms = selectedProp.bedrooms || 0;
 
@@ -228,7 +228,7 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
               >
                 {properties.map(p => (
                   <option key={p.id} value={p.id}>
-                    {isAr ? p.title_ar : p.title_en} ({p.price?.toLocaleString()} ج.م)
+                    {isAr ? p.title_ar : p.title_en} ({p.price?.toLocaleString('en-US')} ج.م)
                   </option>
                 ))}
               </select>

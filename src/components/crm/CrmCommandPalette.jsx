@@ -143,8 +143,8 @@ export default function CrmCommandPalette({
         id: `prop_${p.id}`,
         title_ar: `${String(p.id).toUpperCase()} — ${p.title_ar}`,
         title_en: `${String(p.id).toUpperCase()} — ${p.title_en || p.title_ar}`,
-        sub_ar: `${p.price?.toLocaleString()} ج.م • ${p.locationName_ar || p.areaKey}`,
-        sub_en: `${p.price?.toLocaleString()} EGP • ${p.locationName_ar || p.areaKey}`,
+        sub_ar: `${p.price?.toLocaleString('en-US')} ج.م • ${p.locationName_ar || p.areaKey}`,
+        sub_en: `${p.price?.toLocaleString('en-US')} EGP • ${p.locationName_ar || p.areaKey}`,
         category: 'properties',
         data: p,
         action: () => onSelectProperty?.(p)

@@ -60,8 +60,8 @@ export default function PropertyTableRow({
 
       <td>
         <div className="table-cell-multi">
-          <strong className="text-primary">{prop.price?.toLocaleString()} ج.م</strong>
-          <span className="text-muted">مقدم: {prop.downPayment?.toLocaleString()} ج.م</span>
+          <strong className="text-primary">{prop.price?.toLocaleString('en-US')} ج.م</strong>
+          <span className="text-muted">مقدم: {prop.downPayment?.toLocaleString('en-US')} ج.م</span>
         </div>
       </td>
 

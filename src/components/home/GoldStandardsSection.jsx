@@ -148,7 +148,7 @@ function OffMarketArt({ isAr }) {
       <div className="hx-radar-footer">
         <div className="hx-radar-live-count">
           <span className="hx-pulse-dot-radar" />
-          <span>{isAr ? '+48 مستثمر كاش معتمد' : '+48 Vetted Cash Buyers'}</span>
+          <span>{isAr ? 'مشترون كاش موثّقون' : 'Vetted cash buyers'}</span>
         </div>
         <span className="hx-radar-confidential-pill">
           {isAr ? 'بدون نشر علني • سرية تامة' : '100% Confidential Off-Market'}

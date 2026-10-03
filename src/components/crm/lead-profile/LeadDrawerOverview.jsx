@@ -164,7 +164,7 @@ export default function LeadDrawerOverview({
                 <option value="">{isAr ? '-- اختر العقار من المحفظة --' : '-- Choose Property --'}</option>
                 {properties.map(p => (
                   <option key={p.id} value={p.id}>
-                    {p.id.toUpperCase()} — {p.title_ar || p.title_en} ({p.price?.toLocaleString()} ج.م)
+                    {p.id.toUpperCase()} — {p.title_ar || p.title_en} ({p.price?.toLocaleString('en-US')} ج.م)
                   </option>
                 ))}
               </select>
