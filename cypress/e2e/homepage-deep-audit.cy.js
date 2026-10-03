@@ -65,7 +65,11 @@ describe('Homepage Exhaustive Deep Audit', () => {
     cy.get('.hx-seg-btn').first().should('have.attr', 'aria-selected', 'true');
     cy.get('.properties-grid-4').should('exist');
     cy.get('.hx-seg-btn').eq(1).click();
-    cy.get('.demands-metrics-strip').should('be.visible');
+    // Metrics show once real demands are published; until then an invitation replaces the zeros
+    cy.get('.demands-metrics-strip, .demands-empty-invite').should('be.visible');
+    cy.get('.demands-grid-compact .demand-card-box').should('have.length.at.least', 1);
+    // Sample cards never carry "urgent"/"serious buyer" badges
+    cy.get('.demand-card-box.is-sample .urgency-badge').should('not.exist');
     cy.get('.hx-seg-btn').first().click();
     cy.get('.properties-grid-4').should('be.visible');
   });
