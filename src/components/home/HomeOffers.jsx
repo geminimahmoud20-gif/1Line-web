@@ -29,8 +29,8 @@ export default function HomeOffers({ properties = [], lang = 'ar', currency }) {
         </h2>
         <p className="gx-sub">
           {isAr
-            ? 'أسعار تفضيلية للسداد الكاش على وحدات منتقاة، سارية لمدة محدودة. اطّلع على تفاصيل كل عرض قبل انتهاء مدته.'
-            : 'Preferential cash prices on selected units, valid for a limited period. Review each offer before it ends.'}
+            ? 'خصم مباشر على سعر وحدات منتقاة للبيع كاش، ساري لمدة محدودة. اطّلع على تفاصيل كل عرض قبل انتهاء مدته.'
+            : 'A direct discount on the cash price of selected units, valid for a limited period. Review each offer before it ends.'}
         </p>
       </div>
       <div className={`gx-grid ${offers.length === 1 ? 'gx-grid--one' : ''}`}>

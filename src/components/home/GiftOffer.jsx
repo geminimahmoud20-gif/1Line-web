@@ -64,7 +64,7 @@ function RevealSaving({ amount, isAr }) {
     <div className="gx-win" role="note">
       <Sparkles size={18} aria-hidden="true" className="gx-win-icon" />
       <span className="gx-win-text">
-        <small>{isAr ? 'قيمة الخصم عند السداد الكاش' : 'Discount for cash payment'}</small>
+        <small>{isAr ? 'قيمة الخصم المباشر على السعر' : 'Direct discount on the price'}</small>
         <b><bdi>{v.toLocaleString('en-US')}</bdi> {isAr ? 'ج.م' : 'EGP'}</b>
       </span>
     </div>
@@ -118,7 +118,7 @@ export default function GiftOffer({ property, offer, lang = 'ar', currency, inde
               <span className={`gx-tag ${badge.hot ? 'is-hot' : ''}`}>
                 {badge.hot && <Flame size={13} aria-hidden="true" />}{badge.text}
               </span>
-              <span className="gx-save-kicker">{isAr ? 'خصم السداد الكاش' : 'Cash payment discount'}</span>
+              <span className="gx-save-kicker">{isAr ? 'خصم مباشر' : 'Direct discount'}</span>
               <span className="gx-save">
                 <b><bdi>{head.value}</bdi></b>
                 <small>{head.unit}</small>
@@ -145,7 +145,7 @@ export default function GiftOffer({ property, offer, lang = 'ar', currency, inde
             {location && <p className="gx-loc"><MapPin size={13} aria-hidden="true" />{location}</p>}
             <RevealSaving amount={offer.savings} isAr={isAr} />
             <div className="gx-prices">
-              <span className="gx-price-label">{isAr ? 'السعر بعد الخصم (كاش)' : 'Price after discount (cash)'}</span>
+              <span className="gx-price-label">{isAr ? 'سعر الوحدة بعد الخصم (كاش)' : 'Unit price after discount (cash)'}</span>
               <strong>{now.primary} <small>{now.symbol}</small></strong>
               <span className="gx-was">{isAr ? 'بدلاً من' : 'instead of'} <del>{was.primary} {was.symbol}</del></span>
             </div>
