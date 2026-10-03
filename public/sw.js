@@ -2,7 +2,7 @@
 //  1LINE SOLUTIONS SOHAG - SERVICE WORKER (PWA & OFFLINE RESILIENCE)
 // =============================================================
 
-const CACHE_NAME = 'oneline-sohag-v12';
+const CACHE_NAME = 'oneline-sohag-v13';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
@@ -42,6 +42,9 @@ self.addEventListener('fetch', (event) => {
   // never cached below anyway (type !== 'basic'), and proxying them through the worker would put
   // them under the worker's own fetch policy instead of the page's.
   if (url.origin !== self.location.origin) return;
+
+  // Server functions answer live, per-user data (team list, exchange rates…): never cache them
+  if (url.pathname.startsWith('/api/')) return;
 
   // Network-first strategy for navigation (HTML pages) to ensure instant updates
   if (event.request.mode === 'navigate') {

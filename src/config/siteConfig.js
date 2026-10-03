@@ -32,10 +32,10 @@ export const CONTACT = {
 };
 
 export const SERVICE_AREAS = {
-  sohag_ar: ['شرق سوهاج', 'غرب سوهاج', 'سوهاج الجديدة', 'كورنيش النيل', 'حي الكوثر', 'أخميم', 'طهطا', 'جرجا'],
-  cairo_ar: ['القاهرة الجديدة والتجمع', 'الشيخ زايد', 'السادس من أكتوبر', 'العاصمة الإدارية'],
-  sohag_en: ['East Sohag', 'West Sohag', 'New Sohag', 'Nile Corniche', 'El Kawthar', 'Akhmim', 'Tahta', 'Girga'],
-  cairo_en: ['New Cairo', 'Sheikh Zayed', '6th of October', 'New Administrative Capital'],
+  sohag_ar: ['شرق سوهاج', 'غرب سوهاج', 'سوهاج الجديدة', 'كورنيش النيل', 'مراكز سوهاج'],
+  cairo_ar: ['التجمع الخامس', 'الشيخ زايد', 'أكتوبر الجديدة'],
+  sohag_en: ['East Sohag', 'West Sohag', 'New Sohag', 'Nile Corniche', 'Sohag districts'],
+  cairo_en: ['Fifth Settlement', 'Sheikh Zayed', 'New October'],
 };
 
 /**

@@ -343,7 +343,7 @@ export default function QuickViewModal({
                 <span className="xs-remote-cta-icon"><Video size={18} aria-hidden="true" /></span>
                 <span className="xs-remote-cta-text">
                   <strong>{isAr ? 'طلب معاينة الغربة' : 'Book a remote inspection'}</strong>
-                  <small>{isAr ? 'فيديو حي / شارع وجيران / درون جوي' : 'Live video · street · drone'}</small>
+                  <small>{isAr ? 'فيديو حي / شارع وجيران' : 'Live video · street'}</small>
                 </span>
               </button>
 

@@ -328,7 +328,7 @@ export default function PropertyCard({
               type="button"
               className="pcx-chip pcx-chip--remote"
               onClick={(e) => { stop(e); openRemoteInspection(property); }}
-              title={isAr ? 'طلب معاينة الغربة: فيديو حي أو جولة درون' : 'Remote inspection: live video or drone tour'}
+              title={isAr ? 'طلب معاينة الغربة: فيديو حي أو لقطات الشارع' : 'Remote inspection: live video or street footage'}
             >
               <Video size={12} strokeWidth={2} aria-hidden="true" />
               <span>{isAr ? 'معاينة الغربة' : 'Remote tour'}</span>

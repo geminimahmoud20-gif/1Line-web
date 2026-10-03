@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { X, Video, Plane, Footprints, CalendarDays, Clock, ShieldCheck, CheckCircle2, MessageCircle, Globe2, Crown } from 'lucide-react';
+import { X, Video, Footprints, CalendarDays, Clock, ShieldCheck, CheckCircle2, MessageCircle, Globe2, Crown } from 'lucide-react';
 import { submitIntakeRecord } from '../../firebaseLazy';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { checkFormSpamProtection } from '../../utils/securityShield';
@@ -8,8 +8,7 @@ import '../../styles/expat-suite.css';
 
 const COVERAGE = [
   { id: 'live_call', icon: Video, ar: 'مكالمة فيديو حية على واتساب', en: 'Live WhatsApp video call', desc_ar: 'تمشي مع الاستشاري جوه الوحدة وتسأل وقت ما تحب', desc_en: 'Walk the unit with the advisor and ask anything' },
-  { id: 'street', icon: Footprints, ar: 'فيديو ميداني للشارع والمداخل', en: 'Street & entrance footage', desc_ar: 'الشارع، المدخل، السلم، ومستوى الجيران والمنطقة', desc_en: 'Street, entrance, stairs and the neighbourhood' },
-  { id: 'drone', icon: Plane, ar: 'جولة درون جوية للمشروع', en: 'Aerial drone tour', desc_ar: 'لقطة جوية للموقع والمحيط — حسب توفر تصاريح التصوير', desc_en: 'Aerial view of the site — subject to filming permits' }
+  { id: 'street', icon: Footprints, ar: 'فيديو ميداني للشارع والمداخل', en: 'Street & entrance footage', desc_ar: 'الشارع، المدخل، السلم، ومستوى الجيران والمنطقة', desc_en: 'Street, entrance, stairs and the neighbourhood' }
 ];
 
 const SLOTS = [
@@ -25,7 +24,7 @@ const todayIso = () => {
 };
 
 /**
- * "معاينة الغربة": an expat books a live video / street / drone inspection of a listing.
+ * "معاينة الغربة": an expat books a live video / street footage inspection of a listing.
  * Stores the request (remote_inspections + a VIP lead in the CRM inbox) and hands the visitor
  * straight to WhatsApp with a prepared message.
  */
@@ -191,8 +190,8 @@ export default function RemoteInspectionModal({ property, isOpen, onClose, lang 
             <h2 id="xs-ri-title">{isAr ? 'معاينة الغربة' : 'Remote expat inspection'}</h2>
             <p className="xs-lede">
               {isAr
-                ? 'شوف العقار كأنك واقف قدامه: فيديو حي، ولقطات للشارع والجيران، وجولة جوية للموقع.'
-                : 'See the property as if you were there: live video, street footage and an aerial tour.'}
+                ? 'شوف العقار كأنك واقف قدامه: فيديو حي، ولقطات للشارع والجيران.'
+                : 'See the property as if you were there: live video and street footage.'}
             </p>
           </div>
         </header>
