@@ -155,6 +155,46 @@
 .pcx-chip--verified svg { color: #D9B97E; }
 .pcx-chip--deal { background: linear-gradient(100deg, #EFD9A3, #C5A059); color: #0B1B32; border-color: transparent; }
 .pcx-chip--glass { background: rgba(255, 255, 255, 0.16); }
+/* Limited-time offer (CRM → العروض) */
+.pcx-chip--offer { background: #C2410C; color: #FFF7ED; border-color: rgba(255, 237, 213, 0.55); font-weight: 800; }
+.pcx--offer { box-shadow: 0 0 0 1.5px rgba(194, 65, 12, 0.55), var(--pcx-shadow, 0 8px 24px rgba(11, 27, 50, 0.08)); }
+.pcx-price-tag {
+  align-self: center;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #9A3412;
+  background: #FFEDD5;
+}
+.pcx-offer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+  margin-top: -4px;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #475569);
+}
+.pcx-offer-was del { color: inherit; opacity: 0.85; text-decoration-thickness: 1.5px; }
+.pcx-offer-save { color: #0B7A45; font-weight: 700; }
+.pcx-offer-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #9A3412;
+  background: #FFF1E6;
+  white-space: nowrap;
+}
+.dark-theme .pcx-price-tag, :root[data-theme="dark"] .pcx-price-tag,
+.dark-theme .pcx-offer-timer, :root[data-theme="dark"] .pcx-offer-timer { color: #FDBA74; background: rgba(251, 146, 60, 0.14); }
+.dark-theme .pcx-offer-save, :root[data-theme="dark"] .pcx-offer-save { color: #4ADE80; }
+
 .pcx-chip--demo { background: rgba(91, 33, 182, 0.72); border: 1px dashed rgba(221, 214, 254, 0.8); color: #F5F3FF; }
 
 /* "معاينة الغربة" — the one interactive chip on the photo */

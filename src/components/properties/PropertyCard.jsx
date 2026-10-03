@@ -22,12 +22,15 @@ import {
   Images,
   TrendingDown,
   Wallet,
-  Video
+  Video,
+  Flame
 } from 'lucide-react';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { formatCurrencyPrice, getPriceBenchmark } from '../../utils/currencyAndBenchmark';
 import { formatApprox } from '../../utils/fxRates';
 import { useUIModal } from '../../context/UIModalContext';
+import { getActiveOffer } from '../../utils/propertyOffers';
+import OfferCountdown from './OfferCountdown';
 import '../../styles/property-card.css';
 
 const FALLBACK_PROPERTY_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 500' fill='%23071e3d'%3E%3Crect width='800' height='500' fill='%23071e3d'/%3E%3Cpath d='M400 130 L620 320 L180 320 Z' fill='%230b4ea2' opacity='0.7'/%3E%3Crect x='340' y='220' width='120' height='100' rx='20' fill='%23fdcb42' opacity='0.85'/%3E%3Ctext x='50%25' y='75%25' dominant-baseline='middle' text-anchor='middle' fill='%23ffffff' font-family='sans-serif' font-size='24' font-weight='bold'%3E1LINE REAL ESTATE%3C/text%3E%3Ctext x='50%25' y='85%25' dominant-baseline='middle' text-anchor='middle' fill='%23fdcb42' font-family='sans-serif' font-size='16'%3E%D8%B9%D9%82%D8%A7%D8%B1%D8%A7%D8%AA%20%D8%B3%D9%88%D9%87%D8%A7%D8%AC%20%D8%A7%D9%84%D9%85%D8%B9%D8%AA%D9%85%D8%AF%D8%A9%3C/text%3E%3C/svg%3E";
@@ -110,7 +113,9 @@ export default function PropertyCard({
   const imagesList = (Array.isArray(property.images) && property.images.length > 0) ? property.images : [FALLBACK_PROPERTY_IMG];
   const photoCount = imagesList.length;
   const currentSrc = imagesList[activeImageIndex] || FALLBACK_PROPERTY_IMG;
-  const priceData = formatCurrencyPrice(property.price, currency, lang);
+  // A running limited-time offer (CRM → العروض); samples never carry one
+  const offer = property.isDemo ? null : getActiveOffer(property);
+  const priceData = formatCurrencyPrice(offer ? offer.price : property.price, currency, lang);
   const benchmark = getPriceBenchmark(property, lang);
   const detailsUrl = `/properties/${property.id}`;
 
@@ -206,14 +211,18 @@ export default function PropertyCard({
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('oneline_whatsapp_clicked', { detail: { id: property.id, title, intent: 'quick_inquiry' } }));
     }
-    const msg = isAr
-      ? `مرحباً 1Line، استفسار سريع بخصوص عقار: "${title}" بسعر ${fmt(property.price)} ج.م (كود: #${property.id}). هل هو متاح للمعاينة؟`
-      : `Hello 1Line, quick inquiry about property "${title}" priced at ${fmt(property.price)} EGP (ID: #${property.id}).`;
+    const msg = offer
+      ? (isAr
+        ? `مرحباً 1Line، أريد الاستفادة من عرض الكاش على عقار: "${title}" بسعر ${fmt(offer.price)} ج.م بدلاً من ${fmt(offer.basePrice)} ج.م (كود: #${property.id}). هل هو متاح للمعاينة؟`
+        : `Hello 1Line, I'd like the cash offer on "${title}" at ${fmt(offer.price)} EGP instead of ${fmt(offer.basePrice)} EGP (ID: #${property.id}).`)
+      : (isAr
+        ? `مرحباً 1Line، استفسار سريع بخصوص عقار: "${title}" بسعر ${fmt(property.price)} ج.م (كود: #${property.id}). هل هو متاح للمعاينة؟`
+        : `Hello 1Line, quick inquiry about property "${title}" priced at ${fmt(property.price)} EGP (ID: #${property.id}).`);
     window.open(getWhatsAppUrl(msg), '_blank', 'noopener');
   };
 
   return (
-    <article className="property-card-modern pcx" data-property-id={property.id}>
+    <article className={`property-card-modern pcx${offer ? ' pcx--offer' : ''}`} data-property-id={property.id}>
       {/* ── Media ───────────────────────────────────────────── */}
       <div className="pcx-media" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         {onQuickView ? (
@@ -247,7 +256,13 @@ export default function PropertyCard({
                 {isAr ? 'مثال توضيحي' : 'Sample'}
               </span>
             )}
-            {!property.isDemo && statusBadge && (
+            {offer && (
+              <span className="pcx-chip pcx-chip--offer">
+                <Flame size={12} strokeWidth={2.25} aria-hidden="true" />
+                <span>{isAr ? offer.label.ar : offer.label.en} <bdi dir="ltr">−{offer.pct}%</bdi></span>
+              </span>
+            )}
+            {!property.isDemo && !offer && statusBadge && (
               <span className={`pcx-chip pcx-chip--${statusBadge.tone}`}>
                 <statusBadge.Icon size={12} strokeWidth={2} aria-hidden="true" />
                 <span>{statusBadge.label}</span>
@@ -347,6 +362,7 @@ export default function PropertyCard({
           <div className="pcx-price">
             <bdi className="pcx-price-val">{priceData.primary}</bdi>
             <span className="pcx-price-cur">{priceData.symbol}</span>
+            {offer && <span className="pcx-price-tag">{isAr ? 'كاش' : 'cash'}</span>}
           </div>
           {benchmark?.pricePerMeterFormatted && (
             <span className="pcx-ppm" title={benchmark.badgeLabel}>
@@ -362,7 +378,17 @@ export default function PropertyCard({
           </span>
         )}
 
-        {belowAvgPct > 0 && (
+        {offer && (
+          <div className="pcx-offer">
+            <span className="pcx-offer-was">
+              {isAr ? 'بدلاً من ' : 'was '}<del><bdi>{fmt(offer.basePrice)}</bdi></del>
+              <span className="pcx-offer-save">{isAr ? ` · وفّر ${fmt(offer.savings)} ج.م` : ` · save ${fmt(offer.savings)} EGP`}</span>
+            </span>
+            <OfferCountdown endsAt={offer.endsAt} isAr={isAr} />
+          </div>
+        )}
+
+        {!offer && belowAvgPct > 0 && (
           <span className="pcx-insight" title={isAr ? 'مقارنة استرشادية بمتوسط سعر المتر في المنطقة' : 'Indicative, vs. the district average price per m²'}>
             <TrendingDown size={13} strokeWidth={2} aria-hidden="true" />
             <span>{isAr ? `أقل ${belowAvgPct}% من متوسط المنطقة` : `${belowAvgPct}% below area average`}</span>

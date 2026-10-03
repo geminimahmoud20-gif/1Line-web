@@ -73,7 +73,7 @@
 
 /* Schedule dialog (inside the dark .crm-modal-card) */
 .hs-modal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 16px; }
-.hs-modal-head h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; font-size: 1.1rem; color: #fff; }
+.crm-modal-card.hs-modal .hs-modal-head h3, .hs-modal-head h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; font-size: 1.1rem; color: #fff; }
 .hs-modal-head small { color: #94A3B8; }
 .hs-modal .hs-icon-btn { background: transparent; border-color: rgba(255, 255, 255, 0.15); color: #CBD5E1; }
 .hs-presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
@@ -82,6 +82,7 @@
 .hs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .hs-grid label { display: flex; flex-direction: column; gap: 6px; font-size: var(--crm-text-sm); color: #CBD5E1; }
 .hs-grid label:last-child { grid-column: 1 / -1; }
+.hs-grid textarea { padding: 9px 12px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(0, 0, 0, 0.3); color: #fff; font: inherit; resize: vertical; }
 .hs-grid input { padding: 9px 12px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(0, 0, 0, 0.3); color: #fff; font: inherit; color-scheme: dark; }
 .hs-grid input:disabled { opacity: 0.4; }
 .hs-note { margin: 14px 0 0; font-size: var(--crm-text-xs); line-height: 1.7; color: #94A3B8; }

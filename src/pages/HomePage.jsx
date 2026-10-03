@@ -15,6 +15,7 @@ import { SELLER_PROOF } from '../config/siteConfig';
 import { getHomepageSlots } from '../utils/featuredSlots';
 import { useAdCampaigns, pickHeroCampaign, getInlineCampaigns } from '../utils/adCampaigns';
 import { SponsoredStrip } from '../components/home/SponsoredPlacements';
+import HomeOffers from '../components/home/HomeOffers';
 
 import HomeHero from '../components/home/HomeHero';
 import HomeMarketplace from '../components/home/HomeMarketplace';
@@ -366,6 +367,18 @@ export default function HomePage({
 
       {/* 📈 REAL-TIME SOHAG PROPTECH MARKET TICKER */}
       <MarketTickerBar lang={lang} demands={realDemands} />
+
+      {/* 🔥 Limited-time offers (CRM → العقارات → العرض); renders nothing when no offer is running */}
+      <HomeOffers
+        properties={publishedProperties}
+        lang={lang}
+        currency={currency}
+        favorites={favorites}
+        compareList={compareList}
+        onToggleFavorite={onToggleFavorite}
+        onToggleCompare={onToggleCompare}
+        onQuickView={onQuickView}
+      />
 
       {/* 🏢 2. SOHAG LIVE MARKETPLACE HUB (Consolidated Segmented Discovery) */}
       <HomeMarketplace
