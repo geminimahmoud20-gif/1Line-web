@@ -3394,3 +3394,67 @@
   .similar-properties-section .properties-grid-3::-webkit-scrollbar { display: none; }
   .similar-properties-section .properties-grid-3 > * { scroll-snap-align: start; }
 }
+
+/* ── Hero balance: key facts + offer live in the title column, so it no longer
+      leaves an empty band beside a tall price box ───────────────────────── */
+.property-detail-hero-stage .pd-quick-facts {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.property-detail-hero-stage .pd-fact {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  flex: 1 1 auto;
+  min-width: 84px;
+}
+.property-detail-hero-stage .pd-fact span {
+  font-size: 0.74rem;
+  color: rgba(226, 232, 240, 0.72);
+  font-weight: 600;
+}
+.property-detail-hero-stage .pd-fact b {
+  font-size: 1rem;
+  color: #fff;
+  font-weight: 800;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+/* Offer: one full-width strip under title + price (details left, CTA right) */
+.property-detail-hero-stage .pd-offer-strip {
+  flex: 1 1 100%;
+  margin-top: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 24px;
+  align-items: center;
+}
+.property-detail-hero-stage .pd-offer-strip > * { grid-column: 1; }
+.property-detail-hero-stage .pd-offer-strip .pd-offer-head { justify-content: flex-start; }
+.property-detail-hero-stage .pd-offer-strip .pd-offer-pct { margin-inline-start: 4px; }
+.property-detail-hero-stage .pd-offer-strip .pd-offer-cta {
+  grid-column: 2;
+  grid-row: 1 / span 6;
+  margin: 0;
+  padding: 14px 28px;
+  min-width: 220px;
+}
+@media (max-width: 700px) {
+  .property-detail-hero-stage .pd-offer-strip { display: block; }
+  .property-detail-hero-stage .pd-offer-strip .pd-offer-cta { margin-top: 12px; min-width: 0; }
+}
+@media (max-width: 600px) {
+  /* one swipeable row on phones keeps the hero short */
+  .property-detail-hero-stage .pd-quick-facts { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: -2px; padding-bottom: 2px; }
+  .property-detail-hero-stage .pd-quick-facts::-webkit-scrollbar { display: none; }
+  .property-detail-hero-stage .pd-fact { padding: 8px 10px; flex: 0 0 auto; min-width: 74px; }
+  .property-detail-hero-stage .pd-fact b { font-size: 0.9rem; }
+}

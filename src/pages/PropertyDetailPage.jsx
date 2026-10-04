@@ -186,6 +186,14 @@ export default function PropertyDetailPage({
   const licenseText = property.legalStatus
     ? (isAr ? property.legalStatus.licenseStatus_ar : (property.legalStatus.licenseStatus_en || property.legalStatus.licenseStatus_ar)) || ''
     : '';
+  const quickFacts = [
+    Number(property.size) > 0 && { k: isAr ? 'المساحة' : 'Area', v: `${Number(property.size).toLocaleString('en-US')} ${isAr ? 'م²' : 'm²'}` },
+    Number(property.bedrooms) > 0 && { k: isAr ? 'الغرف' : 'Bedrooms', v: String(property.bedrooms) },
+    Number(property.bathrooms) > 0 && { k: isAr ? 'الحمامات' : 'Baths', v: String(property.bathrooms) },
+    (property.floor === 0 || Number(property.floor) > 0) && { k: isAr ? 'الدور' : 'Floor', v: property.floor === 0 ? (isAr ? 'أرضي' : 'Ground') : String(property.floor) },
+    finishing && { k: isAr ? 'التشطيب' : 'Finishing', v: finishing },
+    property.completionStatus === 'ready' && { k: isAr ? 'الاستلام' : 'Handover', v: isAr ? 'فوري' : 'Immediate' }
+  ].filter(Boolean);
   const deliveryText = property.deliveryYear
     ? String(property.deliveryYear)
     : property.completionStatus === 'ready'
@@ -378,6 +386,15 @@ export default function PropertyDetailPage({
                   </a>
                 )}
               </div>
+
+              {/* Key facts at a glance: fills the title column next to the price box */}
+              {quickFacts.length > 0 && (
+                <ul className="pd-quick-facts" aria-label={isAr ? 'أهم المواصفات' : 'Key facts'}>
+                  {quickFacts.map((f) => (
+                    <li key={f.k} className="pd-fact"><span>{f.k}</span><b>{f.v}</b></li>
+                  ))}
+                </ul>
+              )}
             </div>
 
             <div className="detail-price-box">
@@ -404,39 +421,40 @@ export default function PropertyDetailPage({
                 </span>
               )}
 
-              {offer && (
-                <div className="pd-offer-box" role="note">
-                  <div className="pd-offer-head">
-                    <Flame size={16} aria-hidden="true" />
-                    <strong>{isAr ? 'عرض كاش لفترة محدودة' : 'Limited-time cash offer'}</strong>
-                    <bdi dir="ltr" className="pd-offer-pct">−{offer.pct}%</bdi>
-                  </div>
-                  <div className="pd-offer-price">
-                    <bdi>{offerPriceData.primary}</bdi> <span>{offerPriceData.symbol}</span>
-                    <small>{isAr ? 'للدفع كاش' : 'paid in cash'}</small>
-                  </div>
-                  <p className="pd-offer-was">
-                    {isAr ? 'بدلاً من ' : 'Instead of '}<del><bdi>{offer.basePrice.toLocaleString('en-US')}</bdi></del>{isAr ? ' ج.م' : ' EGP'}
-                    {' · '}<span className="pd-offer-save">{isAr ? `وفّر ${offer.savings.toLocaleString('en-US')} ج.م` : `Save ${offer.savings.toLocaleString('en-US')} EGP`}</span>
-                  </p>
-                  <div className="pd-offer-meta">
-                    <OfferCountdown endsAt={offer.endsAt} isAr={isAr} className="pd-offer-timer" />
-                    <span>{isAr ? `آخر يوم: ${offerEndDay}` : `Last day: ${offerEndDay}`}</span>
-                    {offer.extended && <span className="pd-offer-extended">{isAr ? 'تم تمديد العرض' : 'Offer extended'}</span>}
-                  </div>
-                  {offerTerms && <p className="pd-offer-terms"><strong>{isAr ? 'الشروط: ' : 'Terms: '}</strong>{offerTerms}</p>}
-                  <a href={getWhatsAppUrl(waText)} target="_blank" rel="noopener noreferrer" className="pd-offer-cta">
-                    {isAr ? 'احجز بسعر العرض' : 'Book at the offer price'}
-                  </a>
-                </div>
-              )}
-
               {/* 🛡️ Free viewing + written fees (1Line charges commission — never claim 0%) */}
               <div className="buyer-commission-badge">
                 <CheckCircle2 size={14} style={{ color: '#34D399', flexShrink: 0 }} />
                 <span>{isAr ? 'معاينة ميدانية مجانية للموقع • كل الأتعاب والرسوم مكتوبة قبل التعاقد' : 'Free on-site viewing • All fees in writing before contract'}</span>
               </div>
             </div>
+
+            {/* Full-width strip under both columns: a tall box in either column would leave a gap beside it */}
+            {offer && (
+              <div className="pd-offer-box pd-offer-strip" role="note">
+                <div className="pd-offer-head">
+                  <Flame size={16} aria-hidden="true" />
+                  <strong>{isAr ? 'عرض كاش لفترة محدودة' : 'Limited-time cash offer'}</strong>
+                  <bdi dir="ltr" className="pd-offer-pct">−{offer.pct}%</bdi>
+                </div>
+                <div className="pd-offer-price">
+                  <bdi>{offerPriceData.primary}</bdi> <span>{offerPriceData.symbol}</span>
+                  <small>{isAr ? 'للدفع كاش' : 'paid in cash'}</small>
+                </div>
+                <p className="pd-offer-was">
+                  {isAr ? 'بدلاً من ' : 'Instead of '}<del><bdi>{offer.basePrice.toLocaleString('en-US')}</bdi></del>{isAr ? ' ج.م' : ' EGP'}
+                  {' · '}<span className="pd-offer-save">{isAr ? `وفّر ${offer.savings.toLocaleString('en-US')} ج.م` : `Save ${offer.savings.toLocaleString('en-US')} EGP`}</span>
+                </p>
+                <div className="pd-offer-meta">
+                  <OfferCountdown endsAt={offer.endsAt} isAr={isAr} className="pd-offer-timer" />
+                  <span>{isAr ? `آخر يوم: ${offerEndDay}` : `Last day: ${offerEndDay}`}</span>
+                  {offer.extended && <span className="pd-offer-extended">{isAr ? 'تم تمديد العرض' : 'Offer extended'}</span>}
+                </div>
+                {offerTerms && <p className="pd-offer-terms"><strong>{isAr ? 'الشروط: ' : 'Terms: '}</strong>{offerTerms}</p>}
+                <a href={getWhatsAppUrl(waText)} target="_blank" rel="noopener noreferrer" className="pd-offer-cta">
+                  {isAr ? 'احجز بسعر العرض' : 'Book at the offer price'}
+                </a>
+              </div>
+            )}
           </div>
 
           {/* 📸 Gallery Component */}
