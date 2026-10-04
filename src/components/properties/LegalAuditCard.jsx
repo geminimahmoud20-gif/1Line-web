@@ -1,5 +1,5 @@
 import { ShieldCheck, CheckCircle2, FileText, UserCheck, Clock, MessageCircle, Info } from 'lucide-react';
-import { generatePropertyPdf } from '../../utils/pdfBrochure';
+import { brochureRequestUrl, trackBrochureRequest } from '../../utils/brochure/requestBrochure';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import '../../styles/expat-suite.css';
 
@@ -90,9 +90,9 @@ export default function LegalAuditCard({ property, lang = 'ar' }) {
         <a className="xs-btn xs-btn--ghost" href={askUrl} target="_blank" rel="noopener noreferrer">
           <MessageCircle size={16} aria-hidden="true" /> {L('اطلب المستندات والملخص الكامل', 'Request documents & full summary')}
         </a>
-        <button type="button" className="xs-btn xs-btn--ghost" onClick={() => generatePropertyPdf(property).catch((err) => console.error('PDF generation error:', err))}>
-          <FileText size={16} aria-hidden="true" /> {L('بروشور العقار PDF', 'Property PDF')}
-        </button>
+        <a className="xs-btn xs-btn--ghost" href={brochureRequestUrl(property)} target="_blank" rel="noopener noreferrer" onClick={() => trackBrochureRequest(property)}>
+          <FileText size={16} aria-hidden="true" /> {L('اطلب بروشور الوحدة', 'Request the brochure')}
+        </a>
       </div>
 
       <p className="xs-fin-foot">

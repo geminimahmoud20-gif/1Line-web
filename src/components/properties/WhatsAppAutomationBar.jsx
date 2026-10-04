@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Download, Share2, Check, Sparkles, Loader2 } from 'lucide-react';
-import { generatePropertyPdf } from '../../utils/pdfBrochure';
+import { FileText, Share2, Check, Sparkles } from 'lucide-react';
+import { brochureRequestUrl, trackBrochureRequest } from '../../utils/brochure/requestBrochure';
 import { getWhatsAppUrl, getDynamicPhone } from '../../utils/founderCmsData';
 import { formatCurrencyPrice, getPriceBenchmark } from '../../utils/currencyAndBenchmark';
 import '../../styles/expat-suite.css';
@@ -12,11 +12,10 @@ const WaIcon = () => (
 );
 
 /**
- * Share toolbar under the gallery: PDF brochure, 9:16 story card, WhatsApp and native share.
+ * Share toolbar under the gallery: brochure request on WhatsApp, 9:16 story card, WhatsApp and native share.
  * The shared text only states facts the listing actually carries.
  */
 export default function WhatsAppAutomationBar({ property, lang = 'ar', currency = 'EGP', triggerToast, onOpenStoryCard }) {
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const isAr = lang === 'ar';
@@ -62,19 +61,6 @@ export default function WhatsAppAutomationBar({ property, lang = 'ar', currency 
     ];
   const shareText = lines.filter(Boolean).join('\n');
 
-  const handleDownloadPdf = async () => {
-    setIsGeneratingPdf(true);
-    try {
-      await generatePropertyPdf(property, lang);
-      triggerToast?.(isAr ? 'تم تنزيل بروشور العقار PDF' : 'PDF brochure downloaded', 'success');
-    } catch (err) {
-      console.error('PDF generation error:', err);
-      triggerToast?.(isAr ? 'تعذر تنزيل البروشور' : 'Could not generate the PDF', 'error');
-    } finally {
-      setIsGeneratingPdf(false);
-    }
-  };
-
   const handleWhatsApp = () => window.open(getWhatsAppUrl(shareText), '_blank', 'noopener');
 
   // Native share sheet on phones; copy as a fallback
@@ -101,10 +87,10 @@ export default function WhatsAppAutomationBar({ property, lang = 'ar', currency 
     <div className="xs-share" role="toolbar" aria-label={isAr ? 'مشاركة العقار' : 'Share this property'}>
       <span className="xs-share-label">{isAr ? 'شارك العقار' : 'Share'}</span>
       <div className="xs-share-actions">
-        <button type="button" className="xs-share-btn is-gold" onClick={handleDownloadPdf} disabled={isGeneratingPdf}>
-          {isGeneratingPdf ? <Loader2 size={16} className="xs-spin" aria-hidden="true" /> : <Download size={16} aria-hidden="true" />}
-          <span>{isAr ? 'بروشور PDF' : 'PDF brochure'}</span>
-        </button>
+        <a className="xs-share-btn is-gold" href={brochureRequestUrl(property)} target="_blank" rel="noopener noreferrer" onClick={() => trackBrochureRequest(property)}>
+          <FileText size={16} aria-hidden="true" />
+          <span>{isAr ? 'اطلب البروشور على واتساب' : 'Brochure on WhatsApp'}</span>
+        </a>
         {onOpenStoryCard && (
           <button type="button" className="xs-share-btn" onClick={onOpenStoryCard}>
             <Sparkles size={16} aria-hidden="true" />

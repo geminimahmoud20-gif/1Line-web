@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { X, MapPin, Maximize2, BedDouble, Bath, MessageSquare, ArrowLeft, ArrowRight, Download, Loader2, Share2, ChevronLeft, ChevronRight, Layers, Sparkles, Store, Briefcase, Building, Video } from 'lucide-react';
+import { X, MapPin, Maximize2, BedDouble, Bath, MessageSquare, ArrowLeft, ArrowRight, FileText, Share2, ChevronLeft, ChevronRight, Layers, Sparkles, Store, Briefcase, Building, Video } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useUIModal } from '../../context/UIModalContext';
 import '../../styles/expat-suite.css';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
 import BrandWatermark from './BrandWatermark';
+import { brochureRequestUrl, trackBrochureRequest } from '../../utils/brochure/requestBrochure';
 
 export default function QuickViewModal({ 
   property, 
@@ -17,7 +18,6 @@ export default function QuickViewModal({
 }) {
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const [viewMode, setViewMode] = useState('photos'); // 'photos' | 'floorplan'
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [imgError, setImgError] = useState(false);
   const { openRemoteInspection } = useUIModal();
 
@@ -55,18 +55,6 @@ export default function QuickViewModal({
   const handlePrevImage = (e) => {
     e.stopPropagation();
     setActiveImageIdx((prev) => (prev - 1 + imagesList.length) % imagesList.length);
-  };
-
-  const handleDownloadPdf = async () => {
-    setIsGeneratingPdf(true);
-    try {
-      const { generatePropertyPdf } = await import('../../utils/pdfBrochure');
-      generatePropertyPdf(property, lang);
-    } catch (err) {
-      console.error('Failed to generate PDF:', err);
-    } finally {
-      setIsGeneratingPdf(false);
-    }
   };
 
   const handleShare = () => {
@@ -359,16 +347,17 @@ export default function QuickViewModal({
                   <span>{isAr ? 'استفسار واتساب' : 'WhatsApp'}</span>
                 </a>
 
-                <button
-                  type="button"
+                <a
+                  href={brochureRequestUrl(property)}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="btn btn-pdf-action quickview-half-btn"
-                  onClick={handleDownloadPdf}
-                  disabled={isGeneratingPdf}
-                  title={isAr ? 'تحميل بروشور العقار' : 'Download Property PDF'}
+                  onClick={() => trackBrochureRequest(property)}
+                  title={isAr ? 'اطلب بروشور الوحدة على واتساب' : 'Request the brochure on WhatsApp'}
                 >
-                  {isGeneratingPdf ? <Loader2 size={15} className="spin-animation" /> : <Download size={15} />}
-                  <span>{isGeneratingPdf ? (isAr ? 'جاري التحميل...' : 'Loading...') : (isAr ? 'بروشور PDF' : 'PDF Brochure')}</span>
-                </button>
+                  <FileText size={15} />
+                  <span>{isAr ? 'اطلب البروشور' : 'Get brochure'}</span>
+                </a>
               </div>
             </div>
           </div>
