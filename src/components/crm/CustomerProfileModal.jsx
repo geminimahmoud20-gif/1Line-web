@@ -548,6 +548,8 @@ export default function CustomerProfileModal({
                         return { text: isAr ? '⚖️ إضافة للمقارنة' : '⚖️ Added to Compare', color: 'var(--crm-violet)', bg: 'var(--crm-violet-soft)', border: 'var(--crm-violet-line)' };
                       case 'favorite_added':
                         return { text: isAr ? '❤️ إضافة للمفضلة' : '❤️ Favorited', color: 'var(--crm-danger)', bg: 'var(--crm-danger-soft)', border: 'var(--crm-danger-line)' };
+                      case 'brochure_request':
+                        return { text: isAr ? '📑 طلب بروشور (واتساب)' : '📑 Brochure request', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)', border: 'var(--crm-info-line)' };
                       case 'brochure_download':
                         return { text: isAr ? '📑 تنزيل بروشور' : '📑 PDF Brochure', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)', border: 'var(--crm-info-line)' };
                       default:

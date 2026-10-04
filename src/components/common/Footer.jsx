@@ -104,6 +104,7 @@ export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
               <li><Link to="/special-requests">{isAr ? 'الطلبات العقارية الخاصة' : 'Bespoke Requests'}</Link></li>
               <li><Link to="/broker">{isAr ? 'شبكة الوسطاء والشركاء' : 'Brokers Network'}</Link></li>
               <li><Link to="/about">{isAr ? 'عن الشركة' : 'About us'}</Link></li>
+              <li><Link to="/about#faq">{isAr ? 'الأسئلة الشائعة' : 'FAQ'}</Link></li>
             </ul>
           </div>
 

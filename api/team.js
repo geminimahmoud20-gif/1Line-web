@@ -1,7 +1,8 @@
 // =============================================================
 //  Vercel Function: CRM team accounts (CRM → إدارة المنظومة → الفريق والصلاحيات).
 //    GET               → the staff list (accounts with a CRM role)
-//    POST { action }   → add | role | disable | enable | remove   (see api/_team-core.js)
+//    POST { action }   → add | role | disable | enable | remove | resync   (see api/_team-core.js)
+//  The staff list comes from staff_registry in Firestore (kept here), not a scan of every account.
 //  Caller: a signed-in super admin (Firebase ID token in Authorization: Bearer …).
 //
 //  Environment (Vercel → Settings → Environment Variables):
@@ -9,7 +10,7 @@
 //  Without it the route answers 503 and the CRM explains how to turn it on.
 // =============================================================
 import { SignJWT, importPKCS8, createRemoteJWKSet, jwtVerify, decodeJwt } from 'jose';
-import { handleTeam, teamStore, roleOf } from './_team-core.js';
+import { handleTeam, teamStore, staffRegistry, roleOf } from './_team-core.js';
 
 const FIREBASE_PROJECT_ID = 'line-c9601';
 const firebaseKeys = createRemoteJWKSet(
@@ -60,6 +61,18 @@ export function authCaller(sa) {
   });
 }
 
+/** Firestore REST for the staff registry (FIRESTORE_EMULATOR_HOST in tests) */
+export function firestoreCaller(sa) {
+  const host = process.env.FIRESTORE_EMULATOR_HOST;
+  const projectId = sa?.project_id || FIREBASE_PROJECT_ID;
+  const base = `${host ? `http://${host}` : 'https://firestore.googleapis.com'}/v1/projects/${projectId}/databases/(default)/documents`;
+  return async (method, path, body) => fetch(`${base}/${path}`, {
+    method,
+    headers: { authorization: `Bearer ${host ? 'owner' : await accessToken(sa)}`, 'content-type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined
+  });
+}
+
 /** The caller's verified claims (emulator tokens are unsigned, so they are only decoded there) */
 async function verifyCaller(request) {
   const idToken = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
@@ -87,7 +100,7 @@ async function route(request) {
     try { body = await request.json(); } catch { return json(400, { error: 'bad-request' }); }
   }
   try {
-    const { status, body: out } = await handleTeam({ method: request.method, body, callerUid: caller.sub || caller.user_id, store: teamStore(authCaller(sa)) });
+    const { status, body: out } = await handleTeam({ method: request.method, body, callerUid: caller.sub || caller.user_id, store: teamStore(authCaller(sa), staffRegistry(firestoreCaller(sa))) });
     return json(status, out);
   } catch (err) {
     console.error('team route error:', err?.message);

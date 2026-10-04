@@ -45,6 +45,8 @@ export default function VisitorIntelligencePanel({
         return { label: isAr ? '🧮 حاسبة التمويل' : 'Calculator Used', color: 'var(--crm-warn)', bg: 'rgba(245, 158, 11, 0.1)' };
       case 'compare_added':
         return { label: isAr ? '⚖️ مقارنة عقارات' : 'Compare Added', color: 'var(--crm-violet)', bg: 'rgba(139, 92, 246, 0.1)' };
+      case 'brochure_request':
+        return { label: isAr ? '📑 طلب بروشور (واتساب)' : 'Brochure request', color: 'var(--crm-pink)', bg: 'rgba(236, 72, 153, 0.1)' };
       case 'brochure_download':
         return { label: isAr ? '📑 تحميل بروشور' : 'Brochure PDF', color: 'var(--crm-pink)', bg: 'rgba(236, 72, 153, 0.1)' };
       default:

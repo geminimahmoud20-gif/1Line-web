@@ -6,6 +6,7 @@ import CurrencySwitcher from './CurrencySwitcher';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { playNotificationChime } from '../../utils/notificationHub';
 import { useClientAuth } from '../../context/ClientAuthContext';
+import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 
 export default function Header({ 
   lang = 'ar', 
@@ -24,6 +25,7 @@ export default function Header({
   onOpenFavorites
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  useBodyScrollLock(mobileMenuOpen);
   const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const dropdownTimeoutRef = useRef(null);

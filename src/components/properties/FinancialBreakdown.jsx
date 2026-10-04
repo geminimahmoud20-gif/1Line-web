@@ -1,4 +1,4 @@
-import { Receipt, Wallet, CalendarClock, Wrench, Landmark, FileText, Info } from 'lucide-react';
+import { Receipt, Wallet, Wrench, Landmark, FileText, Info } from 'lucide-react';
 import { computeFinanceBreakdown } from '../../utils/propertyInsights';
 import { formatApprox } from '../../utils/fxRates';
 import '../../styles/expat-suite.css';
@@ -40,24 +40,18 @@ export default function FinancialBreakdown({ property, lang = 'ar', currency = '
   const L = (ar, en) => (isAr ? ar : en);
   const m = { currency, lang };
 
-  const plan = fb.plan;
-  const parts = plan ? [
-    { key: 'down', label: L('المقدم', 'Down payment'), value: plan.down, cls: 'is-down' },
-    { key: 'inst', label: L('الأقساط', 'Installments'), value: plan.total - plan.down - plan.handover, cls: 'is-inst' },
-    { key: 'hand', label: L('دفعة الاستلام', 'Handover'), value: plan.handover, cls: 'is-hand' },
-    { key: 'rest', label: L('غير مجدول', 'Unscheduled'), value: plan.unscheduled, cls: 'is-rest' }
-  ].filter((p) => p.value > 0) : [];
-  const barTotal = parts.reduce((s, p) => s + p.value, 0) || 1;
-
+  // Resale units are sold cash: the breakdown only earns its space when there is a cost beyond the
+  // price (maintenance, over-price, transfer fees) or a cash discount to explain
   const hasExtras = fb.maintenance || fb.overPrice || fb.fees;
+  if (!hasExtras && !(fb.cashDiscountPct > 0)) return null;
 
   return (
     <section className="xs-fin" aria-labelledby="xs-fin-title">
       <header className="xs-fin-head">
         <span className="xs-fin-icon"><Receipt size={20} aria-hidden="true" /></span>
         <div>
-          <h3 id="xs-fin-title">{L('مصفوفة الشفافية المالية', 'Transparent cost breakdown')}</h3>
-          <p>{L('كل جنيه هتدفعه، مقسّم بوضوح قبل ما تقرر.', 'Every pound you will pay, laid out before you decide.')}</p>
+          <h3 id="xs-fin-title">{L('التكلفة الكاملة للشراء', 'Full cost of buying')}</h3>
+          <p>{L('السعر وكل مصروف إضافي، قبل ما تقرر.', 'The price and every extra cost, before you decide.')}</p>
         </div>
       </header>
 
@@ -69,58 +63,6 @@ export default function FinancialBreakdown({ property, lang = 'ar', currency = '
           <Money value={fb.cashPrice} strong {...m} />
         </Row>
       </div>
-
-      {/* 2. Installment plan */}
-      {plan && (
-        <div className="xs-fin-block">
-          <h4><CalendarClock size={15} aria-hidden="true" /> {L('نظام التقسيط التفصيلي', 'Installment plan')}</h4>
-          <Row label={L('المقدم', 'Down payment')} hint={pct(plan.downPct)}><Money value={plan.down} {...m} /></Row>
-          {plan.monthly > 0 && <Row label={L('القسط الشهري', 'Monthly installment')}><Money value={plan.monthly} {...m} /></Row>}
-          {plan.quarterly > 0 && <Row label={L('القسط الربع سنوي', 'Quarterly installment')}><Money value={plan.quarterly} {...m} /></Row>}
-          <Row label={L('فترة السداد', 'Term')}>
-            <span className="xs-money"><span className="xs-money-main"><bdi>{plan.months}</bdi> <small>{L('شهر', 'months')}</small></span> <em>({plan.years} {L('سنوات', 'years')})</em></span>
-          </Row>
-          {plan.handover > 0 && <Row label={L('دفعة الاستلام', 'Handover payment')}><Money value={plan.handover} {...m} /></Row>}
-
-          {parts.length > 1 && (
-            <div className="xs-fin-bar" role="img" aria-label={parts.map((p) => `${p.label} ${pct((p.value / barTotal) * 100)}`).join('، ')}>
-              {parts.map((p) => (
-                <span key={p.key} className={p.cls} style={{ flexGrow: p.value }} title={`${p.label}: ${fmt(p.value)}`} />
-              ))}
-            </div>
-          )}
-          {parts.length > 1 && (
-            <div className="xs-fin-legend">
-              {parts.map((p) => (
-                <span key={p.key}><i className={p.cls} />{p.label} <bdi>{pct((p.value / barTotal) * 100)}</bdi></span>
-              ))}
-            </div>
-          )}
-
-          {plan.incomplete ? (
-            <>
-              <Row
-                label={L('رصيد غير مجدول', 'Unscheduled balance')}
-                hint={L('دفعات إضافية أو عند الاستلام حسب الجدول الرسمي', 'Extra or handover payments per the official schedule')}
-              >
-                <Money value={plan.unscheduled} {...m} />
-              </Row>
-              <Row label={L('إجمالي سعر التقسيط (على الأقل)', 'Total installment price (at least)')}><Money value={fb.price} strong {...m} /></Row>
-              <p className="xs-fin-note">
-                <Info size={13} aria-hidden="true" />
-                {L('نرسل لك الجدول الرسمي بمواعيد كل دفعة قبل الحجز.', 'We send the official schedule with every due date before reservation.')}
-              </p>
-            </>
-          ) : (
-            <Row label={L('إجمالي سعر التقسيط', 'Total installment price')}><Money value={plan.total} strong {...m} /></Row>
-          )}
-          {!plan.incomplete && plan.premiumOverCash > 0 && (
-            <Row label={L('الفرق عن الكاش', 'Difference vs cash')} hint={L(`+${pct(plan.premiumPct)}`, `+${pct(plan.premiumPct)}`)}>
-              <Money value={plan.premiumOverCash} muted {...m} />
-            </Row>
-          )}
-        </div>
-      )}
 
       {/* 3. Maintenance */}
       {fb.maintenance && (

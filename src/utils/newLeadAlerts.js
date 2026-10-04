@@ -57,3 +57,42 @@ export function announceNewLeads(leads, { isAr = true, toast } = {}) {
     } catch { /* some mobile browsers only allow notifications from a service worker */ }
   }
 }
+
+const KIND_AR = {
+  property_brochure: 'بروشور الوحدة',
+  story_card: 'بطاقة الستوري',
+  project_brochure: 'كتالوج المشروع',
+  investor_prospectus: 'دراسة المستثمرين',
+  compare_pdf: 'ملف مقارنة العقارات'
+};
+export const downloadKindLabel = (kind, isAr = true) => (isAr ? KIND_AR[kind] : kind?.replace(/_/g, ' ')) || (isAr ? 'ملف' : 'file');
+export const describeDownload = (d, isAr = true) => {
+  const what = downloadKindLabel(d.kind, isAr);
+  return isAr
+    ? `${d.clientName || 'عميل'} حمّل ${what}${d.itemTitle ? `: ${d.itemTitle}` : ''}`
+    : `${d.clientName || 'A client'} downloaded the ${what}${d.itemTitle ? `: ${d.itemTitle}` : ''}`;
+};
+
+const seenDownloads = new Set();
+/** Call with the CRM's latest client downloads: rings once for each one from the last few minutes */
+export function announceDownloads(downloads, { isAr = true, toast } = {}) {
+  if (!Array.isArray(downloads)) return;
+  const now = Date.now();
+  const fresh = [];
+  for (const d of downloads) {
+    if (!d?.id || seenDownloads.has(d.id)) continue;
+    seenDownloads.add(d.id);
+    const age = now - createdMillis(d);
+    if (age >= 0 && age <= ALERT_WINDOW_MS) fresh.push(d);
+  }
+  if (fresh.length === 0) return;
+  playNotificationChime();
+  const text = `📥 ${describeDownload(fresh[0], isAr)}${fresh.length > 1 ? (isAr ? ` (+${fresh.length - 1})` : ` (+${fresh.length - 1})`) : ''}`;
+  if (typeof toast === 'function') toast(text, 'success');
+  if (desktopAlertsEnabled()) {
+    try {
+      const n = new window.Notification(isAr ? 'تحميل ملف — 1Line' : 'File downloaded — 1Line', { body: text, tag: `dl-${fresh[0].id}`, icon: '/icon-192.png' });
+      n.onclick = () => { window.focus(); n.close(); };
+    } catch { /* some browsers only allow notifications from a service worker */ }
+  }
+}

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Download, Share2, Check, Sparkles, Loader2 } from 'lucide-react';
-import { generatePropertyPdf } from '../../utils/pdfBrochure';
+import { FileText, Share2, Check, Sparkles } from 'lucide-react';
+import useClientDownload from '../../hooks/useClientDownload';
 import { getWhatsAppUrl, getDynamicPhone } from '../../utils/founderCmsData';
 import { formatCurrencyPrice, getPriceBenchmark } from '../../utils/currencyAndBenchmark';
 import '../../styles/expat-suite.css';
@@ -12,11 +12,10 @@ const WaIcon = () => (
 );
 
 /**
- * Share toolbar under the gallery: PDF brochure, 9:16 story card, WhatsApp and native share.
+ * Share toolbar under the gallery: brochure PDF (registered clients), 9:16 story card, WhatsApp and native share.
  * The shared text only states facts the listing actually carries.
  */
 export default function WhatsAppAutomationBar({ property, lang = 'ar', currency = 'EGP', triggerToast, onOpenStoryCard }) {
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const isAr = lang === 'ar';
@@ -62,18 +61,23 @@ export default function WhatsAppAutomationBar({ property, lang = 'ar', currency 
     ];
   const shareText = lines.filter(Boolean).join('\n');
 
-  const handleDownloadPdf = async () => {
-    setIsGeneratingPdf(true);
+  const download = useClientDownload();
+  const [brochureBusy, setBrochureBusy] = useState(false);
+  // Registered clients only; the team sees who downloaded it (CRM bell)
+  const handleBrochure = () => download({ kind: 'property_brochure', itemId: String(property.id || ''), itemTitle: property.title_ar || property.title_en || '' }, async () => {
+    setBrochureBusy(true);
     try {
-      await generatePropertyPdf(property, lang);
+      const { generatePropertyPdf } = await import('../../utils/brochure/propertyBrochure');
+      await generatePropertyPdf(property);
       triggerToast?.(isAr ? 'تم تنزيل بروشور العقار PDF' : 'PDF brochure downloaded', 'success');
     } catch (err) {
       console.error('PDF generation error:', err);
       triggerToast?.(isAr ? 'تعذر تنزيل البروشور' : 'Could not generate the PDF', 'error');
+      throw err;
     } finally {
-      setIsGeneratingPdf(false);
+      setBrochureBusy(false);
     }
-  };
+  });
 
   const handleWhatsApp = () => window.open(getWhatsAppUrl(shareText), '_blank', 'noopener');
 
@@ -101,9 +105,9 @@ export default function WhatsAppAutomationBar({ property, lang = 'ar', currency 
     <div className="xs-share" role="toolbar" aria-label={isAr ? 'مشاركة العقار' : 'Share this property'}>
       <span className="xs-share-label">{isAr ? 'شارك العقار' : 'Share'}</span>
       <div className="xs-share-actions">
-        <button type="button" className="xs-share-btn is-gold" onClick={handleDownloadPdf} disabled={isGeneratingPdf}>
-          {isGeneratingPdf ? <Loader2 size={16} className="xs-spin" aria-hidden="true" /> : <Download size={16} aria-hidden="true" />}
-          <span>{isAr ? 'بروشور PDF' : 'PDF brochure'}</span>
+        <button type="button" className="xs-share-btn is-gold" onClick={handleBrochure} disabled={brochureBusy}>
+          <FileText size={16} aria-hidden="true" />
+          <span>{brochureBusy ? (isAr ? 'جاري التجهيز…' : 'Preparing…') : (isAr ? 'تحميل البروشور PDF' : 'Download brochure')}</span>
         </button>
         {onOpenStoryCard && (
           <button type="button" className="xs-share-btn" onClick={onOpenStoryCard}>

@@ -7,6 +7,7 @@ import ExportMenu from './ExportMenu';
 import DataImportModal from './DataImportModal';
 import { getAreas } from '../../utils/areasData';
 import { useState } from 'react';
+import { useProperties } from '../../context/PropertiesContext';
 
 export default function LeadsTab({
   activeRole,
@@ -50,6 +51,25 @@ export default function LeadsTab({
   triggerToast
 }) {
   const [importOpen, setImportOpen] = useState(false);
+  const { leadsHasMore, loadMoreLeads, searchAllLeads } = useProperties();
+  const [serverSearching, setServerSearching] = useState(false);
+  // The list holds the newest clients only; this looks the term up across all of them on the server
+  const runServerSearch = async () => {
+    const term = searchQuery.trim();
+    if (term.length < 2 || serverSearching) return;
+    setServerSearching(true);
+    const res = await searchAllLeads(term);
+    setServerSearching(false);
+    if (!res.ok) {
+      triggerToast?.(res.error === 'index'
+        ? (isAr ? 'البحث بالاسم لسه محتاج تفعيل (نشر فهارس قاعدة البيانات).' : 'Name search needs the database indexes published.')
+        : (isAr ? 'تعذّر البحث، جرّب تاني.' : 'Search failed, try again.'), 'error');
+      return;
+    }
+    triggerToast?.(res.leads.length
+      ? (isAr ? `لقينا ${res.leads.length} عميل وضفناهم للقائمة` : `Found ${res.leads.length} and added them to the list`)
+      : (isAr ? 'مفيش عميل بالاسم أو الرقم ده' : 'No client matches'), res.leads.length ? 'success' : 'info');
+  };
   return (
     <div className="crm-table-container">
       {importOpen && (
@@ -188,7 +208,20 @@ export default function LeadsTab({
             style={{ padding: '6px 14px', fontSize: 'var(--crm-text-sm)', width: '220px', borderRadius: 'var(--radius-pill)' }}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') runServerSearch(); }}
           />
+          {searchQuery.trim().length >= 2 && (
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              onClick={runServerSearch}
+              disabled={serverSearching}
+              title={isAr ? 'يدوّر في كل العملاء على السيرفر، مش بس اللي ظاهرين: رقم موبايل بأي صيغة أو أول الاسم' : 'Searches every client on the server: a phone in any format or the start of a name'}
+              style={{ borderRadius: 'var(--radius-pill)', whiteSpace: 'nowrap' }}
+            >
+              {serverSearching ? (isAr ? 'جاري البحث…' : 'Searching…') : (isAr ? 'ابحث في كل العملاء' : 'Search all clients')}
+            </button>
+          )}
         </div>
       </div>
 
@@ -571,6 +604,13 @@ export default function LeadsTab({
           )}
         </tbody>
       </table>
+      {leadsHasMore && (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '14px' }}>
+          <button type="button" className="btn btn-outline" onClick={loadMoreLeads}>
+            {isAr ? `عرض عملاء أقدم (المعروض الآن أحدث ${leads.length})` : `Load older clients (showing newest ${leads.length})`}
+          </button>
+        </div>
+      )}
     </div>
     </div>
 

@@ -7,6 +7,7 @@ import {
   getPhoneCallUrl, 
   cleanPhoneNumber 
 } from '../../utils/founderCmsData';
+import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 
 export default function QuickContactDrawer({
   isOpen,
@@ -17,6 +18,7 @@ export default function QuickContactDrawer({
   const isAr = lang === 'ar';
   const [cms, setCms] = useState(() => getFounderSettings());
   const { openRemoteInspection } = useUIModal();
+  useBodyScrollLock(isOpen);
 
   useEffect(() => {
     const handleUpdate = () => setCms(getFounderSettings());

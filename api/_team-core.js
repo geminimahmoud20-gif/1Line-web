@@ -96,7 +96,7 @@ export function claimsWithRole(existingRaw, role) {
  * Identity Toolkit (Firebase Auth admin REST). `call(method, path, body)` does the HTTP with the
  * project's service-account token (or the emulator), path relative to /v1/projects/{project}/.
  */
-export function teamStore(call) {
+export function teamStore(call, registry = null) {
   const ok = async (res, what) => {
     if (!res.ok) {
       let detail = '';
@@ -107,20 +107,54 @@ export function teamStore(call) {
     }
     return res.json();
   };
+
+  /** Every account with a CRM role, by walking all accounts (slow with many client accounts) */
+  const scanAll = async () => {
+    const members = [];
+    let token = '';
+    do {
+      const r = await ok(await call('GET', `accounts:batchGet?maxResults=1000${token ? `&nextPageToken=${encodeURIComponent(token)}` : ''}`), 'list');
+      for (const u of r.users || []) {
+        const m = toMember(u);
+        if (m.role) members.push(m);
+      }
+      token = r.nextPageToken || '';
+    } while (token);
+    return members;
+  };
+
+  /** Accounts by uid, 100 per lookup */
+  const lookupMany = async (uids) => {
+    const users = [];
+    for (let i = 0; i < uids.length; i += 100) {
+      const r = await ok(await call('POST', 'accounts:lookup', { localId: uids.slice(i, i + 100) }), 'lookup');
+      users.push(...(r.users || []));
+    }
+    return users;
+  };
+
+  const byEmail = (a, b) => a.email.localeCompare(b.email);
+
   return {
-    /** Every account that has a CRM role */
-    async listMembers() {
-      const members = [];
-      let token = '';
-      do {
-        const r = await ok(await call('GET', `accounts:batchGet?maxResults=1000${token ? `&nextPageToken=${encodeURIComponent(token)}` : ''}`), 'list');
-        for (const u of r.users || []) {
-          const m = toMember(u);
-          if (m.role) members.push(m);
-        }
-        token = r.nextPageToken || '';
-      } while (token);
-      return members.sort((a, b) => a.email.localeCompare(b.email));
+    /**
+     * Every account that has a CRM role. With a registry: read it and look those accounts up
+     * (a handful of requests whatever the number of client accounts). An empty registry, or
+     * `{ rebuild: true }`, falls back to the full scan once and refills it.
+     */
+    async listMembers({ rebuild = false } = {}) {
+      if (!registry) return (await scanAll()).sort(byEmail);
+      const uids = rebuild ? [] : await registry.list();
+      if (uids.length === 0) {
+        const members = await scanAll();
+        await registry.replace(members.map((m) => [m.uid, m.role]));
+        return members.sort(byEmail);
+      }
+      const users = await lookupMany(uids);
+      const members = users.map(toMember).filter((m) => m.role);
+      // Drop registry entries whose account is gone or no longer has a role
+      const stale = uids.filter((uid) => !members.some((m) => m.uid === uid));
+      for (const uid of stale) await registry.remove(uid);
+      return members.sort(byEmail);
     },
     async findByEmail(email) {
       const r = await ok(await call('POST', 'accounts:lookup', { email: [email] }), 'lookup');
@@ -143,8 +177,48 @@ export function teamStore(call) {
       if (disabled !== undefined) body.disableUser = disabled;
       if (name) body.displayName = name;
       await ok(await call('POST', 'accounts:update', body), 'update');
+      if (registry && claims !== undefined) {
+        const role = roleOf(claims);
+        if (role) await registry.set(uid, role);
+        else await registry.remove(uid);
+      }
     }
   };
+}
+
+/**
+ * The staff registry in Firestore (staff_registry/{uid} = { role }), over the REST API.
+ * `fs(method, path, body)` calls .../databases/(default)/documents/{path}.
+ */
+export function staffRegistry(fs) {
+  const check = async (res, what, allow404 = false) => {
+    if (res.ok || (allow404 && res.status === 404)) return res.status === 204 || res.status === 404 ? {} : res.json();
+    throw new Error(`registry ${what} ${res.status}`);
+  };
+  const reg = {
+    async list() {
+      const uids = [];
+      let token = '';
+      do {
+        const r = await check(await fs('GET', `staff_registry?pageSize=300&mask.fieldPaths=role${token ? `&pageToken=${encodeURIComponent(token)}` : ''}`), 'list', true);
+        for (const d of r.documents || []) uids.push(d.name.split('/').pop());
+        token = r.nextPageToken || '';
+      } while (token);
+      return uids;
+    },
+    async set(uid, role) {
+      await check(await fs('PATCH', `staff_registry/${encodeURIComponent(uid)}`, { fields: { role: { stringValue: role }, updatedAt: { timestampValue: new Date().toISOString() } } }), 'set');
+    },
+    async remove(uid) {
+      await check(await fs('DELETE', `staff_registry/${encodeURIComponent(uid)}`), 'remove', true);
+    },
+    async replace(entries) {
+      const keep = new Set(entries.map(([uid]) => uid));
+      for (const uid of await reg.list()) if (!keep.has(uid)) await reg.remove(uid);
+      for (const [uid, role] of entries) await reg.set(uid, role);
+    }
+  };
+  return reg;
 }
 
 /**
@@ -153,6 +227,7 @@ export function teamStore(call) {
  */
 export async function handleTeam({ method, body, callerUid, store }) {
   if (method === 'GET') return { status: 200, body: { ok: true, members: await store.listMembers() } };
+  if (body?.action === 'resync') return { status: 200, body: { ok: true, members: await store.listMembers({ rebuild: true }) } };
   const req = parseTeamRequest(body);
   if (!req) return { status: 400, body: { error: 'bad-request' } };
 

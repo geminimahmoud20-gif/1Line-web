@@ -115,6 +115,10 @@ export function ClientAuthProvider({
           ? `لإضافة عقار "${propertyTitle}" لجدول المقارنة الذكية، يرجى تفعيل حسابك أولاً.`
           : 'لإضافة العقار لقائمة المقارنة، يرجى تفعيل حسابك أولاً.'
         : 'To compare this property, please verify your account first.';
+    } else if (actionType === 'download') {
+      reason = isAr
+        ? `${propertyTitle ? `لتحميل "${propertyTitle}"` : 'لتحميل الملفات والصور'} سجّل حسابك مرة واحدة، وبعدها التحميل بيبدأ على طول.`
+        : 'Register once to download files and images; the download starts right after.';
     } else {
       reason = isAr
         ? 'يرجى تسجيل وتأكيد بيانات حسابك للوصول لهذه الخدمة.'

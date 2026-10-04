@@ -1,9 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MapPin, Sparkles, CheckCircle2, Layers, Calendar, Phone, MessageSquare, ShieldCheck, TrendingUp, TrendingDown, Calculator, Navigation, ArrowRight, ArrowLeft, Building, Video, Zap, Droplets, Copy, Sun, Moon, Scale, Flame } from 'lucide-react';
+import { MapPin, Sparkles, CheckCircle2, Layers, Calendar, Phone, MessageSquare, ShieldCheck, TrendingUp, TrendingDown, Navigation, ArrowRight, ArrowLeft, Building, Video, Zap, Droplets, Copy, Sun, Moon, Scale, Flame } from 'lucide-react';
 import { incrementPropertyView, getPropertyViews } from '../utils/visitorTracker';
 import PropertyGallery from '../components/properties/PropertyGallery';
-import MortgageRoiCalculator from '../components/calculators/MortgageRoiCalculator';
 import PropertyCard from '../components/properties/PropertyCard';
 import LegalAuditCard from '../components/properties/LegalAuditCard';
 import WhatsAppAutomationBar from '../components/properties/WhatsAppAutomationBar';
@@ -25,7 +24,7 @@ import { saveLead } from '../firebaseLazy';
 import { useClientAuth } from '../context/ClientAuthContext';
 import { useUIModal } from '../context/UIModalContext';
 
-import { getFamilyInfo, computeFinanceBreakdown } from '../utils/propertyInsights';
+import { getFamilyInfo } from '../utils/propertyInsights';
 import { PROPERTY_TYPES } from '../data/propertiesData';
 
 import '../styles/expat-suite.css';
@@ -72,7 +71,7 @@ export default function PropertyDetailPage({
   const { id } = useParams();
   const { openRemoteInspection } = useUIModal();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'legal' | 'valuation' | 'financing'
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'legal' | 'valuation'
   const [depositModalOpen, setDepositModalOpen] = useState(false);
   const [storyModalOpen, setStoryModalOpen] = useState(false);
   const [bookingConfirmationOpen, setBookingConfirmationOpen] = useState(false);
@@ -187,6 +186,14 @@ export default function PropertyDetailPage({
   const licenseText = property.legalStatus
     ? (isAr ? property.legalStatus.licenseStatus_ar : (property.legalStatus.licenseStatus_en || property.legalStatus.licenseStatus_ar)) || ''
     : '';
+  const quickFacts = [
+    Number(property.size) > 0 && { k: isAr ? 'المساحة' : 'Area', v: `${Number(property.size).toLocaleString('en-US')} ${isAr ? 'م²' : 'm²'}` },
+    Number(property.bedrooms) > 0 && { k: isAr ? 'الغرف' : 'Bedrooms', v: String(property.bedrooms) },
+    Number(property.bathrooms) > 0 && { k: isAr ? 'الحمامات' : 'Baths', v: String(property.bathrooms) },
+    (property.floor === 0 || Number(property.floor) > 0) && { k: isAr ? 'الدور' : 'Floor', v: property.floor === 0 ? (isAr ? 'أرضي' : 'Ground') : String(property.floor) },
+    finishing && { k: isAr ? 'التشطيب' : 'Finishing', v: finishing },
+    property.completionStatus === 'ready' && { k: isAr ? 'الاستلام' : 'Handover', v: isAr ? 'فوري' : 'Immediate' }
+  ].filter(Boolean);
   const deliveryText = property.deliveryYear
     ? String(property.deliveryYear)
     : property.completionStatus === 'ready'
@@ -195,9 +202,6 @@ export default function PropertyDetailPage({
         ? (isAr ? 'تحت الإنشاء' : 'Under construction')
         : '';
   const officeOpen = isOfficeOpenNow();
-  const financePlan = computeFinanceBreakdown(property)?.plan || null;
-  // Most units sell cash: the installment calculator only shows on a listing that has its own plan
-  const hasInstallments = Number(property.installmentYears) > 0 || Number(property.monthlyInstallment) > 0;
   const util = property.utilities || {};
   const utilityItems = [
     { key: 'electricity', Icon: Zap, label: isAr ? 'الكهرباء' : 'Electricity', value: util.electricity_ar },
@@ -382,6 +386,15 @@ export default function PropertyDetailPage({
                   </a>
                 )}
               </div>
+
+              {/* Key facts at a glance: fills the title column next to the price box */}
+              {quickFacts.length > 0 && (
+                <ul className="pd-quick-facts" aria-label={isAr ? 'أهم المواصفات' : 'Key facts'}>
+                  {quickFacts.map((f) => (
+                    <li key={f.k} className="pd-fact"><span>{f.k}</span><b>{f.v}</b></li>
+                  ))}
+                </ul>
+              )}
             </div>
 
             <div className="detail-price-box">
@@ -408,39 +421,40 @@ export default function PropertyDetailPage({
                 </span>
               )}
 
-              {offer && (
-                <div className="pd-offer-box" role="note">
-                  <div className="pd-offer-head">
-                    <Flame size={16} aria-hidden="true" />
-                    <strong>{isAr ? 'عرض كاش لفترة محدودة' : 'Limited-time cash offer'}</strong>
-                    <bdi dir="ltr" className="pd-offer-pct">−{offer.pct}%</bdi>
-                  </div>
-                  <div className="pd-offer-price">
-                    <bdi>{offerPriceData.primary}</bdi> <span>{offerPriceData.symbol}</span>
-                    <small>{isAr ? 'للدفع كاش' : 'paid in cash'}</small>
-                  </div>
-                  <p className="pd-offer-was">
-                    {isAr ? 'بدلاً من ' : 'Instead of '}<del><bdi>{offer.basePrice.toLocaleString('en-US')}</bdi></del>{isAr ? ' ج.م' : ' EGP'}
-                    {' · '}<span className="pd-offer-save">{isAr ? `وفّر ${offer.savings.toLocaleString('en-US')} ج.م` : `Save ${offer.savings.toLocaleString('en-US')} EGP`}</span>
-                  </p>
-                  <div className="pd-offer-meta">
-                    <OfferCountdown endsAt={offer.endsAt} isAr={isAr} className="pd-offer-timer" />
-                    <span>{isAr ? `آخر يوم: ${offerEndDay}` : `Last day: ${offerEndDay}`}</span>
-                    {offer.extended && <span className="pd-offer-extended">{isAr ? 'تم تمديد العرض' : 'Offer extended'}</span>}
-                  </div>
-                  {offerTerms && <p className="pd-offer-terms"><strong>{isAr ? 'الشروط: ' : 'Terms: '}</strong>{offerTerms}</p>}
-                  <a href={getWhatsAppUrl(waText)} target="_blank" rel="noopener noreferrer" className="pd-offer-cta">
-                    {isAr ? 'احجز بسعر العرض' : 'Book at the offer price'}
-                  </a>
-                </div>
-              )}
-
               {/* 🛡️ Free viewing + written fees (1Line charges commission — never claim 0%) */}
               <div className="buyer-commission-badge">
                 <CheckCircle2 size={14} style={{ color: '#34D399', flexShrink: 0 }} />
                 <span>{isAr ? 'معاينة ميدانية مجانية للموقع • كل الأتعاب والرسوم مكتوبة قبل التعاقد' : 'Free on-site viewing • All fees in writing before contract'}</span>
               </div>
             </div>
+
+            {/* Full-width strip under both columns: a tall box in either column would leave a gap beside it */}
+            {offer && (
+              <div className="pd-offer-box pd-offer-strip" role="note">
+                <div className="pd-offer-head">
+                  <Flame size={16} aria-hidden="true" />
+                  <strong>{isAr ? 'عرض كاش لفترة محدودة' : 'Limited-time cash offer'}</strong>
+                  <bdi dir="ltr" className="pd-offer-pct">−{offer.pct}%</bdi>
+                </div>
+                <div className="pd-offer-price">
+                  <bdi>{offerPriceData.primary}</bdi> <span>{offerPriceData.symbol}</span>
+                  <small>{isAr ? 'للدفع كاش' : 'paid in cash'}</small>
+                </div>
+                <p className="pd-offer-was">
+                  {isAr ? 'بدلاً من ' : 'Instead of '}<del><bdi>{offer.basePrice.toLocaleString('en-US')}</bdi></del>{isAr ? ' ج.م' : ' EGP'}
+                  {' · '}<span className="pd-offer-save">{isAr ? `وفّر ${offer.savings.toLocaleString('en-US')} ج.م` : `Save ${offer.savings.toLocaleString('en-US')} EGP`}</span>
+                </p>
+                <div className="pd-offer-meta">
+                  <OfferCountdown endsAt={offer.endsAt} isAr={isAr} className="pd-offer-timer" />
+                  <span>{isAr ? `آخر يوم: ${offerEndDay}` : `Last day: ${offerEndDay}`}</span>
+                  {offer.extended && <span className="pd-offer-extended">{isAr ? 'تم تمديد العرض' : 'Offer extended'}</span>}
+                </div>
+                {offerTerms && <p className="pd-offer-terms"><strong>{isAr ? 'الشروط: ' : 'Terms: '}</strong>{offerTerms}</p>}
+                <a href={getWhatsAppUrl(waText)} target="_blank" rel="noopener noreferrer" className="pd-offer-cta">
+                  {isAr ? 'احجز بسعر العرض' : 'Book at the offer price'}
+                </a>
+              </div>
+            )}
           </div>
 
           {/* 📸 Gallery Component */}
@@ -471,7 +485,6 @@ export default function PropertyDetailPage({
             { id: 'overview', Icon: Layers, ar: 'المواصفات والتكاليف', en: 'Specs & costs' },
             { id: 'legal', Icon: ShieldCheck, ar: 'الموقف القانوني', en: 'Legal status' },
             { id: 'valuation', Icon: TrendingUp, ar: 'السعر والمنطقة', en: 'Price & area' },
-            ...(hasInstallments ? [{ id: 'financing', Icon: Calculator, ar: 'خطة التقسيط', en: 'Installment plan' }] : [])
           ].map(({ id: tabId, Icon, ar, en }, idx, all) => (
             <button
               key={tabId}
@@ -563,39 +576,6 @@ export default function PropertyDetailPage({
               </div>
             )}
 
-            {/* TAB 4: FINANCING & ROI CALCULATOR */}
-            {activeTab === 'financing' && hasInstallments && (
-              <div className="tab-pane-content">
-                {/* Customized Mortgage Calculator for this property */}
-                <div className="detail-card-box">
-                  <h3>{isAr ? 'حاسبة القسط والتمويل لهذا العقار' : 'Payment & Financing Calculator'}</h3>
-                  {Number(property.monthlyInstallment) > 0 && (
-                    <p className="pd-calc-note">
-                      {financePlan?.incomplete
-                        ? (isAr
-                          ? `الحاسبة توزّع كل المبلغ المتبقي على أقساط شهرية متساوية بدون فوائد، لذلك يختلف القسط هنا عن القسط المسجل (${Number(property.monthlyInstallment).toLocaleString('en-US')} ج.م) الذي يصاحبه رصيد غير مجدول — راجع مصفوفة التكاليف.`
-                          : `The calculator spreads the whole remaining amount over equal interest-free months, so it differs from the listed installment (${Number(property.monthlyInstallment).toLocaleString('en-US')} EGP), which comes with an unscheduled balance — see the cost breakdown.`)
-                        : (isAr
-                          ? 'الحاسبة تبدأ بنظام السداد المسجل لهذا العقار (تقسيط مباشر بدون فوائد). غيّر النسبة لو هتمول من بنك.'
-                          : 'The calculator starts from this listing\'s own plan (direct, interest-free). Change the rate if you finance through a bank.')}
-                    </p>
-                  )}
-                  <MortgageRoiCalculator
-                    lang={lang}
-                    initialPrice={property.price}
-                    // exact share (not rounded) so the down payment matches the listing to the pound
-                    initialDownpaymentPercent={property.downPayment && property.price ? Math.round((property.downPayment / property.price) * 10000) / 100 : 20}
-                    initialYears={property.installmentYears || 5}
-                    // the listing's own plan is interest-free; a bank rate is the visitor's choice
-                    initialInterestRate={Number(property.monthlyInstallment) > 0 ? 0 : 12}
-                    initialMonthlyRent={Number(property.commercial?.rentPerSqm) > 0 && Number(property.size) > 0
-                      ? Math.round(Number(property.commercial.rentPerSqm) * Number(property.size))
-                      : 18000}
-                    rentIsEstimate={!(Number(property.commercial?.rentPerSqm) > 0)}
-                  />
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Right / Sticky Agent & Booking Sidebar */}

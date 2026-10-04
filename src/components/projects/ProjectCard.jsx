@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Building2, MapPin, Wallet, Layers, CalendarClock, Check, MessageSquare, FileDown } from 'lucide-react';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
+import useClientDownload from '../../hooks/useClientDownload';
 
 // Brochure links are typed in the CRM: only web links are opened
 const safeBrochureUrl = (url) => (/^https?:\/\/\S+$/i.test(String(url || '').trim()) ? String(url).trim() : null);
@@ -40,6 +41,7 @@ export default function ProjectCard({ project, isAr, currency, lang, featured = 
   const feats = (isAr ? project.features_ar : project.features_en) || [];
   const price = formatCurrencyPrice(project.startPrice, currency, lang);
   const brochureUrl = safeBrochureUrl(project.brochureUrl);
+  const download = useClientDownload();
   const image = Array.isArray(project.images) ? project.images.find(Boolean) : null;
   const progress = pct(project.progress);
   const bk = project.progressBreakdown || {};
@@ -143,10 +145,18 @@ export default function ProjectCard({ project, isAr, currency, lang, featured = 
             </span>
           </button>
           {brochureUrl && (
-            <a className="pj-btn pj-btn--ghost" href={brochureUrl} target="_blank" rel="noopener noreferrer" title={isAr ? 'الكتالوج PDF' : 'Brochure PDF'}>
+            <button
+              type="button"
+              className="pj-btn pj-btn--ghost"
+              title={isAr ? 'الكتالوج PDF' : 'Brochure PDF'}
+              onClick={() => download(
+                { kind: 'project_brochure', itemId: String(project.id || ''), itemTitle: project.name_ar || project.title_ar || project.name_en || '' },
+                () => { window.open(brochureUrl, '_blank', 'noopener'); }
+              )}
+            >
               <FileDown size={17} aria-hidden="true" />
               <span>{isAr ? 'الكتالوج' : 'Brochure'}</span>
-            </a>
+            </button>
           )}
         </div>
       </div>

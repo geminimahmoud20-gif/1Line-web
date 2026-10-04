@@ -23,7 +23,6 @@ import HomeMarketplace from '../components/home/HomeMarketplace';
 // Below the fold: their own chunks, fetched right after the hero renders instead of in the entry bundle
 const FamilyLegacySection = lazy(() => import('../components/family/FamilyLegacySection'));
 const GoldStandardsSection = lazy(() => import('../components/home/GoldStandardsSection'));
-const FaqSection = lazy(() => import('../components/home/FaqSection'));
 
 // Keep in sync with the <link rel="preload"> in index.html
 
@@ -361,18 +360,6 @@ export default function HomePage({
       {/* 📈 REAL-TIME SOHAG PROPTECH MARKET TICKER */}
       <MarketTickerBar lang={lang} demands={realDemands} />
 
-      {/* 🔥 Limited-time offers (CRM → العقارات → العرض); renders nothing when no offer is running */}
-      <HomeOffers
-        properties={publishedProperties}
-        lang={lang}
-        currency={currency}
-        favorites={favorites}
-        compareList={compareList}
-        onToggleFavorite={onToggleFavorite}
-        onToggleCompare={onToggleCompare}
-        onQuickView={onQuickView}
-      />
-
       {/* 🏢 2. SOHAG LIVE MARKETPLACE HUB (Consolidated Segmented Discovery) */}
       <HomeMarketplace
         activeDemandsList={activeDemandsList}
@@ -391,6 +378,18 @@ export default function HomePage({
         realDemands={realDemands}
         setMarketplaceAreaFilter={setMarketplaceAreaFilter}
         setMarketplaceTab={setMarketplaceTab}
+      />
+
+      {/* 🔥 Limited-time offers (CRM → العقارات → العرض), after the listings so a visitor sees properties first; renders nothing when no offer is running */}
+      <HomeOffers
+        properties={publishedProperties}
+        lang={lang}
+        currency={currency}
+        favorites={favorites}
+        compareList={compareList}
+        onToggleFavorite={onToggleFavorite}
+        onToggleCompare={onToggleCompare}
+        onQuickView={onQuickView}
       />
 
       {/* 📢 Sponsored banners (CRM → الإعلانات, placement "inline"); renders nothing when no campaign is live */}
@@ -583,11 +582,6 @@ export default function HomePage({
           <GoldStandardsSection lang={lang} />
         </Suspense>
       </ScrollReveal>
-
-      {/* FAQ — answer-engine friendly, with FAQPage schema */}
-      <Suspense fallback={null}>
-        <FaqSection lang={lang} />
-      </Suspense>
 
       {/* 🎬 Hero Video Theater Modal (Full uncropped HD viewing) */}
       {showTheaterModal && (

@@ -1,12 +1,30 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect, lazy, Suspense } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Building2, ShieldCheck, CheckCircle2, Quote, MessageSquare, Phone, MapPin, TrendingUp, FileCheck, Users, Sparkles, ArrowRight, ArrowLeft, Award, Scale, Video, Clock } from 'lucide-react';
 import LogoEmblem from '../components/LogoEmblem';
 import { getFounderSettings, cleanPhoneNumber, getWhatsAppUrl, DEFAULT_FOUNDER_CMS } from '../utils/founderCmsData';
 import { updatePageSeo } from '../utils/seoHelper';
 
+// The questions (by category, with FAQPage schema) live here rather than on the long homepage
+const FaqSection = lazy(() => import('../components/home/FaqSection'));
+
 export default function AboutPage({ lang = 'ar' }) {
   const isAr = lang === 'ar';
+  const { hash } = useLocation();
+
+  // /about#faq (footer link): the questions load lazily, so scroll once they are on the page
+  useEffect(() => {
+    if (hash !== '#faq') return undefined;
+    let tries = 0;
+    const t = setInterval(() => {
+      const el = document.getElementById('faq-title');
+      if (el || ++tries > 30) {
+        clearInterval(t);
+        document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+    return () => clearInterval(t);
+  }, [hash]);
   const [cms, setCms] = useState(() => getFounderSettings());
 
   useEffect(() => {
@@ -382,6 +400,12 @@ export default function AboutPage({ lang = 'ar' }) {
       </section>
 
       {/* 🚀 6. EXECUTIVE VIP CALL TO ACTION BANNER */}
+      <div id="faq">
+        <Suspense fallback={null}>
+          <FaqSection lang={lang} />
+        </Suspense>
+      </div>
+
       <section className="about-vip-cta-section section-container">
         <div className="about-vip-cta-banner">
           <div className="vip-cta-text">

@@ -94,7 +94,7 @@ export function trackEvent(eventType, metadata = {}) {
     const event = {
       id: 'evt_' + Math.random().toString(36).substring(2, 9),
       sessionId: session.sessionId,
-      eventType, // 'page_view' | 'property_view' | 'whatsapp_click' | 'calculator_used' | 'filter_applied' | 'favorite_added' | 'compare_added' | 'brochure_download'
+      eventType, // 'page_view' | 'property_view' | 'whatsapp_click' | 'calculator_used' | 'filter_applied' | 'favorite_added' | 'compare_added' | 'brochure_request' (older: 'brochure_download')
       timestamp: new Date().toISOString(),
       url: window.location.pathname + window.location.search,
       metadata,
@@ -237,7 +237,7 @@ export function getLiveAnalyticsSummary() {
     const totalViews = Object.values(viewsMap).reduce((acc, v) => acc + v, 0);
     const whatsappClicks = events.filter(e => e.eventType === 'whatsapp_click').length;
     const calculatorUses = events.filter(e => e.eventType === 'calculator_used').length;
-    const brochureDownloads = events.filter(e => e.eventType === 'brochure_download').length;
+    const brochureDownloads = events.filter(e => e.eventType === 'brochure_request' || e.eventType === 'brochure_download').length;
     const compareEvents = events.filter(e => e.eventType === 'compare_added').length;
 
     // Calculate Average Dwell Time

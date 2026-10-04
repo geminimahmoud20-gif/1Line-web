@@ -1,4 +1,5 @@
-import { Edit3, Eye, EyeOff, Flame, MessageSquare, RotateCcw, Star, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { Edit3, Eye, EyeOff, FileDown, Flame, MessageSquare, RotateCcw, Star, Trash2 } from 'lucide-react';
 import { offerState, formatTimeLeft, getActiveOffer } from '../../utils/propertyOffers';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { FeaturedPeriodLabel } from './HomepageSlotsBoard';
@@ -12,6 +13,35 @@ const shortLeft = (ms, isAr) => {
   const h = Math.max(1, Math.floor(ms / 3600000));
   return isAr ? (h === 1 ? 'ساعة' : h === 2 ? 'ساعتين' : `${h} ${h <= 10 ? 'ساعات' : 'ساعة'}`) : `${h}h`;
 };
+
+/** Downloads the unit's brochure (Arabic, locked, watermarked) so the team can send it on WhatsApp */
+function BrochureButton({ prop, isAr }) {
+  const [busy, setBusy] = useState(false);
+  const download = async () => {
+    setBusy(true);
+    try {
+      const { generatePropertyPdf } = await import('../../utils/brochure/propertyBrochure');
+      await generatePropertyPdf(prop);
+    } catch (err) {
+      console.error('Brochure error:', err);
+      window.alert(isAr ? 'تعذّر تجهيز البروشور، جرّب تاني.' : 'Could not build the brochure.');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <button
+      type="button"
+      className="icon-action-table-btn"
+      onClick={download}
+      disabled={busy}
+      title={isAr ? 'تنزيل بروشور الوحدة لإرساله للعميل على واتساب' : 'Download the brochure to send on WhatsApp'}
+      aria-label={isAr ? 'تنزيل بروشور الوحدة' : 'Download brochure'}
+    >
+      <FileDown size={16} style={{ opacity: busy ? 0.4 : 1 }} />
+    </button>
+  );
+}
 
 export default function PropertyTableRow({
   prop,
@@ -211,6 +241,9 @@ export default function PropertyTableRow({
                   </button>
                 );
               })()}
+
+              {/* The brochure the team sends to a client who asked for it on WhatsApp */}
+              <BrochureButton prop={prop} isAr={isAr} />
 
               {/* WhatsApp Retargeting / Match Broadcast Button */}
               <button

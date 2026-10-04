@@ -10,7 +10,8 @@ import FounderCmsPanel from '../components/crm/FounderCmsPanel';
 import AreaManagerPanel from '../components/crm/AreaManagerPanel';
 import AdCampaignsPanel from '../components/crm/AdCampaignsPanel';
 import SystemSection, { RestrictedSection } from '../components/crm/SystemSection';
-import { announceNewLeads } from '../utils/newLeadAlerts';
+import { announceNewLeads, announceDownloads } from '../utils/newLeadAlerts';
+import { subscribeToClientDownloads } from '../firebaseLazy';
 import { pushLocalSettingsMissingFromCloud } from '../utils/settingsCloudSync';
 import { RemoteInspectionsPanel, TradeInsPanel } from '../components/crm/ExpatIntakePanels';
 import GoLiveWizardModal from '../components/crm/GoLiveWizardModal';
@@ -149,6 +150,17 @@ export default function CrmPage({
   useEffect(() => {
     if (crmAuthenticated) announceNewLeads(leads, { isAr: lang === 'ar', toast: triggerToast });
   }, [leads, crmAuthenticated, lang, triggerToast]);
+
+  // Clients' downloads (brochures, story cards, files): managers see who downloaded what, live
+  const [clientDownloads, setClientDownloads] = useState([]);
+  const seesDownloads = crmAuthenticated && (isSuperAdminUser || ['sales_manager'].includes(activeRole));
+  useEffect(() => {
+    if (!seesDownloads) return undefined;
+    return subscribeToClientDownloads(setClientDownloads, 30);
+  }, [seesDownloads]);
+  useEffect(() => {
+    if (seesDownloads) announceDownloads(clientDownloads, { isAr: lang === 'ar', toast: triggerToast });
+  }, [clientDownloads, seesDownloads, lang, triggerToast]);
 
   // Settings saved only in this browser (cloud write failed earlier) never reach visitors:
   // upload whatever Firestore doesn't have yet, once per CRM visit of a signed-in super admin.
@@ -563,6 +575,7 @@ export default function CrmPage({
           leads={leads}
           properties={properties}
           demands={demands}
+          clientDownloads={clientDownloads}
           universalSearch={universalSearch}
           setUniversalSearch={setUniversalSearch}
           selectedRole={selectedRole}

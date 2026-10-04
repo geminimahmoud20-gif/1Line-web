@@ -13,6 +13,7 @@ export * from './services/adStats.js';
 export * from './services/clientErrors.js';
 export * from './services/leads.js';
 export * from './services/team.js';
+export * from './services/downloads.js';
 export * from './services/deals.js';
 export * from './services/notifications.js';
 export { REQUEST_CONTACT_FIELDS } from './services/requestContacts.js';

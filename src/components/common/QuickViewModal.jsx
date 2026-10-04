@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { X, MapPin, Maximize2, BedDouble, Bath, MessageSquare, ArrowLeft, ArrowRight, Download, Loader2, Share2, ChevronLeft, ChevronRight, Layers, Sparkles, Store, Briefcase, Building, Video } from 'lucide-react';
+import { X, MapPin, Maximize2, BedDouble, Bath, MessageSquare, ArrowLeft, ArrowRight, FileText, Share2, ChevronLeft, ChevronRight, Layers, Sparkles, Store, Briefcase, Building, Video } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useUIModal } from '../../context/UIModalContext';
 import '../../styles/expat-suite.css';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
 import BrandWatermark from './BrandWatermark';
+import useClientDownload from '../../hooks/useClientDownload';
 
 export default function QuickViewModal({ 
   property, 
@@ -16,8 +17,8 @@ export default function QuickViewModal({
   triggerToast
 }) {
   const [activeImageIdx, setActiveImageIdx] = useState(0);
+  const download = useClientDownload();
   const [viewMode, setViewMode] = useState('photos'); // 'photos' | 'floorplan'
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [imgError, setImgError] = useState(false);
   const { openRemoteInspection } = useUIModal();
 
@@ -55,18 +56,6 @@ export default function QuickViewModal({
   const handlePrevImage = (e) => {
     e.stopPropagation();
     setActiveImageIdx((prev) => (prev - 1 + imagesList.length) % imagesList.length);
-  };
-
-  const handleDownloadPdf = async () => {
-    setIsGeneratingPdf(true);
-    try {
-      const { generatePropertyPdf } = await import('../../utils/pdfBrochure');
-      generatePropertyPdf(property, lang);
-    } catch (err) {
-      console.error('Failed to generate PDF:', err);
-    } finally {
-      setIsGeneratingPdf(false);
-    }
   };
 
   const handleShare = () => {
@@ -362,12 +351,14 @@ export default function QuickViewModal({
                 <button
                   type="button"
                   className="btn btn-pdf-action quickview-half-btn"
-                  onClick={handleDownloadPdf}
-                  disabled={isGeneratingPdf}
-                  title={isAr ? 'تحميل بروشور العقار' : 'Download Property PDF'}
+                  onClick={() => download({ kind: 'property_brochure', itemId: String(property.id || ''), itemTitle: property.title_ar || property.title_en || '' }, async () => {
+                    const { generatePropertyPdf } = await import('../../utils/brochure/propertyBrochure');
+                    await generatePropertyPdf(property);
+                  })}
+                  title={isAr ? 'تحميل بروشور الوحدة' : 'Download the brochure'}
                 >
-                  {isGeneratingPdf ? <Loader2 size={15} className="spin-animation" /> : <Download size={15} />}
-                  <span>{isGeneratingPdf ? (isAr ? 'جاري التحميل...' : 'Loading...') : (isAr ? 'بروشور PDF' : 'PDF Brochure')}</span>
+                  <FileText size={15} />
+                  <span>{isAr ? 'بروشور PDF' : 'Brochure PDF'}</span>
                 </button>
               </div>
             </div>

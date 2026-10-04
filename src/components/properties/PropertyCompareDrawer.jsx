@@ -3,6 +3,7 @@ import { X, Trash2, ShieldCheck, Share2, Star, Download, Building2, Calendar, Ma
 import { Link } from 'react-router-dom';
 import { trackEvent } from '../../utils/visitorTracker';
 import { generateComparePdf } from '../../utils/comparePdfGenerator';
+import useClientDownload from '../../hooks/useClientDownload';
 
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import CompareColumn from './CompareColumn';
@@ -20,6 +21,7 @@ export default function PropertyCompareDrawer({
   currency = 'EGP'
 }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const download = useClientDownload();
   const [activeTab, setActiveTab] = useState('all'); // 'all' | 'financial' | 'specs' | 'legal'
   const [customDownPercent, setCustomDownPercent] = useState(20); // 20% simulator
   const [showAddSelector, setShowAddSelector] = useState(false);
@@ -123,8 +125,10 @@ export default function PropertyCompareDrawer({
 
   const handleDownloadPdf = () => {
     if (compareList.length === 0) return;
-    generateComparePdf(compareList, lang);
-    trackEvent('compare_downloaded_pdf', { count: compareList.length });
+    download({ kind: 'compare_pdf', itemTitle: compareList.map((p) => p.title_ar || p.title_en || p.id).join(' / ') }, () => {
+      generateComparePdf(compareList, lang);
+      trackEvent('compare_downloaded_pdf', { count: compareList.length });
+    });
   };
 
   const handleShareWhatsApp = () => {

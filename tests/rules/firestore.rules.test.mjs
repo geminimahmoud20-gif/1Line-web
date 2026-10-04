@@ -1,7 +1,7 @@
 // Firestore security rules tests. Needs the Firestore emulator (Java 11+):
 //   npm run test:rules
 import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
-import { doc, getDoc, setDoc, deleteDoc, collection, query, where, orderBy, getDocs, writeBatch, deleteField, documentId, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, collection, query, where, orderBy, getDocs, collectionGroup, writeBatch, deleteField, documentId, serverTimestamp } from 'firebase/firestore';
 import fs from 'node:fs';
 import { test, before, after, beforeEach } from 'node:test';
 
@@ -293,6 +293,20 @@ test('ad stats: +1 steps only, and only for published campaigns', async () => {
   await assertSucceeds(setDoc(doc(g, 'ad_stats/ad-2'), { impressions: 1, clicks: 0 }));
 });
 
+test('ad stats shards: same +1 rules, shard ids 0-9, staff read them as a group', async () => {
+  const g = guest();
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'settings/ad_campaigns'), { campaigns: [{ id: 'ad-9' }], campaignIds: ['ad-9'] });
+  });
+  await assertSucceeds(setDoc(doc(g, 'ad_stats/ad-9/ad_stat_shards/3'), { impressions: 1, clicks: 0 }));
+  await assertSucceeds(setDoc(doc(g, 'ad_stats/ad-9/ad_stat_shards/3'), { impressions: 2, clicks: 1 }));
+  await assertFails(setDoc(doc(g, 'ad_stats/ad-9/ad_stat_shards/3'), { impressions: 50, clicks: 1 }));
+  await assertFails(setDoc(doc(g, 'ad_stats/ad-9/ad_stat_shards/42'), { impressions: 1, clicks: 0 }));
+  await assertFails(setDoc(doc(g, 'ad_stats/ad-unpublished/ad_stat_shards/1'), { impressions: 1, clicks: 0 }));
+  await assertFails(getDocs(collectionGroup(g, 'ad_stat_shards')));
+  await assertSucceeds(getDocs(collectionGroup(as('viewer'), 'ad_stat_shards')));
+});
+
 // ── Site error log ───────────────────────────────────────────────────────
 test('client errors: anyone files a bounded entry; only the admin reads or clears', async () => {
   const entry = { kind: 'error', message: 'x is not a function', source: 'https://site/assets/a.js', line: 1, col: 2,
@@ -325,4 +339,25 @@ test('notify: reads the stored record over REST and claims each record once', as
   if ((await db.claimOnce('leads', 'n1')) !== false) throw new Error('second claim should lose');
   // nobody reaches the log through the SDK
   await assertFails(getDoc(doc(asAdmin(), 'notify_log/leads__n1')));
+});
+
+test('staff registry is server-only (api/team.js with the service account)', async () => {
+  await assertFails(getDoc(doc(asAdmin(), 'staff_registry/u1')));
+  await assertFails(setDoc(doc(asAdmin(), 'staff_registry/u1'), { role: 'super_admin' }));
+  await assertFails(setDoc(doc(guest(), 'staff_registry/u1'), { role: 'super_admin' }));
+});
+
+test('client downloads: anyone files a bounded record; only managers read it', async () => {
+  const entry = { kind: 'property_brochure', itemId: 'p1', itemTitle: 'شقة', clientName: 'سارة', clientPhone: '+201001112223',
+    clientEmail: 's@x.test', path: '/properties/p1', createdAt: serverTimestamp() };
+  await assertSucceeds(setDoc(doc(guest(), 'client_downloads/d1'), entry));
+  await assertFails(setDoc(doc(guest(), 'client_downloads/d2'), { ...entry, kind: 'anything' }));
+  await assertFails(setDoc(doc(guest(), 'client_downloads/d3'), { ...entry, clientName: '' }));
+  await assertFails(setDoc(doc(guest(), 'client_downloads/d4'), { ...entry, extra: 1 }));
+  await assertFails(getDoc(doc(guest(), 'client_downloads/d1')));
+  await assertFails(getDoc(doc(as('agent_east'), 'client_downloads/d1')));
+  await assertFails(getDoc(doc(as('viewer'), 'client_downloads/d1')));
+  await assertSucceeds(getDoc(doc(as('sales_manager'), 'client_downloads/d1')));
+  await assertSucceeds(getDoc(doc(asAdmin(), 'client_downloads/d1')));
+  await assertFails(setDoc(doc(guest(), 'client_downloads/d1'), { ...entry, clientName: 'تعديل' }));
 });

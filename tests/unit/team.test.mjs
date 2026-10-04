@@ -68,3 +68,43 @@ test('team accounts on the Auth emulator', { skip: !HOST && 'Auth emulator not r
   assert.equal(r.body.created, false);
   assert.equal(r.body.uid, nada);
 });
+
+// Staff registry in Firestore (runs when both emulators are up)
+const FS = process.env.FIRESTORE_EMULATOR_HOST;
+test('team list comes from the staff registry, not a scan of every account', { skip: (!HOST || !FS) && 'Auth/Firestore emulators not running' }, async () => {
+  const { teamStore, staffRegistry } = await import('../../api/_team-core.js');
+  const { authCaller, firestoreCaller } = await import('../../api/team.js');
+  const P = 'line-c9601';
+  await fetch(`http://${HOST}/emulator/v1/projects/${P}/accounts`, { method: 'DELETE', headers: { Authorization: 'Bearer owner' } });
+  await fetch(`http://${FS}/emulator/v1/projects/${P}/databases/(default)/documents`, { method: 'DELETE' });
+  const auth = authCaller({ project_id: P });
+  const registry = staffRegistry(firestoreCaller({ project_id: P }));
+  const plain = teamStore(auth); // no registry: the way accounts changed outside this route look
+  const store = teamStore(auth, registry);
+
+  const boss = await plain.createUser('boss@reg.test', 'المدير');
+  await plain.updateUser(boss, { claims: { role: 'super_admin', admin: true } });
+  await plain.createUser('client1@reg.test', 'عميل'); // client accounts: never listed
+  await plain.createUser('client2@reg.test', 'عميل');
+
+  // Empty registry → one full scan fills it
+  assert.deepEqual((await store.listMembers()).map((m) => m.email), ['boss@reg.test']);
+  assert.deepEqual(await registry.list(), [boss]);
+
+  const call = (method, body) => handleTeam({ method, body, callerUid: boss, store });
+  const nada = (await call('POST', { action: 'add', email: 'nada@reg.test', role: 'sales_agent' })).body.uid;
+  assert.deepEqual((await registry.list()).sort(), [boss, nada].sort());
+  assert.deepEqual((await call('GET')).body.members.map((m) => [m.email, m.role]), [['boss@reg.test', 'super_admin'], ['nada@reg.test', 'sales_agent']]);
+
+  // A role taken away outside the route: dropped from the list and from the registry
+  await plain.updateUser(nada, { claims: {} });
+  assert.deepEqual((await call('GET')).body.members.map((m) => m.email), ['boss@reg.test']);
+  assert.deepEqual(await registry.list(), [boss]);
+
+  // A role given outside the route shows after "resync"
+  const sami = await plain.createUser('sami@reg.test', 'سامي');
+  await plain.updateUser(sami, { claims: { role: 'finance', admin: false } });
+  assert.deepEqual((await call('GET')).body.members.map((m) => m.email), ['boss@reg.test']);
+  assert.deepEqual((await call('POST', { action: 'resync' })).body.members.map((m) => m.email), ['boss@reg.test', 'sami@reg.test']);
+  assert.deepEqual((await registry.list()).sort(), [boss, sami].sort());
+});

@@ -3,6 +3,7 @@ import { Building2, Store, Briefcase, Video, PhoneCall, Download, Sparkles } fro
 import PhoneInputField from './PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { getAreas } from '../utils/areasData';
+import useClientDownload from '../hooks/useClientDownload';
 
 // Dynamic ROI Yields based on property type in Sohag
 const YIELD_RATES = {
@@ -31,6 +32,7 @@ export const InvestorCenter = ({
   const [whatsappError, setWhatsappError] = useState('');
   const [meetingFormat, setMeetingFormat] = useState('video_tour'); // 'video_tour' | 'phone_call' | 'in_person'
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const download = useClientDownload();
   const [areasList, setAreasList] = useState(() => getAreas().filter(a => a.id !== 'all'));
 
   // Live listen for area data updates from Admin CRM
@@ -121,7 +123,7 @@ export const InvestorCenter = ({
     submitInvestorForm(updatedForm);
   };
 
-  const handleDownloadProspectus = async () => {
+  const handleDownloadProspectus = () => download({ kind: 'investor_prospectus', itemTitle: `${invPropType} — ${invAmount}` }, async () => {
     setIsDownloadingPdf(true);
     try {
       const { generateInvestorProspectusPdf } = await import('../utils/pdfBrochure');
@@ -143,7 +145,7 @@ export const InvestorCenter = ({
     } finally {
       setIsDownloadingPdf(false);
     }
-  };
+  });
 
   return (
     <div className="smart-valuation-wizard-box">
