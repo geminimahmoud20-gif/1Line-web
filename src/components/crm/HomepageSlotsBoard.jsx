@@ -210,13 +210,8 @@ export default function HomepageSlotsBoard({ properties = [], onUpdateProperty, 
         })}
       </ol>
 
-      {(queue.overflow.length > 0 || queue.scheduled.length > 0 || queue.expired.length > 0) && (
+      {(queue.scheduled.length > 0 || queue.expired.length > 0) && (
         <div className="hs-queue">
-          {queue.overflow.length > 0 && (
-            <p><strong>{isAr ? 'في الانتظار (الأماكن ممتلئة):' : 'Waiting (slots full):'}</strong> {queue.overflow.map((p) => (
-              <button type="button" key={p.id} className="hs-queue-item" onClick={() => setEditing(p)}>{title(p)}</button>
-            ))}</p>
-          )}
           {queue.scheduled.length > 0 && (
             <p><CalendarClock size={14} /> <strong>{isAr ? 'مجدول لاحقاً:' : 'Scheduled:'}</strong> {queue.scheduled.map((p) => (
               <button type="button" key={p.id} className="hs-queue-item" onClick={() => setEditing(p)}>{title(p)} <FeaturedPeriodLabel property={p} isAr={isAr} /></button>

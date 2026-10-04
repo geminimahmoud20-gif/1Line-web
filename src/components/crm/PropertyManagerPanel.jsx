@@ -15,6 +15,11 @@ import { uploadMultipleImages } from '../../utils/imageUploadService';
 // Accurate GPS Coordinates map for Sohag Districts
 import PropertyFormModal from './PropertyFormModal';
 import PropertyTableRow from './PropertyTableRow';
+import PropertyFacetFilter from './PropertyFacetFilter';
+import { PROPERTY_TYPES } from '../../data/propertiesData';
+
+const SHORT_TYPE_AR = { apartment: 'شقق ودوبلكس', villa: 'فيلات', commercial: 'محلات', office: 'مكاتب وعيادات', land: 'أراضي' };
+const SHORT_TYPE_EN = { apartment: 'Apartments', villa: 'Villas', commercial: 'Shops', office: 'Offices & clinics', land: 'Land' };
 import OfferModal from './OfferModal';
 const SOHAG_AREA_COORDINATES = {
   east: { lat: 26.5569, lng: 31.7001 },
@@ -75,6 +80,8 @@ export default function PropertyManagerPanel({
 }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingPropertyId, setEditingPropertyId] = useState(null);
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [areaFilter, setAreaFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'published' | 'hidden' | 'under_negotiation' | 'sold' | 'trash'
   const [searchQuery, setSearchQuery] = useState('');
   const [showMapPicker, setShowMapPicker] = useState(false);
@@ -454,7 +461,11 @@ export default function PropertyManagerPanel({
       if (statusFilter === 'under_negotiation' && propStatus !== 'under_negotiation') return false;
       if (statusFilter === 'sold' && propStatus !== 'sold') return false;
 
-      // 3. Search Query
+      // 3. Type & area (the pill filter)
+      if (typeFilter !== 'all' && prop.type !== typeFilter) return false;
+      if (areaFilter !== 'all' && prop.areaKey !== areaFilter) return false;
+
+      // 4. Search Query
       if (searchQuery.trim() !== '') {
         const q = searchQuery.toLowerCase();
         const matchTitle = (prop.title_ar || '').toLowerCase().includes(q) || (prop.title_en || '').toLowerCase().includes(q);
@@ -465,7 +476,22 @@ export default function PropertyManagerPanel({
 
       return true;
     });
-  }, [properties, statusFilter, searchQuery]);
+  }, [properties, statusFilter, searchQuery, typeFilter, areaFilter]);
+
+  // Pill filter options: only the types and areas that have listings (outside the trash), with counts
+  const facets = useMemo(() => {
+    const live = properties.filter((p) => !(p.isDeleted || p.status === 'trash'));
+    const count = (key) => live.reduce((m, p) => { const k = p[key]; if (k) m.set(k, (m.get(k) || 0) + 1); return m; }, new Map());
+    const byType = count('type');
+    const byArea = count('areaKey');
+    return {
+      types: PROPERTY_TYPES.filter((t) => t.id !== 'all' && byType.get(t.id))
+        .map((t) => ({ id: t.id, label: (isAr ? SHORT_TYPE_AR : SHORT_TYPE_EN)[t.id] || (isAr ? t.name_ar : t.name_en), count: byType.get(t.id) })),
+      areas: areas.filter((a) => a.id !== 'all' && byArea.get(a.id))
+        .map((a) => ({ id: a.id, label: isAr ? (a.name_ar || a.label_ar || a.id) : (a.name_en || a.name_ar || a.id), count: byArea.get(a.id) }))
+        .sort((x, y) => y.count - x.count)
+    };
+  }, [properties, areas, isAr]);
 
   const badgePresets = [
     { ar: 'عرض مميز', en: 'Featured Deal' },
@@ -566,6 +592,16 @@ export default function PropertyManagerPanel({
           }}
         />
       )}
+
+      <PropertyFacetFilter
+        types={facets.types}
+        areas={facets.areas}
+        typeFilter={typeFilter}
+        areaFilter={areaFilter}
+        onType={setTypeFilter}
+        onArea={setAreaFilter}
+        isAr={isAr}
+      />
 
       {/* Status Filter Tabs & Search Bar */}
       <div className="crm-table-header" style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
