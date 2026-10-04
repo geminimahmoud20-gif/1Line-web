@@ -288,7 +288,10 @@
 }
 
 .gx-photo { position: relative; aspect-ratio: 16 / 8.5; background: linear-gradient(135deg, #16294A, #081221); }
-.gx-photo img { width: 100%; height: 100%; object-fit: cover; }
+/* The photo never sets the card height: a portrait or square image used to stretch its card, so
+   two offers side by side came out different sizes. Fixed frame, image cropped to fill it. */
+.gx-photo { overflow: hidden; min-height: 0; }
+.gx-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .gx-photo::after {
   content: '';
   position: absolute;
