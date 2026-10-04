@@ -2887,7 +2887,7 @@
 
 .property-detail-hero-stage .gallery-main-item {
   position: relative;
-  height: 480px;
+  height: 380px;
   cursor: pointer;
   overflow: hidden;
   border-radius: 18px;
@@ -3020,7 +3020,7 @@
     height: auto;
   }
   .property-detail-hero-stage .gallery-main-item {
-    height: 320px;
+    height: 250px;
   }
   .property-detail-hero-stage .gallery-side-thumbs {
     grid-template-columns: repeat(3, 1fr);
@@ -3374,4 +3374,23 @@
 /* Room under the search chips for the controls pill */
 .hx-hero:has(> .hero-video-controls-badge) .hx-hero-inner {
   padding-block-end: calc(clamp(48px, 7vh, 80px) + 28px);
+}
+
+/* Property page on phones: shorter — the main photo opens the full gallery, so the thumbnail row
+   goes, and similar listings become one row you swipe through */
+@media (max-width: 640px) {
+  .property-detail-hero-stage .gallery-side-thumbs { display: none; }
+  .similar-properties-section .properties-grid-3 {
+    display: grid;
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: min(82%, 320px);
+    gap: 14px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 6px;
+    scrollbar-width: none;
+  }
+  .similar-properties-section .properties-grid-3::-webkit-scrollbar { display: none; }
+  .similar-properties-section .properties-grid-3 > * { scroll-snap-align: start; }
 }

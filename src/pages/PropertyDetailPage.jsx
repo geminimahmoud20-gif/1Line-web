@@ -1,9 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MapPin, Sparkles, CheckCircle2, Layers, Calendar, Phone, MessageSquare, ShieldCheck, TrendingUp, TrendingDown, Calculator, Navigation, ArrowRight, ArrowLeft, Building, Video, Zap, Droplets, Copy, Sun, Moon, Scale, Flame } from 'lucide-react';
+import { MapPin, Sparkles, CheckCircle2, Layers, Calendar, Phone, MessageSquare, ShieldCheck, TrendingUp, TrendingDown, Navigation, ArrowRight, ArrowLeft, Building, Video, Zap, Droplets, Copy, Sun, Moon, Scale, Flame } from 'lucide-react';
 import { incrementPropertyView, getPropertyViews } from '../utils/visitorTracker';
 import PropertyGallery from '../components/properties/PropertyGallery';
-import MortgageRoiCalculator from '../components/calculators/MortgageRoiCalculator';
 import PropertyCard from '../components/properties/PropertyCard';
 import LegalAuditCard from '../components/properties/LegalAuditCard';
 import WhatsAppAutomationBar from '../components/properties/WhatsAppAutomationBar';
@@ -25,7 +24,7 @@ import { saveLead } from '../firebaseLazy';
 import { useClientAuth } from '../context/ClientAuthContext';
 import { useUIModal } from '../context/UIModalContext';
 
-import { getFamilyInfo, computeFinanceBreakdown } from '../utils/propertyInsights';
+import { getFamilyInfo } from '../utils/propertyInsights';
 import { PROPERTY_TYPES } from '../data/propertiesData';
 
 import '../styles/expat-suite.css';
@@ -72,7 +71,7 @@ export default function PropertyDetailPage({
   const { id } = useParams();
   const { openRemoteInspection } = useUIModal();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'legal' | 'valuation' | 'financing'
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'legal' | 'valuation'
   const [depositModalOpen, setDepositModalOpen] = useState(false);
   const [storyModalOpen, setStoryModalOpen] = useState(false);
   const [bookingConfirmationOpen, setBookingConfirmationOpen] = useState(false);
@@ -195,9 +194,6 @@ export default function PropertyDetailPage({
         ? (isAr ? 'تحت الإنشاء' : 'Under construction')
         : '';
   const officeOpen = isOfficeOpenNow();
-  const financePlan = computeFinanceBreakdown(property)?.plan || null;
-  // Most units sell cash: the installment calculator only shows on a listing that has its own plan
-  const hasInstallments = Number(property.installmentYears) > 0 || Number(property.monthlyInstallment) > 0;
   const util = property.utilities || {};
   const utilityItems = [
     { key: 'electricity', Icon: Zap, label: isAr ? 'الكهرباء' : 'Electricity', value: util.electricity_ar },
@@ -471,7 +467,6 @@ export default function PropertyDetailPage({
             { id: 'overview', Icon: Layers, ar: 'المواصفات والتكاليف', en: 'Specs & costs' },
             { id: 'legal', Icon: ShieldCheck, ar: 'الموقف القانوني', en: 'Legal status' },
             { id: 'valuation', Icon: TrendingUp, ar: 'السعر والمنطقة', en: 'Price & area' },
-            ...(hasInstallments ? [{ id: 'financing', Icon: Calculator, ar: 'خطة التقسيط', en: 'Installment plan' }] : [])
           ].map(({ id: tabId, Icon, ar, en }, idx, all) => (
             <button
               key={tabId}
@@ -563,39 +558,6 @@ export default function PropertyDetailPage({
               </div>
             )}
 
-            {/* TAB 4: FINANCING & ROI CALCULATOR */}
-            {activeTab === 'financing' && hasInstallments && (
-              <div className="tab-pane-content">
-                {/* Customized Mortgage Calculator for this property */}
-                <div className="detail-card-box">
-                  <h3>{isAr ? 'حاسبة القسط والتمويل لهذا العقار' : 'Payment & Financing Calculator'}</h3>
-                  {Number(property.monthlyInstallment) > 0 && (
-                    <p className="pd-calc-note">
-                      {financePlan?.incomplete
-                        ? (isAr
-                          ? `الحاسبة توزّع كل المبلغ المتبقي على أقساط شهرية متساوية بدون فوائد، لذلك يختلف القسط هنا عن القسط المسجل (${Number(property.monthlyInstallment).toLocaleString('en-US')} ج.م) الذي يصاحبه رصيد غير مجدول — راجع مصفوفة التكاليف.`
-                          : `The calculator spreads the whole remaining amount over equal interest-free months, so it differs from the listed installment (${Number(property.monthlyInstallment).toLocaleString('en-US')} EGP), which comes with an unscheduled balance — see the cost breakdown.`)
-                        : (isAr
-                          ? 'الحاسبة تبدأ بنظام السداد المسجل لهذا العقار (تقسيط مباشر بدون فوائد). غيّر النسبة لو هتمول من بنك.'
-                          : 'The calculator starts from this listing\'s own plan (direct, interest-free). Change the rate if you finance through a bank.')}
-                    </p>
-                  )}
-                  <MortgageRoiCalculator
-                    lang={lang}
-                    initialPrice={property.price}
-                    // exact share (not rounded) so the down payment matches the listing to the pound
-                    initialDownpaymentPercent={property.downPayment && property.price ? Math.round((property.downPayment / property.price) * 10000) / 100 : 20}
-                    initialYears={property.installmentYears || 5}
-                    // the listing's own plan is interest-free; a bank rate is the visitor's choice
-                    initialInterestRate={Number(property.monthlyInstallment) > 0 ? 0 : 12}
-                    initialMonthlyRent={Number(property.commercial?.rentPerSqm) > 0 && Number(property.size) > 0
-                      ? Math.round(Number(property.commercial.rentPerSqm) * Number(property.size))
-                      : 18000}
-                    rentIsEstimate={!(Number(property.commercial?.rentPerSqm) > 0)}
-                  />
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Right / Sticky Agent & Booking Sidebar */}

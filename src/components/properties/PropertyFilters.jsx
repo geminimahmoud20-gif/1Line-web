@@ -381,34 +381,6 @@ export default function PropertyFilters({
               </select>
             </div>
 
-            {/* Payment Scheme */}
-            <div className="filter-item">
-              <label className="compact-label">{isAr ? 'نظام الدفع' : 'Payment Plan'}</label>
-              <select
-                value={filters.paymentPlan || 'all'}
-                onChange={(e) => onFilterChange('paymentPlan', e.target.value)}
-              >
-                <option value="all">{isAr ? 'كل طرق الدفع' : 'Any payment'}</option>
-                <option value="cash">{isAr ? 'كاش' : 'Cash'}</option>
-                <option value="installments">{isAr ? 'متاح تقسيط' : 'Installments available'}</option>
-              </select>
-            </div>
-
-            {/* Installment Years (only when the visitor asks for installments) */}
-            {filters.paymentPlan === 'installments' && (
-              <div className="filter-item">
-                <label className="compact-label">{isAr ? 'فترة التقسيط المتاحة' : 'Installment Period'}</label>
-                <select
-                  value={filters.maxInstallmentYears || 'all'}
-                  onChange={(e) => onFilterChange('maxInstallmentYears', e.target.value)}
-                >
-                  <option value="all">{isAr ? 'أي مدة تقسيط' : 'Any Years'}</option>
-                  <option value="3">{isAr ? 'حتى 3 سنوات' : 'Up to 3 Years'}</option>
-                  <option value="5">{isAr ? 'حتى 5 سنوات' : 'Up to 5 Years'}</option>
-                  <option value="7">{isAr ? '7 سنوات فأكثر' : '7+ Years'}</option>
-                </select>
-              </div>
-            )}
           </div>
         </div>
       )}

@@ -23,7 +23,6 @@ import HomeMarketplace from '../components/home/HomeMarketplace';
 // Below the fold: their own chunks, fetched right after the hero renders instead of in the entry bundle
 const FamilyLegacySection = lazy(() => import('../components/family/FamilyLegacySection'));
 const GoldStandardsSection = lazy(() => import('../components/home/GoldStandardsSection'));
-const FaqSection = lazy(() => import('../components/home/FaqSection'));
 
 // Keep in sync with the <link rel="preload"> in index.html
 
@@ -583,11 +582,6 @@ export default function HomePage({
           <GoldStandardsSection lang={lang} />
         </Suspense>
       </ScrollReveal>
-
-      {/* FAQ — answer-engine friendly, with FAQPage schema */}
-      <Suspense fallback={null}>
-        <FaqSection lang={lang} />
-      </Suspense>
 
       {/* 🎬 Hero Video Theater Modal (Full uncropped HD viewing) */}
       {showTheaterModal && (

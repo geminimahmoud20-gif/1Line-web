@@ -21,13 +21,11 @@ import {
   Rotate3d,
   Images,
   TrendingDown,
-  Wallet,
   Video,
   Flame
 } from 'lucide-react';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { formatCurrencyPrice, getPriceBenchmark } from '../../utils/currencyAndBenchmark';
-import { formatApprox } from '../../utils/fxRates';
 import { useUIModal } from '../../context/UIModalContext';
 import { getActiveOffer } from '../../utils/propertyOffers';
 import OfferCountdown from './OfferCountdown';
@@ -163,8 +161,6 @@ export default function PropertyCard({
     if (property.bathrooms > 0) specs.push({ key: 'baths', Icon: Bath, value: property.bathrooms, label: isAr ? 'حمام' : 'Baths' });
   }
 
-  const hasInstallments = Number(property.monthlyInstallment) > 0;
-  const installmentYears = Number(property.installmentYears) || 0;
 
   const stop = (e) => { e.preventDefault(); e.stopPropagation(); };
   const goTo = (idx) => setActiveImageIndex((idx + photoCount) % photoCount);
@@ -415,33 +411,6 @@ export default function PropertyCard({
             </li>
           ))}
         </ul>
-
-        {hasInstallments ? (
-          <div className="pcx-finance">
-            <div className="pcx-fin-cell">
-              <span className="pcx-fin-label">{isAr ? 'المقدم' : 'Down payment'}</span>
-              <span className="pcx-fin-val"><bdi>{fmt(property.downPayment)}</bdi> <small>{isAr ? 'ج.م' : 'EGP'}</small></span>
-              {currency !== 'EGP' && formatApprox(property.downPayment, currency, lang) && (
-                <span className="pcx-fin-fx"><bdi>{formatApprox(property.downPayment, currency, lang)}</bdi></span>
-              )}
-            </div>
-            <div className="pcx-fin-cell pcx-fin-cell--accent">
-              <span className="pcx-fin-label">
-                {isAr ? 'القسط الشهري' : 'Monthly'}
-                {installmentYears > 0 && <em>{isAr ? `${installmentYears} سنوات` : `${installmentYears} yrs`}</em>}
-              </span>
-              <span className="pcx-fin-val"><bdi>{fmt(property.monthlyInstallment)}</bdi> <small>{isAr ? 'ج.م' : 'EGP'}</small></span>
-              {currency !== 'EGP' && formatApprox(property.monthlyInstallment, currency, lang) && (
-                <span className="pcx-fin-fx"><bdi>{formatApprox(property.monthlyInstallment, currency, lang)}</bdi></span>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="pcx-finance pcx-finance--cash">
-            <Wallet size={15} strokeWidth={1.75} aria-hidden="true" />
-            <span>{isAr ? 'سداد كاش — بدون أقساط' : 'Cash payment — no installments'}</span>
-          </div>
-        )}
 
         <div className="pcx-cta">
           <Link to={detailsUrl} className="pcx-btn-main" onClick={() => announceView(property, title)}>

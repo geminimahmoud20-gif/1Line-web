@@ -346,7 +346,6 @@
   color: var(--pcx-gold-text);
   font-variant-numeric: tabular-nums;
 }
-.pcx-fin-fx { font-size: 0.66rem; font-weight: 600; color: var(--pcx-muted); font-variant-numeric: tabular-nums; }
 
 .pcx-insight {
   align-self: flex-start;
@@ -424,60 +423,6 @@
 }
 .pcx-spec-val small { font-size: 0.7rem; font-weight: 600; color: var(--pcx-muted); }
 .pcx-spec-label { font-size: 0.68rem; color: var(--pcx-muted); line-height: 1.3; }
-
-/* Finance panel */
-.pcx-finance {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-.pcx-fin-cell {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between; /* values line up even when one label wraps */
-  gap: 4px;
-  padding: 9px 11px;
-  border-radius: 12px;
-  background: var(--pcx-soft);
-  min-width: 0;
-}
-.pcx-fin-cell--accent { background: var(--pcx-gold-soft); }
-.pcx-fin-label {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 6px;
-  font-size: 0.68rem;
-  font-weight: 600;
-  line-height: 1.3;
-  color: var(--pcx-muted);
-}
-.pcx-fin-label em {
-  font-style: normal;
-  font-size: 0.62rem;
-  font-weight: 700;
-  padding: 1px 6px;
-  border-radius: 999px;
-  color: var(--pcx-gold-text);
-  background: rgba(197, 160, 89, 0.18);
-  white-space: nowrap;
-}
-.pcx-fin-val { font-size: 0.95rem; font-weight: 800; color: var(--pcx-ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.pcx-fin-cell--accent .pcx-fin-val { color: var(--pcx-gold-text); }
-.pcx-fin-val small { font-size: 0.68rem; font-weight: 600; color: var(--pcx-muted); }
-
-.pcx-finance--cash {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 11px 12px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--pcx-muted);
-  background: var(--pcx-soft);
-}
-.pcx-finance--cash svg { color: var(--pcx-gold); flex: none; }
 
 /* CTA row pinned to the bottom so rows of cards line up */
 .pcx-cta {

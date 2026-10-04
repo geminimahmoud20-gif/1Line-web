@@ -118,12 +118,10 @@ html .footer-crm-lock::after {
 /* ── 4. Text too small to read on a phone (was 10–11px) ──────────────────── */
 @media (max-width: 768px) {
   html .pcx-spec-label,
-  html .pcx-fin-label,
   html .spec-lbl,
   html .metric-lbl,
   html .prog-desc,
   html .legend-item { font-size: 0.75rem; }
-  html .pcx-fin-label em { font-size: 0.7rem; }
   html .pcx-ppm small,
   html .pcx-spec-val small { font-size: 0.72rem; }
   html .mobile-sticky-price .mob-lbl { font-size: 0.75rem; }
