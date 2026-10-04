@@ -1,5 +1,5 @@
 import { ShieldCheck, CheckCircle2, FileText, UserCheck, Clock, MessageCircle, Info } from 'lucide-react';
-import { brochureRequestUrl, trackBrochureRequest } from '../../utils/brochure/requestBrochure';
+import useClientDownload from '../../hooks/useClientDownload';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import '../../styles/expat-suite.css';
 
@@ -21,6 +21,7 @@ export default function LegalAuditCard({ property, lang = 'ar' }) {
   const isAr = lang === 'ar';
   const L = (ar, en) => (isAr ? ar : en);
   const legal = property.legalStatus || null;
+  const download = useClientDownload();
   const code = String(property.id || '').toUpperCase();
 
   const rows = legal
@@ -90,9 +91,16 @@ export default function LegalAuditCard({ property, lang = 'ar' }) {
         <a className="xs-btn xs-btn--ghost" href={askUrl} target="_blank" rel="noopener noreferrer">
           <MessageCircle size={16} aria-hidden="true" /> {L('اطلب المستندات والملخص الكامل', 'Request documents & full summary')}
         </a>
-        <a className="xs-btn xs-btn--ghost" href={brochureRequestUrl(property)} target="_blank" rel="noopener noreferrer" onClick={() => trackBrochureRequest(property)}>
-          <FileText size={16} aria-hidden="true" /> {L('اطلب بروشور الوحدة', 'Request the brochure')}
-        </a>
+        <button
+          type="button"
+          className="xs-btn xs-btn--ghost"
+          onClick={() => download({ kind: 'property_brochure', itemId: String(property.id || ''), itemTitle: property.title_ar || property.title_en || '' }, async () => {
+            const { generatePropertyPdf } = await import('../../utils/brochure/propertyBrochure');
+            await generatePropertyPdf(property);
+          })}
+        >
+          <FileText size={16} aria-hidden="true" /> {L('بروشور العقار PDF', 'Property PDF')}
+        </button>
       </div>
 
       <p className="xs-fin-foot">

@@ -431,7 +431,7 @@ button.sidebar-deposit-banner .deposit-banner-left > span { display: flex; flex-
   position: fixed;
   inset-inline: 16px;
   bottom: calc(16px + env(safe-area-inset-bottom));
-  z-index: 11000;
+  z-index: 2400; /* above the page, below dialogs (2500+), so it never covers a modal's buttons */
   max-width: 720px;
   margin-inline: auto;
   display: flex;

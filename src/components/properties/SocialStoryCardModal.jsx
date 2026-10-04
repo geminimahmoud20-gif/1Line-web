@@ -1,26 +1,43 @@
 import { useState, useRef } from 'react';
 import { X, Download, Sparkles, ShieldCheck, MapPin } from 'lucide-react';
+import useClientDownload from '../../hooks/useClientDownload';
 
 export default function SocialStoryCardModal({ isOpen, onClose, property, lang = 'ar', triggerToast }) {
   const [downloading, setDownloading] = useState(false);
   const cardRef = useRef(null);
+  const download = useClientDownload();
 
   if (!isOpen || !property) return null;
   const isAr = lang === 'ar';
 
   const title = isAr ? property.title_ar : property.title_en;
   const location = isAr ? property.locationName_ar : property.locationName_en;
-  const priceFormatted = `${property.price.toLocaleString('en-US')} ${isAr ? 'ج.م' : 'EGP'}`;
-  const downPayment = property.downPayment ? `${property.downPayment.toLocaleString('en-US')} ${isAr ? 'ج.م' : 'EGP'}` : '-';
+  const priceFormatted = `${(Number(property.price) || 0).toLocaleString('en-US')} ${isAr ? 'ج.م' : 'EGP'}`;
 
-  const handleDownloadStory = () => {
-    setDownloading(true);
-    // Trigger download of story card image
-    setTimeout(() => {
-      setDownloading(false);
-      triggerToast(isAr ? 'تم تجهيز بطاقة الستوري بنجاح' : 'Story card ready!', 'success');
-    }, 1000);
-  };
+  // The 9:16 card as a PNG (registered clients only; the team sees the download)
+  const handleDownloadStory = () => download(
+    { kind: 'story_card', itemId: String(property.id || ''), itemTitle: property.title_ar || property.title_en || '' },
+    async () => {
+      if (!cardRef.current) return;
+      setDownloading(true);
+      try {
+        const { default: html2canvas } = await import('html2canvas');
+        const canvas = await html2canvas(cardRef.current, { scale: 2, useCORS: true, backgroundColor: null, logging: false });
+        const a = document.createElement('a');
+        a.href = canvas.toDataURL('image/png');
+        a.download = `1Line_story_${String(property.unitCode || property.id || 'unit').replace(/[^\w-]+/g, '_')}.png`;
+        document.body.append(a);
+        a.click();
+        a.remove();
+        triggerToast?.(isAr ? 'تم تنزيل بطاقة الستوري' : 'Story card downloaded', 'success');
+      } catch (err) {
+        triggerToast?.(isAr ? 'تعذّر تجهيز الصورة، جرّب تاني' : 'Could not build the image', 'error');
+        throw err;
+      } finally {
+        setDownloading(false);
+      }
+    }
+  );
 
   return (
     <div className="track-modal-backdrop" onClick={onClose}>
@@ -66,7 +83,7 @@ export default function SocialStoryCardModal({ isOpen, onClose, property, lang =
                 <span>•</span>
                 <span>{property.bedrooms || 0} غرف</span>
                 <span>•</span>
-                <span>مقدم {downPayment}</span>
+                <span>كاش</span>
               </div>
 
               <div className="story-legal-footer">

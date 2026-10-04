@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Menu, Search, X, Plus, ChevronDown, Bell, ShieldCheck, Lock, Rocket, Globe, LogOut, Users, Building, Zap, Sparkles, CheckCircle2, AlertTriangle, ArrowRight, ArrowLeft } from 'lucide-react';
 import { CRM_ROLES } from './crmRoles';
-import { desktopAlertsSupported, desktopAlertsEnabled, enableDesktopAlerts } from '../../utils/newLeadAlerts';
+import { desktopAlertsSupported, desktopAlertsEnabled, enableDesktopAlerts, describeDownload } from '../../utils/newLeadAlerts';
 
 export default function CrmTopbar({
+  clientDownloads = [],
   isAr = true,
   leads = [],
   properties = [],
@@ -49,7 +50,20 @@ export default function CrmTopbar({
 
   const pendingDemands = useMemo(() => demands.filter(d => d.status === 'pending'), [demands]);
   const recentLeads = useMemo(() => leads.slice(0, 3), [leads]);
-  const totalNotifications = pendingDemands.length + (recentLeads.length > 0 ? 1 : 0);
+  // Downloads since the bell was last opened count towards the badge (remembered on this browser)
+  const [downloadsSeenAt, setDownloadsSeenAt] = useState(() => {
+    try { return Number(localStorage.getItem('oneline_crm_downloads_seen_at')) || 0; } catch { return 0; }
+  });
+  const recentDownloads = useMemo(
+    () => clientDownloads.filter((d) => (d.createdAt?.toMillis ? d.createdAt.toMillis() : 0) > downloadsSeenAt),
+    [clientDownloads, downloadsSeenAt]
+  );
+  const markDownloadsSeen = () => {
+    const now = Date.now();
+    setDownloadsSeenAt(now);
+    try { localStorage.setItem('oneline_crm_downloads_seen_at', String(now)); } catch { /* not remembered */ }
+  };
+  const totalNotifications = pendingDemands.length + (recentLeads.length > 0 ? 1 : 0) + recentDownloads.length;
 
   // Dynamic breadcrumb labels
   const tabTitles = {
@@ -472,7 +486,7 @@ export default function CrmTopbar({
           <button
             type="button"
             className="crm-notif-btn"
-            onClick={() => setShowNotifMenu(!showNotifMenu)}
+            onClick={() => { if (!showNotifMenu) markDownloadsSeen(); setShowNotifMenu(!showNotifMenu); }}
             title={isAr ? 'الإشعارات والتنبيهات' : 'Notifications'}
           >
             <Bell size={16} />
@@ -507,6 +521,24 @@ export default function CrmTopbar({
                   >
                     <Bell size={13} /> {isAr ? 'فعّل إشعار سطح المكتب للعملاء الجدد' : 'Turn on desktop alerts for new leads'}
                   </button>
+                )}
+                {clientDownloads.length > 0 && (
+                  <div style={{ padding: '8px 10px', background: 'var(--crm-info-soft)', border: '1px solid var(--crm-info-line)', borderRadius: '8px' }}>
+                    <div style={{ fontWeight: 'bold', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-info)', marginBottom: '4px' }}>
+                      {isAr ? '📥 آخر تحميلات العملاء' : '📥 Latest client downloads'}
+                    </div>
+                    <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '6px', maxHeight: '220px', overflowY: 'auto' }}>
+                      {clientDownloads.slice(0, 8).map((d) => (
+                        <li key={d.id} style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-ink)', lineHeight: 1.5 }}>
+                          <div>{describeDownload(d, isAr)}</div>
+                          <small style={{ color: 'var(--crm-muted)' }}>
+                            <span style={{ direction: 'ltr', unicodeBidi: 'isolate', display: 'inline-block' }}>{d.clientPhone || d.clientEmail || ''}</span>
+                            {d.createdAt?.toDate ? ` · ${d.createdAt.toDate().toLocaleString(isAr ? 'ar-EG-u-nu-latn' : 'en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : ''}
+                          </small>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
                 {pendingDemands.length > 0 ? (
                   <div

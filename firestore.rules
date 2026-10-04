@@ -307,6 +307,26 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // 📥 8f. CLIENT DOWNLOADS — a registered client downloaded a brochure / story card / file.
+    // The browser files a bounded record; managers see who downloaded what (it holds the client's
+    // contact, so desk agents and read-only roles don't read it).
+    match /client_downloads/{entryId} {
+      function validDownload(data) {
+        return data.keys().hasOnly(['kind', 'itemId', 'itemTitle', 'clientName', 'clientPhone', 'clientEmail', 'path', 'createdAt'])
+          && data.kind in ['property_brochure', 'story_card', 'project_brochure', 'investor_prospectus', 'compare_pdf']
+          && isStr(data, 'itemId', 0, 128)
+          && isStr(data, 'itemTitle', 0, 200)
+          && isStr(data, 'clientName', 1, 100)
+          && isStr(data, 'clientPhone', 0, 25)
+          && isStr(data, 'clientEmail', 0, 120)
+          && isStr(data, 'path', 0, 200)
+          && data.createdAt == request.time;
+      }
+      allow create: if validDownload(request.resource.data);
+      allow read: if hasRole(['sales_manager']);
+      allow delete: if isAdmin();
+    }
+
     // 👥 8e. STAFF REGISTRY — uid → role of every CRM account, kept by api/team.js with the service
     // account so the team screen reads a few docs instead of scanning every client account.
     match /staff_registry/{uid} {

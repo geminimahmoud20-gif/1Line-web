@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { FileText, Share2, Check, Sparkles } from 'lucide-react';
-import { brochureRequestUrl, trackBrochureRequest } from '../../utils/brochure/requestBrochure';
+import useClientDownload from '../../hooks/useClientDownload';
 import { getWhatsAppUrl, getDynamicPhone } from '../../utils/founderCmsData';
 import { formatCurrencyPrice, getPriceBenchmark } from '../../utils/currencyAndBenchmark';
 import '../../styles/expat-suite.css';
@@ -12,7 +12,7 @@ const WaIcon = () => (
 );
 
 /**
- * Share toolbar under the gallery: brochure request on WhatsApp, 9:16 story card, WhatsApp and native share.
+ * Share toolbar under the gallery: brochure PDF (registered clients), 9:16 story card, WhatsApp and native share.
  * The shared text only states facts the listing actually carries.
  */
 export default function WhatsAppAutomationBar({ property, lang = 'ar', currency = 'EGP', triggerToast, onOpenStoryCard }) {
@@ -61,6 +61,24 @@ export default function WhatsAppAutomationBar({ property, lang = 'ar', currency 
     ];
   const shareText = lines.filter(Boolean).join('\n');
 
+  const download = useClientDownload();
+  const [brochureBusy, setBrochureBusy] = useState(false);
+  // Registered clients only; the team sees who downloaded it (CRM bell)
+  const handleBrochure = () => download({ kind: 'property_brochure', itemId: String(property.id || ''), itemTitle: property.title_ar || property.title_en || '' }, async () => {
+    setBrochureBusy(true);
+    try {
+      const { generatePropertyPdf } = await import('../../utils/brochure/propertyBrochure');
+      await generatePropertyPdf(property);
+      triggerToast?.(isAr ? 'تم تنزيل بروشور العقار PDF' : 'PDF brochure downloaded', 'success');
+    } catch (err) {
+      console.error('PDF generation error:', err);
+      triggerToast?.(isAr ? 'تعذر تنزيل البروشور' : 'Could not generate the PDF', 'error');
+      throw err;
+    } finally {
+      setBrochureBusy(false);
+    }
+  });
+
   const handleWhatsApp = () => window.open(getWhatsAppUrl(shareText), '_blank', 'noopener');
 
   // Native share sheet on phones; copy as a fallback
@@ -87,10 +105,10 @@ export default function WhatsAppAutomationBar({ property, lang = 'ar', currency 
     <div className="xs-share" role="toolbar" aria-label={isAr ? 'مشاركة العقار' : 'Share this property'}>
       <span className="xs-share-label">{isAr ? 'شارك العقار' : 'Share'}</span>
       <div className="xs-share-actions">
-        <a className="xs-share-btn is-gold" href={brochureRequestUrl(property)} target="_blank" rel="noopener noreferrer" onClick={() => trackBrochureRequest(property)}>
+        <button type="button" className="xs-share-btn is-gold" onClick={handleBrochure} disabled={brochureBusy}>
           <FileText size={16} aria-hidden="true" />
-          <span>{isAr ? 'اطلب البروشور على واتساب' : 'Brochure on WhatsApp'}</span>
-        </a>
+          <span>{brochureBusy ? (isAr ? 'جاري التجهيز…' : 'Preparing…') : (isAr ? 'تحميل البروشور PDF' : 'Download brochure')}</span>
+        </button>
         {onOpenStoryCard && (
           <button type="button" className="xs-share-btn" onClick={onOpenStoryCard}>
             <Sparkles size={16} aria-hidden="true" />

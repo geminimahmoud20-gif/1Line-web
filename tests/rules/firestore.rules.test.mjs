@@ -346,3 +346,18 @@ test('staff registry is server-only (api/team.js with the service account)', asy
   await assertFails(setDoc(doc(asAdmin(), 'staff_registry/u1'), { role: 'super_admin' }));
   await assertFails(setDoc(doc(guest(), 'staff_registry/u1'), { role: 'super_admin' }));
 });
+
+test('client downloads: anyone files a bounded record; only managers read it', async () => {
+  const entry = { kind: 'property_brochure', itemId: 'p1', itemTitle: 'شقة', clientName: 'سارة', clientPhone: '+201001112223',
+    clientEmail: 's@x.test', path: '/properties/p1', createdAt: serverTimestamp() };
+  await assertSucceeds(setDoc(doc(guest(), 'client_downloads/d1'), entry));
+  await assertFails(setDoc(doc(guest(), 'client_downloads/d2'), { ...entry, kind: 'anything' }));
+  await assertFails(setDoc(doc(guest(), 'client_downloads/d3'), { ...entry, clientName: '' }));
+  await assertFails(setDoc(doc(guest(), 'client_downloads/d4'), { ...entry, extra: 1 }));
+  await assertFails(getDoc(doc(guest(), 'client_downloads/d1')));
+  await assertFails(getDoc(doc(as('agent_east'), 'client_downloads/d1')));
+  await assertFails(getDoc(doc(as('viewer'), 'client_downloads/d1')));
+  await assertSucceeds(getDoc(doc(as('sales_manager'), 'client_downloads/d1')));
+  await assertSucceeds(getDoc(doc(asAdmin(), 'client_downloads/d1')));
+  await assertFails(setDoc(doc(guest(), 'client_downloads/d1'), { ...entry, clientName: 'تعديل' }));
+});

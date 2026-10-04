@@ -6,7 +6,7 @@ import '../../styles/expat-suite.css';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
 import BrandWatermark from './BrandWatermark';
-import { brochureRequestUrl, trackBrochureRequest } from '../../utils/brochure/requestBrochure';
+import useClientDownload from '../../hooks/useClientDownload';
 
 export default function QuickViewModal({ 
   property, 
@@ -17,6 +17,7 @@ export default function QuickViewModal({
   triggerToast
 }) {
   const [activeImageIdx, setActiveImageIdx] = useState(0);
+  const download = useClientDownload();
   const [viewMode, setViewMode] = useState('photos'); // 'photos' | 'floorplan'
   const [imgError, setImgError] = useState(false);
   const { openRemoteInspection } = useUIModal();
@@ -347,17 +348,18 @@ export default function QuickViewModal({
                   <span>{isAr ? 'استفسار واتساب' : 'WhatsApp'}</span>
                 </a>
 
-                <a
-                  href={brochureRequestUrl(property)}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  type="button"
                   className="btn btn-pdf-action quickview-half-btn"
-                  onClick={() => trackBrochureRequest(property)}
-                  title={isAr ? 'اطلب بروشور الوحدة على واتساب' : 'Request the brochure on WhatsApp'}
+                  onClick={() => download({ kind: 'property_brochure', itemId: String(property.id || ''), itemTitle: property.title_ar || property.title_en || '' }, async () => {
+                    const { generatePropertyPdf } = await import('../../utils/brochure/propertyBrochure');
+                    await generatePropertyPdf(property);
+                  })}
+                  title={isAr ? 'تحميل بروشور الوحدة' : 'Download the brochure'}
                 >
                   <FileText size={15} />
-                  <span>{isAr ? 'اطلب البروشور' : 'Get brochure'}</span>
-                </a>
+                  <span>{isAr ? 'بروشور PDF' : 'Brochure PDF'}</span>
+                </button>
               </div>
             </div>
           </div>

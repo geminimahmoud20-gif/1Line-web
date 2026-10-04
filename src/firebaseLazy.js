@@ -60,6 +60,7 @@ export const upsertCatalogItem = lazyCall('upsertCatalogItem');
 export const upsertCatalogItems = lazyCall('upsertCatalogItems');
 export const importLeads = lazyCall('importLeads');
 export const searchLeads = lazyCall('searchLeads');
+export const recordClientDownload = lazyCall('recordClientDownload');
 export const deleteCatalogItem = lazyCall('deleteCatalogItem');
 export const incrementAdStat = lazyCall('incrementAdStat');
 export const reportClientError = lazyCall('reportClientError');
@@ -70,6 +71,7 @@ export const submitIntakeRecord = lazyCall('submitIntakeRecord');
 export const updateIntakeRecord = lazyCall('updateIntakeRecord');
 
 export const subscribeToLeads = lazySubscribe('subscribeToLeads');
+export const subscribeToClientDownloads = lazySubscribe('subscribeToClientDownloads');
 export const subscribeToDemands = lazySubscribe('subscribeToDemands');
 export const monitorAuthState = lazySubscribe('monitorAuthState');
 export const subscribeToSettings = lazySubscribe('subscribeToSettings');
