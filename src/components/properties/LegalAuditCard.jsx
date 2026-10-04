@@ -90,7 +90,7 @@ export default function LegalAuditCard({ property, lang = 'ar' }) {
         <a className="xs-btn xs-btn--ghost" href={askUrl} target="_blank" rel="noopener noreferrer">
           <MessageCircle size={16} aria-hidden="true" /> {L('اطلب المستندات والملخص الكامل', 'Request documents & full summary')}
         </a>
-        <button type="button" className="xs-btn xs-btn--ghost" onClick={() => generatePropertyPdf(property, lang)}>
+        <button type="button" className="xs-btn xs-btn--ghost" onClick={() => generatePropertyPdf(property).catch((err) => console.error('PDF generation error:', err))}>
           <FileText size={16} aria-hidden="true" /> {L('بروشور العقار PDF', 'Property PDF')}
         </button>
       </div>
