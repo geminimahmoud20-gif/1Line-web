@@ -59,6 +59,7 @@ export const settingsExist = lazyCall('settingsExist');
 export const upsertCatalogItem = lazyCall('upsertCatalogItem');
 export const upsertCatalogItems = lazyCall('upsertCatalogItems');
 export const importLeads = lazyCall('importLeads');
+export const searchLeads = lazyCall('searchLeads');
 export const deleteCatalogItem = lazyCall('deleteCatalogItem');
 export const incrementAdStat = lazyCall('incrementAdStat');
 export const reportClientError = lazyCall('reportClientError');

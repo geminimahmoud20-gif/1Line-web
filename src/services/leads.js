@@ -5,6 +5,7 @@ import { collection, getDocs, getDoc, doc, query, where, orderBy, limit, onSnaps
 import { onAuthStateChanged } from 'firebase/auth';
 import { getUserClaims } from './auth.js';
 import { notifyStaff } from './staffNotify.js';
+import { phoneVariants } from '../utils/phoneVariants.js';
 
 // ===================== LEADS & OFFLINE SYNC QUEUE =====================
 
@@ -211,14 +212,19 @@ export const subscribeToLeads = (callback, maxCount = 150) => {
     };
 
     const base = collection(db, 'leads');
-    // A desk's queue is filtered on assignedTo only (no orderBy), so it needs no composite index;
-    // it is sorted newest-first here. Desk queues are small, so a wider window keeps the newest.
-    const q = desk
-      ? query(base, where('assignedTo', 'in', [desk, UNASSIGNED_DESK]), limit(maxCount * 4))
-      : query(base, orderBy('createdAt', 'desc'), limit(maxCount));
+    // A desk's queue, newest first on the server (index assignedTo + createdAt). Until that index
+    // is published the query fails with failed-precondition; it then falls back to the unordered
+    // filter (sorted here), which only sees an arbitrary slice of a large desk.
+    let deskOrdered = true;
+    const buildQuery = () => (desk
+      ? (deskOrdered
+        ? query(base, where('assignedTo', 'in', [desk, UNASSIGNED_DESK]), orderBy('createdAt', 'desc'), limit(maxCount))
+        : query(base, where('assignedTo', 'in', [desk, UNASSIGNED_DESK]), limit(maxCount * 4)))
+      : query(base, orderBy('createdAt', 'desc'), limit(maxCount)));
     // includeMetadataChanges: also hear "now confirmed by the server" (fromCache true → false),
     // which the CRM needs to know the list is complete
-    const unsubLeads = onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
+    let unsubLeads = () => {};
+    const start = () => { unsubLeads = onSnapshot(buildQuery(), { includeMetadataChanges: true }, (snapshot) => {
       leads = snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
       if (desk) leads = leads.sort((x, y) => createdMillis(y) - createdMillis(x)).slice(0, maxCount);
       // fromCache snapshots can hold only this device's pending writes — not the full list
@@ -228,8 +234,14 @@ export const subscribeToLeads = (callback, maxCount = 150) => {
     }, (err) => {
       // Guests and non-CRM accounts have no lead access — expected, stay quiet
       if (err && err.code === 'permission-denied') return;
+      if (desk && deskOrdered && err?.code === 'failed-precondition') {
+        deskOrdered = false;
+        start();
+        return;
+      }
       console.warn('Firebase subscribeToLeads snapshot warning:', err);
-    });
+    }); };
+    start();
     return () => { unsubLeads(); stopContacts(); };
   };
 
@@ -378,4 +390,61 @@ export const importLeads = async (leads = []) => {
     console.error('Firebase importLeads error:', error);
     return { ok: false, written, ids: ids.slice(0, written), reason: error?.code || 'error' };
   }
+};
+
+// ===================== SEARCH BEYOND THE LOADED LIST =====================
+// The CRM keeps only the newest leads live; these find any client on the server.
+
+/**
+ * Leads matching a phone number (exact, any common format) or the start of a name, across all the
+ * leads this account may read. Returns up to `max` leads with their contacts merged in.
+ * { ok: true, leads } | { ok: false, error: 'index' | 'denied' | 'error' }
+ */
+export const searchLeads = async (term, max = 25) => {
+  const text = String(term || '').trim();
+  if (!isFirebaseConfigured() || !db || !auth?.currentUser || text.length < 2) return { ok: true, leads: [] };
+  let claims = {};
+  try { claims = await getUserClaims(auth.currentUser); } catch { /* rules decide */ }
+  const desk = DESK_BY_ROLE[claims.role] || null;
+  const seesAllContacts = claims.admin === true || ['admin', 'super_admin', 'sales_manager'].includes(claims.role);
+  const deskFilter = desk ? [where('assignedTo', 'in', [desk, UNASSIGNED_DESK])] : [];
+  const found = new Map();
+
+  try {
+    const digits = text.replace(/\D/g, '');
+    if (digits.length >= 7) {
+      // Phones live in lead_contacts, readable by managers and (their queue) desk agents only
+      if (!seesAllContacts && !desk) return { ok: true, leads: [] };
+      const variants = phoneVariants(text);
+      for (const field of ['phone', 'whatsapp', 'altPhone']) {
+        const snap = await getDocs(query(collection(db, 'lead_contacts'), where(field, 'in', variants), ...deskFilter, limit(max)));
+        snap.docs.forEach((d) => found.set(d.id, { contact: d.data() }));
+      }
+      await Promise.all([...found.keys()].map(async (id) => {
+        const leadSnap = await getDoc(doc(db, 'leads', id)).catch(() => null);
+        if (leadSnap?.exists()) found.get(id).lead = { ...leadSnap.data(), id };
+      }));
+    } else {
+      const snap = await getDocs(query(collection(db, 'leads'), ...deskFilter, where('name', '>=', text), where('name', '<=', `${text}\uf8ff`), limit(max)));
+      snap.docs.forEach((d) => found.set(d.id, { lead: { ...d.data(), id: d.id } }));
+      if (seesAllContacts || desk) {
+        await Promise.all([...found.keys()].map(async (id) => {
+          const c = await getDoc(doc(db, 'lead_contacts', id)).catch(() => null);
+          if (c?.exists()) found.get(id).contact = c.data();
+        }));
+      }
+    }
+  } catch (err) {
+    if (err?.code === 'failed-precondition') return { ok: false, error: 'index' };
+    if (err?.code === 'permission-denied') return { ok: false, error: 'denied' };
+    console.warn('Lead search error:', err);
+    return { ok: false, error: 'error' };
+  }
+
+  const leads = [...found.values()].filter((x) => x.lead).map(({ lead, contact }) => {
+    const merged = { ...lead };
+    if (contact) LEAD_CONTACT_FIELDS.forEach((f) => { if (contact[f]) merged[f] = contact[f]; });
+    return merged;
+  });
+  return { ok: true, leads: leads.sort((a, b) => createdMillis(b) - createdMillis(a)).slice(0, max) };
 };

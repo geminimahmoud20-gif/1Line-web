@@ -10,6 +10,7 @@ const readCatalogLive = () => {
 import {
   saveLead,
   subscribeToLeads,
+  searchLeads,
   subscribeToDemands,
   isFirebaseActive,
   saveNotification,
@@ -74,6 +75,8 @@ const persistDemands = (list) => {
 };
 
 const PropertiesContext = createContext(null);
+
+const LEADS_PAGE = 150;
 
 export function PropertiesProvider({ children }) {
   const { lang, soundEnabled } = usePreferences();
@@ -640,28 +643,6 @@ export function PropertiesProvider({ children }) {
   // Firebase Real-time subscriptions
   useEffect(() => {
     if (isFirebaseActive()) {
-      const unsubLeads = subscribeToLeads((cloudLeads, meta) => {
-        if (meta?.signedOut) {
-          // Signed out: drop every CRM lead from memory, keep only this device's own requests
-          setLeads((prev) => prev.filter((l) => !isCloudLead(l)));
-          return;
-        }
-        // A server snapshot is the full list for this role — empty included (an agent's empty queue)
-        if (cloudLeads && (cloudLeads.length > 0 || !meta?.fromCache)) {
-          const valid = cloudLeads.filter(l => l && typeof l === 'object').map((l) => ({ ...l, _cloud: true }));
-          if (meta?.fromCache) {
-            // Cache-only snapshot (offline / first paint): merge, never shrink the list to it
-            setLeads((prev) => {
-              const byId = new Map(prev.map((l) => [String(l.id), l]));
-              valid.forEach((l) => byId.set(String(l.id), { ...byId.get(String(l.id)), ...l }));
-              const fresh = valid.filter((l) => !prev.some((p) => String(p.id) === String(l.id)));
-              return [...fresh, ...prev.map((p) => byId.get(String(p.id)))];
-            });
-          } else {
-            setLeads(valid);
-          }
-        }
-      });
       const unsubDemands = subscribeToDemands((cloudDemands, meta) => {
         // No published demands yet → show the labelled samples (also clears a signed-out staff list)
         if (meta?.isPublic && !meta.fromCache && cloudDemands?.length === 0) {
@@ -686,11 +667,61 @@ export function PropertiesProvider({ children }) {
           setDemands(sorted);
         }
       });
-      return () => { 
-        if (unsubLeads) unsubLeads(); 
+      return () => {
         if (unsubDemands) unsubDemands();
       };
     }
+  }, []);
+
+  // CRM leads: the newest `leadsWindow` live (a bigger window on "load more"); any older client is
+  // reached through searchAllLeads. Leads found by a search stay in the list (flag _searched)
+  // when the live window refreshes.
+  const [leadsWindow, setLeadsWindow] = useState(LEADS_PAGE);
+  const [leadsHasMore, setLeadsHasMore] = useState(false);
+  useEffect(() => {
+    if (!isFirebaseActive()) return undefined;
+      const unsubLeads = subscribeToLeads((cloudLeads, meta) => {
+        if (meta?.signedOut) {
+          // Signed out: drop every CRM lead from memory, keep only this device's own requests
+          setLeads((prev) => prev.filter((l) => !isCloudLead(l)));
+          return;
+        }
+        // A server snapshot is the full list for this role — empty included (an agent's empty queue)
+        if (cloudLeads && (cloudLeads.length > 0 || !meta?.fromCache)) {
+          const valid = cloudLeads.filter(l => l && typeof l === 'object').map((l) => ({ ...l, _cloud: true }));
+          if (meta?.fromCache) {
+            // Cache-only snapshot (offline / first paint): merge, never shrink the list to it
+            setLeads((prev) => {
+              const byId = new Map(prev.map((l) => [String(l.id), l]));
+              valid.forEach((l) => byId.set(String(l.id), { ...byId.get(String(l.id)), ...l }));
+              const fresh = valid.filter((l) => !prev.some((p) => String(p.id) === String(l.id)));
+              return [...fresh, ...prev.map((p) => byId.get(String(p.id)))];
+            });
+          } else {
+            setLeadsHasMore(valid.length >= leadsWindow);
+            setLeads((prev) => {
+              const ids = new Set(valid.map((l) => String(l.id)));
+              return [...valid, ...prev.filter((l) => l._searched && !ids.has(String(l.id)))];
+            });
+          }
+        }
+      }, leadsWindow);
+    return () => { if (unsubLeads) unsubLeads(); };
+  }, [leadsWindow]);
+
+  const loadMoreLeads = useCallback(() => setLeadsWindow((w) => w + LEADS_PAGE), []);
+
+  /** Finds clients outside the loaded list (phone in any format, or the start of the name) */
+  const searchAllLeads = useCallback(async (term) => {
+    const res = await searchLeads(term);
+    if (res?.ok && res.leads.length) {
+      setLeads((prev) => {
+        const byId = new Map(prev.map((l) => [String(l.id), l]));
+        const added = res.leads.filter((l) => !byId.has(String(l.id))).map((l) => ({ ...l, _cloud: true, _searched: true }));
+        return [...prev, ...added];
+      });
+    }
+    return res || { ok: false, error: 'error' };
   }, []);
 
   // CRM Leads Handlers
@@ -781,6 +812,9 @@ export function PropertiesProvider({ children }) {
     clearCompare,
     leads,
     setLeads,
+    leadsHasMore,
+    loadMoreLeads,
+    searchAllLeads,
     handleAddNewLead,
     handleUpdateLead,
     handleDeleteLead,
