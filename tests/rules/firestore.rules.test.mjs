@@ -1,7 +1,7 @@
 // Firestore security rules tests. Needs the Firestore emulator (Java 11+):
 //   npm run test:rules
 import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
-import { doc, getDoc, setDoc, deleteDoc, collection, query, where, orderBy, getDocs, writeBatch, deleteField, documentId, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, collection, query, where, orderBy, getDocs, collectionGroup, writeBatch, deleteField, documentId, serverTimestamp } from 'firebase/firestore';
 import fs from 'node:fs';
 import { test, before, after, beforeEach } from 'node:test';
 
@@ -291,6 +291,20 @@ test('ad stats: +1 steps only, and only for published campaigns', async () => {
     await setDoc(doc(ctx.firestore(), 'settings/ad_campaigns'), { campaigns: [{ id: 'ad-2' }] });
   });
   await assertSucceeds(setDoc(doc(g, 'ad_stats/ad-2'), { impressions: 1, clicks: 0 }));
+});
+
+test('ad stats shards: same +1 rules, shard ids 0-9, staff read them as a group', async () => {
+  const g = guest();
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'settings/ad_campaigns'), { campaigns: [{ id: 'ad-9' }], campaignIds: ['ad-9'] });
+  });
+  await assertSucceeds(setDoc(doc(g, 'ad_stats/ad-9/ad_stat_shards/3'), { impressions: 1, clicks: 0 }));
+  await assertSucceeds(setDoc(doc(g, 'ad_stats/ad-9/ad_stat_shards/3'), { impressions: 2, clicks: 1 }));
+  await assertFails(setDoc(doc(g, 'ad_stats/ad-9/ad_stat_shards/3'), { impressions: 50, clicks: 1 }));
+  await assertFails(setDoc(doc(g, 'ad_stats/ad-9/ad_stat_shards/42'), { impressions: 1, clicks: 0 }));
+  await assertFails(setDoc(doc(g, 'ad_stats/ad-unpublished/ad_stat_shards/1'), { impressions: 1, clicks: 0 }));
+  await assertFails(getDocs(collectionGroup(g, 'ad_stat_shards')));
+  await assertSucceeds(getDocs(collectionGroup(as('viewer'), 'ad_stat_shards')));
 });
 
 // ── Site error log ───────────────────────────────────────────────────────

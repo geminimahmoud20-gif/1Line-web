@@ -258,6 +258,28 @@ service cloud.firestore {
                     && request.resource.data.clicks >= resource.data.clicks
                     && request.resource.data.clicks <= resource.data.clicks + 1;
       allow delete: if isAdmin();
+
+      // Busy campaigns: the counter is split over 10 shard docs (a single doc takes ~1 write/s),
+      // same +1 rules per shard. The CRM sums parent + shards.
+      match /ad_stat_shards/{shardId} {
+        allow create: if shardId.matches('^[0-9]$') && isPublishedCampaign()
+                      && request.resource.data.keys().hasOnly(['impressions', 'clicks'])
+                      && request.resource.data.impressions is int && request.resource.data.clicks is int
+                      && request.resource.data.impressions >= 0 && request.resource.data.impressions <= 1
+                      && request.resource.data.clicks >= 0 && request.resource.data.clicks <= 1;
+        allow update: if isPublishedCampaign()
+                      && request.resource.data.keys().hasOnly(['impressions', 'clicks'])
+                      && request.resource.data.impressions >= resource.data.impressions
+                      && request.resource.data.impressions <= resource.data.impressions + 1
+                      && request.resource.data.clicks >= resource.data.clicks
+                      && request.resource.data.clicks <= resource.data.clicks + 1;
+        allow delete: if isAdmin();
+      }
+    }
+
+    // Staff read every campaign's shards in one collection-group listener
+    match /{path=**}/ad_stat_shards/{shardId} {
+      allow read: if isStaff();
     }
 
     // 🩺 8c. SITE ERROR LOG — visitors' browsers report JS errors / crashes / CSP violations
