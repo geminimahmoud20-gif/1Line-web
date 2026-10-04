@@ -110,6 +110,15 @@ export default function TeamPanel({ lang = 'ar', triggerToast }) {
 
   const [reloadKey, setReloadKey] = useState(0);
   const load = useCallback(() => setReloadKey((k) => k + 1), []);
+  const [syncing, setSyncing] = useState(false);
+  // Rebuilds the server's staff list from every account (slow, so only on demand)
+  const resync = async () => {
+    setSyncing(true);
+    const res = await teamAction({ action: 'resync' });
+    setSyncing(false);
+    if (res.ok) { setMembers(res.members); setLoadError(null); }
+    else triggerToast?.(errorText(res.error, isAr), 'error');
+  };
 
   useEffect(() => {
     let alive = true;
@@ -178,7 +187,16 @@ export default function TeamPanel({ lang = 'ar', triggerToast }) {
           <p>{isAr ? 'ضيف الموظفين، حدد دور كل واحد، وقف أو شيل أي حد. التغيير بيطبق فورًا والموظف بيحتاج يسجّل دخول تاني.' : 'Add staff, set roles, disable or remove access. Changes apply at their next sign-in.'}</p>
         </div>
         <div className="tm-head-actions">
-          <button type="button" className="btn btn-outline" onClick={load} aria-label={isAr ? 'تحديث' : 'Refresh'}><RefreshCw size={16} /></button>
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={resync}
+            disabled={syncing}
+            aria-label={isAr ? 'تحديث ومزامنة الفريق' : 'Refresh & resync team'}
+            title={isAr ? 'لو اتغيّر دور حد من برا الشاشة دي (مثلاً من سكربت)، المزامنة بتلاقيه' : 'Finds roles changed outside this screen'}
+          >
+            <RefreshCw size={16} style={{ opacity: syncing ? 0.4 : 1 }} />
+          </button>
           <button type="button" className="btn btn-primary" onClick={() => setAdding(true)} disabled={members === undefined || members === null}>
             <UserPlus size={16} /> {isAr ? 'إضافة عضو' : 'Add member'}
           </button>

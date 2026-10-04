@@ -326,3 +326,9 @@ test('notify: reads the stored record over REST and claims each record once', as
   // nobody reaches the log through the SDK
   await assertFails(getDoc(doc(asAdmin(), 'notify_log/leads__n1')));
 });
+
+test('staff registry is server-only (api/team.js with the service account)', async () => {
+  await assertFails(getDoc(doc(asAdmin(), 'staff_registry/u1')));
+  await assertFails(setDoc(doc(asAdmin(), 'staff_registry/u1'), { role: 'super_admin' }));
+  await assertFails(setDoc(doc(guest(), 'staff_registry/u1'), { role: 'super_admin' }));
+});

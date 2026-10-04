@@ -285,6 +285,12 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // 👥 8e. STAFF REGISTRY — uid → role of every CRM account, kept by api/team.js with the service
+    // account so the team screen reads a few docs instead of scanning every client account.
+    match /staff_registry/{uid} {
+      allow read, write: if false;
+    }
+
     // 🌍 10. EXPAT REMOTE INSPECTIONS (live video / drone / street footage requests)
     // Public create with a fixed field list; staff triage in the CRM.
     function isStr(data, field, minLen, maxLen) {
