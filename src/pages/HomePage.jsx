@@ -361,18 +361,6 @@ export default function HomePage({
       {/* 📈 REAL-TIME SOHAG PROPTECH MARKET TICKER */}
       <MarketTickerBar lang={lang} demands={realDemands} />
 
-      {/* 🔥 Limited-time offers (CRM → العقارات → العرض); renders nothing when no offer is running */}
-      <HomeOffers
-        properties={publishedProperties}
-        lang={lang}
-        currency={currency}
-        favorites={favorites}
-        compareList={compareList}
-        onToggleFavorite={onToggleFavorite}
-        onToggleCompare={onToggleCompare}
-        onQuickView={onQuickView}
-      />
-
       {/* 🏢 2. SOHAG LIVE MARKETPLACE HUB (Consolidated Segmented Discovery) */}
       <HomeMarketplace
         activeDemandsList={activeDemandsList}
@@ -391,6 +379,18 @@ export default function HomePage({
         realDemands={realDemands}
         setMarketplaceAreaFilter={setMarketplaceAreaFilter}
         setMarketplaceTab={setMarketplaceTab}
+      />
+
+      {/* 🔥 Limited-time offers (CRM → العقارات → العرض), after the listings so a visitor sees properties first; renders nothing when no offer is running */}
+      <HomeOffers
+        properties={publishedProperties}
+        lang={lang}
+        currency={currency}
+        favorites={favorites}
+        compareList={compareList}
+        onToggleFavorite={onToggleFavorite}
+        onToggleCompare={onToggleCompare}
+        onQuickView={onQuickView}
       />
 
       {/* 📢 Sponsored banners (CRM → الإعلانات, placement "inline"); renders nothing when no campaign is live */}

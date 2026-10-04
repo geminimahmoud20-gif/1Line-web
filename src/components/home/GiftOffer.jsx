@@ -62,11 +62,9 @@ function RevealSaving({ amount, isAr }) {
   const v = useCountUp(amount);
   return (
     <div className="gx-win" role="note">
-      <Sparkles size={18} aria-hidden="true" className="gx-win-icon" />
-      <span className="gx-win-text">
-        <small>{isAr ? 'قيمة الخصم المباشر' : 'Direct discount'}</small>
-        <b><bdi>{v.toLocaleString('en-US')}</bdi> {isAr ? 'ج.م' : 'EGP'}</b>
-      </span>
+      <Sparkles size={16} aria-hidden="true" className="gx-win-icon" />
+      <small>{isAr ? 'خصم مباشر' : 'Direct discount'}</small>
+      <b><bdi>{v.toLocaleString('en-US')}</bdi> {isAr ? 'ج.م' : 'EGP'}</b>
     </div>
   );
 }
@@ -135,7 +133,6 @@ export default function GiftOffer({ property, offer, lang = 'ar', currency, inde
           <span className="gx-burst" aria-hidden="true">{Array.from({ length: 16 }, (_, i) => <i key={i} style={{ '--k': i }} />)}</span>
           <div className="gx-photo">
             {image && <img src={image} alt={title} loading="lazy" decoding="async" />}
-            <span className="gx-photo-pct">{isAr ? `خصم ${head.value} ${head.unit}` : `${head.value}${head.unit} off`}</span>
             <button type="button" className="gx-close" onClick={() => setOpen(false)} aria-label={isAr ? 'إغلاق' : 'Close'}>
               <RotateCcw size={15} aria-hidden="true" />
             </button>
