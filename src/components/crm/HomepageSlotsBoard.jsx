@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Star, ChevronUp, ChevronDown, CalendarClock, X, GripVertical, Eye, Pencil } from 'lucide-react';
+import { Star, StarOff, ChevronUp, ChevronDown, CalendarClock, X, GripVertical, Eye, Pencil, ImageOff, Hourglass } from 'lucide-react';
 import {
   HOME_FEATURED_SLOTS,
   getHomepageSlots,
@@ -28,10 +28,12 @@ export function FeaturedPeriodLabel({ property, isAr }) {
 }
 
 /** Schedule dialog used by the star button and the board */
-export function FeaturedSlotModal({ property, isAr, onSave, onClose, nextOrder }) {
-  const [from, setFrom] = useState(() => property.featuredFrom || toDayInput(Date.now()));
-  const [until, setUntil] = useState(() => property.featuredUntil || addDays(29));
-  const [openEnded, setOpenEnded] = useState(property.featured && !property.featuredUntil);
+export function FeaturedSlotModal({ property, isAr, onSave, onClose, onRemove, nextOrder }) {
+  // Renewing an expired listing starts a fresh period; re-saving the old dates would keep it expired
+  const fresh = !property.featured || featuredState(property) === 'expired';
+  const [from, setFrom] = useState(() => (!fresh && property.featuredFrom) || toDayInput(Date.now()));
+  const [until, setUntil] = useState(() => (!fresh && property.featuredUntil) || addDays(29));
+  const [openEnded, setOpenEnded] = useState(!fresh && !property.featuredUntil);
   const [order, setOrder] = useState(property.featuredOrder ?? nextOrder);
   const [error, setError] = useState('');
 
@@ -105,6 +107,11 @@ export function FeaturedSlotModal({ property, isAr, onSave, onClose, nextOrder }
         {error && <p className="hs-error" role="alert">{error}</p>}
 
         <div className="hs-modal-actions">
+          {property.featured && onRemove && (
+            <button type="button" className="btn btn-ghost hs-danger-btn" onClick={onRemove} style={{ marginInlineEnd: 'auto' }}>
+              <StarOff size={15} /> {isAr ? 'إلغاء التمييز' : 'Remove'}
+            </button>
+          )}
           <button type="button" className="btn btn-ghost" onClick={onClose}>{isAr ? 'إلغاء' : 'Cancel'}</button>
           <button type="submit" className="btn btn-primary">{isAr ? 'حفظ التمييز' : 'Save'}</button>
         </div>
@@ -152,6 +159,13 @@ export default function HomepageSlotsBoard({ properties = [], onUpdateProperty, 
 
   const title = (p) => (isAr ? p.title_ar : (p.title_en || p.title_ar));
 
+  // Take a listing off the homepage; the rest close the gap (1..n)
+  const unfeature = (id) => {
+    if (onUpdateProperty(id, { featured: false, featuredOrder: null }) === false) return false;
+    applyOrder(liveIds.filter((x) => x !== id));
+    return true;
+  };
+
   return (
     <section className="hs-board" aria-labelledby="hs-board-title">
       <header className="hs-board-head">
@@ -182,7 +196,9 @@ export default function HomepageSlotsBoard({ properties = [], onUpdateProperty, 
               onDrop={() => isFeatured && dropOn(p.id)}
             >
               <span className="hs-slot-num">{idx + 1}</span>
-              <img src={p.images?.[0]} alt="" loading="lazy" />
+              {p.images?.[0]
+                ? <img src={p.images[0]} alt="" loading="lazy" />
+                : <span className="hs-slot-noimg" aria-hidden="true"><ImageOff size={18} /></span>}
               <div className="hs-slot-body">
                 <strong title={title(p)}>{title(p)}</strong>
                 <div className="hs-slot-meta">
@@ -198,7 +214,8 @@ export default function HomepageSlotsBoard({ properties = [], onUpdateProperty, 
                       <GripVertical size={16} className="hs-grip" aria-hidden="true" />
                       <button type="button" className="hs-icon-btn" onClick={() => move(p.id, -1)} disabled={liveIds.indexOf(p.id) === 0} aria-label={isAr ? 'تقديم' : 'Move up'}><ChevronUp size={16} /></button>
                       <button type="button" className="hs-icon-btn" onClick={() => move(p.id, 1)} disabled={liveIds.indexOf(p.id) === liveIds.length - 1} aria-label={isAr ? 'تأخير' : 'Move down'}><ChevronDown size={16} /></button>
-                      <button type="button" className="hs-icon-btn" onClick={() => setEditing(p)} aria-label={isAr ? 'تعديل المدة' : 'Edit period'}><Pencil size={15} /></button>
+                      <button type="button" className="hs-icon-btn" onClick={() => setEditing(p)} aria-label={isAr ? 'تعديل المدة' : 'Edit period'} title={isAr ? 'تعديل المدة' : 'Edit period'}><Pencil size={15} /></button>
+                      <button type="button" className="hs-icon-btn hs-icon-btn--danger" onClick={() => unfeature(p.id)} aria-label={isAr ? 'إلغاء التمييز' : 'Remove from homepage'} title={isAr ? 'إلغاء التمييز' : 'Remove from homepage'}><StarOff size={15} /></button>
                     </>
                   ) : (
                     <button type="button" className="hs-link-btn" onClick={() => setEditing(p)}><Star size={13} /> {isAr ? 'ثبّته' : 'Pin'}</button>
@@ -210,8 +227,13 @@ export default function HomepageSlotsBoard({ properties = [], onUpdateProperty, 
         })}
       </ol>
 
-      {(queue.scheduled.length > 0 || queue.expired.length > 0) && (
+      {(queue.overflow.length > 0 || queue.scheduled.length > 0 || queue.expired.length > 0) && (
         <div className="hs-queue">
+          {queue.overflow.length > 0 && (
+            <p><Hourglass size={14} /> <strong>{isAr ? 'في الانتظار (الأماكن ممتلئة):' : 'Waiting (slots full):'}</strong> {queue.overflow.map((p) => (
+              <button type="button" key={p.id} className="hs-queue-item" onClick={() => setEditing(p)}>{title(p)} <FeaturedPeriodLabel property={p} isAr={isAr} /></button>
+            ))}</p>
+          )}
           {queue.scheduled.length > 0 && (
             <p><CalendarClock size={14} /> <strong>{isAr ? 'مجدول لاحقاً:' : 'Scheduled:'}</strong> {queue.scheduled.map((p) => (
               <button type="button" key={p.id} className="hs-queue-item" onClick={() => setEditing(p)}>{title(p)} <FeaturedPeriodLabel property={p} isAr={isAr} /></button>
@@ -231,7 +253,8 @@ export default function HomepageSlotsBoard({ properties = [], onUpdateProperty, 
           isAr={isAr}
           nextOrder={nextOrder}
           onClose={() => setEditing(null)}
-          onSave={(patch) => { onUpdateProperty(editing.id, patch); setEditing(null); }}
+          onRemove={canEdit ? () => { if (unfeature(editing.id)) setEditing(null); } : undefined}
+          onSave={(patch) => { if (onUpdateProperty(editing.id, patch) !== false) setEditing(null); }}
         />
       )}
     </section>
