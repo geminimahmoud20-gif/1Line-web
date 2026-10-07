@@ -976,6 +976,7 @@ export { getAreas, DEFAULT_SOHAG_AREAS };
 export const ASSET_CATEGORIES = [
   { id: 'all', name_ar: 'كافة القطاعات', name_en: 'All Sectors' },
   { id: 'residential', name_ar: 'القطاع السكني (شقق وفيلات)', name_en: 'Residential' },
+  { id: 'building', name_ar: 'عمارات ومباني كاملة', name_en: 'Buildings & Mixed-Use' },
   { id: 'commercial', name_ar: 'القطاع التجاري (محلات ومعارض)', name_en: 'Commercial' },
   { id: 'administrative', name_ar: 'القطاع الإداري (مكاتب وعيادات)', name_en: 'Administrative' },
   { id: 'land', name_ar: 'قطاع الأراضي والاستثمار', name_en: 'Land' }
@@ -985,6 +986,7 @@ export const PROPERTY_TYPES = [
   { id: 'all', name_ar: 'جميع الأنواع', name_en: 'All Types', category: 'all' },
   { id: 'apartment', name_ar: 'شقق ودوبلكس سكنية', name_en: 'Residential Apartments', category: 'residential' },
   { id: 'villa', name_ar: 'فيلات ومنازل مستقلة', name_en: 'Villas & Townhouses', category: 'residential' },
+  { id: 'building', name_ar: 'عمارات ومنازل كاملة (سكني وتجاري)', name_en: 'Entire Buildings & Mixed-Use', category: 'building' },
   { id: 'commercial', name_ar: 'محلات ومساحات تجارية', name_en: 'Commercial Retail Shops', category: 'commercial' },
   { id: 'office', name_ar: 'مكاتب ومقرات إدارية وعيادات', name_en: 'Admin Offices & Clinics', category: 'administrative' },
   { id: 'land', name_ar: 'أراضي ومواقع استثمارية', name_en: 'Investment Land Plots', category: 'land' }

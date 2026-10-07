@@ -13,6 +13,7 @@ import {
   Scale,
   ShieldCheck,
   Building,
+  Building2,
   Store,
   Briefcase,
   ChevronRight,
@@ -25,7 +26,7 @@ import {
   Flame
 } from 'lucide-react';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
-import { formatCurrencyPrice, getPriceBenchmark } from '../../utils/currencyAndBenchmark';
+import { formatCurrencyPrice, getPriceBenchmark, isMultiUnitOrBuilding, parseUnitBreakdown } from '../../utils/currencyAndBenchmark';
 import { useUIModal } from '../../context/UIModalContext';
 import { getActiveOffer } from '../../utils/propertyOffers';
 import OfferCountdown from './OfferCountdown';
@@ -117,8 +118,13 @@ export default function PropertyCard({
   const benchmark = getPriceBenchmark(property, lang);
   const detailsUrl = `/properties/${property.id}`;
 
-  // "Below area average" chip: only when the listing is clearly under the district benchmark
+  // Multi-unit / whole building detection
+  const isMultiUnit = isMultiUnitOrBuilding(property);
+  const unitBreakdown = isMultiUnit ? (benchmark?.unitBreakdown || parseUnitBreakdown(property, isAr)) : null;
+
+  // "Below area average" chip: only for single residential/commercial units when under district benchmark
   const belowAvgPct = (() => {
+    if (isMultiUnit) return 0;
     const m = benchmark?.badgeType === 'deal' && /(\d+)%/.exec(benchmark.badgeLabel || '');
     return m ? Number(m[1]) : 0;
   })();
@@ -130,25 +136,49 @@ export default function PropertyCard({
       ? { label: isAr ? 'مستندات مراجَعة' : 'Documents reviewed', Icon: ShieldCheck, tone: 'verified' }
       : null;
 
-  // Sector separation: land, commercial, office, residential
-  const isLand = property.type === 'land' || (title && title.includes('أرض'));
-  const isCommercial = !isLand && (property.type === 'commercial' || property.category === 'commercial' || (title && (title.includes('محل') || title.includes('معرض') || title.includes('ريتيل') || title.includes('تجاري'))));
-  const isOffice = !isLand && !isCommercial && (property.type === 'office' || property.category === 'administrative' || (title && (title.includes('مكتب') || title.includes('عيادة') || title.includes('إداري'))));
+  // Sector separation: full building, land, commercial, office, residential
+  const isLand = !isMultiUnit && (property.type === 'land' || (title && title.includes('أرض')));
+  const isCommercial = !isMultiUnit && !isLand && (property.type === 'commercial' || property.category === 'commercial' || (title && (title.includes('محل') || title.includes('معرض') || title.includes('ريتيل') || title.includes('تجاري'))));
+  const isOffice = !isMultiUnit && !isLand && !isCommercial && (property.type === 'office' || property.category === 'administrative' || (title && (title.includes('مكتب') || title.includes('عيادة') || title.includes('إداري'))));
 
-  const sectorLabel = isCommercial
-    ? (isAr ? 'تجاري' : 'Commercial')
-    : isOffice
-      ? (isAr ? 'إداري' : 'Office')
-      : isLand
-        ? (isAr ? 'أرض' : 'Land')
-        : (isAr ? 'سكني' : 'Residential');
+  const sectorLabel = isMultiUnit
+    ? (isAr ? 'عقار كامل' : 'Full Building')
+    : isCommercial
+      ? (isAr ? 'تجاري' : 'Commercial')
+      : isOffice
+        ? (isAr ? 'إداري' : 'Office')
+        : isLand
+          ? (isAr ? 'أرض' : 'Land')
+          : (isAr ? 'سكني' : 'Residential');
 
-  // Residential: up to three cells (area, beds, baths); others: two wider cells
+  // Specs: for multi-unit buildings, display footprint area + unit composition (apartments + shops)
   const specs = [
-    { key: 'size', Icon: Maximize2, value: fmt(property.size), unit: isAr ? 'م²' : 'm²', label: isAr ? 'المساحة' : 'Area' }
+    {
+      key: 'size',
+      Icon: Maximize2,
+      value: fmt(property.size),
+      unit: isAr ? 'م²' : 'm²',
+      label: isMultiUnit ? (isAr ? 'مسطح الأرض' : 'Plot Area') : (isAr ? 'المساحة' : 'Area')
+    }
   ];
-  // Non-residential: two wide cells (the sector chip on the photo already names the category)
-  if (isCommercial) {
+
+  if (isMultiUnit) {
+    if (unitBreakdown?.summary) {
+      specs.push({
+        key: 'units',
+        Icon: Building2,
+        value: unitBreakdown.summary,
+        label: isAr ? 'مكونات العقار' : 'Asset Units'
+      });
+    } else {
+      specs.push({
+        key: 'kind',
+        Icon: Building2,
+        value: isAr ? 'سكني + تجاري' : 'Mixed Use',
+        label: isAr ? 'نوع العقار' : 'Type'
+      });
+    }
+  } else if (isCommercial) {
     if (property.frontage) specs.push({ key: 'front', Icon: Layers, value: property.frontage, label: isAr ? 'الواجهة' : 'Frontage' });
     else specs.push({ key: 'kind', Icon: Store, value: formatCommercialSpec(property.commercialType_ar, lang), label: floorLabel(property.floor ?? 0, isAr) });
   } else if (isOffice) {
@@ -360,12 +390,30 @@ export default function PropertyCard({
             <span className="pcx-price-cur">{priceData.symbol}</span>
             {offer && <span className="pcx-price-tag">{isAr ? 'كاش' : 'cash'}</span>}
           </div>
-          {benchmark?.pricePerMeterFormatted && (
+          {benchmark?.pricePerMeterFormatted ? (
             <span className="pcx-ppm" title={benchmark.badgeLabel}>
               <bdi>{fmt(benchmark.pricePerMeter)}</bdi>
               <small>{isAr ? 'ج.م/م²' : 'EGP/m²'}</small>
             </span>
-          )}
+          ) : isMultiUnit ? (
+            <span
+              className="pcx-ppm pcx-ppm--multi"
+              title={benchmark?.valuationNote || (isAr ? 'عقار كامل متعدد الوحدات' : 'Multi-unit building')}
+              style={{
+                background: 'rgba(11, 78, 162, 0.08)',
+                color: '#0b4ea2',
+                borderColor: 'rgba(11, 78, 162, 0.2)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '3px 8px',
+                borderRadius: '6px'
+              }}
+            >
+              <Building2 size={13} aria-hidden="true" />
+              <small style={{ fontWeight: 700 }}>{isAr ? 'عقار كامل' : 'Full Building'}</small>
+            </span>
+          ) : null}
         </div>
 
         {priceData.approx && (

@@ -306,7 +306,7 @@ export default function PropertyFormModal({
                   setForm({
                     ...form,
                     type: newType,
-                    category: newType === 'commercial' ? 'commercial' : newType === 'office' ? 'administrative' : newType === 'land' ? 'land' : 'residential',
+                    category: newType === 'commercial' ? 'commercial' : newType === 'office' ? 'administrative' : newType === 'land' ? 'land' : newType === 'building' ? 'building' : 'residential',
                     bedrooms: isCommOrLand ? 0 : (form.bedrooms || 3),
                     bathrooms: newType === 'land' ? 0 : form.bathrooms,
                     floor: newType === 'land' ? 0 : form.floor
@@ -518,6 +518,56 @@ export default function PropertyFormModal({
                   gap: '8px'
                 }}>
                   <span>💼 {isAr ? 'مقر إداري / عيادة: تقسيمات مكاتب مرخصة (غرف النوم السكنية = 0).' : 'Office / Clinic: Administrative partitions (Residential bedrooms = 0).'}</span>
+                </div>
+              </>
+            ) : form.type === 'building' ? (
+              <>
+                <div className="form-group-item">
+                  <label>{isAr ? 'عدد الأدوار الإجمالي' : 'Total Floors'}</label>
+                  <input
+                    type="number"
+                    value={form.totalFloors || 0}
+                    onChange={(e) => setForm({ ...form, totalFloors: parseInt(e.target.value) || 0, floor: 0 })}
+                  />
+                </div>
+                <div className="form-group-item">
+                  <label>{isAr ? 'عدد الشقق السكنية' : 'Residential Apartments'}</label>
+                  <input
+                    type="number"
+                    value={form.residentialUnitsCount || 0}
+                    onChange={(e) => setForm({ ...form, residentialUnitsCount: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="form-group-item">
+                  <label>{isAr ? 'عدد المحلات التجارية' : 'Commercial Shops'}</label>
+                  <input
+                    type="number"
+                    value={form.commercialUnitsCount || 0}
+                    onChange={(e) => setForm({ ...form, commercialUnitsCount: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="form-group-item">
+                  <label>{isAr ? 'واجهة العقار (متر)' : 'Frontage (Meters)'}</label>
+                  <input
+                    type="text"
+                    placeholder={isAr ? 'مثال: واجهة 12م بحرية' : 'e.g. 12m North-facing'}
+                    value={form.frontage || ''}
+                    onChange={(e) => setForm({ ...form, frontage: e.target.value })}
+                  />
+                </div>
+                <div style={{
+                  gridColumn: '1 / -1',
+                  padding: '8px 12px',
+                  background: 'rgba(11, 78, 162, 0.08)',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(11, 78, 162, 0.22)',
+                  fontSize: 'var(--crm-text-sm)',
+                  color: 'var(--brand-primary, #0b4ea2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <span>🏢 {isAr ? 'عقار كامل (سكني + تجاري): لن يتم حساب متوسط سعر المتر السكني البسيط تلقائياً لتجنب تشويه التقييم، وسيتم عرض تفصيل الوحدات للعملاء.' : 'Full Building (Mixed-Use): Flat price/sqm calculation is disabled to protect fair valuation.'}</span>
                 </div>
               </>
             ) : (

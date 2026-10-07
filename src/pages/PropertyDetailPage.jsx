@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MapPin, Sparkles, CheckCircle2, Layers, Calendar, Phone, MessageSquare, ShieldCheck, TrendingUp, TrendingDown, Navigation, ArrowRight, ArrowLeft, Building, Video, Zap, Droplets, Copy, Sun, Moon, Scale, Flame } from 'lucide-react';
+import { MapPin, Sparkles, CheckCircle2, Layers, Calendar, Phone, MessageSquare, ShieldCheck, TrendingUp, TrendingDown, Navigation, ArrowRight, ArrowLeft, Building, Building2, Video, Zap, Droplets, Copy, Sun, Moon, Scale, Flame } from 'lucide-react';
 import { incrementPropertyView, getPropertyViews } from '../utils/visitorTracker';
 import PropertyGallery from '../components/properties/PropertyGallery';
 import PropertyCard from '../components/properties/PropertyCard';
@@ -18,7 +18,7 @@ import HistoricalPriceChart from '../components/properties/HistoricalPriceChart'
 import SocialStoryCardModal from '../components/properties/SocialStoryCardModal';
 import { updatePageSeo, buildPropertySchema } from '../utils/seoHelper';
 import { checkFormSpamProtection } from '../utils/securityShield';
-import { formatCurrencyPrice, getPriceBenchmark } from '../utils/currencyAndBenchmark';
+import { formatCurrencyPrice, getPriceBenchmark, isMultiUnitOrBuilding } from '../utils/currencyAndBenchmark';
 import BookingConfirmationModal from '../components/common/BookingConfirmationModal';
 import { saveLead } from '../firebaseLazy';
 import { useClientAuth } from '../context/ClientAuthContext';
@@ -213,9 +213,10 @@ export default function PropertyDetailPage({
   const benchmark = getPriceBenchmark(property, lang);
 
   // Sector separation
-  const isLand = property.type === 'land' || (title && title.includes('أرض'));
-  const isCommercial = !isLand && (property.type === 'commercial' || property.category === 'commercial' || (title && (title.includes('محل') || title.includes('معرض') || title.includes('ريتيل') || title.includes('تجاري'))));
-  const isOffice = !isLand && !isCommercial && (property.type === 'office' || property.category === 'administrative' || (title && (title.includes('مكتب') || title.includes('عيادة') || title.includes('إداري'))));
+  const isMultiUnit = isMultiUnitOrBuilding(property);
+  const isLand = !isMultiUnit && (property.type === 'land' || (title && title.includes('أرض')));
+  const isCommercial = !isMultiUnit && !isLand && (property.type === 'commercial' || property.category === 'commercial' || (title && (title.includes('محل') || title.includes('معرض') || title.includes('ريتيل') || title.includes('تجاري'))));
+  const isOffice = !isMultiUnit && !isLand && !isCommercial && (property.type === 'office' || property.category === 'administrative' || (title && (title.includes('مكتب') || title.includes('عيادة') || title.includes('إداري'))));
 
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
@@ -410,15 +411,29 @@ export default function PropertyDetailPage({
               )}
               {benchmark && (
                 <div className={`benchmark-hero-pill is-${benchmark.badgeType}`}>
-                  {benchmark.badgeType === 'deal' ? <TrendingDown size={13} /> : benchmark.badgeType === 'premium' ? <Sparkles size={13} /> : <Scale size={13} />}
+                  {benchmark.badgeType === 'deal' ? (
+                    <TrendingDown size={13} />
+                  ) : benchmark.badgeType === 'premium' ? (
+                    <Sparkles size={13} />
+                  ) : benchmark.badgeType === 'building' ? (
+                    <Building2 size={13} />
+                  ) : (
+                    <Scale size={13} />
+                  )}
                   <span>{benchmark.badgeLabel}</span>
                 </div>
               )}
               {Number(property.size) > 0 && (
-                // price ÷ size — same figure as the listing card and the valuation tab
-                <span className="price-per-m">
-                  <bdi>{Math.round(Number(property.price) / Number(property.size)).toLocaleString('en-US')}</bdi> {isAr ? 'ج.م / م²' : 'EGP / m²'}
-                </span>
+                isMultiUnit ? (
+                  <span className="price-per-m price-multi-unit" title={benchmark?.valuationNote || (isAr ? 'عقار كامل متعدد الأدوار والوحدات' : 'Multi-unit building')}>
+                    <Building2 size={13} style={{ marginInlineEnd: '4px' }} />
+                    <span>{isAr ? 'عقار كامل (أرض + مباني)' : 'Full Building (Land + Units)'}</span>
+                  </span>
+                ) : (
+                  <span className="price-per-m">
+                    <bdi>{Math.round(Number(property.price) / Number(property.size)).toLocaleString('en-US')}</bdi> {isAr ? 'ج.م / م²' : 'EGP / m²'}
+                  </span>
+                )
               )}
 
               {/* 🛡️ Free viewing + written fees (1Line charges commission — never claim 0%) */}
