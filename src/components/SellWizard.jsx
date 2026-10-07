@@ -41,6 +41,74 @@ export const REAL_ESTATE_LEGAL_DOCS = [
   { id: 'land_share', ar: 'حصة بالأرض محددة بالعقد', en: 'Defined Land Share in Contract' }
 ];
 
+// Comprehensive realistic finishing classifications in Egypt & Sohag
+export const REAL_ESTATE_FINISHING_TYPES = [
+  { 
+    id: 'ultra_lux', 
+    ar: 'ألترا سوبر لوكس (فاخر)', 
+    en: 'Ultra Super Lux (Deluxe)',
+    icon: '💎',
+    multiplier: 1.25,
+    desc_ar: 'رخام/بورسلين، جبس بورد، خامات وتجهيزات مستوردة'
+  },
+  { 
+    id: 'super_lux', 
+    ar: 'سوبر لوكس كامل', 
+    en: 'Super Lux Finished',
+    icon: '🌟',
+    multiplier: 1.15,
+    desc_ar: 'تشطيب كامل حديث، سيراميك فرز أول، جاهز للسكن'
+  },
+  { 
+    id: 'lux', 
+    ar: 'لوكس عادي', 
+    en: 'Standard Lux',
+    icon: '✨',
+    multiplier: 1.05,
+    desc_ar: 'تشطيب كامل كلاسيكي صالح للسكن أو التأجير'
+  },
+  { 
+    id: 'semi', 
+    ar: 'نصف تشطيب (محارة وحلوق)', 
+    en: 'Semi-Finished',
+    icon: '🏗️',
+    multiplier: 1.00,
+    desc_ar: 'محارة، حلوق، تأسيس سباكة وكهرباء'
+  },
+  { 
+    id: 'core', 
+    ar: 'بدون تشطيب (طوب أحمر / هيكل)', 
+    en: 'Core & Shell',
+    icon: '🧱',
+    multiplier: 0.86,
+    desc_ar: 'هيكل خرساني وجدران طوب بدون محارة'
+  },
+  { 
+    id: 'furnished', 
+    ar: 'مفروش بالكامل (بالأثاث والتكييفات)', 
+    en: 'Fully Furnished',
+    icon: '🛋️',
+    multiplier: 1.35,
+    desc_ar: 'جاهز فوراً بفرش راقٍ وتكييفات وأجهزة كهربائية'
+  },
+  { 
+    id: 'mixed', 
+    ar: 'تشطيب مختلط (أدوار مشطبة وأدوار عظم)', 
+    en: 'Mixed Finishing (Multi-Story)',
+    icon: '🏢',
+    multiplier: 1.08,
+    desc_ar: 'خاص بالعمارات والمنازل: جزء مشطب وجزء عظم أو محارة'
+  },
+  { 
+    id: 'under_construction', 
+    ar: 'تحت الإنشاء / جاري التشطيب', 
+    en: 'Under Construction',
+    icon: '⏳',
+    multiplier: 0.90,
+    desc_ar: 'أعمال البناء أو التشطيب جارية حالياً'
+  }
+];
+
 export const SellWizard = ({ 
   lang = 'ar', 
   sellerAnswers = {}, 
@@ -126,9 +194,17 @@ export const SellWizard = ({
 
     // Finishing multiplier
     let finishMultiplier = 1.0;
-    if (sellerAnswers.finishing === 'luxury') finishMultiplier = 1.18;
-    if (sellerAnswers.finishing === 'semi') finishMultiplier = 1.0;
-    if (sellerAnswers.finishing === 'core') finishMultiplier = 0.88;
+    const currentFinishing = sellerAnswers.finishing || 'super_lux';
+    const foundFinish = REAL_ESTATE_FINISHING_TYPES.find(f => f.id === currentFinishing);
+    if (foundFinish) {
+      finishMultiplier = foundFinish.multiplier;
+    } else if (currentFinishing === 'luxury') {
+      finishMultiplier = 1.15;
+    } else if (currentFinishing === 'core') {
+      finishMultiplier = 0.86;
+    } else if (currentFinishing === 'semi') {
+      finishMultiplier = 1.00;
+    }
 
     const baseVal = size * baseM2 * typeMultiplier * finishMultiplier;
     const minVal = Math.round((baseVal * 0.93) / 10000) * 10000;
@@ -188,6 +264,10 @@ export const SellWizard = ({
       ? (sellerAnswers.totalFloors ? `${sellerAnswers.totalFloors} طوابق` : (sellerAnswers.floor || 'طابقان'))
       : (sellerAnswers.floor || '3');
 
+    const finObj = REAL_ESTATE_FINISHING_TYPES.find(f => f.id === (sellerAnswers.finishing || 'super_lux')) 
+      || (sellerAnswers.finishing === 'luxury' ? REAL_ESTATE_FINISHING_TYPES[1] : null);
+    const finishingLabelAr = finObj ? finObj.ar : (sellerAnswers.finishing || 'سوبر لوكس');
+
     const updatedAnswers = {
       ...sellerAnswers,
       estimatedMin: isCairo ? null : calculatedEstimate.min,
@@ -195,6 +275,8 @@ export const SellWizard = ({
       estimatedAvg: calculatedEstimate.avg,
       totalFloors: isHouse ? (sellerAnswers.totalFloors || sellerAnswers.floor || '2') : undefined,
       floor: floorDisplay,
+      finishing: sellerAnswers.finishing || 'super_lux',
+      finishingLabelAr,
       rooms: isNonResidential ? 0 : parseInt(sellerAnswers.rooms || (isHouse ? 5 : 3)),
       phone: `${sellerCountry}${normalizedPhone}`,
       whatsapp: `${whatsappCountry}${normalizedWhatsapp}`,
@@ -431,33 +513,48 @@ export const SellWizard = ({
             <p>{isAr ? 'تساعدنا هذه البيانات في رفع دقة التقييم إلى 98% وتحديد سرعة البيع' : 'Helps calculate valuation accuracy up to 98%'}</p>
           </div>
 
-          {/* Finishing Status */}
-          <div className="form-group-block">
-            <label className="block-label">{isAr ? 'مستوى وحالة التشطيب' : 'Finishing Condition'}</label>
-            <div className="options-pill-grid">
-              <button
-                type="button"
-                className={`opt-pill-btn ${(sellerAnswers.finishing || 'luxury') === 'luxury' ? 'active' : ''}`}
-                onClick={() => setSellerAnswers({ ...sellerAnswers, finishing: 'luxury' })}
-              >
-                {isAr ? '🌟 تشطيب سوبر لوكس / ألترا لوكس' : 'Ultra Luxury Finished'}
-              </button>
-              <button
-                type="button"
-                className={`opt-pill-btn ${sellerAnswers.finishing === 'semi' ? 'active' : ''}`}
-                onClick={() => setSellerAnswers({ ...sellerAnswers, finishing: 'semi' })}
-              >
-                {isAr ? '🏗️ نصف تشطيب (محارة وحلوق)' : 'Semi-Finished'}
-              </button>
-              <button
-                type="button"
-                className={`opt-pill-btn ${sellerAnswers.finishing === 'core' ? 'active' : ''}`}
-                onClick={() => setSellerAnswers({ ...sellerAnswers, finishing: 'core' })}
-              >
-                {isAr ? '🧱 بدون تشطيب (طوب أحمر / هيكل)' : 'Core & Shell'}
-              </button>
+          {/* Finishing Status - Only for built properties (apartments, houses, offices, shops) */}
+          {sellerAnswers.propertyType !== 'land' && (
+            <div className="form-group-block">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+                <label className="block-label" style={{ margin: 0 }}>
+                  {isAr ? 'مستوى وحالة التشطيب' : 'Finishing Condition'}
+                </label>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                  {isAr ? 'يؤثر بدقة على القيمة السوقية للمتر وسرعة البيع' : 'Directly impacts market valuation per m²'}
+                </span>
+              </div>
+              <div className="options-pill-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px' }}>
+                {REAL_ESTATE_FINISHING_TYPES.map((type) => {
+                  const isSelected = (sellerAnswers.finishing || 'super_lux') === type.id || 
+                    (type.id === 'super_lux' && sellerAnswers.finishing === 'luxury');
+                  return (
+                    <button
+                      key={type.id}
+                      type="button"
+                      className={`opt-pill-btn ${isSelected ? 'active' : ''}`}
+                      onClick={() => setSellerAnswers({ ...sellerAnswers, finishing: type.id })}
+                      style={{
+                        justifyContent: 'flex-start',
+                        textAlign: isAr ? 'right' : 'left',
+                        padding: '11px 13px',
+                        fontSize: '0.82rem',
+                        lineHeight: 1.35
+                      }}
+                    >
+                      <span style={{ fontSize: '1.15rem', flexShrink: 0 }}>{type.icon}</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
+                        <span style={{ fontWeight: isSelected ? 800 : 700 }}>{isAr ? type.ar : type.en}</span>
+                        <span style={{ fontSize: '0.72rem', opacity: isSelected ? 0.92 : 0.65, fontWeight: 500 }}>
+                          {isAr ? type.desc_ar : type.en}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Legal Status & Documents (Granular, Multi-Select & Fully Optional) */}
           <div className="form-group-block">
