@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { MessageSquare, Menu, X, Search, Globe, Share2, Sun, Moon, Volume2, VolumeX, MoreHorizontal, Scale, Building, Sparkles, FileText, ChevronDown, Home, TrendingUp, Award, Layers, Heart, ArrowRight, ArrowLeft, Lock, User, ShieldCheck, Repeat2, Stethoscope } from 'lucide-react';
+import { MessageSquare, Menu, X, Search, Globe, Share2, Sun, Moon, Volume2, VolumeX, MoreHorizontal, Scale, Building, Sparkles, FileText, ChevronDown, Home, TrendingUp, Award, Layers, Heart, ArrowRight, ArrowLeft, Lock, User, ShieldCheck, Repeat2, Stethoscope, PlusCircle } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import CurrencySwitcher from './CurrencySwitcher';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
@@ -122,6 +122,14 @@ export default function Header({
       label: isAr ? 'طلبات المشترين' : 'Buyer Demands',
       title: isAr ? 'طلبات المشترين' : 'Buyer Demands',
       icon: FileText
+    },
+    {
+      id: 'sell',
+      type: 'link',
+      path: '/sell',
+      label: isAr ? 'اعرض عقارك' : 'List Property',
+      title: isAr ? 'اعرض عقارك للبيع أمام نخبة المشترين والمستثمرين' : 'List your property for sale',
+      icon: PlusCircle
     },
     {
       id: 'about',

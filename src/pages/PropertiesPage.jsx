@@ -14,6 +14,7 @@ import PropertyCard from '../components/properties/PropertyCard';
 import PropertyFilters from '../components/properties/PropertyFilters';
 import PropertyMapView from '../components/properties/PropertyMapView';
 import ZeroResultsFallback from '../components/properties/ZeroResultsFallback';
+import Pagination from '../components/common/Pagination';
 import { DEMO_PROPERTIES } from '../data/demoData';
 import { updatePageSeo } from '../utils/seoHelper';
 import { searchPropertiesSemantic, parseSemanticQuery } from '../utils/semanticSearchEngine';
@@ -47,7 +48,8 @@ export default function PropertiesPage({
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [hoveredPropertyId, setHoveredPropertyId] = useState(null);
   const [sortBy, setSortBy] = useState('featured'); // 'featured' | 'price_asc' | 'price_desc' | 'size_desc'
-  const [visibleCount, setVisibleCount] = useState(12);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 9;
 
   // Dynamic SEO for Properties Catalog
   useEffect(() => {
@@ -276,6 +278,17 @@ export default function PropertiesPage({
       return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
     });
   }, [safeProperties, filters, sortBy, familyFilter]);
+
+  // Reset to first page when any search criteria or sorting changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters, sortBy, familyFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredProperties.length / PAGE_SIZE));
+  const paginatedProperties = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredProperties.slice(start, start + PAGE_SIZE);
+  }, [filteredProperties, currentPage, PAGE_SIZE]);
 
   return (
     <div className="properties-page-wrapper">
