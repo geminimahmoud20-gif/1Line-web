@@ -328,6 +328,10 @@ function AppContent() {
 
   const submitSellerJourney = async (overrideData) => {
     const data = overrideData || sellerAnswers;
+    const isHouse = data.propertyType === 'villa';
+    const floorDesc = isHouse 
+      ? ` | المبنى: ${data.totalFloors || data.floor || 'طوابق متعددة'}`
+      : (data.floor ? ` | الدور: ${data.floor}` : '');
     const legalSummary = data.legalSummaryAr ? ` | المستندات: ${data.legalSummaryAr}` : '';
     return handleAddNewLead({
       name: data.name,
@@ -337,7 +341,7 @@ function AppContent() {
       area: data.area || 'new_sohag',
       type: 'seller',
       landingPage: '/sell',
-      notes: `عرض بيع ${data.propertyType} في ${data.area} بمساحة ${data.size || ''}م${legalSummary}`,
+      notes: `عرض بيع ${data.propertyType} في ${data.area} بمساحة ${data.size || ''}م${floorDesc}${legalSummary}`,
       details: data
     });
   };

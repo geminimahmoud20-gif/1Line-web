@@ -178,17 +178,24 @@ export const SellWizard = ({
     const normalizedWhatsapp = cleanWhatsapp.startsWith('0') ? cleanWhatsapp.substring(1) : cleanWhatsapp;
 
     const isNonResidential = sellerAnswers.propertyType === 'retail' || sellerAnswers.propertyType === 'land' || sellerAnswers.propertyType === 'office';
+    const isHouse = sellerAnswers.propertyType === 'villa';
     const legalDocsList = selectedLegalDocs;
     const legalLabelsAr = legalDocsList
       .map(id => REAL_ESTATE_LEGAL_DOCS.find(d => d.id === id)?.ar || id)
       .join('، ');
+
+    const floorDisplay = isHouse
+      ? (sellerAnswers.totalFloors ? `${sellerAnswers.totalFloors} طوابق` : (sellerAnswers.floor || 'طابقان'))
+      : (sellerAnswers.floor || '3');
 
     const updatedAnswers = {
       ...sellerAnswers,
       estimatedMin: isCairo ? null : calculatedEstimate.min,
       estimatedMax: isCairo ? null : calculatedEstimate.max,
       estimatedAvg: calculatedEstimate.avg,
-      rooms: isNonResidential ? 0 : parseInt(sellerAnswers.rooms || 3),
+      totalFloors: isHouse ? (sellerAnswers.totalFloors || sellerAnswers.floor || '2') : undefined,
+      floor: floorDisplay,
+      rooms: isNonResidential ? 0 : parseInt(sellerAnswers.rooms || (isHouse ? 5 : 3)),
       phone: `${sellerCountry}${normalizedPhone}`,
       whatsapp: `${whatsappCountry}${normalizedWhatsapp}`,
       legalDocs: legalDocsList,
@@ -210,7 +217,7 @@ export const SellWizard = ({
   const propertyTypes = [
     { id: 'apartment', label_ar: 'شقة سكنية', label_en: 'Apartment', icon: Building, desc_ar: 'شقق وأدوار سكنية ودوبلكس' },
     { id: 'retail', label_ar: 'محل تجاري', label_en: 'Retail Shop', icon: Store, desc_ar: 'محلات ومساحات تجارية على شوارع رئيسية' },
-    { id: 'villa', label_ar: 'فيلا / تاون هاوس', label_en: 'Villa', icon: Home, desc_ar: 'فيلات مستقلة وتاون هاوس في كمبوندات' },
+    { id: 'villa', label_ar: 'منزل مستقل / بيت عائلي / فيلا', label_en: 'House / Villa / Building', icon: Home, desc_ar: 'منازل كاملة متعددة الأدوار وفيلات مستقلة' },
     { id: 'office', label_ar: 'مكتب إداري / عيادة', label_en: 'Office / Clinic', icon: Briefcase, desc_ar: 'مقرات إدارية وعيادات طبية جاهزة' },
     { id: 'land', label_ar: 'قطعة أرض', label_en: 'Land Plot', icon: MapPin, desc_ar: 'أراضي مباني وتجارية بترخيص معتمد' }
   ];
@@ -671,7 +678,15 @@ export const SellWizard = ({
                     <option value="2">{isAr ? 'الدور الثاني' : '2nd Floor'}</option>
                     <option value="3">{isAr ? 'الدور الثالث' : '3rd Floor'}</option>
                     <option value="4">{isAr ? 'الدور الرابع' : '4th Floor'}</option>
-                    <option value="5+">{isAr ? 'الدور الخامس أو أعلى' : '5th Floor or Higher'}</option>
+                    <option value="5">{isAr ? 'الدور الخامس' : '5th Floor'}</option>
+                    <option value="6">{isAr ? 'الدور السادس' : '6th Floor'}</option>
+                    <option value="7">{isAr ? 'الدور السابع' : '7th Floor'}</option>
+                    <option value="8">{isAr ? 'الدور الثامن' : '8th Floor'}</option>
+                    <option value="9">{isAr ? 'الدور التاسع' : '9th Floor'}</option>
+                    <option value="10">{isAr ? 'الدور العاشر' : '10th Floor'}</option>
+                    <option value="11">{isAr ? 'الدور الحادي عشر' : '11th Floor'}</option>
+                    <option value="12">{isAr ? 'الدور الثاني عشر' : '12th Floor'}</option>
+                    <option value="13+">{isAr ? 'الدور 13 فأعلى' : '13th Floor or Higher'}</option>
                   </select>
                 </div>
 
@@ -705,22 +720,91 @@ export const SellWizard = ({
                 <span>{isAr ? '💼 مقر إداري / عيادة مرخصة (تقسيمات إدارية متخصصة بدون غرف سكنية)' : 'Administrative / Medical facility (Corporate partitioning without residential rooms)'}</span>
               </div>
             </div>
+          ) : sellerAnswers.propertyType === 'villa' ? (
+            /* House / Villa / Full Building Specs */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div className="phase-inputs-row">
+                <div className="form-group-flex">
+                  <label>{isAr ? 'إجمالي عدد طوابق / أدوار المنزل' : 'Total Building Floors / Stories'}</label>
+                  <select
+                    className="form-select-styled"
+                    value={sellerAnswers.totalFloors || sellerAnswers.floor || '2'}
+                    onChange={(e) => setSellerAnswers({ 
+                      ...sellerAnswers, 
+                      totalFloors: e.target.value,
+                      floor: `${e.target.value} ${isAr ? 'طوابق' : 'Floors'}`
+                    })}
+                  >
+                    <option value="1">{isAr ? 'طابق واحد (أرضي فقط / فيلا دور واحد)' : '1 Floor (Ground Only)'}</option>
+                    <option value="2">{isAr ? 'طابقان (أرضي + أول علوي)' : '2 Floors (Ground + 1)'}</option>
+                    <option value="3">{isAr ? '3 طوابق (أرضي + دورين)' : '3 Floors (Ground + 2)'}</option>
+                    <option value="4">{isAr ? '4 طوابق (أرضي + 3 أدوار)' : '4 Floors (Ground + 3)'}</option>
+                    <option value="5">{isAr ? '5 طوابق (أرضي + 4 أدوار)' : '5 Floors (Ground + 4)'}</option>
+                    <option value="6">{isAr ? '6 طوابق (أرضي + 5 أدوار)' : '6 Floors (Ground + 5)'}</option>
+                    <option value="7">{isAr ? '7 طوابق' : '7 Floors'}</option>
+                    <option value="8">{isAr ? '8 طوابق' : '8 Floors'}</option>
+                    <option value="9">{isAr ? '9 طوابق' : '9 Floors'}</option>
+                    <option value="10">{isAr ? '10 طوابق' : '10 Floors'}</option>
+                    <option value="11">{isAr ? '11 طابقاً' : '11 Floors'}</option>
+                    <option value="12+">{isAr ? '12 طابقاً فأكثر' : '12+ Floors'}</option>
+                  </select>
+                </div>
+
+                <div className="form-group-flex">
+                  <label>{isAr ? 'إجمالي عدد الغرف / الأجنحة بالمنزل' : 'Total Bedrooms / Suites'}</label>
+                  <select
+                    className="form-select-styled"
+                    value={sellerAnswers.rooms || '5'}
+                    onChange={(e) => setSellerAnswers({ ...sellerAnswers, rooms: e.target.value })}
+                  >
+                    <option value="3">{isAr ? '3 - 4 غرف' : '3 - 4 Rooms'}</option>
+                    <option value="5">{isAr ? '5 - 6 غرف' : '5 - 6 Rooms'}</option>
+                    <option value="7">{isAr ? '7 - 8 غرف' : '7 - 8 Rooms'}</option>
+                    <option value="9">{isAr ? '9 - 10 غرف' : '9 - 10 Rooms'}</option>
+                    <option value="12+">{isAr ? '12 غرفة فأكثر' : '12+ Rooms'}</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{
+                padding: '10px 14px',
+                borderRadius: '8px',
+                background: 'rgba(217, 119, 6, 0.08)',
+                border: '1px solid rgba(217, 119, 6, 0.22)',
+                fontSize: '0.82rem',
+                color: 'var(--accent-gold, #d97706)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <Home size={16} style={{ flexShrink: 0 }} />
+                <span>{isAr ? '🏡 منزل مستقل / فيلا بالكامل: يشمل التقييم كامل أدوار المبنى وحصة الأرض الإجمالية.' : 'House / Full Building: Valuation covers all floors and the total land footprint.'}</span>
+              </div>
+            </div>
           ) : (
-            /* Standard Residential (Apartment / Villa) */
+            /* Apartment Specs */
             <div className="phase-inputs-row">
               <div className="form-group-flex">
-                <label>{isAr ? 'الدور / الطابق' : 'Floor Level'}</label>
+                <label>{isAr ? 'الدور / الطابق للشقة' : 'Apartment Floor Level'}</label>
                 <select
                   className="form-select-styled"
                   value={sellerAnswers.floor || '3'}
                   onChange={(e) => setSellerAnswers({ ...sellerAnswers, floor: e.target.value })}
                 >
-                  <option value="ground">{isAr ? 'أرضي / مدخل خاص' : 'Ground Floor'}</option>
+                  <option value="ground">{isAr ? 'أرضي / مدخل خاص' : 'Ground Floor / Private Entrance'}</option>
                   <option value="1">{isAr ? 'الدور الأول' : '1st Floor'}</option>
                   <option value="2">{isAr ? 'الدور الثاني' : '2nd Floor'}</option>
                   <option value="3">{isAr ? 'الدور الثالث' : '3rd Floor'}</option>
                   <option value="4">{isAr ? 'الدور الرابع' : '4th Floor'}</option>
-                  <option value="top">{isAr ? 'دور أخير مع روف' : 'Top Floor + Roof'}</option>
+                  <option value="5">{isAr ? 'الدور الخامس' : '5th Floor'}</option>
+                  <option value="6">{isAr ? 'الدور السادس' : '6th Floor'}</option>
+                  <option value="7">{isAr ? 'الدور السابع' : '7th Floor'}</option>
+                  <option value="8">{isAr ? 'الدور الثامن' : '8th Floor'}</option>
+                  <option value="9">{isAr ? 'الدور التاسع' : '9th Floor'}</option>
+                  <option value="10">{isAr ? 'الدور العاشر' : '10th Floor'}</option>
+                  <option value="11">{isAr ? 'الدور الحادي عشر' : '11th Floor'}</option>
+                  <option value="12">{isAr ? 'الدور الثاني عشر' : '12th Floor'}</option>
+                  <option value="13+">{isAr ? 'الدور 13 فأعلى' : '13th Floor or Higher'}</option>
+                  <option value="top">{isAr ? 'دور أخير مع روف (بنتهاوس)' : 'Top Floor + Roof (Penthouse)'}</option>
                 </select>
               </div>
 
@@ -731,7 +815,7 @@ export const SellWizard = ({
                   value={sellerAnswers.rooms || '3'}
                   onChange={(e) => setSellerAnswers({ ...sellerAnswers, rooms: e.target.value })}
                 >
-                  <option value="1">1 {isAr ? 'غرفة' : 'Room'}</option>
+                  <option value="1">1 {isAr ? 'غرفة (استوديو)' : 'Room (Studio)'}</option>
                   <option value="2">2 {isAr ? 'غرف' : 'Rooms'}</option>
                   <option value="3">3 {isAr ? 'غرف' : 'Rooms'}</option>
                   <option value="4">4 {isAr ? 'غرف' : 'Rooms'}</option>
