@@ -40,9 +40,11 @@ export default function WhatsAppAutomationBar({ property, lang = 'ar', currency 
       `📌 *العقار:* ${title}`,
       `📍 *الموقع:* ${location}`,
       `💰 *السعر:* ${priceFormatted}`,
-      benchmark ? `📊 *مقارنة بالحي:* ${benchmark.badgeLabel}` : null,
+      benchmark ? (benchmark.isMultiUnit ? `🏢 *طبيعة العقار:* ${benchmark.badgeLabel}` : `📊 *مقارنة بالحي:* ${benchmark.badgeLabel}`) : null,
       hasPlan ? `💵 *المقدم:* ${fmt(property.downPayment)} ج.م — *القسط:* ${fmt(property.monthlyInstallment)} ج.م شهرياً` : '💵 *السداد:* كاش',
-      `📐 *المساحة:* ${property.size} م²${property.bedrooms ? ` — ${property.bedrooms} غرف` : ''}`,
+      benchmark?.isMultiUnit && benchmark.unitBreakdown?.summary
+        ? `📐 *المكونات:* مساحة الأرض ${property.size} م² — ${benchmark.unitBreakdown.summary}`
+        : `📐 *المساحة:* ${property.size} م²${property.bedrooms ? ` — ${property.bedrooms} غرف` : ''}`,
       legal ? `🛡️ *الموقف القانوني:* ${legal}` : null,
       `🔗 ${url}`,
       `📞 للمعاينة: ${dynamicPhone}`
@@ -52,9 +54,11 @@ export default function WhatsAppAutomationBar({ property, lang = 'ar', currency 
       `📌 *Listing:* ${title}`,
       `📍 *Location:* ${location}`,
       `💰 *Price:* ${priceFormatted}`,
-      benchmark ? `📊 *District comparison:* ${benchmark.badgeLabel}` : null,
+      benchmark ? (benchmark.isMultiUnit ? `🏢 *Asset Type:* ${benchmark.badgeLabel}` : `📊 *District comparison:* ${benchmark.badgeLabel}`) : null,
       hasPlan ? `💵 *Down:* ${fmt(property.downPayment)} EGP — *Monthly:* ${fmt(property.monthlyInstallment)} EGP` : '💵 *Payment:* cash',
-      `📐 *Area:* ${property.size} m²${property.bedrooms ? ` — ${property.bedrooms} beds` : ''}`,
+      benchmark?.isMultiUnit && benchmark.unitBreakdown?.summary
+        ? `📐 *Breakdown:* Plot ${property.size} m² — ${benchmark.unitBreakdown.summary}`
+        : `📐 *Area:* ${property.size} m²${property.bedrooms ? ` — ${property.bedrooms} beds` : ''}`,
       legal ? `🛡️ *Legal status:* ${legal}` : null,
       `🔗 ${url}`,
       `📞 Viewings: ${dynamicPhone}`

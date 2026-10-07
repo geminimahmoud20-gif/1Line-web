@@ -1,13 +1,14 @@
-import { getPriceBenchmark, formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
-import { X, Star, Maximize2, Calendar, ShieldCheck, FileCheck2, MapPin, ExternalLink } from 'lucide-react';
+import { getPriceBenchmark, formatCurrencyPrice, isMultiUnitOrBuilding } from '../../utils/currencyAndBenchmark';
+import { X, Star, Maximize2, Calendar, ShieldCheck, FileCheck2, MapPin, ExternalLink, Building2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // One property's column in the comparison matrix.
 export default function CompareColumn({ prop, isAr, lang, currency, verdicts, customDownPercent, onRemoveFromCompare, activeTab, setCustomDownPercent, onClose }) {
+  const isMulti = isMultiUnitOrBuilding(prop);
   const title = isAr ? prop.title_ar : prop.title_en;
   const location = isAr ? prop.locationName_ar : prop.locationName_en;
   const finishing = isAr ? prop.finishing_ar : prop.finishing_en;
-  const ppm = prop.pricePerMeter || (prop.size ? Math.round(prop.price / prop.size) : 0);
+  const ppm = !isMulti ? (prop.pricePerMeter || (prop.size ? Math.round(prop.price / prop.size) : 0)) : 0;
   const benchmark = getPriceBenchmark(prop, lang);
   const priceData = formatCurrencyPrice(prop.price, currency, lang);
   const isBestPpm = prop.id === verdicts.bestPpmId;
@@ -81,7 +82,9 @@ export default function CompareColumn({ prop, isAr, lang, currency, verdicts, cu
           {/* Price Per SqM */}
           <div className="compare-cell">
             <span className={`cell-ppm-val ${isBestPpm ? 'text-gold fw-bold' : ''}`}>
-              {ppm.toLocaleString('en-US')} {isAr ? 'ج.م / م²' : 'EGP / m²'}
+              {benchmark?.isMultiUnit
+                ? (isAr ? 'عقار كامل (سكني + تجاري)' : 'Multi-Unit Building')
+                : `${ppm.toLocaleString('en-US')} ${isAr ? 'ج.م / م²' : 'EGP / m²'}`}
             </span>
           </div>
 

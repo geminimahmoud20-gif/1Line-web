@@ -6,6 +6,7 @@ import { generateComparePdf } from '../../utils/comparePdfGenerator';
 import useClientDownload from '../../hooks/useClientDownload';
 
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
+import { isMultiUnitOrBuilding } from '../../utils/currencyAndBenchmark';
 import CompareColumn from './CompareColumn';
 import CompareDuel from './CompareDuel';
 
@@ -47,9 +48,10 @@ export default function PropertyCompareDrawer({
     let topLegalId = null;
 
     compareList.forEach((p) => {
-      // Best Price Per Meter
-      const ppm = p.pricePerMeter || (p.size ? Math.round(p.price / p.size) : Infinity);
-      if (ppm < minPpm) {
+      // Best Price Per Meter: only for single units, skip multi-unit buildings where price is for entire multi-floor structure
+      const isMulti = isMultiUnitOrBuilding(p);
+      const ppm = !isMulti && (p.pricePerMeter || (p.size ? Math.round(p.price / p.size) : Infinity));
+      if (ppm && ppm < minPpm) {
         minPpm = ppm;
         bestPpmId = p.id;
       }
