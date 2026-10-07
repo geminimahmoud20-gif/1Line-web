@@ -89,26 +89,36 @@ export default function CallbackModal({ isOpen, onClose, lang = 'ar', onSubmitCa
 
   return (
     <div className="track-modal-backdrop" onClick={onClose}>
-      <div className="track-modal-card luxury-consultation-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '620px' }}>
+      <div 
+        className="track-modal-card luxury-consultation-card" 
+        onClick={(e) => e.stopPropagation()} 
+        style={{ 
+          maxWidth: '640px',
+          maxHeight: 'min(92vh, 760px)',
+          overflowY: 'auto',
+          padding: '24px 26px',
+          boxSizing: 'border-box'
+        }}
+      >
         <button type="button" className="modal-close-btn" onClick={onClose} aria-label="إغلاق">
           <X size={20} />
         </button>
 
-        <div className="track-modal-header text-center">
-          <div className="track-icon-wrap luxury-gold-glow">
-            <Sparkles size={24} className="text-gold" />
+        <div className="track-modal-header text-center" style={{ marginBottom: '10px' }}>
+          <div className="track-icon-wrap luxury-gold-glow" style={{ width: '44px', height: '44px', margin: '0 auto 6px' }}>
+            <Sparkles size={22} className="text-gold" />
           </div>
-          <h3 style={{ fontSize: '1.35rem', fontWeight: 800, marginTop: '8px' }}>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '4px 0' }}>
             {isAr ? 'حجز جلسة استشارة عقارية خاصة 🏛️' : 'VIP Real Estate Consultation Booking'}
           </h3>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
             {isAr 
               ? 'تحدث مباشرة مع مستشاري 1Line المعتمدين بسوهاج لدراسة استثمارك وتأكيد الموقف القانوني مجاناً.'
               : 'Direct advisory with certified 1Line consultants for investment feasibility & legal due diligence.'}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="booking-form-wrap" style={{ marginTop: '16px' }}>
+        <form onSubmit={handleSubmit} className="booking-form-wrap" style={{ marginTop: '12px' }}>
           {/* 🍯 Invisible Honeypot Anti-Bot Shield */}
           <div style={{ position: 'absolute', opacity: 0, zIndex: -1, pointerEvents: 'none', height: 0, overflow: 'hidden' }} aria-hidden="true">
             <input
@@ -123,10 +133,10 @@ export default function CallbackModal({ isOpen, onClose, lang = 'ar', onSubmitCa
 
           {/* 1. Track Selector */}
           <div className="form-group-item">
-            <label style={{ fontWeight: 700, marginBottom: '8px', display: 'block', fontSize: '0.88rem' }}>
+            <label style={{ fontWeight: 700, marginBottom: '6px', display: 'block', fontSize: '0.86rem' }}>
               {isAr ? 'اختر مسار الاستشارة المتخصصة:' : 'Select Consultation Track:'}
             </label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '8px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '8px' }}>
               {consultationTracks.map((track) => {
                 const Icon = track.icon;
                 const isSelected = form.consultationTrack === track.id;
@@ -135,7 +145,7 @@ export default function CallbackModal({ isOpen, onClose, lang = 'ar', onSubmitCa
                     key={track.id}
                     onClick={() => setForm({ ...form, consultationTrack: track.id })}
                     style={{
-                      padding: '10px 12px',
+                      padding: '8px 10px',
                       borderRadius: '10px',
                       border: isSelected ? '1.5px solid var(--accent-gold, #d97706)' : '1px solid rgba(148, 163, 184, 0.25)',
                       background: isSelected ? 'rgba(217, 119, 6, 0.08)' : 'rgba(255, 255, 255, 0.04)',
@@ -143,13 +153,13 @@ export default function CallbackModal({ isOpen, onClose, lang = 'ar', onSubmitCa
                       transition: 'all 0.2s ease'
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                      <Icon size={16} color={isSelected ? 'var(--accent-gold, #d97706)' : '#64748b'} />
-                      <span style={{ fontSize: '0.84rem', fontWeight: 700 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+                      <Icon size={15} color={isSelected ? 'var(--accent-gold, #d97706)' : '#64748b'} />
+                      <span style={{ fontSize: '0.82rem', fontWeight: 700 }}>
                         {isAr ? track.title_ar : track.title_en}
                       </span>
                     </div>
-                    <p style={{ fontSize: '0.74rem', color: '#64748b', margin: 0, lineHeight: 1.3 }}>
+                    <p style={{ fontSize: '0.72rem', color: '#64748b', margin: 0, lineHeight: 1.3 }}>
                       {isAr ? track.desc_ar : ''}
                     </p>
                   </div>
@@ -159,8 +169,8 @@ export default function CallbackModal({ isOpen, onClose, lang = 'ar', onSubmitCa
           </div>
 
           {/* 2. Client Name */}
-          <div className="form-group-item" style={{ marginTop: '12px' }}>
-            <label style={{ fontWeight: 700, fontSize: '0.88rem', display: 'block', marginBottom: '6px' }}>
+          <div className="form-group-item" style={{ marginTop: '10px' }}>
+            <label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: '4px' }}>
               {isAr ? 'الاسم الكريم بالكامل * (إلزامي)' : 'Full Name * (Required)'}
             </label>
             <input
@@ -170,12 +180,12 @@ export default function CallbackModal({ isOpen, onClose, lang = 'ar', onSubmitCa
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               required
-              style={{ width: '100%', boxSizing: 'border-box' }}
+              style={{ width: '100%', boxSizing: 'border-box', minHeight: '44px', padding: '10px 14px' }}
             />
           </div>
 
           {/* 3. Phone Input with Country Code */}
-          <div className="form-group-item" style={{ marginTop: '12px' }}>
+          <div className="form-group-item" style={{ marginTop: '10px' }}>
             <PhoneInputField
               label={isAr ? 'رقم الهاتف والواتساب المفضل للتواصل *' : 'Phone / WhatsApp *'}
               value={form.phone}
@@ -191,15 +201,15 @@ export default function CallbackModal({ isOpen, onClose, lang = 'ar', onSubmitCa
           </div>
 
           {/* 4. Target District */}
-          <div className="form-group-item" style={{ marginTop: '12px' }}>
-            <label style={{ fontWeight: 700, fontSize: '0.88rem', display: 'block', marginBottom: '6px' }}>
+          <div className="form-group-item" style={{ marginTop: '10px' }}>
+            <label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: '4px' }}>
               {isAr ? 'المنطقة أو الحي المستهدف بسوهاج:' : 'Target District:'}
             </label>
             <select
               className="form-select-styled"
               value={form.area}
               onChange={(e) => setForm({ ...form, area: e.target.value })}
-              style={{ width: '100%', boxSizing: 'border-box' }}
+              style={{ width: '100%', boxSizing: 'border-box', minHeight: '44px', padding: '10px 14px' }}
             >
               {areas.map((a) => (
                 <option key={a.id} value={a.id}>
@@ -210,7 +220,7 @@ export default function CallbackModal({ isOpen, onClose, lang = 'ar', onSubmitCa
           </div>
 
           {/* 5. Meeting Format & Timing */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginTop: '14px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '10px', marginTop: '10px' }}>
             <div>
               <label style={{ fontWeight: 700, fontSize: '0.84rem', display: 'block', marginBottom: '6px' }}>
                 {isAr ? 'قناة الاستشارة المفضلة:' : 'Meeting Channel:'}
@@ -228,11 +238,11 @@ export default function CallbackModal({ isOpen, onClose, lang = 'ar', onSubmitCa
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px',
-                        padding: '8px 12px',
+                        padding: '7px 10px',
                         borderRadius: '8px',
                         border: isSelected ? '1px solid var(--accent-gold, #d97706)' : '1px solid rgba(148, 163, 184, 0.2)',
                         background: isSelected ? 'rgba(217, 119, 6, 0.08)' : 'transparent',
-                        fontSize: '0.82rem',
+                        fontSize: '0.8rem',
                         cursor: 'pointer',
                         textAlign: isAr ? 'right' : 'left'
                       }}
@@ -265,11 +275,11 @@ export default function CallbackModal({ isOpen, onClose, lang = 'ar', onSubmitCa
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px',
-                        padding: '8px 12px',
+                        padding: '7px 10px',
                         borderRadius: '8px',
                         border: isSelected ? '1px solid var(--accent-gold, #d97706)' : '1px solid rgba(148, 163, 184, 0.2)',
                         background: isSelected ? 'rgba(217, 119, 6, 0.08)' : 'transparent',
-                        fontSize: '0.82rem',
+                        fontSize: '0.8rem',
                         cursor: 'pointer'
                       }}
                     >
@@ -283,26 +293,31 @@ export default function CallbackModal({ isOpen, onClose, lang = 'ar', onSubmitCa
           </div>
 
           {/* Submit CTA */}
-          <div style={{ marginTop: '20px' }}>
+          <div style={{ marginTop: '16px' }}>
             <button
               type="submit"
               className="btn btn-primary"
               style={{
                 width: '100%',
                 padding: '12px 18px',
-                fontSize: '1rem',
+                fontSize: '0.98rem',
                 fontWeight: 700,
                 borderRadius: '12px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '10px'
+                gap: '10px',
+                background: 'var(--gradient-gold, linear-gradient(135deg, #d97706, #b45309))',
+                color: '#ffffff',
+                boxShadow: '0 4px 14px rgba(217, 119, 6, 0.35)',
+                border: 'none',
+                cursor: 'pointer'
               }}
             >
               <Sparkles size={18} />
               <span>{isAr ? 'تأكيد حجز الاستشارة العقارية VIP' : 'Confirm VIP Consultation Booking'}</span>
             </button>
-            <span style={{ display: 'block', textAlign: 'center', fontSize: '0.76rem', color: '#94a3b8', marginTop: '8px' }}>
+            <span style={{ display: 'block', textAlign: 'center', fontSize: '0.74rem', color: '#94a3b8', marginTop: '6px' }}>
               🔒 {isAr ? 'بياناتك مشفرة ومحمية بخصوصية تامة وفق ميثاق 1Line للأمان الرقمي' : 'Your details are strictly confidential under 1Line Privacy Charter'}
             </span>
           </div>

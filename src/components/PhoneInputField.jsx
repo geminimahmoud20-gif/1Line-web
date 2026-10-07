@@ -137,6 +137,7 @@ export const PhoneInputField = ({
           value={currentVal}
           onChange={(e) => handleValChange(e.target.value)}
           placeholder={placeholder || defaultPlaceholder}
+          dir="ltr"
           required={required}
           disabled={disabled}
           autoFocus={autoFocus}
@@ -152,7 +153,9 @@ export const PhoneInputField = ({
             color: 'var(--text-primary, #0f172a)',
             fontWeight: '700',
             fontFamily: 'inherit',
-            letterSpacing: '0.5px'
+            letterSpacing: '0.5px',
+            direction: 'ltr',
+            textAlign: 'left'
           }}
         />
       </div>
