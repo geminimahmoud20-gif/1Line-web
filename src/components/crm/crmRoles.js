@@ -10,3 +10,27 @@ export const CRM_ROLES = [
   { id: 'agent_east', label_ar: 'فريق شرق والكوثر (وسيط)', label_en: 'East Desk Broker', agentName: 'Sales Team A', icon: '🏆', canDelete: false, canViewAgencyFinancials: false },
   { id: 'agent_new_sohag', label_ar: 'فريق سوهاج الجديدة (وسيط)', label_en: 'New Sohag Desk Broker', agentName: 'Sales Team B', icon: '🌟', canDelete: false, canViewAgencyFinancials: false }
 ];
+
+export const getMergedCrmRoles = (config = null) => {
+  if (!config?.roles) return CRM_ROLES;
+  const merged = [...CRM_ROLES];
+  config.roles.forEach((r) => {
+    const existing = merged.find((x) => x.id === r.id);
+    if (!existing) {
+      merged.push({
+        id: r.id,
+        label_ar: r.name_ar,
+        label_en: r.name_en,
+        agentName: r.name_ar,
+        icon: r.icon || '👤',
+        canDelete: r.perms?.includes('ld.manage') || r.perms?.includes('inv.delete') || false,
+        canViewAgencyFinancials: r.perms?.includes('fin') || false
+      });
+    } else {
+      existing.label_ar = r.name_ar || existing.label_ar;
+      existing.label_en = r.name_en || existing.label_en;
+      if (r.icon) existing.icon = r.icon;
+    }
+  });
+  return merged;
+};

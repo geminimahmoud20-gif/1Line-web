@@ -34,8 +34,8 @@ export const contactAccess = async () => {
   if (!user) return { seesContacts: false, isManager: false };
   try {
     const claims = await getUserClaims(user);
-    const isManager = claims.admin === true || MANAGER_ROLES.includes(claims.role);
-    return { seesContacts: isManager || CONTACT_ROLES.includes(claims.role), isManager };
+    const isManager = claims.admin === true || MANAGER_ROLES.includes(claims.role) || claims.perms?.includes('ld.manage');
+    return { seesContacts: isManager || CONTACT_ROLES.includes(claims.role) || Boolean(claims.perms?.includes('ld.phone')), isManager };
   } catch {
     return { seesContacts: false, isManager: false };
   }

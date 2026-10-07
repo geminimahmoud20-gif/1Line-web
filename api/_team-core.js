@@ -48,9 +48,9 @@ export function parseTeamRequest(body, config = null) {
     const email = String(body.email || '').trim().toLowerCase();
     const name = String(body.name || '').replace(/\s+/g, ' ').trim().slice(0, 80);
     const role = String(body.role || '');
-    const desk = typeof body.desk === 'string' ? body.desk.trim() : '';
+    const desk = typeof body.desk === 'string' ? body.desk.trim() : undefined;
     if (!EMAIL_RE.test(email) || email.length > 120 || !validRoles.includes(role)) return null;
-    return { action, email, role, desk, name };
+    return { action, email, role, ...(desk !== undefined ? { desk } : {}), name };
   }
 
   if (action === 'role') {
@@ -58,7 +58,7 @@ export function parseTeamRequest(body, config = null) {
     const role = String(body.role || '');
     const desk = typeof body.desk === 'string' ? body.desk.trim() : undefined;
     if (!UID_RE.test(uid) || !validRoles.includes(role)) return null;
-    return { action, uid, role, desk };
+    return { action, uid, role, ...(desk !== undefined ? { desk } : {}) };
   }
 
   if (['disable', 'enable', 'remove'].includes(action)) {

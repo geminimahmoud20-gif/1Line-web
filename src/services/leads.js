@@ -267,9 +267,11 @@ export const subscribeToLeads = (callback, maxCount = 150) => {
         claims = await getUserClaims(user);
       } catch { /* treat as no desk; rules decide */ }
       if (version !== authVersion) return; // a newer auth change already took over
-      const desk = DESK_BY_ROLE[claims.role] || null;
+      const desk = claims.desk || DESK_BY_ROLE[claims.role] || null;
       const seesAllContacts = claims.admin === true
-        || ['admin', 'super_admin', 'sales_manager'].includes(claims.role);
+        || ['admin', 'super_admin', 'sales_manager'].includes(claims.role)
+        || claims.perms?.includes('ld.manage')
+        || (claims.perms?.includes('ld.all') && claims.perms?.includes('ld.phone'));
       unsubSnapshot = listen(desk, desk ? 'desk' : (seesAllContacts ? 'all' : null));
     });
     return () => {
@@ -405,8 +407,11 @@ export const searchLeads = async (term, max = 25) => {
   if (!isFirebaseConfigured() || !db || !auth?.currentUser || text.length < 2) return { ok: true, leads: [] };
   let claims = {};
   try { claims = await getUserClaims(auth.currentUser); } catch { /* rules decide */ }
-  const desk = DESK_BY_ROLE[claims.role] || null;
-  const seesAllContacts = claims.admin === true || ['admin', 'super_admin', 'sales_manager'].includes(claims.role);
+  const desk = claims.desk || DESK_BY_ROLE[claims.role] || null;
+  const seesAllContacts = claims.admin === true
+    || ['admin', 'super_admin', 'sales_manager'].includes(claims.role)
+    || claims.perms?.includes('ld.manage')
+    || (claims.perms?.includes('ld.all') && claims.perms?.includes('ld.phone'));
   const deskFilter = desk ? [where('assignedTo', 'in', [desk, UNASSIGNED_DESK])] : [];
   const found = new Map();
 

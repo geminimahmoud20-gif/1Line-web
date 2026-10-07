@@ -45,6 +45,8 @@ export const checkIsAdmin = async (user) => {
   }
 };
 
+import { accessFromClaims } from '../utils/accessModel.js';
+
 // Staff roles are Firebase custom claims ({ role: 'sales_agent' }), set server-side with
 // scripts/set-crm-role.mjs — a user cannot change their own claims. Must match firestore.rules.
 export const CRM_STAFF_ROLES = ['sales_manager', 'sales_agent', 'property_manager', 'finance', 'viewer', 'agent_east', 'agent_new_sohag'];
@@ -57,10 +59,24 @@ export const getCrmRole = async (user) => {
   try {
     const claims = await getUserClaims(user);
     if (isAdminClaims(claims)) return 'super_admin';
+    if (claims.staff === true && claims.role) return claims.role;
     if (CRM_STAFF_ROLES.includes(claims.role)) return claims.role;
     return null;
   } catch {
     return null; // fail closed
+  }
+};
+
+/**
+ * Resolves full structured CRM access (role, desk, perms, flags)
+ */
+export const getCrmAccess = async (user) => {
+  if (!user) return { role: null, desk: '', perms: [], isAdmin: false, isStaff: false };
+  try {
+    const claims = await getUserClaims(user);
+    return accessFromClaims(claims);
+  } catch {
+    return { role: null, desk: '', perms: [], isAdmin: false, isStaff: false };
   }
 };
 

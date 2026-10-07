@@ -17,24 +17,47 @@ service cloud.firestore {
     function hasRole(roles) {
       return isAdmin() || (request.auth != null && role() in roles);
     }
+    function legacyHasPerm(p) {
+      return (role() == 'sales_manager' && p in ['ld.all', 'ld.manage', 'ld.edit', 'ld.phone', 'ld.import', 'inv.edit', 'deal.all', 'deal.edit', 'export'])
+          || (role() in ['sales_agent', 'agent_east', 'agent_new_sohag'] && p in ['ld.edit', 'ld.phone', 'deal.edit'])
+          || (role() == 'property_manager' && p in ['ld.all', 'inv.edit', 'inv.delete'])
+          || (role() == 'finance' && p in ['ld.all', 'deal.all', 'deal.edit', 'fin', 'export'])
+          || (role() == 'viewer' && p in ['ld.all', 'deal.all']);
+    }
+    function hasPerm(p) {
+      return isAdmin() || (
+        request.auth != null && (
+          (request.auth.token.get('perms', []) is list && p in request.auth.token.get('perms', [])) ||
+          legacyHasPerm(p)
+        )
+      );
+    }
     function isStaff() {
-      return hasRole(['sales_manager', 'sales_agent', 'property_manager', 'finance', 'viewer', 'agent_east', 'agent_new_sohag']);
+      return isAdmin() || (request.auth != null && (
+        request.auth.token.get('staff', false) == true ||
+        hasRole(['sales_manager', 'sales_agent', 'property_manager', 'finance', 'viewer', 'agent_east', 'agent_new_sohag'])
+      ));
     }
     function isLeadEditor() {
-      return hasRole(['sales_manager', 'sales_agent', 'agent_east', 'agent_new_sohag']);
+      return hasPerm('ld.edit') || hasPerm('ld.manage');
     }
     function isInventoryEditor() {
-      return hasRole(['sales_manager', 'property_manager']);
+      return hasPerm('inv.edit');
     }
 
     // Lead visibility. Desk agents work only their own queue: leads assigned to their desk plus the
     // shared 'Unassigned' pool. Desk names match CRM_ROLES in components/crm/crmRoles.js and DESK_BY_ROLE
     // in src/utils/rbacRules.js. Managers, admins and the read-only roles see every lead.
     function leadDesk() {
-      return {'sales_agent': 'Sales Advisor Team', 'agent_east': 'Sales Team A', 'agent_new_sohag': 'Sales Team B'}.get(role(), '');
+      return request.auth != null && request.auth.token.get('desk', '') != ''
+        ? request.auth.token.get('desk', '')
+        : {'sales_agent': 'Sales Advisor Team', 'agent_east': 'Sales Team A', 'agent_new_sohag': 'Sales Team B'}.get(role(), '');
+    }
+    function canSeeAllLeads() {
+      return hasPerm('ld.all') || hasPerm('ld.manage');
     }
     function isDeskAgent() {
-      return request.auth != null && !isAdmin() && role() in ['sales_agent', 'agent_east', 'agent_new_sohag'];
+      return request.auth != null && !isAdmin() && !canSeeAllLeads() && isLeadEditor();
     }
     function inMyLeadQueue(data) {
       return data.assignedTo in [leadDesk(), 'Unassigned'];
@@ -67,7 +90,7 @@ service cloud.firestore {
     }
     // Who may see a client's phone: admins, sales managers and the sales desks (rbacRules canViewLeadPhone)
     function seesClientContacts() {
-      return hasRole(['sales_manager', 'sales_agent', 'agent_east', 'agent_new_sohag']);
+      return hasPerm('ld.phone') || hasRole(['sales_manager', 'sales_agent', 'agent_east', 'agent_new_sohag']);
     }
     // Demands and expat/trade-in requests keep their phone in request_contacts/{kind}__{id}
     function requestContactPath(kind, id) {
@@ -101,9 +124,11 @@ service cloud.firestore {
                     );
       // Agents can claim a pool lead or hand it back, but only managers move leads between desks.
       // A desk change must move the contact doc with it (same batch), or the old desk keeps the phone.
-      allow read: if hasRole(['sales_manager', 'property_manager', 'finance', 'viewer'])
+      allow read: if canSeeAllLeads()
+                  || hasRole(['sales_manager', 'property_manager', 'finance', 'viewer'])
                   || (isDeskAgent() && inMyLeadQueue(resource.data));
-      allow update: if (hasRole(['sales_manager'])
+      allow update: if (hasPerm('ld.manage')
+                       || hasRole(['sales_manager'])
                        || (isDeskAgent() && inMyLeadQueue(resource.data) && inMyLeadQueue(request.resource.data)))
                     && keepsContactFields()
                     && (!exists(contactPath(leadId)) || deskOf(getAfter(contactPath(leadId)).data) == deskOf(request.resource.data));
@@ -122,16 +147,19 @@ service cloud.firestore {
             && (!('altPhone' in data) || (data.altPhone is string && data.altPhone.size() <= 25))
             && boundedText(data, 'email', 120);
       }
-      allow read: if hasRole(['sales_manager'])
+      allow read: if (canSeeAllLeads() && seesClientContacts())
+                  || hasRole(['sales_manager'])
                   || (isDeskAgent() && inMyLeadQueue(resource.data));
       // Anyone, together with a brand-new lead (the public forms); staff for a lead they may edit
       allow create: if existsAfter(leadPath(leadId))
                     && validContact(request.resource.data)
                     && (!exists(leadPath(leadId))
+                        || hasPerm('ld.manage')
                         || hasRole(['sales_manager'])
                         || (isDeskAgent() && inMyLeadQueue(request.resource.data)));
       allow update: if validContact(request.resource.data)
-                    && (hasRole(['sales_manager'])
+                    && (hasPerm('ld.manage')
+                        || hasRole(['sales_manager'])
                         || (isDeskAgent() && inMyLeadQueue(resource.data) && inMyLeadQueue(request.resource.data)));
       allow delete: if isAdmin();
     }
@@ -174,7 +202,7 @@ service cloud.firestore {
     match /properties/{propId} {
       allow read: if true;
       allow create, update: if isInventoryEditor();
-      allow delete: if hasRole(['property_manager']);
+      allow delete: if hasPerm('inv.delete') || hasRole(['property_manager']);
     }
 
     // 🔔 4. NOTIFICATIONS
@@ -222,7 +250,7 @@ service cloud.firestore {
     match /projects/{projectId} {
       allow read: if true;
       allow create, update: if isInventoryEditor();
-      allow delete: if hasRole(['property_manager']);
+      allow delete: if hasPerm('inv.delete') || hasRole(['property_manager']);
     }
 
     // 📢 8. SPONSORED ADS & CAMPAIGNS
@@ -323,7 +351,7 @@ service cloud.firestore {
           && data.createdAt == request.time;
       }
       allow create: if validDownload(request.resource.data);
-      allow read: if hasRole(['sales_manager']);
+      allow read: if canSeeAllLeads() || hasRole(['sales_manager']);
       allow delete: if isAdmin();
     }
 
@@ -438,11 +466,14 @@ service cloud.firestore {
     // 💼 9. DEALS & PIPELINE
     // Same desk scoping as leads: agents see and edit only their desk's deals (and the pool).
     match /deals/{dealId} {
-      allow read: if hasRole(['sales_manager', 'finance', 'viewer'])
+      allow read: if hasPerm('deal.all')
+                  || hasRole(['sales_manager', 'finance', 'viewer'])
                   || (isDeskAgent() && inMyLeadQueue(resource.data));
-      allow create: if hasRole(['sales_manager', 'finance'])
+      allow create: if hasPerm('deal.edit')
+                    || hasRole(['sales_manager', 'finance'])
                     || (isDeskAgent() && inMyLeadQueue(request.resource.data));
-      allow update: if hasRole(['sales_manager', 'finance'])
+      allow update: if hasPerm('deal.edit')
+                    || hasRole(['sales_manager', 'finance'])
                     || (isDeskAgent() && inMyLeadQueue(resource.data) && inMyLeadQueue(request.resource.data));
       allow delete: if isAdmin();
     }
