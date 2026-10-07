@@ -1,53 +1,101 @@
 // =============================================================
-//  CRM team accounts — logic shared by api/team.js and its tests.
+//  CRM team accounts & dynamic roles/teams — logic shared by api/team.js and tests.
 //  (Files starting with "_" in api/ are not deployed as their own routes.)
-//
-//  Roles are Firebase Auth custom claims: { role, admin } in the user's ID token, read by
-//  firestore.rules and the CRM. Only a super admin may change them, through this route; the
-//  browser can't. Passwords are never handled here: a new member sets their own through the
-//  "set your password" email Firebase sends.
 // =============================================================
 
-// Keep in step with CRM_STAFF_ROLES in src/services/auth.js, scripts/set-crm-role.mjs and firestore.rules
+import {
+  DEFAULT_ACCESS,
+  SUPER_ADMIN,
+  UNASSIGNED_DESK,
+  normalizeAccess,
+  claimsForMember,
+  permsOfRole,
+  cleanRole,
+  cleanTeam,
+  makeId,
+  roleById,
+  teamById
+} from '../src/utils/accessModel.js';
+
+export { DEFAULT_ACCESS, SUPER_ADMIN, UNASSIGNED_DESK };
+
+// Legacy hardcoded roles kept for backward compatibility
 export const TEAM_ROLES = ['super_admin', 'sales_manager', 'sales_agent', 'agent_east', 'agent_new_sohag', 'property_manager', 'finance', 'viewer'];
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UID_RE = /^[A-Za-z0-9_-]{1,128}$/;
 
-export const roleOf = (claims = {}) => {
-  if (claims.admin === true || claims.role === 'admin' || claims.role === 'super_admin') return 'super_admin';
-  return TEAM_ROLES.includes(claims.role) ? claims.role : null;
-};
-
-const parseClaims = (raw) => {
+export const parseClaims = (raw) => {
   if (!raw) return {};
   if (typeof raw === 'object') return raw;
   try { return JSON.parse(raw) || {}; } catch { return {}; }
 };
 
+export const roleOf = (claims = {}, config = null) => {
+  if (claims.admin === true || claims.role === 'admin' || claims.role === SUPER_ADMIN) return SUPER_ADMIN;
+  if (config && config.roles?.some((r) => r.id === claims.role)) return claims.role;
+  if (TEAM_ROLES.includes(claims.role)) return claims.role;
+  if (claims.staff && typeof claims.role === 'string' && claims.role) return claims.role;
+  return null;
+};
+
 /** Validate a POST body. Returns { action, ... } or null. */
-export function parseTeamRequest(body) {
+export function parseTeamRequest(body, config = null) {
   const action = body?.action;
+  const validRoles = config ? config.roles.map((r) => r.id) : TEAM_ROLES;
+
   if (action === 'add') {
     const email = String(body.email || '').trim().toLowerCase();
     const name = String(body.name || '').replace(/\s+/g, ' ').trim().slice(0, 80);
-    if (!EMAIL_RE.test(email) || email.length > 120 || !TEAM_ROLES.includes(body.role)) return null;
-    return { action, email, role: body.role, name };
+    const role = String(body.role || '');
+    const desk = typeof body.desk === 'string' ? body.desk.trim() : '';
+    if (!EMAIL_RE.test(email) || email.length > 120 || !validRoles.includes(role)) return null;
+    return { action, email, role, desk, name };
   }
-  if (['role', 'disable', 'enable', 'remove'].includes(action)) {
+
+  if (action === 'role') {
+    const uid = String(body.uid || '');
+    const role = String(body.role || '');
+    const desk = typeof body.desk === 'string' ? body.desk.trim() : undefined;
+    if (!UID_RE.test(uid) || !validRoles.includes(role)) return null;
+    return { action, uid, role, desk };
+  }
+
+  if (['disable', 'enable', 'remove'].includes(action)) {
     const uid = String(body.uid || '');
     if (!UID_RE.test(uid)) return null;
-    if (action === 'role' && !TEAM_ROLES.includes(body.role)) return null;
-    return { action, uid, role: body.role };
+    return { action, uid };
   }
+
+  if (action === 'save_role') {
+    const role = cleanRole(body.role);
+    if (!role) return null;
+    return { action, role };
+  }
+
+  if (action === 'delete_role') {
+    const roleId = String(body.roleId || '').trim();
+    const fallbackRoleId = String(body.fallbackRoleId || '').trim();
+    if (!roleId || roleId === SUPER_ADMIN || !fallbackRoleId || roleId === fallbackRoleId) return null;
+    return { action, roleId, fallbackRoleId };
+  }
+
+  if (action === 'save_team') {
+    const team = cleanTeam(body.team);
+    if (!team) return null;
+    return { action, team };
+  }
+
+  if (action === 'delete_team') {
+    const teamId = String(body.teamId || '').trim();
+    const fallbackTeamId = String(body.fallbackTeamId || UNASSIGNED_DESK).trim();
+    if (!teamId || teamId === UNASSIGNED_DESK || teamId === fallbackTeamId) return null;
+    return { action, teamId, fallbackTeamId };
+  }
+
   return null;
 }
 
-/**
- * Last time the member actually used their account: a token refresh, or a sign-in. Auth stamps
- * lastLoginAt at creation too, so for an account made here (no refresh yet) a stamp next to
- * createdAt means "never signed in".
- */
 const lastSignIn = (u) => {
   const refresh = u.lastRefreshAt ? Date.parse(u.lastRefreshAt) || 0 : 0;
   const login = Number(u.lastLoginAt || 0);
@@ -55,48 +103,125 @@ const lastSignIn = (u) => {
   return Math.max(refresh, realLogin) || null;
 };
 
-/** Shape a raw Identity Toolkit user for the CRM list (only what the screen needs) */
-export function toMember(u) {
+/** Shape a raw Identity Toolkit user for the CRM list */
+export function toMember(u, config = null) {
   const claims = parseClaims(u.customAttributes);
   return {
     uid: u.localId,
     email: u.email || '',
     name: u.displayName || '',
-    role: roleOf(claims),
+    role: roleOf(claims, config),
+    desk: typeof claims.desk === 'string' ? claims.desk : '',
+    perms: Array.isArray(claims.perms) ? claims.perms : [],
     disabled: Boolean(u.disabled),
     lastLoginAt: lastSignIn(u) ? new Date(lastSignIn(u)).toISOString() : null,
     createdAt: u.createdAt ? new Date(Number(u.createdAt)).toISOString() : null
   };
 }
 
-/**
- * Rules that keep the CRM from being locked out:
- *  - nobody changes, disables or removes their own access here
- *  - the last active super admin can't be demoted, disabled or removed
- */
+/** Lockout prevention rules */
 export function checkChange({ action, uid, role }, callerUid, members) {
-  if (action === 'add') return null;
+  if (['add', 'save_role', 'delete_role', 'save_team', 'delete_team'].includes(action)) return null;
   if (uid === callerUid) return 'self';
   const target = members.find((m) => m.uid === uid);
   if (!target) return 'not-found';
-  const activeAdmins = members.filter((m) => m.role === 'super_admin' && !m.disabled);
-  const losesAdmin = target.role === 'super_admin' && !target.disabled
-    && (action === 'disable' || action === 'remove' || (action === 'role' && role !== 'super_admin'));
+  const activeAdmins = members.filter((m) => m.role === SUPER_ADMIN && !m.disabled);
+  const losesAdmin = target.role === SUPER_ADMIN && !target.disabled
+    && (action === 'disable' || action === 'remove' || (action === 'role' && role !== SUPER_ADMIN));
   if (losesAdmin && activeAdmins.length <= 1) return 'last-admin';
   return null;
 }
 
-/** Claims after setting a role: other claims kept, role + admin flag replaced */
-export function claimsWithRole(existingRaw, role) {
-  const { role: _r, admin: _a, ...rest } = parseClaims(existingRaw);
-  return role ? { ...rest, role, admin: role === 'super_admin' } : rest;
+/** Claims after setting a role: backward-compatible wrapper around claimsForMember */
+export function claimsWithRole(existingRaw, role, desk = '', config = null) {
+  const existing = parseClaims(existingRaw);
+  if (!config) {
+    const { role: _r, admin: _a, staff: _s, perms: _p, desk: _d, ...rest } = existing;
+    if (!role) return rest;
+    return { ...rest, role, admin: role === SUPER_ADMIN };
+  }
+  return claimsForMember(existing, role, desk, config);
 }
 
 /**
- * Identity Toolkit (Firebase Auth admin REST). `call(method, path, body)` does the HTTP with the
- * project's service-account token (or the emulator), path relative to /v1/projects/{project}/.
+ * Access storage for Firestore settings/access
  */
-export function teamStore(call, registry = null) {
+export function accessStore(fs) {
+  const check = async (res, what, allow404 = false) => {
+    if (res.ok || (allow404 && res.status === 404)) return res.status === 204 || res.status === 404 ? null : res.json();
+    throw new Error(`accessStore ${what} ${res.status}`);
+  };
+  return {
+    async get() {
+      if (!fs) return DEFAULT_ACCESS;
+      try {
+        const doc = await check(await fs('GET', 'settings/access'), 'get', true);
+        const rawJson = doc?.fields?.json?.stringValue;
+        return normalizeAccess(rawJson);
+      } catch (err) {
+        console.warn('accessStore get error, using defaults:', err?.message);
+        return DEFAULT_ACCESS;
+      }
+    },
+    async save(config) {
+      if (!fs) return config;
+      const clean = normalizeAccess(config);
+      await check(await fs('PATCH', 'settings/access', {
+        fields: {
+          json: { stringValue: JSON.stringify(clean) },
+          updatedAt: { timestampValue: new Date().toISOString() }
+        }
+      }), 'save');
+      return clean;
+    }
+  };
+}
+
+/** Reassigns leads and lead_contacts from oldTeamId to targetTeamId */
+async function reassignTeamLeads(fs, oldTeamId, targetTeamId) {
+  if (!fs || !oldTeamId) return 0;
+  const target = targetTeamId || UNASSIGNED_DESK;
+  try {
+    const qBody = {
+      structuredQuery: {
+        from: [{ collectionId: 'leads' }],
+        where: {
+          fieldFilter: {
+            field: { fieldPath: 'assignedTo' },
+            op: 'EQUAL',
+            value: { stringValue: oldTeamId }
+          }
+        },
+        limit: 500
+      }
+    };
+    const res = await fs('POST', ':runQuery', qBody);
+    if (!res.ok) return 0;
+    const items = await res.json();
+    let count = 0;
+    for (const item of items) {
+      const doc = item?.document;
+      if (!doc?.name) continue;
+      const leadId = doc.name.split('/').pop();
+      await fs('PATCH', `leads/${encodeURIComponent(leadId)}?updateMask.fieldPaths=assignedTo`, {
+        fields: { assignedTo: { stringValue: target } }
+      }).catch(() => {});
+      await fs('PATCH', `lead_contacts/${encodeURIComponent(leadId)}?updateMask.fieldPaths=assignedTo`, {
+        fields: { assignedTo: { stringValue: target } }
+      }).catch(() => {});
+      count++;
+    }
+    return count;
+  } catch (err) {
+    console.warn('reassignTeamLeads warning:', err);
+    return 0;
+  }
+}
+
+/**
+ * Identity Toolkit (Firebase Auth admin REST).
+ */
+export function teamStore(call, registry = null, accessStorage = null, fs = null) {
   const ok = async (res, what) => {
     if (!res.ok) {
       let detail = '';
@@ -108,14 +233,13 @@ export function teamStore(call, registry = null) {
     return res.json();
   };
 
-  /** Every account with a CRM role, by walking all accounts (slow with many client accounts) */
-  const scanAll = async () => {
+  const scanAll = async (config) => {
     const members = [];
     let token = '';
     do {
       const r = await ok(await call('GET', `accounts:batchGet?maxResults=1000${token ? `&nextPageToken=${encodeURIComponent(token)}` : ''}`), 'list');
       for (const u of r.users || []) {
-        const m = toMember(u);
+        const m = toMember(u, config);
         if (m.role) members.push(m);
       }
       token = r.nextPageToken || '';
@@ -123,7 +247,6 @@ export function teamStore(call, registry = null) {
     return members;
   };
 
-  /** Accounts by uid, 100 per lookup */
   const lookupMany = async (uids) => {
     const users = [];
     for (let i = 0; i < uids.length; i += 100) {
@@ -136,22 +259,23 @@ export function teamStore(call, registry = null) {
   const byEmail = (a, b) => a.email.localeCompare(b.email);
 
   return {
-    /**
-     * Every account that has a CRM role. With a registry: read it and look those accounts up
-     * (a handful of requests whatever the number of client accounts). An empty registry, or
-     * `{ rebuild: true }`, falls back to the full scan once and refills it.
-     */
+    async getAccess() {
+      return accessStorage ? await accessStorage.get() : DEFAULT_ACCESS;
+    },
+    async saveAccess(config) {
+      return accessStorage ? await accessStorage.save(config) : config;
+    },
     async listMembers({ rebuild = false } = {}) {
-      if (!registry) return (await scanAll()).sort(byEmail);
+      const config = await this.getAccess();
+      if (!registry) return (await scanAll(config)).sort(byEmail);
       const uids = rebuild ? [] : await registry.list();
       if (uids.length === 0) {
-        const members = await scanAll();
-        await registry.replace(members.map((m) => [m.uid, m.role]));
+        const members = await scanAll(config);
+        await registry.replace(members.map((m) => [m.uid, m.role, m.desk]));
         return members.sort(byEmail);
       }
       const users = await lookupMany(uids);
-      const members = users.map(toMember).filter((m) => m.role);
-      // Drop registry entries whose account is gone or no longer has a role
+      const members = users.map((u) => toMember(u, config)).filter((m) => m.role);
       const stale = uids.filter((uid) => !members.some((m) => m.uid === uid));
       for (const uid of stale) await registry.remove(uid);
       return members.sort(byEmail);
@@ -164,14 +288,12 @@ export function teamStore(call, registry = null) {
       const r = await ok(await call('POST', 'accounts:lookup', { localId: [uid] }), 'lookup');
       return r.users?.[0] || null;
     },
-    /** New account with a random password nobody knows; the member sets theirs by email */
     async createUser(email, name) {
       const password = Array.from(crypto.getRandomValues(new Uint8Array(24)), (b) => b.toString(16).padStart(2, '0')).join('');
       const r = await ok(await call('POST', 'accounts', { email, password, displayName: name || undefined, emailVerified: false }), 'create');
       return r.localId;
     },
-    /** Update claims / disabled / name; validSince ends the member's current sessions so the change applies now */
-    async updateUser(uid, { claims, disabled, name }) {
+    async updateUser(uid, { claims, disabled, name, desk }) {
       const body = { localId: uid, validSince: String(Math.floor(Date.now() / 1000)) };
       if (claims !== undefined) body.customAttributes = JSON.stringify(claims);
       if (disabled !== undefined) body.disableUser = disabled;
@@ -179,16 +301,19 @@ export function teamStore(call, registry = null) {
       await ok(await call('POST', 'accounts:update', body), 'update');
       if (registry && claims !== undefined) {
         const role = roleOf(claims);
-        if (role) await registry.set(uid, role);
+        const resolvedDesk = desk !== undefined ? desk : (claims?.desk || '');
+        if (role) await registry.set(uid, role, resolvedDesk);
         else await registry.remove(uid);
       }
+    },
+    async reassignLeads(oldTeamId, targetTeamId) {
+      return reassignTeamLeads(fs, oldTeamId, targetTeamId);
     }
   };
 }
 
 /**
- * The staff registry in Firestore (staff_registry/{uid} = { role }), over the REST API.
- * `fs(method, path, body)` calls .../databases/(default)/documents/{path}.
+ * Staff registry in Firestore
  */
 export function staffRegistry(fs) {
   const check = async (res, what, allow404 = false) => {
@@ -206,8 +331,14 @@ export function staffRegistry(fs) {
       } while (token);
       return uids;
     },
-    async set(uid, role) {
-      await check(await fs('PATCH', `staff_registry/${encodeURIComponent(uid)}`, { fields: { role: { stringValue: role }, updatedAt: { timestampValue: new Date().toISOString() } } }), 'set');
+    async set(uid, role, desk = '') {
+      await check(await fs('PATCH', `staff_registry/${encodeURIComponent(uid)}`, {
+        fields: {
+          role: { stringValue: role },
+          desk: { stringValue: desk || '' },
+          updatedAt: { timestampValue: new Date().toISOString() }
+        }
+      }), 'set');
     },
     async remove(uid) {
       await check(await fs('DELETE', `staff_registry/${encodeURIComponent(uid)}`), 'remove', true);
@@ -215,22 +346,129 @@ export function staffRegistry(fs) {
     async replace(entries) {
       const keep = new Set(entries.map(([uid]) => uid));
       for (const uid of await reg.list()) if (!keep.has(uid)) await reg.remove(uid);
-      for (const [uid, role] of entries) await reg.set(uid, role);
+      for (const [uid, role, desk] of entries) await reg.set(uid, role, desk || '');
     }
   };
   return reg;
 }
 
 /**
- * The route's work once the caller is verified as a super admin.
- * Returns { status, body }.
+ * Super Admin operations handler
  */
 export async function handleTeam({ method, body, callerUid, store }) {
-  if (method === 'GET') return { status: 200, body: { ok: true, members: await store.listMembers() } };
-  if (body?.action === 'resync') return { status: 200, body: { ok: true, members: await store.listMembers({ rebuild: true }) } };
-  const req = parseTeamRequest(body);
+  const config = await store.getAccess();
+
+  if (method === 'GET') {
+    return {
+      status: 200,
+      body: {
+        ok: true,
+        members: await store.listMembers(),
+        access: config
+      }
+    };
+  }
+
+  if (body?.action === 'get_access') {
+    return { status: 200, body: { ok: true, access: config } };
+  }
+
+  if (body?.action === 'resync') {
+    return {
+      status: 200,
+      body: {
+        ok: true,
+        members: await store.listMembers({ rebuild: true }),
+        access: config
+      }
+    };
+  }
+
+  const req = parseTeamRequest(body, config);
   if (!req) return { status: 400, body: { error: 'bad-request' } };
 
+  // Role / Team mutations
+  if (req.action === 'save_role') {
+    const roles = [...config.roles];
+    const idx = roles.findIndex((r) => r.id === req.role.id);
+    if (idx >= 0) roles[idx] = req.role;
+    else roles.push(req.role);
+    const updatedConfig = await store.saveAccess({ ...config, roles });
+
+    // Refresh claims for members on this role so permissions apply immediately
+    const members = await store.listMembers();
+    for (const m of members) {
+      if (m.role === req.role.id) {
+        const u = await store.getUser(m.uid);
+        if (u) {
+          const claims = claimsForMember(parseClaims(u.customAttributes), m.role, m.desk, updatedConfig);
+          await store.updateUser(m.uid, { claims, desk: m.desk });
+        }
+      }
+    }
+    return { status: 200, body: { ok: true, access: updatedConfig, members: await store.listMembers() } };
+  }
+
+  if (req.action === 'delete_role') {
+    if (!roleById(config, req.fallbackRoleId)) return { status: 400, body: { error: 'invalid-fallback-role' } };
+    const roles = config.roles.filter((r) => r.id !== req.roleId);
+    const updatedConfig = await store.saveAccess({ ...config, roles });
+
+    // Migrate members on deleted role to fallbackRoleId
+    const members = await store.listMembers();
+    for (const m of members) {
+      if (m.role === req.roleId) {
+        const u = await store.getUser(m.uid);
+        if (u) {
+          const claims = claimsForMember(parseClaims(u.customAttributes), req.fallbackRoleId, m.desk, updatedConfig);
+          await store.updateUser(m.uid, { claims, desk: m.desk });
+        }
+      }
+    }
+    return { status: 200, body: { ok: true, access: updatedConfig, members: await store.listMembers() } };
+  }
+
+  if (req.action === 'save_team') {
+    const teams = [...config.teams];
+    const idx = teams.findIndex((t) => t.id === req.team.id);
+    if (idx >= 0) teams[idx] = req.team;
+    else teams.push(req.team);
+    const updatedConfig = await store.saveAccess({ ...config, teams });
+    return { status: 200, body: { ok: true, access: updatedConfig } };
+  }
+
+  if (req.action === 'delete_team') {
+    const teams = config.teams.filter((t) => t.id !== req.teamId);
+    const updatedConfig = await store.saveAccess({ ...config, teams });
+
+    // 1. Reassign members whose desk was req.teamId
+    const fallbackDesk = req.fallbackTeamId === UNASSIGNED_DESK ? '' : req.fallbackTeamId;
+    const members = await store.listMembers();
+    for (const m of members) {
+      if (m.desk === req.teamId) {
+        const u = await store.getUser(m.uid);
+        if (u) {
+          const claims = claimsForMember(parseClaims(u.customAttributes), m.role, fallbackDesk, updatedConfig);
+          await store.updateUser(m.uid, { claims, desk: fallbackDesk });
+        }
+      }
+    }
+
+    // 2. Reassign leads in Firestore
+    const migratedLeads = await store.reassignLeads(req.teamId, req.fallbackTeamId);
+
+    return {
+      status: 200,
+      body: {
+        ok: true,
+        access: updatedConfig,
+        migratedLeads,
+        members: await store.listMembers()
+      }
+    };
+  }
+
+  // Member mutations
   const members = await store.listMembers();
   const blocked = checkChange(req, callerUid, members);
   if (blocked) return { status: 409, body: { error: blocked } };
@@ -238,16 +476,38 @@ export async function handleTeam({ method, body, callerUid, store }) {
   if (req.action === 'add') {
     const existing = await store.findByEmail(req.email);
     const uid = existing ? existing.localId : await store.createUser(req.email, req.name);
-    await store.updateUser(uid, { claims: claimsWithRole(existing?.customAttributes, req.role), name: existing?.displayName ? undefined : req.name, disabled: false });
-    // A new account (never signed in) needs the "set your password" email; the browser sends it
-    return { status: 200, body: { ok: true, uid, created: !existing, needsPassword: !existing || !lastSignIn(existing) } };
+    const claims = claimsForMember(parseClaims(existing?.customAttributes), req.role, req.desk || '', config);
+    await store.updateUser(uid, {
+      claims,
+      name: existing?.displayName ? undefined : req.name,
+      disabled: false,
+      desk: req.desk || ''
+    });
+    return {
+      status: 200,
+      body: {
+        ok: true,
+        uid,
+        created: !existing,
+        needsPassword: !existing || !lastSignIn(existing)
+      }
+    };
   }
 
   const user = await store.getUser(req.uid);
   if (!user) return { status: 404, body: { error: 'not-found' } };
-  if (req.action === 'role') await store.updateUser(req.uid, { claims: claimsWithRole(user.customAttributes, req.role) });
-  else if (req.action === 'disable') await store.updateUser(req.uid, { disabled: true });
-  else if (req.action === 'enable') await store.updateUser(req.uid, { disabled: false });
-  else if (req.action === 'remove') await store.updateUser(req.uid, { claims: claimsWithRole(user.customAttributes, null) });
+
+  if (req.action === 'role') {
+    const targetDesk = req.desk !== undefined ? req.desk : (parseClaims(user.customAttributes).desk || '');
+    const claims = claimsForMember(parseClaims(user.customAttributes), req.role, targetDesk, config);
+    await store.updateUser(req.uid, { claims, desk: targetDesk });
+  } else if (req.action === 'disable') {
+    await store.updateUser(req.uid, { disabled: true });
+  } else if (req.action === 'enable') {
+    await store.updateUser(req.uid, { disabled: false });
+  } else if (req.action === 'remove') {
+    await store.updateUser(req.uid, { claims: claimsForMember(parseClaims(user.customAttributes), null, '', config) });
+  }
+
   return { status: 200, body: { ok: true } };
 }

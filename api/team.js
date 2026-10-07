@@ -10,7 +10,7 @@
 //  Without it the route answers 503 and the CRM explains how to turn it on.
 // =============================================================
 import { SignJWT, importPKCS8, createRemoteJWKSet, jwtVerify, decodeJwt } from 'jose';
-import { handleTeam, teamStore, staffRegistry, roleOf } from './_team-core.js';
+import { handleTeam, teamStore, staffRegistry, accessStore, roleOf } from './_team-core.js';
 
 const FIREBASE_PROJECT_ID = 'line-c9601';
 const firebaseKeys = createRemoteJWKSet(
@@ -100,7 +100,9 @@ async function route(request) {
     try { body = await request.json(); } catch { return json(400, { error: 'bad-request' }); }
   }
   try {
-    const { status, body: out } = await handleTeam({ method: request.method, body, callerUid: caller.sub || caller.user_id, store: teamStore(authCaller(sa), staffRegistry(firestoreCaller(sa))) });
+    const fs = firestoreCaller(sa);
+    const store = teamStore(authCaller(sa), staffRegistry(fs), accessStore(fs), fs);
+    const { status, body: out } = await handleTeam({ method: request.method, body, callerUid: caller.sub || caller.user_id, store });
     return json(status, out);
   } catch (err) {
     console.error('team route error:', err?.message);
