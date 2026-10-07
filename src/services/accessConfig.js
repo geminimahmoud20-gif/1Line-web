@@ -6,7 +6,7 @@
 import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from '../firebase';
 import { teamAction } from '../firebaseService';
-import { DEFAULT_ACCESS, normalizeAccess } from '../utils/accessModel';
+import { DEFAULT_ACCESS, normalizeAccess } from '../utils/accessModel.js';
 
 const STORAGE_KEY = 'oneline_crm_access_config';
 
@@ -28,10 +28,12 @@ const writeCachedConfig = (cfg) => {
 };
 
 let currentConfig = readCachedConfig();
+if (typeof window !== 'undefined') window.__ACTIVE_ACCESS_CONFIG__ = currentConfig;
 const listeners = new Set();
 
 const notifyListeners = (cfg) => {
   currentConfig = cfg;
+  if (typeof window !== 'undefined') window.__ACTIVE_ACCESS_CONFIG__ = cfg;
   writeCachedConfig(cfg);
   listeners.forEach((fn) => {
     try { fn(cfg); } catch (e) { console.error('accessConfig listener error:', e); }

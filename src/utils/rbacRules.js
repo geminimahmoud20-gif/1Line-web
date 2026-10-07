@@ -2,8 +2,7 @@
 //  1LINE SOLUTIONS CRM - ENTERPRISE RBAC PERMISSIONS MATRIX
 // =============================================================
 
-import { getActiveAccessConfig } from '../services/accessConfig';
-import { DEFAULT_ACCESS } from './accessModel';
+import { DEFAULT_ACCESS } from './accessModel.js';
 
 export const CRM_ROLES = {
   SUPER_ADMIN: 'super_admin',
@@ -107,7 +106,7 @@ const FULL_LEAD_ROLES = [CRM_ROLES.SUPER_ADMIN, CRM_ROLES.SALES_MANAGER];
 
 /** Returns live desks combined from config */
 export const getLiveLeadDesks = (config = null) => {
-  const cfg = config || getActiveAccessConfig() || DEFAULT_ACCESS;
+  const cfg = config || (typeof window !== 'undefined' && window.__ACTIVE_ACCESS_CONFIG__) || DEFAULT_ACCESS;
   if (!cfg?.teams || cfg.teams.length === 0) return LEAD_DESKS;
   return [
     ...cfg.teams.map((t) => ({ value: t.id, label_ar: t.name_ar, label_en: t.name_en })),

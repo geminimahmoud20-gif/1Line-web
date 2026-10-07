@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { Lock, ShieldCheck, Sparkles, KeyRound, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 
 import CrmAdminPanel from '../components/CrmAdminPanel';
-import { CRM_ROLES } from '../components/crm/crmRoles';
+import { CRM_ROLES, getMergedCrmRoles } from '../components/crm/crmRoles';
+import { subscribeToAccessConfig, getActiveAccessConfig } from '../services/accessConfig';
 import PropertyManagerPanel from '../components/crm/PropertyManagerPanel';
 import MegaProjectsManagerPanel from '../components/crm/MegaProjectsManagerPanel';
 import DemandsManagerPanel from '../components/crm/DemandsManagerPanel';
@@ -57,9 +58,13 @@ export default function CrmPage({
   const { isAuthInitializing, currentUser, userRole } = useAuth();
   const { handleImportProperties, handleImportLeads } = useProperties();
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'leads' | 'kanban' | 'properties' | 'demands' | 'projects' | 'financials' | 'matching' | 'analytics' | 'system'
+  const [accessCfg, setAccessCfg] = useState(getActiveAccessConfig);
+  useEffect(() => subscribeToAccessConfig(setAccessCfg), []);
+  const allRoles = getMergedCrmRoles(accessCfg);
+
   // Fail closed: a signed-in account whose role is unknown (e.g. 'agent' from a claims error)
   // gets read-only 'viewer'. Only the local-password session (no Firebase user) is super_admin.
-  const knownRole = (r) => (CRM_ROLES.some((x) => x.id === r) ? r : null);
+  const knownRole = (r) => (allRoles.some((x) => x.id === r) ? r : null);
   const ROLE_ALIASES = { admin: 'super_admin' };
   const resolveRole = (r) => knownRole(ROLE_ALIASES[r] || r);
   const hasLocalSessionFlag = (!isFirebaseAuthAvailable() || import.meta.env.DEV)
@@ -77,14 +82,15 @@ export default function CrmPage({
 
   // Permission enforcement on the mutation handlers themselves — the panels only render
   // buttons, so hiding UI alone would leave viewer/finance able to edit inventory.
+  const userPerms = currentUser?.perms || null;
   const can = {
-    editInventory: canEditProperties(activeRole),
-    deleteInventory: activeRole === 'super_admin' || activeRole === 'property_manager',
-    manageDemands: ['super_admin', 'sales_manager', 'property_manager'].includes(activeRole),
+    editInventory: canEditProperties(activeRole, userPerms),
+    deleteInventory: activeRole === 'super_admin' || activeRole === 'property_manager' || Boolean(userPerms?.includes('inv.delete')),
+    manageDemands: ['super_admin', 'sales_manager', 'property_manager'].includes(activeRole) || Boolean(userPerms?.includes('inv.edit')),
     // viewer / finance / property_manager read leads but don't change their pipeline
-    editLeads: canEditLeadsRole(activeRole),
+    editLeads: canEditLeadsRole(activeRole, userPerms),
     // Bulk file import of clients (and owners from a property file): managers only
-    importLeads: activeRole === 'super_admin' || activeRole === 'sales_manager'
+    importLeads: activeRole === 'super_admin' || activeRole === 'sales_manager' || Boolean(userPerms?.includes('ld.import'))
   };
   // Returns false when blocked so callers that check `=== false` don't report success
   const guard = (allowed, fn) => (...args) => {

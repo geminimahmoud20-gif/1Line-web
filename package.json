@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test:unit": "node --test tests/unit/*.test.mjs",
+    "migrate:access": "node scripts/migrate-access.mjs",
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
     "emulators:journey": "npx -y firebase-tools@15 emulators:start --only firestore,auth --project line-c9601",

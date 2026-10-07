@@ -25,7 +25,8 @@ import FounderCmsPanel from './crm/FounderCmsPanel';
 import ContractStudioModal from './crm/ContractStudioModal';
 import LeadQuickDrawer from './crm/LeadQuickDrawer';
 import CrmExecutiveDashboard from './crm/CrmExecutiveDashboard';
-import { CRM_ROLES } from './crm/crmRoles';
+import { CRM_ROLES, getMergedCrmRoles } from './crm/crmRoles';
+import { getActiveAccessConfig } from '../services/accessConfig';
 import EditLeadModal from './crm/EditLeadModal';
 import { LEAD_EXPORT_HEADERS, makeLeadFormatters } from './crm/leadFormatters';
 import CrmLoginGate from './crm/CrmLoginGate';
@@ -116,8 +117,9 @@ export const CrmAdminPanel = ({
   const isAr = lang === 'ar';
 
   // Active Role Permissions and Agent Claim Helper
-  const currentRoleObj = CRM_ROLES.find(r => r.id === activeRole) || CRM_ROLES[0];
-  const isSuperAdmin = currentRoleObj.canDelete;
+  const allCurrentRoles = getMergedCrmRoles(getActiveAccessConfig());
+  const currentRoleObj = allCurrentRoles.find(r => r.id === activeRole) || CRM_ROLES[0];
+  const isSuperAdmin = activeRole === 'super_admin';
 
   // Leads saved before desk scoping may lack assignedTo; desk agents' queue queries can't see
   // them. A manager's session files them into the shared pool once (only cloud-synced leads).

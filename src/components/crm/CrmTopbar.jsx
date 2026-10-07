@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Menu, Search, X, Plus, ChevronDown, Bell, ShieldCheck, Lock, Rocket, Globe, LogOut, Users, Building, Zap, Sparkles, CheckCircle2, AlertTriangle, ArrowRight, ArrowLeft } from 'lucide-react';
-import { CRM_ROLES } from './crmRoles';
+import { CRM_ROLES, getMergedCrmRoles } from './crmRoles';
+import { getActiveAccessConfig, subscribeToAccessConfig } from '../../services/accessConfig';
 import { desktopAlertsSupported, desktopAlertsEnabled, enableDesktopAlerts, describeDownload } from '../../utils/newLeadAlerts';
 
 export default function CrmTopbar({
@@ -27,6 +28,9 @@ export default function CrmTopbar({
   const [showQuickActionMenu, setShowQuickActionMenu] = useState(false);
   const [showNotifMenu, setShowNotifMenu] = useState(false);
   const [desktopAlerts, setDesktopAlerts] = useState(desktopAlertsEnabled);
+  const [accessCfg, setAccessCfg] = useState(getActiveAccessConfig);
+  useEffect(() => subscribeToAccessConfig(setAccessCfg), []);
+  const currentRolesList = useMemo(() => getMergedCrmRoles(accessCfg), [accessCfg]);
   const quickActionRef = useRef(null);
   const notifRef = useRef(null);
   const searchRef = useRef(null);
@@ -613,7 +617,7 @@ export default function CrmTopbar({
               }}
               title={isAr ? 'محاكي الأدوار (متاح للمدير العام فقط للمعاينة)' : 'Role Simulation (Super Admin preview)'}
             >
-              {CRM_ROLES.map(r => (
+              {currentRolesList.map(r => (
                 <option key={r.id} value={r.id}>
                   {r.icon} {isAr ? r.label_ar : r.label_en}
                 </option>
@@ -634,8 +638,8 @@ export default function CrmTopbar({
             color: 'var(--crm-body)'
           }}>
             <Lock size={12} style={{ color: 'var(--crm-muted)' }} />
-            <span>{CRM_ROLES.find(r => r.id === activeRole)?.icon || '👤'}</span>
-            <span>{isAr ? (CRM_ROLES.find(r => r.id === activeRole)?.label_ar || activeRole) : (CRM_ROLES.find(r => r.id === activeRole)?.label_en || activeRole)}</span>
+            <span>{currentRolesList.find(r => r.id === activeRole)?.icon || '👤'}</span>
+            <span>{isAr ? (currentRolesList.find(r => r.id === activeRole)?.label_ar || activeRole) : (currentRolesList.find(r => r.id === activeRole)?.label_en || activeRole)}</span>
           </div>
         )}
 

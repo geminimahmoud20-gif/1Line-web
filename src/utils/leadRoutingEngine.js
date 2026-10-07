@@ -4,8 +4,7 @@
 //  Dynamically backed by settings/access teams and keywords.
 // =============================================================
 
-import { DEFAULT_ACCESS } from './accessModel';
-import { getActiveAccessConfig } from '../services/accessConfig';
+import { DEFAULT_ACCESS } from './accessModel.js';
 
 export const SALES_AGENTS_POOL = [
   { id: 'agent_east', name: 'Sales Team A', role: 'فريق شرق والكوثر' },
@@ -28,7 +27,7 @@ export function routeLeadAutomatically(leadData, existingLeads = [], customConfi
     return leadData;
   }
 
-  const config = customConfig || getActiveAccessConfig() || DEFAULT_ACCESS;
+  const config = customConfig || (typeof window !== 'undefined' && window.__ACTIVE_ACCESS_CONFIG__) || DEFAULT_ACCESS;
   const activeTeams = (config?.teams || DEFAULT_ACCESS.teams).filter((t) => t.active !== false);
 
   const budget = parseInt(leadData.budget || leadData.details?.budget || leadData.details?.expectedPrice || 0, 10);

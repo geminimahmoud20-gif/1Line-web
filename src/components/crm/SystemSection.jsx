@@ -86,7 +86,7 @@ export default function SystemSection({ lang, triggerToast, properties, leads, s
         })}
       </div>
 
-      {subTab === 'team' && <TeamPanel lang={lang} triggerToast={triggerToast} />}
+      {subTab === 'team' && <TeamPanel lang={lang} leads={leads} triggerToast={triggerToast} />}
       {subTab === 'areas' && <AreaManagerPanel lang={lang} triggerToast={triggerToast} properties={properties} leads={leads} />}
       {subTab === 'corporate' && <FounderCmsPanel lang={lang} triggerToast={triggerToast} />}
       {subTab === 'errors' && <ClientErrorsPanel lang={lang} triggerToast={triggerToast} />}
