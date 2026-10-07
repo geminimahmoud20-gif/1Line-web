@@ -4115,7 +4115,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 16px;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .quickview-modal-card {
@@ -4138,6 +4140,9 @@
   padding: 30px;
   box-shadow: var(--shadow-lg);
   animation: zoomInModal 0.25s ease;
+  max-height: min(92vh, 850px);
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 
 @keyframes zoomInModal {
