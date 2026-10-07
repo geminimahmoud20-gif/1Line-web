@@ -25,6 +25,22 @@ const FALLBACK_BENCHMARK_PRICING = {
   kawthar: { base: 12000, name_ar: 'حي الكوثر', name_en: 'Al-Kawthar' }
 };
 
+// Realistic granular legal title and licensing documents in Egypt & Sohag
+export const REAL_ESTATE_LEGAL_DOCS = [
+  { id: 'registered_deed', ar: 'عقد مسجل شهر عقاري', en: 'Registered Title Deed' },
+  { id: 'cadastral_registry', ar: 'سجل عيني مطهر', en: 'Cadastral Land Registry' },
+  { id: 'court_valid_enforceable', ar: 'حكم صحة ونفاذ', en: 'Court Validity & Enforcement' },
+  { id: 'signature_validity', ar: 'حكم صحة توقيع', en: 'Court Signature Validity' },
+  { id: 'preliminary_contract', ar: 'عقد بيع ابتدائي', en: 'Preliminary Sales Contract' },
+  { id: 'city_authority_allocation', ar: 'تخصيص ومحضر استلام (جهاز المدينة)', en: 'City Authority Allocation & Handover' },
+  { id: 'building_permit', ar: 'ترخيص بناء رسمي ساري', en: 'Official Building License' },
+  { id: 'form10_reconciliation', ar: 'نموذج 10 تصالح نهائي معتمد', en: 'Form 10 Reconciliation Certificate' },
+  { id: 'power_of_attorney', ar: 'توكيل رسمي بالبيع (تسلسل توكيلات)', en: 'Power of Attorney (POA Chain)' },
+  { id: 'inheritance_deed', ar: 'إعلام وراثة رسمي وتوكيل الورثة', en: 'Inheritance Deed & Heirs POA' },
+  { id: 'utility_meters', ar: 'عدادات مرافق رسمية باسم المالك', en: 'Official Utility Meters' },
+  { id: 'land_share', ar: 'حصة بالأرض محددة بالعقد', en: 'Defined Land Share in Contract' }
+];
+
 export const SellWizard = ({ 
   lang = 'ar', 
   sellerAnswers = {}, 
@@ -55,6 +71,45 @@ export const SellWizard = ({
 
   // Live Real-Time Estimated Valuation Range calculation dynamically tied to CMS
   const isCairo = String(sellerAnswers.area || '').startsWith('cairo_');
+
+  // Selected legal documents as a flexible array (allows multi-select or zero-select)
+  const selectedLegalDocs = useMemo(() => {
+    if (Array.isArray(sellerAnswers.legalDocs)) {
+      return sellerAnswers.legalDocs;
+    }
+    if (Array.isArray(sellerAnswers.legal)) {
+      return sellerAnswers.legal;
+    }
+    if (typeof sellerAnswers.legal === 'string' && sellerAnswers.legal) {
+      if (sellerAnswers.legal === 'registered') return ['registered_deed'];
+      if (sellerAnswers.legal === 'contract') return ['preliminary_contract', 'signature_validity'];
+      if (sellerAnswers.legal === 'permit') return ['building_permit', 'form10_reconciliation'];
+      return [sellerAnswers.legal];
+    }
+    return [];
+  }, [sellerAnswers.legalDocs, sellerAnswers.legal]);
+
+  const handleToggleLegalDoc = (docId) => {
+    const isSelected = selectedLegalDocs.includes(docId);
+    const updated = isSelected
+      ? selectedLegalDocs.filter(id => id !== docId)
+      : [...selectedLegalDocs, docId];
+
+    setSellerAnswers({
+      ...sellerAnswers,
+      legalDocs: updated,
+      legal: updated
+    });
+  };
+
+  const handleClearLegalDocs = () => {
+    setSellerAnswers({
+      ...sellerAnswers,
+      legalDocs: [],
+      legal: []
+    });
+  };
+
   const calculatedEstimate = useMemo(() => {
     const areaKey = sellerAnswers.area || 'east';
     const liveArea = districts.find(d => d.id === areaKey);
@@ -123,6 +178,11 @@ export const SellWizard = ({
     const normalizedWhatsapp = cleanWhatsapp.startsWith('0') ? cleanWhatsapp.substring(1) : cleanWhatsapp;
 
     const isNonResidential = sellerAnswers.propertyType === 'retail' || sellerAnswers.propertyType === 'land' || sellerAnswers.propertyType === 'office';
+    const legalDocsList = selectedLegalDocs;
+    const legalLabelsAr = legalDocsList
+      .map(id => REAL_ESTATE_LEGAL_DOCS.find(d => d.id === id)?.ar || id)
+      .join('، ');
+
     const updatedAnswers = {
       ...sellerAnswers,
       estimatedMin: isCairo ? null : calculatedEstimate.min,
@@ -130,7 +190,10 @@ export const SellWizard = ({
       estimatedAvg: calculatedEstimate.avg,
       rooms: isNonResidential ? 0 : parseInt(sellerAnswers.rooms || 3),
       phone: `${sellerCountry}${normalizedPhone}`,
-      whatsapp: `${whatsappCountry}${normalizedWhatsapp}`
+      whatsapp: `${whatsappCountry}${normalizedWhatsapp}`,
+      legalDocs: legalDocsList,
+      legal: legalDocsList,
+      legalSummaryAr: legalLabelsAr || (isAr ? 'قيد المراجعة / لم يُحدد بعد' : 'Pending review / Not specified')
     };
 
     if (isSubmitting) return;
@@ -389,33 +452,115 @@ export const SellWizard = ({
             </div>
           </div>
 
-          {/* Legal Status */}
+          {/* Legal Status & Documents (Granular, Multi-Select & Fully Optional) */}
           <div className="form-group-block">
-            <label className="block-label">{isAr ? 'الموقف القانوني وتسلسل الملكية' : 'Legal & Title Status'}</label>
-            <div className="options-pill-grid">
-              <button
-                type="button"
-                className={`opt-pill-btn ${(sellerAnswers.legal || 'registered') === 'registered' ? 'active' : ''}`}
-                onClick={() => setSellerAnswers({ ...sellerAnswers, legal: 'registered' })}
-              >
-                <ShieldCheck size={16} className="text-success" />
-                <span>{isAr ? 'مسجل شهر عقاري / سجل عيني' : 'Registered Title Deed'}</span>
-              </button>
-              <button
-                type="button"
-                className={`opt-pill-btn ${sellerAnswers.legal === 'contract' ? 'active' : ''}`}
-                onClick={() => setSellerAnswers({ ...sellerAnswers, legal: 'contract' })}
-              >
-                <span>{isAr ? 'عقد بيع ابتدائي + صحة توقيع' : 'Signed Contract + Court Validity'}</span>
-              </button>
-              <button
-                type="button"
-                className={`opt-pill-btn ${sellerAnswers.legal === 'permit' ? 'active' : ''}`}
-                onClick={() => setSellerAnswers({ ...sellerAnswers, legal: 'permit' })}
-              >
-                <span>{isAr ? 'ترخيص بناء رسمي + تصالح معتمد' : 'Licensed + Reconciled'}</span>
-              </button>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <label className="block-label" style={{ margin: 0 }}>
+                  {isAr ? 'الموقف القانوني والمستندات المتوفرة' : 'Legal & Title Documents'}
+                </label>
+                <span style={{ 
+                  fontSize: '0.75rem', 
+                  padding: '3px 8px', 
+                  borderRadius: '6px', 
+                  background: selectedLegalDocs.length > 0 ? 'rgba(14, 165, 233, 0.12)' : 'rgba(100, 116, 139, 0.12)', 
+                  color: selectedLegalDocs.length > 0 ? '#0284c7' : 'var(--text-secondary)',
+                  fontWeight: 700 
+                }}>
+                  {selectedLegalDocs.length > 0
+                    ? (isAr ? `تم تحديد (${selectedLegalDocs.length}) مستندات` : `${selectedLegalDocs.length} selected`)
+                    : (isAr ? 'اختياري — غير إلزامي' : 'Optional')}
+                </span>
+              </div>
+              {selectedLegalDocs.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleClearLegalDocs}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#ef4444',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    padding: '2px 6px',
+                    borderRadius: '4px'
+                  }}
+                >
+                  {isAr ? 'مسح التحديد ✕' : 'Clear all ✕'}
+                </button>
+              )}
             </div>
+
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '12px', lineHeight: 1.5 }}>
+              {isAr
+                ? 'حدد كل بند ينطبق على عقارك (يمكنك اختيار أكثر من بند، أو عدم اختيار أي بند إذا كانت الأوراق قيد المراجعة).'
+                : 'Select all documents that apply (multi-choice, or leave empty if documents are pending review).'}
+            </p>
+
+            <div className="options-pill-grid legal-docs-grid">
+              {REAL_ESTATE_LEGAL_DOCS.map((doc) => {
+                const isSelected = selectedLegalDocs.includes(doc.id);
+                return (
+                  <button
+                    key={doc.id}
+                    type="button"
+                    className={`opt-pill-btn legal-doc-pill ${isSelected ? 'active' : ''}`}
+                    onClick={() => handleToggleLegalDoc(doc.id)}
+                    aria-pressed={isSelected}
+                  >
+                    {isSelected ? (
+                      <CheckCircle2 size={16} className="text-success" style={{ flexShrink: 0, color: '#10b981' }} />
+                    ) : (
+                      <span className="legal-doc-checkbox-placeholder" />
+                    )}
+                    <span className="legal-doc-title">{isAr ? doc.ar : doc.en}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {selectedLegalDocs.length === 0 ? (
+              <div style={{
+                marginTop: '10px',
+                padding: '8px 12px',
+                borderRadius: '8px',
+                background: 'rgba(241, 245, 249, 0.7)',
+                border: '1px dashed rgba(203, 213, 225, 0.9)',
+                fontSize: '0.78rem',
+                color: '#64748b',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <ShieldCheck size={16} style={{ color: '#0284c7', flexShrink: 0 }} />
+                <span>
+                  {isAr
+                    ? 'لم تختر أي بند — لا توجد مشكلة، سيقوم مستشار 1Line بمراجعة وتدقيق الموقف القانوني والتراخيص معك مجاناً.'
+                    : 'No items selected — no worries, our legal advisor will audit your documents free of charge during on-site visit.'}
+                </span>
+              </div>
+            ) : (
+              <div style={{
+                marginTop: '10px',
+                padding: '8px 12px',
+                borderRadius: '8px',
+                background: 'rgba(16, 185, 129, 0.08)',
+                border: '1px solid rgba(16, 185, 129, 0.25)',
+                fontSize: '0.78rem',
+                color: '#065f46',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <CheckCircle2 size={16} style={{ color: '#10b981', flexShrink: 0 }} />
+                <span>
+                  {isAr
+                    ? `رائع! توثيق ${selectedLegalDocs.length} مستندات يعزز من سرعة تسويق العقار وثقة المشترين الجادين.`
+                    : `Great! Having ${selectedLegalDocs.length} documents speeds up verified buyer matching.`}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Differentiated Property Structure Specs */}
@@ -657,6 +802,14 @@ export const SellWizard = ({
               <div className="cert-perk"><CheckCircle2 size={15} className="text-success" /> <span>{isAr ? 'عرض أولي على المشترين المسجلين بطلبات مطابقة' : 'First shown to registered matching buyers'}</span></div>
               <div className="cert-perk"><CheckCircle2 size={15} className="text-success" /> <span>{isAr ? 'تصوير بروشور احترافي مجاناً' : 'Free Photo Brochure'}</span></div>
               <div className="cert-perk"><CheckCircle2 size={15} className="text-success" /> <span>{isAr ? 'معاينة مجانية للموقع' : 'Free on-site viewing'}</span></div>
+              <div className="cert-perk">
+                <ShieldCheck size={15} color={selectedLegalDocs.length > 0 ? '#10b981' : '#64748b'} />
+                <span>
+                  {selectedLegalDocs.length > 0
+                    ? (isAr ? `توثيق: ${selectedLegalDocs.length} مستندات محددة` : `Audited: ${selectedLegalDocs.length} docs recorded`)
+                    : (isAr ? 'تدقيق المستندات: مجاناً أثناء المعاينة' : 'Documents: Audited during visit')}
+                </span>
+              </div>
             </div>
 
             <div style={{

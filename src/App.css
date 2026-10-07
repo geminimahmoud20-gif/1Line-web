@@ -9294,6 +9294,93 @@ body.dark,
   border-color: var(--primary);
 }
 
+/* Granular Legal Documents Multi-Select Grid & Checkable Pills */
+.legal-docs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+  gap: 9px;
+}
+
+.opt-pill-btn.legal-doc-pill {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: right;
+  gap: 10px;
+  padding: 11px 13px;
+  border-radius: 10px;
+  font-size: 0.83rem;
+  font-weight: 600;
+  line-height: 1.35;
+  background: #ffffff;
+  border: 1.5px solid rgba(203, 213, 225, 0.7);
+  color: #334155;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[dir="ltr"] .opt-pill-btn.legal-doc-pill {
+  text-align: left;
+}
+
+.opt-pill-btn.legal-doc-pill:hover {
+  border-color: #0284c7;
+  background: #f0f9ff;
+  color: #0369a1;
+  transform: translateY(-1px);
+}
+
+.opt-pill-btn.legal-doc-pill.active {
+  background: #f0fdf4;
+  border-color: #10b981;
+  color: #065f46;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+  font-weight: 700;
+}
+
+.legal-doc-checkbox-placeholder {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid rgba(148, 163, 184, 0.7);
+  display: inline-block;
+  flex-shrink: 0;
+  background: transparent;
+  transition: all 0.15s ease;
+}
+
+.opt-pill-btn.legal-doc-pill:hover .legal-doc-checkbox-placeholder {
+  border-color: #0284c7;
+  background: rgba(2, 132, 199, 0.08);
+}
+
+.dark-theme .opt-pill-btn.legal-doc-pill,
+[data-theme="dark"] .opt-pill-btn.legal-doc-pill {
+  background: #1e293b;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+}
+
+.dark-theme .opt-pill-btn.legal-doc-pill:hover,
+[data-theme="dark"] .opt-pill-btn.legal-doc-pill:hover {
+  background: rgba(2, 132, 199, 0.15);
+  border-color: #38bdf8;
+  color: #f8fafc;
+}
+
+.dark-theme .opt-pill-btn.legal-doc-pill.active,
+[data-theme="dark"] .opt-pill-btn.legal-doc-pill.active {
+  background: rgba(16, 185, 129, 0.16);
+  border-color: #34d399;
+  color: #a7f3d0;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.2);
+}
+
+.dark-theme .legal-doc-checkbox-placeholder,
+[data-theme="dark"] .legal-doc-checkbox-placeholder {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+
 /* Live Valuation Output Certificate Card (White Luxury Architectural Aesthetic) */
 .live-valuation-certificate-card {
   background: linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #fefce8 100%);

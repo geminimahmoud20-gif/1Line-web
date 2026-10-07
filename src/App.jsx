@@ -328,6 +328,7 @@ function AppContent() {
 
   const submitSellerJourney = async (overrideData) => {
     const data = overrideData || sellerAnswers;
+    const legalSummary = data.legalSummaryAr ? ` | المستندات: ${data.legalSummaryAr}` : '';
     return handleAddNewLead({
       name: data.name,
       phone: data.phone,
@@ -336,7 +337,7 @@ function AppContent() {
       area: data.area || 'new_sohag',
       type: 'seller',
       landingPage: '/sell',
-      notes: `عرض بيع ${data.propertyType} في ${data.area} بمساحة ${data.size || ''}م`,
+      notes: `عرض بيع ${data.propertyType} في ${data.area} بمساحة ${data.size || ''}م${legalSummary}`,
       details: data
     });
   };
