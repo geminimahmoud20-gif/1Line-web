@@ -447,6 +447,7 @@ export default function PropertiesPage({
         )}
 
         {/* View Layout Container */}
+        <div id="properties-catalog-anchor" style={{ scrollMarginTop: '110px' }} />
         {viewMode === 'split' ? (
           <div className="split-view-container">
             {/* Cards List Column */}
@@ -454,7 +455,7 @@ export default function PropertiesPage({
               {filteredProperties.length > 0 ? (
                 <>
                   <div className="properties-grid-split">
-                    {filteredProperties.slice(0, visibleCount).map((prop) => (
+                    {paginatedProperties.map((prop) => (
                       <div 
                         key={prop.id}
                         id={`prop-card-${prop.id}`}
@@ -479,23 +480,15 @@ export default function PropertiesPage({
                     ))}
                   </div>
 
-                  {visibleCount < filteredProperties.length && (
-                    <div style={{ textAlign: 'center', marginTop: '24px', padding: '16px 0' }}>
-                      <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '10px' }}>
-                        {lang === 'ar' 
-                          ? `عرض ${Math.min(visibleCount, filteredProperties.length)} من أصل ${filteredProperties.length} عقاراً معتمداً` 
-                          : `Showing ${Math.min(visibleCount, filteredProperties.length)} of ${filteredProperties.length} verified properties`}
-                      </p>
-                      <button
-                        type="button"
-                        className="btn btn-outline"
-                        style={{ padding: '8px 20px', fontWeight: 'bold', borderColor: 'var(--accent-gold)', color: 'var(--text-primary)' }}
-                        onClick={() => setVisibleCount(prev => prev + 12)}
-                      >
-                        <span>{lang === 'ar' ? 'عرض المزيد من العقارات ➕' : 'Load More Properties ➕'}</span>
-                      </button>
-                    </div>
-                  )}
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={filteredProperties.length}
+                    pageSize={PAGE_SIZE}
+                    onPageChange={setCurrentPage}
+                    isAr={lang === 'ar'}
+                    scrollToId="properties-catalog-anchor"
+                  />
                 </>
               ) : (
                 <ZeroResultsFallback
@@ -548,7 +541,7 @@ export default function PropertiesPage({
             {filteredProperties.length > 0 ? (
               <>
                 <div className="properties-grid-full">
-                  {filteredProperties.slice(0, visibleCount).map((prop) => (
+                  {paginatedProperties.map((prop) => (
                     <PropertyCard
                       key={prop.id}
                       property={prop}
@@ -563,23 +556,15 @@ export default function PropertiesPage({
                   ))}
                 </div>
 
-                {visibleCount < filteredProperties.length && (
-                  <div style={{ textAlign: 'center', marginTop: '30px', padding: '20px 0' }}>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-                      {lang === 'ar' 
-                        ? `عرض ${Math.min(visibleCount, filteredProperties.length)} من أصل ${filteredProperties.length} عقاراً معتمداً` 
-                        : `Showing ${Math.min(visibleCount, filteredProperties.length)} of ${filteredProperties.length} verified properties`}
-                    </p>
-                    <button
-                      type="button"
-                      className="btn btn-outline"
-                      style={{ padding: '10px 24px', fontWeight: 'bold', borderColor: 'var(--accent-gold)', color: 'var(--text-primary)' }}
-                      onClick={() => setVisibleCount(prev => prev + 12)}
-                    >
-                      <span>{lang === 'ar' ? 'عرض المزيد من العقارات ➕' : 'Load More Properties ➕'}</span>
-                    </button>
-                  </div>
-                )}
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={filteredProperties.length}
+                  pageSize={PAGE_SIZE}
+                  onPageChange={setCurrentPage}
+                  isAr={lang === 'ar'}
+                  scrollToId="properties-catalog-anchor"
+                />
               </>
             ) : (
               <ZeroResultsFallback

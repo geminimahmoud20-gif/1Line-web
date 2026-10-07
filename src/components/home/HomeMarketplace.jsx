@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Building, Users, MapPin, DollarSign, ArrowRight, ArrowLeft, ShieldCheck, Sparkles } from 'lucide-react';
 import PropertyCard from '../properties/PropertyCard';
 import ScrollReveal from '../common/ScrollReveal';
+import Pagination from '../common/Pagination';
 
 const toBudget = (b) => (typeof b === 'number' ? b : Number(String(b ?? '').replace(/[^\d.]/g, '')) || 0);
 
@@ -30,6 +32,11 @@ export default function HomeMarketplace({
   setMarketplaceAreaFilter,
   setMarketplaceTab
 }) {
+  const [homePage, setHomePage] = useState(1);
+  const HOME_PAGE_SIZE = 4;
+  const totalHomePages = Math.ceil((displayProperties || []).length / HOME_PAGE_SIZE);
+  const paginatedHomeProps = (displayProperties || []).slice((homePage - 1) * HOME_PAGE_SIZE, homePage * HOME_PAGE_SIZE);
+
   return (
     <section className="homepage-section bg-surface" id="marketplace-hub">
       <ScrollReveal>
@@ -80,21 +87,38 @@ export default function HomeMarketplace({
       {marketplaceTab === 'properties' && (
         <div>
           {displayProperties.length > 0 ? (
-            <div className="properties-grid-4 hx-market-rail">
-              {displayProperties.map((prop) => (
-                <PropertyCard
-                  key={prop.id}
-                  property={prop}
-                  lang={lang}
-                  currency={currency}
-                  isFavorite={favorites.includes(prop.id)}
-                  onToggleFavorite={onToggleFavorite}
-                  isCompared={compareList.some(c => c.id === prop.id)}
-                  onToggleCompare={onToggleCompare}
-                  onQuickView={onQuickView}
-                />
-              ))}
-            </div>
+            <>
+              <div className="properties-grid-4 hx-market-rail">
+                {paginatedHomeProps.map((prop) => (
+                  <PropertyCard
+                    key={prop.id}
+                    property={prop}
+                    lang={lang}
+                    currency={currency}
+                    isFavorite={favorites.includes(prop.id)}
+                    onToggleFavorite={onToggleFavorite}
+                    isCompared={compareList.some(c => c.id === prop.id)}
+                    onToggleCompare={onToggleCompare}
+                    onQuickView={onQuickView}
+                  />
+                ))}
+              </div>
+
+              {totalHomePages > 1 && (
+                <div style={{ marginTop: '16px' }}>
+                  <Pagination
+                    currentPage={homePage}
+                    totalPages={totalHomePages}
+                    totalItems={displayProperties.length}
+                    pageSize={HOME_PAGE_SIZE}
+                    onPageChange={setHomePage}
+                    isAr={lang === 'ar'}
+                    scrollToId="marketplace-hub"
+                    showInfo={false}
+                  />
+                </div>
+              )}
+            </>
           ) : (
             <div className="marketplace-empty-box">
               <div className="empty-icon-circle">
