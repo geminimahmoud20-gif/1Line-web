@@ -152,8 +152,6 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
   const convertedPricePerM = formatCurrencyPrice(propertyPricePerM, currency, lang);
   const convertedAvgPricePerM = formatCurrencyPrice(districtAvg, currency, lang);
 
-  const currentDistrictName = (isAr ? areaData?.name_ar : areaData?.name_en) || (isAr ? 'سوهاج عام' : 'Sohag Average');
-
   return (
     <div className="price-benchmark-card">
       <div className="benchmark-header">
