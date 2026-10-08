@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { LOST_REASONS } from '../utils/crmLeadViews';
 import { MEGA_PROJECTS, tagDemoProject } from '../data/projectsData';
 import { INITIAL_LEADS } from '../data/mockData';
 import { DEMO_PROPERTIES, DEMO_DEMANDS, tagDemoProperty, tagDemoDemand, isRealItem } from '../data/demoData';
@@ -61,6 +62,20 @@ const readLeadCache = () => {
     }
   } catch { return []; }
   return readStoredJson('oneline_crm_leads', [], isRecordArray);
+};
+const LEAD_STAGE_AR = { new: 'طلب جديد', contacted: 'تم التواصل', site_visit: 'معاينة', negotiating: 'تفاوض', closing: 'توقيع وحجز', closed: 'صفقة ناجحة', lost: 'خسرانة' };
+const LEAD_FIELD_AR = { assignedTo: 'المسؤول', temperature: 'درجة الحرارة', score: 'الجدية', notes: 'الملاحظات', nextFollowUpAt: 'موعد المتابعة', isArchived: 'الأرشفة', tags: 'الوسوم', lastContactedAt: 'تواصل' };
+/** One readable line for the lead's activity log */
+const describeLeadChange = (f = {}) => {
+  if (f.status) {
+    const base = `تغيير المرحلة إلى: ${LEAD_STAGE_AR[f.status] || f.status}`;
+    const reason = f.status === 'lost' && LOST_REASONS.find((r) => r.id === f.lostReason);
+    return reason ? `${base} (${reason.ar}${f.lostNote ? ` — ${f.lostNote}` : ''})` : base;
+  }
+  if ('assignedTo' in f) return `تعيين المسؤول: ${f.assignedTo || '—'}`;
+  if (f.lastContactedAt && Object.keys(f).length <= 2) return 'تواصل مع العميل';
+  const names = Object.keys(f).map((k) => LEAD_FIELD_AR[k]).filter(Boolean);
+  return `تحديث بيانات${names.length ? `: ${[...new Set(names)].join('، ')}` : ''}`;
 };
 const DEMAND_CONTACT_FIELDS = ['phone', 'whatsapp', 'email', 'clientName', 'name'];
 const persistDemands = (list) => {
@@ -426,7 +441,7 @@ export function PropertiesProvider({ children }) {
           propertyType: standardizedData.propertyType || existing.propertyType,
           area: standardizedData.area || existing.area,
           score: Math.min(100, (existing.score || 80) + 10),
-          temperature: existing.temperature || 'hot',
+          temperature: existing.temperature || standardizedData.temperature || '',
           status: existing.status || 'new',
           assignedTo: existing.assignedTo || 'Sales Advisor Team',
           nextFollowUpAt: standardizedData.nextFollowUpAt || existing.nextFollowUpAt || null,
@@ -465,7 +480,8 @@ export function PropertiesProvider({ children }) {
           area: standardizedData.area || 'new_sohag',
           propertyType: standardizedData.propertyType || 'apartment',
           notes: standardizedData.notes || '',
-          temperature: standardizedData.temperature || 'hot',
+          // Unset until someone on the team judges it; defaulting to 'hot' inflated the hot count
+          temperature: standardizedData.temperature || '',
           score: typeof standardizedData.score === 'number' ? standardizedData.score : 85,
           assignedTo: standardizedData.assignedTo || 'Unassigned',
           nextFollowUpAt: standardizedData.nextFollowUpAt || null,
@@ -727,8 +743,25 @@ export function PropertiesProvider({ children }) {
   // CRM Leads Handlers
   const handleUpdateLead = useCallback(async (id, updatedFields) => {
     const nowIso = new Date().toISOString();
+    const current = leadsRef.current.find((l) => l.id === id);
+
+    // First reply time: set once, the first time the lead leaves 'new' or someone contacts it
+    const extra = {};
+    if (current && !current.firstContactedAt) {
+      const s = updatedFields.status;
+      if ((s && s !== 'new') || updatedFields.lastContactedAt) {
+        extra.firstContactedAt = updatedFields.lastContactedAt || nowIso;
+      }
+    }
+    // The activity log is saved with the lead (it used to live only in this browser).
+    // Callers that build their own log entry pass activityLogs themselves.
+    const activityLogs = updatedFields.activityLogs
+      || [{ timestamp: nowIso, action: describeLeadChange(updatedFields) }, ...(current?.activityLogs || [])].slice(0, 100);
+
     const enrichedFields = {
       ...updatedFields,
+      ...extra,
+      activityLogs,
       updatedAt: nowIso,
       lastActivityAt: nowIso
     };
@@ -738,7 +771,6 @@ export function PropertiesProvider({ children }) {
     // "await first" version left the kanban card unmoved while the caller had already
     // shown "moved successfully". On a real failure only the changed fields roll back.
     const previousValues = {};
-    const current = leadsRef.current.find((l) => l.id === id);
     if (current) Object.keys(enrichedFields).forEach((k) => { previousValues[k] = current[k]; });
 
     const applyToLeads = (mutate) => setLeads((prev) => {
@@ -748,11 +780,7 @@ export function PropertiesProvider({ children }) {
       return updated;
     });
 
-    applyToLeads((l) => ({
-      ...l,
-      ...enrichedFields,
-      activityLogs: [{ timestamp: nowIso, action: `تحديث بيانات: ${Object.keys(updatedFields).join(', ')}` }, ...(l.activityLogs || [])]
-    }));
+    applyToLeads((l) => ({ ...l, ...enrichedFields }));
 
     if (isFirebaseActive()) {
       updateLeadField(id, enrichedFields).then((saved) => {

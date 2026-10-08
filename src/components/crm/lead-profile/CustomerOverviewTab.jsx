@@ -174,6 +174,7 @@ export default function CustomerOverviewTab({
               value={formData.temperature}
               onChange={(e) => setFormData({ ...formData, temperature: e.target.value })}
             >
+              <option value="">غير محدد</option>
               <option value="hot">🔥 ساخن جداً (Hot - شراء خلال 7 أيام)</option>
               <option value="warm">⚡ دافئ (Warm - شراء خلال شهر)</option>
               <option value="cold">❄️ بارد / مستكشف (Cold)</option>

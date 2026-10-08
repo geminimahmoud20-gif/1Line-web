@@ -31,7 +31,7 @@ import EditLeadModal from './crm/EditLeadModal';
 import { LEAD_EXPORT_HEADERS, makeLeadFormatters } from './crm/leadFormatters';
 import CrmLoginGate from './crm/CrmLoginGate';
 import useLeadKeyboardTriage from './crm/useLeadKeyboardTriage';
-import { computeCrmAnalytics, filterLeads } from '../utils/crmLeadViews';
+import { computeCrmAnalytics, filterLeads, sortLeads, duplicatesById, buildMergedLead } from '../utils/crmLeadViews';
 
 export const CrmAdminPanel = ({
   lang = 'ar',
@@ -83,6 +83,9 @@ export const CrmAdminPanel = ({
   const [temperatureFilter, setTemperatureFilter] = useState('all');
   const [areaFilter, setAreaFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sourceFilter, setSourceFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('all');
+  const [leadSort, setLeadSort] = useState('newest');
 
   // Customer 360 & Add Lead Modal States
   const [showAddLeadModal, setShowAddLeadModal] = useState(false);
@@ -374,7 +377,7 @@ export const CrmAdminPanel = ({
       propertyType: lead.propertyType || details.propertyType || 'apartment',
       notes: lead.notes || '',
       status: lead.status || 'new',
-      temperature: lead.temperature || 'hot',
+      temperature: lead.temperature || '',
       score: lead.score || 85,
       assignedTo: lead.assignedTo || 'Unassigned',
       nextFollowUpAt: lead.nextFollowUpAt ? String(lead.nextFollowUpAt).slice(0, 16) : '',
@@ -421,7 +424,7 @@ export const CrmAdminPanel = ({
       propertyType: leadFormData.propertyType,
       notes: leadFormData.notes,
       status: leadFormData.status,
-      temperature: leadFormData.temperature || editingLead.temperature || 'hot',
+      temperature: leadFormData.temperature || '',
       score: parseInt(leadFormData.score) || 85,
       assignedTo: leadFormData.assignedTo,
       nextFollowUpAt: leadFormData.nextFollowUpAt ? new Date(leadFormData.nextFollowUpAt).toISOString() : null,
@@ -469,6 +472,8 @@ export const CrmAdminPanel = ({
   // Quick Action Handler (WhatsApp Direct Contact)
 
   const onWhatsAppClick = (lead) => {
+    // Counts as contacting the client (first reply time, last contact)
+    if (onUpdateLead && lead?.id) onUpdateLead(lead.id, { lastContactedAt: new Date().toISOString() });
     if (handleWhatsAppAction) {
       handleWhatsAppAction(lead);
     } else {
@@ -503,9 +508,25 @@ export const CrmAdminPanel = ({
   const crmAnalytics = useMemo(() => computeCrmAnalytics(leads), [leads]);
 
   // Filtered Leads list with Multi-Dimensional Search & Workflow Stages (Memoized)
-  const filteredLeads = useMemo(() => filterLeads(leads, {
-    myDealsOnly, activeRole, agentName: currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter, searchQuery
-  }), [leads, myDealsOnly, activeRole, currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter, searchQuery]);
+  const duplicateIds = useMemo(() => duplicatesById(leads), [leads]);
+  const filteredLeads = useMemo(() => sortLeads(filterLeads(leads, {
+    myDealsOnly, activeRole, agentName: currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter,
+    sourceFilter, dateFilter, searchQuery, duplicateIds
+  }), leadSort), [leads, myDealsOnly, activeRole, currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter, sourceFilter, dateFilter, searchQuery, duplicateIds, leadSort]);
+
+  // Fold duplicate leads into the kept one, then delete the others (delete is admin-only in the rules)
+  const handleMergeLeads = async (keepId, otherIds) => {
+    const keep = leads.find((l) => l.id === keepId);
+    const others = leads.filter((l) => otherIds.includes(l.id));
+    if (!keep || others.length === 0 || !onUpdateLead) return false;
+    await onUpdateLead(keepId, buildMergedLead(keep, others));
+    for (const o of others) {
+      if (onDeleteLead) await onDeleteLead(o.id);
+      else setLeads((prev) => prev.filter((l) => l.id !== o.id));
+    }
+    triggerToast(isAr ? `تم دمج ${others.length} سجل مكرر في عميل واحد` : `Merged ${others.length} duplicate(s)`, 'success');
+    return true;
+  };
 
   // Login Gate
   // Hooks stay above the early return below (keyboard triage reads the visible rows)
@@ -613,6 +634,15 @@ export const CrmAdminPanel = ({
           onDispatchLeadClick={onDispatchLeadClick}
           onUpdateLead={onUpdateLead}
           onWhatsAppClick={onWhatsAppClick}
+          duplicateIds={duplicateIds}
+          onMergeLeads={handleMergeLeads}
+          canMergeLeads={canDeleteLead(activeRole)}
+          sourceFilter={sourceFilter}
+          setSourceFilter={setSourceFilter}
+          dateFilter={dateFilter}
+          setDateFilter={setDateFilter}
+          leadSort={leadSort}
+          setLeadSort={setLeadSort}
           searchQuery={searchQuery}
           selectedLeadIds={selectedLeadIds}
           setAreaFilter={setAreaFilter}

@@ -30,7 +30,7 @@ export default function CustomerProfileModal({
     cityOrExpat: lead?.cityOrExpat || 'سوهاج',
     type: lead?.type || 'buyer',
     status: lead?.status || 'new',
-    temperature: lead?.temperature || 'hot',
+    temperature: lead?.temperature || '',
     score: lead?.score || 85,
     assignedTo: lead?.assignedTo || 'Sales Advisor Team',
     budget: lead?.details?.budget || lead?.details?.expectedPrice || '',
@@ -239,7 +239,7 @@ export default function CustomerProfileModal({
               justifyContent: 'center',
               fontSize: 'var(--crm-text-xl)'
             }}>
-              {formData.temperature === 'hot' ? '🔥' : formData.temperature === 'warm' ? '⚡' : '❄️'}
+              {formData.temperature === 'hot' ? '🔥' : formData.temperature === 'warm' ? '⚡' : formData.temperature === 'cold' ? '❄️' : '—'}
             </div>
 
             <div>

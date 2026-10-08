@@ -147,6 +147,7 @@ export default function EditLeadModal({
                 aria-label={isAr ? 'درجة الاهتمام' : 'Temperature'}
                 onChange={(e) => setLeadFormData({ ...leadFormData, temperature: e.target.value })}
               >
+                <option value="">{isAr ? 'غير محدد' : 'Not set'}</option>
                 <option value="hot">🔥 {isAr ? 'ساخن' : 'Hot'}</option>
                 <option value="warm">⚡ {isAr ? 'متوسط' : 'Warm'}</option>
                 <option value="cold">❄️ {isAr ? 'بارد' : 'Cold'}</option>
