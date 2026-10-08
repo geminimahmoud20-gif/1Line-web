@@ -8194,6 +8194,27 @@ body.dark,
   margin: 0 auto;
 }
 
+/* The hero is navy in both themes: back button and breadcrumb need light text here
+   (the global light-theme colours are navy, so they vanished) */
+.market-hero-banner .btn-back-step {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 10px;
+  padding: 8px 16px;
+  color: #F1F5F9 !important;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+.market-hero-banner .btn-back-step:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: var(--gold, #B38A45);
+  color: #ECC875 !important;
+}
+.market-hero-banner .page-breadcrumb-sub { color: rgba(255, 255, 255, 0.6); }
+.market-hero-banner .page-breadcrumb-sub a { color: rgba(255, 255, 255, 0.88); }
+.market-hero-banner .page-breadcrumb-sub a:hover,
+.market-hero-banner .page-breadcrumb-sub .crumb-current { color: #ECC875; }
+
 .market-badge-pill {
   display: inline-flex;
   align-items: center;
