@@ -6096,8 +6096,9 @@ body.dark,
 [data-theme="dark"] input,
 [data-theme="dark"] select,
 [data-theme="dark"] textarea {
-  background: #131c31 !important;
-  border-color: rgba(255, 255, 255, 0.14) !important;
+  /* a step lighter than the navy cards, with an edge you can see (--input-border in index.css) */
+  background: #172540 !important;
+  border-color: var(--input-border, rgba(255, 255, 255, 0.26)) !important;
   color: #f8fafc !important;
 }
 
