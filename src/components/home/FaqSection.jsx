@@ -72,9 +72,9 @@ export default function FaqSection({ lang = 'ar' }) {
       icon: ShieldCheck,
       question: isAr ? 'هل تراجعون المستندات القانونية قبل البيع أو الشراء؟' : 'Do you review legal documents before listing or purchase?',
       answer: isAr
-        ? 'نعم، بكل حسم. نراجع تسلسل الملكية وتراخيص البناء وسريان وصحة التوكيلات قبل عرض أي عقار، ونسلم المشتري والبائع ملخص التدقيق القانوني قبل إبرام أي تعاقد لضمان خلو العقار من النزاعات أو المخالفات، مع تشجيع الطرفين دائماً على الاستعانة بمحاميهم الخاص.'
-        : 'Yes, rigorously. We examine chain of title, building permits, and power of attorney validity before listing, delivering a comprehensive legal review summary before contracts to safeguard both parties against disputes.',
-      highlight: isAr ? 'فحص تسلسل الملكية والتراخيص بنسبة 100%' : '100% Chain of title & permit audit',
+        ? 'نعم، بكل حسم. نراجع تسلسل الملكية وتراخيص البناء وسريان وصحة التوكيلات قبل عرض أي عقار، ونسلم المشتري والبائع ملخص التدقيق القانوني قبل إبرام أي تعاقد للمساعدة في كشف النزاعات أو المخالفات، مع تشجيع الطرفين دائماً على الاستعانة بمحاميهم الخاص.'
+        : 'Yes, rigorously. We examine chain of title, building permits, and power of attorney validity before listing, delivering a comprehensive legal review summary before contracts to help both parties spot disputes early. We always encourage both sides to use their own lawyer.',
+      highlight: isAr ? 'مراجعة تسلسل الملكية والتراخيص قبل العرض' : 'Title & permit review before listing',
       action: {
         isWhatsApp: true,
         label: isAr ? 'استشر المستشار القانوني' : 'Consult Legal Advisor',

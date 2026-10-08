@@ -134,7 +134,7 @@ html .footer-crm-lock::after {
   html .btn { max-width: 100%; white-space: normal; text-align: center; }
   /* Hero search intents: all three fit on a 360px phone */
   html .hx-intents { gap: 2px; padding-inline: 2px; }
-  html .hx-intent { padding: 8px 10px; gap: 5px; font-size: 0.84rem; }
+  html .hx-intent { flex: 1 1 0; min-width: 0; justify-content: center; padding: 8px 4px; gap: 4px; font-size: 0.8rem; white-space: nowrap; }
 }
 
 /* Market page on phones: summary boxes stack their icon, the table gets tighter cells and
@@ -225,4 +225,26 @@ html .demands-add-cta .btn { display: inline-flex; align-items: center; gap: 8px
   html .wizard-container select { width: 100%; max-width: 100%; }
   /* …except the phone field's country code: it sits beside the number, which needs the room */
   html .phone-input-control-box select { width: auto; max-width: 50%; }
+}
+
+/* ── Readable minimum on phones: labels that sat at 0.68rem (≈10.9px) go to 12px ── */
+@media (max-width: 768px) {
+  html .spec-lbl,
+  html .detail-card-box .specs-detail-grid .spec-lbl,
+  html .hx-eyebrow span,
+  html .hx-cert-sub-id,
+  html .hx-point-tag,
+  html .hx-comps-badge-fair,
+  html .hx-bar-lbl,
+  html .hx-blip-label,
+  html .hx-radar-confidential-pill,
+  html .hx-hud-live-tag span,
+  html .hx-hud-quality,
+  html .hx-hud-location-tag span,
+  html .hx-hud-latency,
+  html .hx-expat-badge-handover,
+  html .about-portrait-seal span,
+  html .watermark-brand-name { font-size: 0.75rem !important; }
+  /* Breadcrumb links: taller tap area without moving the text */
+  html .page-breadcrumb-sub a { display: inline-block; padding-block: 10px; margin-block: -10px; }
 }

@@ -1,11 +1,33 @@
 import { useState } from 'react';
-import { 
-  Sparkles 
+import {
+  Sparkles, Users, FileCheck, Megaphone, Lock, FileSignature, MessageCircle
 } from 'lucide-react';
 import PhoneInputField from './PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { getAreas } from '../utils/areasData';
 import { PROPERTY_TYPES } from '../data/propertiesData';
+
+// What a broker gets from the network. Deliberately no rates or amounts: fees are agreed per deal in writing.
+const BROKER_PERKS = [
+  { Icon: Users, title_ar: 'طلبات مشترين جادة', title_en: 'Serious buyer requests',
+    desc_ar: 'نوصّلك بطلبات شراء وإيجار فعلية بتوصلنا من الموقع والواتساب في منطقتك.',
+    desc_en: 'We connect you with real purchase and rental requests reaching us in your area.' },
+  { Icon: FileCheck, title_ar: 'مراجعة المستندات', title_en: 'Document review',
+    desc_ar: 'فريقنا يراجع أوراق العقار قبل العرض، فتشتغل على صفقة أوضح وأسرع.',
+    desc_en: 'Our team reviews the papers before listing, so your deals move with fewer surprises.' },
+  { Icon: Megaphone, title_ar: 'دعم تسويقي', title_en: 'Marketing support',
+    desc_ar: 'عرض عقاراتك على منصة 1Line بصفحة احترافية وصور وملف قابل للمشاركة.',
+    desc_en: 'Your listings on the 1Line platform with a professional page, photos and a shareable brochure.' },
+  { Icon: Lock, title_ar: 'عقارات خارج السوق', title_en: 'Off-market access',
+    desc_ar: 'فرصة للتعاون على عقارات غير منشورة للعامة حسب كل صفقة.',
+    desc_en: 'A chance to cooperate on properties not shown publicly, deal by deal.' },
+  { Icon: FileSignature, title_ar: 'اتفاق مكتوب وواضح', title_en: 'Clear written terms',
+    desc_ar: 'كل تعاون باتفاق مكتوب قبل البدء، يحدد دور كل طرف من غير لبس.',
+    desc_en: 'Every cooperation starts with a written agreement setting out each side\'s role.' },
+  { Icon: MessageCircle, title_ar: 'تواصل مباشر', title_en: 'Direct line',
+    desc_ar: 'متابعة مع فريق 1Line على الواتساب من أول ترشيح لحد التعاقد.',
+    desc_en: 'Follow-up with the 1Line team on WhatsApp from first lead to contract.' },
+];
 
 export const BrokerPortal = ({
   lang = 'ar',
@@ -78,11 +100,31 @@ export const BrokerPortal = ({
     <div className="smart-valuation-wizard-box">
       {/* No published rates: every arrangement is agreed in writing, deal by deal */}
       <div className="step-prompt-row">
-        <h3>{isAr ? 'التعاون مع شبكة وسطاء 1Line' : 'Working with the 1Line broker network'}</h3>
+        <h3>{isAr ? 'ليه تشتغل مع شبكة وسطاء 1Line؟' : 'Why work with the 1Line broker network?'}</h3>
         <p>{isAr
-          ? 'سجّل بياناتك ونتواصل معك. أي تعاون أو أتعاب يتم الاتفاق عليها كتابياً لكل صفقة على حدة، ولا ينشأ أي التزام مالي قبل توقيع اتفاق مكتوب.'
-          : 'Register and we will contact you. Any cooperation or fee is agreed in writing for each deal; no financial obligation arises before a signed agreement.'}</p>
+          ? 'سجّل بياناتك ونتواصل معك لنتفق على طريقة التعاون.'
+          : 'Register and we will contact you to agree how we work together.'}</p>
       </div>
+
+      <div className="prop-types-rich-grid broker-perks-grid" style={{ marginBottom: '16px' }}>
+        {BROKER_PERKS.map(({ Icon, title_ar, title_en, desc_ar, desc_en }) => (
+          <div key={title_en} className="prop-type-card">
+            <div className="prop-type-icon" style={{ background: 'rgba(13, 72, 161, 0.08)' }}>
+              <Icon size={22} style={{ color: 'var(--accent-gold)' }} />
+            </div>
+            <div className="prop-type-info">
+              <h4>{isAr ? title_ar : title_en}</h4>
+              <p>{isAr ? desc_ar : desc_en}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 28px' }}>
+        {isAr
+          ? 'الأتعاب يتم الاتفاق عليها كتابياً لكل صفقة على حدة، ولا ينشأ أي التزام مالي قبل توقيع اتفاق مكتوب.'
+          : 'Fees are agreed in writing for each deal; no financial obligation arises before a signed agreement.'}
+      </p>
 
       {/* Broker Registration Form */}
       <form onSubmit={validateAndSubmit} className="seller-contact-submission-form">
@@ -214,7 +256,7 @@ export const BrokerPortal = ({
             className="btn btn-primary btn-submit-valuation"
           >
             <Sparkles size={16} className="text-gold" />
-            <span>{isAr ? 'تأكيد التسجيل وتفعيل حساب الشريك المعتمد' : 'Activate Certified Broker Partner Profile'}</span>
+            <span>{isAr ? 'سجّل كوسيط شريك' : 'Register as a partner broker'}</span>
           </button>
         </div>
       </form>
