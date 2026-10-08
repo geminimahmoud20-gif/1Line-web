@@ -110,7 +110,7 @@ export default function PropertiesPage({
   const [prevFilterState, setPrevFilterState] = useState({ filters, sortBy });
   if (prevFilterState.filters !== filters || prevFilterState.sortBy !== sortBy) {
     setPrevFilterState({ filters, sortBy });
-    setVisibleCount(12);
+    setCurrentPage(1);
   }
 
   const handleFilterChange = (key, value) => {
