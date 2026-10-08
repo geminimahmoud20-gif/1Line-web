@@ -499,7 +499,7 @@ export default function PropertyManagerPanel({
     { ar: 'لقطة الأسبوع', en: 'Deal of the Week' },
     { ar: 'خصم الكاش الفوري', en: 'Instant Cash Discount' },
     { ar: 'تم تخفيض السعر', en: 'Price Reduced' },
-    { ar: 'استثمار بعائد مرتفع', en: 'High ROI Investment' },
+    { ar: 'مناسب للاستثمار', en: 'Investment Opportunity' },
     { ar: 'مرخص 100% شهر عقاري', en: '100% Legally Verified' },
     { ar: 'متاح للتمويل العقاري', en: 'Mortgage Eligible' }
   ];

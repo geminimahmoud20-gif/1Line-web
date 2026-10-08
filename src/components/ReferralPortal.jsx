@@ -84,11 +84,11 @@ export const ReferralPortal = ({
     <div>
       <div className="investment-hero" style={{ background: 'linear-gradient(135deg, #092347 0%, #0d48a1 60%, #0a3880 100%)', color: 'white', padding: '36px 20px', borderRadius: 'var(--radius-lg)', marginBottom: '30px', textAlign: 'center', border: '1px solid rgba(255, 202, 40, 0.35)', boxShadow: '0 15px 35px rgba(13, 72, 161, 0.25)' }}>
         <Gift size={40} className="text-gold" style={{ marginBottom: '16px' }} />
-        <h2>{lang === 'ar' ? 'برنامج شركاء النجاح وعمولات الإحالة' : 'Referral Reward Partner Program'}</h2>
+        <h2>{lang === 'ar' ? 'برنامج ترشيح العملاء' : 'Client referral program'}</h2>
         <p style={{ marginTop: '10px', fontSize: '0.95rem', opacity: 0.9 }}>
           {lang === 'ar'
-            ? 'أوصِ ببائع، مشتري، مستثمر، أو وسيط عقاري في سوهاج، واحصل على مكافأة عند إتمام الصفقة وفق شروط مكتوبة.'
-            : 'Refer buyers, sellers or investors and earn a reward when the deal closes, under written terms.'}
+            ? 'رشّح بائعاً أو مشترياً أو مستثمراً في سوهاج ونتواصل معه مباشرة. لا ينشأ أي التزام مالي إلا باتفاق مكتوب وموقّع.'
+            : 'Refer a seller, buyer or investor and we contact them directly. No financial obligation arises without a signed written agreement.'}
         </p>
       </div>
 
@@ -121,9 +121,9 @@ export const ReferralPortal = ({
             <div style={{ display: 'flex', gap: '15px' }}>
               <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary)', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.9rem', flexShrink: 0 }}>3</div>
               <div>
-                <h4 style={{ fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: '4px' }}>{lang === 'ar' ? 'مكافأتك بشروط مكتوبة' : 'Get paid rewards'}</h4>
+                <h4 style={{ fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: '4px' }}>{lang === 'ar' ? 'باتفاق مكتوب فقط' : 'Written agreement only'}</h4>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                  {lang === 'ar' ? 'نسبة المكافأة وموعد صرفها يُتفق عليهما كتابياً عند تسجيل الإحالة.' : 'Receive your share of brokerage revenues immediately.'}
+                  {lang === 'ar' ? 'تسجيل الترشيح لا يُنشئ أي حق أو التزام مالي. أي مقابل يكون فقط بموجب اتفاق مكتوب وموقّع من الطرفين قبل الترشيح.' : 'A referral creates no right or financial obligation. Any compensation exists only under a written agreement signed by both parties beforehand.'}
                 </p>
               </div>
             </div>
@@ -226,7 +226,7 @@ export const ReferralPortal = ({
             </div>
 
             <button type="submit" className="btn btn-primary btn-full">
-              {lang === 'ar' ? 'تسجيل الإحالة ومكافأة العمولة' : 'Register Referral Share'}
+              {lang === 'ar' ? 'تسجيل الترشيح' : 'Submit referral'}
             </button>
           </form>
         </div>

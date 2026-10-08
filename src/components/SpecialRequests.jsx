@@ -491,9 +491,10 @@ export const SpecialRequests = ({
           disabled={submitting}
           className="btn btn-primary btn-full" 
           style={{ 
-            height: '52px', 
-            fontSize: '1.05rem', 
-            fontWeight: '800', 
+            minHeight: '52px',
+            fontSize: '1rem',
+            fontWeight: '800',
+            whiteSpace: 'nowrap',
             background: 'linear-gradient(135deg, #0d48a1 0%, #092347 100%)',
             boxShadow: '0 6px 20px rgba(13, 72, 161, 0.3)',
             display: 'flex',
@@ -507,7 +508,7 @@ export const SpecialRequests = ({
           ) : (
             <>
               <Send size={18} />
-              <span>{isAr ? 'إرسال الطلب للاستحواذ والبحث العقاري الذكي 🚀' : 'Submit Bespoke Request 🚀'}</span>
+              <span>{isAr ? 'أرسل طلبك' : 'Send request'}</span>
             </>
           )}
         </button>

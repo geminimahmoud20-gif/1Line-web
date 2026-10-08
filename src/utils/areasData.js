@@ -94,7 +94,7 @@ export const DEFAULT_SOHAG_AREAS = [
     label_en: 'New Sohag (Districts 1, 2 & Central Axis)',
     center: { lat: 26.4715, lng: 31.6620 },
     zoom: 13,
-    description_ar: 'المدينة الذكية المستقبلية وأعلى عائد استثماري ونمو سكني',
+    description_ar: 'المدينة الجديدة ومحور النمو السكني والتجاري',
     avgPricePerMeter: 12000,
     annualGrowthRate: 109,
     historicalPrices: [

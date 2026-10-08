@@ -37,10 +37,10 @@ export const generateInvestorProspectusPdf = async ({
   doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(255, 202, 40);
-  doc.text('INSTITUTIONAL INVESTOR DESK & CAPITAL GROWTH PROSPECTUS 2026', 15, 30);
+  doc.text('INDICATIVE INVESTMENT SIMULATION', 15, 30);
   doc.setTextColor(200, 210, 225);
   doc.setFontSize(9);
-  doc.text('Sohag & New Sohag Prime Strategic Asset Allocation', 15, 38);
+  doc.text('Estimates for guidance only - not an offer or a guarantee', 15, 38);
 
   doc.setFontSize(9);
   doc.setTextColor(255, 255, 255);
@@ -65,7 +65,7 @@ export const generateInvestorProspectusPdf = async ({
   doc.text('Target Asset Class:', 22, 82);
   doc.text('Initial Capital Deployed:', 22, 92);
   doc.text('Investment Horizon:', 22, 102);
-  doc.text('Projected Total ROI:', 22, 112);
+  doc.text('Indicative Total Return:', 22, 112);
 
   doc.setTextColor(15, 23, 42);
   doc.text(invPropType.toUpperCase(), 85, 82);
@@ -85,7 +85,7 @@ export const generateInvestorProspectusPdf = async ({
   const breakdownRows = [
     ['Estimated Annual Rental Income:', `${(investmentSim.annualRent || 0).toLocaleString('en-US')} ${currency} / Year`],
     ['Total Rental Income over Period:', `${(investmentSim.totalRentOverPeriod || 0).toLocaleString('en-US')} ${currency}`],
-    ['Projected Future Asset Value:', `${(investmentSim.futureCapitalValue || 0).toLocaleString('en-US')} ${currency}`],
+    ['Indicative Future Asset Value:', `${(investmentSim.futureCapitalValue || 0).toLocaleString('en-US')} ${currency}`],
     ['Net Capital Profit & Rental Gain:', `+${(investmentSim.netProfit || 0).toLocaleString('en-US')} ${currency}`]
   ];
 
@@ -143,9 +143,9 @@ export const generateInvestorProspectusPdf = async ({
   doc.setTextColor(255, 255, 255);
   doc.text(`VIP Direct Hotline: ${getDynamicPhone()} | WhatsApp: wa.me/${getDynamicWhatsApp()}`, 15, 279);
   doc.text('Head Office: El Gomhoureya St, Sohag, Egypt', 15, 285);
-  doc.text('Confidential Document - Issued for the designated recipient only.', 15, 291);
+  doc.text('Indicative simulation based on user assumptions. Not an offer, advice, or a guarantee of any return by 1Line.', 15, 291);
 
-  const filename = `1Line_Investor_Prospectus_${Date.now()}.pdf`;
+  const filename = `1Line_Investment_Simulation_${Date.now()}.pdf`;
   doc.save(filename);
   return filename;
 };

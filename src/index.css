@@ -96,6 +96,9 @@
 
   /* Quiet Architectural Borders (Eliminate redundant bright gold lines) */
   --border-color: rgba(20, 43, 73, 0.08);
+  /* Form fields need a clearly visible edge (WCAG 1.4.11: 3:1 for UI boundaries) */
+  --input-border: rgba(20, 43, 73, 0.24);
+  --input-bg: #FFFFFF;
   --border-hover: rgba(20, 43, 73, 0.16);
   --border-light: rgba(20, 43, 73, 0.05);
 
@@ -211,6 +214,9 @@ body.dark,
 
   --border-color: rgba(255, 255, 255, 0.08);
   --border-hover: rgba(255, 255, 255, 0.18);
+  /* Dark: fields sit a step lighter than the card, with a visible edge */
+  --input-border: rgba(255, 255, 255, 0.26);
+  --input-bg: #172540;
   --border-light: rgba(255, 255, 255, 0.05);
 
   --brand-navy: var(--navy-900);
@@ -1030,8 +1036,8 @@ a:hover {
 
 /* §64-65: Form inputs — quiet, simple, large enough, high contrast */
 .form-input {
-  background: var(--bg-card, #ffffff);
-  border: 1px solid var(--border-color);
+  background: var(--input-bg, var(--bg-card, #ffffff));
+  border: 1px solid var(--input-border, var(--border-color));
   border-radius: 10px;
   padding: 14px 16px;
   min-height: 52px;
@@ -1053,8 +1059,8 @@ select {
   font-family: inherit !important;
   font-size: 0.95rem !important;
   color: var(--text-primary) !important;
-  background-color: var(--bg-card, #ffffff) !important;
-  border: 1px solid var(--border-color);
+  background-color: var(--input-bg, var(--bg-card, #ffffff)) !important;
+  border: 1px solid var(--input-border, var(--border-color));
   border-radius: 10px;
 }
 
@@ -1062,6 +1068,7 @@ select option {
   padding: 10px 14px;
   font-size: 0.95rem;
   line-height: 1.6;
+  /* solid (not the translucent field colour): the native list paints on its own layer */
   background-color: var(--bg-card, #ffffff);
   color: var(--text-primary);
 }
@@ -1070,7 +1077,7 @@ select option {
 .form-input:focus,
 select:focus {
   border-color: var(--navy-800);
-  background: var(--bg-card, #ffffff);
+  background: var(--input-bg, var(--bg-card, #ffffff));
   box-shadow: 0 0 0 3px rgba(11, 27, 50, 0.08);
 }
 

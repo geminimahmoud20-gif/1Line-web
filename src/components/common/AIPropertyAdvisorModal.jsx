@@ -26,10 +26,10 @@ const SOHAG_AI_KNOWLEDGE = [
   },
   {
     tag: 'invest',
-    q_ar: 'ما هي المشروعات والمجالات الأعلى عائداً استثمارياً في سوهاج؟',
-    q_en: 'What are the highest yield real estate investments in Sohag?',
-    a_ar: 'تتصدر **المساحات التجارية والعيادات الطبية في سوهاج الجديدة** قائمة العوائد الاستثمارية بعائد سنوي متوقع يتراوح بين **14.5% إلى 18.5%**، مدفوعة بافتتاح مجمعات البنوك، الجامعات الخاصة، ومحاور التنمية المركزية. تليها المقرات الإدارية في **شرق سوهاج** بعائد 13% سنوياً وسرعة إعادة تأجير فائقة.',
-    a_en: 'Commercial retail and clinics in New Sohag deliver the highest yields (14.5% - 18.5% annually), followed by medical hubs in East Sohag.'
+    q_ar: 'ما هي أكثر أنواع العقارات طلباً للاستثمار في سوهاج؟',
+    q_en: 'Which property types are most in demand for investment in Sohag?',
+    a_ar: 'يزداد الطلب على **المساحات التجارية والعيادات الطبية في سوهاج الجديدة** مع افتتاح البنوك والجامعات الخاصة، وكذلك المقرات الإدارية في **شرق سوهاج**. العائد الفعلي يختلف حسب الموقع والإيجار والحالة، لذلك نوفر لك إيجارات مقارنة فعلية قبل القرار. هذه معلومات استرشادية وليست وعداً بعائد.',
+    a_en: 'Demand is strongest for retail and clinics in New Sohag and offices in East Sohag. Actual returns vary; we share real comparable rents before you decide. This is guidance, not a promised return.'
   }
 ];
 

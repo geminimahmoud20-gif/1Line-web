@@ -51,7 +51,7 @@ export default function QuickPortalLeadCard({
       case 'investor':
         return {
           title: isAr ? 'طلب استشارة ومحفظة استثمارية فورية' : 'Instant Investment Portfolio Request',
-          subtitle: isAr ? 'حدد ميزانيتك الاستثمارية وسنرسل لك دراسة جدوى لأعلى الفرص التجارية عائداً بسوهاج.' : 'Get customized high-yield investment options sent directly to your WhatsApp.',
+          subtitle: isAr ? 'حدد ميزانيتك الاستثمارية وسنرسل لك فرصاً تجارية مناسبة بسوهاج مع إيجارات مقارنة.' : 'Get customized investment options sent directly to your WhatsApp.',
           budgetLabel: isAr ? 'الميزانية الاستثمارية المتاحة (ج.م)' : 'Investment Budget (EGP)',
           submitBtn: isAr ? 'طلب الملف الاستثماري الفوري ←' : 'Get Investment Portfolio ←',
           leadType: 'investor_instant'
@@ -175,7 +175,7 @@ export default function QuickPortalLeadCard({
 
         <div className="quick-success-guarantee">
           <ShieldCheck size={14} className="text-gold" />
-          <span>{isAr ? 'خدمة مجانية 100% مع ضمان حماية وخصوصية بياناتك' : '100% Free & Private'}</span>
+          <span>{isAr ? 'نحافظ على خصوصية بياناتك' : 'Your data stays private'}</span>
         </div>
       </div>
     );

@@ -96,7 +96,7 @@ export const PROPERTIES_DATA = [
     finishing_en: 'Core & Shell',
     featured: true,
     badge_ar: 'فرصة استثمارية',
-    badge_en: '14% Projected ROI',
+    badge_en: 'Investment Opportunity',
     images: [
       'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80',
       'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80',
@@ -131,8 +131,8 @@ export const PROPERTIES_DATA = [
     virtualTour: false,
     completionStatus: 'under_construction',
     projectYear: 2025,
-    description_ar: 'فرصة استثمارية ذهبية في قلب سوهاج الجديدة، محل تجاري على المحور الرئيسي مباشرة مناسب لأقوى البراندات العالمية والمطاعم والتوكيلات، بعائد إيجاري متوقع يتجاوز 14% سنوياً.',
-    description_en: 'Prime investment opportunity in the heart of New Sohag. Retail shop on the main central avenue ideal for franchises, clinics or banks, with high expected rental yield.'
+    description_ar: 'فرصة استثمارية في قلب سوهاج الجديدة، محل تجاري على المحور الرئيسي مباشرة مناسب للبراندات والمطاعم والتوكيلات.',
+    description_en: 'Prime investment opportunity in the heart of New Sohag. Retail shop on the main central avenue ideal for franchises, clinics or banks.'
   },
   {
     id: 'prop-3',
@@ -371,8 +371,8 @@ export const PROPERTIES_DATA = [
     finishing_ar: 'تشطيب فندقي إداري متكامل',
     finishing_en: 'Turnkey Commercial Fit-out',
     featured: true,
-    badge_ar: 'عائد إيجاري مرتفع',
-    badge_en: 'High Rental Yield',
+    badge_ar: 'مناسب للاستثمار',
+    badge_en: 'Investment',
     images: [
       'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80',
       'https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=800&q=80',
@@ -407,8 +407,8 @@ export const PROPERTIES_DATA = [
     virtualTour: true,
     completionStatus: 'ready',
     projectYear: 2023,
-    description_ar: 'مقر تجاري إداري استثنائي في أرقى المواقع الحيوية وسط البلد بسوهاج، مثالي لمركز طبي تخصصي، شركة كبرى، أو توكيل تجاري بعائد استثماري سنوي يتجاوز 14%.',
-    description_en: 'Exceptional commercial hub in prime city center Sohag, ideal for specialized medical centers, corporate HQs, or retail franchises with >14% annual yield.'
+    description_ar: 'مقر تجاري إداري استثنائي في أرقى المواقع الحيوية وسط البلد بسوهاج، مثالي لمركز طبي تخصصي، شركة كبرى، أو توكيل تجاري.',
+    description_en: 'Exceptional commercial hub in prime city center Sohag, ideal for specialized medical centers, corporate HQs, or retail franchises.'
   },
   {
     id: 'prop-8',
@@ -590,7 +590,7 @@ export const PROPERTIES_DATA = [
     virtualTour: false,
     completionStatus: 'ready',
     projectYear: 2023,
-    description_ar: 'شقة سكنية واعدة بحي الكوثر بأقل سعر للمتر في محافظة سوهاج، تصلح للسكن أو التأجير للمهندسين والعاملين بالمنطقة الصناعية بعائد ممتاز.',
+    description_ar: 'شقة سكنية واعدة بحي الكوثر بأقل سعر للمتر في محافظة سوهاج، تصلح للسكن أو التأجير للمهندسين والعاملين بالمنطقة الصناعية.',
     description_en: 'High-value entry apartment in Al-Kawthar at Sohag’s most competitive per-sqm price point, ideal for personal residence or rental yield.'
   },
   {
@@ -840,8 +840,8 @@ export const PROPERTIES_DATA = [
     virtualTour: false,
     completionStatus: 'ready',
     projectYear: 2023,
-    description_ar: 'عيادة طبية راقية جاهزة للتشغيل المباشر في أهم شارع طبي وتجاري بشرق سوهاج، فرصة للأطباء الاستشاريين أو المستثمرين بعائد إيجاري سريع.',
-    description_en: 'Turnkey medical clinic ready for immediate practice in East Sohag’s primary medical corridor on City Street, high rental yield potential.'
+    description_ar: 'عيادة طبية راقية جاهزة للتشغيل المباشر في أهم شارع طبي وتجاري بشرق سوهاج، فرصة للأطباء الاستشاريين أو المستثمرين.',
+    description_en: 'Turnkey medical clinic ready for immediate practice in East Sohag’s primary medical corridor on City Street.'
   },
   {
     id: 'prop-15',
@@ -963,8 +963,8 @@ export const PROPERTIES_DATA = [
     virtualTour: false,
     completionStatus: 'ready',
     projectYear: 2021,
-    description_ar: 'فرصة استثمارية نادرة في مدينة طهطا بسوهاج، عقار تجاري سكني كامل يدر عائداً إيجارياً فورياً ممتازاً مع فرصة نمو رأسمالي قوي في أكبر مركز تجاري بالمحافظة.',
-    description_en: 'Rare commercial investment building in Tahta, Sohag, offering active day-one rental yields from ground shops plus premium residential space.'
+    description_ar: 'فرصة استثمارية نادرة في مدينة طهطا بسوهاج، عقار تجاري سكني كامل بمحلات أرضية مؤجرة في أكبر مركز تجاري بالمحافظة.',
+    description_en: 'Rare commercial investment building in Tahta, Sohag, with leased ground-floor shops plus residential space.'
   }
 ];
 

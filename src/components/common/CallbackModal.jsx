@@ -28,7 +28,7 @@ export default function CallbackModal({ isOpen, onClose, lang = 'ar', onSubmitCa
       id: 'investment',
       icon: TrendingUp,
       title_ar: 'استشارة استثمار وعوائد إيجارية',
-      title_en: 'High-Yield Investment Advisory',
+      title_en: 'Investment & Rental Advisory',
       desc_ar: 'المشروعات التجارية والمولات والمقرات الإدارية بسوهاج الجديدة'
     },
     {

@@ -135,7 +135,7 @@ export const InvestorCenter = ({
         currency
       });
       if (triggerToast) {
-        triggerToast(isAr ? 'تم إنشاء وتحميل دراسة الجدوى الاستثمارية بنجاح' : 'Prospectus PDF generated and downloaded successfully', 'success');
+        triggerToast(isAr ? 'تم تحميل ملف المحاكاة' : 'Simulation PDF downloaded', 'success');
       }
     } catch (err) {
       console.error('Error generating investor PDF:', err);
@@ -239,13 +239,13 @@ export const InvestorCenter = ({
         <div className="cert-header">
           <div className="cert-badge">
             <Sparkles size={16} className="text-gold" />
-            <span>{isAr ? 'توقعات العائد المالي التراكمي' : 'Projected Investment Returns'}</span>
+            <span>{isAr ? 'محاكاة تقديرية للعائد' : 'Indicative Return Simulation'}</span>
           </div>
           <span className="cert-date">{isAr ? `خلال ${invPeriod} سنوات` : `${invPeriod} Years Simulation`}</span>
         </div>
 
         <div className="cert-price-range">
-          <span className="range-lbl">{isAr ? 'صافي الأرباح الرأسمالية والإيجارية المتوقعة:' : 'Projected Net Cumulative Profits:'}</span>
+          <span className="range-lbl">{isAr ? 'صافي الربح التقديري (حسب افتراضاتك):' : 'Indicative net gain (your assumptions):'}</span>
           <div className="range-numbers">
             <strong>+{formatConverted(investmentSim.netProfit)}</strong>
           </div>
@@ -256,11 +256,11 @@ export const InvestorCenter = ({
 
         <div className="calc-breakdown-list">
           <div className="calc-breakdown-glass-row">
-            <span className="glass-row-lbl">{isAr ? 'العائد الإيجاري السنوي المتوقع' : 'Estimated Annual Rent'}</span>
+            <span className="glass-row-lbl">{isAr ? 'الإيجار السنوي التقديري' : 'Estimated Annual Rent'}</span>
             <strong className="text-emerald">{formatConverted(investmentSim.annualRent)} / {isAr ? 'سنوياً' : 'yr'}</strong>
           </div>
           <div className="calc-breakdown-glass-row">
-            <span className="glass-row-lbl">{isAr ? 'القيمة السوقية المتوقعة للأصل بعد المدة' : 'Projected Asset Capital Value'}</span>
+            <span className="glass-row-lbl">{isAr ? 'القيمة التقديرية للأصل بعد المدة' : 'Indicative Asset Value'}</span>
             <strong className="text-gold">{formatConverted(investmentSim.futureCapitalValue)}</strong>
           </div>
           <div className="calc-breakdown-glass-row">
@@ -268,6 +268,12 @@ export const InvestorCenter = ({
             <strong className="text-sky">{formatConverted(investmentSim.totalRentOverPeriod)}</strong>
           </div>
         </div>
+
+        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '10px 0 0' }}>
+          {isAr
+            ? 'محاكاة حسابية للاسترشاد فقط مبنية على افتراضات، وليست عرضاً أو ضماناً لأي عائد أو ربح من 1Line.'
+            : 'An indicative simulation based on assumptions; not an offer or a guarantee of any return by 1Line.'}
+        </p>
 
         {/* Institutional Prospectus Download Action */}
         <div className="prospectus-download-bar">
@@ -278,7 +284,7 @@ export const InvestorCenter = ({
             className="btn-download-prospectus"
           >
             <Download size={15} />
-            <span>{isDownloadingPdf ? (isAr ? 'جاري إنشاء الملف...' : 'Generating...') : (isAr ? 'تحميل دراسة الجدوى والملف الاستثماري PDF' : 'Download Institutional Prospectus PDF')}</span>
+            <span>{isDownloadingPdf ? (isAr ? 'جاري إنشاء الملف...' : 'Generating...') : (isAr ? 'تحميل المحاكاة PDF' : 'Download Simulation PDF')}</span>
           </button>
         </div>
       </div>

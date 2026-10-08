@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { 
-  Award, 
   Sparkles 
 } from 'lucide-react';
 import PhoneInputField from './PhoneInputField';
@@ -74,35 +73,15 @@ export const BrokerPortal = ({
     submitBrokerPortal(updatedForm);
   };
 
-  const commissionTiers = [
-    { title_ar: 'وسيط معتمد (Silver)', rate: '2.0%', desc_ar: 'وصول لمخزون الوحدات المباشرة + إغلاق سريع', color: '#94a3b8' },
-    { title_ar: 'شريك ذهبي (Gold Partner)', rate: '2.5% + بونص', desc_ar: 'أولوية في حجز مشروعات سوهاج الجديدة + عمولات فورية', color: '#ffca28', featured: true },
-    { title_ar: 'شريك استراتيجي (VIP Club)', rate: '3.0% + دعم تسويقي', desc_ar: 'تمويل حملات إعلانية مشتركة ورعاية صفقات كبرى', color: '#38bdf8' }
-  ];
 
   return (
     <div className="smart-valuation-wizard-box">
-      {/* Commission Tiers Strip */}
+      {/* No published rates: every arrangement is agreed in writing, deal by deal */}
       <div className="step-prompt-row">
-        <h3>{isAr ? 'باقات وحوافز شبكة وسطاء 1Line بسوهاج' : 'Broker Commission Tiers & Partner Benefits'}</h3>
-        <p>{isAr ? 'عمولة مكتوبة ومتفق عليها قبل أي صفقة، وتُصرف عند إتمام التعاقد' : 'A written commission agreed before any deal, paid on closing'}</p>
-      </div>
-
-      <div className="prop-types-rich-grid" style={{ marginBottom: '32px' }}>
-        {commissionTiers.map((tier, idx) => (
-          <div key={idx} className={`prop-type-card ${tier.featured ? 'selected' : ''}`}>
-            <div className="prop-type-icon" style={{ background: tier.featured ? 'var(--primary)' : 'rgba(13, 72, 161, 0.08)' }}>
-              <Award size={24} style={{ color: tier.featured ? '#ffffff' : tier.color }} />
-            </div>
-            <div className="prop-type-info">
-              <h4>{isAr ? tier.title_ar : ''}</h4>
-              <div style={{ fontSize: '1.1rem', fontWeight: '900', color: 'var(--accent-gold)', marginBottom: '4px' }}>
-                {tier.rate}
-              </div>
-              <p>{isAr ? tier.desc_ar : ''}</p>
-            </div>
-          </div>
-        ))}
+        <h3>{isAr ? 'التعاون مع شبكة وسطاء 1Line' : 'Working with the 1Line broker network'}</h3>
+        <p>{isAr
+          ? 'سجّل بياناتك ونتواصل معك. أي تعاون أو أتعاب يتم الاتفاق عليها كتابياً لكل صفقة على حدة، ولا ينشأ أي التزام مالي قبل توقيع اتفاق مكتوب.'
+          : 'Register and we will contact you. Any cooperation or fee is agreed in writing for each deal; no financial obligation arises before a signed agreement.'}</p>
       </div>
 
       {/* Broker Registration Form */}

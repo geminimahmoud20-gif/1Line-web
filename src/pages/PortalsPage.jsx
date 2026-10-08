@@ -86,7 +86,7 @@ export default function PortalsPage({
         return {
           badge: isAr ? 'شراكة الوسطاء' : 'Broker partnership',
           title: isAr ? 'انضم لشبكة شركاء 1Line العقارية' : 'Join 1Line Broker Partner Network',
-          subtitle: isAr ? 'تعاون معنا على صفقات موثقة بعمولة واضحة ومكتوبة قبل البدء.' : 'Access verified inventory, high commission rates, and instant closing bonuses.'
+          subtitle: isAr ? 'تعاون معنا على صفقات موثقة؛ أي أتعاب يُتفق عليها كتابياً قبل البدء.' : 'Work with us on verified deals; any fee is agreed in writing before we start.'
         };
       case 'demands':
         return {
@@ -97,8 +97,8 @@ export default function PortalsPage({
       case 'referral':
         return {
           badge: isAr ? 'برنامج المكافآت والإحالة العقارية' : 'Referral Rewards Program',
-          title: isAr ? 'رشّح مالكاً أو مشترياً واحصل على مكافأة عند إتمام الصفقة' : 'Refer a Buyer or Seller & Earn Cash Rewards',
-          subtitle: isAr ? 'تُصرف المكافأة بعد تسجيل الصفقة ووفق شروط مكتوبة نرسلها لك قبل الترشيح.' : 'Share your referral code and earn instant bonuses on successful closings.'
+          title: isAr ? 'رشّح مالكاً أو مشترياً' : 'Refer a buyer or seller',
+          subtitle: isAr ? 'لا ينشأ أي التزام مالي من الترشيح إلا باتفاق مكتوب وموقّع قبل البدء.' : 'A referral creates no financial obligation unless a written agreement is signed first.'
         };
       case 'special':
         return {

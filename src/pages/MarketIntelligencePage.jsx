@@ -278,7 +278,7 @@ export default function MarketIntelligencePage({ lang = 'ar' }) {
               </div>
               <div>
                 <h4>{isAr ? 'محاكي ترشيح أفضل حي لاستثمار ميزانيتك' : 'Certified Investment District Recommender'}</h4>
-                <p>{isAr ? 'أدخل حجم السيولة المتاحة لديك لنرشح لك الحي الأكثر ربحية وأعلى عائد إيجاري فورياً' : 'Input your capital to discover the highest-yield district in Sohag'}</p>
+                <p>{isAr ? 'أدخل حجم السيولة المتاحة لديك لنرشح لك حياً مناسباً كتقدير استرشادي' : 'Input your capital to discover the highest-yield district in Sohag'}</p>
               </div>
             </div>
 
@@ -306,7 +306,7 @@ export default function MarketIntelligencePage({ lang = 'ar' }) {
               <p>{isAr ? budgetRecommendation.strategy_ar : budgetRecommendation.strategy_en}</p>
             </div>
             <div className="advisor-res-yield">
-              <span className="yield-tag">{isAr ? 'العائد السنوي المتوقع' : 'Est. Annual Cash Flow'}</span>
+              <span className="yield-tag">{isAr ? 'تقدير حسابي للعائد السنوي (استرشادي)' : 'Indicative annual estimate'}</span>
               <strong>{budgetRecommendation.estAnnualYield} {isAr ? 'ج.م / سنوياً' : 'EGP/yr'}</strong>
             </div>
           </div>
@@ -317,7 +317,7 @@ export default function MarketIntelligencePage({ lang = 'ar' }) {
           <div className="matrix-header-flex">
             <div>
               <h3>{isAr ? 'جدول مقارنة أسعار المتر والعوائد حسب أحياء سوهاج' : 'District Price & Yield Benchmark Matrix'}</h3>
-              <p>{isAr ? 'متوسط سعر المتر الكاش ومعدلات النمو والعوائد المتوقعة لعام 2026' : 'Average cash price per sqm, CAGR, and yield forecast'}</p>
+              <p>{isAr ? 'متوسطات تقديرية لسعر المتر ومعدلات النمو والعوائد — للاسترشاد فقط وليست التزاماً أو ضماناً' : 'Indicative sqm prices, growth and yields — guidance only, not a commitment'}</p>
             </div>
 
             {/* Filter Toggle */}
@@ -389,6 +389,11 @@ export default function MarketIntelligencePage({ lang = 'ar' }) {
             </table>
           </div>
         </div>
+        <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '10px 4px 0' }}>
+          {isAr
+            ? 'جميع الأرقام والنسب في هذه الصفحة تقديرات استرشادية مبنية على متوسطات السوق، وليست عرضاً أو ضماناً لعائد أو سعر من 1Line.'
+            : 'All figures on this page are indicative market estimates, not an offer or a guarantee of any return or price by 1Line.'}
+        </p>
 
         {/* Investment Insights & Expert Forecast Section */}
         <div className="market-insights-grid">
@@ -400,7 +405,7 @@ export default function MarketIntelligencePage({ lang = 'ar' }) {
             <ul className="insights-points-list">
               <li>
                 <CheckCircle2 size={16} className="text-success" />
-                <span>{isAr ? 'سوهاج الجديدة تمثل الفرصة الذهبية للمضاعفة الرأسمالية خلال الـ 24 شهراً القادمة بسبب نقل المصالح والجامعات.' : 'New Sohag is the prime capital appreciation hotspot for the next 24 months.'}</span>
+                <span>{isAr ? 'سوهاج الجديدة تشهد نمواً في الطلب مع نقل المصالح والجامعات، ويُنصح بمراجعة الأسعار الفعلية قبل القرار.' : 'New Sohag is seeing growing demand as services and universities move in; check real prices before deciding.'}</span>
               </li>
               <li>
                 <CheckCircle2 size={16} className="text-success" />

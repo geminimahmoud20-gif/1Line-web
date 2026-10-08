@@ -42,8 +42,8 @@ export const ROUTE_SEO = {
   '/referral': {
     title_ar: 'برنامج الترشيحات',
     title_en: 'Referral program',
-    desc_ar: 'رشّح مالكاً أو مشترياً لـ 1Line واحصل على مكافأة عند إتمام الصفقة وفق شروط مكتوبة.',
-    desc_en: 'Refer an owner or buyer and receive a reward when the deal closes, under written terms.',
+    desc_ar: 'رشّح مالكاً أو مشترياً لـ 1Line ونتواصل معه مباشرة.',
+    desc_en: 'Refer an owner or buyer to 1Line and we contact them directly.',
   },
   '/special': {
     title_ar: 'طلبات عقارية خاصة',
