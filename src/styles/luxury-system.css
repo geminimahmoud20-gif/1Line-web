@@ -1058,7 +1058,7 @@ button.sidebar-deposit-banner .deposit-banner-left > span { display: flex; flex-
 /* Phone field: the number input must shrink inside its flex row */
 .phone-input-control-box { max-width: 100%; box-sizing: border-box; }
 .phone-input-control-box input { min-width: 0 !important; flex: 1 1 auto; width: 100% !important; }
-.phone-input-control-box select { flex: none; }
+.phone-input-control-box select { flex: none; width: auto !important; max-width: 50%; height: auto !important; min-height: 0 !important; padding: 6px 4px !important; }
 
 /* Touch targets on mobile */
 @media (pointer: coarse) {

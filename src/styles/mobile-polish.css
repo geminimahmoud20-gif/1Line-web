@@ -223,4 +223,6 @@ html .demands-add-cta .btn { display: inline-flex; align-items: center; gap: 8px
   /* Form selects fill their column */
   html .portal-content-wrapper select,
   html .wizard-container select { width: 100%; max-width: 100%; }
+  /* …except the phone field's country code: it sits beside the number, which needs the room */
+  html .phone-input-control-box select { width: auto; max-width: 50%; }
 }

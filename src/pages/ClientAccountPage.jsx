@@ -339,7 +339,7 @@ export default function ClientAccountPage({
             onClick={() => setActiveTab('favorites')}
           >
             <Heart size={16} fill={activeTab === 'favorites' ? '#ef4444' : 'none'} color={activeTab === 'favorites' ? '#ef4444' : 'currentColor'} />
-            <span>{isAr ? 'عقاراتي المفضلة' : 'My Saved Properties'}</span>
+            <span>{isAr ? 'المفضلة' : 'Saved'}</span>
             <span className="tab-pill-count">{favoriteProperties.length}</span>
           </button>
 
@@ -349,7 +349,7 @@ export default function ClientAccountPage({
             onClick={() => setActiveTab('compare')}
           >
             <Scale size={16} color={activeTab === 'compare' ? '#d97706' : 'currentColor'} />
-            <span>{isAr ? 'عقارات المقارنة الفورية' : 'Compared Properties'}</span>
+            <span>{isAr ? 'المقارنة' : 'Compare'}</span>
             <span className="tab-pill-count">{compareList.length}</span>
           </button>
 
@@ -359,7 +359,7 @@ export default function ClientAccountPage({
             onClick={() => setActiveTab('inquiries')}
           >
             <Calendar size={16} color={activeTab === 'inquiries' ? '#059669' : 'currentColor'} />
-            <span>{isAr ? 'طلباتي ومواعيدي' : 'My Requests & Site Visits'}</span>
+            <span>{isAr ? 'طلباتي' : 'Requests'}</span>
             <span className="tab-pill-count">{totalInquiriesCount}</span>
           </button>
         </div>

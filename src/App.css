@@ -15717,6 +15717,12 @@ body.dark-theme .compare-tabs-bar {
   padding-bottom: 2px;
 }
 
+/* Phones: the three tabs share the row equally instead of the third falling off the edge */
+@media (max-width: 600px) {
+  .client-account-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+  .client-account-tabs .account-tab-btn { justify-content: center; padding: 10px 6px; gap: 5px; font-size: 0.85rem; min-width: 0; white-space: nowrap; }
+}
+
 .dark-theme .client-account-tabs,
 [data-theme="dark"] .client-account-tabs {
   border-bottom-color: rgba(255, 255, 255, 0.08);
