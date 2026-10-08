@@ -635,3 +635,40 @@
   .crm-modal-card form > div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
 }
 
+
+/* ── Leads table: source / waiting / duplicate / lost chips ─────────────── */
+.crm-lead-meta { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.crm-lead-chip {
+  display: inline-flex; align-items: center; gap: 3px;
+  font: inherit; font-size: var(--crm-text-xs); line-height: 1.5;
+  padding: 0 6px; border-radius: 4px;
+  background: var(--crm-subtle); color: var(--crm-muted);
+  border: 1px solid var(--crm-line);
+}
+.crm-lead-chip.is-waiting { background: var(--crm-warn-soft); color: var(--crm-warn); border-color: transparent; }
+.crm-lead-chip.is-late { background: var(--crm-danger-soft); color: var(--crm-danger); border-color: transparent; font-weight: 700; }
+.crm-lead-chip.is-lost { background: var(--crm-danger-soft); color: var(--crm-danger); border-color: transparent; }
+button.crm-lead-chip.is-dupe { background: var(--crm-warn-soft); color: var(--crm-warn); border-color: transparent; cursor: pointer; font-weight: 600; }
+button.crm-lead-chip.is-dupe:hover { text-decoration: underline; }
+
+/* Lost reason picker */
+.crm-lost-reasons { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.crm-lost-reason {
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  padding: 8px 10px; border: 1px solid var(--crm-line); border-radius: 8px;
+  font-size: var(--crm-text-sm); color: var(--crm-ink);
+}
+.crm-lost-reason.is-active { border-color: var(--crm-danger); background: var(--crm-danger-soft); }
+.crm-lost-reason input { accent-color: var(--crm-danger); margin: 0; }
+@media (max-width: 520px) { .crm-lost-reasons { grid-template-columns: 1fr; } }
+
+/* Duplicate merge list */
+.crm-merge-list { display: flex; flex-direction: column; gap: 8px; }
+.crm-merge-item {
+  display: flex; align-items: flex-start; gap: 10px; cursor: pointer;
+  padding: 10px 12px; border: 1px solid var(--crm-line); border-radius: 10px;
+}
+.crm-merge-item.is-active { border-color: var(--crm-accent); background: var(--crm-accent-soft); }
+.crm-merge-item input { margin-top: 4px; accent-color: var(--crm-accent); }
+.crm-merge-main { display: flex; flex-direction: column; gap: 2px; font-size: var(--crm-text-sm); color: var(--crm-muted); }
+.crm-merge-main strong { color: var(--crm-ink); font-size: var(--crm-text-base); }

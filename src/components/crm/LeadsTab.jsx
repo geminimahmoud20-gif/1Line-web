@@ -6,7 +6,10 @@ import DeskOptions from './DeskOptions';
 import ExportMenu from './ExportMenu';
 import DataImportModal from './DataImportModal';
 import { getAreas } from '../../utils/areasData';
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import LostReasonModal from './LostReasonModal';
+import MergeLeadsModal from './MergeLeadsModal';
+import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, RESPONSE_SLA_MS } from '../../utils/crmLeadViews';
 import { useProperties } from '../../context/PropertiesContext';
 
 export default function LeadsTab({
@@ -48,8 +51,49 @@ export default function LeadsTab({
   setTemperatureFilter,
   setViewingProfileLead,
   temperatureFilter,
-  triggerToast
+  triggerToast,
+  duplicateIds = new Map(),
+  onMergeLeads,
+  canMergeLeads = false,
+  sourceFilter = 'all',
+  setSourceFilter,
+  dateFilter = 'all',
+  setDateFilter,
+  leadSort = 'newest',
+  setLeadSort
 }) {
+  const [lostFor, setLostFor] = useState(null);
+  const [mergeGroup, setMergeGroup] = useState(null);
+  // Clock for the "no reply for …" badges; ticks once a minute
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(t);
+  }, []);
+  const counts = useMemo(() => {
+    const open = leads.filter((l) => !l.isArchived && l.status !== 'lost');
+    return {
+      all: open.length,
+      fresh: open.filter((l) => !l.status || l.status === 'new').length,
+      awaiting: open.filter((l) => waitingMs(l, now) > 0).length,
+      late: open.filter((l) => waitingMs(l, now) > RESPONSE_SLA_MS).length,
+      dupes: open.filter((l) => duplicateIds.has(l.id)).length,
+      lost: leads.filter((l) => !l.isArchived && l.status === 'lost').length,
+      archived: leads.filter((l) => l.isArchived).length
+    };
+  }, [leads, duplicateIds, now]);
+  const fmtWait = (ms) => {
+    const m = Math.floor(ms / 60000);
+    if (m < 60) return isAr ? `${m} د` : `${m}m`;
+    const h = Math.floor(m / 60);
+    if (h < 48) return isAr ? `${h} س` : `${h}h`;
+    return isAr ? `${Math.floor(h / 24)} يوم` : `${Math.floor(h / 24)}d`;
+  };
+  const sourceLabel = (l) => { const s = LEAD_SOURCES.find((x) => x.id === leadSourceKey(l)); return s ? (isAr ? s.ar : s.en) : ''; };
+  const openMerge = (l) => {
+    const ids = [l.id, ...(duplicateIds.get(l.id) || [])];
+    setMergeGroup(leads.filter((x) => ids.includes(x.id)));
+  };
   const [importOpen, setImportOpen] = useState(false);
   const { leadsHasMore, loadMoreLeads, searchAllLeads } = useProperties();
   const [serverSearching, setServerSearching] = useState(false);
@@ -72,6 +116,27 @@ export default function LeadsTab({
   };
   return (
     <div className="crm-table-container">
+      {lostFor && (
+        <LostReasonModal
+          lead={lostFor}
+          isAr={isAr}
+          onCancel={() => setLostFor(null)}
+          onConfirm={({ lostReason, lostNote }) => {
+            onUpdateLead?.(lostFor.id, { status: 'lost', lostReason, lostNote, lostAt: new Date().toISOString() });
+            triggerToast?.(isAr ? 'اتسجلت كصفقة خسرانة مع السبب' : 'Marked as lost', 'info');
+            setLostFor(null);
+          }}
+        />
+      )}
+      {mergeGroup && (
+        <MergeLeadsModal
+          group={mergeGroup}
+          isAr={isAr}
+          canMerge={canMergeLeads && !!onMergeLeads}
+          onCancel={() => setMergeGroup(null)}
+          onMerge={async (keepId, otherIds) => { await onMergeLeads(keepId, otherIds); setMergeGroup(null); }}
+        />
+      )}
       {importOpen && (
         <DataImportModal
           entity="leads"
@@ -145,10 +210,18 @@ export default function LeadsTab({
         {/* Stage & Workflow Quick Tabs */}
         <div className="table-filters" style={{ flexWrap: 'wrap', gap: '6px' }}>
           <button className={`table-filter-btn ${leadFilter === 'all' ? 'active' : ''}`} onClick={() => setLeadFilter('all')}>
-            {isAr ? 'كل العملاء' : 'All Leads'} ({leads.filter(l => !l.isArchived).length})
+            {isAr ? 'كل العملاء' : 'All Leads'} ({counts.all})
           </button>
           <button className={`table-filter-btn ${leadFilter === 'new' ? 'active' : ''}`} onClick={() => setLeadFilter('new')}>
-            ✨ {isAr ? 'عملاء جدد' : 'New Leads'} ({leads.filter(l => !l.isArchived && (l.status === 'new' || !l.status)).length})
+            ✨ {isAr ? 'عملاء جدد' : 'New Leads'} ({counts.fresh})
+          </button>
+          <button
+            className={`table-filter-btn ${leadFilter === 'awaiting' ? 'active' : ''}`}
+            onClick={() => setLeadFilter('awaiting')}
+            title={isAr ? 'عملاء جدد محدش كلمهم لسه' : 'New leads nobody has contacted yet'}
+            style={{ color: counts.late > 0 && leadFilter !== 'awaiting' ? 'var(--crm-danger)' : undefined }}
+          >
+            ⏱️ {isAr ? 'مستني رد' : 'Awaiting reply'} ({counts.awaiting}{counts.late > 0 ? (isAr ? ` · ${counts.late} متأخر` : ` · ${counts.late} late`) : ''})
           </button>
           <button className={`table-filter-btn ${leadFilter === 'due' ? 'active' : ''}`} onClick={() => setLeadFilter('due')}>
             ⏰ {isAr ? 'متابعة اليوم' : 'Due Today'}
@@ -166,8 +239,16 @@ export default function LeadsTab({
             💎 {isAr ? 'مستثمرون VIP' : 'Investors'}
           </button>
           <button className={`table-filter-btn ${leadFilter === 'archived' ? 'active' : ''}`} onClick={() => setLeadFilter('archived')} style={{ color: leadFilter === 'archived' ? 'var(--crm-warn)' : undefined }}>
-            📦 {isAr ? 'المؤرشفون' : 'Archived'} ({leads.filter(l => l.isArchived).length})
+            📦 {isAr ? 'المؤرشفون' : 'Archived'} ({counts.archived})
           </button>
+          <button className={`table-filter-btn ${leadFilter === 'lost' ? 'active' : ''}`} onClick={() => setLeadFilter('lost')}>
+            ✖ {isAr ? 'صفقات خسرانة' : 'Lost'} ({counts.lost})
+          </button>
+          {counts.dupes > 0 && (
+            <button className={`table-filter-btn ${leadFilter === 'dupes' ? 'active' : ''}`} onClick={() => setLeadFilter('dupes')} style={{ color: leadFilter !== 'dupes' ? 'var(--crm-warn)' : undefined }}>
+              ⧉ {isAr ? 'مكرر' : 'Duplicates'} ({counts.dupes})
+            </button>
+          )}
         </div>
 
         {/* Secondary Filters (Temperature & Area) */}
@@ -184,7 +265,48 @@ export default function LeadsTab({
             <option value="hot">🔥 {isAr ? 'ساخن جداً' : 'Hot'}</option>
             <option value="warm">⚡ {isAr ? 'دافئ' : 'Warm'}</option>
             <option value="cold">❄️ {isAr ? 'بارد' : 'Cold'}</option>
+            <option value="unknown">{isAr ? 'غير محدد' : 'Not set'}</option>
           </select>
+
+          {/* Source, date range and sort */}
+          {setSourceFilter && (
+            <select
+              value={sourceFilter}
+              aria-label={isAr ? 'تصفية حسب المصدر' : 'Filter by source'}
+              onChange={(e) => setSourceFilter(e.target.value)}
+              className="form-input"
+              style={{ padding: '6px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
+            >
+              <option value="all">🔗 {isAr ? 'كل المصادر' : 'All sources'}</option>
+              {LEAD_SOURCES.map((s) => <option key={s.id} value={s.id}>{isAr ? s.ar : s.en}</option>)}
+            </select>
+          )}
+          {setDateFilter && (
+            <select
+              value={dateFilter}
+              aria-label={isAr ? 'تصفية حسب تاريخ الإضافة' : 'Filter by date added'}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="form-input"
+              style={{ padding: '6px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
+            >
+              <option value="all">📅 {isAr ? 'كل الأوقات' : 'Any time'}</option>
+              <option value="today">{isAr ? 'النهارده' : 'Today'}</option>
+              <option value="7d">{isAr ? 'آخر 7 أيام' : 'Last 7 days'}</option>
+              <option value="30d">{isAr ? 'آخر 30 يوم' : 'Last 30 days'}</option>
+              <option value="month">{isAr ? 'الشهر ده' : 'This month'}</option>
+            </select>
+          )}
+          {setLeadSort && (
+            <select
+              value={leadSort}
+              aria-label={isAr ? 'ترتيب العملاء' : 'Sort leads'}
+              onChange={(e) => setLeadSort(e.target.value)}
+              className="form-input"
+              style={{ padding: '6px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
+            >
+              {LEAD_SORTS.map((o) => <option key={o.id} value={o.id}>↕ {isAr ? o.ar : o.en}</option>)}
+            </select>
+          )}
 
           {/* Area Filter */}
           <select
@@ -339,7 +461,9 @@ export default function LeadsTab({
           ) : (
             filteredLeads.map((l, rowIndex) => {
               const isSelected = selectedLeadIds.includes(l.id);
-              const temp = l.temperature || 'hot';
+              const temp = l.temperature || '';
+              const waited = waitingMs(l, now);
+              const dupCount = (duplicateIds.get(l.id) || []).length;
 
               return (
                 <tr
@@ -388,6 +512,26 @@ export default function LeadsTab({
 
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}><bdi>{l.phone || l.whatsapp || '—'}</bdi></span>
 
+                      <div className="crm-lead-meta">
+                        <span className="crm-lead-chip">{sourceLabel(l)}</span>
+                        {waited > 0 && (
+                          <span
+                            className={`crm-lead-chip ${waited > RESPONSE_SLA_MS ? 'is-late' : 'is-waiting'}`}
+                            title={isAr ? 'وقت من غير أول رد' : 'Time without a first reply'}
+                          >
+                            ⏱ {isAr ? `بدون رد ${fmtWait(waited)}` : `No reply ${fmtWait(waited)}`}
+                          </span>
+                        )}
+                        {dupCount > 0 && (
+                          <button type="button" className="crm-lead-chip is-dupe" onClick={() => openMerge(l)} title={isAr ? 'نفس الرقم مسجل في عميل تاني' : 'Same phone on another lead'}>
+                            ⧉ {isAr ? `مكرر (${dupCount + 1})` : `Duplicate (${dupCount + 1})`}
+                          </button>
+                        )}
+                        {l.status === 'lost' && l.lostReason && (
+                          <span className="crm-lead-chip is-lost" title={l.lostNote || ''}>✖ {(() => { const r = LOST_REASONS.find((x) => x.id === l.lostReason); return r ? (isAr ? r.ar : r.en) : l.lostReason; })()}</span>
+                        )}
+                      </div>
+
                       {/* Tags Display */}
                       {l.tags && l.tags.length > 0 && (
                         <div style={{ display: 'flex', gap: '4px', marginTop: '3px', flexWrap: 'wrap' }}>
@@ -419,10 +563,10 @@ export default function LeadsTab({
                   <td data-label={isAr ? 'الجدية والحرارة' : 'Score & Temp'}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span className={`lead-score-pill ${l.score >= 85 ? 'score-high' : 'score-medium'}`}>
-                        {l.score || 85}%
+                        {typeof l.score === 'number' ? `${l.score}%` : '—'}
                       </span>
-                      <span title={temp === 'hot' ? 'عميل ساخن للشراء' : temp === 'warm' ? 'عميل دافئ' : 'عميل مستكشف'}>
-                        {temp === 'hot' ? '🔥' : temp === 'warm' ? '⚡' : '❄️'}
+                      <span title={temp === 'hot' ? 'عميل ساخن للشراء' : temp === 'warm' ? 'عميل دافئ' : temp === 'cold' ? 'عميل مستكشف' : (isAr ? 'درجة الحرارة غير محددة' : 'Temperature not set')}>
+                        {temp === 'hot' ? '🔥' : temp === 'warm' ? '⚡' : temp === 'cold' ? '❄️' : <span className="crm-empty-value">—</span>}
                       </span>
                     </div>
                   </td>
@@ -436,7 +580,8 @@ export default function LeadsTab({
                         aria-label={isAr ? `حالة ${l.name || 'العميل'}` : `Status of ${l.name || 'lead'}`}
                         data-status={l.status || 'new'}
                         onChange={(e) => {
-                          if (onUpdateLead) onUpdateLead(l.id, { status: e.target.value });
+                          if (e.target.value === 'lost') { setLostFor(l); return; }
+                          if (onUpdateLead) onUpdateLead(l.id, { status: e.target.value, ...(l.status === 'lost' ? { lostReason: null, lostNote: null, lostAt: null } : {}) });
                         }}
                         className="crm-status-select"
                         title={isAr ? 'تغيير مرحلة العميل' : 'Change Status'}
@@ -447,6 +592,7 @@ export default function LeadsTab({
                         <option value="negotiating">{isAr ? 'قيد التفاوض' : 'Negotiating'}</option>
                         <option value="closing">{isAr ? 'توقيع وحجز' : 'Closing'}</option>
                         <option value="closed">{isAr ? 'صفقة ناجحة' : 'Closed Won'}</option>
+                        <option value="lost">{isAr ? 'صفقة خسرانة' : 'Closed Lost'}</option>
                       </select>
                     </div>
                   </td>

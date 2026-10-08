@@ -37,7 +37,8 @@ export function mapLeadType(value) {
 export function mapLeadStatus(value) {
   const t = normKey(value);
   if (!t) return null;
-  if (['new', 'contacted', 'site visit', 'negotiating', 'closing', 'closed'].includes(t)) return t.replace(' ', '_');
+  if (['new', 'contacted', 'site visit', 'negotiating', 'closing', 'closed', 'lost'].includes(t)) return t.replace(' ', '_');
+  if (/خسر|خسران|مفقود|ملغي|لاغي|lost|cancel/.test(t)) return 'lost';
   if (/ناجح|تم البيع|مغلق|closed|won|تمت/.test(t)) return 'closed';
   if (/توقيع|حجز|عربون|closing|deposit/.test(t)) return 'closing';
   if (/تفاوض|negotiat/.test(t)) return 'negotiating';
@@ -99,7 +100,7 @@ export function rowToLead(row, { areas = [], now = new Date() } = {}) {
 /** Export: one lead → { [label]: value } */
 export function leadToRow(l) {
   const typeLabel = { buyer: 'مشتري', seller: 'بائع / مالك', broker: 'وسيط', investor: 'مستثمر', request: 'طلب خاص' };
-  const statusLabel = { new: 'جديد', contacted: 'تم التواصل', site_visit: 'معاينة', negotiating: 'تفاوض', closing: 'توقيع وحجز', closed: 'صفقة ناجحة' };
+  const statusLabel = { new: 'جديد', contacted: 'تم التواصل', site_visit: 'معاينة', negotiating: 'تفاوض', closing: 'توقيع وحجز', closed: 'صفقة ناجحة', lost: 'صفقة خسرانة' };
   const created = l.createdAt?.toDate ? l.createdAt.toDate().toISOString() : (l.createdAt || l.timestamp || '');
   const values = {
     name: l.name || '',

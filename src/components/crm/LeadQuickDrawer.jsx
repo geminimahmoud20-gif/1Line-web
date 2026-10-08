@@ -4,6 +4,7 @@ import { SOHAG_AREAS, PROPERTY_TYPES } from '../../data/propertiesData';
 import { trackEvent } from '../../utils/visitorTracker';
 import LeadDrawerOverview from './lead-profile/LeadDrawerOverview';
 import LeadDrawerMatching from './lead-profile/LeadDrawerMatching';
+import LostReasonModal from './LostReasonModal';
 
 export default function LeadQuickDrawer({
   lead,
@@ -22,6 +23,7 @@ export default function LeadQuickDrawer({
   const [selectedViewingPropId, setSelectedViewingPropId] = useState('');
   const [viewingDateTime, setViewingDateTime] = useState('');
   const [showViewingForm, setShowViewingForm] = useState(false);
+  const [lostOpen, setLostOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'matching' | 'timeline'
   const drawerRef = useRef(null);
 
@@ -82,8 +84,10 @@ export default function LeadQuickDrawer({
 
   const currentStageIndex = stages.findIndex(s => s.id === (lead.status || 'new'));
 
-  const handleUpdateStatus = (newStatus) => {
+  const handleUpdateStatus = (newStatus, lostFields) => {
     if (!onUpdateLead) return;
+    // A lost deal needs a reason first
+    if (newStatus === 'lost' && !lostFields) { setLostOpen(true); return; }
     const stageObj = stages.find(s => s.id === newStatus);
     const timeStr = new Date().toLocaleTimeString(isAr ? 'ar-EG-u-nu-latn' : 'en-US', { hour: '2-digit', minute: '2-digit' });
     const noteEntry = `[${timeStr}] تم تحديث المرحلة إلى: "${isAr ? stageObj?.label_ar : stageObj?.label_en}"`;
@@ -91,6 +95,7 @@ export default function LeadQuickDrawer({
 
     onUpdateLead(lead.id, {
       status: newStatus,
+      ...(newStatus === 'lost' ? { ...lostFields, lostAt: new Date().toISOString() } : (lead.status === 'lost' ? { lostReason: null, lostNote: null, lostAt: null } : {})),
       notes: updatedNotes,
       lastActivityAt: new Date().toISOString()
     });
@@ -351,7 +356,7 @@ export default function LeadQuickDrawer({
                       background: lead.temperature === 'hot' ? 'rgba(239, 68, 68, 0.12)' : 'rgba(59, 130, 246, 0.12)',
                       color: lead.temperature === 'hot' ? 'var(--crm-danger)' : 'var(--crm-info)'
                     }}>
-                      {lead.temperature === 'hot' ? '🔥 ساخن' : '⚡ دافئ'}
+                      {lead.temperature === 'hot' ? '🔥 ساخن' : lead.temperature === 'warm' ? '⚡ دافئ' : '❄️ بارد'}
                     </span>
                   )}
                 </div>
@@ -651,6 +656,14 @@ export default function LeadQuickDrawer({
           )}
         </div>
       </aside>
+      {lostOpen && (
+        <LostReasonModal
+          lead={lead}
+          isAr={isAr}
+          onCancel={() => setLostOpen(false)}
+          onConfirm={(fields) => { setLostOpen(false); handleUpdateStatus('lost', fields); }}
+        />
+      )}
     </>
   );
 }
