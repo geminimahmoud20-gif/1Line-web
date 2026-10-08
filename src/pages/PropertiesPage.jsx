@@ -107,9 +107,9 @@ export default function PropertiesPage({
   }
 
   // Reset pagination on filter or sort change without cascading effect renders
-  const [prevFilterState, setPrevFilterState] = useState({ filters, sortBy });
-  if (prevFilterState.filters !== filters || prevFilterState.sortBy !== sortBy) {
-    setPrevFilterState({ filters, sortBy });
+  const [prevFilterState, setPrevFilterState] = useState({ filters, sortBy, familyFilter });
+  if (prevFilterState.filters !== filters || prevFilterState.sortBy !== sortBy || prevFilterState.familyFilter !== familyFilter) {
+    setPrevFilterState({ filters, sortBy, familyFilter });
     setCurrentPage(1);
   }
 
@@ -278,11 +278,6 @@ export default function PropertiesPage({
       return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
     });
   }, [safeProperties, filters, sortBy, familyFilter]);
-
-  // Reset to first page when any search criteria or sorting changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filters, sortBy, familyFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredProperties.length / PAGE_SIZE));
   const paginatedProperties = useMemo(() => {

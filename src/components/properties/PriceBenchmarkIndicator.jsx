@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { TrendingDown, TrendingUp, CheckCircle2, ShieldCheck, BarChart3, Building2, Store, Home, Layers } from 'lucide-react';
 import { getDistrictBenchmark, formatCurrencyPrice, isMultiUnitOrBuilding, parseUnitBreakdown } from '../../utils/currencyAndBenchmark';
 import { getAreaById } from '../../utils/areasData';

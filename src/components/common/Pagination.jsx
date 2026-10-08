@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ChevronRight, ChevronLeft, ChevronsRight, ChevronsLeft } from 'lucide-react';
+import { ChevronRight, ChevronLeft } from 'lucide-react';
 
 /**
  * 🌟 1LINE LUXURY PROPTECH PAGINATION COMPONENT

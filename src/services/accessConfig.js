@@ -3,7 +3,7 @@
 //  and API mutators that call /api/team (handled server-side with service account).
 // =============================================================
 
-import { doc, onSnapshot, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from '../firebase';
 import { teamAction } from '../firebaseService';
 import { DEFAULT_ACCESS, normalizeAccess } from '../utils/accessModel.js';
