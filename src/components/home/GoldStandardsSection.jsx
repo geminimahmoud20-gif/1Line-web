@@ -16,15 +16,15 @@ const ICON_MAP = { ShieldCheck, Scale, Award, Video, FileCheck, Check, Lock, Eye
 /** 01 — Modern Digital Legal Audit Widget */
 function CertificateArt({ isAr }) {
   const auditPoints = isAr ? [
-    { title: 'تسلسل الملكية', desc: 'خالٍ من النزاعات القضائية والرهونات', status: 'موثق 100%' },
-    { title: 'تراخيص البناء', desc: 'مطابق لاشتراطات الحي والارتفاعات', status: 'معتمد' },
-    { title: 'صحة التوكيلات', desc: 'محققة وسارية بالشهر العقاري', status: 'سارٍ' },
-    { title: 'المرافق والمخالفات', desc: 'براءة ذمة كاملة وخالٍ من المستحقات', status: 'سليم' },
+    { title: 'تسلسل الملكية', desc: 'مراجعة النزاعات القضائية والرهونات', status: 'تمت المراجعة' },
+    { title: 'تراخيص البناء', desc: 'مطابقة الترخيص مع الأدوار المبنية', status: 'تمت المراجعة' },
+    { title: 'صحة التوكيلات', desc: 'التحقق من سريانها بالشهر العقاري', status: 'تمت المراجعة' },
+    { title: 'المرافق والمخالفات', desc: 'مراجعة براءة الذمة والمستحقات', status: 'تمت المراجعة' },
   ] : [
-    { title: 'Chain of Title', desc: 'Free of judicial disputes & liens', status: 'Verified' },
-    { title: 'Building Permits', desc: 'Compliant with zoning & height codes', status: 'Approved' },
-    { title: 'Powers of Attorney', desc: 'Verified & active at public registry', status: 'Active' },
-    { title: 'Utilities & Dues', desc: 'Zero municipal arrears or citations', status: 'Cleared' },
+    { title: 'Chain of Title', desc: 'Disputes & liens reviewed', status: 'Reviewed' },
+    { title: 'Building Permits', desc: 'Permit checked against built floors', status: 'Reviewed' },
+    { title: 'Powers of Attorney', desc: 'Validity checked at public registry', status: 'Reviewed' },
+    { title: 'Utilities & Dues', desc: 'Dues & clearance reviewed', status: 'Reviewed' },
   ];
 
   return (
