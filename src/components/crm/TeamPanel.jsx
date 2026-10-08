@@ -204,7 +204,7 @@ export default function TeamPanel({ lang = 'ar', leads = [], triggerToast }) {
         >
           <Users size={16} />
           <span>{isAr ? 'الأعضاء والموظفون' : 'Members'}</span>
-          {members && <span style={{ opacity: 0.7, fontSize: 11 }}>({members.length})</span>}
+          {members && <span style={{ opacity: 0.7, fontSize: 'var(--crm-text-xs)' }}>({members.length})</span>}
         </button>
         <button
           type="button"
@@ -213,7 +213,7 @@ export default function TeamPanel({ lang = 'ar', leads = [], triggerToast }) {
         >
           <ShieldCheck size={16} />
           <span>{isAr ? 'الأدوار والصلاحيات' : 'Roles & Permissions'}</span>
-          <span style={{ opacity: 0.7, fontSize: 11 }}>({roles.length})</span>
+          <span style={{ opacity: 0.7, fontSize: 'var(--crm-text-xs)' }}>({roles.length})</span>
         </button>
         <button
           type="button"
@@ -222,7 +222,7 @@ export default function TeamPanel({ lang = 'ar', leads = [], triggerToast }) {
         >
           <Building size={16} />
           <span>{isAr ? 'فرق المبيعات والتوزيع' : 'Sales Desks'}</span>
-          <span style={{ opacity: 0.7, fontSize: 11 }}>({teams.length})</span>
+          <span style={{ opacity: 0.7, fontSize: 'var(--crm-text-xs)' }}>({teams.length})</span>
         </button>
       </nav>
 

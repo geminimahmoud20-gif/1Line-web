@@ -315,36 +315,49 @@ export const DEFAULT_SOHAG_AREAS = [
 const LOCAL_STORAGE_KEY = 'oneline_custom_areas';
 const SETTING_DOC_KEY = 'areas_cms';
 
+const ALL_AREA = DEFAULT_SOHAG_AREAS[0];
+
 /**
- * Get all active areas from LocalStorage with smart-merge of enriched defaults
+ * The saved list is the source of truth: an area the admin deleted (built-in or not) stays deleted.
+ * Built-in areas that are still in the list keep their reference data (amenities, price history)
+ * unless the admin saved their own. "كل المناطق" is always present and first.
+ * Pure, so it can be unit-tested.
+ */
+export function mergeStoredAreas(stored, defaults = DEFAULT_SOHAG_AREAS) {
+  if (!Array.isArray(stored) || stored.length === 0) return defaults;
+  const byId = new Map(defaults.map((d) => [d.id, d]));
+  const seen = new Set();
+  const out = [];
+  for (const item of stored) {
+    if (!item || typeof item !== 'object' || !item.id || seen.has(item.id)) continue;
+    seen.add(item.id);
+    const def = byId.get(item.id);
+    out.push(def
+      ? {
+          ...def,
+          ...item,
+          amenities: Array.isArray(item.amenities) ? item.amenities : def.amenities,
+          historicalPrices: Array.isArray(item.historicalPrices) ? item.historicalPrices : def.historicalPrices,
+          // ?? not ||: a saved 0% growth must stay 0
+          avgPricePerMeter: item.avgPricePerMeter ?? def.avgPricePerMeter,
+          annualGrowthRate: item.annualGrowthRate ?? def.annualGrowthRate
+        }
+      : item);
+  }
+  const allIdx = out.findIndex((a) => a.id === 'all');
+  const all = allIdx >= 0 ? out.splice(allIdx, 1)[0] : (byId.get('all') || ALL_AREA);
+  return [all, ...out];
+}
+
+/**
+ * All active areas: this browser's copy of settings/areas_cms (kept in sync by initAreasSync),
+ * or the built-in list when nothing was ever saved.
  */
 export function getAreas() {
   if (typeof window === 'undefined') return DEFAULT_SOHAG_AREAS;
   try {
     const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        // Smart merge so existing stored areas inherit new benchmark/amenities if not previously stored
-        const mergedDefaults = DEFAULT_SOHAG_AREAS.map(def => {
-          const userModified = parsed.find(p => p.id === def.id);
-          if (!userModified) return def;
-          return {
-            ...def,
-            ...userModified,
-            // Keep rich amenities and historical prices if user hasn't explicitly set them
-            amenities: userModified.amenities || def.amenities,
-            historicalPrices: userModified.historicalPrices || def.historicalPrices,
-            avgPricePerMeter: userModified.avgPricePerMeter || def.avgPricePerMeter,
-            annualGrowthRate: userModified.annualGrowthRate || def.annualGrowthRate
-          };
-        });
-
-        // Add any purely custom areas created by admin
-        const customOnly = parsed.filter(p => !DEFAULT_SOHAG_AREAS.some(def => def.id === p.id));
-        return [...mergedDefaults, ...customOnly];
-      }
-    }
+    if (saved) return mergeStoredAreas(JSON.parse(saved));
   } catch (err) {
     console.error('Error reading custom areas:', err);
   }
@@ -534,11 +547,14 @@ export async function saveAreas(areasList) {
  */
 export async function addArea(areaData) {
   const currentAreas = getAreas();
-  const rawId = (areaData.id || areaData.name_en || areaData.name_ar || `area_${Date.now()}`)
+  // Latin ids only (they end up in URLs and saved listings); an Arabic-only name gets area_<time>
+  const slug = String(areaData.id || areaData.name_en || '')
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9_]/g, '_');
-  
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  const rawId = slug || `area_${Date.now().toString(36)}`;
+
   // Ensure unique ID
   let uniqueId = rawId;
   let counter = 1;
@@ -556,9 +572,10 @@ export async function addArea(areaData) {
     zoom: areaData.zoom || 14,
     description_ar: areaData.description_ar?.trim() || '',
     avgPricePerMeter: Number(areaData.avgPricePerMeter) || 15000,
-    annualGrowthRate: Number(areaData.annualGrowthRate) || 75,
-    historicalPrices: areaData.historicalPrices || DEFAULT_SOHAG_AREAS[0].historicalPrices,
-    amenities: areaData.amenities || DEFAULT_SOHAG_AREAS[0].amenities,
+    annualGrowthRate: Number.isFinite(Number(areaData.annualGrowthRate)) ? Number(areaData.annualGrowthRate) : 0,
+    // A new area starts without landmarks or price history; never borrow another area's figures
+    historicalPrices: Array.isArray(areaData.historicalPrices) ? areaData.historicalPrices : [],
+    amenities: Array.isArray(areaData.amenities) ? areaData.amenities : [],
     isSystem: false,
     createdAt: new Date().toISOString()
   };

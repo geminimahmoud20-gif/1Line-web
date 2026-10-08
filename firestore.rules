@@ -17,20 +17,27 @@ service cloud.firestore {
     function hasRole(roles) {
       return isAdmin() || (request.auth != null && role() in roles);
     }
-    function legacyHasPerm(p) {
-      return (role() == 'sales_manager' && p in ['ld.all', 'ld.manage', 'ld.edit', 'ld.phone', 'ld.import', 'inv.edit', 'deal.all', 'deal.edit', 'export'])
-          || (role() in ['sales_agent', 'agent_east', 'agent_new_sohag'] && p in ['ld.edit', 'ld.phone', 'deal.edit'])
-          || (role() == 'property_manager' && p in ['ld.all', 'inv.edit', 'inv.delete'])
-          || (role() == 'finance' && p in ['ld.all', 'deal.all', 'deal.edit', 'fin', 'export'])
-          || (role() == 'viewer' && p in ['ld.all', 'deal.all']);
+    // The member's permissions, worked out once per call: the token's own list for accounts set
+    // through the team API (staff: true), else the old role's fixed list. Same rule as
+    // accessFromClaims() in src/utils/accessModel.js. One map lookup instead of a chain of ORs,
+    // which used to blow the 1000-expression limit (desk agents' lead reads were denied).
+    function myPerms() {
+      return request.auth.token.get('staff', false) == true && request.auth.token.get('perms', null) is list
+        ? request.auth.token.perms
+        : {
+            'sales_manager': ['ld.all', 'ld.manage', 'ld.edit', 'ld.phone', 'ld.import', 'inv.edit', 'deal.all', 'deal.edit', 'export'],
+            'sales_agent': ['ld.edit', 'ld.phone', 'deal.edit'],
+            'agent_east': ['ld.edit', 'ld.phone', 'deal.edit'],
+            'agent_new_sohag': ['ld.edit', 'ld.phone', 'deal.edit'],
+            'property_manager': ['ld.all', 'inv.edit', 'inv.delete'],
+            'finance': ['ld.all', 'deal.all', 'deal.edit', 'fin', 'export'],
+            'viewer': ['ld.all', 'deal.all']
+          }.get(role(), []);
     }
+    // Every check goes through hasPerm(): a role's permissions are what the roles screen says,
+    // never its name (a built-in role id with permissions removed loses them here too).
     function hasPerm(p) {
-      return isAdmin() || (
-        request.auth != null && (
-          (request.auth.token.get('perms', []) is list && p in request.auth.token.get('perms', [])) ||
-          legacyHasPerm(p)
-        )
-      );
+      return request.auth != null && (isAdmin() || p in myPerms());
     }
     function isStaff() {
       return isAdmin() || (request.auth != null && (
@@ -90,7 +97,7 @@ service cloud.firestore {
     }
     // Who may see a client's phone: admins, sales managers and the sales desks (rbacRules canViewLeadPhone)
     function seesClientContacts() {
-      return hasPerm('ld.phone') || hasRole(['sales_manager', 'sales_agent', 'agent_east', 'agent_new_sohag']);
+      return hasPerm('ld.phone');
     }
     // Demands and expat/trade-in requests keep their phone in request_contacts/{kind}__{id}
     function requestContactPath(kind, id) {
@@ -125,10 +132,8 @@ service cloud.firestore {
       // Agents can claim a pool lead or hand it back, but only managers move leads between desks.
       // A desk change must move the contact doc with it (same batch), or the old desk keeps the phone.
       allow read: if canSeeAllLeads()
-                  || hasRole(['sales_manager', 'property_manager', 'finance', 'viewer'])
                   || (isDeskAgent() && inMyLeadQueue(resource.data));
       allow update: if (hasPerm('ld.manage')
-                       || hasRole(['sales_manager'])
                        || (isDeskAgent() && inMyLeadQueue(resource.data) && inMyLeadQueue(request.resource.data)))
                     && keepsContactFields()
                     && (!exists(contactPath(leadId)) || deskOf(getAfter(contactPath(leadId)).data) == deskOf(request.resource.data));
@@ -148,18 +153,15 @@ service cloud.firestore {
             && boundedText(data, 'email', 120);
       }
       allow read: if (canSeeAllLeads() && seesClientContacts())
-                  || hasRole(['sales_manager'])
                   || (isDeskAgent() && inMyLeadQueue(resource.data));
       // Anyone, together with a brand-new lead (the public forms); staff for a lead they may edit
       allow create: if existsAfter(leadPath(leadId))
                     && validContact(request.resource.data)
                     && (!exists(leadPath(leadId))
                         || hasPerm('ld.manage')
-                        || hasRole(['sales_manager'])
                         || (isDeskAgent() && inMyLeadQueue(request.resource.data)));
       allow update: if validContact(request.resource.data)
                     && (hasPerm('ld.manage')
-                        || hasRole(['sales_manager'])
                         || (isDeskAgent() && inMyLeadQueue(resource.data) && inMyLeadQueue(request.resource.data)));
       allow delete: if isAdmin();
     }
@@ -202,7 +204,7 @@ service cloud.firestore {
     match /properties/{propId} {
       allow read: if true;
       allow create, update: if isInventoryEditor();
-      allow delete: if hasPerm('inv.delete') || hasRole(['property_manager']);
+      allow delete: if hasPerm('inv.delete');
     }
 
     // 🔔 4. NOTIFICATIONS
@@ -250,7 +252,7 @@ service cloud.firestore {
     match /projects/{projectId} {
       allow read: if true;
       allow create, update: if isInventoryEditor();
-      allow delete: if hasPerm('inv.delete') || hasRole(['property_manager']);
+      allow delete: if hasPerm('inv.delete');
     }
 
     // 📢 8. SPONSORED ADS & CAMPAIGNS
@@ -351,7 +353,8 @@ service cloud.firestore {
           && data.createdAt == request.time;
       }
       allow create: if validDownload(request.resource.data);
-      allow read: if canSeeAllLeads() || hasRole(['sales_manager']);
+      // Holds clients' phones and emails: lead managers only (not read-only roles with ld.all)
+      allow read: if hasPerm('ld.manage');
       allow delete: if isAdmin();
     }
 
@@ -455,7 +458,7 @@ service cloud.firestore {
       // Anyone together with a brand-new request; managers when migrating an existing one
       allow create: if validRequestContact(request.resource.data)
                     && existsAfter(parentPath(request.resource.data))
-                    && (!exists(parentPath(request.resource.data)) || hasRole(['sales_manager']));
+                    && (!exists(parentPath(request.resource.data)) || hasPerm('ld.manage'));
       allow update: if validRequestContact(request.resource.data)
                     && request.resource.data.kind == resource.data.kind
                     && request.resource.data.parentId == resource.data.parentId
@@ -466,15 +469,13 @@ service cloud.firestore {
     // 💼 9. DEALS & PIPELINE
     // Same desk scoping as leads: agents see and edit only their desk's deals (and the pool).
     match /deals/{dealId} {
+      // deal.edit: every deal with deal.all, otherwise only the member's own desk (+ the pool)
       allow read: if hasPerm('deal.all')
-                  || hasRole(['sales_manager', 'finance', 'viewer'])
                   || (isDeskAgent() && inMyLeadQueue(resource.data));
       allow create: if hasPerm('deal.edit')
-                    || hasRole(['sales_manager', 'finance'])
-                    || (isDeskAgent() && inMyLeadQueue(request.resource.data));
+                    && (hasPerm('deal.all') || inMyLeadQueue(request.resource.data));
       allow update: if hasPerm('deal.edit')
-                    || hasRole(['sales_manager', 'finance'])
-                    || (isDeskAgent() && inMyLeadQueue(resource.data) && inMyLeadQueue(request.resource.data));
+                    && (hasPerm('deal.all') || (inMyLeadQueue(resource.data) && inMyLeadQueue(request.resource.data)));
       allow delete: if isAdmin();
     }
   }

@@ -37,10 +37,18 @@ describe('Homepage Exhaustive Deep Audit', () => {
   });
 
   it('2. Image Integrity: Zero Broken Images on Homepage', () => {
-    cy.get('img').each(($img) => {
-      cy.wrap($img).scrollIntoView({ duration: 150 }).should(($el) => {
-        expect($el[0].naturalWidth, `Image source "${$el[0].src}" failed to load`).to.be.greaterThan(0);
-      });
+    // Look each image up again by index: sections re-render their images while they scroll into
+    // view, so a wrapped element from the first query can be detached by the time it is checked.
+    cy.get('img').its('length').then((count) => {
+      for (let i = 0; i < count; i += 1) {
+        cy.get('img').then(($imgs) => {
+          if (i >= $imgs.length) return; // a lazy section swapped its images out
+          cy.get('img').eq(i).scrollIntoView({ duration: 150 });
+          cy.get('img').eq(i).should(($el) => {
+            expect($el[0].naturalWidth, `Image source "${$el[0].src}" failed to load`).to.be.greaterThan(0);
+          });
+        });
+      }
     });
   });
 

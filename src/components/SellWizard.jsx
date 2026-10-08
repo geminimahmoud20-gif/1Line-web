@@ -26,7 +26,7 @@ const FALLBACK_BENCHMARK_PRICING = {
 };
 
 // Realistic granular legal title and licensing documents in Egypt & Sohag
-export const REAL_ESTATE_LEGAL_DOCS = [
+const REAL_ESTATE_LEGAL_DOCS = [
   { id: 'registered_deed', ar: 'عقد مسجل شهر عقاري', en: 'Registered Title Deed' },
   { id: 'cadastral_registry', ar: 'سجل عيني مطهر', en: 'Cadastral Land Registry' },
   { id: 'court_valid_enforceable', ar: 'حكم صحة ونفاذ', en: 'Court Validity & Enforcement' },
@@ -42,7 +42,7 @@ export const REAL_ESTATE_LEGAL_DOCS = [
 ];
 
 // Comprehensive realistic finishing classifications in Egypt & Sohag
-export const REAL_ESTATE_FINISHING_TYPES = [
+const REAL_ESTATE_FINISHING_TYPES = [
   { 
     id: 'ultra_lux', 
     ar: 'ألترا سوبر لوكس (فاخر)', 

@@ -1,5 +1,5 @@
 import { getPriceBenchmark, formatCurrencyPrice, isMultiUnitOrBuilding } from '../../utils/currencyAndBenchmark';
-import { X, Star, Maximize2, Calendar, ShieldCheck, FileCheck2, MapPin, ExternalLink, Building2 } from 'lucide-react';
+import { X, Star, Maximize2, Calendar, ShieldCheck, FileCheck2, MapPin, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // One property's column in the comparison matrix.

@@ -169,7 +169,6 @@ export function accessFromClaims(claims = {}) {
 
 /** Custom claims for a member: other claims kept, CRM access replaced. role null → access removed. */
 export function claimsForMember(existing = {}, role, desk, config) {
-  // eslint-disable-next-line no-unused-vars
   const { role: _r, admin: _a, staff: _s, perms: _p, desk: _d, ...rest } = existing || {};
   if (!role) return rest;
   if (role === SUPER_ADMIN) return { ...rest, role, admin: true, staff: true, perms: [], desk: desk || '' };

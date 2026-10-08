@@ -562,7 +562,7 @@ export default function PropertyFormModal({
                   borderRadius: '8px',
                   border: '1px solid rgba(11, 78, 162, 0.22)',
                   fontSize: 'var(--crm-text-sm)',
-                  color: 'var(--brand-primary, #0b4ea2)',
+                  color: 'var(--crm-info)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px'

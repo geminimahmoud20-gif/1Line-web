@@ -247,7 +247,6 @@ export default function TeamsTab({ accessConfig, members = [], leads = [], isAr 
         {teams.map((t) => {
           const assignedMembers = members.filter((m) => m.desk === t.id).length;
           const assignedLeads = leads.filter((l) => l.assignedTo === t.id && l.status !== 'closed' && l.status !== 'cancelled').length;
-          const otherTeams = teams.filter((x) => x.id !== t.id);
 
           return (
             <div key={t.id} className={`tm-team-card ${!t.active ? 'is-inactive' : ''}`}>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { MapPin, Plus, Edit3, Trash2, RotateCcw, Search, CheckCircle2, Navigation, X, AlertTriangle } from 'lucide-react';
-import { getAreas, addArea, updateArea, deleteArea, resetAreasToDefault } from '../../utils/areasData';
+import { getAreas, addArea, updateArea, deleteArea, resetAreasToDefault, normalizeAreaKey } from '../../utils/areasData';
+import { useProperties } from '../../context/PropertiesContext';
 import AreaFormModal from './AreaFormModal';
 
 export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties = [] }) {
@@ -13,6 +14,8 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
   const [modalMode, setModalMode] = useState(null); // 'add' | 'edit' | null
   const [activeArea, setActiveArea] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+  const [moveToId, setMoveToId] = useState('');
+  const { handleUpdateProperty } = useProperties();
 
   // Form State for Add / Edit
   const [formData, setFormData] = useState({
@@ -93,7 +96,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
       zoom: 14,
       description_ar: '',
       avgPricePerMeter: 15000,
-      annualGrowthRate: 75
+      annualGrowthRate: 0
     });
     setModalMode('add');
   };
@@ -182,19 +185,30 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
     }
   };
 
-  // Delete Area
+  // Delete Area — listings in it are moved first, so none is left pointing at a missing area
   const handleDeleteArea = async (id) => {
     if (id === 'all') {
       if (triggerToast) triggerToast(isAr ? 'لا يمكن حذف خيار "كل المناطق" لأنه خيار نظامي رئيسي' : 'Cannot delete system default', 'error');
       return;
     }
+    const linked = areaProperties(id);
+    if (linked.length > 0 && (!moveToId || !handleUpdateProperty)) {
+      if (triggerToast) triggerToast(isAr ? 'اختار المنطقة اللي هتنتقل لها العقارات الأول' : 'Choose where to move the listings first', 'error');
+      return;
+    }
 
     setIsSaving(true);
     try {
+      linked.forEach((p) => handleUpdateProperty(p.id, { areaKey: moveToId }));
       await deleteArea(id);
       setAreas(getAreas());
       setDeleteConfirmId(null);
-      if (triggerToast) triggerToast(isAr ? 'تم حذف المنطقة بنجاح وتحديث فلاتر الموقع! 🗑️' : 'Area deleted successfully!', 'success');
+      setMoveToId('');
+      if (triggerToast) {
+        triggerToast(isAr
+          ? (linked.length ? `تم حذف المنطقة ونقل ${linked.length} عقار` : 'تم حذف المنطقة')
+          : (linked.length ? `Area deleted, ${linked.length} listings moved` : 'Area deleted'), 'success');
+      }
     } catch (err) {
       console.error('Error deleting area:', err);
       if (triggerToast) triggerToast(isAr ? 'حدث خطأ أثناء الحذف' : 'Failed to delete', 'error');
@@ -219,11 +233,11 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
     }
   };
 
-  // Count properties in area
-  const getAreaPropertiesCount = (areaId) => {
-    if (areaId === 'all') return properties.length;
-    return properties.filter(p => p.location === areaId).length;
-  };
+  // Listings saved under this area (areaKey, in any of its legacy spellings)
+  const areaProperties = (areaId) => (areaId === 'all'
+    ? properties
+    : properties.filter((p) => p && !p.isDemo && normalizeAreaKey(p.areaKey || p.location || '') === areaId));
+  const getAreaPropertiesCount = (areaId) => areaProperties(areaId).length;
 
   return (
     <div className="crm-subpanel-container animate-fadeIn">
@@ -463,7 +477,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                   }}>
                     {isAr ? `متوسط: ${(area.avgPricePerMeter || 15000).toLocaleString('en-US')} ج.م/م²` : `Avg: ${(area.avgPricePerMeter || 15000).toLocaleString('en-US')} EGP/m²`}
                   </span>
-                  <span style={{
+                  {Number(area.annualGrowthRate) > 0 && <span style={{
                     fontSize: 'var(--crm-text-xs)',
                     fontWeight: '700',
                     padding: '3px 8px',
@@ -472,8 +486,8 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                     color: 'var(--crm-positive)',
                     border: '1px solid rgba(16, 185, 129, 0.25)'
                   }}>
-                    {isAr ? `نمو: +${area.annualGrowthRate ?? 0}%` : `Growth: +${area.annualGrowthRate ?? 0}%`}
-                  </span>
+                    {isAr ? `نمو: +${area.annualGrowthRate}%` : `Growth: +${area.annualGrowthRate}%`}
+                  </span>}
                   {area.amenities?.length > 0 && (
                     <span style={{
                       fontSize: 'var(--crm-text-xs)',
@@ -538,7 +552,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                   <button
                     type="button"
                     className="btn-action-mini"
-                    onClick={() => setDeleteConfirmId(area.id)}
+                    onClick={() => { setMoveToId(''); setDeleteConfirmId(area.id); }}
                     aria-label={isAr ? `حذف ${area.name_ar}` : `Delete ${area.name_en || area.id}`}
                     style={{
                       display: 'flex',
@@ -614,11 +628,25 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                 : 'The district will be removed from all search filters.'}
             </p>
             {getAreaPropertiesCount(deleteConfirmId) > 0 && (
-              <p style={{ color: 'var(--crm-on-dark-danger)', fontSize: 'var(--crm-text-sm)', fontWeight: 700, background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', padding: '8px 10px', marginBottom: '18px' }}>
-                {isAr
-                  ? `تنبيه: ${getAreaPropertiesCount(deleteConfirmId)} عقار مرتبط بهذا الحي وسيظهر بدون اسم منطقة. انقلها لحي آخر أولاً.`
-                  : `${getAreaPropertiesCount(deleteConfirmId)} listings use this district.`}
-              </p>
+              <div style={{ color: 'var(--crm-on-dark-danger)', fontSize: 'var(--crm-text-sm)', fontWeight: 700, background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', padding: '10px', marginBottom: '18px', textAlign: 'start' }}>
+                <label htmlFor="area-move-to" style={{ display: 'block', marginBottom: '6px' }}>
+                  {isAr
+                    ? `فيه ${getAreaPropertiesCount(deleteConfirmId)} عقار في المنطقة دي. انقلهم إلى:`
+                    : `${getAreaPropertiesCount(deleteConfirmId)} listings are in this area. Move them to:`}
+                </label>
+                <select
+                  id="area-move-to"
+                  value={moveToId}
+                  onChange={(e) => setMoveToId(e.target.value)}
+                  disabled={isSaving}
+                  style={{ width: '100%', padding: '8px', borderRadius: '8px', fontWeight: 600 }}
+                >
+                  <option value="">{isAr ? 'اختار منطقة…' : 'Choose an area…'}</option>
+                  {areas.filter((a) => a.id !== 'all' && a.id !== deleteConfirmId).map((a) => (
+                    <option key={a.id} value={a.id}>{isAr ? a.name_ar : (a.name_en || a.name_ar)}</option>
+                  ))}
+                </select>
+              </div>
             )}
 
             <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
@@ -635,7 +663,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
               <button
                 type="button"
                 onClick={() => handleDeleteArea(deleteConfirmId)}
-                disabled={isSaving}
+                disabled={isSaving || (getAreaPropertiesCount(deleteConfirmId) > 0 && !moveToId)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',

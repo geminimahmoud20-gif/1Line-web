@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { TrendingDown, TrendingUp, CheckCircle2, ShieldCheck, BarChart3, Building2, Store, Home, Layers } from 'lucide-react';
 import { getDistrictBenchmark, formatCurrencyPrice, isMultiUnitOrBuilding, parseUnitBreakdown } from '../../utils/currencyAndBenchmark';
 import { getAreaById } from '../../utils/areasData';
@@ -134,11 +134,8 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
   // Always price ÷ size for single-unit properties
   const propertyPricePerM = Math.round((Number(property?.price) || 0) / (Number(property?.size) || 1));
 
-  const diffPercent = useMemo(() => {
-    if (!property || !districtAvg) return 0;
-    const diff = ((propertyPricePerM - districtAvg) / districtAvg) * 100;
-    return Math.round(diff);
-  }, [property, propertyPricePerM, districtAvg]);
+  // Plain math (no hook): this runs after the multi-unit early return above
+  const diffPercent = property && districtAvg ? Math.round(((propertyPricePerM - districtAvg) / districtAvg) * 100) : 0;
 
   if (!property) return null;
 

@@ -71,7 +71,7 @@ function RoleModal({ role, isAr, onClose, onSave, busy }) {
               value={form.icon}
               onChange={(e) => setForm({ ...form, icon: e.target.value })}
               maxLength={4}
-              style={{ textAlign: 'center', fontSize: '1.2rem' }}
+              style={{ textAlign: 'center', fontSize: 'var(--crm-text-lg)' }}
             />
           </label>
           <label className="tm-field">
@@ -246,7 +246,6 @@ export default function RolesTab({ accessConfig, members = [], isAr = true, trig
         {roles.map((r) => {
           const isLocked = r.id === SUPER_ADMIN;
           const assignedCount = members.filter((m) => m.role === r.id).length;
-          const otherRoles = roles.filter((x) => x.id !== r.id);
 
           return (
             <div key={r.id} className="tm-role-card">

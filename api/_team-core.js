@@ -9,12 +9,9 @@ import {
   UNASSIGNED_DESK,
   normalizeAccess,
   claimsForMember,
-  permsOfRole,
   cleanRole,
   cleanTeam,
-  makeId,
-  roleById,
-  teamById
+  roleById
 } from '../src/utils/accessModel.js';
 
 export { DEFAULT_ACCESS, SUPER_ADMIN, UNASSIGNED_DESK };

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Menu, Search, X, Plus, ChevronDown, Bell, ShieldCheck, Lock, Rocket, Globe, LogOut, Users, Building, Zap, Sparkles, CheckCircle2, AlertTriangle, ArrowRight, ArrowLeft } from 'lucide-react';
-import { CRM_ROLES, getMergedCrmRoles } from './crmRoles';
+import { getMergedCrmRoles } from './crmRoles';
 import { getActiveAccessConfig, subscribeToAccessConfig } from '../../services/accessConfig';
 import { desktopAlertsSupported, desktopAlertsEnabled, enableDesktopAlerts, describeDownload } from '../../utils/newLeadAlerts';
 

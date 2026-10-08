@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ChevronRight, ChevronLeft, ChevronsRight, ChevronsLeft } from 'lucide-react';
+import { ChevronRight, ChevronLeft } from 'lucide-react';
 
 /**
  * 🌟 1LINE LUXURY PROPTECH PAGINATION COMPONENT
@@ -15,8 +15,6 @@ export default function Pagination({
   showInfo = true,
   scrollToId = null
 }) {
-  if (totalPages <= 1) return null;
-
   // Compute start and end items for the info text
   const startItem = (currentPage - 1) * pageSize + 1;
   const endItem = Math.min(currentPage * pageSize, totalItems);
@@ -52,6 +50,9 @@ export default function Pagination({
 
     return pages;
   }, [currentPage, totalPages]);
+
+  // After the hook: hooks must run on every render
+  if (totalPages <= 1) return null;
 
   const handleSelectPage = (pageNum) => {
     if (pageNum === currentPage || pageNum < 1 || pageNum > totalPages) return;
