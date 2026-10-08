@@ -56,7 +56,10 @@ test('team accounts on the Auth emulator', { skip: !HOST && 'Auth emulator not r
   assert.equal(r.body.members[1].name, 'ندى');
 
   assert.equal((await call('POST', { action: 'role', uid: nada, role: 'sales_manager' })).status, 200);
-  assert.equal((await store.getUser(nada)).customAttributes, '{"role":"sales_manager","admin":false}');
+  // Access-model claims: the role plus its permissions, as firestore.rules reads them
+  const claims = JSON.parse((await store.getUser(nada)).customAttributes);
+  assert.deepEqual([claims.role, claims.admin, claims.staff], ['sales_manager', false, true]);
+  assert.ok(claims.perms.includes('ld.manage'));
   assert.equal((await call('POST', { action: 'disable', uid: nada })).status, 200);
   assert.equal((await store.getUser(nada)).disabled, true);
   assert.equal((await call('POST', { action: 'enable', uid: nada })).status, 200);

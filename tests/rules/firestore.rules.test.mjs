@@ -361,3 +361,19 @@ test('client downloads: anyone files a bounded record; only managers read it', a
   await assertSucceeds(getDoc(doc(asAdmin(), 'client_downloads/d1')));
   await assertFails(setDoc(doc(guest(), 'client_downloads/d1'), { ...entry, clientName: 'تعديل' }));
 });
+
+// ── Access model claims (staff: true + perms + desk, set by api/team.js) ─────
+test('new-model claims: perms list is the whole truth; desk scopes leads and deals', async () => {
+  const team = env.authenticatedContext('u-team-x', { role: 'r_team_x', staff: true, perms: ['ld.edit', 'ld.phone', 'deal.edit'], desk: 'Sales Team A' }).firestore();
+  await assertSucceeds(getDoc(doc(team, 'leads/a')));
+  await assertSucceeds(getDoc(doc(team, 'leads/u')));
+  await assertFails(getDoc(doc(team, 'leads/b')));
+  await assertSucceeds(setDoc(doc(team, 'deals/t1'), { assignedTo: 'Sales Team A', stage: 'qualification' }));
+  await assertFails(setDoc(doc(team, 'deals/t2'), { assignedTo: 'Sales Team B', stage: 'qualification' }));
+  await assertFails(getDoc(doc(team, 'deals/b')));
+  // a role named like a built-in one gets only the perms in its token, not the old fixed list
+  const narrowed = env.authenticatedContext('u-narrow', { role: 'sales_manager', staff: true, perms: ['ld.all'], desk: '' }).firestore();
+  await assertSucceeds(getDoc(doc(narrowed, 'leads/b')));
+  await assertFails(setDoc(doc(narrowed, 'leads/b'), { status: 'contacted' }, { merge: true }));
+  await assertFails(getDoc(doc(narrowed, 'client_downloads/x')));
+});
