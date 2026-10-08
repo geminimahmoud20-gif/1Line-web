@@ -235,7 +235,7 @@ export const BuyWizard = ({
                 onClick={() => setBuyerAnswers({ ...buyerAnswers, purpose: 'investment' })}
               >
                 <TrendingUp size={16} className="text-success" />
-                <span>{isAr ? '📈 استثمار وتأجير بعائد شهري' : 'Rental Investment'}</span>
+                <span>{isAr ? '📈 استثمار وتأجير' : 'Rental Investment'}</span>
               </button>
               <button
                 type="button"
@@ -449,7 +449,7 @@ export const BuyWizard = ({
             <div className="cert-perks-row">
               <div className="cert-perk"><CheckCircle2 size={15} className="text-success" /> <span>{isAr ? 'مراجعة قانونية للمستندات' : 'Legal document review'}</span></div>
               <div className="cert-perk"><CheckCircle2 size={15} className="text-success" /> <span>{isAr ? 'معاينة ميدانية مجانية بالسيارة' : 'Free Viewing Tour'}</span></div>
-              <div className="cert-perk"><CheckCircle2 size={15} className="text-success" /> <span>{isAr ? 'تسهيلات حصرية بدون فوائد' : '0% Interest Direct Deals'}</span></div>
+              <div className="cert-perk"><CheckCircle2 size={15} className="text-success" /> <span>{isAr ? 'تفاوض مباشر مع المالك' : 'Direct owner negotiation'}</span></div>
             </div>
           </div>
 

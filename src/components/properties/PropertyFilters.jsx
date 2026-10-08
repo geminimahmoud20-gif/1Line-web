@@ -9,7 +9,7 @@ const SMART_FILTER_TAGS = [
   { id: 'registered', label_ar: 'مسجل شهر عقاري', label_en: 'Registered Deed', icon: FileCheck },
   { id: 'licensed', label_ar: 'ترخيص ونموذج 10', label_en: 'Licensed Building', icon: ShieldCheck },
   { id: 'land_share', label_ar: 'حصة بالأرض', label_en: 'Land Share', icon: KeyRound },
-  { id: 'investment', label_ar: 'عائد استثماري مرتفع', label_en: 'High ROI', icon: PieChart },
+  { id: 'investment', label_ar: 'مناسب للاستثمار', label_en: 'Investment', icon: PieChart },
 ];
 
 export default function PropertyFilters({

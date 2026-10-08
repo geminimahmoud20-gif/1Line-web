@@ -101,7 +101,7 @@ export default function QuickContactDrawer({
               <div className="channel-title-badge">
                 <strong>{isAr ? 'مكتب المستثمرين والمغتربين (VIP Desk)' : 'VIP Expat & Investor Desk'}</strong>
               </div>
-              <span className="channel-sub">{isAr ? 'فرص استثمارية وحصص تجارية بعوائد دولارية' : 'High ROI commercial & residential portfolios'}</span>
+              <span className="channel-sub">{isAr ? 'فرص استثمارية تجارية وسكنية' : 'Commercial & residential investment options'}</span>
             </div>
             {isAr ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
           </button>

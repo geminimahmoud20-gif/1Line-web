@@ -84,11 +84,11 @@ export default function PrivateOfficePage({ lang = 'ar' }) {
             <div className="pillar-icon-box">
               <Compass size={22} className="text-gold" />
             </div>
-            <h4>{isAr ? 'أبراج ومبانٍ استثمارية ذات عائد فوري' : 'High-Yield Commercial Towers'}</h4>
+            <h4>{isAr ? 'أبراج ومبانٍ استثمارية مؤجرة' : 'Leased Commercial Buildings'}</h4>
             <p>
               {isAr
-                ? 'مبانٍ إدارية ومجمعات طبية مؤجرة لكبرى الشركات والبنوك، تحقق عوائد دولارية ومحلية مستقرة بعقود إيجار طويلة الأجل.'
-                : 'Fully leased commercial headquarters and medical towers delivering turnkey cash-flow with institutional tenants.'}
+                ? 'مبانٍ إدارية ومجمعات طبية مؤجرة بعقود إيجار قائمة، مع مراجعة العقود والمستأجرين قبل أي قرار.'
+                : 'Leased office and medical buildings with existing tenancy contracts, reviewed before any decision.'}
             </p>
           </div>
         </div>

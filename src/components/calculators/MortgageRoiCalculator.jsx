@@ -39,7 +39,7 @@ export default function MortgageRoiCalculator({
 
   // Egyptian Financing Programs Presets
   const FINANCING_PROGRAMS = [
-    { id: 'dev_0', name_ar: 'تقسيط مباشر من المطور', name_en: 'Direct Developer 0%', rate: 0, desc_ar: 'بدون فوائد بنكية', icon: Handshake },
+    { id: 'dev_0', name_ar: 'تقسيط مباشر من المطور', name_en: 'Direct Developer 0%', rate: 0, desc_ar: 'سيناريو حسابي بدون فائدة', icon: Handshake },
     { id: 'cbe_3', name_ar: 'مبادرة البنك المركزي (3%)', name_en: 'CBE 3% Initiative', rate: 3, desc_ar: 'لمحدودي ومتوسطي الدخل', icon: Landmark },
     { id: 'cbe_8', name_ar: 'مبادرة التمويل العقاري (8%)', name_en: 'Mortgage 8% Initiative', rate: 8, desc_ar: 'فائدة متناقصة ميسرة', icon: Landmark },
     { id: 'bank_12', name_ar: 'مرابحة بنكية / تمويل تجاري (12%)', name_en: 'Islamic Murabaha / Bank 12%', rate: 12, desc_ar: 'تمويل سريع للوحدات الفاخرة', icon: Building2 },

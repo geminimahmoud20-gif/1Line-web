@@ -55,8 +55,8 @@ export default function FinancingPage({ lang = 'ar' }) {
             <h1>{isAr ? 'حاسبة التمويل والأقساط وتحليل العائد' : 'Mortgage & Investment ROI Suite'}</h1>
             <p>
               {isAr 
-                ? 'نمذجة مالية شفافة لحساب الأقساط الشهرية حتى 7 سنوات، أو تحليل العائد الإيجاري ونمو رأس المال بدقة.' 
-                : 'Transparent financial modeling for monthly installments up to 7 years and real estate capital growth.'}
+                ? 'حاسبة استرشادية لتقدير القسط الشهري أو العائد الإيجاري. الأرقام تقديرية وليست عرض تمويل أو التزاماً من 1Line؛ شروط السداد يحددها البائع أو جهة التمويل.' 
+                : 'An indicative calculator for monthly payments or rental yield. Figures are estimates, not a financing offer or a commitment by 1Line; payment terms are set by the seller or lender.'}
             </p>
           </div>
         </div>
@@ -76,24 +76,24 @@ export default function FinancingPage({ lang = 'ar' }) {
             <div className="financing-ribbon-pill">
               <Clock size={18} className="text-gold ribbon-icon" />
               <div>
-                <strong>{isAr ? 'تقسيط مرن حتى 7 سنوات' : 'Up to 7 Years Repayment'}</strong>
-                <span>{isAr ? 'أقساط متوازنة مع تدفقاتك النقدية' : 'Tailored cash-flow schedules'}</span>
+                <strong>{isAr ? 'جرّب مدداً مختلفة' : 'Try different terms'}</strong>
+                <span>{isAr ? 'قارن القسط حسب المدة والمقدم' : 'Compare by term and down payment'}</span>
               </div>
             </div>
 
             <div className="financing-ribbon-pill">
               <Percent size={18} className="text-gold ribbon-icon" />
               <div>
-                <strong>{isAr ? 'مقدمات تبدأ من 10%' : 'From 10% Downpayment'}</strong>
-                <span>{isAr ? 'استلام وحدتك بأقل رأس مال مبدئي' : 'Minimal upfront entry barrier'}</span>
+                <strong>{isAr ? 'احسب المقدم المناسب لك' : 'Plan your down payment'}</strong>
+                <span>{isAr ? 'الأرقام للاسترشاد فقط' : 'Figures are for guidance only'}</span>
               </div>
             </div>
 
             <div className="financing-ribbon-pill">
               <ShieldCheck size={18} className="text-gold ribbon-icon" />
               <div>
-                <strong>{isAr ? 'موافقة وتوثيق قانوني فوري' : 'Direct Advisory & Fast Vetting'}</strong>
-                <span>{isAr ? 'فحص ائتماني مباشر بدون تعقيدات' : 'Streamlined pre-approval process'}</span>
+                <strong>{isAr ? 'مراجعة المستندات قبل التعاقد' : 'Document review before signing'}</strong>
+                <span>{isAr ? 'نراجع معك الأوراق قبل أي دفع' : 'We review the papers with you first'}</span>
               </div>
             </div>
           </div>
@@ -101,13 +101,13 @@ export default function FinancingPage({ lang = 'ar' }) {
           {/* Streamlined Executive Action Bar */}
           <div className="financing-action-dock">
             <div className="action-dock-info">
-              <h3>{isAr ? 'هل تبحث عن وحدات جاهزة للتعاقد الفوري بنظام التقسيط؟' : 'Looking for installment-ready certified properties?'}</h3>
-              <p>{isAr ? 'تصفح قائمة الوحدات السكنية والتجارية المفحوصة والمتاحة بخطط سداد معتمدة.' : 'Browse pre-vetted residential and commercial properties with active installment plans.'}</p>
+              <h3>{isAr ? 'هل تبحث عن وحدة بنظام سداد مرن؟' : 'Looking for a property with flexible payment?'}</h3>
+              <p>{isAr ? 'تصفح الوحدات التي يقبل أصحابها التفاوض على السداد؛ الشروط النهائية يتفق عليها الطرفان كتابياً.' : 'Browse units whose owners are open to payment terms; final terms are agreed in writing between the parties.'}</p>
             </div>
             <div className="action-dock-btns">
               <Link to="/properties?financing=true" className="btn btn-primary btn-md">
                 <Building size={15} />
-                <span>{isAr ? 'استعراض عقارات التقسيط' : 'Browse Properties'}</span>
+                <span>{isAr ? 'استعراض العقارات' : 'Browse Properties'}</span>
                 {isAr ? <ArrowLeft size={14} /> : <ArrowRight size={14} />}
               </Link>
               <a

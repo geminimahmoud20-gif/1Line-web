@@ -79,7 +79,7 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
             <strong className="metric-val" style={{ color: '#d97706' }}>
               {unitBreakdown?.commercialUnits ? `${unitBreakdown.commercialUnits} ${isAr ? 'محلات' : 'Shops'}` : (isAr ? 'محلات بالدور الأرضي' : 'Ground Retail')}
             </strong>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{isAr ? 'عائد استثماري وتشغيلي' : 'High rental yield'}</span>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{isAr ? 'مناسب للاستثمار والتأجير' : 'Suited to rental investment'}</span>
           </div>
 
           <div className="benchmark-metric-box">

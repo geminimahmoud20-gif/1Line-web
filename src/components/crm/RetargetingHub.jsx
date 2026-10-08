@@ -118,16 +118,16 @@ export default function RetargetingHub({
       return isAr
         ? `📈 *دراسة جدوى استثمارية بعائد إيجاري مرتفع — 1LINE INVEST*\n\n` +
           `أهلاً أستاذ *${name}*،\n` +
-          `فرصة استثمارية واعدة بسوهاج تحقق عائداً سنوياً يفوق 14% ونمواً رأسمالياً سريعاً:\n\n` +
+          `فرصة استثمارية متاحة الآن بسوهاج:\n\n` +
           `🏢 *الأصل العقاري:* ${propTitle}\n` +
           `📍 *الموقع التجاري والحيوي:* ${propLocation}\n` +
-          `💵 *السعر الإجمالي:* ${propPrice} (مع تسهيلات سداد)\n` +
-          `⚖️ *الموقف القانوني:* مفحوص ومعتمد 100% بدون أي نزاعات\n\n` +
-          `📊 لطلب ملف التدفقات النقدية وجدول الأرباح المتوقعة، رد على هذه الرسالة وسنرسل لك التقرير فوراً.`
-        : `📈 *High-Yield Investment Opportunity — 1Line Real Estate*\n\n` +
+          `💵 *السعر الإجمالي:* ${propPrice} \n` +
+          `📄 المستندات متاحة للمراجعة القانونية قبل التعاقد.\n\n` +
+          `📊 لطلب تفاصيل العقار وإيجارات مقارنة في المنطقة، رد على هذه الرسالة.`
+        : `📈 *Investment Opportunity — 1Line Real Estate*\n\n` +
           `Dear ${name},\n` +
-          `An exceptional investment asset with 14%+ ROI is now available: *${propTitle}*.\n` +
-          `Reply to receive the detailed financial prospectus.`;
+          `An investment property is now available: *${propTitle}*.\n` +
+          `Reply to receive details and comparable rents in the area.`;
     }
 
     if (activeSegment === 'price_drop') {
