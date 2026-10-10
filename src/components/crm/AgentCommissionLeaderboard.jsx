@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { Trophy, Award, DollarSign, Target } from 'lucide-react';
+import { parseMoney } from '../../utils/crmLeadViews';
+import { getLiveLeadDesks, UNASSIGNED_DESK } from '../../utils/rbacRules';
+import { getActiveAccessConfig } from '../../services/accessConfig';
 
 export default function AgentCommissionLeaderboard({
   leads = [],
@@ -8,59 +11,45 @@ export default function AgentCommissionLeaderboard({
   const isAr = lang === 'ar';
   const [commissionRate, setCommissionRate] = useState(2.0); // 2% default commission
 
-  // Define Team Agents
-  const agentsList = [
-    {
-      id: 'agent-1',
-      name: 'Dr. Mahmoud Elbaz',
-      title_ar: 'المدير التنفيذي واستشاري التوثيق',
-      title_en: 'Executive Director & Senior Consultant',
-      avatar: '👑',
-      target: 20000000
-    },
-    {
-      id: 'agent-2',
-      name: 'Sales Team A',
-      title_ar: 'فريق مبيعات قطاع شرق النيل والكوثر',
-      title_en: 'East Sohag & Kawthar Sales Desk',
-      avatar: '🏆',
-      target: 15000000
-    },
-    {
-      id: 'agent-3',
-      name: 'Sales Team B',
-      title_ar: 'فريق مبيعات سوهاج الجديدة والمحور المركزي',
-      title_en: 'New Sohag & Commercial Hub Desk',
-      avatar: '🌟',
-      target: 12000000
-    }
-  ];
+  // Desks come from the team settings (CRM → إدارة المنظومة → الفرق), not a fixed list.
+  // Targets are only known for the original desks; a new team shows no target bar.
+  const KNOWN = {
+    'Dr. Mahmoud Elbaz': { avatar: '👑', target: 20000000 },
+    'Sales Team A': { avatar: '🏆', target: 15000000 },
+    'Sales Team B': { avatar: '🌟', target: 12000000 }
+  };
+  const agentsList = getLiveLeadDesks(getActiveAccessConfig())
+    .filter((d) => d.value !== UNASSIGNED_DESK)
+    .map((d) => ({
+      id: d.value,
+      name: d.value,
+      title_ar: d.label_ar,
+      title_en: d.label_en,
+      avatar: KNOWN[d.value]?.avatar || '👤',
+      target: KNOWN[d.value]?.target || null
+    }));
 
-  // Calculate dynamic stats for each agent from leads
+  // Volumes use the amount actually recorded on the lead. A deal with no amount counts as 0 and is
+  // flagged, instead of being assumed to be 3–3.5M (which inflated sales and commissions).
+  const amountOf = (l) => parseMoney(l.budget) || parseMoney(l.details?.budget) || parseMoney(l.details?.expectedPrice);
   const agentStats = agentsList.map((agent) => {
     const assignedLeads = leads.filter(l => l.assignedTo === agent.name);
     const closedLeads = assignedLeads.filter(l => l.status === 'closed');
     const scheduledVisits = assignedLeads.filter(l => l.status === 'site_visit' || l.siteVisit);
-    
-    // Total closed volume in EGP
-    const closedVolume = closedLeads.reduce((acc, curr) => {
-      const budget = parseInt(curr.details?.budget) || parseInt(curr.details?.expectedPrice) || 3500000;
-      return acc + budget;
-    }, 0);
-
-    // Active pipeline volume (Negotiation / Closing)
-    const pipelineVolume = assignedLeads.filter(l => l.status === 'negotiating' || l.status === 'closing').reduce((acc, curr) => {
-      const budget = parseInt(curr.details?.budget) || parseInt(curr.details?.expectedPrice) || 3000000;
-      return acc + budget;
-    }, 0);
+    const closedVolume = closedLeads.reduce((acc, l) => acc + amountOf(l), 0);
+    const closedWithoutAmount = closedLeads.filter((l) => !amountOf(l)).length;
+    const pipelineVolume = assignedLeads
+      .filter(l => l.status === 'negotiating' || l.status === 'closing')
+      .reduce((acc, l) => acc + amountOf(l), 0);
 
     const earnedCommission = Math.round(closedVolume * (commissionRate / 100));
-    const targetPercent = Math.min(100, Math.round((closedVolume / agent.target) * 100));
+    const targetPercent = agent.target ? Math.min(100, Math.round((closedVolume / agent.target) * 100)) : null;
 
     return {
       ...agent,
       totalLeads: assignedLeads.length,
       closedCount: closedLeads.length,
+      closedWithoutAmount,
       siteVisitsCount: scheduledVisits.length,
       closedVolume,
       pipelineVolume,
@@ -238,8 +227,8 @@ export default function AgentCommissionLeaderboard({
               </div>
             </div>
 
-            {/* Target Progress Bar */}
-            <div style={{ marginTop: '10px' }}>
+            {/* Target Progress Bar (only for desks with a set target) */}
+            {agent.targetPercent !== null && <div style={{ marginTop: '10px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--crm-text-xs)', marginBottom: '6px' }}>
                 <span style={{ color: 'var(--crm-muted)' }}>
                   {isAr ? `المستهدف الشهري: ${(agent.target / 1000000).toFixed(0)} مليون ج.م` : `Monthly Target: ${(agent.target / 1000000)}M`}
@@ -263,7 +252,7 @@ export default function AgentCommissionLeaderboard({
                   transition: 'width 0.6s ease'
                 }} />
               </div>
-            </div>
+            </div>}
 
             {/* Micro Stats Strip */}
             <div style={{
@@ -278,6 +267,11 @@ export default function AgentCommissionLeaderboard({
               <span>👥 {isAr ? 'إجمالي العملاء:' : 'Leads:'} <strong>{agent.totalLeads}</strong></span>
               <span>🚗 {isAr ? 'المعاينات المنجزة:' : 'Site Visits:'} <strong>{agent.siteVisitsCount}</strong></span>
               <span>💼 {isAr ? 'صفقات قيد الإغلاق:' : 'In Closing:'} <strong>{(agent.pipelineVolume / 1000000).toFixed(1)} M</strong></span>
+              {agent.closedWithoutAmount > 0 && (
+                <span style={{ color: 'var(--crm-warn)' }} title={isAr ? 'سجّل قيمة الصفقة في بيانات العميل عشان تتحسب' : 'Record the deal amount on the lead so it counts'}>
+                  ⚠ {isAr ? `${agent.closedWithoutAmount} صفقة ناجحة بدون قيمة (محسوبة صفر)` : `${agent.closedWithoutAmount} won deal(s) with no amount (counted as 0)`}
+                </span>
+              )}
             </div>
           </div>
         ))}

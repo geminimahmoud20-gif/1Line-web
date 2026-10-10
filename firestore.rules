@@ -116,6 +116,15 @@ service cloud.firestore {
           && !('isAdmin' in data);
     }
 
+    // The pipeline lives on the lead's status. Moving a lead INTO closing / won is a deal action,
+    // so it needs deal.edit (the same right /deals uses); other stage changes are lead work.
+    function closesDealOnlyWithDealRights() {
+      return !('status' in request.resource.data)
+          || request.resource.data.status == resource.data.get('status', '')
+          || !(request.resource.data.status in ['closing', 'closed'])
+          || hasPerm('deal.edit');
+    }
+
     // 🛡️ 1. LEADS & CUSTOMER INQUIRIES
     match /leads/{leadId} {
       // Current format: no contact fields here, its lead_contacts doc written in the same batch.
@@ -136,6 +145,7 @@ service cloud.firestore {
       allow update: if (hasPerm('ld.manage')
                        || (isDeskAgent() && inMyLeadQueue(resource.data) && inMyLeadQueue(request.resource.data)))
                     && keepsContactFields()
+                    && closesDealOnlyWithDealRights()
                     && (!exists(contactPath(leadId)) || deskOf(getAfter(contactPath(leadId)).data) == deskOf(request.resource.data));
       allow delete: if isAdmin();
     }

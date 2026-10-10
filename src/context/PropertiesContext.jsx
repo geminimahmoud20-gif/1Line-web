@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { LOST_REASONS } from '../utils/crmLeadViews';
+import { persistDemands } from '../utils/demandStorage';
 import { MEGA_PROJECTS, tagDemoProject } from '../data/projectsData';
 import { INITIAL_LEADS } from '../data/mockData';
 import { DEMO_PROPERTIES, DEMO_DEMANDS, tagDemoProperty, tagDemoDemand, isRealItem } from '../data/demoData';
@@ -76,17 +77,6 @@ const describeLeadChange = (f = {}) => {
   if (f.lastContactedAt && Object.keys(f).length <= 2) return 'تواصل مع العميل';
   const names = Object.keys(f).map((k) => LEAD_FIELD_AR[k]).filter(Boolean);
   return `تحديث بيانات${names.length ? `: ${[...new Set(names)].join('، ')}` : ''}`;
-};
-const DEMAND_CONTACT_FIELDS = ['phone', 'whatsapp', 'email', 'clientName', 'name'];
-const persistDemands = (list) => {
-  try {
-    const safe = list.map((d) => {
-      const copy = { ...d };
-      DEMAND_CONTACT_FIELDS.forEach((k) => delete copy[k]);
-      return copy;
-    });
-    persistDemands(safe);
-  } catch { /* storage full or blocked */ }
 };
 
 const PropertiesContext = createContext(null);

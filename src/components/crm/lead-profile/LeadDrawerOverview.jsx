@@ -58,8 +58,8 @@ export default function LeadDrawerOverview({
         </div>
       </div>
 
-      {/* 2. WhatsApp Pre-formatted Pitches */}
-      <div style={{
+      {/* 2. WhatsApp Pre-formatted Pitches — only with a real (unmasked) number */}
+      {egWhatsapp && <div style={{
         background: 'var(--crm-card)',
         border: '1px solid var(--crm-line)',
         borderRadius: '12px',
@@ -117,7 +117,7 @@ export default function LeadDrawerOverview({
             );
           })}
         </div>
-      </div>
+      </div>}
 
       {/* 3. Schedule Viewing Toggle / Form */}
       <div style={{

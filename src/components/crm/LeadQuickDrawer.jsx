@@ -68,6 +68,8 @@ export default function LeadQuickDrawer({
   const nextLead = currentIndex < filteredLeads.length - 1 ? filteredLeads[currentIndex + 1] : null;
 
   const cleanPhone = (lead.phone || '').replace(/[^0-9+]/g, '');
+  // Masked numbers (010****78) are shown as text only: no call / WhatsApp link to a broken number
+  const hasRealPhone = Boolean(lead.phone || lead.whatsapp) && !/\*/.test(`${lead.phone || ''}${lead.whatsapp || ''}`);
   const cleanWhatsapp = (lead.whatsapp || lead.phone || '').replace(/[^0-9]/g, '');
   const egWhatsapp = cleanWhatsapp.startsWith('0') ? `2${cleanWhatsapp}` : (cleanWhatsapp.startsWith('20') ? cleanWhatsapp : `20${cleanWhatsapp}`);
 
@@ -375,8 +377,8 @@ export default function LeadQuickDrawer({
                 </div>
               </div>
 
-              {/* Instant Call / WhatsApp Direct triggers */}
-              <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+              {/* Instant Call / WhatsApp Direct triggers — not for a masked number (role without ld.phone) */}
+              {hasRealPhone && <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
                 <a
                   href={`tel:${cleanPhone}`}
                   title={isAr ? 'اتصال هاتفي مباشر' : 'Direct Call'}
@@ -414,7 +416,7 @@ export default function LeadQuickDrawer({
                 >
                   <MessageSquare size={16} />
                 </a>
-              </div>
+              </div>}
             </div>
 
             {/* Stepper / Stage Selector */}
@@ -502,7 +504,7 @@ export default function LeadQuickDrawer({
           {/* TAB 1: OPERATIONS & QUICK ACTIONS */}
           {activeTab === 'overview' && (
             <LeadDrawerOverview
-              egWhatsapp={egWhatsapp}
+              egWhatsapp={hasRealPhone ? egWhatsapp : ''}
               handleLogCall={handleLogCall}
               handleScheduleViewing={handleScheduleViewing}
               isAr={isAr}
@@ -520,7 +522,7 @@ export default function LeadQuickDrawer({
           {activeTab === 'matching' && (
             <LeadDrawerMatching
               areaName={areaName}
-              egWhatsapp={egWhatsapp}
+              egWhatsapp={hasRealPhone ? egWhatsapp : ''}
               isAr={isAr}
               lead={lead}
               matchedProperties={matchedProperties}
