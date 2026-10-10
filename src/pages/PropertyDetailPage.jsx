@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { MapPin, Sparkles, CheckCircle2, Layers, Calendar, Phone, MessageSquare, ShieldCheck, TrendingUp, TrendingDown, Navigation, ArrowRight, ArrowLeft, Building, Building2, Video, Zap, Droplets, Copy, Sun, Moon, Scale, Flame } from 'lucide-react';
 import { incrementPropertyView, getPropertyViews } from '../utils/visitorTracker';
+import usePropertyEngagement from '../hooks/usePropertyEngagement';
 import PropertyGallery from '../components/properties/PropertyGallery';
 import PropertyCard from '../components/properties/PropertyCard';
 import LegalAuditCard from '../components/properties/LegalAuditCard';
@@ -131,6 +132,9 @@ export default function PropertyDetailPage({
       }
     }
   }, [property?.id, property]);
+
+  // Reading time / scroll depth for the visitor analytics
+  usePropertyEngagement(property);
 
   const { clientUser, isClientAuthenticated } = useClientAuth();
 

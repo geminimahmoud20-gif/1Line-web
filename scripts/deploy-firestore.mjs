@@ -86,6 +86,26 @@ for (const ix of wanted) {
   pending.push({ ix, listUrl, fields });
 }
 
+// ── 3. TTL: raw visitor analytics are deleted by Firestore 180 days after expireAt is set ──
+// (api/_track-core.js writes expireAt on analytics sessions and raw event batches)
+for (const group of ['analytics_sessions', 'batches']) {
+  const fieldUrl = `${api}/collectionGroups/${group}/fields/expireAt`;
+  const current = (await call('GET', fieldUrl)).json;
+  const state = current?.ttlConfig?.state;
+  if (state === 'ACTIVE' || state === 'CREATING') {
+    console.log(`• TTL ${group}.expireAt: ${state}`);
+    continue;
+  }
+  const { status, json } = await call('PATCH', `${fieldUrl}?updateMask=ttlConfig`, { ttlConfig: {} });
+  if (status >= 300) {
+    // Same as indexes: needs Cloud Datastore Index Admin; without it old raw events simply stay
+    console.warn(`! TTL ${group}.expireAt: not enabled (HTTP ${status} ${json.error?.message || ''}) — optional`);
+    skipped++;
+    continue;
+  }
+  console.log(`+ TTL ${group}.expireAt: enabling`);
+}
+
 // Wait for indexes this run created
 const deadline = Date.now() + 15 * 60 * 1000;
 while (pending.length && Date.now() < deadline) {
@@ -104,5 +124,5 @@ if (pending.length) {
   console.error(`✖ still building after 15 min: ${pending.map((p) => describe(p.ix)).join('; ')}`);
   process.exit(1);
 }
-console.log(skipped ? `✔ Done (${skipped} optional index(es) skipped — grant Cloud Datastore Index Admin to create them)` : '✔ All indexes READY');
+console.log(skipped ? `✔ Done (${skipped} optional index(es) skipped — grant Cloud Datastore Index Admin to create them / enable TTL)` : '✔ All indexes READY');
 process.exit(0);

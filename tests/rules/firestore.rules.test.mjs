@@ -409,3 +409,35 @@ test('leads: moving a lead to closing / won needs deal.edit; other stages are le
   // editing other fields of an already-won lead is not a new close
   await assertSucceeds(setDoc(doc(noDeals, 'leads/w1'), { notes: 'متابعة بعد البيع' }, { merge: true }));
 });
+
+test('analytics: read by managers/admins only, never written from a browser', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    const db = ctx.firestore();
+    await setDoc(doc(db, 'analytics_daily/2026-10-10_0'), { date: '2026-10-10', pageViews: 3 });
+    await setDoc(doc(db, 'analytics_visitors/v_abcdefgh1234'), { intent: 12, leadId: 'a' });
+    await setDoc(doc(db, 'analytics_visitors/v_abcdefgh1234/batches/b1'), { events: [] });
+  });
+  for (const path of ['analytics_daily/2026-10-10_0', 'analytics_visitors/v_abcdefgh1234', 'analytics_visitors/v_abcdefgh1234/batches/b1']) {
+    await assertSucceeds(getDoc(doc(asAdmin(), path)));
+    await assertSucceeds(getDoc(doc(as('sales_manager'), path)));
+    await assertFails(getDoc(doc(as('sales_agent'), path)));
+    await assertFails(getDoc(doc(as('viewer'), path)));
+    await assertFails(getDoc(doc(guest(), path)));
+  }
+  await assertSucceeds(getDocs(query(collection(as('sales_manager'), 'analytics_daily'), where('date', '>=', '2026-10-01'))));
+  // the collector writes with the service account; browsers (even admins) cannot forge numbers
+  await assertFails(setDoc(doc(guest(), 'analytics_daily/2026-10-10_1'), { pageViews: 999 }));
+  await assertFails(setDoc(doc(asAdmin(), 'analytics_visitors/v_abcdefgh1234'), { intent: 999 }));
+  await assertFails(setDoc(doc(guest(), 'analytics_properties/prop-1'), { views: 999 }));
+});
+
+test('backup restore: an admin re-creates a lead with its original id and contact doc', async () => {
+  const restore = (db) => {
+    const b = writeBatch(db);
+    b.set(doc(db, 'leads/lead-1700000000000'), { name: 'Restored', assignedTo: 'Sales Team A', status: 'closed', createdAt: '2025-01-02T10:00:00.000Z', restoredAt: serverTimestamp() });
+    b.set(doc(db, 'lead_contacts/lead-1700000000000'), { phone: '01000000099', assignedTo: 'Sales Team A' });
+    return b.commit();
+  };
+  await assertSucceeds(restore(asAdmin()));
+  await assertFails(restore(as('viewer')));
+});

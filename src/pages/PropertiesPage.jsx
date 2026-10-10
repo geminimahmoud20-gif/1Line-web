@@ -17,6 +17,7 @@ import ZeroResultsFallback from '../components/properties/ZeroResultsFallback';
 import Pagination from '../components/common/Pagination';
 import { DEMO_PROPERTIES } from '../data/demoData';
 import { updatePageSeo } from '../utils/seoHelper';
+import { track } from '../utils/analytics';
 import { searchPropertiesSemantic, parseSemanticQuery } from '../utils/semanticSearchEngine';
 
 // Slider ceiling; a maxPrice at the cap means "no upper limit"
@@ -112,6 +113,16 @@ export default function PropertiesPage({
     setPrevFilterState({ filters, sortBy, familyFilter });
     setCurrentPage(1);
   }
+
+  // What visitors look for (area / type / budget) once they stop changing the filters
+  const searchSignature = JSON.stringify([filters.query, filters.type, filters.area, filters.minPrice, filters.maxPrice, filters.bedrooms, filters.paymentPlan]);
+  useEffect(() => {
+    const [query, type, area, minPrice, maxPrice, bedrooms, payment] = JSON.parse(searchSignature);
+    const chosen = query || type !== 'all' || area !== 'all' || minPrice || maxPrice || bedrooms !== 'all' || payment !== 'all';
+    if (!chosen) return undefined;
+    const t = setTimeout(() => track('search', { query, type, area, minPrice, maxPrice, bedrooms, payment }), 2000);
+    return () => clearTimeout(t);
+  }, [searchSignature]);
 
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));

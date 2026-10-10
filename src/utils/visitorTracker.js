@@ -3,6 +3,8 @@
  * Handles Session Tracking, Dwell Time, Property View Counters, and Clickstream Analytics
  */
 
+import { track } from './analytics';
+
 const STORAGE_KEYS = {
   SESSION: 'oneline_visitor_session',
   EVENTS: 'oneline_visitor_events',
@@ -54,6 +56,31 @@ export function getOrCreateSession() {
   }
 }
 
+// The older event names used around the site → the server analytics vocabulary (api/_track-core.js).
+// Events not listed (CRM actions, lead_identified with a name/phone) are never sent.
+const toursSeen = new Set();
+function forwardToServer(eventType, m = {}) {
+  switch (eventType) {
+    case 'page_view': return track('page_view', { path: m.path || window.location.pathname });
+    case 'property_view': return track('property_view', { propertyId: m.propertyId, area: m.area, type: m.type, price: m.price });
+    case 'property_gallery_opened': return track('gallery_open', {});
+    case 'virtual_tour_room_switched': {
+      const k = window.location.pathname;
+      if (toursSeen.has(k)) return undefined;
+      toursSeen.add(k);
+      return track('virtual_tour', {});
+    }
+    case 'calculator_used': return track('calculator_used', { price: m.price, downPct: m.downPct, years: m.years, mode: m.type });
+    case 'compare_shared_whatsapp':
+    case 'compare_downloaded_pdf':
+    case 'favorites_shared_whatsapp': return track('share', { kind: eventType, count: m.count });
+    case 'compare_booked_group_tour':
+    case 'compare_booked_dual_tour': return track('contact_click', { channel: 'whatsapp', placement: 'compare_tour' });
+    case 'reservation_requested': return track('reservation_requested', { propertyId: m.propertyId });
+    default: return undefined;
+  }
+}
+
 /**
  * Track an interaction event (Clickstream)
  */
@@ -61,6 +88,7 @@ export function trackEvent(eventType, metadata = {}) {
   if (typeof window === 'undefined') return;
   // Staff activity inside the CRM is not visitor behaviour; recording it skews the analytics.
   if (window.location.pathname.startsWith('/crm')) return;
+  forwardToServer(eventType, metadata);
 
   try {
     const session = getOrCreateSession();
@@ -168,7 +196,8 @@ export function incrementPropertyView(propertyId, propertyData = {}) {
       propertyId,
       title: propertyData.title_ar || propertyData.title || propertyId,
       price: propertyData.price,
-      area: propertyData.areaKey || propertyData.area
+      area: propertyData.areaKey || propertyData.area,
+      type: propertyData.type
     });
 
     return updated;

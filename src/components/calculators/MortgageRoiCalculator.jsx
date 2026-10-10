@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Calculator, TrendingUp, Sparkles, Copy, Check, Building2, Landmark, Handshake, ShieldCheck } from 'lucide-react';
 import { trackEvent } from '../../utils/visitorTracker';
 import { getWhatsAppUrl, getDynamicPhone } from '../../utils/founderCmsData';
@@ -22,6 +22,19 @@ export default function MortgageRoiCalculator({
   const [years, setYears] = useState(initialYears);
   const [interestRate, setInterestRate] = useState(initialInterestRate); // Annual rate in % (step 1%)
   const [copied, setCopied] = useState(false);
+
+  // Report a real use of the calculator once the visitor stops adjusting it (not on first render):
+  // the price, down payment and years they try say a lot about their budget.
+  const initialPlan = useRef({ price, downpaymentPercent, years });
+  useEffect(() => {
+    const first = initialPlan.current;
+    if (first.price === price && first.downpaymentPercent === downpaymentPercent && first.years === years) return undefined;
+    const t = setTimeout(() => {
+      trackEvent('calculator_used', { price, downPct: downpaymentPercent, years, type: activeTab });
+      initialPlan.current = { price, downpaymentPercent, years };
+    }, 2500);
+    return () => clearTimeout(t);
+  }, [price, downpaymentPercent, years, activeTab]);
 
   // ROI States
   const [monthlyRent, setMonthlyRent] = useState(initialMonthlyRent);
@@ -116,7 +129,7 @@ export default function MortgageRoiCalculator({
         `📞 Hotline & Booking: ${getDynamicPhone()}`;
     navigator.clipboard.writeText(text);
     setCopied(true);
-    trackEvent('calculator_used', { price, monthlyInstallment, type: activeTab });
+    trackEvent('calculator_used', { price, downPct: downpaymentPercent, years, type: activeTab });
     setTimeout(() => setCopied(false), 3000);
   };
 
