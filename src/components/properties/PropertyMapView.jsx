@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css'; // only map pages pay for it (overrides in App.css are more specific)
 import { Layers, Satellite, Map as MapIcon, Maximize2, Minimize2, X, Navigation, TrendingUp, Sparkles, Landmark, Filter } from 'lucide-react';
@@ -203,6 +204,9 @@ export default function PropertyMapView({
   const landmarksRef = useRef([]);
   const districtPolygonsRef = useRef([]);
   const tileLayerRef = useRef(null);
+  const navigate = useNavigate();
+  const navigateRef = useRef(navigate);
+  useEffect(() => { navigateRef.current = navigate; }, [navigate]);
   
   const [mapType, setMapType] = useState('satellite'); // 'streets' | 'satellite'
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -258,11 +262,31 @@ export default function PropertyMapView({
         maxZoom: 19
       }).addTo(map);
 
+      // Popup links open the listing inside the app (no full page reload)
+      map.on('popupopen', (e) => {
+        const link = e.popup.getElement()?.querySelector('a.popup-cta-btn');
+        if (!link || link.dataset.spa) return;
+        link.dataset.spa = '1';
+        link.addEventListener('click', (ev) => {
+          if (ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.button === 1) return;
+          ev.preventDefault();
+          navigateRef.current(link.getAttribute('href'));
+        });
+      });
+
       mapInstanceRef.current = map;
     }
 
     return () => {
-      // Map cleanup
+      // Release Leaflet (listeners, tiles, the container's _leaflet_id) so a remount starts clean
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+      tileLayerRef.current = null;
+      markersRef.current = [];
+      landmarksRef.current = [];
+      districtPolygonsRef.current = [];
     };
   }, []);
 
@@ -318,7 +342,7 @@ export default function PropertyMapView({
       const isHovered = hoveredPropertyId === prop.id;
 
       // Price formatting for Luxury Beacon Pin (EGP)
-      const priceObj = formatCurrencyPrice(prop.price, 'EGP', lang);
+      const priceObj = formatCurrencyPrice(prop.price, currency, lang);
       const pinPriceLabel = (prop.price / 1000000).toFixed(1) + (isAr ? ' م.ج' : 'M');
 
       // Luxury Beacon Pin with Pointer Needle directly hitting the property unit
@@ -359,7 +383,7 @@ export default function PropertyMapView({
             </div>
             <div class="popup-price-row">
               <div>
-                <strong style="color: var(--primary, #071e3d); font-size: 0.95rem;">${priceObj.primary} ${priceObj.symbol}</strong>
+                <strong style="color: var(--primary, #071e3d); font-size: 0.95rem;">${priceObj.primary} ${priceObj.symbol}</strong>${priceObj.approx ? `<div style="font-size: 0.72rem; color: #64748b;">${priceObj.approx}</div>` : ''}
               </div>
               <span class="popup-size">${prop.size || ''} ${isAr ? 'م²' : 'sqm'}</span>
             </div>

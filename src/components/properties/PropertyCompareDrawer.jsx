@@ -105,7 +105,9 @@ export default function PropertyCompareDrawer({
     const priceDiff = Math.abs(p1.price - p2.price);
     const ppm1 = p1.pricePerMeter || (p1.size ? Math.round(p1.price / p1.size) : 0);
     const ppm2 = p2.pricePerMeter || (p2.size ? Math.round(p2.price / p2.size) : 0);
-    const ppmDiff = Math.abs(ppm1 - ppm2);
+    // Price per m² only compares when both listings have an area; 0 is "unknown", not "cheapest"
+    const ppmComparable = ppm1 > 0 && ppm2 > 0;
+    const ppmDiff = ppmComparable ? Math.abs(ppm1 - ppm2) : 0;
     const sizeDiff = Math.abs((Number(p1.size) || 0) - (Number(p2.size) || 0));
     const monthlyDiff = Math.abs((Number(p1.monthlyInstallment) || 0) - (Number(p2.monthlyInstallment) || 0));
 
@@ -114,9 +116,9 @@ export default function PropertyCompareDrawer({
       ppmDiff,
       sizeDiff,
       monthlyDiff,
-      cheaperId: p1.price < p2.price ? p1.id : p2.id,
-      largerId: (Number(p1.size) || 0) > (Number(p2.size) || 0) ? p1.id : p2.id,
-      betterPpmId: ppm1 < ppm2 ? p1.id : p2.id,
+      cheaperId: p1.price !== p2.price ? (p1.price < p2.price ? p1.id : p2.id) : null,
+      largerId: (Number(p1.size) || 0) !== (Number(p2.size) || 0) ? ((Number(p1.size) || 0) > (Number(p2.size) || 0) ? p1.id : p2.id) : null,
+      betterPpmId: ppmComparable && ppm1 !== ppm2 ? (ppm1 < ppm2 ? p1.id : p2.id) : null,
       lowerMonthlyId: (Number(p1.monthlyInstallment) || Infinity) < (Number(p2.monthlyInstallment) || Infinity) ? p1.id : p2.id,
       p1,
       p2,

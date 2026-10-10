@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { TrendingDown, TrendingUp, CheckCircle2, ShieldCheck, BarChart3, Building2, Store, Home, Layers } from 'lucide-react';
-import { getDistrictBenchmark, formatCurrencyPrice, isMultiUnitOrBuilding, parseUnitBreakdown } from '../../utils/currencyAndBenchmark';
+import { getDistrictBenchmark, formatCurrencyPrice, isMultiUnitOrBuilding, parseUnitBreakdown, isResidentialProperty } from '../../utils/currencyAndBenchmark';
 import { getAreaById } from '../../utils/areasData';
 
 export default function PriceBenchmarkIndicator({ property, lang = 'ar', currency = 'EGP' }) {
@@ -127,6 +127,36 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
               : 'Advisory Note: Total investment return is calculated from standalone commercial shop cash flows plus residential apartment capital value.'}
           </span>
         </div>
+      </div>
+    );
+  }
+
+  // The district average is a residential price per m². Shops, offices, clinics and land are priced
+  // by frontage, activity and zoning, so comparing them with it would flag fair prices as "overpriced".
+  const isResidential = isResidentialProperty(property);
+  const sizeM2 = Number(property?.size) || 0;
+  if (property && (!sizeM2 || (!isResidential && !property.customBenchmarkPrice))) {
+    const perM = sizeM2 ? formatCurrencyPrice(Math.round((Number(property.price) || 0) / sizeM2), currency, lang) : null;
+    return (
+      <div className="price-benchmark-card">
+        <div className="benchmark-header">
+          <div className="benchmark-title-wrap">
+            <BarChart3 size={18} className="text-gold" />
+            <h4>{isAr ? `سعر المتر (حي ${currentDistrictName})` : `Price per m² (${currentDistrictName})`}</h4>
+          </div>
+        </div>
+        {perM && (
+          <p style={{ margin: '10px 0 6px', fontWeight: 700 }}>
+            {perM.primary} {perM.symbol} / {isAr ? 'م²' : 'm²'}
+          </p>
+        )}
+        <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+          {!sizeM2
+            ? (isAr ? 'المساحة مش مسجلة، فمفيش مقارنة لسعر المتر.' : 'No area recorded, so there is no price-per-m² comparison.')
+            : (isAr
+              ? 'متوسط الحي محسوب للشقق والفيلات بس. المحلات والمكاتب والأراضي سعرها بيتحدد بالواجهة والنشاط والترخيص، فمش بنقارنها بيه. اسأل مستشارنا عن صفقات مشابهة في نفس الشارع.'
+              : 'The district average covers homes only. Shops, offices and land are priced by frontage, activity and zoning, so they are not compared with it. Ask us for comparable deals on the same street.')}
+        </p>
       </div>
     );
   }

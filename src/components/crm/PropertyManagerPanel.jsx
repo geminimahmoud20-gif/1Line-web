@@ -57,9 +57,11 @@ const DEFAULT_FORM_STATE = {
   images: [
     'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80'
   ],
-  description_ar: 'شقة فاخرة بموقع حيوي متكامل الخدمات وإطلالة ممتازة كاملة المرافق.',
-  description_en: 'Luxury unit in a vibrant prime location with complete utilities.',
-  virtualTour: true,
+  // Written per listing; a pre-filled "luxury / great view" text would be published as fact
+  description_ar: '',
+  description_en: '',
+  // Panoramic photo viewer; off until the listing has photos worth panning
+  virtualTour: false,
   isDeleted: false,
   // No legal record until the team actually reviews the documents (CRM → الموقف القانوني)
   legalStatus: null,

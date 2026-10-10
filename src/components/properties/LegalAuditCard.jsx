@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ShieldCheck, CheckCircle2, FileText, UserCheck, Clock, MessageCircle, Info } from 'lucide-react';
 import useClientDownload from '../../hooks/useClientDownload';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
@@ -22,6 +23,8 @@ export default function LegalAuditCard({ property, lang = 'ar' }) {
   const L = (ar, en) => (isAr ? ar : en);
   const legal = property.legalStatus || null;
   const download = useClientDownload();
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const [pdfError, setPdfError] = useState(false);
   const code = String(property.id || '').toUpperCase();
 
   const rows = legal
@@ -94,13 +97,28 @@ export default function LegalAuditCard({ property, lang = 'ar' }) {
         <button
           type="button"
           className="xs-btn xs-btn--ghost"
+          disabled={pdfBusy}
+          aria-busy={pdfBusy}
           onClick={() => download({ kind: 'property_brochure', itemId: String(property.id || ''), itemTitle: property.title_ar || property.title_en || '' }, async () => {
-            const { generatePropertyPdf } = await import('../../utils/brochure/propertyBrochure');
-            await generatePropertyPdf(property);
+            setPdfBusy(true);
+            try {
+              const { generatePropertyPdf } = await import('../../utils/brochure/propertyBrochure');
+              await generatePropertyPdf(property);
+            } catch (err) {
+              setPdfError(true);
+              throw err;
+            } finally {
+              setPdfBusy(false);
+            }
           })}
         >
-          <FileText size={16} aria-hidden="true" /> {L('بروشور العقار PDF', 'Property PDF')}
+          <FileText size={16} aria-hidden="true" /> {pdfBusy ? L('جاري تجهيز الملف…', 'Preparing…') : L('بروشور العقار PDF', 'Property PDF')}
         </button>
+        {pdfError && (
+          <span role="alert" style={{ fontSize: '0.8rem', color: 'var(--danger, #b91c1c)' }}>
+            {L('تعذّر تجهيز الملف، جرّب تاني أو اطلبه على واتساب.', 'Could not prepare the file; try again or ask on WhatsApp.')}
+          </span>
+        )}
       </div>
 
       <p className="xs-fin-foot">

@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { Rotate3d, Compass, Maximize2, Minimize2, Sun, Moon, Play, Pause, Info, Sparkles } from 'lucide-react';
+import { Rotate3d, Compass, Maximize2, Minimize2, Play, Pause, Info, Sparkles } from 'lucide-react';
 import BrandWatermark from '../common/BrandWatermark';
 import { trackEvent } from '../../utils/visitorTracker';
 
 /**
  * VirtualTourViewer Component
- * Immersive 360° interactive room-by-room virtual property tour simulator.
+ * Panoramic viewer for the listing's own photos (pan by drag / touch, shot-to-shot hotspots).
  */
 export default function VirtualTourViewer({ 
   propertyImages = [], 
@@ -14,60 +14,25 @@ export default function VirtualTourViewer({
 }) {
   const isAr = lang === 'ar';
 
-  // Room Scenes with High-Res Panoramas & Hotspots
-  const ROOM_SCENES = [
-    {
-      id: 'reception',
-      name_ar: 'الريسبشن وصالة الاستقبال',
-      name_en: 'Grand Reception & Living Hall',
-      image: propertyImages[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1920&q=80',
-      nightImage: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1920&q=80',
-      hotspots: [
-        { id: 'h1', x: 30, y: 55, title_ar: 'أرضيات بورسلين إسباني نخب أول', title_en: 'Spanish Porcelain Floor', targetRoom: null },
-        { id: 'h2', x: 75, y: 45, title_ar: 'انتقل إلى: جناح النوم الماستر 🛏️', title_en: 'Go to Master Bedroom 🛏️', targetRoom: 'bedroom' }
-      ]
-    },
-    {
-      id: 'bedroom',
-      name_ar: 'غرفة النوم الرئيسية (Master Suite)',
-      name_en: 'Master Bedroom Suite',
-      image: propertyImages[1] || 'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=1920&q=80',
-      nightImage: 'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=1920&q=80',
-      hotspots: [
-        { id: 'h3', x: 25, y: 50, title_ar: 'حمام ماستر ملحق وغرفة ملابس', title_en: 'En-Suite Bathroom & Dressing', targetRoom: null },
-        { id: 'h4', x: 80, y: 50, title_ar: 'انتقل إلى: الشرفة والإطلالة 🌿', title_en: 'Go to Balcony & View 🌿', targetRoom: 'balcony' }
-      ]
-    },
-    {
-      id: 'balcony',
-      name_ar: 'الشرفة والإطلالة البانورامية',
-      name_en: 'Panoramic Balcony & Views',
-      image: propertyImages[2] || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1920&q=80',
-      nightImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1920&q=80',
-      hotspots: [
-        { id: 'h5', x: 50, y: 35, title_ar: 'إطلالة بحرية مفتوحة على حدائق الكمبوند', title_en: 'Open Garden View', targetRoom: null },
-        { id: 'h6', x: 15, y: 60, title_ar: 'العودة إلى: الريسبشن 🛋️', title_en: 'Back to Reception 🛋️', targetRoom: 'reception' }
-      ]
-    },
-    {
-      id: 'kitchen',
-      name_ar: 'المطبخ الأمريكي المفتوح',
-      name_en: 'Modern Open-Concept Kitchen',
-      image: propertyImages[3] || 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=1920&q=80',
-      nightImage: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=1920&q=80',
-      hotspots: [
-        { id: 'h7', x: 40, y: 55, title_ar: 'تجهيزات كهربائية وغاز طبيعي وتوصيلات مدمجة', title_en: 'Built-in Utilities', targetRoom: null },
-        { id: 'h8', x: 75, y: 50, title_ar: 'العودة إلى: الريسبشن 🛋️', title_en: 'Back to Reception 🛋️', targetRoom: 'reception' }
-      ]
-    }
-  ];
+  // One scene per real photo of THIS listing. No stock pictures and no invented rooms or
+  // finishes: the viewer only pans across what the owner actually photographed.
+  const shots = propertyImages.filter(Boolean).slice(0, 10);
+  const ROOM_SCENES = shots.map((image, i) => ({
+    id: `shot-${i}`,
+    name_ar: `لقطة ${i + 1} من ${shots.length}`,
+    name_en: `Shot ${i + 1} of ${shots.length}`,
+    image,
+    hotspots: shots.length > 1 ? [
+      { id: `next-${i}`, x: 82, y: 50, title_ar: 'اللقطة التالية ←', title_en: 'Next shot →', targetRoom: `shot-${(i + 1) % shots.length}` },
+      { id: `prev-${i}`, x: 12, y: 50, title_ar: '→ اللقطة السابقة', title_en: '← Previous shot', targetRoom: `shot-${(i - 1 + shots.length) % shots.length}` },
+    ] : [],
+  }));
 
-  const [activeRoomId, setActiveRoomId] = useState('reception');
+  const [activeRoomId, setActiveRoomId] = useState('shot-0');
   const [rotationX, setRotationX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartX, setDragStartX] = useState(0);
   const [autoRotate, setAutoRotate] = useState(true);
-  const [isNightMode, setIsNightMode] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activeHotspotInfo, setActiveHotspotInfo] = useState(null);
 
@@ -135,7 +100,14 @@ export default function VirtualTourViewer({
     }
   };
 
-  const activeImage = isNightMode ? currentRoom.nightImage : currentRoom.image;
+  if (!currentRoom) {
+    return (
+      <div className="virtual-tour-360-component" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '220px', padding: '20px', textAlign: 'center' }}>
+        <span>{isAr ? 'مفيش صور مرفوعة للوحدة دي لسه.' : 'No photos uploaded for this listing yet.'}</span>
+      </div>
+    );
+  }
+  const activeImage = currentRoom.image;
 
   return (
     <div 
@@ -154,22 +126,12 @@ export default function VirtualTourViewer({
         </div>
 
         <div className="tour-controls-cluster">
-          {/* Day / Night Toggle */}
-          <button
-            type="button"
-            className="tour-ctrl-btn"
-            onClick={() => setIsNightMode(!isNightMode)}
-            title={isAr ? (isNightMode ? 'تفعيل الإضاءة النهارية' : 'تفعيل الإضاءة المسائية الدافئة') : 'Toggle Lighting'}
-          >
-            {isNightMode ? <Sun size={15} className="text-gold" /> : <Moon size={15} />}
-          </button>
-
           {/* Auto Rotate Toggle */}
           <button
             type="button"
             className={`tour-ctrl-btn ${autoRotate ? 'active' : ''}`}
             onClick={() => setAutoRotate(!autoRotate)}
-            title={isAr ? (autoRotate ? 'إيقاف الدوران التلقائي' : 'تشغيل الدوران التلقائي 360°') : 'Toggle Auto-Rotate'}
+            title={isAr ? (autoRotate ? 'إيقاف الحركة التلقائية' : 'تشغيل الحركة التلقائية') : 'Toggle auto-pan'}
           >
             {autoRotate ? <Pause size={15} /> : <Play size={15} />}
           </button>
@@ -247,7 +209,7 @@ export default function VirtualTourViewer({
         {/* Drag Hint Overlay */}
         <div className="tour-gesture-hint">
           <Compass size={14} className="spin-slow" />
-          <span>{isAr ? 'اسحب في أي اتجاه للتنقل 360° واستكشاف الغرفة' : 'Drag around to explore in 360°'}</span>
+          <span>{isAr ? 'اسحب لتحريك الصورة • صور حقيقية للوحدة' : 'Drag to pan • real photos of this unit'}</span>
         </div>
       </div>
 

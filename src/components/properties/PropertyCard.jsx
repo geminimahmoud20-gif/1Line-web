@@ -360,9 +360,9 @@ export default function PropertyCard({
               <span>{isAr ? 'معاينة الغربة' : 'Remote tour'}</span>
             </button>
             {property.virtualTour && (
-              <span className="pcx-chip pcx-chip--glass" title={isAr ? 'جولة افتراضية 360°' : '360° virtual tour'}>
+              <span className="pcx-chip pcx-chip--glass" title={isAr ? 'عرض بانورامي لصور الوحدة' : 'Panoramic photo view'}>
                 <Rotate3d size={12} strokeWidth={2} aria-hidden="true" />
-                <span>360°</span>
+                <span>{isAr ? 'بانوراما' : 'Pano'}</span>
               </span>
             )}
           </div>

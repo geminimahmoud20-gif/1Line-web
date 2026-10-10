@@ -110,6 +110,11 @@ export function parseUnitBreakdown(property, isAr = true) {
 /**
  * Computes price per square meter and compares with district benchmark
  */
+// District averages are residential prices per m². Shops, offices, clinics and land are priced by
+// frontage, activity and zoning, so they get no "above/below the area average" verdict.
+const RESIDENTIAL_TYPES = ['apartment', 'villa', 'duplex', 'penthouse', 'studio', 'chalet', 'townhouse', 'twinhouse', 'residential'];
+export const isResidentialProperty = (p) => !p?.type || RESIDENTIAL_TYPES.includes(p.type) || p.category === 'residential';
+
 export function getPriceBenchmark(property, lang = 'ar') {
   if (!property || !property.price || !property.size) {
     return null;
@@ -138,6 +143,7 @@ export function getPriceBenchmark(property, lang = 'ar') {
   const price = Number(property.price) || 0;
   const size = Number(property.size) || 1;
   const pricePerMeter = Math.round(price / size);
+  if (!isResidentialProperty(property) && !property.customBenchmarkPrice) return null;
 
   const areaKey = property.areaKey || 'default';
   const districtAvg = property.customBenchmarkPrice || getDistrictBenchmark(areaKey);

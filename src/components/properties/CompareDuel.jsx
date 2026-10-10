@@ -54,7 +54,7 @@ export default function CompareDuel({
             <h5 className="dual-card-title">{isAr ? dualDiff.p1.title_ar : dualDiff.p1.title_en}</h5>
             <div className="dual-card-meta">
               <span className="dual-price"><bdi>{(Number(dualDiff.p1.price) || 0).toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}</bdi></span>
-              <span className="dual-ppm"><bdi>{dualDiff.ppm1.toLocaleString('en-US')} {isAr ? 'ج.م/م²' : 'EGP/m²'}</bdi></span>
+              <span className="dual-ppm"><bdi>{dualDiff.ppm1 > 0 ? `${dualDiff.ppm1.toLocaleString('en-US')} ${isAr ? 'ج.م/م²' : 'EGP/m²'}` : (isAr ? 'المساحة غير مسجلة' : 'Area not listed')}</bdi></span>
             </div>
           </div>
         </div>
@@ -114,7 +114,7 @@ export default function CompareDuel({
             <h5 className="dual-card-title">{isAr ? dualDiff.p2.title_ar : dualDiff.p2.title_en}</h5>
             <div className="dual-card-meta">
               <span className="dual-price"><bdi>{(Number(dualDiff.p2.price) || 0).toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}</bdi></span>
-              <span className="dual-ppm"><bdi>{dualDiff.ppm2.toLocaleString('en-US')} {isAr ? 'ج.م/م²' : 'EGP/m²'}</bdi></span>
+              <span className="dual-ppm"><bdi>{dualDiff.ppm2 > 0 ? `${dualDiff.ppm2.toLocaleString('en-US')} ${isAr ? 'ج.م/م²' : 'EGP/m²'}` : (isAr ? 'المساحة غير مسجلة' : 'Area not listed')}</bdi></span>
             </div>
           </div>
         </div>
