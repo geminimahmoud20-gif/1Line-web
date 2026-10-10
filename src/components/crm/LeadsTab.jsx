@@ -61,7 +61,8 @@ export default function LeadsTab({
   setLeadSort,
   canEdit = true,
   canExport = false,
-  canClaimLead = () => false
+  canClaimLead = () => false,
+  canCloseDeals = true
 }) {
   const [lostFor, setLostFor] = useState(null);
   const [mergeGroup, setMergeGroup] = useState(null);
@@ -610,8 +611,8 @@ export default function LeadsTab({
                         <option value="contacted">{isAr ? 'تم التواصل' : 'Contacted'}</option>
                         <option value="site_visit">{isAr ? 'معاينة مجدولة' : 'Site Visit'}</option>
                         <option value="negotiating">{isAr ? 'قيد التفاوض' : 'Negotiating'}</option>
-                        <option value="closing">{isAr ? 'توقيع وحجز' : 'Closing'}</option>
-                        <option value="closed">{isAr ? 'صفقة ناجحة' : 'Closed Won'}</option>
+                        <option value="closing" disabled={!canCloseDeals && l.status !== 'closing'}>{isAr ? 'توقيع وحجز' : 'Closing'}</option>
+                        <option value="closed" disabled={!canCloseDeals && l.status !== 'closed'}>{isAr ? 'صفقة ناجحة' : 'Closed Won'}</option>
                         <option value="lost">{isAr ? 'صفقة خسرانة' : 'Closed Lost'}</option>
                       </select>
                     </div>

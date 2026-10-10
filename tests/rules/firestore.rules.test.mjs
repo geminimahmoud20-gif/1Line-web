@@ -394,3 +394,18 @@ test('session_revocations: a member reads only their own marker; nobody writes f
   await assertFails(setDoc(doc(asAdmin(), 'session_revocations/u-agent_east'), { at: serverTimestamp() }));
   await assertFails(getDoc(doc(guest(), 'session_revocations/u-agent_east')));
 });
+
+test('leads: moving a lead to closing / won needs deal.edit; other stages are lead work', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'leads/w1'), { name: 'صفقة', status: 'negotiating', assignedTo: 'Sales Team A' });
+  });
+  // a custom role that edits its team's leads but has no deal rights
+  const noDeals = env.authenticatedContext('u-nodeal', { role: 'r_nodeal', staff: true, perms: ['ld.edit', 'ld.phone'], desk: 'Sales Team A' }).firestore();
+  await assertSucceeds(setDoc(doc(noDeals, 'leads/w1'), { status: 'site_visit' }, { merge: true }));
+  await assertFails(setDoc(doc(noDeals, 'leads/w1'), { status: 'closed' }, { merge: true }));
+  await assertFails(setDoc(doc(noDeals, 'leads/w1'), { status: 'closing' }, { merge: true }));
+  const withDeals = env.authenticatedContext('u-deal', { role: 'r_deal', staff: true, perms: ['ld.edit', 'ld.phone', 'deal.edit'], desk: 'Sales Team A' }).firestore();
+  await assertSucceeds(setDoc(doc(withDeals, 'leads/w1'), { status: 'closed' }, { merge: true }));
+  // editing other fields of an already-won lead is not a new close
+  await assertSucceeds(setDoc(doc(noDeals, 'leads/w1'), { notes: 'متابعة بعد البيع' }, { merge: true }));
+});

@@ -684,6 +684,7 @@ export const CrmAdminPanel = ({
           canEdit={canEditLeads}
           canExport={canExport}
           canClaimLead={canClaimLead}
+          canCloseDeals={isSuperRole || perms.includes('deal.edit')}
           sourceFilter={sourceFilter}
           setSourceFilter={setSourceFilter}
           dateFilter={dateFilter}
