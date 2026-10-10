@@ -3,6 +3,7 @@ import { Sparkles, Send, CheckCircle2, Car, Zap } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
 import { getAreas, normalizeAreaKey } from '../../utils/areasData';
 import { parseMoney } from '../../utils/crmLeadViews';
+import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 
 export default function SmartMatchingHub({
   leads = [],
@@ -138,7 +139,7 @@ export default function SmartMatchingHub({
         `Would you like to schedule a site visit?`;
 
     if (cleanPhone) {
-      window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(waText)}`, '_blank', 'noopener,noreferrer');
+      window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}?text=${encodeURIComponent(waText)}`, '_blank', 'noopener,noreferrer');
     }
 
     if (triggerToast) {

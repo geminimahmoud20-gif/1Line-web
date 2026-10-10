@@ -60,6 +60,7 @@ export const upsertCatalogItem = lazyCall('upsertCatalogItem');
 export const upsertCatalogItems = lazyCall('upsertCatalogItems');
 export const importLeads = lazyCall('importLeads');
 export const restoreLeads = lazyCall('restoreLeads');
+export const mergeLeads = lazyCall('mergeLeads');
 export const moveLeadsToArea = lazyCall('moveLeadsToArea');
 export const moveDemandsToArea = lazyCall('moveDemandsToArea');
 export const searchLeads = lazyCall('searchLeads');

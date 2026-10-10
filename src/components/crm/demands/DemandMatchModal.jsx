@@ -1,4 +1,5 @@
 import { X, MapPin, AlertCircle, Home, Share2 } from 'lucide-react';
+import { formatWhatsAppPhone } from '../../../utils/matchingEngine';
 
 export default function DemandMatchModal({
   canViewPhone,
@@ -120,7 +121,7 @@ export default function DemandMatchModal({
                     {/* WhatsApp Pitch Share Button */}
                     {cleanPhone && canViewPhone ? (
                       <a
-                        href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(shareText)}`}
+                        href={`https://wa.me/${formatWhatsAppPhone(cleanPhone)}?text=${encodeURIComponent(shareText)}`}
                         target="_blank"
                         rel="noreferrer"
                         className="btn btn-sm btn-primary"

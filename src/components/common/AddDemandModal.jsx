@@ -142,7 +142,7 @@ export default function AddDemandModal({
       urgency: formData.timeframe === 'immediate' ? 'high' : formData.timeframe === 'within_1_month' ? 'high' : 'medium',
       minSize: formData.minSize,
       notes: formData.notes,
-      timestamp: isAr ? 'الآن' : 'Just now',
+      timestamp: new Date().toISOString(),
       createdAt: new Date().toISOString(),
       status: 'pending',
       source: 'public_web_demand_form'

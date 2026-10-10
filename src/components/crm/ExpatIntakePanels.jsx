@@ -5,9 +5,10 @@ import { findTradeMatches, matchInventory, reachBudget, OFFER_TYPES, WANT_TYPES,
 import { GOVERNORATES } from '../../utils/propertyInsights';
 import { getFxState, subscribeFx, initFxRates } from '../../utils/fxRates';
 import './crm-intake.css';
+import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 
 const fmt = (n) => Math.round(Number(n) || 0).toLocaleString('en-US');
-const waLink = (phone, text) => `https://wa.me/${String(phone || '').replace(/[^\d]/g, '')}?text=${encodeURIComponent(text)}`;
+const waLink = (phone, text) => `https://wa.me/${formatWhatsAppPhone(String(phone || ''))}?text=${encodeURIComponent(text)}`;
 const when = (iso) => {
   if (!iso) return '—';
   try { return new Date(iso).toLocaleString('ar-EG-u-nu-latn', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch { return '—'; }

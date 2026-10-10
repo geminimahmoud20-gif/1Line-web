@@ -465,6 +465,36 @@ export const moveLeadsToArea = async (fromArea, toArea) => {
   }
 };
 
+/**
+ * Merge duplicates in one atomic batch: the kept lead (and its contact doc) gets the merged
+ * fields and the duplicates (with their contact docs) are deleted — all or nothing.
+ */
+export const mergeLeads = async (keepId, mergedFields, removeIds = []) => {
+  if (!isFirebaseConfigured() || !db || !keepId) return false;
+  try {
+    const keepRef = doc(db, 'leads', String(keepId));
+    const { lead, contact } = splitLeadFields(mergedFields);
+    let desk = lead.assignedTo;
+    if (desk === undefined) {
+      const snap = await getDoc(keepRef);
+      desk = deskOf(snap.exists() ? snap.data() : {});
+    }
+    const batch = writeBatch(db);
+    batch.set(keepRef, { ...lead, updatedAt: serverTimestamp() }, { merge: true });
+    batch.set(doc(db, 'lead_contacts', String(keepId)), { ...contact, assignedTo: desk || UNASSIGNED_DESK }, { merge: true });
+    for (const id of removeIds) {
+      if (String(id) === String(keepId)) continue;
+      batch.delete(doc(db, 'leads', String(id)));
+      batch.delete(doc(db, 'lead_contacts', String(id)));
+    }
+    await batch.commit();
+    return true;
+  } catch (error) {
+    console.error('Firebase mergeLeads error:', error);
+    return false;
+  }
+};
+
 // ===================== SEARCH BEYOND THE LOADED LIST =====================
 // The CRM keeps only the newest leads live; these find any client on the server.
 

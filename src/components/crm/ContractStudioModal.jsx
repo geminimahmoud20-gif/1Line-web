@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X, FileText, Download, Send, Building2, User, Loader2 } from 'lucide-react';
 import { trackEvent } from '../../utils/visitorTracker';
 import { getDynamicPhone } from '../../utils/founderCmsData';
+import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 
 /**
  * ContractStudioModal Component
@@ -310,7 +311,7 @@ export default function ContractStudioModal({
             </button>
 
             <a
-              href={`https://wa.me/${formData.buyerPhone.replace(/[^0-9]/g, '')}?text=${whatsappText}`}
+              href={`https://wa.me/${formatWhatsAppPhone(formData.buyerPhone)}?text=${whatsappText}`}
               target="_blank"
               rel="noopener noreferrer"
               className="btn"

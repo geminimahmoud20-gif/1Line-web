@@ -5,7 +5,7 @@ import { exportToCsv } from '../utils/exportCsv';
 import { exportRows } from '../utils/transfer/exportTable';
 import { leadToRow } from '../utils/transfer/leadSchema';
 
-import { restoreLeads } from '../firebaseLazy';
+import { restoreLeads, mergeLeads } from '../firebaseLazy';
 import { canExportCsv, canDeleteLead, canManagePayments, canEditLeadsRole, assignableDesks, scopeLeadsForAccess } from '../utils/rbacRules';
 import { permsOfRole } from '../utils/accessModel';
 
@@ -35,6 +35,7 @@ import { LEAD_EXPORT_HEADERS, makeLeadFormatters } from './crm/leadFormatters';
 import CrmLoginGate from './crm/CrmLoginGate';
 import useLeadKeyboardTriage from './crm/useLeadKeyboardTriage';
 import { filterLeads, sortLeads, duplicatesById, buildMergedLead } from '../utils/crmLeadViews';
+import { formatWhatsAppPhone } from '../utils/matchingEngine';
 
 export const CrmAdminPanel = ({
   lang = 'ar',
@@ -534,7 +535,7 @@ export const CrmAdminPanel = ({
       const text = isAr 
         ? `مرحباً أ. ${lead.name || ''}، معك مستشار شركة 1Line للحلول العقارية بسوهاج. نود متابعة طلبك العقاري ومساعدتك في أفضل الفرص المتاحة.` 
         : `Hello ${lead.name || ''}, this is 1Line Real Estate following up on your property request in Sohag.`;
-      window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`, '_blank');
+      window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}?text=${encodeURIComponent(text)}`, '_blank');
     }
   };
 
@@ -567,10 +568,22 @@ export const CrmAdminPanel = ({
     const keep = leads.find((l) => l.id === keepId);
     const others = leads.filter((l) => otherIds.includes(l.id));
     if (!keep || others.length === 0 || !onUpdateLead) return false;
-    await onUpdateLead(keepId, buildMergedLead(keep, others));
-    for (const o of others) {
-      if (onDeleteLead) await onDeleteLead(o.id);
-      else setLeads((prev) => prev.filter((l) => l.id !== o.id));
+    const merged = buildMergedLead(keep, others);
+    const otherIds2 = others.map((o) => o.id);
+    if (firebaseConnected) {
+      // One batch: either the kept lead is updated AND the duplicates are gone, or nothing changes
+      const ok = await mergeLeads(keepId, merged, otherIds2);
+      if (!ok) {
+        triggerToast(isAr ? 'تعذّر الدمج، لم يتغير أي سجل. حاول تاني.' : 'Merge failed; nothing was changed. Try again.', 'error');
+        return false;
+      }
+      setLeads((prev) => prev.filter((l) => !otherIds2.includes(l.id)).map((l) => (l.id === keepId ? { ...l, ...merged } : l)));
+    } else {
+      await onUpdateLead(keepId, merged);
+      for (const o of others) {
+        if (onDeleteLead) await onDeleteLead(o.id);
+        else setLeads((prev) => prev.filter((l) => l.id !== o.id));
+      }
     }
     triggerToast(isAr ? `تم دمج ${others.length} سجل مكرر في عميل واحد` : `Merged ${others.length} duplicate(s)`, 'success');
     return true;

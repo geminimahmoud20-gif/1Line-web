@@ -4,6 +4,7 @@ import {
   Car,
   X
 } from 'lucide-react';
+import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 
 export default function SiteVisitModal({
   isOpen,
@@ -75,7 +76,7 @@ export default function SiteVisitModal({
         `🤝 *Accompanying Advisor:* ${agentName}`;
 
     if (cleanPhone) {
-      window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(waText)}`, '_blank');
+      window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}?text=${encodeURIComponent(waText)}`, '_blank');
     }
 
     if (triggerToast) {

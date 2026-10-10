@@ -5,6 +5,9 @@ import { Phone, MessageSquare, CheckCircle2, Plus, Send, Activity, Lock, Calenda
 import { canViewLeadPhone, maskPhoneNumber } from '../../utils/rbacRules';
 import { generateGoogleCalendarUrl, downloadIcsFile } from '../../utils/calendarSync';
 import CustomerOverviewTab from './lead-profile/CustomerOverviewTab';
+import { formatWhatsAppPhone } from '../../utils/matchingEngine';
+import { parseMoney } from '../../utils/crmLeadViews';
+import { normalizeAreaKey } from '../../utils/areasData';
 
 export default function CustomerProfileModal({
   isOpen,
@@ -154,10 +157,27 @@ export default function CustomerProfileModal({
   };
 
   // Matched Properties for this client
-  const matchedProperties = properties.filter(p => {
-    const clientArea = formData.area || 'east';
-    return p.areaKey === clientArea || !p.isDeleted;
-  }).slice(0, 4);
+  // Only what the client actually asked for (the form falls back to east/apartment for display)
+  const wantArea = (lead?.details?.area || lead?.area) ? normalizeAreaKey(formData.area) : null;
+  const wantType = (lead?.details?.propertyType || lead?.propertyType) ? formData.propertyType : null;
+  const wantBudget = parseMoney(formData.budget) || parseMoney(lead?.budget);
+  const matchedProperties = properties
+    .filter((p) => !p.isDeleted && (p.status || 'published') === 'published' && Number(p.price) > 0)
+    .map((p) => {
+      const price = Number(p.price);
+      // A different type, or a price far above the budget, is not a match at all
+      if (wantType && p.type !== wantType) return null;
+      if (wantBudget && price > wantBudget * 1.25) return null;
+      let score = 0;
+      if (wantArea && normalizeAreaKey(p.areaKey) === wantArea) score += 40;
+      if (wantType) score += 30;
+      if (wantBudget) score += price >= wantBudget * 0.75 ? 30 : 15;
+      return { p, score };
+    })
+    .filter((m) => m && m.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 4)
+    .map((m) => m.p);
 
   // Digital Journey & Clickstream History for this lead
   // Only the journey recorded on the customer's own device and saved with their request.
@@ -212,7 +232,7 @@ export default function CustomerProfileModal({
               <button
                 type="button"
                 className="btn btn-sm"
-                onClick={() => window.open(`https://wa.me/${cleanPhone}`, '_blank', 'noopener,noreferrer')}
+                onClick={() => window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}`, '_blank', 'noopener,noreferrer')}
                 style={{ padding: '6px 12px', fontSize: 'var(--crm-text-sm)', background: 'var(--crm-positive-soft)', color: 'var(--crm-positive)', border: '1px solid var(--crm-positive-line)', fontWeight: 'bold' }}
               >
                 <MessageSquare size={14} />
@@ -565,6 +585,13 @@ export default function CustomerProfileModal({
                 🏢 {isAr ? 'العقارات والوحدات المقترحة لهذا العميل:' : 'Matched & Recommended Units:'}
               </h4>
 
+              {matchedProperties.length === 0 && (
+                <p style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-sm)', margin: '0 0 12px' }}>
+                  {isAr
+                    ? 'مفيش وحدة منشورة بنفس النوع وفي حدود الميزانية دلوقتي.'
+                    : 'No published unit of this type within the budget right now.'}
+                </p>
+              )}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 {matchedProperties.map((prop) => (
                   <div
@@ -594,7 +621,7 @@ export default function CustomerProfileModal({
                       className="btn btn-sm btn-primary"
                       onClick={() => {
                         const waText = `أهلاً أ. ${formData.name}، بخصوص طلبك العقاري، نود ترشيح وحدة ${isAr ? prop.title_ar : prop.title_en} بسعر ${prop.price?.toLocaleString('en-US')} ج.م. هل نحدد موعداً للمعاينة؟`;
-                        window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(waText)}`, '_blank', 'noopener,noreferrer');
+                        window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}?text=${encodeURIComponent(waText)}`, '_blank', 'noopener,noreferrer');
                       }}
                       style={{ padding: '6px 10px', fontSize: 'var(--crm-text-xs)', background: 'var(--crm-brand-navy)', color: 'var(--crm-on-dark)', borderRadius: '6px' }}
                       title={isAr ? 'إرسال بروشور الوحدة على الواتساب' : 'Send WhatsApp Brochure'}

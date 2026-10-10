@@ -7,6 +7,7 @@ import {
   Zap
 } from 'lucide-react';
 import { parseMoney } from '../../utils/crmLeadViews';
+import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 
 const amountOf = (l) => parseMoney(l.budget) || parseMoney(l.details?.budget) || parseMoney(l.details?.expectedPrice);
 
@@ -163,7 +164,7 @@ export default function RetargetingHub({
     const text = getWhatsAppMessage(lead);
     const cleanPhone = (lead.whatsapp || lead.phone || '').replace(/[^0-9]/g, '');
     if (cleanPhone) {
-      window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`, '_blank');
+      window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}?text=${encodeURIComponent(text)}`, '_blank');
       
       // Update Lead Activity Log
       if (onUpdateLead) {

@@ -441,3 +441,16 @@ test('backup restore: an admin re-creates a lead with its original id and contac
   await assertSucceeds(restore(asAdmin()));
   await assertFails(restore(as('viewer')));
 });
+
+test('merge duplicates: one batch updates the kept lead and deletes the copies (admin only)', async () => {
+  const merge = (db) => {
+    const b = writeBatch(db);
+    b.set(doc(db, 'leads/c1'), { notes: 'merged', updatedAt: serverTimestamp() }, { merge: true });
+    b.set(doc(db, 'lead_contacts/c1'), { phone: '01000000011', assignedTo: 'Sales Team A' }, { merge: true });
+    b.delete(doc(db, 'leads/c2'));
+    b.delete(doc(db, 'lead_contacts/c2'));
+    return b.commit();
+  };
+  await assertFails(merge(as('sales_manager')));
+  await assertSucceeds(merge(asAdmin()));
+});

@@ -3,6 +3,7 @@ import { MessageSquare, Calendar, Car, Clock, Sparkles, Edit3, Trash2, ChevronRi
 import SiteVisitModal from './SiteVisitModal';
 import './crm-kanban.css';
 import { getAreas } from '../../utils/areasData';
+import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 
 const PIPELINE_STAGES = [
   { id: 'new', title_ar: 'طلبات جديدة', title_en: 'New Inquiries', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)' },
@@ -228,7 +229,7 @@ export default function KanbanPipeline({
     const text = isAr 
       ? `مرحباً أ. ${lead.name || 'العميل الكريم'}، معك مستشار شركة 1Line للحلول العقارية بسوهاج بخصوص طلبكم (${propTitle} في ${areaTitle}). يسعدنا تزويدك بالتفاصيل.`
       : `Hello ${lead.name}, this is 1Line Real Estate following up on your request for ${propTitle} in ${areaTitle}.`;
-    window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`, '_blank');
+    window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   const handleScheduleVisit = (leadId, visitDetails) => {
