@@ -41,12 +41,16 @@ describe('Homepage Exhaustive Deep Audit', () => {
     // view, so a wrapped element from the first query can be detached by the time it is checked.
     cy.get('img').its('length').then((count) => {
       for (let i = 0; i < count; i += 1) {
+        // Scroll and check against a fresh list each time, and never via .eq(i): a lazy section
+        // can swap its images out between two queries, and .eq(i) then waits for an element that
+        // no longer exists (the "Expected to find element: 8" failure).
         cy.get('img').then(($imgs) => {
-          if (i >= $imgs.length) return; // a lazy section swapped its images out
-          cy.get('img').eq(i).scrollIntoView({ duration: 150 });
-          cy.get('img').eq(i).should(($el) => {
-            expect($el[0].naturalWidth, `Image source "${$el[0].src}" failed to load`).to.be.greaterThan(0);
-          });
+          if (i < $imgs.length) $imgs[i].scrollIntoView({ block: 'center' });
+        });
+        cy.get('img').should(($all) => {
+          if (i >= $all.length) return; // a lazy section swapped its images out
+          const img = $all[i];
+          expect(img.naturalWidth, `Image source "${img.src}" failed to load`).to.be.greaterThan(0);
         });
       }
     });
