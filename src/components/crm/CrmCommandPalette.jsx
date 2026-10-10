@@ -14,7 +14,8 @@ export default function CrmCommandPalette({
   onSelectDemand,
   onAction,
   userRole = 'super_admin',
-  isAr = true
+  isAr = true,
+  canAdd = {}
 }) {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -103,7 +104,11 @@ export default function CrmCommandPalette({
       shortcut: 'T',
       action: () => toggleTheme?.()
     }
-  ], [onAction, theme, toggleTheme]);
+  ].filter((a) => {
+    // Add actions only for roles that can save what they add
+    const need = { act_add_lead: 'lead', act_add_prop: 'property', act_add_demand: 'demand' }[a.id];
+    return !need || canAdd[need] !== false;
+  }), [onAction, theme, toggleTheme, canAdd]);
 
   // Filtered results calculation
   const searchResults = useMemo(() => {

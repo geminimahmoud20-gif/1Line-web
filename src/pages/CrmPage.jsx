@@ -64,6 +64,12 @@ export default function CrmPage({
   const [openRequest, setOpenRequest] = useState(null);
   if (openRequest && openRequest.tab !== activeTab) setOpenRequest(null);
   const requestOpen = (type) => {
+    // Never open a form the role can't save (the same checks guard the handlers themselves)
+    const allowed = { add_lead: can.editLeads, add_property: can.editInventory, add_demand: can.manageDemands, add_project: can.editInventory }[type];
+    if (allowed === false) {
+      if (triggerToast) triggerToast(lang === 'ar' ? 'صلاحياتك الحالية لا تسمح بهذا الإجراء' : 'Your role does not allow this action', 'error');
+      return;
+    }
     const ADMIN_PANEL_TABS = ['dashboard', 'leads', 'kanban', 'matching', 'agents', 'financials', 'retargeting', 'analytics'];
     const tab = { add_lead: 'leads', add_property: 'properties', add_demand: 'demands', add_project: 'projects' }[type]
       || (ADMIN_PANEL_TABS.includes(activeTab) ? activeTab : 'dashboard');
@@ -117,8 +123,11 @@ export default function CrmPage({
     // viewer / finance / property_manager read leads but don't change their pipeline
     editLeads: canEditLeadsRole(activeRole, userPerms),
     // Bulk file import of clients (and owners from a property file): managers only
-    importLeads: activeRole === 'super_admin' || activeRole === 'sales_manager' || Boolean(userPerms?.includes('ld.import'))
+    importLeads: activeRole === 'super_admin' || activeRole === 'sales_manager' || Boolean(userPerms?.includes('ld.import')),
+    // Campaigns message clients directly: sales roles that see real numbers
+    retarget: activeRole === 'super_admin' || (canEditLeadsRole(activeRole, userPerms) && Boolean(userPerms?.includes('ld.phone')))
   };
+  const canAddMap = { lead: can.editLeads, property: can.editInventory, demand: can.manageDemands, project: can.editInventory, retarget: can.retarget };
   // Returns false when blocked so callers that check `=== false` don't report success
   const guard = (allowed, fn) => (...args) => {
     if (!allowed) {
@@ -597,6 +606,8 @@ export default function CrmPage({
         pendingDemandsBadge={pendingDemandsCount > 0 ? `${pendingDemandsCount} معلق` : null}
         projects={projects}
         activeRole={activeRole}
+        canRetarget={can.retarget}
+        canWorkRequests={can.editLeads}
         collapsed={sidebarCollapsed}
         onToggleCollapse={handleToggleCollapse}
         width={sidebarWidth}
@@ -640,6 +651,7 @@ export default function CrmPage({
           onToggleMobileSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
           onOpenCommandPalette={() => setShowCommandPalette(true)}
           onRequestOpen={requestOpen}
+          canAdd={canAddMap}
         />
 
         {/* Role Simulation Mode Alert Banner */}
@@ -730,6 +742,10 @@ export default function CrmPage({
               lang={lang}
               triggerToast={triggerToast}
             />
+          ) : (activeTab === 'expat' || activeTab === 'trade_ins') && !can.editLeads ? (
+            <div className="crm-table-container" style={{ padding: '32px', textAlign: 'center', color: 'var(--crm-muted)' }}>
+              {isAr ? 'طلبات المغتربين والتبادل متاحة لفريق المبيعات والإدارة فقط.' : 'Expat and trade-in requests are for the sales team and managers only.'}
+            </div>
           ) : activeTab === 'expat' ? (
             <RemoteInspectionsPanel
               properties={properties}
@@ -791,7 +807,7 @@ export default function CrmPage({
                     onConvertToProperty={handleConvertToProperty}
                     onUpdateLead={guard(can.editLeads, onUpdateLead)}
                     onDeleteLead={guard(activeRole === 'super_admin', onDeleteLead)}
-                    onAddNewLead={onAddNewLead}
+                    onAddNewLead={guard(can.editLeads, onAddNewLead)}
                     onImportLeads={can.importLeads ? handleImportLeads : undefined}
                     demands={demands}
                     onSwitchToDemands={() => setActiveTab('demands')}
@@ -827,7 +843,7 @@ export default function CrmPage({
               onConvertToProperty={handleConvertToProperty}
               onUpdateLead={guard(can.editLeads, onUpdateLead)}
               onDeleteLead={guard(activeRole === 'super_admin', onDeleteLead)}
-              onAddNewLead={onAddNewLead}
+              onAddNewLead={guard(can.editLeads, onAddNewLead)}
               onImportLeads={can.importLeads ? handleImportLeads : undefined}
               demands={demands}
               onSwitchToDemands={() => setActiveTab('demands')}
@@ -876,6 +892,7 @@ export default function CrmPage({
         demands={demands}
         userRole={activeRole}
         isAr={isAr}
+        canAdd={canAddMap}
         onSelectLead={() => {
           setActiveTab('leads');
           setShowCommandPalette(false);

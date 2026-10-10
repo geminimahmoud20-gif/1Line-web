@@ -220,7 +220,12 @@ test('request contacts: only sales roles read them; read-only roles do not', asy
   for (const role of ['sales_manager', 'agent_east', 'sales_agent']) {
     await assertSucceeds(getDocs(query(collection(as(role), 'request_contacts'), where('kind', '==', 'trade_ins'))));
   }
-  await assertSucceeds(getDoc(doc(as('viewer'), 'trade_ins/t1')));
+  // The requests themselves are for the team that follows them up, not read-only roles
+  for (const role of ['viewer', 'finance', 'property_manager']) {
+    await assertFails(getDoc(doc(as(role), 'trade_ins/t1')));
+  }
+  await assertSucceeds(getDoc(doc(as('agent_east'), 'trade_ins/t1')));
+  await assertSucceeds(getDoc(doc(as('sales_manager'), 'trade_ins/t1')));
 });
 
 test('request contacts: a trade-in without a phone needs its contact doc; updates cannot add a phone', async () => {

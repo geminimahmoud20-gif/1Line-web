@@ -14,6 +14,8 @@ export default function CrmSidebar({
   demands = [],
   projects = [],
   activeRole = 'super_admin',
+  canRetarget = true,
+  canWorkRequests = true,
   collapsed = false,
   onToggleCollapse,
   width = 270,
@@ -112,13 +114,15 @@ export default function CrmSidebar({
           label_ar: 'فريق المبيعات والعمولات',
           label_en: 'Agents Leaderboard'
         },
-        {
+        // Messages clients in bulk: only roles that work leads and see real numbers
+        ...(canRetarget ? [{
           id: 'retargeting',
           icon: Flame,
           label_ar: 'إعادة الاستهداف الذكي',
           label_en: 'Smart Retargeting'
-        },
-        {
+        }] : []),
+        // Client requests (expat viewings, swaps): the people who follow up on them
+        ...(canWorkRequests ? [{
           id: 'expat',
           icon: Globe2,
           label_ar: 'خدمات المغتربين VIP',
@@ -129,7 +133,7 @@ export default function CrmSidebar({
           icon: Repeat2,
           label_ar: 'صفقات التبادل العقاري',
           label_en: 'Trade-in Deals'
-        }
+        }] : [])
       ]
     },
     {
@@ -185,7 +189,7 @@ export default function CrmSidebar({
         }
       ]
     }
-  ], [leads.length, properties.length, pendingDemandsCount, demands.length, projects.length, activeRole]);
+  ], [leads.length, properties.length, pendingDemandsCount, demands.length, projects.length, activeRole, canRetarget, canWorkRequests]);
 
   const handleItemClick = (id) => {
     setActiveTab(id);
