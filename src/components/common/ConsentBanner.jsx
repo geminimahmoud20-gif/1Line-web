@@ -51,7 +51,7 @@ export default function ConsentBanner({ lang = 'ar' }) {
         {/* Full sentence on desktop; one line on phones so the banner doesn't cover the hero search */}
         <span className="lx-consent-long">
           {isAr
-            ? 'نستخدم أدوات قياس لتحسين تجربة الموقع، ولا نشغّلها إلا بموافقتك. بياناتك في النماذج تُستخدم فقط للرد على طلبك.'
+            ? 'بموافقتك نقيس تصفحك للموقع (الوحدات والبحث والحاسبة) لنرشّح لك الأنسب، من غير أسماء أو أرقام. بياناتك في النماذج تُستخدم فقط للرد على طلبك.'
             : 'We use analytics to improve the site and only run them with your consent. Form data is used only to respond to your request.'}
         </span>
         <span className="lx-consent-short">

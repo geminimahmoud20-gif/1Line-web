@@ -3,14 +3,14 @@ import { updatePageSeo } from '../utils/seoHelper';
 import { BRAND, CONTACT } from '../config/siteConfig';
 import { getDynamicPhone } from '../utils/founderCmsData';
 
-const LAST_UPDATED = '2026-09-24';
+const LAST_UPDATED = '2026-10-10';
 
 const SECTIONS_AR = [
   ['من نحن', `${BRAND.name_ar} (${BRAND.name_en})، ومقرها ${CONTACT.address_ar}. نحن المسؤول عن معالجة البيانات التي تُرسل عبر هذا الموقع.`],
   ['البيانات التي نجمعها', 'ما تكتبه بنفسك في النماذج: الاسم، رقم الهاتف والواتساب، البريد الإلكتروني إن وُجد، وتفاصيل العقار أو الطلب. وبيانات استخدام تقنية (الصفحات التي زرتها ونوع الجهاز) لتحسين الموقع.'],
   ['لماذا نستخدمها', 'للتواصل معك بخصوص طلبك، وإعداد التقييم أو مطابقة العقارات، وترتيب المعاينات، وتحسين الخدمة. لا نبيع بياناتك ولا نؤجرها لأي جهة.'],
   ['مع من نشاركها', 'فريق 1Line المختص بطلبك فقط. عند إتمام صفقة قد نشارك الحد الأدنى اللازم مع الطرف الآخر أو المحامي أو جهة التوثيق، وبعلمك. نستضيف البيانات لدى Google Firebase، ونستخدم Microsoft Clarity للقياس فقط إذا وافقت عليه.'],
-  ['ملفات تعريف الارتباط والقياس', 'يحفظ الموقع تفضيلاتك (اللغة، الوضع الليلي، المفضلة) في متصفحك. أدوات القياس وتسجيل الجلسات لا تعمل إلا بعد موافقتك في شريط الخصوصية، ويمكنك سحب الموافقة بمسح بيانات الموقع من متصفحك.'],
+  ['ملفات تعريف الارتباط والقياس', 'يحفظ الموقع تفضيلاتك (اللغة، الوضع الليلي، المفضلة) في متصفحك. إذا وافقت في شريط الخصوصية نحفظ معرّفاً عشوائياً لجهازك ونسجّل تصفحك للموقع (الوحدات التي فتحتها ومدة قراءتها، البحث، حاسبة التمويل، التواصل) لنفهم احتياجك ونرشّح لك وحدات مناسبة، ويُربط ذلك بطلبك إذا سجّلت طلباً. لا نسجّل في القياس اسماً أو رقماً أو نصاً تكتبه في النماذج، وتُحذف السجلات التفصيلية تلقائياً بعد 180 يوماً. إذا لم توافق نحسب الزيارة ضمن أرقام إجمالية فقط دون أي معرّف. يمكنك سحب الموافقة بمسح بيانات الموقع من متصفحك.'],
   ['مدة الاحتفاظ', 'نحتفظ ببيانات الطلبات طوال مدة التعامل وحتى 24 شهراً بعد آخر تواصل، ما لم يلزمنا القانون بمدة أطول للمستندات التعاقدية.'],
   ['حقوقك', 'وفق قانون حماية البيانات الشخصية المصري رقم 151 لسنة 2020، يحق لك معرفة البيانات المحفوظة عنك، وتصحيحها، وطلب حذفها، وسحب موافقتك في أي وقت. راسلنا وسنرد خلال 15 يوم عمل.'],
   ['المدفوعات', 'لا يقبل هذا الموقع أي مدفوعات إلكترونية ولا يطلب بيانات بطاقات. أي مبلغ جدية حجز يُسدَّد فقط بعد استلامك خطاب حجز رسمياً من الشركة يحدد الحساب والمبلغ وشروط الاسترداد.'],
@@ -21,7 +21,7 @@ const SECTIONS_EN = [
   ['What we collect', 'What you type into forms (name, phone/WhatsApp, optional email, property or request details) and technical usage data (pages visited, device type) to improve the site.'],
   ['Why we use it', 'To contact you about your request, prepare valuations or matches, arrange viewings and improve the service. We never sell or rent your data.'],
   ['Who we share it with', 'Only the 1Line team handling your request. When a deal proceeds we may share the minimum necessary with the counterparty, lawyer or notary, with your knowledge. Data is hosted on Google Firebase; Microsoft Clarity runs only with your consent.'],
-  ['Cookies and analytics', 'Preferences (language, theme, favorites) are stored in your browser. Analytics and session recording run only after you accept in the privacy bar; clear site data to withdraw consent.'],
+  ['Cookies and analytics', 'Preferences (language, theme, favorites) are stored in your browser. If you accept in the privacy bar, we keep a random ID for your device and record your browsing (listings opened and reading time, searches, the financing calculator, contact clicks) to understand your needs and suggest suitable units; it is linked to your request if you submit one. Analytics never record names, numbers or text you type, and detailed logs are deleted after 180 days. Without consent a visit only adds to anonymous totals. Clear site data to withdraw consent.'],
   ['Retention', 'We keep request data for the duration of our relationship and up to 24 months after last contact, unless the law requires longer for contract records.'],
   ['Your rights', 'Under Egyptian Personal Data Protection Law No. 151 of 2020 you may access, correct or delete your data and withdraw consent at any time. Email us; we reply within 15 business days.'],
   ['Payments', 'This website does not take online payments or card details. Any reservation deposit is paid only after you receive an official reservation letter stating the account, amount and refund terms.'],
