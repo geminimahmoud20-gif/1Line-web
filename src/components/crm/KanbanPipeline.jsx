@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect } from 'react';
-import { MessageSquare, Calendar, Car, Clock, Sparkles, Edit3, Trash2, ChevronRight, ChevronLeft, Filter, AlertTriangle, Shuffle, Search, X, Zap, MoreHorizontal } from 'lucide-react';
+import { MessageSquare, Calendar, Car, Clock, Sparkles, Edit3, Trash2, ChevronRight, ChevronLeft, Filter, AlertTriangle, Search, X, Zap, MoreHorizontal } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
 import './crm-kanban.css';
 import { getAreas } from '../../utils/areasData';
+import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 
 const PIPELINE_STAGES = [
   { id: 'new', title_ar: 'طلبات جديدة', title_en: 'New Inquiries', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)' },
@@ -221,26 +222,6 @@ export default function KanbanPipeline({
     }
   };
 
-  // Auto distribute leads across stages for realistic demo (with confirmation safeguard)
-  const handleAutoDistributeStages = () => {
-    if (!onUpdateLead || leads.length === 0) return;
-    const confirmed = typeof window !== 'undefined' && window.confirm(
-      isAr 
-        ? `⚠️ تنبيه تشغيلي:\nهل أنت متأكد من رغبتك في إعادة توزيع حالات جميع العملاء (${leads.length} عميل) على مراحل المسار تجريبياً؟\nسيؤدي ذلك إلى تعديل مراحل الصفقات الحالية.`
-        : `⚠️ Operational Warning:\nAre you sure you want to test-redistribute all ${leads.length} leads across pipeline stages? This will update their active deal stages.`
-    );
-    if (!confirmed) return;
-
-    const stages = ['new', 'contacted', 'site_visit', 'negotiating', 'closing'];
-    leads.forEach((lead, idx) => {
-      const assignedStage = stages[idx % stages.length];
-      onUpdateLead(lead.id, { status: assignedStage });
-    });
-    if (triggerToast) {
-      triggerToast(isAr ? 'تم توزيع الصفقات على مسار المبيعات بنجاح!' : 'Leads distributed across stages!', 'success');
-    }
-  };
-
   const onWhatsAppClick = (lead) => {
     const cleanPhone = (lead.whatsapp || lead.phone || '').replace(/[^0-9]/g, '');
     const propTitle = getLocalizedPropertyType(lead.propertyType || lead.details?.propertyType);
@@ -248,7 +229,7 @@ export default function KanbanPipeline({
     const text = isAr 
       ? `مرحباً أ. ${lead.name || 'العميل الكريم'}، معك مستشار شركة 1Line للحلول العقارية بسوهاج بخصوص طلبكم (${propTitle} في ${areaTitle}). يسعدنا تزويدك بالتفاصيل.`
       : `Hello ${lead.name}, this is 1Line Real Estate following up on your request for ${propTitle} in ${areaTitle}.`;
-    window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`, '_blank');
+    window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   const handleScheduleVisit = (leadId, visitDetails) => {
@@ -390,27 +371,6 @@ export default function KanbanPipeline({
             {isAr ? 'مستثمرين' : 'Investors'}
           </button>
 
-          {/* Quick Demo Balancer */}
-          <button
-            type="button"
-            className="btn btn-sm"
-            onClick={handleAutoDistributeStages}
-            title={isAr ? 'توزيع الصفقات تلقائياً على كل مراحل خط الأنابيب لاختبار النظام' : 'Distribute across pipeline'}
-            style={{
-              borderRadius: '8px',
-              fontSize: 'var(--crm-text-xs)',
-              background: 'var(--crm-warn-soft)',
-              border: '1px solid var(--crm-warn-line)',
-              color: 'var(--crm-warn)',
-              fontWeight: 'bold',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px'
-            }}
-          >
-            <Shuffle size={13} />
-            <span>{isAr ? 'توزيع المراحل' : 'Auto Distribute'}</span>
-          </button>
         </div>
       </div>
 

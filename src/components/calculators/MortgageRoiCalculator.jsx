@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Calculator, TrendingUp, Sparkles, Copy, Check, Building2, Landmark, Handshake, ShieldCheck } from 'lucide-react';
 import { trackEvent } from '../../utils/visitorTracker';
-import { getWhatsAppUrl } from '../../utils/founderCmsData';
+import { getWhatsAppUrl, getDynamicPhone } from '../../utils/founderCmsData';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
 
 export default function MortgageRoiCalculator({ 
@@ -23,6 +23,19 @@ export default function MortgageRoiCalculator({
   const [interestRate, setInterestRate] = useState(initialInterestRate); // Annual rate in % (step 1%)
   const [copied, setCopied] = useState(false);
 
+  // Report a real use of the calculator once the visitor stops adjusting it (not on first render):
+  // the price, down payment and years they try say a lot about their budget.
+  const initialPlan = useRef({ price, downpaymentPercent, years });
+  useEffect(() => {
+    const first = initialPlan.current;
+    if (first.price === price && first.downpaymentPercent === downpaymentPercent && first.years === years) return undefined;
+    const t = setTimeout(() => {
+      trackEvent('calculator_used', { price, downPct: downpaymentPercent, years, type: activeTab });
+      initialPlan.current = { price, downpaymentPercent, years };
+    }, 2500);
+    return () => clearTimeout(t);
+  }, [price, downpaymentPercent, years, activeTab]);
+
   // ROI States
   const [monthlyRent, setMonthlyRent] = useState(initialMonthlyRent);
   const annualMaintenance = useMemo(() => {
@@ -32,16 +45,17 @@ export default function MortgageRoiCalculator({
   const [annualAppreciation, setAnnualAppreciation] = useState(15); // Capital growth %
   const isAr = lang === 'ar';
 
+  // Prices are in EGP; for visitors browsing in another currency the copied plan adds the equivalent
   const formatCurrency = (valInEgp) => {
-    const formatted = formatCurrencyPrice(valInEgp, 'EGP', lang);
-    return `${formatted.primary} ${formatted.symbol}`;
+    const formatted = formatCurrencyPrice(valInEgp, currency, lang);
+    return `${formatted.primary} ${formatted.symbol}${formatted.approx ? ` (${formatted.approx})` : ''}`;
   };
 
   // Egyptian Financing Programs Presets
   const FINANCING_PROGRAMS = [
     { id: 'dev_0', name_ar: 'تقسيط مباشر من المطور', name_en: 'Direct Developer 0%', rate: 0, desc_ar: 'سيناريو حسابي بدون فائدة', icon: Handshake },
-    { id: 'cbe_3', name_ar: 'مبادرة البنك المركزي (3%)', name_en: 'CBE 3% Initiative', rate: 3, desc_ar: 'لمحدودي ومتوسطي الدخل', icon: Landmark },
-    { id: 'cbe_8', name_ar: 'مبادرة التمويل العقاري (8%)', name_en: 'Mortgage 8% Initiative', rate: 8, desc_ar: 'فائدة متناقصة ميسرة', icon: Landmark },
+    { id: 'cbe_3', name_ar: 'مبادرة البنك المركزي (3%)', name_en: 'CBE 3% Initiative', rate: 3, desc_ar: 'بشروط دخل وسقف سعر للوحدة', icon: Landmark, restricted: true },
+    { id: 'cbe_8', name_ar: 'مبادرة التمويل العقاري (8%)', name_en: 'Mortgage 8% Initiative', rate: 8, desc_ar: 'بشروط دخل وسقف سعر للوحدة', icon: Landmark, restricted: true },
     { id: 'bank_12', name_ar: 'مرابحة بنكية / تمويل تجاري (12%)', name_en: 'Islamic Murabaha / Bank 12%', rate: 12, desc_ar: 'تمويل سريع للوحدات الفاخرة', icon: Building2 },
   ];
 
@@ -83,7 +97,7 @@ export default function MortgageRoiCalculator({
   // Dynamic slider track fill percentages for active color fill
   const priceFillPct = Math.min(100, Math.max(0, ((price - 500000) / (20000000 - 500000)) * 100));
   const downpaymentFillPct = Math.min(100, Math.max(0, ((downpaymentPercent - 10) / (80 - 10)) * 100));
-  const yearsFillPct = Math.min(100, Math.max(0, ((effectiveYears - 1) / (15 - 1)) * 100));
+  const yearsFillPct = Math.min(100, Math.max(0, ((effectiveYears - 1) / (30 - 1)) * 100));
   const interestFillPct = Math.min(100, Math.max(0, (effectiveRate / 24) * 100));
   const rentFillPct = Math.min(100, Math.max(0, ((monthlyRent - 2000) / (100000 - 2000)) * 100));
   const growthFillPct = Math.min(100, Math.max(0, ((annualAppreciation - 3) / (35 - 3)) * 100));
@@ -105,7 +119,7 @@ export default function MortgageRoiCalculator({
         `• مدة التقسيط: ${years} سنوات (${years * 12} شهر)\n` +
         `• معدل الفائدة/المرابحة: ${interestRate}%\n` +
         `• إجمالي المبلغ المسترد: ${formatCurrency(totalPaid)}\n` +
-        `📞 للاستفسار وحجز الوحدة: +20 122 322 2956`
+        `📞 للاستفسار وحجز الوحدة: ${getDynamicPhone()}`
       : `🏢 Mortgage & Payment Plan - 1Line Real Estate (${currency})\n` +
         `• Price: ${formatCurrency(price)}\n` +
         `• Downpayment (${downpaymentPercent}%): ${formatCurrency(downPaymentAmount)}\n` +
@@ -113,10 +127,10 @@ export default function MortgageRoiCalculator({
         `• Duration: ${years} Years\n` +
         `• Rate: ${interestRate}%\n` +
         `• Total Repayment: ${formatCurrency(totalPaid)}\n` +
-        `📞 Hotline & Booking: +20 122 322 2956`;
+        `📞 Hotline & Booking: ${getDynamicPhone()}`;
     navigator.clipboard.writeText(text);
     setCopied(true);
-    trackEvent('calculator_used', { price, monthlyInstallment, type: activeTab });
+    trackEvent('calculator_used', { price, downPct: downpaymentPercent, years, type: activeTab });
     setTimeout(() => setCopied(false), 3000);
   };
 
@@ -305,7 +319,7 @@ export default function MortgageRoiCalculator({
                     <input
                       type="number"
                       min="1"
-                      max="15"
+                      max="30"
                       step="1"
                       value={years === '' ? '' : years}
                       onChange={(e) => {
@@ -314,7 +328,7 @@ export default function MortgageRoiCalculator({
                           setYears('');
                         } else {
                           const parsed = parseInt(val);
-                          setYears(isNaN(parsed) ? '' : Math.min(25, Math.max(1, parsed)));
+                          setYears(isNaN(parsed) ? '' : Math.min(30, Math.max(1, parsed)));
                         }
                       }}
                       onBlur={() => {
@@ -335,7 +349,7 @@ export default function MortgageRoiCalculator({
                   <input
                     type="range"
                     min="1"
-                    max="15"
+                    max="30"
                     step="1"
                     value={effectiveYears}
                     onChange={(e) => setYears(parseInt(e.target.value))}
@@ -347,7 +361,7 @@ export default function MortgageRoiCalculator({
                   <div className="calc-range-limits-ltr">
                     <span>{isAr ? 'سنة واحدة' : '1 Year'}</span>
                     <span>{isAr ? '7 سنوات' : '7 Years'}</span>
-                    <span>{isAr ? '15 سنة' : '15 Years'}</span>
+                    <span>{isAr ? '30 سنة' : '30 Years'}</span>
                   </div>
                 </div>
 
@@ -444,6 +458,13 @@ export default function MortgageRoiCalculator({
                     );
                   })}
                 </div>
+                {FINANCING_PROGRAMS.some((prog) => prog.restricted && prog.rate === interestRate) && (
+                  <p className="calc-program-note" role="note" style={{ margin: '10px 0 0', fontSize: 'var(--text-xs, 12px)', lineHeight: 1.6, color: 'var(--text-muted)' }}>
+                    {isAr
+                      ? 'المبادرات المدعومة مش لأي وحدة: ليها سقف لسعر الوحدة وحد للدخل وشروط ترخيص، ومدتها ممكن توصل لعشرات السنين. الرقم هنا تقديري، والشروط والسقف الحاليين بيحددهم البنك.'
+                      : 'Subsidised initiatives have a unit-price cap, income limits and licensing conditions, with longer terms. This is an estimate; the bank sets the current terms and caps.'}
+                  </p>
+                )}
               </div>
             </>
           ) : (

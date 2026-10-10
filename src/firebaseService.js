@@ -18,6 +18,7 @@ export * from './services/deals.js';
 export * from './services/notifications.js';
 export { REQUEST_CONTACT_FIELDS } from './services/requestContacts.js';
 export * from './services/demands.js';
+export * from './services/analytics.js';
 export * from './services/intake.js';
 export * from './services/settings.js';
 export * from './services/auth.js';

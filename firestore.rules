@@ -354,6 +354,33 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Visitor analytics, written only by /api/track with the service account. No contact data is
+    // ever stored here (the collector keeps whitelisted ids/numbers only). Readers: staff who see
+    // leads across desks (permission ld.manage: managers, admins) — profiles can be tied to a lead.
+    function canSeeAnalytics() {
+      return hasPerm('ld.manage');
+    }
+    match /analytics_daily/{dayShard} {
+      allow read: if canSeeAnalytics();
+      allow write: if false;
+    }
+    match /analytics_properties/{propertyId} {
+      allow read: if canSeeAnalytics();
+      allow write: if false;
+    }
+    match /analytics_sessions/{sessionId} {
+      allow read: if canSeeAnalytics();
+      allow write: if false;
+    }
+    match /analytics_visitors/{visitorId} {
+      allow read: if canSeeAnalytics();
+      allow write: if false;
+      match /batches/{batchId} {
+        allow read: if canSeeAnalytics();
+        allow write: if false;
+      }
+    }
+
     // 📥 8f. CLIENT DOWNLOADS — a registered client downloaded a brochure / story card / file.
     // The browser files a bounded record; managers see who downloaded what (it holds the client's
     // contact, so desk agents and read-only roles don't read it).

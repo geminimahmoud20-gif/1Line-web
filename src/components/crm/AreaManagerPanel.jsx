@@ -3,6 +3,7 @@ import { MapPin, Plus, Edit3, Trash2, RotateCcw, Search, CheckCircle2, Navigatio
 import { getAreas, addArea, updateArea, deleteArea, resetAreasToDefault, normalizeAreaKey } from '../../utils/areasData';
 import { useProperties } from '../../context/PropertiesContext';
 import AreaFormModal from './AreaFormModal';
+import { moveLeadsToArea, moveDemandsToArea } from '../../firebaseLazy';
 
 export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties = [] }) {
   const isAr = lang === 'ar';
@@ -192,22 +193,29 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
       return;
     }
     const linked = areaProperties(id);
-    if (linked.length > 0 && (!moveToId || !handleUpdateProperty)) {
-      if (triggerToast) triggerToast(isAr ? 'اختار المنطقة اللي هتنتقل لها العقارات الأول' : 'Choose where to move the listings first', 'error');
+    // Leads and requests can point at the area too (most aren't loaded here), so a destination is always required
+    if (!moveToId || !handleUpdateProperty) {
+      if (triggerToast) triggerToast(isAr ? 'اختار المنطقة اللي هينتقل لها العقارات والعملاء والطلبات الأول' : 'Choose where to move listings, leads and requests first', 'error');
       return;
     }
 
     setIsSaving(true);
     try {
       linked.forEach((p) => handleUpdateProperty(p.id, { areaKey: moveToId }));
+      const [leadsMoved, demandsMoved] = await Promise.all([moveLeadsToArea(id, moveToId), moveDemandsToArea(id, moveToId)]);
+      if (!leadsMoved.ok || !demandsMoved.ok) {
+        // Keep the area: deleting it now would orphan the records that failed to move
+        if (triggerToast) triggerToast(isAr ? 'تعذّر نقل العملاء/الطلبات، المنطقة لم تُحذف. حاول تاني.' : 'Could not move leads/requests; area kept. Try again.', 'error');
+        return;
+      }
       await deleteArea(id);
       setAreas(getAreas());
       setDeleteConfirmId(null);
       setMoveToId('');
       if (triggerToast) {
         triggerToast(isAr
-          ? (linked.length ? `تم حذف المنطقة ونقل ${linked.length} عقار` : 'تم حذف المنطقة')
-          : (linked.length ? `Area deleted, ${linked.length} listings moved` : 'Area deleted'), 'success');
+          ? `تم حذف المنطقة ونقل ${linked.length} عقار و${leadsMoved.moved} عميل و${demandsMoved.moved} طلب`
+          : `Area deleted: ${linked.length} listings, ${leadsMoved.moved} leads, ${demandsMoved.moved} requests moved`, 'success');
       }
     } catch (err) {
       console.error('Error deleting area:', err);
@@ -622,17 +630,17 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                 ? `حذف «${areas.find((a) => a.id === deleteConfirmId)?.name_ar || deleteConfirmId}»؟`
                 : 'Confirm District Deletion'}
             </h3>
-            <p style={{ color: 'var(--crm-on-dark-muted)', fontSize: 'var(--crm-text-base)', marginBottom: getAreaPropertiesCount(deleteConfirmId) > 0 ? '10px' : '20px' }}>
+            <p style={{ color: 'var(--crm-on-dark-muted)', fontSize: 'var(--crm-text-base)', marginBottom: '10px' }}>
               {isAr
                 ? 'سيتم إزالة الحي من فلاتر البحث ونماذج البيع والشراء في الموقع.'
                 : 'The district will be removed from all search filters.'}
             </p>
-            {getAreaPropertiesCount(deleteConfirmId) > 0 && (
+            {(
               <div style={{ color: 'var(--crm-on-dark-danger)', fontSize: 'var(--crm-text-sm)', fontWeight: 700, background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', padding: '10px', marginBottom: '18px', textAlign: 'start' }}>
                 <label htmlFor="area-move-to" style={{ display: 'block', marginBottom: '6px' }}>
                   {isAr
-                    ? `فيه ${getAreaPropertiesCount(deleteConfirmId)} عقار في المنطقة دي. انقلهم إلى:`
-                    : `${getAreaPropertiesCount(deleteConfirmId)} listings are in this area. Move them to:`}
+                    ? `انقل العقارات (${getAreaPropertiesCount(deleteConfirmId)}) والعملاء والطلبات اللي على المنطقة دي إلى:`
+                    : `Move its listings (${getAreaPropertiesCount(deleteConfirmId)}), leads and requests to:`}
                 </label>
                 <select
                   id="area-move-to"
@@ -663,7 +671,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
               <button
                 type="button"
                 onClick={() => handleDeleteArea(deleteConfirmId)}
-                disabled={isSaving || (getAreaPropertiesCount(deleteConfirmId) > 0 && !moveToId)}
+                disabled={isSaving || !moveToId}
                 style={{
                   display: 'flex',
                   alignItems: 'center',

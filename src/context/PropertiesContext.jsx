@@ -35,6 +35,7 @@ import { routeLeadAutomatically } from '../utils/leadRoutingEngine';
 import { isRecordArray, readStoredJson, rememberMyDemand } from '../utils/browserStorage';
 import { normalizeAreaKey } from '../utils/areasData';
 import { enqueuePendingLead, pendingLeadCount } from '../utils/leadQueue';
+import { track, propertyFacts, analyticsVisitorId } from '../utils/analytics';
 import { usePreferences } from './PreferencesContext';
 import { useUIModal } from './UIModalContext';
 
@@ -272,6 +273,9 @@ export function PropertiesProvider({ children }) {
   });
 
   const toggleFavorite = useCallback((propertyId) => {
+    if (!favorites.includes(propertyId)) {
+      track('favorite_added', propertyFacts(properties.find((p) => p.id === propertyId) || { id: propertyId }));
+    }
     setFavorites((prev) => {
       const exists = prev.includes(propertyId);
       const updated = exists ? prev.filter((id) => id !== propertyId) : [...prev, propertyId];
@@ -284,7 +288,7 @@ export function PropertiesProvider({ children }) {
       );
       return updated;
     });
-  }, [lang, triggerToast]);
+  }, [lang, triggerToast, favorites, properties]);
 
   const clearFavorites = useCallback((silent = false) => {
     setFavorites([]);
@@ -321,9 +325,11 @@ export function PropertiesProvider({ children }) {
       triggerToast(lang === 'ar' ? 'تمت الإضافة إلى قائمة المقارنة' : 'Added to comparison', 'success');
       return [...prev, property];
     });
-  }, [lang, triggerToast]);
+    if (!compareList.some((p) => p.id === property.id) && compareList.length < 4) track('compare_added', propertyFacts(property));
+  }, [lang, triggerToast, compareList]);
 
   const addToCompare = useCallback((property) => {
+    if (!compareList.some((p) => p.id === property.id) && compareList.length < 4) track('compare_added', propertyFacts(property));
     setCompareList((prev) => {
       if (prev.some((p) => p.id === property.id)) return prev;
       if (prev.length >= 4) {
@@ -333,7 +339,7 @@ export function PropertiesProvider({ children }) {
       triggerToast(lang === 'ar' ? 'تمت الإضافة إلى قائمة المقارنة' : 'Added to comparison', 'success');
       return [...prev, property];
     });
-  }, [lang, triggerToast]);
+  }, [lang, triggerToast, compareList]);
 
   const removeCompare = useCallback((propertyId) => {
     setCompareList((prev) => prev.filter((p) => p.id !== propertyId));
@@ -445,7 +451,8 @@ export function PropertiesProvider({ children }) {
           details: { ...(existing.details || {}), ...(standardizedData.details || {}) },
           activityLogs: [newLog, ...(existing.activityLogs || [])],
           digitalJourney: (sessionJourney.events && sessionJourney.events.length > 0) ? sessionJourney.events : (existing.digitalJourney || []),
-          dwellTimeFormatted: sessionJourney.dwellTimeFormatted || existing.dwellTimeFormatted || '1د 15ث',
+          dwellTimeFormatted: sessionJourney.dwellTimeFormatted || existing.dwellTimeFormatted || '',
+          analyticsVisitorId: analyticsVisitorId() || existing.analyticsVisitorId || null,
           isLiveTracked: true
         };
 
@@ -485,8 +492,10 @@ export function PropertiesProvider({ children }) {
             action: 'تسجيل العميل لأول مرة عبر المنصة'
           }],
           digitalJourney: sessionJourney.events || [],
-          dwellTimeFormatted: sessionJourney.dwellTimeFormatted || '45 ثانية',
-          dwellTimeSeconds: sessionJourney.dwellTimeSeconds || 45,
+          dwellTimeFormatted: sessionJourney.dwellTimeFormatted || '',
+          dwellTimeSeconds: sessionJourney.dwellTimeSeconds || 0,
+          // Ties the request to this visitor's browsing profile (only when they accepted analytics)
+          analyticsVisitorId: analyticsVisitorId(),
           isLiveTracked: true,
           marketingAttribution: attribution,
           utmSource: attribution?.source || 'مباشر',
@@ -504,6 +513,7 @@ export function PropertiesProvider({ children }) {
     };
 
     const { updated: nextLeads, finalLead } = buildNextLeads(leadsRef.current);
+    if (finalLead) track('lead_submitted', { form: String(sourceLabel || finalLead.source || 'website').replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 40) || 'website', leadId: finalLead.id });
     leadsRef.current = nextLeads;
     setLeads(nextLeads);
     persistLeads(nextLeads);

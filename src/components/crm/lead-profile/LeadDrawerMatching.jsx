@@ -1,4 +1,5 @@
 import { Building, Sparkles, ExternalLink, Share2 } from 'lucide-react';
+import { SITE_URL } from '../../../config/siteConfig';
 
 export default function LeadDrawerMatching({
   areaName,
@@ -39,7 +40,7 @@ export default function LeadDrawerMatching({
             `🏢 ${p.title_ar || p.title_en}\n` +
             `📍 الموقع: ${p.locationName_ar || p.areaKey}\n` +
             `💰 السعر: ${p.price?.toLocaleString('en-US')} ج.م\n` +
-            `🔗 تفاصيل الوحدة: https://1-line-qkzp9.vercel.app/properties/${p.id}`
+            `🔗 تفاصيل الوحدة: ${SITE_URL}/properties/${p.id}`
           );
           const shareHref = `https://wa.me/${egWhatsapp}?text=${propShareMsg}`;
 

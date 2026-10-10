@@ -4,6 +4,7 @@ import { Building, Users, MapPin, DollarSign, ArrowRight, ArrowLeft, ShieldCheck
 import PropertyCard from '../properties/PropertyCard';
 import ScrollReveal from '../common/ScrollReveal';
 import Pagination from '../common/Pagination';
+import { recordTimeLabel } from '../../utils/relativeTime';
 
 const toBudget = (b) => (typeof b === 'number' ? b : Number(String(b ?? '').replace(/[^\d.]/g, '')) || 0);
 
@@ -207,7 +208,7 @@ export default function HomeMarketplace({
                 <div className="demand-top-row">
                   {dem.isDemo
                     ? <span className="xs-demo-tag">{lang === 'ar' ? 'مثال توضيحي' : 'Sample'}</span>
-                    : <span className="demand-time-tag">{dem.timestamp}</span>}
+                    : <span className="demand-time-tag">{recordTimeLabel(dem, lang === 'ar')}</span>}
                   {/* "Urgent cash" / "serious buyer" describe a real person — never on a sample */}
                   {!dem.isDemo && <span
                     className="urgency-badge"

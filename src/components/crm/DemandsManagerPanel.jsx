@@ -7,6 +7,8 @@ import { reconcilePublicDemands } from '../../firebaseLazy';
 import DemandFormModal from './demands/DemandFormModal';
 import DemandMatchModal from './demands/DemandMatchModal';
 import { AREA_OPTIONS, PROP_TYPE_OPTIONS } from './DemandsManagerPanelData';
+import { formatWhatsAppPhone } from '../../utils/matchingEngine';
+import { recordTimeLabel } from '../../utils/relativeTime';
 
 
 
@@ -152,7 +154,8 @@ export default function DemandsManagerPanel({
       type: 'apartment',
       budget: 3000000,
       urgency: 'high',
-      timestamp: isAr ? 'الآن' : 'Just now',
+      timestamp: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       clientName: '',
       phone: '',
       whatsapp: '',
@@ -523,7 +526,7 @@ export default function DemandsManagerPanel({
                     </div>
 
                     <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
-                      {demand.timestamp || (demand.createdAt ? new Date(demand.createdAt).toLocaleDateString('ar-EG-u-nu-latn') : '')}
+                      {recordTimeLabel(demand, isAr)}
                     </span>
                   </div>
 
@@ -594,7 +597,7 @@ export default function DemandsManagerPanel({
                         {demand.phone && canViewPhone && (
                           <div style={{ display: 'flex', gap: '6px' }}>
                             <a 
-                              href={`https://wa.me/${demand.whatsapp ? demand.whatsapp.replace(/[^0-9]/g, '') : demand.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`أهلاً بك أستاذ ${demand.clientName || ''}، بخصوص طلبك العقاري في منصة 1Line (${demand.text_ar || ''})`)}`}
+                              href={`https://wa.me/${formatWhatsAppPhone(demand.whatsapp || demand.phone || '')}?text=${encodeURIComponent(`أهلاً بك أستاذ ${demand.clientName || ''}، بخصوص طلبك العقاري في منصة 1Line (${demand.text_ar || ''})`)}`}
                               target="_blank"
                               rel="noreferrer"
                               className="btn btn-sm"

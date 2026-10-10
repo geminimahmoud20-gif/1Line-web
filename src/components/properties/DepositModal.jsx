@@ -80,6 +80,12 @@ export default function DepositModal({
 
       trackEvent('reservation_requested', { propertyId: property.id });
       setSubmittedRef(lead?.id || `lead-${Date.now()}`);
+    } catch (err) {
+      // The request didn't go through: say so and keep the form filled so they can retry
+      console.error('Reservation request failed:', err);
+      triggerToast?.(isAr
+        ? 'تعذّر إرسال طلب الحجز. تأكد من الاتصال وحاول تاني، أو كلمنا على واتساب.'
+        : 'Could not send the reservation request. Check your connection and try again, or message us on WhatsApp.', 'error');
     } finally {
       setIsProcessing(false);
     }

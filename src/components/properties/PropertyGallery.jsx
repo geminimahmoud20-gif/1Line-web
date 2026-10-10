@@ -230,7 +230,7 @@ export default function PropertyGallery({
             onClick={() => setActiveViewMode('360')}
           >
             <Rotate3d size={15} />
-            <span>{isAr ? 'جولة تفاعلية بانورامية 360°' : '360° Virtual Tour'}</span>
+            <span>{isAr ? 'عرض بانورامي للصور' : 'Panoramic photo view'}</span>
           </button>
         )}
       </div>

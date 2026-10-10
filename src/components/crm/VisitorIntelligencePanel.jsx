@@ -1,393 +1,242 @@
-import { useState, useEffect } from 'react';
-import { Activity, Eye, Clock, MessageSquare, Calculator, Flame, RefreshCw, MousePointerClick } from 'lucide-react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { Activity, RefreshCw } from 'lucide-react';
 import { getAreas } from '../../utils/areasData';
-import { getLiveAnalyticsSummary, getTopViewedProperties } from '../../utils/visitorTracker';
+import { PROPERTY_TYPES } from '../../data/propertiesData';
+import { recordTimeLabel } from '../../utils/relativeTime';
+import {
+  sumDays, kpis, funnel, demand, dayRange, topEntries, visitorInterests, formatSeconds, bandLabel, sourceLabel,
+} from '../../utils/analyticsSummary';
+import { loadAnalyticsDays, loadTopAnalyticsProperties, loadHotVisitors, loadRecentSessions } from '../../firebaseLazy';
+import { Section, Kpi, BarList, DayColumns, LevelBadge } from './analytics/AnalyticsBits';
+import { card } from './analytics/analyticsStyles';
 
-export default function VisitorIntelligencePanel({
-  properties = [],
-  lang = 'ar',
-  triggerToast
-}) {
+const RANGES = [7, 30, 90];
+const DEVICE_LABELS = { mobile: ['موبايل', 'Mobile'], tablet: ['تابلت', 'Tablet'], desktop: ['كمبيوتر', 'Desktop'] };
+
+/**
+ * Visitor analytics from the server (/api/track → Firestore): every visitor on every device.
+ * Visitors who declined analytics are counted anonymously; profiles exist only with consent.
+ */
+export default function VisitorIntelligencePanel({ properties = [], leads = [], onOpenLead, lang = 'ar' }) {
   const isAr = lang === 'ar';
-  const [summary, setSummary] = useState(() => getLiveAnalyticsSummary());
-  const [trendingProperties, setTrendingProperties] = useState(() => getTopViewedProperties(properties));
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [range, setRange] = useState(30);
+  const [state, setState] = useState({ loading: true, error: null, days: [], props: [], visitors: [], sessions: [] });
+  const [refreshTick, setRefreshTick] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
 
-  const refreshData = () => {
-    setIsRefreshing(true);
-    setTimeout(() => {
-      setSummary(getLiveAnalyticsSummary());
-      setTrendingProperties(getTopViewedProperties(properties));
-      setIsRefreshing(false);
-      if (triggerToast) {
-        triggerToast(isAr ? 'تم تحديث بيانات التتبع وسلوك الزوار اللحظية! 🔄' : 'Visitor Analytics Refreshed!', 'info');
-      }
-    }, 400);
-  };
+  const load = useCallback(async (days) => {
+    setState((s) => ({ ...s, loading: true, error: null }));
+    const fromDay = dayRange(days)[0];
+    const [d, p, v, s] = await Promise.all([
+      loadAnalyticsDays(fromDay), loadTopAnalyticsProperties(15), loadHotVisitors(20), loadRecentSessions(40),
+    ]);
+    const failed = [d, p, v, s].find((r) => !r.ok);
+    setState({ loading: false, error: failed ? failed.reason : null, days: d.data, props: p.data, visitors: v.data, sessions: s.data });
+    setNow(Date.now());
+  }, []);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setSummary(getLiveAnalyticsSummary());
-      setTrendingProperties(getTopViewedProperties(properties));
-    }, 15000); // Auto-refresh every 15s
+    // Loading is async; state is only set once the reads resolve
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    load(range);
+  }, [load, range, refreshTick]);
 
-    return () => clearInterval(timer);
-  }, [properties]);
-
-  // Translate event types to friendly labels
-  const getEventBadge = (eventType) => {
-    switch (eventType) {
-      case 'property_view':
-        return { label: isAr ? '👁️ مشاهدة عقار' : 'Property View', color: 'var(--crm-info)', bg: 'rgba(6, 182, 212, 0.1)' };
-      case 'whatsapp_click':
-        return { label: isAr ? '💬 نقرة واتساب' : 'WhatsApp Click', color: 'var(--crm-positive)', bg: 'rgba(16, 185, 129, 0.1)' };
-      case 'calculator_used':
-        return { label: isAr ? '🧮 حاسبة التمويل' : 'Calculator Used', color: 'var(--crm-warn)', bg: 'rgba(245, 158, 11, 0.1)' };
-      case 'compare_added':
-        return { label: isAr ? '⚖️ مقارنة عقارات' : 'Compare Added', color: 'var(--crm-violet)', bg: 'rgba(139, 92, 246, 0.1)' };
-      case 'brochure_request':
-        return { label: isAr ? '📑 طلب بروشور (واتساب)' : 'Brochure request', color: 'var(--crm-pink)', bg: 'rgba(236, 72, 153, 0.1)' };
-      case 'brochure_download':
-        return { label: isAr ? '📑 تحميل بروشور' : 'Brochure PDF', color: 'var(--crm-pink)', bg: 'rgba(236, 72, 153, 0.1)' };
-      default:
-        return { label: isAr ? '⚡ تفاعل' : 'Action', color: 'var(--crm-faint)', bg: 'rgba(148, 163, 184, 0.1)' };
-    }
+  const areaName = useMemo(() => {
+    const areas = getAreas();
+    return (id) => {
+      const a = areas.find((x) => x.id === id);
+      return a ? (isAr ? a.name_ar : (a.name_en || a.name_ar)) : id;
+    };
+  }, [isAr]);
+  const typeName = (id) => {
+    const t = PROPERTY_TYPES.find((x) => x.id === id);
+    return t ? (isAr ? t.name_ar : t.name_en) : id;
   };
+  const propertyById = useMemo(() => new Map(properties.map((p) => [String(p.id), p])), [properties]);
+  const propertyName = (id) => {
+    const p = propertyById.get(String(id));
+    return (p && (isAr ? p.title_ar || p.title_en : p.title_en || p.title_ar)) || id;
+  };
+  const leadById = useMemo(() => new Map(leads.map((l) => [String(l.id), l])), [leads]);
+
+  const { totals, byDay } = useMemo(() => sumDays(state.days), [state.days]);
+  const k = kpis(totals);
+  const steps = funnel(totals);
+  const want = demand(totals);
+  const series = dayRange(range, now).map((day) => ({ day, value: byDay[day]?.sessions || 0, mark: byDay[day]?.leads || 0 }));
+  const activeNow = state.sessions.filter((s) => now - (s.lastSeenAt?.toMillis?.() || 0) < 5 * 60 * 1000).length;
+  const n = (v) => Number(v || 0).toLocaleString('en-US');
+  const noData = isAr ? 'لسه مفيش بيانات' : 'No data yet';
+
+  const errorText = {
+    denied: isAr ? 'التحليلات متاحة للمدير العام ومديري المبيعات بس.' : 'Analytics are available to admins and sales managers only.',
+    'not-configured': isAr ? 'Firebase مش متوصل.' : 'Firebase is not connected.',
+    error: isAr ? 'تعذّر تحميل التحليلات. جرّب تحديث.' : 'Could not load analytics. Try refreshing.',
+  }[state.error];
 
   return (
-    <div className="visitor-intelligence-panel animate-fadeIn" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      {/* Header Bar */}
-      <div style={{
-        background: 'var(--crm-card)',
-        boxShadow: 'var(--crm-shadow)',
-        border: '1px solid var(--crm-line)',
-        borderRadius: 'var(--radius-md)',
-        padding: '18px 24px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: '14px'
-      }}>
+    <div className="visitor-intelligence-panel animate-fadeIn" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ ...card, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '12px',
-            background: 'rgba(6, 182, 212, 0.15)',
-            color: 'var(--crm-info)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 'var(--crm-text-lg)'
-          }}>
-            <Activity size={22} className="animate-pulse" />
+          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--crm-info-soft)', color: 'var(--crm-info)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Activity size={22} />
           </div>
-
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h2 style={{ margin: 0, fontSize: 'var(--crm-text-lg)' }}>
-                {isAr ? 'محرك تتبع سلوك الزوار وتحليلات الاهتمام اللحظية' : 'Visitor Intelligence & Real-Time Tracking'}
-              </h2>
-              <span className="badge" style={{ background: 'rgba(16, 185, 129, 0.15)', color: 'var(--crm-positive)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: 'var(--crm-text-xs)' }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--crm-positive-solid)', display: 'inline-block' }}></span>
-                {isAr ? 'تتبع مباشر' : 'Live'}
-              </span>
-            </div>
-            <p style={{ margin: '3px 0 0 0', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
-              {isAr ? 'تتبع مسار كل زائر، وقت التصفح المستهلك، ونسب المشاهدات لكل وحدة عقارية' : 'Track dwell time, clickstream, and top viewed properties.'}
+            <h2 style={{ margin: 0, fontSize: 'var(--crm-text-lg)' }}>{isAr ? 'تحليلات الزوار وتوجهات العملاء' : 'Visitor analytics & buyer intent'}</h2>
+            <p style={{ margin: '3px 0 0', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
+              {isAr ? `بيانات حقيقية من كل الأجهزة • ${activeNow} زائر نشط دلوقتي` : `Real data from every device • ${activeNow} active now`}
             </p>
           </div>
         </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button
-            type="button"
-            className="btn btn-sm btn-outline"
-            onClick={refreshData}
-            disabled={isRefreshing}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 'var(--crm-text-sm)' }}
-          >
-            <RefreshCw size={13} className={isRefreshing ? 'animate-spin' : ''} />
-            <span>{isAr ? 'تحديث لحظي' : 'Refresh'}</span>
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          {RANGES.map((r) => (
+            <button key={r} type="button" className={`btn btn-sm ${range === r ? 'btn-primary' : 'btn-outline'}`} onClick={() => setRange(r)} aria-pressed={range === r}>
+              {isAr ? `${r} يوم` : `${r}d`}
+            </button>
+          ))}
+          <button type="button" className="btn btn-sm btn-outline" onClick={() => setRefreshTick((t) => t + 1)} disabled={state.loading} aria-label={isAr ? 'تحديث' : 'Refresh'}>
+            <RefreshCw size={14} />
           </button>
         </div>
       </div>
 
-      {/* Top 4 KPI Metrics */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-        gap: '14px'
-      }}>
-        {/* KPI 1: Total Views */}
-        <div className="crm-stat-card" style={{ borderLeft: '4px solid var(--crm-info)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
-              {isAr ? 'إجمالي مشاهدات العقارات' : 'Total Property Views'}
-            </span>
-            <Eye size={18} style={{ color: 'var(--crm-info)' }} />
-          </div>
-          <div style={{ fontSize: 'var(--crm-text-2xl)', fontWeight: 'bold', margin: '8px 0 4px 0', color: 'var(--crm-info)' }}>
-            {summary.totalPropertyViews?.toLocaleString('en-US')}
-          </div>
-          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)' }}>
-            ↑ +18.4% {isAr ? 'نمو مقارنة بالأسبوع الماضي' : 'vs last week'}
-          </span>
-        </div>
+      {errorText && <div style={{ ...card, color: 'var(--crm-danger)', background: 'var(--crm-danger-soft)' }}>{errorText}</div>}
 
-        {/* KPI 2: Average Dwell Time */}
-        <div className="crm-stat-card" style={{ borderLeft: '4px solid var(--crm-accent)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
-              {isAr ? 'متوسط وقت بقاء الزائر' : 'Average Dwell Time'}
-            </span>
-            <Clock size={18} style={{ color: 'var(--crm-accent-text)' }} />
-          </div>
-          <div style={{ fontSize: 'var(--crm-text-2xl)', fontWeight: 'bold', margin: '8px 0 4px 0', color: 'var(--crm-accent-text)' }}>
-            {summary.avgDwellTimeFormatted || '3د 45ث'}
-          </div>
-          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
-            ⏱️ {isAr ? 'معدل انتباه وقراءة مرتفع' : 'High engagement rate'}
-          </span>
-        </div>
-
-        {/* KPI 3: WhatsApp Conversion Clicks */}
-        <div className="crm-stat-card" style={{ borderLeft: '4px solid var(--crm-positive)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
-              {isAr ? 'نقرات الواتساب المباشرة' : 'WhatsApp Lead Clicks'}
-            </span>
-            <MessageSquare size={18} style={{ color: 'var(--crm-positive)' }} />
-          </div>
-          <div style={{ fontSize: 'var(--crm-text-2xl)', fontWeight: 'bold', margin: '8px 0 4px 0', color: 'var(--crm-positive)' }}>
-            {summary.whatsappClicks} {isAr ? 'نقرة' : 'Clicks'}
-          </div>
-          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)' }}>
-            🔥 {isAr ? 'أعلى قناة تحويل للصفقات' : 'Top converting channel'}
-          </span>
-        </div>
-
-        {/* KPI 4: Financial Calculator Uses */}
-        <div className="crm-stat-card" style={{ borderLeft: '4px solid var(--crm-warn)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
-              {isAr ? 'تجارب حاسبة التمويل' : 'Calculator Simulations'}
-            </span>
-            <Calculator size={18} style={{ color: 'var(--crm-warn)' }} />
-          </div>
-          <div style={{ fontSize: 'var(--crm-text-2xl)', fontWeight: 'bold', margin: '8px 0 4px 0', color: 'var(--crm-warn)' }}>
-            {summary.calculatorUses} {isAr ? 'حسبة' : 'Runs'}
-          </div>
-          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
-            📈 {isAr ? 'مشترين جادين يبحثون عن خطط دفع' : 'High-intent payment seekers'}
-          </span>
-        </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
+        <Kpi label={isAr ? 'الزوار' : 'Visitors'} value={n(k.visitors)} sub={isAr ? `${n(k.newVisitors)} جديد` : `${n(k.newVisitors)} new`} />
+        <Kpi label={isAr ? 'الزيارات' : 'Visits'} value={n(k.sessions)} sub={isAr ? `${n(k.pageViews)} صفحة` : `${n(k.pageViews)} pages`} />
+        <Kpi label={isAr ? 'مشاهدات العقارات' : 'Listing views'} value={n(k.propertyViews)} sub={isAr ? `متوسط القراءة ${formatSeconds(k.avgReadSeconds, isAr)}` : `avg read ${formatSeconds(k.avgReadSeconds, isAr)}`} />
+        <Kpi tone="positive" label={isAr ? 'تواصل مباشر' : 'Contacts'} value={n(k.contacts)} sub={isAr ? `واتساب ${n(k.whatsapp)} • اتصال ${n(k.calls)}` : `WhatsApp ${n(k.whatsapp)} • calls ${n(k.calls)}`} />
+        <Kpi tone="positive" label={isAr ? 'طلبات مسجلة' : 'Requests'} value={n(k.leads)} sub={isAr ? `تحويل ${k.conversionRate}% من الزيارات` : `${k.conversionRate}% of visits`} />
+        <Kpi tone="warn" label={isAr ? 'حاسبة التمويل' : 'Calculator'} value={n(k.calculatorUses)} sub={isAr ? `بدأوا نموذج ${n(k.formStarts)}` : `${n(k.formStarts)} forms started`} />
       </div>
 
-      {/* Main Grid: Top Trending Properties vs Live Clickstream Feed */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-        gap: '20px'
-      }}>
-        {/* Left Column: TOP TRENDING PROPERTIES LEADERBOARD */}
-        <div style={{
-          background: 'var(--crm-card)',
-          border: '1px solid var(--crm-line)',
-          borderRadius: 'var(--radius-md)',
-          padding: '20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '14px'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: 'var(--crm-text-md)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Flame size={18} style={{ color: 'var(--crm-danger)' }} />
-              <span>{isAr ? 'العقارات الأكثر طلباً ومشاهدة' : 'Top Viewed Properties'}</span>
-            </h3>
-            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
-              {trendingProperties.length} {isAr ? 'عقار مرصود' : 'tracked'}
-            </span>
+      <Section title={isAr ? 'الزيارات يوم بيوم' : 'Visits per day'} hint={isAr ? 'العمود = عدد الزيارات، والنقطة الخضرا = يوم اتسجل فيه طلب.' : 'Bars = visits; green dot = a day with requests.'}>
+        <DayColumns days={series} isAr={isAr} />
+      </Section>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+        <Section title={isAr ? 'المناطق المطلوبة' : 'Areas in demand'} hint={isAr ? 'اللي الزوار فتحوا عقاراتها أو بحثوا عنها.' : 'Opened or searched by visitors.'}>
+          <BarList rows={want.areas.map(([id, v]) => ({ key: id, label: areaName(id), value: v }))} empty={noData} />
+        </Section>
+        <Section title={isAr ? 'أنواع العقارات المطلوبة' : 'Property types in demand'}>
+          <BarList tone="violet" rows={want.types.map(([id, v]) => ({ key: id, label: typeName(id), value: v }))} empty={noData} />
+        </Section>
+        <Section title={isAr ? 'شرائح الميزانية' : 'Budget bands'} hint={isAr ? 'من أسعار العقارات اللي اتفتحت والبحث والحاسبة.' : 'From listings opened, searches and the calculator.'}>
+          <BarList tone="warn" rows={want.bands.map(([id, v]) => ({ key: id, label: bandLabel(id, isAr), value: v }))} empty={noData} />
+        </Section>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+        <Section title={isAr ? 'رحلة الزائر (قمع التحويل)' : 'Conversion funnel'} hint={isAr ? 'نسبة الزيارات اللي وصلت لكل مرحلة.' : 'Share of visits reaching each step.'}>
+          <BarList tone="positive" rows={steps.map((s) => ({ key: s.id, label: isAr ? s.ar : s.en, value: s.count, sub: s.id === 'sessions' ? '' : `(${s.pctOfVisits}%)` }))} empty={isAr ? 'لسه مفيش زيارات' : 'No visits yet'} />
+        </Section>
+        <Section title={isAr ? 'مصادر الزيارات' : 'Traffic sources'}>
+          <BarList rows={topEntries(totals.sources, 8).map(([id, v]) => ({ key: id, label: sourceLabel(id, isAr), value: v }))} empty={noData} />
+          {topEntries(totals.campaigns, 5).length > 0 && (
+            <>
+              <h4 style={{ margin: '14px 0 8px', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>{isAr ? 'الحملات (utm_campaign)' : 'Campaigns'}</h4>
+              <BarList tone="violet" rows={topEntries(totals.campaigns, 5).map(([id, v]) => ({ key: id, label: id, value: v }))} />
+            </>
+          )}
+        </Section>
+        <Section title={isAr ? 'الأجهزة وأفضل وقت' : 'Devices & best hours'} hint={isAr ? 'أكتر ساعات تصفح (بتوقيت مصر): أنسب وقت للمتابعة والإعلانات.' : 'Busiest hours (Cairo time).'}>
+          <BarList rows={topEntries(totals.devices, 3).map(([id, v]) => ({ key: id, label: DEVICE_LABELS[id]?.[isAr ? 0 : 1] || id, value: v }))} empty={noData} />
+          <h4 style={{ margin: '14px 0 8px', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>{isAr ? 'أكتر الساعات نشاطاً' : 'Busiest hours'}</h4>
+          <BarList tone="warn" rows={topEntries(totals.hours, 4).map(([h, v]) => ({ key: h, label: `${h}:00`, value: v }))} empty="—" />
+        </Section>
+      </div>
+
+      <Section title={isAr ? 'أكتر العقارات جذباً' : 'Most engaging listings'} hint={isAr ? 'المشاهدات ووقت القراءة والتواصل لكل وحدة (من بداية التسجيل).' : 'Views, reading time and contacts per listing (all time).'}>
+        {state.props.length === 0 ? (
+          <p style={{ margin: 0, color: 'var(--crm-faint)', fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'لسه مفيش مشاهدات مسجلة.' : 'No views recorded yet.'}</p>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table className="crm-table" style={{ width: '100%', fontSize: 'var(--crm-text-sm)' }}>
+              <thead>
+                <tr>
+                  <th>{isAr ? 'العقار' : 'Listing'}</th>
+                  <th>{isAr ? 'مشاهدات' : 'Views'}</th>
+                  <th>{isAr ? 'متوسط القراءة' : 'Avg read'}</th>
+                  <th>{isAr ? 'مفضلة / مقارنة' : 'Saved / compared'}</th>
+                  <th>{isAr ? 'تواصل' : 'Contacts'}</th>
+                  <th>{isAr ? 'نسبة التواصل' : 'Contact rate'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {state.props.map((p) => (
+                  <tr key={p.id}>
+                    <td style={{ maxWidth: '260px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{propertyName(p.id)}</td>
+                    <td>{n(p.views)}</td>
+                    <td>{p.engagedViews ? formatSeconds((p.engagedSeconds || 0) / p.engagedViews, isAr) : '—'}</td>
+                    <td>{n(p.favorites)} / {n(p.compares)}</td>
+                    <td>{n(p.contacts)}</td>
+                    <td>{p.views ? `${Math.round(((p.contacts || 0) / p.views) * 1000) / 10}%` : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
+        )}
+      </Section>
 
-          <div tabIndex={0} role="region" aria-label={isAr ? 'قائمة العقارات الأكثر مشاهدة' : 'Most viewed properties'} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '420px', overflowY: 'auto' }}>
-            {trendingProperties.slice(0, 6).map((prop, idx) => (
-              <div
-                key={prop.id}
-                style={{
-                  background: 'rgba(255, 255, 255, 0.03)',
-                  border: '1px solid var(--crm-line)',
-                  borderRadius: 'var(--radius-sm)',
-                  padding: '12px 14px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  gap: '10px'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    background: idx === 0 ? 'var(--gradient-gold)' : 'rgba(255,255,255,0.08)',
-                    color: idx === 0 ? 'var(--crm-on-accent)' : 'var(--crm-ink)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 'var(--crm-text-xs)',
-                    fontWeight: 'bold'
-                  }}>
-                    #{idx + 1}
-                  </span>
-
-                  <div>
-                    <strong style={{ fontSize: 'var(--crm-text-base)', display: 'block' }}>
-                      {isAr ? prop.title_ar : prop.title_en}
-                    </strong>
-                    <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
-                      📍 {(getAreas().find(a => a.id === prop.areaKey)?.[isAr ? 'name_ar' : 'name_en']) || prop.areaKey || 'سوهاج'} • 💰 {prop.price?.toLocaleString('en-US')} ج.م
-                    </span>
+      <Section
+        title={isAr ? 'أكتر الزوار جدية' : 'Highest-intent visitors'}
+        hint={isAr
+          ? 'ترتيب حسب نقاط الجدية (مشاهدة، قراءة، حاسبة، مقارنة، تواصل، طلب). اللي سجّل طلب بيظهر جنبه زرار يفتح ملفه. اللي رفضوا التتبع بيتعدّوا في الأرقام بس من غير ملف.'
+          : 'Ranked by intent score. Visitors who submitted a request link to their lead. Visitors who declined tracking are only counted.'}
+      >
+        {state.visitors.length === 0 ? (
+          <p style={{ margin: 0, color: 'var(--crm-faint)', fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'لسه مفيش زوار وافقوا على التتبع.' : 'No consenting visitors yet.'}</p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {state.visitors.map((v) => {
+              const it = visitorInterests(v);
+              const lead = v.leadId ? leadById.get(String(v.leadId)) : null;
+              const seen = recordTimeLabel({ timestamp: v.lastSeenAt?.toMillis?.() }, isAr, now);
+              const wants = [
+                ...it.types.slice(0, 1).map(([id]) => typeName(id)),
+                ...it.areas.slice(0, 2).map(([id]) => areaName(id)),
+                ...it.bands.slice(0, 1).map(([id]) => bandLabel(id, isAr)),
+              ].join(' • ');
+              return (
+                <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', padding: '10px 12px', border: '1px solid var(--crm-line)', borderRadius: '10px', background: 'var(--crm-surface)' }}>
+                  <LevelBadge level={it.level} score={it.intent} isAr={isAr} />
+                  <div style={{ flex: '1 1 220px', minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, color: 'var(--crm-ink)', fontSize: 'var(--crm-text-sm)' }}>{wants || (isAr ? 'اهتمامات غير واضحة بعد' : 'No clear interest yet')}</div>
+                    <div style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-xs)', marginTop: '2px' }}>
+                      {isAr
+                        ? `${n(it.sessions)} زيارة • قراءة ${formatSeconds(it.engagedSeconds, isAr)} • ${n(it.contacts)} تواصل • حاسبة ${n(it.calculatorUses)} • ${sourceLabel(v.lastSource, isAr)} • ${seen}`
+                        : `${n(it.sessions)} visits • read ${formatSeconds(it.engagedSeconds, isAr)} • ${n(it.contacts)} contacts • calc ${n(it.calculatorUses)} • ${sourceLabel(v.lastSource, isAr)} • ${seen}`}
+                    </div>
+                    {it.topProps.length > 0 && (
+                      <div style={{ color: 'var(--crm-body)', fontSize: 'var(--crm-text-xs)', marginTop: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {isAr ? 'أكتر وحدة شدّته: ' : 'Most read: '}{propertyName(it.topProps[0].id)}
+                        {it.topProps[0].seconds ? ` (${formatSeconds(it.topProps[0].seconds, isAr)})` : ''}
+                      </div>
+                    )}
                   </div>
-                </div>
-
-                <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
-                  <span className="badge" style={{
-                    background: prop.isTrending ? 'rgba(244, 63, 94, 0.15)' : 'rgba(6, 182, 212, 0.15)',
-                    color: prop.isTrending ? 'var(--crm-danger)' : 'var(--crm-info)',
-                    fontSize: 'var(--crm-text-xs)',
-                    fontWeight: 'bold'
-                  }}>
-                    👁️ {prop.viewCount} {isAr ? 'مشاهدة' : 'Views'}
-                  </span>
-                  {prop.isTrending && (
-                    <small style={{ color: 'var(--crm-danger)', fontSize: 'var(--crm-text-xs)', fontWeight: 'bold' }}>
-                      🔥 {isAr ? 'رائج جداً' : 'Hot Demand'}
-                    </small>
+                  {lead && onOpenLead ? (
+                    <button type="button" className="btn btn-sm btn-primary" onClick={() => onOpenLead(lead)}>
+                      {isAr ? `افتح ${lead.name || 'العميل'}` : `Open ${lead.name || 'lead'}`}
+                    </button>
+                  ) : (
+                    <span style={{ fontSize: 'var(--crm-text-xs)', color: v.leadId ? 'var(--crm-positive)' : 'var(--crm-faint)' }}>
+                      {v.leadId ? (isAr ? 'سجّل طلب' : 'Submitted a request') : (isAr ? 'لسه ماسجلش' : 'Not a lead yet')}
+                    </span>
                   )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
-        </div>
+        )}
+      </Section>
 
-        {/* Right Column: LIVE CLICKSTREAM STREAM */}
-        <div style={{
-          background: 'var(--crm-card)',
-          border: '1px solid var(--crm-line)',
-          borderRadius: 'var(--radius-md)',
-          padding: '20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '14px'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: 'var(--crm-text-md)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <MousePointerClick size={18} style={{ color: 'var(--crm-accent-text)' }} />
-              <span>{isAr ? 'شريط أحداث وتفاعل الزوار المباشر' : 'Live Clickstream Feed'}</span>
-            </h3>
-            <span className="badge" style={{ background: 'var(--crm-subtle)', color: 'var(--crm-body)', fontSize: 'var(--crm-text-xs)' }}>
-              {summary.recentEvents?.length || 0} {isAr ? 'حدث مسجل' : 'events'}
-            </span>
-          </div>
-
-          <div tabIndex={0} role="region" aria-label={isAr ? 'سجل نشاط الزوار' : 'Visitor activity log'} style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '420px', overflowY: 'auto' }}>
-            {(!summary.recentEvents || summary.recentEvents.length === 0) ? (
-              <p style={{ textAlign: 'center', color: 'var(--crm-muted)', padding: '30px' }}>
-                {isAr ? 'جاري استقبال أحداث ونقرات الزوار لحظياً...' : 'Waiting for incoming events...'}
-              </p>
-            ) : (
-              summary.recentEvents.map((evt, idx) => {
-                const badge = getEventBadge(evt.eventType);
-
-                return (
-                  <div
-                    key={evt.id || idx}
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.02)',
-                      borderInlineStart: `3px solid ${badge.color}`,
-                      borderRadius: 'var(--radius-sm)',
-                      padding: '8px 12px',
-                      fontSize: 'var(--crm-text-sm)',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
-                    }}
-                  >
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
-                        <span style={{ background: badge.bg, color: badge.color, padding: '1px 6px', borderRadius: '4px', fontSize: 'var(--crm-text-xs)', fontWeight: 'bold' }}>
-                          {badge.label}
-                        </span>
-                        {evt.identifiedUser?.name && (
-                          <strong style={{ color: 'var(--crm-accent-text)', fontSize: 'var(--crm-text-xs)' }}>
-                            👤 {evt.identifiedUser.name}
-                          </strong>
-                        )}
-                      </div>
-
-                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
-                        {evt.metadata?.title || evt.metadata?.propertyId || evt.url}
-                      </span>
-                    </div>
-
-                    <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
-                      {new Date(evt.timestamp).toLocaleTimeString(isAr ? 'ar-EG-u-nu-latn' : 'en-US')}
-                    </span>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Section: USER ENGAGEMENT HEATMAP BREAKDOWN */}
-      <div style={{
-        background: 'var(--crm-card)',
-        border: '1px solid var(--crm-line)',
-        borderRadius: 'var(--radius-md)',
-        padding: '20px'
-      }}>
-        <h3 style={{ margin: '0 0 14px 0', fontSize: 'var(--crm-text-md)', color: 'var(--crm-accent-text)' }}>
-          📊 {isAr ? 'توزيع اهتمامات ونقرات المشترين' : 'Visitor Intent & Action Heatmap'}
-        </h3>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
-          <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: 'var(--radius-sm)' }}>
-            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'block' }}>
-              💬 {isAr ? 'الاستفسار المباشر (واتساب)' : 'WhatsApp Inquiries'}
-            </span>
-            <strong style={{ fontSize: 'var(--crm-text-lg)', color: 'var(--crm-positive)' }}>42%</strong>
-            <div style={{ height: '4px', background: 'var(--crm-positive-solid)', borderRadius: '2px', marginTop: '6px', width: '42%' }}></div>
-          </div>
-
-          <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: 'var(--radius-sm)' }}>
-            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'block' }}>
-              🧮 {isAr ? 'حاسبة التمويل والأقساط' : 'Calculators & ROI'}
-            </span>
-            <strong style={{ fontSize: 'var(--crm-text-lg)', color: 'var(--crm-warn)' }}>28%</strong>
-            <div style={{ height: '4px', background: 'var(--crm-warn-solid)', borderRadius: '2px', marginTop: '6px', width: '28%' }}></div>
-          </div>
-
-          <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: 'var(--radius-sm)' }}>
-            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'block' }}>
-              ⚖️ {isAr ? 'مقارنة الوحدات والمفضلة' : 'Compare & Favorites'}
-            </span>
-            <strong style={{ fontSize: 'var(--crm-text-lg)', color: 'var(--crm-violet)' }}>18%</strong>
-            <div style={{ height: '4px', background: 'var(--crm-violet-solid)', borderRadius: '2px', marginTop: '6px', width: '18%' }}></div>
-          </div>
-
-          <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: 'var(--radius-sm)' }}>
-            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'block' }}>
-              📑 {isAr ? 'تحميل البروشور PDF' : 'Brochure Downloads'}
-            </span>
-            <strong style={{ fontSize: 'var(--crm-text-lg)', color: 'var(--crm-pink)' }}>12%</strong>
-            <div style={{ height: '4px', background: 'var(--crm-pink-solid)', borderRadius: '2px', marginTop: '6px', width: '12%' }}></div>
-          </div>
-        </div>
-      </div>
+      <p style={{ margin: 0, fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)', lineHeight: 1.7 }}>
+        {isAr
+          ? `${k.anonymousShare}% من النشاط من زوار رفضوا التتبع (بيتعدّوا في الإجماليات بس). مفيش أسماء ولا أرقام بتتسجل في التحليلات، والسجلات التفصيلية بتتمسح لوحدها بعد 180 يوم.`
+          : `${k.anonymousShare}% of activity is from visitors who declined tracking (totals only). No names or phone numbers are stored; detailed logs expire after 180 days.`}
+      </p>
     </div>
   );
 }

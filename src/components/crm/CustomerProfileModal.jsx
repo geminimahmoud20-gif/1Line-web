@@ -1,11 +1,14 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Phone, MessageSquare, CheckCircle2, Plus, Send, Activity, Lock, Calendar, Download } from 'lucide-react';
 
-import { getLeadDigitalJourney } from '../../utils/visitorTracker';
 
 import { canViewLeadPhone, maskPhoneNumber } from '../../utils/rbacRules';
 import { generateGoogleCalendarUrl, downloadIcsFile } from '../../utils/calendarSync';
 import CustomerOverviewTab from './lead-profile/CustomerOverviewTab';
+import { formatWhatsAppPhone } from '../../utils/matchingEngine';
+import { parseMoney } from '../../utils/crmLeadViews';
+import { normalizeAreaKey } from '../../utils/areasData';
+import VisitorJourney from './analytics/VisitorJourney';
 
 export default function CustomerProfileModal({
   isOpen,
@@ -155,68 +158,34 @@ export default function CustomerProfileModal({
   };
 
   // Matched Properties for this client
-  const matchedProperties = properties.filter(p => {
-    const clientArea = formData.area || 'east';
-    return p.areaKey === clientArea || !p.isDeleted;
-  }).slice(0, 4);
+  // Only what the client actually asked for (the form falls back to east/apartment for display)
+  const wantArea = (lead?.details?.area || lead?.area) ? normalizeAreaKey(formData.area) : null;
+  const wantType = (lead?.details?.propertyType || lead?.propertyType) ? formData.propertyType : null;
+  const wantBudget = parseMoney(formData.budget) || parseMoney(lead?.budget);
+  const matchedProperties = properties
+    .filter((p) => !p.isDeleted && (p.status || 'published') === 'published' && Number(p.price) > 0)
+    .map((p) => {
+      const price = Number(p.price);
+      // A different type, or a price far above the budget, is not a match at all
+      if (wantType && p.type !== wantType) return null;
+      if (wantBudget && price > wantBudget * 1.25) return null;
+      let score = 0;
+      if (wantArea && normalizeAreaKey(p.areaKey) === wantArea) score += 40;
+      if (wantType) score += 30;
+      if (wantBudget) score += price >= wantBudget * 0.75 ? 30 : 15;
+      return { p, score };
+    })
+    .filter((m) => m && m.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 4)
+    .map((m) => m.p);
 
   // Digital Journey & Clickstream History for this lead
-  const { journeyEvents, isLiveTracked, dwellTimeLabel } = useMemo(() => {
-    // Priority 1: Real events saved directly on the lead object (synced from Cloud/LocalStorage)
-    if (Array.isArray(lead.digitalJourney) && lead.digitalJourney.length > 0) {
-      return {
-        journeyEvents: lead.digitalJourney,
-        isLiveTracked: true,
-        dwellTimeLabel: lead.dwellTimeFormatted || 'جلسة مباشرة'
-      };
-    }
-
-    // Priority 2: Direct events recorded in active browser session matching phone/name
-    const directEvents = getLeadDigitalJourney(lead.phone || lead.name);
-    if (directEvents && directEvents.length > 0) {
-      return {
-        journeyEvents: directEvents,
-        isLiveTracked: true,
-        dwellTimeLabel: lead.dwellTimeFormatted || 'جلسة مباشرة'
-      };
-    }
-
-    // Priority 3: Transparently identified demo journey for sample/mock leads
-    const baseTime = lead.timestamp 
-      ? (typeof lead.timestamp === 'string' ? new Date(lead.timestamp).getTime() : Number(lead.timestamp) || 1772700000000)
-      : 1772700000000;
-
-    return {
-      journeyEvents: [
-        {
-          id: 'tr_1',
-          eventType: 'whatsapp_click',
-          timestamp: lead.timestamp || new Date(baseTime - 1800000).toISOString(),
-          metadata: { title: `طلب تواصل مباشر واتساب بشأن عقارات ${formData.area || 'سوهاج'}` }
-        },
-        {
-          id: 'tr_2',
-          eventType: 'calculator_used',
-          timestamp: new Date(baseTime - 5400000).toISOString(),
-          metadata: { title: `تجربة حاسبة التمويل والأقساط لميزانية ${formData.budget || '3,000,000'} ج.م` }
-        },
-        {
-          id: 'tr_3',
-          eventType: 'property_view',
-          timestamp: new Date(baseTime - 9000000).toISOString(),
-          metadata: { title: `تصفح تفاصيل وحدات ${formData.propertyType || 'الشقق'} في ${formData.area || 'شرق سوهاج'}` }
-        },
-        {
-          id: 'tr_4',
-          eventType: 'page_view',
-          timestamp: new Date(baseTime - 12600000).toISOString(),
-          metadata: { title: 'دخول الموقع واستكشاف الفرص المتاحة' }
-        }
-      ],
-      isLiveTracked: false,
-      dwellTimeLabel: isAr ? '6د 15ث (تقديري استرشادي)' : '~6m 15s (Demo Estimate)'
-    };
-  }, [lead, formData, isAr]);
+  // Only the journey recorded on the customer's own device and saved with their request.
+  // Nothing is read from this (staff) browser and nothing is invented when it is missing.
+  const journeyEvents = Array.isArray(lead?.digitalJourney) ? lead.digitalJourney : [];
+  const isLiveTracked = journeyEvents.length > 0;
+  const dwellTimeLabel = lead?.dwellTimeFormatted || '';
 
   if (!isOpen || !lead) return null;
 
@@ -264,7 +233,7 @@ export default function CustomerProfileModal({
               <button
                 type="button"
                 className="btn btn-sm"
-                onClick={() => window.open(`https://wa.me/${cleanPhone}`, '_blank', 'noopener,noreferrer')}
+                onClick={() => window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}`, '_blank', 'noopener,noreferrer')}
                 style={{ padding: '6px 12px', fontSize: 'var(--crm-text-sm)', background: 'var(--crm-positive-soft)', color: 'var(--crm-positive)', border: '1px solid var(--crm-positive-line)', fontWeight: 'bold' }}
               >
                 <MessageSquare size={14} />
@@ -490,7 +459,11 @@ export default function CustomerProfileModal({
           )}
 
           {/* TAB: DIGITAL JOURNEY & VISITOR CLICKSTREAM */}
-          {profileTab === 'journey' && (
+          {/* Server-side analytics profile (visitor accepted analytics when submitting) */}
+          {profileTab === 'journey' && lead.analyticsVisitorId && (
+            <VisitorJourney visitorId={lead.analyticsVisitorId} properties={properties} isAr={isAr} />
+          )}
+          {profileTab === 'journey' && !lead.analyticsVisitorId && (
             <div>
               <div style={{
                 background: isLiveTracked ? 'var(--crm-positive-soft)' : 'var(--crm-info-soft)',
@@ -511,8 +484,8 @@ export default function CustomerProfileModal({
                   </h4>
                   <small style={{ color: 'var(--crm-body)' }}>
                     {isLiveTracked 
-                      ? (isAr ? 'سجل حقيقي مباشر لكافة الصفحات والعقارات والنقرات التي قام بها العميل أثناء زيارته' : 'Live real-time log of pages, listings, and clicks during visitor session.') 
-                      : (isAr ? 'بيانات استرشادية توضيحية لرحلة العميل النموذجية قبل بدء نشاطه الفعلي' : 'Illustrative sample footprint representing typical buyer journey.')}
+                      ? (isAr ? 'الصفحات والعقارات اللي العميل فتحها قبل ما يبعت طلبه' : 'Pages and listings the client opened before submitting.') 
+                      : (isAr ? 'مفيش رحلة تصفح متسجلة للعميل ده (بتتسجل بس لما يبعت طلبه من الموقع على جهازه)' : 'No browsing journey recorded (only captured when the client submits from the site).')}
                   </small>
                 </div>
 
@@ -524,12 +497,14 @@ export default function CustomerProfileModal({
                     border: `1px solid ${isLiveTracked ? 'var(--crm-positive)' : 'var(--crm-warn-line)'}`,
                     fontSize: 'var(--crm-text-xs)'
                   }}>
-                    {isLiveTracked ? '🟢 ' + (isAr ? 'رصد حي ومباشر 100%' : '100% Live Tracked') : '🟡 ' + (isAr ? 'نموذج محاكاة استرشادي' : 'Demo Simulation')}
+                    {isLiveTracked ? '🟢 ' + (isAr ? 'مسجلة من جهاز العميل' : 'Recorded on client device') : (isAr ? 'غير متاحة' : 'Not available')}
                   </span>
 
+                  {dwellTimeLabel && (
                   <span className="badge" style={{ background: 'var(--crm-info-soft)', color: 'var(--crm-info)', fontWeight: 'bold', border: '1px solid var(--crm-info-line)' }}>
                     ⏱️ {isAr ? `مدة الجلسة: ${dwellTimeLabel}` : `Dwell Time: ${dwellTimeLabel}`}
                   </span>
+                  )}
                 </div>
               </div>
 
@@ -615,6 +590,13 @@ export default function CustomerProfileModal({
                 🏢 {isAr ? 'العقارات والوحدات المقترحة لهذا العميل:' : 'Matched & Recommended Units:'}
               </h4>
 
+              {matchedProperties.length === 0 && (
+                <p style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-sm)', margin: '0 0 12px' }}>
+                  {isAr
+                    ? 'مفيش وحدة منشورة بنفس النوع وفي حدود الميزانية دلوقتي.'
+                    : 'No published unit of this type within the budget right now.'}
+                </p>
+              )}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 {matchedProperties.map((prop) => (
                   <div
@@ -644,7 +626,7 @@ export default function CustomerProfileModal({
                       className="btn btn-sm btn-primary"
                       onClick={() => {
                         const waText = `أهلاً أ. ${formData.name}، بخصوص طلبك العقاري، نود ترشيح وحدة ${isAr ? prop.title_ar : prop.title_en} بسعر ${prop.price?.toLocaleString('en-US')} ج.م. هل نحدد موعداً للمعاينة؟`;
-                        window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(waText)}`, '_blank', 'noopener,noreferrer');
+                        window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}?text=${encodeURIComponent(waText)}`, '_blank', 'noopener,noreferrer');
                       }}
                       style={{ padding: '6px 10px', fontSize: 'var(--crm-text-xs)', background: 'var(--crm-brand-navy)', color: 'var(--crm-on-dark)', borderRadius: '6px' }}
                       title={isAr ? 'إرسال بروشور الوحدة على الواتساب' : 'Send WhatsApp Brochure'}

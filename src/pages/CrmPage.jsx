@@ -26,6 +26,7 @@ import '../components/crm/crm-density.css';
 import { isFirebaseAuthAvailable, loginUser, requestPasswordReset } from '../firebaseService';
 import { useAuth } from '../context/AuthContext';
 import { useProperties } from '../context/PropertiesContext';
+import { parseMoney } from '../utils/crmLeadViews';
 import { canEditProperties, canEditLeadsRole, DESK_BY_ROLE, scopeLeadsForAccess } from '../utils/rbacRules';
 import { permsOfRole, PERM_IDS, LEGACY_DESK } from '../utils/accessModel';
 import { verifyAdminCredentials, checkRateLimit, recordFailedAttempt, resetFailedAttempts } from '../utils/securityShield';
@@ -257,33 +258,31 @@ export default function CrmPage({
 
   const handleConvertToProperty = (lead) => {
     const details = lead.details || {};
-    const priceVal = parseInt(details.expectedPrice) || parseInt(details.budget) || 2500000;
-    const sizeVal = parseInt(details.size) || 150;
-    const typeVal = details.propertyType || 'apartment';
-    const areaVal = details.area || 'east';
+    const priceVal = parseMoney(details.expectedPrice) || parseMoney(details.price) || 0;
+    const typeVal = details.propertyType || lead.propertyType || 'apartment';
+    const areaVal = details.area || lead.area || 'east';
 
+    // A listing is public: the owner's name, phone and private notes never go into it.
+    // It starts hidden with only what the owner actually told us; staff complete it and publish.
     const prepopulated = {
-      title_ar: `${isAr ? 'عقار معروض من العميل' : 'Property by'} ${lead.name || 'عميل'} (${details.propertyType ? (isAr ? details.propertyType : details.propertyType) : 'شقة'})`,
-      title_en: `${typeVal.toUpperCase()} listed by ${lead.name || 'Client'}`,
+      title_ar: 'عرض بيع جديد (أكمل البيانات قبل النشر)',
+      title_en: 'New owner listing (complete before publishing)',
       type: typeVal,
       areaKey: areaVal,
-      price: priceVal,
-      downPayment: Math.round(priceVal * 0.2),
-      monthlyInstallment: Math.round((priceVal * 0.8) / 60),
-      size: sizeVal,
-      bedrooms: parseInt(details.rooms) || 3,
-      description_ar: `طلب بيع مباشر مسجل من العميل: ${lead.name} (${lead.phone}) - ملاحظات العميل: ${lead.notes || 'لا توجد ملاحظات إضافية'}`,
-      description_en: `Direct owner listing by ${lead.name} (${lead.phone}). Notes: ${lead.notes || 'Direct request'}`,
-      status: 'published',
-      featured: true,
-      badge_ar: 'عقار موثق',
-      badge_en: 'Verified Unit'
+      price: priceVal || '',
+      size: parseInt(details.size) || '',
+      bedrooms: parseInt(details.rooms) || '',
+      description_ar: '',
+      description_en: '',
+      status: 'hidden',
+      featured: false,
+      sourceLeadId: lead.id
     };
 
     setExternalPropertyData(prepopulated);
     setActiveTab('properties');
     if (triggerToast) {
-      triggerToast(isAr ? 'تم استيراد بيانات العميل بنجاح! راجع البيانات ثم اضغط نشر.' : 'Lead data converted to property draft!', 'info');
+      triggerToast(isAr ? 'اتعمل عقار مخفي من الطلب (من غير اسم أو رقم المالك). كمّل البيانات وبعدين انشره.' : 'Hidden draft created (no owner name or phone). Complete it, then publish.', 'info');
     }
   };
 
@@ -875,7 +874,6 @@ export default function CrmPage({
           isOpen={showGoLiveWizard}
           onClose={() => setShowGoLiveWizard(false)}
           leads={visibleLeads}
-          setLeads={setLeads}
           properties={properties}
           demands={demands}
           lang={lang}

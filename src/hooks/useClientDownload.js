@@ -17,11 +17,21 @@ const currentClient = () => {
  * const download = useClientDownload();
  * download({ kind: 'property_brochure', itemId, itemTitle }, () => generatePropertyPdf(property));
  */
+// Files being generated right now: a second tap on a slow phone must not start another PDF
+const inFlight = new Set();
+
 export default function useClientDownload() {
   const { requireClientAuth } = useClientAuth();
   return useCallback((meta, produce) => {
+    const key = `${meta?.kind || 'file'}:${meta?.itemId || ''}`;
     const run = async () => {
-      await produce();
+      if (inFlight.has(key)) return;
+      inFlight.add(key);
+      try {
+        await produce();
+      } finally {
+        inFlight.delete(key);
+      }
       const client = currentClient();
       if (client) recordClientDownload({ ...meta, client }).catch(() => {});
     };

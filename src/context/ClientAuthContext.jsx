@@ -240,7 +240,8 @@ export function ClientAuthProvider({
       // Nothing has checked the number yet: the team confirms it when the WhatsApp message with
       // this code arrives from the same number. `verified` only unlocks favourites on this device.
       verificationMethod: 'whatsapp_pending',
-      role: 'verified_client'
+      // A device-local account (favourites on this phone), not a checked identity — see the note above
+      role: 'client'
     };
 
     // Save client state
@@ -251,7 +252,7 @@ export function ClientAuthProvider({
     identifyVisitor({
       name: verifiedAccount.name,
       phone: verifiedAccount.whatsapp,
-      type: 'verified_client'
+      type: 'client'
     });
 
     // Register lead in CRM pipeline with full verified metadata

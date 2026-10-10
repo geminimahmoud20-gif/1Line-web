@@ -3,6 +3,7 @@ import { Zap, Search, Sparkles, CheckCircle, CheckCircle2, AlertCircle, MapPin, 
 import { Link } from 'react-router-dom';
 import { getAreas } from '../utils/areasData';
 import '../styles/expat-suite.css';
+import { recordTimeLabel } from '../utils/relativeTime';
 
 export const DemandsPortal = ({
   lang,
@@ -366,7 +367,7 @@ export const DemandsPortal = ({
                       title={lang === 'ar' ? 'تاريخ النشر' : 'Published'}
                     >
                       <Clock size={13} style={{ flexShrink: 0 }} />
-                      <span>{dem.timestamp || (lang === 'ar' ? 'حديثاً' : 'Recent')}</span>
+                      <span>{recordTimeLabel(dem, lang === 'ar')}</span>
                     </div>
                   )}
                 </div>

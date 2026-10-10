@@ -5,7 +5,7 @@ import { trackEvent } from '../../utils/visitorTracker';
 import { generateComparePdf } from '../../utils/comparePdfGenerator';
 import useClientDownload from '../../hooks/useClientDownload';
 
-import { getWhatsAppUrl } from '../../utils/founderCmsData';
+import { getWhatsAppUrl, getDynamicPhone } from '../../utils/founderCmsData';
 import { isMultiUnitOrBuilding } from '../../utils/currencyAndBenchmark';
 import CompareColumn from './CompareColumn';
 import CompareDuel from './CompareDuel';
@@ -105,7 +105,9 @@ export default function PropertyCompareDrawer({
     const priceDiff = Math.abs(p1.price - p2.price);
     const ppm1 = p1.pricePerMeter || (p1.size ? Math.round(p1.price / p1.size) : 0);
     const ppm2 = p2.pricePerMeter || (p2.size ? Math.round(p2.price / p2.size) : 0);
-    const ppmDiff = Math.abs(ppm1 - ppm2);
+    // Price per m² only compares when both listings have an area; 0 is "unknown", not "cheapest"
+    const ppmComparable = ppm1 > 0 && ppm2 > 0;
+    const ppmDiff = ppmComparable ? Math.abs(ppm1 - ppm2) : 0;
     const sizeDiff = Math.abs((Number(p1.size) || 0) - (Number(p2.size) || 0));
     const monthlyDiff = Math.abs((Number(p1.monthlyInstallment) || 0) - (Number(p2.monthlyInstallment) || 0));
 
@@ -114,9 +116,9 @@ export default function PropertyCompareDrawer({
       ppmDiff,
       sizeDiff,
       monthlyDiff,
-      cheaperId: p1.price < p2.price ? p1.id : p2.id,
-      largerId: (Number(p1.size) || 0) > (Number(p2.size) || 0) ? p1.id : p2.id,
-      betterPpmId: ppm1 < ppm2 ? p1.id : p2.id,
+      cheaperId: p1.price !== p2.price ? (p1.price < p2.price ? p1.id : p2.id) : null,
+      largerId: (Number(p1.size) || 0) !== (Number(p2.size) || 0) ? ((Number(p1.size) || 0) > (Number(p2.size) || 0) ? p1.id : p2.id) : null,
+      betterPpmId: ppmComparable && ppm1 !== ppm2 ? (ppm1 < ppm2 ? p1.id : p2.id) : null,
       lowerMonthlyId: (Number(p1.monthlyInstallment) || Infinity) < (Number(p2.monthlyInstallment) || Infinity) ? p1.id : p2.id,
       p1,
       p2,
@@ -155,13 +157,17 @@ export default function PropertyCompareDrawer({
       msg += `• المقدم: ${p.downPayment ? `${p.downPayment.toLocaleString('en-US')} ج.م` : 'كاش'}\n`;
       msg += `• القسط: ${p.monthlyInstallment ? `${p.monthlyInstallment.toLocaleString('en-US')} ج.م/شهرياً (${p.installmentYears || 0} سنوات)` : 'كاش فقط'}\n`;
       msg += `• الموقع: ${loc}\n`;
-      msg += `• الموقف القانوني: عقد مسجل وشهر عقاري معتمد 100%\n`;
+      // Only what the listing's legal review actually recorded; never a blanket guarantee
+      const legalLine = p.legalStatus
+        ? [p.legalStatus.ownershipType_ar, p.legalStatus.licenseStatus_ar].filter(Boolean).join(' • ')
+        : '';
+      msg += `• الموقف القانوني: ${legalLine || 'نراجع معك المستندات قبل التعاقد'}\n`;
       msg += `• الرابط: ${window.location.origin}/properties/${p.id}\n\n`;
     });
 
     msg += isAr 
-      ? `🏛️ صادر عن منصة 1Line Solutions العقارية بسوهاج\n📞 للاستفسار وحجز معاينة مجمعة: +20 122 322 2956` 
-      : `🏛️ Issued by 1Line Solutions Sohag\n📞 For Inquiries & Group Tour: +20 122 322 2956`;
+      ? `🏛️ صادر عن منصة 1Line Solutions العقارية بسوهاج\n📞 للاستفسار وحجز معاينة مجمعة: ${getDynamicPhone()}` 
+      : `🏛️ Issued by 1Line Solutions Sohag\n📞 For Inquiries & Group Tour: ${getDynamicPhone()}`;
 
     trackEvent('compare_shared_whatsapp', { count: compareList.length });
     const waUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`;

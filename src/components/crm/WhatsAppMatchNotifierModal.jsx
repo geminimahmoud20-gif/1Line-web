@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { SITE_URL } from '../../config/siteConfig';
 import { 
   MessageSquare, 
   Send, 
@@ -52,7 +53,7 @@ export default function WhatsAppMatchNotifierModal({
     if (!property || matchedClients.length === 0) return null;
     const propertyTitle = property.title_ar || property.title || 'وحدة عقارية مميزة';
     const propertyPrice = (property.price || 0).toLocaleString('ar-EG-u-nu-latn');
-    const propertyUrl = typeof window !== 'undefined' ? `${window.location.origin}/property/${property.id}` : `https://1line-sohag.com/property/${property.id}`;
+    const propertyUrl = `${SITE_URL}/properties/${property.id}`;
 
     return {
       dispatcher: '1Line Real Estate Meta WhatsApp Cloud API',
