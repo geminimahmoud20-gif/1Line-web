@@ -142,6 +142,13 @@ service cloud.firestore {
 
     // 🛡️ 1b. LEAD CONTACTS — phone / WhatsApp / email per lead (doc id = lead id).
     // assignedTo mirrors the lead's desk so agents' queue queries can be checked by the rules.
+    // 🔑 Forced sign-out marker, written by /api/team (service account) when the super admin signs
+    // a member out or changes their access. Each member reads only their own.
+    match /session_revocations/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
     match /lead_contacts/{leadId} {
       function validContact(data) {
         return data.keys().hasOnly(contactFields().concat(['assignedTo']))

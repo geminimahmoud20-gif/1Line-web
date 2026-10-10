@@ -119,3 +119,31 @@ test('activated: own password set from the email link, or email verified', () =>
   assert.equal(toMember({ ...base, emailVerified: true }).activatedAt, new Date(1700000000000).toISOString());
   assert.equal(toMember(base).activatedAt, null);
 });
+
+test('signout: validated, blocked on yourself, revokes and stamps the marker', async () => {
+  assert.deepEqual(parseTeamRequest({ action: 'signout', uid: 'abc123' }), { action: 'signout', uid: 'abc123' });
+  assert.equal(parseTeamRequest({ action: 'signout', uid: '../x' }), null);
+  const calls = [];
+  const fsCalls = [];
+  const { teamStore } = await import('../../api/_team-core.js');
+  const fakeAuth = async (method, path, body) => {
+    calls.push([path, body]);
+    const users = { boss: { localId: 'boss', customAttributes: '{"role":"super_admin","admin":true}' }, nada: { localId: 'nada', customAttributes: '{"role":"sales_agent"}' } };
+    if (path === 'accounts:lookup') return new Response(JSON.stringify({ users: (body.localId || []).map((id) => users[id]).filter(Boolean) }));
+    return new Response('{}');
+  };
+  const fakeFs = async (method, path, body) => { fsCalls.push([method, path, body]); return new Response('{}'); };
+  const registry = { list: async () => ['boss', 'nada'], set: async () => {}, remove: async () => {} };
+  const store = teamStore(fakeAuth, registry, null, fakeFs);
+  const r = await handleTeam({ method: 'POST', body: { action: 'signout', uid: 'nada' }, callerUid: 'boss', store });
+  assert.equal(r.status, 200);
+  const update = calls.find(([p]) => p === 'accounts:update');
+  assert.equal(update[1].localId, 'nada');
+  assert.ok(Number(update[1].validSince) > 0);
+  assert.equal(update[1].customAttributes, undefined); // access itself untouched
+  assert.equal(fsCalls[0][0], 'PATCH');
+  assert.equal(fsCalls[0][1], 'session_revocations/nada');
+  assert.ok(fsCalls[0][2].fields.at.timestampValue);
+  const self = await handleTeam({ method: 'POST', body: { action: 'signout', uid: 'boss' }, callerUid: 'boss', store });
+  assert.equal(self.status, 409);
+});

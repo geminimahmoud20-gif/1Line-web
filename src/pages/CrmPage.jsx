@@ -133,6 +133,17 @@ export default function CrmPage({
   const [showPassword, setShowPassword] = useState(false);
   const [honeypot, setHoneypot] = useState('');
   const [loginError, setLoginError] = useState('');
+  // Signed out by the super admin (access changed): say why on the login screen
+  if (!crmAuthenticated && typeof window !== 'undefined') {
+    let forced = false;
+    try { forced = sessionStorage.getItem('oneline_forced_signout') === '1'; } catch { /* storage unavailable */ }
+    if (forced) {
+      try { sessionStorage.removeItem('oneline_forced_signout'); } catch { /* storage unavailable */ }
+      setLoginError(lang === 'ar'
+        ? 'المدير حدّث صلاحياتك أو طلب تسجيل دخول جديد — سجّل دخولك تاني.'
+        : 'Your access was updated by an admin — please sign in again.');
+    }
+  }
   const [isVerifying, setIsVerifying] = useState(false);
   const [resetNotice, setResetNotice] = useState(null); // { ok: boolean, text: string }
   const [resetSending, setResetSending] = useState(false);

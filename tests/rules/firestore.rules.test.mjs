@@ -377,3 +377,15 @@ test('new-model claims: perms list is the whole truth; desk scopes leads and dea
   await assertFails(setDoc(doc(narrowed, 'leads/b'), { status: 'contacted' }, { merge: true }));
   await assertFails(getDoc(doc(narrowed, 'client_downloads/x')));
 });
+
+test('session_revocations: a member reads only their own marker; nobody writes from a client', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'session_revocations/u-agent_east'), { at: serverTimestamp() });
+  });
+  const east = as('agent_east');
+  await assertSucceeds(getDoc(doc(east, 'session_revocations/u-agent_east')));
+  await assertFails(getDoc(doc(east, 'session_revocations/u-sales_agent')));
+  await assertFails(setDoc(doc(east, 'session_revocations/u-agent_east'), { at: serverTimestamp() }));
+  await assertFails(setDoc(doc(asAdmin(), 'session_revocations/u-agent_east'), { at: serverTimestamp() }));
+  await assertFails(getDoc(doc(guest(), 'session_revocations/u-agent_east')));
+});

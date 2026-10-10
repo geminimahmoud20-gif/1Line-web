@@ -1,6 +1,6 @@
 import { db, auth, isFirebaseConfigured } from '../firebase.js';
 
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, onSnapshot } from 'firebase/firestore';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth';
 
 // ===================== UTILITY =====================
@@ -217,7 +217,10 @@ export const monitorAuthState = (callback) => {
     return () => {};
   }
 
-  return onAuthStateChanged(auth, async (user) => {
+  let stopRevocationWatch = () => {};
+  const unsubAuth = onAuthStateChanged(auth, async (user) => {
+    stopRevocationWatch();
+    stopRevocationWatch = () => {};
     if (!user) {
       callback(false, null);
       return;
@@ -238,5 +241,36 @@ export const monitorAuthState = (callback) => {
       perms: access.role ? access.perms : [],
       desk: access.desk || ''
     });
+    stopRevocationWatch = watchForcedSignOut(user);
   });
+  return () => {
+    stopRevocationWatch();
+    unsubAuth();
+  };
 };
+
+export const FORCED_SIGNOUT_KEY = 'oneline_forced_signout';
+
+/**
+ * The super admin can sign a member out (or change their role / team, which does the same):
+ * /api/team stamps session_revocations/{uid}.at. A session that signed in before that moment
+ * ends now, so the member signs in again and picks up their new access.
+ */
+function watchForcedSignOut(user) {
+  if (!db) return () => {};
+  let signedInAt = 0;
+  user.getIdTokenResult().then((r) => { signedInAt = Date.parse(r.authTime) || 0; }).catch(() => {});
+  return onSnapshot(doc(db, 'session_revocations', user.uid), async (snap) => {
+    const at = snap.exists() ? snap.data()?.at?.toMillis?.() || 0 : 0;
+    if (!at) return;
+    if (!signedInAt) {
+      try { signedInAt = Date.parse((await user.getIdTokenResult()).authTime) || 0; } catch { return; }
+    }
+    // 2s slack: the stamp and a sign-in a moment later come from different clocks
+    if (at > signedInAt + 2000) {
+      try { sessionStorage.setItem(FORCED_SIGNOUT_KEY, '1'); } catch { /* storage unavailable */ }
+      try { sessionStorage.removeItem('crm_auth'); } catch { /* storage unavailable */ }
+      await signOut(auth).catch(() => {});
+    }
+  }, () => { /* no doc yet or offline: nothing to do */ });
+}
