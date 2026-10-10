@@ -220,7 +220,12 @@ test('request contacts: only sales roles read them; read-only roles do not', asy
   for (const role of ['sales_manager', 'agent_east', 'sales_agent']) {
     await assertSucceeds(getDocs(query(collection(as(role), 'request_contacts'), where('kind', '==', 'trade_ins'))));
   }
-  await assertSucceeds(getDoc(doc(as('viewer'), 'trade_ins/t1')));
+  // The requests themselves are for the team that follows them up, not read-only roles
+  for (const role of ['viewer', 'finance', 'property_manager']) {
+    await assertFails(getDoc(doc(as(role), 'trade_ins/t1')));
+  }
+  await assertSucceeds(getDoc(doc(as('agent_east'), 'trade_ins/t1')));
+  await assertSucceeds(getDoc(doc(as('sales_manager'), 'trade_ins/t1')));
 });
 
 test('request contacts: a trade-in without a phone needs its contact doc; updates cannot add a phone', async () => {
@@ -376,4 +381,16 @@ test('new-model claims: perms list is the whole truth; desk scopes leads and dea
   await assertSucceeds(getDoc(doc(narrowed, 'leads/b')));
   await assertFails(setDoc(doc(narrowed, 'leads/b'), { status: 'contacted' }, { merge: true }));
   await assertFails(getDoc(doc(narrowed, 'client_downloads/x')));
+});
+
+test('session_revocations: a member reads only their own marker; nobody writes from a client', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'session_revocations/u-agent_east'), { at: serverTimestamp() });
+  });
+  const east = as('agent_east');
+  await assertSucceeds(getDoc(doc(east, 'session_revocations/u-agent_east')));
+  await assertFails(getDoc(doc(east, 'session_revocations/u-sales_agent')));
+  await assertFails(setDoc(doc(east, 'session_revocations/u-agent_east'), { at: serverTimestamp() }));
+  await assertFails(setDoc(doc(asAdmin(), 'session_revocations/u-agent_east'), { at: serverTimestamp() }));
+  await assertFails(getDoc(doc(guest(), 'session_revocations/u-agent_east')));
 });

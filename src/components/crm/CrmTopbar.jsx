@@ -24,6 +24,7 @@ export default function CrmTopbar({
   setShowGoLiveWizard,
   onToggleMobileSidebar,
   onRequestOpen,
+  canAdd = {},
   onOpenCommandPalette
 }) {
   const [showQuickActionMenu, setShowQuickActionMenu] = useState(false);
@@ -349,7 +350,7 @@ export default function CrmTopbar({
                 padding: '6px'
               }}
             >
-              <button
+              {canAdd.lead !== false && (<button
                 type="button"
                 onClick={() => { if (onRequestOpen) onRequestOpen('add_lead'); else setActiveTab('leads'); setShowQuickActionMenu(false); }}
                 style={{
@@ -369,9 +370,9 @@ export default function CrmTopbar({
               >
                 <Users size={14} style={{ color: 'var(--crm-info)' }} />
                 <span>{isAr ? '+ تسجيل عميل جديد' : '+ New Lead'}</span>
-              </button>
+              </button>)}
 
-              <button
+              {canAdd.property !== false && (<button
                 type="button"
                 onClick={() => { if (onRequestOpen) onRequestOpen('add_property'); else setActiveTab('properties'); setShowQuickActionMenu(false); }}
                 style={{
@@ -391,9 +392,9 @@ export default function CrmTopbar({
               >
                 <Building size={14} style={{ color: 'var(--crm-accent-text)' }} />
                 <span>{isAr ? '+ إضافة عقار جديد' : '+ New Property'}</span>
-              </button>
+              </button>)}
 
-              <button
+              {canAdd.demand !== false && (<button
                 type="button"
                 onClick={() => { if (onRequestOpen) onRequestOpen('add_demand'); else setActiveTab('demands'); setShowQuickActionMenu(false); }}
                 style={{
@@ -413,9 +414,9 @@ export default function CrmTopbar({
               >
                 <Zap size={14} style={{ color: 'var(--crm-positive)' }} />
                 <span>{isAr ? '+ إضافة طلب مشترٍ' : '+ New Demand'}</span>
-              </button>
+              </button>)}
 
-              <button
+              {canAdd.project !== false && (<button
                 type="button"
                 onClick={() => { if (onRequestOpen) onRequestOpen('add_project'); else setActiveTab('projects'); setShowQuickActionMenu(false); }}
                 style={{
@@ -435,7 +436,7 @@ export default function CrmTopbar({
               >
                 <Building size={14} style={{ color: 'var(--crm-violet)' }} />
                 <span>{isAr ? '+ إضافة مشروع استثماري' : '+ New Project'}</span>
-              </button>
+              </button>)}
 
               <div style={{ height: '1px', background: 'var(--crm-subtle-2)', margin: '4px 8px' }} />
 
@@ -461,7 +462,7 @@ export default function CrmTopbar({
                 <span>{isAr ? '✨ فحص المطابقات الذكية AI' : '✨ Smart AI Match'}</span>
               </button>
 
-              <button
+              {canAdd.retarget !== false && (<button
                 type="button"
                 onClick={() => { setActiveTab('retargeting'); setShowQuickActionMenu(false); }}
                 style={{
@@ -481,7 +482,7 @@ export default function CrmTopbar({
               >
                 <Zap size={14} style={{ color: 'var(--crm-danger)' }} />
                 <span>{isAr ? '📢 حملة إعادة استهداف' : '📢 Retargeting Campaign'}</span>
-              </button>
+              </button>)}
             </div>
           )}
         </div>

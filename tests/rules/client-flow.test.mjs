@@ -115,13 +115,19 @@ test('a visitor\'s demand and trade-in keep the phone in request_contacts', asyn
   assert.equal((await raw(`request_contacts/trade_ins__${t.id}`)).phone, '+201033333333');
 });
 
-test('sales roles get request phones merged in; viewers do not', async () => {
+test('sales roles get request phones merged in; viewers cannot read the requests at all', async () => {
   await signInAs('agent-east-1', { role: 'agent_east' });
   const forAgent = await nextList((cb) => svc.subscribeToIntake('trade_ins', cb), (l) => l.some((r) => r.phone));
   assert.equal(forAgent[0].phone, '+201033333333');
   await signInAs('viewer-1', { role: 'viewer' });
-  const forViewer = await nextList((cb) => svc.subscribeToIntake('trade_ins', cb), (l) => l.length > 0);
-  assert.ok(forViewer.every((r) => !r.phone));
+  // Expat / trade-in requests are for the people who follow them up (ld.edit), not viewer/finance
+  const denied = await new Promise((resolve) => {
+    const timer = setTimeout(() => { unsub?.(); resolve('no-answer'); }, 8000);
+    const unsub = svc.subscribeToIntake('trade_ins', (list, meta) => {
+      if (meta?.error) { clearTimeout(timer); unsub?.(); resolve(meta.error); }
+    });
+  });
+  assert.equal(denied, 'permission-denied');
 });
 
 test('a manager session migrates inline request phones automatically', async () => {

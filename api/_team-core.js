@@ -58,7 +58,7 @@ export function parseTeamRequest(body, config = null) {
     return { action, uid, role, ...(desk !== undefined ? { desk } : {}) };
   }
 
-  if (['disable', 'enable', 'remove'].includes(action)) {
+  if (['disable', 'enable', 'remove', 'signout'].includes(action)) {
     const uid = String(body.uid || '');
     if (!UID_RE.test(uid)) return null;
     return { action, uid };
@@ -265,6 +265,16 @@ export function teamStore(call, registry = null, accessStorage = null, fs = null
 
   const byEmail = (a, b) => a.email.localeCompare(b.email);
 
+  // session_revocations/{uid}.at: the CRM signs out any session that started before it
+  // (validSince alone only bites when the ID token refreshes, up to an hour later)
+  const markSignedOut = async (uid) => {
+    if (!fs) return;
+    const res = await fs('PATCH', `session_revocations/${encodeURIComponent(uid)}`, {
+      fields: { at: { timestampValue: new Date().toISOString() } }
+    });
+    if (!res.ok) console.warn('session_revocations write failed', res.status);
+  };
+
   return {
     async getAccess() {
       return accessStorage ? await accessStorage.get() : DEFAULT_ACCESS;
@@ -306,6 +316,8 @@ export function teamStore(call, registry = null, accessStorage = null, fs = null
       if (disabled !== undefined) body.disableUser = disabled;
       if (name) body.displayName = name;
       await ok(await call('POST', 'accounts:update', body), 'update');
+      // Every access change signs the member out now, not when their token next refreshes
+      await markSignedOut(uid);
       if (registry && claims !== undefined) {
         const role = roleOf(claims);
         const resolvedDesk = desk !== undefined ? desk : (claims?.desk || '');
@@ -315,6 +327,11 @@ export function teamStore(call, registry = null, accessStorage = null, fs = null
     },
     async reassignLeads(oldTeamId, targetTeamId) {
       return reassignTeamLeads(fs, oldTeamId, targetTeamId);
+    },
+    /** Force a fresh sign-in: revoke refresh tokens (validSince) and tell open CRM tabs */
+    async signOutUser(uid) {
+      await ok(await call('POST', 'accounts:update', { localId: uid, validSince: String(Math.floor(Date.now() / 1000)) }), 'update');
+      await markSignedOut(uid);
     }
   };
 }
@@ -512,6 +529,8 @@ export async function handleTeam({ method, body, callerUid, store }) {
     await store.updateUser(req.uid, { disabled: true });
   } else if (req.action === 'enable') {
     await store.updateUser(req.uid, { disabled: false });
+  } else if (req.action === 'signout') {
+    await store.signOutUser(req.uid);
   } else if (req.action === 'remove') {
     await store.updateUser(req.uid, { claims: claimsForMember(parseClaims(user.customAttributes), null, '', config) });
   }

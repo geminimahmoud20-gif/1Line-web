@@ -88,6 +88,7 @@ export const CrmAdminPanel = ({
   const seesPhones = isSuperRole || perms.includes('ld.phone');
   const canEditLeads = isSuperRole || canEditLeadsRole(activeRole, perms);
   const canExport = isSuperRole || canExportCsv(activeRole, perms);
+  const canRetarget = isSuperRole || (canEditLeads && seesPhones);
   const myDesk = userDesk || '';
   const leads = useMemo(() => scopeLeadsForAccess(allLeads, { role: activeRole, perms, desk: myDesk }), [allLeads, activeRole, perms, myDesk]);
   // One gate for every lead write from this panel: read-only roles can't write, and a role that
@@ -131,7 +132,7 @@ export const CrmAdminPanel = ({
   const [showContractStudio, setShowContractStudio] = useState(false);
   // Top bar / command palette asked for one of this panel's modals
   useOpenRequest(openRequest, ['add_lead', 'contract_studio', 'ai_copywriter'], (type) => {
-    if (type === 'add_lead') setShowAddLeadModal(true);
+    if (type === 'add_lead') { if (canEditLeads) setShowAddLeadModal(true); }
     else if (type === 'contract_studio') setShowContractStudio(true);
     else setShowAICopywriter(true);
   });
@@ -726,7 +727,12 @@ export const CrmAdminPanel = ({
       )}
 
       {/* 📢 TAB 7: RETARGETING CAMPAIGNS HUB */}
-      {adminTab === 'retargeting' && (
+      {adminTab === 'retargeting' && !canRetarget && (
+        <div className="crm-table-container" style={{ padding: '32px', textAlign: 'center', color: 'var(--crm-muted)' }}>
+          {isAr ? 'حملات إعادة الاستهداف متاحة لفريق المبيعات والإدارة فقط.' : 'Retargeting campaigns are for the sales team and managers only.'}
+        </div>
+      )}
+      {adminTab === 'retargeting' && canRetarget && (
         <RetargetingHub
           leads={leads}
           properties={properties}
@@ -746,7 +752,13 @@ export const CrmAdminPanel = ({
       )}
 
       {/* 🏛️ TAB 9: CORPORATE & FOUNDER CMS */}
-      {adminTab === 'founder_cms' && (
+      {/* Company identity, backups and automation: super admin only (writes are admin-only in the rules too) */}
+      {['founder_cms', 'system_backup', 'automation'].includes(adminTab) && !isSuperRole && (
+        <div className="crm-table-container" style={{ padding: '32px', textAlign: 'center', color: 'var(--crm-muted)' }}>
+          {isAr ? 'القسم ده للمدير العام بس.' : 'This section is for the super admin only.'}
+        </div>
+      )}
+      {adminTab === 'founder_cms' && isSuperRole && (
         <FounderCmsPanel
           lang={lang}
           triggerToast={triggerToast}
@@ -754,7 +766,7 @@ export const CrmAdminPanel = ({
       )}
 
       {/* 🛡️ TAB 9.5: SYSTEM BACKUP & RESTORE (ADMIN ONLY) */}
-      {adminTab === 'system_backup' && (
+      {adminTab === 'system_backup' && isSuperRole && (
         <SystemBackupTab
           handleExportLeadsJson={handleExportLeadsJson}
           handleImportLeadsJson={handleImportLeadsJson}
@@ -764,7 +776,7 @@ export const CrmAdminPanel = ({
       )}
 
       {/* ⚙️ TAB 10: AUTOMATION & WEBHOOKS */}
-      {adminTab === 'automation' && (
+      {adminTab === 'automation' && isSuperRole && (
         <AutomationTab
           addNotification={addNotification}
           isAr={isAr}

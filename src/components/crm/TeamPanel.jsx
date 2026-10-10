@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { UserPlus, KeyRound, UserX, UserCheck, Trash2, RefreshCw, X, Users, ShieldCheck, Building } from 'lucide-react';
+import { UserPlus, KeyRound, UserX, UserCheck, Trash2, RefreshCw, X, Users, ShieldCheck, Building, LogOut } from 'lucide-react';
 import { auth } from '../../firebase';
 import { listTeamMembers, teamAction, requestPasswordReset, logAuditEvent } from '../../firebaseService';
 import { DEFAULT_ACCESS } from '../../utils/accessModel';
@@ -150,13 +150,15 @@ export default function TeamPanel({ lang = 'ar', leads = [], triggerToast }) {
 
   const act = async (m, action, extra = {}) => {
     if (action === 'remove' && !window.confirm(isAr ? `شيل ${m.name || m.email} من الفريق؟ مش هيقدر يدخل لوحة التحكم تاني.` : `Remove ${m.email} from the team?`)) return;
+    if (action === 'signout' && !window.confirm(isAr ? `تسجيل خروج ${m.name || m.email} من كل الأجهزة؟ هيطلب منه يدخل الإيميل والباسورد تاني، وصلاحياته هتتحدث.` : `Sign ${m.email} out everywhere? They will sign in again with their current access.`)) return;
     if (action === 'disable' && !window.confirm(isAr ? `إيقاف حساب ${m.name || m.email}؟ هيخرج من لوحة التحكم فورًا.` : `Disable ${m.email}?`)) return;
     setBusyUid(m.uid);
     const res = await teamAction({ action, uid: m.uid, ...extra });
     setBusyUid(null);
     if (!res.ok) { toast(errorText(res.error, isAr), 'error'); return; }
     const done = {
-      role: isAr ? 'تم تحديث الدور وفريق العمل' : 'Role and desk updated',
+      role: isAr ? 'تم تحديث الدور والفريق — هيطلب منه يسجّل دخول تاني' : 'Role and desk updated — they will sign in again',
+      signout: isAr ? 'اتعمل تسجيل خروج — هيدخل بياناته تاني' : 'Signed out — they will sign in again',
       disable: isAr ? 'الحساب اتوقف' : 'Account disabled',
       enable: isAr ? 'الحساب اتفعّل' : 'Account enabled',
       remove: isAr ? 'اتشال من الفريق' : 'Removed from the team'
@@ -164,6 +166,24 @@ export default function TeamPanel({ lang = 'ar', leads = [], triggerToast }) {
     toast(done);
     audit(`TEAM_${action.toUpperCase()}`, m.uid, { email: m.email, from: m.role, ...extra });
     load();
+  };
+
+  const [signingOutAll, setSigningOutAll] = useState(false);
+  const signOutAll = async () => {
+    const targets = (members || []).filter((m) => m.uid !== me && !m.disabled);
+    if (!targets.length) return;
+    if (!window.confirm(isAr ? `تسجيل خروج ${targets.length} موظف من كل الأجهزة؟ كل واحد هيدخل الإيميل والباسورد تاني وصلاحياته هتتحدث.` : `Sign ${targets.length} members out everywhere?`)) return;
+    setSigningOutAll(true);
+    let failed = 0;
+    for (const m of targets) {
+      const res = await teamAction({ action: 'signout', uid: m.uid });
+      if (res.ok) audit('TEAM_SIGNOUT', m.uid, { email: m.email, bulk: true });
+      else failed += 1;
+    }
+    setSigningOutAll(false);
+    toast(failed
+      ? (isAr ? `اتعمل خروج لـ ${targets.length - failed} وفشل ${failed}` : `${targets.length - failed} signed out, ${failed} failed`)
+      : (isAr ? `اتعمل تسجيل خروج لـ ${targets.length} موظف` : `${targets.length} members signed out`), failed ? 'error' : undefined);
   };
 
   const add = async (form) => {
@@ -245,6 +265,15 @@ export default function TeamPanel({ lang = 'ar', leads = [], triggerToast }) {
               >
                 <RefreshCw size={16} style={{ opacity: syncing ? 0.4 : 1 }} />
               </button>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={signOutAll}
+                disabled={!members || signingOutAll || !members.some((m) => m.uid !== me && !m.disabled)}
+                title={isAr ? 'كل الموظفين (غيرك) يخرجوا ويدخلوا بياناتهم تاني' : 'Everyone except you signs in again'}
+              >
+                <LogOut size={16} /> {signingOutAll ? (isAr ? 'جاري…' : 'Working…') : (isAr ? 'خروج الكل' : 'Sign out all')}
+              </button>
               <button type="button" className="btn btn-primary" onClick={() => setAdding(true)} disabled={members === undefined || members === null}>
                 <UserPlus size={16} /> {isAr ? 'إضافة موظف' : 'Add member'}
               </button>
@@ -325,6 +354,11 @@ export default function TeamPanel({ lang = 'ar', leads = [], triggerToast }) {
                               <button type="button" className="tm-icon-btn" onClick={() => sendPasswordLink(m)} disabled={busy || m.disabled} title={isAr ? 'إرسال لينك تعيين الباسورد' : 'Send password link'}>
                                 <KeyRound size={16} />
                               </button>
+                              {!self && !m.disabled && (
+                                <button type="button" className="tm-icon-btn" onClick={() => act(m, 'signout')} disabled={busy} title={isAr ? 'تسجيل خروج إجباري (يدخل بياناته تاني)' : 'Sign out everywhere'} aria-label={isAr ? `تسجيل خروج ${m.email}` : `Sign out ${m.email}`}>
+                                  <LogOut size={16} />
+                                </button>
+                              )}
                               {!self && (m.disabled ? (
                                 <button type="button" className="tm-icon-btn" onClick={() => act(m, 'enable')} disabled={busy} title={isAr ? 'تفعيل' : 'Enable'}><UserCheck size={16} /></button>
                               ) : (
