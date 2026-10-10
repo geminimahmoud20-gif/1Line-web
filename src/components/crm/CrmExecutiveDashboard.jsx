@@ -15,14 +15,20 @@ export default function CrmExecutiveDashboard({
   onOpenLead,
   onFilterLeads,
   onOpenContractStudio,
-  onOpenCopywriter
+  onOpenCopywriter,
+  deskView = null,
+  scopeDesk: scopeDeskProp = null,
+  showMoney: showMoneyProp = null
 }) {
   const isSuperAdmin = activeRole === 'super_admin';
 
   // Company-wide numbers are for roles that see agency financials (super admin, sales manager,
   // finance). Everyone else gets their own desk's numbers.
+  // CrmAdminPanel passes the account's real scope; the role-name fallback is for older callers
   const canViewCompany = isSuperAdmin || !!currentRoleObj.canViewAgencyFinancials;
-  const scopeDesk = canViewCompany ? null : (DESK_BY_ROLE[activeRole] || currentRoleObj.agentName || null);
+  const isDeskView = deskView ?? !canViewCompany;
+  const scopeDesk = isDeskView ? (scopeDeskProp || DESK_BY_ROLE[activeRole] || currentRoleObj.agentName || '__no_team__') : null;
+  const showMoney = showMoneyProp ?? canViewCompany;
 
   // Clock for "overdue / stale / today"; ticks once a minute
   const [now, setNow] = useState(() => Date.now());
@@ -246,7 +252,7 @@ export default function CrmExecutiveDashboard({
           </>
         )}
 
-        {!metrics.scoped && (
+        {!metrics.scoped && showMoney && (
           <>
         {/* Metric 2: Expected Commission */}
         <div

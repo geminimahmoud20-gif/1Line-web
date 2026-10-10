@@ -78,7 +78,8 @@ export default function PropertyManagerPanel({
   triggerToast,
   externalNewPropertyData = null,
   onClearExternalData = () => {},
-  openRequest = null
+  openRequest = null,
+  readOnly = false
 }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingPropertyId, setEditingPropertyId] = useState(null);
@@ -127,7 +128,7 @@ export default function PropertyManagerPanel({
     setForm(DEFAULT_FORM_STATE);
     setShowAddModal(true);
   };
-  useOpenRequest(openRequest, ['add_property'], handleOpenAdd);
+  useOpenRequest(openRequest, ['add_property'], () => { if (!readOnly) handleOpenAdd(); });
 
   const handleOpenEdit = (prop) => {
     setEditingPropertyId(prop.id);
@@ -541,7 +542,7 @@ export default function PropertyManagerPanel({
           />
 
           {/* Add New Property */}
-          <button type="button" className="btn btn-primary" onClick={handleOpenAdd}>
+          <button type="button" className="btn btn-primary" onClick={handleOpenAdd} disabled={readOnly} title={readOnly ? (isAr ? 'دورك للعرض فقط' : 'View-only role') : undefined}>
             <Plus size={16} />
             <span>{isAr ? 'إضافة عقار جديد للموقع' : 'Add New Property'}</span>
           </button>
@@ -691,6 +692,7 @@ export default function PropertyManagerPanel({
               filteredProperties.map((prop) => {
                 return (
                   <PropertyTableRow
+                    readOnly={readOnly}
                     key={prop.id}
                     prop={prop}
                     isAr={isAr}

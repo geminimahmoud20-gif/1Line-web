@@ -228,11 +228,15 @@ export const monitorAuthState = (callback) => {
       callback(false, null);
       return;
     }
+    // Team and fine-grained permissions come from the same token as the role
+    const access = await getCrmAccess(user);
     callback(true, {
       uid: user.uid,
       email: user.email,
       displayName: user.displayName || user.email?.split('@')[0] || 'Admin',
-      role
+      role,
+      perms: access.role ? access.perms : [],
+      desk: access.desk || ''
     });
   });
 };

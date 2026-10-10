@@ -204,3 +204,24 @@ export const maskPhoneNumber = (phone, role, perms = null) => {
   if (str.length <= 4) return '***';
   return str.slice(0, 3) + '****' + str.slice(-2);
 };
+
+/**
+ * The leads an account may see, as it may see them: desk roles keep their team's queue plus the
+ * unassigned pool; roles without ld.phone get masked numbers and no email. Mirrors firestore.rules
+ * (which already enforce both on the server) so the screens, search and exports agree with it.
+ */
+export const scopeLeadsForAccess = (leads = [], { role, perms = [], desk = '' } = {}) => {
+  const isSuper = role === CRM_ROLES.SUPER_ADMIN;
+  const seesAll = isSuper || perms.includes('ld.all') || perms.includes('ld.manage');
+  const seesPhones = isSuper || perms.includes('ld.phone');
+  const queue = [desk || UNASSIGNED_DESK, UNASSIGNED_DESK];
+  return leads
+    .filter((l) => seesAll || queue.includes(l?.assignedTo || UNASSIGNED_DESK))
+    .map((l) => (seesPhones ? l : {
+      ...l,
+      phone: l.phone ? maskPhoneNumber(l.phone, role, perms) : '',
+      whatsapp: l.whatsapp ? maskPhoneNumber(l.whatsapp, role, perms) : '',
+      altPhone: '',
+      email: l.email ? '•••' : ''
+    }));
+};

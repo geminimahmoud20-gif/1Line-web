@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Lock, ShieldCheck, Sparkles, KeyRound, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 
 import CrmAdminPanel from '../components/CrmAdminPanel';
@@ -26,7 +26,8 @@ import '../components/crm/crm-density.css';
 import { isFirebaseAuthAvailable, loginUser, requestPasswordReset } from '../firebaseService';
 import { useAuth } from '../context/AuthContext';
 import { useProperties } from '../context/PropertiesContext';
-import { canEditProperties, canEditLeadsRole } from '../utils/rbacRules';
+import { canEditProperties, canEditLeadsRole, DESK_BY_ROLE, scopeLeadsForAccess } from '../utils/rbacRules';
+import { permsOfRole, PERM_IDS, LEGACY_DESK } from '../utils/accessModel';
 import { verifyAdminCredentials, checkRateLimit, recordFailedAttempt, resetFailedAttempts } from '../utils/securityShield';
 
 export default function CrmPage({
@@ -78,7 +79,10 @@ export default function CrmPage({
   const knownRole = (r) => (allRoles.some((x) => x.id === r) ? r : null);
   const ROLE_ALIASES = { admin: 'super_admin' };
   const resolveRole = (r) => knownRole(ROLE_ALIASES[r] || r);
-  const hasLocalSessionFlag = (!isFirebaseAuthAvailable() || import.meta.env.DEV)
+  // The local-password session exists only for a build with no Firebase at all (offline demo,
+  // nothing to protect). With Firebase configured — dev builds included — a role comes only from
+  // the signed-in account's token.
+  const hasLocalSessionFlag = !isFirebaseAuthAvailable()
     && typeof window !== 'undefined' && sessionStorage.getItem('crm_auth') === 'true';
   const verifiedUserRole = currentUser
     ? (resolveRole(currentUser.role) || 'viewer')
@@ -93,7 +97,19 @@ export default function CrmPage({
 
   // Permission enforcement on the mutation handlers themselves — the panels only render
   // buttons, so hiding UI alone would leave viewer/finance able to edit inventory.
-  const userPerms = currentUser?.perms || null;
+  // Effective permissions and team: the account's own (from its token), or — while the super admin
+  // previews another role — that role's set, so the preview shows what that role really gets.
+  const userPerms = isSimulationMode
+    ? permsOfRole(accessCfg, activeRole)
+    : (activeRole === 'super_admin' ? PERM_IDS : (Array.isArray(currentUser?.perms) ? currentUser.perms : permsOfRole(accessCfg, activeRole)));
+  const userDesk = isSimulationMode
+    ? (LEGACY_DESK[activeRole] || DESK_BY_ROLE[activeRole] || '')
+    : (currentUser?.desk || LEGACY_DESK[activeRole] || DESK_BY_ROLE[activeRole] || '');
+  // Every CRM screen (tables, kanban, search, command palette, exports) gets this list, not the raw one
+  const visibleLeads = useMemo(
+    () => scopeLeadsForAccess(leads, { role: activeRole, perms: userPerms, desk: userDesk }),
+    [leads, activeRole, userPerms, userDesk]
+  );
   const can = {
     editInventory: canEditProperties(activeRole, userPerms),
     deleteInventory: activeRole === 'super_admin' || activeRole === 'property_manager' || Boolean(userPerms?.includes('inv.delete')),
@@ -394,7 +410,7 @@ export default function CrmPage({
   // 1. Dedicated Full-Screen Luxury Admin Login Portal (Zero Dashboard Leak)
   // The local-password session flag is only trusted when Firebase Auth is unavailable (offline/local
   // setups) or in development. Otherwise anyone could open the dashboard by setting it in DevTools.
-  const allowLocalSession = !isFirebaseAuthAvailable() || import.meta.env.DEV;
+  const allowLocalSession = !isFirebaseAuthAvailable();
   const isLocalSession = allowLocalSession && typeof window !== 'undefined' && sessionStorage.getItem('crm_auth') === 'true';
   if (!crmAuthenticated && !isLocalSession) {
     return (
@@ -564,7 +580,7 @@ export default function CrmPage({
         systemSubTab={systemSubTab}
         setSystemSubTab={setSystemSubTab}
         isAr={isAr}
-        leads={leads}
+        leads={visibleLeads}
         properties={properties}
         demands={demands}
         pendingDemandsBadge={pendingDemandsCount > 0 ? `${pendingDemandsCount} معلق` : null}
@@ -589,7 +605,7 @@ export default function CrmPage({
         <CrmTopbar
           lang={lang}
           isAr={isAr}
-          leads={leads}
+          leads={visibleLeads}
           properties={properties}
           demands={demands}
           clientDownloads={clientDownloads}
@@ -663,8 +679,9 @@ export default function CrmPage({
           {activeTab === 'properties' ? (
             <PropertyManagerPanel
               openRequest={openRequest}
+              readOnly={!can.editInventory}
               properties={properties}
-              leads={leads}
+              leads={visibleLeads}
               demands={demands}
               onAddProperty={guard(can.editInventory, onAddProperty)}
               onUpdateProperty={guard(can.editInventory, onUpdateProperty)}
@@ -679,6 +696,7 @@ export default function CrmPage({
           ) : activeTab === 'demands' ? (
             <DemandsManagerPanel
               openRequest={openRequest}
+              readOnly={!can.manageDemands}
               demands={demands}
               properties={properties}
               onAddDemand={guard(can.manageDemands, onAddDemand)}
@@ -693,6 +711,7 @@ export default function CrmPage({
           ) : activeTab === 'projects' ? (
             <MegaProjectsManagerPanel
               openRequest={openRequest}
+              readOnly={!can.editInventory}
               projects={projects}
               onAddProject={guard(can.editInventory, onAddProject)}
               onUpdateProject={guard(can.editInventory, onUpdateProject)}
@@ -720,7 +739,7 @@ export default function CrmPage({
               lang={lang}
               triggerToast={triggerToast}
               properties={properties}
-              leads={leads}
+              leads={visibleLeads}
             />
           ) : activeTab === 'corporate' && activeRole === 'super_admin' ? (
             <FounderCmsPanel
@@ -735,12 +754,12 @@ export default function CrmPage({
                 lang={lang}
                 triggerToast={triggerToast}
                 properties={properties}
-                leads={leads}
+                leads={visibleLeads}
                 subTab={systemSubTab}
                 setSubTab={setSystemSubTab}
                 renderAdminPanel={(adminTab) => (
                   <CrmAdminPanel
-                    leads={leads}
+                    leads={visibleLeads}
                     setLeads={setLeads}
                     lang={lang}
                     crmAuthenticated={true}
@@ -756,6 +775,8 @@ export default function CrmPage({
                     properties={properties}
                     projects={projects}
                     openRequest={openRequest}
+                    userPerms={userPerms}
+                    userDesk={userDesk}
                     onConvertToProperty={handleConvertToProperty}
                     onUpdateLead={guard(can.editLeads, onUpdateLead)}
                     onDeleteLead={guard(activeRole === 'super_admin', onDeleteLead)}
@@ -774,7 +795,7 @@ export default function CrmPage({
           ) : (
             /* For 'dashboard', 'leads', 'kanban', 'matching', 'financials', 'analytics' */
             <CrmAdminPanel
-              leads={leads}
+              leads={visibleLeads}
               setLeads={setLeads}
               lang={lang}
               crmAuthenticated={true}
@@ -790,6 +811,8 @@ export default function CrmPage({
               properties={properties}
               projects={projects}
               openRequest={openRequest}
+              userPerms={userPerms}
+              userDesk={userDesk}
               onConvertToProperty={handleConvertToProperty}
               onUpdateLead={guard(can.editLeads, onUpdateLead)}
               onDeleteLead={guard(activeRole === 'super_admin', onDeleteLead)}
@@ -824,7 +847,7 @@ export default function CrmPage({
         <GoLiveWizardModal
           isOpen={showGoLiveWizard}
           onClose={() => setShowGoLiveWizard(false)}
-          leads={leads}
+          leads={visibleLeads}
           setLeads={setLeads}
           properties={properties}
           demands={demands}
@@ -837,7 +860,7 @@ export default function CrmPage({
       <CrmCommandPalette
         isOpen={showCommandPalette}
         onClose={() => setShowCommandPalette(false)}
-        leads={leads}
+        leads={visibleLeads}
         properties={properties}
         demands={demands}
         userRole={activeRole}
