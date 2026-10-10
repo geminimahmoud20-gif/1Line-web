@@ -1,7 +1,7 @@
 import { db, auth, isFirebaseConfigured } from '../firebase.js';
 import { DESK_BY_ROLE, UNASSIGNED_DESK } from '../utils/rbacRules.js';
 import { enqueuePendingLead, readPendingLeads, writePendingLeads } from '../utils/leadQueue.js';
-import { collection, getDocs, getDoc, doc, query, where, orderBy, limit, onSnapshot, serverTimestamp, writeBatch, deleteField, documentId } from 'firebase/firestore';
+import { collection, getDocs, getDoc, doc, query, where, orderBy, limit, onSnapshot, serverTimestamp, writeBatch, deleteField, documentId, Timestamp } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { getUserClaims } from './auth.js';
 import { notifyStaff } from './staffNotify.js';
@@ -391,6 +391,77 @@ export const importLeads = async (leads = []) => {
   } catch (error) {
     console.error('Firebase importLeads error:', error);
     return { ok: false, written, ids: ids.slice(0, written), reason: error?.code || 'error' };
+  }
+};
+
+/**
+ * Restore leads from a CRM JSON backup into Firestore, keeping their original ids.
+ * Only leads missing from the database are written: a lead that still exists is never
+ * overwritten by an older copy. Returns { ok, restored, skipped, invalid, reason? }.
+ */
+const RESTORE_ID_RE = /^[A-Za-z0-9_-]{1,128}$/;
+const restoredCreatedAt = (value) => {
+  if (value && typeof value === 'object' && Number.isFinite(value.seconds)) return Timestamp.fromMillis(value.seconds * 1000);
+  if (typeof value === 'string' || typeof value === 'number') return value;
+  return serverTimestamp();
+};
+export const restoreLeads = async (leads = []) => {
+  if (!isFirebaseConfigured() || !db) return { ok: false, restored: 0, skipped: 0, invalid: 0, reason: 'not-configured' };
+  const valid = leads.filter((l) => l && typeof l === 'object' && RESTORE_ID_RE.test(String(l.id || '')) && String(l.name || '').trim().length >= 2);
+  const invalid = leads.length - valid.length;
+  let restored = 0;
+  let skipped = 0;
+  try {
+    for (let i = 0; i < valid.length; i += 30) {
+      const chunk = valid.slice(i, i + 30);
+      const existing = await getDocs(query(collection(db, 'leads'), where(documentId(), 'in', chunk.map((l) => String(l.id)))));
+      const present = new Set(existing.docs.map((d) => d.id));
+      const batch = writeBatch(db);
+      let writes = 0;
+      for (const raw of chunk) {
+        const id = String(raw.id);
+        if (present.has(id)) { skipped += 1; continue; }
+        const { lead, contact } = splitLeadFields(raw);
+        const payload = { ...lead, createdAt: restoredCreatedAt(raw.createdAt), restoredAt: serverTimestamp() };
+        batch.set(doc(db, 'leads', id), payload);
+        batch.set(doc(db, 'lead_contacts', id), { ...contact, assignedTo: deskOf(payload) });
+        writes += 1;
+      }
+      if (writes) await batch.commit();
+      restored += writes;
+    }
+    return { ok: true, restored, skipped, invalid };
+  } catch (error) {
+    console.error('Firebase restoreLeads error:', error);
+    return { ok: false, restored, skipped, invalid, reason: error?.code || 'error' };
+  }
+};
+
+/**
+ * Area deleted in the CRM: move every lead that points at it (lead.area or details.area) to
+ * another area, across the whole database (not only the leads loaded on screen).
+ * Returns { ok, moved }.
+ */
+export const moveLeadsToArea = async (fromArea, toArea) => {
+  if (!isFirebaseConfigured() || !db || !fromArea || !toArea) return { ok: false, moved: 0 };
+  try {
+    const [byArea, byDetails] = await Promise.all([
+      getDocs(query(collection(db, 'leads'), where('area', '==', fromArea))),
+      getDocs(query(collection(db, 'leads'), where('details.area', '==', fromArea))),
+    ]);
+    const changes = new Map();
+    byArea.docs.forEach((d) => changes.set(d.id, { area: toArea }));
+    byDetails.docs.forEach((d) => changes.set(d.id, { ...(changes.get(d.id) || {}), 'details.area': toArea }));
+    const entries = [...changes];
+    for (let i = 0; i < entries.length; i += 400) {
+      const batch = writeBatch(db);
+      entries.slice(i, i + 400).forEach(([id, fields]) => batch.update(doc(db, 'leads', id), { ...fields, updatedAt: serverTimestamp() }));
+      await batch.commit();
+    }
+    return { ok: true, moved: entries.length };
+  } catch (error) {
+    console.error('Firebase moveLeadsToArea error:', error);
+    return { ok: false, moved: 0 };
   }
 };
 

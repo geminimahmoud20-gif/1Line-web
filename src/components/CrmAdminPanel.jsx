@@ -5,6 +5,7 @@ import { exportToCsv } from '../utils/exportCsv';
 import { exportRows } from '../utils/transfer/exportTable';
 import { leadToRow } from '../utils/transfer/leadSchema';
 
+import { restoreLeads } from '../firebaseLazy';
 import { canExportCsv, canDeleteLead, canManagePayments, canEditLeadsRole, assignableDesks, scopeLeadsForAccess } from '../utils/rbacRules';
 import { permsOfRole } from '../utils/accessModel';
 
@@ -50,7 +51,6 @@ export const CrmAdminPanel = ({
   userRole = 'super_admin',
   handleWhatsAppAction,
   triggerToast,
-  addNotification = () => {},
   onConvertToProperty,
   onUpdateLead: rawUpdateLead,
   onDeleteLead,
@@ -388,9 +388,17 @@ export const CrmAdminPanel = ({
         const parsed = JSON.parse(event.target.result);
         const importedLeads = parsed.leads || parsed;
         if (Array.isArray(importedLeads) && importedLeads.length > 0) {
-          if (window.confirm(isAr ? `هل تريد استيراد ${importedLeads.length} عميل من ملف النسخة الاحتياطية؟` : `Import ${importedLeads.length} leads?`)) {
-            localStorage.setItem('oneline_crm_leads', JSON.stringify(importedLeads));
-            window.location.reload();
+          if (window.confirm(isAr ? `استعادة ${importedLeads.length} عميل من ملف النسخة الاحتياطية إلى قاعدة البيانات؟ العملاء الموجودين حالياً مش هيتغيروا، بيتضاف بس اللي ناقص.` : `Restore ${importedLeads.length} leads to the database? Existing leads are left unchanged; only missing ones are added.`)) {
+            // Written to Firestore (not this browser): the live list then shows them on every device
+            restoreLeads(importedLeads).then((res) => {
+              if (!res.ok) {
+                triggerToast(isAr ? `فشلت الاستعادة (${res.reason}). اتستعاد ${res.restored} قبل الخطأ.` : `Restore failed (${res.reason}); ${res.restored} restored before the error.`, 'error');
+                return;
+              }
+              triggerToast(isAr
+                ? `اتستعاد ${res.restored} عميل • ${res.skipped} موجودين أصلاً${res.invalid ? ` • ${res.invalid} سجل غير صالح` : ''}`
+                : `Restored ${res.restored} • ${res.skipped} already present${res.invalid ? ` • ${res.invalid} invalid` : ''}`, res.restored ? 'success' : 'info');
+            });
           }
         } else {
           throw new Error('Invalid format');
@@ -780,9 +788,9 @@ export const CrmAdminPanel = ({
       {/* ⚙️ TAB 10: AUTOMATION & WEBHOOKS */}
       {adminTab === 'automation' && isSuperRole && (
         <AutomationTab
-          addNotification={addNotification}
           isAr={isAr}
           leads={leads}
+          onUpdateLead={onUpdateLead}
           triggerToast={triggerToast}
         />
       )}
@@ -886,7 +894,8 @@ export const CrmAdminPanel = ({
             if (onAddNewLead) {
               onAddNewLead(newLeadPayload);
             } else {
-              setLeads(prev => [newLeadPayload, ...prev]);
+              // Local-only fallback: give the lead an id so it can be opened, edited and moved
+              setLeads(prev => [{ id: newLeadPayload.id || `lead-${Date.now()}`, ...newLeadPayload }, ...prev]);
             }
           }}
           lang={lang}

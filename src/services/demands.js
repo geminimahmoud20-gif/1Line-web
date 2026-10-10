@@ -1,6 +1,6 @@
 import { db, auth, isFirebaseConfigured } from '../firebase.js';
 
-import { collection, getDocs, getDoc, updateDoc, deleteDoc, doc, setDoc, query, orderBy, limit, onSnapshot, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, getDoc, updateDoc, deleteDoc, doc, setDoc, query, where, orderBy, limit, onSnapshot, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { notifyStaff } from './staffNotify.js';
 import { createRequestWithContact, splitRequestFields, updateRequestContact, withRequestContacts, requestContactRef } from './requestContacts.js';
@@ -187,6 +187,25 @@ export const updateDemandStatus = async (demandId, updates) => {
     }
   }
   return false;
+};
+
+/**
+ * Area deleted in the CRM: move every demand in it to another area (public copy included).
+ * Returns { ok, moved }.
+ */
+export const moveDemandsToArea = async (fromArea, toArea) => {
+  if (!isFirebaseConfigured() || !db || !fromArea || !toArea) return { ok: false, moved: 0 };
+  try {
+    const snap = await getDocs(query(collection(db, 'demands'), where('area', '==', fromArea)));
+    let moved = 0;
+    for (const d of snap.docs) {
+      if (await updateDemandStatus(d.id, { area: toArea })) moved += 1;
+    }
+    return { ok: true, moved };
+  } catch (error) {
+    console.error('Firebase moveDemandsToArea error:', error);
+    return { ok: false, moved: 0 };
+  }
 };
 
 /**

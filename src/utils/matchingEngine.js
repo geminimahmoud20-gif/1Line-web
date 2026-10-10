@@ -3,6 +3,7 @@
 // =============================================================
 
 import { normalizeAreaKey } from './areasData.js';
+import { SITE_URL } from '../config/siteConfig.js';
 
 /**
  * Normalizes phone number for WhatsApp URL
@@ -143,9 +144,12 @@ export function generateWhatsAppMessage(eventType, client, property, alternative
   const propertyTitle = property.title_ar || property.title_en || 'وحدة عقارية مميزة';
   const areaName = property.locationName_ar || property.locationName_en || 'سوهاج';
   const priceFormatted = (property.price || 0).toLocaleString('en-US');
-  const downPaymentFormatted = (property.downPayment || Math.round((property.price || 0) * 0.2)).toLocaleString('en-US');
-  const installmentFormatted = (property.monthlyInstallment || Math.round(((property.price || 0) * 0.8) / 60)).toLocaleString('en-US');
-  const origin = (typeof window !== 'undefined' && window.location?.origin) ? window.location.origin : 'https://1-line-qkzp9.vercel.app';
+  // Only the listing's own plan goes to the client; no invented 20% / 60-month figures
+  const planLines = [
+    property.downPayment ? `💳 المقدم: ${Number(property.downPayment).toLocaleString('en-US')} ج.م` : '',
+    property.monthlyInstallment ? `📅 القسط الشهري: ${Number(property.monthlyInstallment).toLocaleString('en-US')} ج.م` : '',
+  ].filter(Boolean).join('\n');
+  const origin = SITE_URL;
   const propertyUrl = `${origin}/properties/${property.id}`;
 
   if (eventType === 'new_unit') {
@@ -157,9 +161,7 @@ export function generateWhatsAppMessage(eventType, client, property, alternative
 
 🏠 العقار: ${propertyTitle}
 📍 الموقع: ${areaName}
-💰 السعر: ${priceFormatted} ج.م
-💳 المقدم: ${downPaymentFormatted} ج.م
-📅 القسط الشهري: ${installmentFormatted} ج.م
+💰 السعر: ${priceFormatted} ج.م${planLines ? `\n${planLines}` : ''}
 
 📸 يمكنك معاينة تفاصيل الوحدة والصور والموقع على الخريطة عبر الرابط:
 ${propertyUrl}
@@ -192,7 +194,7 @@ ${propertyUrl}
 نود إعلامكم بتحديث سعر مميز وتسهيلات دفع استثنائية على الوحدة:
 🏠 ${propertyTitle}
 📍 ${areaName}
-🔥 السعر الجديد: ${priceFormatted} ج.م (تسهيلات سداد حتى ${property.installmentYears || 5} سنوات)
+🔥 السعر الجديد: ${priceFormatted} ج.م${property.installmentYears ? ` (تقسيط حتى ${property.installmentYears} سنوات)` : ''}
 
 🔗 رابط المعاينة المباشرة:
 ${propertyUrl}

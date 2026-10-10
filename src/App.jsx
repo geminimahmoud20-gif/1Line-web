@@ -740,7 +740,8 @@ function AppContent() {
       />
 
       {/* Mobile Floating Bottom Navigation */}
-      {!location.pathname.startsWith('/crm') && !location.pathname.startsWith('/property/') && (
+      {/* The listing page has its own sticky price/contact bar */}
+      {!location.pathname.startsWith('/crm') && !/^\/properties\/[^/]+/.test(location.pathname) && (
         <MobileBottomBar
           lang={lang}
           compareCount={compareList.length}

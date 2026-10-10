@@ -5,6 +5,7 @@
 // =============================================================
 
 import { DEFAULT_ACCESS } from './accessModel.js';
+import { parseMoney } from './crmLeadViews.js';
 
 export const SALES_AGENTS_POOL = [
   { id: 'agent_east', name: 'Sales Team A', role: 'فريق شرق والكوثر' },
@@ -30,7 +31,8 @@ export function routeLeadAutomatically(leadData, existingLeads = [], customConfi
   const config = customConfig || (typeof window !== 'undefined' && window.__ACTIVE_ACCESS_CONFIG__) || DEFAULT_ACCESS;
   const activeTeams = (config?.teams || DEFAULT_ACCESS.teams).filter((t) => t.active !== false);
 
-  const budget = parseInt(leadData.budget || leadData.details?.budget || leadData.details?.expectedPrice || 0, 10);
+  // parseMoney reads '3.5 مليون' / '٣٥٠٠٠٠٠' (parseInt read the first as 3)
+  const budget = parseMoney(leadData.budget) || parseMoney(leadData.details?.budget) || parseMoney(leadData.details?.expectedPrice);
   const area = String(leadData.area || leadData.details?.area || leadData.areaKey || '').toLowerCase();
   const propertyType = String(leadData.propertyType || leadData.details?.propertyType || '').toLowerCase();
   const leadType = String(leadData.type || leadData.leadType || '').toLowerCase();
