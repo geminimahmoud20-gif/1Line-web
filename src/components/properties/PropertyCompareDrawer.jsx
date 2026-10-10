@@ -5,7 +5,7 @@ import { trackEvent } from '../../utils/visitorTracker';
 import { generateComparePdf } from '../../utils/comparePdfGenerator';
 import useClientDownload from '../../hooks/useClientDownload';
 
-import { getWhatsAppUrl } from '../../utils/founderCmsData';
+import { getWhatsAppUrl, getDynamicPhone } from '../../utils/founderCmsData';
 import { isMultiUnitOrBuilding } from '../../utils/currencyAndBenchmark';
 import CompareColumn from './CompareColumn';
 import CompareDuel from './CompareDuel';
@@ -164,8 +164,8 @@ export default function PropertyCompareDrawer({
     });
 
     msg += isAr 
-      ? `🏛️ صادر عن منصة 1Line Solutions العقارية بسوهاج\n📞 للاستفسار وحجز معاينة مجمعة: +20 122 322 2956` 
-      : `🏛️ Issued by 1Line Solutions Sohag\n📞 For Inquiries & Group Tour: +20 122 322 2956`;
+      ? `🏛️ صادر عن منصة 1Line Solutions العقارية بسوهاج\n📞 للاستفسار وحجز معاينة مجمعة: ${getDynamicPhone()}` 
+      : `🏛️ Issued by 1Line Solutions Sohag\n📞 For Inquiries & Group Tour: ${getDynamicPhone()}`;
 
     trackEvent('compare_shared_whatsapp', { count: compareList.length });
     const waUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`;

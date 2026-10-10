@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Calculator, TrendingUp, Sparkles, Copy, Check, Building2, Landmark, Handshake, ShieldCheck } from 'lucide-react';
 import { trackEvent } from '../../utils/visitorTracker';
-import { getWhatsAppUrl } from '../../utils/founderCmsData';
+import { getWhatsAppUrl, getDynamicPhone } from '../../utils/founderCmsData';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
 
 export default function MortgageRoiCalculator({ 
@@ -105,7 +105,7 @@ export default function MortgageRoiCalculator({
         `• مدة التقسيط: ${years} سنوات (${years * 12} شهر)\n` +
         `• معدل الفائدة/المرابحة: ${interestRate}%\n` +
         `• إجمالي المبلغ المسترد: ${formatCurrency(totalPaid)}\n` +
-        `📞 للاستفسار وحجز الوحدة: +20 122 322 2956`
+        `📞 للاستفسار وحجز الوحدة: ${getDynamicPhone()}`
       : `🏢 Mortgage & Payment Plan - 1Line Real Estate (${currency})\n` +
         `• Price: ${formatCurrency(price)}\n` +
         `• Downpayment (${downpaymentPercent}%): ${formatCurrency(downPaymentAmount)}\n` +
@@ -113,7 +113,7 @@ export default function MortgageRoiCalculator({
         `• Duration: ${years} Years\n` +
         `• Rate: ${interestRate}%\n` +
         `• Total Repayment: ${formatCurrency(totalPaid)}\n` +
-        `📞 Hotline & Booking: +20 122 322 2956`;
+        `📞 Hotline & Booking: ${getDynamicPhone()}`;
     navigator.clipboard.writeText(text);
     setCopied(true);
     trackEvent('calculator_used', { price, monthlyInstallment, type: activeTab });

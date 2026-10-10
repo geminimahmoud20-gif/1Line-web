@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, FileText, Download, Send, Building2, User, Loader2 } from 'lucide-react';
 import { trackEvent } from '../../utils/visitorTracker';
+import { getDynamicPhone } from '../../utils/founderCmsData';
 
 /**
  * ContractStudioModal Component
@@ -20,14 +21,16 @@ export default function ContractStudioModal({
   const [selectedPropertyId, setSelectedPropertyId] = useState('');
 
   const [formData, setFormData] = useState(() => ({
-    buyerName: 'محمد أحمد علي',
-    buyerPhone: '+20 122 322 2956',
-    buyerNationalId: '29001012600000',
-    buyerAddress: 'سوهاج - شارع الجمهورية',
-    propertyTitle: 'شقة فاخرة ناصية بحرية',
-    propertyLocation: 'سوهاج الجديدة - الحي الأول',
-    propertySize: 165,
-    propertyPrice: 3500000,
+    // Starts empty: a contract must never go out with a sample buyer or unit.
+    // Buyer phone comes from the lead, never the company hotline.
+    buyerName: '',
+    buyerPhone: '',
+    buyerNationalId: '',
+    buyerAddress: '',
+    propertyTitle: '',
+    propertyLocation: '',
+    propertySize: 0,
+    propertyPrice: 0,
     depositAmount: 50000,
     paymentMethod: 'InstaPay (إنستاباي)',
     transactionRef: `REF-OL-${Math.floor(100000 + Math.random() * 900000)}`
@@ -73,6 +76,10 @@ export default function ContractStudioModal({
   };
 
   const handleGeneratePdf = async () => {
+    if (!formData.buyerName.trim() || !formData.propertyTitle.trim() || !formData.propertyPrice) {
+      triggerToast(isAr ? 'اختار العميل والوحدة (أو اكتب الاسم والوحدة والسعر) قبل إصدار العقد' : 'Pick the client and the unit (or fill name, unit and price) first', 'error');
+      return;
+    }
     setIsGeneratingPdf(true);
     try {
       const { generateReservationContractPdf } = await import('../../utils/contractPdfGenerator');
@@ -116,7 +123,7 @@ export default function ContractStudioModal({
     `• إجمالي الثمن: ${formData.propertyPrice.toLocaleString('en-US')} ج.م\n` +
     `• مبلغ جدية الحجز المؤكد: ${formData.depositAmount.toLocaleString('en-US')} ج.م (${formData.paymentMethod})\n` +
     `• الرقم المرجعي: ${formData.transactionRef}\n` +
-    `📞 للاستفسار والتواصل مع الإدارة القانونية: +20 122 322 2956`
+    `📞 للاستفسار والتواصل مع الإدارة القانونية: ${getDynamicPhone()}`
   );
 
   return (
