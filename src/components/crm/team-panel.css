@@ -42,6 +42,7 @@
 .tm-status-on { background: var(--crm-positive-soft); color: var(--crm-positive); border-color: var(--crm-positive-line); }
 .tm-status-off { background: var(--crm-danger-soft); color: var(--crm-danger); border-color: var(--crm-danger-line); }
 .tm-status-pending { background: var(--crm-warn-soft); color: var(--crm-warn); border-color: var(--crm-warn-line); }
+.tm-status-ready { background: var(--crm-info-soft); color: var(--crm-info); border-color: var(--crm-info-soft); }
 
 .tm-actions { display: flex; gap: 6px; }
 .tm-icon-btn {
