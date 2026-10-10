@@ -88,6 +88,14 @@ export default function CrmCommandPalette({
       action: () => onAction?.('open_contract_studio')
     },
     {
+      id: 'act_copywriter',
+      title_ar: 'صانع المحتوى AI (إعلانات العقارات)',
+      title_en: 'AI Copywriter (listing ads)',
+      category: 'actions',
+      shortcut: 'A',
+      action: () => onAction?.('open_ai_copywriter')
+    },
+    {
       id: 'act_theme',
       title_ar: theme === 'dark' ? 'التحويل للوضع النهاري ☀️' : 'التحويل للوضع الليلي الفاخر 🌙',
       title_en: theme === 'dark' ? 'Switch to Light Mode ☀️' : 'Switch to Dark Mode 🌙',

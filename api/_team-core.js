@@ -100,6 +100,15 @@ const lastSignIn = (u) => {
   return Math.max(refresh, realLogin) || null;
 };
 
+// The account is created with a random password, so a password change well after creation means
+// the member opened the invite / reset link and chose their own. Verifying the email counts too.
+const activatedAt = (u) => {
+  const created = Number(u.createdAt || 0);
+  const pwd = Number(u.passwordUpdatedAt || 0);
+  if (pwd && pwd - created > 5000) return pwd;
+  return u.emailVerified ? (lastSignIn(u) || pwd || created || null) : null;
+};
+
 /** Shape a raw Identity Toolkit user for the CRM list */
 export function toMember(u, config = null) {
   const claims = parseClaims(u.customAttributes);
@@ -112,6 +121,7 @@ export function toMember(u, config = null) {
     perms: Array.isArray(claims.perms) ? claims.perms : [],
     disabled: Boolean(u.disabled),
     lastLoginAt: lastSignIn(u) ? new Date(lastSignIn(u)).toISOString() : null,
+    activatedAt: activatedAt(u) ? new Date(activatedAt(u)).toISOString() : null,
     createdAt: u.createdAt ? new Date(Number(u.createdAt)).toISOString() : null
   };
 }

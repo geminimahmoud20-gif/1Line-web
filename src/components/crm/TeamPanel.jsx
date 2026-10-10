@@ -273,7 +273,8 @@ export default function TeamPanel({ lang = 'ar', leads = [], triggerToast }) {
                     {members.map((m) => {
                       const self = m.uid === me;
                       const busy = busyUid === m.uid;
-                      const status = m.disabled ? 'off' : m.lastLoginAt ? 'on' : 'pending';
+                      // on: has signed in · ready: set a password from the email but never signed in · pending: link not used
+                      const status = m.disabled ? 'off' : m.lastLoginAt ? 'on' : m.activatedAt ? 'ready' : 'pending';
 
                       return (
                         <tr key={m.uid} className={m.disabled ? 'is-off' : ''}>
@@ -308,8 +309,14 @@ export default function TeamPanel({ lang = 'ar', leads = [], triggerToast }) {
                             </select>
                           </td>
                           <td data-label={isAr ? 'الحالة' : 'Status'}>
-                            <span className={`tm-status tm-status-${status}`}>
-                              {{ on: isAr ? 'نشط' : 'Active', off: isAr ? 'موقوف' : 'Disabled', pending: isAr ? 'لم يفعّل بعد' : 'Not activated' }[status]}
+                            <span
+                              className={`tm-status tm-status-${status}`}
+                              title={{
+                                ready: isAr ? 'عمل باسورد من الإيميل، لكن لسه ما سجّلش دخول على الـ CRM' : 'Set a password from the email but has not signed in yet',
+                                pending: isAr ? 'لسه ما فتحش لينك الباسورد — ابعته تاني من زرار المفتاح' : 'Has not used the password link yet — resend it with the key button'
+                              }[status]}
+                            >
+                              {{ on: isAr ? 'نشط' : 'Active', off: isAr ? 'موقوف' : 'Disabled', ready: isAr ? 'فعّل — لم يدخل بعد' : 'Activated — not signed in', pending: isAr ? 'لم يفعّل بعد' : 'Not activated' }[status]}
                             </span>
                           </td>
                           <td data-label={isAr ? 'آخر نشاط' : 'Last active'}>{fmtDate(m.lastLoginAt, isAr)}</td>

@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import useOpenRequest from '../../hooks/useOpenRequest';
 import { Zap, Plus, Check, Trash2, Edit3, Clock, MapPin, DollarSign, Phone, MessageSquare, Search, CheckCircle, EyeOff, Sparkles, Download } from 'lucide-react';
 import { exportToCsv } from '../../utils/exportCsv';
 import { canViewLeadPhone, maskPhoneNumber, canEditProperties } from '../../utils/rbacRules';
@@ -19,7 +20,9 @@ export default function DemandsManagerPanel({
   onUnpublishDemand,
   lang = 'ar',
   userRole = 'super_admin',
-  triggerToast
+  triggerToast,
+  openRequest = null,
+  readOnly = false
 }) {
   const isAr = lang === 'ar';
   const canViewPhone = canViewLeadPhone(userRole);
@@ -159,6 +162,8 @@ export default function DemandsManagerPanel({
     setShowAddModal(true);
   };
 
+  useOpenRequest(openRequest, ['add_demand'], () => { if (!readOnly) handleOpenAdd(); });
+
   const handleOpenEdit = (demand) => {
     setEditingDemand(demand);
     setFormData({
@@ -264,6 +269,7 @@ export default function DemandsManagerPanel({
             <button 
               type="button" 
               className="btn btn-primary"
+              disabled={readOnly}
               onClick={handleOpenAdd}
               style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 20px', borderRadius: '10px', fontWeight: 'bold', background: 'var(--crm-brand-navy)', color: 'var(--crm-on-dark)', border: 'none' }}
             >
@@ -630,6 +636,7 @@ export default function DemandsManagerPanel({
                       <button
                         type="button"
                         className="btn btn-sm btn-primary"
+                        disabled={readOnly}
                         onClick={() => handleQuickApprove(demand)}
                         style={{ 
                           flex: 1, 
@@ -676,6 +683,7 @@ export default function DemandsManagerPanel({
                       <button
                         type="button"
                         className="btn btn-sm"
+                        disabled={readOnly}
                         onClick={() => handleOpenEdit(demand)}
                         style={{ 
                           padding: '6px 10px', 
@@ -695,6 +703,7 @@ export default function DemandsManagerPanel({
                       <button
                         type="button"
                         className="btn btn-sm"
+                        disabled={readOnly}
                         onClick={() => handleQuickReject(demand.id)}
                         style={{ 
                           background: 'var(--crm-danger-soft)', 
@@ -714,6 +723,7 @@ export default function DemandsManagerPanel({
                       <button
                         type="button"
                         className="btn btn-sm"
+                        disabled={readOnly}
                         onClick={() => handleOpenEdit(demand)}
                         style={{ 
                           flex: 1, 
@@ -761,6 +771,7 @@ export default function DemandsManagerPanel({
                         <button
                           type="button"
                           className="btn btn-sm"
+                          disabled={readOnly}
                           onClick={() => {
                             const res = onUnpublishDemand(demand.id);
                             if (res !== false) {
@@ -784,6 +795,7 @@ export default function DemandsManagerPanel({
                       <button
                         type="button"
                         className="btn btn-sm"
+                        disabled={readOnly}
                         onClick={() => handleQuickReject(demand.id)}
                         style={{ 
                           background: 'rgba(239, 68, 68, 0.15)', 

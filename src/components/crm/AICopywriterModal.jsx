@@ -297,9 +297,9 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
                         justifyContent: 'center',
                         gap: '6px',
                         transition: 'all 0.15s ease',
-                        background: isActive ? 'var(--crm-brand-navy, #0B132B)' : 'var(--crm-subtle, rgba(0,0,0,0.03))',
-                        color: isActive ? 'var(--crm-on-dark, #FFFFFF)' : 'var(--crm-ink)',
-                        border: isActive ? '1px solid var(--crm-brand-navy, #0B132B)' : '1px solid var(--crm-line, rgba(0,0,0,0.1))',
+                        background: isActive ? 'var(--crm-surface-ink)' : 'var(--crm-subtle)',
+                        color: isActive ? 'var(--crm-on-dark)' : 'var(--crm-ink)',
+                        border: isActive ? '1px solid var(--crm-surface-ink)' : '1px solid var(--crm-line)',
                         boxShadow: isActive ? '0 2px 8px rgba(11, 19, 43, 0.25)' : 'none'
                       }}
                     >
@@ -314,7 +314,7 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
 
           {/* Generated Text Preview Box with High Contrast Dark Luxury Theme */}
           <div style={{
-            background: 'linear-gradient(145deg, #0B132B 0%, #172554 100%)',
+            background: 'var(--crm-surface-ink)',
             border: '1px solid rgba(212, 175, 55, 0.3)',
             borderRadius: '16px',
             padding: '18px 20px',
@@ -322,8 +322,8 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
             boxShadow: '0 8px 30px rgba(0, 0, 0, 0.35)'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
-              <span style={{ fontSize: 'var(--crm-text-xs)', color: '#FBBF24', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '800', letterSpacing: '0.3px' }}>
-                <Sparkles size={16} style={{ color: '#FBBF24' }} /> {isAr ? 'تمت الصياغة بواسطة الذكاء الاصطناعي العقاري' : 'AI Generated Marketing Copy'}
+              <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent)', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '800', letterSpacing: '0.3px' }}>
+                <Sparkles size={16} style={{ color: 'var(--crm-accent)' }} /> {isAr ? 'تمت الصياغة بواسطة الذكاء الاصطناعي العقاري' : 'AI Generated Marketing Copy'}
               </span>
 
               <div style={{ display: 'flex', gap: '8px' }}>
@@ -335,8 +335,8 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
                     fontSize: 'var(--crm-text-xs)',
                     fontWeight: '700',
                     background: copied ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-                    color: copied ? '#34D399' : '#FFFFFF',
-                    border: copied ? '1px solid #10B981' : '1px solid rgba(255, 255, 255, 0.25)',
+                    color: 'var(--crm-on-dark)',
+                    border: copied ? '1px solid var(--crm-positive-solid)' : '1px solid rgba(255, 255, 255, 0.25)',
                     borderRadius: '8px',
                     cursor: 'pointer',
                     display: 'inline-flex',
@@ -355,8 +355,8 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
                     padding: '7px 14px',
                     fontSize: 'var(--crm-text-xs)',
                     fontWeight: '700',
-                    background: '#10B981',
-                    color: '#FFFFFF',
+                    background: 'var(--crm-positive-solid)',
+                    color: 'var(--crm-on-dark)',
                     border: 'none',
                     borderRadius: '8px',
                     cursor: 'pointer',
@@ -383,9 +383,9 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
                 border: '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: '12px',
                 padding: '16px',
-                color: '#F8FAFC',
+                color: 'var(--crm-on-dark)',
                 lineHeight: '1.85',
-                fontSize: '14px',
+                fontSize: 'var(--crm-text-base)',
                 fontWeight: '500',
                 resize: 'none',
                 fontFamily: 'inherit',

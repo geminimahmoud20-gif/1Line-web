@@ -1,5 +1,4 @@
 import { Download, Building, Users, User, Inbox, MessageSquare, Edit3, Trash2, Clock, Zap, Plus, UserPlus, Send, Archive } from 'lucide-react';
-import { canExportCsv, canEditLeadsRole } from '../../utils/rbacRules';
 import { SOHAG_AREAS } from '../../data/propertiesData';
 import { formatFollowUp, formatBudget } from '../../utils/crmLabels';
 import DeskOptions from './DeskOptions';
@@ -9,13 +8,12 @@ import { getAreas } from '../../utils/areasData';
 import { useState, useMemo, useEffect } from 'react';
 import LostReasonModal from './LostReasonModal';
 import MergeLeadsModal from './MergeLeadsModal';
-import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, RESPONSE_SLA_MS } from '../../utils/crmLeadViews';
+import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, RESPONSE_SLA_MS, isOverdue, isUnassigned, isStale, localDayKey } from '../../utils/crmLeadViews';
 import { useProperties } from '../../context/PropertiesContext';
 
 export default function LeadsTab({
   activeRole,
   areaFilter,
-  currentRoleObj,
   filteredLeads,
   getLocalizedArea,
   getLocalizedPropertyType,
@@ -60,7 +58,10 @@ export default function LeadsTab({
   dateFilter = 'all',
   setDateFilter,
   leadSort = 'newest',
-  setLeadSort
+  setLeadSort,
+  canEdit = true,
+  canExport = false,
+  canClaimLead = () => false
 }) {
   const [lostFor, setLostFor] = useState(null);
   const [mergeGroup, setMergeGroup] = useState(null);
@@ -78,6 +79,9 @@ export default function LeadsTab({
       awaiting: open.filter((l) => waitingMs(l, now) > 0).length,
       late: open.filter((l) => waitingMs(l, now) > RESPONSE_SLA_MS).length,
       dupes: open.filter((l) => duplicateIds.has(l.id)).length,
+      overdue: open.filter((l) => isOverdue(l, localDayKey(now))).length,
+      unassigned: open.filter(isUnassigned).length,
+      stale: open.filter((l) => isStale(l, now)).length,
       lost: leads.filter((l) => !l.isArchived && l.status === 'lost').length,
       archived: leads.filter((l) => l.isArchived).length
     };
@@ -167,7 +171,7 @@ export default function LeadsTab({
 
         {/* Quick Add Lead & Export Actions */}
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <button
+          {canEdit && <button
             type="button"
             className="btn btn-sm btn-primary"
             onClick={() => setShowAddLeadModal(true)}
@@ -181,7 +185,7 @@ export default function LeadsTab({
           >
             <UserPlus size={15} />
             <span>{isAr ? 'إضافة عميل جديد ➕' : 'Add New Lead ➕'}</span>
-          </button>
+          </button>}
           {onImportLeads && (
             <button
               type="button"
@@ -194,7 +198,7 @@ export default function LeadsTab({
               <span>{isAr ? 'استيراد' : 'Import'}</span>
             </button>
           )}
-          {canExportCsv(activeRole) && (
+          {canExport && (
             // Exports what is on screen (current filter and search)
             <ExportMenu
               label={isAr ? `تصدير (${filteredLeads.length})` : `Export (${filteredLeads.length})`}
@@ -226,6 +230,21 @@ export default function LeadsTab({
           <button className={`table-filter-btn ${leadFilter === 'due' ? 'active' : ''}`} onClick={() => setLeadFilter('due')}>
             ⏰ {isAr ? 'متابعة اليوم' : 'Due Today'}
           </button>
+          {counts.overdue > 0 && (
+            <button className={`table-filter-btn ${leadFilter === 'overdue' ? 'active' : ''}`} onClick={() => setLeadFilter('overdue')} style={{ color: leadFilter !== 'overdue' ? 'var(--crm-danger)' : undefined }}>
+              ⚠ {isAr ? 'متابعات متأخرة' : 'Overdue'} ({counts.overdue})
+            </button>
+          )}
+          {counts.unassigned > 0 && (
+            <button className={`table-filter-btn ${leadFilter === 'unassigned' ? 'active' : ''}`} onClick={() => setLeadFilter('unassigned')}>
+              👤 {isAr ? 'بدون مسؤول' : 'Unassigned'} ({counts.unassigned})
+            </button>
+          )}
+          {counts.stale > 0 && (
+            <button className={`table-filter-btn ${leadFilter === 'stale' ? 'active' : ''}`} onClick={() => setLeadFilter('stale')} title={isAr ? 'مفيش أي نشاط من أكتر من 48 ساعة' : 'No activity for 48h+'}>
+              💤 {isAr ? 'راكد' : 'Stale'} ({counts.stale})
+            </button>
+          )}
           <button className={`table-filter-btn ${leadFilter === 'qualified' ? 'active' : ''}`} onClick={() => setLeadFilter('qualified')}>
             🎯 {isAr ? 'مؤهلون للشراء' : 'Qualified'}
           </button>
@@ -372,7 +391,7 @@ export default function LeadsTab({
 
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
             {/* Bulk Assign Agent Dropdown */}
-            {canEditLeadsRole(activeRole) && <select
+            {canEdit && <select
               aria-label={isAr ? 'تعيين مسؤول للعملاء المحددين' : 'Assign selected leads'}
               onChange={(e) => {
                 if (e.target.value) handleBulkAssign(e.target.value);
@@ -576,6 +595,7 @@ export default function LeadsTab({
                     <div className={`crm-status-select-wrap status-pill-${l.status || 'new'}`}>
                       <span className="crm-status-dot" />
                       <select 
+                        disabled={!canEdit}
                         value={l.status || 'new'} 
                         aria-label={isAr ? `حالة ${l.name || 'العميل'}` : `Status of ${l.name || 'lead'}`}
                         data-status={l.status || 'new'}
@@ -624,6 +644,7 @@ export default function LeadsTab({
                         {l.assignedTo && l.assignedTo !== 'Unassigned' ? l.assignedTo.charAt(0) : '—'}
                       </div>
                       <select 
+                        disabled={!canEdit}
                         value={l.assignedTo || 'Unassigned'} 
                         aria-label={isAr ? `المسؤول عن ${l.name || 'العميل'}` : `Owner of ${l.name || 'lead'}`}
                         onChange={(e) => {
@@ -672,14 +693,16 @@ export default function LeadsTab({
                       </button>
 
                       {/* Edit Modal */}
-                      <button
-                        type="button"
-                        className="crm-icon-btn"
-                        onClick={() => handleOpenEditLead(l)}
-                        title={isAr ? 'تعديل بيانات العميل' : 'Edit'}
-                      >
-                        <Edit3 size={13} />
-                      </button>
+                      {canEdit && (
+                        <button
+                          type="button"
+                          className="crm-icon-btn"
+                          onClick={() => handleOpenEditLead(l)}
+                          title={isAr ? 'تعديل بيانات العميل' : 'Edit'}
+                        >
+                          <Edit3 size={13} />
+                        </button>
+                      )}
 
                       {/* Dispatch Lead via WhatsApp */}
                       <button 
@@ -692,7 +715,7 @@ export default function LeadsTab({
                       </button>
 
                       {/* Convert to Property */}
-                      {onConvertToProperty && (
+                      {onConvertToProperty && canEdit && (
                         <button 
                           type="button"
                           className="crm-icon-btn" 
@@ -704,19 +727,19 @@ export default function LeadsTab({
                       )}
 
                       {/* Claim Lead */}
-                      {!isSuperAdmin && l.assignedTo !== currentRoleObj.agentName && (
+                      {canClaimLead(l) && (
                         <button
                           type="button"
                           className="crm-icon-btn"
                           onClick={() => handleClaimLead(l.id)}
-                          title={isAr ? `استلام هذا العميل وتعيينه لـ ${currentRoleObj.label_ar}` : 'Claim'}
+                          title={isAr ? 'استلام هذا العميل (غير مسند) لفريقك' : 'Claim this unassigned lead for your team'}
                         >
                           <UserPlus size={12} />
                         </button>
                       )}
 
                       {/* Archive Lead Toggle */}
-                      <button
+                      {canEdit && <button
                         type="button"
                         className="crm-icon-btn"
                         onClick={() => {
@@ -729,7 +752,7 @@ export default function LeadsTab({
                         title={l.isArchived ? (isAr ? 'استعادة من الأرشيف' : 'Unarchive') : (isAr ? 'أرشفة العميل' : 'Archive')}
                       >
                         <Archive size={12} />
-                      </button>
+                      </button>}
 
                       {/* Delete Lead (Super Admin Only) */}
                       {isSuperAdmin && (

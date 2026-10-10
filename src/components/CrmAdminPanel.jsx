@@ -5,7 +5,8 @@ import { exportToCsv } from '../utils/exportCsv';
 import { exportRows } from '../utils/transfer/exportTable';
 import { leadToRow } from '../utils/transfer/leadSchema';
 
-import { canExportCsv, canDeleteLead, canEditLeadsRole, assignableDesks } from '../utils/rbacRules';
+import { canExportCsv, canDeleteLead, canEditLeadsRole, assignableDesks, scopeLeadsForAccess } from '../utils/rbacRules';
+import { permsOfRole } from '../utils/accessModel';
 
 // Enterprise PropTech Modules
 import KanbanPipeline from './crm/KanbanPipeline';
@@ -28,19 +29,21 @@ import CrmExecutiveDashboard from './crm/CrmExecutiveDashboard';
 import { CRM_ROLES, getMergedCrmRoles } from './crm/crmRoles';
 import { getActiveAccessConfig } from '../services/accessConfig';
 import EditLeadModal from './crm/EditLeadModal';
+import useOpenRequest from '../hooks/useOpenRequest';
 import { LEAD_EXPORT_HEADERS, makeLeadFormatters } from './crm/leadFormatters';
 import CrmLoginGate from './crm/CrmLoginGate';
 import useLeadKeyboardTriage from './crm/useLeadKeyboardTriage';
-import { computeCrmAnalytics, filterLeads, sortLeads, duplicatesById, buildMergedLead } from '../utils/crmLeadViews';
+import { filterLeads, sortLeads, duplicatesById, buildMergedLead } from '../utils/crmLeadViews';
 
 export const CrmAdminPanel = ({
   lang = 'ar',
   t = {},
   firebaseConnected = true,
-  leads = [],
+  leads: allLeads = [],
   setLeads,
   properties = [],
-  exportLeadsCSV,
+  projects = [],
+  openRequest = null,
   crmAuthenticated = true,
   setCrmAuthenticated,
   currentUser = null,
@@ -49,7 +52,7 @@ export const CrmAdminPanel = ({
   triggerToast,
   addNotification = () => {},
   onConvertToProperty,
-  onUpdateLead,
+  onUpdateLead: rawUpdateLead,
   onDeleteLead,
   onAddNewLead,
   onImportLeads,
@@ -59,7 +62,9 @@ export const CrmAdminPanel = ({
   onSwitchToProjects,
   adminTab: propAdminTab,
   onSwitchTab,
-  activeRole: propActiveRole
+  activeRole: propActiveRole,
+  userPerms = null,
+  userDesk = ''
 }) => {
   // Local Authentication States
   const [crmPasswordInput, setCrmPasswordInput] = useState('');
@@ -70,7 +75,35 @@ export const CrmAdminPanel = ({
 
   // Multi-Tenant RBAC Identity State
   const activeRole = propActiveRole || userRole || 'super_admin';
-  const myDealsOnly = false; // "my deals only" filter: not exposed in the UI yet
+  const isAr = lang === 'ar';
+  const myDealsOnly = false; // desk scoping happens below, on the data itself
+
+  // ── What this account may see and do (mirrors firestore.rules) ─────────────
+  // perms come from the token (CrmPage passes them, or the simulated role's set); desk is the
+  // member's team. Firestore already limits desk agents' queries and hides phones without
+  // ld.phone — this keeps the screens, exports and the super admin's role preview consistent.
+  const perms = userPerms || permsOfRole(getActiveAccessConfig(), activeRole);
+  const isSuperRole = activeRole === 'super_admin';
+  const seesAllLeads = isSuperRole || perms.includes('ld.all') || perms.includes('ld.manage');
+  const seesPhones = isSuperRole || perms.includes('ld.phone');
+  const canEditLeads = isSuperRole || canEditLeadsRole(activeRole, perms);
+  const canExport = isSuperRole || canExportCsv(activeRole, perms);
+  const myDesk = userDesk || '';
+  const leads = useMemo(() => scopeLeadsForAccess(allLeads, { role: activeRole, perms, desk: myDesk }), [allLeads, activeRole, perms, myDesk]);
+  // One gate for every lead write from this panel: read-only roles can't write, and a role that
+  // only sees masked numbers never writes them back over the real ones.
+  const onUpdateLead = useMemo(() => {
+    if (!rawUpdateLead) return undefined;
+    return (id, fields = {}) => {
+      if (!canEditLeads) {
+        triggerToast?.(isAr ? 'صلاحياتك لا تسمح بتعديل العملاء' : 'Your role cannot edit leads', 'error');
+        return false;
+      }
+      if (seesPhones) return rawUpdateLead(id, fields);
+      const { phone: _p, whatsapp: _w, altPhone: _a, email: _e, ...rest } = fields;
+      return rawUpdateLead(id, rest);
+    };
+  }, [rawUpdateLead, canEditLeads, seesPhones, triggerToast, isAr]);
 
   // Enterprise Tab States
   const [localAdminTab, setLocalAdminTab] = useState('dashboard');
@@ -96,6 +129,12 @@ export const CrmAdminPanel = ({
   // AI Copywriter & Contract Studio Modal States
   const [showAICopywriter, setShowAICopywriter] = useState(false);
   const [showContractStudio, setShowContractStudio] = useState(false);
+  // Top bar / command palette asked for one of this panel's modals
+  useOpenRequest(openRequest, ['add_lead', 'contract_studio', 'ai_copywriter'], (type) => {
+    if (type === 'add_lead') setShowAddLeadModal(true);
+    else if (type === 'contract_studio') setShowContractStudio(true);
+    else setShowAICopywriter(true);
+  });
 
   // Edit Lead Modal State
   const [editingLead, setEditingLead] = useState(null);
@@ -117,7 +156,6 @@ export const CrmAdminPanel = ({
   // Activity Log Viewer State
   const [viewingLogsLead, setViewingLogsLead] = useState(null);
 
-  const isAr = lang === 'ar';
 
   // Active Role Permissions and Agent Claim Helper
   const allCurrentRoles = getMergedCrmRoles(getActiveAccessConfig());
@@ -150,20 +188,25 @@ export const CrmAdminPanel = ({
     migrateInlineLeadContacts(pending).catch(() => {});
   }, [canAssignAll, firebaseConnected, leads]);
 
+  // Only a sales role with a team can claim, and only from the shared pool (same as the rules:
+  // a desk agent may move a lead between the pool and their own desk, never off someone else's)
+  const canClaimLead = (lead) => Boolean(lead) && canEditLeads && !!myDesk && !isSuperRole
+    && (!lead.assignedTo || lead.assignedTo === 'Unassigned');
   const handleClaimLead = (leadId) => {
-    if (onUpdateLead) {
-      onUpdateLead(leadId, { assignedTo: currentRoleObj.agentName });
-      logAuditEvent({
-        actionType: 'LEAD_CLAIMED',
-        targetCollection: 'leads',
-        targetId: leadId,
-        details: { assignedTo: currentRoleObj.agentName },
-        actor: currentUser
-      });
-      if (triggerToast) {
-        triggerToast(isAr ? `تم استلام العميل بنجاح وتعيينه لـ ${currentRoleObj.label_ar}` : `Lead claimed by ${currentRoleObj.label_en}`, 'success');
-      }
+    const lead = leads.find((l) => l.id === leadId);
+    if (!onUpdateLead || !canClaimLead(lead)) {
+      triggerToast?.(isAr ? 'تقدر تستلم العملاء غير المسندين بس، ولازم يكون ليك فريق' : 'You can only claim unassigned leads, and need a team', 'error');
+      return;
     }
+    onUpdateLead(leadId, { assignedTo: myDesk });
+    logAuditEvent({
+      actionType: 'LEAD_CLAIMED',
+      targetCollection: 'leads',
+      targetId: leadId,
+      details: { assignedTo: myDesk },
+      actor: currentUser
+    });
+    triggerToast?.(isAr ? 'تم استلام العميل وتعيينه لفريقك' : 'Lead claimed for your team', 'success');
   };
 
   const { getLocalizedPropertyType, getLocalizedArea, toLeadExportRow } = makeLeadFormatters(isAr, t);
@@ -187,7 +230,7 @@ export const CrmAdminPanel = ({
 
   const handleBulkAssign = (newAgent) => {
     if (selectedLeadIds.length === 0 || !newAgent) return;
-    if (!canEditLeadsRole(activeRole) || !assignableDesks(activeRole).some((d) => d.value === newAgent)) {
+    if (!canEditLeads || !assignableDesks(activeRole, myDesk || null).some((d) => d.value === newAgent)) {
       if (triggerToast) triggerToast(isAr ? 'صلاحياتك الحالية لا تسمح بتعيين العملاء' : 'Your role cannot assign leads', 'error');
       return;
     }
@@ -234,7 +277,7 @@ export const CrmAdminPanel = ({
   };
 
   const exportLeadRows = (rows, fileName, scope, format = 'csv') => {
-    if (!canExportCsv(activeRole)) {
+    if (!canExport) {
       if (triggerToast) {
         triggerToast(isAr ? 'غير مصرح لك بتصدير بيانات العملاء (تتطلب صلاحية مدير أو مالية)' : 'Unauthorized: requires Manager or Finance role', 'error');
       }
@@ -301,16 +344,14 @@ export const CrmAdminPanel = ({
   };
 
   const handleExportCSV = (rows = leads || [], format = 'csv') => {
-    if (format === 'csv' && exportLeadsCSV && canExportCsv(activeRole)) {
-      exportLeadsCSV();
-      return;
-    }
+    // Always the rows this account can see (scoped, phones masked if needed) — never the
+    // app-wide unmasked list
     exportLeadRows(rows, '1Line_Clients', rows === leads ? 'all_leads' : 'filtered_view', format);
   };
 
   // Full Leads Database JSON Backup
   const handleExportLeadsJson = () => {
-    if (!canExportCsv(activeRole)) {
+    if (!canExport) {
       if (triggerToast) {
         triggerToast(isAr ? 'غير مصرح لك بتصدير النسخ الاحتياطية (تتطلب صلاحية Super Admin أو المالية)' : 'Unauthorized: requires Admin or Finance', 'error');
       }
@@ -504,8 +545,6 @@ export const CrmAdminPanel = ({
     window.open(`https://wa.me/?text=${encodeURIComponent(dispatchText)}`, '_blank');
   };
 
-  // CRM Analytics Metrics (Memoized)
-  const crmAnalytics = useMemo(() => computeCrmAnalytics(leads), [leads]);
 
   // Filtered Leads list with Multi-Dimensional Search & Workflow Stages (Memoized)
   const duplicateIds = useMemo(() => duplicatesById(leads), [leads]);
@@ -559,10 +598,9 @@ export const CrmAdminPanel = ({
           leads={leads}
           properties={properties}
           demands={demands}
-          projects={[]}
+          projects={projects}
           activeRole={activeRole}
           currentRoleObj={currentRoleObj}
-          crmAnalytics={crmAnalytics}
           isAr={isAr}
           onSwitchTab={(tab) => {
             if (tab === 'properties') onSwitchToProperties?.();
@@ -576,6 +614,11 @@ export const CrmAdminPanel = ({
             setLeadFilter(filterKey);
             setAdminTab('leads');
           }}
+          onOpenContractStudio={() => setShowContractStudio(true)}
+          deskView={!seesAllLeads}
+          scopeDesk={myDesk || null}
+          showMoney={isSuperRole || perms.includes('fin') || perms.includes('ld.manage')}
+          onOpenCopywriter={() => setShowAICopywriter(true)}
         />
       )}
 
@@ -637,6 +680,9 @@ export const CrmAdminPanel = ({
           duplicateIds={duplicateIds}
           onMergeLeads={handleMergeLeads}
           canMergeLeads={canDeleteLead(activeRole)}
+          canEdit={canEditLeads}
+          canExport={canExport}
+          canClaimLead={canClaimLead}
           sourceFilter={sourceFilter}
           setSourceFilter={setSourceFilter}
           dateFilter={dateFilter}

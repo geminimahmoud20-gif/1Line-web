@@ -111,3 +111,11 @@ test('team list comes from the staff registry, not a scan of every account', { s
   assert.deepEqual((await call('POST', { action: 'resync' })).body.members.map((m) => m.email), ['boss@reg.test', 'sami@reg.test']);
   assert.deepEqual((await registry.list()).sort(), [boss, sami].sort());
 });
+
+test('activated: own password set from the email link, or email verified', () => {
+  const base = { localId: 'u', createdAt: '1700000000000' };
+  assert.equal(toMember({ ...base, passwordUpdatedAt: 1700000000300 }).activatedAt, null); // the random initial password
+  assert.equal(toMember({ ...base, passwordUpdatedAt: 1700086400000 }).activatedAt, new Date(1700086400000).toISOString());
+  assert.equal(toMember({ ...base, emailVerified: true }).activatedAt, new Date(1700000000000).toISOString());
+  assert.equal(toMember(base).activatedAt, null);
+});

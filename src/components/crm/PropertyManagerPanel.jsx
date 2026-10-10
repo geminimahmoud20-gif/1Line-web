@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import useOpenRequest from '../../hooks/useOpenRequest';
 import { Building, Plus, Trash2, Upload, Eye, EyeOff, Archive } from 'lucide-react';
 import { getAreas } from '../../utils/areasData';
 import HomepageSlotsBoard, { FeaturedSlotModal } from './HomepageSlotsBoard';
@@ -76,7 +77,9 @@ export default function PropertyManagerPanel({
   lang = 'ar',
   triggerToast,
   externalNewPropertyData = null,
-  onClearExternalData = () => {}
+  onClearExternalData = () => {},
+  openRequest = null,
+  readOnly = false
 }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingPropertyId, setEditingPropertyId] = useState(null);
@@ -125,6 +128,7 @@ export default function PropertyManagerPanel({
     setForm(DEFAULT_FORM_STATE);
     setShowAddModal(true);
   };
+  useOpenRequest(openRequest, ['add_property'], () => { if (!readOnly) handleOpenAdd(); });
 
   const handleOpenEdit = (prop) => {
     setEditingPropertyId(prop.id);
@@ -538,7 +542,7 @@ export default function PropertyManagerPanel({
           />
 
           {/* Add New Property */}
-          <button type="button" className="btn btn-primary" onClick={handleOpenAdd}>
+          <button type="button" className="btn btn-primary" onClick={handleOpenAdd} disabled={readOnly} title={readOnly ? (isAr ? 'دورك للعرض فقط' : 'View-only role') : undefined}>
             <Plus size={16} />
             <span>{isAr ? 'إضافة عقار جديد للموقع' : 'Add New Property'}</span>
           </button>
@@ -688,6 +692,7 @@ export default function PropertyManagerPanel({
               filteredProperties.map((prop) => {
                 return (
                   <PropertyTableRow
+                    readOnly={readOnly}
                     key={prop.id}
                     prop={prop}
                     isAr={isAr}

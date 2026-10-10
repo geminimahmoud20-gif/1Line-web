@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import useOpenRequest from '../../hooks/useOpenRequest';
 import { Building2, Plus, Edit3, Trash2, MapPin, Save, X, Search } from 'lucide-react';
 
 /**
@@ -12,7 +13,9 @@ export default function MegaProjectsManagerPanel({
   onUpdateProject,
   onDeleteProject,
   lang = 'ar',
-  triggerToast = () => {}
+  triggerToast = () => {},
+  openRequest = null,
+  readOnly = false
 }) {
   const isAr = lang === 'ar';
   const [searchQuery, setSearchQuery] = useState('');
@@ -68,6 +71,8 @@ export default function MegaProjectsManagerPanel({
     setFormData(initialForm);
     setIsModalOpen(true);
   };
+
+  useOpenRequest(openRequest, ['add_project'], () => { if (!readOnly) handleOpenAddModal(); });
 
   const handleOpenEditModal = (proj) => {
     setEditingProjectId(proj.id);
@@ -182,6 +187,7 @@ export default function MegaProjectsManagerPanel({
         <button
           type="button"
           className="btn btn-primary btn-add-prop-cta"
+          disabled={readOnly}
           onClick={handleOpenAddModal}
         >
           <Plus size={16} />
@@ -294,6 +300,7 @@ export default function MegaProjectsManagerPanel({
                       <button
                         type="button"
                         className="btn btn-sm btn-ghost"
+                        disabled={readOnly}
                         onClick={() => handleOpenEditModal(p)}
                         title={isAr ? 'تعديل المشروع ونسب الإنجاز' : 'Edit Project'}
                         style={{ padding: '6px', color: 'var(--crm-ink)' }}
@@ -303,6 +310,7 @@ export default function MegaProjectsManagerPanel({
                       <button
                         type="button"
                         className="btn btn-sm btn-ghost"
+                        disabled={readOnly}
                         onClick={() => handleDelete(p.id, title)}
                         title={isAr ? 'حذف المشروع' : 'Delete'}
                         style={{ padding: '6px', color: 'var(--crm-danger)' }}

@@ -44,6 +44,7 @@ function BrochureButton({ prop, isAr }) {
 }
 
 export default function PropertyTableRow({
+  readOnly = false,
   prop,
   isAr,
   areas,
@@ -155,6 +156,7 @@ export default function PropertyTableRow({
         <div className="hs-star-cell">
           <button
             type="button"
+            disabled={readOnly}
             onClick={() => {
               if (prop.featured) {
                 if (onUpdateProperty(prop.id, { featured: false }) !== false) {
@@ -177,7 +179,7 @@ export default function PropertyTableRow({
             <Star size={18} fill={prop.featured ? '#f59e0b' : 'none'} />
           </button>
           {prop.featured && (
-            <button type="button" className="hs-link-btn" onClick={() => setSlotEditing(prop)} title={isAr ? 'تعديل مدة التمييز' : 'Edit period'}>
+            <button type="button" className="hs-link-btn" disabled={readOnly} onClick={() => setSlotEditing(prop)} title={isAr ? 'تعديل مدة التمييز' : 'Edit period'}>
               <FeaturedPeriodLabel property={prop} isAr={isAr} />
             </button>
           )}
@@ -193,6 +195,7 @@ export default function PropertyTableRow({
               <button
                 type="button"
                 className="icon-action-table-btn"
+                disabled={readOnly}
                 onClick={() => handleToggleVisibility(prop)}
                 title={isOnSite ? (isAr ? 'إخفاء العقار من الموقع' : 'Hide from site') : (isAr ? 'إظهار العقار على الموقع' : 'Show on site')}
                 aria-pressed={isOnSite}
@@ -217,6 +220,7 @@ export default function PropertyTableRow({
                   <button
                     type="button"
                     className="btn btn-sm"
+                    disabled={readOnly}
                     onClick={() => setOfferEditing(prop)}
                     style={{
                       display: 'inline-flex',
@@ -276,6 +280,7 @@ export default function PropertyTableRow({
               <button
                 type="button"
                 className="icon-action-table-btn btn-edit"
+                disabled={readOnly}
                 onClick={() => handleOpenEdit(prop)}
                 title={isAr ? 'تعديل التفاصيل' : 'Edit'}
               >
@@ -286,6 +291,7 @@ export default function PropertyTableRow({
               <button
                 type="button"
                 className="icon-action-table-btn btn-del"
+                disabled={readOnly}
                 onClick={() => handleSoftDelete(prop.id)}
                 title={isAr ? 'نقل للمهملات' : 'Trash'}
               >
@@ -298,6 +304,7 @@ export default function PropertyTableRow({
               <button
                 type="button"
                 className="icon-action-table-btn"
+                disabled={readOnly}
                 onClick={() => handleRestore(prop.id)}
                 title={isAr ? 'استرجاع ونشر العقار' : 'Restore'}
                 style={{ color: 'var(--crm-positive)' }}
@@ -309,6 +316,7 @@ export default function PropertyTableRow({
               <button
                 type="button"
                 className="icon-action-table-btn btn-del"
+                disabled={readOnly}
                 onClick={() => handlePermanentDelete(prop.id)}
                 title={isAr ? 'حذف نهائي للأبد' : 'Delete Permanently'}
               >
