@@ -3,6 +3,26 @@ import { Sparkles, Copy, Check, Send, Wand2 } from 'lucide-react';
 import { getDynamicPhone, getWhatsAppUrl } from '../../utils/founderCmsData';
 import { computeRentalYield } from '../../utils/propertyInsights';
 
+// Arabic room counter grammar (قواعد تمييز العدد في اللغة العربية)
+const formatRoomsAr = (num) => {
+  if (!num) return '';
+  const n = parseInt(num, 10);
+  if (isNaN(n) || n <= 0) return '';
+  if (n === 1) return ' (غرفة واحدة)';
+  if (n === 2) return ' (غرفتان)';
+  if (n >= 3 && n <= 10) return ` (${n} غرف)`;
+  return ` (${n} غرفة)`;
+};
+
+// Clean common spelling mistakes in Egyptian real estate listings
+const fixArabicSpelling = (str) => {
+  if (!str) return '';
+  return str
+    .replace(/الجديده\b/g, 'الجديدة')
+    .replace(/\bالحي الاول\b/g, 'الحي الأول')
+    .replace(/\bالاول\b/g, 'الأول');
+};
+
 export default function AICopywriterModal({
   isOpen,
   onClose,
@@ -12,20 +32,32 @@ export default function AICopywriterModal({
 }) {
   const isAr = lang === 'ar';
   const [selectedPropertyId, setSelectedPropertyId] = useState(properties[0]?.id || '');
-  const [adTone, setAdTone] = useState('luxury'); // 'luxury' | 'social' | 'investor' | 'english'
+  const [adTone, setAdTone] = useState('social'); // 'social' | 'luxury' | 'investor' | 'expat' | 'english'
   const [copied, setCopied] = useState(false);
 
   if (!isOpen) return null;
 
   const selectedProp = properties.find(p => p.id === selectedPropertyId) || properties[0] || {};
 
-  const propTitle = isAr ? selectedProp.title_ar : selectedProp.title_en;
-  const propLocation = isAr ? selectedProp.locationName_ar : selectedProp.locationName_en;
-  const propPrice = selectedProp.price ? selectedProp.price.toLocaleString('en-US') + ' ج.م' : 'سعر مميز';
-  const propDownPayment = selectedProp.downPayment ? selectedProp.downPayment.toLocaleString('en-US') + ' ج.م' : 'مقدم ميسر';
-  const propInstallment = selectedProp.monthlyInstallment ? selectedProp.monthlyInstallment.toLocaleString('en-US') + ' ج.م' : 'أقساط مرنة';
+  const propTitle = isAr ? fixArabicSpelling(selectedProp.title_ar) : selectedProp.title_en;
+  const propLocation = isAr ? fixArabicSpelling(selectedProp.locationName_ar) : selectedProp.locationName_en;
+
+  const hasPrice = Boolean(selectedProp.price);
+  const hasDownPayment = Boolean(selectedProp.downPayment);
+  const hasInstallment = Boolean(selectedProp.monthlyInstallment);
+
+  const propPrice = hasPrice ? selectedProp.price.toLocaleString('en-US') + ' ج.م' : (isAr ? 'سعر مميز عند التعاقد' : 'Special Price');
+  const propDownPayment = hasDownPayment ? selectedProp.downPayment.toLocaleString('en-US') + ' ج.م' : (isAr ? 'مقدم تعاقد ميسر' : 'Flexible Down Payment');
+  const propInstallment = hasInstallment ? selectedProp.monthlyInstallment.toLocaleString('en-US') + ' ج.م' : (isAr ? 'أقساط ميسرة' : 'Flexible Installments');
   const propSize = selectedProp.size || '—';
   const propRooms = selectedProp.bedrooms || 0;
+
+  // Natural phrasing for payments in social ad to avoid awkward repetition
+  const paymentLineSocial = (hasDownPayment && hasInstallment)
+    ? `مقدم يبدأ من ${selectedProp.downPayment.toLocaleString('en-US')} ج.م وقسط شهري ${selectedProp.monthlyInstallment.toLocaleString('en-US')} ج.م`
+    : (hasDownPayment
+        ? `مقدم تعاقد يبدأ من ${selectedProp.downPayment.toLocaleString('en-US')} ج.م وتسهيلات سداد ممتدة`
+        : `أنظمة سداد ميسرة بمقدم تعاقد بسيط وأقساط شهرية مرنة`);
 
   // Every factual line comes from the listing itself — posts get published as-is.
   const legal = selectedProp.legalStatus || null;
@@ -37,7 +69,7 @@ export default function AICopywriterModal({
     : 'Documents reviewed with you before contract';
   const rentPerSqm = Number(selectedProp.commercial?.rentPerSqm) || 0;
   const yieldStudy = rentPerSqm ? computeRentalYield({ price: selectedProp.price, size: selectedProp.size, rentPerSqm }) : null;
-  const roomsAr = propRooms ? ` (${propRooms} غرف)` : '';
+  const roomsAr = formatRoomsAr(propRooms);
 
   // Sector classification
   const isLand = selectedProp.type === 'land' || (propTitle && propTitle.includes('أرض'));
@@ -46,7 +78,7 @@ export default function AICopywriterModal({
 
   let sectorTitleLuxury = 'قصر السكن الراقي';
   let sectorHookLuxury = 'هل تبحث عن السكن الفندقي والخصوصية الكاملة لك ولأسرتك؟';
-  let sectorSpaceLuxury = propRooms ? `بتوزيع داخلي (${propRooms} غرف نوم)` : 'بتوزيع داخلي مدروس';
+  let sectorSpaceLuxury = propRooms ? `بتوزيع داخلي${roomsAr}` : 'بتوزيع داخلي مدروس';
   let sectorAdvantagesLuxury = selectedProp.finishing_ar ? `تشطيب ${selectedProp.finishing_ar}.` : 'التفاصيل الكاملة والصور في صفحة العقار.';
 
   let sectorSpaceSocial = `${propSize} م²${roomsAr}`;
@@ -95,8 +127,8 @@ export default function AICopywriterModal({
 
 💰 خطة السداد والاستثمار:
 • السعر الإجمالي: ${propPrice}
-• مقدم التعاقد والاستلام: ${propDownPayment}
-• قسط شهري ميسر: ${propInstallment} فقط!
+• مقدم التعاقد: ${propDownPayment}
+• قسط شهري ميسر: ${propInstallment}
 
 📞 للتواصل المباشر وحجز موعد المعاينة الخاصة:
 مستشارك العقاري: ${getDynamicPhone()}
@@ -113,7 +145,7 @@ export default function AICopywriterModal({
 
 ⚡ ليه العقار ده بالذات ميتفوتش؟
 ✅ مساحة واسعة: ${sectorSpaceSocial}
-✅ مقدم يبدأ من ${propDownPayment} وقسط شهري ${propInstallment}
+✅ ${paymentLineSocial}
 ✅ ${legalLineAr}
 ✅ معاينة مجانية للموقع قبل أي التزام!
 
@@ -135,7 +167,7 @@ ${yieldStudy
   ? `• العائد الإجمالي التقديري: ${Math.round(yieldStudy.grossYieldPct * 10) / 10}% سنوياً (على إيجار متوقع ${rentPerSqm.toLocaleString('en-US')} ج.م للمتر شهرياً)
 • فترة استرداد رأس المال التقديرية: ${Math.round(yieldStudy.paybackYears * 10) / 10} سنة قبل الضرائب`
   : '• نجهز لك دراسة عائد بإيجارات مقارنة فعلية في نفس الشارع قبل القرار'}
-• التسهيلات: مقدم ${propDownPayment} والباقي على أقساط.
+• التسهيلات: ${paymentLineSocial}
 
 🛡️ الموقف القانوني:
 ${legalLineAr}
@@ -200,117 +232,140 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
     window.open(`https://wa.me/?text=${encodeURIComponent(adText)}`, '_blank');
   };
 
+  const toneOptions = [
+    { id: 'social', icon: '🔥', labelAr: 'سوشيال', labelEn: 'Viral' },
+    { id: 'luxury', icon: '👑', labelAr: 'فندقي', labelEn: 'Luxury' },
+    { id: 'investor', icon: '📈', labelAr: 'استثماري', labelEn: 'Investor' },
+    { id: 'expat', icon: '✈️', labelAr: 'مغتربين', labelEn: 'Expats' },
+    { id: 'english', icon: '🌐', labelAr: 'English', labelEn: 'EN' }
+  ];
+
   return (
     <div className="track-modal-backdrop" onClick={onClose}>
-      <div className="property-form-modal-card animate-fadeIn" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '780px' }}>
+      <div className="property-form-modal-card animate-fadeIn" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '820px', borderRadius: '20px', overflow: 'hidden' }}>
         <div className="modal-form-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Wand2 size={20} className="text-gold" />
-            <h3 style={{ margin: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Wand2 size={22} className="text-gold" />
+            <h3 style={{ margin: 0, fontSize: 'var(--crm-text-lg)', fontWeight: '800' }}>
               {isAr ? 'مُولّد الإعلانات التسويقية بالذكاء الاصطناعي' : 'AI Real Estate Copywriter'}
             </h3>
           </div>
-          <button type="button" className="drawer-close-btn" onClick={onClose}>✕</button>
+          <button type="button" className="drawer-close-btn" onClick={onClose} aria-label={isAr ? 'إغلاق' : 'Close'}>✕</button>
         </div>
 
-        <div style={{ padding: '20px' }}>
-          {/* Controls Bar */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '14px', marginBottom: '18px' }}>
+        <div style={{ padding: '24px' }}>
+          {/* Controls Bar: Clean Stacked Responsive Form */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '20px' }}>
             <div>
-              <label style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
+              <label style={{ fontSize: 'var(--crm-text-sm)', fontWeight: '700', display: 'block', marginBottom: '8px', color: 'var(--crm-ink)' }}>
                 {isAr ? 'اختر العقار المراد كتابة إعلان له:' : 'Select Property:'}
               </label>
               <select
                 value={selectedPropertyId}
                 onChange={(e) => setSelectedPropertyId(e.target.value)}
                 className="form-input"
-                style={{ width: '100%', fontWeight: 'bold' }}
+                style={{ width: '100%', fontWeight: '700', padding: '10px 14px', borderRadius: '10px' }}
               >
                 {properties.map(p => (
                   <option key={p.id} value={p.id}>
-                    {isAr ? p.title_ar : p.title_en} ({p.price?.toLocaleString('en-US')} ج.م)
+                    {isAr ? fixArabicSpelling(p.title_ar) : p.title_en} ({p.price ? p.price.toLocaleString('en-US') + ' ج.م' : 'سعر مميز'})
                   </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
+              <label style={{ fontSize: 'var(--crm-text-sm)', fontWeight: '700', display: 'block', marginBottom: '8px', color: 'var(--crm-ink)' }}>
                 {isAr ? 'نبرة وأسلوب الإعلان:' : 'Campaign Tone:'}
               </label>
-              <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  className={`btn btn-sm ${adTone === 'luxury' ? 'btn-primary' : 'btn-outline'}`}
-                  onClick={() => setAdTone('luxury')}
-                  style={{ flex: '1 1 auto', padding: '5px 6px', fontSize: 'var(--crm-text-xs)' }}
-                >
-                  👑 {isAr ? 'فندقي' : 'Luxury'}
-                </button>
-                <button
-                  type="button"
-                  className={`btn btn-sm ${adTone === 'social' ? 'btn-primary' : 'btn-outline'}`}
-                  onClick={() => setAdTone('social')}
-                  style={{ flex: '1 1 auto', padding: '5px 6px', fontSize: 'var(--crm-text-xs)' }}
-                >
-                  🔥 {isAr ? 'سوشيال' : 'Viral'}
-                </button>
-                <button
-                  type="button"
-                  className={`btn btn-sm ${adTone === 'investor' ? 'btn-primary' : 'btn-outline'}`}
-                  onClick={() => setAdTone('investor')}
-                  style={{ flex: '1 1 auto', padding: '5px 6px', fontSize: 'var(--crm-text-xs)' }}
-                >
-                  📈 {isAr ? 'استثماري' : 'Investor'}
-                </button>
-                <button
-                  type="button"
-                  className={`btn btn-sm ${adTone === 'expat' ? 'btn-primary' : 'btn-outline'}`}
-                  onClick={() => setAdTone('expat')}
-                  style={{ flex: '1 1 auto', padding: '5px 6px', fontSize: 'var(--crm-text-xs)' }}
-                >
-                  ✈️ {isAr ? 'مغتربين' : 'Expats'}
-                </button>
-                <button
-                  type="button"
-                  className={`btn btn-sm ${adTone === 'english' ? 'btn-primary' : 'btn-outline'}`}
-                  onClick={() => setAdTone('english')}
-                  style={{ flex: '1 1 auto', padding: '5px 6px', fontSize: 'var(--crm-text-xs)' }}
-                >
-                  🌐 EN
-                </button>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '8px' }}>
+                {toneOptions.map(t => {
+                  const isActive = adTone === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setAdTone(t.id)}
+                      style={{
+                        padding: '9px 12px',
+                        fontSize: 'var(--crm-text-xs)',
+                        fontWeight: '700',
+                        borderRadius: '10px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        transition: 'all 0.15s ease',
+                        background: isActive ? 'var(--crm-brand-navy, #0B132B)' : 'var(--crm-subtle, rgba(0,0,0,0.03))',
+                        color: isActive ? 'var(--crm-on-dark, #FFFFFF)' : 'var(--crm-ink)',
+                        border: isActive ? '1px solid var(--crm-brand-navy, #0B132B)' : '1px solid var(--crm-line, rgba(0,0,0,0.1))',
+                        boxShadow: isActive ? '0 2px 8px rgba(11, 19, 43, 0.25)' : 'none'
+                      }}
+                    >
+                      <span>{t.icon}</span>
+                      <span>{isAr ? t.labelAr : t.labelEn}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
 
-          {/* Generated Text Preview Box */}
+          {/* Generated Text Preview Box with High Contrast Dark Luxury Theme */}
           <div style={{
-            background: 'rgba(15, 23, 42, 0.7)',
-            border: '1px solid var(--border-light)',
-            borderRadius: 'var(--radius-md)',
-            padding: '16px',
-            position: 'relative'
+            background: 'linear-gradient(145deg, #0B132B 0%, #172554 100%)',
+            border: '1px solid rgba(212, 175, 55, 0.3)',
+            borderRadius: '16px',
+            padding: '18px 20px',
+            position: 'relative',
+            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.35)'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-              <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}>
-                <Sparkles size={14} /> {isAr ? 'تم الصياغة بواسطة الذكاء الاصطناعي العقاري' : 'AI Generated Content'}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+              <span style={{ fontSize: 'var(--crm-text-xs)', color: '#FBBF24', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '800', letterSpacing: '0.3px' }}>
+                <Sparkles size={16} style={{ color: '#FBBF24' }} /> {isAr ? 'تمت الصياغة بواسطة الذكاء الاصطناعي العقاري' : 'AI Generated Marketing Copy'}
               </span>
 
-              <div style={{ display: 'flex', gap: '6px' }}>
+              <div style={{ display: 'flex', gap: '8px' }}>
                 <button
                   type="button"
-                  className="btn btn-sm btn-outline"
                   onClick={handleCopy}
-                  style={{ padding: '4px 10px', fontSize: 'var(--crm-text-xs)' }}
+                  style={{
+                    padding: '7px 14px',
+                    fontSize: 'var(--crm-text-xs)',
+                    fontWeight: '700',
+                    background: copied ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                    color: copied ? '#34D399' : '#FFFFFF',
+                    border: copied ? '1px solid #10B981' : '1px solid rgba(255, 255, 255, 0.25)',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transition: 'all 0.15s ease'
+                  }}
                 >
-                  {copied ? <Check size={14} className="text-success" /> : <Copy size={14} />}
-                  <span>{copied ? (isAr ? 'تم النسخ!' : 'Copied!') : (isAr ? 'نسخ النص' : 'Copy')}</span>
+                  {copied ? <Check size={14} /> : <Copy size={14} />}
+                  <span>{copied ? (isAr ? 'تم النسخ!' : 'Copied!') : (isAr ? 'نسخ النص' : 'Copy Text')}</span>
                 </button>
                 <button
                   type="button"
-                  className="btn btn-sm btn-accent"
                   onClick={handleSendToWhatsApp}
-                  style={{ padding: '4px 10px', fontSize: 'var(--crm-text-xs)' }}
+                  style={{
+                    padding: '7px 14px',
+                    fontSize: 'var(--crm-text-xs)',
+                    fontWeight: '700',
+                    background: '#10B981',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 2px 8px rgba(16, 185, 129, 0.35)',
+                    transition: 'all 0.15s ease'
+                  }}
                 >
                   <Send size={14} />
                   <span>{isAr ? 'مشاركة واتساب' : 'Share WhatsApp'}</span>
@@ -320,24 +375,30 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
 
             <textarea
               readOnly
-              rows="12"
-              className="form-input"
+              rows="13"
               value={adText}
               style={{
                 width: '100%',
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--crm-ink)',
-                lineHeight: '1.7',
-                fontSize: 'var(--crm-text-base)',
+                background: 'rgba(2, 6, 23, 0.55)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '12px',
+                padding: '16px',
+                color: '#F8FAFC',
+                lineHeight: '1.85',
+                fontSize: '14px',
+                fontWeight: '500',
                 resize: 'none',
-                fontFamily: 'inherit'
+                fontFamily: 'inherit',
+                outline: 'none',
+                boxSizing: 'border-box',
+                scrollbarWidth: 'thin',
+                scrollbarColor: 'rgba(255, 255, 255, 0.3) transparent'
               }}
             />
           </div>
 
-          <div className="cms-modal-actions" style={{ marginTop: '16px' }}>
-            <button type="button" className="btn btn-outline" onClick={onClose}>
+          <div className="cms-modal-actions" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
+            <button type="button" className="btn btn-outline" onClick={onClose} style={{ padding: '8px 20px', borderRadius: '8px', fontWeight: '700' }}>
               {isAr ? 'إغلاق' : 'Close'}
             </button>
           </div>
