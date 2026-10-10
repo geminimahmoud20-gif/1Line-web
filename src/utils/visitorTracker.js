@@ -6,38 +6,11 @@
 const STORAGE_KEYS = {
   SESSION: 'oneline_visitor_session',
   EVENTS: 'oneline_visitor_events',
-  PROPERTY_VIEWS: 'oneline_property_views',
+  // v2: the old key holds seeded (invented) starting counts, so it is ignored
+  PROPERTY_VIEWS: 'oneline_property_views_v2',
   SESSIONS_HISTORY: 'oneline_sessions_history'
 };
 
-// Default baseline views for initial properties to provide rich statistics
-const INITIAL_PROPERTY_VIEWS = {
-  'prop-1': 438,
-  'prop-2': 512,
-  'prop-3': 640,
-  'prop-4': 380,
-  'prop-5': 295,
-  'prop-6': 468,
-  'prop-7': 415,
-  'prop-8': 354,
-  'prop-9': 270,
-  'prop-10': 310,
-  'prop-11': 290,
-  'prop-12': 480,
-  'prop-13': 520,
-  'prop-14': 240,
-  'prop-15': 365,
-  'prop-16': 495,
-  // legacy aliases
-  'sohag-apt-01': 384,
-  'sohag-villa-01': 512,
-  'sohag-comm-01': 295,
-  'sohag-apt-02': 420,
-  'sohag-land-01': 310,
-  'sohag-dup-01': 468,
-  'sohag-pent-01': 354,
-  'sohag-med-01': 230
-};
 
 /**
  * Initialize or retrieve active visitor session
@@ -164,19 +137,16 @@ export function identifyVisitor(userData = {}) {
  * Get real-time views count for a property
  */
 export function getPropertyViews(propertyId) {
-  if (!propertyId || typeof window === 'undefined') return 150;
+  if (!propertyId || typeof window === 'undefined') return 0;
 
   try {
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEYS.PROPERTY_VIEWS) || '{}');
     if (stored[propertyId] !== undefined) {
       return stored[propertyId];
     }
-    const initial = INITIAL_PROPERTY_VIEWS[propertyId] || (180 + (Math.abs(hashString(String(propertyId))) % 150));
-    stored[propertyId] = initial;
-    localStorage.setItem(STORAGE_KEYS.PROPERTY_VIEWS, JSON.stringify(stored));
-    return initial;
+    return 0;
   } catch (err) {
-    return 220;
+    return 0;
   }
 }
 
@@ -188,7 +158,7 @@ export function incrementPropertyView(propertyId, propertyData = {}) {
 
   try {
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEYS.PROPERTY_VIEWS) || '{}');
-    const current = stored[propertyId] || INITIAL_PROPERTY_VIEWS[propertyId] || 180;
+    const current = stored[propertyId] || 0;
     const updated = current + 1;
     stored[propertyId] = updated;
     localStorage.setItem(STORAGE_KEYS.PROPERTY_VIEWS, JSON.stringify(stored));
@@ -214,7 +184,7 @@ export function getTopViewedProperties(properties = []) {
   const viewsMap = JSON.parse(localStorage.getItem(STORAGE_KEYS.PROPERTY_VIEWS) || '{}');
   
   return properties.map(p => {
-    const views = viewsMap[p.id] || INITIAL_PROPERTY_VIEWS[p.id] || 150;
+    const views = viewsMap[p.id] || 0;
     return {
       ...p,
       viewCount: views,
@@ -244,16 +214,17 @@ export function getLiveAnalyticsSummary() {
     const durations = sessions.map(s => Math.max(1, Math.round(((s.lastActiveMs || Date.now()) - s.startTimeMs) / 1000)));
     const avgDurationSeconds = durations.length > 0
       ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length)
-      : 145;
+      : 0;
 
+    // Real counts only (this browser's own log); no floors that inflate the numbers
     return {
-      totalSessionsCount: Math.max(sessions.length, 48),
-      totalPropertyViews: Math.max(totalViews, 4210),
-      totalEventsCount: Math.max(events.length, 185),
-      whatsappClicks: Math.max(whatsappClicks, 34),
-      calculatorUses: Math.max(calculatorUses, 58),
-      brochureDownloads: Math.max(brochureDownloads, 19),
-      compareEvents: Math.max(compareEvents, 42),
+      totalSessionsCount: sessions.length,
+      totalPropertyViews: totalViews,
+      totalEventsCount: events.length,
+      whatsappClicks: whatsappClicks,
+      calculatorUses: calculatorUses,
+      brochureDownloads: brochureDownloads,
+      compareEvents: compareEvents,
       avgDwellTimeFormatted: formatDuration(avgDurationSeconds),
       avgDwellTimeSeconds: avgDurationSeconds,
       recentEvents: events.slice(0, 50),
@@ -261,35 +232,18 @@ export function getLiveAnalyticsSummary() {
     };
   } catch (err) {
     return {
-      totalSessionsCount: 48,
-      totalPropertyViews: 4210,
-      totalEventsCount: 185,
-      whatsappClicks: 34,
-      avgDwellTimeFormatted: '3m 45s',
+      totalSessionsCount: 0,
+      totalPropertyViews: 0,
+      totalEventsCount: 0,
+      whatsappClicks: 0,
+      calculatorUses: 0,
+      brochureDownloads: 0,
+      compareEvents: 0,
+      avgDwellTimeFormatted: formatDuration(0),
+      avgDwellTimeSeconds: 0,
       recentEvents: [],
       recentSessions: []
     };
-  }
-}
-
-/**
- * Get events and journey for a specific lead or phone number
- */
-export function getLeadDigitalJourney(phoneOrName) {
-  if (!phoneOrName || typeof window === 'undefined') return [];
-
-  try {
-    const events = JSON.parse(localStorage.getItem(STORAGE_KEYS.EVENTS) || '[]');
-    const q = String(phoneOrName).toLowerCase().replace(/[^0-9a-zA-Z]/g, '');
-
-    return events.filter(e => {
-      if (!e.identifiedUser) return false;
-      const uPhone = (e.identifiedUser.phone || '').replace(/[^0-9a-zA-Z]/g, '');
-      const uName = (e.identifiedUser.name || '').toLowerCase();
-      return (uPhone && uPhone.includes(q)) || uName.includes(phoneOrName.toLowerCase());
-    });
-  } catch (err) {
-    return [];
   }
 }
 
@@ -319,20 +273,12 @@ export function getCurrentSessionJourney() {
 
 // Helpers
 function formatDuration(seconds) {
-  if (!seconds || seconds < 60) return `${seconds || 45} ثانية`;
+  if (!seconds || seconds < 60) return `${seconds || 0} ثانية`;
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${m}د ${s}ث`;
 }
 
-function hashString(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash |= 0;
-  }
-  return hash;
-}
 
 /**
  * 🎯 UTM & Marketing Attribution Engine

@@ -875,7 +875,6 @@ export default function CrmPage({
           isOpen={showGoLiveWizard}
           onClose={() => setShowGoLiveWizard(false)}
           leads={visibleLeads}
-          setLeads={setLeads}
           properties={properties}
           demands={demands}
           lang={lang}

@@ -8,6 +8,7 @@ import {
   QrCode, 
   ShieldCheck 
 } from 'lucide-react';
+import { amountInArabicWords } from '../../utils/tafqeet';
 
 export default function PaymentScheduleBuilder({
   properties = [],
@@ -397,7 +398,7 @@ export default function PaymentScheduleBuilder({
                   رقم الهاتف: <strong>{selectedLead.phone || '010XXXXXXXX'}</strong>
                 </p>
                 <p style={{ margin: 0 }}>
-                  مبلغ وقدره: <strong style={{ color: 'var(--crm-positive)', fontSize: 'var(--crm-text-lg)' }}>{receiptDepositAmount.toLocaleString('en-US')} ج.م</strong> (فقط خمسون ألف جنيهاً مصرياً لا غير).
+                  مبلغ وقدره: <strong style={{ color: 'var(--crm-positive)', fontSize: 'var(--crm-text-lg)' }}>{receiptDepositAmount.toLocaleString('en-US')} ج.م</strong> ({amountInArabicWords(receiptDepositAmount)}).
                 </p>
                 <p style={{ margin: 0 }}>
                   طريقة السداد: <strong>{paymentMethod === 'cash' ? 'نقداً بخزينة الشركة' : paymentMethod === 'bank_transfer' ? 'تحويل بنكي رسمي' : 'فودافون كاش / إنستاباي'}</strong>

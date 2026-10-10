@@ -29,6 +29,8 @@ const SOHAG_AREA_COORDINATES = {
   markaz: { lat: 26.5700, lng: 31.6700 },
   akhmeem: { lat: 26.5630, lng: 31.7450 }
 };
+// Every area's own center (Tahta, Girga, Kawthar, Thakafa… included); the table above only covers legacy keys
+const areaCenter = (key) => SOHAG_AREA_COORDINATES[key] || getAreas().find((a) => a.id === key)?.center || null;
 
 const DEFAULT_FORM_STATE = {
   title_ar: '',
@@ -374,7 +376,7 @@ export default function PropertyManagerPanel({
     }
 
     // 🗺️ Assign Real GPS Coordinates matching the selected Sohag district
-    const baseCoords = SOHAG_AREA_COORDINATES[form.areaKey] || { lat: 26.5569, lng: 31.7001 };
+    const baseCoords = areaCenter(form.areaKey) || { lat: 26.5569, lng: 31.7001 };
     // Slight random offset (approx 100-300m) to prevent multiple units in the same district from stacking directly on top of each other
     const randomOffset = (Math.random() - 0.5) * 0.005;
     const finalCoords = (form.coordinates?.lat && form.coordinates.lat !== 26.5500) ? form.coordinates : {
@@ -749,7 +751,7 @@ export default function PropertyManagerPanel({
         <InteractiveMapPickerModal
           isOpen={showMapPicker}
           onClose={() => setShowMapPicker(false)}
-          initialCoordinates={form.coordinates || SOHAG_AREA_COORDINATES[form.areaKey]}
+          initialCoordinates={form.coordinates || areaCenter(form.areaKey)}
           onConfirmCoordinates={(coords) => setForm(prev => ({ ...prev, coordinates: coords }))}
           lang={lang}
           triggerToast={triggerToast}
