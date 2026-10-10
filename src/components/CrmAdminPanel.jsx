@@ -28,10 +28,11 @@ import CrmExecutiveDashboard from './crm/CrmExecutiveDashboard';
 import { CRM_ROLES, getMergedCrmRoles } from './crm/crmRoles';
 import { getActiveAccessConfig } from '../services/accessConfig';
 import EditLeadModal from './crm/EditLeadModal';
+import useOpenRequest from '../hooks/useOpenRequest';
 import { LEAD_EXPORT_HEADERS, makeLeadFormatters } from './crm/leadFormatters';
 import CrmLoginGate from './crm/CrmLoginGate';
 import useLeadKeyboardTriage from './crm/useLeadKeyboardTriage';
-import { computeCrmAnalytics, filterLeads, sortLeads, duplicatesById, buildMergedLead } from '../utils/crmLeadViews';
+import { filterLeads, sortLeads, duplicatesById, buildMergedLead } from '../utils/crmLeadViews';
 
 export const CrmAdminPanel = ({
   lang = 'ar',
@@ -40,6 +41,8 @@ export const CrmAdminPanel = ({
   leads = [],
   setLeads,
   properties = [],
+  projects = [],
+  openRequest = null,
   exportLeadsCSV,
   crmAuthenticated = true,
   setCrmAuthenticated,
@@ -96,6 +99,12 @@ export const CrmAdminPanel = ({
   // AI Copywriter & Contract Studio Modal States
   const [showAICopywriter, setShowAICopywriter] = useState(false);
   const [showContractStudio, setShowContractStudio] = useState(false);
+  // Top bar / command palette asked for one of this panel's modals
+  useOpenRequest(openRequest, ['add_lead', 'contract_studio', 'ai_copywriter'], (type) => {
+    if (type === 'add_lead') setShowAddLeadModal(true);
+    else if (type === 'contract_studio') setShowContractStudio(true);
+    else setShowAICopywriter(true);
+  });
 
   // Edit Lead Modal State
   const [editingLead, setEditingLead] = useState(null);
@@ -504,8 +513,6 @@ export const CrmAdminPanel = ({
     window.open(`https://wa.me/?text=${encodeURIComponent(dispatchText)}`, '_blank');
   };
 
-  // CRM Analytics Metrics (Memoized)
-  const crmAnalytics = useMemo(() => computeCrmAnalytics(leads), [leads]);
 
   // Filtered Leads list with Multi-Dimensional Search & Workflow Stages (Memoized)
   const duplicateIds = useMemo(() => duplicatesById(leads), [leads]);
@@ -559,10 +566,9 @@ export const CrmAdminPanel = ({
           leads={leads}
           properties={properties}
           demands={demands}
-          projects={[]}
+          projects={projects}
           activeRole={activeRole}
           currentRoleObj={currentRoleObj}
-          crmAnalytics={crmAnalytics}
           isAr={isAr}
           onSwitchTab={(tab) => {
             if (tab === 'properties') onSwitchToProperties?.();
@@ -576,6 +582,8 @@ export const CrmAdminPanel = ({
             setLeadFilter(filterKey);
             setAdminTab('leads');
           }}
+          onOpenContractStudio={() => setShowContractStudio(true)}
+          onOpenCopywriter={() => setShowAICopywriter(true)}
         />
       )}
 

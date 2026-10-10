@@ -97,6 +97,103 @@ export function leadSourceKey(l = {}) {
   return 'other';
 }
 
+// ── Money, dates and attention flags (dashboard + filters) ───────────────────
+
+const AR_DIGITS = /[٠-٩۰-۹]/g;
+const toLatin = (str) => String(str).replace(AR_DIGITS, (d) => { const c = d.charCodeAt(0); return String(c >= 0x06F0 ? c - 0x06F0 : c - 0x0660); });
+
+/**
+ * Money from whatever the forms stored: 2500000, "2,500,000", "٢٫٥ مليون", "2.5M", "750 ألف",
+ * "EGP 1.2m". A range ("2-3 مليون") counts its lower end. 0 when there is no number.
+ */
+export function parseMoney(value) {
+  if (typeof value === 'number') return Number.isFinite(value) && value > 0 ? value : 0;
+  if (!value) return 0;
+  let t = toLatin(value).toLowerCase().replace(/٬/g, ',').replace(/٫/g, '.');
+  const m = t.match(/(\d[\d,]*(?:\.\d+)?)/);
+  if (!m) return 0;
+  const raw = m[1];
+  // "2,500,000" → thousands separators; "2,5" (comma decimal) → 2.5
+  const num = /^\d{1,3}(,\d{3})+(\.\d+)?$/.test(raw) ? Number(raw.replace(/,/g, '')) : Number(raw.replace(',', '.'));
+  if (!Number.isFinite(num)) return 0;
+  // A range shares the unit written after its upper end: "2-3 مليون"
+  const after = t.slice(m.index + raw.length).replace(/^\s*(?:-|–|to|إلى|الى)\s*\d[\d,.]*/, '').slice(0, 14);
+  if (/^\s*(مليون|ملايين|million|mn|m\b)/.test(after)) return num * 1e6;
+  if (/^\s*(مليار|billion|bn|b\b)/.test(after)) return num * 1e9;
+  if (/^\s*(ألف|الف|آلاف|الاف|thousand|k\b)/.test(after)) return num * 1e3;
+  return num;
+}
+
+/** YYYY-MM-DD of a moment in the browser's own time zone (toISOString() gives the UTC day) */
+export function localDayKey(value = new Date()) {
+  const ms = value instanceof Date ? value.getTime() : toMs(value);
+  if (!ms) return '';
+  const d = new Date(ms);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+const isClosedOut = (l) => l.isArchived || l.status === 'closed' || l.status === 'lost';
+const followUpDay = (l) => (l.nextFollowUpAt ? localDayKey(l.nextFollowUpAt) : '');
+
+/** Follow-up date already passed (open leads only) */
+export const isOverdue = (l, todayKey = localDayKey()) => !isClosedOut(l) && !!followUpDay(l) && followUpDay(l) < todayKey;
+
+/** Follow-up due today, or the legacy free-text followUp mentions today's date */
+export const isDueToday = (l, todayKey = localDayKey()) => !isClosedOut(l)
+  && (followUpDay(l) === todayKey || (typeof l.followUp === 'string' && l.followUp.includes(todayKey)));
+
+export const isUnassigned = (l) => !l.isArchived && l.status !== 'lost' && l.status !== 'closed'
+  && (!l.assignedTo || l.assignedTo === 'Unassigned');
+
+/** Open lead with no activity for `hours` (default 48) */
+export const STALE_HOURS = 48;
+export function isStale(l, now = Date.now(), hours = STALE_HOURS) {
+  if (isClosedOut(l)) return false;
+  const last = toMs(l.lastActivityAt) || toMs(l.updatedAt) || leadCreatedMs(l);
+  return !!last && now - last > hours * 3600 * 1000;
+}
+
+const ACTIVE_STAGES = ['new', 'contacted', 'site_visit', 'negotiating', 'closing'];
+const leadBudget = (l) => parseMoney(l.budget) || parseMoney(l.details?.budget) || parseMoney(l.details?.expectedPrice);
+
+/**
+ * Dashboard numbers. The active pipeline is open deals only (not archived, won or lost).
+ * scopeDesk: when set (a desk agent), every count is for that desk's leads and the shared pool
+ * is reported separately; company-wide money is left out.
+ */
+export function computeDashboardMetrics(allLeads = [], demands = [], { now = Date.now(), scopeDesk = null, commissionRate = 0.025 } = {}) {
+  const todayKey = localDayKey(now);
+  const leads = scopeDesk ? allLeads.filter((l) => l.assignedTo === scopeDesk) : allLeads;
+  const open = leads.filter((l) => !l.isArchived && ACTIVE_STAGES.includes(l.status || 'new'));
+  const pipelineValue = open.reduce((sum, l) => sum + leadBudget(l), 0);
+  const liveDemands = scopeDesk ? [] : demands.filter((d) => !d.isArchived && d.status !== 'archived' && d.status !== 'rejected');
+  const purchasingPower = liveDemands.reduce((sum, d) => sum + parseMoney(d.budget), 0);
+  const won = leads.filter((l) => l.status === 'closed');
+  const lost = leads.filter((l) => l.status === 'lost' && !l.isArchived);
+  const decided = won.length + lost.length;
+
+  return {
+    todayKey,
+    scoped: !!scopeDesk,
+    pipelineValue,
+    purchasingPower,
+    expectedCommission: pipelineValue * commissionRate,
+    openCount: open.length,
+    newCount: open.filter((l) => !l.status || l.status === 'new').length,
+    qualifiedCount: open.filter((l) => ['contacted', 'site_visit', 'negotiating'].includes(l.status)).length,
+    closingCount: open.filter((l) => ['negotiating', 'closing'].includes(l.status)).length,
+    wonCount: won.length,
+    lostCount: lost.length,
+    winRate: decided ? Math.round((won.length / decided) * 100) : null,
+    overdueList: leads.filter((l) => isOverdue(l, todayKey)),
+    dueTodayList: leads.filter((l) => isDueToday(l, todayKey)),
+    unassignedList: allLeads.filter(isUnassigned),
+    staleList: leads.filter((l) => isStale(l, now)),
+    awaitingList: leads.filter((l) => waitingMs(l, now) > 0),
+    pendingDemandsCount: liveDemands.filter((d) => d.status === 'pending').length
+  };
+}
+
 const isOpenNew = (l) => !l.isArchived && (!l.status || l.status === 'new');
 
 /** A new lead nobody has contacted yet: ms it has waited, or 0 when it isn't waiting */
@@ -196,7 +293,8 @@ function inDateRange(l, range, now) {
  * Leads table filter.
  * opts: { myDealsOnly, activeRole, agentName, leadFilter, temperatureFilter, areaFilter, sourceFilter,
  *         dateFilter, searchQuery, today, now, duplicateIds }
- * leadFilter: 'all' | 'archived' | 'lost' | 'new' | 'awaiting' | 'dupes' | 'due' | 'qualified' | a lead type.
+ * leadFilter: 'all' | 'archived' | 'lost' | 'new' | 'awaiting' | 'dupes' | 'due' | 'overdue' | 'unassigned'
+ *   | 'stale' | 'qualified' | a lead type.
  * Archived and lost leads only show under their own filter. today (YYYY-MM-DD) and now (ms)
  * default to the current time; tests pass them in.
  */
@@ -204,9 +302,10 @@ export function filterLeads(leads = [], opts = {}) {
   const {
     myDealsOnly = false, activeRole, agentName, leadFilter = 'all',
     temperatureFilter = 'all', areaFilter = 'all', sourceFilter = 'all', dateFilter = 'all', searchQuery = '',
-    today = new Date().toISOString().slice(0, 10), now = Date.now(), duplicateIds = null
+    today, now = Date.now(), duplicateIds = null
   } = opts;
   const q = searchQuery.trim().toLowerCase();
+  const todayKey = today || localDayKey(now);
   const dupes = leadFilter === 'dupes' ? (duplicateIds || duplicatesById(leads)) : null;
 
   return leads.filter((l) => {
@@ -229,8 +328,14 @@ export function filterLeads(leads = [], opts = {}) {
     } else if (leadFilter === 'dupes') {
       if (!dupes.has(l.id)) return false;
     } else if (leadFilter === 'due') {
-      const hasDue = (l.nextFollowUpAt && l.nextFollowUpAt.slice(0, 10) <= today) || (l.followUp && l.followUp.includes(today));
-      if (!hasDue) return false;
+      // Due today or already late
+      if (!isDueToday(l, todayKey) && !isOverdue(l, todayKey)) return false;
+    } else if (leadFilter === 'overdue') {
+      if (!isOverdue(l, todayKey)) return false;
+    } else if (leadFilter === 'unassigned') {
+      if (!isUnassigned(l)) return false;
+    } else if (leadFilter === 'stale') {
+      if (!isStale(l, now)) return false;
     } else if (leadFilter === 'qualified') {
       if ((l.score || 0) < 80) return false;
     } else if (leadFilter !== 'all' && l.type !== leadFilter) {

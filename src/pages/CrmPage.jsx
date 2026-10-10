@@ -57,7 +57,18 @@ export default function CrmPage({
 }) {
   const { isAuthInitializing, currentUser, userRole } = useAuth();
   const { handleImportProperties, handleImportLeads } = useProperties();
-  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'leads' | 'kanban' | 'properties' | 'demands' | 'projects' | 'financials' | 'matching' | 'analytics' | 'system'
+  const [activeTab, setActiveTab] = useState('dashboard');
+  // "Open this modal" requests from the top bar, command palette and dashboard shortcuts.
+  // The target panel opens it once (useOpenRequest); leaving that tab drops the request.
+  const [openRequest, setOpenRequest] = useState(null);
+  if (openRequest && openRequest.tab !== activeTab) setOpenRequest(null);
+  const requestOpen = (type) => {
+    const ADMIN_PANEL_TABS = ['dashboard', 'leads', 'kanban', 'matching', 'agents', 'financials', 'retargeting', 'analytics'];
+    const tab = { add_lead: 'leads', add_property: 'properties', add_demand: 'demands', add_project: 'projects' }[type]
+      || (ADMIN_PANEL_TABS.includes(activeTab) ? activeTab : 'dashboard');
+    setActiveTab(tab);
+    setOpenRequest({ type, tab, seq: Date.now() });
+  }; // 'dashboard' | 'leads' | 'kanban' | 'properties' | 'demands' | 'projects' | 'financials' | 'matching' | 'analytics' | 'system'
   const [accessCfg, setAccessCfg] = useState(getActiveAccessConfig);
   useEffect(() => subscribeToAccessConfig(setAccessCfg), []);
   const allRoles = getMergedCrmRoles(accessCfg);
@@ -601,6 +612,7 @@ export default function CrmPage({
           setShowGoLiveWizard={setShowGoLiveWizard}
           onToggleMobileSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
           onOpenCommandPalette={() => setShowCommandPalette(true)}
+          onRequestOpen={requestOpen}
         />
 
         {/* Role Simulation Mode Alert Banner */}
@@ -650,6 +662,7 @@ export default function CrmPage({
         <main className="crm-content-area" id="crm-main-content">
           {activeTab === 'properties' ? (
             <PropertyManagerPanel
+              openRequest={openRequest}
               properties={properties}
               leads={leads}
               demands={demands}
@@ -665,6 +678,7 @@ export default function CrmPage({
             />
           ) : activeTab === 'demands' ? (
             <DemandsManagerPanel
+              openRequest={openRequest}
               demands={demands}
               properties={properties}
               onAddDemand={guard(can.manageDemands, onAddDemand)}
@@ -678,6 +692,7 @@ export default function CrmPage({
             />
           ) : activeTab === 'projects' ? (
             <MegaProjectsManagerPanel
+              openRequest={openRequest}
               projects={projects}
               onAddProject={guard(can.editInventory, onAddProject)}
               onUpdateProject={guard(can.editInventory, onUpdateProject)}
@@ -739,6 +754,8 @@ export default function CrmPage({
                     handleCrmLogout={onLogout || (() => setCrmAuthenticated(false))}
                     triggerToast={triggerToast}
                     properties={properties}
+                    projects={projects}
+                    openRequest={openRequest}
                     onConvertToProperty={handleConvertToProperty}
                     onUpdateLead={guard(can.editLeads, onUpdateLead)}
                     onDeleteLead={guard(activeRole === 'super_admin', onDeleteLead)}
@@ -771,6 +788,8 @@ export default function CrmPage({
               handleCrmLogout={onLogout || (() => setCrmAuthenticated(false))}
               triggerToast={triggerToast}
               properties={properties}
+              projects={projects}
+              openRequest={openRequest}
               onConvertToProperty={handleConvertToProperty}
               onUpdateLead={guard(can.editLeads, onUpdateLead)}
               onDeleteLead={guard(activeRole === 'super_admin', onDeleteLead)}
@@ -839,14 +858,12 @@ export default function CrmPage({
           setShowCommandPalette(false);
           if (actionType === 'switch_tab') {
             setActiveTab(payload);
-          } else if (actionType === 'add_lead') {
-            setActiveTab('leads');
-          } else if (actionType === 'add_property') {
-            setActiveTab('properties');
-          } else if (actionType === 'add_demand') {
-            setActiveTab('demands');
+          } else if (['add_lead', 'add_property', 'add_demand'].includes(actionType)) {
+            requestOpen(actionType);
           } else if (actionType === 'open_contract_studio') {
-            setActiveTab('dashboard');
+            requestOpen('contract_studio');
+          } else if (actionType === 'open_ai_copywriter') {
+            requestOpen('ai_copywriter');
           }
         }}
       />

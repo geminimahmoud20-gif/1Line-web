@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import useOpenRequest from '../../hooks/useOpenRequest';
 import { Building, Plus, Trash2, Upload, Eye, EyeOff, Archive } from 'lucide-react';
 import { getAreas } from '../../utils/areasData';
 import HomepageSlotsBoard, { FeaturedSlotModal } from './HomepageSlotsBoard';
@@ -76,7 +77,8 @@ export default function PropertyManagerPanel({
   lang = 'ar',
   triggerToast,
   externalNewPropertyData = null,
-  onClearExternalData = () => {}
+  onClearExternalData = () => {},
+  openRequest = null
 }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingPropertyId, setEditingPropertyId] = useState(null);
@@ -125,6 +127,7 @@ export default function PropertyManagerPanel({
     setForm(DEFAULT_FORM_STATE);
     setShowAddModal(true);
   };
+  useOpenRequest(openRequest, ['add_property'], handleOpenAdd);
 
   const handleOpenEdit = (prop) => {
     setEditingPropertyId(prop.id);

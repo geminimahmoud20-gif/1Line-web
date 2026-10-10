@@ -9,7 +9,7 @@ import { getAreas } from '../../utils/areasData';
 import { useState, useMemo, useEffect } from 'react';
 import LostReasonModal from './LostReasonModal';
 import MergeLeadsModal from './MergeLeadsModal';
-import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, RESPONSE_SLA_MS } from '../../utils/crmLeadViews';
+import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, RESPONSE_SLA_MS, isOverdue, isUnassigned, isStale, localDayKey } from '../../utils/crmLeadViews';
 import { useProperties } from '../../context/PropertiesContext';
 
 export default function LeadsTab({
@@ -78,6 +78,9 @@ export default function LeadsTab({
       awaiting: open.filter((l) => waitingMs(l, now) > 0).length,
       late: open.filter((l) => waitingMs(l, now) > RESPONSE_SLA_MS).length,
       dupes: open.filter((l) => duplicateIds.has(l.id)).length,
+      overdue: open.filter((l) => isOverdue(l, localDayKey(now))).length,
+      unassigned: open.filter(isUnassigned).length,
+      stale: open.filter((l) => isStale(l, now)).length,
       lost: leads.filter((l) => !l.isArchived && l.status === 'lost').length,
       archived: leads.filter((l) => l.isArchived).length
     };
@@ -226,6 +229,21 @@ export default function LeadsTab({
           <button className={`table-filter-btn ${leadFilter === 'due' ? 'active' : ''}`} onClick={() => setLeadFilter('due')}>
             ⏰ {isAr ? 'متابعة اليوم' : 'Due Today'}
           </button>
+          {counts.overdue > 0 && (
+            <button className={`table-filter-btn ${leadFilter === 'overdue' ? 'active' : ''}`} onClick={() => setLeadFilter('overdue')} style={{ color: leadFilter !== 'overdue' ? 'var(--crm-danger)' : undefined }}>
+              ⚠ {isAr ? 'متابعات متأخرة' : 'Overdue'} ({counts.overdue})
+            </button>
+          )}
+          {counts.unassigned > 0 && (
+            <button className={`table-filter-btn ${leadFilter === 'unassigned' ? 'active' : ''}`} onClick={() => setLeadFilter('unassigned')}>
+              👤 {isAr ? 'بدون مسؤول' : 'Unassigned'} ({counts.unassigned})
+            </button>
+          )}
+          {counts.stale > 0 && (
+            <button className={`table-filter-btn ${leadFilter === 'stale' ? 'active' : ''}`} onClick={() => setLeadFilter('stale')} title={isAr ? 'مفيش أي نشاط من أكتر من 48 ساعة' : 'No activity for 48h+'}>
+              💤 {isAr ? 'راكد' : 'Stale'} ({counts.stale})
+            </button>
+          )}
           <button className={`table-filter-btn ${leadFilter === 'qualified' ? 'active' : ''}`} onClick={() => setLeadFilter('qualified')}>
             🎯 {isAr ? 'مؤهلون للشراء' : 'Qualified'}
           </button>

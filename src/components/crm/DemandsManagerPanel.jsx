@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import useOpenRequest from '../../hooks/useOpenRequest';
 import { Zap, Plus, Check, Trash2, Edit3, Clock, MapPin, DollarSign, Phone, MessageSquare, Search, CheckCircle, EyeOff, Sparkles, Download } from 'lucide-react';
 import { exportToCsv } from '../../utils/exportCsv';
 import { canViewLeadPhone, maskPhoneNumber, canEditProperties } from '../../utils/rbacRules';
@@ -19,7 +20,8 @@ export default function DemandsManagerPanel({
   onUnpublishDemand,
   lang = 'ar',
   userRole = 'super_admin',
-  triggerToast
+  triggerToast,
+  openRequest = null
 }) {
   const isAr = lang === 'ar';
   const canViewPhone = canViewLeadPhone(userRole);
@@ -158,6 +160,8 @@ export default function DemandsManagerPanel({
     setEditingDemand(null);
     setShowAddModal(true);
   };
+
+  useOpenRequest(openRequest, ['add_demand'], handleOpenAdd);
 
   const handleOpenEdit = (demand) => {
     setEditingDemand(demand);

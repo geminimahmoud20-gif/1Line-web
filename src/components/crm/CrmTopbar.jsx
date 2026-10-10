@@ -23,6 +23,7 @@ export default function CrmTopbar({
   onLogout,
   setShowGoLiveWizard,
   onToggleMobileSidebar,
+  onRequestOpen,
   onOpenCommandPalette
 }) {
   const [showQuickActionMenu, setShowQuickActionMenu] = useState(false);
@@ -350,7 +351,7 @@ export default function CrmTopbar({
             >
               <button
                 type="button"
-                onClick={() => { setActiveTab('leads'); setShowQuickActionMenu(false); }}
+                onClick={() => { if (onRequestOpen) onRequestOpen('add_lead'); else setActiveTab('leads'); setShowQuickActionMenu(false); }}
                 style={{
                   width: '100%',
                   padding: '9px 12px',
@@ -372,7 +373,7 @@ export default function CrmTopbar({
 
               <button
                 type="button"
-                onClick={() => { setActiveTab('properties'); setShowQuickActionMenu(false); }}
+                onClick={() => { if (onRequestOpen) onRequestOpen('add_property'); else setActiveTab('properties'); setShowQuickActionMenu(false); }}
                 style={{
                   width: '100%',
                   padding: '9px 12px',
@@ -394,7 +395,7 @@ export default function CrmTopbar({
 
               <button
                 type="button"
-                onClick={() => { setActiveTab('demands'); setShowQuickActionMenu(false); }}
+                onClick={() => { if (onRequestOpen) onRequestOpen('add_demand'); else setActiveTab('demands'); setShowQuickActionMenu(false); }}
                 style={{
                   width: '100%',
                   padding: '9px 12px',
@@ -416,7 +417,7 @@ export default function CrmTopbar({
 
               <button
                 type="button"
-                onClick={() => { setActiveTab('projects'); setShowQuickActionMenu(false); }}
+                onClick={() => { if (onRequestOpen) onRequestOpen('add_project'); else setActiveTab('projects'); setShowQuickActionMenu(false); }}
                 style={{
                   width: '100%',
                   padding: '9px 12px',

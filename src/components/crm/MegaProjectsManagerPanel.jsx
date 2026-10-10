@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import useOpenRequest from '../../hooks/useOpenRequest';
 import { Building2, Plus, Edit3, Trash2, MapPin, Save, X, Search } from 'lucide-react';
 
 /**
@@ -12,7 +13,8 @@ export default function MegaProjectsManagerPanel({
   onUpdateProject,
   onDeleteProject,
   lang = 'ar',
-  triggerToast = () => {}
+  triggerToast = () => {},
+  openRequest = null
 }) {
   const isAr = lang === 'ar';
   const [searchQuery, setSearchQuery] = useState('');
@@ -68,6 +70,8 @@ export default function MegaProjectsManagerPanel({
     setFormData(initialForm);
     setIsModalOpen(true);
   };
+
+  useOpenRequest(openRequest, ['add_project'], handleOpenAddModal);
 
   const handleOpenEditModal = (proj) => {
     setEditingProjectId(proj.id);
