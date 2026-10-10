@@ -767,11 +767,16 @@ export const CrmAdminPanel = ({
 
       {/* 📊 TAB 8: VISITOR INTELLIGENCE & CLICKSTREAM */}
       {(adminTab === 'visitor_intelligence' || adminTab === 'analytics') && (
-        <VisitorIntelligencePanel
-          properties={properties}
-          lang={lang}
-          triggerToast={triggerToast}
-        />
+        (isSuperRole || perms.includes('ld.manage')) ? (
+          <VisitorIntelligencePanel
+            properties={properties}
+            leads={leads}
+            onOpenLead={(lead) => setQuickDrawerLead(lead)}
+            lang={lang}
+          />
+        ) : (
+          <div className="crm-table-container">{isAr ? 'تحليلات الزوار متاحة للمدير العام ومديري المبيعات.' : 'Visitor analytics are available to admins and sales managers.'}</div>
+        )
       )}
 
       {/* 🏛️ TAB 9: CORPORATE & FOUNDER CMS */}

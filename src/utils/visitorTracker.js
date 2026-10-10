@@ -59,10 +59,17 @@ export function getOrCreateSession() {
 // The older event names used around the site → the server analytics vocabulary (api/_track-core.js).
 // Events not listed (CRM actions, lead_identified with a name/phone) are never sent.
 const toursSeen = new Set();
+const recentViews = new Map();
 function forwardToServer(eventType, m = {}) {
   switch (eventType) {
     case 'page_view': return track('page_view', { path: m.path || window.location.pathname });
-    case 'property_view': return track('property_view', { propertyId: m.propertyId, area: m.area, type: m.type, price: m.price });
+    case 'property_view': {
+      // The listing page can re-run its view effect when the record refreshes from the cloud
+      const last = recentViews.get(m.propertyId) || 0;
+      if (Date.now() - last < 60_000) return undefined;
+      recentViews.set(m.propertyId, Date.now());
+      return track('property_view', { propertyId: m.propertyId, area: m.area, type: m.type, price: m.price });
+    }
     case 'property_gallery_opened': return track('gallery_open', {});
     case 'virtual_tour_room_switched': {
       const k = window.location.pathname;

@@ -671,7 +671,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
               <button
                 type="button"
                 onClick={() => handleDeleteArea(deleteConfirmId)}
-                disabled={isSaving || (getAreaPropertiesCount(deleteConfirmId) > 0 && !moveToId)}
+                disabled={isSaving || !moveToId}
                 style={{
                   display: 'flex',
                   alignItems: 'center',

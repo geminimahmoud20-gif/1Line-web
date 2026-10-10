@@ -118,9 +118,14 @@ export default function PropertiesPage({
   const searchSignature = JSON.stringify([filters.query, filters.type, filters.area, filters.minPrice, filters.maxPrice, filters.bedrooms, filters.paymentPlan]);
   useEffect(() => {
     const [query, type, area, minPrice, maxPrice, bedrooms, payment] = JSON.parse(searchSignature);
-    const chosen = query || type !== 'all' || area !== 'all' || minPrice || maxPrice || bedrooms !== 'all' || payment !== 'all';
+    const chosen = query || type !== 'all' || area !== 'all' || minPrice > 0 || (maxPrice && maxPrice < MAX_PRICE_CAP) || bedrooms !== 'all' || payment !== 'all';
     if (!chosen) return undefined;
-    const t = setTimeout(() => track('search', { query, type, area, minPrice, maxPrice, bedrooms, payment }), 2000);
+    // The slider's own bounds (0 … cap) mean "no budget chosen"
+    const budget = {
+      minPrice: minPrice > 0 ? minPrice : undefined,
+      maxPrice: maxPrice && maxPrice < MAX_PRICE_CAP ? maxPrice : undefined,
+    };
+    const t = setTimeout(() => track('search', { query, type, area, ...budget, bedrooms, payment }), 2000);
     return () => clearTimeout(t);
   }, [searchSignature]);
 

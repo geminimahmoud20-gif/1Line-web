@@ -8,6 +8,7 @@ import CustomerOverviewTab from './lead-profile/CustomerOverviewTab';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { parseMoney } from '../../utils/crmLeadViews';
 import { normalizeAreaKey } from '../../utils/areasData';
+import VisitorJourney from './analytics/VisitorJourney';
 
 export default function CustomerProfileModal({
   isOpen,
@@ -458,7 +459,11 @@ export default function CustomerProfileModal({
           )}
 
           {/* TAB: DIGITAL JOURNEY & VISITOR CLICKSTREAM */}
-          {profileTab === 'journey' && (
+          {/* Server-side analytics profile (visitor accepted analytics when submitting) */}
+          {profileTab === 'journey' && lead.analyticsVisitorId && (
+            <VisitorJourney visitorId={lead.analyticsVisitorId} properties={properties} isAr={isAr} />
+          )}
+          {profileTab === 'journey' && !lead.analyticsVisitorId && (
             <div>
               <div style={{
                 background: isLiveTracked ? 'var(--crm-positive-soft)' : 'var(--crm-info-soft)',
