@@ -6,6 +6,9 @@ import {
   Check, 
   Zap
 } from 'lucide-react';
+import { parseMoney } from '../../utils/crmLeadViews';
+
+const amountOf = (l) => parseMoney(l.budget) || parseMoney(l.details?.budget) || parseMoney(l.details?.expectedPrice);
 
 export default function RetargetingHub({
   leads = [],
@@ -39,11 +42,11 @@ export default function RetargetingHub({
 
     return {
       vip_cash: leads.filter(l => {
-        const budget = parseInt(l.details?.budget) || parseInt(l.details?.expectedPrice) || 0;
+        const budget = amountOf(l);
         return (budget >= 3500000 || l.score >= 90) && l.status !== 'closed';
       }),
       installment: leads.filter(l => {
-        const budget = parseInt(l.details?.budget) || parseInt(l.details?.expectedPrice) || 0;
+        const budget = amountOf(l);
         return (budget > 0 && budget < 3500000) && l.status !== 'closed';
       }),
       investors: leads.filter(l => {
@@ -67,8 +70,8 @@ export default function RetargetingHub({
 
   // Total purchasing power of current segment
   const segmentTotalVolume = currentList.reduce((acc, curr) => {
-    const budget = parseInt(curr.details?.budget) || parseInt(curr.details?.expectedPrice) || 2500000;
-    return acc + budget;
+    // Recorded amounts only (an unknown budget adds nothing, it is not assumed to be 2.5M)
+    return acc + amountOf(curr);
   }, 0);
 
   // Generate Personalized WhatsApp Copy per Segment

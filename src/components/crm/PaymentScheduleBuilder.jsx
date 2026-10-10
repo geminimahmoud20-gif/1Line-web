@@ -12,7 +12,9 @@ import {
 export default function PaymentScheduleBuilder({
   properties = [],
   leads = [],
-  lang = 'ar'
+  lang = 'ar',
+  // Receipts acknowledge money taken, so only finance (perm `fin`) and the super admin issue them
+  canIssueReceipts = false
 }) {
   const isAr = lang === 'ar';
 
@@ -30,7 +32,7 @@ export default function PaymentScheduleBuilder({
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [receiptDepositAmount, setReceiptDepositAmount] = useState(50000);
   const [paymentMethod, setPaymentMethod] = useState('cash'); // 'cash' | 'bank_transfer' | 'cheque' | 'vodafone_cash'
-  const [receiptSerial] = useState(() => `ONE-REC-2026-${Math.floor(1000 + Math.random() * 9000)}`);
+  const [receiptSerial] = useState(() => `ONE-REC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
 
   const selectedProp = properties.find(p => p.id === selectedPropertyId) || properties[0] || {};
   const selectedLead = leads.find(l => l.id === selectedLeadId) || leads[0] || {};
@@ -111,6 +113,7 @@ export default function PaymentScheduleBuilder({
         </div>
 
         {/* Generate Official Receipt Button */}
+        {canIssueReceipts && (
         <button
           type="button"
           className="btn btn-primary"
@@ -120,6 +123,7 @@ export default function PaymentScheduleBuilder({
           <FileText size={16} />
           <span>{isAr ? 'إصدار إيصال حجز رسمي' : 'Issue Official E-Receipt'}</span>
         </button>
+        )}
       </div>
 
       {/* Plan Customizer Form */}
@@ -319,7 +323,7 @@ export default function PaymentScheduleBuilder({
       </div>
 
       {/* 📜 E-RESERVATION OFFICIAL RECEIPT MODAL */}
-      {showReceiptModal && (
+      {canIssueReceipts && showReceiptModal && (
         <div className="track-modal-backdrop" onClick={() => setShowReceiptModal(false)}>
           <div className="property-form-modal-card animate-fadeIn" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '680px' }}>
             <div className="modal-form-header">

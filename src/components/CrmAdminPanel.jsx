@@ -5,7 +5,7 @@ import { exportToCsv } from '../utils/exportCsv';
 import { exportRows } from '../utils/transfer/exportTable';
 import { leadToRow } from '../utils/transfer/leadSchema';
 
-import { canExportCsv, canDeleteLead, canEditLeadsRole, assignableDesks, scopeLeadsForAccess } from '../utils/rbacRules';
+import { canExportCsv, canDeleteLead, canManagePayments, canEditLeadsRole, assignableDesks, scopeLeadsForAccess } from '../utils/rbacRules';
 import { permsOfRole } from '../utils/accessModel';
 
 // Enterprise PropTech Modules
@@ -629,7 +629,7 @@ export const CrmAdminPanel = ({
           leads={leads}
           properties={properties}
           onUpdateLead={onUpdateLead}
-          onDeleteLead={onDeleteLead}
+          onDeleteLead={canDeleteLead(activeRole) ? onDeleteLead : undefined}
           onOpenEditLead={handleOpenEditLead}
           onOpenLead={(lead) => setQuickDrawerLead(lead)}
           lang={lang}
@@ -723,6 +723,7 @@ export const CrmAdminPanel = ({
           properties={properties}
           leads={leads}
           lang={lang}
+          canIssueReceipts={isSuperRole || canManagePayments(activeRole, perms)}
           triggerToast={triggerToast}
         />
       )}

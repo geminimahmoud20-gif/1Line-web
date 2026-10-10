@@ -155,7 +155,11 @@ export default function PropertyCompareDrawer({
       msg += `• المقدم: ${p.downPayment ? `${p.downPayment.toLocaleString('en-US')} ج.م` : 'كاش'}\n`;
       msg += `• القسط: ${p.monthlyInstallment ? `${p.monthlyInstallment.toLocaleString('en-US')} ج.م/شهرياً (${p.installmentYears || 0} سنوات)` : 'كاش فقط'}\n`;
       msg += `• الموقع: ${loc}\n`;
-      msg += `• الموقف القانوني: عقد مسجل وشهر عقاري معتمد 100%\n`;
+      // Only what the listing's legal review actually recorded; never a blanket guarantee
+      const legalLine = p.legalStatus
+        ? [p.legalStatus.ownershipType_ar, p.legalStatus.licenseStatus_ar].filter(Boolean).join(' • ')
+        : '';
+      msg += `• الموقف القانوني: ${legalLine || 'نراجع معك المستندات قبل التعاقد'}\n`;
       msg += `• الرابط: ${window.location.origin}/properties/${p.id}\n\n`;
     });
 

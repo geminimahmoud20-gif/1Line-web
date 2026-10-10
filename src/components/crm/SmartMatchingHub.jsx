@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Sparkles, Send, CheckCircle2, Car, Zap } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
 import { getAreas, normalizeAreaKey } from '../../utils/areasData';
+import { parseMoney } from '../../utils/crmLeadViews';
 
 export default function SmartMatchingHub({
   leads = [],
@@ -51,7 +52,8 @@ export default function SmartMatchingHub({
       const rawLeadArea = lead.area || details.area || lead.location || '';
       const leadArea = normalizeAreaKey(rawLeadArea);
       const leadType = (lead.propertyType || details.propertyType || '').toLowerCase();
-      const leadBudget = parseInt(lead.budget) || parseInt(details.budget) || parseInt(details.investmentAmount) || 2500000;
+      // The client's own amount only; no budget means the budget doesn't score either way
+      const leadBudget = parseMoney(lead.budget) || parseMoney(details.budget) || parseMoney(details.investmentAmount);
 
       liveProps.forEach(prop => {
         let score = 0;
@@ -74,8 +76,10 @@ export default function SmartMatchingHub({
           score += 15;
         }
 
-        // 3. Budget match (35 pts)
-        if (prop.price) {
+        // 3. Budget match (35 pts); an unknown budget gets the same partial credit as an unknown area/type
+        if (!leadBudget) {
+          score += 15;
+        } else if (prop.price) {
           const diffRatio = Math.abs(prop.price - leadBudget) / leadBudget;
           if (diffRatio <= 0.1) {
             score += 35;
@@ -96,7 +100,7 @@ export default function SmartMatchingHub({
             property: prop,
             score,
             reasons,
-            budgetDifference: prop.price - leadBudget
+            budgetDifference: leadBudget ? prop.price - leadBudget : null
           });
         }
       });
@@ -296,7 +300,7 @@ export default function SmartMatchingHub({
                         📱 {lead.whatsapp || lead.phone}
                       </span>
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', display: 'block', marginTop: '4px', fontWeight: '700' }}>
-                        💰 ميزانية: {(lead.details?.budget || lead.budget) ? parseInt(lead.details?.budget || lead.budget).toLocaleString('en-US') + ' ج.م' : '2,500,000 ج.م'}
+                        💰 ميزانية: {parseMoney(lead.details?.budget) || parseMoney(lead.budget) ? (parseMoney(lead.details?.budget) || parseMoney(lead.budget)).toLocaleString('en-US') + ' ج.م' : 'غير محددة'}
                       </span>
                     </div>
 

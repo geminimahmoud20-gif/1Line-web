@@ -87,15 +87,14 @@ export default function VisitorIntelligencePanel({
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <h2 style={{ margin: 0, fontSize: 'var(--crm-text-lg)' }}>
-                {isAr ? 'محرك تتبع سلوك الزوار وتحليلات الاهتمام اللحظية' : 'Visitor Intelligence & Real-Time Tracking'}
+                {isAr ? 'نشاط التصفح على هذا الجهاز' : 'Browsing activity on this device'}
               </h2>
-              <span className="badge" style={{ background: 'rgba(16, 185, 129, 0.15)', color: 'var(--crm-positive)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: 'var(--crm-text-xs)' }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--crm-positive-solid)', display: 'inline-block' }}></span>
-                {isAr ? 'تتبع مباشر' : 'Live'}
+              <span className="badge" style={{ background: 'var(--crm-warn-soft)', color: 'var(--crm-warn)', fontSize: 'var(--crm-text-xs)' }}>
+                {isAr ? 'هذا الجهاز فقط' : 'This device only'}
               </span>
             </div>
             <p style={{ margin: '3px 0 0 0', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
-              {isAr ? 'تتبع مسار كل زائر، وقت التصفح المستهلك، ونسب المشاهدات لكل وحدة عقارية' : 'Track dwell time, clickstream, and top viewed properties.'}
+              {isAr ? 'الأرقام دي محفوظة في متصفح الجهاز ده بس، مش زوار الموقع كلهم. لإحصائيات الزوار الفعلية استخدم أداة التحليلات المربوطة بالموقع.' : 'Stored in this browser only, not all site visitors. Use the site analytics tool for real visitor stats.'}
             </p>
           </div>
         </div>
