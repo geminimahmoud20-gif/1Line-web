@@ -329,14 +329,58 @@ function AppContent() {
 
   const estimatedValue = 3200000;
 
+  const PROPERTY_TYPE_NAMES_AR = {
+    apartment: 'شقة سكنية',
+    retail: 'محل تجاري',
+    villa: 'منزل مستقل / فيلا',
+    office: 'مكتب إداري / عيادة',
+    land: 'قطعة أرض',
+    building: 'عقار كامل'
+  };
+
+  const AREA_NAMES_AR = {
+    east: 'شرق سوهاج',
+    west: 'غرب سوهاج',
+    new_sohag: 'سوهاج الجديدة',
+    university: 'حي الجامعة',
+    thawra: 'شارع الثورة',
+    thakafa: 'الثقافة والمخبز الآلي',
+    center: 'وسط البلد',
+    kawthar: 'حي الكوثر',
+    corniche: 'طريق الكورنيش',
+    cairo_new_cairo: 'القاهرة الجديدة والتجمع',
+    cairo_zayed: 'الشيخ زايد',
+    cairo_october: 'السادس من أكتوبر',
+    cairo_capital: 'العاصمة الإدارية',
+    cairo_other: 'القاهرة الكبرى'
+  };
+
   const submitSellerJourney = async (overrideData) => {
     const data = overrideData || sellerAnswers;
     const isHouse = data.propertyType === 'villa';
-    const floorDesc = isHouse 
-      ? ` | المبنى: ${data.totalFloors || data.floor || 'طوابق متعددة'}`
-      : (data.floor ? ` | الدور: ${data.floor}` : '');
+    const isRetail = data.propertyType === 'retail';
+    const isLand = data.propertyType === 'land';
+
+    let floorDesc = '';
+    if (isRetail) {
+      floorDesc = data.floor ? ` | موقع المحل: ${data.floor}` : '';
+    } else if (isLand) {
+      floorDesc = data.floor ? ` | تصنيف الأرض: ${data.floor}` : '';
+    } else if (isHouse) {
+      floorDesc = ` | المبنى: ${data.totalFloors || data.floor || 'طوابق متعددة'}`;
+    } else if (data.floor) {
+      floorDesc = ` | الدور: ${data.floor}`;
+    }
+
     const finishingDesc = data.finishingLabelAr ? ` | التشطيب: ${data.finishingLabelAr}` : '';
     const legalSummary = data.legalSummaryAr ? ` | المستندات: ${data.legalSummaryAr}` : '';
+    const priceDesc = data.askingPrice 
+      ? ` | السعر المطلوب: ${Number(data.askingPrice).toLocaleString('en-US')} ج.م` 
+      : (data.estimatedAvg ? ` | التقدير الآلي: ${Number(data.estimatedAvg).toLocaleString('en-US')} ج.م` : '');
+    const photosDesc = data.images && data.images.length > 0 ? ` | مرفق ${data.images.length} صور` : '';
+    const propLabel = PROPERTY_TYPE_NAMES_AR[data.propertyType] || data.propertyType || 'عقار';
+    const areaLabel = AREA_NAMES_AR[data.area] || data.area || 'سوهاج';
+
     return handleAddNewLead({
       name: data.name,
       phone: data.phone,
@@ -345,7 +389,7 @@ function AppContent() {
       area: data.area || 'new_sohag',
       type: 'seller',
       landingPage: '/sell',
-      notes: `عرض بيع ${data.propertyType} في ${data.area} بمساحة ${data.size || ''}م${floorDesc}${finishingDesc}${legalSummary}`,
+      notes: `عرض بيع ${propLabel} في ${areaLabel} بمساحة ${data.size || ''}م²${priceDesc}${floorDesc}${finishingDesc}${legalSummary}${photosDesc}`,
       details: data
     });
   };

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Building, Home, Store, Briefcase, MapPin, Sparkles, ShieldCheck, CheckCircle2, ArrowRight, ArrowLeft, MessageCircle } from 'lucide-react';
+import { Building, Home, Store, Briefcase, MapPin, Sparkles, ShieldCheck, CheckCircle2, ArrowRight, ArrowLeft, MessageCircle, Camera, Upload, AlertCircle } from 'lucide-react';
 import PhoneInputField from './PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { getAreas } from '../utils/areasData';
@@ -111,6 +111,64 @@ const REAL_ESTATE_FINISHING_TYPES = [
   }
 ];
 
+// Granular Floor & Category Mapping Dictionaries
+export const RETAIL_FLOOR_LABELS = {
+  ground: { ar: 'أرضي واجهة شارع مباشرة', en: 'Ground Floor Street Front' },
+  mezzanine: { ar: 'ميزانين تجاري مرخص', en: 'Licensed Mezzanine' },
+  mall_ground: { ar: 'أرضي داخل مول تجاري', en: 'Mall Ground Floor' },
+  mall_upper: { ar: 'دور متكرر داخل مول', en: 'Upper Floor inside Mall' },
+  basement: { ar: 'بدروم تجاري مرخص', en: 'Licensed Commercial Basement' },
+};
+
+export const LAND_STREET_LABELS = {
+  wide_20: { ar: 'شارع رئيسي 20م فأكثر', en: 'Main Street 20m+' },
+  corner: { ar: 'ناصية مميزة على شارعين', en: 'Prime Corner (2 Streets)' },
+  mid_16: { ar: 'شارع 16 متر', en: '16-Meter Street' },
+  internal_12: { ar: 'شارع داخلي 10 - 12 متر', en: 'Internal 10-12m Street' },
+};
+
+export const OFFICE_TYPE_LABELS = {
+  administrative: { ar: 'مقر إداري مرخص', en: 'Licensed Office' },
+  clinic: { ar: 'عيادة طبية مرخصة', en: 'Licensed Clinic' },
+  commercial_hub: { ar: 'مكتب داخل مجمع أعمال / مول', en: 'Office inside Commercial Hub' },
+};
+
+// Grammatically sound Arabic counter for verified legal documents
+export const formatArabicDocCount = (count) => {
+  if (!count || count <= 0) return 'لا توجد مستندات مسجلة';
+  if (count === 1) return 'مستند رسمي واحد';
+  if (count === 2) return 'مستندان رسميان';
+  if (count >= 3 && count <= 10) return `${count} مستندات رسمية`;
+  return `${count} مستنداً رسمياً`;
+};
+
+// Robust phone sanitizer that handles Arabic digits, copy-pasted + / 00, and prevents double country codes
+export const sanitizePhoneNumber = (rawPhone, countryCode = '+20') => {
+  if (!rawPhone) return { localPart: '', fullNumber: '' };
+  // Convert Arabic-Indic digits to Latin
+  const latinDigits = String(rawPhone)
+    .replace(/[٠-٩]/g, d => String(d.charCodeAt(0) - 0x0660))
+    .replace(/[۰-۹]/g, d => String(d.charCodeAt(0) - 0x06F0));
+  
+  let clean = latinDigits.trim().replace(/[\s\-\(\)]/g, '');
+  if (clean.startsWith('+')) {
+    clean = clean.substring(1);
+  } else if (clean.startsWith('00')) {
+    clean = clean.substring(2);
+  }
+
+  const countryDigits = String(countryCode || '').replace(/\D/g, '');
+  if (countryDigits && clean.startsWith(countryDigits)) {
+    clean = clean.substring(countryDigits.length);
+  }
+
+  const localPart = clean;
+  const normalizedDigits = clean.startsWith('0') ? clean.substring(1) : clean;
+  const formattedCountry = countryCode.startsWith('+') ? countryCode : `+${countryCode}`;
+  const fullNumber = `${formattedCountry}${normalizedDigits}`;
+  return { localPart, fullNumber };
+};
+
 export const SellWizard = ({ 
   lang = 'ar', 
   sellerAnswers = {}, 
@@ -127,6 +185,51 @@ export const SellWizard = ({
   const [districts, setDistricts] = useState(() => getAreas().filter(a => a.id !== 'all'));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedRef, setSubmittedRef] = useState(null);
+
+  // Direct seller photo upload state & handlers
+  const [uploadedPhotos, setUploadedPhotos] = useState(() => sellerAnswers.images || []);
+  const [photoUploadError, setPhotoUploadError] = useState('');
+
+  const handlePhotoFiles = (files) => {
+    if (!files || files.length === 0) return;
+    setPhotoUploadError('');
+    const remainingSlots = 6 - uploadedPhotos.length;
+    if (remainingSlots <= 0) {
+      setPhotoUploadError(isAr ? 'الحد الأقصى للصور هو 6 صور' : 'Maximum 6 photos allowed');
+      return;
+    }
+    const toProcess = Array.from(files).slice(0, remainingSlots);
+    const newPhotos = [];
+    let processed = 0;
+
+    toProcess.forEach((file) => {
+      if (file.size > 8 * 1024 * 1024) {
+        setPhotoUploadError(isAr ? 'حجم إحدى الصور يتجاوز 8 ميجابايت' : 'An image exceeds 8MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        newPhotos.push(e.target.result);
+        processed++;
+        if (processed === toProcess.length) {
+          setUploadedPhotos((prev) => {
+            const updated = [...prev, ...newPhotos];
+            setSellerAnswers((sa) => ({ ...sa, images: updated }));
+            return updated;
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleRemovePhoto = (index) => {
+    setUploadedPhotos((prev) => {
+      const updated = prev.filter((_, i) => i !== index);
+      setSellerAnswers((sa) => ({ ...sa, images: updated }));
+      return updated;
+    });
+  };
 
   const isAr = lang === 'ar';
 
@@ -161,9 +264,20 @@ export const SellWizard = ({
 
   const handleToggleLegalDoc = (docId) => {
     const isSelected = selectedLegalDocs.includes(docId);
-    const updated = isSelected
-      ? selectedLegalDocs.filter(id => id !== docId)
-      : [...selectedLegalDocs, docId];
+    let updated;
+    if (isSelected) {
+      updated = selectedLegalDocs.filter(id => id !== docId);
+    } else {
+      // Smart legal logic: if selecting a conclusive registered title deed / cadastral registry,
+      // eliminate contradictory preliminary contract / mere signature validity to preserve legal consistency.
+      if (docId === 'registered_deed' || docId === 'cadastral_registry') {
+        updated = [...selectedLegalDocs.filter(id => id !== 'preliminary_contract' && id !== 'signature_validity'), docId];
+      } else if (docId === 'preliminary_contract' || docId === 'signature_validity') {
+        updated = [...selectedLegalDocs.filter(id => id !== 'registered_deed' && id !== 'cadastral_registry'), docId];
+      } else {
+        updated = [...selectedLegalDocs, docId];
+      }
+    }
 
     setSellerAnswers({
       ...sellerAnswers,
@@ -227,25 +341,27 @@ export const SellWizard = ({
 
   const validateAndSubmit = async (e) => {
     e.preventDefault();
+    setPhoneError('');
+    setWhatsappError('');
 
-    const cleanPhone = (sellerAnswers.phone || '').trim().replace(/[\s\-()]/g, '');
-    const cleanWhatsapp = (sellerAnswers.whatsapp || '').trim().replace(/[\s\-()]/g, '');
+    const { localPart: localPhone, fullNumber: fullPhone } = sanitizePhoneNumber(sellerAnswers.phone || '', sellerCountry);
+    const { localPart: localWhatsapp, fullNumber: fullWhatsapp } = sanitizePhoneNumber(sellerAnswers.whatsapp || '', whatsappCountry);
 
     if (!sellerAnswers.name || !sellerAnswers.name.trim()) {
       return;
     }
 
-    if (!cleanWhatsapp) {
+    if (!localWhatsapp) {
       setWhatsappError(isAr ? 'رقم الواتساب إلزامي لإرسال تقرير التقييم والمتابعة' : 'WhatsApp number is required');
       return;
     }
 
     // Check phone format
     const phoneCountryObj = SUPPORTED_COUNTRIES.find(c => c.code === sellerCountry);
-    const isPhoneValid = phoneCountryObj ? phoneCountryObj.regex.test(cleanPhone) : true;
+    const isPhoneValid = phoneCountryObj ? phoneCountryObj.regex.test(localPhone) : true;
     
     const whatsappCountryObj = SUPPORTED_COUNTRIES.find(c => c.code === whatsappCountry);
-    const isWhatsappValid = whatsappCountryObj ? whatsappCountryObj.regex.test(cleanWhatsapp) : true;
+    const isWhatsappValid = whatsappCountryObj ? whatsappCountryObj.regex.test(localWhatsapp) : true;
 
     if (!isPhoneValid) {
       setPhoneError(isAr ? 'رقم الهاتف غير متوافق مع صيغة الدولة المحددة' : 'Phone number does not match country format');
@@ -257,9 +373,6 @@ export const SellWizard = ({
       return;
     }
 
-    const normalizedPhone = cleanPhone.startsWith('0') ? cleanPhone.substring(1) : cleanPhone;
-    const normalizedWhatsapp = cleanWhatsapp.startsWith('0') ? cleanWhatsapp.substring(1) : cleanWhatsapp;
-
     const isNonResidential = sellerAnswers.propertyType === 'retail' || sellerAnswers.propertyType === 'land' || sellerAnswers.propertyType === 'office';
     const isHouse = sellerAnswers.propertyType === 'villa';
     const legalDocsList = selectedLegalDocs;
@@ -267,9 +380,28 @@ export const SellWizard = ({
       .map(id => REAL_ESTATE_LEGAL_DOCS.find(d => d.id === id)?.ar || id)
       .join('، ');
 
-    const floorDisplay = isHouse
-      ? (sellerAnswers.totalFloors ? `${sellerAnswers.totalFloors} طوابق` : (sellerAnswers.floor || 'طابقان'))
-      : (sellerAnswers.floor || '3');
+    // Accurate semantic floor representation avoiding arbitrary defaults
+    let floorDisplay = '';
+    if (sellerAnswers.propertyType === 'retail') {
+      const rf = sellerAnswers.retailFloor || 'ground';
+      floorDisplay = RETAIL_FLOOR_LABELS[rf]?.ar || 'أرضي واجهة شارع مباشرة';
+    } else if (sellerAnswers.propertyType === 'land') {
+      const ls = sellerAnswers.landStreet || 'wide_20';
+      floorDisplay = LAND_STREET_LABELS[ls]?.ar || 'أرض فضاء';
+    } else if (sellerAnswers.propertyType === 'office') {
+      floorDisplay = sellerAnswers.floor 
+        ? (sellerAnswers.floor === 'ground' ? 'أرضي / مدخل خاص' : `الدور ${sellerAnswers.floor}`) 
+        : 'الدور الثاني';
+    } else if (isHouse) {
+      floorDisplay = sellerAnswers.totalFloors 
+        ? `${sellerAnswers.totalFloors} طوابق` 
+        : (sellerAnswers.floor || 'طابقان');
+    } else {
+      // apartment
+      floorDisplay = sellerAnswers.floor 
+        ? (sellerAnswers.floor === 'ground' ? 'أرضي / مدخل خاص' : `الدور ${sellerAnswers.floor}`) 
+        : 'الدور الثالث';
+    }
 
     const finObj = REAL_ESTATE_FINISHING_TYPES.find(f => f.id === (sellerAnswers.finishing || 'super_lux')) 
       || (sellerAnswers.finishing === 'luxury' ? REAL_ESTATE_FINISHING_TYPES[1] : null);
@@ -281,13 +413,15 @@ export const SellWizard = ({
       estimatedMax: isCairo || !calculatedEstimate.avg ? null : calculatedEstimate.max,
       estimatedAvg: calculatedEstimate.avg || null,
       estimateBasis: calculatedEstimate.basis,
+      askingPrice: sellerAnswers.askingPrice ? parseInt(sellerAnswers.askingPrice) : null,
       totalFloors: isHouse ? (sellerAnswers.totalFloors || sellerAnswers.floor || '2') : undefined,
       floor: floorDisplay,
       finishing: sellerAnswers.finishing || 'super_lux',
       finishingLabelAr,
       rooms: isNonResidential ? 0 : parseInt(sellerAnswers.rooms || (isHouse ? 5 : 3)),
-      phone: `${sellerCountry}${normalizedPhone}`,
-      whatsapp: `${whatsappCountry}${normalizedWhatsapp}`,
+      phone: fullPhone,
+      whatsapp: fullWhatsapp,
+      images: uploadedPhotos,
       legalDocs: legalDocsList,
       legal: legalDocsList,
       legalSummaryAr: legalLabelsAr || (isAr ? 'قيد المراجعة / لم يُحدد بعد' : 'Pending review / Not specified')
@@ -394,10 +528,27 @@ export const SellWizard = ({
             </div>
             <button
               type="button"
-              onClick={() => {
+              onClick={async () => {
+                const propLabel = propertyTypes.find(t => t.id === sellerAnswers.propertyType)?.label_ar || 'عقار';
+                const areaLabel = FALLBACK_BENCHMARK_PRICING[sellerAnswers.area]?.name_ar || sellerAnswers.area || 'سوهاج';
+                
+                // Automatically log express lead in CRM in the background to prevent lead leakage
+                try {
+                  if (submitSellerJourney) {
+                    await submitSellerJourney({
+                      ...sellerAnswers,
+                      name: sellerAnswers.name || 'عميل إدراج سريع عبر واتساب',
+                      notes: `طلب إدراج سريع عبر واتساب المشرف: ${propLabel} في ${areaLabel}`,
+                      source: 'express_whatsapp'
+                    });
+                  }
+                } catch (e) {
+                  console.warn('Express whatsapp lead tracking error:', e);
+                }
+
                 const msg = isAr
-                  ? 'مرحباً 1Line سوهاج، أرغب في عرض عقار للبيع / التقييم المباشر، وأود إرسال الصور والمواصفات لمستشار الإدراج المعتمد.'
-                  : 'Hello 1Line Sohag, I would like to list my property directly via WhatsApp.';
+                  ? `مرحباً 1Line سوهاج، أرغب في عرض (${propLabel}) في (${areaLabel}) بمساحة (${sellerAnswers.size || 'قيد التحديد'}م²) للبيع / التقييم المباشر، وأود إرسال الصور والمواصفات لمستشار الإدراج المعتمد.`
+                  : `Hello 1Line Sohag, I would like to list my property (${propLabel}) in (${areaLabel}) directly via WhatsApp.`;
                 window.open(getWhatsAppUrl(msg), '_blank');
               }}
               style={{
@@ -668,7 +819,7 @@ export const SellWizard = ({
                 <CheckCircle2 size={16} style={{ color: '#10b981', flexShrink: 0 }} />
                 <span>
                   {isAr
-                    ? `رائع! توثيق ${selectedLegalDocs.length} مستندات يعزز من سرعة تسويق العقار وثقة المشترين الجادين.`
+                    ? `رائع! توثيق (${formatArabicDocCount(selectedLegalDocs.length)}) يعزز من سرعة تسويق العقار وثقة المشترين الجادين.`
                     : `Great! Having ${selectedLegalDocs.length} documents speeds up verified buyer matching.`}
                 </span>
               </div>
@@ -684,7 +835,11 @@ export const SellWizard = ({
                   <select
                     className="form-select-styled"
                     value={sellerAnswers.retailFloor || 'ground'}
-                    onChange={(e) => setSellerAnswers({ ...sellerAnswers, retailFloor: e.target.value, rooms: 0 })}
+                    onChange={(e) => {
+                      const rf = e.target.value;
+                      const label = RETAIL_FLOOR_LABELS[rf]?.ar || 'أرضي واجهة شارع مباشرة';
+                      setSellerAnswers({ ...sellerAnswers, retailFloor: rf, floor: label, rooms: 0 });
+                    }}
                   >
                     <option value="ground">{isAr ? 'أرضي واجهة شارع مباشرة' : 'Ground Floor Street Front'}</option>
                     <option value="mezzanine">{isAr ? 'ميزانين تجاري مرخص' : 'Licensed Mezzanine'}</option>
@@ -731,7 +886,11 @@ export const SellWizard = ({
                   <select
                     className="form-select-styled"
                     value={sellerAnswers.landStreet || 'wide_20'}
-                    onChange={(e) => setSellerAnswers({ ...sellerAnswers, landStreet: e.target.value, rooms: 0, floor: 'ground' })}
+                    onChange={(e) => {
+                      const ls = e.target.value;
+                      const label = LAND_STREET_LABELS[ls]?.ar || 'أرض فضاء';
+                      setSellerAnswers({ ...sellerAnswers, landStreet: ls, floor: label, rooms: 0 });
+                    }}
                   >
                     <option value="wide_20">{isAr ? 'شارع رئيسي 20م فأكثر' : 'Main Street 20m+'}</option>
                     <option value="corner">{isAr ? 'ناصية مميزة على شارعين' : 'Prime Corner (2 Streets)'}</option>
@@ -930,6 +1089,96 @@ export const SellWizard = ({
             </div>
           )}
 
+          {/* 📸 Direct Property Photos Upload Section */}
+          <div className="wizard-photo-upload-section" style={{
+            marginTop: '16px',
+            padding: '16px',
+            borderRadius: '12px',
+            background: 'rgba(248, 250, 252, 0.85)',
+            border: '1px dashed #cbd5e1'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <label style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                <Camera size={18} color="var(--primary, #0f172a)" />
+                <span>{isAr ? 'صور العقار من الموبايل أو الكاميرا (اختياري)' : 'Property Photos from Device / Camera (Optional)'}</span>
+              </label>
+              <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>
+                {uploadedPhotos.length} / 6 {isAr ? 'صور' : 'photos'}
+              </span>
+            </div>
+
+            <p style={{ fontSize: '0.79rem', color: '#64748b', margin: '0 0 10px 0' }}>
+              {isAr ? '💡 إرفاق الصور يعزز سرعة تسويق العقار بنسبة 70% ويعرضه فوراً للمشترين الجادين.' : 'Adding photos boosts buyer inquiries by up to 70%.'}
+            </p>
+
+            {uploadedPhotos.length < 6 && (
+              <div>
+                <input
+                  type="file"
+                  id="sell-wizard-photos"
+                  multiple
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={(e) => handlePhotoFiles(e.target.files)}
+                />
+                <label htmlFor="sell-wizard-photos" style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 16px',
+                  background: '#fff',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '0.84rem',
+                  fontWeight: 600,
+                  color: 'var(--primary, #0f172a)',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                }}>
+                  <Upload size={16} />
+                  <span>{isAr ? 'اختيار صور من الهاتف أو الكمبيوتر' : 'Choose photos from device'}</span>
+                </label>
+              </div>
+            )}
+
+            {photoUploadError && (
+              <div style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '6px' }}>{photoUploadError}</div>
+            )}
+
+            {uploadedPhotos.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
+                {uploadedPhotos.map((imgSrc, idx) => (
+                  <div key={idx} style={{ position: 'relative', width: '82px', height: '65px', borderRadius: '6px', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+                    <img src={imgSrc} alt={`Property Photo ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePhoto(idx)}
+                      style={{
+                        position: 'absolute',
+                        top: '2px',
+                        left: '2px',
+                        background: 'rgba(239, 68, 68, 0.9)',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '18px',
+                        height: '18px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '11px',
+                        cursor: 'pointer'
+                      }}
+                      title={isAr ? 'حذف الصورة' : 'Remove image'}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="wizard-actions-bar space-between">
             <button
               type="button"
@@ -1011,7 +1260,7 @@ export const SellWizard = ({
                 <ShieldCheck size={15} color={selectedLegalDocs.length > 0 ? '#10b981' : '#64748b'} />
                 <span>
                   {selectedLegalDocs.length > 0
-                    ? (isAr ? `توثيق: ${selectedLegalDocs.length} مستندات محددة` : `Audited: ${selectedLegalDocs.length} docs recorded`)
+                    ? (isAr ? `توثيق: ${formatArabicDocCount(selectedLegalDocs.length)}` : `Audited: ${selectedLegalDocs.length} docs recorded`)
                     : (isAr ? 'تدقيق المستندات: مجاناً أثناء المعاينة' : 'Documents: Audited during visit')}
                 </span>
               </div>
@@ -1052,6 +1301,28 @@ export const SellWizard = ({
                 onChange={(e) => setSellerAnswers({ ...sellerAnswers, name: e.target.value })}
                 required
               />
+            </div>
+
+            <div className="form-group-block" style={{
+              background: 'rgba(217, 119, 6, 0.05)',
+              padding: '12px',
+              borderRadius: '10px',
+              border: '1px solid rgba(217, 119, 6, 0.2)'
+            }}>
+              <label style={{ fontWeight: 'bold', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>💰 {isAr ? 'السعر المطلوب من المالك (ج.م) — اختياري' : 'Owner Asking Price (EGP) — Optional'}</span>
+              </label>
+              <input
+                type="number"
+                min="0"
+                placeholder={isAr ? 'مثال: 2500000 (اتركه فارغاً للاكتفاء بتقدير المنصة)' : 'e.g. 2500000'}
+                className="form-input-styled"
+                value={sellerAnswers.askingPrice || ''}
+                onChange={(e) => setSellerAnswers({ ...sellerAnswers, askingPrice: e.target.value ? parseInt(e.target.value) : '' })}
+              />
+              <span style={{ fontSize: '0.78rem', color: '#64748b', display: 'block', marginTop: '4px' }}>
+                {isAr ? 'تحديد سعرك المطلوب يسرع مطابقة عقارك فوراً مع المشترين الجادين وأصحاب الميزانيات المناسبة.' : 'Setting your target price speeds up matching with qualified buyers.'}
+              </span>
             </div>
 
             <div className="form-group-block">
