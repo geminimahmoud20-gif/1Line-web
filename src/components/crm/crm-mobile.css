@@ -1,0 +1,76 @@
+/* =============================================================
+   CRM on a phone (staff in the field). Desktop is unchanged.
+   ============================================================= */
+.crm-leads-filters-toggle,
+.crm-btn-label-short { display: none; }
+
+@media (max-width: 768px) {
+  /* Leads: title and actions stack; actions stay on one row */
+  .crm-leads-head > div:last-child { width: 100%; }
+  .crm-leads-head .btn { flex: 1 1 auto; justify-content: center; min-height: 42px; white-space: nowrap; }
+  .crm-btn-label { display: none; }
+  .crm-btn-label-short { display: inline; }
+
+  /* Request kinds and stages: one swipeable row instead of three wrapped rows */
+  .table-filters {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+    max-width: 100%;
+  }
+  .table-filters::-webkit-scrollbar { display: none; }
+  .table-filters .table-filter-btn { flex: none; white-space: nowrap; min-height: 40px; }
+
+  /* Secondary filters and search fold behind one button */
+  .crm-leads-filters-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+    border-radius: 12px;
+    border: 1px solid var(--crm-line-strong);
+    background: var(--crm-card);
+    color: var(--crm-ink);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .crm-leads-secondary { display: none !important; }
+  .crm-leads-secondary.is-open { display: flex !important; width: 100%; }
+  .crm-leads-secondary.is-open > * { flex: 1 1 100%; }
+
+  /* Top bar: only the current page name, never two labels on top of each other */
+  .crm-breadcrumb-root,
+  .crm-breadcrumb-separator { display: none !important; }
+  .crm-breadcrumb { min-width: 0; overflow: hidden; }
+  .crm-breadcrumb-current { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 46vw; display: inline-block; }
+}
+
+@media (max-width: 768px) {
+  /* Actions row: three equal buttons that never push the last one off screen */
+  .crm-leads-head > div:last-child { display: flex !important; flex-wrap: nowrap !important; gap: 6px !important; }
+  .crm-leads-head > div:last-child > * { flex: 1 1 0; min-width: 0; }
+  .crm-leads-head > div:last-child .btn { padding-inline: 8px; font-size: 13px; overflow: hidden; text-overflow: ellipsis; }
+
+  /* A lead as a compact card: name and request on top, two facts per row, actions last.
+     Bulk selection (the checkbox column) is a desk task and stays on larger screens. */
+  .crm-layout .crm-table tbody tr.crm-lead-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 12px;
+    padding: 12px !important;
+  }
+  .crm-layout .crm-table tbody tr.crm-lead-row > td {
+    display: block !important;
+    padding: 0 !important;
+    border: 0 !important;
+    min-height: 0 !important;
+    width: auto !important;
+  }
+  .crm-layout .crm-table tbody tr.crm-lead-row > td:first-child { display: none !important; }
+  .crm-layout .crm-table tbody tr.crm-lead-row > td:nth-child(2),
+  .crm-layout .crm-table tbody tr.crm-lead-row > td:last-child { grid-column: 1 / -1; }
+}

@@ -248,3 +248,83 @@ html .demands-add-cta .btn { display: inline-flex; align-items: center; gap: 8px
   /* Breadcrumb links: taller tap area without moving the text */
   html .page-breadcrumb-sub a { display: inline-block; padding-block: 10px; margin-block: -10px; }
 }
+
+/* ── Mobile pass 3 (phone audit at 390×664) ──────────────────────────────────
+   First screen, iOS focus-zoom, header, minimum text size, CRM on a phone. */
+@media (max-width: 768px) {
+  /* Consent: one compact row (was 122px over the hero and the booking bar) */
+  html .lx-consent { flex-wrap: nowrap; align-items: center; gap: 8px; padding: 8px 10px; line-height: 1.45; }
+  html .lx-consent p { flex: 1 1 auto; font-size: 0.8rem; }
+  html .lx-consent-actions { flex: none; gap: 6px; }
+  html .lx-consent-actions > * { flex: none; }
+  html .lx-consent .lx-btn-sm { min-height: 40px; padding: 6px 12px; }
+
+  /* iOS zooms the page into any field under 16px; keep every field at 16px on phones */
+  /* :not(#\#) adds id-level weight so component rules marked !important can't win */
+  html :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea):not(#\#) { font-size: 16px !important; }
+
+  /* Header: theme and language live in the menu drawer; the row keeps account, search, menu */
+  html .header-utility-pill-group { display: none !important; }
+  html .header-client-account-btn,
+  html .mobile-quick-search-btn,
+  html .mobile-hamburger-btn { min-width: 40px; min-height: 40px; }
+  html .mobile-header-back-btn { min-width: 40px; min-height: 40px; }
+
+  /* The header already has a back arrow on phones; the page-level one repeated it */
+  html .page-top-back-bar { display: none; }
+
+  /* Properties: listings start sooner — shorter header, the trust strip folds into one line */
+  html .properties-page-header .page-header-subtitle { display: none; }
+  html .properties-page-header.compact-page-header { padding-block: 14px 10px !important; }
+  html .properties-page-header .page-header-title { font-size: 1.35rem !important; line-height: 1.35; }
+  html .properties-certified-explainer-strip { padding-block: 6px !important; }
+  html .properties-certified-explainer-strip .certified-points-row { display: none; }
+}
+@media (max-width: 768px) {
+  /* Home: the four-line slogan pushed the search below the first screen */
+  html .hx-hero-inner { padding-top: 18px !important; gap: 10px !important; }
+  html .hx-eyebrow { margin-bottom: 4px !important; }
+  html .hx-title { font-size: clamp(1.55rem, 6.6vw, 1.95rem) !important; line-height: 1.4 !important; margin-block: 4px 6px !important; }
+  html .hx-lede { font-size: 0.9rem !important; padding: 8px 14px !important; margin-bottom: 8px !important; }
+}
+@media (max-width: 480px) {
+  /* The slogan already says it; the search box comes first on small phones */
+  html .hx-lede { display: none !important; }
+}
+@media (max-width: 768px) {
+  /* Readable minimum (12.5px) for the small labels phones show most:
+     bottom tabs, property cards, calculators, filters, footer, projects, demands */
+  html .mob-tab-btn span,
+  html .pcx-spec-label,
+  html .pcx-chip, html .pcx-chip span,
+  html .pcx-spec-val small,
+  html .pcx-ppm, html .pcx-ppm small, html .pcx-ppm bdi,
+  html .prop-type-info p,
+  html .calc-chip-btn,
+  html .calc-range-limits-ltr span,
+  html .footer-brand-sub,
+  html .footer-crm-lock,
+  html .phase-sub,
+  html .location-chip,
+  html .xs-input-suffix em,
+  html .hx-field-label,
+  html .hx-point-detail,
+  html .stat-lbl,
+  html .xs-demo-tag,
+  html .standard-pill-badge,
+  html .pj-brand,
+  html .unauth-feat span,
+  html .hx-seller-float-sub, html .hx-seller-float-badge,
+  html .hx-legend-item span,
+  html .toolbar-section-label,
+  html .res-tag,
+  html .direct-curr-tag,
+  html .cert-date,
+  html .lx-concierge-status span,
+  html .founder-badge-pill span,
+  html .hx-cert-signature,
+  html .hx-expat-agent-tag span,
+  html .hx-radar-live-count span,
+  html .hx-cert-status-badge span, html .hx-cert-seal-pill span,
+  html .allocation-bar-header span, html .allocation-bar-header strong { font-size: 12.5px !important; }
+}

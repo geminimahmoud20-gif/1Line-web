@@ -107,6 +107,8 @@ export default function LeadsTab({
     setMergeGroup(leads.filter((x) => ids.includes(x.id)));
   };
   const [importOpen, setImportOpen] = useState(false);
+  // Phones: the secondary filters fold behind one button so the first lead shows on screen
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const { leadsHasMore, loadMoreLeads, searchAllLeads } = useProperties();
   const [serverSearching, setServerSearching] = useState(false);
   // The list holds the newest clients only; this looks the term up across all of them on the server
@@ -159,7 +161,7 @@ export default function LeadsTab({
         />
       )}
       {/* Top Control Strip */}
-      <div style={{
+      <div className="crm-leads-head" style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -192,7 +194,8 @@ export default function LeadsTab({
             }}
           >
             <UserPlus size={15} />
-            <span>{isAr ? 'إضافة عميل جديد ➕' : 'Add New Lead ➕'}</span>
+            <span className="crm-btn-label">{isAr ? 'إضافة عميل جديد' : 'Add New Lead'}</span>
+            <span className="crm-btn-label-short">{isAr ? 'عميل' : 'Lead'}</span>
           </button>}
           {onImportLeads && (
             <button
@@ -292,8 +295,20 @@ export default function LeadsTab({
           )}
         </div>
 
+        {/* Phones only: one button opens the secondary filters */}
+        <button
+          type="button"
+          className="crm-leads-filters-toggle"
+          aria-expanded={filtersOpen}
+          onClick={() => setFiltersOpen((o) => !o)}
+        >
+          {isAr ? 'فلاتر وبحث' : 'Filters & search'}
+          {[temperatureFilter, sourceFilter, dateFilter, areaFilter].filter((v) => v && v !== 'all').length > 0 ? ` (${[temperatureFilter, sourceFilter, dateFilter, areaFilter].filter((v) => v && v !== 'all').length})` : ''}
+          {searchQuery ? (isAr ? ' • بحث' : ' • search') : ''}
+        </button>
+
         {/* Secondary Filters (Temperature & Area) */}
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div className={`crm-leads-secondary ${filtersOpen ? 'is-open' : ''}`} style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
           {/* Temperature Filter */}
           <select
             value={temperatureFilter}

@@ -600,7 +600,7 @@ export default function Header({
                 }}
               >
                 <Search size={16} />
-                <span>{isAr ? 'البحث السريع (Ctrl + K)' : 'Quick Search (Ctrl + K)'}</span>
+                <span>{isAr ? 'البحث السريع' : 'Quick search'}</span>
               </button>
             )}
 

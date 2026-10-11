@@ -11,14 +11,37 @@ export const loadFirebaseService = () => {
   return servicePromise;
 };
 
-// Warm the SDK once the browser is idle so the first form submit doesn't wait on the download.
-if (typeof window !== 'undefined') {
-  const warm = () => loadFirebaseService().catch(() => {});
-  if ('requestIdleCallback' in window) window.requestIdleCallback(warm, { timeout: 4000 });
-  else setTimeout(warm, 2500);
+// Visitors see the site without the SDK (listings come from /api/catalog), so on a phone its
+// ~170 KB (gzip) waits for the first touch, click or key, or a few seconds — whichever is first.
+// (Not 'scroll': the router's scroll-to-top fires it on load; a finger scroll starts with a touch.)
+// Pages that work with Firebase from the start (CRM, client account, buyer requests) open it at
+// once, and any explicit call (a form submit, a CRM action) loads it immediately.
+const EAGER_PATHS = /^\/(crm|my-account|demands)(\/|$)/;
+const GATE_DELAY_MS = 6000;
+let openGate = () => {};
+const gate = new Promise((resolve) => { openGate = resolve; });
+if (typeof window === 'undefined' || EAGER_PATHS.test(window.location.pathname)) {
+  openGate();
+} else {
+  const events = ['pointerdown', 'touchstart', 'keydown'];
+  const open = () => {
+    events.forEach((e) => window.removeEventListener(e, open, true));
+    openGate();
+  };
+  events.forEach((e) => window.addEventListener(e, open, { capture: true, passive: true }));
+  setTimeout(open, GATE_DELAY_MS);
 }
 
 const lazyCall = (name) => async (...args) => {
+  openGate();
+  const svc = await loadFirebaseService();
+  return svc[name](...args);
+};
+
+// Background calls (ad counters, error reports) wait for the gate instead of opening it,
+// so an impression on a listing page doesn't pull the SDK onto a visitor's phone by itself.
+const backgroundCall = (name) => async (...args) => {
+  await gate;
   const svc = await loadFirebaseService();
   return svc[name](...args);
 };
@@ -27,7 +50,8 @@ const lazyCall = (name) => async (...args) => {
 const lazySubscribe = (name) => (...args) => {
   let unsub = null;
   let cancelled = false;
-  loadFirebaseService()
+  gate
+    .then(loadFirebaseService)
     .then((svc) => {
       if (cancelled) return;
       const u = svc[name](...args);
@@ -73,8 +97,8 @@ export const moveDemandsToArea = lazyCall('moveDemandsToArea');
 export const searchLeads = lazyCall('searchLeads');
 export const recordClientDownload = lazyCall('recordClientDownload');
 export const deleteCatalogItem = lazyCall('deleteCatalogItem');
-export const incrementAdStat = lazyCall('incrementAdStat');
-export const reportClientError = lazyCall('reportClientError');
+export const incrementAdStat = backgroundCall('incrementAdStat');
+export const reportClientError = backgroundCall('reportClientError');
 export const deleteClientErrors = lazyCall('deleteClientErrors');
 export const uploadCmsMedia = lazyCall('uploadCmsMedia');
 export const getCmsStorageStatus = lazyCall('getCmsStorageStatus');
