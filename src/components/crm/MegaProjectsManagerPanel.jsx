@@ -31,32 +31,31 @@ export default function MegaProjectsManagerPanel({
     title_ar: '',
     title_en: '',
     brandTag: '',
-    developer_ar: 'شركة 1Line للتطوير العقاري',
-    developer_en: '1Line Real Estate Developments',
-    location_ar: 'سوهاج الجديدة - الحي السكني',
-    location_en: 'New Sohag',
+    // Starts empty: each figure below is published as a fact about the project
+    developer_ar: '',
+    developer_en: '',
+    location_ar: '',
+    location_en: '',
     category: 'residential',
-    startPrice: 2500000,
-    downPaymentPercent: 15,
-    installmentYears: 5,
-    deliveryDate_ar: 'ديسمبر 2026',
-    deliveryDate_en: 'Dec 2026',
-    progress: 75,
+    startPrice: '',
+    downPaymentPercent: '',
+    installmentYears: '',
+    deliveryDate_ar: '',
+    deliveryDate_en: '',
+    progress: 0,
     progressBreakdown: {
-      concrete: 100,
-      masonry: 80,
-      finishing: 50,
-      infrastructure: 70
+      concrete: 0,
+      masonry: 0,
+      finishing: 0,
+      infrastructure: 0
     },
-    area_sqm: '25,000 م²',
-    totalUnits: 150,
-    availableUnits: 25,
-    roiEstimate: 12.5,
-    images: [
-      'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80'
-    ],
-    features_ar: 'أمن وحراسة 24 ساعة, لاندسكيب وبحيرات صناعية, مول تجاري خاص',
-    features_en: '24/7 Security, Landscape & Water Features, Private Mall',
+    area_sqm: '',
+    totalUnits: '',
+    availableUnits: '',
+    roiEstimate: '',
+    images: [],
+    features_ar: '',
+    features_en: '',
     description_ar: '',
     description_en: '',
     brochureUrl: ''
@@ -94,18 +93,23 @@ export default function MegaProjectsManagerPanel({
       triggerToast(isAr ? 'يرجى إدخال اسم المشروع بالعربية' : 'Please enter project title', 'error');
       return;
     }
+    if (!(Number(formData.startPrice) > 0)) {
+      triggerToast(isAr ? 'اكتب سعر البداية الحقيقي للمشروع' : 'Enter the real starting price', 'error');
+      return;
+    }
 
     setIsSaving(true);
     try {
 
     const payload = {
       ...formData,
-      startPrice: Number(formData.startPrice) || 2000000,
-      downPaymentPercent: Number(formData.downPaymentPercent) || 15,
-      installmentYears: Number(formData.installmentYears) || 5,
-      progress: numOr(formData.progress, 50),
-      totalUnits: numOr(formData.totalUnits, 100),
-      availableUnits: numOr(formData.availableUnits, 20),
+      // Blank stays blank (0 = not given): no invented 15% / 5 years / 100 units
+      startPrice: Number(formData.startPrice),
+      downPaymentPercent: Number(formData.downPaymentPercent) || 0,
+      installmentYears: Number(formData.installmentYears) || 0,
+      progress: numOr(formData.progress, 0),
+      totalUnits: numOr(formData.totalUnits, 0),
+      availableUnits: numOr(formData.availableUnits, 0),
       // Saving a sample from here makes it the admin's own project
       isDemo: false,
       features_ar: typeof formData.features_ar === 'string' 

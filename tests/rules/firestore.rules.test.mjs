@@ -1,7 +1,7 @@
 // Firestore security rules tests. Needs the Firestore emulator (Java 11+):
 //   npm run test:rules
 import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
-import { doc, getDoc, setDoc, deleteDoc, collection, query, where, orderBy, getDocs, collectionGroup, writeBatch, deleteField, documentId, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, collection, query, where, orderBy, limit, getDocs, collectionGroup, writeBatch, deleteField, documentId, serverTimestamp } from 'firebase/firestore';
 import fs from 'node:fs';
 import { test, before, after, beforeEach } from 'node:test';
 
@@ -453,4 +453,16 @@ test('merge duplicates: one batch updates the kept lead and deletes the copies (
   };
   await assertFails(merge(as('sales_manager')));
   await assertSucceeds(merge(asAdmin()));
+});
+
+test('dashboard totals: the paged "all leads" read works per role (services/leads loadAllLeadsForStats)', async () => {
+  // desk agent: own desk + pool, paged by document id
+  const east = as('agent_east');
+  const deskPage = query(collection(east, 'leads'), where('assignedTo', 'in', ['Sales Team A', 'Unassigned']), orderBy(documentId()), limit(500));
+  const r = await assertSucceeds(getDocs(deskPage));
+  if (r.size !== 3) throw new Error(`expected 3 leads, got ${r.size}`);
+  // managers and admins: every lead
+  const all = await assertSucceeds(getDocs(query(collection(as('sales_manager'), 'leads'), orderBy(documentId()), limit(500))));
+  if (all.size !== 6) throw new Error(`expected 6 leads, got ${all.size}`);
+  await assertFails(getDocs(query(collection(east, 'leads'), orderBy(documentId()), limit(500))));
 });

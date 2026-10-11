@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect } from 'react';
 import { computeDashboardMetrics } from '../../utils/crmLeadViews';
 import { DESK_BY_ROLE } from '../../utils/rbacRules';
 import { Users, Building, Zap, Briefcase, Clock, Target, AlertTriangle, CheckCircle2, TrendingUp, Phone, Sparkles, Award, FileText, ArrowRight } from 'lucide-react';
+import LeadScorePill from './LeadScorePill';
 
 export default function CrmExecutiveDashboard({
   leads = [],
@@ -18,7 +19,8 @@ export default function CrmExecutiveDashboard({
   onOpenCopywriter,
   deskView = null,
   scopeDesk: scopeDeskProp = null,
-  showMoney: showMoneyProp = null
+  showMoney: showMoneyProp = null,
+  coverage = null
 }) {
   const isSuperAdmin = activeRole === 'super_admin';
 
@@ -98,6 +100,15 @@ export default function CrmExecutiveDashboard({
               ? `موجز العمليات: لديك اليوم ${metrics.dueTodayCount} متابعات مجدولة • ${metrics.newLeadsCount} عملاء جدد بحاجة للتأهيل • ${metrics.pendingDemandsCount} طلبات معلقة.`
               : `Today's Brief: ${metrics.dueTodayCount} follow-ups due • ${metrics.newLeadsCount} new leads to qualify • ${metrics.pendingDemandsCount} pending demands.`}
           </p>
+          {coverage && (
+            <p style={{ margin: '4px 0 0', fontSize: 'var(--crm-text-xs)', color: coverage.complete && !coverage.loading ? 'var(--crm-faint)' : 'var(--crm-warn)' }}>
+              {coverage.loading
+                ? (isAr ? 'بيتحسب من كل العملاء…' : 'Computing over all leads…')
+                : coverage.complete
+                  ? (isAr ? `الأرقام محسوبة من كل العملاء (${coverage.count.toLocaleString('en-US')})` : `Figures cover all ${coverage.count.toLocaleString('en-US')} leads`)
+                  : (isAr ? `الأرقام من أول ${coverage.count.toLocaleString('en-US')} عميل بس — مش كل العملاء` : `Figures cover the first ${coverage.count.toLocaleString('en-US')} leads only`)}
+            </p>
+          )}
         </div>
 
         {/* Quick Jump Buttons */}
@@ -554,11 +565,7 @@ export default function CrmExecutiveDashboard({
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <strong style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-ink)' }}>{leadItem.name}</strong>
-                        {leadItem.score && (
-                          <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 700, color: 'var(--crm-accent-text)' }}>
-                            ⚡ {leadItem.score}%
-                          </span>
-                        )}
+                        <LeadScorePill lead={leadItem} isAr={isAr} style={{ fontSize: 'var(--crm-text-xs)' }} />
                       </div>
                       <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px' }}>
                         {leadItem.phone} • {leadItem.area || 'سوهاج'}

@@ -436,7 +436,6 @@ export function PropertiesProvider({ children }) {
           budget: standardizedData.budget || existing.budget || existing.details?.budget || '',
           propertyType: standardizedData.propertyType || existing.propertyType,
           area: standardizedData.area || existing.area,
-          score: Math.min(100, (existing.score || 80) + 10),
           temperature: existing.temperature || standardizedData.temperature || '',
           status: existing.status || 'new',
           assignedTo: existing.assignedTo || 'Sales Advisor Team',
@@ -479,7 +478,6 @@ export function PropertiesProvider({ children }) {
           notes: standardizedData.notes || '',
           // Unset until someone on the team judges it; defaulting to 'hot' inflated the hot count
           temperature: standardizedData.temperature || '',
-          score: typeof standardizedData.score === 'number' ? standardizedData.score : 85,
           assignedTo: standardizedData.assignedTo || 'Unassigned',
           nextFollowUpAt: standardizedData.nextFollowUpAt || null,
           createdAt: nowIso,

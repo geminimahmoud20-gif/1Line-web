@@ -121,7 +121,6 @@ export default function TradeInPortal({ lang = 'ar', properties = [], onCreateLe
       type: 'trade_in',
       source: 'trade_in_portal',
       temperature: 'hot',
-      score: 90,
       budget: record.offerValue,
       area: record.offerGovernorate === 'sohag' ? 'new_sohag' : record.offerGovernorate,
       propertyType: record.offerType,

@@ -1,3 +1,4 @@
+import { SITE_URL, LEGAL_IDS } from '../config/siteConfig';
 import { getDynamicPhone } from './founderCmsData';
 /**
  * Generate an official Arabic / Bilingual Unit Reservation Contract & Deposit Agreement
@@ -64,7 +65,7 @@ export const generateReservationContractPdf = async (contractData) => {
   doc.text('ESTMARAT HAJZ WAHDA AQARIA & SANAD ESTELAM MOBTADA', 105, 54, { align: 'center' });
   doc.setFontSize(9);
   doc.setTextColor(100, 116, 139);
-  doc.text('Official Real Estate Unit Reservation & Deposit Agreement', 105, 60, { align: 'center' });
+  doc.text('Preliminary Unit Reservation & Deposit Form (draft for signature)', 105, 60, { align: 'center' });
 
   // 3. Section 1: Buyer Information Box
   doc.setFillColor(248, 250, 252);
@@ -158,7 +159,7 @@ export const generateReservationContractPdf = async (contractData) => {
   doc.setTextColor(217, 119, 6);
   doc.setFontSize(8);
   doc.setFont('helvetica', 'bold');
-  doc.text('OFFICIAL VERIFIED DEPOSIT', 130, 165);
+  doc.text('RESERVATION DEPOSIT', 130, 165);
   doc.setFontSize(11);
   doc.text(`${depositAmount.toLocaleString('en-US')} EGP`, 130, 172);
   doc.setFontSize(7);
@@ -177,7 +178,7 @@ export const generateReservationContractPdf = async (contractData) => {
   doc.text('1. This preliminary reservation holds the specified unit for (15) calendar days to complete final contract signing.', 15, 204);
   doc.text('2. 1Line reviews the title chain and building licence and shares a written summary before the final contract.', 15, 209);
   doc.text('3. The reservation deposit is officially credited toward the unit downpayment upon final contract execution.', 15, 214);
-  doc.text('4. All transactions are backed by Dr. Mahmoud Elbaz legal advisory and registered brokerage charter in Sohag.', 15, 219);
+  doc.text('4. Valid only when signed by both parties and stamped by 1Line. Review it with your own lawyer before signing.', 15, 219);
 
   // 7. Signatures & Official Endorsement Section
   doc.setDrawColor(203, 213, 225);
@@ -192,7 +193,7 @@ export const generateReservationContractPdf = async (contractData) => {
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(100, 116, 139);
   doc.text('Chairman & Founder: Dr. Mahmoud Elbaz', 20, 239);
-  doc.text('Official Seal: [ VERIFIED DIGITAL SEAL ]', 20, 245);
+  doc.text('Company stamp: ______________________', 20, 245);
   doc.text('Signature: __________________________', 20, 255);
 
   // Second Party (Buyer)
@@ -215,7 +216,8 @@ export const generateReservationContractPdf = async (contractData) => {
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.text('1Line Real Estate Development & Brokerage - Sohag & New Sohag, Egypt', 15, 287);
-  doc.text(`Hotline: ${getDynamicPhone()}  |  Website: www.oneline-egypt.com  |  CR: 489201`, 15, 292);
+  // Registry number only when the company has entered its real one (siteConfig LEGAL_IDS)
+  doc.text(`Hotline: ${getDynamicPhone()}  |  ${SITE_URL.replace(/^https?:\/\//, '')}${LEGAL_IDS.commercialRegistry ? `  |  CR: ${LEGAL_IDS.commercialRegistry}` : ''}`, 15, 292);
 
   // Save the PDF file
   const filename = `1Line_Contract_${transactionRef}_${new Date().toISOString().slice(0, 10)}.pdf`;

@@ -10,6 +10,7 @@ import LostReasonModal from './LostReasonModal';
 import MergeLeadsModal from './MergeLeadsModal';
 import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, RESPONSE_SLA_MS, isOverdue, isUnassigned, isStale, localDayKey } from '../../utils/crmLeadViews';
 import { useProperties } from '../../context/PropertiesContext';
+import LeadScorePill from './LeadScorePill';
 
 export default function LeadsTab({
   activeRole,
@@ -582,9 +583,7 @@ export default function LeadsTab({
                   {/* Score & Temperature */}
                   <td data-label={isAr ? 'الجدية والحرارة' : 'Score & Temp'}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span className={`lead-score-pill ${l.score >= 85 ? 'score-high' : 'score-medium'}`}>
-                        {typeof l.score === 'number' ? `${l.score}%` : '—'}
-                      </span>
+                      <LeadScorePill lead={l} isAr={isAr} />
                       <span title={temp === 'hot' ? 'عميل ساخن للشراء' : temp === 'warm' ? 'عميل دافئ' : temp === 'cold' ? 'عميل مستكشف' : (isAr ? 'درجة الحرارة غير محددة' : 'Temperature not set')}>
                         {temp === 'hot' ? '🔥' : temp === 'warm' ? '⚡' : temp === 'cold' ? '❄️' : <span className="crm-empty-value">—</span>}
                       </span>

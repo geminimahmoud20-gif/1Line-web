@@ -71,7 +71,7 @@ export default function PropertyTableRow({
     <tr style={{ opacity: isTrash ? 0.6 : 1 }}>
       <td>
         <div className="table-prop-info">
-          <img src={prop.images?.[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=400&q=80'} alt="" className="table-thumb" />
+          <img src={prop.images?.[0] || '/no-photo.svg'} alt="" className="table-thumb" />
           <div>
             <strong>{isAr ? prop.title_ar : prop.title_en}</strong>
             <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '2px' }}>

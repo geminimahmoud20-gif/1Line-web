@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="لا توجد صورة بعد">
+  <rect width="800" height="600" fill="#eef1f5"/>
+  <g fill="none" stroke="#9aa5b4" stroke-width="14" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M300 340 L400 255 L500 340"/>
+    <path d="M330 315 V395 H470 V315"/>
+  </g>
+  <text x="400" y="460" text-anchor="middle" font-family="Cairo, Tahoma, sans-serif" font-size="34" fill="#6b7685">لا توجد صورة بعد</text>
+</svg>

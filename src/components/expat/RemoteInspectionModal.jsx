@@ -154,7 +154,6 @@ export default function RemoteInspectionModal({ property, isOpen, onClose, lang 
       type: 'remote_inspection',
       source: 'expat_remote_inspection',
       temperature: 'hot',
-      score: 95,
       isVip: true,
       area: property?.areaKey || 'new_sohag',
       propertyType: property?.type || 'apartment',

@@ -2,6 +2,7 @@
 import { PROPERTY_TYPES, SOHAG_AREAS } from '../../data/propertiesData';
 import { getAreas } from '../../utils/areasData';
 import { formatLeadType } from '../../utils/crmLabels';
+import { leadScore } from '../../utils/crmLeadViews';
 
 // Leads keep area/budget/propertyType under `details`; exporting the raw objects left those columns empty.
 export const LEAD_EXPORT_HEADERS = {
@@ -97,7 +98,7 @@ export function makeLeadFormatters(isAr, t = {}) {
       budget: l.budget || d.budget || d.expectedPrice || '',
       status: formatLeadStatus(l.status),
       temperature: { hot: 'ساخن', warm: 'دافئ', cold: 'بارد' }[l.temperature] || '',
-      score: l.score ?? '',
+      score: leadScore(l).score,
       assignedTo: l.assignedTo || '',
       source: l.source || '',
       nextFollowUpAt: l.nextFollowUpAt || '',

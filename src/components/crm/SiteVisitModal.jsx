@@ -5,6 +5,7 @@ import {
   X
 } from 'lucide-react';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
+import { leadScore } from '../../utils/crmLeadViews';
 
 export default function SiteVisitModal({
   isOpen,
@@ -120,7 +121,7 @@ export default function SiteVisitModal({
               <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>{lead.phone}</span>
             </div>
             <span className="badge" style={{ background: 'var(--crm-positive-soft)', color: 'var(--crm-positive)', border: '1px solid var(--crm-positive-line)', fontWeight: 'bold' }}>
-              {isAr ? 'عميل مؤكد الجدية' : 'Verified Lead'} ({lead.score || 85}%)
+              {isAr ? 'درجة الاهتمام' : 'Lead score'} ({leadScore(lead).score}%)
             </span>
           </div>
 

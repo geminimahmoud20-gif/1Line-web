@@ -9,6 +9,7 @@ import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { parseMoney } from '../../utils/crmLeadViews';
 import { normalizeAreaKey } from '../../utils/areasData';
 import VisitorJourney from './analytics/VisitorJourney';
+import LeadScorePill from './LeadScorePill';
 
 export default function CustomerProfileModal({
   isOpen,
@@ -34,7 +35,6 @@ export default function CustomerProfileModal({
     type: lead?.type || 'buyer',
     status: lead?.status || 'new',
     temperature: lead?.temperature || '',
-    score: lead?.score || 85,
     assignedTo: lead?.assignedTo || 'Sales Advisor Team',
     budget: lead?.details?.budget || lead?.details?.expectedPrice || '',
     area: lead?.details?.area || 'east',
@@ -130,7 +130,6 @@ export default function CustomerProfileModal({
       type: formData.type,
       status: formData.status,
       temperature: formData.temperature,
-      score: parseInt(formData.score) || 85,
       assignedTo: formData.assignedTo,
       financing: formData.financing,
       tags: formData.tags,
@@ -214,9 +213,7 @@ export default function CustomerProfileModal({
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <h3 style={{ margin: 0, fontSize: 'var(--crm-text-lg)', color: 'var(--crm-ink)', fontWeight: 700 }}>{formData.name}</h3>
-                <span className={`lead-score-pill ${formData.score >= 85 ? 'score-high' : 'score-medium'}`}>
-                  {formData.score}% {isAr ? 'جدية' : 'Score'}
-                </span>
+                <LeadScorePill lead={{ ...lead, ...formData }} isAr={isAr} suffix={isAr ? ' اهتمام' : ' score'} />
                 <span className="badge" style={{ background: 'var(--crm-subtle-2)', color: 'var(--crm-body)', border: '1px solid var(--crm-line-strong)', fontSize: 'var(--crm-text-xs)', fontWeight: 'bold' }}>
                   {formData.status?.toUpperCase()}
                 </span>

@@ -1,7 +1,7 @@
 import { db, auth, isFirebaseConfigured } from '../firebase.js';
 import { DESK_BY_ROLE, UNASSIGNED_DESK } from '../utils/rbacRules.js';
 import { enqueuePendingLead, readPendingLeads, writePendingLeads } from '../utils/leadQueue.js';
-import { collection, getDocs, getDoc, doc, query, where, orderBy, limit, onSnapshot, serverTimestamp, writeBatch, deleteField, documentId, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, getDoc, doc, query, where, orderBy, limit, onSnapshot, serverTimestamp, writeBatch, deleteField, documentId, Timestamp, startAfter } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { getUserClaims } from './auth.js';
 import { notifyStaff } from './staffNotify.js';
@@ -492,6 +492,33 @@ export const mergeLeads = async (keepId, mergedFields, removeIds = []) => {
   } catch (error) {
     console.error('Firebase mergeLeads error:', error);
     return false;
+  }
+};
+
+/**
+ * Every lead this account may read (no contact docs), for dashboard totals. The live list only
+ * holds the newest 150, so numbers computed from it alone go wrong once there are more.
+ * Paged by document id (500 a page) up to `max`. Returns { ok, leads, truncated }.
+ */
+export const loadAllLeadsForStats = async (max = 5000) => {
+  if (!isFirebaseConfigured() || !db || !auth?.currentUser) return { ok: false, leads: [], truncated: false };
+  let claims = {};
+  try { claims = await getUserClaims(auth.currentUser); } catch { /* rules decide */ }
+  const desk = claims.desk || DESK_BY_ROLE[claims.role] || null;
+  const scope = desk ? [where('assignedTo', 'in', [desk, UNASSIGNED_DESK])] : [];
+  const out = [];
+  let last = null;
+  try {
+    while (out.length < max) {
+      const page = await getDocs(query(collection(db, 'leads'), ...scope, orderBy(documentId()), ...(last ? [startAfter(last)] : []), limit(500)));
+      page.docs.forEach((d) => out.push({ ...d.data(), id: d.id, _cloud: true }));
+      if (page.docs.length < 500) return { ok: true, leads: out, truncated: false };
+      last = page.docs[page.docs.length - 1];
+    }
+    return { ok: true, leads: out, truncated: true };
+  } catch (error) {
+    console.warn('Firebase loadAllLeadsForStats error:', error?.code || error);
+    return { ok: false, leads: out, truncated: true };
   }
 };
 

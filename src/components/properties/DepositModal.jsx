@@ -72,7 +72,6 @@ export default function DepositModal({
           propertyTitle: title,
           propertyPrice: property.price,
           temperature: 'hot',
-          score: 95,
           notes: `طلب حجز مبدئي للعقار ${code} — ${title} | وقت التواصل المفضل: ${timeLabel}${form.notes ? ' | ملاحظات: ' + form.notes : ''}`,
           details: { propertyId: property.id, preferredTime: form.preferredTime, notes: form.notes }
         })

@@ -42,10 +42,10 @@ export default function QuickViewModal({
 
   const imagesList = Array.isArray(property.images) && property.images.length > 0 
     ? property.images 
-    : [property.image || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80'];
+    : [property.image || '/no-photo.svg'];
 
   const currentImage = imgError
-    ? 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80'
+    ? '/no-photo.svg'
     : (imagesList[activeImageIdx] || imagesList[0]);
 
   const handleNextImage = (e) => {

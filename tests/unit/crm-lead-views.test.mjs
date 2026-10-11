@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { filterLeads, computeCrmAnalytics, sortLeads, duplicatesById, buildMergedLead, leadSourceKey, waitingMs, phoneKey, lostReasonCounts, parseMoney, localDayKey, isOverdue, isDueToday, isStale, isUnassigned, computeDashboardMetrics } from '../../src/utils/crmLeadViews.js';
+import { leadScore, filterLeads, computeCrmAnalytics, sortLeads, duplicatesById, buildMergedLead, leadSourceKey, waitingMs, phoneKey, lostReasonCounts, parseMoney, localDayKey, isOverdue, isDueToday, isStale, isUnassigned, computeDashboardMetrics } from '../../src/utils/crmLeadViews.js';
 
 const leads = [
-  { id: 1, name: 'Ahmed', phone: '01011111111', type: 'buyer', status: 'new', assignedTo: 'Sales Team A', temperature: 'hot', details: { area: 'east' }, score: 90 },
+  { id: 1, name: 'Ahmed', phone: '01011111111', type: 'buyer', status: 'new', assignedTo: 'Sales Team A', temperature: 'hot', details: { area: 'east' } },
   { id: 2, name: 'Mona', phone: '01022222222', type: 'seller', status: 'contacted', assignedTo: 'Sales Team B', temperature: 'cold', details: { area: 'kawthar' }, nextFollowUpAt: '2026-10-01T09:00:00Z' },
   { id: 3, name: 'Old', phone: '01033333333', type: 'buyer', status: 'closed', assignedTo: 'Unassigned', isArchived: true },
   { id: 4, name: 'Pool', phone: '01044444444', type: 'investor', assignedTo: 'Unassigned', tags: ['VIP'], notes: 'wants Clinic' }
@@ -17,7 +17,9 @@ test('archived leads only appear under "archived"', () => {
 
 test('stage, type, temperature and area filters', () => {
   assert.deepEqual(ids(filterLeads(leads, { leadFilter: 'new' })), [1, 4]); // no status counts as new
-  assert.deepEqual(ids(filterLeads(leads, { leadFilter: 'qualified' })), [1]);
+  // 'qualified' = computed score 60+ (negotiating 35 + reservation request 25 + phone 5)
+  const hotDeal = { id: 9, name: 'Q', phone: '010', status: 'negotiating', type: 'reservation_request' };
+  assert.deepEqual(ids(filterLeads([...leads, hotDeal], { leadFilter: 'qualified' })), [9]);
   assert.deepEqual(ids(filterLeads(leads, { leadFilter: 'due', today: '2026-10-02' })), [2]);
   assert.deepEqual(ids(filterLeads(leads, { leadFilter: 'seller' })), [2]);
   assert.deepEqual(ids(filterLeads(leads, { temperatureFilter: 'hot' })), [1]);
@@ -81,11 +83,10 @@ test('duplicates match the same number across formats, skipping archived leads',
   assert.deepEqual(ids(filterLeads(crm, { leadFilter: 'dupes', now: NOW })), ['a', 'b']);
 });
 
-test('merge keeps the oldest date, furthest stage, best score, all notes and tags', () => {
+test('merge keeps the oldest date, furthest stage, all notes and tags', () => {
   const m = buildMergedLead(crm[0], [crm[1]], '2026-10-08T12:00:00.000Z');
   assert.equal(m.createdAt, crm[1].createdAt);
   assert.equal(m.status, 'contacted');
-  assert.equal(m.score, 95);
   assert.deepEqual(m.tags, ['VIP']);
   assert.match(m.notes, /old note/);
   assert.equal(m.phone, '+20 101 234 5678');
@@ -101,7 +102,9 @@ test('source buckets, date range and sorting', () => {
   assert.deepEqual(ids(filterLeads(crm, { dateFilter: '7d', now: NOW })), ['a', 'c']);
   assert.deepEqual(ids(sortLeads(crm.slice(0, 3), 'oldest', NOW)), ['b', 'a', 'c']);
   assert.deepEqual(ids(sortLeads(crm.slice(0, 3), 'newest', NOW)), ['c', 'a', 'b']);
-  assert.deepEqual(ids(sortLeads(crm.slice(0, 3), 'score', NOW)), ['b', 'a', 'c']);
+  // score sort follows the computed score (highest first)
+  const byScore = sortLeads(crm.slice(0, 3), 'score', NOW).map((l) => leadScore(l, NOW).score);
+  assert.deepEqual(byScore, [...byScore].sort((x, y) => y - x));
   assert.deepEqual(ids(sortLeads(crm.slice(0, 3), 'waiting', NOW)), ['a', 'c', 'b']);
 });
 
