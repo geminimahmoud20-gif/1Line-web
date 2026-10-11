@@ -65,50 +65,58 @@ export default function PortalsPage({
     switch (portalType) {
       case 'buy':
         return {
-          badge: isAr ? 'مطابقة شخصية للمشترين' : 'Personal buyer matching',
+          breadcrumb: isAr ? 'طلب شراء عقار' : 'Buyer Request',
+          heroBadge: isAr ? 'مطابقة ذكية لطلبات الشراء' : 'Smart Buyer Matching',
           title: isAr ? 'صف العقار الذي تبحث عنه، ونعود إليك بما يطابقه' : 'Describe what you need — we come back with matches',
           subtitle: isAr ? 'في سوهاج أو القاهرة الكبرى: حدد الغرض والمنطقة والميزانية، ويرسل لك مستشارك قائمة مختصرة بعد مراجعة مستنداتها.' : 'In Sohag or Greater Cairo: set purpose, area and budget; your advisor sends a short list with documents reviewed.'
         };
       case 'sell':
       case 'valuation':
         return {
-          badge: isAr ? 'تقييم استرشادي خلال دقيقتين' : 'Indicative valuation in two minutes',
+          breadcrumb: isAr ? 'تقييم وعرض عقار' : 'Valuation & Listing',
+          heroBadge: isAr ? 'تقييم استرشادي خلال دقيقتين' : 'Indicative valuation in two minutes',
           title: isAr ? 'اعرف قيمة عقارك قبل أن تعرضه' : 'Know your property’s value before you list',
           subtitle: isAr ? 'احصل على نطاق سعري استرشادي لعقارك، ثم مراجعة ميدانية للمستندات وخطة عرض قبل أي تسويق.' : 'Get an indicative price range, then an on-site document review and a marketing plan before any listing.'
         };
       case 'investor':
         return {
-          badge: isAr ? 'مركز المستثمرين' : '1Line VIP Investors Club',
+          breadcrumb: isAr ? 'بوابة المستثمرين' : 'Investors Club',
+          heroBadge: isAr ? 'فرص استثمارية وحساب العائد' : 'VIP High-Yield Opportunities',
           title: isAr ? 'دراسة عائد مبدئية قبل أن تستثمر' : 'A preliminary yield study before you invest',
           subtitle: isAr ? 'أصول سكنية وتجارية وأراضٍ في سوهاج والقاهرة الكبرى، مع تقدير للعائد الإيجاري وسيناريوهات الخروج. الأرقام تقديرية وتختلف حسب الأصل والسوق.' : 'Residential, commercial and land assets with estimated rental yield and exit scenarios. Figures are estimates and vary by asset and market.'
         };
       case 'broker':
         return {
-          badge: isAr ? 'شراكة الوسطاء' : 'Broker partnership',
+          breadcrumb: isAr ? 'شبكة الوسطاء' : 'Broker Network',
+          heroBadge: isAr ? 'شراكات الوساطة المعتمدة' : 'Verified Partner Network',
           title: isAr ? 'انضم لشبكة شركاء 1Line العقارية' : 'Join 1Line Broker Partner Network',
           subtitle: isAr ? 'تعاون معنا على صفقات موثقة؛ أي أتعاب يُتفق عليها كتابياً قبل البدء.' : 'Work with us on verified deals; any fee is agreed in writing before we start.'
         };
       case 'demands':
         return {
-          badge: isAr ? 'طلبات المشترين' : 'Live Real Estate Market Demands',
+          breadcrumb: isAr ? 'طلبات المشترين النشطة' : 'Active Buyer Demands',
+          heroBadge: isAr ? 'قاعدة بيانات المشترين المحدثة فورياً' : 'Live Verified Buyers Stream',
           title: isAr ? 'طلبات المشترين: عندك عقار يطابق طلب؟' : 'Buyer requests: have a matching property?',
           subtitle: isAr ? 'إن كان لديك عقار يطابق أحد هذه الطلبات، اعرضه ليصل مباشرة للمشتري.' : 'Browse active cash buyers and match your property for fast closing.'
         };
       case 'referral':
         return {
-          badge: isAr ? 'برنامج المكافآت والإحالة العقارية' : 'Referral Rewards Program',
+          breadcrumb: isAr ? 'برنامج الإحالة والمكافآت' : 'Referral Program',
+          heroBadge: isAr ? 'مكافآت التوصية الرسمية' : 'Official Referral Rewards',
           title: isAr ? 'رشّح مالكاً أو مشترياً' : 'Refer a buyer or seller',
           subtitle: isAr ? 'لا ينشأ أي التزام مالي من الترشيح إلا باتفاق مكتوب وموقّع قبل البدء.' : 'A referral creates no financial obligation unless a written agreement is signed first.'
         };
       case 'special':
         return {
-          badge: isAr ? 'إدارة الطلبات والاستفسارات الخاصة' : 'Bespoke Inquiries & Special Demands',
+          breadcrumb: isAr ? 'الطلبات الخاصة' : 'Special Demands',
+          heroBadge: isAr ? 'إدارة الطلبات والاستفسارات الخاصة' : 'Bespoke Inquiries & Special Demands',
           title: isAr ? 'طلب عقاري بمواصفات استثنائية خاصة' : 'Custom Real Estate Request',
           subtitle: isAr ? 'هل تبحث عن مقر لفرنشايز، أرض مجمع مدارس، أو برج سكني؟ فريقنا متخصص في تلبية الطلبات الكبرى.' : 'Looking for land plots, school zones, or mega franchises? Our acquisition team delivers.'
         };
       default:
         return {
-          badge: isAr ? 'خدمات 1Line العقارية' : '1Line Real Estate Services',
+          breadcrumb: isAr ? 'البوابات العقارية' : 'Property Portals',
+          heroBadge: isAr ? 'خدمات 1Line العقارية' : '1Line Real Estate Services',
           title: isAr ? 'البوابات العقارية المتخصصة' : 'Specialized Property Portals',
           subtitle: ''
         };
@@ -125,12 +133,12 @@ export default function PortalsPage({
           <div className="portal-breadcrumbs">
             <Link to="/">{isAr ? 'الرئيسية' : 'Home'}</Link>
             {isAr ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
-            <span>{portalInfo.title}</span>
+            <span>{portalInfo.breadcrumb}</span>
           </div>
 
           <div className="portal-hero-badge">
             <Sparkles size={15} className="text-gold" />
-            <span>{portalInfo.badge}</span>
+            <span>{portalInfo.heroBadge}</span>
           </div>
 
           <h1 className="portal-hero-title">{portalInfo.title}</h1>

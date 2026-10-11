@@ -465,9 +465,9 @@ function AppContent() {
   };
 
   // Demands Match State
-  const [ownerSearch, setOwnerSearch] = useState('');
+  const [ownerSearch, setOwnerSearch] = useState({ propertyType: 'all', area: 'all' });
   const [isScanningMap, setIsScanningMap] = useState(false);
-  const [ownerMatchesFound, setOwnerMatchesFound] = useState([]);
+  const [ownerMatchesFound, setOwnerMatchesFound] = useState(null);
   const [scanningMessage, setScanningMessage] = useState('');
 
   return (
