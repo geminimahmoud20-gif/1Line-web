@@ -374,14 +374,9 @@ function AppContent() {
 
     const finishingDesc = data.finishingLabelAr ? ` | التشطيب: ${data.finishingLabelAr}` : '';
     const legalSummary = data.legalSummaryAr ? ` | المستندات: ${data.legalSummaryAr}` : '';
-    const priceParts = [];
-    if (data.estimatedAvg) {
-      priceParts.push(`التقدير الاسترشادي: ${Number(data.estimatedAvg).toLocaleString('en-US')} ج.م`);
-    }
-    if (data.askingPrice) {
-      priceParts.push(`السعر المطلوب من المالك: ${Number(data.askingPrice).toLocaleString('en-US')} ج.م`);
-    }
-    const priceDesc = priceParts.length > 0 ? ` | ${priceParts.join(' | ')}` : '';
+    const priceDesc = data.askingPrice 
+      ? ` | السعر المطلوب: ${Number(data.askingPrice).toLocaleString('en-US')} ج.م` 
+      : (data.estimatedAvg ? ` | التقدير الآلي: ${Number(data.estimatedAvg).toLocaleString('en-US')} ج.م` : '');
     const photosDesc = data.images && data.images.length > 0 ? ` | مرفق ${data.images.length} صور` : '';
     const propLabel = PROPERTY_TYPE_NAMES_AR[data.propertyType] || data.propertyType || 'عقار';
     const areaLabel = AREA_NAMES_AR[data.area] || data.area || 'سوهاج';
@@ -465,9 +460,9 @@ function AppContent() {
   };
 
   // Demands Match State
-  const [ownerSearch, setOwnerSearch] = useState({ propertyType: 'all', area: 'all' });
+  const [ownerSearch, setOwnerSearch] = useState('');
   const [isScanningMap, setIsScanningMap] = useState(false);
-  const [ownerMatchesFound, setOwnerMatchesFound] = useState(null);
+  const [ownerMatchesFound, setOwnerMatchesFound] = useState([]);
   const [scanningMessage, setScanningMessage] = useState('');
 
   return (

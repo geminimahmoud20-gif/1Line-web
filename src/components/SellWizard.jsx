@@ -17,14 +17,14 @@ const CAIRO_AREAS = [
   { id: 'cairo_other', ar: 'منطقة أخرى بالقاهرة الكبرى', en: 'Other Greater Cairo area' }
 ];
 
-// Default fallback benchmark pricing per sqm for all property classes in Sohag
+// Default fallback benchmark pricing per sqm
 const FALLBACK_BENCHMARK_PRICING = {
-  east: { base: 21500, commercialBase: 45000, officeBase: 28000, landBase: 30000, name_ar: 'شرق سوهاج (الجمهورية وسيتي)', name_en: 'East Sohag' },
-  new_sohag: { base: 17800, commercialBase: 38000, officeBase: 22000, landBase: 14500, name_ar: 'سوهاج الجديدة (الحي الأول والثاني)', name_en: 'New Sohag' },
-  corniche: { base: 31000, commercialBase: 70000, officeBase: 40000, landBase: 50000, name_ar: 'كورنيش النيل', name_en: 'Nile Corniche' },
-  thakafa: { base: 15200, commercialBase: 34000, officeBase: 20000, landBase: 22000, name_ar: 'منطقة الثقافة والمخبز الآلي', name_en: 'El Thakafa' },
-  center: { base: 18500, commercialBase: 42000, officeBase: 25000, landBase: 32000, name_ar: 'وسط البلد والجامعة', name_en: 'City Center' },
-  kawthar: { base: 12000, commercialBase: 24000, officeBase: 15000, landBase: 10500, name_ar: 'حي الكوثر', name_en: 'Al-Kawthar' }
+  east: { base: 21500, name_ar: 'شرق سوهاج (الجمهورية وسيتي)', name_en: 'East Sohag' },
+  new_sohag: { base: 17800, name_ar: 'سوهاج الجديدة (الحي الأول والثاني)', name_en: 'New Sohag' },
+  corniche: { base: 31000, name_ar: 'كورنيش النيل', name_en: 'Nile Corniche' },
+  thakafa: { base: 15200, name_ar: 'منطقة الثقافة والمخبز الآلي', name_en: 'El Thakafa' },
+  center: { base: 18500, name_ar: 'وسط البلد والجامعة', name_en: 'City Center' },
+  kawthar: { base: 12000, name_ar: 'حي الكوثر', name_en: 'Al-Kawthar' }
 };
 
 // Realistic granular legal title and licensing documents in Egypt & Sohag
@@ -140,21 +140,6 @@ export const formatArabicDocCount = (count) => {
   if (count === 2) return 'مستندان رسميان';
   if (count >= 3 && count <= 10) return `${count} مستندات رسمية`;
   return `${count} مستنداً رسمياً`;
-};
-
-// Human-readable Arabic currency words helper (تفقيط الأرقام باللغة العربية)
-export const formatArabicPriceSummary = (val) => {
-  if (!val || isNaN(val) || val <= 0) return '';
-  const num = Number(val);
-  if (num >= 1000000) {
-    const millions = (num / 1000000).toLocaleString('ar-EG', { maximumFractionDigits: 2 });
-    return `${millions} مليون جنيه مصري`;
-  }
-  if (num >= 1000) {
-    const thousands = (num / 1000).toLocaleString('ar-EG', { maximumFractionDigits: 0 });
-    return `${thousands} ألف جنيه مصري`;
-  }
-  return `${num.toLocaleString('ar-EG')} جنيه مصري`;
 };
 
 // Robust phone sanitizer that handles Arabic digits, copy-pasted + / 00, and prevents double country codes
@@ -324,36 +309,18 @@ export const SellWizard = ({
 
     let baseM2 = 0;
     let basis = null;
-    const districtFallback = FALLBACK_BENCHMARK_PRICING[areaKey] || FALLBACK_BENCHMARK_PRICING.east;
-
     if (comps.length >= 3) {
       baseM2 = median(comps);
       basis = 'comparables';
-    } else {
+    } else if (cls === 'residential') {
       const liveArea = districts.find(d => d.id === areaKey);
-      const resBase = liveArea?.avgPricePerMeter || districtFallback.base || 18000;
-
-      if (type === 'retail') {
-        baseM2 = districtFallback.commercialBase || Math.round(resBase * 2.0);
-        basis = 'commercial_index';
-      } else if (type === 'office') {
-        baseM2 = districtFallback.officeBase || Math.round(resBase * 1.3);
-        basis = 'office_index';
-      } else if (type === 'land') {
-        baseM2 = districtFallback.landBase || Math.round(resBase * 1.15);
-        basis = 'land_index';
-      } else if (type === 'villa') {
-        baseM2 = Math.round(resBase * 1.12);
-        basis = 'villa_index';
-      } else {
-        baseM2 = resBase;
-        basis = 'area';
-      }
+      baseM2 = liveArea?.avgPricePerMeter || FALLBACK_BENCHMARK_PRICING[areaKey]?.base || 0;
+      basis = baseM2 ? 'area' : null;
     }
 
     // Finishing only matters for built units, and only when the comparables are not already of mixed finish
     let finishMultiplier = 1.0;
-    if (cls !== 'land') {
+    if (cls !== 'land' && basis === 'area') {
       const currentFinishing = sellerAnswers.finishing || 'super_lux';
       const foundFinish = REAL_ESTATE_FINISHING_TYPES.find(f => f.id === currentFinishing);
       if (foundFinish) finishMultiplier = foundFinish.multiplier;
@@ -480,76 +447,13 @@ export const SellWizard = ({
   ];
 
   if (submittedRef) {
-    const areaName = districts.find(d => d.id === sellerAnswers.area)?.label_ar || FALLBACK_BENCHMARK_PRICING[sellerAnswers.area]?.name_ar || sellerAnswers.area || 'سوهاج';
-    const propTypeLabel = propertyTypes.find(t => t.id === sellerAnswers.propertyType)?.label_ar || 'عقار';
-
     return (
       <div className="smart-valuation-wizard-box">
-        {/* Confirmed Property & Price Summary Ticket */}
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.08) 0%, rgba(245, 158, 11, 0.02) 100%)',
-          border: '1.5px solid rgba(217, 119, 6, 0.35)',
-          borderRadius: '16px',
-          padding: '18px 22px',
-          marginBottom: '20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-            <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary, #0f172a)' }}>
-              📋 {isAr ? `ملخص العقار المسجل: ${propTypeLabel} (${areaName} - ${sellerAnswers.size} م²)` : `Registered Property: ${propTypeLabel}`}
-            </span>
-            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#16a34a', background: 'rgba(22, 163, 74, 0.1)', padding: '4px 12px', borderRadius: '14px' }}>
-              ✓ {isAr ? 'تم اعتماد التقييم والسعر المطلوب' : 'Valuation & Target Price Saved'}
-            </span>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '12px' }}>
-            {calculatedEstimate.avg > 0 && (
-              <div style={{ background: '#fff', padding: '12px 16px', borderRadius: '10px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-                <span style={{ fontSize: '0.8rem', color: '#64748b', display: 'block', marginBottom: '4px' }}>
-                  {isAr ? 'التقدير الاسترشادي المعتمد من المنصة' : 'Platform Indicative Valuation'}
-                </span>
-                <strong style={{ fontSize: '1.15rem', color: '#d97706', fontWeight: 900 }}>
-                  {calculatedEstimate.avg.toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}
-                </strong>
-                <span style={{ fontSize: '0.74rem', color: '#94a3b8', display: 'block', marginTop: '2px' }}>
-                  ({calculatedEstimate.sqmAvg.toLocaleString('en-US')} {isAr ? 'ج.م / م²' : 'EGP/sqm'})
-                </span>
-              </div>
-            )}
-
-            {sellerAnswers.askingPrice ? (
-              <div style={{ background: '#fff', padding: '12px 16px', borderRadius: '10px', border: '2px solid #10b981', boxShadow: '0 2px 6px rgba(16, 185, 129, 0.12)' }}>
-                <span style={{ fontSize: '0.8rem', color: '#065f46', display: 'block', marginBottom: '4px', fontWeight: 700 }}>
-                  {isAr ? '🎯 سعرك المطلوب المسجل (المستهدف للبيع)' : 'Your Registered Target Asking Price'}
-                </span>
-                <strong style={{ fontSize: '1.25rem', color: '#059669', fontWeight: 900 }}>
-                  {Number(sellerAnswers.askingPrice).toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}
-                </strong>
-                <span style={{ fontSize: '0.74rem', color: '#047857', display: 'block', marginTop: '2px', fontWeight: 600 }}>
-                  {formatArabicPriceSummary(sellerAnswers.askingPrice)}
-                </span>
-              </div>
-            ) : (
-              <div style={{ background: '#fff', padding: '12px 16px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                <span style={{ fontSize: '0.8rem', color: '#64748b', display: 'block', marginBottom: '4px' }}>
-                  {isAr ? 'السعر المطلوب' : 'Target Price'}
-                </span>
-                <span style={{ fontSize: '0.92rem', color: '#334155', fontWeight: 700 }}>
-                  {isAr ? 'اعتماد متوسط تقدير المنصة' : 'Platform Benchmark Adopted'}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-
         <SubmissionSuccess
           lang={lang}
           reference={submittedRef}
-          title_ar="استلمنا بيانات عقارك وسعرك المطلوب بنجاح"
-          title_en="We have received your property details & asking price"
+          title_ar="استلمنا بيانات عقارك"
+          title_en="We have your property details"
           steps={[
             { ar: 'يراجع مستشار التقييم البيانات ويتصل بك خلال يوم عمل.', en: 'A valuation advisor reviews your details and calls you within one business day.' },
             { ar: 'نحدد موعد معاينة لمراجعة المستندات والحالة الفعلية للعقار.', en: 'We schedule a visit to review documents and the actual condition.' },
@@ -745,62 +649,6 @@ export const SellWizard = ({
               </div>
             </div>
           </div>
-
-          {/* 🌟 Phase 1 Live Initial Valuation Ticker */}
-          {sellerAnswers.size && parseInt(sellerAnswers.size) >= 20 && (
-            <div style={{
-              marginTop: '16px',
-              padding: '14px 18px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.08) 0%, rgba(245, 158, 11, 0.02) 100%)',
-              border: '1.5px solid rgba(217, 119, 6, 0.35)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '6px'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-                <span style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-primary, #0f172a)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Sparkles size={16} color="#d97706" />
-                  <span>{isAr ? 'مؤشر التقدير السعري اللحظي الأولي:' : 'Initial Indicative Price Indicator:'}</span>
-                </span>
-                {calculatedEstimate.avg > 0 && !isCairo && (
-                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#d97706', background: '#fff', padding: '3px 10px', borderRadius: '20px', border: '1px solid rgba(217, 119, 6, 0.3)' }}>
-                    {isAr ? `متوسط المتر: ${calculatedEstimate.sqmAvg.toLocaleString('en-US')} ج.م / م²` : `${calculatedEstimate.sqmAvg.toLocaleString('en-US')} EGP/sqm`}
-                  </span>
-                )}
-              </div>
-
-              {isCairo ? (
-                <p style={{ margin: 0, fontSize: '0.82rem', color: '#64748b', lineHeight: 1.5 }}>
-                  {isAr 
-                    ? '📍 عقارات القاهرة الكبرى تخضع لتقييم مخصص دقيق وفق أسعار الكمبوند والحي، مع تدقيق سعرك المطلوب في الخطوة الأخيرة.' 
-                    : 'Greater Cairo units undergo custom benchmark valuation against local compound listings.'}
-                </p>
-              ) : calculatedEstimate.avg > 0 ? (
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', flexWrap: 'wrap', marginTop: '2px' }}>
-                    <span style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 600 }}>{isAr ? 'النطاق التقديري العادل:' : 'Range:'}</span>
-                    <strong style={{ fontSize: '1.18rem', color: 'var(--text-primary, #0f172a)', fontWeight: 900 }}>
-                      {calculatedEstimate.min.toLocaleString('en-US')}
-                    </strong>
-                    <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>{isAr ? 'إلى' : 'to'}</span>
-                    <strong style={{ fontSize: '1.18rem', color: '#d97706', fontWeight: 900 }}>
-                      {calculatedEstimate.max.toLocaleString('en-US')}
-                    </strong>
-                    <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#64748b' }}>{isAr ? 'ج.م كاش' : 'EGP'}</span>
-                    <span style={{ fontSize: '0.82rem', color: '#10b981', fontWeight: 700 }}>
-                      ({isAr ? `متوسط القيمة: ${calculatedEstimate.avg.toLocaleString('en-US')} ج.م` : `Avg: ${calculatedEstimate.avg.toLocaleString('en-US')}`})
-                    </span>
-                  </div>
-                  <p style={{ margin: '6px 0 0 0', fontSize: '0.78rem', color: '#64748b' }}>
-                    {isAr 
-                      ? '💡 هذا تقدير أولي للمنطقة. في الخطوتين التاليتين ستدقق حالة التشطيب والمستندات وتحدد سعرك المطلوب للبيع.' 
-                      : 'Initial estimate. In the next steps you will refine specs and set your target asking price.'}
-                  </p>
-                </div>
-              ) : null}
-            </div>
-          )}
 
           <div className="wizard-actions-bar">
             <button
@@ -1331,35 +1179,6 @@ export const SellWizard = ({
             )}
           </div>
 
-          {/* 🌟 Phase 2 Live Estimate Ticker */}
-          {calculatedEstimate.avg > 0 && !isCairo && (
-            <div style={{
-              marginTop: '16px',
-              padding: '12px 18px',
-              borderRadius: '10px',
-              background: 'rgba(16, 185, 129, 0.07)',
-              border: '1px solid rgba(16, 185, 129, 0.25)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '10px'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Sparkles size={16} color="#059669" />
-                <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#065f46' }}>
-                  {isAr ? 'التقدير السعري المحدث وفق مواصفاتك الحالية:' : 'Live Estimate Based on Specs:'}
-                </span>
-                <strong style={{ fontSize: '1.05rem', fontWeight: 900, color: '#059669' }}>
-                  {calculatedEstimate.avg.toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}
-                </strong>
-              </div>
-              <span style={{ fontSize: '0.78rem', color: '#047857', fontWeight: 600 }}>
-                {isAr ? '✨ الخطوة التالية: عرض الشهادة وتحديد سعرك المطلوب' : 'Next: Certificate & Target Asking Price'}
-              </span>
-            </div>
-          )}
-
           <div className="wizard-actions-bar space-between">
             <button
               type="button"
@@ -1385,332 +1204,55 @@ export const SellWizard = ({
       {currentPhase === 3 && (
         <div className="wizard-step-body animate-fadeIn">
           {/* Real-time Valuation Output Card */}
-          <div className="live-valuation-certificate-card" style={{
-            background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-            border: '2px solid rgba(217, 119, 6, 0.35)',
-            borderRadius: '16px',
-            padding: '24px',
-            boxShadow: '0 10px 25px -5px rgba(217, 119, 6, 0.08)',
-            marginBottom: '20px'
-          }}>
-            <div className="cert-header" style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '12px', marginBottom: '16px' }}>
-              <div className="cert-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(217, 119, 6, 0.1)', color: '#d97706', padding: '6px 14px', borderRadius: '20px', fontWeight: 800, fontSize: '0.92rem' }}>
-                <Sparkles size={16} />
-                <span>{isAr ? 'التقدير السعري الاسترشادي لعقارك' : 'Indicative Market Valuation'}</span>
+          <div className="live-valuation-certificate-card">
+            <div className="cert-header">
+              <div className="cert-badge">
+                <Sparkles size={16} className="text-gold" />
+                <span>{isAr ? 'تقدير سعري استرشادي' : 'Indicative price estimate'}</span>
               </div>
-              <span className="cert-date" style={{ fontSize: '0.82rem', color: '#64748b' }}>
-                {isAr ? 'محدث وفق مؤشرات صفقات سوهاج 2026' : 'Live 2026 Sohag Market Index'}
-              </span>
+              <span className="cert-date">{isAr ? 'تقدير آلي — ليس تقييماً رسمياً' : 'Automated — not a formal valuation'}</span>
             </div>
 
             {isCairo ? (
-              <div className="cert-price-range">
-                <span className="range-lbl">
-                  {isAr
-                    ? 'عقارات القاهرة الكبرى نقيّمها يدوياً بمقارنات دقيقة من نفس الكمبوند أو الحي. سجّل بياناتك وسعرك المطلوب وسيتواصل معك مستشار التقييم.'
-                    : 'Greater Cairo properties are valued manually against comparables in the same compound or district.'}
-                </span>
-              </div>
+            <div className="cert-price-range">
+              <span className="range-lbl">
+                {isAr
+                  ? 'عقارات القاهرة الكبرى نقيّمها يدوياً بمقارنات من نفس الكمبوند أو الحي. سجّل بياناتك ويتواصل معك مستشار التقييم.'
+                  : 'Greater Cairo properties are valued manually against comparables in the same compound or district. Leave your details and a valuation advisor will call.'}
+              </span>
+            </div>
+            ) : !calculatedEstimate.avg ? (
+            <div className="cert-price-range">
+              <span className="range-lbl">
+                {isAr
+                  ? (sellerAnswers.size
+                    ? 'مفيش عروض مشابهة كفاية عندنا في المنطقة دي نطلع منها رقم آلي، والمحلات والمكاتب والأراضي سعرها بيتحدد بالواجهة والنشاط. سجّل بياناتك ونقيّمه يدوياً بمقارنات حقيقية.'
+                    : 'اكتب المساحة عشان نقدر نطلع تقدير.')
+                  : (sellerAnswers.size
+                    ? 'Not enough similar listings here for an automatic figure; shops, offices and land depend on frontage and activity. Leave your details for a manual valuation.'
+                    : 'Enter the area to get an estimate.')}
+              </span>
+            </div>
             ) : (
-              <div>
-                <span style={{ fontSize: '0.92rem', color: '#475569', fontWeight: 800, display: 'block', textAlign: 'center', marginBottom: '6px' }}>
-                  {isAr ? '📊 بطاقة القيمة السوقية العادلة لعقارك (سوهاج 2026):' : 'Estimated Fair Market Value Range:'}
-                </span>
-
-                {/* 3 Valuation Benchmark Pillar Cards */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-                  gap: '12px',
-                  marginTop: '12px',
-                  marginBottom: '14px'
-                }}>
-                  {/* Pillar 1: Min (Fast Sale) */}
-                  <div style={{
-                    background: '#f8fafc',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '12px',
-                    padding: '14px 16px',
-                    textAlign: 'center'
-                  }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '4px' }}>
-                      {isAr ? 'الحد الأدنى العادل (بيع سريع)' : 'Market Low (Fast Closing)'}
-                    </span>
-                    <strong style={{ fontSize: '1.45rem', fontWeight: 900, color: 'var(--text-primary, #0f172a)' }}>
-                      {calculatedEstimate.min.toLocaleString('en-US')}
-                    </strong>
-                    <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b', display: 'block' }}>
-                      {isAr ? 'ج.م كاش' : 'EGP'}
-                    </span>
-                    <span style={{ fontSize: '0.74rem', color: '#94a3b8', display: 'block', marginTop: '4px' }}>
-                      ~{Math.round(calculatedEstimate.min / (parseInt(sellerAnswers.size) || 1)).toLocaleString('en-US')} {isAr ? 'ج.م / م²' : 'EGP/m²'}
-                    </span>
-                  </div>
-
-                  {/* Pillar 2: Fair Recommended Average (Highlighted) */}
-                  <div style={{
-                    background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.1) 0%, rgba(245, 158, 11, 0.04) 100%)',
-                    border: '2px solid #d97706',
-                    borderRadius: '12px',
-                    padding: '14px 16px',
-                    textAlign: 'center',
-                    boxShadow: '0 4px 12px rgba(217, 119, 6, 0.12)',
-                    position: 'relative'
-                  }}>
-                    <div style={{
-                      position: 'absolute',
-                      top: '-11px',
-                      right: '50%',
-                      transform: 'translateX(50%)',
-                      background: '#d97706',
-                      color: '#fff',
-                      fontSize: '0.72rem',
-                      fontWeight: 800,
-                      padding: '2px 10px',
-                      borderRadius: '20px',
-                      whiteSpace: 'nowrap'
-                    }}>
-                      ⭐ {isAr ? 'القيمة السوقية العادلة' : 'Fair Market Benchmark'}
-                    </div>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#b45309', display: 'block', marginBottom: '4px' }}>
-                      {isAr ? 'متوسط التقدير الموصى به' : 'Recommended Fair Value'}
-                    </span>
-                    <strong style={{ fontSize: '1.65rem', fontWeight: 900, color: '#b45309' }}>
-                      {calculatedEstimate.avg.toLocaleString('en-US')}
-                    </strong>
-                    <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#d97706', display: 'block' }}>
-                      {isAr ? 'ج.م كاش' : 'EGP'}
-                    </span>
-                    <span style={{ fontSize: '0.78rem', color: '#92400e', display: 'block', marginTop: '4px', fontWeight: 700 }}>
-                      {calculatedEstimate.sqmAvg.toLocaleString('en-US')} {isAr ? 'ج.م / م²' : 'EGP/m²'}
-                    </span>
-                  </div>
-
-                  {/* Pillar 3: Max (Premium Finish / Top Tier) */}
-                  <div style={{
-                    background: '#f8fafc',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '12px',
-                    padding: '14px 16px',
-                    textAlign: 'center'
-                  }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', display: 'block', marginBottom: '4px' }}>
-                      {isAr ? 'الحد الأعلى التقديري (مميز)' : 'Market High (Prime Finish)'}
-                    </span>
-                    <strong style={{ fontSize: '1.45rem', fontWeight: 900, color: '#0f172a' }}>
-                      {calculatedEstimate.max.toLocaleString('en-US')}
-                    </strong>
-                    <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b', display: 'block' }}>
-                      {isAr ? 'ج.م كاش' : 'EGP'}
-                    </span>
-                    <span style={{ fontSize: '0.74rem', color: '#94a3b8', display: 'block', marginTop: '4px' }}>
-                      ~{Math.round(calculatedEstimate.max / (parseInt(sellerAnswers.size) || 1)).toLocaleString('en-US')} {isAr ? 'ج.م / م²' : 'EGP/m²'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Visual Spectrum Gauge with Active Pin */}
-                {calculatedEstimate.max > calculatedEstimate.min && (
-                  <div style={{ marginTop: '8px', marginBottom: '16px', padding: '0 8px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '8px' }}>
-                      <span>{isAr ? 'سعر بيع كاش سريع' : 'Fast Cash'}</span>
-                      <span style={{ color: '#b45309' }}>{isAr ? 'نقطة التوازن العادل' : 'Equilibrium'}</span>
-                      <span>{isAr ? 'سعر أقصى تفاوضي' : 'Ceiling'}</span>
-                    </div>
-                    <div style={{
-                      position: 'relative',
-                      height: '8px',
-                      borderRadius: '4px',
-                      background: 'linear-gradient(90deg, #10b981 0%, #d97706 50%, #6366f1 100%)',
-                      margin: '14px 0 6px 0'
-                    }}>
-                      {/* Fixed Center Dot for Avg */}
-                      <div style={{
-                        position: 'absolute',
-                        top: '-4px',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        width: '16px',
-                        height: '16px',
-                        borderRadius: '50%',
-                        background: '#fff',
-                        border: '3px solid #d97706',
-                        boxShadow: '0 1px 4px rgba(0,0,0,0.2)'
-                      }} title={isAr ? 'متوسط السوق' : 'Market Avg'} />
-
-                      {/* Interactive Pin for Owner Asking Price */}
-                      {sellerAnswers.askingPrice > 0 && (
-                        <div style={{
-                          position: 'absolute',
-                          top: '-26px',
-                          left: `${Math.min(95, Math.max(5, ((sellerAnswers.askingPrice - calculatedEstimate.min) / (calculatedEstimate.max - calculatedEstimate.min || 1)) * 100))}%`,
-                          transform: 'translateX(-50%)',
-                          background: '#0f172a',
-                          color: '#fff',
-                          fontSize: '0.72rem',
-                          fontWeight: 800,
-                          padding: '2px 8px',
-                          borderRadius: '6px',
-                          whiteSpace: 'nowrap',
-                          boxShadow: '0 2px 5px rgba(0,0,0,0.25)',
-                          zIndex: 2
-                        }}>
-                          📍 {isAr ? 'سعرك المستهدف' : 'Your Price'}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+            <div className="cert-price-range">
+              <span className="range-lbl">{isAr ? 'نطاق السعر المتوقع لعقارك:' : 'Estimated price range:'}</span>
+              <div className="range-numbers">
+                <strong>{calculatedEstimate.min.toLocaleString('en-US')}</strong>
+                <span className="range-to">{isAr ? 'إلى' : 'to'}</span>
+                <strong>{calculatedEstimate.max.toLocaleString('en-US')}</strong>
+                <span className="range-curr">{isAr ? 'ج.م كاش' : 'EGP'}</span>
               </div>
+              <span className="sqm-rate-sub">
+                {isAr ? `متوسط سعر المتر المقدر: ${calculatedEstimate.sqmAvg.toLocaleString('en-US')} ج.م / م²` : `Est. ${calculatedEstimate.sqmAvg.toLocaleString('en-US')} EGP/sqm`}
+                {' — '}
+                {calculatedEstimate.basis === 'comparables'
+                  ? (isAr ? `محسوب من ${calculatedEstimate.sample} عرض مشابه في نفس المنطقة` : `from ${calculatedEstimate.sample} similar listings in this area`)
+                  : (isAr ? 'محسوب من متوسط سعر المتر اللي حدده فريق 1Line للمنطقة' : 'from the district average set by the 1Line team')}
+              </span>
+            </div>
             )}
 
-            {/* 🎯 Prominent Owner Asking Price Section */}
-            <div style={{
-              marginTop: '16px',
-              padding: '20px 22px',
-              borderRadius: '14px',
-              background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.08) 0%, rgba(245, 158, 11, 0.02) 100%)',
-              border: '2px solid rgba(217, 119, 6, 0.45)',
-              boxShadow: '0 2px 8px rgba(217, 119, 6, 0.06)'
-            }}>
-              <div style={{ marginBottom: '10px' }}>
-                <label htmlFor="owner-asking-price-input" style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-primary, #0f172a)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span>🎯 {isAr ? 'ما هو سعرك المطلوب لبيع عقارك؟ (السعر المستهدف)' : 'What is your target asking price?'}</span>
-                </label>
-                <p style={{ fontSize: '0.84rem', color: '#64748b', margin: '6px 0 0 0', lineHeight: 1.5 }}>
-                  {isAr
-                    ? 'بصفتك مالك العقار، لك كامل القرار في تحديد السعر الذي ترغب في تحقيقه. سنقوم بمطابقته فوراً مع شبكة المشترين الجادين وأصحاب الميزانيات المطابقة عبر المنصة.'
-                    : 'Enter your desired net asking price to match with verified active buyers across our network.'}
-                </p>
-              </div>
-
-              {/* 1-Click Quick Preset Buttons */}
-              {calculatedEstimate.avg > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
-                  <button
-                    type="button"
-                    onClick={() => setSellerAnswers(prev => ({ ...prev, askingPrice: calculatedEstimate.avg }))}
-                    style={{
-                      background: sellerAnswers.askingPrice === calculatedEstimate.avg ? '#d97706' : '#fff',
-                      border: '1.5px solid #d97706',
-                      color: sellerAnswers.askingPrice === calculatedEstimate.avg ? '#fff' : '#b45309',
-                      borderRadius: '8px',
-                      padding: '6px 12px',
-                      fontSize: '0.82rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-                    }}
-                  >
-                    ⚡ {isAr ? `اعتماد متوسط التقدير (${calculatedEstimate.avg.toLocaleString('en-US')} ج.م)` : `Use estimate (${calculatedEstimate.avg.toLocaleString('en-US')})`}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setSellerAnswers(prev => ({ ...prev, askingPrice: calculatedEstimate.min }))}
-                    style={{
-                      background: sellerAnswers.askingPrice === calculatedEstimate.min ? '#10b981' : '#fff',
-                      border: '1.5px solid #10b981',
-                      color: sellerAnswers.askingPrice === calculatedEstimate.min ? '#fff' : '#047857',
-                      borderRadius: '8px',
-                      padding: '6px 12px',
-                      fontSize: '0.82rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-                    }}
-                  >
-                    🚀 {isAr ? `بيع سريع كاش (${calculatedEstimate.min.toLocaleString('en-US')} ج.م)` : `Fast Cash (${calculatedEstimate.min.toLocaleString('en-US')})`}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setSellerAnswers(prev => ({ ...prev, askingPrice: calculatedEstimate.max }))}
-                    style={{
-                      background: sellerAnswers.askingPrice === calculatedEstimate.max ? '#6366f1' : '#fff',
-                      border: '1.5px solid #6366f1',
-                      color: sellerAnswers.askingPrice === calculatedEstimate.max ? '#fff' : '#4338ca',
-                      borderRadius: '8px',
-                      padding: '6px 12px',
-                      fontSize: '0.82rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-                    }}
-                  >
-                    💎 {isAr ? `سعر أقصى تفاوضي (${calculatedEstimate.max.toLocaleString('en-US')} ج.م)` : `Negotiation Ceiling (${calculatedEstimate.max.toLocaleString('en-US')})`}
-                  </button>
-                </div>
-              )}
-
-              {/* Input Field with Currency Badge */}
-              <div style={{ position: 'relative' }}>
-                <input
-                  id="owner-asking-price-input"
-                  type="number"
-                  min="100000"
-                  step="50000"
-                  placeholder={isAr ? `اكتب سعرك المطلوب هنا (مثال: ${calculatedEstimate.avg ? calculatedEstimate.avg.toLocaleString('en-US') : '2500000'})` : 'e.g. 2500000'}
-                  className="form-input-styled"
-                  style={{
-                    fontSize: '1.3rem',
-                    fontWeight: 800,
-                    padding: '12px 18px',
-                    borderRadius: '10px',
-                    border: '2px solid rgba(217, 119, 6, 0.5)',
-                    background: '#fff',
-                    color: 'var(--text-primary, #0f172a)',
-                    boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.04)'
-                  }}
-                  value={sellerAnswers.askingPrice || ''}
-                  onChange={(e) => setSellerAnswers({ ...sellerAnswers, askingPrice: e.target.value ? parseInt(e.target.value) : '' })}
-                />
-              </div>
-
-              {/* Formatted Number Display in Arabic */}
-              {sellerAnswers.askingPrice > 0 ? (
-                <div style={{ marginTop: '8px', fontSize: '0.85rem', color: '#1e293b', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span>💰</span>
-                  <span>{isAr ? 'القيمة المسجلة بالكلمات:' : 'Registered Amount:'}</span>
-                  <span style={{ color: '#059669', fontWeight: 800 }}>
-                    {Number(sellerAnswers.askingPrice).toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}
-                    {formatArabicPriceSummary(sellerAnswers.askingPrice) ? ` (${formatArabicPriceSummary(sellerAnswers.askingPrice)})` : ''}
-                  </span>
-                </div>
-              ) : (
-                <div style={{ marginTop: '8px', fontSize: '0.8rem', color: '#d97706', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <AlertCircle size={14} />
-                  <span>{isAr ? 'يرجى كتابة سعرك المطلوب في الخانة أو النقر على أحد الخيارات السريعة أعلاه لتحديد السعر المستهدف.' : 'Please enter your asking price or click one of the quick options above.'}</span>
-                </div>
-              )}
-
-              {/* Instant Comparison Feedback */}
-              {sellerAnswers.askingPrice > 0 && calculatedEstimate.avg > 0 && (
-                <div style={{ marginTop: '10px', fontSize: '0.84rem', fontWeight: 700, padding: '10px 14px', borderRadius: '8px', background: '#fff', border: '1px solid #e2e8f0' }}>
-                  {sellerAnswers.askingPrice > calculatedEstimate.max ? (
-                    <span style={{ color: '#d97706', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '1.1rem' }}>💡</span>
-                      <span>{isAr ? `سعرك المطلوب أعلى من متوسط التقدير بنحو ${Math.round(((sellerAnswers.askingPrice - calculatedEstimate.avg) / calculatedEstimate.avg) * 100)}% — سنبرز ميزات وتشطيب وواجهة عقارك لإقناع المشترين بأحقية السعر.` : 'Asking price is above market average — we will highlight premium features.'}</span>
-                    </span>
-                  ) : sellerAnswers.askingPrice < calculatedEstimate.min ? (
-                    <span style={{ color: '#059669', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '1.1rem' }}>🔥</span>
-                      <span>{isAr ? 'سعر منافس ومغرٍ جداً — سيحظى عقارك بأولوية كبرى للمطابقة الفورية مع المشترين الكاش والمستثمرين الجادين.' : 'Competitive attractive price — prioritised for immediate matching.'}</span>
-                    </span>
-                  ) : (
-                    <span style={{ color: '#16a34a', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '1.1rem' }}>✅</span>
-                      <span>{isAr ? 'سعرك متوازن ومثالي للمطابقة وسرعة إتمام الصفقة بالسعر العادل مع المشترين المسجلين.' : 'Fair balanced price aligned with market range for fast closing.'}</span>
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="cert-perks-row" style={{ marginTop: '16px' }}>
+            <div className="cert-perks-row">
               <div className="cert-perk"><CheckCircle2 size={15} className="text-success" /> <span>{isAr ? 'عرض أولي على المشترين المسجلين بطلبات مطابقة' : 'First shown to registered matching buyers'}</span></div>
               <div className="cert-perk"><CheckCircle2 size={15} className="text-success" /> <span>{isAr ? 'تصوير بروشور احترافي مجاناً' : 'Free Photo Brochure'}</span></div>
               <div className="cert-perk"><CheckCircle2 size={15} className="text-success" /> <span>{isAr ? 'معاينة مجانية للموقع' : 'Free on-site viewing'}</span></div>
@@ -1759,6 +1301,28 @@ export const SellWizard = ({
                 onChange={(e) => setSellerAnswers({ ...sellerAnswers, name: e.target.value })}
                 required
               />
+            </div>
+
+            <div className="form-group-block" style={{
+              background: 'rgba(217, 119, 6, 0.05)',
+              padding: '12px',
+              borderRadius: '10px',
+              border: '1px solid rgba(217, 119, 6, 0.2)'
+            }}>
+              <label style={{ fontWeight: 'bold', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>💰 {isAr ? 'السعر المطلوب من المالك (ج.م) — اختياري' : 'Owner Asking Price (EGP) — Optional'}</span>
+              </label>
+              <input
+                type="number"
+                min="0"
+                placeholder={isAr ? 'مثال: 2500000 (اتركه فارغاً للاكتفاء بتقدير المنصة)' : 'e.g. 2500000'}
+                className="form-input-styled"
+                value={sellerAnswers.askingPrice || ''}
+                onChange={(e) => setSellerAnswers({ ...sellerAnswers, askingPrice: e.target.value ? parseInt(e.target.value) : '' })}
+              />
+              <span style={{ fontSize: '0.78rem', color: '#64748b', display: 'block', marginTop: '4px' }}>
+                {isAr ? 'تحديد سعرك المطلوب يسرع مطابقة عقارك فوراً مع المشترين الجادين وأصحاب الميزانيات المناسبة.' : 'Setting your target price speeds up matching with qualified buyers.'}
+              </span>
             </div>
 
             <div className="form-group-block">
