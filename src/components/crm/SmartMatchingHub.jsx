@@ -56,42 +56,97 @@ export default function SmartMatchingHub({
       // The client's own amount only; no budget means the budget doesn't score either way
       const leadBudget = parseMoney(lead.budget) || parseMoney(details.budget) || parseMoney(details.investmentAmount);
 
+      // Desired size & rooms criteria
+      const leadWantedSize = parseMoney(lead.size) || parseMoney(details.size) || parseMoney(details.minSize);
+      const leadWantedRooms = parseInt(lead.rooms || details.rooms || details.bedrooms) || 0;
+
+      // Payment method preference
+      const leadPaymentRaw = (lead.paymentMethod || details.paymentMethod || details.paymentPlan || '').toLowerCase();
+      const prefersInstallments = leadPaymentRaw.includes('installment') || leadPaymentRaw.includes('قسط') || leadPaymentRaw.includes('تقسيط');
+      const prefersCash = leadPaymentRaw.includes('cash') || leadPaymentRaw.includes('كاش');
+
       liveProps.forEach(prop => {
         let score = 0;
         const reasons = [];
         const propArea = normalizeAreaKey(prop.areaKey);
 
-        // 1. Area match (35 pts) - Normalized comparison
+        // 1. Area match (25 pts) - Normalized comparison
         if (leadArea && (propArea === leadArea || leadArea === 'all' || propArea === 'all')) {
-          score += 35;
+          score += 25;
           reasons.push(isAr ? 'نفس المنطقة المستهدفة' : 'Area match');
         } else if (!rawLeadArea) {
-          score += 20;
+          score += 15;
         }
 
-        // 2. Property type match (30 pts)
+        // 2. Property type match (20 pts)
         if (leadType && (prop.type === leadType || prop.category === leadType)) {
-          score += 30;
+          score += 20;
           reasons.push(isAr ? 'نفس نوع العقار' : 'Type match');
         } else if (!leadType) {
-          score += 15;
+          score += 12;
         }
 
-        // 3. Budget match (35 pts); an unknown budget gets the same partial credit as an unknown area/type
+        // 3. Budget match (25 pts)
         if (!leadBudget) {
-          score += 15;
+          score += 12;
         } else if (prop.price) {
           const diffRatio = Math.abs(prop.price - leadBudget) / leadBudget;
           if (diffRatio <= 0.1) {
-            score += 35;
+            score += 25;
             reasons.push(isAr ? 'مطابق تماماً للميزانية' : 'Exact budget match');
           } else if (diffRatio <= 0.25) {
-            score += 25;
+            score += 18;
             reasons.push(isAr ? 'قريب جداً من الميزانية' : 'Close to budget');
           } else if (prop.price <= leadBudget) {
-            score += 30;
+            score += 22;
             reasons.push(isAr ? 'أقل من الميزانية المحددة' : 'Under budget');
           }
+        }
+
+        // 4. Size & Rooms Compatibility (15 pts)
+        const propSize = Number(prop.size) || 0;
+        const propRooms = Number(prop.bedrooms) || 0;
+
+        if (leadWantedSize && propSize) {
+          if (propSize >= leadWantedSize * 0.85 && propSize <= leadWantedSize * 1.35) {
+            score += 10;
+            reasons.push(isAr ? 'المساحة مطابقة للطلب' : 'Size match');
+          } else if (propSize < leadWantedSize * 0.7) {
+            // Significant size mismatch penalty
+            score = Math.max(0, score - 10);
+          } else {
+            score += 5;
+          }
+        } else {
+          score += 8; // Neutral if size unspecified
+        }
+
+        if (leadWantedRooms && propRooms) {
+          if (propRooms >= leadWantedRooms) {
+            score += 5;
+            reasons.push(isAr ? 'عدد الغرف كافٍ' : 'Rooms match');
+          }
+        } else {
+          score += 3;
+        }
+
+        // 5. Payment Plan Compatibility (15 pts)
+        const propHasInstallments = Boolean(prop.monthlyInstallment || prop.installmentYears || prop.downPayment);
+
+        if (prefersInstallments) {
+          if (propHasInstallments) {
+            score += 15;
+            reasons.push(isAr ? 'تسهيلات تقسيط متوافقة' : 'Installment plan match');
+          } else {
+            // Wants installment but property is strictly cash only
+            score = Math.max(0, score - 8);
+          }
+        } else if (prefersCash) {
+          score += 15;
+          reasons.push(isAr ? 'سداد كاش فوري' : 'Direct cash ready');
+        } else {
+          // Unspecified payment mode gets standard baseline
+          score += 10;
         }
 
         if (score >= minMatchScore) {
@@ -99,7 +154,7 @@ export default function SmartMatchingHub({
             id: `match-${lead.id}-${prop.id}`,
             lead,
             property: prop,
-            score,
+            score: Math.min(100, Math.round(score)),
             reasons,
             budgetDifference: leadBudget ? prop.price - leadBudget : null
           });

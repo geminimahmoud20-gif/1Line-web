@@ -51,12 +51,12 @@ export default function MortgageRoiCalculator({
     return `${formatted.primary} ${formatted.symbol}${formatted.approx ? ` (${formatted.approx})` : ''}`;
   };
 
-  // Egyptian Financing Programs Presets
+  // Egyptian Financing Programs Presets (Reflected on 2026 banking rates)
   const FINANCING_PROGRAMS = [
-    { id: 'dev_0', name_ar: 'تقسيط مباشر من المطور', name_en: 'Direct Developer 0%', rate: 0, desc_ar: 'سيناريو حسابي بدون فائدة', icon: Handshake },
-    { id: 'cbe_3', name_ar: 'مبادرة البنك المركزي (3%)', name_en: 'CBE 3% Initiative', rate: 3, desc_ar: 'بشروط دخل وسقف سعر للوحدة', icon: Landmark, restricted: true },
-    { id: 'cbe_8', name_ar: 'مبادرة التمويل العقاري (8%)', name_en: 'Mortgage 8% Initiative', rate: 8, desc_ar: 'بشروط دخل وسقف سعر للوحدة', icon: Landmark, restricted: true },
-    { id: 'bank_12', name_ar: 'مرابحة بنكية / تمويل تجاري (12%)', name_en: 'Islamic Murabaha / Bank 12%', rate: 12, desc_ar: 'تمويل سريع للوحدات الفاخرة', icon: Building2 },
+    { id: 'dev_0', name_ar: 'تقسيط مباشر من المالك / المطور (0% فائدة)', name_en: 'Direct Developer Plan 0%', rate: 0, desc_ar: 'سداد مباشر بدون وساطة بنكية أو فوائد تمويلية', icon: Handshake },
+    { id: 'bank_market', name_ar: 'تمويل عقاري بنكي حر (26% متناقصة)', name_en: 'Commercial Bank Mortgage (26%)', rate: 26, desc_ar: 'وفق أسعار الكوريدور المصرفية والبنك المركزي الحالية', icon: Building2 },
+    { id: 'islamic_murabaha', name_ar: 'مرابحة بنكية إسلامية (16% ربح سنوي)', name_en: 'Islamic Murabaha (16% Flat)', rate: 16, desc_ar: 'صيغة مرابحة إسلامية معتمدة بهامش ربح سنوي محدد', icon: Landmark },
+    { id: 'cbe_subsidized', name_ar: 'مبادرات الإسكان المدعومة (سقف سعر محدد)', name_en: 'CBE Subsidized Program', rate: 8, desc_ar: 'خاصة بمحدودي ومتوسطي الدخل ولها شروط دخل وسقف للوحدة', icon: Landmark, restricted: true },
   ];
 
   // Mortgage Calculations
@@ -704,8 +704,8 @@ export default function MortgageRoiCalculator({
                 <span style={{ color: '#ffca28', fontSize: '0.85rem' }}>ℹ️</span>
                 <span>
                   {isAr 
-                    ? 'النسبة تمثل صافي العائد الإيجاري (Net Yield) بعد خصم مخصص الصيانة والتشغيل السنوي. نسبة النمو الرأسمالي افتراض تختاره أنت وليست توقعاً مضموناً.' 
-                    : 'Reflects Net Rental Yield after deducting estimated annual maintenance. Capital appreciation is indicative based on historical Sohag transactions.'}
+                    ? 'النسبة تمثل صافي العائد الإيجاري (Net Yield) بعد خصم مخصص الصيانة والتشغيل السنوي. تخضع صفقات البيع لضريبة التصرفات العقارية الرسمية (2.5% على البائع طبقاً للقانون 91 لسنة 2005) ورسوم التسجيل والوساطة المعتادة.' 
+                    : 'Reflects Net Rental Yield after maintenance. Official property transactions in Egypt are subject to the 2.5% property transfer tax on the seller (Law 91/2005) plus standard registration & brokerage fees.'}
                 </span>
               </div>
 

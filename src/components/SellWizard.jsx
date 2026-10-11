@@ -7,6 +7,7 @@ import { useProperties } from '../context/PropertiesContext';
 import { liveListings, assetClass, median } from '../utils/marketStats';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
 import SubmissionSuccess from './common/SubmissionSuccess';
+import { uploadPropertyImage } from '../utils/imageUploadService';
 
 // Greater Cairo coverage: no automated benchmark yet, valued manually
 const CAIRO_AREAS = [
@@ -189,8 +190,9 @@ export const SellWizard = ({
   // Direct seller photo upload state & handlers
   const [uploadedPhotos, setUploadedPhotos] = useState(() => sellerAnswers.images || []);
   const [photoUploadError, setPhotoUploadError] = useState('');
+  const [isProcessingPhotos, setIsProcessingPhotos] = useState(false);
 
-  const handlePhotoFiles = (files) => {
+  const handlePhotoFiles = async (files) => {
     if (!files || files.length === 0) return;
     setPhotoUploadError('');
     const remainingSlots = 6 - uploadedPhotos.length;
@@ -199,28 +201,35 @@ export const SellWizard = ({
       return;
     }
     const toProcess = Array.from(files).slice(0, remainingSlots);
-    const newPhotos = [];
-    let processed = 0;
+    setIsProcessingPhotos(true);
 
-    toProcess.forEach((file) => {
-      if (file.size > 8 * 1024 * 1024) {
-        setPhotoUploadError(isAr ? 'حجم إحدى الصور يتجاوز 8 ميجابايت' : 'An image exceeds 8MB');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        newPhotos.push(e.target.result);
-        processed++;
-        if (processed === toProcess.length) {
-          setUploadedPhotos((prev) => {
-            const updated = [...prev, ...newPhotos];
-            setSellerAnswers((sa) => ({ ...sa, images: updated }));
-            return updated;
-          });
+    try {
+      const newUrls = [];
+      for (const file of toProcess) {
+        if (file.size > 15 * 1024 * 1024) {
+          setPhotoUploadError(isAr ? 'حجم إحدى الصور يتجاوز 15 ميجابايت' : 'An image exceeds 15MB');
+          continue;
         }
-      };
-      reader.readAsDataURL(file);
-    });
+        // Compresses image to ~80-150KB WebP/JPEG + uploads to cloud storage when online
+        const result = await uploadPropertyImage(file, `seller-${Date.now()}`);
+        if (result?.url) {
+          newUrls.push(result.url);
+        }
+      }
+
+      if (newUrls.length > 0) {
+        setUploadedPhotos((prev) => {
+          const updated = [...prev, ...newUrls];
+          setSellerAnswers((sa) => ({ ...sa, images: updated }));
+          return updated;
+        });
+      }
+    } catch (err) {
+      console.error('Error compressing/uploading photos:', err);
+      setPhotoUploadError(isAr ? 'حدث خطأ أثناء معالجة الصور، يرجى المحاولة مرة أخرى' : 'Failed to process photos');
+    } finally {
+      setIsProcessingPhotos(false);
+    }
   };
 
   const handleRemovePhoto = (index) => {
@@ -1284,23 +1293,41 @@ export const SellWizard = ({
                   style={{ display: 'none' }}
                   onChange={(e) => handlePhotoFiles(e.target.files)}
                 />
-                <label htmlFor="sell-wizard-photos" style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '8px 16px',
-                  background: '#fff',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '0.84rem',
-                  fontWeight: 600,
-                  color: 'var(--primary, #0f172a)',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-                }}>
-                  <Upload size={16} />
-                  <span>{isAr ? 'اختيار صور من الهاتف أو الكمبيوتر' : 'Choose photos from device'}</span>
-                </label>
+                {isProcessingPhotos ? (
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 16px',
+                    background: '#f8fafc',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '8px',
+                    fontSize: '0.84rem',
+                    fontWeight: 700,
+                    color: '#d97706'
+                  }}>
+                    <Sparkles size={16} />
+                    <span>{isAr ? 'جاري ضغط ومعالجة الصور...' : 'Compressing photos...'}</span>
+                  </div>
+                ) : (
+                  <label htmlFor="sell-wizard-photos" style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 16px',
+                    background: '#fff',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '0.84rem',
+                    fontWeight: 600,
+                    color: 'var(--primary, #0f172a)',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                  }}>
+                    <Upload size={16} />
+                    <span>{isAr ? 'اختيار صور من الهاتف أو الكمبيوتر' : 'Choose photos from device'}</span>
+                  </label>
+                )}
               </div>
             )}
 
