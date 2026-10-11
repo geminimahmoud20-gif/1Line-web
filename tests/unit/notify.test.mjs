@@ -53,3 +53,18 @@ test('sender config parsing and partial failures', async () => {
   const cloud = calls.find((c) => c.url.includes('graph.facebook.com'));
   assert.ok(!JSON.parse(cloud.opts.body).template.components[0].parameters[0].text.includes('\n'));
 });
+
+test('the alert is titled by what the lead asks for, with the listing and requested visit', () => {
+  const viewing = { name: 'منى', type: 'viewing_request', propertyTitle: 'شقة 150م', propertyId: 'p-120', date: '2026-10-12', slot: 'evening', tourType: 'field', phone: '01011112222' };
+  const text = buildMessage('leads', 'L2', viewing, 'https://site');
+  assert.match(text.split('\n')[0], /^👁 طلب معاينة — 1Line$/);
+  assert.match(text, /العقار: شقة 150م \(كود P-120\)/);
+  assert.match(text, /الميعاد المطلوب: 2026-10-12 مساءً \(ميدانية\)/);
+  assert.ok(!text.includes('viewing_request') && !text.includes('01011112222'));
+  const reserve = buildMessage('leads', 'L3', { name: 'سامي', type: 'reservation_request', propertyId: 'x9', returningClient: true }, 'https://site');
+  assert.match(reserve.split('\n')[0], /^🔒 طلب حجز/);
+  assert.match(reserve, /عميل راجع/);
+  // Older account sign-ups were saved as buyers with source client_account
+  assert.match(buildMessage('leads', 'L4', { name: 'علي', type: 'buyer', source: 'client_account' }, 'https://site').split('\n')[0], /حساب جديد/);
+  assert.match(buildMessage('leads', 'L5', { name: 'علي', type: 'buyer' }, 'https://site'), /🔎 شراء/);
+});

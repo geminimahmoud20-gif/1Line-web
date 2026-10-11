@@ -62,6 +62,17 @@ export default function CrmPage({
   // Staff edit the catalog: switch from the cached public copy to the live listener
   useEffect(() => { if (currentUser) requestLiveCatalog(); }, [currentUser, requestLiveCatalog]);
   const [activeTab, setActiveTab] = useState('dashboard');
+  // A bell item or desktop alert asked to show one lead: go to Leads, the panel opens it
+  const [focusLeadId, setFocusLeadId] = useState(null);
+  useEffect(() => {
+    const onOpen = (e) => {
+      if (!e.detail?.id) return;
+      setActiveTab('leads');
+      setFocusLeadId(e.detail.id);
+    };
+    window.addEventListener('oneline_open_lead', onOpen);
+    return () => window.removeEventListener('oneline_open_lead', onOpen);
+  }, []);
   // "Open this modal" requests from the top bar, command palette and dashboard shortcuts.
   // The target panel opens it once (useOpenRequest); leaving that tab drops the request.
   const [openRequest, setOpenRequest] = useState(null);
@@ -798,6 +809,8 @@ export default function CrmPage({
                     onRoleChange={setSelectedRole}
                     adminTab={adminTab}
                     onSwitchTab={setActiveTab}
+                    focusLeadId={focusLeadId}
+                    onFocusHandled={() => setFocusLeadId(null)}
                     handleCrmLogout={onLogout || (() => setCrmAuthenticated(false))}
                     triggerToast={triggerToast}
                     properties={properties}
@@ -834,6 +847,8 @@ export default function CrmPage({
               onRoleChange={setSelectedRole}
               adminTab={activeTab}
               onSwitchTab={setActiveTab}
+              focusLeadId={focusLeadId}
+              onFocusHandled={() => setFocusLeadId(null)}
               handleCrmLogout={onLogout || (() => setCrmAuthenticated(false))}
               triggerToast={triggerToast}
               properties={properties}

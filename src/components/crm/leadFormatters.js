@@ -74,6 +74,7 @@ export function makeLeadFormatters(isAr, t = {}) {
         investor: 'مستثمر VIP',
         broker: 'وسيط عقاري',
         callback_request: 'طلب اتصال',
+        client_account: 'حساب على الموقع',
         express_buyer: 'طلب شراء سريع',
         request: 'استفسار عام'
       };

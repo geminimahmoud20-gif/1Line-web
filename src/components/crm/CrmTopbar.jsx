@@ -2,7 +2,8 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { Menu, Search, X, Plus, ChevronDown, Bell, ShieldCheck, Lock, Rocket, Globe, LogOut, Users, Building, Zap, Sparkles, CheckCircle2, AlertTriangle, ArrowRight, ArrowLeft } from 'lucide-react';
 import { getMergedCrmRoles } from './crmRoles';
 import { getActiveAccessConfig, subscribeToAccessConfig } from '../../services/accessConfig';
-import { desktopAlertsSupported, desktopAlertsEnabled, enableDesktopAlerts, describeDownload } from '../../utils/newLeadAlerts';
+import { desktopAlertsSupported, desktopAlertsEnabled, enableDesktopAlerts, describeDownload, openLeadInCrm } from '../../utils/newLeadAlerts';
+import { describeRequest } from '../../utils/leadRequests';
 
 export default function CrmTopbar({
   clientDownloads = [],
@@ -55,7 +56,22 @@ export default function CrmTopbar({
   }, []);
 
   const pendingDemands = useMemo(() => demands.filter(d => d.status === 'pending'), [demands]);
-  const recentLeads = useMemo(() => leads.slice(0, 3), [leads]);
+  // Requests that arrived since the bell was last opened on this browser (first visit: last 24 h)
+  const leadMs = (l) => {
+    const v = l.createdAt || l.timestamp;
+    if (typeof v?.toMillis === 'function') return v.toMillis();
+    const t = Date.parse(v || '');
+    return Number.isNaN(t) ? 0 : t;
+  };
+  const [leadsSeenAt, setLeadsSeenAt] = useState(() => {
+    try { return Number(localStorage.getItem('oneline_crm_leads_seen_at')) || Date.now() - 24 * 60 * 60 * 1000; } catch { return 0; }
+  });
+  const unseenLeads = useMemo(
+    () => leads.filter((l) => !l.isArchived && leadMs(l) > leadsSeenAt).sort((a, b) => leadMs(b) - leadMs(a)),
+    [leads, leadsSeenAt]
+  );
+  // What the open menu lists: the unseen requests at the moment it was opened
+  const [bellLeads, setBellLeads] = useState([]);
   // Downloads since the bell was last opened count towards the badge (remembered on this browser)
   const [downloadsSeenAt, setDownloadsSeenAt] = useState(() => {
     try { return Number(localStorage.getItem('oneline_crm_downloads_seen_at')) || 0; } catch { return 0; }
@@ -67,9 +83,14 @@ export default function CrmTopbar({
   const markDownloadsSeen = () => {
     const now = Date.now();
     setDownloadsSeenAt(now);
-    try { localStorage.setItem('oneline_crm_downloads_seen_at', String(now)); } catch { /* not remembered */ }
+    setBellLeads(unseenLeads.slice(0, 12));
+    setLeadsSeenAt(now);
+    try {
+      localStorage.setItem('oneline_crm_downloads_seen_at', String(now));
+      localStorage.setItem('oneline_crm_leads_seen_at', String(now));
+    } catch { /* not remembered */ }
   };
-  const totalNotifications = pendingDemands.length + (recentLeads.length > 0 ? 1 : 0) + recentDownloads.length;
+  const totalNotifications = pendingDemands.length + unseenLeads.length + recentDownloads.length;
 
   // Dynamic breadcrumb labels
   const tabTitles = {
@@ -496,7 +517,7 @@ export default function CrmTopbar({
             title={isAr ? 'الإشعارات والتنبيهات' : 'Notifications'}
           >
             <Bell size={16} />
-            {totalNotifications > 0 && <span className="crm-notif-badge" />}
+            {totalNotifications > 0 && <span className="crm-notif-badge" aria-label={isAr ? `${totalNotifications} تنبيه جديد` : `${totalNotifications} new`} />}
           </button>
 
           {showNotifMenu && (
@@ -541,6 +562,26 @@ export default function CrmTopbar({
                             <span style={{ direction: 'ltr', unicodeBidi: 'isolate', display: 'inline-block' }}>{d.clientPhone || d.clientEmail || ''}</span>
                             {d.createdAt?.toDate ? ` · ${d.createdAt.toDate().toLocaleString(isAr ? 'ar-EG-u-nu-latn' : 'en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : ''}
                           </small>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {bellLeads.length > 0 && (
+                  <div style={{ padding: '8px 10px', background: 'var(--crm-subtle)', border: '1px solid var(--crm-line)', borderRadius: '8px' }}>
+                    <div style={{ fontWeight: 'bold', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-ink)', marginBottom: '4px' }}>
+                      {isAr ? `🆕 طلبات جديدة (${bellLeads.length})` : `🆕 New requests (${bellLeads.length})`}
+                    </div>
+                    <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '4px', maxHeight: '240px', overflowY: 'auto' }}>
+                      {bellLeads.map((l) => (
+                        <li key={l.id}>
+                          <button
+                            type="button"
+                            onClick={() => { openLeadInCrm(l.id); setShowNotifMenu(false); }}
+                            style={{ width: '100%', textAlign: 'start', background: 'transparent', border: 'none', padding: '4px 2px', cursor: 'pointer', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-ink)', lineHeight: 1.5 }}
+                          >
+                            {describeRequest(l, isAr)}
+                          </button>
                         </li>
                       ))}
                     </ul>

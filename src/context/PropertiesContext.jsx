@@ -440,8 +440,13 @@ export function PropertiesProvider({ children }) {
         (l) => normalizePhoneNumber(l.phone || l.whatsapp) === incomingPhone
       );
 
-      if (existingIndex !== -1 && incomingPhone) {
-        const existing = prev[existingIndex];
+      // Staff adding a client the CRM already holds (a cloud lead) → one record, updated.
+      // A visitor's own earlier request on this device → a new record of its own: its own type,
+      // source and note, flagged as a returning client (the rules don't let visitors update a
+      // lead anyway, so a merge would only re-file the old request under the new one's id).
+      const previous = existingIndex !== -1 && incomingPhone ? prev[existingIndex] : null;
+      if (previous && previous._cloud) {
+        const existing = previous;
         const newLog = {
           timestamp: new Date().toISOString(),
           action: `تسجيل اهتمام إضافي: طلب ${standardizedData.propertyType || standardizedData.type || 'جديد'}`
@@ -521,7 +526,8 @@ export function PropertiesProvider({ children }) {
           marketingAttribution: attribution,
           utmSource: attribution?.source || 'مباشر',
           utmCampaign: attribution?.campaign || 'direct',
-          ...standardizedData
+          ...standardizedData,
+          ...(previous ? { returningClient: true, previousLeadId: String(previous.id), previousRequest: String(previous.type || '') } : {})
         };
 
         // 🤖 Automated Lead Routing & Round-Robin Load Balance

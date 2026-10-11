@@ -38,6 +38,7 @@ import { filterLeads, sortLeads, duplicatesById, buildMergedLead } from '../util
 import { formatWhatsAppPhone } from '../utils/matchingEngine';
 import useFullLeadStats from '../hooks/useFullLeadStats';
 import { useProperties } from '../context/PropertiesContext';
+import { sortByRequestedVisit } from '../utils/leadRequests';
 
 export const CrmAdminPanel = ({
   lang = 'ar',
@@ -65,6 +66,8 @@ export const CrmAdminPanel = ({
   onSwitchToProjects,
   adminTab: propAdminTab,
   onSwitchTab,
+  focusLeadId = null,
+  onFocusHandled,
   activeRole: propActiveRole,
   userPerms = null,
   userDesk = ''
@@ -133,6 +136,16 @@ export const CrmAdminPanel = ({
   const [viewingProfileLead, setViewingProfileLead] = useState(null);
   const [selectedLeadIds, setSelectedLeadIds] = useState([]);
   const [quickDrawerLead, setQuickDrawerLead] = useState(null);
+  // Opened from the bell or a desktop alert (CrmPage passes the id once)
+  useEffect(() => {
+    if (!focusLeadId) return;
+    const lead = leads.find((l) => String(l.id) === String(focusLeadId));
+    if (lead) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- a one-off request from outside, handled once
+      setQuickDrawerLead(lead);
+      if (onFocusHandled) onFocusHandled();
+    }
+  }, [focusLeadId, leads, onFocusHandled]);
 
   // AI Copywriter & Contract Studio Modal States
   const [showAICopywriter, setShowAICopywriter] = useState(false);
@@ -561,10 +574,14 @@ export const CrmAdminPanel = ({
 
   // Filtered Leads list with Multi-Dimensional Search & Workflow Stages (Memoized)
   const duplicateIds = useMemo(() => duplicatesById(leads), [leads]);
-  const filteredLeads = useMemo(() => sortLeads(filterLeads(leads, {
-    myDealsOnly, activeRole, agentName: currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter,
-    sourceFilter, dateFilter, searchQuery, duplicateIds
-  }), leadSort), [leads, myDealsOnly, activeRole, currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter, sourceFilter, dateFilter, searchQuery, duplicateIds, leadSort]);
+  const filteredLeads = useMemo(() => {
+    const list = sortLeads(filterLeads(leads, {
+      myDealsOnly, activeRole, agentName: currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter,
+      sourceFilter, dateFilter, searchQuery, duplicateIds
+    }), leadSort);
+    // Viewing requests read best in visit order: today, tomorrow, later; past and undated last
+    return leadFilter === 'viewing_request' ? sortByRequestedVisit(list) : list;
+  }, [leads, myDealsOnly, activeRole, currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter, sourceFilter, dateFilter, searchQuery, duplicateIds, leadSort]);
 
   // Fold duplicate leads into the kept one, then delete the others (delete is admin-only in the rules)
   const handleMergeLeads = async (keepId, otherIds) => {

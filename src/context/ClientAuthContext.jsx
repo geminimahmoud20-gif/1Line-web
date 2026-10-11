@@ -264,7 +264,8 @@ export function ClientAuthProvider({
           whatsapp: verifiedAccount.whatsapp,
           phone: verifiedAccount.whatsapp,
           source: 'client_account',
-          type: 'buyer',
+          // An account is not a purchase request yet: its own kind, kept out of buyer counts and matching
+          type: 'client_account',
           notes: `سجّل حساب عميل على الموقع (المفضلة والمقارنات). الرقم لسه متأكدش: لو وصلت رسالة واتساب فيها الكود ${verifiedAccount.verificationToken} من نفس الرقم يبقى الرقم صحيح. (${verifiedAccount.countryFlag} ${verifiedAccount.country})`
         }));
       } catch (err) {

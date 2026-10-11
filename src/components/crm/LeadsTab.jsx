@@ -11,6 +11,7 @@ import MergeLeadsModal from './MergeLeadsModal';
 import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, RESPONSE_SLA_MS, isOverdue, isUnassigned, isStale, localDayKey } from '../../utils/crmLeadViews';
 import { useProperties } from '../../context/PropertiesContext';
 import LeadScorePill from './LeadScorePill';
+import { leadKind, kindInfo, requestedVisit } from '../../utils/leadRequests';
 
 export default function LeadsTab({
   activeRole,
@@ -84,6 +85,11 @@ export default function LeadsTab({
       overdue: open.filter((l) => isOverdue(l, localDayKey(now))).length,
       unassigned: open.filter(isUnassigned).length,
       stale: open.filter((l) => isStale(l, now)).length,
+      // Open requests of each kind not yet handled (still "new")
+      reservations: open.filter((l) => leadKind(l) === 'reservation_request' && (!l.status || l.status === 'new')).length,
+      viewings: open.filter((l) => leadKind(l) === 'viewing_request' && (!l.status || l.status === 'new')).length,
+      accounts: open.filter((l) => leadKind(l) === 'client_account' && (!l.status || l.status === 'new')).length,
+      sellers: open.filter((l) => leadKind(l) === 'seller' && (!l.status || l.status === 'new')).length,
       lost: leads.filter((l) => !l.isArchived && l.status === 'lost').length,
       archived: leads.filter((l) => l.isArchived).length
     };
@@ -221,6 +227,23 @@ export default function LeadsTab({
           <button className={`table-filter-btn ${leadFilter === 'new' ? 'active' : ''}`} onClick={() => setLeadFilter('new')}>
             ✨ {isAr ? 'عملاء جدد' : 'New Leads'} ({counts.fresh})
           </button>
+          {/* What clients asked for; the count is requests nobody has picked up yet */}
+          {[
+            ['reservation_request', counts.reservations],
+            ['viewing_request', counts.viewings],
+            ['seller', counts.sellers],
+            ['client_account', counts.accounts]
+          ].map(([kind, pending]) => (
+            <button
+              key={kind}
+              className={`table-filter-btn ${leadFilter === kind ? 'active' : ''}`}
+              onClick={() => setLeadFilter(kind)}
+              title={isAr ? 'العدد = اللي لسه محدش اشتغل عليه' : 'Count = not picked up yet'}
+              style={{ fontWeight: pending > 0 ? 800 : undefined, color: pending > 0 && leadFilter !== kind && kind !== 'client_account' ? 'var(--crm-danger)' : undefined }}
+            >
+              {kindInfo(kind).icon} {isAr ? kindInfo(kind).plural_ar : kindInfo(kind).en}{pending > 0 ? ` (${pending})` : ''}
+            </button>
+          ))}
           <button
             className={`table-filter-btn ${leadFilter === 'awaiting' ? 'active' : ''}`}
             onClick={() => setLeadFilter('awaiting')}
@@ -252,9 +275,6 @@ export default function LeadsTab({
           </button>
           <button className={`table-filter-btn ${leadFilter === 'buyer' ? 'active' : ''}`} onClick={() => setLeadFilter('buyer')}>
             {isAr ? 'طلبات شراء' : 'Buyers'}
-          </button>
-          <button className={`table-filter-btn ${leadFilter === 'seller' ? 'active' : ''}`} onClick={() => setLeadFilter('seller')}>
-            {isAr ? 'عروض بيع' : 'Sellers'}
           </button>
           <button className={`table-filter-btn ${leadFilter === 'investor' ? 'active' : ''}`} onClick={() => setLeadFilter('investor')}>
             💎 {isAr ? 'مستثمرون VIP' : 'Investors'}
@@ -524,6 +544,23 @@ export default function LeadsTab({
                         >
                           {l.name?.trim() || <span className="crm-empty-value">{isAr ? 'عميل بدون اسم' : 'Unnamed lead'}</span>}
                         </button>
+                        {(() => {
+                          const kind = leadKind(l);
+                          if (!['reservation_request', 'viewing_request', 'seller', 'client_account'].includes(kind)) return null;
+                          const visit = requestedVisit(l);
+                          const soon = visit && visit.dayDiff !== null && visit.dayDiff >= 0 && visit.dayDiff <= 1;
+                          return (
+                            <span
+                              title={l.propertyTitle ? `${l.propertyTitle}${l.propertyId ? ` (${String(l.propertyId).toUpperCase()})` : ''}` : undefined}
+                              style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', whiteSpace: 'nowrap', background: soon ? 'var(--crm-danger-soft, rgba(239,68,68,0.12))' : 'var(--crm-subtle)', color: soon ? 'var(--crm-danger)' : 'var(--crm-body)' }}
+                            >
+                              {kindInfo(kind).icon} {isAr ? kindInfo(kind).ar : kindInfo(kind).en}
+                              {visit ? ` · ${visit.video ? (isAr ? 'فيديو ' : 'video ') : ''}${visit.label}` : ''}
+                              {l.propertyId ? ` · ${String(l.propertyId).toUpperCase()}` : ''}
+                              {l.returningClient ? (isAr ? ' · راجع' : ' · returning') : ''}
+                            </span>
+                          );
+                        })()}
                         {l.cityOrExpat && l.cityOrExpat !== 'سوهاج' && (
                           <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--cyan)', background: 'var(--cyan-bg)', padding: '1px 5px', borderRadius: '4px' }}>
                             ✈️ {l.cityOrExpat}

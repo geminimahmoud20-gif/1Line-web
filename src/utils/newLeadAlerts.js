@@ -6,6 +6,7 @@
 // =============================================================
 
 import { playNotificationChime } from './notificationHub';
+import { leadKind, kindInfo, describeRequest } from './leadRequests.js';
 
 const ALERT_WINDOW_MS = 10 * 60 * 1000;
 const seen = new Set();
@@ -44,18 +45,27 @@ export function announceNewLeads(leads, { isAr = true, toast } = {}) {
   if (fresh.length === 0) return;
 
   playNotificationChime();
+  // Most urgent first: a reservation, then a viewing, then the rest
+  const urgency = { reservation_request: 0, viewing_request: 1 };
+  fresh.sort((a, b) => (urgency[leadKind(a)] ?? 9) - (urgency[leadKind(b)] ?? 9));
   const first = fresh[0];
-  const name = String(first.name || (isAr ? 'عميل' : 'Lead')).slice(0, 60);
+  const info = kindInfo(leadKind(first));
   const text = fresh.length === 1
-    ? (isAr ? `🔔 عميل جديد: ${name}` : `🔔 New lead: ${name}`)
-    : (isAr ? `🔔 ${fresh.length} عملاء جدد (آخرهم ${name})` : `🔔 ${fresh.length} new leads (latest ${name})`);
+    ? describeRequest(first, isAr)
+    : `${describeRequest(first, isAr)} ${isAr ? `(+${fresh.length - 1} طلبات تانية)` : `(+${fresh.length - 1} more)`}`;
   if (typeof toast === 'function') toast(text, 'success');
   if (desktopAlertsEnabled()) {
     try {
-      const n = new window.Notification(isAr ? 'عميل جديد — 1Line' : 'New lead — 1Line', { body: text, tag: `lead-${first.id}`, icon: '/icon-192.png' });
-      n.onclick = () => { window.focus(); n.close(); };
+      const n = new window.Notification(`${info.icon} ${isAr ? info.ar : info.en} — 1Line`, { body: text, tag: `lead-${first.id}`, icon: '/icon-192.png' });
+      n.onclick = () => { window.focus(); openLeadInCrm(first.id); n.close(); };
     } catch { /* some mobile browsers only allow notifications from a service worker */ }
   }
+}
+
+/** Ask the CRM to show one lead (bell items, desktop alerts): switches to Leads and opens it. */
+export function openLeadInCrm(id) {
+  if (typeof window === 'undefined' || id == null) return;
+  window.dispatchEvent(new CustomEvent('oneline_open_lead', { detail: { id: String(id) } }));
 }
 
 const KIND_AR = {

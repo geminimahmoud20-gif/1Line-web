@@ -22,7 +22,9 @@ const LEAD_TYPE_AR = {
   broker: 'وسيط عقاري',
   buyer_demand: 'طلب شراء',
   reservation_request: 'طلب حجز',
-  viewing_request: 'طلب معاينة'
+  viewing_request: 'طلب معاينة',
+  client_account: 'حساب على الموقع',
+  callback_request: 'طلب اتصال'
 };
 
 /** Follow-up / next-action note in the UI language (free text passes through unchanged) */

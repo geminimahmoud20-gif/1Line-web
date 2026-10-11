@@ -1,3 +1,5 @@
+import { leadKind } from './leadRequests.js';
+
 // =============================================================
 //  Pure helpers behind the CRM leads views (CrmAdminPanel): dashboard counters and the
 //  filter for the leads table. Kept free of React so tests/unit/crm-lead-views.test.mjs can
@@ -93,7 +95,7 @@ export function leadSourceKey(l = {}) {
   if (/\b(facebook|fb|instagram|ig|google|tiktok|ads?|cpc|meta)\b|إعلان|اعلان|campaign/.test(raw)) return 'ads';
   if (/whats|واتس/.test(raw)) return 'whatsapp';
   if (/direct entry|manual|يدوي|crm|admin|مكالمة|هاتف|walk/.test(raw)) return 'manual';
-  if (!raw.trim() || /web|site|موقع|form|نموذج|online|بوابة|portal/.test(raw)) return 'website';
+  if (!raw.trim() || /web|site|موقع|form|نموذج|online|بوابة|portal|client_account|معاينة|حجز/.test(raw)) return 'website';
   return 'other';
 }
 
@@ -336,7 +338,7 @@ export function filterLeads(leads = [], opts = {}) {
       if (!isStale(l, now)) return false;
     } else if (leadFilter === 'qualified') {
       if (leadScore(l, now).score < LEAD_SCORE_HIGH) return false;
-    } else if (leadFilter !== 'all' && l.type !== leadFilter) {
+    } else if (leadFilter !== 'all' && leadKind(l) !== leadFilter) {
       return false;
     }
 

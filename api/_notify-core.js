@@ -7,6 +7,8 @@
 //  The alert never carries the customer's phone or email: those stay in the CRM behind its rules.
 // =============================================================
 
+import { leadKind, kindInfo } from '../src/utils/leadRequests.js';
+
 export const KINDS = {
   leads: 'عميل جديد',
   demands: 'طلب عقار (مطلوب)',
@@ -20,7 +22,7 @@ export const FRESH_MS = 15 * 60 * 1000;
 const TYPE_LABELS = {
   buyer: 'شراء', seller: 'بيع', investor: 'استثمار', broker: 'وسيط', callback_request: 'اتصال سريع',
   deposit: 'جدية حجز', special_request: 'طلب خاص', bespoke_request: 'طلب خاص VIP', financing: 'تمويل',
-  valuation: 'تقييم'
+  valuation: 'تقييم', reservation_request: 'طلب حجز', viewing_request: 'طلب معاينة', client_account: 'حساب جديد على الموقع'
 };
 
 const clean = (v, max = 80) => String(v ?? '').replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
@@ -36,12 +38,24 @@ export function parseRequest(body) {
 /** Alert text from the stored record (contact fields deliberately never read) */
 export function buildMessage(kind, id, rec, siteUrl) {
   const d = rec.details && typeof rec.details === 'object' ? rec.details : {};
+  // A lead's alert is titled by what it asks for (leadRequests), so the team knows before opening it
+  const lk = kind === 'leads' ? leadKind(rec) : null;
+  const title = lk && TYPE_LABELS[lk] ? `${kindInfo(lk).icon} ${TYPE_LABELS[lk]}` : `🔔 ${KINDS[kind]}`;
   const lines = [
-    `🔔 ${KINDS[kind]} — 1Line`,
+    `${title} — 1Line`,
     `الاسم: ${clean(rec.name || rec.clientName || '—', 60)}`
   ];
-  const type = TYPE_LABELS[rec.type] || clean(rec.type || rec.purpose || rec.propertyType, 40);
-  if (type) lines.push(`النوع: ${type}`);
+  if (rec.returningClient) lines.push('عميل راجع (له طلب سابق)');
+  const type = TYPE_LABELS[lk || rec.type] || clean(rec.type || rec.purpose || rec.propertyType, 40);
+  if (type && !(lk && TYPE_LABELS[lk])) lines.push(`النوع: ${type}`);
+  if (rec.propertyTitle || rec.propertyId) {
+    lines.push(`العقار: ${clean(rec.propertyTitle, 60)}${rec.propertyId ? ` (كود ${clean(String(rec.propertyId).toUpperCase(), 30)})` : ''}`);
+  }
+  if (lk === 'viewing_request') {
+    const slot = { morning: 'صباحاً', evening: 'مساءً' }[rec.slot] || '';
+    const how = rec.tourType === 'video' ? 'فيديو' : 'ميدانية';
+    lines.push(`الميعاد المطلوب: ${clean(rec.date, 12) || 'أقرب موعد'}${slot ? ` ${slot}` : ''} (${how})`);
+  }
   const area = clean(d.area || rec.area || rec.location || rec.district, 60);
   if (area) lines.push(`المنطقة: ${area}`);
   const budget = clean(d.budget || rec.budget || d.expectedPrice || rec.expectedPrice, 40);
