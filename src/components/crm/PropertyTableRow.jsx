@@ -3,6 +3,7 @@ import { Edit3, Eye, EyeOff, FileDown, Flame, MessageSquare, RotateCcw, Star, Tr
 import { offerState, formatTimeLeft, getActiveOffer } from '../../utils/propertyOffers';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { FeaturedPeriodLabel } from './HomepageSlotsBoard';
+import { listingSampleFlags } from '../../utils/sampleDataFlags';
 
 // One row of the CRM properties table (PropertyManagerPanel): status selector, homepage star,
 // WhatsApp match notifier and the edit / trash / restore actions.
@@ -74,6 +75,11 @@ export default function PropertyTableRow({
           <img src={prop.images?.[0] || '/no-photo.svg'} alt="" className="table-thumb" />
           <div>
             <strong>{isAr ? prop.title_ar : prop.title_en}</strong>
+            {listingSampleFlags(prop).length > 0 && (
+              <span title={`${isAr ? 'لسه فيه قيم من نموذج الإضافة القديم: ' : 'Still has old form defaults: '}${listingSampleFlags(prop).join(' • ')}`} style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-warn)', fontWeight: 'bold', marginInlineStart: 6, cursor: 'help' }}>
+                ⚠️ {isAr ? 'راجع البيانات' : 'Review data'}
+              </span>
+            )}
             <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '2px' }}>
               <span className="prop-id-tag">{prop.id.toUpperCase()}</span>
               {prop.badge_ar && (

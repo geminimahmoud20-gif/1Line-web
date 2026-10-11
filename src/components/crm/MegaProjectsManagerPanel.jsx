@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import useOpenRequest from '../../hooks/useOpenRequest';
 import { Building2, Plus, Edit3, Trash2, MapPin, Save, X, Search } from 'lucide-react';
+import { projectSampleFlags } from '../../utils/sampleDataFlags';
 
 /**
  * MegaProjectsManagerPanel Component
@@ -253,13 +254,18 @@ export default function MegaProjectsManagerPanel({
                 <tr key={p.id}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <img src={p.images[0]} alt={title} style={{ width: '56px', height: '42px', borderRadius: '6px', objectFit: 'cover' }} />
+                      <img src={p.images?.[0] || '/no-photo.svg'} alt={title} style={{ width: '56px', height: '42px', borderRadius: '6px', objectFit: 'cover' }} />
                       <div>
                         <strong style={{ fontSize: 'var(--crm-text-base)', color: 'var(--crm-ink)', display: 'block' }}>{title}</strong>
                         {p.brandTag && <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', fontWeight: 'bold' }}>{p.brandTag}</span>}
                         {p.isDemo && (
                           <span title={isAr ? 'مشروع مثال يظهر للزوار بشارة "مثال توضيحي". احذفه أو عدّله واحفظه ليصبح مشروعك.' : 'Sample project, labelled on the site. Delete it, or edit and save to make it yours.'} style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-warn)', fontWeight: 'bold', marginInlineStart: 6 }}>
                             {isAr ? 'مثال توضيحي' : 'Sample'}
+                          </span>
+                        )}
+                        {projectSampleFlags(p).length > 0 && (
+                          <span title={`${isAr ? 'لسه فيه قيم من النموذج القديم: ' : 'Still has old form defaults: '}${projectSampleFlags(p).join(' • ')}`} style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-warn)', fontWeight: 'bold', marginInlineStart: 6, cursor: 'help' }}>
+                            ⚠️ {isAr ? 'راجع البيانات' : 'Review data'}
                           </span>
                         )}
                       </div>

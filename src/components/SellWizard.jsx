@@ -3,6 +3,8 @@ import { Building, Home, Store, Briefcase, MapPin, Sparkles, ShieldCheck, CheckC
 import PhoneInputField from './PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { getAreas } from '../utils/areasData';
+import { useProperties } from '../context/PropertiesContext';
+import { liveListings, assetClass, median } from '../utils/marketStats';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
 import SubmissionSuccess from './common/SubmissionSuccess';
 
@@ -178,45 +180,50 @@ export const SellWizard = ({
     });
   };
 
+  // Estimate from similar listings on the site (same district + same kind: home / shop-office / land).
+  // With fewer than 3 comparables, homes fall back to the district's per-m² average set by the team;
+  // shops, offices and land get no automatic figure (their price depends on frontage and activity).
+  const { properties: siteListings = [] } = useProperties();
   const calculatedEstimate = useMemo(() => {
     const areaKey = sellerAnswers.area || 'east';
-    const liveArea = districts.find(d => d.id === areaKey);
-    const fallbackArea = FALLBACK_BENCHMARK_PRICING[areaKey] || FALLBACK_BENCHMARK_PRICING.east;
-    const baseM2 = liveArea?.avgPricePerMeter || fallbackArea.base || 21500;
-    const size = parseInt(sellerAnswers.size) || 140;
-    
-    // Type multiplier
-    let typeMultiplier = 1.0;
-    if (sellerAnswers.propertyType === 'retail') typeMultiplier = 1.45; // Shops have high sqm price
-    if (sellerAnswers.propertyType === 'villa') typeMultiplier = 1.25;
-    if (sellerAnswers.propertyType === 'office') typeMultiplier = 1.15;
-    if (sellerAnswers.propertyType === 'land') typeMultiplier = 0.85;
+    const size = parseInt(sellerAnswers.size) || 0;
+    const type = sellerAnswers.propertyType;
+    const cls = type === 'retail' || type === 'office' ? 'commercial' : type === 'land' ? 'land' : 'residential';
+    const comps = liveListings(siteListings)
+      .filter((p) => p.areaKey === areaKey && assetClass(p) === cls && Number(p.size) > 0)
+      .map((p) => Number(p.price) / Number(p.size));
 
-    // Finishing multiplier
-    let finishMultiplier = 1.0;
-    const currentFinishing = sellerAnswers.finishing || 'super_lux';
-    const foundFinish = REAL_ESTATE_FINISHING_TYPES.find(f => f.id === currentFinishing);
-    if (foundFinish) {
-      finishMultiplier = foundFinish.multiplier;
-    } else if (currentFinishing === 'luxury') {
-      finishMultiplier = 1.15;
-    } else if (currentFinishing === 'core') {
-      finishMultiplier = 0.86;
-    } else if (currentFinishing === 'semi') {
-      finishMultiplier = 1.00;
+    let baseM2 = 0;
+    let basis = null;
+    if (comps.length >= 3) {
+      baseM2 = median(comps);
+      basis = 'comparables';
+    } else if (cls === 'residential') {
+      const liveArea = districts.find(d => d.id === areaKey);
+      baseM2 = liveArea?.avgPricePerMeter || FALLBACK_BENCHMARK_PRICING[areaKey]?.base || 0;
+      basis = baseM2 ? 'area' : null;
     }
 
-    const baseVal = size * baseM2 * typeMultiplier * finishMultiplier;
-    const minVal = Math.round((baseVal * 0.93) / 10000) * 10000;
-    const maxVal = Math.round((baseVal * 1.07) / 10000) * 10000;
+    // Finishing only matters for built units, and only when the comparables are not already of mixed finish
+    let finishMultiplier = 1.0;
+    if (cls !== 'land' && basis === 'area') {
+      const currentFinishing = sellerAnswers.finishing || 'super_lux';
+      const foundFinish = REAL_ESTATE_FINISHING_TYPES.find(f => f.id === currentFinishing);
+      if (foundFinish) finishMultiplier = foundFinish.multiplier;
+    }
 
+    if (!size || !baseM2) return { min: 0, max: 0, avg: 0, sqmAvg: 0, basis: null, sample: comps.length };
+    const spread = basis === 'comparables' ? 0.10 : 0.12;
+    const baseVal = size * baseM2 * finishMultiplier;
     return {
-      min: minVal,
-      max: maxVal,
+      min: Math.round((baseVal * (1 - spread)) / 10000) * 10000,
+      max: Math.round((baseVal * (1 + spread)) / 10000) * 10000,
       avg: Math.round(baseVal),
-      sqmAvg: Math.round(baseM2 * typeMultiplier * finishMultiplier)
+      sqmAvg: Math.round(baseM2 * finishMultiplier),
+      basis,
+      sample: comps.length
     };
-  }, [sellerAnswers, districts]);
+  }, [sellerAnswers, districts, siteListings]);
 
   const validateAndSubmit = async (e) => {
     e.preventDefault();
@@ -270,9 +277,10 @@ export const SellWizard = ({
 
     const updatedAnswers = {
       ...sellerAnswers,
-      estimatedMin: isCairo ? null : calculatedEstimate.min,
-      estimatedMax: isCairo ? null : calculatedEstimate.max,
-      estimatedAvg: calculatedEstimate.avg,
+      estimatedMin: isCairo || !calculatedEstimate.avg ? null : calculatedEstimate.min,
+      estimatedMax: isCairo || !calculatedEstimate.avg ? null : calculatedEstimate.max,
+      estimatedAvg: calculatedEstimate.avg || null,
+      estimateBasis: calculatedEstimate.basis,
       totalFloors: isHouse ? (sellerAnswers.totalFloors || sellerAnswers.floor || '2') : undefined,
       floor: floorDisplay,
       finishing: sellerAnswers.finishing || 'super_lux',
@@ -964,6 +972,18 @@ export const SellWizard = ({
                   : 'Greater Cairo properties are valued manually against comparables in the same compound or district. Leave your details and a valuation advisor will call.'}
               </span>
             </div>
+            ) : !calculatedEstimate.avg ? (
+            <div className="cert-price-range">
+              <span className="range-lbl">
+                {isAr
+                  ? (sellerAnswers.size
+                    ? 'مفيش عروض مشابهة كفاية عندنا في المنطقة دي نطلع منها رقم آلي، والمحلات والمكاتب والأراضي سعرها بيتحدد بالواجهة والنشاط. سجّل بياناتك ونقيّمه يدوياً بمقارنات حقيقية.'
+                    : 'اكتب المساحة عشان نقدر نطلع تقدير.')
+                  : (sellerAnswers.size
+                    ? 'Not enough similar listings here for an automatic figure; shops, offices and land depend on frontage and activity. Leave your details for a manual valuation.'
+                    : 'Enter the area to get an estimate.')}
+              </span>
+            </div>
             ) : (
             <div className="cert-price-range">
               <span className="range-lbl">{isAr ? 'نطاق السعر المتوقع لعقارك:' : 'Estimated price range:'}</span>
@@ -975,6 +995,10 @@ export const SellWizard = ({
               </div>
               <span className="sqm-rate-sub">
                 {isAr ? `متوسط سعر المتر المقدر: ${calculatedEstimate.sqmAvg.toLocaleString('en-US')} ج.م / م²` : `Est. ${calculatedEstimate.sqmAvg.toLocaleString('en-US')} EGP/sqm`}
+                {' — '}
+                {calculatedEstimate.basis === 'comparables'
+                  ? (isAr ? `محسوب من ${calculatedEstimate.sample} عرض مشابه في نفس المنطقة` : `from ${calculatedEstimate.sample} similar listings in this area`)
+                  : (isAr ? 'محسوب من متوسط سعر المتر اللي حدده فريق 1Line للمنطقة' : 'from the district average set by the 1Line team')}
               </span>
             </div>
             )}
