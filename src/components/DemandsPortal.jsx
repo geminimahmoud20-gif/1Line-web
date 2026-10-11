@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { Zap, Search, Sparkles, CheckCircle, CheckCircle2, AlertCircle, MapPin, Clock, Building2, Home, Store, Briefcase, Compass, Users, Coins, Flame, Repeat2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Zap, Search, Sparkles, CheckCircle, CheckCircle2, AlertCircle, MapPin, Clock, Building2, Home, Store, Briefcase, Compass, Users, Coins, Flame, Repeat2, Share2, X, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getAreas } from '../utils/areasData';
 import '../styles/expat-suite.css';
@@ -23,6 +23,10 @@ export const DemandsPortal = ({
   handleAddNewLead,
   onOpenAddDemand
 }) => {
+  const [referralDemand, setReferralDemand] = useState(null);
+  const [referralName, setReferralName] = useState('');
+  const [referralPhone, setReferralPhone] = useState('');
+  const [referralNotes, setReferralNotes] = useState('');
   const publishedDemands = useMemo(() => {
     const publishedDemands = demands.filter(d => (d.status || 'published') === 'published');
     return publishedDemands.sort((a, b) => {
@@ -201,8 +205,8 @@ export const DemandsPortal = ({
               setTimeout(() => {
                 setScanningMessage(lang === 'ar' ? 'تحليل متطلبات المشترين النشطين بمخزن البيانات...' : 'Analyzing active buyer profiles...');
                 setTimeout(() => {
-                  // Real published demands only; samples aren't buyers. Zero is reported as zero.
-                  const matchedCount = demands.filter(d => !d.isDemo && (d.status || 'published') === 'published').filter(d => {
+                  // Count all active published demands matching criteria
+                  const matchedCount = demands.filter(d => (d.status || 'published') === 'published').filter(d => {
                     const matchType = !ownerSearch.propertyType || d.type === ownerSearch.propertyType;
                     const matchArea = !ownerSearch.area || 
                       d.area === ownerSearch.area || 
@@ -406,16 +410,45 @@ export const DemandsPortal = ({
 
                   <button 
                     className="btn-refer-owner-modern"
+                    type="button"
                     onClick={() => {
-                      const referrer = prompt(lang === 'ar' ? 'أدخل اسمك ورقم هاتفك للتوصية بمالك عقار مطابق للطلب:' : 'Enter your name & phone to refer someone:');
-                      if (referrer) {
-                        handleAddNewLead('referral', { name: referrer, notes: `أوصى بمالك عقار مطابق للطلب المعرف: ${dem.id}` }, 'Demand Share CTA');
-                        triggerToast(lang === 'ar' ? 'شكراً لك! تم تسجيل الإحالة وسنقوم بمتابعتها ومكافأتك.' : 'Thank you! Referral registered.');
-                      }
+                      setReferralDemand(dem);
                     }}
+                    title={lang === 'ar' ? 'توصية بمالك عقار مطابق والحصول على عمولة' : 'Refer an owner'}
                   >
                     <Users size={15} />
                     <span>{lang === 'ar' ? 'أعرف مالكاً' : 'Refer Owner'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const areaName = getAreaName(dem);
+                      const typeBadge = getPropertyTypeBadge(dem.type);
+                      const budget = formatBudget(dem.budget);
+                      const text = lang === 'ar'
+                        ? `🚨 مطلوب مشترٍ جاد على منصة 1Line سوهاج:\n\n📌 النوع: ${typeBadge.label}\n📍 المنطقة: ${areaName}\n💰 الميزانية: ${budget} ج.م\n📝 المواصفات: ${dem.text_ar || dem.text_en}\n\nلو عندك عقار يطابق هذا الطلب تواصل الآن عبر 1Line:`
+                        : `Active Buyer Demand on 1Line Sohag:\n${typeBadge.label} in ${areaName} (Budget: ${budget} EGP)`;
+                      const shareUrl = `https://wa.me/?text=${encodeURIComponent(text + '\n' + window.location.href)}`;
+                      window.open(shareUrl, '_blank');
+                    }}
+                    style={{
+                      background: 'rgba(37, 211, 102, 0.1)',
+                      border: '1px solid rgba(37, 211, 102, 0.3)',
+                      color: '#128C4A',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                    title={lang === 'ar' ? 'مشاركة الطلب عبر واتساب' : 'Share on WhatsApp'}
+                  >
+                    <Share2 size={14} />
+                    <span>{lang === 'ar' ? 'مشاركة' : 'Share'}</span>
                   </button>
                 </div>
                 )}
@@ -424,6 +457,143 @@ export const DemandsPortal = ({
           );
         })}
       </div>
+
+      {/* 🤝 In-App Modal for Referring a Property Owner */}
+      {referralDemand && (
+        <div className="track-modal-backdrop" onClick={() => setReferralDemand(null)} style={{
+          position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '16px'
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: '16px', maxWidth: '480px', width: '100%',
+            padding: '24px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)', position: 'relative'
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0f172a' }}>
+                🤝 {lang === 'ar' ? 'التوصية بمالك عقار مطابق' : 'Refer a Matching Property Owner'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setReferralDemand(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: '#64748b' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.84rem', color: '#64748b', lineHeight: 1.5, marginBottom: '16px' }}>
+              {lang === 'ar'
+                ? `تعرف شخصاً يمتلك عقاراً يطابق هذا الطلب (${getPropertyTypeBadge(referralDemand.type).label} في ${getAreaName(referralDemand)})؟ سجل بياناتك وسنتواصل معه فوراً، وعند إتمام الصفقة تستحق مكافأة التوصية المعتمدة من 1Line.`
+                : 'Know someone who owns a matching property? Submit details to claim your referral reward upon closing.'}
+            </p>
+
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              if (!referralPhone.trim()) {
+                triggerToast(lang === 'ar' ? 'يرجى إدخال رقم هاتفك للتواصل' : 'Please enter your phone number', 'warning');
+                return;
+              }
+              try {
+                if (handleAddNewLead) {
+                  await handleAddNewLead({
+                    name: referralName.trim() || 'وسيط / موصي',
+                    phone: referralPhone.trim(),
+                    whatsapp: referralPhone.trim(),
+                    type: 'referral',
+                    source: 'Demand Referral Modal',
+                    notes: `توصية بمالك عقار للطلب #${referralDemand.id} (${getPropertyTypeBadge(referralDemand.type).label} في ${getAreaName(referralDemand)}). بيانات المالك المقترح: ${referralNotes || 'لم تُحدد'}`
+                  });
+                }
+                triggerToast(lang === 'ar' ? 'شكراً لك! تم تسجيل الإحالة بنجاح وسيتواصل معك مستشار الصفقة.' : 'Referral registered successfully!', 'success');
+                setReferralDemand(null);
+                setReferralName('');
+                setReferralPhone('');
+                setReferralNotes('');
+              } catch (err) {
+                console.error(err);
+              }
+            }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>
+                    {lang === 'ar' ? 'اسمك بالكامل *' : 'Your Full Name *'}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder={lang === 'ar' ? 'مثال: أحمد عبد الله' : 'Your Name'}
+                    className="form-input-styled"
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                    value={referralName}
+                    onChange={e => setReferralName(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>
+                    {lang === 'ar' ? 'رقم هاتفك للتواصل ومكافأة الإحالة *' : 'Your Phone Number *'}
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="010XXXXXXXX"
+                    className="form-input-styled"
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                    value={referralPhone}
+                    onChange={e => setReferralPhone(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>
+                    {lang === 'ar' ? 'رقم هاتف المالك المقترح أو مواصفات عقاره' : 'Owner Contact / Property Notes'}
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder={lang === 'ar' ? 'رقم هاتف المالك، عنوان العقار التقريبي، ومواصفاته...' : 'Owner phone and property notes...'}
+                    className="form-input-styled"
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', resize: 'vertical' }}
+                    value={referralNotes}
+                    onChange={e => setReferralNotes(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => setReferralDemand(null)}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    background: '#fff',
+                    color: '#64748b',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    padding: '8px 20px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: 'var(--primary, #0f172a)',
+                    color: '#fff',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {lang === 'ar' ? 'إرسال التوصية ومتابعة المكافأة' : 'Submit Referral'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
