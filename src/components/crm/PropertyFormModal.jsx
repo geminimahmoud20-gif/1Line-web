@@ -2,6 +2,7 @@ import { Plus, Sparkles, Image as ImageIcon, Save, Upload, Star, MapPin, Loader2
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { toDayInput, addDays } from '../../utils/featuredSlots';
 import PropertyExtrasEditor from './PropertyExtrasEditor';
+import AreaOptions from '../common/AreaOptions';
 
 export default function PropertyFormModal({
   areas,
@@ -326,9 +327,7 @@ export default function PropertyFormModal({
                 value={form.areaKey}
                 onChange={(e) => setForm({ ...form, areaKey: e.target.value })}
               >
-                {areas.filter(a => a.id !== 'all').map(a => (
-                  <option key={a.id} value={a.id}>{isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}</option>
-                ))}
+                <AreaOptions areas={areas} isAr={isAr} />
               </select>
             </div>
 

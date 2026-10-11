@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { TrendingUp, Building, Sparkles, ShieldCheck, MapPin, CheckCircle2, Calculator, ArrowRight, ArrowLeft, Home, Store } from 'lucide-react';
 import { areaMarketStats, budgetMatches, liveListings } from '../utils/marketStats';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
-import { getAreas } from '../utils/areasData';
+import { getAreas, groupAreas } from '../utils/areasData';
 import { updatePageSeo } from '../utils/seoHelper';
 
 export default function MarketIntelligencePage({ lang = 'ar', properties = [] }) {
@@ -33,6 +33,19 @@ export default function MarketIntelligencePage({ lang = 'ar', properties = [] })
 
   const live = useMemo(() => liveListings(properties), [properties]);
   const stats = useMemo(() => areaMarketStats(properties), [properties]);
+  // Table rows in city → sector order, with a heading row per group when there is more than one
+  const groupedRows = useMemo(() => {
+    const where = new Map();
+    groupAreas(areas).forEach((city, ci) => city.sectors.forEach((sector, si) => sector.areas.forEach((a) => {
+      const label = [isAr ? city.ar : (city.en || city.ar), sector.key && (isAr ? sector.ar : (sector.en || sector.ar))].filter(Boolean).join(' · ');
+      where.set(a.id, { order: ci * 100 + si, label });
+    })));
+    const other = { order: 1e6, label: isAr ? 'مناطق أخرى' : 'Other areas' };
+    const rows = stats.map((d) => ({ d, g: where.get(d.areaId) || other }))
+      .sort((a, b) => a.g.order - b.g.order || b.d.total - a.d.total);
+    const several = new Set(rows.map((r) => r.g.label)).size > 1;
+    return rows.map((r, i) => ({ ...r, heading: several && (i === 0 || rows[i - 1].g.label !== r.g.label) ? r.g.label : null }));
+  }, [stats, areas, isAr]);
   const matches = useMemo(() => budgetMatches(properties, userBudget), [properties, userBudget]);
   const overall = useMemo(() => {
     const ppm = live.filter((p) => Number(p.size) > 0 && ['apartment', 'villa', 'duplex', 'penthouse', 'studio', 'residential'].includes(p.type))
@@ -179,11 +192,16 @@ export default function MarketIntelligencePage({ lang = 'ar', properties = [] })
                   </tr>
                 </thead>
                 <tbody>
-                  {stats.map((d) => {
+                  {groupedRows.map(({ d, heading }) => {
                     const prices = [d.residential, d.commercial, d.land].filter((c) => c.count);
                     const min = Math.min(...prices.map((c) => c.minPrice));
                     const max = Math.max(...prices.map((c) => c.maxPrice));
-                    return (
+                    return [
+                      heading && (
+                        <tr key={`h-${heading}`} className="market-group-row">
+                          <th colSpan={5} scope="colgroup" style={{ textAlign: 'start', background: 'var(--bg-secondary, rgba(0,0,0,0.04))', fontWeight: 800 }}>{heading}</th>
+                        </tr>
+                      ),
                       <tr key={d.areaId}>
                         <td><div className="district-cell"><MapPin size={15} className="text-primary" /><strong>{areaName(d.areaId)}</strong></div></td>
                         <td>{n(d.total)}</td>
@@ -191,7 +209,7 @@ export default function MarketIntelligencePage({ lang = 'ar', properties = [] })
                         <td>{d.commercial.medianPpm ? <strong className="cell-price">{n(d.commercial.medianPpm)} {isAr ? 'ج.م' : 'EGP'}</strong> : '—'}{d.commercial.ppmSample ? <small style={{ display: 'block', opacity: 0.7 }}>{isAr ? `من ${d.commercial.ppmSample} عرض` : `from ${d.commercial.ppmSample}`}</small> : null}</td>
                         <td>{Number.isFinite(min) ? `${short(min)} – ${short(max)}` : '—'}</td>
                       </tr>
-                    );
+                    ];
                   })}
                 </tbody>
               </table>

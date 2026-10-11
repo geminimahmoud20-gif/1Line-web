@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Search, SlidersHorizontal, RotateCcw, X, Sparkles, ShieldCheck, FileCheck, Waves, PieChart, ChevronDown, ChevronUp, KeyRound, Check } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
-import { getAreas } from '../../utils/areasData';
+import { getAreas, groupAreas, areaFilterLabel, cityFilterValue, sectorFilterValue } from '../../utils/areasData';
+import AreaOptions from '../common/AreaOptions';
 import './property-filters-mobile.css';
 
 const SMART_FILTER_TAGS = [
@@ -34,6 +35,19 @@ export default function PropertyFilters({
 
   const isAr = lang === 'ar';
 
+  // Quick chips: each city (when there are several) and its sectors; districts only when no sectors exist
+  const quickAreas = (() => {
+    const cities = groupAreas(areas);
+    const chips = [];
+    cities.forEach((city) => {
+      if (cities.length > 1) chips.push({ value: cityFilterValue(city.key), label: isAr ? city.ar : (city.en || city.ar) });
+      city.sectors.filter((x) => x.key).forEach((x) => chips.push({ value: sectorFilterValue(city.key, x.key), label: isAr ? x.ar : (x.en || x.ar) }));
+    });
+    if (chips.length) return chips.slice(0, 10);
+    return areas.filter((a) => a.id !== 'all').slice(0, 8)
+      .map((a) => ({ value: a.id, label: isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en) }));
+  })();
+
   const handleToggleTag = (tagId) => {
     const currentTags = filters.smartTags || [];
     const exists = currentTags.includes(tagId);
@@ -65,10 +79,9 @@ export default function PropertyFilters({
     }
 
     if (filters.area && filters.area !== 'all') {
-      const foundArea = areas.find(a => a.id === filters.area);
       list.push({
         id: 'area',
-        label: foundArea ? (isAr ? (foundArea.name_ar || foundArea.label_ar) : (foundArea.name_en || foundArea.label_en)) : filters.area,
+        label: areaFilterLabel(filters.area, areas, isAr),
         onRemove: () => onFilterChange('area', 'all')
       });
     }
@@ -246,11 +259,7 @@ export default function PropertyFilters({
             value={filters.area || 'all'}
             onChange={(e) => onFilterChange('area', e.target.value)}
           >
-            {areas.map((a) => (
-              <option key={a.id} value={a.id}>
-                {isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}
-              </option>
-            ))}
+            <AreaOptions areas={areas} isAr={isAr} includeAll wholeGroups />
           </select>
         </div>
 
@@ -400,14 +409,14 @@ export default function PropertyFilters({
             >
               {isAr ? 'كل المناطق' : 'All Districts'}
             </button>
-            {areas.filter(a => a.id !== 'all').slice(0, 8).map((area) => (
+            {quickAreas.map((chip) => (
               <button
-                key={area.id}
+                key={chip.value}
                 type="button"
-                className={`location-chip compact-location-chip ${filters.area === area.id ? 'active' : ''}`}
-                onClick={() => onFilterChange('area', area.id)}
+                className={`location-chip compact-location-chip ${filters.area === chip.value ? 'active' : ''}`}
+                onClick={() => onFilterChange('area', chip.value)}
               >
-                {isAr ? (area.name_ar || area.label_ar) : (area.name_en || area.label_en)}
+                {chip.label}
               </button>
             ))}
           </div>

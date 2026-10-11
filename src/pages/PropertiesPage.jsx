@@ -18,6 +18,8 @@ import Pagination from '../components/common/Pagination';
 import { DEMO_PROPERTIES } from '../data/demoData';
 import { updatePageSeo } from '../utils/seoHelper';
 import { track } from '../utils/analytics';
+import { areaIdsForFilter } from '../utils/areasData';
+import useAreas from '../hooks/useAreas';
 import { searchPropertiesSemantic, parseSemanticQuery } from '../utils/semanticSearchEngine';
 
 // Slider ceiling; a maxPrice at the cap means "no upper limit"
@@ -162,6 +164,9 @@ export default function PropertiesPage({
     return parseSemanticQuery(filters.query);
   }, [filters.query]);
 
+  const areas = useAreas();
+  const areaIds = useMemo(() => areaIdsForFilter(filters.area, areas), [filters.area, areas]);
+
   // Filter & Sort Properties
   const filteredProperties = useMemo(() => {
     // 1. Initial pool: exclude deleted, trash, hidden, draft
@@ -184,7 +189,8 @@ export default function PropertiesPage({
       if (filters.type && filters.type !== 'all' && prop.type !== filters.type) return false;
 
       // Area filter
-      if (filters.area && filters.area !== 'all' && prop.areaKey !== filters.area) return false;
+      // Area filter: one district, or a whole city / sector (city:… / sector:…)
+      if (areaIds && !areaIds.has(String(prop.areaKey))) return false;
 
       // Max Price filter
       if (filters.maxPrice && filters.maxPrice < MAX_PRICE_CAP && prop.price > filters.maxPrice) return false;
@@ -296,7 +302,7 @@ export default function PropertiesPage({
       }
       return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
     });
-  }, [safeProperties, filters, sortBy, familyFilter]);
+  }, [safeProperties, filters, sortBy, familyFilter, areaIds]);
 
   const totalPages = Math.max(1, Math.ceil(filteredProperties.length / PAGE_SIZE));
   const paginatedProperties = useMemo(() => {

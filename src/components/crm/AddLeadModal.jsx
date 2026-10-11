@@ -5,6 +5,7 @@ import { getAreas } from '../../utils/areasData';
 import { isValidPhoneNumber } from '../../utils/securityShield';
 import DeskOptions from './DeskOptions';
 import { DESK_BY_ROLE } from '../../utils/rbacRules';
+import AreaOptions from '../common/AreaOptions';
 
 export default function AddLeadModal({
   isOpen,
@@ -227,9 +228,7 @@ export default function AddLeadModal({
                 value={formData.area}
                 onChange={(e) => setFormData({ ...formData, area: e.target.value })}
               >
-                {getAreas().filter(a => a.id !== 'all').map(a => (
-                  <option key={a.id} value={a.id}>{isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}</option>
-                ))}
+                <AreaOptions areas={getAreas()} isAr={isAr} />
               </select>
             </div>
 

@@ -2,6 +2,7 @@ import { Edit3, Save, Lock } from 'lucide-react';
 import { getAreas } from '../../../utils/areasData';
 import DeskOptions from '../DeskOptions';
 import { canViewLeadPhone, maskPhoneNumber, canEditLead } from '../../../utils/rbacRules';
+import AreaOptions from '../../common/AreaOptions';
 
 export default function CustomerOverviewTab({
   AVAILABLE_TAGS,
@@ -160,9 +161,7 @@ export default function CustomerOverviewTab({
               value={formData.area}
               onChange={(e) => setFormData({ ...formData, area: e.target.value })}
             >
-              {getAreas().map(a => (
-                <option key={a.id} value={a.id}>{isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}</option>
-              ))}
+              <AreaOptions areas={getAreas()} isAr={isAr} includeAll />
             </select>
           </div>
 

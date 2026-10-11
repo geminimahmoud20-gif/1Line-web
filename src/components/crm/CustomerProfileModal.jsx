@@ -7,7 +7,7 @@ import { generateGoogleCalendarUrl, downloadIcsFile } from '../../utils/calendar
 import CustomerOverviewTab from './lead-profile/CustomerOverviewTab';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { parseMoney } from '../../utils/crmLeadViews';
-import { normalizeAreaKey } from '../../utils/areasData';
+import { normalizeAreaKey, areaProximity } from '../../utils/areasData';
 import VisitorJourney from './analytics/VisitorJourney';
 import LeadScorePill from './LeadScorePill';
 
@@ -169,7 +169,9 @@ export default function CustomerProfileModal({
       if (wantType && p.type !== wantType) return null;
       if (wantBudget && price > wantBudget * 1.25) return null;
       let score = 0;
-      if (wantArea && normalizeAreaKey(p.areaKey) === wantArea) score += 40;
+      const near = wantArea ? areaProximity(wantArea, normalizeAreaKey(p.areaKey)) : null;
+      if (near === 'same') score += 40;
+      else if (near === 'sector') score += 20;
       if (wantType) score += 30;
       if (wantBudget) score += price >= wantBudget * 0.75 ? 30 : 15;
       return { p, score };

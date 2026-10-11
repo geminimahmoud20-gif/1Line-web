@@ -15,6 +15,7 @@ import PhoneInputField from '../PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../../utils/phoneCountries';
 import { getAreas } from '../../utils/areasData';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
+import AreaOptions from './AreaOptions';
 
 export default function QuickPortalLeadCard({
   portalType = 'buy',
@@ -274,11 +275,7 @@ export default function QuickPortalLeadCard({
               onChange={(e) => setArea(e.target.value)}
               className="quick-input quick-select"
             >
-              {areas.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}
-                </option>
-              ))}
+              <AreaOptions areas={areas} isAr={isAr} includeAll />
             </select>
           </div>
 

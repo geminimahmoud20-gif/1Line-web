@@ -6,6 +6,7 @@ import PhoneInputField from './PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { getAreas } from '../utils/areasData';
 import { PROPERTY_TYPES } from '../data/propertiesData';
+import AreaOptions from './common/AreaOptions';
 
 // What a broker gets from the network. Deliberately no rates or amounts: fees are agreed per deal in writing.
 const BROKER_PERKS = [
@@ -167,9 +168,7 @@ export const BrokerPortal = ({
               onChange={(e) => setBrokerForm({ ...brokerForm, area: e.target.value })}
               required
             >
-              {getAreas().filter(a => a.id !== 'all').map(a => (
-                <option key={a.id} value={a.id}>{isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}</option>
-              ))}
+              <AreaOptions areas={getAreas()} isAr={isAr} />
             </select>
           </div>
 

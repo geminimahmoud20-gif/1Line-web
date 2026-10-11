@@ -15,6 +15,7 @@ import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { getAreas } from '../utils/areasData';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
 import { checkFormSpamProtection } from '../utils/securityShield';
+import AreaOptions from './common/AreaOptions';
 
 export const SpecialRequests = ({
   lang = 'ar',
@@ -332,11 +333,7 @@ export const SpecialRequests = ({
                 onChange={(e) => setForm({ ...form, area: e.target.value })}
                 style={{ height: '48px', padding: '8px 14px', fontSize: '0.92rem', fontWeight: '600', lineHeight: 'normal' }}
               >
-                {areas.map(a => (
-                  <option key={a.id} value={a.id}>
-                    {isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}
-                  </option>
-                ))}
+                <AreaOptions areas={areas} isAr={isAr} includeAll />
               </select>
             </div>
           </div>

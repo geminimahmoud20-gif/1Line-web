@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Sparkles, Send, CheckCircle2, Car, Zap } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
-import { getAreas, normalizeAreaKey } from '../../utils/areasData';
+import { getAreas, normalizeAreaKey, areaProximity } from '../../utils/areasData';
 import { parseMoney } from '../../utils/crmLeadViews';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 
@@ -62,9 +62,13 @@ export default function SmartMatchingHub({
         const propArea = normalizeAreaKey(prop.areaKey);
 
         // 1. Area match (35 pts) - Normalized comparison
-        if (leadArea && (propArea === leadArea || leadArea === 'all' || propArea === 'all')) {
+        const near = leadArea ? areaProximity(leadArea, propArea) : null;
+        if (near === 'same') {
           score += 35;
           reasons.push(isAr ? 'نفس المنطقة المستهدفة' : 'Area match');
+        } else if (near === 'sector') {
+          score += 18;
+          reasons.push(isAr ? 'نفس القطاع' : 'Same sector');
         } else if (!rawLeadArea) {
           score += 20;
         }

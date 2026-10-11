@@ -2,7 +2,7 @@
 //  ONE LINE REAL ESTATE - SMART WHATSAPP MATCH & RETARGETING ENGINE
 // =============================================================
 
-import { normalizeAreaKey } from './areasData.js';
+import { normalizeAreaKey, areaProximity } from './areasData.js';
 import { SITE_URL } from '../config/siteConfig.js';
 
 /**
@@ -46,10 +46,10 @@ export function findMatchingClientsForProperty(property, leads = [], demands = [
     const leadType = details.propertyType || lead.type || '';
     const leadBudget = parseInt(String(details.budget || details.expectedPrice || lead.budget || 0).replace(/[^0-9]/g, '')) || 0;
 
-    // Area Match (+40)
-    if (leadArea && (leadArea === propertyArea || leadArea === 'all' || propertyArea === 'all')) {
-      score += 40;
-    }
+    // Area Match (+40), or a district in the same sector (+20)
+    const near = leadArea ? areaProximity(leadArea, propertyArea) : null;
+    if (near === 'same') score += 40;
+    else if (near === 'sector') score += 20;
 
     // Property Type Match (+30)
     if (leadType && (leadType === propertyType || leadType === 'all')) {

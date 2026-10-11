@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { getAreas } from '../utils/areasData';
 import '../styles/expat-suite.css';
 import { recordTimeLabel } from '../utils/relativeTime';
+import AreaOptions from './common/AreaOptions';
 
 export const DemandsPortal = ({
   lang,
@@ -174,11 +175,7 @@ export const DemandsPortal = ({
               value={ownerSearch.area}
               onChange={(e) => setOwnerSearch({ ...ownerSearch, area: e.target.value })}
             >
-              {areas.map(a => (
-                <option key={a.id} value={a.id}>
-                  {lang === 'ar' ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}
-                </option>
-              ))}
+              <AreaOptions areas={areas} isAr={lang === 'ar'} includeAll />
             </select>
           </div>
 

@@ -1,6 +1,6 @@
 import { saveSettings, subscribeToSettings } from '../firebaseLazy.js';
 
-export const DEFAULT_SOHAG_AREAS = [
+const BUILT_IN_AREAS = [
   {
     id: 'all',
     name_ar: 'كل المناطق',
@@ -32,10 +32,14 @@ export const DEFAULT_SOHAG_AREAS = [
   },
   {
     id: 'east',
+    city_ar: 'سوهاج',
+    city_en: 'Sohag',
+    sector_ar: 'شرق النيل',
+    sector_en: 'East Nile',
     name_ar: 'شرق سوهاج',
     name_en: 'East Sohag',
-    label_ar: 'شرق سوهاج (الجمهورية وسيتي وميدان الثقافة)',
-    label_en: 'East Sohag (El Gomhoureya & City)',
+    label_ar: 'شرق سوهاج (الكورنيش الشرقي وشارع العشرين)',
+    label_en: 'East Sohag (East Corniche & 20th St)',
     center: { lat: 26.5569, lng: 31.7001 },
     zoom: 14,
     description_ar: 'أرقى المناطق التجارية والسكنية وكورنيش النيل الشرقي',
@@ -60,6 +64,8 @@ export const DEFAULT_SOHAG_AREAS = [
   },
   {
     id: 'corniche',
+    city_ar: 'سوهاج',
+    city_en: 'Sohag',
     name_ar: 'كورنيش النيل',
     name_en: 'Nile Corniche',
     label_ar: 'كورنيش النيل (الشرقي والغربي والواجهات النهرية)',
@@ -88,6 +94,10 @@ export const DEFAULT_SOHAG_AREAS = [
   },
   {
     id: 'new_sohag',
+    city_ar: 'سوهاج',
+    city_en: 'Sohag',
+    sector_ar: 'سوهاج الجديدة',
+    sector_en: 'New Sohag',
     name_ar: 'سوهاج الجديدة',
     name_en: 'New Sohag',
     label_ar: 'سوهاج الجديدة (الحي الأول، الثاني، المحور المركزي)',
@@ -116,6 +126,10 @@ export const DEFAULT_SOHAG_AREAS = [
   },
   {
     id: 'west',
+    city_ar: 'سوهاج',
+    city_en: 'Sohag',
+    sector_ar: 'غرب النيل',
+    sector_en: 'West Nile',
     name_ar: 'غرب سوهاج',
     name_en: 'West Sohag',
     label_ar: 'غرب سوهاج (الشهيد والمحطة والشبان المسلمين)',
@@ -144,6 +158,10 @@ export const DEFAULT_SOHAG_AREAS = [
   },
   {
     id: 'center',
+    city_ar: 'سوهاج',
+    city_en: 'Sohag',
+    sector_ar: 'غرب النيل',
+    sector_en: 'West Nile',
     name_ar: 'وسط البلد',
     name_en: 'City Center',
     label_ar: 'وسط البلد (ميدان العارف والشارع الجديد والجامعة)',
@@ -172,6 +190,10 @@ export const DEFAULT_SOHAG_AREAS = [
   },
   {
     id: 'thakafa',
+    city_ar: 'سوهاج',
+    city_en: 'Sohag',
+    sector_ar: 'غرب النيل',
+    sector_en: 'West Nile',
     name_ar: 'منطقة الثقافة',
     name_en: 'El Thakafa',
     label_ar: 'منطقة الثقافة (ميدان الثقافة والمخبز الآلي)',
@@ -200,6 +222,10 @@ export const DEFAULT_SOHAG_AREAS = [
   },
   {
     id: 'kawthar',
+    city_ar: 'سوهاج',
+    city_en: 'Sohag',
+    sector_ar: 'شرق النيل',
+    sector_en: 'East Nile',
     name_ar: 'حي الكوثر',
     name_en: 'Al Kawthar',
     label_ar: 'حي الكوثر (المنطقة الصناعية والإسكان المتميز)',
@@ -228,6 +254,10 @@ export const DEFAULT_SOHAG_AREAS = [
   },
   {
     id: 'akhmeem',
+    city_ar: 'سوهاج',
+    city_en: 'Sohag',
+    sector_ar: 'شرق النيل',
+    sector_en: 'East Nile',
     name_ar: 'أخميم',
     name_en: 'Akhmeem',
     label_ar: 'أخميم (شارع بورسعيد وميدان الست دميانة والسنترال)',
@@ -256,6 +286,8 @@ export const DEFAULT_SOHAG_AREAS = [
   },
   {
     id: 'tahta',
+    city_ar: 'طهطا',
+    city_en: 'Tahta',
     name_ar: 'طهطا',
     name_en: 'Tahta',
     label_ar: 'طهطا (شارع المحطة ووسط المدينة والتجاري)',
@@ -284,6 +316,8 @@ export const DEFAULT_SOHAG_AREAS = [
   },
   {
     id: 'girga',
+    city_ar: 'جرجا',
+    city_en: 'Girga',
     name_ar: 'جرجا',
     name_en: 'Girga',
     label_ar: 'جرجا (الكورنيش والميدان الرئيسي وشارع البحر)',
@@ -315,6 +349,12 @@ export const DEFAULT_SOHAG_AREAS = [
 const LOCAL_STORAGE_KEY = 'oneline_custom_areas';
 const SETTING_DOC_KEY = 'areas_cms';
 
+// The built-in price series were illustrations, not recorded prices: they never reach a page,
+// and a saved copy of one (areas saved before this change carry them) is dropped on load.
+const SAMPLE_SERIES = new Set(BUILT_IN_AREAS.map((a) => JSON.stringify(a.historicalPrices || [])));
+const realSeries = (series) => (Array.isArray(series) && !SAMPLE_SERIES.has(JSON.stringify(series)) ? series : []);
+export const DEFAULT_SOHAG_AREAS = BUILT_IN_AREAS.map((a) => ({ ...a, historicalPrices: [] }));
+
 const ALL_AREA = DEFAULT_SOHAG_AREAS[0];
 
 /**
@@ -337,12 +377,12 @@ export function mergeStoredAreas(stored, defaults = DEFAULT_SOHAG_AREAS) {
           ...def,
           ...item,
           amenities: Array.isArray(item.amenities) ? item.amenities : def.amenities,
-          historicalPrices: Array.isArray(item.historicalPrices) ? item.historicalPrices : def.historicalPrices,
+          historicalPrices: realSeries(item.historicalPrices),
           // ?? not ||: a saved 0% growth must stay 0
           avgPricePerMeter: item.avgPricePerMeter ?? def.avgPricePerMeter,
           annualGrowthRate: item.annualGrowthRate ?? def.annualGrowthRate
         }
-      : item);
+      : { ...item, historicalPrices: realSeries(item.historicalPrices) });
   }
   const allIdx = out.findIndex((a) => a.id === 'all');
   const all = allIdx >= 0 ? out.splice(allIdx, 1)[0] : (byId.get('all') || ALL_AREA);
@@ -576,6 +616,7 @@ export async function addArea(areaData) {
     // A new area starts without landmarks or price history; never borrow another area's figures
     historicalPrices: Array.isArray(areaData.historicalPrices) ? areaData.historicalPrices : [],
     amenities: Array.isArray(areaData.amenities) ? areaData.amenities : [],
+    ...placementOf(areaData),
     isSystem: false,
     createdAt: new Date().toISOString()
   };
@@ -644,4 +685,110 @@ export function initAreasSync() {
       }
     }
   });
+}
+
+
+// ===================== PLACEMENT: city → sector → district =====================
+// Every area is a district (حي) a listing belongs to. It sits in a city (سوهاج، 6 أكتوبر…) and,
+// optionally, a sector inside that city (غرب النيل، شرق النيل، سوهاج الجديدة…). Listings only
+// store the district id; city and sector come from the area, so moving a district to another
+// sector never touches a listing. "all" is the site's "every area" filter, not a place.
+
+export const DEFAULT_CITY_AR = 'سوهاج';
+export const DEFAULT_CITY_EN = 'Sohag';
+const clean = (v) => String(v ?? '').trim().replace(/\s+/g, ' ').slice(0, 60);
+
+/** The placement fields of an area form / patch, trimmed (empty sector = none). */
+export function placementOf(data = {}) {
+  const city_ar = clean(data.city_ar) || DEFAULT_CITY_AR;
+  const sector_ar = clean(data.sector_ar);
+  return {
+    city_ar,
+    city_en: clean(data.city_en) || (city_ar === DEFAULT_CITY_AR ? DEFAULT_CITY_EN : city_ar),
+    sector_ar,
+    sector_en: sector_ar ? (clean(data.sector_en) || sector_ar) : ''
+  };
+}
+
+/**
+ * Areas grouped for menus and lists: [{ key, ar, en, count, sectors: [{ key, ar, en, areas }] }].
+ * Cities and sectors keep the order they first appear in; districts without a sector come last
+ * in their city (key ''). The "all" pseudo-area is left out.
+ */
+export function groupAreas(areas = []) {
+  const cities = new Map();
+  for (const a of areas) {
+    if (!a || a.id === 'all') continue;
+    const p = placementOf(a);
+    if (!cities.has(p.city_ar)) cities.set(p.city_ar, { key: p.city_ar, ar: p.city_ar, en: p.city_en, count: 0, sectors: new Map() });
+    const city = cities.get(p.city_ar);
+    if (!city.sectors.has(p.sector_ar)) city.sectors.set(p.sector_ar, { key: p.sector_ar, ar: p.sector_ar, en: p.sector_en, areas: [] });
+    city.sectors.get(p.sector_ar).areas.push(a);
+    city.count += 1;
+  }
+  return [...cities.values()].map((c) => {
+    const sectors = [...c.sectors.values()];
+    return { ...c, sectors: [...sectors.filter((x) => x.key), ...sectors.filter((x) => !x.key)] };
+  });
+}
+
+/** Filter values beyond a single district: the whole city, or one sector of it. */
+export const cityFilterValue = (cityKey) => `city:${cityKey}`;
+export const sectorFilterValue = (cityKey, sectorKey) => `sector:${cityKey}|${sectorKey}`;
+
+/**
+ * District ids an area filter covers: null for "all" (no restriction), a set otherwise.
+ * Accepts a district id, city:<city> or sector:<city>|<sector>.
+ */
+export function areaIdsForFilter(value, areas = []) {
+  if (!value || value === 'all') return null;
+  const v = String(value);
+  if (v.startsWith('city:') || v.startsWith('sector:')) {
+    const [cityKey, sectorKey] = v.startsWith('city:') ? [v.slice(5), null] : v.slice(7).split('|');
+    return new Set(areas.filter((a) => {
+      if (!a || a.id === 'all') return false;
+      const p = placementOf(a);
+      return p.city_ar === cityKey && (sectorKey === null || p.sector_ar === (sectorKey || ''));
+    }).map((a) => a.id));
+  }
+  return new Set([v]);
+}
+
+/** Readable name of an area filter value ("سوهاج"، "سوهاج · شرق النيل"، or the district). */
+export function areaFilterLabel(value, areas = [], isAr = true) {
+  if (!value || value === 'all') return isAr ? 'كل المناطق' : 'All areas';
+  const v = String(value);
+  const pick = (ar, en) => (isAr ? ar : (en || ar));
+  for (const city of groupAreas(areas)) {
+    if (v === cityFilterValue(city.key)) return pick(city.ar, city.en);
+    for (const sector of city.sectors) {
+      if (sector.key && v === sectorFilterValue(city.key, sector.key)) return `${pick(city.ar, city.en)} · ${pick(sector.ar, sector.en)}`;
+    }
+  }
+  const area = areas.find((a) => a.id === v);
+  return area ? pick(area.name_ar || area.label_ar, area.name_en || area.label_en) : v;
+}
+
+/** "سوهاج · شرق النيل · أخميم" — where a district sits. */
+export function areaPathLabel(area, isAr = true) {
+  if (!area) return '';
+  const p = placementOf(area);
+  const pick = (ar, en) => (isAr ? ar : (en || ar));
+  return [pick(p.city_ar, p.city_en), p.sector_ar && pick(p.sector_ar, p.sector_en), pick(area.name_ar, area.name_en)].filter(Boolean).join(' · ');
+}
+
+/**
+ * How close two districts are: 'same', 'sector' (same city and sector), 'city' or null.
+ * 'all' on either side counts as 'same' (the client is open to any area).
+ */
+export function areaProximity(aId, bId, areas = getAreas()) {
+  if (!aId || !bId) return null;
+  if (aId === bId || aId === 'all' || bId === 'all') return 'same';
+  const a = areas.find((x) => x.id === aId);
+  const b = areas.find((x) => x.id === bId);
+  if (!a || !b) return null;
+  const pa = placementOf(a);
+  const pb = placementOf(b);
+  if (pa.city_ar !== pb.city_ar) return null;
+  return pa.sector_ar && pa.sector_ar === pb.sector_ar ? 'sector' : 'city';
 }

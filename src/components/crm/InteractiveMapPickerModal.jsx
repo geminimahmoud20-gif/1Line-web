@@ -3,6 +3,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css'; // only map pages pay for it (overrides in App.css are more specific)
 import { MapPin, Satellite, Map as MapIcon, Check, Crosshair, Sparkles } from 'lucide-react';
 import { getAreas } from '../../utils/areasData';
+import AreaOptions from '../common/AreaOptions';
 
 const SOHAG_HOTSPOTS = [
   { id: 'thakafa', name_ar: 'ميدان الثقافة', name_en: 'Thakafa Sq', lat: 26.5580, lng: 31.6960 },
@@ -250,9 +251,7 @@ export default function InteractiveMapPickerModal({
                 className="form-input"
                 style={{ padding: '4px 8px', fontSize: 'var(--crm-text-sm)' }}
               >
-                {areas.filter(a => a.id !== 'all').map(a => (
-                  <option key={a.id} value={a.id}>{isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}</option>
-                ))}
+                <AreaOptions areas={areas} isAr={isAr} />
               </select>
             </div>
 

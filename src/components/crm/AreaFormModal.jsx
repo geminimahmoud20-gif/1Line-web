@@ -7,8 +7,20 @@ export default function AreaFormModal({
   isSaving,
   modalMode,
   setFormData,
-  setModalMode
+  setModalMode,
+  groups = []
 }) {
+  const inputStyle = {
+    width: '100%',
+    background: 'rgba(0, 0, 0, 0.4)',
+    border: '1px solid rgba(255, 255, 255, 0.15)',
+    padding: '10px 12px',
+    borderRadius: '8px',
+    color: 'var(--crm-on-dark)',
+    fontSize: 'var(--crm-text-base)'
+  };
+  const labelStyle = { display: 'block', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-on-dark-muted)', marginBottom: '6px' };
+  const cityGroup = groups.find((c) => c.key === String(formData.city_ar || '').trim());
   return (
     <div className="crm-modal-backdrop" onClick={() => !isSaving && setModalMode(null)}>
       <div className="crm-modal-card" role="dialog" aria-modal="true" aria-labelledby="area-modal-title" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '540px' }}>
@@ -42,6 +54,46 @@ export default function AreaFormModal({
         </div>
 
         <form onSubmit={handleSubmitForm}>
+          {/* Where the district sits: city → sector (optional) */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '6px' }}>
+            <div className="form-group-item">
+              <label htmlFor="area-city" style={labelStyle}>{isAr ? 'المدينة *' : 'City *'}</label>
+              <input
+                id="area-city"
+                type="text"
+                required
+                list="area-city-options"
+                placeholder={isAr ? 'سوهاج، 6 أكتوبر، الشيخ زايد…' : 'Sohag, 6th of October…'}
+                value={formData.city_ar}
+                onChange={(e) => setFormData({ ...formData, city_ar: e.target.value })}
+                style={inputStyle}
+              />
+              <datalist id="area-city-options">
+                {groups.map((c) => <option key={c.key} value={c.ar} />)}
+              </datalist>
+            </div>
+            <div className="form-group-item">
+              <label htmlFor="area-sector" style={labelStyle}>{isAr ? 'القطاع (اختياري)' : 'Sector (optional)'}</label>
+              <input
+                id="area-sector"
+                type="text"
+                list="area-sector-options"
+                placeholder={isAr ? 'غرب النيل، شرق النيل…' : 'West Nile, East Nile…'}
+                value={formData.sector_ar}
+                onChange={(e) => setFormData({ ...formData, sector_ar: e.target.value })}
+                style={inputStyle}
+              />
+              <datalist id="area-sector-options">
+                {(cityGroup?.sectors || []).filter((x) => x.key).map((x) => <option key={x.key} value={x.ar} />)}
+              </datalist>
+            </div>
+          </div>
+          <small style={{ color: 'var(--crm-faint)', fontSize: 'var(--crm-text-xs)', display: 'block', marginBottom: '14px' }}>
+            {isAr
+              ? 'الحي هو المكان اللي العميل بيدوّر بيه وليه سعر مختلف. الشارع مش حي: لو العقار على شارع رئيسي اكتبها في مميزات العقار.'
+              : 'A district is a place buyers search by, with its own prices. A street is not a district.'}
+          </small>
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
             <div className="form-group-item">
               <label style={{ display: 'block', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-on-dark-muted)', marginBottom: '6px' }}>
@@ -155,61 +207,26 @@ export default function AreaFormModal({
             </div>
           </div>
 
-          {/* Market Benchmark: Avg Price Per Meter & Growth Rate */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
-            <div className="form-group-item">
-              <label style={{ display: 'block', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-on-dark-muted)', marginBottom: '6px' }}>
-                {isAr ? 'متوسط سعر المتر (ج.م/م²) *' : 'Avg Price/m² (EGP) *'}
-              </label>
-              <input
-                type="number"
-                min="1000"
-                step="500"
-                placeholder="15000"
-                value={formData.avgPricePerMeter}
-                onChange={(e) => setFormData({ ...formData, avgPricePerMeter: e.target.value })}
-                style={{
-                  width: '100%',
-                  background: 'rgba(0, 0, 0, 0.4)',
-                  border: '1px solid rgba(217, 119, 6, 0.4)',
-                  padding: '10px 12px',
-                  borderRadius: '8px',
-                  color: 'var(--crm-gold-on-dark)',
-                  fontWeight: 'bold',
-                  fontSize: 'var(--crm-text-base)'
-                }}
-              />
-              <small style={{ color: 'var(--crm-faint)', fontSize: 'var(--crm-text-xs)', display: 'block', marginTop: '4px' }}>
-                {isAr ? 'يحدد معيار عدالة الأسعار التلقائي للحي' : 'Sets valuation benchmark for district'}
-              </small>
-            </div>
-
-            <div className="form-group-item">
-              <label style={{ display: 'block', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-on-dark-muted)', marginBottom: '6px' }}>
-                {isAr ? 'مؤشر النمو التراكمي للأسعار (%)' : 'Capital Growth Rate (%)'}
-              </label>
-              <input
-                type="number"
-                min="0"
-                max="500"
-                placeholder="75"
-                value={formData.annualGrowthRate}
-                onChange={(e) => setFormData({ ...formData, annualGrowthRate: e.target.value })}
-                style={{
-                  width: '100%',
-                  background: 'rgba(0, 0, 0, 0.4)',
-                  border: '1px solid rgba(16, 185, 129, 0.4)',
-                  padding: '10px 12px',
-                  borderRadius: '8px',
-                  color: 'var(--crm-positive)',
-                  fontWeight: 'bold',
-                  fontSize: 'var(--crm-text-base)'
-                }}
-              />
-              <small style={{ color: 'var(--crm-faint)', fontSize: 'var(--crm-text-xs)', display: 'block', marginTop: '4px' }}>
-                {isAr ? 'النسبة المعروضة على الرسم البياني' : 'Displayed in historical growth chart'}
-              </small>
-            </div>
+          {/* Fallback price per m²: listings in the district take over once there are enough */}
+          <div className="form-group-item" style={{ marginBottom: '14px' }}>
+            <label htmlFor="area-price" style={labelStyle}>
+              {isAr ? 'سعر المتر المرجعي (ج.م/م²) *' : 'Reference price/m² (EGP) *'}
+            </label>
+            <input
+              id="area-price"
+              type="number"
+              min="1000"
+              step="500"
+              placeholder="15000"
+              value={formData.avgPricePerMeter}
+              onChange={(e) => setFormData({ ...formData, avgPricePerMeter: e.target.value })}
+              style={{ ...inputStyle, border: '1px solid rgba(217, 119, 6, 0.4)', color: 'var(--crm-gold-on-dark)', fontWeight: 'bold' }}
+            />
+            <small style={{ color: 'var(--crm-faint)', fontSize: 'var(--crm-text-xs)', display: 'block', marginTop: '4px' }}>
+              {isAr
+                ? 'رقم احتياطي: صفحة أسعار المتر والتقييم بيحسبوا من العروض المنشورة في الحي لما يبقى فيه 3 عروض أو أكتر.'
+                : 'Fallback only: market figures use the district’s own listings once there are 3 or more.'}
+            </small>
           </div>
 
           {/* Description */}

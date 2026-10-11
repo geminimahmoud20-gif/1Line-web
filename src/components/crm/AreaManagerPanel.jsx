@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { MapPin, Plus, Edit3, Trash2, RotateCcw, Search, CheckCircle2, Navigation, X, AlertTriangle } from 'lucide-react';
-import { getAreas, addArea, updateArea, deleteArea, resetAreasToDefault, normalizeAreaKey } from '../../utils/areasData';
+import { getAreas, addArea, updateArea, deleteArea, resetAreasToDefault, normalizeAreaKey, groupAreas, placementOf, DEFAULT_CITY_AR } from '../../utils/areasData';
+import AreaOptions from '../common/AreaOptions';
 import { useProperties } from '../../context/PropertiesContext';
 import AreaFormModal from './AreaFormModal';
 import { moveLeadsToArea, moveDemandsToArea } from '../../firebaseLazy';
@@ -28,7 +29,9 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
     lat: 26.5569,
     lng: 31.7001,
     zoom: 14,
-    description_ar: ''
+    description_ar: '',
+    city_ar: DEFAULT_CITY_AR,
+    sector_ar: ''
   });
 
   // Listen to external/cloud updates
@@ -76,13 +79,16 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
     );
   }, [areas, searchQuery]);
 
-  // Statistics
+  // City → sector → district, for the list, the form's suggestions and the stats
+  const groups = useMemo(() => groupAreas(areas), [areas]);
+  const visibleGroups = useMemo(() => groupAreas(filteredAreas), [filteredAreas]);
   const stats = useMemo(() => {
-    const total = areas.length;
-    const system = areas.filter(a => a.isSystem).length;
-    const custom = total - system;
-    return { total, system, custom };
-  }, [areas]);
+    const districts = areas.filter((a) => a.id !== 'all').length;
+    const sectors = groups.reduce((n, c) => n + c.sectors.filter((x) => x.key).length, 0);
+    // Districts left outside a sector in a city that is split into sectors
+    const unplaced = groups.reduce((n, c) => n + (c.sectors.some((x) => x.key) ? (c.sectors.find((x) => !x.key)?.areas.length || 0) : 0), 0);
+    return { districts, cities: groups.length, sectors, unplaced };
+  }, [areas, groups]);
 
   // Open Add Modal
   const handleOpenAdd = () => {
@@ -97,7 +103,8 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
       zoom: 14,
       description_ar: '',
       avgPricePerMeter: 15000,
-      annualGrowthRate: 0
+      city_ar: groups[0]?.ar || DEFAULT_CITY_AR,
+      sector_ar: ''
     });
     setModalMode('add');
   };
@@ -116,7 +123,8 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
       zoom: area.zoom ?? 14,
       description_ar: area.description_ar || '',
       avgPricePerMeter: area.avgPricePerMeter ?? 15000,
-      annualGrowthRate: area.annualGrowthRate ?? 0
+      city_ar: placementOf(area).city_ar,
+      sector_ar: placementOf(area).sector_ar
     });
     setModalMode('edit');
   };
@@ -131,7 +139,6 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
     const lat = Number(formData.lat);
     const lng = Number(formData.lng);
     const price = Number(formData.avgPricePerMeter);
-    const growth = Number(formData.annualGrowthRate);
     // Egypt bounding box — catches swapped or mistyped coordinates before they reach the public map
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < 22 || lat > 32 || lng < 24.5 || lng > 37) {
       if (triggerToast) triggerToast(isAr ? 'الإحداثيات خارج مصر — تأكد من خط العرض (22–32) وخط الطول (24.5–37)' : 'Coordinates must be inside Egypt', 'error');
@@ -141,10 +148,10 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
       if (triggerToast) triggerToast(isAr ? 'متوسط سعر المتر يجب أن يكون بين 1,000 و 1,000,000 ج.م' : 'Price per m² must be 1,000–1,000,000 EGP', 'error');
       return;
     }
-    if (!Number.isFinite(growth) || growth < 0 || growth > 500) {
-      if (triggerToast) triggerToast(isAr ? 'نسبة النمو يجب أن تكون بين 0 و 500%' : 'Growth must be 0–500%', 'error');
-      return;
-    }
+    // English names of an existing city / sector are kept; new ones start as the Arabic name
+    const cityGroup = groups.find((c) => c.key === String(formData.city_ar).trim());
+    const sectorGroup = cityGroup?.sectors.find((x) => x.key && x.key === String(formData.sector_ar).trim());
+    const placement = placementOf({ city_ar: formData.city_ar, city_en: cityGroup?.en, sector_ar: formData.sector_ar, sector_en: sectorGroup?.en });
 
     setIsSaving(true);
     try {
@@ -159,7 +166,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
           zoom: parseInt(formData.zoom, 10) || 14,
           description_ar: formData.description_ar,
           avgPricePerMeter: price,
-          annualGrowthRate: growth
+          ...placement
         });
         if (triggerToast) triggerToast(isAr ? 'تمت إضافة المنطقة' : 'Area added', 'success');
       } else if (modalMode === 'edit' && activeArea) {
@@ -172,7 +179,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
           zoom: parseInt(formData.zoom, 10) || 14,
           description_ar: formData.description_ar.trim(),
           avgPricePerMeter: price,
-          annualGrowthRate: growth
+          ...placement
         });
         if (triggerToast) triggerToast(isAr ? 'تم حفظ تعديلات المنطقة' : 'Area updated', 'success');
       }
@@ -270,7 +277,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                   {isAr ? '🗺️ إدارة المناطق والأحياء' : '🗺️ Sohag Districts & Areas CMS'}
                 </h2>
                 <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-faint)' }}>
-                  {isAr ? 'إضافة وتعديل وحذف مناطق محافظة سوهاج مع المزامنة السحابية الفورية لكافة شاشات وفلاتر الموقع' : 'Manage all districts & sync real-time across platform'}
+                  {isAr ? 'المدن ← القطاعات ← الأحياء. العقار بيتربط بالحي، والمدينة والقطاع بيتعرفوا منه في كل فلاتر الموقع' : 'Manage all districts & sync real-time across platform'}
                 </span>
               </div>
             </div>
@@ -337,25 +344,30 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
         {/* Stats Row */}
         <div style={{ 
           display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', 
           gap: '12px', 
           marginTop: '18px',
           paddingTop: '16px',
           borderTop: '1px solid var(--crm-line)'
         }}>
-          <div style={{ background: 'var(--crm-subtle)', padding: '10px 14px', borderRadius: '10px' }}>
-            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)' }}>{isAr ? 'إجمالي المناطق والأحياء' : 'Total Districts'}</span>
-            <strong style={{ display: 'block', fontSize: 'var(--crm-text-lg)', color: 'var(--crm-ink)', marginTop: '2px' }}>{stats.total} {isAr ? 'منطقة' : 'Areas'}</strong>
-          </div>
-          <div style={{ background: 'var(--crm-subtle)', padding: '10px 14px', borderRadius: '10px' }}>
-            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)' }}>{isAr ? 'الأحياء المخصصة المضافة' : 'Custom Added Districts'}</span>
-            <strong style={{ display: 'block', fontSize: 'var(--crm-text-lg)', color: 'var(--crm-accent-text)', marginTop: '2px' }}>{stats.custom} {isAr ? 'حي إضافي' : 'Custom'}</strong>
-          </div>
-          <div style={{ background: 'var(--crm-subtle)', padding: '10px 14px', borderRadius: '10px' }}>
-            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)' }}>{isAr ? 'الأحياء الأساسية الرسمية' : 'System Districts'}</span>
-            <strong style={{ display: 'block', fontSize: 'var(--crm-text-lg)', color: 'var(--crm-info)', marginTop: '2px' }}>{stats.system} {isAr ? 'مناطق رئيسية' : 'Core'}</strong>
-          </div>
+          {[
+            [isAr ? 'المدن' : 'Cities', stats.cities, 'var(--crm-ink)'],
+            [isAr ? 'القطاعات' : 'Sectors', stats.sectors, 'var(--crm-info)'],
+            [isAr ? 'الأحياء' : 'Districts', stats.districts, 'var(--crm-accent-text)']
+          ].map(([label, value, color]) => (
+            <div key={label} style={{ background: 'var(--crm-subtle)', padding: '10px 14px', borderRadius: '10px' }}>
+              <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)' }}>{label}</span>
+              <strong style={{ display: 'block', fontSize: 'var(--crm-text-lg)', color, marginTop: '2px' }}>{value}</strong>
+            </div>
+          ))}
         </div>
+        {stats.unplaced > 0 && (
+          <p role="status" style={{ margin: '12px 0 0', padding: '10px 12px', borderRadius: '8px', background: 'var(--crm-warn-bg, rgba(217, 119, 6, 0.1))', color: 'var(--crm-warn, var(--crm-accent-text))', fontSize: 'var(--crm-text-sm)', fontWeight: 600 }}>
+            {isAr
+              ? `⚠️ ${stats.unplaced} حي لسه مش متحط في قطاع — افتح «تعديل» واختار القطاع، عشان يظهر صح في فلاتر الموقع.`
+              : `⚠️ ${stats.unplaced} districts have no sector yet — edit them to place them.`}
+          </p>
+        )}
       </div>
 
       {/* Search & Filter Bar */}
@@ -388,13 +400,31 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
         </div>
       </div>
 
-      {/* Areas Grid */}
+      {/* Districts, grouped city → sector */}
+      {visibleGroups.map((city) => (
+        <section key={city.key} style={{ marginBottom: '26px' }} aria-label={city.ar}>
+          <h3 style={{ fontSize: 'var(--crm-text-lg)', fontWeight: 800, color: 'var(--crm-ink)', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <MapPin size={18} style={{ color: 'var(--crm-accent-text)' }} />
+            {isAr ? city.ar : (city.en || city.ar)}
+            <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-faint)' }}>
+              {isAr ? `${city.count} حي` : `${city.count} districts`}
+            </span>
+          </h3>
+          {city.sectors.map((sector) => (
+            <div key={sector.key || '_'} style={{ marginBottom: '16px' }}>
+              {(sector.key || city.sectors.length > 1) && (
+                <h4 style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 700, color: sector.key ? 'var(--crm-body)' : 'var(--crm-warn, var(--crm-accent-text))', margin: '0 0 8px' }}>
+                  {sector.key ? (isAr ? sector.ar : (sector.en || sector.ar)) : (isAr ? 'من غير قطاع' : 'No sector')}
+                  {' '}
+                  <span style={{ fontWeight: 500, color: 'var(--crm-faint)' }}>({sector.areas.length})</span>
+                </h4>
+              )}
       <div style={{ 
         display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', 
+        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
         gap: '16px' 
       }}>
-        {filteredAreas.map((area) => {
+        {sector.areas.map((area) => {
           const propCount = getAreaPropertiesCount(area.id);
           const isSystem = area.isSystem || area.id === 'all';
 
@@ -483,19 +513,8 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                     color: 'var(--crm-accent-text)',
                     border: '1px solid rgba(217, 119, 6, 0.25)'
                   }}>
-                    {isAr ? `متوسط: ${(area.avgPricePerMeter || 15000).toLocaleString('en-US')} ج.م/م²` : `Avg: ${(area.avgPricePerMeter || 15000).toLocaleString('en-US')} EGP/m²`}
+                    {isAr ? `سعر مرجعي: ${(area.avgPricePerMeter || 15000).toLocaleString('en-US')} ج.م/م²` : `Reference: ${(area.avgPricePerMeter || 15000).toLocaleString('en-US')} EGP/m²`}
                   </span>
-                  {Number(area.annualGrowthRate) > 0 && <span style={{
-                    fontSize: 'var(--crm-text-xs)',
-                    fontWeight: '700',
-                    padding: '3px 8px',
-                    borderRadius: '6px',
-                    background: 'rgba(16, 185, 129, 0.12)',
-                    color: 'var(--crm-positive)',
-                    border: '1px solid rgba(16, 185, 129, 0.25)'
-                  }}>
-                    {isAr ? `نمو: +${area.annualGrowthRate}%` : `Growth: +${area.annualGrowthRate}%`}
-                  </span>}
                   {area.amenities?.length > 0 && (
                     <span style={{
                       fontSize: 'var(--crm-text-xs)',
@@ -584,9 +603,13 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
           );
         })}
       </div>
+            </div>
+          ))}
+        </section>
+      ))}
 
       {/* Empty State */}
-      {filteredAreas.length === 0 && (
+      {visibleGroups.length === 0 && (
         <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--crm-faint)' }}>
           <MapPin size={40} style={{ opacity: 0.3, marginBottom: '12px' }} />
           <h4>{isAr ? 'لم يتم العثور على مناطق مطابقة لبحثك' : 'No matching districts found'}</h4>
@@ -604,6 +627,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
           modalMode={modalMode}
           setFormData={setFormData}
           setModalMode={setModalMode}
+          groups={groups}
         />
       )}
 
@@ -650,9 +674,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                   style={{ width: '100%', padding: '8px', borderRadius: '8px', fontWeight: 600 }}
                 >
                   <option value="">{isAr ? 'اختار منطقة…' : 'Choose an area…'}</option>
-                  {areas.filter((a) => a.id !== 'all' && a.id !== deleteConfirmId).map((a) => (
-                    <option key={a.id} value={a.id}>{isAr ? a.name_ar : (a.name_en || a.name_ar)}</option>
-                  ))}
+                  <AreaOptions areas={areas} isAr={isAr} exclude={[deleteConfirmId]} />
                 </select>
               </div>
             )}
