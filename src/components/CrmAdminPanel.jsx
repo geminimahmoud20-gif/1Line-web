@@ -27,6 +27,7 @@ import FounderCmsPanel from './crm/FounderCmsPanel';
 import ContractStudioModal from './crm/ContractStudioModal';
 import LeadQuickDrawer from './crm/LeadQuickDrawer';
 import CrmExecutiveDashboard from './crm/CrmExecutiveDashboard';
+import CrmInboxPanel from './crm/CrmInboxPanel';
 import { CRM_ROLES, getMergedCrmRoles } from './crm/crmRoles';
 import { getActiveAccessConfig } from '../services/accessConfig';
 import EditLeadModal from './crm/EditLeadModal';
@@ -645,6 +646,21 @@ export const CrmAdminPanel = ({
           scopeDesk={myDesk || null}
           showMoney={isSuperRole || perms.includes('fin') || perms.includes('ld.manage')}
           onOpenCopywriter={() => setShowAICopywriter(true)}
+        />
+      )}
+
+      {/* 📥 TAB 1.5: SMART TRIAGE INBOX */}
+      {adminTab === 'inbox' && (
+        <CrmInboxPanel
+          leads={leads}
+          properties={properties}
+          currentUser={currentUser}
+          userRole={activeRole}
+          lang={lang}
+          onUpdateLead={onUpdateLead}
+          onOpenLead={(lead) => setQuickDrawerLead(lead)}
+          onConvertToProperty={onConvertToProperty}
+          triggerToast={triggerToast}
         />
       )}
 

@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { LayoutGrid, Users, Target, Building, Zap, Sparkles, Calculator, Activity, ShieldCheck, ChevronDown, Search, X, Moon, Sun, LogOut, MapPin, Database, Award, Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame, Megaphone, Globe2, Repeat2, Bug, UserCog } from 'lucide-react';
+import { Inbox, LayoutGrid, Users, Target, Building, Zap, Sparkles, Calculator, Activity, ShieldCheck, ChevronDown, Search, X, Moon, Sun, LogOut, MapPin, Database, Award, Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame, Megaphone, Globe2, Repeat2, Bug, UserCog } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import { usePreferences } from '../../context/PreferencesContext';
 
@@ -33,6 +33,10 @@ export default function CrmSidebar({
   const pendingDemandsCount = useMemo(() => {
     return demands.filter(d => d.status === 'pending').length;
   }, [demands]);
+
+  const unassignedInboxCount = useMemo(() => {
+    return leads.filter(l => !l.assignedTo || l.status === 'new').length;
+  }, [leads]);
 
   // Keep system group open if active tab is related
   const [sidebarTab, setSidebarTab] = useState(activeTab);
@@ -83,6 +87,14 @@ export default function CrmSidebar({
       label_ar: 'العمليات والمبيعات',
       label_en: 'Core Operations',
       items: [
+        {
+          id: 'inbox',
+          icon: Inbox,
+          label_ar: 'صندوق الوارد الذكي',
+          label_en: 'Triage Inbox',
+          badge: unassignedInboxCount > 0 ? unassignedInboxCount : undefined,
+          badgeDanger: unassignedInboxCount > 0
+        },
         {
           id: 'dashboard',
           icon: LayoutGrid,
@@ -189,7 +201,7 @@ export default function CrmSidebar({
         }
       ]
     }
-  ], [leads.length, properties.length, pendingDemandsCount, demands.length, projects.length, activeRole, canRetarget, canWorkRequests]);
+  ], [leads.length, unassignedInboxCount, properties.length, pendingDemandsCount, demands.length, projects.length, activeRole, canRetarget, canWorkRequests]);
 
   const handleItemClick = (id) => {
     setActiveTab(id);
