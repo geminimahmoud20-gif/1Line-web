@@ -36,6 +36,7 @@ import { isRecordArray, readStoredJson, rememberMyDemand } from '../utils/browse
 import { normalizeAreaKey } from '../utils/areasData';
 import { enqueuePendingLead, pendingLeadCount } from '../utils/leadQueue';
 import { track, propertyFacts, analyticsVisitorId } from '../utils/analytics';
+import { fetchPublicCatalog, PUBLIC_CATALOG_REFRESH_MS } from '../utils/publicCatalog';
 import { usePreferences } from './PreferencesContext';
 import { useUIModal } from './UIModalContext';
 
@@ -231,8 +232,11 @@ export function PropertiesProvider({ children }) {
     triggerToast(lang === 'ar' ? 'تم حذف المشروع' : 'Project deleted', 'info');
   }, [lang, triggerToast, reportCatalogSync]);
 
-  // Live catalog from Firestore for every visitor: cloud docs override the bundled seed
-  // by id, tombstones remove items, cloud-only items (added in the CRM) go first.
+  // Cloud catalog: cloud docs override the bundled seed by id, tombstones remove items,
+  // cloud-only items (added in the CRM) go first. Visitors read the shared CDN copy
+  // (/api/catalog, no Firestore reads per visit); the CRM asks for the live listener.
+  const [liveCatalog, setLiveCatalog] = useState(false);
+  const requestLiveCatalog = useCallback(() => setLiveCatalog(true), []);
   useEffect(() => {
     const applyCloud = (setter, storageKey, pruneDemos = false) => (cloudDocs) => {
       if (!Array.isArray(cloudDocs) || cloudDocs.length === 0) return;
@@ -261,10 +265,29 @@ export function PropertiesProvider({ children }) {
         return next;
       });
     };
-    const unsubProps = subscribeToCatalog('properties', applyCloud(setProperties, 'oneline_properties', true));
-    const unsubProjects = subscribeToCatalog('projects', applyCloud(setProjects, 'oneline_mega_projects'));
-    return () => { unsubProps(); unsubProjects(); };
-  }, []);
+    const applyProperties = applyCloud(setProperties, 'oneline_properties', true);
+    const applyProjects = applyCloud(setProjects, 'oneline_mega_projects');
+    let unsubs = [];
+    const goLive = () => {
+      unsubs = [subscribeToCatalog('properties', applyProperties), subscribeToCatalog('projects', applyProjects)];
+    };
+    if (liveCatalog) {
+      goLive();
+      return () => unsubs.forEach((u) => u?.());
+    }
+    let cancelled = false;
+    const load = () => fetchPublicCatalog().then((res) => {
+      if (cancelled || unsubs.length) return;
+      if (!res) { goLive(); return; }
+      applyProperties(res.properties);
+      applyProjects(res.projects);
+    });
+    load();
+    const timer = setInterval(() => {
+      if (!unsubs.length && document.visibilityState === 'visible') load();
+    }, PUBLIC_CATALOG_REFRESH_MS);
+    return () => { cancelled = true; clearInterval(timer); unsubs.forEach((u) => u?.()); };
+  }, [liveCatalog]);
 
   // Favorites State
   const [favorites, setFavorites] = useState(() => {
@@ -818,6 +841,7 @@ export function PropertiesProvider({ children }) {
 
   const value = {
     properties,
+    requestLiveCatalog,
     handleAddProperty,
     handleImportProperties,
     handleImportLeads,

@@ -500,7 +500,7 @@ export const mergeLeads = async (keepId, mergedFields, removeIds = []) => {
  * holds the newest 150, so numbers computed from it alone go wrong once there are more.
  * Paged by document id (500 a page) up to `max`. Returns { ok, leads, truncated }.
  */
-export const loadAllLeadsForStats = async (max = 5000) => {
+export const loadAllLeadsForStats = async (max = 20000) => {
   if (!isFirebaseConfigured() || !db || !auth?.currentUser) return { ok: false, leads: [], truncated: false };
   let claims = {};
   try { claims = await getUserClaims(auth.currentUser); } catch { /* rules decide */ }
@@ -512,13 +512,34 @@ export const loadAllLeadsForStats = async (max = 5000) => {
     while (out.length < max) {
       const page = await getDocs(query(collection(db, 'leads'), ...scope, orderBy(documentId()), ...(last ? [startAfter(last)] : []), limit(500)));
       page.docs.forEach((d) => out.push({ ...d.data(), id: d.id, _cloud: true }));
-      if (page.docs.length < 500) return { ok: true, leads: out, truncated: false };
+      if (page.docs.length < 500) return { ok: true, leads: out, truncated: false, scoped: Boolean(desk) };
       last = page.docs[page.docs.length - 1];
     }
-    return { ok: true, leads: out, truncated: true };
+    return { ok: true, leads: out, truncated: true, scoped: Boolean(desk) };
   } catch (error) {
     console.warn('Firebase loadAllLeadsForStats error:', error?.code || error);
-    return { ok: false, leads: out, truncated: true };
+    return { ok: false, leads: out, truncated: true, scoped: Boolean(desk) };
+  }
+};
+
+/**
+ * Leads created or changed after `sinceMs` (server time), so the dashboard refreshes its totals
+ * by reading only what moved instead of every lead again. For accounts that see all leads: a
+ * desk-scoped version would need composite indexes, so those accounts reload in full instead.
+ * Returns { ok, leads, truncated }.
+ */
+export const loadLeadChangesSince = async (sinceMs, max = 1000) => {
+  if (!isFirebaseConfigured() || !db || !auth?.currentUser) return { ok: false, leads: [], truncated: false };
+  const since = Timestamp.fromMillis(Math.max(0, Number(sinceMs) || 0));
+  try {
+    const pages = await Promise.all(['createdAt', 'updatedAt'].map((field) =>
+      getDocs(query(collection(db, 'leads'), where(field, '>', since), limit(max)))));
+    const byId = new Map();
+    pages.forEach((page) => page.docs.forEach((d) => byId.set(d.id, { ...d.data(), id: d.id, _cloud: true })));
+    return { ok: true, leads: [...byId.values()], truncated: pages.some((page) => page.docs.length >= max) };
+  } catch (error) {
+    console.warn('Firebase loadLeadChangesSince error:', error?.code || error);
+    return { ok: false, leads: [], truncated: false };
   }
 };
 

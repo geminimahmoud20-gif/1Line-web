@@ -58,7 +58,9 @@ export default function CrmPage({
   onUnpublishDemand
 }) {
   const { isAuthInitializing, currentUser, userRole } = useAuth();
-  const { handleImportProperties, handleImportLeads } = useProperties();
+  const { handleImportProperties, handleImportLeads, requestLiveCatalog } = useProperties();
+  // Staff edit the catalog: switch from the cached public copy to the live listener
+  useEffect(() => { if (currentUser) requestLiveCatalog(); }, [currentUser, requestLiveCatalog]);
   const [activeTab, setActiveTab] = useState('dashboard');
   // "Open this modal" requests from the top bar, command palette and dashboard shortcuts.
   // The target panel opens it once (useOpenRequest); leaving that tab drops the request.

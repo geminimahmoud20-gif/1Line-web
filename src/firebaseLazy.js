@@ -62,6 +62,7 @@ export const importLeads = lazyCall('importLeads');
 export const restoreLeads = lazyCall('restoreLeads');
 export const mergeLeads = lazyCall('mergeLeads');
 export const loadAllLeadsForStats = lazyCall('loadAllLeadsForStats');
+export const loadLeadChangesSince = lazyCall('loadLeadChangesSince');
 export const loadAnalyticsDays = lazyCall('loadAnalyticsDays');
 export const loadTopAnalyticsProperties = lazyCall('loadTopAnalyticsProperties');
 export const loadHotVisitors = lazyCall('loadHotVisitors');
