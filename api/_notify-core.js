@@ -36,8 +36,25 @@ export function parseRequest(body) {
 /** Alert text from the stored record (contact fields deliberately never read) */
 export function buildMessage(kind, id, rec, siteUrl) {
   const d = rec.details && typeof rec.details === 'object' ? rec.details : {};
+  let headline = `🔔 ${KINDS[kind]} — 1Line`;
+
+  if (rec.type === 'visit' || d.visitDate || d.propertyId) {
+    const code = clean(d.propertyCode || d.propertyId || 'عقار', 25);
+    const when = d.visitDate ? ` ${clean(d.visitDate, 15)}` : '';
+    const slot = d.visitSlot ? ` ${clean(d.visitSlot, 15)}` : '';
+    headline = `🏠 طلب معاينة: كود ${code}${when}${slot} — 1Line`;
+  } else if (rec.type === 'seller') {
+    headline = `💰 عرض بيع عقار جديد — 1Line`;
+  } else if (rec.type === 'buyer') {
+    headline = `🎯 طلب شراء جديد — 1Line`;
+  } else if (rec.type === 'broker') {
+    headline = `🤝 انضمام وسيط عقاري معتمد — 1Line`;
+  } else if (rec.type === 'account') {
+    headline = `👤 تسجيل حساب مستخدم جديد — 1Line`;
+  }
+
   const lines = [
-    `🔔 ${KINDS[kind]} — 1Line`,
+    headline,
     `الاسم: ${clean(rec.name || rec.clientName || '—', 60)}`
   ];
   const type = TYPE_LABELS[rec.type] || clean(rec.type || rec.purpose || rec.propertyType, 40);

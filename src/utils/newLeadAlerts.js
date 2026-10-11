@@ -28,6 +28,46 @@ export const enableDesktopAlerts = async () => {
   }
 };
 
+export const formatLeadHeadline = (lead, isAr = true) => {
+  const d = lead?.details || {};
+  const name = String(lead?.name || (isAr ? 'عميل' : 'Client')).slice(0, 40);
+  
+  // 1. Viewing / Site Inspection Request
+  if (lead?.type === 'visit' || lead?.type === 'viewing' || d.visitDate || d.propertyId || lead?.notes?.includes('معاينة')) {
+    const code = d.propertyCode || d.propertyId || (isAr ? 'عقار' : 'Property');
+    const when = d.visitDate ? ` ${d.visitDate}` : '';
+    const slot = d.visitSlot ? ` ${d.visitSlot}` : '';
+    return isAr ? `🏠 طلب معاينة: كود ${code}${when}${slot} — ${name}` : `🏠 Viewing Request: Code ${code}${when}${slot} — ${name}`;
+  }
+
+  // 2. Seller / Property Listing
+  if (lead?.type === 'seller' || lead?.type === 'valuation' || lead?.landingPage === '/sell' || lead?.notes?.includes('عرض بيع')) {
+    const propType = d.propertyType || lead?.propertyType || (isAr ? 'عقار' : 'Unit');
+    const area = d.area || lead?.area || '';
+    const size = d.size || lead?.size ? ` (${d.size || lead?.size}م²)` : '';
+    return isAr ? `💰 عرض بيع عقار: ${propType} في ${area}${size} — ${name}` : `💰 Sale Listing: ${propType} in ${area}${size} — ${name}`;
+  }
+
+  // 3. Buyer Demand / Purchase Inquiry
+  if (lead?.type === 'buyer' || lead?.type === 'request' || lead?.type === 'investor' || lead?.notes?.includes('طلب شراء')) {
+    const propType = d.propertyType || lead?.propertyType || (isAr ? 'عقار' : 'Unit');
+    const budget = d.budget || lead?.budget ? ` (ميزانية: ${Number(d.budget || lead?.budget).toLocaleString('en-US')} ج.م)` : '';
+    return isAr ? `🎯 طلب شراء: ${propType}${budget} — ${name}` : `🎯 Buyer Demand: ${propType}${budget} — ${name}`;
+  }
+
+  // 4. Broker Partner
+  if (lead?.type === 'broker' || lead?.landingPage === '/broker') {
+    return isAr ? `🤝 انضمام وسيط عقاري معتمد: ${name}` : `🤝 New Broker Partner: ${name}`;
+  }
+
+  // 5. Registered User Account
+  if (lead?.type === 'account' || lead?.type === 'client_registration') {
+    return isAr ? `👤 حساب مستخدم مسجل جديد: ${name}` : `👤 New User Account: ${name}`;
+  }
+
+  return isAr ? `🔔 طلب جديد: ${name}` : `🔔 New request: ${name}`;
+};
+
 /** Call with the CRM's current lead list whenever it changes. */
 export function announceNewLeads(leads, { isAr = true, toast } = {}) {
   if (!Array.isArray(leads)) return;
@@ -45,14 +85,15 @@ export function announceNewLeads(leads, { isAr = true, toast } = {}) {
 
   playNotificationChime();
   const first = fresh[0];
-  const name = String(first.name || (isAr ? 'عميل' : 'Lead')).slice(0, 60);
+  const headline = formatLeadHeadline(first, isAr);
   const text = fresh.length === 1
-    ? (isAr ? `🔔 عميل جديد: ${name}` : `🔔 New lead: ${name}`)
-    : (isAr ? `🔔 ${fresh.length} عملاء جدد (آخرهم ${name})` : `🔔 ${fresh.length} new leads (latest ${name})`);
+    ? headline
+    : (isAr ? `${headline} (+${fresh.length - 1} طلبات أخرى)` : `${headline} (+${fresh.length - 1} more)`);
+
   if (typeof toast === 'function') toast(text, 'success');
   if (desktopAlertsEnabled()) {
     try {
-      const n = new window.Notification(isAr ? 'عميل جديد — 1Line' : 'New lead — 1Line', { body: text, tag: `lead-${first.id}`, icon: '/icon-192.png' });
+      const n = new window.Notification(headline, { body: text, tag: `lead-${first.id}`, icon: '/icon-192.png' });
       n.onclick = () => { window.focus(); n.close(); };
     } catch { /* some mobile browsers only allow notifications from a service worker */ }
   }
