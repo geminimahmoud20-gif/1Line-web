@@ -1,4 +1,4 @@
-# Daily encrypted backup of the whole Firestore database (scripts/backup-firestore.mjs).
+# Daily encrypted backup of the Firestore database, raw visitor analytics excluded (scripts/backup-firestore.mjs).
 # Kept as a workflow artifact for 30 days. This repository is public, so the file is
 # AES-256-GCM encrypted with BACKUP_PASSPHRASE — without it the artifact is unreadable.
 #

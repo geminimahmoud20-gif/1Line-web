@@ -7,6 +7,8 @@
 //  Environment (Vercel → Settings → Environment Variables):
 //    FIREBASE_SERVICE_ACCOUNT — the service account JSON (same key as api/notify.js)
 //  Without it the route answers 503 and the site carries on normally.
+//    ANALYTICS_PAUSED=1 — optional: stop recording (answers 204, writes nothing), e.g. when the
+//    free plan's daily Firestore writes run short, so leads and listings keep their share.
 // =============================================================
 import { SignJWT, importPKCS8 } from 'jose';
 import { sanitizeBatch, buildWrites, isBot, DAILY_SHARDS, MAX_BODY_BYTES } from './_track-core.js';
@@ -67,7 +69,13 @@ const sameSite = (request) => {
   }
 };
 
+// Firestore said the daily quota is used up: stop writing for a while instead of failing on
+// every flush (the quota is shared with leads and listings)
+let quotaPausedUntil = 0;
+const QUOTA_PAUSE_MS = 30 * 60 * 1000;
+
 export async function POST(request) {
+  if (process.env.ANALYTICS_PAUSED === '1' || Date.now() < quotaPausedUntil) return noContent();
   const emulator = process.env.FIRESTORE_EMULATOR_HOST;
   const sa = serviceAccount() || (emulator ? { project_id: process.env.FIREBASE_PROJECT || 'line-c9601' } : null);
   if (!sa?.project_id || (!emulator && (!sa.private_key || !sa.client_email))) return noContent(503);
@@ -99,6 +107,7 @@ export async function POST(request) {
       body: JSON.stringify({ writes })
     });
     if (!res.ok) {
+      if (res.status === 429) quotaPausedUntil = Date.now() + QUOTA_PAUSE_MS;
       console.error('track commit failed:', res.status, (await res.text()).slice(0, 300));
       return noContent(502);
     }
