@@ -103,11 +103,11 @@ export default function ProjectCard({ project, isAr, currency, lang, featured = 
         <dl className="pj-facts">
           <div>
             <dt><Wallet size={15} aria-hidden="true" />{isAr ? 'المقدم' : 'Down'}</dt>
-            <dd>{pct(project.downPaymentPercent)}%</dd>
+            <dd>{Number(project.downPaymentPercent) > 0 ? `${pct(project.downPaymentPercent)}%` : '—'}</dd>
           </div>
           <div>
             <dt><Layers size={15} aria-hidden="true" />{isAr ? 'التقسيط' : 'Plan'}</dt>
-            <dd>{isAr ? arYears(years) : `${years} yrs`}</dd>
+            <dd>{years ? (isAr ? arYears(years) : `${years} yrs`) : '—'}</dd>
           </div>
           <div>
             <dt><CalendarClock size={15} aria-hidden="true" />{isAr ? 'التسليم' : 'Delivery'}</dt>

@@ -22,6 +22,7 @@ import { PROPERTY_TYPES } from '../../data/propertiesData';
 const SHORT_TYPE_AR = { apartment: 'شقق ودوبلكس', villa: 'فيلات', commercial: 'محلات', office: 'مكاتب وعيادات', land: 'أراضي' };
 const SHORT_TYPE_EN = { apartment: 'Apartments', villa: 'Villas', commercial: 'Shops', office: 'Offices & clinics', land: 'Land' };
 import OfferModal from './OfferModal';
+import { listingSampleFlags } from '../../utils/sampleDataFlags';
 const SOHAG_AREA_COORDINATES = {
   east: { lat: 26.5569, lng: 31.7001 },
   new_sohag: { lat: 26.4715, lng: 31.6620 },
@@ -37,26 +38,26 @@ const DEFAULT_FORM_STATE = {
   title_en: '',
   type: 'apartment',
   areaKey: 'east',
-  locationName_ar: 'شرق سوهاج - شارع الجمهورية الرئيسي',
-  locationName_en: 'East Sohag - Main Republic St.',
-  price: 2500000,
-  downPayment: 500000,
-  monthlyInstallment: 20000,
-  installmentYears: 5,
-  size: 150,
-  bedrooms: 3,
-  bathrooms: 2,
-  floor: 3,
-  finishing_ar: 'سوبر لوكس',
-  finishing_en: 'Super Lux',
+  // A new listing starts empty: every fact on it (price, size, rooms, finishing, photos) must come
+  // from the owner. Pre-filled samples were being published whenever a field was left unchanged.
+  locationName_ar: '',
+  locationName_en: '',
+  price: '',
+  downPayment: 0,
+  monthlyInstallment: 0,
+  installmentYears: 0,
+  size: '',
+  bedrooms: '',
+  bathrooms: '',
+  floor: '',
+  finishing_ar: '',
+  finishing_en: '',
   status: 'published', // 'published' | 'hidden' | 'under_negotiation' | 'sold'
-  featured: true,
-  priorityRank: 90,
-  badge_ar: 'عرض مميز',
-  badge_en: 'Featured Deal',
-  images: [
-    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80'
-  ],
+  featured: false,
+  priorityRank: 0,
+  badge_ar: '',
+  badge_en: '',
+  images: [],
   // Written per listing; a pre-filled "luxury / great view" text would be published as fact
   description_ar: '',
   description_en: '',
@@ -89,7 +90,8 @@ export default function PropertyManagerPanel({
   const [editingPropertyId, setEditingPropertyId] = useState(null);
   const [typeFilter, setTypeFilter] = useState('all');
   const [areaFilter, setAreaFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'published' | 'hidden' | 'under_negotiation' | 'sold' | 'trash'
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sampleOnly, setSampleOnly] = useState(false); // 'all' | 'published' | 'hidden' | 'under_negotiation' | 'sold' | 'trash'
   const [searchQuery, setSearchQuery] = useState('');
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [notifierProperty, setNotifierProperty] = useState(null);
@@ -452,6 +454,8 @@ export default function PropertyManagerPanel({
     };
   }, [properties]);
 
+  const sampleFlagCount = useMemo(() => properties.filter((p) => !p.isDeleted && listingSampleFlags(p).length > 0).length, [properties]);
+
   // Filtered Properties for Display (Memoized)
   const filteredProperties = useMemo(() => {
     return properties.filter((prop) => {
@@ -469,6 +473,8 @@ export default function PropertyManagerPanel({
       if (statusFilter === 'under_negotiation' && propStatus !== 'under_negotiation') return false;
       if (statusFilter === 'sold' && propStatus !== 'sold') return false;
 
+      if (sampleOnly && listingSampleFlags(prop).length === 0) return false;
+
       // 3. Type & area (the pill filter)
       if (typeFilter !== 'all' && prop.type !== typeFilter) return false;
       if (areaFilter !== 'all' && prop.areaKey !== areaFilter) return false;
@@ -484,7 +490,7 @@ export default function PropertyManagerPanel({
 
       return true;
     });
-  }, [properties, statusFilter, searchQuery, typeFilter, areaFilter]);
+  }, [properties, statusFilter, searchQuery, typeFilter, areaFilter, sampleOnly]);
 
   // Pill filter options: only the types and areas that have listings (outside the trash), with counts
   const facets = useMemo(() => {
@@ -599,6 +605,19 @@ export default function PropertyManagerPanel({
             setOfferEditing(null);
           }}
         />
+      )}
+
+      {sampleFlagCount > 0 && (
+        <div role="status" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', padding: '10px 14px', marginBottom: '12px', borderRadius: '10px', background: 'var(--crm-warn-soft)', border: '1px solid var(--crm-warn-line)', color: 'var(--crm-warn)', fontSize: 'var(--crm-text-sm)', fontWeight: 600 }}>
+          <span>
+            {isAr
+              ? `⚠️ ${sampleFlagCount} عقار لسه فيه بيانات من نموذج الإضافة القديم (صورة جاهزة، وصف أو سعر افتراضي، "عرض مميز" تلقائي). راجعها وعدّلها أو اخفيها.`
+              : `⚠️ ${sampleFlagCount} listings still have values from the old add form (stock photo, sample description or price, automatic "featured"). Review them.`}
+          </span>
+          <button type="button" className="btn btn-sm btn-outline" onClick={() => setSampleOnly((v) => !v)}>
+            {sampleOnly ? (isAr ? 'اعرض الكل' : 'Show all') : (isAr ? 'اعرضهم بس' : 'Show only these')}
+          </button>
+        </div>
       )}
 
       <PropertyFacetFilter

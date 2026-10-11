@@ -24,7 +24,10 @@ import { searchPropertiesSemantic, parseSemanticQuery } from '../utils/semanticS
 const MAX_PRICE_CAP = 15000000;
 
 // Budget keys used by the hero search, lifestyle links and quick filters
-function budgetRange(key) {
+function budgetRange(key, maxParam) {
+  // ?maxPrice=2500000 (e.g. from the market page's budget tool) caps the range directly
+  const cap = Number(maxParam);
+  if (cap > 0) return { minPrice: 0, maxPrice: Math.min(cap, MAX_PRICE_CAP) };
   switch (key) {
     case 'under_3m': return { minPrice: 0, maxPrice: 3000000 };
     case '3m_to_6m': return { minPrice: 3000000, maxPrice: 6000000 };
@@ -70,7 +73,7 @@ export default function PropertiesPage({
     query: searchParams.get('q') || '',
     type: searchParams.get('type') || 'all',
     area: searchParams.get('area') || 'all',
-    ...budgetRange(searchParams.get('budget')),
+    ...budgetRange(searchParams.get('budget'), searchParams.get('maxPrice')),
     bedrooms: searchParams.get('bedrooms') || 'all',
     completionStatus: 'all',
     finishing: 'all',
@@ -95,7 +98,7 @@ export default function PropertiesPage({
     const q = searchParams.get('q') || '';
     const type = searchParams.get('type') || 'all';
     const area = searchParams.get('area') || 'all';
-    const { minPrice, maxPrice } = budgetRange(searchParams.get('budget'));
+    const { minPrice, maxPrice } = budgetRange(searchParams.get('budget'), searchParams.get('maxPrice'));
     const bedrooms = searchParams.get('bedrooms') || 'all';
     const paymentPlan = searchParams.get('paymentPlan') || (searchParams.get('financing') === 'true' ? 'installments' : 'all');
 

@@ -373,7 +373,7 @@ export default function PropertyMapView({
       const popupContent = `
         <div class="luxury-map-popup-card">
           <div class="popup-thumb-wrap">
-            <img src="${prop.images && prop.images[0] ? prop.images[0] : 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=400&q=80'}" alt="${title}" class="popup-thumb-img" />
+            <img src="${prop.images && prop.images[0] ? prop.images[0] : '/no-photo.svg'}" alt="${title}" class="popup-thumb-img" />
             <span class="popup-badge-pill">${prop.badge_ar || (isAr ? 'معتمد' : 'Verified')}</span>
           </div>
           <div class="popup-details-body">

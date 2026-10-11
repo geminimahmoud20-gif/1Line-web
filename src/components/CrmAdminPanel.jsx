@@ -36,6 +36,8 @@ import CrmLoginGate from './crm/CrmLoginGate';
 import useLeadKeyboardTriage from './crm/useLeadKeyboardTriage';
 import { filterLeads, sortLeads, duplicatesById, buildMergedLead } from '../utils/crmLeadViews';
 import { formatWhatsAppPhone } from '../utils/matchingEngine';
+import useFullLeadStats from '../hooks/useFullLeadStats';
+import { useProperties } from '../context/PropertiesContext';
 
 export const CrmAdminPanel = ({
   lang = 'ar',
@@ -110,6 +112,10 @@ export const CrmAdminPanel = ({
   // Enterprise Tab States
   const [localAdminTab, setLocalAdminTab] = useState('dashboard');
   const adminTab = propAdminTab || localAdminTab;
+  // Dashboard numbers cover every lead this account may read, not only the newest 150 loaded live
+  const { leadsHasMore } = useProperties();
+  const fullStats = useFullLeadStats(allLeads, { enabled: adminTab === 'dashboard', hasMore: leadsHasMore });
+  const dashboardLeads = useMemo(() => (fullStats.leads === allLeads ? leads : scopeLeadsForAccess(fullStats.leads, { role: activeRole, perms, desk: myDesk })), [fullStats.leads, allLeads, leads, activeRole, perms, myDesk]);
   const setAdminTab = (tab) => {
     setLocalAdminTab(tab);
     if (onSwitchTab) onSwitchTab(tab);
@@ -149,7 +155,6 @@ export const CrmAdminPanel = ({
     followUp: '',
     assignedTo: 'Unassigned',
     notes: '',
-    score: 85,
     budget: '',
     area: 'east',
     propertyType: 'apartment'
@@ -429,7 +434,6 @@ export const CrmAdminPanel = ({
       notes: lead.notes || '',
       status: lead.status || 'new',
       temperature: lead.temperature || '',
-      score: lead.score || 85,
       assignedTo: lead.assignedTo || 'Unassigned',
       nextFollowUpAt: lead.nextFollowUpAt ? String(lead.nextFollowUpAt).slice(0, 16) : '',
       followUp: lead.followUp || 'Pending Contact'
@@ -476,7 +480,6 @@ export const CrmAdminPanel = ({
       notes: leadFormData.notes,
       status: leadFormData.status,
       temperature: leadFormData.temperature || '',
-      score: parseInt(leadFormData.score) || 85,
       assignedTo: leadFormData.assignedTo,
       nextFollowUpAt: leadFormData.nextFollowUpAt ? new Date(leadFormData.nextFollowUpAt).toISOString() : null,
       followUp: leadFormData.followUp,
@@ -617,7 +620,8 @@ export const CrmAdminPanel = ({
       {/* 📊 TAB 1: EXECUTIVE DECISION-BASED DASHBOARD (CEO / SALES REP DUAL-MODE) */}
       {adminTab === 'dashboard' && (
         <CrmExecutiveDashboard
-          leads={leads}
+          leads={dashboardLeads}
+          coverage={fullStats.coverage}
           properties={properties}
           demands={demands}
           projects={projects}

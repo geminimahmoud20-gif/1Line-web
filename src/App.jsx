@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
+import { withoutStockPhotos } from './utils/sampleDataFlags';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
 
@@ -181,6 +182,8 @@ function AppContent() {
       toggleFavorite(propertyId);
     }, 'favorite', propTitle || '');
   }, [properties, lang, requireClientAuth, toggleFavorite]);
+  // Public overlays never show the old stock photo on a real listing (see utils/sampleDataFlags)
+  const siteProperties = useMemo(() => properties.map(withoutStockPhotos), [properties]);
 
   // 🛡️ Protected Client Compare Toggle (Requires Name, Email, WhatsApp verification)
   const handleProtectedToggleCompare = useCallback((property) => {
@@ -660,7 +663,7 @@ function AppContent() {
             isOpen={favoritesDrawerOpen}
             onClose={() => setFavoritesDrawerOpen(false)}
             favorites={favorites}
-            properties={properties}
+            properties={siteProperties}
             onRemoveFavorite={toggleFavorite}
             onClearFavorites={clearFavorites}
             onQuickView={handleOpenQuickView}
@@ -685,6 +688,7 @@ function AppContent() {
             onClose={() => setAiModalOpen(false)}
             lang={lang}
             onOpenCallbackModal={() => setCallbackModalOpen(true)}
+            properties={siteProperties}
           />
         </Suspense>
       )}
@@ -695,7 +699,7 @@ function AppContent() {
           <QuickSearchModal
             isOpen={quickSearchOpen}
             onClose={() => setQuickSearchOpen(false)}
-            properties={properties}
+            properties={siteProperties}
             lang={lang}
             currency={currency}
             onOpenAddDemand={() => setAddDemandModalOpen(true)}
@@ -721,10 +725,10 @@ function AppContent() {
           type="button"
           className="floating-ai-advisor-trigger"
           onClick={() => setAiModalOpen(true)}
-          title={lang === 'ar' ? 'استشارة عقارية مباشرة مع مستشاري 1Line' : 'Live 1Line Real Estate Advisory'}
+          title={lang === 'ar' ? 'أسئلة شائعة وتواصل مع فريق 1Line' : 'FAQ and contact the 1Line team'}
         >
           <span className="ai-icon-pulse"><MessageSquare size={16} strokeWidth={1.8} /></span>
-          <span className="ai-trigger-text">{lang === 'ar' ? 'مستشارك العقاري المباشر' : 'Live Property Advisor'}</span>
+          <span className="ai-trigger-text">{lang === 'ar' ? 'عندك سؤال؟' : 'Questions?'}</span>
         </button>
       )}
 

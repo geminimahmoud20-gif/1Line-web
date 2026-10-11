@@ -5,6 +5,7 @@ import { trackEvent } from '../../utils/visitorTracker';
 import LeadDrawerOverview from './lead-profile/LeadDrawerOverview';
 import LeadDrawerMatching from './lead-profile/LeadDrawerMatching';
 import LostReasonModal from './LostReasonModal';
+import LeadScorePill from './LeadScorePill';
 
 export default function LeadQuickDrawer({
   lead,
@@ -337,18 +338,7 @@ export default function LeadQuickDrawer({
                   <h2 id="drawer-lead-name" style={{ margin: 0, fontSize: 'var(--crm-text-lg)', fontWeight: 800 }}>
                     {lead.name}
                   </h2>
-                  {lead.score && (
-                    <span style={{
-                      fontSize: 'var(--crm-text-xs)',
-                      fontWeight: 700,
-                      padding: '2px 8px',
-                      borderRadius: '999px',
-                      background: lead.score >= 85 ? 'rgba(4, 120, 87, 0.12)' : 'rgba(217, 119, 6, 0.12)',
-                      color: lead.score >= 85 ? 'var(--crm-positive)' : 'var(--crm-accent, var(--crm-accent-text))'
-                    }}>
-                      ⚡ {lead.score}% {isAr ? 'جدية' : 'Score'}
-                    </span>
-                  )}
+                  <LeadScorePill lead={lead} isAr={isAr} suffix={isAr ? ' اهتمام' : ' score'} />
                   {lead.temperature && (
                     <span style={{
                       fontSize: 'var(--crm-text-xs)',

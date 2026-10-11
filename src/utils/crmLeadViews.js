@@ -240,7 +240,7 @@ const MAX_LOGS = 100;
 
 /**
  * Fields to write on the kept lead when merging duplicates into it. The others are then deleted.
- * Keeps the oldest creation date, the furthest stage, the best score, every note, tag and log.
+ * Keeps the oldest creation date, the furthest stage, every note, tag and log (the score is computed, not merged).
  */
 export function buildMergedLead(primary, others = [], nowIso = new Date().toISOString()) {
   const all = [primary, ...others];
@@ -252,7 +252,6 @@ export function buildMergedLead(primary, others = [], nowIso = new Date().toISOS
   const tags = [...new Set(all.flatMap((l) => (Array.isArray(l.tags) ? l.tags : [])))];
   const logs = all.flatMap((l) => (Array.isArray(l.activityLogs) ? l.activityLogs : []))
     .sort((a, b) => toMs(b.timestamp) - toMs(a.timestamp));
-  const scores = all.map((l) => l.score).filter((v) => typeof v === 'number');
   const firstContacts = all.map((l) => toMs(l.firstContactedAt)).filter(Boolean);
   const assigned = [primary, ...others].map((l) => l.assignedTo).find((a) => a && a !== 'Unassigned');
 
@@ -269,7 +268,6 @@ export function buildMergedLead(primary, others = [], nowIso = new Date().toISOS
     mergedFrom: [...new Set([...(primary.mergedFrom || []), ...others.map((l) => String(l.id))])]
   };
   if (assigned) fields.assignedTo = assigned;
-  if (scores.length) fields.score = Math.max(...scores);
   if (created.length) fields.createdAt = new Date(Math.min(...created)).toISOString();
   if (firstContacts.length) fields.firstContactedAt = new Date(Math.min(...firstContacts)).toISOString();
   ['temperature', 'budget', 'propertyType', 'area', 'type', 'source', 'cityOrExpat', 'nextFollowUpAt']
@@ -337,7 +335,7 @@ export function filterLeads(leads = [], opts = {}) {
     } else if (leadFilter === 'stale') {
       if (!isStale(l, now)) return false;
     } else if (leadFilter === 'qualified') {
-      if ((l.score || 0) < 80) return false;
+      if (leadScore(l, now).score < LEAD_SCORE_HIGH) return false;
     } else if (leadFilter !== 'all' && l.type !== leadFilter) {
       return false;
     }
@@ -377,7 +375,7 @@ export function sortLeads(list = [], key = 'newest', now = Date.now()) {
     oldest: (l) => leadCreatedMs(l) || Number.MAX_SAFE_INTEGER,
     activity: (l) => -(toMs(l.lastActivityAt) || toMs(l.updatedAt) || leadCreatedMs(l)),
     followup: (l) => toMs(l.nextFollowUpAt) || Number.MAX_SAFE_INTEGER,
-    score: (l) => -(typeof l.score === 'number' ? l.score : -1),
+    score: (l) => -leadScore(l, now).score,
     waiting: (l) => -waitingMs(l, now)
   }[key];
   if (!val) return list;
@@ -391,4 +389,31 @@ export function lostReasonCounts(leads = []) {
   const out = {};
   for (const l of leads) if (l.status === 'lost' && !l.isArchived) out[l.lostReason || 'other'] = (out[l.lostReason || 'other'] || 0) + 1;
   return out;
+}
+
+// ── Lead score ───────────────────────────────────────────────────────────────
+// Computed from facts on the lead (never a stored default like the old 85 / 95), with the reasons
+// so the team can see why. 60+ = high, 30+ = medium.
+const DAY_MS = 24 * 60 * 60 * 1000;
+const SCORE_STAGE = { contacted: 10, site_visit: 25, negotiating: 35, closing: 45 };
+export const LEAD_SCORE_HIGH = 60;
+export const LEAD_SCORE_MEDIUM = 30;
+
+export function leadScore(l = {}, now = Date.now()) {
+  if (!l || l.isArchived || l.status === 'lost') return { score: 0, reasons: [] };
+  if (l.status === 'closed') return { score: 100, reasons: ['تم البيع'] };
+  let score = 0;
+  const reasons = [];
+  const add = (pts, why) => { score += pts; reasons.push(why); };
+  if (SCORE_STAGE[l.status]) add(SCORE_STAGE[l.status], `مرحلة: ${{ contacted: 'تم التواصل', site_visit: 'معاينة', negotiating: 'تفاوض', closing: 'إغلاق' }[l.status]}`);
+  if (l.type === 'reservation_request') add(25, 'طلب حجز مبدئي');
+  if (l.propertyId || l.details?.propertyId) add(10, 'سأل عن وحدة محددة');
+  if (parseMoney(l.budget) || parseMoney(l.details?.budget)) add(10, 'ميزانية محددة');
+  if (l.phone || l.whatsapp) add(5, 'رقم تواصل');
+  if (l.temperature === 'hot') add(10, 'الفريق صنّفه ساخن');
+  else if (l.temperature === 'cold') add(-10, 'الفريق صنّفه بارد');
+  const lastMs = [l.lastActivityAt, l.updatedAt, l.createdAt, l.timestamp].map(toMs).find(Boolean) || 0;
+  if (lastMs && now - lastMs <= 7 * DAY_MS) add(10, 'نشاط آخر 7 أيام');
+  else if (lastMs && now - lastMs > 30 * DAY_MS) add(-15, 'مفيش نشاط من أكتر من شهر');
+  return { score: Math.max(0, Math.min(100, score)), reasons };
 }

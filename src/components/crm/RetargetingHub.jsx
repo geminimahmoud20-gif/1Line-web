@@ -6,8 +6,9 @@ import {
   Check, 
   Zap
 } from 'lucide-react';
-import { parseMoney } from '../../utils/crmLeadViews';
+import { parseMoney, leadScore, LEAD_SCORE_HIGH } from '../../utils/crmLeadViews';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
+import LeadScorePill from './LeadScorePill';
 
 const amountOf = (l) => parseMoney(l.budget) || parseMoney(l.details?.budget) || parseMoney(l.details?.expectedPrice);
 
@@ -44,7 +45,7 @@ export default function RetargetingHub({
     return {
       vip_cash: leads.filter(l => {
         const budget = amountOf(l);
-        return (budget >= 3500000 || l.score >= 90) && l.status !== 'closed';
+        return (budget >= 3500000 || leadScore(l).score >= LEAD_SCORE_HIGH) && l.status !== 'closed';
       }),
       installment: leads.filter(l => {
         const budget = amountOf(l);
@@ -362,9 +363,7 @@ export default function RetargetingHub({
                   <tr key={lead.id}>
                     <td>
                       <strong>{lead.name}</strong>
-                      <span className={`lead-score-pill ${lead.score >= 85 ? 'score-high' : 'score-medium'}`} style={{ marginInlineStart: '6px', fontSize: 'var(--crm-text-xs)' }}>
-                        {lead.score || 85}%
-                      </span>
+                      <LeadScorePill lead={lead} isAr={isAr} style={{ marginInlineStart: '6px', fontSize: 'var(--crm-text-xs)' }} />
                     </td>
                     <td style={{ direction: 'ltr', textAlign: isAr ? 'right' : 'left' }}>
                       {lead.phone}

@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { lazy } from 'react';
+import { lazy, useMemo } from 'react';
+import { withoutStockPhotos } from './utils/sampleDataFlags';
 import HomePage from './pages/HomePage';
 
 // Home is eager (first paint); every other page loads on navigation
@@ -93,6 +94,8 @@ export default function AppRoutes({
   t,
   triggerToast
 }) {
+  // Visitors never see the old stock photo on a real listing; the CRM keeps the stored record
+  const siteProperties = useMemo(() => properties.map(withoutStockPhotos), [properties]);
   return (
     <Routes>
       {/* 1. Home Page */}
@@ -102,7 +105,7 @@ export default function AppRoutes({
           <HomePage
             lang={lang}
             currency={currency}
-            properties={properties}
+            properties={siteProperties}
             demands={demands}
             favorites={favorites}
             onToggleFavorite={handleProtectedToggleFavorite}
@@ -123,7 +126,7 @@ export default function AppRoutes({
           <PropertiesPage
             lang={lang}
             currency={currency}
-            properties={properties}
+            properties={siteProperties}
             favorites={favorites}
             onToggleFavorite={handleProtectedToggleFavorite}
             compareList={compareList}
@@ -141,7 +144,7 @@ export default function AppRoutes({
             lang={lang}
             currency={currency}
             t={t}
-            properties={properties}
+            properties={siteProperties}
             favorites={favorites}
             onToggleFavorite={handleProtectedToggleFavorite}
             onQuickView={handleOpenQuickView}
@@ -369,6 +372,7 @@ export default function AppRoutes({
           <MarketIntelligencePage
             lang={lang}
             currency={currency}
+            properties={siteProperties}
             triggerToast={triggerToast}
           />
         }
@@ -379,7 +383,7 @@ export default function AppRoutes({
         path="/my-account"
         element={
           <ClientAccountPage
-            properties={properties}
+            properties={siteProperties}
             favorites={favorites}
             onToggleFavorite={handleProtectedToggleFavorite}
             compareList={compareList}
@@ -447,7 +451,7 @@ export default function AppRoutes({
           <CommercialHubPage
             lang={lang}
             currency={currency}
-            properties={properties}
+            properties={siteProperties}
             favorites={favorites}
             onToggleFavorite={handleProtectedToggleFavorite}
             compareList={compareList}
@@ -463,7 +467,7 @@ export default function AppRoutes({
         element={
           <TradeInPortal
             lang={lang}
-            properties={properties}
+            properties={siteProperties}
             onCreateLead={handleAddNewLead}
             triggerToast={triggerToast}
           />

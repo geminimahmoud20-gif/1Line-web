@@ -109,7 +109,7 @@ export default function PaymentScheduleBuilder({
             {isAr ? 'مُولّد جداول السداد وإيصالات الحجز الإلكترونية' : 'Financial Schedule & E-Reservation Hub'}
           </h3>
           <p className="section-subtitle" style={{ margin: '4px 0 0' }}>
-            {isAr ? 'هندسة خطط الأقساط المخصصة، حساب دفعات الصيانة والاستلام، وطباعة إيصالات الحجز الرسمية' : 'Build custom installment plans and generate official verified reservation receipts'}
+            {isAr ? 'هندسة خطط الأقساط المخصصة، حساب دفعات الصيانة والاستلام، وطباعة إيصالات الحجز' : 'Build custom installment plans and generate official verified reservation receipts'}
           </p>
         </div>
 
@@ -122,7 +122,7 @@ export default function PaymentScheduleBuilder({
           style={{ background: 'var(--gradient-gold)', display: 'flex', alignItems: 'center', gap: '6px' }}
         >
           <FileText size={16} />
-          <span>{isAr ? 'إصدار إيصال حجز رسمي' : 'Issue Official E-Receipt'}</span>
+          <span>{isAr ? 'إصدار إيصال حجز' : 'Issue reservation receipt'}</span>
         </button>
         )}
       </div>
@@ -290,7 +290,7 @@ export default function PaymentScheduleBuilder({
       {/* Schedule Table Preview */}
       <div className="admin-table-wrapper">
         <h4 style={{ margin: '0 0 14px 0', fontSize: 'var(--crm-text-md)' }}>
-          📑 {isAr ? 'جدول الدفعات والاستحقاقات المالية المعتمد:' : 'Certified Payment Schedule:'}
+          📑 {isAr ? 'جدول الدفعات المقترح:' : 'Proposed payment schedule:'}
         </h4>
         <table className="admin-data-table">
           <thead>
@@ -331,7 +331,7 @@ export default function PaymentScheduleBuilder({
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <ShieldCheck size={22} className="text-gold" />
                 <h3 style={{ margin: 0 }}>
-                  {isAr ? 'إيصال استلام جدية حجز رسمي معتمد' : 'Official Verified E-Reservation Slip'}
+                  {isAr ? 'إيصال استلام جدية حجز (ساري بعد التوقيع والختم)' : 'Reservation deposit receipt (valid once signed and stamped)'}
                 </h3>
               </div>
               <button type="button" className="drawer-close-btn" onClick={() => setShowReceiptModal(false)}>✕</button>
@@ -444,7 +444,7 @@ export default function PaymentScheduleBuilder({
                 style={{ background: 'var(--gradient-gold)', display: 'flex', alignItems: 'center', gap: '6px' }}
               >
                 <Printer size={16} />
-                <span>{isAr ? 'طباعة الإيصال الفوري' : 'Print Official Receipt'}</span>
+                <span>{isAr ? 'طباعة الإيصال' : 'Print receipt'}</span>
               </button>
             </div>
           </div>

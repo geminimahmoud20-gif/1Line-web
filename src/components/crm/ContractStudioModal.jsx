@@ -105,7 +105,7 @@ export default function ContractStudioModal({
         transactionRef: formData.transactionRef
       });
 
-      triggerToast(isAr ? 'تم إنشاء وتحميل عقد الحجز المعتمد بنجاح! 📄' : 'Reservation agreement PDF generated!', 'success');
+      triggerToast(isAr ? 'اتعمل نموذج الحجز. راجعه قانونياً قبل التوقيع 📄' : 'Reservation form generated. Have it reviewed before signing.', 'success');
       trackEvent('crm_contract_pdf_generated', { buyerName: formData.buyerName, price: formData.propertyPrice });
     } catch (err) {
       console.error(err);
@@ -144,8 +144,8 @@ export default function ContractStudioModal({
             <FileText size={24} style={{ color: 'var(--crm-ink)' }} />
           </div>
           <div>
-            <h3>{isAr ? 'استوديو إصدار عقود الحجز والاتفاقيات الرسمية' : 'Official Reservation Contract Studio'}</h3>
-            <p>{isAr ? 'توليد عقود حجز وسندات استلام مبدئية معتمدة بصيغة PDF فورياً' : 'Generate certified bilingual property reservation agreements'}</p>
+            <h3>{isAr ? 'نماذج الحجز المبدئي' : 'Preliminary reservation forms'}</h3>
+            <p>{isAr ? 'نموذج حجز مبدئي PDF للمراجعة والتوقيع. مش عقد نهائي، ويُفضَّل يراجعه محامي قبل التوقيع.' : 'A preliminary reservation form to review and sign. Not a final contract; have a lawyer review it.'}</p>
           </div>
         </div>
 
@@ -305,7 +305,7 @@ export default function ContractStudioModal({
               ) : (
                 <>
                   <Download size={16} />
-                  <span>{isAr ? 'تحميل العقد المعتمد (PDF)' : 'Download Agreement (PDF)'}</span>
+                  <span>{isAr ? 'تحميل نموذج الحجز (PDF)' : 'Download reservation form (PDF)'}</span>
                 </>
               )}
             </button>

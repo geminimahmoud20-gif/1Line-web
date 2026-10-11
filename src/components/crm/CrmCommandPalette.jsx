@@ -58,7 +58,7 @@ export default function CrmCommandPalette({
     },
     {
       id: 'act_add_demand',
-      title_ar: 'إضافة طلب مشتري معتمد ⚡',
+      title_ar: 'إضافة طلب مشتري ⚡',
       title_en: 'Add Buyer Demand ⚡',
       category: 'actions',
       shortcut: 'D',
@@ -82,7 +82,7 @@ export default function CrmCommandPalette({
     },
     {
       id: 'act_contracts',
-      title_ar: 'استوديو العقود والشهادات الرسمية (PDF)',
+      title_ar: 'نماذج الحجز المبدئي (PDF)',
       title_en: 'Open Contract Studio (PDF)',
       category: 'actions',
       shortcut: 'C',

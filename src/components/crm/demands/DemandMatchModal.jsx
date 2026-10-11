@@ -94,7 +94,7 @@ export default function DemandMatchModal({
                 >
                   <div style={{ position: 'relative', height: '130px' }}>
                     <img 
-                      src={p.images?.[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80'} 
+                      src={p.images?.[0] || '/no-photo.svg'} 
                       alt={p.title_ar} 
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />

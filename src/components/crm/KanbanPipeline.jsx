@@ -4,6 +4,7 @@ import SiteVisitModal from './SiteVisitModal';
 import './crm-kanban.css';
 import { getAreas } from '../../utils/areasData';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
+import { leadScore } from '../../utils/crmLeadViews';
 
 const PIPELINE_STAGES = [
   { id: 'new', title_ar: 'طلبات جديدة', title_en: 'New Inquiries', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)' },
@@ -493,7 +494,7 @@ export default function KanbanPipeline({
                           <span>{propType}</span>
                           <span aria-hidden="true">·</span>
                           <span>{area}</span>
-                          {lead.score ? <><span aria-hidden="true">·</span><span>{isAr ? `جودة ${lead.score}%` : `${lead.score}% fit`}</span></> : null}
+                          <span aria-hidden="true">·</span><span title={leadScore(lead).reasons.join(' • ')}>{isAr ? `اهتمام ${leadScore(lead).score}%` : `${leadScore(lead).score}% score`}</span>
                         </p>
 
                         <div className="kb-value">
