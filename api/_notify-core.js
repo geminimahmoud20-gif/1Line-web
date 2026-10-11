@@ -20,7 +20,8 @@ export const FRESH_MS = 15 * 60 * 1000;
 const TYPE_LABELS = {
   buyer: 'شراء', seller: 'بيع', investor: 'استثمار', broker: 'وسيط', callback_request: 'اتصال سريع',
   deposit: 'جدية حجز', special_request: 'طلب خاص', bespoke_request: 'طلب خاص VIP', financing: 'تمويل',
-  valuation: 'تقييم'
+  valuation: 'تقييم', viewing_request: 'طلب معاينة', visit: 'معاينة ميدانية', viewing: 'طلب معاينة',
+  account: 'حساب جديد', client_registration: 'تسجيل حساب'
 };
 
 const clean = (v, max = 80) => String(v ?? '').replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
@@ -38,19 +39,20 @@ export function buildMessage(kind, id, rec, siteUrl) {
   const d = rec.details && typeof rec.details === 'object' ? rec.details : {};
   let headline = `🔔 ${KINDS[kind]} — 1Line`;
 
-  if (rec.type === 'visit' || d.visitDate || d.propertyId) {
-    const code = clean(d.propertyCode || d.propertyId || 'عقار', 25);
-    const when = d.visitDate ? ` ${clean(d.visitDate, 15)}` : '';
-    const slot = d.visitSlot ? ` ${clean(d.visitSlot, 15)}` : '';
-    headline = `🏠 طلب معاينة: كود ${code}${when}${slot} — 1Line`;
-  } else if (rec.type === 'seller') {
-    headline = `💰 عرض بيع عقار جديد — 1Line`;
+  if (rec.type === 'visit' || rec.type === 'viewing_request' || rec.type === 'viewing' || d.visitDate || d.propertyId || rec.propertyId || rec.date) {
+    const code = clean(rec.propertyId || d.propertyCode || d.propertyId || 'عقار', 25);
+    const when = (d.visitDate || rec.date) ? ` ${clean(d.visitDate || rec.date, 15)}` : '';
+    const slot = (d.visitSlot || rec.slot) ? ` ${clean(d.visitSlot || rec.slot, 15)}` : '';
+    headline = `👁 طلب معاينة: كود ${code}${when}${slot} — 1Line`;
+  } else if (rec.type === 'seller' || rec.type === 'valuation') {
+    const area = clean(rec.area || d.area, 30);
+    headline = `🏠 عرض بيع: ${area ? `عقار في ${area}` : 'عقار جديد'} — 1Line`;
   } else if (rec.type === 'buyer') {
     headline = `🎯 طلب شراء جديد — 1Line`;
   } else if (rec.type === 'broker') {
     headline = `🤝 انضمام وسيط عقاري معتمد — 1Line`;
-  } else if (rec.type === 'account') {
-    headline = `👤 تسجيل حساب مستخدم جديد — 1Line`;
+  } else if (rec.type === 'account' || rec.type === 'client_registration') {
+    headline = `👤 حساب جديد على المنصة — 1Line`;
   }
 
   const lines = [

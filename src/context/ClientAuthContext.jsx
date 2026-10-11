@@ -263,8 +263,8 @@ export function ClientAuthProvider({
           email: verifiedAccount.email,
           whatsapp: verifiedAccount.whatsapp,
           phone: verifiedAccount.whatsapp,
-          source: 'client_account',
-          type: 'buyer',
+          source: 'تسجيل حساب بالموقع',
+          type: 'account',
           notes: `سجّل حساب عميل على الموقع (المفضلة والمقارنات). الرقم لسه متأكدش: لو وصلت رسالة واتساب فيها الكود ${verifiedAccount.verificationToken} من نفس الرقم يبقى الرقم صحيح. (${verifiedAccount.countryFlag} ${verifiedAccount.country})`
         }));
       } catch (err) {

@@ -145,6 +145,30 @@ export const CrmAdminPanel = ({
     else setShowAICopywriter(true);
   });
 
+  // Open lead drawer directly when clicking desktop notifications or topbar alerts
+  useEffect(() => {
+    const handleOpenFromEvent = (e) => {
+      const targetLead = e.detail?.lead || leads.find((l) => l.id === e.detail?.leadId);
+      if (targetLead) {
+        setQuickDrawerLead(targetLead);
+        if (adminTab !== 'leads' && adminTab !== 'inbox') {
+          setAdminTab('leads');
+        }
+      }
+    };
+    window.addEventListener('oneline_open_lead', handleOpenFromEvent);
+    return () => window.removeEventListener('oneline_open_lead', handleOpenFromEvent);
+  }, [leads, adminTab]);
+
+  // Role-based default initial lead filter
+  useEffect(() => {
+    if (activeRole === 'property_manager') {
+      setLeadFilter('seller');
+    } else if (activeRole === 'sales_agent' || activeRole === 'agent_east' || activeRole === 'agent_new_sohag') {
+      setLeadFilter('viewing_request');
+    }
+  }, [activeRole]);
+
   // Edit Lead Modal State
   const [editingLead, setEditingLead] = useState(null);
   const [leadFormData, setLeadFormData] = useState({

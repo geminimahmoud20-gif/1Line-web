@@ -94,7 +94,11 @@ export function announceNewLeads(leads, { isAr = true, toast } = {}) {
   if (desktopAlertsEnabled()) {
     try {
       const n = new window.Notification(headline, { body: text, tag: `lead-${first.id}`, icon: '/icon-192.png' });
-      n.onclick = () => { window.focus(); n.close(); };
+      n.onclick = () => {
+        window.focus();
+        window.dispatchEvent(new CustomEvent('oneline_open_lead', { detail: { leadId: first.id, lead: first } }));
+        n.close();
+      };
     } catch { /* some mobile browsers only allow notifications from a service worker */ }
   }
 }

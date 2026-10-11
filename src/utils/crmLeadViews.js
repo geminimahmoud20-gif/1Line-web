@@ -93,8 +93,60 @@ export function leadSourceKey(l = {}) {
   if (/\b(facebook|fb|instagram|ig|google|tiktok|ads?|cpc|meta)\b|إعلان|اعلان|campaign/.test(raw)) return 'ads';
   if (/whats|واتس/.test(raw)) return 'whatsapp';
   if (/direct entry|manual|يدوي|crm|admin|مكالمة|هاتف|walk/.test(raw)) return 'manual';
-  if (!raw.trim() || /web|site|موقع|form|نموذج|online|بوابة|portal/.test(raw)) return 'website';
+  if (!raw.trim() || /web|site|موقع|form|نموذج|online|بوابة|portal|client_account|حساب|تسجيل/.test(raw)) return 'website';
   return 'other';
+}
+
+/** Extract requested visit / appointment date from lead object */
+export function getLeadVisitDate(l = {}) {
+  const d = l.details || {};
+  return l.visitDate || l.date || d.visitDate || l.siteVisit?.visitDate || null;
+}
+
+/** Extract requested visit / appointment time slot from lead object */
+export function getLeadVisitSlot(l = {}) {
+  const d = l.details || {};
+  return l.visitSlot || l.slot || d.visitSlot || l.siteVisit?.visitTime || null;
+}
+
+export function isViewingLead(l = {}) {
+  const type = (l.type || '').toLowerCase();
+  const notes = (l.notes || '').toLowerCase();
+  return (
+    type === 'viewing_request' ||
+    type === 'visit' ||
+    type === 'viewing' ||
+    !!l.siteVisit ||
+    !!l.details?.visitDate ||
+    !!l.date ||
+    !!l.visitDate ||
+    notes.includes('معاينة') ||
+    notes.includes('زيارة')
+  );
+}
+
+export function isSellerLead(l = {}) {
+  const type = (l.type || '').toLowerCase();
+  const notes = (l.notes || '').toLowerCase();
+  return (
+    type === 'seller' ||
+    type === 'valuation' ||
+    !!l.details?.askingPrice ||
+    notes.includes('عرض بيع') ||
+    (l.landingPage && l.landingPage.includes('/sell'))
+  );
+}
+
+export function isAccountLead(l = {}) {
+  const type = (l.type || '').toLowerCase();
+  const source = (l.source || '').toLowerCase();
+  return (
+    type === 'account' ||
+    type === 'client_registration' ||
+    type === 'client' ||
+    source.includes('حساب') ||
+    source.includes('client_account')
+  );
 }
 
 // ── Money, dates and attention flags (dashboard + filters) ───────────────────
@@ -336,6 +388,16 @@ export function filterLeads(leads = [], opts = {}) {
       if (!isStale(l, now)) return false;
     } else if (leadFilter === 'qualified') {
       if (leadScore(l, now).score < LEAD_SCORE_HIGH) return false;
+    } else if (leadFilter === 'unanswered') {
+      if ((l.status && l.status !== 'new') || l.firstContactedAt || l.lastContactedAt) return false;
+    } else if (leadFilter === 'viewing_request' || leadFilter === 'visit') {
+      if (!isViewingLead(l)) return false;
+    } else if (leadFilter === 'seller') {
+      if (!isSellerLead(l)) return false;
+    } else if (leadFilter === 'account') {
+      if (!isAccountLead(l)) return false;
+    } else if (leadFilter === 'buyer') {
+      if (l.type !== 'buyer' || isViewingLead(l) || isAccountLead(l)) return false;
     } else if (leadFilter !== 'all' && l.type !== leadFilter) {
       return false;
     }
@@ -362,6 +424,7 @@ export function filterLeads(leads = [], opts = {}) {
 /** Sort keys for the leads table. Stable: ties keep the incoming (newest-first) order. */
 export const LEAD_SORTS = [
   { id: 'newest', ar: 'الأحدث', en: 'Newest' },
+  { id: 'visit_date', ar: '📅 الأقرب ميعاد معاينة', en: 'Upcoming visit' },
   { id: 'oldest', ar: 'الأقدم', en: 'Oldest' },
   { id: 'activity', ar: 'آخر نشاط', en: 'Last activity' },
   { id: 'followup', ar: 'أقرب متابعة', en: 'Next follow-up' },
@@ -372,6 +435,12 @@ export const LEAD_SORTS = [
 export function sortLeads(list = [], key = 'newest', now = Date.now()) {
   const val = {
     newest: (l) => -leadCreatedMs(l),
+    visit_date: (l) => {
+      const vd = getLeadVisitDate(l);
+      if (!vd) return Number.MAX_SAFE_INTEGER;
+      const ms = toMs(vd);
+      return ms ? ms : Number.MAX_SAFE_INTEGER;
+    },
     oldest: (l) => leadCreatedMs(l) || Number.MAX_SAFE_INTEGER,
     activity: (l) => -(toMs(l.lastActivityAt) || toMs(l.updatedAt) || leadCreatedMs(l)),
     followup: (l) => toMs(l.nextFollowUpAt) || Number.MAX_SAFE_INTEGER,

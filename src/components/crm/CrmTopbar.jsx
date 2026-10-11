@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { Menu, Search, X, Plus, ChevronDown, Bell, ShieldCheck, Lock, Rocket, Globe, LogOut, Users, Building, Zap, Sparkles, CheckCircle2, AlertTriangle, ArrowRight, ArrowLeft } from 'lucide-react';
 import { getMergedCrmRoles } from './crmRoles';
 import { getActiveAccessConfig, subscribeToAccessConfig } from '../../services/accessConfig';
-import { desktopAlertsSupported, desktopAlertsEnabled, enableDesktopAlerts, describeDownload } from '../../utils/newLeadAlerts';
+import { desktopAlertsSupported, desktopAlertsEnabled, enableDesktopAlerts, describeDownload, formatLeadHeadline } from '../../utils/newLeadAlerts';
 
 export default function CrmTopbar({
   clientDownloads = [],
@@ -55,7 +55,7 @@ export default function CrmTopbar({
   }, []);
 
   const pendingDemands = useMemo(() => demands.filter(d => d.status === 'pending'), [demands]);
-  const recentLeads = useMemo(() => leads.slice(0, 3), [leads]);
+
   // Downloads since the bell was last opened count towards the badge (remembered on this browser)
   const [downloadsSeenAt, setDownloadsSeenAt] = useState(() => {
     try { return Number(localStorage.getItem('oneline_crm_downloads_seen_at')) || 0; } catch { return 0; }
@@ -64,12 +64,30 @@ export default function CrmTopbar({
     () => clientDownloads.filter((d) => (d.createdAt?.toMillis ? d.createdAt.toMillis() : 0) > downloadsSeenAt),
     [clientDownloads, downloadsSeenAt]
   );
-  const markDownloadsSeen = () => {
+
+  // Leads unseen by this browser session: only count new leads created after last opened
+  const [leadsSeenAt, setLeadsSeenAt] = useState(() => {
+    try { return Number(localStorage.getItem('oneline_crm_leads_seen_at')) || 0; } catch { return 0; }
+  });
+  const unseenNewLeads = useMemo(() => {
+    return leads.filter((l) => {
+      if (l.status && l.status !== 'new') return false;
+      const t = l.createdAt ? new Date(l.createdAt).getTime() : (l.timestamp ? new Date(l.timestamp).getTime() : 0);
+      return !leadsSeenAt || t > leadsSeenAt;
+    });
+  }, [leads, leadsSeenAt]);
+
+  const markAllSeen = () => {
     const now = Date.now();
     setDownloadsSeenAt(now);
-    try { localStorage.setItem('oneline_crm_downloads_seen_at', String(now)); } catch { /* not remembered */ }
+    setLeadsSeenAt(now);
+    try {
+      localStorage.setItem('oneline_crm_downloads_seen_at', String(now));
+      localStorage.setItem('oneline_crm_leads_seen_at', String(now));
+    } catch { /* not remembered */ }
   };
-  const totalNotifications = pendingDemands.length + (recentLeads.length > 0 ? 1 : 0) + recentDownloads.length;
+
+  const totalNotifications = pendingDemands.length + unseenNewLeads.length + recentDownloads.length;
 
   // Dynamic breadcrumb labels
   const tabTitles = {
@@ -492,11 +510,11 @@ export default function CrmTopbar({
           <button
             type="button"
             className="crm-notif-btn"
-            onClick={() => { if (!showNotifMenu) markDownloadsSeen(); setShowNotifMenu(!showNotifMenu); }}
+            onClick={() => { if (!showNotifMenu) markAllSeen(); setShowNotifMenu(!showNotifMenu); }}
             title={isAr ? 'الإشعارات والتنبيهات' : 'Notifications'}
           >
             <Bell size={16} />
-            {totalNotifications > 0 && <span className="crm-notif-badge" />}
+            {totalNotifications > 0 && <span className="crm-notif-badge">{totalNotifications}</span>}
           </button>
 
           {showNotifMenu && (
@@ -527,6 +545,40 @@ export default function CrmTopbar({
                   >
                     <Bell size={13} /> {isAr ? 'فعّل إشعار سطح المكتب للعملاء الجدد' : 'Turn on desktop alerts for new leads'}
                   </button>
+                )}
+                {unseenNewLeads.length > 0 && (
+                  <div style={{ padding: '8px 10px', background: 'rgba(217, 119, 6, 0.08)', border: '1px solid rgba(217, 119, 6, 0.25)', borderRadius: '8px' }}>
+                    <div style={{ fontWeight: 'bold', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', marginBottom: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>{isAr ? '⚡ طلبات جديدة لم تُشاهد' : '⚡ Unseen New Requests'}</span>
+                      <span className="badge" style={{ background: 'var(--crm-accent)', color: '#fff', fontSize: '10px', padding: '1px 6px', borderRadius: '10px' }}>{unseenNewLeads.length}</span>
+                    </div>
+                    <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '6px', maxHeight: '180px', overflowY: 'auto' }}>
+                      {unseenNewLeads.slice(0, 6).map((l) => (
+                        <li
+                          key={l.id}
+                          onClick={() => {
+                            window.dispatchEvent(new CustomEvent('oneline_open_lead', { detail: { leadId: l.id, lead: l } }));
+                            setShowNotifMenu(false);
+                          }}
+                          style={{
+                            fontSize: 'var(--crm-text-xs)',
+                            color: 'var(--crm-ink)',
+                            padding: '6px 8px',
+                            borderRadius: '6px',
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '2px',
+                            border: '1px solid rgba(255, 255, 255, 0.06)'
+                          }}
+                        >
+                          <div style={{ fontWeight: 'bold', color: 'var(--crm-ink)' }}>{formatLeadHeadline(l, isAr)}</div>
+                          <small style={{ color: 'var(--crm-muted)' }}>{l.name || (isAr ? 'عميل' : 'Client')} • {l.phone || l.whatsapp || ''}</small>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
                 {clientDownloads.length > 0 && (
                   <div style={{ padding: '8px 10px', background: 'var(--crm-info-soft)', border: '1px solid var(--crm-info-line)', borderRadius: '8px' }}>

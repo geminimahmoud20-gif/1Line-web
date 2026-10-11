@@ -8,7 +8,7 @@ import { getAreas } from '../../utils/areasData';
 import { useState, useMemo, useEffect } from 'react';
 import LostReasonModal from './LostReasonModal';
 import MergeLeadsModal from './MergeLeadsModal';
-import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, RESPONSE_SLA_MS, isOverdue, isUnassigned, isStale, localDayKey } from '../../utils/crmLeadViews';
+import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, RESPONSE_SLA_MS, isOverdue, isUnassigned, isStale, localDayKey, getLeadVisitDate, getLeadVisitSlot, isViewingLead, isSellerLead, isAccountLead } from '../../utils/crmLeadViews';
 import { useProperties } from '../../context/PropertiesContext';
 import LeadScorePill from './LeadScorePill';
 
@@ -75,9 +75,22 @@ export default function LeadsTab({
   }, []);
   const counts = useMemo(() => {
     const open = leads.filter((l) => !l.isArchived && l.status !== 'lost');
+    const viewings = open.filter(isViewingLead);
+    const sellers = open.filter(isSellerLead);
+    const accounts = open.filter(isAccountLead);
+    const unanswered = open.filter((l) => (!l.status || l.status === 'new') && !l.firstContactedAt && !l.lastContactedAt);
+
     return {
       all: open.length,
       fresh: open.filter((l) => !l.status || l.status === 'new').length,
+      unanswered: unanswered.length,
+      viewings: viewings.length,
+      viewingUnanswered: viewings.filter((l) => (!l.status || l.status === 'new') && !l.firstContactedAt).length,
+      sellers: sellers.length,
+      sellerUnanswered: sellers.filter((l) => (!l.status || l.status === 'new') && !l.firstContactedAt).length,
+      accounts: accounts.length,
+      accountUnanswered: accounts.filter((l) => (!l.status || l.status === 'new') && !l.firstContactedAt).length,
+      buyers: open.filter((l) => l.type === 'buyer' && !isViewingLead(l) && !isAccountLead(l)).length,
       awaiting: open.filter((l) => waitingMs(l, now) > 0).length,
       late: open.filter((l) => waitingMs(l, now) > RESPONSE_SLA_MS).length,
       dupes: open.filter((l) => duplicateIds.has(l.id)).length,
@@ -88,6 +101,46 @@ export default function LeadsTab({
       archived: leads.filter((l) => l.isArchived).length
     };
   }, [leads, duplicateIds, now]);
+
+  const renderVisitBadge = (l) => {
+    const vd = getLeadVisitDate(l);
+    if (!vd) return <span className="crm-empty-value">—</span>;
+    const vs = getLeadVisitSlot(l);
+    const todayKey = localDayKey(now);
+    const tomorrowKey = localDayKey(now + 86400000);
+    const vdKey = localDayKey(vd);
+
+    const isToday = vdKey === todayKey || String(vd).includes(todayKey) || String(vd).includes('اليوم');
+    const isTomorrow = vdKey === tomorrowKey || String(vd).includes(tomorrowKey) || String(vd).includes('بكرة') || String(vd).includes('غدا');
+    const isPast = vdKey && vdKey < todayKey;
+
+    if (isToday) {
+      return (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(239, 68, 68, 0.2)', border: '1px solid var(--crm-danger)', color: 'var(--crm-danger)', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: '11px' }}>
+          🚨 {isAr ? 'اليوم' : 'Today'} • {vd} {vs ? `(${vs})` : ''}
+        </span>
+      );
+    }
+    if (isTomorrow) {
+      return (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(245, 158, 11, 0.2)', border: '1px solid #f59e0b', color: '#f59e0b', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: '11px' }}>
+          ⚡ {isAr ? 'بكرة' : 'Tomorrow'} • {vd} {vs ? `(${vs})` : ''}
+        </span>
+      );
+    }
+    if (isPast) {
+      return (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(100, 116, 139, 0.2)', color: 'var(--crm-muted)', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>
+          ⌛ {isAr ? 'فات موعده' : 'Past'} • {vd} {vs ? `(${vs})` : ''}
+        </span>
+      );
+    }
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(217, 119, 6, 0.12)', border: '1px solid rgba(217, 119, 6, 0.3)', color: 'var(--crm-accent-text)', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>
+        📅 {vd} {vs ? `(${vs})` : ''}
+      </span>
+    );
+  };
   const fmtWait = (ms) => {
     const m = Math.floor(ms / 60000);
     if (m < 60) return isAr ? `${m} د` : `${m}m`;
@@ -211,12 +264,146 @@ export default function LeadsTab({
         </div>
       </div>
 
+      {/* 🚀 QUICK PRIORITY TRIAGE BAR (جديد محدش رد، طلبات معاينة، عروض بيع، حسابات) */}
+      <div className="crm-priority-triage-bar" style={{
+        display: 'flex',
+        gap: '8px',
+        flexWrap: 'wrap',
+        marginBottom: '14px',
+        padding: '10px 14px',
+        background: 'var(--crm-card-bg, rgba(255, 255, 255, 0.03))',
+        border: '1px solid var(--crm-border, rgba(255, 255, 255, 0.08))',
+        borderRadius: '10px'
+      }}>
+        {/* 1. 🆕 جديد محدش ردّ عليه */}
+        <button
+          type="button"
+          className={`table-filter-btn ${leadFilter === 'unanswered' ? 'active' : ''}`}
+          onClick={() => { setLeadFilter('unanswered'); }}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '7px 13px',
+            fontSize: 'var(--crm-text-sm)',
+            fontWeight: '600',
+            border: leadFilter === 'unanswered' ? '1px solid var(--crm-danger, #ef4444)' : '1px solid rgba(239, 68, 68, 0.25)',
+            background: leadFilter === 'unanswered' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.07)',
+            color: 'var(--crm-ink)'
+          }}
+        >
+          <span>🆕 {isAr ? 'جديد محدش ردّ عليه' : 'Unanswered / New'}</span>
+          <span className="badge" style={{ background: 'var(--crm-danger, #ef4444)', color: '#fff', fontSize: '11px', padding: '2px 7px', borderRadius: '12px' }}>
+            {counts.unanswered}
+          </span>
+        </button>
+
+        {/* 2. 👁 طلبات معاينة */}
+        <button
+          type="button"
+          className={`table-filter-btn ${leadFilter === 'viewing_request' ? 'active' : ''}`}
+          onClick={() => { setLeadFilter('viewing_request'); setLeadSort?.('visit_date'); }}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '7px 13px',
+            fontSize: 'var(--crm-text-sm)',
+            fontWeight: '600',
+            border: leadFilter === 'viewing_request' ? '1px solid var(--crm-accent, #d97706)' : '1px solid rgba(217, 119, 6, 0.25)',
+            background: leadFilter === 'viewing_request' ? 'rgba(217, 119, 6, 0.2)' : 'rgba(217, 119, 6, 0.07)',
+            color: 'var(--crm-ink)'
+          }}
+        >
+          <span>👁 {isAr ? 'طلبات معاينة' : 'Viewing Requests'}</span>
+          {counts.viewingUnanswered > 0 ? (
+            <span className="badge" style={{ background: 'var(--crm-accent, #d97706)', color: '#fff', fontSize: '11px', padding: '2px 7px', borderRadius: '12px' }}>
+              {counts.viewings} ({counts.viewingUnanswered} {isAr ? 'معلق' : 'pending'})
+            </span>
+          ) : (
+            <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--crm-muted)', fontSize: '11px', padding: '2px 7px', borderRadius: '12px' }}>
+              {counts.viewings}
+            </span>
+          )}
+        </button>
+
+        {/* 3. 🏠 عروض بيع */}
+        <button
+          type="button"
+          className={`table-filter-btn ${leadFilter === 'seller' ? 'active' : ''}`}
+          onClick={() => { setLeadFilter('seller'); }}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '7px 13px',
+            fontSize: 'var(--crm-text-sm)',
+            fontWeight: '600',
+            border: leadFilter === 'seller' ? '1px solid var(--crm-positive, #10b981)' : '1px solid rgba(16, 185, 129, 0.25)',
+            background: leadFilter === 'seller' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.07)',
+            color: 'var(--crm-ink)'
+          }}
+        >
+          <span>🏠 {isAr ? 'عروض بيع' : 'Seller Listings'}</span>
+          {counts.sellerUnanswered > 0 ? (
+            <span className="badge" style={{ background: 'var(--crm-positive, #10b981)', color: '#fff', fontSize: '11px', padding: '2px 7px', borderRadius: '12px' }}>
+              {counts.sellers} ({counts.sellerUnanswered} {isAr ? 'معلق' : 'pending'})
+            </span>
+          ) : (
+            <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--crm-muted)', fontSize: '11px', padding: '2px 7px', borderRadius: '12px' }}>
+              {counts.sellers}
+            </span>
+          )}
+        </button>
+
+        {/* 4. 👤 حسابات جديدة */}
+        <button
+          type="button"
+          className={`table-filter-btn ${leadFilter === 'account' ? 'active' : ''}`}
+          onClick={() => { setLeadFilter('account'); }}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '7px 13px',
+            fontSize: 'var(--crm-text-sm)',
+            fontWeight: '600',
+            border: leadFilter === 'account' ? '1px solid var(--crm-info, #0ea5e9)' : '1px solid rgba(14, 165, 233, 0.25)',
+            background: leadFilter === 'account' ? 'rgba(14, 165, 233, 0.2)' : 'rgba(14, 165, 233, 0.07)',
+            color: 'var(--crm-ink)'
+          }}
+        >
+          <span>👤 {isAr ? 'حسابات جديدة' : 'New Accounts'}</span>
+          {counts.accountUnanswered > 0 ? (
+            <span className="badge" style={{ background: 'var(--crm-info, #0ea5e9)', color: '#fff', fontSize: '11px', padding: '2px 7px', borderRadius: '12px' }}>
+              {counts.accounts} ({counts.accountUnanswered} {isAr ? 'جديد' : 'new'})
+            </span>
+          ) : (
+            <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--crm-muted)', fontSize: '11px', padding: '2px 7px', borderRadius: '12px' }}>
+              {counts.accounts}
+            </span>
+          )}
+        </button>
+      </div>
+
       {/* Advanced Multi-Filters Toolbar */}
       <div className="crm-table-header" style={{ alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '14px' }}>
         {/* Stage & Workflow Quick Tabs */}
         <div className="table-filters" style={{ flexWrap: 'wrap', gap: '6px' }}>
           <button className={`table-filter-btn ${leadFilter === 'all' ? 'active' : ''}`} onClick={() => setLeadFilter('all')}>
             {isAr ? 'كل العملاء' : 'All Leads'} ({counts.all})
+          </button>
+          <button className={`table-filter-btn ${leadFilter === 'viewing_request' ? 'active' : ''}`} onClick={() => { setLeadFilter('viewing_request'); setLeadSort?.('visit_date'); }}>
+            👁 {isAr ? 'طلبات معاينة' : 'Viewing Requests'} ({counts.viewings})
+          </button>
+          <button className={`table-filter-btn ${leadFilter === 'buyer' ? 'active' : ''}`} onClick={() => setLeadFilter('buyer')}>
+            {isAr ? 'طلبات شراء' : 'Buyers'} ({counts.buyers})
+          </button>
+          <button className={`table-filter-btn ${leadFilter === 'seller' ? 'active' : ''}`} onClick={() => setLeadFilter('seller')}>
+            {isAr ? 'عروض بيع' : 'Sellers'} ({counts.sellers})
+          </button>
+          <button className={`table-filter-btn ${leadFilter === 'account' ? 'active' : ''}`} onClick={() => setLeadFilter('account')}>
+            👤 {isAr ? 'حسابات جديدة' : 'Accounts'} ({counts.accounts})
           </button>
           <button className={`table-filter-btn ${leadFilter === 'new' ? 'active' : ''}`} onClick={() => setLeadFilter('new')}>
             ✨ {isAr ? 'عملاء جدد' : 'New Leads'} ({counts.fresh})
@@ -462,6 +649,7 @@ export default function LeadsTab({
             </th>
             <th>{isAr ? 'العميل والملف الشخصي' : 'Client Profile'}</th>
             <th>{isAr ? 'المواصفات والميزانية' : 'Requirements'}</th>
+            {leadFilter === 'viewing_request' && <th style={{ minWidth: '150px' }}>{isAr ? 'الميعاد المطلوب' : 'Requested Schedule'}</th>}
             <th>{isAr ? 'الجدية والحرارة' : 'Score & Temp'}</th>
             <th>{isAr ? 'الحالة' : 'Status'}</th>
             <th>{isAr ? 'المتابعة القادمة' : 'Next Action'}</th>
@@ -472,7 +660,7 @@ export default function LeadsTab({
         <tbody>
           {filteredLeads.length === 0 ? (
             <tr>
-              <td colSpan="8" style={{ textAlign: 'center', padding: '40px', color: 'var(--crm-muted)' }}>
+              <td colSpan={leadFilter === 'viewing_request' ? 9 : 8} style={{ textAlign: 'center', padding: '40px', color: 'var(--crm-muted)' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
                   <Inbox size={32} style={{ color: 'var(--crm-accent-text)' }} />
                   <span style={{ fontSize: 'var(--crm-text-base)' }}>{isAr ? 'لم يتم العثور على أي عملاء يطابقون خيارات البحث الحالية.' : 'No leads found.'}</span>
@@ -577,8 +765,20 @@ export default function LeadsTab({
                       <span style={{ color: 'var(--crm-muted)' }}>
                         {getLocalizedPropertyType(l.propertyType || l.details?.propertyType || l.type)} • {getLocalizedArea(l.area || l.details?.area || l.details?.district || 'east')}
                       </span>
+                      {leadFilter !== 'viewing_request' && isViewingLead(l) && (
+                        <div style={{ marginTop: '5px' }}>
+                          {renderVisitBadge(l)}
+                        </div>
+                      )}
                     </div>
                   </td>
+
+                  {/* Requested Schedule Column (for viewing_request) */}
+                  {leadFilter === 'viewing_request' && (
+                    <td data-label={isAr ? 'الميعاد المطلوب' : 'Schedule'}>
+                      {renderVisitBadge(l)}
+                    </td>
+                  )}
 
                   {/* Score & Temperature */}
                   <td data-label={isAr ? 'الجدية والحرارة' : 'Score & Temp'}>
