@@ -301,7 +301,7 @@ export const SellWizard = ({
   const calculatedEstimate = useMemo(() => {
     const areaKey = sellerAnswers.area || 'east';
     const size = parseInt(sellerAnswers.size) || 0;
-    const type = sellerAnswers.propertyType;
+    const type = sellerAnswers.propertyType || 'apartment';
     const cls = type === 'retail' || type === 'office' ? 'commercial' : type === 'land' ? 'land' : 'residential';
     const comps = liveListings(siteListings)
       .filter((p) => p.areaKey === areaKey && assetClass(p) === cls && Number(p.size) > 0)
@@ -312,30 +312,60 @@ export const SellWizard = ({
     if (comps.length >= 3) {
       baseM2 = median(comps);
       basis = 'comparables';
-    } else if (cls === 'residential') {
+    } else {
       const liveArea = districts.find(d => d.id === areaKey);
-      baseM2 = liveArea?.avgPricePerMeter || FALLBACK_BENCHMARK_PRICING[areaKey]?.base || 0;
-      basis = baseM2 ? 'area' : null;
+      const districtResidentialBase = liveArea?.avgPricePerMeter || FALLBACK_BENCHMARK_PRICING[areaKey]?.base || 21500;
+      
+      if (cls === 'residential') {
+        baseM2 = districtResidentialBase;
+        basis = 'area';
+      } else if (cls === 'commercial') {
+        // Commercial benchmark: shops vs office
+        const mult = type === 'retail' ? 2.1 : 1.45;
+        baseM2 = Math.round(districtResidentialBase * mult);
+        basis = 'benchmark_commercial';
+      } else if (cls === 'land') {
+        baseM2 = Math.round(districtResidentialBase * 0.85);
+        basis = 'benchmark_land';
+      }
     }
 
-    // Finishing only matters for built units, and only when the comparables are not already of mixed finish
+    // Finishing only applies if explicitly chosen (Phase 2/3), keeping Phase 1 pure & unbiased
     let finishMultiplier = 1.0;
-    if (cls !== 'land' && basis === 'area') {
-      const currentFinishing = sellerAnswers.finishing || 'super_lux';
-      const foundFinish = REAL_ESTATE_FINISHING_TYPES.find(f => f.id === currentFinishing);
-      if (foundFinish) finishMultiplier = foundFinish.multiplier;
+    const hasExplicitFinishing = Boolean(sellerAnswers.finishing);
+    if (cls !== 'land') {
+      if (hasExplicitFinishing) {
+        const foundFinish = REAL_ESTATE_FINISHING_TYPES.find(f => f.id === sellerAnswers.finishing);
+        if (foundFinish) finishMultiplier = foundFinish.multiplier;
+      } else {
+        finishMultiplier = 1.0;
+      }
     }
 
-    if (!size || !baseM2) return { min: 0, max: 0, avg: 0, sqmAvg: 0, basis: null, sample: comps.length };
-    const spread = basis === 'comparables' ? 0.10 : 0.12;
+    if (!size || !baseM2) {
+      return { 
+        min: 0, 
+        max: 0, 
+        avg: 0, 
+        sqmAvg: 0, 
+        rawSqm: baseM2, 
+        basis: null, 
+        sample: comps.length,
+        hasExplicitFinishing 
+      };
+    }
+
+    const spread = basis === 'comparables' ? 0.08 : 0.10;
     const baseVal = size * baseM2 * finishMultiplier;
     return {
       min: Math.round((baseVal * (1 - spread)) / 10000) * 10000,
       max: Math.round((baseVal * (1 + spread)) / 10000) * 10000,
       avg: Math.round(baseVal),
       sqmAvg: Math.round(baseM2 * finishMultiplier),
+      rawSqm: baseM2,
       basis,
-      sample: comps.length
+      sample: comps.length,
+      hasExplicitFinishing
     };
   }, [sellerAnswers, districts, siteListings]);
 
@@ -649,6 +679,139 @@ export const SellWizard = ({
               </div>
             </div>
           </div>
+
+          {/* Smart Sanity Check for Small Units in Prime Commercial Districts */}
+          {sellerAnswers.size && parseInt(sellerAnswers.size) > 0 && parseInt(sellerAnswers.size) < 60 && (!sellerAnswers.propertyType || sellerAnswers.propertyType === 'apartment') && (sellerAnswers.area === 'east' || sellerAnswers.area === 'corniche' || sellerAnswers.area === 'center') && (
+            <div style={{
+              background: 'rgba(234, 88, 12, 0.08)',
+              border: '1px solid rgba(234, 88, 12, 0.25)',
+              borderRadius: '10px',
+              padding: '10px 14px',
+              marginTop: '12px',
+              fontSize: '0.8rem',
+              color: '#c2410c',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              lineHeight: 1.45
+            }}>
+              <AlertCircle size={16} style={{ flexShrink: 0 }} />
+              <span>
+                {isAr 
+                  ? `💡 تنبيه استشاري: مساحة (${sellerAnswers.size} م²) في شارع رئيسي (مثل الجمهورية أو الكورنيش) نادراً ما تكون شقة سكنية مستقلة، وغالباً ما تكون عيادة، مكتباً إدارياً، أو محلاً تجارياً. إذا كان عقارك تجارياً أو إدارياً، اختر "مكتب / عيادة" أو "محل تجاري" بالأعلى للحصول على أدق تسعير للمنطقة.`
+                  : `Market Note: Built area of (${sellerAnswers.size} sqm) in prime streets is typically a commercial shop or medical clinic/office. Please confirm property type above.`}
+              </span>
+            </div>
+          )}
+
+          {/* 🌟 Phase 1 Live Initial Indicative Valuation Ticker */}
+          {sellerAnswers.size && parseInt(sellerAnswers.size) >= 20 && (
+            <div style={{
+              marginTop: '14px',
+              padding: '16px 20px',
+              borderRadius: '14px',
+              background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.06) 0%, rgba(255, 255, 255, 0.95) 100%)',
+              border: '1.5px solid rgba(217, 119, 6, 0.3)',
+              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Sparkles size={16} color="#d97706" />
+                  <span>{isAr ? 'مؤشر القيمة الاسترشادي الأولي للمنطقة:' : 'Initial Indicative Price Indicator:'}</span>
+                </span>
+                {calculatedEstimate.avg > 0 && !isCairo && (
+                  <span style={{
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    color: '#b45309',
+                    background: '#fffbeb',
+                    padding: '4px 12px',
+                    borderRadius: '20px',
+                    border: '1px solid rgba(217, 119, 6, 0.25)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    <span>{isAr ? 'متوسط المتر الاسترشادي:' : 'Est. Benchmark:'}</span>
+                    <strong style={{ fontWeight: 800 }}>{calculatedEstimate.sqmAvg.toLocaleString('en-US')}</strong>
+                    <span>{isAr ? 'ج.م / م²' : 'EGP/sqm'}</span>
+                  </span>
+                )}
+              </div>
+
+              {isCairo ? (
+                <p style={{ margin: 0, fontSize: '0.84rem', color: '#64748b', lineHeight: 1.5 }}>
+                  {isAr 
+                    ? '📍 عقارات القاهرة الكبرى تخضع لتقييم مخصص دقيق وفق أسعار الكمبوند والحي، مع تدقيق سعرك المطلوب في الخطوة الأخيرة.' 
+                    : 'Greater Cairo units undergo custom benchmark valuation against local compound listings.'}
+                </p>
+              ) : calculatedEstimate.avg > 0 ? (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
+                    <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 700 }}>
+                      {isAr ? 'النطاق الاسترشادي المتوقع:' : 'Indicative Range:'}
+                    </span>
+                    <span style={{ fontSize: '0.85rem', color: '#64748b' }}>{isAr ? 'من' : 'from'}</span>
+                    <strong style={{
+                      fontSize: '1.2rem',
+                      color: '#1e293b',
+                      fontWeight: 900,
+                      background: 'rgba(15, 23, 42, 0.05)',
+                      padding: '2px 8px',
+                      borderRadius: '6px'
+                    }}>
+                      {calculatedEstimate.min.toLocaleString('en-US')}
+                    </strong>
+                    <span style={{ fontSize: '0.85rem', color: '#64748b' }}>{isAr ? 'إلى' : 'to'}</span>
+                    <strong style={{
+                      fontSize: '1.2rem',
+                      color: '#b45309',
+                      fontWeight: 900,
+                      background: 'rgba(217, 119, 6, 0.1)',
+                      padding: '2px 8px',
+                      borderRadius: '6px'
+                    }}>
+                      {calculatedEstimate.max.toLocaleString('en-US')}
+                    </strong>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#334155' }}>
+                      {isAr ? 'ج.م كاش' : 'EGP'}
+                    </span>
+                    <span style={{ fontSize: '0.84rem', color: '#059669', fontWeight: 800, marginRight: isAr ? '4px' : 0 }}>
+                      ({isAr ? `متوسط: ${calculatedEstimate.avg.toLocaleString('en-US')} ج.م` : `Avg: ${calculatedEstimate.avg.toLocaleString('en-US')}`})
+                    </span>
+                  </div>
+
+                  <div style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '6px',
+                    marginTop: '10px',
+                    fontSize: '0.76rem',
+                    color: '#64748b'
+                  }}>
+                    <span style={{ background: '#f8fafc', padding: '3px 8px', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
+                      🏗️ {isAr ? 'سعر أساسي تمهيدي قبل فروق التشطيب' : 'Raw baseline before finishing status'}
+                    </span>
+                    <span style={{ background: '#f8fafc', padding: '3px 8px', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
+                      🏢 {isAr ? 'بدون احتساب ميزات الدور والواجهة' : 'Floor & view pending'}
+                    </span>
+                    <span style={{ background: '#f8fafc', padding: '3px 8px', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
+                      ⚖️ {isAr ? 'التدقيق النهائي بنسبة 98% في الخطوة التالية' : 'Refined up to 98% in next steps'}
+                    </span>
+                  </div>
+
+                  <p style={{ margin: '8px 0 0 0', fontSize: '0.78rem', color: '#64748b', lineHeight: 1.4 }}>
+                    {isAr 
+                      ? '💡 هذا مؤشر تمهيدي لموقع العقار. في الخطوتين التاليتين ستحدد حالة التشطيب ورقم الدور والمستندات القانونية وسعرك المستهدف.' 
+                      : 'Initial estimate for property location. In the next steps you will refine finishing, floor, legal docs and your asking price.'}
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          )}
 
           <div className="wizard-actions-bar">
             <button

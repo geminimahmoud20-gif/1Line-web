@@ -9242,6 +9242,27 @@ body.dark,
 
 .input-with-tag {
   position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-tag input[type="number"]::-webkit-outer-spin-button,
+.input-with-tag input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.input-with-tag input[type="number"] {
+  -moz-appearance: textfield;
+  padding-left: 42px !important;
+  text-align: right;
+  direction: ltr;
+}
+
+[dir="ltr"] .input-with-tag input[type="number"] {
+  padding-left: 14px !important;
+  padding-right: 42px !important;
+  text-align: left;
 }
 
 .input-tag {
@@ -9249,9 +9270,15 @@ body.dark,
   top: 50%;
   left: 14px;
   transform: translateY(-50%);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 800;
-  color: var(--text-muted);
+  color: var(--text-muted, #64748b);
+  pointer-events: none;
+  user-select: none;
+  background: rgba(148, 163, 184, 0.12);
+  padding: 2px 7px;
+  border-radius: 6px;
+  line-height: 1;
 }
 
 [dir="ltr"] .input-tag {
