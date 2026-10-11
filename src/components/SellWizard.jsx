@@ -142,6 +142,21 @@ export const formatArabicDocCount = (count) => {
   return `${count} مستنداً رسمياً`;
 };
 
+// Human-readable Arabic currency words helper (تفقيط الأرقام باللغة العربية)
+export const formatArabicPriceSummary = (val) => {
+  if (!val || isNaN(val) || val <= 0) return '';
+  const num = Number(val);
+  if (num >= 1000000) {
+    const millions = (num / 1000000).toLocaleString('ar-EG', { maximumFractionDigits: 2 });
+    return `${millions} مليون جنيه مصري`;
+  }
+  if (num >= 1000) {
+    const thousands = (num / 1000).toLocaleString('ar-EG', { maximumFractionDigits: 0 });
+    return `${thousands} ألف جنيه مصري`;
+  }
+  return `${num.toLocaleString('ar-EG')} جنيه مصري`;
+};
+
 // Robust phone sanitizer that handles Arabic digits, copy-pasted + / 00, and prevents double country codes
 export const sanitizePhoneNumber = (rawPhone, countryCode = '+20') => {
   if (!rawPhone) return { localPart: '', fullNumber: '' };
@@ -465,13 +480,76 @@ export const SellWizard = ({
   ];
 
   if (submittedRef) {
+    const areaName = districts.find(d => d.id === sellerAnswers.area)?.label_ar || FALLBACK_BENCHMARK_PRICING[sellerAnswers.area]?.name_ar || sellerAnswers.area || 'سوهاج';
+    const propTypeLabel = propertyTypes.find(t => t.id === sellerAnswers.propertyType)?.label_ar || 'عقار';
+
     return (
       <div className="smart-valuation-wizard-box">
+        {/* Confirmed Property & Price Summary Ticket */}
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.08) 0%, rgba(245, 158, 11, 0.02) 100%)',
+          border: '1.5px solid rgba(217, 119, 6, 0.35)',
+          borderRadius: '16px',
+          padding: '18px 22px',
+          marginBottom: '20px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+            <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary, #0f172a)' }}>
+              📋 {isAr ? `ملخص العقار المسجل: ${propTypeLabel} (${areaName} - ${sellerAnswers.size} م²)` : `Registered Property: ${propTypeLabel}`}
+            </span>
+            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#16a34a', background: 'rgba(22, 163, 74, 0.1)', padding: '4px 12px', borderRadius: '14px' }}>
+              ✓ {isAr ? 'تم اعتماد التقييم والسعر المطلوب' : 'Valuation & Target Price Saved'}
+            </span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '12px' }}>
+            {calculatedEstimate.avg > 0 && (
+              <div style={{ background: '#fff', padding: '12px 16px', borderRadius: '10px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                <span style={{ fontSize: '0.8rem', color: '#64748b', display: 'block', marginBottom: '4px' }}>
+                  {isAr ? 'التقدير الاسترشادي المعتمد من المنصة' : 'Platform Indicative Valuation'}
+                </span>
+                <strong style={{ fontSize: '1.15rem', color: '#d97706', fontWeight: 900 }}>
+                  {calculatedEstimate.avg.toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}
+                </strong>
+                <span style={{ fontSize: '0.74rem', color: '#94a3b8', display: 'block', marginTop: '2px' }}>
+                  ({calculatedEstimate.sqmAvg.toLocaleString('en-US')} {isAr ? 'ج.م / م²' : 'EGP/sqm'})
+                </span>
+              </div>
+            )}
+
+            {sellerAnswers.askingPrice ? (
+              <div style={{ background: '#fff', padding: '12px 16px', borderRadius: '10px', border: '2px solid #10b981', boxShadow: '0 2px 6px rgba(16, 185, 129, 0.12)' }}>
+                <span style={{ fontSize: '0.8rem', color: '#065f46', display: 'block', marginBottom: '4px', fontWeight: 700 }}>
+                  {isAr ? '🎯 سعرك المطلوب المسجل (المستهدف للبيع)' : 'Your Registered Target Asking Price'}
+                </span>
+                <strong style={{ fontSize: '1.25rem', color: '#059669', fontWeight: 900 }}>
+                  {Number(sellerAnswers.askingPrice).toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}
+                </strong>
+                <span style={{ fontSize: '0.74rem', color: '#047857', display: 'block', marginTop: '2px', fontWeight: 600 }}>
+                  {formatArabicPriceSummary(sellerAnswers.askingPrice)}
+                </span>
+              </div>
+            ) : (
+              <div style={{ background: '#fff', padding: '12px 16px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: '0.8rem', color: '#64748b', display: 'block', marginBottom: '4px' }}>
+                  {isAr ? 'السعر المطلوب' : 'Target Price'}
+                </span>
+                <span style={{ fontSize: '0.92rem', color: '#334155', fontWeight: 700 }}>
+                  {isAr ? 'اعتماد متوسط تقدير المنصة' : 'Platform Benchmark Adopted'}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
         <SubmissionSuccess
           lang={lang}
           reference={submittedRef}
-          title_ar="استلمنا بيانات عقارك"
-          title_en="We have your property details"
+          title_ar="استلمنا بيانات عقارك وسعرك المطلوب بنجاح"
+          title_en="We have received your property details & asking price"
           steps={[
             { ar: 'يراجع مستشار التقييم البيانات ويتصل بك خلال يوم عمل.', en: 'A valuation advisor reviews your details and calls you within one business day.' },
             { ar: 'نحدد موعد معاينة لمراجعة المستندات والحالة الفعلية للعقار.', en: 'We schedule a visit to review documents and the actual condition.' },
