@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // =============================================================
-//  Encrypted backup of the whole Firestore database (every collection and sub-collection).
+//  Encrypted backup of the Firestore database (every collection and sub-collection except raw
+//  visitor analytics — see SKIP below).
 //
 //  Usage: BACKUP_PASSPHRASE=… GOOGLE_APPLICATION_CREDENTIALS=key.json \
 //           node scripts/backup-firestore.mjs [out-dir]
@@ -43,7 +44,11 @@ async function dumpCollection(ref) {
   total += docs.length;
 }
 
-for (const ref of await db.listCollections()) await dumpCollection(ref);
+// Raw visitor analytics are left out: they expire anyway (scripts/cleanup-analytics.mjs), hold
+// most of the documents, and re-reading them every night would use up the free plan's daily reads.
+// Daily totals and per-listing counters are still backed up.
+const SKIP = new Set(['analytics_sessions', 'analytics_visitors']);
+for (const ref of await db.listCollections()) if (!SKIP.has(ref.id)) await dumpCollection(ref);
 
 const now = new Date();
 const backup = {
