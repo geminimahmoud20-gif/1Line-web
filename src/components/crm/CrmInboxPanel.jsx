@@ -1,62 +1,66 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { 
   Inbox, 
   Home, 
   Eye, 
   UserCheck, 
   Search, 
-  Sparkles, 
   Phone, 
   MessageCircle, 
-  Clock, 
-  CheckCircle2, 
   AlertTriangle, 
   Lock, 
   RotateCcw, 
   Building, 
-  Calendar, 
-  MapPin, 
   DollarSign, 
-  ArrowRight, 
-  ArrowLeft,
-  ChevronRight,
-  Shield,
-  Briefcase,
-  ExternalLink,
+  Briefcase, 
   Filter
 } from 'lucide-react';
-import { formatWhatsAppPhone } from '../../utils/matchingEngine';
+import { canViewLeadPhone, maskPhoneNumber } from '../../utils/rbacRules';
+import { claimLeadAtomic } from '../../services/leads';
 
 const STAGES = [
-  { id: 'new', label_ar: 'جديد', label_en: 'New', color: '#ef4444', icon: '🔴' },
-  { id: 'contacted', label_ar: 'اتصلنا', label_en: 'Contacted', color: '#f59e0b', icon: '📞' },
-  { id: 'scheduled', label_ar: 'اتحدد ميعاد', label_en: 'Scheduled', color: '#6366f1', icon: '📅' },
-  { id: 'closed', label_ar: 'خلص', label_en: 'Closed', color: '#10b981', icon: '✅' }
+  { id: 'new', label_ar: 'جديد', label_en: 'New', color: 'var(--crm-danger)', icon: '🔴' },
+  { id: 'contacted', label_ar: 'اتصلنا', label_en: 'Contacted', color: 'var(--crm-warn)', icon: '📞' },
+  { id: 'scheduled', label_ar: 'اتحدد ميعاد', label_en: 'Scheduled', color: 'var(--crm-accent)', icon: '📅' },
+  { id: 'closed', label_ar: 'خلص', label_en: 'Closed', color: 'var(--crm-positive)', icon: '✅' }
 ];
 
 export default function CrmInboxPanel({
   leads = [],
-  properties = [],
+  _properties = [],
   currentUser = null,
   userRole = 'super_admin',
+  userPerms = null,
   lang = 'ar',
   onUpdateLead,
   onOpenLead,
   onConvertToProperty,
-  triggerToast
+  triggerToast,
+  slaMinutes = 15
 }) {
   const isAr = lang === 'ar';
   const isSuperAdmin = userRole === 'super_admin' || userRole === 'admin';
   const isMarketing = userRole === 'marketing' || userRole === 'content_creator';
   const isSales = userRole === 'sales_agent' || userRole === 'sales_manager' || userRole === 'broker';
+  const canSeePhone = canViewLeadPhone(userRole, userPerms);
+
+  // Time state updated every minute to prevent pure-render violations while evaluating SLA
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Default active tab based on staff role
   const defaultTab = isMarketing ? 'sellers' : (isSales ? 'visits' : 'sellers');
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [searchQuery, setSearchQuery] = useState('');
-  const [stageFilter, setStageFilter] = useState('all'); // 'all' | 'new' | 'contacted' | 'scheduled' | 'closed'
+  const [stageFilter, setStageFilter] = useState('all');
   const [reassigningLeadId, setReassigningLeadId] = useState(null);
   const [reassignName, setReassignName] = useState('');
+  const [claimingId, setClaimingId] = useState(null);
 
   const currentStaffName = useMemo(() => {
     return currentUser?.displayName || currentUser?.name || currentUser?.email?.split('@')[0] || (isAr ? 'موظف 1Line' : 'Staff');
@@ -80,6 +84,7 @@ export default function CrmInboxPanel({
       if (
         type === 'visit' || 
         type === 'viewing' || 
+        type === 'viewing_request' ||
         details.visitDate || 
         details.inspectionType || 
         notes.includes('معاينة') || 
@@ -124,16 +129,16 @@ export default function CrmInboxPanel({
     return { sellers, visits, buyers, accounts, brokers };
   }, [leads]);
 
-  // Calculate SLA Breaches (Unclaimed leads older than 2 hours)
+  // Calculate First Response SLA Breaches (Unclaimed leads older than configurable slaMinutes, default 15m)
   const slaBreaches = useMemo(() => {
-    // eslint-disable-next-line react-hooks/purity -- SLA breach detection requires current clock time
-    const twoHoursAgo = Date.now() - (2 * 60 * 60 * 1000);
+    const thresholdMillis = (slaMinutes || 15) * 60 * 1000;
+    const cutoff = currentTime - thresholdMillis;
     return leads.filter((l) => {
       const createdTime = l.createdAt?.toMillis ? l.createdAt.toMillis() : Date.parse(l.createdAt || l.timestamp || 0);
       const isUnclaimed = !l.assignedTo || l.status === 'new';
-      return isUnclaimed && createdTime > 0 && createdTime < twoHoursAgo;
+      return isUnclaimed && createdTime > 0 && createdTime < cutoff;
     });
-  }, [leads]);
+  }, [leads, currentTime, slaMinutes]);
 
   // Counts of unhandled requests per tab
   const unhandledCounts = useMemo(() => {
@@ -156,7 +161,7 @@ export default function CrmInboxPanel({
       icon: Home, 
       count: categorized.sellers.length, 
       unhandled: unhandledCounts.sellers,
-      accent: '#d97706'
+      accent: 'var(--crm-warn)'
     },
     { 
       id: 'visits', 
@@ -165,7 +170,7 @@ export default function CrmInboxPanel({
       icon: Eye, 
       count: categorized.visits.length, 
       unhandled: unhandledCounts.visits,
-      accent: '#6366f1'
+      accent: 'var(--crm-accent)'
     },
     { 
       id: 'buyers', 
@@ -174,7 +179,7 @@ export default function CrmInboxPanel({
       icon: DollarSign, 
       count: categorized.buyers.length, 
       unhandled: unhandledCounts.buyers,
-      accent: '#059669'
+      accent: 'var(--crm-positive)'
     },
     { 
       id: 'accounts', 
@@ -183,7 +188,7 @@ export default function CrmInboxPanel({
       icon: UserCheck, 
       count: categorized.accounts.length, 
       unhandled: unhandledCounts.accounts,
-      accent: '#0284c7'
+      accent: 'var(--crm-info)'
     },
     { 
       id: 'brokers', 
@@ -192,7 +197,7 @@ export default function CrmInboxPanel({
       icon: Briefcase, 
       count: categorized.brokers.length, 
       unhandled: unhandledCounts.brokers,
-      accent: '#8b5cf6'
+      accent: 'var(--crm-muted)'
     }
   ], [categorized, unhandledCounts]);
 
@@ -208,7 +213,7 @@ export default function CrmInboxPanel({
       const q = searchQuery.trim().toLowerCase();
       list = list.filter(l => 
         (l.name && l.name.toLowerCase().includes(q)) ||
-        (l.phone && l.phone.includes(q)) ||
+        (canSeePhone && l.phone && l.phone.includes(q)) ||
         (l.notes && l.notes.toLowerCase().includes(q)) ||
         (l.assignedTo && l.assignedTo.toLowerCase().includes(q)) ||
         (l.details?.propertyCode && l.details.propertyCode.toLowerCase().includes(q))
@@ -224,31 +229,47 @@ export default function CrmInboxPanel({
       const bTime = b.createdAt?.toMillis ? b.createdAt.toMillis() : Date.parse(b.createdAt || b.timestamp || 0);
       return bTime - aTime;
     });
-  }, [categorized, activeTab, stageFilter, searchQuery]);
+  }, [categorized, activeTab, stageFilter, searchQuery, canSeePhone]);
 
-  // Claim Lead Handler
-  const handleClaimLead = (lead) => {
-    if (!onUpdateLead) return;
+  // Atomic Claim Lead Handler via Firestore Transaction (الاستلام ذرّي ولا يغيّر الحالة إلى contacted)
+  const handleClaimLead = async (lead) => {
+    if (claimingId === lead.id) return;
+    setClaimingId(lead.id);
 
-    if (lead.assignedTo && lead.assignedTo !== currentStaffName && !isSuperAdmin) {
-      if (triggerToast) {
-        triggerToast(isAr ? `عذراً، هذا الطلب مستلم بالفعل بواسطة "${lead.assignedTo}" لمنع تكرار الاتصال.` : `Already claimed by ${lead.assignedTo}`, 'warning');
+    try {
+      if (lead.assignedTo && lead.assignedTo !== currentStaffName && !isSuperAdmin) {
+        if (triggerToast) {
+          triggerToast(isAr ? `عذراً، هذا الطلب مستلم بالفعل بواسطة "${lead.assignedTo}" لمنع تكرار الاتصال.` : `Already claimed by ${lead.assignedTo}`, 'warning');
+        }
+        return;
       }
-      return;
-    }
 
-    onUpdateLead(lead.id, {
-      assignedTo: currentStaffName,
-      assignedAt: new Date().toISOString(),
-      status: (!lead.status || lead.status === 'new') ? 'contacted' : lead.status
-    });
+      const res = await claimLeadAtomic(lead.id, currentStaffName, { override: isSuperAdmin });
+      if (!res.ok) {
+        if (res.reason === 'already_claimed') {
+          triggerToast?.(isAr ? `عذراً، هذا الطلب تم استلامه للتو بواسطة "${res.claimedBy}".` : `Already claimed by ${res.claimedBy}`, 'warning');
+          onUpdateLead?.(lead.id, { assignedTo: res.claimedBy });
+        } else {
+          triggerToast?.(isAr ? 'تعذر استلام الطلب، يرجى المحاولة لاحقاً' : 'Failed to claim lead', 'error');
+        }
+        return;
+      }
 
-    if (triggerToast) {
-      triggerToast(isAr ? `تم استلام الطلب وتعيينه لك بنجاح! 🔒` : `Lead claimed by you!`, 'success');
+      // Synchronize local view (Note: status is intentionally preserved, never marked 'contacted' upon claim)
+      onUpdateLead?.(lead.id, {
+        assignedTo: currentStaffName,
+        assignedAt: new Date().toISOString()
+      });
+
+      if (triggerToast) {
+        triggerToast(isAr ? 'تم استلام الطلب وتعيينه لك بنجاح! 🔒' : 'Lead claimed by you!', 'success');
+      }
+    } finally {
+      setClaimingId(null);
     }
   };
 
-  // Stage Switch Handler
+  // Stage Switch Handler (Changes status upon verified action)
   const handleSetStage = (lead, newStage) => {
     if (!onUpdateLead) return;
     onUpdateLead(lead.id, {
@@ -257,7 +278,20 @@ export default function CrmInboxPanel({
     });
     if (triggerToast) {
       const stageObj = STAGES.find(s => s.id === newStage);
-      triggerToast(isAr ? `تم تحديث الحالة إلى: ${stageObj ? stageObj.label_ar : newStage}` : `Status updated`, 'info');
+      triggerToast(isAr ? `تم تحديث الحالة إلى: ${stageObj ? stageObj.label_ar : newStage}` : 'Status updated', 'info');
+    }
+  };
+
+  // Log contact activity when calling or messaging
+  const handleRegisterContact = (lead) => {
+    if (!onUpdateLead) return;
+    if (!lead.status || lead.status === 'new') {
+      onUpdateLead(lead.id, {
+        status: 'contacted',
+        firstContactedAt: new Date().toISOString(),
+        lastContactedAt: new Date().toISOString()
+      });
+      triggerToast?.(isAr ? 'تم تسجيل أول تواصل مع العميل بنجاح 📞' : 'First contact recorded', 'success');
     }
   };
 
@@ -271,7 +305,7 @@ export default function CrmInboxPanel({
     setReassigningLeadId(null);
     setReassignName('');
     if (triggerToast) {
-      triggerToast(isAr ? `تمت إعادة إسناد الطلب إلى "${reassignName.trim()}"` : `Reassigned successfully`, 'success');
+      triggerToast(isAr ? `تمت إعادة إسناد الطلب إلى "${reassignName.trim()}"` : 'Reassigned successfully', 'success');
     }
   };
 
@@ -321,43 +355,42 @@ export default function CrmInboxPanel({
         flexWrap: 'wrap',
         gap: '14px',
         padding: '16px 20px',
-        background: 'var(--crm-card, #ffffff)',
+        background: 'var(--crm-card)',
         borderRadius: '14px',
-        border: '1px solid var(--crm-line, #e2e8f0)',
-        boxShadow: '0 1px 4px rgba(0,0,0,0.03)'
+        border: '1px solid var(--crm-line)',
+        boxShadow: 'var(--crm-shadow-sm, 0 1px 4px rgba(0,0,0,0.03))'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{
             width: '44px',
             height: '44px',
             borderRadius: '12px',
-            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-            color: '#fff',
+            background: 'var(--crm-ink)',
+            color: 'var(--crm-on-dark)',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 6px rgba(15, 23, 42, 0.15)'
+            justifyContent: 'center'
           }}>
-            <Inbox size={22} color="#fbbf24" />
+            <Inbox size={22} style={{ color: 'var(--crm-accent)' }} />
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: 'var(--crm-ink, #0f172a)' }}>
+              <h2 style={{ margin: 0, fontSize: 'var(--crm-text-xl)', fontWeight: 800, color: 'var(--crm-ink)' }}>
                 {isAr ? 'صندوق الوارد الذكي وإدارة الاستجابة' : 'Smart Triage Inbox'}
               </h2>
               <span style={{
-                fontSize: '0.74rem',
+                fontSize: 'var(--crm-text-xs)',
                 fontWeight: 700,
-                background: 'rgba(217, 119, 6, 0.1)',
-                color: '#d97706',
+                background: 'var(--crm-warn-soft)',
+                color: 'var(--crm-warn)',
                 padding: '2px 8px',
                 borderRadius: '12px',
-                border: '1px solid rgba(217, 119, 6, 0.25)'
+                border: '1px solid var(--crm-warn-line)'
               }}>
                 {isAr ? 'فرز فوري وتوزيع حصري' : 'Instant Triage & Lock'}
               </span>
             </div>
-            <p style={{ margin: '2px 0 0 0', fontSize: '0.82rem', color: 'var(--crm-muted, #64748b)' }}>
+            <p style={{ margin: '2px 0 0 0', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
               {isAr 
                 ? 'فصل مسارات البيع والمعاينة والشراء لضمان سرعة الرد ومنع تكرار الاتصال بين أفراد الفريق.' 
                 : 'Isolated workflow queues for sellers, site visits and buyers with exclusive claim ownership.'}
@@ -371,17 +404,17 @@ export default function CrmInboxPanel({
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            background: '#fef2f2',
-            border: '1px solid #fecaca',
-            color: '#b91c1c',
+            background: 'var(--crm-danger-soft)',
+            border: '1px solid var(--crm-danger-line)',
+            color: 'var(--crm-danger)',
             padding: '8px 14px',
             borderRadius: '10px',
-            fontSize: '0.82rem',
+            fontSize: 'var(--crm-text-sm)',
             fontWeight: 700
           }}>
             <AlertTriangle size={16} />
             <span>
-              {isAr ? `تنبيه المدير: يوجد ${slaBreaches.length} طلبات تجاوزت ساعتين دون استلام أو رد!` : `${slaBreaches.length} requests breached 2-hour response SLA!`}
+              {isAr ? `تنبيه المدير: يوجد ${slaBreaches.length} طلبات تجاوزت ${slaMinutes} دقيقة دون استلام أو رد!` : `${slaBreaches.length} requests breached ${slaMinutes}-min response SLA!`}
             </span>
           </div>
         )}
@@ -407,9 +440,9 @@ export default function CrmInboxPanel({
                 justifyContent: 'space-between',
                 padding: '12px 16px',
                 borderRadius: '12px',
-                background: isActive ? 'var(--crm-card, #ffffff)' : 'rgba(255, 255, 255, 0.65)',
-                border: isActive ? `2px solid ${t.accent}` : '1.5px solid var(--crm-line, #e2e8f0)',
-                boxShadow: isActive ? '0 4px 12px rgba(0,0,0,0.05)' : 'none',
+                background: isActive ? 'var(--crm-card)' : 'var(--crm-bg)',
+                border: isActive ? `2px solid ${t.accent}` : '1.5px solid var(--crm-line)',
+                boxShadow: isActive ? 'var(--crm-shadow-sm, 0 4px 12px rgba(0,0,0,0.05))' : 'none',
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
                 textAlign: isAr ? 'right' : 'left'
@@ -420,8 +453,8 @@ export default function CrmInboxPanel({
                   width: '34px',
                   height: '34px',
                   borderRadius: '8px',
-                  background: isActive ? `${t.accent}15` : '#f1f5f9',
-                  color: isActive ? t.accent : '#64748b',
+                  background: 'var(--crm-bg)',
+                  color: isActive ? t.accent : 'var(--crm-muted)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
@@ -429,10 +462,10 @@ export default function CrmInboxPanel({
                   <IconComp size={18} />
                 </div>
                 <div>
-                  <div style={{ fontWeight: 800, fontSize: '0.86rem', color: isActive ? 'var(--crm-ink, #0f172a)' : '#475569' }}>
+                  <div style={{ fontWeight: 800, fontSize: 'var(--crm-text-sm)', color: isActive ? 'var(--crm-ink)' : 'var(--crm-body)' }}>
                     {isAr ? t.label_ar : t.label_en}
                   </div>
-                  <div style={{ fontSize: '0.74rem', color: '#94a3b8' }}>
+                  <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
                     {t.count} {isAr ? 'طلب إجمالي' : 'total'}
                   </div>
                 </div>
@@ -441,21 +474,20 @@ export default function CrmInboxPanel({
               {/* Unhandled Badge */}
               {t.unhandled > 0 ? (
                 <span style={{
-                  background: '#ef4444',
-                  color: '#ffffff',
-                  fontSize: '0.72rem',
+                  background: 'var(--crm-danger)',
+                  color: 'var(--crm-on-dark)',
+                  fontSize: 'var(--crm-text-xs)',
                   fontWeight: 800,
                   padding: '3px 8px',
-                  borderRadius: '12px',
-                  boxShadow: '0 2px 4px rgba(239, 68, 68, 0.25)'
+                  borderRadius: '12px'
                 }}>
                   {t.unhandled} {isAr ? 'جديد' : 'new'}
                 </span>
               ) : (
                 <span style={{
-                  background: '#f1f5f9',
-                  color: '#94a3b8',
-                  fontSize: '0.72rem',
+                  background: 'var(--crm-bg)',
+                  color: 'var(--crm-muted)',
+                  fontSize: 'var(--crm-text-xs)',
                   fontWeight: 700,
                   padding: '2px 7px',
                   borderRadius: '10px'
@@ -476,16 +508,16 @@ export default function CrmInboxPanel({
         flexWrap: 'wrap',
         gap: '12px',
         padding: '12px 16px',
-        background: 'var(--crm-card, #ffffff)',
+        background: 'var(--crm-card)',
         borderRadius: '12px',
-        border: '1px solid var(--crm-line, #e2e8f0)'
+        border: '1px solid var(--crm-line)'
       }}>
         {/* Search Input */}
         <div style={{ position: 'relative', minWidth: '260px', flex: 1 }}>
-          <Search size={16} style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', [isAr ? 'right' : 'left']: '12px', color: '#94a3b8' }} />
+          <Search size={16} style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', [isAr ? 'right' : 'left']: '12px', color: 'var(--crm-muted)' }} />
           <input
             type="text"
-            placeholder={isAr ? 'بحث بالاسم، الهاتف، كود العقار، أو الموظف المسند...' : 'Search by client, phone, code...'}
+            placeholder={canSeePhone ? (isAr ? 'بحث بالاسم، الهاتف، كود العقار، أو الموظف المسند...' : 'Search by client, phone, code...') : (isAr ? 'بحث بالاسم، كود العقار، أو الموظف المسند...' : 'Search by client, code...')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
@@ -493,16 +525,17 @@ export default function CrmInboxPanel({
               padding: '8px 14px',
               paddingInlineStart: '36px',
               borderRadius: '8px',
-              border: '1px solid var(--crm-line, #cbd5e1)',
-              background: '#f8fafc',
-              fontSize: '0.84rem'
+              border: '1px solid var(--crm-line)',
+              background: 'var(--crm-bg)',
+              color: 'var(--crm-ink)',
+              fontSize: 'var(--crm-text-sm)'
             }}
           />
         </div>
 
         {/* Stage Filter Chips */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700, marginInlineEnd: '4px' }}>
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: 700, marginInlineEnd: '4px' }}>
             <Filter size={13} style={{ verticalAlign: 'middle', marginInlineEnd: '4px' }} />
             {isAr ? 'الحالة:' : 'Stage:'}
           </span>
@@ -513,12 +546,12 @@ export default function CrmInboxPanel({
             style={{
               padding: '5px 10px',
               borderRadius: '6px',
-              fontSize: '0.78rem',
+              fontSize: 'var(--crm-text-xs)',
               fontWeight: 700,
               border: '1px solid',
-              borderColor: stageFilter === 'all' ? '#0f172a' : '#e2e8f0',
-              background: stageFilter === 'all' ? '#0f172a' : '#fff',
-              color: stageFilter === 'all' ? '#fff' : '#64748b',
+              borderColor: stageFilter === 'all' ? 'var(--crm-ink)' : 'var(--crm-line)',
+              background: stageFilter === 'all' ? 'var(--crm-ink)' : 'var(--crm-card)',
+              color: stageFilter === 'all' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
               cursor: 'pointer'
             }}
           >
@@ -532,12 +565,12 @@ export default function CrmInboxPanel({
               style={{
                 padding: '5px 10px',
                 borderRadius: '6px',
-                fontSize: '0.78rem',
+                fontSize: 'var(--crm-text-xs)',
                 fontWeight: 700,
                 border: '1px solid',
-                borderColor: stageFilter === s.id ? s.color : '#e2e8f0',
-                background: stageFilter === s.id ? `${s.color}15` : '#fff',
-                color: stageFilter === s.id ? s.color : '#64748b',
+                borderColor: stageFilter === s.id ? s.color : 'var(--crm-line)',
+                background: stageFilter === s.id ? 'var(--crm-bg)' : 'var(--crm-card)',
+                color: stageFilter === s.id ? s.color : 'var(--crm-muted)',
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -557,16 +590,16 @@ export default function CrmInboxPanel({
           <div style={{
             textAlign: 'center',
             padding: '48px 20px',
-            background: 'var(--crm-card, #ffffff)',
+            background: 'var(--crm-card)',
             borderRadius: '14px',
-            border: '1px dashed var(--crm-line, #cbd5e1)',
-            color: '#64748b'
+            border: '1px dashed var(--crm-line)',
+            color: 'var(--crm-muted)'
           }}>
-            <Inbox size={38} color="#cbd5e1" style={{ margin: '0 auto 12px' }} />
-            <h4 style={{ margin: '0 0 6px 0', fontSize: '1rem', fontWeight: 800, color: '#334155' }}>
+            <Inbox size={38} style={{ margin: '0 auto 12px', color: 'var(--crm-muted)' }} />
+            <h4 style={{ margin: '0 0 6px 0', fontSize: 'var(--crm-text-base)', fontWeight: 800, color: 'var(--crm-ink)' }}>
               {isAr ? 'لا توجد طلبات في هذا التبويب حالياً' : 'No requests in this queue'}
             </h4>
-            <p style={{ margin: 0, fontSize: '0.82rem' }}>
+            <p style={{ margin: 0, fontSize: 'var(--crm-text-sm)' }}>
               {isAr ? 'كافة الطلبات الواردة تم الرد عليها وإسنادها بنجاح.' : 'All incoming requests have been assigned and processed.'}
             </p>
           </div>
@@ -575,17 +608,15 @@ export default function CrmInboxPanel({
             const d = lead.details || {};
             const isClaimedByMe = lead.assignedTo === currentStaffName;
             const isUnclaimed = !lead.assignedTo;
-            const currentStage = STAGES.find(s => s.id === (lead.status || 'new')) || STAGES[0];
             const cleanPhone = (lead.whatsapp || lead.phone || '').replace(/[^0-9]/g, '');
 
             return (
               <div
                 key={lead.id}
                 style={{
-                  background: 'var(--crm-card, #ffffff)',
+                  background: 'var(--crm-card)',
                   borderRadius: '14px',
-                  border: isUnclaimed ? '2px solid #ef4444' : '1px solid var(--crm-line, #e2e8f0)',
-                  boxShadow: isUnclaimed ? '0 2px 8px rgba(239, 68, 68, 0.08)' : '0 1px 4px rgba(0,0,0,0.02)',
+                  border: isUnclaimed ? '2px solid var(--crm-danger)' : '1px solid var(--crm-line)',
                   padding: '16px 20px',
                   display: 'flex',
                   flexDirection: 'column',
@@ -600,30 +631,30 @@ export default function CrmInboxPanel({
                       width: '40px',
                       height: '40px',
                       borderRadius: '10px',
-                      background: '#f1f5f9',
+                      background: 'var(--crm-bg)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontWeight: 800,
-                      fontSize: '1rem',
-                      color: '#0f172a'
+                      fontSize: 'var(--crm-text-base)',
+                      color: 'var(--crm-ink)'
                     }}>
                       {(lead.name || 'ع')[0]}
                     </div>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <h4 style={{ margin: 0, fontSize: '0.96rem', fontWeight: 800, color: '#0f172a' }}>
+                        <h4 style={{ margin: 0, fontSize: 'var(--crm-text-md)', fontWeight: 800, color: 'var(--crm-ink)' }}>
                           {lead.name || (isAr ? 'عميل بدون اسم' : 'Unnamed Lead')}
                         </h4>
                         {/* Stream Identifier Pill */}
                         <span style={{
-                          fontSize: '0.72rem',
+                          fontSize: 'var(--crm-text-xs)',
                           fontWeight: 700,
-                          background: '#f8fafc',
+                          background: 'var(--crm-bg)',
                           padding: '2px 8px',
                           borderRadius: '6px',
-                          border: '1px solid #e2e8f0',
-                          color: '#475569'
+                          border: '1px solid var(--crm-line)',
+                          color: 'var(--crm-body)'
                         }}>
                           {activeTab === 'sellers' ? '💰 عرض بيع' :
                            activeTab === 'visits' ? '🏠 حجز معاينة' :
@@ -631,10 +662,12 @@ export default function CrmInboxPanel({
                            activeTab === 'accounts' ? '👤 حساب مسجل' : '🤝 وسيط شريك'}
                         </span>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>
-                        <span>📞 {lead.phone || 'بدون هاتف'}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px' }}>
+                        <span>
+                          📞 {canSeePhone ? (lead.phone || (isAr ? 'بدون هاتف' : 'No phone')) : maskPhoneNumber(lead.phone, userRole, userPerms)}
+                        </span>
                         {lead.createdAt && (
-                          <span>🕒 {new Date(lead.createdAt?.toMillis ? lead.createdAt.toMillis() : lead.createdAt).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span>🕒 {new Date(lead.createdAt?.toMillis ? lead.createdAt.toMillis() : lead.createdAt).toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' })}</span>
                         )}
                       </div>
                     </div>
@@ -645,24 +678,24 @@ export default function CrmInboxPanel({
                     {isUnclaimed ? (
                       <button
                         type="button"
+                        disabled={claimingId === lead.id}
                         onClick={() => handleClaimLead(lead)}
                         style={{
-                          background: '#ef4444',
-                          color: '#fff',
+                          background: 'var(--crm-danger)',
+                          color: 'var(--crm-on-dark)',
                           border: 'none',
                           borderRadius: '8px',
                           padding: '6px 14px',
-                          fontSize: '0.82rem',
+                          fontSize: 'var(--crm-text-sm)',
                           fontWeight: 800,
                           cursor: 'pointer',
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '6px',
-                          boxShadow: '0 2px 6px rgba(239, 68, 68, 0.25)',
                           transition: 'all 0.15s ease'
                         }}
                       >
-                        <span>✋ {isAr ? 'استلمت الطلب' : 'Claim Lead'}</span>
+                        <span>✋ {claimingId === lead.id ? (isAr ? 'جارٍ الاستلام...' : 'Claiming...') : (isAr ? 'استلمت الطلب' : 'Claim Lead')}</span>
                       </button>
                     ) : (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -672,10 +705,10 @@ export default function CrmInboxPanel({
                           gap: '5px',
                           padding: '5px 10px',
                           borderRadius: '8px',
-                          background: isClaimedByMe ? '#ecfdf5' : '#f8fafc',
-                          border: isClaimedByMe ? '1px solid #10b981' : '1px solid #cbd5e1',
-                          color: isClaimedByMe ? '#059669' : '#334155',
-                          fontSize: '0.78rem',
+                          background: isClaimedByMe ? 'var(--crm-positive-soft)' : 'var(--crm-bg)',
+                          border: isClaimedByMe ? '1px solid var(--crm-positive)' : '1px solid var(--crm-line)',
+                          color: isClaimedByMe ? 'var(--crm-positive)' : 'var(--crm-ink)',
+                          fontSize: 'var(--crm-text-xs)',
                           fontWeight: 700
                         }}>
                           <Lock size={12} />
@@ -688,13 +721,13 @@ export default function CrmInboxPanel({
                             onClick={() => { setReassigningLeadId(lead.id); setReassignName(lead.assignedTo || ''); }}
                             title={isAr ? 'إعادة الإسناد لموظف آخر' : 'Reassign'}
                             style={{
-                              background: '#fff',
-                              border: '1px solid #cbd5e1',
+                              background: 'var(--crm-card)',
+                              border: '1px solid var(--crm-line)',
                               borderRadius: '6px',
                               padding: '4px 8px',
-                              fontSize: '0.72rem',
+                              fontSize: 'var(--crm-text-xs)',
                               cursor: 'pointer',
-                              color: '#64748b'
+                              color: 'var(--crm-muted)'
                             }}
                           >
                             <RotateCcw size={12} />
@@ -712,29 +745,29 @@ export default function CrmInboxPanel({
                     alignItems: 'center',
                     gap: '8px',
                     padding: '8px 12px',
-                    background: '#f8fafc',
+                    background: 'var(--crm-bg)',
                     borderRadius: '8px',
-                    border: '1px solid #cbd5e1'
+                    border: '1px solid var(--crm-line)'
                   }}>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 700 }}>{isAr ? 'تحويل المتابعة إلى:' : 'Assign to:'}</span>
+                    <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 700, color: 'var(--crm-ink)' }}>{isAr ? 'تحويل المتابعة إلى:' : 'Assign to:'}</span>
                     <input
                       type="text"
                       placeholder={isAr ? 'اسم الموظف أو الفريق...' : 'Agent name...'}
                       value={reassignName}
                       onChange={(e) => setReassignName(e.target.value)}
-                      style={{ padding: '4px 8px', fontSize: '0.8rem', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                      style={{ padding: '4px 8px', fontSize: 'var(--crm-text-sm)', borderRadius: '4px', border: '1px solid var(--crm-line)', background: 'var(--crm-card)', color: 'var(--crm-ink)' }}
                     />
                     <button
                       type="button"
                       onClick={() => handleExecuteReassign(lead.id)}
-                      style={{ background: '#0f172a', color: '#fff', border: 'none', borderRadius: '4px', padding: '4px 10px', fontSize: '0.78rem', cursor: 'pointer' }}
+                      style={{ background: 'var(--crm-ink)', color: 'var(--crm-on-dark)', border: 'none', borderRadius: '4px', padding: '4px 10px', fontSize: 'var(--crm-text-xs)', cursor: 'pointer' }}
                     >
                       {isAr ? 'تأكيد' : 'Save'}
                     </button>
                     <button
                       type="button"
                       onClick={() => setReassigningLeadId(null)}
-                      style={{ background: 'transparent', border: 'none', fontSize: '0.78rem', color: '#64748b', cursor: 'pointer' }}
+                      style={{ background: 'transparent', border: 'none', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', cursor: 'pointer' }}
                     >
                       {isAr ? 'إلغاء' : 'Cancel'}
                     </button>
@@ -743,21 +776,22 @@ export default function CrmInboxPanel({
 
                 {/* Detailed Spec Block Specific to Stream */}
                 <div style={{
-                  background: '#f8fafc',
+                  background: 'var(--crm-bg)',
                   borderRadius: '10px',
                   padding: '10px 14px',
                   display: 'flex',
                   flexWrap: 'wrap',
                   gap: '12px',
-                  fontSize: '0.82rem',
-                  border: '1px solid #f1f5f9'
+                  fontSize: 'var(--crm-text-sm)',
+                  border: '1px solid var(--crm-line)',
+                  color: 'var(--crm-body)'
                 }}>
                   {activeTab === 'sellers' && (
                     <>
-                      {d.propertyType && <span style={{ fontWeight: 700, color: '#0f172a' }}>🏢 {d.propertyType}</span>}
+                      {d.propertyType && <span style={{ fontWeight: 700, color: 'var(--crm-ink)' }}>🏢 {d.propertyType}</span>}
                       {d.area && <span>📍 {d.area}</span>}
                       {d.size && <span>📐 {d.size} م²</span>}
-                      {d.askingPrice && <span style={{ color: '#059669', fontWeight: 800 }}>💰 المطلوب: {Number(d.askingPrice).toLocaleString('en-US')} ج.م</span>}
+                      {d.askingPrice && <span style={{ color: 'var(--crm-positive)', fontWeight: 800 }}>💰 المطلوب: {Number(d.askingPrice).toLocaleString('en-US')} ج.م</span>}
                       {d.finishingLabelAr && <span>✨ {d.finishingLabelAr}</span>}
                       {d.legalSummaryAr && <span>📜 {d.legalSummaryAr}</span>}
                     </>
@@ -765,7 +799,7 @@ export default function CrmInboxPanel({
 
                   {activeTab === 'visits' && (
                     <>
-                      <span style={{ fontWeight: 800, color: '#6366f1' }}>
+                      <span style={{ fontWeight: 800, color: 'var(--crm-accent)' }}>
                         🏷️ {isAr ? 'كود العقار:' : 'Code:'} {d.propertyCode || d.propertyId || 'P-101'}
                       </span>
                       {d.visitDate && (
@@ -779,17 +813,17 @@ export default function CrmInboxPanel({
 
                   {activeTab === 'buyers' && (
                     <>
-                      {d.propertyType && <span style={{ fontWeight: 700 }}>🏢 المطلوب: {d.propertyType}</span>}
+                      {d.propertyType && <span style={{ fontWeight: 700, color: 'var(--crm-ink)' }}>🏢 المطلوب: {d.propertyType}</span>}
                       {d.area && <span>📍 المنطقة: {d.area}</span>}
-                      {d.budget && <span style={{ color: '#059669', fontWeight: 800 }}>💰 الميزانية: {Number(d.budget).toLocaleString('en-US')} ج.م</span>}
+                      {d.budget && <span style={{ color: 'var(--crm-positive)', fontWeight: 800 }}>💰 الميزانية: {Number(d.budget).toLocaleString('en-US')} ج.م</span>}
                       {d.paymentMethod && <span>💳 طريقة السداد: {d.paymentMethod === 'cash' ? 'كاش' : 'تقسيط'}</span>}
                     </>
                   )}
 
                   {activeTab === 'accounts' && (
                     <>
-                      <span>📧 {lead.email || 'بدون بريد'}</span>
-                      <span>📅 {isAr ? 'تاريخ التسجيل:' : 'Registered:'} {lead.createdAt ? new Date(lead.createdAt).toLocaleDateString('ar-EG') : '—'}</span>
+                      <span>📧 {lead.email || (isAr ? 'بدون بريد' : 'No email')}</span>
+                      <span>📅 {isAr ? 'تاريخ التسجيل:' : 'Registered:'} {lead.createdAt ? new Date(lead.createdAt?.toMillis ? lead.createdAt.toMillis() : lead.createdAt).toLocaleDateString('ar-EG-u-nu-latn') : (isAr ? 'غير معروف' : 'Unknown')}</span>
                       <span>👤 {isAr ? 'مستخدم مسجل في البوابة' : 'Registered Web Client'}</span>
                     </>
                   )}
@@ -803,8 +837,8 @@ export default function CrmInboxPanel({
                   )}
 
                   {lead.notes && (
-                    <div style={{ width: '100%', fontSize: '0.78rem', color: '#64748b', borderTop: '1px dashed #e2e8f0', paddingTop: '6px', marginTop: '2px' }}>
-                      <strong>📝 {isAr ? 'ملاحظات:' : 'Notes:'}</strong> {lead.notes}
+                    <div style={{ width: '100%', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', borderTop: '1px dashed var(--crm-line)', paddingTop: '6px', marginTop: '2px' }}>
+                      <strong style={{ color: 'var(--crm-ink)' }}>📝 {isAr ? 'ملاحظات:' : 'Notes:'}</strong> {lead.notes}
                     </div>
                   )}
                 </div>
@@ -812,13 +846,13 @@ export default function CrmInboxPanel({
                 {/* Photos Preview Strip if photos exist */}
                 {d.images && d.images.length > 0 && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflowX: 'auto', padding: '4px 0' }}>
-                    <span style={{ fontSize: '0.74rem', color: '#64748b', fontWeight: 700 }}>📸 {d.images.length} صور:</span>
-                    {d.images.slice(0, 4).map((img, idx) => (
+                    <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: 700 }}>📸 {d.images.length} صور:</span>
+                    {d.images.slice(0, 4).map((img, _idx) => (
                       <img
-                        key={idx}
+                        key={_idx}
                         src={img}
                         alt="Preview"
-                        style={{ width: '50px', height: '38px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #e2e8f0' }}
+                        style={{ width: '50px', height: '38px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--crm-line)' }}
                       />
                     ))}
                   </div>
@@ -831,15 +865,15 @@ export default function CrmInboxPanel({
                   alignItems: 'center',
                   flexWrap: 'wrap',
                   gap: '12px',
-                  borderTop: '1px solid #f1f5f9',
+                  borderTop: '1px solid var(--crm-line)',
                   paddingTop: '10px'
                 }}>
                   {/* The 4 Stages Lifecycle Stepper */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ fontSize: '0.74rem', color: '#94a3b8', fontWeight: 700, marginInlineEnd: '4px' }}>
+                    <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: 700, marginInlineEnd: '4px' }}>
                       {isAr ? 'مرحلة المتابعة:' : 'Stage:'}
                     </span>
-                    {STAGES.map((s, idx) => {
+                    {STAGES.map((s) => {
                       const isCurrent = (lead.status || 'new') === s.id;
                       return (
                         <button
@@ -849,11 +883,11 @@ export default function CrmInboxPanel({
                           style={{
                             padding: '4px 8px',
                             borderRadius: '6px',
-                            fontSize: '0.74rem',
+                            fontSize: 'var(--crm-text-xs)',
                             fontWeight: isCurrent ? 800 : 600,
-                            border: isCurrent ? `1.5px solid ${s.color}` : '1px solid #e2e8f0',
-                            background: isCurrent ? `${s.color}18` : '#fff',
-                            color: isCurrent ? s.color : '#64748b',
+                            border: isCurrent ? `1.5px solid ${s.color}` : '1px solid var(--crm-line)',
+                            background: isCurrent ? 'var(--crm-bg)' : 'var(--crm-card)',
+                            color: isCurrent ? s.color : 'var(--crm-muted)',
                             cursor: 'pointer',
                             transition: 'all 0.1s ease'
                           }}
@@ -867,18 +901,19 @@ export default function CrmInboxPanel({
                   {/* Quick Action Buttons */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     {/* WhatsApp Action with smart text */}
-                    {cleanPhone && (
+                    {canSeePhone && cleanPhone && (
                       <a
                         href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(getWhatsAppMessage(lead))}`}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={() => handleRegisterContact(lead)}
                         style={{
-                          background: '#128C4A',
-                          color: '#fff',
+                          background: 'var(--crm-positive)',
+                          color: 'var(--crm-on-dark)',
                           textDecoration: 'none',
                           padding: '6px 12px',
                           borderRadius: '8px',
-                          fontSize: '0.78rem',
+                          fontSize: 'var(--crm-text-xs)',
                           fontWeight: 700,
                           display: 'inline-flex',
                           alignItems: 'center',
@@ -891,17 +926,18 @@ export default function CrmInboxPanel({
                     )}
 
                     {/* Direct Call */}
-                    {lead.phone && (
+                    {canSeePhone && lead.phone && (
                       <a
                         href={`tel:${lead.phone}`}
+                        onClick={() => handleRegisterContact(lead)}
                         style={{
-                          background: '#fff',
-                          border: '1px solid #cbd5e1',
-                          color: '#334155',
+                          background: 'var(--crm-card)',
+                          border: '1px solid var(--crm-line)',
+                          color: 'var(--crm-ink)',
                           textDecoration: 'none',
                           padding: '6px 10px',
                           borderRadius: '8px',
-                          fontSize: '0.78rem',
+                          fontSize: 'var(--crm-text-xs)',
                           fontWeight: 700,
                           display: 'inline-flex',
                           alignItems: 'center',
@@ -919,12 +955,12 @@ export default function CrmInboxPanel({
                         type="button"
                         onClick={() => onConvertToProperty(lead)}
                         style={{
-                          background: '#6366f1',
-                          color: '#fff',
+                          background: 'var(--crm-accent)',
+                          color: 'var(--crm-on-dark)',
                           border: 'none',
                           padding: '6px 12px',
                           borderRadius: '8px',
-                          fontSize: '0.78rem',
+                          fontSize: 'var(--crm-text-xs)',
                           fontWeight: 700,
                           cursor: 'pointer',
                           display: 'inline-flex',
@@ -943,13 +979,13 @@ export default function CrmInboxPanel({
                         type="button"
                         onClick={() => onOpenLead(lead)}
                         style={{
-                          background: '#f8fafc',
-                          border: '1px solid #cbd5e1',
+                          background: 'var(--crm-bg)',
+                          border: '1px solid var(--crm-line)',
                           borderRadius: '8px',
                           padding: '6px 10px',
-                          fontSize: '0.78rem',
+                          fontSize: 'var(--crm-text-xs)',
                           fontWeight: 700,
-                          color: '#0f172a',
+                          color: 'var(--crm-ink)',
                           cursor: 'pointer'
                         }}
                       >
