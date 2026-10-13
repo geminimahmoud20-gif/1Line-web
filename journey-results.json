@@ -4,7 +4,7 @@
     "title": "رحلة المشتري (Buyer)",
     "device": "iPhone SE",
     "taps": 6,
-    "duration": "2.1 ثانية",
+    "duration": "2.5 ثانية",
     "stalls": [
       {
         "point": "صفحة العقار: حجز المعاينة يتطلب التمرير لأسفل",
@@ -43,7 +43,7 @@
     "title": "رحلة عميل مغترب (Expat)",
     "device": "iPhone SE",
     "taps": 5,
-    "duration": "1.0 ثانية",
+    "duration": "1.1 ثانية",
     "stalls": [],
     "crmOutcome": "حساب أقساط التمويل وعرض المعادل بالعملة الأجنبية بنجاح"
   },
@@ -52,7 +52,7 @@
     "title": "رحلة عميل راجع (Returning Client)",
     "device": "iPhone SE",
     "taps": 5,
-    "duration": "1.0 ثانية",
+    "duration": "0.9 ثانية",
     "stalls": [],
     "crmOutcome": "تم ربط الطلب الثاني بنفس العميل ووضع شارة \"عميل راجع\" في لوحة CRM"
   },
@@ -61,7 +61,7 @@
     "title": "رحلة موظف مبيعات في الشارع (Field Agent CRM)",
     "device": "iPhone SE",
     "taps": 6,
-    "duration": "1.1 ثانية",
+    "duration": "1.0 ثانية",
     "stalls": [
       {
         "point": "جدول العملاء: التمرير الأفقي الإجباري داخل الكارت",
@@ -76,7 +76,7 @@
     "title": "رحلة المشتري (Buyer)",
     "device": "Galaxy S8",
     "taps": 6,
-    "duration": "2.8 ثانية",
+    "duration": "2.4 ثانية",
     "stalls": [
       {
         "point": "صفحة العقار: حجز المعاينة يتطلب التمرير لأسفل",
@@ -91,7 +91,7 @@
     "title": "رحلة مشتري جاهز يدفع كاش (Cash Offer Buyer)",
     "device": "Galaxy S8",
     "taps": 4,
-    "duration": "1.4 ثانية",
+    "duration": "0.9 ثانية",
     "stalls": [],
     "crmOutcome": "وصل طلب حجز مبدئي تحت \"طلبات حجز\" (نوع deposit) مع تطبيق خصم الكاش"
   },
@@ -100,7 +100,7 @@
     "title": "رحلة مالك عقار للبيع والتقييم (Seller)",
     "device": "Galaxy S8",
     "taps": 8,
-    "duration": "1.3 ثانية",
+    "duration": "1.1 ثانية",
     "stalls": [
       {
         "point": "معالج البيع: غياب مؤشر aria-invalid عند الخطأ في رقم الهاتف",
@@ -133,7 +133,7 @@
     "title": "رحلة موظف مبيعات في الشارع (Field Agent CRM)",
     "device": "Galaxy S8",
     "taps": 6,
-    "duration": "1.3 ثانية",
+    "duration": "0.9 ثانية",
     "stalls": [
       {
         "point": "جدول العملاء: التمرير الأفقي الإجباري داخل الكارت",

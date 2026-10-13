@@ -1,0 +1,35 @@
+{
+  "intakeForms": [
+    {
+      "file": "src/components/crm/AddLeadModal.jsx",
+      "hasConsentField": false,
+      "hasSourceRequired": true,
+      "generatesTimestampId": true,
+      "issues": [
+        "🔴 Missing mandatory marketing consent checkbox (Egyptian Law 151/2020 violation)",
+        "🟠 Client-side ID generation (lead-${Date.now()}) instead of phone-based primary key"
+      ]
+    }
+  ],
+  "consentGaps": [],
+  "deduplicationRisks": [
+    {
+      "file": "src/context/PropertiesContext.jsx",
+      "scope": "Local in-memory window only",
+      "risk": "Deduplication only checks the currently loaded batch of 150 leads. Historical leads outside the 150-lead live window will create duplicate lead profiles."
+    }
+  ],
+  "stageGatingGaps": [
+    {
+      "file": "src/components/crm/KanbanPipeline.jsx",
+      "hasGateChecks": false,
+      "allowsFreeDrag": false,
+      "finding": "🔴 Stage transitions allow arbitrary drag-and-drop between columns without validating stage deliverables (e.g., 5 qualification questions, 3 written nominations, site visit report, Gate 1/2/3 checklist)."
+    },
+    {
+      "file": "firestore.rules",
+      "ruleGating": "Only checks deal.edit when moving to closing or closed. Moving from new to site_visit, negotiating, etc., is completely unvalidated at the database layer."
+    }
+  ],
+  "auditLogAnalysis": []
+}
