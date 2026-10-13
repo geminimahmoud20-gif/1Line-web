@@ -6,6 +6,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { getUserClaims } from './auth.js';
 import { notifyStaff } from './staffNotify.js';
 import { phoneVariants } from '../utils/phoneVariants.js';
+import { CONTACT_FIELDS, withoutContactFields } from '../utils/leadContactFields.js';
 
 // ===================== LEADS & OFFLINE SYNC QUEUE =====================
 
@@ -16,7 +17,7 @@ let isSyncingPendingLeads = false;
 // Client phone/WhatsApp/email live in lead_contacts/{leadId} (managers + the lead's desk only),
 // not on the lead itself, which read-only roles can list. Keep in sync with contactFields() in
 // firestore.rules. The contact doc mirrors the lead's desk in assignedTo.
-export const LEAD_CONTACT_FIELDS = ['phone', 'whatsapp', 'email', 'altPhone'];
+export const LEAD_CONTACT_FIELDS = CONTACT_FIELDS;
 const CLIENT_ONLY_FIELDS = ['_cloud', '_inlineContact', 'queuedAt', 'id'];
 
 const splitLeadFields = (fields) => {
@@ -26,6 +27,8 @@ const splitLeadFields = (fields) => {
     if (CLIENT_ONLY_FIELDS.includes(key) || value === undefined) continue;
     if (LEAD_CONTACT_FIELDS.includes(key)) {
       if (value !== null && value !== '') contact[key] = String(value);
+    } else if (key === 'details') {
+      lead.details = value && typeof value === 'object' ? withoutContactFields(value) : value;
     } else {
       lead[key] = value;
     }
