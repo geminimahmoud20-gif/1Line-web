@@ -183,26 +183,63 @@ export default function LeadQuickDrawer({
     trackEvent('crm_viewing_scheduled', { leadId: lead.id, propertyId: selectedViewingPropId });
   };
 
-  // WhatsApp Pitch Templates
+  // Dynamic WhatsApp Pitch Templates based on Lead Journey Type
   const leadArea = lead.area || lead.details?.area || 'سوهاج';
   const areaName = SOHAG_AREAS.find(a => a.id === leadArea)?.name_ar || leadArea;
   const propType = lead.propertyType || lead.details?.propertyType || 'عقار';
   const propTypeName = PROPERTY_TYPES.find(p => p.id === propType)?.name_ar || propType;
 
-  const whatsappTemplates = [
-    {
-      title: isAr ? 'ترحيب واستكشاف الاحتياج' : 'Welcome & Discovery',
-      msg: `أهلاً بك أستاذ ${lead.name}، معك فريق 1Line Solutions للاستشارات العقارية بسوهاج. نتابع طلبك بخصوص ${propTypeName} في منطقة ${areaName}. هل يناسبك اتصال سريع لمناقشة أفضل الخيارات المتاحة حالياً؟`
-    },
-    {
-      title: isAr ? 'دعوة لمعاينة ميدانية' : 'Viewing Invite',
-      msg: `أستاذ ${lead.name} العزيز، تم تجهيز قائمة وحدات مميزة ومفحوصة قانونياً ومطابقة لطلبك في ${areaName}. يسعدنا ترتيب موعد معاينة ميدانية بصحبة مستشارك العقاري في الموعد الذي يناسبك.`
-    },
-    {
-      title: isAr ? 'عروض وتسهيلات سداد' : 'Financing & Offers',
-      msg: `تحياتنا أستاذ ${lead.name}، لدينا وحدات في ${areaName} يقبل أصحابها التفاوض على طريقة السداد. شروط السداد يتم الاتفاق عليها مع المالك كتابياً، وتقدر تستعرض التفاصيل معنا.`
-    }
-  ];
+  const isSeller = lead.type === 'seller' || lead.landingPage === '/sell' || Boolean(lead.details?.askingPrice);
+  const isViewingRequest = lead.type === 'viewing_request' || lead.type === 'visit' || Boolean(lead.details?.visitDate) || Boolean(lead.viewingPropertyId);
+
+  let whatsappTemplates = [];
+
+  if (isSeller) {
+    whatsappTemplates = [
+      {
+        title: isAr ? 'متابعة تقييم العقار وتأكيد المعاينة' : 'Valuation & Inspection Follow-up',
+        msg: `أهلاً بك أستاذ ${lead.name}، معك استشاري الإدراج والتقييم من شركة 1Line بسوهاج. نراجع بيانات عرض بيع عقاركم في ${areaName} بمساحة ${lead.details?.size || ''}م². يسعدنا تحديد موعد لزيارة الوحدة ومعاينتها وتصويرها رسمياً لبدء تسويقها للعملاء المشترين.`
+      },
+      {
+        title: isAr ? 'إبلاغ بمطابقات مشترين جاهزين' : 'Buyer Matches Alert',
+        msg: `أستاذ ${lead.name} المحترم، لدينا مشترون مسجلون يبحثون عن ${propTypeName} في ${areaName} بميزانيات مطابقة لعقاركم المعروض. نود تأكيد تفاصيل الوحدة والسعر المطلوب لعرضها عليهم فوراً.`
+      },
+      {
+        title: isAr ? 'طلب استكمال مستندات أو صور' : 'Documents & Photos Request',
+        msg: `تحياتنا أستاذ ${lead.name}، لاستكمال ملف تسويق عقاركم ورفعه في المعرض المعتمد على منصة 1Line، هل يمكن إرسال صور إضافية واضحة للوحدة والموقف القانوني عبر واتساب؟`
+      }
+    ];
+  } else if (isViewingRequest) {
+    whatsappTemplates = [
+      {
+        title: isAr ? 'تأكيد موعد المعاينة وإرسال اللوكيشن' : 'Confirm Viewing & Location',
+        msg: `أهلاً بك أستاذ ${lead.name}، بخصوص طلب معاينة العقار في ${areaName}، يسعدنا تأكيد الموعد المناسب لحضرتك. مستشارك العقاري سيكون بانتظارك في الموقع، ونرسل لحضرتك اللوكيشن وتفاصيل النقطة المحددة.`
+      },
+      {
+        title: isAr ? 'اقتراح موعد بديل للمعاينة' : 'Reschedule / Alternative Slot',
+        msg: `مرحباً أستاذ ${lead.name}، نتواصل معك بخصوص معاينة ${propTypeName} في ${areaName}. هل يناسبك ترتيب موعد غداً أو في نهاية الأسبوع في الفترة الصباحية أم المسائية؟`
+      },
+      {
+        title: isAr ? 'إرسال بروشور وتفاصيل الوحدة' : 'Send Brochure & Specs',
+        msg: `تحياتنا أستاذ ${lead.name}، تجد مرفقاً كافة تفاصيل ومواصفات العقار الذي طلبت معاينته في ${areaName} مع خطة الأسعار وطرق السداد المتاحة.`
+      }
+    ];
+  } else {
+    whatsappTemplates = [
+      {
+        title: isAr ? 'ترحيب واستكشاف الاحتياج' : 'Welcome & Discovery',
+        msg: `أهلاً بك أستاذ ${lead.name}، معك فريق 1Line Solutions للاستشارات العقارية بسوهاج. نتابع طلبك بخصوص ${propTypeName} في منطقة ${areaName}. هل يناسبك اتصال سريع لمناقشة أفضل الخيارات المتاحة حالياً؟`
+      },
+      {
+        title: isAr ? 'دعوة لمعاينة ميدانية' : 'Viewing Invite',
+        msg: `أستاذ ${lead.name} العزيز، تم تجهيز قائمة وحدات مميزة ومفحوصة قانونياً ومطابقة لطلبك في ${areaName}. يسعدنا ترتيب موعد معاينة ميدانية بصحبة مستشارك العقاري في الموعد الذي يناسبك.`
+      },
+      {
+        title: isAr ? 'عروض وتسهيلات سداد' : 'Financing & Offers',
+        msg: `تحياتنا أستاذ ${lead.name}، لدينا وحدات في ${areaName} يقبل أصحابها التفاوض على طريقة السداد. شروط السداد يتم الاتفاق عليها مع المالك كتابياً، وتقدر تستعرض التفاصيل معنا.`
+      }
+    ];
+  }
 
   return (
     <>
@@ -507,10 +544,13 @@ export default function LeadQuickDrawer({
           {/* TAB 1: OPERATIONS & QUICK ACTIONS */}
           {activeTab === 'overview' && (
             <LeadDrawerOverview
+              lead={lead}
               egWhatsapp={hasRealPhone ? egWhatsapp : ''}
               handleLogCall={handleLogCall}
               handleScheduleViewing={handleScheduleViewing}
               isAr={isAr}
+              onConvertToProperty={onConvertToProperty}
+              properties={properties}
               selectedViewingPropId={selectedViewingPropId}
               setSelectedViewingPropId={setSelectedViewingPropId}
               setShowViewingForm={setShowViewingForm}

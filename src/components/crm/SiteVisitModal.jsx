@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { 
   Send, 
   Car,
-  X
+  X,
+  Calendar,
+  ExternalLink
 } from 'lucide-react';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { leadScore } from '../../utils/crmLeadViews';
+import { getGoogleCalendarUrl, downloadIcsFile } from '../../utils/calendarHelper';
 
 export default function SiteVisitModal({
   isOpen,
@@ -209,14 +212,58 @@ export default function SiteVisitModal({
             />
           </div>
 
-          <div className="cms-modal-actions" style={{ marginTop: '20px' }}>
-            <button type="button" className="btn btn-outline" onClick={onClose} style={{ background: 'var(--crm-subtle)', border: '1px solid var(--crm-line-strong)', color: 'var(--crm-body)' }}>
-              {isAr ? 'إلغاء' : 'Cancel'}
-            </button>
-            <button type="submit" className="btn btn-primary" style={{ background: 'var(--crm-brand-navy)', color: 'var(--crm-on-dark)', border: 'none', borderRadius: '6px', fontWeight: 'bold' }}>
-              <Send size={16} />
-              <span>{isAr ? 'تأكيد المعاينة وإرسال WhatsApp للعميل' : 'Confirm & Send WhatsApp'}</span>
-            </button>
+          <div className="cms-modal-actions" style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                type="button"
+                className="btn btn-sm btn-outline"
+                style={{ fontSize: 'var(--crm-text-xs)', borderRadius: '6px', padding: '6px 12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                onClick={() => {
+                  if (!visitDate) return;
+                  const startDt = new Date(`${visitDate}T${visitTime || '16:00'}`);
+                  const propTitle = selectedProperty ? (isAr ? selectedProperty.title_ar : selectedProperty.title_en) : (isAr ? 'عقار 1Line' : '1Line Property');
+                  downloadIcsFile({
+                    title: `معاينة: ${propTitle} (${lead.name})`,
+                    description: `معاينة ميدانية مع العميل: ${lead.name}\nالهاتف: ${lead.phone || lead.whatsapp}\nالمستشار: ${agentName}\nنقطة اللقاء: ${meetingLocation}\nملاحظات: ${notes}`,
+                    location: meetingLocation || 'سوهاج',
+                    start: startDt,
+                    filename: `viewing-${lead.name}-${visitDate}.ics`
+                  });
+                  if (triggerToast) triggerToast(isAr ? 'تم تنزيل موعد المعاينة لتقويم الهاتف 📅' : 'Viewing downloaded to calendar (.ics)', 'success');
+                }}
+                title={isAr ? 'تنزيل موعد المعاينة لتقويم الهاتف (Apple / Android)' : 'Download .ics calendar event'}
+              >
+                <Calendar size={14} />
+                <span>{isAr ? 'حفظ بالتقويم (.ICS)' : 'Save (.ICS)'}</span>
+              </button>
+
+              <a
+                href={getGoogleCalendarUrl({
+                  title: `معاينة: ${selectedProperty ? (isAr ? selectedProperty.title_ar : selectedProperty.title_en) : 'عقار 1Line'} (${lead?.name})`,
+                  description: `معاينة مع العميل ${lead?.name} - هاتف: ${lead?.phone || lead?.whatsapp}\nالمستشار: ${agentName}\nنقطة اللقاء: ${meetingLocation}`,
+                  location: meetingLocation || 'سوهاج',
+                  start: new Date(`${visitDate}T${visitTime || '16:00'}`)
+                })}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-sm btn-outline"
+                style={{ fontSize: 'var(--crm-text-xs)', borderRadius: '6px', padding: '6px 12px', display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}
+                title={isAr ? 'فتح في تقويم Google' : 'Open Google Calendar'}
+              >
+                <ExternalLink size={13} />
+                <span>{isAr ? 'تقويم Google' : 'Google Cal'}</span>
+              </a>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button type="button" className="btn btn-outline" onClick={onClose} style={{ background: 'var(--crm-subtle)', border: '1px solid var(--crm-line-strong)', color: 'var(--crm-body)' }}>
+                {isAr ? 'إلغاء' : 'Cancel'}
+              </button>
+              <button type="submit" className="btn btn-primary" style={{ background: 'var(--crm-brand-navy)', color: 'var(--crm-on-dark)', border: 'none', borderRadius: '6px', fontWeight: 'bold' }}>
+                <Send size={16} />
+                <span>{isAr ? 'تأكيد وإرسال WhatsApp للعميل' : 'Confirm & Send WhatsApp'}</span>
+              </button>
+            </div>
           </div>
         </form>
       </div>
