@@ -22,7 +22,7 @@ const ANDROID_UA = 'Mozilla/5.0 (Linux; Android 11; SM-A035F) AppleWebKit/537.36
 const IOS_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1';
 const FB_UA = `${ANDROID_UA} [FB_IAB/FB4A;FBAV/450.0.0.0;]`;
 
-export const DEVICES = [
+const ALL_DEVICES = [
   { id: '320x568', w: 320, h: 568, mobile: true, ua: IOS_UA, shot: true },
   { id: '280x653-fold', w: 280, h: 653, mobile: true, ua: ANDROID_UA },
   { id: '360x740', w: 360, h: 740, mobile: true, ua: FB_UA },
@@ -37,6 +37,10 @@ export const DEVICES = [
   { id: '1366x768-dark', w: 1366, h: 768, mobile: false, dark: true },
   { id: '1920x1080', w: 1920, h: 1080, mobile: false }
 ];
+// AUDIT_DEVICES=390x844,1366x768 limits a run to some devices
+export const DEVICES = process.env.AUDIT_DEVICES
+  ? ALL_DEVICES.filter((d) => process.env.AUDIT_DEVICES.split(',').includes(d.id))
+  : ALL_DEVICES;
 
 // Runs in the page. Returns plain data only.
 function measure() {
@@ -159,10 +163,12 @@ const results = [];
 if (MODE === 'public' || MODE === 'all') {
   for (const d of DEVICES) {
     const ctx = await newContext(browser, d);
-    const page = await ctx.newPage();
     for (const route of PUBLIC_ROUTES) {
+      // A fresh tab per route, as a visitor landing from an ad or a link (CLS and LCP are per landing)
+      const page = await ctx.newPage();
       const name = `pub_${route.replace(/[^a-z0-9]+/gi, '_') || 'home'}_${d.id}.jpg`;
       try { results.push(await auditPage(page, BASE + route, d, route, name)); } catch (e) { results.push({ page: route, device: d.id, failed: String(e).slice(0, 200) }); }
+      await page.close();
     }
     await ctx.close();
     console.log(`public ${d.id} done`);
@@ -183,8 +189,9 @@ if (MODE === 'crm' || MODE === 'all') {
     const items = async () => page.locator('.crm-sidebar-item, .crm-sidebar-subitem');
     const count = await (await items()).count();
     for (let i = 0; i < count; i++) {
+      // On phones and tablets the sidebar is off-canvas (still "visible" to Playwright), so open it first
       const menu = page.locator('.crm-topbar-toggle-btn').first();
-      if (d.mobile && await menu.count() && !(await (await items()).nth(i).isVisible())) await menu.click().catch(() => {});
+      if (d.mobile && await menu.count()) { await menu.click().catch(() => {}); await page.waitForTimeout(400); }
       const item = (await items()).nth(i);
       const label = ((await item.innerText().catch(() => '')) || `item${i}`).split('\n')[0].trim().slice(0, 40);
       try {
@@ -201,7 +208,7 @@ if (MODE === 'crm' || MODE === 'all') {
 
 // Blocked storage (Safari "block all cookies", some in-app browsers): does the site still render?
 {
-  const d = DEVICES.find((x) => x.id === '390x844');
+  const d = ALL_DEVICES.find((x) => x.id === '390x844');
   const ctx = await browser.newContext({ viewport: { width: d.w, height: d.h }, isMobile: true, hasTouch: true, userAgent: d.ua, serviceWorkers: 'block' });
   await ctx.addInitScript(() => {
     const thrower = { get() { throw new DOMException('The operation is insecure.', 'SecurityError'); } };

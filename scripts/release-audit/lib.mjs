@@ -119,7 +119,7 @@ export function auditProperties(n = 30) {
     const id = `audit-p${i + 1}`;
     const base = {
       id,
-      title_ar: `عقار اختبار ${i + 1} — ${['شقة', 'فيلا', 'أرض', 'محل', 'مكتب', 'عمارة'][i % 6]} في ${AREAS[i % 6]}`,
+      title_ar: `عقار اختبار ${i + 1} — ${['شقة', 'فيلا', 'أرض', 'محل', 'مكتب', 'عمارة'][i % 6]}`,
       title_en: `Audit property ${i + 1}`,
       type: TYPES[i % 6], category: i % 6 >= 3 ? 'commercial' : 'residential', purpose: 'sale',
       areaKey: AREAS[i % 6], price: 900000 + i * 350000, size: 90 + i * 12,
