@@ -611,54 +611,93 @@ export const searchLeads = async (term, max = 25) => {
  * Returns { ok: true, lead } or { ok: false, reason: 'already_claimed', claimedBy }.
  */
 export const claimLeadAtomic = async (leadId, staffName, options = {}) => {
-  if (!isFirebaseConfigured() || !db) return { ok: false, reason: 'no-db' };
+  const targetDb = options.db || db;
+  if (!targetDb) return { ok: false, reason: 'no-db' };
   if (!leadId || !staffName) return { ok: false, reason: 'invalid-argument' };
 
-  const leadRef = doc(db, 'leads', String(leadId));
-  const contactRef = doc(db, 'lead_contacts', String(leadId));
+  const leadRef = doc(targetDb, 'leads', String(leadId));
+  const contactRef = doc(targetDb, 'lead_contacts', String(leadId));
+
+  const TEAM_DESKS = [
+    'Sales Team A',
+    'Sales Team B',
+    'Sales Management',
+    'Sales Advisor Team',
+    'Dr. Mahmoud Elbaz',
+    'Unassigned',
+    UNASSIGNED_DESK
+  ];
 
   try {
-    return await runTransaction(db, async (txn) => {
-      const leadSnap = await txn.get(leadRef);
+    return await runTransaction(targetDb, async (txn) => {
+      // 1. ALL READS BEFORE WRITES (Strict Firestore Transaction Contract)
+      const [leadSnap, contactSnap] = await Promise.all([
+        txn.get(leadRef),
+        txn.get(contactRef)
+      ]);
+
       if (!leadSnap.exists()) {
         return { ok: false, reason: 'not-found' };
       }
 
       const data = leadSnap.data();
+      const currentOwner = data.ownerName || data.claimedBy;
       const currentAssignee = data.assignedTo;
+
+      // A lead is claimed if it has an assigned individual owner,
+      // or if assignedTo was set to a specific employee name (not a general desk)
       const isClaimed = Boolean(
-        currentAssignee &&
-        currentAssignee !== UNASSIGNED_DESK &&
-        currentAssignee !== 'Unassigned'
+        currentOwner && currentOwner !== UNASSIGNED_DESK && currentOwner !== 'Unassigned'
+      ) || Boolean(
+        currentAssignee && !TEAM_DESKS.includes(currentAssignee)
       );
 
-      if (isClaimed && currentAssignee !== staffName && !options.override) {
+      const existingClaimant = currentOwner || currentAssignee;
+      if (isClaimed && existingClaimant !== staffName && !options.override) {
         return {
           ok: false,
           reason: 'already_claimed',
-          claimedBy: currentAssignee
+          claimedBy: existingClaimant
         };
       }
 
-      // Atomic update of assignment without changing communication status
-      txn.update(leadRef, {
-        assignedTo: staffName,
+      // 2. ALL WRITES AFTER READS
+      // Retain desk if already assigned to a team (so desk routing/rules are not broken)
+      const desk = (currentAssignee && currentAssignee !== 'Unassigned' && currentAssignee !== UNASSIGNED_DESK)
+        ? currentAssignee
+        : (options.desk || staffName);
+
+      const leadUpdates = {
+        ownerName: staffName,
+        claimedBy: staffName,
+        assignedTo: desk,
+        claimedAt: serverTimestamp(),
         assignedAt: serverTimestamp(),
         updatedAt: serverTimestamp()
-      });
+      };
+
+      if (options.staffUid) {
+        leadUpdates.ownerUid = options.staffUid;
+      }
+
+      // Atomic write to lead doc (status is strictly preserved: الاستلام ≠ تواصل)
+      txn.update(leadRef, leadUpdates);
 
       // Keep contact mirror doc in sync if it exists
-      const contactSnap = await txn.get(contactRef);
       if (contactSnap.exists()) {
-        txn.update(contactRef, { assignedTo: staffName });
+        txn.update(contactRef, { assignedTo: desk });
       }
 
       return {
         ok: true,
+        staffName,
+        claimedBy: staffName,
         lead: {
           ...data,
           id: String(leadId),
-          assignedTo: staffName
+          ownerName: staffName,
+          claimedBy: staffName,
+          assignedTo: desk
         }
       };
     });
