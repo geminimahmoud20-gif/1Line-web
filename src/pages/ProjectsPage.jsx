@@ -71,6 +71,11 @@ export default function ProjectsPage({
         <div className="pj-wrap">
           {/* Quick Back Navigation Bar */}
           <div className="page-top-back-bar">
+            <div className="page-breadcrumb-sub">
+              <Link to="/">{isAr ? 'الرئيسية' : 'Home'}</Link>
+              <span>/</span>
+              <span className="crumb-current">{isAr ? 'دليل المشروعات' : 'Projects'}</span>
+            </div>
             <button
               type="button"
               className="btn-back-step"
@@ -86,11 +91,6 @@ export default function ProjectsPage({
               {isAr ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
               <span>{isAr ? 'رجوع خطوة للخلف' : 'Back'}</span>
             </button>
-            <div className="page-breadcrumb-sub">
-              <Link to="/">{isAr ? 'الرئيسية' : 'Home'}</Link>
-              <span>/</span>
-              <span className="crumb-current">{isAr ? 'دليل المشروعات' : 'Projects'}</span>
-            </div>
           </div>
 
           <p className="pj-kicker"><Sparkles size={15} aria-hidden="true" />{isAr ? 'دليل المشروعات' : 'Projects guide'}</p>

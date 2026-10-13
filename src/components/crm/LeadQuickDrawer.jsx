@@ -258,7 +258,7 @@ export default function LeadQuickDrawer({
               {isAr ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
             </button>
 
-            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted, var(--crm-faint))', fontWeight: 600 }}>
+            <span dir="ltr" style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted, var(--crm-faint))', fontWeight: 700, unicodeBidi: 'plaintext' }}>
               {currentIndex + 1} / {filteredLeads.length || 1}
             </span>
 
@@ -322,7 +322,7 @@ export default function LeadQuickDrawer({
         </div>
 
         {/* Scrollable Body Content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '20px', paddingBottom: '36px' }}>
           {/* Lead Header Card */}
           <div style={{
             background: 'var(--crm-card)',
@@ -424,8 +424,8 @@ export default function LeadQuickDrawer({
                 </span>
               </div>
 
-              {/* Stage Pills Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+              {/* Stage Pills Grid (Balanced 3x2 for 6 stages) */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
                 {stages.slice(0, 6).map((st) => {
                   const isActive = lead.status === st.id;
                   return (
