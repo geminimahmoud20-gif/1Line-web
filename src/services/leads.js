@@ -345,23 +345,33 @@ export const migrateInlineLeadContacts = async (leads) => {
 };
 
 /**
- * Delete a lead from Firestore.
+ * Delete one or multiple leads from Firestore using atomic batched writes.
  */
-export const deleteLead = async (leadId) => {
-  if (isFirebaseConfigured() && db) {
-    try {
+export const deleteLeads = async (leadIds) => {
+  const ids = Array.isArray(leadIds) ? leadIds : [leadIds];
+  if (!isFirebaseConfigured() || !db || ids.length === 0) return false;
+  try {
+    // 2 writes per lead (leads + lead_contacts); 200 per batch <= 500 limit
+    for (let i = 0; i < ids.length; i += 200) {
+      const chunk = ids.slice(i, i + 200);
       const batch = writeBatch(db);
-      batch.delete(doc(db, 'leads', leadId));
-      batch.delete(doc(db, 'lead_contacts', leadId));
+      for (const id of chunk) {
+        batch.delete(doc(db, 'leads', String(id)));
+        batch.delete(doc(db, 'lead_contacts', String(id)));
+      }
       await batch.commit();
-      return true;
-    } catch (error) {
-      console.error('Firebase deleteLead error:', error);
-      return false;
     }
+    return true;
+  } catch (error) {
+    console.error('Firebase deleteLeads error:', error);
+    return false;
   }
-  return false;
 };
+
+/**
+ * Delete a single lead from Firestore.
+ */
+export const deleteLead = async (leadId) => deleteLeads([leadId]);
 
 /**
  * Staff file import: many leads, each with its contact doc, in batched writes. Unlike saveLead

@@ -19,6 +19,7 @@ import RetargetingHub from './crm/RetargetingHub';
 import CustomerProfileModal from './crm/CustomerProfileModal';
 
 import LeadsTab from './crm/LeadsTab';
+import ConcurrencyConflictModal from './crm/ConcurrencyConflictModal';
 import SystemBackupTab from './crm/SystemBackupTab';
 import AutomationTab from './crm/AutomationTab';
 import AddLeadModal from './crm/AddLeadModal';
@@ -95,20 +96,44 @@ export const CrmAdminPanel = ({
   const canRetarget = isSuperRole || (canEditLeads && seesPhones);
   const myDesk = userDesk || '';
   const leads = useMemo(() => scopeLeadsForAccess(allLeads, { role: activeRole, perms, desk: myDesk }), [allLeads, activeRole, perms, myDesk]);
+  const [conflictModalState, setConflictModalState] = useState({ isOpen: false, conflictData: null, pendingUpdate: null });
+
   // One gate for every lead write from this panel: read-only roles can't write, and a role that
-  // only sees masked numbers never writes them back over the real ones.
+  // only sees masked numbers never writes them back over the real ones. Also enforces versioning.
   const onUpdateLead = useMemo(() => {
     if (!rawUpdateLead) return undefined;
-    return (id, fields = {}) => {
+    return (id, fields = {}, expectedVersion = null) => {
       if (!canEditLeads) {
         triggerToast?.(isAr ? 'صلاحياتك لا تسمح بتعديل العملاء' : 'Your role cannot edit leads', 'error');
         return false;
       }
-      if (seesPhones) return rawUpdateLead(id, fields);
-      const { phone: _p, whatsapp: _w, altPhone: _a, email: _e, ...rest } = fields;
+      const currentLead = leads.find((l) => l.id === id);
+      const currentVersion = currentLead?.version || 1;
+      if (expectedVersion !== null && expectedVersion !== undefined && expectedVersion !== currentVersion) {
+        setConflictModalState({
+          isOpen: true,
+          conflictData: {
+            currentEntity: currentLead,
+            heldBy: currentLead?.lastEditedBy || (isAr ? 'زميل آخر' : 'another user')
+          },
+          pendingUpdate: { id, fields }
+        });
+        return false;
+      }
+
+      const nextVersion = currentVersion + 1;
+      const payload = {
+        ...fields,
+        version: nextVersion,
+        lastEditedBy: currentUser?.name || 'مستخدم 1Line',
+        lastEditedUid: currentUser?.uid || null
+      };
+
+      if (seesPhones) return rawUpdateLead(id, payload);
+      const { phone: _p, whatsapp: _w, altPhone: _a, email: _e, ...rest } = payload;
       return rawUpdateLead(id, rest);
     };
-  }, [rawUpdateLead, canEditLeads, seesPhones, triggerToast, isAr]);
+  }, [rawUpdateLead, canEditLeads, seesPhones, triggerToast, isAr, leads, currentUser]);
 
   // Enterprise Tab States
   const [localAdminTab, setLocalAdminTab] = useState('dashboard');
@@ -295,20 +320,21 @@ export const CrmAdminPanel = ({
       return;
     }
     if (window.confirm(isAr ? `هل أنت متأكد من حذف ${selectedLeadIds.length} عميل محدد نهائياً؟` : `Delete ${selectedLeadIds.length} leads?`)) {
-      selectedLeadIds.forEach(id => {
-        if (onDeleteLead) onDeleteLead(id);
-      });
+      const idsToDelete = [...selectedLeadIds];
+      setSelectedLeadIds([]);
+      if (onDeleteLead) {
+        onDeleteLead(idsToDelete);
+      }
       logAuditEvent({
         actionType: 'BULK_LEADS_DELETED',
         targetCollection: 'leads',
-        targetId: selectedLeadIds.join(','),
-        details: { count: selectedLeadIds.length },
+        targetId: idsToDelete.join(','),
+        details: { count: idsToDelete.length },
         actor: currentUser
       });
       if (triggerToast) {
-        triggerToast(isAr ? `تم حذف ${selectedLeadIds.length} عميل بنجاح` : `Deleted ${selectedLeadIds.length} leads`, 'info');
+        triggerToast(isAr ? `تم حذف ${idsToDelete.length} عميل بنجاح` : `Deleted ${idsToDelete.length} leads`, 'info');
       }
-      setSelectedLeadIds([]);
     }
   };
 
@@ -1003,6 +1029,35 @@ export const CrmAdminPanel = ({
         triggerToast={triggerToast}
         activeRole={activeRole}
       />
+
+      {/* ⚠️ MODAL: CONCURRENCY CONFLICT RESOLUTION */}
+      {conflictModalState.isOpen && (
+        <ConcurrencyConflictModal
+          isOpen={conflictModalState.isOpen}
+          conflictData={conflictModalState.conflictData}
+          isAr={isAr}
+          onClose={() => setConflictModalState({ isOpen: false, conflictData: null, pendingUpdate: null })}
+          onReload={() => {
+            setConflictModalState({ isOpen: false, conflictData: null, pendingUpdate: null });
+            triggerToast?.(isAr ? 'تم تحديث البيانات لآخر نسخة مسجلة' : 'Reloaded latest version', 'info');
+          }}
+          onOverwrite={() => {
+            if (conflictModalState.pendingUpdate && rawUpdateLead) {
+              const { id, fields } = conflictModalState.pendingUpdate;
+              const currentLead = leads.find((l) => l.id === id);
+              const nextVersion = (currentLead?.version || 1) + 1;
+              rawUpdateLead(id, {
+                ...fields,
+                version: nextVersion,
+                lastEditedBy: currentUser?.name || 'مستشار 1Line',
+                lastEditedUid: currentUser?.uid || null
+              });
+              setConflictModalState({ isOpen: false, conflictData: null, pendingUpdate: null });
+              triggerToast?.(isAr ? 'تم حفظ التعديل وتجاوز النسخة السابقة' : 'Changes saved with overwrite', 'warn');
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

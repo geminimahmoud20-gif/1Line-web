@@ -166,14 +166,26 @@ export default function KanbanPipeline({
     });
   }, [leads, filterType, searchQuery]);
 
-  // Calculate Column metrics
-  const getStageStats = (stageId) => {
-    const stageLeads = filteredLeads.filter(l => (l.status || 'new') === stageId);
-    const totalVolume = stageLeads.reduce((acc, curr) => {
-      return acc + getLeadBudget(curr);
-    }, 0);
-    return { count: stageLeads.length, totalVolume };
-  };
+  // Pre-grouped leads & metrics by stage in a single O(N) pass
+  const { leadsByStage, stageStatsMap } = useMemo(() => {
+    const groups = {};
+    const stats = {};
+    PIPELINE_STAGES.forEach((s) => {
+      groups[s.id] = [];
+      stats[s.id] = { count: 0, totalVolume: 0 };
+    });
+    filteredLeads.forEach((l) => {
+      const st = l.status || 'new';
+      if (!groups[st]) {
+        groups[st] = [];
+        stats[st] = { count: 0, totalVolume: 0 };
+      }
+      groups[st].push(l);
+      stats[st].count += 1;
+      stats[st].totalVolume += getLeadBudget(l);
+    });
+    return { leadsByStage: groups, stageStatsMap: stats };
+  }, [filteredLeads]);
 
   // Drag & Drop Handlers
   const handleDragStart = (e, leadId) => {
@@ -424,8 +436,8 @@ export default function KanbanPipeline({
         paddingBottom: '40px'
       }}>
         {PIPELINE_STAGES.map((stage) => {
-          const stageLeads = filteredLeads.filter(l => (l.status || 'new') === stage.id);
-          const { count, totalVolume } = getStageStats(stage.id);
+          const stageLeads = leadsByStage[stage.id] || [];
+          const { count, totalVolume } = stageStatsMap[stage.id] || { count: 0, totalVolume: 0 };
 
           return (
             <div
