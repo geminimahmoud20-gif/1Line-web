@@ -10,7 +10,7 @@ import { validateStageTransition } from '../../services/stateMachineEngine';
 import StageDeliverableModal from './StageDeliverableModal';
 import ActiveEditorBanner from './ActiveEditorBanner';
 import ConcurrencyConflictModal from './ConcurrencyConflictModal';
-import { validateOptimisticUpdate, renewEntityLease } from '../../services/concurrencyEngine';
+import { validateOptimisticUpdate, renewEntityLease, releaseEntityLease } from '../../services/concurrencyEngine';
 
 export default function LeadQuickDrawer({
   lead,
