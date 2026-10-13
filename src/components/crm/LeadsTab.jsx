@@ -116,27 +116,27 @@ export default function LeadsTab({
 
     if (isToday) {
       return (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(239, 68, 68, 0.2)', border: '1px solid var(--crm-danger)', color: 'var(--crm-danger)', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: '11px' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--crm-danger-soft)', border: '1px solid var(--crm-danger)', color: 'var(--crm-danger)', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: 'var(--crm-text-xs)' }}>
           🚨 {isAr ? 'اليوم' : 'Today'} • {vd} {vs ? `(${vs})` : ''}
         </span>
       );
     }
     if (isTomorrow) {
       return (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(245, 158, 11, 0.2)', border: '1px solid #f59e0b', color: '#f59e0b', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: '11px' }}>
-          ⚡ {isAr ? 'بكرة' : 'Tomorrow'} • {vd} {vs ? `(${vs})` : ''}
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--crm-warn-soft)', border: '1px solid var(--crm-warn)', color: 'var(--crm-warn)', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: 'var(--crm-text-xs)' }}>
+          ⚡ {isAr ? 'غداً' : 'Tomorrow'} • {vd} {vs ? `(${vs})` : ''}
         </span>
       );
     }
     if (isPast) {
       return (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(100, 116, 139, 0.2)', color: 'var(--crm-muted)', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--crm-subtle)', color: 'var(--crm-muted)', padding: '2px 8px', borderRadius: '4px', fontSize: 'var(--crm-text-xs)' }}>
           ⌛ {isAr ? 'فات موعده' : 'Past'} • {vd} {vs ? `(${vs})` : ''}
         </span>
       );
     }
     return (
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(217, 119, 6, 0.12)', border: '1px solid rgba(217, 119, 6, 0.3)', color: 'var(--crm-accent-text)', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--crm-accent-soft)', border: '1px solid var(--crm-accent)', color: 'var(--crm-accent-text)', padding: '2px 8px', borderRadius: '4px', fontSize: 'var(--crm-text-xs)' }}>
         📅 {vd} {vs ? `(${vs})` : ''}
       </span>
     );
@@ -264,127 +264,7 @@ export default function LeadsTab({
         </div>
       </div>
 
-      {/* 🚀 QUICK PRIORITY TRIAGE BAR (جديد محدش رد، طلبات معاينة، عروض بيع، حسابات) */}
-      <div className="crm-priority-triage-bar" style={{
-        display: 'flex',
-        gap: '8px',
-        flexWrap: 'wrap',
-        marginBottom: '14px',
-        padding: '10px 14px',
-        background: 'var(--crm-card-bg, rgba(255, 255, 255, 0.03))',
-        border: '1px solid var(--crm-border, rgba(255, 255, 255, 0.08))',
-        borderRadius: '10px'
-      }}>
-        {/* 1. 🆕 جديد محدش ردّ عليه */}
-        <button
-          type="button"
-          className={`table-filter-btn ${leadFilter === 'unanswered' ? 'active' : ''}`}
-          onClick={() => { setLeadFilter('unanswered'); }}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '7px 13px',
-            fontSize: 'var(--crm-text-sm)',
-            fontWeight: '600',
-            border: leadFilter === 'unanswered' ? '1px solid var(--crm-danger, #ef4444)' : '1px solid rgba(239, 68, 68, 0.25)',
-            background: leadFilter === 'unanswered' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.07)',
-            color: 'var(--crm-ink)'
-          }}
-        >
-          <span>🆕 {isAr ? 'جديد محدش ردّ عليه' : 'Unanswered / New'}</span>
-          <span className="badge" style={{ background: 'var(--crm-danger, #ef4444)', color: '#fff', fontSize: '11px', padding: '2px 7px', borderRadius: '12px' }}>
-            {counts.unanswered}
-          </span>
-        </button>
 
-        {/* 2. 👁 طلبات معاينة */}
-        <button
-          type="button"
-          className={`table-filter-btn ${leadFilter === 'viewing_request' ? 'active' : ''}`}
-          onClick={() => { setLeadFilter('viewing_request'); setLeadSort?.('visit_date'); }}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '7px 13px',
-            fontSize: 'var(--crm-text-sm)',
-            fontWeight: '600',
-            border: leadFilter === 'viewing_request' ? '1px solid var(--crm-accent, #d97706)' : '1px solid rgba(217, 119, 6, 0.25)',
-            background: leadFilter === 'viewing_request' ? 'rgba(217, 119, 6, 0.2)' : 'rgba(217, 119, 6, 0.07)',
-            color: 'var(--crm-ink)'
-          }}
-        >
-          <span>👁 {isAr ? 'طلبات معاينة' : 'Viewing Requests'}</span>
-          {counts.viewingUnanswered > 0 ? (
-            <span className="badge" style={{ background: 'var(--crm-accent, #d97706)', color: '#fff', fontSize: '11px', padding: '2px 7px', borderRadius: '12px' }}>
-              {counts.viewings} ({counts.viewingUnanswered} {isAr ? 'معلق' : 'pending'})
-            </span>
-          ) : (
-            <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--crm-muted)', fontSize: '11px', padding: '2px 7px', borderRadius: '12px' }}>
-              {counts.viewings}
-            </span>
-          )}
-        </button>
-
-        {/* 3. 🏠 عروض بيع */}
-        <button
-          type="button"
-          className={`table-filter-btn ${leadFilter === 'seller' ? 'active' : ''}`}
-          onClick={() => { setLeadFilter('seller'); }}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '7px 13px',
-            fontSize: 'var(--crm-text-sm)',
-            fontWeight: '600',
-            border: leadFilter === 'seller' ? '1px solid var(--crm-positive, #10b981)' : '1px solid rgba(16, 185, 129, 0.25)',
-            background: leadFilter === 'seller' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.07)',
-            color: 'var(--crm-ink)'
-          }}
-        >
-          <span>🏠 {isAr ? 'عروض بيع' : 'Seller Listings'}</span>
-          {counts.sellerUnanswered > 0 ? (
-            <span className="badge" style={{ background: 'var(--crm-positive, #10b981)', color: '#fff', fontSize: '11px', padding: '2px 7px', borderRadius: '12px' }}>
-              {counts.sellers} ({counts.sellerUnanswered} {isAr ? 'معلق' : 'pending'})
-            </span>
-          ) : (
-            <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--crm-muted)', fontSize: '11px', padding: '2px 7px', borderRadius: '12px' }}>
-              {counts.sellers}
-            </span>
-          )}
-        </button>
-
-        {/* 4. 👤 حسابات جديدة */}
-        <button
-          type="button"
-          className={`table-filter-btn ${leadFilter === 'account' ? 'active' : ''}`}
-          onClick={() => { setLeadFilter('account'); }}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '7px 13px',
-            fontSize: 'var(--crm-text-sm)',
-            fontWeight: '600',
-            border: leadFilter === 'account' ? '1px solid var(--crm-info, #0ea5e9)' : '1px solid rgba(14, 165, 233, 0.25)',
-            background: leadFilter === 'account' ? 'rgba(14, 165, 233, 0.2)' : 'rgba(14, 165, 233, 0.07)',
-            color: 'var(--crm-ink)'
-          }}
-        >
-          <span>👤 {isAr ? 'حسابات جديدة' : 'New Accounts'}</span>
-          {counts.accountUnanswered > 0 ? (
-            <span className="badge" style={{ background: 'var(--crm-info, #0ea5e9)', color: '#fff', fontSize: '11px', padding: '2px 7px', borderRadius: '12px' }}>
-              {counts.accounts} ({counts.accountUnanswered} {isAr ? 'جديد' : 'new'})
-            </span>
-          ) : (
-            <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--crm-muted)', fontSize: '11px', padding: '2px 7px', borderRadius: '12px' }}>
-              {counts.accounts}
-            </span>
-          )}
-        </button>
-      </div>
 
       {/* Advanced Multi-Filters Toolbar */}
       <div className="crm-table-header" style={{ alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '14px' }}>
@@ -437,12 +317,6 @@ export default function LeadsTab({
           <button className={`table-filter-btn ${leadFilter === 'qualified' ? 'active' : ''}`} onClick={() => setLeadFilter('qualified')}>
             🎯 {isAr ? 'مؤهلون للشراء' : 'Qualified'}
           </button>
-          <button className={`table-filter-btn ${leadFilter === 'buyer' ? 'active' : ''}`} onClick={() => setLeadFilter('buyer')}>
-            {isAr ? 'طلبات شراء' : 'Buyers'}
-          </button>
-          <button className={`table-filter-btn ${leadFilter === 'seller' ? 'active' : ''}`} onClick={() => setLeadFilter('seller')}>
-            {isAr ? 'عروض بيع' : 'Sellers'}
-          </button>
           <button className={`table-filter-btn ${leadFilter === 'investor' ? 'active' : ''}`} onClick={() => setLeadFilter('investor')}>
             💎 {isAr ? 'مستثمرون VIP' : 'Investors'}
           </button>
@@ -450,7 +324,7 @@ export default function LeadsTab({
             📦 {isAr ? 'المؤرشفون' : 'Archived'} ({counts.archived})
           </button>
           <button className={`table-filter-btn ${leadFilter === 'lost' ? 'active' : ''}`} onClick={() => setLeadFilter('lost')}>
-            ✖ {isAr ? 'صفقات خسرانة' : 'Lost'} ({counts.lost})
+            ✖ {isAr ? 'صفقات خاسرة' : 'Lost'} ({counts.lost})
           </button>
           {counts.dupes > 0 && (
             <button className={`table-filter-btn ${leadFilter === 'dupes' ? 'active' : ''}`} onClick={() => setLeadFilter('dupes')} style={{ color: leadFilter !== 'dupes' ? 'var(--crm-warn)' : undefined }}>
