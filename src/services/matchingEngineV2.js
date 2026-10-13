@@ -17,7 +17,7 @@ export const MATCH_THRESHOLDS = {
  * Calculates a multi-factor score (0 - 100) comparing a Buyer Profile or Lead with an Inventory Property.
  * Respects negative filters (rejected options, disliked developers, Gate 1 failures).
  */
-export function calculateMatchScore(buyerProfileOrLead, property, options = {}) {
+export function calculateMatchScore(buyerProfileOrLead, property, _options = {}) {
   if (!buyerProfileOrLead || !property) {
     return {
       score: 0,
@@ -88,10 +88,10 @@ export function calculateMatchScore(buyerProfileOrLead, property, options = {}) 
   }
 
   // ── 2. MULTI-FACTOR SCORING (100 Points Total) ──────────────────────────────
-  let areaScore = 0;
-  let budgetScore = 0;
-  let typeScore = 0;
-  let purposeScore = 0;
+  let areaScore;
+  let budgetScore;
+  let typeScore;
+  let purposeScore;
   let developerScore = 0;
   const reasons = [];
 
