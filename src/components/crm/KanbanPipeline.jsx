@@ -518,7 +518,7 @@ export default function KanbanPipeline({
                       >
                         <div className="kb-card-top">
                           <span className="kb-type">{typeBadge.label}</span>
-                          {budget >= HIGH_VALUE_DEAL_THRESHOLD && (
+                          {budget >= highValueThreshold && (
                             <span
                               style={{
                                 display: 'inline-flex',
@@ -532,10 +532,10 @@ export default function KanbanPipeline({
                                 padding: '1px 5px',
                                 borderRadius: '4px'
                               }}
-                              title={isAr ? 'صفقة كبرى (≥ 5 مليون ج) تتطلب اعتماد المؤسس' : 'High value (5M+) requires Founder sign-off'}
+                              title={isAr ? `صفقة كبرى (≥ ${(highValueThreshold / 1e6).toLocaleString('ar-EG')} مليون ج) تتطلب اعتماد المؤسس` : `High value (${(highValueThreshold / 1e6).toFixed(1)}M+) requires Founder sign-off`}
                             >
                               <ShieldAlert size={11} aria-hidden="true" />
-                              {isAr ? 'صفقة كبرى (5M+)' : '5M+ Deal'}
+                              {isAr ? `صفقة كبرى (${(highValueThreshold / 1e6)}M+)` : `${(highValueThreshold / 1e6).toFixed(1)}M+ Deal`}
                             </span>
                           )}
                           <span className="kb-time"><Clock size={11} aria-hidden="true" />{timeAgoText}</span>

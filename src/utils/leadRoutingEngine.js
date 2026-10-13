@@ -44,11 +44,13 @@ export function routeLeadAutomatically(leadData, existingLeads = [], customConfi
 
   const vipTeam = activeTeams.find((t) => t.routeVip) || activeTeams.find((t) => t.id === 'Dr. Mahmoud Elbaz');
   const commTeam = activeTeams.find((t) => t.routeCommercial) || activeTeams.find((t) => t.id === 'Sales Management');
+  const vipThreshold = Number(config?.founderApprovalThreshold || config?.vipBudgetThreshold) || 5000000;
 
   // 1. VIP / Private Office / High Budget Tier
-  if (vipTeam && (budget >= 5000000 || leadType === 'investor' || leadType === 'vip' || notes.includes('مكتب خاص') || notes.includes('vip'))) {
+  if (vipTeam && (budget >= vipThreshold || leadType === 'investor' || leadType === 'vip' || notes.includes('مكتب خاص') || notes.includes('vip'))) {
     assignedTo = vipTeam.id;
-    routingReason_ar = `عميل استثماري VIP (ميزانية تفوق 5 ملايين ج.م أو محفظة خاصة) — [${vipTeam.name_ar}]`;
+    const formattedThreshold = (vipThreshold / 1e6) >= 1 ? `${(vipThreshold / 1e6)} ملايين` : `${vipThreshold.toLocaleString('ar-EG')}`;
+    routingReason_ar = `عميل استثماري VIP (ميزانية تفوق ${formattedThreshold} ج.م أو محفظة خاصة) — [${vipTeam.name_ar}]`;
     routingReason_en = `VIP Investor / Private Office Portfolio Desk — [${vipTeam.name_en}]`;
   }
   // 2. Commercial / Administrative / Mega Projects
