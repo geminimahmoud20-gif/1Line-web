@@ -1,10 +1,12 @@
 import { useState, useMemo, useEffect } from 'react';
-import { MessageSquare, Calendar, Car, Clock, Sparkles, Edit3, Trash2, ChevronRight, ChevronLeft, Filter, AlertTriangle, Search, X, Zap, MoreHorizontal } from 'lucide-react';
+import { MessageSquare, Calendar, Car, Clock, Sparkles, Edit3, Trash2, ChevronRight, ChevronLeft, Filter, AlertTriangle, Search, X, Zap, MoreHorizontal, ShieldAlert } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
+import StageDeliverableModal from './StageDeliverableModal';
 import './crm-kanban.css';
 import { getAreas } from '../../utils/areasData';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { leadScore } from '../../utils/crmLeadViews';
+import { validateStageTransition, HIGH_VALUE_DEAL_THRESHOLD } from '../../services/stateMachineEngine';
 
 const PIPELINE_STAGES = [
   { id: 'new', title_ar: 'طلبات جديدة', title_en: 'New Inquiries', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)' },
@@ -51,11 +53,13 @@ export default function KanbanPipeline({
   onOpenEditLead,
   onOpenLead,
   lang = 'ar',
-  triggerToast
+  triggerToast,
+  activeRole = 'sales_agent'
 }) {
   const [draggedLeadId, setDraggedLeadId] = useState(null);
   const [schedulingVisitLead, setSchedulingVisitLead] = useState(null);
   const [leadToDelete, setLeadToDelete] = useState(null);
+  const [blockerModal, setBlockerModal] = useState({ isOpen: false, blockerInfo: null, lead: null });
   const [filterType, setFilterType] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -185,10 +189,29 @@ export default function KanbanPipeline({
     e.preventDefault();
     const leadId = e.dataTransfer.getData('text/plain') || draggedLeadId;
     if (leadId) {
-      if (onUpdateLead) {
-        onUpdateLead(leadId, { status: targetStageId });
+      const targetLead = leads.find(l => l.id === leadId);
+      if (targetLead && onUpdateLead) {
+        const validation = validateStageTransition(targetLead, targetStageId, {
+          userRole: activeRole,
+          isFounderApproved: targetLead.isFounderApproved || activeRole === 'super_admin'
+        });
+
+        if (!validation.allowed) {
+          setBlockerModal({ isOpen: true, blockerInfo: validation, lead: targetLead });
+          if (triggerToast) {
+            triggerToast(validation.missingDeliverable, 'error');
+          }
+          setDraggedLeadId(null);
+          return;
+        }
+
+        const updates = { status: targetStageId };
+        if (validation.nextTask) {
+          updates.latestHandoffTask = validation.nextTask;
+        }
+        onUpdateLead(leadId, updates);
         if (triggerToast) {
-          triggerToast(isAr ? `تم نقل العميل بنجاح إلى مرحلة ${PIPELINE_STAGES.find(s=>s.id===targetStageId)?.title_ar}` : `Lead moved to ${targetStageId}`, 'success');
+          triggerToast(isAr ? `تم نقل العميل بنجاح إلى مرحلة ${PIPELINE_STAGES.find(s=>s.id===targetStageId)?.title_ar || targetStageId}` : `Lead moved to ${targetStageId}`, 'success');
         }
       }
     }
@@ -200,8 +223,25 @@ export default function KanbanPipeline({
     const currentIndex = PIPELINE_STAGES.findIndex(s => s.id === (lead.status || 'new'));
     if (currentIndex < PIPELINE_STAGES.length - 1) {
       const nextStage = PIPELINE_STAGES[currentIndex + 1];
+      const validation = validateStageTransition(lead, nextStage.id, {
+        userRole: activeRole,
+        isFounderApproved: lead.isFounderApproved || activeRole === 'super_admin'
+      });
+
+      if (!validation.allowed) {
+        setBlockerModal({ isOpen: true, blockerInfo: validation, lead });
+        if (triggerToast) {
+          triggerToast(validation.missingDeliverable, 'error');
+        }
+        return;
+      }
+
       if (onUpdateLead) {
-        onUpdateLead(lead.id, { status: nextStage.id });
+        const updates = { status: nextStage.id };
+        if (validation.nextTask) {
+          updates.latestHandoffTask = validation.nextTask;
+        }
+        onUpdateLead(lead.id, updates);
         if (triggerToast) {
           triggerToast(isAr ? `تم نقل العميل إلى مرحلة: ${nextStage.title_ar}` : `Moved to ${nextStage.title_en}`, 'success');
         }
@@ -478,6 +518,26 @@ export default function KanbanPipeline({
                       >
                         <div className="kb-card-top">
                           <span className="kb-type">{typeBadge.label}</span>
+                          {budget >= HIGH_VALUE_DEAL_THRESHOLD && (
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                                background: 'var(--crm-danger-soft, rgba(239, 68, 68, 0.12))',
+                                color: 'var(--crm-danger)',
+                                border: '1px solid var(--crm-danger-line, rgba(239, 68, 68, 0.3))',
+                                fontSize: 'var(--crm-text-xs)',
+                                fontWeight: 700,
+                                padding: '1px 5px',
+                                borderRadius: '4px'
+                              }}
+                              title={isAr ? 'صفقة كبرى (≥ 5 مليون ج) تتطلب اعتماد المؤسس' : 'High value (5M+) requires Founder sign-off'}
+                            >
+                              <ShieldAlert size={11} aria-hidden="true" />
+                              {isAr ? 'صفقة كبرى (5M+)' : '5M+ Deal'}
+                            </span>
+                          )}
                           <span className="kb-time"><Clock size={11} aria-hidden="true" />{timeAgoText}</span>
                         </div>
 
@@ -634,6 +694,19 @@ export default function KanbanPipeline({
           </div>
         </div>
       )}
+
+      {/* 1Line OS Deliverable Gate Blocker Modal */}
+      <StageDeliverableModal
+        isOpen={blockerModal.isOpen}
+        onClose={() => setBlockerModal({ isOpen: false, blockerInfo: null, lead: null })}
+        blockerInfo={blockerModal.blockerInfo}
+        lead={blockerModal.lead}
+        onOpenDeliverableAction={(leadToEdit) => {
+          setBlockerModal({ isOpen: false, blockerInfo: null, lead: null });
+          if (onOpenLead) onOpenLead(leadToEdit);
+          else if (onOpenEditLead) onOpenEditLead(leadToEdit);
+        }}
+      />
     </div>
   );
 }

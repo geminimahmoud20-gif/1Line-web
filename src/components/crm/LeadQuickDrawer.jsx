@@ -6,6 +6,8 @@ import LeadDrawerOverview from './lead-profile/LeadDrawerOverview';
 import LeadDrawerMatching from './lead-profile/LeadDrawerMatching';
 import LostReasonModal from './LostReasonModal';
 import LeadScorePill from './LeadScorePill';
+import { validateStageTransition } from '../../services/stateMachineEngine';
+import StageDeliverableModal from './StageDeliverableModal';
 
 export default function LeadQuickDrawer({
   lead,
@@ -25,6 +27,7 @@ export default function LeadQuickDrawer({
   const [viewingDateTime, setViewingDateTime] = useState('');
   const [showViewingForm, setShowViewingForm] = useState(false);
   const [lostOpen, setLostOpen] = useState(false);
+  const [blockerModal, setBlockerModal] = useState({ isOpen: false, blockerInfo: null });
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'matching' | 'timeline'
   const drawerRef = useRef(null);
 
@@ -104,17 +107,36 @@ export default function LeadQuickDrawer({
     if (!onUpdateLead) return;
     // A lost deal needs a reason first
     if (newStatus === 'lost' && !lostFields) { setLostOpen(true); return; }
+
+    const validation = validateStageTransition(lead, newStatus, {
+      userRole: activeRole,
+      lostReason: lostFields?.lostReason || (newStatus === 'lost' ? lostFields?.reason : undefined),
+      isFounderApproved: lead.isFounderApproved || activeRole === 'super_admin'
+    });
+
+    if (!validation.allowed) {
+      setBlockerModal({ isOpen: true, blockerInfo: validation });
+      triggerToast?.(validation.missingDeliverable, 'error');
+      return;
+    }
+
     const stageObj = stages.find(s => s.id === newStatus);
     const timeStr = new Date().toLocaleTimeString(isAr ? 'ar-EG-u-nu-latn' : 'en-US', { hour: '2-digit', minute: '2-digit' });
     const noteEntry = `[${timeStr}] تم تحديث المرحلة إلى: "${isAr ? stageObj?.label_ar : stageObj?.label_en}"`;
     const updatedNotes = lead.notes ? `${noteEntry}\n${lead.notes}` : noteEntry;
 
-    onUpdateLead(lead.id, {
+    const updates = {
       status: newStatus,
       ...(newStatus === 'lost' ? { ...lostFields, lostAt: new Date().toISOString() } : (lead.status === 'lost' ? { lostReason: null, lostNote: null, lostAt: null } : {})),
       notes: updatedNotes,
       lastActivityAt: new Date().toISOString()
-    });
+    };
+
+    if (validation.nextTask) {
+      updates.latestHandoffTask = validation.nextTask;
+    }
+
+    onUpdateLead(lead.id, updates);
 
     triggerToast?.(isAr ? `تم تحديث مرحلة العميل إلى "${stageObj?.label_ar}"` : `Stage updated to ${stageObj?.label_en}`, 'success');
   };
@@ -192,7 +214,7 @@ export default function LeadQuickDrawer({
   const isSeller = lead.type === 'seller' || lead.landingPage === '/sell' || Boolean(lead.details?.askingPrice);
   const isViewingRequest = lead.type === 'viewing_request' || lead.type === 'visit' || Boolean(lead.details?.visitDate) || Boolean(lead.viewingPropertyId);
 
-  let whatsappTemplates = [];
+  let whatsappTemplates;
 
   if (isSeller) {
     whatsappTemplates = [
@@ -709,6 +731,16 @@ export default function LeadQuickDrawer({
           onConfirm={(fields) => { setLostOpen(false); handleUpdateStatus('lost', fields); }}
         />
       )}
+      <StageDeliverableModal
+        isOpen={blockerModal.isOpen}
+        onClose={() => setBlockerModal({ isOpen: false, blockerInfo: null })}
+        blockerInfo={blockerModal.blockerInfo}
+        lead={lead}
+        onOpenDeliverableAction={() => {
+          setBlockerModal({ isOpen: false, blockerInfo: null });
+          setActiveTab('overview');
+        }}
+      />
     </>
   );
 }

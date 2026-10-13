@@ -152,7 +152,7 @@ export const sanitizePhoneNumber = (rawPhone, countryCode = '+20') => {
     .replace(/[٠-٩]/g, d => String(d.charCodeAt(0) - 0x0660))
     .replace(/[۰-۹]/g, d => String(d.charCodeAt(0) - 0x06F0));
   
-  let clean = latinDigits.trim().replace(/[\s\-\(\)]/g, '');
+  let clean = latinDigits.trim().replace(/[\s\-()]/g, '');
   if (clean.startsWith('+')) {
     clean = clean.substring(1);
   } else if (clean.startsWith('00')) {
@@ -421,7 +421,7 @@ export const SellWizard = ({
       .join('، ');
 
     // Accurate semantic floor representation avoiding arbitrary defaults
-    let floorDisplay = '';
+    let floorDisplay;
     if (sellerAnswers.propertyType === 'retail') {
       const rf = sellerAnswers.retailFloor || 'ground';
       floorDisplay = RETAIL_FLOOR_LABELS[rf]?.ar || 'أرضي واجهة شارع مباشرة';

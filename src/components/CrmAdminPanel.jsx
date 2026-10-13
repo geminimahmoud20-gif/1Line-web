@@ -699,6 +699,7 @@ export const CrmAdminPanel = ({
           onOpenLead={(lead) => setQuickDrawerLead(lead)}
           lang={lang}
           triggerToast={triggerToast}
+          activeRole={activeRole}
         />
       )}
 
