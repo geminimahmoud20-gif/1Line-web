@@ -31,6 +31,7 @@ import {
 } from '../firebaseLazy';
 import { playNotificationChime } from '../utils/notificationHub';
 import { sanitizeObject, normalizePhoneNumber } from '../utils/securityShield';
+import { withoutContactFields } from '../utils/leadContactFields';
 import { identifyVisitor, getCurrentSessionJourney, getAttributionData } from '../utils/visitorTracker';
 import { routeLeadAutomatically } from '../utils/leadRoutingEngine';
 import { isRecordArray, readStoredJson, rememberMyDemand } from '../utils/browserStorage';
@@ -39,7 +40,6 @@ import { enqueuePendingLead, pendingLeadCount } from '../utils/leadQueue';
 import { track, propertyFacts, analyticsVisitorId } from '../utils/analytics';
 import { fetchPublicCatalog, PUBLIC_CATALOG_REFRESH_MS } from '../utils/publicCatalog';
 import { applySiteSettings, SITE_SETTINGS_KEY } from '../utils/siteSettings';
-import { sanitizeAndMergeNotes } from '../utils/crmNoteSanitizer';
 import { usePreferences } from './PreferencesContext';
 import { useUIModal } from './UIModalContext';
 
@@ -426,8 +426,10 @@ export function PropertiesProvider({ children }) {
       whatsapp: rawWhatsapp,
       propertyType: normalizedPropertyType,
       area: normalizedArea,
+      // Phones live in lead_contacts only; a form that copies its whole state into details must
+      // not put them back on the lead, which read-only roles can see.
       details: {
-        ...(cleanData.details || {}),
+        ...withoutContactFields(cleanData.details),
         propertyType: normalizedPropertyType,
         area: normalizedArea
       }
@@ -445,103 +447,62 @@ export function PropertiesProvider({ children }) {
     // which previously left finalLead null and skipped the cloud save).
     const buildNextLeads = (prev) => {
       let finalLead;
-      const existingIndex = prev.findIndex(
-        (l) => normalizePhoneNumber(l.phone || l.whatsapp) === incomingPhone
-      );
-
-      if (existingIndex !== -1 && incomingPhone) {
-        const existing = prev[existingIndex];
-        const newLog = {
-          timestamp: new Date().toISOString(),
-          action: `تسجيل اهتمام إضافي: طلب ${standardizedData.propertyType || standardizedData.type || 'جديد'}`
-        };
-
-        const nowIso = new Date().toISOString();
-        const mergedLead = {
-          ...existing,
-          version: (existing.version || 1) + 1,
-          name: existing.name || standardizedData.name,
-          whatsapp: standardizedData.whatsapp || existing.whatsapp,
-          phone: standardizedData.phone || existing.phone,
-          email: standardizedData.email || existing.email || '',
-          source: existing.source || standardizedData.source || 'website',
-          type: standardizedData.type || existing.type || 'buyer',
-          budget: standardizedData.budget || existing.budget || existing.details?.budget || '',
-          propertyType: standardizedData.propertyType || existing.propertyType,
-          area: standardizedData.area || existing.area,
-          temperature: existing.temperature || standardizedData.temperature || '',
-          status: existing.status || 'new',
-          assignedTo: existing.assignedTo || 'Sales Advisor Team',
-          nextFollowUpAt: standardizedData.nextFollowUpAt || existing.nextFollowUpAt || null,
-          createdAt: existing.createdAt || existing.timestamp || nowIso,
-          updatedAt: nowIso,
-          createdBy: existing.createdBy || 'online_visitor',
-          lastActivityAt: nowIso,
+      // Every request is its own lead, so a viewing request stays a viewing request and a broker
+      // sign-up lands under brokers even when the phone is already known. A known phone only
+      // flags the new lead as a returning client and links the earlier one; the CRM's duplicate
+      // view is where staff merge people.
+      const previous = incomingPhone
+        ? prev.find((l) => normalizePhoneNumber(l.phone || l.whatsapp) === incomingPhone)
+        : null;
+      const nowIso = new Date().toISOString();
+      const attribution = getAttributionData();
+      const rawNewLead = {
+        id: 'lead-' + Date.now(),
+        timestamp: new Date().toISOString(),
+        status: 'new',
+        version: 1,
+        name: standardizedData.name,
+        phone: standardizedData.phone,
+        whatsapp: standardizedData.whatsapp,
+        email: standardizedData.email || '',
+        source: standardizedData.source || 'website',
+        type: standardizedData.type || 'buyer',
+        budget: standardizedData.budget || standardizedData.details?.budget || '',
+        area: standardizedData.area || 'new_sohag',
+        propertyType: standardizedData.propertyType || 'apartment',
+        notes: standardizedData.notes || '',
+        // Unset until someone on the team judges it; defaulting to 'hot' inflated the hot count
+        temperature: standardizedData.temperature || '',
+        assignedTo: standardizedData.assignedTo || 'Unassigned',
+        nextFollowUpAt: standardizedData.nextFollowUpAt || null,
+        createdAt: nowIso,
+        updatedAt: nowIso,
+        createdBy: standardizedData.createdBy || 'online_visitor',
+        lastActivityAt: nowIso,
+        followUp: 'Pending Contact',
+        activityLogs: [{
           timestamp: nowIso,
-          // Cleanly localize, deduplicate, and merge incoming request notes without raw developer slugs
-          notes: sanitizeAndMergeNotes(existing.notes, standardizedData),
-          details: { ...(existing.details || {}), ...(standardizedData.details || {}) },
-          activityLogs: [newLog, ...(existing.activityLogs || [])],
-          digitalJourney: (sessionJourney.events && sessionJourney.events.length > 0) ? sessionJourney.events : (existing.digitalJourney || []),
-          dwellTimeFormatted: sessionJourney.dwellTimeFormatted || existing.dwellTimeFormatted || '',
-          analyticsVisitorId: analyticsVisitorId() || existing.analyticsVisitorId || null,
-          isLiveTracked: true
-        };
+          action: 'تسجيل العميل لأول مرة عبر المنصة'
+        }],
+        digitalJourney: sessionJourney.events || [],
+        dwellTimeFormatted: sessionJourney.dwellTimeFormatted || '',
+        dwellTimeSeconds: sessionJourney.dwellTimeSeconds || 0,
+        // Ties the request to this visitor's browsing profile (only when they accepted analytics)
+        analyticsVisitorId: analyticsVisitorId(),
+        isLiveTracked: true,
+        marketingAttribution: attribution,
+        utmSource: attribution?.source || 'مباشر',
+        utmCampaign: attribution?.campaign || 'direct',
+        ...standardizedData,
+        ...(previous ? { returningClient: true, previousLeadId: String(previous.id), previousRequest: String(previous.type || '') } : {})
+      };
 
-        finalLead = mergedLead;
-        const updated = [...prev];
-        updated[existingIndex] = mergedLead;
-        return { updated, finalLead };
-      } else {
-        const nowIso = new Date().toISOString();
-        const attribution = getAttributionData();
-        const rawNewLead = {
-          id: 'lead-' + Date.now(),
-          timestamp: new Date().toISOString(),
-          status: 'new',
-          version: 1,
-          name: standardizedData.name,
-          phone: standardizedData.phone,
-          whatsapp: standardizedData.whatsapp,
-          email: standardizedData.email || '',
-          source: standardizedData.source || 'website',
-          type: standardizedData.type || 'buyer',
-          budget: standardizedData.budget || standardizedData.details?.budget || '',
-          area: standardizedData.area || 'new_sohag',
-          propertyType: standardizedData.propertyType || 'apartment',
-          notes: standardizedData.notes || '',
-          // Unset until someone on the team judges it; defaulting to 'hot' inflated the hot count
-          temperature: standardizedData.temperature || '',
-          assignedTo: standardizedData.assignedTo || 'Unassigned',
-          nextFollowUpAt: standardizedData.nextFollowUpAt || null,
-          createdAt: nowIso,
-          updatedAt: nowIso,
-          createdBy: standardizedData.createdBy || 'online_visitor',
-          lastActivityAt: nowIso,
-          followUp: 'Pending Contact',
-          activityLogs: [{
-            timestamp: nowIso,
-            action: 'تسجيل العميل لأول مرة عبر المنصة'
-          }],
-          digitalJourney: sessionJourney.events || [],
-          dwellTimeFormatted: sessionJourney.dwellTimeFormatted || '',
-          dwellTimeSeconds: sessionJourney.dwellTimeSeconds || 0,
-          // Ties the request to this visitor's browsing profile (only when they accepted analytics)
-          analyticsVisitorId: analyticsVisitorId(),
-          isLiveTracked: true,
-          marketingAttribution: attribution,
-          utmSource: attribution?.source || 'مباشر',
-          utmCampaign: attribution?.campaign || 'direct',
-          ...standardizedData
-        };
+      // 🤖 Automated Lead Routing & Round-Robin Load Balance
+      const newLead = routeLeadAutomatically(rawNewLead, prev);
 
-        // 🤖 Automated Lead Routing & Round-Robin Load Balance
-        const newLead = routeLeadAutomatically(rawNewLead, prev);
-
-        finalLead = newLead;
-        const updated = [newLead, ...prev];
-        return { updated, finalLead };
-      }
+      finalLead = newLead;
+      const updated = [newLead, ...prev];
+      return { updated, finalLead };
     };
 
     const { updated: nextLeads, finalLead } = buildNextLeads(leadsRef.current);
