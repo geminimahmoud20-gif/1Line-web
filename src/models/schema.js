@@ -290,6 +290,7 @@ export function createHandoffTask(handoffNumber, relatedEntityId, assignee = nul
     name: def.name,
     fromDept: def.from,
     toDept: def.to,
+    slaHours: def.slaHours,
     assignee,
     relatedEntityId,
     createdAt: now.toISOString(),
