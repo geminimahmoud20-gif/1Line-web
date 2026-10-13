@@ -148,7 +148,7 @@ export function auditLeads(n = 500) {
       id, name: `عميل اختبار ${i + 1}`, type: kinds[i % kinds.length], status: stages[i % stages.length],
       source: ['website', 'facebook', 'whatsapp', 'referral'][i % 4], assignedTo: desks[i % 3],
       area: AREAS[i % 6], propertyType: TYPES[i % 6], notes: i % 11 === 0 ? 'ملاحظة فيها كلمة معاينة' : '',
-      createdAt: new Date(Date.now() - i * 3600000).toISOString(), updatedAt: new Date(Date.now() - i * 3600000).toISOString()
+      createdAt: new Date(Date.now() - i * 3600000), updatedAt: new Date(Date.now() - i * 3600000)
     };
     if (lead.type === 'viewing_request') lead.details = { propertyId: `audit-p${(i % 30) + 1}`, date: '2026-10-20', slot: 'evening' };
     const contact = { phone: `0100000${String(i).padStart(4, '0')}`, assignedTo: lead.assignedTo };
