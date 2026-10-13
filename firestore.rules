@@ -25,7 +25,7 @@ service cloud.firestore {
       return request.auth.token.get('staff', false) == true && request.auth.token.get('perms', null) is list
         ? request.auth.token.perms
         : {
-            'sales_manager': ['ld.all', 'ld.manage', 'ld.edit', 'ld.phone', 'ld.import', 'inv.edit', 'deal.all', 'deal.edit', 'export'],
+            'sales_manager': ['ld.all', 'ld.manage', 'ld.edit', 'ld.phone', 'ld.import', 'deal.all', 'deal.edit', 'export'],
             'sales_agent': ['ld.edit', 'ld.phone', 'deal.edit'],
             'agent_east': ['ld.edit', 'ld.phone', 'deal.edit'],
             'agent_new_sohag': ['ld.edit', 'ld.phone', 'deal.edit'],
@@ -201,7 +201,7 @@ service cloud.firestore {
                     && (isInventoryEditor() || !('status' in request.resource.data) || request.resource.data.status == 'pending');
       // Staff only. Visitors read public_demands; phones are in request_contacts.
       allow read: if isStaff();
-      allow update: if isInventoryEditor() && keepsContactFields();
+      allow update: if (isInventoryEditor() || hasPerm('ld.manage')) && keepsContactFields();
       allow delete: if isAdmin();
     }
 
@@ -522,6 +522,83 @@ service cloud.firestore {
                     && (hasPerm('deal.all') || inMyLeadQueue(request.resource.data));
       allow update: if hasPerm('deal.edit')
                     && (hasPerm('deal.all') || (inMyLeadQueue(resource.data) && inMyLeadQueue(request.resource.data)));
+      allow delete: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 🏛️ 1LINE OS ENTERPRISE ENTITIES (Schema 5.1)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // 👤 Persons (Unified Contact Entity)
+    match /persons/{personId} {
+      allow read: if canSeeAllLeads() || (isDeskAgent() && inMyLeadQueue(resource.data));
+      allow create: if isStaff() && validLeadBasics(request.resource.data);
+      allow update: if (hasPerm('ld.manage')
+                       || (isDeskAgent() && inMyLeadQueue(resource.data) && inMyLeadQueue(request.resource.data)))
+                    && keepsContactFields()
+                    && closesDealOnlyWithDealRights();
+      allow delete: if isAdmin();
+    }
+
+    // 🔒 Person Contacts (Protected Phone & PII)
+    match /person_contacts/{personId} {
+      allow read: if (canSeeAllLeads() && seesClientContacts())
+                  || (isDeskAgent() && inMyLeadQueue(resource.data));
+      allow create, update: if (hasPerm('ld.manage')
+                               || (isDeskAgent() && inMyLeadQueue(request.resource.data)));
+      allow delete: if isAdmin();
+    }
+
+    // 🔍 Search Requests (طلبات البحث الموجّه - 7 Days SLA)
+    match /search_requests/{reqId} {
+      allow read: if isStaff();
+      allow create: if isLeadEditor();
+      allow update: if isLeadEditor() || isInventoryEditor();
+      allow delete: if isAdmin();
+    }
+
+    // 🎯 Nominations (الترشيحات المكتوبة - الأقرب / القيمة / التحدي)
+    match /nominations/{nomId} {
+      allow read: if isStaff();
+      allow create, update: if isLeadEditor() || isInventoryEditor();
+      allow delete: if isAdmin();
+    }
+
+    // 📋 Tasks & Handoffs (التسليمات والمهام التشغيلية 1-10)
+    match /tasks/{taskId} {
+      allow read: if isStaff();
+      allow create: if isStaff();
+      allow update: if isStaff();
+      allow delete: if isAdmin();
+    }
+
+    // 🏗️ Developers & Cairo Projects (محرك القاهرة)
+    match /developers/{devId} {
+      allow read: if isStaff();
+      allow create, update: if isAdmin() || hasPerm('ld.manage') || isInventoryEditor();
+      allow delete: if isAdmin();
+    }
+
+    // 💰 Commission Invoices & Collections (الفوترة والتحصيل)
+    match /commission_invoices/{invId} {
+      allow read: if hasPerm('fin') || hasPerm('deal.all') || isAdmin();
+      allow create, update, delete: if hasPerm('fin') || isAdmin();
+    }
+
+    match /collections/{colId} {
+      allow read: if hasPerm('fin') || hasPerm('deal.all') || isAdmin();
+      allow create, update, delete: if hasPerm('fin') || isAdmin();
+    }
+
+    // 🚨 Complaints (خدمة العملاء والشكاوى)
+    match /complaints/{compId} {
+      allow read, create, update: if isStaff();
+      allow delete: if isAdmin();
+    }
+
+    // 🤝 Referrals (برنامج الإحالات)
+    match /referrals/{refId} {
+      allow read, create, update: if isStaff();
       allow delete: if isAdmin();
     }
   }
