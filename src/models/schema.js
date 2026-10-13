@@ -107,17 +107,6 @@ export function generatePropertyCode(city = 'SOH', sector = 'E', sequenceNumber 
 }
 
 export function validateGate1Checklist(gate1) {
-<<<<<<< Updated upstream
-  // Gate 1 (Before Grade A Classification):
-  // 1. Seller identity matches deed
-  // 2. Power of attorney valid (if applicable)
-  // 3. Inheritance declaration + heirs consent (if inheritance)
-  // 4. Deed type recognized (registered, signature validity, validity & enforcement, preliminary)
-  // 5. Contract chain continuous
-  // 6. Area survey matches
-  // 7. Building license & reconciliation or Land allocation installments up-to-date
-=======
->>>>>>> Stashed changes
   const requiredChecks = [
     'sellerIdentityMatchesDeed',
     'contractChainContinuous',
@@ -131,10 +120,6 @@ export function validateGate1Checklist(gate1) {
     }
   }
 
-<<<<<<< Updated upstream
-  // Deed type must be valid
-=======
->>>>>>> Stashed changes
   const validDeeds = ['registered', 'signature_validity', 'validity_and_enforceability', 'preliminary'];
   if (!validDeeds.includes(gate1.deedType)) {
     errors.push('Gate 1 Check Failed: Deed type must be valid');
@@ -185,10 +170,6 @@ export function calculateComparativeValuation(comparables = []) {
  * 4. DEVELOPER SCORECARD & EXCLUSION (Cairo Developers Hub)
  */
 export function evaluateDeveloperScorecard(criteria, exclusion) {
-<<<<<<< Updated upstream
-  // Exclusion checks (Zero tolerance)
-=======
->>>>>>> Stashed changes
   const isExcluded = (
     exclusion.licensed !== true ||
     exclusion.deliveredAtLeastOnePriorProject !== true ||
@@ -205,10 +186,6 @@ export function evaluateDeveloperScorecard(criteria, exclusion) {
     };
   }
 
-<<<<<<< Updated upstream
-  // Weighted score (Weights: Delivery 30%, Construction 20%, Sohag Fit 20%, Commission 15%, Reputation 15%)
-=======
->>>>>>> Stashed changes
   const delivery = (criteria.deliveryTrackRecord || 1) * 0.30;
   const construction = (criteria.constructionVsSchedule || 1) * 0.20;
   const sohagFit = (criteria.sohagClientFit || 1) * 0.20;
@@ -218,13 +195,8 @@ export function evaluateDeveloperScorecard(criteria, exclusion) {
   const totalScore = Number((delivery + construction + sohagFit + commission + reputation).toFixed(2));
 
   let status = 'rejected';
-<<<<<<< Updated upstream
-  if (totalScore >= 3.5) status = 'trial_6m'; // Trial partnership 6 months
-  else if (totalScore >= 2.5) status = 'review_3m'; // Review after 3 months
-=======
   if (totalScore >= 3.5) status = 'trial_6m';
   else if (totalScore >= 2.5) status = 'review_3m';
->>>>>>> Stashed changes
 
   return {
     status,
@@ -279,22 +251,14 @@ export function createNominationPack(personId, closestProperty, valueProperty, c
  */
 export function createSearchRequestDraft(personId, specifications = {}, inventoryAssignee = 'Engy') {
   const now = new Date();
-<<<<<<< Updated upstream
-  const deadline = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 days later
-=======
   const deadline = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000));
->>>>>>> Stashed changes
   return {
     personId,
     specifications,
     inventoryAssignee,
     openedAt: now.toISOString(),
     deadline: deadline.toISOString(),
-<<<<<<< Updated upstream
-    status: 'open', // open, in_market_search, fulfilled, expired, escalated
-=======
     status: 'open',
->>>>>>> Stashed changes
     matchedPropertyIds: [],
     notes: ''
   };
@@ -330,11 +294,7 @@ export function createHandoffTask(handoffNumber, relatedEntityId, assignee = nul
     relatedEntityId,
     createdAt: now.toISOString(),
     dueAt: dueAt.toISOString(),
-<<<<<<< Updated upstream
-    status: 'pending', // pending, in_progress, completed, escalated_manager, escalated_founder
-=======
     status: 'pending',
->>>>>>> Stashed changes
     completedAt: null
   };
 }
@@ -364,10 +324,5 @@ export function calculateDealFinances(executedPrice, buyerCommissionRate = 0.025
 
 export function calculateAgentIncentiveOnCollection(collectedAmount) {
   if (!collectedAmount || collectedAmount <= 0) return 0;
-<<<<<<< Updated upstream
-  // 5,000 EGP per 1,000,000 EGP of deal value
-  // Ratio = 5,000 / 1,000,000 = 0.005 (0.5% of executed/collected transaction value)
-=======
->>>>>>> Stashed changes
   return Math.round((collectedAmount / 1_000_000) * 5_000);
 }

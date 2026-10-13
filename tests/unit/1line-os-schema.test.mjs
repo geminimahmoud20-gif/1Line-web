@@ -16,7 +16,6 @@ import {
   createNominationPack,
   createSearchRequestDraft,
   createHandoffTask,
-  calculateDealFinances,
   calculateAgentIncentiveOnCollection
 } from '../../src/models/schema.js';
 
@@ -72,7 +71,7 @@ test('schema: Gate 1, 2, and 3 checklists enforce Playbook verification standard
 
   const gate1Fail = {
     sellerIdentityMatchesDeed: true,
-    contractChainContinuous: false, // broken chain
+    contractChainContinuous: false,
     areaSurveyMatches: true,
     deedType: 'invalid_type'
   };
@@ -103,26 +102,15 @@ test('schema: calculateComparativeValuation requires 3-5 comps and produces ±5%
   assert.equal(calculateComparativeValuation(tooFew).valid, false);
 
   const comps = [
-<<<<<<< Updated upstream
-    { price: 2000000, area: 100 }, // 20k/m
-    { price: 2200000, area: 100 }, // 22k/m
-    { price: 2100000, area: 100 }  // 21k/m
-=======
     { price: 2000000, area: 100 },
     { price: 2200000, area: 100 },
     { price: 2100000, area: 100 }
->>>>>>> Stashed changes
   ];
   const res = calculateComparativeValuation(comps);
   assert.equal(res.valid, true);
   assert.equal(res.avgPricePerMeter, 21000);
-<<<<<<< Updated upstream
-  assert.equal(res.minValuationPerMeter, 19950); // -5%
-  assert.equal(res.maxValuationPerMeter, 22050); // +5%
-=======
   assert.equal(res.minValuationPerMeter, 19950);
   assert.equal(res.maxValuationPerMeter, 22050);
->>>>>>> Stashed changes
 });
 
 test('schema: evaluateDeveloperScorecard handles exclusion and weighted score', () => {
@@ -161,36 +149,18 @@ test('schema: createSearchRequestDraft initiates a 7-day SLA countdown', () => {
 });
 
 test('schema: createHandoffTask builds Playbook inter-departmental handoffs with proper SLA', () => {
-<<<<<<< Updated upstream
-  const h3 = createHandoffTask(3, 'p-1', 'Engy'); // Sales -> Inventory (48h)
-=======
   const h3 = createHandoffTask(3, 'p-1', 'Engy');
->>>>>>> Stashed changes
   assert.equal(h3.fromDept, 'sales');
   assert.equal(h3.toDept, 'inventory');
   assert.equal(h3.handoffNumber, 3);
 
-<<<<<<< Updated upstream
-  const h8 = createHandoffTask(8, 'p-1', 'Mahmoud'); // Inventory -> Founder + Lawyer (Gate 3 - 48h)
-=======
   const h8 = createHandoffTask(8, 'p-1', 'Mahmoud');
->>>>>>> Stashed changes
   assert.equal(h8.handoffNumber, 8);
   assert.equal(h8.toDept, 'founder');
 });
 
 test('schema: calculateAgentIncentiveOnCollection awards 5,000 EGP per 1M collected strictly upon collection', () => {
-<<<<<<< Updated upstream
-  // If deal signed at 8M but collected is 0 -> incentive is 0!
-  assert.equal(calculateAgentIncentiveOnCollection(0), 0);
-
-  // If 2.5M collected -> (2.5M / 1M) * 5,000 = 12,500 EGP
-  assert.equal(calculateAgentIncentiveOnCollection(2_500_000), 12_500);
-
-  // If 8M Cairo unit collected in full -> 40,000 EGP
-=======
   assert.equal(calculateAgentIncentiveOnCollection(0), 0);
   assert.equal(calculateAgentIncentiveOnCollection(2_500_000), 12_500);
->>>>>>> Stashed changes
   assert.equal(calculateAgentIncentiveOnCollection(8_000_000), 40_000);
 });
