@@ -260,21 +260,38 @@ export default function CrmPage({
 
   const handleConvertToProperty = (lead) => {
     const details = lead.details || {};
-    const priceVal = parseMoney(details.expectedPrice) || parseMoney(details.price) || 0;
+    const priceVal = parseMoney(details.askingPrice) || parseMoney(details.expectedPrice) || parseMoney(details.price) || parseMoney(details.estimatedAvg) || 0;
     const typeVal = details.propertyType || lead.propertyType || 'apartment';
     const areaVal = details.area || lead.area || 'east';
+    const sizeVal = parseInt(details.size, 10) || '';
+    const roomsVal = parseInt(details.rooms, 10) || '';
+    const floorVal = details.floor || '';
+    const finishVal = details.finishingLabelAr || details.finishing || '';
+    const imagesVal = Array.isArray(details.images) && details.images.length > 0 ? details.images : [];
 
-    // A listing is public: the owner's name, phone and private notes never go into it.
-    // It starts hidden with only what the owner actually told us; staff complete it and publish.
+    const typeLabels = {
+      apartment: 'شقة سكنية',
+      villa: 'فيلا / منزل مستقل',
+      commercial: 'محل تجاري',
+      retail: 'محل تجاري',
+      office: 'مكتب إداري / عيادة',
+      land: 'قطعة أرض'
+    };
+    const typeLabel = typeLabels[typeVal] || 'عقار';
+
+    // Listing starts hidden with seller's submitted specs & photos for staff review
     const prepopulated = {
-      title_ar: 'عرض بيع جديد (أكمل البيانات قبل النشر)',
-      title_en: 'New owner listing (complete before publishing)',
+      title_ar: `عرض بيع: ${typeLabel} ${sizeVal ? `${sizeVal}م² ` : ''}في ${lead.area || 'سوهاج'}`,
+      title_en: `Owner listing: ${typeVal} ${sizeVal ? `${sizeVal} sqm` : ''}`,
       type: typeVal,
       areaKey: areaVal,
       price: priceVal || '',
-      size: parseInt(details.size) || '',
-      bedrooms: parseInt(details.rooms) || '',
-      description_ar: '',
+      size: sizeVal,
+      bedrooms: roomsVal,
+      floor: floorVal,
+      finishing_ar: finishVal,
+      images: imagesVal,
+      description_ar: lead.notes || (details.legalSummaryAr ? `الموقف القانوني: ${details.legalSummaryAr}` : ''),
       description_en: '',
       status: 'hidden',
       featured: false,
@@ -284,7 +301,9 @@ export default function CrmPage({
     setExternalPropertyData(prepopulated);
     setActiveTab('properties');
     if (triggerToast) {
-      triggerToast(isAr ? 'اتعمل عقار مخفي من الطلب (من غير اسم أو رقم المالك). كمّل البيانات وبعدين انشره.' : 'Hidden draft created (no owner name or phone). Complete it, then publish.', 'info');
+      triggerToast(isAr 
+        ? `تم تجهيز مسودة العقار مع ${imagesVal.length} صورة ومواصفات الوحدة بنجاح! راجع البيانات واضغط نشر.` 
+        : 'Listing draft created with specs and photos! Review and publish.', 'success');
     }
   };
 
