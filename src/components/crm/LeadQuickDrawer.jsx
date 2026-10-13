@@ -8,6 +8,9 @@ import LostReasonModal from './LostReasonModal';
 import LeadScorePill from './LeadScorePill';
 import { validateStageTransition } from '../../services/stateMachineEngine';
 import StageDeliverableModal from './StageDeliverableModal';
+import ActiveEditorBanner from './ActiveEditorBanner';
+import ConcurrencyConflictModal from './ConcurrencyConflictModal';
+import { validateOptimisticUpdate, renewEntityLease } from '../../services/concurrencyEngine';
 
 export default function LeadQuickDrawer({
   lead,
@@ -28,6 +31,7 @@ export default function LeadQuickDrawer({
   const [showViewingForm, setShowViewingForm] = useState(false);
   const [lostOpen, setLostOpen] = useState(false);
   const [blockerModal, setBlockerModal] = useState({ isOpen: false, blockerInfo: null });
+  const [conflictModal, setConflictModal] = useState({ isOpen: false, conflictData: null, pendingUpdates: null });
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'matching' | 'timeline'
   const drawerRef = useRef(null);
 
