@@ -114,7 +114,7 @@ const REAL_ESTATE_FINISHING_TYPES = [
 ];
 
 // Granular Floor & Category Mapping Dictionaries
-export const RETAIL_FLOOR_LABELS = {
+const RETAIL_FLOOR_LABELS = {
   ground: { ar: 'أرضي واجهة شارع مباشرة', en: 'Ground Floor Street Front' },
   mezzanine: { ar: 'ميزانين تجاري مرخص', en: 'Licensed Mezzanine' },
   mall_ground: { ar: 'أرضي داخل مول تجاري', en: 'Mall Ground Floor' },
@@ -122,21 +122,17 @@ export const RETAIL_FLOOR_LABELS = {
   basement: { ar: 'بدروم تجاري مرخص', en: 'Licensed Commercial Basement' },
 };
 
-export const LAND_STREET_LABELS = {
+const LAND_STREET_LABELS = {
   wide_20: { ar: 'شارع رئيسي 20م فأكثر', en: 'Main Street 20m+' },
   corner: { ar: 'ناصية مميزة على شارعين', en: 'Prime Corner (2 Streets)' },
   mid_16: { ar: 'شارع 16 متر', en: '16-Meter Street' },
   internal_12: { ar: 'شارع داخلي 10 - 12 متر', en: 'Internal 10-12m Street' },
 };
 
-export const OFFICE_TYPE_LABELS = {
-  administrative: { ar: 'مقر إداري مرخص', en: 'Licensed Office' },
-  clinic: { ar: 'عيادة طبية مرخصة', en: 'Licensed Clinic' },
-  commercial_hub: { ar: 'مكتب داخل مجمع أعمال / مول', en: 'Office inside Commercial Hub' },
-};
+
 
 // Grammatically sound Arabic counter for verified legal documents
-export const formatArabicDocCount = (count) => {
+const formatArabicDocCount = (count) => {
   if (!count || count <= 0) return 'لا توجد مستندات مسجلة';
   if (count === 1) return 'مستند رسمي واحد';
   if (count === 2) return 'مستندان رسميان';
@@ -145,14 +141,14 @@ export const formatArabicDocCount = (count) => {
 };
 
 // Robust phone sanitizer that handles Arabic digits, copy-pasted + / 00, and prevents double country codes
-export const sanitizePhoneNumber = (rawPhone, countryCode = '+20') => {
+const sanitizePhoneNumber = (rawPhone, countryCode = '+20') => {
   if (!rawPhone) return { localPart: '', fullNumber: '' };
   // Convert Arabic-Indic digits to Latin
   const latinDigits = String(rawPhone)
     .replace(/[٠-٩]/g, d => String(d.charCodeAt(0) - 0x0660))
     .replace(/[۰-۹]/g, d => String(d.charCodeAt(0) - 0x06F0));
   
-  let clean = latinDigits.trim().replace(/[\s\-()]/g, '');
+  let clean = latinDigits.trim().replace(/[\s()-]/g, '');
   if (clean.startsWith('+')) {
     clean = clean.substring(1);
   } else if (clean.startsWith('00')) {
