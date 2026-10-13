@@ -28,7 +28,10 @@ const PROPERTY_TYPE_NAMES = {
   chalet: 'شاليه',
   commercial: 'تجاري (محلات ومعارض)',
   residential: 'سكني (شقق وفيلات)',
-  administrative: 'مقر إداري / عيادة'
+  administrative: 'مقر إداري / عيادة',
+  buyer: 'طلب شراء عقار',
+  seller: 'عرض عقار للبيع',
+  investor: 'استثمار عقاري'
 };
 
 const AREA_NAMES = {
@@ -455,11 +458,13 @@ export default function KanbanPipeline({
                 alignItems: 'center'
               }}>
                 <div>
-                  <h4 style={{ margin: 0, fontSize: 'var(--crm-text-md)', color: 'var(--crm-ink)', fontWeight: 700 }}>
+                  <h4 style={{ margin: 0, fontSize: 'var(--crm-text-md)', color: 'var(--crm-ink)', fontWeight: 700, whiteSpace: 'nowrap' }}>
                     {isAr ? stage.title_ar : stage.title_en}
                   </h4>
-                  <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: '600' }}>
-                    {(totalVolume / 1000000).toFixed(1)} {isAr ? 'مليون ج.م حجم الصفقات' : 'M EGP'}
+                  <span style={{ fontSize: 'var(--crm-text-xs)', color: totalVolume > 0 ? 'var(--crm-muted)' : 'var(--crm-faint)', fontWeight: '600' }}>
+                    {totalVolume > 0
+                      ? `${(totalVolume / 1000000).toFixed(1)} ${isAr ? 'مليون ج.م حجم الصفقات' : 'M EGP volume'}`
+                      : (isAr ? 'الميزانية قيد التحديد' : 'Budget pending')}
                   </span>
                 </div>
                 <span style={{

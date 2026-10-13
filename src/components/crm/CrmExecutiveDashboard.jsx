@@ -100,15 +100,13 @@ export default function CrmExecutiveDashboard({
               ? `موجز العمليات: لديك اليوم ${metrics.dueTodayCount} متابعات مجدولة • ${metrics.newLeadsCount} عملاء جدد بحاجة للتأهيل • ${metrics.pendingDemandsCount} طلبات معلقة.`
               : `Today's Brief: ${metrics.dueTodayCount} follow-ups due • ${metrics.newLeadsCount} new leads to qualify • ${metrics.pendingDemandsCount} pending demands.`}
           </p>
-          {coverage && (
             <p style={{ margin: '4px 0 0', fontSize: 'var(--crm-text-xs)', color: coverage.complete && !coverage.loading ? 'var(--crm-faint)' : 'var(--crm-warn)' }}>
               {coverage.loading
-                ? (isAr ? 'بيتحسب من كل العملاء…' : 'Computing over all leads…')
+                ? (isAr ? 'جاري حساب المؤشرات من إجمالي قاعدة البيانات…' : 'Computing over all leads…')
                 : coverage.complete
-                  ? (isAr ? `الأرقام محسوبة من كل العملاء (${coverage.count.toLocaleString('en-US')})` : `Figures cover all ${coverage.count.toLocaleString('en-US')} leads`)
-                  : (isAr ? `الأرقام من أول ${coverage.count.toLocaleString('en-US')} عميل بس — مش كل العملاء` : `Figures cover the first ${coverage.count.toLocaleString('en-US')} leads only`)}
+                  ? (isAr ? `الأرقام محسوبة من إجمالي قاعدة العملاء (${coverage.count.toLocaleString('en-US')})` : `Figures cover all ${coverage.count.toLocaleString('en-US')} leads`)
+                  : (isAr ? `الأرقام مستخلصة من أول ${coverage.count.toLocaleString('en-US')} عميل (عينة أولية)` : `Figures cover the first ${coverage.count.toLocaleString('en-US')} leads only`)}
             </p>
-          )}
         </div>
 
         {/* Quick Jump Buttons */}

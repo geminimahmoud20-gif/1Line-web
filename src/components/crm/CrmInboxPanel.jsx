@@ -19,10 +19,10 @@ import { canViewLeadPhone, maskPhoneNumber } from '../../utils/rbacRules';
 import { claimLeadAtomic } from '../../services/leads';
 
 const STAGES = [
-  { id: 'new', label_ar: 'جديد', label_en: 'New', color: 'var(--crm-danger)', icon: '🔴' },
-  { id: 'contacted', label_ar: 'اتصلنا', label_en: 'Contacted', color: 'var(--crm-warn)', icon: '📞' },
-  { id: 'scheduled', label_ar: 'اتحدد ميعاد', label_en: 'Scheduled', color: 'var(--crm-accent)', icon: '📅' },
-  { id: 'closed', label_ar: 'خلص', label_en: 'Closed', color: 'var(--crm-positive)', icon: '✅' }
+  { id: 'new', label_ar: 'وارد جديد', label_en: 'New', color: 'var(--crm-danger)', icon: '🔴' },
+  { id: 'contacted', label_ar: 'تم التواصل', label_en: 'Contacted', color: 'var(--crm-warn)', icon: '📞' },
+  { id: 'scheduled', label_ar: 'موعد محدد', label_en: 'Scheduled', color: 'var(--crm-accent)', icon: '📅' },
+  { id: 'closed', label_ar: 'مكتمل', label_en: 'Closed', color: 'var(--crm-positive)', icon: '✅' }
 ];
 
 export default function CrmInboxPanel({
@@ -423,8 +423,8 @@ export default function CrmInboxPanel({
       {/* 🧭 The 5 Dedicated Workflow Tabs Bar */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '10px'
+        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+        gap: '12px'
       }}>
         {tabsList.map((t) => {
           const isActive = activeTab === t.id;
@@ -438,11 +438,11 @@ export default function CrmInboxPanel({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '12px 16px',
+                padding: '14px 16px',
                 borderRadius: '12px',
-                background: isActive ? 'var(--crm-card)' : 'var(--crm-bg)',
-                border: isActive ? `2px solid ${t.accent}` : '1.5px solid var(--crm-line)',
-                boxShadow: isActive ? 'var(--crm-shadow-sm, 0 4px 12px rgba(0,0,0,0.05))' : 'none',
+                background: isActive ? 'var(--crm-card)' : 'var(--crm-subtle, var(--crm-bg))',
+                border: isActive ? `2px solid ${t.accent}` : '1px solid var(--crm-line)',
+                boxShadow: isActive ? 'var(--crm-shadow, 0 4px 12px rgba(0,0,0,0.06))' : 'none',
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
                 textAlign: isAr ? 'right' : 'left'
@@ -631,13 +631,15 @@ export default function CrmInboxPanel({
                       width: '40px',
                       height: '40px',
                       borderRadius: '10px',
-                      background: 'var(--crm-bg)',
+                      background: 'var(--crm-subtle, var(--crm-bg))',
+                      border: '1px solid var(--crm-line)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontWeight: 800,
+                      fontWeight: 700,
                       fontSize: 'var(--crm-text-base)',
-                      color: 'var(--crm-ink)'
+                      color: 'var(--crm-ink)',
+                      flexShrink: 0
                     }}>
                       {(lead.name || 'ع')[0]}
                     </div>
