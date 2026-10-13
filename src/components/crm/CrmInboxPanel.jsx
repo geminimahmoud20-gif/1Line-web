@@ -17,12 +17,125 @@ import {
 } from 'lucide-react';
 import { canViewLeadPhone, maskPhoneNumber } from '../../utils/rbacRules';
 import { claimLeadAtomic } from '../../services/leads';
+import { normalizeAreaKey, getAreaById } from '../../utils/areasData';
+
+const PROPERTY_TYPE_LABELS = {
+  apartment: 'شقة سكنية',
+  villa: 'فيلا مستقلة',
+  land: 'أرض فضاء / استثمارية',
+  office: 'مكتب إداري / عيادة',
+  retail: 'محل تجاري / مساحة ريتيل',
+  commercial: 'عقار تجاري',
+  building: 'عمارة بالكامل',
+  chalet: 'شاليه',
+  penthouse: 'بنتهاوس',
+  duplex: 'دوبلكس'
+};
+
+function formatPropertyType(type) {
+  if (!type || typeof type !== 'string') return '';
+  const key = type.toLowerCase().trim();
+  return PROPERTY_TYPE_LABELS[key] || type;
+}
+
+function formatAreaName(area) {
+  if (!area || typeof area !== 'string') return '';
+  const normalized = normalizeAreaKey(area);
+  const found = getAreaById(normalized);
+  return found?.name_ar || area;
+}
+
+const TEAM_DESKS = [
+  'Sales Team A',
+  'Sales Team B',
+  'Sales Management',
+  'Sales Advisor Team',
+  'Dr. Mahmoud Elbaz',
+  'Unassigned',
+  'غير مسند'
+];
+
+function isLeadUnclaimed(lead) {
+  if (!lead) return true;
+  if (lead.ownerUid || lead.ownerName || lead.claimedBy) return false;
+  return !lead.assignedTo || TEAM_DESKS.includes(lead.assignedTo) || lead.status === 'new';
+}
+
+function isLeadClaimedByMe(lead, currentUser, currentStaffName) {
+  if (!lead) return false;
+  if (lead.ownerUid && currentUser?.uid && lead.ownerUid === currentUser.uid) return true;
+  if (lead.ownerName && currentStaffName && lead.ownerName === currentStaffName) return true;
+  if (lead.claimedBy && currentStaffName && lead.claimedBy === currentStaffName) return true;
+  if (!lead.ownerName && !lead.claimedBy && lead.assignedTo === currentStaffName) return true;
+  return false;
+}
+
+function getLeadOwnerDisplay(lead, isAr) {
+  if (lead.ownerName) return lead.ownerName;
+  if (lead.claimedBy) return lead.claimedBy;
+  if (lead.assignedTo && !TEAM_DESKS.includes(lead.assignedTo)) {
+    return lead.assignedTo;
+  }
+  if (lead.assignedTo && TEAM_DESKS.includes(lead.assignedTo)) {
+    return isAr ? `الفريق: ${lead.assignedTo} (لم يُستلم)` : `Desk: ${lead.assignedTo} (Unclaimed)`;
+  }
+  return isAr ? 'غير مستلم' : 'Unclaimed';
+}
+
+function classifyLeadCategory(lead) {
+  const type = (lead?.type || '').toLowerCase();
+  const source = (lead?.source || '').toLowerCase();
+  const landing = (lead?.landingPage || '').toLowerCase();
+  const details = lead?.details || {};
+
+  // Accounts: Explicit type OR legacy client_account source
+  if (
+    type === 'account' ||
+    type === 'client_registration' ||
+    type === 'client' ||
+    source === 'client_account' ||
+    source === 'account' ||
+    landing.includes('/account')
+  ) {
+    return 'accounts';
+  }
+
+  // Visits & Viewing requests: Strictly from type or explicit visit details, NEVER notes text
+  if (
+    type === 'visit' ||
+    type === 'viewing' ||
+    type === 'viewing_request' ||
+    type === 'reservation_request' ||
+    Boolean(details.visitDate) ||
+    Boolean(details.inspectionType)
+  ) {
+    return 'visits';
+  }
+
+  // Sellers & Valuations
+  if (
+    type === 'seller' ||
+    type === 'valuation' ||
+    landing.includes('/sell') ||
+    landing.includes('/valuation') ||
+    Boolean(details.askingPrice)
+  ) {
+    return 'sellers';
+  }
+
+  // Brokers
+  if (type === 'broker' || landing.includes('/broker')) {
+    return 'brokers';
+  }
+
+  // Buyers / Investor / Default
+  return 'buyers';
+}
 
 const STAGES = [
   { id: 'new', label_ar: 'جديد', label_en: 'New', color: 'var(--crm-danger)', icon: '🔴' },
   { id: 'contacted', label_ar: 'اتصلنا', label_en: 'Contacted', color: 'var(--crm-warn)', icon: '📞' },
-  { id: 'scheduled', label_ar: 'اتحدد ميعاد', label_en: 'Scheduled', color: 'var(--crm-accent)', icon: '📅' },
-  { id: 'closed', label_ar: 'خلص', label_en: 'Closed', color: 'var(--crm-positive)', icon: '✅' }
+  { id: 'site_visit', label_ar: 'معاينة', label_en: 'Site Visit', color: 'var(--crm-accent)', icon: '📅' }
 ];
 
 export default function CrmInboxPanel({
@@ -66,7 +179,7 @@ export default function CrmInboxPanel({
     return currentUser?.displayName || currentUser?.name || currentUser?.email?.split('@')[0] || (isAr ? 'موظف 1Line' : 'Staff');
   }, [currentUser, isAr]);
 
-  // Categorize leads into dedicated triage streams
+  // Categorize leads into dedicated triage streams without keyword guessing
   const categorized = useMemo(() => {
     const sellers = [];
     const visits = [];
@@ -75,55 +188,12 @@ export default function CrmInboxPanel({
     const brokers = [];
 
     leads.forEach((l) => {
-      const details = l.details || {};
-      const type = (l.type || '').toLowerCase();
-      const notes = (l.notes || '').toLowerCase();
-      const landing = (l.landingPage || '').toLowerCase();
-
-      // 1. Viewing / Visit Bookings
-      if (
-        type === 'visit' || 
-        type === 'viewing' || 
-        type === 'viewing_request' ||
-        details.visitDate || 
-        details.inspectionType || 
-        notes.includes('معاينة') || 
-        notes.includes('زيارة')
-      ) {
-        visits.push(l);
-      }
-      // 2. Sellers & Valuation Demands
-      else if (
-        type === 'seller' || 
-        type === 'valuation' || 
-        landing.includes('/sell') || 
-        landing.includes('/valuation') || 
-        notes.includes('عرض بيع') ||
-        details.askingPrice
-      ) {
-        sellers.push(l);
-      }
-      // 3. Registered User Accounts
-      else if (
-        type === 'account' || 
-        type === 'client_registration' || 
-        type === 'client' || 
-        landing.includes('/account')
-      ) {
-        accounts.push(l);
-      }
-      // 4. Broker Partners
-      else if (
-        type === 'broker' || 
-        landing.includes('/broker') || 
-        notes.includes('وسيط')
-      ) {
-        brokers.push(l);
-      }
-      // 5. Buyer Requests / Investor Demands (Default)
-      else {
-        buyers.push(l);
-      }
+      const category = classifyLeadCategory(l);
+      if (category === 'sellers') sellers.push(l);
+      else if (category === 'visits') visits.push(l);
+      else if (category === 'accounts') accounts.push(l);
+      else if (category === 'brokers') brokers.push(l);
+      else buyers.push(l);
     });
 
     return { sellers, visits, buyers, accounts, brokers };
@@ -135,14 +205,14 @@ export default function CrmInboxPanel({
     const cutoff = currentTime - thresholdMillis;
     return leads.filter((l) => {
       const createdTime = l.createdAt?.toMillis ? l.createdAt.toMillis() : Date.parse(l.createdAt || l.timestamp || 0);
-      const isUnclaimed = !l.assignedTo || l.status === 'new';
-      return isUnclaimed && createdTime > 0 && createdTime < cutoff;
+      const unclaimed = isLeadUnclaimed(l);
+      return unclaimed && createdTime > 0 && createdTime < cutoff;
     });
   }, [leads, currentTime, slaMinutes]);
 
   // Counts of unhandled requests per tab
   const unhandledCounts = useMemo(() => {
-    const countPending = (list) => list.filter(l => !l.assignedTo || l.status === 'new').length;
+    const countPending = (list) => list.filter(l => isLeadUnclaimed(l)).length;
     return {
       sellers: countPending(categorized.sellers),
       visits: countPending(categorized.visits),
@@ -220,10 +290,10 @@ export default function CrmInboxPanel({
       );
     }
 
-    // Sort: Unassigned / New first, then newest timestamp
-    return list.sort((a, b) => {
-      const aNew = (!a.assignedTo || a.status === 'new') ? 1 : 0;
-      const bNew = (!b.assignedTo || b.status === 'new') ? 1 : 0;
+    // Sort: Unassigned / New first, then newest timestamp (pure, non-mutating)
+    return [...list].sort((a, b) => {
+      const aNew = isLeadUnclaimed(a) ? 1 : 0;
+      const bNew = isLeadUnclaimed(b) ? 1 : 0;
       if (aNew !== bNew) return bNew - aNew;
       const aTime = a.createdAt?.toMillis ? a.createdAt.toMillis() : Date.parse(a.createdAt || a.timestamp || 0);
       const bTime = b.createdAt?.toMillis ? b.createdAt.toMillis() : Date.parse(b.createdAt || b.timestamp || 0);
@@ -237,28 +307,34 @@ export default function CrmInboxPanel({
     setClaimingId(lead.id);
 
     try {
-      if (lead.assignedTo && lead.assignedTo !== currentStaffName && !isSuperAdmin) {
+      const currentOwner = lead.ownerName || lead.claimedBy || (!TEAM_DESKS.includes(lead.assignedTo) ? lead.assignedTo : null);
+      if (currentOwner && currentOwner !== currentStaffName && !isSuperAdmin) {
         if (triggerToast) {
-          triggerToast(isAr ? `عذراً، هذا الطلب مستلم بالفعل بواسطة "${lead.assignedTo}" لمنع تكرار الاتصال.` : `Already claimed by ${lead.assignedTo}`, 'warning');
+          triggerToast(isAr ? `عذراً، هذا الطلب مستلم بالفعل بواسطة "${currentOwner}" لمنع تكرار الاتصال.` : `Already claimed by ${currentOwner}`, 'warning');
         }
         return;
       }
 
-      const res = await claimLeadAtomic(lead.id, currentStaffName, { override: isSuperAdmin });
+      const res = await claimLeadAtomic(lead.id, currentStaffName, {
+        override: isSuperAdmin,
+        staffUid: currentUser?.uid
+      });
       if (!res.ok) {
         if (res.reason === 'already_claimed') {
           triggerToast?.(isAr ? `عذراً، هذا الطلب تم استلامه للتو بواسطة "${res.claimedBy}".` : `Already claimed by ${res.claimedBy}`, 'warning');
-          onUpdateLead?.(lead.id, { assignedTo: res.claimedBy });
+          onUpdateLead?.(lead.id, { ownerName: res.claimedBy, claimedBy: res.claimedBy });
         } else {
           triggerToast?.(isAr ? 'تعذر استلام الطلب، يرجى المحاولة لاحقاً' : 'Failed to claim lead', 'error');
         }
         return;
       }
 
-      // Synchronize local view (Note: status is intentionally preserved, never marked 'contacted' upon claim)
+      // Synchronize local view (Note: status is intentionally preserved; desk assignedTo is preserved)
       onUpdateLead?.(lead.id, {
-        assignedTo: currentStaffName,
-        assignedAt: new Date().toISOString()
+        ownerName: currentStaffName,
+        claimedBy: currentStaffName,
+        ownerUid: currentUser?.uid || null,
+        claimedAt: new Date().toISOString()
       });
 
       if (triggerToast) {
@@ -282,24 +358,12 @@ export default function CrmInboxPanel({
     }
   };
 
-  // Log contact activity when calling or messaging
-  const handleRegisterContact = (lead) => {
-    if (!onUpdateLead) return;
-    if (!lead.status || lead.status === 'new') {
-      onUpdateLead(lead.id, {
-        status: 'contacted',
-        firstContactedAt: new Date().toISOString(),
-        lastContactedAt: new Date().toISOString()
-      });
-      triggerToast?.(isAr ? 'تم تسجيل أول تواصل مع العميل بنجاح 📞' : 'First contact recorded', 'success');
-    }
-  };
-
   // Reassign Handler for Managers
   const handleExecuteReassign = (leadId) => {
     if (!onUpdateLead || !reassignName.trim()) return;
     onUpdateLead(leadId, {
       assignedTo: reassignName.trim(),
+      ownerName: reassignName.trim(),
       assignedAt: new Date().toISOString()
     });
     setReassigningLeadId(null);
@@ -309,34 +373,33 @@ export default function CrmInboxPanel({
     }
   };
 
-  // Generate customized WhatsApp text based on stream
+  // Generate customized WhatsApp text based on stream without false promises or fake data
   const getWhatsAppMessage = (lead) => {
     const name = lead.name || (isAr ? 'العميل' : 'Client');
     const d = lead.details || {};
 
     if (activeTab === 'visits') {
-      const propCode = d.propertyCode || d.propertyId || (isAr ? 'عقار' : 'Property');
-      const date = d.visitDate || (isAr ? 'المحدد' : '');
-      const slot = d.visitSlot || '';
-      return isAr 
-        ? `أهلاً بك أ. ${name}، بخصوص طلبكم لمعاينة العقار (كود: ${propCode}) عبر منصة 1Line بتاريخ ${date} (${slot})، نسعد بتأكيد الموعد معكم...`
-        : `Hello ${name}, regarding your viewing request for property (${propCode}) on 1Line...`;
+      const propCode = d.propertyCode || d.propertyId ? ` (كود: ${d.propertyCode || d.propertyId})` : '';
+      const datePart = d.visitDate ? ` يوم ${d.visitDate}${d.visitSlot ? ` (${d.visitSlot})` : ''}` : '';
+      return isAr
+        ? `أهلاً بك أ. ${name}، بخصوص طلبكم لمعاينة العقار${propCode}${datePart} عبر منصة 1Line، نسعد بتأكيد الموعد معكم ومتابعة التفاصيل...`
+        : `Hello ${name}, regarding your viewing request${propCode ? ` for property ${propCode}` : ''}${datePart ? ` on ${datePart}` : ''} on 1Line...`;
     }
 
     if (activeTab === 'sellers') {
-      const propType = d.propertyType || lead.propertyType || (isAr ? 'عقاركم' : 'property');
-      const area = d.area || lead.area || (isAr ? 'سوهاج' : 'Sohag');
+      const propType = formatPropertyType(d.propertyType || lead.propertyType) || (isAr ? 'عقاركم' : 'property');
+      const area = formatAreaName(d.area || lead.area) || (isAr ? 'سوهاج' : 'Sohag');
       return isAr
         ? `أهلاً بك أ. ${name}، بخصوص رغبتكم في عرض (${propType}) في (${area}) للبيع والتسويق عبر منصة 1Line، نود مراجعة التفاصيل والصور معكم للبدء فوراً...`
         : `Hello ${name}, regarding your listing request on 1Line...`;
     }
 
     if (activeTab === 'buyers') {
-      const propType = d.propertyType || lead.propertyType || (isAr ? 'عقار' : 'property');
+      const propType = formatPropertyType(d.propertyType || lead.propertyType) || (isAr ? 'عقار' : 'property');
       const budget = d.budget || lead.budget ? ` بميزانية ${d.budget || lead.budget}` : '';
       return isAr
-        ? `أهلاً بك أ. ${name}، بخصوص بحثكم عن (${propType})${budget} عبر 1Line، تم إعداد قائمة مختارة تطابق طلبكم تماماً...`
-        : `Hello ${name}, regarding your property search on 1Line...`;
+        ? `أهلاً بك أ. ${name}، استلمنا طلبكم بخصوص البحث عن (${propType})${budget} عبر 1Line، وسنتواصل معكم لطرح بعض الأسئلة لترشيح أفضل الخيارات المناسبة لكم بدقة...`
+        : `Hello ${name}, we received your request for (${propType})${budget} on 1Line, and our advisor will follow up with a few discovery questions to shortlist the best options for you...`;
     }
 
     return isAr
@@ -606,8 +669,9 @@ export default function CrmInboxPanel({
         ) : (
           currentItems.map((lead) => {
             const d = lead.details || {};
-            const isClaimedByMe = lead.assignedTo === currentStaffName;
-            const isUnclaimed = !lead.assignedTo;
+            const isClaimedByMe = isLeadClaimedByMe(lead, currentUser, currentStaffName);
+            const isUnclaimed = isLeadUnclaimed(lead);
+            const ownerDisplay = getLeadOwnerDisplay(lead, isAr);
             const cleanPhone = (lead.whatsapp || lead.phone || '').replace(/[^0-9]/g, '');
 
             return (
@@ -712,7 +776,7 @@ export default function CrmInboxPanel({
                           fontWeight: 700
                         }}>
                           <Lock size={12} />
-                          <span>{isClaimedByMe ? (isAr ? 'قيد متابعتك 🔒' : 'Assigned to you') : (isAr ? `مع: ${lead.assignedTo}` : `With: ${lead.assignedTo}`)}</span>
+                          <span>{isClaimedByMe ? (isAr ? 'قيد متابعتك 🔒' : 'Assigned to you') : (isAr ? `مع: ${ownerDisplay}` : `With: ${ownerDisplay}`)}</span>
                         </span>
 
                         {isSuperAdmin && (
@@ -788,8 +852,8 @@ export default function CrmInboxPanel({
                 }}>
                   {activeTab === 'sellers' && (
                     <>
-                      {d.propertyType && <span style={{ fontWeight: 700, color: 'var(--crm-ink)' }}>🏢 {d.propertyType}</span>}
-                      {d.area && <span>📍 {d.area}</span>}
+                      {d.propertyType && <span style={{ fontWeight: 700, color: 'var(--crm-ink)' }}>🏢 {formatPropertyType(d.propertyType)}</span>}
+                      {d.area && <span>📍 {formatAreaName(d.area)}</span>}
                       {d.size && <span>📐 {d.size} م²</span>}
                       {d.askingPrice && <span style={{ color: 'var(--crm-positive)', fontWeight: 800 }}>💰 المطلوب: {Number(d.askingPrice).toLocaleString('en-US')} ج.م</span>}
                       {d.finishingLabelAr && <span>✨ {d.finishingLabelAr}</span>}
@@ -799,9 +863,11 @@ export default function CrmInboxPanel({
 
                   {activeTab === 'visits' && (
                     <>
-                      <span style={{ fontWeight: 800, color: 'var(--crm-accent)' }}>
-                        🏷️ {isAr ? 'كود العقار:' : 'Code:'} {d.propertyCode || d.propertyId || 'P-101'}
-                      </span>
+                      {(d.propertyCode || d.propertyId) && (
+                        <span style={{ fontWeight: 800, color: 'var(--crm-accent)' }}>
+                          🏷️ {isAr ? 'كود العقار:' : 'Code:'} {d.propertyCode || d.propertyId}
+                        </span>
+                      )}
                       {d.visitDate && (
                         <span style={{ fontWeight: 700 }}>
                           📅 {isAr ? 'الموعد:' : 'Date:'} {d.visitDate} {d.visitSlot ? `(${d.visitSlot})` : ''}
@@ -813,8 +879,8 @@ export default function CrmInboxPanel({
 
                   {activeTab === 'buyers' && (
                     <>
-                      {d.propertyType && <span style={{ fontWeight: 700, color: 'var(--crm-ink)' }}>🏢 المطلوب: {d.propertyType}</span>}
-                      {d.area && <span>📍 المنطقة: {d.area}</span>}
+                      {d.propertyType && d.propertyType !== 'buyer' && <span style={{ fontWeight: 700, color: 'var(--crm-ink)' }}>🏢 {isAr ? 'المطلوب:' : 'Desired:'} {formatPropertyType(d.propertyType)}</span>}
+                      {d.area && <span>📍 {isAr ? 'المنطقة:' : 'Area:'} {formatAreaName(d.area)}</span>}
                       {d.budget && <span style={{ color: 'var(--crm-positive)', fontWeight: 800 }}>💰 الميزانية: {Number(d.budget).toLocaleString('en-US')} ج.م</span>}
                       {d.paymentMethod && <span>💳 طريقة السداد: {d.paymentMethod === 'cash' ? 'كاش' : 'تقسيط'}</span>}
                     </>
@@ -858,7 +924,7 @@ export default function CrmInboxPanel({
                   </div>
                 )}
 
-                {/* Bottom Row: 4-Stage Lifecycle Stepper & Quick Actions */}
+                {/* Bottom Row: 3-Stage Lifecycle Stepper & Quick Actions */}
                 <div style={{
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -868,7 +934,7 @@ export default function CrmInboxPanel({
                   borderTop: '1px solid var(--crm-line)',
                   paddingTop: '10px'
                 }}>
-                  {/* The 4 Stages Lifecycle Stepper */}
+                  {/* The Stages Lifecycle Stepper */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: 700, marginInlineEnd: '4px' }}>
                       {isAr ? 'مرحلة المتابعة:' : 'Stage:'}
@@ -906,7 +972,6 @@ export default function CrmInboxPanel({
                         href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(getWhatsAppMessage(lead))}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        onClick={() => handleRegisterContact(lead)}
                         style={{
                           background: 'var(--crm-positive)',
                           color: 'var(--crm-on-dark)',
@@ -929,7 +994,6 @@ export default function CrmInboxPanel({
                     {canSeePhone && lead.phone && (
                       <a
                         href={`tel:${lead.phone}`}
-                        onClick={() => handleRegisterContact(lead)}
                         style={{
                           background: 'var(--crm-card)',
                           border: '1px solid var(--crm-line)',

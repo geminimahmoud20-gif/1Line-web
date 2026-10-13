@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build && node scripts/postbuild-seo.mjs",
+    "preview": "vite preview",
+    "migrate:access": "node scripts/migrate-access.mjs",
     "lint": "eslint .",
     "test:unit": "node --test tests/unit/*.test.mjs",
     "test:integration": "node --test tests/integration/*.test.mjs",
