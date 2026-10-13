@@ -25,7 +25,7 @@ service cloud.firestore {
       return request.auth.token.get('staff', false) == true && request.auth.token.get('perms', null) is list
         ? request.auth.token.perms
         : {
-            'sales_manager': ['ld.all', 'ld.manage', 'ld.edit', 'ld.phone', 'ld.import', 'deal.all', 'deal.edit', 'export'],
+            'sales_manager': ['ld.all', 'ld.manage', 'ld.edit', 'ld.phone', 'ld.import', 'deal.all', 'deal.edit', 'export', 'inv.edit'],
             'sales_agent': ['ld.edit', 'ld.phone', 'deal.edit'],
             'agent_east': ['ld.edit', 'ld.phone', 'deal.edit'],
             'agent_new_sohag': ['ld.edit', 'ld.phone', 'deal.edit'],
@@ -86,6 +86,9 @@ service cloud.firestore {
     }
     function leadPath(leadId) {
       return /databases/$(database)/documents/leads/$(leadId);
+    }
+    function personPath(personId) {
+      return /databases/$(database)/documents/persons/$(personId);
     }
     function deskOf(data) {
       return data.get('assignedTo', 'Unassigned');
@@ -542,10 +545,19 @@ service cloud.firestore {
 
     // 🔒 Person Contacts (Protected Phone & PII)
     match /person_contacts/{personId} {
-      allow read: if (canSeeAllLeads() && seesClientContacts())
-                  || (isDeskAgent() && inMyLeadQueue(resource.data));
-      allow create, update: if (hasPerm('ld.manage')
-                               || (isDeskAgent() && inMyLeadQueue(request.resource.data)));
+      function canManagePersonContact(data) {
+        return hasPerm('ld.manage')
+          || (seesClientContacts() && isDeskAgent()
+              && inMyLeadQueue(data)
+              && (!exists(personPath(personId)) || inMyLeadQueue(get(personPath(personId)).data)));
+      }
+      allow read: if seesClientContacts() && (
+                    canSeeAllLeads()
+                    || (isDeskAgent() && inMyLeadQueue(resource.data))
+                  );
+      allow create: if canManagePersonContact(request.resource.data);
+      allow update: if canManagePersonContact(request.resource.data)
+                    && (hasPerm('ld.manage') || inMyLeadQueue(resource.data));
       allow delete: if isAdmin();
     }
 
@@ -566,9 +578,17 @@ service cloud.firestore {
 
     // 📋 Tasks & Handoffs (التسليمات والمهام التشغيلية 1-10)
     match /tasks/{taskId} {
+      function canEditTask(data) {
+        return isAdmin()
+          || (hasPerm('ld.manage') && (leadDesk() == '' || data.get('assignedDesk', '') == leadDesk() || data.get('assignedTo', '') in [leadDesk(), 'Unassigned']))
+          || (isLeadEditor() && (data.get('assignedTo', 'Unassigned') in [request.auth.uid, leadDesk(), 'Unassigned'] || data.get('assignedDesk', '') == leadDesk()))
+          || isInventoryEditor();
+      }
       allow read: if isStaff();
-      allow create: if isStaff();
-      allow update: if isStaff();
+      allow create: if isLeadEditor() || isInventoryEditor() || hasPerm('ld.manage');
+      allow update: if canEditTask(resource.data)
+                    && canEditTask(request.resource.data)
+                    && !resource.data.diff(request.resource.data).affectedKeys().hasAny(['createdBy', 'createdAt']);
       allow delete: if isAdmin();
     }
 
@@ -581,24 +601,28 @@ service cloud.firestore {
 
     // 💰 Commission Invoices & Collections (الفوترة والتحصيل)
     match /commission_invoices/{invId} {
-      allow read: if hasPerm('fin') || hasPerm('deal.all') || isAdmin();
-      allow create, update, delete: if hasPerm('fin') || isAdmin();
+      allow read, write: if hasPerm('fin') || isAdmin();
     }
 
     match /collections/{colId} {
-      allow read: if hasPerm('fin') || hasPerm('deal.all') || isAdmin();
-      allow create, update, delete: if hasPerm('fin') || isAdmin();
+      allow read, write: if hasPerm('fin') || isAdmin();
     }
 
     // 🚨 Complaints (خدمة العملاء والشكاوى)
     match /complaints/{compId} {
-      allow read, create, update: if isStaff();
+      allow read: if isStaff();
+      allow create: if isLeadEditor() || hasPerm('ld.manage');
+      allow update: if (isLeadEditor() || hasPerm('ld.manage'))
+                    && !resource.data.diff(request.resource.data).affectedKeys().hasAny(['createdBy', 'createdAt']);
       allow delete: if isAdmin();
     }
 
     // 🤝 Referrals (برنامج الإحالات)
     match /referrals/{refId} {
-      allow read, create, update: if isStaff();
+      allow read: if isStaff();
+      allow create: if isLeadEditor() || hasPerm('ld.manage');
+      allow update: if (isLeadEditor() || hasPerm('ld.manage'))
+                    && !resource.data.diff(request.resource.data).affectedKeys().hasAny(['createdBy', 'createdAt']);
       allow delete: if isAdmin();
     }
   }

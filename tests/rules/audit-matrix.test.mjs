@@ -69,7 +69,7 @@ test('MATRIX: super_admin has full read/write across all collections', async () 
 });
 
 // ── 2. SALES MANAGER PERMISSIONS ───────────────────────────────────────────
-test('MATRIX: sales_manager reads all leads & contacts, edits all leads, cannot delete leads or edit properties', async () => {
+test('MATRIX: sales_manager reads all leads & contacts, edits all leads, cannot delete leads, has inv.edit', async () => {
   const mgr = asSalesManager();
   await assertSucceeds(getDoc(doc(mgr, 'leads/lead-a')));
   await assertSucceeds(getDoc(doc(mgr, 'leads/lead-b')));
@@ -79,8 +79,8 @@ test('MATRIX: sales_manager reads all leads & contacts, edits all leads, cannot 
   await assertSucceeds(setDoc(doc(mgr, 'leads/lead-a'), { status: 'contacted' }, { merge: true }));
   // Cannot delete leads (super_admin only)
   await assertFails(deleteDoc(doc(mgr, 'leads/lead-a')));
-  // DEF-09 Fixed: sales_manager no longer has inv.edit in firestore.rules
-  await assertFails(setDoc(doc(mgr, 'properties/prop-1'), { title: 'Hacked' }, { merge: true }));
+  // inv.edit restored for sales_manager pending owner decision
+  await assertSucceeds(setDoc(doc(mgr, 'properties/prop-1'), { title: 'Updated' }, { merge: true }));
 });
 
 // ── 3. SALES AGENT (DESK A) PERMISSIONS & SCOPING ───────────────────────────
