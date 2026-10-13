@@ -1,7 +1,7 @@
 import { db, auth, isFirebaseConfigured } from '../firebase.js';
 import { DESK_BY_ROLE, UNASSIGNED_DESK } from '../utils/rbacRules.js';
 import { enqueuePendingLead, readPendingLeads, writePendingLeads } from '../utils/leadQueue.js';
-import { collection, getDocs, getDoc, doc, query, where, orderBy, limit, onSnapshot, serverTimestamp, writeBatch, deleteField, documentId, Timestamp, startAfter } from 'firebase/firestore';
+import { collection, getDocs, getDoc, doc, query, where, orderBy, limit, onSnapshot, serverTimestamp, writeBatch, deleteField, documentId, Timestamp, startAfter, runTransaction } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { getUserClaims } from './auth.js';
 import { notifyStaff } from './staffNotify.js';
@@ -602,3 +602,69 @@ export const searchLeads = async (term, max = 25) => {
   });
   return { ok: true, leads: leads.sort((a, b) => createdMillis(b) - createdMillis(a)).slice(0, max) };
 };
+
+/**
+ * Atomically claims a lead for a staff member using a Firestore transaction.
+ * Reads the document, rejects if assignedTo already exists and differs from staffName,
+ * then sets assignedTo and assignedAt: serverTimestamp().
+ * Note: Does NOT modify status to 'contacted' (الاستلام ≠ تواصل).
+ * Returns { ok: true, lead } or { ok: false, reason: 'already_claimed', claimedBy }.
+ */
+export const claimLeadAtomic = async (leadId, staffName, options = {}) => {
+  if (!isFirebaseConfigured() || !db) return { ok: false, reason: 'no-db' };
+  if (!leadId || !staffName) return { ok: false, reason: 'invalid-argument' };
+
+  const leadRef = doc(db, 'leads', String(leadId));
+  const contactRef = doc(db, 'lead_contacts', String(leadId));
+
+  try {
+    return await runTransaction(db, async (txn) => {
+      const leadSnap = await txn.get(leadRef);
+      if (!leadSnap.exists()) {
+        return { ok: false, reason: 'not-found' };
+      }
+
+      const data = leadSnap.data();
+      const currentAssignee = data.assignedTo;
+      const isClaimed = Boolean(
+        currentAssignee &&
+        currentAssignee !== UNASSIGNED_DESK &&
+        currentAssignee !== 'Unassigned'
+      );
+
+      if (isClaimed && currentAssignee !== staffName && !options.override) {
+        return {
+          ok: false,
+          reason: 'already_claimed',
+          claimedBy: currentAssignee
+        };
+      }
+
+      // Atomic update of assignment without changing communication status
+      txn.update(leadRef, {
+        assignedTo: staffName,
+        assignedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+
+      // Keep contact mirror doc in sync if it exists
+      const contactSnap = await txn.get(contactRef);
+      if (contactSnap.exists()) {
+        txn.update(contactRef, { assignedTo: staffName });
+      }
+
+      return {
+        ok: true,
+        lead: {
+          ...data,
+          id: String(leadId),
+          assignedTo: staffName
+        }
+      };
+    });
+  } catch (error) {
+    console.error('Firebase claimLeadAtomic error:', error);
+    return { ok: false, reason: error?.code || error?.message || 'error' };
+  }
+};
+

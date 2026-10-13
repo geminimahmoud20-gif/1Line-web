@@ -54,12 +54,12 @@ export default function LeadDrawerOverview({
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Building size={16} style={{ color: 'var(--crm-accent-text, #d97706)' }} />
+              <Building size={16} style={{ color: 'var(--crm-accent-text)' }} />
               <strong style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-ink)' }}>
                 {isAr ? '🏠 تفاصيل عقار عرض البيع من المالك:' : '🏠 Seller Property Specs:'}
               </strong>
             </div>
-            <span className="badge" style={{ background: 'var(--crm-accent)', color: '#fff', fontSize: '11px', padding: '2px 8px', borderRadius: '12px' }}>
+            <span className="badge" style={{ background: 'var(--crm-accent)', color: 'var(--crm-card)', fontSize: 'var(--crm-text-xs)', padding: '2px 8px', borderRadius: '12px' }}>
               {isAr ? 'عرض بيع مباشر' : 'Direct Listing'}
             </span>
           </div>
@@ -75,7 +75,7 @@ export default function LeadDrawerOverview({
             {(details.askingPrice || details.estimatedAvg) && (
               <div style={{ background: 'var(--crm-card)', padding: '6px 10px', borderRadius: '8px', border: '1px solid var(--crm-line)', fontSize: 'var(--crm-text-xs)' }}>
                 <span style={{ color: 'var(--crm-muted)', display: 'block' }}>{details.askingPrice ? (isAr ? 'السعر المطلوب:' : 'Asking Price:') : (isAr ? 'التقدير الآلي:' : 'Estimate:')}</span>
-                <strong style={{ color: 'var(--crm-accent-text, #d97706)' }}>
+                <strong style={{ color: 'var(--crm-accent-text)' }}>
                   {Number(details.askingPrice || details.estimatedAvg).toLocaleString('en-US')} ج.م
                 </strong>
               </div>
@@ -138,8 +138,8 @@ export default function LeadDrawerOverview({
                 borderRadius: '8px',
                 fontSize: 'var(--crm-text-sm)',
                 fontWeight: 700,
-                background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
-                color: '#ffffff',
+                background: 'var(--crm-accent)',
+                color: 'var(--crm-card)',
                 border: 'none',
                 display: 'flex',
                 alignItems: 'center',

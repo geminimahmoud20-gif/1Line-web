@@ -551,7 +551,7 @@ export default function CrmTopbar({
                   <div style={{ padding: '8px 10px', background: 'rgba(217, 119, 6, 0.08)', border: '1px solid rgba(217, 119, 6, 0.25)', borderRadius: '8px' }}>
                     <div style={{ fontWeight: 'bold', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', marginBottom: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span>{isAr ? '⚡ طلبات جديدة لم تُشاهد' : '⚡ Unseen New Requests'}</span>
-                      <span className="badge" style={{ background: 'var(--crm-accent)', color: '#fff', fontSize: '10px', padding: '1px 6px', borderRadius: '10px' }}>{unseenNewLeads.length}</span>
+                      <span className="badge" style={{ background: 'var(--crm-accent)', color: 'var(--crm-card)', fontSize: 'var(--crm-text-xs)', padding: '1px 6px', borderRadius: '10px' }}>{unseenNewLeads.length}</span>
                     </div>
                     <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '6px', maxHeight: '180px', overflowY: 'auto' }}>
                       {unseenNewLeads.slice(0, 6).map((l) => (
