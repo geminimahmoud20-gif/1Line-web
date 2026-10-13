@@ -56,6 +56,7 @@ export default function KanbanPipeline({
   triggerToast,
   activeRole = 'sales_agent'
 }) {
+  const highValueThreshold = HIGH_VALUE_DEAL_THRESHOLD;
   const [draggedLeadId, setDraggedLeadId] = useState(null);
   const [schedulingVisitLead, setSchedulingVisitLead] = useState(null);
   const [leadToDelete, setLeadToDelete] = useState(null);
