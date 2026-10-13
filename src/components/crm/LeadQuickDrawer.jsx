@@ -592,6 +592,8 @@ export default function LeadQuickDrawer({
               lead={lead}
               matchedProperties={matchedProperties}
               properties={properties}
+              onUpdateLead={onUpdateLead}
+              triggerToast={triggerToast}
             />
           )}
 
