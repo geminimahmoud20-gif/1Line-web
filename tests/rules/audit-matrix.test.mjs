@@ -2,7 +2,7 @@
 // Exhaustive test matrix for Firestore Security Rules: Role × Team × Collection × Action
 // Covers all cells of the CRM security matrix.
 import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
-import { doc, getDoc, setDoc, deleteDoc, collection, query, where, getDocs, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import fs from 'node:fs';
 import { test, before, after, beforeEach } from 'node:test';
 
@@ -51,7 +51,6 @@ beforeEach(async () => {
 const asAdmin = () => env.authenticatedContext('u-admin', { role: 'super_admin', admin: true }).firestore();
 const asSalesManager = () => env.authenticatedContext('u-mgr', { role: 'sales_manager' }).firestore();
 const asAgentEast = () => env.authenticatedContext('u-agent-a', { role: 'agent_east', desk: 'Sales Team A' }).firestore();
-const asAgentWest = () => env.authenticatedContext('u-agent-b', { role: 'agent_new_sohag', desk: 'Sales Team B' }).firestore();
 const asPropertyManager = () => env.authenticatedContext('u-pm', { role: 'property_manager' }).firestore();
 const asFinance = () => env.authenticatedContext('u-fin', { role: 'finance' }).firestore();
 const asViewer = () => env.authenticatedContext('u-view', { role: 'viewer' }).firestore();
@@ -70,7 +69,7 @@ test('MATRIX: super_admin has full read/write across all collections', async () 
 });
 
 // ── 2. SALES MANAGER PERMISSIONS ───────────────────────────────────────────
-test('MATRIX: sales_manager reads all leads & contacts, edits all leads, cannot delete leads (discrepancy: has inv.edit in legacy rules)', async () => {
+test('MATRIX: sales_manager reads all leads & contacts, edits all leads, cannot delete leads or edit properties', async () => {
   const mgr = asSalesManager();
   await assertSucceeds(getDoc(doc(mgr, 'leads/lead-a')));
   await assertSucceeds(getDoc(doc(mgr, 'leads/lead-b')));
@@ -80,11 +79,8 @@ test('MATRIX: sales_manager reads all leads & contacts, edits all leads, cannot 
   await assertSucceeds(setDoc(doc(mgr, 'leads/lead-a'), { status: 'contacted' }, { merge: true }));
   // Cannot delete leads (super_admin only)
   await assertFails(deleteDoc(doc(mgr, 'leads/lead-a')));
-  // Legacy role has inv.edit in firestore.rules line 28 despite Runbook stating unpermitted!
-  await assertSucceeds(setDoc(doc(mgr, 'properties/prop-1'), { title: 'Discrepancy' }, { merge: true }));
-  // But a narrowed token without inv.edit is properly rejected:
-  const narrowedMgr = env.authenticatedContext('u-narrow-mgr', { role: 'sales_manager', staff: true, perms: ['ld.all', 'ld.manage', 'ld.edit', 'ld.phone'], desk: '' }).firestore();
-  await assertFails(setDoc(doc(narrowedMgr, 'properties/prop-1'), { title: 'Narrowed' }, { merge: true }));
+  // DEF-09 Fixed: sales_manager no longer has inv.edit in firestore.rules
+  await assertFails(setDoc(doc(mgr, 'properties/prop-1'), { title: 'Hacked' }, { merge: true }));
 });
 
 // ── 3. SALES AGENT (DESK A) PERMISSIONS & SCOPING ───────────────────────────
