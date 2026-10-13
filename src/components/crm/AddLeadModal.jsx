@@ -315,6 +315,7 @@ export default function AddLeadModal({
               <label>{isAr ? 'تاريخ المتابعة القادمة:' : 'Follow-up Date:'}</label>
               <input
                 type="date"
+                min={new Date().toISOString().split('T')[0]}
                 value={formData.nextFollowUpAt}
                 onChange={(e) => setFormData({ ...formData, nextFollowUpAt: e.target.value })}
               />

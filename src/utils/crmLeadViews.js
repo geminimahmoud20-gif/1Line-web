@@ -152,7 +152,8 @@ export function isAccountLead(l = {}) {
 // ── Money, dates and attention flags (dashboard + filters) ───────────────────
 
 const AR_DIGITS = /[٠-٩۰-۹]/g;
-const toLatin = (str) => String(str).replace(AR_DIGITS, (d) => { const c = d.charCodeAt(0); return String(c >= 0x06F0 ? c - 0x06F0 : c - 0x0660); });
+export const toLatin = (str) => String(str).replace(AR_DIGITS, (d) => { const c = d.charCodeAt(0); return String(c >= 0x06F0 ? c - 0x06F0 : c - 0x0660); });
+export const normalizeDigits = toLatin;
 
 /**
  * Money from whatever the forms stored: 2500000, "2,500,000", "٢٫٥ مليون", "2.5M", "750 ألف",

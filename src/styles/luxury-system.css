@@ -453,14 +453,24 @@ button.sidebar-deposit-banner .deposit-banner-left > span { display: flex; flex-
 .lx-consent .lx-btn-ghost { color: #E5E7EB; border-color: rgba(255, 255, 255, 0.28); }
 .lx-consent-short { display: none; }
 @media (max-width: 768px) {
-  /* Compact single bar: the old 3-line card covered the hero search fields on phones */
-  .lx-consent { inset-inline: 10px; flex-wrap: wrap; gap: 8px 10px; padding: 10px 12px; border-radius: 14px; font-size: 0.8rem; line-height: 1.5; bottom: calc(80px + env(safe-area-inset-bottom)); }
+  /* Compact single bar: avoids overlapping hero search and bottom navigation bar */
+  .lx-consent { 
+    inset-inline: 12px; 
+    flex-wrap: wrap; 
+    gap: 8px 10px; 
+    padding: 12px 14px; 
+    border-radius: 14px; 
+    font-size: 0.85rem; 
+    line-height: 1.5; 
+    bottom: calc(76px + env(safe-area-inset-bottom, 12px));
+    z-index: 2500;
+  }
   .lx-consent p { flex: 1 1 100%; }
-  .lx-consent-actions { flex: 1 1 100%; }
+  .lx-consent-actions { flex: 1 1 100%; display: flex; gap: 8px; }
   .lx-consent-actions > * { flex: 1; }
   .lx-consent-long { display: none; }
   .lx-consent-short { display: inline; }
-  .lx-consent .lx-btn-sm { min-height: 40px; padding: 6px 12px; font-size: 0.78rem; }
+  .lx-consent .lx-btn-sm { min-height: 44px; padding: 8px 14px; font-size: 0.85rem; }
 }
 
 /* ── §9 Not found & legal pages ───────────────────────────── */

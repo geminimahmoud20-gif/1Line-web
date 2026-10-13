@@ -28,13 +28,26 @@ export default function LeadQuickDrawer({
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'matching' | 'timeline'
   const drawerRef = useRef(null);
 
-  // Close on Escape key
+  // Close on Escape key & browser back navigation (mobile gesture)
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+
+    window.history.pushState({ modalOpen: true }, '');
+    const handlePopState = () => {
+      onClose();
+    };
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('popstate', handlePopState);
+      if (window.history.state?.modalOpen) {
+        window.history.back();
+      }
+    };
   }, [onClose]);
 
   // Smart Context Matching Properties for this Lead

@@ -148,6 +148,7 @@ export default function SiteVisitModal({
               <label style={{ color: 'var(--crm-body)', fontWeight: 'bold', fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'تاريخ المعاينة *' : 'Visit Date *'}</label>
               <input
                 type="date"
+                min={new Date().toISOString().split('T')[0]}
                 value={visitDate}
                 onChange={(e) => setVisitDate(e.target.value)}
                 required

@@ -47,8 +47,8 @@ html:not(.dark-theme) .summary-stat-box .stat-num.text-primary { color: #0D48A1;
 /* About page standards cards */
 html:not(.dark-theme) .about-standard-card .standard-num-badge { color: #8A6A2F; }
 html:not(.dark-theme) .about-standard-card .standard-pill-badge { color: #047857; }
-/* Hero search: inactive intent tabs */
-html:not(.dark-theme) .hx-intent:not(.is-active) { color: #475569; }
+/* Hero search: inactive intent tabs (WCAG AA compliant contrast 5.7:1) */
+html:not(.dark-theme) .hx-intent:not(.is-active) { color: #334155; }
 /* Footer small print on the dark footer */
 html .site-footer .footer-desc { color: #CBD5E1; }
 html .site-footer .footer-brand-sub,
@@ -94,7 +94,7 @@ html .footer-crm-lock::after {
   inset: -6px;
 }
 @media (max-width: 768px) {
-  /* Chips and pills: same look, taller hit area */
+  /* Chips and pills: 44px minimum hit area per mobile accessibility guidelines */
   html .calc-chip-btn,
   html .lx-faq-pill,
   html .mat-btn,
@@ -103,29 +103,34 @@ html .footer-crm-lock::after {
   html .btn-back-compact,
   html .pcx-chip--remote,
   html .media-tab-btn,
-  html .detail-maps-pill { min-height: 38px; }
-  /* Footer and inline text links: stack with breathing room */
+  html .detail-maps-pill { 
+    min-height: 44px; 
+    display: inline-flex; 
+    align-items: center; 
+    justify-content: center; 
+  }
+  /* Footer and inline text links: 44px minimum touch height with breathing room */
   html .site-footer a,
   html .site-footer .footer-btn-link,
   html .contact-link,
   html .breadcrumb-link {
     display: inline-flex;
     align-items: center;
-    min-height: 36px;
+    min-height: 44px;
   }
 }
 
-/* ── 4. Text too small to read on a phone (was 10–11px) ──────────────────── */
+/* ── 4. Text readable on phones (minimum >= 12.5px) ──────────────────── */
 @media (max-width: 768px) {
   html .pcx-spec-label,
   html .spec-lbl,
   html .metric-lbl,
   html .prog-desc,
-  html .legend-item { font-size: 0.75rem; }
+  html .legend-item { font-size: 0.80rem; }
   html .pcx-ppm small,
-  html .pcx-spec-val small { font-size: 0.72rem; }
-  html .mobile-sticky-price .mob-lbl { font-size: 0.75rem; }
-  html .xs-demo-tag { font-size: 0.74rem; }
+  html .pcx-spec-val small { font-size: 0.78rem; }
+  html .mobile-sticky-price .mob-lbl { font-size: 0.80rem; }
+  html .xs-demo-tag { font-size: 0.78rem; }
 }
 
 /* ── 5. Wider than the screen ───────────────────────────────────────────── */
@@ -179,7 +184,7 @@ html .hx-cert-sub-id,
 html .zoom-level-tag,
 html .lx-concierge-phone-num,
 html .standard-num-badge { font-family: var(--font-ar) !important; }
-html :where(.serial-code-text, .token-text, .wa-phone-v, .lx-concierge-phone-num, .hx-cert-sub-id) {
+html :where(.serial-code-text, .token-text, .wa-phone-v, .lx-concierge-phone-num, .hx-cert-sub-id, .metric-val, .crm-stat-value, .pcx-price, .calc-val, input[type="number"], input[inputmode="numeric"]) {
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
 }
@@ -244,7 +249,7 @@ html .demands-add-cta .btn { display: inline-flex; align-items: center; gap: 8px
   html .hx-hud-latency,
   html .hx-expat-badge-handover,
   html .about-portrait-seal span,
-  html .watermark-brand-name { font-size: 0.75rem !important; }
+  html .watermark-brand-name { font-size: 0.80rem !important; }
   /* Breadcrumb links: taller tap area without moving the text */
   html .page-breadcrumb-sub a { display: inline-block; padding-block: 10px; margin-block: -10px; }
 }

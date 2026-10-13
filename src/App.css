@@ -6797,8 +6797,9 @@ body.dark,
   bottom: 0;
   left: 0;
   right: 0;
-  background: #ffffff;
+  background: var(--surface-card, #ffffff);
   padding: 10px 16px;
+  padding-bottom: max(10px, env(safe-area-inset-bottom, 10px));
   border-top: 1px solid var(--border-color);
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
   z-index: 2000;
@@ -6806,16 +6807,33 @@ body.dark,
   justify-content: space-between;
 }
 
+html.dark-theme .mobile-detail-sticky-bar,
+html.dark .mobile-detail-sticky-bar {
+  background: #0B1B32;
+  border-top-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+}
+
 .mobile-sticky-price .mob-lbl {
   display: block;
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
+}
+
+html.dark-theme .mobile-sticky-price .mob-lbl,
+html.dark .mobile-sticky-price .mob-lbl {
+  color: #94A3B8;
 }
 
 .mobile-sticky-price strong {
   font-size: 1.05rem;
   font-weight: 900;
   color: var(--primary);
+}
+
+html.dark-theme .mobile-sticky-price strong,
+html.dark .mobile-sticky-price strong {
+  color: #F1F5F9;
 }
 
 .mobile-sticky-actions {

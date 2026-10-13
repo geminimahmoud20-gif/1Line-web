@@ -77,6 +77,23 @@ export default function Header({
     };
   }, []);
 
+  // Handle browser back button & escape key to close mobile drawer
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    window.history.pushState({ mobileDrawerOpen: true }, '');
+    const handlePopState = () => setMobileMenuOpen(false);
+    const handleKeyDown = (e) => { if (e.key === 'Escape') setMobileMenuOpen(false); };
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('keydown', handleKeyDown);
+      if (window.history.state?.mobileDrawerOpen) {
+        window.history.back();
+      }
+    };
+  }, [mobileMenuOpen]);
+
   const handleMouseEnter = (id) => {
     if (dropdownTimeoutRef.current) {
       clearTimeout(dropdownTimeoutRef.current);
@@ -447,7 +464,8 @@ export default function Header({
                 setLang(lang === 'ar' ? 'en' : 'ar');
                 if (soundEnabled) playNotificationChime('click');
               }}
-              title="Switch Language"
+              title={isAr ? "Switch to English" : "التبديل إلى العربية"}
+              aria-label={isAr ? "تغيير لغة المنصة إلى الإنجليزية" : "Switch language to Arabic"}
             >
               <Globe size={13} />
               <span>{isAr ? 'EN' : 'عربي'}</span>
@@ -588,7 +606,12 @@ export default function Header({
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="mobile-drawer open">
+        <div 
+          className="mobile-drawer open" 
+          role="dialog" 
+          aria-modal="true" 
+          aria-label={isAr ? 'قائمة التنقل الرئيسية للموقع' : 'Main Navigation Menu'}
+        >
           <div className="mobile-drawer-links">
             {onOpenQuickSearch && (
               <button

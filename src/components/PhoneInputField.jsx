@@ -141,6 +141,8 @@ export const PhoneInputField = ({
           required={required}
           disabled={disabled}
           autoFocus={autoFocus}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error && id ? `${id}-error` : undefined}
           aria-label={label ? String(label).replace(/\s*\*+\s*/g, ' ').trim() : (isAr ? 'رقم الهاتف' : 'Phone number')}
           style={{
             flex: 1,
@@ -160,7 +162,11 @@ export const PhoneInputField = ({
         />
       </div>
       {error && (
-        <span style={{ color: 'var(--rose, #e11d48)', fontSize: '0.78rem', fontWeight: '800', marginTop: '2px', textAlign: 'right' }}>
+        <span 
+          id={id ? `${id}-error` : undefined}
+          role="alert"
+          style={{ color: 'var(--rose, #e11d48)', fontSize: '0.78rem', fontWeight: '800', marginTop: '2px', textAlign: 'right' }}
+        >
           {error}
         </span>
       )}

@@ -8,6 +8,7 @@ import { liveListings, assetClass, median } from '../utils/marketStats';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
 import SubmissionSuccess from './common/SubmissionSuccess';
 import { uploadPropertyImage } from '../utils/imageUploadService';
+import { toLatinDigits } from '../utils/latinDigits';
 
 // Greater Cairo coverage: no automated benchmark yet, valued manually
 const CAIRO_AREAS = [
@@ -309,7 +310,7 @@ export const SellWizard = ({
   const { properties: siteListings = [] } = useProperties();
   const calculatedEstimate = useMemo(() => {
     const areaKey = sellerAnswers.area || 'east';
-    const size = parseInt(sellerAnswers.size) || 0;
+    const size = parseInt(toLatinDigits(sellerAnswers.size), 10) || 0;
     const type = sellerAnswers.propertyType || 'apartment';
     const cls = type === 'retail' || type === 'office' ? 'commercial' : type === 'land' ? 'land' : 'residential';
     const comps = liveListings(siteListings)
@@ -452,12 +453,12 @@ export const SellWizard = ({
       estimatedMax: isCairo || !calculatedEstimate.avg ? null : calculatedEstimate.max,
       estimatedAvg: calculatedEstimate.avg || null,
       estimateBasis: calculatedEstimate.basis,
-      askingPrice: sellerAnswers.askingPrice ? parseInt(sellerAnswers.askingPrice) : null,
+      askingPrice: sellerAnswers.askingPrice ? parseInt(toLatinDigits(sellerAnswers.askingPrice), 10) : null,
       totalFloors: isHouse ? (sellerAnswers.totalFloors || sellerAnswers.floor || '2') : undefined,
       floor: floorDisplay,
       finishing: sellerAnswers.finishing || 'super_lux',
       finishingLabelAr,
-      rooms: isNonResidential ? 0 : parseInt(sellerAnswers.rooms || (isHouse ? 5 : 3)),
+      rooms: isNonResidential ? 0 : parseInt(toLatinDigits(sellerAnswers.rooms || (isHouse ? 5 : 3)), 10),
       phone: fullPhone,
       whatsapp: fullWhatsapp,
       images: uploadedPhotos,
@@ -676,13 +677,15 @@ export const SellWizard = ({
               <label>{isAr ? 'المساحة الإجمالية (بالمتر المربع م²)' : 'Total Built Area (Sqm)'}</label>
               <div className="input-with-tag">
                 <input
-                  type="number"
-                  min="30"
-                  max="5000"
+                  type="text"
+                  inputMode="numeric"
                   placeholder="مثال: 150"
                   className="form-input-styled"
                   value={sellerAnswers.size || ''}
-                  onChange={(e) => setSellerAnswers({ ...sellerAnswers, size: e.target.value })}
+                  onChange={(e) => {
+                    const latin = toLatinDigits(e.target.value).replace(/[^\d]/g, '');
+                    setSellerAnswers({ ...sellerAnswers, size: latin });
+                  }}
                 />
                 <span className="input-tag">م²</span>
               </div>
@@ -690,7 +693,7 @@ export const SellWizard = ({
           </div>
 
           {/* Smart Sanity Check for Small Units in Prime Commercial Districts */}
-          {sellerAnswers.size && parseInt(sellerAnswers.size) > 0 && parseInt(sellerAnswers.size) < 60 && (!sellerAnswers.propertyType || sellerAnswers.propertyType === 'apartment') && (sellerAnswers.area === 'east' || sellerAnswers.area === 'corniche' || sellerAnswers.area === 'center') && (
+          {sellerAnswers.size && parseInt(toLatinDigits(sellerAnswers.size), 10) > 0 && parseInt(toLatinDigits(sellerAnswers.size), 10) < 60 && (!sellerAnswers.propertyType || sellerAnswers.propertyType === 'apartment') && (sellerAnswers.area === 'east' || sellerAnswers.area === 'corniche' || sellerAnswers.area === 'center') && (
             <div style={{
               background: 'rgba(234, 88, 12, 0.08)',
               border: '1px solid rgba(234, 88, 12, 0.25)',
@@ -714,7 +717,7 @@ export const SellWizard = ({
           )}
 
           {/* 🌟 Phase 1 Live Initial Indicative Valuation Ticker */}
-          {sellerAnswers.size && parseInt(sellerAnswers.size) >= 20 && (
+          {sellerAnswers.size && parseInt(toLatinDigits(sellerAnswers.size), 10) >= 20 && (
             <div style={{
               marginTop: '14px',
               padding: '16px 20px',
@@ -826,7 +829,7 @@ export const SellWizard = ({
             <button
               type="button"
               className="btn btn-primary btn-next-phase"
-              disabled={!sellerAnswers.size || parseInt(sellerAnswers.size) < 20}
+              disabled={!sellerAnswers.size || parseInt(toLatinDigits(sellerAnswers.size), 10) < 20}
               onClick={() => setCurrentPhase(2)}
             >
               <span>{isAr ? 'متابعة المواصفات والترخيص' : 'Continue to Specs & Legal'}</span>
@@ -1503,12 +1506,15 @@ export const SellWizard = ({
                 <span>💰 {isAr ? 'السعر المطلوب من المالك (ج.م) — اختياري' : 'Owner Asking Price (EGP) — Optional'}</span>
               </label>
               <input
-                type="number"
-                min="0"
+                type="text"
+                inputMode="numeric"
                 placeholder={isAr ? 'مثال: 2500000 (اتركه فارغاً للاكتفاء بتقدير المنصة)' : 'e.g. 2500000'}
                 className="form-input-styled"
                 value={sellerAnswers.askingPrice || ''}
-                onChange={(e) => setSellerAnswers({ ...sellerAnswers, askingPrice: e.target.value ? parseInt(e.target.value) : '' })}
+                onChange={(e) => {
+                  const cleaned = toLatinDigits(e.target.value).replace(/\D/g, '');
+                  setSellerAnswers({ ...sellerAnswers, askingPrice: cleaned ? parseInt(cleaned, 10) : '' });
+                }}
               />
               <span style={{ fontSize: '0.78rem', color: '#64748b', display: 'block', marginTop: '4px' }}>
                 {isAr ? 'تحديد سعرك المطلوب يسرع مطابقة عقارك فوراً مع المشترين الجادين وأصحاب الميزانيات المناسبة.' : 'Setting your target price speeds up matching with qualified buyers.'}

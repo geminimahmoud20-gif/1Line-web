@@ -11,11 +11,29 @@ export const loadFirebaseService = () => {
   return servicePromise;
 };
 
-// Warm the SDK once the browser is idle so the first form submit doesn't wait on the download.
+// Warm the SDK: Immediate on /crm, /my-account, /demands.
+// On visitor routes: loads only after first user touch/interaction or 6-second timer.
 if (typeof window !== 'undefined') {
-  const warm = () => loadFirebaseService().catch(() => {});
-  if ('requestIdleCallback' in window) window.requestIdleCallback(warm, { timeout: 4000 });
-  else setTimeout(warm, 2500);
+  const isImmediateRoute = /^\/(crm|my-account|demands)($|\/)/.test(window.location.pathname);
+  if (isImmediateRoute) {
+    loadFirebaseService().catch(() => {});
+  } else {
+    let warmed = false;
+    let timer = null;
+    const events = ['touchstart', 'pointerdown', 'keydown', 'scroll'];
+    const cleanup = () => {
+      events.forEach((ev) => window.removeEventListener(ev, warm));
+      if (timer) clearTimeout(timer);
+    };
+    const warm = () => {
+      if (warmed) return;
+      warmed = true;
+      cleanup();
+      loadFirebaseService().catch(() => {});
+    };
+    events.forEach((ev) => window.addEventListener(ev, warm, { passive: true, once: true }));
+    timer = setTimeout(warm, 6000);
+  }
 }
 
 const lazyCall = (name) => async (...args) => {

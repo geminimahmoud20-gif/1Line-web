@@ -522,7 +522,8 @@ export default function CrmTopbar({
               className="crm-dropdown-card"
               style={{
                 [isAr ? 'left' : 'right']: 0,
-                width: '320px',
+                width: 'min(320px, calc(100vw - 24px))',
+                maxWidth: 'calc(100vw - 24px)',
                 padding: '12px'
               }}
             >

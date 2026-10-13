@@ -862,6 +862,8 @@
 .crm-dropdown-card {
   position: absolute;
   top: calc(100% + 8px);
+  max-width: calc(100vw - 24px);
+  box-sizing: border-box;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
