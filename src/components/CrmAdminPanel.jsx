@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { X, Clock } from 'lucide-react';
 import { loginUser, logAuditEvent, migrateInlineLeadContacts } from '../firebaseService';
 import { exportToCsv } from '../utils/exportCsv';
@@ -117,11 +117,24 @@ export const CrmAdminPanel = ({
   const { leadsHasMore } = useProperties();
   const fullStats = useFullLeadStats(allLeads, { enabled: adminTab === 'dashboard', hasMore: leadsHasMore });
   const dashboardLeads = useMemo(() => (fullStats.leads === allLeads ? leads : scopeLeadsForAccess(fullStats.leads, { role: activeRole, perms, desk: myDesk })), [fullStats.leads, allLeads, leads, activeRole, perms, myDesk]);
-  const setAdminTab = (tab) => {
+  const setAdminTab = useCallback((tab) => {
     setLocalAdminTab(tab);
     if (onSwitchTab) onSwitchTab(tab);
-  };
-  const [leadFilter, setLeadFilter] = useState('all');
+  }, [onSwitchTab]);
+  const [leadFilter, setLeadFilter] = useState(() => {
+    if (activeRole === 'property_manager') return 'seller';
+    if (activeRole === 'sales_agent' || activeRole === 'agent_east' || activeRole === 'agent_new_sohag') return 'viewing_request';
+    return 'all';
+  });
+  const [prevActiveRole, setPrevActiveRole] = useState(activeRole);
+  if (activeRole !== prevActiveRole) {
+    setPrevActiveRole(activeRole);
+    if (activeRole === 'property_manager') {
+      setLeadFilter('seller');
+    } else if (activeRole === 'sales_agent' || activeRole === 'agent_east' || activeRole === 'agent_new_sohag') {
+      setLeadFilter('viewing_request');
+    }
+  }
   const [temperatureFilter, setTemperatureFilter] = useState('all');
   const [areaFilter, setAreaFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -158,16 +171,7 @@ export const CrmAdminPanel = ({
     };
     window.addEventListener('oneline_open_lead', handleOpenFromEvent);
     return () => window.removeEventListener('oneline_open_lead', handleOpenFromEvent);
-  }, [leads, adminTab]);
-
-  // Role-based default initial lead filter
-  useEffect(() => {
-    if (activeRole === 'property_manager') {
-      setLeadFilter('seller');
-    } else if (activeRole === 'sales_agent' || activeRole === 'agent_east' || activeRole === 'agent_new_sohag') {
-      setLeadFilter('viewing_request');
-    }
-  }, [activeRole]);
+  }, [leads, adminTab, setAdminTab]);
 
   // Edit Lead Modal State
   const [editingLead, setEditingLead] = useState(null);
