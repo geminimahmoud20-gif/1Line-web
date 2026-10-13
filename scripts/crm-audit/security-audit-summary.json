@@ -1,0 +1,138 @@
+{
+  "piiLeaks": [
+    {
+      "file": "src/components/crm/CustomerProfileModal.jsx",
+      "line": 251,
+      "code": "onClick={() => window.open(`tel:${formData.phone}`, '_self')}",
+      "issue": "Client phone number directly bound to anchor/window.open without desk/role gate"
+    },
+    {
+      "file": "src/components/crm/DemandsManagerPanel.jsx",
+      "line": 621,
+      "code": "href={`tel:${demand.phone}`}",
+      "issue": "Client phone number directly bound to anchor/window.open without desk/role gate"
+    }
+  ],
+  "unmaskedPhoneRenderings": [],
+  "urlLeaks": [
+    {
+      "file": "src/components/CrmAdminPanel.jsx",
+      "line": 566,
+      "code": "window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}?text=${encodeURIComponent(text)}`, '_blank');",
+      "severity": "🔴 CRITICAL",
+      "issue": "Direct unauthenticated WhatsApp URL generated in browser client"
+    },
+    {
+      "file": "src/components/CrmAdminPanel.jsx",
+      "line": 583,
+      "code": "window.open(`https://wa.me/?text=${encodeURIComponent(dispatchText)}`, '_blank');",
+      "severity": "🔴 CRITICAL",
+      "issue": "Direct unauthenticated WhatsApp URL generated in browser client"
+    },
+    {
+      "file": "src/components/crm/CustomerProfileModal.jsx",
+      "line": 233,
+      "code": "onClick={() => window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}`, '_blank', 'noopener,noreferrer')}",
+      "severity": "🔴 CRITICAL",
+      "issue": "Direct unauthenticated WhatsApp URL generated in browser client"
+    },
+    {
+      "file": "src/components/crm/CustomerProfileModal.jsx",
+      "line": 626,
+      "code": "window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}?text=${encodeURIComponent(waText)}`, '_blank', 'noopener,noreferrer');",
+      "severity": "🔴 CRITICAL",
+      "issue": "Direct unauthenticated WhatsApp URL generated in browser client"
+    },
+    {
+      "file": "src/components/crm/LeadQuickDrawer.jsx",
+      "line": 441,
+      "code": "href={`https://wa.me/${egWhatsapp}`}",
+      "severity": "🔴 CRITICAL",
+      "issue": "Direct unauthenticated WhatsApp URL generated in browser client"
+    },
+    {
+      "file": "src/components/crm/DemandsManagerPanel.jsx",
+      "line": 600,
+      "code": "href={`https://wa.me/${formatWhatsAppPhone(demand.whatsapp || demand.phone || '')}?text=${encodeURIComponent(`أهلاً بك أستاذ ${demand.clientName || ''}، بخصوص طلبك العقاري في منصة 1Line (${demand.text_ar || ''})`)}`}",
+      "severity": "🔴 CRITICAL",
+      "issue": "Direct unauthenticated WhatsApp URL generated in browser client"
+    },
+    {
+      "file": "src/components/crm/WhatsAppMatchNotifierModal.jsx",
+      "line": 122,
+      "code": "const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;",
+      "severity": "🔴 CRITICAL",
+      "issue": "Direct unauthenticated WhatsApp URL generated in browser client"
+    },
+    {
+      "file": "src/components/crm/KanbanPipeline.jsx",
+      "line": 233,
+      "code": "window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}?text=${encodeURIComponent(text)}`, '_blank');",
+      "severity": "🔴 CRITICAL",
+      "issue": "Direct unauthenticated WhatsApp URL generated in browser client"
+    }
+  ],
+  "missingRbacEnforcements": [],
+  "rulesAnalysis": [
+    {
+      "collection": "leads",
+      "isDefinedInRules": true
+    },
+    {
+      "collection": "lead_contacts",
+      "isDefinedInRules": true
+    },
+    {
+      "collection": "properties",
+      "isDefinedInRules": true
+    },
+    {
+      "collection": "projects",
+      "isDefinedInRules": true
+    },
+    {
+      "collection": "deals",
+      "isDefinedInRules": true
+    },
+    {
+      "collection": "demands",
+      "isDefinedInRules": true
+    },
+    {
+      "collection": "public_demands",
+      "isDefinedInRules": true
+    },
+    {
+      "collection": "request_contacts",
+      "isDefinedInRules": true
+    },
+    {
+      "collection": "remote_inspections",
+      "isDefinedInRules": true
+    },
+    {
+      "collection": "trade_ins",
+      "isDefinedInRules": true
+    },
+    {
+      "collection": "audit_logs",
+      "isDefinedInRules": true
+    },
+    {
+      "collection": "analytics_daily",
+      "isDefinedInRules": true
+    },
+    {
+      "collection": "analytics_visitors",
+      "isDefinedInRules": true
+    },
+    {
+      "collection": "client_downloads",
+      "isDefinedInRules": true
+    },
+    {
+      "collection": "client_errors",
+      "isDefinedInRules": true
+    }
+  ]
+}
