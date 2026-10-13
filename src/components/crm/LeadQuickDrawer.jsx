@@ -833,6 +833,17 @@ export default function LeadQuickDrawer({
           setActiveTab('overview');
         }}
       />
+      <ConcurrencyConflictModal
+        isOpen={conflictModal.isOpen}
+        isAr={isAr}
+        conflictData={conflictModal.conflictData}
+        onClose={() => setConflictModal({ isOpen: false, conflictData: null, pendingUpdates: null })}
+        onReload={() => {
+          setConflictModal({ isOpen: false, conflictData: null, pendingUpdates: null });
+          triggerToast?.(isAr ? 'تم إعادة تحميل أحدث نسخة' : 'Latest version reloaded', 'info');
+        }}
+        onOverwrite={handleForceOverwrite}
+      />
     </>
   );
 }
