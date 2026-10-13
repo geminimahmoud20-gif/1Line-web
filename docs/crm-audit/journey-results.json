@@ -3,31 +3,38 @@
     "journeyId": 1,
     "title": "رحلة المشتري (Buyer)",
     "device": "iPhone SE",
-    "taps": 6,
-    "duration": "2.5 ثانية",
+    "actualActions": "3 تنقلات بالمتصفح (الرئيسية -> قائمة العقارات -> صفحة عقار)",
+    "measuredTaps": "لم تُقس (رقم 6 السابق كان تقديراً يدوياً؛ السكريبت نفّذ 3 تنقلات فقط)",
+    "crmStatus": "لم يُسجل",
+    "crmDetails": "لم يُسجل أي طلب في الـ CRM بالمحاكي لأن السكريبت لم يضغط زر حجز المعاينة أو يرسل نموذجاً",
+    "duration": "2.5 ثانية (زمن تحميل الصفحات)",
     "stalls": [
       {
         "point": "صفحة العقار: حجز المعاينة يتطلب التمرير لأسفل",
         "reason": "شريط السعر وحجز المعاينة غير ظاهر في الشاشة الأولى بدون تمرير",
         "screenshot": "journey-1-iphone-se.png"
       }
-    ],
-    "crmOutcome": "وصل طلب معاينة جديد في CRM تحت \"طلبات معاينة\" ومميز بعلامة \"بكرة\""
+    ]
   },
   {
     "journeyId": 2,
     "title": "رحلة مشتري جاهز يدفع كاش (Cash Offer Buyer)",
     "device": "iPhone SE",
-    "taps": 4,
+    "actualActions": "تنقل مباشر لصفحة العقار الكاش (/properties/prop-2-cash)",
+    "measuredTaps": "لم تُقس (رقم 4 السابق كان تقديراً يدوياً؛ السكريبت نفّذ تنقلاً واحداً)",
+    "crmStatus": "لم يُسجل",
+    "crmDetails": "لم يُسجل أي طلب حجز في الـ CRM بالمحاكي (لم يُرسل نموذج الدفع/العربون)",
     "duration": "0.9 ثانية",
-    "stalls": [],
-    "crmOutcome": "وصل طلب حجز مبدئي تحت \"طلبات حجز\" (نوع deposit) مع تطبيق خصم الكاش"
+    "stalls": []
   },
   {
     "journeyId": 3,
     "title": "رحلة مالك عقار للبيع والتقييم (Seller)",
     "device": "iPhone SE",
-    "taps": 8,
+    "actualActions": "تنقل لصفحة البيع والتقييم (/sell)",
+    "measuredTaps": "لم تُقس (رقم 8 السابق كان تقديراً يدوياً؛ السكريبت نفّذ تنقلاً واحداً)",
+    "crmStatus": "لم يُسجل",
+    "crmDetails": "لم يُسجل في الـ CRM بالمحاكي (لم يتم إكمال خطوات معالج البيع برمجياً)",
     "duration": "1.1 ثانية",
     "stalls": [
       {
@@ -35,112 +42,111 @@
         "reason": "src/components/PhoneInputField.jsx:131 لا يضع aria-invalid",
         "screenshot": "journey-3-iphone-se.png"
       }
-    ],
-    "crmOutcome": "تم حفظ الطلب في CRM تحت \"عروض بيع\" مع إرفاق التقييم التقديري المحسوب"
+    ]
   },
   {
     "journeyId": 4,
     "title": "رحلة عميل مغترب (Expat)",
     "device": "iPhone SE",
-    "taps": 5,
+    "actualActions": "تنقل لصفحة حاسبة التمويل والمغتربين (/financing)",
+    "measuredTaps": "لم تُقس (رقم 5 السابق كان تقديراً يدوياً؛ السكريبت نفّذ تنقلاً واحداً)",
+    "crmStatus": "لم يُسجل",
+    "crmDetails": "لم يُسجل في الـ CRM (حاسبة محلية فقط بالواجهة)",
     "duration": "1.1 ثانية",
-    "stalls": [],
-    "crmOutcome": "حساب أقساط التمويل وعرض المعادل بالعملة الأجنبية بنجاح"
+    "stalls": []
   },
   {
     "journeyId": 5,
     "title": "رحلة عميل راجع (Returning Client)",
     "device": "iPhone SE",
-    "taps": 5,
+    "actualActions": "تنقل لصفحة حسابي (/my-account)",
+    "measuredTaps": "لم تُقس (رقم 5 السابق كان تقديراً يدوياً؛ السكريبت نفّذ تنقلاً واحداً)",
+    "crmStatus": "لم يُسجل",
+    "crmDetails": "لم يُسجل في الـ CRM بالمحاكي (لم يتم ربط أو استرجاع جلسة فعلية)",
     "duration": "0.9 ثانية",
-    "stalls": [],
-    "crmOutcome": "تم ربط الطلب الثاني بنفس العميل ووضع شارة \"عميل راجع\" في لوحة CRM"
+    "stalls": []
   },
   {
     "journeyId": 6,
     "title": "رحلة موظف مبيعات في الشارع (Field Agent CRM)",
     "device": "iPhone SE",
-    "taps": 6,
+    "actualActions": "تنقل لشاشة الـ CRM (/crm)",
+    "measuredTaps": "لم تُقس (رقم 6 السابق كان تقديراً يدوياً؛ السكريبت نفّذ تنقلاً واحداً)",
+    "crmStatus": "لم يُسجل",
+    "crmDetails": "لم يُسجل أي تغيير في الـ CRM (اقتصر على فتح الصفحة والتصوير)",
     "duration": "1.0 ثانية",
     "stalls": [
       {
         "point": "جدول العملاء: التمرير الأفقي الإجباري داخل الكارت",
-        "reason": "crm-luxury.css:66 يفرض min-width: 720px على جدول العملاء مما يتطلب سحب جانبي يدوي لرؤية الإجراءات",
+        "reason": "crm-luxury.css يفرض عرضاً واسعاً على جدول العملاء في الموبايل",
         "screenshot": "journey-6-iphone-se.png"
       }
-    ],
-    "crmOutcome": "الموظف يشاهد فقط عملاء فريقه (sales_east) مع إمكانية تحديث الحالة إلى \"تم التواصل\""
+    ]
   },
   {
     "journeyId": 1,
     "title": "رحلة المشتري (Buyer)",
     "device": "Galaxy S8",
-    "taps": 6,
-    "duration": "2.4 ثانية",
-    "stalls": [
-      {
-        "point": "صفحة العقار: حجز المعاينة يتطلب التمرير لأسفل",
-        "reason": "شريط السعر وحجز المعاينة غير ظاهر في الشاشة الأولى بدون تمرير",
-        "screenshot": "journey-1-galaxy-s8.png"
-      }
-    ],
-    "crmOutcome": "وصل طلب معاينة جديد في CRM تحت \"طلبات معاينة\" ومميز بعلامة \"بكرة\""
+    "actualActions": "3 تنقلات بالمتصفح (الرئيسية -> قائمة العقارات -> صفحة عقار)",
+    "measuredTaps": "لم تُقس (تقدير يدوي سابق؛ 3 تنقلات فعلية)",
+    "crmStatus": "لم يُسجل",
+    "crmDetails": "لم يُسجل في الـ CRM بالمحاكي",
+    "duration": "2.6 ثانية",
+    "stalls": []
   },
   {
     "journeyId": 2,
     "title": "رحلة مشتري جاهز يدفع كاش (Cash Offer Buyer)",
     "device": "Galaxy S8",
-    "taps": 4,
+    "actualActions": "تنقل مباشر لصفحة العقار الكاش (/properties/prop-2-cash)",
+    "measuredTaps": "لم تُقس (تنقل واحد فعلي)",
+    "crmStatus": "لم يُسجل",
+    "crmDetails": "لم يُسجل في الـ CRM بالمحاكي",
     "duration": "0.9 ثانية",
-    "stalls": [],
-    "crmOutcome": "وصل طلب حجز مبدئي تحت \"طلبات حجز\" (نوع deposit) مع تطبيق خصم الكاش"
+    "stalls": []
   },
   {
     "journeyId": 3,
     "title": "رحلة مالك عقار للبيع والتقييم (Seller)",
     "device": "Galaxy S8",
-    "taps": 8,
+    "actualActions": "تنقل لصفحة البيع والتقييم (/sell)",
+    "measuredTaps": "لم تُقس (تنقل واحد فعلي)",
+    "crmStatus": "لم يُسجل",
+    "crmDetails": "لم يُسجل في الـ CRM بالمحاكي",
     "duration": "1.1 ثانية",
-    "stalls": [
-      {
-        "point": "معالج البيع: غياب مؤشر aria-invalid عند الخطأ في رقم الهاتف",
-        "reason": "src/components/PhoneInputField.jsx:131 لا يضع aria-invalid",
-        "screenshot": "journey-3-galaxy-s8.png"
-      }
-    ],
-    "crmOutcome": "تم حفظ الطلب في CRM تحت \"عروض بيع\" مع إرفاق التقييم التقديري المحسوب"
+    "stalls": []
   },
   {
     "journeyId": 4,
     "title": "رحلة عميل مغترب (Expat)",
     "device": "Galaxy S8",
-    "taps": 5,
+    "actualActions": "تنقل لصفحة حاسبة التمويل والمغتربين (/financing)",
+    "measuredTaps": "لم تُقس (تنقل واحد فعلي)",
+    "crmStatus": "لم يُسجل",
+    "crmDetails": "لم يُسجل في الـ CRM بالمحاكي",
     "duration": "1.0 ثانية",
-    "stalls": [],
-    "crmOutcome": "حساب أقساط التمويل وعرض المعادل بالعملة الأجنبية بنجاح"
+    "stalls": []
   },
   {
     "journeyId": 5,
     "title": "رحلة عميل راجع (Returning Client)",
     "device": "Galaxy S8",
-    "taps": 5,
+    "actualActions": "تنقل لصفحة حسابي (/my-account)",
+    "measuredTaps": "لم تُقس (تنقل واحد فعلي)",
+    "crmStatus": "لم يُسجل",
+    "crmDetails": "لم يُسجل في الـ CRM بالمحاكي",
     "duration": "0.9 ثانية",
-    "stalls": [],
-    "crmOutcome": "تم ربط الطلب الثاني بنفس العميل ووضع شارة \"عميل راجع\" في لوحة CRM"
+    "stalls": []
   },
   {
     "journeyId": 6,
     "title": "رحلة موظف مبيعات في الشارع (Field Agent CRM)",
     "device": "Galaxy S8",
-    "taps": 6,
-    "duration": "0.9 ثانية",
-    "stalls": [
-      {
-        "point": "جدول العملاء: التمرير الأفقي الإجباري داخل الكارت",
-        "reason": "crm-luxury.css:66 يفرض min-width: 720px على جدول العملاء مما يتطلب سحب جانبي يدوي لرؤية الإجراءات",
-        "screenshot": "journey-6-galaxy-s8.png"
-      }
-    ],
-    "crmOutcome": "الموظف يشاهد فقط عملاء فريقه (sales_east) مع إمكانية تحديث الحالة إلى \"تم التواصل\""
+    "actualActions": "تنقل لشاشة الـ CRM (/crm)",
+    "measuredTaps": "لم تُقس (تنقل واحد فعلي)",
+    "crmStatus": "لم يُسجل",
+    "crmDetails": "لم يُسجل في الـ CRM بالمحاكي",
+    "duration": "1.0 ثانية",
+    "stalls": []
   }
 ]

@@ -1,0 +1,40 @@
+{
+  "testedAt": "2026-10-13T20:27:21.544Z",
+  "environment": "Firebase Firestore Emulator + Adoptium Java 21",
+  "agentContext": {
+    "role": "sales_agent",
+    "desk": "sales_east",
+    "totalDeskLeads": 40
+  },
+  "measuredInTest": {
+    "totalReads": 289,
+    "totalWrites": 10,
+    "breakdown": {
+      "initialOpenDesk": 160,
+      "inMemoryFiltering": 0,
+      "serverFilterQueriesOptional": 28,
+      "drawerOpens20Leads": 40,
+      "updates10Leads": 10,
+      "listenerEventReads": 10,
+      "tabTransitions": 51
+    }
+  },
+  "estimatedFullDay8Hours": {
+    "totalReads": 733,
+    "totalWrites": 30,
+    "confidence": "تقديري (Extrapolated from 4 active cycles)"
+  },
+  "comparisonWithV1Theory": {
+    "v1TheoreticalFormula": {
+      "readsPerAgentDay": 3540,
+      "maxAgentsOnSpark": 14
+    },
+    "measuredReality": {
+      "measuredTestSessionReads": 289,
+      "measuredSessionWrites": 10,
+      "extrapolatedFullDayReads": 733,
+      "realCapacityOnSpark50k": 68,
+      "note": "الرقم القديم (3,540) كان ناتج معادلة تفترض 3 إعادة تحميل كاملة لـ 800 مستند بدلاً من التخزين المؤقت للـ SPA والتصفية الموضعية."
+    }
+  }
+}

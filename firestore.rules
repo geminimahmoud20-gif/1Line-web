@@ -128,6 +128,39 @@ service cloud.firestore {
           || hasPerm('deal.edit');
     }
 
+    // 🛡️ 1Line OS Stage Transitions & Deliverable Gate Controls
+    function validStageTransition() {
+      return !('status' in request.resource.data)
+          || request.resource.data.status == resource.data.get('status', 'new')
+          // 1. Lost Gate: must supply a reason when moving to lost
+          || (request.resource.data.status == 'lost'
+              && ('lostReason' in request.resource.data)
+              && request.resource.data.lostReason is string
+              && request.resource.data.lostReason.size() >= 2)
+          // 2. Qualified Gate: requires buyer profile, qualification questions, or budget details
+          || (request.resource.data.status == 'qualified'
+              && (('buyerProfile' in request.resource.data)
+                  || ('qualificationAnswers' in request.resource.data)
+                  || ('budget' in request.resource.data)
+                  || ('details' in request.resource.data)))
+          // 3. Negotiating Gate: requires completed site visit report or viewing unit
+          || (request.resource.data.status == 'negotiating'
+              && (('siteVisitReport' in request.resource.data)
+                  || ('viewingPropertyId' in request.resource.data)
+                  || isAdmin()))
+          // 4. Closing / Closed Gate: requires deal rights & founder approval on mega deals
+          || ((request.resource.data.status in ['closing', 'closed'])
+              && hasPerm('deal.edit')
+              && (
+                (!(('expectedValue' in request.resource.data) && request.resource.data.expectedValue >= 5000000)
+                 && !(('budget' in request.resource.data) && request.resource.data.budget is number && request.resource.data.budget >= 5000000))
+                || request.resource.data.get('isFounderApproved', false) == true
+                || isAdmin()
+              ))
+          // 5. Normal operational stages
+          || (request.resource.data.status in ['new', 'contacted', 'site_visit', 'matched']);
+    }
+
     // 🛡️ 1. LEADS & CUSTOMER INQUIRIES
     match /leads/{leadId} {
       // Current format: no contact fields here, its lead_contacts doc written in the same batch.
@@ -149,6 +182,7 @@ service cloud.firestore {
                        || (isDeskAgent() && inMyLeadQueue(resource.data) && inMyLeadQueue(request.resource.data)))
                     && keepsContactFields()
                     && closesDealOnlyWithDealRights()
+                    && validStageTransition()
                     && (!exists(contactPath(leadId)) || deskOf(getAfter(contactPath(leadId)).data) == deskOf(request.resource.data));
       allow delete: if isAdmin();
     }

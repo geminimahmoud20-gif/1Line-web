@@ -16,6 +16,7 @@
     "cypress:run": "cypress run",
     "emulators:journey": "npx -y firebase-tools@15 emulators:start --only firestore,auth --project line-c9601",
     "test:rules": "npx -y firebase-tools@15 emulators:exec --only firestore,auth --project line-c9601 \"node --test --test-concurrency=1 tests/rules/*.test.mjs\"",
+    "measure:workday": "npx -y firebase-tools@15 emulators:exec --only firestore,auth --project line-c9601 \"node scripts/crm-audit/measure-agent-workday.mjs\"",
     "prepare": "git config core.hooksPath .githooks && git config commit.template .gitmessage || true",
     "check:commits": "node scripts/check-commit-message.mjs --range"
   },
