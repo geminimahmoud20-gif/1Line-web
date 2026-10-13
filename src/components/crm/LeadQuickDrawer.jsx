@@ -10,7 +10,7 @@ import { validateStageTransition } from '../../services/stateMachineEngine';
 import StageDeliverableModal from './StageDeliverableModal';
 import ActiveEditorBanner from './ActiveEditorBanner';
 import ConcurrencyConflictModal from './ConcurrencyConflictModal';
-import { validateOptimisticUpdate, renewEntityLease } from '../../services/concurrencyEngine';
+import { validateOptimisticUpdate, renewEntityLease, releaseEntityLease } from '../../services/concurrencyEngine';
 
 export default function LeadQuickDrawer({
   lead,
@@ -80,8 +80,81 @@ export default function LeadQuickDrawer({
     .slice(0, 4);
   }, [properties, lead]);
 
+  // Soft editing presence lease (Heartbeat & unmount release)
+  useEffect(() => {
+    if (!lead?.id || !onUpdateLead) return;
+    const currentUser = {
+      uid: activeRole,
+      name: activeRole === 'super_admin' ? 'الإدارة العامة' : activeRole,
+      role: activeRole
+    };
+
+    const leaseRes = renewEntityLease(lead, currentUser);
+    if (leaseRes.renewed && (!lead.activeEditor || lead.activeEditor.uid === currentUser.uid)) {
+      onUpdateLead(lead.id, { activeEditor: leaseRes.lease });
+    }
+
+    const interval = setInterval(() => {
+      const ping = renewEntityLease(lead, currentUser);
+      if (ping.renewed) {
+        onUpdateLead(lead.id, { activeEditor: ping.lease });
+      }
+    }, 90000);
+
+    return () => {
+      clearInterval(interval);
+      if (lead?.activeEditor?.uid === currentUser.uid) {
+        onUpdateLead(lead.id, { activeEditor: null });
+      }
+    };
+  }, [lead, activeRole, onUpdateLead]);
+
   // Every hook above runs on each render; the early return must stay after them (React rules of hooks)
   if (!lead) return null;
+
+  const applySafeUpdate = (updates, successMsg) => {
+    if (!onUpdateLead) return false;
+    const currentUser = {
+      uid: activeRole,
+      name: activeRole === 'super_admin' ? 'الإدارة العامة' : activeRole,
+      role: activeRole
+    };
+
+    const optResult = validateOptimisticUpdate(lead, updates, lead.version, currentUser);
+    if (!optResult.success) {
+      setConflictModal({
+        isOpen: true,
+        conflictData: optResult,
+        pendingUpdates: updates
+      });
+      return false;
+    }
+
+    onUpdateLead(lead.id, optResult.updatedEntity);
+    if (successMsg) triggerToast?.(successMsg, 'success');
+    return true;
+  };
+
+  const handleForceOverwrite = () => {
+    if (!conflictModal.pendingUpdates || !onUpdateLead) return;
+    const currentUser = {
+      uid: activeRole,
+      name: activeRole === 'super_admin' ? 'الإدارة العامة' : activeRole,
+      role: activeRole
+    };
+    const newVersion = (conflictModal.conflictData?.currentVersion || 1) + 1;
+    const forcedEntity = {
+      ...lead,
+      ...conflictModal.pendingUpdates,
+      version: newVersion,
+      lastEditedBy: currentUser.name,
+      lastEditedUid: currentUser.uid,
+      updatedAt: new Date().toISOString()
+    };
+    onUpdateLead(lead.id, forcedEntity);
+    setConflictModal({ isOpen: false, conflictData: null, pendingUpdates: null });
+    triggerToast?.(isAr ? 'تم تجاوز التضارب وحفظ البيانات بنجاح' : 'Changes overwritten successfully', 'warning');
+  };
 
   // Next / Prev lead navigation index
   const currentIndex = filteredLeads.findIndex(l => l.id === lead.id);
@@ -140,9 +213,7 @@ export default function LeadQuickDrawer({
       updates.latestHandoffTask = validation.nextTask;
     }
 
-    onUpdateLead(lead.id, updates);
-
-    triggerToast?.(isAr ? `تم تحديث مرحلة العميل إلى "${stageObj?.label_ar}"` : `Stage updated to ${stageObj?.label_en}`, 'success');
+    applySafeUpdate(updates, isAr ? `تم تحديث مرحلة العميل إلى "${stageObj?.label_ar}"` : `Stage updated to ${stageObj?.label_en}`);
   };
 
   // Quick Call Outcome Logger
@@ -155,14 +226,12 @@ export default function LeadQuickDrawer({
 
     const nextStatus = outcome.includes('معاينة') ? 'site_visit' : (lead.status === 'new' ? 'contacted' : lead.status);
 
-    onUpdateLead(lead.id, {
+    applySafeUpdate({
       notes: updatedNotes,
       status: nextStatus,
       lastContactedAt: new Date().toISOString(),
       lastActivityAt: new Date().toISOString()
-    });
-
-    triggerToast?.(isAr ? `تم تسجيل المكالمة: "${outcome}"` : `Call logged: ${outcome}`, 'success');
+    }, isAr ? `تم تسجيل المكالمة: "${outcome}"` : `Call logged: ${outcome}`);
     trackEvent('crm_call_logged', { leadId: lead.id, outcome });
   };
 
@@ -175,13 +244,12 @@ export default function LeadQuickDrawer({
     const noteEntry = `📝 [ملاحظة ${dateStr} ${timeStr}]: ${newNote.trim()}`;
     const updatedNotes = lead.notes ? `${noteEntry}\n${lead.notes}` : noteEntry;
 
-    onUpdateLead(lead.id, {
+    const applied = applySafeUpdate({
       notes: updatedNotes,
       lastActivityAt: new Date().toISOString()
-    });
+    }, isAr ? 'تمت إضافة الملاحظة بنجاح' : 'Note added');
 
-    setNewNote('');
-    triggerToast?.(isAr ? 'تمت إضافة الملاحظة بنجاح' : 'Note added', 'success');
+    if (applied) setNewNote('');
   };
 
   // Schedule Viewing Action
@@ -196,17 +264,18 @@ export default function LeadQuickDrawer({
     const viewingEntry = `📍 [معاينة مجدولة ${dateFormatted}]: عقار ${matchedProp?.id} — ${matchedProp?.title_ar || matchedProp?.title_en}`;
     const updatedNotes = lead.notes ? `${viewingEntry}\n${lead.notes}` : viewingEntry;
 
-    onUpdateLead(lead.id, {
+    const applied = applySafeUpdate({
       status: 'site_visit',
       nextFollowUpAt: new Date(viewingDateTime).toISOString(),
       notes: updatedNotes,
       viewingPropertyId: selectedViewingPropId,
       lastActivityAt: new Date().toISOString()
-    });
+    }, isAr ? 'تمت جدولة المعاينة بنجاح وتحديث موعد المتابعة' : 'Viewing scheduled successfully');
 
-    setShowViewingForm(false);
-    triggerToast?.(isAr ? 'تمت جدولة المعاينة بنجاح وتحديث موعد المتابعة' : 'Viewing scheduled successfully', 'success');
-    trackEvent('crm_viewing_scheduled', { leadId: lead.id, propertyId: selectedViewingPropId });
+    if (applied) {
+      setShowViewingForm(false);
+      trackEvent('crm_viewing_scheduled', { leadId: lead.id, propertyId: selectedViewingPropId });
+    }
   };
 
   // Dynamic WhatsApp Pitch Templates based on Lead Journey Type
@@ -399,6 +468,23 @@ export default function LeadQuickDrawer({
 
         {/* Scrollable Body Content */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '20px', paddingBottom: '36px' }}>
+          {/* Active Editor Soft Lease Presence Banner */}
+          <ActiveEditorBanner
+            activeEditor={lead.activeEditor}
+            currentUser={{ uid: activeRole, role: activeRole, name: activeRole === 'super_admin' ? 'الإدارة العامة' : activeRole }}
+            onForceUnlock={() => {
+              const rel = releaseEntityLease(lead, { uid: activeRole, role: activeRole }, { forceOverride: true });
+              if (rel.released && onUpdateLead) {
+                onUpdateLead(lead.id, rel.updatedEntity);
+                triggerToast?.(isAr ? 'تم فك القفل التحريري بنجاح' : 'Lease unlocked', 'success');
+              }
+            }}
+            onRefresh={() => {
+              triggerToast?.(isAr ? 'تم استدعاء أحدث نسخة' : 'Refreshed', 'info');
+            }}
+            isAr={isAr}
+          />
+
           {/* Lead Header Card */}
           <div style={{
             background: 'var(--crm-card)',
