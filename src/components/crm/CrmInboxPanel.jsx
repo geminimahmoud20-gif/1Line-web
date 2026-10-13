@@ -126,6 +126,7 @@ export default function CrmInboxPanel({
 
   // Calculate SLA Breaches (Unclaimed leads older than 2 hours)
   const slaBreaches = useMemo(() => {
+    // eslint-disable-next-line react-hooks/purity -- SLA breach detection requires current clock time
     const twoHoursAgo = Date.now() - (2 * 60 * 60 * 1000);
     return leads.filter((l) => {
       const createdTime = l.createdAt?.toMillis ? l.createdAt.toMillis() : Date.parse(l.createdAt || l.timestamp || 0);
@@ -788,7 +789,7 @@ export default function CrmInboxPanel({
                   {activeTab === 'accounts' && (
                     <>
                       <span>📧 {lead.email || 'بدون بريد'}</span>
-                      <span>📅 {isAr ? 'تاريخ التسجيل:' : 'Registered:'} {new Date(lead.createdAt || Date.now()).toLocaleDateString('ar-EG')}</span>
+                      <span>📅 {isAr ? 'تاريخ التسجيل:' : 'Registered:'} {lead.createdAt ? new Date(lead.createdAt).toLocaleDateString('ar-EG') : '—'}</span>
                       <span>👤 {isAr ? 'مستخدم مسجل في البوابة' : 'Registered Web Client'}</span>
                     </>
                   )}

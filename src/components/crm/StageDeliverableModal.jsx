@@ -1,6 +1,6 @@
 // src/components/crm/StageDeliverableModal.jsx
 // Modal displayed when an agent attempts a stage transition without the mandatory deliverable.
-import { AlertCircle, ArrowLeft, CheckCircle2, ShieldAlert, Sparkles, X } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ShieldAlert, X } from 'lucide-react';
 
 export default function StageDeliverableModal({
   isOpen,
@@ -26,35 +26,35 @@ export default function StageDeliverableModal({
       padding: '16px'
     }}>
       <div className="crm-modal-card" style={{
-        backgroundColor: 'var(--crm-card, #1e293b)',
-        color: 'var(--crm-ink, #f8fafc)',
+        backgroundColor: 'var(--crm-card)',
+        color: 'var(--crm-ink)',
         borderRadius: '16px',
-        border: '1px solid var(--crm-border, #334155)',
+        border: '1px solid var(--crm-line)',
         width: '100%',
         maxWidth: '520px',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+        boxShadow: 'var(--crm-shadow, 0 25px 50px -12px rgba(0, 0, 0, 0.5))',
         overflow: 'hidden'
       }}>
         {/* Header */}
         <div style={{
           padding: '20px 24px',
-          borderBottom: '1px solid var(--crm-border, #334155)',
+          borderBottom: '1px solid var(--crm-line)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          backgroundColor: isHighValue ? 'rgba(239, 68, 68, 0.1)' : 'rgba(234, 179, 8, 0.1)'
+          backgroundColor: isHighValue ? 'var(--crm-danger-soft, rgba(239, 68, 68, 0.1))' : 'var(--crm-warn-soft, rgba(234, 179, 8, 0.1))'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             {isHighValue ? (
-              <ShieldAlert className="w-6 h-6 text-red-500" style={{ color: '#ef4444' }} />
+              <ShieldAlert size={24} style={{ color: 'var(--crm-danger)' }} />
             ) : (
-              <AlertCircle className="w-6 h-6 text-amber-500" style={{ color: '#eab308' }} />
+              <AlertCircle size={24} style={{ color: 'var(--crm-warn)' }} />
             )}
             <div>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>
+              <h3 style={{ margin: 0, fontSize: 'var(--crm-text-lg)', fontWeight: 'bold' }}>
                 {isHighValue ? 'اعتماد المؤسس إلزامي (صفقة كبرى)' : 'المخرج الإلزامي للمرحلة مطلوب'}
               </h3>
-              <p style={{ margin: 0, fontSize: '13px', color: 'var(--crm-muted, #94a3b8)' }}>
+              <p style={{ margin: 0, fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
                 قواعد تشغيل 1Line OS — لا انتقال بدون مخرج موثّق
               </p>
             </div>
@@ -65,33 +65,33 @@ export default function StageDeliverableModal({
             style={{
               background: 'none',
               border: 'none',
-              color: 'var(--crm-muted, #94a3b8)',
+              color: 'var(--crm-muted)',
               cursor: 'pointer',
               padding: '4px'
             }}
           >
-            <X className="w-5 h-5" />
+            <X size={20} />
           </button>
         </div>
 
         {/* Content */}
         <div style={{ padding: '24px' }}>
           <div style={{
-            backgroundColor: 'rgba(15, 23, 42, 0.6)',
+            backgroundColor: 'var(--crm-subtle)',
             borderRadius: '12px',
             padding: '16px',
-            border: '1px solid var(--crm-border, #334155)',
+            border: '1px solid var(--crm-line)',
             marginBottom: '20px'
           }}>
-            <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '8px', color: 'var(--crm-warn, #f59e0b)' }}>
+            <div style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold', marginBottom: '8px', color: 'var(--crm-warn)' }}>
               ⚠️ سبب إيقاف الانتقال:
             </div>
-            <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.6 }}>
+            <p style={{ margin: 0, fontSize: 'var(--crm-text-sm)', lineHeight: 1.6 }}>
               {blockerInfo.missingDeliverable}
             </p>
           </div>
 
-          <div style={{ fontSize: '13px', color: 'var(--crm-muted, #94a3b8)', lineHeight: 1.5 }}>
+          <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', lineHeight: 1.5 }}>
             💡 <strong>تعليمات الدليل الرسمي:</strong> لضمان عدم ضياع الصفقات بين التأهيل والمعاينة، يفرض النظام استيفاء متطلبات كل مرحلة بدقة لإنشاء مهمة التسليم الآلية للقسم التالي.
           </div>
         </div>
@@ -99,11 +99,11 @@ export default function StageDeliverableModal({
         {/* Footer Actions */}
         <div style={{
           padding: '16px 24px',
-          borderTop: '1px solid var(--crm-border, #334155)',
+          borderTop: '1px solid var(--crm-line)',
           display: 'flex',
           justifyContent: 'flex-end',
           gap: '12px',
-          backgroundColor: 'rgba(15, 23, 42, 0.4)'
+          backgroundColor: 'var(--crm-subtle)'
         }}>
           <button
             type="button"
@@ -112,9 +112,10 @@ export default function StageDeliverableModal({
             style={{
               padding: '10px 18px',
               borderRadius: '8px',
-              border: '1px solid var(--crm-border, #334155)',
+              border: '1px solid var(--crm-line)',
               background: 'transparent',
-              color: 'var(--crm-ink, #f8fafc)',
+              color: 'var(--crm-ink)',
+              fontSize: 'var(--crm-text-sm)',
               cursor: 'pointer'
             }}
           >
@@ -132,17 +133,18 @@ export default function StageDeliverableModal({
                 padding: '10px 20px',
                 borderRadius: '8px',
                 border: 'none',
-                background: isHighValue ? '#ef4444' : 'var(--crm-accent, #2563eb)',
-                color: '#fff',
+                background: isHighValue ? 'var(--crm-danger)' : 'var(--crm-accent)',
+                color: 'var(--crm-on-dark)',
                 fontWeight: 'bold',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '8px',
+                fontSize: 'var(--crm-text-sm)'
               }}
             >
               <span>استكمال المخرج الآن</span>
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft size={16} />
             </button>
           )}
         </div>
