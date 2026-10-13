@@ -32,20 +32,20 @@ const PROPERTY_TYPE_LABELS = {
   duplex: 'دوبلكس'
 };
 
-export function formatPropertyType(type) {
+function formatPropertyType(type) {
   if (!type || typeof type !== 'string') return '';
   const key = type.toLowerCase().trim();
   return PROPERTY_TYPE_LABELS[key] || type;
 }
 
-export function formatAreaName(area) {
+function formatAreaName(area) {
   if (!area || typeof area !== 'string') return '';
   const normalized = normalizeAreaKey(area);
   const found = getAreaById(normalized);
   return found?.name_ar || area;
 }
 
-export const TEAM_DESKS = [
+const TEAM_DESKS = [
   'Sales Team A',
   'Sales Team B',
   'Sales Management',
@@ -55,13 +55,13 @@ export const TEAM_DESKS = [
   'غير مسند'
 ];
 
-export function isLeadUnclaimed(lead) {
+function isLeadUnclaimed(lead) {
   if (!lead) return true;
   if (lead.ownerUid || lead.ownerName || lead.claimedBy) return false;
   return !lead.assignedTo || TEAM_DESKS.includes(lead.assignedTo) || lead.status === 'new';
 }
 
-export function isLeadClaimedByMe(lead, currentUser, currentStaffName) {
+function isLeadClaimedByMe(lead, currentUser, currentStaffName) {
   if (!lead) return false;
   if (lead.ownerUid && currentUser?.uid && lead.ownerUid === currentUser.uid) return true;
   if (lead.ownerName && currentStaffName && lead.ownerName === currentStaffName) return true;
@@ -70,7 +70,7 @@ export function isLeadClaimedByMe(lead, currentUser, currentStaffName) {
   return false;
 }
 
-export function getLeadOwnerDisplay(lead, isAr) {
+function getLeadOwnerDisplay(lead, isAr) {
   if (lead.ownerName) return lead.ownerName;
   if (lead.claimedBy) return lead.claimedBy;
   if (lead.assignedTo && !TEAM_DESKS.includes(lead.assignedTo)) {
@@ -82,7 +82,7 @@ export function getLeadOwnerDisplay(lead, isAr) {
   return isAr ? 'غير مستلم' : 'Unclaimed';
 }
 
-export function classifyLeadCategory(lead) {
+function classifyLeadCategory(lead) {
   const type = (lead?.type || '').toLowerCase();
   const source = (lead?.source || '').toLowerCase();
   const landing = (lead?.landingPage || '').toLowerCase();

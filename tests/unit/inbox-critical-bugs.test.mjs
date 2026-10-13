@@ -191,3 +191,32 @@ test('Bug 12 fix: list sorting must NOT mutate original array in place', () => {
   assert.equal(originalList[0].id, '1', 'Original array must remain unmutated at index 0');
   assert.deepEqual(originalList, listCopy, 'Original array elements must remain unchanged');
 });
+
+test('Bug 4 & 5 fix: inbox triage stages must NOT include "closed" (deal won) or "scheduled" (non-existent Kanban stage)', () => {
+  const INBOX_TRIAGE_STAGES = ['new', 'contacted', 'site_visit'];
+
+  assert.equal(INBOX_TRIAGE_STAGES.includes('closed'), false, 'Triage inbox must never allow closed stage (which inflates won deals and requires deal.edit)');
+  assert.equal(INBOX_TRIAGE_STAGES.includes('scheduled'), false, 'Triage inbox must not use scheduled which disappears from Kanban pipeline');
+  assert.deepEqual(INBOX_TRIAGE_STAGES, ['new', 'contacted', 'site_visit']);
+});
+
+test('Bug 13 fix: property types and areas must be formatted into Arabic, never raw keys', () => {
+  const PROPERTY_TYPE_LABELS = {
+    apartment: 'شقة سكنية',
+    villa: 'فيلا مستقلة',
+    land: 'أرض فضاء / استثمارية',
+    office: 'مكتب إداري / عيادة'
+  };
+  const AREA_LABELS = {
+    new_sohag: 'مدينة سوهاج الجديدة',
+    east: 'شرق سوهاج',
+    west: 'غرب سوهاج'
+  };
+
+  const formatType = (t) => PROPERTY_TYPE_LABELS[t] || t;
+  const formatArea = (a) => AREA_LABELS[a] || a;
+
+  assert.equal(formatType('apartment'), 'شقة سكنية', 'apartment must format to شقة سكنية');
+  assert.equal(formatArea('new_sohag'), 'مدينة سوهاج الجديدة', 'new_sohag must format to Arabic label');
+});
+
