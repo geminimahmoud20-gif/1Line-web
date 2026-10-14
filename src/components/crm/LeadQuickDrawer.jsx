@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { X, Phone, MessageSquare, Building, ChevronRight, ChevronLeft, Trash2, Plus, Eye } from 'lucide-react';
 import { SOHAG_AREAS, PROPERTY_TYPES } from '../../data/propertiesData';
 import { trackEvent } from '../../utils/visitorTracker';
@@ -35,7 +35,7 @@ export default function LeadQuickDrawer({
   // Dirty State (Unsaved Changes) Protection
   const hasUnsavedChanges = Boolean(newNote.trim() || (showViewingForm && (viewingDateTime || selectedViewingPropId)));
 
-  const safeClose = () => {
+  const safeClose = useCallback(() => {
     if (hasUnsavedChanges) {
       const confirmDiscard = window.confirm(
         isAr 
@@ -45,7 +45,7 @@ export default function LeadQuickDrawer({
       if (!confirmDiscard) return;
     }
     onClose();
-  };
+  }, [hasUnsavedChanges, isAr, onClose]);
 
   // Close on Escape key & browser back navigation (mobile gesture)
   useEffect(() => {
@@ -67,7 +67,7 @@ export default function LeadQuickDrawer({
         window.history.back();
       }
     };
-  }, [hasUnsavedChanges, isAr, onClose]);
+  }, [safeClose]);
 
   // Smart Context Matching Properties for this Lead
   const matchedProperties = useMemo(() => {

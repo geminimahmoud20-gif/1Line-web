@@ -75,7 +75,7 @@ export default function KanbanPipeline({
   const toggleStageCollapse = (stageId) => {
     setCollapsedStages(prev => {
       const next = prev.includes(stageId) ? prev.filter(id => id !== stageId) : [...prev, stageId];
-      try { localStorage.setItem('oneline_kanban_collapsed_stages', JSON.stringify(next)); } catch {}
+      try { localStorage.setItem('oneline_kanban_collapsed_stages', JSON.stringify(next)); } catch { /* ignore storage error */ }
       return next;
     });
   };
@@ -608,7 +608,7 @@ export default function KanbanPipeline({
                   border: `1px solid ${stage.color}`,
                   borderRadius: '12px',
                   padding: '2px 6px',
-                  fontSize: '11px',
+                  fontSize: 'var(--crm-text-xs)',
                   fontWeight: 800
                 }}>
                   {count}
@@ -836,7 +836,7 @@ export default function KanbanPipeline({
                             <div className="kb-menu">
                               {/* Direct Jump To Any Stage */}
                               <div style={{ borderBottom: '1px solid var(--crm-line)', paddingBottom: '4px', marginBottom: '4px' }}>
-                                <span style={{ fontSize: '11px', color: 'var(--crm-faint)', padding: '2px 8px', display: 'block', fontWeight: 600 }}>
+                                <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)', padding: '2px 8px', display: 'block', fontWeight: 600 }}>
                                   {isAr ? 'نقل مباشر إلى مرحلة:' : 'Direct Move to:'}
                                 </span>
                                 {PIPELINE_STAGES.filter(s => s.id !== (lead.status || 'new')).map(targetStage => (

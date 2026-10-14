@@ -7,7 +7,6 @@ import {
   Zap
 } from 'lucide-react';
 import { parseMoney, leadScore, LEAD_SCORE_HIGH } from '../../utils/crmLeadViews';
-import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { openWhatsAppSafely } from '../../utils/founderCmsData';
 import LeadScorePill from './LeadScorePill';
 

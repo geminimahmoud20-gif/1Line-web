@@ -39,7 +39,9 @@ export default function CrmSidebar({
     try {
       const saved = localStorage.getItem('oneline_crm_workspace_mode');
       if (saved === 'sales' || saved === 'full') return saved;
-    } catch (e) {}
+    } catch {
+      /* ignore storage errors */
+    }
     return isSalesRole ? 'sales' : 'full';
   });
 
@@ -47,7 +49,9 @@ export default function CrmSidebar({
     setWorkspaceMode(mode);
     try {
       localStorage.setItem('oneline_crm_workspace_mode', mode);
-    } catch (e) {}
+    } catch {
+      /* ignore storage errors */
+    }
     if (mode === 'sales' && !['inbox', 'leads', 'kanban', 'matching', 'agents'].includes(activeTab)) {
       setActiveTab('inbox');
     }
@@ -363,7 +367,7 @@ export default function CrmSidebar({
                 style={{ justifyContent: 'center', width: '44px', height: '40px', padding: 0 }}
                 title={workspaceMode === 'sales' ? (isAr ? 'مساحة العمل: تركيز المبيعات (انقر للتحكم الشامل)' : 'Sales Focus (Click for Full Command)') : (isAr ? 'مساحة العمل: التحكم الشامل (انقر لتركيز المبيعات)' : 'Full Command (Click for Sales Focus)')}
               >
-                <span style={{ fontSize: '18px' }}>{workspaceMode === 'sales' ? '🎯' : '⚡'}</span>
+                <span style={{ fontSize: 'var(--crm-text-lg)' }}>{workspaceMode === 'sales' ? '🎯' : '⚡'}</span>
               </button>
             </div>
           )}

@@ -4,6 +4,15 @@
 //  run them directly.
 // =============================================================
 
+export function getNormalizedPropertyStatus(prop) {
+  if (!prop) return 'published';
+  if (prop.isDeleted || prop.status === 'trash') return 'trash';
+  if (prop.status === 'sold') return 'sold';
+  if (prop.status === 'under_negotiation' || prop.status === 'negotiating') return 'under_negotiation';
+  if (prop.status === 'hidden' || prop.status === 'archived' || prop.status === 'draft' || prop.isArchived) return 'hidden';
+  return 'published';
+}
+
 /** Dashboard counters for the given leads */
 export function computeCrmAnalytics(leads = []) {
   const todayStr = new Date().toDateString();
