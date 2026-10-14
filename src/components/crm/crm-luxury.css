@@ -113,7 +113,10 @@
 [class*="table-wrapper"], [class*="table-scroll"], .crm-table-scroll-wrapper { 
   overflow-x: auto; 
   max-width: 100%; 
-  border-radius: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--crm-line);
+  background: var(--crm-card);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
 /* ── Clean Table Status Pills with Integrated Select ────────── */
@@ -160,27 +163,29 @@
   background-position: right center !important;
 }
 
-/* Status variants: soft, calming, non-clashing pastel surfaces */
-.status-pill-new { background: #EFF6FF !important; color: #1D4ED8 !important; border: 1px solid #DBEAFE !important; }
-.status-pill-new .crm-status-dot { background: #2563EB; }
+/* Status variants: soft, calming, non-clashing surfaces in both light and dark mode */
+.status-pill-new { background: var(--crm-info-soft) !important; color: var(--crm-info) !important; border: 1px solid var(--crm-info-line) !important; }
+.status-pill-new .crm-status-dot { background: var(--crm-info); }
 
-.status-pill-contacted { background: #FFFBEB !important; color: #B45309 !important; border: 1px solid #FDE68A !important; }
-.status-pill-contacted .crm-status-dot { background: #F59E0B; }
+.status-pill-contacted { background: var(--crm-warn-soft) !important; color: var(--crm-warn) !important; border: 1px solid var(--crm-warn-line) !important; }
+.status-pill-contacted .crm-status-dot { background: var(--crm-warn); }
 
-.status-pill-site_visit { background: #F0F9FF !important; color: #0369A1 !important; border: 1px solid #BAE6FD !important; }
+.status-pill-site_visit { background: rgba(14, 165, 233, 0.12) !important; color: #0284C7 !important; border: 1px solid rgba(14, 165, 233, 0.35) !important; }
 .status-pill-site_visit .crm-status-dot { background: #0EA5E9; }
 
-.status-pill-negotiating { background: #FAF5FF !important; color: #6D28D9 !important; border: 1px solid #E9D5FF !important; }
-.status-pill-negotiating .crm-status-dot { background: #8B5CF6; }
+:is(.dark-theme, [data-theme="dark"]) .status-pill-site_visit { color: #38BDF8 !important; }
 
-.status-pill-closing { background: var(--crm-accent-soft) !important; color: var(--crm-accent-text) !important; border: 1px solid rgba(179, 138, 69, 0.25) !important; }
+.status-pill-negotiating { background: var(--crm-violet-soft) !important; color: var(--crm-violet) !important; border: 1px solid var(--crm-violet-line) !important; }
+.status-pill-negotiating .crm-status-dot { background: var(--crm-violet); }
+
+.status-pill-closing { background: var(--crm-accent-soft) !important; color: var(--crm-accent-text) !important; border: 1px solid rgba(179, 138, 69, 0.35) !important; }
 .status-pill-closing .crm-status-dot { background: var(--crm-accent); }
 
-.status-pill-closed { background: #ECFDF5 !important; color: #047857 !important; border: 1px solid #A7F3D0 !important; }
-.status-pill-closed .crm-status-dot { background: #10B981; }
+.status-pill-closed { background: var(--crm-positive-soft) !important; color: var(--crm-positive) !important; border: 1px solid var(--crm-positive-line) !important; }
+.status-pill-closed .crm-status-dot { background: var(--crm-positive); }
 
-.status-pill-lost { background: #FEF2F2 !important; color: #991B1B !important; border: 1px solid #FECACA !important; }
-.status-pill-lost .crm-status-dot { background: #EF4444; }
+.status-pill-lost { background: var(--crm-danger-soft) !important; color: var(--crm-danger) !important; border: 1px solid var(--crm-danger-line) !important; }
+.status-pill-lost .crm-status-dot { background: var(--crm-danger); }
 
 /* ── Clean Table Next Action Cell ──────────────────────────── */
 .crm-next-action-cell {
@@ -244,17 +249,23 @@
   background: var(--crm-card);
 }
 .crm-agent-avatar-sm {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  background: #0F172A;
-  color: #FFFFFF;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  color: #D4AF37;
   font-size: var(--crm-text-xs);
   font-weight: 700;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  border: 1px solid rgba(212, 175, 55, 0.25);
+}
+:is(.dark-theme, [data-theme="dark"]) .crm-agent-avatar-sm {
+  background: rgba(255, 255, 255, 0.12);
+  color: #E5C384;
+  border-color: rgba(212, 175, 55, 0.4);
 }
 .crm-agent-select {
   appearance: none;
@@ -368,6 +379,62 @@
   color: #F87171 !important;
 }
 
+/* ── Modern Table Row Context Menu (.kb-menu) ──────────────── */
+.kb-menu {
+  position: absolute;
+  z-index: 70;
+  top: calc(100% + 4px);
+  inset-inline-start: auto;
+  inset-inline-end: 0;
+  min-width: 195px;
+  padding: 6px;
+  border-radius: 12px;
+  background: var(--crm-card) !important;
+  border: 1px solid var(--crm-line-strong) !important;
+  box-shadow: 0 14px 34px -4px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: fadeInDown 0.15s ease-out;
+}
+
+.kb-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--crm-ink);
+  font-family: inherit;
+  font-size: var(--crm-text-xs);
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.kb-menu button:hover:not(:disabled) {
+  background: var(--crm-subtle);
+  color: var(--crm-accent-text);
+}
+
+.kb-menu button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.kb-menu button.is-danger {
+  color: var(--crm-danger) !important;
+}
+
+.kb-menu button.is-danger:hover:not(:disabled) {
+  background: var(--crm-danger-soft) !important;
+  color: var(--crm-danger) !important;
+}
+
 /* ── Badges & pills: calm, readable, never uppercase shouting ── */
 .crm-layout .badge,
 .crm-layout .lead-score-pill {
@@ -379,8 +446,8 @@
   padding: 3px 10px !important;
   white-space: nowrap;
 }
-.crm-layout .lead-score-pill.score-high { background: #ECFDF5 !important; color: #047857 !important; border: 1px solid #A7F3D0 !important; }
-.crm-layout .lead-score-pill.score-medium { background: #FFFBEB !important; color: #B45309 !important; border: 1px solid #FDE68A !important; }
+.crm-layout .lead-score-pill.score-high { background: var(--crm-positive-soft) !important; color: var(--crm-positive) !important; border: 1px solid var(--crm-positive-line) !important; }
+.crm-layout .lead-score-pill.score-medium { background: var(--crm-warn-soft) !important; color: var(--crm-warn) !important; border: 1px solid var(--crm-warn-line) !important; }
 
 /* Minimum readable size across the CRM */
 .crm-content-area [style*="font-size: 0.6"],
@@ -395,7 +462,7 @@
 /* ── Buttons: one system (primary ink, secondary hairline, gold accent) ── */
 .crm-content-area button,
 .crm-topbar button {
-  font-family: var(--font-ar);
+  font-family: var(--crm-font) !important;
   transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
 }
 .crm-content-area button[style*="border-radius: 7px"],
@@ -1436,7 +1503,7 @@ button.crm-lead-chip.is-dupe:hover { text-decoration: underline; }
 /* ── Modern Client Table Row Polish ──────────────────────── */
 .crm-client-identity-wrap {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
 }
 
@@ -1454,6 +1521,31 @@ button.crm-lead-chip.is-dupe:hover { text-decoration: underline; }
   flex-shrink: 0;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
   border: 1px solid rgba(212, 175, 55, 0.2);
+  margin-top: 2px;
+}
+
+/* ── Modern Requirements Cell ────────────────────────────── */
+.crm-lead-req-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-width: 280px;
+  white-space: normal;
+}
+
+.crm-lead-budget-val {
+  color: var(--crm-positive);
+  font-size: var(--crm-text-sm);
+  font-weight: 800;
+  font-family: var(--font-number);
+  letter-spacing: 0.02em;
+}
+
+.crm-lead-spec-sub {
+  color: var(--crm-muted);
+  font-size: var(--crm-text-xs);
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .crm-client-name-link {
@@ -2247,6 +2339,9 @@ button.crm-lead-chip.is-dupe:hover { text-decoration: underline; }
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
 }
 
 .crm-lead-kpi-card::after {
@@ -2324,6 +2419,8 @@ button.crm-lead-chip.is-dupe:hover { text-decoration: underline; }
   border: 1px solid transparent;
   transition: all 0.15s ease;
   user-select: none;
+  font: inherit;
+  text-align: inherit;
 }
 .crm-temp-badge-interactive:hover {
   transform: scale(1.05);
@@ -2686,5 +2783,46 @@ mark.crm-search-highlight {
   border-color: rgba(212, 175, 55, 0.7);
   transform: translateY(-1px);
 }
+
+.crm-inbox-claim-btn {
+  background: var(--crm-danger);
+  color: var(--crm-on-dark);
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: var(--crm-text-xs);
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+  transition: all 0.15s ease;
+}
+
+.crm-inbox-claim-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+}
+
+.crm-inbox-claimed-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: var(--crm-bg);
+  border: 1px solid var(--crm-line);
+  color: var(--crm-ink);
+  font-size: var(--crm-text-xs);
+  font-weight: 700;
+}
+
+.crm-inbox-claimed-badge.is-mine {
+  background: var(--crm-positive-soft);
+  border-color: var(--crm-positive);
+  color: var(--crm-positive);
+}
+
 
 

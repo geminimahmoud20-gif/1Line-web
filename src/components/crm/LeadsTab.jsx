@@ -454,83 +454,80 @@ export default function LeadsTab({
 
       {/* 📊 Executive Pipeline KPI Mini-Strip */}
       <div className="crm-lead-kpi-strip">
-        <div 
+        <button 
+          type="button"
           className="crm-lead-kpi-card is-gold" 
-          role="button" 
-          tabIndex={0}
           onClick={() => setLeadFilter('all')}
-          style={{ cursor: 'pointer' }}
           title={isAr ? 'عرض جميع العملاء' : 'View all leads'}
+          aria-label={isAr ? `إجمالي العملاء: ${kpiStats.total}` : `Total leads: ${kpiStats.total}`}
         >
           <div className="crm-lead-kpi-info">
             <span className="crm-lead-kpi-lbl">{isAr ? 'إجمالي العملاء' : 'Total Leads'}</span>
             <span className="crm-lead-kpi-val">{kpiStats.total}</span>
           </div>
-          <div className="crm-lead-kpi-icon-wrap">
+          <div className="crm-lead-kpi-icon-wrap" aria-hidden="true">
             <Users size={18} />
           </div>
-        </div>
+        </button>
 
-        <div 
+        <button 
+          type="button"
           className="crm-lead-kpi-card is-hot"
-          role="button"
-          tabIndex={0}
           onClick={() => setTemperatureFilter('hot')}
-          style={{ cursor: 'pointer' }}
           title={isAr ? 'تصفية العملاء الساخنين' : 'Filter hot leads'}
+          aria-label={isAr ? `عملاء ساخنون: ${kpiStats.hot}` : `Hot leads: ${kpiStats.hot}`}
         >
           <div className="crm-lead-kpi-info">
             <span className="crm-lead-kpi-lbl">{isAr ? 'عملاء ساخنون 🔥' : 'Hot Deals'}</span>
             <span className="crm-lead-kpi-val" style={{ color: 'var(--crm-danger)' }}>{kpiStats.hot}</span>
           </div>
-          <div className="crm-lead-kpi-icon-wrap">
+          <div className="crm-lead-kpi-icon-wrap" aria-hidden="true">
             <Flame size={18} />
           </div>
-        </div>
+        </button>
 
-        <div 
+        <button 
+          type="button"
           className="crm-lead-kpi-card is-due"
-          role="button"
-          tabIndex={0}
           onClick={() => setLeadFilter('due')}
-          style={{ cursor: 'pointer' }}
           title={isAr ? 'متابعات اليوم والمتأخرة' : 'Due today'}
+          aria-label={isAr ? `متابعة اليوم: ${kpiStats.due}` : `Due follow-ups: ${kpiStats.due}`}
         >
           <div className="crm-lead-kpi-info">
             <span className="crm-lead-kpi-lbl">{isAr ? 'متابعة اليوم ⏰' : 'Due Follow-ups'}</span>
             <span className="crm-lead-kpi-val" style={{ color: 'var(--crm-warn)' }}>{kpiStats.due}</span>
           </div>
-          <div className="crm-lead-kpi-icon-wrap">
+          <div className="crm-lead-kpi-icon-wrap" aria-hidden="true">
             <Calendar size={18} />
           </div>
-        </div>
+        </button>
 
-        <div 
+        <button 
+          type="button"
           className="crm-lead-kpi-card is-unanswered"
-          role="button"
-          tabIndex={0}
           onClick={() => setLeadFilter('unanswered')}
-          style={{ cursor: 'pointer' }}
           title={isAr ? 'عملاء بانتظار أول رد' : 'Awaiting reply'}
+          aria-label={isAr ? `عملاء بانتظار الرد: ${kpiStats.unanswered}` : `Awaiting reply: ${kpiStats.unanswered}`}
         >
           <div className="crm-lead-kpi-info">
             <span className="crm-lead-kpi-lbl">{isAr ? 'مستني رد ⚡' : 'Awaiting Reply'}</span>
             <span className="crm-lead-kpi-val" style={{ color: 'var(--crm-info)' }}>{kpiStats.unanswered}</span>
           </div>
-          <div className="crm-lead-kpi-icon-wrap">
+          <div className="crm-lead-kpi-icon-wrap" aria-hidden="true">
             <AlertCircle size={18} />
           </div>
-        </div>
+        </button>
 
         <div 
           className="crm-lead-kpi-card is-win"
           title={isAr ? `صفقات ناجحة (${kpiStats.won}) ونسبة إغلاق ${kpiStats.winRate}%` : `Win rate ${kpiStats.winRate}%`}
+          aria-label={isAr ? `نسبة الإغلاق: ${kpiStats.winRate}%` : `Win rate: ${kpiStats.winRate}%`}
         >
           <div className="crm-lead-kpi-info">
             <span className="crm-lead-kpi-lbl">{isAr ? 'نسبة الإغلاق 🎯' : 'Win Rate'}</span>
             <span className="crm-lead-kpi-val" style={{ color: 'var(--crm-positive)' }}>{kpiStats.winRate}%</span>
           </div>
-          <div className="crm-lead-kpi-icon-wrap">
+          <div className="crm-lead-kpi-icon-wrap" aria-hidden="true">
             <Trophy size={18} />
           </div>
         </div>
@@ -1283,13 +1280,13 @@ export default function LeadsTab({
                   {/* Requirements */}
                   {visibleColumns.requirements && (
                     <td data-label={isAr ? 'المواصفات' : 'Requirements'}>
-                      <div style={{ fontSize: 'var(--crm-text-sm)', maxWidth: '280px', whiteSpace: 'normal' }}>
-                        {l.details?.budget && (
-                          <strong style={{ color: 'var(--crm-positive)', display: 'block', marginBottom: '2px' }}>
-                            <bdi>{formatBudget(l.details.budget, isAr)}</bdi>
+                      <div className="crm-lead-req-cell">
+                        {(l.budget || l.details?.budget || l.details?.expectedPrice) ? (
+                          <strong className="crm-lead-budget-val">
+                            <bdi>{formatBudget(l.budget || l.details?.budget || l.details?.expectedPrice, isAr)}</bdi>
                           </strong>
-                        )}
-                        <span style={{ color: 'var(--crm-muted)' }}>
+                        ) : null}
+                        <span className="crm-lead-spec-sub">
                           {getLocalizedPropertyType(l.propertyType || l.details?.propertyType || l.type)} • {getLocalizedArea(l.area || l.details?.area || l.details?.district || 'east')}
                         </span>
                         {leadFilter !== 'viewing_request' && isViewingLead(l) && (
@@ -1313,16 +1310,18 @@ export default function LeadsTab({
                     <td data-label={isAr ? 'الجدية والحرارة' : 'Score & Temp'}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <LeadScorePill lead={l} isAr={isAr} />
-                        <div
+                        <button
+                          type="button"
                           className={`crm-temp-badge-interactive is-${temp || 'unset'}`}
                           onClick={(e) => cycleTemperature(l, e)}
                           title={isAr ? 'انقر للتبديل السريع لدرجة الاهتمام (ساخن 🔥 / دافئ ⚡ / بارد ❄️)' : 'Click to cycle temperature'}
+                          aria-label={isAr ? `تغيير حرارة ${l.name || 'العميل'}` : `Cycle temperature of ${l.name || 'lead'}`}
                         >
                           {temp === 'hot' && <>🔥 {isAr ? 'ساخن' : 'Hot'}</>}
                           {temp === 'warm' && <>⚡ {isAr ? 'دافئ' : 'Warm'}</>}
                           {temp === 'cold' && <>❄️ {isAr ? 'بارد' : 'Cold'}</>}
                           {!['hot', 'warm', 'cold'].includes(temp) && <>⚪ {isAr ? 'غير محدد' : 'Unset'}</>}
-                        </div>
+                        </button>
                       </div>
                     </td>
                   )}

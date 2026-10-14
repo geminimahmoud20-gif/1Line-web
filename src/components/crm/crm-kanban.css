@@ -184,6 +184,7 @@
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
   color: var(--crm-ink);
   cursor: grab;
+  touch-action: manipulation;
   transition: border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 

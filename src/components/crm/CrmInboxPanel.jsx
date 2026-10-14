@@ -459,10 +459,10 @@ export default function CrmInboxPanel({
                   <IconComp size={18} />
                 </div>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.84rem', color: isActive ? 'var(--crm-ink)' : 'var(--crm-body)' }}>
+                  <div style={{ fontWeight: 700, fontSize: 'var(--crm-text-sm)', color: isActive ? 'var(--crm-ink)' : 'var(--crm-body)' }}>
                     {isAr ? t.label_ar : t.label_en}
                   </div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--crm-muted)', marginTop: '2px' }}>
+                  <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px' }}>
                     {t.count} {isAr ? 'طلب إجمالي' : 'total'}
                   </div>
                 </div>
@@ -608,12 +608,12 @@ export default function CrmInboxPanel({
                     </div>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                        <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 800, color: 'var(--crm-ink)' }}>
+                        <h4 style={{ margin: 0, fontSize: 'var(--crm-text-md)', fontWeight: 800, color: 'var(--crm-ink)' }}>
                           {lead.name || (isAr ? 'عميل بدون اسم' : 'Unnamed Lead')}
                         </h4>
                         {/* Stream Identifier Pill */}
                         <span style={{
-                          fontSize: '0.72rem',
+                          fontSize: 'var(--crm-text-xs)',
                           fontWeight: 700,
                           background: 'var(--crm-bg)',
                           padding: '2px 8px',
@@ -627,7 +627,7 @@ export default function CrmInboxPanel({
                            activeTab === 'accounts' ? '👤 حساب مسجل' : '🤝 وسيط شريك'}
                         </span>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.75rem', color: 'var(--crm-muted)', marginTop: '4px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '4px' }}>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                           <span>📞</span>
                           <bdi dir="ltr" style={{ unicodeBidi: 'isolate', fontFamily: 'monospace', fontWeight: 600 }}>
@@ -651,38 +651,13 @@ export default function CrmInboxPanel({
                         type="button"
                         disabled={claimingId === lead.id}
                         onClick={() => handleClaimLead(lead)}
-                        style={{
-                          background: '#DC2626',
-                          color: '#FFFFFF',
-                          border: 'none',
-                          borderRadius: '8px',
-                          padding: '6px 14px',
-                          fontSize: '0.8rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          boxShadow: '0 2px 8px rgba(220, 38, 38, 0.25)',
-                          transition: 'all 0.15s ease'
-                        }}
+                        className="crm-inbox-claim-btn"
                       >
                         <span>✋ {claimingId === lead.id ? (isAr ? 'جارٍ الاستلام...' : 'Claiming...') : (isAr ? 'استلمت الطلب' : 'Claim Lead')}</span>
                       </button>
                     ) : (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '5px',
-                          padding: '5px 10px',
-                          borderRadius: '8px',
-                          background: isClaimedByMe ? 'rgba(16, 185, 129, 0.1)' : 'var(--crm-bg)',
-                          border: isClaimedByMe ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid var(--crm-line)',
-                          color: isClaimedByMe ? '#059669' : 'var(--crm-ink)',
-                          fontSize: '0.75rem',
-                          fontWeight: 700
-                        }}>
+                        <span className={`crm-inbox-claimed-badge ${isClaimedByMe ? 'is-mine' : ''}`}>
                           <Lock size={12} />
                           <span>{isClaimedByMe ? (isAr ? 'قيد متابعتك 🔒' : 'Assigned to you') : (isAr ? `مع: ${ownerDisplay}` : `With: ${ownerDisplay}`)}</span>
                         </span>
@@ -697,7 +672,7 @@ export default function CrmInboxPanel({
                               border: '1px solid var(--crm-line)',
                               borderRadius: '6px',
                               padding: '4px 8px',
-                              fontSize: '0.75rem',
+                              fontSize: 'var(--crm-text-xs)',
                               cursor: 'pointer',
                               color: 'var(--crm-muted)'
                             }}
@@ -811,7 +786,7 @@ export default function CrmInboxPanel({
                   )}
 
                   {lead.notes && (
-                    <div style={{ width: '100%', fontSize: '0.75rem', color: 'var(--crm-muted)', borderTop: '1px dashed var(--crm-line)', paddingTop: '6px', marginTop: '2px', lineHeight: 1.6 }}>
+                    <div style={{ width: '100%', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', borderTop: '1px dashed var(--crm-line)', paddingTop: '6px', marginTop: '2px', lineHeight: 1.6 }}>
                       <strong style={{ color: 'var(--crm-ink)' }}>📝 {isAr ? 'ملاحظات:' : 'Notes:'}</strong>{' '}
                       {(sanitizeAndMergeNotes(lead.notes) || '')
                         .replace(/في\s+undefined\b/gi, 'في سوهاج')
@@ -826,7 +801,7 @@ export default function CrmInboxPanel({
                 {/* Photos Preview Strip if photos exist */}
                 {d.images && d.images.length > 0 && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflowX: 'auto', padding: '4px 0' }}>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--crm-muted)', fontWeight: 700 }}>📸 {d.images.length} صور:</span>
+                    <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: 700 }}>📸 {d.images.length} صور:</span>
                     {d.images.slice(0, 4).map((img, _idx) => (
                       <img
                         key={_idx}
@@ -850,7 +825,7 @@ export default function CrmInboxPanel({
                 }}>
                   {/* The Stages Lifecycle Stepper */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '0.74rem', color: 'var(--crm-muted)', fontWeight: 700 }}>
+                    <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: 700 }}>
                       {isAr ? 'مرحلة المتابعة:' : 'Stage:'}
                     </span>
                     <div className="crm-inbox-stage-tracker">
