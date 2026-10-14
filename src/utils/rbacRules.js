@@ -3,6 +3,7 @@
 // =============================================================
 
 import { DEFAULT_ACCESS } from './accessModel.js';
+import { formatPhoneNumber } from './crmNoteSanitizer.js';
 
 export const CRM_ROLES = {
   SUPER_ADMIN: 'super_admin',
@@ -199,8 +200,9 @@ export const canViewLeadPhone = (role, perms = null) => {
  */
 export const maskPhoneNumber = (phone, role, perms = null) => {
   if (!phone) return '—';
-  if (canViewLeadPhone(role, perms)) return phone;
-  const str = String(phone).trim();
+  const formatted = formatPhoneNumber(phone);
+  if (canViewLeadPhone(role, perms)) return formatted;
+  const str = String(formatted).trim();
   if (str.length <= 4) return '***';
   return str.slice(0, 3) + '****' + str.slice(-2);
 };

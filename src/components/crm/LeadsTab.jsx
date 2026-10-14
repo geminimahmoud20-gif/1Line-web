@@ -1,16 +1,18 @@
-import { Download, Building, Users, User, Inbox, MessageSquare, Edit3, Trash2, Clock, Zap, Plus, UserPlus, Send, Archive } from 'lucide-react';
+import { Download, Users, Inbox, Trash2, Clock, Plus, UserPlus, SlidersHorizontal } from 'lucide-react';
 import { SOHAG_AREAS } from '../../data/propertiesData';
 import { formatFollowUp, formatBudget } from '../../utils/crmLabels';
 import DeskOptions from './DeskOptions';
 import ExportMenu from './ExportMenu';
 import DataImportModal from './DataImportModal';
 import { getAreas } from '../../utils/areasData';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import LostReasonModal from './LostReasonModal';
 import MergeLeadsModal from './MergeLeadsModal';
 import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, RESPONSE_SLA_MS, isOverdue, isUnassigned, isStale, localDayKey, getLeadVisitDate, getLeadVisitSlot, isViewingLead, isSellerLead, isAccountLead } from '../../utils/crmLeadViews';
 import { useProperties } from '../../context/PropertiesContext';
 import LeadScorePill from './LeadScorePill';
+import LeadTableRowActions from './LeadTableRowActions';
+import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 
 export default function LeadsTab({
   activeRole,
@@ -67,6 +69,95 @@ export default function LeadsTab({
 }) {
   const [lostFor, setLostFor] = useState(null);
   const [mergeGroup, setMergeGroup] = useState(null);
+
+  // Column Visibility state & persistence
+  const DEFAULT_VISIBLE_COLUMNS = useMemo(() => ({
+    requirements: true,
+    score: true,
+    status: true,
+    nextAction: true,
+    agent: true,
+  }), []);
+  const STORAGE_KEY_COLUMNS = 'oneline_crm_leads_columns';
+
+  const [visibleColumns, setVisibleColumns] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_COLUMNS);
+      if (saved) {
+        return {
+          requirements: true,
+          score: true,
+          status: true,
+          nextAction: true,
+          agent: true,
+          ...JSON.parse(saved)
+        };
+      }
+    } catch (e) {
+      // fallback
+    }
+    return {
+      requirements: true,
+      score: true,
+      status: true,
+      nextAction: true,
+      agent: true,
+    };
+  });
+
+  const [showColumnPicker, setShowColumnPicker] = useState(false);
+  const columnPickerRef = useRef(null);
+
+  const toggleColumn = (key) => {
+    setVisibleColumns((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      try {
+        localStorage.setItem(STORAGE_KEY_COLUMNS, JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+  };
+
+  const resetColumns = () => {
+    const def = {
+      requirements: true,
+      score: true,
+      status: true,
+      nextAction: true,
+      agent: true,
+    };
+    setVisibleColumns(def);
+    try {
+      localStorage.removeItem(STORAGE_KEY_COLUMNS);
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    if (!showColumnPicker) return;
+    const handleClickOutside = (e) => {
+      if (columnPickerRef.current && !columnPickerRef.current.contains(e.target)) {
+        setShowColumnPicker(false);
+      }
+    };
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setShowColumnPicker(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showColumnPicker]);
+
+  const totalVisibleCols = 3 + // Checkbox (1), Client Profile (1), Actions (1)
+    (visibleColumns.requirements ? 1 : 0) +
+    (leadFilter === 'viewing_request' ? 1 : 0) +
+    (visibleColumns.score ? 1 : 0) +
+    (visibleColumns.status ? 1 : 0) +
+    (visibleColumns.nextAction ? 1 : 0) +
+    (visibleColumns.agent ? 1 : 0);
+
   // Clock for the "no reply for …" badges; ticks once a minute
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -181,7 +272,13 @@ export default function LeadsTab({
           isAr={isAr}
           onCancel={() => setLostFor(null)}
           onConfirm={({ lostReason, lostNote }) => {
-            onUpdateLead?.(lostFor.id, { status: 'lost', lostReason, lostNote, lostAt: new Date().toISOString() });
+            onUpdateLead?.(lostFor.id, { 
+              status: 'lost', 
+              lostReason, 
+              lostNote, 
+              lostAt: new Date().toISOString(),
+              lastActivityAt: new Date().toISOString()
+            }, lostFor.version);
             triggerToast?.(isAr ? 'اتسجلت كصفقة خسرانة مع السبب' : 'Marked as lost', 'info');
             setLostFor(null);
           }}
@@ -264,210 +361,214 @@ export default function LeadsTab({
         </div>
       </div>
 
-      {/* 🚀 QUICK PRIORITY TRIAGE BAR (جديد محدش رد، طلبات معاينة، عروض بيع، حسابات) */}
-      <div className="crm-priority-triage-bar" style={{
-        display: 'flex',
-        gap: '8px',
-        flexWrap: 'wrap',
+      {/* 🎯 UNIFIED TRIAGE & WORKFLOW SEGMENTS BAR */}
+      <div className="crm-unified-triage-hub" style={{
         marginBottom: '14px',
-        padding: '10px 14px',
         background: 'var(--crm-card-bg, rgba(255, 255, 255, 0.03))',
         border: '1px solid var(--crm-border, rgba(255, 255, 255, 0.08))',
-        borderRadius: '10px'
+        borderRadius: '12px',
+        padding: '10px 14px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px'
       }}>
-        {/* 1. 🆕 جديد محدش ردّ عليه */}
-        <button
-          type="button"
-          className={`table-filter-btn ${leadFilter === 'unanswered' ? 'active' : ''}`}
-          onClick={() => { setLeadFilter('unanswered'); }}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '7px 13px',
-            fontSize: 'var(--crm-text-sm)',
-            fontWeight: '600',
-            border: leadFilter === 'unanswered' ? '1px solid var(--crm-danger)' : '1px solid rgba(239, 68, 68, 0.25)',
-            background: leadFilter === 'unanswered' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.07)',
-            color: 'var(--crm-ink)'
-          }}
-        >
-          <span>🆕 {isAr ? 'جديد محدش ردّ عليه' : 'Unanswered / New'}</span>
-          <span className="badge" style={{ background: 'var(--crm-danger)', color: 'var(--crm-on-dark)', fontSize: 'var(--crm-text-xs)', padding: '2px 7px', borderRadius: '12px' }}>
-            {counts.unanswered}
-          </span>
-        </button>
-
-        {/* 2. 👁 طلبات معاينة */}
-        <button
-          type="button"
-          className={`table-filter-btn ${leadFilter === 'viewing_request' ? 'active' : ''}`}
-          onClick={() => { setLeadFilter('viewing_request'); setLeadSort?.('visit_date'); }}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '7px 13px',
-            fontSize: 'var(--crm-text-sm)',
-            fontWeight: '600',
-            border: leadFilter === 'viewing_request' ? '1px solid var(--crm-accent)' : '1px solid rgba(217, 119, 6, 0.25)',
-            background: leadFilter === 'viewing_request' ? 'rgba(217, 119, 6, 0.2)' : 'rgba(217, 119, 6, 0.07)',
-            color: 'var(--crm-ink)'
-          }}
-        >
-          <span>👁 {isAr ? 'طلبات معاينة' : 'Viewing Requests'}</span>
-          {counts.viewingUnanswered > 0 ? (
-            <span className="badge" style={{ background: 'var(--crm-accent)', color: 'var(--crm-on-dark)', fontSize: 'var(--crm-text-xs)', padding: '2px 7px', borderRadius: '12px' }}>
-              {counts.viewings} ({counts.viewingUnanswered} {isAr ? 'معلق' : 'pending'})
-            </span>
-          ) : (
-            <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--crm-muted)', fontSize: 'var(--crm-text-xs)', padding: '2px 7px', borderRadius: '12px' }}>
-              {counts.viewings}
-            </span>
-          )}
-        </button>
-
-        {/* 3. 🏠 عروض بيع */}
-        <button
-          type="button"
-          className={`table-filter-btn ${leadFilter === 'seller' ? 'active' : ''}`}
-          onClick={() => { setLeadFilter('seller'); }}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '7px 13px',
-            fontSize: 'var(--crm-text-sm)',
-            fontWeight: '600',
-            border: leadFilter === 'seller' ? '1px solid var(--crm-positive)' : '1px solid rgba(16, 185, 129, 0.25)',
-            background: leadFilter === 'seller' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.07)',
-            color: 'var(--crm-ink)'
-          }}
-        >
-          <span>🏠 {isAr ? 'عروض بيع' : 'Seller Listings'}</span>
-          {counts.sellerUnanswered > 0 ? (
-            <span className="badge" style={{ background: 'var(--crm-positive)', color: 'var(--crm-on-dark)', fontSize: 'var(--crm-text-xs)', padding: '2px 7px', borderRadius: '12px' }}>
-              {counts.sellers} ({counts.sellerUnanswered} {isAr ? 'معلق' : 'pending'})
-            </span>
-          ) : (
-            <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--crm-muted)', fontSize: 'var(--crm-text-xs)', padding: '2px 7px', borderRadius: '12px' }}>
-              {counts.sellers}
-            </span>
-          )}
-        </button>
-
-        {/* 4. 👤 حسابات جديدة */}
-        <button
-          type="button"
-          className={`table-filter-btn ${leadFilter === 'account' ? 'active' : ''}`}
-          onClick={() => { setLeadFilter('account'); }}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '7px 13px',
-            fontSize: 'var(--crm-text-sm)',
-            fontWeight: '600',
-            border: leadFilter === 'account' ? '1px solid var(--crm-info)' : '1px solid rgba(14, 165, 233, 0.25)',
-            background: leadFilter === 'account' ? 'rgba(14, 165, 233, 0.2)' : 'rgba(14, 165, 233, 0.07)',
-            color: 'var(--crm-ink)'
-          }}
-        >
-          <span>👤 {isAr ? 'حسابات جديدة' : 'New Accounts'}</span>
-          {counts.accountUnanswered > 0 ? (
-            <span className="badge" style={{ background: 'var(--crm-info)', color: 'var(--crm-on-dark)', fontSize: 'var(--crm-text-xs)', padding: '2px 7px', borderRadius: '12px' }}>
-              {counts.accounts} ({counts.accountUnanswered} {isAr ? 'جديد' : 'new'})
-            </span>
-          ) : (
-            <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--crm-muted)', fontSize: 'var(--crm-text-xs)', padding: '2px 7px', borderRadius: '12px' }}>
-              {counts.accounts}
-            </span>
-          )}
-        </button>
-      </div>
-
-      {/* Advanced Multi-Filters Toolbar */}
-      <div className="crm-table-header" style={{ alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '14px' }}>
-        {/* Stage & Workflow Quick Tabs */}
-        <div className="table-filters" style={{ flexWrap: 'wrap', gap: '6px' }}>
-          <button className={`table-filter-btn ${leadFilter === 'all' ? 'active' : ''}`} onClick={() => setLeadFilter('all')}>
-            {isAr ? 'كل العملاء' : 'All Leads'} ({counts.all})
-          </button>
-          <button className={`table-filter-btn ${leadFilter === 'viewing_request' ? 'active' : ''}`} onClick={() => { setLeadFilter('viewing_request'); setLeadSort?.('visit_date'); }}>
-            👁 {isAr ? 'طلبات معاينة' : 'Viewing Requests'} ({counts.viewings})
-          </button>
-          <button className={`table-filter-btn ${leadFilter === 'buyer' ? 'active' : ''}`} onClick={() => setLeadFilter('buyer')}>
-            {isAr ? 'طلبات شراء' : 'Buyers'} ({counts.buyers})
-          </button>
-          <button className={`table-filter-btn ${leadFilter === 'seller' ? 'active' : ''}`} onClick={() => setLeadFilter('seller')}>
-            {isAr ? 'عروض بيع' : 'Sellers'} ({counts.sellers})
-          </button>
-          <button className={`table-filter-btn ${leadFilter === 'account' ? 'active' : ''}`} onClick={() => setLeadFilter('account')}>
-            👤 {isAr ? 'حسابات جديدة' : 'Accounts'} ({counts.accounts})
-          </button>
-          <button className={`table-filter-btn ${leadFilter === 'new' ? 'active' : ''}`} onClick={() => setLeadFilter('new')}>
-            ✨ {isAr ? 'عملاء جدد' : 'New Leads'} ({counts.fresh})
-          </button>
+        {/* Row 1: Primary Lifecycle & Workflow Stages */}
+        <div className="table-filters" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+          {/* الكل */}
           <button
-            className={`table-filter-btn ${leadFilter === 'awaiting' ? 'active' : ''}`}
-            onClick={() => setLeadFilter('awaiting')}
-            title={isAr ? 'عملاء جدد محدش كلمهم لسه' : 'New leads nobody has contacted yet'}
-            style={{ color: counts.late > 0 && leadFilter !== 'awaiting' ? 'var(--crm-danger)' : undefined }}
+            type="button"
+            className={`table-filter-btn ${leadFilter === 'all' ? 'active' : ''}`}
+            onClick={() => setLeadFilter('all')}
           >
-            ⏱️ {isAr ? 'مستني رد' : 'Awaiting reply'} ({counts.awaiting}{counts.late > 0 ? (isAr ? ` · ${counts.late} متأخر` : ` · ${counts.late} late`) : ''})
+            ⚡ {isAr ? 'الكل' : 'All Leads'} ({counts.all})
           </button>
-          <button className={`table-filter-btn ${leadFilter === 'due' ? 'active' : ''}`} onClick={() => setLeadFilter('due')}>
+
+          {/* جديد ومستني رد */}
+          <button
+            type="button"
+            className={`table-filter-btn ${leadFilter === 'unanswered' ? 'active' : ''}`}
+            onClick={() => setLeadFilter('unanswered')}
+            style={{
+              borderColor: counts.unanswered > 0 ? 'var(--crm-danger)' : undefined,
+              color: counts.unanswered > 0 && leadFilter !== 'unanswered' ? 'var(--crm-danger)' : undefined
+            }}
+          >
+            🚨 {isAr ? 'مستني أول رد' : 'Awaiting Reply'}
+            <span className="badge" style={{
+              background: counts.unanswered > 0 ? 'var(--crm-danger)' : 'rgba(255,255,255,0.1)',
+              color: 'var(--crm-on-dark)',
+              fontSize: 'var(--crm-text-xs)',
+              padding: '1px 6px',
+              borderRadius: '10px',
+              marginInlineStart: '5px'
+            }}>
+              {counts.unanswered}
+            </span>
+          </button>
+
+          {/* طلبات معاينة */}
+          <button
+            type="button"
+            className={`table-filter-btn ${leadFilter === 'viewing_request' ? 'active' : ''}`}
+            onClick={() => { setLeadFilter('viewing_request'); setLeadSort?.('visit_date'); }}
+            style={{
+              borderColor: counts.viewingUnanswered > 0 ? 'var(--crm-accent)' : undefined
+            }}
+          >
+            👁️ {isAr ? 'طلبات معاينة' : 'Viewing Requests'}
+            <span className="badge" style={{
+              background: counts.viewingUnanswered > 0 ? 'var(--crm-accent)' : 'rgba(255,255,255,0.1)',
+              color: 'var(--crm-on-dark)',
+              fontSize: 'var(--crm-text-xs)',
+              padding: '1px 6px',
+              borderRadius: '10px',
+              marginInlineStart: '5px'
+            }}>
+              {counts.viewings}{counts.viewingUnanswered > 0 ? ` (${counts.viewingUnanswered} ${isAr ? 'معلق' : 'pending'})` : ''}
+            </span>
+          </button>
+
+          {/* متابعات اليوم والمتأخرة */}
+          <button
+            type="button"
+            className={`table-filter-btn ${leadFilter === 'due' ? 'active' : ''}`}
+            onClick={() => setLeadFilter('due')}
+            style={{
+              borderColor: counts.overdue > 0 ? 'var(--crm-warn)' : undefined,
+              color: counts.overdue > 0 && leadFilter !== 'due' ? 'var(--crm-warn)' : undefined
+            }}
+          >
             ⏰ {isAr ? 'متابعة اليوم' : 'Due Today'}
+            {counts.overdue > 0 && (
+              <span className="badge" style={{
+                background: 'var(--crm-danger)',
+                color: 'var(--crm-on-dark)',
+                fontSize: 'var(--crm-text-xs)',
+                padding: '1px 6px',
+                borderRadius: '10px',
+                marginInlineStart: '5px'
+              }}>
+                {counts.overdue} {isAr ? 'متأخر' : 'overdue'}
+              </span>
+            )}
           </button>
-          {counts.overdue > 0 && (
-            <button className={`table-filter-btn ${leadFilter === 'overdue' ? 'active' : ''}`} onClick={() => setLeadFilter('overdue')} style={{ color: leadFilter !== 'overdue' ? 'var(--crm-danger)' : undefined }}>
-              ⚠ {isAr ? 'متابعات متأخرة' : 'Overdue'} ({counts.overdue})
-            </button>
-          )}
+
+          {/* بدون مسؤول */}
           {counts.unassigned > 0 && (
-            <button className={`table-filter-btn ${leadFilter === 'unassigned' ? 'active' : ''}`} onClick={() => setLeadFilter('unassigned')}>
+            <button
+              type="button"
+              className={`table-filter-btn ${leadFilter === 'unassigned' ? 'active' : ''}`}
+              onClick={() => setLeadFilter('unassigned')}
+            >
               👤 {isAr ? 'بدون مسؤول' : 'Unassigned'} ({counts.unassigned})
             </button>
           )}
+
+          {/* مؤهلون للشراء */}
+          <button
+            type="button"
+            className={`table-filter-btn ${leadFilter === 'qualified' ? 'active' : ''}`}
+            onClick={() => setLeadFilter('qualified')}
+          >
+            🎯 {isAr ? 'مؤهلون للشراء' : 'Qualified'}
+          </button>
+
+          {/* طلبات شراء */}
+          <button
+            type="button"
+            className={`table-filter-btn ${leadFilter === 'buyer' ? 'active' : ''}`}
+            onClick={() => setLeadFilter('buyer')}
+          >
+            🛒 {isAr ? 'طلبات شراء' : 'Buyers'} ({counts.buyers})
+          </button>
+
+          {/* عروض بيع */}
+          <button
+            type="button"
+            className={`table-filter-btn ${leadFilter === 'seller' ? 'active' : ''}`}
+            onClick={() => setLeadFilter('seller')}
+          >
+            🏠 {isAr ? 'عروض بيع' : 'Sellers'} ({counts.sellers})
+          </button>
+
+          {/* حسابات جديدة */}
+          <button
+            type="button"
+            className={`table-filter-btn ${leadFilter === 'account' ? 'active' : ''}`}
+            onClick={() => setLeadFilter('account')}
+          >
+            👤 {isAr ? 'حسابات جديدة' : 'Accounts'} ({counts.accounts})
+          </button>
+
+          {/* مستثمرون VIP */}
+          <button
+            type="button"
+            className={`table-filter-btn ${leadFilter === 'investor' ? 'active' : ''}`}
+            onClick={() => setLeadFilter('investor')}
+          >
+            💎 {isAr ? 'مستثمرون VIP' : 'Investors'}
+          </button>
+
+          {/* راكد */}
           {counts.stale > 0 && (
-            <button className={`table-filter-btn ${leadFilter === 'stale' ? 'active' : ''}`} onClick={() => setLeadFilter('stale')} title={isAr ? 'مفيش أي نشاط من أكتر من 48 ساعة' : 'No activity for 48h+'}>
+            <button
+              type="button"
+              className={`table-filter-btn ${leadFilter === 'stale' ? 'active' : ''}`}
+              onClick={() => setLeadFilter('stale')}
+              title={isAr ? 'مفيش أي نشاط من أكتر من 48 ساعة' : 'No activity for 48h+'}
+            >
               💤 {isAr ? 'راكد' : 'Stale'} ({counts.stale})
             </button>
           )}
-          <button className={`table-filter-btn ${leadFilter === 'qualified' ? 'active' : ''}`} onClick={() => setLeadFilter('qualified')}>
-            🎯 {isAr ? 'مؤهلون للشراء' : 'Qualified'}
-          </button>
-          <button className={`table-filter-btn ${leadFilter === 'buyer' ? 'active' : ''}`} onClick={() => setLeadFilter('buyer')}>
-            {isAr ? 'طلبات شراء' : 'Buyers'}
-          </button>
-          <button className={`table-filter-btn ${leadFilter === 'seller' ? 'active' : ''}`} onClick={() => setLeadFilter('seller')}>
-            {isAr ? 'عروض بيع' : 'Sellers'}
-          </button>
-          <button className={`table-filter-btn ${leadFilter === 'investor' ? 'active' : ''}`} onClick={() => setLeadFilter('investor')}>
-            💎 {isAr ? 'مستثمرون VIP' : 'Investors'}
-          </button>
-          <button className={`table-filter-btn ${leadFilter === 'archived' ? 'active' : ''}`} onClick={() => setLeadFilter('archived')} style={{ color: leadFilter === 'archived' ? 'var(--crm-warn)' : undefined }}>
-            📦 {isAr ? 'المؤرشفون' : 'Archived'} ({counts.archived})
-          </button>
-          <button className={`table-filter-btn ${leadFilter === 'lost' ? 'active' : ''}`} onClick={() => setLeadFilter('lost')}>
-            ✖ {isAr ? 'صفقات خسرانة' : 'Lost'} ({counts.lost})
-          </button>
+
+          {/* مكرر */}
           {counts.dupes > 0 && (
-            <button className={`table-filter-btn ${leadFilter === 'dupes' ? 'active' : ''}`} onClick={() => setLeadFilter('dupes')} style={{ color: leadFilter !== 'dupes' ? 'var(--crm-warn)' : undefined }}>
+            <button
+              type="button"
+              className={`table-filter-btn ${leadFilter === 'dupes' ? 'active' : ''}`}
+              onClick={() => setLeadFilter('dupes')}
+              style={{ color: leadFilter !== 'dupes' ? 'var(--crm-warn)' : undefined }}
+            >
               ⧉ {isAr ? 'مكرر' : 'Duplicates'} ({counts.dupes})
             </button>
           )}
+
+          {/* المؤرشفون */}
+          <button
+            type="button"
+            className={`table-filter-btn ${leadFilter === 'archived' ? 'active' : ''}`}
+            onClick={() => setLeadFilter('archived')}
+            style={{ color: leadFilter === 'archived' ? 'var(--crm-warn)' : undefined }}
+          >
+            📦 {isAr ? 'المؤرشفون' : 'Archived'} ({counts.archived})
+          </button>
+
+          {/* صفقات خسرانة */}
+          <button
+            type="button"
+            className={`table-filter-btn ${leadFilter === 'lost' ? 'active' : ''}`}
+            onClick={() => setLeadFilter('lost')}
+          >
+            ✖ {isAr ? 'خسرانة' : 'Lost'} ({counts.lost})
+          </button>
         </div>
 
-        {/* Secondary Filters (Temperature & Area) */}
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+        {/* Row 2: Secondary Dropdown Filters + Search & Reset */}
+        <div style={{
+          display: 'flex',
+          gap: '8px',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          borderTop: '1px solid var(--crm-border, rgba(255, 255, 255, 0.06))',
+          paddingTop: '8px'
+        }}>
           {/* Temperature Filter */}
           <select
             value={temperatureFilter}
             aria-label={isAr ? 'تصفية حسب درجة الاهتمام' : 'Filter by temperature'}
             onChange={(e) => setTemperatureFilter(e.target.value)}
             className="form-input"
-            style={{ padding: '6px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
+            style={{ padding: '5px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
           >
             <option value="all">🌡️ {isAr ? 'كل درجات الحرارة' : 'All Temperatures'}</option>
             <option value="hot">🔥 {isAr ? 'ساخن جداً' : 'Hot'}</option>
@@ -476,26 +577,28 @@ export default function LeadsTab({
             <option value="unknown">{isAr ? 'غير محدد' : 'Not set'}</option>
           </select>
 
-          {/* Source, date range and sort */}
+          {/* Source Filter */}
           {setSourceFilter && (
             <select
               value={sourceFilter}
               aria-label={isAr ? 'تصفية حسب المصدر' : 'Filter by source'}
               onChange={(e) => setSourceFilter(e.target.value)}
               className="form-input"
-              style={{ padding: '6px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
+              style={{ padding: '5px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
             >
               <option value="all">🔗 {isAr ? 'كل المصادر' : 'All sources'}</option>
               {LEAD_SOURCES.map((s) => <option key={s.id} value={s.id}>{isAr ? s.ar : s.en}</option>)}
             </select>
           )}
+
+          {/* Date Filter */}
           {setDateFilter && (
             <select
               value={dateFilter}
               aria-label={isAr ? 'تصفية حسب تاريخ الإضافة' : 'Filter by date added'}
               onChange={(e) => setDateFilter(e.target.value)}
               className="form-input"
-              style={{ padding: '6px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
+              style={{ padding: '5px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
             >
               <option value="all">📅 {isAr ? 'كل الأوقات' : 'Any time'}</option>
               <option value="today">{isAr ? 'النهارده' : 'Today'}</option>
@@ -504,13 +607,15 @@ export default function LeadsTab({
               <option value="month">{isAr ? 'الشهر ده' : 'This month'}</option>
             </select>
           )}
+
+          {/* Sort */}
           {setLeadSort && (
             <select
               value={leadSort}
               aria-label={isAr ? 'ترتيب العملاء' : 'Sort leads'}
               onChange={(e) => setLeadSort(e.target.value)}
               className="form-input"
-              style={{ padding: '6px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
+              style={{ padding: '5px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
             >
               {LEAD_SORTS.map((o) => <option key={o.id} value={o.id}>↕ {isAr ? o.ar : o.en}</option>)}
             </select>
@@ -522,7 +627,7 @@ export default function LeadsTab({
             aria-label={isAr ? 'تصفية حسب المنطقة' : 'Filter by area'}
             onChange={(e) => setAreaFilter(e.target.value)}
             className="form-input"
-            style={{ padding: '6px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
+            style={{ padding: '5px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
           >
             <option value="all">📍 {isAr ? 'كل مناطق سوهاج' : 'All Areas'}</option>
             {SOHAG_AREAS.filter(a => a.id !== 'all').map(a => (
@@ -535,7 +640,7 @@ export default function LeadsTab({
             type="text" 
             placeholder={isAr ? 'بحث بالاسم، الهاتف، الوسم، الاغتراب...' : 'Search name/phone/tag...'} 
             className="form-input" 
-            style={{ padding: '6px 14px', fontSize: 'var(--crm-text-sm)', width: '220px', borderRadius: 'var(--radius-pill)' }}
+            style={{ padding: '5px 12px', fontSize: 'var(--crm-text-xs)', width: '210px', borderRadius: 'var(--radius-pill)' }}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') runServerSearch(); }}
@@ -546,12 +651,152 @@ export default function LeadsTab({
               className="btn btn-outline btn-sm"
               onClick={runServerSearch}
               disabled={serverSearching}
-              title={isAr ? 'يدوّر في كل العملاء على السيرفر، مش بس اللي ظاهرين: رقم موبايل بأي صيغة أو أول الاسم' : 'Searches every client on the server: a phone in any format or the start of a name'}
-              style={{ borderRadius: 'var(--radius-pill)', whiteSpace: 'nowrap' }}
+              title={isAr ? 'يدوّر في كل العملاء على السيرفر، مش بس اللي ظاهرين' : 'Searches every client on the server'}
+              style={{ borderRadius: 'var(--radius-pill)', whiteSpace: 'nowrap', padding: '4px 10px', fontSize: 'var(--crm-text-xs)' }}
             >
-              {serverSearching ? (isAr ? 'جاري البحث…' : 'Searching…') : (isAr ? 'ابحث في كل العملاء' : 'Search all clients')}
+              {serverSearching ? (isAr ? 'جاري البحث…' : 'Searching…') : (isAr ? 'بحث بالسيرفر' : 'Server Search')}
             </button>
           )}
+
+          {/* Reset Filters Button */}
+          {(leadFilter !== 'all' || temperatureFilter !== 'all' || (sourceFilter && sourceFilter !== 'all') || (dateFilter && dateFilter !== 'all') || (areaFilter && areaFilter !== 'all') || searchQuery) && (
+            <button
+              type="button"
+              className="btn btn-sm btn-ghost"
+              onClick={() => {
+                setLeadFilter('all');
+                setTemperatureFilter('all');
+                setSourceFilter?.('all');
+                setDateFilter?.('all');
+                setAreaFilter?.('all');
+                setSearchQuery?.('');
+              }}
+              style={{
+                fontSize: 'var(--crm-text-xs)',
+                color: 'var(--crm-warn)',
+                padding: '4px 8px',
+                cursor: 'pointer',
+                marginInlineStart: 'auto'
+              }}
+              title={isAr ? 'إعادة ضبط كل الفلاتر' : 'Reset all filters'}
+            >
+              🔄 {isAr ? 'تصفير الفلاتر' : 'Reset Filters'}
+            </button>
+          )}
+
+          {/* Column Customization Toggle */}
+          <div ref={columnPickerRef} style={{ position: 'relative', marginInlineStart: (leadFilter !== 'all' || temperatureFilter !== 'all' || (sourceFilter && sourceFilter !== 'all') || (dateFilter && dateFilter !== 'all') || (areaFilter && areaFilter !== 'all') || searchQuery) ? '8px' : 'auto' }}>
+            <button
+              type="button"
+              className="btn btn-sm btn-outline"
+              onClick={() => setShowColumnPicker((v) => !v)}
+              aria-expanded={showColumnPicker}
+              style={{
+                borderRadius: 'var(--radius-pill)',
+                padding: '5px 11px',
+                fontSize: 'var(--crm-text-xs)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                background: showColumnPicker ? 'var(--crm-accent-soft)' : undefined,
+                borderColor: showColumnPicker ? 'var(--crm-accent)' : undefined
+              }}
+              title={isAr ? 'تخصيص وإخفاء أعمدة الجدول' : 'Customize table columns'}
+            >
+              <SlidersHorizontal size={12} />
+              <span>{isAr ? 'تخصيص الأعمدة' : 'Columns'}</span>
+              {Object.values(visibleColumns).filter(Boolean).length < 5 && (
+                <span style={{
+                  background: 'var(--crm-accent)',
+                  color: 'var(--crm-on-accent)',
+                  borderRadius: '10px',
+                  padding: '1px 5px',
+                  fontSize: '10px',
+                  fontWeight: 700
+                }}>
+                  {Object.values(visibleColumns).filter(Boolean).length}/5
+                </span>
+              )}
+            </button>
+
+            {showColumnPicker && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 6px)',
+                  insetInlineEnd: 0,
+                  zIndex: 60,
+                  background: 'var(--crm-card)',
+                  border: '1px solid var(--crm-line-strong)',
+                  borderRadius: 'var(--radius-md)',
+                  boxShadow: '0 12px 28px -6px rgba(0, 0, 0, 0.4), 0 8px 12px -4px rgba(0, 0, 0, 0.25)',
+                  padding: '10px',
+                  minWidth: '230px',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid var(--crm-line)' }}>
+                  <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-ink)' }}>
+                    {isAr ? 'الأعمدة المعروضة' : 'Visible Columns'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={resetColumns}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--crm-accent-text)',
+                      fontSize: '11px',
+                      cursor: 'pointer',
+                      padding: '2px 4px'
+                    }}
+                  >
+                    {isAr ? 'إظهار الكل' : 'Show All'}
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {[
+                    { key: 'requirements', ar: 'المواصفات والميزانية', en: 'Requirements & Budget' },
+                    { key: 'score', ar: 'الجدية والحرارة', en: 'Score & Temp' },
+                    { key: 'status', ar: 'الحالة والمرحلة', en: 'Status' },
+                    { key: 'nextAction', ar: 'المتابعة القادمة', en: 'Next Action' },
+                    { key: 'agent', ar: 'المسؤول', en: 'Assigned Agent' },
+                  ].map((col) => (
+                    <label
+                      key={col.key}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '6px 8px',
+                        borderRadius: 'var(--radius-sm)',
+                        cursor: 'pointer',
+                        fontSize: 'var(--crm-text-xs)',
+                        color: 'var(--crm-ink)',
+                        userSelect: 'none',
+                        background: visibleColumns[col.key] ? 'transparent' : 'rgba(255, 255, 255, 0.02)'
+                      }}
+                      className="crm-col-toggle-label"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={!!visibleColumns[col.key]}
+                        onChange={() => toggleColumn(col.key)}
+                        style={{ cursor: 'pointer', accentColor: 'var(--crm-accent)' }}
+                      />
+                      <span>{isAr ? col.ar : col.en}</span>
+                    </label>
+                  ))}
+                </div>
+
+                <div style={{ marginTop: '8px', paddingTop: '6px', borderTop: '1px solid var(--crm-line)', fontSize: '10px', color: 'var(--crm-muted)', textAlign: 'center' }}>
+                  {isAr ? '🔒 عمود الاسم والإجراءات ثابتان دائماً' : '🔒 Name & Actions are always pinned'}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -648,19 +893,19 @@ export default function LeadsTab({
               />
             </th>
             <th>{isAr ? 'العميل والملف الشخصي' : 'Client Profile'}</th>
-            <th>{isAr ? 'المواصفات والميزانية' : 'Requirements'}</th>
+            {visibleColumns.requirements && <th>{isAr ? 'المواصفات والميزانية' : 'Requirements'}</th>}
             {leadFilter === 'viewing_request' && <th style={{ minWidth: '150px' }}>{isAr ? 'الميعاد المطلوب' : 'Requested Schedule'}</th>}
-            <th>{isAr ? 'الجدية والحرارة' : 'Score & Temp'}</th>
-            <th>{isAr ? 'الحالة' : 'Status'}</th>
-            <th>{isAr ? 'المتابعة القادمة' : 'Next Action'}</th>
-            <th>{isAr ? 'المسؤول' : 'Agent'}</th>
+            {visibleColumns.score && <th>{isAr ? 'الجدية والحرارة' : 'Score & Temp'}</th>}
+            {visibleColumns.status && <th>{isAr ? 'الحالة' : 'Status'}</th>}
+            {visibleColumns.nextAction && <th>{isAr ? 'المتابعة القادمة' : 'Next Action'}</th>}
+            {visibleColumns.agent && <th>{isAr ? 'المسؤول' : 'Agent'}</th>}
             <th>{isAr ? 'الإجراءات' : 'Actions'}</th>
           </tr>
         </thead>
         <tbody>
           {filteredLeads.length === 0 ? (
             <tr>
-              <td colSpan={leadFilter === 'viewing_request' ? 9 : 8} style={{ textAlign: 'center', padding: '40px', color: 'var(--crm-muted)' }}>
+              <td colSpan={totalVisibleCols} style={{ textAlign: 'center', padding: '40px', color: 'var(--crm-muted)' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
                   <Inbox size={32} style={{ color: 'var(--crm-accent-text)' }} />
                   <span style={{ fontSize: 'var(--crm-text-base)' }}>{isAr ? 'لم يتم العثور على أي عملاء يطابقون خيارات البحث الحالية.' : 'No leads found.'}</span>
@@ -719,7 +964,7 @@ export default function LeadsTab({
                         )}
                       </div>
 
-                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}><bdi>{l.phone || l.whatsapp || '—'}</bdi></span>
+                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}><bdi dir="ltr" style={{ unicodeBidi: 'isolate', fontFamily: 'monospace' }}>{formatPhoneNumber(l.phone || l.whatsapp) || '—'}</bdi></span>
 
                       <div className="crm-lead-meta">
                         <span className="crm-lead-chip">{sourceLabel(l)}</span>
@@ -755,23 +1000,25 @@ export default function LeadsTab({
                   </td>
 
                   {/* Requirements */}
-                  <td data-label={isAr ? 'المواصفات' : 'Requirements'}>
-                    <div style={{ fontSize: 'var(--crm-text-sm)', maxWidth: '280px', whiteSpace: 'normal' }}>
-                      {l.details?.budget && (
-                        <strong style={{ color: 'var(--crm-positive)', display: 'block', marginBottom: '2px' }}>
-                          <bdi>{formatBudget(l.details.budget, isAr)}</bdi>
-                        </strong>
-                      )}
-                      <span style={{ color: 'var(--crm-muted)' }}>
-                        {getLocalizedPropertyType(l.propertyType || l.details?.propertyType || l.type)} • {getLocalizedArea(l.area || l.details?.area || l.details?.district || 'east')}
-                      </span>
-                      {leadFilter !== 'viewing_request' && isViewingLead(l) && (
-                        <div style={{ marginTop: '5px' }}>
-                          {renderVisitBadge(l)}
-                        </div>
-                      )}
-                    </div>
-                  </td>
+                  {visibleColumns.requirements && (
+                    <td data-label={isAr ? 'المواصفات' : 'Requirements'}>
+                      <div style={{ fontSize: 'var(--crm-text-sm)', maxWidth: '280px', whiteSpace: 'normal' }}>
+                        {l.details?.budget && (
+                          <strong style={{ color: 'var(--crm-positive)', display: 'block', marginBottom: '2px' }}>
+                            <bdi>{formatBudget(l.details.budget, isAr)}</bdi>
+                          </strong>
+                        )}
+                        <span style={{ color: 'var(--crm-muted)' }}>
+                          {getLocalizedPropertyType(l.propertyType || l.details?.propertyType || l.type)} • {getLocalizedArea(l.area || l.details?.area || l.details?.district || 'east')}
+                        </span>
+                        {leadFilter !== 'viewing_request' && isViewingLead(l) && (
+                          <div style={{ marginTop: '5px' }}>
+                            {renderVisitBadge(l)}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                  )}
 
                   {/* Requested Schedule Column (for viewing_request) */}
                   {leadFilter === 'viewing_request' && (
@@ -781,191 +1028,158 @@ export default function LeadsTab({
                   )}
 
                   {/* Score & Temperature */}
-                  <td data-label={isAr ? 'الجدية والحرارة' : 'Score & Temp'}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <LeadScorePill lead={l} isAr={isAr} />
-                      <span title={temp === 'hot' ? 'عميل ساخن للشراء' : temp === 'warm' ? 'عميل دافئ' : temp === 'cold' ? 'عميل مستكشف' : (isAr ? 'درجة الحرارة غير محددة' : 'Temperature not set')}>
-                        {temp === 'hot' ? '🔥' : temp === 'warm' ? '⚡' : temp === 'cold' ? '❄️' : <span className="crm-empty-value">—</span>}
-                      </span>
-                    </div>
-                  </td>
+                  {visibleColumns.score && (
+                    <td data-label={isAr ? 'الجدية والحرارة' : 'Score & Temp'}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <LeadScorePill lead={l} isAr={isAr} />
+                        <span title={temp === 'hot' ? 'عميل ساخن للشراء' : temp === 'warm' ? 'عميل دافئ' : temp === 'cold' ? 'عميل مستكشف' : (isAr ? 'درجة الحرارة غير محددة' : 'Temperature not set')}>
+                          {temp === 'hot' ? '🔥' : temp === 'warm' ? '⚡' : temp === 'cold' ? '❄️' : <span className="crm-empty-value">—</span>}
+                        </span>
+                      </div>
+                    </td>
+                  )}
 
                   {/* Status */}
-                  <td data-label={isAr ? 'الحالة' : 'Status'}>
-                    <div className={`crm-status-select-wrap status-pill-${l.status || 'new'}`}>
-                      <span className="crm-status-dot" />
-                      <select 
-                        disabled={!canEdit}
-                        value={l.status || 'new'} 
-                        aria-label={isAr ? `حالة ${l.name || 'العميل'}` : `Status of ${l.name || 'lead'}`}
-                        data-status={l.status || 'new'}
-                        onChange={(e) => {
-                          if (e.target.value === 'lost') { setLostFor(l); return; }
-                          if (onUpdateLead) onUpdateLead(l.id, { status: e.target.value, ...(l.status === 'lost' ? { lostReason: null, lostNote: null, lostAt: null } : {}) });
-                        }}
-                        className="crm-status-select"
-                        title={isAr ? 'تغيير مرحلة العميل' : 'Change Status'}
-                      >
-                        <option value="new">{isAr ? 'طلب جديد' : 'New'}</option>
-                        <option value="contacted">{isAr ? 'تم التواصل' : 'Contacted'}</option>
-                        <option value="site_visit">{isAr ? 'معاينة مجدولة' : 'Site Visit'}</option>
-                        <option value="negotiating">{isAr ? 'قيد التفاوض' : 'Negotiating'}</option>
-                        <option value="closing" disabled={!canCloseDeals && l.status !== 'closing'}>{isAr ? 'توقيع وحجز' : 'Closing'}</option>
-                        <option value="closed" disabled={!canCloseDeals && l.status !== 'closed'}>{isAr ? 'صفقة ناجحة' : 'Closed Won'}</option>
-                        <option value="lost">{isAr ? 'صفقة خسرانة' : 'Closed Lost'}</option>
-                      </select>
-                    </div>
-                  </td>
+                  {visibleColumns.status && (
+                    <td data-label={isAr ? 'الحالة' : 'Status'}>
+                      <div className={`crm-status-select-wrap status-pill-${l.status || 'new'}`}>
+                        <span className="crm-status-dot" />
+                        <select 
+                          disabled={!canEdit}
+                          value={l.status || 'new'} 
+                          aria-label={isAr ? `حالة ${l.name || 'العميل'}` : `Status of ${l.name || 'lead'}`}
+                          data-status={l.status || 'new'}
+                          onChange={(e) => {
+                            const prevStatus = l.status || 'new';
+                            const nextStatus = e.target.value;
+                            if (nextStatus === 'lost') { setLostFor(l); return; }
+                            if (onUpdateLead) {
+                              onUpdateLead(l.id, { 
+                                status: nextStatus, 
+                                ...(l.status === 'lost' ? { lostReason: null, lostNote: null, lostAt: null } : {}),
+                                statusUpdatedAt: new Date().toISOString(),
+                                lastActivityAt: new Date().toISOString()
+                              }, l.version);
+                              const stageNames = {
+                                new: isAr ? 'طلب جديد' : 'New',
+                                contacted: isAr ? 'تم التواصل' : 'Contacted',
+                                site_visit: isAr ? 'معاينة مجدولة' : 'Site Visit',
+                                negotiating: isAr ? 'قيد التفاوض' : 'Negotiating',
+                                closing: isAr ? 'توقيع وحجز' : 'Closing',
+                                closed: isAr ? 'صفقة ناجحة' : 'Closed Won',
+                                lost: isAr ? 'صفقة خسرانة' : 'Closed Lost'
+                              };
+                              triggerToast?.(
+                                isAr ? `تم تغيير مرحلة (${l.name || 'العميل'}) إلى: ${stageNames[nextStatus] || nextStatus}` : `Status changed to ${stageNames[nextStatus] || nextStatus}`,
+                                'info',
+                                {
+                                  onUndo: () => {
+                                    onUpdateLead(l.id, { status: prevStatus, lastActivityAt: new Date().toISOString() });
+                                  },
+                                  undoLabel: isAr ? 'تراجع' : 'Undo',
+                                  duration: 6000
+                                }
+                              );
+                            }
+                          }}
+                          className="crm-status-select"
+                          title={isAr ? 'تغيير مرحلة العميل' : 'Change Status'}
+                        >
+                          <option value="new">{isAr ? 'طلب جديد' : 'New'}</option>
+                          <option value="contacted">{isAr ? 'تم التواصل' : 'Contacted'}</option>
+                          <option value="site_visit">{isAr ? 'معاينة مجدولة' : 'Site Visit'}</option>
+                          <option value="negotiating">{isAr ? 'قيد التفاوض' : 'Negotiating'}</option>
+                          <option value="closing" disabled={!canCloseDeals && l.status !== 'closing'}>{isAr ? 'توقيع وحجز' : 'Closing'}</option>
+                          <option value="closed" disabled={!canCloseDeals && l.status !== 'closed'}>{isAr ? 'صفقة ناجحة' : 'Closed Won'}</option>
+                          <option value="lost">{isAr ? 'صفقة خسرانة' : 'Closed Lost'}</option>
+                        </select>
+                      </div>
+                    </td>
+                  )}
 
                   {/* Next Action / Follow-up */}
-                  <td data-label={isAr ? 'المتابعة القادمة' : 'Next Action'}>
-                    <div 
-                      className="crm-next-action-cell"
-                      onClick={() => setQuickDrawerLead(l)}
-                      title={isAr ? 'انقر لتحديث المتابعة والمعاينة السريعة' : 'Click to update next action'}
-                    >
-                      {l.nextActionNote || l.followUp ? (
-                        <div className="crm-next-action-pill">
-                          <Clock size={12} className="crm-next-action-icon" />
-                          <span className="crm-next-action-text" title={formatFollowUp(l.nextActionNote || l.followUp, isAr)}>{formatFollowUp(l.nextActionNote || l.followUp, isAr)}</span>
-                        </div>
-                      ) : (
-                        <span className="crm-next-action-empty">
-                          <Plus size={11} /> {isAr ? 'جدولة متابعة' : 'Add action'}
-                        </span>
-                      )}
-                    </div>
-                  </td>
+                  {visibleColumns.nextAction && (
+                    <td data-label={isAr ? 'المتابعة القادمة' : 'Next Action'}>
+                      <div 
+                        className="crm-next-action-cell"
+                        onClick={() => setQuickDrawerLead(l)}
+                        title={isAr ? 'انقر لتحديث المتابعة والمعاينة السريعة' : 'Click to update next action'}
+                      >
+                        {l.nextActionNote || l.followUp ? (
+                          <div className="crm-next-action-pill">
+                            <Clock size={12} className="crm-next-action-icon" />
+                            <span className="crm-next-action-text" title={formatFollowUp(l.nextActionNote || l.followUp, isAr)}>{formatFollowUp(l.nextActionNote || l.followUp, isAr)}</span>
+                          </div>
+                        ) : (
+                          <span className="crm-next-action-empty">
+                            <Plus size={11} /> {isAr ? 'جدولة متابعة' : 'Add action'}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                  )}
 
                   {/* Agent */}
-                  <td data-label={isAr ? 'المسؤول' : 'Agent'}>
-                    <div className="crm-agent-select-wrap">
-                      <div className="crm-agent-avatar-sm">
-                        {l.assignedTo && l.assignedTo !== 'Unassigned' ? l.assignedTo.charAt(0) : '—'}
+                  {visibleColumns.agent && (
+                    <td data-label={isAr ? 'المسؤول' : 'Agent'}>
+                      <div className="crm-agent-select-wrap">
+                        <div className="crm-agent-avatar-sm">
+                          {l.assignedTo && l.assignedTo !== 'Unassigned' ? l.assignedTo.charAt(0) : '—'}
+                        </div>
+                        <select 
+                          disabled={!canEdit}
+                          value={l.assignedTo || 'Unassigned'} 
+                          aria-label={isAr ? `المسؤول عن ${l.name || 'العميل'}` : `Owner of ${l.name || 'lead'}`}
+                          onChange={(e) => {
+                            const prevAgent = l.assignedTo || 'Unassigned';
+                            const newAgent = e.target.value;
+                            if (onUpdateLead) {
+                              onUpdateLead(l.id, { 
+                                assignedTo: newAgent,
+                                assignedAt: new Date().toISOString(),
+                                lastActivityAt: new Date().toISOString()
+                              }, l.version);
+                              triggerToast?.(
+                                isAr ? `تم تعيين (${l.name || 'العميل'}) للمسؤول: ${newAgent}` : `Assigned ${l.name || 'lead'} to ${newAgent}`,
+                                'success',
+                                {
+                                  onUndo: () => {
+                                    onUpdateLead(l.id, { assignedTo: prevAgent, lastActivityAt: new Date().toISOString() });
+                                  },
+                                  undoLabel: isAr ? 'تراجع' : 'Undo',
+                                  duration: 6000
+                                }
+                              );
+                            }
+                          }}
+                          className="crm-agent-select"
+                          title={isAr ? 'تعيين مسؤول المبيعات' : 'Assign Agent'}
+                        >
+                          <DeskOptions role={activeRole} current={l.assignedTo || 'Unassigned'} lang={lang} />
+                        </select>
                       </div>
-                      <select 
-                        disabled={!canEdit}
-                        value={l.assignedTo || 'Unassigned'} 
-                        aria-label={isAr ? `المسؤول عن ${l.name || 'العميل'}` : `Owner of ${l.name || 'lead'}`}
-                        onChange={(e) => {
-                          if (onUpdateLead) onUpdateLead(l.id, { assignedTo: e.target.value });
-                        }}
-                        className="crm-agent-select"
-                        title={isAr ? 'تعيين مسؤول المبيعات' : 'Assign Agent'}
-                      >
-                        <DeskOptions role={activeRole} current={l.assignedTo || 'Unassigned'} lang={lang} />
-                      </select>
-                    </div>
-                  </td>
+                    </td>
+                  )}
 
                   {/* Actions */}
                   <td data-label={isAr ? 'الإجراءات' : 'Actions'}>
-                    <div className="crm-action-group">
-                      {/* Quick Drawer Fast Inspection */}
-                      <button
-                        type="button"
-                        className="crm-btn-quick"
-                        onClick={() => setQuickDrawerLead(l)}
-                        title={isAr ? 'معاينة سريعة وتسجيل مكالمة' : 'Quick Drawer'}
-                      >
-                        <Zap size={13} />
-                        <span>{isAr ? 'سريع' : 'Quick'}</span>
-                      </button>
-
-                      {/* WhatsApp Direct Contact */}
-                      <button 
-                        type="button"
-                        className="crm-icon-btn is-whatsapp" 
-                        onClick={() => onWhatsAppClick(l)} 
-                        title={isAr ? 'محادثة العميل مباشرة عبر واتساب' : 'WhatsApp'}
-                      >
-                        <MessageSquare size={13} />
-                      </button>
-
-                      {/* 360° Profile */}
-                      <button
-                        type="button"
-                        className="crm-icon-btn"
-                        onClick={() => setViewingProfileLead(l)}
-                        title={isAr ? 'فتح ملف العميل الشامل 360°' : 'Profile 360°'}
-                      >
-                        <User size={13} />
-                      </button>
-
-                      {/* Edit Modal */}
-                      {canEdit && (
-                        <button
-                          type="button"
-                          className="crm-icon-btn"
-                          onClick={() => handleOpenEditLead(l)}
-                          title={isAr ? 'تعديل بيانات العميل' : 'Edit'}
-                        >
-                          <Edit3 size={13} />
-                        </button>
-                      )}
-
-                      {/* Dispatch Lead via WhatsApp */}
-                      <button 
-                        type="button"
-                        className="crm-icon-btn" 
-                        onClick={() => onDispatchLeadClick(l)} 
-                        title={isAr ? 'إحالة بيانات العميل لمسؤول المبيعات عبر واتساب' : 'Dispatch'}
-                      >
-                        <Send size={12} />
-                      </button>
-
-                      {/* Convert to Property */}
-                      {onConvertToProperty && canEdit && (
-                        <button 
-                          type="button"
-                          className="crm-icon-btn" 
-                          onClick={() => onConvertToProperty(l)}
-                          title={isAr ? 'تحويل لعقار معروض بالموقع' : 'Convert'}
-                        >
-                          <Building size={12} />
-                        </button>
-                      )}
-
-                      {/* Claim Lead */}
-                      {canClaimLead(l) && (
-                        <button
-                          type="button"
-                          className="crm-icon-btn"
-                          onClick={() => handleClaimLead(l.id)}
-                          title={isAr ? 'استلام هذا العميل (غير مسند) لفريقك' : 'Claim this unassigned lead for your team'}
-                        >
-                          <UserPlus size={12} />
-                        </button>
-                      )}
-
-                      {/* Archive Lead Toggle */}
-                      {canEdit && <button
-                        type="button"
-                        className="crm-icon-btn"
-                        onClick={() => {
-                          const newStatus = l.isArchived ? false : true;
-                          if (onUpdateLead) {
-                            onUpdateLead(l.id, { isArchived: newStatus });
-                          }
-                          triggerToast(isAr ? (newStatus ? 'تم نقل العميل للأرشيف 📦' : 'تم استعادة العميل من الأرشيف') : (newStatus ? 'Lead archived' : 'Lead restored'), 'info');
-                        }}
-                        title={l.isArchived ? (isAr ? 'استعادة من الأرشيف' : 'Unarchive') : (isAr ? 'أرشفة العميل' : 'Archive')}
-                      >
-                        <Archive size={12} />
-                      </button>}
-
-                      {/* Delete Lead (Super Admin Only) */}
-                      {isSuperAdmin && (
-                        <button 
-                          type="button"
-                          className="crm-icon-btn is-danger" 
-                          onClick={() => handleDeleteLeadClick(l.id, l.name)} 
-                          title={isAr ? 'حذف العميل نهائياً' : 'Delete'}
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      )}
-                    </div>
+                    <LeadTableRowActions
+                      lead={l}
+                      isAr={isAr}
+                      canEdit={canEdit}
+                      isSuperAdmin={isSuperAdmin}
+                      onQuickDrawer={setQuickDrawerLead}
+                      onWhatsAppClick={onWhatsAppClick}
+                      onViewingProfileLead={setViewingProfileLead}
+                      onOpenEditLead={handleOpenEditLead}
+                      onDispatchLeadClick={onDispatchLeadClick}
+                      onConvertToProperty={onConvertToProperty}
+                      canClaimLead={canClaimLead}
+                      handleClaimLead={handleClaimLead}
+                      onUpdateLead={onUpdateLead}
+                      triggerToast={triggerToast}
+                      handleDeleteLeadClick={handleDeleteLeadClick}
+                    />
                   </td>
                 </tr>
               );

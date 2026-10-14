@@ -1,5 +1,7 @@
+import { useEffect, useRef } from 'react';
 import { Save, X } from 'lucide-react';
 import { SOHAG_AREAS, PROPERTY_TYPES } from '../../data/propertiesData';
+import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 
 export default function EditLeadModal({
   handleSaveLeadEdits,
@@ -8,8 +10,25 @@ export default function EditLeadModal({
   setEditingLead,
   setLeadFormData
 }) {
+  useBodyScrollLock(true);
+  const mouseDownOnBackdropRef = useRef(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setEditingLead(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [setEditingLead]);
+
   return (
-    <div className="track-modal-backdrop" onClick={() => setEditingLead(null)}>
+    <div
+      className="track-modal-backdrop"
+      onMouseDown={(e) => { mouseDownOnBackdropRef.current = e.target === e.currentTarget; }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget && mouseDownOnBackdropRef.current) setEditingLead(null);
+      }}
+    >
       <div className="property-form-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '640px' }}>
         <div className="modal-form-header">
           <h3>{isAr ? 'تعديل وتصحيح بيانات العميل' : 'Edit Lead Details'}</h3>

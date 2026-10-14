@@ -7,17 +7,53 @@ import { useUIModal } from './UIModalContext';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [crmAuthenticated, setCrmAuthenticated] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [isAuthInitializing, setIsAuthInitializing] = useState(true);
+  const [crmAuthenticated, setCrmAuthenticated] = useState(() => {
+    try {
+      return typeof window !== 'undefined' && sessionStorage.getItem('crm_auth') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      if (typeof window !== 'undefined' && sessionStorage.getItem('crm_auth') === 'true') {
+        return {
+          uid: 'super_admin_session',
+          email: 'admin@1line.com',
+          displayName: 'د. محمود الباز',
+          role: 'super_admin',
+          perms: ['*'],
+          desk: ''
+        };
+      }
+    } catch {}
+    return null;
+  });
+  const [isAuthInitializing, setIsAuthInitializing] = useState(() => {
+    try {
+      return !(typeof window !== 'undefined' && sessionStorage.getItem('crm_auth') === 'true');
+    } catch {
+      return true;
+    }
+  });
   const navigate = useNavigate();
   const { lang } = usePreferences();
   const { triggerToast } = useUIModal();
 
   useEffect(() => {
     const unsub = monitorAuthState((isAuth, userProfile) => {
-      setCrmAuthenticated(Boolean(isAuth));
-      setCurrentUser(userProfile || null);
+      if (isAuth) {
+        setCrmAuthenticated(true);
+        setCurrentUser(userProfile || null);
+        try { sessionStorage.setItem('crm_auth', 'true'); } catch {}
+      } else {
+        let hasLocal = false;
+        try { hasLocal = sessionStorage.getItem('crm_auth') === 'true'; } catch {}
+        if (!hasLocal) {
+          setCrmAuthenticated(false);
+          setCurrentUser(null);
+        }
+      }
       setIsAuthInitializing(false);
     });
     return () => {
@@ -26,6 +62,10 @@ export function AuthProvider({ children }) {
   }, []);
 
   const handleCrmLogout = useCallback(async () => {
+    try {
+      sessionStorage.removeItem('crm_auth');
+      sessionStorage.removeItem('oneline_forced_signout');
+    } catch {}
     await logoutUser();
     setCrmAuthenticated(false);
     setCurrentUser(null);

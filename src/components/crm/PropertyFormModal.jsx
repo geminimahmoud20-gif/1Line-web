@@ -26,12 +26,31 @@ export default function PropertyFormModal({
   setShowMapPicker,
   uploadProgressText
 }) {
+  const hasDirtyContent = Boolean(
+    (form?.title && String(form.title).trim()) ||
+    form?.price ||
+    (form?.images && form.images.length > 0) ||
+    (form?.description && String(form.description).trim())
+  );
+
+  const handleSafeClose = () => {
+    if (hasDirtyContent) {
+      const confirmClose = window.confirm(
+        isAr
+          ? 'لديك بيانات وصور عقار تم إدخالها، هل أنت متأكد من الإلغاء والخروج دون حفظ؟'
+          : 'You have entered property details or photos. Are you sure you want to discard them?'
+      );
+      if (!confirmClose) return;
+    }
+    setShowAddModal(false);
+  };
+
   return (
-    <div className="track-modal-backdrop" onClick={() => setShowAddModal(false)}>
+    <div className="track-modal-backdrop" onClick={handleSafeClose}>
       <div className="property-form-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '780px' }}>
         <div className="modal-form-header">
           <h3>{editingPropertyId ? (isAr ? 'تعديل بيانات العقار ومستوى العرض' : 'Edit Property & Display Settings') : (isAr ? 'إضافة عقار جديد للمنصة' : 'Add New Property')}</h3>
-          <button type="button" className="drawer-close-btn" onClick={() => setShowAddModal(false)}>✕</button>
+          <button type="button" className="drawer-close-btn" onClick={handleSafeClose}>✕</button>
         </div>
 
         <form onSubmit={handleSubmit} className="property-cms-form">

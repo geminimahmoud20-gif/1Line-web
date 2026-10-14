@@ -66,6 +66,7 @@ export const syncPendingLeads = lazyCall('syncPendingLeads');
 export const saveNotification = lazyCall('saveNotification');
 export const updateLeadField = lazyCall('updateLeadField');
 export const deleteLead = lazyCall('deleteLead');
+export const deleteLeads = lazyCall('deleteLeads');
 export const saveDemand = lazyCall('saveDemand');
 export const updateDemandStatus = lazyCall('updateDemandStatus');
 export const deleteDemandDoc = lazyCall('deleteDemandDoc');

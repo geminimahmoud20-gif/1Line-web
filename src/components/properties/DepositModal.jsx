@@ -1,16 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { X, ShieldCheck, RefreshCw, CalendarClock } from 'lucide-react';
+import { X, ShieldCheck, RefreshCw, CalendarClock, AlertOctagon } from 'lucide-react';
 import { PhoneInputField } from '../PhoneInputField';
 import { trackEvent } from '../../utils/visitorTracker';
-import { checkFormSpamProtection } from '../../utils/securityShield';
+import { checkFormSpamProtection, isValidPhoneNumber } from '../../utils/securityShield';
 import SubmissionSuccess from '../common/SubmissionSuccess';
 
 /**
  * Reservation request (no online payment).
- * DO NOT reintroduce simulated payment channels here: the site has no payment gateway, so card
- * fields, generated Fawry codes or "confirmed" receipts would mislead customers into paying for
- * units that were never reserved. Availability and documents are confirmed first; the client then
+ * Availability and documents are confirmed first; the client then
  * receives an official reservation letter with payment terms.
  */
 export default function DepositModal({
@@ -26,42 +24,63 @@ export default function DepositModal({
   const [hpField, setHpField] = useState('');
   const [form, setForm] = useState({ name: '', phone: '', preferredTime: 'any', notes: '' });
   const [submittedRef, setSubmittedRef] = useState(null);
+  const isSubmittingRef = useRef(false);
   const nameRef = useRef(null);
 
   useEffect(() => {
     if (!isOpen) return undefined;
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
-    const t = setTimeout(() => nameRef.current?.focus(), 50);
+    const t = setTimeout(() => nameRef.current?.focus(), 60);
     return () => { window.removeEventListener('keydown', onKey); clearTimeout(t); };
   }, [isOpen, onClose]);
 
   if (!isOpen || !property) return null;
   const isAr = lang === 'ar';
   const title = isAr ? property.title_ar : property.title_en;
-  const code = String(property.id).toUpperCase();
+  const code = String(property.id || '').toUpperCase();
+  const isAlreadyBooked = ['reserved', 'deposit_paid', 'contracted', 'sold'].includes(property.status);
+
+  const handleBackdropMouseDown = (e) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isProcessing) return;
+    if (isSubmittingRef.current || isProcessing) return;
+
+    if (isAlreadyBooked) {
+      triggerToast?.(isAr ? 'عذراً، هذه الوحدة لم تعد متاحة للحجز حالياً.' : 'This unit is no longer available.', 'error');
+      return;
+    }
 
     const spamCheck = checkFormSpamProtection(hpField, 'reservation_request');
     if (!spamCheck.allowed) {
       triggerToast?.(isAr ? 'يرجى المحاولة بعد قليل.' : 'Please try again shortly.', 'error');
       return;
     }
-    if (!form.name.trim() || !form.phone.trim()) {
+    const trimmedName = form.name.trim();
+    const trimmedPhone = form.phone.trim();
+    if (!trimmedName || !trimmedPhone) {
       triggerToast?.(isAr ? 'يرجى إدخال الاسم ورقم الهاتف' : 'Please enter your name and phone', 'error');
       return;
     }
 
+    const fullPhone = trimmedPhone.startsWith('+') ? trimmedPhone : `${phoneCountry}${trimmedPhone.replace(/^0+/, '')}`;
+    if (!isValidPhoneNumber(fullPhone)) {
+      triggerToast?.(isAr ? 'رقم الهاتف غير صالح، يرجى كتابة رقم صحيح' : 'Invalid phone number format', 'error');
+      return;
+    }
+
+    isSubmittingRef.current = true;
     setIsProcessing(true);
     try {
-      const fullPhone = form.phone.startsWith('+') ? form.phone : `${phoneCountry}${form.phone.replace(/^0+/, '')}`;
       const timeLabel = { any: 'أي وقت', morning: 'صباحاً', evening: 'مساءً' }[form.preferredTime];
       const lead = onConfirmDeposit
         ? await onConfirmDeposit({
-          name: form.name.trim(),
+          name: trimmedName,
           phone: fullPhone,
           whatsapp: fullPhone,
           type: 'reservation_request',
@@ -72,7 +91,7 @@ export default function DepositModal({
           propertyTitle: title,
           propertyPrice: property.price,
           temperature: 'hot',
-          notes: `طلب حجز مبدئي للعقار ${code} — ${title} | وقت التواصل المفضل: ${timeLabel}${form.notes ? ' | ملاحظات: ' + form.notes : ''}`,
+          notes: `طلب حجز مبدئي للعقار [${code}] — ${title} | وقت التواصل المفضل: ${timeLabel}${form.notes ? ' | ملاحظات: ' + form.notes : ''}`,
           details: { propertyId: property.id, preferredTime: form.preferredTime, notes: form.notes }
         })
         : null;
@@ -80,31 +99,48 @@ export default function DepositModal({
       trackEvent('reservation_requested', { propertyId: property.id });
       setSubmittedRef(lead?.id || `lead-${Date.now()}`);
     } catch (err) {
-      // The request didn't go through: say so and keep the form filled so they can retry
       console.error('Reservation request failed:', err);
       triggerToast?.(isAr
         ? 'تعذّر إرسال طلب الحجز. تأكد من الاتصال وحاول تاني، أو كلمنا على واتساب.'
         : 'Could not send the reservation request. Check your connection and try again, or message us on WhatsApp.', 'error');
     } finally {
       setIsProcessing(false);
+      isSubmittingRef.current = false;
     }
   };
 
   return (
-    <div className="track-modal-backdrop" onClick={onClose} style={{ zIndex: 12000 }}>
+    <div 
+      className="track-modal-backdrop" 
+      onMouseDown={handleBackdropMouseDown} 
+      style={{ zIndex: 12000 }}
+      role="presentation"
+    >
       <div
         className="lx-modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby="reserve-title"
         dir={isAr ? 'rtl' : 'ltr'}
-        onClick={(e) => e.stopPropagation()}
       >
         <button type="button" className="lx-modal-close" onClick={onClose} aria-label={isAr ? 'إغلاق' : 'Close'}>
           <X size={18} />
         </button>
 
-        {submittedRef ? (
+        {isAlreadyBooked ? (
+          <div style={{ textAlign: 'center', padding: '24px 12px' }}>
+            <AlertOctagon size={48} style={{ color: 'var(--crm-danger, #b91c1c)', margin: '0 auto 16px' }} />
+            <h3 style={{ marginBottom: '8px' }}>{isAr ? 'الوحدة غير متاحة للحجز' : 'Unit Unavailable'}</h3>
+            <p style={{ color: 'var(--crm-muted, #475569)', fontSize: '0.9rem', lineHeight: '1.6' }}>
+              {isAr 
+                ? 'تم حجز هذه الوحدة أو بيعها مؤخراً. يمكنك استعراض وحدات مماثلة أو التواصل مع فريقنا لمساعدتك.'
+                : 'This unit is already booked or sold. Please check our alternative listings.'}
+            </p>
+            <button type="button" className="lx-btn lx-btn-primary" onClick={onClose} style={{ marginTop: '16px' }}>
+              {isAr ? 'تصفح وحدات أخرى' : 'Browse other properties'}
+            </button>
+          </div>
+        ) : submittedRef ? (
           <SubmissionSuccess
             lang={lang}
             reference={submittedRef}
@@ -115,7 +151,7 @@ export default function DepositModal({
               { ar: 'نراجع معك مستندات الملكية والترخيص قبل أي التزام مالي.', en: 'We review ownership and permit documents with you before any payment.' },
               { ar: 'عند الاتفاق تستلم خطاب حجز رسمياً يحدد المبلغ والحساب وشروط الاسترداد.', en: 'Once agreed, you receive an official reservation letter with amount, account and refund terms.' },
             ]}
-            whatsappText={isAr ? `مرحباً 1Line، أرسلت طلب حجز مبدئي للعقار ${code}` : `Hello 1Line, I requested a reservation for ${code}`}
+            whatsappText={isAr ? `مرحباً 1Line، أرسلت طلب حجز مبدئي للعقار [${code}]` : `Hello 1Line, I requested a reservation for [${code}]`}
           />
         ) : (
           <>
@@ -123,7 +159,13 @@ export default function DepositModal({
               <span className="lx-modal-icon"><CalendarClock size={22} aria-hidden="true" /></span>
               <div>
                 <h3 id="reserve-title">{isAr ? 'طلب حجز مبدئي' : 'Reservation request'}</h3>
-                <p>{isAr ? `العقار ${code} — ${title}` : `${code} — ${title}`}</p>
+                <p>
+                  {isAr ? (
+                    <>العقار <bdi dir="ltr">[{code}]</bdi> — {title}</>
+                  ) : (
+                    <><bdi dir="ltr">[{code}]</bdi> — {title}</>
+                  )}
+                </p>
               </div>
             </header>
 
@@ -149,7 +191,7 @@ export default function DepositModal({
               />
 
               <label className="lx-field">
-                <span>{isAr ? 'الاسم بالكامل' : 'Full name'}</span>
+                <span>{isAr ? 'الاسم بالكامل' : 'Full name'} *</span>
                 <input
                   ref={nameRef}
                   type="text"

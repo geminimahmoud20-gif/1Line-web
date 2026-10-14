@@ -34,9 +34,16 @@ export default function CrmCommandPalette({
   }
   useEffect(() => {
     if (!isOpen) return undefined;
+    const handleGlobalKey = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleGlobalKey);
     const t = setTimeout(() => inputRef.current?.focus(), 60);
-    return () => clearTimeout(t);
-  }, [isOpen]);
+    return () => {
+      window.removeEventListener('keydown', handleGlobalKey);
+      clearTimeout(t);
+    };
+  }, [isOpen, onClose]);
 
   // Static action commands
   const quickActions = useMemo(() => [
@@ -214,7 +221,10 @@ export default function CrmCommandPalette({
   return (
     <div
       className="crm-command-backdrop"
-      onClick={onClose}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      role="presentation"
       style={{
         position: 'fixed',
         top: 0,

@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { UserPlus, Save } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { getAreas } from '../../utils/areasData';
 import { isValidPhoneNumber } from '../../utils/securityShield';
 import DeskOptions from './DeskOptions';
 import { DESK_BY_ROLE } from '../../utils/rbacRules';
+import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 
 export default function AddLeadModal({
   isOpen,
@@ -15,6 +16,20 @@ export default function AddLeadModal({
   userRole = 'super_admin'
 }) {
   const isAr = lang === 'ar';
+  useBodyScrollLock(isOpen);
+  const isSubmittingRef = useRef(false);
+  const mouseDownOnBackdropRef = useRef(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && !isSubmittingRef.current) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   // Lazy initialiser: the default follow-up date is computed once, not on every render
   const [formData, setFormData] = useState(() => ({
@@ -59,6 +74,8 @@ export default function AddLeadModal({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmittingRef.current) return;
+
     const nameTrimmed = formData.name.trim();
     const whatsappTrimmed = (formData.whatsapp || formData.phone || '').trim();
 
@@ -92,45 +109,58 @@ export default function AddLeadModal({
       return;
     }
 
-    const leadPayload = {
-      name: nameTrimmed,
-      phone: formData.phone.trim() || whatsappTrimmed,
-      whatsapp: whatsappTrimmed,
-      altPhone: formData.altPhone,
-      cityOrExpat: formData.cityOrExpat,
-      type: formData.type,
-      status: 'new',
-      temperature: formData.temperature,
-      assignedTo: formData.assignedTo,
-      financing: formData.financing,
-      tags: formData.tags,
-      notes: formData.notes,
-      source: formData.source || 'اتصال مباشر / هاتف',
-      nextActionNote: formData.nextActionNote || 'مكالمة متابعة أولية',
-      nextFollowUpAt: formData.nextFollowUpAt,
-      followUp: formData.nextActionNote || 'مكالمة متابعة أولية',
-      timestamp: new Date().toISOString(),
-      details: {
-        budget: formData.budget,
-        expectedPrice: formData.budget,
-        area: formData.area,
-        propertyType: formData.propertyType
+    try {
+      isSubmittingRef.current = true;
+      const leadPayload = {
+        name: nameTrimmed,
+        phone: formData.phone.trim() || whatsappTrimmed,
+        whatsapp: whatsappTrimmed,
+        altPhone: formData.altPhone,
+        cityOrExpat: formData.cityOrExpat,
+        type: formData.type,
+        status: 'new',
+        temperature: formData.temperature,
+        assignedTo: formData.assignedTo,
+        financing: formData.financing,
+        tags: formData.tags,
+        notes: formData.notes,
+        source: formData.source || 'اتصال مباشر / هاتف',
+        nextActionNote: formData.nextActionNote || 'مكالمة متابعة أولية',
+        nextFollowUpAt: formData.nextFollowUpAt,
+        followUp: formData.nextActionNote || 'مكالمة متابعة أولية',
+        timestamp: new Date().toISOString(),
+        details: {
+          budget: formData.budget,
+          expectedPrice: formData.budget,
+          area: formData.area,
+          propertyType: formData.propertyType
+        }
+      };
+
+      if (onAddLead) {
+        onAddLead(leadPayload);
       }
-    };
 
-    if (onAddLead) {
-      onAddLead(leadPayload);
+      if (triggerToast) {
+        triggerToast(isAr ? `تم تسجيل العميل الجديد (${nameTrimmed}) بنجاح! 👤` : 'Lead added successfully!', 'success');
+      }
+
+      onClose();
+    } finally {
+      isSubmittingRef.current = false;
     }
-
-    if (triggerToast) {
-      triggerToast(isAr ? `تم تسجيل العميل الجديد (${nameTrimmed}) بنجاح! 👤` : 'Lead added successfully!', 'success');
-    }
-
-    onClose();
   };
 
   return (
-    <div className="track-modal-backdrop" onClick={onClose}>
+    <div
+      className="track-modal-backdrop"
+      onMouseDown={(e) => { mouseDownOnBackdropRef.current = e.target === e.currentTarget; }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget && mouseDownOnBackdropRef.current && !isSubmittingRef.current) {
+          onClose();
+        }
+      }}
+    >
       <div className="property-form-modal-card animate-fadeIn" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '720px', width: '95%' }}>
         <div className="modal-form-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

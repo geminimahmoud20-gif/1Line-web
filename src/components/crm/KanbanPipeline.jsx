@@ -7,6 +7,7 @@ import { getAreas } from '../../utils/areasData';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { leadScore } from '../../utils/crmLeadViews';
 import { validateStageTransition, HIGH_VALUE_DEAL_THRESHOLD } from '../../services/stateMachineEngine';
+import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 
 const PIPELINE_STAGES = [
   { id: 'new', title_ar: 'طلبات جديدة', title_en: 'New Inquiries', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)' },
@@ -62,15 +63,34 @@ export default function KanbanPipeline({
   const [blockerModal, setBlockerModal] = useState({ isOpen: false, blockerInfo: null, lead: null });
   const [filterType, setFilterType] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [collapsedStages, setCollapsedStages] = useState(() => {
+    try {
+      const saved = localStorage.getItem('oneline_kanban_collapsed_stages');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const toggleStageCollapse = (stageId) => {
+    setCollapsedStages(prev => {
+      const next = prev.includes(stageId) ? prev.filter(id => id !== stageId) : [...prev, stageId];
+      try { localStorage.setItem('oneline_kanban_collapsed_stages', JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
 
   const isAr = lang === 'ar';
 
   const allAreas = useMemo(() => getAreas(), []);
 
-  // Format and localize property type
+  // Format and localize property type (returns null for general tags that duplicate the top card badge)
   const getLocalizedPropertyType = (typeKey) => {
-    if (!typeKey) return isAr ? 'عقار غير محدد' : 'Property';
+    if (!typeKey) return null;
     const cleanKey = String(typeKey).trim().toLowerCase();
+    if (cleanKey === 'buyer' || cleanKey === 'request' || cleanKey === 'lead' || cleanKey === 'seller') {
+      return null;
+    }
     if (PROPERTY_TYPE_NAMES[cleanKey]) {
       return isAr ? PROPERTY_TYPE_NAMES[cleanKey] : typeKey;
     }
@@ -166,14 +186,32 @@ export default function KanbanPipeline({
     });
   }, [leads, filterType, searchQuery]);
 
-  // Calculate Column metrics
-  const getStageStats = (stageId) => {
-    const stageLeads = filteredLeads.filter(l => (l.status || 'new') === stageId);
-    const totalVolume = stageLeads.reduce((acc, curr) => {
-      return acc + getLeadBudget(curr);
-    }, 0);
-    return { count: stageLeads.length, totalVolume };
-  };
+  // Pre-grouped leads & metrics by stage in a single O(N) pass
+  const { leadsByStage, stageStatsMap } = useMemo(() => {
+    const groups = {};
+    const stats = {};
+    PIPELINE_STAGES.forEach((s) => {
+      groups[s.id] = [];
+      stats[s.id] = { count: 0, totalVolume: 0, budgetedCount: 0, unbudgetedCount: 0 };
+    });
+    filteredLeads.forEach((l) => {
+      const st = l.status || 'new';
+      if (!groups[st]) {
+        groups[st] = [];
+        stats[st] = { count: 0, totalVolume: 0, budgetedCount: 0, unbudgetedCount: 0 };
+      }
+      groups[st].push(l);
+      stats[st].count += 1;
+      const b = getLeadBudget(l);
+      stats[st].totalVolume += b;
+      if (b > 0) {
+        stats[st].budgetedCount += 1;
+      } else {
+        stats[st].unbudgetedCount += 1;
+      }
+    });
+    return { leadsByStage: groups, stageStatsMap: stats };
+  }, [filteredLeads]);
 
   // Drag & Drop Handlers
   const handleDragStart = (e, leadId) => {
@@ -205,13 +243,28 @@ export default function KanbanPipeline({
           return;
         }
 
-        const updates = { status: targetStageId };
+        const prevStageId = targetLead.status || 'new';
+        const updates = { 
+          status: targetStageId,
+          statusUpdatedAt: new Date().toISOString(),
+          lastActivityAt: new Date().toISOString()
+        };
         if (validation.nextTask) {
           updates.latestHandoffTask = validation.nextTask;
         }
-        onUpdateLead(leadId, updates);
+        onUpdateLead(leadId, updates, targetLead.version);
         if (triggerToast) {
-          triggerToast(isAr ? `تم نقل العميل بنجاح إلى مرحلة ${PIPELINE_STAGES.find(s=>s.id===targetStageId)?.title_ar || targetStageId}` : `Lead moved to ${targetStageId}`, 'success');
+          triggerToast(
+            isAr ? `تم نقل العميل بنجاح إلى مرحلة ${PIPELINE_STAGES.find(s=>s.id===targetStageId)?.title_ar || targetStageId}` : `Lead moved to ${targetStageId}`,
+            'success',
+            {
+              onUndo: () => {
+                onUpdateLead(leadId, { status: prevStageId, lastActivityAt: new Date().toISOString() });
+              },
+              undoLabel: isAr ? 'تراجع' : 'Undo',
+              duration: 6000
+            }
+          );
         }
       }
     }
@@ -222,6 +275,7 @@ export default function KanbanPipeline({
   const handleMoveToNextStage = (lead) => {
     const currentIndex = PIPELINE_STAGES.findIndex(s => s.id === (lead.status || 'new'));
     if (currentIndex < PIPELINE_STAGES.length - 1) {
+      const prevStageId = lead.status || 'new';
       const nextStage = PIPELINE_STAGES[currentIndex + 1];
       const validation = validateStageTransition(lead, nextStage.id, {
         userRole: activeRole,
@@ -237,13 +291,27 @@ export default function KanbanPipeline({
       }
 
       if (onUpdateLead) {
-        const updates = { status: nextStage.id };
+        const updates = { 
+          status: nextStage.id,
+          statusUpdatedAt: new Date().toISOString(),
+          lastActivityAt: new Date().toISOString()
+        };
         if (validation.nextTask) {
           updates.latestHandoffTask = validation.nextTask;
         }
-        onUpdateLead(lead.id, updates);
+        onUpdateLead(lead.id, updates, lead.version);
         if (triggerToast) {
-          triggerToast(isAr ? `تم نقل العميل إلى مرحلة: ${nextStage.title_ar}` : `Moved to ${nextStage.title_en}`, 'success');
+          triggerToast(
+            isAr ? `تم نقل العميل إلى مرحلة: ${nextStage.title_ar}` : `Moved to ${nextStage.title_en}`,
+            'success',
+            {
+              onUndo: () => {
+                onUpdateLead(lead.id, { status: prevStageId, lastActivityAt: new Date().toISOString() });
+              },
+              undoLabel: isAr ? 'تراجع' : 'Undo',
+              duration: 6000
+            }
+          );
         }
       }
     }
@@ -253,12 +321,71 @@ export default function KanbanPipeline({
   const handleMoveToPrevStage = (lead) => {
     const currentIndex = PIPELINE_STAGES.findIndex(s => s.id === (lead.status || 'new'));
     if (currentIndex > 0) {
+      const currentStageId = lead.status || 'new';
       const prevStage = PIPELINE_STAGES[currentIndex - 1];
       if (onUpdateLead) {
-        onUpdateLead(lead.id, { status: prevStage.id });
+        onUpdateLead(lead.id, { 
+          status: prevStage.id,
+          statusUpdatedAt: new Date().toISOString(),
+          lastActivityAt: new Date().toISOString()
+        }, lead.version);
         if (triggerToast) {
-          triggerToast(isAr ? `تم إرجاع العميل إلى مرحلة: ${prevStage.title_ar}` : `Moved back to ${prevStage.title_en}`, 'info');
+          triggerToast(
+            isAr ? `تم إرجاع العميل إلى مرحلة: ${prevStage.title_ar}` : `Moved back to ${prevStage.title_en}`,
+            'info',
+            {
+              onUndo: () => {
+                onUpdateLead(lead.id, { status: currentStageId, lastActivityAt: new Date().toISOString() });
+              },
+              undoLabel: isAr ? 'تراجع' : 'Undo',
+              duration: 6000
+            }
+          );
         }
+      }
+    }
+  };
+
+  // Direct Move to Any Specific Stage
+  const handleMoveToSpecificStage = (lead, targetStageId) => {
+    if (!lead || !targetStageId || lead.status === targetStageId) return;
+    const prevStageId = lead.status || 'new';
+    const validation = validateStageTransition(lead, targetStageId, {
+      userRole: activeRole,
+      isFounderApproved: lead.isFounderApproved || activeRole === 'super_admin'
+    });
+
+    if (!validation.allowed) {
+      setBlockerModal({ isOpen: true, blockerInfo: validation, lead });
+      if (triggerToast) {
+        triggerToast(validation.missingDeliverable, 'error');
+      }
+      return;
+    }
+
+    if (onUpdateLead) {
+      const updates = { 
+        status: targetStageId,
+        statusUpdatedAt: new Date().toISOString(),
+        lastActivityAt: new Date().toISOString()
+      };
+      if (validation.nextTask) {
+        updates.latestHandoffTask = validation.nextTask;
+      }
+      onUpdateLead(lead.id, updates, lead.version);
+      const targetStage = PIPELINE_STAGES.find(s => s.id === targetStageId);
+      if (triggerToast) {
+        triggerToast(
+          isAr ? `تم نقل العميل مباشرة إلى مرحلة: ${targetStage?.title_ar || targetStageId}` : `Moved to ${targetStage?.title_en || targetStageId}`,
+          'success',
+          {
+            onUndo: () => {
+              onUpdateLead(lead.id, { status: prevStageId, lastActivityAt: new Date().toISOString() });
+            },
+            undoLabel: isAr ? 'تراجع' : 'Undo',
+            duration: 6000
+          }
+        );
       }
     }
   };
@@ -418,14 +545,90 @@ export default function KanbanPipeline({
       {/* Kanban Stages Board */}
       <div className="kanban-board-scroll-container" style={{
         display: 'grid',
-        gridTemplateColumns: `repeat(${PIPELINE_STAGES.length}, minmax(280px, 1fr))`,
+        gridTemplateColumns: PIPELINE_STAGES.map(s => collapsedStages.includes(s.id) ? '54px' : 'minmax(280px, 1fr)').join(' '),
         gap: '14px',
         overflowX: 'auto',
         paddingBottom: '40px'
       }}>
         {PIPELINE_STAGES.map((stage) => {
-          const stageLeads = filteredLeads.filter(l => (l.status || 'new') === stage.id);
-          const { count, totalVolume } = getStageStats(stage.id);
+          const isCollapsed = collapsedStages.includes(stage.id);
+          const stageLeads = leadsByStage[stage.id] || [];
+          const { count, totalVolume, budgetedCount, unbudgetedCount } = stageStatsMap[stage.id] || { count: 0, totalVolume: 0, budgetedCount: 0, unbudgetedCount: 0 };
+
+          if (isCollapsed) {
+            return (
+              <div
+                key={stage.id}
+                className="kanban-stage-column is-collapsed"
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, stage.id)}
+                onClick={() => toggleStageCollapse(stage.id)}
+                title={isAr ? `انقر لتوسيع مرحلة "${stage.title_ar}" (${count} صفقات)` : `Click to expand "${stage.title_en}" (${count})`}
+                style={{
+                  background: 'var(--crm-subtle)',
+                  border: '1px solid var(--crm-line)',
+                  borderTop: `3px solid ${stage.color}`,
+                  borderRadius: '12px',
+                  padding: '14px 6px',
+                  minHeight: '560px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  gap: '12px',
+                  transition: 'all 0.2s ease',
+                  userSelect: 'none'
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleStageCollapse(stage.id);
+                  }}
+                  style={{
+                    background: 'var(--crm-card)',
+                    border: '1px solid var(--crm-line)',
+                    borderRadius: '6px',
+                    color: 'var(--crm-muted)',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  title={isAr ? 'توسيع المرحلة' : 'Expand stage'}
+                >
+                  <ChevronRight size={14} style={{ transform: isAr ? 'rotate(180deg)' : 'none' }} />
+                </button>
+
+                <span style={{
+                  background: 'var(--crm-card)',
+                  color: stage.color,
+                  border: `1px solid ${stage.color}`,
+                  borderRadius: '12px',
+                  padding: '2px 6px',
+                  fontSize: '11px',
+                  fontWeight: 800
+                }}>
+                  {count}
+                </span>
+
+                <div style={{
+                  writingMode: 'vertical-rl',
+                  transform: isAr ? 'rotate(180deg)' : 'none',
+                  fontSize: 'var(--crm-text-xs)',
+                  fontWeight: 700,
+                  color: 'var(--crm-ink)',
+                  letterSpacing: '0.04em',
+                  whiteSpace: 'nowrap',
+                  marginTop: '10px'
+                }}>
+                  {isAr ? stage.title_ar : stage.title_en}
+                </div>
+              </div>
+            );
+          }
 
           return (
             <div
@@ -458,21 +661,57 @@ export default function KanbanPipeline({
                   <h4 style={{ margin: 0, fontSize: 'var(--crm-text-md)', color: 'var(--crm-ink)', fontWeight: 700 }}>
                     {isAr ? stage.title_ar : stage.title_en}
                   </h4>
-                  <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: '600' }}>
-                    {(totalVolume / 1000000).toFixed(1)} {isAr ? 'مليون ج.م حجم الصفقات' : 'M EGP'}
+                  <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: '600', display: 'block', marginTop: '2px' }}>
+                    {totalVolume > 0 ? (
+                      <>
+                        <bdi>{(totalVolume / 1000000).toFixed(1)}</bdi> {isAr ? 'مليون ج.م' : 'M EGP'}
+                        {unbudgetedCount > 0 && (
+                          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)', marginInlineStart: '4px' }}>
+                            ({budgetedCount} {isAr ? 'محددة' : 'set'} • {unbudgetedCount} {isAr ? 'قيد التحديد' : 'pending'})
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <span style={{ color: 'var(--crm-faint)' }}>
+                        {count > 0 ? (isAr ? 'الميزانيات قيد التحديد' : 'Budgets pending') : (isAr ? 'لا توجد صفقات' : 'No deals')}
+                      </span>
+                    )}
                   </span>
                 </div>
-                <span style={{
-                  background: 'var(--crm-card)',
-                  color: 'var(--crm-body)',
-                  border: '1px solid var(--crm-line)',
-                  padding: '2px 10px',
-                  borderRadius: '20px',
-                  fontSize: 'var(--crm-text-xs)',
-                  fontWeight: 700
-                }}>
-                  {count}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{
+                    background: 'var(--crm-card)',
+                    color: 'var(--crm-body)',
+                    border: '1px solid var(--crm-line)',
+                    padding: '2px 10px',
+                    borderRadius: '20px',
+                    fontSize: 'var(--crm-text-xs)',
+                    fontWeight: 700
+                  }}>
+                    {count}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleStageCollapse(stage.id);
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--crm-muted)',
+                      cursor: 'pointer',
+                      padding: '3px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      borderRadius: '4px'
+                    }}
+                    title={isAr ? 'طي هذا العمود لتقليل العرض' : 'Collapse column'}
+                    aria-label={isAr ? 'طي العمود' : 'Collapse'}
+                  >
+                    <ChevronLeft size={15} style={{ transform: isAr ? 'none' : 'rotate(180deg)' }} />
+                  </button>
+                </div>
               </div>
 
               {/* Cards Container */}
@@ -551,8 +790,12 @@ export default function KanbanPipeline({
                         </button>
 
                         <p className="kb-meta">
-                          <span>{propType}</span>
-                          <span aria-hidden="true">·</span>
+                          {propType && (
+                            <>
+                              <span>{propType}</span>
+                              <span aria-hidden="true">·</span>
+                            </>
+                          )}
                           <span>{area}</span>
                           <span aria-hidden="true">·</span><span title={leadScore(lead).reasons.join(' • ')}>{isAr ? `اهتمام ${leadScore(lead).score}%` : `${leadScore(lead).score}% score`}</span>
                         </p>
@@ -563,7 +806,7 @@ export default function KanbanPipeline({
                           ) : (
                             <span className="kb-value-empty">{isAr ? 'لم تُحدَّد الميزانية' : 'Budget not set'}</span>
                           )}
-                          <bdi className="kb-phone">{lead.whatsapp || lead.phone || '—'}</bdi>
+                          <bdi dir="ltr" className="kb-phone" style={{ unicodeBidi: 'isolate' }}>{formatPhoneNumber(lead.whatsapp || lead.phone) || '—'}</bdi>
                         </div>
 
                         {isOverdue && (
@@ -591,6 +834,27 @@ export default function KanbanPipeline({
                               <MoreHorizontal size={16} aria-hidden="true" />
                             </summary>
                             <div className="kb-menu">
+                              {/* Direct Jump To Any Stage */}
+                              <div style={{ borderBottom: '1px solid var(--crm-line)', paddingBottom: '4px', marginBottom: '4px' }}>
+                                <span style={{ fontSize: '11px', color: 'var(--crm-faint)', padding: '2px 8px', display: 'block', fontWeight: 600 }}>
+                                  {isAr ? 'نقل مباشر إلى مرحلة:' : 'Direct Move to:'}
+                                </span>
+                                {PIPELINE_STAGES.filter(s => s.id !== (lead.status || 'new')).map(targetStage => (
+                                  <button
+                                    key={targetStage.id}
+                                    type="button"
+                                    onClick={(e) => {
+                                      closeMenu(e);
+                                      handleMoveToSpecificStage(lead, targetStage.id);
+                                    }}
+                                    style={{ fontSize: 'var(--crm-text-xs)', padding: '5px 8px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                                  >
+                                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: targetStage.color, flexShrink: 0 }} />
+                                    <span>{isAr ? targetStage.title_ar : targetStage.title_en}</span>
+                                  </button>
+                                ))}
+                              </div>
+
                               <button type="button" onClick={(e) => { closeMenu(e); setSchedulingVisitLead(lead); }}>
                                 <Car size={14} aria-hidden="true" />{isAr ? 'حجز موعد معاينة' : 'Schedule visit'}
                               </button>

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Zap, Search, Sparkles, CheckCircle, CheckCircle2, AlertCircle, MapPin, 
   Clock, Building2, Home, Store, Briefcase, Compass, Users, Coins, Flame, 
@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getAreas } from '../utils/areasData';
+import { isValidPhoneNumber } from '../utils/securityShield';
 import '../styles/expat-suite.css';
 import { recordTimeLabel } from '../utils/relativeTime';
 
@@ -38,6 +39,23 @@ export const DemandsPortal = ({
   const [referringDemand, setReferringDemand] = useState(null);
   const [referralForm, setReferralForm] = useState({ name: '', phone: '', propertyNotes: '' });
   const [isSubmittingReferral, setIsSubmittingReferral] = useState(false);
+  const isSubmittingRef = useRef(false);
+
+  // Lock background scroll and listen for Escape key on referral modal
+  useEffect(() => {
+    if (!referringDemand) return undefined;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKey = (e) => {
+      if (e.key === 'Escape') setReferringDemand(null);
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', handleKey);
+    };
+  }, [referringDemand]);
 
   const allPublished = useMemo(() => {
     const list = demands.filter(d => (d.status || 'published') === 'published');
@@ -147,17 +165,29 @@ export const DemandsPortal = ({
   // Handler for referral modal submission
   const handleReferralSubmit = async (e) => {
     e.preventDefault();
-    if (!referralForm.name.trim() || !referralForm.phone.trim()) {
+    if (isSubmittingRef.current || isSubmittingReferral) return;
+
+    const trimmedName = referralForm.name.trim();
+    const trimmedPhone = referralForm.phone.trim();
+
+    if (!trimmedName || !trimmedPhone) {
       triggerToast?.(isAr ? 'يرجى كتابة اسمك ورقم الهاتف للتواصل' : 'Name and phone are required', 'error');
       return;
     }
+
+    if (!isValidPhoneNumber(trimmedPhone)) {
+      triggerToast?.(isAr ? 'رقم الهاتف غير صالح، يرجى كتابة رقم هاتف مصري أو دولي صحيح' : 'Invalid phone number format', 'error');
+      return;
+    }
+
+    isSubmittingRef.current = true;
     setIsSubmittingReferral(true);
     try {
       if (handleAddNewLead) {
         await handleAddNewLead({
-          name: referralForm.name.trim(),
-          phone: referralForm.phone.trim(),
-          whatsapp: referralForm.phone.trim(),
+          name: trimmedName,
+          phone: trimmedPhone,
+          whatsapp: trimmedPhone,
           type: 'referral',
           source: 'Demand Card Referral CTA',
           notes: `إحالة مالك لطلب مشتري (${referringDemand?.type} - ${referringDemand?.area_ar || referringDemand?.area}): ${referringDemand?.text_ar} | مواصفات الوحدة المرشحة: ${referralForm.propertyNotes || 'لم تُحدد'}`,
@@ -176,6 +206,7 @@ export const DemandsPortal = ({
       triggerToast?.(isAr ? 'حدث خطأ أثناء الإرسال، يرجى المحاولة ثانية' : 'Submission error, please try again', 'error');
     } finally {
       setIsSubmittingReferral(false);
+      isSubmittingRef.current = false;
     }
   };
 
@@ -692,8 +723,16 @@ export const DemandsPortal = ({
 
       {/* 🤝 Professional Refer Owner Modal (Replaces amateur window.prompt) */}
       {referringDemand && (
-        <div className="track-modal-backdrop" onClick={() => setReferringDemand(null)} style={{ zIndex: 1200 }}>
-          <div className="track-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
+        <div 
+          className="track-modal-backdrop" 
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setReferringDemand(null);
+          }} 
+          style={{ zIndex: 1200 }}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="track-modal-card" style={{ maxWidth: '520px' }}>
             <div className="track-modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Users size={20} color="var(--primary, #0d48a1)" />

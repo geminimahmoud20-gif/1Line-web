@@ -23,6 +23,7 @@ const SHORT_TYPE_AR = { apartment: 'شقق ودوبلكس', villa: 'فيلات',
 const SHORT_TYPE_EN = { apartment: 'Apartments', villa: 'Villas', commercial: 'Shops', office: 'Offices & clinics', land: 'Land' };
 import OfferModal from './OfferModal';
 import { listingSampleFlags } from '../../utils/sampleDataFlags';
+import { formatArabicPlural } from '../../utils/crmNoteSanitizer';
 const SOHAG_AREA_COORDINATES = {
   east: { lat: 26.5569, lng: 31.7001 },
   new_sohag: { lat: 26.4715, lng: 31.6620 },
@@ -68,6 +69,15 @@ const DEFAULT_FORM_STATE = {
   legalStatus: null,
   customBenchmarkPrice: '',
   nearbyAmenities: []
+};
+
+export const getNormalizedPropertyStatus = (prop) => {
+  if (!prop) return 'published';
+  if (prop.isDeleted || prop.status === 'trash') return 'trash';
+  if (prop.status === 'sold') return 'sold';
+  if (prop.status === 'under_negotiation' || prop.status === 'negotiating') return 'under_negotiation';
+  if (prop.status === 'hidden' || prop.status === 'archived' || prop.status === 'draft' || prop.isArchived) return 'hidden';
+  return 'published';
 };
 
 export default function PropertyManagerPanel({
@@ -434,15 +444,12 @@ export default function PropertyManagerPanel({
 
     for (let i = 0; i < properties.length; i++) {
       const p = properties[i];
-      if (p.isDeleted || p.status === 'trash') {
-        trash++;
-      } else {
-        const st = p.status || (p.isArchived ? 'hidden' : 'published');
-        if (st === 'published') active++;
-        else if (st === 'hidden') hidden++;
-        else if (st === 'under_negotiation') negotiation++;
-        else if (st === 'sold') sold++;
-      }
+      const st = getNormalizedPropertyStatus(p);
+      if (st === 'trash') trash++;
+      else if (st === 'published') active++;
+      else if (st === 'hidden') hidden++;
+      else if (st === 'under_negotiation') negotiation++;
+      else if (st === 'sold') sold++;
     }
 
     return {
@@ -460,14 +467,13 @@ export default function PropertyManagerPanel({
   const filteredProperties = useMemo(() => {
     return properties.filter((prop) => {
       // 1. Trash vs Active
-      const isTrash = prop.isDeleted || prop.status === 'trash';
+      const propStatus = getNormalizedPropertyStatus(prop);
       if (statusFilter === 'trash') {
-        return isTrash;
+        return propStatus === 'trash';
       }
-      if (isTrash) return false;
+      if (propStatus === 'trash') return false;
 
       // 2. Status Filters
-      const propStatus = prop.status || (prop.isArchived ? 'hidden' : 'published');
       if (statusFilter === 'published' && propStatus !== 'published') return false;
       if (statusFilter === 'hidden' && propStatus !== 'hidden') return false;
       if (statusFilter === 'under_negotiation' && propStatus !== 'under_negotiation') return false;
@@ -526,8 +532,8 @@ export default function PropertyManagerPanel({
           <h3>{isAr ? 'إدارة العقارات والوحدات المعروضة' : 'Property Catalog Management'}</h3>
           <p className="panel-sub">
             {isAr 
-              ? `إجمالي المعروض النشط: ${activeCount} عقاراً • المخفي: ${hiddenCount} • تحت التفاوض: ${negotiationCount}` 
-              : `Live: ${activeCount} • Hidden: ${hiddenCount} • Negotiation: ${negotiationCount}`}
+              ? `النشط بالموقع: ${formatArabicPlural(activeCount, 'عقار', 'عقاران', 'عقارات', 'عقاراً')} • المخفي: ${hiddenCount} • تحت التفاوض: ${negotiationCount}${soldCount > 0 ? ` • المباع: ${soldCount}` : ''} • الإجمالي: ${activeCount + hiddenCount + negotiationCount + soldCount} وحدة` 
+              : `Live: ${activeCount} • Hidden: ${hiddenCount} • Negotiation: ${negotiationCount}${soldCount > 0 ? ` • Sold: ${soldCount}` : ''} • Total: ${activeCount + hiddenCount + negotiationCount + soldCount}`}
           </p>
         </div>
 
@@ -608,14 +614,46 @@ export default function PropertyManagerPanel({
       )}
 
       {sampleFlagCount > 0 && (
-        <div role="status" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', padding: '10px 14px', marginBottom: '12px', borderRadius: '10px', background: 'var(--crm-warn-soft)', border: '1px solid var(--crm-warn-line)', color: 'var(--crm-warn)', fontSize: 'var(--crm-text-sm)', fontWeight: 600 }}>
-          <span>
-            {isAr
-              ? `⚠️ ${sampleFlagCount} عقار لسه فيه بيانات من نموذج الإضافة القديم (صورة جاهزة، وصف أو سعر افتراضي، "عرض مميز" تلقائي). راجعها وعدّلها أو اخفيها.`
-              : `⚠️ ${sampleFlagCount} listings still have values from the old add form (stock photo, sample description or price, automatic "featured"). Review them.`}
-          </span>
-          <button type="button" className="btn btn-sm btn-outline" onClick={() => setSampleOnly((v) => !v)}>
-            {sampleOnly ? (isAr ? 'اعرض الكل' : 'Show all') : (isAr ? 'اعرضهم بس' : 'Show only these')}
+        <div role="status" style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
+          flexWrap: 'wrap',
+          padding: '12px 16px',
+          marginBottom: '14px',
+          borderRadius: '12px',
+          background: 'linear-gradient(90deg, var(--crm-warn-soft), #FEF3C7)',
+          border: '1px solid var(--crm-warn-line)',
+          boxShadow: '0 1px 3px rgba(180, 83, 9, 0.06)',
+          color: 'var(--crm-warn)',
+          fontSize: 'var(--crm-text-sm)',
+          fontWeight: 600
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '1.1rem' }}>⚠️</span>
+            <span>
+              {isAr
+                ? `${sampleFlagCount} عقار يحتوي على بيانات من نموذج الإضافة القديم (صورة افتراضية أو سعر تقديري). يُرجى تدقيقها.`
+                : `${sampleFlagCount} listings have legacy template values (placeholder photo or sample price). Please review.`}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSampleOnly((v) => !v)}
+            style={{
+              padding: '6px 14px',
+              fontSize: 'var(--crm-text-xs)',
+              fontWeight: 700,
+              borderRadius: '8px',
+              background: sampleOnly ? 'var(--crm-warn)' : 'var(--crm-card)',
+              color: sampleOnly ? '#fff' : 'var(--crm-warn)',
+              border: '1.5px solid var(--crm-warn)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            {sampleOnly ? (isAr ? 'عرض جميع العقارات' : 'Show all listings') : (isAr ? 'تصفية العقارات القديمة فقط' : 'Filter legacy listings')}
           </button>
         </div>
       )}

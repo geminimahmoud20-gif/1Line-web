@@ -179,11 +179,11 @@ export default function PropertyGallery({
     // Minimum swipe threshold of 45px, ensure predominantly horizontal movement
     if (Math.abs(deltaX) > 45 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
       if (deltaX > 0) {
-        // Swiped Right -> Previous in LTR, Next in RTL
-        isAr ? handlePrev() : handlePrev();
+        // Swiped Right -> Next in RTL, Previous in LTR
+        isAr ? handleNext() : handlePrev();
       } else {
-        // Swiped Left -> Next in LTR, Prev in RTL
-        isAr ? handleNext() : handleNext();
+        // Swiped Left -> Previous in RTL, Next in LTR
+        isAr ? handlePrev() : handleNext();
       }
     }
     touchStartXRef.current = null;

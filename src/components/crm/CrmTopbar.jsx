@@ -724,11 +724,11 @@ export default function CrmTopbar({
           <span className="crm-top-chip-label">{isAr ? 'جاهزية الإطلاق' : 'Audit'}</span>
         </button>
 
-        {/* Live Site Link */}
+        {/* Live Site Preview Link */}
         <a
           href="/"
           target="_blank"
-          rel="noreferrer"
+          rel="noopener noreferrer"
           style={{
             fontSize: 'var(--crm-text-xs)',
             display: 'flex',
@@ -743,12 +743,12 @@ export default function CrmTopbar({
             fontWeight: '600',
             transition: 'all 0.15s ease'
           }}
-          title={isAr ? 'معاينة الموقع في نافذة مستقلة' : 'View Live Site'}
-          aria-label={isAr ? 'فتح الموقع' : 'Open site'}
+          title={isAr ? 'معاينة الموقع العام في تبويب جديد مستقل' : 'View Live Site in New Tab'}
+          aria-label={isAr ? 'معاينة الموقع العام' : 'Preview Live Site'}
           className="crm-top-chip"
         >
           <Globe size={13} style={{ color: 'var(--crm-muted)' }} />
-          <span className="crm-top-chip-label">{isAr ? 'الموقع' : 'Site'}</span>
+          <span className="crm-top-chip-label">{isAr ? 'معاينة الموقع' : 'Preview'}</span>
         </a>
 
         {/* Quick Logout button in topbar */}

@@ -4,6 +4,7 @@ import { offerState, formatTimeLeft, getActiveOffer } from '../../utils/property
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { FeaturedPeriodLabel } from './HomepageSlotsBoard';
 import { listingSampleFlags } from '../../utils/sampleDataFlags';
+import { getNormalizedPropertyStatus } from './PropertyManagerPanel';
 
 // One row of the CRM properties table (PropertyManagerPanel): status selector, homepage star,
 // WhatsApp match notifier and the edit / trash / restore actions.
@@ -62,8 +63,8 @@ export default function PropertyTableRow({
   setNotifierProperty,
   setNotifierEventType
 }) {
-  const propStatus = prop.status || (prop.isArchived ? 'hidden' : 'published');
-  const isTrash = prop.isDeleted || prop.status === 'trash';
+  const propStatus = getNormalizedPropertyStatus(prop);
+  const isTrash = propStatus === 'trash';
   // Same rule as the public site: only hidden / draft / trash listings are off the site
   // ("under negotiation" and "sold" ones are still shown there)
   const isOnSite = !isTrash && !['hidden', 'draft'].includes(propStatus);

@@ -39,8 +39,9 @@ export default function LeadDrawerMatching({
     if (!onUpdateLead || !canAssemble3TierPack) return;
     onUpdateLead(lead.id, {
       nominations: nominationPack,
-      nominatedAt: new Date().toISOString()
-    });
+      nominatedAt: new Date().toISOString(),
+      lastActivityAt: new Date().toISOString()
+    }, lead.version);
     triggerToast?.(isAr ? 'تم اعتماد باقة الترشيحات الثلاثية في ملف العميل بنجاح!' : '3-Tier pack approved for lead profile', 'success');
   };
 
@@ -49,8 +50,9 @@ export default function LeadDrawerMatching({
     onUpdateLead(lead.id, {
       hasOpenSearchRequest: true,
       searchRequest: searchRequestDraft,
-      searchRequestOpenedAt: new Date().toISOString()
-    });
+      searchRequestOpenedAt: new Date().toISOString(),
+      lastActivityAt: new Date().toISOString()
+    }, lead.version);
     triggerToast?.(isAr ? 'تم فتح طلب بحث موجّه للمخزون بمهلة 7 أيام بنجاح!' : 'SearchRequest opened with 7-day SLA', 'success');
   };
 

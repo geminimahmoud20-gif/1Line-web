@@ -1,4 +1,4 @@
-﻿// =============================================================
+// =============================================================
 //  1LINE SOLUTIONS SOHAG - SERVICE WORKER (PWA & OFFLINE RESILIENCE)
 // =============================================================
 
@@ -43,8 +43,8 @@ self.addEventListener('fetch', (event) => {
   // them under the worker's own fetch policy instead of the page's.
   if (url.origin !== self.location.origin) return;
 
-  // Server functions answer live, per-user data (team list, exchange rates…): never cache them
-  if (url.pathname.startsWith('/api/')) return;
+  // Server functions & CRM admin portal: never cache or intercept them
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/crm')) return;
 
   // Network-first strategy for navigation (HTML pages) to ensure instant updates
   if (event.request.mode === 'navigate') {

@@ -18,6 +18,7 @@ import {
   saveNotification,
   updateLeadField,
   deleteLead,
+  deleteLeads,
   saveDemand,
   updateDemandStatus,
   deleteDemandDoc,
@@ -37,6 +38,7 @@ import { normalizeAreaKey } from '../utils/areasData';
 import { enqueuePendingLead, pendingLeadCount } from '../utils/leadQueue';
 import { track, propertyFacts, analyticsVisitorId } from '../utils/analytics';
 import { fetchPublicCatalog, PUBLIC_CATALOG_REFRESH_MS } from '../utils/publicCatalog';
+import { sanitizeAndMergeNotes } from '../utils/crmNoteSanitizer';
 import { usePreferences } from './PreferencesContext';
 import { useUIModal } from './UIModalContext';
 
@@ -450,6 +452,7 @@ export function PropertiesProvider({ children }) {
         const nowIso = new Date().toISOString();
         const mergedLead = {
           ...existing,
+          version: (existing.version || 1) + 1,
           name: existing.name || standardizedData.name,
           whatsapp: standardizedData.whatsapp || existing.whatsapp,
           phone: standardizedData.phone || existing.phone,
@@ -468,8 +471,8 @@ export function PropertiesProvider({ children }) {
           createdBy: existing.createdBy || 'online_visitor',
           lastActivityAt: nowIso,
           timestamp: nowIso,
-          // Keep the new request's own note (e.g. remote inspection / trade-in summary) instead of a generic line
-          notes: `${existing.notes ? existing.notes + ' | ' : ''}${standardizedData.notes ? `طلب إضافي: ${standardizedData.notes}` : `طلب إضافي: ${standardizedData.propertyType || ''} في ${standardizedData.area || ''}`}`,
+          // Cleanly localize, deduplicate, and merge incoming request notes without raw developer slugs
+          notes: sanitizeAndMergeNotes(existing.notes, standardizedData),
           details: { ...(existing.details || {}), ...(standardizedData.details || {}) },
           activityLogs: [newLog, ...(existing.activityLogs || [])],
           digitalJourney: (sessionJourney.events && sessionJourney.events.length > 0) ? sessionJourney.events : (existing.digitalJourney || []),
@@ -489,6 +492,7 @@ export function PropertiesProvider({ children }) {
           id: 'lead-' + Date.now(),
           timestamp: new Date().toISOString(),
           status: 'new',
+          version: 1,
           name: standardizedData.name,
           phone: standardizedData.phone,
           whatsapp: standardizedData.whatsapp,
@@ -819,21 +823,42 @@ export function PropertiesProvider({ children }) {
     return true;
   }, [lang, triggerToast]);
 
-  const handleDeleteLead = useCallback(async (id) => {
-    setLeads((prev) => {
-      const updated = prev.filter((l) => l.id !== id);
-      persistLeads(updated);
-      return updated;
-    });
+  const handleDeleteLead = useCallback(async (idOrIds) => {
+    const ids = Array.isArray(idOrIds) ? idOrIds.map(String) : [String(idOrIds)];
+    if (ids.length === 0) return true;
+
+    const previousLeads = leadsRef.current;
+    const idsSet = new Set(ids);
+    const updated = previousLeads.filter((l) => !idsSet.has(String(l.id)));
+
+    // Optimistic update
+    setLeads(updated);
+    leadsRef.current = updated;
+    persistLeads(updated);
 
     if (isFirebaseActive()) {
       try {
-        await deleteLead(id);
+        const ok = await deleteLeads(ids);
+        if (!ok) {
+          throw new Error('Delete operation rejected by cloud');
+        }
       } catch (err) {
-        console.error('Firebase delete lead error:', err);
+        console.error('Firebase delete lead error, rolling back:', err);
+        // Rollback state and persistence
+        setLeads(previousLeads);
+        leadsRef.current = previousLeads;
+        persistLeads(previousLeads);
+        triggerToast?.(
+          lang === 'ar'
+            ? 'تعذر حذف العميل من الخادم السحابي، تم التراجع عن العملية.'
+            : 'Could not delete lead from server. Action rolled back.',
+          'error'
+        );
+        return false;
       }
     }
-  }, []);
+    return true;
+  }, [lang, triggerToast]);
 
   // File import of clients: saved straight to the cloud (contacts in lead_contacts); the leads
   // listener brings them into the list. No sound / staff alert per row.

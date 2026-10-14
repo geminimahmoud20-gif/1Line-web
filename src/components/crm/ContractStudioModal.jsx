@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X, FileText, Download, Send, Building2, User, Loader2 } from 'lucide-react';
 import { trackEvent } from '../../utils/visitorTracker';
-import { getDynamicPhone } from '../../utils/founderCmsData';
+import { getDynamicPhone, openWhatsAppSafely } from '../../utils/founderCmsData';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
+import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 
 /**
  * ContractStudioModal Component
@@ -17,6 +18,19 @@ export default function ContractStudioModal({
   triggerToast = () => {}
 }) {
   const isAr = lang === 'ar';
+  useBodyScrollLock(isOpen);
+  const mouseDownOnBackdropRef = useRef(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && !isGeneratingPdf) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   const [selectedLeadId, setSelectedLeadId] = useState('');
   const [selectedPropertyId, setSelectedPropertyId] = useState('');
@@ -115,20 +129,36 @@ export default function ContractStudioModal({
     }
   };
 
-  const whatsappText = encodeURIComponent(
+  const getRawWhatsappMessage = () => (
     `🏢 شركة 1Line للاستثمار والتطوير العقاري - سوهاج\n` +
     `مرحباً أستاذ / ${formData.buyerName}\n` +
     `تم إصدار استمارة وعقد حجز وحدتكم العقارية وسند الاستلام المبدئي:\n` +
     `• الوحدة: ${formData.propertyTitle}\n` +
     `• الموقع: ${formData.propertyLocation}\n` +
-    `• إجمالي الثمن: ${formData.propertyPrice.toLocaleString('en-US')} ج.م\n` +
-    `• مبلغ جدية الحجز المؤكد: ${formData.depositAmount.toLocaleString('en-US')} ج.م (${formData.paymentMethod})\n` +
+    `• إجمالي الثمن: ${(Number(formData.propertyPrice) || 0).toLocaleString('en-US')} ج.م\n` +
+    `• مبلغ جدية الحجز المؤكد: ${(Number(formData.depositAmount) || 0).toLocaleString('en-US')} ج.م (${formData.paymentMethod})\n` +
     `• الرقم المرجعي: ${formData.transactionRef}\n` +
     `📞 للاستفسار والتواصل مع الإدارة القانونية: ${getDynamicPhone()}`
   );
 
+  const handleSendWhatsApp = () => {
+    if (!formData.buyerName.trim() || !formData.propertyTitle.trim()) {
+      triggerToast(isAr ? 'يرجى إدخال اسم المشتري واسم الوحدة قبل إرسال العقد' : 'Please fill buyer name and property title', 'error');
+      return;
+    }
+    openWhatsAppSafely(getRawWhatsappMessage(), formData.buyerPhone);
+  };
+
   return (
-    <div className="track-modal-backdrop" onClick={onClose}>
+    <div
+      className="track-modal-backdrop"
+      onMouseDown={(e) => { mouseDownOnBackdropRef.current = e.target === e.currentTarget; }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget && mouseDownOnBackdropRef.current && !isGeneratingPdf) {
+          onClose();
+        }
+      }}
+    >
       <div 
         className="deposit-modal-card" 
         onClick={(e) => e.stopPropagation()}
@@ -310,16 +340,15 @@ export default function ContractStudioModal({
               )}
             </button>
 
-            <a
-              href={`https://wa.me/${formatWhatsAppPhone(formData.buyerPhone)}?text=${whatsappText}`}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
+              onClick={handleSendWhatsApp}
               className="btn"
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'var(--crm-positive-solid)', color: 'var(--crm-on-dark)' }}
             >
               <Send size={15} />
               <span>{isAr ? 'إرسال بيانات العقد واتساب' : 'Send on WhatsApp'}</span>
-            </a>
+            </button>
           </div>
         </div>
       </div>

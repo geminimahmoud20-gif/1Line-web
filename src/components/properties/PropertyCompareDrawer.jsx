@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { X, Trash2, ShieldCheck, Share2, Star, Download, Building2, Calendar, Maximize2, Minimize2, Calculator, Sparkles, Award, Plus, PhoneCall, Scale } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { trackEvent } from '../../utils/visitorTracker';
@@ -200,10 +200,38 @@ export default function PropertyCompareDrawer({
     trackEvent('compare_booked_dual_tour', { p1: p1.id, p2: p2.id });
   };
 
+  // Lock background scroll and listen for Escape key
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
-    <div className={`compare-drawer-backdrop ${isFullscreen ? 'fullscreen-mode' : ''}`} onClick={onClose} dir={isAr ? 'rtl' : 'ltr'}>
+    <div 
+      className={`compare-drawer-backdrop ${isFullscreen ? 'fullscreen-mode' : ''}`} 
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }} 
+      dir={isAr ? 'rtl' : 'ltr'}
+      role="dialog"
+      aria-modal="true"
+    >
       <div 
         className={`compare-drawer-panel luxury-compare-panel ${isFullscreen ? 'is-fullscreen' : ''}`} 
         onClick={(e) => e.stopPropagation()}

@@ -4,6 +4,7 @@ import SiteVisitModal from './SiteVisitModal';
 import { getAreas, normalizeAreaKey } from '../../utils/areasData';
 import { parseMoney } from '../../utils/crmLeadViews';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
+import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 
 export default function SmartMatchingHub({
   leads = [],
@@ -41,6 +42,12 @@ export default function SmartMatchingHub({
     return found ? (isAr ? (found.name_ar || found.label_ar) : (found.name_en || found.label_en)) : areaKey;
   };
 
+  const formatAssignedAgent = (agent) => {
+    if (!agent || agent === 'Unassigned') return isAr ? 'غير مخصص' : 'Unassigned';
+    if (agent === 'Sales Advisor Team') return isAr ? 'فريق مستشاري المبيعات' : 'Sales Advisor Team';
+    return agent;
+  };
+
   // Compute live match matrix between Buyer Leads and Published Properties
   const matches = useMemo(() => {
     const buyerLeads = leads.filter(l => l.type === 'buyer' || l.type === 'investor' || l.type === 'request' || !l.type);
@@ -52,15 +59,14 @@ export default function SmartMatchingHub({
       const details = lead.details || {};
       const rawLeadArea = lead.area || details.area || lead.location || '';
       const leadArea = normalizeAreaKey(rawLeadArea);
-      const leadType = (lead.propertyType || details.propertyType || '').toLowerCase();
-      // The client's own amount only; no budget means the budget doesn't score either way
+      const rawLeadType = (lead.propertyType || details.propertyType || '').toLowerCase();
+      // Guard against account role "buyer" accidentally stored as propertyType
+      const leadType = (rawLeadType === 'buyer' || rawLeadType === 'request' || rawLeadType === 'lead') ? '' : rawLeadType;
+      
       const leadBudget = parseMoney(lead.budget) || parseMoney(details.budget) || parseMoney(details.investmentAmount);
-
-      // Desired size & rooms criteria
       const leadWantedSize = parseMoney(lead.size) || parseMoney(details.size) || parseMoney(details.minSize);
-      const leadWantedRooms = parseInt(lead.rooms || details.rooms || details.bedrooms) || 0;
+      const leadWantedRooms = parseInt(lead.rooms || details.rooms || details.bedrooms, 10) || 0;
 
-      // Payment method preference
       const leadPaymentRaw = (lead.paymentMethod || details.paymentMethod || details.paymentPlan || '').toLowerCase();
       const prefersInstallments = leadPaymentRaw.includes('installment') || leadPaymentRaw.includes('قسط') || leadPaymentRaw.includes('تقسيط');
       const prefersCash = leadPaymentRaw.includes('cash') || leadPaymentRaw.includes('كاش');
@@ -69,84 +75,73 @@ export default function SmartMatchingHub({
         let score = 0;
         const reasons = [];
         const propArea = normalizeAreaKey(prop.areaKey);
+        const propPrice = Number(prop.price) || 0;
 
-        // 1. Area match (25 pts) - Normalized comparison
+        // 1. Area match (Up to 35 pts)
         if (leadArea && (propArea === leadArea || leadArea === 'all' || propArea === 'all')) {
-          score += 25;
+          score += 35;
           reasons.push(isAr ? 'نفس المنطقة المستهدفة' : 'Area match');
-        } else if (!rawLeadArea) {
-          score += 15;
         }
 
-        // 2. Property type match (20 pts)
+        // 2. Property type match (Up to 25 pts)
         if (leadType && (prop.type === leadType || prop.category === leadType)) {
-          score += 20;
+          score += 25;
           reasons.push(isAr ? 'نفس نوع العقار' : 'Type match');
-        } else if (!leadType) {
-          score += 12;
         }
 
-        // 3. Budget match (25 pts)
-        if (!leadBudget) {
-          score += 12;
-        } else if (prop.price) {
-          const diffRatio = Math.abs(prop.price - leadBudget) / leadBudget;
+        // 3. Budget match (Up to 30 pts)
+        if (propPrice <= 0) {
+          reasons.push(isAr ? 'السعر قيد التحديد' : 'Price pending');
+        } else if (leadBudget) {
+          const diffRatio = Math.abs(propPrice - leadBudget) / leadBudget;
           if (diffRatio <= 0.1) {
-            score += 25;
+            score += 30;
             reasons.push(isAr ? 'مطابق تماماً للميزانية' : 'Exact budget match');
           } else if (diffRatio <= 0.25) {
-            score += 18;
+            score += 20;
             reasons.push(isAr ? 'قريب جداً من الميزانية' : 'Close to budget');
-          } else if (prop.price <= leadBudget) {
-            score += 22;
+          } else if (propPrice <= leadBudget) {
+            score += 25;
             reasons.push(isAr ? 'أقل من الميزانية المحددة' : 'Under budget');
           }
+        } else {
+          // No budget specified: do NOT grant fake points; cap score
+          reasons.push(isAr ? 'الميزانية قيد التدقيق' : 'Budget pending');
         }
 
-        // 4. Size & Rooms Compatibility (15 pts)
+        // 4. Size & Rooms Compatibility (Up to 10 pts)
         const propSize = Number(prop.size) || 0;
         const propRooms = Number(prop.bedrooms) || 0;
 
-        if (leadWantedSize && propSize) {
+        if (leadWantedSize && propSize > 0) {
           if (propSize >= leadWantedSize * 0.85 && propSize <= leadWantedSize * 1.35) {
-            score += 10;
+            score += 7;
             reasons.push(isAr ? 'المساحة مطابقة للطلب' : 'Size match');
-          } else if (propSize < leadWantedSize * 0.7) {
-            // Significant size mismatch penalty
-            score = Math.max(0, score - 10);
-          } else {
-            score += 5;
           }
-        } else {
-          score += 8; // Neutral if size unspecified
         }
 
-        if (leadWantedRooms && propRooms) {
+        if (leadWantedRooms && propRooms > 0) {
           if (propRooms >= leadWantedRooms) {
-            score += 5;
+            score += 3;
             reasons.push(isAr ? 'عدد الغرف كافٍ' : 'Rooms match');
           }
-        } else {
-          score += 3;
         }
 
-        // 5. Payment Plan Compatibility (15 pts)
+        // 5. Payment Plan Compatibility (Up to 5 pts)
         const propHasInstallments = Boolean(prop.monthlyInstallment || prop.installmentYears || prop.downPayment);
+        if (prefersInstallments && propHasInstallments) {
+          score += 5;
+          reasons.push(isAr ? 'تسهيلات تقسيط متوافقة' : 'Installment plan match');
+        } else if (prefersCash && !propHasInstallments) {
+          score += 5;
+          reasons.push(isAr ? 'سداد كاش' : 'Cash ready');
+        }
 
-        if (prefersInstallments) {
-          if (propHasInstallments) {
-            score += 15;
-            reasons.push(isAr ? 'تسهيلات تقسيط متوافقة' : 'Installment plan match');
-          } else {
-            // Wants installment but property is strictly cash only
-            score = Math.max(0, score - 8);
-          }
-        } else if (prefersCash) {
-          score += 15;
-          reasons.push(isAr ? 'سداد كاش فوري' : 'Direct cash ready');
-        } else {
-          // Unspecified payment mode gets standard baseline
-          score += 10;
+        // Cap score: unpriced properties cannot exceed 50%; unspecified client budgets cannot exceed 65%
+        if (propPrice <= 0) {
+          if (score > 50) score = 50;
+        } else if (!leadBudget && score > 65) {
+          score = 65;
         }
 
         if (score >= minMatchScore) {
@@ -156,7 +151,7 @@ export default function SmartMatchingHub({
             property: prop,
             score: Math.min(100, Math.round(score)),
             reasons,
-            budgetDifference: leadBudget ? prop.price - leadBudget : null
+            budgetDifference: leadBudget ? propPrice - leadBudget : null
           });
         }
       });
@@ -170,6 +165,11 @@ export default function SmartMatchingHub({
     const { lead, property } = match;
     const phone = lead.whatsapp || lead.phone;
     const cleanPhone = phone?.replace(/[^0-9]/g, '');
+
+    if (!cleanPhone || cleanPhone.includes('*') || cleanPhone.length < 8) {
+      triggerToast?.(isAr ? 'رقم هاتف العميل غير متوفر أو محجوب لصلاحيات حسابك' : 'Phone number is unavailable or masked for your role', 'error');
+      return;
+    }
 
     const propTitle = isAr ? property.title_ar : property.title_en;
     const propPrice = property.price?.toLocaleString('en-US');
@@ -193,12 +193,23 @@ export default function SmartMatchingHub({
         `💰 *Price:* ${propPrice} EGP\n\n` +
         `Would you like to schedule a site visit?`;
 
-    if (cleanPhone) {
-      window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}?text=${encodeURIComponent(waText)}`, '_blank', 'noopener,noreferrer');
+    window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}?text=${encodeURIComponent(waText)}`, '_blank', 'noopener,noreferrer');
+
+    // Update lead CRM record: lastContactedAt + activity log
+    if (onUpdateLead) {
+      const nowIso = new Date().toISOString();
+      const newLog = {
+        timestamp: nowIso,
+        action: `إرسال ترشيح مطابق عبر واتساب للعقار [${property.id}] — ${propTitle} (${match.score}% توافق)`
+      };
+      onUpdateLead(lead.id, {
+        lastContactedAt: nowIso,
+        activityLogs: [newLog, ...(lead.activityLogs || [])]
+      });
     }
 
     if (triggerToast) {
-      triggerToast(isAr ? 'تم فتح واتساب لإرسال العرض المقترح للمشتري!' : 'WhatsApp proposal link opened!', 'success');
+      triggerToast(isAr ? 'تم فتح واتساب وتوثيق إرسال العرض في سجل العميل!' : 'WhatsApp opened and logged in lead history!', 'success');
     }
   };
 
@@ -317,7 +328,7 @@ export default function SmartMatchingHub({
                     </div>
 
                     <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: '600' }}>
-                      {lead.assignedTo}
+                      {formatAssignedAgent(lead.assignedTo)}
                     </span>
                   </div>
 
@@ -352,11 +363,12 @@ export default function SmartMatchingHub({
                       >
                         {lead.name}
                       </strong>
-                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'block', direction: 'ltr', textAlign: isAr ? 'right' : 'left' }}>
-                        📱 {lead.whatsapp || lead.phone}
+                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                        <span>📱</span>
+                        <bdi dir="ltr" style={{ unicodeBidi: 'isolate', fontFamily: 'monospace' }}>{formatPhoneNumber(lead.whatsapp || lead.phone) || '—'}</bdi>
                       </span>
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', display: 'block', marginTop: '4px', fontWeight: '700' }}>
-                        💰 ميزانية: {parseMoney(lead.details?.budget) || parseMoney(lead.budget) ? (parseMoney(lead.details?.budget) || parseMoney(lead.budget)).toLocaleString('en-US') + ' ج.م' : 'غير محددة'}
+                        💰 {isAr ? 'ميزانية:' : 'Budget:'} {parseMoney(lead.details?.budget) || parseMoney(lead.budget) ? (parseMoney(lead.details?.budget) || parseMoney(lead.budget)).toLocaleString('en-US') + ' ج.م' : (isAr ? 'غير محددة بعد' : 'Not set')}
                       </span>
                     </div>
 
@@ -372,7 +384,11 @@ export default function SmartMatchingHub({
                         📐 {property.size} م² • 📍 {getLocalizedArea(property.areaKey)}
                       </span>
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', display: 'block', marginTop: '4px', fontWeight: 700 }}>
-                        💵 السعر: {property.price?.toLocaleString('en-US')} ج.م
+                        {property.price && Number(property.price) > 0 ? (
+                          <>💵 {isAr ? 'السعر:' : 'Price:'} {Number(property.price).toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}</>
+                        ) : (
+                          <span style={{ color: 'var(--crm-warn)' }}>💵 {isAr ? 'السعر: عند التواصل / غير محدد' : 'Price: Upon inquiry'}</span>
+                        )}
                       </span>
                     </div>
                   </div>
@@ -396,16 +412,31 @@ export default function SmartMatchingHub({
                 </div>
 
                 {/* Actions Footer */}
-                <div style={{ display: 'flex', gap: '8px', paddingTop: '10px', borderTop: '1px solid var(--crm-line)' }}>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid var(--crm-line)' }}>
                   {onOpenLead && (
                     <button
                       type="button"
                       className="btn btn-sm"
                       onClick={() => onOpenLead(lead)}
-                      style={{ padding: '7px 10px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-info)', background: 'var(--crm-info-soft)', border: '1px solid var(--crm-info-line)', borderRadius: '6px' }}
+                      style={{
+                        height: '36px',
+                        padding: '0 12px',
+                        fontSize: 'var(--crm-text-xs)',
+                        color: 'var(--crm-info)',
+                        background: 'var(--crm-info-soft)',
+                        border: '1px solid var(--crm-info-line)',
+                        borderRadius: '6px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap'
+                      }}
                       title={isAr ? 'معاينة العميل وتعديل مرحلته' : 'Quick Drawer'}
                     >
                       <Zap size={14} />
+                      <span>{isAr ? 'معاينة' : 'Preview'}</span>
                     </button>
                   )}
 
@@ -413,7 +444,23 @@ export default function SmartMatchingHub({
                     type="button"
                     className="btn btn-sm btn-primary"
                     onClick={() => handleSendProposal(match)}
-                    style={{ flex: 1, padding: '7px 10px', fontSize: 'var(--crm-text-xs)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: 'var(--crm-positive-solid)', color: 'var(--crm-on-dark)', border: 'none', borderRadius: '6px', fontWeight: 'bold' }}
+                    style={{
+                      flex: 1,
+                      height: '36px',
+                      padding: '0 12px',
+                      fontSize: 'var(--crm-text-xs)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      background: 'var(--crm-positive-solid)',
+                      color: 'var(--crm-on-dark)',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap'
+                    }}
                   >
                     <Send size={13} />
                     <span>{isAr ? 'إرسال العرض واتساب' : 'Send WhatsApp'}</span>
@@ -423,10 +470,25 @@ export default function SmartMatchingHub({
                     type="button"
                     className="btn btn-sm"
                     onClick={() => setSchedulingVisitLead({ ...lead, details: { ...lead.details, targetPropertyId: property.id } })}
-                    style={{ padding: '7px 10px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', background: 'var(--crm-warn-soft)', border: '1px solid var(--crm-warn-line)', borderRadius: '6px' }}
+                    style={{
+                      height: '36px',
+                      padding: '0 12px',
+                      fontSize: 'var(--crm-text-xs)',
+                      color: 'var(--crm-accent-text)',
+                      background: 'var(--crm-warn-soft)',
+                      border: '1px solid var(--crm-warn-line)',
+                      borderRadius: '6px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap'
+                    }}
                     title={isAr ? 'حجز موعد معاينة' : 'Schedule Visit'}
                   >
                     <Car size={14} />
+                    <span>{isAr ? 'معاينة ميدانية' : 'Visit'}</span>
                   </button>
                 </div>
               </div>

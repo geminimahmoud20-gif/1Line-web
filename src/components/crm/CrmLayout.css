@@ -139,6 +139,12 @@
   text-decoration: none;
   color: #ffffff;
   overflow: hidden;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  text-align: inherit;
 }
 
 .crm-brand-title {
