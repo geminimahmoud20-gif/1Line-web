@@ -1119,7 +1119,22 @@ export default function LeadsTab({
                           value={l.assignedTo || 'Unassigned'} 
                           aria-label={isAr ? `المسؤول عن ${l.name || 'العميل'}` : `Owner of ${l.name || 'lead'}`}
                           onChange={(e) => {
-                            if (onUpdateLead) onUpdateLead(l.id, { assignedTo: e.target.value });
+                            const prevAgent = l.assignedTo || 'Unassigned';
+                            const newAgent = e.target.value;
+                            if (onUpdateLead) {
+                              onUpdateLead(l.id, { assignedTo: newAgent });
+                              triggerToast?.(
+                                isAr ? `تم تعيين (${l.name || 'العميل'}) للمسؤول: ${newAgent}` : `Assigned ${l.name || 'lead'} to ${newAgent}`,
+                                'success',
+                                {
+                                  onUndo: () => {
+                                    onUpdateLead(l.id, { assignedTo: prevAgent });
+                                  },
+                                  undoLabel: isAr ? 'تراجع' : 'Undo',
+                                  duration: 6000
+                                }
+                              );
+                            }
                           }}
                           className="crm-agent-select"
                           title={isAr ? 'تعيين مسؤول المبيعات' : 'Assign Agent'}

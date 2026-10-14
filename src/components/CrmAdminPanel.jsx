@@ -306,18 +306,36 @@ export const CrmAdminPanel = ({
       if (triggerToast) triggerToast(isAr ? 'صلاحياتك الحالية لا تسمح بتعيين العملاء' : 'Your role cannot assign leads', 'error');
       return;
     }
-    selectedLeadIds.forEach(id => {
+    const priorAssignments = selectedLeadIds.map(id => {
+      const found = leads.find(l => l.id === id);
+      return { id, assignedTo: found?.assignedTo || 'Unassigned' };
+    });
+    const targetIds = [...selectedLeadIds];
+
+    targetIds.forEach(id => {
       if (onUpdateLead) onUpdateLead(id, { assignedTo: newAgent });
     });
     logAuditEvent({
       actionType: 'BULK_LEADS_ASSIGNED',
       targetCollection: 'leads',
-      targetId: selectedLeadIds.join(','),
-      details: { newAgent, count: selectedLeadIds.length },
+      targetId: targetIds.join(','),
+      details: { newAgent, count: targetIds.length },
       actor: currentUser
     });
     if (triggerToast) {
-      triggerToast(isAr ? `تم تعيين ${selectedLeadIds.length} عميل إلى ${newAgent}` : `Assigned ${selectedLeadIds.length} leads to ${newAgent}`, 'success');
+      triggerToast(
+        isAr ? `تم تعيين ${targetIds.length} عميل إلى ${newAgent}` : `Assigned ${targetIds.length} leads to ${newAgent}`,
+        'success',
+        {
+          onUndo: () => {
+            priorAssignments.forEach(({ id, assignedTo }) => {
+              if (onUpdateLead) onUpdateLead(id, { assignedTo });
+            });
+          },
+          undoLabel: isAr ? 'تراجع' : 'Undo',
+          duration: 7000
+        }
+      );
     }
     setSelectedLeadIds([]);
   };
