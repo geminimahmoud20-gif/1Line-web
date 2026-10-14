@@ -4,7 +4,7 @@ import { offerState, formatTimeLeft, getActiveOffer } from '../../utils/property
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { FeaturedPeriodLabel } from './HomepageSlotsBoard';
 import { listingSampleFlags } from '../../utils/sampleDataFlags';
-import { getNormalizedPropertyStatus } from './PropertyManagerPanel';
+import { getNormalizedPropertyStatus } from '../../utils/crmLeadViews';
 
 // One row of the CRM properties table (PropertyManagerPanel): status selector, homepage star,
 // WhatsApp match notifier and the edit / trash / restore actions.
@@ -106,8 +106,18 @@ export default function PropertyTableRow({
 
       <td>
         <div className="table-cell-multi">
-          <strong className="text-primary">{prop.price?.toLocaleString('en-US')} ج.م</strong>
-          <span className="text-muted">مقدم: {prop.downPayment?.toLocaleString('en-US')} ج.م</span>
+          <strong className="text-primary">
+            {prop.price && Number(prop.price) > 0 ? (
+              <><bdi>{Number(prop.price).toLocaleString('en-US')}</bdi> {isAr ? 'ج.م' : 'EGP'}</>
+            ) : (
+              <span style={{ color: 'var(--crm-warn)', fontSize: 'var(--crm-text-xs)' }}>{isAr ? 'عند التواصل' : 'Upon inquiry'}</span>
+            )}
+          </strong>
+          {prop.downPayment && Number(prop.downPayment) > 0 ? (
+            <span className="text-muted">{isAr ? 'مقدم:' : 'Down:'} <bdi>{Number(prop.downPayment).toLocaleString('en-US')}</bdi> {isAr ? 'ج.م' : 'EGP'}</span>
+          ) : (
+            <span className="text-muted" style={{ fontSize: 'var(--crm-text-xs)' }}>{isAr ? 'بدون مقدم محدد' : 'No down payment'}</span>
+          )}
         </div>
       </td>
 
@@ -131,11 +141,11 @@ export default function PropertyTableRow({
             aria-label={isAr ? `حالة العرض: ${prop.title_ar || prop.id}` : `Display status: ${prop.title_en || prop.id}`}
             onChange={(e) => handleStatusChange(prop.id, e.target.value)}
             style={{
-              padding: '4px 8px',
-              borderRadius: 'var(--radius-pill)',
+              padding: '4px 10px',
+              borderRadius: '8px',
               fontSize: 'var(--crm-text-xs)',
-              fontWeight: 'bold',
-              border: '1px solid var(--border-light)',
+              fontWeight: 700,
+              border: '1px solid var(--crm-line)',
               background: 
                 propStatus === 'published' ? 'var(--crm-positive-soft)' :
                 propStatus === 'hidden' ? 'var(--crm-subtle-2)' :
@@ -143,7 +153,8 @@ export default function PropertyTableRow({
               color:
                 propStatus === 'published' ? 'var(--crm-positive)' :
                 propStatus === 'hidden' ? 'var(--crm-muted)' :
-                propStatus === 'under_negotiation' ? 'var(--crm-warn)' : 'var(--crm-danger)'
+                propStatus === 'under_negotiation' ? 'var(--crm-warn)' : 'var(--crm-danger)',
+              cursor: 'pointer'
             }}
           >
             <option value="published">🟢 {isAr ? 'منشور' : 'Published'}</option>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { X, Phone, MessageSquare, Building, ChevronRight, ChevronLeft, Trash2, Plus, Eye } from 'lucide-react';
 import { SOHAG_AREAS, PROPERTY_TYPES } from '../../data/propertiesData';
 import { trackEvent } from '../../utils/visitorTracker';
@@ -35,7 +35,7 @@ export default function LeadQuickDrawer({
   // Dirty State (Unsaved Changes) Protection
   const hasUnsavedChanges = Boolean(newNote.trim() || (showViewingForm && (viewingDateTime || selectedViewingPropId)));
 
-  const safeClose = () => {
+  const safeClose = useCallback(() => {
     if (hasUnsavedChanges) {
       const confirmDiscard = window.confirm(
         isAr 
@@ -45,7 +45,7 @@ export default function LeadQuickDrawer({
       if (!confirmDiscard) return;
     }
     onClose();
-  };
+  }, [hasUnsavedChanges, isAr, onClose]);
 
   // Close on Escape key & browser back navigation (mobile gesture)
   useEffect(() => {
@@ -67,7 +67,7 @@ export default function LeadQuickDrawer({
         window.history.back();
       }
     };
-  }, [hasUnsavedChanges, isAr, onClose]);
+  }, [safeClose]);
 
   // Smart Context Matching Properties for this Lead
   const matchedProperties = useMemo(() => {
@@ -428,29 +428,24 @@ export default function LeadQuickDrawer({
                   </h2>
                   <LeadScorePill lead={lead} isAr={isAr} suffix={isAr ? ' اهتمام' : ' score'} />
                   {lead.temperature && (
-                    <span style={{
-                      fontSize: 'var(--crm-text-xs)',
-                      fontWeight: 700,
-                      padding: '2px 8px',
-                      borderRadius: '999px',
-                      background: lead.temperature === 'hot' ? 'rgba(239, 68, 68, 0.12)' : 'rgba(59, 130, 246, 0.12)',
-                      color: lead.temperature === 'hot' ? 'var(--crm-danger)' : 'var(--crm-info)'
-                    }}>
+                    <span className={`crm-temp-tag is-${lead.temperature}`}>
                       {lead.temperature === 'hot' ? '🔥 ساخن' : lead.temperature === 'warm' ? '⚡ دافئ' : '❄️ بارد'}
                     </span>
                   )}
                 </div>
 
                 {/* Subtitle Contact & Source */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted, var(--crm-faint))', flexWrap: 'wrap' }}>
-                  <bdi dir="ltr" style={{ unicodeBidi: 'isolate', fontFamily: 'monospace' }}>{formatPhoneNumber(lead.phone || lead.whatsapp) || '—'}</bdi>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '6px', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted, var(--crm-faint))', flexWrap: 'wrap' }}>
+                  <span className="crm-phone-mono-pill">
+                    <bdi dir="ltr">{formatPhoneNumber(lead.phone || lead.whatsapp) || '—'}</bdi>
+                  </span>
                   {lead.source && (
-                    <span style={{ background: 'var(--crm-subtle-2, var(--crm-subtle))', padding: '2px 6px', borderRadius: '4px', fontSize: 'var(--crm-text-xs)' }}>
+                    <span style={{ background: 'var(--crm-subtle)', border: '1px solid var(--crm-line)', padding: '2px 8px', borderRadius: '6px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
                       {lead.source}
                     </span>
                   )}
                   {lead.assignedTo && lead.assignedTo !== 'Unassigned' && (
-                    <span>👤 {lead.assignedTo}</span>
+                    <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-body)', fontWeight: 600 }}>👤 {lead.assignedTo}</span>
                   )}
                 </div>
               </div>

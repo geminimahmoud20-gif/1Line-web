@@ -62,40 +62,27 @@ export default function CrmExecutiveDashboard({
   return (
     <div className="crm-dashboard-stack" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {/* ── §1. CEO COMMAND HUD / GREETING ──────────────────────────── */}
-      <div style={{
+      <div className="crm-modern-header-strip" style={{
         background: 'var(--crm-card)',
         border: '1px solid var(--crm-line)',
         borderRadius: '16px',
         padding: '20px 24px',
-        boxShadow: 'var(--crm-shadow, 0 1px 3px rgba(0,0,0,0.04))',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '16px'
+        boxShadow: 'var(--crm-shadow, 0 1px 3px rgba(0,0,0,0.04))'
       }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+        <div className="crm-header-title-group">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{ fontSize: 'var(--crm-text-xl)' }}>{isSuperAdmin ? '👑' : '💼'}</span>
-            <h1 style={{ margin: 0, fontSize: 'var(--crm-text-lg)', fontWeight: 800, color: 'var(--crm-ink)' }}>
+            <h1 className="crm-header-main-title">
               {isAr
                 ? (isSuperAdmin ? 'مركز القيادة والعمليات التنفيذية' : `مرحباً ${currentRoleObj.label_ar || 'مستشار المبيعات'}`)
                 : (isSuperAdmin ? 'Executive Command Center' : `Welcome, ${currentRoleObj.label_en || 'Sales Advisor'}`)}
             </h1>
-            <span style={{
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: 700,
-              padding: '2px 8px',
-              borderRadius: '999px',
-              background: 'rgba(169, 130, 74, 0.12)',
-              color: 'var(--crm-accent-text)',
-              border: '1px solid rgba(169, 130, 74, 0.25)'
-            }}>
+            <span className="crm-badge-360">
               1Line Real Estate OS
             </span>
           </div>
 
-          <p style={{ margin: 0, fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted, var(--crm-faint))' }}>
+          <p className="crm-header-subtitle" style={{ margin: '6px 0 0' }}>
             {isAr
               ? `موجز العمليات: لديك اليوم ${metrics.dueTodayCount} متابعات مجدولة • ${metrics.newLeadsCount} عملاء جدد بحاجة للتأهيل • ${metrics.pendingDemandsCount} طلبات معلقة.`
               : `Today's Brief: ${metrics.dueTodayCount} follow-ups due • ${metrics.newLeadsCount} new leads to qualify • ${metrics.pendingDemandsCount} pending demands.`}
@@ -112,29 +99,17 @@ export default function CrmExecutiveDashboard({
         </div>
 
         {/* Quick Jump Buttons */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div className="crm-header-actions-group">
           <button
             type="button"
             onClick={() => {
               onFilterLeads?.('due');
               onSwitchTab?.('leads');
             }}
-            className="btn btn-sm"
-            style={{
-              background: 'var(--crm-surface-ink)',
-              color: 'var(--crm-on-dark)',
-              padding: '8px 14px',
-              borderRadius: '8px',
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              border: 'none',
-              cursor: 'pointer'
-            }}
+            className="crm-btn-primary-gold"
+            style={{ padding: '8px 14px', fontSize: 'var(--crm-text-xs)' }}
           >
-            <Clock size={14} style={{ color: 'var(--crm-accent)' }} />
+            <Clock size={14} />
             <span>{isAr ? `متابعات اليوم (${metrics.dueTodayCount})` : `Follow-ups (${metrics.dueTodayCount})`}</span>
           </button>
 
@@ -144,44 +119,20 @@ export default function CrmExecutiveDashboard({
               onFilterLeads?.('new');
               onSwitchTab?.('leads');
             }}
-            className="btn btn-sm"
-            style={{
-              background: 'var(--crm-subtle)',
-              color: 'var(--crm-ink)',
-              border: '1px solid var(--crm-line)',
-              padding: '8px 14px',
-              borderRadius: '8px',
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              cursor: 'pointer'
-            }}
+            className="crm-btn-secondary-modern"
+            style={{ padding: '8px 14px', fontSize: 'var(--crm-text-xs)' }}
           >
-            <Users size={14} style={{ color: 'var(--crm-muted)' }} />
+            <Users size={14} />
             <span>{isAr ? `العملاء الجدد (${metrics.newLeadsCount})` : `New Leads (${metrics.newLeadsCount})`}</span>
           </button>
 
           <button
             type="button"
             onClick={() => onSwitchTab?.('kanban')}
-            className="btn btn-sm"
-            style={{
-              background: 'var(--crm-subtle)',
-              color: 'var(--crm-ink)',
-              border: '1px solid var(--crm-line)',
-              padding: '8px 14px',
-              borderRadius: '8px',
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              cursor: 'pointer'
-            }}
+            className="crm-btn-secondary-modern"
+            style={{ padding: '8px 14px', fontSize: 'var(--crm-text-xs)' }}
           >
-            <Target size={14} style={{ color: 'var(--crm-muted)' }} />
+            <Target size={14} />
             <span>{isAr ? 'مسار الصفقات' : 'Pipeline'}</span>
           </button>
         </div>

@@ -151,16 +151,6 @@ export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
               <span>{isAr ? 'بطاقة ضريبية' : 'Tax ID'} <bdi>{LEGAL_IDS.taxCard}</bdi></span>
             )}
             <Link to="/privacy" className="footer-legal-link">{isAr ? 'سياسة الخصوصية' : 'Privacy policy'}</Link>
-            <Link 
-              to="/crm" 
-              className="footer-crm-lock"
-              tabIndex="-1"
-              title=""
-              rel="nofollow"
-              aria-label={isAr ? 'دخول الإدارة' : 'Admin sign-in'}
-            >
-              🔒
-            </Link>
           </div>
 
           <div className="footer-bottom-meta">

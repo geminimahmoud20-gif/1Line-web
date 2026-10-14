@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { MapPin, Plus, Edit3, Trash2, RotateCcw, Search, CheckCircle2, Navigation, X, AlertTriangle } from 'lucide-react';
+import { MapPin, Plus, Edit3, Trash2, RotateCcw, Search, CheckCircle2, Navigation, AlertTriangle } from 'lucide-react';
 import { getAreas, addArea, updateArea, deleteArea, resetAreasToDefault, normalizeAreaKey } from '../../utils/areasData';
 import { useProperties } from '../../context/PropertiesContext';
 import AreaFormModal from './AreaFormModal';
@@ -295,19 +295,8 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
 
             <button
               type="button"
-              className="btn btn-primary"
+              className="crm-btn-primary-gold"
               onClick={handleOpenAdd}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                background: 'linear-gradient(135deg, var(--crm-warn-solid), var(--crm-warn-solid))',
-                color: 'var(--crm-ink)',
-                padding: '9px 16px',
-                borderRadius: '10px',
-                fontWeight: 'bold',
-                fontSize: 'var(--crm-text-base)'
-              }}
             >
               <Plus size={16} />
               <span>{isAr ? 'إضافة حي / منطقة جديدة' : 'Add New District'}</span>
@@ -315,18 +304,9 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
 
             <button
               type="button"
-              className="btn btn-outline"
+              className="crm-btn-secondary-modern"
               onClick={handleResetDefaults}
               title={isAr ? 'استعادة الأحياء الافتراضية' : 'Reset Defaults'}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '9px 14px',
-                fontSize: 'var(--crm-text-sm)',
-                color: 'var(--crm-body)',
-                borderColor: 'var(--crm-line-strong)'
-              }}
             >
               <RotateCcw size={14} />
               <span>{isAr ? 'استعادة الافتراضيات' : 'Reset'}</span>
@@ -359,30 +339,24 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="crm-card" style={{ marginBottom: '20px', padding: '14px 18px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Search size={18} style={{ color: 'var(--crm-faint)' }} />
+      <div style={{ marginBottom: '20px' }}>
+        <div className="crm-search-pill-wrapper">
+          <Search size={16} className="crm-search-pill-icon" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={isAr ? 'بحث سريع باسم الحي، المعرف، أو المعالم الرئيسية...' : 'Search districts by name, ID, or landmarks...'}
-            style={{
-              flex: 1,
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--crm-ink)',
-              fontSize: 'var(--crm-text-base)',
-              outline: 'none'
-            }}
+            className="crm-search-pill-input"
           />
           {searchQuery && (
             <button 
               type="button" 
               onClick={() => setSearchQuery('')}
-              style={{ background: 'transparent', border: 'none', color: 'var(--crm-faint)', cursor: 'pointer' }}
+              className="crm-search-pill-clear"
+              title={isAr ? 'مسح البحث' : 'Clear search'}
             >
-              <X size={16} />
+              ✕
             </button>
           )}
         </div>

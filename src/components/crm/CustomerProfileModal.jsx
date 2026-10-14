@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Phone, MessageSquare, CheckCircle2, Plus, Send, Activity, Lock, Calendar, Download } from 'lucide-react';
 
 
@@ -58,7 +58,7 @@ export default function CustomerProfileModal({
   // Dirty State (Unsaved Changes) Protection
   const hasUnsavedProfile = Boolean(isEditing || (newLogText && newLogText.trim()));
 
-  const handleSafeClose = () => {
+  const handleSafeClose = useCallback(() => {
     if (hasUnsavedProfile) {
       const confirmClose = window.confirm(
         isAr
@@ -68,7 +68,7 @@ export default function CustomerProfileModal({
       if (!confirmClose) return;
     }
     onClose();
-  };
+  }, [hasUnsavedProfile, isAr, onClose]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -79,7 +79,7 @@ export default function CustomerProfileModal({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, hasUnsavedProfile, isAr, onClose]);
+  }, [isOpen, handleSafeClose]);
 
   // Available Tag Presets
   const AVAILABLE_TAGS = [

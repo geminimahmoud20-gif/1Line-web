@@ -7,16 +7,9 @@ export function UIModalProvider({ children }) {
   const [toasts, setToasts] = useState([]);
   const triggerToast = useCallback((message, typeOrOptions = 'info', options = null) => {
     const id = Date.now() + Math.random();
-    let type = 'info';
-    let opts = null;
-
-    if (typeof typeOrOptions === 'object' && typeOrOptions !== null) {
-      opts = typeOrOptions;
-      type = opts.type || 'info';
-    } else {
-      type = typeOrOptions || 'info';
-      opts = options;
-    }
+    const isObj = typeof typeOrOptions === 'object' && typeOrOptions !== null;
+    const opts = isObj ? typeOrOptions : options;
+    const type = isObj ? (opts?.type || 'info') : (typeOrOptions || 'info');
 
     const duration = opts?.duration || (opts?.onUndo ? 6000 : 4000);
     const onUndo = opts?.onUndo || null;

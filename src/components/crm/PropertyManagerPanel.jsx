@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import useOpenRequest from '../../hooks/useOpenRequest';
-import { Building, Plus, Trash2, Upload, Eye, EyeOff, Archive } from 'lucide-react';
+import { Building, Plus, Trash2, Upload, Eye, EyeOff, Archive, Search, X } from 'lucide-react';
 import { getAreas } from '../../utils/areasData';
 import HomepageSlotsBoard, { FeaturedSlotModal } from './HomepageSlotsBoard';
 
@@ -23,7 +23,7 @@ const SHORT_TYPE_AR = { apartment: 'شقق ودوبلكس', villa: 'فيلات',
 const SHORT_TYPE_EN = { apartment: 'Apartments', villa: 'Villas', commercial: 'Shops', office: 'Offices & clinics', land: 'Land' };
 import OfferModal from './OfferModal';
 import { listingSampleFlags } from '../../utils/sampleDataFlags';
-import { formatArabicPlural } from '../../utils/crmNoteSanitizer';
+import { getNormalizedPropertyStatus } from '../../utils/crmLeadViews';
 const SOHAG_AREA_COORDINATES = {
   east: { lat: 26.5569, lng: 31.7001 },
   new_sohag: { lat: 26.4715, lng: 31.6620 },
@@ -69,15 +69,6 @@ const DEFAULT_FORM_STATE = {
   legalStatus: null,
   customBenchmarkPrice: '',
   nearbyAmenities: []
-};
-
-export const getNormalizedPropertyStatus = (prop) => {
-  if (!prop) return 'published';
-  if (prop.isDeleted || prop.status === 'trash') return 'trash';
-  if (prop.status === 'sold') return 'sold';
-  if (prop.status === 'under_negotiation' || prop.status === 'negotiating') return 'under_negotiation';
-  if (prop.status === 'hidden' || prop.status === 'archived' || prop.status === 'draft' || prop.isArchived) return 'hidden';
-  return 'published';
 };
 
 export default function PropertyManagerPanel({
@@ -527,26 +518,52 @@ export default function PropertyManagerPanel({
   return (
     <div className="property-manager-panel">
       {/* Header & Main Actions */}
-      <div className="panel-top-bar">
-        <div>
-          <h3>{isAr ? 'إدارة العقارات والوحدات المعروضة' : 'Property Catalog Management'}</h3>
-          <p className="panel-sub">
-            {isAr 
-              ? `النشط بالموقع: ${formatArabicPlural(activeCount, 'عقار', 'عقاران', 'عقارات', 'عقاراً')} • المخفي: ${hiddenCount} • تحت التفاوض: ${negotiationCount}${soldCount > 0 ? ` • المباع: ${soldCount}` : ''} • الإجمالي: ${activeCount + hiddenCount + negotiationCount + soldCount} وحدة` 
-              : `Live: ${activeCount} • Hidden: ${hiddenCount} • Negotiation: ${negotiationCount}${soldCount > 0 ? ` • Sold: ${soldCount}` : ''} • Total: ${activeCount + hiddenCount + negotiationCount + soldCount}`}
-          </p>
+      <div className="crm-modern-header-strip">
+        <div className="crm-header-title-group">
+          <h3 className="crm-header-main-title">
+            <Building size={22} style={{ color: 'var(--crm-gold)' }} />
+            <span>{isAr ? 'إدارة العقارات والوحدات المعروضة' : 'Property Catalog Management'}</span>
+            <span className="crm-badge-360">Catalog 360°</span>
+          </h3>
+          <div className="crm-header-subtitle">
+            <span>{isAr ? 'النشط بالموقع:' : 'Live:'} <strong className="crm-header-count-pill">{activeCount}</strong></span>
+            <span style={{ opacity: 0.4 }}>•</span>
+            <span>{isAr ? 'المخفي:' : 'Hidden:'} <strong>{hiddenCount}</strong></span>
+            <span style={{ opacity: 0.4 }}>•</span>
+            <span>{isAr ? 'تحت التفاوض:' : 'Negotiation:'} <strong>{negotiationCount}</strong></span>
+            {soldCount > 0 && (
+              <>
+                <span style={{ opacity: 0.4 }}>•</span>
+                <span>{isAr ? 'المباع:' : 'Sold:'} <strong>{soldCount}</strong></span>
+              </>
+            )}
+            <span style={{ opacity: 0.4 }}>•</span>
+            <span>{isAr ? 'الإجمالي:' : 'Total:'} <strong className="crm-header-count-pill">{activeCount + hiddenCount + negotiationCount + soldCount}</strong></span>
+          </div>
         </div>
 
-        <div className="panel-actions-row">
-          {/* Import: Excel / CSV / JSON from any system, with column matching and a review step */}
+        <div className="crm-header-actions-group">
+          {/* Add New Property */}
+          <button 
+            type="button" 
+            className="crm-btn-primary-gold" 
+            onClick={handleOpenAdd} 
+            disabled={readOnly} 
+            title={readOnly ? (isAr ? 'دورك للعرض فقط' : 'View-only role') : undefined}
+          >
+            <Plus size={16} />
+            <span>{isAr ? 'إضافة عقار جديد للموقع' : 'Add New Property'}</span>
+          </button>
+
+          {/* Import: Excel / CSV / JSON */}
           {onImportProperties && (
-            <button type="button" className="btn btn-outline" onClick={() => setImportOpen(true)}>
+            <button type="button" className="crm-btn-secondary-modern" onClick={() => setImportOpen(true)}>
               <Upload size={15} />
               <span>{isAr ? 'استيراد' : 'Import'}</span>
             </button>
           )}
 
-          {/* Export: Excel / CSV / full JSON backup */}
+          {/* Export */}
           <ExportMenu
             label={isAr ? 'تصدير' : 'Export'}
             baseName="1Line_Properties"
@@ -556,12 +573,6 @@ export default function PropertyManagerPanel({
             disabled={!properties.some((p) => !p.isDemo)}
             onDone={(format, ok) => triggerToast(ok ? (isAr ? 'تم تجهيز الملف وتنزيله' : 'File downloaded') : (isAr ? 'تعذّر تجهيز الملف' : 'Export failed'), ok ? 'success' : 'error')}
           />
-
-          {/* Add New Property */}
-          <button type="button" className="btn btn-primary" onClick={handleOpenAdd} disabled={readOnly} title={readOnly ? (isAr ? 'دورك للعرض فقط' : 'View-only role') : undefined}>
-            <Plus size={16} />
-            <span>{isAr ? 'إضافة عقار جديد للموقع' : 'Add New Property'}</span>
-          </button>
         </div>
       </div>
 
@@ -623,7 +634,7 @@ export default function PropertyManagerPanel({
           padding: '12px 16px',
           marginBottom: '14px',
           borderRadius: '12px',
-          background: 'linear-gradient(90deg, var(--crm-warn-soft), #FEF3C7)',
+          background: 'var(--crm-warn-soft)',
           border: '1px solid var(--crm-warn-line)',
           boxShadow: '0 1px 3px rgba(180, 83, 9, 0.06)',
           color: 'var(--crm-warn)',
@@ -631,7 +642,7 @@ export default function PropertyManagerPanel({
           fontWeight: 600
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '1.1rem' }}>⚠️</span>
+            <span style={{ fontSize: 'var(--crm-text-base)' }}>⚠️</span>
             <span>
               {isAr
                 ? `${sampleFlagCount} عقار يحتوي على بيانات من نموذج الإضافة القديم (صورة افتراضية أو سعر تقديري). يُرجى تدقيقها.`
@@ -647,7 +658,7 @@ export default function PropertyManagerPanel({
               fontWeight: 700,
               borderRadius: '8px',
               background: sampleOnly ? 'var(--crm-warn)' : 'var(--crm-card)',
-              color: sampleOnly ? '#fff' : 'var(--crm-warn)',
+              color: sampleOnly ? 'var(--crm-on-dark)' : 'var(--crm-warn)',
               border: '1.5px solid var(--crm-warn)',
               cursor: 'pointer',
               transition: 'all 0.15s ease'
@@ -669,61 +680,85 @@ export default function PropertyManagerPanel({
       />
 
       {/* Status Filter Tabs & Search Bar */}
-      <div className="crm-table-header" style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-        <div className="table-filters">
-          <button 
-            className={`table-filter-btn ${statusFilter === 'all' ? 'active' : ''}`} 
-            onClick={() => setStatusFilter('all')}
-          >
-            {isAr ? 'الكل' : 'All'} ({properties.length - trashCount})
-          </button>
-          <button 
-            className={`table-filter-btn ${statusFilter === 'published' ? 'active' : ''}`} 
-            onClick={() => setStatusFilter('published')}
-            style={{ color: statusFilter === 'published' ? 'var(--crm-positive)' : undefined }}
-          >
-            <Eye size={13} style={{ marginInlineEnd: '4px' }} />
-            {isAr ? 'النشطة والمعروضة' : 'Published Live'} ({activeCount})
-          </button>
-          <button 
-            className={`table-filter-btn ${statusFilter === 'hidden' ? 'active' : ''}`} 
-            onClick={() => setStatusFilter('hidden')}
-          >
-            <EyeOff size={13} style={{ marginInlineEnd: '4px' }} />
-            {isAr ? 'المخفية مؤقتاً' : 'Hidden'} ({hiddenCount})
-          </button>
-          <button 
-            className={`table-filter-btn ${statusFilter === 'under_negotiation' ? 'active' : ''}`} 
-            onClick={() => setStatusFilter('under_negotiation')}
-          >
-            <Archive size={13} style={{ marginInlineEnd: '4px' }} />
-            {isAr ? 'تحت التفاوض' : 'Negotiation'} ({negotiationCount})
-          </button>
-          <button 
-            className={`table-filter-btn ${statusFilter === 'sold' ? 'active' : ''}`} 
-            onClick={() => setStatusFilter('sold')}
-          >
-            {isAr ? 'تم البيع' : 'Sold'} ({soldCount})
-          </button>
-          <button 
-            className={`table-filter-btn ${statusFilter === 'trash' ? 'active' : ''}`} 
-            onClick={() => setStatusFilter('trash')}
-            style={{ color: statusFilter === 'trash' ? 'var(--rose)' : undefined }}
-          >
-            <Trash2 size={13} style={{ marginInlineEnd: '4px' }} />
-            {isAr ? 'سلة المهملات' : 'Trash'} ({trashCount})
-          </button>
-        </div>
+      <div className="crm-modern-triage-hub" style={{ padding: '10px 14px', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+          <div className="crm-triage-scroll-strip" style={{ paddingBottom: 0 }}>
+            <button 
+              type="button"
+              className={`crm-triage-tab-btn ${statusFilter === 'all' ? 'is-active' : ''}`} 
+              onClick={() => setStatusFilter('all')}
+            >
+              <span>{isAr ? 'الكل' : 'All'}</span>
+              <span className="crm-triage-counter">{properties.length - trashCount}</span>
+            </button>
+            <button 
+              type="button"
+              className={`crm-triage-tab-btn ${statusFilter === 'published' ? 'is-active' : ''}`} 
+              onClick={() => setStatusFilter('published')}
+            >
+              <Eye size={13} />
+              <span>{isAr ? 'النشطة والمعروضة' : 'Published Live'}</span>
+              <span className="crm-triage-counter" style={{ color: statusFilter === 'published' ? 'inherit' : 'var(--crm-positive)' }}>{activeCount}</span>
+            </button>
+            <button 
+              type="button"
+              className={`crm-triage-tab-btn ${statusFilter === 'hidden' ? 'is-active' : ''}`} 
+              onClick={() => setStatusFilter('hidden')}
+            >
+              <EyeOff size={13} />
+              <span>{isAr ? 'المخفية مؤقتاً' : 'Hidden'}</span>
+              <span className="crm-triage-counter">{hiddenCount}</span>
+            </button>
+            <button 
+              type="button"
+              className={`crm-triage-tab-btn ${statusFilter === 'under_negotiation' ? 'is-active' : ''}`} 
+              onClick={() => setStatusFilter('under_negotiation')}
+            >
+              <Archive size={13} />
+              <span>{isAr ? 'تحت التفاوض' : 'Negotiation'}</span>
+              <span className="crm-triage-counter" style={{ color: statusFilter === 'under_negotiation' ? 'inherit' : 'var(--crm-warn)' }}>{negotiationCount}</span>
+            </button>
+            <button 
+              type="button"
+              className={`crm-triage-tab-btn ${statusFilter === 'sold' ? 'is-active' : ''}`} 
+              onClick={() => setStatusFilter('sold')}
+            >
+              <span>{isAr ? 'تم البيع' : 'Sold'}</span>
+              <span className="crm-triage-counter">{soldCount}</span>
+            </button>
+            <button 
+              type="button"
+              className={`crm-triage-tab-btn ${statusFilter === 'trash' ? 'is-active' : ''} ${trashCount > 0 ? 'is-danger-tab' : ''}`} 
+              onClick={() => setStatusFilter('trash')}
+            >
+              <Trash2 size={13} />
+              <span>{isAr ? 'سلة المهملات' : 'Trash'}</span>
+              <span className="crm-triage-counter">{trashCount}</span>
+            </button>
+          </div>
 
-        <div>
-          <input 
-            type="text" 
-            placeholder={isAr ? 'بحث بالاسم، الكود، أو المنطقة...' : 'Search title, code, area...'} 
-            className="form-input" 
-            style={{ padding: '6px 14px', fontSize: 'var(--crm-text-base)', width: '220px', borderRadius: 'var(--radius-pill)' }}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          <div className="crm-search-pill-wrapper" style={{ flex: '0 1 260px' }}>
+            <span className="crm-search-icon-prefix">
+              <Search size={14} />
+            </span>
+            <input 
+              type="text" 
+              placeholder={isAr ? 'بحث بالاسم، الكود، أو المنطقة...' : 'Search title, code, area...'} 
+              className="crm-search-pill-input" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                className="crm-search-clear-btn"
+                onClick={() => setSearchQuery('')}
+                title={isAr ? 'مسح البحث' : 'Clear search'}
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

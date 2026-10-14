@@ -7,9 +7,9 @@
 
 /* ── §1 Tokens ─────────────────────────────────────────────── */
 :root {
-  --font-ar: 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, system-ui, sans-serif;
-  --font-en: 'IBM Plex Sans Arabic', 'Segoe UI', system-ui, sans-serif;
-  --font-number: 'IBM Plex Sans Arabic', 'Segoe UI', system-ui, sans-serif;
+  --font-ar: 'Alexandria', 'IBM Plex Sans Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-en: 'Plus Jakarta Sans', 'Alexandria', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-number: 'Plus Jakarta Sans', 'Alexandria', monospace, sans-serif;
 
   /* Palette: ink navy, warm ivory, champagne hairline gold */
   --navy-950: #081221;

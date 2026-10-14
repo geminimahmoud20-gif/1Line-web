@@ -6,7 +6,6 @@ import CurrencySwitcher from './CurrencySwitcher';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { playNotificationChime } from '../../utils/notificationHub';
 import { useClientAuth } from '../../context/ClientAuthContext';
-import { useAuth } from '../../context/AuthContext';
 import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 
 export default function Header({ 
@@ -34,7 +33,6 @@ export default function Header({
   const toolsDropdownRef = useRef(null);
   const location = useLocation();
   const { clientUser, isClientAuthenticated } = useClientAuth();
-  const { crmAuthenticated } = useAuth();
 
   const isAr = lang === 'ar';
 
@@ -369,25 +367,6 @@ export default function Header({
             )}
           </Link>
 
-          {/* 🛡️ CRM Control Panel Quick Access (Visible for authenticated staff / admin) */}
-          {crmAuthenticated && (
-            <Link
-              to="/crm"
-              className="header-client-account-btn"
-              style={{
-                background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.22), rgba(15, 23, 42, 0.88))',
-                border: '1px solid rgba(217, 119, 6, 0.45)',
-                color: 'var(--accent-gold, #d97706)'
-              }}
-              title={isAr ? 'لوحة تحكم إدارة 1Line (CRM)' : '1Line CRM Control Panel'}
-            >
-              <Lock size={14} />
-              <span className="account-text hide-mobile">
-                {isAr ? 'لوحة الإدارة' : 'CRM Panel'}
-              </span>
-            </Link>
-          )}
-
           {/* Active Comparison Button (Luxury Sleek Badge) */}
           {compareCount > 0 && onOpenCompare && (
             <button
@@ -667,26 +646,6 @@ export default function Header({
                 {isClientAuthenticated ? (isAr ? 'حسابي' : 'Account') : (isAr ? 'تفعيل' : 'Activate')}
               </span>
             </Link>
-
-            {/* 🛡️ Mobile CRM Admin Portal Link */}
-            {crmAuthenticated && (
-              <Link
-                to="/crm"
-                className="mobile-nav-item"
-                onClick={() => setMobileMenuOpen(false)}
-                style={{ background: 'rgba(217, 119, 6, 0.1)', border: '1px solid rgba(217, 119, 6, 0.3)', borderRadius: '10px', marginBottom: '6px' }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Lock size={16} className="text-gold" />
-                  <span style={{ fontWeight: 700, color: 'var(--accent-gold, #d97706)' }}>
-                    {isAr ? 'لوحة تحكم الإدارة (CRM)' : 'CRM Admin Panel'}
-                  </span>
-                </div>
-                <span className="nav-badge nav-badge-gold">
-                  {isAr ? 'إدارة' : 'Admin'}
-                </span>
-              </Link>
-            )}
 
             {favoritesCount > 0 && onOpenFavorites && (
               <button

@@ -215,55 +215,44 @@ export default function SmartMatchingHub({
 
   return (
     <div className="smart-matching-hub-card">
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '20px',
-        flexWrap: 'wrap',
-        gap: '12px'
-      }}>
-        <div>
-          <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0, color: 'var(--crm-ink)', fontSize: 'var(--crm-text-lg)', fontWeight: 700 }}>
-            <Sparkles size={20} style={{ color: 'var(--crm-accent-text)' }} />
-            {isAr ? 'محرك المطابقة الذكي اللحظي بين المشترين والمعروض' : 'Live Smart Deals & Buyer Matching Engine'}
-          </h3>
-          <p className="section-subtitle" style={{ margin: '4px 0 0', color: 'var(--crm-muted)', fontSize: 'var(--crm-text-base)' }}>
-            {isAr ? `تم العثور على ${matches.length} فرصة صفقة مؤكدة التوافق مع المشترين المسجلين` : `${matches.length} high-probability buyer-property matches found`}
-          </p>
+      <div className="crm-modern-header-strip">
+        <div className="crm-header-title-group">
+          <h2 className="crm-header-main-title">
+            <Sparkles size={22} style={{ color: 'var(--crm-accent-text)' }} />
+            <span>{isAr ? 'محرك المطابقة الذكي اللحظي AI' : 'Live Smart AI Matching Engine'}</span>
+            <span className="crm-badge-360">Matching AI 360°</span>
+          </h2>
+          <div className="crm-header-subtitle">
+            <span>
+              {isAr ? `تم العثور على ${matches.length} فرصة صفقة مؤكدة التوافق مع المشترين المسجلين` : `${matches.length} high-probability buyer-property matches found`}
+            </span>
+          </div>
         </div>
 
         {/* Filter by Match Strength */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-body)', fontWeight: '600' }}>
-            {isAr ? 'الحد الأدنى للتوافق:' : 'Min Score:'}
-          </span>
           <button
             type="button"
-            className="btn btn-sm"
+            className={`crm-btn-secondary-modern ${minMatchScore === 80 ? 'is-active' : ''}`}
             onClick={() => setMinMatchScore(80)}
             style={{
-              borderRadius: '8px',
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: minMatchScore === 80 ? 'bold' : '600',
-              background: minMatchScore === 80 ? 'var(--crm-warn-solid)' : 'var(--crm-card)',
-              color: minMatchScore === 80 ? 'var(--crm-on-dark)' : 'var(--crm-body)',
-              border: minMatchScore === 80 ? '1px solid var(--crm-warn)' : '1px solid var(--crm-line-strong)'
+              background: minMatchScore === 80 ? 'var(--crm-accent-soft)' : undefined,
+              borderColor: minMatchScore === 80 ? 'var(--crm-accent)' : undefined,
+              color: minMatchScore === 80 ? 'var(--crm-accent-text)' : undefined,
+              fontWeight: 700
             }}
           >
             🔥 80%+ {isAr ? 'مطابقة مثالية' : 'Super Match'}
           </button>
           <button
             type="button"
-            className="btn btn-sm"
+            className={`crm-btn-secondary-modern ${minMatchScore === 60 ? 'is-active' : ''}`}
             onClick={() => setMinMatchScore(60)}
             style={{
-              borderRadius: '8px',
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: minMatchScore === 60 ? 'bold' : '600',
-              background: minMatchScore === 60 ? 'var(--crm-brand-navy)' : 'var(--crm-card)',
-              color: minMatchScore === 60 ? 'var(--crm-on-dark)' : 'var(--crm-body)',
-              border: minMatchScore === 60 ? '1px solid var(--crm-brand-navy)' : '1px solid var(--crm-line-strong)'
+              background: minMatchScore === 60 ? 'var(--crm-accent-soft)' : undefined,
+              borderColor: minMatchScore === 60 ? 'var(--crm-accent)' : undefined,
+              color: minMatchScore === 60 ? 'var(--crm-accent-text)' : undefined,
+              fontWeight: 700
             }}
           >
             ⚡ 60%+ {isAr ? 'كل الفرص' : 'All Deals'}
