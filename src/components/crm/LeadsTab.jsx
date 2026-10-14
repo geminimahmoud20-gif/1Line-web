@@ -116,27 +116,27 @@ export default function LeadsTab({
 
     if (isToday) {
       return (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(239, 68, 68, 0.2)', border: '1px solid var(--crm-danger)', color: 'var(--crm-danger)', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: '11px' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(239, 68, 68, 0.2)', border: '1px solid var(--crm-danger)', color: 'var(--crm-danger)', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: 'var(--crm-text-xs)' }}>
           🚨 {isAr ? 'اليوم' : 'Today'} • {vd} {vs ? `(${vs})` : ''}
         </span>
       );
     }
     if (isTomorrow) {
       return (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(245, 158, 11, 0.2)', border: '1px solid #f59e0b', color: '#f59e0b', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: '11px' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(245, 158, 11, 0.2)', border: '1px solid var(--crm-warn)', color: 'var(--crm-warn)', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: 'var(--crm-text-xs)' }}>
           ⚡ {isAr ? 'بكرة' : 'Tomorrow'} • {vd} {vs ? `(${vs})` : ''}
         </span>
       );
     }
     if (isPast) {
       return (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(100, 116, 139, 0.2)', color: 'var(--crm-muted)', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(100, 116, 139, 0.2)', color: 'var(--crm-muted)', padding: '2px 8px', borderRadius: '4px', fontSize: 'var(--crm-text-xs)' }}>
           ⌛ {isAr ? 'فات موعده' : 'Past'} • {vd} {vs ? `(${vs})` : ''}
         </span>
       );
     }
     return (
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(217, 119, 6, 0.12)', border: '1px solid rgba(217, 119, 6, 0.3)', color: 'var(--crm-accent-text)', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(217, 119, 6, 0.12)', border: '1px solid rgba(217, 119, 6, 0.3)', color: 'var(--crm-accent-text)', padding: '2px 8px', borderRadius: '4px', fontSize: 'var(--crm-text-xs)' }}>
         📅 {vd} {vs ? `(${vs})` : ''}
       </span>
     );
@@ -287,13 +287,13 @@ export default function LeadsTab({
             padding: '7px 13px',
             fontSize: 'var(--crm-text-sm)',
             fontWeight: '600',
-            border: leadFilter === 'unanswered' ? '1px solid var(--crm-danger, #ef4444)' : '1px solid rgba(239, 68, 68, 0.25)',
+            border: leadFilter === 'unanswered' ? '1px solid var(--crm-danger)' : '1px solid rgba(239, 68, 68, 0.25)',
             background: leadFilter === 'unanswered' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.07)',
             color: 'var(--crm-ink)'
           }}
         >
           <span>🆕 {isAr ? 'جديد محدش ردّ عليه' : 'Unanswered / New'}</span>
-          <span className="badge" style={{ background: 'var(--crm-danger, #ef4444)', color: '#fff', fontSize: '11px', padding: '2px 7px', borderRadius: '12px' }}>
+          <span className="badge" style={{ background: 'var(--crm-danger)', color: 'var(--crm-on-dark)', fontSize: 'var(--crm-text-xs)', padding: '2px 7px', borderRadius: '12px' }}>
             {counts.unanswered}
           </span>
         </button>
@@ -310,18 +310,18 @@ export default function LeadsTab({
             padding: '7px 13px',
             fontSize: 'var(--crm-text-sm)',
             fontWeight: '600',
-            border: leadFilter === 'viewing_request' ? '1px solid var(--crm-accent, #d97706)' : '1px solid rgba(217, 119, 6, 0.25)',
+            border: leadFilter === 'viewing_request' ? '1px solid var(--crm-accent)' : '1px solid rgba(217, 119, 6, 0.25)',
             background: leadFilter === 'viewing_request' ? 'rgba(217, 119, 6, 0.2)' : 'rgba(217, 119, 6, 0.07)',
             color: 'var(--crm-ink)'
           }}
         >
           <span>👁 {isAr ? 'طلبات معاينة' : 'Viewing Requests'}</span>
           {counts.viewingUnanswered > 0 ? (
-            <span className="badge" style={{ background: 'var(--crm-accent, #d97706)', color: '#fff', fontSize: '11px', padding: '2px 7px', borderRadius: '12px' }}>
+            <span className="badge" style={{ background: 'var(--crm-accent)', color: 'var(--crm-on-dark)', fontSize: 'var(--crm-text-xs)', padding: '2px 7px', borderRadius: '12px' }}>
               {counts.viewings} ({counts.viewingUnanswered} {isAr ? 'معلق' : 'pending'})
             </span>
           ) : (
-            <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--crm-muted)', fontSize: '11px', padding: '2px 7px', borderRadius: '12px' }}>
+            <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--crm-muted)', fontSize: 'var(--crm-text-xs)', padding: '2px 7px', borderRadius: '12px' }}>
               {counts.viewings}
             </span>
           )}
@@ -339,18 +339,18 @@ export default function LeadsTab({
             padding: '7px 13px',
             fontSize: 'var(--crm-text-sm)',
             fontWeight: '600',
-            border: leadFilter === 'seller' ? '1px solid var(--crm-positive, #10b981)' : '1px solid rgba(16, 185, 129, 0.25)',
+            border: leadFilter === 'seller' ? '1px solid var(--crm-positive)' : '1px solid rgba(16, 185, 129, 0.25)',
             background: leadFilter === 'seller' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.07)',
             color: 'var(--crm-ink)'
           }}
         >
           <span>🏠 {isAr ? 'عروض بيع' : 'Seller Listings'}</span>
           {counts.sellerUnanswered > 0 ? (
-            <span className="badge" style={{ background: 'var(--crm-positive, #10b981)', color: '#fff', fontSize: '11px', padding: '2px 7px', borderRadius: '12px' }}>
+            <span className="badge" style={{ background: 'var(--crm-positive)', color: 'var(--crm-on-dark)', fontSize: 'var(--crm-text-xs)', padding: '2px 7px', borderRadius: '12px' }}>
               {counts.sellers} ({counts.sellerUnanswered} {isAr ? 'معلق' : 'pending'})
             </span>
           ) : (
-            <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--crm-muted)', fontSize: '11px', padding: '2px 7px', borderRadius: '12px' }}>
+            <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--crm-muted)', fontSize: 'var(--crm-text-xs)', padding: '2px 7px', borderRadius: '12px' }}>
               {counts.sellers}
             </span>
           )}
@@ -368,18 +368,18 @@ export default function LeadsTab({
             padding: '7px 13px',
             fontSize: 'var(--crm-text-sm)',
             fontWeight: '600',
-            border: leadFilter === 'account' ? '1px solid var(--crm-info, #0ea5e9)' : '1px solid rgba(14, 165, 233, 0.25)',
+            border: leadFilter === 'account' ? '1px solid var(--crm-info)' : '1px solid rgba(14, 165, 233, 0.25)',
             background: leadFilter === 'account' ? 'rgba(14, 165, 233, 0.2)' : 'rgba(14, 165, 233, 0.07)',
             color: 'var(--crm-ink)'
           }}
         >
           <span>👤 {isAr ? 'حسابات جديدة' : 'New Accounts'}</span>
           {counts.accountUnanswered > 0 ? (
-            <span className="badge" style={{ background: 'var(--crm-info, #0ea5e9)', color: '#fff', fontSize: '11px', padding: '2px 7px', borderRadius: '12px' }}>
+            <span className="badge" style={{ background: 'var(--crm-info)', color: 'var(--crm-on-dark)', fontSize: 'var(--crm-text-xs)', padding: '2px 7px', borderRadius: '12px' }}>
               {counts.accounts} ({counts.accountUnanswered} {isAr ? 'جديد' : 'new'})
             </span>
           ) : (
-            <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--crm-muted)', fontSize: '11px', padding: '2px 7px', borderRadius: '12px' }}>
+            <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--crm-muted)', fontSize: 'var(--crm-text-xs)', padding: '2px 7px', borderRadius: '12px' }}>
               {counts.accounts}
             </span>
           )}
@@ -757,13 +757,13 @@ export default function LeadsTab({
                   {/* Requirements */}
                   <td data-label={isAr ? 'المواصفات' : 'Requirements'}>
                     <div style={{ fontSize: 'var(--crm-text-sm)', maxWidth: '280px', whiteSpace: 'normal' }}>
-                      {l.details?.budget && (
+                      {(l.budget || l.details?.budget || l.details?.expectedPrice) ? (
                         <strong style={{ color: 'var(--crm-positive)', display: 'block', marginBottom: '2px' }}>
-                          <bdi>{formatBudget(l.details.budget, isAr)}</bdi>
+                          <bdi>{formatBudget(l.budget || l.details?.budget || l.details?.expectedPrice, isAr)}</bdi>
                         </strong>
-                      )}
+                      ) : null}
                       <span style={{ color: 'var(--crm-muted)' }}>
-                        {getLocalizedPropertyType(l.propertyType || l.details?.propertyType || l.type)} • {getLocalizedArea(l.area || l.details?.area || l.details?.district || 'east')}
+                        {getLocalizedPropertyType(l.propertyType || l.details?.propertyType || l.type)} • {getLocalizedArea(l.area || l.details?.area || l.details?.district || '')}
                       </span>
                       {leadFilter !== 'viewing_request' && isViewingLead(l) && (
                         <div style={{ marginTop: '5px' }}>

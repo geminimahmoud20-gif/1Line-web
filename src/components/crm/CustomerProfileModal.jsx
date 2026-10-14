@@ -36,9 +36,9 @@ export default function CustomerProfileModal({
     status: lead?.status || 'new',
     temperature: lead?.temperature || '',
     assignedTo: lead?.assignedTo || 'Sales Advisor Team',
-    budget: lead?.details?.budget || lead?.details?.expectedPrice || '',
-    area: lead?.details?.area || 'east',
-    propertyType: lead?.details?.propertyType || 'apartment',
+    budget: lead?.budget || lead?.details?.budget || lead?.details?.expectedPrice || '',
+    area: lead?.area || lead?.details?.area || lead?.details?.district || 'east',
+    propertyType: lead?.propertyType || lead?.details?.propertyType || 'apartment',
     financing: lead?.financing || 'cash', // 'cash' | 'installments' | 'mortgage'
     tags: lead?.tags || ['VIP كاش', 'جاهز للمعاينة'],
     nextActionDate: lead?.nextActionDate || '',

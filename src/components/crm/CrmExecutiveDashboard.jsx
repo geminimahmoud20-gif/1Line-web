@@ -195,7 +195,16 @@ export default function CrmExecutiveDashboard({
       }}>
         {/* Metric 1: Total Pipeline Value */}
         <div
+          role="button"
+          tabIndex={0}
+          aria-label={metrics.scoped ? (isAr ? 'قيمة صفقاتي المفتوحة' : 'My open pipeline') : (isAr ? 'قيمة مسار الصفقات النشط' : 'Active Pipeline Value')}
           onClick={() => onSwitchTab?.('kanban')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onSwitchTab?.('kanban');
+            }
+          }}
           style={{
             background: 'var(--crm-card)',
             border: '1px solid var(--crm-line)',
@@ -227,7 +236,16 @@ export default function CrmExecutiveDashboard({
           <>
             {/* Desk view: the shared pool and first replies instead of company money */}
             <div
+              role="button"
+              tabIndex={0}
+              aria-label={isAr ? 'عملاء متاحين للاستلام' : 'Leads in the shared pool'}
               onClick={() => onFilterLeads?.('unassigned')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onFilterLeads?.('unassigned');
+                }
+              }}
               style={{ background: 'var(--crm-card)', border: '1px solid var(--crm-line)', borderRadius: '14px', padding: '16px 20px', cursor: 'pointer', boxShadow: 'var(--crm-shadow, 0 1px 3px rgba(0,0,0,0.04))' }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -244,7 +262,16 @@ export default function CrmExecutiveDashboard({
               </span>
             </div>
             <div
+              role="button"
+              tabIndex={0}
+              aria-label={isAr ? 'عملائي المستنيين أول رد' : 'My leads awaiting a first reply'}
               onClick={() => onFilterLeads?.('awaiting')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onFilterLeads?.('awaiting');
+                }
+              }}
               style={{ background: 'var(--crm-card)', border: '1px solid var(--crm-line)', borderRadius: '14px', padding: '16px 20px', cursor: 'pointer', boxShadow: 'var(--crm-shadow, 0 1px 3px rgba(0,0,0,0.04))' }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -294,7 +321,16 @@ export default function CrmExecutiveDashboard({
 
         {/* Metric 3: Demand Purchasing Power */}
         <div
+          role="button"
+          tabIndex={0}
+          aria-label={isAr ? 'القوة الشرائية المسجلة' : 'Demand Purchasing Power'}
           onClick={() => onSwitchTab?.('demands')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onSwitchTab?.('demands');
+            }
+          }}
           style={{
             background: 'var(--crm-card)',
             border: '1px solid var(--crm-line)',
@@ -381,9 +417,19 @@ export default function CrmExecutiveDashboard({
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
             {metrics.overdueCount > 0 && (
               <div
+                role="button"
+                tabIndex={0}
+                aria-label={isAr ? `عرض ${metrics.overdueCount} متابعات متأخرة` : `View ${metrics.overdueCount} overdue follow-ups`}
                 onClick={() => {
                   onFilterLeads?.('overdue');
                   onSwitchTab?.('leads');
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onFilterLeads?.('overdue');
+                    onSwitchTab?.('leads');
+                  }
                 }}
                 style={{
                   background: 'var(--crm-subtle)',
@@ -411,9 +457,19 @@ export default function CrmExecutiveDashboard({
 
             {metrics.unassignedCount > 0 && (
               <div
+                role="button"
+                tabIndex={0}
+                aria-label={isAr ? `عرض ${metrics.unassignedCount} عملاء بدون مسؤول` : `View ${metrics.unassignedCount} unassigned leads`}
                 onClick={() => {
                   onFilterLeads?.('unassigned');
                   onSwitchTab?.('leads');
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onFilterLeads?.('unassigned');
+                    onSwitchTab?.('leads');
+                  }
                 }}
                 style={{
                   background: 'var(--crm-subtle)',
@@ -441,7 +497,16 @@ export default function CrmExecutiveDashboard({
 
             {metrics.pendingDemandsCount > 0 && (
               <div
+                role="button"
+                tabIndex={0}
+                aria-label={isAr ? `عرض ${metrics.pendingDemandsCount} طلبات مشترين بحاجة للاعتماد` : `View ${metrics.pendingDemandsCount} pending buyer demands`}
                 onClick={() => onSwitchTab?.('demands')}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onSwitchTab?.('demands');
+                  }
+                }}
                 style={{
                   background: 'var(--crm-subtle)',
                   border: '1px solid var(--crm-line)',
@@ -468,9 +533,19 @@ export default function CrmExecutiveDashboard({
 
             {metrics.staleLeadsCount > 0 && (
               <div
+                role="button"
+                tabIndex={0}
+                aria-label={isAr ? `عرض ${metrics.staleLeadsCount} عملاء في وضع الركود` : `View ${metrics.staleLeadsCount} stale leads`}
                 onClick={() => {
                   onFilterLeads?.('stale');
                   onSwitchTab?.('leads');
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onFilterLeads?.('stale');
+                    onSwitchTab?.('leads');
+                  }
                 }}
                 style={{
                   background: 'var(--crm-subtle)',
@@ -549,7 +624,16 @@ export default function CrmExecutiveDashboard({
                 return (
                   <div
                     key={leadItem.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={isAr ? `فتح ملف العميل ${leadItem.name}` : `Open lead ${leadItem.name}`}
                     onClick={() => onOpenLead?.(leadItem)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onOpenLead?.(leadItem);
+                      }
+                    }}
                     style={{
                       background: 'var(--crm-subtle)',
                       border: '1px solid var(--crm-line)',
