@@ -12,6 +12,7 @@ import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, RESPO
 import { useProperties } from '../../context/PropertiesContext';
 import LeadScorePill from './LeadScorePill';
 import LeadTableRowActions from './LeadTableRowActions';
+import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 
 export default function LeadsTab({
   activeRole,
@@ -963,7 +964,7 @@ export default function LeadsTab({
                         )}
                       </div>
 
-                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}><bdi dir="ltr" style={{ unicodeBidi: 'isolate', fontFamily: 'monospace' }}>{l.phone || l.whatsapp || '—'}</bdi></span>
+                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}><bdi dir="ltr" style={{ unicodeBidi: 'isolate', fontFamily: 'monospace' }}>{formatPhoneNumber(l.phone || l.whatsapp) || '—'}</bdi></span>
 
                       <div className="crm-lead-meta">
                         <span className="crm-lead-chip">{sourceLabel(l)}</span>

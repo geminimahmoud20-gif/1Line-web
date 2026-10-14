@@ -8,6 +8,7 @@ import LostReasonModal from './LostReasonModal';
 import LeadScorePill from './LeadScorePill';
 import { validateStageTransition } from '../../services/stateMachineEngine';
 import StageDeliverableModal from './StageDeliverableModal';
+import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 
 export default function LeadQuickDrawer({
   lead,
@@ -442,7 +443,7 @@ export default function LeadQuickDrawer({
 
                 {/* Subtitle Contact & Source */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted, var(--crm-faint))', flexWrap: 'wrap' }}>
-                  <span>{lead.phone}</span>
+                  <bdi dir="ltr" style={{ unicodeBidi: 'isolate', fontFamily: 'monospace' }}>{formatPhoneNumber(lead.phone || lead.whatsapp) || '—'}</bdi>
                   {lead.source && (
                     <span style={{ background: 'var(--crm-subtle-2, var(--crm-subtle))', padding: '2px 6px', borderRadius: '4px', fontSize: 'var(--crm-text-xs)' }}>
                       {lead.source}
