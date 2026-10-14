@@ -249,92 +249,47 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
 
   return (
     <div className="crm-subpanel-container animate-fadeIn">
-      {/* Top Banner & Header */}
-      <div className="crm-card" style={{ marginBottom: '20px', borderLeft: '4px solid var(--crm-accent)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-              <div style={{ 
-                background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.2), rgba(180, 83, 9, 0.4))', 
-                padding: '8px', 
-                borderRadius: '10px', 
-                color: 'var(--crm-accent-text)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <MapPin size={22} />
-              </div>
-              <div>
-                <h2 style={{ fontSize: 'var(--crm-text-lg)', fontWeight: 700, color: 'var(--crm-ink)', margin: 0 }}>
-                  {isAr ? '🗺️ إدارة المناطق والأحياء' : '🗺️ Sohag Districts & Areas CMS'}
-                </h2>
-                <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-faint)' }}>
-                  {isAr ? 'إضافة وتعديل وحذف مناطق محافظة سوهاج مع المزامنة السحابية الفورية لكافة شاشات وفلاتر الموقع' : 'Manage all districts & sync real-time across platform'}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <span style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 12px',
-              borderRadius: '20px',
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: '700',
-              background: 'rgba(16, 185, 129, 0.15)',
-              color: 'var(--crm-positive)',
-              border: '1px solid rgba(16, 185, 129, 0.3)'
-            }}>
-              <CheckCircle2 size={13} />
-              {isAr ? 'مزامنة سحابية حية' : 'Live Cloud Sync'}
+      {/* Modern Header Strip */}
+      <div className="crm-modern-header-strip">
+        <div className="crm-header-title-group">
+          <h3 className="crm-header-main-title">
+            <MapPin size={22} style={{ color: 'var(--crm-accent)' }} />
+            <span>{isAr ? 'إدارة المناطق والأحياء' : 'Sohag Districts & Areas CMS'}</span>
+            <span className="crm-badge-360">GeoAreas 360°</span>
+          </h3>
+          <div className="crm-header-subtitle">
+            <span>{isAr ? 'إجمالي المناطق والأحياء:' : 'Total Districts:'} <strong className="crm-header-count-pill">{stats.total}</strong></span>
+            <span style={{ opacity: 0.4 }}>•</span>
+            <span>{isAr ? 'المخصصة:' : 'Custom:'} <strong>{stats.custom}</strong></span>
+            <span style={{ opacity: 0.4 }}>•</span>
+            <span>{isAr ? 'الأساسية الرسمية:' : 'Core:'} <strong>{stats.system}</strong></span>
+            <span style={{ opacity: 0.4 }}>•</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--crm-positive)' }}>
+              <CheckCircle2 size={12} />
+              <span>{isAr ? 'مزامنة سحابية حية' : 'Live Cloud Sync'}</span>
             </span>
-
-            <button
-              type="button"
-              className="crm-btn-primary-gold"
-              onClick={handleOpenAdd}
-            >
-              <Plus size={16} />
-              <span>{isAr ? 'إضافة حي / منطقة جديدة' : 'Add New District'}</span>
-            </button>
-
-            <button
-              type="button"
-              className="crm-btn-secondary-modern"
-              onClick={handleResetDefaults}
-              title={isAr ? 'استعادة الأحياء الافتراضية' : 'Reset Defaults'}
-            >
-              <RotateCcw size={14} />
-              <span>{isAr ? 'استعادة الافتراضيات' : 'Reset'}</span>
-            </button>
           </div>
         </div>
 
-        {/* Stats Row */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', 
-          gap: '12px', 
-          marginTop: '18px',
-          paddingTop: '16px',
-          borderTop: '1px solid var(--crm-line)'
-        }}>
-          <div style={{ background: 'var(--crm-subtle)', padding: '10px 14px', borderRadius: '10px' }}>
-            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)' }}>{isAr ? 'إجمالي المناطق والأحياء' : 'Total Districts'}</span>
-            <strong style={{ display: 'block', fontSize: 'var(--crm-text-lg)', color: 'var(--crm-ink)', marginTop: '2px' }}>{stats.total} {isAr ? 'منطقة' : 'Areas'}</strong>
-          </div>
-          <div style={{ background: 'var(--crm-subtle)', padding: '10px 14px', borderRadius: '10px' }}>
-            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)' }}>{isAr ? 'الأحياء المخصصة المضافة' : 'Custom Added Districts'}</span>
-            <strong style={{ display: 'block', fontSize: 'var(--crm-text-lg)', color: 'var(--crm-accent-text)', marginTop: '2px' }}>{stats.custom} {isAr ? 'حي إضافي' : 'Custom'}</strong>
-          </div>
-          <div style={{ background: 'var(--crm-subtle)', padding: '10px 14px', borderRadius: '10px' }}>
-            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)' }}>{isAr ? 'الأحياء الأساسية الرسمية' : 'System Districts'}</span>
-            <strong style={{ display: 'block', fontSize: 'var(--crm-text-lg)', color: 'var(--crm-info)', marginTop: '2px' }}>{stats.system} {isAr ? 'مناطق رئيسية' : 'Core'}</strong>
-          </div>
+        <div className="crm-header-actions-group">
+          <button
+            type="button"
+            className="crm-btn-primary-gold"
+            onClick={handleOpenAdd}
+          >
+            <Plus size={16} />
+            <span>{isAr ? 'إضافة حي / منطقة جديدة' : 'Add New District'}</span>
+          </button>
+
+          <button
+            type="button"
+            className="crm-btn-secondary-modern"
+            onClick={handleResetDefaults}
+            title={isAr ? 'استعادة الأحياء الافتراضية' : 'Reset Defaults'}
+          >
+            <RotateCcw size={14} />
+            <span>{isAr ? 'استعادة الافتراضيات' : 'Reset'}</span>
+          </button>
         </div>
       </div>
 
