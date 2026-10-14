@@ -36,8 +36,9 @@ const SLUG_DICTIONARY = {
 };
 
 export function localizeSlug(val) {
-  if (!val) return '';
+  if (!val || val === 'undefined' || val === 'null') return '';
   const clean = String(val).trim().toLowerCase();
+  if (clean === 'undefined' || clean === 'null') return '';
   return SLUG_DICTIONARY[clean] || val;
 }
 
@@ -105,7 +106,14 @@ export function sanitizeAndMergeNotes(existingNotes = '', incomingData = {}) {
     // Reorder "area في type" to "type في area" (e.g. "منطقة الثقافة في شقة سكنية" -> "شقة سكنية في منطقة الثقافة")
     cleanedPart = cleanedPart.replace(/(منطقة الثقافة|سوهاج الجديدة|كورنيش النيل|مدينة الكوثر|أخميم|طهطا|جرجا|عرابة أبيدوس|حي شرق|حي غرب|سيتي والشبان)\s+في\s+(شقة سكنية|دوبلكس|فيلا مستقلة|شاليه|بنتهاوس|عمارة كاملة|محل تجاري|عيادة ومقر طبي|مكتب إداري|أرض)/g, '$2 في $1');
 
-    cleanedPart = cleanedPart.trim();
+    // Strip raw "undefined" or "null" literals leaked from previous JS string interpolations
+    cleanedPart = cleanedPart
+      .replace(/في\s+undefined\b/gi, 'في سوهاج')
+      .replace(/في\s+null\b/gi, 'في سوهاج')
+      .replace(/\b(undefined|null)\b/gi, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+
     if (!cleanedPart) return;
 
     // Normalize key to deduplicate near-identical fragments

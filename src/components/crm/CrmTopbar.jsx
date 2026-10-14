@@ -192,7 +192,7 @@ export default function CrmTopbar({
         <Search size={14} className="crm-topbar-search-icon" />
         <input
           type="text"
-          placeholder={isAr ? 'ابحث أو اضغط (Ctrl + K) للأوامر…' : 'Search or press (Ctrl + K)...'}
+          placeholder={isAr ? 'بحث في العملاء، العقارات، الأوامر…' : 'Search leads, properties, commands...'}
           value={universalSearch}
           onChange={(e) => setUniversalSearch(e.target.value)}
           className="crm-topbar-search-input"
