@@ -1,11 +1,11 @@
-import { Download, Users, Inbox, Trash2, Clock, Plus, UserPlus } from 'lucide-react';
+import { Download, Users, Inbox, Trash2, Clock, Plus, UserPlus, SlidersHorizontal } from 'lucide-react';
 import { SOHAG_AREAS } from '../../data/propertiesData';
 import { formatFollowUp, formatBudget } from '../../utils/crmLabels';
 import DeskOptions from './DeskOptions';
 import ExportMenu from './ExportMenu';
 import DataImportModal from './DataImportModal';
 import { getAreas } from '../../utils/areasData';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import LostReasonModal from './LostReasonModal';
 import MergeLeadsModal from './MergeLeadsModal';
 import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, RESPONSE_SLA_MS, isOverdue, isUnassigned, isStale, localDayKey, getLeadVisitDate, getLeadVisitSlot, isViewingLead, isSellerLead, isAccountLead } from '../../utils/crmLeadViews';
@@ -68,6 +68,95 @@ export default function LeadsTab({
 }) {
   const [lostFor, setLostFor] = useState(null);
   const [mergeGroup, setMergeGroup] = useState(null);
+
+  // Column Visibility state & persistence
+  const DEFAULT_VISIBLE_COLUMNS = useMemo(() => ({
+    requirements: true,
+    score: true,
+    status: true,
+    nextAction: true,
+    agent: true,
+  }), []);
+  const STORAGE_KEY_COLUMNS = 'oneline_crm_leads_columns';
+
+  const [visibleColumns, setVisibleColumns] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_COLUMNS);
+      if (saved) {
+        return {
+          requirements: true,
+          score: true,
+          status: true,
+          nextAction: true,
+          agent: true,
+          ...JSON.parse(saved)
+        };
+      }
+    } catch (e) {
+      // fallback
+    }
+    return {
+      requirements: true,
+      score: true,
+      status: true,
+      nextAction: true,
+      agent: true,
+    };
+  });
+
+  const [showColumnPicker, setShowColumnPicker] = useState(false);
+  const columnPickerRef = useRef(null);
+
+  const toggleColumn = (key) => {
+    setVisibleColumns((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      try {
+        localStorage.setItem(STORAGE_KEY_COLUMNS, JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+  };
+
+  const resetColumns = () => {
+    const def = {
+      requirements: true,
+      score: true,
+      status: true,
+      nextAction: true,
+      agent: true,
+    };
+    setVisibleColumns(def);
+    try {
+      localStorage.removeItem(STORAGE_KEY_COLUMNS);
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    if (!showColumnPicker) return;
+    const handleClickOutside = (e) => {
+      if (columnPickerRef.current && !columnPickerRef.current.contains(e.target)) {
+        setShowColumnPicker(false);
+      }
+    };
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setShowColumnPicker(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showColumnPicker]);
+
+  const totalVisibleCols = 3 + // Checkbox (1), Client Profile (1), Actions (1)
+    (visibleColumns.requirements ? 1 : 0) +
+    (leadFilter === 'viewing_request' ? 1 : 0) +
+    (visibleColumns.score ? 1 : 0) +
+    (visibleColumns.status ? 1 : 0) +
+    (visibleColumns.nextAction ? 1 : 0) +
+    (visibleColumns.agent ? 1 : 0);
+
   // Clock for the "no reply for …" badges; ticks once a minute
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -587,6 +676,120 @@ export default function LeadsTab({
               🔄 {isAr ? 'تصفير الفلاتر' : 'Reset Filters'}
             </button>
           )}
+
+          {/* Column Customization Toggle */}
+          <div ref={columnPickerRef} style={{ position: 'relative', marginInlineStart: (leadFilter !== 'all' || temperatureFilter !== 'all' || (sourceFilter && sourceFilter !== 'all') || (dateFilter && dateFilter !== 'all') || (areaFilter && areaFilter !== 'all') || searchQuery) ? '8px' : 'auto' }}>
+            <button
+              type="button"
+              className="btn btn-sm btn-outline"
+              onClick={() => setShowColumnPicker((v) => !v)}
+              aria-expanded={showColumnPicker}
+              style={{
+                borderRadius: 'var(--radius-pill)',
+                padding: '5px 11px',
+                fontSize: 'var(--crm-text-xs)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                background: showColumnPicker ? 'var(--crm-accent-soft)' : undefined,
+                borderColor: showColumnPicker ? 'var(--crm-accent)' : undefined
+              }}
+              title={isAr ? 'تخصيص وإخفاء أعمدة الجدول' : 'Customize table columns'}
+            >
+              <SlidersHorizontal size={12} />
+              <span>{isAr ? 'تخصيص الأعمدة' : 'Columns'}</span>
+              {Object.values(visibleColumns).filter(Boolean).length < 5 && (
+                <span style={{
+                  background: 'var(--crm-accent)',
+                  color: 'var(--crm-on-accent)',
+                  borderRadius: '10px',
+                  padding: '1px 5px',
+                  fontSize: '10px',
+                  fontWeight: 700
+                }}>
+                  {Object.values(visibleColumns).filter(Boolean).length}/5
+                </span>
+              )}
+            </button>
+
+            {showColumnPicker && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 6px)',
+                  insetInlineEnd: 0,
+                  zIndex: 60,
+                  background: 'var(--crm-card)',
+                  border: '1px solid var(--crm-line-strong)',
+                  borderRadius: 'var(--radius-md)',
+                  boxShadow: '0 12px 28px -6px rgba(0, 0, 0, 0.4), 0 8px 12px -4px rgba(0, 0, 0, 0.25)',
+                  padding: '10px',
+                  minWidth: '230px',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid var(--crm-line)' }}>
+                  <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-ink)' }}>
+                    {isAr ? 'الأعمدة المعروضة' : 'Visible Columns'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={resetColumns}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--crm-accent-text)',
+                      fontSize: '11px',
+                      cursor: 'pointer',
+                      padding: '2px 4px'
+                    }}
+                  >
+                    {isAr ? 'إظهار الكل' : 'Show All'}
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {[
+                    { key: 'requirements', ar: 'المواصفات والميزانية', en: 'Requirements & Budget' },
+                    { key: 'score', ar: 'الجدية والحرارة', en: 'Score & Temp' },
+                    { key: 'status', ar: 'الحالة والمرحلة', en: 'Status' },
+                    { key: 'nextAction', ar: 'المتابعة القادمة', en: 'Next Action' },
+                    { key: 'agent', ar: 'المسؤول', en: 'Assigned Agent' },
+                  ].map((col) => (
+                    <label
+                      key={col.key}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '6px 8px',
+                        borderRadius: 'var(--radius-sm)',
+                        cursor: 'pointer',
+                        fontSize: 'var(--crm-text-xs)',
+                        color: 'var(--crm-ink)',
+                        userSelect: 'none',
+                        background: visibleColumns[col.key] ? 'transparent' : 'rgba(255, 255, 255, 0.02)'
+                      }}
+                      className="crm-col-toggle-label"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={!!visibleColumns[col.key]}
+                        onChange={() => toggleColumn(col.key)}
+                        style={{ cursor: 'pointer', accentColor: 'var(--crm-accent)' }}
+                      />
+                      <span>{isAr ? col.ar : col.en}</span>
+                    </label>
+                  ))}
+                </div>
+
+                <div style={{ marginTop: '8px', paddingTop: '6px', borderTop: '1px solid var(--crm-line)', fontSize: '10px', color: 'var(--crm-muted)', textAlign: 'center' }}>
+                  {isAr ? '🔒 عمود الاسم والإجراءات ثابتان دائماً' : '🔒 Name & Actions are always pinned'}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -683,19 +886,19 @@ export default function LeadsTab({
               />
             </th>
             <th>{isAr ? 'العميل والملف الشخصي' : 'Client Profile'}</th>
-            <th>{isAr ? 'المواصفات والميزانية' : 'Requirements'}</th>
+            {visibleColumns.requirements && <th>{isAr ? 'المواصفات والميزانية' : 'Requirements'}</th>}
             {leadFilter === 'viewing_request' && <th style={{ minWidth: '150px' }}>{isAr ? 'الميعاد المطلوب' : 'Requested Schedule'}</th>}
-            <th>{isAr ? 'الجدية والحرارة' : 'Score & Temp'}</th>
-            <th>{isAr ? 'الحالة' : 'Status'}</th>
-            <th>{isAr ? 'المتابعة القادمة' : 'Next Action'}</th>
-            <th>{isAr ? 'المسؤول' : 'Agent'}</th>
+            {visibleColumns.score && <th>{isAr ? 'الجدية والحرارة' : 'Score & Temp'}</th>}
+            {visibleColumns.status && <th>{isAr ? 'الحالة' : 'Status'}</th>}
+            {visibleColumns.nextAction && <th>{isAr ? 'المتابعة القادمة' : 'Next Action'}</th>}
+            {visibleColumns.agent && <th>{isAr ? 'المسؤول' : 'Agent'}</th>}
             <th>{isAr ? 'الإجراءات' : 'Actions'}</th>
           </tr>
         </thead>
         <tbody>
           {filteredLeads.length === 0 ? (
             <tr>
-              <td colSpan={leadFilter === 'viewing_request' ? 9 : 8} style={{ textAlign: 'center', padding: '40px', color: 'var(--crm-muted)' }}>
+              <td colSpan={totalVisibleCols} style={{ textAlign: 'center', padding: '40px', color: 'var(--crm-muted)' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
                   <Inbox size={32} style={{ color: 'var(--crm-accent-text)' }} />
                   <span style={{ fontSize: 'var(--crm-text-base)' }}>{isAr ? 'لم يتم العثور على أي عملاء يطابقون خيارات البحث الحالية.' : 'No leads found.'}</span>
@@ -790,23 +993,25 @@ export default function LeadsTab({
                   </td>
 
                   {/* Requirements */}
-                  <td data-label={isAr ? 'المواصفات' : 'Requirements'}>
-                    <div style={{ fontSize: 'var(--crm-text-sm)', maxWidth: '280px', whiteSpace: 'normal' }}>
-                      {l.details?.budget && (
-                        <strong style={{ color: 'var(--crm-positive)', display: 'block', marginBottom: '2px' }}>
-                          <bdi>{formatBudget(l.details.budget, isAr)}</bdi>
-                        </strong>
-                      )}
-                      <span style={{ color: 'var(--crm-muted)' }}>
-                        {getLocalizedPropertyType(l.propertyType || l.details?.propertyType || l.type)} • {getLocalizedArea(l.area || l.details?.area || l.details?.district || 'east')}
-                      </span>
-                      {leadFilter !== 'viewing_request' && isViewingLead(l) && (
-                        <div style={{ marginTop: '5px' }}>
-                          {renderVisitBadge(l)}
-                        </div>
-                      )}
-                    </div>
-                  </td>
+                  {visibleColumns.requirements && (
+                    <td data-label={isAr ? 'المواصفات' : 'Requirements'}>
+                      <div style={{ fontSize: 'var(--crm-text-sm)', maxWidth: '280px', whiteSpace: 'normal' }}>
+                        {l.details?.budget && (
+                          <strong style={{ color: 'var(--crm-positive)', display: 'block', marginBottom: '2px' }}>
+                            <bdi>{formatBudget(l.details.budget, isAr)}</bdi>
+                          </strong>
+                        )}
+                        <span style={{ color: 'var(--crm-muted)' }}>
+                          {getLocalizedPropertyType(l.propertyType || l.details?.propertyType || l.type)} • {getLocalizedArea(l.area || l.details?.area || l.details?.district || 'east')}
+                        </span>
+                        {leadFilter !== 'viewing_request' && isViewingLead(l) && (
+                          <div style={{ marginTop: '5px' }}>
+                            {renderVisitBadge(l)}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                  )}
 
                   {/* Requested Schedule Column (for viewing_request) */}
                   {leadFilter === 'viewing_request' && (
@@ -816,82 +1021,90 @@ export default function LeadsTab({
                   )}
 
                   {/* Score & Temperature */}
-                  <td data-label={isAr ? 'الجدية والحرارة' : 'Score & Temp'}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <LeadScorePill lead={l} isAr={isAr} />
-                      <span title={temp === 'hot' ? 'عميل ساخن للشراء' : temp === 'warm' ? 'عميل دافئ' : temp === 'cold' ? 'عميل مستكشف' : (isAr ? 'درجة الحرارة غير محددة' : 'Temperature not set')}>
-                        {temp === 'hot' ? '🔥' : temp === 'warm' ? '⚡' : temp === 'cold' ? '❄️' : <span className="crm-empty-value">—</span>}
-                      </span>
-                    </div>
-                  </td>
+                  {visibleColumns.score && (
+                    <td data-label={isAr ? 'الجدية والحرارة' : 'Score & Temp'}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <LeadScorePill lead={l} isAr={isAr} />
+                        <span title={temp === 'hot' ? 'عميل ساخن للشراء' : temp === 'warm' ? 'عميل دافئ' : temp === 'cold' ? 'عميل مستكشف' : (isAr ? 'درجة الحرارة غير محددة' : 'Temperature not set')}>
+                          {temp === 'hot' ? '🔥' : temp === 'warm' ? '⚡' : temp === 'cold' ? '❄️' : <span className="crm-empty-value">—</span>}
+                        </span>
+                      </div>
+                    </td>
+                  )}
 
                   {/* Status */}
-                  <td data-label={isAr ? 'الحالة' : 'Status'}>
-                    <div className={`crm-status-select-wrap status-pill-${l.status || 'new'}`}>
-                      <span className="crm-status-dot" />
-                      <select 
-                        disabled={!canEdit}
-                        value={l.status || 'new'} 
-                        aria-label={isAr ? `حالة ${l.name || 'العميل'}` : `Status of ${l.name || 'lead'}`}
-                        data-status={l.status || 'new'}
-                        onChange={(e) => {
-                          if (e.target.value === 'lost') { setLostFor(l); return; }
-                          if (onUpdateLead) onUpdateLead(l.id, { status: e.target.value, ...(l.status === 'lost' ? { lostReason: null, lostNote: null, lostAt: null } : {}) });
-                        }}
-                        className="crm-status-select"
-                        title={isAr ? 'تغيير مرحلة العميل' : 'Change Status'}
-                      >
-                        <option value="new">{isAr ? 'طلب جديد' : 'New'}</option>
-                        <option value="contacted">{isAr ? 'تم التواصل' : 'Contacted'}</option>
-                        <option value="site_visit">{isAr ? 'معاينة مجدولة' : 'Site Visit'}</option>
-                        <option value="negotiating">{isAr ? 'قيد التفاوض' : 'Negotiating'}</option>
-                        <option value="closing" disabled={!canCloseDeals && l.status !== 'closing'}>{isAr ? 'توقيع وحجز' : 'Closing'}</option>
-                        <option value="closed" disabled={!canCloseDeals && l.status !== 'closed'}>{isAr ? 'صفقة ناجحة' : 'Closed Won'}</option>
-                        <option value="lost">{isAr ? 'صفقة خسرانة' : 'Closed Lost'}</option>
-                      </select>
-                    </div>
-                  </td>
+                  {visibleColumns.status && (
+                    <td data-label={isAr ? 'الحالة' : 'Status'}>
+                      <div className={`crm-status-select-wrap status-pill-${l.status || 'new'}`}>
+                        <span className="crm-status-dot" />
+                        <select 
+                          disabled={!canEdit}
+                          value={l.status || 'new'} 
+                          aria-label={isAr ? `حالة ${l.name || 'العميل'}` : `Status of ${l.name || 'lead'}`}
+                          data-status={l.status || 'new'}
+                          onChange={(e) => {
+                            if (e.target.value === 'lost') { setLostFor(l); return; }
+                            if (onUpdateLead) onUpdateLead(l.id, { status: e.target.value, ...(l.status === 'lost' ? { lostReason: null, lostNote: null, lostAt: null } : {}) });
+                          }}
+                          className="crm-status-select"
+                          title={isAr ? 'تغيير مرحلة العميل' : 'Change Status'}
+                        >
+                          <option value="new">{isAr ? 'طلب جديد' : 'New'}</option>
+                          <option value="contacted">{isAr ? 'تم التواصل' : 'Contacted'}</option>
+                          <option value="site_visit">{isAr ? 'معاينة مجدولة' : 'Site Visit'}</option>
+                          <option value="negotiating">{isAr ? 'قيد التفاوض' : 'Negotiating'}</option>
+                          <option value="closing" disabled={!canCloseDeals && l.status !== 'closing'}>{isAr ? 'توقيع وحجز' : 'Closing'}</option>
+                          <option value="closed" disabled={!canCloseDeals && l.status !== 'closed'}>{isAr ? 'صفقة ناجحة' : 'Closed Won'}</option>
+                          <option value="lost">{isAr ? 'صفقة خسرانة' : 'Closed Lost'}</option>
+                        </select>
+                      </div>
+                    </td>
+                  )}
 
                   {/* Next Action / Follow-up */}
-                  <td data-label={isAr ? 'المتابعة القادمة' : 'Next Action'}>
-                    <div 
-                      className="crm-next-action-cell"
-                      onClick={() => setQuickDrawerLead(l)}
-                      title={isAr ? 'انقر لتحديث المتابعة والمعاينة السريعة' : 'Click to update next action'}
-                    >
-                      {l.nextActionNote || l.followUp ? (
-                        <div className="crm-next-action-pill">
-                          <Clock size={12} className="crm-next-action-icon" />
-                          <span className="crm-next-action-text" title={formatFollowUp(l.nextActionNote || l.followUp, isAr)}>{formatFollowUp(l.nextActionNote || l.followUp, isAr)}</span>
-                        </div>
-                      ) : (
-                        <span className="crm-next-action-empty">
-                          <Plus size={11} /> {isAr ? 'جدولة متابعة' : 'Add action'}
-                        </span>
-                      )}
-                    </div>
-                  </td>
+                  {visibleColumns.nextAction && (
+                    <td data-label={isAr ? 'المتابعة القادمة' : 'Next Action'}>
+                      <div 
+                        className="crm-next-action-cell"
+                        onClick={() => setQuickDrawerLead(l)}
+                        title={isAr ? 'انقر لتحديث المتابعة والمعاينة السريعة' : 'Click to update next action'}
+                      >
+                        {l.nextActionNote || l.followUp ? (
+                          <div className="crm-next-action-pill">
+                            <Clock size={12} className="crm-next-action-icon" />
+                            <span className="crm-next-action-text" title={formatFollowUp(l.nextActionNote || l.followUp, isAr)}>{formatFollowUp(l.nextActionNote || l.followUp, isAr)}</span>
+                          </div>
+                        ) : (
+                          <span className="crm-next-action-empty">
+                            <Plus size={11} /> {isAr ? 'جدولة متابعة' : 'Add action'}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                  )}
 
                   {/* Agent */}
-                  <td data-label={isAr ? 'المسؤول' : 'Agent'}>
-                    <div className="crm-agent-select-wrap">
-                      <div className="crm-agent-avatar-sm">
-                        {l.assignedTo && l.assignedTo !== 'Unassigned' ? l.assignedTo.charAt(0) : '—'}
+                  {visibleColumns.agent && (
+                    <td data-label={isAr ? 'المسؤول' : 'Agent'}>
+                      <div className="crm-agent-select-wrap">
+                        <div className="crm-agent-avatar-sm">
+                          {l.assignedTo && l.assignedTo !== 'Unassigned' ? l.assignedTo.charAt(0) : '—'}
+                        </div>
+                        <select 
+                          disabled={!canEdit}
+                          value={l.assignedTo || 'Unassigned'} 
+                          aria-label={isAr ? `المسؤول عن ${l.name || 'العميل'}` : `Owner of ${l.name || 'lead'}`}
+                          onChange={(e) => {
+                            if (onUpdateLead) onUpdateLead(l.id, { assignedTo: e.target.value });
+                          }}
+                          className="crm-agent-select"
+                          title={isAr ? 'تعيين مسؤول المبيعات' : 'Assign Agent'}
+                        >
+                          <DeskOptions role={activeRole} current={l.assignedTo || 'Unassigned'} lang={lang} />
+                        </select>
                       </div>
-                      <select 
-                        disabled={!canEdit}
-                        value={l.assignedTo || 'Unassigned'} 
-                        aria-label={isAr ? `المسؤول عن ${l.name || 'العميل'}` : `Owner of ${l.name || 'lead'}`}
-                        onChange={(e) => {
-                          if (onUpdateLead) onUpdateLead(l.id, { assignedTo: e.target.value });
-                        }}
-                        className="crm-agent-select"
-                        title={isAr ? 'تعيين مسؤول المبيعات' : 'Assign Agent'}
-                      >
-                        <DeskOptions role={activeRole} current={l.assignedTo || 'Unassigned'} lang={lang} />
-                      </select>
-                    </div>
-                  </td>
+                    </td>
+                  )}
 
                   {/* Actions */}
                   <td data-label={isAr ? 'الإجراءات' : 'Actions'}>
