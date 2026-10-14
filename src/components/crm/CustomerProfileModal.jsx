@@ -28,17 +28,6 @@ export default function CustomerProfileModal({
   const isSubmittingRef = useRef(false);
   const mouseDownOnBackdropRef = useRef(false);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && !isSubmittingRef.current) {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
   const [profileTab, setProfileTab] = useState('overview'); // 'overview' | 'properties' | 'timeline' | 'actions'
   const [isEditing, setIsEditing] = useState(false);
 
@@ -65,6 +54,32 @@ export default function CustomerProfileModal({
   // Call Log / Note Input State
   const [newLogText, setNewLogText] = useState('');
   const [newLogType, setNewLogType] = useState('call'); // 'call' | 'meeting' | 'whatsapp' | 'offer'
+
+  // Dirty State (Unsaved Changes) Protection
+  const hasUnsavedProfile = Boolean(isEditing || (newLogText && newLogText.trim()));
+
+  const handleSafeClose = () => {
+    if (hasUnsavedProfile) {
+      const confirmClose = window.confirm(
+        isAr
+          ? 'لديك تعديلات أو ملاحظات غير محفوظة في ملف العميل، هل أنت متأكد من الخروج وتجاهلها؟'
+          : 'You have unsaved changes or notes in this profile. Are you sure you want to discard them?'
+      );
+      if (!confirmClose) return;
+    }
+    onClose();
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && !isSubmittingRef.current) {
+        handleSafeClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, hasUnsavedProfile, isAr, onClose]);
 
   // Available Tag Presets
   const AVAILABLE_TAGS = [
@@ -229,7 +244,7 @@ export default function CustomerProfileModal({
       onMouseDown={(e) => { mouseDownOnBackdropRef.current = e.target === e.currentTarget; }}
       onClick={(e) => {
         if (e.target === e.currentTarget && mouseDownOnBackdropRef.current && !isSubmittingRef.current) {
-          onClose();
+          handleSafeClose();
         }
       }}
     >
@@ -349,7 +364,7 @@ export default function CustomerProfileModal({
               <span>.ICS</span>
             </button>
 
-            <button type="button" className="drawer-close-btn" onClick={onClose} style={{ background: 'var(--crm-subtle-2)', color: 'var(--crm-ink)', border: '1px solid var(--crm-line-strong)' }}>✕</button>
+            <button type="button" className="drawer-close-btn" onClick={handleSafeClose} style={{ background: 'var(--crm-subtle-2)', color: 'var(--crm-ink)', border: '1px solid var(--crm-line-strong)' }}>✕</button>
           </div>
         </div>
 
