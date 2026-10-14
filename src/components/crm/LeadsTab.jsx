@@ -1043,8 +1043,32 @@ export default function LeadsTab({
                           aria-label={isAr ? `حالة ${l.name || 'العميل'}` : `Status of ${l.name || 'lead'}`}
                           data-status={l.status || 'new'}
                           onChange={(e) => {
-                            if (e.target.value === 'lost') { setLostFor(l); return; }
-                            if (onUpdateLead) onUpdateLead(l.id, { status: e.target.value, ...(l.status === 'lost' ? { lostReason: null, lostNote: null, lostAt: null } : {}) });
+                            const prevStatus = l.status || 'new';
+                            const nextStatus = e.target.value;
+                            if (nextStatus === 'lost') { setLostFor(l); return; }
+                            if (onUpdateLead) {
+                              onUpdateLead(l.id, { status: nextStatus, ...(l.status === 'lost' ? { lostReason: null, lostNote: null, lostAt: null } : {}) });
+                              const stageNames = {
+                                new: isAr ? 'طلب جديد' : 'New',
+                                contacted: isAr ? 'تم التواصل' : 'Contacted',
+                                site_visit: isAr ? 'معاينة مجدولة' : 'Site Visit',
+                                negotiating: isAr ? 'قيد التفاوض' : 'Negotiating',
+                                closing: isAr ? 'توقيع وحجز' : 'Closing',
+                                closed: isAr ? 'صفقة ناجحة' : 'Closed Won',
+                                lost: isAr ? 'صفقة خسرانة' : 'Closed Lost'
+                              };
+                              triggerToast?.(
+                                isAr ? `تم تغيير مرحلة (${l.name || 'العميل'}) إلى: ${stageNames[nextStatus] || nextStatus}` : `Status changed to ${stageNames[nextStatus] || nextStatus}`,
+                                'info',
+                                {
+                                  onUndo: () => {
+                                    onUpdateLead(l.id, { status: prevStatus });
+                                  },
+                                  undoLabel: isAr ? 'تراجع' : 'Undo',
+                                  duration: 6000
+                                }
+                              );
+                            }
                           }}
                           className="crm-status-select"
                           title={isAr ? 'تغيير مرحلة العميل' : 'Change Status'}

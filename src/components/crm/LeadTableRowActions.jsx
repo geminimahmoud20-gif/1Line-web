@@ -154,7 +154,8 @@ export default function LeadTableRowActions({
               type="button"
               onClick={(e) => {
                 closeDetails(e);
-                const newStatus = !lead.isArchived;
+                const prevArchived = !!lead.isArchived;
+                const newStatus = !prevArchived;
                 if (onUpdateLead) onUpdateLead(lead.id, { isArchived: newStatus });
                 triggerToast?.(
                   isAr
@@ -164,7 +165,14 @@ export default function LeadTableRowActions({
                     : newStatus
                     ? 'Lead archived'
                     : 'Lead restored',
-                  'info'
+                  'info',
+                  {
+                    onUndo: () => {
+                      if (onUpdateLead) onUpdateLead(lead.id, { isArchived: prevArchived });
+                    },
+                    undoLabel: isAr ? 'تراجع' : 'Undo',
+                    duration: 6000
+                  }
                 );
               }}
             >
