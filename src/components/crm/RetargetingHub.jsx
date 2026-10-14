@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { parseMoney, leadScore, LEAD_SCORE_HIGH } from '../../utils/crmLeadViews';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
+import { openWhatsAppSafely } from '../../utils/founderCmsData';
 import LeadScorePill from './LeadScorePill';
 
 const amountOf = (l) => parseMoney(l.budget) || parseMoney(l.details?.budget) || parseMoney(l.details?.expectedPrice);
@@ -165,7 +166,7 @@ export default function RetargetingHub({
     const text = getWhatsAppMessage(lead);
     const cleanPhone = (lead.whatsapp || lead.phone || '').replace(/[^0-9]/g, '');
     if (cleanPhone) {
-      window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}?text=${encodeURIComponent(text)}`, '_blank');
+      openWhatsAppSafely(text, cleanPhone);
       
       // Update Lead Activity Log
       if (onUpdateLead) {
@@ -176,7 +177,7 @@ export default function RetargetingHub({
         onUpdateLead(lead.id, {
           activityLogs: [newLog, ...(lead.activityLogs || [])],
           lastRetargeted: new Date().toISOString()
-        });
+        }, lead.version);
       }
 
       if (triggerToast) {
