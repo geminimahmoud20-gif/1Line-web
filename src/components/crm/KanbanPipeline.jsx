@@ -245,13 +245,24 @@ export default function KanbanPipeline({
           return;
         }
 
+        const prevStageId = targetLead.status || 'new';
         const updates = { status: targetStageId };
         if (validation.nextTask) {
           updates.latestHandoffTask = validation.nextTask;
         }
         onUpdateLead(leadId, updates);
         if (triggerToast) {
-          triggerToast(isAr ? `تم نقل العميل بنجاح إلى مرحلة ${PIPELINE_STAGES.find(s=>s.id===targetStageId)?.title_ar || targetStageId}` : `Lead moved to ${targetStageId}`, 'success');
+          triggerToast(
+            isAr ? `تم نقل العميل بنجاح إلى مرحلة ${PIPELINE_STAGES.find(s=>s.id===targetStageId)?.title_ar || targetStageId}` : `Lead moved to ${targetStageId}`,
+            'success',
+            {
+              onUndo: () => {
+                onUpdateLead(leadId, { status: prevStageId });
+              },
+              undoLabel: isAr ? 'تراجع' : 'Undo',
+              duration: 6000
+            }
+          );
         }
       }
     }
@@ -262,6 +273,7 @@ export default function KanbanPipeline({
   const handleMoveToNextStage = (lead) => {
     const currentIndex = PIPELINE_STAGES.findIndex(s => s.id === (lead.status || 'new'));
     if (currentIndex < PIPELINE_STAGES.length - 1) {
+      const prevStageId = lead.status || 'new';
       const nextStage = PIPELINE_STAGES[currentIndex + 1];
       const validation = validateStageTransition(lead, nextStage.id, {
         userRole: activeRole,
@@ -283,7 +295,17 @@ export default function KanbanPipeline({
         }
         onUpdateLead(lead.id, updates);
         if (triggerToast) {
-          triggerToast(isAr ? `تم نقل العميل إلى مرحلة: ${nextStage.title_ar}` : `Moved to ${nextStage.title_en}`, 'success');
+          triggerToast(
+            isAr ? `تم نقل العميل إلى مرحلة: ${nextStage.title_ar}` : `Moved to ${nextStage.title_en}`,
+            'success',
+            {
+              onUndo: () => {
+                onUpdateLead(lead.id, { status: prevStageId });
+              },
+              undoLabel: isAr ? 'تراجع' : 'Undo',
+              duration: 6000
+            }
+          );
         }
       }
     }
@@ -293,11 +315,22 @@ export default function KanbanPipeline({
   const handleMoveToPrevStage = (lead) => {
     const currentIndex = PIPELINE_STAGES.findIndex(s => s.id === (lead.status || 'new'));
     if (currentIndex > 0) {
+      const currentStageId = lead.status || 'new';
       const prevStage = PIPELINE_STAGES[currentIndex - 1];
       if (onUpdateLead) {
         onUpdateLead(lead.id, { status: prevStage.id });
         if (triggerToast) {
-          triggerToast(isAr ? `تم إرجاع العميل إلى مرحلة: ${prevStage.title_ar}` : `Moved back to ${prevStage.title_en}`, 'info');
+          triggerToast(
+            isAr ? `تم إرجاع العميل إلى مرحلة: ${prevStage.title_ar}` : `Moved back to ${prevStage.title_en}`,
+            'info',
+            {
+              onUndo: () => {
+                onUpdateLead(lead.id, { status: currentStageId });
+              },
+              undoLabel: isAr ? 'تراجع' : 'Undo',
+              duration: 6000
+            }
+          );
         }
       }
     }
@@ -306,6 +339,7 @@ export default function KanbanPipeline({
   // Direct Move to Any Specific Stage
   const handleMoveToSpecificStage = (lead, targetStageId) => {
     if (!lead || !targetStageId || lead.status === targetStageId) return;
+    const prevStageId = lead.status || 'new';
     const validation = validateStageTransition(lead, targetStageId, {
       userRole: activeRole,
       isFounderApproved: lead.isFounderApproved || activeRole === 'super_admin'
@@ -327,7 +361,17 @@ export default function KanbanPipeline({
       onUpdateLead(lead.id, updates);
       const targetStage = PIPELINE_STAGES.find(s => s.id === targetStageId);
       if (triggerToast) {
-        triggerToast(isAr ? `تم نقل العميل مباشرة إلى مرحلة: ${targetStage?.title_ar || targetStageId}` : `Moved to ${targetStage?.title_en || targetStageId}`, 'success');
+        triggerToast(
+          isAr ? `تم نقل العميل مباشرة إلى مرحلة: ${targetStage?.title_ar || targetStageId}` : `Moved to ${targetStage?.title_en || targetStageId}`,
+          'success',
+          {
+            onUndo: () => {
+              onUpdateLead(lead.id, { status: prevStageId });
+            },
+            undoLabel: isAr ? 'تراجع' : 'Undo',
+            duration: 6000
+          }
+        );
       }
     }
   };
