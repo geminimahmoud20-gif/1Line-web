@@ -31,16 +31,31 @@ export default function LeadQuickDrawer({
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'matching' | 'timeline'
   const drawerRef = useRef(null);
 
+  // Dirty State (Unsaved Changes) Protection
+  const hasUnsavedChanges = Boolean(newNote.trim() || (showViewingForm && (viewingDateTime || selectedViewingPropId)));
+
+  const safeClose = () => {
+    if (hasUnsavedChanges) {
+      const confirmDiscard = window.confirm(
+        isAr 
+          ? 'لديك ملاحظات أو بيانات غير محفوظة، هل أنت متأكد من الإغلاق وتجاهل التغييرات؟'
+          : 'You have unsaved notes or changes. Are you sure you want to discard them?'
+      );
+      if (!confirmDiscard) return;
+    }
+    onClose();
+  };
+
   // Close on Escape key & browser back navigation (mobile gesture)
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') safeClose();
     };
     window.addEventListener('keydown', handleKeyDown);
 
     window.history.pushState({ modalOpen: true }, '');
     const handlePopState = () => {
-      onClose();
+      safeClose();
     };
     window.addEventListener('popstate', handlePopState);
 
@@ -51,7 +66,7 @@ export default function LeadQuickDrawer({
         window.history.back();
       }
     };
-  }, [onClose]);
+  }, [hasUnsavedChanges, isAr, onClose]);
 
   // Smart Context Matching Properties for this Lead
   const matchedProperties = useMemo(() => {
@@ -268,7 +283,7 @@ export default function LeadQuickDrawer({
       {/* Dim Backdrop */}
       <div
         className="crm-drawer-backdrop is-visible"
-        onClick={onClose}
+        onClick={safeClose}
         style={{ zIndex: 11000 }}
         aria-hidden="true"
       />
@@ -373,7 +388,7 @@ export default function LeadQuickDrawer({
 
             <button
               type="button"
-              onClick={onClose}
+              onClick={safeClose}
               aria-label={isAr ? 'إغلاق الدرج' : 'Close Drawer'}
               style={{
                 background: 'var(--crm-card)',
