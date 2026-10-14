@@ -275,20 +275,14 @@ export default function DemandsManagerPanel({
 
       {/* Quick KPI Stat Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginBottom: '20px' }}>
-        <div style={{ background: 'var(--crm-card)', border: '1px solid var(--crm-line)', borderRadius: '14px', padding: '16px 20px', boxShadow: 'var(--crm-shadow)' }}>
+        <div className="crm-metric-card-executive">
           <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: '600' }}>{isAr ? 'إجمالي الطلبات' : 'Total Demands'}</span>
           <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 800, color: 'var(--crm-ink)', marginTop: '4px' }}>
             {totalDemandsCount}
           </div>
         </div>
 
-        <div style={{ 
-          background: pendingCount > 0 ? 'var(--crm-warn-soft)' : 'var(--crm-card)', 
-          border: pendingCount > 0 ? '1px solid var(--crm-warn-line)' : '1px solid var(--crm-line)', 
-          borderRadius: '14px', 
-          padding: '16px 20px',
-          boxShadow: 'var(--crm-shadow)'
-        }}>
+        <div className="crm-metric-card-executive" style={pendingCount > 0 ? { background: 'var(--crm-warn-soft)', borderColor: 'var(--crm-warn-line)' } : undefined}>
           <span style={{ fontSize: 'var(--crm-text-xs)', color: pendingCount > 0 ? 'var(--crm-warn)' : 'var(--crm-muted)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <Clock size={14} />
             <span>{isAr ? 'قيد مراجعة الإدارة' : 'Pending Review'}</span>
@@ -298,7 +292,7 @@ export default function DemandsManagerPanel({
           </div>
         </div>
 
-        <div style={{ background: 'var(--crm-card)', border: '1px solid var(--crm-positive-line)', borderRadius: '14px', padding: '16px 20px', boxShadow: 'var(--crm-shadow)' }}>
+        <div className="crm-metric-card-executive" style={{ borderColor: 'var(--crm-positive-line)' }}>
           <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <CheckCircle size={14} />
             <span>{isAr ? 'منشور نشط على الموقع' : 'Published Live'}</span>
@@ -308,7 +302,7 @@ export default function DemandsManagerPanel({
           </div>
         </div>
 
-        <div style={{ background: 'var(--crm-card)', border: '1px solid var(--crm-info-line)', borderRadius: '14px', padding: '16px 20px', boxShadow: 'var(--crm-shadow)' }}>
+        <div className="crm-metric-card-executive" style={{ borderColor: 'var(--crm-info-line)' }}>
           <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-info)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <DollarSign size={14} />
             <span>{isAr ? 'القوة الشرائية الجاهزة' : 'Total Buying Power'}</span>
@@ -392,20 +386,25 @@ export default function DemandsManagerPanel({
 
       {/* 3. Demands Cards Grid */}
       {filteredDemands.length === 0 ? (
-        <div style={{
-          textAlign: 'center',
-          padding: '60px 20px',
-          background: 'var(--crm-card)',
-          border: '1px dashed var(--crm-line-strong)',
-          borderRadius: '16px'
-        }}>
-          <Zap size={40} style={{ color: 'var(--crm-faint)', margin: '0 auto 12px' }} />
+        <div className="crm-empty-state-card">
+          <div className="crm-empty-state-icon-glow">
+            <Zap size={26} style={{ color: 'var(--crm-accent-text)' }} />
+          </div>
           <h4 style={{ color: 'var(--crm-ink)', fontSize: 'var(--crm-text-lg)', marginBottom: '6px', fontWeight: '700' }}>
             {isAr ? 'لا توجد طلبات مطابقة للفلتر المحدد' : 'No demands match this filter'}
           </h4>
-          <p style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-base)' }}>
+          <p style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-base)', maxWidth: '420px', margin: '0 auto 16px' }}>
             {isAr ? 'يمكنك تغيير الفلاتر أو إضافة طلب جديد مباشرة.' : 'Try adjusting your filters or create a new demand.'}
           </p>
+          <button
+            type="button"
+            className="crm-btn-primary-gold"
+            onClick={handleOpenAdd}
+            disabled={readOnly}
+          >
+            <Plus size={15} />
+            <span>{isAr ? 'إضافة طلب جديد' : 'Add Demand'}</span>
+          </button>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '18px' }}>
