@@ -34,7 +34,7 @@
   position: relative;
   overflow-x: hidden;
   transition: background-color 0.25s ease, color 0.25s ease;
-  font-family: var(--font-ar), var(--font-en), -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--crm-font, 'Alexandria', 'Plus Jakarta Sans', system-ui, sans-serif) !important;
   letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -752,27 +752,37 @@
 }
 
 .crm-breadcrumb-root {
-  color: #64748b;
+  background: none;
+  border: none;
+  font: inherit;
+  padding: 0;
+  color: var(--crm-muted, #64748b);
   display: inline-flex;
   align-items: center;
   gap: 4px;
   text-decoration: none;
   cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.crm-breadcrumb-root:hover {
+  color: var(--crm-accent-text, #b48c36);
 }
 
 .crm-breadcrumb-separator {
-  color: #94a3b8;
+  color: var(--crm-line-strong, #94a3b8);
   font-size: var(--crm-text-xs);
+  display: inline-flex;
+  align-items: center;
 }
 
 .crm-breadcrumb-current {
-  color: #0f172a;
+  background: none;
+  border: none;
+  font: inherit;
+  padding: 0;
+  color: var(--crm-ink, #0f172a);
   font-weight: 700;
-}
-
-[data-theme="dark"] .crm-breadcrumb-current,
-.dark-theme .crm-breadcrumb-current {
-  color: #f8fafc;
 }
 
 /* Universal Search in Topbar */

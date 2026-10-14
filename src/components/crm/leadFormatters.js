@@ -28,7 +28,7 @@ export const LEAD_EXPORT_HEADERS = {
 /** Formatters bound to the current language; `t` is the CRM translation table. */
 export function makeLeadFormatters(isAr, t = {}) {
   const getLocalizedPropertyType = (typeKey) => {
-    if (!typeKey) return isAr ? 'عقار غير محدد' : 'N/A';
+    if (!typeKey || typeKey === 'undefined' || typeKey === 'null') return isAr ? 'عقار غير محدد' : 'N/A';
     const found = PROPERTY_TYPES.find(t => t.id === typeKey);
     if (found) return isAr ? found.name_ar : found.name_en;
     const fallbackMap = {
@@ -43,7 +43,7 @@ export function makeLeadFormatters(isAr, t = {}) {
   };
 
   const getLocalizedArea = (areaKey) => {
-    if (!areaKey) return isAr ? 'سوهاج' : 'Sohag';
+    if (!areaKey || areaKey === 'undefined' || areaKey === 'null') return isAr ? 'سوهاج' : 'Sohag';
     // getAreas() includes Cairo and CMS-added districts; SOHAG_AREAS is the static fallback
     const found = getAreas().find(a => a.id === areaKey) || SOHAG_AREAS.find(a => a.id === areaKey);
     if (found) return isAr ? found.name_ar : found.name_en;

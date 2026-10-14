@@ -113,8 +113,8 @@
   --amber-bg: rgba(179, 138, 69, 0.1);
 
   /* Fonts */
-  --font-ar: 'Cairo', system-ui, -apple-system, sans-serif;
-  --font-en: 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-ar: 'Alexandria', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-en: 'Plus Jakarta Sans', 'Alexandria', system-ui, -apple-system, sans-serif;
 
   /* 🏛️ Modern Disciplined Fluid Typography Scale (Architectural Luxury) */
   --text-display: clamp(3.5rem, 5vw, 4.75rem);

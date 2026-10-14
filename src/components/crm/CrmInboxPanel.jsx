@@ -409,17 +409,17 @@ export default function CrmInboxPanel({
   };
 
   return (
-    <div className="crm-inbox-workspace animate-fadeIn" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div className="crm-inbox-workspace animate-fadeIn">
       
-      {/* 🏛️ Top Header Bar with Executive SLA Badge */}
-      <div className="crm-modern-header-strip">
-        <div className="crm-header-title-group">
-          <h2 className="crm-header-main-title">
+      {/* 🏛️ Modern Header Bar with Executive SLA Badge */}
+      <div className="crm-inbox-header-wrap">
+        <div className="crm-inbox-title-cluster">
+          <h2 className="crm-inbox-main-title">
             <Inbox size={22} style={{ color: 'var(--crm-accent-text)' }} />
             <span>{isAr ? 'صندوق الوارد الذكي وإدارة الاستجابة' : 'Smart Triage Inbox'}</span>
-            <span className="crm-badge-360">Inbox 360°</span>
+            <span className="crm-inbox-badge-360">Inbox 360°</span>
           </h2>
-          <div className="crm-header-subtitle">
+          <div className="crm-inbox-subtitle">
             <span>
               {isAr 
                 ? 'فصل مسارات البيع والمعاينة والشراء لضمان سرعة الرد ومنع تكرار الاتصال' 
@@ -430,18 +430,7 @@ export default function CrmInboxPanel({
 
         {/* Executive SLA Alerts Banner for Managers */}
         {isSuperAdmin && slaBreaches.length > 0 && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            background: 'var(--crm-danger-soft)',
-            border: '1px solid var(--crm-danger-line)',
-            color: 'var(--crm-danger)',
-            padding: '8px 14px',
-            borderRadius: '10px',
-            fontSize: 'var(--crm-text-sm)',
-            fontWeight: 700
-          }}>
+          <div className="crm-inbox-sla-alert">
             <AlertTriangle size={16} />
             <span>
               {isAr ? `تنبيه المدير: يوجد ${formatArabicPlural(slaBreaches.length, 'طلب', 'طلبان', 'طلبات', 'طلباً')} تجاوزت ${slaMinutes} دقيقة دون استلام أو رد!` : `${slaBreaches.length} requests breached ${slaMinutes}-min response SLA!`}
@@ -460,64 +449,32 @@ export default function CrmInboxPanel({
               key={t.id}
               type="button"
               onClick={() => { setActiveTab(t.id); setStageFilter('all'); }}
+              className={`crm-inbox-tab-btn ${isActive ? 'is-active' : ''}`}
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '12px 16px',
-                borderRadius: '12px',
-                background: isActive ? 'var(--crm-card)' : 'var(--crm-bg)',
-                border: isActive ? `2px solid ${t.accent}` : '1.5px solid var(--crm-line)',
-                boxShadow: isActive ? 'var(--crm-shadow-sm, 0 4px 12px rgba(0,0,0,0.05))' : 'none',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                textAlign: isAr ? 'right' : 'left'
+                '--tab-accent': t.accent || '#B38A45'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{
-                  width: '34px',
-                  height: '34px',
-                  borderRadius: '8px',
-                  background: 'var(--crm-bg)',
-                  color: isActive ? t.accent : 'var(--crm-muted)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
+                <div className="crm-inbox-tab-icon-box">
                   <IconComp size={18} />
                 </div>
                 <div>
-                  <div style={{ fontWeight: 800, fontSize: 'var(--crm-text-sm)', color: isActive ? 'var(--crm-ink)' : 'var(--crm-body)' }}>
+                  <div style={{ fontWeight: 700, fontSize: 'var(--crm-text-sm)', color: isActive ? 'var(--crm-ink)' : 'var(--crm-body)' }}>
                     {isAr ? t.label_ar : t.label_en}
                   </div>
-                  <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
+                  <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px' }}>
                     {t.count} {isAr ? 'طلب إجمالي' : 'total'}
                   </div>
                 </div>
               </div>
 
-              {/* Unhandled Badge */}
+              {/* Refined Badge */}
               {t.unhandled > 0 ? (
-                <span style={{
-                  background: 'var(--crm-danger)',
-                  color: 'var(--crm-on-dark)',
-                  fontSize: 'var(--crm-text-xs)',
-                  fontWeight: 800,
-                  padding: '3px 8px',
-                  borderRadius: '12px'
-                }}>
+                <span className="crm-inbox-tab-badge-new">
                   {t.unhandled} {isAr ? 'جديد' : 'new'}
                 </span>
               ) : (
-                <span style={{
-                  background: 'var(--crm-bg)',
-                  color: 'var(--crm-muted)',
-                  fontSize: 'var(--crm-text-xs)',
-                  fontWeight: 700,
-                  padding: '2px 7px',
-                  borderRadius: '10px'
-                }}>
+                <span className="crm-inbox-tab-badge-zero">
                   0
                 </span>
               )}
@@ -641,36 +598,16 @@ export default function CrmInboxPanel({
             return (
               <div
                 key={lead.id}
-                style={{
-                  background: 'var(--crm-card)',
-                  borderRadius: '14px',
-                  border: isUnclaimed ? '2px solid var(--crm-danger)' : '1px solid var(--crm-line)',
-                  padding: '16px 20px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px',
-                  position: 'relative'
-                }}
+                className={`crm-inbox-lead-card ${isUnclaimed ? 'is-unclaimed' : ''}`}
               >
                 {/* Top Row: Client Identity & Ownership Badge */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '10px',
-                      background: 'var(--crm-bg)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 800,
-                      fontSize: 'var(--crm-text-base)',
-                      color: 'var(--crm-ink)'
-                    }}>
-                      {(lead.name || 'ع')[0]}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div className="crm-inbox-avatar-box">
+                      {(lead.name || 'ع').trim()[0]}
                     </div>
                     <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                         <h4 style={{ margin: 0, fontSize: 'var(--crm-text-md)', fontWeight: 800, color: 'var(--crm-ink)' }}>
                           {lead.name || (isAr ? 'عميل بدون اسم' : 'Unnamed Lead')}
                         </h4>
@@ -680,7 +617,7 @@ export default function CrmInboxPanel({
                           fontWeight: 700,
                           background: 'var(--crm-bg)',
                           padding: '2px 8px',
-                          borderRadius: '6px',
+                          borderRadius: '9999px',
                           border: '1px solid var(--crm-line)',
                           color: 'var(--crm-body)'
                         }}>
@@ -690,10 +627,10 @@ export default function CrmInboxPanel({
                            activeTab === 'accounts' ? '👤 حساب مسجل' : '🤝 وسيط شريك'}
                         </span>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '4px' }}>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                           <span>📞</span>
-                          <bdi dir="ltr" style={{ unicodeBidi: 'isolate', fontFamily: 'monospace' }}>
+                          <bdi dir="ltr" style={{ unicodeBidi: 'isolate', fontFamily: 'monospace', fontWeight: 600 }}>
                             {canSeePhone ? (formatPhoneNumber(lead.phone) || (isAr ? 'بدون هاتف' : 'No phone')) : maskPhoneNumber(lead.phone, userRole, userPerms)}
                           </bdi>
                         </span>
@@ -714,37 +651,13 @@ export default function CrmInboxPanel({
                         type="button"
                         disabled={claimingId === lead.id}
                         onClick={() => handleClaimLead(lead)}
-                        style={{
-                          background: 'var(--crm-danger)',
-                          color: 'var(--crm-on-dark)',
-                          border: 'none',
-                          borderRadius: '8px',
-                          padding: '6px 14px',
-                          fontSize: 'var(--crm-text-sm)',
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          transition: 'all 0.15s ease'
-                        }}
+                        className="crm-inbox-claim-btn"
                       >
                         <span>✋ {claimingId === lead.id ? (isAr ? 'جارٍ الاستلام...' : 'Claiming...') : (isAr ? 'استلمت الطلب' : 'Claim Lead')}</span>
                       </button>
                     ) : (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '5px',
-                          padding: '5px 10px',
-                          borderRadius: '8px',
-                          background: isClaimedByMe ? 'var(--crm-positive-soft)' : 'var(--crm-bg)',
-                          border: isClaimedByMe ? '1px solid var(--crm-positive)' : '1px solid var(--crm-line)',
-                          color: isClaimedByMe ? 'var(--crm-positive)' : 'var(--crm-ink)',
-                          fontSize: 'var(--crm-text-xs)',
-                          fontWeight: 700
-                        }}>
+                        <span className={`crm-inbox-claimed-badge ${isClaimedByMe ? 'is-mine' : ''}`}>
                           <Lock size={12} />
                           <span>{isClaimedByMe ? (isAr ? 'قيد متابعتك 🔒' : 'Assigned to you') : (isAr ? `مع: ${ownerDisplay}` : `With: ${ownerDisplay}`)}</span>
                         </span>
@@ -873,8 +786,14 @@ export default function CrmInboxPanel({
                   )}
 
                   {lead.notes && (
-                    <div style={{ width: '100%', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', borderTop: '1px dashed var(--crm-line)', paddingTop: '6px', marginTop: '2px' }}>
-                      <strong style={{ color: 'var(--crm-ink)' }}>📝 {isAr ? 'ملاحظات:' : 'Notes:'}</strong> {sanitizeAndMergeNotes(lead.notes)}
+                    <div style={{ width: '100%', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', borderTop: '1px dashed var(--crm-line)', paddingTop: '6px', marginTop: '2px', lineHeight: 1.6 }}>
+                      <strong style={{ color: 'var(--crm-ink)' }}>📝 {isAr ? 'ملاحظات:' : 'Notes:'}</strong>{' '}
+                      {(sanitizeAndMergeNotes(lead.notes) || '')
+                        .replace(/في\s+undefined\b/gi, 'في سوهاج')
+                        .replace(/في\s+null\b/gi, 'في سوهاج')
+                        .replace(/\b(undefined|null)\b/gi, '')
+                        .replace(/\s{2,}/g, ' ')
+                        .trim()}
                     </div>
                   )}
                 </div>
@@ -902,58 +821,40 @@ export default function CrmInboxPanel({
                   flexWrap: 'wrap',
                   gap: '12px',
                   borderTop: '1px solid var(--crm-line)',
-                  paddingTop: '10px'
+                  paddingTop: '12px'
                 }}>
                   {/* The Stages Lifecycle Stepper */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: 700, marginInlineEnd: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: 700 }}>
                       {isAr ? 'مرحلة المتابعة:' : 'Stage:'}
                     </span>
-                    {STAGES.map((s) => {
-                      const isCurrent = (lead.status || 'new') === s.id;
-                      return (
-                        <button
-                          key={s.id}
-                          type="button"
-                          onClick={() => handleSetStage(lead, s.id)}
-                          style={{
-                            padding: '4px 8px',
-                            borderRadius: '6px',
-                            fontSize: 'var(--crm-text-xs)',
-                            fontWeight: isCurrent ? 800 : 600,
-                            border: isCurrent ? `1.5px solid ${s.color}` : '1px solid var(--crm-line)',
-                            background: isCurrent ? 'var(--crm-bg)' : 'var(--crm-card)',
-                            color: isCurrent ? s.color : 'var(--crm-muted)',
-                            cursor: 'pointer',
-                            transition: 'all 0.1s ease'
-                          }}
-                        >
-                          {isAr ? s.label_ar : s.label_en}
-                        </button>
-                      );
-                    })}
+                    <div className="crm-inbox-stage-tracker">
+                      {STAGES.map((s) => {
+                        const isCurrent = (lead.status || 'new') === s.id;
+                        return (
+                          <button
+                            key={s.id}
+                            type="button"
+                            onClick={() => handleSetStage(lead, s.id)}
+                            className={`crm-inbox-stage-pill ${isCurrent ? 'is-active' : ''}`}
+                            style={{ '--stage-color': s.color }}
+                          >
+                            {isAr ? s.label_ar : s.label_en}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   {/* Quick Action Buttons */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                     {/* WhatsApp Action with smart text */}
                     {canSeePhone && cleanPhone && (
                       <a
                         href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(getWhatsAppMessage(lead))}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        style={{
-                          background: 'var(--crm-positive)',
-                          color: 'var(--crm-on-dark)',
-                          textDecoration: 'none',
-                          padding: '6px 12px',
-                          borderRadius: '8px',
-                          fontSize: 'var(--crm-text-xs)',
-                          fontWeight: 700,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px'
-                        }}
+                        className="crm-inbox-action-btn is-whatsapp"
                       >
                         <MessageCircle size={14} />
                         <span>{isAr ? 'واتساب مخصص' : 'WhatsApp'}</span>
@@ -964,19 +865,7 @@ export default function CrmInboxPanel({
                     {canSeePhone && lead.phone && (
                       <a
                         href={`tel:${lead.phone}`}
-                        style={{
-                          background: 'var(--crm-card)',
-                          border: '1px solid var(--crm-line)',
-                          color: 'var(--crm-ink)',
-                          textDecoration: 'none',
-                          padding: '6px 10px',
-                          borderRadius: '8px',
-                          fontSize: 'var(--crm-text-xs)',
-                          fontWeight: 700,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}
+                        className="crm-inbox-action-btn is-outline"
                       >
                         <Phone size={13} />
                         <span>{isAr ? 'اتصال' : 'Call'}</span>
@@ -988,19 +877,7 @@ export default function CrmInboxPanel({
                       <button
                         type="button"
                         onClick={() => onConvertToProperty(lead)}
-                        style={{
-                          background: 'var(--crm-accent)',
-                          color: 'var(--crm-on-dark)',
-                          border: 'none',
-                          padding: '6px 12px',
-                          borderRadius: '8px',
-                          fontSize: 'var(--crm-text-xs)',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px'
-                        }}
+                        className="crm-inbox-action-btn is-accent"
                       >
                         <Building size={14} />
                         <span>{isAr ? 'تحويل لعقار' : 'To Property'}</span>
@@ -1012,18 +889,10 @@ export default function CrmInboxPanel({
                       <button
                         type="button"
                         onClick={() => onOpenLead(lead)}
-                        style={{
-                          background: 'var(--crm-bg)',
-                          border: '1px solid var(--crm-line)',
-                          borderRadius: '8px',
-                          padding: '6px 10px',
-                          fontSize: 'var(--crm-text-xs)',
-                          fontWeight: 700,
-                          color: 'var(--crm-ink)',
-                          cursor: 'pointer'
-                        }}
+                        className="crm-inbox-action-btn is-outline"
                       >
-                        {isAr ? 'التفاصيل 👁️' : 'Details'}
+                        <Eye size={13} />
+                        <span>{isAr ? 'التفاصيل' : 'Details'}</span>
                       </button>
                     )}
                   </div>

@@ -165,10 +165,10 @@ html .calc-results-column .total-highlight-row .glass-row-val { color: #6EE7B7 !
    numbers each looked different. They all use the site font now, with even-width digits where
    numbers line up. Weights above 700 don't exist in the font: no faux-bold smearing. */
 html {
-  --font-ar: 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, system-ui, sans-serif;
-  --font-en: var(--font-ar);
-  --font-number: var(--font-ar);
-  --font-display: var(--font-ar);
+  --font-ar: 'Alexandria', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-en: 'Plus Jakarta Sans', 'Alexandria', system-ui, sans-serif;
+  --font-number: 'Plus Jakarta Sans', 'Alexandria', system-ui, sans-serif;
+  --font-display: 'Alexandria', system-ui, sans-serif;
   font-synthesis-weight: none;
 }
 html body,

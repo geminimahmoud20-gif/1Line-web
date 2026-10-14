@@ -133,7 +133,7 @@
 }
 
 .brand-subtitle {
-  font-family: var(--font-ar, 'Cairo', system-ui, sans-serif);
+  font-family: var(--font-ar, 'Alexandria', system-ui, sans-serif);
   font-size: 0.68rem;
   color: #475569;
   font-weight: 700;

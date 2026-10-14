@@ -379,7 +379,7 @@ function AppContent() {
       : (data.estimatedAvg ? ` | التقدير الآلي: ${Number(data.estimatedAvg).toLocaleString('en-US')} ج.م` : '');
     const photosDesc = data.images && data.images.length > 0 ? ` | مرفق ${data.images.length} صور` : '';
     const propLabel = PROPERTY_TYPE_NAMES_AR[data.propertyType] || data.propertyType || 'عقار';
-    const areaLabel = AREA_NAMES_AR[data.area] || data.area || 'سوهاج';
+    const areaLabel = (data.area && AREA_NAMES_AR[data.area]) || data.area || 'سوهاج';
 
     return handleAddNewLead({
       name: data.name,

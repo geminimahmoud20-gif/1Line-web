@@ -225,22 +225,6 @@ export default function CrmCommandPalette({
         if (e.target === e.currentTarget) onClose();
       }}
       role="presentation"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(7, 14, 26, 0.72)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        zIndex: 12000,
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-        padding: '12vh 16px 24px',
-        animation: 'fadeIn 0.18s ease'
-      }}
     >
       <div
         className="crm-command-modal"
@@ -249,28 +233,9 @@ export default function CrmCommandPalette({
         aria-modal="true"
         aria-label={isAr ? 'لوحة الأوامر والبحث' : 'Command palette'}
         dir={isAr ? 'rtl' : 'ltr'}
-        style={{
-          width: '100%',
-          maxWidth: '640px',
-          background: 'var(--crm-card)',
-          border: '1px solid var(--crm-line)',
-          borderRadius: '16px',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.08)',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          color: 'var(--crm-ink)'
-        }}
       >
         {/* Search Input Bar */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          padding: '16px 20px',
-          borderBottom: '1px solid var(--crm-line)',
-          background: 'var(--crm-subtle)'
-        }}>
+        <div className="crm-command-search-bar">
           <Search size={20} style={{ color: 'var(--crm-accent, var(--crm-accent-text))', flexShrink: 0 }} />
           <input
             ref={inputRef}
@@ -288,25 +253,9 @@ export default function CrmCommandPalette({
             aria-controls="crm-cmdk-list"
             aria-autocomplete="list"
             aria-activedescendant={searchResults[selectedIndex] ? `crm-cmdk-opt-${selectedIndex}` : undefined}
-            style={{
-              flex: 1,
-              background: 'transparent',
-              border: 'none',
-              outline: 'none',
-              fontSize: 'var(--crm-text-md)',
-              color: 'var(--crm-ink)',
-              fontFamily: 'inherit'
-            }}
+            className="crm-command-input"
           />
-          <kbd style={{
-            fontSize: 'var(--crm-text-xs)',
-            padding: '3px 7px',
-            borderRadius: '6px',
-            background: 'var(--crm-card)',
-            border: '1px solid var(--crm-line)',
-            color: 'var(--crm-muted, var(--crm-faint))',
-            fontWeight: 700
-          }}>
+          <kbd className="crm-command-kbd">
             ESC
           </kbd>
         </div>
@@ -317,11 +266,7 @@ export default function CrmCommandPalette({
           id="crm-cmdk-list"
           role="listbox"
           aria-label={isAr ? 'النتائج' : 'Results'}
-          style={{
-            maxHeight: '380px',
-            overflowY: 'auto',
-            padding: '8px'
-          }}
+          className="crm-command-results-list"
         >
           {searchResults.length === 0 ? (
             <div style={{ padding: '36px 20px', textAlign: 'center', color: 'var(--crm-muted, var(--crm-faint))' }}>
@@ -348,31 +293,16 @@ export default function CrmCommandPalette({
                     onClose();
                   }}
                   onMouseEnter={() => setSelectedIndex(idx)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '10px 14px',
-                    borderRadius: '10px',
-                    cursor: 'pointer',
-                    background: isSelected ? 'var(--crm-subtle-2, var(--crm-subtle))' : 'transparent',
-                    border: isSelected ? '1px solid var(--crm-line)' : '1px solid transparent',
-                    transition: 'all 0.1s ease',
-                    marginBottom: '2px'
-                  }}
+                  className={`crm-command-option ${isSelected ? 'is-selected' : ''}`}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
-                    <div style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      background: isAction ? 'rgba(169, 130, 74, 0.12)' : isLead ? 'rgba(59, 130, 246, 0.12)' : isProp ? 'rgba(16, 185, 129, 0.12)' : 'rgba(234, 179, 8, 0.12)',
-                      color: isAction ? 'var(--crm-accent)' : isLead ? 'var(--crm-info)' : isProp ? 'var(--crm-positive)' : 'var(--crm-warn)'
-                    }}>
+                    <div
+                      className="crm-command-icon-box"
+                      style={{
+                        background: isAction ? 'rgba(169, 130, 74, 0.12)' : isLead ? 'rgba(59, 130, 246, 0.12)' : isProp ? 'rgba(16, 185, 129, 0.12)' : 'rgba(234, 179, 8, 0.12)',
+                        color: isAction ? 'var(--crm-accent)' : isLead ? 'var(--crm-info)' : isProp ? 'var(--crm-positive)' : 'var(--crm-warn)'
+                      }}
+                    >
                       {isAction ? <Command size={16} /> : isLead ? <Phone size={16} /> : isProp ? <Building size={16} /> : <Zap size={16} />}
                     </div>
 
@@ -404,15 +334,7 @@ export default function CrmCommandPalette({
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                     {item.shortcut && (
-                      <kbd style={{
-                        fontSize: 'var(--crm-text-xs)',
-                        padding: '2px 6px',
-                        borderRadius: '4px',
-                        background: 'var(--crm-subtle)',
-                        border: '1px solid var(--crm-line)',
-                        color: 'var(--crm-muted, var(--crm-faint))',
-                        fontWeight: 700
-                      }}>
+                      <kbd className="crm-command-kbd">
                         {item.shortcut}
                       </kbd>
                     )}
@@ -429,16 +351,7 @@ export default function CrmCommandPalette({
         </div>
 
         {/* Footer shortcuts hint */}
-        <div style={{
-          padding: '10px 18px',
-          borderTop: '1px solid var(--crm-line)',
-          background: 'var(--crm-subtle)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          fontSize: 'var(--crm-text-xs)',
-          color: 'var(--crm-muted, var(--crm-faint))'
-        }}>
+        <div className="crm-command-footer">
           <div style={{ display: 'flex', gap: '14px' }}>
             <span><kbd style={{ fontWeight: 700 }}>↑↓</kbd> للتنقل</span>
             <span><kbd style={{ fontWeight: 700 }}>↵</kbd> للاختيار</span>

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { MessageSquare, Calendar, Car, Clock, Sparkles, Edit3, Trash2, ChevronRight, ChevronLeft, AlertTriangle, Search, Zap, MoreHorizontal, ShieldAlert } from 'lucide-react';
+import { MessageSquare, Calendar, Car, Clock, Sparkles, Edit3, Trash2, ChevronRight, ChevronLeft, AlertTriangle, Search, Zap, MoreHorizontal, ShieldAlert, TrendingUp, Users } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
 import StageDeliverableModal from './StageDeliverableModal';
 import './crm-kanban.css';
@@ -212,6 +212,33 @@ export default function KanbanPipeline({
     });
     return { leadsByStage: groups, stageStatsMap: stats };
   }, [filteredLeads]);
+
+  // Clock for overdue calculations
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Executive pipeline metrics overview
+  const pipelineOverview = useMemo(() => {
+    let totalVol = 0;
+    let highValue = 0;
+    let overdue = 0;
+    filteredLeads.forEach(l => {
+      const b = getLeadBudget(l);
+      totalVol += b;
+      if (b >= HIGH_VALUE_DEAL_THRESHOLD) highValue++;
+      const isOverdue = (l.status === 'new' || !l.status) && l.timestamp && (now - new Date(l.timestamp).getTime() > 24 * 60 * 60 * 1000);
+      if (isOverdue) overdue++;
+    });
+    return {
+      totalVolM: (totalVol / 1000000).toFixed(1),
+      highValue,
+      overdue,
+      activeCount: filteredLeads.length
+    };
+  }, [filteredLeads, now]);
 
   // Drag & Drop Handlers
   const handleDragStart = (e, leadId) => {
@@ -434,6 +461,56 @@ export default function KanbanPipeline({
         </div>
       </div>
 
+      {/* 2. Executive Deal Velocity & Pipeline Mini-Strip */}
+      <div className="crm-kanban-exec-strip">
+        <div className="crm-kanban-exec-stat">
+          <div>
+            <span className="crm-kanban-exec-stat-label">{isAr ? 'قيمة الصفقات الجارية' : 'Pipeline Volume'}</span>
+            <div className="crm-kanban-exec-stat-val">
+              <bdi>{pipelineOverview.totalVolM}</bdi>
+              <small style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted)', marginInlineStart: '4px' }}>
+                {isAr ? 'مليون ج.م' : 'M EGP'}
+              </small>
+            </div>
+          </div>
+          <div className="crm-kanban-exec-stat-icon" style={{ background: 'var(--crm-accent-soft)', color: 'var(--crm-accent-text)' }}>
+            <TrendingUp size={18} />
+          </div>
+        </div>
+
+        <div className="crm-kanban-exec-stat">
+          <div>
+            <span className="crm-kanban-exec-stat-label">{isAr ? 'الصفقات المعروضة' : 'Active Deals'}</span>
+            <div className="crm-kanban-exec-stat-val">{pipelineOverview.activeCount}</div>
+          </div>
+          <div className="crm-kanban-exec-stat-icon" style={{ background: 'var(--crm-info-soft)', color: 'var(--crm-info)' }}>
+            <Users size={18} />
+          </div>
+        </div>
+
+        <div className="crm-kanban-exec-stat">
+          <div>
+            <span className="crm-kanban-exec-stat-label">{isAr ? 'صفقات كبرى (≥ 5M)' : 'High Value (≥ 5M)'}</span>
+            <div className="crm-kanban-exec-stat-val">{pipelineOverview.highValue}</div>
+          </div>
+          <div className="crm-kanban-exec-stat-icon" style={{ background: 'var(--crm-warn-soft)', color: 'var(--crm-warn)' }}>
+            <ShieldAlert size={18} />
+          </div>
+        </div>
+
+        <div className="crm-kanban-exec-stat">
+          <div>
+            <span className="crm-kanban-exec-stat-label">{isAr ? 'تتطلب تدخلاً عاجلاً' : 'Needs Attention'}</span>
+            <div className="crm-kanban-exec-stat-val" style={{ color: pipelineOverview.overdue > 0 ? 'var(--crm-danger)' : 'var(--crm-positive)' }}>
+              {pipelineOverview.overdue > 0 ? `${pipelineOverview.overdue} ${isAr ? 'متأخرة' : 'overdue'}` : (isAr ? 'الكل منتظم ✓' : 'All clear ✓')}
+            </div>
+          </div>
+          <div className="crm-kanban-exec-stat-icon" style={{ background: pipelineOverview.overdue > 0 ? 'var(--crm-danger-soft)' : 'var(--crm-positive-soft)', color: pipelineOverview.overdue > 0 ? 'var(--crm-danger)' : 'var(--crm-positive)' }}>
+            <AlertTriangle size={18} />
+          </div>
+        </div>
+      </div>
+
       {/* 2. Modern Triage & Filter Hub */}
       <div className="crm-modern-triage-hub" style={{ marginBottom: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
@@ -495,13 +572,13 @@ export default function KanbanPipeline({
       </div>
 
       {/* Kanban Stages Board */}
-      <div className="kanban-board-scroll-container" style={{
-        display: 'grid',
-        gridTemplateColumns: PIPELINE_STAGES.map(s => collapsedStages.includes(s.id) ? '54px' : 'minmax(280px, 1fr)').join(' '),
-        gap: '14px',
-        overflowX: 'auto',
-        paddingBottom: '40px'
-      }}>
+      <div
+        className="kanban-board-scroll-container"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: PIPELINE_STAGES.map(s => collapsedStages.includes(s.id) ? '54px' : 'minmax(280px, 1fr)').join(' ')
+        }}
+      >
         {PIPELINE_STAGES.map((stage) => {
           const isCollapsed = collapsedStages.includes(stage.id);
           const stageLeads = leadsByStage[stage.id] || [];
@@ -516,38 +593,14 @@ export default function KanbanPipeline({
                 onDrop={(e) => handleDrop(e, stage.id)}
                 onClick={() => toggleStageCollapse(stage.id)}
                 title={isAr ? `انقر لتوسيع مرحلة "${stage.title_ar}" (${count} صفقات)` : `Click to expand "${stage.title_en}" (${count})`}
-                style={{
-                  background: 'var(--crm-subtle)',
-                  border: '1px solid var(--crm-line)',
-                  borderTop: `3px solid ${stage.color}`,
-                  borderRadius: '12px',
-                  padding: '14px 6px',
-                  minHeight: '560px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  cursor: 'pointer',
-                  gap: '12px',
-                  transition: 'all 0.2s ease',
-                  userSelect: 'none'
-                }}
+                style={{ borderTop: `3px solid ${stage.color}` }}
               >
                 <button
                   type="button"
+                  className="kanban-stage-collapse-btn"
                   onClick={(e) => {
                     e.stopPropagation();
                     toggleStageCollapse(stage.id);
-                  }}
-                  style={{
-                    background: 'var(--crm-card)',
-                    border: '1px solid var(--crm-line)',
-                    borderRadius: '6px',
-                    color: 'var(--crm-muted)',
-                    cursor: 'pointer',
-                    padding: '4px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
                   }}
                   title={isAr ? 'توسيع المرحلة' : 'Expand stage'}
                 >
@@ -588,32 +641,13 @@ export default function KanbanPipeline({
               className="kanban-stage-column"
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, stage.id)}
-              style={{
-                background: 'var(--crm-subtle)',
-                border: '1px solid var(--crm-line)',
-                borderTop: `3px solid ${stage.color}`,
-                borderRadius: '12px',
-                padding: '14px',
-                minHeight: '560px',
-                display: 'flex',
-                flexDirection: 'column',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
-              }}
+              style={{ borderTop: `3px solid ${stage.color}` }}
             >
               {/* Stage Header */}
-              <div style={{
-                borderBottom: '1px solid var(--crm-line)',
-                paddingBottom: '10px',
-                marginBottom: '14px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <div>
-                  <h4 style={{ margin: 0, fontSize: 'var(--crm-text-md)', color: 'var(--crm-ink)', fontWeight: 700 }}>
-                    {isAr ? stage.title_ar : stage.title_en}
-                  </h4>
-                  <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: '600', display: 'block', marginTop: '2px' }}>
+              <div className="kanban-stage-header">
+                <div className="kanban-stage-title-wrap">
+                  <h4>{isAr ? stage.title_ar : stage.title_en}</h4>
+                  <span className="kanban-stage-volume-sub">
                     {totalVolume > 0 ? (
                       <>
                         <bdi>{(totalVolume / 1000000).toFixed(1)}</bdi> {isAr ? 'مليون ج.م' : 'M EGP'}
@@ -631,32 +665,15 @@ export default function KanbanPipeline({
                   </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{
-                    background: 'var(--crm-card)',
-                    color: 'var(--crm-body)',
-                    border: '1px solid var(--crm-line)',
-                    padding: '2px 10px',
-                    borderRadius: '20px',
-                    fontSize: 'var(--crm-text-xs)',
-                    fontWeight: 700
-                  }}>
+                  <span className="kanban-stage-count-pill">
                     {count}
                   </span>
                   <button
                     type="button"
+                    className="kanban-stage-collapse-btn"
                     onClick={(e) => {
                       e.stopPropagation();
                       toggleStageCollapse(stage.id);
-                    }}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--crm-muted)',
-                      cursor: 'pointer',
-                      padding: '3px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      borderRadius: '4px'
                     }}
                     title={isAr ? 'طي هذا العمود لتقليل العرض' : 'Collapse column'}
                     aria-label={isAr ? 'طي العمود' : 'Collapse'}
@@ -667,16 +684,9 @@ export default function KanbanPipeline({
               </div>
 
               {/* Cards Container */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
+              <div className="kanban-cards-container">
                 {stageLeads.length === 0 ? (
-                  <div style={{
-                    padding: '40px 10px',
-                    textAlign: 'center',
-                    border: '2px dashed var(--crm-line-strong)',
-                    borderRadius: '10px',
-                    color: 'var(--crm-faint)',
-                    fontSize: 'var(--crm-text-xs)'
-                  }}>
+                  <div className="kanban-drop-empty">
                     {isAr ? 'اسحب بطاقة عميل إلى هنا' : 'Drop leads here'}
                   </div>
                 ) : (
@@ -711,18 +721,7 @@ export default function KanbanPipeline({
                           <span className="kb-type">{typeBadge.label}</span>
                           {budget >= HIGH_VALUE_DEAL_THRESHOLD && (
                             <span
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '3px',
-                                background: 'var(--crm-danger-soft, rgba(239, 68, 68, 0.12))',
-                                color: 'var(--crm-danger)',
-                                border: '1px solid var(--crm-danger-line, rgba(239, 68, 68, 0.3))',
-                                fontSize: 'var(--crm-text-xs)',
-                                fontWeight: 700,
-                                padding: '1px 5px',
-                                borderRadius: '4px'
-                              }}
+                              className="kb-high-value-pill"
                               title={isAr ? 'صفقة كبرى (≥ 5 مليون ج) تتطلب اعتماد المؤسس' : 'High value (5M+) requires Founder sign-off'}
                             >
                               <ShieldAlert size={11} aria-hidden="true" />
@@ -787,8 +786,8 @@ export default function KanbanPipeline({
                             </summary>
                             <div className="kb-menu">
                               {/* Direct Jump To Any Stage */}
-                              <div style={{ borderBottom: '1px solid var(--crm-line)', paddingBottom: '4px', marginBottom: '4px' }}>
-                                <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)', padding: '2px 8px', display: 'block', fontWeight: 600 }}>
+                              <div className="kb-menu-header">
+                                <span className="kb-menu-header-label">
                                   {isAr ? 'نقل مباشر إلى مرحلة:' : 'Direct Move to:'}
                                 </span>
                                 {PIPELINE_STAGES.filter(s => s.id !== (lead.status || 'new')).map(targetStage => (
@@ -799,7 +798,6 @@ export default function KanbanPipeline({
                                       closeMenu(e);
                                       handleMoveToSpecificStage(lead, targetStage.id);
                                     }}
-                                    style={{ fontSize: 'var(--crm-text-xs)', padding: '5px 8px', display: 'flex', alignItems: 'center', gap: '8px' }}
                                   >
                                     <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: targetStage.color, flexShrink: 0 }} />
                                     <span>{isAr ? targetStage.title_ar : targetStage.title_en}</span>

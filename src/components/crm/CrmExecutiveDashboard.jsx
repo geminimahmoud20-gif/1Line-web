@@ -147,15 +147,7 @@ export default function CrmExecutiveDashboard({
         {/* Metric 1: Total Pipeline Value */}
         <div
           onClick={() => onSwitchTab?.('kanban')}
-          style={{
-            background: 'var(--crm-card)',
-            border: '1px solid var(--crm-line)',
-            borderRadius: '14px',
-            padding: '16px 20px',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            boxShadow: 'var(--crm-shadow, 0 1px 3px rgba(0,0,0,0.04))'
-          }}
+          className="crm-metric-card-executive is-clickable"
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted, var(--crm-faint))' }}>
@@ -179,7 +171,7 @@ export default function CrmExecutiveDashboard({
             {/* Desk view: the shared pool and first replies instead of company money */}
             <div
               onClick={() => onFilterLeads?.('unassigned')}
-              style={{ background: 'var(--crm-card)', border: '1px solid var(--crm-line)', borderRadius: '14px', padding: '16px 20px', cursor: 'pointer', boxShadow: 'var(--crm-shadow, 0 1px 3px rgba(0,0,0,0.04))' }}
+              className="crm-metric-card-executive is-clickable"
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted, var(--crm-faint))' }}>
@@ -196,7 +188,7 @@ export default function CrmExecutiveDashboard({
             </div>
             <div
               onClick={() => onFilterLeads?.('awaiting')}
-              style={{ background: 'var(--crm-card)', border: '1px solid var(--crm-line)', borderRadius: '14px', padding: '16px 20px', cursor: 'pointer', boxShadow: 'var(--crm-shadow, 0 1px 3px rgba(0,0,0,0.04))' }}
+              className="crm-metric-card-executive is-clickable"
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted, var(--crm-faint))' }}>
@@ -216,76 +208,51 @@ export default function CrmExecutiveDashboard({
 
         {!metrics.scoped && showMoney && (
           <>
-        {/* Metric 2: Expected Commission */}
-        <div
-          style={{
-            background: 'var(--crm-card)',
-            border: '1px solid var(--crm-line)',
-            borderRadius: '14px',
-            padding: '16px 20px',
-            boxShadow: 'var(--crm-shadow, 0 1px 3px rgba(0,0,0,0.04))'
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted, var(--crm-faint))' }}>
-              {isAr ? 'العمولة المتوقعة (2.5%)' : 'Expected Commission'}
-            </span>
-            <Award size={16} style={{ color: 'var(--crm-accent-text)' }} />
-          </div>
-          <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 900, color: 'var(--crm-accent-text)', marginTop: '6px', fontVariantNumeric: 'tabular-nums' }}>
-            <bdi>{metrics.commissionIsMillions ? metrics.commissionM : metrics.commissionFull}</bdi>
-            <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted)', marginInlineStart: '6px' }}>
-              {metrics.commissionIsMillions ? (isAr ? 'مليون ج.م' : 'M EGP') : (isAr ? 'ج.م' : 'EGP')}
-            </span>
-          </div>
-          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px', display: 'block' }}>
-            {isAr ? 'بناءً على الصفقات قيد التفاوض' : 'Based on ongoing negotiations'}
-          </span>
-        </div>
+            {/* Metric 2: Expected Commission */}
+            <div className="crm-metric-card-executive">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted, var(--crm-faint))' }}>
+                  {isAr ? 'العمولة المتوقعة (2.5%)' : 'Expected Commission'}
+                </span>
+                <Award size={16} style={{ color: 'var(--crm-accent-text)' }} />
+              </div>
+              <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 900, color: 'var(--crm-accent-text)', marginTop: '6px', fontVariantNumeric: 'tabular-nums' }}>
+                <bdi>{metrics.commissionIsMillions ? metrics.commissionM : metrics.commissionFull}</bdi>
+                <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted)', marginInlineStart: '6px' }}>
+                  {metrics.commissionIsMillions ? (isAr ? 'مليون ج.م' : 'M EGP') : (isAr ? 'ج.م' : 'EGP')}
+                </span>
+              </div>
+              <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px', display: 'block' }}>
+                {isAr ? 'بناءً على الصفقات قيد التفاوض' : 'Based on ongoing negotiations'}
+              </span>
+            </div>
 
-        {/* Metric 3: Demand Purchasing Power */}
-        <div
-          onClick={() => onSwitchTab?.('demands')}
-          style={{
-            background: 'var(--crm-card)',
-            border: '1px solid var(--crm-line)',
-            borderRadius: '14px',
-            padding: '16px 20px',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            boxShadow: 'var(--crm-shadow, 0 1px 3px rgba(0,0,0,0.04))'
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted, var(--crm-faint))' }}>
-              {isAr ? 'القوة الشرائية المسجلة' : 'Demand Purchasing Power'}
-            </span>
-            <Zap size={16} style={{ color: 'var(--crm-positive)' }} />
-          </div>
-          <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 900, color: 'var(--crm-ink)', marginTop: '6px', fontVariantNumeric: 'tabular-nums' }}>
-            <bdi>{metrics.purchasingPowerM}</bdi>
-            <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted)', marginInlineStart: '6px' }}>
-              {isAr ? 'مليون ج.م' : 'M EGP'}
-            </span>
-          </div>
-          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px', display: 'block' }}>
-            {isAr ? `${demands.filter((d) => !d.isArchived && d.status !== 'archived').length} طلب مشتري نشط` : `${demands.filter((d) => !d.isArchived && d.status !== 'archived').length} active buyer demands`}
-          </span>
-        </div>
-
+            {/* Metric 3: Demand Purchasing Power */}
+            <div
+              onClick={() => onSwitchTab?.('demands')}
+              className="crm-metric-card-executive is-clickable"
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted, var(--crm-faint))' }}>
+                  {isAr ? 'القوة الشرائية المسجلة' : 'Demand Purchasing Power'}
+                </span>
+                <Zap size={16} style={{ color: 'var(--crm-positive)' }} />
+              </div>
+              <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 900, color: 'var(--crm-ink)', marginTop: '6px', fontVariantNumeric: 'tabular-nums' }}>
+                <bdi>{metrics.purchasingPowerM}</bdi>
+                <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted)', marginInlineStart: '6px' }}>
+                  {isAr ? 'مليون ج.م' : 'M EGP'}
+                </span>
+              </div>
+              <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px', display: 'block' }}>
+                {isAr ? `${demands.filter((d) => !d.isArchived && d.status !== 'archived').length} طلب مشتري نشط` : `${demands.filter((d) => !d.isArchived && d.status !== 'archived').length} active buyer demands`}
+              </span>
+            </div>
           </>
         )}
 
         {/* Metric 4: Closing Rate */}
-        <div
-          style={{
-            background: 'var(--crm-card)',
-            border: '1px solid var(--crm-line)',
-            borderRadius: '14px',
-            padding: '16px 20px',
-            boxShadow: 'var(--crm-shadow, 0 1px 3px rgba(0,0,0,0.04))'
-          }}
-        >
+        <div className="crm-metric-card-executive">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted, var(--crm-faint))' }}>
               {isAr ? 'نسبة الفوز بالصفقات' : 'Win rate'}
