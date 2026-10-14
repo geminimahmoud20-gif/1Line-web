@@ -106,8 +106,18 @@ export default function PropertyTableRow({
 
       <td>
         <div className="table-cell-multi">
-          <strong className="text-primary">{prop.price?.toLocaleString('en-US')} ج.م</strong>
-          <span className="text-muted">مقدم: {prop.downPayment?.toLocaleString('en-US')} ج.م</span>
+          <strong className="text-primary">
+            {prop.price && Number(prop.price) > 0 ? (
+              <><bdi>{Number(prop.price).toLocaleString('en-US')}</bdi> {isAr ? 'ج.م' : 'EGP'}</>
+            ) : (
+              <span style={{ color: 'var(--crm-warn)', fontSize: 'var(--crm-text-xs)' }}>{isAr ? 'عند التواصل' : 'Upon inquiry'}</span>
+            )}
+          </strong>
+          {prop.downPayment && Number(prop.downPayment) > 0 ? (
+            <span className="text-muted">{isAr ? 'مقدم:' : 'Down:'} <bdi>{Number(prop.downPayment).toLocaleString('en-US')}</bdi> {isAr ? 'ج.م' : 'EGP'}</span>
+          ) : (
+            <span className="text-muted" style={{ fontSize: 'var(--crm-text-xs)' }}>{isAr ? 'بدون مقدم محدد' : 'No down payment'}</span>
+          )}
         </div>
       </td>
 
