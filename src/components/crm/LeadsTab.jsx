@@ -1165,7 +1165,49 @@ export default function LeadsTab({
                         <span>{isAr ? 'إضافة عميل جديد' : 'Add New Lead'}</span>
                       </button>
                     )}
-                                       <div className="crm-client-identity-meta">
+                  </div>
+                </div>
+              </td>
+            </tr>
+          ) : (
+            filteredLeads.map((l, rowIndex) => {
+              const isSelected = selectedLeadIds.includes(l.id);
+              const temp = l.temperature || '';
+              const waited = waitingMs(l, now);
+              const dupCount = (duplicateIds.get(l.id) || []).length;
+
+              return (
+                <tr
+                  key={l.id}
+                  data-lead-id={l.id}
+                  className={`crm-lead-row ${rowIndex === kbdIndex ? 'is-kbd-active' : ''}`}
+                  aria-current={rowIndex === kbdIndex ? 'true' : undefined}
+                  style={{ background: isSelected ? 'rgba(217, 119, 6, 0.05)' : undefined }}
+                  onClick={(e) => {
+                    // Row click opens the quick drawer (not the full-screen profile); controls keep their own behaviour
+                    if (e.target.closest('button, a, input, select, label, summary, details')) return;
+                    setKbdIndex(rowIndex);
+                    setQuickDrawerLead(l);
+                  }}
+                >
+                  {/* Checkbox */}
+                  <td style={{ textAlign: 'center' }}>
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => handleToggleSelectOne(l.id)}
+                      aria-label={isAr ? `تحديد ${l.name || 'العميل'}` : `Select ${l.name || 'lead'}`}
+                      style={{ cursor: 'pointer' }}
+                    />
+                  </td>
+
+                  {/* Client Info + 360 Trigger */}
+                  <td data-label={isAr ? 'الاسم والملف' : 'Name & Profile'}>
+                    <div className="crm-client-identity-wrap">
+                      <div className="crm-client-avatar-badge" aria-hidden="true">
+                        {l.name ? l.name.trim().charAt(0).toUpperCase() : 'ع'}
+                      </div>
+                      <div className="crm-client-identity-meta">
                         <div className="crm-client-identity-row">
                           <button
                             type="button"
