@@ -23,6 +23,7 @@ const SHORT_TYPE_AR = { apartment: 'شقق ودوبلكس', villa: 'فيلات',
 const SHORT_TYPE_EN = { apartment: 'Apartments', villa: 'Villas', commercial: 'Shops', office: 'Offices & clinics', land: 'Land' };
 import OfferModal from './OfferModal';
 import { listingSampleFlags } from '../../utils/sampleDataFlags';
+import { getNormalizedPropertyStatus } from '../../utils/crmLeadViews';
 import { formatArabicPlural } from '../../utils/crmNoteSanitizer';
 const SOHAG_AREA_COORDINATES = {
   east: { lat: 26.5569, lng: 31.7001 },
@@ -69,15 +70,6 @@ const DEFAULT_FORM_STATE = {
   legalStatus: null,
   customBenchmarkPrice: '',
   nearbyAmenities: []
-};
-
-export const getNormalizedPropertyStatus = (prop) => {
-  if (!prop) return 'published';
-  if (prop.isDeleted || prop.status === 'trash') return 'trash';
-  if (prop.status === 'sold') return 'sold';
-  if (prop.status === 'under_negotiation' || prop.status === 'negotiating') return 'under_negotiation';
-  if (prop.status === 'hidden' || prop.status === 'archived' || prop.status === 'draft' || prop.isArchived) return 'hidden';
-  return 'published';
 };
 
 export default function PropertyManagerPanel({
@@ -623,7 +615,7 @@ export default function PropertyManagerPanel({
           padding: '12px 16px',
           marginBottom: '14px',
           borderRadius: '12px',
-          background: 'linear-gradient(90deg, var(--crm-warn-soft), #FEF3C7)',
+          background: 'var(--crm-warn-soft)',
           border: '1px solid var(--crm-warn-line)',
           boxShadow: '0 1px 3px rgba(180, 83, 9, 0.06)',
           color: 'var(--crm-warn)',
@@ -631,7 +623,7 @@ export default function PropertyManagerPanel({
           fontWeight: 600
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '1.1rem' }}>⚠️</span>
+            <span style={{ fontSize: 'var(--crm-text-base)' }}>⚠️</span>
             <span>
               {isAr
                 ? `${sampleFlagCount} عقار يحتوي على بيانات من نموذج الإضافة القديم (صورة افتراضية أو سعر تقديري). يُرجى تدقيقها.`
@@ -647,7 +639,7 @@ export default function PropertyManagerPanel({
               fontWeight: 700,
               borderRadius: '8px',
               background: sampleOnly ? 'var(--crm-warn)' : 'var(--crm-card)',
-              color: sampleOnly ? '#fff' : 'var(--crm-warn)',
+              color: sampleOnly ? 'var(--crm-on-dark)' : 'var(--crm-warn)',
               border: '1.5px solid var(--crm-warn)',
               cursor: 'pointer',
               transition: 'all 0.15s ease'

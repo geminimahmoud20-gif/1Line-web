@@ -1,4 +1,8 @@
-import { Download, Users, Inbox, Trash2, Clock, Plus, UserPlus, SlidersHorizontal } from 'lucide-react';
+import { 
+  Download, Users, Inbox, Trash2, Clock, Plus, UserPlus, SlidersHorizontal,
+  Search, X, RotateCcw, ChevronDown, Check, Layers, AlertCircle, Eye, 
+  Building, Sparkles, User, Copy, Calendar, ShoppingBag, UserCheck 
+} from 'lucide-react';
 import { SOHAG_AREAS } from '../../data/propertiesData';
 import { formatFollowUp, formatBudget } from '../../utils/crmLabels';
 import DeskOptions from './DeskOptions';
@@ -71,13 +75,13 @@ export default function LeadsTab({
   const [mergeGroup, setMergeGroup] = useState(null);
 
   // Column Visibility state & persistence
-  const DEFAULT_VISIBLE_COLUMNS = useMemo(() => ({
+  const DEFAULT_VISIBLE_COLUMNS = {
     requirements: true,
     score: true,
     status: true,
     nextAction: true,
     agent: true,
-  }), []);
+  };
   const STORAGE_KEY_COLUMNS = 'oneline_crm_leads_columns';
 
   const [visibleColumns, setVisibleColumns] = useState(() => {
@@ -85,24 +89,14 @@ export default function LeadsTab({
       const saved = localStorage.getItem(STORAGE_KEY_COLUMNS);
       if (saved) {
         return {
-          requirements: true,
-          score: true,
-          status: true,
-          nextAction: true,
-          agent: true,
+          ...DEFAULT_VISIBLE_COLUMNS,
           ...JSON.parse(saved)
         };
       }
-    } catch (e) {
+    } catch (_e) {
       // fallback
     }
-    return {
-      requirements: true,
-      score: true,
-      status: true,
-      nextAction: true,
-      agent: true,
-    };
+    return DEFAULT_VISIBLE_COLUMNS;
   });
 
   const [showColumnPicker, setShowColumnPicker] = useState(false);
@@ -113,23 +107,20 @@ export default function LeadsTab({
       const next = { ...prev, [key]: !prev[key] };
       try {
         localStorage.setItem(STORAGE_KEY_COLUMNS, JSON.stringify(next));
-      } catch (e) {}
+      } catch (_e) {
+        // storage disabled
+      }
       return next;
     });
   };
 
   const resetColumns = () => {
-    const def = {
-      requirements: true,
-      score: true,
-      status: true,
-      nextAction: true,
-      agent: true,
-    };
-    setVisibleColumns(def);
+    setVisibleColumns(DEFAULT_VISIBLE_COLUMNS);
     try {
       localStorage.removeItem(STORAGE_KEY_COLUMNS);
-    } catch (e) {}
+    } catch (_e) {
+      // storage disabled
+    }
   };
 
   useEffect(() => {
@@ -149,6 +140,27 @@ export default function LeadsTab({
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [showColumnPicker]);
+
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const moreFiltersRef = useRef(null);
+
+  useEffect(() => {
+    if (!showMoreFilters) return;
+    const handleClickOutside = (e) => {
+      if (moreFiltersRef.current && !moreFiltersRef.current.contains(e.target)) {
+        setShowMoreFilters(false);
+      }
+    };
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setShowMoreFilters(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showMoreFilters]);
 
   const totalVisibleCols = 3 + // Checkbox (1), Client Profile (1), Actions (1)
     (visibleColumns.requirements ? 1 : 0) +
@@ -264,6 +276,21 @@ export default function LeadsTab({
       ? (isAr ? `لقينا ${res.leads.length} عميل وضفناهم للقائمة` : `Found ${res.leads.length} and added them to the list`)
       : (isAr ? 'مفيش عميل بالاسم أو الرقم ده' : 'No client matches'), res.leads.length ? 'success' : 'info');
   };
+
+  const MORE_FILTER_KEYS = ['qualified', 'account', 'stale', 'dupes', 'archived', 'lost'];
+  const isMoreFilterActive = MORE_FILTER_KEYS.includes(leadFilter);
+  const getMoreFilterLabel = () => {
+    switch (leadFilter) {
+      case 'qualified': return isAr ? 'مؤهلون للشراء' : 'Qualified';
+      case 'account': return isAr ? `حسابات جديدة (${counts.accounts})` : `Accounts (${counts.accounts})`;
+      case 'stale': return isAr ? `راكد (${counts.stale})` : `Stale (${counts.stale})`;
+      case 'dupes': return isAr ? `مكرر (${counts.dupes})` : `Duplicates (${counts.dupes})`;
+      case 'archived': return isAr ? `المؤرشفون (${counts.archived})` : `Archived (${counts.archived})`;
+      case 'lost': return isAr ? `صفقات خسرانة (${counts.lost})` : `Lost (${counts.lost})`;
+      default: return isAr ? 'المزيد من الحالات' : 'More Stages';
+    }
+  };
+
   return (
     <div className="crm-table-container">
       {lostFor && (
@@ -303,55 +330,44 @@ export default function LeadsTab({
         />
       )}
       {/* Top Control Strip */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '16px',
-        flexWrap: 'wrap',
-        gap: '12px'
-      }}>
-        <div>
-          <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Users size={20} className="text-gold" />
-            {isAr ? 'قاعدة بيانات العملاء الشاملة' : 'Customer 360° Database'}
+      <div className="crm-modern-header-strip">
+        <div className="crm-header-title-group">
+          <h3 className="crm-header-main-title">
+            <Users size={22} style={{ color: 'var(--crm-gold)' }} />
+            <span>{isAr ? 'قاعدة بيانات العملاء الشاملة' : 'Customer 360° Database'}</span>
+            <span className="crm-badge-360">360° CRM</span>
           </h3>
-          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
-            {isAr ? `إجمالي العملاء: ${leads.length} عميل | المطابق للفلتر: ${filteredLeads.length}` : `Total Leads: ${leads.length} | Filtered: ${filteredLeads.length}`}
-          </span>
+          <div className="crm-header-subtitle">
+            <span>{isAr ? 'إجمالي العملاء:' : 'Total Leads:'} <strong className="crm-header-count-pill">{leads.length}</strong></span>
+            <span style={{ opacity: 0.4 }}>•</span>
+            <span>{isAr ? 'المطابق للفلتر:' : 'Filtered:'} <strong className="crm-header-count-pill">{filteredLeads.length}</strong></span>
+          </div>
         </div>
 
         {/* Quick Add Lead & Export Actions */}
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          {canEdit && <button
-            type="button"
-            className="btn btn-sm btn-primary"
-            onClick={() => setShowAddLeadModal(true)}
-            style={{
-              background: 'var(--gradient-gold)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              boxShadow: '0 2px 10px rgba(217, 119, 6, 0.3)'
-            }}
-          >
-            <UserPlus size={15} />
-            <span>{isAr ? 'إضافة عميل جديد ➕' : 'Add New Lead ➕'}</span>
-          </button>}
+        <div className="crm-header-actions-group">
+          {canEdit && (
+            <button
+              type="button"
+              className="crm-btn-primary-gold"
+              onClick={() => setShowAddLeadModal(true)}
+            >
+              <UserPlus size={16} />
+              <span>{isAr ? 'إضافة عميل جديد' : 'Add New Lead'}</span>
+            </button>
+          )}
           {onImportLeads && (
             <button
               type="button"
-              className="btn btn-sm btn-outline"
+              className="crm-btn-secondary-modern"
               onClick={() => setImportOpen(true)}
               title={isAr ? 'استيراد عملاء من Excel أو CSV أو JSON' : 'Import clients from a file'}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
               <Download size={15} style={{ transform: 'rotate(180deg)' }} />
               <span>{isAr ? 'استيراد' : 'Import'}</span>
             </button>
           )}
           {canExport && (
-            // Exports what is on screen (current filter and search)
             <ExportMenu
               label={isAr ? `تصدير (${filteredLeads.length})` : `Export (${filteredLeads.length})`}
               disabled={filteredLeads.length === 0}
@@ -362,68 +378,40 @@ export default function LeadsTab({
       </div>
 
       {/* 🎯 UNIFIED TRIAGE & WORKFLOW SEGMENTS BAR */}
-      <div className="crm-unified-triage-hub" style={{
-        marginBottom: '14px',
-        background: 'var(--crm-card-bg, rgba(255, 255, 255, 0.03))',
-        border: '1px solid var(--crm-border, rgba(255, 255, 255, 0.08))',
-        borderRadius: '12px',
-        padding: '10px 14px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px'
-      }}>
-        {/* Row 1: Primary Lifecycle & Workflow Stages */}
-        <div className="table-filters" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+      <div className="crm-modern-triage-hub">
+        {/* Tier 1: Primary Lifecycle & Workflow Stages */}
+        <div className="crm-triage-scroll-strip">
           {/* الكل */}
           <button
             type="button"
-            className={`table-filter-btn ${leadFilter === 'all' ? 'active' : ''}`}
+            className={`crm-triage-tab-btn ${leadFilter === 'all' ? 'is-active' : ''}`}
             onClick={() => setLeadFilter('all')}
           >
-            ⚡ {isAr ? 'الكل' : 'All Leads'} ({counts.all})
+            <Layers size={14} />
+            <span>{isAr ? 'الكل' : 'All Leads'}</span>
+            <span className="crm-triage-counter">{counts.all}</span>
           </button>
 
           {/* جديد ومستني رد */}
           <button
             type="button"
-            className={`table-filter-btn ${leadFilter === 'unanswered' ? 'active' : ''}`}
+            className={`crm-triage-tab-btn ${leadFilter === 'unanswered' ? 'is-active' : ''} ${counts.unanswered > 0 ? 'is-danger-tab has-unread' : ''}`}
             onClick={() => setLeadFilter('unanswered')}
-            style={{
-              borderColor: counts.unanswered > 0 ? 'var(--crm-danger)' : undefined,
-              color: counts.unanswered > 0 && leadFilter !== 'unanswered' ? 'var(--crm-danger)' : undefined
-            }}
           >
-            🚨 {isAr ? 'مستني أول رد' : 'Awaiting Reply'}
-            <span className="badge" style={{
-              background: counts.unanswered > 0 ? 'var(--crm-danger)' : 'rgba(255,255,255,0.1)',
-              color: 'var(--crm-on-dark)',
-              fontSize: 'var(--crm-text-xs)',
-              padding: '1px 6px',
-              borderRadius: '10px',
-              marginInlineStart: '5px'
-            }}>
-              {counts.unanswered}
-            </span>
+            {counts.unanswered > 0 ? <span className="crm-pulse-dot" /> : <AlertCircle size={14} />}
+            <span>{isAr ? 'مستني أول رد' : 'Awaiting Reply'}</span>
+            <span className="crm-triage-counter">{counts.unanswered}</span>
           </button>
 
           {/* طلبات معاينة */}
           <button
             type="button"
-            className={`table-filter-btn ${leadFilter === 'viewing_request' ? 'active' : ''}`}
+            className={`crm-triage-tab-btn ${leadFilter === 'viewing_request' ? 'is-active' : ''}`}
             onClick={() => { setLeadFilter('viewing_request'); setLeadSort?.('visit_date'); }}
-            style={{
-              borderColor: counts.viewingUnanswered > 0 ? 'var(--crm-accent)' : undefined
-            }}
           >
-            👁️ {isAr ? 'طلبات معاينة' : 'Viewing Requests'}
-            <span className="badge" style={{
-              background: counts.viewingUnanswered > 0 ? 'var(--crm-accent)' : 'rgba(255,255,255,0.1)',
-              color: 'var(--crm-on-dark)',
-              fontSize: 'var(--crm-text-xs)',
-              padding: '1px 6px',
-              borderRadius: '10px',
-              marginInlineStart: '5px'
-            }}>
+            <Eye size={14} />
+            <span>{isAr ? 'طلبات معاينة' : 'Viewing Requests'}</span>
+            <span className="crm-triage-counter">
               {counts.viewings}{counts.viewingUnanswered > 0 ? ` (${counts.viewingUnanswered} ${isAr ? 'معلق' : 'pending'})` : ''}
             </span>
           </button>
@@ -431,25 +419,17 @@ export default function LeadsTab({
           {/* متابعات اليوم والمتأخرة */}
           <button
             type="button"
-            className={`table-filter-btn ${leadFilter === 'due' ? 'active' : ''}`}
+            className={`crm-triage-tab-btn ${leadFilter === 'due' ? 'is-active' : ''} ${counts.overdue > 0 ? 'is-danger-tab' : ''}`}
             onClick={() => setLeadFilter('due')}
-            style={{
-              borderColor: counts.overdue > 0 ? 'var(--crm-warn)' : undefined,
-              color: counts.overdue > 0 && leadFilter !== 'due' ? 'var(--crm-warn)' : undefined
-            }}
           >
-            ⏰ {isAr ? 'متابعة اليوم' : 'Due Today'}
-            {counts.overdue > 0 && (
-              <span className="badge" style={{
-                background: 'var(--crm-danger)',
-                color: 'var(--crm-on-dark)',
-                fontSize: 'var(--crm-text-xs)',
-                padding: '1px 6px',
-                borderRadius: '10px',
-                marginInlineStart: '5px'
-              }}>
+            <Calendar size={14} />
+            <span>{isAr ? 'متابعة اليوم' : 'Due Today'}</span>
+            {counts.overdue > 0 ? (
+              <span className="crm-triage-counter" style={{ background: 'var(--crm-danger)', color: 'var(--crm-on-dark)' }}>
                 {counts.overdue} {isAr ? 'متأخر' : 'overdue'}
               </span>
+            ) : (
+              <span className="crm-triage-counter">{counts.awaiting || 0}</span>
             )}
           </button>
 
@@ -457,120 +437,191 @@ export default function LeadsTab({
           {counts.unassigned > 0 && (
             <button
               type="button"
-              className={`table-filter-btn ${leadFilter === 'unassigned' ? 'active' : ''}`}
+              className={`crm-triage-tab-btn ${leadFilter === 'unassigned' ? 'is-active' : ''}`}
               onClick={() => setLeadFilter('unassigned')}
             >
-              👤 {isAr ? 'بدون مسؤول' : 'Unassigned'} ({counts.unassigned})
+              <User size={14} />
+              <span>{isAr ? 'بدون مسؤول' : 'Unassigned'}</span>
+              <span className="crm-triage-counter">{counts.unassigned}</span>
             </button>
           )}
-
-          {/* مؤهلون للشراء */}
-          <button
-            type="button"
-            className={`table-filter-btn ${leadFilter === 'qualified' ? 'active' : ''}`}
-            onClick={() => setLeadFilter('qualified')}
-          >
-            🎯 {isAr ? 'مؤهلون للشراء' : 'Qualified'}
-          </button>
 
           {/* طلبات شراء */}
           <button
             type="button"
-            className={`table-filter-btn ${leadFilter === 'buyer' ? 'active' : ''}`}
+            className={`crm-triage-tab-btn ${leadFilter === 'buyer' ? 'is-active' : ''}`}
             onClick={() => setLeadFilter('buyer')}
           >
-            🛒 {isAr ? 'طلبات شراء' : 'Buyers'} ({counts.buyers})
+            <ShoppingBag size={14} />
+            <span>{isAr ? 'طلبات شراء' : 'Buyers'}</span>
+            <span className="crm-triage-counter">{counts.buyers}</span>
           </button>
 
           {/* عروض بيع */}
           <button
             type="button"
-            className={`table-filter-btn ${leadFilter === 'seller' ? 'active' : ''}`}
+            className={`crm-triage-tab-btn ${leadFilter === 'seller' ? 'is-active' : ''}`}
             onClick={() => setLeadFilter('seller')}
           >
-            🏠 {isAr ? 'عروض بيع' : 'Sellers'} ({counts.sellers})
-          </button>
-
-          {/* حسابات جديدة */}
-          <button
-            type="button"
-            className={`table-filter-btn ${leadFilter === 'account' ? 'active' : ''}`}
-            onClick={() => setLeadFilter('account')}
-          >
-            👤 {isAr ? 'حسابات جديدة' : 'Accounts'} ({counts.accounts})
+            <Building size={14} />
+            <span>{isAr ? 'عروض بيع' : 'Sellers'}</span>
+            <span className="crm-triage-counter">{counts.sellers}</span>
           </button>
 
           {/* مستثمرون VIP */}
           <button
             type="button"
-            className={`table-filter-btn ${leadFilter === 'investor' ? 'active' : ''}`}
+            className={`crm-triage-tab-btn ${leadFilter === 'investor' ? 'is-active' : ''}`}
             onClick={() => setLeadFilter('investor')}
           >
-            💎 {isAr ? 'مستثمرون VIP' : 'Investors'}
+            <Sparkles size={14} style={{ color: 'var(--crm-gold)' }} />
+            <span>{isAr ? 'مستثمرون VIP' : 'Investors'}</span>
           </button>
 
-          {/* راكد */}
-          {counts.stale > 0 && (
+          {/* Dropdown for More Stages */}
+          <div className="crm-triage-dropdown-wrap" ref={moreFiltersRef}>
             <button
               type="button"
-              className={`table-filter-btn ${leadFilter === 'stale' ? 'active' : ''}`}
-              onClick={() => setLeadFilter('stale')}
-              title={isAr ? 'مفيش أي نشاط من أكتر من 48 ساعة' : 'No activity for 48h+'}
+              className={`crm-triage-tab-btn ${isMoreFilterActive ? 'is-active' : ''}`}
+              onClick={() => setShowMoreFilters(v => !v)}
+              aria-expanded={showMoreFilters}
+              title={isAr ? 'عرض المزيد من حالات وتصنيفات العملاء' : 'More stages'}
             >
-              💤 {isAr ? 'راكد' : 'Stale'} ({counts.stale})
+              <span>{getMoreFilterLabel()}</span>
+              <ChevronDown size={13} style={{ transform: showMoreFilters ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
-          )}
 
-          {/* مكرر */}
-          {counts.dupes > 0 && (
-            <button
-              type="button"
-              className={`table-filter-btn ${leadFilter === 'dupes' ? 'active' : ''}`}
-              onClick={() => setLeadFilter('dupes')}
-              style={{ color: leadFilter !== 'dupes' ? 'var(--crm-warn)' : undefined }}
-            >
-              ⧉ {isAr ? 'مكرر' : 'Duplicates'} ({counts.dupes})
-            </button>
-          )}
+            {showMoreFilters && (
+              <div className="crm-triage-dropdown-menu">
+                <button
+                  type="button"
+                  className={`crm-triage-dropdown-item ${leadFilter === 'qualified' ? 'is-active' : ''}`}
+                  onClick={() => { setLeadFilter('qualified'); setShowMoreFilters(false); }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <UserCheck size={14} />
+                    <span>{isAr ? 'مؤهلون للشراء' : 'Qualified'}</span>
+                  </span>
+                  {leadFilter === 'qualified' && <Check size={14} />}
+                </button>
 
-          {/* المؤرشفون */}
-          <button
-            type="button"
-            className={`table-filter-btn ${leadFilter === 'archived' ? 'active' : ''}`}
-            onClick={() => setLeadFilter('archived')}
-            style={{ color: leadFilter === 'archived' ? 'var(--crm-warn)' : undefined }}
-          >
-            📦 {isAr ? 'المؤرشفون' : 'Archived'} ({counts.archived})
-          </button>
+                <button
+                  type="button"
+                  className={`crm-triage-dropdown-item ${leadFilter === 'account' ? 'is-active' : ''}`}
+                  onClick={() => { setLeadFilter('account'); setShowMoreFilters(false); }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <User size={14} />
+                    <span>{isAr ? 'حسابات جديدة' : 'Accounts'}</span>
+                  </span>
+                  <span className="crm-triage-counter">{counts.accounts}</span>
+                </button>
 
-          {/* صفقات خسرانة */}
-          <button
-            type="button"
-            className={`table-filter-btn ${leadFilter === 'lost' ? 'active' : ''}`}
-            onClick={() => setLeadFilter('lost')}
-          >
-            ✖ {isAr ? 'خسرانة' : 'Lost'} ({counts.lost})
-          </button>
+                {counts.stale > 0 && (
+                  <button
+                    type="button"
+                    className={`crm-triage-dropdown-item ${leadFilter === 'stale' ? 'is-active' : ''}`}
+                    onClick={() => { setLeadFilter('stale'); setShowMoreFilters(false); }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Clock size={14} />
+                      <span>{isAr ? 'عملاء راكدين' : 'Stale'}</span>
+                    </span>
+                    <span className="crm-triage-counter">{counts.stale}</span>
+                  </button>
+                )}
+
+                {counts.dupes > 0 && (
+                  <button
+                    type="button"
+                    className={`crm-triage-dropdown-item ${leadFilter === 'dupes' ? 'is-active' : ''}`}
+                    onClick={() => { setLeadFilter('dupes'); setShowMoreFilters(false); }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Layers size={14} />
+                      <span>{isAr ? 'مكرر بالهاتف' : 'Duplicates'}</span>
+                    </span>
+                    <span className="crm-triage-counter" style={{ color: 'var(--crm-warn)' }}>{counts.dupes}</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  className={`crm-triage-dropdown-item ${leadFilter === 'archived' ? 'is-active' : ''}`}
+                  onClick={() => { setLeadFilter('archived'); setShowMoreFilters(false); }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Inbox size={14} />
+                    <span>{isAr ? 'المؤرشفون' : 'Archived'}</span>
+                  </span>
+                  <span className="crm-triage-counter">{counts.archived}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`crm-triage-dropdown-item ${leadFilter === 'lost' ? 'is-active' : ''}`}
+                  onClick={() => { setLeadFilter('lost'); setShowMoreFilters(false); }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <X size={14} />
+                    <span>{isAr ? 'صفقات خسرانة' : 'Closed Lost'}</span>
+                  </span>
+                  <span className="crm-triage-counter">{counts.lost}</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Row 2: Secondary Dropdown Filters + Search & Reset */}
-        <div style={{
-          display: 'flex',
-          gap: '8px',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          borderTop: '1px solid var(--crm-border, rgba(255, 255, 255, 0.06))',
-          paddingTop: '8px'
-        }}>
+        {/* Tier 2: Search, Pill Filters, Column Picker & Reset */}
+        <div className="crm-modern-filter-toolbar">
+          {/* Text Search Pill */}
+          <div className="crm-search-pill-wrapper">
+            <span className="crm-search-icon-prefix">
+              <Search size={14} />
+            </span>
+            <input 
+              type="text" 
+              placeholder={isAr ? 'بحث بالاسم، الهاتف، الوسم، الاغتراب...' : 'Search name, phone, tag...'} 
+              className="crm-search-pill-input" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') runServerSearch(); }}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                className="crm-search-clear-btn"
+                onClick={() => setSearchQuery('')}
+                title={isAr ? 'مسح البحث' : 'Clear search'}
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+
+          {/* Server Search Button when >= 2 characters */}
+          {searchQuery.trim().length >= 2 && (
+            <button
+              type="button"
+              className="crm-server-search-pill-btn"
+              onClick={runServerSearch}
+              disabled={serverSearching}
+              title={isAr ? 'يدوّر في كل العملاء على السيرفر، مش بس اللي ظاهرين' : 'Searches every client on the server'}
+            >
+              <Search size={13} />
+              <span>{serverSearching ? (isAr ? 'جاري البحث…' : 'Searching…') : (isAr ? 'بحث بالسيرفر' : 'Server Search')}</span>
+            </button>
+          )}
+
           {/* Temperature Filter */}
           <select
             value={temperatureFilter}
             aria-label={isAr ? 'تصفية حسب درجة الاهتمام' : 'Filter by temperature'}
             onChange={(e) => setTemperatureFilter(e.target.value)}
-            className="form-input"
-            style={{ padding: '5px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
+            className="crm-select-custom-pill"
           >
-            <option value="all">🌡️ {isAr ? 'كل درجات الحرارة' : 'All Temperatures'}</option>
+            <option value="all">🌡️ {isAr ? 'كل درجات الاهتمام' : 'All Temperatures'}</option>
             <option value="hot">🔥 {isAr ? 'ساخن جداً' : 'Hot'}</option>
             <option value="warm">⚡ {isAr ? 'دافئ' : 'Warm'}</option>
             <option value="cold">❄️ {isAr ? 'بارد' : 'Cold'}</option>
@@ -583,8 +634,7 @@ export default function LeadsTab({
               value={sourceFilter}
               aria-label={isAr ? 'تصفية حسب المصدر' : 'Filter by source'}
               onChange={(e) => setSourceFilter(e.target.value)}
-              className="form-input"
-              style={{ padding: '5px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
+              className="crm-select-custom-pill"
             >
               <option value="all">🔗 {isAr ? 'كل المصادر' : 'All sources'}</option>
               {LEAD_SOURCES.map((s) => <option key={s.id} value={s.id}>{isAr ? s.ar : s.en}</option>)}
@@ -597,10 +647,9 @@ export default function LeadsTab({
               value={dateFilter}
               aria-label={isAr ? 'تصفية حسب تاريخ الإضافة' : 'Filter by date added'}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="form-input"
-              style={{ padding: '5px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
+              className="crm-select-custom-pill"
             >
-              <option value="all">📅 {isAr ? 'كل الأوقات' : 'Any time'}</option>
+              <option value="all">📅 {isAr ? 'كل الفترات' : 'Any time'}</option>
               <option value="today">{isAr ? 'النهارده' : 'Today'}</option>
               <option value="7d">{isAr ? 'آخر 7 أيام' : 'Last 7 days'}</option>
               <option value="30d">{isAr ? 'آخر 30 يوم' : 'Last 30 days'}</option>
@@ -608,14 +657,13 @@ export default function LeadsTab({
             </select>
           )}
 
-          {/* Sort */}
+          {/* Sort Filter */}
           {setLeadSort && (
             <select
               value={leadSort}
               aria-label={isAr ? 'ترتيب العملاء' : 'Sort leads'}
               onChange={(e) => setLeadSort(e.target.value)}
-              className="form-input"
-              style={{ padding: '5px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
+              className="crm-select-custom-pill"
             >
               {LEAD_SORTS.map((o) => <option key={o.id} value={o.id}>↕ {isAr ? o.ar : o.en}</option>)}
             </select>
@@ -626,8 +674,7 @@ export default function LeadsTab({
             value={areaFilter}
             aria-label={isAr ? 'تصفية حسب المنطقة' : 'Filter by area'}
             onChange={(e) => setAreaFilter(e.target.value)}
-            className="form-input"
-            style={{ padding: '5px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
+            className="crm-select-custom-pill"
           >
             <option value="all">📍 {isAr ? 'كل مناطق سوهاج' : 'All Areas'}</option>
             {SOHAG_AREAS.filter(a => a.id !== 'all').map(a => (
@@ -635,34 +682,11 @@ export default function LeadsTab({
             ))}
           </select>
 
-          {/* Text Search */}
-          <input 
-            type="text" 
-            placeholder={isAr ? 'بحث بالاسم، الهاتف، الوسم، الاغتراب...' : 'Search name/phone/tag...'} 
-            className="form-input" 
-            style={{ padding: '5px 12px', fontSize: 'var(--crm-text-xs)', width: '210px', borderRadius: 'var(--radius-pill)' }}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') runServerSearch(); }}
-          />
-          {searchQuery.trim().length >= 2 && (
-            <button
-              type="button"
-              className="btn btn-outline btn-sm"
-              onClick={runServerSearch}
-              disabled={serverSearching}
-              title={isAr ? 'يدوّر في كل العملاء على السيرفر، مش بس اللي ظاهرين' : 'Searches every client on the server'}
-              style={{ borderRadius: 'var(--radius-pill)', whiteSpace: 'nowrap', padding: '4px 10px', fontSize: 'var(--crm-text-xs)' }}
-            >
-              {serverSearching ? (isAr ? 'جاري البحث…' : 'Searching…') : (isAr ? 'بحث بالسيرفر' : 'Server Search')}
-            </button>
-          )}
-
           {/* Reset Filters Button */}
           {(leadFilter !== 'all' || temperatureFilter !== 'all' || (sourceFilter && sourceFilter !== 'all') || (dateFilter && dateFilter !== 'all') || (areaFilter && areaFilter !== 'all') || searchQuery) && (
             <button
               type="button"
-              className="btn btn-sm btn-ghost"
+              className="crm-filter-reset-pill-btn"
               onClick={() => {
                 setLeadFilter('all');
                 setTemperatureFilter('all');
@@ -671,47 +695,31 @@ export default function LeadsTab({
                 setAreaFilter?.('all');
                 setSearchQuery?.('');
               }}
-              style={{
-                fontSize: 'var(--crm-text-xs)',
-                color: 'var(--crm-warn)',
-                padding: '4px 8px',
-                cursor: 'pointer',
-                marginInlineStart: 'auto'
-              }}
               title={isAr ? 'إعادة ضبط كل الفلاتر' : 'Reset all filters'}
             >
-              🔄 {isAr ? 'تصفير الفلاتر' : 'Reset Filters'}
+              <RotateCcw size={12} />
+              <span>{isAr ? 'تصفير الفلاتر' : 'Reset'}</span>
             </button>
           )}
 
           {/* Column Customization Toggle */}
-          <div ref={columnPickerRef} style={{ position: 'relative', marginInlineStart: (leadFilter !== 'all' || temperatureFilter !== 'all' || (sourceFilter && sourceFilter !== 'all') || (dateFilter && dateFilter !== 'all') || (areaFilter && areaFilter !== 'all') || searchQuery) ? '8px' : 'auto' }}>
+          <div ref={columnPickerRef} style={{ position: 'relative', marginInlineStart: 'auto' }}>
             <button
               type="button"
-              className="btn btn-sm btn-outline"
+              className="crm-btn-secondary-modern"
               onClick={() => setShowColumnPicker((v) => !v)}
               aria-expanded={showColumnPicker}
-              style={{
-                borderRadius: 'var(--radius-pill)',
-                padding: '5px 11px',
-                fontSize: 'var(--crm-text-xs)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-                background: showColumnPicker ? 'var(--crm-accent-soft)' : undefined,
-                borderColor: showColumnPicker ? 'var(--crm-accent)' : undefined
-              }}
               title={isAr ? 'تخصيص وإخفاء أعمدة الجدول' : 'Customize table columns'}
             >
-              <SlidersHorizontal size={12} />
-              <span>{isAr ? 'تخصيص الأعمدة' : 'Columns'}</span>
+              <SlidersHorizontal size={13} />
+              <span>{isAr ? 'الأعمدة' : 'Columns'}</span>
               {Object.values(visibleColumns).filter(Boolean).length < 5 && (
                 <span style={{
                   background: 'var(--crm-accent)',
                   color: 'var(--crm-on-accent)',
                   borderRadius: '10px',
-                  padding: '1px 5px',
-                  fontSize: '10px',
+                  padding: '1px 6px',
+                  fontSize: 'var(--crm-text-xs)',
                   fontWeight: 700
                 }}>
                   {Object.values(visibleColumns).filter(Boolean).length}/5
@@ -720,24 +728,9 @@ export default function LeadsTab({
             </button>
 
             {showColumnPicker && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 6px)',
-                  insetInlineEnd: 0,
-                  zIndex: 60,
-                  background: 'var(--crm-card)',
-                  border: '1px solid var(--crm-line-strong)',
-                  borderRadius: 'var(--radius-md)',
-                  boxShadow: '0 12px 28px -6px rgba(0, 0, 0, 0.4), 0 8px 12px -4px rgba(0, 0, 0, 0.25)',
-                  padding: '10px',
-                  minWidth: '230px',
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)'
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid var(--crm-line)' }}>
-                  <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-ink)' }}>
+              <div className="crm-col-picker-modern-popover">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '8px', borderBottom: '1px solid var(--crm-line)' }}>
+                  <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 700, color: 'var(--crm-ink)' }}>
                     {isAr ? 'الأعمدة المعروضة' : 'Visible Columns'}
                   </span>
                   <button
@@ -747,7 +740,8 @@ export default function LeadsTab({
                       background: 'none',
                       border: 'none',
                       color: 'var(--crm-accent-text)',
-                      fontSize: '11px',
+                      fontSize: 'var(--crm-text-xs)',
+                      fontWeight: 600,
                       cursor: 'pointer',
                       padding: '2px 4px'
                     }}
@@ -771,9 +765,9 @@ export default function LeadsTab({
                         alignItems: 'center',
                         gap: '8px',
                         padding: '6px 8px',
-                        borderRadius: 'var(--radius-sm)',
+                        borderRadius: '8px',
                         cursor: 'pointer',
-                        fontSize: 'var(--crm-text-xs)',
+                        fontSize: 'var(--crm-text-sm)',
                         color: 'var(--crm-ink)',
                         userSelect: 'none',
                         background: visibleColumns[col.key] ? 'transparent' : 'rgba(255, 255, 255, 0.02)'
@@ -791,8 +785,8 @@ export default function LeadsTab({
                   ))}
                 </div>
 
-                <div style={{ marginTop: '8px', paddingTop: '6px', borderTop: '1px solid var(--crm-line)', fontSize: '10px', color: 'var(--crm-muted)', textAlign: 'center' }}>
-                  {isAr ? '🔒 عمود الاسم والإجراءات ثابتان دائماً' : '🔒 Name & Actions are always pinned'}
+                <div style={{ marginTop: '4px', paddingTop: '6px', borderTop: '1px solid var(--crm-line)', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', textAlign: 'center' }}>
+                  {isAr ? '🔒 عمود العميل والإجراءات ثابتان دائماً' : '🔒 Name & Actions are always pinned'}
                 </div>
               </div>
             )}
@@ -802,48 +796,46 @@ export default function LeadsTab({
 
       {/* ⚡ BULK ACTIONS FLOATING TOOLBAR */}
       {selectedLeadIds.length > 0 && (
-        <div style={{
-          background: 'rgba(217, 119, 6, 0.12)',
-          border: '1px solid var(--crm-accent)',
-          borderRadius: 'var(--radius-sm)',
-          padding: '10px 16px',
-          marginBottom: '14px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '10px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span className="badge" style={{ background: 'var(--crm-accent)', color: 'var(--crm-on-accent)', fontWeight: 'bold' }}>
-              {selectedLeadIds.length} {isAr ? 'عميل محدد' : 'selected'}
+        <div className="crm-bulk-floating-bar">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{
+              background: 'var(--crm-gold)',
+              color: 'var(--crm-card)',
+              padding: '2px 9px',
+              borderRadius: '999px',
+              fontWeight: 800,
+              fontSize: 'var(--crm-text-xs)'
+            }}>
+              {selectedLeadIds.length}
             </span>
-            <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-ink)' }}>
-              {isAr ? 'إجراءات جماعية فورية:' : 'Bulk Actions:'}
+            <span style={{ fontWeight: 600, fontSize: 'var(--crm-text-sm)' }}>
+              {isAr ? 'عميل محدد في الجدول' : 'leads selected'}
             </span>
           </div>
 
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
             {/* Bulk Assign Agent Dropdown */}
-            {canEdit && <select
-              aria-label={isAr ? 'تعيين مسؤول للعملاء المحددين' : 'Assign selected leads'}
-              onChange={(e) => {
-                if (e.target.value) handleBulkAssign(e.target.value);
-              }}
-              className="form-input"
-              style={{ padding: '4px 8px', fontSize: 'var(--crm-text-xs)', width: 'auto' }}
-              defaultValue=""
-            >
-              <option value="" disabled>👥 {isAr ? 'تعيين مسؤول جماعي...' : 'Assign Agent...'}</option>
-              <DeskOptions role={activeRole} lang={lang} />
-            </select>}
+            {canEdit && (
+              <select
+                aria-label={isAr ? 'تعيين مسؤول للعملاء المحددين' : 'Assign selected leads'}
+                onChange={(e) => {
+                  if (e.target.value) handleBulkAssign(e.target.value);
+                }}
+                className="crm-select-custom-pill"
+                style={{ height: '32px', fontSize: 'var(--crm-text-xs)', background: 'var(--crm-subtle-2)', color: 'var(--crm-on-dark)', borderColor: 'var(--crm-line)' }}
+                defaultValue=""
+              >
+                <option value="" disabled style={{ color: 'var(--crm-ink)' }}>👥 {isAr ? 'تعيين مسؤول جماعي...' : 'Assign Agent...'}</option>
+                <DeskOptions role={activeRole} lang={lang} />
+              </select>
+            )}
 
             {/* Bulk Export */}
             <button
               type="button"
               className="btn btn-sm btn-outline"
               onClick={handleBulkExportSelected}
-              style={{ padding: '4px 10px', fontSize: 'var(--crm-text-xs)' }}
+              style={{ padding: '5px 12px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-on-dark)', borderColor: 'var(--crm-line)' }}
             >
               <Download size={13} />
               <span>{isAr ? 'تصدير المحدد (CSV)' : 'Export CSV'}</span>
@@ -855,7 +847,7 @@ export default function LeadsTab({
                 type="button"
                 className="btn btn-sm"
                 onClick={handleBulkDelete}
-                style={{ padding: '4px 10px', fontSize: 'var(--crm-text-xs)', background: 'rgba(239, 68, 68, 0.15)', color: 'var(--rose)', border: '1px solid var(--rose)' }}
+                style={{ padding: '5px 12px', fontSize: 'var(--crm-text-xs)', background: 'var(--crm-danger-soft)', color: 'var(--crm-danger)', border: '1px solid var(--crm-danger-line)' }}
               >
                 <Trash2 size={13} />
                 <span>{isAr ? 'حذف المحدد' : 'Delete'}</span>
@@ -867,7 +859,7 @@ export default function LeadsTab({
               type="button"
               className="btn btn-sm btn-ghost"
               onClick={() => setSelectedLeadIds([])}
-              style={{ padding: '4px 8px', fontSize: 'var(--crm-text-xs)' }}
+              style={{ padding: '5px 10px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}
             >
               ✕ {isAr ? 'إلغاء التحديد' : 'Clear'}
             </button>
@@ -946,56 +938,80 @@ export default function LeadsTab({
 
                   {/* Client Info + 360 Trigger */}
                   <td data-label={isAr ? 'الاسم والملف' : 'Name & Profile'}>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        {/* Real button: keyboard reachable, and never an invisible empty link when the name is missing */}
-                        <button
-                          type="button"
-                          className="crm-lead-name-btn"
-                          onClick={() => setQuickDrawerLead(l)}
-                          title={isAr ? 'فتح المعاينة السريعة وتسجيل المكالمة' : 'Open Quick Drawer'}
-                        >
-                          {l.name?.trim() || <span className="crm-empty-value">{isAr ? 'عميل بدون اسم' : 'Unnamed lead'}</span>}
-                        </button>
-                        {l.cityOrExpat && l.cityOrExpat !== 'سوهاج' && (
-                          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--cyan)', background: 'var(--cyan-bg)', padding: '1px 5px', borderRadius: '4px' }}>
-                            ✈️ {l.cityOrExpat}
-                          </span>
-                        )}
+                    <div className="crm-client-identity-wrap">
+                      <div className="crm-client-avatar-badge" aria-hidden="true">
+                        {l.name ? l.name.trim().charAt(0).toUpperCase() : 'ع'}
                       </div>
-
-                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}><bdi dir="ltr" style={{ unicodeBidi: 'isolate', fontFamily: 'monospace' }}>{formatPhoneNumber(l.phone || l.whatsapp) || '—'}</bdi></span>
-
-                      <div className="crm-lead-meta">
-                        <span className="crm-lead-chip">{sourceLabel(l)}</span>
-                        {waited > 0 && (
-                          <span
-                            className={`crm-lead-chip ${waited > RESPONSE_SLA_MS ? 'is-late' : 'is-waiting'}`}
-                            title={isAr ? 'وقت من غير أول رد' : 'Time without a first reply'}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <button
+                            type="button"
+                            className="crm-client-name-link"
+                            onClick={() => setQuickDrawerLead(l)}
+                            title={isAr ? 'فتح المعاينة السريعة وتسجيل المكالمة' : 'Open Quick Drawer'}
                           >
-                            ⏱ {isAr ? `بدون رد ${fmtWait(waited)}` : `No reply ${fmtWait(waited)}`}
-                          </span>
-                        )}
-                        {dupCount > 0 && (
-                          <button type="button" className="crm-lead-chip is-dupe" onClick={() => openMerge(l)} title={isAr ? 'نفس الرقم مسجل في عميل تاني' : 'Same phone on another lead'}>
-                            ⧉ {isAr ? `مكرر (${dupCount + 1})` : `Duplicate (${dupCount + 1})`}
+                            {l.name?.trim() || <span className="crm-empty-value">{isAr ? 'عميل بدون اسم' : 'Unnamed lead'}</span>}
                           </button>
-                        )}
-                        {l.status === 'lost' && l.lostReason && (
-                          <span className="crm-lead-chip is-lost" title={l.lostNote || ''}>✖ {(() => { const r = LOST_REASONS.find((x) => x.id === l.lostReason); return r ? (isAr ? r.ar : r.en) : l.lostReason; })()}</span>
+                          {l.cityOrExpat && l.cityOrExpat !== 'سوهاج' && (
+                            <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-info)', background: 'var(--crm-info-soft)', padding: '1px 6px', borderRadius: '4px', fontWeight: 600 }}>
+                              ✈️ {l.cityOrExpat}
+                            </span>
+                          )}
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span className="crm-phone-mono-pill">
+                            <bdi dir="ltr">{formatPhoneNumber(l.phone || l.whatsapp) || '—'}</bdi>
+                          </span>
+                          {(l.phone || l.whatsapp) && (
+                            <button
+                              type="button"
+                              className="crm-phone-copy-btn"
+                              title={isAr ? 'نسخ رقم الهاتف' : 'Copy phone'}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigator.clipboard?.writeText(l.phone || l.whatsapp);
+                                triggerToast?.(isAr ? 'تم نسخ الرقم بنجاح' : 'Phone copied', 'success');
+                              }}
+                            >
+                              <Copy size={11} />
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="crm-lead-meta">
+                          <span className="crm-lead-chip">{sourceLabel(l)}</span>
+                          {waited > 0 && (
+                            <span
+                              className={`crm-lead-chip ${waited > RESPONSE_SLA_MS ? 'is-late' : 'is-waiting'}`}
+                              title={isAr ? 'وقت من غير أول رد' : 'Time without a first reply'}
+                            >
+                              ⏱ {isAr ? `بدون رد ${fmtWait(waited)}` : `No reply ${fmtWait(waited)}`}
+                            </span>
+                          )}
+                          {dupCount > 0 && (
+                            <button type="button" className="crm-lead-chip is-dupe" onClick={(e) => { e.stopPropagation(); openMerge(l); }} title={isAr ? 'نفس الرقم مسجل في عميل تاني' : 'Same phone on another lead'}>
+                              ⧉ {isAr ? `مكرر (${dupCount + 1})` : `Duplicate (${dupCount + 1})`}
+                            </button>
+                          )}
+                          {l.status === 'lost' && l.lostReason && (
+                            <span className="crm-lead-chip is-lost" title={l.lostNote || ''}>
+                              ✕ {(() => { const r = LOST_REASONS.find((x) => x.id === l.lostReason); return r ? (isAr ? r.ar : r.en) : l.lostReason; })()}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Tags Display */}
+                        {l.tags && l.tags.length > 0 && (
+                          <div style={{ display: 'flex', gap: '4px', marginTop: '2px', flexWrap: 'wrap' }}>
+                            {l.tags.slice(0, 2).map((t, i) => (
+                              <span key={i} style={{ fontSize: 'var(--crm-text-xs)', background: 'var(--crm-subtle-2)', padding: '1px 6px', borderRadius: '4px', color: 'var(--crm-accent-text)', border: '1px solid var(--crm-line)' }}>
+                                {t}
+                              </span>
+                            ))}
+                          </div>
                         )}
                       </div>
-
-                      {/* Tags Display */}
-                      {l.tags && l.tags.length > 0 && (
-                        <div style={{ display: 'flex', gap: '4px', marginTop: '3px', flexWrap: 'wrap' }}>
-                          {l.tags.slice(0, 2).map((t, i) => (
-                            <span key={i} style={{ fontSize: 'var(--crm-text-xs)', background: 'rgba(255,255,255,0.05)', padding: '1px 5px', borderRadius: '3px', color: 'var(--crm-accent-text)' }}>
-                              {t}
-                            </span>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   </td>
 
@@ -1032,9 +1048,24 @@ export default function LeadsTab({
                     <td data-label={isAr ? 'الجدية والحرارة' : 'Score & Temp'}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <LeadScorePill lead={l} isAr={isAr} />
-                        <span title={temp === 'hot' ? 'عميل ساخن للشراء' : temp === 'warm' ? 'عميل دافئ' : temp === 'cold' ? 'عميل مستكشف' : (isAr ? 'درجة الحرارة غير محددة' : 'Temperature not set')}>
-                          {temp === 'hot' ? '🔥' : temp === 'warm' ? '⚡' : temp === 'cold' ? '❄️' : <span className="crm-empty-value">—</span>}
-                        </span>
+                        {temp === 'hot' && (
+                          <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 700, color: 'var(--crm-danger)', background: 'var(--crm-danger-soft)', padding: '2px 6px', borderRadius: '6px', border: '1px solid var(--crm-danger-line)', display: 'inline-flex', alignItems: 'center', gap: '3px' }} title={isAr ? 'عميل ساخن للشراء' : 'Hot lead'}>
+                            🔥 {isAr ? 'ساخن' : 'Hot'}
+                          </span>
+                        )}
+                        {temp === 'warm' && (
+                          <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 700, color: 'var(--crm-warn)', background: 'var(--crm-warn-soft)', padding: '2px 6px', borderRadius: '6px', border: '1px solid var(--crm-warn-line)', display: 'inline-flex', alignItems: 'center', gap: '3px' }} title={isAr ? 'عميل دافئ' : 'Warm lead'}>
+                            ⚡ {isAr ? 'دافئ' : 'Warm'}
+                          </span>
+                        )}
+                        {temp === 'cold' && (
+                          <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-info)', background: 'var(--crm-info-soft)', padding: '2px 6px', borderRadius: '6px', border: '1px solid var(--crm-info-line)', display: 'inline-flex', alignItems: 'center', gap: '3px' }} title={isAr ? 'عميل مستكشف' : 'Cold lead'}>
+                            ❄️ {isAr ? 'بارد' : 'Cold'}
+                          </span>
+                        )}
+                        {!['hot', 'warm', 'cold'].includes(temp) && (
+                          <span className="crm-empty-value">—</span>
+                        )}
                       </div>
                     </td>
                   )}
