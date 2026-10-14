@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Sparkles, Copy, Check, Send, Wand2 } from 'lucide-react';
-import { getDynamicPhone, getWhatsAppUrl } from '../../utils/founderCmsData';
+import { getDynamicPhone, getWhatsAppUrl, openWhatsAppSafely } from '../../utils/founderCmsData';
 import { computeRentalYield } from '../../utils/propertyInsights';
+import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 
 // Arabic room counter grammar (قواعد تمييز العدد في اللغة العربية)
 const formatRoomsAr = (num) => {
@@ -31,6 +32,18 @@ export default function AICopywriterModal({
   triggerToast
 }) {
   const isAr = lang === 'ar';
+  useBodyScrollLock(isOpen);
+  const mouseDownOnBackdropRef = useRef(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   const [selectedPropertyId, setSelectedPropertyId] = useState(properties[0]?.id || '');
   const [adTone, setAdTone] = useState('social'); // 'social' | 'luxury' | 'investor' | 'expat' | 'english'
   const [copied, setCopied] = useState(false);
@@ -229,7 +242,7 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
   };
 
   const handleSendToWhatsApp = () => {
-    window.open(`https://wa.me/?text=${encodeURIComponent(adText)}`, '_blank');
+    openWhatsAppSafely(adText);
   };
 
   const toneOptions = [
@@ -241,7 +254,15 @@ WhatsApp / Direct Call: ${getDynamicPhone()}
   ];
 
   return (
-    <div className="track-modal-backdrop" onClick={onClose}>
+    <div
+      className="track-modal-backdrop"
+      onMouseDown={(e) => { mouseDownOnBackdropRef.current = e.target === e.currentTarget; }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget && mouseDownOnBackdropRef.current) {
+          onClose();
+        }
+      }}
+    >
       <div className="property-form-modal-card animate-fadeIn" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '820px', borderRadius: '20px', overflow: 'hidden' }}>
         <div className="modal-form-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

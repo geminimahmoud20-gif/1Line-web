@@ -8,6 +8,7 @@ import { leadToRow } from '../utils/transfer/leadSchema';
 import { restoreLeads, mergeLeads } from '../firebaseLazy';
 import { canExportCsv, canDeleteLead, canManagePayments, canEditLeadsRole, assignableDesks, scopeLeadsForAccess } from '../utils/rbacRules';
 import { permsOfRole } from '../utils/accessModel';
+import { isValidPhoneNumber } from '../utils/securityShield';
 
 // Enterprise PropTech Modules
 import KanbanPipeline from './crm/KanbanPipeline';
@@ -216,6 +217,16 @@ export const CrmAdminPanel = ({
 
   // Activity Log Viewer State
   const [viewingLogsLead, setViewingLogsLead] = useState(null);
+  const logsBackdropRef = useRef(false);
+
+  useEffect(() => {
+    if (!viewingLogsLead) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setViewingLogsLead(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [viewingLogsLead]);
 
 
   // Active Role Permissions and Agent Claim Helper
@@ -511,6 +522,16 @@ export const CrmAdminPanel = ({
       return;
     }
 
+    if (leadFormData.phone && !isValidPhoneNumber(leadFormData.phone)) {
+      triggerToast(isAr ? 'رقم الهاتف الأساسي غير صحيح — يرجى كتابة رقم مصري (01xxxxxxxxx) أو رقم دولي يبدأ بـ +' : 'Invalid phone number format', 'error');
+      return;
+    }
+
+    if (cleanWhatsapp && !isValidPhoneNumber(cleanWhatsapp)) {
+      triggerToast(isAr ? 'رقم الواتساب غير صحيح — يرجى كتابة رقم مصري (01xxxxxxxxx) أو رقم دولي يبدأ بـ +' : 'Invalid WhatsApp number format', 'error');
+      return;
+    }
+
     if (!leadFormData.area) {
       triggerToast(isAr ? 'الموقع / المنطقة بسوهاج إلزامي!' : 'Target Area is required!', 'error');
       return;
@@ -552,7 +573,7 @@ export const CrmAdminPanel = ({
     };
 
     if (onUpdateLead) {
-      const saved = await onUpdateLead(editingLead.id, updatedLeadData);
+      const saved = await onUpdateLead(editingLead.id, updatedLeadData, editingLead.version);
       if (saved === false) return;
     } else {
       setLeads(prev => prev.map(l => l.id === editingLead.id ? { ...l, ...updatedLeadData } : l));
@@ -913,7 +934,13 @@ export const CrmAdminPanel = ({
 
       {/* 🕒 ACTIVITY LOG VIEWER MODAL */}
       {viewingLogsLead && (
-        <div className="track-modal-backdrop" onClick={() => setViewingLogsLead(null)}>
+        <div
+          className="track-modal-backdrop"
+          onMouseDown={(e) => { logsBackdropRef.current = e.target === e.currentTarget; }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget && logsBackdropRef.current) setViewingLogsLead(null);
+          }}
+        >
           <div className="property-form-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '540px' }}>
             <div className="modal-form-header">
               <h3>

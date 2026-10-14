@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Phone, MessageSquare, CheckCircle2, Plus, Send, Activity, Lock, Calendar, Download } from 'lucide-react';
 
 
@@ -8,6 +8,8 @@ import CustomerOverviewTab from './lead-profile/CustomerOverviewTab';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { parseMoney } from '../../utils/crmLeadViews';
 import { normalizeAreaKey } from '../../utils/areasData';
+import { isValidPhoneNumber } from '../../utils/securityShield';
+import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 import VisitorJourney from './analytics/VisitorJourney';
 import LeadScorePill from './LeadScorePill';
 
@@ -22,6 +24,21 @@ export default function CustomerProfileModal({
   userRole = 'super_admin'
 }) {
   const isAr = lang === 'ar';
+  useBodyScrollLock(isOpen);
+  const isSubmittingRef = useRef(false);
+  const mouseDownOnBackdropRef = useRef(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && !isSubmittingRef.current) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   const [profileTab, setProfileTab] = useState('overview'); // 'overview' | 'properties' | 'timeline' | 'actions'
   const [isEditing, setIsEditing] = useState(false);
 
@@ -85,7 +102,7 @@ export default function CustomerProfileModal({
     if (onUpdateLead) {
       onUpdateLead(lead.id, {
         activityLogs: updatedLogs
-      });
+      }, lead.version);
     }
 
     setNewLogText('');
@@ -97,6 +114,7 @@ export default function CustomerProfileModal({
   // Save Full Profile Edits
   const handleSaveProfile = async (e) => {
     e.preventDefault();
+    if (isSubmittingRef.current) return;
 
     const nameTrimmed = (formData.name || '').trim();
     const whatsappTrimmed = (formData.whatsapp || formData.phone || '').trim();
@@ -111,6 +129,16 @@ export default function CustomerProfileModal({
       return;
     }
 
+    if (formData.phone && !isValidPhoneNumber(formData.phone)) {
+      if (triggerToast) triggerToast(isAr ? 'رقم الهاتف الأساسي غير صحيح — يرجى كتابة رقم مصري 01xxxxxxxxx أو رقم دولي يبدأ بـ +' : 'Invalid primary phone format', 'error');
+      return;
+    }
+
+    if (whatsappTrimmed && !isValidPhoneNumber(whatsappTrimmed)) {
+      if (triggerToast) triggerToast(isAr ? 'رقم الواتساب غير صحيح — يرجى كتابة رقم مصري 01xxxxxxxxx أو رقم دولي يبدأ بـ +' : 'Invalid WhatsApp number format', 'error');
+      return;
+    }
+
     if (!formData.area) {
       if (triggerToast) triggerToast(isAr ? 'تحديد الموقع / المنطقة بسوهاج إلزامي!' : 'Area is required!', 'error');
       return;
@@ -121,38 +149,43 @@ export default function CustomerProfileModal({
       return;
     }
 
-    const updatedLead = {
-      name: nameTrimmed,
-      phone: (formData.phone || '').trim() || whatsappTrimmed,
-      whatsapp: whatsappTrimmed,
-      altPhone: formData.altPhone,
-      cityOrExpat: formData.cityOrExpat,
-      type: formData.type,
-      status: formData.status,
-      temperature: formData.temperature,
-      assignedTo: formData.assignedTo,
-      financing: formData.financing,
-      tags: formData.tags,
-      nextActionDate: formData.nextActionDate,
-      nextActionNote: formData.nextActionNote,
-      followUp: formData.nextActionNote,
-      details: {
-        ...(lead.details || {}),
-        budget: formData.budget,
-        expectedPrice: formData.budget,
-        area: formData.area,
-        propertyType: formData.propertyType
+    try {
+      isSubmittingRef.current = true;
+      const updatedLead = {
+        name: nameTrimmed,
+        phone: (formData.phone || '').trim() || whatsappTrimmed,
+        whatsapp: whatsappTrimmed,
+        altPhone: formData.altPhone,
+        cityOrExpat: formData.cityOrExpat,
+        type: formData.type,
+        status: formData.status,
+        temperature: formData.temperature,
+        assignedTo: formData.assignedTo,
+        financing: formData.financing,
+        tags: formData.tags,
+        nextActionDate: formData.nextActionDate,
+        nextActionNote: formData.nextActionNote,
+        followUp: formData.nextActionNote,
+        details: {
+          ...(lead.details || {}),
+          budget: formData.budget,
+          expectedPrice: formData.budget,
+          area: formData.area,
+          propertyType: formData.propertyType
+        }
+      };
+
+      if (onUpdateLead) {
+        const saved = await onUpdateLead(lead.id, updatedLead, lead.version);
+        if (saved === false) return;
       }
-    };
 
-    if (onUpdateLead) {
-      const saved = await onUpdateLead(lead.id, updatedLead);
-      if (saved === false) return;
-    }
-
-    setIsEditing(false);
-    if (triggerToast) {
-      triggerToast(isAr ? 'تم حفظ وتحديث ملف العميل الشامل بنجاح! 💾' : 'Customer 360 profile updated!', 'success');
+      setIsEditing(false);
+      if (triggerToast) {
+        triggerToast(isAr ? 'تم حفظ وتحديث ملف العميل الشامل بنجاح! 💾' : 'Customer 360 profile updated!', 'success');
+      }
+    } finally {
+      isSubmittingRef.current = false;
     }
   };
 
@@ -191,7 +224,15 @@ export default function CustomerProfileModal({
   const cleanPhone = (formData.whatsapp || formData.phone || '').replace(/[^0-9]/g, '');
 
   return (
-    <div className="track-modal-backdrop" onClick={onClose}>
+    <div
+      className="track-modal-backdrop"
+      onMouseDown={(e) => { mouseDownOnBackdropRef.current = e.target === e.currentTarget; }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget && mouseDownOnBackdropRef.current && !isSubmittingRef.current) {
+          onClose();
+        }
+      }}
+    >
       <div className="property-form-modal-card animate-fadeIn" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '860px', width: '95%', background: 'var(--crm-card)', color: 'var(--crm-ink)', border: '1px solid var(--crm-line-strong)', boxShadow: '0 20px 50px rgba(0,0,0,0.15)' }}>
         {/* Header Bar */}
         <div className="modal-form-header" style={{ borderBottom: '1px solid var(--crm-line)', paddingBottom: '16px', background: 'var(--crm-card)' }}>

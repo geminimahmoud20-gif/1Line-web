@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import useOpenRequest from '../../hooks/useOpenRequest';
 import { Building2, Plus, Edit3, Trash2, MapPin, Save, X, Search } from 'lucide-react';
 import { projectSampleFlags } from '../../utils/sampleDataFlags';
+import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 
 /**
  * MegaProjectsManagerPanel Component
@@ -24,6 +25,21 @@ export default function MegaProjectsManagerPanel({
   
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  useBodyScrollLock(isModalOpen);
+  const isSavingRef = useRef(false);
+  const mouseDownOnBackdropRef = useRef(false);
+
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && !isSavingRef.current) {
+        setIsModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isModalOpen]);
+
   const [editingProjectId, setEditingProjectId] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   
@@ -88,7 +104,7 @@ export default function MegaProjectsManagerPanel({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (isSaving) return;
+    if (isSaving || isSavingRef.current) return;
 
     if (!formData.title_ar) {
       triggerToast(isAr ? 'يرجى إدخال اسم المشروع بالعربية' : 'Please enter project title', 'error');
@@ -99,6 +115,7 @@ export default function MegaProjectsManagerPanel({
       return;
     }
 
+    isSavingRef.current = true;
     setIsSaving(true);
     try {
 
@@ -141,6 +158,7 @@ export default function MegaProjectsManagerPanel({
 
     setIsModalOpen(false);
     } finally {
+      isSavingRef.current = false;
       setIsSaving(false);
     }
   };
@@ -338,7 +356,15 @@ export default function MegaProjectsManagerPanel({
 
       {/* Add / Edit Modal */}
       {isModalOpen && (
-        <div className="track-modal-backdrop" onClick={() => setIsModalOpen(false)}>
+        <div
+          className="track-modal-backdrop"
+          onMouseDown={(e) => { mouseDownOnBackdropRef.current = e.target === e.currentTarget; }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget && mouseDownOnBackdropRef.current && !isSavingRef.current) {
+              setIsModalOpen(false);
+            }
+          }}
+        >
           <div className="deposit-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '720px', width: '95%' }}>
             <button type="button" className="modal-close-btn" onClick={() => setIsModalOpen(false)}>
               <X size={20} />
