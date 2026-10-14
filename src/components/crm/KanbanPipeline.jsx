@@ -62,6 +62,22 @@ export default function KanbanPipeline({
   const [blockerModal, setBlockerModal] = useState({ isOpen: false, blockerInfo: null, lead: null });
   const [filterType, setFilterType] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [collapsedStages, setCollapsedStages] = useState(() => {
+    try {
+      const saved = localStorage.getItem('oneline_kanban_collapsed_stages');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const toggleStageCollapse = (stageId) => {
+    setCollapsedStages(prev => {
+      const next = prev.includes(stageId) ? prev.filter(id => id !== stageId) : [...prev, stageId];
+      try { localStorage.setItem('oneline_kanban_collapsed_stages', JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
 
   const isAr = lang === 'ar';
 
@@ -287,6 +303,35 @@ export default function KanbanPipeline({
     }
   };
 
+  // Direct Move to Any Specific Stage
+  const handleMoveToSpecificStage = (lead, targetStageId) => {
+    if (!lead || !targetStageId || lead.status === targetStageId) return;
+    const validation = validateStageTransition(lead, targetStageId, {
+      userRole: activeRole,
+      isFounderApproved: lead.isFounderApproved || activeRole === 'super_admin'
+    });
+
+    if (!validation.allowed) {
+      setBlockerModal({ isOpen: true, blockerInfo: validation, lead });
+      if (triggerToast) {
+        triggerToast(validation.missingDeliverable, 'error');
+      }
+      return;
+    }
+
+    if (onUpdateLead) {
+      const updates = { status: targetStageId };
+      if (validation.nextTask) {
+        updates.latestHandoffTask = validation.nextTask;
+      }
+      onUpdateLead(lead.id, updates);
+      const targetStage = PIPELINE_STAGES.find(s => s.id === targetStageId);
+      if (triggerToast) {
+        triggerToast(isAr ? `تم نقل العميل مباشرة إلى مرحلة: ${targetStage?.title_ar || targetStageId}` : `Moved to ${targetStage?.title_en || targetStageId}`, 'success');
+      }
+    }
+  };
+
   const onWhatsAppClick = (lead) => {
     const cleanPhone = (lead.whatsapp || lead.phone || '').replace(/[^0-9]/g, '');
     const propTitle = getLocalizedPropertyType(lead.propertyType || lead.details?.propertyType);
@@ -442,14 +487,90 @@ export default function KanbanPipeline({
       {/* Kanban Stages Board */}
       <div className="kanban-board-scroll-container" style={{
         display: 'grid',
-        gridTemplateColumns: `repeat(${PIPELINE_STAGES.length}, minmax(280px, 1fr))`,
+        gridTemplateColumns: PIPELINE_STAGES.map(s => collapsedStages.includes(s.id) ? '54px' : 'minmax(280px, 1fr)').join(' '),
         gap: '14px',
         overflowX: 'auto',
         paddingBottom: '40px'
       }}>
         {PIPELINE_STAGES.map((stage) => {
+          const isCollapsed = collapsedStages.includes(stage.id);
           const stageLeads = leadsByStage[stage.id] || [];
           const { count, totalVolume, budgetedCount, unbudgetedCount } = stageStatsMap[stage.id] || { count: 0, totalVolume: 0, budgetedCount: 0, unbudgetedCount: 0 };
+
+          if (isCollapsed) {
+            return (
+              <div
+                key={stage.id}
+                className="kanban-stage-column is-collapsed"
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, stage.id)}
+                onClick={() => toggleStageCollapse(stage.id)}
+                title={isAr ? `انقر لتوسيع مرحلة "${stage.title_ar}" (${count} صفقات)` : `Click to expand "${stage.title_en}" (${count})`}
+                style={{
+                  background: 'var(--crm-subtle)',
+                  border: '1px solid var(--crm-line)',
+                  borderTop: `3px solid ${stage.color}`,
+                  borderRadius: '12px',
+                  padding: '14px 6px',
+                  minHeight: '560px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  gap: '12px',
+                  transition: 'all 0.2s ease',
+                  userSelect: 'none'
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleStageCollapse(stage.id);
+                  }}
+                  style={{
+                    background: 'var(--crm-card)',
+                    border: '1px solid var(--crm-line)',
+                    borderRadius: '6px',
+                    color: 'var(--crm-muted)',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  title={isAr ? 'توسيع المرحلة' : 'Expand stage'}
+                >
+                  <ChevronRight size={14} style={{ transform: isAr ? 'rotate(180deg)' : 'none' }} />
+                </button>
+
+                <span style={{
+                  background: 'var(--crm-card)',
+                  color: stage.color,
+                  border: `1px solid ${stage.color}`,
+                  borderRadius: '12px',
+                  padding: '2px 6px',
+                  fontSize: '11px',
+                  fontWeight: 800
+                }}>
+                  {count}
+                </span>
+
+                <div style={{
+                  writingMode: 'vertical-rl',
+                  transform: isAr ? 'rotate(180deg)' : 'none',
+                  fontSize: 'var(--crm-text-xs)',
+                  fontWeight: 700,
+                  color: 'var(--crm-ink)',
+                  letterSpacing: '0.04em',
+                  whiteSpace: 'nowrap',
+                  marginTop: '10px'
+                }}>
+                  {isAr ? stage.title_ar : stage.title_en}
+                </div>
+              </div>
+            );
+          }
 
           return (
             <div
@@ -499,17 +620,40 @@ export default function KanbanPipeline({
                     )}
                   </span>
                 </div>
-                <span style={{
-                  background: 'var(--crm-card)',
-                  color: 'var(--crm-body)',
-                  border: '1px solid var(--crm-line)',
-                  padding: '2px 10px',
-                  borderRadius: '20px',
-                  fontSize: 'var(--crm-text-xs)',
-                  fontWeight: 700
-                }}>
-                  {count}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{
+                    background: 'var(--crm-card)',
+                    color: 'var(--crm-body)',
+                    border: '1px solid var(--crm-line)',
+                    padding: '2px 10px',
+                    borderRadius: '20px',
+                    fontSize: 'var(--crm-text-xs)',
+                    fontWeight: 700
+                  }}>
+                    {count}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleStageCollapse(stage.id);
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--crm-muted)',
+                      cursor: 'pointer',
+                      padding: '3px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      borderRadius: '4px'
+                    }}
+                    title={isAr ? 'طي هذا العمود لتقليل العرض' : 'Collapse column'}
+                    aria-label={isAr ? 'طي العمود' : 'Collapse'}
+                  >
+                    <ChevronLeft size={15} style={{ transform: isAr ? 'none' : 'rotate(180deg)' }} />
+                  </button>
+                </div>
               </div>
 
               {/* Cards Container */}
@@ -628,6 +772,27 @@ export default function KanbanPipeline({
                               <MoreHorizontal size={16} aria-hidden="true" />
                             </summary>
                             <div className="kb-menu">
+                              {/* Direct Jump To Any Stage */}
+                              <div style={{ borderBottom: '1px solid var(--crm-line)', paddingBottom: '4px', marginBottom: '4px' }}>
+                                <span style={{ fontSize: '11px', color: 'var(--crm-faint)', padding: '2px 8px', display: 'block', fontWeight: 600 }}>
+                                  {isAr ? 'نقل مباشر إلى مرحلة:' : 'Direct Move to:'}
+                                </span>
+                                {PIPELINE_STAGES.filter(s => s.id !== (lead.status || 'new')).map(targetStage => (
+                                  <button
+                                    key={targetStage.id}
+                                    type="button"
+                                    onClick={(e) => {
+                                      closeMenu(e);
+                                      handleMoveToSpecificStage(lead, targetStage.id);
+                                    }}
+                                    style={{ fontSize: 'var(--crm-text-xs)', padding: '5px 8px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                                  >
+                                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: targetStage.color, flexShrink: 0 }} />
+                                    <span>{isAr ? targetStage.title_ar : targetStage.title_en}</span>
+                                  </button>
+                                ))}
+                              </div>
+
                               <button type="button" onClick={(e) => { closeMenu(e); setSchedulingVisitLead(lead); }}>
                                 <Car size={14} aria-hidden="true" />{isAr ? 'حجز موعد معاينة' : 'Schedule visit'}
                               </button>
