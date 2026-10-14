@@ -247,7 +247,13 @@ export default function CrmSidebar({
         <div className="crm-sidebar-inner">
           {/* Header Brand */}
           <div className="crm-sidebar-header">
-            <a href="/" className="crm-sidebar-brand" title={isAr ? 'الانتقال للموقع الرئيسي' : 'Go to Homepage'}>
+            <button
+              type="button"
+              onClick={() => handleItemClick('dashboard')}
+              className="crm-sidebar-brand"
+              title={isAr ? 'اللوحة الرئيسية للتحكم' : 'CRM Dashboard'}
+              aria-label={isAr ? 'اللوحة الرئيسية للتحكم' : 'CRM Dashboard'}
+            >
               <div style={{
                 background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.2), rgba(13, 72, 161, 0.4))',
                 padding: '6px',
@@ -265,7 +271,7 @@ export default function CrmSidebar({
                 </span>
                 <span className="crm-brand-badge">PRO COMMAND</span>
               </div>
-            </a>
+            </button>
 
             <button
               type="button"

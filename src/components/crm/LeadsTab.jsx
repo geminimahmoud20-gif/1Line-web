@@ -265,210 +265,214 @@ export default function LeadsTab({
         </div>
       </div>
 
-      {/* 🚀 QUICK PRIORITY TRIAGE BAR (جديد محدش رد، طلبات معاينة، عروض بيع، حسابات) */}
-      <div className="crm-priority-triage-bar" style={{
-        display: 'flex',
-        gap: '8px',
-        flexWrap: 'wrap',
+      {/* 🎯 UNIFIED TRIAGE & WORKFLOW SEGMENTS BAR */}
+      <div className="crm-unified-triage-hub" style={{
         marginBottom: '14px',
-        padding: '10px 14px',
         background: 'var(--crm-card-bg, rgba(255, 255, 255, 0.03))',
         border: '1px solid var(--crm-border, rgba(255, 255, 255, 0.08))',
-        borderRadius: '10px'
+        borderRadius: '12px',
+        padding: '10px 14px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px'
       }}>
-        {/* 1. 🆕 جديد محدش ردّ عليه */}
-        <button
-          type="button"
-          className={`table-filter-btn ${leadFilter === 'unanswered' ? 'active' : ''}`}
-          onClick={() => { setLeadFilter('unanswered'); }}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '7px 13px',
-            fontSize: 'var(--crm-text-sm)',
-            fontWeight: '600',
-            border: leadFilter === 'unanswered' ? '1px solid var(--crm-danger)' : '1px solid rgba(239, 68, 68, 0.25)',
-            background: leadFilter === 'unanswered' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.07)',
-            color: 'var(--crm-ink)'
-          }}
-        >
-          <span>🆕 {isAr ? 'جديد محدش ردّ عليه' : 'Unanswered / New'}</span>
-          <span className="badge" style={{ background: 'var(--crm-danger)', color: 'var(--crm-on-dark)', fontSize: 'var(--crm-text-xs)', padding: '2px 7px', borderRadius: '12px' }}>
-            {counts.unanswered}
-          </span>
-        </button>
-
-        {/* 2. 👁 طلبات معاينة */}
-        <button
-          type="button"
-          className={`table-filter-btn ${leadFilter === 'viewing_request' ? 'active' : ''}`}
-          onClick={() => { setLeadFilter('viewing_request'); setLeadSort?.('visit_date'); }}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '7px 13px',
-            fontSize: 'var(--crm-text-sm)',
-            fontWeight: '600',
-            border: leadFilter === 'viewing_request' ? '1px solid var(--crm-accent)' : '1px solid rgba(217, 119, 6, 0.25)',
-            background: leadFilter === 'viewing_request' ? 'rgba(217, 119, 6, 0.2)' : 'rgba(217, 119, 6, 0.07)',
-            color: 'var(--crm-ink)'
-          }}
-        >
-          <span>👁 {isAr ? 'طلبات معاينة' : 'Viewing Requests'}</span>
-          {counts.viewingUnanswered > 0 ? (
-            <span className="badge" style={{ background: 'var(--crm-accent)', color: 'var(--crm-on-dark)', fontSize: 'var(--crm-text-xs)', padding: '2px 7px', borderRadius: '12px' }}>
-              {counts.viewings} ({counts.viewingUnanswered} {isAr ? 'معلق' : 'pending'})
-            </span>
-          ) : (
-            <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--crm-muted)', fontSize: 'var(--crm-text-xs)', padding: '2px 7px', borderRadius: '12px' }}>
-              {counts.viewings}
-            </span>
-          )}
-        </button>
-
-        {/* 3. 🏠 عروض بيع */}
-        <button
-          type="button"
-          className={`table-filter-btn ${leadFilter === 'seller' ? 'active' : ''}`}
-          onClick={() => { setLeadFilter('seller'); }}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '7px 13px',
-            fontSize: 'var(--crm-text-sm)',
-            fontWeight: '600',
-            border: leadFilter === 'seller' ? '1px solid var(--crm-positive)' : '1px solid rgba(16, 185, 129, 0.25)',
-            background: leadFilter === 'seller' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.07)',
-            color: 'var(--crm-ink)'
-          }}
-        >
-          <span>🏠 {isAr ? 'عروض بيع' : 'Seller Listings'}</span>
-          {counts.sellerUnanswered > 0 ? (
-            <span className="badge" style={{ background: 'var(--crm-positive)', color: 'var(--crm-on-dark)', fontSize: 'var(--crm-text-xs)', padding: '2px 7px', borderRadius: '12px' }}>
-              {counts.sellers} ({counts.sellerUnanswered} {isAr ? 'معلق' : 'pending'})
-            </span>
-          ) : (
-            <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--crm-muted)', fontSize: 'var(--crm-text-xs)', padding: '2px 7px', borderRadius: '12px' }}>
-              {counts.sellers}
-            </span>
-          )}
-        </button>
-
-        {/* 4. 👤 حسابات جديدة */}
-        <button
-          type="button"
-          className={`table-filter-btn ${leadFilter === 'account' ? 'active' : ''}`}
-          onClick={() => { setLeadFilter('account'); }}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '7px 13px',
-            fontSize: 'var(--crm-text-sm)',
-            fontWeight: '600',
-            border: leadFilter === 'account' ? '1px solid var(--crm-info)' : '1px solid rgba(14, 165, 233, 0.25)',
-            background: leadFilter === 'account' ? 'rgba(14, 165, 233, 0.2)' : 'rgba(14, 165, 233, 0.07)',
-            color: 'var(--crm-ink)'
-          }}
-        >
-          <span>👤 {isAr ? 'حسابات جديدة' : 'New Accounts'}</span>
-          {counts.accountUnanswered > 0 ? (
-            <span className="badge" style={{ background: 'var(--crm-info)', color: 'var(--crm-on-dark)', fontSize: 'var(--crm-text-xs)', padding: '2px 7px', borderRadius: '12px' }}>
-              {counts.accounts} ({counts.accountUnanswered} {isAr ? 'جديد' : 'new'})
-            </span>
-          ) : (
-            <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--crm-muted)', fontSize: 'var(--crm-text-xs)', padding: '2px 7px', borderRadius: '12px' }}>
-              {counts.accounts}
-            </span>
-          )}
-        </button>
-      </div>
-
-      {/* Advanced Multi-Filters Toolbar */}
-      <div className="crm-table-header" style={{ alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '14px' }}>
-        {/* Stage & Workflow Quick Tabs */}
-        <div className="table-filters" style={{ flexWrap: 'wrap', gap: '6px' }}>
-          <button className={`table-filter-btn ${leadFilter === 'all' ? 'active' : ''}`} onClick={() => setLeadFilter('all')}>
-            {isAr ? 'كل العملاء' : 'All Leads'} ({counts.all})
-          </button>
-          <button className={`table-filter-btn ${leadFilter === 'viewing_request' ? 'active' : ''}`} onClick={() => { setLeadFilter('viewing_request'); setLeadSort?.('visit_date'); }}>
-            👁 {isAr ? 'طلبات معاينة' : 'Viewing Requests'} ({counts.viewings})
-          </button>
-          <button className={`table-filter-btn ${leadFilter === 'buyer' ? 'active' : ''}`} onClick={() => setLeadFilter('buyer')}>
-            {isAr ? 'طلبات شراء' : 'Buyers'} ({counts.buyers})
-          </button>
-          <button className={`table-filter-btn ${leadFilter === 'seller' ? 'active' : ''}`} onClick={() => setLeadFilter('seller')}>
-            {isAr ? 'عروض بيع' : 'Sellers'} ({counts.sellers})
-          </button>
-          <button className={`table-filter-btn ${leadFilter === 'account' ? 'active' : ''}`} onClick={() => setLeadFilter('account')}>
-            👤 {isAr ? 'حسابات جديدة' : 'Accounts'} ({counts.accounts})
-          </button>
-          <button className={`table-filter-btn ${leadFilter === 'new' ? 'active' : ''}`} onClick={() => setLeadFilter('new')}>
-            ✨ {isAr ? 'عملاء جدد' : 'New Leads'} ({counts.fresh})
-          </button>
+        {/* Row 1: Primary Lifecycle & Workflow Stages */}
+        <div className="table-filters" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+          {/* الكل */}
           <button
-            className={`table-filter-btn ${leadFilter === 'awaiting' ? 'active' : ''}`}
-            onClick={() => setLeadFilter('awaiting')}
-            title={isAr ? 'عملاء جدد محدش كلمهم لسه' : 'New leads nobody has contacted yet'}
-            style={{ color: counts.late > 0 && leadFilter !== 'awaiting' ? 'var(--crm-danger)' : undefined }}
+            type="button"
+            className={`table-filter-btn ${leadFilter === 'all' ? 'active' : ''}`}
+            onClick={() => setLeadFilter('all')}
           >
-            ⏱️ {isAr ? 'مستني رد' : 'Awaiting reply'} ({counts.awaiting}{counts.late > 0 ? (isAr ? ` · ${counts.late} متأخر` : ` · ${counts.late} late`) : ''})
+            ⚡ {isAr ? 'الكل' : 'All Leads'} ({counts.all})
           </button>
-          <button className={`table-filter-btn ${leadFilter === 'due' ? 'active' : ''}`} onClick={() => setLeadFilter('due')}>
+
+          {/* جديد ومستني رد */}
+          <button
+            type="button"
+            className={`table-filter-btn ${leadFilter === 'unanswered' ? 'active' : ''}`}
+            onClick={() => setLeadFilter('unanswered')}
+            style={{
+              borderColor: counts.unanswered > 0 ? 'var(--crm-danger)' : undefined,
+              color: counts.unanswered > 0 && leadFilter !== 'unanswered' ? 'var(--crm-danger)' : undefined
+            }}
+          >
+            🚨 {isAr ? 'مستني أول رد' : 'Awaiting Reply'}
+            <span className="badge" style={{
+              background: counts.unanswered > 0 ? 'var(--crm-danger)' : 'rgba(255,255,255,0.1)',
+              color: 'var(--crm-on-dark)',
+              fontSize: 'var(--crm-text-xs)',
+              padding: '1px 6px',
+              borderRadius: '10px',
+              marginInlineStart: '5px'
+            }}>
+              {counts.unanswered}
+            </span>
+          </button>
+
+          {/* طلبات معاينة */}
+          <button
+            type="button"
+            className={`table-filter-btn ${leadFilter === 'viewing_request' ? 'active' : ''}`}
+            onClick={() => { setLeadFilter('viewing_request'); setLeadSort?.('visit_date'); }}
+            style={{
+              borderColor: counts.viewingUnanswered > 0 ? 'var(--crm-accent)' : undefined
+            }}
+          >
+            👁️ {isAr ? 'طلبات معاينة' : 'Viewing Requests'}
+            <span className="badge" style={{
+              background: counts.viewingUnanswered > 0 ? 'var(--crm-accent)' : 'rgba(255,255,255,0.1)',
+              color: 'var(--crm-on-dark)',
+              fontSize: 'var(--crm-text-xs)',
+              padding: '1px 6px',
+              borderRadius: '10px',
+              marginInlineStart: '5px'
+            }}>
+              {counts.viewings}{counts.viewingUnanswered > 0 ? ` (${counts.viewingUnanswered} ${isAr ? 'معلق' : 'pending'})` : ''}
+            </span>
+          </button>
+
+          {/* متابعات اليوم والمتأخرة */}
+          <button
+            type="button"
+            className={`table-filter-btn ${leadFilter === 'due' ? 'active' : ''}`}
+            onClick={() => setLeadFilter('due')}
+            style={{
+              borderColor: counts.overdue > 0 ? 'var(--crm-warn)' : undefined,
+              color: counts.overdue > 0 && leadFilter !== 'due' ? 'var(--crm-warn)' : undefined
+            }}
+          >
             ⏰ {isAr ? 'متابعة اليوم' : 'Due Today'}
+            {counts.overdue > 0 && (
+              <span className="badge" style={{
+                background: 'var(--crm-danger)',
+                color: 'var(--crm-on-dark)',
+                fontSize: 'var(--crm-text-xs)',
+                padding: '1px 6px',
+                borderRadius: '10px',
+                marginInlineStart: '5px'
+              }}>
+                {counts.overdue} {isAr ? 'متأخر' : 'overdue'}
+              </span>
+            )}
           </button>
-          {counts.overdue > 0 && (
-            <button className={`table-filter-btn ${leadFilter === 'overdue' ? 'active' : ''}`} onClick={() => setLeadFilter('overdue')} style={{ color: leadFilter !== 'overdue' ? 'var(--crm-danger)' : undefined }}>
-              ⚠ {isAr ? 'متابعات متأخرة' : 'Overdue'} ({counts.overdue})
-            </button>
-          )}
+
+          {/* بدون مسؤول */}
           {counts.unassigned > 0 && (
-            <button className={`table-filter-btn ${leadFilter === 'unassigned' ? 'active' : ''}`} onClick={() => setLeadFilter('unassigned')}>
+            <button
+              type="button"
+              className={`table-filter-btn ${leadFilter === 'unassigned' ? 'active' : ''}`}
+              onClick={() => setLeadFilter('unassigned')}
+            >
               👤 {isAr ? 'بدون مسؤول' : 'Unassigned'} ({counts.unassigned})
             </button>
           )}
+
+          {/* مؤهلون للشراء */}
+          <button
+            type="button"
+            className={`table-filter-btn ${leadFilter === 'qualified' ? 'active' : ''}`}
+            onClick={() => setLeadFilter('qualified')}
+          >
+            🎯 {isAr ? 'مؤهلون للشراء' : 'Qualified'}
+          </button>
+
+          {/* طلبات شراء */}
+          <button
+            type="button"
+            className={`table-filter-btn ${leadFilter === 'buyer' ? 'active' : ''}`}
+            onClick={() => setLeadFilter('buyer')}
+          >
+            🛒 {isAr ? 'طلبات شراء' : 'Buyers'} ({counts.buyers})
+          </button>
+
+          {/* عروض بيع */}
+          <button
+            type="button"
+            className={`table-filter-btn ${leadFilter === 'seller' ? 'active' : ''}`}
+            onClick={() => setLeadFilter('seller')}
+          >
+            🏠 {isAr ? 'عروض بيع' : 'Sellers'} ({counts.sellers})
+          </button>
+
+          {/* حسابات جديدة */}
+          <button
+            type="button"
+            className={`table-filter-btn ${leadFilter === 'account' ? 'active' : ''}`}
+            onClick={() => setLeadFilter('account')}
+          >
+            👤 {isAr ? 'حسابات جديدة' : 'Accounts'} ({counts.accounts})
+          </button>
+
+          {/* مستثمرون VIP */}
+          <button
+            type="button"
+            className={`table-filter-btn ${leadFilter === 'investor' ? 'active' : ''}`}
+            onClick={() => setLeadFilter('investor')}
+          >
+            💎 {isAr ? 'مستثمرون VIP' : 'Investors'}
+          </button>
+
+          {/* راكد */}
           {counts.stale > 0 && (
-            <button className={`table-filter-btn ${leadFilter === 'stale' ? 'active' : ''}`} onClick={() => setLeadFilter('stale')} title={isAr ? 'مفيش أي نشاط من أكتر من 48 ساعة' : 'No activity for 48h+'}>
+            <button
+              type="button"
+              className={`table-filter-btn ${leadFilter === 'stale' ? 'active' : ''}`}
+              onClick={() => setLeadFilter('stale')}
+              title={isAr ? 'مفيش أي نشاط من أكتر من 48 ساعة' : 'No activity for 48h+'}
+            >
               💤 {isAr ? 'راكد' : 'Stale'} ({counts.stale})
             </button>
           )}
-          <button className={`table-filter-btn ${leadFilter === 'qualified' ? 'active' : ''}`} onClick={() => setLeadFilter('qualified')}>
-            🎯 {isAr ? 'مؤهلون للشراء' : 'Qualified'}
-          </button>
-          <button className={`table-filter-btn ${leadFilter === 'buyer' ? 'active' : ''}`} onClick={() => setLeadFilter('buyer')}>
-            {isAr ? 'طلبات شراء' : 'Buyers'}
-          </button>
-          <button className={`table-filter-btn ${leadFilter === 'seller' ? 'active' : ''}`} onClick={() => setLeadFilter('seller')}>
-            {isAr ? 'عروض بيع' : 'Sellers'}
-          </button>
-          <button className={`table-filter-btn ${leadFilter === 'investor' ? 'active' : ''}`} onClick={() => setLeadFilter('investor')}>
-            💎 {isAr ? 'مستثمرون VIP' : 'Investors'}
-          </button>
-          <button className={`table-filter-btn ${leadFilter === 'archived' ? 'active' : ''}`} onClick={() => setLeadFilter('archived')} style={{ color: leadFilter === 'archived' ? 'var(--crm-warn)' : undefined }}>
-            📦 {isAr ? 'المؤرشفون' : 'Archived'} ({counts.archived})
-          </button>
-          <button className={`table-filter-btn ${leadFilter === 'lost' ? 'active' : ''}`} onClick={() => setLeadFilter('lost')}>
-            ✖ {isAr ? 'صفقات خسرانة' : 'Lost'} ({counts.lost})
-          </button>
+
+          {/* مكرر */}
           {counts.dupes > 0 && (
-            <button className={`table-filter-btn ${leadFilter === 'dupes' ? 'active' : ''}`} onClick={() => setLeadFilter('dupes')} style={{ color: leadFilter !== 'dupes' ? 'var(--crm-warn)' : undefined }}>
+            <button
+              type="button"
+              className={`table-filter-btn ${leadFilter === 'dupes' ? 'active' : ''}`}
+              onClick={() => setLeadFilter('dupes')}
+              style={{ color: leadFilter !== 'dupes' ? 'var(--crm-warn)' : undefined }}
+            >
               ⧉ {isAr ? 'مكرر' : 'Duplicates'} ({counts.dupes})
             </button>
           )}
+
+          {/* المؤرشفون */}
+          <button
+            type="button"
+            className={`table-filter-btn ${leadFilter === 'archived' ? 'active' : ''}`}
+            onClick={() => setLeadFilter('archived')}
+            style={{ color: leadFilter === 'archived' ? 'var(--crm-warn)' : undefined }}
+          >
+            📦 {isAr ? 'المؤرشفون' : 'Archived'} ({counts.archived})
+          </button>
+
+          {/* صفقات خسرانة */}
+          <button
+            type="button"
+            className={`table-filter-btn ${leadFilter === 'lost' ? 'active' : ''}`}
+            onClick={() => setLeadFilter('lost')}
+          >
+            ✖ {isAr ? 'خسرانة' : 'Lost'} ({counts.lost})
+          </button>
         </div>
 
-        {/* Secondary Filters (Temperature & Area) */}
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+        {/* Row 2: Secondary Dropdown Filters + Search & Reset */}
+        <div style={{
+          display: 'flex',
+          gap: '8px',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          borderTop: '1px solid var(--crm-border, rgba(255, 255, 255, 0.06))',
+          paddingTop: '8px'
+        }}>
           {/* Temperature Filter */}
           <select
             value={temperatureFilter}
             aria-label={isAr ? 'تصفية حسب درجة الاهتمام' : 'Filter by temperature'}
             onChange={(e) => setTemperatureFilter(e.target.value)}
             className="form-input"
-            style={{ padding: '6px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
+            style={{ padding: '5px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
           >
             <option value="all">🌡️ {isAr ? 'كل درجات الحرارة' : 'All Temperatures'}</option>
             <option value="hot">🔥 {isAr ? 'ساخن جداً' : 'Hot'}</option>
@@ -477,26 +481,28 @@ export default function LeadsTab({
             <option value="unknown">{isAr ? 'غير محدد' : 'Not set'}</option>
           </select>
 
-          {/* Source, date range and sort */}
+          {/* Source Filter */}
           {setSourceFilter && (
             <select
               value={sourceFilter}
               aria-label={isAr ? 'تصفية حسب المصدر' : 'Filter by source'}
               onChange={(e) => setSourceFilter(e.target.value)}
               className="form-input"
-              style={{ padding: '6px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
+              style={{ padding: '5px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
             >
               <option value="all">🔗 {isAr ? 'كل المصادر' : 'All sources'}</option>
               {LEAD_SOURCES.map((s) => <option key={s.id} value={s.id}>{isAr ? s.ar : s.en}</option>)}
             </select>
           )}
+
+          {/* Date Filter */}
           {setDateFilter && (
             <select
               value={dateFilter}
               aria-label={isAr ? 'تصفية حسب تاريخ الإضافة' : 'Filter by date added'}
               onChange={(e) => setDateFilter(e.target.value)}
               className="form-input"
-              style={{ padding: '6px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
+              style={{ padding: '5px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
             >
               <option value="all">📅 {isAr ? 'كل الأوقات' : 'Any time'}</option>
               <option value="today">{isAr ? 'النهارده' : 'Today'}</option>
@@ -505,13 +511,15 @@ export default function LeadsTab({
               <option value="month">{isAr ? 'الشهر ده' : 'This month'}</option>
             </select>
           )}
+
+          {/* Sort */}
           {setLeadSort && (
             <select
               value={leadSort}
               aria-label={isAr ? 'ترتيب العملاء' : 'Sort leads'}
               onChange={(e) => setLeadSort(e.target.value)}
               className="form-input"
-              style={{ padding: '6px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
+              style={{ padding: '5px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
             >
               {LEAD_SORTS.map((o) => <option key={o.id} value={o.id}>↕ {isAr ? o.ar : o.en}</option>)}
             </select>
@@ -523,7 +531,7 @@ export default function LeadsTab({
             aria-label={isAr ? 'تصفية حسب المنطقة' : 'Filter by area'}
             onChange={(e) => setAreaFilter(e.target.value)}
             className="form-input"
-            style={{ padding: '6px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
+            style={{ padding: '5px 10px', fontSize: 'var(--crm-text-xs)', borderRadius: 'var(--radius-pill)', width: 'auto' }}
           >
             <option value="all">📍 {isAr ? 'كل مناطق سوهاج' : 'All Areas'}</option>
             {SOHAG_AREAS.filter(a => a.id !== 'all').map(a => (
@@ -536,7 +544,7 @@ export default function LeadsTab({
             type="text" 
             placeholder={isAr ? 'بحث بالاسم، الهاتف، الوسم، الاغتراب...' : 'Search name/phone/tag...'} 
             className="form-input" 
-            style={{ padding: '6px 14px', fontSize: 'var(--crm-text-sm)', width: '220px', borderRadius: 'var(--radius-pill)' }}
+            style={{ padding: '5px 12px', fontSize: 'var(--crm-text-xs)', width: '210px', borderRadius: 'var(--radius-pill)' }}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') runServerSearch(); }}
@@ -547,10 +555,36 @@ export default function LeadsTab({
               className="btn btn-outline btn-sm"
               onClick={runServerSearch}
               disabled={serverSearching}
-              title={isAr ? 'يدوّر في كل العملاء على السيرفر، مش بس اللي ظاهرين: رقم موبايل بأي صيغة أو أول الاسم' : 'Searches every client on the server: a phone in any format or the start of a name'}
-              style={{ borderRadius: 'var(--radius-pill)', whiteSpace: 'nowrap' }}
+              title={isAr ? 'يدوّر في كل العملاء على السيرفر، مش بس اللي ظاهرين' : 'Searches every client on the server'}
+              style={{ borderRadius: 'var(--radius-pill)', whiteSpace: 'nowrap', padding: '4px 10px', fontSize: 'var(--crm-text-xs)' }}
             >
-              {serverSearching ? (isAr ? 'جاري البحث…' : 'Searching…') : (isAr ? 'ابحث في كل العملاء' : 'Search all clients')}
+              {serverSearching ? (isAr ? 'جاري البحث…' : 'Searching…') : (isAr ? 'بحث بالسيرفر' : 'Server Search')}
+            </button>
+          )}
+
+          {/* Reset Filters Button */}
+          {(leadFilter !== 'all' || temperatureFilter !== 'all' || (sourceFilter && sourceFilter !== 'all') || (dateFilter && dateFilter !== 'all') || (areaFilter && areaFilter !== 'all') || searchQuery) && (
+            <button
+              type="button"
+              className="btn btn-sm btn-ghost"
+              onClick={() => {
+                setLeadFilter('all');
+                setTemperatureFilter('all');
+                setSourceFilter?.('all');
+                setDateFilter?.('all');
+                setAreaFilter?.('all');
+                setSearchQuery?.('');
+              }}
+              style={{
+                fontSize: 'var(--crm-text-xs)',
+                color: 'var(--crm-warn)',
+                padding: '4px 8px',
+                cursor: 'pointer',
+                marginInlineStart: 'auto'
+              }}
+              title={isAr ? 'إعادة ضبط كل الفلاتر' : 'Reset all filters'}
+            >
+              🔄 {isAr ? 'تصفير الفلاتر' : 'Reset Filters'}
             </button>
           )}
         </div>
