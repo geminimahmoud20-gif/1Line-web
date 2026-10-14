@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import { X, FileText, Download, Send, Building2, User, Loader2 } from 'lucide-react';
 import { trackEvent } from '../../utils/visitorTracker';
 import { getDynamicPhone, openWhatsAppSafely } from '../../utils/founderCmsData';
-import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 
 /**
@@ -21,19 +20,9 @@ export default function ContractStudioModal({
   useBodyScrollLock(isOpen);
   const mouseDownOnBackdropRef = useRef(false);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && !isGeneratingPdf) {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
   const [selectedLeadId, setSelectedLeadId] = useState('');
   const [selectedPropertyId, setSelectedPropertyId] = useState('');
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const [formData, setFormData] = useState(() => ({
     // Starts empty: a contract must never go out with a sample buyer or unit.
@@ -50,7 +39,17 @@ export default function ContractStudioModal({
     paymentMethod: 'InstaPay (إنستاباي)',
     transactionRef: `REF-OL-${Math.floor(100000 + Math.random() * 900000)}`
   }));
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && !isGeneratingPdf) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose, isGeneratingPdf]);
 
   if (!isOpen) return null;
 

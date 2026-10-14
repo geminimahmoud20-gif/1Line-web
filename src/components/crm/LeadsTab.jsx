@@ -1219,9 +1219,10 @@ export default function LeadsTab({
         </tbody>
       </table>
       {leadsHasMore && (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '14px' }}>
-          <button type="button" className="btn btn-outline" onClick={loadMoreLeads}>
-            {isAr ? `عرض عملاء أقدم (المعروض الآن أحدث ${leads.length})` : `Load older clients (showing newest ${leads.length})`}
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '16px' }}>
+          <button type="button" className="crm-btn-secondary-modern" onClick={loadMoreLeads} style={{ gap: '8px', padding: '8px 20px' }}>
+            <RotateCcw size={14} />
+            <span>{isAr ? `عرض عملاء أقدم (المعروض الآن أحدث ${leads.length})` : `Load older clients (showing newest ${leads.length})`}</span>
           </button>
         </div>
       )}
