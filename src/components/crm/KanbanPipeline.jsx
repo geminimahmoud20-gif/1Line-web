@@ -7,6 +7,7 @@ import { getAreas } from '../../utils/areasData';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { leadScore } from '../../utils/crmLeadViews';
 import { validateStageTransition, HIGH_VALUE_DEAL_THRESHOLD } from '../../services/stateMachineEngine';
+import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 
 const PIPELINE_STAGES = [
   { id: 'new', title_ar: 'طلبات جديدة', title_en: 'New Inquiries', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)' },
@@ -83,15 +84,12 @@ export default function KanbanPipeline({
 
   const allAreas = useMemo(() => getAreas(), []);
 
-  // Format and localize property type
+  // Format and localize property type (returns null for general tags that duplicate the top card badge)
   const getLocalizedPropertyType = (typeKey) => {
-    if (!typeKey) return isAr ? 'عقار غير محدد' : 'Property';
+    if (!typeKey) return null;
     const cleanKey = String(typeKey).trim().toLowerCase();
-    if (cleanKey === 'buyer' || cleanKey === 'request' || cleanKey === 'lead') {
-      return isAr ? 'طلب شراء' : 'Buyer Request';
-    }
-    if (cleanKey === 'seller') {
-      return isAr ? 'عرض بيع' : 'Seller Listing';
+    if (cleanKey === 'buyer' || cleanKey === 'request' || cleanKey === 'lead' || cleanKey === 'seller') {
+      return null;
     }
     if (PROPERTY_TYPE_NAMES[cleanKey]) {
       return isAr ? PROPERTY_TYPE_NAMES[cleanKey] : typeKey;
@@ -246,18 +244,22 @@ export default function KanbanPipeline({
         }
 
         const prevStageId = targetLead.status || 'new';
-        const updates = { status: targetStageId };
+        const updates = { 
+          status: targetStageId,
+          statusUpdatedAt: new Date().toISOString(),
+          lastActivityAt: new Date().toISOString()
+        };
         if (validation.nextTask) {
           updates.latestHandoffTask = validation.nextTask;
         }
-        onUpdateLead(leadId, updates);
+        onUpdateLead(leadId, updates, targetLead.version);
         if (triggerToast) {
           triggerToast(
             isAr ? `تم نقل العميل بنجاح إلى مرحلة ${PIPELINE_STAGES.find(s=>s.id===targetStageId)?.title_ar || targetStageId}` : `Lead moved to ${targetStageId}`,
             'success',
             {
               onUndo: () => {
-                onUpdateLead(leadId, { status: prevStageId });
+                onUpdateLead(leadId, { status: prevStageId, lastActivityAt: new Date().toISOString() });
               },
               undoLabel: isAr ? 'تراجع' : 'Undo',
               duration: 6000
@@ -289,18 +291,22 @@ export default function KanbanPipeline({
       }
 
       if (onUpdateLead) {
-        const updates = { status: nextStage.id };
+        const updates = { 
+          status: nextStage.id,
+          statusUpdatedAt: new Date().toISOString(),
+          lastActivityAt: new Date().toISOString()
+        };
         if (validation.nextTask) {
           updates.latestHandoffTask = validation.nextTask;
         }
-        onUpdateLead(lead.id, updates);
+        onUpdateLead(lead.id, updates, lead.version);
         if (triggerToast) {
           triggerToast(
             isAr ? `تم نقل العميل إلى مرحلة: ${nextStage.title_ar}` : `Moved to ${nextStage.title_en}`,
             'success',
             {
               onUndo: () => {
-                onUpdateLead(lead.id, { status: prevStageId });
+                onUpdateLead(lead.id, { status: prevStageId, lastActivityAt: new Date().toISOString() });
               },
               undoLabel: isAr ? 'تراجع' : 'Undo',
               duration: 6000
@@ -318,14 +324,18 @@ export default function KanbanPipeline({
       const currentStageId = lead.status || 'new';
       const prevStage = PIPELINE_STAGES[currentIndex - 1];
       if (onUpdateLead) {
-        onUpdateLead(lead.id, { status: prevStage.id });
+        onUpdateLead(lead.id, { 
+          status: prevStage.id,
+          statusUpdatedAt: new Date().toISOString(),
+          lastActivityAt: new Date().toISOString()
+        }, lead.version);
         if (triggerToast) {
           triggerToast(
             isAr ? `تم إرجاع العميل إلى مرحلة: ${prevStage.title_ar}` : `Moved back to ${prevStage.title_en}`,
             'info',
             {
               onUndo: () => {
-                onUpdateLead(lead.id, { status: currentStageId });
+                onUpdateLead(lead.id, { status: currentStageId, lastActivityAt: new Date().toISOString() });
               },
               undoLabel: isAr ? 'تراجع' : 'Undo',
               duration: 6000
@@ -354,11 +364,15 @@ export default function KanbanPipeline({
     }
 
     if (onUpdateLead) {
-      const updates = { status: targetStageId };
+      const updates = { 
+        status: targetStageId,
+        statusUpdatedAt: new Date().toISOString(),
+        lastActivityAt: new Date().toISOString()
+      };
       if (validation.nextTask) {
         updates.latestHandoffTask = validation.nextTask;
       }
-      onUpdateLead(lead.id, updates);
+      onUpdateLead(lead.id, updates, lead.version);
       const targetStage = PIPELINE_STAGES.find(s => s.id === targetStageId);
       if (triggerToast) {
         triggerToast(
@@ -366,7 +380,7 @@ export default function KanbanPipeline({
           'success',
           {
             onUndo: () => {
-              onUpdateLead(lead.id, { status: prevStageId });
+              onUpdateLead(lead.id, { status: prevStageId, lastActivityAt: new Date().toISOString() });
             },
             undoLabel: isAr ? 'تراجع' : 'Undo',
             duration: 6000
@@ -776,8 +790,12 @@ export default function KanbanPipeline({
                         </button>
 
                         <p className="kb-meta">
-                          <span>{propType}</span>
-                          <span aria-hidden="true">·</span>
+                          {propType && (
+                            <>
+                              <span>{propType}</span>
+                              <span aria-hidden="true">·</span>
+                            </>
+                          )}
                           <span>{area}</span>
                           <span aria-hidden="true">·</span><span title={leadScore(lead).reasons.join(' • ')}>{isAr ? `اهتمام ${leadScore(lead).score}%` : `${leadScore(lead).score}% score`}</span>
                         </p>
@@ -788,7 +806,7 @@ export default function KanbanPipeline({
                           ) : (
                             <span className="kb-value-empty">{isAr ? 'لم تُحدَّد الميزانية' : 'Budget not set'}</span>
                           )}
-                          <bdi dir="ltr" className="kb-phone" style={{ unicodeBidi: 'isolate' }}>{lead.whatsapp || lead.phone || '—'}</bdi>
+                          <bdi dir="ltr" className="kb-phone" style={{ unicodeBidi: 'isolate' }}>{formatPhoneNumber(lead.whatsapp || lead.phone) || '—'}</bdi>
                         </div>
 
                         {isOverdue && (
