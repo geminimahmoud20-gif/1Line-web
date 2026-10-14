@@ -28,7 +28,6 @@ export function AuthProvider({ children }) {
       }
     } catch {
       /* ignore */
-      void 0;
     }
     return null;
   });
@@ -48,10 +47,10 @@ export function AuthProvider({ children }) {
       if (isAuth) {
         setCrmAuthenticated(true);
         setCurrentUser(userProfile || null);
-        try { sessionStorage.setItem('crm_auth', 'true'); } catch { /* ignore */ void 0; }
+        try { sessionStorage.setItem('crm_auth', 'true'); } catch { /* ignore */ }
       } else {
         let hasLocal = false;
-        try { hasLocal = sessionStorage.getItem('crm_auth') === 'true'; } catch { /* ignore */ void 0; }
+        try { hasLocal = sessionStorage.getItem('crm_auth') === 'true'; } catch { /* ignore */ }
         if (!hasLocal) {
           setCrmAuthenticated(false);
           setCurrentUser(null);
@@ -70,7 +69,6 @@ export function AuthProvider({ children }) {
       sessionStorage.removeItem('oneline_forced_signout');
     } catch {
       /* ignore */
-      void 0;
     }
     await logoutUser();
     setCrmAuthenticated(false);

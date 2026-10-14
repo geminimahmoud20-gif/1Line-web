@@ -305,6 +305,7 @@ export default function CrmTopbar({
             onClick={() => setShowQuickActionMenu(!showQuickActionMenu)}
             className="crm-btn-primary-gold"
             aria-expanded={showQuickActionMenu}
+            style={{ padding: '6px 13px', fontSize: 'var(--crm-text-xs)' }}
           >
             <Plus size={14} />
             <span>{isAr ? 'إجراء سريع' : 'Quick Action'}</span>

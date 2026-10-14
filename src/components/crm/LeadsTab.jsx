@@ -822,10 +822,10 @@ export default function LeadsTab({
                   if (e.target.value) handleBulkAssign(e.target.value);
                 }}
                 className="crm-select-custom-pill"
-                style={{ height: '32px', fontSize: 'var(--crm-text-xs)' }}
+                style={{ height: '32px', fontSize: 'var(--crm-text-xs)', background: 'var(--crm-subtle-2)', color: 'var(--crm-on-dark)', borderColor: 'var(--crm-line)' }}
                 defaultValue=""
               >
-                <option value="" disabled>👥 {isAr ? 'تعيين مسؤول جماعي...' : 'Assign Agent...'}</option>
+                <option value="" disabled style={{ color: 'var(--crm-ink)' }}>👥 {isAr ? 'تعيين مسؤول جماعي...' : 'Assign Agent...'}</option>
                 <DeskOptions role={activeRole} lang={lang} />
               </select>
             )}
@@ -835,6 +835,7 @@ export default function LeadsTab({
               type="button"
               className="crm-bulk-pill-btn is-primary"
               onClick={handleBulkExportSelected}
+              style={{ padding: '5px 12px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-on-dark)', borderColor: 'var(--crm-line)' }}
             >
               <Download size={13} />
               <span>{isAr ? 'تصدير المحدد (CSV)' : 'Export CSV'}</span>
@@ -846,6 +847,7 @@ export default function LeadsTab({
                 type="button"
                 className="crm-bulk-pill-btn is-danger"
                 onClick={handleBulkDelete}
+                style={{ padding: '5px 12px', fontSize: 'var(--crm-text-xs)', background: 'var(--crm-danger-soft)', color: 'var(--crm-danger)', border: '1px solid var(--crm-danger-line)' }}
               >
                 <Trash2 size={13} />
                 <span>{isAr ? 'حذف المحدد' : 'Delete'}</span>
@@ -857,6 +859,7 @@ export default function LeadsTab({
               type="button"
               className="crm-bulk-pill-btn is-ghost"
               onClick={() => setSelectedLeadIds([])}
+              style={{ padding: '5px 10px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}
             >
               ✕ {isAr ? 'إلغاء التحديد' : 'Clear'}
             </button>
