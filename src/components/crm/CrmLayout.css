@@ -16,8 +16,9 @@
   --crm-text-dark: #f1f5f9;
   --crm-muted-light: #64748b;
   --crm-muted-dark: #94a3b8;
-  --crm-gold: #d97706;
-  --crm-gold-glow: rgba(217, 119, 6, 0.25);
+  --crm-gold: #B38A45;
+  --crm-gold-glow: rgba(179, 138, 69, 0.28);
+  --crm-gold-gradient: linear-gradient(135deg, #D4AF37 0%, #B38A45 100%);
   --crm-navy-deep: #051021;
   --crm-navy-mid: #0b1c36;
   --crm-navy-light: #132a4e;
