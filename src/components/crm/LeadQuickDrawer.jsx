@@ -221,11 +221,12 @@ export default function LeadQuickDrawer({
     trackEvent('crm_viewing_scheduled', { leadId: lead.id, propertyId: selectedViewingPropId });
   };
 
-  // Dynamic WhatsApp Pitch Templates based on Lead Journey Type
-  const leadArea = lead.area || lead.details?.area || 'سوهاج';
-  const areaName = SOHAG_AREAS.find(a => a.id === leadArea)?.name_ar || leadArea;
-  const propType = lead.propertyType || lead.details?.propertyType || 'عقار';
-  const propTypeName = PROPERTY_TYPES.find(p => p.id === propType)?.name_ar || propType;
+  const rawLeadArea = lead.area || lead.details?.area;
+  const leadArea = (!rawLeadArea || rawLeadArea === 'undefined' || rawLeadArea === 'null') ? 'سوهاج' : rawLeadArea;
+  const areaName = SOHAG_AREAS.find(a => a.id === leadArea)?.name_ar || (leadArea === 'undefined' ? 'سوهاج' : leadArea);
+  const rawPropType = lead.propertyType || lead.details?.propertyType;
+  const propType = (!rawPropType || rawPropType === 'undefined' || rawPropType === 'null') ? 'عقار' : rawPropType;
+  const propTypeName = PROPERTY_TYPES.find(p => p.id === propType)?.name_ar || (propType === 'undefined' ? 'عقار' : propType);
 
   const isSeller = lead.type === 'seller' || lead.landingPage === '/sell' || Boolean(lead.details?.askingPrice);
   const isViewingRequest = lead.type === 'viewing_request' || lead.type === 'visit' || Boolean(lead.details?.visitDate) || Boolean(lead.viewingPropertyId);
@@ -564,21 +565,30 @@ export default function LeadQuickDrawer({
 
                 {lead.notes ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {lead.notes.split('\n').filter(Boolean).map((line, idx) => (
-                      <div
-                        key={idx}
-                        style={{
-                          fontSize: 'var(--crm-text-xs)',
-                          padding: '8px 10px',
-                          borderRadius: '6px',
-                          background: 'var(--crm-subtle)',
-                          borderInlineStart: '3px solid var(--crm-accent)',
-                          lineHeight: '1.4'
-                        }}
-                      >
-                        {line}
-                      </div>
-                    ))}
+                    {lead.notes.split('\n').filter(Boolean).map((line, idx) => {
+                      const cleanedLine = line
+                        .replace(/في\s+undefined\b/gi, 'في سوهاج')
+                        .replace(/في\s+null\b/gi, 'في سوهاج')
+                        .replace(/\b(undefined|null)\b/gi, '')
+                        .replace(/\s{2,}/g, ' ')
+                        .trim();
+                      if (!cleanedLine) return null;
+                      return (
+                        <div
+                          key={idx}
+                          style={{
+                            fontSize: 'var(--crm-text-xs)',
+                            padding: '8px 10px',
+                            borderRadius: '6px',
+                            background: 'var(--crm-subtle)',
+                            borderInlineStart: '3px solid var(--crm-accent)',
+                            lineHeight: '1.5'
+                          }}
+                        >
+                          {cleanedLine}
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>

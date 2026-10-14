@@ -21,7 +21,7 @@ export default function SmartMatchingHub({
   const allAreas = useMemo(() => getAreas(), []);
 
   const getLocalizedArea = (areaKey) => {
-    if (!areaKey) return isAr ? 'سوهاج' : 'Sohag';
+    if (!areaKey || areaKey === 'undefined' || areaKey === 'null') return isAr ? 'سوهاج' : 'Sohag';
     const cleanKey = normalizeAreaKey(areaKey);
     const map = {
       thakafa: 'حي الثقافة',
@@ -39,7 +39,7 @@ export default function SmartMatchingHub({
     };
     if (map[cleanKey]) return map[cleanKey];
     const found = allAreas.find(a => a.id === cleanKey);
-    return found ? (isAr ? (found.name_ar || found.label_ar) : (found.name_en || found.label_en)) : areaKey;
+    return found ? (isAr ? (found.name_ar || found.label_ar) : (found.name_en || found.label_en)) : (cleanKey === 'undefined' ? 'سوهاج' : areaKey);
   };
 
   const formatAssignedAgent = (agent) => {
