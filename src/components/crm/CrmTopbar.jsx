@@ -29,6 +29,7 @@ export default function CrmTopbar({
 }) {
   const [showQuickActionMenu, setShowQuickActionMenu] = useState(false);
   const [showNotifMenu, setShowNotifMenu] = useState(false);
+  const [notifTab, setNotifTab] = useState('all'); // 'all' | 'leads' | 'downloads' | 'demands'
   const [desktopAlerts, setDesktopAlerts] = useState(desktopAlertsEnabled);
   const [accessCfg, setAccessCfg] = useState(getActiveAccessConfig);
   useEffect(() => subscribeToAccessConfig(setAccessCfg), []);
@@ -46,9 +47,6 @@ export default function CrmTopbar({
       if (notifRef.current && !notifRef.current.contains(e.target)) {
         setShowNotifMenu(false);
       }
-      if (searchRef.current && !searchRef.current.contains(e.target)) {
-        // don't clear text, just let it blur
-      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -56,7 +54,7 @@ export default function CrmTopbar({
 
   const pendingDemands = useMemo(() => demands.filter(d => d.status === 'pending'), [demands]);
 
-  // Downloads since the bell was last opened count towards the badge (remembered on this browser)
+  // Downloads since the bell was last opened count towards the badge
   const [downloadsSeenAt, setDownloadsSeenAt] = useState(() => {
     try { return Number(localStorage.getItem('oneline_crm_downloads_seen_at')) || 0; } catch { return 0; }
   });
@@ -65,7 +63,7 @@ export default function CrmTopbar({
     [clientDownloads, downloadsSeenAt]
   );
 
-  // Leads unseen by this browser session: only count new leads created after last opened
+  // Leads unseen by this browser session
   const [leadsSeenAt, setLeadsSeenAt] = useState(() => {
     try { return Number(localStorage.getItem('oneline_crm_leads_seen_at')) || 0; } catch { return 0; }
   });
@@ -122,6 +120,25 @@ export default function CrmTopbar({
   const currentTabName = tabTitles[activeTab] || activeTab;
   const currentSubTabName = activeTab === 'system' ? (systemSubTitles[systemSubTab] || systemSubTab) : null;
 
+  // Filtered matching items for live search
+  const matchingLeads = useMemo(() => {
+    if (!universalSearch || !universalSearch.trim()) return [];
+    const q = universalSearch.toLowerCase();
+    return leads.filter(l => (l.name || '').toLowerCase().includes(q) || (l.phone || '').includes(q)).slice(0, 4);
+  }, [leads, universalSearch]);
+
+  const matchingProperties = useMemo(() => {
+    if (!universalSearch || !universalSearch.trim()) return [];
+    const q = universalSearch.toLowerCase();
+    return properties.filter(p => (p.title_ar || '').toLowerCase().includes(q) || (p.locationName_ar || '').toLowerCase().includes(q)).slice(0, 4);
+  }, [properties, universalSearch]);
+
+  const matchingDemands = useMemo(() => {
+    if (!universalSearch || !universalSearch.trim()) return [];
+    const q = universalSearch.toLowerCase();
+    return demands.filter(d => (d.text_ar || '').toLowerCase().includes(q) || (d.clientName || '').toLowerCase().includes(q) || (d.phone || '').includes(q)).slice(0, 4);
+  }, [demands, universalSearch]);
+
   return (
     <header className="crm-topbar">
       {/* Left: Mobile Toggle & Dynamic Breadcrumb */}
@@ -153,7 +170,6 @@ export default function CrmTopbar({
           <span 
             className={`crm-breadcrumb-current ${!currentSubTabName ? 'is-active' : ''}`}
             onClick={() => currentSubTabName && setActiveTab(activeTab)}
-            style={{ cursor: currentSubTabName ? 'pointer' : 'default' }}
           >
             {currentTabName}
           </span>
@@ -163,7 +179,7 @@ export default function CrmTopbar({
               <span className="crm-breadcrumb-separator">
                 {isAr ? <ArrowLeft size={12} /> : <ArrowRight size={12} />}
               </span>
-              <span className="crm-breadcrumb-current is-active" style={{ color: 'var(--crm-gold)' }}>
+              <span className="crm-breadcrumb-current is-active" style={{ color: 'var(--crm-accent-text)' }}>
                 {currentSubTabName}
               </span>
             </>
@@ -173,16 +189,7 @@ export default function CrmTopbar({
 
       {/* Center: Universal Search */}
       <div className="crm-topbar-search-wrap" ref={searchRef}>
-        <Search
-          size={14}
-          style={{
-            position: 'absolute',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            [isAr ? 'right' : 'left']: '12px',
-            color: 'var(--crm-faint)'
-          }}
-        />
+        <Search size={14} className="crm-topbar-search-icon" />
         <input
           type="text"
           placeholder={isAr ? 'ابحث أو اضغط (Ctrl + K) للأوامر…' : 'Search or press (Ctrl + K)...'}
@@ -190,27 +197,13 @@ export default function CrmTopbar({
           onChange={(e) => setUniversalSearch(e.target.value)}
           className="crm-topbar-search-input"
         />
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          [isAr ? 'left' : 'right']: '10px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '4px'
-        }}>
+        <div className="crm-topbar-search-actions">
           {universalSearch && (
             <button
               type="button"
               onClick={() => setUniversalSearch('')}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--crm-faint)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center'
-              }}
+              className="crm-topbar-search-clear"
+              title={isAr ? 'مسح البحث' : 'Clear search'}
             >
               <X size={13} />
             </button>
@@ -219,16 +212,7 @@ export default function CrmTopbar({
             type="button"
             onClick={() => onOpenCommandPalette?.()}
             title={isAr ? 'لوحة الأوامر السريعة (Ctrl + K)' : 'Command Palette (Ctrl + K)'}
-            style={{
-              background: 'var(--crm-subtle)',
-              border: '1px solid var(--crm-line)',
-              borderRadius: '5px',
-              padding: '2px 6px',
-              fontSize: 'var(--crm-text-xs)',
-              color: 'var(--crm-muted)',
-              fontWeight: 700,
-              cursor: 'pointer'
-            }}
+            className="crm-topbar-kbd-pill"
           >
             ⌘K
           </button>
@@ -236,42 +220,24 @@ export default function CrmTopbar({
 
         {/* Live Search Instant Results Dropdown */}
         {universalSearch.trim() && (
-          <div
-            className="crm-dropdown-card"
-            style={{
-              [isAr ? 'right' : 'left']: 0,
-              width: '360px',
-              maxHeight: '380px',
-              overflowY: 'auto',
-              padding: '10px'
-            }}
-          >
+          <div className="crm-topbar-search-dropdown">
             {/* Matching Leads */}
-            {leads.filter(l => (l.name || '').toLowerCase().includes(universalSearch.toLowerCase()) || (l.phone || '').includes(universalSearch)).length > 0 && (
-              <div style={{ marginBottom: '10px' }}>
-                <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-info)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+            {matchingLeads.length > 0 && (
+              <div className="crm-search-dropdown-group">
+                <span className="crm-search-dropdown-title is-lead">
                   {isAr ? 'العملاء المطابقين' : 'Matching Leads'}
                 </span>
-                {leads.filter(l => (l.name || '').toLowerCase().includes(universalSearch.toLowerCase()) || (l.phone || '').includes(universalSearch)).slice(0, 3).map(l => (
+                {matchingLeads.map(l => (
                   <div
                     key={l.id}
                     onClick={() => { setActiveTab('leads'); setUniversalSearch(''); }}
-                    style={{
-                      padding: '8px 10px',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      background: 'rgba(37, 99, 235, 0.06)',
-                      marginBottom: '4px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between'
-                    }}
+                    className="crm-search-result-item is-lead"
                   >
                     <div>
-                      <div style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold' }}>{l.name}</div>
-                      <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{l.phone}</div>
+                      <div className="crm-search-result-name">{l.name}</div>
+                      <div className="crm-search-result-sub">{l.phone}</div>
                     </div>
-                    <span style={{ fontSize: 'var(--crm-text-xs)', padding: '2px 6px', background: 'var(--crm-subtle-2)', borderRadius: '4px', color: 'var(--crm-body)' }}>
+                    <span className="crm-search-result-badge">
                       {isAr ? ({ new: 'جديد', contacted: 'تم التواصل', site_visit: 'معاينة', negotiating: 'تفاوض', closing: 'توقيع', closed: 'ناجحة' }[l.status] || 'جديد') : (l.status || 'new')}
                     </span>
                   </div>
@@ -280,52 +246,50 @@ export default function CrmTopbar({
             )}
 
             {/* Matching Properties */}
-            {properties.filter(p => (p.title_ar || '').toLowerCase().includes(universalSearch.toLowerCase()) || (p.locationName_ar || '').toLowerCase().includes(universalSearch.toLowerCase())).length > 0 && (
-              <div style={{ marginBottom: '10px' }}>
-                <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+            {matchingProperties.length > 0 && (
+              <div className="crm-search-dropdown-group">
+                <span className="crm-search-dropdown-title is-prop">
                   {isAr ? 'العقارات المطابقة' : 'Matching Properties'}
                 </span>
-                {properties.filter(p => (p.title_ar || '').toLowerCase().includes(universalSearch.toLowerCase()) || (p.locationName_ar || '').toLowerCase().includes(universalSearch.toLowerCase())).slice(0, 3).map(p => (
+                {matchingProperties.map(p => (
                   <div
                     key={p.id}
                     onClick={() => { setActiveTab('properties'); setUniversalSearch(''); }}
-                    style={{
-                      padding: '8px 10px',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      background: 'rgba(217, 119, 6, 0.08)',
-                      marginBottom: '4px'
-                    }}
+                    className="crm-search-result-item is-prop"
                   >
-                    <div style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold' }}>{p.title_ar}</div>
-                    <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{p.price?.toLocaleString('en-US')} ج.م</div>
+                    <div>
+                      <div className="crm-search-result-name">{p.title_ar}</div>
+                      <div className="crm-search-result-sub">{p.price?.toLocaleString('en-US')} ج.م</div>
+                    </div>
                   </div>
                 ))}
               </div>
             )}
 
             {/* Matching Demands */}
-            {demands.filter(d => (d.text_ar || '').toLowerCase().includes(universalSearch.toLowerCase()) || (d.clientName || '').toLowerCase().includes(universalSearch.toLowerCase()) || (d.phone || '').includes(universalSearch)).length > 0 && (
-              <div>
-                <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+            {matchingDemands.length > 0 && (
+              <div className="crm-search-dropdown-group">
+                <span className="crm-search-dropdown-title is-demand">
                   {isAr ? 'طلبات المشترين' : 'Matching Demands'}
                 </span>
-                {demands.filter(d => (d.text_ar || '').toLowerCase().includes(universalSearch.toLowerCase()) || (d.clientName || '').toLowerCase().includes(universalSearch.toLowerCase()) || (d.phone || '').includes(universalSearch)).slice(0, 3).map(d => (
+                {matchingDemands.map(d => (
                   <div
                     key={d.id}
                     onClick={() => { setActiveTab('demands'); setUniversalSearch(''); }}
-                    style={{
-                      padding: '8px 10px',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      background: 'rgba(5, 150, 105, 0.08)',
-                      marginBottom: '4px'
-                    }}
+                    className="crm-search-result-item is-demand"
                   >
-                    <div style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold' }}>{d.text_ar || d.clientName}</div>
-                    <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>ميزانية: {d.budget} ج.م</div>
+                    <div>
+                      <div className="crm-search-result-name">{d.text_ar || d.clientName}</div>
+                      <div className="crm-search-result-sub">ميزانية: {d.budget} ج.م</div>
+                    </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {matchingLeads.length === 0 && matchingProperties.length === 0 && matchingDemands.length === 0 && (
+              <div className="crm-notif-empty">
+                <span>{isAr ? 'لا توجد نتائج مطابقة لبحثك' : 'No matching results found'}</span>
               </div>
             )}
           </div>
@@ -335,310 +299,239 @@ export default function CrmTopbar({
       {/* Right Actions Cluster */}
       <div className="crm-topbar-right">
         {/* Quick Action Button */}
-        <div style={{ position: 'relative' }} ref={quickActionRef}>
+        <div className="crm-quick-action-wrap" ref={quickActionRef}>
           <button
             type="button"
             onClick={() => setShowQuickActionMenu(!showQuickActionMenu)}
-            style={{
-              background: 'var(--crm-surface-ink)',
-              color: 'var(--crm-on-dark)',
-              fontWeight: '700',
-              fontSize: 'var(--crm-text-xs)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '7px 13px',
-              borderRadius: '8px',
-              border: '1px solid var(--crm-brand-navy)',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease'
-            }}
+            className="crm-btn-primary-gold"
+            aria-expanded={showQuickActionMenu}
           >
-            <Plus size={14} style={{ color: 'var(--crm-accent)' }} />
-            <span>{isAr ? 'إجراء سريع' : 'Action'}</span>
-            <ChevronDown size={12} style={{ color: 'var(--crm-faint)' }} />
+            <Plus size={14} />
+            <span>{isAr ? 'إجراء سريع' : 'Quick Action'}</span>
+            <ChevronDown size={12} style={{ transform: showQuickActionMenu ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
           </button>
 
           {showQuickActionMenu && (
-            <div
-              className="crm-dropdown-card"
-              style={{
-                [isAr ? 'left' : 'right']: 0,
-                minWidth: '220px',
-                padding: '6px'
-              }}
-            >
-              {canAdd.lead !== false && (<button
-                type="button"
-                onClick={() => { if (onRequestOpen) onRequestOpen('add_lead'); else setActiveTab('leads'); setShowQuickActionMenu(false); }}
-                style={{
-                  width: '100%',
-                  padding: '9px 12px',
-                  textAlign: isAr ? 'right' : 'left',
-                  background: 'none',
-                  border: 'none',
-                  color: 'inherit',
-                  fontSize: 'var(--crm-text-sm)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  cursor: 'pointer',
-                  borderRadius: '6px'
-                }}
-              >
-                <Users size={14} style={{ color: 'var(--crm-info)' }} />
-                <span>{isAr ? '+ تسجيل عميل جديد' : '+ New Lead'}</span>
-              </button>)}
+            <div className="crm-quick-action-dropdown">
+              {canAdd.lead !== false && (
+                <button
+                  type="button"
+                  onClick={() => { if (onRequestOpen) onRequestOpen('add_lead'); else setActiveTab('leads'); setShowQuickActionMenu(false); }}
+                  className="crm-quick-action-item"
+                >
+                  <Users size={15} style={{ color: 'var(--crm-info)' }} />
+                  <span>{isAr ? '+ تسجيل عميل جديد' : '+ New Lead'}</span>
+                </button>
+              )}
 
-              {canAdd.property !== false && (<button
-                type="button"
-                onClick={() => { if (onRequestOpen) onRequestOpen('add_property'); else setActiveTab('properties'); setShowQuickActionMenu(false); }}
-                style={{
-                  width: '100%',
-                  padding: '9px 12px',
-                  textAlign: isAr ? 'right' : 'left',
-                  background: 'none',
-                  border: 'none',
-                  color: 'inherit',
-                  fontSize: 'var(--crm-text-sm)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  cursor: 'pointer',
-                  borderRadius: '6px'
-                }}
-              >
-                <Building size={14} style={{ color: 'var(--crm-accent-text)' }} />
-                <span>{isAr ? '+ إضافة عقار جديد' : '+ New Property'}</span>
-              </button>)}
+              {canAdd.property !== false && (
+                <button
+                  type="button"
+                  onClick={() => { if (onRequestOpen) onRequestOpen('add_property'); else setActiveTab('properties'); setShowQuickActionMenu(false); }}
+                  className="crm-quick-action-item"
+                >
+                  <Building size={15} style={{ color: 'var(--crm-accent-text)' }} />
+                  <span>{isAr ? '+ إضافة عقار جديد' : '+ New Property'}</span>
+                </button>
+              )}
 
-              {canAdd.demand !== false && (<button
-                type="button"
-                onClick={() => { if (onRequestOpen) onRequestOpen('add_demand'); else setActiveTab('demands'); setShowQuickActionMenu(false); }}
-                style={{
-                  width: '100%',
-                  padding: '9px 12px',
-                  textAlign: isAr ? 'right' : 'left',
-                  background: 'none',
-                  border: 'none',
-                  color: 'inherit',
-                  fontSize: 'var(--crm-text-sm)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  cursor: 'pointer',
-                  borderRadius: '6px'
-                }}
-              >
-                <Zap size={14} style={{ color: 'var(--crm-positive)' }} />
-                <span>{isAr ? '+ إضافة طلب مشترٍ' : '+ New Demand'}</span>
-              </button>)}
+              {canAdd.demand !== false && (
+                <button
+                  type="button"
+                  onClick={() => { if (onRequestOpen) onRequestOpen('add_demand'); else setActiveTab('demands'); setShowQuickActionMenu(false); }}
+                  className="crm-quick-action-item"
+                >
+                  <Zap size={15} style={{ color: 'var(--crm-positive)' }} />
+                  <span>{isAr ? '+ إضافة طلب مشترٍ' : '+ New Demand'}</span>
+                </button>
+              )}
 
-              {canAdd.project !== false && (<button
-                type="button"
-                onClick={() => { if (onRequestOpen) onRequestOpen('add_project'); else setActiveTab('projects'); setShowQuickActionMenu(false); }}
-                style={{
-                  width: '100%',
-                  padding: '9px 12px',
-                  textAlign: isAr ? 'right' : 'left',
-                  background: 'none',
-                  border: 'none',
-                  color: 'inherit',
-                  fontSize: 'var(--crm-text-sm)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  cursor: 'pointer',
-                  borderRadius: '6px'
-                }}
-              >
-                <Building size={14} style={{ color: 'var(--crm-violet)' }} />
-                <span>{isAr ? '+ إضافة مشروع استثماري' : '+ New Project'}</span>
-              </button>)}
+              {canAdd.project !== false && (
+                <button
+                  type="button"
+                  onClick={() => { if (onRequestOpen) onRequestOpen('add_project'); else setActiveTab('projects'); setShowQuickActionMenu(false); }}
+                  className="crm-quick-action-item"
+                >
+                  <Building size={15} style={{ color: 'var(--crm-violet)' }} />
+                  <span>{isAr ? '+ إضافة مشروع استثماري' : '+ New Project'}</span>
+                </button>
+              )}
 
-              <div style={{ height: '1px', background: 'var(--crm-subtle-2)', margin: '4px 8px' }} />
+              <div className="crm-quick-action-divider" />
 
               <button
                 type="button"
                 onClick={() => { setActiveTab('matching'); setShowQuickActionMenu(false); }}
-                style={{
-                  width: '100%',
-                  padding: '9px 12px',
-                  textAlign: isAr ? 'right' : 'left',
-                  background: 'none',
-                  border: 'none',
-                  color: 'inherit',
-                  fontSize: 'var(--crm-text-sm)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  cursor: 'pointer',
-                  borderRadius: '6px'
-                }}
+                className="crm-quick-action-item"
               >
-                <Sparkles size={14} style={{ color: 'var(--crm-accent-text)' }} />
+                <Sparkles size={15} style={{ color: 'var(--crm-accent-text)' }} />
                 <span>{isAr ? '✨ فحص المطابقات الذكية AI' : '✨ Smart AI Match'}</span>
               </button>
 
-              {canAdd.retarget !== false && (<button
-                type="button"
-                onClick={() => { setActiveTab('retargeting'); setShowQuickActionMenu(false); }}
-                style={{
-                  width: '100%',
-                  padding: '9px 12px',
-                  textAlign: isAr ? 'right' : 'left',
-                  background: 'none',
-                  border: 'none',
-                  color: 'inherit',
-                  fontSize: 'var(--crm-text-sm)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  cursor: 'pointer',
-                  borderRadius: '6px'
-                }}
-              >
-                <Zap size={14} style={{ color: 'var(--crm-danger)' }} />
-                <span>{isAr ? '📢 حملة إعادة استهداف' : '📢 Retargeting Campaign'}</span>
-              </button>)}
+              {canAdd.retarget !== false && (
+                <button
+                  type="button"
+                  onClick={() => { setActiveTab('retargeting'); setShowQuickActionMenu(false); }}
+                  className="crm-quick-action-item"
+                >
+                  <Zap size={15} style={{ color: 'var(--crm-danger)' }} />
+                  <span>{isAr ? '📢 حملة إعادة استهداف' : '📢 Retargeting Campaign'}</span>
+                </button>
+              )}
             </div>
           )}
         </div>
 
         {/* Notifications Center */}
-        <div style={{ position: 'relative' }} ref={notifRef}>
+        <div className="crm-notif-wrap" ref={notifRef}>
           <button
             type="button"
             className="crm-notif-btn"
             onClick={() => { if (!showNotifMenu) markAllSeen(); setShowNotifMenu(!showNotifMenu); }}
             title={isAr ? 'الإشعارات والتنبيهات' : 'Notifications'}
+            aria-expanded={showNotifMenu}
           >
             <Bell size={16} />
             {totalNotifications > 0 && <span className="crm-notif-badge">{totalNotifications}</span>}
           </button>
 
           {showNotifMenu && (
-            <div
-              className="crm-dropdown-card"
-              style={{
-                [isAr ? 'left' : 'right']: 0,
-                width: 'min(320px, calc(100vw - 24px))',
-                maxWidth: 'calc(100vw - 24px)',
-                padding: '12px'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <span style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold' }}>
-                  {isAr ? 'مركز الإشعارات الحية' : 'Live Notifications'}
+            <div className="crm-notif-dropdown">
+              <div className="crm-notif-header">
+                <span className="crm-notif-header-title">
+                  <Bell size={15} style={{ color: 'var(--crm-accent-text)' }} />
+                  <span>{isAr ? 'مركز الإشعارات الحية' : 'Live Notifications'}</span>
                 </span>
-                <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
+                <span className="crm-notif-header-badge">
                   {totalNotifications} {isAr ? 'تنبيه' : 'alerts'}
                 </span>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {/* Category Filter Tabs */}
+              <div className="crm-notif-tabs">
+                <button
+                  type="button"
+                  className={`crm-notif-tab-btn ${notifTab === 'all' ? 'is-active' : ''}`}
+                  onClick={() => setNotifTab('all')}
+                >
+                  {isAr ? 'الكل' : 'All'} ({totalNotifications})
+                </button>
+                <button
+                  type="button"
+                  className={`crm-notif-tab-btn ${notifTab === 'leads' ? 'is-active' : ''}`}
+                  onClick={() => setNotifTab('leads')}
+                >
+                  {isAr ? 'العملاء' : 'Leads'} ({unseenNewLeads.length})
+                </button>
+                <button
+                  type="button"
+                  className={`crm-notif-tab-btn ${notifTab === 'downloads' ? 'is-active' : ''}`}
+                  onClick={() => setNotifTab('downloads')}
+                >
+                  {isAr ? 'التحميلات' : 'Downloads'} ({clientDownloads.length})
+                </button>
+                <button
+                  type="button"
+                  className={`crm-notif-tab-btn ${notifTab === 'demands' ? 'is-active' : ''}`}
+                  onClick={() => setNotifTab('demands')}
+                >
+                  {isAr ? 'الطلبات' : 'Demands'} ({pendingDemands.length})
+                </button>
+              </div>
+
+              <div className="crm-notif-body">
                 {desktopAlertsSupported() && !desktopAlerts && (
                   <button
                     type="button"
-                    className="btn btn-outline"
+                    className="crm-topbar-tool-btn"
                     onClick={async () => setDesktopAlerts(await enableDesktopAlerts())}
-                    style={{ justifyContent: 'center', fontSize: 'var(--crm-text-xs)' }}
+                    style={{ width: '100%', justifyContent: 'center' }}
                   >
-                    <Bell size={13} /> {isAr ? 'فعّل إشعار سطح المكتب للعملاء الجدد' : 'Turn on desktop alerts for new leads'}
+                    <Bell size={13} /> {isAr ? 'تفعيل إشعارات سطح المكتب' : 'Enable desktop alerts'}
                   </button>
                 )}
-                {unseenNewLeads.length > 0 && (
-                  <div style={{ padding: '8px 10px', background: 'rgba(217, 119, 6, 0.08)', border: '1px solid rgba(217, 119, 6, 0.25)', borderRadius: '8px' }}>
-                    <div style={{ fontWeight: 'bold', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', marginBottom: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span>{isAr ? '⚡ طلبات جديدة لم تُشاهد' : '⚡ Unseen New Requests'}</span>
-                      <span className="badge" style={{ background: 'var(--crm-accent)', color: 'var(--crm-card)', fontSize: 'var(--crm-text-xs)', padding: '1px 6px', borderRadius: '10px' }}>{unseenNewLeads.length}</span>
+
+                {/* Unseen New Leads */}
+                {(notifTab === 'all' || notifTab === 'leads') && unseenNewLeads.length > 0 && (
+                  <div className="crm-notif-card is-leads">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <strong style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)' }}>
+                        ⚡ {isAr ? 'طلبات جديدة بحاجة للرد' : 'Unseen New Requests'}
+                      </strong>
+                      <span className="crm-search-result-badge">{unseenNewLeads.length}</span>
                     </div>
-                    <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '6px', maxHeight: '180px', overflowY: 'auto' }}>
-                      {unseenNewLeads.slice(0, 6).map((l) => (
-                        <li
-                          key={l.id}
-                          onClick={() => {
-                            window.dispatchEvent(new CustomEvent('oneline_open_lead', { detail: { leadId: l.id, lead: l } }));
-                            setShowNotifMenu(false);
-                          }}
-                          style={{
-                            fontSize: 'var(--crm-text-xs)',
-                            color: 'var(--crm-ink)',
-                            padding: '6px 8px',
-                            borderRadius: '6px',
-                            background: 'rgba(255, 255, 255, 0.05)',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '2px',
-                            border: '1px solid rgba(255, 255, 255, 0.06)'
-                          }}
-                        >
-                          <div style={{ fontWeight: 'bold', color: 'var(--crm-ink)' }}>{formatLeadHeadline(l, isAr)}</div>
-                          <small style={{ color: 'var(--crm-muted)' }}>{l.name || (isAr ? 'عميل' : 'Client')} • {l.phone || l.whatsapp || ''}</small>
-                        </li>
-                      ))}
-                    </ul>
+                    {unseenNewLeads.slice(0, 5).map((l) => (
+                      <div
+                        key={l.id}
+                        className="crm-notif-item"
+                        onClick={() => {
+                          window.dispatchEvent(new CustomEvent('oneline_open_lead', { detail: { leadId: l.id, lead: l } }));
+                          setShowNotifMenu(false);
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold', color: 'var(--crm-ink)', fontSize: 'var(--crm-text-xs)' }}>
+                          {formatLeadHeadline(l, isAr)}
+                        </div>
+                        <small style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-xs)' }}>
+                          {l.name || (isAr ? 'عميل' : 'Client')} • {l.phone || l.whatsapp || ''}
+                        </small>
+                      </div>
+                    ))}
                   </div>
                 )}
-                {clientDownloads.length > 0 && (
-                  <div style={{ padding: '8px 10px', background: 'var(--crm-info-soft)', border: '1px solid var(--crm-info-line)', borderRadius: '8px' }}>
-                    <div style={{ fontWeight: 'bold', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-info)', marginBottom: '4px' }}>
-                      {isAr ? '📥 آخر تحميلات العملاء' : '📥 Latest client downloads'}
+
+                {/* Client Downloads */}
+                {(notifTab === 'all' || notifTab === 'downloads') && clientDownloads.length > 0 && (
+                  <div className="crm-notif-card is-downloads">
+                    <div style={{ fontWeight: 'bold', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-info)', marginBottom: '6px' }}>
+                      📥 {isAr ? 'آخر تحميلات العملاء للبروشورات' : 'Client downloads'}
                     </div>
-                    <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '6px', maxHeight: '220px', overflowY: 'auto' }}>
-                      {clientDownloads.slice(0, 8).map((d) => (
-                        <li key={d.id} style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-ink)', lineHeight: 1.5 }}>
-                          <div>{describeDownload(d, isAr)}</div>
-                          <small style={{ color: 'var(--crm-muted)' }}>
-                            <span style={{ direction: 'ltr', unicodeBidi: 'isolate', display: 'inline-block' }}>{d.clientPhone || d.clientEmail || ''}</span>
-                            {d.createdAt?.toDate ? ` · ${d.createdAt.toDate().toLocaleString(isAr ? 'ar-EG-u-nu-latn' : 'en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : ''}
-                          </small>
-                        </li>
-                      ))}
-                    </ul>
+                    {clientDownloads.slice(0, 6).map((d) => (
+                      <div key={d.id} className="crm-notif-item">
+                        <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-ink)' }}>{describeDownload(d, isAr)}</div>
+                        <small style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-xs)', direction: 'ltr', display: 'block' }}>
+                          {d.clientPhone || d.clientEmail || ''}
+                        </small>
+                      </div>
+                    ))}
                   </div>
                 )}
-                {pendingDemands.length > 0 ? (
+
+                {/* Pending Buyer Demands */}
+                {(notifTab === 'all' || notifTab === 'demands') && pendingDemands.length > 0 && (
                   <div
+                    className="crm-notif-card is-demands"
                     onClick={() => { setActiveTab('demands'); setShowNotifMenu(false); }}
-                    style={{
-                      padding: '8px 10px',
-                      background: 'rgba(239, 68, 68, 0.08)',
-                      border: '1px solid rgba(239, 68, 68, 0.2)',
-                      borderRadius: '8px',
-                      cursor: 'pointer'
-                    }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--crm-danger)', fontWeight: 'bold', fontSize: 'var(--crm-text-xs)' }}>
                       <AlertTriangle size={13} />
-                      <span>{isAr ? `يوجد ${pendingDemands.length} طلب مشترٍ بحاجة للمراجعة!` : `${pendingDemands.length} pending demands awaiting approval`}</span>
+                      <span>{isAr ? `يوجد ${pendingDemands.length} طلب مشترٍ بحاجة للمراجعة!` : `${pendingDemands.length} pending demands`}</span>
                     </div>
                     <small style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-xs)', display: 'block', marginTop: '2px' }}>
                       {isAr ? 'انقر للذهاب لصفحة الطلبات واعتمادها' : 'Click to review and approve'}
                     </small>
                   </div>
-                ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--crm-positive)', fontSize: 'var(--crm-text-xs)', padding: '6px' }}>
-                    <CheckCircle2 size={14} />
-                    <span>{isAr ? 'جميع طلبات المشترين معتمدة ومحدثة' : 'All buyer demands approved'}</span>
+                )}
+
+                {/* Encrypted Sync Pill */}
+                {notifTab === 'all' && (
+                  <div className="crm-notif-card is-sync">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--crm-positive)', fontWeight: 'bold', fontSize: 'var(--crm-text-xs)' }}>
+                      <CheckCircle2 size={13} />
+                      <span>{isAr ? 'جلسة التشفير والسحابة نشطة' : 'Encrypted Cloud Sync Active'}</span>
+                    </div>
+                    <small style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-xs)', display: 'block', marginTop: '2px' }}>
+                      {isAr ? 'تمت مزامنة البيانات مع Firebase بنجاح' : 'Data synchronized with Firestore'}
+                    </small>
                   </div>
                 )}
 
-                <div style={{
-                  padding: '8px 10px',
-                  background: 'rgba(16, 185, 129, 0.08)',
-                  border: '1px solid rgba(16, 185, 129, 0.2)',
-                  borderRadius: '8px'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--crm-positive)', fontWeight: 'bold', fontSize: 'var(--crm-text-xs)' }}>
-                    <CheckCircle2 size={13} />
-                    <span>{isAr ? 'جلسة التشفير والسحابة نشطة' : 'Encrypted Cloud Sync Active'}</span>
+                {totalNotifications === 0 && (
+                  <div className="crm-notif-empty">
+                    <CheckCircle2 size={24} style={{ color: 'var(--crm-positive)' }} />
+                    <span>{isAr ? 'لا توجد تنبيهات جديدة، كل الأمور تحت السيطرة!' : 'No new notifications, all clear!'}</span>
                   </div>
-                  <small style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-xs)', display: 'block', marginTop: '2px' }}>
-                    {isAr ? 'تمت مزامنة البيانات مع Firebase بنجاح' : 'Data synchronized with Firestore'}
-                  </small>
-                </div>
+                )}
               </div>
             </div>
           )}
@@ -646,30 +539,13 @@ export default function CrmTopbar({
 
         {/* Role Simulator Switcher (Super Admin only) */}
         {isSuperAdmin ? (
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            background: 'var(--crm-subtle)',
-            border: isSimulationMode ? '1px solid var(--crm-warn)' : '1px solid var(--crm-line)',
-            borderRadius: '8px',
-            padding: '4px 10px'
-          }}>
+          <div className={`crm-role-switcher-box ${isSimulationMode ? 'is-simulating' : ''}`}>
             <ShieldCheck size={14} style={{ color: isSimulationMode ? 'var(--crm-warn)' : 'var(--crm-accent)' }} />
             <select
               className="crm-role-select"
               aria-label={isAr ? 'محاكي الأدوار' : 'Role simulator'}
               value={selectedRole}
               onChange={(e) => setSelectedRole(e.target.value)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                fontSize: 'var(--crm-text-xs)',
-                fontWeight: '700',
-                color: selectedRole === 'super_admin' ? 'var(--crm-ink)' : 'var(--crm-accent-text)',
-                cursor: 'pointer',
-                outline: 'none'
-              }}
               title={isAr ? 'محاكي الأدوار (متاح للمدير العام فقط للمعاينة)' : 'Role Simulation (Super Admin preview)'}
             >
               {currentRolesList.map(r => (
@@ -680,18 +556,7 @@ export default function CrmTopbar({
             </select>
           </div>
         ) : (
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            background: 'var(--crm-subtle)',
-            border: '1px solid var(--crm-line)',
-            borderRadius: '8px',
-            padding: '4px 10px',
-            fontSize: 'var(--crm-text-xs)',
-            fontWeight: '600',
-            color: 'var(--crm-body)'
-          }}>
+          <div className="crm-role-lock-box">
             <Lock size={12} style={{ color: 'var(--crm-muted)' }} />
             <span>{currentRolesList.find(r => r.id === activeRole)?.icon || '👤'}</span>
             <span>{isAr ? (currentRolesList.find(r => r.id === activeRole)?.label_ar || activeRole) : (currentRolesList.find(r => r.id === activeRole)?.label_en || activeRole)}</span>
@@ -702,23 +567,9 @@ export default function CrmTopbar({
         <button
           type="button"
           onClick={() => setShowGoLiveWizard(true)}
-          style={{
-            background: 'var(--crm-subtle)',
-            border: '1px solid var(--crm-line)',
-            color: 'var(--crm-body)',
-            padding: '6px 12px',
-            borderRadius: '8px',
-            fontSize: 'var(--crm-text-xs)',
-            fontWeight: '600',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            cursor: 'pointer',
-            transition: 'all 0.15s ease'
-          }}
+          className="crm-topbar-tool-btn crm-top-chip"
           title={isAr ? 'فحص جاهزية الموقع والتحول للإنتاج الفعلي' : 'Go-Live Readiness Audit'}
           aria-label={isAr ? 'جاهزية الإطلاق' : 'Go-live audit'}
-          className="crm-top-chip"
         >
           <Rocket size={13} style={{ color: 'var(--crm-accent)' }} />
           <span className="crm-top-chip-label">{isAr ? 'جاهزية الإطلاق' : 'Audit'}</span>
@@ -729,49 +580,21 @@ export default function CrmTopbar({
           href="/"
           target="_blank"
           rel="noopener noreferrer"
-          style={{
-            fontSize: 'var(--crm-text-xs)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '6px 12px',
-            borderRadius: '8px',
-            background: 'var(--crm-subtle)',
-            border: '1px solid var(--crm-line)',
-            color: 'var(--crm-ink)',
-            textDecoration: 'none',
-            fontWeight: '600',
-            transition: 'all 0.15s ease'
-          }}
+          className="crm-topbar-tool-btn crm-top-chip"
           title={isAr ? 'معاينة الموقع العام في تبويب جديد مستقل' : 'View Live Site in New Tab'}
           aria-label={isAr ? 'معاينة الموقع العام' : 'Preview Live Site'}
-          className="crm-top-chip"
         >
           <Globe size={13} style={{ color: 'var(--crm-muted)' }} />
           <span className="crm-top-chip-label">{isAr ? 'معاينة الموقع' : 'Preview'}</span>
         </a>
 
-        {/* Quick Logout button in topbar */}
+        {/* Logout button */}
         <button
           type="button"
           onClick={onLogout}
-          style={{
-            color: 'var(--crm-danger)',
-            fontSize: 'var(--crm-text-xs)',
-            padding: '6px 12px',
-            borderRadius: '8px',
-            border: '1px solid var(--crm-danger-line)',
-            background: 'var(--crm-danger-soft)',
-            fontWeight: '600',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '5px',
-            transition: 'all 0.15s ease'
-          }}
+          className="crm-topbar-tool-btn is-danger crm-top-chip"
           title={isAr ? 'تسجيل الخروج' : 'Logout'}
           aria-label={isAr ? 'تسجيل الخروج' : 'Logout'}
-          className="crm-top-chip"
         >
           <LogOut size={13} />
           <span className="crm-top-chip-label">{isAr ? 'خروج' : 'Exit'}</span>

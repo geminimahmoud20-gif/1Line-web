@@ -39,7 +39,9 @@ export default function CrmSidebar({
     try {
       const saved = localStorage.getItem('oneline_crm_workspace_mode');
       if (saved === 'sales' || saved === 'full') return saved;
-    } catch (e) {}
+    } catch {
+      /* ignore storage errors */
+    }
     return isSalesRole ? 'sales' : 'full';
   });
 
@@ -47,7 +49,9 @@ export default function CrmSidebar({
     setWorkspaceMode(mode);
     try {
       localStorage.setItem('oneline_crm_workspace_mode', mode);
-    } catch (e) {}
+    } catch {
+      /* ignore storage errors */
+    }
     if (mode === 'sales' && !['inbox', 'leads', 'kanban', 'matching', 'agents'].includes(activeTab)) {
       setActiveTab('inbox');
     }
@@ -363,41 +367,20 @@ export default function CrmSidebar({
                 style={{ justifyContent: 'center', width: '44px', height: '40px', padding: 0 }}
                 title={workspaceMode === 'sales' ? (isAr ? 'مساحة العمل: تركيز المبيعات (انقر للتحكم الشامل)' : 'Sales Focus (Click for Full Command)') : (isAr ? 'مساحة العمل: التحكم الشامل (انقر لتركيز المبيعات)' : 'Full Command (Click for Sales Focus)')}
               >
-                <span style={{ fontSize: '18px' }}>{workspaceMode === 'sales' ? '🎯' : '⚡'}</span>
+                <span style={{ fontSize: 'var(--crm-text-lg)' }}>{workspaceMode === 'sales' ? '🎯' : '⚡'}</span>
               </button>
             </div>
           )}
 
           {/* Workspace Switcher (Segmented Control) */}
+          {/* Workspace Switcher (Segmented Control) */}
           {!collapsed && (
             <div style={{ padding: '0 12px 10px' }}>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: 'var(--radius-pill)',
-                padding: '3px',
-                gap: '2px'
-              }}>
+              <div className="crm-workspace-pill-group">
                 <button
                   type="button"
                   onClick={() => toggleWorkspaceMode('sales')}
-                  style={{
-                    padding: '5px 8px',
-                    borderRadius: 'var(--radius-pill)',
-                    border: 'none',
-                    fontSize: 'var(--crm-text-xs)',
-                    fontWeight: workspaceMode === 'sales' ? 700 : 500,
-                    background: workspaceMode === 'sales' ? 'var(--crm-accent)' : 'transparent',
-                    color: workspaceMode === 'sales' ? 'var(--crm-on-accent)' : 'var(--crm-on-dark-faint)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '4px',
-                    transition: 'all 0.15s ease'
-                  }}
+                  className={`crm-workspace-pill ${workspaceMode === 'sales' ? 'is-active' : ''}`}
                   title={isAr ? 'مساحة عمل مركزة للمبيعات (الوارد، العملاء، الصفقات، المطابقة، الفريق)' : 'Sales Focus workspace (5 core sales modules)'}
                 >
                   <span>🎯</span>
@@ -407,21 +390,7 @@ export default function CrmSidebar({
                 <button
                   type="button"
                   onClick={() => toggleWorkspaceMode('full')}
-                  style={{
-                    padding: '5px 8px',
-                    borderRadius: 'var(--radius-pill)',
-                    border: 'none',
-                    fontSize: 'var(--crm-text-xs)',
-                    fontWeight: workspaceMode === 'full' ? 700 : 500,
-                    background: workspaceMode === 'full' ? 'var(--crm-accent)' : 'transparent',
-                    color: workspaceMode === 'full' ? 'var(--crm-on-accent)' : 'var(--crm-on-dark-faint)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '4px',
-                    transition: 'all 0.15s ease'
-                  }}
+                  className={`crm-workspace-pill ${workspaceMode === 'full' ? 'is-active' : ''}`}
                   title={isAr ? 'التحكم الشامل بكافة أقسام العقارات والتحليلات والإدارة' : 'Full Command across all CRM operations'}
                 >
                   <span>⚡</span>

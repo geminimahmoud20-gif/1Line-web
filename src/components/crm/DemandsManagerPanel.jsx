@@ -229,208 +229,163 @@ export default function DemandsManagerPanel({
 
   return (
     <div className="demands-manager-container" style={{ animation: 'fadeIn 0.3s ease' }}>
-      {/* 1. Header & KPI Metrics */}
-      <div style={{
-        background: 'var(--crm-card)',
-        border: '1px solid var(--crm-line)',
-        borderRadius: '16px',
-        padding: '24px',
-        marginBottom: '24px',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ padding: '8px', borderRadius: '10px', background: 'var(--crm-warn-soft)', color: 'var(--crm-accent-text)', border: '1px solid var(--crm-warn-line)' }}>
-                <Zap size={24} />
-              </div>
-              <div>
-                <h2 style={{ fontSize: 'var(--crm-text-lg)', color: 'var(--crm-ink)', margin: 0, fontWeight: 700 }}>
-                  {isAr ? 'إدارة طلبات المشترين واعتمادها' : 'Buyer Demands Management & Approval'}
-                </h2>
-                <p style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-base)', margin: '4px 0 0' }}>
-                  {isAr 
-                    ? 'راجع طلبات المشترين والمستثمرين الواردة من الموقع، ودقق مواصفاتها واعتمد نشرها مباشرة أمام البائعين.' 
-                    : 'Review, verify and approve active buyer requests submitted across the platform.'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <button 
-              type="button" 
-              className="btn btn-outline"
-              onClick={handleExportCsv}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 16px', borderRadius: '10px', fontSize: 'var(--crm-text-sm)', background: 'var(--crm-card)', border: '1px solid var(--crm-line-strong)', color: 'var(--crm-body)' }}
-              title={isAr ? 'تصدير جدول الطلبات إلى ملف Excel' : 'Export Demands to CSV'}
-            >
-              <Download size={16} />
-              <span>{isAr ? 'تصدير Excel' : 'Export CSV'}</span>
-            </button>
-
-            <button 
-              type="button" 
-              className="btn btn-primary"
-              disabled={readOnly}
-              onClick={handleOpenAdd}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 20px', borderRadius: '10px', fontWeight: 'bold', background: 'var(--crm-brand-navy)', color: 'var(--crm-on-dark)', border: 'none' }}
-            >
-              <Plus size={18} />
-              <span>{isAr ? 'إضافة طلب مباشر من الإدارة' : 'Add Direct Demand'}</span>
-            </button>
+      {/* 1. Header Strip */}
+      <div className="crm-modern-header-strip">
+        <div className="crm-header-title-group">
+          <h2 className="crm-header-main-title">
+            <Zap size={22} style={{ color: 'var(--crm-accent-text)' }} />
+            <span>{isAr ? 'إدارة طلبات المشترين واعتمادها' : 'Buyer Demands Management'}</span>
+            <span className="crm-badge-360">Demand 360°</span>
+          </h2>
+          <div className="crm-header-subtitle">
+            <span>
+              {isAr 
+                ? 'تدقيق واعتماد طلبات المشترين والمستثمرين ونشرها مباشرة أمام أصحاب العقارات' 
+                : 'Review, verify and approve active buyer requests across the platform'}
+            </span>
+            <span>•</span>
+            <span className="crm-header-count-pill">
+              {filteredDemands.length} {isAr ? 'طلب معروض' : 'demands'}
+            </span>
           </div>
         </div>
 
-        {/* Quick KPI Stat Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
-          <div style={{ background: 'var(--crm-subtle)', border: '1px solid var(--crm-line)', borderRadius: '12px', padding: '14px 18px' }}>
-            <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)', fontWeight: '600' }}>{isAr ? 'إجمالي الطلبات' : 'Total Demands'}</span>
-            <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 700, color: 'var(--crm-ink)', marginTop: '4px' }}>
-              {totalDemandsCount}
-            </div>
-          </div>
+        <div className="crm-header-actions-group">
+          <button 
+            type="button" 
+            className="crm-btn-secondary-modern"
+            onClick={handleExportCsv}
+            title={isAr ? 'تصدير جدول الطلبات إلى ملف Excel' : 'Export Demands to CSV'}
+          >
+            <Download size={15} />
+            <span>{isAr ? 'تصدير Excel' : 'Export CSV'}</span>
+          </button>
 
-          <div style={{ 
-            background: pendingCount > 0 ? 'var(--crm-warn-soft)' : 'var(--crm-subtle)', 
-            border: pendingCount > 0 ? '1px solid var(--crm-warn-line)' : '1px solid var(--crm-line)', 
-            borderRadius: '12px', 
-            padding: '14px 18px' 
-          }}>
-            <span style={{ fontSize: 'var(--crm-text-sm)', color: pendingCount > 0 ? 'var(--crm-warn)' : 'var(--crm-faint)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Clock size={14} />
-              <span>{isAr ? 'قيد مراجعة الإدارة' : 'Pending Review'}</span>
-            </span>
-            <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 700, color: pendingCount > 0 ? 'var(--crm-warn)' : 'var(--crm-ink)', marginTop: '4px' }}>
-              {pendingCount}
-            </div>
-          </div>
+          <button 
+            type="button" 
+            className="crm-btn-primary-gold"
+            disabled={readOnly}
+            onClick={handleOpenAdd}
+          >
+            <Plus size={16} />
+            <span>{isAr ? 'إضافة طلب مباشر' : 'Add Direct Demand'}</span>
+          </button>
+        </div>
+      </div>
 
-          <div style={{ background: 'var(--crm-positive-soft)', border: '1px solid var(--crm-positive-line)', borderRadius: '12px', padding: '14px 18px' }}>
-            <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-positive)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <CheckCircle size={14} />
-              <span>{isAr ? 'منشور نشط على الموقع' : 'Published Live'}</span>
-            </span>
-            <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 700, color: 'var(--crm-positive)', marginTop: '4px' }}>
-              {publishedCount}
-            </div>
+      {/* Quick KPI Stat Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginBottom: '20px' }}>
+        <div style={{ background: 'var(--crm-card)', border: '1px solid var(--crm-line)', borderRadius: '14px', padding: '16px 20px', boxShadow: 'var(--crm-shadow)' }}>
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: '600' }}>{isAr ? 'إجمالي الطلبات' : 'Total Demands'}</span>
+          <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 800, color: 'var(--crm-ink)', marginTop: '4px' }}>
+            {totalDemandsCount}
           </div>
+        </div>
 
-          <div style={{ background: 'var(--crm-info-soft)', border: '1px solid var(--crm-info-line)', borderRadius: '12px', padding: '14px 18px' }}>
-            <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-info)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <DollarSign size={14} />
-              <span>{isAr ? 'القوة الشرائية الجاهزة' : 'Total Buying Power'}</span>
-            </span>
-            <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 700, color: 'var(--crm-info)', marginTop: '4px' }}>
-              {(totalPurchasingPower / 1000000).toFixed(1)} {isAr ? 'مليون ج.م' : 'M EGP'}
-            </div>
+        <div style={{ 
+          background: pendingCount > 0 ? 'var(--crm-warn-soft)' : 'var(--crm-card)', 
+          border: pendingCount > 0 ? '1px solid var(--crm-warn-line)' : '1px solid var(--crm-line)', 
+          borderRadius: '14px', 
+          padding: '16px 20px',
+          boxShadow: 'var(--crm-shadow)'
+        }}>
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: pendingCount > 0 ? 'var(--crm-warn)' : 'var(--crm-muted)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Clock size={14} />
+            <span>{isAr ? 'قيد مراجعة الإدارة' : 'Pending Review'}</span>
+          </span>
+          <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 800, color: pendingCount > 0 ? 'var(--crm-warn)' : 'var(--crm-ink)', marginTop: '4px' }}>
+            {pendingCount}
+          </div>
+        </div>
+
+        <div style={{ background: 'var(--crm-card)', border: '1px solid var(--crm-positive-line)', borderRadius: '14px', padding: '16px 20px', boxShadow: 'var(--crm-shadow)' }}>
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <CheckCircle size={14} />
+            <span>{isAr ? 'منشور نشط على الموقع' : 'Published Live'}</span>
+          </span>
+          <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 800, color: 'var(--crm-positive)', marginTop: '4px' }}>
+            {publishedCount}
+          </div>
+        </div>
+
+        <div style={{ background: 'var(--crm-card)', border: '1px solid var(--crm-info-line)', borderRadius: '14px', padding: '16px 20px', boxShadow: 'var(--crm-shadow)' }}>
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-info)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <DollarSign size={14} />
+            <span>{isAr ? 'القوة الشرائية الجاهزة' : 'Total Buying Power'}</span>
+          </span>
+          <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 800, color: 'var(--crm-info)', marginTop: '4px' }}>
+            {(totalPurchasingPower / 1000000).toFixed(1)} {isAr ? 'مليون ج.م' : 'M EGP'}
           </div>
         </div>
       </div>
 
-      {/* 2. Filter Bar & Search */}
-      <div style={{
-        background: 'var(--crm-card)',
-        border: '1px solid var(--crm-line)',
-        borderRadius: '12px',
-        padding: '14px 18px',
-        marginBottom: '20px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '14px',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)'
-      }}>
-        {/* Status Tabs */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            className={`btn btn-sm ${statusFilter === 'all' ? 'btn-primary' : 'btn-outline'}`}
-            onClick={() => setStatusFilter('all')}
-            style={{ 
-              borderRadius: '20px', 
-              fontSize: 'var(--crm-text-sm)', 
-              padding: '6px 14px',
-              background: statusFilter === 'all' ? 'var(--crm-brand-navy)' : 'var(--crm-card)',
-              color: statusFilter === 'all' ? 'var(--crm-on-dark)' : 'var(--crm-body)',
-              border: '1px solid ' + (statusFilter === 'all' ? 'var(--crm-brand-navy)' : 'var(--crm-line-strong)')
-            }}
-          >
-            {isAr ? 'جميع الطلبات' : 'All'} ({totalDemandsCount})
-          </button>
-          <button
-            type="button"
-            className={`btn btn-sm ${statusFilter === 'pending' ? 'btn-primary' : 'btn-outline'}`}
-            onClick={() => setStatusFilter('pending')}
-            style={{ 
-              borderRadius: '20px', 
-              fontSize: 'var(--crm-text-sm)', 
-              padding: '6px 14px',
-              background: statusFilter === 'pending' ? 'var(--crm-warn-solid)' : 'var(--crm-card)',
-              color: statusFilter === 'pending' ? 'var(--crm-on-dark)' : 'var(--crm-warn)',
-              border: '1px solid ' + (statusFilter === 'pending' ? 'var(--crm-warn)' : 'var(--crm-warn-line)'),
-              fontWeight: 'bold'
-            }}
-          >
-            {isAr ? 'قيد المراجعة' : 'Pending Review'} ({pendingCount})
-          </button>
-          <button
-            type="button"
-            className={`btn btn-sm ${statusFilter === 'published' ? 'btn-primary' : 'btn-outline'}`}
-            onClick={() => setStatusFilter('published')}
-            style={{ 
-              borderRadius: '20px', 
-              fontSize: 'var(--crm-text-sm)', 
-              padding: '6px 14px',
-              background: statusFilter === 'published' ? 'var(--crm-positive-solid)' : 'var(--crm-card)',
-              color: statusFilter === 'published' ? 'var(--crm-on-dark)' : 'var(--crm-positive)',
-              border: '1px solid ' + (statusFilter === 'published' ? 'var(--crm-positive)' : 'var(--crm-positive-line)')
-            }}
-          >
-            {isAr ? 'المنشورة لايف' : 'Published'} ({publishedCount})
-          </button>
-        </div>
+      {/* 2. Modern Triage & Filter Hub */}
+      <div className="crm-modern-triage-hub">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+          {/* Status Tabs */}
+          <div className="crm-triage-scroll-strip" style={{ margin: 0, padding: 0 }}>
+            <button
+              type="button"
+              className={`crm-triage-tab-btn ${statusFilter === 'all' ? 'is-active' : ''}`}
+              onClick={() => setStatusFilter('all')}
+            >
+              <span>{isAr ? 'جميع الطلبات' : 'All'}</span>
+              <span className="crm-triage-counter">{totalDemandsCount}</span>
+            </button>
+            <button
+              type="button"
+              className={`crm-triage-tab-btn ${statusFilter === 'pending' ? 'is-active' : ''}`}
+              onClick={() => setStatusFilter('pending')}
+            >
+              <Clock size={13} />
+              <span>{isAr ? 'قيد المراجعة' : 'Pending Review'}</span>
+              <span className="crm-triage-counter" style={{ background: 'var(--crm-warn)', color: 'var(--crm-on-dark)' }}>{pendingCount}</span>
+            </button>
+            <button
+              type="button"
+              className={`crm-triage-tab-btn ${statusFilter === 'published' ? 'is-active' : ''}`}
+              onClick={() => setStatusFilter('published')}
+            >
+              <CheckCircle size={13} />
+              <span>{isAr ? 'المنشورة لايف' : 'Published'}</span>
+              <span className="crm-triage-counter">{publishedCount}</span>
+            </button>
+          </div>
 
-        {/* Type Filter & Search Box */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', flex: 1, justifyContent: 'flex-end' }}>
-          <select
-            value={typeFilter}
-            aria-label={isAr ? 'تصفية حسب نوع العقار' : 'Filter by property type'}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            style={{
-              padding: '8px 12px',
-              borderRadius: '8px',
-              background: 'var(--crm-card)',
-              border: '1px solid var(--crm-line-strong)',
-              color: 'var(--crm-ink)',
-              fontSize: 'var(--crm-text-sm)'
-            }}
-          >
-            <option value="all">{isAr ? 'كل أنواع العقارات' : 'All Types'}</option>
-            {PROP_TYPE_OPTIONS.map(t => (
-              <option key={t.value} value={t.value}>{isAr ? t.label_ar : t.label_en}</option>
-            ))}
-          </select>
+          {/* Type Filter & Search Box */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <select
+              value={typeFilter}
+              aria-label={isAr ? 'تصفية حسب نوع العقار' : 'Filter by property type'}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="crm-select-custom-pill"
+            >
+              <option value="all">{isAr ? 'كل أنواع العقارات' : 'All Types'}</option>
+              {PROP_TYPE_OPTIONS.map(t => (
+                <option key={t.value} value={t.value}>{isAr ? t.label_ar : t.label_en}</option>
+              ))}
+            </select>
 
-          <div style={{ position: 'relative', minWidth: '220px' }}>
-            <Search size={15} style={{ position: 'absolute', top: '10px', [isAr ? 'right' : 'left']: '10px', color: 'var(--crm-faint)' }} />
-            <input
-              type="text"
-              placeholder={isAr ? 'بحث سريع في الطلبات...' : 'Search demands...'}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '7px 12px',
-                paddingInlineStart: '32px',
-                borderRadius: '8px',
-                background: 'var(--crm-card)',
-                border: '1px solid var(--crm-line-strong)',
-                color: 'var(--crm-ink)',
-                fontSize: 'var(--crm-text-sm)'
-              }}
-            />
+            <div className="crm-search-pill-wrapper" style={{ minWidth: '220px' }}>
+              <Search size={15} className="crm-search-pill-icon" />
+              <input
+                type="text"
+                placeholder={isAr ? 'بحث سريع في الطلبات...' : 'Search demands...'}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="crm-search-pill-input"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="crm-search-pill-clear"
+                  title={isAr ? 'مسح البحث' : 'Clear search'}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

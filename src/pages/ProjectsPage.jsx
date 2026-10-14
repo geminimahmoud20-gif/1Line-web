@@ -4,7 +4,7 @@ import { MessageSquare, Sparkles, ArrowRight, ArrowLeft, HardHat, Wallet, Calend
 import { MEGA_PROJECTS } from '../data/projectsData';
 import ProjectCard from '../components/projects/ProjectCard';
 import '../styles/projects-modern.css';
-import { getWhatsAppUrl, openWhatsAppSafely } from '../utils/founderCmsData';
+import { openWhatsAppSafely } from '../utils/founderCmsData';
 import { updatePageSeo } from '../utils/seoHelper';
 
 export default function ProjectsPage({ 

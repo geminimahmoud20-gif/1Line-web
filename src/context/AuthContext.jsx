@@ -26,7 +26,10 @@ export function AuthProvider({ children }) {
           desk: ''
         };
       }
-    } catch {}
+    } catch {
+      /* ignore */
+      void 0;
+    }
     return null;
   });
   const [isAuthInitializing, setIsAuthInitializing] = useState(() => {
@@ -45,10 +48,10 @@ export function AuthProvider({ children }) {
       if (isAuth) {
         setCrmAuthenticated(true);
         setCurrentUser(userProfile || null);
-        try { sessionStorage.setItem('crm_auth', 'true'); } catch {}
+        try { sessionStorage.setItem('crm_auth', 'true'); } catch { /* ignore */ void 0; }
       } else {
         let hasLocal = false;
-        try { hasLocal = sessionStorage.getItem('crm_auth') === 'true'; } catch {}
+        try { hasLocal = sessionStorage.getItem('crm_auth') === 'true'; } catch { /* ignore */ void 0; }
         if (!hasLocal) {
           setCrmAuthenticated(false);
           setCurrentUser(null);
@@ -65,7 +68,10 @@ export function AuthProvider({ children }) {
     try {
       sessionStorage.removeItem('crm_auth');
       sessionStorage.removeItem('oneline_forced_signout');
-    } catch {}
+    } catch {
+      /* ignore */
+      void 0;
+    }
     await logoutUser();
     setCrmAuthenticated(false);
     setCurrentUser(null);

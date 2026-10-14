@@ -17,7 +17,6 @@ import {
   isFirebaseActive,
   saveNotification,
   updateLeadField,
-  deleteLead,
   deleteLeads,
   saveDemand,
   updateDemandStatus,

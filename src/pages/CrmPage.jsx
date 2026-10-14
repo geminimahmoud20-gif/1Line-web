@@ -403,7 +403,10 @@ export default function CrmPage({
               resetFailedAttempts();
               res = { success: true };
             }
-          } catch {}
+          } catch {
+            /* ignore dev fallback error */
+            void 0;
+          }
         }
 
         if (!localFallback) {
