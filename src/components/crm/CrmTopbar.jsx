@@ -154,25 +154,31 @@ export default function CrmTopbar({
         </button>
 
         <nav className="crm-breadcrumb" aria-label="Breadcrumb">
-          <span 
+          <button 
+            type="button"
             className="crm-breadcrumb-root"
             onClick={() => setActiveTab('dashboard')}
-            role="button"
-            tabIndex={0}
           >
             {isAr ? 'الرئيسية' : 'Root'}
-          </span>
+          </button>
           
-          <span className="crm-breadcrumb-separator">
+          <span className="crm-breadcrumb-separator" aria-hidden="true">
             {isAr ? <ArrowLeft size={12} /> : <ArrowRight size={12} />}
           </span>
 
-          <span 
-            className={`crm-breadcrumb-current ${!currentSubTabName ? 'is-active' : ''}`}
-            onClick={() => currentSubTabName && setActiveTab(activeTab)}
-          >
-            {currentTabName}
-          </span>
+          {currentSubTabName ? (
+            <button
+              type="button"
+              className="crm-breadcrumb-root"
+              onClick={() => setActiveTab(activeTab)}
+            >
+              {currentTabName}
+            </button>
+          ) : (
+            <span className="crm-breadcrumb-current is-active">
+              {currentTabName}
+            </span>
+          )}
 
           {currentSubTabName && (
             <>
