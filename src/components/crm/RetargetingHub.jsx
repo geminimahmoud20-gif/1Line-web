@@ -196,34 +196,29 @@ export default function RetargetingHub({
   return (
     <div className="retargeting-hub-card animate-fadeIn">
       {/* Top Banner */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '20px',
-        flexWrap: 'wrap',
-        gap: '12px'
-      }}>
-        <div>
-          <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-            <Zap size={22} className="text-gold" />
-            {isAr ? 'مركز حملات إعادة الاستهداف والذكاء التسويقي' : 'Smart Lead Retargeting & Nurturing Engine'}
-          </h3>
-          <p className="section-subtitle" style={{ margin: '4px 0 0' }}>
-            {isAr ? 'تقسيم العملاء حسب القوة الشرائية وتنشيطهم بحملات WhatsApp ديناميكية بنقرة واحدة' : 'Segment leads by purchasing power & trigger 1-click personalized WhatsApp campaigns'}
-          </p>
+      <div className="crm-modern-header-strip">
+        <div className="crm-header-title-group">
+          <h2 className="crm-header-main-title">
+            <Zap size={22} style={{ color: 'var(--crm-accent-text)' }} />
+            <span>{isAr ? 'مركز حملات إعادة الاستهداف والذكاء التسويقي' : 'Smart Lead Retargeting Engine'}</span>
+            <span className="crm-badge-360">Retargeting 360°</span>
+          </h2>
+          <div className="crm-header-subtitle">
+            <span>
+              {isAr ? 'تقسيم العملاء حسب القوة الشرائية وتنشيطهم بحملات WhatsApp ديناميكية بنقرة واحدة' : 'Segment leads by purchasing power & trigger 1-click personalized WhatsApp campaigns'}
+            </span>
+          </div>
         </div>
 
         {/* Target Property Switcher for Campaigns */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: 600 }}>
             🏢 {isAr ? 'العقار المروج له:' : 'Promoted Property:'}
           </span>
           <select
             value={selectedPropertyId}
             onChange={(e) => setSelectedPropertyId(e.target.value)}
-            className="form-input"
-            style={{ padding: '6px 12px', fontSize: 'var(--crm-text-sm)', fontWeight: 'bold' }}
+            className="crm-select-custom-pill"
           >
             {properties.map(p => (
               <option key={p.id} value={p.id}>

@@ -339,24 +339,12 @@ export default function CrmTopbar({
           <button
             type="button"
             onClick={() => setShowQuickActionMenu(!showQuickActionMenu)}
-            style={{
-              background: 'var(--crm-surface-ink)',
-              color: 'var(--crm-on-dark)',
-              fontWeight: '700',
-              fontSize: 'var(--crm-text-xs)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '7px 13px',
-              borderRadius: '8px',
-              border: '1px solid var(--crm-brand-navy)',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease'
-            }}
+            className="crm-btn-primary-gold"
+            style={{ padding: '6px 13px', fontSize: 'var(--crm-text-xs)' }}
           >
-            <Plus size={14} style={{ color: 'var(--crm-accent)' }} />
-            <span>{isAr ? 'إجراء سريع' : 'Action'}</span>
-            <ChevronDown size={12} style={{ color: 'var(--crm-faint)' }} />
+            <Plus size={14} />
+            <span>{isAr ? 'إجراء سريع' : 'Quick Action'}</span>
+            <ChevronDown size={12} />
           </button>
 
           {showQuickActionMenu && (

@@ -412,53 +412,19 @@ export default function CrmInboxPanel({
     <div className="crm-inbox-workspace animate-fadeIn" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       
       {/* 🏛️ Top Header Bar with Executive SLA Badge */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: '14px',
-        padding: '16px 20px',
-        background: 'var(--crm-card)',
-        borderRadius: '14px',
-        border: '1px solid var(--crm-line)',
-        boxShadow: 'var(--crm-shadow-sm, 0 1px 4px rgba(0,0,0,0.03))'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '12px',
-            background: 'var(--crm-ink)',
-            color: 'var(--crm-on-dark)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <Inbox size={22} style={{ color: 'var(--crm-accent)' }} />
-          </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h2 style={{ margin: 0, fontSize: 'var(--crm-text-xl)', fontWeight: 800, color: 'var(--crm-ink)' }}>
-                {isAr ? 'صندوق الوارد الذكي وإدارة الاستجابة' : 'Smart Triage Inbox'}
-              </h2>
-              <span style={{
-                fontSize: 'var(--crm-text-xs)',
-                fontWeight: 700,
-                background: 'var(--crm-warn-soft)',
-                color: 'var(--crm-warn)',
-                padding: '2px 8px',
-                borderRadius: '12px',
-                border: '1px solid var(--crm-warn-line)'
-              }}>
-                {isAr ? 'فرز فوري وتوزيع حصري' : 'Instant Triage & Lock'}
-              </span>
-            </div>
-            <p style={{ margin: '2px 0 0 0', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
+      <div className="crm-modern-header-strip">
+        <div className="crm-header-title-group">
+          <h2 className="crm-header-main-title">
+            <Inbox size={22} style={{ color: 'var(--crm-accent-text)' }} />
+            <span>{isAr ? 'صندوق الوارد الذكي وإدارة الاستجابة' : 'Smart Triage Inbox'}</span>
+            <span className="crm-badge-360">Inbox 360°</span>
+          </h2>
+          <div className="crm-header-subtitle">
+            <span>
               {isAr 
-                ? 'فصل مسارات البيع والمعاينة والشراء لضمان سرعة الرد ومنع تكرار الاتصال بين أفراد الفريق.' 
-                : 'Isolated workflow queues for sellers, site visits and buyers with exclusive claim ownership.'}
-            </p>
+                ? 'فصل مسارات البيع والمعاينة والشراء لضمان سرعة الرد ومنع تكرار الاتصال' 
+                : 'Isolated queues for sellers, viewings and buyers with exclusive claim ownership'}
+            </span>
           </div>
         </div>
 
@@ -573,24 +539,25 @@ export default function CrmInboxPanel({
         border: '1px solid var(--crm-line)'
       }}>
         {/* Search Input */}
-        <div style={{ position: 'relative', minWidth: '260px', flex: 1 }}>
-          <Search size={16} style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', [isAr ? 'right' : 'left']: '12px', color: 'var(--crm-muted)' }} />
+        <div className="crm-search-pill-wrapper" style={{ minWidth: '260px', flex: 1 }}>
+          <Search size={15} className="crm-search-pill-icon" />
           <input
             type="text"
             placeholder={canSeePhone ? (isAr ? 'بحث بالاسم، الهاتف، كود العقار، أو الموظف المسند...' : 'Search by client, phone, code...') : (isAr ? 'بحث بالاسم، كود العقار، أو الموظف المسند...' : 'Search by client, code...')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '8px 14px',
-              paddingInlineStart: '36px',
-              borderRadius: '8px',
-              border: '1px solid var(--crm-line)',
-              background: 'var(--crm-bg)',
-              color: 'var(--crm-ink)',
-              fontSize: 'var(--crm-text-sm)'
-            }}
+            className="crm-search-pill-input"
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="crm-search-pill-clear"
+              title={isAr ? 'مسح البحث' : 'Clear search'}
+            >
+              ✕
+            </button>
+          )}
         </div>
 
         {/* Stage Filter Chips */}

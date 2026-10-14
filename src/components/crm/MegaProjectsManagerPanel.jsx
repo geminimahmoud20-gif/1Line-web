@@ -193,58 +193,79 @@ export default function MegaProjectsManagerPanel({
   return (
     <div className="crm-prop-manager-wrapper">
       {/* Top Header & Actions Strip */}
-      <div className="crm-manager-topbar">
-        <div>
-          <h3 className="crm-manager-title">
-            <Building2 size={20} className="text-primary" />
+      <div className="crm-modern-header-strip">
+        <div className="crm-header-title-group">
+          <h2 className="crm-header-main-title">
+            <Building2 size={22} style={{ color: 'var(--crm-accent-text)' }} />
             <span>{isAr ? 'إدارة المشروعات الكبرى والكمبوندات' : 'Mega Projects Management Hub'}</span>
-            <span className="count-badge-gold">{projects.length}</span>
-          </h3>
-          <p className="crm-manager-sub">
-            {isAr 
-              ? 'إضافة مشروعات جديدة، تحديث نسب الإنجاز الميداني (خرسانات/مباني/تشطيب)، وتعديل خطط السداد' 
-              : 'Add new flagship compounds, update live construction milestones, and manage payment plans'}
-          </p>
+            <span className="crm-badge-360">Projects 360°</span>
+          </h2>
+          <div className="crm-header-subtitle">
+            <span>
+              {isAr 
+                ? 'إضافة مشروعات جديدة، تحديث نسب الإنجاز الميداني، وتعديل خطط السداد' 
+                : 'Add flagship compounds, update live construction milestones, and manage payment plans'}
+            </span>
+            <span>•</span>
+            <span className="crm-header-count-pill">
+              {projects.length} {isAr ? 'مشروع متاح' : 'projects'}
+            </span>
+          </div>
         </div>
 
-        <button
-          type="button"
-          className="btn btn-primary btn-add-prop-cta"
-          disabled={readOnly}
-          onClick={handleOpenAddModal}
-        >
-          <Plus size={16} />
-          <span>{isAr ? 'إضافة مشروع جديد +' : 'Add New Project +'}</span>
-        </button>
+        <div className="crm-header-actions-group">
+          <button
+            type="button"
+            className="crm-btn-primary-gold"
+            disabled={readOnly}
+            onClick={handleOpenAddModal}
+          >
+            <Plus size={16} />
+            <span>{isAr ? 'إضافة مشروع جديد' : 'Add New Project'}</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter & Search Toolbar */}
-      <div className="crm-manager-filter-bar">
-        <div className="crm-search-box-wrap">
-          <Search size={15} />
-          <input
-            type="text"
-            placeholder={isAr ? 'بحث باسم المشروع أو المطور...' : 'Search project or developer...'}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
+      <div className="crm-modern-triage-hub" style={{ marginBottom: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+          <div className="crm-triage-scroll-strip" style={{ margin: 0, padding: 0 }}>
+            {[
+              { id: 'all', label_ar: 'الكل', label_en: 'All' },
+              { id: 'residential', label_ar: 'كمبوندات سكنية', label_en: 'Residential' },
+              { id: 'commercial', label_ar: 'مولات تجارية', label_en: 'Commercial' }
+            ].map(cat => (
+              <button
+                key={cat.id}
+                type="button"
+                className={`crm-triage-tab-btn ${selectedCategory === cat.id ? 'is-active' : ''}`}
+                onClick={() => setSelectedCategory(cat.id)}
+              >
+                <span>{isAr ? cat.label_ar : cat.label_en}</span>
+              </button>
+            ))}
+          </div>
 
-        <div className="crm-cat-pills">
-          {[
-            { id: 'all', label_ar: 'الكل', label_en: 'All' },
-            { id: 'residential', label_ar: 'كمبوندات سكنية', label_en: 'Residential' },
-            { id: 'commercial', label_ar: 'مولات تجارية', label_en: 'Commercial' }
-          ].map(cat => (
-            <button
-              key={cat.id}
-              type="button"
-              className={`cat-pill-btn ${selectedCategory === cat.id ? 'active' : ''}`}
-              onClick={() => setSelectedCategory(cat.id)}
-            >
-              {isAr ? cat.label_ar : cat.label_en}
-            </button>
-          ))}
+          <div className="crm-search-pill-wrapper" style={{ minWidth: '240px' }}>
+            <Search size={15} className="crm-search-pill-icon" />
+            <input
+              type="text"
+              placeholder={isAr ? 'بحث باسم المشروع أو المطور...' : 'Search project or developer...'}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="crm-search-pill-input"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="crm-search-pill-clear"
+                title={isAr ? 'مسح البحث' : 'Clear search'}
+              >
+                ✕
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

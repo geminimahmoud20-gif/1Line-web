@@ -119,22 +119,10 @@ export default function CrmExecutiveDashboard({
               onFilterLeads?.('due');
               onSwitchTab?.('leads');
             }}
-            className="btn btn-sm"
-            style={{
-              background: 'var(--crm-surface-ink)',
-              color: 'var(--crm-on-dark)',
-              padding: '8px 14px',
-              borderRadius: '8px',
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              border: 'none',
-              cursor: 'pointer'
-            }}
+            className="crm-btn-primary-gold"
+            style={{ padding: '8px 14px', fontSize: 'var(--crm-text-xs)' }}
           >
-            <Clock size={14} style={{ color: 'var(--crm-accent)' }} />
+            <Clock size={14} />
             <span>{isAr ? `متابعات اليوم (${metrics.dueTodayCount})` : `Follow-ups (${metrics.dueTodayCount})`}</span>
           </button>
 
@@ -144,44 +132,20 @@ export default function CrmExecutiveDashboard({
               onFilterLeads?.('new');
               onSwitchTab?.('leads');
             }}
-            className="btn btn-sm"
-            style={{
-              background: 'var(--crm-subtle)',
-              color: 'var(--crm-ink)',
-              border: '1px solid var(--crm-line)',
-              padding: '8px 14px',
-              borderRadius: '8px',
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              cursor: 'pointer'
-            }}
+            className="crm-btn-secondary-modern"
+            style={{ padding: '8px 14px', fontSize: 'var(--crm-text-xs)' }}
           >
-            <Users size={14} style={{ color: 'var(--crm-muted)' }} />
+            <Users size={14} />
             <span>{isAr ? `العملاء الجدد (${metrics.newLeadsCount})` : `New Leads (${metrics.newLeadsCount})`}</span>
           </button>
 
           <button
             type="button"
             onClick={() => onSwitchTab?.('kanban')}
-            className="btn btn-sm"
-            style={{
-              background: 'var(--crm-subtle)',
-              color: 'var(--crm-ink)',
-              border: '1px solid var(--crm-line)',
-              padding: '8px 14px',
-              borderRadius: '8px',
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              cursor: 'pointer'
-            }}
+            className="crm-btn-secondary-modern"
+            style={{ padding: '8px 14px', fontSize: 'var(--crm-text-xs)' }}
           >
-            <Target size={14} style={{ color: 'var(--crm-muted)' }} />
+            <Target size={14} />
             <span>{isAr ? 'مسار الصفقات' : 'Pipeline'}</span>
           </button>
         </div>

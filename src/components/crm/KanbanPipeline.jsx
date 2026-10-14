@@ -412,133 +412,85 @@ export default function KanbanPipeline({
 
   return (
     <div className="kanban-pipeline-wrapper" style={{ paddingBottom: '70px' }}>
-      {/* Top Filter & Search Bar */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '20px',
-        flexWrap: 'wrap',
-        gap: '12px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Sparkles size={18} style={{ color: 'var(--crm-accent-text)' }} />
-          <h3 style={{ margin: 0, fontSize: 'var(--crm-text-lg)', fontWeight: 700, color: 'var(--crm-ink)' }}>
-            {isAr ? 'مسار الصفقات والمبيعات المرئي' : 'Visual Sales Deals Pipeline'}
-          </h3>
-          <span className="badge" style={{ background: 'var(--crm-warn-soft)', color: 'var(--crm-warn)', border: '1px solid var(--crm-warn-line)', fontSize: 'var(--crm-text-xs)', fontWeight: 'bold' }}>
-            {filteredLeads.length} {isAr ? 'صفقة' : 'deals'}
-          </span>
+      {/* 1. Modern Header Strip */}
+      <div className="crm-modern-header-strip">
+        <div className="crm-header-title-group">
+          <h2 className="crm-header-main-title">
+            <Sparkles size={22} style={{ color: 'var(--crm-accent-text)' }} />
+            <span>{isAr ? 'مسار الصفقات والمبيعات المرئي' : 'Visual Sales Deals Pipeline'}</span>
+            <span className="crm-badge-360">Pipeline 360°</span>
+          </h2>
+          <div className="crm-header-subtitle">
+            <span>
+              {isAr 
+                ? 'متابعة مسار الصفقات وتحديث مراحل التفاوض والحجز بالسحب والإفلات' 
+                : 'Interactive drag-and-drop deal lifecycle tracker'}
+            </span>
+            <span>•</span>
+            <span className="crm-header-count-pill">
+              {filteredLeads.length} {isAr ? 'صفقة جارية' : 'deals'}
+            </span>
+          </div>
         </div>
+      </div>
 
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+      {/* 2. Modern Triage & Filter Hub */}
+      <div className="crm-modern-triage-hub" style={{ marginBottom: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+          {/* Type Filter Tabs */}
+          <div className="crm-triage-scroll-strip" style={{ margin: 0, padding: 0 }}>
+            <button
+              type="button"
+              className={`crm-triage-tab-btn ${filterType === 'all' ? 'is-active' : ''}`}
+              onClick={() => setFilterType('all')}
+            >
+              <span>{isAr ? 'الكل' : 'All'}</span>
+              <span className="crm-triage-counter">{leads.length}</span>
+            </button>
+            <button
+              type="button"
+              className={`crm-triage-tab-btn ${filterType === 'buyer' ? 'is-active' : ''}`}
+              onClick={() => setFilterType('buyer')}
+            >
+              <span>{isAr ? 'مشترين' : 'Buyers'}</span>
+            </button>
+            <button
+              type="button"
+              className={`crm-triage-tab-btn ${filterType === 'seller' ? 'is-active' : ''}`}
+              onClick={() => setFilterType('seller')}
+            >
+              <span>{isAr ? 'بائعين' : 'Sellers'}</span>
+            </button>
+            <button
+              type="button"
+              className={`crm-triage-tab-btn ${filterType === 'investor' ? 'is-active' : ''}`}
+              onClick={() => setFilterType('investor')}
+            >
+              <span>{isAr ? 'مستثمرين' : 'Investors'}</span>
+            </button>
+          </div>
+
           {/* Live Search Input */}
-          <div style={{ position: 'relative', width: '220px' }}>
-            <Search size={14} style={{ position: 'absolute', [isAr ? 'right' : 'left']: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--crm-muted)' }} />
+          <div className="crm-search-pill-wrapper" style={{ minWidth: '220px' }}>
+            <Search size={15} className="crm-search-pill-icon" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={isAr ? 'بحث بالاسم أو الهاتف...' : 'Search lead...'}
-              className="form-input"
-              style={{
-                width: '100%',
-                paddingTop: '6px',
-                paddingBottom: '6px',
-                [isAr ? 'paddingRight' : 'paddingLeft']: '30px',
-                [isAr ? 'paddingLeft' : 'paddingRight']: searchQuery ? '24px' : '10px',
-                fontSize: 'var(--crm-text-xs)',
-                borderRadius: '8px',
-                background: 'var(--crm-card)',
-                border: '1px solid var(--crm-line-strong)',
-                color: 'var(--crm-ink)'
-              }}
+              className="crm-search-pill-input"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                style={{
-                  position: 'absolute',
-                  [isAr ? 'left' : 'right']: '6px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--crm-muted)',
-                  cursor: 'pointer',
-                  padding: '2px'
-                }}
+                className="crm-search-pill-clear"
+                title={isAr ? 'مسح البحث' : 'Clear search'}
               >
-                <X size={13} />
+                ✕
               </button>
             )}
           </div>
-
-          <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-body)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '600' }}>
-            <Filter size={13} /> {isAr ? 'النوع:' : 'Type:'}
-          </span>
-          <button 
-            type="button"
-            className="btn btn-sm"
-            onClick={() => setFilterType('all')}
-            style={{
-              borderRadius: '8px',
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: filterType === 'all' ? 'bold' : '600',
-              background: filterType === 'all' ? 'var(--crm-brand-navy)' : 'var(--crm-card)',
-              color: filterType === 'all' ? 'var(--crm-on-dark)' : 'var(--crm-body)',
-              border: filterType === 'all' ? '1px solid var(--crm-brand-navy)' : '1px solid var(--crm-line-strong)'
-            }}
-          >
-            {isAr ? 'الكل' : 'All'}
-          </button>
-          <button 
-            type="button"
-            className="btn btn-sm"
-            onClick={() => setFilterType('buyer')}
-            style={{
-              borderRadius: '8px',
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: filterType === 'buyer' ? 'bold' : '600',
-              background: filterType === 'buyer' ? 'var(--crm-info-solid)' : 'var(--crm-card)',
-              color: filterType === 'buyer' ? 'var(--crm-on-dark)' : 'var(--crm-body)',
-              border: filterType === 'buyer' ? '1px solid var(--crm-info)' : '1px solid var(--crm-line-strong)'
-            }}
-          >
-            {isAr ? 'مشترين' : 'Buyers'}
-          </button>
-          <button 
-            type="button"
-            className="btn btn-sm"
-            onClick={() => setFilterType('seller')}
-            style={{
-              borderRadius: '8px',
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: filterType === 'seller' ? 'bold' : '600',
-              background: filterType === 'seller' ? 'var(--crm-warn-solid)' : 'var(--crm-card)',
-              color: filterType === 'seller' ? 'var(--crm-on-dark)' : 'var(--crm-body)',
-              border: filterType === 'seller' ? '1px solid var(--crm-warn)' : '1px solid var(--crm-line-strong)'
-            }}
-          >
-            {isAr ? 'بائعين' : 'Sellers'}
-          </button>
-          <button 
-            type="button"
-            className="btn btn-sm"
-            onClick={() => setFilterType('investor')}
-            style={{
-              borderRadius: '8px',
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: filterType === 'investor' ? 'bold' : '600',
-              background: filterType === 'investor' ? 'var(--crm-violet-solid)' : 'var(--crm-card)',
-              color: filterType === 'investor' ? 'var(--crm-on-dark)' : 'var(--crm-body)',
-              border: filterType === 'investor' ? '1px solid var(--crm-violet)' : '1px solid var(--crm-line-strong)'
-            }}
-          >
-            {isAr ? 'مستثمرين' : 'Investors'}
-          </button>
-
         </div>
       </div>
 
