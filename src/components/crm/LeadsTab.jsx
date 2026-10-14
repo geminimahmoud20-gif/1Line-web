@@ -271,7 +271,13 @@ export default function LeadsTab({
           isAr={isAr}
           onCancel={() => setLostFor(null)}
           onConfirm={({ lostReason, lostNote }) => {
-            onUpdateLead?.(lostFor.id, { status: 'lost', lostReason, lostNote, lostAt: new Date().toISOString() });
+            onUpdateLead?.(lostFor.id, { 
+              status: 'lost', 
+              lostReason, 
+              lostNote, 
+              lostAt: new Date().toISOString(),
+              lastActivityAt: new Date().toISOString()
+            }, lostFor.version);
             triggerToast?.(isAr ? 'اتسجلت كصفقة خسرانة مع السبب' : 'Marked as lost', 'info');
             setLostFor(null);
           }}
@@ -1047,7 +1053,12 @@ export default function LeadsTab({
                             const nextStatus = e.target.value;
                             if (nextStatus === 'lost') { setLostFor(l); return; }
                             if (onUpdateLead) {
-                              onUpdateLead(l.id, { status: nextStatus, ...(l.status === 'lost' ? { lostReason: null, lostNote: null, lostAt: null } : {}) });
+                              onUpdateLead(l.id, { 
+                                status: nextStatus, 
+                                ...(l.status === 'lost' ? { lostReason: null, lostNote: null, lostAt: null } : {}),
+                                statusUpdatedAt: new Date().toISOString(),
+                                lastActivityAt: new Date().toISOString()
+                              }, l.version);
                               const stageNames = {
                                 new: isAr ? 'طلب جديد' : 'New',
                                 contacted: isAr ? 'تم التواصل' : 'Contacted',
@@ -1062,7 +1073,7 @@ export default function LeadsTab({
                                 'info',
                                 {
                                   onUndo: () => {
-                                    onUpdateLead(l.id, { status: prevStatus });
+                                    onUpdateLead(l.id, { status: prevStatus, lastActivityAt: new Date().toISOString() });
                                   },
                                   undoLabel: isAr ? 'تراجع' : 'Undo',
                                   duration: 6000
@@ -1122,13 +1133,17 @@ export default function LeadsTab({
                             const prevAgent = l.assignedTo || 'Unassigned';
                             const newAgent = e.target.value;
                             if (onUpdateLead) {
-                              onUpdateLead(l.id, { assignedTo: newAgent });
+                              onUpdateLead(l.id, { 
+                                assignedTo: newAgent,
+                                assignedAt: new Date().toISOString(),
+                                lastActivityAt: new Date().toISOString()
+                              }, l.version);
                               triggerToast?.(
                                 isAr ? `تم تعيين (${l.name || 'العميل'}) للمسؤول: ${newAgent}` : `Assigned ${l.name || 'lead'} to ${newAgent}`,
                                 'success',
                                 {
                                   onUndo: () => {
-                                    onUpdateLead(l.id, { assignedTo: prevAgent });
+                                    onUpdateLead(l.id, { assignedTo: prevAgent, lastActivityAt: new Date().toISOString() });
                                   },
                                   undoLabel: isAr ? 'تراجع' : 'Undo',
                                   duration: 6000
