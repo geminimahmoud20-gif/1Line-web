@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Star, StarOff, ChevronUp, ChevronDown, CalendarClock, X, GripVertical, Eye, Pencil, ImageOff, Hourglass } from 'lucide-react';
+import { Star, StarOff, ChevronUp, ChevronDown, CalendarClock, X, GripVertical, Eye, Pencil, Building2, Hourglass } from 'lucide-react';
 import {
   HOME_FEATURED_SLOTS,
   getHomepageSlots,
@@ -198,7 +198,7 @@ export default function HomepageSlotsBoard({ properties = [], onUpdateProperty, 
               <span className="hs-slot-num">{idx + 1}</span>
               {p.images?.[0]
                 ? <img src={p.images[0]} alt="" loading="lazy" />
-                : <span className="hs-slot-noimg" aria-hidden="true"><ImageOff size={18} /></span>}
+                : <span className="hs-slot-noimg" aria-hidden="true" title={isAr ? 'عقار بدون صورة' : 'No photo'}><Building2 size={20} /></span>}
               <div className="hs-slot-body">
                 <strong title={title(p)}>{title(p)}</strong>
                 <div className="hs-slot-meta">

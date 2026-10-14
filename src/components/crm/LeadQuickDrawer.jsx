@@ -151,7 +151,7 @@ export default function LeadQuickDrawer({
       updates.latestHandoffTask = validation.nextTask;
     }
 
-    onUpdateLead(lead.id, updates);
+    onUpdateLead(lead.id, updates, lead.version);
 
     triggerToast?.(isAr ? `تم تحديث مرحلة العميل إلى "${stageObj?.label_ar}"` : `Stage updated to ${stageObj?.label_en}`, 'success');
   };
@@ -171,7 +171,7 @@ export default function LeadQuickDrawer({
       status: nextStatus,
       lastContactedAt: new Date().toISOString(),
       lastActivityAt: new Date().toISOString()
-    });
+    }, lead.version);
 
     triggerToast?.(isAr ? `تم تسجيل المكالمة: "${outcome}"` : `Call logged: ${outcome}`, 'success');
     trackEvent('crm_call_logged', { leadId: lead.id, outcome });
@@ -189,7 +189,7 @@ export default function LeadQuickDrawer({
     onUpdateLead(lead.id, {
       notes: updatedNotes,
       lastActivityAt: new Date().toISOString()
-    });
+    }, lead.version);
 
     setNewNote('');
     triggerToast?.(isAr ? 'تمت إضافة الملاحظة بنجاح' : 'Note added', 'success');
@@ -213,7 +213,7 @@ export default function LeadQuickDrawer({
       notes: updatedNotes,
       viewingPropertyId: selectedViewingPropId,
       lastActivityAt: new Date().toISOString()
-    });
+    }, lead.version);
 
     setShowViewingForm(false);
     triggerToast?.(isAr ? 'تمت جدولة المعاينة بنجاح وتحديث موعد المتابعة' : 'Viewing scheduled successfully', 'success');
