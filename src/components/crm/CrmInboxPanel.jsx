@@ -18,7 +18,7 @@ import {
 import { canViewLeadPhone, maskPhoneNumber } from '../../utils/rbacRules';
 import { claimLeadAtomic } from '../../services/leads';
 import { normalizeAreaKey, getAreaById } from '../../utils/areasData';
-import { formatArabicPlural, sanitizeAndMergeNotes } from '../../utils/crmNoteSanitizer';
+import { formatArabicPlural, sanitizeAndMergeNotes, formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 
 const PROPERTY_TYPE_LABELS = {
   apartment: 'شقة سكنية',
@@ -485,11 +485,7 @@ export default function CrmInboxPanel({
       </div>
 
       {/* 🧭 The 5 Dedicated Workflow Tabs Bar */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '10px'
-      }}>
+      <div className="crm-inbox-tabs-grid">
         {tabsList.map((t) => {
           const isActive = activeTab === t.id;
           const IconComp = t.icon;
@@ -731,7 +727,7 @@ export default function CrmInboxPanel({
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                           <span>📞</span>
                           <bdi dir="ltr" style={{ unicodeBidi: 'isolate', fontFamily: 'monospace' }}>
-                            {canSeePhone ? (lead.phone || (isAr ? 'بدون هاتف' : 'No phone')) : maskPhoneNumber(lead.phone, userRole, userPerms)}
+                            {canSeePhone ? (formatPhoneNumber(lead.phone) || (isAr ? 'بدون هاتف' : 'No phone')) : maskPhoneNumber(lead.phone, userRole, userPerms)}
                           </bdi>
                         </span>
                         {lead.createdAt && (

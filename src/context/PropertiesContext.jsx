@@ -452,6 +452,7 @@ export function PropertiesProvider({ children }) {
         const nowIso = new Date().toISOString();
         const mergedLead = {
           ...existing,
+          version: (existing.version || 1) + 1,
           name: existing.name || standardizedData.name,
           whatsapp: standardizedData.whatsapp || existing.whatsapp,
           phone: standardizedData.phone || existing.phone,
@@ -491,6 +492,7 @@ export function PropertiesProvider({ children }) {
           id: 'lead-' + Date.now(),
           timestamp: new Date().toISOString(),
           status: 'new',
+          version: 1,
           name: standardizedData.name,
           phone: standardizedData.phone,
           whatsapp: standardizedData.whatsapp,

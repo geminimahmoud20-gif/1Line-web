@@ -442,6 +442,38 @@ export default function AppRoutes({
           />
         }
       />
+      <Route
+        path="/crm/*"
+        element={
+          <CrmPage
+            lang={lang}
+            t={t}
+            leads={leads}
+            setLeads={setLeads}
+            properties={properties}
+            onAddProperty={handleAddProperty}
+            onUpdateProperty={handleUpdateProperty}
+            onDeleteProperty={handleDeleteProperty}
+            projects={projects}
+            onAddProject={handleAddProject}
+            onUpdateProject={handleUpdateProject}
+            onDeleteProject={handleDeleteProject}
+            demands={demands}
+            onAddDemand={handleAddAdminDemand}
+            onApproveDemand={handleApproveDemand}
+            onUpdateDemand={handleUpdateDemand}
+            onDeleteDemand={handleDeleteDemand}
+            onUnpublishDemand={handleUnpublishDemand}
+            crmAuthenticated={crmAuthenticated}
+            setCrmAuthenticated={setCrmAuthenticated}
+            onLogout={handleCrmLogout}
+            triggerToast={triggerToast}
+            onUpdateLead={handleUpdateLead}
+            onDeleteLead={handleDeleteLead}
+            onAddNewLead={handleAddNewLead}
+          />
+        }
+      />
 
       {/* Privacy policy & data handling */}
       {/* مركز الاستثمار الطبي والتجاري */}

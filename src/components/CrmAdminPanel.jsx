@@ -270,7 +270,11 @@ export const CrmAdminPanel = ({
       triggerToast?.(isAr ? 'تقدر تستلم العملاء غير المسندين بس، ولازم يكون ليك فريق' : 'You can only claim unassigned leads, and need a team', 'error');
       return;
     }
-    onUpdateLead(leadId, { assignedTo: myDesk });
+    onUpdateLead(leadId, { 
+      assignedTo: myDesk,
+      assignedAt: new Date().toISOString(),
+      lastActivityAt: new Date().toISOString()
+    }, lead?.version);
     logAuditEvent({
       actionType: 'LEAD_CLAIMED',
       targetCollection: 'leads',
@@ -308,12 +312,17 @@ export const CrmAdminPanel = ({
     }
     const priorAssignments = selectedLeadIds.map(id => {
       const found = leads.find(l => l.id === id);
-      return { id, assignedTo: found?.assignedTo || 'Unassigned' };
+      return { id, assignedTo: found?.assignedTo || 'Unassigned', version: found?.version };
     });
     const targetIds = [...selectedLeadIds];
 
     targetIds.forEach(id => {
-      if (onUpdateLead) onUpdateLead(id, { assignedTo: newAgent });
+      const leadItem = leads.find(l => l.id === id);
+      if (onUpdateLead) onUpdateLead(id, { 
+        assignedTo: newAgent,
+        assignedAt: new Date().toISOString(),
+        lastActivityAt: new Date().toISOString()
+      }, leadItem?.version);
     });
     logAuditEvent({
       actionType: 'BULK_LEADS_ASSIGNED',
@@ -621,7 +630,7 @@ export const CrmAdminPanel = ({
 
   const onWhatsAppClick = (lead) => {
     // Counts as contacting the client (first reply time, last contact)
-    if (onUpdateLead && lead?.id) onUpdateLead(lead.id, { lastContactedAt: new Date().toISOString() });
+    if (onUpdateLead && lead?.id) onUpdateLead(lead.id, { lastContactedAt: new Date().toISOString() }, lead.version);
     if (handleWhatsAppAction) {
       handleWhatsAppAction(lead);
     } else {
@@ -1011,8 +1020,8 @@ export const CrmAdminPanel = ({
           lead={viewingProfileLead}
           properties={properties}
           onClose={() => setViewingProfileLead(null)}
-          onUpdateLead={(leadId, updatedData) => {
-            const result = onUpdateLead ? onUpdateLead(leadId, updatedData) : undefined;
+          onUpdateLead={(leadId, updatedData, expectedVer) => {
+            const result = onUpdateLead ? onUpdateLead(leadId, updatedData, expectedVer) : undefined;
             if (result === false) return false; // blocked by role — don't show an edit that didn't happen
             setViewingProfileLead(prev => prev ? { ...prev, ...updatedData } : null);
             return result;
@@ -1058,9 +1067,12 @@ export const CrmAdminPanel = ({
       <LeadQuickDrawer
         lead={quickDrawerLead}
         onClose={() => setQuickDrawerLead(null)}
-        onUpdateLead={(leadId, updatedData) => {
-          if (onUpdateLead) onUpdateLead(leadId, updatedData);
-          setQuickDrawerLead(prev => prev && prev.id === leadId ? { ...prev, ...updatedData } : prev);
+        onUpdateLead={(leadId, updatedData, expectedVer) => {
+          const result = onUpdateLead ? onUpdateLead(leadId, updatedData, expectedVer) : undefined;
+          if (result !== false) {
+            setQuickDrawerLead(prev => prev && prev.id === leadId ? { ...prev, ...updatedData } : prev);
+          }
+          return result;
         }}
         onDeleteLead={onDeleteLead}
         onConvertToProperty={onConvertToProperty}

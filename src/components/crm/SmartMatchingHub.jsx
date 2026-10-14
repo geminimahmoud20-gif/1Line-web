@@ -41,11 +41,16 @@ export default function SmartMatchingHub({
     return found ? (isAr ? (found.name_ar || found.label_ar) : (found.name_en || found.label_en)) : areaKey;
   };
 
+  const formatAssignedAgent = (agent) => {
+    if (!agent || agent === 'Unassigned') return isAr ? 'غير مخصص' : 'Unassigned';
+    if (agent === 'Sales Advisor Team') return isAr ? 'فريق مستشاري المبيعات' : 'Sales Advisor Team';
+    return agent;
+  };
+
   // Compute live match matrix between Buyer Leads and Published Properties
   const matches = useMemo(() => {
     const buyerLeads = leads.filter(l => l.type === 'buyer' || l.type === 'investor' || l.type === 'request' || !l.type);
-    // Hard filter: only match active, non-hidden properties that have a valid price > 0
-    const liveProps = properties.filter(p => !p.isDeleted && p.status !== 'trash' && p.status !== 'hidden' && Number(p.price) > 0);
+    const liveProps = properties.filter(p => !p.isDeleted && p.status !== 'trash' && p.status !== 'hidden');
 
     const results = [];
 
@@ -84,7 +89,9 @@ export default function SmartMatchingHub({
         }
 
         // 3. Budget match (Up to 30 pts)
-        if (leadBudget && propPrice > 0) {
+        if (propPrice <= 0) {
+          reasons.push(isAr ? 'السعر قيد التحديد' : 'Price pending');
+        } else if (leadBudget) {
           const diffRatio = Math.abs(propPrice - leadBudget) / leadBudget;
           if (diffRatio <= 0.1) {
             score += 30;
@@ -96,7 +103,7 @@ export default function SmartMatchingHub({
             score += 25;
             reasons.push(isAr ? 'أقل من الميزانية المحددة' : 'Under budget');
           }
-        } else if (!leadBudget) {
+        } else {
           // No budget specified: do NOT grant fake points; cap score
           reasons.push(isAr ? 'الميزانية قيد التدقيق' : 'Budget pending');
         }
@@ -129,8 +136,10 @@ export default function SmartMatchingHub({
           reasons.push(isAr ? 'سداد كاش' : 'Cash ready');
         }
 
-        // If client has NO budget specified, match score cannot exceed 65%
-        if (!leadBudget && score > 65) {
+        // Cap score: unpriced properties cannot exceed 50%; unspecified client budgets cannot exceed 65%
+        if (propPrice <= 0) {
+          if (score > 50) score = 50;
+        } else if (!leadBudget && score > 65) {
           score = 65;
         }
 
@@ -318,7 +327,7 @@ export default function SmartMatchingHub({
                     </div>
 
                     <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: '600' }}>
-                      {lead.assignedTo}
+                      {formatAssignedAgent(lead.assignedTo)}
                     </span>
                   </div>
 
@@ -374,7 +383,11 @@ export default function SmartMatchingHub({
                         📐 {property.size} م² • 📍 {getLocalizedArea(property.areaKey)}
                       </span>
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', display: 'block', marginTop: '4px', fontWeight: 700 }}>
-                        💵 السعر: {property.price?.toLocaleString('en-US')} ج.م
+                        {property.price && Number(property.price) > 0 ? (
+                          <>💵 {isAr ? 'السعر:' : 'Price:'} {Number(property.price).toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}</>
+                        ) : (
+                          <span style={{ color: 'var(--crm-warn)' }}>💵 {isAr ? 'السعر: عند التواصل / غير محدد' : 'Price: Upon inquiry'}</span>
+                        )}
                       </span>
                     </div>
                   </div>
@@ -398,16 +411,31 @@ export default function SmartMatchingHub({
                 </div>
 
                 {/* Actions Footer */}
-                <div style={{ display: 'flex', gap: '8px', paddingTop: '10px', borderTop: '1px solid var(--crm-line)' }}>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid var(--crm-line)' }}>
                   {onOpenLead && (
                     <button
                       type="button"
                       className="btn btn-sm"
                       onClick={() => onOpenLead(lead)}
-                      style={{ padding: '7px 10px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-info)', background: 'var(--crm-info-soft)', border: '1px solid var(--crm-info-line)', borderRadius: '6px' }}
+                      style={{
+                        height: '36px',
+                        padding: '0 12px',
+                        fontSize: 'var(--crm-text-xs)',
+                        color: 'var(--crm-info)',
+                        background: 'var(--crm-info-soft)',
+                        border: '1px solid var(--crm-info-line)',
+                        borderRadius: '6px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap'
+                      }}
                       title={isAr ? 'معاينة العميل وتعديل مرحلته' : 'Quick Drawer'}
                     >
                       <Zap size={14} />
+                      <span>{isAr ? 'معاينة' : 'Preview'}</span>
                     </button>
                   )}
 
@@ -415,7 +443,23 @@ export default function SmartMatchingHub({
                     type="button"
                     className="btn btn-sm btn-primary"
                     onClick={() => handleSendProposal(match)}
-                    style={{ flex: 1, padding: '7px 10px', fontSize: 'var(--crm-text-xs)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: 'var(--crm-positive-solid)', color: 'var(--crm-on-dark)', border: 'none', borderRadius: '6px', fontWeight: 'bold' }}
+                    style={{
+                      flex: 1,
+                      height: '36px',
+                      padding: '0 12px',
+                      fontSize: 'var(--crm-text-xs)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      background: 'var(--crm-positive-solid)',
+                      color: 'var(--crm-on-dark)',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap'
+                    }}
                   >
                     <Send size={13} />
                     <span>{isAr ? 'إرسال العرض واتساب' : 'Send WhatsApp'}</span>
@@ -425,10 +469,25 @@ export default function SmartMatchingHub({
                     type="button"
                     className="btn btn-sm"
                     onClick={() => setSchedulingVisitLead({ ...lead, details: { ...lead.details, targetPropertyId: property.id } })}
-                    style={{ padding: '7px 10px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', background: 'var(--crm-warn-soft)', border: '1px solid var(--crm-warn-line)', borderRadius: '6px' }}
+                    style={{
+                      height: '36px',
+                      padding: '0 12px',
+                      fontSize: 'var(--crm-text-xs)',
+                      color: 'var(--crm-accent-text)',
+                      background: 'var(--crm-warn-soft)',
+                      border: '1px solid var(--crm-warn-line)',
+                      borderRadius: '6px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap'
+                    }}
                     title={isAr ? 'حجز موعد معاينة' : 'Schedule Visit'}
                   >
                     <Car size={14} />
+                    <span>{isAr ? 'معاينة ميدانية' : 'Visit'}</span>
                   </button>
                 </div>
               </div>
