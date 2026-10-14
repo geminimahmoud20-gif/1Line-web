@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import useOpenRequest from '../../hooks/useOpenRequest';
-import { Building, Plus, Trash2, Upload, Eye, EyeOff, Archive } from 'lucide-react';
+import { Building, Plus, Trash2, Upload, Eye, EyeOff, Archive, Search, X } from 'lucide-react';
 import { getAreas } from '../../utils/areasData';
 import HomepageSlotsBoard, { FeaturedSlotModal } from './HomepageSlotsBoard';
 
@@ -23,6 +23,7 @@ const SHORT_TYPE_AR = { apartment: 'شقق ودوبلكس', villa: 'فيلات',
 const SHORT_TYPE_EN = { apartment: 'Apartments', villa: 'Villas', commercial: 'Shops', office: 'Offices & clinics', land: 'Land' };
 import OfferModal from './OfferModal';
 import { listingSampleFlags } from '../../utils/sampleDataFlags';
+import { getNormalizedPropertyStatus } from '../../utils/crmLeadViews';
 import { formatArabicPlural } from '../../utils/crmNoteSanitizer';
 const SOHAG_AREA_COORDINATES = {
   east: { lat: 26.5569, lng: 31.7001 },
@@ -69,15 +70,6 @@ const DEFAULT_FORM_STATE = {
   legalStatus: null,
   customBenchmarkPrice: '',
   nearbyAmenities: []
-};
-
-export const getNormalizedPropertyStatus = (prop) => {
-  if (!prop) return 'published';
-  if (prop.isDeleted || prop.status === 'trash') return 'trash';
-  if (prop.status === 'sold') return 'sold';
-  if (prop.status === 'under_negotiation' || prop.status === 'negotiating') return 'under_negotiation';
-  if (prop.status === 'hidden' || prop.status === 'archived' || prop.status === 'draft' || prop.isArchived) return 'hidden';
-  return 'published';
 };
 
 export default function PropertyManagerPanel({
@@ -527,26 +519,52 @@ export default function PropertyManagerPanel({
   return (
     <div className="property-manager-panel">
       {/* Header & Main Actions */}
-      <div className="panel-top-bar">
-        <div>
-          <h3>{isAr ? 'إدارة العقارات والوحدات المعروضة' : 'Property Catalog Management'}</h3>
-          <p className="panel-sub">
-            {isAr 
-              ? `النشط بالموقع: ${formatArabicPlural(activeCount, 'عقار', 'عقاران', 'عقارات', 'عقاراً')} • المخفي: ${hiddenCount} • تحت التفاوض: ${negotiationCount}${soldCount > 0 ? ` • المباع: ${soldCount}` : ''} • الإجمالي: ${activeCount + hiddenCount + negotiationCount + soldCount} وحدة` 
-              : `Live: ${activeCount} • Hidden: ${hiddenCount} • Negotiation: ${negotiationCount}${soldCount > 0 ? ` • Sold: ${soldCount}` : ''} • Total: ${activeCount + hiddenCount + negotiationCount + soldCount}`}
-          </p>
+      <div className="crm-modern-header-strip">
+        <div className="crm-header-title-group">
+          <h3 className="crm-header-main-title">
+            <Building size={22} style={{ color: 'var(--crm-gold)' }} />
+            <span>{isAr ? 'إدارة العقارات والوحدات المعروضة' : 'Property Catalog Management'}</span>
+            <span className="crm-badge-360">Catalog 360°</span>
+          </h3>
+          <div className="crm-header-subtitle">
+            <span>{isAr ? 'النشط بالموقع:' : 'Live:'} <strong className="crm-header-count-pill">{activeCount}</strong></span>
+            <span style={{ opacity: 0.4 }}>•</span>
+            <span>{isAr ? 'المخفي:' : 'Hidden:'} <strong>{hiddenCount}</strong></span>
+            <span style={{ opacity: 0.4 }}>•</span>
+            <span>{isAr ? 'تحت التفاوض:' : 'Negotiation:'} <strong>{negotiationCount}</strong></span>
+            {soldCount > 0 && (
+              <>
+                <span style={{ opacity: 0.4 }}>•</span>
+                <span>{isAr ? 'المباع:' : 'Sold:'} <strong>{soldCount}</strong></span>
+              </>
+            )}
+            <span style={{ opacity: 0.4 }}>•</span>
+            <span>{isAr ? 'الإجمالي:' : 'Total:'} <strong className="crm-header-count-pill">{activeCount + hiddenCount + negotiationCount + soldCount}</strong></span>
+          </div>
         </div>
 
-        <div className="panel-actions-row">
-          {/* Import: Excel / CSV / JSON from any system, with column matching and a review step */}
+        <div className="crm-header-actions-group">
+          {/* Add New Property */}
+          <button 
+            type="button" 
+            className="crm-btn-primary-gold" 
+            onClick={handleOpenAdd} 
+            disabled={readOnly} 
+            title={readOnly ? (isAr ? 'دورك للعرض فقط' : 'View-only role') : undefined}
+          >
+            <Plus size={16} />
+            <span>{isAr ? 'إضافة عقار جديد للموقع' : 'Add New Property'}</span>
+          </button>
+
+          {/* Import: Excel / CSV / JSON */}
           {onImportProperties && (
-            <button type="button" className="btn btn-outline" onClick={() => setImportOpen(true)}>
+            <button type="button" className="crm-btn-secondary-modern" onClick={() => setImportOpen(true)}>
               <Upload size={15} />
               <span>{isAr ? 'استيراد' : 'Import'}</span>
             </button>
           )}
 
-          {/* Export: Excel / CSV / full JSON backup */}
+          {/* Export */}
           <ExportMenu
             label={isAr ? 'تصدير' : 'Export'}
             baseName="1Line_Properties"
@@ -556,12 +574,6 @@ export default function PropertyManagerPanel({
             disabled={!properties.some((p) => !p.isDemo)}
             onDone={(format, ok) => triggerToast(ok ? (isAr ? 'تم تجهيز الملف وتنزيله' : 'File downloaded') : (isAr ? 'تعذّر تجهيز الملف' : 'Export failed'), ok ? 'success' : 'error')}
           />
-
-          {/* Add New Property */}
-          <button type="button" className="btn btn-primary" onClick={handleOpenAdd} disabled={readOnly} title={readOnly ? (isAr ? 'دورك للعرض فقط' : 'View-only role') : undefined}>
-            <Plus size={16} />
-            <span>{isAr ? 'إضافة عقار جديد للموقع' : 'Add New Property'}</span>
-          </button>
         </div>
       </div>
 
@@ -623,7 +635,7 @@ export default function PropertyManagerPanel({
           padding: '12px 16px',
           marginBottom: '14px',
           borderRadius: '12px',
-          background: 'linear-gradient(90deg, var(--crm-warn-soft), #FEF3C7)',
+          background: 'var(--crm-warn-soft)',
           border: '1px solid var(--crm-warn-line)',
           boxShadow: '0 1px 3px rgba(180, 83, 9, 0.06)',
           color: 'var(--crm-warn)',
@@ -631,7 +643,7 @@ export default function PropertyManagerPanel({
           fontWeight: 600
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '1.1rem' }}>⚠️</span>
+            <span style={{ fontSize: 'var(--crm-text-base)' }}>⚠️</span>
             <span>
               {isAr
                 ? `${sampleFlagCount} عقار يحتوي على بيانات من نموذج الإضافة القديم (صورة افتراضية أو سعر تقديري). يُرجى تدقيقها.`
@@ -647,7 +659,7 @@ export default function PropertyManagerPanel({
               fontWeight: 700,
               borderRadius: '8px',
               background: sampleOnly ? 'var(--crm-warn)' : 'var(--crm-card)',
-              color: sampleOnly ? '#fff' : 'var(--crm-warn)',
+              color: sampleOnly ? 'var(--crm-on-dark)' : 'var(--crm-warn)',
               border: '1.5px solid var(--crm-warn)',
               cursor: 'pointer',
               transition: 'all 0.15s ease'

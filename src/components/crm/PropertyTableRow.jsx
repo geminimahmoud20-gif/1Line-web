@@ -4,7 +4,7 @@ import { offerState, formatTimeLeft, getActiveOffer } from '../../utils/property
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { FeaturedPeriodLabel } from './HomepageSlotsBoard';
 import { listingSampleFlags } from '../../utils/sampleDataFlags';
-import { getNormalizedPropertyStatus } from './PropertyManagerPanel';
+import { getNormalizedPropertyStatus } from '../../utils/crmLeadViews';
 
 // One row of the CRM properties table (PropertyManagerPanel): status selector, homepage star,
 // WhatsApp match notifier and the edit / trash / restore actions.
