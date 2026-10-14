@@ -171,6 +171,11 @@ export default function SmartMatchingHub({
     const phone = lead.whatsapp || lead.phone;
     const cleanPhone = phone?.replace(/[^0-9]/g, '');
 
+    if (!cleanPhone || cleanPhone.includes('*') || cleanPhone.length < 8) {
+      triggerToast?.(isAr ? 'رقم هاتف العميل غير متوفر أو محجوب لصلاحيات حسابك' : 'Phone number is unavailable or masked for your role', 'error');
+      return;
+    }
+
     const propTitle = isAr ? property.title_ar : property.title_en;
     const propPrice = property.price?.toLocaleString('en-US');
     const propLoc = getLocalizedArea(property.areaKey);
@@ -193,12 +198,23 @@ export default function SmartMatchingHub({
         `💰 *Price:* ${propPrice} EGP\n\n` +
         `Would you like to schedule a site visit?`;
 
-    if (cleanPhone) {
-      window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}?text=${encodeURIComponent(waText)}`, '_blank', 'noopener,noreferrer');
+    window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}?text=${encodeURIComponent(waText)}`, '_blank', 'noopener,noreferrer');
+
+    // Update lead CRM record: lastContactedAt + activity log
+    if (onUpdateLead) {
+      const nowIso = new Date().toISOString();
+      const newLog = {
+        timestamp: nowIso,
+        action: `إرسال ترشيح مطابق عبر واتساب للعقار [${property.id}] — ${propTitle} (${match.score}% توافق)`
+      };
+      onUpdateLead(lead.id, {
+        lastContactedAt: nowIso,
+        activityLogs: [newLog, ...(lead.activityLogs || [])]
+      });
     }
 
     if (triggerToast) {
-      triggerToast(isAr ? 'تم فتح واتساب لإرسال العرض المقترح للمشتري!' : 'WhatsApp proposal link opened!', 'success');
+      triggerToast(isAr ? 'تم فتح واتساب وتوثيق إرسال العرض في سجل العميل!' : 'WhatsApp opened and logged in lead history!', 'success');
     }
   };
 

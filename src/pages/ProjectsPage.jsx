@@ -4,7 +4,7 @@ import { MessageSquare, Sparkles, ArrowRight, ArrowLeft, HardHat, Wallet, Calend
 import { MEGA_PROJECTS } from '../data/projectsData';
 import ProjectCard from '../components/projects/ProjectCard';
 import '../styles/projects-modern.css';
-import { getWhatsAppUrl } from '../utils/founderCmsData';
+import { getWhatsAppUrl, openWhatsAppSafely } from '../utils/founderCmsData';
 import { updatePageSeo } from '../utils/seoHelper';
 
 export default function ProjectsPage({ 
@@ -41,18 +41,16 @@ export default function ProjectsPage({
     // A sample project can't be visited: ask about real projects of the same kind instead
     if (project.isDemo) {
       const kind = isAr ? (project.type_ar || 'مشروع') : (project.type_en || 'project');
-      window.open(getWhatsAppUrl(isAr
+      openWhatsAppSafely(isAr
         ? `مرحباً 1Line، أبحث عن ${kind} في سوهاج. ما المشروعات المتاحة حالياً؟`
-        : `Hello 1Line, I'm looking for a ${kind} in Sohag. Which projects are available now?`), '_blank');
+        : `Hello 1Line, I'm looking for a ${kind} in Sohag. Which projects are available now?`);
       return;
     }
     const msg = isAr 
       ? `مرحباً 1Line، أريد حجز موعد معاينة ميدانية ومعرفة الوحدات المتاحة في مشروع: ${title}`
       : `Hello 1Line, I would like to book a viewing tour and request unit availability for: ${title}`;
-    window.open(getWhatsAppUrl(msg), '_blank');
+    openWhatsAppSafely(msg);
   };
-
-
 
   const categories = [
     { id: 'all', label_ar: 'الكل', label_en: 'All', Icon: LayoutGrid },
@@ -61,9 +59,9 @@ export default function ProjectsPage({
   ];
   const countFor = (id) => (id === 'all' ? allProjects.length : allProjects.filter((p) => p.category === id).length);
 
-  const askCustom = () => window.open(getWhatsAppUrl(isAr
+  const askCustom = () => openWhatsAppSafely(isAr
     ? 'مرحباً 1Line، أبحث عن وحدة في مشروع بمواصفات معيّنة في سوهاج. المواصفات: '
-    : 'Hello 1Line, I am looking for a unit in a specific kind of project in Sohag. Details: '), '_blank');
+    : 'Hello 1Line, I am looking for a unit in a specific kind of project in Sohag. Details: ');
 
   return (
     <div className="pj-page">
