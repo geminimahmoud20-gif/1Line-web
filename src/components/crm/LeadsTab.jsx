@@ -1,4 +1,4 @@
-import { Download, Building, Users, User, Inbox, MessageSquare, Edit3, Trash2, Clock, Zap, Plus, UserPlus, Send, Archive } from 'lucide-react';
+import { Download, Users, Inbox, Trash2, Clock, Plus, UserPlus } from 'lucide-react';
 import { SOHAG_AREAS } from '../../data/propertiesData';
 import { formatFollowUp, formatBudget } from '../../utils/crmLabels';
 import DeskOptions from './DeskOptions';
@@ -11,6 +11,7 @@ import MergeLeadsModal from './MergeLeadsModal';
 import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, RESPONSE_SLA_MS, isOverdue, isUnassigned, isStale, localDayKey, getLeadVisitDate, getLeadVisitSlot, isViewingLead, isSellerLead, isAccountLead } from '../../utils/crmLeadViews';
 import { useProperties } from '../../context/PropertiesContext';
 import LeadScorePill from './LeadScorePill';
+import LeadTableRowActions from './LeadTableRowActions';
 
 export default function LeadsTab({
   activeRole,
@@ -719,7 +720,7 @@ export default function LeadsTab({
                         )}
                       </div>
 
-                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}><bdi>{l.phone || l.whatsapp || '—'}</bdi></span>
+                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}><bdi dir="ltr" style={{ unicodeBidi: 'isolate', fontFamily: 'monospace' }}>{l.phone || l.whatsapp || '—'}</bdi></span>
 
                       <div className="crm-lead-meta">
                         <span className="crm-lead-chip">{sourceLabel(l)}</span>
@@ -860,112 +861,23 @@ export default function LeadsTab({
 
                   {/* Actions */}
                   <td data-label={isAr ? 'الإجراءات' : 'Actions'}>
-                    <div className="crm-action-group">
-                      {/* Quick Drawer Fast Inspection */}
-                      <button
-                        type="button"
-                        className="crm-btn-quick"
-                        onClick={() => setQuickDrawerLead(l)}
-                        title={isAr ? 'معاينة سريعة وتسجيل مكالمة' : 'Quick Drawer'}
-                      >
-                        <Zap size={13} />
-                        <span>{isAr ? 'سريع' : 'Quick'}</span>
-                      </button>
-
-                      {/* WhatsApp Direct Contact */}
-                      <button 
-                        type="button"
-                        className="crm-icon-btn is-whatsapp" 
-                        onClick={() => onWhatsAppClick(l)} 
-                        title={isAr ? 'محادثة العميل مباشرة عبر واتساب' : 'WhatsApp'}
-                      >
-                        <MessageSquare size={13} />
-                      </button>
-
-                      {/* 360° Profile */}
-                      <button
-                        type="button"
-                        className="crm-icon-btn"
-                        onClick={() => setViewingProfileLead(l)}
-                        title={isAr ? 'فتح ملف العميل الشامل 360°' : 'Profile 360°'}
-                      >
-                        <User size={13} />
-                      </button>
-
-                      {/* Edit Modal */}
-                      {canEdit && (
-                        <button
-                          type="button"
-                          className="crm-icon-btn"
-                          onClick={() => handleOpenEditLead(l)}
-                          title={isAr ? 'تعديل بيانات العميل' : 'Edit'}
-                        >
-                          <Edit3 size={13} />
-                        </button>
-                      )}
-
-                      {/* Dispatch Lead via WhatsApp */}
-                      <button 
-                        type="button"
-                        className="crm-icon-btn" 
-                        onClick={() => onDispatchLeadClick(l)} 
-                        title={isAr ? 'إحالة بيانات العميل لمسؤول المبيعات عبر واتساب' : 'Dispatch'}
-                      >
-                        <Send size={12} />
-                      </button>
-
-                      {/* Convert to Property */}
-                      {onConvertToProperty && canEdit && (
-                        <button 
-                          type="button"
-                          className="crm-icon-btn" 
-                          onClick={() => onConvertToProperty(l)}
-                          title={isAr ? 'تحويل لعقار معروض بالموقع' : 'Convert'}
-                        >
-                          <Building size={12} />
-                        </button>
-                      )}
-
-                      {/* Claim Lead */}
-                      {canClaimLead(l) && (
-                        <button
-                          type="button"
-                          className="crm-icon-btn"
-                          onClick={() => handleClaimLead(l.id)}
-                          title={isAr ? 'استلام هذا العميل (غير مسند) لفريقك' : 'Claim this unassigned lead for your team'}
-                        >
-                          <UserPlus size={12} />
-                        </button>
-                      )}
-
-                      {/* Archive Lead Toggle */}
-                      {canEdit && <button
-                        type="button"
-                        className="crm-icon-btn"
-                        onClick={() => {
-                          const newStatus = l.isArchived ? false : true;
-                          if (onUpdateLead) {
-                            onUpdateLead(l.id, { isArchived: newStatus });
-                          }
-                          triggerToast(isAr ? (newStatus ? 'تم نقل العميل للأرشيف 📦' : 'تم استعادة العميل من الأرشيف') : (newStatus ? 'Lead archived' : 'Lead restored'), 'info');
-                        }}
-                        title={l.isArchived ? (isAr ? 'استعادة من الأرشيف' : 'Unarchive') : (isAr ? 'أرشفة العميل' : 'Archive')}
-                      >
-                        <Archive size={12} />
-                      </button>}
-
-                      {/* Delete Lead (Super Admin Only) */}
-                      {isSuperAdmin && (
-                        <button 
-                          type="button"
-                          className="crm-icon-btn is-danger" 
-                          onClick={() => handleDeleteLeadClick(l.id, l.name)} 
-                          title={isAr ? 'حذف العميل نهائياً' : 'Delete'}
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      )}
-                    </div>
+                    <LeadTableRowActions
+                      lead={l}
+                      isAr={isAr}
+                      canEdit={canEdit}
+                      isSuperAdmin={isSuperAdmin}
+                      onQuickDrawer={setQuickDrawerLead}
+                      onWhatsAppClick={onWhatsAppClick}
+                      onViewingProfileLead={setViewingProfileLead}
+                      onOpenEditLead={handleOpenEditLead}
+                      onDispatchLeadClick={onDispatchLeadClick}
+                      onConvertToProperty={onConvertToProperty}
+                      canClaimLead={canClaimLead}
+                      handleClaimLead={handleClaimLead}
+                      onUpdateLead={onUpdateLead}
+                      triggerToast={triggerToast}
+                      handleDeleteLeadClick={handleDeleteLeadClick}
+                    />
                   </td>
                 </tr>
               );

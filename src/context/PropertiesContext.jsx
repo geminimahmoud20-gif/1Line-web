@@ -38,6 +38,7 @@ import { normalizeAreaKey } from '../utils/areasData';
 import { enqueuePendingLead, pendingLeadCount } from '../utils/leadQueue';
 import { track, propertyFacts, analyticsVisitorId } from '../utils/analytics';
 import { fetchPublicCatalog, PUBLIC_CATALOG_REFRESH_MS } from '../utils/publicCatalog';
+import { sanitizeAndMergeNotes } from '../utils/crmNoteSanitizer';
 import { usePreferences } from './PreferencesContext';
 import { useUIModal } from './UIModalContext';
 
@@ -469,8 +470,8 @@ export function PropertiesProvider({ children }) {
           createdBy: existing.createdBy || 'online_visitor',
           lastActivityAt: nowIso,
           timestamp: nowIso,
-          // Keep the new request's own note (e.g. remote inspection / trade-in summary) instead of a generic line
-          notes: `${existing.notes ? existing.notes + ' | ' : ''}${standardizedData.notes ? `طلب إضافي: ${standardizedData.notes}` : `طلب إضافي: ${standardizedData.propertyType || ''} في ${standardizedData.area || ''}`}`,
+          // Cleanly localize, deduplicate, and merge incoming request notes without raw developer slugs
+          notes: sanitizeAndMergeNotes(existing.notes, standardizedData),
           details: { ...(existing.details || {}), ...(standardizedData.details || {}) },
           activityLogs: [newLog, ...(existing.activityLogs || [])],
           digitalJourney: (sessionJourney.events && sessionJourney.events.length > 0) ? sessionJourney.events : (existing.digitalJourney || []),

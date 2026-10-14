@@ -18,6 +18,7 @@ import {
 import { canViewLeadPhone, maskPhoneNumber } from '../../utils/rbacRules';
 import { claimLeadAtomic } from '../../services/leads';
 import { normalizeAreaKey, getAreaById } from '../../utils/areasData';
+import { formatArabicPlural, sanitizeAndMergeNotes } from '../../utils/crmNoteSanitizer';
 
 const PROPERTY_TYPE_LABELS = {
   apartment: 'شقة سكنية',
@@ -477,7 +478,7 @@ export default function CrmInboxPanel({
           }}>
             <AlertTriangle size={16} />
             <span>
-              {isAr ? `تنبيه المدير: يوجد ${slaBreaches.length} طلبات تجاوزت ${slaMinutes} دقيقة دون استلام أو رد!` : `${slaBreaches.length} requests breached ${slaMinutes}-min response SLA!`}
+              {isAr ? `تنبيه المدير: يوجد ${formatArabicPlural(slaBreaches.length, 'طلب', 'طلبان', 'طلبات', 'طلباً')} تجاوزت ${slaMinutes} دقيقة دون استلام أو رد!` : `${slaBreaches.length} requests breached ${slaMinutes}-min response SLA!`}
             </span>
           </div>
         )}
@@ -727,11 +728,17 @@ export default function CrmInboxPanel({
                         </span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px' }}>
-                        <span>
-                          📞 {canSeePhone ? (lead.phone || (isAr ? 'بدون هاتف' : 'No phone')) : maskPhoneNumber(lead.phone, userRole, userPerms)}
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <span>📞</span>
+                          <bdi dir="ltr" style={{ unicodeBidi: 'isolate', fontFamily: 'monospace' }}>
+                            {canSeePhone ? (lead.phone || (isAr ? 'بدون هاتف' : 'No phone')) : maskPhoneNumber(lead.phone, userRole, userPerms)}
+                          </bdi>
                         </span>
                         {lead.createdAt && (
-                          <span>🕒 {new Date(lead.createdAt?.toMillis ? lead.createdAt.toMillis() : lead.createdAt).toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <span>🕒</span>
+                            <bdi dir="ltr">{new Date(lead.createdAt?.toMillis ? lead.createdAt.toMillis() : lead.createdAt).toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' })}</bdi>
+                          </span>
                         )}
                       </div>
                     </div>
@@ -904,7 +911,7 @@ export default function CrmInboxPanel({
 
                   {lead.notes && (
                     <div style={{ width: '100%', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', borderTop: '1px dashed var(--crm-line)', paddingTop: '6px', marginTop: '2px' }}>
-                      <strong style={{ color: 'var(--crm-ink)' }}>📝 {isAr ? 'ملاحظات:' : 'Notes:'}</strong> {lead.notes}
+                      <strong style={{ color: 'var(--crm-ink)' }}>📝 {isAr ? 'ملاحظات:' : 'Notes:'}</strong> {sanitizeAndMergeNotes(lead.notes)}
                     </div>
                   )}
                 </div>

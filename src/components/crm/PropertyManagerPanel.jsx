@@ -23,6 +23,7 @@ const SHORT_TYPE_AR = { apartment: 'شقق ودوبلكس', villa: 'فيلات',
 const SHORT_TYPE_EN = { apartment: 'Apartments', villa: 'Villas', commercial: 'Shops', office: 'Offices & clinics', land: 'Land' };
 import OfferModal from './OfferModal';
 import { listingSampleFlags } from '../../utils/sampleDataFlags';
+import { formatArabicPlural } from '../../utils/crmNoteSanitizer';
 const SOHAG_AREA_COORDINATES = {
   east: { lat: 26.5569, lng: 31.7001 },
   new_sohag: { lat: 26.4715, lng: 31.6620 },
@@ -526,8 +527,8 @@ export default function PropertyManagerPanel({
           <h3>{isAr ? 'إدارة العقارات والوحدات المعروضة' : 'Property Catalog Management'}</h3>
           <p className="panel-sub">
             {isAr 
-              ? `إجمالي المعروض النشط: ${activeCount} عقاراً • المخفي: ${hiddenCount} • تحت التفاوض: ${negotiationCount}` 
-              : `Live: ${activeCount} • Hidden: ${hiddenCount} • Negotiation: ${negotiationCount}`}
+              ? `النشط بالموقع: ${formatArabicPlural(activeCount, 'عقار', 'عقاران', 'عقارات', 'عقاراً')} • المخفي: ${hiddenCount} • تحت التفاوض: ${negotiationCount}${soldCount > 0 ? ` • المباع: ${soldCount}` : ''} • الإجمالي: ${activeCount + hiddenCount + negotiationCount + soldCount} وحدة` 
+              : `Live: ${activeCount} • Hidden: ${hiddenCount} • Negotiation: ${negotiationCount}${soldCount > 0 ? ` • Sold: ${soldCount}` : ''} • Total: ${activeCount + hiddenCount + negotiationCount + soldCount}`}
           </p>
         </div>
 

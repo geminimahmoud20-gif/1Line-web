@@ -44,7 +44,8 @@ export default function SmartMatchingHub({
   // Compute live match matrix between Buyer Leads and Published Properties
   const matches = useMemo(() => {
     const buyerLeads = leads.filter(l => l.type === 'buyer' || l.type === 'investor' || l.type === 'request' || !l.type);
-    const liveProps = properties.filter(p => !p.isDeleted && p.status !== 'trash' && p.status !== 'hidden');
+    // Hard filter: only match active, non-hidden properties that have a valid price > 0
+    const liveProps = properties.filter(p => !p.isDeleted && p.status !== 'trash' && p.status !== 'hidden' && Number(p.price) > 0);
 
     const results = [];
 
@@ -52,15 +53,14 @@ export default function SmartMatchingHub({
       const details = lead.details || {};
       const rawLeadArea = lead.area || details.area || lead.location || '';
       const leadArea = normalizeAreaKey(rawLeadArea);
-      const leadType = (lead.propertyType || details.propertyType || '').toLowerCase();
-      // The client's own amount only; no budget means the budget doesn't score either way
+      const rawLeadType = (lead.propertyType || details.propertyType || '').toLowerCase();
+      // Guard against account role "buyer" accidentally stored as propertyType
+      const leadType = (rawLeadType === 'buyer' || rawLeadType === 'request' || rawLeadType === 'lead') ? '' : rawLeadType;
+      
       const leadBudget = parseMoney(lead.budget) || parseMoney(details.budget) || parseMoney(details.investmentAmount);
-
-      // Desired size & rooms criteria
       const leadWantedSize = parseMoney(lead.size) || parseMoney(details.size) || parseMoney(details.minSize);
-      const leadWantedRooms = parseInt(lead.rooms || details.rooms || details.bedrooms) || 0;
+      const leadWantedRooms = parseInt(lead.rooms || details.rooms || details.bedrooms, 10) || 0;
 
-      // Payment method preference
       const leadPaymentRaw = (lead.paymentMethod || details.paymentMethod || details.paymentPlan || '').toLowerCase();
       const prefersInstallments = leadPaymentRaw.includes('installment') || leadPaymentRaw.includes('قسط') || leadPaymentRaw.includes('تقسيط');
       const prefersCash = leadPaymentRaw.includes('cash') || leadPaymentRaw.includes('كاش');
@@ -69,84 +69,69 @@ export default function SmartMatchingHub({
         let score = 0;
         const reasons = [];
         const propArea = normalizeAreaKey(prop.areaKey);
+        const propPrice = Number(prop.price) || 0;
 
-        // 1. Area match (25 pts) - Normalized comparison
+        // 1. Area match (Up to 35 pts)
         if (leadArea && (propArea === leadArea || leadArea === 'all' || propArea === 'all')) {
-          score += 25;
+          score += 35;
           reasons.push(isAr ? 'نفس المنطقة المستهدفة' : 'Area match');
-        } else if (!rawLeadArea) {
-          score += 15;
         }
 
-        // 2. Property type match (20 pts)
+        // 2. Property type match (Up to 25 pts)
         if (leadType && (prop.type === leadType || prop.category === leadType)) {
-          score += 20;
+          score += 25;
           reasons.push(isAr ? 'نفس نوع العقار' : 'Type match');
-        } else if (!leadType) {
-          score += 12;
         }
 
-        // 3. Budget match (25 pts)
-        if (!leadBudget) {
-          score += 12;
-        } else if (prop.price) {
-          const diffRatio = Math.abs(prop.price - leadBudget) / leadBudget;
+        // 3. Budget match (Up to 30 pts)
+        if (leadBudget && propPrice > 0) {
+          const diffRatio = Math.abs(propPrice - leadBudget) / leadBudget;
           if (diffRatio <= 0.1) {
-            score += 25;
+            score += 30;
             reasons.push(isAr ? 'مطابق تماماً للميزانية' : 'Exact budget match');
           } else if (diffRatio <= 0.25) {
-            score += 18;
+            score += 20;
             reasons.push(isAr ? 'قريب جداً من الميزانية' : 'Close to budget');
-          } else if (prop.price <= leadBudget) {
-            score += 22;
+          } else if (propPrice <= leadBudget) {
+            score += 25;
             reasons.push(isAr ? 'أقل من الميزانية المحددة' : 'Under budget');
           }
+        } else if (!leadBudget) {
+          // No budget specified: do NOT grant fake points; cap score
+          reasons.push(isAr ? 'الميزانية قيد التدقيق' : 'Budget pending');
         }
 
-        // 4. Size & Rooms Compatibility (15 pts)
+        // 4. Size & Rooms Compatibility (Up to 10 pts)
         const propSize = Number(prop.size) || 0;
         const propRooms = Number(prop.bedrooms) || 0;
 
-        if (leadWantedSize && propSize) {
+        if (leadWantedSize && propSize > 0) {
           if (propSize >= leadWantedSize * 0.85 && propSize <= leadWantedSize * 1.35) {
-            score += 10;
+            score += 7;
             reasons.push(isAr ? 'المساحة مطابقة للطلب' : 'Size match');
-          } else if (propSize < leadWantedSize * 0.7) {
-            // Significant size mismatch penalty
-            score = Math.max(0, score - 10);
-          } else {
-            score += 5;
           }
-        } else {
-          score += 8; // Neutral if size unspecified
         }
 
-        if (leadWantedRooms && propRooms) {
+        if (leadWantedRooms && propRooms > 0) {
           if (propRooms >= leadWantedRooms) {
-            score += 5;
+            score += 3;
             reasons.push(isAr ? 'عدد الغرف كافٍ' : 'Rooms match');
           }
-        } else {
-          score += 3;
         }
 
-        // 5. Payment Plan Compatibility (15 pts)
+        // 5. Payment Plan Compatibility (Up to 5 pts)
         const propHasInstallments = Boolean(prop.monthlyInstallment || prop.installmentYears || prop.downPayment);
+        if (prefersInstallments && propHasInstallments) {
+          score += 5;
+          reasons.push(isAr ? 'تسهيلات تقسيط متوافقة' : 'Installment plan match');
+        } else if (prefersCash && !propHasInstallments) {
+          score += 5;
+          reasons.push(isAr ? 'سداد كاش' : 'Cash ready');
+        }
 
-        if (prefersInstallments) {
-          if (propHasInstallments) {
-            score += 15;
-            reasons.push(isAr ? 'تسهيلات تقسيط متوافقة' : 'Installment plan match');
-          } else {
-            // Wants installment but property is strictly cash only
-            score = Math.max(0, score - 8);
-          }
-        } else if (prefersCash) {
-          score += 15;
-          reasons.push(isAr ? 'سداد كاش فوري' : 'Direct cash ready');
-        } else {
-          // Unspecified payment mode gets standard baseline
-          score += 10;
+        // If client has NO budget specified, match score cannot exceed 65%
+        if (!leadBudget && score > 65) {
+          score = 65;
         }
 
         if (score >= minMatchScore) {
@@ -156,7 +141,7 @@ export default function SmartMatchingHub({
             property: prop,
             score: Math.min(100, Math.round(score)),
             reasons,
-            budgetDifference: leadBudget ? prop.price - leadBudget : null
+            budgetDifference: leadBudget ? propPrice - leadBudget : null
           });
         }
       });
@@ -368,11 +353,12 @@ export default function SmartMatchingHub({
                       >
                         {lead.name}
                       </strong>
-                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'block', direction: 'ltr', textAlign: isAr ? 'right' : 'left' }}>
-                        📱 {lead.whatsapp || lead.phone}
+                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                        <span>📱</span>
+                        <bdi dir="ltr" style={{ unicodeBidi: 'isolate', fontFamily: 'monospace' }}>{lead.whatsapp || lead.phone || '—'}</bdi>
                       </span>
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', display: 'block', marginTop: '4px', fontWeight: '700' }}>
-                        💰 ميزانية: {parseMoney(lead.details?.budget) || parseMoney(lead.budget) ? (parseMoney(lead.details?.budget) || parseMoney(lead.budget)).toLocaleString('en-US') + ' ج.م' : 'غير محددة'}
+                        💰 {isAr ? 'ميزانية:' : 'Budget:'} {parseMoney(lead.details?.budget) || parseMoney(lead.budget) ? (parseMoney(lead.details?.budget) || parseMoney(lead.budget)).toLocaleString('en-US') + ' ج.م' : (isAr ? 'غير محددة بعد' : 'Not set')}
                       </span>
                     </div>
 

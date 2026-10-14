@@ -71,6 +71,12 @@ export default function KanbanPipeline({
   const getLocalizedPropertyType = (typeKey) => {
     if (!typeKey) return isAr ? 'عقار غير محدد' : 'Property';
     const cleanKey = String(typeKey).trim().toLowerCase();
+    if (cleanKey === 'buyer' || cleanKey === 'request' || cleanKey === 'lead') {
+      return isAr ? 'طلب شراء' : 'Buyer Request';
+    }
+    if (cleanKey === 'seller') {
+      return isAr ? 'عرض بيع' : 'Seller Listing';
+    }
     if (PROPERTY_TYPE_NAMES[cleanKey]) {
       return isAr ? PROPERTY_TYPE_NAMES[cleanKey] : typeKey;
     }
@@ -172,17 +178,23 @@ export default function KanbanPipeline({
     const stats = {};
     PIPELINE_STAGES.forEach((s) => {
       groups[s.id] = [];
-      stats[s.id] = { count: 0, totalVolume: 0 };
+      stats[s.id] = { count: 0, totalVolume: 0, budgetedCount: 0, unbudgetedCount: 0 };
     });
     filteredLeads.forEach((l) => {
       const st = l.status || 'new';
       if (!groups[st]) {
         groups[st] = [];
-        stats[st] = { count: 0, totalVolume: 0 };
+        stats[st] = { count: 0, totalVolume: 0, budgetedCount: 0, unbudgetedCount: 0 };
       }
       groups[st].push(l);
       stats[st].count += 1;
-      stats[st].totalVolume += getLeadBudget(l);
+      const b = getLeadBudget(l);
+      stats[st].totalVolume += b;
+      if (b > 0) {
+        stats[st].budgetedCount += 1;
+      } else {
+        stats[st].unbudgetedCount += 1;
+      }
     });
     return { leadsByStage: groups, stageStatsMap: stats };
   }, [filteredLeads]);
@@ -437,7 +449,7 @@ export default function KanbanPipeline({
       }}>
         {PIPELINE_STAGES.map((stage) => {
           const stageLeads = leadsByStage[stage.id] || [];
-          const { count, totalVolume } = stageStatsMap[stage.id] || { count: 0, totalVolume: 0 };
+          const { count, totalVolume, budgetedCount, unbudgetedCount } = stageStatsMap[stage.id] || { count: 0, totalVolume: 0, budgetedCount: 0, unbudgetedCount: 0 };
 
           return (
             <div
@@ -470,8 +482,21 @@ export default function KanbanPipeline({
                   <h4 style={{ margin: 0, fontSize: 'var(--crm-text-md)', color: 'var(--crm-ink)', fontWeight: 700 }}>
                     {isAr ? stage.title_ar : stage.title_en}
                   </h4>
-                  <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: '600' }}>
-                    {(totalVolume / 1000000).toFixed(1)} {isAr ? 'مليون ج.م حجم الصفقات' : 'M EGP'}
+                  <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: '600', display: 'block', marginTop: '2px' }}>
+                    {totalVolume > 0 ? (
+                      <>
+                        <bdi>{(totalVolume / 1000000).toFixed(1)}</bdi> {isAr ? 'مليون ج.م' : 'M EGP'}
+                        {unbudgetedCount > 0 && (
+                          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)', marginInlineStart: '4px' }}>
+                            ({budgetedCount} {isAr ? 'محددة' : 'set'} • {unbudgetedCount} {isAr ? 'قيد التحديد' : 'pending'})
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <span style={{ color: 'var(--crm-faint)' }}>
+                        {count > 0 ? (isAr ? 'الميزانيات قيد التحديد' : 'Budgets pending') : (isAr ? 'لا توجد صفقات' : 'No deals')}
+                      </span>
+                    )}
                   </span>
                 </div>
                 <span style={{
@@ -575,7 +600,7 @@ export default function KanbanPipeline({
                           ) : (
                             <span className="kb-value-empty">{isAr ? 'لم تُحدَّد الميزانية' : 'Budget not set'}</span>
                           )}
-                          <bdi className="kb-phone">{lead.whatsapp || lead.phone || '—'}</bdi>
+                          <bdi dir="ltr" className="kb-phone" style={{ unicodeBidi: 'isolate' }}>{lead.whatsapp || lead.phone || '—'}</bdi>
                         </div>
 
                         {isOverdue && (
