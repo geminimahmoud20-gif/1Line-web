@@ -76,7 +76,9 @@ export default function CrmTopbar({
   const unseenNewLeads = useMemo(() => {
     return leads.filter((l) => {
       if (l.status && l.status !== 'new') return false;
-      const t = l.createdAt ? new Date(l.createdAt).getTime() : (l.timestamp ? new Date(l.timestamp).getTime() : 0);
+      // createdAt is a Firestore Timestamp for cloud leads, an ISO string for older / offline ones
+      const c = l.createdAt;
+      const t = (c && typeof c.toMillis === 'function') ? c.toMillis() : (Date.parse(c || l.timestamp || '') || 0);
       return !leadsSeenAt || t > leadsSeenAt;
     });
   }, [leads, leadsSeenAt]);
@@ -90,6 +92,13 @@ export default function CrmTopbar({
       localStorage.setItem('oneline_crm_leads_seen_at', String(now));
     } catch { /* not remembered */ }
   };
+
+  // Everything counts as seen when the panel closes, not when it opens (it used to empty itself first)
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (wasOpen.current && !showNotifMenu) markAllSeen();
+    wasOpen.current = showNotifMenu;
+  }, [showNotifMenu]);
 
   const totalNotifications = pendingDemands.length + unseenNewLeads.length + recentDownloads.length;
 
@@ -375,7 +384,7 @@ export default function CrmTopbar({
           <button
             type="button"
             className="crm-notif-btn"
-            onClick={() => { if (!showNotifMenu) markAllSeen(); setShowNotifMenu(!showNotifMenu); }}
+            onClick={() => setShowNotifMenu(!showNotifMenu)}
             title={isAr ? 'الإشعارات والتنبيهات' : 'Notifications'}
             aria-expanded={showNotifMenu}
           >
