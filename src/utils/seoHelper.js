@@ -6,6 +6,7 @@
 
 import { SITE_URL, BRAND, CONTACT, SERVICE_AREAS } from '../config/siteConfig';
 import { getDynamicPhone } from './founderCmsData';
+import { getSiteSettings, subscribeSiteSettings } from './siteSettings';
 
 const BASE_URL = SITE_URL;
 const DEFAULT_TITLE = '1Line Solutions | وساطة واستشارات عقارية في سوهاج والقاهرة الكبرى';
@@ -41,21 +42,28 @@ export function injectJsonLdSchema(schemaId, schemaObject) {
   script.textContent = JSON.stringify(schemaObject, null, 2);
 }
 
+// The title/description the CRM set for this path (إعدادات الموقع → جوجل), in the page's language
+function seoOverride(path) {
+  const entry = getSiteSettings().seo[path];
+  if (!entry) return {};
+  const en = typeof document !== 'undefined' && document.documentElement.lang === 'en';
+  return { title: en ? entry.title_en : entry.title_ar, description: en ? entry.description_en : entry.description_ar };
+}
+
+// Pages set their SEO once on mount; settings can arrive later, so the last call is re-applied
+let lastSeoCall = null;
+subscribeSiteSettings(() => { if (lastSeoCall) updatePageSeo(lastSeoCall); });
+
 /**
  * Update Page SEO & Social Sharing Tags dynamically
  */
-export function updatePageSeo({
-  title,
-  description,
-  image,
-  url,
-  price,
-  type = 'website',
-  schemaId,
-  schema,
-  noindex = false
-}) {
+export function updatePageSeo(args) {
   if (typeof document === 'undefined') return;
+  lastSeoCall = args;
+  const { image, url, price, type = 'website', schemaId, schema, noindex = false } = args;
+  const override = noindex ? {} : seoOverride(url || window.location.pathname);
+  const title = override.title || args.title;
+  const description = override.description || args.description;
 
   setMetaTag('name', 'robots', noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large');
 
@@ -207,7 +215,8 @@ export function buildOrganizationSchema() {
     image: `${BASE_URL}${DEFAULT_IMAGE}`,
     description: DEFAULT_DESC,
     telephone: getDynamicPhone(),
-    email: CONTACT.email,
+    email: getSiteSettings().contact.email,
+    ...(Object.keys(getSiteSettings().social).length ? { sameAs: Object.values(getSiteSettings().social) } : {}),
     founder: {
       '@type': 'Person',
       name: BRAND.founder_ar,
@@ -222,7 +231,7 @@ export function buildOrganizationSchema() {
       addressCountry: 'EG'
     },
     geo: { '@type': 'GeoCoordinates', latitude: CONTACT.geo.lat, longitude: CONTACT.geo.lng },
-    hasMap: CONTACT.mapsUrl,
+    hasMap: getSiteSettings().contact.mapsUrl,
     openingHoursSpecification: [{
       '@type': 'OpeningHoursSpecification',
       dayOfWeek: ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'],

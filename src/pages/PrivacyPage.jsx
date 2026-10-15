@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { updatePageSeo } from '../utils/seoHelper';
 import { BRAND, CONTACT } from '../config/siteConfig';
 import { getDynamicPhone } from '../utils/founderCmsData';
+import { useSiteSettings } from '../utils/siteSettings';
 
 const LAST_UPDATED = '2026-10-10';
 
@@ -28,6 +29,7 @@ const SECTIONS_EN = [
 ];
 
 export default function PrivacyPage({ lang = 'ar' }) {
+  const { contact } = useSiteSettings();
   const isAr = lang === 'ar';
   const sections = isAr ? SECTIONS_AR : SECTIONS_EN;
 
@@ -57,7 +59,7 @@ export default function PrivacyPage({ lang = 'ar' }) {
       <section>
         <h2>{isAr ? 'للتواصل بخصوص بياناتك' : 'Contact about your data'}</h2>
         <p>
-          <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a> — <bdi>{getDynamicPhone()}</bdi>
+          <a href={`mailto:${contact.email}`}>{contact.email}</a> — <bdi>{getDynamicPhone()}</bdi>
         </p>
       </section>
     </article>

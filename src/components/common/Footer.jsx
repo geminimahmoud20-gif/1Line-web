@@ -9,7 +9,9 @@ import {
   ArrowUp,
   Clock
 } from 'lucide-react';
-import { BRAND, CONTACT, LEGAL_IDS } from '../../config/siteConfig';
+import { BRAND, LEGAL_IDS } from '../../config/siteConfig';
+import { useSiteSettings, SOCIAL_NETWORKS } from '../../utils/siteSettings';
+import './footer-social.css';
 import LogoEmblem from '../LogoEmblem';
 import { 
   getFounderSettings, 
@@ -20,6 +22,8 @@ import {
 
 export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
   const isAr = lang === 'ar';
+  const { contact, social } = useSiteSettings();
+  const socialLinks = SOCIAL_NETWORKS.filter((n) => social[n.id]);
   const [cms, setCms] = useState(() => getFounderSettings());
 
   useEffect(() => {
@@ -67,6 +71,16 @@ export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
               <ShieldCheck size={16} className="trust-shield-icon" />
               <span>{isAr ? 'وساطة واستشارات مرخصة • مراجعة المستندات قبل التعاقد' : 'Licensed Advisory • Document Audit Before Contract'}</span>
             </div>
+
+            {socialLinks.length > 0 && (
+              <ul className="footer-social" aria-label={isAr ? 'حساباتنا على السوشيال ميديا' : 'Our social accounts'}>
+                {socialLinks.map((n) => (
+                  <li key={n.id}>
+                    <a href={social[n.id]} target="_blank" rel="noopener noreferrer me" className="footer-social-link">{n.label}</a>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           {/* Col 2: Properties & Portals */}
@@ -121,11 +135,11 @@ export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
             </div>
             <div className="footer-contact-item">
               <Mail size={15} className="contact-icon" />
-              <a href={`mailto:${CONTACT.email}`} className="contact-link">{CONTACT.email}</a>
+              <a href={`mailto:${contact.email}`} className="contact-link">{contact.email}</a>
             </div>
             <div className="footer-contact-item">
               <Clock size={15} className="contact-icon" />
-              <span>{isAr ? CONTACT.hours_ar : CONTACT.hours_en}</span>
+              <span>{isAr ? contact.hours_ar : contact.hours_en}</span>
             </div>
 
             <a
