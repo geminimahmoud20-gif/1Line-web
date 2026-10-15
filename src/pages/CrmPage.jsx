@@ -738,7 +738,7 @@ export default function CrmPage({
         )}
 
         {/* 3. Main Dynamic Content Area */}
-        <main className="crm-content-area" id="crm-main-content">
+        <div className="crm-content-area" id="crm-main-content">
           {activeTab === 'properties' ? (
             <PropertyManagerPanel
               openRequest={openRequest}
@@ -893,7 +893,7 @@ export default function CrmPage({
               onSwitchToCorporate={() => setActiveTab('corporate')}
             />
           )}
-        </main>
+        </div>
 
         {/* 4. Minimal Executive Footer */}
         <footer className="crm-footer">
