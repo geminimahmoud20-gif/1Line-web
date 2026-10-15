@@ -1,5 +1,6 @@
 // =============================================================
-//  Vercel Function: WhatsApp alert to the sales team when a visitor creates a lead or request.
+//  Vercel Function: WhatsApp alert and receipt to the company number when a visitor creates a lead
+//  or request.
 //  POST { kind, id } right after the browser saved it. See api/_notify-core.js for the rules.
 //
 //  Environment (Vercel → Settings → Environment Variables):
@@ -77,6 +78,14 @@ export function firestore(sa) {
       const createdAtMs = Date.parse(data.createdAt || doc.createTime || '');
       return { data, createdAtMs: Number.isNaN(createdAtMs) ? 0 : createdAtMs };
     },
+    // Phone lives apart from the record: lead_contacts/{id}, request_contacts/{kind}__{id}
+    async readContact(kind, id) {
+      const path = kind === 'leads' ? `lead_contacts/${encodeURIComponent(id)}` : `request_contacts/${encodeURIComponent(`${kind}__${id}`)}`;
+      const res = await call('GET', path);
+      if (!res.ok) return null;
+      const doc = await res.json();
+      return { phone: fromValue(doc.fields?.phone), whatsapp: fromValue(doc.fields?.whatsapp) };
+    },
     // notify_log/{kind__id}: create fails with 409 when it already exists → each record alerts once
     async claimOnce(kind, id) {
       const res = await call('POST', `notify_log?documentId=${encodeURIComponent(`${kind}__${id}`)}`, {
@@ -101,6 +110,7 @@ export async function POST(request) {
     const db = firestore(sa);
     const { status, body: out } = await handleNotify(body, {
       readRecord: db.readRecord,
+      readContact: db.readContact,
       claimOnce: db.claimOnce,
       sendAll: (text) => sendAll(senders, text),
       now: () => Date.now()
