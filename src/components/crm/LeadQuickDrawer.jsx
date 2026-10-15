@@ -624,7 +624,7 @@ export default function LeadQuickDrawer({
             }}
           >
             <Eye size={14} />
-            <span>{isAr ? 'فتح الملف الشامل 360°' : 'Open 360 Profile'}</span>
+            <span>{isAr ? 'فتح ملف العميل' : 'Open client profile'}</span>
           </button>
 
           {activeRole === 'super_admin' && onDeleteLead && (

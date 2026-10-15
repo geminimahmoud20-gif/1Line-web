@@ -201,7 +201,6 @@ export default function RetargetingHub({
           <h2 className="crm-header-main-title">
             <Zap size={22} style={{ color: 'var(--crm-accent-text)' }} />
             <span>{isAr ? 'مركز حملات إعادة الاستهداف والذكاء التسويقي' : 'Smart Lead Retargeting Engine'}</span>
-            <span className="crm-badge-360">Retargeting 360°</span>
           </h2>
           <div className="crm-header-subtitle">
             <span>

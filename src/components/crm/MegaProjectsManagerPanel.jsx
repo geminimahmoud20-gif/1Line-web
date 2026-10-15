@@ -198,7 +198,6 @@ export default function MegaProjectsManagerPanel({
           <h2 className="crm-header-main-title">
             <Building2 size={22} style={{ color: 'var(--crm-accent-text)' }} />
             <span>{isAr ? 'إدارة المشروعات الكبرى والكمبوندات' : 'Mega Projects Management Hub'}</span>
-            <span className="crm-badge-360">Projects 360°</span>
           </h2>
           <div className="crm-header-subtitle">
             <span>

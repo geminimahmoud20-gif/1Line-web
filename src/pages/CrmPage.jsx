@@ -24,6 +24,7 @@ import '../components/crm/CrmLayout.css';
 import '../components/crm/crm-luxury.css';
 import '../components/crm/crm-dark-surfaces.css';
 import '../components/crm/crm-density.css';
+import '../styles/crm-bridge.css';
 import { isFirebaseAuthAvailable, loginUser, requestPasswordReset } from '../firebaseService';
 import { useAuth } from '../context/AuthContext';
 import { useProperties } from '../context/PropertiesContext';

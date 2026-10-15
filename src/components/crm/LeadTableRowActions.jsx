@@ -95,7 +95,7 @@ export default function LeadTableRowActions({
               onViewingProfileLead?.(lead);
             }}
           >
-            <User size={13} /> <span>{isAr ? 'الملف الشامل 360°' : 'Profile 360°'}</span>
+            <User size={13} /> <span>{isAr ? 'ملف العميل' : 'Client profile'}</span>
           </button>
 
           {/* Edit Lead Modal */}

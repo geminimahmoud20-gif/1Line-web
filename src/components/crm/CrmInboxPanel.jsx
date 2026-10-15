@@ -1,20 +1,23 @@
 import { useState, useEffect, useMemo } from 'react';
-import { 
-  Inbox, 
-  Home, 
-  Eye, 
-  UserCheck, 
-  Search, 
-  Phone, 
-  MessageCircle, 
-  AlertTriangle, 
-  Lock, 
-  RotateCcw, 
-  Building, 
-  DollarSign, 
-  Briefcase, 
-  Filter
+import {
+  Home,
+  Eye,
+  UserCheck,
+  Search,
+  Phone,
+  MessageCircle,
+  AlertTriangle,
+  Lock,
+  RotateCcw,
+  Building,
+  DollarSign,
+  Briefcase,
+  Clock,
+  Hand
 } from 'lucide-react';
+import { PageHeader, Tabs, SegmentedControl, Chip, Badge, Button, IconButton, Input, Card, Avatar, EmptyState, MotionRoot } from '../ui';
+import { cx } from '../ui/cx';
+import './CrmInboxPanel.css';
 import { canViewLeadPhone, maskPhoneNumber } from '../../utils/rbacRules';
 import { claimLeadAtomic } from '../../services/leads';
 import { normalizeAreaKey, getAreaById } from '../../utils/areasData';
@@ -134,10 +137,70 @@ function classifyLeadCategory(lead) {
 }
 
 const STAGES = [
-  { id: 'new', label_ar: 'جديد', label_en: 'New', color: 'var(--crm-danger)', icon: '🔴' },
-  { id: 'contacted', label_ar: 'اتصلنا', label_en: 'Contacted', color: 'var(--crm-warn)', icon: '📞' },
-  { id: 'site_visit', label_ar: 'معاينة', label_en: 'Site Visit', color: 'var(--crm-accent)', icon: '📅' }
+  { id: 'new', label_ar: 'جديد', label_en: 'New' },
+  { id: 'contacted', label_ar: 'اتصلنا', label_en: 'Contacted' },
+  { id: 'site_visit', label_ar: 'معاينة', label_en: 'Site visit' }
 ];
+
+const toMillis = (v) => {
+  if (!v) return NaN;
+  if (typeof v.toMillis === 'function') return v.toMillis();
+  if (typeof v.seconds === 'number') return v.seconds * 1000;
+  return new Date(v).getTime();
+};
+
+const money = (n, isAr) => `${Number(n).toLocaleString('en-US')} ${isAr ? 'ج.م' : 'EGP'}`;
+
+// When the request came in: the time if today, otherwise day and month (Latin digits, like the rest of the CRM)
+function formatReceived(lead, now, isAr) {
+  const t = toMillis(lead.createdAt || lead.timestamp);
+  if (!Number.isFinite(t)) return '';
+  const d = new Date(t);
+  const locale = isAr ? 'ar-EG-u-nu-latn' : 'en-GB';
+  if (new Date(now).toDateString() === d.toDateString()) {
+    return d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+  }
+  return d.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+}
+
+// Notes saved by older forms can carry "undefined" from missing fields
+const cleanNotes = (notes) => (sanitizeAndMergeNotes(notes) || '')
+  .replace(/في\s+(undefined|null)\b/gi, 'في سوهاج')
+  .replace(/\b(undefined|null)\b/gi, '')
+  .replace(/\s{2,}/g, ' ')
+  .trim();
+
+// The few facts staff need before calling, per request type, as label/value pairs
+function getLeadFacts(lead, tab, isAr) {
+  const d = lead.details || {};
+  const L = (ar, en) => (isAr ? ar : en);
+  const facts = [];
+  const add = (label, value, strong = false) => { if (value) facts.push({ label, value, strong }); };
+  if (tab === 'sellers') {
+    add(L('النوع', 'Type'), formatPropertyType(d.propertyType));
+    add(L('المنطقة', 'Area'), d.area && formatAreaName(d.area));
+    add(L('المساحة', 'Size'), d.size && `${d.size} ${L('م²', 'm²')}`);
+    add(L('السعر المطلوب', 'Asking price'), d.askingPrice && money(d.askingPrice, isAr), true);
+    add(L('التشطيب', 'Finishing'), d.finishingLabelAr);
+    add(L('الوضع القانوني', 'Legal'), d.legalSummaryAr);
+  } else if (tab === 'visits') {
+    add(L('كود العقار', 'Listing'), d.propertyCode || d.propertyId, true);
+    add(L('الموعد', 'Date'), d.visitDate && `${d.visitDate}${d.visitSlot ? ` · ${d.visitSlot}` : ''}`);
+    add(L('نوع المعاينة', 'Viewing'), d.inspectionType === 'remote' ? L('فيديو أونلاين', 'Video call') : L('في الموقع', 'On site'));
+  } else if (tab === 'buyers') {
+    add(L('المطلوب', 'Looking for'), d.propertyType && d.propertyType !== 'buyer' && formatPropertyType(d.propertyType));
+    add(L('المنطقة', 'Area'), d.area && formatAreaName(d.area));
+    add(L('الميزانية', 'Budget'), d.budget && money(d.budget, isAr), true);
+    add(L('السداد', 'Payment'), d.paymentMethod && (d.paymentMethod === 'cash' ? L('كاش', 'Cash') : L('تقسيط', 'Instalments')));
+  } else if (tab === 'accounts') {
+    add(L('البريد', 'Email'), lead.email);
+  } else if (tab === 'brokers') {
+    add(L('الشركة', 'Agency'), d.agencyName || L('وسيط مستقل', 'Independent'));
+    add(L('الترخيص', 'Licence'), d.licenseNo);
+    add(L('التغطية', 'Coverage'), d.coverageArea);
+  }
+  return facts;
+}
 
 export default function CrmInboxPanel({
   leads = [],
@@ -227,48 +290,43 @@ export default function CrmInboxPanel({
   const tabsList = useMemo(() => [
     { 
       id: 'sellers', 
-      label_ar: 'طلبات البيع والتثمين', 
-      label_en: 'Sale & Valuation', 
+      label_ar: 'بيع وتثمين', 
+      label_en: 'Sell & value', 
       icon: Home, 
       count: categorized.sellers.length, 
-      unhandled: unhandledCounts.sellers,
-      accent: 'var(--crm-warn)'
+      unhandled: unhandledCounts.sellers
     },
     { 
       id: 'visits', 
-      label_ar: 'طلبات المعاينة والزيارات', 
-      label_en: 'Site Visits & Bookings', 
+      label_ar: 'معاينات', 
+      label_en: 'Viewings', 
       icon: Eye, 
       count: categorized.visits.length, 
-      unhandled: unhandledCounts.visits,
-      accent: 'var(--crm-accent)'
+      unhandled: unhandledCounts.visits
     },
     { 
       id: 'buyers', 
-      label_ar: 'استفسارات وطلبات الشراء', 
-      label_en: 'Buyer Demands', 
+      label_ar: 'شراء', 
+      label_en: 'Buyers', 
       icon: DollarSign, 
       count: categorized.buyers.length, 
-      unhandled: unhandledCounts.buyers,
-      accent: 'var(--crm-positive)'
+      unhandled: unhandledCounts.buyers
     },
     { 
       id: 'accounts', 
-      label_ar: 'حسابات العملاء المسجلين', 
-      label_en: 'Registered Accounts', 
+      label_ar: 'حسابات', 
+      label_en: 'Accounts', 
       icon: UserCheck, 
       count: categorized.accounts.length, 
-      unhandled: unhandledCounts.accounts,
-      accent: 'var(--crm-info)'
+      unhandled: unhandledCounts.accounts
     },
     { 
       id: 'brokers', 
-      label_ar: 'شركاء شبكة الوسطاء', 
-      label_en: 'Broker Partners', 
+      label_ar: 'وسطاء', 
+      label_en: 'Brokers', 
       icon: Briefcase, 
       count: categorized.brokers.length, 
-      unhandled: unhandledCounts.brokers,
-      accent: 'var(--crm-muted)'
+      unhandled: unhandledCounts.brokers
     }
   ], [categorized, unhandledCounts]);
 
@@ -301,6 +359,14 @@ export default function CrmInboxPanel({
       return bTime - aTime;
     });
   }, [categorized, activeTab, stageFilter, searchQuery, canSeePhone]);
+
+  // How many requests in the open tab sit in each stage (the chip counts)
+  const stageCounts = useMemo(() => {
+    const list = categorized[activeTab] || [];
+    const counts = { all: list.length };
+    STAGES.forEach((st) => { counts[st.id] = list.filter((l) => (l.status || 'new') === st.id).length; });
+    return counts;
+  }, [categorized, activeTab]);
 
   // Atomic Claim Lead Handler via Firestore Transaction (الاستلام ذرّي ولا يغيّر الحالة إلى contacted)
   const handleClaimLead = async (lead) => {
@@ -339,7 +405,7 @@ export default function CrmInboxPanel({
       });
 
       if (triggerToast) {
-        triggerToast(isAr ? 'تم استلام الطلب وتعيينه لك بنجاح! 🔒' : 'Lead claimed by you!', 'success');
+        triggerToast(isAr ? 'الطلب بقى معاك' : 'Lead claimed by you', 'success');
       }
     } finally {
       setClaimingId(null);
@@ -408,500 +474,217 @@ export default function CrmInboxPanel({
       : `Hello ${name}, regarding your inquiry on 1Line...`;
   };
 
+  const totalNew = unhandledCounts[activeTab] || 0;
+  const hasFilters = stageFilter !== 'all' || searchQuery.trim() !== '';
+
   return (
-    <div className="crm-inbox-workspace animate-fadeIn">
-      
-      {/* 🏛️ Modern Header Bar with Executive SLA Badge */}
-      <div className="crm-inbox-header-wrap">
-        <div className="crm-inbox-title-cluster">
-          <h2 className="crm-inbox-main-title">
-            <Inbox size={22} style={{ color: 'var(--crm-accent-text)' }} />
-            <span>{isAr ? 'صندوق الوارد الذكي وإدارة الاستجابة' : 'Smart Triage Inbox'}</span>
-            <span className="crm-inbox-badge-360">Inbox 360°</span>
-          </h2>
-          <div className="crm-inbox-subtitle">
-            <span>
-              {isAr 
-                ? 'فصل مسارات البيع والمعاينة والشراء لضمان سرعة الرد ومنع تكرار الاتصال' 
-                : 'Isolated queues for sellers, viewings and buyers with exclusive claim ownership'}
-            </span>
-          </div>
-        </div>
+    <MotionRoot>
+      <div className="crm-inbox">
+        <PageHeader
+          title={isAr ? 'صندوق الوارد' : 'Inbox'}
+          description={isAr ? 'كل طلب جديد بيوصل هنا. استلمه علشان محدش تاني يكلّم نفس العميل.' : 'Every new request lands here. Claim it so nobody else calls the same client.'}
+        />
 
-        {/* Executive SLA Alerts Banner for Managers */}
+        {/* Managers only: unclaimed requests older than the response target */}
         {isSuperAdmin && slaBreaches.length > 0 && (
-          <div className="crm-inbox-sla-alert">
-            <AlertTriangle size={16} />
+          <div className="crm-inbox__notice" role="status">
+            <AlertTriangle size={16} aria-hidden="true" />
             <span>
-              {isAr ? `تنبيه المدير: يوجد ${formatArabicPlural(slaBreaches.length, 'طلب', 'طلبان', 'طلبات', 'طلباً')} تجاوزت ${slaMinutes} دقيقة دون استلام أو رد!` : `${slaBreaches.length} requests breached ${slaMinutes}-min response SLA!`}
+              {isAr
+                ? `${formatArabicPlural(slaBreaches.length, 'طلب', 'طلبان', 'طلبات', 'طلباً')} مستنية استلام من أكتر من ${slaMinutes} دقيقة`
+                : `${slaBreaches.length} requests unclaimed for over ${slaMinutes} minutes`}
             </span>
           </div>
         )}
-      </div>
 
-      {/* 🧭 The 5 Dedicated Workflow Tabs Bar */}
-      <div className="crm-inbox-tabs-grid">
-        {tabsList.map((t) => {
-          const isActive = activeTab === t.id;
-          const IconComp = t.icon;
-          return (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => { setActiveTab(t.id); setStageFilter('all'); }}
-              className={`crm-inbox-tab-btn ${isActive ? 'is-active' : ''}`}
-              style={{
-                '--tab-accent': t.accent || '#B38A45'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div className="crm-inbox-tab-icon-box">
-                  <IconComp size={18} />
-                </div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 'var(--crm-text-sm)', color: isActive ? 'var(--crm-ink)' : 'var(--crm-body)' }}>
-                    {isAr ? t.label_ar : t.label_en}
-                  </div>
-                  <div style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '2px' }}>
-                    {t.count} {isAr ? 'طلب إجمالي' : 'total'}
-                  </div>
-                </div>
-              </div>
+        <Tabs
+          label={isAr ? 'نوع الطلب' : 'Request type'}
+          value={activeTab}
+          onChange={(id) => { setActiveTab(id); setStageFilter('all'); }}
+          items={tabsList.map((t) => {
+            const IconComp = t.icon;
+            return { id: t.id, label: isAr ? t.label_ar : t.label_en, icon: <IconComp size={16} aria-hidden="true" />, count: t.unhandled || null };
+          })}
+        />
 
-              {/* Refined Badge */}
-              {t.unhandled > 0 ? (
-                <span className="crm-inbox-tab-badge-new">
-                  {t.unhandled} {isAr ? 'جديد' : 'new'}
-                </span>
-              ) : (
-                <span className="crm-inbox-tab-badge-zero">
-                  0
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* 🔍 Search & Stage Lifecycle Filter Bar */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '12px',
-        padding: '12px 16px',
-        background: 'var(--crm-card)',
-        borderRadius: '12px',
-        border: '1px solid var(--crm-line)'
-      }}>
-        {/* Search Input */}
-        <div className="crm-search-pill-wrapper" style={{ minWidth: '260px', flex: 1 }}>
-          <Search size={15} className="crm-search-pill-icon" />
-          <input
-            type="text"
-            placeholder={canSeePhone ? (isAr ? 'بحث بالاسم، الهاتف، كود العقار، أو الموظف المسند...' : 'Search by client, phone, code...') : (isAr ? 'بحث بالاسم، كود العقار، أو الموظف المسند...' : 'Search by client, code...')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="crm-search-pill-input"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              className="crm-search-pill-clear"
-              title={isAr ? 'مسح البحث' : 'Clear search'}
-            >
-              ✕
-            </button>
-          )}
-        </div>
-
-        {/* Stage Filter Chips */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: 700, marginInlineEnd: '4px' }}>
-            <Filter size={13} style={{ verticalAlign: 'middle', marginInlineEnd: '4px' }} />
-            {isAr ? 'الحالة:' : 'Stage:'}
-          </span>
-          <button
-            type="button"
-            className={`btn-stage-chip ${stageFilter === 'all' ? 'active' : ''}`}
-            onClick={() => setStageFilter('all')}
-            style={{
-              padding: '5px 10px',
-              borderRadius: '6px',
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: 700,
-              border: '1px solid',
-              borderColor: stageFilter === 'all' ? 'var(--crm-ink)' : 'var(--crm-line)',
-              background: stageFilter === 'all' ? 'var(--crm-ink)' : 'var(--crm-card)',
-              color: stageFilter === 'all' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
-              cursor: 'pointer'
-            }}
-          >
-            {isAr ? 'الكل' : 'All'}
-          </button>
-          {STAGES.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => setStageFilter(s.id)}
-              style={{
-                padding: '5px 10px',
-                borderRadius: '6px',
-                fontSize: 'var(--crm-text-xs)',
-                fontWeight: 700,
-                border: '1px solid',
-                borderColor: stageFilter === s.id ? s.color : 'var(--crm-line)',
-                background: stageFilter === s.id ? 'var(--crm-bg)' : 'var(--crm-card)',
-                color: stageFilter === s.id ? s.color : 'var(--crm-muted)',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}
-            >
-              <span>{s.icon}</span>
-              <span>{isAr ? s.label_ar : s.label_en}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 📦 Queue List Cards Container */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {currentItems.length === 0 ? (
-          <div style={{
-            textAlign: 'center',
-            padding: '48px 20px',
-            background: 'var(--crm-card)',
-            borderRadius: '14px',
-            border: '1px dashed var(--crm-line)',
-            color: 'var(--crm-muted)'
-          }}>
-            <Inbox size={38} style={{ margin: '0 auto 12px', color: 'var(--crm-muted)' }} />
-            <h4 style={{ margin: '0 0 6px 0', fontSize: 'var(--crm-text-base)', fontWeight: 800, color: 'var(--crm-ink)' }}>
-              {isAr ? 'لا توجد طلبات في هذا التبويب حالياً' : 'No requests in this queue'}
-            </h4>
-            <p style={{ margin: 0, fontSize: 'var(--crm-text-sm)' }}>
-              {isAr ? 'كافة الطلبات الواردة تم الرد عليها وإسنادها بنجاح.' : 'All incoming requests have been assigned and processed.'}
-            </p>
+        <div className="crm-inbox__toolbar">
+          <label className="crm-inbox__search">
+            <Search size={16} aria-hidden="true" />
+            <input
+              type="search"
+              aria-label={isAr ? 'بحث في الطلبات' : 'Search requests'}
+              placeholder={canSeePhone ? (isAr ? 'اسم، تليفون، كود عقار أو موظف' : 'Name, phone, code or agent') : (isAr ? 'اسم، كود عقار أو موظف' : 'Name, code or agent')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </label>
+          <div className="crm-inbox__chips" role="group" aria-label={isAr ? 'المرحلة' : 'Stage'}>
+            <Chip pressed={stageFilter === 'all'} count={stageCounts.all} onClick={() => setStageFilter('all')}>
+              {isAr ? 'الكل' : 'All'}
+            </Chip>
+            {STAGES.map((s) => (
+              <Chip key={s.id} pressed={stageFilter === s.id} count={stageCounts[s.id]} onClick={() => setStageFilter(s.id)}>
+                {isAr ? s.label_ar : s.label_en}
+              </Chip>
+            ))}
           </div>
+        </div>
+
+        <p className="crm-inbox__summary">
+          {isAr
+            ? `${currentItems.length} طلب${totalNew ? ` · ${totalNew} مستني استلام` : ''}`
+            : `${currentItems.length} requests${totalNew ? ` · ${totalNew} unclaimed` : ''}`}
+        </p>
+
+        {currentItems.length === 0 ? (
+          <EmptyState
+            title={hasFilters ? (isAr ? 'مفيش طلبات بالفلتر ده' : 'No requests match') : (isAr ? 'مفيش طلبات هنا دلوقتي' : 'Nothing here right now')}
+            description={hasFilters ? (isAr ? 'جرّب تشيل البحث أو تختار مرحلة تانية.' : 'Clear the search or pick another stage.') : (isAr ? 'أول ما يوصل طلب جديد هيظهر هنا.' : 'New requests show up here as they arrive.')}
+            action={hasFilters ? (
+              <Button variant="secondary" size="sm" onClick={() => { setSearchQuery(''); setStageFilter('all'); }}>
+                {isAr ? 'امسح الفلاتر' : 'Clear filters'}
+              </Button>
+            ) : null}
+          />
         ) : (
-          currentItems.map((lead) => {
-            const d = lead.details || {};
-            const isClaimedByMe = isLeadClaimedByMe(lead, currentUser, currentStaffName);
-            const isUnclaimed = isLeadUnclaimed(lead);
-            const ownerDisplay = getLeadOwnerDisplay(lead, isAr);
-            const cleanPhone = (lead.whatsapp || lead.phone || '').replace(/[^0-9]/g, '');
+          <ul className="crm-inbox__list">
+            {currentItems.map((lead) => {
+              const isClaimedByMe = isLeadClaimedByMe(lead, currentUser, currentStaffName);
+              const isUnclaimed = isLeadUnclaimed(lead);
+              const ownerDisplay = getLeadOwnerDisplay(lead, isAr);
+              const cleanPhone = (lead.whatsapp || lead.phone || '').replace(/[^0-9]/g, '');
+              const facts = getLeadFacts(lead, activeTab, isAr);
+              const images = lead.details?.images || [];
+              const notes = lead.notes ? cleanNotes(lead.notes) : '';
+              const when = formatReceived(lead, currentTime, isAr);
 
-            return (
-              <div
-                key={lead.id}
-                className={`crm-inbox-lead-card ${isUnclaimed ? 'is-unclaimed' : ''}`}
-              >
-                {/* Top Row: Client Identity & Ownership Badge */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div className="crm-inbox-avatar-box">
-                      {(lead.name || 'ع').trim()[0]}
-                    </div>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                        <h4 style={{ margin: 0, fontSize: 'var(--crm-text-md)', fontWeight: 800, color: 'var(--crm-ink)' }}>
-                          {lead.name || (isAr ? 'عميل بدون اسم' : 'Unnamed Lead')}
-                        </h4>
-                        {/* Stream Identifier Pill */}
-                        <span style={{
-                          fontSize: 'var(--crm-text-xs)',
-                          fontWeight: 700,
-                          background: 'var(--crm-bg)',
-                          padding: '2px 8px',
-                          borderRadius: '9999px',
-                          border: '1px solid var(--crm-line)',
-                          color: 'var(--crm-body)'
-                        }}>
-                          {activeTab === 'sellers' ? '💰 عرض بيع' :
-                           activeTab === 'visits' ? '🏠 حجز معاينة' :
-                           activeTab === 'buyers' ? '🎯 طلب شراء' :
-                           activeTab === 'accounts' ? '👤 حساب مسجل' : '🤝 وسيط شريك'}
-                        </span>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '4px' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                          <span>📞</span>
-                          <bdi dir="ltr" style={{ unicodeBidi: 'isolate', fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>
-                            {canSeePhone ? (formatPhoneNumber(lead.phone) || (isAr ? 'بدون هاتف' : 'No phone')) : maskPhoneNumber(lead.phone, userRole, userPerms)}
-                          </bdi>
-                        </span>
-                        {lead.createdAt && (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                            <span>🕒</span>
-                            <bdi dir="ltr">{new Date(lead.createdAt?.toMillis ? lead.createdAt.toMillis() : lead.createdAt).toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' })}</bdi>
+              return (
+                <li key={lead.id}>
+                  <Card padding="compact" className={cx('crm-inbox-item', isUnclaimed && 'is-new')}>
+                    <div className="crm-inbox-item__head">
+                      <Avatar name={lead.name || ''} />
+                      <div className="crm-inbox-item__who">
+                        <h2 className="crm-inbox-item__name">{lead.name || (isAr ? 'عميل بدون اسم' : 'Unnamed client')}</h2>
+                        <p className="crm-inbox-item__meta">
+                          <span>
+                            <Phone size={14} aria-hidden="true" />
+                            <bdi dir="ltr">
+                              {canSeePhone ? (formatPhoneNumber(lead.phone) || (isAr ? 'بدون تليفون' : 'No phone')) : maskPhoneNumber(lead.phone, userRole, userPerms)}
+                            </bdi>
                           </span>
+                          {when && (
+                            <span>
+                              <Clock size={14} aria-hidden="true" />
+                              {when}
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                      <div className="crm-inbox-item__owner">
+                        {isUnclaimed ? (
+                          <Button size="sm" icon={<Hand size={16} aria-hidden="true" />} loading={claimingId === lead.id} onClick={() => handleClaimLead(lead)}>
+                            {isAr ? 'استلم الطلب' : 'Claim'}
+                          </Button>
+                        ) : (
+                          <>
+                            <Badge tone={isClaimedByMe ? 'success' : 'neutral'} icon={<Lock size={12} aria-hidden="true" />}>
+                              {isClaimedByMe ? (isAr ? 'معاك' : 'Yours') : (isAr ? `مع ${ownerDisplay}` : `With ${ownerDisplay}`)}
+                            </Badge>
+                            {isSuperAdmin && (
+                              <IconButton
+                                size="sm"
+                                label={isAr ? 'تحويل لموظف تاني' : 'Reassign'}
+                                icon={<RotateCcw size={16} />}
+                                onClick={() => { setReassigningLeadId(lead.id); setReassignName(lead.assignedTo || ''); }}
+                              />
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
-                  </div>
 
-                  {/* Ownership & Claim Button Area */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {isUnclaimed ? (
-                      <button
-                        type="button"
-                        disabled={claimingId === lead.id}
-                        onClick={() => handleClaimLead(lead)}
-                        className="crm-inbox-claim-btn"
+                    {reassigningLeadId === lead.id && (
+                      <form
+                        className="crm-inbox-item__reassign"
+                        onSubmit={(e) => { e.preventDefault(); handleExecuteReassign(lead.id); }}
                       >
-                        <span>✋ {claimingId === lead.id ? (isAr ? 'جارٍ الاستلام...' : 'Claiming...') : (isAr ? 'استلمت الطلب' : 'Claim Lead')}</span>
-                      </button>
-                    ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span className={`crm-inbox-claimed-badge ${isClaimedByMe ? 'is-mine' : ''}`}>
-                          <Lock size={12} />
-                          <span>{isClaimedByMe ? (isAr ? 'قيد متابعتك 🔒' : 'Assigned to you') : (isAr ? `مع: ${ownerDisplay}` : `With: ${ownerDisplay}`)}</span>
-                        </span>
+                        <Input
+                          label={isAr ? 'تحويل المتابعة إلى' : 'Assign to'}
+                          placeholder={isAr ? 'اسم الموظف أو الفريق' : 'Agent or team'}
+                          value={reassignName}
+                          onChange={(e) => setReassignName(e.target.value)}
+                        />
+                        <Button type="submit" size="sm" disabled={!reassignName.trim()}>{isAr ? 'حوّل' : 'Assign'}</Button>
+                        <Button variant="ghost" size="sm" onClick={() => setReassigningLeadId(null)}>{isAr ? 'إلغاء' : 'Cancel'}</Button>
+                      </form>
+                    )}
 
-                        {isSuperAdmin && (
-                          <button
-                            type="button"
-                            onClick={() => { setReassigningLeadId(lead.id); setReassignName(lead.assignedTo || ''); }}
-                            title={isAr ? 'إعادة الإسناد لموظف آخر' : 'Reassign'}
-                            style={{
-                              background: 'var(--crm-card)',
-                              border: '1px solid var(--crm-line)',
-                              borderRadius: '6px',
-                              padding: '4px 8px',
-                              fontSize: 'var(--crm-text-xs)',
-                              cursor: 'pointer',
-                              color: 'var(--crm-muted)'
-                            }}
-                          >
-                            <RotateCcw size={12} />
-                          </button>
-                        )}
+                    {facts.length > 0 && (
+                      <dl className="crm-inbox-item__facts">
+                        {facts.map((f) => (
+                          <div key={f.label} className={cx(f.strong && 'is-strong')}>
+                            <dt>{f.label}</dt>
+                            <dd>{f.value}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    )}
+
+                    {notes && <p className="crm-inbox-item__notes">{notes}</p>}
+
+                    {images.length > 0 && (
+                      <div className="crm-inbox-item__photos">
+                        {images.slice(0, 4).map((img, i) => (
+                          <img key={img} src={img} alt={isAr ? `صورة ${i + 1} من العميل` : `Client photo ${i + 1}`} loading="lazy" />
+                        ))}
+                        {images.length > 4 && <span className="crm-inbox-item__more">+{images.length - 4}</span>}
                       </div>
                     )}
-                  </div>
-                </div>
 
-                {/* Manager Reassign Input Popout */}
-                {reassigningLeadId === lead.id && (
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '8px 12px',
-                    background: 'var(--crm-bg)',
-                    borderRadius: '8px',
-                    border: '1px solid var(--crm-line)'
-                  }}>
-                    <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 700, color: 'var(--crm-ink)' }}>{isAr ? 'تحويل المتابعة إلى:' : 'Assign to:'}</span>
-                    <input
-                      type="text"
-                      placeholder={isAr ? 'اسم الموظف أو الفريق...' : 'Agent name...'}
-                      value={reassignName}
-                      onChange={(e) => setReassignName(e.target.value)}
-                      style={{ padding: '4px 8px', fontSize: 'var(--crm-text-sm)', borderRadius: '4px', border: '1px solid var(--crm-line)', background: 'var(--crm-card)', color: 'var(--crm-ink)' }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleExecuteReassign(lead.id)}
-                      style={{ background: 'var(--crm-ink)', color: 'var(--crm-on-dark)', border: 'none', borderRadius: '4px', padding: '4px 10px', fontSize: 'var(--crm-text-xs)', cursor: 'pointer' }}
-                    >
-                      {isAr ? 'تأكيد' : 'Save'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setReassigningLeadId(null)}
-                      style={{ background: 'transparent', border: 'none', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', cursor: 'pointer' }}
-                    >
-                      {isAr ? 'إلغاء' : 'Cancel'}
-                    </button>
-                  </div>
-                )}
-
-                {/* Detailed Spec Block Specific to Stream */}
-                <div style={{
-                  background: 'var(--crm-bg)',
-                  borderRadius: '10px',
-                  padding: '10px 14px',
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '12px',
-                  fontSize: 'var(--crm-text-sm)',
-                  border: '1px solid var(--crm-line)',
-                  color: 'var(--crm-body)'
-                }}>
-                  {activeTab === 'sellers' && (
-                    <>
-                      {d.propertyType && <span style={{ fontWeight: 700, color: 'var(--crm-ink)' }}>🏢 {formatPropertyType(d.propertyType)}</span>}
-                      {d.area && <span>📍 {formatAreaName(d.area)}</span>}
-                      {d.size && <span>📐 {d.size} م²</span>}
-                      {d.askingPrice && <span style={{ color: 'var(--crm-positive)', fontWeight: 800 }}>💰 المطلوب: {Number(d.askingPrice).toLocaleString('en-US')} ج.م</span>}
-                      {d.finishingLabelAr && <span>✨ {d.finishingLabelAr}</span>}
-                      {d.legalSummaryAr && <span>📜 {d.legalSummaryAr}</span>}
-                    </>
-                  )}
-
-                  {activeTab === 'visits' && (
-                    <>
-                      {(d.propertyCode || d.propertyId) && (
-                        <span style={{ fontWeight: 800, color: 'var(--crm-accent)' }}>
-                          🏷️ {isAr ? 'كود العقار:' : 'Code:'} {d.propertyCode || d.propertyId}
-                        </span>
-                      )}
-                      {d.visitDate && (
-                        <span style={{ fontWeight: 700 }}>
-                          📅 {isAr ? 'الموعد:' : 'Date:'} {d.visitDate} {d.visitSlot ? `(${d.visitSlot})` : ''}
-                        </span>
-                      )}
-                      <span>🚗 {d.inspectionType === 'remote' ? (isAr ? 'فيديو مباشر للمغتربين' : 'Remote Video') : (isAr ? 'معاينة ميدانية بالموقع' : 'On-Site Viewing')}</span>
-                    </>
-                  )}
-
-                  {activeTab === 'buyers' && (
-                    <>
-                      {d.propertyType && d.propertyType !== 'buyer' && <span style={{ fontWeight: 700, color: 'var(--crm-ink)' }}>🏢 {isAr ? 'المطلوب:' : 'Desired:'} {formatPropertyType(d.propertyType)}</span>}
-                      {d.area && <span>📍 {isAr ? 'المنطقة:' : 'Area:'} {formatAreaName(d.area)}</span>}
-                      {d.budget && <span style={{ color: 'var(--crm-positive)', fontWeight: 800 }}>💰 الميزانية: {Number(d.budget).toLocaleString('en-US')} ج.م</span>}
-                      {d.paymentMethod && <span>💳 طريقة السداد: {d.paymentMethod === 'cash' ? 'كاش' : 'تقسيط'}</span>}
-                    </>
-                  )}
-
-                  {activeTab === 'accounts' && (
-                    <>
-                      <span>📧 {lead.email || (isAr ? 'بدون بريد' : 'No email')}</span>
-                      <span>📅 {isAr ? 'تاريخ التسجيل:' : 'Registered:'} {lead.createdAt ? new Date(lead.createdAt?.toMillis ? lead.createdAt.toMillis() : lead.createdAt).toLocaleDateString('ar-EG-u-nu-latn') : (isAr ? 'غير معروف' : 'Unknown')}</span>
-                      <span>👤 {isAr ? 'مستخدم مسجل في البوابة' : 'Registered Web Client'}</span>
-                    </>
-                  )}
-
-                  {activeTab === 'brokers' && (
-                    <>
-                      <span>🤝 {d.agencyName || (isAr ? 'وسيط مستقل' : 'Independent Broker')}</span>
-                      {d.licenseNo && <span>📜 {isAr ? 'ترخيص رقم:' : 'Licence:'} {d.licenseNo}</span>}
-                      {d.coverageArea && <span>📍 {d.coverageArea}</span>}
-                    </>
-                  )}
-
-                  {lead.notes && (
-                    <div style={{ width: '100%', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', borderTop: '1px dashed var(--crm-line)', paddingTop: '6px', marginTop: '2px', lineHeight: 1.6 }}>
-                      <strong style={{ color: 'var(--crm-ink)' }}>📝 {isAr ? 'ملاحظات:' : 'Notes:'}</strong>{' '}
-                      {(sanitizeAndMergeNotes(lead.notes) || '')
-                        .replace(/في\s+undefined\b/gi, 'في سوهاج')
-                        .replace(/في\s+null\b/gi, 'في سوهاج')
-                        .replace(/\b(undefined|null)\b/gi, '')
-                        .replace(/\s{2,}/g, ' ')
-                        .trim()}
-                    </div>
-                  )}
-                </div>
-
-                {/* Photos Preview Strip if photos exist */}
-                {d.images && d.images.length > 0 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflowX: 'auto', padding: '4px 0' }}>
-                    <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: 700 }}>📸 {d.images.length} صور:</span>
-                    {d.images.slice(0, 4).map((img, _idx) => (
-                      <img
-                        key={_idx}
-                        src={img}
-                        alt="Preview"
-                        style={{ width: '50px', height: '38px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--crm-line)' }}
+                    <div className="crm-inbox-item__foot">
+                      <SegmentedControl
+                        label={isAr ? 'مرحلة المتابعة' : 'Follow-up stage'}
+                        value={lead.status && STAGES.some((s) => s.id === lead.status) ? lead.status : 'new'}
+                        onChange={(id) => handleSetStage(lead, id)}
+                        options={STAGES.map((s) => ({ value: s.id, label: isAr ? s.label_ar : s.label_en }))}
                       />
-                    ))}
-                  </div>
-                )}
-
-                {/* Bottom Row: 3-Stage Lifecycle Stepper & Quick Actions */}
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: '12px',
-                  borderTop: '1px solid var(--crm-line)',
-                  paddingTop: '12px'
-                }}>
-                  {/* The Stages Lifecycle Stepper */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: 700 }}>
-                      {isAr ? 'مرحلة المتابعة:' : 'Stage:'}
-                    </span>
-                    <div className="crm-inbox-stage-tracker">
-                      {STAGES.map((s) => {
-                        const isCurrent = (lead.status || 'new') === s.id;
-                        return (
-                          <button
-                            key={s.id}
-                            type="button"
-                            onClick={() => handleSetStage(lead, s.id)}
-                            className={`crm-inbox-stage-pill ${isCurrent ? 'is-active' : ''}`}
-                            style={{ '--stage-color': s.color }}
+                      <div className="crm-inbox-item__actions">
+                        {canSeePhone && cleanPhone && (
+                          <a
+                            href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(getWhatsAppMessage(lead))}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ui-btn ui-btn--secondary ui-btn--sm"
                           >
-                            {isAr ? s.label_ar : s.label_en}
-                          </button>
-                        );
-                      })}
+                            <MessageCircle size={16} aria-hidden="true" />
+                            {isAr ? 'واتساب' : 'WhatsApp'}
+                          </a>
+                        )}
+                        {canSeePhone && lead.phone && (
+                          <a href={`tel:${lead.phone}`} className="ui-btn ui-btn--secondary ui-btn--sm">
+                            <Phone size={16} aria-hidden="true" />
+                            {isAr ? 'اتصال' : 'Call'}
+                          </a>
+                        )}
+                        {activeTab === 'sellers' && onConvertToProperty && (
+                          <Button variant="secondary" size="sm" icon={<Building size={16} aria-hidden="true" />} onClick={() => onConvertToProperty(lead)}>
+                            {isAr ? 'حوّله لعقار' : 'To listing'}
+                          </Button>
+                        )}
+                        {onOpenLead && (
+                          <Button variant="ghost" size="sm" icon={<Eye size={16} aria-hidden="true" />} onClick={() => onOpenLead(lead)}>
+                            {isAr ? 'ملف العميل' : 'Client profile'}
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-
-                  {/* Quick Action Buttons */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                    {/* WhatsApp Action with smart text */}
-                    {canSeePhone && cleanPhone && (
-                      <a
-                        href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(getWhatsAppMessage(lead))}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="crm-inbox-action-btn is-whatsapp"
-                      >
-                        <MessageCircle size={14} />
-                        <span>{isAr ? 'واتساب مخصص' : 'WhatsApp'}</span>
-                      </a>
-                    )}
-
-                    {/* Direct Call */}
-                    {canSeePhone && lead.phone && (
-                      <a
-                        href={`tel:${lead.phone}`}
-                        className="crm-inbox-action-btn is-outline"
-                      >
-                        <Phone size={13} />
-                        <span>{isAr ? 'اتصال' : 'Call'}</span>
-                      </a>
-                    )}
-
-                    {/* Convert to Property (for sellers) */}
-                    {activeTab === 'sellers' && onConvertToProperty && (
-                      <button
-                        type="button"
-                        onClick={() => onConvertToProperty(lead)}
-                        className="crm-inbox-action-btn is-accent"
-                      >
-                        <Building size={14} />
-                        <span>{isAr ? 'تحويل لعقار' : 'To Property'}</span>
-                      </button>
-                    )}
-
-                    {/* Open Drawer */}
-                    {onOpenLead && (
-                      <button
-                        type="button"
-                        onClick={() => onOpenLead(lead)}
-                        className="crm-inbox-action-btn is-outline"
-                      >
-                        <Eye size={13} />
-                        <span>{isAr ? 'التفاصيل' : 'Details'}</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })
+                  </Card>
+                </li>
+              );
+            })}
+          </ul>
         )}
       </div>
-    </div>
+    </MotionRoot>
   );
 }

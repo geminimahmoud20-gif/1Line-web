@@ -220,7 +220,6 @@ export default function SmartMatchingHub({
           <h2 className="crm-header-main-title">
             <Sparkles size={22} style={{ color: 'var(--crm-accent-text)' }} />
             <span>{isAr ? 'محرك المطابقة الذكي اللحظي AI' : 'Live Smart AI Matching Engine'}</span>
-            <span className="crm-badge-360">Matching AI 360°</span>
           </h2>
           <div className="crm-header-subtitle">
             <span>

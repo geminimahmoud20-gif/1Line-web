@@ -108,15 +108,21 @@ export default function KanbanPipeline({
     if (found) {
       return isAr ? (found.name_ar || found.label_ar) : (found.name_en || found.label_en);
     }
-    return areaKey;
+    // An unknown internal key (e.g. "new_area_2") must not reach the card as raw text
+    return /^[a-z0-9_-]+$/i.test(String(areaKey)) ? (isAr ? 'سوهاج' : 'Sohag') : areaKey;
   };
 
   // Format time ago
   const formatTimeAgo = (timestamp) => {
     if (!timestamp) return isAr ? 'اليوم' : 'Today';
     try {
+      // Firestore Timestamps (createdAt on imported and staff-added leads) are not Dates: new Date(ts) gave NaN
+      const ms = typeof timestamp?.toMillis === 'function' ? timestamp.toMillis()
+        : typeof timestamp?.seconds === 'number' ? timestamp.seconds * 1000
+        : new Date(timestamp).getTime();
+      if (!Number.isFinite(ms)) return isAr ? 'مؤخراً' : 'Recent';
       // eslint-disable-next-line react-hooks/purity -- "time ago" label must use the current clock
-      const diffMs = Date.now() - new Date(timestamp).getTime();
+      const diffMs = Date.now() - ms;
       const diffMins = Math.floor(diffMs / 60000);
       if (diffMins < 2) return isAr ? 'الآن' : 'Just now';
       if (diffMins < 60) return isAr ? `منذ ${diffMins} دقيقة` : `${diffMins}m ago`;
@@ -445,7 +451,6 @@ export default function KanbanPipeline({
           <h2 className="crm-header-main-title">
             <Sparkles size={22} style={{ color: 'var(--crm-accent-text)' }} />
             <span>{isAr ? 'مسار الصفقات والمبيعات المرئي' : 'Visual Sales Deals Pipeline'}</span>
-            <span className="crm-badge-360">Pipeline 360°</span>
           </h2>
           <div className="crm-header-subtitle">
             <span>
