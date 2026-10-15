@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Download, ChevronDown, FileSpreadsheet, FileText, FileJson } from 'lucide-react';
 import { exportRows } from '../../utils/transfer/exportTable';
 import './data-transfer.css';
+import { Button } from '../ui';
 
 /**
  * "تصدير ▾" — Excel / CSV / JSON. getRows() returns the table rows (labelled columns);
@@ -39,11 +40,18 @@ export default function ExportMenu({ getRows, getJson, baseName, sheetName, labe
 
   return (
     <div className="dx-menu" ref={ref}>
-      <button type="button" className="btn btn-outline" onClick={() => setOpen((o) => !o)} disabled={disabled || busy} aria-haspopup="menu" aria-expanded={open}>
-        <Download size={16} aria-hidden="true" />
-        <span>{busy ? 'جاري التجهيز…' : label}</span>
-        <ChevronDown size={14} aria-hidden="true" />
-      </button>
+      <Button
+        variant="secondary"
+        icon={<Download size={16} aria-hidden="true" />}
+        iconEnd={<ChevronDown size={16} aria-hidden="true" />}
+        loading={busy}
+        disabled={disabled}
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+      >
+        {busy ? 'جاري التجهيز…' : label}
+      </Button>
       {open && (
         <div className="dx-menu-list" role="menu">
           <button type="button" role="menuitem" onClick={() => run('excel')}><FileSpreadsheet size={16} aria-hidden="true" /><span><b>Excel</b><small>.xlsx — للفتح والتعديل في Excel أو Google Sheets</small></span></button>
