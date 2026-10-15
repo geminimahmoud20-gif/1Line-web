@@ -108,6 +108,7 @@ import './styles/luxury-system.css';
 import './styles/home-luxe.css';
 import './styles/mobile-polish.css';
 import AppRoutes from './AppRoutes';
+import { withoutContact } from './utils/sellerListing';
 
 /**
  * Main Application Shell & Route Controller
@@ -377,6 +378,7 @@ function AppContent() {
     const priceDesc = data.askingPrice 
       ? ` | السعر المطلوب: ${Number(data.askingPrice).toLocaleString('en-US')} ج.م` 
       : (data.estimatedAvg ? ` | التقدير الآلي: ${Number(data.estimatedAvg).toLocaleString('en-US')} ج.م` : '');
+    const featuresDesc = Array.isArray(data.featuresAr) && data.featuresAr.length > 0 ? ` | المميزات: ${data.featuresAr.join('، ')}` : '';
     const photosDesc = data.images && data.images.length > 0 ? ` | مرفق ${data.images.length} صور` : '';
     const propLabel = PROPERTY_TYPE_NAMES_AR[data.propertyType] || data.propertyType || 'عقار';
     const areaLabel = (data.area && AREA_NAMES_AR[data.area]) || data.area || 'سوهاج';
@@ -389,8 +391,9 @@ function AppContent() {
       area: data.area || 'new_sohag',
       type: 'seller',
       landingPage: '/sell',
-      notes: `عرض بيع ${propLabel} في ${areaLabel} بمساحة ${data.size || ''}م²${priceDesc}${floorDesc}${finishingDesc}${legalSummary}${photosDesc}`,
-      details: data
+      notes: `عرض بيع ${propLabel} في ${areaLabel} بمساحة ${data.size || ''}م²${priceDesc}${floorDesc}${finishingDesc}${featuresDesc}${legalSummary}${photosDesc}`,
+      // The lead is visible to roles that may not see contact details: phone/name stay out of details
+      details: withoutContact(data)
     });
   };
 

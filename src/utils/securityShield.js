@@ -137,6 +137,8 @@ export function sanitizeInput(input) {
 
 export function sanitizeObject(obj) {
   if (!obj || typeof obj !== 'object') return obj;
+  // Lists stay lists (photos, documents, features); they used to come back as {0: …, 1: …}
+  if (Array.isArray(obj)) return obj.map((v) => (typeof v === 'string' ? sanitizeInput(v) : sanitizeObject(v)));
   const sanitized = {};
   for (const [key, value] of Object.entries(obj)) {
     if (typeof value === 'string') {
