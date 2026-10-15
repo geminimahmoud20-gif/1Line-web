@@ -630,7 +630,7 @@ export default function CrmInboxPanel({
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', marginTop: '4px' }}>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                           <span>📞</span>
-                          <bdi dir="ltr" style={{ unicodeBidi: 'isolate', fontFamily: 'monospace', fontWeight: 600 }}>
+                          <bdi dir="ltr" style={{ unicodeBidi: 'isolate', fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>
                             {canSeePhone ? (formatPhoneNumber(lead.phone) || (isAr ? 'بدون هاتف' : 'No phone')) : maskPhoneNumber(lead.phone, userRole, userPerms)}
                           </bdi>
                         </span>

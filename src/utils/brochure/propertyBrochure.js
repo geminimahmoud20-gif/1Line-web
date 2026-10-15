@@ -18,7 +18,7 @@ const GOLD = '#C9A15A';
 const GOLD_LIGHT = '#E9D29A';
 const INK = '#1E293B';
 const MUTED = '#5B6577';
-const FONT = "'IBM Plex Sans Arabic', 'Cairo', 'Segoe UI', Tahoma, sans-serif";
+const FONT = "'Cairo', 'Segoe UI', Tahoma, sans-serif";
 
 /** Tiny element helper: text always goes through textContent (listing data is never parsed as HTML) */
 function h(tag, style = {}, children = []) {

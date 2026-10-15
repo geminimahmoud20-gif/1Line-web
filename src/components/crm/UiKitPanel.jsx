@@ -103,7 +103,7 @@ function Kit() {
 
       <div className="ui-kit__grid">
         <Card>
-          <CardHeader title="الخط" description="Alexandria، 8 أحجام بس." />
+          <CardHeader title="الخط" description="Cairo، 8 أحجام بس." />
           <div className="ui-kit__stack ui-kit__type">
             <p style={{ fontSize: 'var(--ui-fs-8)', fontWeight: 'var(--ui-fw-bold)' }}>1,250,000 · 34</p>
             <p style={{ fontSize: 'var(--ui-fs-7)', fontWeight: 'var(--ui-fw-bold)' }}>رقم مهم · 28</p>

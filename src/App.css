@@ -96,7 +96,7 @@
   gap: 3px;
   direction: ltr !important;
   unicode-bidi: isolate;
-  font-family: 'Outfit', 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-ar);
   font-size: 1.35rem;
   font-weight: 900;
   line-height: 1;
@@ -133,7 +133,7 @@
 }
 
 .brand-subtitle {
-  font-family: var(--font-ar, 'Alexandria', system-ui, sans-serif);
+  font-family: var(--font-ar);
   font-size: 0.68rem;
   color: #475569;
   font-weight: 700;
@@ -7225,7 +7225,7 @@ html.dark .mobile-sticky-price strong {
   gap: 3px;
   direction: ltr !important;
   unicode-bidi: isolate;
-  font-family: 'Outfit', 'Montserrat', -apple-system, sans-serif;
+  font-family: var(--font-ar);
   font-size: 1.3rem;
   font-weight: 900;
   letter-spacing: 0.8px;
@@ -12836,7 +12836,8 @@ body.dark-theme .compare-tabs-bar {
 
 .serial-code-text {
   font-size: 1.25rem;
-  font-family: monospace;
+  font-family: var(--font-ar);
+  font-variant-numeric: tabular-nums;
   color: var(--brand-navy-light, #0284c7);
   letter-spacing: 1.5px;
 }
@@ -14289,7 +14290,7 @@ body.dark-theme .compare-tabs-bar {
    🌟 SOTHEBY'S BENCHMARK: LUXURY SERIF ACCENT
    ============================================================ */
 .luxury-serif-title {
-  font-family: 'Playfair Display', Georgia, 'Amiri', 'Cairo', serif;
+  font-family: var(--font-ar);
   letter-spacing: -0.3px;
   line-height: 1.35;
 }
@@ -15248,7 +15249,8 @@ body.dark-theme .compare-tabs-bar {
   font-weight: 900;
   letter-spacing: 2px;
   color: #0b1f3a;
-  font-family: monospace;
+  font-family: var(--font-ar);
+  font-variant-numeric: tabular-nums;
 }
 
 .dark-theme .token-text,
@@ -15334,7 +15336,8 @@ body.dark-theme .compare-tabs-bar {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-family: monospace;
+  font-family: var(--font-ar);
+  font-variant-numeric: tabular-nums;
 }
 
 .btn-client-auth-primary.confirm-ready-btn {
@@ -17186,7 +17189,7 @@ body:has(.lightbox-overlay) .floating-back-to-top-btn {
   line-height: 1.1;
   letter-spacing: -0.5px;
   margin-bottom: 6px;
-  font-family: var(--font-number, 'Outfit', 'Inter', sans-serif);
+  font-family: var(--font-number);
 }
 
 .about-stat-label {
@@ -17519,7 +17522,7 @@ body:has(.lightbox-overlay) .floating-back-to-top-btn {
   font-size: 1.4rem;
   font-weight: 900;
   color: #ECC875;
-  font-family: var(--font-number, 'Outfit', 'Inter', sans-serif);
+  font-family: var(--font-number);
 }
 
 .standard-pill-badge {

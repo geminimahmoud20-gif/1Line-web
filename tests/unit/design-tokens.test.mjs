@@ -104,3 +104,23 @@ test('old CRM code does not gain hard-coded colours, inline styles or !important
   assert.ok(inlineStyle <= CRM_LIMITS.inlineStyle, `CRM style={{}} ${inlineStyle} > ${CRM_LIMITS.inlineStyle}: use src/components/ui or a class`);
   assert.ok(important <= CRM_LIMITS.important, `CRM !important ${important} > ${CRM_LIMITS.important}`);
 });
+
+// One typeface across the site and the CRM (owner's choice: Cairo). index.html loads only Cairo, and
+// no stylesheet or component names another family; numbers use tabular figures instead of monospace.
+test('Cairo is the only font the site loads or names', () => {
+  const html = read('index.html');
+  const families = [...html.matchAll(/fonts\.googleapis\.com\/css2\?([^"]+)/g)].flatMap((m) => [...m[1].matchAll(/family=([^:&]+)/g)].map((f) => f[1]));
+  assert.ok(families.length > 0 && families.every((f) => f === 'Cairo'), `index.html loads ${families.join(', ')}`);
+  const banned = /(Alexandria|Plus Jakarta Sans|IBM Plex|Outfit|Playfair|Montserrat|Tajawal|Readex|Noto Kufi|\bInter\b|monospace)/;
+  const files = walk('src').filter((f) => /\.(css|jsx|js)$/.test(f));
+  for (const f of files) {
+    for (const m of read(f).matchAll(/font-?[fF]amily\s*[:=]\s*([^;\n}]+)/g)) {
+      assert.ok(!banned.test(m[1]), `${f}: font-family ${m[1].trim()} — use var(--font-ar) / var(--ui-font) (Cairo)`);
+    }
+  }
+  for (const f of ['src/index.css', 'src/styles/luxury-system.css', 'src/styles/mobile-polish.css', 'src/components/crm/crm-luxury.css', 'src/styles/tokens.css']) {
+    for (const m of read(f).matchAll(/--(?:font-[a-z]+|crm-font|ui-font)\s*:\s*([^;]+);/g)) {
+      assert.match(m[1], /^'Cairo'/, `${f}: ${m[0]}`);
+    }
+  }
+});

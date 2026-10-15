@@ -34,7 +34,7 @@
   position: relative;
   overflow-x: hidden;
   transition: background-color 0.25s ease, color 0.25s ease;
-  font-family: var(--crm-font, 'Alexandria', 'Plus Jakarta Sans', system-ui, sans-serif) !important;
+  font-family: var(--crm-font) !important;
   letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

@@ -7,7 +7,7 @@
 
 /* ── Canvas & typography ─────────────────────────────────── */
 :root {
-  --crm-font: 'Alexandria', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --crm-font: 'Cairo', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif;
 }
 
 .crm-layout {

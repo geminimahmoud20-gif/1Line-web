@@ -71,7 +71,7 @@
   --ui-focus: color-mix(in srgb, var(--ui-blue) 55%, transparent);
 
   /* Type: one family, 8 sizes, 4 weights */
-  --ui-font: 'Alexandria', 'IBM Plex Sans Arabic', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ui-font: 'Cairo', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif;
   --ui-fs-1: 0.75rem;    /* 12 captions, badges */
   --ui-fs-2: 0.8125rem;  /* 13 table cells, meta */
   --ui-fs-3: 0.875rem;   /* 14 body, buttons */
