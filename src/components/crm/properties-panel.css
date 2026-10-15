@@ -1,0 +1,33 @@
+/* CRM → العقارات (redesign phase 3): header, featured block, notices and filters from the UI kit. */
+.crm-props { display: flex; flex-direction: column; gap: var(--ui-s-4); font-family: var(--ui-font); color: var(--ui-text); }
+.crm-props .ui-page-head { margin-bottom: 0; }
+.crm-props__slots-toggle {
+  width: 100%; display: flex; align-items: center; gap: var(--ui-s-2); padding: 0;
+  border: 0; background: none; font: inherit; color: var(--ui-text); text-align: start; cursor: pointer;
+}
+.crm-props__slots-toggle:focus-visible { outline: none; box-shadow: var(--ui-sh-focus); border-radius: var(--ui-r-sm); }
+.crm-props__slots-toggle > svg:first-child { color: var(--ui-accent); }
+.crm-props__slots-title { flex: 1; font-size: var(--ui-fs-3); font-weight: var(--ui-fw-bold); }
+.crm-props__slots-toggle .is-open { transform: rotate(180deg); }
+#crm-props-slots { margin-top: var(--ui-s-3); }
+.crm-props__notice {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-s-2) var(--ui-s-3);
+  padding: var(--ui-s-3); border-radius: var(--ui-r-md); background: var(--ui-warning-tint); color: var(--ui-warning);
+  font-size: var(--ui-fs-2); font-weight: var(--ui-fw-semibold);
+}
+.crm-props__notice > span { flex: 1 1 260px; }
+.crm-props__toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ui-s-3); }
+.crm-props__chips { display: flex; gap: var(--ui-s-2); overflow-x: auto; scrollbar-width: none; max-width: 100%; }
+.crm-props__chips::-webkit-scrollbar { display: none; }
+.crm-props__chips .ui-chip { flex-shrink: 0; }
+.crm-props__search {
+  flex: 0 1 300px; display: flex; align-items: center; gap: var(--ui-s-2); height: var(--ui-control-h); padding: 0 var(--ui-s-3);
+  background: var(--ui-surface); border: 1px solid var(--ui-line-strong); border-radius: var(--ui-r-md); color: var(--ui-text-3);
+}
+.crm-props__search:focus-within { border-color: var(--ui-info); box-shadow: var(--ui-sh-focus); }
+.crm-props__search input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; font: var(--ui-fw-regular) var(--ui-field-fs) / 1 var(--ui-font); color: var(--ui-text); }
+.crm-layout .crm-props .admin-data-table td.crm-props__empty { padding: 0; }
+.crm-layout .crm-props .admin-table-wrapper { margin: 0; border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); box-shadow: var(--ui-sh-1); }
+@media (max-width: 639px) {
+  .crm-props__search { flex: 1 1 100%; }
+}

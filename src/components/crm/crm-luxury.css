@@ -1128,15 +1128,6 @@ button.crm-lead-chip.is-dupe:hover { text-decoration: underline; }
   max-width: 380px;
 }
 
-.crm-search-icon-prefix {
-  position: absolute;
-  inset-inline-start: 12px;
-  color: var(--crm-muted);
-  pointer-events: none;
-  display: flex;
-  align-items: center;
-}
-
 .crm-search-pill-input {
   width: 100%;
   height: 38px;
@@ -1159,24 +1150,6 @@ button.crm-lead-chip.is-dupe:hover { text-decoration: underline; }
   background: var(--crm-card);
   border-color: var(--crm-accent);
   box-shadow: 0 0 0 3px rgba(179, 138, 69, 0.15);
-}
-
-.crm-search-clear-btn {
-  position: absolute;
-  inset-inline-end: 10px;
-  background: transparent;
-  border: none;
-  color: var(--crm-muted);
-  cursor: pointer;
-  padding: 3px;
-  display: flex;
-  align-items: center;
-  border-radius: 50%;
-}
-
-.crm-search-clear-btn:hover {
-  color: var(--crm-ink);
-  background: var(--crm-line);
 }
 
 .crm-select-custom-pill {

@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import useOpenRequest from '../../hooks/useOpenRequest';
-import { Building, Plus, Trash2, Upload, Eye, EyeOff, Archive, Search, X } from 'lucide-react';
+import { Building, Plus, Upload, Search, Star, ChevronDown, AlertTriangle } from 'lucide-react';
+import { PageHeader, Button, Card, Badge, Chip, EmptyState } from '../ui';
+import './properties-panel.css';
 import { getAreas } from '../../utils/areasData';
 import HomepageSlotsBoard, { FeaturedSlotModal } from './HomepageSlotsBoard';
 
@@ -94,6 +96,7 @@ export default function PropertyManagerPanel({
   const [statusFilter, setStatusFilter] = useState('all');
   const [sampleOnly, setSampleOnly] = useState(false); // 'all' | 'published' | 'hidden' | 'under_negotiation' | 'sold' | 'trash'
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSlots, setShowSlots] = useState(false);
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [notifierProperty, setNotifierProperty] = useState(null);
   const [notifierEventType, setNotifierEventType] = useState('new_unit');
@@ -516,64 +519,34 @@ export default function PropertyManagerPanel({
   ];
 
   return (
-    <div className="property-manager-panel">
-      {/* Header & Main Actions */}
-      <div className="crm-modern-header-strip">
-        <div className="crm-header-title-group">
-          <h3 className="crm-header-main-title">
-            <Building size={22} style={{ color: 'var(--crm-gold)' }} />
-            <span>{isAr ? 'إدارة العقارات والوحدات المعروضة' : 'Property Catalog Management'}</span>
-          </h3>
-          <div className="crm-header-subtitle">
-            <span>{isAr ? 'النشط بالموقع:' : 'Live:'} <strong className="crm-header-count-pill">{activeCount}</strong></span>
-            <span style={{ opacity: 0.4 }}>•</span>
-            <span>{isAr ? 'المخفي:' : 'Hidden:'} <strong>{hiddenCount}</strong></span>
-            <span style={{ opacity: 0.4 }}>•</span>
-            <span>{isAr ? 'تحت التفاوض:' : 'Negotiation:'} <strong>{negotiationCount}</strong></span>
-            {soldCount > 0 && (
-              <>
-                <span style={{ opacity: 0.4 }}>•</span>
-                <span>{isAr ? 'المباع:' : 'Sold:'} <strong>{soldCount}</strong></span>
-              </>
+    <div className="property-manager-panel crm-props">
+      <PageHeader
+        title={isAr ? 'العقارات' : 'Listings'}
+        description={isAr
+          ? `${activeCount} معروض · ${hiddenCount} مخفي · ${negotiationCount} تحت التفاوض${soldCount ? ` · ${soldCount} اتباع` : ''}`
+          : `${activeCount} live · ${hiddenCount} hidden · ${negotiationCount} in negotiation${soldCount ? ` · ${soldCount} sold` : ''}`}
+        actions={(
+          <>
+            <Button icon={<Plus size={16} aria-hidden="true" />} onClick={handleOpenAdd} disabled={readOnly} title={readOnly ? (isAr ? 'دورك للعرض فقط' : 'View-only role') : undefined}>
+              {isAr ? 'عقار جديد' : 'New listing'}
+            </Button>
+            {onImportProperties && (
+              <Button variant="secondary" icon={<Upload size={16} aria-hidden="true" />} onClick={() => setImportOpen(true)}>
+                {isAr ? 'استيراد' : 'Import'}
+              </Button>
             )}
-            <span style={{ opacity: 0.4 }}>•</span>
-            <span>{isAr ? 'الإجمالي:' : 'Total:'} <strong className="crm-header-count-pill">{activeCount + hiddenCount + negotiationCount + soldCount}</strong></span>
-          </div>
-        </div>
-
-        <div className="crm-header-actions-group">
-          {/* Add New Property */}
-          <button 
-            type="button" 
-            className="crm-btn-primary-gold" 
-            onClick={handleOpenAdd} 
-            disabled={readOnly} 
-            title={readOnly ? (isAr ? 'دورك للعرض فقط' : 'View-only role') : undefined}
-          >
-            <Plus size={16} />
-            <span>{isAr ? 'إضافة عقار جديد للموقع' : 'Add New Property'}</span>
-          </button>
-
-          {/* Import: Excel / CSV / JSON */}
-          {onImportProperties && (
-            <button type="button" className="crm-btn-secondary-modern" onClick={() => setImportOpen(true)}>
-              <Upload size={15} />
-              <span>{isAr ? 'استيراد' : 'Import'}</span>
-            </button>
-          )}
-
-          {/* Export */}
-          <ExportMenu
-            label={isAr ? 'تصدير' : 'Export'}
-            baseName="1Line_Properties"
-            sheetName="العقارات"
-            getRows={() => properties.filter((p) => !p.isDemo).map((p) => propertyToRow(p, areas))}
-            getJson={() => ({ platform: '1Line Real Estate', timestamp: new Date().toISOString(), propertiesCount: properties.length, properties: properties.filter((p) => !p.isDemo) })}
-            disabled={!properties.some((p) => !p.isDemo)}
-            onDone={(format, ok) => triggerToast(ok ? (isAr ? 'تم تجهيز الملف وتنزيله' : 'File downloaded') : (isAr ? 'تعذّر تجهيز الملف' : 'Export failed'), ok ? 'success' : 'error')}
-          />
-        </div>
-      </div>
+            <ExportMenu
+              label={isAr ? 'تصدير' : 'Export'}
+              baseName="1Line_Properties"
+              sheetName="العقارات"
+              getRows={() => properties.filter((p) => !p.isDemo).map((p) => propertyToRow(p, areas))}
+              getJson={() => ({ platform: '1Line Real Estate', timestamp: new Date().toISOString(), propertiesCount: properties.length, properties: properties.filter((p) => !p.isDemo) })}
+              disabled={!properties.some((p) => !p.isDemo)}
+              onDone={(format, ok) => triggerToast(ok ? (isAr ? 'تم تجهيز الملف وتنزيله' : 'File downloaded') : (isAr ? 'تعذّر تجهيز الملف' : 'Export failed'), ok ? 'success' : 'error')}
+            />
+          </>
+        )}
+      />
 
       {importOpen && (
         <DataImportModal
@@ -588,8 +561,26 @@ export default function PropertyManagerPanel({
         />
       )}
 
-      {/* What visitors see on the homepage right now: featured slots, periods, order */}
-      <HomepageSlotsBoard properties={properties} onUpdateProperty={onUpdateProperty} isAr={isAr} />
+      {/* What visitors see on the homepage right now: featured slots, periods, order (folded by default) */}
+      <Card padding="compact" className="crm-props__slots">
+        <button
+          type="button"
+          className="crm-props__slots-toggle"
+          aria-expanded={showSlots}
+          aria-controls="crm-props-slots"
+          onClick={() => setShowSlots((v) => !v)}
+        >
+          <Star size={16} aria-hidden="true" />
+          <span className="crm-props__slots-title">{isAr ? 'العقارات المميزة في الصفحة الرئيسية' : 'Featured on the homepage'}</span>
+          <Badge>{isAr ? `${properties.filter((p) => p.featured).length} مثبّت` : `${properties.filter((p) => p.featured).length} pinned`}</Badge>
+          <ChevronDown size={16} aria-hidden="true" className={showSlots ? 'is-open' : undefined} />
+        </button>
+        {showSlots && (
+          <div id="crm-props-slots">
+            <HomepageSlotsBoard properties={properties} onUpdateProperty={onUpdateProperty} isAr={isAr} />
+          </div>
+        )}
+      </Card>
       {slotEditing && (
         <FeaturedSlotModal
           property={slotEditing}
@@ -624,47 +615,16 @@ export default function PropertyManagerPanel({
       )}
 
       {sampleFlagCount > 0 && (
-        <div role="status" style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '12px',
-          flexWrap: 'wrap',
-          padding: '12px 16px',
-          marginBottom: '14px',
-          borderRadius: '12px',
-          background: 'var(--crm-warn-soft)',
-          border: '1px solid var(--crm-warn-line)',
-          boxShadow: '0 1px 3px rgba(180, 83, 9, 0.06)',
-          color: 'var(--crm-warn)',
-          fontSize: 'var(--crm-text-sm)',
-          fontWeight: 600
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: 'var(--crm-text-base)' }}>⚠️</span>
-            <span>
-              {isAr
-                ? `${sampleFlagCount} عقار يحتوي على بيانات من نموذج الإضافة القديم (صورة افتراضية أو سعر تقديري). يُرجى تدقيقها.`
-                : `${sampleFlagCount} listings have legacy template values (placeholder photo or sample price). Please review.`}
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setSampleOnly((v) => !v)}
-            style={{
-              padding: '6px 14px',
-              fontSize: 'var(--crm-text-xs)',
-              fontWeight: 700,
-              borderRadius: '8px',
-              background: sampleOnly ? 'var(--crm-warn)' : 'var(--crm-card)',
-              color: sampleOnly ? 'var(--crm-on-dark)' : 'var(--crm-warn)',
-              border: '1.5px solid var(--crm-warn)',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease'
-            }}
-          >
-            {sampleOnly ? (isAr ? 'عرض جميع العقارات' : 'Show all listings') : (isAr ? 'تصفية العقارات القديمة فقط' : 'Filter legacy listings')}
-          </button>
+        <div role="status" className="crm-props__notice">
+          <AlertTriangle size={16} aria-hidden="true" />
+          <span>
+            {isAr
+              ? `${sampleFlagCount} عقار فيهم بيانات من نموذج الإضافة القديم (صورة افتراضية أو سعر تقديري). راجعهم.`
+              : `${sampleFlagCount} listings carry legacy template values (placeholder photo or sample price). Please review.`}
+          </span>
+          <Button variant="secondary" size="sm" aria-pressed={sampleOnly} onClick={() => setSampleOnly((v) => !v)}>
+            {sampleOnly ? (isAr ? 'اعرض كل العقارات' : 'Show all listings') : (isAr ? 'اعرضهم بس' : 'Show only these')}
+          </Button>
         </div>
       )}
 
@@ -678,87 +638,25 @@ export default function PropertyManagerPanel({
         isAr={isAr}
       />
 
-      {/* Status Filter Tabs & Search Bar */}
-      <div className="crm-modern-triage-hub" style={{ padding: '10px 14px', marginBottom: '16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-          <div className="crm-triage-scroll-strip" style={{ paddingBottom: 0 }}>
-            <button 
-              type="button"
-              className={`crm-triage-tab-btn ${statusFilter === 'all' ? 'is-active' : ''}`} 
-              onClick={() => setStatusFilter('all')}
-            >
-              <span>{isAr ? 'الكل' : 'All'}</span>
-              <span className="crm-triage-counter">{properties.length - trashCount}</span>
-            </button>
-            <button 
-              type="button"
-              className={`crm-triage-tab-btn ${statusFilter === 'published' ? 'is-active' : ''}`} 
-              onClick={() => setStatusFilter('published')}
-            >
-              <Eye size={13} />
-              <span>{isAr ? 'النشطة والمعروضة' : 'Published Live'}</span>
-              <span className="crm-triage-counter" style={{ color: statusFilter === 'published' ? 'inherit' : 'var(--crm-positive)' }}>{activeCount}</span>
-            </button>
-            <button 
-              type="button"
-              className={`crm-triage-tab-btn ${statusFilter === 'hidden' ? 'is-active' : ''}`} 
-              onClick={() => setStatusFilter('hidden')}
-            >
-              <EyeOff size={13} />
-              <span>{isAr ? 'المخفية مؤقتاً' : 'Hidden'}</span>
-              <span className="crm-triage-counter">{hiddenCount}</span>
-            </button>
-            <button 
-              type="button"
-              className={`crm-triage-tab-btn ${statusFilter === 'under_negotiation' ? 'is-active' : ''}`} 
-              onClick={() => setStatusFilter('under_negotiation')}
-            >
-              <Archive size={13} />
-              <span>{isAr ? 'تحت التفاوض' : 'Negotiation'}</span>
-              <span className="crm-triage-counter" style={{ color: statusFilter === 'under_negotiation' ? 'inherit' : 'var(--crm-warn)' }}>{negotiationCount}</span>
-            </button>
-            <button 
-              type="button"
-              className={`crm-triage-tab-btn ${statusFilter === 'sold' ? 'is-active' : ''}`} 
-              onClick={() => setStatusFilter('sold')}
-            >
-              <span>{isAr ? 'تم البيع' : 'Sold'}</span>
-              <span className="crm-triage-counter">{soldCount}</span>
-            </button>
-            <button 
-              type="button"
-              className={`crm-triage-tab-btn ${statusFilter === 'trash' ? 'is-active' : ''} ${trashCount > 0 ? 'is-danger-tab' : ''}`} 
-              onClick={() => setStatusFilter('trash')}
-            >
-              <Trash2 size={13} />
-              <span>{isAr ? 'سلة المهملات' : 'Trash'}</span>
-              <span className="crm-triage-counter">{trashCount}</span>
-            </button>
-          </div>
-
-          <div className="crm-search-pill-wrapper" style={{ flex: '0 1 260px' }}>
-            <span className="crm-search-icon-prefix">
-              <Search size={14} />
-            </span>
-            <input 
-              type="text" 
-              placeholder={isAr ? 'بحث بالاسم، الكود، أو المنطقة...' : 'Search title, code, area...'} 
-              className="crm-search-pill-input" 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                className="crm-search-clear-btn"
-                onClick={() => setSearchQuery('')}
-                title={isAr ? 'مسح البحث' : 'Clear search'}
-              >
-                <X size={13} />
-              </button>
-            )}
-          </div>
+      <div className="crm-props__toolbar">
+        <div className="crm-props__chips" role="group" aria-label={isAr ? 'حالة العرض' : 'Display status'}>
+          <Chip pressed={statusFilter === 'all'} count={properties.length - trashCount} onClick={() => setStatusFilter('all')}>{isAr ? 'الكل' : 'All'}</Chip>
+          <Chip pressed={statusFilter === 'published'} count={activeCount} onClick={() => setStatusFilter('published')}>{isAr ? 'معروضة' : 'Live'}</Chip>
+          <Chip pressed={statusFilter === 'hidden'} count={hiddenCount} onClick={() => setStatusFilter('hidden')}>{isAr ? 'مخفية' : 'Hidden'}</Chip>
+          <Chip pressed={statusFilter === 'under_negotiation'} count={negotiationCount} onClick={() => setStatusFilter('under_negotiation')}>{isAr ? 'تحت التفاوض' : 'Negotiation'}</Chip>
+          <Chip pressed={statusFilter === 'sold'} count={soldCount} onClick={() => setStatusFilter('sold')}>{isAr ? 'اتباعت' : 'Sold'}</Chip>
+          <Chip pressed={statusFilter === 'trash'} count={trashCount} onClick={() => setStatusFilter('trash')}>{isAr ? 'سلة المهملات' : 'Trash'}</Chip>
         </div>
+        <label className="crm-props__search">
+          <Search size={16} aria-hidden="true" />
+          <input
+            type="search"
+            aria-label={isAr ? 'بحث في العقارات' : 'Search listings'}
+            placeholder={isAr ? 'اسم، كود أو منطقة' : 'Title, code or area'}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </label>
       </div>
 
       {/* Properties Table */}
@@ -778,9 +676,12 @@ export default function PropertyManagerPanel({
           <tbody>
             {filteredProperties.length === 0 ? (
               <tr>
-                <td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: 'var(--crm-muted)' }}>
-                  <Building size={32} style={{ marginBottom: '8px', opacity: 0.5 }} />
-                  <p>{isAr ? 'لا توجد عقارات مطابقة للفلتر المحدد' : 'No properties found in this tab'}</p>
+                <td colSpan="7" className="crm-props__empty">
+                  <EmptyState
+                    icon={<Building size={22} />}
+                    title={isAr ? 'مفيش عقارات بالفلتر ده' : 'No listings match'}
+                    description={isAr ? 'غيّر الحالة أو النوع أو البحث.' : 'Change the status, type or search.'}
+                  />
                 </td>
               </tr>
             ) : (
