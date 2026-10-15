@@ -4,7 +4,9 @@
 //
 //  The browser only says "I just created <kind>/<id>". The server reads that record itself, so a
 //  caller can't make it send arbitrary text, and alerts each record once, only while it is fresh.
-//  The alert never carries the customer's phone or email: those stay in the CRM behind its rules.
+//  It doubles as the company's receipt that the customer sent the request: reference, time received
+//  (server clock) and a summary. Of the phone it shows only the last 3 digits, enough to match a
+//  caller; the full number and the email stay in the CRM behind its rules.
 // =============================================================
 
 export const KINDS = {
@@ -34,8 +36,31 @@ export function parseRequest(body) {
   return { kind, id };
 }
 
-/** Alert text from the stored record (contact fields deliberately never read) */
-export function buildMessage(kind, id, rec, siteUrl) {
+/** "••••678": enough to match a caller, useless to anyone reading the company phone. */
+export function maskPhone(value) {
+  const digits = String(value ?? '').replace(/\D/g, '');
+  return digits.length >= 7 ? `••••${digits.slice(-3)}` : '';
+}
+
+// Free text a customer typed may hold a phone number: runs of 10+ digits (phones, not prices) are hidden
+export const scrubDigits = (text) => String(text ?? '').replace(/[+\d٠-٩](?:[\s-]?[\d٠-٩]){9,}/g, '•••');
+
+export function formatReceived(ms) {
+  if (!ms) return '';
+  try {
+    return new Intl.DateTimeFormat('ar-EG-u-nu-latn', {
+      timeZone: 'Africa/Cairo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true
+    }).format(new Date(ms));
+  } catch {
+    return new Date(ms).toISOString();
+  }
+}
+
+/**
+ * Alert text from the stored record. extra: { phone, receivedMs } — phone is read from the
+ * contact record only to show its last 3 digits.
+ */
+export function buildMessage(kind, id, rec, siteUrl, extra = {}) {
   const d = rec.details && typeof rec.details === 'object' ? rec.details : {};
   let headline = `🔔 ${KINDS[kind]} — 1Line`;
 
@@ -57,8 +82,13 @@ export function buildMessage(kind, id, rec, siteUrl) {
 
   const lines = [
     headline,
-    `الاسم: ${clean(rec.name || rec.clientName || '—', 60)}`
+    `رقم الطلب: ${id}`
   ];
+  const received = formatReceived(extra.receivedMs);
+  if (received) lines.push(`وقت الاستلام: ${received}`);
+  lines.push(`الاسم: ${clean(rec.name || rec.clientName || '—', 60)}`);
+  const tail = maskPhone(extra.phone);
+  if (tail) lines.push(`الموبايل: ${tail}`);
   const type = TYPE_LABELS[rec.type] || clean(rec.type || rec.purpose || rec.propertyType, 40);
   if (type) lines.push(`النوع: ${type}`);
   const area = clean(d.area || rec.area || rec.location || rec.district, 60);
@@ -68,8 +98,11 @@ export function buildMessage(kind, id, rec, siteUrl) {
   if (kind === 'leads') lines.push(`الفريق: ${clean(rec.assignedTo || 'Unassigned', 40)}`);
   const source = clean(rec.source, 40);
   if (source) lines.push(`المصدر: ${source}`);
+  const summary = clean(scrubDigits(rec.notes || rec.message || rec.text_ar || rec.description), 400);
+  if (summary) lines.push(`الملخص: ${summary}`);
+  const photos = Array.isArray(d.images) ? d.images.length : 0;
+  if (photos) lines.push(`الصور: ${photos}`);
   lines.push(`افتح الـ CRM: ${siteUrl}/crm`);
-  lines.push(`(${kind}/${id})`);
   return lines.join('\n');
 }
 
@@ -85,7 +118,12 @@ export async function handleNotify(body, deps, siteUrl) {
   if (!rec) return { status: 404, body: { error: 'not-found' } };
   if (!rec.createdAtMs || deps.now() - rec.createdAtMs > FRESH_MS) return { status: 200, body: { skipped: 'stale' } };
   if (!(await deps.claimOnce(req.kind, req.id))) return { status: 200, body: { skipped: 'already-sent' } };
-  const sent = await deps.sendAll(buildMessage(req.kind, req.id, rec.data, siteUrl));
+  let phone = '';
+  try {
+    const contact = deps.readContact ? await deps.readContact(req.kind, req.id) : null;
+    phone = contact?.phone || contact?.whatsapp || rec.data.phone || rec.data.whatsapp || '';
+  } catch { /* the receipt still goes out without the last digits */ }
+  const sent = await deps.sendAll(buildMessage(req.kind, req.id, rec.data, siteUrl, { phone, receivedMs: rec.createdAtMs }));
   return { status: 200, body: { sent } };
 }
 

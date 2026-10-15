@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { handleNotify, buildMessage, parseCallMeBot, makeSenders, sendAll, FRESH_MS } from '../../api/_notify-core.js';
+import { handleNotify, buildMessage, parseCallMeBot, makeSenders, sendAll, FRESH_MS, maskPhone, scrubDigits } from '../../api/_notify-core.js';
 
 const NOW = Date.parse('2026-10-02T12:00:00Z');
 const lead = { name: 'أحمد', type: 'buyer', assignedTo: 'Sales Team A', source: 'sell_wizard', details: { area: 'الكوثر', budget: '2,000,000' }, phone: '01011112222', email: 'a@b.c', whatsapp: '01011112222' };
@@ -34,9 +34,10 @@ test('missing records 404; old records are not alerted (no replay of past ids)',
   assert.equal(state.sent.length, 0);
 });
 
-test('the alert never contains the customer\'s phone or email', () => {
-  const text = buildMessage('leads', 'L1', lead, 'https://site');
-  assert.ok(!text.includes('01011112222') && !text.includes('a@b.c'));
+test('the alert never contains the customer\'s full phone or email', () => {
+  const text = buildMessage('leads', 'L1', lead, 'https://site', { phone: '+201011112222' });
+  assert.ok(!text.includes('01011112222') && !text.includes('1011112222') && !text.includes('a@b.c'));
+  assert.match(text, /الموبايل: ••••222/);
   assert.match(text, /أحمد/);
   assert.match(text, /الكوثر/);
   assert.match(text, /https:\/\/site\/crm/);
@@ -52,4 +53,30 @@ test('sender config parsing and partial failures', async () => {
   assert.equal(await sendAll(senders, 'hi\nthere'), 2);
   const cloud = calls.find((c) => c.url.includes('graph.facebook.com'));
   assert.ok(!JSON.parse(cloud.opts.body).template.components[0].parameters[0].text.includes('\n'));
+});
+
+test('the receipt carries reference, time received, summary and photo count', async () => {
+  const sent = [];
+  const rec = { ...lead, type: 'seller', notes: 'عرض بيع شقة في الكوثر بمساحة 120م² | كلموني على 0101 111 2222', details: { area: 'الكوثر', images: ['a', 'b', 'c'] } };
+  const d = { ...deps({ data: rec, createdAtMs: Date.parse('2026-10-15T13:05:00Z') }, { sent }), readContact: async () => ({ phone: '+201011112999' }) };
+  await handleNotify({ kind: 'leads', id: 'abc123' }, d, 'https://s');
+  const text = sent[0];
+  assert.match(text, /رقم الطلب: abc123/);
+  assert.match(text, /وقت الاستلام: .*04:05/); // 13:05 UTC = 16:05 Cairo
+  assert.match(text, /الموبايل: ••••999/);
+  assert.match(text, /الملخص: عرض بيع شقة في الكوثر/);
+  assert.match(text, /الصور: 3/);
+  assert.ok(!/0101 111 2222|1011112999/.test(text));
+});
+
+test('a failing contact read still sends the receipt; masking and scrubbing edge cases', async () => {
+  const sent = [];
+  const d = { ...deps({ data: lead, createdAtMs: NOW }, { sent }), readContact: async () => { throw new Error('down'); } };
+  assert.deepEqual((await handleNotify({ kind: 'leads', id: 'L9' }, d, 'https://s')).body, { sent: 1 });
+  assert.equal(maskPhone(''), '');
+  assert.equal(maskPhone('123'), '');
+  assert.equal(maskPhone('٠١٠١١١١٢٢٢٢'.replace(/[٠-٩]/g, (c) => String(c.charCodeAt(0) - 0x660))), '••••222');
+  assert.equal(scrubDigits('رقمي +20 101 111 2222 شكرا'), 'رقمي ••• شكرا');
+  assert.equal(scrubDigits('مساحة 120 متر وسعر 250000000'), 'مساحة 120 متر وسعر 250000000');
+  assert.equal(scrubDigits('واتس 01011112222.'), 'واتس •••.');
 });
