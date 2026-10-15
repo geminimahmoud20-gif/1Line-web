@@ -9,6 +9,8 @@
 //  caller; the full number and the email stay in the CRM behind its rules.
 // =============================================================
 
+import { areaLabel, propertyTypeLabel } from '../src/utils/placeLabels.js';
+
 export const KINDS = {
   leads: 'عميل جديد',
   demands: 'طلب عقار (مطلوب)',
@@ -70,8 +72,9 @@ export function buildMessage(kind, id, rec, siteUrl, extra = {}) {
     const slot = (d.visitSlot || rec.slot) ? ` ${clean(d.visitSlot || rec.slot, 15)}` : '';
     headline = `👁 طلب معاينة: كود ${code}${when}${slot} — 1Line`;
   } else if (rec.type === 'seller' || rec.type === 'valuation') {
-    const area = clean(rec.area || d.area, 30);
-    headline = `🏠 عرض بيع: ${area ? `عقار في ${area}` : 'عقار جديد'} — 1Line`;
+    const area = clean(areaLabel(rec.area || d.area), 40);
+    const kind = clean(propertyTypeLabel(d.propertyType || rec.propertyType), 30) || 'عقار';
+    headline = `🏠 عرض بيع: ${area ? `${kind} في ${area}` : `${kind} جديد`} — 1Line`;
   } else if (rec.type === 'buyer') {
     headline = `🎯 طلب شراء جديد — 1Line`;
   } else if (rec.type === 'broker') {
@@ -89,9 +92,9 @@ export function buildMessage(kind, id, rec, siteUrl, extra = {}) {
   lines.push(`الاسم: ${clean(rec.name || rec.clientName || '—', 60)}`);
   const tail = maskPhone(extra.phone);
   if (tail) lines.push(`الموبايل: ${tail}`);
-  const type = TYPE_LABELS[rec.type] || clean(rec.type || rec.purpose || rec.propertyType, 40);
+  const type = TYPE_LABELS[rec.type] || clean(rec.type || rec.purpose || propertyTypeLabel(rec.propertyType), 40);
   if (type) lines.push(`النوع: ${type}`);
-  const area = clean(d.area || rec.area || rec.location || rec.district, 60);
+  const area = clean(areaLabel(d.area || rec.area || rec.location || rec.district), 60);
   if (area) lines.push(`المنطقة: ${area}`);
   const budget = clean(d.budget || rec.budget || d.expectedPrice || rec.expectedPrice, 40);
   if (budget) lines.push(`الميزانية: ${budget}`);

@@ -80,3 +80,12 @@ test('a failing contact read still sends the receipt; masking and scrubbing edge
   assert.equal(scrubDigits('مساحة 120 متر وسعر 250000000'), 'مساحة 120 متر وسعر 250000000');
   assert.equal(scrubDigits('واتس 01011112222.'), 'واتس •••.');
 });
+
+test('area and property type read as Arabic names, not stored keys', () => {
+  const text = buildMessage('leads', 'S1', { name: 'منى', type: 'seller', area: 'west', details: { area: 'west', propertyType: 'villa' } }, 'https://s');
+  assert.match(text, /عرض بيع: بيت أو فيلا في غرب سوهاج/);
+  assert.match(text, /المنطقة: غرب سوهاج/);
+  assert.ok(!/\bwest\b|\bvilla\b/.test(text));
+  // An area the server does not know (added in the CRM, or typed) is shown as stored
+  assert.match(buildMessage('leads', 'S2', { name: 'x', type: 'buyer', area: 'حي جديد' }, 'https://s'), /المنطقة: حي جديد/);
+});
