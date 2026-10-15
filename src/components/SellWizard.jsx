@@ -103,7 +103,7 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
   }, [a.size, a.finishing, type, area, isCairo, districts, siteListings]);
 
   const chooseType = (id) => {
-    if (id === type) return;
+    if (id === a.propertyType) return;
     // Features and photo spots differ per kind; keep only what still applies
     const keep = featuresFor(id).map((f) => f.id);
     set({ propertyType: id, features: features.filter((f) => keep.includes(f)), ...(sellerAssetClass(id) !== sellerAssetClass(type) ? { photoSlots: {} } : {}) });
