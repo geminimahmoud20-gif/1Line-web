@@ -1,5 +1,5 @@
 import {
-  Zap,
+  Eye,
   MessageSquare,
   User,
   Edit3,
@@ -39,10 +39,10 @@ export default function LeadTableRowActions({
         type="button"
         className="crm-btn-quick"
         onClick={() => onQuickDrawer?.(lead)}
-        title={isAr ? 'معاينة سريعة وتسجيل مكالمة' : 'Quick Drawer'}
+        title={isAr ? 'افتح درج العميل وسجّل مكالمة' : 'Open the client drawer'}
       >
-        <Zap size={13} />
-        <span>{isAr ? 'سريع' : 'Quick'}</span>
+        <Eye size={16} aria-hidden="true" />
+        <span>{isAr ? 'افتح' : 'Open'}</span>
       </button>
 
       {/* Primary 2: WhatsApp Direct Contact */}
@@ -51,8 +51,9 @@ export default function LeadTableRowActions({
         className="crm-icon-btn is-whatsapp"
         onClick={() => onWhatsAppClick?.(lead)}
         title={isAr ? 'محادثة العميل مباشرة عبر واتساب' : 'WhatsApp'}
+        aria-label={isAr ? `واتساب ${lead.name || 'العميل'}` : `WhatsApp ${lead.name || 'client'}`}
       >
-        <MessageSquare size={13} />
+        <MessageSquare size={16} />
       </button>
 
       {/* Secondary Actions: Clean Context Menu */}

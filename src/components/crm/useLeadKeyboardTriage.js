@@ -17,7 +17,7 @@ export default function useLeadKeyboardTriage({ list, onOpen, onWhatsApp }) {
     const onKey = (e) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (!document.querySelector('.crm-table[data-kbd="leads"]')) return;
-      if (document.querySelector('.crm-lead-drawer, .crm-modal-backdrop, .track-modal-backdrop, .crm-command-modal')) return;
+      if (document.querySelector('.ui-overlay, .crm-modal-backdrop, .track-modal-backdrop, .crm-command-modal')) return;
       const t = e.target;
       if (t?.closest?.('input, textarea, select, [contenteditable="true"]')) return;
       const { list: rows, index, open, wa } = kbdRef.current;

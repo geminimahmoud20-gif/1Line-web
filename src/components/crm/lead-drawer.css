@@ -1,0 +1,74 @@
+/* Lead drawer (CRM redesign phase 3): built on the kit Drawer; only the layout lives here. */
+.crm-ld { display: flex; flex-direction: column; gap: var(--ui-s-4); font-family: var(--ui-font); color: var(--ui-text); }
+.crm-ld__nav { display: flex; align-items: center; gap: 2px; }
+.crm-ld__counter { font-size: var(--ui-fs-1); color: var(--ui-text-3); font-variant-numeric: tabular-nums; min-width: 40px; text-align: center; }
+.crm-ld__delete { color: var(--ui-danger); margin-inline-end: auto; }
+
+.crm-ld__summary { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ui-s-3); }
+.crm-ld__contact { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-s-2); }
+.crm-ld__phone { display: inline-flex; align-items: center; gap: var(--ui-s-1); font-size: var(--ui-fs-3); font-weight: var(--ui-fw-semibold); color: var(--ui-text-2); font-variant-numeric: tabular-nums; }
+.crm-ld__quick { display: flex; gap: var(--ui-s-2); }
+
+.crm-ld__stage { padding: var(--ui-s-3); background: var(--ui-surface-2); border-radius: var(--ui-r-md); }
+.crm-ld__stage-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--ui-s-2); }
+.crm-ld__stages { display: flex; flex-wrap: wrap; gap: var(--ui-s-2); }
+.crm-ld__lost[aria-pressed='true'] { background: var(--ui-danger); border-color: var(--ui-danger); color: var(--ui-on-danger); }
+
+.crm-ld__h { display: flex; align-items: center; gap: var(--ui-s-2); margin: 0; font-size: var(--ui-fs-3); font-weight: var(--ui-fw-bold); color: var(--ui-text); }
+.crm-ld__h svg { color: var(--ui-text-3); }
+.crm-ld__hint { margin: 0; font-size: var(--ui-fs-2); line-height: var(--ui-lh); color: var(--ui-text-3); }
+.crm-ld__stack { display: flex; flex-direction: column; gap: var(--ui-s-4); }
+.crm-ld__block { display: flex; flex-direction: column; gap: var(--ui-s-3); padding: var(--ui-s-4); border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); background: var(--ui-surface); }
+.crm-ld__block--info { background: var(--ui-info-tint); border-color: transparent; }
+.crm-ld__block--warn { background: var(--ui-warning-tint); border-color: transparent; }
+.crm-ld__block-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ui-s-2); }
+.crm-ld__when { font-size: var(--ui-fs-2); color: var(--ui-text); font-variant-numeric: tabular-nums; }
+.crm-ld__row { display: flex; flex-wrap: wrap; gap: var(--ui-s-2); }
+.crm-ld__row a.ui-btn, .crm-ld__tpl a.ui-btn { text-decoration: none; color: var(--ui-text); }
+.crm-ld__form { display: flex; flex-direction: column; gap: var(--ui-s-3); }
+
+.crm-ld__facts { margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--ui-s-3); }
+.crm-ld__facts dt { font-size: var(--ui-fs-1); color: var(--ui-text-3); }
+.crm-ld__facts dd { margin: 2px 0 0; font-size: var(--ui-fs-3); font-weight: var(--ui-fw-semibold); font-variant-numeric: tabular-nums; }
+.crm-ld__photos { display: flex; align-items: center; gap: var(--ui-s-2); overflow-x: auto; }
+.crm-ld__photos img { width: 64px; height: 48px; object-fit: cover; border-radius: var(--ui-r-sm); border: 1px solid var(--ui-line); flex-shrink: 0; }
+.crm-ld__more { font-size: var(--ui-fs-2); color: var(--ui-text-3); }
+
+.crm-ld__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--ui-s-2); }
+.crm-ld__tpl { display: flex; align-items: center; gap: var(--ui-s-3); padding: var(--ui-s-2) var(--ui-s-3); background: var(--ui-surface-2); border-radius: var(--ui-r-md); }
+.crm-ld__tpl-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.crm-ld__tpl-title { font-size: var(--ui-fs-2); font-weight: var(--ui-fw-semibold); }
+.crm-ld__tpl-msg { font-size: var(--ui-fs-1); color: var(--ui-text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.crm-ld__pick { display: flex; align-items: center; gap: var(--ui-s-2); padding: var(--ui-s-2) var(--ui-s-3); background: var(--ui-surface-2); border-radius: var(--ui-r-md); }
+.crm-ld__pick-title { flex: 1; min-width: 0; font-size: var(--ui-fs-2); font-weight: var(--ui-fw-semibold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crm-ld__price { font-size: var(--ui-fs-2); color: var(--ui-text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.crm-ld__match { display: flex; gap: var(--ui-s-3); padding: var(--ui-s-3); border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); }
+.crm-ld__match img { width: 72px; height: 72px; object-fit: cover; border-radius: var(--ui-r-md); flex-shrink: 0; }
+.crm-ld__match-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--ui-s-1); }
+.crm-ld__match-top { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-s-2); }
+.crm-ld__match-title { font-size: var(--ui-fs-3); font-weight: var(--ui-fw-semibold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crm-ld__match-meta { font-size: var(--ui-fs-1); color: var(--ui-text-3); }
+.crm-ld__match .crm-ld__row { margin-top: var(--ui-s-1); }
+
+.crm-ld__timeline { display: flex; flex-direction: column; gap: var(--ui-s-4); }
+.crm-ld__note-form { display: flex; flex-direction: column; align-items: flex-start; gap: var(--ui-s-2); }
+.crm-ld__note-form .ui-field { width: 100%; }
+.crm-ld__events { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.crm-ld__events li {
+  position: relative; display: flex; flex-direction: column; gap: 2px;
+  padding: 0 var(--ui-s-4) var(--ui-s-4); border-inline-start: 2px solid var(--ui-line); margin-inline-start: 5px;
+}
+.crm-ld__events li::before {
+  content: ''; position: absolute; inset-inline-start: -6px; top: 4px; width: 10px; height: 10px;
+  border-radius: var(--ui-r-full); background: var(--ui-surface); border: 2px solid var(--ui-accent);
+}
+.crm-ld__events li:last-child { border-color: transparent; }
+.crm-ld__event-meta { font-size: var(--ui-fs-1); color: var(--ui-text-3); font-variant-numeric: tabular-nums; }
+.crm-ld__event-text { font-size: var(--ui-fs-2); line-height: var(--ui-lh); color: var(--ui-text); }
+
+@media (max-width: 639px) {
+  .crm-ld__quick { width: 100%; }
+  .crm-ld__quick .ui-btn { flex: 1; }
+}

@@ -2,8 +2,9 @@ import { cloneElement, isValidElement, useId } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { cx } from './cx';
 
-// Every control has a visible label. hint and error are tied to the control with aria-describedby.
-export function Field({ label, hint, error, required, id, className, children }) {
+// Every control has a label. hint and error are tied to the control with aria-describedby.
+// hideLabel keeps the label for screen readers only: for filter bars where the placeholder or first option names the field.
+export function Field({ label, hint, error, required, id, className, hideLabel = false, children }) {
   const auto = useId();
   const fieldId = id || auto;
   const hintId = hint ? `${fieldId}-hint` : undefined;
@@ -18,7 +19,7 @@ export function Field({ label, hint, error, required, id, className, children })
     : children;
   return (
     <div className={cx('ui-field', error && 'ui-field--error', className)}>
-      <label className="ui-field__label" htmlFor={fieldId}>
+      <label className={cx('ui-field__label', hideLabel && 'ui-sr-only')} htmlFor={fieldId}>
         {label}
         {required && <span className="ui-field__req" aria-hidden="true">*</span>}
       </label>
@@ -29,26 +30,26 @@ export function Field({ label, hint, error, required, id, className, children })
   );
 }
 
-export function Input({ label, hint, error, required, id, className, ...rest }) {
+export function Input({ label, hint, error, required, id, className, hideLabel, ...rest }) {
   return (
-    <Field label={label} hint={hint} error={error} required={required} id={id} className={className}>
+    <Field label={label} hint={hint} error={error} required={required} id={id} className={className} hideLabel={hideLabel}>
       <input className="ui-input" {...rest} />
     </Field>
   );
 }
 
-export function Textarea({ label, hint, error, required, id, className, ...rest }) {
+export function Textarea({ label, hint, error, required, id, className, hideLabel, ...rest }) {
   return (
-    <Field label={label} hint={hint} error={error} required={required} id={id} className={className}>
+    <Field label={label} hint={hint} error={error} required={required} id={id} className={className} hideLabel={hideLabel}>
       <textarea className="ui-textarea" {...rest} />
     </Field>
   );
 }
 
 // options: [{ value, label }]
-export function Select({ label, hint, error, required, id, className, options = [], placeholder, ...rest }) {
+export function Select({ label, hint, error, required, id, className, options = [], placeholder, hideLabel, ...rest }) {
   return (
-    <Field label={label} hint={hint} error={error} required={required} id={id} className={className}>
+    <Field label={label} hint={hint} error={error} required={required} id={id} className={className} hideLabel={hideLabel}>
       <SelectControl options={options} placeholder={placeholder} {...rest} />
     </Field>
   );

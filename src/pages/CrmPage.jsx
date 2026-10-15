@@ -25,6 +25,7 @@ import '../components/crm/crm-luxury.css';
 import '../components/crm/crm-dark-surfaces.css';
 import '../components/crm/crm-density.css';
 import '../styles/crm-bridge.css';
+import { MotionRoot, ConfirmProvider } from '../components/ui';
 import { isFirebaseAuthAvailable, loginUser, requestPasswordReset } from '../firebaseService';
 import { useAuth } from '../context/AuthContext';
 import { useProperties } from '../context/PropertiesContext';
@@ -623,6 +624,8 @@ export default function CrmPage({
 
   // 2. Authenticated Full Dashboard Interface with Presidential Sidebar Layout
   return (
+    <MotionRoot>
+    <ConfirmProvider cancelLabel={isAr ? 'إلغاء' : 'Cancel'}>
     <div 
       className={`crm-layout ${isAr ? 'rtl-dir' : 'ltr-dir'}`}
       style={{
@@ -735,7 +738,7 @@ export default function CrmPage({
         )}
 
         {/* 3. Main Dynamic Content Area */}
-        <main className="crm-content-area" id="crm-main-content">
+        <div className="crm-content-area" id="crm-main-content">
           {activeTab === 'properties' ? (
             <PropertyManagerPanel
               openRequest={openRequest}
@@ -890,7 +893,7 @@ export default function CrmPage({
               onSwitchToCorporate={() => setActiveTab('corporate')}
             />
           )}
-        </main>
+        </div>
 
         {/* 4. Minimal Executive Footer */}
         <footer className="crm-footer">
@@ -955,5 +958,7 @@ export default function CrmPage({
         }}
       />
     </div>
+    </ConfirmProvider>
+    </MotionRoot>
   );
 }

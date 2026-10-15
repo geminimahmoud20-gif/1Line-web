@@ -289,6 +289,8 @@ export default function CrmTopbar({
             onClick={() => setShowQuickActionMenu(!showQuickActionMenu)}
             className="crm-btn-primary-gold"
             aria-expanded={showQuickActionMenu}
+            aria-haspopup="menu"
+            aria-label={isAr ? 'إضافة جديد' : 'Add new'}
             style={{ padding: '6px 13px', fontSize: 'var(--crm-text-xs)' }}
           >
             <Plus size={14} />

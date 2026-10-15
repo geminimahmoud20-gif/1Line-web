@@ -12499,28 +12499,28 @@ body.dark-theme .compare-tabs-bar {
 }
 
 .crm-table {
-  color: #0f172a !important;
-  background: #ffffff !important;
+  color: #0f172a;
+  background: #ffffff;
 }
 
 .crm-table th {
-  background: #f8fafc !important;
-  color: #0f172a !important;
-  border-bottom: 2px solid #e2e8f0 !important;
-  font-weight: 800 !important;
+  background: #f8fafc;
+  color: #0f172a;
+  border-bottom: 2px solid #e2e8f0;
+  font-weight: 800;
   letter-spacing: 0.2px;
   font-size: 0.84rem;
-  text-shadow: none !important;
+  text-shadow: none;
 }
 
 .crm-table td {
-  border-bottom: 1px solid #f1f5f9 !important;
-  color: #334155 !important;
-  background: #ffffff !important;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  background: #ffffff;
 }
 
 .crm-table tbody tr:hover {
-  background: #f8fafc !important;
+  background: #f8fafc;
 }
 
 /* Light Luxury Command Center Modals inside CRM */
