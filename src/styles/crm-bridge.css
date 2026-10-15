@@ -65,6 +65,12 @@
   --crm-text-lg: var(--ui-fs-5);
   --crm-text-xl: var(--ui-fs-6);
   --crm-text-2xl: var(--ui-fs-7);
+
+  /* The CRM sidebar and top bar sit at 1000–1050 and older dialogs at 2500–12000: kit overlays go above them */
+  --ui-z-drawer: 11000;
+  --ui-z-modal: 12100;
+  --ui-z-toast: 12200;
+  --ui-z-tooltip: 12300;
 }
 
 /* Fields are 16px on touch screens so iOS does not zoom while staff type

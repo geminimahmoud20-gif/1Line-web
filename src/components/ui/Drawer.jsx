@@ -24,7 +24,7 @@ export default function Drawer({ open, onClose, title, description, footer, side
           exit="exit"
           onMouseDown={(e) => { if (e.target === e.currentTarget) onClose?.(); }}
         >
-          <m.aside
+          <m.div
             ref={panelRef}
             role="dialog"
             aria-modal="true"
@@ -43,7 +43,7 @@ export default function Drawer({ open, onClose, title, description, footer, side
             </div>
             <div className="ui-modal__body">{children}</div>
             {footer && <div className="ui-modal__foot">{footer}</div>}
-          </m.aside>
+          </m.div>
         </m.div>
       )}
     </AnimatePresence>,
