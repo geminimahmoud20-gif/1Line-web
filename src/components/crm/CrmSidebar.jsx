@@ -119,8 +119,8 @@ export default function CrmSidebar({
             {
               id: 'inbox',
               icon: Inbox,
-              label_ar: 'صندوق الوارد الذكي',
-              label_en: 'Triage Inbox',
+              label_ar: 'صندوق الوارد',
+              label_en: 'Inbox',
               badge: unassignedInboxCount > 0 ? unassignedInboxCount : undefined,
               badgeDanger: unassignedInboxCount > 0
             },
@@ -162,8 +162,8 @@ export default function CrmSidebar({
           {
             id: 'inbox',
             icon: Inbox,
-            label_ar: 'صندوق الوارد الذكي',
-            label_en: 'Triage Inbox',
+            label_ar: 'صندوق الوارد',
+            label_en: 'Inbox',
             badge: unassignedInboxCount > 0 ? unassignedInboxCount : undefined,
             badgeDanger: unassignedInboxCount > 0
           },
@@ -367,12 +367,11 @@ export default function CrmSidebar({
                 style={{ justifyContent: 'center', width: '44px', height: '40px', padding: 0 }}
                 title={workspaceMode === 'sales' ? (isAr ? 'مساحة العمل: تركيز المبيعات (انقر للتحكم الشامل)' : 'Sales Focus (Click for Full Command)') : (isAr ? 'مساحة العمل: التحكم الشامل (انقر لتركيز المبيعات)' : 'Full Command (Click for Sales Focus)')}
               >
-                <span style={{ fontSize: 'var(--crm-text-lg)' }}>{workspaceMode === 'sales' ? '🎯' : '⚡'}</span>
+                {workspaceMode === 'sales' ? <Target size={18} aria-hidden="true" /> : <LayoutGrid size={18} aria-hidden="true" />}
               </button>
             </div>
           )}
 
-          {/* Workspace Switcher (Segmented Control) */}
           {/* Workspace Switcher (Segmented Control) */}
           {!collapsed && (
             <div style={{ padding: '0 12px 10px' }}>
@@ -383,7 +382,7 @@ export default function CrmSidebar({
                   className={`crm-workspace-pill ${workspaceMode === 'sales' ? 'is-active' : ''}`}
                   title={isAr ? 'مساحة عمل مركزة للمبيعات (الوارد، العملاء، الصفقات، المطابقة، الفريق)' : 'Sales Focus workspace (5 core sales modules)'}
                 >
-                  <span>🎯</span>
+                  <Target size={16} aria-hidden="true" />
                   <span>{isAr ? 'تركيز المبيعات' : 'Sales Focus'}</span>
                 </button>
 
@@ -393,7 +392,7 @@ export default function CrmSidebar({
                   className={`crm-workspace-pill ${workspaceMode === 'full' ? 'is-active' : ''}`}
                   title={isAr ? 'التحكم الشامل بكافة أقسام العقارات والتحليلات والإدارة' : 'Full Command across all CRM operations'}
                 >
-                  <span>⚡</span>
+                  <LayoutGrid size={16} aria-hidden="true" />
                   <span>{isAr ? 'التحكم الشامل' : 'Full Command'}</span>
                 </button>
               </div>

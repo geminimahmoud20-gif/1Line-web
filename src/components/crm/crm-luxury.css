@@ -483,40 +483,40 @@
 }
 .kanban-stage-column { min-width: 280px !important; flex: 0 0 280px !important; }
 
-/* ── Sidebar: ink navy, champagne active state ── */
+/* ── Sidebar: flat 1Line navy, gold marks the active item only (tokens from src/styles/tokens.css) ── */
 .crm-sidebar {
-  background: linear-gradient(180deg, #0B132B 0%, #080D1A 100%) !important;
-  border-inline-start: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--ui-navy) !important;
+  border-inline-start: 1px solid color-mix(in srgb, var(--ui-n0) 8%, transparent);
 }
 .crm-brand-text { letter-spacing: 0.04em; font-weight: 700 !important; }
-.crm-brand-text span { color: #D4AF37 !important; }
-.crm-brand-badge { color: #D4AF37 !important; letter-spacing: 0.12em; font-weight: 600 !important; }
-.crm-sidebar-section-label { color: #94A3B8 !important; font-weight: 600 !important; letter-spacing: 0 !important; }
-.crm-sidebar-item { color: #CBD5E1 !important; border-radius: 10px !important; font-weight: 500 !important; }
-.crm-sidebar-item:hover { background: rgba(255, 255, 255, 0.06) !important; color: #FFFFFF !important; }
+.crm-brand-text span { color: var(--ui-gold) !important; }
+.crm-brand-badge { color: var(--ui-gold); letter-spacing: 0.12em; font-weight: 600; }
+.crm-sidebar-section-label { color: var(--ui-n300) !important; font-weight: 600; letter-spacing: 0; font-size: var(--ui-fs-1) !important; }
+.crm-sidebar-item { color: var(--ui-n200) !important; border-radius: var(--ui-r-md) !important; font-weight: 500 !important; }
+.crm-sidebar-item:hover { background: color-mix(in srgb, var(--ui-n0) 6%, transparent) !important; color: var(--ui-n0) !important; }
 .crm-sidebar-item.is-active {
-  background: rgba(212, 175, 55, 0.12) !important;
-  color: #F8FAFC !important;
-  box-shadow: inset 0 0 0 1px rgba(212, 175, 55, 0.3) !important;
+  background: color-mix(in srgb, var(--ui-n0) 10%, transparent) !important;
+  color: var(--ui-n0) !important;
+  box-shadow: inset -3px 0 0 var(--ui-gold) !important;
 }
-.crm-sidebar-item.is-active .crm-item-icon { color: #D4AF37 !important; }
+.crm-sidebar-item.is-active .crm-item-icon { color: var(--ui-gold) !important; }
 .crm-item-badge {
-  background: rgba(255, 255, 255, 0.08) !important;
-  color: #E2E8F0 !important;
+  background: color-mix(in srgb, var(--ui-n0) 10%, transparent) !important;
+  color: var(--ui-n100) !important;
   font-weight: 600 !important;
   font-variant-numeric: tabular-nums;
 }
-.crm-sidebar-item.is-active .crm-item-badge { background: #D4AF37 !important; color: #0B132B !important; }
+.crm-sidebar-item.is-active .crm-item-badge { background: var(--ui-gold) !important; color: var(--ui-navy) !important; }
 
 /* ── Topbar: quiet frosted glass, nothing truncated ── */
 .crm-topbar {
-  background: rgba(255, 255, 255, 0.88) !important;
+  background: color-mix(in srgb, var(--ui-surface) 90%, transparent) !important;
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
-  border-bottom: 1px solid var(--crm-line) !important;
+  border-bottom: 1px solid var(--ui-line) !important;
+  box-shadow: none !important;
   gap: 16px;
 }
-.dark-theme .crm-topbar { background: rgba(15, 23, 42, 0.88) !important; }
 .crm-topbar-left { flex: 1 1 auto; min-width: 0; }
 .crm-breadcrumb { overflow: visible !important; text-overflow: clip !important; flex: none; }
 .crm-breadcrumb-current { color: var(--crm-ink) !important; font-weight: 600 !important; }
@@ -1164,20 +1164,6 @@ button.crm-lead-chip.is-dupe:hover { text-decoration: underline; }
   font-weight: 800;
   color: var(--crm-ink);
   letter-spacing: -0.01em;
-}
-
-.crm-badge-360 {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: var(--crm-accent-soft);
-  color: var(--crm-accent-text);
-  border: 1px solid rgba(179, 138, 69, 0.25);
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 999px;
-  letter-spacing: 0.04em;
 }
 
 .crm-header-subtitle {
@@ -2150,39 +2136,37 @@ button.crm-lead-chip.is-dupe:hover { text-decoration: underline; }
 .crm-workspace-pill-group {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
+  background: color-mix(in srgb, var(--ui-n0) 5%, transparent);
+  border-radius: var(--ui-r-full);
   padding: 3px;
   gap: 3px;
-  margin-bottom: 12px;
+  margin-bottom: var(--ui-s-3);
 }
 
 .crm-workspace-pill {
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  font-size: var(--crm-text-xs);
-  font-weight: 500;
+  padding: 6px var(--ui-s-2);
+  border-radius: var(--ui-r-full);
+  border: 0;
+  font: var(--ui-fw-medium) var(--ui-fs-1) / 1.2 var(--ui-font);
+  white-space: nowrap;
   background: transparent;
-  color: var(--crm-on-dark-faint);
+  color: var(--ui-n300);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  transition: all 0.18s ease;
+  gap: var(--ui-s-1);
+  transition: background-color var(--ui-dur-1) var(--ui-ease-out), color var(--ui-dur-1) var(--ui-ease-out);
 }
 .crm-workspace-pill:hover {
-  color: var(--crm-on-dark);
+  color: var(--ui-n0);
 }
 .crm-workspace-pill.is-active {
-  background: rgba(255, 255, 255, 0.12);
-  color: #FFFFFF;
-  font-weight: 700;
-  border: 1px solid rgba(212, 175, 55, 0.45);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  background: color-mix(in srgb, var(--ui-n0) 12%, transparent);
+  color: var(--ui-n0);
+  font-weight: var(--ui-fw-semibold);
 }
+.crm-workspace-pill:focus-visible { outline: none; box-shadow: var(--ui-sh-focus); }
 
 /* ── Modern Empty State Component ────────────────────────── */
 .crm-empty-state-card {
@@ -2497,332 +2481,41 @@ mark.crm-search-highlight {
   font-weight: 500;
 }
 
-/* ── §18 Modern Smart Triage Inbox Architecture ──────────────────────── */
-.crm-inbox-workspace {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
+/* ── Top bar (phase 3): page title, search, "new", bell, account menu ── */
+.crm-page-title { display: flex; align-items: center; gap: var(--ui-s-2); min-width: 0; font-family: var(--ui-font); }
+.crm-page-title__main { font-size: var(--ui-fs-4); font-weight: var(--ui-fw-bold); color: var(--ui-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.crm-page-title__sep { color: var(--ui-text-3); display: inline-flex; }
+.crm-page-title__sub { font-size: var(--ui-fs-3); font-weight: var(--ui-fw-semibold); color: var(--ui-text-3); white-space: nowrap; }
+.crm-user-menu { position: relative; }
+.crm-user-menu__btn {
+  display: inline-flex; align-items: center; gap: var(--ui-s-2); height: 38px; padding: 0 var(--ui-s-2) 0 var(--ui-s-3);
+  border: 1px solid var(--ui-line-strong); border-radius: var(--ui-r-full); background: var(--ui-surface); color: var(--ui-text-2);
+  font: var(--ui-fw-semibold) var(--ui-fs-2) / 1 var(--ui-font); cursor: pointer;
 }
-
-.crm-inbox-header-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 14px;
+.crm-user-menu__btn:hover { background: var(--ui-surface-2); }
+.crm-user-menu__btn:focus-visible { outline: none; box-shadow: var(--ui-sh-focus); }
+.crm-user-menu__btn.is-simulating { border-color: var(--ui-warning); color: var(--ui-warning); }
+.crm-user-menu__avatar { display: grid; place-items: center; width: 28px; height: 28px; border-radius: var(--ui-r-full); background: var(--ui-primary-tint); color: var(--ui-primary-text); }
+.crm-user-menu__role { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crm-user-menu__panel {
+  position: absolute; top: calc(100% + 8px); inset-inline-end: 0; z-index: var(--ui-z-drawer); width: 260px;
+  display: flex; flex-direction: column; gap: 2px; padding: var(--ui-s-2);
+  background: var(--ui-surface); border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); box-shadow: var(--ui-sh-3);
+  font-family: var(--ui-font);
 }
-
-.crm-inbox-title-cluster {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.crm-user-menu__field { display: flex; flex-direction: column; gap: var(--ui-s-1); padding: var(--ui-s-2) var(--ui-s-2) var(--ui-s-3); font-size: var(--ui-fs-1); font-weight: var(--ui-fw-semibold); color: var(--ui-text-3); border-bottom: 1px solid var(--ui-line); margin-bottom: var(--ui-s-1); }
+.crm-user-menu__field .crm-role-select { max-width: none; height: 36px; padding: 0 var(--ui-s-2); border: 1px solid var(--ui-line-strong); border-radius: var(--ui-r-md); background: var(--ui-surface); color: var(--ui-text); font-size: var(--ui-fs-3); font-weight: var(--ui-fw-semibold); }
+.crm-user-menu__info { display: flex; align-items: center; gap: var(--ui-s-2); padding: var(--ui-s-2); color: var(--ui-text-2); font-size: var(--ui-fs-3); }
+.crm-user-menu__item {
+  display: flex; align-items: center; gap: var(--ui-s-3); width: 100%; min-height: 40px; padding: 0 var(--ui-s-3);
+  border: 0; border-radius: var(--ui-r-md); background: transparent; color: var(--ui-text); text-decoration: none;
+  font: var(--ui-fw-medium) var(--ui-fs-3) / 1 var(--ui-font); cursor: pointer; text-align: start;
 }
-
-.crm-inbox-main-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: var(--crm-ink);
-  letter-spacing: -0.01em;
+.crm-user-menu__item:hover { background: var(--ui-surface-2); }
+.crm-user-menu__item.is-danger { color: var(--ui-danger); }
+.crm-user-menu__divider { height: 1px; background: var(--ui-line); margin: var(--ui-s-1) 0; }
+@media (max-width: 767px) {
+  .crm-user-menu__role { display: none; }
+  .crm-user-menu__btn { padding: 0 var(--ui-s-1); }
+  .crm-page-title__sub { display: none; }
 }
-
-.crm-inbox-badge-360 {
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 9999px;
-  background: rgba(212, 175, 55, 0.1);
-  color: #B38A45;
-  border: 1px solid rgba(212, 175, 55, 0.28);
-  letter-spacing: 0.03em;
-}
-
-.crm-inbox-subtitle {
-  font-size: 0.82rem;
-  color: var(--crm-muted);
-  font-weight: 500;
-  line-height: 1.5;
-}
-
-.crm-inbox-sla-alert {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  color: #DC2626;
-  padding: 7px 14px;
-  border-radius: 10px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.05);
-}
-
-/* Category Cards Tabs */
-.crm-inbox-tab-btn {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: var(--crm-card);
-  border: 1px solid var(--crm-line);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-  cursor: pointer;
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-  text-align: inherit;
-  position: relative;
-  overflow: hidden;
-}
-
-.crm-inbox-tab-btn:hover {
-  border-color: rgba(20, 43, 73, 0.2);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-}
-
-.crm-inbox-tab-btn.is-active {
-  background: var(--crm-card);
-  border-color: var(--tab-accent, #B38A45);
-  box-shadow: 0 4px 14px -2px rgba(179, 138, 69, 0.15), 0 0 0 1px var(--tab-accent, #B38A45);
-}
-
-.crm-inbox-tab-btn.is-active::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  inset-inline-start: 0;
-  inset-inline-end: 0;
-  height: 3px;
-  background: var(--tab-accent, #B38A45);
-}
-
-.crm-inbox-tab-icon-box {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  background: var(--crm-bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: all 0.18s ease;
-  color: var(--crm-muted);
-}
-
-.crm-inbox-tab-btn.is-active .crm-inbox-tab-icon-box {
-  background: rgba(179, 138, 69, 0.1);
-  color: var(--tab-accent, #B38A45);
-}
-
-.crm-inbox-tab-badge-new {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: rgba(239, 68, 68, 0.09);
-  color: #DC2626;
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 9999px;
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  white-space: nowrap;
-}
-
-.crm-inbox-tab-badge-new::before {
-  content: '';
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #EF4444;
-  box-shadow: 0 0 6px #EF4444;
-}
-
-.crm-inbox-tab-badge-zero {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 22px;
-  padding: 2px 7px;
-  border-radius: 9999px;
-  background: var(--crm-bg);
-  color: var(--crm-muted);
-  font-size: 0.72rem;
-  font-weight: 600;
-  border: 1px solid var(--crm-line);
-}
-
-/* Lead Cards Styling */
-.crm-inbox-lead-card {
-  background: var(--crm-card);
-  border-radius: 14px;
-  border: 1px solid var(--crm-line);
-  padding: 16px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  position: relative;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.crm-inbox-lead-card:hover {
-  border-color: rgba(20, 43, 73, 0.2);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
-}
-
-.crm-inbox-lead-card.is-unclaimed {
-  border-inline-start: 4px solid #EF4444;
-  background: linear-gradient(90deg, rgba(239, 68, 68, 0.015) 0%, var(--crm-card) 20%);
-}
-
-.crm-inbox-avatar-box {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.14) 0%, rgba(20, 43, 73, 0.06) 100%);
-  border: 1px solid rgba(212, 175, 55, 0.28);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 1rem;
-  color: var(--crm-ink);
-  flex-shrink: 0;
-  user-select: none;
-}
-
-.crm-inbox-stage-tracker {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  background: var(--crm-bg);
-  border: 1px solid var(--crm-line);
-  border-radius: 8px;
-  padding: 3px;
-}
-
-.crm-inbox-stage-pill {
-  padding: 4px 9px;
-  border-radius: 6px;
-  font-size: 0.74rem;
-  font-weight: 600;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--crm-muted);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.crm-inbox-stage-pill:hover {
-  color: var(--crm-ink);
-  background: rgba(0, 0, 0, 0.03);
-}
-
-.crm-inbox-stage-pill.is-active {
-  background: var(--crm-card);
-  color: var(--stage-color, var(--crm-ink));
-  border-color: var(--crm-line);
-  font-weight: 700;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-}
-
-.crm-inbox-action-btn {
-  height: 34px;
-  border-radius: 8px;
-  padding: 0 12px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  text-decoration: none;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-  box-sizing: border-box;
-}
-
-.crm-inbox-action-btn.is-whatsapp {
-  background: #10B981;
-  color: #FFFFFF;
-  border: 1px solid #059669;
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);
-}
-
-.crm-inbox-action-btn.is-whatsapp:hover {
-  background: #059669;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
-}
-
-.crm-inbox-action-btn.is-outline {
-  background: var(--crm-card);
-  border: 1px solid var(--crm-line);
-  color: var(--crm-body);
-}
-
-.crm-inbox-action-btn.is-outline:hover {
-  background: var(--crm-bg);
-  color: var(--crm-ink);
-  border-color: rgba(20, 43, 73, 0.2);
-}
-
-.crm-inbox-action-btn.is-accent {
-  background: linear-gradient(135deg, #0B172E 0%, #152744 100%);
-  color: #F8FAFC;
-  border: 1px solid rgba(212, 175, 55, 0.4);
-}
-
-.crm-inbox-action-btn.is-accent:hover {
-  background: linear-gradient(135deg, #152744 0%, #1E3860 100%);
-  color: #FFFFFF;
-  border-color: rgba(212, 175, 55, 0.7);
-  transform: translateY(-1px);
-}
-
-.crm-inbox-claim-btn {
-  background: var(--crm-danger);
-  color: var(--crm-on-dark);
-  border: none;
-  border-radius: 8px;
-  padding: 6px 14px;
-  font-size: var(--crm-text-xs);
-  font-weight: 700;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
-  transition: all 0.15s ease;
-}
-
-.crm-inbox-claim-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
-}
-
-.crm-inbox-claimed-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 10px;
-  border-radius: 8px;
-  background: var(--crm-bg);
-  border: 1px solid var(--crm-line);
-  color: var(--crm-ink);
-  font-size: var(--crm-text-xs);
-  font-weight: 700;
-}
-
-.crm-inbox-claimed-badge.is-mine {
-  background: var(--crm-positive-soft);
-  border-color: var(--crm-positive);
-  color: var(--crm-positive);
-}
-
-
-

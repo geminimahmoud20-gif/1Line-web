@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Menu, Search, X, Plus, ChevronDown, Bell, ShieldCheck, Lock, Rocket, Globe, LogOut, Users, Building, Zap, Sparkles, CheckCircle2, AlertTriangle, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Menu, Search, X, Plus, ChevronDown, Bell, Lock, Rocket, Globe, LogOut, Users, Building, Zap, Sparkles, CheckCircle2, AlertTriangle, ArrowRight, ArrowLeft, UserRound } from 'lucide-react';
 import { getMergedCrmRoles } from './crmRoles';
 import { getActiveAccessConfig, subscribeToAccessConfig } from '../../services/accessConfig';
 import { desktopAlertsSupported, desktopAlertsEnabled, enableDesktopAlerts, describeDownload, formatLeadHeadline } from '../../utils/newLeadAlerts';
@@ -29,13 +29,16 @@ export default function CrmTopbar({
 }) {
   const [showQuickActionMenu, setShowQuickActionMenu] = useState(false);
   const [showNotifMenu, setShowNotifMenu] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const [notifTab, setNotifTab] = useState('all'); // 'all' | 'leads' | 'downloads' | 'demands'
   const [desktopAlerts, setDesktopAlerts] = useState(desktopAlertsEnabled);
   const [accessCfg, setAccessCfg] = useState(getActiveAccessConfig);
   useEffect(() => subscribeToAccessConfig(setAccessCfg), []);
   const currentRolesList = useMemo(() => getMergedCrmRoles(accessCfg), [accessCfg]);
+  const activeRoleObj = currentRolesList.find((r) => r.id === activeRole);
   const quickActionRef = useRef(null);
   const notifRef = useRef(null);
+  const userMenuRef = useRef(null);
   const searchRef = useRef(null);
 
   // Close dropdowns on outside click
@@ -46,6 +49,9 @@ export default function CrmTopbar({
       }
       if (notifRef.current && !notifRef.current.contains(e.target)) {
         setShowNotifMenu(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setShowUserMenu(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -89,7 +95,8 @@ export default function CrmTopbar({
 
   // Dynamic breadcrumb labels
   const tabTitles = {
-    dashboard: isAr ? 'لوحة القيادة والمؤشرات' : 'Dashboard Overview',
+    inbox: isAr ? 'صندوق الوارد' : 'Inbox',
+    dashboard: isAr ? 'لوحة القيادة' : 'Dashboard',
     leads: isAr ? 'العملاء والمبيعات' : 'Leads & Sales',
     kanban: isAr ? 'مسار الصفقات' : 'Pipeline Kanban',
     matching: isAr ? 'المطابقات الذكية AI' : 'Smart AI Matching',
@@ -153,44 +160,15 @@ export default function CrmTopbar({
           <Menu size={18} />
         </button>
 
-        <nav className="crm-breadcrumb" aria-label="Breadcrumb">
-          <button 
-            type="button"
-            className="crm-breadcrumb-root"
-            onClick={() => setActiveTab('dashboard')}
-          >
-            {isAr ? 'الرئيسية' : 'Root'}
-          </button>
-          
-          <span className="crm-breadcrumb-separator" aria-hidden="true">
-            {isAr ? <ArrowLeft size={12} /> : <ArrowRight size={12} />}
-          </span>
-
-          {currentSubTabName ? (
-            <button
-              type="button"
-              className="crm-breadcrumb-root"
-              onClick={() => setActiveTab(activeTab)}
-            >
-              {currentTabName}
-            </button>
-          ) : (
-            <span className="crm-breadcrumb-current is-active">
-              {currentTabName}
-            </span>
-          )}
-
+        <div className="crm-page-title">
+          <span className="crm-page-title__main">{currentTabName}</span>
           {currentSubTabName && (
             <>
-              <span className="crm-breadcrumb-separator">
-                {isAr ? <ArrowLeft size={12} /> : <ArrowRight size={12} />}
-              </span>
-              <span className="crm-breadcrumb-current is-active" style={{ color: 'var(--crm-accent-text)' }}>
-                {currentSubTabName}
-              </span>
+              <span className="crm-page-title__sep" aria-hidden="true">{isAr ? <ArrowLeft size={12} /> : <ArrowRight size={12} />}</span>
+              <span className="crm-page-title__sub">{currentSubTabName}</span>
             </>
           )}
-        </nav>
+        </div>
       </div>
 
       {/* Center: Universal Search */}
@@ -314,7 +292,7 @@ export default function CrmTopbar({
             style={{ padding: '6px 13px', fontSize: 'var(--crm-text-xs)' }}
           >
             <Plus size={14} />
-            <span>{isAr ? 'إجراء سريع' : 'Quick Action'}</span>
+            <span>{isAr ? 'جديد' : 'New'}</span>
             <ChevronDown size={12} style={{ transform: showQuickActionMenu ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
           </button>
 
@@ -327,7 +305,7 @@ export default function CrmTopbar({
                   className="crm-quick-action-item"
                 >
                   <Users size={15} style={{ color: 'var(--crm-info)' }} />
-                  <span>{isAr ? '+ تسجيل عميل جديد' : '+ New Lead'}</span>
+                  <span>{isAr ? 'عميل جديد' : 'New lead'}</span>
                 </button>
               )}
 
@@ -338,7 +316,7 @@ export default function CrmTopbar({
                   className="crm-quick-action-item"
                 >
                   <Building size={15} style={{ color: 'var(--crm-accent-text)' }} />
-                  <span>{isAr ? '+ إضافة عقار جديد' : '+ New Property'}</span>
+                  <span>{isAr ? 'عقار جديد' : 'New property'}</span>
                 </button>
               )}
 
@@ -349,7 +327,7 @@ export default function CrmTopbar({
                   className="crm-quick-action-item"
                 >
                   <Zap size={15} style={{ color: 'var(--crm-positive)' }} />
-                  <span>{isAr ? '+ إضافة طلب مشترٍ' : '+ New Demand'}</span>
+                  <span>{isAr ? 'طلب مشترٍ' : 'Buyer demand'}</span>
                 </button>
               )}
 
@@ -360,7 +338,7 @@ export default function CrmTopbar({
                   className="crm-quick-action-item"
                 >
                   <Building size={15} style={{ color: 'var(--crm-violet)' }} />
-                  <span>{isAr ? '+ إضافة مشروع استثماري' : '+ New Project'}</span>
+                  <span>{isAr ? 'مشروع جديد' : 'New project'}</span>
                 </button>
               )}
 
@@ -372,7 +350,7 @@ export default function CrmTopbar({
                 className="crm-quick-action-item"
               >
                 <Sparkles size={15} style={{ color: 'var(--crm-accent-text)' }} />
-                <span>{isAr ? '✨ فحص المطابقات الذكية AI' : '✨ Smart AI Match'}</span>
+                <span>{isAr ? 'المطابقات' : 'Matches'}</span>
               </button>
 
               {canAdd.retarget !== false && (
@@ -382,7 +360,7 @@ export default function CrmTopbar({
                   className="crm-quick-action-item"
                 >
                   <Zap size={15} style={{ color: 'var(--crm-danger)' }} />
-                  <span>{isAr ? '📢 حملة إعادة استهداف' : '📢 Retargeting Campaign'}</span>
+                  <span>{isAr ? 'حملة إعادة استهداف' : 'Retargeting campaign'}</span>
                 </button>
               )}
             </div>
@@ -407,7 +385,7 @@ export default function CrmTopbar({
               <div className="crm-notif-header">
                 <span className="crm-notif-header-title">
                   <Bell size={15} style={{ color: 'var(--crm-accent-text)' }} />
-                  <span>{isAr ? 'مركز الإشعارات الحية' : 'Live Notifications'}</span>
+                  <span>{isAr ? 'الإشعارات' : 'Notifications'}</span>
                 </span>
                 <span className="crm-notif-header-badge">
                   {totalNotifications} {isAr ? 'تنبيه' : 'alerts'}
@@ -463,7 +441,7 @@ export default function CrmTopbar({
                   <div className="crm-notif-card is-leads">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                       <strong style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)' }}>
-                        ⚡ {isAr ? 'طلبات جديدة بحاجة للرد' : 'Unseen New Requests'}
+                        {isAr ? 'طلبات جديدة مستنية رد' : 'New requests to answer'}
                       </strong>
                       <span className="crm-search-result-badge">{unseenNewLeads.length}</span>
                     </div>
@@ -491,7 +469,7 @@ export default function CrmTopbar({
                 {(notifTab === 'all' || notifTab === 'downloads') && clientDownloads.length > 0 && (
                   <div className="crm-notif-card is-downloads">
                     <div style={{ fontWeight: 'bold', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-info)', marginBottom: '6px' }}>
-                      📥 {isAr ? 'آخر تحميلات العملاء للبروشورات' : 'Client downloads'}
+                      {isAr ? 'آخر تحميلات البروشورات' : 'Client downloads'}
                     </div>
                     {clientDownloads.slice(0, 6).map((d) => (
                       <div key={d.id} className="crm-notif-item">
@@ -520,23 +498,10 @@ export default function CrmTopbar({
                   </div>
                 )}
 
-                {/* Encrypted Sync Pill */}
-                {notifTab === 'all' && (
-                  <div className="crm-notif-card is-sync">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--crm-positive)', fontWeight: 'bold', fontSize: 'var(--crm-text-xs)' }}>
-                      <CheckCircle2 size={13} />
-                      <span>{isAr ? 'جلسة التشفير والسحابة نشطة' : 'Encrypted Cloud Sync Active'}</span>
-                    </div>
-                    <small style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-xs)', display: 'block', marginTop: '2px' }}>
-                      {isAr ? 'تمت مزامنة البيانات مع Firebase بنجاح' : 'Data synchronized with Firestore'}
-                    </small>
-                  </div>
-                )}
-
                 {totalNotifications === 0 && (
                   <div className="crm-notif-empty">
                     <CheckCircle2 size={24} style={{ color: 'var(--crm-positive)' }} />
-                    <span>{isAr ? 'لا توجد تنبيهات جديدة، كل الأمور تحت السيطرة!' : 'No new notifications, all clear!'}</span>
+                    <span>{isAr ? 'مفيش إشعارات جديدة' : 'No new notifications'}</span>
                   </div>
                 )}
               </div>
@@ -544,68 +509,57 @@ export default function CrmTopbar({
           )}
         </div>
 
-        {/* Role Simulator Switcher (Super Admin only) */}
-        {isSuperAdmin ? (
-          <div className={`crm-role-switcher-box ${isSimulationMode ? 'is-simulating' : ''}`}>
-            <ShieldCheck size={14} style={{ color: isSimulationMode ? 'var(--crm-warn)' : 'var(--crm-accent)' }} />
-            <select
-              className="crm-role-select"
-              aria-label={isAr ? 'محاكي الأدوار' : 'Role simulator'}
-              value={selectedRole}
-              onChange={(e) => setSelectedRole(e.target.value)}
-              title={isAr ? 'محاكي الأدوار (متاح للمدير العام فقط للمعاينة)' : 'Role Simulation (Super Admin preview)'}
-            >
-              {currentRolesList.map(r => (
-                <option key={r.id} value={r.id}>
-                  {r.icon} {isAr ? r.label_ar : r.label_en}
-                </option>
-              ))}
-            </select>
-          </div>
-        ) : (
-          <div className="crm-role-lock-box">
-            <Lock size={12} style={{ color: 'var(--crm-muted)' }} />
-            <span>{currentRolesList.find(r => r.id === activeRole)?.icon || '👤'}</span>
-            <span>{isAr ? (currentRolesList.find(r => r.id === activeRole)?.label_ar || activeRole) : (currentRolesList.find(r => r.id === activeRole)?.label_en || activeRole)}</span>
-          </div>
-        )}
-
-        {/* Go-Live Readiness Audit Button */}
-        <button
-          type="button"
-          onClick={() => setShowGoLiveWizard(true)}
-          className="crm-topbar-tool-btn crm-top-chip"
-          title={isAr ? 'فحص جاهزية الموقع والتحول للإنتاج الفعلي' : 'Go-Live Readiness Audit'}
-          aria-label={isAr ? 'جاهزية الإطلاق' : 'Go-live audit'}
-        >
-          <Rocket size={13} style={{ color: 'var(--crm-accent)' }} />
-          <span className="crm-top-chip-label">{isAr ? 'جاهزية الإطلاق' : 'Audit'}</span>
-        </button>
-
-        {/* Live Site Preview Link */}
-        <a
-          href="/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="crm-topbar-tool-btn crm-top-chip"
-          title={isAr ? 'معاينة الموقع العام في تبويب جديد مستقل' : 'View Live Site in New Tab'}
-          aria-label={isAr ? 'معاينة الموقع العام' : 'Preview Live Site'}
-        >
-          <Globe size={13} style={{ color: 'var(--crm-muted)' }} />
-          <span className="crm-top-chip-label">{isAr ? 'معاينة الموقع' : 'Preview'}</span>
-        </a>
-
-        {/* Logout button */}
-        <button
-          type="button"
-          onClick={onLogout}
-          className="crm-topbar-tool-btn is-danger crm-top-chip"
-          title={isAr ? 'تسجيل الخروج' : 'Logout'}
-          aria-label={isAr ? 'تسجيل الخروج' : 'Logout'}
-        >
-          <LogOut size={13} />
-          <span className="crm-top-chip-label">{isAr ? 'خروج' : 'Exit'}</span>
-        </button>
+        {/* Account menu: role, launch readiness, site preview and sign-out live here instead of the bar */}
+        <div className="crm-user-menu" ref={userMenuRef}>
+          <button
+            type="button"
+            className={`crm-user-menu__btn ${isSimulationMode ? 'is-simulating' : ''}`}
+            onClick={() => setShowUserMenu((v) => !v)}
+            aria-expanded={showUserMenu}
+            aria-haspopup="menu"
+            aria-label={isAr ? 'قائمة الحساب' : 'Account menu'}
+          >
+            <span className="crm-user-menu__avatar" aria-hidden="true"><UserRound size={16} /></span>
+            <span className="crm-user-menu__role">{isAr ? (activeRoleObj?.label_ar || activeRole) : (activeRoleObj?.label_en || activeRole)}</span>
+            <ChevronDown size={14} aria-hidden="true" />
+          </button>
+          {showUserMenu && (
+            <div className="crm-user-menu__panel" role="menu">
+              {isSuperAdmin ? (
+                <label className="crm-user-menu__field">
+                  <span>{isAr ? 'معاينة كـ' : 'Preview as'}</span>
+                  <select
+                    className="crm-role-select"
+                    value={selectedRole}
+                    onChange={(e) => setSelectedRole(e.target.value)}
+                  >
+                    {currentRolesList.map(r => (
+                      <option key={r.id} value={r.id}>{isAr ? r.label_ar : r.label_en}</option>
+                    ))}
+                  </select>
+                </label>
+              ) : (
+                <div className="crm-user-menu__info">
+                  <Lock size={14} aria-hidden="true" />
+                  <span>{isAr ? (activeRoleObj?.label_ar || activeRole) : (activeRoleObj?.label_en || activeRole)}</span>
+                </div>
+              )}
+              <button type="button" role="menuitem" className="crm-user-menu__item" onClick={() => { setShowGoLiveWizard(true); setShowUserMenu(false); }}>
+                <Rocket size={16} aria-hidden="true" />
+                <span>{isAr ? 'جاهزية الإطلاق' : 'Launch readiness'}</span>
+              </button>
+              <a role="menuitem" className="crm-user-menu__item" href="/" target="_blank" rel="noopener noreferrer" onClick={() => setShowUserMenu(false)}>
+                <Globe size={16} aria-hidden="true" />
+                <span>{isAr ? 'فتح الموقع' : 'Open the site'}</span>
+              </a>
+              <div className="crm-user-menu__divider" />
+              <button type="button" role="menuitem" className="crm-user-menu__item is-danger" onClick={onLogout}>
+                <LogOut size={16} aria-hidden="true" />
+                <span>{isAr ? 'تسجيل الخروج' : 'Sign out'}</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );
