@@ -1,7 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import useOpenRequest from '../../hooks/useOpenRequest';
-import { Building, Plus, Upload, Search, Star, ChevronDown, AlertTriangle } from 'lucide-react';
-import { PageHeader, Button, Card, Badge, Chip, EmptyState } from '../ui';
+import { Building, Plus, Upload, Search, Star, ChevronDown, AlertTriangle, SlidersHorizontal, X } from 'lucide-react';
+import { PageHeader, Button, Card, Badge, Chip, EmptyState, SegmentedControl, Select, Input, useConfirm } from '../ui';
+import { toLatinDigits } from '../../utils/latinDigits';
+import ListingsBulkBar from './ListingsBulkBar';
+import ListingsReport from './ListingsReport';
+import { listingIssues, matchesFilters, sortListings, SORTS, ISSUES, NO_AREA } from '../../utils/listingReview';
 import './properties-panel.css';
 import { getAreas } from '../../utils/areasData';
 import HomepageSlotsBoard, { FeaturedSlotModal } from './HomepageSlotsBoard';
@@ -24,7 +28,6 @@ import { PROPERTY_TYPES } from '../../data/propertiesData';
 const SHORT_TYPE_AR = { apartment: 'شقق ودوبلكس', villa: 'فيلات', commercial: 'محلات', office: 'مكاتب وعيادات', land: 'أراضي' };
 const SHORT_TYPE_EN = { apartment: 'Apartments', villa: 'Villas', commercial: 'Shops', office: 'Offices & clinics', land: 'Land' };
 import OfferModal from './OfferModal';
-import { listingSampleFlags } from '../../utils/sampleDataFlags';
 import { getNormalizedPropertyStatus } from '../../utils/crmLeadViews';
 const SOHAG_AREA_COORDINATES = {
   east: { lat: 26.5569, lng: 31.7001 },
@@ -94,8 +97,15 @@ export default function PropertyManagerPanel({
   const [typeFilter, setTypeFilter] = useState('all');
   const [areaFilter, setAreaFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [sampleOnly, setSampleOnly] = useState(false); // 'all' | 'published' | 'hidden' | 'under_negotiation' | 'sold' | 'trash'
   const [searchQuery, setSearchQuery] = useState('');
+  const [view, setView] = useState('list'); // 'list' | 'report'
+  const [readiness, setReadiness] = useState('all'); // 'all' | 'ready' | 'incomplete'
+  const [issueFilter, setIssueFilter] = useState('all');
+  const [range, setRange] = useState({ priceMin: '', priceMax: '', sizeMin: '', sizeMax: '' });
+  const [sortKey, setSortKey] = useState('newest');
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const [selected, setSelected] = useState(() => new Set());
+  const confirm = useConfirm();
   const [showSlots, setShowSlots] = useState(false);
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [notifierProperty, setNotifierProperty] = useState(null);
@@ -154,12 +164,25 @@ export default function PropertyManagerPanel({
   };
 
   // Quick Toggle Visibility (Active / Hidden)
-  const handleToggleVisibility = (prop) => {
+  const handleToggleVisibility = async (prop) => {
     // Anything the site shows (published, under negotiation, sold…) is hidden; hidden/draft is published.
     // It used to compare with 'published' only, so the eye on an "under negotiation" listing
     // published it instead of hiding it.
     const currentStatus = prop.status || (prop.isArchived ? 'hidden' : 'published');
     const hiding = !['hidden', 'draft'].includes(currentStatus);
+    const missing = issuesOf(prop);
+    if (!hiding && missing.length) {
+      const ok = await confirm({
+        title: isAr ? 'العقار ده ناقص بيانات' : 'This listing is incomplete',
+        tone: 'primary',
+        message: isAr
+          ? `ناقص: ${missing.map((k) => ISSUES[k].ar).join('، ')}. الزوار هيشوفوه كده. تنشره برضه؟`
+          : `Missing: ${missing.map((k) => ISSUES[k].en).join(', ')}. Publish anyway?`,
+        confirmLabel: isAr ? 'انشره برضه' : 'Publish anyway',
+        cancelLabel: isAr ? 'لأ' : 'Cancel'
+      });
+      if (!ok) return;
+    }
     // Showing it again restores what it was before (e.g. still "under negotiation")
     const newStatus = hiding ? 'hidden' : (prop.statusBeforeHide || 'published');
     const res = onUpdateProperty(prop.id, { status: newStatus, statusBeforeHide: hiding ? currentStatus : null });
@@ -185,8 +208,13 @@ export default function PropertyManagerPanel({
   };
 
   // Soft Delete (Move to Trash)
-  const handleSoftDelete = (propId) => {
-    if (window.confirm(isAr ? 'نقل هذا العقار إلى سلة المهملات؟ (يمكنك استرجاعه لاحقاً)' : 'Move to Trash? (Can be restored)')) {
+  const handleSoftDelete = async (propId) => {
+    if (await confirm({
+      title: isAr ? 'نقل للمهملات؟' : 'Move to trash?',
+      message: isAr ? 'تقدر ترجّعه بعدين من سلة المهملات.' : 'You can restore it from the trash later.',
+      confirmLabel: isAr ? 'انقله' : 'Move',
+      cancelLabel: isAr ? 'لأ' : 'Cancel'
+    })) {
       const res = onUpdateProperty(propId, { isDeleted: true, status: 'trash' });
       if (res !== false) {
         triggerToast(isAr ? 'تم نقل العقار إلى سلة المهملات' : 'Property moved to Trash', 'info');
@@ -203,8 +231,13 @@ export default function PropertyManagerPanel({
   };
 
   // Permanent Hard Delete
-  const handlePermanentDelete = (propId) => {
-    if (window.confirm(isAr ? 'تحذير: هل أنت متأكد من الحذف النهائي؟ لن يمكن استرجاع العقار أبداً.' : 'Warning: Delete permanently? Cannot be undone.')) {
+  const handlePermanentDelete = async (propId) => {
+    if (await confirm({
+      title: isAr ? 'حذف نهائي؟' : 'Delete permanently?',
+      message: isAr ? 'مش هتقدر ترجّعه تاني.' : 'This cannot be undone.',
+      confirmLabel: isAr ? 'احذف' : 'Delete',
+      cancelLabel: isAr ? 'لأ' : 'Cancel'
+    })) {
       const res = onDeleteProperty(propId);
       if (res !== false) {
         triggerToast(isAr ? 'تم الحذف النهائي للعقار' : 'Property permanently deleted', 'info');
@@ -455,42 +488,54 @@ export default function PropertyManagerPanel({
     };
   }, [properties]);
 
-  const sampleFlagCount = useMemo(() => properties.filter((p) => !p.isDeleted && listingSampleFlags(p).length > 0).length, [properties]);
+  // What each listing still lacks before it can go on the site (photo, price, area…)
+  const knownAreas = useMemo(() => new Set(areas.map((a) => a.id)), [areas]);
+  const issuesMap = useMemo(() => {
+    const m = new Map();
+    properties.forEach((p) => m.set(p.id, listingIssues(p, knownAreas)));
+    return m;
+  }, [properties, knownAreas]);
+  const issuesOf = (p) => issuesMap.get(p.id) || [];
 
-  // Filtered Properties for Display (Memoized)
-  const filteredProperties = useMemo(() => {
-    return properties.filter((prop) => {
-      // 1. Trash vs Active
-      const propStatus = getNormalizedPropertyStatus(prop);
-      if (statusFilter === 'trash') {
-        return propStatus === 'trash';
-      }
-      if (propStatus === 'trash') return false;
+  const filters = { status: statusFilter, type: typeFilter, area: areaFilter, readiness, issue: issueFilter, ...range, q: searchQuery };
+  const filteredProperties = useMemo(
+    () => sortListings(properties.filter((p) => matchesFilters(p, filters, issuesMap.get(p.id) || [])), sortKey, (p) => issuesMap.get(p.id) || []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [properties, issuesMap, statusFilter, typeFilter, areaFilter, readiness, issueFilter, range, searchQuery, sortKey]
+  );
 
-      // 2. Status Filters
-      if (statusFilter === 'published' && propStatus !== 'published') return false;
-      if (statusFilter === 'hidden' && propStatus !== 'hidden') return false;
-      if (statusFilter === 'under_negotiation' && propStatus !== 'under_negotiation') return false;
-      if (statusFilter === 'sold' && propStatus !== 'sold') return false;
+  // Readiness counts within the current status (so "جاهز للنشر" under "للمراجعة" means hidden + complete)
+  const readinessCounts = useMemo(() => {
+    const base = properties.filter((p) => matchesFilters(p, { status: statusFilter }, []));
+    const ready = base.filter((p) => (issuesMap.get(p.id) || []).length === 0).length;
+    return { all: base.length, ready, incomplete: base.length - ready };
+  }, [properties, issuesMap, statusFilter]);
 
-      if (sampleOnly && listingSampleFlags(prop).length === 0) return false;
+  const legacyCount = useMemo(() => properties.filter((p) => !p.isDeleted && (issuesMap.get(p.id) || []).includes('legacy')).length, [properties, issuesMap]);
+  const moreFiltersOn = issueFilter !== 'all' || Object.values(range).some((v) => v !== '');
 
-      // 3. Type & area (the pill filter)
-      if (typeFilter !== 'all' && prop.type !== typeFilter) return false;
-      if (areaFilter !== 'all' && prop.areaKey !== areaFilter) return false;
+  const clearFilters = () => {
+    setTypeFilter('all'); setAreaFilter('all'); setReadiness('all'); setIssueFilter('all');
+    setRange({ priceMin: '', priceMax: '', sizeMin: '', sizeMax: '' }); setSearchQuery('');
+  };
 
-      // 4. Search Query
-      if (searchQuery.trim() !== '') {
-        const q = searchQuery.toLowerCase();
-        const matchTitle = (prop.title_ar || '').toLowerCase().includes(q) || (prop.title_en || '').toLowerCase().includes(q);
-        const matchId = (prop.id || '').toLowerCase().includes(q);
-        const matchArea = (prop.areaKey || '').toLowerCase().includes(q);
-        if (!matchTitle && !matchId && !matchArea) return false;
-      }
+  // Selection (bulk actions) only ever holds rows that are on screen
+  const visibleIds = useMemo(() => new Set(filteredProperties.map((p) => p.id)), [filteredProperties]);
+  const selectedIds = [...selected].filter((id) => visibleIds.has(id));
+  const toggleOne = (id, on) => setSelected((prev) => { const next = new Set(prev); if (on) next.add(id); else next.delete(id); return next; });
+  const allOnScreen = filteredProperties.length > 0 && selectedIds.length === filteredProperties.length;
+  const toggleAll = (on) => setSelected(on ? new Set(filteredProperties.map((p) => p.id)) : new Set());
 
-      return true;
-    });
-  }, [properties, statusFilter, searchQuery, typeFilter, areaFilter, sampleOnly]);
+  // From the report: open the list with a filter already applied
+  const openList = (patch) => {
+    clearFilters();
+    setStatusFilter(patch.status || 'all');
+    if (patch.readiness) setReadiness(patch.readiness);
+    if (patch.issue) setIssueFilter(patch.issue);
+    if (patch.area) setAreaFilter(patch.area);
+    if (patch.type) setTypeFilter(patch.type);
+    setView('list');
+  };
 
   // Pill filter options: only the types and areas that have listings (outside the trash), with counts
   const facets = useMemo(() => {
@@ -498,14 +543,18 @@ export default function PropertyManagerPanel({
     const count = (key) => live.reduce((m, p) => { const k = p[key]; if (k) m.set(k, (m.get(k) || 0) + 1); return m; }, new Map());
     const byType = count('type');
     const byArea = count('areaKey');
+    const noArea = live.filter((p) => (issuesMap.get(p.id) || []).includes('area')).length;
     return {
       types: PROPERTY_TYPES.filter((t) => t.id !== 'all' && byType.get(t.id))
         .map((t) => ({ id: t.id, label: (isAr ? SHORT_TYPE_AR : SHORT_TYPE_EN)[t.id] || (isAr ? t.name_ar : t.name_en), count: byType.get(t.id) })),
-      areas: areas.filter((a) => a.id !== 'all' && byArea.get(a.id))
-        .map((a) => ({ id: a.id, label: isAr ? (a.name_ar || a.label_ar || a.id) : (a.name_en || a.name_ar || a.id), count: byArea.get(a.id) }))
-        .sort((x, y) => y.count - x.count)
+      areas: [
+        ...areas.filter((a) => a.id !== 'all' && byArea.get(a.id))
+          .map((a) => ({ id: a.id, label: isAr ? (a.name_ar || a.label_ar || a.id) : (a.name_en || a.name_ar || a.id), count: byArea.get(a.id) }))
+          .sort((x, y) => y.count - x.count),
+        ...(noArea ? [{ id: NO_AREA, label: isAr ? 'من غير منطقة' : 'No area', count: noArea, warn: true }] : [])
+      ]
     };
-  }, [properties, areas, isAr]);
+  }, [properties, areas, isAr, issuesMap]);
 
   const badgePresets = [
     { ar: 'عرض مميز', en: 'Featured Deal' },
@@ -523,7 +572,7 @@ export default function PropertyManagerPanel({
       <PageHeader
         title={isAr ? 'العقارات' : 'Listings'}
         description={isAr
-          ? `${activeCount} معروض · ${hiddenCount} مخفي · ${negotiationCount} تحت التفاوض${soldCount ? ` · ${soldCount} اتباع` : ''}`
+          ? `${activeCount} معروض · ${hiddenCount} للمراجعة · ${negotiationCount} تحت التفاوض${soldCount ? ` · ${soldCount} اتباع` : ''}`
           : `${activeCount} live · ${hiddenCount} hidden · ${negotiationCount} in negotiation${soldCount ? ` · ${soldCount} sold` : ''}`}
         actions={(
           <>
@@ -539,7 +588,7 @@ export default function PropertyManagerPanel({
               label={isAr ? 'تصدير' : 'Export'}
               baseName="1Line_Properties"
               sheetName="العقارات"
-              getRows={() => properties.filter((p) => !p.isDemo).map((p) => propertyToRow(p, areas))}
+              getRows={() => (selected.size ? properties.filter((p) => selected.has(p.id)) : properties).filter((p) => !p.isDemo).map((p) => propertyToRow(p, areas))}
               getJson={() => ({ platform: '1Line Real Estate', timestamp: new Date().toISOString(), propertiesCount: properties.length, properties: properties.filter((p) => !p.isDemo) })}
               disabled={!properties.some((p) => !p.isDemo)}
               onDone={(format, ok) => triggerToast(ok ? (isAr ? 'تم تجهيز الملف وتنزيله' : 'File downloaded') : (isAr ? 'تعذّر تجهيز الملف' : 'Export failed'), ok ? 'success' : 'error')}
@@ -614,104 +663,202 @@ export default function PropertyManagerPanel({
         />
       )}
 
-      {sampleFlagCount > 0 && (
-        <div role="status" className="crm-props__notice">
-          <AlertTriangle size={16} aria-hidden="true" />
-          <span>
-            {isAr
-              ? `${sampleFlagCount} عقار فيهم بيانات من نموذج الإضافة القديم (صورة افتراضية أو سعر تقديري). راجعهم.`
-              : `${sampleFlagCount} listings carry legacy template values (placeholder photo or sample price). Please review.`}
-          </span>
-          <Button variant="secondary" size="sm" aria-pressed={sampleOnly} onClick={() => setSampleOnly((v) => !v)}>
-            {sampleOnly ? (isAr ? 'اعرض كل العقارات' : 'Show all listings') : (isAr ? 'اعرضهم بس' : 'Show only these')}
-          </Button>
-        </div>
-      )}
-
-      <PropertyFacetFilter
-        types={facets.types}
-        areas={facets.areas}
-        typeFilter={typeFilter}
-        areaFilter={areaFilter}
-        onType={setTypeFilter}
-        onArea={setAreaFilter}
-        isAr={isAr}
+      <SegmentedControl
+        label={isAr ? 'طريقة العرض' : 'View'}
+        value={view}
+        onChange={setView}
+        options={[
+          { value: 'list', label: isAr ? 'الوحدات' : 'Listings' },
+          { value: 'report', label: isAr ? 'التقارير' : 'Reports' }
+        ]}
       />
 
-      <div className="crm-props__toolbar">
-        <div className="crm-props__chips" role="group" aria-label={isAr ? 'حالة العرض' : 'Display status'}>
-          <Chip pressed={statusFilter === 'all'} count={properties.length - trashCount} onClick={() => setStatusFilter('all')}>{isAr ? 'الكل' : 'All'}</Chip>
-          <Chip pressed={statusFilter === 'published'} count={activeCount} onClick={() => setStatusFilter('published')}>{isAr ? 'معروضة' : 'Live'}</Chip>
-          <Chip pressed={statusFilter === 'hidden'} count={hiddenCount} onClick={() => setStatusFilter('hidden')}>{isAr ? 'مخفية' : 'Hidden'}</Chip>
-          <Chip pressed={statusFilter === 'under_negotiation'} count={negotiationCount} onClick={() => setStatusFilter('under_negotiation')}>{isAr ? 'تحت التفاوض' : 'Negotiation'}</Chip>
-          <Chip pressed={statusFilter === 'sold'} count={soldCount} onClick={() => setStatusFilter('sold')}>{isAr ? 'اتباعت' : 'Sold'}</Chip>
-          <Chip pressed={statusFilter === 'trash'} count={trashCount} onClick={() => setStatusFilter('trash')}>{isAr ? 'سلة المهملات' : 'Trash'}</Chip>
-        </div>
-        <label className="crm-props__search">
-          <Search size={16} aria-hidden="true" />
-          <input
-            type="search"
-            aria-label={isAr ? 'بحث في العقارات' : 'Search listings'}
-            placeholder={isAr ? 'اسم، كود أو منطقة' : 'Title, code or area'}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </label>
-      </div>
+      {view === 'report' ? (
+        <ListingsReport properties={properties} areas={areas} isAr={isAr} onOpenList={openList} />
+      ) : (
+        <>
+          {legacyCount > 0 && issueFilter !== 'legacy' && (
+            <div role="status" className="crm-props__notice">
+              <AlertTriangle size={16} aria-hidden="true" />
+              <span>
+                {isAr
+                  ? `${legacyCount} عقار فيهم بيانات من نموذج الإضافة القديم (صورة افتراضية أو سعر تقديري). راجعهم.`
+                  : `${legacyCount} listings carry legacy template values (placeholder photo or sample price). Please review.`}
+              </span>
+              <Button variant="secondary" size="sm" onClick={() => { setIssueFilter('legacy'); setShowMoreFilters(true); }}>
+                {isAr ? 'اعرضهم' : 'Show them'}
+              </Button>
+            </div>
+          )}
 
-      {/* Properties Table */}
-      <div className="admin-table-wrapper">
-        <table className="admin-data-table crm-props-table">
-          <thead>
-            <tr>
-              <th>{isAr ? 'العقار' : 'Property'}</th>
-              <th>{isAr ? 'النوع والمنطقة' : 'Type & Area'}</th>
-              <th>{isAr ? 'السعر والمقدم' : 'Price & Downpayment'}</th>
-              <th>{isAr ? 'المساحة والغرف' : 'Specs'}</th>
-              <th>{isAr ? 'حالة العرض' : 'Display Status'}</th>
-              <th>{isAr ? 'التميز' : 'Featured'}</th>
-              <th>{isAr ? 'الإجراءات' : 'Actions'}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredProperties.length === 0 ? (
-              <tr>
-                <td colSpan="7" className="crm-props__empty">
-                  <EmptyState
-                    icon={<Building size={22} />}
-                    title={isAr ? 'مفيش عقارات بالفلتر ده' : 'No listings match'}
-                    description={isAr ? 'غيّر الحالة أو النوع أو البحث.' : 'Change the status, type or search.'}
-                  />
-                </td>
-              </tr>
-            ) : (
-              filteredProperties.map((prop) => {
-                return (
-                  <PropertyTableRow
-                    readOnly={readOnly}
-                    key={prop.id}
-                    prop={prop}
-                    isAr={isAr}
-                    areas={areas}
-                    handleStatusChange={handleStatusChange}
-                    handleToggleVisibility={handleToggleVisibility}
-                    handleOpenEdit={handleOpenEdit}
-                    handleSoftDelete={handleSoftDelete}
-                    handleRestore={handleRestore}
-                    handlePermanentDelete={handlePermanentDelete}
-                    onUpdateProperty={onUpdateProperty}
-                    triggerToast={triggerToast}
-                    setSlotEditing={setSlotEditing}
-                    setOfferEditing={setOfferEditing}
-                    setNotifierProperty={setNotifierProperty}
-                    setNotifierEventType={setNotifierEventType}
-                  />
-                );
-              })
+          <PropertyFacetFilter
+            types={facets.types}
+            areas={facets.areas}
+            typeFilter={typeFilter}
+            areaFilter={areaFilter}
+            onType={setTypeFilter}
+            onArea={setAreaFilter}
+            isAr={isAr}
+          />
+
+          <div className="crm-props__toolbar">
+            <div className="crm-props__chips" role="group" aria-label={isAr ? 'حالة العرض' : 'Display status'}>
+              <Chip pressed={statusFilter === 'all'} count={properties.length - trashCount} onClick={() => setStatusFilter('all')}>{isAr ? 'الكل' : 'All'}</Chip>
+              <Chip pressed={statusFilter === 'published'} count={activeCount} onClick={() => setStatusFilter('published')}>{isAr ? 'معروضة' : 'Live'}</Chip>
+              <Chip pressed={statusFilter === 'hidden'} count={hiddenCount} onClick={() => setStatusFilter('hidden')}>{isAr ? 'للمراجعة (مخفية)' : 'To review (hidden)'}</Chip>
+              <Chip pressed={statusFilter === 'under_negotiation'} count={negotiationCount} onClick={() => setStatusFilter('under_negotiation')}>{isAr ? 'تحت التفاوض' : 'Negotiation'}</Chip>
+              <Chip pressed={statusFilter === 'sold'} count={soldCount} onClick={() => setStatusFilter('sold')}>{isAr ? 'اتباعت' : 'Sold'}</Chip>
+              <Chip pressed={statusFilter === 'trash'} count={trashCount} onClick={() => setStatusFilter('trash')}>{isAr ? 'المهملات' : 'Trash'}</Chip>
+            </div>
+            <label className="crm-props__search">
+              <Search size={16} aria-hidden="true" />
+              <input
+                type="search"
+                aria-label={isAr ? 'بحث في العقارات' : 'Search listings'}
+                placeholder={isAr ? 'اسم، كود، منطقة أو عنوان' : 'Title, code, area or address'}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </label>
+          </div>
+
+          <div className="crm-props__toolbar">
+            {statusFilter !== 'trash' && (
+              <div className="crm-props__chips" role="group" aria-label={isAr ? 'جاهزية النشر' : 'Readiness'}>
+                <Chip pressed={readiness === 'all'} count={readinessCounts.all} onClick={() => setReadiness('all')}>{isAr ? 'كل البيانات' : 'Any data'}</Chip>
+                <Chip pressed={readiness === 'ready'} count={readinessCounts.ready} onClick={() => setReadiness('ready')}>{isAr ? 'بياناته كاملة' : 'Complete'}</Chip>
+                <Chip pressed={readiness === 'incomplete'} count={readinessCounts.incomplete} onClick={() => setReadiness('incomplete')}>{isAr ? 'ناقص بيانات' : 'Incomplete'}</Chip>
+              </div>
             )}
-          </tbody>
-        </table>
-      </div>
+            <div className="crm-props__tools">
+              <Select
+                hideLabel
+                label={isAr ? 'الترتيب' : 'Sort'}
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value)}
+                options={Object.entries(SORTS).map(([value, o]) => ({ value, label: isAr ? o.ar : o.en }))}
+              />
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<SlidersHorizontal size={15} aria-hidden="true" />}
+                aria-expanded={showMoreFilters}
+                aria-controls="crm-props-more"
+                onClick={() => setShowMoreFilters((v) => !v)}
+              >
+                {isAr ? 'فلاتر أكتر' : 'More filters'}{moreFiltersOn ? ' •' : ''}
+              </Button>
+            </div>
+          </div>
+
+          {showMoreFilters && (
+            <Card padding="compact" id="crm-props-more" className="crm-props__more">
+              <Select
+                label={isAr ? 'ناقصه إيه' : 'Missing'}
+                value={issueFilter}
+                onChange={(e) => setIssueFilter(e.target.value)}
+                options={[{ value: 'all', label: isAr ? 'أي حاجة' : 'Anything' }, ...Object.entries(ISSUES).map(([value, o]) => ({ value, label: isAr ? o.ar : o.en }))]}
+              />
+              {[
+                ['priceMin', isAr ? 'السعر من' : 'Price from'],
+                ['priceMax', isAr ? 'السعر لحد' : 'Price to'],
+                ['sizeMin', isAr ? 'المساحة من (م²)' : 'Size from (m²)'],
+                ['sizeMax', isAr ? 'المساحة لحد (م²)' : 'Size to (m²)']
+              ].map(([key, label]) => (
+                <Input
+                  key={key}
+                  label={label}
+                  inputMode="numeric"
+                  value={range[key] ? Number(range[key]).toLocaleString('en-US') : ''}
+                  onChange={(e) => setRange((r) => ({ ...r, [key]: toLatinDigits(e.target.value).replace(/\D/g, '').slice(0, 12) }))}
+                />
+              ))}
+              <Button variant="ghost" size="sm" icon={<X size={15} aria-hidden="true" />} onClick={clearFilters}>
+                {isAr ? 'امسح الفلاتر' : 'Clear filters'}
+              </Button>
+            </Card>
+          )}
+
+          {selectedIds.length > 0 && (
+            <ListingsBulkBar
+              ids={selectedIds}
+              properties={properties}
+              issuesOf={issuesOf}
+              areas={areas}
+              isAr={isAr}
+              onUpdateProperty={onUpdateProperty}
+              triggerToast={triggerToast}
+              onDone={() => setSelected(new Set())}
+            />
+          )}
+
+          <p className="crm-props__count" aria-live="polite">
+            {isAr ? `${filteredProperties.length} وحدة` : `${filteredProperties.length} listings`}
+          </p>
+
+          {/* Properties Table */}
+          <div className="admin-table-wrapper">
+            <table className="admin-data-table crm-props-table">
+              <thead>
+                <tr>
+                  <th className="crm-prow__check">
+                    <input
+                      type="checkbox"
+                      checked={allOnScreen}
+                      disabled={readOnly || filteredProperties.length === 0}
+                      onChange={(e) => toggleAll(e.target.checked)}
+                      aria-label={isAr ? 'اختيار كل الظاهر' : 'Select all shown'}
+                    />
+                  </th>
+                  <th>{isAr ? 'العقار' : 'Property'}</th>
+                  <th>{isAr ? 'السعر' : 'Price'}</th>
+                  <th>{isAr ? 'المساحة' : 'Size'}</th>
+                  <th>{isAr ? 'الحالة' : 'Status'}</th>
+                  <th>{isAr ? 'الإجراءات' : 'Actions'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredProperties.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="crm-props__empty">
+                      <EmptyState
+                        icon={<Building size={22} />}
+                        title={isAr ? 'مفيش عقارات بالفلتر ده' : 'No listings match'}
+                        description={isAr ? 'غيّر الحالة أو النوع أو البحث.' : 'Change the status, type or search.'}
+                      />
+                    </td>
+                  </tr>
+                ) : (
+                  filteredProperties.map((prop) => (
+                    <PropertyTableRow
+                      readOnly={readOnly}
+                      key={prop.id}
+                      prop={prop}
+                      issues={issuesOf(prop)}
+                      selected={selected.has(prop.id)}
+                      onSelect={toggleOne}
+                      isAr={isAr}
+                      areas={areas}
+                      handleStatusChange={handleStatusChange}
+                      handleToggleVisibility={handleToggleVisibility}
+                      handleOpenEdit={handleOpenEdit}
+                      handleSoftDelete={handleSoftDelete}
+                      handleRestore={handleRestore}
+                      handlePermanentDelete={handlePermanentDelete}
+                      onUpdateProperty={onUpdateProperty}
+                      triggerToast={triggerToast}
+                      setSlotEditing={setSlotEditing}
+                      setOfferEditing={setOfferEditing}
+                      setNotifierProperty={setNotifierProperty}
+                      setNotifierEventType={setNotifierEventType}
+                    />
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
 
       {/* Add / Edit Modal */}
       {showAddModal && (

@@ -21,9 +21,9 @@ export default function PropertyFacetFilter({ types, areas, typeFilter, areaFilt
       <div className="pf-row" role="group" aria-label={isAr ? 'المنطقة' : 'Area'}>
         <span className="pf-label">{isAr ? 'المنطقة' : 'Area'}</span>
         <div className="pf-track">
-          <Chip pressed={areaFilter === 'all'} onClick={() => onArea('all')}>{isAr ? 'كل المناطق' : 'All areas'}</Chip>
+          <Chip pressed={areaFilter === 'all'} count={total} onClick={() => onArea('all')}>{isAr ? 'كل المناطق' : 'All areas'}</Chip>
           {areas.map((a) => (
-            <Chip key={a.id} pressed={areaFilter === a.id} count={a.count} onClick={() => onArea(areaFilter === a.id ? 'all' : a.id)}>{a.label}</Chip>
+            <Chip key={a.id} className={a.warn ? 'pf-chip--warn' : undefined} pressed={areaFilter === a.id} count={a.count} onClick={() => onArea(areaFilter === a.id ? 'all' : a.id)}>{a.label}</Chip>
           ))}
         </div>
       </div>

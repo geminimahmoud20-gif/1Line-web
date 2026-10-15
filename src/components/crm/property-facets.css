@@ -5,3 +5,4 @@
 .pf-track { display: flex; gap: var(--ui-s-2); min-width: 0; overflow-x: auto; padding: 2px; scrollbar-width: none; }
 .pf-track::-webkit-scrollbar { display: none; }
 .pf-track .ui-chip { flex-shrink: 0; }
+.pf-track .pf-chip--warn:not([aria-pressed='true']) { border-color: var(--ui-warning); color: var(--ui-warning); background: var(--ui-warning-tint); }
