@@ -1049,8 +1049,9 @@ a:hover {
   width: 100%;
 }
 
+/* .ui-select (src/components/ui) sizes itself from the design tokens */
 select.form-input,
-select {
+select:not(.ui-select) {
   min-height: 52px !important;
   height: 52px !important;
   padding: 10px 14px !important;
@@ -1075,7 +1076,7 @@ select option {
 
 /* §65: Focus state — clear navy border, no excessive gold glow */
 .form-input:focus,
-select:focus {
+select:not(.ui-select):focus {
   border-color: var(--navy-800);
   background: var(--input-bg, var(--bg-card, #ffffff));
   box-shadow: 0 0 0 3px rgba(11, 27, 50, 0.08);

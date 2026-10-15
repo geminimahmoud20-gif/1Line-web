@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { Inbox, LayoutGrid, Users, Target, Building, Zap, Sparkles, Calculator, Activity, ShieldCheck, ChevronDown, Search, X, Moon, Sun, LogOut, MapPin, Database, Award, Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame, Megaphone, Globe2, Repeat2, Bug, UserCog } from 'lucide-react';
+import { Inbox, LayoutGrid, Users, Target, Building, Zap, Sparkles, Calculator, Activity, ShieldCheck, ChevronDown, Search, X, Moon, Sun, LogOut, MapPin, Database, Award, Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame, Megaphone, Globe2, Repeat2, Bug, UserCog, Palette } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import { usePreferences } from '../../context/PreferencesContext';
 import { CRM_ROLES } from './crmRoles';
@@ -601,6 +601,17 @@ export default function CrmSidebar({
                         <Bug size={13} />
                         <span>{isAr ? 'أخطاء الموقع' : 'Site errors'}</span>
                       </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSubItemClick('uikit')}
+                      className={`crm-sidebar-subitem ${activeTab === 'system' && systemSubTab === 'uikit' ? 'is-active' : ''}`}
+                    >
+                      <span className="crm-sidebar-subitem__row">
+                        <Palette size={13} />
+                        <span>{isAr ? 'مكتبة التصميم' : 'UI kit'}</span>
+                      </span>
                     </button>
                   </div>
                 )}

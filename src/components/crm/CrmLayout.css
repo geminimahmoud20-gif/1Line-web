@@ -414,6 +414,8 @@
   border-left: 1px dashed rgba(255, 255, 255, 0.12);
 }
 
+.crm-sidebar-subitem__row { display: flex; align-items: center; gap: 8px; }
+
 .crm-sidebar-subitem {
   display: flex;
   align-items: center;

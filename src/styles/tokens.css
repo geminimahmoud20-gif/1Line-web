@@ -1,0 +1,177 @@
+/*
+ * 1Line design tokens: the one source for colour, type, spacing, radius, shadow and motion.
+ * Components in src/components/ui use only these variables, so dark mode and any later brand
+ * change happen here. Raw colours live in this file only (tests/unit/design-tokens.test.mjs).
+ *
+ * Palette (24 colours): 10 neutrals, navy primary ×3, gold accent ×3, 4 semantic tones × (text + tint).
+ * Gold is for emphasis only (rules, icons, the active nav marker), never body text on white.
+ */
+
+:root {
+  /* Neutrals */
+  --ui-n0: #FFFFFF;
+  --ui-n50: #F7F8FA;
+  --ui-n100: #EEF1F5;
+  --ui-n200: #E1E6EC;
+  --ui-n300: #C9D1DB;
+  --ui-n500: #5B6676;
+  --ui-n600: #475263;
+  --ui-n700: #334155;
+  --ui-n800: #1C2A3D;
+  --ui-n900: #0F172A;
+
+  /* 1Line navy (primary) */
+  --ui-navy: #0B1C36;
+  --ui-navy-hover: #16305A;
+  --ui-navy-tint: #E8EDF5;
+
+  /* Gold (accent, emphasis only) */
+  --ui-gold: #B38A45;
+  --ui-gold-text: #7C5E30;
+  --ui-gold-tint: #FAF5EA;
+
+  /* Semantic: text colour + tinted background */
+  --ui-green: #047857;
+  --ui-green-tint: #ECFDF5;
+  --ui-amber: #B45309;
+  --ui-amber-tint: #FFFBEB;
+  --ui-red: #B91C1C;
+  --ui-red-tint: #FEF2F2;
+  --ui-blue: #1D4ED8;
+  --ui-blue-tint: #EFF6FF;
+
+  /* ── Roles (components use these, never the raw scale above) ── */
+  --ui-bg: var(--ui-n50);
+  --ui-surface: var(--ui-n0);
+  --ui-surface-2: var(--ui-n100);
+  --ui-surface-hover: var(--ui-n50);
+  --ui-line: var(--ui-n200);
+  --ui-line-strong: var(--ui-n300);
+  --ui-text: var(--ui-n900);
+  --ui-text-2: var(--ui-n700);
+  --ui-text-3: var(--ui-n500);
+  --ui-primary: var(--ui-navy);
+  --ui-primary-hover: var(--ui-navy-hover);
+  --ui-on-primary: var(--ui-n0);
+  --ui-primary-tint: var(--ui-navy-tint);
+  --ui-primary-text: var(--ui-navy);
+  --ui-accent: var(--ui-gold);
+  --ui-accent-text: var(--ui-gold-text);
+  --ui-accent-tint: var(--ui-gold-tint);
+  --ui-success: var(--ui-green);
+  --ui-success-tint: var(--ui-green-tint);
+  --ui-warning: var(--ui-amber);
+  --ui-warning-tint: var(--ui-amber-tint);
+  --ui-danger: var(--ui-red);
+  --ui-danger-tint: var(--ui-red-tint);
+  --ui-info: var(--ui-blue);
+  --ui-info-tint: var(--ui-blue-tint);
+  --ui-on-danger: var(--ui-n0);
+  --ui-overlay: color-mix(in srgb, var(--ui-n900) 48%, transparent);
+  --ui-focus: color-mix(in srgb, var(--ui-blue) 55%, transparent);
+
+  /* Type: one family, 8 sizes, 4 weights */
+  --ui-font: 'Alexandria', 'IBM Plex Sans Arabic', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ui-fs-1: 0.75rem;    /* 12 captions, badges */
+  --ui-fs-2: 0.8125rem;  /* 13 table cells, meta */
+  --ui-fs-3: 0.875rem;   /* 14 body, buttons */
+  --ui-fs-4: 1rem;       /* 16 emphasised body, mobile fields */
+  --ui-fs-5: 1.125rem;   /* 18 card titles */
+  --ui-fs-6: 1.375rem;   /* 22 page titles */
+  --ui-fs-7: 1.75rem;    /* 28 KPI figures */
+  --ui-fs-8: 2.125rem;   /* 34 hero figures */
+  --ui-fw-regular: 400;
+  --ui-fw-medium: 500;
+  --ui-fw-semibold: 600;
+  --ui-fw-bold: 700;
+  --ui-lh-tight: 1.25;
+  --ui-lh: 1.6;
+  --ui-field-fs: var(--ui-fs-3);
+
+  /* Space: 4px steps */
+  --ui-s-1: 4px;
+  --ui-s-2: 8px;
+  --ui-s-3: 12px;
+  --ui-s-4: 16px;
+  --ui-s-5: 24px;
+  --ui-s-6: 32px;
+  --ui-s-7: 48px;
+
+  /* Radius */
+  --ui-r-sm: 6px;
+  --ui-r-md: 10px;
+  --ui-r-lg: 14px;
+  --ui-r-full: 999px;
+
+  /* Elevation */
+  --ui-sh-1: 0 1px 2px color-mix(in srgb, var(--ui-n900) 6%, transparent);
+  --ui-sh-2: 0 4px 16px -4px color-mix(in srgb, var(--ui-n900) 14%, transparent);
+  --ui-sh-3: 0 24px 48px -12px color-mix(in srgb, var(--ui-n900) 28%, transparent);
+  --ui-sh-focus: 0 0 0 3px var(--ui-focus);
+
+  /* Sizes */
+  --ui-control-h: 40px;
+  --ui-control-h-sm: 32px;
+  --ui-control-h-lg: 48px;
+  --ui-touch: 44px;
+
+  /* Motion: three durations, one curve in, one out */
+  --ui-dur-1: 150ms;
+  --ui-dur-2: 250ms;
+  --ui-dur-3: 400ms;
+  --ui-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ui-ease-in: cubic-bezier(0.4, 0, 1, 1);
+
+  /* Layers */
+  --ui-z-sticky: 20;
+  --ui-z-drawer: 900;
+  --ui-z-modal: 1000;
+  --ui-z-toast: 1100;
+  --ui-z-tooltip: 1200;
+}
+
+/* Fields stay 16px on touch screens so iOS Safari does not zoom on focus */
+@media (max-width: 1023px), (pointer: coarse) {
+  :root { --ui-field-fs: var(--ui-fs-4); }
+}
+
+[data-theme='dark'] {
+  --ui-bg: #0A1424;
+  --ui-surface: #0F1D33;
+  --ui-surface-2: #16263F;
+  --ui-surface-hover: #142440;
+  --ui-line: #23354F;
+  --ui-line-strong: #33496A;
+  --ui-text: #E8EDF4;
+  --ui-text-2: #C3CDDA;
+  --ui-text-3: #93A2B6;
+  --ui-primary: #E8EDF4;
+  --ui-primary-hover: #FFFFFF;
+  --ui-on-primary: #0B1C36;
+  --ui-primary-tint: #1A2C48;
+  --ui-primary-text: #C9D6EA;
+  --ui-accent: #C9A462;
+  --ui-accent-text: #D9B977;
+  --ui-accent-tint: #2A2416;
+  --ui-success: #34D399;
+  --ui-success-tint: #0E2B24;
+  --ui-warning: #FBBF24;
+  --ui-warning-tint: #2E2410;
+  --ui-danger: #F87171;
+  --ui-danger-tint: #33171B;
+  --ui-info: #7AA2F7;
+  --ui-info-tint: #15233F;
+  --ui-on-danger: #0A1424;
+  --ui-overlay: color-mix(in srgb, #000000 62%, transparent);
+  --ui-sh-1: 0 1px 2px color-mix(in srgb, #000000 40%, transparent);
+  --ui-sh-2: 0 6px 18px -4px color-mix(in srgb, #000000 55%, transparent);
+  --ui-sh-3: 0 24px 56px -12px color-mix(in srgb, #000000 70%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ui-dur-1: 0ms;
+    --ui-dur-2: 0ms;
+    --ui-dur-3: 0ms;
+  }
+}
