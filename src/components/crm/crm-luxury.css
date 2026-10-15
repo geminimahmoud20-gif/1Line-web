@@ -406,6 +406,7 @@
   max-height: calc(100vh - 16px);
   overflow-y: auto;
 }
+.crm-row-menu__group { display: contents; }
 .crm-row-menu__sep { height: 1px; background: var(--crm-line); margin: 4px 0; }
 
 /* ── Badges & pills: calm, readable, never uppercase shouting ── */
