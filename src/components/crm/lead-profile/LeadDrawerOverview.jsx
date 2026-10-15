@@ -60,8 +60,14 @@ export default function LeadDrawerOverview({
     [L('الغرف', 'Rooms'), details.rooms],
     [L('الدور', 'Floor'), details.floor && (details.floor === 'ground' ? L('أرضي', 'Ground') : details.floor)],
     [L('التشطيب', 'Finishing'), details.finishingLabelAr],
+    [L('العنوان', 'Address'), details.address, true],
+    [L('المميزات', 'Features'), Array.isArray(details.featuresAr) && details.featuresAr.join('، '), true],
     [L('المستندات', 'Legal'), details.legalSummaryAr]
   ].filter(([, v]) => v);
+  // Newer requests name each photo's spot (street, frontage…) in photoLabels, same order as images
+  const sellerPhotos = (Array.isArray(details.images) ? details.images : [])
+    .filter((url) => typeof url === 'string' && url)
+    .map((url, i) => ({ url, label: Array.isArray(details.photoLabels) ? details.photoLabels[i] || '' : '' }));
 
   return (
     <div className="crm-ld__stack">
@@ -73,18 +79,22 @@ export default function LeadDrawerOverview({
           </div>
           {sellerFacts.length > 0 && (
             <dl className="crm-ld__facts">
-              {sellerFacts.map(([label, value]) => (
-                <div key={label}><dt>{label}</dt><dd>{value}</dd></div>
+              {sellerFacts.map(([label, value, wide]) => (
+                <div key={label} className={wide ? 'crm-ld__fact--wide' : undefined}><dt>{label}</dt><dd>{value}</dd></div>
               ))}
             </dl>
           )}
-          {Array.isArray(details.images) && details.images.length > 0 && (
-            <div className="crm-ld__photos">
-              {details.images.slice(0, 5).map((img, i) => (
-                <img key={img} src={img} alt={L(`صورة ${i + 1} من المالك`, `Owner photo ${i + 1}`)} loading="lazy" />
+          {sellerPhotos.length > 0 && (
+            <ul className="crm-ld__photos" aria-label={L('صور المالك', 'Owner photos')}>
+              {sellerPhotos.map((p, i) => (
+                <li key={p.url}>
+                  <a href={p.url} target="_blank" rel="noopener noreferrer">
+                    <img src={p.url} alt={p.label || L(`صورة ${i + 1} من المالك`, `Owner photo ${i + 1}`)} loading="lazy" />
+                    {p.label && <span>{p.label}</span>}
+                  </a>
+                </li>
               ))}
-              {details.images.length > 5 && <span className="crm-ld__more">+{details.images.length - 5}</span>}
-            </div>
+            </ul>
           )}
           {onConvertToProperty && (
             <Button block icon={<Building size={16} aria-hidden="true" />} onClick={() => onConvertToProperty(lead)}>
