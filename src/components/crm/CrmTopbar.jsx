@@ -119,6 +119,7 @@ export default function CrmTopbar({
   const systemSubTitles = {
     areas: isAr ? 'المناطق والأحياء' : 'Districts CMS',
     corporate: isAr ? 'هوية المؤسس والشركة' : 'Corporate & Founder CMS',
+    site: isAr ? 'إعدادات الموقع' : 'Site settings',
     backup: isAr ? 'النسخ الاحتياطي والبيانات' : 'Backups & Restore',
     automation: isAr ? 'الأتمتة والتنبيهات' : 'Automations',
     errors: isAr ? 'أخطاء الموقع' : 'Site errors'
