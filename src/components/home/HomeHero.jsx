@@ -198,7 +198,7 @@ export default function HomeHero({
           {lang === 'ar' ? (
             <>
               <span>العقار ليس مجرد مساحة..</span>
-              {/* Fixed break on phones: the fallback font and IBM Plex wrap this line differently,
+              {/* Fixed break on phones: the fallback font and the web font (Cairo) wrap this line differently,
                   which shifted the search capsule 40px when the web font arrived (CLS 0.26). */}
               <span>بل <em>قيمة</em> تُبنى <span className="hx-title-break">على <em>قرار</em> صحيح.</span></span>
             </>

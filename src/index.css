@@ -113,8 +113,8 @@
   --amber-bg: rgba(179, 138, 69, 0.1);
 
   /* Fonts */
-  --font-ar: 'Alexandria', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  --font-en: 'Plus Jakarta Sans', 'Alexandria', system-ui, -apple-system, sans-serif;
+  --font-ar: 'Cairo', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif;
+  --font-en: 'Cairo', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif;
 
   /* 🏛️ Modern Disciplined Fluid Typography Scale (Architectural Luxury) */
   --text-display: clamp(3.5rem, 5vw, 4.75rem);
@@ -1049,8 +1049,9 @@ a:hover {
   width: 100%;
 }
 
+/* .ui-select (src/components/ui) sizes itself from the design tokens */
 select.form-input,
-select {
+select:not(.ui-select) {
   min-height: 52px !important;
   height: 52px !important;
   padding: 10px 14px !important;
@@ -1075,7 +1076,7 @@ select option {
 
 /* §65: Focus state — clear navy border, no excessive gold glow */
 .form-input:focus,
-select:focus {
+select:not(.ui-select):focus {
   border-color: var(--navy-800);
   background: var(--input-bg, var(--bg-card, #ffffff));
   box-shadow: 0 0 0 3px rgba(11, 27, 50, 0.08);
@@ -1581,4 +1582,10 @@ select:focus {
 .dark-theme .text-gold,
 [data-theme="dark"] .text-gold {
   color: var(--gold) !important;
+}
+
+/* Code, keys and sample text use the one site font too (browsers default these to monospace) */
+code, kbd, pre, samp {
+  font-family: var(--font-ar);
+  font-variant-numeric: tabular-nums;
 }

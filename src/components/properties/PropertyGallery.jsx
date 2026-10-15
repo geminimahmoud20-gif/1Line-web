@@ -318,40 +318,40 @@ export default function PropertyGallery({
                 <line x1="520" y1="380" x2="1100" y2="380" stroke="#38bdf8" strokeWidth="2.5" />
                 
                 {/* Reception */}
-                <text x="310" y="210" fill="#fdcb42" fontFamily="sans-serif" fontSize="22" fontWeight="bold" textAnchor="middle">
+                <text x="310" y="210" fill="#fdcb42" fontFamily="Cairo, sans-serif" fontSize="22" fontWeight="bold" textAnchor="middle">
                   {isAr ? 'الريسبشن المفتوح (Grand Reception)' : 'Grand Reception Area'}
                 </text>
-                <text x="310" y="250" fill="#94a3b8" fontFamily="sans-serif" fontSize="16" textAnchor="middle">
+                <text x="310" y="250" fill="#94a3b8" fontFamily="Cairo, sans-serif" fontSize="16" textAnchor="middle">
                   8.5m x 5.4m • {isAr ? 'أرضيات رخام وبورسلين فاخرة' : 'Premium Marble Flooring'}
                 </text>
                 
                 {/* Kitchen */}
-                <text x="310" y="520" fill="#fdcb42" fontFamily="sans-serif" fontSize="22" fontWeight="bold" textAnchor="middle">
+                <text x="310" y="520" fill="#fdcb42" fontFamily="Cairo, sans-serif" fontSize="22" fontWeight="bold" textAnchor="middle">
                   {isAr ? 'المطبخ والخدمات (Gourmet Kitchen)' : 'Gourmet Kitchen & Pantry'}
                 </text>
-                <text x="310" y="560" fill="#94a3b8" fontFamily="sans-serif" fontSize="16" textAnchor="middle">
+                <text x="310" y="560" fill="#94a3b8" fontFamily="Cairo, sans-serif" fontSize="16" textAnchor="middle">
                   4.2m x 3.6m • {isAr ? 'شرفة خدمات وتوصيلات غاز' : 'Balcony & Gas Outlets'}
                 </text>
                 
                 {/* Master Suite */}
-                <text x="810" y="200" fill="#fdcb42" fontFamily="sans-serif" fontSize="22" fontWeight="bold" textAnchor="middle">
+                <text x="810" y="200" fill="#fdcb42" fontFamily="Cairo, sans-serif" fontSize="22" fontWeight="bold" textAnchor="middle">
                   {isAr ? 'الجناح الرئيسي (Master Suite)' : 'Master Bedroom Suite'}
                 </text>
-                <text x="810" y="240" fill="#94a3b8" fontFamily="sans-serif" fontSize="16" textAnchor="middle">
+                <text x="810" y="240" fill="#94a3b8" fontFamily="Cairo, sans-serif" fontSize="16" textAnchor="middle">
                   5.6m x 4.4m • Dressing Room • {isAr ? 'حمام خاص' : 'Ensuite Bath'}
                 </text>
                 
                 {/* Family Bedrooms */}
-                <text x="810" y="500" fill="#fdcb42" fontFamily="sans-serif" fontSize="22" fontWeight="bold" textAnchor="middle">
+                <text x="810" y="500" fill="#fdcb42" fontFamily="Cairo, sans-serif" fontSize="22" fontWeight="bold" textAnchor="middle">
                   {isAr ? 'أجنحة النوم (Family Bedrooms)' : 'Family & Guest Bedrooms'}
                 </text>
-                <text x="810" y="540" fill="#94a3b8" fontFamily="sans-serif" fontSize="16" textAnchor="middle">
+                <text x="810" y="540" fill="#94a3b8" fontFamily="Cairo, sans-serif" fontSize="16" textAnchor="middle">
                   4.2m x 4.0m • 4.0m x 3.8m • {isAr ? 'إطلالة بحرية' : 'Open Views'}
                 </text>
 
                 {/* 1Line CAD Seal */}
                 <rect x="120" y="100" width="310" height="42" rx="10" fill="#0b4ea2" opacity="0.9" />
-                <text x="275" y="127" fill="#ffffff" fontFamily="sans-serif" fontSize="13" fontWeight="bold" textAnchor="middle">
+                <text x="275" y="127" fill="#ffffff" fontFamily="Cairo, sans-serif" fontSize="13" fontWeight="bold" textAnchor="middle">
                   1LINE CERTIFIED CAD SCHEMATIC
                 </text>
               </svg>

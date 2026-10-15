@@ -173,17 +173,17 @@ export default function QuickViewModal({
                   <rect x="50" y="40" width="700" height="420" fill="none" stroke="#38bdf8" strokeWidth="3" rx="4" />
                   <line x1="360" y1="40" x2="360" y2="460" stroke="#38bdf8" strokeWidth="2" />
                   <line x1="50" y1="260" x2="360" y2="260" stroke="#38bdf8" strokeWidth="2" />
-                  <text x="200" y="150" fill="#fdcb42" fontFamily="sans-serif" fontSize="18" fontWeight="bold" textAnchor="middle">
+                  <text x="200" y="150" fill="#fdcb42" fontFamily="Cairo, sans-serif" fontSize="18" fontWeight="bold" textAnchor="middle">
                     {isAr ? 'الريسبشن المفتوح' : 'Reception'}
                   </text>
-                  <text x="200" y="370" fill="#fdcb42" fontFamily="sans-serif" fontSize="16" fontWeight="bold" textAnchor="middle">
+                  <text x="200" y="370" fill="#fdcb42" fontFamily="Cairo, sans-serif" fontSize="16" fontWeight="bold" textAnchor="middle">
                     {isAr ? 'المطبخ والخدمات' : 'Kitchen'}
                   </text>
-                  <text x="580" y="240" fill="#fdcb42" fontFamily="sans-serif" fontSize="18" fontWeight="bold" textAnchor="middle">
+                  <text x="580" y="240" fill="#fdcb42" fontFamily="Cairo, sans-serif" fontSize="18" fontWeight="bold" textAnchor="middle">
                     {isAr ? 'أجنحة النوم والحمام' : 'Bedrooms & Bath'}
                   </text>
                   <rect x="60" y="50" width="220" height="30" rx="6" fill="#0b4ea2" opacity="0.9" />
-                  <text x="170" y="70" fill="#ffffff" fontFamily="sans-serif" fontSize="11" fontWeight="bold" textAnchor="middle">
+                  <text x="170" y="70" fill="#ffffff" fontFamily="Cairo, sans-serif" fontSize="11" fontWeight="bold" textAnchor="middle">
                     1LINE CAD SCHEMATIC
                   </text>
                 </svg>

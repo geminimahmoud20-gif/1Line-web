@@ -354,7 +354,7 @@ export default function SmartMatchingHub({
                       </strong>
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
                         <span>📱</span>
-                        <bdi dir="ltr" style={{ unicodeBidi: 'isolate', fontFamily: 'monospace' }}>{formatPhoneNumber(lead.whatsapp || lead.phone) || '—'}</bdi>
+                        <bdi dir="ltr" style={{ unicodeBidi: 'isolate', fontVariantNumeric: 'tabular-nums' }}>{formatPhoneNumber(lead.whatsapp || lead.phone) || '—'}</bdi>
                       </span>
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', display: 'block', marginTop: '4px', fontWeight: '700' }}>
                         💰 {isAr ? 'ميزانية:' : 'Budget:'} {parseMoney(lead.details?.budget) || parseMoney(lead.budget) ? (parseMoney(lead.details?.budget) || parseMoney(lead.budget)).toLocaleString('en-US') + ' ج.م' : (isAr ? 'غير محددة بعد' : 'Not set')}

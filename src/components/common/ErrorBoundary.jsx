@@ -62,7 +62,7 @@ export default class ErrorBoundary extends React.Component {
           justifyContent: 'center',
           padding: '24px',
           textAlign: 'center',
-          fontFamily: 'system-ui, -apple-system, sans-serif'
+          fontFamily: "'Cairo', system-ui, -apple-system, sans-serif"
         }}>
           <div style={{
             width: '64px',
@@ -100,7 +100,7 @@ export default class ErrorBoundary extends React.Component {
               textAlign: 'left',
               direction: 'ltr',
               overflowX: 'auto',
-              fontFamily: 'monospace'
+              fontVariantNumeric: 'tabular-nums'
             }}>
               <strong>{this.state.error.toString()}</strong>
               {this.state.error.stack && (

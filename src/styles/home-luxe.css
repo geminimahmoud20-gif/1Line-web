@@ -1360,7 +1360,8 @@
 .hx-cert-sub-id {
   font-size: 0.68rem;
   color: #94A3B8;
-  font-family: monospace;
+  font-family: var(--font-ar);
+  font-variant-numeric: tabular-nums;
   letter-spacing: 0.05em;
   display: block;
 }
@@ -2354,7 +2355,7 @@
   color: #ECC875 !important;
   min-width: 46px !important;
   text-align: center !important;
-  font-family: var(--font-number, monospace) !important;
+  font-family: var(--font-number) !important;
 }
 
 /* Center Stage & Image */

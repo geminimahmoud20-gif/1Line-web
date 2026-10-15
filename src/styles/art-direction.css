@@ -452,7 +452,7 @@
     gap: 3px;
     direction: ltr !important;
     unicode-bidi: isolate;
-    font-family: var(--font-number, 'Outfit', 'Inter', sans-serif);
+    font-family: var(--font-number);
     font-size: 1.35rem;
     font-weight: 900;
     line-height: 1;
