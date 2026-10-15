@@ -255,7 +255,6 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
           <h3 className="crm-header-main-title">
             <MapPin size={22} style={{ color: 'var(--crm-accent)' }} />
             <span>{isAr ? 'إدارة المناطق والأحياء' : 'Sohag Districts & Areas CMS'}</span>
-            <span className="crm-badge-360">GeoAreas 360°</span>
           </h3>
           <div className="crm-header-subtitle">
             <span>{isAr ? 'إجمالي المناطق والأحياء:' : 'Total Districts:'} <strong className="crm-header-count-pill">{stats.total}</strong></span>

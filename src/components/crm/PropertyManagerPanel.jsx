@@ -523,7 +523,6 @@ export default function PropertyManagerPanel({
           <h3 className="crm-header-main-title">
             <Building size={22} style={{ color: 'var(--crm-gold)' }} />
             <span>{isAr ? 'إدارة العقارات والوحدات المعروضة' : 'Property Catalog Management'}</span>
-            <span className="crm-badge-360">Catalog 360°</span>
           </h3>
           <div className="crm-header-subtitle">
             <span>{isAr ? 'النشط بالموقع:' : 'Live:'} <strong className="crm-header-count-pill">{activeCount}</strong></span>

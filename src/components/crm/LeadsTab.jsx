@@ -409,8 +409,7 @@ export default function LeadsTab({
         <div className="crm-header-title-group">
           <h3 className="crm-header-main-title">
             <Users size={22} style={{ color: 'var(--crm-gold)' }} />
-            <span>{isAr ? 'قاعدة بيانات العملاء الشاملة' : 'Customer 360° Database'}</span>
-            <span className="crm-badge-360">360° CRM</span>
+            <span>{isAr ? 'قاعدة بيانات العملاء الشاملة' : 'Client database'}</span>
           </h3>
           <div className="crm-header-subtitle">
             <span>{isAr ? 'إجمالي العملاء:' : 'Total Leads:'} <strong className="crm-header-count-pill">{leads.length}</strong></span>

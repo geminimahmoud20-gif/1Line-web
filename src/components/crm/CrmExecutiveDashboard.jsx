@@ -71,15 +71,11 @@ export default function CrmExecutiveDashboard({
       }}>
         <div className="crm-header-title-group">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: 'var(--crm-text-xl)' }}>{isSuperAdmin ? '👑' : '💼'}</span>
             <h1 className="crm-header-main-title">
               {isAr
                 ? (isSuperAdmin ? 'مركز القيادة والعمليات التنفيذية' : `مرحباً ${currentRoleObj.label_ar || 'مستشار المبيعات'}`)
                 : (isSuperAdmin ? 'Executive Command Center' : `Welcome, ${currentRoleObj.label_en || 'Sales Advisor'}`)}
             </h1>
-            <span className="crm-badge-360">
-              1Line Real Estate OS
-            </span>
           </div>
 
           <p className="crm-header-subtitle" style={{ margin: '6px 0 0' }}>

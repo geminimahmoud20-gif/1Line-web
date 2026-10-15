@@ -235,7 +235,6 @@ export default function DemandsManagerPanel({
           <h2 className="crm-header-main-title">
             <Zap size={22} style={{ color: 'var(--crm-accent-text)' }} />
             <span>{isAr ? 'إدارة طلبات المشترين واعتمادها' : 'Buyer Demands Management'}</span>
-            <span className="crm-badge-360">Demand 360°</span>
           </h2>
           <div className="crm-header-subtitle">
             <span>

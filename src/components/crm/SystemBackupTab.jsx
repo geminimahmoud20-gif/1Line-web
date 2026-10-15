@@ -26,7 +26,6 @@ export default function SystemBackupTab({
               <h3 style={{ margin: 0, fontSize: 'var(--crm-text-lg)', color: 'var(--crm-ink)', fontWeight: 800 }}>
                 {isAr ? 'البيانات والنسخ الاحتياطي وإدارة المنظومة' : 'Database Backups & System Administration'}
               </h3>
-              <span className="crm-badge-360">Admin Core</span>
             </div>
             <p style={{ margin: '4px 0 0 0', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
               {isAr ? 'خاص بالمدير العام — تصدير واسترجاع نسخ العملاء والبيانات الحساسة بأمان مع التشفير السحابي' : 'Super Admin only — Backup, export and recovery hub with cloud encryption'}
