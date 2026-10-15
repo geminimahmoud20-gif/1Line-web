@@ -1,3 +1,5 @@
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Eye,
   MessageSquare,
@@ -28,9 +30,53 @@ export default function LeadTableRowActions({
   triggerToast,
   handleDeleteLeadClick
 }) {
-  const closeDetails = (e) => {
-    e.currentTarget.closest('details')?.removeAttribute('open');
+  // The menu is drawn on <body>: inside the table the rows below and the scroll area painted over it
+  const [menuPos, setMenuPos] = useState(null);
+  const triggerRef = useRef(null);
+  const menuRef = useRef(null);
+  const open = Boolean(menuPos);
+  const closeDetails = () => setMenuPos(null);
+
+  const toggleMenu = () => {
+    if (open) return setMenuPos(null);
+    const r = triggerRef.current.getBoundingClientRect();
+    setMenuPos({ top: r.bottom + 4, bottom: r.top - 4, left: r.left, right: r.right });
   };
+
+  // Flip above the button when there is no room below; keep it inside the window sideways
+  useLayoutEffect(() => {
+    const el = menuRef.current;
+    if (!el || !menuPos) return;
+    const { offsetWidth: w, offsetHeight: h } = el;
+    const rtl = getComputedStyle(triggerRef.current).direction === 'rtl';
+    const top = menuPos.top + h > window.innerHeight - 8 ? Math.max(8, menuPos.bottom - h) : menuPos.top;
+    const left = Math.min(Math.max(8, rtl ? menuPos.left : menuPos.right - w), window.innerWidth - w - 8);
+    el.style.top = `${top}px`;
+    el.style.left = `${left}px`;
+    el.style.visibility = 'visible';
+    el.querySelector('button')?.focus();
+  }, [menuPos]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onDown = (e) => {
+      if (!menuRef.current?.contains(e.target) && !triggerRef.current?.contains(e.target)) setMenuPos(null);
+    };
+    const onKey = (e) => {
+      if (e.key === 'Escape') { setMenuPos(null); triggerRef.current?.focus(); }
+    };
+    const onMove = () => setMenuPos(null);
+    document.addEventListener('pointerdown', onDown);
+    document.addEventListener('keydown', onKey);
+    window.addEventListener('scroll', onMove, true);
+    window.addEventListener('resize', onMove);
+    return () => {
+      document.removeEventListener('pointerdown', onDown);
+      document.removeEventListener('keydown', onKey);
+      window.removeEventListener('scroll', onMove, true);
+      window.removeEventListener('resize', onMove);
+    };
+  }, [open]);
 
   return (
     <div className="crm-action-group" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -57,42 +103,25 @@ export default function LeadTableRowActions({
       </button>
 
       {/* Secondary Actions: Clean Context Menu */}
-      <details className="kb-more" style={{ position: 'relative' }}>
-        <summary
-          className="crm-icon-btn"
-          style={{
-            listStyle: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-          title={isAr ? 'المزيد من الإجراءات' : 'More actions'}
-          aria-label={isAr ? 'إجراءات إضافية' : 'More actions'}
-        >
-          <MoreHorizontal size={14} />
-        </summary>
-        <div
-          className="kb-menu"
-          style={{
-            position: 'absolute',
-            top: '100%',
-            insetInlineStart: 'auto',
-            insetInlineEnd: 0,
-            zIndex: 50,
-            minWidth: '180px',
-            background: 'var(--crm-card)',
-            border: '1px solid var(--crm-line-strong)',
-            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.25)',
-            borderRadius: '8px',
-            padding: '4px'
-          }}
-        >
+      <button
+        ref={triggerRef}
+        type="button"
+        className="crm-icon-btn"
+        onClick={toggleMenu}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        title={isAr ? 'المزيد من الإجراءات' : 'More actions'}
+        aria-label={isAr ? 'إجراءات إضافية' : 'More actions'}
+      >
+        <MoreHorizontal size={14} />
+      </button>
+      {open && createPortal(
+        <div ref={menuRef} className="kb-menu crm-row-menu" role="menu" dir={isAr ? 'rtl' : 'ltr'}>
           {/* 360 Comprehensive Profile */}
           <button
             type="button"
-            onClick={(e) => {
-              closeDetails(e);
+            onClick={() => {
+              closeDetails();
               onViewingProfileLead?.(lead);
             }}
           >
@@ -103,8 +132,9 @@ export default function LeadTableRowActions({
           {canEdit && (
             <button
               type="button"
-              onClick={(e) => {
-                closeDetails(e);
+              role="menuitem"
+              onClick={() => {
+                closeDetails();
                 onOpenEditLead?.(lead);
               }}
             >
@@ -115,8 +145,8 @@ export default function LeadTableRowActions({
           {/* Dispatch Lead via WhatsApp */}
           <button
             type="button"
-            onClick={(e) => {
-              closeDetails(e);
+            onClick={() => {
+              closeDetails();
               onDispatchLeadClick?.(lead);
             }}
           >
@@ -127,8 +157,9 @@ export default function LeadTableRowActions({
           {onConvertToProperty && canEdit && (
             <button
               type="button"
-              onClick={(e) => {
-                closeDetails(e);
+              role="menuitem"
+              onClick={() => {
+                closeDetails();
                 onConvertToProperty(lead);
               }}
             >
@@ -140,8 +171,9 @@ export default function LeadTableRowActions({
           {canClaimLead?.(lead) && (
             <button
               type="button"
-              onClick={(e) => {
-                closeDetails(e);
+              role="menuitem"
+              onClick={() => {
+                closeDetails();
                 handleClaimLead?.(lead.id);
               }}
             >
@@ -153,8 +185,9 @@ export default function LeadTableRowActions({
           {canEdit && (
             <button
               type="button"
-              onClick={(e) => {
-                closeDetails(e);
+              role="menuitem"
+              onClick={() => {
+                closeDetails();
                 const prevArchived = !!lead.isArchived;
                 const newStatus = !prevArchived;
                 if (onUpdateLead) onUpdateLead(lead.id, { isArchived: newStatus, lastActivityAt: new Date().toISOString() }, lead.version);
@@ -185,12 +218,13 @@ export default function LeadTableRowActions({
           {/* Delete Lead (Super Admin Only) */}
           {isSuperAdmin && (
             <>
-              <div style={{ height: '1px', background: 'var(--crm-line)', margin: '4px 0' }} />
+              <div className="crm-row-menu__sep" role="separator" />
               <button
                 type="button"
+                role="menuitem"
                 className="is-danger"
-                onClick={(e) => {
-                  closeDetails(e);
+                onClick={() => {
+                  closeDetails();
                   handleDeleteLeadClick?.(lead.id, lead.name);
                 }}
               >
@@ -198,8 +232,9 @@ export default function LeadTableRowActions({
               </button>
             </>
           )}
-        </div>
-      </details>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
