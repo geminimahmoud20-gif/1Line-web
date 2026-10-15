@@ -38,15 +38,6 @@
   min-width: 0;
 }
 .crm-dashboard-stack > * { margin-bottom: 0 !important; min-width: 0; }
-.crm-dashboard-split {
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
-  gap: 20px;
-  align-items: start;
-}
-@media (max-width: 1180px) {
-  .crm-dashboard-split { grid-template-columns: minmax(0, 1fr); }
-}
 
 /* ── Cards ────────────────────────────────────────────────── */
 .crm-table-container,
