@@ -1,0 +1,77 @@
+/*
+ * CRM → design system bridge (phase 3 of the CRM redesign).
+ * The CRM screens read --crm-* variables. Pointing them at the --ui-* tokens moves every screen to
+ * the one palette, type scale and elevation at once, in light and dark, before each screen is
+ * rebuilt from src/components/ui. Loaded last on the CRM page only.
+ *
+ * `:root[data-theme]` has the same specificity as the dark block in luxury-system.css and loads
+ * after it, so it wins in both themes without !important (PreferencesContext always sets data-theme).
+ */
+@import './tokens.css';
+
+:root[data-theme] {
+  --crm-canvas: var(--ui-bg);
+  --crm-bg: var(--ui-bg);
+  --crm-bg-light: var(--ui-bg);
+  --crm-card: var(--ui-surface);
+  --crm-surface-light: var(--ui-surface);
+  --crm-input-bg: var(--ui-surface);
+  --crm-bg-dark: var(--ui-bg);
+  --crm-surface-dark: var(--ui-surface);
+  --crm-border-dark: var(--ui-line);
+  --crm-text-light: var(--ui-text);
+  --crm-text-dark: var(--ui-text);
+  --crm-muted-light: var(--ui-text-3);
+  --crm-muted-dark: var(--ui-text-3);
+  --crm-subtle: var(--ui-surface-2);
+  --crm-subtle-2: var(--ui-line);
+  --crm-line: var(--ui-line);
+  --crm-border-light: var(--ui-line);
+  --crm-line-strong: var(--ui-line-strong);
+  --crm-ink: var(--ui-text);
+  --crm-body: var(--ui-text-2);
+  --crm-muted: var(--ui-text-3);
+  --crm-faint: var(--ui-text-3);
+  --crm-accent: var(--ui-accent);
+  --crm-gold: var(--ui-accent);
+  --crm-accent-text: var(--ui-accent-text);
+  --crm-accent-soft: var(--ui-accent-tint);
+  --crm-accent-line: color-mix(in srgb, var(--ui-accent) 35%, transparent);
+  --crm-positive: var(--ui-success);
+  --crm-positive-soft: var(--ui-success-tint);
+  --crm-positive-line: color-mix(in srgb, var(--ui-success) 30%, transparent);
+  --crm-warn: var(--ui-warning);
+  --crm-warn-soft: var(--ui-warning-tint);
+  --crm-warn-line: color-mix(in srgb, var(--ui-warning) 30%, transparent);
+  --crm-danger: var(--ui-danger);
+  --crm-danger-soft: var(--ui-danger-tint);
+  --crm-danger-line: color-mix(in srgb, var(--ui-danger) 30%, transparent);
+  --crm-info: var(--ui-info);
+  --crm-info-soft: var(--ui-info-tint);
+  --crm-info-line: color-mix(in srgb, var(--ui-info) 30%, transparent);
+  /* Violet and pink are not in the palette: they read as info from now on */
+  --crm-violet: var(--ui-info);
+  --crm-violet-soft: var(--ui-info-tint);
+  --crm-violet-line: color-mix(in srgb, var(--ui-info) 30%, transparent);
+  --crm-pink: var(--ui-danger);
+  --crm-shadow: var(--ui-sh-1);
+  --crm-font: var(--ui-font);
+
+  /* Type: the 7 CRM steps land on the 8-step scale */
+  --crm-text-xs: var(--ui-fs-1);
+  --crm-text-sm: var(--ui-fs-2);
+  --crm-text-base: var(--ui-fs-3);
+  --crm-text-md: var(--ui-fs-4);
+  --crm-text-lg: var(--ui-fs-5);
+  --crm-text-xl: var(--ui-fs-6);
+  --crm-text-2xl: var(--ui-fs-7);
+}
+
+/* Fields are 16px on touch screens so iOS does not zoom while staff type
+   (audit: 96 of 102 phone screens had smaller fields). Older CRM rules set sizes with !important. */
+@media (max-width: 1023px), (pointer: coarse) {
+  .crm-layout :is(input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea),
+  .crm-modal-card :is(input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea) {
+    font-size: 16px !important;
+  }
+}
