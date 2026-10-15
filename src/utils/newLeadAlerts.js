@@ -5,7 +5,9 @@
 //  the whole backlog, and each lead rings once per page load.
 // =============================================================
 
-import { playNotificationChime } from './notificationHub';
+import { playNotificationChime } from './notificationHub.js';
+import { getAreas } from './areasData.js';
+import { areaLabel, propertyTypeLabel } from './placeLabels.js';
 
 const ALERT_WINDOW_MS = 10 * 60 * 1000;
 const seen = new Set();
@@ -30,6 +32,7 @@ export const enableDesktopAlerts = async () => {
 
 export const formatLeadHeadline = (lead, isAr = true) => {
   const d = lead?.details || {};
+  const typeName = (key) => (key ? propertyTypeLabel(key, isAr) : (isAr ? 'عقار' : 'Property'));
   const name = String(lead?.name || (isAr ? 'عميل' : 'Client')).slice(0, 40);
   
   // 1. Viewing / Site Inspection Request
@@ -42,16 +45,22 @@ export const formatLeadHeadline = (lead, isAr = true) => {
 
   // 2. Seller / Property Listing
   if (lead?.type === 'seller' || lead?.type === 'valuation' || lead?.landingPage === '/sell' || lead?.notes?.includes('عرض بيع')) {
-    const propType = d.propertyType || lead?.propertyType || (isAr ? 'عقار' : 'Unit');
-    const area = d.area || lead?.area || '';
+    const propType = typeName(d.propertyType || lead?.propertyType);
+    const areaKey = d.area || lead?.area || '';
+    const area = areaKey ? areaLabel(areaKey, isAr, getAreas()) : '';
     const size = d.size || lead?.size ? ` (${d.size || lead?.size}م²)` : '';
-    return isAr ? `💰 عرض بيع عقار: ${propType} في ${area}${size} — ${name}` : `💰 Sale Listing: ${propType} in ${area}${size} — ${name}`;
+    const where = area ? (isAr ? ` في ${area}` : ` in ${area}`) : '';
+    return isAr ? `💰 عرض بيع: ${propType}${where}${size} — ${name}` : `💰 Sale listing: ${propType}${where}${size} — ${name}`;
   }
 
   // 3. Buyer Demand / Purchase Inquiry
   if (lead?.type === 'buyer' || lead?.type === 'request' || lead?.type === 'investor' || lead?.notes?.includes('طلب شراء')) {
-    const propType = d.propertyType || lead?.propertyType || (isAr ? 'عقار' : 'Unit');
-    const budget = d.budget || lead?.budget ? ` (ميزانية: ${Number(d.budget || lead?.budget).toLocaleString('en-US')} ج.م)` : '';
+    const propType = typeName(d.propertyType || lead?.propertyType);
+    const rawBudget = d.budget || lead?.budget;
+    const budgetNum = Number(String(rawBudget ?? '').replace(/[^\d.]/g, ''));
+    const budget = rawBudget
+      ? (isAr ? ` (ميزانية: ${budgetNum ? `${budgetNum.toLocaleString('en-US')} ج.م` : rawBudget})` : ` (budget: ${budgetNum ? budgetNum.toLocaleString('en-US') : rawBudget})`)
+      : '';
     return isAr ? `🎯 طلب شراء: ${propType}${budget} — ${name}` : `🎯 Buyer Demand: ${propType}${budget} — ${name}`;
   }
 
