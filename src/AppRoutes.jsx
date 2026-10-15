@@ -115,6 +115,7 @@ export default function AppRoutes({
             onOpenAddDemand={() => setAddDemandModalOpen(true)}
             onAddNewLead={handleAddNewLead}
             triggerToast={triggerToast}
+            projects={projects}
           />
         }
       />

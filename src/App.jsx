@@ -744,6 +744,7 @@ function AppContent() {
             isOpen={quickSearchOpen}
             onClose={() => setQuickSearchOpen(false)}
             properties={siteProperties}
+            projects={projects}
             lang={lang}
             currency={currency}
             onOpenAddDemand={() => setAddDemandModalOpen(true)}
