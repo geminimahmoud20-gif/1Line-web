@@ -571,6 +571,17 @@ export default function CrmSidebar({
 
                     <button
                       type="button"
+                      onClick={() => handleSubItemClick('site')}
+                      className={`crm-sidebar-subitem ${activeTab === 'system' && systemSubTab === 'site' ? 'is-active' : ''}`}
+                    >
+                      <span className="crm-sidebar-subitem__row">
+                        <Globe2 size={13} />
+                        <span>{isAr ? 'إعدادات الموقع' : 'Site settings'}</span>
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
                       onClick={() => handleSubItemClick('backup')}
                       className={`crm-sidebar-subitem ${activeTab === 'system' && systemSubTab === 'backup' ? 'is-active' : ''}`}
                     >

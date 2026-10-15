@@ -26,7 +26,8 @@ import {
   upsertCatalogItems,
   importLeads,
   deleteCatalogItem,
-  syncPendingLeads
+  syncPendingLeads,
+  subscribeToSettings
 } from '../firebaseLazy';
 import { playNotificationChime } from '../utils/notificationHub';
 import { sanitizeObject, normalizePhoneNumber } from '../utils/securityShield';
@@ -37,6 +38,7 @@ import { normalizeAreaKey } from '../utils/areasData';
 import { enqueuePendingLead, pendingLeadCount } from '../utils/leadQueue';
 import { track, propertyFacts, analyticsVisitorId } from '../utils/analytics';
 import { fetchPublicCatalog, PUBLIC_CATALOG_REFRESH_MS } from '../utils/publicCatalog';
+import { applySiteSettings, SITE_SETTINGS_KEY } from '../utils/siteSettings';
 import { sanitizeAndMergeNotes } from '../utils/crmNoteSanitizer';
 import { usePreferences } from './PreferencesContext';
 import { useUIModal } from './UIModalContext';
@@ -270,7 +272,12 @@ export function PropertiesProvider({ children }) {
     const applyProjects = applyCloud(setProjects, 'oneline_mega_projects');
     let unsubs = [];
     const goLive = () => {
-      unsubs = [subscribeToCatalog('properties', applyProperties), subscribeToCatalog('projects', applyProjects)];
+      unsubs = [
+        subscribeToCatalog('properties', applyProperties),
+        subscribeToCatalog('projects', applyProjects),
+        // The site settings travel with the cached catalog; without it (CRM, local dev) read them directly
+        subscribeToSettings(SITE_SETTINGS_KEY, applySiteSettings)
+      ];
     };
     if (liveCatalog) {
       goLive();
@@ -282,6 +289,7 @@ export function PropertiesProvider({ children }) {
       if (!res) { goLive(); return; }
       applyProperties(res.properties);
       applyProjects(res.projects);
+      applySiteSettings(res.site);
     });
     load();
     const timer = setInterval(() => {

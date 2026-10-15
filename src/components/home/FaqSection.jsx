@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Building2, MapPin, Calculator, ShieldCheck, Globe, Coins, PhoneCall, MessageSquare, Search, ChevronDown, Sparkles, ArrowLeft, ArrowRight, Clock, CheckCircle2, X, FileCheck2 } from 'lucide-react';
+import { Building2, MapPin, Calculator, ShieldCheck, Globe, Coins, PhoneCall, MessageSquare, Search, ChevronDown, Sparkles, ArrowLeft, ArrowRight, Clock, CheckCircle2, X, FileCheck2, CircleHelp } from 'lucide-react';
 import { injectJsonLdSchema } from '../../utils/seoHelper';
 import { CONTACT, SERVICE_AREAS } from '../../config/siteConfig';
+import { useSiteSettings } from '../../utils/siteSettings';
 import { getDynamicPhone, getWhatsAppUrl } from '../../utils/founderCmsData';
 
 export default function FaqSection({ lang = 'ar' }) {
@@ -12,6 +13,7 @@ export default function FaqSection({ lang = 'ar' }) {
   const [openIds, setOpenIds] = useState(['services-overview']);
 
   const phone = getDynamicPhone();
+  const { faq: customFaq, contact } = useSiteSettings();
   const sohag = (isAr ? SERVICE_AREAS.sohag_ar : SERVICE_AREAS.sohag_en).join(isAr ? '، ' : ', ');
   const cairo = (isAr ? SERVICE_AREAS.cairo_ar : SERVICE_AREAS.cairo_en).join(isAr ? '، ' : ', ');
 
@@ -23,7 +25,20 @@ export default function FaqSection({ lang = 'ar' }) {
     { id: 'expats', label: isAr ? 'المغتربون والرسوم' : 'Expats & Fees' },
   ], [isAr]);
 
-  const faqItems = useMemo(() => [
+  // Questions written in CRM → إعدادات الموقع replace the built-in set below
+  const customItems = useMemo(() => customFaq
+    .map((f, i) => ({
+      id: `custom-${i}`,
+      category: f.category,
+      icon: CircleHelp,
+      question: isAr ? (f.q_ar || f.q_en) : (f.q_en || f.q_ar),
+      answer: isAr ? (f.a_ar || f.a_en) : (f.a_en || f.a_ar),
+      highlight: null,
+      action: null
+    }))
+    .filter((f) => f.question && f.answer), [customFaq, isAr]);
+
+  const defaultItems = useMemo(() => [
     {
       id: 'services-overview',
       category: 'services',
@@ -113,15 +128,17 @@ export default function FaqSection({ lang = 'ar' }) {
       icon: PhoneCall,
       question: isAr ? 'كيف يمكنني التواصل مع فريق 1Line؟' : 'How do I get in touch with 1Line team?',
       answer: isAr
-        ? `يمكنك الاتصال هاتفياً أو عبر واتساب مباشرة على مدار اليوم على رقم ${phone}. كما نرحب بزيارتك لمقرنا الرئيسي في (${CONTACT.address_ar}) خلال مواعيد العمل الرسمية (${CONTACT.hours_ar})، أو مراسلتنا على ${CONTACT.email}.`
-        : `Reach us via phone or WhatsApp 7 days a week at ${phone}. You are also welcome at our flagship office (${CONTACT.address_en}) during operating hours (${CONTACT.hours_en}), or email ${CONTACT.email}.`,
+        ? `يمكنك الاتصال هاتفياً أو عبر واتساب مباشرة على مدار اليوم على رقم ${phone}. كما نرحب بزيارتك لمقرنا الرئيسي في (${CONTACT.address_ar}) خلال مواعيد العمل الرسمية (${contact.hours_ar})، أو مراسلتنا على ${contact.email}.`
+        : `Reach us via phone or WhatsApp 7 days a week at ${phone}. You are also welcome at our flagship office (${CONTACT.address_en}) during operating hours (${contact.hours_en}), or email ${contact.email}.`,
       highlight: isAr ? 'استجابة سريعة هاتفياً وعبر واتساب' : 'Direct Phone & WhatsApp Hotline',
       action: {
         isCall: true,
         label: isAr ? 'اتصل الآن بالرقم المباشر' : 'Call Direct Hotline'
       }
     }
-  ], [isAr, sohag, cairo, phone]);
+  ], [isAr, sohag, cairo, phone, contact]);
+
+  const faqItems = customItems.length > 0 ? customItems : defaultItems;
 
   // Filter items by category and search
   const filteredFaqs = useMemo(() => {

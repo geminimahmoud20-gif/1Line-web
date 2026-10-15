@@ -1,0 +1,16 @@
+/* CRM → إعدادات الموقع: built from src/components/ui; only the layout lives here. */
+.crm-ss { display: flex; flex-direction: column; gap: var(--ui-s-4); font-family: var(--ui-font); color: var(--ui-text); }
+.crm-ss .ui-page-head { margin-bottom: 0; }
+.crm-ss__body { display: flex; flex-direction: column; gap: var(--ui-s-4); }
+.crm-ss__stack { display: flex; flex-direction: column; gap: var(--ui-s-3); align-items: stretch; }
+.crm-ss__stack > .ui-btn { align-self: flex-start; }
+.crm-ss__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ui-s-3) var(--ui-s-4); }
+.crm-ss__note { margin: 0; padding: var(--ui-s-3); border-radius: var(--ui-r-md); background: var(--ui-info-tint); color: var(--ui-text-2); font-size: var(--ui-fs-2); line-height: var(--ui-lh); }
+.crm-ss__note.is-warn { background: var(--ui-warning-tint); }
+.crm-ss__item { display: flex; flex-direction: column; gap: var(--ui-s-3); }
+.crm-ss__item-head { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-s-2); }
+.crm-ss__item-num { font-size: var(--ui-fs-3); font-weight: var(--ui-fw-bold); color: var(--ui-text); }
+.crm-ss__item-tools { display: flex; gap: 2px; }
+@media (max-width: 767px) {
+  .crm-ss__grid { grid-template-columns: 1fr; }
+}

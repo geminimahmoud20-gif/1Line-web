@@ -1,6 +1,7 @@
 // =============================================================
 //  Vercel Function: the public catalog (properties + projects) in one cached response.
-//    GET → { ok: true, at, properties: [...], projects: [...] }
+//    GET → { ok: true, at, properties: [...], projects: [...], site: {...} | null }
+//  `site` is settings/site_cms (contact, social, FAQ, testimonials, page SEO); the client cleans it.
 //  Visitors load this instead of opening a live Firestore listener each, so a visit costs
 //  no Firestore reads: Vercel's CDN serves the same copy to everyone and the function reads
 //  Firestore at most about once a minute per region. The CRM keeps its live listener.
@@ -11,7 +12,7 @@
 //    the live listener whenever this route fails.
 // =============================================================
 import { SignJWT, importPKCS8 } from 'jose';
-import { CATALOG_COLLECTIONS, PAGE_SIZE, MAX_DOCS, toCatalogItems } from './_catalog-core.js';
+import { CATALOG_COLLECTIONS, PAGE_SIZE, MAX_DOCS, toCatalogItems, decodeFields } from './_catalog-core.js';
 
 const FRESH_SECONDS = 60;
 const STALE_SECONDS = 600;
@@ -60,6 +61,18 @@ async function listCollection(base, docRoot, name, headers) {
   return toCatalogItems(documents);
 }
 
+// One settings document; a missing or unreadable one is not an error for the catalog
+async function readSiteSettings(base, docRoot, headers) {
+  try {
+    const res = await fetch(`${base}/v1/${docRoot}/settings/site_cms`, { headers });
+    if (!res.ok) return null;
+    const doc = await res.json();
+    return decodeFields(doc.fields);
+  } catch {
+    return null;
+  }
+}
+
 export async function GET() {
   const emulator = process.env.FIRESTORE_EMULATOR_HOST;
   const sa = serviceAccount();
@@ -70,8 +83,11 @@ export async function GET() {
     const headers = emulator
       ? { authorization: 'Bearer owner' }
       : (sa?.private_key && sa?.client_email ? { authorization: `Bearer ${await accessToken(sa)}` } : {});
-    const [properties, projects] = await Promise.all(CATALOG_COLLECTIONS.map((name) => listCollection(base, docRoot, name, headers)));
-    return json(200, { ok: true, at: new Date().toISOString(), properties, projects },
+    const [[properties, projects], site] = await Promise.all([
+      Promise.all(CATALOG_COLLECTIONS.map((name) => listCollection(base, docRoot, name, headers))),
+      readSiteSettings(base, docRoot, headers)
+    ]);
+    return json(200, { ok: true, at: new Date().toISOString(), properties, projects, site },
       `public, max-age=0, s-maxage=${FRESH_SECONDS}, stale-while-revalidate=${STALE_SECONDS}`);
   } catch (err) {
     console.error('catalog failed:', err?.message || err);
