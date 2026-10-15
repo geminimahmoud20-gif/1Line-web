@@ -1,0 +1,21 @@
+/* Pipeline header (CRM redesign phase 3): page header, KPI row, type chips and search from the UI kit. */
+.crm-kanban { font-family: var(--ui-font); padding-bottom: var(--ui-s-6); }
+.crm-kanban .ui-page-head { margin-bottom: var(--ui-s-4); }
+.crm-kanban .ui-kpi-row { margin-bottom: var(--ui-s-4); }
+.crm-kanban__kpi-alert .ui-kpi__value { color: var(--ui-danger); }
+.crm-kanban__toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ui-s-3); margin-bottom: var(--ui-s-4); }
+.crm-kanban__views { display: flex; gap: var(--ui-s-2); overflow-x: auto; scrollbar-width: none; }
+.crm-kanban__views::-webkit-scrollbar { display: none; }
+.crm-kanban__views .ui-chip { flex-shrink: 0; }
+.crm-kanban__search {
+  flex: 0 1 300px; display: flex; align-items: center; gap: var(--ui-s-2);
+  height: var(--ui-control-h); padding: 0 var(--ui-s-3);
+  background: var(--ui-surface); border: 1px solid var(--ui-line-strong); border-radius: var(--ui-r-md); color: var(--ui-text-3);
+}
+.crm-kanban__search:focus-within { border-color: var(--ui-info); box-shadow: var(--ui-sh-focus); }
+.crm-kanban__search input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; font: var(--ui-fw-regular) var(--ui-field-fs) / 1 var(--ui-font); color: var(--ui-text); }
+.crm-kanban .kanban-stage-title { margin: 0; }
+
+@media (max-width: 639px) {
+  .crm-kanban__search { flex: 1 1 100%; }
+}

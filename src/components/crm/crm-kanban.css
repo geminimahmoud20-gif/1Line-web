@@ -109,7 +109,7 @@
   align-items: center;
 }
 
-.kanban-stage-title-wrap h4 {
+.kanban-stage-title-wrap .kanban-stage-title {
   margin: 0;
   font-size: var(--crm-text-md);
   color: var(--crm-ink);

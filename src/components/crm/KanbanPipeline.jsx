@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { MessageSquare, Calendar, Car, Clock, Sparkles, Edit3, Trash2, ChevronRight, ChevronLeft, AlertTriangle, Search, Zap, MoreHorizontal, ShieldAlert, TrendingUp, Users } from 'lucide-react';
+import { MessageSquare, Calendar, Car, Clock, Edit3, Trash2, ChevronRight, ChevronLeft, AlertTriangle, Search, Zap, MoreHorizontal, ShieldAlert, TrendingUp, Users } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
 import StageDeliverableModal from './StageDeliverableModal';
 import './crm-kanban.css';
@@ -8,6 +8,8 @@ import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { leadScore } from '../../utils/crmLeadViews';
 import { validateStageTransition, HIGH_VALUE_DEAL_THRESHOLD } from '../../services/stateMachineEngine';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
+import { PageHeader, KpiRow, KpiTile, Chip } from '../ui';
+import './kanban-redesign.css';
 
 const PIPELINE_STAGES = [
   { id: 'new', title_ar: 'طلبات جديدة', title_en: 'New Inquiries', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)' },
@@ -235,11 +237,12 @@ export default function KanbanPipeline({
       const b = getLeadBudget(l);
       totalVol += b;
       if (b >= HIGH_VALUE_DEAL_THRESHOLD) highValue++;
-      const isOverdue = (l.status === 'new' || !l.status) && l.timestamp && (now - new Date(l.timestamp).getTime() > 24 * 60 * 60 * 1000);
+      const created = l.createdAt?.toMillis ? l.createdAt.toMillis() : (typeof l.createdAt?.seconds === 'number' ? l.createdAt.seconds * 1000 : new Date(l.createdAt || l.timestamp || NaN).getTime());
+      const isOverdue = (l.status === 'new' || !l.status) && Number.isFinite(created) && (now - created > 24 * 60 * 60 * 1000);
       if (isOverdue) overdue++;
     });
     return {
-      totalVolM: (totalVol / 1000000).toFixed(1),
+      totalVol,
       highValue,
       overdue,
       activeCount: filteredLeads.length
@@ -444,136 +447,56 @@ export default function KanbanPipeline({
   };
 
   return (
-    <div className="kanban-pipeline-wrapper" style={{ paddingBottom: '70px' }}>
-      {/* 1. Modern Header Strip */}
-      <div className="crm-modern-header-strip">
-        <div className="crm-header-title-group">
-          <h2 className="crm-header-main-title">
-            <Sparkles size={22} style={{ color: 'var(--crm-accent-text)' }} />
-            <span>{isAr ? 'مسار الصفقات والمبيعات المرئي' : 'Visual Sales Deals Pipeline'}</span>
-          </h2>
-          <div className="crm-header-subtitle">
-            <span>
-              {isAr 
-                ? 'متابعة مسار الصفقات وتحديث مراحل التفاوض والحجز بالسحب والإفلات' 
-                : 'Interactive drag-and-drop deal lifecycle tracker'}
-            </span>
-            <span>•</span>
-            <span className="crm-header-count-pill">
-              {filteredLeads.length} {isAr ? 'صفقة جارية' : 'deals'}
-            </span>
-          </div>
-        </div>
-      </div>
+    <div className="kanban-pipeline-wrapper crm-kanban">
+      <PageHeader
+        title={isAr ? 'مسار الصفقات' : 'Pipeline'}
+        description={isAr ? 'اسحب الصفقة من مرحلة لمرحلة، أو افتحها علشان تسجّل مكالمة.' : 'Drag a deal between stages, or open it to log a call.'}
+      />
 
-      {/* 2. Executive Deal Velocity & Pipeline Mini-Strip */}
-      <div className="crm-kanban-exec-strip">
-        <div className="crm-kanban-exec-stat">
-          <div>
-            <span className="crm-kanban-exec-stat-label">{isAr ? 'قيمة الصفقات الجارية' : 'Pipeline Volume'}</span>
-            <div className="crm-kanban-exec-stat-val">
-              <bdi>{pipelineOverview.totalVolM}</bdi>
-              <small style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 600, color: 'var(--crm-muted)', marginInlineStart: '4px' }}>
-                {isAr ? 'مليون ج.م' : 'M EGP'}
-              </small>
-            </div>
-          </div>
-          <div className="crm-kanban-exec-stat-icon" style={{ background: 'var(--crm-accent-soft)', color: 'var(--crm-accent-text)' }}>
-            <TrendingUp size={18} />
-          </div>
-        </div>
+      <KpiRow label={isAr ? 'ملخص المسار' : 'Pipeline summary'}>
+        <KpiTile
+          label={isAr ? 'صفقات ظاهرة' : 'Deals shown'}
+          value={pipelineOverview.activeCount}
+          icon={<Users size={16} />}
+        />
+        <KpiTile
+          label={isAr ? 'قيمة الصفقات' : 'Pipeline value'}
+          value={pipelineOverview.totalVol > 0 ? pipelineOverview.totalVol / 1000000 : null}
+          digits={1}
+          unit={isAr ? 'مليون ج.م' : 'M EGP'}
+          emptyText={isAr ? 'مفيش ميزانيات متسجّلة' : 'No budgets yet'}
+          icon={<TrendingUp size={16} />}
+        />
+        <KpiTile
+          label={isAr ? 'صفقات كبيرة (5 مليون+)' : 'Large deals (5M+)'}
+          value={pipelineOverview.highValue}
+          icon={<ShieldAlert size={16} />}
+        />
+        <KpiTile
+          label={isAr ? 'جديدة من غير رد +24 ساعة' : 'New, no reply 24h+'}
+          value={pipelineOverview.overdue}
+          className={pipelineOverview.overdue > 0 ? 'crm-kanban__kpi-alert' : undefined}
+          icon={<AlertTriangle size={16} />}
+        />
+      </KpiRow>
 
-        <div className="crm-kanban-exec-stat">
-          <div>
-            <span className="crm-kanban-exec-stat-label">{isAr ? 'الصفقات المعروضة' : 'Active Deals'}</span>
-            <div className="crm-kanban-exec-stat-val">{pipelineOverview.activeCount}</div>
-          </div>
-          <div className="crm-kanban-exec-stat-icon" style={{ background: 'var(--crm-info-soft)', color: 'var(--crm-info)' }}>
-            <Users size={18} />
-          </div>
+      <div className="crm-kanban__toolbar">
+        <div className="crm-kanban__views" role="group" aria-label={isAr ? 'نوع العميل' : 'Client type'}>
+          <Chip pressed={filterType === 'all'} count={leads.length} onClick={() => setFilterType('all')}>{isAr ? 'الكل' : 'All'}</Chip>
+          <Chip pressed={filterType === 'buyer'} onClick={() => setFilterType('buyer')}>{isAr ? 'مشترين' : 'Buyers'}</Chip>
+          <Chip pressed={filterType === 'seller'} onClick={() => setFilterType('seller')}>{isAr ? 'بايعين' : 'Sellers'}</Chip>
+          <Chip pressed={filterType === 'investor'} onClick={() => setFilterType('investor')}>{isAr ? 'مستثمرين' : 'Investors'}</Chip>
         </div>
-
-        <div className="crm-kanban-exec-stat">
-          <div>
-            <span className="crm-kanban-exec-stat-label">{isAr ? 'صفقات كبرى (≥ 5M)' : 'High Value (≥ 5M)'}</span>
-            <div className="crm-kanban-exec-stat-val">{pipelineOverview.highValue}</div>
-          </div>
-          <div className="crm-kanban-exec-stat-icon" style={{ background: 'var(--crm-warn-soft)', color: 'var(--crm-warn)' }}>
-            <ShieldAlert size={18} />
-          </div>
-        </div>
-
-        <div className="crm-kanban-exec-stat">
-          <div>
-            <span className="crm-kanban-exec-stat-label">{isAr ? 'تتطلب تدخلاً عاجلاً' : 'Needs Attention'}</span>
-            <div className="crm-kanban-exec-stat-val" style={{ color: pipelineOverview.overdue > 0 ? 'var(--crm-danger)' : 'var(--crm-positive)' }}>
-              {pipelineOverview.overdue > 0 ? `${pipelineOverview.overdue} ${isAr ? 'متأخرة' : 'overdue'}` : (isAr ? 'الكل منتظم ✓' : 'All clear ✓')}
-            </div>
-          </div>
-          <div className="crm-kanban-exec-stat-icon" style={{ background: pipelineOverview.overdue > 0 ? 'var(--crm-danger-soft)' : 'var(--crm-positive-soft)', color: pipelineOverview.overdue > 0 ? 'var(--crm-danger)' : 'var(--crm-positive)' }}>
-            <AlertTriangle size={18} />
-          </div>
-        </div>
-      </div>
-
-      {/* 2. Modern Triage & Filter Hub */}
-      <div className="crm-modern-triage-hub" style={{ marginBottom: '20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-          {/* Type Filter Tabs */}
-          <div className="crm-triage-scroll-strip" style={{ margin: 0, padding: 0 }}>
-            <button
-              type="button"
-              className={`crm-triage-tab-btn ${filterType === 'all' ? 'is-active' : ''}`}
-              onClick={() => setFilterType('all')}
-            >
-              <span>{isAr ? 'الكل' : 'All'}</span>
-              <span className="crm-triage-counter">{leads.length}</span>
-            </button>
-            <button
-              type="button"
-              className={`crm-triage-tab-btn ${filterType === 'buyer' ? 'is-active' : ''}`}
-              onClick={() => setFilterType('buyer')}
-            >
-              <span>{isAr ? 'مشترين' : 'Buyers'}</span>
-            </button>
-            <button
-              type="button"
-              className={`crm-triage-tab-btn ${filterType === 'seller' ? 'is-active' : ''}`}
-              onClick={() => setFilterType('seller')}
-            >
-              <span>{isAr ? 'بائعين' : 'Sellers'}</span>
-            </button>
-            <button
-              type="button"
-              className={`crm-triage-tab-btn ${filterType === 'investor' ? 'is-active' : ''}`}
-              onClick={() => setFilterType('investor')}
-            >
-              <span>{isAr ? 'مستثمرين' : 'Investors'}</span>
-            </button>
-          </div>
-
-          {/* Live Search Input */}
-          <div className="crm-search-pill-wrapper" style={{ minWidth: '220px' }}>
-            <Search size={15} className="crm-search-pill-icon" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={isAr ? 'بحث بالاسم أو الهاتف...' : 'Search lead...'}
-              className="crm-search-pill-input"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="crm-search-pill-clear"
-                title={isAr ? 'مسح البحث' : 'Clear search'}
-              >
-                ✕
-              </button>
-            )}
-          </div>
-        </div>
+        <label className="crm-kanban__search">
+          <Search size={16} aria-hidden="true" />
+          <input
+            type="search"
+            aria-label={isAr ? 'بحث في الصفقات' : 'Search deals'}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={isAr ? 'اسم أو تليفون' : 'Name or phone'}
+          />
+        </label>
       </div>
 
       {/* Kanban Stages Board */}
@@ -651,7 +574,7 @@ export default function KanbanPipeline({
               {/* Stage Header */}
               <div className="kanban-stage-header">
                 <div className="kanban-stage-title-wrap">
-                  <h4>{isAr ? stage.title_ar : stage.title_en}</h4>
+                  <h2 className="kanban-stage-title">{isAr ? stage.title_ar : stage.title_en}</h2>
                   <span className="kanban-stage-volume-sub">
                     {totalVolume > 0 ? (
                       <>
