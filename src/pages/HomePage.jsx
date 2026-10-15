@@ -36,7 +36,8 @@ export default function HomePage({
   compareList = [],
   onToggleCompare,
   onQuickView,
-  onOpenAddDemand
+  onOpenAddDemand,
+  projects = []
 }) {
   const navigate = useNavigate();
 
@@ -263,11 +264,12 @@ export default function HomePage({
   const matchingProjects = useMemo(() => {
     if (!searchKeyword.trim()) return [];
     const q = searchKeyword.toLowerCase().trim();
-    return (MEGA_PROJECTS || []).filter(p =>
+    // Projects added in the CRM; the bundled samples only until the catalogue has loaded
+    return (projects.length > 0 ? projects : MEGA_PROJECTS).filter(p =>
       (p.title_ar && p.title_ar.toLowerCase().includes(q)) || 
       (p.title_en && p.title_en.toLowerCase().includes(q))
     ).slice(0, 2);
-  }, [searchKeyword]);
+  }, [searchKeyword, projects]);
 
   const matchingProperties = useMemo(() => {
     if (!searchKeyword.trim()) return [];

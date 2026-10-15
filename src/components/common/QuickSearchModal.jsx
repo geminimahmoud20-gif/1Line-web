@@ -9,6 +9,7 @@ export default function QuickSearchModal({
   isOpen,
   onClose,
   properties = [],
+  projects = [],
   lang = 'ar',
   currency = 'EGP',
   onOpenAddDemand
@@ -123,7 +124,8 @@ export default function QuickSearchModal({
     }).slice(0, 4);
 
     // 3. Matching Mega Projects
-    const matchedProjects = (MEGA_PROJECTS || []).filter((proj) => {
+    // Projects added in the CRM; the bundled samples only until the catalogue has loaded
+    const matchedProjects = (projects.length > 0 ? projects : MEGA_PROJECTS).filter((proj) => {
       const titleAr = (proj.title_ar || '').toLowerCase();
       const titleEn = (proj.title_en || '').toLowerCase();
       const devAr = (proj.developer_ar || '').toLowerCase();
@@ -142,7 +144,7 @@ export default function QuickSearchModal({
       projects: matchedProjects,
       tools: matchedTools
     };
-  }, [query, properties, areas, tools]);
+  }, [query, properties, projects, areas, tools]);
 
   // Flatten items for keyboard navigation
   const flatItems = useMemo(() => {
