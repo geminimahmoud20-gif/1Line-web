@@ -228,9 +228,10 @@
 /* ── KPI tile ── */
 .ui-kpi { display: flex; flex-direction: column; gap: var(--ui-s-2); min-width: 0; }
 .ui-kpi__top { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-s-2); }
+.ui-kpi--button { width: 100%; text-align: start; font: inherit; color: inherit; cursor: pointer; }
 .ui-kpi__label { font-size: var(--ui-fs-2); font-weight: var(--ui-fw-semibold); color: var(--ui-text-3); }
 .ui-kpi__icon { color: var(--ui-accent); display: inline-flex; }
-.ui-kpi__value { font-size: var(--ui-fs-7); font-weight: var(--ui-fw-bold); color: var(--ui-text); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.ui-kpi__value { display: block; font-size: var(--ui-fs-7); font-weight: var(--ui-fw-bold); color: var(--ui-text); line-height: 1.1; font-variant-numeric: tabular-nums; }
 .ui-kpi__unit { font-size: var(--ui-fs-3); font-weight: var(--ui-fw-semibold); color: var(--ui-text-3); margin-inline-start: var(--ui-s-1); }
 .ui-kpi__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-s-2); font-size: var(--ui-fs-1); color: var(--ui-text-3); }
 .ui-kpi__delta { font-weight: var(--ui-fw-bold); font-variant-numeric: tabular-nums; }

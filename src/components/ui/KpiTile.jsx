@@ -37,25 +37,31 @@ export function Sparkline({ points = [], width = 96, height = 28, label }) {
 }
 
 // A number that matters, with its unit, an optional change and trend. Pass value={null} for "no data yet".
-export function KpiTile({ label, value, unit, digits = 0, delta, deltaLabel, hint, icon = null, trend, loading = false, emptyText = 'لسه مفيش', className }) {
+// With onClick the tile is a button (it opens the list behind the number); the inner parts are spans so that stays valid.
+export function KpiTile({ label, value, unit, digits = 0, delta, deltaLabel, hint, icon = null, trend, loading = false, emptyText = 'لسه مفيش', className, onClick }) {
   const up = typeof delta === 'number' && delta > 0;
   const down = typeof delta === 'number' && delta < 0;
+  const Tag = onClick ? 'button' : 'div';
   return (
-    <div className={cx('ui-card', 'ui-card--compact', 'ui-kpi', className)}>
-      <div className="ui-kpi__top">
+    <Tag
+      type={onClick ? 'button' : undefined}
+      onClick={onClick}
+      className={cx('ui-card', 'ui-card--compact', 'ui-kpi', onClick && 'ui-card--interactive ui-kpi--button', className)}
+    >
+      <span className="ui-kpi__top">
         <span className="ui-kpi__label">{label}</span>
         {icon && <span className="ui-kpi__icon" aria-hidden="true">{icon}</span>}
-      </div>
-      <div className="ui-kpi__value">
+      </span>
+      <span className="ui-kpi__value">
         {loading ? <Skeleton width="55%" height={28} /> : value == null ? <span className="ui-kpi__unit">{emptyText}</span> : (
           <>
             <AnimatedNumber value={value} digits={digits} />
             {unit && <span className="ui-kpi__unit">{unit}</span>}
           </>
         )}
-      </div>
+      </span>
       {(hint || delta != null || trend) && (
-        <div className="ui-kpi__foot">
+        <span className="ui-kpi__foot">
           <span>
             {delta != null && (
               <span className={cx('ui-kpi__delta', up && 'ui-kpi__delta--up', down && 'ui-kpi__delta--down')}>
@@ -65,9 +71,9 @@ export function KpiTile({ label, value, unit, digits = 0, delta, deltaLabel, hin
             {hint && <span>{delta != null ? ' · ' : ''}{hint}</span>}
           </span>
           {trend && <Sparkline points={trend} />}
-        </div>
+        </span>
       )}
-    </div>
+    </Tag>
   );
 }
 
