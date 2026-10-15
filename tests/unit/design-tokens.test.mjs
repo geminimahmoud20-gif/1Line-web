@@ -89,7 +89,7 @@ test('the UI kit uses tokens only: no raw colours, radii come from --ui-r-*', ()
 
 // Ratchet for the CRM before the redesign (docs/crm-redesign/AUDIT.md). Lower these numbers as screens
 // move to src/components/ui; raising them means new code skipped the design system.
-const CRM_LIMITS = { hex: 297, inlineStyle: 1564, important: 315 };
+const CRM_LIMITS = { hex: 296, inlineStyle: 1424, important: 315 };
 
 test('old CRM code does not gain hard-coded colours, inline styles or !important', () => {
   const files = walk('src/components/crm').filter((f) => /\.(jsx|css)$/.test(f) && !/UiKitPanel|ui-kit/.test(f));
