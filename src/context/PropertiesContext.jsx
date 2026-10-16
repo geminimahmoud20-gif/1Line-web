@@ -785,6 +785,10 @@ export function PropertiesProvider({ children }) {
         extra.firstContactedAt = updatedFields.lastContactedAt || nowIso;
       }
     }
+    // When a deal is won, for this month's commission figures
+    if (updatedFields.status === 'closed' && current?.status !== 'closed' && !updatedFields.closedAt) {
+      extra.closedAt = nowIso;
+    }
     // The activity log is saved with the lead (it used to live only in this browser).
     // Callers that build their own log entry pass activityLogs themselves.
     const activityLogs = updatedFields.activityLogs

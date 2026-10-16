@@ -353,7 +353,7 @@ function inDateRange(l, range, now) {
  * Leads table filter.
  * opts: { myDealsOnly, activeRole, agentName, leadFilter, temperatureFilter, areaFilter, sourceFilter,
  *         dateFilter, searchQuery, today, now, duplicateIds }
- * leadFilter: 'all' | 'archived' | 'lost' | 'new' | 'awaiting' | 'dupes' | 'due' | 'overdue' | 'unassigned'
+ * leadFilter: 'all' | 'archived' | 'lost' | 'won' | 'new' | 'awaiting' | 'dupes' | 'due' | 'overdue' | 'unassigned'
  *   | 'stale' | 'qualified' | a lead type.
  * Archived and lost leads only show under their own filter. today (YYYY-MM-DD) and now (ms)
  * default to the current time; tests pass them in.
@@ -381,6 +381,8 @@ export function filterLeads(leads = [], opts = {}) {
       if (l.status !== 'lost') return false;
     } else if (l.status === 'lost') {
       return false;
+    } else if (leadFilter === 'won') {
+      if (l.status !== 'closed') return false;
     } else if (leadFilter === 'new') {
       if (l.status !== 'new' && l.status) return false;
     } else if (leadFilter === 'awaiting') {

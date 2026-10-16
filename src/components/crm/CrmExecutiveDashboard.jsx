@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { computeDashboardMetrics } from '../../utils/crmLeadViews';
+import { commissionForecast } from '../../utils/commission';
 import { DESK_BY_ROLE } from '../../utils/rbacRules';
 import { Users, Zap, Briefcase, Clock, Target, AlertTriangle, CheckCircle2, TrendingUp, Phone, Sparkles, Award, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 import { leadScore, LEAD_SCORE_HIGH } from '../../utils/crmLeadViews';
@@ -44,14 +45,12 @@ export default function CrmExecutiveDashboard({
   const metrics = useMemo(() => {
     const m = computeDashboardMetrics(leads, demands, { now, scopeDesk });
     const fmtM = (v) => (v / 1000000).toFixed(1);
+    const fc = commissionForecast(leads, { now });
     return {
       ...m,
       pipelineValueM: fmtM(m.pipelineValue),
       purchasingPowerM: fmtM(m.purchasingPower),
-      commissionM: (m.expectedCommission / 1000000).toFixed(2),
-      // Under 1M the commission reads better as a full amount (87,500 ج.م) than as '0.09 مليون'
-      commissionIsMillions: m.expectedCommission >= 1000000,
-      commissionFull: Math.round(m.expectedCommission).toLocaleString('en-US'),
+      forecast: fc,
       newLeadsCount: m.newCount,
       overdueCount: m.overdueList.length,
       dueTodayCount: m.dueTodayList.length,
@@ -62,6 +61,10 @@ export default function CrmExecutiveDashboard({
   }, [leads, demands, now, scopeDesk]);
 
   const activeDemands = demands.filter((d) => !d.isArchived && d.status !== 'archived').length;
+  // Under 1M money reads better as a full amount (87,500 ج.م) than as '0.09 مليون'
+  const moneyValue = (v) => (v >= 1e6 ? v / 1e6 : Math.round(v));
+  const moneyUnit = (v) => (v >= 1e6 ? (isAr ? 'مليون ج.م' : 'M EGP') : (isAr ? 'ج.م' : 'EGP'));
+  const fmtMoney = (v) => (v >= 1e6 ? `${(v / 1e6).toFixed(2)} ${isAr ? 'مليون' : 'M'}` : `${Math.round(v).toLocaleString('en-US')} ${isAr ? 'ج.م' : 'EGP'}`);
   const goLeads = (filter) => { onFilterLeads?.(filter); onSwitchTab?.('leads'); };
   const L = (ar, en) => (isAr ? ar : en);
 
@@ -136,13 +139,26 @@ export default function CrmExecutiveDashboard({
         )}
         {!metrics.scoped && showMoney && (
           <KpiTile
-            label={L('العمولة المتوقعة (2.5%)', 'Expected commission (2.5%)')}
-            value={metrics.expectedCommission > 0 ? (metrics.commissionIsMillions ? metrics.expectedCommission / 1000000 : Math.round(metrics.expectedCommission)) : null}
-            digits={metrics.commissionIsMillions ? 2 : 0}
-            unit={metrics.commissionIsMillions ? L('مليون ج.م', 'M EGP') : L('ج.م', 'EGP')}
-            emptyText={L('مفيش صفقات في التفاوض', 'No deals in negotiation')}
-            hint={L('من الصفقات اللي في التفاوض', 'From deals in negotiation')}
+            label={L('العمولة المتوقعة', 'Expected commission')}
+            value={metrics.forecast.weighted > 0 ? moneyValue(metrics.forecast.weighted) : null}
+            digits={metrics.forecast.weighted >= 1e6 ? 2 : 0}
+            unit={moneyUnit(metrics.forecast.weighted)}
+            emptyText={L('مفيش صفقات مفتوحة بقيمة', 'No open deals with a value')}
+            hint={L(`مرجّحة بمرحلة كل صفقة · لو كلها اتقفلت ${fmtMoney(metrics.forecast.gross)}`, `Weighted by stage · ${fmtMoney(metrics.forecast.gross)} if all close`)}
             icon={<Award size={16} />}
+            onClick={() => onSwitchTab?.('kanban')}
+          />
+        )}
+        {!metrics.scoped && showMoney && (
+          <KpiTile
+            label={L('عمولات الشهر ده', 'Commission this month')}
+            value={metrics.forecast.wonThisMonth > 0 ? moneyValue(metrics.forecast.wonThisMonth) : null}
+            digits={metrics.forecast.wonThisMonth >= 1e6 ? 2 : 0}
+            unit={moneyUnit(metrics.forecast.wonThisMonth)}
+            emptyText={L('لسه مفيش صفقات اتقفلت', 'No deals won yet')}
+            hint={L(`${metrics.forecast.wonCount} صفقة ناجحة · قريبة: ${fmtMoney(metrics.forecast.late)}`, `${metrics.forecast.wonCount} won · near-term ${fmtMoney(metrics.forecast.late)}`)}
+            icon={<TrendingUp size={16} />}
+            onClick={() => goLeads('won')}
           />
         )}
         {!metrics.scoped && showMoney && (

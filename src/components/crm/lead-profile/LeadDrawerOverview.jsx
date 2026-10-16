@@ -1,6 +1,7 @@
 import { Phone, MessageSquare, Calendar, Send, Building, Download, ExternalLink, Plus } from 'lucide-react';
 import { getGoogleCalendarUrl, downloadIcsFile } from '../../../utils/calendarHelper';
 import { Button, Badge, Select, Input } from '../../ui';
+import LeadCommissionBox from './LeadCommissionBox';
 
 // One-tap call results; the text is what goes into the lead's history
 const CALL_OUTCOMES = [
@@ -25,7 +26,8 @@ export default function LeadDrawerOverview({
   setViewingDateTime,
   showViewingForm,
   viewingDateTime,
-  whatsappTemplates
+  whatsappTemplates,
+  onUpdateLead
 }) {
   const details = lead?.details || {};
   const isSeller = lead?.type === 'seller' || lead?.landingPage === '/sell' || Boolean(details.askingPrice) || Boolean(details.propertyType && details.size);
@@ -103,6 +105,8 @@ export default function LeadDrawerOverview({
           )}
         </section>
       )}
+
+      <LeadCommissionBox key={lead?.id} lead={lead} isAr={isAr} onUpdateLead={onUpdateLead} />
 
       {hasSchedule && (
         <section className="crm-ld__block crm-ld__block--info" aria-labelledby="crm-ld-visit">

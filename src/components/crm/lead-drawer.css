@@ -73,3 +73,8 @@
   .crm-ld__quick { width: 100%; }
   .crm-ld__quick .ui-btn { flex: 1; }
 }
+
+.crm-ld__facts dd small { font-weight: var(--ui-fw-regular); color: var(--ui-text-3); }
+.crm-ld__commission-edit { display: grid; grid-template-columns: 1fr 120px auto; gap: var(--ui-s-2); align-items: start; margin-top: var(--ui-s-3); }
+.crm-ld__commission-edit > .ui-btn { margin-top: 26px; }
+@media (max-width: 479px) { .crm-ld__commission-edit { grid-template-columns: 1fr 1fr; } .crm-ld__commission-edit > .ui-btn { grid-column: 1 / -1; margin-top: 0; } }

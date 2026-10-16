@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Phone, MessageSquare, Building, ChevronRight, ChevronLeft, Trash2, Plus, Eye } from 'lucide-react';
 import { SOHAG_AREAS, PROPERTY_TYPES } from '../../data/propertiesData';
 import { trackEvent } from '../../utils/visitorTracker';
@@ -63,11 +63,16 @@ export default function LeadQuickDrawer({
   }, [hasUnsavedChanges, isAr, onClose, confirm]);
 
   // The phone's back gesture closes the drawer instead of leaving the CRM (Esc is handled by the Drawer)
+  // Runs once per opening: it used to re-run whenever safeClose changed (every update to the lead),
+  // and its cleanup's history.back() fired a popstate that the next run took as "close", so logging
+  // a call, changing the stage or saving anything closed the drawer.
   const isOpen = Boolean(lead);
+  const safeCloseRef = useRef(safeClose);
+  useEffect(() => { safeCloseRef.current = safeClose; }, [safeClose]);
   useEffect(() => {
     if (!isOpen) return undefined;
     window.history.pushState({ modalOpen: true }, '');
-    const handlePopState = () => { safeClose(); };
+    const handlePopState = () => { safeCloseRef.current(); };
     window.addEventListener('popstate', handlePopState);
     return () => {
       window.removeEventListener('popstate', handlePopState);
@@ -75,7 +80,7 @@ export default function LeadQuickDrawer({
         window.history.back();
       }
     };
-  }, [isOpen, safeClose]);
+  }, [isOpen]);
 
   // The same ranking the "matches" tab shows, so the tab count and the list agree
   const matchingResult = useMemo(
@@ -398,6 +403,7 @@ export default function LeadQuickDrawer({
               showViewingForm={showViewingForm}
               viewingDateTime={viewingDateTime}
               whatsappTemplates={whatsappTemplates}
+              onUpdateLead={onUpdateLead}
             />
           )}
 
