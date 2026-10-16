@@ -9,12 +9,16 @@ import { installErrorReporter } from './utils/errorReporter.js'
 import { installLatinDigits } from './utils/latinDigits.js'
 // Catches the browser's install offer before React mounts (it fires once, early)
 import './utils/pwaInstall.js'
+import { installContactIntents } from './utils/contactIntent.js'
 
 // Visitors' errors and CSP violations → CRM → System → Site errors
 installErrorReporter()
 
 // One digit style everywhere (0-9), including text from the database typed with ٠-٩
 installLatinDigits()
+
+// WhatsApp taps to the company number get a reference the CRM can link to the chat
+installContactIntents()
 
 // Auto-heal new deployments when CSS/JS chunks are updated on the server
 window.addEventListener('vite:preloadError', (event) => {

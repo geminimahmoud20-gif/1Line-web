@@ -22,6 +22,8 @@ import { canViewLeadPhone, maskPhoneNumber } from '../../utils/rbacRules';
 import { claimLeadAtomic } from '../../services/leads';
 import { normalizeAreaKey, getAreaById } from '../../utils/areasData';
 import { formatArabicPlural, sanitizeAndMergeNotes, formatPhoneNumber } from '../../utils/crmNoteSanitizer';
+import { subscribeToContactIntents, resolveContactIntent } from '../../firebaseLazy';
+import WhatsAppIntentsList from './WhatsAppIntentsList';
 
 const PROPERTY_TYPE_LABELS = {
   apartment: 'شقة سكنية',
@@ -204,7 +206,7 @@ function getLeadFacts(lead, tab, isAr) {
 
 export default function CrmInboxPanel({
   leads = [],
-  _properties = [],
+  properties = [],
   currentUser = null,
   userRole = 'super_admin',
   userPerms = null,
@@ -213,6 +215,8 @@ export default function CrmInboxPanel({
   onOpenLead,
   onConvertToProperty,
   triggerToast,
+  onAddNewLead,
+  canEditLeads = false,
   slaMinutes = 15
 }) {
   const isAr = lang === 'ar';
@@ -238,6 +242,56 @@ export default function CrmInboxPanel({
   const [reassigningLeadId, setReassigningLeadId] = useState(null);
   const [reassignName, setReassignName] = useState('');
   const [claimingId, setClaimingId] = useState(null);
+
+  // WhatsApp taps from the site (api/contact-intent.js); undefined = loading, null = no access
+  const [intents, setIntents] = useState(undefined);
+  useEffect(() => {
+    let unsub = null;
+    let alive = true;
+    Promise.resolve(subscribeToContactIntents((list) => { if (alive) setIntents(list); }))
+      .then((u) => { if (alive) unsub = u; else u?.(); })
+      .catch(() => { if (alive) setIntents(null); });
+    return () => { alive = false; unsub?.(); };
+  }, []);
+  const openIntents = (intents || []).filter((i) => (i.status || 'open') === 'open').length;
+
+  const resolveIntent = async (intent, status, leadId = null) => {
+    try {
+      await resolveContactIntent(intent.id, status, currentUser?.uid || '', leadId);
+    } catch (err) {
+      console.error('resolve contact intent failed:', err);
+      triggerToast?.(isAr ? 'مقدرناش نحدّث الضغطة. جرّب تاني.' : "Couldn't update. Try again.", 'error');
+      return false;
+    }
+    return true;
+  };
+
+  // "ربط بعميل": the chat with this reference arrived on WhatsApp → it becomes a lead
+  const linkIntent = async (intent, { name, phone }) => {
+    if (!onAddNewLead) return;
+    const unit = intent.propertyId ? properties.find((p) => String(p.id) === String(intent.propertyId)) : null;
+    await onAddNewLead({
+      name: name || (isAr ? 'عميل واتساب' : 'WhatsApp client'),
+      phone,
+      whatsapp: phone,
+      type: 'buyer',
+      source: 'whatsapp_site',
+      contactRef: intent.ref || intent.id,
+      ...(intent.propertyId ? { propertyId: String(intent.propertyId) } : {}),
+      details: {
+        channel: 'whatsapp',
+        propertyCode: intent.propertyId ? String(intent.propertyId).toUpperCase() : '',
+        ...(unit?.areaKey ? { area: unit.areaKey } : {}),
+        ...(unit?.type ? { propertyType: unit.type } : {})
+      },
+      notes: isAr
+        ? `تواصل بالواتساب من الموقع${intent.propertyId ? ` على وحدة #${String(intent.propertyId).toUpperCase()}` : ''} · رقم المرجع ${intent.ref || intent.id}`
+        : `WhatsApp from the site${intent.propertyId ? ` about #${String(intent.propertyId).toUpperCase()}` : ''} · ref ${intent.ref || intent.id}`
+    });
+    if (await resolveIntent(intent, 'linked')) {
+      triggerToast?.(isAr ? `اتعمل طلب لـ ${name || 'العميل'} واتربط بالمرجع ${intent.ref || intent.id}` : 'Lead created and linked', 'success');
+    }
+  };
 
   const currentStaffName = useMemo(() => {
     return currentUser?.displayName || currentUser?.name || currentUser?.email?.split('@')[0] || (isAr ? 'موظف 1Line' : 'Staff');
@@ -327,8 +381,16 @@ export default function CrmInboxPanel({
       icon: Briefcase, 
       count: categorized.brokers.length, 
       unhandled: unhandledCounts.brokers
+    },
+    {
+      id: 'whatsapp',
+      label_ar: 'واتساب من الموقع',
+      label_en: 'WhatsApp taps',
+      icon: MessageCircle,
+      count: (intents || []).length,
+      unhandled: openIntents
     }
-  ], [categorized, unhandledCounts]);
+  ], [categorized, unhandledCounts, intents, openIntents]);
 
   // Current tab items with search & status filtering
   const currentItems = useMemo(() => {
@@ -507,6 +569,19 @@ export default function CrmInboxPanel({
           })}
         />
 
+        {activeTab === 'whatsapp' ? (
+          intents === undefined ? null : (
+            <WhatsAppIntentsList
+              intents={intents}
+              properties={properties}
+              isAr={isAr}
+              now={currentTime}
+              canEdit={canEditLeads}
+              onLink={linkIntent}
+              onResolve={(intent, status) => resolveIntent(intent, status)}
+            />
+          )
+        ) : (<>
         <div className="crm-inbox__toolbar">
           <label className="crm-inbox__search">
             <Search size={16} aria-hidden="true" />
@@ -684,6 +759,7 @@ export default function CrmInboxPanel({
             })}
           </ul>
         )}
+        </>)}
       </div>
     </MotionRoot>
   );

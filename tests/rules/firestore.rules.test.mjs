@@ -466,3 +466,20 @@ test('dashboard totals: the paged "all leads" read works per role (services/lead
   if (all.size !== 6) throw new Error(`expected 6 leads, got ${all.size}`);
   await assertFails(getDocs(query(collection(east, 'leads'), orderBy(documentId()), limit(500))));
 });
+
+test('WhatsApp taps (contact_intents): server-written, staff read, lead editors only change the status', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'contact_intents/W-7K3Q'), { ref: 'W-7K3Q', channel: 'whatsapp', path: '/properties/p1', propertyId: 'p1', status: 'open' });
+  });
+  await assertFails(getDoc(doc(guest(), 'contact_intents/W-7K3Q')));
+  await assertFails(setDoc(doc(guest(), 'contact_intents/W-AAAA'), { ref: 'W-AAAA', status: 'open' }));
+  await assertSucceeds(getDoc(doc(as('viewer'), 'contact_intents/W-7K3Q')));
+  // a viewer can't handle it; an agent can, stamped with their uid and the server time
+  await assertFails(setDoc(doc(as('viewer'), 'contact_intents/W-7K3Q'), { status: 'dismissed', handledBy: 'u-viewer', handledAt: serverTimestamp() }, { merge: true }));
+  await assertSucceeds(setDoc(doc(as('sales_agent'), 'contact_intents/W-7K3Q'), { status: 'linked', leadId: 'lead-1', handledBy: 'u-sales_agent', handledAt: serverTimestamp() }, { merge: true }));
+  // the unit, page and reference can't be rewritten; nobody can sign as someone else
+  await assertFails(setDoc(doc(as('sales_agent'), 'contact_intents/W-7K3Q'), { propertyId: 'p2', status: 'open', handledBy: 'u-sales_agent', handledAt: serverTimestamp() }, { merge: true }));
+  await assertFails(setDoc(doc(as('sales_agent'), 'contact_intents/W-7K3Q'), { status: 'dismissed', handledBy: 'someone-else', handledAt: serverTimestamp() }, { merge: true }));
+  await assertFails(setDoc(doc(as('sales_agent'), 'contact_intents/W-NEW1'), { ref: 'W-NEW1', status: 'open' }));
+  await assertFails(deleteDoc(doc(as('sales_agent'), 'contact_intents/W-7K3Q')));
+});

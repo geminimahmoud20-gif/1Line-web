@@ -357,6 +357,20 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // 💬 8e. WHATSAPP TAPS FROM THE SITE — created only by api/contact-intent.js (service account):
+    // reference, page and unit, no personal data. Staff see them in the inbox; lead editors mark one
+    // linked (with the lead it became) or dismissed. Nothing else on the row can change.
+    match /contact_intents/{ref} {
+      allow read: if isStaff();
+      allow create: if false;
+      allow update: if isLeadEditor()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'leadId', 'handledBy', 'handledAt'])
+        && request.resource.data.status in ['linked', 'dismissed', 'open']
+        && request.resource.data.handledBy == request.auth.uid
+        && request.resource.data.handledAt == request.time;
+      allow delete: if isAdmin();
+    }
+
     // Visitor analytics, written only by /api/track with the service account. No contact data is
     // ever stored here (the collector keeps whitelisted ids/numbers only). Readers: staff who see
     // leads across desks (permission ld.manage: managers, admins) — profiles can be tied to a lead.
