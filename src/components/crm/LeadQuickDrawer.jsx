@@ -403,6 +403,7 @@ export default function LeadQuickDrawer({
               showViewingForm={showViewingForm}
               viewingDateTime={viewingDateTime}
               whatsappTemplates={whatsappTemplates}
+              onUpdateLead={onUpdateLead}
             />
           )}
 

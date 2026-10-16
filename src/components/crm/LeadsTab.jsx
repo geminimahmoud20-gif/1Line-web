@@ -19,7 +19,7 @@ import { leadScore, LEAD_SCORE_HIGH } from '../../utils/crmLeadViews';
 import { PageHeader, Button, Chip, Select, Badge, Avatar, EmptyState } from '../ui';
 import { cx } from '../ui/cx';
 import './leads-tab.css';
-const MORE_FILTER_KEYS = ['qualified', 'account', 'stale', 'dupes', 'archived', 'lost'];
+const MORE_FILTER_KEYS = ['qualified', 'account', 'stale', 'dupes', 'archived', 'won', 'lost'];
 
 const COLUMN_OPTIONS = [
   { key: 'requirements', ar: 'المواصفات والميزانية', en: 'Requirements & budget' },
@@ -207,6 +207,7 @@ export default function LeadsTab({
       unassigned: open.filter(isUnassigned).length,
       stale: open.filter((l) => isStale(l, now)).length,
       lost: leads.filter((l) => !l.isArchived && l.status === 'lost').length,
+      won: leads.filter((l) => !l.isArchived && l.status === 'closed').length,
       archived: leads.filter((l) => l.isArchived).length
     };
   }, [leads, duplicateIds, now]);
@@ -448,6 +449,7 @@ export default function LeadsTab({
             ...(counts.stale > 0 ? [{ value: 'stale', label: isAr ? `راكدين (${counts.stale})` : `Stale (${counts.stale})` }] : []),
             ...(counts.dupes > 0 ? [{ value: 'dupes', label: isAr ? `مكررين بالرقم (${counts.dupes})` : `Duplicates (${counts.dupes})` }] : []),
             { value: 'archived', label: isAr ? `مؤرشفين (${counts.archived})` : `Archived (${counts.archived})` },
+            { value: 'won', label: isAr ? `صفقات ناجحة (${counts.won})` : `Won (${counts.won})` },
             { value: 'lost', label: isAr ? `صفقات خسرانة (${counts.lost})` : `Lost (${counts.lost})` }
           ]}
         />
