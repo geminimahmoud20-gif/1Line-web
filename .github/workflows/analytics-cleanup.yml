@@ -1,0 +1,48 @@
+# Daily deletion of raw visitor analytics past retention (scripts/cleanup-analytics.mjs).
+# Replaces Firestore TTL policies, which need a billed (Blaze) project. At most 5,000 deletes
+# a run, well inside the free plan's 20,000 a day.
+#
+# Needs the repository secret FIREBASE_SERVICE_ACCOUNT (already used by firebase-deploy.yml).
+# Deletes nothing until the owner sets the repository variable ANALYTICS_CLEANUP to "on"
+# (Settings → Secrets and variables → Actions → Variables); until then every run is a dry run
+# that only prints what it would delete.
+name: Analytics cleanup
+
+on:
+  schedule:
+    - cron: '43 2 * * *'   # 04:43 / 05:43 Cairo time, after the backup
+  workflow_dispatch:
+
+concurrency:
+  group: analytics-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Key
+        env:
+          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$SERVICE_ACCOUNT" ]; then echo "::error::Repository secret FIREBASE_SERVICE_ACCOUNT is missing."; exit 1; fi
+          printf '%s' "$SERVICE_ACCOUNT" > "$RUNNER_TEMP/service-account.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/service-account.json" >> "$GITHUB_ENV"
+
+      - name: Clean up
+        env:
+          CLEANUP_MODE: ${{ vars.ANALYTICS_CLEANUP }}
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13
+          if [ "$CLEANUP_MODE" = "on" ]; then node scripts/cleanup-analytics.mjs; else node scripts/cleanup-analytics.mjs --dry-run; fi
+
+      - name: Remove key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/service-account.json"
