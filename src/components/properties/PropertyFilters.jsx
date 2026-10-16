@@ -3,6 +3,7 @@ import { Search, SlidersHorizontal, RotateCcw, X, Sparkles, ShieldCheck, FileChe
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { getAreas } from '../../utils/areasData';
 import './property-filters-mobile.css';
+import { countLabel } from '../../utils/arabicCount';
 
 const SMART_FILTER_TAGS = [
   { id: 'nile_view', label_ar: 'إطلالة نيلية', label_en: 'Nile View', icon: Waves },
@@ -84,7 +85,7 @@ export default function PropertyFilters({
     if (filters.bedrooms && filters.bedrooms !== 'all' && filters.bedrooms !== 'any' && filters.type !== 'commercial' && filters.type !== 'land') {
       list.push({
         id: 'bedrooms',
-        label: `${filters.bedrooms} ${isAr ? 'غرف' : 'Beds'}`,
+        label: countLabel('room', filters.bedrooms, isAr),
         onRemove: () => onFilterChange('bedrooms', 'all')
       });
     }

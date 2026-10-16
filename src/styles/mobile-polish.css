@@ -253,3 +253,60 @@ html .demands-add-cta .btn { display: inline-flex; align-items: center; gap: 8px
   /* Breadcrumb links: taller tap area without moving the text */
   html .page-breadcrumb-sub a { display: inline-block; padding-block: 10px; margin-block: -10px; }
 }
+
+/* ── Public UX pass (phone 375px + desktop 1366px sweep) ─────────────────────── */
+@media (max-width: 768px) {
+  /* Consent bar: one compact row (text · two buttons) instead of a card over a quarter of the screen */
+  html .lx-consent { flex-wrap: nowrap; align-items: center; gap: 10px; padding: 10px 12px; }
+  html .lx-consent p { flex: 1 1 auto; min-width: 0; font-size: 0.8rem; line-height: 1.45; }
+  html .lx-consent-actions { flex: 0 0 auto; gap: 6px; }
+  html .lx-consent-actions > * { flex: 0 0 auto; }
+  html .lx-consent .lx-btn-sm { min-height: 40px; padding: 6px 12px; font-size: 0.8rem; white-space: nowrap; }
+  /* The bottom navigation has Home, and phones have their own way back up: the floating arrow sat on card prices */
+  html .floating-back-to-top-btn { display: none !important; }
+}
+@media (max-width: 1140px) {
+  /* The header already has a back arrow at this width: the in-page "رجوع خطوة للخلف" repeated it */
+  html .btn-back-step { display: none !important; }
+}
+@media (max-width: 480px) {
+  /* Theme and language live in the menu drawer; dropping them from the bar leaves room for 40px buttons */
+  html .site-header .header-utility-pill-group { display: none !important; }
+  html .site-header .header-client-account-btn,
+  html .site-header .mobile-quick-search-btn,
+  html .site-header .mobile-hamburger-btn,
+  html .site-header .mobile-header-back-btn { width: 40px !important; height: 40px !important; min-width: 40px !important; }
+}
+@media (max-width: 768px) {
+  /* Properties page: the first unit was below the first screen. Shorter title block, one-row trust strip. */
+  html .compact-page-header .page-header-titles { padding: 12px 16px !important; }
+  html .compact-page-header .page-header-subtitle { display: none; }
+  html .compact-page-header .page-header-title { font-size: 1.2rem !important; }
+  html .compact-page-header .results-count-badge { white-space: nowrap; flex: none; }
+  html .properties-certified-explainer-strip { padding: 6px 12px !important; }
+  html .certified-explainer-inner { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; gap: 8px; scrollbar-width: none; }
+  html .certified-explainer-inner::-webkit-scrollbar { display: none; }
+  html .certified-points-row { flex-wrap: nowrap; }
+  html .certified-badge-pill, html .cert-point { flex: none; }
+}
+
+/* Unit page with no photos yet: a short note instead of an empty black frame (the gallery sits on the dark hero) */
+.gallery-empty-state {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 28px 20px;
+  border: 1px dashed rgba(197, 160, 89, 0.45);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #CBD5E1;
+  text-align: center;
+}
+.gallery-empty-state svg { color: #D9B97E; }
+.gallery-empty-state strong { color: #F8FAFC; font-size: 1rem; }
+.gallery-empty-state span { font-size: 0.88rem; line-height: 1.6; }
+
+/* Desktop 1141–1440px: the nav ran under "حسابي". The account button shows its icon only at this width. */
+@media (max-width: 1440px) and (min-width: 1141px) {
+  html .header-client-account-btn .account-text { display: none !important; }
+}

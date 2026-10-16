@@ -1,5 +1,6 @@
 import { Bath, BedDouble, Briefcase, Building, CheckCircle2, Clock, Layers, Maximize2, ShieldCheck, Sparkles, Store, Zap } from 'lucide-react';
 import { Users } from 'lucide-react';
+import { countLabel } from '../../../utils/arabicCount';
 import SunlightCompassWidget from '../SunlightCompassWidget';
 import FinancialBreakdown from '../FinancialBreakdown';
 import FamilyCostSplitter from '../../family/FamilyCostSplitter';
@@ -32,7 +33,7 @@ export default function PropertyOverviewTab({
             <Maximize2 size={20} className="text-gold" />
             <div>
               <span className="spec-lbl">{isAr ? 'المساحة الإجمالية' : 'Total Area'}</span>
-              <strong>{property.size} {isAr ? 'متر مربع صافي' : 'sqm net'}</strong>
+              <strong>{property.size} {isAr ? 'م² صافي' : 'sqm net'}</strong>
             </div>
           </div>
 
@@ -131,7 +132,7 @@ export default function PropertyOverviewTab({
                   <BedDouble size={20} className="text-gold" />
                   <div>
                     <span className="spec-lbl">{isAr ? 'غرف النوم' : 'Bedrooms'}</span>
-                    <strong>{property.bedrooms} {isAr ? 'غرف' : 'Rooms'}</strong>
+                    <strong>{countLabel('room', property.bedrooms, isAr)}</strong>
                   </div>
                 </div>
               )}
@@ -141,7 +142,7 @@ export default function PropertyOverviewTab({
                   <Bath size={20} className="text-gold" />
                   <div>
                     <span className="spec-lbl">{isAr ? 'الحمامات' : 'Bathrooms'}</span>
-                    <strong>{property.bathrooms} {isAr ? 'حمامات' : 'Baths'}</strong>
+                    <strong>{countLabel('bath', property.bathrooms, isAr)}</strong>
                   </div>
                 </div>
               )}
@@ -205,11 +206,13 @@ export default function PropertyOverviewTab({
       {/* 🏥 مؤشرات القرار للعقار التجاري/الطبي + حاسبة العائد */}
       <CommercialInsightsCard property={property} lang={lang} currency={currency} />
 
-      {/* Description Box */}
-      <div className="detail-card-box">
-        <h3>{isAr ? 'وصف العقار وتفاصيل الموقع' : 'Property Description'}</h3>
-        <p className="detail-description-p">{description}</p>
-      </div>
+      {/* Description Box: hidden while the listing has no description yet */}
+      {String(description || '').trim() && (
+        <div className="detail-card-box">
+          <h3>{isAr ? 'وصف العقار وتفاصيل الموقع' : 'Property Description'}</h3>
+          <p className="detail-description-p">{description}</p>
+        </div>
+      )}
 
       {/* Features & Amenities List */}
       {features && features.length > 0 && (

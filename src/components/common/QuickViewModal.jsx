@@ -7,6 +7,7 @@ import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
 import BrandWatermark from './BrandWatermark';
 import useClientDownload from '../../hooks/useClientDownload';
+import { countLabel } from '../../utils/arabicCount';
 
 export default function QuickViewModal({ 
   property, 
@@ -274,13 +275,13 @@ export default function QuickViewModal({
                   {property.bedrooms > 0 && (
                     <div className="spec-pill">
                       <BedDouble size={14} className="text-primary" />
-                      <span>{property.bedrooms} {isAr ? 'غرف' : 'Beds'}</span>
+                      <span>{countLabel('room', property.bedrooms, isAr)}</span>
                     </div>
                   )}
                   {property.bathrooms > 0 && (
                     <div className="spec-pill">
                       <Bath size={14} className="text-primary" />
-                      <span>{property.bathrooms} {isAr ? 'حمامات' : 'Baths'}</span>
+                      <span>{countLabel('bath', property.bathrooms, isAr)}</span>
                     </div>
                   )}
                 </>

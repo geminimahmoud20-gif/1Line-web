@@ -223,7 +223,7 @@ export default function Header({
     { path: '/trade-in', label: isAr ? 'بدّل عقارك' : 'Trade-in', badge: isAr ? 'جديد' : 'New', badgeType: 'gold', icon: Repeat2 },
     { path: '/commercial-hub', label: isAr ? 'عيادات ومحلات ومكاتب' : 'Commercial hub', icon: Stethoscope },
     { path: '/about', label: isAr ? 'عن الشركة والمؤسس' : 'About & Founder', icon: Award },
-    { path: '/private-office', label: isAr ? 'المكتب الخاص (Off-Market)' : 'Private Office', badge: 'Private', badgeType: 'gold', icon: Lock },
+    { path: '/private-office', label: isAr ? 'المكتب الخاص' : 'Private Office', badge: 'Private', badgeType: 'gold', icon: Lock },
     { path: '/special-requests', label: isAr ? 'طلب عقار خاص VIP' : 'Special Requests', badge: 'VIP', badgeType: 'gold', icon: Sparkles },
     { path: '/market-intelligence', label: isAr ? 'مؤشرات أسعار السوق' : 'Market Intel', icon: TrendingUp },
     { path: '/investor', label: isAr ? 'بوابة المستثمرين' : 'Investors', icon: Award }
@@ -623,7 +623,7 @@ export default function Header({
                 }}
               >
                 <Search size={16} />
-                <span>{isAr ? 'البحث السريع (Ctrl + K)' : 'Quick Search (Ctrl + K)'}</span>
+                <span>{isAr ? 'البحث السريع' : 'Quick Search'}</span>
               </button>
             )}
 

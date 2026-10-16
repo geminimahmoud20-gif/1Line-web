@@ -1,6 +1,7 @@
 import { getPriceBenchmark, formatCurrencyPrice, isMultiUnitOrBuilding } from '../../utils/currencyAndBenchmark';
 import { X, Star, Maximize2, Calendar, ShieldCheck, FileCheck2, MapPin, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { countLabel } from '../../utils/arabicCount';
 
 // One property's column in the comparison matrix.
 export default function CompareColumn({ prop, isAr, lang, currency, verdicts, customDownPercent, onRemoveFromCompare, activeTab, setCustomDownPercent, onClose }) {
@@ -201,7 +202,7 @@ export default function CompareColumn({ prop, isAr, lang, currency, verdicts, cu
               ) : (prop.type === 'office' || prop.category === 'administrative') ? (
                 prop.adminType_ar || (isAr ? 'مقر إداري / عيادة' : 'Admin Office / Clinic')
               ) : (
-                `${prop.bedrooms || 0} ${isAr ? 'غرف' : 'Beds'} • ${prop.bathrooms || 0} ${isAr ? 'حمام' : 'Baths'}`
+                `${countLabel('room', prop.bedrooms || 0, isAr)} • ${countLabel('bath', prop.bathrooms || 0, isAr)}`
               )}
             </span>
           </div>

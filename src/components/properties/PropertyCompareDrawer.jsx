@@ -9,6 +9,7 @@ import { getWhatsAppUrl, getDynamicPhone } from '../../utils/founderCmsData';
 import { isMultiUnitOrBuilding } from '../../utils/currencyAndBenchmark';
 import CompareColumn from './CompareColumn';
 import CompareDuel from './CompareDuel';
+import { countLabel } from '../../utils/arabicCount';
 
 export default function PropertyCompareDrawer({
   isOpen,
@@ -152,7 +153,7 @@ export default function PropertyCompareDrawer({
       if (isLand) specsText = p.landType_ar || (isAr ? 'أرض استثمارية' : 'Land Plot');
       else if (isCom) specsText = p.commercialType_ar || (isAr ? 'محل تجاري واجهة' : 'Retail Shop');
       else if (isOff) specsText = p.adminType_ar || (isAr ? 'مقر إداري / عيادة' : 'Office/Clinic');
-      else specsText = `${p.bedrooms || 0} ${isAr ? 'غرف' : 'Rooms'} / ${p.bathrooms || 0} ${isAr ? 'حمام' : 'Baths'}`;
+      else specsText = `${countLabel('room', p.bedrooms || 0, isAr)} / ${countLabel('bath', p.bathrooms || 0, isAr)}`;
       msg += `• المساحة: ${p.size} م² (${specsText})\n`;
       msg += `• المقدم: ${p.downPayment ? `${p.downPayment.toLocaleString('en-US')} ج.م` : 'كاش'}\n`;
       msg += `• القسط: ${p.monthlyInstallment ? `${p.monthlyInstallment.toLocaleString('en-US')} ج.م/شهرياً (${p.installmentYears || 0} سنوات)` : 'كاش فقط'}\n`;
