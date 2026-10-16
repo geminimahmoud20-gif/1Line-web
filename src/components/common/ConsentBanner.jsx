@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { isPrivatePath } from '../../utils/privatePaths';
 
 const STORAGE_KEY = 'oneline_consent_v1';
 const CLARITY_ID = 'ykuhk4dxes';
@@ -12,8 +13,17 @@ function readConsent() {
   }
 }
 
-function loadClarity() {
-  if (typeof window === 'undefined' || window.clarity) return;
+// Clarity keeps recording across in-app navigation once loaded, so it is paused on private pages
+function stopClarity() {
+  try { window.clarity?.('stop'); } catch { /* not loaded */ }
+}
+
+function startClarity() {
+  if (typeof window === 'undefined') return;
+  if (window.clarity) {
+    try { window.clarity('start'); } catch { /* ignore */ }
+    return;
+  }
   (function (c, l, a, r, i, t, y) {
     c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments); };
     t = l.createElement(r); t.async = 1; t.src = 'https://www.clarity.ms/tag/' + i;
@@ -30,11 +40,15 @@ export default function ConsentBanner({ lang = 'ar' }) {
   const location = useLocation();
   const isAr = lang === 'ar';
 
-  useEffect(() => {
-    if (choice === 'accepted') loadClarity();
-  }, [choice]);
+  const onPrivatePage = isPrivatePath(location.pathname);
 
-  if (choice || location.pathname.startsWith('/crm')) return null;
+  // Only on public pages: the CRM and a client's account show other people's details (PDPL 151/2020)
+  useEffect(() => {
+    if (onPrivatePage) stopClarity();
+    else if (choice === 'accepted') startClarity();
+  }, [choice, onPrivatePage]);
+
+  if (choice || onPrivatePage) return null;
 
   const decide = (value) => {
     try {
