@@ -9,7 +9,19 @@
 //  Without them the route answers 503 and the site carries on normally.
 // =============================================================
 import { SignJWT, importPKCS8 } from 'jose';
-import { handleNotify, makeSenders, sendAll } from './_notify-core.js';
+import { handleNotify, makeSenders, sendAll, ALERT_LIMITS } from './_notify-core.js';
+import { createRateLimiter, clientIp } from './_rate-limit.js';
+
+const limitIp = createRateLimiter(ALERT_LIMITS.perIp);
+const overall = createRateLimiter(ALERT_LIMITS.overall);
+let floodWarnedAt = 0;
+// true over the limit; 'first' for the first refused alert of a window (sends one warning instead)
+const limitOverall = () => {
+  if (!overall('all')) return false;
+  const now = Date.now();
+  if (now - floodWarnedAt > ALERT_LIMITS.overall.windowMs) { floodWarnedAt = now; return 'first'; }
+  return true;
+};
 
 const SITE_URL = (process.env.SITE_URL || 'https://1-line-qkzp9.vercel.app').replace(/\/$/, '');
 
@@ -112,9 +124,11 @@ export async function POST(request) {
       readRecord: db.readRecord,
       readContact: db.readContact,
       claimOnce: db.claimOnce,
+      limitIp,
+      limitOverall,
       sendAll: (text) => sendAll(senders, text),
       now: () => Date.now()
-    }, SITE_URL);
+    }, SITE_URL, clientIp(request));
     return json(status, out);
   } catch (err) {
     console.error('notify failed:', err?.message || err);
