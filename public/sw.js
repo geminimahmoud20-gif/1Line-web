@@ -2,13 +2,15 @@
 //  1LINE SOLUTIONS SOHAG - SERVICE WORKER (PWA & OFFLINE RESILIENCE)
 // =============================================================
 
-const CACHE_NAME = 'oneline-sohag-v13';
+const CACHE_NAME = 'oneline-sohag-v14';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
   '/favicon.svg',
   '/icon-192.png',
-  '/icon-512.png'
+  '/icon-512.png',
+  '/icon-maskable-512.png',
+  '/apple-touch-icon.png'
 ];
 
 self.addEventListener('install', (event) => {

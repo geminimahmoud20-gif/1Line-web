@@ -7,6 +7,8 @@ import App from './App.jsx'
 import ErrorBoundary from './components/common/ErrorBoundary.jsx'
 import { installErrorReporter } from './utils/errorReporter.js'
 import { installLatinDigits } from './utils/latinDigits.js'
+// Catches the browser's install offer before React mounts (it fires once, early)
+import './utils/pwaInstall.js'
 
 // Visitors' errors and CSP violations → CRM → System → Site errors
 installErrorReporter()

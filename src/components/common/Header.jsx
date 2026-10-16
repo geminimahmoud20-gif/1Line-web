@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { MessageSquare, Menu, X, Search, Globe, Share2, Sun, Moon, Volume2, VolumeX, MoreHorizontal, Scale, Building, Sparkles, FileText, ChevronDown, Home, TrendingUp, Award, Layers, Heart, ArrowRight, ArrowLeft, Lock, User, ShieldCheck, Repeat2, Stethoscope, PlusCircle } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
+import InstallAppButton from './InstallAppButton';
 import CurrencySwitcher from './CurrencySwitcher';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { playNotificationChime } from '../../utils/notificationHub';
@@ -626,6 +627,8 @@ export default function Header({
                 <span>{isAr ? 'البحث السريع' : 'Quick Search'}</span>
               </button>
             )}
+
+            <InstallAppButton lang={lang} className="is-block mobile-drawer-install" onDone={() => setMobileMenuOpen(false)} />
 
             {/* 👤 Mobile Client Account Portal Link */}
             <Link
