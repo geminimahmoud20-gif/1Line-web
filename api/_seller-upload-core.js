@@ -25,18 +25,4 @@ export function sameSite(originHeader, hostHeader) {
   }
 }
 
-/** In-memory, per warm instance: enough to stop one address filling the store, not a hard quota. */
-export function createRateLimiter({ max, windowMs }, now = () => Date.now()) {
-  const hits = new Map();
-  return (key) => {
-    const t = now();
-    const entry = hits.get(key);
-    if (!entry || t - entry.start > windowMs) {
-      if (hits.size > 5000) hits.clear();
-      hits.set(key, { start: t, count: 1 });
-      return false;
-    }
-    entry.count += 1;
-    return entry.count > max;
-  };
-}
+export { createRateLimiter } from './_rate-limit.js';

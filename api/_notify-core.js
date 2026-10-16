@@ -114,13 +114,36 @@ export function buildMessage(kind, id, rec, siteUrl, extra = {}) {
  *   claimOnce(kind,id) → true if this call is the first, sendAll(text) → number sent, now() }
  * Returns { status, body } for the HTTP response.
  */
-export async function handleNotify(body, deps, siteUrl) {
+// A burst of fake requests must not become a burst of WhatsApp messages: per address, and overall
+export const ALERT_LIMITS = {
+  perIp: { max: 6, windowMs: 10 * 60 * 1000 },
+  overall: { max: 40, windowMs: 10 * 60 * 1000 }
+};
+
+export const FLOOD_MESSAGE = (siteUrl) => [
+  '⚠️ 1Line: طلبات كتير جداً في وقت قصير',
+  'وقفنا تنبيهات الواتساب لمدة 10 دقايق عشان التليفون ما يتغرقش. الطلبات نفسها محفوظة في الـ CRM.',
+  'لو مش متوقعين الحجم ده، ممكن يكون حد بيبعت طلبات وهمية.',
+  `افتح الـ CRM: ${siteUrl}/crm`
+].join('\n');
+
+/**
+ * deps.limitIp(ip) / deps.limitOverall() → true when over the limit (optional).
+ * Over the overall limit only the first refused alert of the window sends FLOOD_MESSAGE.
+ */
+export async function handleNotify(body, deps, siteUrl, ip = 'unknown') {
   const req = parseRequest(body);
   if (!req) return { status: 400, body: { error: 'bad-request' } };
+  if (deps.limitIp?.(ip)) return { status: 429, body: { error: 'too-many' } };
   const rec = await deps.readRecord(req.kind, req.id);
   if (!rec) return { status: 404, body: { error: 'not-found' } };
   if (!rec.createdAtMs || deps.now() - rec.createdAtMs > FRESH_MS) return { status: 200, body: { skipped: 'stale' } };
   if (!(await deps.claimOnce(req.kind, req.id))) return { status: 200, body: { skipped: 'already-sent' } };
+  const flood = deps.limitOverall?.();
+  if (flood) {
+    if (flood === 'first') await deps.sendAll(FLOOD_MESSAGE(siteUrl));
+    return { status: 200, body: { skipped: 'flood' } };
+  }
   let phone = '';
   try {
     const contact = deps.readContact ? await deps.readContact(req.kind, req.id) : null;

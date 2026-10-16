@@ -89,3 +89,24 @@ test('area and property type read as Arabic names, not stored keys', () => {
   // An area the server does not know (added in the CRM, or typed) is shown as stored
   assert.match(buildMessage('leads', 'S2', { name: 'x', type: 'buyer', area: 'حي جديد' }, 'https://s'), /المنطقة: حي جديد/);
 });
+
+test('one address is cut off after its limit; nothing is read or sent for it', async () => {
+  let reads = 0;
+  const d = { ...deps({ data: lead, createdAtMs: NOW }), readRecord: async () => { reads += 1; return { data: lead, createdAtMs: NOW }; }, limitIp: (ip) => ip === 'bad' };
+  assert.equal((await handleNotify({ kind: 'leads', id: 'X1' }, d, 'https://s', 'bad')).status, 429);
+  assert.equal(reads, 0);
+  assert.equal((await handleNotify({ kind: 'leads', id: 'X2' }, d, 'https://s', 'ok')).status, 200);
+});
+
+test('a flood sends one warning instead of one message per request', async () => {
+  const sent = [];
+  let calls = 0;
+  const limitOverall = () => { calls += 1; return calls === 1 ? false : calls === 2 ? 'first' : true; };
+  const d = { ...deps({ data: lead, createdAtMs: NOW }, { sent }), limitOverall };
+  const ids = ['F1', 'F2', 'F3', 'F4'];
+  const out = [];
+  for (const id of ids) out.push((await handleNotify({ kind: 'leads', id }, d, 'https://s')).body);
+  assert.deepEqual(out.map((b) => b.sent ?? b.skipped), [1, 'flood', 'flood', 'flood']);
+  assert.equal(sent.length, 2);
+  assert.match(sent[1], /طلبات كتير جداً/);
+});

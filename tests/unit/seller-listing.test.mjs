@@ -75,3 +75,12 @@ test('seller uploads: one folder, images only, same site, capped per address', (
   now = 1001;
   assert.equal(limited('ip'), false);
 });
+
+test('shared rate limiter resets after its window', async () => {
+  const { createRateLimiter } = await import('../../api/_rate-limit.js');
+  let now = 0;
+  const lim = createRateLimiter({ max: 1, windowMs: 10 }, () => now);
+  assert.deepEqual([lim('a'), lim('a')], [false, true]);
+  now = 11;
+  assert.equal(lim('a'), false);
+});
