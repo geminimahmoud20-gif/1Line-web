@@ -872,6 +872,9 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  /* .site-header ignores the pointer so only its capsule is clickable; the drawer sits outside
+     the capsule and has to take taps back, or every menu link passes through to the page */
+  pointer-events: auto;
 }
 
 @keyframes slideDown {

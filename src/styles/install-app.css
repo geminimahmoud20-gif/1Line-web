@@ -1,0 +1,74 @@
+/* "ثبّت التطبيق" button and the iPhone Add-to-Home-Screen sheet */
+.install-app-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(197, 160, 89, 0.55);
+  background: rgba(197, 160, 89, 0.12);
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.install-app-btn svg { color: #C5A059; flex: none; }
+.install-app-btn:hover { background: rgba(197, 160, 89, 0.2); }
+.install-app-btn:focus-visible { outline: 2px solid #C5A059; outline-offset: 2px; }
+.install-app-btn.is-block { width: 100%; }
+
+.install-ios-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2600;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(4, 9, 19, 0.55);
+}
+.install-ios-sheet {
+  position: relative;
+  width: min(440px, 100%);
+  margin: 0 12px calc(12px + env(safe-area-inset-bottom));
+  padding: 24px 20px 20px;
+  border-radius: 20px;
+  background: #FFFFFF;
+  color: #0B1B32;
+  text-align: center;
+  box-shadow: 0 24px 60px -12px rgba(4, 9, 19, 0.5);
+}
+.install-ios-icon { border-radius: 14px; box-shadow: 0 4px 14px rgba(11, 27, 50, 0.15); }
+.install-ios-sheet h2 { margin: 12px 0 14px; font-size: 1.1rem; font-weight: 800; color: #0B1B32; }
+.install-ios-sheet ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; text-align: start; }
+.install-ios-sheet li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #F7F5F0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+.install-ios-sheet li svg { color: #0B4EA2; flex: none; }
+.install-ios-sheet p { margin: 14px 0 0; font-size: 0.85rem; color: #475569; line-height: 1.6; }
+.install-ios-close {
+  position: absolute;
+  top: 10px;
+  inset-inline-end: 10px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #475569;
+  cursor: pointer;
+}
+.install-ios-close:focus-visible { outline: 2px solid #C5A059; }
+.footer-install-app { margin-top: 16px; }
+.mobile-drawer-install { margin-bottom: 8px; }

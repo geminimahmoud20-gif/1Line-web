@@ -13,6 +13,7 @@ import { BRAND, LEGAL_IDS } from '../../config/siteConfig';
 import { useSiteSettings, SOCIAL_NETWORKS } from '../../utils/siteSettings';
 import './footer-social.css';
 import LogoEmblem from '../LogoEmblem';
+import InstallAppButton from './InstallAppButton';
 import { 
   getFounderSettings, 
   getWhatsAppUrl, 
@@ -81,6 +82,8 @@ export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
                 ))}
               </ul>
             )}
+
+            <InstallAppButton lang={lang} className="footer-install-app" />
           </div>
 
           {/* Col 2: Properties & Portals */}
