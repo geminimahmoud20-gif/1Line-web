@@ -18,15 +18,17 @@ import BrandWatermark from '../common/BrandWatermark';
 import VirtualTourViewer from './VirtualTourViewer';
 
 export default function PropertyGallery({
-  images = [],
+  images: rawImages = [],
   title = '',
-  virtualTour = true,
+  virtualTour = false,
   lang = 'ar',
   floorPlan = null
 }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [activeViewMode, setActiveViewMode] = useState('photos'); // 'photos' | 'floorplan' | '360'
+  // The "no photo" placeholder is not a photo of the unit
+  const images = (Array.isArray(rawImages) ? rawImages : []).filter((u) => u && !/no-photo\.svg/.test(u));
+  const [viewMode, setActiveViewMode] = useState('photos'); // 'photos' | 'floorplan' | '360'
 
   // Zoom, Pan & Rotation States
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -200,43 +202,60 @@ export default function PropertyGallery({
   }, [activeImageIndex, lightboxOpen]);
 
   const [floorPlanError, setFloorPlanError] = useState(false);
+  // Only a real plan uploaded for this unit is shown: no generic drawing with made-up dimensions
+  const hasPlan = Boolean(floorPlan) && !floorPlanError;
+  const activeViewMode = viewMode === 'floorplan' && !hasPlan ? 'photos' : viewMode;
+  const tabCount = 1 + (hasPlan ? 1 : 0) + (virtualTour ? 1 : 0);
 
   return (
     <div className="property-gallery-component">
-      {/* Tri-Media Tab Switcher */}
-      <div className="gallery-media-mode-tabs">
-        <button
-          type="button"
-          className={`media-tab-btn ${activeViewMode === 'photos' ? 'active' : ''}`}
-          onClick={() => setActiveViewMode('photos')}
-        >
-          <ImageIcon size={15} />
-          <span>{isAr ? `معرض الصور (${images.length})` : `Photos (${images.length})`}</span>
-        </button>
-
-        <button
-          type="button"
-          className={`media-tab-btn ${activeViewMode === 'floorplan' ? 'active' : ''}`}
-          onClick={() => setActiveViewMode('floorplan')}
-        >
-          <Layers size={15} />
-          <span>{isAr ? 'المخطط الهندسي للدور (Floor Plan)' : 'Architectural Floor Plan'}</span>
-        </button>
-
-        {virtualTour && (
+      {/* Tri-Media Tab Switcher: only when there is more than the photos to switch to */}
+      {tabCount > 1 && (
+        <div className="gallery-media-mode-tabs">
           <button
             type="button"
-            className={`media-tab-btn tab-360 ${activeViewMode === '360' ? 'active' : ''}`}
-            onClick={() => setActiveViewMode('360')}
+            className={`media-tab-btn ${activeViewMode === 'photos' ? 'active' : ''}`}
+            onClick={() => setActiveViewMode('photos')}
           >
-            <Rotate3d size={15} />
-            <span>{isAr ? 'عرض بانورامي للصور' : 'Panoramic photo view'}</span>
+            <ImageIcon size={15} />
+            <span>{isAr ? `معرض الصور (${images.length})` : `Photos (${images.length})`}</span>
           </button>
-        )}
-      </div>
+
+          {hasPlan && (
+            <button
+              type="button"
+              className={`media-tab-btn ${activeViewMode === 'floorplan' ? 'active' : ''}`}
+              onClick={() => setActiveViewMode('floorplan')}
+            >
+              <Layers size={15} />
+              <span>{isAr ? 'المخطط الهندسي' : 'Floor plan'}</span>
+            </button>
+          )}
+
+          {virtualTour && (
+            <button
+              type="button"
+              className={`media-tab-btn tab-360 ${activeViewMode === '360' ? 'active' : ''}`}
+              onClick={() => setActiveViewMode('360')}
+            >
+              <Rotate3d size={15} />
+              <span>{isAr ? 'عرض بانورامي للصور' : 'Panoramic photo view'}</span>
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* No photos uploaded yet: say so instead of an empty frame */}
+      {activeViewMode === 'photos' && images.length === 0 && (
+        <div className="gallery-empty-state" role="note">
+          <ImageIcon size={28} aria-hidden="true" />
+          <strong>{isAr ? 'صور الوحدة لسه بتتجهّز' : 'Photos are being prepared'}</strong>
+          <span>{isAr ? 'اطلب الصور أو فيديو للوحدة من المستشار وهيوصلك على واتساب.' : 'Ask your advisor for photos or a video on WhatsApp.'}</span>
+        </div>
+      )}
 
       {/* 1. Photos Bento Grid Mode */}
-      {activeViewMode === 'photos' && (
+      {activeViewMode === 'photos' && images.length > 0 && (
         <div className="property-gallery-grid">
           {/* Main Large Hero Image */}
           <div className="gallery-main-item" onClick={() => handleOpenLightbox(0)}>
@@ -288,75 +307,12 @@ export default function PropertyGallery({
             <Layers size={14} />
             <span>{isAr ? 'مخطط تقسيم الغرف والأبعاد الهندسية (انقر للتكبير)' : 'Architectural Room Dimensions & Layout (Click to Zoom)'}</span>
           </div>
-          {floorPlan && !floorPlanError ? (
-            <img 
-              src={floorPlan} 
-              alt={title || "Floor Plan"} 
-              className="floorplan-main-img" 
-              onError={() => setFloorPlanError(true)}
-            />
-          ) : (
-            <div className="floorplan-svg-wrap">
-              <svg 
-                viewBox="0 0 1200 800" 
-                className="floorplan-main-svg"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <rect width="1200" height="800" fill="#081426" />
-                <defs>
-                  <pattern id="cadgrid" width="40" height="40" patternUnits="userSpaceOnUse">
-                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#142e54" strokeWidth="0.8" />
-                  </pattern>
-                </defs>
-                <rect width="1200" height="800" fill="url(#cadgrid)" />
-                {/* Outer CAD Border */}
-                <rect x="100" y="80" width="1000" height="640" fill="none" stroke="#38bdf8" strokeWidth="3.5" rx="4" />
-                
-                {/* Partitions */}
-                <line x1="520" y1="80" x2="520" y2="720" stroke="#38bdf8" strokeWidth="2.5" />
-                <line x1="100" y1="400" x2="520" y2="400" stroke="#38bdf8" strokeWidth="2.5" />
-                <line x1="520" y1="380" x2="1100" y2="380" stroke="#38bdf8" strokeWidth="2.5" />
-                
-                {/* Reception */}
-                <text x="310" y="210" fill="#fdcb42" fontFamily="Cairo, sans-serif" fontSize="22" fontWeight="bold" textAnchor="middle">
-                  {isAr ? 'الريسبشن المفتوح (Grand Reception)' : 'Grand Reception Area'}
-                </text>
-                <text x="310" y="250" fill="#94a3b8" fontFamily="Cairo, sans-serif" fontSize="16" textAnchor="middle">
-                  8.5m x 5.4m • {isAr ? 'أرضيات رخام وبورسلين فاخرة' : 'Premium Marble Flooring'}
-                </text>
-                
-                {/* Kitchen */}
-                <text x="310" y="520" fill="#fdcb42" fontFamily="Cairo, sans-serif" fontSize="22" fontWeight="bold" textAnchor="middle">
-                  {isAr ? 'المطبخ والخدمات (Gourmet Kitchen)' : 'Gourmet Kitchen & Pantry'}
-                </text>
-                <text x="310" y="560" fill="#94a3b8" fontFamily="Cairo, sans-serif" fontSize="16" textAnchor="middle">
-                  4.2m x 3.6m • {isAr ? 'شرفة خدمات وتوصيلات غاز' : 'Balcony & Gas Outlets'}
-                </text>
-                
-                {/* Master Suite */}
-                <text x="810" y="200" fill="#fdcb42" fontFamily="Cairo, sans-serif" fontSize="22" fontWeight="bold" textAnchor="middle">
-                  {isAr ? 'الجناح الرئيسي (Master Suite)' : 'Master Bedroom Suite'}
-                </text>
-                <text x="810" y="240" fill="#94a3b8" fontFamily="Cairo, sans-serif" fontSize="16" textAnchor="middle">
-                  5.6m x 4.4m • Dressing Room • {isAr ? 'حمام خاص' : 'Ensuite Bath'}
-                </text>
-                
-                {/* Family Bedrooms */}
-                <text x="810" y="500" fill="#fdcb42" fontFamily="Cairo, sans-serif" fontSize="22" fontWeight="bold" textAnchor="middle">
-                  {isAr ? 'أجنحة النوم (Family Bedrooms)' : 'Family & Guest Bedrooms'}
-                </text>
-                <text x="810" y="540" fill="#94a3b8" fontFamily="Cairo, sans-serif" fontSize="16" textAnchor="middle">
-                  4.2m x 4.0m • 4.0m x 3.8m • {isAr ? 'إطلالة بحرية' : 'Open Views'}
-                </text>
-
-                {/* 1Line CAD Seal */}
-                <rect x="120" y="100" width="310" height="42" rx="10" fill="#0b4ea2" opacity="0.9" />
-                <text x="275" y="127" fill="#ffffff" fontFamily="Cairo, sans-serif" fontSize="13" fontWeight="bold" textAnchor="middle">
-                  1LINE CERTIFIED CAD SCHEMATIC
-                </text>
-              </svg>
-            </div>
-          )}
+          <img
+            src={floorPlan}
+            alt={title || 'Floor Plan'}
+            className="floorplan-main-img"
+            onError={() => setFloorPlanError(true)}
+          />
         </div>
       )}
 

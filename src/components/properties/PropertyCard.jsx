@@ -31,8 +31,9 @@ import { useUIModal } from '../../context/UIModalContext';
 import { getActiveOffer } from '../../utils/propertyOffers';
 import OfferCountdown from './OfferCountdown';
 import '../../styles/property-card.css';
+import { countWord } from '../../utils/arabicCount';
 
-const FALLBACK_PROPERTY_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 500' fill='%23071e3d'%3E%3Crect width='800' height='500' fill='%23071e3d'/%3E%3Cpath d='M400 130 L620 320 L180 320 Z' fill='%230b4ea2' opacity='0.7'/%3E%3Crect x='340' y='220' width='120' height='100' rx='20' fill='%23fdcb42' opacity='0.85'/%3E%3Ctext x='50%25' y='75%25' dominant-baseline='middle' text-anchor='middle' fill='%23ffffff' font-family='sans-serif' font-size='24' font-weight='bold'%3E1LINE REAL ESTATE%3C/text%3E%3Ctext x='50%25' y='85%25' dominant-baseline='middle' text-anchor='middle' fill='%23fdcb42' font-family='sans-serif' font-size='16'%3E%D8%B9%D9%82%D8%A7%D8%B1%D8%A7%D8%AA%20%D8%B3%D9%88%D9%87%D8%A7%D8%AC%20%D8%A7%D9%84%D9%85%D8%B9%D8%AA%D9%85%D8%AF%D8%A9%3C/text%3E%3C/svg%3E";
+const FALLBACK_PROPERTY_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 500' fill='%23071e3d'%3E%3Crect width='800' height='500' fill='%23071e3d'/%3E%3Cpath d='M400 130 L620 320 L180 320 Z' fill='%230b4ea2' opacity='0.7'/%3E%3Crect x='340' y='220' width='120' height='100' rx='20' fill='%23fdcb42' opacity='0.85'/%3E%3C/svg%3E";
 
 // Latin digits everywhere, matching prices on the rest of the site
 const fmt = (n) => (Number(n) || 0).toLocaleString('en-US');
@@ -187,8 +188,8 @@ export default function PropertyCard({
     if (property.frontage) specs.push({ key: 'front', Icon: Layers, value: property.frontage, label: isAr ? 'الواجهة' : 'Frontage' });
     else specs.push({ key: 'kind', Icon: Building, value: formatLandSpec(property.landType_ar, lang), label: isAr ? 'النوع' : 'Type' });
   } else {
-    if (property.bedrooms > 0) specs.push({ key: 'beds', Icon: BedDouble, value: property.bedrooms, label: isAr ? 'غرف' : 'Beds' });
-    if (property.bathrooms > 0) specs.push({ key: 'baths', Icon: Bath, value: property.bathrooms, label: isAr ? 'حمام' : 'Baths' });
+    if (property.bedrooms > 0) specs.push({ key: 'beds', Icon: BedDouble, value: property.bedrooms, label: countWord('room', property.bedrooms, isAr) });
+    if (property.bathrooms > 0) specs.push({ key: 'baths', Icon: Bath, value: property.bathrooms, label: countWord('bath', property.bathrooms, isAr) });
   }
 
 

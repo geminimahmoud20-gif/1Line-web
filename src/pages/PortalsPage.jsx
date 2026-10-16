@@ -70,6 +70,13 @@ export default function PortalsPage({
           subtitle: isAr ? 'في سوهاج أو القاهرة الكبرى: حدد الغرض والمنطقة والميزانية، ويرسل لك مستشارك قائمة مختصرة بعد مراجعة مستنداتها.' : 'In Sohag or Greater Cairo: set purpose, area and budget; your advisor sends a short list with documents reviewed.'
         };
       case 'sell':
+        // The menu calls this page "اعرض عقارك": the seller came to list, and gets a free valuation on the way
+        return {
+          breadcrumb: isAr ? 'اعرض عقارك' : 'List your property',
+          badge: isAr ? 'تقييم استرشادي مجاني مع العرض' : 'Free indicative valuation included',
+          title: isAr ? 'اعرض عقارك للبيع مع 1Line' : 'List your property with 1Line',
+          subtitle: isAr ? 'سجّل بيانات عقارك وصوره، وخد نطاق سعري استرشادي، ثم مراجعة للمستندات وخطة عرض قبل أي تسويق.' : 'Add your property details and photos, get an indicative price range, then a document review and a marketing plan before any listing.'
+        };
       case 'valuation':
         return {
           breadcrumb: isAr ? 'تقييم العقار' : 'Valuation',

@@ -374,10 +374,12 @@ export default function PropertyDetailPage({
               </div>
               <h1 className="detail-main-title">{title}</h1>
               <div className="detail-location-text">
-                <div className="detail-loc-label">
-                  <MapPin size={16} className="loc-icon-gold" />
-                  <span>{location}</span>
-                </div>
+                {String(location || '').trim() && (
+                  <div className="detail-loc-label">
+                    <MapPin size={16} className="loc-icon-gold" />
+                    <span>{location}</span>
+                  </div>
+                )}
                 {property.coordinates?.lat && (
                   <a
                     href={`https://www.google.com/maps?q=${property.coordinates.lat},${property.coordinates.lng}+(${encodeURIComponent(`${title} - 1Line`)})&z=17`}

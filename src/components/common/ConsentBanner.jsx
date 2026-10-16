@@ -71,7 +71,10 @@ export default function ConsentBanner({ lang = 'ar' }) {
         <span className="lx-consent-short">
           {isAr ? 'نشغّل أدوات القياس بموافقتك فقط.' : 'Analytics run only with your consent.'}
         </span>{' '}
-        <Link to="/privacy">{isAr ? 'سياسة الخصوصية' : 'Privacy policy'}</Link>
+        <Link to="/privacy">
+          <span className="lx-consent-long">{isAr ? 'سياسة الخصوصية' : 'Privacy policy'}</span>
+          <span className="lx-consent-short">{isAr ? 'التفاصيل' : 'Details'}</span>
+        </Link>
       </p>
       <div className="lx-consent-actions">
         <button type="button" className="lx-btn lx-btn-primary lx-btn-sm" onClick={() => decide('accepted')}>

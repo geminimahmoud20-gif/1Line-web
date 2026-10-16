@@ -211,7 +211,7 @@
 }
 .pcx-chip--remote:hover { transform: translateY(-1px); box-shadow: 0 10px 20px -8px rgba(197, 160, 89, 1); }
 .pcx-chip--remote svg { flex: none; }
-@media (max-width: 380px) { .pcx-chip--remote span { display: none; } .pcx-chip--remote { padding: 0 8px; } }
+/* The label stays on small phones: without it the chip has no visible name and stretched into an oval */
 
 /* Actions: glass circles */
 .pcx-actions { display: flex; gap: 6px; }
