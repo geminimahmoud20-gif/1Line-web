@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Send, EyeOff, Handshake, BadgeCheck, MapPin, Trash2, X } from 'lucide-react';
+import { Send, EyeOff, Handshake, BadgeCheck, MapPin, ShieldCheck, Trash2, X } from 'lucide-react';
 import { Button, Select, useConfirm } from '../ui';
 import { ISSUES } from '../../utils/listingReview';
+import { REVIEW_OPTIONS } from '../../utils/listingBadges';
 
 /**
  * Actions on the listings ticked in CRM → العقارات: publish (complete ones only), hide, mark under
@@ -10,6 +11,7 @@ import { ISSUES } from '../../utils/listingReview';
 export default function ListingsBulkBar({ ids, properties, issuesOf, areas, isAr, onUpdateProperty, triggerToast, onDone }) {
   const confirm = useConfirm();
   const [area, setArea] = useState('');
+  const [review, setReview] = useState('');
   const picked = properties.filter((p) => ids.includes(p.id));
   const L = (ar, en) => (isAr ? ar : en);
 
@@ -54,6 +56,13 @@ export default function ListingsBulkBar({ ids, properties, issuesOf, areas, isAr
     setArea('');
   };
 
+  const setReviewBadge = () => {
+    if (!review) return;
+    const label = REVIEW_OPTIONS.find((o) => o.value === review)?.ar || review;
+    apply(picked, () => ({ reviewBadge: review }), (n) => L(`${n} عقار: ${label}`, `${n} updated`));
+    setReview('');
+  };
+
   const trash = async () => {
     const go = await confirm({
       title: L(`نقل ${picked.length} عقار للمهملات؟`, `Move ${picked.length} to trash?`),
@@ -81,6 +90,17 @@ export default function ListingsBulkBar({ ids, properties, issuesOf, areas, isAr
           options={areas.filter((a) => a.id !== 'all').map((a) => ({ value: a.id, label: isAr ? a.name_ar : (a.name_en || a.name_ar) }))}
         />
         <Button size="sm" variant="secondary" icon={<MapPin size={14} aria-hidden="true" />} disabled={!area} onClick={moveArea}>{L('انقل', 'Move')}</Button>
+      </span>
+      <span className="crm-props__bulk-area">
+        <Select
+          hideLabel
+          label={L('شارة المراجعة', 'Review badge')}
+          placeholder={L('شارة المراجعة…', 'Review badge…')}
+          value={review}
+          onChange={(e) => setReview(e.target.value)}
+          options={REVIEW_OPTIONS.map((o) => ({ value: o.value, label: isAr ? o.ar : o.en }))}
+        />
+        <Button size="sm" variant="secondary" icon={<ShieldCheck size={14} aria-hidden="true" />} disabled={!review} onClick={setReviewBadge}>{L('طبّق', 'Apply')}</Button>
       </span>
       <Button size="sm" variant="danger" icon={<Trash2 size={14} aria-hidden="true" />} onClick={trash}>{L('للمهملات', 'Trash')}</Button>
       <Button size="sm" variant="ghost" icon={<X size={14} aria-hidden="true" />} onClick={onDone}>{L('إلغاء التحديد', 'Clear')}</Button>

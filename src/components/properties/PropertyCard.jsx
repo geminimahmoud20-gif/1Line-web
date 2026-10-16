@@ -23,7 +23,9 @@ import {
   Images,
   TrendingDown,
   Video,
-  Flame
+  Flame,
+  Clock3,
+  ShieldQuestion
 } from 'lucide-react';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { formatCurrencyPrice, getPriceBenchmark, isMultiUnitOrBuilding, parseUnitBreakdown } from '../../utils/currencyAndBenchmark';
@@ -32,6 +34,7 @@ import { getActiveOffer } from '../../utils/propertyOffers';
 import OfferCountdown from './OfferCountdown';
 import '../../styles/property-card.css';
 import { countWord } from '../../utils/arabicCount';
+import { listingBadges } from '../../utils/listingBadges';
 
 const FALLBACK_PROPERTY_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 500' fill='%23071e3d'%3E%3Crect width='800' height='500' fill='%23071e3d'/%3E%3Cpath d='M400 130 L620 320 L180 320 Z' fill='%230b4ea2' opacity='0.7'/%3E%3Crect x='340' y='220' width='120' height='100' rx='20' fill='%23fdcb42' opacity='0.85'/%3E%3C/svg%3E";
 
@@ -114,7 +117,8 @@ export default function PropertyCard({
   const photoCount = imagesList.length;
   const currentSrc = imagesList[activeImageIndex] || FALLBACK_PROPERTY_IMG;
   // A running limited-time offer (CRM → العروض); samples never carry one
-  const offer = property.isDemo ? null : getActiveOffer(property);
+  // Samples and sold units never carry one
+  const offer = property.isDemo || property.status === 'sold' ? null : getActiveOffer(property);
   const priceData = formatCurrencyPrice(offer ? offer.price : property.price, currency, lang);
   const benchmark = getPriceBenchmark(property, lang);
   const detailsUrl = `/properties/${property.id}`;
@@ -130,12 +134,16 @@ export default function PropertyCard({
     return m ? Number(m[1]) : 0;
   })();
 
-  // One restrained status badge at most: private deal, or documents reviewed (only with a legal record)
+  // At most two chips on the photo: availability (متاح / قيد التفاوض / تم البيع) and one more,
+  // a private deal or the review badge. Each is switched on or off per listing in the CRM.
+  const badges = listingBadges(property, isAr);
+  const REVIEW_ICONS = { verified: ShieldCheck, in_review: Clock3, not_reviewed: ShieldQuestion };
   const statusBadge = (property.isOffMarket || property.isPrivateDeal)
     ? { label: isAr ? 'صفقة خاصة' : 'Private deal', Icon: Sparkles, tone: 'deal' }
-    : property.legalStatus
-      ? { label: isAr ? 'مستندات مراجَعة' : 'Documents reviewed', Icon: ShieldCheck, tone: 'verified' }
+    : badges.review
+      ? { label: badges.review.label, hint: badges.review.hint, Icon: REVIEW_ICONS[badges.review.key], tone: badges.review.tone }
       : null;
+  const isSold = badges.availability?.key === 'sold';
 
   // Sector separation: full building, land, commercial, office, residential
   const isLand = !isMultiUnit && (property.type === 'land' || (title && title.includes('أرض')));
@@ -249,7 +257,7 @@ export default function PropertyCard({
   };
 
   return (
-    <article className={`property-card-modern pcx${offer ? ' pcx--offer' : ''}`} data-property-id={property.id}>
+    <article className={`property-card-modern pcx${offer ? ' pcx--offer' : ''}${isSold ? ' pcx--sold' : ''}`} data-property-id={property.id}>
       {/* ── Media ───────────────────────────────────────────── */}
       <div className="pcx-media" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         {onQuickView ? (
@@ -283,6 +291,12 @@ export default function PropertyCard({
                 {isAr ? 'مثال توضيحي' : 'Sample'}
               </span>
             )}
+            {badges.availability && (
+              <span className={`pcx-chip pcx-chip--avail is-${badges.availability.tone}`} title={badges.availability.hint}>
+                <span className="pcx-avail-dot" aria-hidden="true" />
+                <span>{badges.availability.label}</span>
+              </span>
+            )}
             {offer && (
               <span className="pcx-chip pcx-chip--offer">
                 <Flame size={12} strokeWidth={2.25} aria-hidden="true" />
@@ -290,7 +304,7 @@ export default function PropertyCard({
               </span>
             )}
             {!property.isDemo && !offer && statusBadge && (
-              <span className={`pcx-chip pcx-chip--${statusBadge.tone}`}>
+              <span className={`pcx-chip pcx-chip--${statusBadge.tone}`} title={statusBadge.hint}>
                 <statusBadge.Icon size={12} strokeWidth={2} aria-hidden="true" />
                 <span>{statusBadge.label}</span>
               </span>

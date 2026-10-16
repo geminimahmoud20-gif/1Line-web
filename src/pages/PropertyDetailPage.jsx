@@ -1,9 +1,11 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MapPin, Sparkles, CheckCircle2, Layers, Calendar, Phone, MessageSquare, ShieldCheck, TrendingUp, TrendingDown, Navigation, ArrowRight, ArrowLeft, Building, Building2, Video, Zap, Droplets, Copy, Sun, Moon, Scale, Flame } from 'lucide-react';
+import { MapPin, Sparkles, CheckCircle2, Clock3, ShieldQuestion, Layers, Calendar, Phone, MessageSquare, ShieldCheck, TrendingUp, TrendingDown, Navigation, ArrowRight, ArrowLeft, Building, Building2, Video, Zap, Droplets, Copy, Sun, Moon, Scale, Flame } from 'lucide-react';
 import { incrementPropertyView, getPropertyViews } from '../utils/visitorTracker';
 import usePropertyEngagement from '../hooks/usePropertyEngagement';
 import PropertyGallery from '../components/properties/PropertyGallery';
+import { listingBadges } from '../utils/listingBadges';
+import '../styles/listing-badges.css';
 import PropertyCard from '../components/properties/PropertyCard';
 import LegalAuditCard from '../components/properties/LegalAuditCard';
 import WhatsAppAutomationBar from '../components/properties/WhatsAppAutomationBar';
@@ -171,6 +173,9 @@ export default function PropertyDetailPage({
     return <NotFoundPage lang={lang} variant="property" />;
   }
 
+  const detailBadges = listingBadges(property, isAr);
+  const ReviewIcon = { verified: ShieldCheck, in_review: Clock3, not_reviewed: ShieldQuestion }[detailBadges.review?.key] || ShieldCheck;
+
   const title = isAr ? property.title_ar : property.title_en;
   const location = isAr ? property.locationName_ar : property.locationName_en;
   const finishing = isAr ? property.finishing_ar : property.finishing_en;
@@ -333,11 +338,17 @@ export default function PropertyDetailPage({
           <div className="detail-header-block">
             <div className="detail-title-col">
               <div className="detail-badges-row">
-                {/* Only listings with a legal record carry the badge */}
-                {property.legalStatus && (
-                  <span className="status-pill-badge">
-                    <CheckCircle2 size={13} style={{ flexShrink: 0 }} />
-                    <span>{isAr ? 'مستندات مراجَعة' : 'Documents reviewed'}</span>
+                {/* Availability and review: each shown only if switched on for this listing in the CRM */}
+                {detailBadges.availability && (
+                  <span className={`pd-badge pd-badge--avail is-${detailBadges.availability.tone}`} title={detailBadges.availability.hint}>
+                    <span className="pd-badge-dot" aria-hidden="true" />
+                    <span>{detailBadges.availability.label}</span>
+                  </span>
+                )}
+                {detailBadges.review && (
+                  <span className={`pd-badge pd-badge--${detailBadges.review.tone}`} title={detailBadges.review.hint}>
+                    <ReviewIcon size={13} style={{ flexShrink: 0 }} aria-hidden="true" />
+                    <span>{detailBadges.review.label}</span>
                   </span>
                 )}
                 <span className="type-pill-badge">
@@ -879,15 +890,18 @@ export default function PropertyDetailPage({
           </div>
 
           <div className="mobile-sticky-actions">
-            <button
-              type="button"
-              className="btn btn-deposit-mini"
-              onClick={() => setDepositModalOpen(true)}
-              title={isAr ? 'طلب حجز مبدئي' : 'Request reservation'}
-            >
-              <ShieldCheck size={16} />
-              <span>{isAr ? 'حجز' : 'Reserve'}</span>
-            </button>
+            {/* A sold unit can't be reserved: call and WhatsApp stay for "something similar" */}
+            {property.status !== 'sold' && (
+              <button
+                type="button"
+                className="btn btn-deposit-mini"
+                onClick={() => setDepositModalOpen(true)}
+                title={isAr ? 'طلب حجز مبدئي' : 'Request reservation'}
+              >
+                <ShieldCheck size={16} />
+                <span>{isAr ? 'حجز' : 'Reserve'}</span>
+              </button>
+            )}
 
             <a
               href={getWhatsAppUrl(waText)}

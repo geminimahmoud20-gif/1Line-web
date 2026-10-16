@@ -6,6 +6,7 @@ import '../../styles/expat-suite.css';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
 import BrandWatermark from './BrandWatermark';
+import { isWatermarked } from '../../utils/watermark';
 import useClientDownload from '../../hooks/useClientDownload';
 import { countLabel } from '../../utils/arabicCount';
 
@@ -120,7 +121,7 @@ export default function QuickViewModal({
                   className="quickview-img" 
                   onError={() => setImgError(true)}
                 />
-                <BrandWatermark size="md" position="bottom-right" />
+                {!isWatermarked(currentImage) && <BrandWatermark size="md" position="bottom-right" />}
 
                 {/* Multi-Image Navigation Controls */}
                 {imagesList.length > 1 && (

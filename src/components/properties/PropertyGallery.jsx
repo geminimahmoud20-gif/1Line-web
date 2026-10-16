@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { trackEvent } from '../../utils/visitorTracker';
 import BrandWatermark from '../common/BrandWatermark';
+import { isWatermarked } from '../../utils/watermark';
 import VirtualTourViewer from './VirtualTourViewer';
 
 export default function PropertyGallery({
@@ -265,7 +266,7 @@ export default function PropertyGallery({
               draggable={false}
               onContextMenu={(e) => e.preventDefault()}
             />
-            <BrandWatermark size="md" position="bottom-right" />
+            {!isWatermarked(images[0]) && <BrandWatermark size="md" position="bottom-right" />}
             <div className="gallery-hover-overlay">
               <div className="view-all-pill">
                 <Maximize2 size={16} />
@@ -288,7 +289,7 @@ export default function PropertyGallery({
                   draggable={false}
                   onContextMenu={(e) => e.preventDefault()}
                 />
-                <BrandWatermark size="sm" position="bottom-right" variant="emblem-only" />
+                {!isWatermarked(imgUrl) && <BrandWatermark size="sm" position="bottom-right" variant="emblem-only" />}
                 {idx === 2 && images.length > 4 && (
                   <div className="gallery-more-overlay">
                     <span>+{images.length - 4} {isAr ? 'صور إضافية' : 'More'}</span>
@@ -456,8 +457,8 @@ export default function PropertyGallery({
               }}
             />
 
-            {/* Permanent Watermark on Lightbox Fullscreen */}
-            <BrandWatermark size="lg" position="bottom-right" />
+            {/* Watermark on the fullscreen view, unless the photo already carries it in the file */}
+            {!isWatermarked(images[activeImageIndex]) && <BrandWatermark size="lg" position="bottom-right" />}
 
             {zoomLevel > 1 && (
               <div className="zoom-pan-hint">

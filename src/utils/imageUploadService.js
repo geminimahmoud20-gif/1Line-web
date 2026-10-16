@@ -5,6 +5,7 @@
  */
 
 import { uploadCmsMedia } from '../firebaseLazy';
+import { applyWatermark, watermarkedName } from './watermark';
 
 /**
  * Compresses an image File or Blob using native HTML Canvas
@@ -17,7 +18,8 @@ export async function compressImage(file, options = {}) {
     maxWidth = 1600,
     maxHeight = 1200,
     quality = 0.82,
-    outputType = 'image/jpeg'
+    outputType = 'image/jpeg',
+    watermark = false // burn the brand logo in (listing photos); see utils/watermark.js
   } = options;
 
   return new Promise((resolve, reject) => {
@@ -30,7 +32,7 @@ export async function compressImage(file, options = {}) {
     reader.onload = (event) => {
       const img = new Image();
       img.onerror = () => reject(new Error('تعذر تحميل بيانات الصورة'));
-      img.onload = () => {
+      img.onload = async () => {
         let { width, height } = img;
 
         // Calculate proportional dimensions
@@ -49,18 +51,20 @@ export async function compressImage(file, options = {}) {
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(img, 0, 0, width, height);
+        const watermarked = watermark ? await applyWatermark(ctx, width, height) : false;
 
         const dataUrl = canvas.toDataURL(outputType, quality);
 
         canvas.toBlob(
           (blob) => {
             if (!blob) {
-              return resolve({ blob: file, dataUrl, sizeKb: Math.round(file.size / 1024) });
+              return resolve({ blob: file, dataUrl, sizeKb: Math.round(file.size / 1024), watermarked: false });
             }
             resolve({
               blob,
               dataUrl,
-              sizeKb: Math.round(blob.size / 1024)
+              sizeKb: Math.round(blob.size / 1024),
+              watermarked
             });
           },
           outputType,
@@ -80,13 +84,14 @@ export async function compressImage(file, options = {}) {
  * @returns {Promise<{ url: string, isCloud: boolean, sizeKb: number }>}
  */
 export async function uploadPropertyImage(file, propertyId = 'general') {
-  const compressed = await compressImage(file);
+  const compressed = await compressImage(file, { watermark: true });
 
   // The local dev server has no /api routes, so only production tries the cloud
   if (!import.meta.env.DEV) {
     const type = compressed.blob.type || 'image/jpeg';
     const base = (file.name || 'photo').replace(/\.[^.]+$/, '');
-    const upload = new File([compressed.blob], `${propertyId}-${base}.${type === 'image/webp' ? 'webp' : 'jpg'}`, { type });
+    const fileName = `${propertyId}-${base}.${type === 'image/webp' ? 'webp' : 'jpg'}`;
+    const upload = new File([compressed.blob], compressed.watermarked ? watermarkedName(fileName) : fileName, { type });
     const res = await uploadCmsMedia(upload, 'image');
     if (res.ok) return { url: res.url, isCloud: true, sizeKb: compressed.sizeKb };
     console.warn('Cloud image upload skipped (falling back to local data URL):', res.reason);

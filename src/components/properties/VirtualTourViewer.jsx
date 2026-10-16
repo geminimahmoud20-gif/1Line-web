@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Rotate3d, Compass, Maximize2, Minimize2, Play, Pause, Info, Sparkles } from 'lucide-react';
 import BrandWatermark from '../common/BrandWatermark';
+import { isWatermarked } from '../../utils/watermark';
 import { trackEvent } from '../../utils/visitorTracker';
 
 /**
@@ -164,8 +165,8 @@ export default function VirtualTourViewer({
           }}
         />
 
-        {/* Brand Watermark Overlay */}
-        <BrandWatermark size="md" position="bottom-right" />
+        {/* Brand Watermark Overlay (skipped when the photo carries it in the file) */}
+        {!isWatermarked(activeImage) && <BrandWatermark size="md" position="bottom-right" />}
 
         {/* Interactive Hotspots Overlaid */}
         {currentRoom.hotspots.map((spot) => {
