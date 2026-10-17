@@ -1,4 +1,6 @@
 import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
+import { inBounds } from '../utils/mapPins';
+import { getAreas } from '../utils/areasData';
 import { hasNoRooms } from '../utils/propertyKinds';
 import { useSearchParams } from 'react-router-dom';
 import { 
@@ -21,6 +23,12 @@ import { DEMO_PROPERTIES } from '../data/demoData';
 import { updatePageSeo } from '../utils/seoHelper';
 import { track } from '../utils/analytics';
 import { searchPropertiesSemantic, parseSemanticQuery } from '../utils/semanticSearchEngine';
+
+// Area centre for listings placed only by their area (map bubbles, "search this area")
+const areaCenterOf = (key) => {
+  const c = getAreas().find((a) => a.id === key)?.center;
+  return c && Number.isFinite(Number(c.lat)) ? { lat: Number(c.lat), lng: Number(c.lng) } : null;
+};
 
 // Slider ceiling; a maxPrice at the cap means "no upper limit"
 const MAX_PRICE_CAP = 15000000;
@@ -139,6 +147,7 @@ export default function PropertiesPage({
   };
 
   const handleResetFilters = () => {
+    setMapBounds(null);
     setFilters({
       query: '',
       type: 'all',
@@ -165,7 +174,7 @@ export default function PropertiesPage({
   }, [filters.query]);
 
   // Filter & Sort Properties
-  const filteredProperties = useMemo(() => {
+  const matchedProperties = useMemo(() => {
     // 1. Initial pool: exclude deleted, trash, hidden, draft
     const pool = safeProperties.filter((prop) => {
       return !(prop.isDeleted || prop.status === 'trash' || prop.status === 'hidden' || prop.status === 'draft');
@@ -300,6 +309,14 @@ export default function PropertiesPage({
     });
   }, [safeProperties, filters, sortBy, familyFilter]);
 
+  // Map view: "ابحث في المنطقة دي" limits the list to what the map shows
+  const [mapBounds, setMapBounds] = useState(null);
+  const boundsActive = viewMode === 'split' && !!mapBounds;
+  const filteredProperties = useMemo(
+    () => (boundsActive ? matchedProperties.filter((p) => inBounds(p, mapBounds, areaCenterOf)) : matchedProperties),
+    [matchedProperties, boundsActive, mapBounds]
+  );
+
   const totalPages = Math.max(1, Math.ceil(filteredProperties.length / PAGE_SIZE));
   const paginatedProperties = useMemo(() => {
     const start = (currentPage - 1) * PAGE_SIZE;
@@ -321,7 +338,7 @@ export default function PropertiesPage({
               </span>
             </div>
             <p className="page-header-subtitle">
-              {lang === 'ar' ? 'تصفح أحدث الشقق، الفيلات، المحلات التجارية والأراضي المعروضة حصرياً والمعتمدة رسمياً' : 'Browse verified apartments, commercial units, and lands'}
+              {lang === 'ar' ? 'شقق، فيلات، محلات، أراضي، وعقارات زراعية وصناعية معروضة في سوهاج. الوحدات اللي اتراجع ورقها عليها شارة «مراجَع ومعتمد».' : 'Apartments, villas, shops, land, farmland and industrial units in Sohag. Listings whose papers we checked carry a "Reviewed & approved" badge.'}
             </p>
           </div>
 
@@ -368,18 +385,18 @@ export default function PropertiesPage({
         <div className="certified-explainer-inner">
           <div className="certified-badge-pill">
             <ShieldCheck size={14} className="text-emerald" />
-            <span>{lang === 'ar' ? 'معيار 1Line المعتمد:' : '1Line Certified:'}</span>
+            <span>{lang === 'ar' ? 'شغلنا معاك:' : 'How we work:'}</span>
           </div>
           <div className="certified-points-row">
             {/* Process commitments (what 1Line does), not per-listing certifications */}
             <span className="cert-point">
               <CheckCircle2 size={12} className="text-gold" />
-              <span>{lang === 'ar' ? 'مراجعة المستندات قبل العرض' : 'Documents reviewed before listing'}</span>
+              <span>{lang === 'ar' ? 'بنراجع الورق معاك قبل أي حجز' : 'We check the papers with you before any reservation'}</span>
             </span>
             <span className="cert-dot">•</span>
             <span className="cert-point">
               <CheckCircle2 size={12} className="text-gold" />
-              <span>{lang === 'ar' ? 'تسعير بمقارنات فعلية في المنطقة' : 'Priced from local comparables'}</span>
+              <span>{lang === 'ar' ? 'بنقارن السعر بأسعار المنطقة' : 'We compare the price with the area'}</span>
             </span>
             <span className="cert-dot">•</span>
             <span className="cert-point">
@@ -399,20 +416,22 @@ export default function PropertiesPage({
           onFilterChange={handleFilterChange}
           onResetFilters={handleResetFilters}
           totalResults={filteredProperties.length}
+          extraActive={familyFilter !== 'all' ? 1 : 0}
+          extra={(
+            <nav className="xs-family-chips" aria-label={lang === 'ar' ? 'تصنيفات بيت العيلة' : 'Family categories'}>
+              <span className="xs-family-chips-label"><Users size={14} aria-hidden="true" /> {lang === 'ar' ? 'بيت العيلة:' : 'Family hub:'}</span>
+              <button type="button" className={familyFilter === 'all' ? 'is-on' : ''} onClick={() => setFamilyFilter('all')} aria-pressed={familyFilter === 'all'}>
+                {lang === 'ar' ? 'الكل' : 'All'}
+              </button>
+              {FAMILY_KINDS.map((k) => (
+                <button key={k.id} type="button" className={familyFilter === k.id ? 'is-on' : ''} onClick={() => setFamilyFilter(k.id)} aria-pressed={familyFilter === k.id}>
+                  {lang === 'ar' ? k.ar : k.en}
+                </button>
+              ))}
+            </nav>
+          )}
         />
 
-        {/* بيت العيلة — family-sized categories */}
-        <nav className="xs-family-chips" aria-label={lang === 'ar' ? 'تصنيفات بيت العيلة' : 'Family categories'}>
-          <span className="xs-family-chips-label"><Users size={14} aria-hidden="true" /> {lang === 'ar' ? 'بيت العيلة:' : 'Family hub:'}</span>
-          <button type="button" className={familyFilter === 'all' ? 'is-on' : ''} onClick={() => setFamilyFilter('all')} aria-pressed={familyFilter === 'all'}>
-            {lang === 'ar' ? 'الكل' : 'All'}
-          </button>
-          {FAMILY_KINDS.map((k) => (
-            <button key={k.id} type="button" className={familyFilter === k.id ? 'is-on' : ''} onClick={() => setFamilyFilter(k.id)} aria-pressed={familyFilter === k.id}>
-              {lang === 'ar' ? k.ar : k.en}
-            </button>
-          ))}
-        </nav>
 
         {/* 🤖 AI Semantic Recognition Active Banner */}
         {parsedSemantic && parsedSemantic.tagsFound && parsedSemantic.tagsFound.length > 0 && (
@@ -468,6 +487,12 @@ export default function PropertiesPage({
           <div className="split-view-container">
             {/* Cards List Column */}
             <div className="split-cards-column">
+              {boundsActive && (
+                <div className="map-bounds-chip" role="status">
+                  <span>{lang === 'ar' ? `${filteredProperties.length} وحدة في حدود الخريطة` : `${filteredProperties.length} in the map view`}</span>
+                  <button type="button" onClick={() => setMapBounds(null)}>{lang === 'ar' ? 'اعرض الكل' : 'Show all'}</button>
+                </div>
+              )}
               {filteredProperties.length > 0 ? (
                 <>
                   <div className="properties-grid-split">
@@ -549,6 +574,8 @@ export default function PropertiesPage({
                 currency={currency}
                 lang={lang}
                 centerArea={filters.area}
+                viewBounds={boundsActive ? mapBounds : null}
+                onBoundsChange={(b) => { setMapBounds(b); setCurrentPage(1); }}
               />
               </Suspense>
             </div>

@@ -1,0 +1,41 @@
+/* Properties map: area bubbles, "search this area", legend, popup bits (PropertyMapView) */
+.custom-leaflet-area-bubble { background: none; border: 0; }
+.map-area-bubble {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  width: 108px; min-height: 52px; padding: 5px 6px; box-sizing: border-box;
+  border-radius: 999px; background: rgba(8, 18, 38, 0.9); color: #fff;
+  border: 2px solid #d9b97e; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  font-family: 'Cairo', sans-serif; text-align: center; cursor: pointer; line-height: 1.2;
+}
+.map-area-bubble strong { font-size: 1rem; font-weight: 800; color: #e9d29a; }
+.map-area-bubble span { font-size: 0.68rem; font-weight: 700; white-space: nowrap; }
+.map-area-bubble small { font-size: 0.62rem; opacity: 0.85; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.custom-leaflet-area-bubble:hover .map-area-bubble,
+.custom-leaflet-area-bubble:focus .map-area-bubble { transform: scale(1.06); }
+
+.map-search-area-btn {
+  position: absolute; top: 14px; left: 50%; transform: translateX(-50%); z-index: 1001;
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;
+  border: 0; border-radius: 999px; background: #d9b97e; color: #0b1b32;
+  font: 800 0.8rem/1 'Cairo', sans-serif; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3); cursor: pointer;
+}
+.map-legend-note {
+  position: absolute; bottom: 10px; inset-inline-start: 10px; z-index: 1000; margin: 0;
+  max-width: min(420px, calc(100% - 20px)); padding: 6px 10px; border-radius: 10px;
+  background: rgba(8, 18, 38, 0.82); color: #e2e8f0; font: 600 0.7rem/1.5 'Cairo', sans-serif;
+}
+
+.custom-property-leaflet-popup .popup-price { color: var(--primary, #071e3d); font-size: 0.95rem; }
+.custom-property-leaflet-popup .popup-approx { font-size: 0.72rem; color: #64748b; }
+.custom-property-leaflet-popup .popup-cta-btn {
+  display: block; margin-top: 8px; text-align: center; background: #071e3d; color: #fff;
+  padding: 6px 12px; border-radius: 6px; font-size: 0.76rem; font-weight: 700; text-decoration: none;
+}
+
+/* Split view: list limited to the map view */
+.map-bounds-chip {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px;
+  padding: 8px 12px; border-radius: 10px; background: rgba(217, 185, 126, 0.16); color: var(--text-primary, #0b1b32);
+  font: 700 0.8rem/1.4 'Cairo', sans-serif;
+}
+.map-bounds-chip button { border: 0; background: none; color: var(--accent-gold, #b38a45); font: inherit; text-decoration: underline; cursor: pointer; }
