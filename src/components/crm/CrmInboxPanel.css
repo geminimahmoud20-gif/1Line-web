@@ -80,3 +80,21 @@
   .crm-inbox-item__actions { width: 100%; }
   .crm-inbox-item__actions .ui-btn { flex: 1 1 calc(50% - var(--ui-s-2)); }
 }
+
+/* Inbox → واتساب من الموقع (WhatsAppIntentsList.jsx) */
+.crm-wa-intents { display: flex; flex-direction: column; gap: var(--ui-s-3); }
+.crm-wa-intent__head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-s-2); margin-bottom: var(--ui-s-2); }
+.crm-wa-intent__ref {
+  font-size: var(--ui-fs-4);
+  font-weight: var(--ui-fw-bold);
+  letter-spacing: 0.04em;
+  color: var(--ui-accent-text);
+  background: var(--ui-accent-tint);
+  border-radius: var(--ui-r-sm);
+  padding: 2px var(--ui-s-2);
+  font-variant-numeric: tabular-nums;
+}
+.crm-wa-intent__when { font-size: var(--ui-fs-2); color: var(--ui-text-3); }
+.crm-wa-intent__unit { display: inline-flex; align-items: center; gap: 4px; color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.crm-wa-intent__link { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--ui-s-3); margin-top: var(--ui-s-3); }
+.crm-wa-intent__link .crm-inbox-item__actions { grid-column: 1 / -1; }

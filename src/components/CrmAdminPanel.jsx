@@ -763,6 +763,8 @@ export const CrmAdminPanel = ({
           onOpenLead={(lead) => setQuickDrawerLead(lead)}
           onConvertToProperty={onConvertToProperty}
           triggerToast={triggerToast}
+          onAddNewLead={onAddNewLead}
+          canEditLeads={canEditLeads}
         />
       )}
 
