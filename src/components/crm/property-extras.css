@@ -92,3 +92,7 @@
   font-weight: 700;
 }
 .dark-theme .pxe-chip.is-on, [data-theme="dark"] .pxe-chip.is-on { color: #E9D29A; }
+
+/* Property form: farmland size in feddan + qirat (PropertyFormModal) */
+.pf-size-hint { display: block; margin-top: 4px; font-size: var(--crm-text-xs); color: var(--crm-muted); }
+.pf-feddan { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }

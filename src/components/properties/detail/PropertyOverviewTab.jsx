@@ -1,4 +1,5 @@
-import { Bath, BedDouble, Briefcase, Building, CheckCircle2, Clock, Layers, Maximize2, ShieldCheck, Sparkles, Store, Zap } from 'lucide-react';
+import { Bath, BedDouble, Briefcase, Building, CheckCircle2, Clock, Factory, Layers, Maximize2, ShieldCheck, Sparkles, Sprout, Store, Zap } from 'lucide-react';
+import { isAgricultural, isIndustrial, filledSpecs, sizeLabel, pricePerFeddan } from '../../../utils/propertyKinds';
 import { Users } from 'lucide-react';
 import { countLabel } from '../../../utils/arabicCount';
 import SunlightCompassWidget from '../SunlightCompassWidget';
@@ -23,6 +24,11 @@ export default function PropertyOverviewTab({
   setActiveTab,
   utilityItems
 }) {
+  // Farmland and industrial units list their own details (irrigation, power…) instead of rooms
+  const agri = isAgricultural(property);
+  const special = agri || isIndustrial(property);
+  const specs = filledSpecs(property, isAr);
+  const perFeddan = agri ? pricePerFeddan(property) : 0;
   return (
     <div className="tab-pane-content">
       {/* Quick Specs Overview Grid */}
@@ -33,12 +39,51 @@ export default function PropertyOverviewTab({
             <Maximize2 size={20} className="text-gold" />
             <div>
               <span className="spec-lbl">{isAr ? 'المساحة الإجمالية' : 'Total Area'}</span>
-              <strong>{property.size} {isAr ? 'م² صافي' : 'sqm net'}</strong>
+              <strong>{agri ? sizeLabel(property, isAr) : `${property.size} ${isAr ? 'م² صافي' : 'sqm net'}`}</strong>
             </div>
           </div>
 
           {/* Sector-Specific Specifications */}
-          {isLand ? (
+          {special ? (
+            <>
+              {perFeddan > 0 && (
+                <div className="spec-box">
+                  <Sparkles size={20} className="text-gold" />
+                  <div>
+                    <span className="spec-lbl">{isAr ? 'سعر الفدان' : 'Price per feddan'}</span>
+                    <strong>{perFeddan.toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}</strong>
+                  </div>
+                </div>
+              )}
+              {specs.map((sp) => (
+                <div className="spec-box" key={sp.key}>
+                  {agri ? <Sprout size={20} className="text-gold" /> : <Factory size={20} className="text-gold" />}
+                  <div>
+                    <span className="spec-lbl">{sp.label}</span>
+                    <strong>{sp.value}</strong>
+                  </div>
+                </div>
+              ))}
+              {property.frontage && (
+                <div className="spec-box">
+                  <Layers size={20} className="text-gold" />
+                  <div>
+                    <span className="spec-lbl">{isAr ? 'الواجهة' : 'Frontage'}</span>
+                    <strong>{property.frontage}</strong>
+                  </div>
+                </div>
+              )}
+              {licenseText && (
+                <div className="spec-box">
+                  <ShieldCheck size={20} className="text-gold" />
+                  <div>
+                    <span className="spec-lbl">{isAr ? 'الترخيص (من المراجعة)' : 'Licence (reviewed)'}</span>
+                    <strong>{licenseText}</strong>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : isLand ? (
             <>
               {property.landType_ar && (
                 <div className="spec-box">
@@ -149,7 +194,7 @@ export default function PropertyOverviewTab({
             </>
           )}
 
-          {!isLand && property.floor !== undefined && property.floor !== null && property.floor !== '' && (
+          {!isLand && !special && property.floor !== undefined && property.floor !== null && property.floor !== '' && (
             <div className="spec-box">
               <Layers size={20} className="text-gold" />
               <div>
@@ -273,7 +318,7 @@ export default function PropertyOverviewTab({
       )}
 
       {/* 💼 Optional turnkey / rental management service (not shown for land) */}
-      {!isLand && <div className="investor-turnkey-banner detail-card-box" style={{
+      {!isLand && !special && <div className="investor-turnkey-banner detail-card-box" style={{
         background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.08), rgba(11, 78, 162, 0.06))',
         border: '1px solid rgba(217, 119, 6, 0.25)',
         display: 'flex',

@@ -162,3 +162,4 @@
 @media (prefers-reduced-motion: reduce) {
   .sw *, .sw *::before { transition: none !important; animation: none !important; }
 }
+.sw-hint { display: block; margin-top: 4px; font-size: 0.78rem; color: var(--text-muted, #64748b); }

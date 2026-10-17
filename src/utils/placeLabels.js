@@ -10,6 +10,13 @@ export const PROPERTY_TYPE_LABELS = {
   office: ['مكتب أو عيادة', 'Office / clinic'],
   administrative: ['مكتب إداري', 'Office'],
   land: ['أرض', 'Land'],
+  agri_land: ['أرض زراعية', 'Farmland'],
+  farm: ['مزرعة', 'Farm'],
+  factory: ['مصنع أو ورشة', 'Factory / workshop'],
+  warehouse: ['مخزن', 'Warehouse'],
+  industrial_land: ['أرض صناعية', 'Industrial land'],
+  agricultural: ['زراعي', 'Agricultural'],
+  industrial: ['صناعي', 'Industrial'],
   residential: ['سكني', 'Residential']
 };
 

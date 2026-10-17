@@ -13,7 +13,9 @@ import {
   ArrowRight, 
   ArrowLeft, 
   Clock,
-  MessageCircle
+  MessageCircle,
+  Sprout,
+  Factory
 } from 'lucide-react';
 import PhoneInputField from './PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
@@ -102,7 +104,9 @@ export const BuyWizard = ({
     { id: 'retail', label_ar: 'محل تجاري', label_en: 'Retail Shop', icon: Store, desc_ar: 'محلات ومساحات تجارية على شوارع رئيسية' },
     { id: 'villa', label_ar: 'فيلا / تاون هاوس', label_en: 'Villa', icon: Home, desc_ar: 'فيلات مستقلة وتاون هاوس في كمبوندات' },
     { id: 'office', label_ar: 'مكتب إداري / عيادة', label_en: 'Office / Clinic', icon: Briefcase, desc_ar: 'مقرات إدارية وعيادات طبية جاهزة' },
-    { id: 'land', label_ar: 'قطعة أرض', label_en: 'Land Plot', icon: MapPin, desc_ar: 'أراضي مباني وتجارية بترخيص معتمد' }
+    { id: 'land', label_ar: 'قطعة أرض', label_en: 'Land Plot', icon: MapPin, desc_ar: 'أراضي مباني وتجارية بترخيص معتمد' },
+    { id: 'agri_land', label_ar: 'أرض زراعية أو مزرعة', label_en: 'Farmland / Farm', icon: Sprout, desc_ar: 'أراضي زراعية ومزارع وحدائق فاكهة بالفدان' },
+    { id: 'factory', label_ar: 'مصنع أو مخزن', label_en: 'Factory / Warehouse', icon: Factory, desc_ar: 'مصانع وورش ومخازن وأراضي صناعية' }
   ];
 
   const [districts, setDistricts] = useState(() => getAreas());

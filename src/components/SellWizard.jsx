@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { isAgriculturalType, isIndustrialType, isLandType, formatFeddan } from '../utils/propertyKinds';
 import { ArrowLeft, ArrowRight, Check, ChevronDown, Info, MessageCircle, Send } from 'lucide-react';
 import PhoneInputField from './PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
@@ -80,7 +81,8 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
   const { properties: siteListings = [] } = useProperties();
   const estimate = useMemo(() => {
     const size = num(a.size);
-    if (!size || isCairo) return null;
+    // No automatic estimate for farmland and industrial units yet: valued by hand
+    if (!size || isCairo || isAgriculturalType(type) || isIndustrialType(type)) return null;
     const cls = type === 'retail' || type === 'office' ? 'commercial' : type === 'land' ? 'land' : 'residential';
     const comps = liveListings(siteListings)
       .filter((p) => p.areaKey === area && assetClass(p) === cls && Number(p.size) > 0)
@@ -101,6 +103,9 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
     const round = (v) => Math.round(v / 10000) * 10000;
     return { min: round(avg * (1 - spread)), max: round(avg * (1 + spread)), avg: Math.round(avg), basis, sample: comps.length };
   }, [a.size, a.finishing, type, area, isCairo, districts, siteListings]);
+
+  // Land, farms and industrial land have no finishing
+  const noFinishing = isLandType(type) || isAgriculturalType(type);
 
   const chooseType = (id) => {
     if (id === a.propertyType) return;
@@ -161,10 +166,13 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
         floor: floorLabel({ ...a, propertyType: type }),
         rooms: type === 'apartment' || type === 'villa' ? (a.rooms || SPEC_FIELDS[type][1].def) : 0,
         ...(type === 'villa' ? { totalFloors: a.totalFloors || '2' } : {}),
-        finishing: type === 'land' ? '' : (a.finishing || ''),
-        finishingLabelAr: type === 'land' ? '' : (finish?.ar || ''),
+        finishing: noFinishing ? '' : (a.finishing || ''),
+        finishingLabelAr: noFinishing ? '' : (finish?.ar || ''),
         features,
         featuresAr: featureLabels(type, features),
+        ...(isAgriculturalType(type) || isIndustrialType(type) ? {
+          specsAr: (SPEC_FIELDS[type] || []).map((f) => `${f.ar}: ${f.options.find((o) => o.value === (a[f.field] || f.def))?.ar || ''}`)
+        } : {}),
         legalDocs,
         legalSummaryAr: legalAr,
         askingPrice: num(a.askingPrice) || null,
@@ -248,9 +256,12 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
             <label className="sw-field">
               <span>{L('المساحة', 'Size')}</span>
               <div className="sw-suffix">
-                <input type="text" inputMode="numeric" placeholder="150" value={a.size || ''} onChange={(e) => set({ size: toLatinDigits(e.target.value).replace(/\D/g, '').slice(0, 6) })} />
+                <input type="text" inputMode="numeric" placeholder={isAgriculturalType(type) ? '4200' : '150'} value={a.size || ''} onChange={(e) => set({ size: toLatinDigits(e.target.value).replace(/\D/g, '').slice(0, 7) })} />
                 <span>{L('م²', 'm²')}</span>
               </div>
+              {isAgriculturalType(type) && (
+                <small className="sw-hint">{num(a.size) > 0 ? `= ${formatFeddan(num(a.size), isAr)}` : L('الفدان = 4200 م² تقريباً، والقيراط = 175 م²', '1 feddan ≈ 4,200 m², 1 qirat ≈ 175 m²')}</small>
+              )}
             </label>
             <label className="sw-field sw-field--wide">
               <span>{L('العنوان', 'Address')}</span>
@@ -278,7 +289,7 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
                 </select>
               </label>
             ))}
-            {type !== 'land' && (
+            {!noFinishing && (
               <label className="sw-field">
                 <span>{L('التشطيب', 'Finishing')}</span>
                 <select value={a.finishing || ''} onChange={(e) => set({ finishing: e.target.value })}>

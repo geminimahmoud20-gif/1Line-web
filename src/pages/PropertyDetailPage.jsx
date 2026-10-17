@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { isAgricultural, isIndustrial, isLandType } from '../utils/propertyKinds';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { MapPin, Sparkles, CheckCircle2, Clock3, ShieldQuestion, Layers, Calendar, Phone, MessageSquare, ShieldCheck, TrendingUp, TrendingDown, Navigation, ArrowRight, ArrowLeft, Building, Building2, Video, Zap, Droplets, Copy, Sun, Moon, Scale, Flame } from 'lucide-react';
 import { incrementPropertyView, getPropertyViews } from '../utils/visitorTracker';
@@ -223,9 +224,11 @@ export default function PropertyDetailPage({
 
   // Sector separation
   const isMultiUnit = isMultiUnitOrBuilding(property);
-  const isLand = !isMultiUnit && (property.type === 'land' || (title && title.includes('أرض')));
-  const isCommercial = !isMultiUnit && !isLand && (property.type === 'commercial' || property.category === 'commercial' || (title && (title.includes('محل') || title.includes('معرض') || title.includes('ريتيل') || title.includes('تجاري'))));
-  const isOffice = !isMultiUnit && !isLand && !isCommercial && (property.type === 'office' || property.category === 'administrative' || (title && (title.includes('مكتب') || title.includes('عيادة') || title.includes('إداري'))));
+  const isAgri = !isMultiUnit && isAgricultural(property);
+  const isIndustry = !isMultiUnit && isIndustrial(property);
+  const isLand = !isMultiUnit && (isLandType(property.type) || (!isIndustry && title && title.includes('أرض')));
+  const isCommercial = !isMultiUnit && !isLand && !isIndustry && !isAgri && (property.type === 'commercial' || property.category === 'commercial' || (title && (title.includes('محل') || title.includes('معرض') || title.includes('ريتيل') || title.includes('تجاري'))));
+  const isOffice = !isMultiUnit && !isLand && !isCommercial && !isIndustry && !isAgri && (property.type === 'office' || property.category === 'administrative' || (title && (title.includes('مكتب') || title.includes('عيادة') || title.includes('إداري'))));
 
   const handleBookingSubmit = async (e) => {
     e.preventDefault();

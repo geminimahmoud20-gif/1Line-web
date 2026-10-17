@@ -9,6 +9,7 @@ import { getNormalizedPropertyStatus } from '../../utils/crmLeadViews';
 import { Badge, IconButton, Button, Select } from '../ui';
 import RowMenu from './RowMenu';
 import { propertyTypeLabel } from '../../utils/placeLabels';
+import { sizeLabel, isLandType, isAgriculturalType, isIndustrialType } from '../../utils/propertyKinds';
 
 const STATUS_OPTIONS = [
   { value: 'published', ar: 'معروض', en: 'Live' },
@@ -28,8 +29,9 @@ const shortLeft = (ms, isAr) => {
 };
 
 const specsLine = (prop, isAr) => {
-  const size = Number(prop.size) > 0 ? `${prop.size} ${isAr ? 'م²' : 'm²'}` : '';
-  const extra = prop.type === 'land' ? ''
+  const size = sizeLabel(prop, isAr);
+  const extra = isLandType(prop.type) || isAgriculturalType(prop.type) ? ''
+    : isIndustrialType(prop.type) ? (prop.indBuiltArea || prop.indPower || '')
     : prop.type === 'commercial' ? (prop.frontage || '')
       : prop.type === 'office' ? (prop.divisionCount ? `${prop.divisionCount} ${isAr ? 'مكاتب' : 'rooms'}` : '')
         : (Number(prop.bedrooms) > 0 ? `${prop.bedrooms} ${isAr ? 'غرف' : 'bd'}` : '');

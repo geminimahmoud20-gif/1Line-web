@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { isAgricultural, isIndustrial, isLandType } from '../../utils/propertyKinds';
 import { X, MapPin, Maximize2, BedDouble, Bath, MessageSquare, ArrowLeft, ArrowRight, FileText, Share2, ChevronLeft, ChevronRight, Layers, Sparkles, Store, Briefcase, Building, Video } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useUIModal } from '../../context/UIModalContext';
@@ -33,9 +34,10 @@ export default function QuickViewModal({
   const finishing = isAr ? property.finishing_ar : property.finishing_en;
 
   // Sector classification
-  const isLand = property.type === 'land' || (title && title.includes('أرض'));
-  const isCommercial = !isLand && (property.type === 'commercial' || property.category === 'commercial' || (title && (title.includes('محل') || title.includes('معرض') || title.includes('ريتيل') || title.includes('تجاري'))));
-  const isOffice = !isLand && !isCommercial && (property.type === 'office' || property.category === 'administrative' || (title && (title.includes('مكتب') || title.includes('عيادة') || title.includes('إداري'))));
+  const isSpecial = isAgricultural(property) || isIndustrial(property);
+  const isLand = isLandType(property.type) || (!isIndustrial(property) && title && title.includes('أرض'));
+  const isCommercial = !isLand && !isSpecial && (property.type === 'commercial' || property.category === 'commercial' || (title && (title.includes('محل') || title.includes('معرض') || title.includes('ريتيل') || title.includes('تجاري'))));
+  const isOffice = !isLand && !isCommercial && !isSpecial && (property.type === 'office' || property.category === 'administrative' || (title && (title.includes('مكتب') || title.includes('عيادة') || title.includes('إداري'))));
   const priceData = formatCurrencyPrice(property.price, currency, lang);
   const downPaymentVal = Number(property.downPayment) || 0;
   const monthlyInstallmentVal = Number(property.monthlyInstallment) || 0;

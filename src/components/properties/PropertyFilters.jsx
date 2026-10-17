@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { hasNoRooms } from '../../utils/propertyKinds';
 import { Search, SlidersHorizontal, RotateCcw, X, Sparkles, ShieldCheck, FileCheck, Waves, PieChart, ChevronDown, ChevronUp, KeyRound, Check } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { getAreas } from '../../utils/areasData';
@@ -82,7 +83,7 @@ export default function PropertyFilters({
       });
     }
 
-    if (filters.bedrooms && filters.bedrooms !== 'all' && filters.bedrooms !== 'any' && filters.type !== 'commercial' && filters.type !== 'land') {
+    if (filters.bedrooms && filters.bedrooms !== 'all' && filters.bedrooms !== 'any' && !hasNoRooms(filters.type)) {
       list.push({
         id: 'bedrooms',
         label: countLabel('room', filters.bedrooms, isAr),
@@ -218,7 +219,7 @@ export default function PropertyFilters({
             onChange={(e) => {
               const newType = e.target.value;
               onFilterChange('type', newType);
-              if (newType === 'commercial' || newType === 'land' || newType === 'office') {
+              if (hasNoRooms(newType)) {
                 onFilterChange('bedrooms', 'all');
               }
             }}
@@ -236,6 +237,15 @@ export default function PropertyFilters({
             </optgroup>
             <optgroup label={isAr ? '📐 قطاع الأراضي والاستثمار' : 'Land & Plots'}>
               <option value="land">{isAr ? 'أراضي ومواقع استثمارية' : 'Investment Land Plots'}</option>
+            </optgroup>
+            <optgroup label={isAr ? '🌾 القطاع الزراعي' : 'Agricultural Sector'}>
+              <option value="agri_land">{isAr ? 'أراضي زراعية' : 'Agricultural Land'}</option>
+              <option value="farm">{isAr ? 'مزارع وحدائق فاكهة' : 'Farms & Orchards'}</option>
+            </optgroup>
+            <optgroup label={isAr ? '🏭 القطاع الصناعي' : 'Industrial Sector'}>
+              <option value="factory">{isAr ? 'مصانع وورش' : 'Factories & Workshops'}</option>
+              <option value="warehouse">{isAr ? 'مخازن ومستودعات' : 'Warehouses & Storage'}</option>
+              <option value="industrial_land">{isAr ? 'أراضي صناعية' : 'Industrial Land'}</option>
             </optgroup>
           </select>
         </div>
@@ -311,14 +321,14 @@ export default function PropertyFilters({
         <div className="filter-item bedrooms-filter-item">
           <div className="filter-label-flex" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <label className="compact-label">{isAr ? 'عدد الغرف' : 'Bedrooms'}</label>
-            {(filters.type === 'commercial' || filters.type === 'land') && (
+            {hasNoRooms(filters.type) && filters.type !== 'office' && (
               <span style={{ fontSize: '0.66rem', color: '#b38a45', fontWeight: 800 }}>
                 {isAr ? 'غير منطبق' : 'N/A'}
               </span>
             )}
           </div>
 
-          {(filters.type === 'commercial' || filters.type === 'land') ? (
+          {hasNoRooms(filters.type) && filters.type !== 'office' ? (
             <div style={{
               height: '34px',
               display: 'flex',

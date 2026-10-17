@@ -1,9 +1,13 @@
 import { HERO_POSTER_DEFAULT } from '../../pages/HomePageData';
+import { AGRICULTURAL_TYPES, INDUSTRIAL_TYPES } from '../../utils/propertyKinds';
 import { Link } from 'react-router-dom';
 import { Building, Search, TrendingUp, MapPin, Sparkles, Calculator, Home, Landmark, Pause, Play, Volume2, VolumeX, Zap, Maximize2, X } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { HeroSponsorChip } from './SponsoredPlacements';
 import LogoEmblem from '../LogoEmblem';
+
+// "Invest" search: income and land types only
+const INVEST_TYPES = ['all', 'commercial', 'office', 'land', ...AGRICULTURAL_TYPES, ...INDUSTRIAL_TYPES];
 
 export default function HomeHero({
   activeClipIndex,
@@ -240,7 +244,7 @@ export default function HomeHero({
                 className={`hx-intent ${searchPurpose === id ? 'is-active' : ''}`}
                 onClick={() => {
                   setSearchPurpose(id);
-                  if (id === 'invest' && !['all', 'commercial', 'office', 'land'].includes(searchType)) setSearchType('all');
+                  if (id === 'invest' && !INVEST_TYPES.includes(searchType)) setSearchType('all');
                 }}
               >
                 <Icon size={15} strokeWidth={1.75} aria-hidden="true" />
@@ -394,7 +398,7 @@ export default function HomeHero({
                 <span className="hx-field-label">{lang === 'ar' ? 'نوع العقار' : 'Type'}</span>
                 <select value={searchType} onChange={(e) => setSearchType(e.target.value)} aria-label={lang === 'ar' ? 'نوع العقار' : 'Property type'}>
                   {PROPERTY_TYPES
-                    .filter((t) => searchPurpose !== 'invest' || ['all', 'commercial', 'office', 'land'].includes(t.id))
+                    .filter((t) => searchPurpose !== 'invest' || INVEST_TYPES.includes(t.id))
                     .map((t) => (
                       <option key={t.id} value={t.id}>{lang === 'ar' ? t.name_ar : t.name_en}</option>
                     ))}

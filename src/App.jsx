@@ -337,7 +337,12 @@ function AppContent() {
     villa: 'منزل مستقل / فيلا',
     office: 'مكتب إداري / عيادة',
     land: 'قطعة أرض',
-    building: 'عقار كامل'
+    building: 'عقار كامل',
+    agri_land: 'أرض زراعية',
+    farm: 'مزرعة / حديقة فاكهة',
+    factory: 'مصنع / ورشة',
+    warehouse: 'مخزن',
+    industrial_land: 'أرض صناعية'
   };
 
   const AREA_NAMES_AR = {
@@ -381,6 +386,8 @@ function AppContent() {
       : (data.estimatedAvg ? ` | التقدير الآلي: ${Number(data.estimatedAvg).toLocaleString('en-US')} ج.م` : '');
     const featuresDesc = Array.isArray(data.featuresAr) && data.featuresAr.length > 0 ? ` | المميزات: ${data.featuresAr.join('، ')}` : '';
     const photosDesc = data.images && data.images.length > 0 ? ` | مرفق ${data.images.length} صور` : '';
+    // Farmland / industrial answers (الري، الأوراق، النشاط…) as "label: value"
+    const specsDesc = Array.isArray(data.specsAr) && data.specsAr.length > 0 ? ` | ${data.specsAr.join(' | ')}` : '';
     const propLabel = PROPERTY_TYPE_NAMES_AR[data.propertyType] || data.propertyType || 'عقار';
     const areaLabel = (data.area && AREA_NAMES_AR[data.area]) || data.area || 'سوهاج';
 
@@ -392,7 +399,7 @@ function AppContent() {
       area: data.area || 'new_sohag',
       type: 'seller',
       landingPage: '/sell',
-      notes: `عرض بيع ${propLabel} في ${areaLabel} بمساحة ${data.size || ''}م²${priceDesc}${floorDesc}${finishingDesc}${featuresDesc}${legalSummary}${photosDesc}`,
+      notes: `عرض بيع ${propLabel} في ${areaLabel} بمساحة ${data.size || ''}م²${priceDesc}${floorDesc}${finishingDesc}${specsDesc}${featuresDesc}${legalSummary}${photosDesc}`,
       // The lead is visible to roles that may not see contact details: phone/name stay out of details
       details: withoutContact(data)
     });

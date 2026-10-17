@@ -989,5 +989,10 @@ export const PROPERTY_TYPES = [
   { id: 'building', name_ar: 'عمارات ومنازل كاملة (سكني وتجاري)', name_en: 'Entire Buildings & Mixed-Use', category: 'building' },
   { id: 'commercial', name_ar: 'محلات ومساحات تجارية', name_en: 'Commercial Retail Shops', category: 'commercial' },
   { id: 'office', name_ar: 'مكاتب ومقرات إدارية وعيادات', name_en: 'Admin Offices & Clinics', category: 'administrative' },
-  { id: 'land', name_ar: 'أراضي ومواقع استثمارية', name_en: 'Investment Land Plots', category: 'land' }
+  { id: 'land', name_ar: 'أراضي ومواقع استثمارية', name_en: 'Investment Land Plots', category: 'land' },
+  { id: 'agri_land', name_ar: 'أراضي زراعية', name_en: 'Agricultural Land', category: 'agricultural' },
+  { id: 'farm', name_ar: 'مزارع وحدائق فاكهة', name_en: 'Farms & Orchards', category: 'agricultural' },
+  { id: 'factory', name_ar: 'مصانع وورش', name_en: 'Factories & Workshops', category: 'industrial' },
+  { id: 'warehouse', name_ar: 'مخازن ومستودعات', name_en: 'Warehouses & Storage', category: 'industrial' },
+  { id: 'industrial_land', name_ar: 'أراضي صناعية', name_en: 'Industrial Land', category: 'industrial' }
 ];
