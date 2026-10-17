@@ -16,7 +16,6 @@
   font-size: var(--ui-fs-2); font-weight: var(--ui-fw-semibold);
 }
 .crm-props__notice > span { flex: 1 1 260px; }
-.crm-props__toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ui-s-3); }
 .crm-props__chips { display: flex; gap: var(--ui-s-2); overflow-x: auto; scrollbar-width: none; max-width: 100%; }
 .crm-props__chips::-webkit-scrollbar { display: none; }
 .crm-props__chips .ui-chip { flex-shrink: 0; }
@@ -32,10 +31,15 @@
   .crm-props__search { flex: 1 1 100%; }
 }
 
-/* Second toolbar: readiness chips + sort + more filters */
-.crm-props__tools { display: flex; align-items: center; gap: var(--ui-s-2); }
-.crm-props__tools .ui-field { min-width: 170px; }
+/* Filter bar: search grows, then type, area, sort, more filters, clear */
+.crm-props__filterbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-s-2); }
+.crm-props__filterbar .crm-props__search { flex: 1 1 240px; }
+.crm-props__filterbar > .ui-field { flex: 0 1 180px; min-width: 140px; }
+@media (max-width: 639px) {
+  .crm-props__filterbar > .ui-field { flex: 1 1 45%; }
+}
 .crm-props__more { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--ui-s-3); align-items: end; }
+.crm-props__more-rows { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--ui-s-2); }
 .crm-props__count { margin: 0; font-size: var(--ui-fs-2); color: var(--ui-text-3); }
 
 /* Bulk actions bar */
@@ -62,8 +66,9 @@
 .crm-prow__count { position: absolute; inset-block-end: 3px; inset-inline-end: 3px; min-width: 18px; padding: 0 4px; border-radius: var(--ui-r-full); background: var(--ui-overlay); color: var(--ui-on-primary); font-size: var(--ui-fs-1); text-align: center; }
 .crm-prow__info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .crm-prow__title {
-  padding: 0; border: 0; background: none; font: inherit; font-size: var(--ui-fs-3); font-weight: var(--ui-fw-bold);
-  color: var(--ui-text); text-align: start; cursor: pointer; max-width: 340px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  padding: 0; border: 0; background: none; font: inherit; font-size: var(--ui-fs-3); font-weight: var(--ui-fw-bold); line-height: 1.45;
+  color: var(--ui-text); text-align: start; cursor: pointer; max-width: 380px;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
 }
 .crm-prow__title:hover:not(:disabled) { color: var(--ui-primary-text); text-decoration: underline; text-underline-offset: 3px; }
 .crm-prow__title:disabled { cursor: default; }
@@ -77,6 +82,7 @@
 .crm-prow__price span { display: block; font-size: var(--ui-fs-1); color: var(--ui-text-3); font-variant-numeric: tabular-nums; }
 .crm-prow__missing { color: var(--ui-warning); font-size: var(--ui-fs-2); font-weight: var(--ui-fw-semibold); }
 .crm-prow__specs { white-space: nowrap; font-size: var(--ui-fs-2); color: var(--ui-text-2); }
+.crm-layout .crm-props .crm-props-table td.crm-prow__status { width: 160px; min-width: 160px; }
 .crm-prow__select { min-width: 140px; }
 .crm-prow__select .ui-select { height: var(--ui-control-h-sm); font-size: var(--ui-fs-2); font-weight: var(--ui-fw-semibold); }
 .crm-prow__select.is-published .ui-select { background: var(--ui-success-tint); color: var(--ui-success); }
@@ -105,8 +111,6 @@
   .crm-prow__actions { flex-wrap: wrap; }
   .crm-prow__title { max-width: 100%; white-space: normal; }
   .crm-props__bulk { top: 56px; }
-  .crm-props__tools { width: 100%; }
-  .crm-props__tools .ui-field { flex: 1; min-width: 0; }
 }
 
 /* Reports */

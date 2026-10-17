@@ -7,6 +7,7 @@
 //    featuredFrom   'YYYY-MM-DD' | null  — first day shown (inclusive, local time)
 //    featuredUntil  'YYYY-MM-DD' | null  — last day shown (inclusive); null = open-ended
 //    featuredOrder  number   — slot position, lower first
+//    homeExcluded   boolean  — never used to fill an empty slot automatically (pinning still works)
 // =============================================================
 
 export const HOME_FEATURED_SLOTS = 4;
@@ -65,7 +66,7 @@ export function getHomepageSlots(list = [], limit = HOME_FEATURED_SLOTS, now = D
   const published = list.filter(isPublishedProperty);
   const featured = published.filter((p) => featuredState(p, now) === 'active').sort(byOrder).slice(0, limit);
   const taken = new Set(featured.map((p) => p.id));
-  const filler = published.filter((p) => !taken.has(p.id)).slice(0, Math.max(0, limit - featured.length));
+  const filler = published.filter((p) => !taken.has(p.id) && !p.homeExcluded).slice(0, Math.max(0, limit - featured.length));
   return [
     ...featured.map((property) => ({ property, source: 'featured' })),
     ...filler.map((property) => ({ property, source: 'auto' }))
@@ -80,5 +81,26 @@ export function getFeaturedQueue(list = [], limit = HOME_FEATURED_SLOTS, now = D
     overflow: live.slice(limit),
     scheduled: published.filter((p) => featuredState(p, now) === 'scheduled').sort((a, b) => String(a.featuredFrom).localeCompare(String(b.featuredFrom))),
     expired: published.filter((p) => featuredState(p, now) === 'expired')
+  };
+}
+
+/** Why a pinned listing can't reach the homepage: 'trash' | 'hidden' | 'draft' | 'sold' (null = it can) */
+export function featuredBlocker(p) {
+  if (!p?.featured || isPublishedProperty(p)) return null;
+  if (p.isDeleted || p.status === 'trash') return 'trash';
+  return ['hidden', 'draft', 'sold'].includes(p.status) ? p.status : 'hidden';
+}
+
+/**
+ * Counts for the CRM header and board: live = pinned and on the homepage now (or waiting for a
+ * free slot), blocked = pinned but hidden / sold / in the trash, excluded = kept out of auto-fill.
+ */
+export function homepageSummary(list = [], now = Date.now()) {
+  const pinned = list.filter((p) => p?.featured && !(p.isDeleted || p.status === 'trash'));
+  return {
+    pinned: pinned.length,
+    live: pinned.filter((p) => isPublishedProperty(p) && featuredState(p, now) === 'active').length,
+    blocked: list.filter((p) => featuredBlocker(p) && featuredBlocker(p) !== 'trash'),
+    excluded: list.filter((p) => p?.homeExcluded && isPublishedProperty(p))
   };
 }
