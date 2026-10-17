@@ -15,6 +15,13 @@
 .crm-kanban__search:focus-within { border-color: var(--ui-info); box-shadow: var(--ui-sh-focus); }
 .crm-kanban__search input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; font: var(--ui-fw-regular) var(--ui-field-fs) / 1 var(--ui-font); color: var(--ui-text); }
 .crm-kanban .kanban-stage-title { margin: 0; }
+/* One-line column titles: the header keeps the same height in every column */
+.crm-kanban .kanban-stage-header { gap: var(--ui-s-2); }
+.crm-kanban .kanban-stage-title-wrap { flex: 1; min-width: 0; }
+.crm-kanban .kanban-stage-title-wrap .kanban-stage-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Narrow (compact) columns: the title gets the full width, count and fold button go under it */
+.kanban-board-scroll-container.is-compact .kanban-stage-header { flex-wrap: wrap; row-gap: var(--ui-s-1); }
+.kanban-board-scroll-container.is-compact .kanban-stage-title-wrap { flex-basis: 100%; }
 
 @media (max-width: 639px) {
   .crm-kanban__search { flex: 1 1 100%; }
@@ -40,11 +47,15 @@
 .kanban-board-scroll-container.is-compact .kanban-stage-column { padding: var(--ui-s-2); min-height: 0; }
 .kanban-board-scroll-container.is-compact .kanban-cards-container { gap: var(--ui-s-2); }
 .kanban-board-scroll-container.is-compact .kb-card { padding: var(--ui-s-2); }
-.kanban-board-scroll-container.is-compact .kb-meta,
-.kanban-board-scroll-container.is-compact .kb-flag:not(.kb-flag--danger),
-.kanban-board-scroll-container.is-compact .kanban-stage-volume-sub { display: none; }
+/* Compact keeps type, area, value and warnings; drops follow-up lines and the score */
+.kanban-board-scroll-container.is-compact .kb-flag:not(.kb-flag--danger):not(.kb-flag--warn),
+.kanban-board-scroll-container.is-compact .kb-meta-score,
+.kanban-board-scroll-container.is-compact .kanban-stage-volume-note,
+.kanban-board-scroll-container.is-compact .kb-meta-score-sep { display: none; }
+.kanban-board-scroll-container.is-compact .kb-actions .kb-btn:not(.kb-btn--wa) > span { display: none; }
+.kanban-board-scroll-container.is-compact .kb-actions .kb-btn:not(.kb-btn--wa):not(.kb-btn--icon) { width: 30px; padding: 0; }
 .kanban-board-scroll-container > .kanban-stage-column { min-width: 0; }
-.kanban-board-scroll-container.is-compact .kb-actions { flex-wrap: wrap; }
+.kanban-board-scroll-container.is-compact .kb-actions .kb-btn--wa { flex: 1; }
 .crm-kanban__topscroll::-webkit-scrollbar { height: 10px; }
 .crm-kanban__topscroll::-webkit-scrollbar-thumb { background: var(--ui-line-strong); border-radius: 999px; }
 .crm-kanban__topscroll::-webkit-scrollbar-track { background: var(--ui-surface-2, transparent); border-radius: 999px; }
