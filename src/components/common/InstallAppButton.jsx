@@ -8,7 +8,7 @@ import '../../styles/install-app.css';
  * "ثبّت التطبيق": Android/desktop Chrome get the browser's own install dialog; iPhone Safari gets
  * the two Add-to-Home-Screen steps. Renders nothing once installed or where neither is possible.
  */
-export default function InstallAppButton({ lang = 'ar', className = '', onDone }) {
+export default function InstallAppButton({ lang = 'ar', className = '', onDone, label = null }) {
   const isAr = lang === 'ar';
   const [mode, setMode] = useState(installMode);
   const [showIosHelp, setShowIosHelp] = useState(false);
@@ -36,7 +36,7 @@ export default function InstallAppButton({ lang = 'ar', className = '', onDone }
     <>
       <button type="button" className={`install-app-btn ${className}`} onClick={onClick}>
         <Download size={16} aria-hidden="true" />
-        <span>{isAr ? 'ثبّت تطبيق 1Line' : 'Install the 1Line app'}</span>
+        <span>{label || (isAr ? 'ثبّت تطبيق 1Line' : 'Install the 1Line app')}</span>
       </button>
 
       {/* Portal: the header is its own stacking context, so a sheet opened from the menu sat under the bottom bar */}

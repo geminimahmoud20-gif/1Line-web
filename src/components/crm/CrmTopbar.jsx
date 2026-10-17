@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Menu, Search, X, Plus, ChevronDown, Bell, Lock, Rocket, Globe, LogOut, Users, Building, Zap, Sparkles, CheckCircle2, AlertTriangle, ArrowRight, ArrowLeft, UserRound } from 'lucide-react';
 import { getMergedCrmRoles } from './crmRoles';
+import InstallAppButton from '../common/InstallAppButton';
+import { LOCK_OPTIONS, getLockMinutes, setLockMinutes, lockLabel, markCrmActive } from '../../utils/idleLock';
 import { getActiveAccessConfig, subscribeToAccessConfig } from '../../services/accessConfig';
 import { desktopAlertsSupported, desktopAlertsEnabled, enableDesktopAlerts, describeDownload, formatLeadHeadline } from '../../utils/newLeadAlerts';
 
@@ -30,6 +32,8 @@ export default function CrmTopbar({
   const [showQuickActionMenu, setShowQuickActionMenu] = useState(false);
   const [showNotifMenu, setShowNotifMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  // This device's auto-lock delay (utils/idleLock); the CRM page applies it
+  const [lockMinutes, setLockMinutesState] = useState(getLockMinutes);
   const [notifTab, setNotifTab] = useState('all'); // 'all' | 'leads' | 'downloads' | 'demands'
   const [desktopAlerts, setDesktopAlerts] = useState(desktopAlertsEnabled);
   const [accessCfg, setAccessCfg] = useState(getActiveAccessConfig);
@@ -564,6 +568,22 @@ export default function CrmTopbar({
                 <Globe size={16} aria-hidden="true" />
                 <span>{isAr ? 'فتح الموقع' : 'Open the site'}</span>
               </a>
+              <InstallAppButton
+                lang={isAr ? 'ar' : 'en'}
+                className="crm-user-menu__item crm-user-menu__install"
+                label={isAr ? 'ثبّت 1Line CRM على الكمبيوتر' : 'Install 1Line CRM on this computer'}
+                onDone={() => setShowUserMenu(false)}
+              />
+              <label className="crm-user-menu__field">
+                <span>{isAr ? 'قفل تلقائي لو مفيش استخدام' : 'Auto-lock when idle'}</span>
+                <select
+                  className="crm-role-select"
+                  value={lockMinutes}
+                  onChange={(e) => { const m = Number(e.target.value); setLockMinutes(m); setLockMinutesState(m); markCrmActive(); }}
+                >
+                  {LOCK_OPTIONS.map((m) => <option key={m} value={m}>{lockLabel(m, isAr)}</option>)}
+                </select>
+              </label>
               <div className="crm-user-menu__divider" />
               <button type="button" role="menuitem" className="crm-user-menu__item is-danger" onClick={onLogout}>
                 <LogOut size={16} aria-hidden="true" />
