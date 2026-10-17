@@ -1,0 +1,26 @@
+{
+  "id": "/crm",
+  "short_name": "1Line CRM",
+  "name": "1Line CRM — إدارة العملاء والعقارات",
+  "description": "لوحة إدارة 1Line: العملاء، الصفقات، العقارات وصندوق الوارد",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/crm",
+  "scope": "/crm",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "theme_color": "#0B1B32",
+  "background_color": "#0B1B32",
+  "categories": ["business", "productivity"],
+  "icons": [
+    { "src": "/icon-crm-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-crm-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-crm-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "صندوق الوارد", "short_name": "الوارد", "url": "/crm?tab=inbox", "icons": [{ "src": "/icon-crm-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "مسار الصفقات", "short_name": "الصفقات", "url": "/crm?tab=kanban", "icons": [{ "src": "/icon-crm-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "العقارات", "short_name": "العقارات", "url": "/crm?tab=properties", "icons": [{ "src": "/icon-crm-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "إضافة عميل", "short_name": "عميل جديد", "url": "/crm?open=add_lead", "icons": [{ "src": "/icon-crm-192.png", "sizes": "192x192", "type": "image/png" }] }
+  ]
+}

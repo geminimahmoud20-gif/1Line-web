@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Lock, ShieldCheck, Sparkles, KeyRound, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 
@@ -13,7 +13,10 @@ import AreaManagerPanel from '../components/crm/AreaManagerPanel';
 import AdCampaignsPanel from '../components/crm/AdCampaignsPanel';
 import SystemSection, { RestrictedSection } from '../components/crm/SystemSection';
 import { announceNewLeads, announceDownloads } from '../utils/newLeadAlerts';
-import { subscribeToClientDownloads } from '../firebaseLazy';
+import { subscribeToClientDownloads, logoutUser } from '../firebaseLazy';
+import useIdleLock from '../components/crm/useIdleLock';
+import { setManifestFor } from '../utils/appManifest';
+import { markCrmActive, LOCKED_FLAG } from '../utils/idleLock';
 import { pushLocalSettingsMissingFromCloud } from '../utils/settingsCloudSync';
 import { RemoteInspectionsPanel, TradeInsPanel } from '../components/crm/ExpatIntakePanels';
 import GoLiveWizardModal from '../components/crm/GoLiveWizardModal';
@@ -64,7 +67,16 @@ export default function CrmPage({
   const { handleImportProperties, handleImportLeads, requestLiveCatalog } = useProperties();
   // Staff edit the catalog: switch from the cached public copy to the live listener
   useEffect(() => { if (currentUser) requestLiveCatalog(); }, [currentUser, requestLiveCatalog]);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  // Desktop-app shortcuts open a section directly: /crm?tab=inbox, /crm?open=add_lead
+  const [activeTab, setActiveTab] = useState(() => {
+    const t = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null;
+    return ['inbox', 'dashboard', 'leads', 'kanban', 'properties', 'demands', 'projects'].includes(t) ? t : 'dashboard';
+  });
+  // While the CRM is open, "Install" installs the 1Line CRM app (crm.webmanifest), not the site
+  useEffect(() => {
+    setManifestFor('/crm');
+    return () => setManifestFor('/');
+  }, []);
   // "Open this modal" requests from the top bar, command palette and dashboard shortcuts.
   // The target panel opens it once (useOpenRequest); leaving that tab drops the request.
   const [openRequest, setOpenRequest] = useState(null);
@@ -142,12 +154,37 @@ export default function CrmPage({
     }
     return fn ? fn(...args) : undefined;
   };
+  // "إضافة عميل" shortcut of the desktop app: open the form once, after sign-in
+  const pendingOpenRef = useRef(typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('open') : null);
+  useEffect(() => {
+    // Wait for the role to load: before that every permission reads false
+    if (!crmAuthenticated || !can.editLeads || pendingOpenRef.current !== 'add_lead') return;
+    pendingOpenRef.current = null;
+    requestOpen('add_lead');
+  });
   const [systemSubTab, setSystemSubTab] = useState('areas');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [honeypot, setHoneypot] = useState('');
   const [loginError, setLoginError] = useState('');
+  // Auto-lock after the chosen idle minutes (top bar → account menu): sign out, ask for the password again
+  const lockForIdle = useCallback(async () => {
+    try { sessionStorage.setItem(LOCKED_FLAG, '1'); sessionStorage.removeItem('crm_auth'); } catch { /* storage unavailable */ }
+    try { await logoutUser(); } catch { /* already signed out */ }
+    setCrmAuthenticated(false);
+  }, [setCrmAuthenticated]);
+  useIdleLock(crmAuthenticated, lockForIdle);
+  if (!crmAuthenticated && typeof window !== 'undefined') {
+    let idleLocked = false;
+    try { idleLocked = sessionStorage.getItem(LOCKED_FLAG) === '1'; } catch { /* storage unavailable */ }
+    if (idleLocked) {
+      try { sessionStorage.removeItem(LOCKED_FLAG); } catch { /* storage unavailable */ }
+      setLoginError(lang === 'ar'
+        ? 'اتقفلت لوحة الإدارة لعدم الاستخدام. سجّل دخولك تاني علشان تكمل.'
+        : 'The CRM locked after a period of inactivity. Sign in again to continue.');
+    }
+  }
   // Signed out by the super admin (access changed): say why on the login screen
   if (!crmAuthenticated && typeof window !== 'undefined') {
     let forced = false;
@@ -435,6 +472,7 @@ export default function CrmPage({
 
     if (res.success) {
       sessionStorage.setItem('crm_auth', 'true');
+      markCrmActive();
       setCrmAuthenticated(true);
       if (triggerToast) {
         triggerToast(isAr ? 'تم الدخول بنجاح' : 'Authenticated successfully', 'success');

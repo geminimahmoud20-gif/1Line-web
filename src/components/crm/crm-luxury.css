@@ -1979,6 +1979,10 @@ mark.crm-search-highlight {
 }
 .crm-user-menu__item:hover { background: var(--ui-surface-2); }
 .crm-user-menu__item.is-danger { color: var(--ui-danger); }
+/* "Install 1Line CRM" in the account menu: a plain menu row, not the gold pill used on the site */
+.crm-user-menu__item.crm-user-menu__install { justify-content: flex-start; min-height: 40px; padding: 0 var(--ui-s-3); border: 0; border-radius: var(--ui-r-md); background: transparent; font: var(--ui-fw-medium) var(--ui-fs-3) / 1 var(--ui-font); }
+.crm-user-menu__item.crm-user-menu__install:hover { background: var(--ui-surface-2); }
+.crm-user-menu__item.crm-user-menu__install svg { color: var(--ui-accent); }
 .crm-user-menu__divider { height: 1px; background: var(--ui-line); margin: var(--ui-s-1) 0; }
 @media (max-width: 767px) {
   .crm-user-menu__role { display: none; }

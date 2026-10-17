@@ -9,6 +9,10 @@ import { installErrorReporter } from './utils/errorReporter.js'
 import { installLatinDigits } from './utils/latinDigits.js'
 // Catches the browser's install offer before React mounts (it fires once, early)
 import './utils/pwaInstall.js'
+import { setManifestFor } from './utils/appManifest';
+
+// Before the browser checks installability: the CRM installs as its own app
+setManifestFor(window.location.pathname);
 import { installContactIntents } from './utils/contactIntent.js'
 
 // Visitors' errors and CSP violations → CRM → System → Site errors
