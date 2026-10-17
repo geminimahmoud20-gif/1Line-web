@@ -96,3 +96,5 @@
 /* Property form: farmland size in feddan + qirat (PropertyFormModal) */
 .pf-size-hint { display: block; margin-top: 4px; font-size: var(--crm-text-xs); color: var(--crm-muted); }
 .pf-feddan { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pf-loc-hint { display: block; margin-top: 4px; font-size: var(--crm-text-xs); line-height: 1.6; color: var(--crm-warn); }
+.pf-loc-hint.is-exact { color: var(--crm-positive); }

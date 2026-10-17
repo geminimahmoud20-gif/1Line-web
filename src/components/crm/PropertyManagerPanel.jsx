@@ -927,7 +927,7 @@ export default function PropertyManagerPanel({
           isOpen={showMapPicker}
           onClose={() => setShowMapPicker(false)}
           initialCoordinates={form.coordinates || areaCenter(form.areaKey)}
-          onConfirmCoordinates={(coords) => setForm(prev => ({ ...prev, coordinates: coords }))}
+          onConfirmCoordinates={(coords) => setForm(prev => ({ ...prev, coordinates: coords, locationExact: true }))}
           lang={lang}
           triggerToast={triggerToast}
         />

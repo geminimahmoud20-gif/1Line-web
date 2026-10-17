@@ -394,9 +394,14 @@ export default function PropertyFormModal({
                 onChange={(e) => setForm({ ...form, locationName_ar: e.target.value })}
                 placeholder="مثال: شارع الجمهورية - أمام الجامعة"
               />
-              {form.coordinates?.lat && (
-                <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', display: 'block', marginTop: '3px' }}>
-                  ✓ {isAr ? `إحداثيات GPS المحددة: ${form.coordinates.lat}, ${form.coordinates.lng}` : `GPS: ${form.coordinates.lat}, ${form.coordinates.lng}`}
+              {/* Only a spot picked on the map gets its own pin on the site; otherwise the listing joins its area's circle */}
+              {form.locationExact && form.coordinates?.lat ? (
+                <span className="pf-loc-hint is-exact">
+                  ✓ {isAr ? `الموقع متحدد بدقة على الخريطة (${form.coordinates.lat}, ${form.coordinates.lng})` : `Exact spot set (${form.coordinates.lat}, ${form.coordinates.lng})`}
+                </span>
+              ) : (
+                <span className="pf-loc-hint">
+                  {isAr ? 'الموقع مش متحدد بدقة: الوحدة هتظهر ضمن دايرة المنطقة على خريطة الموقع. دوس «تحديد دقيق على الخريطة» علشان يبقى ليها دبوس.' : 'No exact spot: the listing shows in its area circle on the site map. Use "Pin on Map" to give it its own pin.'}
                 </span>
               )}
             </div>

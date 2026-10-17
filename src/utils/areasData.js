@@ -323,6 +323,8 @@ const ALL_AREA = DEFAULT_SOHAG_AREAS[0];
  * unless the admin saved their own. "كل المناطق" is always present and first.
  * Pure, so it can be unit-tested.
  */
+export const tidyName = (s) => String(s).replace(/\(\s+/g, '(').replace(/\s+\)/g, ')').replace(/\s{2,}/g, ' ').trim();
+
 export function mergeStoredAreas(stored, defaults = DEFAULT_SOHAG_AREAS) {
   if (!Array.isArray(stored) || stored.length === 0) return defaults;
   const byId = new Map(defaults.map((d) => [d.id, d]));
@@ -343,6 +345,12 @@ export function mergeStoredAreas(stored, defaults = DEFAULT_SOHAG_AREAS) {
           annualGrowthRate: item.annualGrowthRate ?? def.annualGrowthRate
         }
       : item);
+  }
+  // Names typed in the CRM sometimes carry stray spaces: "سوهاج ( ش البحر )" → "سوهاج (ش البحر)"
+  for (const a of out) {
+    for (const k of ['name_ar', 'name_en', 'label_ar', 'label_en']) {
+      if (typeof a[k] === 'string') a[k] = tidyName(a[k]);
+    }
   }
   const allIdx = out.findIndex((a) => a.id === 'all');
   const all = allIdx >= 0 ? out.splice(allIdx, 1)[0] : (byId.get('all') || ALL_AREA);
