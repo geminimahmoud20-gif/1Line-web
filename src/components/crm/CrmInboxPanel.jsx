@@ -8,22 +8,32 @@ import {
   MessageCircle,
   AlertTriangle,
   Lock,
-  RotateCcw,
+  UserCog,
+  Archive,
   Building,
   DollarSign,
   Briefcase,
   Clock,
   Hand
 } from 'lucide-react';
-import { PageHeader, Tabs, SegmentedControl, Chip, Badge, Button, IconButton, Input, Card, Avatar, EmptyState, MotionRoot } from '../ui';
+import { PageHeader, Tabs, SegmentedControl, Chip, Badge, Button, IconButton, Select, Card, Avatar, EmptyState, MotionRoot } from '../ui';
 import { cx } from '../ui/cx';
 import './CrmInboxPanel.css';
 import { canViewLeadPhone, maskPhoneNumber } from '../../utils/rbacRules';
 import { claimLeadAtomic } from '../../services/leads';
 import { normalizeAreaKey, getAreaById } from '../../utils/areasData';
-import { formatArabicPlural, sanitizeAndMergeNotes, formatPhoneNumber } from '../../utils/crmNoteSanitizer';
+import { sanitizeAndMergeNotes, formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 import { subscribeToContactIntents, resolveContactIntent } from '../../firebaseLazy';
 import WhatsAppIntentsList from './WhatsAppIntentsList';
+import { formatWhatsAppPhone } from '../../utils/matchingEngine';
+import { listTeamMembers } from '../../services/team';
+import {
+  INBOX_STAGES as STAGES, INBOX_VIEWS, TEAM_DESKS, isInboxStage, pipelineStageLabel, isLeadUnclaimed, isLeadClaimedByMe,
+  isInboxActive, needsAction, matchesView, receivedMs, ageLabel, formatReceived, requestsCount, slaSummary, splitNotes,
+  reassignUpdates, knownOwners
+} from '../../utils/inboxView';
+
+const PAGE_SIZE = 20;
 
 const PROPERTY_TYPE_LABELS = {
   apartment: 'شقة سكنية',
@@ -49,31 +59,6 @@ function formatAreaName(area) {
   const normalized = normalizeAreaKey(area);
   const found = getAreaById(normalized);
   return found?.name_ar || area;
-}
-
-const TEAM_DESKS = [
-  'Sales Team A',
-  'Sales Team B',
-  'Sales Management',
-  'Sales Advisor Team',
-  'Dr. Mahmoud Elbaz',
-  'Unassigned',
-  'غير مسند'
-];
-
-function isLeadUnclaimed(lead) {
-  if (!lead) return true;
-  if (lead.ownerUid || lead.ownerName || lead.claimedBy) return false;
-  return !lead.assignedTo || TEAM_DESKS.includes(lead.assignedTo) || lead.status === 'new';
-}
-
-function isLeadClaimedByMe(lead, currentUser, currentStaffName) {
-  if (!lead) return false;
-  if (lead.ownerUid && currentUser?.uid && lead.ownerUid === currentUser.uid) return true;
-  if (lead.ownerName && currentStaffName && lead.ownerName === currentStaffName) return true;
-  if (lead.claimedBy && currentStaffName && lead.claimedBy === currentStaffName) return true;
-  if (!lead.ownerName && !lead.claimedBy && lead.assignedTo === currentStaffName) return true;
-  return false;
 }
 
 function getLeadOwnerDisplay(lead, isAr) {
@@ -138,32 +123,7 @@ function classifyLeadCategory(lead) {
   return 'buyers';
 }
 
-const STAGES = [
-  { id: 'new', label_ar: 'جديد', label_en: 'New' },
-  { id: 'contacted', label_ar: 'اتصلنا', label_en: 'Contacted' },
-  { id: 'site_visit', label_ar: 'معاينة', label_en: 'Site visit' }
-];
-
-const toMillis = (v) => {
-  if (!v) return NaN;
-  if (typeof v.toMillis === 'function') return v.toMillis();
-  if (typeof v.seconds === 'number') return v.seconds * 1000;
-  return new Date(v).getTime();
-};
-
 const money = (n, isAr) => `${Number(n).toLocaleString('en-US')} ${isAr ? 'ج.م' : 'EGP'}`;
-
-// When the request came in: the time if today, otherwise day and month (Latin digits, like the rest of the CRM)
-function formatReceived(lead, now, isAr) {
-  const t = toMillis(lead.createdAt || lead.timestamp);
-  if (!Number.isFinite(t)) return '';
-  const d = new Date(t);
-  const locale = isAr ? 'ar-EG-u-nu-latn' : 'en-GB';
-  if (new Date(now).toDateString() === d.toDateString()) {
-    return d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
-  }
-  return d.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
-}
 
 // Notes saved by older forms can carry "undefined" from missing fields
 const cleanNotes = (notes) => (sanitizeAndMergeNotes(notes) || '')
@@ -178,11 +138,13 @@ function getLeadFacts(lead, tab, isAr) {
   const L = (ar, en) => (isAr ? ar : en);
   const facts = [];
   const add = (label, value, strong = false) => { if (value) facts.push({ label, value, strong }); };
+  // A price staff must ask for on the first call
+  const ask = (label, value) => facts.push(value ? { label, value, strong: true } : { label, value: L('مش متسجّل', 'Not given'), missing: true });
   if (tab === 'sellers') {
     add(L('النوع', 'Type'), formatPropertyType(d.propertyType));
     add(L('المنطقة', 'Area'), d.area && formatAreaName(d.area));
     add(L('المساحة', 'Size'), d.size && `${d.size} ${L('م²', 'm²')}`);
-    add(L('السعر المطلوب', 'Asking price'), d.askingPrice && money(d.askingPrice, isAr), true);
+    ask(L('السعر المطلوب', 'Asking price'), d.askingPrice && money(d.askingPrice, isAr));
     add(L('التشطيب', 'Finishing'), d.finishingLabelAr);
     add(L('الوضع القانوني', 'Legal'), d.legalSummaryAr);
   } else if (tab === 'visits') {
@@ -192,7 +154,7 @@ function getLeadFacts(lead, tab, isAr) {
   } else if (tab === 'buyers') {
     add(L('المطلوب', 'Looking for'), d.propertyType && d.propertyType !== 'buyer' && formatPropertyType(d.propertyType));
     add(L('المنطقة', 'Area'), d.area && formatAreaName(d.area));
-    add(L('الميزانية', 'Budget'), d.budget && money(d.budget, isAr), true);
+    ask(L('الميزانية', 'Budget'), d.budget && money(d.budget, isAr));
     add(L('السداد', 'Payment'), d.paymentMethod && (d.paymentMethod === 'cash' ? L('كاش', 'Cash') : L('تقسيط', 'Instalments')));
   } else if (tab === 'accounts') {
     add(L('البريد', 'Email'), lead.email);
@@ -238,10 +200,27 @@ export default function CrmInboxPanel({
   const defaultTab = isMarketing ? 'sellers' : (isSales ? 'visits' : 'sellers');
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [searchQuery, setSearchQuery] = useState('');
-  const [stageFilter, setStageFilter] = useState('all');
+  // Which requests to list: still needing someone (default), nobody's yet, mine, or every open one
+  const [view, setView] = useState('todo');
   const [reassigningLeadId, setReassigningLeadId] = useState(null);
-  const [reassignName, setReassignName] = useState('');
+  const [reassignTo, setReassignTo] = useState('');
   const [claimingId, setClaimingId] = useState(null);
+  // Shown cards; resets when the tab, view or search changes (keyed, so no effect is needed)
+  const listKey = `${activeTab}|${view}|${searchQuery.trim()}`;
+  const [paging, setPaging] = useState({ key: listKey, n: PAGE_SIZE });
+  const shown = paging.key === listKey ? paging.n : PAGE_SIZE;
+
+  // Team accounts for "تحويل لموظف تاني" (super admins only, loaded the first time it opens).
+  // undefined = not loaded, null = unavailable (falls back to people already holding requests)
+  const [team, setTeam] = useState(undefined);
+  const loadTeam = () => {
+    if (team !== undefined) return;
+    setTeam(null);
+    listTeamMembers()
+      .then((res) => setTeam(res?.ok && Array.isArray(res.members) ? res.members.filter((m) => !m.disabled) : null))
+      .catch(() => setTeam(null));
+  };
+  const assignees = useMemo(() => (team && team.length ? team : knownOwners(leads)), [team, leads]);
 
   // WhatsApp taps from the site (api/contact-intent.js); undefined = loading, null = no access
   const [intents, setIntents] = useState(undefined);
@@ -317,20 +296,16 @@ export default function CrmInboxPanel({
     return { sellers, visits, buyers, accounts, brokers };
   }, [leads]);
 
-  // Calculate First Response SLA Breaches (Unclaimed leads older than configurable slaMinutes, default 15m)
-  const slaBreaches = useMemo(() => {
-    const thresholdMillis = (slaMinutes || 15) * 60 * 1000;
-    const cutoff = currentTime - thresholdMillis;
-    return leads.filter((l) => {
-      const createdTime = l.createdAt?.toMillis ? l.createdAt.toMillis() : Date.parse(l.createdAt || l.timestamp || 0);
-      const unclaimed = isLeadUnclaimed(l);
-      return unclaimed && createdTime > 0 && createdTime < cutoff;
-    });
-  }, [leads, currentTime, slaMinutes]);
+  // Open requests nobody took within the response target (default 15 minutes)
+  const sla = useMemo(
+    () => slaSummary(leads, currentTime, slaMinutes, classifyLeadCategory),
+    [leads, currentTime, slaMinutes]
+  );
 
   // Counts of unhandled requests per tab
   const unhandledCounts = useMemo(() => {
-    const countPending = (list) => list.filter(l => isLeadUnclaimed(l)).length;
+    // Same rule as the default "محتاجة تصرّف" view, so a tab's number matches its list
+    const countPending = (list) => list.filter((l) => isInboxActive(l) && needsAction(l)).length;
     return {
       sellers: countPending(categorized.sellers),
       visits: countPending(categorized.visits),
@@ -392,43 +367,39 @@ export default function CrmInboxPanel({
     }
   ], [categorized, unhandledCounts, intents, openIntents]);
 
-  // Current tab items with search & status filtering
-  const currentItems = useMemo(() => {
-    let list = categorized[activeTab] || [];
+  const myUid = currentUser?.uid || '';
 
-    if (stageFilter !== 'all') {
-      list = list.filter(l => (l.status || 'new') === stageFilter);
-    }
+  // Current tab items for the chosen view and search
+  const currentItems = useMemo(() => {
+    let list = (categorized[activeTab] || []).filter((l) => matchesView(l, view, myUid, currentStaffName));
 
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
-      list = list.filter(l => 
-        (l.name && l.name.toLowerCase().includes(q)) ||
-        (canSeePhone && l.phone && l.phone.includes(q)) ||
-        (l.notes && l.notes.toLowerCase().includes(q)) ||
-        (l.assignedTo && l.assignedTo.toLowerCase().includes(q)) ||
-        (l.details?.propertyCode && l.details.propertyCode.toLowerCase().includes(q))
-      );
+      const digits = q.replace(/[^0-9]/g, '');
+      const has = (v) => typeof v === 'string' && v.toLowerCase().includes(q);
+      list = list.filter((l) => {
+        const d = l.details || {};
+        return has(l.name) || has(l.notes) || has(l.assignedTo) || has(l.ownerName) || has(d.propertyCode)
+          || has(formatAreaName(d.area || l.area)) || has(formatPropertyType(d.propertyType || l.propertyType))
+          // Phones match on digits, so "0123 699" and "+20123…" both find 01236999836
+          || (canSeePhone && digits.length >= 3 && String(l.phone || '').replace(/[^0-9]/g, '').replace(/^20/, '0').includes(digits.replace(/^20/, '0')));
+      });
     }
 
-    // Sort: Unassigned / New first, then newest timestamp (pure, non-mutating)
+    // Requests nobody has taken first, then newest
     return [...list].sort((a, b) => {
       const aNew = isLeadUnclaimed(a) ? 1 : 0;
       const bNew = isLeadUnclaimed(b) ? 1 : 0;
       if (aNew !== bNew) return bNew - aNew;
-      const aTime = a.createdAt?.toMillis ? a.createdAt.toMillis() : Date.parse(a.createdAt || a.timestamp || 0);
-      const bTime = b.createdAt?.toMillis ? b.createdAt.toMillis() : Date.parse(b.createdAt || b.timestamp || 0);
-      return bTime - aTime;
+      return (receivedMs(b) || 0) - (receivedMs(a) || 0);
     });
-  }, [categorized, activeTab, stageFilter, searchQuery, canSeePhone]);
+  }, [categorized, activeTab, view, searchQuery, canSeePhone, myUid, currentStaffName]);
 
-  // How many requests in the open tab sit in each stage (the chip counts)
-  const stageCounts = useMemo(() => {
+  // How many requests of the open tab each view would list (the chip counts)
+  const viewCounts = useMemo(() => {
     const list = categorized[activeTab] || [];
-    const counts = { all: list.length };
-    STAGES.forEach((st) => { counts[st.id] = list.filter((l) => (l.status || 'new') === st.id).length; });
-    return counts;
-  }, [categorized, activeTab]);
+    return Object.fromEntries(INBOX_VIEWS.map((v) => [v.id, list.filter((l) => matchesView(l, v.id, myUid, currentStaffName)).length]));
+  }, [categorized, activeTab, myUid, currentStaffName]);
 
   // Atomic Claim Lead Handler via Firestore Transaction (الاستلام ذرّي ولا يغيّر الحالة إلى contacted)
   const handleClaimLead = async (lead) => {
@@ -474,32 +445,59 @@ export default function CrmInboxPanel({
     }
   };
 
-  // Stage Switch Handler (Changes status upon verified action)
+  // Stage buttons: only for the inbox's own stages, so a deal already in negotiation or closing
+  // is never sent back to "جديد" by a click here
   const handleSetStage = (lead, newStage) => {
-    if (!onUpdateLead) return;
+    if (!onUpdateLead || !isInboxStage(lead.status)) return;
+    const nowIso = new Date().toISOString();
     onUpdateLead(lead.id, {
       status: newStage,
-      lastStatusUpdate: new Date().toISOString()
+      lastStatusUpdate: nowIso,
+      lastActivityAt: nowIso,
+      ...(newStage !== 'new' && !lead.firstContactedAt ? { firstContactedAt: nowIso } : {})
     });
-    if (triggerToast) {
-      const stageObj = STAGES.find(s => s.id === newStage);
-      triggerToast(isAr ? `تم تحديث الحالة إلى: ${stageObj ? stageObj.label_ar : newStage}` : 'Status updated', 'info');
-    }
+    const stageObj = STAGES.find((s) => s.id === newStage);
+    triggerToast?.(isAr ? `المرحلة بقت: ${stageObj ? stageObj.label_ar : newStage}` : 'Stage updated', 'info');
   };
 
-  // Reassign Handler for Managers
-  const handleExecuteReassign = (leadId) => {
-    if (!onUpdateLead || !reassignName.trim()) return;
-    onUpdateLead(leadId, {
-      assignedTo: reassignName.trim(),
-      ownerName: reassignName.trim(),
-      assignedAt: new Date().toISOString()
-    });
+  const openReassign = (lead) => {
+    loadTeam();
+    setReassigningLeadId(lead.id);
+    setReassignTo('');
+  };
+
+  // Hand the request to a team account (or back to nobody), rewriting the owner's account too
+  const handleExecuteReassign = (lead) => {
+    if (!onUpdateLead || !reassignTo) return;
+    const member = reassignTo === '__none__' ? null : assignees.find((m) => (m.uid || `name:${m.name}`) === reassignTo);
+    if (reassignTo !== '__none__' && !member) return;
+    onUpdateLead(lead.id, reassignUpdates(lead, member));
     setReassigningLeadId(null);
-    setReassignName('');
-    if (triggerToast) {
-      triggerToast(isAr ? `تمت إعادة إسناد الطلب إلى "${reassignName.trim()}"` : 'Reassigned successfully', 'success');
-    }
+    setReassignTo('');
+    triggerToast?.(
+      member
+        ? (isAr ? `الطلب اتحوّل لـ ${member.name || member.email}` : `Assigned to ${member.name || member.email}`)
+        : (isAr ? 'الطلب رجع للطلبات اللي مش مستلمة' : 'Back to unclaimed'),
+      'success'
+    );
+  };
+
+  // Test or duplicate requests: archived (hidden, restorable from the leads table), never deleted
+  const handleArchive = (lead) => {
+    if (!onUpdateLead) return;
+    onUpdateLead(lead.id, { isArchived: true, lastActivityAt: new Date().toISOString() });
+    triggerToast?.(isAr ? 'الطلب اتخفى من الوارد واتنقل للأرشيف' : 'Request archived', 'info', {
+      onUndo: () => onUpdateLead(lead.id, { isArchived: false, lastActivityAt: new Date().toISOString() }),
+      undoLabel: isAr ? 'تراجع' : 'Undo'
+    });
+  };
+
+  // The SLA notice opens the unclaimed list on the tab holding most of the late requests
+  const showLate = () => {
+    const tab = Object.entries(sla.byTab).sort((x, y) => y[1] - x[1])[0]?.[0];
+    if (tab) setActiveTab(tab);
+    setView('unclaimed');
+    setSearchQuery('');
   };
 
   // Generate customized WhatsApp text based on stream without false promises or fake data
@@ -536,8 +534,15 @@ export default function CrmInboxPanel({
       : `Hello ${name}, regarding your inquiry on 1Line...`;
   };
 
-  const totalNew = unhandledCounts[activeTab] || 0;
-  const hasFilters = stageFilter !== 'all' || searchQuery.trim() !== '';
+  const totalNew = (categorized[activeTab] || []).filter((l) => isInboxActive(l) && isLeadUnclaimed(l)).length;
+  const hasFilters = view !== 'all' || searchQuery.trim() !== '';
+  const assigneeOptions = [
+    { value: '__none__', label: isAr ? 'مش مستلم (يرجع للكل)' : 'Nobody (back to unclaimed)' },
+    ...assignees.map((m) => ({
+      value: m.uid || `name:${m.name}`,
+      label: `${m.name || m.email}${m.desk ? ` · ${m.desk}` : ''}`
+    }))
+  ];
 
   return (
     <MotionRoot>
@@ -548,21 +553,22 @@ export default function CrmInboxPanel({
         />
 
         {/* Managers only: unclaimed requests older than the response target */}
-        {isSuperAdmin && slaBreaches.length > 0 && (
+        {isSuperAdmin && sla.count > 0 && (
           <div className="crm-inbox__notice" role="status">
             <AlertTriangle size={16} aria-hidden="true" />
-            <span>
+            <span className="crm-inbox__notice-text">
               {isAr
-                ? `${formatArabicPlural(slaBreaches.length, 'طلب', 'طلبان', 'طلبات', 'طلباً')} مستنية استلام من أكتر من ${slaMinutes} دقيقة`
-                : `${slaBreaches.length} requests unclaimed for over ${slaMinutes} minutes`}
+                ? `${requestsCount(sla.count)} مستنيين حد يستلمهم (الهدف ${slaMinutes} دقيقة) · أقدمهم ${ageLabel(sla.oldestMs)}`
+                : `${requestsCount(sla.count, false)} unclaimed past the ${slaMinutes}-minute target · oldest ${ageLabel(sla.oldestMs, false)}`}
             </span>
+            <Button variant="secondary" size="sm" onClick={showLate}>{isAr ? 'اعرضهم' : 'Show them'}</Button>
           </div>
         )}
 
         <Tabs
           label={isAr ? 'نوع الطلب' : 'Request type'}
           value={activeTab}
-          onChange={(id) => { setActiveTab(id); setStageFilter('all'); }}
+          onChange={(id) => setActiveTab(id)}
           items={tabsList.map((t) => {
             const IconComp = t.icon;
             return { id: t.id, label: isAr ? t.label_ar : t.label_en, icon: <IconComp size={16} aria-hidden="true" />, count: t.unhandled || null };
@@ -593,13 +599,10 @@ export default function CrmInboxPanel({
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </label>
-          <div className="crm-inbox__chips" role="group" aria-label={isAr ? 'المرحلة' : 'Stage'}>
-            <Chip pressed={stageFilter === 'all'} count={stageCounts.all} onClick={() => setStageFilter('all')}>
-              {isAr ? 'الكل' : 'All'}
-            </Chip>
-            {STAGES.map((s) => (
-              <Chip key={s.id} pressed={stageFilter === s.id} count={stageCounts[s.id]} onClick={() => setStageFilter(s.id)}>
-                {isAr ? s.label_ar : s.label_en}
+          <div className="crm-inbox__chips" role="group" aria-label={isAr ? 'عرض' : 'Show'}>
+            {INBOX_VIEWS.map((v) => (
+              <Chip key={v.id} pressed={view === v.id} count={viewCounts[v.id]} onClick={() => setView(v.id)}>
+                {isAr ? v.label_ar : v.label_en}
               </Chip>
             ))}
           </div>
@@ -607,31 +610,38 @@ export default function CrmInboxPanel({
 
         <p className="crm-inbox__summary">
           {isAr
-            ? `${currentItems.length} طلب${totalNew ? ` · ${totalNew} مستني استلام` : ''}`
-            : `${currentItems.length} requests${totalNew ? ` · ${totalNew} unclaimed` : ''}`}
+            ? `${requestsCount(currentItems.length)}${totalNew ? ` · ${totalNew} مش مستلم` : ''}`
+            : `${requestsCount(currentItems.length, false)}${totalNew ? ` · ${totalNew} unclaimed` : ''}`}
         </p>
 
         {currentItems.length === 0 ? (
           <EmptyState
-            title={hasFilters ? (isAr ? 'مفيش طلبات بالفلتر ده' : 'No requests match') : (isAr ? 'مفيش طلبات هنا دلوقتي' : 'Nothing here right now')}
-            description={hasFilters ? (isAr ? 'جرّب تشيل البحث أو تختار مرحلة تانية.' : 'Clear the search or pick another stage.') : (isAr ? 'أول ما يوصل طلب جديد هيظهر هنا.' : 'New requests show up here as they arrive.')}
+            title={view === 'todo' && !searchQuery.trim() ? (isAr ? 'مفيش طلبات مستنية حد هنا' : 'Nothing waiting here') : hasFilters ? (isAr ? 'مفيش طلبات بالفلتر ده' : 'No requests match') : (isAr ? 'مفيش طلبات هنا دلوقتي' : 'Nothing here right now')}
+            description={hasFilters ? (isAr ? 'الطلبات اللي اتعاملت معاها موجودة في «الكل».' : 'Requests already handled are under All.') : (isAr ? 'أول ما يوصل طلب جديد هيظهر هنا.' : 'New requests show up here as they arrive.')}
             action={hasFilters ? (
-              <Button variant="secondary" size="sm" onClick={() => { setSearchQuery(''); setStageFilter('all'); }}>
-                {isAr ? 'امسح الفلاتر' : 'Clear filters'}
+              <Button variant="secondary" size="sm" onClick={() => { setSearchQuery(''); setView('all'); }}>
+                {isAr ? 'اعرض الكل' : 'Show all'}
               </Button>
             ) : null}
           />
         ) : (
           <ul className="crm-inbox__list">
-            {currentItems.map((lead) => {
-              const isClaimedByMe = isLeadClaimedByMe(lead, currentUser, currentStaffName);
+            {currentItems.slice(0, shown).map((lead) => {
+              const isClaimedByMe = isLeadClaimedByMe(lead, myUid, currentStaffName);
               const isUnclaimed = isLeadUnclaimed(lead);
               const ownerDisplay = getLeadOwnerDisplay(lead, isAr);
-              const cleanPhone = (lead.whatsapp || lead.phone || '').replace(/[^0-9]/g, '');
+              const waPhone = formatWhatsAppPhone(lead.whatsapp || lead.phone || '');
               const facts = getLeadFacts(lead, activeTab, isAr);
               const images = lead.details?.images || [];
-              const notes = lead.notes ? cleanNotes(lead.notes) : '';
-              const when = formatReceived(lead, currentTime, isAr);
+              // CRM log lines ("[09:19 ص] تم تحديث المرحلة…") are split off before the client's text is tidied
+              const { client: rawNotes, log } = splitNotes(lead.notes || '');
+              const notes = rawNotes ? cleanNotes(rawNotes) : '';
+              const got = receivedMs(lead);
+              const when = formatReceived(got, currentTime, isAr);
+              const age = Number.isFinite(got) ? ageLabel(currentTime - got, isAr) : '';
+              const followUp = receivedMs({ createdAt: lead.nextFollowUpAt });
+              const followLate = Number.isFinite(followUp) && followUp < new Date(currentTime).setHours(0, 0, 0, 0);
+              const inboxStage = isInboxStage(lead.status);
 
               return (
                 <li key={lead.id}>
@@ -648,9 +658,14 @@ export default function CrmInboxPanel({
                             </bdi>
                           </span>
                           {when && (
-                            <span>
+                            <span title={isAr ? 'وصل' : 'Received'}>
                               <Clock size={14} aria-hidden="true" />
-                              {when}
+                              {when}{age ? ` · ${age}` : ''}
+                            </span>
+                          )}
+                          {Number.isFinite(followUp) && (
+                            <span className={cx(followLate && 'is-late')}>
+                              {isAr ? `المتابعة: ${formatReceived(followUp, currentTime, isAr)}${followLate ? ' (فات ميعادها)' : ''}` : `Follow-up: ${formatReceived(followUp, currentTime, isAr)}${followLate ? ' (late)' : ''}`}
                             </span>
                           )}
                         </p>
@@ -661,19 +676,25 @@ export default function CrmInboxPanel({
                             {isAr ? 'استلم الطلب' : 'Claim'}
                           </Button>
                         ) : (
-                          <>
-                            <Badge tone={isClaimedByMe ? 'success' : 'neutral'} icon={<Lock size={12} aria-hidden="true" />}>
-                              {isClaimedByMe ? (isAr ? 'معاك' : 'Yours') : (isAr ? `مع ${ownerDisplay}` : `With ${ownerDisplay}`)}
-                            </Badge>
-                            {isSuperAdmin && (
-                              <IconButton
-                                size="sm"
-                                label={isAr ? 'تحويل لموظف تاني' : 'Reassign'}
-                                icon={<RotateCcw size={16} />}
-                                onClick={() => { setReassigningLeadId(lead.id); setReassignName(lead.assignedTo || ''); }}
-                              />
-                            )}
-                          </>
+                          <Badge tone={isClaimedByMe ? 'success' : 'neutral'} icon={<Lock size={12} aria-hidden="true" />}>
+                            {isClaimedByMe ? (isAr ? 'معاك' : 'Yours') : (isAr ? `مع ${ownerDisplay}` : `With ${ownerDisplay}`)}
+                          </Badge>
+                        )}
+                        {isSuperAdmin && onUpdateLead && (
+                          <IconButton
+                            size="sm"
+                            label={isAr ? 'حوّله لموظف' : 'Assign to someone'}
+                            icon={<UserCog size={16} aria-hidden="true" />}
+                            onClick={() => openReassign(lead)}
+                          />
+                        )}
+                        {canEditLeads && onUpdateLead && (
+                          <IconButton
+                            size="sm"
+                            label={isAr ? 'إخفاء من الوارد (أرشفة، مش مسح)' : 'Archive (hide, not delete)'}
+                            icon={<Archive size={16} aria-hidden="true" />}
+                            onClick={() => handleArchive(lead)}
+                          />
                         )}
                       </div>
                     </div>
@@ -681,15 +702,17 @@ export default function CrmInboxPanel({
                     {reassigningLeadId === lead.id && (
                       <form
                         className="crm-inbox-item__reassign"
-                        onSubmit={(e) => { e.preventDefault(); handleExecuteReassign(lead.id); }}
+                        onSubmit={(e) => { e.preventDefault(); handleExecuteReassign(lead); }}
                       >
-                        <Input
-                          label={isAr ? 'تحويل المتابعة إلى' : 'Assign to'}
-                          placeholder={isAr ? 'اسم الموظف أو الفريق' : 'Agent or team'}
-                          value={reassignName}
-                          onChange={(e) => setReassignName(e.target.value)}
+                        <Select
+                          label={isAr ? 'حوّل المتابعة لـ' : 'Assign to'}
+                          placeholder={isAr ? 'اختار موظف' : 'Pick a person'}
+                          hint={team === null && !assignees.length ? (isAr ? 'قايمة الفريق مش متاحة دلوقتي.' : 'The team list is unavailable.') : (team === null ? (isAr ? 'دي الأسماء اللي ماسكة طلبات؛ قايمة الفريق كاملة محتاجة إعداد السيرفر.' : 'People already holding requests; the full team list needs the server key.') : undefined)}
+                          options={assigneeOptions}
+                          value={reassignTo}
+                          onChange={(e) => setReassignTo(e.target.value)}
                         />
-                        <Button type="submit" size="sm" disabled={!reassignName.trim()}>{isAr ? 'حوّل' : 'Assign'}</Button>
+                        <Button type="submit" size="sm" disabled={!reassignTo}>{isAr ? 'حوّل' : 'Assign'}</Button>
                         <Button variant="ghost" size="sm" onClick={() => setReassigningLeadId(null)}>{isAr ? 'إلغاء' : 'Cancel'}</Button>
                       </form>
                     )}
@@ -697,7 +720,7 @@ export default function CrmInboxPanel({
                     {facts.length > 0 && (
                       <dl className="crm-inbox-item__facts">
                         {facts.map((f) => (
-                          <div key={f.label} className={cx(f.strong && 'is-strong')}>
+                          <div key={f.label} className={cx(f.strong && 'is-strong', f.missing && 'is-missing')}>
                             <dt>{f.label}</dt>
                             <dd>{f.value}</dd>
                           </div>
@@ -706,6 +729,15 @@ export default function CrmInboxPanel({
                     )}
 
                     {notes && <p className="crm-inbox-item__notes">{notes}</p>}
+
+                    {log.length > 0 && (
+                      <details className="crm-inbox-item__log">
+                        <summary>{isAr ? `سجل النظام (${log.length})` : `CRM log (${log.length})`}</summary>
+                        <ul>
+                          {log.map((line, i) => <li key={i}>{line}</li>)}
+                        </ul>
+                      </details>
+                    )}
 
                     {images.length > 0 && (
                       <div className="crm-inbox-item__photos">
@@ -717,16 +749,23 @@ export default function CrmInboxPanel({
                     )}
 
                     <div className="crm-inbox-item__foot">
-                      <SegmentedControl
-                        label={isAr ? 'مرحلة المتابعة' : 'Follow-up stage'}
-                        value={lead.status && STAGES.some((s) => s.id === lead.status) ? lead.status : 'new'}
-                        onChange={(id) => handleSetStage(lead, id)}
-                        options={STAGES.map((s) => ({ value: s.id, label: isAr ? s.label_ar : s.label_en }))}
-                      />
+                      {inboxStage ? (
+                        <SegmentedControl
+                          label={isAr ? 'مرحلة المتابعة' : 'Follow-up stage'}
+                          value={lead.status || 'new'}
+                          onChange={(id) => handleSetStage(lead, id)}
+                          options={STAGES.map((st) => ({ value: st.id, label: isAr ? st.label_ar : st.label_en }))}
+                        />
+                      ) : (
+                        <span className="crm-inbox-item__stage">
+                          <Badge tone="info">{pipelineStageLabel(lead.status, isAr)}</Badge>
+                          <span>{isAr ? 'المرحلة دي بتتغيّر من مسار الصفقات' : 'Change this stage from the pipeline'}</span>
+                        </span>
+                      )}
                       <div className="crm-inbox-item__actions">
-                        {canSeePhone && cleanPhone && (
+                        {canSeePhone && waPhone && (
                           <a
-                            href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(getWhatsAppMessage(lead))}`}
+                            href={`https://wa.me/${waPhone}?text=${encodeURIComponent(getWhatsAppMessage(lead))}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="ui-btn ui-btn--secondary ui-btn--sm"
@@ -758,6 +797,13 @@ export default function CrmInboxPanel({
               );
             })}
           </ul>
+        )}
+        {currentItems.length > shown && (
+          <div className="crm-inbox__more">
+            <Button variant="secondary" size="sm" onClick={() => setPaging({ key: listKey, n: shown + PAGE_SIZE })}>
+              {isAr ? `عرض ${Math.min(PAGE_SIZE, currentItems.length - shown)} كمان (فاضل ${currentItems.length - shown})` : `Show ${Math.min(PAGE_SIZE, currentItems.length - shown)} more`}
+            </Button>
+          </div>
         )}
         </>)}
       </div>
