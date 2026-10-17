@@ -1,4 +1,5 @@
 import { compressImage } from '../utils/imageUploadService.js';
+import { watermarkedName } from '../utils/watermark.js';
 
 // Owners' photos on /sell: shrunk in the browser, then sent straight to Vercel Blob through
 // /api/seller-upload, so the lead keeps only URLs. If the route is missing (local dev) or refuses,
@@ -20,7 +21,7 @@ const getUploadMode = async () => {
 };
 
 const inlineFallback = async (file) => {
-  const small = await compressImage(file, { maxWidth: 1024, maxHeight: 1024, quality: 0.62 });
+  const small = await compressImage(file, { maxWidth: 1024, maxHeight: 1024, quality: 0.62, watermark: true });
   return { url: small.dataUrl, inline: true, bytes: small.dataUrl.length };
 };
 
@@ -29,14 +30,15 @@ const inlineFallback = async (file) => {
  * Throws only when the file is not a readable image.
  */
 export async function uploadSellerPhoto(file) {
-  const compressed = await compressImage(file, { maxWidth: 1600, maxHeight: 1600, quality: 0.8 });
+  const compressed = await compressImage(file, { maxWidth: 1600, maxHeight: 1600, quality: 0.8, watermark: true });
   const mode = import.meta.env.DEV ? null : await getUploadMode();
   if (!mode) return inlineFallback(file);
 
   try {
     const blobClient = await import('@vercel/blob/client');
     const upload = mode === 'token' ? blobClient.upload : blobClient.uploadPresigned;
-    const name = `seller/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+    const raw = `seller/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+    const name = compressed.watermarked ? watermarkedName(raw) : raw;
     const blob = await upload(name, new File([compressed.blob], 'photo.jpg', { type: 'image/jpeg' }), {
       access: 'public',
       handleUploadUrl: ROUTE,

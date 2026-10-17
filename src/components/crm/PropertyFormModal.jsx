@@ -2,6 +2,7 @@ import { Plus, Sparkles, Image as ImageIcon, Save, Upload, Star, MapPin, Loader2
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { toDayInput, addDays } from '../../utils/featuredSlots';
 import PropertyExtrasEditor from './PropertyExtrasEditor';
+import { AVAILABILITY_OPTIONS, REVIEW_OPTIONS, reviewState } from '../../utils/listingBadges';
 
 export default function PropertyFormModal({
   areas,
@@ -231,6 +232,29 @@ export default function PropertyFormModal({
                   <option value="hidden">⚪ {isAr ? 'مخفي مؤقتاً (مسودة)' : 'Hidden / Draft'}</option>
                   <option value="under_negotiation">🟡 {isAr ? 'تحت التفاوض / حجز مبدئي' : 'Under Negotiation'}</option>
                   <option value="sold">🔴 {isAr ? 'تم البيع بنجاح' : 'Sold'}</option>
+                </select>
+              </div>
+
+              {/* Badges visitors see on the card and unit page (utils/listingBadges.js) */}
+              <div className="form-group-item">
+                <label htmlFor="pf-availability-badge">{isAr ? 'شارة الحالة على الموقع' : 'Availability badge'}</label>
+                <select
+                  id="pf-availability-badge"
+                  value={form.availabilityBadge || 'auto'}
+                  onChange={(e) => setForm({ ...form, availabilityBadge: e.target.value })}
+                >
+                  {AVAILABILITY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{isAr ? o.ar : o.en}</option>)}
+                </select>
+              </div>
+
+              <div className="form-group-item">
+                <label htmlFor="pf-review-badge">{isAr ? 'شارة المراجعة' : 'Review badge'}</label>
+                <select
+                  id="pf-review-badge"
+                  value={reviewState(form)}
+                  onChange={(e) => setForm({ ...form, reviewBadge: e.target.value })}
+                >
+                  {REVIEW_OPTIONS.map((o) => <option key={o.value} value={o.value}>{isAr ? o.ar : o.en}</option>)}
                 </select>
               </div>
 

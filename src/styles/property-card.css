@@ -155,6 +155,17 @@
 .pcx-chip--verified svg { color: #D9B97E; }
 .pcx-chip--deal { background: linear-gradient(100deg, #EFD9A3, #C5A059); color: #0B1B32; border-color: transparent; }
 .pcx-chip--glass { background: rgba(255, 255, 255, 0.16); }
+/* Availability (متاح / قيد التفاوض / تم البيع): a coloured dot, same glass chip as the rest */
+.pcx-avail-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: #34D399; box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.25); }
+.pcx-chip--avail.is-negotiating .pcx-avail-dot { background: #FBBF24; box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.25); }
+.pcx-chip--avail.is-sold { background: rgba(127, 29, 29, 0.78); border-color: rgba(254, 202, 202, 0.4); }
+.pcx-chip--avail.is-sold .pcx-avail-dot { background: #FCA5A5; box-shadow: none; }
+/* Review: in review / not reviewed stay quiet, only "approved" gets the gold */
+.pcx-chip--in-review svg { color: #FCD34D; }
+.pcx-chip--not-reviewed { background: rgba(11, 27, 50, 0.45); color: #E2E8F0; }
+.pcx-chip--not-reviewed svg { color: #CBD5E1; }
+/* Sold: the photo steps back so available units lead the grid */
+.pcx--sold .pcx-media img { filter: grayscale(0.55) brightness(0.92); }
 /* Limited-time offer (CRM → العروض) */
 .pcx-chip--offer { background: #C2410C; color: #FFF7ED; border-color: rgba(255, 237, 213, 0.55); font-weight: 800; }
 .pcx--offer { box-shadow: 0 0 0 1.5px rgba(194, 65, 12, 0.55), var(--pcx-shadow, 0 8px 24px rgba(11, 27, 50, 0.08)); }
