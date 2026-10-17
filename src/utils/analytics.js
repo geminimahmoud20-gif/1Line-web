@@ -1,7 +1,7 @@
 // =============================================================
 //  Visitor analytics → /api/track (server; see api/_track-core.js for what is kept).
 //
-//  • Events are queued and sent in small batches (every few seconds, and with sendBeacon when
+//  • Events are queued and sent in batches (every 30 seconds, and with sendBeacon when
 //    the tab is hidden or closed) — no request per click.
 //  • With analytics consent (ConsentBanner) the batch carries a random visitor id + session id,
 //    so the CRM can see one visitor's interests over time and link them to their request.
@@ -19,8 +19,10 @@ const SESSION_KEY = 'oneline_an_session';
 const STAGES_KEY = 'oneline_an_stages';
 const SOURCE_KEY = 'oneline_an_source';
 const SESSION_IDLE_MS = 30 * 60 * 1000;
-const FLUSH_DELAY_MS = 5000;
-const FLUSH_SIZE = 20;
+// Each flush costs about 5 Firestore writes on the server, and the free plan allows 20,000 a day:
+// batching every 30 s (and on leaving the page) keeps a visit to a handful of flushes.
+const FLUSH_DELAY_MS = 30_000;
+const FLUSH_SIZE = 40;
 
 const isBrowser = typeof window !== 'undefined';
 const safe = (fn, fallback) => { try { return fn(); } catch { return fallback; } };
