@@ -455,7 +455,7 @@
   padding-bottom: 12px;
   max-width: 100%;
 }
-.kanban-stage-column { min-width: 280px !important; flex: 0 0 280px !important; }
+/* Column widths come from the board's grid tracks (KanbanPipeline): normal, compact or collapsed */
 
 /* ── Sidebar: flat 1Line navy, gold marks the active item only (tokens from src/styles/tokens.css) ── */
 .crm-sidebar {
@@ -657,7 +657,7 @@
 @media (max-width: 768px) {
   .crm-content-area { padding: 16px 12px 88px; }
   .crm-table-container { padding: 16px; border-radius: 14px !important; }
-  .kanban-stage-column { min-width: 84vw !important; flex-basis: 84vw !important; }
+  .kanban-stage-column:not(.is-collapsed) { min-width: 84vw !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {

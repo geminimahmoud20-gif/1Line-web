@@ -19,3 +19,32 @@
 @media (max-width: 639px) {
   .crm-kanban__search { flex: 1 1 100%; }
 }
+
+/* Board layout controls: compact view, collapse/expand all, top scrollbar, "show more" per column */
+.crm-kanban__layout { display: flex; gap: var(--ui-s-2); flex-wrap: wrap; }
+.crm-kanban__topscroll {
+  overflow-x: auto; overflow-y: hidden; height: 14px; margin-bottom: var(--ui-s-2);
+  scrollbar-width: thin;
+}
+.crm-kanban__topscroll > div { height: 1px; }
+.kanban-stage-more {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--ui-s-1);
+  width: 100%; min-height: 36px; padding: 0 var(--ui-s-3);
+  background: var(--ui-surface); border: 1px dashed var(--ui-line-strong); border-radius: var(--ui-r-md);
+  font: var(--ui-fw-semibold) var(--ui-fs-2) / 1 var(--ui-font); color: var(--ui-text-2); cursor: pointer;
+}
+.kanban-stage-more:hover { border-style: solid; color: var(--ui-text); }
+.kanban-stage-more:focus-visible { outline: none; box-shadow: var(--ui-sh-focus); }
+
+.kanban-board-scroll-container.is-compact { gap: var(--ui-s-2); }
+.kanban-board-scroll-container.is-compact .kanban-stage-column { padding: var(--ui-s-2); min-height: 0; }
+.kanban-board-scroll-container.is-compact .kanban-cards-container { gap: var(--ui-s-2); }
+.kanban-board-scroll-container.is-compact .kb-card { padding: var(--ui-s-2); }
+.kanban-board-scroll-container.is-compact .kb-meta,
+.kanban-board-scroll-container.is-compact .kb-flag:not(.kb-flag--danger),
+.kanban-board-scroll-container.is-compact .kanban-stage-volume-sub { display: none; }
+.kanban-board-scroll-container > .kanban-stage-column { min-width: 0; }
+.kanban-board-scroll-container.is-compact .kb-actions { flex-wrap: wrap; }
+.crm-kanban__topscroll::-webkit-scrollbar { height: 10px; }
+.crm-kanban__topscroll::-webkit-scrollbar-thumb { background: var(--ui-line-strong); border-radius: 999px; }
+.crm-kanban__topscroll::-webkit-scrollbar-track { background: var(--ui-surface-2, transparent); border-radius: 999px; }
