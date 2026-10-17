@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { ChevronDown, ChevronUp, Columns3, Rows3, MessageSquare, Calendar, Car, Clock, Edit3, Trash2, ChevronRight, ChevronLeft, AlertTriangle, Search, Zap, MoreHorizontal, ShieldAlert, TrendingUp, Users } from 'lucide-react';
+import { ChevronDown, ChevronUp, Columns3, Rows3, MessageSquare, Calendar, Car, Clock, Edit3, Trash2, ChevronRight, ChevronLeft, AlertTriangle, Search, FolderOpen, MoreHorizontal, ShieldAlert, TrendingUp, Users, Archive, Hourglass } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
 import StageDeliverableModal from './StageDeliverableModal';
 import './crm-kanban.css';
@@ -10,15 +10,16 @@ import { validateStageTransition, HIGH_VALUE_DEAL_THRESHOLD } from '../../servic
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 import { PageHeader, KpiRow, KpiTile, Chip } from '../ui';
 import './kanban-redesign.css';
+import { stageSinceMs, isStalled, isNewOverdue, daysLabel, shortMoney, STALE_DAYS } from '../../utils/pipelineCards';
 
 const CARDS_PER_STAGE = 5;
 
 const PIPELINE_STAGES = [
   { id: 'new', title_ar: 'طلبات جديدة', title_en: 'New Inquiries', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)' },
-  { id: 'contacted', title_ar: 'تم التواصل الأولي', title_en: 'Contacted', color: 'var(--crm-violet)', bg: 'var(--crm-violet-soft)' },
-  { id: 'site_visit', title_ar: 'معاينات مجدولة', title_en: 'Site Visits', color: 'var(--crm-accent-text)', bg: 'var(--crm-warn-soft)' },
-  { id: 'negotiating', title_ar: 'قيد التفاوض والتقييم', title_en: 'Negotiation', color: 'var(--crm-warn)', bg: 'var(--crm-warn-soft)' },
-  { id: 'closing', title_ar: 'توقيع عقود وحجز', title_en: 'Closing / Deposit', color: 'var(--crm-positive)', bg: 'var(--crm-positive-soft)' },
+  { id: 'contacted', title_ar: 'اتصلنا', title_en: 'Contacted', color: 'var(--crm-violet)', bg: 'var(--crm-violet-soft)' },
+  { id: 'site_visit', title_ar: 'معاينات', title_en: 'Site Visits', color: 'var(--crm-accent-text)', bg: 'var(--crm-warn-soft)' },
+  { id: 'negotiating', title_ar: 'تفاوض', title_en: 'Negotiation', color: 'var(--crm-warn)', bg: 'var(--crm-warn-soft)' },
+  { id: 'closing', title_ar: 'توقيع وحجز', title_en: 'Closing / Deposit', color: 'var(--crm-positive)', bg: 'var(--crm-positive-soft)' },
   { id: 'closed', title_ar: 'صفقات ناجحة', title_en: 'Closed Won', color: 'var(--crm-positive)', bg: 'var(--crm-positive-soft)' }
 ];
 
@@ -158,29 +159,6 @@ export default function KanbanPipeline({
     return /^[a-z0-9_-]+$/i.test(String(areaKey)) ? (isAr ? 'سوهاج' : 'Sohag') : areaKey;
   };
 
-  // Format time ago
-  const formatTimeAgo = (timestamp) => {
-    if (!timestamp) return isAr ? 'اليوم' : 'Today';
-    try {
-      // Firestore Timestamps (createdAt on imported and staff-added leads) are not Dates: new Date(ts) gave NaN
-      const ms = typeof timestamp?.toMillis === 'function' ? timestamp.toMillis()
-        : typeof timestamp?.seconds === 'number' ? timestamp.seconds * 1000
-        : new Date(timestamp).getTime();
-      if (!Number.isFinite(ms)) return isAr ? 'مؤخراً' : 'Recent';
-      // eslint-disable-next-line react-hooks/purity -- "time ago" label must use the current clock
-      const diffMs = Date.now() - ms;
-      const diffMins = Math.floor(diffMs / 60000);
-      if (diffMins < 2) return isAr ? 'الآن' : 'Just now';
-      if (diffMins < 60) return isAr ? `منذ ${diffMins} دقيقة` : `${diffMins}m ago`;
-      const diffHours = Math.floor(diffMins / 60);
-      if (diffHours < 24) return isAr ? `منذ ${diffHours} ساعة` : `${diffHours}h ago`;
-      const diffDays = Math.floor(diffHours / 24);
-      return isAr ? `منذ ${diffDays} يوم` : `${diffDays}d ago`;
-    } catch {
-      return isAr ? 'مؤخراً' : 'Recent';
-    }
-  };
-
   // Extract lead budget
   const getLeadBudget = (lead) => {
     const b = lead.details?.budget || lead.budget || lead.details?.expectedPrice || lead.expectedPrice;
@@ -225,6 +203,8 @@ export default function KanbanPipeline({
   }, []);
   const filteredLeads = useMemo(() => {
     return leads.filter(l => {
+      // Archived (hidden test or duplicate) requests stay out of the board
+      if (l.isArchived) return false;
       if (filterType !== 'all' && l.type !== filterType) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.trim().toLowerCase();
@@ -281,9 +261,7 @@ export default function KanbanPipeline({
       const b = getLeadBudget(l);
       totalVol += b;
       if (b >= HIGH_VALUE_DEAL_THRESHOLD) highValue++;
-      const created = l.createdAt?.toMillis ? l.createdAt.toMillis() : (typeof l.createdAt?.seconds === 'number' ? l.createdAt.seconds * 1000 : new Date(l.createdAt || l.timestamp || NaN).getTime());
-      const isOverdue = (l.status === 'new' || !l.status) && Number.isFinite(created) && (now - created > 24 * 60 * 60 * 1000);
-      if (isOverdue) overdue++;
+      if (isNewOverdue(l, now)) overdue++;
     });
     return {
       totalVol,
@@ -470,6 +448,17 @@ export default function KanbanPipeline({
     }
   };
 
+  // Test or duplicate deals: archived (hidden here and in the inbox, restorable from the leads table)
+  const handleArchive = (lead) => {
+    if (!onUpdateLead) return;
+    onUpdateLead(lead.id, { isArchived: true, lastActivityAt: new Date().toISOString() });
+    triggerToast?.(isAr ? 'اتنقل للأرشيف واتخفى من المسار' : 'Archived', 'info', {
+      onUndo: () => onUpdateLead(lead.id, { isArchived: false, lastActivityAt: new Date().toISOString() }),
+      undoLabel: isAr ? 'تراجع' : 'Undo',
+      duration: 6000
+    });
+  };
+
   const onWhatsAppClick = (lead) => {
     const cleanPhone = (lead.whatsapp || lead.phone || '').replace(/[^0-9]/g, '');
     const propTitle = getLocalizedPropertyType(lead.propertyType || lead.details?.propertyType);
@@ -526,7 +515,7 @@ export default function KanbanPipeline({
 
       <div className="crm-kanban__toolbar">
         <div className="crm-kanban__views" role="group" aria-label={isAr ? 'نوع العميل' : 'Client type'}>
-          <Chip pressed={filterType === 'all'} count={leads.length} onClick={() => setFilterType('all')}>{isAr ? 'الكل' : 'All'}</Chip>
+          <Chip pressed={filterType === 'all'} count={leads.filter((l) => !l.isArchived).length} onClick={() => setFilterType('all')}>{isAr ? 'الكل' : 'All'}</Chip>
           <Chip pressed={filterType === 'buyer'} onClick={() => setFilterType('buyer')}>{isAr ? 'مشترين' : 'Buyers'}</Chip>
           <Chip pressed={filterType === 'seller'} onClick={() => setFilterType('seller')}>{isAr ? 'بايعين' : 'Sellers'}</Chip>
           <Chip pressed={filterType === 'investor'} onClick={() => setFilterType('investor')}>{isAr ? 'مستثمرين' : 'Investors'}</Chip>
@@ -568,7 +557,13 @@ export default function KanbanPipeline({
         onScroll={() => syncScroll(boardRef.current, topBarRef.current)}
         style={{
           display: 'grid',
-          gridTemplateColumns: PIPELINE_STAGES.map(s => collapsedStages.includes(s.id) ? '54px' : (compact ? 'minmax(160px, 1fr)' : 'minmax(280px, 1fr)')).join(' ')
+          // Empty columns stay narrow so the space goes to the stages that hold deals
+          gridTemplateColumns: PIPELINE_STAGES.map((s) => {
+            if (collapsedStages.includes(s.id)) return '54px';
+            const empty = !(leadsByStage[s.id] || []).length;
+            if (compact) return empty ? 'minmax(110px, 0.5fr)' : 'minmax(170px, 1fr)';
+            return empty ? 'minmax(150px, 0.5fr)' : 'minmax(280px, 1fr)';
+          }).join(' ')
         }}
       >
         {PIPELINE_STAGES.map((stage) => {
@@ -577,7 +572,7 @@ export default function KanbanPipeline({
           const isOpen = openStages.includes(stage.id);
           const stageLeads = isOpen ? allStageLeads : allStageLeads.slice(0, CARDS_PER_STAGE);
           const hiddenCount = allStageLeads.length - stageLeads.length;
-          const { count, totalVolume, budgetedCount, unbudgetedCount } = stageStatsMap[stage.id] || { count: 0, totalVolume: 0, budgetedCount: 0, unbudgetedCount: 0 };
+          const { count, totalVolume, unbudgetedCount } = stageStatsMap[stage.id] || { count: 0, totalVolume: 0, unbudgetedCount: 0 };
 
           if (isCollapsed) {
             return (
@@ -642,19 +637,20 @@ export default function KanbanPipeline({
               <div className="kanban-stage-header">
                 <div className="kanban-stage-title-wrap">
                   <h2 className="kanban-stage-title">{isAr ? stage.title_ar : stage.title_en}</h2>
+                  {/* Total value of the stage; how many deals still have no budget */}
                   <span className="kanban-stage-volume-sub">
                     {totalVolume > 0 ? (
                       <>
-                        <bdi>{(totalVolume / 1000000).toFixed(1)}</bdi> {isAr ? 'مليون ج.م' : 'M EGP'}
+                        <bdi>{shortMoney(totalVolume, isAr)}</bdi>{isAr ? ' ج.م' : ' EGP'}
                         {unbudgetedCount > 0 && (
-                          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)', marginInlineStart: '4px' }}>
-                            ({budgetedCount} {isAr ? 'محددة' : 'set'} • {unbudgetedCount} {isAr ? 'قيد التحديد' : 'pending'})
+                          <span className="kanban-stage-volume-note">
+                            {isAr ? ` · ${unbudgetedCount} من غير ميزانية` : ` · ${unbudgetedCount} without budget`}
                           </span>
                         )}
                       </>
                     ) : (
-                      <span style={{ color: 'var(--crm-faint)' }}>
-                        {count > 0 ? (isAr ? 'الميزانيات قيد التحديد' : 'Budgets pending') : (isAr ? 'لا توجد صفقات' : 'No deals')}
+                      <span className="kanban-stage-volume-note">
+                        {count > 0 ? (isAr ? 'من غير ميزانيات' : 'No budgets yet') : (isAr ? 'فاضية' : 'Empty')}
                       </span>
                     )}
                   </span>
@@ -692,11 +688,11 @@ export default function KanbanPipeline({
                     const propType = getLocalizedPropertyType(propTypeRaw);
                     const area = getLocalizedArea(areaRaw);
                     const typeBadge = getLeadTypeBadge(lead);
-                    const timeAgoText = formatTimeAgo(lead.timestamp || lead.createdAt);
-
-                    // 🚨 Check if inquiry is pending contact > 24 hours
-                    const isOverdue = (lead.status === 'new' || !lead.status) && 
-                      lead.timestamp && (Date.now() - new Date(lead.timestamp).getTime() > 24 * 60 * 60 * 1000);
+                    const sinceMs = stageSinceMs(lead);
+                    const inStage = Number.isFinite(sinceMs) ? daysLabel(now - sinceMs, isAr) : '';
+                    const stalled = isStalled(lead, now);
+                    // New request nobody called within 24 hours (createdAt or timestamp, whichever it has)
+                    const isOverdue = isNewOverdue(lead, now);
 
                     const stageIndex = PIPELINE_STAGES.findIndex(s => s.id === (lead.status || 'new'));
                     const closeMenu = (e) => e.currentTarget.closest('details')?.removeAttribute('open');
@@ -720,10 +716,18 @@ export default function KanbanPipeline({
                               title={isAr ? 'صفقة كبرى (≥ 5 مليون ج) تتطلب اعتماد المؤسس' : 'High value (5M+) requires Founder sign-off'}
                             >
                               <ShieldAlert size={11} aria-hidden="true" />
-                              {isAr ? 'صفقة كبرى (5M+)' : '5M+ Deal'}
+                              {isAr ? 'صفقة كبرى +5 مليون' : '5M+ deal'}
                             </span>
                           )}
-                          <span className="kb-time"><Clock size={11} aria-hidden="true" />{timeAgoText}</span>
+                          {inStage && (
+                            <span
+                              className={`kb-time${stalled ? ' is-stalled' : ''}`}
+                              title={isAr ? `في المرحلة دي ${inStage}${STALE_DAYS[stage.id] ? ` (الحد ${STALE_DAYS[stage.id]} أيام)` : ''}` : `In this stage ${inStage}`}
+                            >
+                              {stalled ? <Hourglass size={11} aria-hidden="true" /> : <Clock size={11} aria-hidden="true" />}
+                              {isAr ? (inStage === 'النهارده' ? 'دخل المرحلة النهارده' : `في المرحلة ${inStage}`) : `In stage ${inStage}`}
+                            </span>
+                          )}
                         </div>
 
                         <button
@@ -743,20 +747,23 @@ export default function KanbanPipeline({
                             </>
                           )}
                           <span>{area}</span>
-                          <span aria-hidden="true">·</span><span title={leadScore(lead).reasons.join(' • ')}>{isAr ? `اهتمام ${leadScore(lead).score}%` : `${leadScore(lead).score}% score`}</span>
+                          <span aria-hidden="true" className="kb-meta-score-sep">·</span><span className="kb-meta-score" title={leadScore(lead).reasons.join(' • ')}>{isAr ? `اهتمام ${leadScore(lead).score}%` : `${leadScore(lead).score}% score`}</span>
                         </p>
 
                         <div className="kb-value">
                           {budget > 0 ? (
-                            <><bdi>{budget.toLocaleString('en-US')}</bdi><small>{isAr ? 'ج.م' : 'EGP'}</small></>
+                            <span className="kb-value-amount"><bdi>{budget.toLocaleString('en-US')}</bdi><small>{isAr ? 'ج.م' : 'EGP'}</small></span>
                           ) : (
-                            <span className="kb-value-empty">{isAr ? 'لم تُحدَّد الميزانية' : 'Budget not set'}</span>
+                            <span className="kb-value-empty">{isAr ? 'الميزانية: —' : 'Budget: —'}</span>
                           )}
-                          <bdi dir="ltr" className="kb-phone" style={{ unicodeBidi: 'isolate' }}>{formatPhoneNumber(lead.whatsapp || lead.phone) || '—'}</bdi>
+                          <bdi dir="ltr" className="kb-phone">{formatPhoneNumber(lead.whatsapp || lead.phone) || '—'}</bdi>
                         </div>
 
                         {isOverdue && (
-                          <p className="kb-flag kb-flag--danger"><AlertTriangle size={13} aria-hidden="true" />{isAr ? 'متأخر عن الاتصال أكثر من 24 ساعة' : 'Not contacted for 24h+'}</p>
+                          <p className="kb-flag kb-flag--danger"><AlertTriangle size={13} aria-hidden="true" />{isAr ? 'محدش كلّمه من أكتر من 24 ساعة' : 'Not contacted for 24h+'}</p>
+                        )}
+                        {stalled && (
+                          <p className="kb-flag kb-flag--warn"><Hourglass size={13} aria-hidden="true" />{isAr ? `راكدة: أكتر من ${STALE_DAYS[stage.id]} أيام في المرحلة` : `Stalled: over ${STALE_DAYS[stage.id]} days in stage`}</p>
                         )}
                         {lead.nextFollowUpAt && (
                           <p className="kb-flag"><Calendar size={13} aria-hidden="true" />{isAr ? 'متابعة:' : 'Follow-up:'} {new Date(lead.nextFollowUpAt).toLocaleString(isAr ? 'ar-EG-u-nu-latn' : 'en-US', { dateStyle: 'short', timeStyle: 'short' })}</p>
@@ -770,8 +777,8 @@ export default function KanbanPipeline({
                             <MessageSquare size={14} aria-hidden="true" /><span>{isAr ? 'واتساب' : 'WhatsApp'}</span>
                           </button>
                           {onOpenLead && (
-                            <button type="button" className="kb-btn" onClick={() => onOpenLead(lead)} title={isAr ? 'معاينة سريعة وتسجيل مكالمة' : 'Quick view'}>
-                              <Zap size={14} aria-hidden="true" /><span>{isAr ? 'معاينة' : 'Open'}</span>
+                            <button type="button" className="kb-btn" onClick={() => onOpenLead(lead)} title={isAr ? 'افتح ملف العميل وسجّل مكالمة' : 'Open the lead'}>
+                              <FolderOpen size={14} aria-hidden="true" /><span>{isAr ? 'فتح' : 'Open'}</span>
                             </button>
                           )}
 
@@ -780,6 +787,12 @@ export default function KanbanPipeline({
                               <MoreHorizontal size={16} aria-hidden="true" />
                             </summary>
                             <div className="kb-menu">
+                              {stageIndex < PIPELINE_STAGES.length - 1 && (
+                                <button type="button" onClick={(e) => { closeMenu(e); handleMoveToNextStage(lead); }}>
+                                  {isAr ? <ChevronLeft size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}
+                                  {isAr ? `للمرحلة اللي بعدها: ${PIPELINE_STAGES[stageIndex + 1].title_ar}` : `Next: ${PIPELINE_STAGES[stageIndex + 1].title_en}`}
+                                </button>
+                              )}
                               {/* Direct Jump To Any Stage */}
                               <div className="kb-menu-header">
                                 <span className="kb-menu-header-label">
@@ -811,6 +824,11 @@ export default function KanbanPipeline({
                               <button type="button" disabled={stageIndex <= 0} onClick={(e) => { closeMenu(e); handleMoveToPrevStage(lead); }}>
                                 {isAr ? <ChevronRight size={14} aria-hidden="true" /> : <ChevronLeft size={14} aria-hidden="true" />}{isAr ? 'إرجاع للمرحلة السابقة' : 'Previous stage'}
                               </button>
+                              {onUpdateLead && (
+                                <button type="button" onClick={(e) => { closeMenu(e); handleArchive(lead); }}>
+                                  <Archive size={14} aria-hidden="true" />{isAr ? 'أرشفة (إخفاء، مش مسح)' : 'Archive (hide)'}
+                                </button>
+                              )}
                               {onDeleteLead && (
                                 <button type="button" className="is-danger" onClick={(e) => { closeMenu(e); setLeadToDelete(lead); }}>
                                   <Trash2 size={14} aria-hidden="true" />{isAr ? 'حذف العميل' : 'Delete'}
@@ -819,16 +837,6 @@ export default function KanbanPipeline({
                             </div>
                           </details>
 
-                          <button
-                            type="button"
-                            className="kb-btn kb-btn--icon kb-next"
-                            onClick={() => handleMoveToNextStage(lead)}
-                            disabled={stageIndex >= PIPELINE_STAGES.length - 1}
-                            aria-label={isAr ? `نقل إلى: ${PIPELINE_STAGES[stageIndex + 1]?.title_ar || ''}` : `Move to: ${PIPELINE_STAGES[stageIndex + 1]?.title_en || ''}`}
-                            title={isAr ? 'نقل للمرحلة التالية' : 'Next stage'}
-                          >
-                            {isAr ? <ChevronLeft size={16} aria-hidden="true" /> : <ChevronRight size={16} aria-hidden="true" />}
-                          </button>
                         </div>
                       </article>
                     );

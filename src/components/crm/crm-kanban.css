@@ -117,6 +117,11 @@
   letter-spacing: -0.01em;
 }
 
+.kanban-stage-volume-note {
+  color: var(--crm-faint);
+  font-weight: 500;
+}
+
 .kanban-stage-volume-sub {
   font-size: var(--crm-text-xs);
   color: var(--crm-muted);
@@ -275,9 +280,10 @@
 
 .kb-value {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 5px;
+  gap: 2px 8px;
   margin-top: 2px;
   font-variant-numeric: tabular-nums;
 }
@@ -302,10 +308,16 @@
   font-style: normal;
 }
 
+.kb-value-amount { white-space: nowrap; }
+
+/* A large amount pushes the phone to its own line instead of out of the card */
 .kb-phone {
   font-size: var(--crm-text-xs);
   color: var(--crm-muted);
   font-variant-numeric: tabular-nums;
+  unicode-bidi: isolate;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .kb-flag {
@@ -329,6 +341,13 @@
 
 .kb-flag--danger svg {
   color: var(--crm-danger);
+}
+
+.kb-flag--warn,
+.kb-flag--warn svg,
+.kb-time.is-stalled {
+  color: var(--crm-warn);
+  font-weight: 600;
 }
 
 /* ── Card Action Buttons ──────────────────────────────────────── */
@@ -399,10 +418,6 @@
 .kb-btn--icon {
   width: 30px;
   padding: 0;
-}
-
-.kb-next {
-  margin-inline-start: auto;
 }
 
 .kb-more {
