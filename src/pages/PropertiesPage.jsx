@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
   LayoutGrid, 
@@ -12,7 +12,8 @@ import { FAMILY_KINDS } from '../utils/propertyInsights';
 import '../styles/expat-suite.css';
 import PropertyCard from '../components/properties/PropertyCard';
 import PropertyFilters from '../components/properties/PropertyFilters';
-import PropertyMapView from '../components/properties/PropertyMapView';
+// Leaflet (~45KB) is only needed once the visitor switches to the map view
+const PropertyMapView = lazy(() => import('../components/properties/PropertyMapView'));
 import ZeroResultsFallback from '../components/properties/ZeroResultsFallback';
 import Pagination from '../components/common/Pagination';
 import { DEMO_PROPERTIES } from '../data/demoData';
@@ -520,6 +521,7 @@ export default function PropertiesPage({
 
             {/* Sticky Map Column */}
             <div className="split-map-column">
+              <Suspense fallback={null}>
               <PropertyMapView
                 properties={filteredProperties.length > 0 ? filteredProperties : properties}
                 selectedProperty={selectedProperty}
@@ -547,6 +549,7 @@ export default function PropertiesPage({
                 lang={lang}
                 centerArea={filters.area}
               />
+              </Suspense>
             </div>
           </div>
         ) : (

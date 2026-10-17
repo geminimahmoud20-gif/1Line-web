@@ -13,41 +13,48 @@ export const loadFirebaseService = () => {
 
 // Warm the SDK: Immediate on /crm, /my-account, /demands.
 // On visitor routes: loads only after first user touch/interaction or 6-second timer.
-if (typeof window !== 'undefined') {
-  const isImmediateRoute = /^\/(crm|my-account|demands)($|\/)/.test(window.location.pathname);
-  if (isImmediateRoute) {
-    loadFirebaseService().catch(() => {});
-  } else {
-    let warmed = false;
-    let timer = null;
-    const events = ['touchstart', 'pointerdown', 'keydown', 'scroll'];
-    const cleanup = () => {
-      events.forEach((ev) => window.removeEventListener(ev, warm));
-      if (timer) clearTimeout(timer);
-    };
-    const warm = () => {
-      if (warmed) return;
-      warmed = true;
-      cleanup();
-      loadFirebaseService().catch(() => {});
-    };
-    events.forEach((ev) => window.addEventListener(ev, warm, { passive: true, once: true }));
-    timer = setTimeout(warm, 6000);
-  }
+// Background subscriptions (site settings, FX rates, auth state) wait for the same signal, so they
+// don't pull the SDK onto a slow phone while the first page is still painting.
+let warmed = false;
+let releaseWarm = () => {};
+const warmSignal = new Promise((resolve) => { releaseWarm = resolve; });
+const warm = () => {
+  if (warmed) return;
+  warmed = true;
+  releaseWarm();
+  loadFirebaseService().catch(() => {});
+};
+if (typeof window === 'undefined') {
+  warmed = true;
+  releaseWarm();
+} else if (/^\/(crm|my-account|demands)($|\/)/.test(window.location.pathname)) {
+  warm();
+} else {
+  const events = ['touchstart', 'pointerdown', 'keydown', 'scroll'];
+  const onEvent = () => {
+    events.forEach((ev) => window.removeEventListener(ev, onEvent));
+    clearTimeout(timer);
+    warm();
+  };
+  events.forEach((ev) => window.addEventListener(ev, onEvent, { passive: true, once: true }));
+  const timer = setTimeout(onEvent, 6000);
 }
 
+// A direct call is something the visitor asked for (send a request, sign in): load right away.
 const lazyCall = (name) => async (...args) => {
+  warm();
   const svc = await loadFirebaseService();
   return svc[name](...args);
 };
 
 // Subscriptions must hand back an unsubscribe synchronously; it is honored even if the SDK is still loading.
-const lazySubscribe = (name) => (...args) => {
+const lazySubscribe = (name, { eager = false } = {}) => (...args) => {
   let unsub = null;
   let cancelled = false;
-  loadFirebaseService()
+  (eager ? Promise.resolve() : warmSignal)
+    .then(() => (cancelled ? null : loadFirebaseService()))
     .then((svc) => {
-      if (cancelled) return;
+      if (!svc || cancelled) return;
       const u = svc[name](...args);
       if (typeof u === 'function') unsub = u;
     })
@@ -106,7 +113,8 @@ export const subscribeToClientDownloads = lazySubscribe('subscribeToClientDownlo
 export const subscribeToDemands = lazySubscribe('subscribeToDemands');
 export const monitorAuthState = lazySubscribe('monitorAuthState');
 export const subscribeToSettings = lazySubscribe('subscribeToSettings');
-export const subscribeToCatalog = lazySubscribe('subscribeToCatalog');
+// Only used when the CDN catalog is unavailable (or in the CRM): the listings themselves, so no wait
+export const subscribeToCatalog = lazySubscribe('subscribeToCatalog', { eager: true });
 export const subscribeToAdStats = lazySubscribe('subscribeToAdStats');
 export const subscribeToClientErrors = lazySubscribe('subscribeToClientErrors');
 export const subscribeToContactIntents = lazySubscribe('subscribeToContactIntents');

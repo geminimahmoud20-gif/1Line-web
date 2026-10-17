@@ -67,10 +67,11 @@ const RemoteInspectionModal = lazy(OVERLAY_LOADERS.RemoteInspectionModal);
 const prefetchOverlays = () => Object.values(OVERLAY_LOADERS).forEach((load) => load().catch(() => {}));
 
 // Luxury Route Transition Fallback Spinner
+// Full screen height, so the footer stays below the fold while the page loads (no layout jump)
 function RouteLoadingSpinner({ lang = 'ar' }) {
   return (
     <div style={{
-      minHeight: '60vh',
+      minHeight: '100vh',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
