@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
-import { MessageSquare, Calendar, Car, Clock, Edit3, Trash2, ChevronRight, ChevronLeft, AlertTriangle, Search, Zap, MoreHorizontal, ShieldAlert, TrendingUp, Users } from 'lucide-react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { ChevronDown, ChevronUp, Columns3, Rows3, MessageSquare, Calendar, Car, Clock, Edit3, Trash2, ChevronRight, ChevronLeft, AlertTriangle, Search, Zap, MoreHorizontal, ShieldAlert, TrendingUp, Users } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
 import StageDeliverableModal from './StageDeliverableModal';
 import './crm-kanban.css';
@@ -10,6 +10,8 @@ import { validateStageTransition, HIGH_VALUE_DEAL_THRESHOLD } from '../../servic
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 import { PageHeader, KpiRow, KpiTile, Chip } from '../ui';
 import './kanban-redesign.css';
+
+const CARDS_PER_STAGE = 5;
 
 const PIPELINE_STAGES = [
   { id: 'new', title_ar: 'طلبات جديدة', title_en: 'New Inquiries', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)' },
@@ -73,6 +75,48 @@ export default function KanbanPipeline({
       return [];
     }
   });
+
+  // Each column shows the first few deals; "show all" opens the rest (per column, not saved)
+  const [openStages, setOpenStages] = useState([]);
+  const toggleStageOpen = (stageId) => setOpenStages((prev) => (prev.includes(stageId) ? prev.filter((id) => id !== stageId) : [...prev, stageId]));
+
+  // Compact view: narrower columns and shorter cards, so more stages fit on one screen
+  const [compact, setCompact] = useState(() => {
+    try { return localStorage.getItem('oneline_kanban_compact') === '1'; } catch { return false; }
+  });
+  const toggleCompact = () => setCompact((prev) => {
+    try { localStorage.setItem('oneline_kanban_compact', prev ? '0' : '1'); } catch { /* ignore storage error */ }
+    return !prev;
+  });
+
+  const saveCollapsed = (next) => {
+    try { localStorage.setItem('oneline_kanban_collapsed_stages', JSON.stringify(next)); } catch { /* ignore storage error */ }
+    return next;
+  };
+  const collapseAll = () => setCollapsedStages(saveCollapsed(PIPELINE_STAGES.map((st) => st.id)));
+  const expandAll = () => setCollapsedStages(saveCollapsed([]));
+
+  // A second scrollbar above the board, kept in sync, so wide boards scroll without going to the bottom
+  const boardRef = useRef(null);
+  const topBarRef = useRef(null);
+  const topTrackRef = useRef(null);
+  const [boardWidth, setBoardWidth] = useState(0);
+  useEffect(() => {
+    if (topTrackRef.current) topTrackRef.current.style.width = `${boardWidth}px`;
+  }, [boardWidth]);
+  useEffect(() => {
+    const board = boardRef.current;
+    if (!board || typeof ResizeObserver === 'undefined') return undefined;
+    const measure = () => setBoardWidth(board.scrollWidth > board.clientWidth + 1 ? board.scrollWidth : 0);
+    const ro = new ResizeObserver(measure);
+    ro.observe(board);
+    measure();
+    return () => ro.disconnect();
+  }, [collapsedStages, compact]);
+  // The echo scroll on the other bar finds the positions already equal and stops there
+  const syncScroll = (from, to) => {
+    if (from && to && Math.abs(to.scrollLeft - from.scrollLeft) >= 1) to.scrollLeft = from.scrollLeft;
+  };
 
   const toggleStageCollapse = (stageId) => {
     setCollapsedStages(prev => {
@@ -487,6 +531,14 @@ export default function KanbanPipeline({
           <Chip pressed={filterType === 'seller'} onClick={() => setFilterType('seller')}>{isAr ? 'بايعين' : 'Sellers'}</Chip>
           <Chip pressed={filterType === 'investor'} onClick={() => setFilterType('investor')}>{isAr ? 'مستثمرين' : 'Investors'}</Chip>
         </div>
+        <div className="crm-kanban__layout" role="group" aria-label={isAr ? 'شكل العرض' : 'Layout'}>
+          <Chip pressed={compact} onClick={toggleCompact} icon={<Rows3 size={14} aria-hidden="true" />}>{isAr ? 'عرض مضغوط' : 'Compact'}</Chip>
+          {collapsedStages.length < PIPELINE_STAGES.length ? (
+            <Chip onClick={collapseAll} icon={<Columns3 size={14} aria-hidden="true" />}>{isAr ? 'طي كل الأعمدة' : 'Collapse all'}</Chip>
+          ) : (
+            <Chip onClick={expandAll} icon={<Columns3 size={14} aria-hidden="true" />}>{isAr ? 'فتح كل الأعمدة' : 'Expand all'}</Chip>
+          )}
+        </div>
         <label className="crm-kanban__search">
           <Search size={16} aria-hidden="true" />
           <input
@@ -500,16 +552,31 @@ export default function KanbanPipeline({
       </div>
 
       {/* Kanban Stages Board */}
+      {boardWidth > 0 && (
+        <div
+          ref={topBarRef}
+          className="crm-kanban__topscroll"
+          aria-hidden="true"
+          onScroll={() => syncScroll(topBarRef.current, boardRef.current)}
+        >
+          <div ref={topTrackRef} />
+        </div>
+      )}
       <div
-        className="kanban-board-scroll-container"
+        ref={boardRef}
+        className={`kanban-board-scroll-container${compact ? ' is-compact' : ''}`}
+        onScroll={() => syncScroll(boardRef.current, topBarRef.current)}
         style={{
           display: 'grid',
-          gridTemplateColumns: PIPELINE_STAGES.map(s => collapsedStages.includes(s.id) ? '54px' : 'minmax(280px, 1fr)').join(' ')
+          gridTemplateColumns: PIPELINE_STAGES.map(s => collapsedStages.includes(s.id) ? '54px' : (compact ? 'minmax(160px, 1fr)' : 'minmax(280px, 1fr)')).join(' ')
         }}
       >
         {PIPELINE_STAGES.map((stage) => {
           const isCollapsed = collapsedStages.includes(stage.id);
-          const stageLeads = leadsByStage[stage.id] || [];
+          const allStageLeads = leadsByStage[stage.id] || [];
+          const isOpen = openStages.includes(stage.id);
+          const stageLeads = isOpen ? allStageLeads : allStageLeads.slice(0, CARDS_PER_STAGE);
+          const hiddenCount = allStageLeads.length - stageLeads.length;
           const { count, totalVolume, budgetedCount, unbudgetedCount } = stageStatsMap[stage.id] || { count: 0, totalVolume: 0, budgetedCount: 0, unbudgetedCount: 0 };
 
           if (isCollapsed) {
@@ -766,6 +833,19 @@ export default function KanbanPipeline({
                       </article>
                     );
                   })
+                )}
+                {(hiddenCount > 0 || (isOpen && allStageLeads.length > CARDS_PER_STAGE)) && (
+                  <button
+                    type="button"
+                    className="kanban-stage-more"
+                    aria-expanded={isOpen}
+                    onClick={() => toggleStageOpen(stage.id)}
+                  >
+                    {isOpen ? <ChevronUp size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}
+                    {isOpen
+                      ? (isAr ? 'عرض أقل' : 'Show less')
+                      : (isAr ? `عرض ${hiddenCount} كمان` : `Show ${hiddenCount} more`)}
+                  </button>
                 )}
               </div>
             </div>
