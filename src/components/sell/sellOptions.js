@@ -1,11 +1,16 @@
-import { Building, Home, Store, Briefcase, MapPin } from 'lucide-react';
+import { Building, Home, Store, Briefcase, MapPin, Sprout, Trees, Factory, Warehouse, LandPlot } from 'lucide-react';
 
 export const PROPERTY_TYPES = [
   { id: 'apartment', ar: 'شقة', en: 'Apartment', icon: Building },
   { id: 'villa', ar: 'بيت أو فيلا', en: 'House / villa', icon: Home },
   { id: 'retail', ar: 'محل', en: 'Shop', icon: Store },
   { id: 'office', ar: 'مكتب أو عيادة', en: 'Office / clinic', icon: Briefcase },
-  { id: 'land', ar: 'أرض', en: 'Land', icon: MapPin }
+  { id: 'land', ar: 'أرض مباني', en: 'Building land', icon: MapPin },
+  { id: 'agri_land', ar: 'أرض زراعية', en: 'Farmland', icon: Sprout },
+  { id: 'farm', ar: 'مزرعة أو حديقة فاكهة', en: 'Farm / orchard', icon: Trees },
+  { id: 'factory', ar: 'مصنع أو ورشة', en: 'Factory / workshop', icon: Factory },
+  { id: 'warehouse', ar: 'مخزن', en: 'Warehouse', icon: Warehouse },
+  { id: 'industrial_land', ar: 'أرض صناعية', en: 'Industrial land', icon: LandPlot }
 ];
 
 // Greater Cairo: no automated benchmark yet, valued by hand
@@ -84,6 +89,92 @@ export const SPEC_FIELDS = {
       ]
     }
   ],
+  agri_land: [
+    {
+      field: 'agriWater', ar: 'الري', en: 'Irrigation', def: 'nile', options: [
+        { value: 'nile', ar: 'ري نيلي (ترعة)', en: 'Nile canal' },
+        { value: 'well', ar: 'بئر', en: 'Well' },
+        { value: 'drip', ar: 'تنقيط أو رش', en: 'Drip / sprinkler' },
+        { value: 'none', ar: 'مفيش مصدر ري لسه', en: 'No water yet' }
+      ]
+    },
+    {
+      field: 'agriPapers', ar: 'الأوراق', en: 'Papers', def: 'holding', options: [
+        { value: 'holding', ar: 'حيازة زراعية', en: 'Farm holding' },
+        { value: 'registered', ar: 'عقد مسجل', en: 'Registered deed' },
+        { value: 'preliminary', ar: 'عقد ابتدائي', en: 'Preliminary contract' },
+        { value: 'reclaimed', ar: 'استصلاح / تقنين', en: 'Reclaimed / legalised' }
+      ]
+    }
+  ],
+  farm: [
+    {
+      field: 'agriCrops', ar: 'المزروع', en: 'Planted with', def: 'palms', options: [
+        { value: 'palms', ar: 'نخيل', en: 'Palms' },
+        { value: 'citrus', ar: 'موالح', en: 'Citrus' },
+        { value: 'mango', ar: 'مانجو', en: 'Mango' },
+        { value: 'mixed', ar: 'فاكهة متنوعة', en: 'Mixed fruit' },
+        { value: 'field', ar: 'محاصيل (قمح، برسيم…)', en: 'Field crops' }
+      ]
+    },
+    {
+      field: 'agriWater', ar: 'الري', en: 'Irrigation', def: 'nile', options: [
+        { value: 'nile', ar: 'ري نيلي (ترعة)', en: 'Nile canal' },
+        { value: 'well', ar: 'بئر', en: 'Well' },
+        { value: 'drip', ar: 'تنقيط أو رش', en: 'Drip / sprinkler' },
+        { value: 'none', ar: 'مفيش مصدر ري لسه', en: 'No water yet' }
+      ]
+    }
+  ],
+  factory: [
+    {
+      field: 'indActivity', ar: 'النشاط', en: 'Activity', def: 'food', options: [
+        { value: 'food', ar: 'مواد غذائية', en: 'Food' },
+        { value: 'building', ar: 'مواد بناء', en: 'Building materials' },
+        { value: 'textile', ar: 'ملابس ونسيج', en: 'Textiles' },
+        { value: 'workshop', ar: 'ورشة (نجارة، حدادة…)', en: 'Workshop' },
+        { value: 'other', ar: 'نشاط تاني', en: 'Other' }
+      ]
+    },
+    {
+      field: 'indLicensed', ar: 'الترخيص', en: 'Licence', def: 'licensed', options: [
+        { value: 'licensed', ar: 'مرخص وشغال', en: 'Licensed, operating' },
+        { value: 'licensed_idle', ar: 'مرخص ومتوقف', en: 'Licensed, idle' },
+        { value: 'unlicensed', ar: 'من غير ترخيص', en: 'Not licensed' }
+      ]
+    }
+  ],
+  warehouse: [
+    {
+      field: 'indCeiling', ar: 'ارتفاع السقف', en: 'Ceiling height', def: 'mid', options: [
+        { value: 'low', ar: 'أقل من 5 متر', en: 'Under 5 m' },
+        { value: 'mid', ar: 'من 5 لـ 8 متر', en: '5-8 m' },
+        { value: 'high', ar: 'أكتر من 8 متر', en: 'Over 8 m' }
+      ]
+    },
+    {
+      field: 'indAccess', ar: 'دخول العربيات', en: 'Vehicle access', def: 'truck', options: [
+        { value: 'truck', ar: 'تريلا تدخل', en: 'Trailers' },
+        { value: 'light', ar: 'نقل خفيف بس', en: 'Light trucks only' }
+      ]
+    }
+  ],
+  industrial_land: [
+    {
+      field: 'indZone', ar: 'المكان', en: 'Location', def: 'zone', options: [
+        { value: 'zone', ar: 'منطقة صناعية حكومية', en: 'Government industrial zone' },
+        { value: 'desert', ar: 'ظهير صحراوي', en: 'Desert hinterland' },
+        { value: 'other', ar: 'مكان تاني', en: 'Elsewhere' }
+      ]
+    },
+    {
+      field: 'indUtilities', ar: 'المرافق', en: 'Utilities', def: 'full', options: [
+        { value: 'full', ar: 'كهرباء ومياه وصرف', en: 'Power, water, drainage' },
+        { value: 'partial', ar: 'مرافق جزئية', en: 'Partial' },
+        { value: 'none', ar: 'مفيش مرافق لسه', en: 'None yet' }
+      ]
+    }
+  ],
   land: [
     {
       field: 'landStreet', ar: 'الشارع', en: 'Street', def: 'wide_20', options: [
@@ -113,6 +204,9 @@ export function floorLabel(answers) {
   };
   if (type === 'retail') return optLabel('retailFloor', 'أرضي على الشارع');
   if (type === 'land') return optLabel('landStreet', 'أرض فضاء');
+  if (type === 'agri_land' || type === 'farm') return optLabel('agriWater', 'أرض زراعية');
+  if (type === 'warehouse') return optLabel('indCeiling', '');
+  if (type === 'factory' || type === 'industrial_land') return '';
   if (type === 'villa') return `${answers.totalFloors || '2'} أدوار`;
   return optLabel('floor', '');
 }

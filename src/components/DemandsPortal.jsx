@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { isAgriculturalType, isIndustrialType } from '../utils/propertyKinds';
 import { 
   Zap, Search, Sparkles, CheckCircle, CheckCircle2, AlertCircle, MapPin, 
   Clock, Building2, Home, Store, Briefcase, Compass, Users, Coins, Flame, 
-  Repeat2, MessageCircle, Send
+  Repeat2, MessageCircle, Send, Sprout, Factory
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getAreas } from '../utils/areasData';
@@ -77,7 +78,11 @@ export const DemandsPortal = ({
           ? (d.type === 'retail' || d.type === 'commercial' || d.type === 'shop')
           : selectedCategory === 'office'
             ? (d.type === 'office' || d.type === 'administrative' || d.type === 'clinic')
-            : d.type === selectedCategory;
+            : selectedCategory === 'agricultural'
+              ? isAgriculturalType(d.type)
+              : selectedCategory === 'industrial'
+                ? isIndustrialType(d.type)
+                : d.type === selectedCategory;
         if (!typeMatch) return false;
       }
       // Area filter
@@ -111,6 +116,13 @@ export const DemandsPortal = ({
         return { label: isAr ? 'مكتب إداري / عيادة' : 'Office / Clinic', Icon: Briefcase };
       case 'land':
         return { label: isAr ? 'أرض فضاء / استثمارية' : 'Land / Investment', Icon: Compass };
+      case 'agri_land':
+      case 'farm':
+        return { label: isAr ? (type === 'farm' ? 'مزرعة / حديقة فاكهة' : 'أرض زراعية') : (type === 'farm' ? 'Farm' : 'Farmland'), Icon: Sprout };
+      case 'factory':
+      case 'warehouse':
+      case 'industrial_land':
+        return { label: isAr ? ({ factory: 'مصنع / ورشة', warehouse: 'مخزن / مستودع', industrial_land: 'أرض صناعية' })[type] : ({ factory: 'Factory', warehouse: 'Warehouse', industrial_land: 'Industrial land' })[type], Icon: Factory };
       default:
         return { label: isAr ? (t?.[type] || 'عقار متميز') : (type ? type.toUpperCase() : 'Property'), Icon: Zap };
     }
@@ -466,8 +478,10 @@ export const DemandsPortal = ({
           { id: 'retail', label_ar: 'محلات وتجاري', label_en: 'Retail & Shops', count: allPublished.filter(d => d.type === 'retail' || d.type === 'commercial' || d.type === 'shop').length },
           { id: 'land', label_ar: 'أراضي استثمارية', label_en: 'Land Plots', count: allPublished.filter(d => d.type === 'land').length },
           { id: 'office', label_ar: 'مكاتب وعيادات', label_en: 'Offices & Clinics', count: allPublished.filter(d => d.type === 'office' || d.type === 'administrative' || d.type === 'clinic').length },
-          { id: 'villa', label_ar: 'فيلات ومنازل', label_en: 'Villas & Houses', count: allPublished.filter(d => d.type === 'villa').length }
-        ].map(cat => {
+          { id: 'villa', label_ar: 'فيلات ومنازل', label_en: 'Villas & Houses', count: allPublished.filter(d => d.type === 'villa').length },
+          { id: 'agricultural', label_ar: 'زراعي', label_en: 'Agricultural', count: allPublished.filter(d => isAgriculturalType(d.type)).length },
+          { id: 'industrial', label_ar: 'صناعي', label_en: 'Industrial', count: allPublished.filter(d => isIndustrialType(d.type)).length }
+        ].filter((cat) => cat.count > 0 || !['agricultural', 'industrial'].includes(cat.id)).map(cat => {
           const isActive = selectedCategory === cat.id && activeAreaFilter === 'all';
           return (
             <button

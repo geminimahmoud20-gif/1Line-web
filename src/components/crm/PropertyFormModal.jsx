@@ -1,5 +1,6 @@
 import { Plus, Sparkles, Image as ImageIcon, Save, Upload, Star, MapPin, Loader2 } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
+import { hasNoRooms, isLandType, categoryOfType, isAgriculturalType, specFieldsFor, formatFeddan, feddanParts, QIRAT_M2 } from '../../utils/propertyKinds';
 import { toDayInput, addDays } from '../../utils/featuredSlots';
 import PropertyExtrasEditor from './PropertyExtrasEditor';
 import { AVAILABILITY_OPTIONS, REVIEW_OPTIONS, reviewState } from '../../utils/listingBadges';
@@ -345,14 +346,13 @@ export default function PropertyFormModal({
                 value={form.type}
                 onChange={(e) => {
                   const newType = e.target.value;
-                  const isCommOrLand = newType === 'commercial' || newType === 'land' || newType === 'office';
                   setForm({
                     ...form,
                     type: newType,
-                    category: newType === 'commercial' ? 'commercial' : newType === 'office' ? 'administrative' : newType === 'land' ? 'land' : newType === 'building' ? 'building' : 'residential',
-                    bedrooms: isCommOrLand ? 0 : (form.bedrooms || 3),
-                    bathrooms: newType === 'land' ? 0 : form.bathrooms,
-                    floor: newType === 'land' ? 0 : form.floor
+                    category: categoryOfType(newType),
+                    bedrooms: hasNoRooms(newType) ? 0 : (form.bedrooms || 3),
+                    bathrooms: isLandType(newType) ? 0 : form.bathrooms,
+                    floor: isLandType(newType) ? 0 : form.floor
                   });
                 }}
               >
@@ -441,10 +441,64 @@ export default function PropertyFormModal({
                 onChange={(e) => setForm({ ...form, size: parseInt(e.target.value) || 0 })}
                 required
               />
+              {isAgriculturalType(form.type) && Number(form.size) > 0 && (
+                <small className="pf-size-hint">= {formatFeddan(form.size, isAr)}</small>
+              )}
             </div>
 
+            {/* Farmland is priced and sold by feddan: typing feddan + qirat fills the m² above */}
+            {isAgriculturalType(form.type) && (
+              <div className="form-group-item">
+                <label>{isAr ? 'أو اكتب المساحة بالفدان والقيراط' : 'Or enter feddan + qirat'}</label>
+                <div className="pf-feddan">
+                  <input
+                    type="number"
+                    min="0"
+                    aria-label={isAr ? 'فدان' : 'Feddan'}
+                    placeholder={isAr ? 'فدان' : 'Feddan'}
+                    value={feddanParts(form.size).feddan || ''}
+                    onChange={(e) => setForm({ ...form, size: Math.round(((parseInt(e.target.value) || 0) * 24 + feddanParts(form.size).qirat) * QIRAT_M2) })}
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    max="23"
+                    aria-label={isAr ? 'قيراط' : 'Qirat'}
+                    placeholder={isAr ? 'قيراط' : 'Qirat'}
+                    value={feddanParts(form.size).qirat || ''}
+                    onChange={(e) => setForm({ ...form, size: Math.round((feddanParts(form.size).feddan * 24 + Math.min(23, parseInt(e.target.value) || 0)) * QIRAT_M2) })}
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Differentiated Specs based on Property Type */}
-            {form.type === 'commercial' ? (
+            {specFieldsFor(form.type).length > 0 ? (
+              <>
+                {specFieldsFor(form.type).map((f) => (
+                  <div className="form-group-item" key={f.key}>
+                    <label>{isAr ? f.ar : f.en}</label>
+                    <input
+                      type="text"
+                      placeholder={isAr ? f.hint_ar : f.hint_en}
+                      value={form[f.key] || ''}
+                      onChange={(e) => setForm({ ...form, [f.key]: e.target.value, bedrooms: 0 })}
+                    />
+                  </div>
+                ))}
+                {isLandType(form.type) && (
+                  <div className="form-group-item">
+                    <label>{isAr ? 'الواجهة وعرض الطريق' : 'Frontage & road width'}</label>
+                    <input
+                      type="text"
+                      placeholder={isAr ? 'مثال: واجهة 50م على طريق 12م' : 'e.g. 50m on a 12m road'}
+                      value={form.frontage || ''}
+                      onChange={(e) => setForm({ ...form, frontage: e.target.value, bedrooms: 0, bathrooms: 0, floor: 0 })}
+                    />
+                  </div>
+                )}
+              </>
+            ) : form.type === 'commercial' ? (
               <>
                 <div className="form-group-item">
                   <label>{isAr ? 'عرض الواجهة التجارية' : 'Commercial Frontage'}</label>

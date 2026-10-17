@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { isAgricultural, isIndustrial, isLandType, sizeLabel, filledSpecs, QIRAT_M2 } from '../../utils/propertyKinds';
 import { Link } from 'react-router-dom';
 import {
   MapPin,
@@ -15,6 +16,8 @@ import {
   Building,
   Building2,
   Store,
+  Sprout,
+  Factory,
   Briefcase,
   ChevronRight,
   ChevronLeft,
@@ -146,12 +149,18 @@ export default function PropertyCard({
   const isSold = badges.availability?.key === 'sold';
 
   // Sector separation: full building, land, commercial, office, residential
-  const isLand = !isMultiUnit && (property.type === 'land' || (title && title.includes('أرض')));
-  const isCommercial = !isMultiUnit && !isLand && (property.type === 'commercial' || property.category === 'commercial' || (title && (title.includes('محل') || title.includes('معرض') || title.includes('ريتيل') || title.includes('تجاري'))));
-  const isOffice = !isMultiUnit && !isLand && !isCommercial && (property.type === 'office' || property.category === 'administrative' || (title && (title.includes('مكتب') || title.includes('عيادة') || title.includes('إداري'))));
+  const isAgri = !isMultiUnit && isAgricultural(property);
+  const isIndustry = !isMultiUnit && isIndustrial(property);
+  const isLand = !isMultiUnit && (isLandType(property.type) || (!isIndustry && title && title.includes('أرض')));
+  const isCommercial = !isMultiUnit && !isLand && !isIndustry && !isAgri && (property.type === 'commercial' || property.category === 'commercial' || (title && (title.includes('محل') || title.includes('معرض') || title.includes('ريتيل') || title.includes('تجاري'))));
+  const isOffice = !isMultiUnit && !isLand && !isCommercial && !isIndustry && !isAgri && (property.type === 'office' || property.category === 'administrative' || (title && (title.includes('مكتب') || title.includes('عيادة') || title.includes('إداري'))));
 
   const sectorLabel = isMultiUnit
     ? (isAr ? 'عقار كامل' : 'Full Building')
+    : isAgri
+      ? (isAr ? 'زراعي' : 'Agricultural')
+    : isIndustry
+      ? (isAr ? 'صناعي' : 'Industrial')
     : isCommercial
       ? (isAr ? 'تجاري' : 'Commercial')
       : isOffice
@@ -165,8 +174,8 @@ export default function PropertyCard({
     {
       key: 'size',
       Icon: Maximize2,
-      value: fmt(property.size),
-      unit: isAr ? 'م²' : 'm²',
+      value: isAgri ? sizeLabel(property, isAr) : fmt(property.size),
+      unit: isAgri && Number(property.size) >= QIRAT_M2 ? '' : (isAr ? 'م²' : 'm²'),
       label: isMultiUnit ? (isAr ? 'مسطح الأرض' : 'Plot Area') : (isAr ? 'المساحة' : 'Area')
     }
   ];
@@ -187,6 +196,9 @@ export default function PropertyCard({
         label: isAr ? 'نوع العقار' : 'Type'
       });
     }
+  } else if (isAgri || isIndustry) {
+    const first = filledSpecs(property, isAr)[0];
+    if (first) specs.push({ key: 'kind', Icon: isAgri ? Sprout : Factory, value: first.value, label: first.label });
   } else if (isCommercial) {
     if (property.frontage) specs.push({ key: 'front', Icon: Layers, value: property.frontage, label: isAr ? 'الواجهة' : 'Frontage' });
     else specs.push({ key: 'kind', Icon: Store, value: formatCommercialSpec(property.commercialType_ar, lang), label: floorLabel(property.floor ?? 0, isAr) });

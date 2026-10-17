@@ -8,6 +8,7 @@
 // =============================================================
 
 import { normKey, stripLinks, parseNumber, parseCount, parseDate, normalizePhone } from './normalize.js';
+import { hasNoRooms, isLandType, categoryOfType } from '../propertyKinds.js';
 
 export const PROPERTY_FIELDS = [
   { key: 'unitCode', label: 'كود الوحدة', aliases: ['كود الوحده', 'كود العقار', 'كود', 'رقم الوحده', 'code', 'unit code', 'ref', 'reference', 'id'] },
@@ -74,11 +75,16 @@ export function autoMapColumns(headers, fields = PROPERTY_FIELDS, { exclude = IN
 
 // ── Values ───────────────────────────────────────────────────────────────────
 
-/** Free text ("سكني شقه", "تجاري محل", "Villa") → apartment | villa | commercial | office | land */
+/** Free text ("سكني شقه", "تجاري محل", "ارض زراعيه", "مصنع") → one of the PROPERTY_TYPES ids */
 export function mapPropertyType(value) {
   const t = normKey(value);
   if (!t) return null;
-  if (['apartment', 'villa', 'commercial', 'office', 'land'].includes(t)) return t;
+  if (['apartment', 'villa', 'commercial', 'office', 'land', 'agri_land', 'farm', 'factory', 'warehouse', 'industrial_land'].includes(t)) return t;
+  if (/صناعي|industrial/.test(t) && /ارض|اراضي|land|plot/.test(t)) return 'industrial_land';
+  if (/مزرعه|مزارع|حديقه فاكهه|بستان|farm|orchard/.test(t)) return 'farm';
+  if (/زراعي|فدان|قيراط|agri|farmland/.test(t)) return 'agri_land';
+  if (/مصنع|مصانع|ورشه|factory|workshop/.test(t)) return 'factory';
+  if (/مخزن|مخازن|مستودع|هنجر|warehouse|storage/.test(t)) return 'warehouse';
   if (/ارض|اراضي|land|plot/.test(t)) return 'land';
   if (/فيلا|فيلل|villa|قصر|منزل|بيت|عماره|مبني|townhouse|house|building|twin/.test(t)) return 'villa';
   if (/اداري|مكتب|عياده|طبي|صيدليه|معمل|office|clinic|medical|تعليمي|مدرسه|حضانه/.test(t)) return 'office';
@@ -189,7 +195,7 @@ export function rowToProperty(row, { areas = [], statusMode = 'review', now = ne
   const status = fileStatus === 'sold' ? 'sold' : statusMode === 'file' ? (fileStatus || 'hidden') : 'hidden';
 
   const finishing = mapFinishing(row.finishing_ar);
-  const isNoRooms = type === 'commercial' || type === 'land' || type === 'office';
+  const isNoRooms = hasNoRooms(type);
   const createdAt = parseDate(row.createdAt);
   const location = [text('locationDetail'), areaText].filter((v, i, a) => v && a.indexOf(v) === i).join(' - ');
   const downPayment = parseNumber(row.downPayment);
@@ -200,7 +206,7 @@ export function rowToProperty(row, { areas = [], statusMode = 'review', now = ne
     title_ar: title,
     title_en: text('title_en') || undefined,
     type,
-    category: type === 'commercial' ? 'commercial' : type === 'office' ? 'administrative' : type === 'land' ? 'land' : 'residential',
+    category: categoryOfType(type),
     purpose: isRent ? 'rent' : 'sale',
     areaKey: areaKey || '',
     locationName_ar: location || areaText || '',
@@ -212,8 +218,8 @@ export function rowToProperty(row, { areas = [], statusMode = 'review', now = ne
     paymentMethod: mapPaymentMethod(row.paymentMethod) || undefined,
     size: size || 0,
     bedrooms: isNoRooms ? 0 : (parseCount(row.bedrooms) ?? 0),
-    bathrooms: type === 'land' ? 0 : (parseCount(row.bathrooms) ?? 0),
-    floor: type === 'land' ? 0 : (parseCount(row.floor) ?? 0),
+    bathrooms: isLandType(type) ? 0 : (parseCount(row.bathrooms) ?? 0),
+    floor: isLandType(type) ? 0 : (parseCount(row.floor) ?? 0),
     totalFloors: parseCount(String(row.totalFloors ?? '').split(/[,،]/).length > 1 ? '' : row.totalFloors) ?? undefined,
     finishing_ar: finishing?.[0] || undefined,
     finishing_en: finishing?.[1] || undefined,

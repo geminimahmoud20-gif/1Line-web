@@ -10,6 +10,7 @@ import './properties-panel.css';
 import { getAreas } from '../../utils/areasData';
 import HomepageSlotsBoard, { FeaturedSlotModal } from './HomepageSlotsBoard';
 import { homepageSummary } from '../../utils/featuredSlots';
+import { hasNoRooms, isLandType, categoryOfType } from '../../utils/propertyKinds';
 
 import DataImportModal from './DataImportModal';
 import ExportMenu from './ExportMenu';
@@ -26,8 +27,8 @@ import PropertyTableRow from './PropertyTableRow';
 import PropertyFacetFilter from './PropertyFacetFilter';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 
-const SHORT_TYPE_AR = { apartment: 'شقق ودوبلكس', villa: 'فيلات', commercial: 'محلات', office: 'مكاتب وعيادات', land: 'أراضي' };
-const SHORT_TYPE_EN = { apartment: 'Apartments', villa: 'Villas', commercial: 'Shops', office: 'Offices & clinics', land: 'Land' };
+const SHORT_TYPE_AR = { apartment: 'شقق ودوبلكس', villa: 'فيلات', commercial: 'محلات', office: 'مكاتب وعيادات', land: 'أراضي', agri_land: 'أراضي زراعية', farm: 'مزارع', factory: 'مصانع وورش', warehouse: 'مخازن', industrial_land: 'أراضي صناعية' };
+const SHORT_TYPE_EN = { apartment: 'Apartments', villa: 'Villas', commercial: 'Shops', office: 'Offices & clinics', land: 'Land', agri_land: 'Farmland', farm: 'Farms', factory: 'Factories', warehouse: 'Warehouses', industrial_land: 'Industrial land' };
 const LIST_PAGE = 25;
 import OfferModal from './OfferModal';
 import { getNormalizedPropertyStatus } from '../../utils/crmLeadViews';
@@ -154,12 +155,11 @@ export default function PropertyManagerPanel({
 
   const handleOpenEdit = (prop) => {
     setEditingPropertyId(prop.id);
-    const isCommercialOrLand = prop.type === 'commercial' || prop.type === 'land' || prop.type === 'office';
     setForm({
       ...DEFAULT_FORM_STATE,
       ...prop,
-      bedrooms: isCommercialOrLand ? 0 : (prop.bedrooms || 0),
-      bathrooms: prop.type === 'land' ? 0 : (prop.bathrooms || 0),
+      bedrooms: hasNoRooms(prop.type) ? 0 : (prop.bedrooms || 0),
+      bathrooms: isLandType(prop.type) ? 0 : (prop.bathrooms || 0),
       status: prop.status || (prop.isArchived ? 'hidden' : 'published')
     });
     setShowAddModal(true);
@@ -427,15 +427,12 @@ export default function PropertyManagerPanel({
       lng: Number((baseCoords.lng + randomOffset).toFixed(6))
     };
 
-    // Cleanse sector-specific attributes (commercial & land have 0 bedrooms)
-    const isCommercial = form.type === 'commercial';
-    const isLand = form.type === 'land';
-    const isOffice = form.type === 'office';
-    const category = isCommercial ? 'commercial' : isOffice ? 'administrative' : isLand ? 'land' : 'residential';
+    // Cleanse sector-specific attributes (land, shops, offices, farms and factories have 0 bedrooms)
+    const isLand = isLandType(form.type);
     const cleanForm = {
       ...form,
-      category,
-      bedrooms: (isCommercial || isLand || isOffice) ? 0 : (parseInt(form.bedrooms) || 0),
+      category: categoryOfType(form.type),
+      bedrooms: hasNoRooms(form.type) ? 0 : (parseInt(form.bedrooms) || 0),
       bathrooms: isLand ? 0 : (parseInt(form.bathrooms) || 0),
       floor: isLand ? 0 : (parseInt(form.floor) || 0)
     };

@@ -89,7 +89,11 @@ test('rows become clean properties; owner phones stay off the listing', () => {
 
 test('type and status words from other systems', () => {
   assert.equal(mapPropertyType('سكني ارض'), 'land');
-  assert.equal(mapPropertyType('ارض زراعي'), 'land');
+  assert.equal(mapPropertyType('ارض زراعي'), 'agri_land');
+  assert.equal(mapPropertyType('مزرعة نخيل'), 'farm');
+  assert.equal(mapPropertyType('ارض صناعية'), 'industrial_land');
+  assert.equal(mapPropertyType('مصنع'), 'factory');
+  assert.equal(mapPropertyType('مخزن'), 'warehouse');
   assert.equal(mapPropertyType('سكني منزل'), 'villa');
   assert.equal(mapPropertyType('طبي'), 'office');
   assert.equal(mapPropertyType('تجاري مول'), 'commercial');

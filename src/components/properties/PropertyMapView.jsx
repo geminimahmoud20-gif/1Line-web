@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
+import { isAgricultural, isIndustrial } from '../../utils/propertyKinds';
 import { useNavigate } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css'; // only map pages pay for it (overrides in App.css are more specific)
@@ -233,6 +234,8 @@ export default function PropertyMapView({
   // Filter properties on the map if the user chooses a type from the map HUD
   const visibleMapProperties = useMemo(() => {
     if (mapPropertyTypeFilter === 'all') return properties;
+    if (mapPropertyTypeFilter === 'agricultural') return properties.filter(isAgricultural);
+    if (mapPropertyTypeFilter === 'industrial') return properties.filter(isIndustrial);
     return properties.filter(p => p.type === mapPropertyTypeFilter);
   }, [properties, mapPropertyTypeFilter]);
 
@@ -607,7 +610,9 @@ export default function PropertyMapView({
           { id: 'apartment', label_ar: 'شقق', label_en: 'Apartments' },
           { id: 'villa', label_ar: 'فيلات', label_en: 'Villas' },
           { id: 'commercial', label_ar: 'تجاري', label_en: 'Commercial' },
-          { id: 'land', label_ar: 'أراضي', label_en: 'Land' }
+          { id: 'land', label_ar: 'أراضي', label_en: 'Land' },
+          { id: 'agricultural', label_ar: 'زراعي', label_en: 'Farmland' },
+          { id: 'industrial', label_ar: 'صناعي', label_en: 'Industrial' }
         ].map(item => (
           <button
             key={item.id}

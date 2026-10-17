@@ -9,8 +9,11 @@ export const MAX_SELLER_PHOTOS = 8;
 // inline images, which must all fit in the lead document with room to spare (Firestore caps it at 1 MB).
 export const INLINE_PHOTO_BUDGET = 650 * 1024;
 
+// Farmland and industrial land use the land photo spots; factories and warehouses the shop ones
 export const sellerAssetClass = (type) => (
-  type === 'retail' || type === 'office' ? 'commercial' : type === 'land' ? 'land' : type === 'villa' ? 'house' : 'apartment'
+  ['retail', 'office', 'factory', 'warehouse'].includes(type) ? 'commercial'
+    : ['land', 'agri_land', 'farm', 'industrial_land'].includes(type) ? 'land'
+      : type === 'villa' ? 'house' : 'apartment'
 );
 
 const extra = (n) => ({ id: `extra_${n}`, ar: 'صورة إضافية', en: 'Extra photo', hint_ar: 'أي زاوية تانية حابب نشوفها', hint_en: 'Any other angle' });

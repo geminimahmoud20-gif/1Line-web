@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
+import { hasNoRooms } from '../utils/propertyKinds';
 import { useSearchParams } from 'react-router-dom';
 import { 
   LayoutGrid, 
@@ -193,7 +194,7 @@ export default function PropertiesPage({
 
       // Bedrooms filter - strictly applies to residential properties only
       if (filters.bedrooms && filters.bedrooms !== 'any' && filters.bedrooms !== 'all' && String(filters.bedrooms).trim() !== '') {
-        const isNonResidential = prop.type === 'commercial' || prop.type === 'land' || prop.type === 'office' || prop.category === 'commercial' || prop.category === 'land' || prop.category === 'administrative';
+        const isNonResidential = hasNoRooms(prop.type) || ['commercial', 'land', 'administrative', 'agricultural', 'industrial'].includes(prop.category);
         if (isNonResidential) return false;
 
         if (filters.bedrooms === '4+') {

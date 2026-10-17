@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { isAgricultural, isLandType, filledSpecs, sizeLabel } from '../../utils/propertyKinds';
 import { X, Trash2, ShieldCheck, Share2, Star, Download, Building2, Calendar, Maximize2, Minimize2, Calculator, Sparkles, Award, Plus, PhoneCall, Scale } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { trackEvent } from '../../utils/visitorTracker';
@@ -146,15 +147,17 @@ export default function PropertyCompareDrawer({
       const title = isAr ? p.title_ar : p.title_en;
       const loc = isAr ? p.locationName_ar : p.locationName_en;
       msg += `📌 *الوحدة ${idx + 1}: ${title}*\n`;
-      const isLand = p.type === 'land';
+      const isLand = isLandType(p.type) || isAgricultural(p);
+      const kindSpecs = filledSpecs(p, isAr).map((x) => x.value).slice(0, 2).join('، ');
       const isCom = p.type === 'commercial' || p.category === 'commercial';
       const isOff = p.type === 'office' || p.category === 'administrative';
       let specsText;
-      if (isLand) specsText = p.landType_ar || (isAr ? 'أرض استثمارية' : 'Land Plot');
+      if (kindSpecs) specsText = kindSpecs;
+      else if (isLand) specsText = p.landType_ar || (isAr ? 'أرض استثمارية' : 'Land Plot');
       else if (isCom) specsText = p.commercialType_ar || (isAr ? 'محل تجاري واجهة' : 'Retail Shop');
       else if (isOff) specsText = p.adminType_ar || (isAr ? 'مقر إداري / عيادة' : 'Office/Clinic');
       else specsText = `${countLabel('room', p.bedrooms || 0, isAr)} / ${countLabel('bath', p.bathrooms || 0, isAr)}`;
-      msg += `• المساحة: ${p.size} م² (${specsText})\n`;
+      msg += `• المساحة: ${sizeLabel(p, true) || `${p.size} م²`} (${specsText})\n`;
       msg += `• المقدم: ${p.downPayment ? `${p.downPayment.toLocaleString('en-US')} ج.م` : 'كاش'}\n`;
       msg += `• القسط: ${p.monthlyInstallment ? `${p.monthlyInstallment.toLocaleString('en-US')} ج.م/شهرياً (${p.installmentYears || 0} سنوات)` : 'كاش فقط'}\n`;
       msg += `• الموقع: ${loc}\n`;
