@@ -9,6 +9,7 @@ import { listingIssues, matchesFilters, sortListings, SORTS, ISSUES, NO_AREA } f
 import './properties-panel.css';
 import { getAreas } from '../../utils/areasData';
 import HomepageSlotsBoard, { FeaturedSlotModal } from './HomepageSlotsBoard';
+import { homepageSummary } from '../../utils/featuredSlots';
 
 import DataImportModal from './DataImportModal';
 import ExportMenu from './ExportMenu';
@@ -27,6 +28,7 @@ import { PROPERTY_TYPES } from '../../data/propertiesData';
 
 const SHORT_TYPE_AR = { apartment: 'شقق ودوبلكس', villa: 'فيلات', commercial: 'محلات', office: 'مكاتب وعيادات', land: 'أراضي' };
 const SHORT_TYPE_EN = { apartment: 'Apartments', villa: 'Villas', commercial: 'Shops', office: 'Offices & clinics', land: 'Land' };
+const LIST_PAGE = 25;
 import OfferModal from './OfferModal';
 import { getNormalizedPropertyStatus } from '../../utils/crmLeadViews';
 const SOHAG_AREA_COORDINATES = {
@@ -512,12 +514,21 @@ export default function PropertyManagerPanel({
   }, [properties, issuesMap, statusFilter]);
 
   const legacyCount = useMemo(() => properties.filter((p) => !p.isDeleted && (issuesMap.get(p.id) || []).includes('legacy')).length, [properties, issuesMap]);
-  const moreFiltersOn = issueFilter !== 'all' || Object.values(range).some((v) => v !== '');
+  const moreFiltersCount = (readiness !== 'all') + (issueFilter !== 'all') + Object.values(range).filter((v) => v !== '').length;
+  const moreFiltersOn = moreFiltersCount > 0;
+  const anyFilterOn = moreFiltersOn || typeFilter !== 'all' || areaFilter !== 'all' || searchQuery !== '';
 
   const clearFilters = () => {
     setTypeFilter('all'); setAreaFilter('all'); setReadiness('all'); setIssueFilter('all');
     setRange({ priceMin: '', priceMax: '', sizeMin: '', sizeMax: '' }); setSearchQuery('');
   };
+
+  // Long lists render in pages of 25; any filter change starts again from the first page
+  const pageKey = `${JSON.stringify(filters)}|${sortKey}`;
+  const [paging, setPaging] = useState({ key: pageKey, n: LIST_PAGE });
+  const shown = paging.key === pageKey ? paging.n : LIST_PAGE;
+  const setShown = (next) => setPaging({ key: pageKey, n: typeof next === 'function' ? next(shown) : next });
+  const pageRows = filteredProperties.slice(0, shown);
 
   // Selection (bulk actions) only ever holds rows that are on screen
   const visibleIds = useMemo(() => new Set(filteredProperties.map((p) => p.id)), [filteredProperties]);
@@ -538,6 +549,8 @@ export default function PropertyManagerPanel({
   };
 
   // Pill filter options: only the types and areas that have listings (outside the trash), with counts
+  const homeSummary = useMemo(() => homepageSummary(properties), [properties]);
+
   const facets = useMemo(() => {
     const live = properties.filter((p) => !(p.isDeleted || p.status === 'trash'));
     const count = (key) => live.reduce((m, p) => { const k = p[key]; if (k) m.set(k, (m.get(k) || 0) + 1); return m; }, new Map());
@@ -621,7 +634,10 @@ export default function PropertyManagerPanel({
         >
           <Star size={16} aria-hidden="true" />
           <span className="crm-props__slots-title">{isAr ? 'العقارات المميزة في الصفحة الرئيسية' : 'Featured on the homepage'}</span>
-          <Badge>{isAr ? `${properties.filter((p) => p.featured).length} مثبّت` : `${properties.filter((p) => p.featured).length} pinned`}</Badge>
+          <Badge tone={homeSummary.live > 0 ? 'accent' : undefined}>{isAr ? `${homeSummary.live} في الواجهة` : `${homeSummary.live} on homepage`}</Badge>
+          {homeSummary.blocked.length > 0 && (
+            <Badge tone="warning">{isAr ? `${homeSummary.blocked.length} متثبّتة ومش ظاهرة` : `${homeSummary.blocked.length} pinned, not shown`}</Badge>
+          )}
           <ChevronDown size={16} aria-hidden="true" className={showSlots ? 'is-open' : undefined} />
         </button>
         {showSlots && (
@@ -634,7 +650,7 @@ export default function PropertyManagerPanel({
         <FeaturedSlotModal
           property={slotEditing}
           isAr={isAr}
-          nextOrder={properties.filter((p) => p.featured).length + 1}
+          nextOrder={homeSummary.pinned + 1}
           onClose={() => setSlotEditing(null)}
           onSave={(patch) => {
             if (onUpdateProperty(slotEditing.id, patch) !== false) {
@@ -691,25 +707,17 @@ export default function PropertyManagerPanel({
             </div>
           )}
 
-          <PropertyFacetFilter
-            types={facets.types}
-            areas={facets.areas}
-            typeFilter={typeFilter}
-            areaFilter={areaFilter}
-            onType={setTypeFilter}
-            onArea={setAreaFilter}
-            isAr={isAr}
-          />
+          {/* Status tabs, then one row: search, type, area, sort, more filters */}
+          <div className="crm-props__chips crm-props__status" role="group" aria-label={isAr ? 'حالة العرض' : 'Display status'}>
+            <Chip pressed={statusFilter === 'all'} count={properties.length - trashCount} onClick={() => setStatusFilter('all')}>{isAr ? 'الكل' : 'All'}</Chip>
+            <Chip pressed={statusFilter === 'published'} count={activeCount} onClick={() => setStatusFilter('published')}>{isAr ? 'معروضة' : 'Live'}</Chip>
+            <Chip pressed={statusFilter === 'hidden'} count={hiddenCount} onClick={() => setStatusFilter('hidden')}>{isAr ? 'مخفية / للمراجعة' : 'Hidden / to review'}</Chip>
+            <Chip pressed={statusFilter === 'under_negotiation'} count={negotiationCount} onClick={() => setStatusFilter('under_negotiation')}>{isAr ? 'تحت التفاوض' : 'Negotiation'}</Chip>
+            <Chip pressed={statusFilter === 'sold'} count={soldCount} onClick={() => setStatusFilter('sold')}>{isAr ? 'اتباعت' : 'Sold'}</Chip>
+            <Chip pressed={statusFilter === 'trash'} count={trashCount} onClick={() => setStatusFilter('trash')}>{isAr ? 'المهملات' : 'Trash'}</Chip>
+          </div>
 
-          <div className="crm-props__toolbar">
-            <div className="crm-props__chips" role="group" aria-label={isAr ? 'حالة العرض' : 'Display status'}>
-              <Chip pressed={statusFilter === 'all'} count={properties.length - trashCount} onClick={() => setStatusFilter('all')}>{isAr ? 'الكل' : 'All'}</Chip>
-              <Chip pressed={statusFilter === 'published'} count={activeCount} onClick={() => setStatusFilter('published')}>{isAr ? 'معروضة' : 'Live'}</Chip>
-              <Chip pressed={statusFilter === 'hidden'} count={hiddenCount} onClick={() => setStatusFilter('hidden')}>{isAr ? 'للمراجعة (مخفية)' : 'To review (hidden)'}</Chip>
-              <Chip pressed={statusFilter === 'under_negotiation'} count={negotiationCount} onClick={() => setStatusFilter('under_negotiation')}>{isAr ? 'تحت التفاوض' : 'Negotiation'}</Chip>
-              <Chip pressed={statusFilter === 'sold'} count={soldCount} onClick={() => setStatusFilter('sold')}>{isAr ? 'اتباعت' : 'Sold'}</Chip>
-              <Chip pressed={statusFilter === 'trash'} count={trashCount} onClick={() => setStatusFilter('trash')}>{isAr ? 'المهملات' : 'Trash'}</Chip>
-            </div>
+          <div className="crm-props__filterbar">
             <label className="crm-props__search">
               <Search size={16} aria-hidden="true" />
               <input
@@ -720,39 +728,54 @@ export default function PropertyManagerPanel({
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </label>
-          </div>
-
-          <div className="crm-props__toolbar">
-            {statusFilter !== 'trash' && (
-              <div className="crm-props__chips" role="group" aria-label={isAr ? 'جاهزية النشر' : 'Readiness'}>
-                <Chip pressed={readiness === 'all'} count={readinessCounts.all} onClick={() => setReadiness('all')}>{isAr ? 'كل البيانات' : 'Any data'}</Chip>
-                <Chip pressed={readiness === 'ready'} count={readinessCounts.ready} onClick={() => setReadiness('ready')}>{isAr ? 'بياناته كاملة' : 'Complete'}</Chip>
-                <Chip pressed={readiness === 'incomplete'} count={readinessCounts.incomplete} onClick={() => setReadiness('incomplete')}>{isAr ? 'ناقص بيانات' : 'Incomplete'}</Chip>
-              </div>
-            )}
-            <div className="crm-props__tools">
-              <Select
-                hideLabel
-                label={isAr ? 'الترتيب' : 'Sort'}
-                value={sortKey}
-                onChange={(e) => setSortKey(e.target.value)}
-                options={Object.entries(SORTS).map(([value, o]) => ({ value, label: isAr ? o.ar : o.en }))}
-              />
-              <Button
-                variant="secondary"
-                size="sm"
-                icon={<SlidersHorizontal size={15} aria-hidden="true" />}
-                aria-expanded={showMoreFilters}
-                aria-controls="crm-props-more"
-                onClick={() => setShowMoreFilters((v) => !v)}
-              >
-                {isAr ? 'فلاتر أكتر' : 'More filters'}{moreFiltersOn ? ' •' : ''}
+            <PropertyFacetFilter
+              types={facets.types}
+              areas={facets.areas}
+              total={properties.length - trashCount}
+              typeFilter={typeFilter}
+              areaFilter={areaFilter}
+              onType={setTypeFilter}
+              onArea={setAreaFilter}
+              isAr={isAr}
+            />
+            <Select
+              hideLabel
+              label={isAr ? 'الترتيب' : 'Sort'}
+              value={sortKey}
+              onChange={(e) => setSortKey(e.target.value)}
+              options={Object.entries(SORTS).map(([value, o]) => ({ value, label: isAr ? o.ar : o.en }))}
+            />
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<SlidersHorizontal size={15} aria-hidden="true" />}
+              aria-expanded={showMoreFilters}
+              aria-controls="crm-props-more"
+              onClick={() => setShowMoreFilters((v) => !v)}
+            >
+              {isAr ? 'فلاتر أكتر' : 'More filters'}{moreFiltersOn ? ` (${moreFiltersCount})` : ''}
+            </Button>
+            {anyFilterOn && (
+              <Button variant="ghost" size="sm" icon={<X size={15} aria-hidden="true" />} onClick={clearFilters}>
+                {isAr ? 'امسح الفلاتر' : 'Clear'}
               </Button>
-            </div>
+            )}
           </div>
 
           {showMoreFilters && (
             <Card padding="compact" id="crm-props-more" className="crm-props__more">
+              {statusFilter !== 'trash' && (
+                <Select
+                  label={isAr ? 'اكتمال البيانات' : 'Data'}
+                  value={readiness}
+                  onChange={(e) => setReadiness(e.target.value)}
+                  options={[
+                    { value: 'all', label: `${isAr ? 'كل الوحدات' : 'Any'} (${readinessCounts.all})` },
+                    { value: 'ready', label: `${isAr ? 'بياناتها كاملة' : 'Complete'} (${readinessCounts.ready})` },
+                    { value: 'incomplete', label: `${isAr ? 'ناقصها بيانات' : 'Incomplete'} (${readinessCounts.incomplete})` }
+                  ]}
+                />
+              )}
               <Select
                 label={isAr ? 'ناقصه إيه' : 'Missing'}
                 value={issueFilter}
@@ -793,7 +816,9 @@ export default function PropertyManagerPanel({
           )}
 
           <p className="crm-props__count" aria-live="polite">
-            {isAr ? `${filteredProperties.length} وحدة` : `${filteredProperties.length} listings`}
+            {pageRows.length < filteredProperties.length
+              ? (isAr ? `عارض ${pageRows.length} من ${filteredProperties.length} وحدة` : `Showing ${pageRows.length} of ${filteredProperties.length}`)
+              : (isAr ? `${filteredProperties.length} وحدة` : `${filteredProperties.length} listings`)}
           </p>
 
           {/* Properties Table */}
@@ -829,7 +854,7 @@ export default function PropertyManagerPanel({
                     </td>
                   </tr>
                 ) : (
-                  filteredProperties.map((prop) => (
+                  pageRows.map((prop) => (
                     <PropertyTableRow
                       readOnly={readOnly}
                       key={prop.id}
@@ -857,6 +882,18 @@ export default function PropertyManagerPanel({
               </tbody>
             </table>
           </div>
+          {pageRows.length < filteredProperties.length && (
+            <div className="crm-props__more-rows">
+              <Button variant="secondary" onClick={() => setShown((n) => n + LIST_PAGE)}>
+                {isAr
+                  ? `اعرض ${Math.min(LIST_PAGE, filteredProperties.length - pageRows.length)} كمان`
+                  : `Show ${Math.min(LIST_PAGE, filteredProperties.length - pageRows.length)} more`}
+              </Button>
+              <Button variant="ghost" onClick={() => setShown(filteredProperties.length)}>
+                {isAr ? `اعرض الكل (${filteredProperties.length})` : `Show all (${filteredProperties.length})`}
+              </Button>
+            </div>
+          )}
         </>
       )}
 

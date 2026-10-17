@@ -3,6 +3,7 @@ import { Edit3, Eye, EyeOff, FileDown, Flame, MessageSquare, RotateCcw, Star, Tr
 import { offerState, getActiveOffer } from '../../utils/propertyOffers';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { FeaturedPeriodLabel } from './HomepageSlotsBoard';
+import { featuredBlocker } from '../../utils/featuredSlots';
 import { ISSUES, pricePerM2, photoCount } from '../../utils/listingReview';
 import { getNormalizedPropertyStatus } from '../../utils/crmLeadViews';
 import { Badge, IconButton, Button, Select } from '../ui';
@@ -90,6 +91,14 @@ export default function PropertyTableRow({
     }
   };
 
+  const toggleHomeExcluded = () => {
+    if (onUpdateProperty(prop.id, { homeExcluded: !prop.homeExcluded }) !== false) {
+      triggerToast(prop.homeExcluded
+        ? (isAr ? 'ممكن تظهر في الصفحة الرئيسية تاني' : 'Can appear on the homepage again')
+        : (isAr ? 'مش هتظهر في الصفحة الرئيسية، لكنها لسه معروضة في صفحة العقارات' : 'Kept off the homepage; still listed on the properties page'), 'success');
+    }
+  };
+
   return (
     <tr className={`crm-prow ${selected ? 'is-selected' : ''} ${isTrash ? 'is-trash' : ''}`}>
       <td className="crm-prow__check">
@@ -122,7 +131,10 @@ export default function PropertyTableRow({
             {!isTrash && (ready
               ? (status === 'hidden' && <Badge tone="success" dot>{isAr ? 'جاهز للنشر' : 'Ready to publish'}</Badge>)
               : <Badge tone="warning" title={isAr ? 'ناقص قبل النشر' : 'Missing before publishing'}>{isAr ? 'ناقص: ' : 'Missing: '}{issues.map((k) => (isAr ? ISSUES[k].ar : ISSUES[k].en)).join('، ')}</Badge>)}
-            {prop.featured && <Badge tone="accent" icon={<Star size={11} fill="currentColor" aria-hidden="true" />}>{isAr ? 'مميز' : 'Featured'} <FeaturedPeriodLabel property={prop} isAr={isAr} /></Badge>}
+            {prop.featured && (featuredBlocker(prop)
+              ? <Badge tone="warning" icon={<Star size={11} aria-hidden="true" />} title={isAr ? 'متثبّتة في الرئيسية بس مش ظاهرة لأنها مش معروضة على الموقع' : 'Pinned, but not shown because it is not live'}>{isAr ? 'متثبّتة ومش ظاهرة' : 'Pinned, not shown'}</Badge>
+              : <Badge tone="accent" icon={<Star size={11} fill="currentColor" aria-hidden="true" />}>{isAr ? 'مميز' : 'Featured'} <FeaturedPeriodLabel property={prop} isAr={isAr} /></Badge>)}
+            {prop.homeExcluded && !prop.featured && <Badge icon={<EyeOff size={11} aria-hidden="true" />}>{isAr ? 'مش في الرئيسية' : 'Off homepage'}</Badge>}
             {liveOffer && <Badge tone="warning" icon={<Flame size={11} aria-hidden="true" />}>−{liveOffer.pct}% · {shortLeft(liveOffer.msLeft, isAr)}</Badge>}
             {offer === 'invalid' && <Badge tone="danger">{isAr ? 'راجع العرض' : 'Fix offer'}</Badge>}
             {prop.badge_ar && <Badge>{isAr ? prop.badge_ar : prop.badge_en}</Badge>}
@@ -191,6 +203,7 @@ export default function PropertyTableRow({
               label={isAr ? `إجراءات ${title}` : `Actions for ${title}`}
               items={[
                 !readOnly && { id: 'feature', icon: <Star size={13} />, label: prop.featured ? (isAr ? 'شيله من الصفحة الرئيسية' : 'Remove from homepage') : (isAr ? 'ميّزه في الصفحة الرئيسية' : 'Feature on homepage'), onSelect: toggleFeatured },
+                !readOnly && !prop.featured && { id: 'home-exclude', icon: <EyeOff size={13} />, label: prop.homeExcluded ? (isAr ? 'رجّعها للصفحة الرئيسية' : 'Allow on homepage') : (isAr ? 'متظهرش في الصفحة الرئيسية' : 'Keep off homepage'), onSelect: toggleHomeExcluded },
                 !readOnly && setOfferEditing && { id: 'offer', icon: <Flame size={13} />, label: offer === 'none' ? (isAr ? 'عرض كاش لفترة محدودة' : 'Limited-time offer') : (isAr ? 'تعديل العرض' : 'Edit offer'), onSelect: () => setOfferEditing(prop) },
                 { id: 'brochure', icon: <FileDown size={13} />, label: busy ? (isAr ? 'بنجهّز البروشور…' : 'Preparing…') : (isAr ? 'بروشور للعميل' : 'Brochure'), disabled: busy, onSelect: async () => { setBusy(true); await downloadBrochure(prop, isAr); setBusy(false); } },
                 { id: 'notify', icon: <MessageSquare size={13} />, label: isAr ? 'ابعته للعملاء المهتمين' : 'Send to matching clients', onSelect: () => { setNotifierProperty(prop); setNotifierEventType(status === 'sold' ? 'sold_unit' : 'new_unit'); } },

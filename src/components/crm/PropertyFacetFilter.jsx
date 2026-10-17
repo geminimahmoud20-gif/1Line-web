@@ -1,32 +1,35 @@
-import { Chip } from '../ui';
+import { Select } from '../ui';
 import './property-facets.css';
 
 /**
- * CRM → العقارات: filter the table by property type and by area. One row of type chips and one of
- * area chips (swipe sideways when they overflow), each with its count; "الكل" clears a row.
+ * CRM → العقارات: filter the table by property type and by area. Two compact selects, each option
+ * with its count; listings with no (or an unknown) area are flagged "⚠" at the end of the list.
  */
-export default function PropertyFacetFilter({ types, areas, typeFilter, areaFilter, onType, onArea, isAr }) {
-  const total = types.reduce((s, t) => s + t.count, 0);
+export default function PropertyFacetFilter({ types, areas, total, typeFilter, areaFilter, onType, onArea, isAr }) {
   return (
-    <section className="pf-bar" aria-label={isAr ? 'فلترة العقارات' : 'Filter listings'}>
-      <div className="pf-row" role="group" aria-label={isAr ? 'نوع العقار' : 'Property type'}>
-        <span className="pf-label">{isAr ? 'النوع' : 'Type'}</span>
-        <div className="pf-track">
-          <Chip pressed={typeFilter === 'all'} count={total} onClick={() => onType('all')}>{isAr ? 'الكل' : 'All'}</Chip>
-          {types.map((t) => (
-            <Chip key={t.id} pressed={typeFilter === t.id} count={t.count} onClick={() => onType(typeFilter === t.id ? 'all' : t.id)}>{t.label}</Chip>
-          ))}
-        </div>
-      </div>
-      <div className="pf-row" role="group" aria-label={isAr ? 'المنطقة' : 'Area'}>
-        <span className="pf-label">{isAr ? 'المنطقة' : 'Area'}</span>
-        <div className="pf-track">
-          <Chip pressed={areaFilter === 'all'} count={total} onClick={() => onArea('all')}>{isAr ? 'كل المناطق' : 'All areas'}</Chip>
-          {areas.map((a) => (
-            <Chip key={a.id} className={a.warn ? 'pf-chip--warn' : undefined} pressed={areaFilter === a.id} count={a.count} onClick={() => onArea(areaFilter === a.id ? 'all' : a.id)}>{a.label}</Chip>
-          ))}
-        </div>
-      </div>
-    </section>
+    <>
+      <Select
+        hideLabel
+        label={isAr ? 'نوع العقار' : 'Property type'}
+        className={`pf-select${typeFilter !== 'all' ? ' is-on' : ''}`}
+        value={typeFilter}
+        onChange={(e) => onType(e.target.value)}
+        options={[
+          { value: 'all', label: `${isAr ? 'كل الأنواع' : 'All types'} (${total})` },
+          ...types.map((t) => ({ value: t.id, label: `${t.label} (${t.count})` }))
+        ]}
+      />
+      <Select
+        hideLabel
+        label={isAr ? 'المنطقة' : 'Area'}
+        className={`pf-select${areaFilter !== 'all' ? ' is-on' : ''}`}
+        value={areaFilter}
+        onChange={(e) => onArea(e.target.value)}
+        options={[
+          { value: 'all', label: `${isAr ? 'كل المناطق' : 'All areas'} (${total})` },
+          ...areas.map((a) => ({ value: a.id, label: `${a.warn ? '⚠ ' : ''}${a.label} (${a.count})` }))
+        ]}
+      />
+    </>
   );
 }
