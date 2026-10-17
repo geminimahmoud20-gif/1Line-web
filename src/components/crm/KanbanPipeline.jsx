@@ -187,7 +187,8 @@ export default function KanbanPipeline({
     }
   };
 
-  // "More" menus are <details> disclosures: close them on outside click or Esc
+  // "More" menus are <details> disclosures: close them on outside click, Esc, or when the page
+  // or board scrolls (the menu is pinned to the screen, so it would drift off its card)
   useEffect(() => {
     const closeAll = (e) => {
       document.querySelectorAll('.kb-more[open]').forEach((d) => {
@@ -196,11 +197,33 @@ export default function KanbanPipeline({
     };
     document.addEventListener('click', closeAll);
     document.addEventListener('keydown', closeAll);
+    document.addEventListener('scroll', closeAll, true);
     return () => {
       document.removeEventListener('click', closeAll);
       document.removeEventListener('keydown', closeAll);
+      document.removeEventListener('scroll', closeAll, true);
     };
   }, []);
+
+  // Opened menus sit on the screen next to their "…" button: below it when there is room,
+  // above it otherwise, and never past the screen edges
+  const placeMenu = (e) => {
+    const details = e.currentTarget;
+    if (!details.open) return;
+    const menu = details.querySelector('.kb-menu');
+    const btn = details.querySelector('summary');
+    if (!menu || !btn) return;
+    const r = btn.getBoundingClientRect();
+    const h = menu.offsetHeight;
+    const w = menu.offsetWidth;
+    const gap = 6;
+    const fitsBelow = r.bottom + gap + h <= window.innerHeight - 8;
+    const top = fitsBelow ? r.bottom + gap : Math.max(8, r.top - gap - h);
+    const left = Math.min(Math.max(8, isAr ? r.left : r.right - w), window.innerWidth - w - 8);
+    menu.style.top = `${Math.round(top)}px`;
+    menu.style.left = `${Math.round(left)}px`;
+    menu.style.visibility = 'visible';
+  };
   const filteredLeads = useMemo(() => {
     return leads.filter(l => {
       // Archived (hidden test or duplicate) requests stay out of the board
@@ -782,7 +805,7 @@ export default function KanbanPipeline({
                             </button>
                           )}
 
-                          <details className="kb-more">
+                          <details className="kb-more" onToggle={placeMenu}>
                             <summary className="kb-btn kb-btn--icon" aria-label={isAr ? 'إجراءات أخرى' : 'More actions'}>
                               <MoreHorizontal size={16} aria-hidden="true" />
                             </summary>
@@ -790,7 +813,7 @@ export default function KanbanPipeline({
                               {stageIndex < PIPELINE_STAGES.length - 1 && (
                                 <button type="button" onClick={(e) => { closeMenu(e); handleMoveToNextStage(lead); }}>
                                   {isAr ? <ChevronLeft size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}
-                                  {isAr ? `للمرحلة اللي بعدها: ${PIPELINE_STAGES[stageIndex + 1].title_ar}` : `Next: ${PIPELINE_STAGES[stageIndex + 1].title_en}`}
+                                  {isAr ? `انقل لـ«${PIPELINE_STAGES[stageIndex + 1].title_ar}»` : `Move to ${PIPELINE_STAGES[stageIndex + 1].title_en}`}
                                 </button>
                               )}
                               {/* Direct Jump To Any Stage */}
