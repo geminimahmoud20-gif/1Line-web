@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { getHomepageSlots, featuredBlocker, homepageSummary } from '../../src/utils/featuredSlots.js';
+import { getHomepageSlots, featuredBlocker, homepageSummary, homeGridCount, HOME_FEATURED_SLOTS } from '../../src/utils/featuredSlots.js';
 
-const p = (id, extra = {}) => ({ id, title_ar: id, status: 'published', ...extra });
+// A complete listing (title, photo, price, size, area), so only the field under test changes
+const p = (id, extra = {}) => ({ id, title_ar: id, status: 'published', images: [`https://x/${id}.webp`], price: 1000000, size: 100, areaKey: 'east', ...extra });
 
 test('auto-fill skips listings excluded from the homepage', () => {
   const list = [p('a', { homeExcluded: true }), p('b'), p('c'), p('d'), p('e')];
@@ -35,4 +36,18 @@ test('homepageSummary separates live, blocked and excluded', () => {
   assert.equal(s.live, 1);
   assert.deepEqual(s.blocked.map((x) => x.id), ['hid', 'sold']);
   assert.deepEqual(s.excluded.map((x) => x.id), ['out']);
+});
+
+test('an incomplete listing never reaches the homepage, and a pinned one says why', () => {
+  const list = [p('a', { featured: true, images: [] }), p('b')];
+  assert.deepEqual(getHomepageSlots(list, 2).map((s) => s.property.id), ['b']);
+  assert.equal(featuredBlocker(list[0]), 'incomplete');
+});
+
+test('the homepage only shows counts that make full rows', () => {
+  assert.deepEqual([0, 1, 2, 3, 4, 5, 6, 9].map(homeGridCount), [0, 1, 2, 3, 4, 4, 6, 6]);
+  const five = ['a', 'b', 'c', 'd', 'e'].map((id) => p(id));
+  assert.equal(getHomepageSlots(five, HOME_FEATURED_SLOTS).length, 4);
+  const eight = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map((id) => p(id));
+  assert.equal(getHomepageSlots(eight, HOME_FEATURED_SLOTS).length, 6);
 });

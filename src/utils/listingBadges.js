@@ -41,9 +41,10 @@ export function listingBadges(p = {}, isAr = true) {
   if (!p || p.isDemo) return { availability: null, review: null };
   const aKey = p.availabilityBadge === 'hide' ? null : availabilityKey(p.status);
   const rKey = reviewState(p);
+  // "لم يُراجَع بعد" only puts visitors off; it stays a CRM note and never shows on the site
   return {
     availability: aKey ? shape(AVAILABILITY[aKey], aKey, isAr) : null,
-    review: rKey !== 'none' ? shape(REVIEW[rKey], rKey, isAr) : null
+    review: rKey !== 'none' && rKey !== 'not_reviewed' ? shape(REVIEW[rKey], rKey, isAr) : null
   };
 }
 
@@ -51,7 +52,7 @@ export function listingBadges(p = {}, isAr = true) {
 export const REVIEW_OPTIONS = [
   { value: 'verified', ar: 'مراجَع ومعتمد', en: 'Reviewed & approved' },
   { value: 'in_review', ar: 'قيد المراجعة', en: 'Under review' },
-  { value: 'not_reviewed', ar: 'لم يُراجَع بعد', en: 'Not reviewed yet' },
+  { value: 'not_reviewed', ar: 'لم يُراجَع بعد (للفريق بس، مش بتظهر للزوار)', en: 'Not reviewed yet (staff only, not shown)' },
   { value: 'none', ar: 'بدون شارة (مخفية)', en: 'No badge (hidden)' }
 ];
 export const AVAILABILITY_OPTIONS = [

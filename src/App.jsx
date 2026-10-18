@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
-import { withoutStockPhotos } from './utils/sampleDataFlags';
+import { forSite } from './utils/siteReady';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
 
@@ -184,8 +184,8 @@ function AppContent() {
       toggleFavorite(propertyId);
     }, 'favorite', propTitle || '');
   }, [properties, lang, requireClientAuth, toggleFavorite]);
-  // Public overlays never show the old stock photo on a real listing (see utils/sampleDataFlags)
-  const siteProperties = useMemo(() => properties.map(withoutStockPhotos), [properties]);
+  // Public overlays get the site list: no old stock photos, no incomplete listings (utils/siteReady)
+  const siteProperties = useMemo(() => forSite(properties), [properties]);
 
   // 🛡️ Protected Client Compare Toggle (Requires Name, Email, WhatsApp verification)
   const handleProtectedToggleCompare = useCallback((property) => {
@@ -704,7 +704,7 @@ function AppContent() {
             onRemoveFromCompare={removeCompare}
             onClearCompare={clearCompare}
             onAddToCompare={addToCompare}
-            availableProperties={properties}
+            availableProperties={siteProperties}
             currency={currency}
             lang={lang}
           />

@@ -169,6 +169,12 @@ export default function PropertyCard({
           ? (isAr ? 'أرض' : 'Land')
           : (isAr ? 'سكني' : 'Residential');
 
+  // Price per m² on every single unit (the benchmark only covers some types): not for whole
+  // buildings (land + floors) or farmland (sold by the feddan)
+  const ownPricePerM2 = !isMultiUnit && !isAgri && Number(property.price) > 0 && Number(property.size) > 0
+    ? Math.round((offer ? offer.price : Number(property.price)) / Number(property.size))
+    : 0;
+
   // Specs: for multi-unit buildings, display footprint area + unit composition (apartments + shops)
   const specs = [
     {
@@ -181,19 +187,15 @@ export default function PropertyCard({
   ];
 
   if (isMultiUnit) {
-    if (unitBreakdown?.summary) {
+    // Floors / flats / shops when the listing says how many; a generic "mixed-use" line only
+    // repeated the "عقار كامل" chip, so it is left out
+    const ub = unitBreakdown || {};
+    if (ub.floors || ub.residentialUnits || ub.commercialUnits) {
       specs.push({
         key: 'units',
         Icon: Building2,
-        value: unitBreakdown.summary,
+        value: ub.summary,
         label: isAr ? 'مكونات العقار' : 'Asset Units'
-      });
-    } else {
-      specs.push({
-        key: 'kind',
-        Icon: Building2,
-        value: isAr ? 'سكني + تجاري' : 'Mixed Use',
-        label: isAr ? 'نوع العقار' : 'Type'
       });
     }
   } else if (isAgri || isIndustry) {
@@ -381,10 +383,10 @@ export default function PropertyCard({
               type="button"
               className="pcx-chip pcx-chip--remote"
               onClick={(e) => { stop(e); openRemoteInspection(property); }}
-              title={isAr ? 'طلب معاينة الغربة: فيديو حي أو لقطات الشارع' : 'Remote inspection: live video or street footage'}
+              title={isAr ? 'للمغتربين: معاينة بالفيديو الحي ولقطات للشارع والجيران' : 'For expats: live video tour and street footage'}
             >
               <Video size={12} strokeWidth={2} aria-hidden="true" />
-              <span>{isAr ? 'معاينة الغربة' : 'Remote tour'}</span>
+              <span>{isAr ? 'معاينة بالفيديو' : 'Video tour'}</span>
             </button>
             {property.virtualTour && (
               <span className="pcx-chip pcx-chip--glass" title={isAr ? 'عرض بانورامي لصور الوحدة' : 'Panoramic photo view'}>
@@ -422,23 +424,10 @@ export default function PropertyCard({
               <bdi>{fmt(benchmark.pricePerMeter)}</bdi>
               <small>{isAr ? 'ج.م/م²' : 'EGP/m²'}</small>
             </span>
-          ) : isMultiUnit ? (
-            <span
-              className="pcx-ppm pcx-ppm--multi"
-              title={benchmark?.valuationNote || (isAr ? 'عقار كامل متعدد الوحدات' : 'Multi-unit building')}
-              style={{
-                background: 'rgba(11, 78, 162, 0.08)',
-                color: '#0b4ea2',
-                borderColor: 'rgba(11, 78, 162, 0.2)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '3px 8px',
-                borderRadius: '6px'
-              }}
-            >
-              <Building2 size={13} aria-hidden="true" />
-              <small style={{ fontWeight: 700 }}>{isAr ? 'عقار كامل' : 'Full Building'}</small>
+          ) : ownPricePerM2 > 0 ? (
+            <span className="pcx-ppm" title={isAr ? 'السعر مقسوم على المساحة' : 'Price divided by size'}>
+              <bdi>{fmt(ownPricePerM2)}</bdi>
+              <small>{isAr ? 'ج.م/م²' : 'EGP/m²'}</small>
             </span>
           ) : null}
         </div>

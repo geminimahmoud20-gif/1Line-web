@@ -75,6 +75,8 @@ export default function PropertyTableRow({
   const isTrash = status === 'trash';
   const isOnSite = !isTrash && status !== 'hidden';
   const ready = issues.length === 0;
+  // Marked as on sale but kept off the site until complete (utils/siteReady)
+  const offSite = ['published', 'under_negotiation', 'sold'].includes(status) && issues.some((k) => k !== 'legacy');
   const title = (isAr ? prop.title_ar : prop.title_en) || prop.title_ar || (isAr ? 'من غير عنوان' : 'Untitled');
   const typeName = (() => { const t = PROPERTY_TYPES.find((x) => x.id === prop.type); return t ? (isAr ? t.name_ar : t.name_en) : propertyTypeLabel(prop.type, isAr); })();
   const areaName = (() => { const a = areas.find((x) => x.id === prop.areaKey); return a ? (isAr ? a.name_ar : a.name_en) : ''; })();
@@ -132,7 +134,7 @@ export default function PropertyTableRow({
           <span className="crm-prow__tags">
             {!isTrash && (ready
               ? (status === 'hidden' && <Badge tone="success" dot>{isAr ? 'جاهز للنشر' : 'Ready to publish'}</Badge>)
-              : <Badge tone="warning" title={isAr ? 'ناقص قبل النشر' : 'Missing before publishing'}>{isAr ? 'ناقص: ' : 'Missing: '}{issues.map((k) => (isAr ? ISSUES[k].ar : ISSUES[k].en)).join('، ')}</Badge>)}
+              : <Badge tone="warning" title={isAr ? 'الموقع مش بيعرض أي وحدة ناقصها صور أو سعر أو مساحة أو منطقة' : 'The site hides listings missing photos, price, size or area'}>{offSite ? (isAr ? 'مش ظاهرة على الموقع · ناقص: ' : 'Not on the site · missing: ') : (isAr ? 'ناقص: ' : 'Missing: ')}{issues.map((k) => (isAr ? ISSUES[k].ar : ISSUES[k].en)).join('، ')}</Badge>)}
             {prop.featured && (featuredBlocker(prop)
               ? <Badge tone="warning" icon={<Star size={11} aria-hidden="true" />} title={isAr ? 'متثبّتة في الرئيسية بس مش ظاهرة لأنها مش معروضة على الموقع' : 'Pinned, but not shown because it is not live'}>{isAr ? 'متثبّتة ومش ظاهرة' : 'Pinned, not shown'}</Badge>
               : <Badge tone="accent" icon={<Star size={11} fill="currentColor" aria-hidden="true" />}>{isAr ? 'مميز' : 'Featured'} <FeaturedPeriodLabel property={prop} isAr={isAr} /></Badge>)}

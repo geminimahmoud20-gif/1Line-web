@@ -166,7 +166,8 @@ export default function HomepageSlotsBoard({ properties = [], onUpdateProperty, 
   const BLOCK_REASON = {
     hidden: isAr ? 'مخفي من الموقع' : 'hidden from the site',
     draft: isAr ? 'مسودة' : 'draft',
-    sold: isAr ? 'اتباع' : 'sold'
+    sold: isAr ? 'اتباع' : 'sold',
+    incomplete: isAr ? 'ناقصها صور أو سعر أو مساحة أو منطقة' : 'missing photos, price, size or area'
   };
   // Listings that could be pinned from here: on the site and not already pinned
   const pinnable = useMemo(
