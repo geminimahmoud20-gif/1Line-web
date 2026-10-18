@@ -3,6 +3,7 @@ import { Inbox, LayoutGrid, Users, Target, Building, Zap, Sparkles, Calculator, 
 import LogoEmblem from '../LogoEmblem';
 import { usePreferences } from '../../context/PreferencesContext';
 import { CRM_ROLES } from './crmRoles';
+import { isInboxActive, needsAction } from '../../utils/inboxView';
 
 export default function CrmSidebar({
   activeTab,
@@ -61,8 +62,9 @@ export default function CrmSidebar({
     return demands.filter(d => d.status === 'pending').length;
   }, [demands]);
 
+  // Same rule as the inbox's own tabs ("محتاجة تصرّف"), so the two numbers always match
   const unassignedInboxCount = useMemo(() => {
-    return leads.filter(l => !l.assignedTo || l.status === 'new').length;
+    return leads.filter((l) => isInboxActive(l) && needsAction(l)).length;
   }, [leads]);
 
   // Keep system group open if active tab is related
