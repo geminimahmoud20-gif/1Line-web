@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { lazy, useMemo } from 'react';
-import { withoutStockPhotos } from './utils/sampleDataFlags';
+import { forSite } from './utils/siteReady';
 import HomePage from './pages/HomePage';
 
 // Home is eager (first paint); every other page loads on navigation
@@ -94,8 +94,8 @@ export default function AppRoutes({
   t,
   triggerToast
 }) {
-  // Visitors never see the old stock photo on a real listing; the CRM keeps the stored record
-  const siteProperties = useMemo(() => properties.map(withoutStockPhotos), [properties]);
+  // Visitors get the site list (no stock photos, no incomplete listings); the CRM keeps every record
+  const siteProperties = useMemo(() => forSite(properties), [properties]);
   return (
     <Routes>
       {/* 1. Home Page */}

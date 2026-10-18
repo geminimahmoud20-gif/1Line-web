@@ -163,7 +163,7 @@ export default function RemoteInspectionModal({ property, isOpen, onClose, lang 
     });
 
     setSent({ waUrl, fullPhone });
-    triggerToast?.(isAr ? 'تم تسجيل طلب معاينة الغربة — كمّل على واتساب' : 'Request saved — continue on WhatsApp', 'success');
+    triggerToast?.(isAr ? 'تم تسجيل طلب المعاينة بالفيديو — كمّل على واتساب' : 'Request saved — continue on WhatsApp', 'success');
   };
 
   return (
@@ -186,7 +186,7 @@ export default function RemoteInspectionModal({ property, isOpen, onClose, lang 
           <span className="xs-crown" aria-hidden="true"><Crown size={20} /></span>
           <div>
             <p className="xs-kicker">{isAr ? 'خدمة المغتربين' : 'Expat service'}</p>
-            <h2 id="xs-ri-title">{isAr ? 'معاينة الغربة' : 'Remote expat inspection'}</h2>
+            <h2 id="xs-ri-title">{isAr ? 'معاينة بالفيديو للمغتربين' : 'Video tour for expats'}</h2>
             <p className="xs-lede">
               {isAr
                 ? 'شوف العقار كأنك واقف قدامه: فيديو حي، ولقطات للشارع والجيران.'

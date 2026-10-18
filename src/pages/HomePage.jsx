@@ -5,7 +5,7 @@ import { DollarSign, ArrowRight, ArrowLeft, ShieldCheck, Sparkles, Calculator, X
 import MarketTickerBar from '../components/home/MarketTickerBar';
 
 import { MEGA_PROJECTS } from '../data/projectsData';
-import { DEMO_PROPERTIES, DEMO_DEMANDS, isRealItem } from '../data/demoData';
+import { DEMO_DEMANDS, isRealItem } from '../data/demoData';
 import { getFounderSettings } from '../utils/founderCmsData';
 import { getAreas } from '../utils/areasData';
 import { updatePageSeo, buildOrganizationSchema } from '../utils/seoHelper';
@@ -205,15 +205,17 @@ export default function HomePage({
   const [marketplaceTab, setMarketplaceTab] = useState('properties'); // 'properties' | 'demands'
   const [marketplaceAreaFilter, setMarketplaceAreaFilter] = useState('all');
 
-  // Safe fallback to default verified catalog if parent state was ever empty
-  const safeProperties = (Array.isArray(properties) && properties.length > 0) ? properties : DEMO_PROPERTIES;
+  // The site list (complete listings only, utils/siteReady). The bundled samples already fill it
+  // while the catalogue loads (PropertiesContext); no fallback here, or incomplete real listings
+  // would be replaced by sample ones
+  const safeProperties = Array.isArray(properties) ? properties : [];
   const safeDemands = (Array.isArray(demands) && demands.length > 0) ? demands : DEMO_DEMANDS;
 
   // Exclude hidden, draft, and deleted properties from public homepage
   const publishedProperties = safeProperties.filter(
     (p) => !p.isDeleted && p.status !== 'trash' && p.status !== 'hidden' && p.status !== 'draft'
   );
-  const activePublished = publishedProperties.length > 0 ? publishedProperties : DEMO_PROPERTIES;
+  const activePublished = publishedProperties;
 
   // In-Tab Quick District Filter for Marketplace Properties
   const filteredMarketplaceProps = useMemo(() => {

@@ -10,7 +10,14 @@
 //    homeExcluded   boolean  — never used to fill an empty slot automatically (pinning still works)
 // =============================================================
 
-export const HOME_FEATURED_SLOTS = 4;
+import { isSiteReady } from './siteReady.js';
+
+// Six cards fill two even rows of three; with fewer listings the grid shrinks to a count that
+// still makes full rows (see homeGridCount) so the homepage never shows a half-empty row.
+export const HOME_FEATURED_SLOTS = 6;
+
+/** Cards the homepage shows out of n available: 6, 4, 3, 2 or 1 (5 → 4) */
+export const homeGridCount = (n) => (n >= 6 ? 6 : n === 5 ? 4 : Math.max(0, n));
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -29,9 +36,9 @@ export const toDayInput = (date) => {
 
 export const addDays = (days, from = Date.now()) => toDayInput(from + days * DAY_MS);
 
-/** Same visibility rule the public homepage uses */
+/** Same visibility rule the public homepage uses: on sale, not hidden, and complete (siteReady) */
 export const isPublishedProperty = (p) =>
-  !!p && !p.isDeleted && !['trash', 'hidden', 'draft', 'sold'].includes(p.status);
+  !!p && !p.isDeleted && !['trash', 'hidden', 'draft', 'sold'].includes(p.status) && isSiteReady(p);
 
 /** 'none' | 'scheduled' | 'active' | 'expired' */
 export function featuredState(p, now = Date.now()) {
@@ -67,10 +74,12 @@ export function getHomepageSlots(list = [], limit = HOME_FEATURED_SLOTS, now = D
   const featured = published.filter((p) => featuredState(p, now) === 'active').sort(byOrder).slice(0, limit);
   const taken = new Set(featured.map((p) => p.id));
   const filler = published.filter((p) => !taken.has(p.id) && !p.homeExcluded).slice(0, Math.max(0, limit - featured.length));
-  return [
+  const slots = [
     ...featured.map((property) => ({ property, source: 'featured' })),
     ...filler.map((property) => ({ property, source: 'auto' }))
   ];
+  // Full rows only (pinned listings come first, so an auto-filled one is the first to go)
+  return limit === HOME_FEATURED_SLOTS ? slots.slice(0, homeGridCount(slots.length)) : slots;
 }
 
 /** Featured listings that are not on the homepage right now, for the CRM board */
@@ -84,11 +93,12 @@ export function getFeaturedQueue(list = [], limit = HOME_FEATURED_SLOTS, now = D
   };
 }
 
-/** Why a pinned listing can't reach the homepage: 'trash' | 'hidden' | 'draft' | 'sold' (null = it can) */
+/** Why a pinned listing can't reach the homepage: 'trash' | 'hidden' | 'draft' | 'sold' | 'incomplete' (null = it can) */
 export function featuredBlocker(p) {
   if (!p?.featured || isPublishedProperty(p)) return null;
   if (p.isDeleted || p.status === 'trash') return 'trash';
-  return ['hidden', 'draft', 'sold'].includes(p.status) ? p.status : 'hidden';
+  if (['hidden', 'draft', 'sold'].includes(p.status)) return p.status;
+  return isSiteReady(p) ? 'hidden' : 'incomplete';
 }
 
 /**

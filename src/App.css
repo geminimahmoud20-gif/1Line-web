@@ -8629,7 +8629,12 @@ html.dark .mobile-sticky-price strong {
   left: 28px;
 }
 
+/* Half see-through until pointed at, so it doesn't hide the card under it while scrolling */
+.floating-back-to-top-btn { opacity: 0.6; transition: opacity 0.2s ease, transform 0.2s ease; }
+.floating-back-to-top-btn:focus-visible { opacity: 1; }
+
 .floating-back-to-top-btn:hover {
+  opacity: 1;
   background: var(--accent-gold);
   color: #000000;
   border-color: var(--accent-gold);

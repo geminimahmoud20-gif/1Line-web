@@ -16,7 +16,7 @@ test('review badge: set in the CRM, hidden by default, legacy legal record count
   assert.equal(listingBadges({}).review, null);
   assert.equal(listingBadges({ reviewBadge: 'verified' }).review.label, 'مراجَع ومعتمد');
   assert.equal(listingBadges({ reviewBadge: 'in_review' }).review.label, 'قيد المراجعة');
-  assert.equal(listingBadges({ reviewBadge: 'not_reviewed' }).review.label, 'لم يُراجَع بعد');
+  assert.equal(listingBadges({ reviewBadge: 'not_reviewed' }).review, null); // staff-only note, never shown on the site
   assert.equal(reviewState({ legalStatus: { ownershipType_ar: 'عقد مسجل' } }), 'verified');
   assert.equal(listingBadges({ legalStatus: {}, reviewBadge: 'none' }).review, null);
   assert.deepEqual(listingBadges({ isDemo: true, status: 'sold', reviewBadge: 'verified' }), { availability: null, review: null });
