@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react';
 import { MessageCircle, Link2, X, ExternalLink, RotateCcw } from 'lucide-react';
 import { Card, Badge, Button, Chip, Input, EmptyState } from '../ui';
+import { ageLabel } from '../../utils/inboxView';
+import { sitePageLabel } from '../../utils/sitePages';
 
 // Inbox → "واتساب من الموقع": one row per WhatsApp tap on the site (api/contact-intent.js). The chat
 // itself arrives on the company's WhatsApp carrying the same reference (W-…); staff link the row to
@@ -13,13 +15,16 @@ const SOURCE_LABELS = {
 
 const toMillis = (t) => (t?.toMillis ? t.toMillis() : Date.parse(t || '') || 0);
 
+// "من ساعة · 11:42 م": the exact time helps match the tap with the chat that reached WhatsApp
 function ago(ms, now, isAr) {
-  const min = Math.max(0, Math.round((now - ms) / 60000));
-  if (min < 1) return isAr ? 'دلوقتي' : 'just now';
-  if (min < 60) return isAr ? `من ${min} دقيقة` : `${min} min ago`;
-  const h = Math.round(min / 60);
-  if (h < 24) return isAr ? `من ${h} ساعة` : `${h} h ago`;
-  return new Date(ms).toLocaleDateString(isAr ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  if (!ms) return '';
+  const d = new Date(ms);
+  const locale = isAr ? 'ar-EG-u-nu-latn' : 'en-GB';
+  const sameDay = new Date(now).toDateString() === d.toDateString();
+  const at = sameDay
+    ? d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+    : d.toLocaleString(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  return `${ageLabel(now - ms, isAr)} · ${at}`;
 }
 
 export default function WhatsAppIntentsList({ intents, properties = [], isAr, now, canEdit, onLink, onResolve }) {
@@ -87,7 +92,7 @@ export default function WhatsAppIntentsList({ intents, properties = [], isAr, no
                   </div>
                   <dl className="crm-inbox-item__facts">
                     <div className="is-strong">
-                      <dt>{L('من', 'From')}</dt>
+                      <dt>{L('داس من', 'Tapped on')}</dt>
                       <dd>
                         {i.propertyId ? (
                           <a href={`/properties/${encodeURIComponent(i.propertyId)}`} target="_blank" rel="noreferrer" className="crm-wa-intent__unit">
@@ -95,7 +100,7 @@ export default function WhatsAppIntentsList({ intents, properties = [], isAr, no
                             <ExternalLink size={12} aria-hidden="true" />
                           </a>
                         ) : (
-                          <bdi dir="ltr">{i.path || '/'}</bdi>
+                          <span title={i.path || '/'}>{isAr ? sitePageLabel(i.path) : (i.path || '/')}</span>
                         )}
                       </dd>
                     </div>
