@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowRight, ArrowLeft, Landmark, ShieldCheck, Clock, Percent, MessageSquare, Building } from 'lucide-react';
 import MortgageRoiCalculator from '../components/calculators/MortgageRoiCalculator';
-import { updatePageSeo } from '../utils/seoHelper';
+import { updatePageSeo, buildBreadcrumbSchema } from '../utils/seoHelper';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
 
 export default function FinancingPage({ lang = 'ar' }) {
@@ -16,7 +16,12 @@ export default function FinancingPage({ lang = 'ar' }) {
         ? 'احسب قسطك الشهري بدقة، خطط ميزانيتك المالية، وحلل العائد الاستثماري لصفقاتك العقارية في سوهاج مع 1Line.' 
         : 'Calculate your exact monthly payments and analyze real estate ROI in Sohag.',
       url: '/financing',
-      type: 'website'
+      type: 'website',
+      schemaId: 'breadcrumb-schema',
+      schema: buildBreadcrumbSchema([
+        { name: isAr ? 'الرئيسية' : 'Home', url: '/' },
+        { name: isAr ? 'التمويل وحساب العائد' : 'Financing & ROI', url: '/financing' }
+      ])
     });
   }, [lang, isAr]);
 

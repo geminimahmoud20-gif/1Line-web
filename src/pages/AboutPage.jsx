@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Building2, ShieldCheck, CheckCircle2, Quote, MessageSquare, Phone, MapPin, TrendingUp, FileCheck, Users, Sparkles, ArrowRight, ArrowLeft, Award, Scale, Video, Clock } from 'lucide-react';
 import LogoEmblem from '../components/LogoEmblem';
 import { getFounderSettings, cleanPhoneNumber, getWhatsAppUrl, DEFAULT_FOUNDER_CMS } from '../utils/founderCmsData';
-import { updatePageSeo } from '../utils/seoHelper';
+import { updatePageSeo, buildBreadcrumbSchema } from '../utils/seoHelper';
 
 // The questions (by category, with FAQPage schema) live here rather than on the long homepage
 const FaqSection = lazy(() => import('../components/home/FaqSection'));
@@ -36,7 +36,12 @@ export default function AboutPage({ lang = 'ar' }) {
         ? 'تعرف على قصة 1Line، معايير الأمان الأربعة المعتمدة، وسيرة المؤسس د. محمود الباز استشاري التقييم والتطوير العقاري بسوهاج.' 
         : 'Discover 1Line story, certified institutional standards, and Dr. Mahmoud Elbaz leadership profile.',
       url: '/about',
-      type: 'website'
+      type: 'website',
+      schemaId: 'breadcrumb-schema',
+      schema: buildBreadcrumbSchema([
+        { name: isAr ? 'الرئيسية' : 'Home', url: '/' },
+        { name: isAr ? 'عن الشركة' : 'About Us', url: '/about' }
+      ])
     });
   }, [lang, isAr]);
 

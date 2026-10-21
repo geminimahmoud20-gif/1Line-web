@@ -19,7 +19,7 @@ import PropertyFilters from '../components/properties/PropertyFilters';
 const PropertyMapView = lazy(() => import('../components/properties/PropertyMapView'));
 import ZeroResultsFallback from '../components/properties/ZeroResultsFallback';
 import Pagination from '../components/common/Pagination';
-import { updatePageSeo } from '../utils/seoHelper';
+import { updatePageSeo, buildBreadcrumbSchema } from '../utils/seoHelper';
 import { track } from '../utils/analytics';
 import { searchPropertiesSemantic, parseSemanticQuery } from '../utils/semanticSearchEngine';
 
@@ -73,7 +73,12 @@ export default function PropertiesPage({
         ? 'تصفح أحدث العقارات المفحوصة والمعتمدة قانونياً في سوهاج وسوهاج الجديدة مع منصة 1Line.' 
         : 'Explore certified properties in Sohag and New Sohag with 1Line Real Estate.',
       url: '/properties',
-      type: 'website'
+      type: 'website',
+      schemaId: 'breadcrumb-schema',
+      schema: buildBreadcrumbSchema([
+        { name: isAr ? 'الرئيسية' : 'Home', url: '/' },
+        { name: isAr ? 'العقارات' : 'Properties', url: '/properties' }
+      ])
     });
   }, [lang]);
 

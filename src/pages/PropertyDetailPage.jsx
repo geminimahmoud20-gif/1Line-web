@@ -20,7 +20,7 @@ import { getWhatsAppUrl, getPhoneCallUrl } from '../utils/founderCmsData';
 
 import HistoricalPriceChart from '../components/properties/HistoricalPriceChart';
 import SocialStoryCardModal from '../components/properties/SocialStoryCardModal';
-import { updatePageSeo, buildPropertySchema } from '../utils/seoHelper';
+import { updatePageSeo, buildPropertySchema, buildBreadcrumbSchema, injectJsonLdSchema } from '../utils/seoHelper';
 import { checkFormSpamProtection } from '../utils/securityShield';
 import { formatCurrencyPrice, getPriceBenchmark, isMultiUnitOrBuilding } from '../utils/currencyAndBenchmark';
 import BookingConfirmationModal from '../components/common/BookingConfirmationModal';
@@ -110,6 +110,11 @@ export default function PropertyDetailPage({
       const propTitle = isAr ? property.title_ar : property.title_en;
       const propDesc = isAr ? property.description_ar : property.description_en;
       const schema = buildPropertySchema(property, lang);
+      const breadcrumbSchema = buildBreadcrumbSchema([
+        { name: isAr ? 'الرئيسية' : 'Home', url: '/' },
+        { name: isAr ? 'العقارات' : 'Properties', url: '/properties' },
+        { name: propTitle || property.id, url: `/properties/${property.id}` }
+      ]);
 
       updatePageSeo({
         title: propTitle,
@@ -121,6 +126,9 @@ export default function PropertyDetailPage({
         schemaId: 'property-jsonld-schema',
         schema: schema
       });
+      if (breadcrumbSchema) {
+        injectJsonLdSchema('breadcrumb-schema', breadcrumbSchema);
+      }
     }
   }, [property, lang, isAr]);
 

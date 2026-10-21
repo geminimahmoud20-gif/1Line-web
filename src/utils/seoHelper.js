@@ -71,7 +71,10 @@ export function updatePageSeo(args) {
   const finalDesc = description || DEFAULT_DESC;
   const finalImage = image ? (image.startsWith('http') ? image : `${BASE_URL}${image}`) : `${BASE_URL}${DEFAULT_IMAGE}`;
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/';
-  const finalUrl = `${BASE_URL}${url || currentPath}`;
+  const targetPath = (url || currentPath).split('?')[0].split('#')[0];
+  const cleanPath = targetPath.startsWith('/') ? targetPath : `/${targetPath}`;
+  const finalPath = cleanPath === '/' ? '/' : cleanPath.replace(/\/+$/, '');
+  const finalUrl = `${BASE_URL}${finalPath}`;
 
   // 1. Standard HTML Title & Description
   document.title = finalTitle;
@@ -248,3 +251,29 @@ export function buildOrganizationSchema() {
     priceRange: 'EGP 1,000,000+'
   };
 }
+
+/**
+ * Build Schema.org BreadcrumbList from route items
+ * @param {Array<{name: string, url: string}>} items
+ */
+export function buildBreadcrumbSchema(items) {
+  if (!Array.isArray(items) || items.length === 0) return null;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => {
+      let itemUrl = item.url || '/';
+      if (!itemUrl.startsWith('http')) {
+        const cleanPath = itemUrl.startsWith('/') ? itemUrl : `/${itemUrl}`;
+        itemUrl = `${BASE_URL}${cleanPath === '/' ? '/' : cleanPath.replace(/\/+$/, '')}`;
+      }
+      return {
+        '@type': 'ListItem',
+        position: index + 1,
+        name: item.name,
+        item: itemUrl
+      };
+    })
+  };
+}
+

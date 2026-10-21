@@ -7,7 +7,7 @@ import { EXPAT_COUNTRIES, getCountry, cleanText, normalizeLocalPhone } from '../
 import { submitIntakeRecord } from '../../firebaseLazy';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { checkFormSpamProtection } from '../../utils/securityShield';
-import { updatePageSeo } from '../../utils/seoHelper';
+import { updatePageSeo, buildBreadcrumbSchema } from '../../utils/seoHelper';
 import '../../styles/expat-suite.css';
 
 const fmt = (n) => Math.round(Number(n) || 0).toLocaleString('en-US');
@@ -44,10 +44,15 @@ export default function TradeInPortal({ lang = 'ar', properties = [], onCreateLe
 
   useEffect(() => {
     updatePageSeo({
-      title: L('بدّل عقارك — منصة البدل العقاري في سوهاج والصعيد', 'Trade in your property — Sohag & Upper Egypt'),
-      description: L('بدّل شقتك أو أرضك أو عمارتك بعقار أنسب لك، بفرق كاش أو رأس برأس، مع مطابقة ذكية بين عروض البدل ومراجعة قانونية للطرفين.', 'Swap your apartment, land or building for a better fit, with or without a cash difference, matched and legally reviewed.'),
+      title: L('منصة البدل والمقايضة العقارية في سوهاج والصعيد', 'Property Trade-In & Exchange Platform in Sohag'),
+      description: L('بدّل شقتك أو أرضك أو مقرك التجاري بعقار مناسب بفرق سعر أو رأس برأس في سوهاج، مع فحص قانوني ومطابقة عقارية موثقة.', 'Swap your apartment, land, or commercial unit in Sohag and Upper Egypt with or without cash difference, backed by certified legal review.'),
       url: '/trade-in',
-      type: 'website'
+      type: 'website',
+      schemaId: 'breadcrumb-schema',
+      schema: buildBreadcrumbSchema([
+        { name: isAr ? 'الرئيسية' : 'Home', url: '/' },
+        { name: isAr ? 'البدل العقاري' : 'Trade-In', url: '/trade-in' }
+      ])
     });
   }, [lang]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -150,6 +155,11 @@ export default function TradeInPortal({ lang = 'ar', properties = [], onCreateLe
   return (
     <div className="xs-trade" dir={isAr ? 'rtl' : 'ltr'}>
       <header className="xs-hub-hero xs-hub-hero--trade">
+        <nav className="page-breadcrumb-sub" aria-label="Breadcrumb" style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
+          <Link to="/" style={{ color: 'rgba(255,255,255,0.75)', textDecoration: 'none' }}>{isAr ? 'الرئيسية' : 'Home'}</Link>
+          <span style={{ color: 'rgba(255,255,255,0.4)' }}>/</span>
+          <span style={{ color: '#D4AF37' }}>{isAr ? 'البدل العقاري' : 'Trade-In'}</span>
+        </nav>
         <p className="xs-kicker"><Repeat2 size={14} aria-hidden="true" /> {L('منصة البدل العقاري', 'Property trade-in')}</p>
         <h1>{L(<>بدّل عقارك <em>بعقار أنسب</em> — من غير ما تبيع الأول</>, <>Swap your property <em>for a better fit</em> — without selling first</>)}</h1>
         <p>{L('شقة في أسيوط بفيلا في سوهاج الجديدة؟ أرض في قنا بعمارة للعيلة؟ قولنا عندك إيه وعايز إيه، ونطابقك مع عروض بدل حقيقية ومخزوننا — بفرق كاش أو رأس برأس.', 'An apartment in Assiut for a villa in New Sohag? Land in Qena for a family building? Tell us what you have and want; we match real swap offers and our inventory.')}</p>
