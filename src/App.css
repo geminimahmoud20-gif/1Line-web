@@ -17993,3 +17993,9 @@ body:has(.lightbox-overlay) .floating-back-to-top-btn {
 /* Building facts the unit doesn't have ("مفيش أسانسير") read quieter than the ones it does */
 .specs-detail-grid .spec-box--no .text-gold { opacity: 0.45; }
 .specs-detail-grid .spec-box--no strong { font-weight: 600; opacity: 0.8; }
+
+/* Wide screens: the theme switch lives in the ⋯ menu; below 769px (no ⋯) it stays in the bar */
+@media (min-width: 769px) {
+  .header-utility-pill-group .theme-toggle-btn--bar,
+  .header-utility-pill-group .utility-divider--theme { display: none !important; }
+}

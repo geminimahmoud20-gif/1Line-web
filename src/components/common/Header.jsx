@@ -134,14 +134,6 @@ export default function Header({
       icon: Layers
     },
     {
-      id: 'demands',
-      type: 'link',
-      path: '/demands',
-      label: isAr ? 'طلبات المشترين' : 'Buyer Demands',
-      title: isAr ? 'طلبات المشترين' : 'Buyer Demands',
-      icon: FileText
-    },
-    {
       id: 'sell',
       type: 'link',
       path: '/sell',
@@ -158,15 +150,20 @@ export default function Header({
       icon: Award
     },
     {
-      id: 'vip-services',
+      // Five links stay in the bar; buyer demands and the VIP services share one menu
+      id: 'services',
       type: 'dropdown',
-      label: isAr ? 'استشارات VIP' : 'VIP Advisory',
-      title: isAr ? 'خدمات واستشارات VIP' : 'VIP Services & Advisory',
+      label: isAr ? 'خدمات' : 'Services',
+      title: isAr ? 'طلبات المشترين وخدمات واستشارات VIP' : 'Buyer demands, VIP services & advisory',
       icon: Sparkles,
-      badge: 'VIP',
-      badgeType: 'gold',
-      activePaths: ['/special-requests', '/market-intelligence', '/financing', '/investor', '/private-office', '/off-market', '/trade-in', '/commercial-hub'],
+      activePaths: ['/demands', '/special-requests', '/market-intelligence', '/financing', '/investor', '/private-office', '/off-market', '/trade-in', '/commercial-hub'],
       items: [
+        {
+          path: '/demands',
+          label: isAr ? 'طلبات المشترين' : 'Buyer Demands',
+          desc: isAr ? 'مشترين بيدوّروا على عقار زي عقارك' : 'Buyers looking for a property like yours',
+          icon: FileText
+        },
         {
           path: '/trade-in',
           label: isAr ? 'بدّل عقارك (البدل العقاري)' : 'Trade in your property',
@@ -296,7 +293,7 @@ export default function Header({
               >
                 <button
                   type="button"
-                  className={`luxury-nav-pill ${groupActive ? 'active' : ''} ${isOpen ? 'open' : ''} ${hub.id === 'vip-services' ? 'vip-nav-pill' : ''}`}
+                  className={`luxury-nav-pill ${groupActive ? 'active' : ''} ${isOpen ? 'open' : ''} ${hub.id === 'services' ? 'vip-nav-pill' : ''}`}
                   onClick={() => setActiveDropdown(isOpen ? null : hub.id)}
                   title={hub.title || hub.label}
                   aria-expanded={isOpen}
@@ -418,12 +415,12 @@ export default function Header({
               <CurrencySwitcher lang={lang} compact />
             </div>
 
-            <div className="utility-divider hide-mobile-sm" />
+            <div className="utility-divider utility-divider--theme hide-mobile-sm" />
 
             {/* Theme Toggle (Sun/Moon) with Luxury Rotation Effect */}
             <button
               type="button"
-              className="utility-sub-btn theme-toggle-btn hide-mobile-sm"
+              className="utility-sub-btn theme-toggle-btn theme-toggle-btn--bar hide-mobile-sm"
               onClick={handleThemeToggle}
               title={isAr ? (theme === 'dark' ? 'الوضع الليلي مفعّل — انقر للتبديل للنهاري' : 'الوضع النهاري مفعّل — انقر لتفعيل الوضع الليلي الفاخر') : 'Toggle Luxury Theme'}
               aria-label="تبديل الوضع الليلي"
@@ -432,26 +429,6 @@ export default function Header({
                 <Sun size={15} className="text-gold theme-icon-rotate" />
               ) : (
                 <Moon size={15} className="theme-icon-rotate" />
-              )}
-            </button>
-
-            <div className="utility-divider hide-mobile" />
-
-            {/* Sound Effects Toggle (Audio Feedback) */}
-            <button
-              type="button"
-              className={`utility-sub-btn sound-toggle-btn hide-mobile ${soundEnabled ? 'sound-active' : ''}`}
-              onClick={() => {
-                if (toggleSound) toggleSound();
-                playNotificationChime('chime');
-              }}
-              title={isAr ? (soundEnabled ? 'التنبيهات الصوتية مفعلة (انقر للكتم)' : 'التنبيهات الصوتية مكتومة (انقر للتشغيل)') : 'Toggle Sound'}
-              aria-label="تشغيل/إيقاف الصوت"
-            >
-              {soundEnabled ? (
-                <Volume2 size={14} className="text-gold" />
-              ) : (
-                <VolumeX size={14} style={{ opacity: 0.6 }} />
               )}
             </button>
 
@@ -511,6 +488,15 @@ export default function Header({
                 >
                   <Share2 size={16} />
                   <span>{isAr ? 'مشاركة المنصة' : 'Share Platform'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="tool-dropdown-item"
+                  onClick={handleThemeToggle}
+                >
+                  {theme === 'dark' ? <Sun size={16} className="text-gold" /> : <Moon size={16} />}
+                  <span>{isAr ? (theme === 'dark' ? 'الوضع النهاري' : 'الوضع الليلي') : (theme === 'dark' ? 'Light mode' : 'Dark mode')}</span>
                 </button>
 
                 {/* Sound Chime Toggle */}

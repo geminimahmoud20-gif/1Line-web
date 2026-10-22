@@ -46,7 +46,8 @@
 .hx-hero {
   position: relative;
   isolation: isolate;
-  min-height: min(calc(100svh - 64px), 900px);
+  /* Tall enough for the video, short enough that search and chips fit the first screen */
+  min-height: min(calc(100svh - 64px), 760px);
   display: grid;
   /* minmax(0,1fr): without it the non-wrapping mobile pill row sets the column width and the hero overflows */
   grid-template-columns: minmax(0, 1fr);
@@ -183,7 +184,7 @@
   width: min(1120px, 100% - 32px);
   min-width: 0;
   margin-inline: auto;
-  padding-block: clamp(56px, 9vh, 104px) clamp(48px, 7vh, 80px);
+  padding-block: clamp(32px, 5vh, 64px) clamp(40px, 6vh, 72px);
   text-align: center;
 }
 
