@@ -20,6 +20,7 @@ import WhatsAppMatchNotifierModal from './WhatsAppMatchNotifierModal';
 import { findMatchingClientsForProperty } from '../../utils/matchingEngine';
 
 import { uploadMultipleImages } from '../../utils/imageUploadService';
+import ThumbBackfillCard from './ThumbBackfillCard';
 
 // Accurate GPS Coordinates map for Sohag Districts
 import PropertyFormModal from './PropertyFormModal';
@@ -665,6 +666,9 @@ export default function PropertyManagerPanel({
           </div>
         )}
       </Card>
+      {!readOnly && (
+        <ThumbBackfillCard properties={properties} onUpdateProperty={onUpdateProperty} isAr={isAr} triggerToast={triggerToast} />
+      )}
       {slotEditing && (
         <FeaturedSlotModal
           property={slotEditing}

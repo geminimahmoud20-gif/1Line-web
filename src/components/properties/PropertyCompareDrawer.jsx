@@ -11,6 +11,7 @@ import { isMultiUnitOrBuilding } from '../../utils/currencyAndBenchmark';
 import CompareColumn from './CompareColumn';
 import CompareDuel from './CompareDuel';
 import { countLabel } from '../../utils/arabicCount';
+import { thumbUrl } from '../../utils/imageThumbs';
 
 export default function PropertyCompareDrawer({
   isOpen,
@@ -580,7 +581,7 @@ export default function PropertyCompareDrawer({
                                     setSelectorSearch('');
                                   }}
                                 >
-                                  <img src={p.images && p.images[0] ? p.images[0] : ''} alt={t} className="sel-item-thumb" />
+                                  <img src={p.images && p.images[0] ? thumbUrl(p.images[0]) : ''} alt={t} className="sel-item-thumb" />
                                   <div className="sel-item-info">
                                     <h5 className="sel-item-title">{t}</h5>
                                     <span className="sel-item-price">

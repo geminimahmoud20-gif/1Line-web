@@ -4,6 +4,7 @@ import { X, Trash2, Heart, Building, MapPin, MessageSquare, Eye, ArrowRight, Arr
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark.js';
 import { getWhatsAppUrl } from '../../utils/founderCmsData.js';
 import { trackEvent } from '../../utils/visitorTracker.js';
+import { thumbUrl } from '../../utils/imageThumbs';
 
 export default function FavoritesDrawer({
   isOpen,
@@ -128,7 +129,7 @@ export default function FavoritesDrawer({
                 const title = isAr ? p.title_ar : p.title_en;
                 const loc = isAr ? p.locationName_ar : p.locationName_en;
                 const priceObj = formatCurrencyPrice(p.price, currency, lang);
-                const thumb = p.images?.[0] || p.image || '/favicon.svg';
+                const thumb = thumbUrl(p.images?.[0] || p.image) || '/favicon.svg';
 
                 return (
                   <div key={p.id} className="fav-card-item">

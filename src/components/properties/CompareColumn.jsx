@@ -2,6 +2,7 @@ import { getPriceBenchmark, formatCurrencyPrice, isMultiUnitOrBuilding } from '.
 import { X, Star, Maximize2, Calendar, ShieldCheck, FileCheck2, MapPin, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { countLabel } from '../../utils/arabicCount';
+import { thumbUrl } from '../../utils/imageThumbs';
 
 // One property's column in the comparison matrix.
 export default function CompareColumn({ prop, isAr, lang, currency, verdicts, customDownPercent, onRemoveFromCompare, activeTab, setCustomDownPercent, onClose }) {
@@ -60,7 +61,7 @@ export default function CompareColumn({ prop, isAr, lang, currency, verdicts, cu
 
         <div className="compare-thumb-wrap">
           <img 
-            src={prop.images && prop.images[0] ? prop.images[0] : ''} 
+            src={prop.images && prop.images[0] ? thumbUrl(prop.images[0]) : ''} 
             alt={title} 
             className="compare-thumb" 
           />
