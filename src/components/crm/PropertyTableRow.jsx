@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Edit3, Eye, EyeOff, FileDown, Flame, MessageSquare, RotateCcw, Star, Trash2, Camera, Send } from 'lucide-react';
+import { Edit3, Eye, EyeOff, FileDown, Flame, MessageSquare, RotateCcw, Star, Trash2, Camera, Send, CloudOff } from 'lucide-react';
 import { offerState, getActiveOffer } from '../../utils/propertyOffers';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { FeaturedPeriodLabel } from './HomepageSlotsBoard';
@@ -50,6 +50,14 @@ async function downloadBrochure(prop, isAr) {
 }
 
 /** One row of CRM → العقارات: what the listing is, what it still lacks, its status and actions. */
+// Why a listing is on this device only, in words the team can act on
+function syncReasonText(reason, isAr) {
+  if (reason === 'too-large') return isAr ? 'الوحدة أكبر من 1MB لأن صورها اتحفظت جواها. امسح النسخة دي وضيفها تاني وارفع الصور.' : 'Over 1 MB: its photos are stored inside it. Remove this copy, add it again and upload the photos.';
+  if (reason === 'permission-denied') return isAr ? 'حسابك مش مسموحله يحفظ العقارات على السيرفر. اطلب صلاحية «إضافة وتعديل العقارات» واخرج وادخل تاني.' : 'Your account may not save listings. Ask for the listing permission, then sign out and in.';
+  if (reason === 'local-only') return isAr ? 'مش موجودة على السيرفر، ومحدش غيرك شايفها.' : 'Not in the database; nobody else sees it.';
+  return isAr ? 'ماوصلتش للسيرفر. اتأكد من النت وابعتها تاني.' : 'Did not reach the server. Check the connection and send again.';
+}
+
 export default function PropertyTableRow({
   readOnly = false,
   prop,
@@ -69,7 +77,10 @@ export default function PropertyTableRow({
   setSlotEditing,
   setOfferEditing,
   setNotifierProperty,
-  setNotifierEventType
+  setNotifierEventType,
+  syncIssue = null,
+  onRetrySync,
+  onDiscardLocal
 }) {
   const [busy, setBusy] = useState(false);
   const status = getNormalizedPropertyStatus(prop);
@@ -144,6 +155,20 @@ export default function PropertyTableRow({
             {offer === 'invalid' && <Badge tone="danger">{isAr ? 'راجع العرض' : 'Fix offer'}</Badge>}
             {prop.badge_ar && <Badge>{isAr ? prop.badge_ar : prop.badge_en}</Badge>}
           </span>
+          {syncIssue && (
+            <span className="crm-prow__sync" role="status">
+              <Badge tone="danger" icon={<CloudOff size={11} aria-hidden="true" />} title={syncReasonText(syncIssue, isAr)}>
+                {isAr ? 'على الجهاز ده بس' : 'This device only'}
+              </Badge>
+              <small>{syncReasonText(syncIssue, isAr)}</small>
+              {onRetrySync && syncIssue !== 'too-large' && (
+                <Button size="sm" variant="secondary" onClick={() => onRetrySync(prop.id)}>{isAr ? 'إعادة الإرسال' : 'Send again'}</Button>
+              )}
+              {onDiscardLocal && (
+                <Button size="sm" variant="ghost" onClick={() => onDiscardLocal(prop.id)}>{isAr ? 'امسح النسخة دي' : 'Remove this copy'}</Button>
+              )}
+            </span>
+          )}
         </div>
         </div>
       </td>

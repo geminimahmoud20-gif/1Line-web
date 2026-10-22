@@ -33,6 +33,7 @@ const SHORT_TYPE_EN = { apartment: 'Apartments', villa: 'Villas', commercial: 'S
 const LIST_PAGE = 25;
 import OfferModal from './OfferModal';
 import { getNormalizedPropertyStatus } from '../../utils/crmLeadViews';
+import { useProperties } from '../../context/PropertiesContext';
 const SOHAG_AREA_COORDINATES = {
   east: { lat: 26.5569, lng: 31.7001 },
   new_sohag: { lat: 26.4715, lng: 31.6620 },
@@ -110,6 +111,17 @@ export default function PropertyManagerPanel({
   const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [selected, setSelected] = useState(() => new Set());
   const confirm = useConfirm();
+  const { unsyncedProperties = {}, cloudPropertyIds, retryPropertySync, discardLocalProperty } = useProperties();
+  const handleDiscardLocal = async (id) => {
+    const ok = await confirm({
+      title: isAr ? 'تمسح النسخة اللي على الجهاز ده؟' : 'Remove this device copy?',
+      tone: 'danger',
+      message: isAr ? 'الوحدة دي مش على السيرفر، فهتتمسح من الجهاز ده بس، ومش هتأثر على حاجة عند حد تاني.' : 'This listing is not in the database; it is removed from this device only.',
+      confirmLabel: isAr ? 'امسحها' : 'Remove',
+      cancelLabel: isAr ? 'لأ' : 'Cancel'
+    });
+    if (ok) discardLocalProperty(id);
+  };
   const [showSlots, setShowSlots] = useState(false);
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [notifierProperty, setNotifierProperty] = useState(null);
@@ -300,17 +312,27 @@ export default function PropertyManagerPanel({
         }
       );
 
+      if (uploadedUrls.inlineCount > 0) {
+        triggerToast(
+          isAr
+            ? `${uploadedUrls.inlineCount} صورة ماترفعتش على السيرفر واتحفظت جوا الوحدة، فالوحدة ممكن متتنشرش. اتأكد إن حسابك معاه صلاحية «إضافة وتعديل العقارات»، واخرج وادخل تاني، وارفع الصور من جديد.`
+            : `${uploadedUrls.inlineCount} photo(s) were not uploaded and stay inside the listing, so it may not publish. Check your listing permission, sign out and in, then upload again.`,
+          'error'
+        );
+      }
       if (uploadedUrls.length > 0) {
         setForm((prev) => ({
           ...prev,
           images: [...uploadedUrls, ...prev.images]
         }));
-        triggerToast(
-          isAr 
-            ? `تم ضغط ورفع ${uploadedUrls.length} صورة بنجاح بجودة معمارية فائقة ⚡` 
-            : `${uploadedUrls.length} photos compressed & saved successfully!`, 
-          'success'
-        );
+        if (!uploadedUrls.inlineCount) {
+          triggerToast(
+            isAr
+              ? `تم ضغط ورفع ${uploadedUrls.length} صورة بنجاح بجودة معمارية فائقة ⚡`
+              : `${uploadedUrls.length} photos compressed & saved successfully!`,
+            'success'
+          );
+        }
       }
     } catch (err) {
       console.error('Image upload failed:', err);
@@ -877,6 +899,9 @@ export default function PropertyManagerPanel({
                       setOfferEditing={setOfferEditing}
                       setNotifierProperty={setNotifierProperty}
                       setNotifierEventType={setNotifierEventType}
+                      syncIssue={unsyncedProperties[String(prop.id)] || null}
+                      onRetrySync={readOnly ? undefined : retryPropertySync}
+                      onDiscardLocal={cloudPropertyIds && !cloudPropertyIds.has(String(prop.id)) ? handleDiscardLocal : undefined}
                     />
                   ))
                 )}

@@ -9,6 +9,7 @@
 import { issueSignedToken } from '@vercel/blob';
 import { handleUpload, handleUploadPresigned } from '@vercel/blob/client';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { canUploadMedia } from '../src/utils/accessModel.js';
 
 const FIREBASE_PROJECT_ID = 'line-c9601';
 const firebaseKeys = createRemoteJWKSet(
@@ -37,9 +38,6 @@ const uploadMode = () => {
   return null;
 };
 
-// Same tests as firestore.rules isAdmin() / isInventoryEditor() (custom claims only)
-const INVENTORY_ROLES = ['sales_manager', 'property_manager'];
-
 // Videos (homepage hero): admins only. Images (property photos): admins + inventory editors.
 const verifyUploader = async (idToken, kind) => {
   let payload;
@@ -51,9 +49,8 @@ const verifyUploader = async (idToken, kind) => {
   } catch {
     throw new Error('not-admin'); // bad signature, expired, wrong project, malformed…
   }
-  const isAdmin = payload.admin === true || payload.role === 'admin' || payload.role === 'super_admin';
-  const allowed = isAdmin || ((kind === 'image' || kind === 'thumb') && INVENTORY_ROLES.includes(payload.role));
-  if (!allowed) throw new Error('not-admin');
+  // A role edited on the roles screen counts by its permissions, as in firestore.rules
+  if (!canUploadMedia(payload, kind)) throw new Error('not-admin');
   return payload.sub;
 };
 

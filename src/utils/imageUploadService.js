@@ -148,22 +148,26 @@ export async function makeThumbForUrl(url) {
  * @param {FileList|File[]} files - List of image files
  * @param {string} propertyId - Property ID
  * @param {Function} onProgress - Progress callback (index, total)
- * @returns {Promise<string[]>} List of image URLs
+ * @returns {Promise<string[]>} List of image URLs; .inlineCount = how many stayed inside the listing
  */
 export async function uploadMultipleImages(files, propertyId = 'general', onProgress = null) {
   const fileArray = Array.from(files).filter(f => f.type.startsWith('image/'));
   const results = [];
+  let inline = 0;
 
   for (let i = 0; i < fileArray.length; i++) {
     const file = fileArray[i];
     try {
       const uploadRes = await uploadPropertyImage(file, propertyId);
       results.push(uploadRes.url);
+      if (!uploadRes.isCloud) inline += 1;
       if (onProgress) onProgress(i + 1, fileArray.length);
     } catch (err) {
       console.error(`Failed to process image ${file.name}:`, err);
     }
   }
 
+  // Photos kept inside the listing (upload refused or offline) make it too big to publish
+  results.inlineCount = import.meta.env.DEV ? 0 : inline;
   return results;
 }

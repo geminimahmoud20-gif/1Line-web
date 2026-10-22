@@ -167,6 +167,18 @@ export function accessFromClaims(claims = {}) {
   return { role: null, perms: [], desk: '', isAdmin: false, isStaff: false };
 }
 
+/**
+ * Who /api/cms-upload signs uploads for, from the verified token's claims. Same test as
+ * firestore.rules isInventoryEditor(): listing photos need 'inv.edit' (whatever the role is
+ * called), the homepage video stays admin-only.
+ */
+export function canUploadMedia(claims = {}, kind = 'image') {
+  const access = accessFromClaims(claims);
+  if (access.isAdmin) return true;
+  if (kind === 'video') return false;
+  return access.perms.includes('inv.edit');
+}
+
 /** Custom claims for a member: other claims kept, CRM access replaced. role null → access removed. */
 export function claimsForMember(existing = {}, role, desk, config) {
   const { role: _r, admin: _a, staff: _s, perms: _p, desk: _d, ...rest } = existing || {};

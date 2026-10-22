@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { LOST_REASONS } from '../utils/crmLeadViews';
 import { persistDemands } from '../utils/demandStorage';
 import { MEGA_PROJECTS, tagDemoProject } from '../data/projectsData';
@@ -6,6 +6,7 @@ import { INITIAL_LEADS } from '../data/mockData';
 import { DEMO_PROPERTIES, DEMO_DEMANDS, tagDemoProperty, tagDemoDemand, isRealItem } from '../data/demoData';
 
 const CATALOG_LIVE_KEY = 'oneline_catalog_live';
+const SYNC_ISSUES_KEY = 'oneline_property_sync_issues';
 const readCatalogLive = () => {
   try { return localStorage.getItem(CATALOG_LIVE_KEY) === '1'; } catch { return false; }
 };
@@ -111,9 +112,29 @@ export function PropertiesProvider({ children }) {
     return DEMO_PROPERTIES;
   });
 
+  // Listings saved here but not in the database: { [id]: reason }. Shown on the CRM row with a
+  // retry, so a refused write isn't only a toast that disappears.
+  const [syncIssues, setSyncIssues] = useState(() => {
+    const v = readStoredJson(SYNC_ISSUES_KEY, {}, (x) => x && typeof x === 'object' && !Array.isArray(x));
+    return v && typeof v === 'object' ? v : {};
+  });
+  const markSync = useCallback((id, reason) => {
+    if (id === undefined || id === null) return;
+    setSyncIssues((prev) => {
+      const key = String(id);
+      if (!reason && !(key in prev)) return prev;
+      if (reason && prev[key] === reason) return prev;
+      const next = { ...prev };
+      if (reason) next[key] = reason; else delete next[key];
+      try { localStorage.setItem(SYNC_ISSUES_KEY, JSON.stringify(next)); } catch { /* storage unavailable */ }
+      return next;
+    });
+  }, []);
+
   // Cloud write results → one honest toast. Local state is already updated, so the UI never waits.
-  const reportCatalogSync = useCallback((promise) => {
+  const reportCatalogSync = useCallback((promise, id) => {
     Promise.resolve(promise).then((res) => {
+      markSync(id, res?.ok ? null : (res?.reason || 'error'));
       if (res?.ok) return;
       const isAr = lang === 'ar';
       const msg = res?.reason === 'too-large'
@@ -123,7 +144,7 @@ export function PropertiesProvider({ children }) {
           : (isAr ? 'تم الحفظ على هذا الجهاز فقط — تعذّر النشر السحابي، أعد المحاولة عند توفر الاتصال.' : 'Saved on this device only — cloud sync failed.');
       triggerToast(msg, 'error');
     }).catch(() => {});
-  }, [lang, triggerToast]);
+  }, [lang, triggerToast, markSync]);
 
   // Synced after each render; handlers also set it immediately so back-to-back updates see each other
   const propertiesRef = useRef(properties);
@@ -138,7 +159,7 @@ export function PropertiesProvider({ children }) {
     propertiesRef.current = updated; // back-to-back updates (slot reordering) must see each other
     setProperties(updated);
     persistProperties(updated);
-    reportCatalogSync(upsertCatalogItem('properties', newProp));
+    reportCatalogSync(upsertCatalogItem('properties', newProp), newProp.id);
   }, [reportCatalogSync]);
 
   const handleUpdateProperty = useCallback((id, updatedData) => {
@@ -149,8 +170,23 @@ export function PropertiesProvider({ children }) {
     propertiesRef.current = updated; // back-to-back updates (slot reordering) must see each other
     setProperties(updated);
     persistProperties(updated);
-    reportCatalogSync(upsertCatalogItem('properties', merged));
+    reportCatalogSync(upsertCatalogItem('properties', merged), id);
   }, [reportCatalogSync]);
+
+  /** Sends this device's copy of a listing again (after a refused or offline save) */
+  const retryPropertySync = useCallback((id) => {
+    const item = propertiesRef.current.find((p) => String(p.id) === String(id));
+    if (item) reportCatalogSync(upsertCatalogItem('properties', item), item.id);
+  }, [reportCatalogSync]);
+
+  /** Drops a listing that only ever existed on this device (the database is not touched) */
+  const discardLocalProperty = useCallback((id) => {
+    const updated = propertiesRef.current.filter((p) => String(p.id) !== String(id));
+    propertiesRef.current = updated;
+    setProperties(updated);
+    persistProperties(updated);
+    markSync(id, null);
+  }, [markSync]);
 
   /**
    * File import: new and updated properties in one go (one batched cloud write, one result).
@@ -239,6 +275,8 @@ export function PropertiesProvider({ children }) {
   // cloud-only items (added in the CRM) go first. Visitors read the shared CDN copy
   // (/api/catalog, no Firestore reads per visit); the CRM asks for the live listener.
   const [liveCatalog, setLiveCatalog] = useState(false);
+  // Listing ids the live listener says the database holds (null until it has answered)
+  const [cloudPropertyIds, setCloudPropertyIds] = useState(null);
   const requestLiveCatalog = useCallback(() => setLiveCatalog(true), []);
   useEffect(() => {
     const applyCloud = (setter, storageKey, pruneDemos = false) => (cloudDocs) => {
@@ -273,7 +311,10 @@ export function PropertiesProvider({ children }) {
     let unsubs = [];
     const goLive = () => {
       unsubs = [
-        subscribeToCatalog('properties', applyProperties),
+        subscribeToCatalog('properties', (docs) => {
+          applyProperties(docs);
+          if (Array.isArray(docs)) setCloudPropertyIds(new Set(docs.filter((d) => !d.deleted).map((d) => String(d.id))));
+        }),
         subscribeToCatalog('projects', applyProjects),
         // The site settings travel with the cached catalog; without it (CRM, local dev) read them directly
         subscribeToSettings(SITE_SETTINGS_KEY, applySiteSettings)
@@ -836,8 +877,30 @@ export function PropertiesProvider({ children }) {
   // listener brings them into the list. No sound / staff alert per row.
   const handleImportLeads = useCallback((list = []) => importLeads(list), []);
 
+  // { [id]: reason } for every real listing the database doesn't have as saved here
+  const unsyncedProperties = useMemo(() => {
+    const out = { ...syncIssues };
+    if (cloudPropertyIds) {
+      for (const p of properties) {
+        const key = String(p.id);
+        if (!p.isDemo && !cloudPropertyIds.has(key) && !out[key]) out[key] = 'local-only';
+      }
+      for (const key of Object.keys(out)) {
+        if (out[key] === 'local-only' && cloudPropertyIds.has(key)) delete out[key];
+      }
+    }
+    for (const key of Object.keys(out)) {
+      if (!properties.some((p) => String(p.id) === key)) delete out[key];
+    }
+    return out;
+  }, [syncIssues, cloudPropertyIds, properties]);
+
   const value = {
     properties,
+    unsyncedProperties,
+    cloudPropertyIds,
+    retryPropertySync,
+    discardLocalProperty,
     requestLiveCatalog,
     handleAddProperty,
     handleImportProperties,
