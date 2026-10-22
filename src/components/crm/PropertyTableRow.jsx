@@ -52,7 +52,7 @@ async function downloadBrochure(prop, isAr) {
 /** One row of CRM → العقارات: what the listing is, what it still lacks, its status and actions. */
 // Why a listing is on this device only, in words the team can act on
 function syncReasonText(reason, isAr) {
-  if (reason === 'too-large') return isAr ? 'الوحدة أكبر من 1MB لأن صورها اتحفظت جواها. امسح النسخة دي وضيفها تاني وارفع الصور.' : 'Over 1 MB: its photos are stored inside it. Remove this copy, add it again and upload the photos.';
+  if (reason === 'too-large') return isAr ? 'الوحدة أكبر من 1MB لأن صورها اتحفظت جواها. دوس «ارفع الصور واحفظ» وهتتبعت للسيرفر.' : 'Over 1 MB: its photos are stored inside it. Press "Upload photos & save" to send it.';
   if (reason === 'permission-denied') return isAr ? 'حسابك مش مسموحله يحفظ العقارات على السيرفر. اطلب صلاحية «إضافة وتعديل العقارات» واخرج وادخل تاني.' : 'Your account may not save listings. Ask for the listing permission, then sign out and in.';
   if (reason === 'local-only') return isAr ? 'مش موجودة على السيرفر، ومحدش غيرك شايفها.' : 'Not in the database; nobody else sees it.';
   return isAr ? 'ماوصلتش للسيرفر. اتأكد من النت وابعتها تاني.' : 'Did not reach the server. Check the connection and send again.';
@@ -80,13 +80,17 @@ export default function PropertyTableRow({
   setNotifierEventType,
   syncIssue = null,
   onRetrySync,
-  onDiscardLocal
+  onDiscardLocal,
+  onUploadInline,
+  inlineProgress = null
 }) {
   const [busy, setBusy] = useState(false);
   const status = getNormalizedPropertyStatus(prop);
   const isTrash = status === 'trash';
   const isOnSite = !isTrash && status !== 'hidden';
   const ready = issues.length === 0;
+  // Photos kept inside the listing after a refused upload (data: URLs)
+  const inlinePhotos = (prop.images || []).filter((u) => String(u).startsWith('data:image/')).length;
   // Marked as on sale but kept off the site until complete (utils/siteReady)
   const offSite = ['published', 'under_negotiation', 'sold'].includes(status) && issues.some((k) => k !== 'legacy');
   const title = (isAr ? prop.title_ar : prop.title_en) || prop.title_ar || (isAr ? 'من غير عنوان' : 'Untitled');
@@ -161,6 +165,13 @@ export default function PropertyTableRow({
                 {isAr ? 'على الجهاز ده بس' : 'This device only'}
               </Badge>
               <small>{syncReasonText(syncIssue, isAr)}</small>
+              {onUploadInline && inlinePhotos > 0 && (
+                <Button size="sm" onClick={() => onUploadInline(prop)} disabled={Boolean(inlineProgress)}>
+                  {inlineProgress
+                    ? (isAr ? `بنرفع الصور… ${inlineProgress.done} من ${inlineProgress.total}` : `Uploading… ${inlineProgress.done}/${inlineProgress.total}`)
+                    : (isAr ? `ارفع الصور (${inlinePhotos}) واحفظ` : `Upload ${inlinePhotos} photos & save`)}
+                </Button>
+              )}
               {onRetrySync && syncIssue !== 'too-large' && (
                 <Button size="sm" variant="secondary" onClick={() => onRetrySync(prop.id)}>{isAr ? 'إعادة الإرسال' : 'Send again'}</Button>
               )}
