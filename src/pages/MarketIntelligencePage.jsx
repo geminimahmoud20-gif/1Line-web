@@ -4,7 +4,7 @@ import { TrendingUp, Building, Sparkles, ShieldCheck, MapPin, CheckCircle2, Calc
 import { areaMarketStats, budgetMatches, liveListings } from '../utils/marketStats';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
 import { getAreas } from '../utils/areasData';
-import { updatePageSeo } from '../utils/seoHelper';
+import { updatePageSeo, buildBreadcrumbSchema } from '../utils/seoHelper';
 
 export default function MarketIntelligencePage({ lang = 'ar', properties = [] }) {
   const navigate = useNavigate();
@@ -20,7 +20,12 @@ export default function MarketIntelligencePage({ lang = 'ar', properties = [] })
         ? 'متوسط سعر المتر في كل منطقة بسوهاج محسوب من العقارات المعروضة حالياً على 1Line، وإيه اللي تقدر تلاقيه بميزانيتك.'
         : 'Price per m² in each Sohag district, computed from the listings currently on 1Line, and what your budget can find.',
       url: '/market-intelligence',
-      type: 'website'
+      type: 'website',
+      schemaId: 'breadcrumb-schema',
+      schema: buildBreadcrumbSchema([
+        { name: isAr ? 'الرئيسية' : 'Home', url: '/' },
+        { name: isAr ? 'أسعار المتر ومؤشرات السوق' : 'Market Intelligence', url: '/market-intelligence' }
+      ])
     });
   }, [lang, isAr]);
 

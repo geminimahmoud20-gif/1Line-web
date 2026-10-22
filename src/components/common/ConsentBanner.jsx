@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { isPrivatePath } from '../../utils/privatePaths';
+import { initGa4 } from '../../utils/ga4';
 
 const STORAGE_KEY = 'oneline_consent_v1';
 const CLARITY_ID = 'ykuhk4dxes';
@@ -32,7 +33,7 @@ function startClarity() {
 }
 
 /**
- * Analytics (Microsoft Clarity session recording) only loads after explicit consent,
+ * Analytics (Microsoft Clarity session recording & GA4) only load after explicit consent,
  * per Egypt's Personal Data Protection Law No. 151 of 2020.
  */
 export default function ConsentBanner({ lang = 'ar' }) {
@@ -44,8 +45,12 @@ export default function ConsentBanner({ lang = 'ar' }) {
 
   // Only on public pages: the CRM and a client's account show other people's details (PDPL 151/2020)
   useEffect(() => {
-    if (onPrivatePage) stopClarity();
-    else if (choice === 'accepted') startClarity();
+    if (onPrivatePage) {
+      stopClarity();
+    } else if (choice === 'accepted') {
+      startClarity();
+      initGa4();
+    }
   }, [choice, onPrivatePage]);
 
   if (choice || onPrivatePage) return null;

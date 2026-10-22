@@ -10,6 +10,7 @@
 // =============================================================
 
 const ENDPOINT = '/api/track';
+import { trackGa4PageView, trackGa4ContactClick, trackGa4FormStart, trackGa4LeadSubmitted } from './ga4.js';
 const CONSENT_KEY = 'oneline_consent_v1';
 const VID_KEY = 'oneline_vid';
 const FIRST_SEEN_KEY = 'oneline_vid_first';
@@ -179,6 +180,17 @@ export function track(type, meta = {}) {
   if (STAGE_OF[type]) markStage(STAGE_OF[type]);
   if (queue.length >= FLUSH_SIZE) flushAnalytics();
   else if (!timer) timer = setTimeout(() => { timer = null; flushAnalytics(); }, FLUSH_DELAY_MS);
+
+  // Forward supported events to GA4 safely (deduplicated, consent-checked, no PII)
+  if (type === 'page_view') {
+    trackGa4PageView(m.path);
+  } else if (type === 'contact_click') {
+    trackGa4ContactClick({ channel: m.channel, placement: m.placement });
+  } else if (type === 'form_start') {
+    trackGa4FormStart({ form: m.form });
+  } else if (type === 'lead_submitted') {
+    trackGa4LeadSubmitted({ form: m.form, leadId: m.leadId });
+  }
 }
 
 /** The fields the collector keeps for a listing. */

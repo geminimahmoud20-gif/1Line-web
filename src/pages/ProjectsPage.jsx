@@ -5,7 +5,7 @@ import { MEGA_PROJECTS } from '../data/projectsData';
 import ProjectCard from '../components/projects/ProjectCard';
 import '../styles/projects-modern.css';
 import { openWhatsAppSafely } from '../utils/founderCmsData';
-import { updatePageSeo } from '../utils/seoHelper';
+import { updatePageSeo, buildBreadcrumbSchema } from '../utils/seoHelper';
 
 export default function ProjectsPage({ 
   projects = [],
@@ -25,7 +25,12 @@ export default function ProjectsPage({
         ? 'تصفح الكمبوندات السكنية والمولات التجارية والأبراج الإدارية بسوهاج مع متابعة حية لنسب التنفيذ الإنشائي.' 
         : 'Explore gated compounds, retail malls, and executive towers with live construction progress updates.',
       url: '/projects',
-      type: 'website'
+      type: 'website',
+      schemaId: 'breadcrumb-schema',
+      schema: buildBreadcrumbSchema([
+        { name: isAr ? 'الرئيسية' : 'Home', url: '/' },
+        { name: isAr ? 'دليل المشروعات' : 'Projects', url: '/projects' }
+      ])
     });
   }, [lang, isAr]);
 

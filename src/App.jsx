@@ -14,7 +14,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { sanitizeObject } from './utils/securityShield';
 
 // SEO
-import { updatePageSeo } from './utils/seoHelper';
+import { updatePageSeo, buildBreadcrumbSchema } from './utils/seoHelper';
 import { ROUTE_SEO } from './config/routeSeo';
 
 // Analytics & CMS
@@ -222,11 +222,20 @@ function AppContent() {
     const seo = ROUTE_SEO[location.pathname];
     if (!seo) return;
     const isAr = lang === 'ar';
+    const pageTitle = isAr ? seo.title_ar : seo.title_en;
+    const isPublic = !seo.noindex;
+    const breadcrumbSchema = isPublic ? buildBreadcrumbSchema([
+      { name: isAr ? 'الرئيسية' : 'Home', url: '/' },
+      { name: pageTitle, url: location.pathname }
+    ]) : null;
+
     updatePageSeo({
-      title: isAr ? seo.title_ar : seo.title_en,
+      title: pageTitle,
       description: isAr ? seo.desc_ar : seo.desc_en,
       url: location.pathname,
-      noindex: !!seo.noindex
+      noindex: !!seo.noindex,
+      schemaId: breadcrumbSchema ? 'breadcrumb-schema' : undefined,
+      schema: breadcrumbSchema || undefined
     });
   }, [location.pathname, lang]);
 

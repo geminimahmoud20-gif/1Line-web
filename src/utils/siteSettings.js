@@ -31,6 +31,7 @@ export const SEO_PAGES = [
   { path: '/market-intelligence', ar: 'مؤشرات السوق', en: 'Market' },
   { path: '/financing', ar: 'التمويل', en: 'Financing' },
   { path: '/commercial-hub', ar: 'التجاري', en: 'Commercial' },
+  { path: '/trade-in', ar: 'البدل العقاري', en: 'Trade-In' },
   { path: '/about', ar: 'عن الشركة', en: 'About' }
 ];
 
