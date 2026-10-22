@@ -55,4 +55,10 @@
   }
   .compact-filters-card .toolbar-pills-scroll::-webkit-scrollbar { display: none; }
   .compact-filters-card .toolbar-pills-scroll > * { flex: none; }
+
+  /* Phones: the first listing shows on the first screen. The count sits once, on the filters
+     toggle; the search label repeats its placeholder; the "how we work" strip is on every unit page */
+  .properties-page-header .results-count-badge,
+  .properties-certified-explainer-strip,
+  .compact-filters-card .search-item > .compact-label { display: none; }
 }

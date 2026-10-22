@@ -204,6 +204,7 @@ export default function PropertyFilters({
             <input
               type="text"
               placeholder={isAr ? 'ابحث بالمنطقة، الشارع، أو نوع العقار...' : 'Search by area, street, or type...'}
+              aria-label={isAr ? 'بحث بالاسم أو الكلمة الدلالية' : 'Keyword Search'}
               value={filters.query || ''}
               onChange={(e) => onFilterChange('query', e.target.value)}
             />
