@@ -43,6 +43,7 @@ import OfferCountdown from './OfferCountdown';
 import '../../styles/property-card.css';
 import { countWord } from '../../utils/arabicCount';
 import { listingBadges } from '../../utils/listingBadges';
+import { thumbUrl } from '../../utils/imageThumbs';
 
 const FEATURE_ICONS = { elevator: ArrowUpDown, garage: Car, garden: Trees, landShare: Landmark };
 
@@ -251,14 +252,21 @@ export default function PropertyCard({
   const img = (
     <img
       key={currentSrc}
-      src={currentSrc}
+      src={thumbUrl(currentSrc)}
       alt={title}
       className={`pcx-img ${loadedSrc.has(currentSrc) ? 'is-loaded' : ''}`}
       loading="lazy"
       decoding="async"
       onLoad={() => setLoadedSrc((s) => (s.has(currentSrc) ? s : new Set(s).add(currentSrc)))}
       onError={(e) => {
-        e.currentTarget.src = FALLBACK_PROPERTY_IMG;
+        const el = e.currentTarget;
+        // A missing small copy falls back to the full photo before the placeholder
+        if (!el.dataset.thumbFallback && thumbUrl(currentSrc) !== currentSrc) {
+          el.dataset.thumbFallback = '1';
+          el.src = currentSrc;
+          return;
+        }
+        el.src = FALLBACK_PROPERTY_IMG;
         setLoadedSrc((s) => new Set(s).add(currentSrc));
       }}
     />

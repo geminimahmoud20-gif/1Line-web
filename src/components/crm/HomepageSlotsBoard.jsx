@@ -13,6 +13,7 @@ import {
   homepageSummary
 } from '../../utils/featuredSlots';
 import './homepage-slots.css';
+import { thumbUrl } from '../../utils/imageThumbs';
 
 const fmtDay = (v, isAr) => (v ? new Date(`${v}T12:00:00`).toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-GB', { day: 'numeric', month: 'short' }) : '');
 
@@ -215,7 +216,7 @@ export default function HomepageSlotsBoard({ properties = [], onUpdateProperty, 
             >
               <span className="hs-slot-num">{idx + 1}</span>
               {p.images?.[0]
-                ? <img src={p.images[0]} alt="" loading="lazy" />
+                ? <img src={thumbUrl(p.images[0])} alt="" loading="lazy" />
                 : <span className="hs-slot-noimg" aria-hidden="true" title={isAr ? 'عقار بدون صورة' : 'No photo'}><Building2 size={20} /></span>}
               <div className="hs-slot-body">
                 <strong title={title(p)}>{title(p)}</strong>

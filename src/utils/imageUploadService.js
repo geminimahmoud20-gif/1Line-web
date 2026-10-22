@@ -6,6 +6,7 @@
 
 import { uploadCmsMedia } from '../firebaseLazy';
 import { applyWatermark, watermarkedName } from './watermark';
+import { THUMB, thumbPathFor, withThumbMarker, needsThumb } from './imageThumbs';
 
 /**
  * Compresses an image File or Blob using native HTML Canvas
@@ -93,7 +94,10 @@ export async function uploadPropertyImage(file, propertyId = 'general') {
     const fileName = `${propertyId}-${base}.${type === 'image/webp' ? 'webp' : 'jpg'}`;
     const upload = new File([compressed.blob], compressed.watermarked ? watermarkedName(fileName) : fileName, { type });
     const res = await uploadCmsMedia(upload, 'image');
-    if (res.ok) return { url: res.url, isCloud: true, sizeKb: compressed.sizeKb };
+    if (res.ok) {
+      const url = (await uploadThumb(compressed.blob, res.path)) ? withThumbMarker(res.url) : res.url;
+      return { url, isCloud: true, sizeKb: compressed.sizeKb };
+    }
     console.warn('Cloud image upload skipped (falling back to local data URL):', res.reason);
   }
 
@@ -103,6 +107,40 @@ export async function uploadPropertyImage(file, propertyId = 'general') {
     isCloud: false,
     sizeKb: compressed.sizeKb
   };
+}
+
+/** Makes and uploads the 640px copy of an already-stored photo; false when it could not */
+async function uploadThumb(source, storedPath) {
+  try {
+    const small = await compressImage(source, { maxWidth: THUMB.width, maxHeight: THUMB.height, quality: THUMB.quality });
+    const file = new File([small.blob], 'thumb.jpg', { type: 'image/jpeg' });
+    const res = await uploadCmsMedia(file, 'thumb', undefined, undefined, { path: thumbPathFor(storedPath) });
+    if (!res.ok) console.warn('Small photo copy skipped:', res.reason);
+    return res.ok;
+  } catch (error) {
+    console.warn('Small photo copy failed:', error?.message || error);
+    return false;
+  }
+}
+
+/**
+ * For a photo already on the site: downloads it, uploads its small copy and returns the photo's
+ * marked address, or null when it can't (not on our store, unreadable, upload refused).
+ */
+export async function makeThumbForUrl(url) {
+  if (!needsThumb(url)) return null;
+  try {
+    const res = await fetch(url, { mode: 'cors', cache: 'no-store' });
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    const type = blob.type && blob.type.startsWith('image/') ? blob.type : 'image/jpeg';
+    const source = new File([blob], 'photo', { type });
+    const path = decodeURIComponent(new URL(url).pathname);
+    return (await uploadThumb(source, path)) ? withThumbMarker(url) : null;
+  } catch (error) {
+    console.warn('Small copy for existing photo failed:', error?.message || error);
+    return null;
+  }
 }
 
 /**

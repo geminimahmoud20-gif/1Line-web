@@ -7,7 +7,8 @@ import { auth } from '../firebase.js';
 
 export const CMS_MEDIA_LIMITS = {
   video: { maxBytes: 60 * 1024 * 1024, types: ['video/mp4', 'video/webm', 'video/quicktime'] },
-  image: { maxBytes: 5 * 1024 * 1024, types: ['image/jpeg', 'image/png', 'image/webp'] }
+  image: { maxBytes: 5 * 1024 * 1024, types: ['image/jpeg', 'image/png', 'image/webp'] },
+  thumb: { maxBytes: 1024 * 1024, types: ['image/jpeg'] }
 };
 
 // Files go to Vercel Blob (Firebase Storage was never enabled for this project: its bucket
@@ -43,7 +44,7 @@ export const getCmsStorageStatus = async () => {
  * Resolves { ok, url, path } or { ok: false, reason }: 'type' | 'size' | 'offline' |
  * 'unauthenticated' | 'storage/unauthorized' | 'bucket-unavailable' | 'stalled' | 'storage/canceled' | 'error'.
  */
-export const uploadCmsMedia = async (file, kind = 'video', onProgress, onStart) => {
+export const uploadCmsMedia = async (file, kind = 'video', onProgress, onStart, { path: fixedPath } = {}) => {
   const limits = CMS_MEDIA_LIMITS[kind];
   if (!file || !limits) return { ok: false, reason: 'type' };
   if (!limits.types.includes(file.type)) return { ok: false, reason: 'type' };
@@ -58,7 +59,7 @@ export const uploadCmsMedia = async (file, kind = 'video', onProgress, onStart) 
   const blobClient = await import('@vercel/blob/client');
   const upload = cmsUploadMode === 'token' ? blobClient.upload : blobClient.uploadPresigned;
   const safeName = file.name.normalize('NFKD').replace(/[^\w.-]+/g, '-').slice(-80) || kind;
-  const path = `cms/${kind}s/${Date.now()}-${safeName}`;
+  const path = fixedPath || `cms/${kind}s/${Date.now()}-${safeName}`;
   const ctrl = new AbortController();
   let moved = false;
   let cancelled = false;

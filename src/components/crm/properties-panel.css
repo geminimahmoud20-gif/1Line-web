@@ -141,3 +141,14 @@
 .crm-lrep__table tbody th button { padding: 0; border: 0; background: none; font: inherit; font-weight: var(--ui-fw-semibold); color: var(--ui-primary-text); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--ui-line-strong); }
 .crm-lrep__table tr.is-warn th button { color: var(--ui-warning); }
 .crm-lrep__note { margin: 0; font-size: var(--ui-fs-1); color: var(--ui-text-3); }
+
+.crm-props__thumbs {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-s-2) var(--ui-s-3);
+  flex-wrap: wrap;
+  margin-block-end: var(--ui-s-3);
+  color: var(--ui-text);
+}
+.crm-props__thumbs > span { flex: 1 1 220px; min-width: 0; font-size: var(--ui-fs-2); }
+.crm-props__thumbs > svg { color: var(--ui-accent); }
