@@ -154,9 +154,11 @@ describe('Homepage Exhaustive Deep Audit', () => {
   });
 
   it('12. Dark Mode Toggle Visual Consistency', () => {
-    cy.get('.theme-toggle-btn').first().click();
+    // On wide screens the switch lives in the ⋯ menu (the bar button is for phones)
+    cy.get('.tools-trigger-btn').click();
+    cy.get('[data-theme-toggle]').click();
     cy.get('html').should('have.attr', 'data-theme', 'dark');
-    cy.get('.theme-toggle-btn').first().click();
+    cy.get('[data-theme-toggle]').click();
     cy.get('html').should('have.attr', 'data-theme', 'light');
   });
 });
