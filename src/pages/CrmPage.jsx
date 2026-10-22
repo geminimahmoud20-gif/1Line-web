@@ -36,6 +36,7 @@ import { parseMoney } from '../utils/crmLeadViews';
 import { canEditProperties, canEditLeadsRole, DESK_BY_ROLE, scopeLeadsForAccess } from '../utils/rbacRules';
 import { permsOfRole, PERM_IDS, LEGACY_DESK } from '../utils/accessModel';
 import { verifyAdminCredentials, checkRateLimit, recordFailedAttempt, resetFailedAttempts } from '../utils/securityShield';
+import { buildingFromSellerFeatures } from '../utils/buildingFeatures';
 
 export default function CrmPage({
   lang = 'ar',
@@ -331,6 +332,9 @@ export default function CrmPage({
       floor: floorVal,
       finishing_ar: finishVal,
       images: imagesVal,
+      // What the owner ticked on /sell: building facts for the specs, the rest as features
+      building: Object.keys(buildingFromSellerFeatures(details.features)).length ? buildingFromSellerFeatures(details.features) : null,
+      features_ar: Array.isArray(details.featuresAr) ? details.featuresAr : [],
       description_ar: lead.notes || (details.legalSummaryAr ? `الموقف القانوني: ${details.legalSummaryAr}` : ''),
       description_en: '',
       status: 'hidden',

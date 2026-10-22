@@ -22,6 +22,7 @@ import Pagination from '../components/common/Pagination';
 import { updatePageSeo, buildBreadcrumbSchema } from '../utils/seoHelper';
 import { track } from '../utils/analytics';
 import { searchPropertiesSemantic, parseSemanticQuery } from '../utils/semanticSearchEngine';
+import { hasLandShare } from '../utils/buildingFeatures';
 
 // Area centre for listings placed only by their area (map bubbles, "search this area")
 const areaCenterOf = (key) => {
@@ -287,8 +288,7 @@ export default function PropertiesPage({
             if (!isLic) return false;
           }
           if (tag === 'land_share') {
-            const hasShare = Boolean(prop.legalStatus?.landShare_ar) || 
-              (prop.features_ar && prop.features_ar.some(f => f.includes('حصة بالأرض') || f.includes('حصة في الأرض') || f.includes('حصة شائعة')));
+            const hasShare = hasLandShare(prop);
             if (!hasShare) return false;
           }
           if (tag === 'investment') {

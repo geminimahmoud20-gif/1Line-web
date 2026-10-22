@@ -50,7 +50,8 @@
 }
 .pxe-field { display: flex; flex-direction: column; gap: 4px; font-size: var(--crm-text-xs, 0.74rem); color: var(--crm-muted, #64748b); }
 .pxe-field > span { font-weight: 600; }
-.pxe-field input {
+.pxe-field input,
+.pxe-field select {
   width: 100%;
   box-sizing: border-box;
   padding: 8px 10px;
@@ -98,3 +99,6 @@
 .pf-feddan { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .pf-loc-hint { display: block; margin-top: 4px; font-size: var(--crm-text-xs); line-height: 1.6; color: var(--crm-warn); }
 .pf-loc-hint.is-exact { color: var(--crm-positive); }
+
+.pxe-building { margin-top: 12px; }
+.pxe-building .pxe-sec-head { cursor: default; }

@@ -435,6 +435,30 @@
 .pcx-spec-val small { font-size: 0.7rem; font-weight: 600; color: var(--pcx-muted); }
 .pcx-spec-label { font-size: 0.68rem; color: var(--pcx-muted); line-height: 1.3; }
 
+/* Building features the unit has (أسانسير · جراج · حديقة · حصة أرض) */
+.pcx-feats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pcx-feat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--pcx-line);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--pcx-ink);
+  white-space: nowrap;
+}
+.pcx-feat svg { flex: none; color: var(--pcx-gold); }
+
 /* CTA row pinned to the bottom so rows of cards line up */
 .pcx-cta {
   display: flex;
