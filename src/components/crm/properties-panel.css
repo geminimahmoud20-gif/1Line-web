@@ -76,6 +76,13 @@
 .crm-prow__code { letter-spacing: 0.02em; font-variant-numeric: tabular-nums; }
 .crm-prow__tags { display: flex; flex-wrap: wrap; gap: var(--ui-s-1); }
 .crm-prow__tags .hs-period { font-size: inherit; }
+/* Saved on this device only: the reason and what to do, right on the row */
+.crm-prow__sync {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-s-1) var(--ui-s-2);
+  margin-top: var(--ui-s-1); padding: var(--ui-s-2); border-radius: var(--ui-r-sm);
+  background: var(--ui-danger-tint, rgba(220, 38, 38, 0.08));
+}
+.crm-prow__sync small { flex: 1 1 200px; min-width: 0; font-size: var(--ui-fs-1); color: var(--ui-text-2); line-height: 1.5; }
 .crm-prow__price { white-space: nowrap; }
 .crm-prow__price strong { display: block; font-size: var(--ui-fs-3); font-variant-numeric: tabular-nums; }
 .crm-prow__price strong small { font-weight: var(--ui-fw-regular); color: var(--ui-text-3); }
