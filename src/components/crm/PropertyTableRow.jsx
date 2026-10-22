@@ -10,6 +10,7 @@ import { Badge, IconButton, Button, Select } from '../ui';
 import RowMenu from './RowMenu';
 import { propertyTypeLabel } from '../../utils/placeLabels';
 import { sizeLabel, isLandType, isAgriculturalType, isIndustrialType } from '../../utils/propertyKinds';
+import { thumbUrl } from '../../utils/imageThumbs';
 
 const STATUS_OPTIONS = [
   { value: 'published', ar: 'معروض', en: 'Live' },
@@ -119,7 +120,7 @@ export default function PropertyTableRow({
         <div className="crm-prow__main">
         <div className="crm-prow__thumb">
           {photos > 0
-            ? <img src={prop.images[0]} alt="" loading="lazy" />
+            ? <img src={thumbUrl(prop.images[0])} alt="" loading="lazy" />
             : <span className="crm-prow__nophoto"><Camera size={18} aria-hidden="true" /></span>}
           {photos > 1 && <span className="crm-prow__count">{photos}</span>}
         </div>

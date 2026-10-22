@@ -17,6 +17,7 @@ import { trackEvent } from '../../utils/visitorTracker';
 import BrandWatermark from '../common/BrandWatermark';
 import { isWatermarked } from '../../utils/watermark';
 import VirtualTourViewer from './VirtualTourViewer';
+import { thumbUrl, thumbFallback } from '../../utils/imageThumbs';
 
 export default function PropertyGallery({
   images: rawImages = [],
@@ -284,7 +285,8 @@ export default function PropertyGallery({
                 onClick={() => handleOpenLightbox(idx + 1)}
               >
                 <img 
-                  src={imgUrl} 
+                  src={thumbUrl(imgUrl)} 
+                  onError={thumbFallback(imgUrl)}
                   alt={`${title} ${idx + 2}`} 
                   draggable={false}
                   onContextMenu={(e) => e.preventDefault()}
@@ -489,7 +491,7 @@ export default function PropertyGallery({
                     setActiveImageIndex(i);
                   }}
                 >
-                  <img src={imgUrl} alt="" />
+                  <img src={thumbUrl(imgUrl)} onError={thumbFallback(imgUrl)} alt="" loading="lazy" />
                 </div>
               ))}
             </div>

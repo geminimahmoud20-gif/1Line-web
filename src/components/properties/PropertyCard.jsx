@@ -38,6 +38,7 @@ import OfferCountdown from './OfferCountdown';
 import '../../styles/property-card.css';
 import { countWord } from '../../utils/arabicCount';
 import { listingBadges } from '../../utils/listingBadges';
+import { thumbUrl } from '../../utils/imageThumbs';
 
 const FALLBACK_PROPERTY_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 500' fill='%23071e3d'%3E%3Crect width='800' height='500' fill='%23071e3d'/%3E%3Cpath d='M400 130 L620 320 L180 320 Z' fill='%230b4ea2' opacity='0.7'/%3E%3Crect x='340' y='220' width='120' height='100' rx='20' fill='%23fdcb42' opacity='0.85'/%3E%3C/svg%3E";
 
@@ -242,14 +243,21 @@ export default function PropertyCard({
   const img = (
     <img
       key={currentSrc}
-      src={currentSrc}
+      src={thumbUrl(currentSrc)}
       alt={title}
       className={`pcx-img ${loadedSrc.has(currentSrc) ? 'is-loaded' : ''}`}
       loading="lazy"
       decoding="async"
       onLoad={() => setLoadedSrc((s) => (s.has(currentSrc) ? s : new Set(s).add(currentSrc)))}
       onError={(e) => {
-        e.currentTarget.src = FALLBACK_PROPERTY_IMG;
+        const el = e.currentTarget;
+        // A missing small copy falls back to the full photo before the placeholder
+        if (!el.dataset.thumbFallback && thumbUrl(currentSrc) !== currentSrc) {
+          el.dataset.thumbFallback = '1';
+          el.src = currentSrc;
+          return;
+        }
+        el.src = FALLBACK_PROPERTY_IMG;
         setLoadedSrc((s) => new Set(s).add(currentSrc));
       }}
     />
