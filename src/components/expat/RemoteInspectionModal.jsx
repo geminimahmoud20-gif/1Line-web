@@ -5,6 +5,7 @@ import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { checkFormSpamProtection } from '../../utils/securityShield';
 import { EXPAT_COUNTRIES, getCountry, cleanText, normalizeLocalPhone, clockIn } from '../../utils/expatIntake';
 import '../../styles/expat-suite.css';
+import { thumbUrl } from '../../utils/imageThumbs';
 
 const COVERAGE = [
   { id: 'live_call', icon: Video, ar: 'مكالمة فيديو حية على واتساب', en: 'Live WhatsApp video call', desc_ar: 'تمشي مع الاستشاري جوه الوحدة وتسأل وقت ما تحب', desc_en: 'Walk the unit with the advisor and ask anything' },
@@ -197,7 +198,7 @@ export default function RemoteInspectionModal({ property, isOpen, onClose, lang 
 
         {property && (
           <div className="xs-prop">
-            {property.images?.[0] && <img src={property.images[0]} alt="" loading="lazy" />}
+            {property.images?.[0] && <img src={thumbUrl(property.images[0])} alt="" loading="lazy" />}
             <div>
               <strong>{title}</strong>
               <span><bdi>#{code}</bdi></span>

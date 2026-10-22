@@ -4,6 +4,7 @@ import { Search, X, Building, MapPin, Layers, Calculator, TrendingUp, FileText, 
 import { getAreas } from '../../utils/areasData.js';
 import { MEGA_PROJECTS } from '../../data/projectsData.js';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark.js';
+import { thumbUrl } from '../../utils/imageThumbs';
 
 export default function QuickSearchModal({
   isOpen,
@@ -296,7 +297,7 @@ export default function QuickSearchModal({
                           onMouseEnter={() => setSelectedIndex(thisIndex)}
                         >
                           <img
-                            src={p.images?.[0] || p.image || '/favicon.svg'}
+                            src={thumbUrl(p.images?.[0] || p.image) || '/favicon.svg'}
                             alt={p.title_ar}
                             className="item-thumb-img"
                             loading="lazy"

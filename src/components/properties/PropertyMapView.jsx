@@ -9,6 +9,7 @@ import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
 import { mapLayout, pinPriceLabel, escapeHtml } from '../../utils/mapPins';
 import { sizeLabel } from '../../utils/propertyKinds';
 import { getAreas } from '../../utils/areasData';
+import { thumbUrl } from '../../utils/imageThumbs';
 
 // Area centre from the areas the CRM manages ({ lat, lng }), used for the area bubbles
 const areaCenterOf = (key) => {
@@ -403,7 +404,7 @@ export default function PropertyMapView({
       const priceObj = formatCurrencyPrice(prop.price, currency, lang);
       const pinLabel = escapeHtml(pinPriceLabel(prop.price, isAr));
       const hasPrice = Number(prop.price) > 0;
-      const image = escapeHtml(prop.images && prop.images[0] ? prop.images[0] : '/no-photo.svg');
+      const image = escapeHtml(prop.images && prop.images[0] ? thumbUrl(prop.images[0]) : '/no-photo.svg');
       const badge = prop.badge_ar ? `<span class="popup-badge-pill">${escapeHtml(isAr ? prop.badge_ar : (prop.badge_en || prop.badge_ar))}</span>` : '';
 
       // Price pin with a pointer on the listing's spot
