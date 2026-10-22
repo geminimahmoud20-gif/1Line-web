@@ -12,7 +12,7 @@ if (!siteUrl && fs.existsSync(path.join(root, '.env'))) {
   const m = fs.readFileSync(path.join(root, '.env'), 'utf8').match(/^VITE_SITE_URL=(.+)$/m);
   if (m) siteUrl = m[1].trim();
 }
-siteUrl = (siteUrl || 'https://1-line-qkzp9.vercel.app').replace(/\/+$/, '');
+siteUrl = (siteUrl || 'https://www.1lineestate.com').replace(/\/+$/, '');
 
 // ── Sanitization and escaping helpers ──────────────────────────────────────────────────
 export const esc = (s) => String(s ?? '')

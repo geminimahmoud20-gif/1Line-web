@@ -68,14 +68,14 @@ console.log('=== SITEMAP VERIFICATION ===');
 console.log(`Valid XML: ${sitemapValidXml}`);
 console.log(`Total URLs: ${sitemapUrls.length}`);
 console.log(`Private URLs in sitemap: ${privateInSitemap ? 'FAIL' : 'PASS (None)'}`);
-console.log(`Contains /trade-in: ${sitemapUrls.includes('https://1-line-qkzp9.vercel.app/trade-in') ? 'PASS' : 'FAIL'}`);
+console.log(`Contains /trade-in: ${sitemapUrls.includes('https://www.1lineestate.com/trade-in') ? 'PASS' : 'FAIL'}`);
 
 // Check robots.txt
 const robotsTxt = fs.readFileSync(path.join(dist, 'robots.txt'), 'utf8');
 console.log('=== ROBOTS.TXT VERIFICATION ===');
 console.log(`Disallow /crm: ${robotsTxt.includes('Disallow: /crm') ? 'PASS' : 'FAIL'}`);
 console.log(`Disallow /my-account: ${robotsTxt.includes('Disallow: /my-account') ? 'PASS' : 'FAIL'}`);
-console.log(`Sitemap directive: ${robotsTxt.includes('Sitemap: https://1-line-qkzp9.vercel.app/sitemap.xml') ? 'PASS' : 'FAIL'}`);
+console.log(`Sitemap directive: ${robotsTxt.includes('Sitemap: https://www.1lineestate.com/sitemap.xml') ? 'PASS' : 'FAIL'}`);
 
 if (allPassed && sitemapValidXml && !privateInSitemap) {
   console.log('\n>>> ALL AUDIT & IMPLEMENTATION CHECKS PASSED <<<');
