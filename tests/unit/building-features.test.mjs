@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildingFacts, hasLandShare, buildingFromSellerFeatures, hasBuildingFacts } from '../../src/utils/buildingFeatures.js';
+import { buildingFacts, hasLandShare, buildingFromSellerFeatures, hasBuildingFacts, cardFeatures } from '../../src/utils/buildingFeatures.js';
 
 const labels = (facts) => Object.fromEntries(facts.map((f) => [f.key, f.value]));
 
@@ -51,4 +51,12 @@ test('what an owner ticked on /sell becomes the draft building facts', () => {
   assert.deepEqual(buildingFromSellerFeatures(['elevator', 'garage', 'garden', 'corner']), { elevator: 'yes', garage: 'private', garden: 'private' });
   assert.deepEqual(buildingFromSellerFeatures(['parking']), {});
   assert.deepEqual(buildingFromSellerFeatures(undefined), {});
+});
+
+test('card tags list only what the unit has, in short words; street parking is not a garage', () => {
+  const p = { type: 'apartment', building: { elevator: 'yes', garage: 'street', garden: 'no', landShare: 'yes' } };
+  assert.deepEqual(cardFeatures(p).map((f) => f.label), ['أسانسير', 'حصة أرض']);
+  assert.deepEqual(cardFeatures({ type: 'villa', features_ar: ['جراج خاص', 'حديقة'] }).map((f) => f.key), ['garage', 'garden']);
+  assert.deepEqual(cardFeatures({ type: 'land', building: { elevator: 'yes' } }), []);
+  assert.deepEqual(cardFeatures(p, false).map((f) => f.label), ['Elevator', 'Land share']);
 });

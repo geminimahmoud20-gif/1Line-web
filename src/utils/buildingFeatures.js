@@ -116,3 +116,21 @@ export function buildingFromSellerFeatures(ids = []) {
   if (has('garden')) b.garden = 'private';
   return b;
 }
+
+const CARD_LABELS = {
+  elevator: { ar: 'أسانسير', en: 'Elevator' },
+  garage: { ar: 'جراج', en: 'Garage' },
+  garden: { ar: 'حديقة', en: 'Garden' },
+  landShare: { ar: 'حصة أرض', en: 'Land share' }
+};
+
+/**
+ * Short tags for the listing card: only what the unit has. Street parking isn't a garage, so it
+ * stays on the unit page only.
+ */
+export function cardFeatures(p, isAr = true) {
+  const street = p?.building?.garage === 'street';
+  return buildingFacts(p, isAr)
+    .filter((f) => f.positive && !(f.key === 'garage' && street))
+    .map((f) => ({ key: f.key, label: isAr ? CARD_LABELS[f.key].ar : CARD_LABELS[f.key].en }));
+}

@@ -28,8 +28,13 @@ import {
   Video,
   Flame,
   Clock3,
-  ShieldQuestion
+  ShieldQuestion,
+  ArrowUpDown,
+  Car,
+  Trees,
+  Landmark
 } from 'lucide-react';
+import { cardFeatures } from '../../utils/buildingFeatures';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { formatCurrencyPrice, getPriceBenchmark, isMultiUnitOrBuilding, parseUnitBreakdown } from '../../utils/currencyAndBenchmark';
 import { useUIModal } from '../../context/UIModalContext';
@@ -38,6 +43,8 @@ import OfferCountdown from './OfferCountdown';
 import '../../styles/property-card.css';
 import { countWord } from '../../utils/arabicCount';
 import { listingBadges } from '../../utils/listingBadges';
+
+const FEATURE_ICONS = { elevator: ArrowUpDown, garage: Car, garden: Trees, landShare: Landmark };
 
 const FALLBACK_PROPERTY_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 500' fill='%23071e3d'%3E%3Crect width='800' height='500' fill='%23071e3d'/%3E%3Cpath d='M400 130 L620 320 L180 320 Z' fill='%230b4ea2' opacity='0.7'/%3E%3Crect x='340' y='220' width='120' height='100' rx='20' fill='%23fdcb42' opacity='0.85'/%3E%3C/svg%3E";
 
@@ -214,6 +221,8 @@ export default function PropertyCard({
     if (property.bathrooms > 0) specs.push({ key: 'baths', Icon: Bath, value: property.bathrooms, label: countWord('bath', property.bathrooms, isAr) });
   }
 
+
+  const features = cardFeatures(property, isAr);
 
   const stop = (e) => { e.preventDefault(); e.stopPropagation(); };
   const goTo = (idx) => setActiveImageIndex((idx + photoCount) % photoCount);
@@ -475,6 +484,20 @@ export default function PropertyCard({
             </li>
           ))}
         </ul>
+
+        {features.length > 0 && (
+          <ul className="pcx-feats" aria-label={isAr ? 'مميزات المبنى' : 'Building features'}>
+            {features.map(({ key, label }) => {
+              const Icon = FEATURE_ICONS[key];
+              return (
+                <li key={key} className="pcx-feat">
+                  <Icon size={13} strokeWidth={1.9} aria-hidden="true" />
+                  <span>{label}</span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
 
         <div className="pcx-cta">
           <Link to={detailsUrl} className="pcx-btn-main" onClick={() => announceView(property, title)}>
