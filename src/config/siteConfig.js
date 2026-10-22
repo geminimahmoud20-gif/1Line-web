@@ -2,14 +2,13 @@
  * Single source of truth for public brand facts (domain, contact, coverage, verified stats).
  * Phone/WhatsApp stay editable from the Founder CMS (see utils/founderCmsData.js).
  *
- * Set VITE_SITE_URL in Vercel once the official domain is connected
- * (e.g. https://1line-sohag.com). Until then the current origin is used,
- * so canonical URLs never point to a domain that doesn't resolve.
+ * VITE_SITE_URL (.env, or the Vercel project's environment variables, which win) is the
+ * official address: https://www.1lineestate.com. 1lineestate.com redirects to it.
  */
 
 const envUrl = (import.meta.env?.VITE_SITE_URL || '').replace(/\/+$/, '');
 
-export const SITE_URL = envUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://1-line-qkzp9.vercel.app');
+export const SITE_URL = envUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://www.1lineestate.com');
 
 export const BRAND = {
   name_ar: 'ون لاين للاستشارات والتسويق العقاري',

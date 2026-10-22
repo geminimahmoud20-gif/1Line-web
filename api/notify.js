@@ -23,7 +23,7 @@ const limitOverall = () => {
   return true;
 };
 
-const SITE_URL = (process.env.SITE_URL || 'https://1-line-qkzp9.vercel.app').replace(/\/$/, '');
+const SITE_URL = (process.env.SITE_URL || 'https://www.1lineestate.com').replace(/\/$/, '');
 
 const json = (status, body) => new Response(JSON.stringify(body), {
   status,
