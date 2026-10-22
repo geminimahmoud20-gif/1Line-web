@@ -493,6 +493,7 @@ export default function Header({
                 <button
                   type="button"
                   className="tool-dropdown-item"
+                  data-theme-toggle
                   onClick={handleThemeToggle}
                 >
                   {theme === 'dark' ? <Sun size={16} className="text-gold" /> : <Moon size={16} />}

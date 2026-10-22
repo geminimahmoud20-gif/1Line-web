@@ -42,22 +42,10 @@ describe('Buyer Demands Navigation Flow', () => {
       cy.title().should('not.be.empty');
     });
 
-    it('navigates to demands page from homepage links if available', () => {
-      cy.get('a, button').then(($els) => {
-        const demandLink = $els.filter((_, el) => {
-          return el.textContent.includes('طلبات') ||
-                 el.textContent.includes('Demand') ||
-                 el.textContent.includes('demands') ||
-                 el.textContent.includes('special');
-        });
-        if (demandLink.length > 0) {
-          cy.wrap(demandLink.first()).click();
-          // Route may be /demands or /special-requests
-          cy.url().should('satisfy', (url) => {
-            return url.includes('/demands') || url.includes('/special-requests');
-          });
-        }
-      });
+    it('navigates to the demands page from the «خدمات» menu', () => {
+      cy.get('.desktop-nav .luxury-nav-dropdown-wrapper').trigger('mouseover');
+      cy.get('.luxury-dropdown-menu a[href="/demands"]').should('be.visible').click();
+      cy.url().should('include', '/demands');
     });
   });
 
