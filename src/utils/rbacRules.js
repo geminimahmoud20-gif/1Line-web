@@ -175,8 +175,10 @@ export const canExportCsv = (role, perms = null) => {
  * Validates whether a given user/role can edit properties
  */
 export const canEditProperties = (role, perms = null) => {
-  if (perms?.includes('inv.edit')) return true;
-  return role === CRM_ROLES.SUPER_ADMIN || role === CRM_ROLES.PROPERTY_MANAGER || role === CRM_ROLES.SALES_MANAGER;
+  if (role === CRM_ROLES.SUPER_ADMIN) return true;
+  // With the account's own permission list, decide like firestore.rules: by 'inv.edit', not the role name
+  if (Array.isArray(perms)) return perms.includes('inv.edit') || perms.includes('*');
+  return role === CRM_ROLES.PROPERTY_MANAGER || role === CRM_ROLES.SALES_MANAGER;
 };
 
 /**

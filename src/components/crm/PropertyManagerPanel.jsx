@@ -299,17 +299,27 @@ export default function PropertyManagerPanel({
         }
       );
 
+      if (uploadedUrls.inlineCount > 0) {
+        triggerToast(
+          isAr
+            ? `${uploadedUrls.inlineCount} صورة ماترفعتش على السيرفر واتحفظت جوا الوحدة، فالوحدة ممكن متتنشرش. اتأكد إن حسابك معاه صلاحية «إضافة وتعديل العقارات»، واخرج وادخل تاني، وارفع الصور من جديد.`
+            : `${uploadedUrls.inlineCount} photo(s) were not uploaded and stay inside the listing, so it may not publish. Check your listing permission, sign out and in, then upload again.`,
+          'error'
+        );
+      }
       if (uploadedUrls.length > 0) {
         setForm((prev) => ({
           ...prev,
           images: [...uploadedUrls, ...prev.images]
         }));
-        triggerToast(
-          isAr 
-            ? `تم ضغط ورفع ${uploadedUrls.length} صورة بنجاح بجودة معمارية فائقة ⚡` 
-            : `${uploadedUrls.length} photos compressed & saved successfully!`, 
-          'success'
-        );
+        if (!uploadedUrls.inlineCount) {
+          triggerToast(
+            isAr
+              ? `تم ضغط ورفع ${uploadedUrls.length} صورة بنجاح بجودة معمارية فائقة ⚡`
+              : `${uploadedUrls.length} photos compressed & saved successfully!`,
+            'success'
+          );
+        }
       }
     } catch (err) {
       console.error('Image upload failed:', err);
