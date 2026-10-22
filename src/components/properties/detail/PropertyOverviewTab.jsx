@@ -1,11 +1,14 @@
 import { Bath, BedDouble, Briefcase, Building, CheckCircle2, Clock, Factory, Layers, Maximize2, ShieldCheck, Sparkles, Sprout, Store, Zap } from 'lucide-react';
 import { isAgricultural, isIndustrial, filledSpecs, sizeLabel, pricePerFeddan } from '../../../utils/propertyKinds';
-import { Users } from 'lucide-react';
+import { Users, ArrowUpDown, Car, Trees, Landmark } from 'lucide-react';
+import { buildingFacts } from '../../../utils/buildingFeatures';
 import { countLabel } from '../../../utils/arabicCount';
 import SunlightCompassWidget from '../SunlightCompassWidget';
 import FinancialBreakdown from '../FinancialBreakdown';
 import FamilyCostSplitter from '../../family/FamilyCostSplitter';
 import CommercialInsightsCard from '../../commercial/CommercialInsightsCard';
+
+const BUILDING_ICONS = { elevator: ArrowUpDown, garage: Car, garden: Trees, landShare: Landmark };
 
 export default function PropertyOverviewTab({
   currency,
@@ -29,6 +32,7 @@ export default function PropertyOverviewTab({
   const special = agri || isIndustrial(property);
   const specs = filledSpecs(property, isAr);
   const perFeddan = agri ? pricePerFeddan(property) : 0;
+  const building = buildingFacts(property, isAr);
   return (
     <div className="tab-pane-content">
       {/* Quick Specs Overview Grid */}
@@ -203,6 +207,19 @@ export default function PropertyOverviewTab({
               </div>
             </div>
           )}
+
+          {building.map((f) => {
+            const Icon = BUILDING_ICONS[f.key];
+            return (
+              <div className={`spec-box${f.positive ? '' : ' spec-box--no'}`} key={f.key}>
+                <Icon size={20} className="text-gold" aria-hidden="true" />
+                <div>
+                  <span className="spec-lbl">{f.label}</span>
+                  <strong>{f.value}</strong>
+                </div>
+              </div>
+            );
+          })}
 
           {finishing && (
             <div className="spec-box">

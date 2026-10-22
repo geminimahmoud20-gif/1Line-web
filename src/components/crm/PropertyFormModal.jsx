@@ -3,6 +3,7 @@ import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { hasNoRooms, isLandType, categoryOfType, isAgriculturalType, specFieldsFor, formatFeddan, feddanParts, QIRAT_M2 } from '../../utils/propertyKinds';
 import { toDayInput, addDays } from '../../utils/featuredSlots';
 import PropertyExtrasEditor from './PropertyExtrasEditor';
+import BuildingFieldsEditor from './BuildingFieldsEditor';
 import { AVAILABILITY_OPTIONS, REVIEW_OPTIONS, reviewState } from '../../utils/listingBadges';
 
 export default function PropertyFormModal({
@@ -703,6 +704,8 @@ export default function PropertyFormModal({
               </>
             )}
           </div>
+
+          <BuildingFieldsEditor form={form} setForm={setForm} isAr={isAr} />
 
           {/* Transparent costs, family hub tag and commercial/medical indicators (all optional) */}
           <PropertyExtrasEditor form={form} setForm={setForm} isAr={isAr} />

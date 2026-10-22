@@ -17989,3 +17989,7 @@ body:has(.lightbox-overlay) .floating-back-to-top-btn {
 .portal-mode-btn.active { background: #EEF4FF; }
 .dark-theme .portal-mode-toggle-strip, [data-theme="dark"] .portal-mode-toggle-strip { background: #0F1B2E; border-color: rgba(255, 255, 255, 0.14); }
 .dark-theme .portal-mode-btn, [data-theme="dark"] .portal-mode-btn { color: #CBD5E1; }
+
+/* Building facts the unit doesn't have ("مفيش أسانسير") read quieter than the ones it does */
+.specs-detail-grid .spec-box--no .text-gold { opacity: 0.45; }
+.specs-detail-grid .spec-box--no strong { font-weight: 600; opacity: 0.8; }
