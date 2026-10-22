@@ -3453,10 +3453,10 @@
   .property-detail-hero-stage .pd-offer-strip .pd-offer-cta { margin-top: 12px; min-width: 0; }
 }
 @media (max-width: 600px) {
-  /* one swipeable row on phones keeps the hero short */
-  .property-detail-hero-stage .pd-quick-facts { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: -2px; padding-bottom: 2px; }
-  .property-detail-hero-stage .pd-quick-facts::-webkit-scrollbar { display: none; }
-  .property-detail-hero-stage .pd-fact { padding: 8px 10px; flex: 0 0 auto; min-width: 74px; }
+  /* A swiped row read as cut off at the edge; three to a line, wrapping, shows every fact */
+  .property-detail-hero-stage .pd-quick-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .property-detail-hero-stage .pd-fact { padding: 8px 10px; min-width: 0; }
+  .property-detail-hero-stage .pd-fact b { white-space: normal; overflow-wrap: anywhere; line-height: 1.35; }
   .property-detail-hero-stage .pd-fact b { font-size: 0.9rem; }
 }
 

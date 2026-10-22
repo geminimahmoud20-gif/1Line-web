@@ -317,29 +317,32 @@ export default function PropertyCard({
         {/* Top row: status (start) · actions (end) */}
         <div className="pcx-top">
           <div className="pcx-chips">
-            {property.isDemo && (
-              <span className="pcx-chip pcx-chip--demo" title={isAr ? 'عقار توضيحي لعرض إمكانيات المنصة — ليس معروضاً للبيع' : 'Sample listing — not for sale'}>
-                {isAr ? 'مثال توضيحي' : 'Sample'}
-              </span>
-            )}
-            {badges.availability && (
-              <span className={`pcx-chip pcx-chip--avail is-${badges.availability.tone}`} title={badges.availability.hint}>
-                <span className="pcx-avail-dot" aria-hidden="true" />
-                <span>{badges.availability.label}</span>
-              </span>
-            )}
-            {offer && (
-              <span className="pcx-chip pcx-chip--offer">
-                <Flame size={12} strokeWidth={2.25} aria-hidden="true" />
-                <span>{isAr ? offer.label.ar : offer.label.en} <bdi dir="ltr">−{offer.pct}%</bdi></span>
-              </span>
-            )}
-            {!property.isDemo && !offer && statusBadge && (
-              <span className={`pcx-chip pcx-chip--${statusBadge.tone}`} title={statusBadge.hint}>
-                <statusBadge.Icon size={12} strokeWidth={2} aria-hidden="true" />
-                <span>{statusBadge.label}</span>
-              </span>
-            )}
+            {/* Two at most, by what matters most, so the photo stays visible */}
+            {[
+              property.isDemo && (
+                <span key="demo" className="pcx-chip pcx-chip--demo" title={isAr ? 'عقار توضيحي لعرض إمكانيات المنصة — ليس معروضاً للبيع' : 'Sample listing — not for sale'}>
+                  {isAr ? 'مثال توضيحي' : 'Sample'}
+                </span>
+              ),
+              offer && (
+                <span key="offer" className="pcx-chip pcx-chip--offer">
+                  <Flame size={12} strokeWidth={2.25} aria-hidden="true" />
+                  <span>{isAr ? offer.label.ar : offer.label.en} <bdi dir="ltr">−{offer.pct}%</bdi></span>
+                </span>
+              ),
+              badges.availability && (
+                <span key="avail" className={`pcx-chip pcx-chip--avail is-${badges.availability.tone}`} title={badges.availability.hint}>
+                  <span className="pcx-avail-dot" aria-hidden="true" />
+                  <span>{badges.availability.label}</span>
+                </span>
+              ),
+              !property.isDemo && !offer && statusBadge && (
+                <span key="status" className={`pcx-chip pcx-chip--${statusBadge.tone}`} title={statusBadge.hint}>
+                  <statusBadge.Icon size={12} strokeWidth={2} aria-hidden="true" />
+                  <span>{statusBadge.label}</span>
+                </span>
+              )
+            ].filter(Boolean).slice(0, 2)}
           </div>
 
           <div className="pcx-actions">
@@ -398,17 +401,16 @@ export default function PropertyCard({
             {/* معاينة الغربة — expat remote inspection */}
             <button
               type="button"
-              className="pcx-chip pcx-chip--remote"
+              className="pcx-chip pcx-chip--remote pcx-chip--icon"
               onClick={(e) => { stop(e); openRemoteInspection(property); }}
               title={isAr ? 'للمغتربين: معاينة بالفيديو الحي ولقطات للشارع والجيران' : 'For expats: live video tour and street footage'}
+              aria-label={isAr ? 'معاينة بالفيديو' : 'Video tour'}
             >
-              <Video size={12} strokeWidth={2} aria-hidden="true" />
-              <span>{isAr ? 'معاينة بالفيديو' : 'Video tour'}</span>
+              <Video size={13} strokeWidth={2} aria-hidden="true" />
             </button>
             {property.virtualTour && (
-              <span className="pcx-chip pcx-chip--glass" title={isAr ? 'عرض بانورامي لصور الوحدة' : 'Panoramic photo view'}>
-                <Rotate3d size={12} strokeWidth={2} aria-hidden="true" />
-                <span>{isAr ? 'بانوراما' : 'Pano'}</span>
+              <span className="pcx-chip pcx-chip--glass pcx-chip--icon" title={isAr ? 'عرض بانورامي لصور الوحدة' : 'Panoramic photo view'} role="img" aria-label={isAr ? 'بانوراما' : 'Panorama'}>
+                <Rotate3d size={13} strokeWidth={2} aria-hidden="true" />
               </span>
             )}
           </div>

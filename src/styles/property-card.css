@@ -222,6 +222,11 @@
 }
 .pcx-chip--remote:hover { transform: translateY(-1px); box-shadow: 0 10px 20px -8px rgba(197, 160, 89, 1); }
 .pcx-chip--remote svg { flex: none; }
+/* Icon-only chips (video tour, panorama): the words live in title / aria-label */
+.pcx-chip--icon { width: 26px; height: 26px; padding: 0; justify-content: center; border-radius: 999px; }
+/* Small on the photo, but still a 44px tap target on phones (mobile-polish.css sets min-height) */
+html .pcx-chip--remote.pcx-chip--icon { position: relative; min-height: 26px; }
+html .pcx-chip--remote.pcx-chip--icon::after { content: ''; position: absolute; inset: -9px; }
 /* The label stays on small phones: without it the chip has no visible name and stretched into an oval */
 
 /* Actions: glass circles */
