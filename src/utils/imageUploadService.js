@@ -124,6 +124,29 @@ async function uploadThumb(source, storedPath) {
 }
 
 /**
+ * A photo kept inside a listing (data: URL, from an upload that was refused or offline) → the
+ * same picture on Blob, with its small copy. It was already shrunk and watermarked when it was
+ * kept, so it is sent as is. Returns the new address, or null when the upload is refused.
+ */
+export async function uploadInlinePhoto(dataUrl, propertyId = 'general', index = 0) {
+  if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/')) return null;
+  try {
+    const blob = await (await fetch(dataUrl)).blob();
+    const type = blob.type === 'image/webp' ? 'image/webp' : 'image/jpeg';
+    const name = watermarkedName(`${propertyId}-photo-${index + 1}.${type === 'image/webp' ? 'webp' : 'jpg'}`);
+    const res = await uploadCmsMedia(new File([blob], name, { type }), 'image');
+    if (!res.ok) {
+      console.warn('Inline photo upload refused:', res.reason);
+      return null;
+    }
+    return (await uploadThumb(blob, res.path)) ? withThumbMarker(res.url) : res.url;
+  } catch (error) {
+    console.warn('Inline photo upload failed:', error?.message || error);
+    return null;
+  }
+}
+
+/**
  * For a photo already on the site: downloads it, uploads its small copy and returns the photo's
  * marked address, or null when it can't (not on our store, unreadable, upload refused).
  */

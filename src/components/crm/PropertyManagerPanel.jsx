@@ -19,7 +19,7 @@ import InteractiveMapPickerModal from './InteractiveMapPickerModal';
 import WhatsAppMatchNotifierModal from './WhatsAppMatchNotifierModal';
 import { findMatchingClientsForProperty } from '../../utils/matchingEngine';
 
-import { uploadMultipleImages } from '../../utils/imageUploadService';
+import { uploadMultipleImages, uploadInlinePhoto } from '../../utils/imageUploadService';
 import ThumbBackfillCard from './ThumbBackfillCard';
 
 // Accurate GPS Coordinates map for Sohag Districts
@@ -112,6 +112,33 @@ export default function PropertyManagerPanel({
   const [selected, setSelected] = useState(() => new Set());
   const confirm = useConfirm();
   const { unsyncedProperties = {}, cloudPropertyIds, retryPropertySync, discardLocalProperty } = useProperties();
+  // Photos stored inside a listing (refused upload) → Blob, then save: the listing gets small
+  // enough for the database without anyone retyping it or picking the photos again
+  const [uploadingInline, setUploadingInline] = useState(null); // { id, done, total }
+  const handleUploadInline = async (prop) => {
+    const images = Array.isArray(prop.images) ? prop.images : [];
+    const total = images.filter((u) => String(u).startsWith('data:image/')).length;
+    if (!total) return;
+    let done = 0;
+    let failed = 0;
+    setUploadingInline({ id: prop.id, done, total });
+    const next = [];
+    for (const [i, url] of images.entries()) {
+      if (!String(url).startsWith('data:image/')) { next.push(url); continue; }
+      const uploaded = await uploadInlinePhoto(url, prop.id, i);
+      if (uploaded) next.push(uploaded); else { next.push(url); failed += 1; }
+      done += 1;
+      setUploadingInline({ id: prop.id, done, total });
+    }
+    setUploadingInline(null);
+    if (failed < total) onUpdateProperty(prop.id, { images: next });
+    triggerToast(
+      failed
+        ? (isAr ? `اترفع ${total - failed} من ${total} صورة. الباقي اترفض: اتأكد إن حسابك معاه صلاحية «إضافة وتعديل العقارات» واخرج وادخل تاني، وبعدين جرّب تاني.` : `${total - failed}/${total} photos uploaded. Check the listing permission, sign out and in, then try again.`)
+        : (isAr ? `اترفعت الـ${total} صورة، والوحدة اتبعتت للسيرفر.` : `All ${total} photos uploaded and the listing was sent.`),
+      failed ? 'error' : 'success'
+    );
+  };
   const handleDiscardLocal = async (id) => {
     const ok = await confirm({
       title: isAr ? 'تمسح النسخة اللي على الجهاز ده؟' : 'Remove this device copy?',
@@ -902,6 +929,8 @@ export default function PropertyManagerPanel({
                       syncIssue={unsyncedProperties[String(prop.id)] || null}
                       onRetrySync={readOnly ? undefined : retryPropertySync}
                       onDiscardLocal={cloudPropertyIds && !cloudPropertyIds.has(String(prop.id)) ? handleDiscardLocal : undefined}
+                      onUploadInline={readOnly ? undefined : handleUploadInline}
+                      inlineProgress={uploadingInline?.id === prop.id ? uploadingInline : null}
                     />
                   ))
                 )}
