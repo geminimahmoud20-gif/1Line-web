@@ -63,7 +63,8 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 310px));
   justify-content: center;
-  align-items: start;
+  /* Cards in a row share one height */
+  align-items: stretch;
   gap: 32px 24px;
 }
 
@@ -304,16 +305,21 @@
   position: absolute;
   top: 10px;
   inset-inline-end: 10px;
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 12px;
   border: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
   color: var(--gx-navy);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
   cursor: pointer;
 }
+.gx-close svg { color: #A9824A; }
 .gx-info { display: flex; flex: 1; flex-direction: column; gap: 8px; padding: 16px 18px 18px; text-align: start; }
 .gx-title {
   display: -webkit-box;
@@ -359,7 +365,7 @@
 .gx-prices { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 10px; margin-top: 2px; }
 .gx-price-label { flex-basis: 100%; font-size: 0.8rem; font-weight: 600; color: #5B6577; }
 .gx-was { font-size: 0.85rem; color: #8A94A6; white-space: nowrap; }
-.gx-ends { margin: 4px 0 0; font-size: 0.8rem; font-weight: 700; color: #A9824A; }
+.gx-ends { margin: auto 0 0; padding-top: 4px; font-size: 0.8rem; font-weight: 700; color: #A9824A; }
 .gx-prices strong { font-size: 1.55rem; font-weight: 800; letter-spacing: -0.01em; color: var(--gx-navy); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .gx-prices strong small { font-size: 0.55em; font-weight: 600; color: #5B6577; }
 .gx-prices del { font-size: 0.9rem; color: #8A94A6; white-space: nowrap; }
@@ -373,7 +379,6 @@
   justify-content: center;
   gap: 8px;
   min-height: 46px;
-  margin-top: auto;
   padding-inline: 10px;
   font-size: clamp(0.86rem, 3.6vw, 0.98rem);
   white-space: nowrap;

@@ -1,0 +1,101 @@
+/* =============================================================
+   Unit page: photos first, one family of contact buttons, tabs that fit a phone, spec cards
+   whose values don't break into short lines. Loaded after the older detail styles.
+   ============================================================= */
+
+/* Photos open the page; title and price follow. On a laptop the photos stay short enough for
+   the title and price to show on the first screen, and the side photos match the main one. */
+.property-detail-hero-stage .property-gallery-component { margin-bottom: 26px; }
+@media (min-width: 901px) {
+  .property-detail-hero-stage .gallery-main-item,
+  .property-detail-hero-stage .gallery-side-thumbs { height: clamp(280px, 42vh, 380px); }
+  .property-detail-hero-stage .property-gallery-grid { height: auto; margin-bottom: 0; }
+}
+.property-detail-hero-stage .page-breadcrumb-sub { min-width: 0; }
+.property-detail-hero-stage .crumb-current {
+  max-width: 32ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: 0;
+}
+/* The price row runs left-to-right so the digits keep their order (art-direction.css); in Arabic it
+   still sits on the right with its label, which shows on a wide box (iPad portrait, phones) */
+[dir="rtl"] .property-detail-hero-stage .price-num-row { justify-content: flex-end; }
+/* The dark top ends softly into the page instead of a hard edge */
+.property-detail-hero-stage { padding-bottom: 36px; box-shadow: none; border-bottom: 0; }
+
+/* ── Contact card: WhatsApp and call lead; the three requests share one quiet style ── */
+.detail-sidebar-col .xs-remote-cta,
+.detail-sidebar-col .pd-book-toggle,
+.detail-sidebar-col button.sidebar-deposit-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin: 8px 0 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(197, 160, 89, 0.4);
+  background: #FFFFFF;
+  color: #0B1B32;
+  box-shadow: none;
+}
+.detail-sidebar-col .xs-remote-cta:hover,
+.detail-sidebar-col .pd-book-toggle:hover,
+.detail-sidebar-col button.sidebar-deposit-banner:hover {
+  background: #FBF6EC;
+  border-color: #C5A059;
+  transform: none;
+  box-shadow: none;
+}
+.detail-sidebar-col .pd-book-toggle > svg,
+.detail-sidebar-col .sidebar-deposit-banner .text-gold { color: #A9824A; }
+.detail-sidebar-col .pd-book-toggle small,
+.detail-sidebar-col .sidebar-deposit-banner .deposit-banner-left span span { color: #5B6577; font-weight: 500; }
+.detail-sidebar-col .xs-remote-cta-icon { width: 34px; height: 34px; border-radius: 10px; }
+.detail-sidebar-col .btn-hold-badge { background: transparent; color: #A9824A; border: 1px solid rgba(197, 160, 89, 0.5); }
+.detail-sidebar-col .sidebar-legal-guarantee { margin-top: 14px; }
+.dark-theme .detail-sidebar-col .xs-remote-cta,
+.dark-theme .detail-sidebar-col .pd-book-toggle,
+.dark-theme .detail-sidebar-col button.sidebar-deposit-banner { background: #0F1B2D; color: #F1F5F9; border-color: rgba(197, 160, 89, 0.35); }
+.dark-theme .detail-sidebar-col .xs-remote-cta:hover,
+.dark-theme .detail-sidebar-col .pd-book-toggle:hover,
+.dark-theme .detail-sidebar-col button.sidebar-deposit-banner:hover { background: #16294A; }
+.dark-theme .detail-sidebar-col .pd-book-toggle > svg { color: #E9D29A; }
+.dark-theme .detail-sidebar-col .pd-book-toggle small,
+.dark-theme .detail-sidebar-col .sidebar-deposit-banner .deposit-banner-left span span { color: #9AA6B8; }
+
+/* Legal line reads in full */
+.pd-legal-glance small { white-space: normal; overflow: visible; text-overflow: clip; }
+
+/* Same heading size as the other sections on the page */
+.similar-properties-section .section-header-flex h2 { font-size: clamp(1.3rem, 2.4vw, 1.6rem); line-height: 1.4; margin: 0 0 4px; }
+
+/* ── Phones ─────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  /* All three tabs on screen, none cut off */
+  .detail-section-tabs-bar { gap: 4px; padding: 5px; overflow: visible; }
+  .detail-section-tabs-bar .section-tab-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+    gap: 5px;
+    padding: 9px 6px;
+    font-size: 0.78rem;
+    white-space: normal;
+    line-height: 1.3;
+    text-align: center;
+  }
+  .detail-section-tabs-bar .section-tab-btn svg { display: none; }
+
+  /* Gallery switch: both choices fit */
+  .property-detail-hero-stage .gallery-media-mode-tabs { overflow: visible !important; }
+  .property-detail-hero-stage .gallery-media-mode-tabs > * { flex: 1 1 0; min-width: 0; justify-content: center; font-size: 0.8rem; white-space: nowrap; }
+
+  /* Spec cards: icon above the text so the value gets the card's full width */
+  .detail-card-box .specs-detail-grid .spec-box { flex-direction: column !important; align-items: flex-start !important; gap: 6px !important; }
+  .detail-card-box .specs-detail-grid .spec-box strong { font-size: 0.9rem !important; overflow-wrap: normal; word-break: normal; }
+
+  .property-detail-hero-stage .crumb-current { max-width: 18ch; }
+}

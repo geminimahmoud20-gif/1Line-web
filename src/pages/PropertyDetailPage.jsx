@@ -32,6 +32,7 @@ import { getFamilyInfo } from '../utils/propertyInsights';
 import { PROPERTY_TYPES } from '../data/propertiesData';
 
 import '../styles/expat-suite.css';
+import '../styles/property-detail-polish.css';
 import PropertyOverviewTab from '../components/properties/detail/PropertyOverviewTab';
 
 const todayIso = () => {
@@ -204,14 +205,6 @@ export default function PropertyDetailPage({
   const licenseText = property.legalStatus
     ? (isAr ? property.legalStatus.licenseStatus_ar : (property.legalStatus.licenseStatus_en || property.legalStatus.licenseStatus_ar)) || ''
     : '';
-  const quickFacts = [
-    Number(property.size) > 0 && { k: isAr ? 'المساحة' : 'Area', v: `${Number(property.size).toLocaleString('en-US')} ${isAr ? 'م²' : 'm²'}` },
-    Number(property.bedrooms) > 0 && { k: isAr ? 'الغرف' : 'Bedrooms', v: String(property.bedrooms) },
-    Number(property.bathrooms) > 0 && { k: isAr ? 'الحمامات' : 'Baths', v: String(property.bathrooms) },
-    (property.floor === 0 || Number(property.floor) > 0) && { k: isAr ? 'الدور' : 'Floor', v: property.floor === 0 ? (isAr ? 'أرضي' : 'Ground') : String(property.floor) },
-    finishing && { k: isAr ? 'التشطيب' : 'Finishing', v: finishing },
-    property.completionStatus === 'ready' && { k: isAr ? 'الاستلام' : 'Handover', v: isAr ? 'فوري' : 'Immediate' }
-  ].filter(Boolean);
   const deliveryText = property.deliveryYear
     ? String(property.deliveryYear)
     : property.completionStatus === 'ready'
@@ -225,8 +218,7 @@ export default function PropertyDetailPage({
     { key: 'electricity', Icon: Zap, label: isAr ? 'الكهرباء' : 'Electricity', value: util.electricity_ar },
     { key: 'water', Icon: Droplets, label: isAr ? 'المياه' : 'Water', value: util.water_ar },
     { key: 'gas', Icon: Flame, label: isAr ? 'الغاز' : 'Gas', value: util.gas_ar },
-    { key: 'elevator', Icon: Building, label: isAr ? 'المصعد' : 'Elevator', value: util.elevator_ar },
-    { key: 'parking', Icon: MapPin, label: isAr ? 'الجراج / الركن' : 'Parking', value: util.parking_ar }
+    // Elevator and parking show with the building facts in the specs card
   ].filter((u) => String(u.value || '').trim() !== '');
   const benchmark = getPriceBenchmark(property, lang);
 
@@ -327,14 +319,14 @@ export default function PropertyDetailPage({
               title={isAr ? 'الرجوع خطوة للخلف' : 'Go back one step'}
             >
               {isAr ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
-              <span>{isAr ? 'رجوع خطوة للخلف' : 'Back'}</span>
+              <span>{isAr ? 'رجوع' : 'Back'}</span>
             </button>
             <div className="page-breadcrumb-sub">
               <Link to="/">{isAr ? 'الرئيسية' : 'Home'}</Link>
               <span className="crumb-sep">/</span>
               <Link to="/properties">{isAr ? 'العقارات' : 'Properties'}</Link>
               <span className="crumb-sep">/</span>
-              <span className="crumb-current">{property.id.toUpperCase()}</span>
+              <span className="crumb-current" title={title}>{title || property.id.toUpperCase()}</span>
             </div>
           </div>
 
@@ -344,6 +336,14 @@ export default function PropertyDetailPage({
               <span>{isAr ? 'هذا عقار توضيحي لعرض إمكانيات المنصة، وليس معروضاً للبيع. تصفح العقارات المتاحة أو اطلب عقاراً بمواصفاتك.' : 'This is a sample listing that shows what the platform can do — it is not for sale.'}</span>
             </div>
           )}
+
+          {/* 📸 Photos first: they are what a buyer looks for before anything else */}
+          <PropertyGallery
+            images={property.images}
+            virtualTour={property.virtualTour}
+            lang={lang}
+            floorPlan={property.floorPlan || property.floorPlanImage}
+          />
 
           {/* Main Title & Price Header Banner */}
           <div className="detail-header-block">
@@ -416,14 +416,6 @@ export default function PropertyDetailPage({
                 )}
               </div>
 
-              {/* Key facts at a glance: fills the title column next to the price box */}
-              {quickFacts.length > 0 && (
-                <ul className="pd-quick-facts" aria-label={isAr ? 'أهم المواصفات' : 'Key facts'}>
-                  {quickFacts.map((f) => (
-                    <li key={f.k} className="pd-fact"><span>{f.k}</span><b>{f.v}</b></li>
-                  ))}
-                </ul>
-              )}
             </div>
 
             <div className="detail-price-box">
@@ -464,11 +456,6 @@ export default function PropertyDetailPage({
                 )
               )}
 
-              {/* 🛡️ Free viewing + written fees (1Line charges commission — never claim 0%) */}
-              <div className="buyer-commission-badge">
-                <CheckCircle2 size={14} style={{ color: '#34D399', flexShrink: 0 }} />
-                <span>{isAr ? 'معاينة ميدانية مجانية للموقع • كل الأتعاب والرسوم مكتوبة قبل التعاقد' : 'Free on-site viewing • All fees in writing before contract'}</span>
-              </div>
             </div>
 
             {/* Full-width strip under both columns: a tall box in either column would leave a gap beside it */}
@@ -500,13 +487,6 @@ export default function PropertyDetailPage({
             )}
           </div>
 
-          {/* 📸 Gallery Component */}
-          <PropertyGallery
-            images={property.images}
-            virtualTour={property.virtualTour}
-            lang={lang}
-            floorPlan={property.floorPlan || property.floorPlanImage}
-          />
         </div>
       </section>
 

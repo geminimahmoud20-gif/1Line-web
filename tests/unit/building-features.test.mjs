@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildingFacts, hasLandShare, buildingFromSellerFeatures, hasBuildingFacts, cardFeatures } from '../../src/utils/buildingFeatures.js';
+import { buildingFacts, hasLandShare, buildingFromSellerFeatures, hasBuildingFacts, cardFeatures, featuresBesideFacts } from '../../src/utils/buildingFeatures.js';
 
 const labels = (facts) => Object.fromEntries(facts.map((f) => [f.key, f.value]));
 
@@ -59,4 +59,13 @@ test('card tags list only what the unit has, in short words; street parking is n
   assert.deepEqual(cardFeatures({ type: 'villa', features_ar: ['جراج خاص', 'حديقة'] }).map((f) => f.key), ['garage', 'garden']);
   assert.deepEqual(cardFeatures({ type: 'land', building: { elevator: 'yes' } }), []);
   assert.deepEqual(cardFeatures(p, false).map((f) => f.label), ['Elevator', 'Land share']);
+});
+
+test('the features list leaves out what the building facts already show', () => {
+  const p = { type: 'apartment', building: { elevator: 'yes', landShare: 'yes' }, features_ar: ['أسانسير مستورد حديث', 'حصة بالأرض مسجلة', 'واجهة بحرية', 'جراج خاص'] };
+  // "جراج خاص" is read from the list itself as the garage fact, so it moves up to the specs too
+  assert.deepEqual(buildingFacts(p).map((f) => f.key), ['elevator', 'garage', 'landShare']);
+  assert.deepEqual(featuresBesideFacts(p.features_ar, buildingFacts(p)), ['واجهة بحرية']);
+  assert.deepEqual(featuresBesideFacts(['Sea view', 'Elevator'], buildingFacts({ type: 'villa', building: { elevator: 'no' } }, false)), ['Sea view']);
+  assert.deepEqual(featuresBesideFacts(undefined, []), []);
 });
