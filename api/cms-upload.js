@@ -5,11 +5,14 @@
 //  Needs a *public* Blob store connected to the project. Two ways Vercel connects one:
 //   - BLOB_STORE_ID (+ the project's OIDC identity) → presigned URLs   (current Vercel default)
 //   - BLOB_READ_WRITE_TOKEN                          → client tokens    (older stores)
+//  On Cloudflare (worker/index.js) the bucket arrives as env.MEDIA and the browser posts the file
+//  here instead ('r2' mode); the same checks decide who may upload what.
 // =============================================================
 import { issueSignedToken } from '@vercel/blob';
 import { handleUpload, handleUploadPresigned } from '@vercel/blob/client';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { canUploadMedia } from '../src/utils/accessModel.js';
+import { readUpload, putMedia, withRandomSuffix } from './_r2-core.js';
 
 const FIREBASE_PROJECT_ID = 'line-c9601';
 const firebaseKeys = createRemoteJWKSet(
@@ -32,7 +35,8 @@ const json = (status, body) => new Response(JSON.stringify(body), {
   headers: { 'content-type': 'application/json', 'cache-control': 'no-store' }
 });
 
-const uploadMode = () => {
+const uploadMode = (env) => {
+  if (env?.MEDIA) return 'r2';
   if (process.env.BLOB_STORE_ID) return 'presigned';
   if (process.env.BLOB_READ_WRITE_TOKEN) return 'token';
   return null;
@@ -70,14 +74,39 @@ const authorise = async (pathname, clientPayload) => {
 };
 
 // The CMS asks this before showing the upload box; `mode` tells the browser which SDK call to use
-export function GET() {
-  const mode = uploadMode();
+export function GET(request, env) {
+  const mode = uploadMode(env);
   return json(200, { ok: Boolean(mode), mode });
 }
 
-export async function POST(request) {
-  const mode = uploadMode();
+const refused = (error, label) => {
+  const msg = String(error?.message || error);
+  const denied = /not-admin/.test(msg);
+  if (!denied && !/bad-path/.test(msg)) console.error(`${label}:`, msg);
+  return json(denied ? 403 : 400, { error: denied ? 'unauthorized' : 'upload-refused' });
+};
+
+// 'r2': POST /api/cms-upload?kind=image&path=cms/images/… with the file as the body
+async function uploadToR2(request, env) {
+  const url = new URL(request.url);
+  const kind = url.searchParams.get('kind');
+  const pathname = url.searchParams.get('path') || '';
+  const idToken = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
+  try {
+    const { limits, naming } = await authorise(pathname, JSON.stringify({ kind, idToken }));
+    const file = await readUpload(request, limits);
+    if (!file.ok) return json(file.status, { error: file.error });
+    const key = naming.addRandomSuffix ? withRandomSuffix(pathname) : pathname;
+    return json(200, await putMedia(env.MEDIA, key, file.body, file.type, { baseUrl: env.MEDIA_BASE_URL, requestUrl: request.url }));
+  } catch (error) {
+    return refused(error, 'cms-upload');
+  }
+}
+
+export async function POST(request, env) {
+  const mode = uploadMode(env);
   if (!mode) return json(503, { error: 'blob-not-configured' });
+  if (mode === 'r2') return uploadToR2(request, env);
   let body;
   try { body = await request.json(); } catch { return json(400, { error: 'bad-request' }); }
 
@@ -126,9 +155,6 @@ export async function POST(request) {
       });
     return json(200, result);
   } catch (error) {
-    const msg = String(error?.message || error);
-    const denied = /not-admin/.test(msg);
-    if (!denied && !/bad-path/.test(msg)) console.error('cms-upload:', msg);
-    return json(denied ? 403 : 400, { error: denied ? 'unauthorized' : 'upload-refused' });
+    return refused(error, 'cms-upload');
   }
 }
