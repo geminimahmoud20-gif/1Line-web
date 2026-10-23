@@ -20,23 +20,8 @@ export default function HistoricalPriceChart({ areaKey = 'east', customPoints = 
     ? customPoints
     : (areaData?.historicalPrices?.length > 1 ? areaData.historicalPrices : null);
 
-  if (!points) {
-    return (
-      <div className="historical-price-chart-card">
-        <div className="chart-header">
-          <div className="chart-title-wrap">
-            <div className="chart-icon-glow">
-              <TrendingUp size={20} className="text-white" />
-            </div>
-            <div>
-              <h4>{isAr ? 'تاريخ أسعار المنطقة' : 'Area price history'}</h4>
-              <p>{isAr ? 'لا توجد بيانات تاريخية منشورة لهذه المنطقة بعد. اطلب من المستشار صفقات مقارنة حديثة.' : 'No published price history for this area yet. Ask an advisor for recent comparable deals.'}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Nothing to chart until the area has published prices: the tab shows the benchmark alone
+  if (!points) return null;
 
   const startPrice = points[0]?.price || 1;
   const currentPrice = points[points.length - 1]?.price || startPrice;

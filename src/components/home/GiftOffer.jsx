@@ -1,6 +1,6 @@
 import { useEffect, useId, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Gift, MapPin, ArrowLeft, ArrowRight, RotateCcw, Flame, Sparkles } from 'lucide-react';
+import { Gift, MapPin, ArrowLeft, ArrowRight, Flame, Sparkles } from 'lucide-react';
 import GiftCountdown from './GiftCountdown';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
 import { savingsHeadline } from '../../utils/propertyOffers';
@@ -133,13 +133,15 @@ export default function GiftOffer({ property, offer, lang = 'ar', currency, inde
           <span className="gx-burst" aria-hidden="true">{Array.from({ length: 16 }, (_, i) => <i key={i} style={{ '--k': i }} />)}</span>
           <div className="gx-photo">
             {image && <img src={image} alt={title} loading="lazy" decoding="async" />}
-            <button type="button" className="gx-close" onClick={() => setOpen(false)} aria-label={isAr ? 'إغلاق' : 'Close'}>
-              <RotateCcw size={15} aria-hidden="true" />
+            <button type="button" className="gx-close" onClick={() => setOpen(false)}>
+              <Gift size={14} aria-hidden="true" />
+              <span>{isAr ? 'اقفل الهدية' : 'Wrap it again'}</span>
             </button>
           </div>
           <div className="gx-info">
             <h3 className="gx-title" title={title}>{title}</h3>
-            {location && <p className="gx-loc"><MapPin size={13} aria-hidden="true" />{location}</p>}
+            {/* Every card keeps this line, so prices and timers sit at the same height side by side */}
+            <p className="gx-loc"><MapPin size={13} aria-hidden="true" />{location || type}</p>
             <RevealSaving amount={offer.savings} isAr={isAr} />
             <div className="gx-prices">
               <span className="gx-price-label">{isAr ? 'سعر الوحدة بعد الخصم (كاش)' : 'Unit price after discount (cash)'}</span>

@@ -1,7 +1,7 @@
 import { Bath, BedDouble, Briefcase, Building, CheckCircle2, Clock, Factory, Layers, Maximize2, ShieldCheck, Sparkles, Sprout, Store, Zap } from 'lucide-react';
 import { isAgricultural, isIndustrial, filledSpecs, sizeLabel, pricePerFeddan } from '../../../utils/propertyKinds';
 import { Users, ArrowUpDown, Car, Trees, Landmark } from 'lucide-react';
-import { buildingFacts } from '../../../utils/buildingFeatures';
+import { buildingFacts, featuresBesideFacts } from '../../../utils/buildingFeatures';
 import { countLabel } from '../../../utils/arabicCount';
 import SunlightCompassWidget from '../SunlightCompassWidget';
 import FinancialBreakdown from '../FinancialBreakdown';
@@ -33,6 +33,8 @@ export default function PropertyOverviewTab({
   const specs = filledSpecs(property, isAr);
   const perFeddan = agri ? pricePerFeddan(property) : 0;
   const building = buildingFacts(property, isAr);
+  // Elevator, land share… already sit in the specs above, so the list keeps the rest
+  const extras = featuresBesideFacts(features, building);
   return (
     <div className="tab-pane-content">
       {/* Quick Specs Overview Grid */}
@@ -277,11 +279,11 @@ export default function PropertyOverviewTab({
       )}
 
       {/* Features & Amenities List */}
-      {features && features.length > 0 && (
+      {extras.length > 0 && (
         <div className="detail-card-box">
           <h3>{isAr ? 'المزايا والخدمات الملحقة' : 'Features & Amenities'}</h3>
           <div className="features-checklist-grid">
-            {features.map((feat, i) => (
+            {extras.map((feat, i) => (
               <div key={i} className="feature-check-item">
                 <CheckCircle2 size={18} className="text-gold" />
                 <span>{feat}</span>

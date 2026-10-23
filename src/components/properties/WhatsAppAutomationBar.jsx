@@ -116,7 +116,7 @@ export default function WhatsAppAutomationBar({ property, lang = 'ar', currency 
         {onOpenStoryCard && (
           <button type="button" className="xs-share-btn" onClick={onOpenStoryCard}>
             <Sparkles size={16} aria-hidden="true" />
-            <span>{isAr ? 'بطاقة ستوري' : 'Story card'}</span>
+            <span>{isAr ? 'صورة للنشر' : 'Story image'}</span>
           </button>
         )}
         <button type="button" className="xs-share-btn is-wa" onClick={handleWhatsApp}>

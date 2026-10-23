@@ -134,3 +134,17 @@ export function cardFeatures(p, isAr = true) {
     .filter((f) => f.positive && !(f.key === 'garage' && street))
     .map((f) => ({ key: f.key, label: isAr ? CARD_LABELS[f.key].ar : CARD_LABELS[f.key].en }));
 }
+
+const FACT_WORDS = {
+  elevator: ['أسانسير', 'اسانسير', 'مصعد', 'elevator', 'lift'],
+  garage: ['جراج', 'garage'],
+  garden: ['حديقة', 'garden'],
+  landShare: ['حصة', 'land share']
+};
+
+/** The features list without what the building facts above it already say */
+export function featuresBesideFacts(features = [], facts = []) {
+  const words = facts.flatMap((f) => FACT_WORDS[f.key] || []);
+  if (!Array.isArray(features) || !words.length) return Array.isArray(features) ? features : [];
+  return features.filter((feat) => !words.some((w) => String(feat).toLowerCase().includes(w)));
+}
