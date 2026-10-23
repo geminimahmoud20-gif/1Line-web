@@ -19,6 +19,9 @@
   white-space: nowrap;
   letter-spacing: 0;
 }
+/* The price row runs left-to-right so the digits keep their order (art-direction.css); in Arabic it
+   still sits on the right with its label, which shows on a wide box (iPad portrait, phones) */
+[dir="rtl"] .property-detail-hero-stage .price-num-row { justify-content: flex-end; }
 /* The dark top ends softly into the page instead of a hard edge */
 .property-detail-hero-stage { padding-bottom: 36px; box-shadow: none; border-bottom: 0; }
 
