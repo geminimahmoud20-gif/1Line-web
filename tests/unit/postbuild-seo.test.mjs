@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { buildPropertyShell } from '../../scripts/postbuild-seo.mjs';
+import { buildPropertyShell, routeShellConfigs } from '../../scripts/postbuild-seo.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const templateHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8')
@@ -88,4 +88,12 @@ test('buildPropertyShell: throws an error if template misses required meta tag (
   assert.throws(() => {
     buildPropertyShell(brokenTemplate, { id: 'test-1', title_ar: 'عقار تجريبي' }, 'https://1-line-qkzp9.vercel.app');
   }, /Mandatory template tag/);
+});
+
+test('routeShellConfigs: every sitemap route without a hand-written shell gets one from the app titles', () => {
+  const routes = [['/', '1.0'], ['/sell', '0.9'], ['/valuation', '0.9'], ['/projects', '0.8'], ['/demands', '0.6'], ['/my-account', '0.1'], ['/unknown', '0.1']];
+  const out = routeShellConfigs(routes, [{ path: 'projects' }]);
+  assert.deepEqual(out.map((c) => c.path), ['sell', 'valuation', 'demands']);
+  assert.match(out[0].title, /\| 1Line Solutions$/);
+  assert.ok(out[0].desc.length > 20);
 });
