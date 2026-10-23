@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ROUTE_SEO } from '../src/config/routeSeo.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
@@ -38,6 +39,24 @@ export const sanitizeMetaText = (text) => {
 /**
  * Replaces a pattern in HTML template and verifies that the replacement succeeded (never fails silently).
  */
+/**
+ * Shells for sitemap routes the hand-written list doesn't cover (/sell, /buy, /demands…), from the
+ * same titles the app sets (src/config/routeSeo.js). Without one, a route is served the homepage's
+ * HTML, whose canonical points at "/", so Google can file the page as a copy of the homepage.
+ */
+export function routeShellConfigs(staticRoutes, existing = [], routeSeo = ROUTE_SEO) {
+  const covered = new Set(existing.map((c) => c.path));
+  const out = [];
+  for (const [loc] of staticRoutes) {
+    const key = String(loc).replace(/^\/+/, '');
+    const seo = routeSeo[loc];
+    if (!key || covered.has(key) || !seo || seo.noindex || !/^[\w-]{1,60}$/.test(key)) continue;
+    covered.add(key);
+    out.push({ path: key, title: `${seo.title_ar} | 1Line Solutions`, desc: seo.desc_ar, breadcrumbName: seo.title_ar });
+  }
+  return out;
+}
+
 export function strictReplace(html, pattern, replacement, label) {
   if (!pattern.test(html)) {
     throw new Error(`postbuild-seo: Mandatory template tag for [${label}] was not found in HTML template.`);
@@ -274,6 +293,8 @@ Sitemap: ${siteUrl}/sitemap.xml
       breadcrumbName: 'سياسة الخصوصية'
     }
   ];
+
+  STATIC_SHELL_CONFIGS.push(...routeShellConfigs(staticRoutes, STATIC_SHELL_CONFIGS));
 
   let prerenderedStatic = 0;
   for (const item of STATIC_SHELL_CONFIGS) {
