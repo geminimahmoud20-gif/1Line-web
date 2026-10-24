@@ -1,6 +1,7 @@
 import { Receipt, Wallet, Wrench, Landmark, FileText, Info } from 'lucide-react';
 import { computeFinanceBreakdown } from '../../utils/propertyInsights';
 import { formatApprox } from '../../utils/fxRates';
+import { termLabel } from '../../utils/paymentTerms';
 import '../../styles/expat-suite.css';
 
 const fmt = (n) => Math.round(Number(n) || 0).toLocaleString('en-US');
@@ -43,7 +44,11 @@ export default function FinancialBreakdown({ property, lang = 'ar', currency = '
   // Resale units are sold cash: the breakdown only earns its space when there is a cost beyond the
   // price (maintenance, over-price, transfer fees) or a cash discount to explain
   const hasExtras = fb.maintenance || fb.overPrice || fb.fees;
-  if (!hasExtras && !(fb.cashDiscountPct > 0)) return null;
+  const plan = fb.plan;
+  // The total typed in the CRM, not the rounded-up monthly × months (a few pounds more)
+  const planTotal = plan ? (Number(property.installmentTotal) || (plan.incomplete ? fb.price : plan.total)) : 0;
+  const premiumPct = plan && fb.cashPrice ? ((planTotal - fb.cashPrice) / fb.cashPrice) * 100 : 0;
+  if (!hasExtras && !(fb.cashDiscountPct > 0) && !plan) return null;
 
   return (
     <section className="xs-fin" aria-labelledby="xs-fin-title">
@@ -55,7 +60,22 @@ export default function FinancialBreakdown({ property, lang = 'ar', currency = '
         </div>
       </header>
 
-      {/* 1. Cash */}
+      {/* 1. Cash — or 2. the installment plan set in CRM → طريقة السداد */}
+      {plan ? (
+        <div className="xs-fin-block">
+          <h4><Wallet size={15} aria-hidden="true" /> {L(`التقسيط على ${termLabel(plan.months)}`, `Installments over ${termLabel(plan.months, false)}`)}</h4>
+          <Row label={L('المقدم', 'Down payment')} hint={plan.down > 0 ? pct(plan.downPct) : null}>
+            {plan.down > 0 ? <Money value={plan.down} {...m} /> : <span className="xs-money">{L('بدون مقدم', 'None')}</span>}
+          </Row>
+          {plan.monthly > 0 && <Row label={L('القسط الشهري', 'Monthly installment')} hint={L(`× ${plan.months} شهر`, `× ${plan.months} months`)}><Money value={plan.monthly} strong {...m} /></Row>}
+          {plan.quarterly > 0 && <Row label={L('القسط ربع السنوي', 'Quarterly installment')}><Money value={plan.quarterly} {...m} /></Row>}
+          {plan.handover > 0 && <Row label={L('دفعة الاستلام', 'Handover payment')}><Money value={plan.handover} {...m} /></Row>}
+          {plan.unscheduled > 0 && <Row label={L('رصيد غير مجدول (نؤكده كتابياً)', 'Unscheduled balance (confirmed in writing)')}><Money value={plan.unscheduled} muted {...m} /></Row>}
+          <Row label={L('إجمالي سعر التقسيط', 'Installment total')} hint={premiumPct >= 0.5 ? L(`أعلى من الكاش بـ ${pct(premiumPct)}`, `${pct(premiumPct)} above cash`) : null}>
+            <Money value={planTotal} strong {...m} />
+          </Row>
+        </div>
+      ) : (
       <div className="xs-fin-block">
         <h4><Wallet size={15} aria-hidden="true" /> {L('السداد كاش', 'Cash')}</h4>
         <Row label={L('سعر الكاش النهائي الصافي', 'Final net cash price')} hint={fb.cashDiscountPct > 0 ? L(`خصم ${pct(fb.cashDiscountPct)} على السعر المعلن`, `${pct(fb.cashDiscountPct)} off the listed price`) : null}>
@@ -63,6 +83,7 @@ export default function FinancialBreakdown({ property, lang = 'ar', currency = '
           <Money value={fb.cashPrice} strong {...m} />
         </Row>
       </div>
+      )}
 
       {/* 3. Maintenance */}
       {fb.maintenance && (
@@ -95,7 +116,7 @@ export default function FinancialBreakdown({ property, lang = 'ar', currency = '
         </div>
       )}
 
-      {hasExtras && (
+      {hasExtras && !plan && (
         <div className="xs-fin-total">
           <span>{L('إجمالي ما تجهّزه للشراء كاش', 'All-in budget (cash route)')}</span>
           <Money value={fb.cashAllIn} strong {...m} />

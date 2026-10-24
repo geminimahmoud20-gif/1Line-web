@@ -1,0 +1,58 @@
+/* Quick view: nothing on the photo overlaps, the card fits the screen, WhatsApp reads as a button.
+   Loaded after App.css. Corners (Arabic): share + close top-right, photos/plan switch top-left,
+   price bottom-right, photo counter bottom-left, dots bottom-centre. English mirrors it. */
+
+.quickview-modal-card {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 32px);
+}
+.quickview-grid { flex: 1; min-height: 0; }
+.quickview-media { min-height: 340px; overflow: hidden; }
+.quickview-info { overflow-y: auto; justify-content: safe center; }
+
+.quickview-mode-toggle { right: auto; left: 14px; }
+[dir="ltr"] .quickview-mode-toggle { left: auto; right: 14px; }
+
+.quickview-img-counter { top: auto; bottom: 14px; left: 14px; }
+[dir="ltr"] .quickview-img-counter { left: auto; right: 14px; }
+
+.quickview-price-badge-floating { bottom: 14px; right: 14px; max-width: calc(100% - 120px); }
+[dir="ltr"] .quickview-price-badge-floating { right: auto; left: 14px; }
+.quickview-price-note {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #047857;
+}
+.dark-theme .quickview-price-note,
+[data-theme="dark"] .quickview-price-note { color: #34D399; }
+
+.quickview-floorplan-preview { width: 100%; height: 100%; background: #FFFFFF; }
+.quickview-img.is-plan { object-fit: contain; padding: 12px; box-sizing: border-box; }
+
+/* Payment cells: one when cash, up to three for a plan */
+.quickview-finance-grid { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+.quickview-finance-grid.is-cash { grid-template-columns: 1fr; }
+
+/* WhatsApp: the second main action, so it looks like one */
+.quickview-secondary-actions-row .btn-whatsapp {
+  background: #16A34A;
+  border: 1px solid #16A34A;
+  color: #FFFFFF;
+}
+.quickview-secondary-actions-row .btn-whatsapp:hover { background: #15803D; border-color: #15803D; color: #FFFFFF; }
+
+@media (max-width: 768px) {
+  /* A short photo strip: price and counter only; the logo and the viewing note wait for the details */
+  .quickview-media { min-height: 0; height: 230px; }
+  /* One column: the whole card scrolls, not the details inside it */
+  .quickview-modal-card { overflow-y: auto; }
+  .quickview-grid { flex: none; }
+  .quickview-info { overflow: visible; justify-content: flex-start; }
+  .quickview-media .brand-watermark-overlay,
+  .quickview-price-note { display: none; }
+  .quickview-price-badge-floating { padding: 6px 12px; }
+  .quickview-price-badge-floating .price-tag-big { font-size: 1.05rem; }
+}

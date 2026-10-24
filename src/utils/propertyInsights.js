@@ -114,12 +114,14 @@ export function computeFinanceBreakdown(p) {
   const cashPrice = num(f.cashPrice) && num(f.cashPrice) <= price ? num(f.cashPrice) : price;
   const cashDiscountPct = cashPrice < price ? ((price - cashPrice) / price) * 100 : 0;
 
-  const down = num(p.downPayment);
-  const monthly = num(p.monthlyInstallment);
-  const quarterly = num(f.quarterlyInstallment);
-  const years = num(p.installmentYears);
-  const months = years * 12;
-  const handover = num(f.handoverPayment);
+  // A listing marked cash (CRM → طريقة السداد) has no plan, whatever older fields still hold
+  const isCash = p.paymentType === 'cash';
+  const down = isCash ? 0 : num(p.downPayment);
+  const monthly = isCash ? 0 : num(p.monthlyInstallment);
+  const quarterly = isCash ? 0 : num(f.quarterlyInstallment);
+  const months = isCash ? 0 : (Math.round(num(p.installmentMonths)) || num(p.installmentYears) * 12);
+  const years = months / 12;
+  const handover = isCash ? 0 : num(f.handoverPayment);
   const hasPlan = Boolean((monthly || quarterly) && months);
 
   const installmentTotal = hasPlan

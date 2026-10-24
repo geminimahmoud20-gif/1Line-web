@@ -102,3 +102,22 @@
 
 .pxe-building { margin-top: 12px; }
 .pxe-building .pxe-sec-head { cursor: default; }
+
+/* Payment: cash / installment switch and the term input with its unit */
+.pxe-pay-switch { display: inline-flex; gap: 4px; padding: 4px; border-radius: 10px; background: var(--crm-input-bg, rgba(148, 163, 184, 0.12)); align-self: flex-start; }
+.pxe-pay-switch button {
+  min-width: 96px;
+  padding: 7px 16px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--crm-muted);
+  font: inherit;
+  font-weight: 700;
+  font-size: var(--crm-text-sm, 0.82rem);
+  cursor: pointer;
+}
+.pxe-pay-switch button.is-on { background: var(--ui-accent); color: var(--ui-n900); }
+.pxe-pay-term { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
+.pxe-pay-term select { width: auto; }
+.pxe-hint { font-size: 0.7rem; color: var(--crm-muted); }

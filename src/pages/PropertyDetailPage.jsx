@@ -34,6 +34,7 @@ import { PROPERTY_TYPES } from '../data/propertiesData';
 import '../styles/expat-suite.css';
 import '../styles/property-detail-polish.css';
 import PropertyOverviewTab from '../components/properties/detail/PropertyOverviewTab';
+import { paymentTerms, hasInstallmentPlan, termLabel } from '../utils/paymentTerms';
 
 const todayIso = () => {
   const d = new Date();
@@ -221,6 +222,15 @@ export default function PropertyDetailPage({
     // Elevator and parking show with the building facts in the specs card
   ].filter((u) => String(u.value || '').trim() !== '');
   const benchmark = getPriceBenchmark(property, lang);
+  // The plan from CRM → طريقة السداد, shown under the price; cash listings show nothing extra
+  const terms = paymentTerms(property);
+  const planLine = hasInstallmentPlan(terms) ? (() => {
+    const fmt = (n) => { const d = formatCurrencyPrice(n, currency, lang); return `${d.primary} ${d.symbol}`; };
+    const down = terms.down > 0 ? (isAr ? `مقدم ${fmt(terms.down)} + ` : `${fmt(terms.down)} down + `) : '';
+    return isAr
+      ? `أو تقسيط: ${down}${fmt(terms.monthly)} شهرياً لمدة ${termLabel(terms.months)}`
+      : `Or installments: ${down}${fmt(terms.monthly)}/month over ${termLabel(terms.months, false)}`;
+  })() : '';
 
   // Sector separation
   const isMultiUnit = isMultiUnitOrBuilding(property);
@@ -429,6 +439,7 @@ export default function PropertyDetailPage({
                   ≈ {priceData.originalEgp}
                 </span>
               )}
+              {planLine && <span className="pd-plan-line">{planLine}</span>}
               {benchmark && (
                 <div className={`benchmark-hero-pill is-${benchmark.badgeType}`}>
                   {benchmark.badgeType === 'deal' ? (

@@ -10,6 +10,8 @@ import BrandWatermark from './BrandWatermark';
 import { isWatermarked } from '../../utils/watermark';
 import useClientDownload from '../../hooks/useClientDownload';
 import { countLabel } from '../../utils/arabicCount';
+import { paymentTerms, termLabel } from '../../utils/paymentTerms';
+import './quickview.css';
 
 export default function QuickViewModal({ 
   property, 
@@ -39,10 +41,11 @@ export default function QuickViewModal({
   const isCommercial = !isLand && !isSpecial && (property.type === 'commercial' || property.category === 'commercial' || (title && (title.includes('محل') || title.includes('معرض') || title.includes('ريتيل') || title.includes('تجاري'))));
   const isOffice = !isLand && !isCommercial && !isSpecial && (property.type === 'office' || property.category === 'administrative' || (title && (title.includes('مكتب') || title.includes('عيادة') || title.includes('إداري'))));
   const priceData = formatCurrencyPrice(property.price, currency, lang);
-  const downPaymentVal = Number(property.downPayment) || 0;
-  const monthlyInstallmentVal = Number(property.monthlyInstallment) || 0;
-  const downPaymentData = formatCurrencyPrice(downPaymentVal, currency, lang);
-  const monthlyInstallmentData = formatCurrencyPrice(monthlyInstallmentVal, currency, lang);
+  // Cash, or the plan set in CRM → طريقة السداد (the monthly is computed there, never typed)
+  const terms = paymentTerms(property);
+  const money = (n) => { const d = formatCurrencyPrice(n, currency, lang); return `${d.primary} ${d.symbol}`; };
+  // Only a floor plan the team uploaded is shown; there is no generic drawing
+  const floorPlan = property.floorPlan || property.floorPlanImage || '';
 
   const imagesList = Array.isArray(property.images) && property.images.length > 0 
     ? property.images 
@@ -123,7 +126,8 @@ export default function QuickViewModal({
                   className="quickview-img" 
                   onError={() => setImgError(true)}
                 />
-                {!isWatermarked(currentImage) && <BrandWatermark size="md" position="bottom-right" />}
+                {/* Centred: the corners hold the controls and the price */}
+                {!isWatermarked(currentImage) && <BrandWatermark size="sm" position="center" />}
 
                 {/* Multi-Image Navigation Controls */}
                 {imagesList.length > 1 && (
@@ -164,38 +168,13 @@ export default function QuickViewModal({
                 )}
               </>
             ) : (
-              /* Floor Plan CAD Blueprint View */
               <div className="quickview-floorplan-preview">
-                <svg viewBox="0 0 800 500" className="quickview-cad-svg" xmlns="http://www.w3.org/2000/svg">
-                  <rect width="800" height="500" fill="#081426" />
-                  <defs>
-                    <pattern id="cadgrid-mini" width="30" height="30" patternUnits="userSpaceOnUse">
-                      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#142e54" strokeWidth="0.8" />
-                    </pattern>
-                  </defs>
-                  <rect width="800" height="500" fill="url(#cadgrid-mini)" />
-                  <rect x="50" y="40" width="700" height="420" fill="none" stroke="#38bdf8" strokeWidth="3" rx="4" />
-                  <line x1="360" y1="40" x2="360" y2="460" stroke="#38bdf8" strokeWidth="2" />
-                  <line x1="50" y1="260" x2="360" y2="260" stroke="#38bdf8" strokeWidth="2" />
-                  <text x="200" y="150" fill="#fdcb42" fontFamily="Cairo, sans-serif" fontSize="18" fontWeight="bold" textAnchor="middle">
-                    {isAr ? 'الريسبشن المفتوح' : 'Reception'}
-                  </text>
-                  <text x="200" y="370" fill="#fdcb42" fontFamily="Cairo, sans-serif" fontSize="16" fontWeight="bold" textAnchor="middle">
-                    {isAr ? 'المطبخ والخدمات' : 'Kitchen'}
-                  </text>
-                  <text x="580" y="240" fill="#fdcb42" fontFamily="Cairo, sans-serif" fontSize="18" fontWeight="bold" textAnchor="middle">
-                    {isAr ? 'أجنحة النوم والحمام' : 'Bedrooms & Bath'}
-                  </text>
-                  <rect x="60" y="50" width="220" height="30" rx="6" fill="#0b4ea2" opacity="0.9" />
-                  <text x="170" y="70" fill="#ffffff" fontFamily="Cairo, sans-serif" fontSize="11" fontWeight="bold" textAnchor="middle">
-                    1LINE CAD SCHEMATIC
-                  </text>
-                </svg>
+                <img src={floorPlan} alt={isAr ? `مخطط ${title}` : `${title} floor plan`} className="quickview-img is-plan" />
               </div>
             )}
 
-            {/* Mode Toggle Button (Photos vs CAD Floorplan) */}
-            <div className="quickview-mode-toggle">
+            {/* Photos / floor plan: only when the listing has a floor plan */}
+            {floorPlan && <div className="quickview-mode-toggle">
               <button 
                 type="button" 
                 className={`mode-toggle-btn ${viewMode === 'photos' ? 'active' : ''}`}
@@ -211,14 +190,12 @@ export default function QuickViewModal({
                 <Layers size={12} />
                 <span>{isAr ? 'المخطط' : 'Floor Plan'}</span>
               </button>
-            </div>
+            </div>}
 
             {/* Floating Price Tag */}
             <div className="quickview-price-badge-floating">
               <span className="price-tag-big">{priceData.primary} {priceData.symbol}</span>
-              <span style={{ fontSize: '0.68rem', display: 'block', fontWeight: 800, color: '#34d399', background: 'rgba(0,0,0,0.5)', padding: '2px 6px', borderRadius: '4px', marginTop: '2px' }}>
-                ✓ {isAr ? 'معاينة مجانية للموقع' : 'Free on-site viewing'}
-              </span>
+              <span className="quickview-price-note">✓ {isAr ? 'معاينة مجانية للموقع' : 'Free on-site viewing'}</span>
             </div>
           </div>
 
@@ -299,21 +276,36 @@ export default function QuickViewModal({
 
             <p className="quickview-desc">{description}</p>
 
-            {/* Structured 2-Column Finance & Installment Box */}
-            <div className="quickview-finance-grid">
-              <div className="finance-cell">
-                <span className="finance-lbl">{isAr ? 'المقدم المطلوب' : 'Required Downpayment'}</span>
-                <strong className="finance-val">
-                  {downPaymentVal > 0 ? `${downPaymentData.primary} ${downPaymentData.symbol}` : (isAr ? 'بدون مقدم' : 'No Downpayment')}
-                </strong>
+            {/* Payment: cash, or the plan's down payment, monthly installment and total */}
+            {terms.type === 'cash' ? (
+              <div className="quickview-finance-grid is-cash">
+                <div className="finance-cell">
+                  <span className="finance-lbl">{isAr ? 'طريقة السداد' : 'Payment'}</span>
+                  <strong className="finance-val">{isAr ? 'كاش' : 'Cash'}</strong>
+                </div>
               </div>
-              <div className="finance-cell highlight-cell">
-                <span className="finance-lbl">{isAr ? 'القسط الشهري' : 'Monthly Installment'}</span>
-                <strong className="finance-val text-primary">
-                  {monthlyInstallmentVal > 0 ? `${monthlyInstallmentData.primary} ${monthlyInstallmentData.symbol}` : (isAr ? 'كاش فوري' : 'Full Cash')}
-                </strong>
+            ) : (
+              <div className="quickview-finance-grid">
+                <div className="finance-cell">
+                  <span className="finance-lbl">{isAr ? 'المقدم' : 'Down payment'}</span>
+                  <strong className="finance-val">{terms.down > 0 ? money(terms.down) : (isAr ? 'بدون مقدم' : 'None')}</strong>
+                </div>
+                {terms.monthly > 0 && (
+                  <div className="finance-cell highlight-cell">
+                    <span className="finance-lbl">
+                      {isAr ? 'القسط الشهري' : 'Monthly'}{terms.months > 0 && ` · ${termLabel(terms.months, isAr)}`}
+                    </span>
+                    <strong className="finance-val text-primary">{money(terms.monthly)}</strong>
+                  </div>
+                )}
+                {terms.months > 0 && terms.total > 0 && (
+                  <div className="finance-cell">
+                    <span className="finance-lbl">{isAr ? 'إجمالي التقسيط' : 'Installment total'}</span>
+                    <strong className="finance-val">{money(terms.total)}</strong>
+                  </div>
+                )}
               </div>
-            </div>
+            )}
 
             {/* Clean, Non-Crammed Actions Hierarchy */}
             <div className="quickview-actions-wrapper">
@@ -323,7 +315,7 @@ export default function QuickViewModal({
                 className="btn btn-primary btn-full quickview-primary-btn"
                 onClick={onClose}
               >
-                <span>{isAr ? 'عرض كامل تفاصيل العقار والمخطط' : 'View Full Property Details'}</span>
+                <span>{isAr ? 'عرض كامل تفاصيل العقار' : 'View Full Property Details'}</span>
                 {isAr ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
               </Link>
 

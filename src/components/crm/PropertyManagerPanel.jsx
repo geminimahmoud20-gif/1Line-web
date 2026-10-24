@@ -34,6 +34,7 @@ const LIST_PAGE = 25;
 import OfferModal from './OfferModal';
 import { getNormalizedPropertyStatus } from '../../utils/crmLeadViews';
 import { useProperties } from '../../context/PropertiesContext';
+import { paymentTerms, paymentFields, paymentProblem } from '../../utils/paymentTerms';
 const SOHAG_AREA_COORDINATES = {
   east: { lat: 26.5569, lng: 31.7001 },
   new_sohag: { lat: 26.4715, lng: 31.6620 },
@@ -54,9 +55,13 @@ const DEFAULT_FORM_STATE = {
   locationName_ar: '',
   locationName_en: '',
   price: '',
+  // Cash until the team picks installments (CRM → طريقة السداد); the monthly is computed
+  paymentType: 'cash',
   downPayment: 0,
   monthlyInstallment: 0,
   installmentYears: 0,
+  installmentMonths: '',
+  installmentTotal: '',
   size: '',
   bedrooms: '',
   bathrooms: '',
@@ -198,6 +203,9 @@ export default function PropertyManagerPanel({
     setForm({
       ...DEFAULT_FORM_STATE,
       ...prop,
+      // Older listings have no paymentType: read it from the installment they carry
+      paymentType: paymentTerms(prop).type,
+      installmentMonths: paymentTerms(prop).months || '',
       bedrooms: hasNoRooms(prop.type) ? 0 : (prop.bedrooms || 0),
       bathrooms: isLandType(prop.type) ? 0 : (prop.bathrooms || 0),
       status: prop.status || (prop.isArchived ? 'hidden' : 'published')
@@ -463,8 +471,9 @@ export default function PropertyManagerPanel({
       triggerToast(isAr ? 'المساحة يجب أن تكون أكبر من صفر' : 'Size must be greater than zero', 'error');
       return;
     }
-    if (form.downPayment < 0 || form.monthlyInstallment < 0) {
-      triggerToast(isAr ? 'قيم المقدم والأقساط لا يمكن أن تكون سالبة' : 'Payment values cannot be negative', 'error');
+    const payProblem = paymentProblem(form, isAr);
+    if (payProblem) {
+      triggerToast(payProblem, 'error');
       return;
     }
 
@@ -481,6 +490,7 @@ export default function PropertyManagerPanel({
     const isLand = isLandType(form.type);
     const cleanForm = {
       ...form,
+      ...paymentFields(form),
       category: categoryOfType(form.type),
       bedrooms: hasNoRooms(form.type) ? 0 : (parseInt(form.bedrooms) || 0),
       bathrooms: isLand ? 0 : (parseInt(form.bathrooms) || 0),
