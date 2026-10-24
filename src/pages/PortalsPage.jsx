@@ -9,6 +9,7 @@ import { DemandsPortal } from '../components/DemandsPortal';
 import { ReferralPortal } from '../components/ReferralPortal';
 import { SpecialRequests } from '../components/SpecialRequests';
 import QuickPortalLeadCard from '../components/common/QuickPortalLeadCard';
+import '../styles/light-headers.css';
 
 export default function PortalsPage({
   portalType,
