@@ -347,8 +347,6 @@ html .property-detail-hero-stage .detail-location-text .code-copy-pill-btn:hover
 /* Wide screens: price card on top of the sidebar, the whole sidebar follows the reader */
 @media (min-width: 1025px) {
   .pd-price-slot.is-inline { display: none; }
-  .detail-content-grid { align-items: stretch; }
-  .pd-side-mini { position: sticky; top: 88px; }
   .detail-sidebar-col .sticky-booking-card { position: static; padding: 18px; }
   .detail-sidebar-col .agent-profile-header { margin-bottom: 6px; }
 }
@@ -375,3 +373,7 @@ html .property-detail-hero-stage .detail-location-text .code-copy-pill-btn:hover
 .dark-theme .pd-side-mini-price strong { color: #F1F5F9; }
 .dark-theme .pd-side-mini-price small { color: #E9D29A; }
 .dark-theme .detail-section-tabs-bar .section-tab-btn.active { background: #C5A059 !important; color: #0B1B32 !important; }
+.pd-side-mini.is-hidden { display: none; }
+.pd-side-mini.is-pinned { position: fixed; top: 88px; z-index: 40; margin: 0; animation: pd-mini-in 0.25s ease; }
+@keyframes pd-mini-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .pd-side-mini.is-pinned { animation: none; } }

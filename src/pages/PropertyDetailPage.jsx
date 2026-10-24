@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { isAgricultural, isIndustrial, isLandType } from '../utils/propertyKinds';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { MapPin, Sparkles, CheckCircle2, Clock3, ShieldQuestion, Layers, Calendar, Phone, MessageSquare, ShieldCheck, TrendingUp, TrendingDown, Navigation, ArrowRight, ArrowLeft, Building2, Video, Zap, Droplets, Copy, Sun, Moon, Scale, Flame, Maximize2, BedDouble, Bath } from 'lucide-react';
@@ -162,6 +162,42 @@ export default function PropertyDetailPage({
   const [phoneError, setPhoneError] = useState('');
   // The viewing form opens on demand so the sidebar leads with two clear actions
   const [showBookingForm, setShowBookingForm] = useState(false);
+  // Wide screens: once the full price card scrolls away, a short one (price + two actions) is pinned
+  // beside the content until the sidebar ends, so the price is always in view but never twice.
+  // Pinned with JS: the site-wide overflow-x on html/body stops CSS sticky from working.
+  const sidePriceRef = useRef(null);
+  const sidebarRef = useRef(null);
+  const miniRef = useRef(null);
+  const [miniPin, setMiniPin] = useState(null);
+  useEffect(() => {
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const price = sidePriceRef.current;
+      const col = sidebarRef.current;
+      if (!price || !col || window.innerWidth <= 1024) { setMiniPin(null); return; }
+      const top = 88;
+      const miniH = miniRef.current?.offsetHeight || 140;
+      const colBox = col.getBoundingClientRect();
+      // Until the two-column area ends (the similar listings and footer come after it)
+      const gridBottom = col.parentElement.getBoundingClientRect().bottom;
+      const show = price.getBoundingClientRect().bottom < top && gridBottom > top + miniH;
+      setMiniPin((prev) => {
+        if (!show) return null;
+        if (prev && prev.left === colBox.left && prev.width === colBox.width) return prev;
+        return { left: colBox.left, width: colBox.width };
+      });
+    };
+    const onScroll = () => { if (!frame) frame = requestAnimationFrame(update); };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    update();
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, [property?.id]);
 
   // Prefill the booking form when the client signs in (adjusted during render, not in an effect)
   const [prefilledFor, setPrefilledFor] = useState(clientUser);
@@ -619,8 +655,8 @@ export default function PropertyDetailPage({
           </div>
 
           {/* Right / Sticky Agent & Booking Sidebar */}
-          <div className="detail-sidebar-col">
-            <div className="property-detail-hero-stage pd-stage-lite pd-price-slot is-side">{priceBlock}</div>
+          <div className="detail-sidebar-col" ref={sidebarRef}>
+            <div className="property-detail-hero-stage pd-stage-lite pd-price-slot is-side" ref={sidePriceRef}>{priceBlock}</div>
             <div className="sticky-booking-card">
               {/* 1. Agent Profile Header */}
               <div className="agent-profile-header">
@@ -819,8 +855,14 @@ export default function PropertyDetailPage({
               triggerToast={triggerToast}
               onOpenStoryCard={() => setStoryModalOpen(true)}
             />
-            {/* Once the full cards scroll away, a short one with the price and the two actions stays in view */}
-            <div className="pd-side-mini" aria-label={isAr ? 'السعر والتواصل' : 'Price and contact'}>
+            {/* Shown only after the full price card scrolls away, so the price never appears twice */}
+            <div
+              ref={miniRef}
+              className={`pd-side-mini ${miniPin ? 'is-pinned' : 'is-hidden'}`}
+              style={miniPin ? { left: miniPin.left, width: miniPin.width } : undefined}
+              aria-hidden={!miniPin}
+              aria-label={isAr ? 'السعر والتواصل' : 'Price and contact'}
+            >
               <div className="pd-side-mini-price">
                 <small>{offer ? (isAr ? 'سعر العرض كاش' : 'Cash offer price') : (isAr ? 'السعر الإجمالي' : 'Total price')}</small>
                 <strong><bdi>{(offer ? offerPriceData : priceData).primary}</bdi> <span>{priceData.symbol}</span></strong>
