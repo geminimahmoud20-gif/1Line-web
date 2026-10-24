@@ -99,3 +99,13 @@
 
   .property-detail-hero-stage .crumb-current { max-width: 18ch; }
 }
+
+/* Installment plan under the price (CRM → طريقة السداد) */
+.property-detail-hero-stage .pd-plan-line {
+  display: block;
+  margin: 6px 0 8px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #E9D29A;
+  line-height: 1.6;
+}

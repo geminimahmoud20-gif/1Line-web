@@ -4,6 +4,7 @@ import { hasNoRooms, isLandType, categoryOfType, isAgriculturalType, specFieldsF
 import { toDayInput, addDays } from '../../utils/featuredSlots';
 import PropertyExtrasEditor from './PropertyExtrasEditor';
 import BuildingFieldsEditor from './BuildingFieldsEditor';
+import PaymentTermsEditor from './PaymentTermsEditor';
 import { AVAILABILITY_OPTIONS, REVIEW_OPTIONS, reviewState } from '../../utils/listingBadges';
 
 export default function PropertyFormModal({
@@ -418,26 +419,6 @@ export default function PropertyFormModal({
               />
             </div>
 
-            {/* Down Payment */}
-            <div className="form-group-item">
-              <label>{isAr ? 'المقدم المطلوب (ج.م)' : 'Downpayment (EGP)'}</label>
-              <input
-                type="number"
-                value={form.downPayment}
-                onChange={(e) => setForm({ ...form, downPayment: parseInt(e.target.value) || 0 })}
-              />
-            </div>
-
-            {/* Monthly Installment */}
-            <div className="form-group-item">
-              <label>{isAr ? 'القسط الشهري (ج.م)' : 'Monthly Installment (EGP)'}</label>
-              <input
-                type="number"
-                value={form.monthlyInstallment}
-                onChange={(e) => setForm({ ...form, monthlyInstallment: parseInt(e.target.value) || 0 })}
-              />
-            </div>
-
             {/* Area Size */}
             <div className="form-group-item">
               <label>{isAr ? 'المساحة بالمتر المربع (م²) *' : 'Size (Sqm) *'}</label>
@@ -705,6 +686,7 @@ export default function PropertyFormModal({
             )}
           </div>
 
+          <PaymentTermsEditor form={form} setForm={setForm} isAr={isAr} />
           <BuildingFieldsEditor form={form} setForm={setForm} isAr={isAr} />
 
           {/* Transparent costs, family hub tag and commercial/medical indicators (all optional) */}
