@@ -1,18 +1,11 @@
 import { useState } from 'react';
-import { Building2, MapPin, Wallet, Layers, CalendarClock, Check, MessageSquare, FileDown } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Building2, MapPin, Wallet, Layers, CalendarClock, MessageSquare, ArrowLeft, ArrowRight } from 'lucide-react';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
-import useClientDownload from '../../hooks/useClientDownload';
-
-// Brochure links are typed in the CRM: only web links are opened
-const safeBrochureUrl = (url) => (/^https?:\/\/\S+$/i.test(String(url || '').trim()) ? String(url).trim() : null);
-
-// Arabic counting: سنة، سنتين، 3–10 سنوات، 11+ سنة
-const arYears = (n) => (n === 1 ? 'سنة' : n === 2 ? 'سنتين' : n <= 10 ? `${n} سنوات` : `${n} سنة`);
-
-const pct = (v) => Math.max(0, Math.min(100, Math.round(Number(v) || 0)));
+import { arYears, pct, projectPath } from '../../utils/projectFacts';
 
 /** Construction progress as a ring: the one number people look for first */
-function ProgressRing({ value, label }) {
+export function ProgressRing({ value, label }) {
   const r = 22;
   const c = 2 * Math.PI * r;
   return (
@@ -27,8 +20,9 @@ function ProgressRing({ value, label }) {
 }
 
 /**
- * One project on /projects. `featured` lays it out wide (photo beside the details) for the
- * first project in the list.
+ * One project on /projects: photo, name, starting price and the three plan facts. Stages,
+ * features and the brochure live on the project page the card opens.
+ * `featured` lays the first project out wide, with its short description.
  */
 export default function ProjectCard({ project, isAr, currency, lang, featured = false, index = 0, onInquire }) {
   const [imgFailed, setImgFailed] = useState(false);
@@ -38,29 +32,21 @@ export default function ProjectCard({ project, isAr, currency, lang, featured = 
   const delivery = isAr ? project.deliveryDate_ar : project.deliveryDate_en;
   const desc = isAr ? project.description_ar : project.description_en;
   const type = isAr ? project.type_ar : project.type_en;
-  const feats = (isAr ? project.features_ar : project.features_en) || [];
   const price = formatCurrencyPrice(project.startPrice, currency, lang);
-  const brochureUrl = safeBrochureUrl(project.brochureUrl);
-  const download = useClientDownload();
   const image = Array.isArray(project.images) ? project.images.find(Boolean) : null;
   const progress = pct(project.progress);
-  const bk = project.progressBreakdown || {};
   const units = Number(project.availableUnits);
   const showUnits = !project.isDemo && units > 0;
   const years = Number(project.installmentYears) || 0;
-
-  const stages = [
-    { key: 'concrete', ar: 'خرسانات', en: 'Structure' },
-    { key: 'masonry', ar: 'مباني', en: 'Masonry' },
-    { key: 'finishing', ar: 'تشطيب', en: 'Finishing' }
-  ];
+  const href = projectPath(project);
   const categoryLabel = project.category === 'commercial'
     ? (isAr ? 'تجاري' : 'Commercial')
     : (isAr ? 'سكني' : 'Residential');
+  const Go = isAr ? ArrowLeft : ArrowRight;
 
   return (
     <article className={`pj-card ${featured ? 'pj-card--feature' : ''}`} style={{ '--i': index }}>
-      <div className="pj-media">
+      <Link to={href} className="pj-media" aria-label={title}>
         {image && !imgFailed ? (
           <img src={image} alt={title} loading={index === 0 ? 'eager' : 'lazy'} decoding="async" onError={() => setImgFailed(true)} />
         ) : (
@@ -84,7 +70,7 @@ export default function ProjectCard({ project, isAr, currency, lang, featured = 
             {project.brandTag && <span className="pj-brand" dir="ltr">{project.brandTag}</span>}
           </p>
         </div>
-      </div>
+      </Link>
 
       <div className="pj-body">
         <div className="pj-price-row">
@@ -115,49 +101,20 @@ export default function ProjectCard({ project, isAr, currency, lang, featured = 
           </div>
         </dl>
 
-        <div className="pj-stages" aria-label={isAr ? 'مراحل التنفيذ' : 'Construction stages'}>
-          {stages.map((s) => {
-            const v = pct(bk[s.key]);
-            return (
-              <div key={s.key} className="pj-stage">
-                <span className="pj-stage-head"><span>{isAr ? s.ar : s.en}</span><b>{v}%</b></span>
-                <span className="pj-stage-bar"><span style={{ width: `${v}%` }} /></span>
-              </div>
-            );
-          })}
-        </div>
-
-        {feats.length > 0 && (
-          <ul className="pj-feats">
-            {feats.slice(0, featured ? 4 : 3).map((f) => (
-              <li key={f}><Check size={14} aria-hidden="true" />{f}</li>
-            ))}
-          </ul>
-        )}
-
         <div className="pj-actions">
-          <button type="button" className="pj-btn pj-btn--primary" onClick={() => onInquire(project)}>
-            <MessageSquare size={17} aria-hidden="true" />
-            <span>
-              {project.isDemo
-                ? (isAr ? 'اسأل عن مشروعات مشابهة' : 'Ask about similar projects')
-                : (isAr ? 'احجز معاينة ميدانية' : 'Book a site visit')}
-            </span>
+          <Link to={href} className="pj-btn pj-btn--primary">
+            <span>{isAr ? 'تفاصيل المشروع' : 'Project details'}</span>
+            <Go size={17} aria-hidden="true" />
+          </Link>
+          <button
+            type="button"
+            className="pj-btn pj-btn--ghost pj-btn--icon"
+            onClick={() => onInquire(project)}
+            aria-label={isAr ? 'اسأل على واتساب' : 'Ask on WhatsApp'}
+            title={isAr ? 'اسأل على واتساب' : 'Ask on WhatsApp'}
+          >
+            <MessageSquare size={18} aria-hidden="true" />
           </button>
-          {brochureUrl && (
-            <button
-              type="button"
-              className="pj-btn pj-btn--ghost"
-              title={isAr ? 'الكتالوج PDF' : 'Brochure PDF'}
-              onClick={() => download(
-                { kind: 'project_brochure', itemId: String(project.id || ''), itemTitle: project.name_ar || project.title_ar || project.name_en || '' },
-                () => { window.open(brochureUrl, '_blank', 'noopener'); }
-              )}
-            >
-              <FileDown size={17} aria-hidden="true" />
-              <span>{isAr ? 'الكتالوج' : 'Brochure'}</span>
-            </button>
-          )}
         </div>
       </div>
     </article>
