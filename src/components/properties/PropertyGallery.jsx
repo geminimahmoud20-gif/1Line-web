@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Maximize2, 
   Minimize2,
@@ -354,7 +355,8 @@ export default function PropertyGallery({
       )}
 
       {/* 🌟 FULLSCREEN INTERACTIVE LIGHTBOX & HD ZOOM VIEWER */}
-      {lightboxOpen && (
+      {/* Rendered on <body>: the sticky section tabs would otherwise sit on top of it */}
+      {lightboxOpen && createPortal(
         <div 
           className="gallery-lightbox-modal" 
           onClick={handleCloseLightbox}
@@ -520,7 +522,7 @@ export default function PropertyGallery({
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
     </div>
   );
 }
