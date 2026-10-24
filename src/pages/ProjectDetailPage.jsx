@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, ArrowRight, Building2, CalendarClock, Check, FileDown, Layers, MapPin, Maximize2,
-  MessageSquare, Navigation, Phone, Sparkles, Wallet, Home as HomeIcon
+  Flame, MessageSquare, Navigation, Phone, Sparkles, Wallet, Home as HomeIcon
 } from 'lucide-react';
 import { MEGA_PROJECTS } from '../data/projectsData';
 import PropertyGallery from '../components/properties/PropertyGallery';
@@ -13,7 +13,8 @@ import { formatCurrencyPrice } from '../utils/currencyAndBenchmark';
 import { getWhatsAppUrl, getPhoneCallUrl } from '../utils/founderCmsData';
 import { updatePageSeo, buildBreadcrumbSchema } from '../utils/seoHelper';
 import useClientDownload from '../hooks/useClientDownload';
-import { arYears, pct, planExample, projectStages, projectUnits } from '../utils/projectFacts';
+import { arYears, pct, planExample, projectStages, projectUnits, projectOffer } from '../utils/projectFacts';
+import OfferCountdown from '../components/properties/OfferCountdown';
 import '../styles/property-detail-polish.css';
 import '../styles/projects-modern.css';
 import '../styles/project-detail.css';
@@ -68,6 +69,10 @@ export default function ProjectDetailPage({ projects = [], properties = [], lang
   const years = Number(project.installmentYears) || 0;
   const downPct = Number(project.downPaymentPercent) || 0;
   const price = formatCurrencyPrice(project.startPrice, currency, lang);
+  const offer = projectOffer(project);
+  const offerPrice = offer ? formatCurrencyPrice(offer.price, currency, lang) : null;
+  const offerEndDay = offer ? new Date(offer.endsAt).toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) : '';
+  const offerTerms = offer ? (isAr ? offer.terms_ar : (offer.terms_en || offer.terms_ar)) : '';
   const money = (n) => { const d = formatCurrencyPrice(n, currency, lang); return `${d.primary} ${d.symbol}`; };
   const brochureUrl = safeUrl(project.brochureUrl);
   const available = Number(project.availableUnits) || 0;
@@ -78,7 +83,9 @@ export default function ProjectDetailPage({ projects = [], properties = [], lang
 
   const waText = project.isDemo
     ? (isAr ? `مرحباً 1Line، أبحث عن ${type || 'مشروع'} في سوهاج زي «${title}». ما المشروعات المتاحة حالياً؟` : `Hello 1Line, I'm looking for a project like "${title}" in Sohag. What is available now?`)
-    : (isAr ? `مرحباً 1Line، أريد معرفة الوحدات المتاحة وحجز معاينة في مشروع: ${title}` : `Hello 1Line, I'd like unit availability and a site visit for: ${title}`);
+    : offer
+      ? (isAr ? `مرحباً 1Line، أريد الحجز بسعر عرض الكاش (−${offer.pct}%) في مشروع: ${title}` : `Hello 1Line, I'd like to book at the cash-offer price (−${offer.pct}%) in: ${title}`)
+      : (isAr ? `مرحباً 1Line، أريد معرفة الوحدات المتاحة وحجز معاينة في مشروع: ${title}` : `Hello 1Line, I'd like unit availability and a site visit for: ${title}`);
 
   const facts = [
     downPct > 0 && { key: 'down', Icon: Wallet, label: isAr ? 'المقدم' : 'Down payment', value: `${pct(downPct)}%` },
@@ -232,6 +239,30 @@ export default function ProjectDetailPage({ projects = [], properties = [], lang
                 </p>
               )}
               {!project.isDemo && available > 0 && <span className="pjd-avail">{isAr ? `${available} وحدة متاحة` : `${available} units left`}</span>}
+              {/* A running cash offer sits with the price */}
+              {offer && (
+                <div className="pd-offer-box pjd-offer" role="note">
+                  <div className="pd-offer-head">
+                    <Flame size={16} aria-hidden="true" />
+                    <strong>{isAr ? 'عرض كاش لفترة محدودة' : 'Limited-time cash offer'}</strong>
+                    <bdi dir="ltr" className="pd-offer-pct">−{offer.pct}%</bdi>
+                  </div>
+                  <div className="pd-offer-price">
+                    <bdi>{offerPrice.primary}</bdi> <span>{offerPrice.symbol}</span>
+                    <small>{isAr ? 'للدفع كاش' : 'paid in cash'}</small>
+                  </div>
+                  <p className="pd-offer-was">
+                    {isAr ? 'بدلاً من ' : 'Instead of '}<del><bdi>{offer.basePrice.toLocaleString('en-US')}</bdi></del>{isAr ? ' ج.م' : ' EGP'}
+                    {' · '}<span className="pd-offer-save">{isAr ? `وفّر ${offer.savings.toLocaleString('en-US')} ج.م` : `Save ${offer.savings.toLocaleString('en-US')} EGP`}</span>
+                  </p>
+                  <div className="pd-offer-meta">
+                    <OfferCountdown endsAt={offer.endsAt} isAr={isAr} className="pd-offer-timer" />
+                    <span>{isAr ? `آخر يوم: ${offerEndDay}` : `Last day: ${offerEndDay}`}</span>
+                    {offer.extended && <span className="pd-offer-extended">{isAr ? 'تم تمديد العرض' : 'Offer extended'}</span>}
+                  </div>
+                  {offerTerms && <p className="pd-offer-terms"><strong>{isAr ? 'الشروط: ' : 'Terms: '}</strong>{offerTerms}</p>}
+                </div>
+              )}
               <div className="pd-price-ctas">
                 <a href={getWhatsAppUrl(waText)} target="_blank" rel="noopener noreferrer" className="pd-cta-wa">
                   <MessageSquare size={16} aria-hidden="true" />

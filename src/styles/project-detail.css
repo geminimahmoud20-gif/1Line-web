@@ -126,3 +126,4 @@
 @media (max-width: 640px) {
   .pjd-plan strong { white-space: normal; font-size: 0.92rem; }
 }
+.pjd-offer { margin-top: 14px; text-align: start; }

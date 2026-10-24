@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { forSite } from './utils/siteReady';
+import { siteProjects } from './utils/projectFacts';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
 
@@ -186,6 +187,7 @@ function AppContent() {
   }, [properties, lang, requireClientAuth, toggleFavorite]);
   // Public overlays get the site list: no old stock photos, no incomplete listings (utils/siteReady)
   const siteProperties = useMemo(() => forSite(properties), [properties]);
+  const publicProjects = useMemo(() => siteProjects(projects), [projects]);
 
   // 🛡️ Protected Client Compare Toggle (Requires Name, Email, WhatsApp verification)
   const handleProtectedToggleCompare = useCallback((property) => {
@@ -764,7 +766,7 @@ function AppContent() {
             isOpen={quickSearchOpen}
             onClose={() => setQuickSearchOpen(false)}
             properties={siteProperties}
-            projects={projects}
+            projects={publicProjects}
             lang={lang}
             currency={currency}
             onOpenAddDemand={() => setAddDemandModalOpen(true)}

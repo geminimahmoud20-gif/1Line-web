@@ -1,0 +1,13 @@
+/* CRM projects table: hidden rows, status badges, the show/hide and offer buttons. CRM tokens only. */
+.pjm-row-hidden td { background: var(--crm-subtle); }
+.pjm-row-hidden img { opacity: 0.5; filter: grayscale(1); }
+.pjm-badge {
+  display: inline-flex; align-items: center; gap: 4px; margin-inline-start: 6px; padding: 2px 8px;
+  border-radius: 999px; background: var(--crm-subtle-2); color: var(--crm-muted); font-size: var(--crm-text-xs); font-weight: 700; vertical-align: middle;
+}
+.pjm-badge.is-hidden { background: var(--crm-danger-soft); color: var(--crm-danger); }
+.pjm-badge.is-offer { background: var(--crm-warn-soft); color: var(--crm-warn); }
+.pjm-act { padding: 6px; color: var(--crm-ink); }
+.pjm-act[aria-pressed="false"] { color: var(--crm-danger); }
+.pjm-act.is-offer { color: var(--crm-warn); }
+.pjm-act:disabled { opacity: 0.35; cursor: not-allowed; }

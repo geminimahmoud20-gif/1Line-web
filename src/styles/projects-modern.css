@@ -259,6 +259,7 @@ html:not(.dark-theme) .pj-filter button:focus-visible { outline-color: var(--pj-
   font-weight: 700;
 }
 .pj-chip--sample { background: #F5F3FF; border-color: #C4B5FD; color: #5B21B6; backdrop-filter: none; }
+.pj-chip--offer { display: inline-flex; align-items: center; gap: 4px; background: #DC2626; border-color: #DC2626; color: #FFFFFF; backdrop-filter: none; }
 
 .pj-ring {
   position: relative;
@@ -358,6 +359,12 @@ html:not(.dark-theme) .pj-filter button:focus-visible { outline-color: var(--pj-
   color: var(--pj-ink);
 }
 .pj-price small { font-size: 0.55em; font-weight: 600; color: var(--pj-muted); }
+/* Running cash offer: the offer price, the starting price struck through, and the time left */
+.pj-offer .pj-price { color: #B91C1C; }
+.dark-theme .pj-offer .pj-price { color: #F87171; }
+.pj-was { display: block; font-size: 0.85rem; color: var(--pj-muted); }
+.pj-offer-timer { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; padding: 2px 8px; border-radius: 999px; background: #FEF2F2; color: #B91C1C; font-size: 0.75rem; font-weight: 700; }
+.dark-theme .pj-offer-timer { background: rgba(248, 113, 113, 0.14); color: #FCA5A5; }
 .pj-units,
 .pj-type {
   max-width: 55%;

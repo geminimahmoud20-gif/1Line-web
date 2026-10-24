@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { lazy, useMemo } from 'react';
 import { forSite } from './utils/siteReady';
+import { siteProjects } from './utils/projectFacts';
 import HomePage from './pages/HomePage';
 
 // Home is eager (first paint); every other page loads on navigation
@@ -97,6 +98,8 @@ export default function AppRoutes({
 }) {
   // Visitors get the site list (no stock photos, no incomplete listings); the CRM keeps every record
   const siteProperties = useMemo(() => forSite(properties), [properties]);
+  // Public pages skip projects hidden in the CRM; the CRM routes keep the full list
+  const publicProjects = useMemo(() => siteProjects(projects), [projects]);
   return (
     <Routes>
       {/* 1. Home Page */}
@@ -116,7 +119,7 @@ export default function AppRoutes({
             onOpenAddDemand={() => setAddDemandModalOpen(true)}
             onAddNewLead={handleAddNewLead}
             triggerToast={triggerToast}
-            projects={projects}
+            projects={publicProjects}
           />
         }
       />
@@ -361,7 +364,7 @@ export default function AppRoutes({
           <ProjectsPage
             lang={lang}
             currency={currency}
-            projects={projects}
+            projects={publicProjects}
             triggerToast={triggerToast}
           />
         }
@@ -374,7 +377,7 @@ export default function AppRoutes({
           <ProjectDetailPage
             lang={lang}
             currency={currency}
-            projects={projects}
+            projects={publicProjects}
             properties={siteProperties}
             favorites={favorites}
             onToggleFavorite={handleProtectedToggleFavorite}

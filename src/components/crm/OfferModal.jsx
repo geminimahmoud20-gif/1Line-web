@@ -10,7 +10,8 @@ const fmt = (n) => (Number(n) || 0).toLocaleString('en-US');
  * Create / edit / end a limited-time cash offer on one listing (CRM → العقارات → 🔥).
  * Saves `offer` on the property; the site shows it from `from` to `until` and drops it afterwards.
  */
-export default function OfferModal({ property, isAr, onSave, onClose }) {
+export default function OfferModal({ property, isAr, onSave, onClose, subject = 'property' }) {
+  const isProject = subject === 'project';
   const existing = property.offer || null;
   const listPrice = Number(property.price) || 0;
   const [price, setPrice] = useState(() => (existing?.price ? String(existing.price) : ''));
@@ -62,14 +63,14 @@ export default function OfferModal({ property, isAr, onSave, onClose }) {
         <div className="hs-modal-head">
           <div>
             <h3 id="offer-modal-title"><Flame size={18} color="var(--crm-warn)" /> {isAr ? 'عرض كاش لفترة محدودة' : 'Limited-time cash offer'}</h3>
-            <small>{title} — {isAr ? 'السعر الحالي' : 'current price'} <bdi>{fmt(listPrice)}</bdi> {isAr ? 'ج.م' : 'EGP'}</small>
+            <small>{title} — {isProject ? (isAr ? 'سعر البداية' : 'starting price') : (isAr ? 'السعر الحالي' : 'current price')} <bdi>{fmt(listPrice)}</bdi> {isAr ? 'ج.م' : 'EGP'}</small>
           </div>
           <button type="button" onClick={onClose} aria-label={isAr ? 'إغلاق' : 'Close'} className="hs-icon-btn"><X size={18} /></button>
         </div>
 
         <div className="hs-grid">
           <label style={{ gridColumn: '1 / -1' }}>
-            <span>{isAr ? 'سعر الكاش في العرض (ج.م)' : 'Offer cash price (EGP)'}</span>
+            <span>{isProject ? (isAr ? 'سعر البداية كاش في العرض (ج.م)' : 'Offer cash starting price (EGP)') : (isAr ? 'سعر الكاش في العرض (ج.م)' : 'Offer cash price (EGP)')}</span>
             <input type="text" inputMode="numeric" dir="ltr" value={price ? fmt(String(price).replace(/[^\d]/g, '')) : ''} onChange={(e) => edit(setPrice)(e.target.value.replace(/[^\d]/g, ''))} placeholder={fmt(Math.round(listPrice * 0.93))} required />
           </label>
         </div>
@@ -102,7 +103,7 @@ export default function OfferModal({ property, isAr, onSave, onClose }) {
             <input type="date" value={until} min={from} onChange={(e) => edit(setUntil)(e.target.value)} required />
           </label>
           <label style={{ gridColumn: '1 / -1' }}>
-            <span>{isAr ? 'الشروط (تظهر للعميل في صفحة العقار)' : 'Terms (Arabic, shown on the listing)'}</span>
+            <span>{isAr ? `الشروط (تظهر للعميل في صفحة ${isProject ? 'المشروع' : 'العقار'})` : `Terms (Arabic, shown on the ${isProject ? 'project page' : 'listing'})`}</span>
             <textarea rows={2} value={termsAr} onChange={(e) => setTermsAr(e.target.value)} maxLength={300} placeholder={isAr ? 'مثال: السداد كاش بالكامل خلال 30 يوم من الحجز. لا يُجمع مع عروض أخرى.' : ''} />
           </label>
           <label style={{ gridColumn: '1 / -1' }}>
@@ -113,8 +114,12 @@ export default function OfferModal({ property, isAr, onSave, onClose }) {
 
         <p className="hs-note">
           {isAr
-            ? `يظهر العرض في الصفحة الرئيسية وعلى كارت العقار بعدّاد تنازلي، وينتهي تلقائياً بعد آخر يوم ويرجع السعر كما كان. "السعر قبل" هو سعر العقار الحالي — لا يمكن تضخيمه. أقصى مدة ${OFFER_MAX_DAYS} يوم. لو مددت العرض بعد بدايته يظهر للعملاء "تم تمديد العرض".`
-            : `Shown on the homepage and the listing card with a countdown; ends automatically after the last day and the price returns to normal. The "was" price is the current listing price and can't be inflated. Up to ${OFFER_MAX_DAYS} days. Extending a running offer shows "Offer extended".`}
+            ? (isProject
+              ? `يظهر العرض على كارت المشروع وفي صفحته بعدّاد تنازلي، وينتهي تلقائياً بعد آخر يوم. "السعر قبل" هو سعر البداية الحالي للمشروع — لا يمكن تضخيمه. أقصى مدة ${OFFER_MAX_DAYS} يوم. لو مددت العرض بعد بدايته يظهر للعملاء "تم تمديد العرض".`
+              : `يظهر العرض في الصفحة الرئيسية وعلى كارت العقار بعدّاد تنازلي، وينتهي تلقائياً بعد آخر يوم ويرجع السعر كما كان. "السعر قبل" هو سعر العقار الحالي — لا يمكن تضخيمه. أقصى مدة ${OFFER_MAX_DAYS} يوم. لو مددت العرض بعد بدايته يظهر للعملاء "تم تمديد العرض".`)
+            : (isProject
+              ? `Shown on the project card and page with a countdown; ends automatically after the last day. The "was" price is the project's current starting price and can't be inflated. Up to ${OFFER_MAX_DAYS} days. Extending a running offer shows "Offer extended".`
+              : `Shown on the homepage and the listing card with a countdown; ends automatically after the last day and the price returns to normal. The "was" price is the current listing price and can't be inflated. Up to ${OFFER_MAX_DAYS} days. Extending a running offer shows "Offer extended".`)}
         </p>
         {errors.length > 0 && (
           <ul className="hs-error" role="alert" style={{ margin: 0, paddingInlineStart: 18 }}>
