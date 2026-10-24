@@ -75,3 +75,10 @@ test('getPriceBenchmark continues to calculate standard price per sqm for regula
   assert.equal(bench.pricePerMeter, 15000);
   assert.equal(bench.pricePerMeterFormatted, '15,000 ج.م/م²');
 });
+
+test('an apartment whose description mentions its building is still one unit', () => {
+  assert.equal(isMultiUnitOrBuilding({ type: 'apartment', title_ar: 'شقة على المحور الرئيسي', description_ar: 'العمارة فيها أسانسير ومبنى حديث' }), false);
+  assert.equal(isMultiUnitOrBuilding({ type: 'villa', title_ar: 'فيلا مستقلة' }), false);
+  assert.equal(isMultiUnitOrBuilding({ title_ar: 'شقة للبيع', description_ar: 'في عمارة حديثة' }), false);
+  assert.equal(isMultiUnitOrBuilding({ type: 'apartment', isMultiUnit: true }), true);
+});

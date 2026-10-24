@@ -68,12 +68,18 @@ export function formatCurrencyPrice(amountInEgp, currency = 'EGP', lang = 'ar') 
  * Detects if a property is a full building, multi-unit house, or mixed-use asset.
  * For these assets, simple flat (price / footprint area) does not represent unit price per sqm.
  */
+const SINGLE_UNIT_TYPES = new Set(['apartment', 'villa', 'commercial', 'office', 'land', 'agri_land', 'farm', 'factory', 'warehouse', 'industrial_land']);
+
 export function isMultiUnitOrBuilding(property) {
   if (!property) return false;
   if (property.type === 'building' || property.type === 'house' || property.isMultiUnit || property.category === 'building') {
     return true;
   }
-  const text = `${property.title_ar || ''} ${property.title_en || ''} ${property.commercialType_ar || ''} ${property.description_ar || ''} ${property.description_en || ''}`.toLowerCase();
+  // A listing typed as one unit (apartment, villa, shop, office, land…) is never a whole building,
+  // even when its description mentions "العمارة" it sits in
+  if (SINGLE_UNIT_TYPES.has(property.type)) return false;
+  // Untyped listings: the title says what is for sale; the description talks about the building
+  const text = `${property.title_ar || ''} ${property.title_en || ''} ${property.commercialType_ar || ''}`.toLowerCase();
   return /(?:منزل|عمارة|عماره|مبنى|مبني|بيت عيلة|بيت عائلي|شقق.*محلات|محلات.*شقق|برج سكن|عقار كامل|building|entire house)/i.test(text);
 }
 

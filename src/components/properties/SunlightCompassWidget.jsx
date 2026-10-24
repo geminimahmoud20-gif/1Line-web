@@ -46,27 +46,27 @@ export default function SunlightCompassWidget({ property, lang = 'ar' }) {
           </div>
         </div>
 
-        {/* 2. Sunlight Hours */}
-        <div className="compass-feature-box">
+        {/* 2. Sunlight Hours — only when recorded */}
+        {orientationData.sunlightHours > 0 && <div className="compass-feature-box">
           <div className="feat-icon-circle bg-gold">
             <Sun size={18} />
           </div>
           <div>
             <span className="feat-lbl">{isAr ? 'ساعات الشمس اليومية' : 'Daily Sunlight'}</span>
-            <strong className="feat-val">{orientationData.sunlightHours ? `${orientationData.sunlightHours} ${isAr ? 'ساعات إضاءة طبيعية' : 'Hours direct sun'}` : '—'}</strong>
+            <strong className="feat-val">{`${orientationData.sunlightHours} ${isAr ? 'ساعات إضاءة طبيعية' : 'Hours direct sun'}`}</strong>
           </div>
-        </div>
+        </div>}
 
-        {/* 3. Natural Ventilation */}
-        <div className="compass-feature-box">
+        {/* 3. Natural Ventilation — only when recorded */}
+        {(orientationData.ventilationRating_ar || orientationData.ventilationRating_en) && <div className="compass-feature-box">
           <div className="feat-icon-circle bg-green">
             <Wind size={18} />
           </div>
           <div>
             <span className="feat-lbl">{isAr ? 'التهوية ودوران الهواء' : 'Natural Ventilation'}</span>
-            <strong className="feat-val">{(isAr ? orientationData.ventilationRating_ar : (orientationData.ventilationRating_en || orientationData.ventilationRating_ar)) || '—'}</strong>
+            <strong className="feat-val">{isAr ? orientationData.ventilationRating_ar : (orientationData.ventilationRating_en || orientationData.ventilationRating_ar)}</strong>
           </div>
-        </div>
+        </div>}
 
         {/* 4. Qibla Direction */}
         <div className="compass-feature-box">

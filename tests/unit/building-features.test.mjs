@@ -69,3 +69,9 @@ test('the features list leaves out what the building facts already show', () => 
   assert.deepEqual(featuresBesideFacts(['Sea view', 'Elevator'], buildingFacts({ type: 'villa', building: { elevator: 'no' } }, false)), ['Sea view']);
   assert.deepEqual(featuresBesideFacts(undefined, []), []);
 });
+
+test('a note that only says "yes" is not repeated after the fact', () => {
+  const f = labels(buildingFacts({ type: 'apartment', building: { landShare: 'yes', landShareNote: 'نعم' }, utilities: { elevator_ar: 'شامل' } }));
+  assert.equal(f.landShare, 'فيه حصة في الأرض');
+  assert.equal(f.elevator, 'فيه أسانسير');
+});

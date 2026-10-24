@@ -109,3 +109,111 @@
   color: #E9D29A;
   line-height: 1.6;
 }
+
+/* =============================================================
+   Light top of the page (light theme). The navy band made the page heavy and split it in two:
+   the top now sits on the page's own background, the price in a white card with a gold edge.
+   Dark theme keeps the navy look.
+   ============================================================= */
+html:not(.dark-theme) .property-detail-hero-stage {
+  background: transparent;
+  color: #0B1B32;
+  padding: 16px 0 28px;
+}
+html:not(.dark-theme) .property-detail-hero-stage .detail-hero-ambient { display: none; }
+html:not(.dark-theme) .property-detail-hero-stage .page-top-back-bar { border-bottom-color: rgba(11, 27, 50, 0.08); }
+html:not(.dark-theme) .property-detail-hero-stage .btn-back-step {
+  background: #FFFFFF;
+  border-color: rgba(11, 27, 50, 0.12);
+  color: #0B1B32 !important;
+}
+html:not(.dark-theme) .property-detail-hero-stage .btn-back-step:hover { color: #7C5E30 !important; border-color: #C5A059; background: #FBF6EC; }
+html:not(.dark-theme) .property-detail-hero-stage .page-breadcrumb-sub,
+html:not(.dark-theme) .property-detail-hero-stage .crumb-sep { color: #8A94A6; }
+html:not(.dark-theme) .property-detail-hero-stage .page-breadcrumb-sub a { color: #5B6577; }
+html:not(.dark-theme) .property-detail-hero-stage .page-breadcrumb-sub a:hover { color: #7C5E30; }
+html:not(.dark-theme) .property-detail-hero-stage .crumb-current { color: #0B1B32; font-weight: 700; }
+
+html:not(.dark-theme) .property-detail-hero-stage .pd-demo-banner { color: #4C1D95; background: #F5F3FF; border-color: #C4B5FD; }
+
+html:not(.dark-theme) .property-detail-hero-stage .pd-badge { color: #334155; background: #FFFFFF; border-color: rgba(11, 27, 50, 0.12); }
+html:not(.dark-theme) .property-detail-hero-stage .pd-badge--verified { color: #047857; background: #ECFDF5; border-color: #A7F3D0; }
+html:not(.dark-theme) .property-detail-hero-stage .pd-badge--in-review { color: #92400E; background: #FFFBEB; border-color: #FDE68A; }
+html:not(.dark-theme) .property-detail-hero-stage .pd-badge--avail.is-sold { color: #991B1B; background: #FEF2F2; border-color: #FECACA; }
+html:not(.dark-theme) .property-detail-hero-stage .gold-pill-badge { background: #FBF6EC !important; border-color: rgba(197, 160, 89, 0.5) !important; color: #7C5E30 !important; }
+html:not(.dark-theme) .property-detail-hero-stage .code-copy-pill-btn { background: #FFFFFF !important; border-color: rgba(11, 27, 50, 0.12) !important; color: #5B6577 !important; }
+html:not(.dark-theme) .property-detail-hero-stage .code-copy-pill-btn:hover { color: #7C5E30 !important; border-color: #C5A059 !important; }
+
+html:not(.dark-theme) .property-detail-hero-stage .detail-main-title { color: #0B1B32 !important; text-shadow: none; font-weight: 800; }
+html:not(.dark-theme) .property-detail-hero-stage .detail-location-text,
+html:not(.dark-theme) .property-detail-hero-stage .detail-loc-label { color: #5B6577; }
+html:not(.dark-theme) .property-detail-hero-stage .loc-icon-gold { color: #A9824A; }
+html:not(.dark-theme) .property-detail-hero-stage .detail-maps-pill { background: #FFFFFF; border-color: rgba(11, 27, 50, 0.12); color: #0B1B32; }
+html:not(.dark-theme) .property-detail-hero-stage .detail-maps-pill:hover { color: #7C5E30; border-color: #C5A059; background: #FBF6EC; }
+
+html:not(.dark-theme) .property-detail-hero-stage .detail-price-box {
+  background: #FFFFFF !important;
+  border: 1px solid rgba(11, 27, 50, 0.08) !important;
+  border-top: 3px solid #C5A059 !important;
+  box-shadow: 0 18px 40px -24px rgba(11, 27, 50, 0.35) !important;
+  backdrop-filter: none !important;
+  color: #0B1B32 !important;
+}
+html:not(.dark-theme) .property-detail-hero-stage .detail-price-box::before { display: none; }
+html:not(.dark-theme) .property-detail-hero-stage .price-tag-sub { color: #7C5E30 !important; }
+html:not(.dark-theme) .property-detail-hero-stage .price-num-row h2 { color: #0B1B32 !important; }
+html:not(.dark-theme) .property-detail-hero-stage .price-num-row .curr { color: #A9824A !important; }
+html:not(.dark-theme) .property-detail-hero-stage .price-per-m,
+html:not(.dark-theme) .property-detail-hero-stage .price-converted-sub { color: #5B6577 !important; }
+html:not(.dark-theme) .property-detail-hero-stage .pd-plan-line { color: #7C5E30; }
+html:not(.dark-theme) .property-detail-hero-stage .benchmark-hero-pill.is-deal { color: #047857; background: #ECFDF5; border-color: #A7F3D0; }
+html:not(.dark-theme) .property-detail-hero-stage .benchmark-hero-pill.is-fair { color: #1E40AF; background: #EFF6FF; border-color: #BFDBFE; }
+
+html:not(.dark-theme) .property-detail-hero-stage .gallery-media-mode-tabs { background: #FFFFFF !important; border-color: rgba(11, 27, 50, 0.1) !important; }
+html:not(.dark-theme) .property-detail-hero-stage .media-tab-btn { color: #5B6577 !important; }
+html:not(.dark-theme) .property-detail-hero-stage .media-tab-btn:hover { color: #0B1B32 !important; background: #F1F5F9 !important; }
+
+/* Phones: a title that fits in two or three lines */
+@media (max-width: 640px) {
+  .property-detail-hero-stage .detail-main-title { font-size: 1.45rem !important; line-height: 1.45 !important; }
+  .property-detail-hero-stage .page-top-back-bar { margin-bottom: 12px; padding-bottom: 10px; }
+}
+
+/* Description: five lines, then "read more" */
+.detail-description-p.is-clamped { display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+.pd-read-more { margin-top: 8px; padding: 0; border: 0; background: none; color: #7C5E30; font: inherit; font-weight: 700; font-size: 0.88rem; cursor: pointer; }
+.pd-read-more:hover { text-decoration: underline; }
+.dark-theme .pd-read-more { color: #E9D29A; }
+
+/* "More details": family split, optional service and orientation, closed until opened */
+.pd-more {
+  margin-top: 4px;
+  border: 1px solid rgba(11, 27, 50, 0.1);
+  border-radius: 18px;
+  background: #FFFFFF;
+  overflow: hidden;
+}
+.pd-more > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  padding: 16px 20px;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 800;
+  font-size: 1rem;
+  color: #0B1B32;
+}
+.pd-more > summary::-webkit-details-marker { display: none; }
+.pd-more > summary::after { content: '+'; margin-inline-start: auto; font-size: 1.3rem; line-height: 1; color: #A9824A; }
+.pd-more[open] > summary::after { content: '−'; }
+.pd-more > summary small { font-size: 0.78rem; font-weight: 500; color: #5B6577; }
+.pd-more-body { display: flex; flex-direction: column; gap: 16px; padding: 0 16px 16px; }
+.pd-more-body > * { margin: 0 !important; }
+.dark-theme .pd-more { background: #0F1B2D; border-color: rgba(255, 255, 255, 0.1); }
+.dark-theme .pd-more > summary { color: #F1F5F9; }
+.dark-theme .pd-more > summary small { color: #9AA6B8; }
+
+/* Similar units: room between them and the cards above */
+.similar-properties-section { margin-top: clamp(28px, 5vw, 48px); }

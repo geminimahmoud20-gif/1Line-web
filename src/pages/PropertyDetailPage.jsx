@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { isAgricultural, isIndustrial, isLandType } from '../utils/propertyKinds';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MapPin, Sparkles, CheckCircle2, Clock3, ShieldQuestion, Layers, Calendar, Phone, MessageSquare, ShieldCheck, TrendingUp, TrendingDown, Navigation, ArrowRight, ArrowLeft, Building, Building2, Video, Zap, Droplets, Copy, Sun, Moon, Scale, Flame } from 'lucide-react';
+import { MapPin, Sparkles, CheckCircle2, Clock3, ShieldQuestion, Layers, Calendar, Phone, MessageSquare, ShieldCheck, TrendingUp, TrendingDown, Navigation, ArrowRight, ArrowLeft, Building2, Video, Zap, Droplets, Copy, Sun, Moon, Scale, Flame } from 'lucide-react';
 import { incrementPropertyView, getPropertyViews } from '../utils/visitorTracker';
 import usePropertyEngagement from '../hooks/usePropertyEngagement';
 import PropertyGallery from '../components/properties/PropertyGallery';
@@ -29,12 +29,12 @@ import { useClientAuth } from '../context/ClientAuthContext';
 import { useUIModal } from '../context/UIModalContext';
 
 import { getFamilyInfo } from '../utils/propertyInsights';
-import { PROPERTY_TYPES } from '../data/propertiesData';
 
 import '../styles/expat-suite.css';
 import '../styles/property-detail-polish.css';
 import PropertyOverviewTab from '../components/properties/detail/PropertyOverviewTab';
 import { paymentTerms, hasInstallmentPlan, termLabel } from '../utils/paymentTerms';
+import { similarListings } from '../utils/similarListings';
 
 const todayIso = () => {
   const d = new Date();
@@ -94,15 +94,8 @@ export default function PropertyDetailPage({
     return isPublicListing(found) ? found : null;
   }, [properties, id]);
 
-  // Smart Similar Properties recommendation (Same district first, fallback to same property type)
-  const similarProperties = useMemo(() => {
-    if (!property) return [];
-    const pool = properties.filter((p) => p.id !== property.id && isPublicListing(p) && p.status !== 'sold');
-    const sameArea = pool.filter((p) => p.areaKey === property.areaKey);
-    if (sameArea.length >= 3) return sameArea.slice(0, 3);
-    const sameType = pool.filter((p) => p.type === property.type && !sameArea.some(sa => sa.id === p.id));
-    return [...sameArea, ...sameType].slice(0, 3);
-  }, [properties, property]);
+  // Same kind of unit at a comparable price, the same area first (src/utils/similarListings.js)
+  const similarProperties = useMemo(() => similarListings(property, properties), [properties, property]);
 
   const isAr = lang === 'ar';
 
@@ -372,15 +365,6 @@ export default function PropertyDetailPage({
                     <span>{detailBadges.review.label}</span>
                   </span>
                 )}
-                <span className="type-pill-badge">
-                  <Building size={13} style={{ flexShrink: 0 }} />
-                  <span>
-                    {(() => {
-                      const t = PROPERTY_TYPES.find((x) => x.id === property.type);
-                      return t ? (isAr ? t.name_ar : t.name_en) : property.type;
-                    })()}
-                  </span>
-                </span>
                 {property.badge_ar && (
                   <span className="gold-pill-badge">
                     <Sparkles size={13} style={{ flexShrink: 0 }} />
@@ -440,7 +424,8 @@ export default function PropertyDetailPage({
                 </span>
               )}
               {planLine && <span className="pd-plan-line">{planLine}</span>}
-              {benchmark && (
+              {/* "Above the area average" stays in the price & area tab; the price box only shows good news */}
+              {benchmark && benchmark.badgeType !== 'premium' && (
                 <div className={`benchmark-hero-pill is-${benchmark.badgeType}`}>
                   {benchmark.badgeType === 'deal' ? (
                     <TrendingDown size={13} />

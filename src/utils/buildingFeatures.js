@@ -45,13 +45,16 @@ const optionOf = (field, v) => field.options.find((o) => o.v === v) || null;
 // The listing's own wording of a feature ("حديقة خلفية 60م"), or '' when it has none
 const featureText = (p, words) => clean((Array.isArray(p?.features_ar) ? p.features_ar : []).find((f) => words.some((w) => String(f).includes(w))));
 const NONE = /^(لا|مفيش|لا يوجد|none|no)$/i;
+// A note that only says "yes" adds nothing to "فيه أسانسير" / "فيه حصة في الأرض"
+const YES = /^(نعم|ايوه|أيوه|آه|موجود|يوجد|متاح|شامل|yes|included|available)$/i;
+const note = (v) => { const t = clean(v); return YES.test(t) ? '' : t; };
 
 /** Values recorded before the building section existed, so older listings still show them */
 function legacyValue(p, key) {
   const util = p?.utilities || {};
   if (key === 'elevator') {
     const t = clean(util.elevator_ar);
-    if (t) return { v: NONE.test(t) ? 'no' : 'yes', note: NONE.test(t) ? '' : t };
+    if (t) return { v: NONE.test(t) ? 'no' : 'yes', note: NONE.test(t) ? '' : note(t) };
     return featureText(p, ['أسانسير', 'اسانسير', 'مصعد']) ? { v: 'yes', note: '' } : null;
   }
   if (key === 'garage') {
@@ -66,7 +69,7 @@ function legacyValue(p, key) {
   }
   if (key === 'landShare') {
     const t = clean(p?.legalStatus?.landShare_ar);
-    if (t) return { v: 'yes', note: t };
+    if (t) return { v: 'yes', note: note(t) };
     return featureText(p, ['حصة بالأرض', 'حصة في الأرض', 'حصة شائعة']) ? { v: 'yes', note: '' } : null;
   }
   return null;
@@ -89,7 +92,7 @@ export function buildingFacts(p, isAr = true) {
     if (opt) {
       let value = isAr ? opt.ar : opt.en;
       if (field.key === 'garden' && opt.v !== 'no' && Number(b.gardenSize) > 0) value += ` · ${Number(b.gardenSize)} ${isAr ? 'م²' : 'm²'}`;
-      if (field.key === 'landShare' && opt.v === 'yes' && clean(b.landShareNote)) value += ` · ${clean(b.landShareNote)}`;
+      if (field.key === 'landShare' && opt.v === 'yes' && note(b.landShareNote)) value += ` · ${note(b.landShareNote)}`;
       out.push({ key: field.key, label, value, positive: opt.v !== 'no' });
       continue;
     }
