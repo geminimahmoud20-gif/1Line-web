@@ -377,3 +377,16 @@ html .property-detail-hero-stage .detail-location-text .code-copy-pill-btn:hover
 .pd-side-mini.is-pinned { position: fixed; top: 88px; z-index: 40; margin: 0; animation: pd-mini-in 0.25s ease; }
 @keyframes pd-mini-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .pd-side-mini.is-pinned { animation: none; } }
+
+/* Nearby landmarks: on phones the kind tabs scroll sideways in one row instead of stacking */
+@media (max-width: 640px) {
+  .amenities-category-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-inline: -4px;
+    padding: 2px 4px 6px;
+  }
+  .amenities-category-tabs::-webkit-scrollbar { display: none; }
+  .amenities-category-tabs .amenity-tab-btn { flex: none; white-space: nowrap; }
+}

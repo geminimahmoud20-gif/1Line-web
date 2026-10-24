@@ -1,17 +1,13 @@
 import { useState, useEffect } from 'react';
-import { School, Hospital, ShoppingBag, Coffee, Train, MapPin, Clock, Navigation } from 'lucide-react';
+import {
+  School, Baby, Hospital, Pill, ShoppingCart, ShoppingBag, UtensilsCrossed, Landmark, Banknote, Building2,
+  Shield, Train, Route, Fuel, Trees, Dumbbell, Hotel, MapPin, Clock, Navigation
+} from 'lucide-react';
 import { getAreaById } from '../../utils/areasData';
+import { amenityCategory, categoriesIn } from '../../utils/amenityCategories';
 
-const getCategoryIcon = (category) => {
-  switch (category) {
-    case 'education': return School;
-    case 'health': return Hospital;
-    case 'shopping': return ShoppingBag;
-    case 'transport': return Train;
-    case 'lifestyle': return Coffee;
-    default: return MapPin;
-  }
-};
+const ICONS = { School, Baby, Hospital, Pill, ShoppingCart, ShoppingBag, UtensilsCrossed, Landmark, Banknote, Building2, Shield, Train, Route, Fuel, Trees, Dumbbell, Hotel, MapPin };
+const iconFor = (category) => ICONS[amenityCategory(category).icon] || MapPin;
 
 export default function NearbyAmenities({ property, lang = 'ar' }) {
   const [activeCategory, setActiveCategory] = useState('all');
@@ -54,8 +50,12 @@ export default function NearbyAmenities({ property, lang = 'ar' }) {
   const amenities = rawAmenities.map((item, idx) => ({
     ...item,
     id: item.id || idx + 1,
-    icon: typeof item.icon === 'function' ? item.icon : getCategoryIcon(item.category)
+    // Unknown kinds group under "other"
+    category: amenityCategory(item.category).id,
+    icon: typeof item.icon === 'function' ? item.icon : iconFor(item.category)
   }));
+  // A tab per kind this listing actually has; no tab bar when there is only one kind
+  const tabs = categoriesIn(amenities);
 
   const filteredAmenities = activeCategory === 'all'
     ? amenities
@@ -79,55 +79,31 @@ export default function NearbyAmenities({ property, lang = 'ar' }) {
         </div>
 
         {/* Categories Tab Filter */}
-        <div className="amenities-category-tabs">
-          <button
-            type="button"
-            className={`amenity-tab-btn ${activeCategory === 'all' ? 'active' : ''}`}
-            onClick={() => setActiveCategory('all')}
-          >
-            {isAr ? 'الكل' : 'All'}
-          </button>
-          <button
-            type="button"
-            className={`amenity-tab-btn ${activeCategory === 'education' ? 'active' : ''}`}
-            onClick={() => setActiveCategory('education')}
-          >
-            <School size={14} />
-            <span>{isAr ? 'التعليم' : 'Education'}</span>
-          </button>
-          <button
-            type="button"
-            className={`amenity-tab-btn ${activeCategory === 'health' ? 'active' : ''}`}
-            onClick={() => setActiveCategory('health')}
-          >
-            <Hospital size={14} />
-            <span>{isAr ? 'الصحة' : 'Health'}</span>
-          </button>
-          <button
-            type="button"
-            className={`amenity-tab-btn ${activeCategory === 'shopping' ? 'active' : ''}`}
-            onClick={() => setActiveCategory('shopping')}
-          >
-            <ShoppingBag size={14} />
-            <span>{isAr ? 'التسوق' : 'Shopping'}</span>
-          </button>
-          <button
-            type="button"
-            className={`amenity-tab-btn ${activeCategory === 'transport' ? 'active' : ''}`}
-            onClick={() => setActiveCategory('transport')}
-          >
-            <Train size={14} />
-            <span>{isAr ? 'المواصلات' : 'Transit'}</span>
-          </button>
-          <button
-            type="button"
-            className={`amenity-tab-btn ${activeCategory === 'lifestyle' ? 'active' : ''}`}
-            onClick={() => setActiveCategory('lifestyle')}
-          >
-            <Coffee size={14} />
-            <span>{isAr ? 'الترفيه' : 'Leisure'}</span>
-          </button>
-        </div>
+        {tabs.length > 1 && (
+          <div className="amenities-category-tabs">
+            <button
+              type="button"
+              className={`amenity-tab-btn ${activeCategory === 'all' ? 'active' : ''}`}
+              onClick={() => setActiveCategory('all')}
+            >
+              {isAr ? 'الكل' : 'All'}
+            </button>
+            {tabs.map((c) => {
+              const Icon = iconFor(c.id);
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  className={`amenity-tab-btn ${activeCategory === c.id ? 'active' : ''}`}
+                  onClick={() => setActiveCategory(c.id)}
+                >
+                  <Icon size={14} />
+                  <span>{isAr ? c.ar : c.en}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Amenities Grid */}
@@ -140,16 +116,24 @@ export default function NearbyAmenities({ property, lang = 'ar' }) {
                 <IconComponent size={20} />
               </div>
               <div className="amenity-item-content">
-                <h4>{isAr ? item.name_ar : item.name_en}</h4>
+                <h4>{isAr ? item.name_ar : (item.name_en || item.name_ar)}</h4>
+                {/* Landmarks typed in the CRM carry a distance only; drive and walk times show when known */}
                 <div className="amenity-metrics-row">
-                  <span className="metric-dist">
-                    <Navigation size={13} />
-                    {item.distance}
-                  </span>
-                  <span className="metric-time">
-                    <Clock size={13} />
-                    {isAr ? `${item.timeDrive} بالسيارة (${item.timeWalk} سيراً)` : `${item.timeDrive} drive (${item.timeWalk} walk)`}
-                  </span>
+                  {item.distance && (
+                    <span className="metric-dist">
+                      <Navigation size={13} />
+                      {item.distance}
+                    </span>
+                  )}
+                  {(item.timeDrive || item.timeWalk) && (
+                    <span className="metric-time">
+                      <Clock size={13} />
+                      {[
+                        item.timeDrive && (isAr ? `${item.timeDrive} بالسيارة` : `${item.timeDrive} drive`),
+                        item.timeWalk && (isAr ? `${item.timeWalk} مشي` : `${item.timeWalk} walk`)
+                      ].filter(Boolean).join(' · ')}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
