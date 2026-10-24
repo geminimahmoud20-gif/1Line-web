@@ -327,9 +327,51 @@ html .property-detail-hero-stage .detail-location-text .code-copy-pill-btn:hover
 .property-detail-hero-stage .detail-loc-label { min-width: 0; flex: 0 1 auto; }
 .property-detail-hero-stage .detail-loc-label span { min-width: 0; overflow-wrap: anywhere; }
 
-/* Wide screens: the advisor card and share block follow the reader down the page */
-@media (min-width: 1024px) and (min-height: 760px) {
-  .detail-content-grid { align-items: start; }
-  .detail-sidebar-col { position: sticky; top: 90px; align-self: start; }
-  .detail-sidebar-col .sticky-booking-card { position: static; }
+
+/* Header and price live in the content columns now; the hero class only carries their colours */
+.property-detail-hero-stage.pd-stage-lite {
+  width: auto;
+  padding: 0 !important;
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
 }
+.pd-head { margin-bottom: 20px; }
+.pd-head .pd-keyfacts { margin-top: 16px; }
+.pd-price-slot { margin-bottom: 20px; }
+.pd-price-slot .detail-price-box { width: 100%; min-width: 0 !important; padding: 22px 24px !important; }
+.pd-price-slot .price-num-row h2 { font-size: clamp(1.9rem, 2.6vw, 2.4rem) !important; }
+.pd-price-slot .pd-offer-box { margin-top: 12px; }
+
+/* Wide screens: price card on top of the sidebar, the whole sidebar follows the reader */
+@media (min-width: 1025px) {
+  .pd-price-slot.is-inline { display: none; }
+  .detail-content-grid { align-items: stretch; }
+  .pd-side-mini { position: sticky; top: 88px; }
+  .detail-sidebar-col .sticky-booking-card { position: static; padding: 18px; }
+  .detail-sidebar-col .agent-profile-header { margin-bottom: 6px; }
+}
+@media (max-width: 1024px) {
+  .pd-price-slot.is-side,
+  .pd-side-mini { display: none; }
+}
+
+.pd-side-mini {
+  margin-top: 16px;
+  padding: 16px 18px;
+  border: 1px solid rgba(11, 27, 50, 0.08);
+  border-top: 3px solid #C5A059;
+  border-radius: 18px;
+  background: #FFFFFF;
+  box-shadow: 0 18px 40px -24px rgba(11, 27, 50, 0.35);
+}
+.pd-side-mini-price { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.pd-side-mini-price small { color: #7C5E30; font-size: 0.78rem; font-weight: 700; }
+.pd-side-mini-price strong { color: #0B1B32; font-size: 1.45rem; font-weight: 900; }
+.pd-side-mini-price strong span { color: #A9824A; font-size: 0.9rem; font-weight: 800; }
+.pd-side-mini .pd-price-ctas { margin-top: 12px; }
+.dark-theme .pd-side-mini { background: #0F1B2D; border-color: rgba(255, 255, 255, 0.08); border-top-color: #C5A059; box-shadow: none; }
+.dark-theme .pd-side-mini-price strong { color: #F1F5F9; }
+.dark-theme .pd-side-mini-price small { color: #E9D29A; }
+.dark-theme .detail-section-tabs-bar .section-tab-btn.active { background: #C5A059 !important; color: #0B1B32 !important; }

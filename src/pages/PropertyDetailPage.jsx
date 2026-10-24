@@ -297,6 +297,95 @@ export default function PropertyDetailPage({
     }
   };
 
+  // Price, payment, offer and the two main actions: in the sidebar on wide screens, under the facts on phones
+  const priceBlock = (
+    <>
+    <div className="detail-price-box">
+      <div className="pd-price-head">
+        <span className="price-tag-sub">{isAr ? 'السعر الإجمالي' : 'Total Price'}</span>
+        <span className={`pd-pay-chip is-${hasInstallmentPlan(terms) ? 'plan' : 'cash'}`}>
+          {hasInstallmentPlan(terms) ? (isAr ? 'كاش أو تقسيط' : 'Cash or installments') : (isAr ? 'كاش' : 'Cash')}
+        </span>
+      </div>
+      <div className="price-num-row">
+        <h2>{priceData.primary}</h2>
+        <span className="curr">{priceData.symbol}</span>
+      </div>
+      {priceData.isConverted && (
+        <span className="price-converted-sub">
+          ≈ {priceData.originalEgp}
+        </span>
+      )}
+      {planLine && <span className="pd-plan-line">{planLine}</span>}
+      {/* "Above the area average" stays in the price & area tab; the price box only shows good news */}
+      {benchmark && benchmark.badgeType !== 'premium' && (
+        <div className={`benchmark-hero-pill is-${benchmark.badgeType}`}>
+          {benchmark.badgeType === 'deal' ? (
+            <TrendingDown size={13} />
+          ) : benchmark.badgeType === 'premium' ? (
+            <Sparkles size={13} />
+          ) : benchmark.badgeType === 'building' ? (
+            <Building2 size={13} />
+          ) : (
+            <Scale size={13} />
+          )}
+          <span>{benchmark.badgeLabel}</span>
+        </div>
+      )}
+      {Number(property.size) > 0 && (
+        isMultiUnit ? (
+          <span className="price-per-m price-multi-unit" title={benchmark?.valuationNote || (isAr ? 'عقار كامل متعدد الأدوار والوحدات' : 'Multi-unit building')}>
+            <Building2 size={13} style={{ marginInlineEnd: '4px' }} />
+            <span>{isAr ? 'عقار كامل (أرض + مباني)' : 'Full Building (Land + Units)'}</span>
+          </span>
+        ) : (
+          <span className="price-per-m">
+            <bdi>{Math.round(Number(property.price) / Number(property.size)).toLocaleString('en-US')}</bdi> {isAr ? 'ج.م / م²' : 'EGP / m²'}
+          </span>
+        )
+      )}
+      <div className="pd-price-ctas">
+        <a href={getWhatsAppUrl(waText)} target="_blank" rel="noopener noreferrer" className="pd-cta-wa">
+          <MessageSquare size={16} aria-hidden="true" />
+          <span>{isAr ? 'استفسر واتساب' : 'Ask on WhatsApp'}</span>
+        </a>
+        <a href={getPhoneCallUrl()} className="pd-cta-visit">
+          <Phone size={16} aria-hidden="true" />
+          <span>{isAr ? 'اتصل بنا' : 'Call us'}</span>
+        </a>
+      </div>
+    </div>
+
+    {/* A running cash offer sits with the price */}
+    {offer && (
+      <div className="pd-offer-box" role="note">
+        <div className="pd-offer-head">
+          <Flame size={16} aria-hidden="true" />
+          <strong>{isAr ? 'عرض كاش لفترة محدودة' : 'Limited-time cash offer'}</strong>
+          <bdi dir="ltr" className="pd-offer-pct">−{offer.pct}%</bdi>
+        </div>
+        <div className="pd-offer-price">
+          <bdi>{offerPriceData.primary}</bdi> <span>{offerPriceData.symbol}</span>
+          <small>{isAr ? 'للدفع كاش' : 'paid in cash'}</small>
+        </div>
+        <p className="pd-offer-was">
+          {isAr ? 'بدلاً من ' : 'Instead of '}<del><bdi>{offer.basePrice.toLocaleString('en-US')}</bdi></del>{isAr ? ' ج.م' : ' EGP'}
+          {' · '}<span className="pd-offer-save">{isAr ? `وفّر ${offer.savings.toLocaleString('en-US')} ج.م` : `Save ${offer.savings.toLocaleString('en-US')} EGP`}</span>
+        </p>
+        <div className="pd-offer-meta">
+          <OfferCountdown endsAt={offer.endsAt} isAr={isAr} className="pd-offer-timer" />
+          <span>{isAr ? `آخر يوم: ${offerEndDay}` : `Last day: ${offerEndDay}`}</span>
+          {offer.extended && <span className="pd-offer-extended">{isAr ? 'تم تمديد العرض' : 'Offer extended'}</span>}
+        </div>
+        {offerTerms && <p className="pd-offer-terms"><strong>{isAr ? 'الشروط: ' : 'Terms: '}</strong>{offerTerms}</p>}
+        <a href={getWhatsAppUrl(waText)} target="_blank" rel="noopener noreferrer" className="pd-offer-cta">
+          {isAr ? 'احجز بسعر العرض' : 'Book at the offer price'}
+        </a>
+      </div>
+    )}
+    </>
+  );
+
   return (
     <div className={`property-detail-page-wrapper ${isAr ? 'rtl-dir' : 'ltr-dir'}`} dir={isAr ? 'rtl' : 'ltr'}>
       {/* 🌟 SOVEREIGN DARK HERO SHOWCASE STAGE */}
@@ -344,177 +433,6 @@ export default function PropertyDetailPage({
             floorPlan={property.floorPlan || property.floorPlanImage}
           />
 
-          {/* Main Title & Price Header Banner */}
-          <div className="detail-header-block">
-            <div className="detail-title-col">
-              <div className="detail-badges-row">
-                {/* Availability and review: each shown only if switched on for this listing in the CRM */}
-                {detailBadges.availability && (
-                  <span className={`pd-badge pd-badge--avail is-${detailBadges.availability.tone}`} title={detailBadges.availability.hint}>
-                    <span className="pd-badge-dot" aria-hidden="true" />
-                    <span>{detailBadges.availability.label}</span>
-                  </span>
-                )}
-                {detailBadges.review && (
-                  <span className={`pd-badge pd-badge--${detailBadges.review.tone}`} title={detailBadges.review.hint}>
-                    <ReviewIcon size={13} style={{ flexShrink: 0 }} aria-hidden="true" />
-                    <span>{detailBadges.review.label}</span>
-                  </span>
-                )}
-                {property.badge_ar && (
-                  <span className="gold-pill-badge">
-                    <Sparkles size={13} style={{ flexShrink: 0 }} />
-                    <span>{isAr ? property.badge_ar : property.badge_en}</span>
-                  </span>
-                )}
-              </div>
-              <h1 className="detail-main-title">{title}</h1>
-              <div className="detail-location-text">
-                {String(location || '').trim() && (
-                  <div className="detail-loc-label">
-                    <MapPin size={16} className="loc-icon-gold" />
-                    <span>{location}</span>
-                  </div>
-                )}
-                {property.coordinates?.lat && (
-                  <a
-                    href={`https://www.google.com/maps?q=${property.coordinates.lat},${property.coordinates.lng}+(${encodeURIComponent(`${title} - 1Line`)})&z=17`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="detail-maps-pill"
-                    title={isAr ? 'فتح اللوكيشن الدقيق على خرائط Google' : 'Open Location in Google Maps'}
-                  >
-                    <Navigation size={13} />
-                    <span>{isAr ? 'عرض على خرائط Google' : 'Open in Google Maps'}</span>
-                  </a>
-                )}
-                <button 
-                  type="button" 
-                  className="code-copy-pill-btn" 
-                  onClick={async () => {
-                    try {
-                      await navigator.clipboard.writeText(property.id.toUpperCase());
-                      triggerToast(isAr ? `تم نسخ كود العقار: ${property.id.toUpperCase()}` : `Copied ID: ${property.id.toUpperCase()}`, 'success');
-                    } catch {
-                      triggerToast(isAr ? `كود العقار: ${property.id.toUpperCase()}` : `Property ID: ${property.id.toUpperCase()}`, 'info');
-                    }
-                  }}
-                  title={isAr ? 'انقر لنسخ كود العقار' : 'Click to copy property ID'}
-                >
-                  <span className="code-id-txt">{property.id.toUpperCase()}</span>
-                  <span className="copy-icon-txt"><Copy size={12} /></span>
-                </button>
-              </div>
-
-              {/* The facts a buyer scans first, right under the title */}
-              {facts.length > 0 && (
-                <ul className="pd-keyfacts">
-                  {facts.map((f) => {
-                    const Icon = FACT_ICONS[f.key];
-                    return (
-                      <li key={f.key}>
-                        <Icon size={18} aria-hidden="true" />
-                        <span><strong>{f.value}</strong><small>{f.label}</small></span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-
-            </div>
-
-            <div className="detail-price-box">
-              <div className="pd-price-head">
-                <span className="price-tag-sub">{isAr ? 'السعر الإجمالي' : 'Total Price'}</span>
-                <span className={`pd-pay-chip is-${hasInstallmentPlan(terms) ? 'plan' : 'cash'}`}>
-                  {hasInstallmentPlan(terms) ? (isAr ? 'كاش أو تقسيط' : 'Cash or installments') : (isAr ? 'كاش' : 'Cash')}
-                </span>
-              </div>
-              <div className="price-num-row">
-                <h2>{priceData.primary}</h2>
-                <span className="curr">{priceData.symbol}</span>
-              </div>
-              {priceData.isConverted && (
-                <span className="price-converted-sub">
-                  ≈ {priceData.originalEgp}
-                </span>
-              )}
-              {planLine && <span className="pd-plan-line">{planLine}</span>}
-              {/* "Above the area average" stays in the price & area tab; the price box only shows good news */}
-              {benchmark && benchmark.badgeType !== 'premium' && (
-                <div className={`benchmark-hero-pill is-${benchmark.badgeType}`}>
-                  {benchmark.badgeType === 'deal' ? (
-                    <TrendingDown size={13} />
-                  ) : benchmark.badgeType === 'premium' ? (
-                    <Sparkles size={13} />
-                  ) : benchmark.badgeType === 'building' ? (
-                    <Building2 size={13} />
-                  ) : (
-                    <Scale size={13} />
-                  )}
-                  <span>{benchmark.badgeLabel}</span>
-                </div>
-              )}
-              {Number(property.size) > 0 && (
-                isMultiUnit ? (
-                  <span className="price-per-m price-multi-unit" title={benchmark?.valuationNote || (isAr ? 'عقار كامل متعدد الأدوار والوحدات' : 'Multi-unit building')}>
-                    <Building2 size={13} style={{ marginInlineEnd: '4px' }} />
-                    <span>{isAr ? 'عقار كامل (أرض + مباني)' : 'Full Building (Land + Units)'}</span>
-                  </span>
-                ) : (
-                  <span className="price-per-m">
-                    <bdi>{Math.round(Number(property.price) / Number(property.size)).toLocaleString('en-US')}</bdi> {isAr ? 'ج.م / م²' : 'EGP / m²'}
-                  </span>
-                )
-              )}
-              <div className="pd-price-ctas">
-                <a href={getWhatsAppUrl(waText)} target="_blank" rel="noopener noreferrer" className="pd-cta-wa">
-                  <MessageSquare size={16} aria-hidden="true" />
-                  <span>{isAr ? 'استفسر واتساب' : 'Ask on WhatsApp'}</span>
-                </a>
-                <button
-                  type="button"
-                  className="pd-cta-visit"
-                  onClick={() => {
-                    setShowBookingForm(true);
-                    document.querySelector('.sticky-booking-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }}
-                >
-                  <Calendar size={16} aria-hidden="true" />
-                  <span>{isAr ? 'احجز معاينة' : 'Book a viewing'}</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Full-width strip under both columns: a tall box in either column would leave a gap beside it */}
-            {offer && (
-              <div className="pd-offer-box pd-offer-strip" role="note">
-                <div className="pd-offer-head">
-                  <Flame size={16} aria-hidden="true" />
-                  <strong>{isAr ? 'عرض كاش لفترة محدودة' : 'Limited-time cash offer'}</strong>
-                  <bdi dir="ltr" className="pd-offer-pct">−{offer.pct}%</bdi>
-                </div>
-                <div className="pd-offer-price">
-                  <bdi>{offerPriceData.primary}</bdi> <span>{offerPriceData.symbol}</span>
-                  <small>{isAr ? 'للدفع كاش' : 'paid in cash'}</small>
-                </div>
-                <p className="pd-offer-was">
-                  {isAr ? 'بدلاً من ' : 'Instead of '}<del><bdi>{offer.basePrice.toLocaleString('en-US')}</bdi></del>{isAr ? ' ج.م' : ' EGP'}
-                  {' · '}<span className="pd-offer-save">{isAr ? `وفّر ${offer.savings.toLocaleString('en-US')} ج.م` : `Save ${offer.savings.toLocaleString('en-US')} EGP`}</span>
-                </p>
-                <div className="pd-offer-meta">
-                  <OfferCountdown endsAt={offer.endsAt} isAr={isAr} className="pd-offer-timer" />
-                  <span>{isAr ? `آخر يوم: ${offerEndDay}` : `Last day: ${offerEndDay}`}</span>
-                  {offer.extended && <span className="pd-offer-extended">{isAr ? 'تم تمديد العرض' : 'Offer extended'}</span>}
-                </div>
-                {offerTerms && <p className="pd-offer-terms"><strong>{isAr ? 'الشروط: ' : 'Terms: '}</strong>{offerTerms}</p>}
-                <a href={getWhatsAppUrl(waText)} target="_blank" rel="noopener noreferrer" className="pd-offer-cta">
-                  {isAr ? 'احجز بسعر العرض' : 'Book at the offer price'}
-                </a>
-              </div>
-            )}
-          </div>
-
         </div>
       </section>
 
@@ -527,6 +445,84 @@ export default function PropertyDetailPage({
         <div className="detail-content-grid">
           {/* Left / Main Details Column */}
           <div className="detail-main-col">
+            {/* Title, badges, address and key facts: wrapped in the hero class so its styles carry over */}
+            <header className="property-detail-hero-stage pd-stage-lite pd-head">
+                <div className="detail-badges-row">
+                  {/* Availability and review: each shown only if switched on for this listing in the CRM */}
+                  {detailBadges.availability && (
+                    <span className={`pd-badge pd-badge--avail is-${detailBadges.availability.tone}`} title={detailBadges.availability.hint}>
+                      <span className="pd-badge-dot" aria-hidden="true" />
+                      <span>{detailBadges.availability.label}</span>
+                    </span>
+                  )}
+                  {detailBadges.review && (
+                    <span className={`pd-badge pd-badge--${detailBadges.review.tone}`} title={detailBadges.review.hint}>
+                      <ReviewIcon size={13} style={{ flexShrink: 0 }} aria-hidden="true" />
+                      <span>{detailBadges.review.label}</span>
+                    </span>
+                  )}
+                  {property.badge_ar && (
+                    <span className="gold-pill-badge">
+                      <Sparkles size={13} style={{ flexShrink: 0 }} />
+                      <span>{isAr ? property.badge_ar : property.badge_en}</span>
+                    </span>
+                  )}
+                </div>
+                <h1 className="detail-main-title">{title}</h1>
+                <div className="detail-location-text">
+                  {String(location || '').trim() && (
+                    <div className="detail-loc-label">
+                      <MapPin size={16} className="loc-icon-gold" />
+                      <span>{location}</span>
+                    </div>
+                  )}
+                  {property.coordinates?.lat && (
+                    <a
+                      href={`https://www.google.com/maps?q=${property.coordinates.lat},${property.coordinates.lng}+(${encodeURIComponent(`${title} - 1Line`)})&z=17`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="detail-maps-pill"
+                      title={isAr ? 'فتح اللوكيشن الدقيق على خرائط Google' : 'Open Location in Google Maps'}
+                    >
+                      <Navigation size={13} />
+                      <span>{isAr ? 'عرض على خرائط Google' : 'Open in Google Maps'}</span>
+                    </a>
+                  )}
+                  <button 
+                    type="button" 
+                    className="code-copy-pill-btn" 
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(property.id.toUpperCase());
+                        triggerToast(isAr ? `تم نسخ كود العقار: ${property.id.toUpperCase()}` : `Copied ID: ${property.id.toUpperCase()}`, 'success');
+                      } catch {
+                        triggerToast(isAr ? `كود العقار: ${property.id.toUpperCase()}` : `Property ID: ${property.id.toUpperCase()}`, 'info');
+                      }
+                    }}
+                    title={isAr ? 'انقر لنسخ كود العقار' : 'Click to copy property ID'}
+                  >
+                    <span className="code-id-txt">{property.id.toUpperCase()}</span>
+                    <span className="copy-icon-txt"><Copy size={12} /></span>
+                  </button>
+                </div>
+
+                {/* The facts a buyer scans first, right under the title */}
+                {facts.length > 0 && (
+                  <ul className="pd-keyfacts">
+                    {facts.map((f) => {
+                      const Icon = FACT_ICONS[f.key];
+                      return (
+                        <li key={f.key}>
+                          <Icon size={18} aria-hidden="true" />
+                          <span><strong>{f.value}</strong><small>{f.label}</small></span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+
+            </header>
+            <div className="property-detail-hero-stage pd-stage-lite pd-price-slot is-inline">{priceBlock}</div>
             {/* 🎯 Sticky Compact Section Tabs (Solves Scrolling & Overload) */}
             <div className="detail-section-tabs-bar" role="tablist" aria-label={isAr ? 'أقسام تفاصيل العقار' : 'Listing sections'}>
               {[
@@ -624,6 +620,7 @@ export default function PropertyDetailPage({
 
           {/* Right / Sticky Agent & Booking Sidebar */}
           <div className="detail-sidebar-col">
+            <div className="property-detail-hero-stage pd-stage-lite pd-price-slot is-side">{priceBlock}</div>
             <div className="sticky-booking-card">
               {/* 1. Agent Profile Header */}
               <div className="agent-profile-header">
@@ -638,29 +635,6 @@ export default function PropertyDetailPage({
                       : (isAr ? 'خارج مواعيد العمل — نرد من 10 صباحاً (عدا الجمعة)' : 'Outside office hours — we reply from 10:00 (closed Friday)')}
                   </span>
                 </div>
-              </div>
-
-              {/* 2. Direct Instant Contact Hub (Top Priority) */}
-              <div className="sidebar-instant-contact-row">
-                <a
-                  href={getWhatsAppUrl(waText)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-whatsapp-half"
-                  title={isAr ? 'تواصل فوري عبر واتساب' : 'Direct WhatsApp'}
-                >
-                  <MessageSquare size={16} />
-                  <span>{isAr ? 'واتساب فوري' : 'WhatsApp'}</span>
-                </a>
-
-                <a 
-                  href={getPhoneCallUrl()} 
-                  className="btn btn-call-half"
-                  title={isAr ? 'اتصال هاتفي مباشر' : 'Direct Phone Call'}
-                >
-                  <Phone size={16} />
-                  <span>{isAr ? 'اتصال هاتفي' : 'Call Agent'}</span>
-                </a>
               </div>
 
               {/* 📹 معاينة الغربة — expat remote inspection (live video / street footage) */}
@@ -845,6 +819,23 @@ export default function PropertyDetailPage({
               triggerToast={triggerToast}
               onOpenStoryCard={() => setStoryModalOpen(true)}
             />
+            {/* Once the full cards scroll away, a short one with the price and the two actions stays in view */}
+            <div className="pd-side-mini" aria-label={isAr ? 'السعر والتواصل' : 'Price and contact'}>
+              <div className="pd-side-mini-price">
+                <small>{offer ? (isAr ? 'سعر العرض كاش' : 'Cash offer price') : (isAr ? 'السعر الإجمالي' : 'Total price')}</small>
+                <strong><bdi>{(offer ? offerPriceData : priceData).primary}</bdi> <span>{priceData.symbol}</span></strong>
+              </div>
+              <div className="pd-price-ctas">
+                <a href={getWhatsAppUrl(waText)} target="_blank" rel="noopener noreferrer" className="pd-cta-wa">
+                  <MessageSquare size={16} aria-hidden="true" />
+                  <span>{isAr ? 'واتساب' : 'WhatsApp'}</span>
+                </a>
+                <a href={getPhoneCallUrl()} className="pd-cta-visit">
+                  <Phone size={16} aria-hidden="true" />
+                  <span>{isAr ? 'اتصل بنا' : 'Call us'}</span>
+                </a>
+              </div>
+            </div>
           </div>
         </div>
 
