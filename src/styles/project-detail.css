@@ -1,0 +1,128 @@
+/* /projects/:id — the project page. Shares the projects tokens (projects-modern.css) and the
+   unit page's facts strip and action buttons (property-detail-polish.css). */
+
+.pjd-page { padding-top: 16px; }
+.pjd-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.pjd-crumbs { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 0.85rem; color: var(--pj-muted); }
+.pjd-crumbs a { color: var(--pj-muted); text-decoration: none; }
+.pjd-crumbs a:hover { color: var(--pj-gold-text); }
+.pjd-crumb-current { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--pj-ink); font-weight: 700; }
+.pjd-back {
+  display: inline-flex; align-items: center; gap: 6px; flex: none;
+  padding: 7px 14px; border: 1px solid var(--pj-line); border-radius: 999px;
+  background: var(--pj-surface); color: var(--pj-ink); font: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer;
+}
+.pjd-back:hover { border-color: var(--pj-gold); }
+.pjd-demo { margin-bottom: 14px; }
+
+.pjd-noimg {
+  display: grid; place-items: center; height: clamp(220px, 40vh, 380px);
+  border-radius: 18px; background: linear-gradient(160deg, #13284A, #0B1B32); color: rgba(233, 210, 154, 0.5);
+}
+
+.pjd-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 28px; align-items: start; margin-top: 24px; }
+.pjd-main { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+
+.pjd-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.pjd-chip { padding: 4px 12px; border: 1px solid var(--pj-line); border-radius: 999px; background: var(--pj-surface); color: var(--pj-ink); font-size: 0.78rem; font-weight: 700; }
+.pjd-chip.is-gold { background: #FBF6EC; border-color: rgba(197, 160, 89, 0.5); color: var(--pj-gold-text); }
+.pjd-chip.is-sample { background: #F5F3FF; border-color: #C4B5FD; color: #5B21B6; }
+.pjd-title { margin: 0; color: var(--pj-ink); font-size: clamp(1.6rem, 3vw, 2.3rem); font-weight: 800; line-height: 1.35; }
+.pjd-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 10px; color: var(--pj-muted); font-weight: 600; }
+.pjd-meta > span { display: inline-flex; align-items: center; gap: 6px; }
+.pjd-meta svg { flex: none; color: var(--pj-gold); }
+.pjd-maps {
+  display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px;
+  border: 1px solid var(--pj-line); border-radius: 999px; background: var(--pj-surface);
+  color: var(--pj-ink); font-size: 0.78rem; font-weight: 700; text-decoration: none;
+}
+.pjd-maps:hover { border-color: var(--pj-gold); }
+.pjd-dev { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0 0; color: var(--pj-muted); font-size: 0.88rem; }
+.pjd-dev svg { color: var(--pj-gold); }
+
+.pjd-card { padding: 24px; border: 1px solid var(--pj-line); border-radius: 18px; background: var(--pj-surface); }
+.pjd-card h2 { margin: 0 0 14px; color: var(--pj-ink); font-size: 1.2rem; font-weight: 800; }
+.pjd-desc { margin: 0; color: var(--pj-ink); line-height: 1.9; white-space: pre-line; }
+
+.pjd-plan { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--pj-line); border-radius: 14px; overflow: hidden; }
+.pjd-plan > div { display: flex; flex-direction: column; gap: 4px; padding: 14px; min-width: 0; }
+.pjd-plan > div + div { border-inline-start: 1px solid var(--pj-line); }
+.pjd-plan small { color: var(--pj-muted); font-size: 0.76rem; font-weight: 600; }
+.pjd-plan strong { color: var(--pj-ink); font-size: 1rem; font-weight: 800; white-space: nowrap; }
+.pjd-plan .is-key { background: #FBF6EC; }
+.pjd-plan .is-key strong { color: var(--pj-gold-text); font-size: 1.1rem; }
+.pjd-note { margin: 10px 0 0; color: var(--pj-muted); font-size: 0.8rem; line-height: 1.7; }
+
+.pjd-progress { display: flex; align-items: center; gap: 24px; }
+.pjd-progress .pj-ring { flex: none; width: 92px; height: 92px; }
+.pjd-progress .pj-ring-num { font-size: 1.35rem; }
+.pjd-stages { flex: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 20px; }
+
+.pjd-feats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 20px; margin: 0; padding: 0; list-style: none; }
+.pjd-feats li { display: flex; align-items: center; gap: 8px; color: var(--pj-ink); font-weight: 600; }
+.pjd-feats svg { flex: none; color: var(--pj-green); }
+
+.pjd-units { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.pjd-units-empty { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; }
+.pjd-units-empty p { flex: 1 1 280px; margin: 0; color: var(--pj-muted); line-height: 1.8; }
+.pjd-units-empty .pd-cta-wa {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px;
+  border-radius: 12px; font-weight: 800; text-decoration: none;
+}
+
+.pjd-side { position: relative; }
+.pjd-price {
+  display: flex; flex-direction: column; gap: 6px; padding: 22px 24px;
+  border: 1px solid var(--pj-line); border-top: 3px solid #C5A059; border-radius: 20px;
+  background: var(--pj-surface); box-shadow: 0 18px 40px -24px rgba(11, 27, 50, 0.35);
+}
+.pjd-price > small { color: var(--pj-gold-text); font-size: 0.8rem; font-weight: 700; }
+.pjd-price > strong { color: var(--pj-ink); font-size: clamp(1.8rem, 2.6vw, 2.3rem); font-weight: 900; line-height: 1.2; }
+.pjd-price > strong span { color: var(--pj-gold); font-size: 1rem; font-weight: 800; }
+.pjd-price-plan { margin: 2px 0 0; color: var(--pj-muted); font-weight: 700; }
+.pjd-avail { align-self: flex-start; padding: 3px 10px; border-radius: 999px; background: #ECFDF5; border: 1px solid #A7F3D0; color: #047857; font-size: 0.78rem; font-weight: 800; }
+.pjd-price .pd-price-ctas { margin-top: 10px; }
+.pjd-brochure {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; margin-top: 4px;
+  border: 1px solid var(--pj-line); border-radius: 12px; background: transparent; color: var(--pj-ink);
+  font: inherit; font-size: 0.86rem; font-weight: 800; cursor: pointer;
+}
+.pjd-brochure:hover { border-color: var(--pj-gold); }
+.pjd-trust { margin: 6px 0 0; color: var(--pj-muted); font-size: 0.78rem; line-height: 1.7; }
+
+/* Tablets and phones: one column, the price card right under the gallery */
+@media (max-width: 1024px) {
+  .pjd-grid { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .pjd-side { order: -1; }
+  .pjd-head { order: -2; }
+}
+@media (max-width: 1024px) {
+  /* The header moves out of <main> visually: main becomes a contents box so its children join the grid */
+  .pjd-main { display: contents; }
+  .pjd-main > section { order: 1; }
+}
+@media (max-width: 640px) {
+  .pjd-card { padding: 18px; }
+  .pjd-plan { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pjd-plan > div:nth-child(3) { border-inline-start: 0; }
+  .pjd-plan > div:nth-child(n + 3) { border-top: 1px solid var(--pj-line); }
+  .pjd-progress { flex-direction: column; align-items: stretch; gap: 16px; }
+  .pjd-progress .pj-ring { align-self: center; }
+  .pjd-stages, .pjd-feats { grid-template-columns: minmax(0, 1fr); }
+  .pjd-price .pd-price-ctas { display: grid; }
+}
+
+.dark-theme .pjd-chip.is-gold, .dark-theme .pjd-plan .is-key { background: rgba(197, 160, 89, 0.12); }
+.dark-theme .pjd-chip.is-sample { background: rgba(139, 92, 246, 0.14); border-color: rgba(167, 139, 250, 0.4); color: #C4B5FD; }
+.dark-theme .pjd-avail { background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.35); color: #6EE7B7; }
+.dark-theme .pjd-price { box-shadow: none; }
+
+/* The ring on a white card: no dark disc, ink-coloured number, gold arc */
+.pjd-progress .pj-ring { background: transparent; box-shadow: none; backdrop-filter: none; }
+.pjd-progress .pj-ring-track { stroke: var(--pj-line); }
+.pjd-progress .pj-ring-fill { stroke: var(--pj-gold); }
+.pjd-progress .pj-ring-num { color: var(--pj-ink); }
+.dark-theme .pjd-progress .pj-ring-fill { stroke: var(--pj-gold-light); }
+@media (max-width: 640px) {
+  .pjd-plan strong { white-space: normal; font-size: 0.92rem; }
+}

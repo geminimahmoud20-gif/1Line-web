@@ -9,6 +9,7 @@ import { AVAILABILITY_OPTIONS, REVIEW_OPTIONS, reviewState } from '../../utils/l
 
 export default function PropertyFormModal({
   areas,
+  projects = [],
   badgePresets,
   editingPropertyId,
   form,
@@ -376,6 +377,19 @@ export default function PropertyFormModal({
                 ))}
               </select>
             </div>
+
+            {/* Project (optional): the unit then shows on that project's page under "الوحدات المتاحة" */}
+            {projects.some((p) => !p.isDemo) && (
+              <div className="form-group-item">
+                <label>{isAr ? 'المشروع (اختياري)' : 'Project (optional)'}</label>
+                <select value={form.projectId || ''} onChange={(e) => setForm({ ...form, projectId: e.target.value })}>
+                  <option value="">{isAr ? '— مش تبع مشروع —' : '— Not in a project —'}</option>
+                  {projects.filter((p) => !p.isDemo).map((p) => (
+                    <option key={p.id} value={p.id}>{isAr ? p.title_ar : (p.title_en || p.title_ar)}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Exact Location Name & Map Pin Trigger */}
             <div className="form-group-item">

@@ -15,6 +15,7 @@ const PortalsPage = lazy(() => import('./pages/PortalsPage'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const PrivateOfficePage = lazy(() => import('./pages/PrivateOfficePage'));
 const ProjectsPage = lazy(() => import('./pages/ProjectsPage'));
+const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage'));
 const PropertiesPage = lazy(() => import('./pages/PropertiesPage'));
 const PropertyDetailPage = lazy(() => import('./pages/PropertyDetailPage'));
 const TradeInPortal = lazy(() => import('./components/tradein/TradeInPortal'));
@@ -362,6 +363,22 @@ export default function AppRoutes({
             currency={currency}
             projects={projects}
             triggerToast={triggerToast}
+          />
+        }
+      />
+
+      {/* One project: photos, plan, progress and its units */}
+      <Route
+        path="/projects/:id"
+        element={
+          <ProjectDetailPage
+            lang={lang}
+            currency={currency}
+            projects={projects}
+            properties={siteProperties}
+            favorites={favorites}
+            onToggleFavorite={handleProtectedToggleFavorite}
+            onQuickView={handleOpenQuickView}
           />
         }
       />

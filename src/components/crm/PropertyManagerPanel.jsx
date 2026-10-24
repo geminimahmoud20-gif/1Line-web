@@ -50,6 +50,7 @@ const DEFAULT_FORM_STATE = {
   title_en: '',
   type: 'apartment',
   areaKey: 'east',
+  projectId: '',
   // A new listing starts empty: every fact on it (price, size, rooms, finishing, photos) must come
   // from the owner. Pre-filled samples were being published whenever a field was left unchanged.
   locationName_ar: '',
@@ -100,7 +101,8 @@ export default function PropertyManagerPanel({
   externalNewPropertyData = null,
   onClearExternalData = () => {},
   openRequest = null,
-  readOnly = false
+  readOnly = false,
+  projects = []
 }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingPropertyId, setEditingPropertyId] = useState(null);
@@ -966,6 +968,7 @@ export default function PropertyManagerPanel({
       {showAddModal && (
         <PropertyFormModal
           areas={areas}
+          projects={projects}
           badgePresets={badgePresets}
           editingPropertyId={editingPropertyId}
           form={form}

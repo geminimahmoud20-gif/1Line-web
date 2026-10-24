@@ -71,8 +71,8 @@
 }
 .pj-hero-title {
   max-width: 760px;
-  margin: 0;
-  font-size: clamp(2rem, 4.2vw, 3.2rem);
+  margin: 20px 0 0;
+  font-size: clamp(1.8rem, 3.4vw, 2.6rem);
   font-weight: 700;
   line-height: 1.22;
   color: #FFFFFF;
@@ -110,7 +110,7 @@
 .pj-filter {
   display: inline-flex;
   gap: 4px;
-  margin-top: 32px;
+  margin-top: 24px;
   padding: 5px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
@@ -149,7 +149,7 @@
 /* Light theme: a bright header like the unit page; the dark one stays for the dark theme */
 html:not(.dark-theme) .pj-hero {
   color: var(--pj-ink);
-  padding-bottom: 112px;
+  padding-bottom: 104px;
   background:
     radial-gradient(50% 80% at 95% 0%, rgba(197, 160, 89, 0.22), transparent 62%),
     radial-gradient(40% 60% at 0% 100%, rgba(37, 99, 235, 0.07), transparent 60%),
@@ -429,6 +429,13 @@ html:not(.dark-theme) .pj-filter button:focus-visible { outline-color: var(--pj-
 
 /* Buttons */
 .pj-actions { display: flex; gap: 10px; margin-top: auto; }
+/* The card's photo opens the project page */
+.pj-card a.pj-media { display: block; color: inherit; text-decoration: none; }
+.pj-card a.pj-media:focus-visible { outline: 3px solid var(--pj-gold); outline-offset: -3px; }
+.pj-card a.pj-media img { transition: transform 0.6s var(--pj-ease); }
+.pj-card a.pj-media:hover img { transform: scale(1.03); }
+.pj-page .pj-btn.pj-btn--icon { flex: 0 0 50px; padding: 0; color: #16A34A; }
+.pj-page .pj-btn.pj-btn--icon:hover { border-color: #16A34A; background: rgba(22, 163, 74, 0.08); }
 .pj-page .pj-btn {
   display: inline-flex;
   align-items: center;
@@ -522,11 +529,13 @@ html:not(.dark-theme) .pj-filter button:focus-visible { outline-color: var(--pj-
   .pj-price { font-size: 1.4rem; }
   .pj-price-row { flex-direction: column; align-items: flex-start; gap: 10px; }
   .pj-units, .pj-type { order: -1; max-width: 100%; }
-  .pj-facts > div { padding: 10px; }
-  .pj-facts dd { font-size: 0.9rem; white-space: normal; line-height: 1.4; }
+  .pj-facts > div { padding: 10px 8px; }
+  .pj-facts dt { font-size: 0.72rem; gap: 4px; }
+  /* "ديسمبر 2026" stays on one line: the delivery column gets the extra width */
+  .pj-facts { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr) minmax(0, 1.35fr); }
+  .pj-facts dd { font-size: 0.84rem; }
   .pj-stages { gap: 10px; }
-  .pj-actions { flex-direction: column; }
-  .pj-page .pj-btn--ghost { min-height: 46px; }
+  .pj-hero-title { font-size: 1.75rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

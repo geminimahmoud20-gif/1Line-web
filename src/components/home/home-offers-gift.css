@@ -417,7 +417,7 @@
 
 /* ── Phones: one row you swipe through ─────────────────────────────────── */
 @media (max-width: 640px) {
-  .gx-section { margin-inline: -4px; padding: 40px 0 24px; border-radius: 22px; }
+  .gx-section { margin-inline: 0; padding: 40px 0 24px; border-radius: 22px; }
   .gx-head { padding-inline: 20px; margin-bottom: 28px; }
   .gx-grid {
     grid-template-columns: none;

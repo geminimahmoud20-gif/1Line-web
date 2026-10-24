@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { MessageSquare, Sparkles, ArrowRight, ArrowLeft, HardHat, Wallet, CalendarClock, LayoutGrid, Home, Store, SearchX } from 'lucide-react';
+import { MessageSquare, ArrowRight, ArrowLeft, LayoutGrid, Home, Store, SearchX } from 'lucide-react';
 import { MEGA_PROJECTS } from '../data/projectsData';
 import ProjectCard from '../components/projects/ProjectCard';
 import '../styles/projects-modern.css';
@@ -92,11 +92,10 @@ export default function ProjectsPage({
               title={isAr ? 'الرجوع خطوة للخلف' : 'Go back one step'}
             >
               {isAr ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
-              <span>{isAr ? 'رجوع خطوة للخلف' : 'Back'}</span>
+              <span>{isAr ? 'رجوع' : 'Back'}</span>
             </button>
           </div>
 
-          <p className="pj-kicker"><Sparkles size={15} aria-hidden="true" />{isAr ? 'دليل المشروعات' : 'Projects guide'}</p>
           <h1 className="pj-hero-title">
             {isAr ? <>المشروعات العقارية والتجارية <em>في سوهاج</em></> : <>Residential & commercial projects <em>in Sohag</em></>}
           </h1>
@@ -105,11 +104,6 @@ export default function ProjectsPage({
               ? 'كمبوندات سكنية ومولات وأبراج إدارية: نسبة التنفيذ على الأرض، نظام السداد، وموعد التسليم لكل مشروع في مكان واحد.'
               : 'Compounds, malls and office towers: on-site progress, payment plan and delivery date for each project in one place.'}
           </p>
-          <ul className="pj-hero-points">
-            <li><HardHat size={16} aria-hidden="true" />{isAr ? 'نسب تنفيذ ميدانية' : 'On-site progress'}</li>
-            <li><Wallet size={16} aria-hidden="true" />{isAr ? 'أنظمة سداد واضحة' : 'Clear payment plans'}</li>
-            <li><CalendarClock size={16} aria-hidden="true" />{isAr ? 'مواعيد التسليم' : 'Delivery dates'}</li>
-          </ul>
 
           <div className="pj-filter" role="tablist" aria-label={isAr ? 'نوع المشروع' : 'Project type'}>
             {categories.map(({ id, label_ar, label_en, Icon }) => (
