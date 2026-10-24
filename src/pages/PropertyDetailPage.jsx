@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { isAgricultural, isIndustrial, isLandType } from '../utils/propertyKinds';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MapPin, Sparkles, CheckCircle2, Clock3, ShieldQuestion, Layers, Calendar, Phone, MessageSquare, ShieldCheck, TrendingUp, TrendingDown, Navigation, ArrowRight, ArrowLeft, Building2, Video, Zap, Droplets, Copy, Sun, Moon, Scale, Flame } from 'lucide-react';
+import { MapPin, Sparkles, CheckCircle2, Clock3, ShieldQuestion, Layers, Calendar, Phone, MessageSquare, ShieldCheck, TrendingUp, TrendingDown, Navigation, ArrowRight, ArrowLeft, Building2, Video, Zap, Droplets, Copy, Sun, Moon, Scale, Flame, Maximize2, BedDouble, Bath } from 'lucide-react';
+import { keyFacts } from '../utils/keyFacts';
 import { incrementPropertyView, getPropertyViews } from '../utils/visitorTracker';
 import usePropertyEngagement from '../hooks/usePropertyEngagement';
 import PropertyGallery from '../components/properties/PropertyGallery';
@@ -35,6 +36,8 @@ import '../styles/property-detail-polish.css';
 import PropertyOverviewTab from '../components/properties/detail/PropertyOverviewTab';
 import { paymentTerms, hasInstallmentPlan, termLabel } from '../utils/paymentTerms';
 import { similarListings } from '../utils/similarListings';
+
+const FACT_ICONS = { size: Maximize2, rooms: BedDouble, baths: Bath, floor: Layers, finishing: Sparkles, handover: Clock3 };
 
 const todayIso = () => {
   const d = new Date();
@@ -194,6 +197,7 @@ export default function PropertyDetailPage({
   const waText = offer
     ? `مرحباً 1Line، أريد الاستفادة من عرض الكاش على كود العقار: ${property.id.toUpperCase()} (${title}) بسعر ${offer.price.toLocaleString('en-US')} ج.م`
     : `مرحباً 1Line، أريد الاستفسار عن كود العقار: ${property.id.toUpperCase()} (${title})`;
+  const facts = keyFacts(property, isAr);
   const familyInfo = getFamilyInfo(property);
   // Licence line only from the reviewed legal record (CRM → الموقف القانوني)
   const licenseText = property.legalStatus
@@ -371,22 +375,6 @@ export default function PropertyDetailPage({
                     <span>{isAr ? property.badge_ar : property.badge_en}</span>
                   </span>
                 )}
-                <button 
-                  type="button" 
-                  className="code-copy-pill-btn" 
-                  onClick={async () => {
-                    try {
-                      await navigator.clipboard.writeText(property.id.toUpperCase());
-                      triggerToast(isAr ? `تم نسخ كود العقار: ${property.id.toUpperCase()}` : `Copied ID: ${property.id.toUpperCase()}`, 'success');
-                    } catch {
-                      triggerToast(isAr ? `كود العقار: ${property.id.toUpperCase()}` : `Property ID: ${property.id.toUpperCase()}`, 'info');
-                    }
-                  }}
-                  title={isAr ? 'انقر لنسخ كود العقار' : 'Click to copy property ID'}
-                >
-                  <span className="code-id-txt">{property.id.toUpperCase()}</span>
-                  <span className="copy-icon-txt"><Copy size={12} /></span>
-                </button>
               </div>
               <h1 className="detail-main-title">{title}</h1>
               <div className="detail-location-text">
@@ -408,12 +396,48 @@ export default function PropertyDetailPage({
                     <span>{isAr ? 'عرض على خرائط Google' : 'Open in Google Maps'}</span>
                   </a>
                 )}
+                <button 
+                  type="button" 
+                  className="code-copy-pill-btn" 
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(property.id.toUpperCase());
+                      triggerToast(isAr ? `تم نسخ كود العقار: ${property.id.toUpperCase()}` : `Copied ID: ${property.id.toUpperCase()}`, 'success');
+                    } catch {
+                      triggerToast(isAr ? `كود العقار: ${property.id.toUpperCase()}` : `Property ID: ${property.id.toUpperCase()}`, 'info');
+                    }
+                  }}
+                  title={isAr ? 'انقر لنسخ كود العقار' : 'Click to copy property ID'}
+                >
+                  <span className="code-id-txt">{property.id.toUpperCase()}</span>
+                  <span className="copy-icon-txt"><Copy size={12} /></span>
+                </button>
               </div>
+
+              {/* The facts a buyer scans first, right under the title */}
+              {facts.length > 0 && (
+                <ul className="pd-keyfacts">
+                  {facts.map((f) => {
+                    const Icon = FACT_ICONS[f.key];
+                    return (
+                      <li key={f.key}>
+                        <Icon size={18} aria-hidden="true" />
+                        <span><strong>{f.value}</strong><small>{f.label}</small></span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
 
             </div>
 
             <div className="detail-price-box">
-              <span className="price-tag-sub">{isAr ? 'السعر الإجمالي' : 'Total Price'}</span>
+              <div className="pd-price-head">
+                <span className="price-tag-sub">{isAr ? 'السعر الإجمالي' : 'Total Price'}</span>
+                <span className={`pd-pay-chip is-${hasInstallmentPlan(terms) ? 'plan' : 'cash'}`}>
+                  {hasInstallmentPlan(terms) ? (isAr ? 'كاش أو تقسيط' : 'Cash or installments') : (isAr ? 'كاش' : 'Cash')}
+                </span>
+              </div>
               <div className="price-num-row">
                 <h2>{priceData.primary}</h2>
                 <span className="curr">{priceData.symbol}</span>
@@ -451,7 +475,23 @@ export default function PropertyDetailPage({
                   </span>
                 )
               )}
-
+              <div className="pd-price-ctas">
+                <a href={getWhatsAppUrl(waText)} target="_blank" rel="noopener noreferrer" className="pd-cta-wa">
+                  <MessageSquare size={16} aria-hidden="true" />
+                  <span>{isAr ? 'استفسر واتساب' : 'Ask on WhatsApp'}</span>
+                </a>
+                <button
+                  type="button"
+                  className="pd-cta-visit"
+                  onClick={() => {
+                    setShowBookingForm(true);
+                    document.querySelector('.sticky-booking-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }}
+                >
+                  <Calendar size={16} aria-hidden="true" />
+                  <span>{isAr ? 'احجز معاينة' : 'Book a viewing'}</span>
+                </button>
+              </div>
             </div>
 
             {/* Full-width strip under both columns: a tall box in either column would leave a gap beside it */}

@@ -4,8 +4,8 @@
 .pg-mosaic {
   position: relative;
   display: grid;
-  gap: 6px;
-  height: clamp(320px, 46vh, 440px);
+  gap: 8px;
+  height: clamp(360px, 56vh, 520px);
   border-radius: 18px;
   overflow: hidden;
   background: #E2E8F0;
@@ -41,21 +41,6 @@
 .pg-slide img { color: transparent; font-size: 0; }
 .pg-tile:hover img { transform: scale(1.03); filter: brightness(1.04); }
 .pg-tile:focus-visible { outline: 3px solid #C5A059; outline-offset: -3px; }
-
-.pg-more {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  background: rgba(11, 27, 50, 0.55);
-  color: #FFFFFF;
-  font-size: 0.85rem;
-  font-weight: 700;
-}
-.pg-more b { font-size: 1.5rem; line-height: 1.1; }
 
 .pg-all {
   position: absolute;

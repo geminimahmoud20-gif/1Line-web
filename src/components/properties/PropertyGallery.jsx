@@ -282,9 +282,6 @@ export default function PropertyGallery({
                   onContextMenu={(e) => e.preventDefault()}
                 />
                 {idx === 0 && !isWatermarked(imgUrl) && <BrandWatermark size="sm" position="bottom-right" variant="emblem-only" />}
-                {idx === 4 && images.length > 5 && (
-                  <span className="pg-more"><b>+{images.length - 5}</b>{isAr ? 'صور أكتر' : 'more'}</span>
-                )}
               </button>
             ))}
             <button type="button" className="pg-all" onClick={() => handleOpenLightbox(0)}>

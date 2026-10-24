@@ -118,7 +118,7 @@
 html:not(.dark-theme) .property-detail-hero-stage {
   background: transparent;
   color: #0B1B32;
-  padding: 16px 0 28px;
+  padding: 16px 0 8px;
 }
 html:not(.dark-theme) .property-detail-hero-stage .detail-hero-ambient { display: none; }
 html:not(.dark-theme) .property-detail-hero-stage .page-top-back-bar { border-bottom-color: rgba(11, 27, 50, 0.08); }
@@ -217,3 +217,100 @@ html:not(.dark-theme) .property-detail-hero-stage .media-tab-btn:hover { color: 
 
 /* Similar units: room between them and the cards above */
 .similar-properties-section { margin-top: clamp(28px, 5vw, 48px); }
+
+/* Key facts under the title: one white strip, icon + value + small label each */
+.pd-keyfacts {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 18px 0 0;
+  padding: 6px;
+  list-style: none;
+  border: 1px solid rgba(11, 27, 50, 0.08);
+  border-radius: 16px;
+  background: #FFFFFF;
+  box-shadow: 0 10px 28px -22px rgba(11, 27, 50, 0.4);
+}
+.pd-keyfacts li {
+  flex: 1 1 auto;
+  min-width: 96px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+}
+.pd-keyfacts li + li { border-inline-start: 1px solid rgba(11, 27, 50, 0.08); }
+.pd-keyfacts svg { flex-shrink: 0; color: #A9824A; }
+.pd-keyfacts span { display: flex; flex-direction: column; min-width: 0; }
+.pd-keyfacts strong { color: #0B1B32; font-size: 0.95rem; font-weight: 800; line-height: 1.35; white-space: nowrap; }
+/* Less air between the hero and the share bar */
+.property-detail-hero-stage .detail-header-block { margin-bottom: 4px; }
+.pd-keyfacts small { color: #8A94A6; font-size: 0.74rem; font-weight: 600; }
+
+/* Unit code: a quiet line beside the location, not another badge */
+html .property-detail-hero-stage .detail-location-text .code-copy-pill-btn {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 2px 4px !important;
+  color: #8A94A6 !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+}
+html .property-detail-hero-stage .detail-location-text .code-copy-pill-btn:hover { color: #7C5E30 !important; }
+
+/* Price card: payment chip beside the label, two actions under the price */
+.pd-price-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pd-pay-chip {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #047857;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  white-space: nowrap;
+}
+.pd-pay-chip.is-plan { color: #1E40AF; background: #EFF6FF; border-color: #BFDBFE; }
+.pd-price-ctas { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+.pd-price-ctas a,
+.pd-price-ctas button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.pd-cta-wa { background: #16A34A; color: #FFFFFF !important; border: 0; }
+.pd-cta-wa:hover { background: #15803D; }
+.pd-cta-visit { background: #0B1B32; color: #FFFFFF; border: 0; }
+.pd-cta-visit:hover { background: #13284A; }
+
+@media (max-width: 640px) {
+  .pd-keyfacts { display: grid; grid-template-columns: repeat(3, 1fr); padding: 4px; }
+  .pd-keyfacts li { min-width: 0; flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px 12px; }
+  .pd-keyfacts li + li { border-inline-start: 0; }
+  .pd-keyfacts li:nth-child(3n + 2),
+  .pd-keyfacts li:nth-child(3n + 3) { border-inline-start: 1px solid rgba(11, 27, 50, 0.08); }
+  .pd-keyfacts li:nth-child(n + 4) { border-top: 1px solid rgba(11, 27, 50, 0.08); }
+  .pd-keyfacts strong { font-size: 0.88rem; white-space: normal; }
+  /* The sticky bar at the bottom already carries the actions on phones */
+  .pd-price-ctas { display: none; }
+}
+
+.dark-theme .pd-keyfacts { background: rgba(15, 27, 45, 0.85); border-color: rgba(255, 255, 255, 0.08); box-shadow: none; }
+.dark-theme .pd-keyfacts li + li,
+.dark-theme .pd-keyfacts li:nth-child(n) { border-color: rgba(255, 255, 255, 0.08); }
+.dark-theme .pd-keyfacts strong { color: #F1F5F9; }
+.dark-theme .pd-keyfacts small { color: #94A3B8; }
+.dark-theme .pd-keyfacts svg { color: #E9D29A; }
+.dark-theme .pd-pay-chip { color: #6EE7B7; background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.35); }
+.dark-theme .pd-pay-chip.is-plan { color: #93C5FD; background: rgba(59, 130, 246, 0.12); border-color: rgba(59, 130, 246, 0.35); }
+.dark-theme .pd-cta-visit { background: #C5A059; color: #0B1B32; }
