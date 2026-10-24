@@ -18,6 +18,7 @@ import { trackEvent } from '../../utils/visitorTracker';
 import BrandWatermark from '../common/BrandWatermark';
 import { isWatermarked } from '../../utils/watermark';
 import VirtualTourViewer from './VirtualTourViewer';
+import PhotoTour from './PhotoTour';
 import './property-gallery.css';
 import { thumbUrl, thumbFallback } from '../../utils/imageThumbs';
 
@@ -29,6 +30,8 @@ export default function PropertyGallery({
   floorPlan = null
 }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  // "All photos" page; null while closed, else the photo it opens at
+  const [tourAt, setTourAt] = useState(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   // The "no photo" placeholder is not a photo of the unit
   const images = (Array.isArray(rawImages) ? rawImages : []).filter((u) => u && !/no-photo\.svg/.test(u));
@@ -271,7 +274,7 @@ export default function PropertyGallery({
                 key={idx}
                 type="button"
                 className={`pg-tile ${idx === 0 ? 'is-cover' : ''}`}
-                onClick={() => handleOpenLightbox(idx)}
+                onClick={() => setTourAt(idx)}
                 aria-label={isAr ? `افتح الصورة ${idx + 1} من ${images.length}` : `Open photo ${idx + 1} of ${images.length}`}
               >
                 <img
@@ -285,7 +288,7 @@ export default function PropertyGallery({
                 {idx === 0 && !isWatermarked(imgUrl) && <BrandWatermark size="sm" position="bottom-right" variant="emblem-only" />}
               </button>
             ))}
-            <button type="button" className="pg-all" onClick={() => handleOpenLightbox(0)}>
+            <button type="button" className="pg-all" onClick={() => setTourAt(0)}>
               <ImageIcon size={15} aria-hidden="true" />
               <span>{isAr ? `كل الصور (${images.length})` : `All photos (${images.length})`}</span>
             </button>
@@ -302,7 +305,7 @@ export default function PropertyGallery({
               }}
             >
               {images.map((imgUrl, idx) => (
-                <button key={idx} type="button" className="pg-slide" onClick={() => handleOpenLightbox(idx)}
+                <button key={idx} type="button" className="pg-slide" onClick={() => setTourAt(idx)}
                   aria-label={isAr ? `افتح الصورة ${idx + 1} من ${images.length}` : `Open photo ${idx + 1} of ${images.length}`}>
                   <img
                     src={idx === 0 ? imgUrl : thumbUrl(imgUrl)}
@@ -355,6 +358,18 @@ export default function PropertyGallery({
       )}
 
       {/* 🌟 FULLSCREEN INTERACTIVE LIGHTBOX & HD ZOOM VIEWER */}
+      {tourAt !== null && (
+        <PhotoTour
+          images={images}
+          title={title}
+          isAr={isAr}
+          startAt={tourAt}
+          viewerOpen={lightboxOpen}
+          onPick={handleOpenLightbox}
+          onClose={() => setTourAt(null)}
+        />
+      )}
+
       {/* Rendered on <body>: the sticky section tabs would otherwise sit on top of it */}
       {lightboxOpen && createPortal(
         <div 

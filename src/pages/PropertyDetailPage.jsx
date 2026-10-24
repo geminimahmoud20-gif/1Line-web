@@ -464,6 +464,7 @@ export default function PropertyDetailPage({
           {/* 📸 Photos first: they are what a buyer looks for before anything else */}
           <PropertyGallery
             images={property.images}
+            title={title}
             virtualTour={property.virtualTour}
             lang={lang}
             floorPlan={property.floorPlan || property.floorPlanImage}
