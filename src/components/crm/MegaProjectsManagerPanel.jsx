@@ -1,8 +1,9 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import useOpenRequest from '../../hooks/useOpenRequest';
-import { Building2, Plus, Edit3, Trash2, MapPin, Save, X, Search } from 'lucide-react';
+import { Building2, Plus, Edit3, Trash2, MapPin, Search } from 'lucide-react';
 import { projectSampleFlags } from '../../utils/sampleDataFlags';
 import useBodyScrollLock from '../../hooks/useBodyScrollLock';
+import ProjectFormModal from './ProjectFormModal';
 
 /**
  * MegaProjectsManagerPanel Component
@@ -27,7 +28,6 @@ export default function MegaProjectsManagerPanel({
   const [isModalOpen, setIsModalOpen] = useState(false);
   useBodyScrollLock(isModalOpen);
   const isSavingRef = useRef(false);
-  const mouseDownOnBackdropRef = useRef(false);
 
   useEffect(() => {
     if (!isModalOpen) return;
@@ -96,8 +96,9 @@ export default function MegaProjectsManagerPanel({
       ...proj,
       features_ar: Array.isArray(proj.features_ar) ? proj.features_ar.join(', ') : (proj.features_ar || ''),
       features_en: Array.isArray(proj.features_en) ? proj.features_en.join(', ') : (proj.features_en || ''),
-      images: proj.images && proj.images.length > 0 ? proj.images : [initialForm.images[0]],
-      progressBreakdown: proj.progressBreakdown || { concrete: 100, masonry: 80, finishing: 50, infrastructure: 70 }
+      images: Array.isArray(proj.images) ? proj.images.filter(Boolean) : [],
+      // A project saved without stages opens at 0%, not with made-up figures
+      progressBreakdown: { concrete: 0, masonry: 0, finishing: 0, infrastructure: 0, ...(proj.progressBreakdown || {}) }
     });
     setIsModalOpen(true);
   };
@@ -374,278 +375,18 @@ export default function MegaProjectsManagerPanel({
         </table>
       </div>
 
-      {/* Add / Edit Modal */}
+      {/* Add / Edit form: sections, photo upload and the shared photo manager */}
       {isModalOpen && (
-        <div
-          className="track-modal-backdrop"
-          onMouseDown={(e) => { mouseDownOnBackdropRef.current = e.target === e.currentTarget; }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget && mouseDownOnBackdropRef.current && !isSavingRef.current) {
-              setIsModalOpen(false);
-            }
-          }}
-        >
-          <div className="deposit-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '720px', width: '95%' }}>
-            <button type="button" className="modal-close-btn" onClick={() => setIsModalOpen(false)}>
-              <X size={20} />
-            </button>
-
-            <div className="deposit-modal-header">
-              <div className="deposit-icon-glow">
-                <Building2 size={24} style={{ color: 'var(--crm-ink)' }} />
-              </div>
-              <div>
-                <h3>{editingProjectId ? (isAr ? 'تعديل بيانات ونسب إنجاز المشروع' : 'Edit Mega Project') : (isAr ? 'إضافة مشروع / كمبوند جديد' : 'Add New Mega Project')}</h3>
-                <p>{isAr ? 'إدخال مواصفات المشروع، الأسعار، صور العرض، ونسب التنفيذ الميداني' : 'Fill in project details, pricing, visuals, and milestone breakdown'}</p>
-              </div>
-            </div>
-
-            <form onSubmit={handleSubmit} className="deposit-modal-body" style={{ maxHeight: '72vh', overflowY: 'auto' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '10px', marginBottom: '10px' }}>
-                <div>
-                  <label style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 700 }}>{isAr ? 'اسم المشروع (عربي) *' : 'Project Title (Arabic)'}</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="مثال: كمبوند لؤلؤة سوهاج الجديدة"
-                    value={formData.title_ar}
-                    onChange={(e) => setFormData({ ...formData, title_ar: e.target.value })}
-                    style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 700 }}>{isAr ? 'الشارة التجارية' : 'Brand Tag'}</label>
-                  <input
-                    type="text"
-                    placeholder="مثال: Pearl Compound"
-                    value={formData.brandTag}
-                    onChange={(e) => setFormData({ ...formData, brandTag: e.target.value })}
-                    style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
-                <div>
-                  <label style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 700 }}>{isAr ? 'الشركة المطورة (عربي)' : 'Developer'}</label>
-                  <input
-                    type="text"
-                    value={formData.developer_ar}
-                    onChange={(e) => setFormData({ ...formData, developer_ar: e.target.value })}
-                    style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 700 }}>{isAr ? 'الموقع الجغرافي' : 'Location'}</label>
-                  <input
-                    type="text"
-                    value={formData.location_ar}
-                    onChange={(e) => setFormData({ ...formData, location_ar: e.target.value })}
-                    style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}
-                  />
-                </div>
-              </div>
-
-              {/* Financials Row */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '8px', marginBottom: '10px' }}>
-                <div>
-                  <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{isAr ? 'يبدأ من (ج.م)' : 'Start Price'}</label>
-                  <input
-                    type="number"
-                    value={formData.startPrice}
-                    onChange={(e) => setFormData({ ...formData, startPrice: e.target.value })}
-                    style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{isAr ? 'نسبة المقدم %' : 'Downpayment %'}</label>
-                  <input
-                    type="number"
-                    value={formData.downPaymentPercent}
-                    onChange={(e) => setFormData({ ...formData, downPaymentPercent: e.target.value })}
-                    style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{isAr ? 'سنوات التقسيط' : 'Years'}</label>
-                  <input
-                    type="number"
-                    value={formData.installmentYears}
-                    onChange={(e) => setFormData({ ...formData, installmentYears: e.target.value })}
-                    style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{isAr ? 'موعد التسليم' : 'Delivery'}</label>
-                  <input
-                    type="text"
-                    value={formData.deliveryDate_ar}
-                    onChange={(e) => setFormData({ ...formData, deliveryDate_ar: e.target.value })}
-                    style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}
-                  />
-                </div>
-              </div>
-
-              {/* Live Construction Milestones Sliders Box */}
-              <div style={{ background: 'var(--crm-subtle)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)', marginBottom: '12px' }}>
-                <strong style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-ink)', display: 'block', marginBottom: '8px' }}>
-                  🏗️ {isAr ? 'نسب التنفيذ الميداني للمشروع' : 'Construction Milestones'}
-                </strong>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--crm-text-xs)', fontWeight: 700 }}>
-                      <span>{isAr ? 'نسبة الإنجاز الإجمالية:' : 'Overall Progress:'}</span>
-                      <strong className="text-emerald">{formData.progress}%</strong>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={formData.progress}
-                      onChange={(e) => setFormData({ ...formData, progress: parseInt(e.target.value) || 0 })}
-                      style={{ width: '100%', accentColor: 'var(--emerald)', cursor: 'pointer' }}
-                    />
-                  </div>
-
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--crm-text-xs)', fontWeight: 700 }}>
-                      <span>{isAr ? 'نسبة الخرسانات:' : 'Concrete:'}</span>
-                      <strong>{formData.progressBreakdown?.concrete || 0}%</strong>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={formData.progressBreakdown?.concrete || 0}
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
-                        progressBreakdown: { ...formData.progressBreakdown, concrete: parseInt(e.target.value) || 0 } 
-                      })}
-                      style={{ width: '100%', accentColor: 'var(--primary)', cursor: 'pointer' }}
-                    />
-                  </div>
-
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--crm-text-xs)', fontWeight: 700 }}>
-                      <span>{isAr ? 'نسبة المباني والحوائط:' : 'Masonry:'}</span>
-                      <strong>{formData.progressBreakdown?.masonry || 0}%</strong>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={formData.progressBreakdown?.masonry || 0}
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
-                        progressBreakdown: { ...formData.progressBreakdown, masonry: parseInt(e.target.value) || 0 } 
-                      })}
-                      style={{ width: '100%', accentColor: 'var(--primary)', cursor: 'pointer' }}
-                    />
-                  </div>
-
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--crm-text-xs)', fontWeight: 700 }}>
-                      <span>{isAr ? 'نسبة التشطيبات:' : 'Finishing:'}</span>
-                      <strong>{formData.progressBreakdown?.finishing || 0}%</strong>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={formData.progressBreakdown?.finishing || 0}
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
-                        progressBreakdown: { ...formData.progressBreakdown, finishing: parseInt(e.target.value) || 0 } 
-                      })}
-                      style={{ width: '100%', accentColor: 'var(--accent-gold)', cursor: 'pointer' }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Units & Image URL */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: '8px', marginBottom: '10px' }}>
-                <div>
-                  <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{isAr ? 'إجمالي الوحدات' : 'Total Units'}</label>
-                  <input
-                    type="number"
-                    value={formData.totalUnits}
-                    onChange={(e) => setFormData({ ...formData, totalUnits: e.target.value })}
-                    style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{isAr ? 'الوحدات المتاحة' : 'Available'}</label>
-                  <input
-                    type="number"
-                    value={formData.availableUnits}
-                    onChange={(e) => setFormData({ ...formData, availableUnits: e.target.value })}
-                    style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{isAr ? 'رابط الصورة الرئيسية' : 'Image URL'}</label>
-                  <input
-                    type="text"
-                    value={formData.images[0] || ''}
-                    onChange={(e) => setFormData({ ...formData, images: [e.target.value] })}
-                    style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{isAr ? 'رابط الكتالوج PDF (اختياري — بدونه لا يظهر الزر)' : 'Brochure PDF link (optional — no link, no button)'}</label>
-                  <input
-                    type="url"
-                    dir="ltr"
-                    placeholder="https://…/brochure.pdf"
-                    value={formData.brochureUrl || ''}
-                    onChange={(e) => setFormData({ ...formData, brochureUrl: e.target.value.trim() })}
-                    style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}
-                  />
-                </div>
-              </div>
-
-              {/* Description */}
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{isAr ? 'وصف المشروع والمميزات' : 'Description'}</label>
-                <textarea
-                  rows="2"
-                  value={formData.description_ar}
-                  onChange={(e) => setFormData({ ...formData, description_ar: e.target.value })}
-                  style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--crm-line)' }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                <button
-                  type="button"
-                  className="btn btn-outline"
-                  onClick={() => setIsModalOpen(false)}
-                >
-                  {isAr ? 'إلغاء' : 'Cancel'}
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={isSaving}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-                >
-                  <Save size={16} />
-                  <span>{isSaving ? (isAr ? 'جارِ الحفظ...' : 'Saving...') : (editingProjectId ? (isAr ? 'حفظ التعديلات' : 'Save Changes') : (isAr ? 'إضافة المشروع' : 'Add Project'))}</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <ProjectFormModal
+          formData={formData}
+          setFormData={setFormData}
+          onSubmit={handleSubmit}
+          onClose={() => { if (!isSavingRef.current) setIsModalOpen(false); }}
+          isSaving={isSaving}
+          editing={Boolean(editingProjectId)}
+          isAr={isAr}
+          triggerToast={triggerToast}
+        />
       )}
     </div>
   );
