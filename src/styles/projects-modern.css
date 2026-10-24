@@ -434,8 +434,8 @@ html:not(.dark-theme) .pj-filter button:focus-visible { outline-color: var(--pj-
 .pj-card a.pj-media:focus-visible { outline: 3px solid var(--pj-gold); outline-offset: -3px; }
 .pj-card a.pj-media img { transition: transform 0.6s var(--pj-ease); }
 .pj-card a.pj-media:hover img { transform: scale(1.03); }
-.pj-page .pj-btn--icon { flex: 0 0 50px; padding: 0; color: #16A34A; }
-.pj-page .pj-btn--icon:hover { border-color: #16A34A; background: rgba(22, 163, 74, 0.08); }
+.pj-page .pj-btn.pj-btn--icon { flex: 0 0 50px; padding: 0; color: #16A34A; }
+.pj-page .pj-btn.pj-btn--icon:hover { border-color: #16A34A; background: rgba(22, 163, 74, 0.08); }
 .pj-page .pj-btn {
   display: inline-flex;
   align-items: center;
@@ -531,7 +531,8 @@ html:not(.dark-theme) .pj-filter button:focus-visible { outline-color: var(--pj-
   .pj-units, .pj-type { order: -1; max-width: 100%; }
   .pj-facts > div { padding: 10px 8px; }
   .pj-facts dt { font-size: 0.72rem; gap: 4px; }
-  /* "ديسمبر 2026" stays on one line */
+  /* "ديسمبر 2026" stays on one line: the delivery column gets the extra width */
+  .pj-facts { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr) minmax(0, 1.35fr); }
   .pj-facts dd { font-size: 0.84rem; }
   .pj-stages { gap: 10px; }
   .pj-hero-title { font-size: 1.75rem; }

@@ -784,6 +784,7 @@ export default function CrmPage({
           {activeTab === 'properties' ? (
             <PropertyManagerPanel
               openRequest={openRequest}
+              projects={projects}
               readOnly={!can.editInventory}
               properties={properties}
               leads={visibleLeads}
