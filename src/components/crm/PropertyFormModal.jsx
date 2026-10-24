@@ -7,6 +7,8 @@ import BuildingFieldsEditor from './BuildingFieldsEditor';
 import PaymentTermsEditor from './PaymentTermsEditor';
 import { AVAILABILITY_OPTIONS, REVIEW_OPTIONS, reviewState } from '../../utils/listingBadges';
 import PhotoManager from './PhotoManager';
+import { AMENITY_GROUPS, amenityCategory } from '../../utils/amenityCategories';
+import './property-amenities.css';
 
 export default function PropertyFormModal({
   areas,
@@ -677,45 +679,38 @@ export default function PropertyFormModal({
             {form.nearbyAmenities && form.nearbyAmenities.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {form.nearbyAmenities.map((am, idx) => (
-                  <div key={idx} style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1.2fr 1fr 1fr auto',
-                    gap: '8px',
-                    alignItems: 'center',
-                    background: 'rgba(0, 0, 0, 0.3)',
-                    padding: '8px 10px',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(255, 255, 255, 0.08)'
-                  }}>
+                  <div key={idx} className="pam-row">
                     <input
                       type="text"
                       placeholder={isAr ? 'اسم المعلم (مثال: مدرسة اللغات)' : 'Landmark name'}
                       value={am.name_ar || ''}
                       onChange={(e) => handleUpdateCustomAmenity(idx, 'name_ar', e.target.value)}
-                      style={{ background: 'transparent', border: '1px solid rgba(255, 255, 255, 0.15)', padding: '6px', borderRadius: '6px', color: 'var(--crm-on-dark)', fontSize: 'var(--crm-text-sm)' }}
                     />
                     <select
-                      value={am.category || 'education'}
+                      value={amenityCategory(am.category || 'education').id}
                       onChange={(e) => handleUpdateCustomAmenity(idx, 'category', e.target.value)}
-                      style={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(255, 255, 255, 0.15)', padding: '6px', borderRadius: '6px', color: 'var(--crm-on-dark)', fontSize: 'var(--crm-text-sm)' }}
+                      aria-label={isAr ? 'نوع المعلم' : 'Landmark type'}
                     >
-                      <option value="education">{isAr ? 'تعليم' : 'Education'}</option>
-                      <option value="health">{isAr ? 'صحة' : 'Health'}</option>
-                      <option value="shopping">{isAr ? 'تسوق' : 'Shopping'}</option>
-                      <option value="transport">{isAr ? 'مواصلات' : 'Transit'}</option>
-                      <option value="lifestyle">{isAr ? 'ترفيه' : 'Leisure'}</option>
+                      {AMENITY_GROUPS.map((g) => (
+                        <optgroup key={g.en} label={isAr ? g.ar : g.en}>
+                          {g.ids.map((id) => {
+                            const c = amenityCategory(id);
+                            return <option key={id} value={id}>{isAr ? c.ar : c.en}</option>;
+                          })}
+                        </optgroup>
+                      ))}
                     </select>
                     <input
                       type="text"
                       placeholder={isAr ? 'المسافة (مثال: 300 متر)' : 'Distance (e.g. 300m)'}
                       value={am.distance || ''}
                       onChange={(e) => handleUpdateCustomAmenity(idx, 'distance', e.target.value)}
-                      style={{ background: 'transparent', border: '1px solid rgba(255, 255, 255, 0.15)', padding: '6px', borderRadius: '6px', color: 'var(--crm-on-dark)', fontSize: 'var(--crm-text-sm)' }}
                     />
                     <button
                       type="button"
+                      className="pam-del"
                       onClick={() => handleRemoveCustomAmenity(idx)}
-                      style={{ background: 'rgba(239, 68, 68, 0.2)', border: 'none', color: 'var(--crm-danger)', padding: '6px 8px', borderRadius: '6px', cursor: 'pointer' }}
+                      aria-label={isAr ? 'احذف المعلم' : 'Remove landmark'}
                     >
                       ✕
                     </button>
