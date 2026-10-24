@@ -1,6 +1,6 @@
 /* Quick view: nothing on the photo overlaps, the card fits the screen, WhatsApp reads as a button.
-   Loaded after App.css. Corners (Arabic): share + close top-right, photos/plan switch top-left,
-   price bottom-right, photo counter bottom-left, dots bottom-centre. English mirrors it. */
+   Loaded after App.css. On the photo (Arabic): share + close top-right, photos/plan switch top-left,
+   dots bottom-centre. Price, payment and the facts live in the details column. */
 
 .quickview-modal-card {
   display: flex;
@@ -14,27 +14,70 @@
 .quickview-mode-toggle { right: auto; left: 14px; }
 [dir="ltr"] .quickview-mode-toggle { left: auto; right: 14px; }
 
-.quickview-img-counter { top: auto; bottom: 14px; left: 14px; }
-[dir="ltr"] .quickview-img-counter { left: auto; right: 14px; }
-
-.quickview-price-badge-floating { bottom: 14px; right: 14px; max-width: calc(100% - 120px); }
-[dir="ltr"] .quickview-price-badge-floating { right: auto; left: 14px; }
-.quickview-price-note {
-  display: block;
-  margin-top: 2px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: #047857;
-}
-.dark-theme .quickview-price-note,
-[data-theme="dark"] .quickview-price-note { color: #34D399; }
 
 .quickview-floorplan-preview { width: 100%; height: 100%; background: #FFFFFF; }
 .quickview-img.is-plan { object-fit: contain; padding: 12px; box-sizing: border-box; }
 
-/* Payment cells: one when cash, up to three for a plan */
+/* Address line with the unit code at the other end */
+.qv-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 20px; }
+.qv-code {
+  margin-inline-start: auto;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(148, 163, 184, 0.14);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* Price, payment chip and price per m² */
+.qv-price { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; }
+.qv-price-num { font-size: 1.6rem; font-weight: 900; color: #0B4EA2; line-height: 1.2; }
+.qv-price-num small { font-size: 0.55em; font-weight: 700; color: var(--text-muted); }
+.qv-pay-chip { align-self: center; padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 800; }
+.qv-pay-chip.is-cash { background: rgba(16, 185, 129, 0.12); color: #047857; }
+.qv-pay-chip.is-plan { background: rgba(197, 160, 89, 0.16); color: #7C5E30; }
+.qv-per-m2 { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); }
+.dark-theme .qv-price-num, [data-theme="dark"] .qv-price-num { color: #E9D29A; }
+.dark-theme .qv-pay-chip.is-cash, [data-theme="dark"] .qv-pay-chip.is-cash { color: #34D399; }
+.dark-theme .qv-pay-chip.is-plan, [data-theme="dark"] .qv-pay-chip.is-plan { color: #E9D29A; }
+
+/* Building features as small ticks */
+.qv-extras { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; padding: 0; list-style: none; font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); }
+.qv-extras li { display: inline-flex; align-items: center; gap: 4px; }
+.qv-extras svg { color: #A9824A; }
+
+/* Two lines of the description */
+.qv-brief { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* Review badge and last update */
+.qv-trust { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 0.74rem; color: var(--text-muted); }
+.qv-trust-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-weight: 700; }
+.qv-trust-badge.is-verified { background: rgba(16, 185, 129, 0.12); color: #047857; }
+.qv-trust-badge.is-in-review { background: rgba(245, 158, 11, 0.14); color: #92400E; }
+
+/* Video tour for buyers abroad: a quiet link under the main actions */
+.qv-remote-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 2px;
+  padding: 4px;
+  border: 0;
+  background: none;
+  color: #7C5E30;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.qv-remote-link:hover { text-decoration: underline; }
+.dark-theme .qv-remote-link, [data-theme="dark"] .qv-remote-link { color: #E9D29A; }
+
+/* Installment cells: down payment, monthly, total */
 .quickview-finance-grid { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
-.quickview-finance-grid.is-cash { grid-template-columns: 1fr; }
 
 /* WhatsApp: the second main action, so it looks like one */
 .quickview-secondary-actions-row .btn-whatsapp {
@@ -45,14 +88,12 @@
 .quickview-secondary-actions-row .btn-whatsapp:hover { background: #15803D; border-color: #15803D; color: #FFFFFF; }
 
 @media (max-width: 768px) {
-  /* A short photo strip: price and counter only; the logo and the viewing note wait for the details */
+  /* A short photo strip on phones, without the logo overlay */
   .quickview-media { min-height: 0; height: 230px; }
   /* One column: the whole card scrolls, not the details inside it */
   .quickview-modal-card { overflow-y: auto; }
   .quickview-grid { flex: none; }
   .quickview-info { overflow: visible; justify-content: flex-start; }
-  .quickview-media .brand-watermark-overlay,
-  .quickview-price-note { display: none; }
-  .quickview-price-badge-floating { padding: 6px 12px; }
-  .quickview-price-badge-floating .price-tag-big { font-size: 1.05rem; }
+  .quickview-media .brand-watermark-overlay { display: none; }
+  .qv-price-num { font-size: 1.35rem; }
 }
