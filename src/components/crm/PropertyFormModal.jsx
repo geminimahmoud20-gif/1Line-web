@@ -1,4 +1,4 @@
-import { Plus, Sparkles, Image as ImageIcon, Save, Upload, Star, MapPin, Loader2 } from 'lucide-react';
+import { Plus, Sparkles, Image as ImageIcon, Save, Upload, MapPin, Loader2 } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { hasNoRooms, isLandType, categoryOfType, isAgriculturalType, specFieldsFor, formatFeddan, feddanParts, QIRAT_M2 } from '../../utils/propertyKinds';
 import { toDayInput, addDays } from '../../utils/featuredSlots';
@@ -6,6 +6,7 @@ import PropertyExtrasEditor from './PropertyExtrasEditor';
 import BuildingFieldsEditor from './BuildingFieldsEditor';
 import PaymentTermsEditor from './PaymentTermsEditor';
 import { AVAILABILITY_OPTIONS, REVIEW_OPTIONS, reviewState } from '../../utils/listingBadges';
+import PhotoManager from './PhotoManager';
 
 export default function PropertyFormModal({
   areas,
@@ -107,107 +108,14 @@ export default function PropertyFormModal({
               </label>
             </div>
 
-            {/* Previews & Primary Cover Manager */}
-            {form.images.length > 0 && (
-              <div className="uploaded-thumbs-grid" style={{ marginTop: '14px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '10px' }}>
-                {form.images.map((imgSrc, idx) => (
-                  <div 
-                    key={idx} 
-                    className="thumb-preview-item"
-                    style={{
-                      position: 'relative',
-                      borderRadius: '8px',
-                      overflow: 'hidden',
-                      border: idx === 0 ? '2px solid var(--crm-accent)' : '1px solid var(--border-light)',
-                      boxShadow: idx === 0 ? '0 0 10px rgba(217, 119, 6, 0.3)' : 'none',
-                      background: 'var(--crm-card)'
-                    }}
-                  >
-                    <img 
-                      src={imgSrc} 
-                      alt={`Unit Photo ${idx + 1}`} 
-                      style={{ width: '100%', height: '90px', objectFit: 'cover', display: 'block' }}
-                    />
-
-                    {/* Primary Badge or Make Primary Button */}
-                    {idx === 0 ? (
-                      <span style={{
-                        position: 'absolute',
-                        bottom: '4px',
-                        right: '4px',
-                        left: '4px',
-                        background: 'rgba(15, 23, 42, 0.85)',
-                        color: 'var(--crm-gold-on-dark)',
-                        fontSize: 'var(--crm-text-xs)',
-                        fontWeight: 'bold',
-                        padding: '2px 4px',
-                        borderRadius: '4px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '4px'
-                      }}>
-                        <Star size={11} fill="currentColor" />
-                        {isAr ? 'الغلاف الرئيسي' : 'Cover Photo'}
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleSetPrimaryImage(idx)}
-                        style={{
-                          position: 'absolute',
-                          bottom: '4px',
-                          right: '4px',
-                          left: '4px',
-                          background: 'rgba(0, 0, 0, 0.7)',
-                          color: 'var(--crm-on-dark)',
-                          border: 'none',
-                          borderRadius: '4px',
-                          fontSize: 'var(--crm-text-xs)',
-                          padding: '2px 4px',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '4px',
-                          transition: 'background 0.2s'
-                        }}
-                        title={isAr ? 'تعيين هذه الصورة كغلاف رئيسي للعقار' : 'Set as primary cover'}
-                      >
-                        <Star size={10} />
-                        {isAr ? 'اجعلها غلاف' : 'Make Cover'}
-                      </button>
-                    )}
-
-                    {/* Delete Button */}
-                    <button
-                      type="button"
-                      className="btn-del-thumb"
-                      onClick={() => handleRemoveImage(idx)}
-                      title={isAr ? 'إزالة الصورة' : 'Remove'}
-                      style={{
-                        position: 'absolute',
-                        top: '4px',
-                        left: '4px',
-                        background: 'rgba(239, 68, 68, 0.9)',
-                        color: 'var(--crm-on-dark)',
-                        border: 'none',
-                        borderRadius: '50%',
-                        width: '22px',
-                        height: '22px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        fontSize: 'var(--crm-text-xs)'
-                      }}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Numbered tiles to drag or nudge into order, a full-size viewer and a preview of the unit page */}
+            <PhotoManager
+              images={form.images}
+              setImages={(images) => setForm((f) => ({ ...f, images }))}
+              onMakeCover={handleSetPrimaryImage}
+              onRemove={handleRemoveImage}
+              isAr={isAr}
+            />
           </div>
 
           {/* 🎛️ Display Status, Featured & Priority Controls */}
