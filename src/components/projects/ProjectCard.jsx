@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Building2, MapPin, Wallet, Layers, CalendarClock, MessageSquare, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Building2, MapPin, Wallet, Layers, CalendarClock, MessageSquare, ArrowLeft, ArrowRight, Flame } from 'lucide-react';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
-import { arYears, pct, projectPath } from '../../utils/projectFacts';
+import { arYears, pct, projectPath, projectOffer } from '../../utils/projectFacts';
+import OfferCountdown from '../properties/OfferCountdown';
 
 /** Construction progress as a ring: the one number people look for first */
 export function ProgressRing({ value, label }) {
@@ -33,6 +34,8 @@ export default function ProjectCard({ project, isAr, currency, lang, featured = 
   const desc = isAr ? project.description_ar : project.description_en;
   const type = isAr ? project.type_ar : project.type_en;
   const price = formatCurrencyPrice(project.startPrice, currency, lang);
+  const offer = projectOffer(project);
+  const offerPrice = offer ? formatCurrencyPrice(offer.price, currency, lang) : null;
   const image = Array.isArray(project.images) ? project.images.find(Boolean) : null;
   const progress = pct(project.progress);
   const units = Number(project.availableUnits);
@@ -58,6 +61,7 @@ export default function ProjectCard({ project, isAr, currency, lang, featured = 
           <div className="pj-chips">
             <span className="pj-chip">{categoryLabel}</span>
             {project.isDemo && <span className="pj-chip pj-chip--sample">{isAr ? 'مثال توضيحي' : 'Sample'}</span>}
+            {offer && <span className="pj-chip pj-chip--offer"><Flame size={12} aria-hidden="true" />{isAr ? `عرض كاش · خصم ${offer.pct}%` : `Cash offer · ${offer.pct}% off`}</span>}
           </div>
           <ProgressRing value={progress} label={isAr ? `نسبة الإنجاز ${progress}%` : `${progress}% built`} />
         </div>
@@ -74,11 +78,20 @@ export default function ProjectCard({ project, isAr, currency, lang, featured = 
 
       <div className="pj-body">
         <div className="pj-price-row">
-          <div>
-            <span className="pj-label">{isAr ? 'يبدأ من' : 'From'}</span>
-            <strong className="pj-price">{price.primary} <small>{price.symbol}</small></strong>
-            {price.isConverted && <span className="pj-label">≈ {price.originalEgp}</span>}
-          </div>
+          {offer ? (
+            <div className="pj-offer">
+              <span className="pj-label">{isAr ? 'يبدأ من — كاش بالعرض' : 'From — cash offer'}</span>
+              <strong className="pj-price">{offerPrice.primary} <small>{offerPrice.symbol}</small></strong>
+              <del className="pj-was">{price.primary} {price.symbol}</del>
+              <OfferCountdown endsAt={offer.endsAt} isAr={isAr} className="pj-offer-timer" />
+            </div>
+          ) : (
+            <div>
+              <span className="pj-label">{isAr ? 'يبدأ من' : 'From'}</span>
+              <strong className="pj-price">{price.primary} <small>{price.symbol}</small></strong>
+              {price.isConverted && <span className="pj-label">≈ {price.originalEgp}</span>}
+            </div>
+          )}
           {showUnits
             ? <span className="pj-units">{isAr ? `${units} وحدة متاحة` : `${units} units left`}</span>
             : type && <span className="pj-type">{type}</span>}

@@ -1,6 +1,7 @@
 // Project helpers shared by the /projects cards and the project page.
 // Pure, unit-tested in tests/unit/project-facts.test.mjs.
 import { monthlyFor } from './paymentTerms.js';
+import { getActiveOffer } from './propertyOffers.js';
 
 const num = (v) => {
   const n = Number(v);
@@ -45,4 +46,17 @@ export function projectStages(project, isAr = true) {
   ]
     .filter((s) => bk[s.key] !== undefined && bk[s.key] !== null && bk[s.key] !== '')
     .map((s) => ({ key: s.key, label: isAr ? s.ar : s.en, value: pct(bk[s.key]) }));
+}
+
+/** Hidden from the CRM (المشروعات → 👁) keeps a project off every public page */
+export const isProjectPublic = (p) => Boolean(p) && !p.isHidden && !p.isDeleted && p.status !== 'hidden';
+export const siteProjects = (list = []) => (Array.isArray(list) ? list.filter(isProjectPublic) : []);
+
+/**
+ * The project's running cash offer, measured against its starting price, in the same shape
+ * as a listing's (utils/propertyOffers). null when there is none or it has ended.
+ */
+export function projectOffer(project, now = Date.now()) {
+  if (!project?.offer || project.isDemo) return null;
+  return getActiveOffer({ ...project, price: project.startPrice }, now);
 }

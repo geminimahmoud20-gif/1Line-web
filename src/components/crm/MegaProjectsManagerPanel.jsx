@@ -1,9 +1,12 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import useOpenRequest from '../../hooks/useOpenRequest';
-import { Building2, Plus, Edit3, Trash2, MapPin, Search } from 'lucide-react';
+import { Building2, Plus, Edit3, Trash2, MapPin, Search, Eye, EyeOff, Flame } from 'lucide-react';
 import { projectSampleFlags } from '../../utils/sampleDataFlags';
 import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 import ProjectFormModal from './ProjectFormModal';
+import OfferModal from './OfferModal';
+import './projects-manager.css';
+import { offerState } from '../../utils/propertyOffers';
 
 /**
  * MegaProjectsManagerPanel Component
@@ -42,6 +45,7 @@ export default function MegaProjectsManagerPanel({
 
   const [editingProjectId, setEditingProjectId] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [offerEditing, setOfferEditing] = useState(null);
   
   // Form State
   const initialForm = {
@@ -164,6 +168,16 @@ export default function MegaProjectsManagerPanel({
     }
   };
 
+  // Hidden projects stay here but leave the projects page, the homepage and search
+  const toggleHidden = (proj) => {
+    if (!onUpdateProject) return;
+    const hide = !proj.isHidden;
+    if (onUpdateProject(proj.id, { isHidden: hide }) === false) return;
+    triggerToast(hide
+      ? (isAr ? 'تم إخفاء المشروع من الموقع' : 'Project hidden from the site')
+      : (isAr ? 'المشروع ظاهر على الموقع تاني' : 'Project is visible on the site again'), 'success');
+  };
+
   const handleDelete = (projId, title) => {
     if (window.confirm(isAr ? `هل أنت متأكد من حذف مشروع: ${title}؟` : `Are you sure you want to delete ${title}?`)) {
       if (onDeleteProject) {
@@ -191,6 +205,16 @@ export default function MegaProjectsManagerPanel({
     });
   }, [projects, searchQuery, selectedCategory]);
 
+  // Running or upcoming offer, next to the project name
+  const offerBadge = (p) => {
+    if (!p.offer) return null;
+    const state = offerState({ ...p, price: p.startPrice });
+    if (state === 'active') return <span className="pjm-badge is-offer"><Flame size={11} aria-hidden="true" />{isAr ? `عرض لحد ${p.offer.until}` : `Offer to ${p.offer.until}`}</span>;
+    if (state === 'scheduled') return <span className="pjm-badge">{isAr ? `عرض يبدأ ${p.offer.from}` : `Offer from ${p.offer.from}`}</span>;
+    if (state === 'expired') return <span className="pjm-badge">{isAr ? 'العرض انتهى' : 'Offer ended'}</span>;
+    return null;
+  };
+
   return (
     <div className="crm-prop-manager-wrapper">
       {/* Top Header & Actions Strip */}
@@ -208,7 +232,8 @@ export default function MegaProjectsManagerPanel({
             </span>
             <span>•</span>
             <span className="crm-header-count-pill">
-              {projects.length} {isAr ? 'مشروع متاح' : 'projects'}
+              {projects.length} {isAr ? 'مشروع' : 'projects'}
+              {projects.some((p) => p.isHidden) && ` · ${projects.filter((p) => p.isHidden).length} ${isAr ? 'مخفي' : 'hidden'}`}
             </span>
           </div>
         </div>
@@ -290,7 +315,7 @@ export default function MegaProjectsManagerPanel({
               const bk = p.progressBreakdown || { concrete: 100, masonry: 80, finishing: 50 };
 
               return (
-                <tr key={p.id}>
+                <tr key={p.id} className={p.isHidden ? 'pjm-row-hidden' : undefined}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <img src={p.images?.[0] || '/no-photo.svg'} alt={title} style={{ width: '56px', height: '42px', borderRadius: '6px', objectFit: 'cover' }} />
@@ -302,6 +327,10 @@ export default function MegaProjectsManagerPanel({
                             {isAr ? 'مثال توضيحي' : 'Sample'}
                           </span>
                         )}
+                        {p.isHidden && (
+                          <span className="pjm-badge is-hidden"><EyeOff size={11} aria-hidden="true" />{isAr ? 'مخفي من الموقع' : 'Hidden'}</span>
+                        )}
+                        {offerBadge(p)}
                         {projectSampleFlags(p).length > 0 && (
                           <span title={`${isAr ? 'لسه فيه قيم من النموذج القديم: ' : 'Still has old form defaults: '}${projectSampleFlags(p).join(' • ')}`} style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-warn)', fontWeight: 'bold', marginInlineStart: 6, cursor: 'help' }}>
                             ⚠️ {isAr ? 'راجع البيانات' : 'Review data'}
@@ -348,6 +377,27 @@ export default function MegaProjectsManagerPanel({
                     <div style={{ display: 'flex', gap: '6px' }}>
                       <button
                         type="button"
+                        className="btn btn-sm btn-ghost pjm-act"
+                        disabled={readOnly}
+                        onClick={() => toggleHidden(p)}
+                        aria-pressed={!p.isHidden}
+                        title={p.isHidden ? (isAr ? 'إظهار على الموقع' : 'Show on the site') : (isAr ? 'إخفاء من الموقع' : 'Hide from the site')}
+                      >
+                        {p.isHidden ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                      <button
+                        type="button"
+                        className={`btn btn-sm btn-ghost pjm-act${p.offer && ['active', 'scheduled'].includes(offerState({ ...p, price: p.startPrice })) ? ' is-offer' : ''}`}
+                        disabled={readOnly || p.isDemo || !Number(p.startPrice)}
+                        onClick={() => setOfferEditing(p)}
+                        title={p.isDemo
+                          ? (isAr ? 'احفظ المشروع كمشروعك الأول عشان تعمل عليه عرض' : 'Save the sample as your own project first')
+                          : (isAr ? 'عرض كاش لفترة محدودة' : 'Limited-time cash offer')}
+                      >
+                        <Flame size={15} />
+                      </button>
+                      <button
+                        type="button"
                         className="btn btn-sm btn-ghost"
                         disabled={readOnly}
                         onClick={() => handleOpenEditModal(p)}
@@ -374,6 +424,25 @@ export default function MegaProjectsManagerPanel({
           </tbody>
         </table>
       </div>
+
+      {offerEditing && (
+        <OfferModal
+          property={{ ...offerEditing, price: offerEditing.startPrice }}
+          subject="project"
+          isAr={isAr}
+          onClose={() => setOfferEditing(null)}
+          onSave={(patch, extended, removed) => {
+            if (onUpdateProject && onUpdateProject(offerEditing.id, patch) !== false) {
+              triggerToast(removed
+                ? (isAr ? 'تم إنهاء العرض — رجع السعر كما كان' : 'Offer ended — price back to normal')
+                : extended
+                  ? (isAr ? 'تم تمديد العرض — سيظهر للعملاء "تم تمديد العرض"' : 'Offer extended — visitors will see "Offer extended"')
+                  : (isAr ? 'تم حفظ العرض — يظهر في موعده وينتهي تلقائياً' : 'Offer saved — it starts on time and ends automatically'), 'success');
+            }
+            setOfferEditing(null);
+          }}
+        />
+      )}
 
       {/* Add / Edit form: sections, photo upload and the shared photo manager */}
       {isModalOpen && (
