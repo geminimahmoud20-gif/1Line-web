@@ -18,7 +18,7 @@ const firebaseKeys = createRemoteJWKSet(
 
 // Keep in step with CMS_MEDIA_LIMITS in src/services/cmsMedia.js
 const LIMITS = {
-  video: { maxBytes: 60 * 1024 * 1024, types: ['video/mp4', 'video/webm', 'video/quicktime'] },
+  video: { maxBytes: 20 * 1024 * 1024, types: ['video/mp4', 'video/webm', 'video/quicktime'] },
   image: { maxBytes: 5 * 1024 * 1024, types: ['image/jpeg', 'image/png', 'image/webp'] },
   // 640px copies of listing photos (src/utils/imageThumbs.js): a fixed path, so no random suffix
   thumb: { maxBytes: 1024 * 1024, types: ['image/jpeg'] }

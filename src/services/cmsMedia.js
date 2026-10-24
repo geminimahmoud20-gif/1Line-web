@@ -6,7 +6,7 @@ import { auth } from '../firebase.js';
 // limits, and it froze the CMS form. Files now go to Storage; settings keep only the URL.
 
 export const CMS_MEDIA_LIMITS = {
-  video: { maxBytes: 60 * 1024 * 1024, types: ['video/mp4', 'video/webm', 'video/quicktime'] },
+  video: { maxBytes: 20 * 1024 * 1024, types: ['video/mp4', 'video/webm', 'video/quicktime'] },
   image: { maxBytes: 5 * 1024 * 1024, types: ['image/jpeg', 'image/png', 'image/webp'] },
   thumb: { maxBytes: 1024 * 1024, types: ['image/jpeg'] }
 };

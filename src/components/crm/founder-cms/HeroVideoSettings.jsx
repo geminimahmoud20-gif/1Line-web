@@ -81,8 +81,8 @@ export default function HeroVideoSettings({
               ? 'MP4 أو WebM أو MOV. يُضغط تلقائياً (720p بدون صوت) ويُحفظ داخل ملفات الموقع في public/videos، ويظهر للزوار بعد نشر الموقع.'
               : 'MP4, WebM or MOV. Compressed (720p, muted) into public/videos; live after the next deploy.')
             : (isAr
-              ? 'MP4 أو WebM أو MOV حتى 60 ميجابايت. يُرفع مباشرة إلى التخزين السحابي ويظهر للزوار فوراً. للخلفية يكفي مقطع 10–15 ثانية.'
-              : 'MP4, WebM or MOV up to 60MB. Uploaded straight to cloud storage; live immediately.')}
+              ? 'MP4 أو WebM أو MOV حتى 20 ميجابايت. يُرفع مباشرة إلى التخزين السحابي ويظهر لزوار الكمبيوتر فقط (الموبايل يشوف صورة الغلاف عشان استهلاك البيانات). للخلفية يكفي مقطع 10–15 ثانية.'
+              : 'MP4, WebM or MOV up to 20MB. Uploaded straight to cloud storage; shown on desktops only (phones see the poster image to save data).')}
         </p>
         {storageStatus === 'checking' && (
           <span role="status" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>

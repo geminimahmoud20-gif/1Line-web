@@ -102,7 +102,14 @@ export default function HomePage({
   const { campaigns: adCampaigns, now: adNow } = useAdCampaigns();
   const heroAd = useMemo(() => pickHeroCampaign(adCampaigns, adNow), [adCampaigns, adNow]);
   const inlineAds = useMemo(() => getInlineCampaigns(adCampaigns, adNow), [adCampaigns, adNow]);
-  const showHeroVideo = !heroAd && founderSettings.heroVideoEnabled !== false;
+  // The hero video is the site's heaviest file: an uploaded clip is several MB, sent from Blob storage
+  // on every visit (the reason the Blob transfer limit was reached in Oct 2026). It plays on wide
+  // screens with a fast connection only; phones, slow links and data saver get the poster image.
+  const canPlayHeroVideo = typeof window !== 'undefined'
+    && Boolean(window.matchMedia?.('(min-width: 1024px)').matches)
+    && !isDataSaver && !isReducedMotion
+    && navigator.connection?.effectiveType !== '3g';
+  const showHeroVideo = !heroAd && founderSettings.heroVideoEnabled !== false && canPlayHeroVideo;
 
   const currentClip = heroClips[activeClipIndex] || heroClips[0];
   const activeVideoUrl = currentClip?.url || founderSettings.heroVideoUrl;
