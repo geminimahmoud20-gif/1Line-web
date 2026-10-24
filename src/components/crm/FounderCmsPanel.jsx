@@ -185,7 +185,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
         'local-server': isAr ? 'تعذّر الاتصال بخادم التطوير المحلي — تأكد أن npm run dev ما زال يعمل.' : 'Local dev server not reachable.',
         'needs-ffmpeg': isAr ? 'هذا النوع يحتاج تحويلاً إلى MP4 لكن ffmpeg غير متاح. ارفع ملف MP4 أو شغّل npm install.' : 'Needs ffmpeg to convert — upload an MP4.',
         type: isAr ? 'نوع الملف غير مدعوم — استخدم MP4 أو WebM أو MOV.' : 'Unsupported file — use MP4, WebM or MOV.',
-        size: isAr ? `حجم الفيديو ${mb} ميجابايت والحد الأقصى 60. اختر مقطعاً أقصر (10–15 ثانية تكفي للخلفية).` : `Video is ${mb}MB; the limit is 60MB.`,
+        size: isAr ? `حجم الفيديو ${mb} ميجابايت والحد الأقصى 20. اختر مقطعاً أقصر (10–15 ثانية تكفي للخلفية) أو اضغطه قبل الرفع.` : `Video is ${mb}MB; the limit is 20MB.`,
         'storage/unauthorized': isAr ? 'حسابك لا يملك صلاحية رفع الملفات — الرفع متاح لحساب المدير فقط.' : 'Not authorised to upload — admin accounts only.',
         'storage/unauthenticated': isAr ? 'سجّل الدخول بحساب المدير أولاً لرفع الفيديو.' : 'Sign in as admin to upload.'
       };
