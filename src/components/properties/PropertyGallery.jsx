@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Maximize2, 
   Minimize2,
@@ -17,6 +18,8 @@ import { trackEvent } from '../../utils/visitorTracker';
 import BrandWatermark from '../common/BrandWatermark';
 import { isWatermarked } from '../../utils/watermark';
 import VirtualTourViewer from './VirtualTourViewer';
+import PhotoTour from './PhotoTour';
+import './property-gallery.css';
 import { thumbUrl, thumbFallback } from '../../utils/imageThumbs';
 
 export default function PropertyGallery({
@@ -27,6 +30,8 @@ export default function PropertyGallery({
   floorPlan = null
 }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  // "All photos" page; null while closed, else the photo it opens at
+  const [tourAt, setTourAt] = useState(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   // The "no photo" placeholder is not a photo of the unit
   const images = (Array.isArray(rawImages) ? rawImages : []).filter((u) => u && !/no-photo\.svg/.test(u));
@@ -43,6 +48,9 @@ export default function PropertyGallery({
   const touchStartXRef = useRef(null);
   const touchStartYRef = useRef(null);
   const thumbsContainerRef = useRef(null);
+  // Phone carousel: which photo is in view
+  const trackRef = useRef(null);
+  const [slideIndex, setSlideIndex] = useState(0);
 
   const isAr = lang === 'ar';
   const imgContainerRef = useRef(null);
@@ -256,51 +264,70 @@ export default function PropertyGallery({
         </div>
       )}
 
-      {/* 1. Photos Bento Grid Mode */}
+      {/* 1. Photos. Wide screens: the cover beside four equal photos, the last showing how many more.
+             Phones: full-width photos you swipe, with dots and a counter. */}
       {activeViewMode === 'photos' && images.length > 0 && (
-        <div className="property-gallery-grid">
-          {/* Main Large Hero Image */}
-          <div className="gallery-main-item" onClick={() => handleOpenLightbox(0)}>
-            <img 
-              src={images[0]} 
-              alt={title} 
-              draggable={false}
-              onContextMenu={(e) => e.preventDefault()}
-            />
-            {!isWatermarked(images[0]) && <BrandWatermark size="md" position="bottom-right" />}
-            <div className="gallery-hover-overlay">
-              <div className="view-all-pill">
-                <Maximize2 size={16} />
-                <span>{isAr ? 'عرض وتكبير ملء الشاشة' : 'View & Zoom Fullscreen'}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Side Smaller Bento Thumbnails */}
-          <div className="gallery-side-thumbs">
-            {images.slice(1, 4).map((imgUrl, idx) => (
-              <div
+        <>
+          <div className={`pg-mosaic has-${Math.min(4, images.length - 1)}`}>
+            {images.slice(0, 5).map((imgUrl, idx) => (
+              <button
                 key={idx}
-                className="gallery-sub-item gallery-thumb-item"
-                onClick={() => handleOpenLightbox(idx + 1)}
+                type="button"
+                className={`pg-tile ${idx === 0 ? 'is-cover' : ''}`}
+                onClick={() => setTourAt(idx)}
+                aria-label={isAr ? `افتح الصورة ${idx + 1} من ${images.length}` : `Open photo ${idx + 1} of ${images.length}`}
               >
-                <img 
-                  src={thumbUrl(imgUrl)} 
-                  onError={thumbFallback(imgUrl)}
-                  alt={`${title} ${idx + 2}`} 
+                <img
+                  src={idx === 0 ? imgUrl : thumbUrl(imgUrl)}
+                  onError={idx === 0 ? undefined : thumbFallback(imgUrl)}
+                  alt={idx === 0 ? title : `${title} ${idx + 1}`}
                   draggable={false}
+                  loading={idx === 0 ? 'eager' : 'lazy'}
                   onContextMenu={(e) => e.preventDefault()}
                 />
-                {!isWatermarked(imgUrl) && <BrandWatermark size="sm" position="bottom-right" variant="emblem-only" />}
-                {idx === 2 && images.length > 4 && (
-                  <div className="gallery-more-overlay">
-                    <span>+{images.length - 4} {isAr ? 'صور إضافية' : 'More'}</span>
-                  </div>
-                )}
-              </div>
+                {idx === 0 && !isWatermarked(imgUrl) && <BrandWatermark size="sm" position="bottom-right" variant="emblem-only" />}
+              </button>
             ))}
+            <button type="button" className="pg-all" onClick={() => setTourAt(0)}>
+              <ImageIcon size={15} aria-hidden="true" />
+              <span>{isAr ? `كل الصور (${images.length})` : `All photos (${images.length})`}</span>
+            </button>
           </div>
-        </div>
+
+          <div className="pg-carousel">
+            <div
+              className="pg-track"
+              ref={trackRef}
+              onScroll={(e) => {
+                const el = e.currentTarget;
+                const i = Math.round(Math.abs(el.scrollLeft) / Math.max(1, el.clientWidth));
+                if (i !== slideIndex) setSlideIndex(Math.min(images.length - 1, i));
+              }}
+            >
+              {images.map((imgUrl, idx) => (
+                <button key={idx} type="button" className="pg-slide" onClick={() => setTourAt(idx)}
+                  aria-label={isAr ? `افتح الصورة ${idx + 1} من ${images.length}` : `Open photo ${idx + 1} of ${images.length}`}>
+                  <img
+                    src={idx === 0 ? imgUrl : thumbUrl(imgUrl)}
+                    onError={idx === 0 ? undefined : thumbFallback(imgUrl)}
+                    alt={idx === 0 ? title : `${title} ${idx + 1}`}
+                    draggable={false}
+                    loading={idx < 2 ? 'eager' : 'lazy'}
+                    onContextMenu={(e) => e.preventDefault()}
+                  />
+                </button>
+              ))}
+            </div>
+            {images.length > 1 && (
+              <>
+                <span className="pg-count" dir="ltr">{slideIndex + 1} / {images.length}</span>
+                <div className="pg-dots" aria-hidden="true">
+                  {images.slice(0, 8).map((_, idx) => <i key={idx} className={idx === Math.min(slideIndex, 7) ? 'is-on' : ''} />)}
+                </div>
+              </>
+            )}
+          </div>
+        </>
       )}
 
       {/* 2. Architectural Floor Plan View */}
@@ -331,7 +358,20 @@ export default function PropertyGallery({
       )}
 
       {/* 🌟 FULLSCREEN INTERACTIVE LIGHTBOX & HD ZOOM VIEWER */}
-      {lightboxOpen && (
+      {tourAt !== null && (
+        <PhotoTour
+          images={images}
+          title={title}
+          isAr={isAr}
+          startAt={tourAt}
+          viewerOpen={lightboxOpen}
+          onPick={handleOpenLightbox}
+          onClose={() => setTourAt(null)}
+        />
+      )}
+
+      {/* Rendered on <body>: the sticky section tabs would otherwise sit on top of it */}
+      {lightboxOpen && createPortal(
         <div 
           className="gallery-lightbox-modal" 
           onClick={handleCloseLightbox}
@@ -497,7 +537,7 @@ export default function PropertyGallery({
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
     </div>
   );
 }

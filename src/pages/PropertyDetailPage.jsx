@@ -1,7 +1,8 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { isAgricultural, isIndustrial, isLandType } from '../utils/propertyKinds';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MapPin, Sparkles, CheckCircle2, Clock3, ShieldQuestion, Layers, Calendar, Phone, MessageSquare, ShieldCheck, TrendingUp, TrendingDown, Navigation, ArrowRight, ArrowLeft, Building, Building2, Video, Zap, Droplets, Copy, Sun, Moon, Scale, Flame } from 'lucide-react';
+import { MapPin, Sparkles, CheckCircle2, Clock3, ShieldQuestion, Layers, Calendar, Phone, MessageSquare, ShieldCheck, TrendingUp, TrendingDown, Navigation, ArrowRight, ArrowLeft, Building2, Video, Zap, Droplets, Copy, Sun, Moon, Scale, Flame, Maximize2, BedDouble, Bath } from 'lucide-react';
+import { keyFacts } from '../utils/keyFacts';
 import { incrementPropertyView, getPropertyViews } from '../utils/visitorTracker';
 import usePropertyEngagement from '../hooks/usePropertyEngagement';
 import PropertyGallery from '../components/properties/PropertyGallery';
@@ -29,12 +30,14 @@ import { useClientAuth } from '../context/ClientAuthContext';
 import { useUIModal } from '../context/UIModalContext';
 
 import { getFamilyInfo } from '../utils/propertyInsights';
-import { PROPERTY_TYPES } from '../data/propertiesData';
 
 import '../styles/expat-suite.css';
 import '../styles/property-detail-polish.css';
 import PropertyOverviewTab from '../components/properties/detail/PropertyOverviewTab';
 import { paymentTerms, hasInstallmentPlan, termLabel } from '../utils/paymentTerms';
+import { similarListings } from '../utils/similarListings';
+
+const FACT_ICONS = { size: Maximize2, rooms: BedDouble, baths: Bath, floor: Layers, finishing: Sparkles, handover: Clock3 };
 
 const todayIso = () => {
   const d = new Date();
@@ -94,15 +97,8 @@ export default function PropertyDetailPage({
     return isPublicListing(found) ? found : null;
   }, [properties, id]);
 
-  // Smart Similar Properties recommendation (Same district first, fallback to same property type)
-  const similarProperties = useMemo(() => {
-    if (!property) return [];
-    const pool = properties.filter((p) => p.id !== property.id && isPublicListing(p) && p.status !== 'sold');
-    const sameArea = pool.filter((p) => p.areaKey === property.areaKey);
-    if (sameArea.length >= 3) return sameArea.slice(0, 3);
-    const sameType = pool.filter((p) => p.type === property.type && !sameArea.some(sa => sa.id === p.id));
-    return [...sameArea, ...sameType].slice(0, 3);
-  }, [properties, property]);
+  // Same kind of unit at a comparable price, the same area first (src/utils/similarListings.js)
+  const similarProperties = useMemo(() => similarListings(property, properties), [properties, property]);
 
   const isAr = lang === 'ar';
 
@@ -166,6 +162,42 @@ export default function PropertyDetailPage({
   const [phoneError, setPhoneError] = useState('');
   // The viewing form opens on demand so the sidebar leads with two clear actions
   const [showBookingForm, setShowBookingForm] = useState(false);
+  // Wide screens: once the full price card scrolls away, a short one (price + two actions) is pinned
+  // beside the content until the sidebar ends, so the price is always in view but never twice.
+  // Pinned with JS: the site-wide overflow-x on html/body stops CSS sticky from working.
+  const sidePriceRef = useRef(null);
+  const sidebarRef = useRef(null);
+  const miniRef = useRef(null);
+  const [miniPin, setMiniPin] = useState(null);
+  useEffect(() => {
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const price = sidePriceRef.current;
+      const col = sidebarRef.current;
+      if (!price || !col || window.innerWidth <= 1024) { setMiniPin(null); return; }
+      const top = 88;
+      const miniH = miniRef.current?.offsetHeight || 140;
+      const colBox = col.getBoundingClientRect();
+      // Until the two-column area ends (the similar listings and footer come after it)
+      const gridBottom = col.parentElement.getBoundingClientRect().bottom;
+      const show = price.getBoundingClientRect().bottom < top && gridBottom > top + miniH;
+      setMiniPin((prev) => {
+        if (!show) return null;
+        if (prev && prev.left === colBox.left && prev.width === colBox.width) return prev;
+        return { left: colBox.left, width: colBox.width };
+      });
+    };
+    const onScroll = () => { if (!frame) frame = requestAnimationFrame(update); };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    update();
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, [property?.id]);
 
   // Prefill the booking form when the client signs in (adjusted during render, not in an effect)
   const [prefilledFor, setPrefilledFor] = useState(clientUser);
@@ -189,7 +221,6 @@ export default function PropertyDetailPage({
 
   const title = isAr ? property.title_ar : property.title_en;
   const location = isAr ? property.locationName_ar : property.locationName_en;
-  const finishing = isAr ? property.finishing_ar : property.finishing_en;
   const description = isAr ? property.description_ar : property.description_en;
   const features = isAr ? property.features_ar : property.features_en;
   const priceData = formatCurrencyPrice(property.price, currency, lang);
@@ -201,18 +232,12 @@ export default function PropertyDetailPage({
   const waText = offer
     ? `مرحباً 1Line، أريد الاستفادة من عرض الكاش على كود العقار: ${property.id.toUpperCase()} (${title}) بسعر ${offer.price.toLocaleString('en-US')} ج.م`
     : `مرحباً 1Line، أريد الاستفسار عن كود العقار: ${property.id.toUpperCase()} (${title})`;
+  const facts = keyFacts(property, isAr);
   const familyInfo = getFamilyInfo(property);
   // Licence line only from the reviewed legal record (CRM → الموقف القانوني)
   const licenseText = property.legalStatus
     ? (isAr ? property.legalStatus.licenseStatus_ar : (property.legalStatus.licenseStatus_en || property.legalStatus.licenseStatus_ar)) || ''
     : '';
-  const deliveryText = property.deliveryYear
-    ? String(property.deliveryYear)
-    : property.completionStatus === 'ready'
-      ? (isAr ? 'فوري — جاهز للاستلام' : 'Ready now')
-      : (property.completionStatus === 'under_construction' || property.completionStatus === 'off_plan')
-        ? (isAr ? 'تحت الإنشاء' : 'Under construction')
-        : '';
   const officeOpen = isOfficeOpenNow();
   const util = property.utilities || {};
   const utilityItems = [
@@ -308,6 +333,95 @@ export default function PropertyDetailPage({
     }
   };
 
+  // Price, payment, offer and the two main actions: in the sidebar on wide screens, under the facts on phones
+  const priceBlock = (
+    <>
+    <div className="detail-price-box">
+      <div className="pd-price-head">
+        <span className="price-tag-sub">{isAr ? 'السعر الإجمالي' : 'Total Price'}</span>
+        <span className={`pd-pay-chip is-${hasInstallmentPlan(terms) ? 'plan' : 'cash'}`}>
+          {hasInstallmentPlan(terms) ? (isAr ? 'كاش أو تقسيط' : 'Cash or installments') : (isAr ? 'كاش' : 'Cash')}
+        </span>
+      </div>
+      <div className="price-num-row">
+        <h2>{priceData.primary}</h2>
+        <span className="curr">{priceData.symbol}</span>
+      </div>
+      {priceData.isConverted && (
+        <span className="price-converted-sub">
+          ≈ {priceData.originalEgp}
+        </span>
+      )}
+      {planLine && <span className="pd-plan-line">{planLine}</span>}
+      {/* "Above the area average" stays in the price & area tab; the price box only shows good news */}
+      {benchmark && benchmark.badgeType !== 'premium' && (
+        <div className={`benchmark-hero-pill is-${benchmark.badgeType}`}>
+          {benchmark.badgeType === 'deal' ? (
+            <TrendingDown size={13} />
+          ) : benchmark.badgeType === 'premium' ? (
+            <Sparkles size={13} />
+          ) : benchmark.badgeType === 'building' ? (
+            <Building2 size={13} />
+          ) : (
+            <Scale size={13} />
+          )}
+          <span>{benchmark.badgeLabel}</span>
+        </div>
+      )}
+      {Number(property.size) > 0 && (
+        isMultiUnit ? (
+          <span className="price-per-m price-multi-unit" title={benchmark?.valuationNote || (isAr ? 'عقار كامل متعدد الأدوار والوحدات' : 'Multi-unit building')}>
+            <Building2 size={13} style={{ marginInlineEnd: '4px' }} />
+            <span>{isAr ? 'عقار كامل (أرض + مباني)' : 'Full Building (Land + Units)'}</span>
+          </span>
+        ) : (
+          <span className="price-per-m">
+            <bdi>{Math.round(Number(property.price) / Number(property.size)).toLocaleString('en-US')}</bdi> {isAr ? 'ج.م / م²' : 'EGP / m²'}
+          </span>
+        )
+      )}
+      <div className="pd-price-ctas">
+        <a href={getWhatsAppUrl(waText)} target="_blank" rel="noopener noreferrer" className="pd-cta-wa">
+          <MessageSquare size={16} aria-hidden="true" />
+          <span>{isAr ? 'استفسر واتساب' : 'Ask on WhatsApp'}</span>
+        </a>
+        <a href={getPhoneCallUrl()} className="pd-cta-visit">
+          <Phone size={16} aria-hidden="true" />
+          <span>{isAr ? 'اتصل بنا' : 'Call us'}</span>
+        </a>
+      </div>
+    </div>
+
+    {/* A running cash offer sits with the price */}
+    {offer && (
+      <div className="pd-offer-box" role="note">
+        <div className="pd-offer-head">
+          <Flame size={16} aria-hidden="true" />
+          <strong>{isAr ? 'عرض كاش لفترة محدودة' : 'Limited-time cash offer'}</strong>
+          <bdi dir="ltr" className="pd-offer-pct">−{offer.pct}%</bdi>
+        </div>
+        <div className="pd-offer-price">
+          <bdi>{offerPriceData.primary}</bdi> <span>{offerPriceData.symbol}</span>
+          <small>{isAr ? 'للدفع كاش' : 'paid in cash'}</small>
+        </div>
+        <p className="pd-offer-was">
+          {isAr ? 'بدلاً من ' : 'Instead of '}<del><bdi>{offer.basePrice.toLocaleString('en-US')}</bdi></del>{isAr ? ' ج.م' : ' EGP'}
+          {' · '}<span className="pd-offer-save">{isAr ? `وفّر ${offer.savings.toLocaleString('en-US')} ج.م` : `Save ${offer.savings.toLocaleString('en-US')} EGP`}</span>
+        </p>
+        <div className="pd-offer-meta">
+          <OfferCountdown endsAt={offer.endsAt} isAr={isAr} className="pd-offer-timer" />
+          <span>{isAr ? `آخر يوم: ${offerEndDay}` : `Last day: ${offerEndDay}`}</span>
+          {offer.extended && <span className="pd-offer-extended">{isAr ? 'تم تمديد العرض' : 'Offer extended'}</span>}
+        </div>
+        {offerTerms && <p className="pd-offer-terms"><strong>{isAr ? 'الشروط: ' : 'Terms: '}</strong>{offerTerms}</p>}
+        <a href={getWhatsAppUrl(waText)} target="_blank" rel="noopener noreferrer" className="pd-offer-cta">
+          {isAr ? 'احجز بسعر العرض' : 'Book at the offer price'}
+        </a>
+      </div>
+    )}
+    </>
+  );
+
   return (
     <div className={`property-detail-page-wrapper ${isAr ? 'rtl-dir' : 'ltr-dir'}`} dir={isAr ? 'rtl' : 'ltr'}>
       {/* 🌟 SOVEREIGN DARK HERO SHOWCASE STAGE */}
@@ -350,153 +464,11 @@ export default function PropertyDetailPage({
           {/* 📸 Photos first: they are what a buyer looks for before anything else */}
           <PropertyGallery
             images={property.images}
+            title={title}
             virtualTour={property.virtualTour}
             lang={lang}
             floorPlan={property.floorPlan || property.floorPlanImage}
           />
-
-          {/* Main Title & Price Header Banner */}
-          <div className="detail-header-block">
-            <div className="detail-title-col">
-              <div className="detail-badges-row">
-                {/* Availability and review: each shown only if switched on for this listing in the CRM */}
-                {detailBadges.availability && (
-                  <span className={`pd-badge pd-badge--avail is-${detailBadges.availability.tone}`} title={detailBadges.availability.hint}>
-                    <span className="pd-badge-dot" aria-hidden="true" />
-                    <span>{detailBadges.availability.label}</span>
-                  </span>
-                )}
-                {detailBadges.review && (
-                  <span className={`pd-badge pd-badge--${detailBadges.review.tone}`} title={detailBadges.review.hint}>
-                    <ReviewIcon size={13} style={{ flexShrink: 0 }} aria-hidden="true" />
-                    <span>{detailBadges.review.label}</span>
-                  </span>
-                )}
-                <span className="type-pill-badge">
-                  <Building size={13} style={{ flexShrink: 0 }} />
-                  <span>
-                    {(() => {
-                      const t = PROPERTY_TYPES.find((x) => x.id === property.type);
-                      return t ? (isAr ? t.name_ar : t.name_en) : property.type;
-                    })()}
-                  </span>
-                </span>
-                {property.badge_ar && (
-                  <span className="gold-pill-badge">
-                    <Sparkles size={13} style={{ flexShrink: 0 }} />
-                    <span>{isAr ? property.badge_ar : property.badge_en}</span>
-                  </span>
-                )}
-                <button 
-                  type="button" 
-                  className="code-copy-pill-btn" 
-                  onClick={async () => {
-                    try {
-                      await navigator.clipboard.writeText(property.id.toUpperCase());
-                      triggerToast(isAr ? `تم نسخ كود العقار: ${property.id.toUpperCase()}` : `Copied ID: ${property.id.toUpperCase()}`, 'success');
-                    } catch {
-                      triggerToast(isAr ? `كود العقار: ${property.id.toUpperCase()}` : `Property ID: ${property.id.toUpperCase()}`, 'info');
-                    }
-                  }}
-                  title={isAr ? 'انقر لنسخ كود العقار' : 'Click to copy property ID'}
-                >
-                  <span className="code-id-txt">{property.id.toUpperCase()}</span>
-                  <span className="copy-icon-txt"><Copy size={12} /></span>
-                </button>
-              </div>
-              <h1 className="detail-main-title">{title}</h1>
-              <div className="detail-location-text">
-                {String(location || '').trim() && (
-                  <div className="detail-loc-label">
-                    <MapPin size={16} className="loc-icon-gold" />
-                    <span>{location}</span>
-                  </div>
-                )}
-                {property.coordinates?.lat && (
-                  <a
-                    href={`https://www.google.com/maps?q=${property.coordinates.lat},${property.coordinates.lng}+(${encodeURIComponent(`${title} - 1Line`)})&z=17`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="detail-maps-pill"
-                    title={isAr ? 'فتح اللوكيشن الدقيق على خرائط Google' : 'Open Location in Google Maps'}
-                  >
-                    <Navigation size={13} />
-                    <span>{isAr ? 'عرض على خرائط Google' : 'Open in Google Maps'}</span>
-                  </a>
-                )}
-              </div>
-
-            </div>
-
-            <div className="detail-price-box">
-              <span className="price-tag-sub">{isAr ? 'السعر الإجمالي' : 'Total Price'}</span>
-              <div className="price-num-row">
-                <h2>{priceData.primary}</h2>
-                <span className="curr">{priceData.symbol}</span>
-              </div>
-              {priceData.isConverted && (
-                <span className="price-converted-sub">
-                  ≈ {priceData.originalEgp}
-                </span>
-              )}
-              {planLine && <span className="pd-plan-line">{planLine}</span>}
-              {benchmark && (
-                <div className={`benchmark-hero-pill is-${benchmark.badgeType}`}>
-                  {benchmark.badgeType === 'deal' ? (
-                    <TrendingDown size={13} />
-                  ) : benchmark.badgeType === 'premium' ? (
-                    <Sparkles size={13} />
-                  ) : benchmark.badgeType === 'building' ? (
-                    <Building2 size={13} />
-                  ) : (
-                    <Scale size={13} />
-                  )}
-                  <span>{benchmark.badgeLabel}</span>
-                </div>
-              )}
-              {Number(property.size) > 0 && (
-                isMultiUnit ? (
-                  <span className="price-per-m price-multi-unit" title={benchmark?.valuationNote || (isAr ? 'عقار كامل متعدد الأدوار والوحدات' : 'Multi-unit building')}>
-                    <Building2 size={13} style={{ marginInlineEnd: '4px' }} />
-                    <span>{isAr ? 'عقار كامل (أرض + مباني)' : 'Full Building (Land + Units)'}</span>
-                  </span>
-                ) : (
-                  <span className="price-per-m">
-                    <bdi>{Math.round(Number(property.price) / Number(property.size)).toLocaleString('en-US')}</bdi> {isAr ? 'ج.م / م²' : 'EGP / m²'}
-                  </span>
-                )
-              )}
-
-            </div>
-
-            {/* Full-width strip under both columns: a tall box in either column would leave a gap beside it */}
-            {offer && (
-              <div className="pd-offer-box pd-offer-strip" role="note">
-                <div className="pd-offer-head">
-                  <Flame size={16} aria-hidden="true" />
-                  <strong>{isAr ? 'عرض كاش لفترة محدودة' : 'Limited-time cash offer'}</strong>
-                  <bdi dir="ltr" className="pd-offer-pct">−{offer.pct}%</bdi>
-                </div>
-                <div className="pd-offer-price">
-                  <bdi>{offerPriceData.primary}</bdi> <span>{offerPriceData.symbol}</span>
-                  <small>{isAr ? 'للدفع كاش' : 'paid in cash'}</small>
-                </div>
-                <p className="pd-offer-was">
-                  {isAr ? 'بدلاً من ' : 'Instead of '}<del><bdi>{offer.basePrice.toLocaleString('en-US')}</bdi></del>{isAr ? ' ج.م' : ' EGP'}
-                  {' · '}<span className="pd-offer-save">{isAr ? `وفّر ${offer.savings.toLocaleString('en-US')} ج.م` : `Save ${offer.savings.toLocaleString('en-US')} EGP`}</span>
-                </p>
-                <div className="pd-offer-meta">
-                  <OfferCountdown endsAt={offer.endsAt} isAr={isAr} className="pd-offer-timer" />
-                  <span>{isAr ? `آخر يوم: ${offerEndDay}` : `Last day: ${offerEndDay}`}</span>
-                  {offer.extended && <span className="pd-offer-extended">{isAr ? 'تم تمديد العرض' : 'Offer extended'}</span>}
-                </div>
-                {offerTerms && <p className="pd-offer-terms"><strong>{isAr ? 'الشروط: ' : 'Terms: '}</strong>{offerTerms}</p>}
-                <a href={getWhatsAppUrl(waText)} target="_blank" rel="noopener noreferrer" className="pd-offer-cta">
-                  {isAr ? 'احجز بسعر العرض' : 'Book at the offer price'}
-                </a>
-              </div>
-            )}
-          </div>
 
         </div>
       </section>
@@ -504,62 +476,132 @@ export default function PropertyDetailPage({
       {/* Main Page Lower Container */}
       <div className="detail-container">
 
-        {/* 📱 WhatsApp Automation, Instant PDF Brochure & Story Bar */}
-        <WhatsAppAutomationBar
-          property={property}
-          lang={lang}
-          currency={currency}
-          triggerToast={triggerToast}
-          onOpenStoryCard={() => setStoryModalOpen(true)}
-        />
 
-        {/* 🎯 Sticky Compact Section Tabs (Solves Scrolling & Overload) */}
-        <div className="detail-section-tabs-bar" role="tablist" aria-label={isAr ? 'أقسام تفاصيل العقار' : 'Listing sections'}>
-          {[
-            { id: 'overview', Icon: Layers, ar: 'المواصفات والتكاليف', en: 'Specs & costs' },
-            { id: 'legal', Icon: ShieldCheck, ar: 'الموقف القانوني', en: 'Legal status' },
-            { id: 'valuation', Icon: TrendingUp, ar: 'السعر والمنطقة', en: 'Price & area' },
-          ].map(({ id: tabId, Icon, ar, en }, idx, all) => (
-            <button
-              key={tabId}
-              type="button"
-              role="tab"
-              id={`pd-tab-${tabId}`}
-              aria-selected={activeTab === tabId}
-              aria-controls="pd-tabpanel"
-              tabIndex={activeTab === tabId ? 0 : -1}
-              className={`section-tab-btn ${activeTab === tabId ? 'active' : ''}`}
-              onClick={() => setActiveTab(tabId)}
-              onKeyDown={(e) => {
-                // Arrow keys move between tabs (reading direction aware)
-                const fwd = isAr ? 'ArrowLeft' : 'ArrowRight';
-                const back = isAr ? 'ArrowRight' : 'ArrowLeft';
-                if (e.key !== fwd && e.key !== back) return;
-                e.preventDefault();
-                const next = all[(idx + (e.key === fwd ? 1 : all.length - 1)) % all.length].id;
-                setActiveTab(next);
-                document.getElementById(`pd-tab-${next}`)?.focus();
-              }}
-            >
-              <Icon size={16} aria-hidden="true" />
-              <span>{isAr ? ar : en}</span>
-            </button>
-          ))}
-        </div>
 
         {/* 2-Column Content Grid */}
         <div className="detail-content-grid">
           {/* Left / Main Details Column */}
-          <div className="detail-main-col" role="tabpanel" id="pd-tabpanel" aria-labelledby={`pd-tab-${activeTab}`}>
+          <div className="detail-main-col">
+            {/* Title, badges, address and key facts: wrapped in the hero class so its styles carry over */}
+            <header className="property-detail-hero-stage pd-stage-lite pd-head">
+                <div className="detail-badges-row">
+                  {/* Availability and review: each shown only if switched on for this listing in the CRM */}
+                  {detailBadges.availability && (
+                    <span className={`pd-badge pd-badge--avail is-${detailBadges.availability.tone}`} title={detailBadges.availability.hint}>
+                      <span className="pd-badge-dot" aria-hidden="true" />
+                      <span>{detailBadges.availability.label}</span>
+                    </span>
+                  )}
+                  {detailBadges.review && (
+                    <span className={`pd-badge pd-badge--${detailBadges.review.tone}`} title={detailBadges.review.hint}>
+                      <ReviewIcon size={13} style={{ flexShrink: 0 }} aria-hidden="true" />
+                      <span>{detailBadges.review.label}</span>
+                    </span>
+                  )}
+                  {property.badge_ar && (
+                    <span className="gold-pill-badge">
+                      <Sparkles size={13} style={{ flexShrink: 0 }} />
+                      <span>{isAr ? property.badge_ar : property.badge_en}</span>
+                    </span>
+                  )}
+                </div>
+                <h1 className="detail-main-title">{title}</h1>
+                <div className="detail-location-text">
+                  {String(location || '').trim() && (
+                    <div className="detail-loc-label">
+                      <MapPin size={16} className="loc-icon-gold" />
+                      <span>{location}</span>
+                    </div>
+                  )}
+                  {property.coordinates?.lat && (
+                    <a
+                      href={`https://www.google.com/maps?q=${property.coordinates.lat},${property.coordinates.lng}+(${encodeURIComponent(`${title} - 1Line`)})&z=17`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="detail-maps-pill"
+                      title={isAr ? 'فتح اللوكيشن الدقيق على خرائط Google' : 'Open Location in Google Maps'}
+                    >
+                      <Navigation size={13} />
+                      <span>{isAr ? 'عرض على خرائط Google' : 'Open in Google Maps'}</span>
+                    </a>
+                  )}
+                  <button 
+                    type="button" 
+                    className="code-copy-pill-btn" 
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(property.id.toUpperCase());
+                        triggerToast(isAr ? `تم نسخ كود العقار: ${property.id.toUpperCase()}` : `Copied ID: ${property.id.toUpperCase()}`, 'success');
+                      } catch {
+                        triggerToast(isAr ? `كود العقار: ${property.id.toUpperCase()}` : `Property ID: ${property.id.toUpperCase()}`, 'info');
+                      }
+                    }}
+                    title={isAr ? 'انقر لنسخ كود العقار' : 'Click to copy property ID'}
+                  >
+                    <span className="code-id-txt">{property.id.toUpperCase()}</span>
+                    <span className="copy-icon-txt"><Copy size={12} /></span>
+                  </button>
+                </div>
+
+                {/* The facts a buyer scans first, right under the title */}
+                {facts.length > 0 && (
+                  <ul className="pd-keyfacts">
+                    {facts.map((f) => {
+                      const Icon = FACT_ICONS[f.key];
+                      return (
+                        <li key={f.key}>
+                          <Icon size={18} aria-hidden="true" />
+                          <span><strong>{f.value}</strong><small>{f.label}</small></span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+
+            </header>
+            <div className="property-detail-hero-stage pd-stage-lite pd-price-slot is-inline">{priceBlock}</div>
+            {/* 🎯 Sticky Compact Section Tabs (Solves Scrolling & Overload) */}
+            <div className="detail-section-tabs-bar" role="tablist" aria-label={isAr ? 'أقسام تفاصيل العقار' : 'Listing sections'}>
+              {[
+                { id: 'overview', Icon: Layers, ar: 'المواصفات والتكاليف', en: 'Specs & costs' },
+                { id: 'legal', Icon: ShieldCheck, ar: 'الموقف القانوني', en: 'Legal status' },
+                { id: 'valuation', Icon: TrendingUp, ar: 'السعر والمنطقة', en: 'Price & area' },
+              ].map(({ id: tabId, Icon, ar, en }, idx, all) => (
+                <button
+                  key={tabId}
+                  type="button"
+                  role="tab"
+                  id={`pd-tab-${tabId}`}
+                  aria-selected={activeTab === tabId}
+                  aria-controls="pd-tabpanel"
+                  tabIndex={activeTab === tabId ? 0 : -1}
+                  className={`section-tab-btn ${activeTab === tabId ? 'active' : ''}`}
+                  onClick={() => setActiveTab(tabId)}
+                  onKeyDown={(e) => {
+                    // Arrow keys move between tabs (reading direction aware)
+                    const fwd = isAr ? 'ArrowLeft' : 'ArrowRight';
+                    const back = isAr ? 'ArrowRight' : 'ArrowLeft';
+                    if (e.key !== fwd && e.key !== back) return;
+                    e.preventDefault();
+                    const next = all[(idx + (e.key === fwd ? 1 : all.length - 1)) % all.length].id;
+                    setActiveTab(next);
+                    document.getElementById(`pd-tab-${next}`)?.focus();
+                  }}
+                >
+                  <Icon size={16} aria-hidden="true" />
+                  <span>{isAr ? ar : en}</span>
+                </button>
+              ))}
+            </div>
+            <div role="tabpanel" id="pd-tabpanel" aria-labelledby={`pd-tab-${activeTab}`}>
+
             {/* TAB 1: OVERVIEW & SPECS */}
             {activeTab === 'overview' && (
               <PropertyOverviewTab
                 currency={currency}
-                deliveryText={deliveryText}
                 description={description}
                 familyInfo={familyInfo}
                 features={features}
-                finishing={finishing}
                 isAr={isAr}
                 isCommercial={isCommercial}
                 isLand={isLand}
@@ -610,10 +652,12 @@ export default function PropertyDetailPage({
               </div>
             )}
 
+            </div>
           </div>
 
           {/* Right / Sticky Agent & Booking Sidebar */}
-          <div className="detail-sidebar-col">
+          <div className="detail-sidebar-col" ref={sidebarRef}>
+            <div className="property-detail-hero-stage pd-stage-lite pd-price-slot is-side" ref={sidePriceRef}>{priceBlock}</div>
             <div className="sticky-booking-card">
               {/* 1. Agent Profile Header */}
               <div className="agent-profile-header">
@@ -628,29 +672,6 @@ export default function PropertyDetailPage({
                       : (isAr ? 'خارج مواعيد العمل — نرد من 10 صباحاً (عدا الجمعة)' : 'Outside office hours — we reply from 10:00 (closed Friday)')}
                   </span>
                 </div>
-              </div>
-
-              {/* 2. Direct Instant Contact Hub (Top Priority) */}
-              <div className="sidebar-instant-contact-row">
-                <a
-                  href={getWhatsAppUrl(waText)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-whatsapp-half"
-                  title={isAr ? 'تواصل فوري عبر واتساب' : 'Direct WhatsApp'}
-                >
-                  <MessageSquare size={16} />
-                  <span>{isAr ? 'واتساب فوري' : 'WhatsApp'}</span>
-                </a>
-
-                <a 
-                  href={getPhoneCallUrl()} 
-                  className="btn btn-call-half"
-                  title={isAr ? 'اتصال هاتفي مباشر' : 'Direct Phone Call'}
-                >
-                  <Phone size={16} />
-                  <span>{isAr ? 'اتصال هاتفي' : 'Call Agent'}</span>
-                </a>
               </div>
 
               {/* 📹 معاينة الغربة — expat remote inspection (live video / street footage) */}
@@ -825,6 +846,37 @@ export default function PropertyDetailPage({
               <div className="sidebar-legal-guarantee">
                 <ShieldCheck size={15} className="text-gold" />
                 <span>{isAr ? 'معاينة مجانية للموقع | الأتعاب مكتوبة قبل التعاقد' : 'Free on-site viewing | Fees in writing before contract'}</span>
+              </div>
+            </div>
+            {/* Share: brochure PDF, story card, WhatsApp — under the advisor card, out of the reading path */}
+            <WhatsAppAutomationBar
+              property={property}
+              lang={lang}
+              currency={currency}
+              triggerToast={triggerToast}
+              onOpenStoryCard={() => setStoryModalOpen(true)}
+            />
+            {/* Shown only after the full price card scrolls away, so the price never appears twice */}
+            <div
+              ref={miniRef}
+              className={`pd-side-mini ${miniPin ? 'is-pinned' : 'is-hidden'}`}
+              style={miniPin ? { left: miniPin.left, width: miniPin.width } : undefined}
+              aria-hidden={!miniPin}
+              aria-label={isAr ? 'السعر والتواصل' : 'Price and contact'}
+            >
+              <div className="pd-side-mini-price">
+                <small>{offer ? (isAr ? 'سعر العرض كاش' : 'Cash offer price') : (isAr ? 'السعر الإجمالي' : 'Total price')}</small>
+                <strong><bdi>{(offer ? offerPriceData : priceData).primary}</bdi> <span>{priceData.symbol}</span></strong>
+              </div>
+              <div className="pd-price-ctas">
+                <a href={getWhatsAppUrl(waText)} target="_blank" rel="noopener noreferrer" className="pd-cta-wa">
+                  <MessageSquare size={16} aria-hidden="true" />
+                  <span>{isAr ? 'واتساب' : 'WhatsApp'}</span>
+                </a>
+                <a href={getPhoneCallUrl()} className="pd-cta-visit">
+                  <Phone size={16} aria-hidden="true" />
+                  <span>{isAr ? 'اتصل بنا' : 'Call us'}</span>
+                </a>
               </div>
             </div>
           </div>
