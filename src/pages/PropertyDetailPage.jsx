@@ -185,7 +185,6 @@ export default function PropertyDetailPage({
 
   const title = isAr ? property.title_ar : property.title_en;
   const location = isAr ? property.locationName_ar : property.locationName_en;
-  const finishing = isAr ? property.finishing_ar : property.finishing_en;
   const description = isAr ? property.description_ar : property.description_en;
   const features = isAr ? property.features_ar : property.features_en;
   const priceData = formatCurrencyPrice(property.price, currency, lang);
@@ -203,13 +202,6 @@ export default function PropertyDetailPage({
   const licenseText = property.legalStatus
     ? (isAr ? property.legalStatus.licenseStatus_ar : (property.legalStatus.licenseStatus_en || property.legalStatus.licenseStatus_ar)) || ''
     : '';
-  const deliveryText = property.deliveryYear
-    ? String(property.deliveryYear)
-    : property.completionStatus === 'ready'
-      ? (isAr ? 'فوري — جاهز للاستلام' : 'Ready now')
-      : (property.completionStatus === 'under_construction' || property.completionStatus === 'off_plan')
-        ? (isAr ? 'تحت الإنشاء' : 'Under construction')
-        : '';
   const officeOpen = isOfficeOpenNow();
   const util = property.utilities || {};
   const utilityItems = [
@@ -529,62 +521,54 @@ export default function PropertyDetailPage({
       {/* Main Page Lower Container */}
       <div className="detail-container">
 
-        {/* 📱 WhatsApp Automation, Instant PDF Brochure & Story Bar */}
-        <WhatsAppAutomationBar
-          property={property}
-          lang={lang}
-          currency={currency}
-          triggerToast={triggerToast}
-          onOpenStoryCard={() => setStoryModalOpen(true)}
-        />
 
-        {/* 🎯 Sticky Compact Section Tabs (Solves Scrolling & Overload) */}
-        <div className="detail-section-tabs-bar" role="tablist" aria-label={isAr ? 'أقسام تفاصيل العقار' : 'Listing sections'}>
-          {[
-            { id: 'overview', Icon: Layers, ar: 'المواصفات والتكاليف', en: 'Specs & costs' },
-            { id: 'legal', Icon: ShieldCheck, ar: 'الموقف القانوني', en: 'Legal status' },
-            { id: 'valuation', Icon: TrendingUp, ar: 'السعر والمنطقة', en: 'Price & area' },
-          ].map(({ id: tabId, Icon, ar, en }, idx, all) => (
-            <button
-              key={tabId}
-              type="button"
-              role="tab"
-              id={`pd-tab-${tabId}`}
-              aria-selected={activeTab === tabId}
-              aria-controls="pd-tabpanel"
-              tabIndex={activeTab === tabId ? 0 : -1}
-              className={`section-tab-btn ${activeTab === tabId ? 'active' : ''}`}
-              onClick={() => setActiveTab(tabId)}
-              onKeyDown={(e) => {
-                // Arrow keys move between tabs (reading direction aware)
-                const fwd = isAr ? 'ArrowLeft' : 'ArrowRight';
-                const back = isAr ? 'ArrowRight' : 'ArrowLeft';
-                if (e.key !== fwd && e.key !== back) return;
-                e.preventDefault();
-                const next = all[(idx + (e.key === fwd ? 1 : all.length - 1)) % all.length].id;
-                setActiveTab(next);
-                document.getElementById(`pd-tab-${next}`)?.focus();
-              }}
-            >
-              <Icon size={16} aria-hidden="true" />
-              <span>{isAr ? ar : en}</span>
-            </button>
-          ))}
-        </div>
 
         {/* 2-Column Content Grid */}
         <div className="detail-content-grid">
           {/* Left / Main Details Column */}
-          <div className="detail-main-col" role="tabpanel" id="pd-tabpanel" aria-labelledby={`pd-tab-${activeTab}`}>
+          <div className="detail-main-col">
+            {/* 🎯 Sticky Compact Section Tabs (Solves Scrolling & Overload) */}
+            <div className="detail-section-tabs-bar" role="tablist" aria-label={isAr ? 'أقسام تفاصيل العقار' : 'Listing sections'}>
+              {[
+                { id: 'overview', Icon: Layers, ar: 'المواصفات والتكاليف', en: 'Specs & costs' },
+                { id: 'legal', Icon: ShieldCheck, ar: 'الموقف القانوني', en: 'Legal status' },
+                { id: 'valuation', Icon: TrendingUp, ar: 'السعر والمنطقة', en: 'Price & area' },
+              ].map(({ id: tabId, Icon, ar, en }, idx, all) => (
+                <button
+                  key={tabId}
+                  type="button"
+                  role="tab"
+                  id={`pd-tab-${tabId}`}
+                  aria-selected={activeTab === tabId}
+                  aria-controls="pd-tabpanel"
+                  tabIndex={activeTab === tabId ? 0 : -1}
+                  className={`section-tab-btn ${activeTab === tabId ? 'active' : ''}`}
+                  onClick={() => setActiveTab(tabId)}
+                  onKeyDown={(e) => {
+                    // Arrow keys move between tabs (reading direction aware)
+                    const fwd = isAr ? 'ArrowLeft' : 'ArrowRight';
+                    const back = isAr ? 'ArrowRight' : 'ArrowLeft';
+                    if (e.key !== fwd && e.key !== back) return;
+                    e.preventDefault();
+                    const next = all[(idx + (e.key === fwd ? 1 : all.length - 1)) % all.length].id;
+                    setActiveTab(next);
+                    document.getElementById(`pd-tab-${next}`)?.focus();
+                  }}
+                >
+                  <Icon size={16} aria-hidden="true" />
+                  <span>{isAr ? ar : en}</span>
+                </button>
+              ))}
+            </div>
+            <div role="tabpanel" id="pd-tabpanel" aria-labelledby={`pd-tab-${activeTab}`}>
+
             {/* TAB 1: OVERVIEW & SPECS */}
             {activeTab === 'overview' && (
               <PropertyOverviewTab
                 currency={currency}
-                deliveryText={deliveryText}
                 description={description}
                 familyInfo={familyInfo}
                 features={features}
-                finishing={finishing}
                 isAr={isAr}
                 isCommercial={isCommercial}
                 isLand={isLand}
@@ -635,6 +619,7 @@ export default function PropertyDetailPage({
               </div>
             )}
 
+            </div>
           </div>
 
           {/* Right / Sticky Agent & Booking Sidebar */}
@@ -852,6 +837,14 @@ export default function PropertyDetailPage({
                 <span>{isAr ? 'معاينة مجانية للموقع | الأتعاب مكتوبة قبل التعاقد' : 'Free on-site viewing | Fees in writing before contract'}</span>
               </div>
             </div>
+            {/* Share: brochure PDF, story card, WhatsApp — under the advisor card, out of the reading path */}
+            <WhatsAppAutomationBar
+              property={property}
+              lang={lang}
+              currency={currency}
+              triggerToast={triggerToast}
+              onOpenStoryCard={() => setStoryModalOpen(true)}
+            />
           </div>
         </div>
 

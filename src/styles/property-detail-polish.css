@@ -314,3 +314,22 @@ html .property-detail-hero-stage .detail-location-text .code-copy-pill-btn:hover
 .dark-theme .pd-pay-chip { color: #6EE7B7; background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.35); }
 .dark-theme .pd-pay-chip.is-plan { color: #93C5FD; background: rgba(59, 130, 246, 0.12); border-color: rgba(59, 130, 246, 0.35); }
 .dark-theme .pd-cta-visit { background: #C5A059; color: #0B1B32; }
+
+/* Share block under the advisor card: label on top, actions two by two */
+.detail-sidebar-col .xs-share { margin-top: 16px; flex-direction: column; align-items: stretch; gap: 10px; }
+.detail-sidebar-col .xs-share-label { display: block; padding: 0; }
+.detail-sidebar-col .xs-share-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; }
+.detail-sidebar-col .xs-share-btn { justify-content: center; }
+/* Only filled unit details show; with none, the card goes */
+.pd-specs-card:has(.specs-detail-grid:empty) { display: none; }
+
+/* A long address wraps instead of running out of the column */
+.property-detail-hero-stage .detail-loc-label { min-width: 0; flex: 0 1 auto; }
+.property-detail-hero-stage .detail-loc-label span { min-width: 0; overflow-wrap: anywhere; }
+
+/* Wide screens: the advisor card and share block follow the reader down the page */
+@media (min-width: 1024px) and (min-height: 760px) {
+  .detail-content-grid { align-items: start; }
+  .detail-sidebar-col { position: sticky; top: 90px; align-self: start; }
+  .detail-sidebar-col .sticky-booking-card { position: static; }
+}

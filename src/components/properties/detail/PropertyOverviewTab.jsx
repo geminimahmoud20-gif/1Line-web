@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { Bath, BedDouble, Briefcase, Building, CheckCircle2, Clock, Factory, Layers, Maximize2, ShieldCheck, Sparkles, Sprout, Store, Zap } from 'lucide-react';
-import { isAgricultural, isIndustrial, filledSpecs, sizeLabel, pricePerFeddan } from '../../../utils/propertyKinds';
+import { Briefcase, Building, CheckCircle2, Factory, Layers, ShieldCheck, Sparkles, Sprout, Store, Zap } from 'lucide-react';
+import { isAgricultural, isIndustrial, filledSpecs, pricePerFeddan } from '../../../utils/propertyKinds';
 import { Users, ArrowUpDown, Car, Trees, Landmark } from 'lucide-react';
 import { buildingFacts, featuresBesideFacts } from '../../../utils/buildingFeatures';
-import { countLabel } from '../../../utils/arabicCount';
 import SunlightCompassWidget from '../SunlightCompassWidget';
 import FinancialBreakdown from '../FinancialBreakdown';
 import FamilyCostSplitter from '../../family/FamilyCostSplitter';
@@ -16,11 +15,9 @@ const BUILDING_ICONS = { elevator: ArrowUpDown, garage: Car, garden: Trees, land
 
 export default function PropertyOverviewTab({
   currency,
-  deliveryText,
   description,
   familyInfo,
   features,
-  finishing,
   isAr,
   isCommercial,
   isLand,
@@ -58,16 +55,10 @@ export default function PropertyOverviewTab({
       )}
 
       {/* Quick Specs Overview Grid */}
-      <div className="detail-card-box">
-        <h3>{isAr ? 'المواصفات الرئيسية للعقار' : 'Key Specifications'}</h3>
+      <div className="detail-card-box pd-specs-card">
+        {/* Area, rooms, baths, floor, finishing and handover sit in the facts strip under the title */}
+        <h3>{isAr ? 'تفاصيل الوحدة' : 'Unit details'}</h3>
         <div className="specs-detail-grid">
-          <div className="spec-box">
-            <Maximize2 size={20} className="text-gold" />
-            <div>
-              <span className="spec-lbl">{isAr ? 'المساحة الإجمالية' : 'Total Area'}</span>
-              <strong>{agri ? sizeLabel(property, isAr) : `${property.size} ${isAr ? 'م² صافي' : 'sqm net'}`}</strong>
-            </div>
-          </div>
 
           {/* Sector-Specific Specifications */}
           {special ? (
@@ -195,40 +186,7 @@ export default function PropertyOverviewTab({
                 </div>
               )}
             </>
-          ) : (
-            /* Residential Units */
-            <>
-              {property.bedrooms > 0 && (
-                <div className="spec-box">
-                  <BedDouble size={20} className="text-gold" />
-                  <div>
-                    <span className="spec-lbl">{isAr ? 'غرف النوم' : 'Bedrooms'}</span>
-                    <strong>{countLabel('room', property.bedrooms, isAr)}</strong>
-                  </div>
-                </div>
-              )}
-
-              {property.bathrooms > 0 && (
-                <div className="spec-box">
-                  <Bath size={20} className="text-gold" />
-                  <div>
-                    <span className="spec-lbl">{isAr ? 'الحمامات' : 'Bathrooms'}</span>
-                    <strong>{countLabel('bath', property.bathrooms, isAr)}</strong>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-
-          {!isLand && !special && property.floor !== undefined && property.floor !== null && property.floor !== '' && (
-            <div className="spec-box">
-              <Layers size={20} className="text-gold" />
-              <div>
-                <span className="spec-lbl">{isAr ? 'الدور / الطابق' : 'Floor'}</span>
-                <strong>{Number(property.floor) === 0 ? (isAr ? 'أرضي' : 'Ground') : property.floor}</strong>
-              </div>
-            </div>
-          )}
+          ) : null}
 
           {building.map((f) => {
             const Icon = BUILDING_ICONS[f.key];
@@ -243,25 +201,7 @@ export default function PropertyOverviewTab({
             );
           })}
 
-          {finishing && (
-            <div className="spec-box">
-              <Sparkles size={20} className="text-gold" />
-              <div>
-                <span className="spec-lbl">{isLand ? (isAr ? 'طبيعة التجهيز' : 'Site Readiness') : (isAr ? 'مستوى التشطيب' : 'Finishing')}</span>
-                <strong>{finishing}</strong>
-              </div>
-            </div>
-          )}
 
-          {deliveryText && (
-            <div className="spec-box">
-              <Clock size={20} className="text-gold" />
-              <div>
-                <span className="spec-lbl">{isAr ? 'الاستلام' : 'Delivery'}</span>
-                <strong>{deliveryText}</strong>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
