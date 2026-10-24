@@ -1,0 +1,100 @@
+/* Light page headers for /properties and the portal pages (/sell, /buy, /valuation…), matching
+   the unit and project pages. Light theme only: the dark theme keeps its navy headers. */
+
+/* ── /properties ── */
+html:not(.dark-theme) .properties-page-header {
+  background:
+    radial-gradient(50% 120% at 95% 0%, rgba(197, 160, 89, 0.18), transparent 62%),
+    linear-gradient(180deg, #FBF7EF 0%, #F7F5F0 100%) !important;
+  border-bottom: 1px solid rgba(11, 27, 50, 0.08) !important;
+  color: #0B1B32 !important;
+}
+html:not(.dark-theme) .properties-page-header::before { display: none; }
+html:not(.dark-theme) .compact-page-header .page-header-title { color: #0B1B32 !important; font-weight: 800 !important; }
+html:not(.dark-theme) .compact-page-header .page-header-subtitle { color: #5B6577 !important; }
+html:not(.dark-theme) .compact-page-header .results-count-badge {
+  background: #FBF6EC !important;
+  border-color: rgba(197, 160, 89, 0.5) !important;
+  color: #7C5E30 !important;
+}
+html:not(.dark-theme) .view-mode-controls .sort-selector-wrap {
+  background: #FFFFFF !important;
+  border-color: rgba(11, 27, 50, 0.12) !important;
+  color: #A9824A !important;
+}
+html:not(.dark-theme) .view-mode-controls .sort-selector-wrap select { color: #0B1B32 !important; }
+html:not(.dark-theme) .view-mode-controls .sort-selector-wrap select option { background: #FFFFFF !important; color: #0B1B32 !important; }
+html:not(.dark-theme) .view-toggle-btns { background: #FFFFFF !important; border-color: rgba(11, 27, 50, 0.12) !important; }
+html:not(.dark-theme) .view-btn { color: #5B6577 !important; }
+html:not(.dark-theme) .view-btn:hover { color: #0B1B32 !important; }
+html:not(.dark-theme) .view-btn.active { background: #0B1B32 !important; color: #FFFFFF !important; box-shadow: none !important; }
+
+html:not(.dark-theme) .properties-certified-explainer-strip {
+  background: #FFFFFF !important;
+  border-bottom: 1px solid rgba(11, 27, 50, 0.08) !important;
+  color: #334155 !important;
+}
+html:not(.dark-theme) .certified-badge-pill { background: #ECFDF5 !important; border-color: #A7F3D0 !important; color: #047857 !important; }
+html:not(.dark-theme) .certified-points-row .cert-point { color: #334155 !important; }
+html:not(.dark-theme) .certified-points-row .cert-dot { color: #CBD5E1 !important; }
+
+/* ── Portal pages ── */
+html:not(.dark-theme) .portal-hero-section {
+  background:
+    radial-gradient(45% 90% at 95% 0%, rgba(197, 160, 89, 0.2), transparent 62%),
+    radial-gradient(40% 70% at 0% 100%, rgba(37, 99, 235, 0.06), transparent 60%),
+    linear-gradient(180deg, #FBF7EF 0%, #F7F5F0 100%);
+  border-bottom: 1px solid rgba(11, 27, 50, 0.08);
+  color: #0B1B32;
+}
+html:not(.dark-theme) .portal-breadcrumbs { background: #FFFFFF; border-color: rgba(11, 27, 50, 0.1); color: #5B6577; }
+html:not(.dark-theme) .portal-breadcrumbs a { color: #5B6577; }
+html:not(.dark-theme) .portal-breadcrumbs a:hover { color: #7C5E30; }
+html:not(.dark-theme) .portal-breadcrumbs span { color: #0B1B32; }
+html:not(.dark-theme) .portal-hero-badge { background: #FBF6EC; border-color: rgba(197, 160, 89, 0.5); color: #7C5E30; backdrop-filter: none; }
+html:not(.dark-theme) .portal-hero-title { color: #0B1B32; font-weight: 800; }
+html:not(.dark-theme) .portal-hero-subtitle { color: #5B6577; }
+
+/* ── /properties search & filter card ── */
+html:not(.dark-theme) .compact-filters-card {
+  background: #FFFFFF !important;
+  border: 1px solid rgba(11, 27, 50, 0.1) !important;
+  box-shadow: 0 18px 40px -28px rgba(11, 27, 50, 0.35) !important;
+  color: #0B1B32 !important;
+}
+html:not(.dark-theme) .compact-filters-card .filter-header-bar { border-bottom-color: rgba(11, 27, 50, 0.08) !important; }
+html:not(.dark-theme) .compact-filters-card .filter-title-icon-badge { background: #FBF6EC !important; border-color: rgba(197, 160, 89, 0.45) !important; color: #A9824A !important; }
+html:not(.dark-theme) .compact-filters-card .filter-main-title { color: #0B1B32 !important; }
+html:not(.dark-theme) .compact-filters-card .filter-inline-badge { background: #FBF6EC !important; border-color: rgba(197, 160, 89, 0.45) !important; color: #7C5E30 !important; }
+html:not(.dark-theme) .compact-filters-card .filter-toggle-adv-btn { background: #FFFFFF !important; border-color: rgba(11, 27, 50, 0.12) !important; color: #334155 !important; }
+html:not(.dark-theme) .compact-filters-card .filter-toggle-adv-btn:hover,
+html:not(.dark-theme) .compact-filters-card .filter-toggle-adv-btn.active { background: #FBF6EC !important; border-color: #C5A059 !important; color: #7C5E30 !important; }
+html:not(.dark-theme) .compact-filters-card .filter-reset-btn { color: #5B6577 !important; }
+html:not(.dark-theme) .compact-filters-card .filter-reset-btn:hover { color: #B91C1C !important; }
+html:not(.dark-theme) .compact-filters-card .filter-item label,
+html:not(.dark-theme) .compact-filters-card .compact-label,
+html:not(.dark-theme) .compact-filters-card .toolbar-section-label { color: #5B6577 !important; }
+html:not(.dark-theme) .compact-filters-card .filter-input-with-icon input,
+html:not(.dark-theme) .compact-filters-card .filter-item select {
+  background: #F8FAFC !important;
+  border-color: rgba(11, 27, 50, 0.12) !important;
+  color: #0B1B32 !important;
+}
+html:not(.dark-theme) .compact-filters-card .filter-input-with-icon input::placeholder { color: #8A94A6 !important; }
+html:not(.dark-theme) .compact-filters-card .filter-input-with-icon input:focus,
+html:not(.dark-theme) .compact-filters-card .filter-item select:focus { background: #FFFFFF !important; border-color: #C5A059 !important; }
+html:not(.dark-theme) .compact-filters-card .filter-item select option,
+html:not(.dark-theme) .compact-filters-card .filter-item select optgroup { background: #FFFFFF !important; color: #0B1B32 !important; }
+html:not(.dark-theme) .compact-filters-card .price-tag-value { color: #7C5E30 !important; }
+html:not(.dark-theme) .compact-filters-card .compact-range-slider { accent-color: #A9824A !important; }
+html:not(.dark-theme) .compact-filters-card .quick-price-pills-grid .price-mini-pill,
+html:not(.dark-theme) .compact-filters-card .compact-location-chip { background: #F8FAFC !important; border-color: rgba(11, 27, 50, 0.12) !important; color: #334155 !important; }
+html:not(.dark-theme) .compact-filters-card .quick-price-pills-grid .price-mini-pill:hover,
+html:not(.dark-theme) .compact-filters-card .compact-location-chip:hover { background: #FBF6EC !important; border-color: #C5A059 !important; color: #7C5E30 !important; }
+html:not(.dark-theme) .compact-filters-card .quick-price-pills-grid .price-mini-pill.active,
+html:not(.dark-theme) .compact-filters-card .compact-location-chip.active,
+html:not(.dark-theme) .compact-filters-card .bedroom-pill.active { background: #0B1B32 !important; border-color: #0B1B32 !important; color: #FFFFFF !important; }
+html:not(.dark-theme) .compact-filters-card .compact-bedroom-pills { background: #F8FAFC !important; border-color: rgba(11, 27, 50, 0.12) !important; }
+html:not(.dark-theme) .compact-filters-card .bedroom-pill { color: #5B6577 !important; }
+html:not(.dark-theme) .compact-filters-card .bedroom-pill:hover { background: #FBF6EC !important; color: #7C5E30 !important; }
+html:not(.dark-theme) .compact-filters-card .filter-unified-toolbar { background: #F8FAFC !important; border-color: rgba(11, 27, 50, 0.08) !important; }

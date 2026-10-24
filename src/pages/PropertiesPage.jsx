@@ -23,6 +23,7 @@ import { updatePageSeo, buildBreadcrumbSchema } from '../utils/seoHelper';
 import { track } from '../utils/analytics';
 import { searchPropertiesSemantic, parseSemanticQuery } from '../utils/semanticSearchEngine';
 import { hasLandShare } from '../utils/buildingFeatures';
+import '../styles/light-headers.css';
 
 // Area centre for listings placed only by their area (map bubbles, "search this area")
 const areaCenterOf = (key) => {
