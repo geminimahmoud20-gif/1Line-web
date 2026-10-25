@@ -1,0 +1,50 @@
+/* Search landing pages (/sohag/:kind/:area?): light header, the listings grid, nearby searches, FAQ */
+.ld-page { --ld-ink: #0B1B32; --ld-muted: #5B677A; --ld-line: #E2E8F0; --ld-card: #FFFFFF; --ld-soft: #F6F7F9; --ld-gold: #A87B1E;
+  max-width: 1240px; margin: 0 auto; padding: 24px 16px 48px; color: var(--ld-ink); }
+.dark-theme .ld-page { --ld-ink: #E8EDF5; --ld-muted: #9AA8BD; --ld-line: #24324A; --ld-card: #111C2E; --ld-soft: #0E1828; --ld-gold: #E0B85A; }
+.ld-head { display: grid; gap: 12px; margin-bottom: 24px; }
+.ld-crumbs { display: flex; flex-wrap: wrap; gap: 6px; font-size: 0.85rem; color: var(--ld-muted); }
+.ld-crumbs a { color: var(--ld-muted); text-decoration: none; }
+.ld-crumbs a:hover { color: var(--ld-gold); }
+.ld-crumbs [aria-current] { color: var(--ld-ink); font-weight: 700; }
+.ld-head h1 { margin: 0; font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 800; line-height: 1.35; }
+.ld-intro { margin: 0; max-width: 72ch; color: var(--ld-muted); font-size: 1rem; line-height: 1.9; }
+.ld-facts { display: flex; flex-wrap: wrap; gap: 10px; margin: 4px 0 0; }
+.ld-facts div { padding: 10px 16px; border: 1px solid var(--ld-line); border-radius: 12px; background: var(--ld-card); }
+.ld-facts dt { font-size: 0.78rem; color: var(--ld-muted); }
+.ld-facts dd { margin: 2px 0 0; font-size: 1.15rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.ld-facts small { font-size: 0.7em; color: var(--ld-muted); }
+.ld-grid { margin-bottom: 32px; }
+.ld-ask { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin: 8px 0 32px; padding: 20px; border-radius: 16px; background: var(--ld-soft); border: 1px solid var(--ld-line); }
+.ld-ask h2 { margin: 0 0 4px; font-size: 1.2rem; }
+.ld-ask p { margin: 0; color: var(--ld-muted); max-width: 60ch; line-height: 1.8; }
+.ld-ask-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.ld-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 12px; font-weight: 700; text-decoration: none; }
+.ld-btn--primary { background: #0B1B32; color: #FFFFFF; }
+.dark-theme .ld-btn--primary { background: #E0B85A; color: #0B1B32; }
+.ld-btn--wa { background: #16A34A; color: #FFFFFF; }
+.ld-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-bottom: 32px; }
+.ld-links h2, .ld-faq h2 { margin: 0 0 12px; font-size: 1.1rem; }
+.ld-links ul { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.ld-links a { display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 0 14px; border: 1px solid var(--ld-line); border-radius: 999px; background: var(--ld-card); color: var(--ld-ink); font-size: 0.88rem; font-weight: 600; text-decoration: none; }
+.ld-links a:hover { border-color: var(--ld-gold); }
+.ld-links small { color: var(--ld-muted); }
+.ld-faq details { border-bottom: 1px solid var(--ld-line); padding: 12px 0; }
+.ld-faq summary { cursor: pointer; font-weight: 700; line-height: 1.7; }
+.ld-faq details p { margin: 8px 0 0; color: var(--ld-muted); line-height: 1.85; }
+.ld-note { display: flex; align-items: center; gap: 6px; margin: 14px 0 0; color: var(--ld-muted); font-size: 0.82rem; }
+@media (max-width: 640px) {
+  .ld-page { padding-top: 16px; }
+  .ld-facts { flex-wrap: nowrap; gap: 8px; }
+  .ld-facts div { flex: 1 1 0; min-width: 0; padding: 8px 10px; }
+  .ld-facts dd { font-size: 1rem; white-space: nowrap; }
+  .ld-facts dd small { display: block; font-size: 0.72rem; }
+  .ld-ask { padding: 16px; }
+  .ld-ask-actions, .ld-btn { width: 100%; justify-content: center; }
+}
+/* The "browse by kind and area" block under the listings page */
+.ld-browse { padding-top: 8px; }
+.ld-browse > h2 { margin: 0 0 14px; font-size: 1.2rem; }
+.ld-browse h3 { margin: 0 0 10px; font-size: 1rem; }
+.ld-browse h3 a { color: var(--ld-ink); text-decoration: none; }
+.ld-browse h3 a:hover { color: var(--ld-gold); }

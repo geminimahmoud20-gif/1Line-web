@@ -24,6 +24,7 @@ import { track } from '../utils/analytics';
 import { searchPropertiesSemantic, parseSemanticQuery } from '../utils/semanticSearchEngine';
 import { hasLandShare } from '../utils/buildingFeatures';
 import '../styles/light-headers.css';
+import LandingLinks from '../components/properties/LandingLinks';
 
 // Area centre for listings placed only by their area (map bubbles, "search this area")
 const areaCenterOf = (key) => {
@@ -632,6 +633,7 @@ export default function PropertiesPage({
           </div>
         )}
       </div>
+      <LandingLinks properties={properties} isAr={lang === 'ar'} />
     </div>
   );
 }

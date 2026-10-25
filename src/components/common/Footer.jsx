@@ -91,6 +91,7 @@ export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
             <h4 className="footer-col-title">{isAr ? 'العقارات والمشروعات' : 'Properties & Portals'}</h4>
             <ul className="footer-links">
               <li><Link to="/properties">{isAr ? 'استكشاف كافة العقارات' : 'Explore Properties'}</Link></li>
+              <li><Link to="/sohag/apartments-for-sale">{isAr ? 'شقق للبيع في سوهاج' : 'Apartments for sale in Sohag'}</Link></li>
               <li><Link to="/projects">{isAr ? 'المشروعات والكمبوندات' : 'Mega Projects Hub'}</Link></li>
               <li><Link to="/market-intelligence">{isAr ? 'مؤشرات أسعار السوق' : 'Market Intelligence'}</Link></li>
               <li><Link to="/financing">{isAr ? 'حاسبة تقسيط المشروعات' : 'Project installment calculator'}</Link></li>

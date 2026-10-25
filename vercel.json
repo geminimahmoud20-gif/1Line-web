@@ -15,7 +15,9 @@
       "destination": "/index.html"
     },
     { "source": "/properties/:id", "destination": "/index.html" },
-    { "source": "/projects/:id", "destination": "/index.html" }
+    { "source": "/projects/:id", "destination": "/index.html" },
+    { "source": "/sohag/:kind", "destination": "/index.html" },
+    { "source": "/sohag/:kind/:area", "destination": "/index.html" }
   ],
   "headers": [
     {
