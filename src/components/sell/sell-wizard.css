@@ -152,9 +152,12 @@
   .sw-steps__dot, .sw-steps__label { display: none; }
   .sw-steps__mobile { display: block; margin: 0 0 18px; font-size: 0.875rem; font-weight: 600; color: var(--sw-muted); }
   .sw-title { font-size: 1.25rem; }
-  .sw-types { display: flex; flex-wrap: wrap; }
-  .sw-type { flex: 1 1 28%; padding: 12px 6px; font-size: 0.875rem; }
+  /* Two even columns of icon + name rows: no tile left alone on the last row, and half the height */
+  .sw-types { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .sw-type { flex-direction: row; justify-content: flex-start; gap: 8px; min-height: 48px; padding: 8px 12px; font-size: 0.875rem; text-align: start; line-height: 1.35; }
+  .sw-type svg { flex: none; }
   .sw-grid { grid-template-columns: 1fr; }
+  .sw-field select { text-overflow: ellipsis; padding-inline-end: 28px; }
   .sw-slots { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .sw-slot__hint { display: none; }
   .sw-actions .sw-btn--primary { flex: 1; }

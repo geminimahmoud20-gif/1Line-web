@@ -868,3 +868,23 @@
 .dark-theme .section-heading-desc {
     color: #CBD5E1 !important;
 }
+/* Phones: the footer was a screen and a half. Links become wrapped chips, the long description
+   and the badge go (the header and the page already say it), contact stays one tap away. */
+@media (max-width: 640px) {
+    .site-footer { padding: 28px 0 calc(84px + env(safe-area-inset-bottom, 0px)) !important; }
+    .footer-container { padding: 0 16px !important; }
+    .footer-grid { gap: 20px !important; }
+    .footer-grid > .footer-col { grid-column: 1 / -1 !important; }
+    .footer-desc, .footer-trust-badge { display: none !important; }
+    .footer-brand-header { margin-bottom: 4px; }
+    .footer-col-title { margin: 0 0 10px !important; padding-bottom: 6px !important; font-size: 0.9rem !important; }
+    .footer-links { display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; gap: 8px !important; }
+    .footer-links li { margin: 0 !important; padding: 0 !important; }
+    .footer-links a, .footer-links .footer-btn-link {
+        display: inline-flex !important; align-items: center; min-height: 40px !important; padding: 0 12px !important;
+        border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 999px; font-size: 0.82rem !important; line-height: 1.3 !important;
+    }
+    .footer-contact-item { margin-bottom: 8px !important; font-size: 0.85rem; }
+    .footer-wa-pill { width: 100%; justify-content: center; min-height: 44px; }
+    .footer-bottom-bar { margin-top: 20px !important; padding-top: 14px !important; gap: 10px !important; }
+}

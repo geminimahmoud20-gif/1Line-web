@@ -564,3 +564,10 @@ html .pcx-chip--remote.pcx-chip--icon::after { content: ''; position: absolute; 
   .pcx, .pcx *, .pcx *::before { transition: none !important; animation: none !important; }
   .property-card-modern.pcx:hover { transform: none; }
 }
+
+/* Phones: a shorter card (wider photo, no extras row; the unit page lists them) so a screen
+   shows more than one listing */
+@media (max-width: 640px) {
+  .pcx-media { aspect-ratio: 16 / 10; }
+  .pcx-feats { display: none; }
+}

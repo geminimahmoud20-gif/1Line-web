@@ -38,6 +38,7 @@ export default function MarketIntelligencePage({ lang = 'ar', properties = [] })
 
   const live = useMemo(() => liveListings(properties), [properties]);
   const stats = useMemo(() => areaMarketStats(properties), [properties]);
+  const hasCommercial = stats.some((d) => d.commercial?.medianPpm);
   const matches = useMemo(() => budgetMatches(properties, userBudget), [properties, userBudget]);
   const overall = useMemo(() => {
     const ppm = live.filter((p) => Number(p.size) > 0 && ['apartment', 'villa', 'duplex', 'penthouse', 'studio', 'residential'].includes(p.type))
@@ -169,6 +170,7 @@ export default function MarketIntelligencePage({ lang = 'ar', properties = [] })
               <p>{isAr ? 'الوسيط = السعر اللي نص العروض أقل منه ونصها أعلى. السكني والتجاري محسوبين كل واحد لوحده.' : 'Median = half the listings are below it, half above. Homes and commercial are computed separately.'}</p>
             </div>
           </div>
+          {/* The commercial column only shows once some area has a commercial median */}
           {stats.length === 0 ? (
             <p style={{ margin: '12px 0 0' }}>{isAr ? 'لسه مفيش عقارات منشورة كفاية لحساب المتوسطات.' : 'Not enough published listings yet.'}</p>
           ) : (
@@ -179,7 +181,7 @@ export default function MarketIntelligencePage({ lang = 'ar', properties = [] })
                     <th>{isAr ? 'المنطقة' : 'District'}</th>
                     <th>{isAr ? 'عروض حالية' : 'Listings'}</th>
                     <th>{isAr ? 'متر السكني (وسيط)' : 'Homes / m² (median)'}</th>
-                    <th>{isAr ? 'متر التجاري (وسيط)' : 'Commercial / m² (median)'}</th>
+                    {hasCommercial && <th>{isAr ? 'متر التجاري (وسيط)' : 'Commercial / m² (median)'}</th>}
                     <th>{isAr ? 'نطاق الأسعار' : 'Price range'}</th>
                   </tr>
                 </thead>
@@ -193,7 +195,7 @@ export default function MarketIntelligencePage({ lang = 'ar', properties = [] })
                         <td><div className="district-cell"><MapPin size={15} className="text-primary" /><strong>{areaName(d.areaId)}</strong></div></td>
                         <td>{n(d.total)}</td>
                         <td>{d.residential.medianPpm ? <strong className="cell-price">{n(d.residential.medianPpm)} {isAr ? 'ج.م' : 'EGP'}</strong> : '—'}{d.residential.ppmSample ? <small style={{ display: 'block', opacity: 0.7 }}>{isAr ? `من ${d.residential.ppmSample} عرض` : `from ${d.residential.ppmSample}`}</small> : null}</td>
-                        <td>{d.commercial.medianPpm ? <strong className="cell-price">{n(d.commercial.medianPpm)} {isAr ? 'ج.م' : 'EGP'}</strong> : '—'}{d.commercial.ppmSample ? <small style={{ display: 'block', opacity: 0.7 }}>{isAr ? `من ${d.commercial.ppmSample} عرض` : `from ${d.commercial.ppmSample}`}</small> : null}</td>
+                        {hasCommercial && <td>{d.commercial.medianPpm ? <strong className="cell-price">{n(d.commercial.medianPpm)} {isAr ? 'ج.م' : 'EGP'}</strong> : '—'}{d.commercial.ppmSample ? <small style={{ display: 'block', opacity: 0.7 }}>{isAr ? `من ${d.commercial.ppmSample} عرض` : `from ${d.commercial.ppmSample}`}</small> : null}</td>}
                         <td>{Number.isFinite(min) ? `${short(min)} – ${short(max)}` : '—'}</td>
                       </tr>
                     );

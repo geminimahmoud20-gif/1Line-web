@@ -169,9 +169,8 @@ function ExpatTourArt({ isAr }) {
         <div className="hx-expat-hud-top">
           <div className="hx-hud-live-tag">
             <span className="hx-hud-rec-dot" />
-            <span>{isAr ? 'بث حي ومباشر' : 'LIVE ON-SITE'}</span>
+            <span>{isAr ? 'مكالمة فيديو' : 'VIDEO CALL'}</span>
           </div>
-          <span className="hx-hud-quality">4K HDR • 60fps</span>
         </div>
 
         {/* Crosshair telemetry */}

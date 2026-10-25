@@ -1168,3 +1168,10 @@
   letter-spacing: 2px;
 }
 
+
+/* Phones: arrows only on prev / next so the whole pager stays on one line */
+@media (max-width: 640px) {
+  .pagination-controls-row { flex-wrap: nowrap; }
+  .pagination-nav-btn { min-width: 44px; padding: 0 10px; }
+  .pagination-nav-btn span { display: none; }
+}
