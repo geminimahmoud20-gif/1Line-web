@@ -310,3 +310,40 @@ html .demands-add-cta .btn { display: inline-flex; align-items: center; gap: 8px
 @media (max-width: 1440px) and (min-width: 1141px) {
   html .header-client-account-btn .account-text { display: none !important; }
 }
+
+/* Financing calculator on phones: typed fields a finger can hit, an even grid of preset chips,
+   and amounts that keep "ج.م" on their own line instead of breaking under the number */
+@media (max-width: 640px) {
+  html .calc-direct-input-wrap { min-height: 42px; padding: 4px 10px; }
+  html .direct-num-input { min-height: 32px; font-size: 1rem; }
+  html .calc-range { height: 8px; margin-block: 10px; }
+  html .calc-range::-webkit-slider-thumb { width: 26px; height: 26px; }
+  html .calc-range::-moz-range-thumb { width: 26px; height: 26px; }
+  html .calc-quick-chips-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+  html .calc-chip-btn { width: 100%; padding: 4px 6px; font-size: 0.8rem; line-height: 1.35; white-space: normal; text-align: center; }
+  html .calc-breakdown-glass-row { gap: 10px; }
+  html .calc-breakdown-glass-row .glass-row-lbl { flex: 1 1 auto; min-width: 0; }
+  html .calc-breakdown-glass-row .glass-row-val { flex: none; white-space: nowrap; }
+}
+
+/* Phones: the smallest recurring labels (card chips and features, price per m², photo count,
+   bottom-bar tabs, slider ends, search field labels) were 11–11.5px, too small for Arabic */
+@media (max-width: 640px) {
+  html .pcx-chip, html .pcx-feat, html .pcx-feat span, html .pcx-ppm, html .pcx-ppm bdi { font-size: 0.8rem; }
+  html .pcx-count, html .pcx-count bdi { font-size: 0.75rem; }
+  html .mob-tab-btn span { font-size: 0.75rem; }
+  html .calc-range-limits-ltr span, html .hx-field-label, html .footer-brand-sub, html .prop-type-info p { font-size: 0.78rem; }
+  html .pj-facts dt { font-size: 0.78rem; }
+}
+
+/* About page on phones: the hero had no side gutter (badge and stat cards touched the screen
+   edge) and the four stats took a screen and a half, one per row */
+@media (max-width: 640px) {
+  html .about-hero-content { padding-inline: 16px; box-sizing: border-box; }
+  html .about-hero-badge { max-width: 100%; box-sizing: border-box; padding: 7px 14px; font-size: 0.8rem; line-height: 1.6; }
+  html .about-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  html .about-stat-card { padding: 16px 10px; }
+  html .about-stat-icon-box { width: 38px; height: 38px; margin-bottom: 8px; }
+  html .about-stat-number { font-size: 1.6rem; }
+  html .about-stat-sub { font-size: 0.76rem; }
+}

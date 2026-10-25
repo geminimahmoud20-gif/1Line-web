@@ -510,7 +510,10 @@
 
 @media (max-width: 600px) {
   .hx-hero { min-height: auto; }
-  .hx-hero-inner { width: calc(100% - 24px); padding-block: 36px 32px; }
+  .hx-hero-inner { width: calc(100% - 24px); padding-block: 20px 24px; }
+  /* Phones: the headline and the search fit the first screen, above the bottom bar */
+  .hx-eyebrow, .hx-lede { display: none; }
+  .hx-title { font-size: clamp(1.5rem, 6.6vw, 1.8rem); line-height: 1.35; margin-bottom: 16px; }
   .hx-eyebrow { font-size: 0.68rem; letter-spacing: 0.16em; margin-bottom: 16px; gap: 8px; }
   .hx-eyebrow .hx-eyebrow-emblem { width: 20px; height: 20px; }
   .hx-eyebrow i { display: none; }
@@ -3422,4 +3425,10 @@
   /* Tablets: 6 and 4 cards as two-column rows, 3 stay in one row */
   .homepage-wrapper .properties-grid-4.hx-home-grid--6,
   .homepage-wrapper .properties-grid-4.hx-home-grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Phones: the illustration panels (audit sheet, price bars, radar, video call, seller photo cards)
+   double each section's height and repeat the copy beside them, so only the copy stays */
+@media (max-width: 640px) {
+  .hx-cert-modern, .hx-comps-modern, .hx-radar-modern, .hx-expat-modern, .hx-seller-media { display: none; }
 }

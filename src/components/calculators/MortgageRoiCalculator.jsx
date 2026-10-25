@@ -4,6 +4,10 @@ import { trackEvent } from '../../utils/visitorTracker';
 import { getWhatsAppUrl, getDynamicPhone } from '../../utils/founderCmsData';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
 
+// Big amounts read as 3,500,000 while typing; the field takes digits only
+const groupDigits = (n) => (Number(n) > 0 ? Number(n).toLocaleString('en-US') : '');
+const onlyDigits = (v) => String(v).replace(/[^\d]/g, '');
+
 export default function MortgageRoiCalculator({ 
   lang = 'ar', 
   currency = 'EGP',
@@ -181,12 +185,14 @@ export default function MortgageRoiCalculator({
               </label>
               <div className="calc-direct-input-wrap">
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
+                  dir="ltr"
                   min="300000"
                   max="50000000"
                   step="25000"
-                  value={price}
-                  onChange={(e) => setPrice(Math.min(50000000, Math.max(0, parseInt(e.target.value) || 0)))}
+                  value={groupDigits(price)}
+                  onChange={(e) => setPrice(Math.min(50000000, Math.max(0, parseInt(onlyDigits(e.target.value)) || 0)))}
                   className="direct-num-input"
                   title={isAr ? 'اكتب السعر هنا مباشرة' : 'Type price directly'}
                 />
@@ -258,12 +264,14 @@ export default function MortgageRoiCalculator({
 
                     <div className="calc-direct-input-wrap">
                       <input
-                        type="number"
+                        type="text"
+                        inputMode="numeric"
+                        dir="ltr"
                         min="50000"
                         max={price}
                         step="10000"
-                        value={downPaymentAmount}
-                        onChange={(e) => handleDownpaymentAmountChange(e.target.value)}
+                        value={groupDigits(downPaymentAmount)}
+                        onChange={(e) => handleDownpaymentAmountChange(onlyDigits(e.target.value))}
                         className="direct-num-input"
                         aria-label={isAr ? 'قيمة الدفعة الأولى بالجنيه' : 'Downpayment amount in EGP'}
                         title={isAr ? 'اكتب قيمة المقدم بالجنيه مباشرة' : 'Type downpayment amount in EGP'}
@@ -475,12 +483,14 @@ export default function MortgageRoiCalculator({
                   <label className="calc-field-title">{isAr ? 'الإيجار الشهري المتوقع' : 'Expected Monthly Rent'}</label>
                   <div className="calc-direct-input-wrap">
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
+                      dir="ltr"
                       min="2000"
                       max="200000"
                       step="500"
-                      value={monthlyRent}
-                      onChange={(e) => setMonthlyRent(Math.max(0, parseInt(e.target.value) || 0))}
+                      value={groupDigits(monthlyRent)}
+                      onChange={(e) => setMonthlyRent(Math.max(0, parseInt(onlyDigits(e.target.value)) || 0))}
                       className="direct-num-input"
                       aria-label={isAr ? 'الإيجار الشهري المتوقع بالجنيه' : 'Expected monthly rent'}
                     />
