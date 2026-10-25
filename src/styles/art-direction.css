@@ -884,7 +884,10 @@
         display: inline-flex !important; align-items: center; min-height: 40px !important; padding: 0 12px !important;
         border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 999px; font-size: 0.82rem !important; line-height: 1.3 !important;
     }
-    .footer-contact-item { margin-bottom: 8px !important; font-size: 0.85rem; }
+    /* One even row per contact line: icon centred on the text, phone and email still 40px to tap */
+    .footer-contact-item { align-items: center !important; min-height: 40px; margin-bottom: 2px !important; font-size: 0.85rem; }
+    .footer-contact-item .contact-icon { margin-top: 0 !important; }
+    .site-footer .footer-contact-item .contact-link { min-height: 40px !important; }
     .footer-wa-pill { width: 100%; justify-content: center; min-height: 44px; }
     .footer-bottom-bar { margin-top: 20px !important; padding-top: 14px !important; gap: 10px !important; }
 }
