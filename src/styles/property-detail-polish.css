@@ -390,3 +390,8 @@ html .property-detail-hero-stage .detail-location-text .code-copy-pill-btn:hover
   .amenities-category-tabs::-webkit-scrollbar { display: none; }
   .amenities-category-tabs .amenity-tab-btn { flex: none; white-space: nowrap; }
 }
+
+/* Visit booking: the day is chosen from chips (common/DayChips), each row on its own line */
+.pd-book-day { min-width: 0; }
+.pd-book-day-label { display: block; margin-bottom: 6px; font-size: 0.85rem; font-weight: 700; color: var(--text-secondary, #475569); }
+.dark-theme .pd-book-day-label { color: #CBD5E1; }

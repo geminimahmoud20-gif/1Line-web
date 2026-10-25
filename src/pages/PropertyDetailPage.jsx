@@ -13,6 +13,7 @@ import LegalAuditCard from '../components/properties/LegalAuditCard';
 import WhatsAppAutomationBar from '../components/properties/WhatsAppAutomationBar';
 import DepositModal from '../components/properties/DepositModal';
 import OfferCountdown from '../components/properties/OfferCountdown';
+import DayChips from '../components/common/DayChips';
 import { getActiveOffer } from '../utils/propertyOffers';
 import NotFoundPage from './NotFoundPage';
 import PriceBenchmarkIndicator from '../components/properties/PriceBenchmarkIndicator';
@@ -783,15 +784,9 @@ export default function PropertyDetailPage({
                   </fieldset>
 
                   <div className="form-row-2col">
-                    <div className="form-group-item">
-                      <label htmlFor="pd-book-date">{isAr ? 'اليوم المفضل' : 'Preferred day'}</label>
-                      <input
-                        id="pd-book-date"
-                        type="date"
-                        min={todayIso()}
-                        value={bookingForm.date}
-                        onChange={(e) => setBookingForm({ ...bookingForm, date: e.target.value })}
-                      />
+                    <div className="form-group-item pd-book-day">
+                      <span className="pd-book-day-label">{isAr ? 'اليوم المفضل' : 'Preferred day'}</span>
+                      <DayChips value={bookingForm.date} onChange={(d) => setBookingForm({ ...bookingForm, date: d })} isAr={isAr} label={isAr ? 'اليوم المفضل' : 'Preferred day'} />
                     </div>
                     <fieldset className="form-group-item pd-fieldset">
                       <legend>{isAr ? 'الفترة' : 'Time'}</legend>

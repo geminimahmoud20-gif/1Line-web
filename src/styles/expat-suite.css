@@ -66,6 +66,9 @@
 .xs-input-suffix input { padding-inline-end: 64px !important; }
 .xs-input-suffix em { position: absolute; inset-inline-end: 12px; font-style: normal; font-size: 0.74rem; color: var(--xs-muted); pointer-events: none; }
 .xs-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+/* Day chips need the full width; the time slots sit under them in an even 2×2 grid */
+.xs-row--day { grid-template-columns: minmax(0, 1fr); }
+.xs-row--day .xs-slots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .xs-sub { font-size: 0.8rem; font-weight: 700; color: var(--xs-ink); }
 .xs-mt { margin-top: 18px !important; }
 .xs-hp { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
