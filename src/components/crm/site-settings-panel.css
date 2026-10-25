@@ -14,3 +14,4 @@
 @media (max-width: 767px) {
   .crm-ss__grid { grid-template-columns: 1fr; }
 }
+.crm-ss__hint { margin: 12px 0 0; color: var(--crm-muted); font-size: var(--crm-text-xs); line-height: 1.7; }

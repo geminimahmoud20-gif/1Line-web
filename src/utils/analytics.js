@@ -11,6 +11,7 @@
 
 const ENDPOINT = '/api/track';
 import { trackGa4PageView, trackGa4ContactClick, trackGa4FormStart, trackGa4LeadSubmitted } from './ga4.js';
+import { sendMetaEvent } from './metaPixel.js';
 const CONSENT_KEY = 'oneline_consent_v1';
 const VID_KEY = 'oneline_vid';
 const FIRST_SEEN_KEY = 'oneline_vid_first';
@@ -191,6 +192,8 @@ export function track(type, meta = {}) {
   } else if (type === 'lead_submitted') {
     trackGa4LeadSubmitted({ form: m.form, leadId: m.leadId });
   }
+  // …and to the Meta Pixel (same consent and private-page rules, no personal data)
+  sendMetaEvent(type, m);
 }
 
 /** The fields the collector keeps for a listing. */
