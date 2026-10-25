@@ -1,6 +1,7 @@
 // =============================================================
 //  Site settings edited in CRM → إدارة المنظومة → إعدادات الموقع (Firestore settings/site_cms):
-//  contact details, social links, FAQ, testimonials and the Google title/description of each page.
+//  contact details, social links, FAQ, testimonials, the Google title/description of each page,
+//  and the Meta Pixel ID.
 //
 //  Visitors get them inside the cached /api/catalog response (no Firestore read per visit); the CRM
 //  and local dev, where that route is missing, read the document directly. Until either arrives the
@@ -49,7 +50,8 @@ export const DEFAULT_SITE_SETTINGS = Object.freeze({
   social: Object.freeze({}),
   faq: Object.freeze([]),
   testimonials: Object.freeze([]),
-  seo: Object.freeze({})
+  seo: Object.freeze({}),
+  tracking: Object.freeze({})
 });
 
 const str = (v, max) => (typeof v === 'string' ? v.replace(/\s+/g, ' ').trim().slice(0, max) : '');
@@ -126,7 +128,12 @@ export function normalizeSiteSettings(raw) {
     if (Object.values(entry).some(Boolean)) seo[page.path] = entry;
   }
 
-  return { contact, social, faq, testimonials, seo };
+  // Ad measurement: the Meta Pixel ID (digits only), loaded after consent by utils/metaPixel
+  const t = src.tracking && typeof src.tracking === 'object' ? src.tracking : {};
+  const pixel = String(t.metaPixelId ?? '').replace(/\s+/g, '');
+  const tracking = /^\d{8,20}$/.test(pixel) ? { metaPixelId: pixel } : {};
+
+  return { contact, social, faq, testimonials, seo, tracking };
 }
 
 // ---- store ----

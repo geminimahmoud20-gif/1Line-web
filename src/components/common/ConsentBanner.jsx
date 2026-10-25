@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { isPrivatePath } from '../../utils/privatePaths';
 import { initGa4 } from '../../utils/ga4';
+import { initMetaPixel, sendMetaEvent } from '../../utils/metaPixel';
 
 const STORAGE_KEY = 'oneline_consent_v1';
 const CLARITY_ID = 'ykuhk4dxes';
@@ -50,8 +51,10 @@ export default function ConsentBanner({ lang = 'ar' }) {
     } else if (choice === 'accepted') {
       startClarity();
       initGa4();
+      // The page view that happened before the click counts once the Pixel can run
+      if (initMetaPixel()) sendMetaEvent('page_view', { path: location.pathname });
     }
-  }, [choice, onPrivatePage]);
+  }, [choice, onPrivatePage]); // eslint-disable-line react-hooks/exhaustive-deps -- location.pathname: page views come from App
 
   if (choice || onPrivatePage) return null;
 
@@ -70,8 +73,8 @@ export default function ConsentBanner({ lang = 'ar' }) {
         {/* Full sentence on desktop; one line on phones so the banner doesn't cover the hero search */}
         <span className="lx-consent-long">
           {isAr
-            ? 'بموافقتك نقيس تصفحك للموقع (الوحدات والبحث والحاسبة) لنرشّح لك الأنسب، من غير أسماء أو أرقام. بياناتك في النماذج تُستخدم فقط للرد على طلبك.'
-            : 'We use analytics to improve the site and only run them with your consent. Form data is used only to respond to your request.'}
+            ? 'بموافقتك نقيس تصفحك للموقع (الوحدات والبحث والحاسبة) ونتائج إعلاناتنا على فيسبوك وإنستجرام، لنرشّح لك الأنسب، من غير أسماء أو أرقام. بياناتك في النماذج تُستخدم فقط للرد على طلبك.'
+            : 'We use analytics, including Facebook/Instagram ad measurement, only with your consent. Form data is used only to respond to your request.'}
         </span>
         <span className="lx-consent-short">
           {isAr ? 'نشغّل أدوات القياس بموافقتك فقط.' : 'Analytics run only with your consent.'}

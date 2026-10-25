@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Trash2, ArrowUp, ArrowDown, Save, Mail, Share2, CircleHelp, Quote, Search } from 'lucide-react';
+import { Plus, Trash2, ArrowUp, ArrowDown, Save, Mail, Share2, CircleHelp, Quote, Search, Megaphone } from 'lucide-react';
 import { PageHeader, Tabs, Card, CardHeader, Input, Textarea, Select, Button, IconButton, EmptyState, useConfirm } from '../ui';
 import { saveSettings, loadSettings } from '../../firebaseLazy';
 import {
@@ -24,7 +24,8 @@ const toForm = (s) => ({
   social: Object.fromEntries(SOCIAL_NETWORKS.map((n) => [n.id, s.social[n.id] || ''])),
   faq: s.faq.map((f) => ({ ...f })),
   testimonials: s.testimonials.map((t) => ({ ...t })),
-  seo: Object.fromEntries(SEO_PAGES.map((p) => [p.path, { title_ar: '', description_ar: '', title_en: '', description_en: '', ...(s.seo[p.path] || {}) }]))
+  seo: Object.fromEntries(SEO_PAGES.map((p) => [p.path, { title_ar: '', description_ar: '', title_en: '', description_en: '', ...(s.seo[p.path] || {}) }])),
+  tracking: { metaPixelId: s.tracking?.metaPixelId || '' }
 });
 
 const move = (list, i, dir) => {
@@ -63,6 +64,9 @@ export default function SiteSettingsPanel({ lang = 'ar', triggerToast }) {
 
   // Links that would be dropped on save (not https, or the wrong site for that network)
   const badSocial = SOCIAL_NETWORKS.filter((n) => form.social[n.id].trim() && !normalizeSiteSettings({ social: { [n.id]: form.social[n.id] } }).social[n.id]);
+
+  const pixelInput = form.tracking.metaPixelId.trim();
+  const badPixel = Boolean(pixelInput) && !normalizeSiteSettings({ tracking: { metaPixelId: pixelInput } }).tracking.metaPixelId;
 
   const handleSave = async () => {
     const clean = normalizeSiteSettings(form);
@@ -114,7 +118,8 @@ export default function SiteSettingsPanel({ lang = 'ar', triggerToast }) {
           { id: 'social', label: L('السوشيال', 'Social'), icon: <Share2 size={16} aria-hidden="true" /> },
           { id: 'faq', label: L('الأسئلة الشائعة', 'FAQ'), icon: <CircleHelp size={16} aria-hidden="true" />, count: form.faq.length || null },
           { id: 'testimonials', label: L('آراء العملاء', 'Testimonials'), icon: <Quote size={16} aria-hidden="true" />, count: form.testimonials.length || null },
-          { id: 'seo', label: L('جوجل', 'Google'), icon: <Search size={16} aria-hidden="true" /> }
+          { id: 'seo', label: L('جوجل', 'Google'), icon: <Search size={16} aria-hidden="true" /> },
+          { id: 'ads', label: L('الإعلانات', 'Ads'), icon: <Megaphone size={16} aria-hidden="true" /> }
         ]}
       />
 
@@ -148,6 +153,35 @@ export default function SiteSettingsPanel({ lang = 'ar', triggerToast }) {
                 />
               ))}
             </div>
+          </Card>
+        )}
+
+        {tab === 'ads' && (
+          <Card>
+            <CardHeader
+              title={L('Meta Pixel (فيسبوك وإنستجرام)', 'Meta Pixel (Facebook & Instagram)')}
+              description={L(
+                'بيقيس الإعلانات: مين فتح وحدة، ومين داس واتساب أو اتصل، ومين بعت طلب، عشان فيسبوك يوصّل الإعلان للناس اللي بتتواصل فعلاً، وتعمل جمهور لإعادة الاستهداف. بيشتغل بس عند الزوار اللي وافقوا على القياس، ومش بيشتغل في الـCRM ولا في حساب العميل، ومش بيبعت أسماء ولا أرقام.',
+                'Measures ads: who opened a listing, tapped WhatsApp or call, or sent a request, so Meta can deliver to people who actually get in touch and you can build retargeting audiences. Runs only for visitors who accept measurement, never in the CRM or a client account, and sends no names or numbers.'
+              )}
+            />
+            <div className="crm-ss__grid">
+              <Input
+                label={L('رقم الـPixel', 'Pixel ID')}
+                dir="ltr"
+                inputMode="numeric"
+                placeholder="123456789012345"
+                value={form.tracking.metaPixelId}
+                error={badPixel ? L('الرقم لازم يكون أرقام بس (من 8 لـ 20 رقم)', 'Digits only, 8 to 20') : undefined}
+                onChange={(e) => set('tracking', 'metaPixelId', e.target.value)}
+              />
+            </div>
+            <p className="crm-ss__hint">
+              {L(
+                'تلاقيه في Meta Events Manager ← مصادر البيانات ← الـPixel بتاعك (رقم طويل). سيبه فاضي عشان توقفه. الأحداث اللي بتتبعت: PageView، ViewContent (فتح وحدة)، Search، AddToWishlist، Contact (واتساب/اتصال)، Schedule (طلب معاينة)، Lead (طلب اتبعت).',
+                'Find it in Meta Events Manager → Data sources → your Pixel (a long number). Leave blank to turn it off. Events sent: PageView, ViewContent (listing opened), Search, AddToWishlist, Contact (WhatsApp/call), Schedule (visit request), Lead (request sent).'
+              )}
+            </p>
           </Card>
         )}
 
