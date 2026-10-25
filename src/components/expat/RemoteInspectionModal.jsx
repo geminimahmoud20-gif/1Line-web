@@ -5,6 +5,7 @@ import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { checkFormSpamProtection } from '../../utils/securityShield';
 import { EXPAT_COUNTRIES, getCountry, cleanText, normalizeLocalPhone, clockIn } from '../../utils/expatIntake';
 import '../../styles/expat-suite.css';
+import DayChips from '../common/DayChips';
 import { thumbUrl } from '../../utils/imageThumbs';
 
 const COVERAGE = [
@@ -18,11 +19,6 @@ const SLOTS = [
   { id: 'evening', ar: 'مساءً بعد العمل', en: 'Evening, after work' },
   { id: 'weekend', ar: 'الجمعة / السبت', en: 'Friday / Saturday' }
 ];
-
-const todayIso = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-};
 
 /**
  * "معاينة الغربة": an expat books a live video / street footage inspection of a listing.
@@ -272,11 +268,11 @@ export default function RemoteInspectionModal({ property, isOpen, onClose, lang 
 
             <fieldset className="xs-fieldset">
               <legend><CalendarDays size={15} aria-hidden="true" /> {isAr ? 'الموعد المفضل' : 'Preferred time'}</legend>
-              <div className="xs-row">
-                <label className="xs-field">
+              <div className="xs-row xs-row--day">
+                <div className="xs-field">
                   <span>{isAr ? 'اليوم (اختياري)' : 'Day (optional)'}</span>
-                  <input type="date" min={todayIso()} value={date} onChange={(e) => setDate(e.target.value)} />
-                </label>
+                  <DayChips value={date} onChange={setDate} isAr={isAr} label={isAr ? 'اليوم' : 'Day'} />
+                </div>
                 <div className="xs-slots" role="radiogroup" aria-label={isAr ? 'الفترة' : 'Time slot'}>
                   {SLOTS.map((s) => (
                     <button key={s.id} type="button" role="radio" aria-checked={slot === s.id} className={`xs-slot ${slot === s.id ? 'is-on' : ''}`} onClick={() => setSlot(s.id)}>
