@@ -4,6 +4,7 @@ import { hasNoRooms, isLandType, categoryOfType, isAgriculturalType, specFieldsF
 import { toDayInput, addDays } from '../../utils/featuredSlots';
 import PropertyExtrasEditor from './PropertyExtrasEditor';
 import BuildingFieldsEditor from './BuildingFieldsEditor';
+import HandoverFieldsEditor from './HandoverFieldsEditor';
 import PaymentTermsEditor from './PaymentTermsEditor';
 import { AVAILABILITY_OPTIONS, REVIEW_OPTIONS, reviewState } from '../../utils/listingBadges';
 import PhotoManager from './PhotoManager';
@@ -611,6 +612,7 @@ export default function PropertyFormModal({
           </div>
 
           <PaymentTermsEditor form={form} setForm={setForm} isAr={isAr} />
+          <HandoverFieldsEditor form={form} setForm={setForm} isAr={isAr} />
           <BuildingFieldsEditor form={form} setForm={setForm} isAr={isAr} />
 
           {/* Transparent costs, family hub tag and commercial/medical indicators (all optional) */}

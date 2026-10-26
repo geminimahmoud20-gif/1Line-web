@@ -37,6 +37,7 @@ import { canEditProperties, canEditLeadsRole, DESK_BY_ROLE, scopeLeadsForAccess 
 import { permsOfRole, PERM_IDS, LEGACY_DESK } from '../utils/accessModel';
 import { verifyAdminCredentials, checkRateLimit, recordFailedAttempt, resetFailedAttempts } from '../utils/securityShield';
 import { buildingFromSellerFeatures } from '../utils/buildingFeatures';
+import { handoverFromSeller } from '../utils/unitHandover';
 
 export default function CrmPage({
   lang = 'ar',
@@ -330,7 +331,7 @@ export default function CrmPage({
       size: sizeVal,
       bedrooms: roomsVal,
       floor: floorVal,
-      finishing_ar: finishVal,
+      ...handoverFromSeller(details.finishing, finishVal),
       images: imagesVal,
       // What the owner ticked on /sell: building facts for the specs, the rest as features
       building: Object.keys(buildingFromSellerFeatures(details.features)).length ? buildingFromSellerFeatures(details.features) : null,

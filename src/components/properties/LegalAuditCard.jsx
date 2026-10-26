@@ -42,7 +42,7 @@ export default function LegalAuditCard({ property, lang = 'ar' }) {
         <header className="xs-fin-head">
           <span className="xs-fin-icon"><Clock size={20} aria-hidden="true" /></span>
           <div>
-            <h3 id="xs-legal-title">{L('المراجعة القانونية لم تُنشر بعد', 'Legal review not published yet')}</h3>
+            <h3 id="xs-legal-title">{L('الموقف القانوني: لم يراجع بعد', 'Legal status: not reviewed yet')}</h3>
             <p>{L('نراجع المستندات معك قبل أي حجز أو تعاقد، ونسلمك ملخص المراجعة كتابياً.', 'We review the documents with you before any reservation or contract and give you a written summary.')}</p>
           </div>
         </header>

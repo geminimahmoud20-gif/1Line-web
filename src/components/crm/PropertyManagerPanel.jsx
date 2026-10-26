@@ -69,6 +69,10 @@ const DEFAULT_FORM_STATE = {
   floor: '',
   finishing_ar: '',
   finishing_en: '',
+  // Picked in CRM → حالة الوحدة عند التسليم; empty stays off the site
+  finishing: '',
+  completionStatus: '',
+  deliveryYear: '',
   status: 'published', // 'published' | 'hidden' | 'under_negotiation' | 'sold'
   featured: false,
   priorityRank: 0,
