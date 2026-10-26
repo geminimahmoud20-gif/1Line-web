@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ROUTE_SEO } from '../src/config/routeSeo.js';
+import { landingPages, landingListings, landingSummary, landingCopy, landingFaq, landingPath } from '../src/utils/seoLanding.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
@@ -142,17 +143,17 @@ const fromFirestoreValue = (v) => {
   return undefined;
 };
 
-async function fetchRealListings() {
+async function fetchCollection(name) {
   const out = [];
   let pageToken = '';
   try {
     for (let page = 0; page < 10; page++) {
-      const url = `https://firestore.googleapis.com/v1/projects/${FIRESTORE_PROJECT}/databases/(default)/documents/properties?pageSize=300&key=${FIRESTORE_KEY}${pageToken ? `&pageToken=${pageToken}` : ''}`;
+      const url = `https://firestore.googleapis.com/v1/projects/${FIRESTORE_PROJECT}/databases/(default)/documents/${name}?pageSize=300&key=${FIRESTORE_KEY}${pageToken ? `&pageToken=${pageToken}` : ''}`;
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), 15000);
       const res = await fetch(url, { signal: ctrl.signal });
       clearTimeout(timer);
-      if (!res.ok) { console.warn(`postbuild-seo: Firestore listings unavailable (${res.status})`); break; }
+      if (!res.ok) { console.warn(`postbuild-seo: Firestore ${name} unavailable (${res.status})`); break; }
       const data = await res.json();
       for (const d of data.documents || []) {
         const f = Object.fromEntries(Object.entries(d.fields || {}).map(([k, v]) => [k, fromFirestoreValue(v)]));
@@ -165,7 +166,51 @@ async function fetchRealListings() {
   } catch (err) {
     console.warn('postbuild-seo: could not reach Firestore —', err.message);
   }
-  return out.filter((p) => p.id && !p.deleted && !p.isDeleted && !['trash', 'hidden', 'draft', 'sold'].includes(p.status));
+  return out;
+}
+
+const fetchRealListings = async () => (await fetchCollection('properties'))
+  .filter((p) => p.id && !p.isDemo && !p.deleted && !p.isDeleted && !['trash', 'hidden', 'draft', 'sold'].includes(p.status));
+
+// Projects shown on the site: not samples, not hidden in the CRM
+const fetchPublicProjects = async () => (await fetchCollection('projects'))
+  .filter((p) => p.id && !p.isDemo && !p.isHidden && !p.isDeleted && p.status !== 'hidden');
+
+/**
+ * A search landing page (/sohag/:kind/:area?) as static HTML: title, description, canonical,
+ * breadcrumbs and FAQ JSON-LD, plus the H1, intro, listing links and FAQ inside #root, so search
+ * engines read the page before any script runs (React replaces it on load).
+ */
+export function buildLandingShell(template, page, listings, origin = siteUrl) {
+  const { kind, area } = page;
+  const own = landingListings(listings, kind, area);
+  const s = landingSummary(own);
+  const copy = landingCopy(kind, area, s);
+  const faq = landingFaq(kind, area, s);
+  const url = `${origin}${landingPath(kind, area)}`;
+  const title = `${copy.title} | 1Line Solutions`;
+  const crumbs = [{ name: 'الرئيسية', item: `${origin}/` }, { name: `${kind.ar} في سوهاج`, item: `${origin}${landingPath(kind)}` }];
+  if (area) crumbs.push({ name: copy.h1, item: url });
+  const ld = [
+    { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, ...c })) },
+    { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) }
+  ];
+  const items = own.slice(0, 40).map((p) => `<li><a href="/properties/${encodeURIComponent(p.id)}">${esc(sanitizeMetaText(p.title_ar || p.title_en || 'عقار'))}</a>${p.price ? ` — ${esc(fmtPrice(p.price))}` : ''}</li>`).join('');
+  const body = `<main dir="rtl"><h1>${esc(copy.h1)}</h1><p>${esc(copy.intro)}</p>${items ? `<ul>${items}</ul>` : ''}`
+    + `<section><h2>أسئلة شائعة</h2>${faq.map((f) => `<h3>${esc(f.q)}</h3><p>${esc(f.a)}</p>`).join('')}</section></main>`;
+
+  let html = template;
+  html = strictReplace(html, /<title>[\s\S]*?<\/title>/, `<title>${esc(title)}</title>`, 'landing title');
+  html = strictReplace(html, /(<meta name="description" content=")[^"]*(")/, `$1${esc(copy.description)}$2`, 'landing description');
+  html = strictReplace(html, /(<link rel="canonical" href=")[^"]*(")/, `$1${esc(url)}$2`, 'landing canonical');
+  html = strictReplace(html, /(<meta property="og:url" content=")[^"]*(")/, `$1${esc(url)}$2`, 'landing og:url');
+  html = strictReplace(html, /(<meta property="og:title" content=")[^"]*(")/, `$1${esc(title)}$2`, 'landing og:title');
+  html = strictReplace(html, /(<meta property="og:description" content=")[^"]*(")/, `$1${esc(copy.description)}$2`, 'landing og:desc');
+  html = strictReplace(html, /(<meta name="twitter:title" content=")[^"]*(")/, `$1${esc(title)}$2`, 'landing twitter:title');
+  html = strictReplace(html, /(<meta name="twitter:description" content=")[^"]*(")/, `$1${esc(copy.description)}$2`, 'landing twitter:desc');
+  html = strictReplace(html, /<div id="root"><\/div>/, `<div id="root">${body}</div>`, 'landing root');
+  html = html.replace('</head>', `${ld.map((o) => `    <script type="application/ld+json">\n${JSON.stringify(o, null, 2).replace(/</g, '\\u003c')}\n    </script>`).join('\n')}\n  </head>`);
+  return html;
 }
 
 // ── Main Build Runner ──────────────────────────────────────────────────────────────────
@@ -187,6 +232,8 @@ export async function runPostbuild() {
   }
 
   const realListings = await fetchRealListings();
+  const projects = await fetchPublicProjects();
+  const landings = landingPages(realListings);
   const today = new Date().toISOString().slice(0, 10);
 
   const staticRoutes = [
@@ -212,7 +259,9 @@ export async function runPostbuild() {
 
   const urls = [
     ...staticRoutes.map(([loc, priority, freq]) => ({ loc, priority, freq })),
+    ...landings.map((l) => ({ loc: l.path, priority: l.area ? '0.7' : '0.8', freq: 'daily' })),
     ...realListings.map((p) => ({ loc: `/properties/${encodeURIComponent(p.id)}`, priority: '0.8', freq: 'weekly' })),
+    ...projects.filter((p) => /^[\w-]{1,80}$/.test(p.id)).map((p) => ({ loc: `/projects/${encodeURIComponent(p.id)}`, priority: '0.6', freq: 'weekly' })),
   ];
 
   // 1. Sitemap.xml
@@ -338,7 +387,14 @@ Sitemap: ${siteUrl}/sitemap.xml
     prerenderedListings++;
   }
 
-  console.log(`postbuild-seo: ${urls.length} URLs → sitemap.xml, robots.txt, 404.html; ${prerenderedStatic} static shells; ${prerenderedListings} listing shells (${siteUrl})`);
+  // 6. Search landing page shells
+  for (const page of landings) {
+    const dir = path.join(dist, ...page.path.split('/').filter(Boolean));
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'index.html'), buildLandingShell(indexHtml, page, realListings, siteUrl));
+  }
+
+  console.log(`postbuild-seo: ${urls.length} URLs → sitemap.xml, robots.txt, 404.html; ${prerenderedStatic} static shells; ${prerenderedListings} listing shells; ${landings.length} landing pages; ${projects.length} projects (${siteUrl})`);
 }
 
 const isDirectRun = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);

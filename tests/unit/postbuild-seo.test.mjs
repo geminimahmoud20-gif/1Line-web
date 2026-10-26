@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { buildPropertyShell, routeShellConfigs } from '../../scripts/postbuild-seo.mjs';
+import { buildPropertyShell, routeShellConfigs, buildLandingShell } from '../../scripts/postbuild-seo.mjs';
+import { landingPages } from '../../src/utils/seoLanding.js';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const templateHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8')
@@ -96,4 +97,19 @@ test('routeShellConfigs: every sitemap route without a hand-written shell gets o
   assert.deepEqual(out.map((c) => c.path), ['sell', 'valuation', 'demands']);
   assert.match(out[0].title, /\| 1Line Solutions$/);
   assert.ok(out[0].desc.length > 20);
+});
+
+test('buildLandingShell: a search page readable without JavaScript', () => {
+  const listings = [
+    { id: 'p1', type: 'apartment', areaKey: 'new_sohag', price: 2000000, size: 100, status: 'published', title_ar: 'شقة 100 م سوهاج الجديدة' },
+    { id: 'p2', type: 'apartment', areaKey: 'new_sohag', price: 3000000, size: 150, status: 'published', title_ar: 'شقة <b>150</b> م' }
+  ];
+  const page = landingPages(listings).find((l) => l.path === '/sohag/apartments-for-sale/new-sohag');
+  const html = buildLandingShell(templateHtml, page, listings, 'https://www.1lineestate.com');
+  assert.match(html, /<title>شقق للبيع في سوهاج الجديدة — أسعار \d{4} \| 1Line Solutions<\/title>/);
+  assert.match(html, /<link rel="canonical" href="https:\/\/www\.1lineestate\.com\/sohag\/apartments-for-sale\/new-sohag"/);
+  assert.match(html, /<div id="root"><main dir="rtl"><h1>شقق للبيع في سوهاج الجديدة<\/h1>/);
+  assert.match(html, /<a href="\/properties\/p1">/);
+  assert.match(html, /"@type": "FAQPage"/);
+  assert.ok(!html.includes('<b>150</b>'), 'listing titles are escaped');
 });

@@ -17,6 +17,7 @@ const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const PrivateOfficePage = lazy(() => import('./pages/PrivateOfficePage'));
 const ProjectsPage = lazy(() => import('./pages/ProjectsPage'));
 const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage'));
+const LandingPage = lazy(() => import('./pages/LandingPage'));
 const PropertiesPage = lazy(() => import('./pages/PropertiesPage'));
 const PropertyDetailPage = lazy(() => import('./pages/PropertyDetailPage'));
 const TradeInPortal = lazy(() => import('./components/tradein/TradeInPortal'));
@@ -385,6 +386,26 @@ export default function AppRoutes({
           />
         }
       />
+
+      {/* Search landing pages: "شقق للبيع في سوهاج الجديدة" (utils/seoLanding) */}
+      {['/sohag/:kind', '/sohag/:kind/:area'].map((p) => (
+        <Route
+          key={p}
+          path={p}
+          element={
+            <LandingPage
+              lang={lang}
+              currency={currency}
+              properties={siteProperties}
+              favorites={favorites}
+              onToggleFavorite={handleProtectedToggleFavorite}
+              compareList={compareList}
+              onToggleCompare={handleProtectedToggleCompare}
+              onQuickView={handleOpenQuickView}
+            />
+          }
+        />
+      ))}
 
       {/* Sohag Real Estate Market Intelligence & Price Benchmark */}
       <Route
