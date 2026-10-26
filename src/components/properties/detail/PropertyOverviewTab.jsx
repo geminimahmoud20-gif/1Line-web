@@ -230,7 +230,7 @@ export default function PropertyOverviewTab({
       <button type="button" className={`pd-legal-glance ${property.legalStatus ? 'is-reviewed' : 'is-pending'}`} onClick={() => setActiveTab('legal')}>
         <ShieldCheck size={18} aria-hidden="true" />
         <span>
-          <strong>{property.legalStatus ? (isAr ? 'المستندات مراجَعة' : 'Documents reviewed') : (isAr ? 'المراجعة القانونية لم تُنشر بعد' : 'Legal review not published yet')}</strong>
+          <strong>{property.legalStatus ? (isAr ? 'المستندات مراجَعة' : 'Documents reviewed') : (isAr ? 'الموقف القانوني: لم يراجع بعد' : 'Legal status: not reviewed yet')}</strong>
           <small>
             {property.legalStatus
               ? ((isAr ? property.legalStatus.ownershipType_ar : (property.legalStatus.ownershipType_en || property.legalStatus.ownershipType_ar)) || (isAr ? 'اعرض ملخص المراجعة' : 'See the review summary'))

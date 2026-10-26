@@ -30,7 +30,7 @@ export const FINISHING = [
   { id: 'super_lux', ar: 'سوبر لوكس', en: 'Super lux', multiplier: 1.15 },
   { id: 'lux', ar: 'لوكس', en: 'Lux', multiplier: 1.05 },
   { id: 'semi', ar: 'نص تشطيب (محارة وحلوق)', en: 'Semi-finished', multiplier: 1 },
-  { id: 'core', ar: 'طوب أحمر (من غير تشطيب)', en: 'Core & shell', multiplier: 0.86 },
+  { id: 'core', ar: 'على الطوب (من غير تشطيب)', en: 'Core & shell', multiplier: 0.86 },
   { id: 'furnished', ar: 'مفروش بالكامل', en: 'Fully furnished', multiplier: 1.35 },
   { id: 'mixed', ar: 'أدوار متشطبة وأدوار لأ', en: 'Partly finished', multiplier: 1.08 },
   { id: 'under_construction', ar: 'تحت الإنشاء', en: 'Under construction', multiplier: 0.9 }

@@ -52,7 +52,7 @@ export default function PropertyExtrasEditor({ form, setForm, isAr = true }) {
   const isCommercial = ['commercial', 'office'].includes(form.type);
 
   const legal = form.legalStatus || {};
-  // Empty legal record = null, so the listing shows "review not published" instead of a badge
+  // Empty legal record = null, so the listing shows "not reviewed yet" instead of a badge
   const setLegal = (k, v) => setForm((f) => {
     const next = { ...(f.legalStatus || {}), [k]: v };
     const hasAny = Object.values(next).some((x) => String(x ?? '').trim() !== '');
@@ -91,7 +91,7 @@ export default function PropertyExtrasEditor({ form, setForm, isAr = true }) {
 
   return (
     <div className="pxe">
-      <Section icon={Scale} title={L('الموقف القانوني (بعد المراجعة الفعلية فقط)', 'Legal status (after an actual review only)')} hint={form.legalStatus ? L('يظهر كـ«مستندات مراجَعة»', 'Shows as "Documents reviewed"') : L('فارغ = «المراجعة لم تُنشر بعد»', 'Empty = "review not published"')}>
+      <Section icon={Scale} title={L('الموقف القانوني (بعد المراجعة الفعلية فقط)', 'Legal status (after an actual review only)')} hint={form.legalStatus ? L('يظهر كـ«مستندات مراجَعة»', 'Shows as "Documents reviewed"') : L('فارغ = «لم يراجع بعد»', 'Empty = "Not reviewed yet"')}>
         <p className="pxe-note">{L('اكتب فقط ما راجعته فعلاً من مستندات. أي خانة فارغة لا تظهر، ولو كل الخانات فاضية العقار يظهر بدون شارة «مستندات مراجَعة».', 'Only record what you actually reviewed. Empty fields stay hidden; if all are empty the listing shows no "Documents reviewed" badge.')}</p>
         <div className="pxe-grid">
           <TextField label={L('سند الملكية', 'Title')} value={legal.ownershipType_ar} onChange={(v) => setLegal('ownershipType_ar', v)} placeholder={L('مثال: عقد مسجل شهر عقاري', 'e.g. Registered deed')} />

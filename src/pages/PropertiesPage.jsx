@@ -23,6 +23,7 @@ import { updatePageSeo, buildBreadcrumbSchema } from '../utils/seoHelper';
 import { track } from '../utils/analytics';
 import { searchPropertiesSemantic, parseSemanticQuery } from '../utils/semanticSearchEngine';
 import { hasLandShare } from '../utils/buildingFeatures';
+import { finishingGroupOf } from '../utils/unitHandover';
 import '../styles/light-headers.css';
 import LandingLinks from '../components/properties/LandingLinks';
 
@@ -239,15 +240,9 @@ export default function PropertiesPage({
 
       // Finishing Quality filter
       if (filters.finishing && filters.finishing !== 'all') {
-        if (filters.finishing === 'lux') {
-          const isLux = (prop.finishing_ar && (prop.finishing_ar.includes('لوكس') || prop.finishing_ar.includes('سوبر'))) ||
-            (prop.finishing_en && prop.finishing_en.toLowerCase().includes('lux'));
-          if (!isLux) return false;
-        } else if (filters.finishing === 'core') {
-          const isCore = (prop.finishing_ar && (prop.finishing_ar.includes('محارة') || prop.finishing_ar.includes('نصف'))) ||
-            (prop.finishing_en && prop.finishing_en.toLowerCase().includes('core'));
-          if (!isCore) return false;
-        }
+        const group = finishingGroupOf(prop);
+        if (filters.finishing === 'lux' && group !== 'finished') return false;
+        if (filters.finishing === 'core' && group !== 'core') return false;
       }
 
       // Payment Plan filter

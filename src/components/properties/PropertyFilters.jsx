@@ -107,7 +107,7 @@ export default function PropertyFilters({
     if (filters.finishing && filters.finishing !== 'all') {
       list.push({
         id: 'finishing',
-        label: filters.finishing === 'lux' ? (isAr ? 'تشطيب سوبر لوكس' : 'Super Lux') : (isAr ? 'نصف تشطيب' : 'Core & Shell'),
+        label: filters.finishing === 'lux' ? (isAr ? 'متشطب' : 'Finished') : (isAr ? 'على الطوب / نص تشطيب' : 'Core & semi-finished'),
         onRemove: () => onFilterChange('finishing', 'all')
       });
     }
@@ -335,8 +335,8 @@ export default function PropertyFilters({
                 onChange={(e) => onFilterChange('finishing', e.target.value)}
               >
                 <option value="all">{isAr ? 'كافة مستويات التشطيب' : 'All Finishing'}</option>
-                <option value="lux">{isAr ? 'ألترا سوبر لوكس / كامل' : 'Ultra Super Lux'}</option>
-                <option value="core">{isAr ? 'نصف تشطيب / محارة' : 'Core & Shell'}</option>
+                <option value="lux">{isAr ? 'متشطب (كامل ولوكس وأعلى)' : 'Finished (full, lux and up)'}</option>
+                <option value="core">{isAr ? 'على الطوب / نص تشطيب' : 'Core & semi-finished'}</option>
               </select>
             </div>
 
