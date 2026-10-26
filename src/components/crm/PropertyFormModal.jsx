@@ -34,6 +34,7 @@ export default function PropertyFormModal({
   setShowMapPicker,
   uploadProgressText
 }) {
+  const areaKnown = Boolean(form?.areaKey) && areas.some((a) => a.id === form.areaKey && a.id !== 'all');
   const hasDirtyContent = Boolean(
     (form?.title && String(form.title).trim()) ||
     form?.price ||
@@ -278,10 +279,19 @@ export default function PropertyFormModal({
             {/* Area Location */}
             <div className="form-group-item">
               <label>{isAr ? 'المنطقة في سوهاج' : 'Area'}</label>
+              {/* No valid area yet: say so instead of showing the first area as if it were picked */}
               <select
-                value={form.areaKey}
+                value={areaKnown ? form.areaKey : ''}
                 onChange={(e) => setForm({ ...form, areaKey: e.target.value })}
+                aria-invalid={!areaKnown}
               >
+                {!areaKnown && (
+                  <option value="" disabled>
+                    {form.areaKey
+                      ? (isAr ? 'المنطقة المحفوظة اتمسحت، اختار منطقة' : 'Saved area was removed, pick one')
+                      : (isAr ? 'اختار المنطقة' : 'Pick an area')}
+                  </option>
+                )}
                 {areas.filter(a => a.id !== 'all').map(a => (
                   <option key={a.id} value={a.id}>{isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}</option>
                 ))}

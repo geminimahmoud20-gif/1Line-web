@@ -5,7 +5,7 @@ import { PageHeader, Button, Card, Badge, Chip, EmptyState, SegmentedControl, Se
 import { toLatinDigits } from '../../utils/latinDigits';
 import ListingsBulkBar from './ListingsBulkBar';
 import ListingsReport from './ListingsReport';
-import { listingIssues, matchesFilters, sortListings, SORTS, ISSUES, NO_AREA } from '../../utils/listingReview';
+import { listingIssues, matchesFilters, sortListings, SORTS, ISSUES, NO_AREA, noArea as noAreaIssue } from '../../utils/listingReview';
 import './properties-panel.css';
 import { getAreas } from '../../utils/areasData';
 import HomepageSlotsBoard, { FeaturedSlotModal } from './HomepageSlotsBoard';
@@ -49,7 +49,8 @@ const DEFAULT_FORM_STATE = {
   title_ar: '',
   title_en: '',
   type: 'apartment',
-  areaKey: 'east',
+  // Picked in the form; a preset area was saved unseen when it no longer existed
+  areaKey: '',
   projectId: '',
   // A new listing starts empty: every fact on it (price, size, rooms, finishing, photos) must come
   // from the owner. Pre-filled samples were being published whenever a field was left unchanged.
@@ -228,8 +229,8 @@ export default function PropertyManagerPanel({
         title: isAr ? 'العقار ده ناقص بيانات' : 'This listing is incomplete',
         tone: 'primary',
         message: isAr
-          ? `ناقص: ${missing.map((k) => ISSUES[k].ar).join('، ')}. الزوار هيشوفوه كده. تنشره برضه؟`
-          : `Missing: ${missing.map((k) => ISSUES[k].en).join(', ')}. Publish anyway?`,
+          ? `ناقص: ${missing.map((k) => ISSUES[k].ar).join('، ')}. كمّله الأول عشان يظهر صح للزوار. تنشره برضه؟`
+          : `Missing: ${missing.map((k) => ISSUES[k].en).join(', ')}. Complete it so visitors see it right. Publish anyway?`,
         confirmLabel: isAr ? 'انشره برضه' : 'Publish anyway',
         cancelLabel: isAr ? 'لأ' : 'Cancel'
       });
@@ -473,6 +474,11 @@ export default function PropertyManagerPanel({
       triggerToast(isAr ? 'المساحة يجب أن تكون أكبر من صفر' : 'Size must be greater than zero', 'error');
       return;
     }
+    // An area missing from the areas list shows on the site under the wrong name, so pick one first
+    if (!form.areaKey || form.areaKey === 'all' || !areas.some((a) => a.id === form.areaKey)) {
+      triggerToast(isAr ? 'اختار المنطقة: من غيرها الوحدة مش هتظهر على الموقع' : 'Pick an area: without one the listing stays off the site', 'error');
+      return;
+    }
     const payProblem = paymentProblem(form, isAr);
     if (payProblem) {
       triggerToast(payProblem, 'error');
@@ -615,7 +621,7 @@ export default function PropertyManagerPanel({
     const count = (key) => live.reduce((m, p) => { const k = p[key]; if (k) m.set(k, (m.get(k) || 0) + 1); return m; }, new Map());
     const byType = count('type');
     const byArea = count('areaKey');
-    const noArea = live.filter((p) => (issuesMap.get(p.id) || []).includes('area')).length;
+    const noArea = live.filter((p) => noAreaIssue(issuesMap.get(p.id) || [])).length;
     return {
       types: PROPERTY_TYPES.filter((t) => t.id !== 'all' && byType.get(t.id))
         .map((t) => ({ id: t.id, label: (isAr ? SHORT_TYPE_AR : SHORT_TYPE_EN)[t.id] || (isAr ? t.name_ar : t.name_en), count: byType.get(t.id) })),

@@ -8,7 +8,7 @@ const full = { id: 'prop-1700000000000', title_ar: 'شقة', images: ['https://x
 
 test('a complete listing has no issues; each missing fact is named', () => {
   assert.deepEqual(listingIssues(full, known), []);
-  assert.deepEqual(listingIssues({ ...full, images: ['/no-photo.svg'], price: 0, areaKey: 'nowhere' }, known), ['photo', 'price', 'area']);
+  assert.deepEqual(listingIssues({ ...full, images: ['/no-photo.svg'], price: 0, areaKey: 'nowhere' }, known), ['photo', 'price', 'areaGone']);
   assert.deepEqual(listingIssues({ id: 'x' }, known), ['title', 'photo', 'price', 'size', 'area']);
   assert.ok(listingIssues({ ...full, price: 2500000, size: 150, bedrooms: 3 }, known).includes('legacy'));
 });
@@ -24,6 +24,11 @@ test('filters: readiness, missing fact, no area, ranges, search, trash kept apar
   assert.deepEqual(pick({ readiness: 'incomplete' }), ['b']);
   assert.deepEqual(pick({ area: NO_AREA }), ['b']);
   assert.deepEqual(pick({ issue: 'area' }), ['b']);
+  // An area deleted from the list counts as "no area" in the filters too
+  const gone = { ...full, id: 'e', areaKey: 'removed_area' };
+  const pickGone = (f) => [full, gone].filter((p) => matchesFilters(p, f, listingIssues(p, known))).map((p) => p.id);
+  assert.deepEqual(pickGone({ area: NO_AREA }), ['e']);
+  assert.deepEqual(pickGone({ issue: 'area' }), ['e']);
   assert.deepEqual(pick({ priceMin: 3000000 }), ['c']);
   assert.deepEqual(pick({ sizeMax: 150 }), ['prop-1700000000000', 'b']);
   assert.deepEqual(pick({ q: 'PROP-17' }), ['prop-1700000000000']);

@@ -17,8 +17,12 @@ export const ISSUES = {
   price: { ar: 'السعر', en: 'Price' },
   size: { ar: 'المساحة', en: 'Size' },
   area: { ar: 'المنطقة', en: 'Area' },
+  areaGone: { ar: 'المنطقة (اتمسحت من القائمة)', en: 'Area (removed from the list)' },
   legacy: { ar: 'بيانات قديمة', en: 'Legacy data' }
 };
+
+/** No area, or one deleted from the areas list since */
+export const noArea = (issues) => issues.includes('area') || issues.includes('areaGone');
 
 /** Same statuses the site uses; trash is separate */
 export const listingStatus = getNormalizedPropertyStatus;
@@ -30,7 +34,8 @@ export function listingIssues(p, knownAreas) {
   if (realPhotos(p).length === 0) out.push('photo');
   if (!(Number(p?.price) > 0)) out.push('price');
   if (!(Number(p?.size) > 0)) out.push('size');
-  if (!p?.areaKey || (knownAreas && !knownAreas.has(p.areaKey))) out.push('area');
+  if (!p?.areaKey) out.push('area');
+  else if (knownAreas && !knownAreas.has(p.areaKey)) out.push('areaGone');
   if (listingSampleFlags(p).length > 0) out.push('legacy');
   return out;
 }
@@ -83,11 +88,11 @@ export function matchesFilters(p, f, issues) {
   if (f.status && !['all', 'trash'].includes(f.status) && st !== f.status) return false;
   if (f.type && f.type !== 'all' && p.type !== f.type) return false;
   if (f.area && f.area !== 'all') {
-    if (f.area === NO_AREA ? !issues.includes('area') : p.areaKey !== f.area) return false;
+    if (f.area === NO_AREA ? !noArea(issues) : p.areaKey !== f.area) return false;
   }
   if (f.readiness === 'ready' && issues.length) return false;
   if (f.readiness === 'incomplete' && !issues.length) return false;
-  if (f.issue && f.issue !== 'all' && !issues.includes(f.issue)) return false;
+  if (f.issue && f.issue !== 'all' && !(f.issue === 'area' ? noArea(issues) : issues.includes(f.issue))) return false;
   if (!inRange(p.price, f.priceMin, f.priceMax)) return false;
   if (!inRange(p.size, f.sizeMin, f.sizeMax)) return false;
   const q = String(f.q || '').trim().toLowerCase();
@@ -128,7 +133,7 @@ export function listingReport(properties, areas = [], typeLabel = (t) => t) {
     if (st === 'hidden' && !issues.length) readyHidden += 1;
     if ((st === 'published' || st === 'under_negotiation') && Number(p.price) > 0) onSiteValue += Number(p.price);
 
-    const areaId = issues.includes('area') ? NO_AREA : p.areaKey;
+    const areaId = noArea(issues) ? NO_AREA : p.areaKey;
     const ar = areaRows.get(areaId) || { id: areaId, count: 0, onSite: 0, hidden: 0, sold: 0, m2: [] };
     ar.count += 1;
     if (st === 'published' || st === 'under_negotiation') ar.onSite += 1;
