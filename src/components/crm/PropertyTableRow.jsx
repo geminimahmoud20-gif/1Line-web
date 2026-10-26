@@ -92,7 +92,7 @@ export default function PropertyTableRow({
   // Photos kept inside the listing after a refused upload (data: URLs)
   const inlinePhotos = (prop.images || []).filter((u) => String(u).startsWith('data:image/')).length;
   // Marked as on sale but kept off the site until complete (utils/siteReady)
-  const offSite = ['published', 'under_negotiation', 'sold'].includes(status) && issues.some((k) => k !== 'legacy');
+  const offSite = ['published', 'under_negotiation', 'sold'].includes(status) && issues.some((k) => k !== 'legacy' && k !== 'areaGone');
   const title = (isAr ? prop.title_ar : prop.title_en) || prop.title_ar || (isAr ? 'من غير عنوان' : 'Untitled');
   const typeName = (() => { const t = PROPERTY_TYPES.find((x) => x.id === prop.type); return t ? (isAr ? t.name_ar : t.name_en) : propertyTypeLabel(prop.type, isAr); })();
   const areaName = (() => { const a = areas.find((x) => x.id === prop.areaKey); return a ? (isAr ? a.name_ar : a.name_en) : ''; })();
