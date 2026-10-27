@@ -3,6 +3,8 @@ import { X, ShieldCheck, Heart, Scale, MessageSquare, CheckCircle2, ArrowLeft, A
 import { useClientAuth } from '../../context/ClientAuthContext';
 import PhoneInputField from '../PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../../utils/phoneCountries';
+import { readAccounts } from '../../utils/clientAccounts';
+import '../../styles/client-auth-modes.css';
 
 export default function ClientAuthModal({ lang = 'ar' }) {
   const isAr = lang === 'ar';
@@ -11,8 +13,14 @@ export default function ClientAuthModal({ lang = 'ar' }) {
     setClientAuthModalOpen, 
     authReasonMessage,
     activateClientDirectly,
+    signInClient,
     verificationSession
   } = useClientAuth();
+
+  // 'new' = register, 'signin' = «عندي حساب» (opens on sign-in when this device knows an account)
+  const [mode, setMode] = useState(() => {
+    try { return Object.keys(readAccounts(localStorage)).length ? 'signin' : 'new'; } catch { return 'new'; }
+  });
 
   const [step, setStep] = useState('input'); // 'input' | 'activated'
   const [formData, setFormData] = useState({
@@ -142,6 +150,31 @@ export default function ClientAuthModal({ lang = 'ar' }) {
     }
   };
 
+  const switchMode = (next) => {
+    setMode(next);
+    setErrorMsg('');
+    setPhoneError('');
+  };
+
+  const handleSignIn = (e) => {
+    e.preventDefault();
+    setErrorMsg('');
+    setPhoneError('');
+    const res = signInClient({ whatsapp: formData.whatsapp, country });
+    if (res.ok) {
+      setStep('input');
+      return;
+    }
+    if (res.reason === 'invalid') {
+      const countryObj = SUPPORTED_COUNTRIES.find((c) => c.code === country) || SUPPORTED_COUNTRIES[0];
+      setPhoneError(isAr ? `اكتب رقم واتساب صحيح (${countryObj.placeholder})` : `Enter a valid WhatsApp number (${countryObj.placeholder})`);
+      return;
+    }
+    setErrorMsg(isAr
+      ? 'الرقم ده مش متسجل على الجهاز ده. سجّل من «حساب جديد» بنفس الرقم.'
+      : 'This number has no account on this device. Register under "New account" with the same number.');
+  };
+
   const handleCopyCode = () => {
     const token = activatedClient?.verificationToken || verificationSession?.token;
     if (token) {
@@ -171,12 +204,16 @@ export default function ClientAuthModal({ lang = 'ar' }) {
             <span>{isAr ? 'حساب عميل 1Line' : '1Line Client Account'}</span>
           </div>
           <h2 className="client-auth-title">
-            {step === 'input' 
+            {step === 'input' && mode === 'signin'
+              ? (isAr ? 'أهلاً بيك تاني' : 'Welcome back')
+              : step === 'input'
               ? (isAr ? 'تفعيل حسابك لحفظ ومقارنة العقارات' : 'Activate Your Account to Save & Compare')
               : (isAr ? 'تم تفعيل الحساب مباشرة' : 'Account Activated Directly')}
           </h2>
           <p className="client-auth-subtitle">
-            {step === 'input'
+            {step === 'input' && mode === 'signin'
+              ? (isAr ? 'اكتب رقم الواتساب اللي سجّلت بيه، وحسابك ومفضلتك يرجعوا على طول.' : 'Enter the WhatsApp number you registered with to get your account back.')
+              : step === 'input'
               ? (authReasonMessage || (isAr 
                   ? 'احفظ عقاراتك في مفضلتك وقارن بين المشروعات بسوهاج وتلقّ إشعارات الأسعار الحصرية.'
                   : 'Save favorite properties, run smart comparisons, and get exclusive market price alerts.'))
@@ -186,7 +223,7 @@ export default function ClientAuthModal({ lang = 'ar' }) {
           </p>
 
           {/* Stepper Pill */}
-          <div className="client-auth-stepper">
+          {!(step === 'input' && mode === 'signin') && <div className="client-auth-stepper">
             <div className={`stepper-pill ${step === 'input' ? 'active' : 'completed'}`}>
               <Sparkles size={14} className="text-gold" />
               <span>{isAr ? 'تفعيل فوري بنقرة واحدة' : 'Instant 1-Click Activation'}</span>
@@ -197,7 +234,7 @@ export default function ClientAuthModal({ lang = 'ar' }) {
                 <span>{isAr ? 'تم تفعيل الحساب مباشرة' : 'Directly Activated'}</span>
               </div>
             )}
-          </div>
+          </div>}
         </div>
 
         {/* Error Notification */}
@@ -207,8 +244,52 @@ export default function ClientAuthModal({ lang = 'ar' }) {
           </div>
         )}
 
-        {/* Body - Input Form: Name, Email, WhatsApp & 1-Click Activation */}
         {step === 'input' && (
+          <div className="client-auth-modes" role="tablist" aria-label={isAr ? 'نوع الدخول' : 'Sign-in type'}>
+            <button type="button" role="tab" aria-selected={mode === 'new'} className={mode === 'new' ? 'is-active' : ''} onClick={() => switchMode('new')}>
+              {isAr ? 'حساب جديد' : 'New account'}
+            </button>
+            <button type="button" role="tab" aria-selected={mode === 'signin'} className={mode === 'signin' ? 'is-active' : ''} onClick={() => switchMode('signin')}>
+              {isAr ? 'عندي حساب' : 'I have an account'}
+            </button>
+          </div>
+        )}
+
+        {/* «عندي حساب»: the WhatsApp number brings back the account saved on this device */}
+        {step === 'input' && mode === 'signin' && (
+          <form onSubmit={handleSignIn} className="client-auth-form">
+            <div className="auth-input-group">
+              <PhoneInputField
+                label={isAr ? 'رقم الواتساب اللي سجّلت بيه' : 'The WhatsApp number you registered with'}
+                value={formData.whatsapp}
+                onChange={(val) => {
+                  setFormData((prev) => ({ ...prev, whatsapp: val }));
+                  if (phoneError) setPhoneError('');
+                  if (errorMsg) setErrorMsg('');
+                }}
+                country={country}
+                onCountryChange={(c) => {
+                  setCountry(c);
+                  if (phoneError) setPhoneError('');
+                  if (errorMsg) setErrorMsg('');
+                }}
+                error={phoneError}
+                required
+              />
+              <span className="input-hint">
+                {isAr ? 'مفضلتك ومقارناتك بترجع على نفس الجهاز اللي سجّلت منه.' : 'Your favourites come back on the device you registered on.'}
+              </span>
+            </div>
+            <button type="submit" className="btn-client-auth-primary">
+              <User size={18} />
+              <span>{isAr ? 'دخول' : 'Sign in'}</span>
+              {isAr ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
+            </button>
+          </form>
+        )}
+
+        {/* Body - Input Form: Name, Email, WhatsApp & 1-Click Activation */}
+        {step === 'input' && mode === 'new' && (
           <form onSubmit={handleDirectActivate} className="client-auth-form">
             <div className="auth-input-group">
               <label htmlFor="client-name">
@@ -274,7 +355,7 @@ export default function ClientAuthModal({ lang = 'ar' }) {
             <div className="auth-perks-grid">
               <div className="perk-item">
                 <Heart size={14} className="text-rose" />
-                <span>{isAr ? 'حفظ المفضلة ومزامنتها عبر جميع أجهزتك' : 'Synced Favorites Across Devices'}</span>
+                <span>{isAr ? 'حفظ المفضلة، وترجعلك بـ«عندي حساب» على نفس الجهاز' : 'Saved favourites, back with "I have an account" on this device'}</span>
               </div>
               <div className="perk-item">
                 <Scale size={14} className="text-amber" />

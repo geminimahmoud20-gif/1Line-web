@@ -3,6 +3,7 @@ import { getWhatsAppUrl } from '../utils/founderCmsData';
 import { identifyVisitor } from '../utils/visitorTracker';
 import { sanitizeObject } from '../utils/securityShield';
 import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
+import { intlPhone, phoneKey, rememberAccount, findAccount, forgetAccount } from '../utils/clientAccounts';
 
 const CLIENT_STORAGE_KEY = 'oneline_client_account';
 
@@ -47,6 +48,8 @@ export function ClientAuthProvider({
   useEffect(() => {
     if (clientUser) {
       localStorage.setItem(CLIENT_STORAGE_KEY, JSON.stringify(clientUser));
+      // Remembered on this device so «عندي حساب» brings it back after signing out
+      rememberAccount(localStorage, clientUser);
     } else {
       localStorage.removeItem(CLIENT_STORAGE_KEY);
     }
@@ -208,6 +211,25 @@ export function ClientAuthProvider({
     };
   }, [isAr]);
 
+  // Bring back the favourites saved under this number on this device, merged with current ones
+  const restoreSavedFavorites = useCallback((phone) => {
+    const phoneDigits = phoneKey(phone);
+    let clientSavedFavs = [];
+    if (phoneDigits) {
+      try {
+        const raw = localStorage.getItem(`oneline_client_favorites_${phoneDigits}`);
+        if (raw) clientSavedFavs = JSON.parse(raw);
+      } catch { /* storage unavailable — non-fatal */ }
+    }
+    const mergedFavs = Array.from(new Set([
+      ...(Array.isArray(clientSavedFavs) ? clientSavedFavs : []),
+      ...(Array.isArray(favorites) ? favorites : [])
+    ]));
+    if (mergedFavs.length > 0 && typeof restoreFavorites === 'function') {
+      restoreFavorites(mergedFavs);
+    }
+  }, [favorites, restoreFavorites]);
+
   /**
    * Step 2: Finalize Client Verification & Activate
    * Solution 2 Handshake: Direct activation upon sending WhatsApp message without confusing code mismatch errors.
@@ -226,8 +248,10 @@ export function ClientAuthProvider({
     }
 
     const nowIso = new Date().toISOString();
+    // Same number registered on this device before: same account, and no second lead in the CRM
+    const known = findAccount(localStorage, sessionToUse.whatsapp);
     const verifiedAccount = {
-      id: `client_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      id: known?.id || `client_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       name: sessionToUse.name,
       email: sessionToUse.email,
       whatsapp: sessionToUse.whatsapp,
@@ -256,7 +280,7 @@ export function ClientAuthProvider({
     });
 
     // Register lead in CRM pipeline with full verified metadata
-    if (typeof handleAddNewLead === 'function') {
+    if (typeof handleAddNewLead === 'function' && !known) {
       try {
         await handleAddNewLead(sanitizeObject({
           name: verifiedAccount.name,
@@ -272,24 +296,7 @@ export function ClientAuthProvider({
       }
     }
 
-    // Restore or merge client's saved favorites
-    const phoneDigits = (sessionToUse.whatsapp || '').replace(/[^0-9]/g, '');
-    let clientSavedFavs = [];
-    if (phoneDigits) {
-      try {
-        const raw = localStorage.getItem(`oneline_client_favorites_${phoneDigits}`);
-        if (raw) clientSavedFavs = JSON.parse(raw);
-      } catch { /* storage unavailable — non-fatal */ }
-    }
-
-    const mergedFavs = Array.from(new Set([
-      ...(Array.isArray(clientSavedFavs) ? clientSavedFavs : []),
-      ...(Array.isArray(favorites) ? favorites : [])
-    ]));
-
-    if (mergedFavs.length > 0 && typeof restoreFavorites === 'function') {
-      restoreFavorites(mergedFavs);
-    }
+    restoreSavedFavorites(sessionToUse.whatsapp);
 
     // Close modal unless caller wants to manage the success screen
     if (!options?.keepModalOpen) {
@@ -320,7 +327,7 @@ export function ClientAuthProvider({
     }
 
     return verifiedAccount;
-  }, [verificationSession, isAr, handleAddNewLead, favorites, restoreFavorites, triggerToast, pendingAction]);
+  }, [verificationSession, isAr, handleAddNewLead, restoreSavedFavorites, triggerToast, pendingAction]);
 
   /**
    * One-Click Direct Activation:
@@ -337,11 +344,43 @@ export function ClientAuthProvider({
   }, [initiateClientRegistration, completeClientVerification]);
 
   /**
+   * «عندي حساب»: a client who signed out on this device comes back with their WhatsApp number.
+   * Returns { ok: true, account } or { ok: false, reason: 'invalid' | 'unknown' }.
+   */
+  const signInClient = useCallback(({ whatsapp, country = '+20' }) => {
+    const raw = String(whatsapp || '').replace(/\D/g, '');
+    const countryObj = SUPPORTED_COUNTRIES.find((c) => c.code === country) || SUPPORTED_COUNTRIES[0];
+    if (!raw || (countryObj?.regex && !countryObj.regex.test(raw))) return { ok: false, reason: 'invalid' };
+    const known = findAccount(localStorage, intlPhone(country, raw));
+    if (!known) return { ok: false, reason: 'unknown' };
+
+    const account = { ...known, verified: true, lastSignInAt: new Date().toISOString() };
+    setClientUser(account);
+    restoreSavedFavorites(account.whatsapp);
+    setClientAuthModalOpen(false);
+    setVerificationSession(null);
+    if (typeof triggerToast === 'function') {
+      triggerToast(isAr ? `أهلاً بيك تاني يا ${account.name} 👋` : `Welcome back, ${account.name}`, 'success');
+    }
+    if (typeof pendingAction === 'function') {
+      setTimeout(() => {
+        try { pendingAction(); } catch (e) { console.error('Error running pending action after sign-in:', e); }
+        setPendingAction(null);
+      }, 250);
+    }
+    return { ok: true, account };
+  }, [isAr, triggerToast, pendingAction, restoreSavedFavorites]);
+
+  /**
    * Client Logout
    */
-  const logoutClient = useCallback(() => {
-    // 1. Back up client favorites before clearing
-    if (clientUser) {
+  const logoutClient = useCallback(({ forgetDevice = false } = {}) => {
+    // 1. Back up client favorites before clearing (or, on a shared device, forget the account)
+    if (clientUser && forgetDevice) {
+      const phone = clientUser.whatsapp || clientUser.phone;
+      forgetAccount(localStorage, phone);
+      try { localStorage.removeItem(`oneline_client_favorites_${phoneKey(phone)}`); } catch { /* non-fatal */ }
+    } else if (clientUser) {
       const phoneDigits = (clientUser.whatsapp || clientUser.phone || clientUser.id || '').replace(/[^0-9]/g, '');
       if (phoneDigits && Array.isArray(favorites)) {
         try {
@@ -401,6 +440,7 @@ export function ClientAuthProvider({
     initiateClientRegistration,
     completeClientVerification,
     activateClientDirectly,
+    signInClient,
     logoutClient,
     updateClientProfile
   };

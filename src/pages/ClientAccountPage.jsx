@@ -12,6 +12,7 @@ import { readMyDemands } from '../utils/browserStorage';
 import AccountInquiriesTab from '../components/account/AccountInquiriesTab';
 import AccountCompareTab from '../components/account/AccountCompareTab';
 import { LEAD_TYPE_NAMES } from './ClientAccountPageData';
+import '../styles/client-auth-modes.css';
 
 /**
  * Lead Stages & Color Scheme
@@ -321,12 +322,20 @@ export default function ClientAccountPage({
 
             <button 
               type="button" 
-              onClick={logoutClient} 
+              onClick={() => logoutClient()} 
               className="btn-client-logout"
               title={isAr ? 'تسجيل الخروج ومسح الجلسة' : 'Logout and clear active session'}
             >
               <LogOut size={15} />
               <span>{isAr ? 'خروج' : 'Logout'}</span>
+            </button>
+            {/* On a shared phone: sign out and leave nothing behind for «عندي حساب» */}
+            <button
+              type="button"
+              onClick={() => logoutClient({ forgetDevice: true })}
+              className="btn-client-forget"
+            >
+              {isAr ? 'جهاز مش بتاعك؟ اخرج وامسح حسابك منه' : 'Not your device? Sign out and forget me'}
             </button>
           </div>
         </div>
