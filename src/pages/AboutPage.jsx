@@ -4,6 +4,8 @@ import { Building2, ShieldCheck, CheckCircle2, Quote, MessageSquare, Phone, MapP
 import LogoEmblem from '../components/LogoEmblem';
 import { getFounderSettings, cleanPhoneNumber, getWhatsAppUrl, DEFAULT_FOUNDER_CMS } from '../utils/founderCmsData';
 import { updatePageSeo, buildBreadcrumbSchema } from '../utils/seoHelper';
+import { sectionOn, visibleCompanyFacts } from '../utils/aboutProfile';
+import { AboutCompanyFacts, AboutTeam, AboutGallery } from '../components/about/AboutProfileSections';
 
 // The questions (by category, with FAQPage schema) live here rather than on the long homepage
 const FaqSection = lazy(() => import('../components/home/FaqSection'));
@@ -58,6 +60,11 @@ export default function AboutPage({ lang = 'ar' }) {
   }, []);
 
   const cleanPhone = cleanPhoneNumber(cms.phoneNumber);
+  // Sections and company facts the team switched on in the CRM (الفريق وبيانات الشركة والصور)
+  const about = cms.about;
+  const show = (id) => sectionOn(about, id);
+  const facts = visibleCompanyFacts(about, isAr);
+  const factOf = (key) => facts.find((f) => f.key === key)?.value || '';
 
   const stats = [
     {
@@ -205,6 +212,7 @@ export default function AboutPage({ lang = 'ar' }) {
       </section>
 
       {/* 👑 2. EXECUTIVE LEADERSHIP SHOWCASE: DR. MAHMOUD ELBAZ */}
+      {show('founder') && (
       <section className="about-founder-feature-section section-container">
         <div className="about-founder-executive-card">
           {/* Portrait Column: Executive Frame with Radiant Gold Trim */}
@@ -292,8 +300,14 @@ export default function AboutPage({ lang = 'ar' }) {
           </div>
         </div>
       </section>
+      )}
+
+      <AboutCompanyFacts about={about} isAr={isAr} />
+      <AboutTeam about={about} isAr={isAr} />
+      <AboutGallery about={about} isAr={isAr} />
 
       {/* 🛡️ 3. THE 4 INSTITUTIONAL STANDARDS OF TRUST */}
+      {show('standards') && (
       <section className="about-standards-section section-container">
         <div className="section-header-centered">
           <span className="section-pill">
@@ -324,8 +338,10 @@ export default function AboutPage({ lang = 'ar' }) {
           ))}
         </div>
       </section>
+      )}
 
       {/* 🏛️ 4. CORPORATE PILLARS: VISION, MISSION & VALUES */}
+      {show('pillars') && (
       <section className="about-pillars-section section-container">
         <div className="pillars-grid">
           {corporatePillars.map((p, idx) => (
@@ -340,8 +356,10 @@ export default function AboutPage({ lang = 'ar' }) {
           ))}
         </div>
       </section>
+      )}
 
       {/* 📍 5. HEADQUARTERS & PHYSICAL ACCREDITATION */}
+      {show('hq') && (
       <section className="about-hq-section section-container">
         <div className="hq-luxury-card">
           <div className="hq-details-col">
@@ -359,7 +377,7 @@ export default function AboutPage({ lang = 'ar' }) {
             <div className="hq-features-list">
               <div className="hq-feature-item">
                 <Clock size={16} className="text-gold" />
-                <span>{isAr ? 'ساعات العمل: يومياً من 10:00 صباحاً حتى 10:00 مساءً (ما عدا الجمعة)' : 'Working Hours: 10:00 AM – 10:00 PM (Sat–Thu)'}</span>
+                <span>{factOf('hours') ? `${isAr ? 'مواعيد العمل' : 'Working hours'}: ${factOf('hours')}` : (isAr ? 'ساعات العمل: يومياً من 10:00 صباحاً حتى 10:00 مساءً (ما عدا الجمعة)' : 'Working Hours: 10:00 AM – 10:00 PM (Sat–Thu)')}</span>
               </div>
               <div className="hq-feature-item">
                 <Phone size={16} className="text-gold" />
@@ -367,7 +385,9 @@ export default function AboutPage({ lang = 'ar' }) {
               </div>
               <div className="hq-feature-item">
                 <ShieldCheck size={16} className="text-emerald" />
-                <span>{isAr ? 'سجل تجاري وبطاقة ضريبية معتمدة • استشارات هندسية وقانونية مرخصة' : 'Licensed Real Estate Firm • Certified Advisory'}</span>
+                <span>{factOf('commercialReg')
+                  ? `${isAr ? 'السجل التجاري' : 'Commercial registry'}: ${factOf('commercialReg')}`
+                  : (isAr ? 'سجل تجاري وبطاقة ضريبية معتمدة • استشارات هندسية وقانونية مرخصة' : 'Licensed Real Estate Firm • Certified Advisory')}</span>
               </div>
             </div>
 
@@ -403,14 +423,18 @@ export default function AboutPage({ lang = 'ar' }) {
           </div>
         </div>
       </section>
+      )}
 
       {/* 🚀 6. EXECUTIVE VIP CALL TO ACTION BANNER */}
+      {show('faq') && (
       <div id="faq">
         <Suspense fallback={null}>
           <FaqSection lang={lang} />
         </Suspense>
       </div>
+      )}
 
+      {show('cta') && (
       <section className="about-vip-cta-section section-container">
         <div className="about-vip-cta-banner">
           <div className="vip-cta-text">
@@ -440,6 +464,7 @@ export default function AboutPage({ lang = 'ar' }) {
           </div>
         </div>
       </section>
+      )}
     </div>
   );
 }

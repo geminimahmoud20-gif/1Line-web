@@ -194,3 +194,21 @@ export async function uploadMultipleImages(files, propertyId = 'general', onProg
   results.inlineCount = import.meta.env.DEV ? 0 : inline;
   return results;
 }
+
+/**
+ * A company photo for the About page (a team portrait or an office picture): shrunk, no watermark,
+ * stored on Blob. No data: URL fallback, since these live inside one settings document that
+ * must stay small. Returns { ok, url } or { ok: false, reason }.
+ */
+export async function uploadProfilePhoto(file, name = 'about', { maxWidth = 1200, maxHeight = 1200 } = {}) {
+  if (import.meta.env.DEV) return { ok: false, reason: 'dev' };
+  try {
+    const compressed = await compressImage(file, { maxWidth, maxHeight, quality: 0.84 });
+    const type = compressed.blob.type || 'image/jpeg';
+    const upload = new File([compressed.blob], `${name}.${type === 'image/webp' ? 'webp' : 'jpg'}`, { type });
+    const res = await uploadCmsMedia(upload, 'image');
+    return res.ok ? { ok: true, url: res.url } : { ok: false, reason: res.reason || 'refused' };
+  } catch (error) {
+    return { ok: false, reason: error?.message || 'failed' };
+  }
+}
