@@ -7,6 +7,7 @@ import MarketTickerBar from '../components/home/MarketTickerBar';
 import { MEGA_PROJECTS } from '../data/projectsData';
 import { DEMO_DEMANDS, isRealItem } from '../data/demoData';
 import { getFounderSettings } from '../utils/founderCmsData';
+import { heroSlides, slideIntervalMs } from '../utils/videoPoster';
 import { getAreas } from '../utils/areasData';
 import { updatePageSeo, buildOrganizationSchema } from '../utils/seoHelper';
 import { parseSemanticQuery } from '../utils/semanticSearchEngine';
@@ -110,6 +111,19 @@ export default function HomePage({
     && !isDataSaver && !isReducedMotion
     && navigator.connection?.effectiveType !== '3g';
   const showHeroVideo = !heroAd && founderSettings.heroVideoEnabled !== false && canPlayHeroVideo;
+
+  // Without the video (phones, slow links, data saver) the hero changes between one still per video
+  const heroStills = useMemo(
+    () => (heroAd ? [] : heroSlides(founderSettings.heroVideoClips, founderSettings.heroPosterUrl)),
+    [heroAd, founderSettings.heroVideoClips, founderSettings.heroPosterUrl]
+  );
+  const [activeStill, setActiveStill] = useState(0);
+  const stillsCycle = !showHeroVideo && heroStills.length > 1 && founderSettings.heroVideoAutoCycle !== false && !isReducedMotion;
+  useEffect(() => {
+    if (!stillsCycle) return;
+    const timer = setInterval(() => setActiveStill((i) => (i + 1) % heroStills.length), slideIntervalMs(founderSettings.heroVideoIntervalSec));
+    return () => clearInterval(timer);
+  }, [stillsCycle, heroStills.length, founderSettings.heroVideoIntervalSec, activeStill]);
 
   const currentClip = heroClips[activeClipIndex] || heroClips[0];
   const activeVideoUrl = currentClip?.url || founderSettings.heroVideoUrl;
@@ -339,6 +353,10 @@ export default function HomePage({
         handleHeroSearch={handleHeroSearch}
         handleVideoEnded={handleVideoEnded}
         heroAd={heroAd}
+        heroStills={heroStills}
+        activeStill={heroStills[activeStill] ? activeStill : 0}
+        setActiveStill={setActiveStill}
+        stillsCycle={stillsCycle}
         heroClips={heroClips}
         heroVideoRef={heroVideoRef}
         isDataSaver={isDataSaver}
