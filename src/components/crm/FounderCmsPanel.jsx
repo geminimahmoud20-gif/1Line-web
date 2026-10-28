@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { Building, User, Quote, TrendingUp, ShieldCheck, Save, RotateCcw, Sparkles, Award, Loader2, Film } from 'lucide-react';
+import { Building, User, Quote, TrendingUp, ShieldCheck, Save, RotateCcw, Sparkles, Award, Loader2, Film, Users } from 'lucide-react';
 import { getFounderSettings, saveFounderSettings, resetFounderSettings, DEFAULT_FOUNDER_CMS } from '../../utils/founderCmsData';
 import { uploadCmsMedia, getCmsStorageStatus } from '../../firebaseLazy';
 import HeroVideoSettings from './founder-cms/HeroVideoSettings';
 import GoldStandardsSettings from './founder-cms/GoldStandardsSettings';
+import AboutProfileSettings from './founder-cms/AboutProfileSettings';
 
 /**
  * DEV ONLY: send the file to the Vite dev-server endpoint (scripts/vite-local-media.mjs), which
@@ -339,6 +340,15 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
 
         <button
           type="button"
+          className={`btn btn-sm ${activeSubTab === 'about_profile' ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() => setActiveSubTab('about_profile')}
+        >
+          <Users size={14} />
+          <span>{isAr ? 'الفريق وبيانات الشركة والصور' : 'Team, company facts & photos'}</span>
+        </button>
+
+        <button
+          type="button"
           className={`btn btn-sm ${activeSubTab === 'founder' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => setActiveSubTab('founder')}
         >
@@ -409,6 +419,10 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
         )}
 
         {/* SUBTAB 1: FOUNDER INFO */}
+        {activeSubTab === 'about_profile' && (
+          <AboutProfileSettings formData={formData} setFormData={setFormData} isAr={isAr} triggerToast={triggerToast} />
+        )}
+
         {activeSubTab === 'founder' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
             <div className="form-group-item">
