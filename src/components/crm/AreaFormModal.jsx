@@ -6,6 +6,8 @@ export default function AreaFormModal({
   isAr,
   isSaving,
   modalMode,
+  parentChoices = [],
+  hasChildren = false,
   setFormData,
   setModalMode
 }) {
@@ -86,6 +88,38 @@ export default function AreaFormModal({
                 }}
               />
             </div>
+          </div>
+
+          {/* Main area or a sub-area of one */}
+          <div className="form-group-item" style={{ marginBottom: '14px' }}>
+            <label htmlFor="area-parent" style={{ display: 'block', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-on-dark-muted)', marginBottom: '6px' }}>
+              {isAr ? 'تابعة لـ' : 'Belongs to'}
+            </label>
+            <select
+              id="area-parent"
+              value={formData.parentId || ''}
+              onChange={(e) => setFormData({ ...formData, parentId: e.target.value })}
+              disabled={hasChildren}
+              style={{
+                width: '100%',
+                background: 'rgba(0, 0, 0, 0.4)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                padding: '10px 12px',
+                borderRadius: '8px',
+                color: 'var(--crm-on-dark)',
+                fontSize: 'var(--crm-text-base)'
+              }}
+            >
+              <option value="">{isAr ? 'منطقة رئيسية (مش تابعة لحاجة)' : 'Main area'}</option>
+              {parentChoices.map((a) => (
+                <option key={a.id} value={a.id}>{isAr ? `فرعية من: ${a.name_ar}` : `Sub-area of ${a.name_en || a.name_ar}`}</option>
+              ))}
+            </select>
+            {hasChildren && (
+              <small style={{ display: 'block', marginTop: '4px', color: 'var(--crm-on-dark-muted)' }}>
+                {isAr ? 'المنطقة دي تحتها مناطق فرعية، فهتفضل رئيسية.' : 'This area has sub-areas, so it stays a main area.'}
+              </small>
+            )}
           </div>
 
           {/* Detailed Label for Dropdowns */}

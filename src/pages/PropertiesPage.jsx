@@ -26,6 +26,7 @@ import { hasLandShare } from '../utils/buildingFeatures';
 import { finishingGroupOf } from '../utils/unitHandover';
 import '../styles/light-headers.css';
 import LandingLinks from '../components/properties/LandingLinks';
+import { inArea } from '../utils/areaLookup';
 
 // Area centre for listings placed only by their area (map bubbles, "search this area")
 const areaCenterOf = (key) => {
@@ -204,7 +205,8 @@ export default function PropertiesPage({
       if (filters.type && filters.type !== 'all' && prop.type !== filters.type) return false;
 
       // Area filter
-      if (filters.area && filters.area !== 'all' && prop.areaKey !== filters.area) return false;
+      // A main area shows its sub-areas' listings too
+      if (filters.area && filters.area !== 'all' && !inArea(prop.areaKey, filters.area, getAreas())) return false;
 
       // Max Price filter
       if (filters.maxPrice && filters.maxPrice < MAX_PRICE_CAP && prop.price > filters.maxPrice) return false;

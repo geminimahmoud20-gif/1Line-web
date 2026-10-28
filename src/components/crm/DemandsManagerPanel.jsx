@@ -8,7 +8,7 @@ import DemandFormModal from './demands/DemandFormModal';
 import DemandMatchModal from './demands/DemandMatchModal';
 import { PROP_TYPE_OPTIONS } from './DemandsManagerPanelData';
 import { getAreas } from '../../utils/areasData';
-import { findArea, placeAreas } from '../../utils/areaLookup';
+import { findArea, placeAreas, inArea } from '../../utils/areaLookup';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { recordTimeLabel } from '../../utils/relativeTime';
 
@@ -58,7 +58,7 @@ export default function DemandsManagerPanel({
     const b = typeof demand.budget === 'number' ? demand.budget : parseInt(String(demand.budget).replace(/,/g, '')) || 0;
     return properties.filter(p => {
       const typeMatch = !demand.type || p.type === demand.type;
-      const areaMatch = !demand.area || p.areaKey === demand.area;
+      const areaMatch = !demand.area || inArea(p.areaKey, demand.area, getAreas());
       const priceMatch = p.price <= (b * 1.25);
       return typeMatch && (areaMatch || priceMatch);
     });

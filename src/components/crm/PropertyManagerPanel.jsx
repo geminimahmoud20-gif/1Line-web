@@ -35,6 +35,7 @@ import OfferModal from './OfferModal';
 import { getNormalizedPropertyStatus } from '../../utils/crmLeadViews';
 import { useProperties } from '../../context/PropertiesContext';
 import { paymentTerms, paymentFields, paymentProblem } from '../../utils/paymentTerms';
+import { areaFamily } from '../../utils/areaLookup';
 const SOHAG_AREA_COORDINATES = {
   east: { lat: 26.5569, lng: 31.7001 },
   new_sohag: { lat: 26.4715, lng: 31.6620 },
@@ -568,7 +569,7 @@ export default function PropertyManagerPanel({
   }, [properties, knownAreas]);
   const issuesOf = (p) => issuesMap.get(p.id) || [];
 
-  const filters = { status: statusFilter, type: typeFilter, area: areaFilter, readiness, issue: issueFilter, ...range, q: searchQuery };
+  const filters = { status: statusFilter, type: typeFilter, area: areaFilter, areaIds: areaFamily(areaFilter, areas), readiness, issue: issueFilter, ...range, q: searchQuery };
   const filteredProperties = useMemo(
     () => sortListings(properties.filter((p) => matchesFilters(p, filters, issuesMap.get(p.id) || [])), sortKey, (p) => issuesMap.get(p.id) || []),
     // eslint-disable-next-line react-hooks/exhaustive-deps

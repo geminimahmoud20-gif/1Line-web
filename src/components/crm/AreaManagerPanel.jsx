@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
+import { Fragment, useState, useEffect, useMemo } from 'react';
 import { MapPin, Plus, Edit3, Trash2, RotateCcw, Search, CheckCircle2, Navigation, AlertTriangle } from 'lucide-react';
-import { getAreas, addArea, updateArea, deleteArea, resetAreasToDefault, normalizeAreaKey } from '../../utils/areasData';
+import { getAreas, addArea, updateArea, deleteArea, resetAreasToDefault, normalizeAreaKey, saveAreas } from '../../utils/areasData';
+import { groupedAreas, childrenOf, mainAreas, areaFamily, isMainArea, suggestedArrangement } from '../../utils/areaLookup';
 import { useProperties } from '../../context/PropertiesContext';
 import AreaFormModal from './AreaFormModal';
 import { moveLeadsToArea, moveDemandsToArea } from '../../firebaseLazy';
@@ -28,7 +29,8 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
     lat: 26.5569,
     lng: 31.7001,
     zoom: 14,
-    description_ar: ''
+    description_ar: '',
+    parentId: ''
   });
 
   // Listen to external/cloud updates
@@ -64,17 +66,39 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
     };
   }, [modalMode, deleteConfirmId, isSaving]);
 
+  // Each main area followed by its sub-areas ("كل المناطق" first)
+  const orderedAreas = useMemo(() => {
+    const all = areas.filter((a) => a.id === 'all');
+    return [...all, ...groupedAreas(areas).flatMap((g) => [g.main, ...g.children])];
+  }, [areas]);
+
   // Filtered areas
   const filteredAreas = useMemo(() => {
-    if (!searchQuery.trim()) return areas;
+    if (!searchQuery.trim()) return orderedAreas;
     const q = searchQuery.toLowerCase().trim();
-    return areas.filter(a => 
+    return orderedAreas.filter(a => 
       a.name_ar?.toLowerCase().includes(q) ||
       a.name_en?.toLowerCase().includes(q) ||
       a.label_ar?.toLowerCase().includes(q) ||
       a.id?.toLowerCase().includes(q)
     );
-  }, [areas, searchQuery]);
+  }, [orderedAreas, searchQuery]);
+
+  // The agreed arrangement (main areas + where each street goes), offered until it is applied
+  const arrangement = useMemo(() => suggestedArrangement(areas), [areas]);
+  const handleApplyArrangement = async () => {
+    setIsSaving(true);
+    try {
+      await saveAreas(arrangement.list);
+      setAreas(getAreas());
+      if (triggerToast) triggerToast(isAr ? 'تم ترتيب المناطق: رئيسية وتحتها الفرعية' : 'Areas arranged into main areas and sub-areas', 'success');
+    } catch (err) {
+      console.error('Error arranging areas:', err);
+      if (triggerToast) triggerToast(isAr ? 'تعذّر حفظ الترتيب' : 'Could not save the arrangement', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Statistics
   const stats = useMemo(() => {
@@ -97,7 +121,8 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
       zoom: 14,
       description_ar: '',
       avgPricePerMeter: 15000,
-      annualGrowthRate: 0
+      annualGrowthRate: 0,
+      parentId: ''
     });
     setModalMode('add');
   };
@@ -116,7 +141,8 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
       zoom: area.zoom ?? 14,
       description_ar: area.description_ar || '',
       avgPricePerMeter: area.avgPricePerMeter ?? 15000,
-      annualGrowthRate: area.annualGrowthRate ?? 0
+      annualGrowthRate: area.annualGrowthRate ?? 0,
+      parentId: isMainArea(area, areas) ? '' : (area.parentId || '')
     });
     setModalMode('edit');
   };
@@ -159,7 +185,8 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
           zoom: parseInt(formData.zoom, 10) || 14,
           description_ar: formData.description_ar,
           avgPricePerMeter: price,
-          annualGrowthRate: growth
+          annualGrowthRate: growth,
+          parentId: formData.parentId || ''
         });
         if (triggerToast) triggerToast(isAr ? 'تمت إضافة المنطقة' : 'Area added', 'success');
       } else if (modalMode === 'edit' && activeArea) {
@@ -172,7 +199,9 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
           zoom: parseInt(formData.zoom, 10) || 14,
           description_ar: formData.description_ar.trim(),
           avgPricePerMeter: price,
-          annualGrowthRate: growth
+          annualGrowthRate: growth,
+          // A main area with sub-areas stays main (one level only)
+          parentId: childrenOf(activeArea.id, areas).length ? '' : (formData.parentId || '')
         });
         if (triggerToast) triggerToast(isAr ? 'تم حفظ تعديلات المنطقة' : 'Area updated', 'success');
       }
@@ -246,6 +275,8 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
     ? properties
     : properties.filter((p) => p && !p.isDemo && normalizeAreaKey(p.areaKey || p.location || '') === areaId));
   const getAreaPropertiesCount = (areaId) => areaProperties(areaId).length;
+  // A main area counts its sub-areas' listings too
+  const getFamilyPropertiesCount = (areaId) => areaFamily(areaId, areas).reduce((n, id) => n + getAreaPropertiesCount(id), 0);
 
   return (
     <div className="crm-subpanel-container animate-fadeIn">
@@ -316,6 +347,34 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
         </div>
       </div>
 
+      {/* One-click arrangement into main areas and sub-areas */}
+      {(arrangement.added.length > 0 || arrangement.placed.length > 0) && (
+        <div className="crm-card" style={{ marginBottom: '20px', padding: '16px 18px', borderRadius: '12px', border: '1px solid rgba(217, 119, 6, 0.35)', background: 'rgba(217, 119, 6, 0.06)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <strong style={{ color: 'var(--crm-ink)', fontSize: 'var(--crm-text-md)' }}>
+            {isAr ? 'رتّب المناطق: مناطق رئيسية وتحتها مناطق فرعية' : 'Arrange areas into main areas and sub-areas'}
+          </strong>
+          {arrangement.added.length > 0 && (
+            <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-body)' }}>
+              {isAr ? 'هتتضاف مناطق رئيسية: ' : 'Main areas to add: '}<b>{arrangement.added.join('، ')}</b>
+            </span>
+          )}
+          {arrangement.placed.length > 0 && (
+            <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-body)' }}>
+              {isAr ? `هتتحط ${arrangement.placed.length} منطقة تحت «سوهاج غرب» و«سوهاج شرق» حسب اسمها، ويتصلح «سوهاح» لـ«سوهاج».` : `${arrangement.placed.length} areas go under West / East Sohag by their names.`}
+            </span>
+          )}
+          <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
+            {isAr ? 'العقارات والعملاء مش هيتغيروا. تقدر تعدّل أي منطقة بعدين من «تعديل ← تابعة لـ».' : 'Listings and leads are not changed. Edit any area later via Edit → Belongs to.'}
+          </span>
+          <div>
+            <button type="button" className="crm-btn-primary-gold" onClick={handleApplyArrangement} disabled={isSaving}>
+              <CheckCircle2 size={16} />
+              <span>{isSaving ? (isAr ? 'جاري الحفظ…' : 'Saving…') : (isAr ? 'طبّق الترتيب ده' : 'Apply this arrangement')}</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Areas Grid */}
       <div style={{ 
         display: 'grid', 
@@ -323,10 +382,21 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
         gap: '16px' 
       }}>
         {filteredAreas.map((area) => {
-          const propCount = getAreaPropertiesCount(area.id);
+          const isMain = area.id !== 'all' && isMainArea(area, areas);
+          const subCount = isMain ? childrenOf(area.id, areas).length : 0;
+          const propCount = isMain ? getFamilyPropertiesCount(area.id) : getAreaPropertiesCount(area.id);
+          const parent = !isMain && area.id !== 'all' ? areas.find((a) => a.id === area.parentId) : null;
           const isSystem = area.isSystem || area.id === 'all';
 
           return (
+            <Fragment key={area.id}>
+            {isMain && !searchQuery.trim() && (
+              <h4 style={{ gridColumn: '1 / -1', margin: '10px 0 0', paddingBottom: '6px', borderBottom: '2px solid rgba(217, 119, 6, 0.35)', color: 'var(--crm-ink)', fontSize: 'var(--crm-text-md)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <MapPin size={16} style={{ color: 'var(--crm-accent)' }} />
+                <span>{area.name_ar}</span>
+                <small style={{ color: 'var(--crm-muted)', fontWeight: 600 }}>{isAr ? (subCount ? `${subCount} منطقة فرعية` : 'من غير مناطق فرعية') : `${subCount} sub-areas`}</small>
+              </h4>
+            )}
             <div 
               key={area.id} 
               className="crm-card area-item-card animate-fadeIn"
@@ -360,6 +430,11 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                       }}>
                         #{area.id}
                       </span>
+                      {area.id !== 'all' && (
+                        <span style={{ fontSize: 'var(--crm-text-xs)', padding: '2px 8px', borderRadius: '6px', fontWeight: 700, background: isMain ? 'rgba(217, 119, 6, 0.15)' : 'var(--crm-subtle)', color: isMain ? 'var(--crm-accent-text)' : 'var(--crm-body)' }}>
+                          {isMain ? (isAr ? 'رئيسية' : 'Main') : (isAr ? `فرعية من ${parent?.name_ar || ''}` : `Sub-area of ${parent?.name_en || parent?.name_ar || ''}`)}
+                        </span>
+                      )}
                     </div>
                     <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-faint)', marginTop: '2px', display: 'block' }}>
                       {area.name_en || area.id}
@@ -374,7 +449,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                     background: propCount > 0 ? 'rgba(16, 185, 129, 0.15)' : 'var(--crm-subtle)',
                     color: propCount > 0 ? 'var(--crm-positive)' : 'var(--crm-muted)'
                   }}>
-                    {propCount} {isAr ? 'عقار' : 'Props'}
+                    {propCount} {isAr ? (subCount ? 'عقار مع الفرعية' : 'عقار') : 'Props'}
                   </span>
                 </div>
 
@@ -509,6 +584,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                 )}
               </div>
             </div>
+            </Fragment>
           );
         })}
       </div>
@@ -530,6 +606,8 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
           isAr={isAr}
           isSaving={isSaving}
           modalMode={modalMode}
+          parentChoices={mainAreas(areas).filter((a) => a.id !== activeArea?.id || modalMode === 'add')}
+          hasChildren={modalMode === 'edit' && Boolean(activeArea) && childrenOf(activeArea.id, areas).length > 0}
           setFormData={setFormData}
           setModalMode={setModalMode}
         />
@@ -560,7 +638,9 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
             </h3>
             <p style={{ color: 'var(--crm-on-dark-muted)', fontSize: 'var(--crm-text-base)', marginBottom: '10px' }}>
               {isAr
-                ? 'سيتم إزالة الحي من فلاتر البحث ونماذج البيع والشراء في الموقع.'
+                ? (childrenOf(deleteConfirmId, areas).length
+                  ? `سيتم إزالة الحي من فلاتر البحث ونماذج البيع والشراء في الموقع. مناطقها الفرعية (${childrenOf(deleteConfirmId, areas).length}) هتبقى مناطق رئيسية.`
+                  : 'سيتم إزالة الحي من فلاتر البحث ونماذج البيع والشراء في الموقع.')
                 : 'The district will be removed from all search filters.'}
             </p>
             {(

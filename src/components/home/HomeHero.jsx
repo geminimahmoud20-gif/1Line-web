@@ -5,6 +5,7 @@ import { Building, Search, TrendingUp, MapPin, Sparkles, Calculator, Home, Landm
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { HeroSponsorChip } from './SponsoredPlacements';
 import LogoEmblem from '../LogoEmblem';
+import AreaOptions from '../common/AreaOptions';
 
 // "Invest" search: income and land types only
 const INVEST_TYPES = ['all', 'commercial', 'office', 'land', ...AGRICULTURAL_TYPES, ...INDUSTRIAL_TYPES];
@@ -388,9 +389,7 @@ export default function HomeHero({
               <label className="hx-field">
                 <span className="hx-field-label">{lang === 'ar' ? 'المنطقة' : 'Area'}</span>
                 <select value={searchArea} onChange={(e) => setSearchArea(e.target.value)} aria-label={lang === 'ar' ? 'المنطقة' : 'Area'}>
-                  {districts.map((a) => (
-                    <option key={a.id} value={a.id}>{lang === 'ar' ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}</option>
-                  ))}
+                  <AreaOptions areas={districts} isAr={lang === 'ar'} includeAll={districts.some((a) => a?.id === 'all')} />
                 </select>
               </label>
 
