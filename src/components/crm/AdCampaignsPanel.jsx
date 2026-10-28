@@ -13,6 +13,7 @@ import {
 import { subscribeToAdStats } from '../../firebaseLazy';
 import { toDayInput, addDays } from '../../utils/featuredSlots';
 import './homepage-slots.css';
+import ImageUploadField from './ImageUploadField';
 
 const PLACEMENTS = {
   hero: { ar: 'خلفية الصفحة الرئيسية', en: 'Homepage hero', hint_ar: 'صورة 1920×1080 للكمبيوتر + 900×1200 للموبايل، أقل من 400KB. العنوان والبحث يبقيان فوقها.' },
@@ -55,8 +56,8 @@ function CampaignModal({ initial, isAr, onSave, onClose }) {
     if (!f.title_ar) return setError('اكتب عنوان الإعلان');
     if (!f.advertiser) return setError('اكتب اسم المُعلِن — يظهر بجوار كلمة «مُموَّل»');
     if (!isSafeAdUrl(f.url)) return setError('الرابط يجب أن يبدأ بـ / (صفحة داخل الموقع) أو https://');
-    if (!isSafeImageUrl(f.imageDesktop)) return setError('رابط صورة الكمبيوتر يجب أن يبدأ بـ https://');
-    if (f.imageMobile && !isSafeImageUrl(f.imageMobile)) return setError('رابط صورة الموبايل يجب أن يبدأ بـ https://');
+    if (!isSafeImageUrl(f.imageDesktop)) return setError('ارفع صورة الكمبيوتر من الجهاز');
+    if (f.imageMobile && !isSafeImageUrl(f.imageMobile)) return setError('صورة الموبايل مش صالحة، ارفعها تاني من الجهاز');
     if (!f.startAt || !f.endAt) return setError('حدد تاريخ البداية والنهاية');
     if (f.endAt < f.startAt) return setError('تاريخ النهاية قبل البداية');
     onSave({ ...f, id: f.id || newCampaignId(), priority: Number(f.priority) || 1, updatedAt: new Date().toISOString() });
@@ -88,8 +89,9 @@ function CampaignModal({ initial, isAr, onSave, onClose }) {
           <label className="ad-full"><span>سطر وصفي (للبانر)</span><input value={form.subtitle_ar} onChange={set('subtitle_ar')} maxLength={140} /></label>
           <label><span>نص الزر</span><input value={form.cta_ar} onChange={set('cta_ar')} maxLength={28} /></label>
           <label><span>الرابط *</span><input value={form.url} onChange={set('url')} dir="ltr" placeholder="/projects أو https://..." /></label>
-          <label className="ad-full"><span>صورة الكمبيوتر (https) *</span><input value={form.imageDesktop} onChange={set('imageDesktop')} dir="ltr" placeholder="https://..." /></label>
-          <label className="ad-full"><span>صورة الموبايل (اختياري)</span><input value={form.imageMobile} onChange={set('imageMobile')} dir="ltr" placeholder="https://..." /></label>
+          {/* Pictures are uploaded from the device only, stored with the site's own files */}
+          <div className="ad-full"><ImageUploadField label="صورة الكمبيوتر" required value={form.imageDesktop} onChange={(url) => setForm((f) => ({ ...f, imageDesktop: url }))} name="ad-desktop" maxWidth={1920} maxHeight={1080} isAr={isAr} /></div>
+          <div className="ad-full"><ImageUploadField label="صورة الموبايل (اختياري)" value={form.imageMobile} onChange={(url) => setForm((f) => ({ ...f, imageMobile: url }))} name="ad-mobile" maxWidth={1080} maxHeight={1350} previewShape="portrait" isAr={isAr} /></div>
           <label><span>من يوم</span><input type="date" value={form.startAt} onChange={set('startAt')} /></label>
           <label><span>حتى يوم (شامل)</span><input type="date" value={form.endAt} min={form.startAt} onChange={set('endAt')} /></label>
           <details className="ad-full ad-en">

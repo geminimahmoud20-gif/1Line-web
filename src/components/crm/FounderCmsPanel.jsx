@@ -3,6 +3,7 @@ import { Building, User, Quote, TrendingUp, ShieldCheck, Save, RotateCcw, Sparkl
 import { getFounderSettings, saveFounderSettings, resetFounderSettings, DEFAULT_FOUNDER_CMS } from '../../utils/founderCmsData';
 import { uploadCmsMedia, getCmsStorageStatus } from '../../firebaseLazy';
 import HeroVideoSettings from './founder-cms/HeroVideoSettings';
+import ImageUploadField from './ImageUploadField';
 import { captureVideoFrame } from '../../utils/videoPoster';
 import { uploadProfilePhoto } from '../../utils/imageUploadService';
 import GoldStandardsSettings from './founder-cms/GoldStandardsSettings';
@@ -509,49 +510,18 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
             </div>
 
             <div className="form-group-item">
-              <label htmlFor="fcms-field-14">{isAr ? 'رابط الصورة الشخصية للمؤسس:' : 'Founder Photo URL:'}</label>
-              <input id="fcms-field-14"
-                type="text"
-                placeholder="/founder-dr-mahmoud-elbaz.jpg"
-                value={formData.founderPhoto || ''}
-                onChange={(e) => setFormData({ ...formData, founderPhoto: e.target.value })}
+              {/* Uploaded from the device only; empty falls back to the official portrait shipped with the site */}
+              <ImageUploadField
+                label={isAr ? 'الصورة الشخصية للمؤسس' : 'Founder photo'}
+                value={formData.founderPhoto || '/founder-dr-mahmoud-elbaz.jpg'}
+                onChange={(url) => setFormData({ ...formData, founderPhoto: url || '/founder-dr-mahmoud-elbaz.jpg' })}
+                name="founder"
+                maxWidth={900}
+                maxHeight={1200}
+                previewShape="portrait"
+                isAr={isAr}
+                hint={isAr ? '«شيل الصورة» بيرجّع الصورة الرسمية.' : 'Remove brings back the official portrait.'}
               />
-              {/* Photo Live Preview */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
-                <div style={{
-                  width: '56px',
-                  height: '68px',
-                  borderRadius: '10px',
-                  overflow: 'hidden',
-                  border: '1.5px solid rgba(212, 175, 55, 0.6)',
-                  boxShadow: '0 4px 10px rgba(0, 0, 0, 0.25)',
-                  background: 'var(--crm-surface-ink-deep)',
-                  flexShrink: 0
-                }}>
-                  <img
-                    src={formData.founderPhoto || '/founder-dr-mahmoud-elbaz.jpg'}
-                    alt="Founder Preview"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 12%' }}
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = "/founder-dr-mahmoud-elbaz.jpg";
-                    }}
-                  />
-                </div>
-                <div>
-                  <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', fontWeight: 700, display: 'block' }}>
-                    {isAr ? '✓ صورة المؤسس د. محمود الباز معتمدة' : '✓ Accredited Founder Portrait'}
-                  </span>
-                  <button
-                    type="button"
-                    className="btn btn-xs btn-ghost"
-                    onClick={() => setFormData({ ...formData, founderPhoto: '/founder-dr-mahmoud-elbaz.jpg' })}
-                    style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', marginTop: '2px', padding: '0' }}
-                  >
-                    {isAr ? 'استعادة الصورة الرسمية' : 'Restore Official Photo'}
-                  </button>
-                </div>
-              </div>
             </div>
 
             <div className="form-group-item">

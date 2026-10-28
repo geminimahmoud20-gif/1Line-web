@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Eye, EyeOff, Plus, Trash2, ArrowUp, ArrowDown, Upload, Loader2, Users, Building2, Image as ImageIcon, LayoutList } from 'lucide-react';
 import { ABOUT_SECTIONS, COMPANY_FIELDS, TEAM_GROUPS, LIMITS, normalizeAbout, blankMember, blankPhoto, moveItem, initials } from '../../../utils/aboutProfile';
 import { uploadProfilePhoto } from '../../../utils/imageUploadService';
+import ImageUploadField from '../ImageUploadField';
 import './about-profile.css';
 
 function Switch({ checked, onChange, label }) {
@@ -26,7 +27,7 @@ function Field({ label, value, onChange, placeholder, multiline = false, maxLeng
 }
 
 const UPLOAD_ERRORS = {
-  dev: { ar: 'الرفع شغال على الموقع الحقيقي بس. حط رابط الصورة بدل كده.', en: 'Uploads work on the live site only. Paste an image link instead.' }
+  dev: { ar: 'الرفع شغال على الموقع الحقيقي بس، مش على نسخة التجربة.', en: 'Uploads work on the live site only.' }
 };
 
 /**
@@ -47,16 +48,7 @@ export default function AboutProfileSettings({ formData, setFormData, isAr = tru
 
   const failed = (reason) => {
     const msg = UPLOAD_ERRORS[reason];
-    triggerToast?.(msg ? L(msg.ar, msg.en) : L('الصورة مارفعتش. جرّب تاني أو حط رابطها.', 'Upload failed. Try again or paste a link.'), 'error');
-  };
-
-  const uploadMemberPhoto = async (id, file) => {
-    if (!file) return;
-    setBusy(id);
-    const res = await uploadProfilePhoto(file, `team-${id}`, { maxWidth: 800, maxHeight: 800 });
-    setBusy('');
-    if (res.ok) setMember(id, { photo: res.url });
-    else failed(res.reason);
+    triggerToast?.(msg ? L(msg.ar, msg.en) : L('الصورة مارفعتش. اتأكد من النت وجرّب تاني.', 'Upload failed. Check the connection and try again.'), 'error');
   };
 
   const uploadGallery = async (files) => {
@@ -73,13 +65,6 @@ export default function AboutProfileSettings({ formData, setFormData, isAr = tru
     if (added.length) update((a) => ({ gallery: [...a.gallery, ...added].slice(0, LIMITS.gallery) }));
   };
 
-  const [galleryUrl, setGalleryUrl] = useState('');
-  const addGalleryUrl = () => {
-    const url = galleryUrl.trim();
-    if (!/^https:\/\/\S+$/i.test(url)) { triggerToast?.(L('الرابط لازم يبدأ بـ https://', 'The link must start with https://'), 'error'); return; }
-    update((a) => ({ gallery: [...a.gallery, blankPhoto(url)].slice(0, LIMITS.gallery) }));
-    setGalleryUrl('');
-  };
 
   return (
     <div className="ap">
@@ -160,13 +145,9 @@ export default function AboutProfileSettings({ formData, setFormData, isAr = tru
               <Field label={L('نبذة قصيرة (سطرين)', 'Short bio (two lines)')} value={m.bio_ar} multiline maxLength={220} onChange={(v) => setMember(m.id, { bio_ar: v })} />
               <div className="ap-grid">
                 <Field label={L('رقم الواتساب (اختياري)', 'WhatsApp (optional)')} value={m.whatsapp} dir="ltr" maxLength={20} onChange={(v) => setMember(m.id, { whatsapp: v })} placeholder="01xxxxxxxxx" />
-                <Field label={L('رابط الصورة', 'Photo link')} value={m.photo} dir="ltr" maxLength={500} onChange={(v) => setMember(m.id, { photo: v.trim() })} placeholder="https://" />
               </div>
-              <label className="btn btn-sm btn-outline ap-upload">
-                {busy === m.id ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
-                <span>{busy === m.id ? L('جاري الرفع…', 'Uploading…') : L('ارفع صورة من الجهاز', 'Upload a photo')}</span>
-                <input type="file" accept="image/*" hidden disabled={Boolean(busy)} onChange={(e) => { uploadMemberPhoto(m.id, e.target.files?.[0]); e.target.value = ''; }} />
-              </label>
+              {/* Photos are uploaded from the device only, never pasted as a link */}
+              <ImageUploadField label={L('الصورة', 'Photo')} value={m.photo} onChange={(url) => setMember(m.id, { photo: url })} name={`team-${m.id}`} maxWidth={800} maxHeight={800} previewShape="round" isAr={isAr} />
 
               <div className="ap-switch-row">
                 <span>{L('يظهر في الكارت:', 'On the card:')}</span>
@@ -190,8 +171,6 @@ export default function AboutProfileSettings({ formData, setFormData, isAr = tru
             <span>{busy === 'gallery' ? L('جاري الرفع…', 'Uploading…') : L('ارفع صور', 'Upload photos')}</span>
             <input type="file" accept="image/*" multiple hidden disabled={Boolean(busy) || about.gallery.length >= LIMITS.gallery} onChange={(e) => { uploadGallery(e.target.files); e.target.value = ''; }} />
           </label>
-          <input className="ap-url" type="url" dir="ltr" value={galleryUrl} placeholder="https://…" onChange={(e) => setGalleryUrl(e.target.value)} aria-label={L('رابط صورة', 'Image link')} />
-          <button type="button" className="btn btn-sm btn-outline" onClick={addGalleryUrl} disabled={!galleryUrl.trim()}>{L('أضف بالرابط', 'Add by link')}</button>
         </div>
 
         {about.gallery.length === 0 && <p className="ap-empty">{L('لسه مفيش صور.', 'No photos yet.')}</p>}

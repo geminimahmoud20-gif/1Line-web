@@ -1,5 +1,6 @@
 import { Loader2, Film, Upload, Trash2, Plus, Play, Maximize2, Image as ImageIcon } from 'lucide-react';
 import { DEFAULT_FOUNDER_CMS } from '../../../utils/founderCmsData';
+import ImageUploadField from '../ImageUploadField';
 
 export default function HeroVideoSettings({
   canCancelUpload,
@@ -518,12 +519,15 @@ export default function HeroVideoSettings({
         </div>
 
         <div className="form-group-item" style={{ gridColumn: '1 / -1' }}>
-          <label htmlFor="fcms-field-4">{isAr ? 'رابط صورة البوستر البديلة:' : 'Fallback Poster Image URL:'}</label>
-          <input id="fcms-field-4"
-            type="url"
+          {/* Uploaded from the device only, stored with the site's own files */}
+          <ImageUploadField
+            label={isAr ? 'صورة البوستر البديلة' : 'Fallback poster image'}
             value={formData.heroPosterUrl || ''}
-            onChange={(e) => setFormData({ ...formData, heroPosterUrl: e.target.value })}
-            placeholder="https://images.unsplash.com/photo-..."
+            onChange={(url) => setFormData({ ...formData, heroPosterUrl: url })}
+            name="hero-poster"
+            maxWidth={1600}
+            maxHeight={1200}
+            isAr={isAr}
           />
           <small style={{ color: 'var(--crm-muted)', display: 'block', marginTop: '4px' }}>
             {isAr ? 'تظهر في أول أجزاء من الثانية لضمان سرعة التحميل أو على الأجهزة التي تعطل تشغيل الفيديو التلقائي.' : 'Shown before video loads or on power-save devices.'}

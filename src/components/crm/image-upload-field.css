@@ -1,0 +1,25 @@
+/* CRM picture field: upload from the device only (iuf-*) */
+.iuf { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.iuf-label { font-size: var(--ui-fs-1); font-weight: 600; color: var(--ui-text-3); }
+.iuf-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.iuf-preview {
+  flex: none;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 10px;
+  border: 1px dashed var(--ui-line);
+  background: var(--ui-surface-2);
+  color: var(--ui-text-3);
+  font-size: var(--ui-fs-1);
+  text-align: center;
+}
+.iuf-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.iuf-preview--wide { width: 128px; height: 72px; }
+.iuf-preview--portrait { width: 64px; height: 80px; }
+.iuf-preview--round { width: 64px; height: 64px; border-radius: 50%; }
+.iuf-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.iuf-upload { position: relative; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; }
+.iuf-remove { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; color: var(--ui-danger); }
+.iuf-hint { color: var(--ui-text-3); font-size: var(--ui-fs-1); line-height: 1.5; }
+.iuf-error { color: var(--ui-danger); font-size: var(--ui-fs-1); font-weight: 600; }
