@@ -4,6 +4,7 @@ import PhoneInputField from './PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { getAreas } from '../utils/areasData';
 import useClientDownload from '../hooks/useClientDownload';
+import AreaOptions from './common/AreaOptions';
 
 // Dynamic ROI Yields based on property type in Sohag
 const YIELD_RATES = {
@@ -348,11 +349,7 @@ export const InvestorCenter = ({
               required
             >
               <option value="" disabled>{isAr ? 'اختار المنطقة' : 'Choose an area'}</option>
-              {areasList.map(a => (
-                <option key={a.id} value={a.id}>
-                  {isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}
-                </option>
-              ))}
+              <AreaOptions areas={areasList} isAr={isAr} includeAll={areasList.some((a) => a?.id === 'all')} />
             </select>
           </div>
         </div>

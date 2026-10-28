@@ -41,6 +41,8 @@ import { filterLeads, sortLeads, duplicatesById, buildMergedLead } from '../util
 import { formatWhatsAppPhone } from '../utils/matchingEngine';
 import useFullLeadStats from '../hooks/useFullLeadStats';
 import { useProperties } from '../context/PropertiesContext';
+import { areaFamily } from '../utils/areaLookup';
+import { getAreas } from '../utils/areasData';
 
 export const CrmAdminPanel = ({
   lang = 'ar',
@@ -666,7 +668,7 @@ export const CrmAdminPanel = ({
   const duplicateIds = useMemo(() => duplicatesById(leads), [leads]);
   const filteredLeads = useMemo(() => sortLeads(filterLeads(leads, {
     myDealsOnly, activeRole, agentName: currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter,
-    sourceFilter, dateFilter, searchQuery, duplicateIds
+    areaIds: areaFamily(areaFilter, getAreas()), sourceFilter, dateFilter, searchQuery, duplicateIds
   }), leadSort), [leads, myDealsOnly, activeRole, currentRoleObj.agentName, leadFilter, temperatureFilter, areaFilter, sourceFilter, dateFilter, searchQuery, duplicateIds, leadSort]);
 
   // Fold duplicate leads into the kept one, then delete the others (delete is admin-only in the rules)

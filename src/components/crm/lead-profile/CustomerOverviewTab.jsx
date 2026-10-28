@@ -3,6 +3,7 @@ import { getAreas } from '../../../utils/areasData';
 import { formArea } from '../../../utils/areaLookup';
 import DeskOptions from '../DeskOptions';
 import { canViewLeadPhone, maskPhoneNumber, canEditLead } from '../../../utils/rbacRules';
+import AreaOptions from '../../common/AreaOptions';
 
 export default function CustomerOverviewTab({
   AVAILABLE_TAGS,
@@ -162,9 +163,7 @@ export default function CustomerOverviewTab({
               onChange={(e) => setFormData({ ...formData, area: e.target.value })}
             >
               <option value="" disabled>{formData.area && formArea(formData.area, getAreas(), { allowAll: true }) === '' ? (isAr ? 'المنطقة المحفوظة اتمسحت، اختار منطقة' : 'Saved area was deleted, choose one') : (isAr ? 'اختار المنطقة' : 'Choose an area')}</option>
-              {getAreas().map(a => (
-                <option key={a.id} value={a.id}>{isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}</option>
-              ))}
+              <AreaOptions areas={getAreas()} isAr={isAr} includeAll={getAreas().some((a) => a?.id === 'all')} />
             </select>
           </div>
 

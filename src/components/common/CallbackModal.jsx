@@ -3,6 +3,7 @@ import { X, Phone, Sparkles, ShieldCheck, TrendingUp, Home, Clock, Video, Buildi
 import { checkFormSpamProtection } from '../../utils/securityShield';
 import { getAreas } from '../../utils/areasData';
 import PhoneInputField from '../PhoneInputField';
+import AreaOptions from './AreaOptions';
 
 export default function CallbackModal({ isOpen, onClose, lang = 'ar', onSubmitCallback, triggerToast }) {
   const [form, setForm] = useState({
@@ -212,11 +213,7 @@ export default function CallbackModal({ isOpen, onClose, lang = 'ar', onSubmitCa
               style={{ width: '100%', boxSizing: 'border-box', minHeight: '44px', padding: '10px 14px' }}
             >
               <option value="">{isAr ? 'أي منطقة' : 'Any area'}</option>
-              {areas.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {isAr ? (a.label_ar || a.name_ar) : (a.label_en || a.name_en)}
-                </option>
-              ))}
+              <AreaOptions areas={areas} isAr={isAr} includeAll={areas.some((a) => a?.id === 'all')} />
             </select>
           </div>
 

@@ -6,6 +6,7 @@ import { isValidPhoneNumber } from '../../utils/securityShield';
 import DeskOptions from './DeskOptions';
 import { DESK_BY_ROLE } from '../../utils/rbacRules';
 import useBodyScrollLock from '../../hooks/useBodyScrollLock';
+import AreaOptions from '../common/AreaOptions';
 
 export default function AddLeadModal({
   isOpen,
@@ -258,9 +259,7 @@ export default function AddLeadModal({
                 onChange={(e) => setFormData({ ...formData, area: e.target.value })}
               >
                 <option value="" disabled>{isAr ? 'اختار المنطقة' : 'Choose an area'}</option>
-                {getAreas().filter(a => a.id !== 'all').map(a => (
-                  <option key={a.id} value={a.id}>{isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}</option>
-                ))}
+                <AreaOptions areas={getAreas()} isAr={isAr} includeAll={false} />
               </select>
             </div>
 

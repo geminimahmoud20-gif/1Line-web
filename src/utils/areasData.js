@@ -587,6 +587,8 @@ export async function addArea(areaData) {
     // A new area starts without landmarks or price history; never borrow another area's figures
     historicalPrices: Array.isArray(areaData.historicalPrices) ? areaData.historicalPrices : [],
     amenities: Array.isArray(areaData.amenities) ? areaData.amenities : [],
+    // '' = a main area; another area's id = a sub-area of it (utils/areaLookup)
+    parentId: typeof areaData.parentId === 'string' ? areaData.parentId : '',
     isSystem: false,
     createdAt: new Date().toISOString()
   };

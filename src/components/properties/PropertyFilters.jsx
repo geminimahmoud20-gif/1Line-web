@@ -5,6 +5,7 @@ import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { getAreas } from '../../utils/areasData';
 import './property-filters-mobile.css';
 import { countLabel } from '../../utils/arabicCount';
+import AreaOptions from '../common/AreaOptions';
 
 // "Any price" is the page's cap (PropertiesPage MAX_PRICE_CAP): no upper limit
 const ANY_PRICE = 15000000;
@@ -268,11 +269,7 @@ export default function PropertyFilters({
             value={filters.area || 'all'}
             onChange={(e) => onFilterChange('area', e.target.value)}
           >
-            {areas.map((a) => (
-              <option key={a.id} value={a.id}>
-                {isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}
-              </option>
-            ))}
+            <AreaOptions areas={areas} isAr={isAr} includeAll={areas.some((a) => a?.id === 'all')} />
           </select>
         </div>
 

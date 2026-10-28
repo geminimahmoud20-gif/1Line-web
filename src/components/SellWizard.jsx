@@ -13,6 +13,7 @@ import { featuresFor, featureLabels, orderedPhotos, sellerAssetClass } from '../
 import { PROPERTY_TYPES, CAIRO_AREAS, FALLBACK_M2, FINISHING, LEGAL_DOCS, SPEC_FIELDS, floorLabel } from './sell/sellOptions';
 import SellPhotoSlots from './sell/SellPhotoSlots';
 import './sell/sell-wizard.css';
+import AreaOptions from './common/AreaOptions';
 
 const STEPS = [
   { ar: 'العقار والعنوان', en: 'Property & address' },
@@ -248,9 +249,7 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
               <span>{L('المنطقة', 'Area')}</span>
               <select value={area} onChange={(e) => set({ area: e.target.value })} aria-invalid={Boolean(errors.step) && !area}>
                 <option value="" disabled>{L('اختار المنطقة', 'Choose the area')}</option>
-                <optgroup label={L('سوهاج', 'Sohag')}>
-                  {districts.map((d) => <option key={d.id} value={d.id}>{isAr ? (d.label_ar || d.name_ar) : (d.label_en || d.name_en)}</option>)}
-                </optgroup>
+                <AreaOptions areas={districts} isAr={isAr} includeAll={false} />
                 <optgroup label={L('القاهرة الكبرى', 'Greater Cairo')}>
                   {CAIRO_AREAS.map((c) => <option key={c.id} value={c.id}>{isAr ? c.ar : c.en}</option>)}
                 </optgroup>

@@ -4,6 +4,7 @@ import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { getAreas } from '../../utils/areasData';
 import { isKnownArea } from '../../utils/areaLookup';
 import useBodyScrollLock from '../../hooks/useBodyScrollLock';
+import AreaOptions from '../common/AreaOptions';
 
 export default function EditLeadModal({
   handleSaveLeadEdits,
@@ -96,9 +97,7 @@ export default function EditLeadModal({
               >
                 {/* A saved area that was deleted from the CRM shows as such instead of the first area */}
                 <option value="" disabled>{leadFormData.area && !isKnownArea(leadFormData.area, getAreas()) ? (isAr ? 'المنطقة المحفوظة اتمسحت، اختار منطقة' : 'Saved area was deleted, choose one') : (isAr ? 'اختار المنطقة' : 'Choose an area')}</option>
-                {getAreas().filter(a => a.id !== 'all').map(a => (
-                  <option key={a.id} value={a.id}>{isAr ? a.name_ar : (a.name_en || a.name_ar)}</option>
-                ))}
+                <AreaOptions areas={getAreas()} isAr={isAr} includeAll={false} />
               </select>
             </div>
 

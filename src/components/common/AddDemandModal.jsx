@@ -4,6 +4,7 @@ import PhoneInputField from '../PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../../utils/phoneCountries';
 import { getAreas } from '../../utils/areasData';
 import { checkFormSpamProtection } from '../../utils/securityShield';
+import AreaOptions from './AreaOptions';
 
 const PROP_TYPE_OPTIONS = [
   { value: 'apartment', label_ar: 'شقة سكنية', label_en: 'Apartment' },
@@ -326,11 +327,7 @@ export default function AddDemandModal({
                     required
                   >
                     <option value="" disabled>{isAr ? 'اختار المنطقة' : 'Choose an area'}</option>
-                    {getAreas().filter(a => a.id !== 'all').map(opt => (
-                      <option key={opt.id} value={opt.id}>
-                        {isAr ? (opt.label_ar || opt.name_ar) : (opt.label_en || opt.name_en)}
-                      </option>
-                    ))}
+                    <AreaOptions areas={getAreas()} isAr={isAr} includeAll={false} />
                   </select>
                 </div>
               </div>

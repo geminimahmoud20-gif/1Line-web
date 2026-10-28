@@ -5,6 +5,7 @@ import { getAreas, normalizeAreaKey } from '../../utils/areasData';
 import { parseMoney } from '../../utils/crmLeadViews';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
+import { inArea } from '../../utils/areaLookup';
 
 export default function SmartMatchingHub({
   leads = [],
@@ -78,7 +79,7 @@ export default function SmartMatchingHub({
         const propPrice = Number(prop.price) || 0;
 
         // 1. Area match (Up to 35 pts)
-        if (leadArea && (propArea === leadArea || leadArea === 'all' || propArea === 'all')) {
+        if (leadArea && (inArea(propArea, leadArea, allAreas) || propArea === 'all')) {
           score += 35;
           reasons.push(isAr ? 'نفس المنطقة المستهدفة' : 'Area match');
         }
@@ -158,7 +159,7 @@ export default function SmartMatchingHub({
     });
 
     return results.sort((a, b) => b.score - a.score);
-  }, [leads, properties, minMatchScore, isAr]);
+  }, [leads, properties, minMatchScore, isAr, allAreas]);
 
   // Dispatch proposal directly to buyer via WhatsApp
   const handleSendProposal = (match) => {

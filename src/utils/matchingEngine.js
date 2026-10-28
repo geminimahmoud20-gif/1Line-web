@@ -2,8 +2,9 @@
 //  ONE LINE REAL ESTATE - SMART WHATSAPP MATCH & RETARGETING ENGINE
 // =============================================================
 
-import { normalizeAreaKey } from './areasData.js';
+import { normalizeAreaKey, getAreas } from './areasData.js';
 import { SITE_URL } from '../config/siteConfig.js';
+import { inArea } from './areaLookup.js';
 
 /**
  * Normalizes phone number for WhatsApp URL
@@ -47,7 +48,7 @@ export function findMatchingClientsForProperty(property, leads = [], demands = [
     const leadBudget = parseInt(String(details.budget || details.expectedPrice || lead.budget || 0).replace(/[^0-9]/g, '')) || 0;
 
     // Area Match (+40)
-    if (leadArea && (leadArea === propertyArea || leadArea === 'all' || propertyArea === 'all')) {
+    if (leadArea && (inArea(propertyArea, leadArea, getAreas()) || propertyArea === 'all')) {
       score += 40;
     }
 
@@ -93,7 +94,7 @@ export function findMatchingClientsForProperty(property, leads = [], demands = [
     const demandType = demand.type || '';
     const demandBudget = typeof demand.budget === 'number' ? demand.budget : parseInt(String(demand.budget).replace(/,/g, '')) || 0;
 
-    if (demandArea && (demandArea === propertyArea || demandArea === 'all' || propertyArea === 'all')) {
+    if (demandArea && (inArea(propertyArea, demandArea, getAreas()) || propertyArea === 'all')) {
       score += 40;
     }
     if (demandType && (demandType === propertyType || demandType === 'all')) {

@@ -361,7 +361,7 @@ function inDateRange(l, range, now) {
 export function filterLeads(leads = [], opts = {}) {
   const {
     myDealsOnly = false, activeRole, agentName, leadFilter = 'all',
-    temperatureFilter = 'all', areaFilter = 'all', sourceFilter = 'all', dateFilter = 'all', searchQuery = '',
+    temperatureFilter = 'all', areaFilter = 'all', areaIds = null, sourceFilter = 'all', dateFilter = 'all', searchQuery = '',
     today, now = Date.now(), duplicateIds = null
   } = opts;
   const q = searchQuery.trim().toLowerCase();
@@ -418,7 +418,8 @@ export function filterLeads(leads = [], opts = {}) {
       const t = l.temperature || 'unknown';
       if (t !== temperatureFilter) return false;
     }
-    if (areaFilter !== 'all' && l.details?.area !== areaFilter) return false;
+    // areaIds: the chosen area plus its sub-areas when it is a main area
+    if (areaFilter !== 'all' && !(areaIds?.length ? areaIds : [areaFilter]).includes(l.details?.area || l.area)) return false;
     if (sourceFilter !== 'all' && leadSourceKey(l) !== sourceFilter) return false;
     if (!inDateRange(l, dateFilter, now)) return false;
     if (q) {

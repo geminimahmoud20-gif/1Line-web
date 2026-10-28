@@ -88,7 +88,9 @@ export function matchesFilters(p, f, issues) {
   if (f.status && !['all', 'trash'].includes(f.status) && st !== f.status) return false;
   if (f.type && f.type !== 'all' && p.type !== f.type) return false;
   if (f.area && f.area !== 'all') {
-    if (f.area === NO_AREA ? !noArea(issues) : p.areaKey !== f.area) return false;
+    // f.areaIds: the chosen area and, for a main area, its sub-areas
+    const ids = Array.isArray(f.areaIds) && f.areaIds.length ? f.areaIds : [f.area];
+    if (f.area === NO_AREA ? !noArea(issues) : !ids.includes(p.areaKey)) return false;
   }
   if (f.readiness === 'ready' && issues.length) return false;
   if (f.readiness === 'incomplete' && !issues.length) return false;

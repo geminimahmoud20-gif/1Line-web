@@ -22,6 +22,7 @@ import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { getAreas } from '../utils/areasData';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
 import SubmissionSuccess from './common/SubmissionSuccess';
+import AreaOptions from './common/AreaOptions';
 
 export const BuyWizard = ({ 
   lang = 'ar', 
@@ -287,13 +288,8 @@ export const BuyWizard = ({
               value={buyerAnswers.area || 'all'}
               onChange={(e) => handleBuyerChoice('area', e.target.value)}
             >
-              <optgroup label={isAr ? 'محافظة سوهاج' : 'Sohag'}>
-                {districts.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {isAr ? (d.label_ar || d.name_ar) : (d.label_en || d.name_en)}
-                  </option>
-                ))}
-              </optgroup>
+              {/* Sohag: main areas with their sub-areas grouped (an optgroup can't hold optgroups) */}
+              <AreaOptions areas={districts} isAr={isAr} includeAll={districts.some((a) => a?.id === 'all')} />
               <optgroup label={isAr ? 'القاهرة الكبرى' : 'Greater Cairo'}>
                 <option value="cairo_new_cairo">{isAr ? 'القاهرة الجديدة والتجمع' : 'New Cairo'}</option>
                 <option value="cairo_zayed">{isAr ? 'الشيخ زايد' : 'Sheikh Zayed'}</option>
