@@ -10,6 +10,7 @@ import { AVAILABILITY_OPTIONS, REVIEW_OPTIONS, reviewState } from '../../utils/l
 import PhotoManager from './PhotoManager';
 import { AMENITY_GROUPS, amenityCategory } from '../../utils/amenityCategories';
 import './property-amenities.css';
+import AreaOptions from '../common/AreaOptions';
 
 export default function PropertyFormModal({
   areas,
@@ -293,9 +294,8 @@ export default function PropertyFormModal({
                       : (isAr ? 'اختار المنطقة' : 'Pick an area')}
                   </option>
                 )}
-                {areas.filter(a => a.id !== 'all').map(a => (
-                  <option key={a.id} value={a.id}>{isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}</option>
-                ))}
+                {/* Main areas with their sub-areas grouped under them */}
+                <AreaOptions areas={areas} isAr={isAr} includeAll={false} />
               </select>
             </div>
 
