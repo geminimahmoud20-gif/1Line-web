@@ -38,6 +38,8 @@ import { permsOfRole, PERM_IDS, LEGACY_DESK } from '../utils/accessModel';
 import { verifyAdminCredentials, checkRateLimit, recordFailedAttempt, resetFailedAttempts } from '../utils/securityShield';
 import { buildingFromSellerFeatures } from '../utils/buildingFeatures';
 import { handoverFromSeller } from '../utils/unitHandover';
+import { getAreas } from '../utils/areasData';
+import { formArea } from '../utils/areaLookup';
 
 export default function CrmPage({
   lang = 'ar',
@@ -304,7 +306,8 @@ export default function CrmPage({
     const details = lead.details || {};
     const priceVal = parseMoney(details.askingPrice) || parseMoney(details.expectedPrice) || parseMoney(details.price) || parseMoney(details.estimatedAvg) || 0;
     const typeVal = details.propertyType || lead.propertyType || 'apartment';
-    const areaVal = details.area || lead.area || 'east';
+    // The seller's area when it is still in the list; else empty, and the listing form asks for one
+    const areaVal = formArea(details.area || lead.area, getAreas());
     const sizeVal = parseInt(details.size, 10) || '';
     const roomsVal = parseInt(details.rooms, 10) || '';
     const floorVal = details.floor || '';

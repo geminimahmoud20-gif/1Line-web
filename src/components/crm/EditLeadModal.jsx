@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { Save, X } from 'lucide-react';
-import { SOHAG_AREAS, PROPERTY_TYPES } from '../../data/propertiesData';
+import { PROPERTY_TYPES } from '../../data/propertiesData';
+import { getAreas } from '../../utils/areasData';
+import { isKnownArea } from '../../utils/areaLookup';
 import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 
 export default function EditLeadModal({
@@ -87,13 +89,15 @@ export default function EditLeadModal({
             <div className="form-group-item">
               <label>{isAr ? 'الموقع / المنطقة بسوهاج * (إلزامي)' : 'Target Area in Sohag * (Required)'}</label>
               <select
-                value={leadFormData.area}
+                value={isKnownArea(leadFormData.area, getAreas()) ? leadFormData.area : ''}
                 aria-label={isAr ? 'المنطقة' : 'Area'}
                 onChange={(e) => setLeadFormData({ ...leadFormData, area: e.target.value })}
                 required
               >
-                {SOHAG_AREAS.filter(a => a.id !== 'all').map(a => (
-                  <option key={a.id} value={a.id}>{isAr ? a.name_ar : a.name_en}</option>
+                {/* A saved area that was deleted from the CRM shows as such instead of the first area */}
+                <option value="" disabled>{leadFormData.area && !isKnownArea(leadFormData.area, getAreas()) ? (isAr ? 'المنطقة المحفوظة اتمسحت، اختار منطقة' : 'Saved area was deleted, choose one') : (isAr ? 'اختار المنطقة' : 'Choose an area')}</option>
+                {getAreas().filter(a => a.id !== 'all').map(a => (
+                  <option key={a.id} value={a.id}>{isAr ? a.name_ar : (a.name_en || a.name_ar)}</option>
                 ))}
               </select>
             </div>

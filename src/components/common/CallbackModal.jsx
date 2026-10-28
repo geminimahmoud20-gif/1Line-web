@@ -10,7 +10,7 @@ export default function CallbackModal({ isOpen, onClose, lang = 'ar', onSubmitCa
     phone: '',
     whatsapp: '',
     propertyType: 'apartment',
-    area: 'new_sohag',
+    area: '', // optional: no preset area
     consultationTrack: 'investment', // 'investment' | 'legal' | 'luxury_home'
     meetingType: 'vip_call',          // 'vip_call' | 'office_meeting' | 'video_call'
     preferredTime: 'immediate'        // 'immediate' | 'evening' | 'tomorrow'
@@ -211,6 +211,7 @@ export default function CallbackModal({ isOpen, onClose, lang = 'ar', onSubmitCa
               onChange={(e) => setForm({ ...form, area: e.target.value })}
               style={{ width: '100%', boxSizing: 'border-box', minHeight: '44px', padding: '10px 14px' }}
             >
+              <option value="">{isAr ? 'أي منطقة' : 'Any area'}</option>
               {areas.map((a) => (
                 <option key={a.id} value={a.id}>
                   {isAr ? (a.label_ar || a.name_ar) : (a.label_en || a.name_en)}

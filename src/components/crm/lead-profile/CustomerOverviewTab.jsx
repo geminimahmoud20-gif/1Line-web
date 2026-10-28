@@ -1,5 +1,6 @@
 import { Edit3, Save, Lock } from 'lucide-react';
 import { getAreas } from '../../../utils/areasData';
+import { formArea } from '../../../utils/areaLookup';
 import DeskOptions from '../DeskOptions';
 import { canViewLeadPhone, maskPhoneNumber, canEditLead } from '../../../utils/rbacRules';
 
@@ -157,9 +158,10 @@ export default function CustomerOverviewTab({
             <label>{isAr ? 'المنطقة المستهدفة:' : 'Target Area:'}</label>
             <select
               disabled={!isEditing}
-              value={formData.area}
+              value={formArea(formData.area, getAreas(), { allowAll: true })}
               onChange={(e) => setFormData({ ...formData, area: e.target.value })}
             >
+              <option value="" disabled>{formData.area && formArea(formData.area, getAreas(), { allowAll: true }) === '' ? (isAr ? 'المنطقة المحفوظة اتمسحت، اختار منطقة' : 'Saved area was deleted, choose one') : (isAr ? 'اختار المنطقة' : 'Choose an area')}</option>
               {getAreas().map(a => (
                 <option key={a.id} value={a.id}>{isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}</option>
               ))}

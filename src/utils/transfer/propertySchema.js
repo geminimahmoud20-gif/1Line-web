@@ -3,6 +3,7 @@
 //  • FIELDS: each 1Line field with the column names it is recognised by (Arabic, English, other
 //    systems' exports such as Notion). The export uses the first name, so an exported file
 //    imports back with every column matched.
+import { areaFromText } from '../areaLookup.js';
 //  • rowToProperty(): one spreadsheet row → a 1Line property + the owner's contact (kept apart:
 //    property documents are public, owner phones are not).
 // =============================================================
@@ -117,8 +118,15 @@ export function mapAreaKey(value, areas = []) {
     return id && id !== 'all' && (normKey(id) === t || normKey(a.name_ar) === t || normKey(a.name_en) === t);
   });
   if (own) return own.id ?? own.key;
+  // A CRM area named inside longer text ("شقة ش الجمهورية بجوار…")
+  const named = areaFromText(value, areas);
+  if (named) return named;
   const hit = AREA_WORDS.find(([re]) => re.test(t));
-  return hit ? hit[1] : null;
+  if (!hit) return null;
+  // Built-in words count only while that area is still in the CRM's list (when a list is given):
+  // 'شرق' must not import as 'east' after East Sohag was deleted
+  const live = areas.filter((a) => (a?.id ?? a?.key) && (a.id ?? a.key) !== 'all');
+  return live.length === 0 || live.some((a) => (a.id ?? a.key) === hit[1]) ? hit[1] : null;
 }
 
 const FINISHING = [

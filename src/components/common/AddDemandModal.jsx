@@ -40,7 +40,7 @@ export default function AddDemandModal({
     phone: '',
     whatsapp: '',
     type: 'apartment',
-    area: 'east',
+    area: '', // the visitor picks it (a hidden 'east' default was saved under another area's name)
     budget: '',
     paymentMethod: 'cash',
     timeframe: 'immediate',
@@ -121,7 +121,7 @@ export default function AddDemandModal({
     
     // Construct rich text for Arabic & English
     const allAreas = getAreas().filter(a => a.id !== 'all');
-    const areaObj = allAreas.find(a => a.id === formData.area) || allAreas[0] || { name_ar: formData.area, name_en: formData.area };
+    const areaObj = allAreas.find(a => a.id === formData.area) || { name_ar: formData.area, name_en: formData.area };
     // Map area field names to match expected label_ar/label_en
     const areaMapped = { label_ar: areaObj.label_ar || areaObj.name_ar, label_en: areaObj.label_en || areaObj.name_en };
     const typeObj = PROP_TYPE_OPTIONS.find(t => t.value === formData.type) || PROP_TYPE_OPTIONS[0];
@@ -325,6 +325,7 @@ export default function AddDemandModal({
                     onChange={(e) => setFormData({ ...formData, area: e.target.value })}
                     required
                   >
+                    <option value="" disabled>{isAr ? 'اختار المنطقة' : 'Choose an area'}</option>
                     {getAreas().filter(a => a.id !== 'all').map(opt => (
                       <option key={opt.id} value={opt.id}>
                         {isAr ? (opt.label_ar || opt.name_ar) : (opt.label_en || opt.name_en)}

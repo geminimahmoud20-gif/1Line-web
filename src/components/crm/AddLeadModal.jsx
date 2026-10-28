@@ -42,7 +42,7 @@ export default function AddLeadModal({
     status: 'new',
     temperature: 'hot',
     budget: '',
-    area: 'east',
+    area: '', // nothing preselected: 'east' was saved even after the area was deleted
     propertyType: 'apartment',
     financing: 'cash',
     assignedTo: DESK_BY_ROLE[userRole] || 'Sales Advisor Team',
@@ -257,6 +257,7 @@ export default function AddLeadModal({
                 value={formData.area}
                 onChange={(e) => setFormData({ ...formData, area: e.target.value })}
               >
+                <option value="" disabled>{isAr ? 'اختار المنطقة' : 'Choose an area'}</option>
                 {getAreas().filter(a => a.id !== 'all').map(a => (
                   <option key={a.id} value={a.id}>{isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}</option>
                 ))}

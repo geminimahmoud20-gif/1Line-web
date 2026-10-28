@@ -152,7 +152,7 @@ export default function RemoteInspectionModal({ property, isOpen, onClose, lang 
       source: 'expat_remote_inspection',
       temperature: 'hot',
       isVip: true,
-      area: property?.areaKey || 'new_sohag',
+      area: property?.areaKey || '',
       propertyType: property?.type || 'apartment',
       propertyId: property?.id || '',
       notes: `🌍 عميل مغترب VIP (${country.ar}) — معاينة الغربة: ${COVERAGE.filter((c) => coverage.includes(c.id)).map((c) => c.ar).join(' + ')}${property ? ` | عقار #${code}` : ''}${date ? ` | ${date}` : ''} | ${SLOTS.find((s) => s.id === slot)?.ar || ''}${record.notes ? ` | ${record.notes}` : ''}`,

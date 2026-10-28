@@ -457,7 +457,8 @@ export function PropertiesProvider({ children }) {
     const rawPhone = cleanData.phone || cleanData.whatsapp || '';
     const rawWhatsapp = cleanData.whatsapp || cleanData.phone || '';
     const normalizedPropertyType = cleanData.propertyType || cleanData.details?.propertyType || cleanData.targetType || cleanData.type || 'residential';
-    const rawArea = cleanData.area || cleanData.details?.area || cleanData.location || 'new_sohag';
+    // No area picked stays empty: defaulting to New Sohag counted unknown leads there
+    const rawArea = cleanData.area || cleanData.details?.area || cleanData.location || '';
     const normalizedArea = normalizeAreaKey(rawArea);
 
     const standardizedData = {
@@ -509,7 +510,7 @@ export function PropertiesProvider({ children }) {
         source: standardizedData.source || 'website',
         type: standardizedData.type || 'buyer',
         budget: standardizedData.budget || standardizedData.details?.budget || '',
-        area: standardizedData.area || 'new_sohag',
+        area: standardizedData.area || '',
         propertyType: standardizedData.propertyType || 'apartment',
         notes: standardizedData.notes || '',
         // Unset until someone on the team judges it; defaulting to 'hot' inflated the hot count

@@ -1,5 +1,6 @@
 // Lead labels and CSV export rows for the CRM leads table (Arabic / English).
-import { PROPERTY_TYPES, SOHAG_AREAS } from '../../data/propertiesData';
+import { PROPERTY_TYPES } from '../../data/propertiesData';
+import { areaLabel } from '../../utils/placeLabels';
 import { getAreas } from '../../utils/areasData';
 import { formatLeadType } from '../../utils/crmLabels';
 import { leadScore } from '../../utils/crmLeadViews';
@@ -44,10 +45,15 @@ export function makeLeadFormatters(isAr, t = {}) {
 
   const getLocalizedArea = (areaKey) => {
     if (!areaKey || areaKey === 'undefined' || areaKey === 'null') return isAr ? 'سوهاج' : 'Sohag';
-    // getAreas() includes Cairo and CMS-added districts; SOHAG_AREAS is the static fallback
-    const found = getAreas().find(a => a.id === areaKey) || SOHAG_AREAS.find(a => a.id === areaKey);
-    if (found) return isAr ? found.name_ar : found.name_en;
-    return areaKey;
+    if (areaKey === 'all') return isAr ? 'كل المناطق' : 'Any area';
+    // The live list only. An old id (east, kawthar…) keeps its old name, marked as removed
+    const found = getAreas().find(a => a.id === areaKey);
+    if (found) return isAr ? found.name_ar : (found.name_en || found.name_ar);
+    const legacy = areaLabel(areaKey, isAr);
+    if (String(areaKey).startsWith('cairo_')) return legacy; // Greater Cairo choices in the buy wizard
+    if (/[\u0600-\u06FF]/.test(areaKey)) return areaKey;     // typed text, already a place name
+    if (legacy && legacy !== areaKey) return isAr ? `${legacy} (منطقة محذوفة)` : `${legacy} (removed area)`;
+    return isAr ? 'منطقة محذوفة' : 'Removed area';
   };
 
   const formatLeadStatus = (status) => {

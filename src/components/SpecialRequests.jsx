@@ -34,7 +34,7 @@ export const SpecialRequests = ({
   // Fallback internal state if not managed externally
   const [internalForm, setInternalForm] = useState({
     propertyType: 'apartment',
-    area: 'new_sohag',
+    area: '',
     budget: '',
     minSize: '',
     priority: 'high',
@@ -239,7 +239,7 @@ export const SpecialRequests = ({
               setIsSubmitted(false);
               setForm({
                 propertyType: 'apartment',
-                area: 'new_sohag',
+                area: '',
                 budget: '',
                 minSize: '',
                 priority: 'high',
@@ -332,6 +332,7 @@ export const SpecialRequests = ({
                 onChange={(e) => setForm({ ...form, area: e.target.value })}
                 style={{ height: '48px', padding: '8px 14px', fontSize: '0.92rem', fontWeight: '600', lineHeight: 'normal' }}
               >
+                <option value="" disabled>{isAr ? 'اختار المنطقة' : 'Choose an area'}</option>
                 {areas.map(a => (
                   <option key={a.id} value={a.id}>
                     {isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}

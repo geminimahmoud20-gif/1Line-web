@@ -65,7 +65,7 @@ export default function AccountInquiriesTab({
                       )}
                       <div className="visit-detail-item">
                         <MapPin size={14} className="text-muted" />
-                        <span>{getAreaDisplayName(lead.area || targetProp?.area || 'new_sohag', lang)}</span>
+                        <span>{getAreaDisplayName(lead.area || targetProp?.areaKey || targetProp?.area || '', lang)}</span>
                       </div>
                     </div>
 
@@ -124,7 +124,7 @@ export default function AccountInquiriesTab({
               {clientLeads.map((lead) => {
                 const stage = STAGE_CONFIG[lead.status] || STAGE_CONFIG.new;
                 const typeLabel = LEAD_TYPE_NAMES[lead.type] || lead.type || (isAr ? 'استشارة' : 'Inquiry');
-                const areaName = getAreaDisplayName(lead.area || 'new_sohag', lang);
+                const areaName = getAreaDisplayName(lead.area || '', lang);
                 const propTypeLabel = PROPERTY_TYPE_NAMES[lead.propertyType] || lead.propertyType || '';
 
                 return (

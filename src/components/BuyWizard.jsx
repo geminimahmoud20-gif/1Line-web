@@ -82,8 +82,9 @@ export const BuyWizard = ({
     const updatedAnswers = {
       ...buyerAnswers,
       propertyType: buyerAnswers.propertyType || 'apartment',
-      area: buyerAnswers.area || buyerAnswers.district || 'east',
-      location: buyerAnswers.area || buyerAnswers.district || 'east',
+      // Untouched select = "كل المناطق" (it used to save 'east', an area no longer in the list)
+      area: buyerAnswers.area || buyerAnswers.district || 'all',
+      location: buyerAnswers.area || buyerAnswers.district || 'all',
       phone: `${buyerCountry}${normalizedPhone}`,
       whatsapp: `${whatsappCountry}${normalizedWhatsapp}`
     };
@@ -283,7 +284,7 @@ export const BuyWizard = ({
             <label className="block-label">{isAr ? 'المنطقة المفضلة' : 'Preferred area'}</label>
             <select
               className="form-select-styled"
-              value={buyerAnswers.area || 'east'}
+              value={buyerAnswers.area || 'all'}
               onChange={(e) => handleBuyerChoice('area', e.target.value)}
             >
               <optgroup label={isAr ? 'محافظة سوهاج' : 'Sohag'}>

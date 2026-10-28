@@ -100,7 +100,7 @@ export const InvestorCenter = ({
       return;
     }
 
-    const targetArea = investorForm.area || 'new_sohag';
+    const targetArea = investorForm.area || ''; // required select: no preset area
     const normalizedPhone = cleanPhone.startsWith('0') ? cleanPhone.substring(1) : cleanPhone;
     const normalizedWhatsapp = cleanWhatsapp.startsWith('0') ? cleanWhatsapp.substring(1) : cleanWhatsapp;
 
@@ -343,10 +343,11 @@ export const InvestorCenter = ({
             <label>{isAr ? 'الموقع / المنطقة المستهدفة بسوهاج * (إلزامي)' : 'Target Area in Sohag * (Required)'}</label>
             <select
               className="form-input-styled"
-              value={investorForm.area || 'new_sohag'}
+              value={investorForm.area || ''}
               onChange={(e) => setInvestorForm({ ...investorForm, area: e.target.value })}
               required
             >
+              <option value="" disabled>{isAr ? 'اختار المنطقة' : 'Choose an area'}</option>
               {areasList.map(a => (
                 <option key={a.id} value={a.id}>
                   {isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}

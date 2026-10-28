@@ -306,7 +306,7 @@ export default function PropertyDetailPage({
         whatsapp: fullPhone,
         phone: fullPhone,
         propertyType: property.type || 'residential',
-        area: property.areaKey || 'new_sohag',
+        area: property.areaKey || '',
         serialCode,
         propertyId: property.id,
         propertyTitle: title,

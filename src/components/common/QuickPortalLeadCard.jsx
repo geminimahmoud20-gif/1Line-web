@@ -14,6 +14,7 @@ import {
 import PhoneInputField from '../PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../../utils/phoneCountries';
 import { getAreas } from '../../utils/areasData';
+import { areaNameOf } from '../../utils/areaLookup';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 
 export default function QuickPortalLeadCard({
@@ -29,7 +30,7 @@ export default function QuickPortalLeadCard({
   const [whatsapp, setWhatsapp] = useState('');
   const [whatsappCountry, setWhatsappCountry] = useState('+20');
   const [propertyType, setPropertyType] = useState('residential');
-  const [area, setArea] = useState('east');
+  const [area, setArea] = useState('all'); // "كل المناطق" until the visitor narrows it
   const [budget, setBudget] = useState('');
   const [notes, setNotes] = useState('');
   const [phoneError, setPhoneError] = useState('');
@@ -133,8 +134,8 @@ export default function QuickPortalLeadCard({
 
   if (submitted) {
     const waText = isAr
-      ? `مرحباً 1Line، أنا ${lastSubmittedLead?.name} سجلت طلباً سريعاً لـ (${lastSubmittedLead?.propertyType}) في (${lastSubmittedLead?.area}) وأريد المتابعة الفورية.`
-      : `Hello 1Line, I submitted a quick request for ${lastSubmittedLead?.propertyType} in ${lastSubmittedLead?.area}.`;
+      ? `مرحباً 1Line، أنا ${lastSubmittedLead?.name} سجلت طلباً سريعاً لـ (${lastSubmittedLead?.propertyType}) في (${areaNameOf(lastSubmittedLead?.area, areas) || 'سوهاج'}) وأريد المتابعة الفورية.`
+      : `Hello 1Line, I submitted a quick request for ${lastSubmittedLead?.propertyType} in ${areaNameOf(lastSubmittedLead?.area, areas, false) || 'Sohag'}.`;
 
     return (
       <div className="quick-portal-success-card">
@@ -144,7 +145,7 @@ export default function QuickPortalLeadCard({
         <h3>{isAr ? 'تم استلام طلبك بنجاح وسرعة!' : 'Request Received Successfully!'}</h3>
         <p>
           {isAr 
-            ? `شكراً أ/ ${lastSubmittedLead?.name}، تم توجيه طلبك لمستشار منطقة ${lastSubmittedLead?.area} وجارٍ تجهيز أفضل الخيارات المطابقة لميزانيتك فوراً.`
+            ? `شكراً أ/ ${lastSubmittedLead?.name}، تم توجيه طلبك لمستشار منطقة ${areaNameOf(lastSubmittedLead?.area, areas) || 'سوهاج'} وجارٍ تجهيز أفضل الخيارات المطابقة لميزانيتك فوراً.`
             : `Thank you ${lastSubmittedLead?.name}, our regional advisor is reviewing matching units now.`}
         </p>
 

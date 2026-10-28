@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { TrendingUp, Award, ArrowUpRight } from 'lucide-react';
 import { getAreaById } from '../../utils/areasData';
 
-export default function HistoricalPriceChart({ areaKey = 'east', customPoints = null, lang = 'ar' }) {
+export default function HistoricalPriceChart({ areaKey = '', customPoints = null, lang = 'ar' }) {
   const [, setTick] = useState(0);
   const isAr = lang === 'ar';
 

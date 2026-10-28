@@ -1,4 +1,6 @@
-import { AREA_OPTIONS, PROP_TYPE_OPTIONS } from '../DemandsManagerPanelData';
+import { PROP_TYPE_OPTIONS } from '../DemandsManagerPanelData';
+import { getAreas } from '../../../utils/areasData';
+import { isKnownArea, placeAreas } from '../../../utils/areaLookup';
 import { X, Edit3, Sparkles } from 'lucide-react';
 
 export default function DemandFormModal({
@@ -104,13 +106,22 @@ export default function DemandFormModal({
 
             <div className="form-group-item">
               <label>{isAr ? 'المنطقة' : 'District'}</label>
+              {/* The CRM's live area list. A request saved under an area that was later deleted
+                  says so, instead of showing the first area as if it were picked. */}
               <select
-                value={formData.area}
+                value={isKnownArea(formData.area, getAreas()) ? formData.area : ''}
                 aria-label={isAr ? 'المنطقة' : 'Area'}
+                aria-invalid={!isKnownArea(formData.area, getAreas())}
+                required
                 onChange={(e) => setFormData({ ...formData, area: e.target.value })}
               >
-                {AREA_OPTIONS.map(a => (
-                  <option key={a.value} value={a.value}>{isAr ? a.label_ar : a.label_en}</option>
+                <option value="" disabled>
+                  {formData.area && !isKnownArea(formData.area, getAreas())
+                    ? (isAr ? `المنطقة المحفوظة (${formData.area_ar || formData.area}) اتمسحت، اختار منطقة` : 'Saved area was deleted, choose one')
+                    : (isAr ? 'اختار المنطقة' : 'Choose an area')}
+                </option>
+                {placeAreas(getAreas()).map(a => (
+                  <option key={a.id} value={a.id}>{isAr ? a.name_ar : (a.name_en || a.name_ar)}</option>
                 ))}
               </select>
             </div>
