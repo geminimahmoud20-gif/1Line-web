@@ -12,6 +12,7 @@ const INVEST_TYPES = ['all', 'commercial', 'office', 'land', ...AGRICULTURAL_TYP
 
 export default function HomeHero({
   activeClipIndex,
+  activeStill = 0,
   activeVideoUrl,
   clipFade,
   currentClip,
@@ -21,6 +22,7 @@ export default function HomeHero({
   handleVideoEnded,
   heroAd,
   heroClips,
+  heroStills = [],
   heroVideoRef,
   isDataSaver,
   lang,
@@ -40,8 +42,10 @@ export default function HomeHero({
   setSearchPurpose,
   setSearchType,
   setShowSuggestions,
+  setActiveStill,
   setShowTheaterModal,
   showHeroVideo,
+  stillsCycle,
   showSuggestions,
   switchClip,
   toggleVideoMute,
@@ -91,6 +95,23 @@ export default function HomeHero({
             const srcSet = !heroAd && /images\.unsplash\.com/.test(src) && /[?&]w=\d+/.test(src)
               ? `${sized(640)} 640w, ${sized(960)} 960w, ${sized(1600)} 1600w`
               : undefined;
+            // Phones: one still per video, changing on the video timer (the first one stays the LCP image)
+            if (heroStills.length > 1) {
+              return heroStills.map((still, idx) => (
+                <img
+                  key={still.id}
+                  src={still.poster}
+                  sizes="100vw"
+                  alt=""
+                  className={`hero-cinematic-video hero-still ${idx === activeStill ? 'is-active' : ''}`}
+                  fetchPriority={idx === 0 ? 'high' : 'low'}
+                  loading={idx === 0 ? 'eager' : 'lazy'}
+                  decoding="async"
+                  width="1600"
+                  height="1067"
+                />
+              ));
+            }
             return (
               <picture>
                 {heroAd?.imageMobile && <source media="(max-width: 700px)" srcSet={heroAd.imageMobile} />}
@@ -113,6 +134,35 @@ export default function HomeHero({
               opacity: founderSettings.heroOverlayOpacity !== undefined ? founderSettings.heroOverlayOpacity : 0.58
             }}
           />
+        </div>
+      )}
+
+      {/* Phones: the same dots as the video playlist, for the stills */}
+      {!showHeroVideo && heroStills.length > 1 && (
+        <div className="hero-video-controls-badge hero-stills-badge">
+          <div className="hero-clips-switcher">
+            <div className="hero-clip-dots">
+              {heroStills.map((still, idx) => (
+                <button
+                  key={still.id}
+                  type="button"
+                  className={`hero-clip-dot ${idx === activeStill ? 'active' : ''}`}
+                  onClick={() => setActiveStill(idx)}
+                  title={lang === 'ar' ? still.title_ar : still.title_en}
+                  aria-label={lang === 'ar' ? `الصورة ${idx + 1} من ${heroStills.length}` : `Picture ${idx + 1} of ${heroStills.length}`}
+                  aria-current={idx === activeStill ? 'true' : undefined}
+                >
+                  {idx === activeStill && stillsCycle && (
+                    <span
+                      key={`still-progress-${activeStill}`}
+                      className="hero-clip-progress-fill"
+                      style={{ animationDuration: `${Math.max(5, Number(founderSettings.heroVideoIntervalSec) || 10)}s` }}
+                    />
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
