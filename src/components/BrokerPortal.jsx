@@ -74,7 +74,7 @@ export const BrokerPortal = ({
       return;
     }
 
-    const targetArea = brokerForm.area || 'new_sohag';
+    const targetArea = brokerForm.area || ''; // required select: no preset area
     const targetType = brokerForm.propertyType || 'apartment';
 
     const normalizedPhone = cleanPhone.startsWith('0') ? cleanPhone.substring(1) : cleanPhone;
@@ -163,10 +163,11 @@ export const BrokerPortal = ({
             <label>{isAr ? 'الموقع / منطقة نشاطك الأساسية بسوهاج * (إلزامي)' : 'Primary District in Sohag * (Required)'}</label>
             <select
               className="form-select-styled"
-              value={brokerForm.area || 'new_sohag'}
+              value={brokerForm.area || ''}
               onChange={(e) => setBrokerForm({ ...brokerForm, area: e.target.value })}
               required
             >
+              <option value="" disabled>{isAr ? 'اختار المنطقة' : 'Choose an area'}</option>
               {getAreas().filter(a => a.id !== 'all').map(a => (
                 <option key={a.id} value={a.id}>{isAr ? (a.name_ar || a.label_ar) : (a.name_en || a.label_en)}</option>
               ))}

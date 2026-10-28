@@ -1,4 +1,5 @@
 import { saveSettings, subscribeToSettings } from '../firebaseLazy.js';
+import { areaFromText } from './areaLookup.js';
 
 export const DEFAULT_SOHAG_AREAS = [
   {
@@ -376,8 +377,9 @@ export function getAreas() {
  * Get specific area by ID or fallback
  */
 export function getAreaById(areaId) {
-  const all = getAreas();
-  return all.find(a => a.id === areaId) || all.find(a => a.id === 'default') || DEFAULT_SOHAG_AREAS[1];
+  // null when the id is not in the list: callers hide area data instead of showing another area's
+  if (!areaId) return null;
+  return getAreas().find((a) => a.id === areaId) || null;
 }
 
 /**
@@ -386,7 +388,8 @@ export function getAreaById(areaId) {
  * into the standard system area ID (e.g. 'new_sohag').
  */
 export function normalizeAreaKey(rawArea) {
-  if (!rawArea) return 'new_sohag';
+  // No area stays no area (it used to become New Sohag, which counted unknown leads there)
+  if (!rawArea) return '';
   if (typeof rawArea !== 'string') return String(rawArea);
 
   const clean = rawArea.trim().toLowerCase().replace(/[\s\-_]+/g, '_');
@@ -494,29 +497,29 @@ export function normalizeAreaKey(rawArea) {
     'اي_منطقه': 'all'
   };
 
-  if (aliases[clean]) return aliases[clean];
-
-  // Try checking raw string without underscore replacement
+  // An alias counts only while its area is still in the CRM's list: 'شرق' used to become 'east'
+  // even after East Sohag was deleted, and the lead then pointed at an area nobody can pick.
   const rawClean = rawArea.trim();
-  if (aliases[rawClean]) return aliases[rawClean];
+  const alias = aliases[clean] || aliases[rawClean] || '';
+  let currentAreas = [];
+  try { currentAreas = getAreas(); } catch { /* storage unavailable */ }
+  if (alias && (alias === 'all' || currentAreas.some((a) => a.id === alias))) return alias;
 
-  // Check against dynamic areas list from getAreas()
-  try {
-    const currentAreas = getAreas();
-    const matched = currentAreas.find(a => 
-      a.id === clean || 
-      a.id === rawArea ||
-      a.name_ar === rawClean || 
-      a.name_en?.toLowerCase() === rawArea.toLowerCase() ||
-      a.label_ar === rawClean ||
-      rawClean.includes(a.name_ar)
-    );
-    if (matched) return matched.id;
-  } catch (_e) {
-    // Ignore matching errors and fallback to clean
-  }
+  const matched = currentAreas.find((a) =>
+    a.id === clean ||
+    a.id === rawArea ||
+    a.name_ar === rawClean ||
+    a.name_en?.toLowerCase() === rawArea.toLowerCase() ||
+    a.label_ar === rawClean ||
+    (a.name_ar && rawClean.includes(a.name_ar))
+  );
+  if (matched) return matched.id;
 
-  return clean;
+  // Free text that names one of the CRM's areas ("محل في شارع الجمهورية")
+  const fromText = areaFromText(rawArea, currentAreas);
+  if (fromText) return fromText;
+
+  return alias || clean;
 }
 
 /**

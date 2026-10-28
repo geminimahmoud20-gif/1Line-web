@@ -43,7 +43,8 @@ export default function CustomerProfileModal({
     temperature: lead?.temperature || '',
     assignedTo: lead?.assignedTo || 'Sales Advisor Team',
     budget: lead?.details?.budget || lead?.details?.expectedPrice || '',
-    area: (!lead?.details?.area || lead?.details?.area === 'undefined') ? 'east' : lead.details.area,
+    // No saved area stays empty (it used to become 'east', saved back on the next edit)
+    area: (!lead?.details?.area || lead?.details?.area === 'undefined') ? (lead?.area || '') : lead.details.area,
     propertyType: (!lead?.details?.propertyType || lead?.details?.propertyType === 'undefined') ? 'apartment' : lead.details.propertyType,
     financing: lead?.financing || 'cash', // 'cash' | 'installments' | 'mortgage'
     tags: lead?.tags || ['VIP كاش', 'جاهز للمعاينة'],

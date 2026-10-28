@@ -6,7 +6,9 @@ import { canViewLeadPhone, maskPhoneNumber, canEditProperties } from '../../util
 import { reconcilePublicDemands } from '../../firebaseLazy';
 import DemandFormModal from './demands/DemandFormModal';
 import DemandMatchModal from './demands/DemandMatchModal';
-import { AREA_OPTIONS, PROP_TYPE_OPTIONS } from './DemandsManagerPanelData';
+import { PROP_TYPE_OPTIONS } from './DemandsManagerPanelData';
+import { getAreas } from '../../utils/areasData';
+import { findArea, placeAreas } from '../../utils/areaLookup';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { recordTimeLabel } from '../../utils/relativeTime';
 
@@ -107,9 +109,9 @@ export default function DemandsManagerPanel({
     id: '',
     text_ar: '',
     text_en: '',
-    area: 'east',
-    area_ar: 'شرق سوهاج',
-    area_en: 'East Sohag',
+    area: '',
+    area_ar: '',
+    area_en: '',
     type: 'apartment',
     budget: 3000000,
     urgency: 'high',
@@ -148,9 +150,9 @@ export default function DemandsManagerPanel({
       id: `dem-adm-${Date.now()}`,
       text_ar: '',
       text_en: '',
-      area: 'east',
-      area_ar: 'شرق سوهاج',
-      area_en: 'East Sohag',
+      area: '', // picked in the form: a preset 'east' was saved after East Sohag was deleted
+      area_ar: '',
+      area_en: '',
       type: 'apartment',
       budget: 3000000,
       urgency: 'high',
@@ -184,12 +186,17 @@ export default function DemandsManagerPanel({
       return;
     }
 
-    const areaObj = AREA_OPTIONS.find(a => a.value === formData.area) || AREA_OPTIONS[0];
+    // The CRM's own area list; no silent fallback to another area
+    const areaObj = findArea(formData.area, placeAreas(getAreas()));
+    if (!areaObj) {
+      triggerToast?.(isAr ? 'اختار المنطقة من القائمة' : 'Choose an area from the list', 'error');
+      return;
+    }
 
     const demandPayload = {
       ...formData,
-      area_ar: areaObj.label_ar,
-      area_en: areaObj.label_en,
+      area_ar: areaObj.name_ar || areaObj.label_ar || '',
+      area_en: areaObj.name_en || areaObj.label_en || areaObj.name_ar || '',
       budget: parseInt(String(formData.budget).replace(/,/g, '')) || 2500000,
       updatedAt: new Date().toISOString()
     };

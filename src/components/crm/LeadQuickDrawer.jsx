@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Phone, MessageSquare, Building, ChevronRight, ChevronLeft, Trash2, Plus, Eye } from 'lucide-react';
-import { SOHAG_AREAS, PROPERTY_TYPES } from '../../data/propertiesData';
+import { PROPERTY_TYPES } from '../../data/propertiesData';
+import { getAreas } from '../../utils/areasData';
+import { areaNameOf } from '../../utils/areaLookup';
 import { trackEvent } from '../../utils/visitorTracker';
 import LeadDrawerOverview from './lead-profile/LeadDrawerOverview';
 import LeadDrawerMatching from './lead-profile/LeadDrawerMatching';
@@ -230,7 +232,8 @@ export default function LeadQuickDrawer({
 
   const rawLeadArea = lead.area || lead.details?.area;
   const leadArea = (!rawLeadArea || rawLeadArea === 'undefined' || rawLeadArea === 'null') ? 'سوهاج' : rawLeadArea;
-  const areaName = SOHAG_AREAS.find(a => a.id === leadArea)?.name_ar || (leadArea === 'undefined' ? 'سوهاج' : leadArea);
+  // Live list; an id no longer in it shows as «منطقة محذوفة», not a code
+  const areaName = !leadArea || leadArea === 'undefined' ? 'سوهاج' : leadArea === 'all' ? 'كل المناطق' : (areaNameOf(leadArea, getAreas()) || 'منطقة محذوفة');
   const rawPropType = lead.propertyType || lead.details?.propertyType;
   const propType = (!rawPropType || rawPropType === 'undefined' || rawPropType === 'null') ? 'عقار' : rawPropType;
   const propTypeName = PROPERTY_TYPES.find(p => p.id === propType)?.name_ar || (propType === 'undefined' ? 'عقار' : propType);

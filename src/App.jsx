@@ -21,7 +21,9 @@ import { ROUTE_SEO } from './config/routeSeo';
 // Analytics & CMS
 import { getOrCreateSession, trackEvent } from './utils/visitorTracker';
 import { initFounderCmsSync } from './utils/founderCmsData';
-import { initAreasSync } from './utils/areasData';
+import { initAreasSync, getAreas } from './utils/areasData';
+import { areaNameOf } from './utils/areaLookup';
+import { areaLabel as placeAreaLabel } from './utils/placeLabels';
 
 // Layout & Common Components
 import Header from './components/common/Header';
@@ -270,7 +272,7 @@ function AppContent() {
       phone: formData.phone,
       whatsapp: formData.whatsapp || formData.phone,
       propertyType: formData.propertyType || 'apartment',
-      area: formData.area || 'new_sohag',
+      area: formData.area || '',
       type: 'callback_request',
       notes: `طلب استشارة ومعاودة اتصال (${formData.preferredTime || 'في أقرب وقت'}) | نوع العقار: ${formData.propertyType || 'سكني'} | المسار: ${formData.consultationTrack || 'عام'}`,
       details: formData
@@ -313,7 +315,7 @@ function AppContent() {
       phone: data.phone,
       whatsapp: data.whatsapp || data.phone,
       propertyType: data.propertyType || 'apartment',
-      area: data.area || 'new_sohag',
+      area: data.area || '',
       type: 'buyer',
       landingPage: '/buy',
       notes: `طلب شراء ${data.propertyType} في منطقة ${data.area} بميزانية ${data.budget}`,
@@ -356,22 +358,7 @@ function AppContent() {
     industrial_land: 'أرض صناعية'
   };
 
-  const AREA_NAMES_AR = {
-    east: 'شرق سوهاج',
-    west: 'غرب سوهاج',
-    new_sohag: 'سوهاج الجديدة',
-    university: 'حي الجامعة',
-    thawra: 'شارع الثورة',
-    thakafa: 'الثقافة والمخبز الآلي',
-    center: 'وسط البلد',
-    kawthar: 'حي الكوثر',
-    corniche: 'طريق الكورنيش',
-    cairo_new_cairo: 'القاهرة الجديدة والتجمع',
-    cairo_zayed: 'الشيخ زايد',
-    cairo_october: 'السادس من أكتوبر',
-    cairo_capital: 'العاصمة الإدارية',
-    cairo_other: 'القاهرة الكبرى'
-  };
+  // Area names come from the CRM's live list (Greater Cairo choices keep their fixed names)
 
   const submitSellerJourney = async (overrideData) => {
     const data = overrideData || sellerAnswers;
@@ -400,14 +387,14 @@ function AppContent() {
     // Farmland / industrial answers (الري، الأوراق، النشاط…) as "label: value"
     const specsDesc = Array.isArray(data.specsAr) && data.specsAr.length > 0 ? ` | ${data.specsAr.join(' | ')}` : '';
     const propLabel = PROPERTY_TYPE_NAMES_AR[data.propertyType] || data.propertyType || 'عقار';
-    const areaLabel = (data.area && AREA_NAMES_AR[data.area]) || data.area || 'سوهاج';
+    const areaLabel = areaNameOf(data.area, getAreas()) || (String(data.area || '').startsWith('cairo_') ? placeAreaLabel(data.area) : '') || 'سوهاج';
 
     return handleAddNewLead({
       name: data.name,
       phone: data.phone,
       whatsapp: data.whatsapp || data.phone,
       propertyType: data.propertyType || 'apartment',
-      area: data.area || 'new_sohag',
+      area: data.area || '',
       type: 'seller',
       landingPage: '/sell',
       notes: `عرض بيع ${propLabel} في ${areaLabel} بمساحة ${data.size || ''}م²${priceDesc}${floorDesc}${finishingDesc}${specsDesc}${featuresDesc}${legalSummary}${photosDesc}`,
@@ -420,7 +407,7 @@ function AppContent() {
   const [invAmount, setInvAmount] = useState(5000000);
   const [invPeriod, setInvPeriod] = useState(5);
   const [invPropType, setInvPropType] = useState('commercial');
-  const [investorForm, setInvestorForm] = useState({ name: '', phone: '', whatsapp: '', email: '', area: 'new_sohag' });
+  const [investorForm, setInvestorForm] = useState({ name: '', phone: '', whatsapp: '', email: '', area: '' });
   const [showInvResultForm, setShowInvResultForm] = useState(false);
 
   const roiRes = {
@@ -436,12 +423,12 @@ function AppContent() {
       phone: data.phone,
       whatsapp: data.whatsapp || data.phone,
       propertyType: data.propertyType || data.targetType || invPropType,
-      area: data.area || 'new_sohag',
+      area: data.area || '',
       email: data.email,
       type: 'investor',
       landingPage: '/investor',
       notes: `طلب دراسة جدوى استثمارية بمبلغ ${(data.budget || invAmount).toLocaleString('en-US')} ج.م لفترة ${data.investmentHorizon || invPeriod} سنوات`,
-      details: { invAmount: data.budget || invAmount, invPeriod: data.investmentHorizon || invPeriod, invPropType: data.propertyType || invPropType, area: data.area || 'new_sohag', ...data }
+      details: { invAmount: data.budget || invAmount, invPeriod: data.investmentHorizon || invPeriod, invPropType: data.propertyType || invPropType, area: data.area || '', ...data }
     });
     triggerToast(lang === 'ar' ? 'تم إرسال طلب دراسة الجدوى الاستثمارية بنجاح!' : 'Investment study requested!', 'success');
   };
@@ -452,7 +439,7 @@ function AppContent() {
     phone: '',
     whatsapp: '',
     experience: '1_3',
-    areas: ['new_sohag'],
+    areas: [],
     categories: ['residential'],
     inventoryCount: '1_5'
   });
@@ -472,10 +459,10 @@ function AppContent() {
       phone: data.phone,
       whatsapp: data.whatsapp || data.phone,
       propertyType: data.propertyType || (data.categories && data.categories[0]) || 'all_types',
-      area: data.area || (data.areas && data.areas[0]) || 'new_sohag',
+      area: data.area || (data.areas && data.areas[0]) || '',
       type: 'broker',
       landingPage: '/broker',
-      notes: `طلب انضمام وسيط عقاري (خبرة ${data.experience} سنوات) - المنطقة: ${data.area || 'سوهاج'}`,
+      notes: `طلب انضمام وسيط عقاري (خبرة ${data.experience} سنوات) - المنطقة: ${areaNameOf(data.area, getAreas()) || 'سوهاج'}`,
       details: data
     });
     triggerToast(lang === 'ar' ? 'تم تسجيل طلب انضمامك كشريك وسيط بنجاح!' : 'Broker application submitted!', 'success');

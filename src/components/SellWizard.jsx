@@ -72,7 +72,8 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
     return () => window.removeEventListener('oneline_areas_updated', refresh);
   }, []);
 
-  const area = a.area || districts[0]?.id || 'east';
+  // The owner picks the area: preselecting the first one filed untouched forms under it
+  const area = a.area || '';
   const isCairo = area.startsWith('cairo_');
   const features = Array.isArray(a.features) ? a.features : [];
   const legalDocs = Array.isArray(a.legalDocs) ? a.legalDocs : [];
@@ -82,7 +83,7 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
   const estimate = useMemo(() => {
     const size = num(a.size);
     // No automatic estimate for farmland and industrial units yet: valued by hand
-    if (!size || isCairo || isAgriculturalType(type) || isIndustrialType(type)) return null;
+    if (!size || !area || isCairo || isAgriculturalType(type) || isIndustrialType(type)) return null;
     const cls = type === 'retail' || type === 'office' ? 'commercial' : type === 'land' ? 'land' : 'residential';
     const comps = liveListings(siteListings)
       .filter((p) => p.areaKey === area && assetClass(p) === cls && Number(p.size) > 0)
@@ -118,6 +119,7 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
 
   const stepError = [
     !a.propertyType ? L('اختار نوع العقار', 'Choose the property type')
+      : !area ? L('اختار المنطقة', 'Choose the area')
       : num(a.size) < 20 ? L('اكتب المساحة (20 م² على الأقل)', 'Enter the size (20 m² or more)')
         : String(a.address || '').trim().length < 3 ? L('اكتب العنوان', 'Enter the address') : '',
     '',
@@ -244,7 +246,8 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
           <div className="sw-grid">
             <label className="sw-field">
               <span>{L('المنطقة', 'Area')}</span>
-              <select value={area} onChange={(e) => set({ area: e.target.value })}>
+              <select value={area} onChange={(e) => set({ area: e.target.value })} aria-invalid={Boolean(errors.step) && !area}>
+                <option value="" disabled>{L('اختار المنطقة', 'Choose the area')}</option>
                 <optgroup label={L('سوهاج', 'Sohag')}>
                   {districts.map((d) => <option key={d.id} value={d.id}>{isAr ? (d.label_ar || d.name_ar) : (d.label_en || d.name_en)}</option>)}
                 </optgroup>

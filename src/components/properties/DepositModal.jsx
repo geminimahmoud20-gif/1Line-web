@@ -86,7 +86,7 @@ export default function DepositModal({
           type: 'reservation_request',
           source: 'طلب حجز مبدئي (صفحة العقار)',
           propertyType: property.type || 'residential',
-          area: property.areaKey || 'new_sohag',
+          area: property.areaKey || '',
           propertyId: property.id,
           propertyTitle: title,
           propertyPrice: property.price,

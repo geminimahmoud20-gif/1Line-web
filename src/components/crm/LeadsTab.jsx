@@ -2,7 +2,6 @@ import {
   Download, Trash2, Clock, Plus, UserPlus, SlidersHorizontal, Search, X, RotateCcw, ChevronDown,
   Copy, Upload, Columns3, Timer, CopyPlus, Plane, Ban, CalendarClock
 } from 'lucide-react';
-import { SOHAG_AREAS } from '../../data/propertiesData';
 import { formatFollowUp, formatBudget } from '../../utils/crmLabels';
 import DeskOptions from './DeskOptions';
 import ExportMenu from './ExportMenu';
@@ -525,7 +524,7 @@ export default function LeadsTab({
             label={isAr ? 'المنطقة' : 'Area'}
             value={areaFilter}
             onChange={(e) => setAreaFilter(e.target.value)}
-            options={[{ value: 'all', label: isAr ? 'كل المناطق' : 'All areas' }, ...SOHAG_AREAS.filter((a) => a.id !== 'all').map((a) => ({ value: a.id, label: isAr ? a.name_ar : a.name_en }))]}
+            options={[{ value: 'all', label: isAr ? 'كل المناطق' : 'All areas' }, ...getAreas().filter((a) => a.id !== 'all').map((a) => ({ value: a.id, label: isAr ? a.name_ar : (a.name_en || a.name_ar) }))]}
           />
           {setLeadSort && (
             <Select
@@ -798,7 +797,7 @@ export default function LeadsTab({
                           </strong>
                         ) : null}
                         <span className="crm-lead-spec-sub">
-                          {getLocalizedPropertyType(l.propertyType || l.details?.propertyType || l.type)} • {getLocalizedArea(l.area || l.details?.area || l.details?.district || 'east')}
+                          {getLocalizedPropertyType(l.propertyType || l.details?.propertyType || l.type)} • {getLocalizedArea(l.area || l.details?.area || l.details?.district || '')}
                         </span>
                         {leadFilter !== 'viewing_request' && isViewingLead(l) && (
                           <div style={{ marginTop: '5px' }}>

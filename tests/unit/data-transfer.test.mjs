@@ -188,7 +188,12 @@ test('areas from the CRM list (id + Arabic name) are recognised', async () => {
   const areas = [{ id: 'all', name_ar: 'كل المناطق' }, { id: 'saqulta', name_ar: 'ساقلتة', name_en: 'Saqulta' }];
   assert.equal(mapAreaKey('ساقلته', areas), 'saqulta');
   assert.equal(mapAreaKey('كل المناطق', areas), null);
-  assert.equal(mapAreaKey('سوهاج الغرب', areas), 'west');
+  // A built-in word maps only to an area that is still in the CRM's list
+  assert.equal(mapAreaKey('سوهاج الغرب', areas), null);
+  assert.equal(mapAreaKey('سوهاج الغرب', [...areas, { id: 'west', name_ar: 'غرب سوهاج' }]), 'west');
+  assert.equal(mapAreaKey('سوهاج الغرب'), 'west'); // no list given: the built-in word
+  // An area named inside longer text
+  assert.equal(mapAreaKey('شقة ش الجمهورية بجوار البنك', [{ id: 'area_g', name_ar: 'سوهاج (ش الجمهورية)' }]), 'area_g');
 });
 
 test('a plain "النوع" column is the client type', () => {

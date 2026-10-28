@@ -211,7 +211,7 @@ export const CrmAdminPanel = ({
     assignedTo: 'Unassigned',
     notes: '',
     budget: '',
-    area: 'east',
+    area: '', // chosen in EditLeadModal (required there)
     propertyType: 'apartment'
   });
 
@@ -522,7 +522,7 @@ export const CrmAdminPanel = ({
       source: lead.source || 'Direct Entry',
       type: lead.type || 'buyer',
       budget: lead.budget || details.budget || details.expectedPrice || '',
-      area: lead.area || details.area || 'east',
+      area: lead.area || details.area || '',
       propertyType: lead.propertyType || details.propertyType || 'apartment',
       notes: lead.notes || '',
       status: lead.status || 'new',

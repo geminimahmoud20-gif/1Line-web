@@ -6,6 +6,8 @@
 
 import { DEFAULT_ACCESS } from './accessModel.js';
 import { parseMoney } from './crmLeadViews.js';
+import { getAreas } from './areasData.js';
+import { areaNameOf, foldAr } from './areaLookup.js';
 
 export const SALES_AGENTS_POOL = [
   { id: 'agent_east', name: 'Sales Team A', role: 'فريق شرق والكوثر' },
@@ -59,9 +61,17 @@ export function routeLeadAutomatically(leadData, existingLeads = [], customConfi
   }
   // 3. Dynamic Geo-specialization matching configured team keywords
   else {
+    // Areas added in the CRM have generated ids (area_mv3l…), so a keyword like «الجمهورية»
+    // is looked for in the area's name as well as its id and the notes
+    let areaName = '';
+    try { areaName = foldAr(areaNameOf(leadData.area || leadData.details?.area || leadData.areaKey, getAreas())); } catch { /* no area list */ }
+    const foldedNotes = foldAr(notes);
     const geoMatch = activeTeams.find((t) => {
       if (!Array.isArray(t.keywords) || t.keywords.length === 0) return false;
-      return t.keywords.some((kw) => area.includes(kw) || notes.includes(kw));
+      return t.keywords.some((kw) => {
+        const k = foldAr(kw);
+        return k && (area.includes(kw) || notes.includes(kw) || areaName.includes(k) || foldedNotes.includes(k));
+      });
     });
 
     if (geoMatch) {

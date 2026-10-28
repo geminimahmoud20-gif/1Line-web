@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getAreas } from '../utils/areasData';
+import { recordInArea, areaFromText } from '../utils/areaLookup';
 import { isValidPhoneNumber } from '../utils/securityShield';
 import '../styles/expat-suite.css';
 import { recordTimeLabel } from '../utils/relativeTime';
@@ -87,17 +88,13 @@ export const DemandsPortal = ({
       }
       // Area filter
       if (activeAreaFilter !== 'all') {
-        const matchArea = d.area === activeAreaFilter || 
-          (d.area_ar && d.area_ar.includes(activeAreaFilter)) ||
-          (activeAreaFilter === 'east' && d.area_ar?.includes('شرق')) ||
-          (activeAreaFilter === 'new_sohag' && d.area_ar?.includes('الجديدة')) ||
-          (activeAreaFilter === 'kawthar' && d.area_ar?.includes('الكوثر')) ||
-          (activeAreaFilter === 'center' && (d.area_ar?.includes('البلد') || d.area_ar?.includes('الجامعة')));
+        // By the CRM's live areas: the id, or the area's name inside the request text
+        const matchArea = recordInArea(d, activeAreaFilter, areas);
         if (!matchArea) return false;
       }
       return true;
     });
-  }, [allPublished, selectedCategory, activeAreaFilter]);
+  }, [allPublished, selectedCategory, activeAreaFilter, areas]);
 
   // Helper for crisp property type tag with clear icons and 100% contrast
   const getPropertyTypeBadge = (type) => {
@@ -327,13 +324,7 @@ export const DemandsPortal = ({
                     const matchType = !ownerSearch.propertyType || 
                       d.type === ownerSearch.propertyType ||
                       (ownerSearch.propertyType === 'retail' && (d.type === 'commercial' || d.type === 'shop'));
-                    const matchArea = !ownerSearch.area || 
-                      d.area === ownerSearch.area || 
-                      (d.area_ar && d.area_ar.includes(ownerSearch.area)) || 
-                      (ownerSearch.area === 'east' && d.area_ar?.includes('شرق')) ||
-                      (ownerSearch.area === 'new_sohag' && d.area_ar?.includes('الجديدة')) ||
-                      (ownerSearch.area === 'kawthar' && d.area_ar?.includes('الكوثر')) ||
-                      (ownerSearch.area === 'center' && (d.area_ar?.includes('البلد') || d.area_ar?.includes('الجامعة')));
+                    const matchArea = !ownerSearch.area || recordInArea(d, ownerSearch.area, areas);
                     return matchType && matchArea;
                   });
 
@@ -409,7 +400,7 @@ export const DemandsPortal = ({
                       setSellerAnswers(prev => ({
                         ...prev,
                         propertyType: ownerSearch.propertyType || 'apartment',
-                        area: ownerSearch.area || 'east'
+                        area: ownerSearch.area || ''
                       }));
                       navigateTo('valuation');
                     }}
@@ -679,7 +670,7 @@ export const DemandsPortal = ({
                         setSellerAnswers(prev => ({
                           ...prev,
                           propertyType: dem.type === 'commercial' ? 'retail' : dem.type,
-                          area: dem.area || (dem.area_ar?.includes('شرق') ? 'east' : dem.area_ar?.includes('جديدة') ? 'new_sohag' : dem.area_ar?.includes('كوثر') ? 'kawthar' : 'center')
+                          area: dem.area || areaFromText(dem.area_ar, areas)
                         }));
                         navigateTo('valuation');
                         triggerToast?.(isAr ? 'تم اختيار مواصفات الطلب! أكمل عقارك للمطابقة الفورية.' : 'Demand selected! Fill property specs.');
