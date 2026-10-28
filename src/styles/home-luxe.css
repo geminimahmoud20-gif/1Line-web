@@ -77,6 +77,18 @@
 }
 .hx-hero .hero-cinematic-video.clip-fading { opacity: 0; }
 
+/* Phones: stills from the hero videos, stacked and cross-faded */
+.hx-hero .hero-cinematic-video.hero-still {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.2s var(--hx-ease);
+}
+.hx-hero .hero-cinematic-video.hero-still.is-active { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .hx-hero .hero-cinematic-video.hero-still { transition: none; }
+}
+
 /* Soft ambient vignette — top and bottom only, plus a faint centre veil for type legibility */
 /* Deep ambient vignette — protects text contrast 100% against light and white video backgrounds */
 .hx-vignette {
@@ -162,6 +174,20 @@
 
 .hx-hero .hero-clip-progress-fill {
   background: var(--accent-gold, #d4a24c);
+}
+
+/* Stills pill: dots only, each with a finger-sized tap area */
+.hx-hero .hero-stills-badge .hero-clips-switcher,
+[dir="rtl"] .hx-hero .hero-stills-badge .hero-clips-switcher {
+  border-inline-start: 0;
+  padding: 6px 10px;
+}
+.hx-hero .hero-stills-badge .hero-clip-dots { gap: 12px; }
+.hx-hero .hero-stills-badge .hero-clip-dot { position: relative; overflow: visible; }
+.hx-hero .hero-stills-badge .hero-clip-dot::after {
+  content: '';
+  position: absolute;
+  inset: -18px -6px;
 }
 
 @media (max-width: 768px) {

@@ -3,6 +3,8 @@ import { Building, User, Quote, TrendingUp, ShieldCheck, Save, RotateCcw, Sparkl
 import { getFounderSettings, saveFounderSettings, resetFounderSettings, DEFAULT_FOUNDER_CMS } from '../../utils/founderCmsData';
 import { uploadCmsMedia, getCmsStorageStatus } from '../../firebaseLazy';
 import HeroVideoSettings from './founder-cms/HeroVideoSettings';
+import { captureVideoFrame } from '../../utils/videoPoster';
+import { uploadProfilePhoto } from '../../utils/imageUploadService';
 import GoldStandardsSettings from './founder-cms/GoldStandardsSettings';
 import AboutProfileSettings from './founder-cms/AboutProfileSettings';
 
@@ -131,6 +133,15 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
   }, []);
   const uploadLocked = storageStatus === 'unavailable';
 
+  // Still picture for phones: a frame from the video, shrunk and stored next to it. null when the
+  // browser can't read the video (codec, or no cross-origin access) or the upload is refused.
+  const makeClipPoster = async (source) => {
+    const blob = await captureVideoFrame(source);
+    if (!blob) return null;
+    const res = await uploadProfilePhoto(new File([blob], 'hero-still.jpg', { type: 'image/jpeg' }), 'hero-still', { maxWidth: 1280, maxHeight: 1280 });
+    return res.ok ? res.url : null;
+  };
+
   // Works without any upload service: any public https video (mp4/webm) can be added by URL
   const handleAddVideoByUrl = async () => {
     const url = pastedVideoUrl.trim();
@@ -197,13 +208,15 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
       return;
     }
 
+    // A still from the clip for phones, which never download the video itself
+    const poster = await makeClipPoster(file);
     const newClip = {
       id: `uploaded-${Date.now()}`,
       title_ar: file.name.replace(/\.[^/.]+$/, ''),
       title_en: file.name.replace(/\.[^/.]+$/, ''),
       url: res.url,
       storagePath: res.path,
-      poster: formData.heroPosterUrl || ''
+      poster: poster || formData.heroPosterUrl || ''
     };
     const currentClips = formData.heroVideoClips || DEFAULT_FOUNDER_CMS.heroVideoClips;
     const next = { ...formData, heroVideoUrl: res.url, heroVideoClips: [newClip, ...currentClips] };
@@ -217,6 +230,36 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
           ? `تم حفظ الفيديو في ملفات الموقع (${res.url})${outMb ? ` — تم ضغطه من ${mb} إلى ${outMb} ميجابايت` : ''}. سيظهر للزوار بعد نشر الموقع.`
           : `Saved to the site at ${res.url}. Visible after the next deploy.`)
         : (isAr ? `تم رفع الفيديو (${mb} ميجابايت) وحفظه ✔` : `Video uploaded (${mb}MB) and saved`), 'success');
+    }
+  };
+
+  // For videos uploaded before stills existed: one still per video that still shows the default picture
+  const [postersBusy, setPostersBusy] = useState(false);
+  const clipNeedsPoster = (clip) => Boolean(clip?.url) && (!clip.poster || clip.poster === formData.heroPosterUrl || clip.poster === DEFAULT_FOUNDER_CMS.heroPosterUrl);
+  const handleMakeClipPosters = async (onlyIdx = null) => {
+    if (postersBusy) return;
+    const clips = [...(formData.heroVideoClips || DEFAULT_FOUNDER_CMS.heroVideoClips)];
+    const targets = clips.map((c, i) => i).filter((i) => (onlyIdx === null ? clipNeedsPoster(clips[i]) : i === onlyIdx) && clips[i]?.url);
+    if (!targets.length) return;
+    setPostersBusy(true);
+    let made = 0;
+    for (const i of targets) {
+      const url = await makeClipPoster(clips[i].url);
+      if (url) { clips[i] = { ...clips[i], poster: url }; made += 1; }
+    }
+    setPostersBusy(false);
+    if (made) {
+      const next = { ...formData, heroVideoClips: clips };
+      setFormData(next);
+      await saveFounderSettings(next);
+    }
+    if (!triggerToast) return;
+    if (made === targets.length) {
+      triggerToast(isAr ? `تم عمل ${made} صورة للموبايل من الفيديوهات وحفظها ✔` : `Made ${made} phone stills from the videos`, 'success');
+    } else {
+      triggerToast(isAr
+        ? `اتعمل ${made} من ${targets.length}. الباقي المتصفح ماقدرش يقرأه (نوع الفيديو أو إعدادات التخزين). ارفع الفيديو تاني وصورته هتتعمل لوحدها.`
+        : `Made ${made} of ${targets.length}; the browser could not read the rest. Re-upload those videos.`, made ? 'info' : 'error');
     }
   };
 
@@ -404,6 +447,9 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
             handleAddClip={handleAddClip}
             handleAddVideoByUrl={handleAddVideoByUrl}
             handleKeepOnlyActiveClip={handleKeepOnlyActiveClip}
+            handleMakeClipPosters={handleMakeClipPosters}
+            clipNeedsPoster={clipNeedsPoster}
+            postersBusy={postersBusy}
             handleRemoveClip={handleRemoveClip}
             handleUpdateClip={handleUpdateClip}
             handleVideoFileUpload={handleVideoFileUpload}
