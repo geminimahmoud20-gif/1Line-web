@@ -12,7 +12,9 @@ export const loadFirebaseService = () => {
 };
 
 // Warm the SDK: Immediate on /crm, /my-account, /demands.
-// On visitor routes: loads only after first user touch/interaction or 6-second timer.
+// On visitor routes: once the page has loaded and the phone is idle (or after 6 seconds). It used
+// to start on the first touch or scroll, so compiling 550KB landed on the visitor's first gesture
+// and that first scroll or tap stuttered.
 // Background subscriptions (site settings, FX rates, auth state) wait for the same signal, so they
 // don't pull the SDK onto a slow phone while the first page is still painting.
 let warmed = false;
@@ -30,14 +32,14 @@ if (typeof window === 'undefined') {
 } else if (/^\/(crm|my-account|demands)($|\/)/.test(window.location.pathname)) {
   warm();
 } else {
-  const events = ['touchstart', 'pointerdown', 'keydown', 'scroll'];
-  const onEvent = () => {
-    events.forEach((ev) => window.removeEventListener(ev, onEvent));
-    clearTimeout(timer);
-    warm();
+  const timer = setTimeout(warm, 6000);
+  const whenIdle = () => {
+    const go = () => { clearTimeout(timer); warm(); };
+    if ('requestIdleCallback' in window) window.requestIdleCallback(go, { timeout: 3000 });
+    else setTimeout(go, 1500);
   };
-  events.forEach((ev) => window.addEventListener(ev, onEvent, { passive: true, once: true }));
-  const timer = setTimeout(onEvent, 6000);
+  if (document.readyState === 'complete') whenIdle();
+  else window.addEventListener('load', whenIdle, { once: true });
 }
 
 // A direct call is something the visitor asked for (send a request, sign in): load right away.
