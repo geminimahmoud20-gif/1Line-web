@@ -19,6 +19,22 @@ const getAudioContext = () => {
 };
 
 /**
+ * Browsers keep sound off until the person touches the page. Call once when the CRM opens: the
+ * first tap or key press unlocks the sound, so a lead arriving later rings instead of staying silent.
+ */
+export const unlockChimeOnFirstTouch = () => {
+  if (typeof window === 'undefined') return () => {};
+  const stop = () => {
+    window.removeEventListener('pointerdown', unlock);
+    window.removeEventListener('keydown', unlock);
+  };
+  function unlock() { getAudioContext(); stop(); }
+  window.addEventListener('pointerdown', unlock);
+  window.addEventListener('keydown', unlock);
+  return stop;
+};
+
+/**
  * Play a subtle, professional audio notification chime
  */
 export const playNotificationChime = (type = 'chime') => {

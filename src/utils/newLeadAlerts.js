@@ -21,6 +21,8 @@ const createdMillis = (lead) => {
 
 export const desktopAlertsSupported = () => typeof window !== 'undefined' && 'Notification' in window;
 export const desktopAlertsEnabled = () => desktopAlertsSupported() && window.Notification.permission === 'granted';
+/** 'granted' | 'denied' | 'default' | 'unsupported' — the CRM explains each one */
+export const desktopAlertsState = () => (desktopAlertsSupported() ? window.Notification.permission : 'unsupported');
 export const enableDesktopAlerts = async () => {
   if (!desktopAlertsSupported()) return false;
   try {
@@ -29,6 +31,30 @@ export const enableDesktopAlerts = async () => {
     return false;
   }
 };
+
+/**
+ * A system notification. Phones (Chrome on Android, an installed CRM on iPhone) only show one
+ * through the service worker: `new Notification()` throws there, which is why phones used to get
+ * nothing. Tapping it opens data.url (or focuses the open CRM, see public/sw.js).
+ */
+export async function showSystemAlert(title, { body = '', tag = '', data = {}, onClick } = {}) {
+  if (!desktopAlertsEnabled()) return false;
+  const options = { body, tag: tag || undefined, icon: '/icon-192.png', badge: '/icon-192.png', data, renotify: Boolean(tag) };
+  try {
+    const reg = 'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistration() : null;
+    if (reg && typeof reg.showNotification === 'function') {
+      await reg.showNotification(title, options);
+      return true;
+    }
+  } catch { /* fall back to the page notification below */ }
+  try {
+    const n = new window.Notification(title, options);
+    n.onclick = () => { window.focus(); if (onClick) onClick(); n.close(); };
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export const formatLeadHeadline = (lead, isAr = true) => {
   const d = lead?.details || {};
@@ -100,16 +126,46 @@ export function announceNewLeads(leads, { isAr = true, toast } = {}) {
     : (isAr ? `${headline} (+${fresh.length - 1} طلبات أخرى)` : `${headline} (+${fresh.length - 1} more)`);
 
   if (typeof toast === 'function') toast(text, 'success');
-  if (desktopAlertsEnabled()) {
-    try {
-      const n = new window.Notification(headline, { body: text, tag: `lead-${first.id}`, icon: '/icon-192.png' });
-      n.onclick = () => {
-        window.focus();
-        window.dispatchEvent(new CustomEvent('oneline_open_lead', { detail: { leadId: first.id, lead: first } }));
-        n.close();
-      };
-    } catch { /* some mobile browsers only allow notifications from a service worker */ }
+  showSystemAlert(headline, {
+    body: text,
+    tag: `lead-${first.id}`,
+    data: { url: `/crm?lead=${encodeURIComponent(first.id)}`, leadId: String(first.id) },
+    onClick: () => window.dispatchEvent(new CustomEvent('oneline_open_lead', { detail: { leadId: first.id, lead: first } }))
+  });
+}
+
+// Expat remote inspections and trade-ins: their own lists in the CRM, so they ring here too
+export const INTAKE_KINDS = {
+  remote_inspections: { tab: 'expat', ar: '🌍 طلب معاينة عن بُعد (مغترب)', en: '🌍 Remote inspection request' },
+  trade_ins: { tab: 'trade_ins', ar: '🔁 طلب بدل / استبدال', en: '🔁 Trade-in request' }
+};
+export const intakeHeadline = (item, isAr = true) => {
+  const k = INTAKE_KINDS[item?._kind] || INTAKE_KINDS.remote_inspections;
+  const name = String(item?.name || item?.clientName || (isAr ? 'عميل' : 'Client')).slice(0, 40);
+  return `${isAr ? k.ar : k.en} — ${name}`;
+};
+
+const seenIntake = new Set();
+/** Call with the CRM's latest intake requests (each tagged _kind): rings once for each fresh one */
+export function announceIntake(items, { isAr = true, toast } = {}) {
+  if (!Array.isArray(items)) return;
+  const now = Date.now();
+  const fresh = [];
+  for (const it of items) {
+    const key = `${it?._kind}/${it?.id}`;
+    if (!it?.id || seenIntake.has(key)) continue;
+    seenIntake.add(key);
+    const age = now - (Date.parse(it.createdAtIso || '') || 0);
+    if (age >= 0 && age <= ALERT_WINDOW_MS) fresh.push(it);
   }
+  if (fresh.length === 0) return;
+  playNotificationChime();
+  const first = fresh[0];
+  const headline = intakeHeadline(first, isAr);
+  const text = fresh.length > 1 ? `${headline} (+${fresh.length - 1})` : headline;
+  if (typeof toast === 'function') toast(text, 'success');
+  const tab = (INTAKE_KINDS[first._kind] || INTAKE_KINDS.remote_inspections).tab;
+  showSystemAlert(headline, { body: text, tag: `${first._kind}-${first.id}`, data: { url: `/crm?tab=${tab}` } });
 }
 
 const KIND_AR = {
@@ -143,10 +199,5 @@ export function announceDownloads(downloads, { isAr = true, toast } = {}) {
   playNotificationChime();
   const text = `📥 ${describeDownload(fresh[0], isAr)}${fresh.length > 1 ? (isAr ? ` (+${fresh.length - 1})` : ` (+${fresh.length - 1})`) : ''}`;
   if (typeof toast === 'function') toast(text, 'success');
-  if (desktopAlertsEnabled()) {
-    try {
-      const n = new window.Notification(isAr ? 'تحميل ملف — 1Line' : 'File downloaded — 1Line', { body: text, tag: `dl-${fresh[0].id}`, icon: '/icon-192.png' });
-      n.onclick = () => { window.focus(); n.close(); };
-    } catch { /* some browsers only allow notifications from a service worker */ }
-  }
+  showSystemAlert(isAr ? 'تحميل ملف — 1Line' : 'File downloaded — 1Line', { body: text, tag: `dl-${fresh[0].id}`, data: { url: '/crm' } });
 }

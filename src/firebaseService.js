@@ -1,6 +1,6 @@
 // =============================================================
 //  ONE LINE SOLUTIONS - FIREBASE DATA SERVICE LAYER
-//  Handles all CRUD operations for Leads, Demands, and Notifications.
+//  Handles all CRUD operations for Leads, Demands and the rest of the CRM data.
 //  Falls back to localStorage if Firebase is not configured.
 // =============================================================
 
@@ -16,7 +16,7 @@ export * from './services/leads.js';
 export * from './services/team.js';
 export * from './services/downloads.js';
 export * from './services/deals.js';
-export * from './services/notifications.js';
+export { loadNotifyStatus, sendTestAlert, loadAlertsSeenAt, saveAlertsSeenAt } from './services/staffNotify.js';
 export { REQUEST_CONTACT_FIELDS } from './services/requestContacts.js';
 export * from './services/demands.js';
 export * from './services/analytics.js';

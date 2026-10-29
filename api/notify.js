@@ -2,14 +2,17 @@
 //  Vercel Function: WhatsApp alert and receipt to the company number when a visitor creates a lead
 //  or request.
 //  POST { kind, id } right after the browser saved it. See api/_notify-core.js for the rules.
+//  POST { test: true } with a super admin's ID token (Authorization: Bearer …): the CRM's
+//  «ابعت رسالة تجربة» button. Each send is recorded in notify_status/whatsapp for the CRM.
 //
 //  Environment (Vercel → Settings → Environment Variables):
 //   FIREBASE_SERVICE_ACCOUNT  — the service account JSON (reads the record, records "alert sent")
 //   WHATSAPP_CALLMEBOT and/or WHATSAPP_CLOUD_*  — where to send (see _notify-core.js)
 //  Without them the route answers 503 and the site carries on normally.
 // =============================================================
-import { SignJWT, importPKCS8 } from 'jose';
-import { handleNotify, makeSenders, sendAll, ALERT_LIMITS } from './_notify-core.js';
+import { SignJWT, importPKCS8, createRemoteJWKSet, jwtVerify, decodeJwt } from 'jose';
+import { handleNotify, handleTest, makeSenders, sendAll, ALERT_LIMITS } from './_notify-core.js';
+import { roleOf } from './_team-core.js';
 import { createRateLimiter, clientIp } from './_rate-limit.js';
 
 const limitIp = createRateLimiter(ALERT_LIMITS.perIp);
@@ -99,6 +102,19 @@ export function firestore(sa) {
       return { phone: fromValue(doc.fields?.phone), whatsapp: fromValue(doc.fields?.whatsapp) };
     },
     // notify_log/{kind__id}: create fails with 409 when it already exists → each record alerts once
+    // A send that failed gives the record back, so a retry can alert it
+    async releaseClaim(kind, id) {
+      await call('DELETE', `notify_log/${encodeURIComponent(`${kind}__${id}`)}`);
+    },
+    // notify_status/whatsapp: last message that went out and last one that didn't (no customer data)
+    async recordStatus({ ok, ref }, channels = 0) {
+      const at = { timestampValue: new Date().toISOString() };
+      const fields = ok
+        ? { lastOkAt: at, lastOkRef: { stringValue: ref }, channels: { integerValue: String(channels) } }
+        : { lastFailAt: at, lastFailRef: { stringValue: ref }, channels: { integerValue: String(channels) } };
+      const mask = Object.keys(fields).map((f) => `updateMask.fieldPaths=${f}`).join('&');
+      await call('PATCH', `notify_status/whatsapp?${mask}`, { fields });
+    },
     async claimOnce(kind, id) {
       const res = await call('POST', `notify_log?documentId=${encodeURIComponent(`${kind}__${id}`)}`, {
         fields: { kind: { stringValue: kind }, sentAt: { timestampValue: new Date().toISOString() } }
@@ -110,20 +126,44 @@ export function firestore(sa) {
   };
 }
 
+// The test button: only a signed-in super admin (same check as api/team.js)
+const FIREBASE_PROJECT_ID = 'line-c9601';
+const firebaseKeys = createRemoteJWKSet(new URL('https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com'));
+async function isSuperAdmin(request) {
+  const idToken = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
+  if (!idToken) return false;
+  try {
+    const claims = process.env.FIREBASE_AUTH_EMULATOR_HOST
+      ? decodeJwt(idToken)
+      : (await jwtVerify(idToken, firebaseKeys, { issuer: `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`, audience: FIREBASE_PROJECT_ID })).payload;
+    return roleOf(claims) === 'super_admin';
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(request) {
   const sa = serviceAccount();
   const senders = makeSenders(process.env);
-  if (!sa?.private_key || !sa.client_email || !sa.project_id || senders.length === 0) {
-    return json(503, { error: 'notify-not-configured' });
-  }
   let body;
   try { body = await request.json(); } catch { return json(400, { error: 'bad-request' }); }
+  if (body?.test === true && !(await isSuperAdmin(request))) return json(403, { error: 'forbidden' });
+  if (!sa?.private_key || !sa.client_email || !sa.project_id || senders.length === 0) {
+    return json(503, { error: 'notify-not-configured', channels: senders.length, serviceAccount: Boolean(sa?.private_key) });
+  }
   try {
     const db = firestore(sa);
+    const recordStatus = (entry) => db.recordStatus(entry, senders.length);
+    if (body?.test === true) {
+      const { status, body: out } = await handleTest({ sendAll: (text) => sendAll(senders, text), recordStatus }, SITE_URL, senders.length);
+      return json(status, out);
+    }
     const { status, body: out } = await handleNotify(body, {
       readRecord: db.readRecord,
       readContact: db.readContact,
       claimOnce: db.claimOnce,
+      releaseClaim: db.releaseClaim,
+      recordStatus,
       limitIp,
       limitOverall,
       sendAll: (text) => sendAll(senders, text),

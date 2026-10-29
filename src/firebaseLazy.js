@@ -70,7 +70,10 @@ export const isFirebaseActive = () => true;
 
 export const saveLead = lazyCall('saveLead');
 export const syncPendingLeads = lazyCall('syncPendingLeads');
-export const saveNotification = lazyCall('saveNotification');
+export const loadNotifyStatus = lazyCall('loadNotifyStatus');
+export const sendTestAlert = lazyCall('sendTestAlert');
+export const loadAlertsSeenAt = lazyCall('loadAlertsSeenAt');
+export const saveAlertsSeenAt = lazyCall('saveAlertsSeenAt');
 export const updateLeadField = lazyCall('updateLeadField');
 export const deleteLead = lazyCall('deleteLead');
 export const deleteLeads = lazyCall('deleteLeads');

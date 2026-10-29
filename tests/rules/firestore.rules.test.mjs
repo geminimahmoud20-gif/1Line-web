@@ -344,6 +344,27 @@ test('notify: reads the stored record over REST and claims each record once', as
   if ((await db.claimOnce('leads', 'n1')) !== false) throw new Error('second claim should lose');
   // nobody reaches the log through the SDK
   await assertFails(getDoc(doc(asAdmin(), 'notify_log/leads__n1')));
+  // a failed send gives the record back for the retry
+  await db.releaseClaim('leads', 'n1');
+  if ((await db.claimOnce('leads', 'n1')) !== true) throw new Error('claim after release should win');
+  // the status record: admins read it, nobody writes it through the SDK
+  await db.recordStatus({ ok: false, ref: 'leads/n1' }, 2);
+  await db.recordStatus({ ok: true, ref: 'leads/n2' }, 2);
+  const status = await getDoc(doc(asAdmin(), 'notify_status/whatsapp'));
+  const st = status.data();
+  if (st.lastFailRef !== 'leads/n1' || st.lastOkRef !== 'leads/n2' || st.channels !== 2 || !st.lastOkAt || !st.lastFailAt) throw new Error(`status ${JSON.stringify(st)}`);
+  await assertFails(getDoc(doc(as('sales_manager'), 'notify_status/whatsapp')));
+  await assertFails(setDoc(doc(asAdmin(), 'notify_status/whatsapp'), { lastOkAt: 'x' }));
+});
+
+test('staff_prefs: each member reads and writes only their own bell marker', async () => {
+  const mgr = env.authenticatedContext('u-mgr', { role: 'sales_manager' }).firestore();
+  await assertSucceeds(setDoc(doc(mgr, 'staff_prefs/u-mgr'), { alertsSeenAt: 1761700000000 }));
+  await assertSucceeds(getDoc(doc(mgr, 'staff_prefs/u-mgr')));
+  await assertFails(setDoc(doc(mgr, 'staff_prefs/u-mgr'), { alertsSeenAt: 'yesterday' }));
+  await assertFails(setDoc(doc(mgr, 'staff_prefs/u-mgr'), { alertsSeenAt: 1, role: 'super_admin' }));
+  await assertFails(getDoc(doc(mgr, 'staff_prefs/someone-else')));
+  await assertFails(setDoc(doc(guest(), 'staff_prefs/u-guest'), { alertsSeenAt: 1 }));
 });
 
 test('staff registry is server-only (api/team.js with the service account)', async () => {

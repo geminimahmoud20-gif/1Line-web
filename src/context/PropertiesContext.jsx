@@ -16,7 +16,6 @@ import {
   searchLeads,
   subscribeToDemands,
   isFirebaseActive,
-  saveNotification,
   updateLeadField,
   deleteLeads,
   saveDemand,
@@ -561,10 +560,6 @@ export function PropertiesProvider({ children }) {
         // Save in the background: Firestore's addDoc waits for a server ack, which can hang on a
         // weak connection, so the visitor's confirmation must not depend on it.
         saveLead(finalLead)
-          .then(() => {
-            // Notifications are admin-only in Firestore rules; a failure here must never re-queue the lead.
-            saveNotification(`Lead update: ${finalLead.name || 'Client'}`).catch(() => {});
-          })
           .catch((err) => {
             // e.g. the Firebase chunk itself failed to download — keep the lead for the next visit
             console.error('Firebase save lead error:', err);

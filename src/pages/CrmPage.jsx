@@ -12,8 +12,9 @@ import FounderCmsPanel from '../components/crm/FounderCmsPanel';
 import AreaManagerPanel from '../components/crm/AreaManagerPanel';
 import AdCampaignsPanel from '../components/crm/AdCampaignsPanel';
 import SystemSection, { RestrictedSection } from '../components/crm/SystemSection';
-import { announceNewLeads, announceDownloads } from '../utils/newLeadAlerts';
-import { subscribeToClientDownloads, logoutUser } from '../firebaseLazy';
+import { announceNewLeads, announceDownloads, announceIntake } from '../utils/newLeadAlerts';
+import { unlockChimeOnFirstTouch } from '../utils/notificationHub';
+import { subscribeToClientDownloads, subscribeToIntake, logoutUser } from '../firebaseLazy';
 import useIdleLock from '../components/crm/useIdleLock';
 import { setManifestFor } from '../utils/appManifest';
 import { markCrmActive, LOCKED_FLAG } from '../utils/idleLock';
@@ -41,6 +42,9 @@ import { buildingFromSellerFeatures } from '../utils/buildingFeatures';
 import { handoverFromSeller } from '../utils/unitHandover';
 import { getAreas } from '../utils/areasData';
 import { formArea } from '../utils/areaLookup';
+
+// Sections a link can open directly: /crm?tab=… (desktop-app shortcuts, WhatsApp alerts, tapped notifications)
+const URL_TABS = ['inbox', 'dashboard', 'leads', 'kanban', 'properties', 'demands', 'projects', 'expat', 'trade_ins'];
 
 export default function CrmPage({
   lang = 'ar',
@@ -75,7 +79,7 @@ export default function CrmPage({
   // Desktop-app shortcuts open a section directly: /crm?tab=inbox, /crm?open=add_lead
   const [activeTab, setActiveTab] = useState(() => {
     const t = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null;
-    return ['inbox', 'dashboard', 'leads', 'kanban', 'properties', 'demands', 'projects'].includes(t) ? t : 'dashboard';
+    return URL_TABS.includes(t) ? t : 'dashboard';
   });
   // While the CRM is open, "Install" installs the 1Line CRM app (crm.webmanifest), not the site
   useEffect(() => {
@@ -251,6 +255,61 @@ export default function CrmPage({
   useEffect(() => {
     if (crmAuthenticated) announceNewLeads(leads, { isAr: lang === 'ar', toast: triggerToast });
   }, [leads, crmAuthenticated, lang, triggerToast]);
+
+  // Expat remote inspections and trade-ins (their own lists): ring and show in the bell like leads
+  const [intakeRequests, setIntakeRequests] = useState([]);
+  const seesIntake = crmAuthenticated && can.editLeads;
+  useEffect(() => {
+    if (!seesIntake) return undefined;
+    const lists = { remote_inspections: [], trade_ins: [] };
+    const unsubs = Object.keys(lists).map((kind) => subscribeToIntake(kind, (list) => {
+      lists[kind] = (list || []).map((r) => ({ ...r, _kind: kind }));
+      setIntakeRequests([...lists.remote_inspections, ...lists.trade_ins]);
+    }, 30));
+    return () => unsubs.forEach((u) => { if (typeof u === 'function') u(); });
+  }, [seesIntake]);
+  useEffect(() => {
+    if (seesIntake) announceIntake(intakeRequests, { isAr: lang === 'ar', toast: triggerToast });
+  }, [intakeRequests, seesIntake, lang, triggerToast]);
+
+  // Sound stays off until the page is touched once: unlock it on the first tap, not on the first lead
+  useEffect(() => (crmAuthenticated ? unlockChimeOnFirstTouch() : undefined), [crmAuthenticated]);
+
+  // /crm?lead=<id> (the WhatsApp alert's link) and a tapped phone notification open that lead,
+  // once it has loaded; a link to a section (?tab=expat) switches to it
+  const [leadToOpen, setLeadToOpen] = useState(() => (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('lead') : '') || '');
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !navigator.serviceWorker) return undefined;
+    const onMessage = (e) => {
+      if (e.data?.type !== 'oneline_open') return;
+      const params = new URLSearchParams(String(e.data.url || '').split('?')[1] || '');
+      const lead = e.data.leadId || params.get('lead');
+      if (lead) setLeadToOpen(String(lead));
+      else if (URL_TABS.includes(params.get('tab'))) setActiveTab(params.get('tab'));
+    };
+    navigator.serviceWorker.addEventListener('message', onMessage);
+    return () => navigator.serviceWorker.removeEventListener('message', onMessage);
+  }, []);
+  useEffect(() => {
+    if (!crmAuthenticated || !leadToOpen) return undefined;
+    const lead = visibleLeads.find((l) => String(l.id) === leadToOpen);
+    if (!lead) return undefined;
+    // Switch to the leads screen, then open the lead once that screen listens for the event
+    let opener = 0;
+    const switcher = setTimeout(() => {
+      setActiveTab('leads');
+      opener = setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('oneline_open_lead', { detail: { leadId: lead.id, lead } }));
+        setLeadToOpen('');
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('lead');
+          window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+        } catch { /* the address bar keeps ?lead= */ }
+      }, 300);
+    }, 0);
+    return () => { clearTimeout(switcher); clearTimeout(opener); };
+  }, [crmAuthenticated, leadToOpen, visibleLeads]);
 
   // Clients' downloads (brochures, story cards, files): managers see who downloaded what, live
   const [clientDownloads, setClientDownloads] = useState([]);
@@ -719,6 +778,7 @@ export default function CrmPage({
           properties={properties}
           demands={demands}
           clientDownloads={clientDownloads}
+          intakeRequests={intakeRequests}
           universalSearch={universalSearch}
           setUniversalSearch={setUniversalSearch}
           selectedRole={selectedRole}

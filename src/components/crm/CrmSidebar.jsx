@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { Inbox, LayoutGrid, Users, Target, Building, Zap, Sparkles, Calculator, Activity, ShieldCheck, ChevronDown, Search, X, Moon, Sun, LogOut, MapPin, Database, Award, Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame, Megaphone, Globe2, Repeat2, Bug, UserCog, Palette } from 'lucide-react';
+import { Inbox, LayoutGrid, Users, Target, Building, Zap, Sparkles, Calculator, Activity, ShieldCheck, ChevronDown, Search, X, Moon, Sun, LogOut, MapPin, Database, Award, Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame, Megaphone, Globe2, Repeat2, Bug, UserCog, Palette, Bell } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import { usePreferences } from '../../context/PreferencesContext';
 import { CRM_ROLES } from './crmRoles';
@@ -590,6 +590,17 @@ export default function CrmSidebar({
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Database size={13} />
                         <span>{isAr ? 'النسخ الاحتياطي والبيانات' : 'Data & Backups'}</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSubItemClick('alerts')}
+                      className={`crm-sidebar-subitem ${activeTab === 'system' && systemSubTab === 'alerts' ? 'is-active' : ''}`}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Bell size={13} />
+                        <span>{isAr ? 'تنبيهات الطلبات' : 'Request alerts'}</span>
                       </div>
                     </button>
 

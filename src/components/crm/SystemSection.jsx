@@ -8,6 +8,7 @@ import TeamPanel from './TeamPanel';
 // Loaded on demand so the UI kit and its motion code never reach other screens' first load
 const UiKitPanel = lazy(() => import('./UiKitPanel'));
 const SiteSettingsPanel = lazy(() => import('./SiteSettingsPanel'));
+const AlertsSettingsPanel = lazy(() => import('./AlertsSettingsPanel'));
 
 // CRM → System administration (super admin only): sub-navigation + the module for each sub-tab.
 // Backups and automations live in CrmAdminPanel, which the page renders through renderAdminPanel.
@@ -18,6 +19,7 @@ const SUB_TABS = [
   { id: 'corporate', ar: 'هوية الشركة والمؤسس (CMS)', en: 'Founder & Corporate CMS' },
   { id: 'site', ar: 'إعدادات الموقع', en: 'Site settings' },
   { id: 'backup', ar: 'النسخ الاحتياطي والبيانات', en: 'Backups & Restore' },
+  { id: 'alerts', ar: 'تنبيهات الطلبات', en: 'Request alerts' },
   { id: 'automation', ar: 'الأتمتة والتنبيهات', en: 'Automations' },
   { id: 'errors', ar: 'أخطاء الموقع', en: 'Site errors' },
   { id: 'uikit', ar: 'مكتبة التصميم', en: 'UI kit' }
@@ -97,6 +99,7 @@ export default function SystemSection({ lang, triggerToast, properties, leads, s
       {subTab === 'areas' && <AreaManagerPanel lang={lang} triggerToast={triggerToast} properties={properties} leads={leads} />}
       {subTab === 'corporate' && <FounderCmsPanel lang={lang} triggerToast={triggerToast} />}
       {subTab === 'site' && <Suspense fallback={null}><SiteSettingsPanel lang={lang} triggerToast={triggerToast} /></Suspense>}
+      {subTab === 'alerts' && <Suspense fallback={null}><AlertsSettingsPanel /></Suspense>}
       {subTab === 'errors' && <ClientErrorsPanel lang={lang} triggerToast={triggerToast} />}
       {subTab === 'uikit' && <Suspense fallback={null}><UiKitPanel /></Suspense>}
       {(subTab === 'backup' || subTab === 'automation') && renderAdminPanel(subTab === 'backup' ? 'system_backup' : 'automation')}
