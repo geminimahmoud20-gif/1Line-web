@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Eye, EyeOff, Plus, Trash2, ArrowUp, ArrowDown, Upload, Loader2, Users, Building2, Image as ImageIcon, LayoutList } from 'lucide-react';
-import { ABOUT_SECTIONS, COMPANY_FIELDS, TEAM_GROUPS, LIMITS, normalizeAbout, blankMember, blankPhoto, moveItem, initials } from '../../../utils/aboutProfile';
+import { ABOUT_SECTIONS, COMPANY_FIELDS, TEAM_GROUPS, LIMITS, PHOTO_POSITIONS, photoPositionCss, normalizeAbout, blankMember, blankPhoto, moveItem, initials } from '../../../utils/aboutProfile';
 import { uploadProfilePhoto } from '../../../utils/imageUploadService';
 import ImageUploadField from '../ImageUploadField';
 import './about-profile.css';
@@ -119,7 +119,7 @@ export default function AboutProfileSettings({ formData, setFormData, isAr = tru
             <article key={m.id} className={`ap-member ${m.visible ? '' : 'is-off'}`}>
               <div className="ap-member-head">
                 <div className="ap-avatar">
-                  {m.photo ? <img src={m.photo} alt="" /> : <span>{initials(m.name_ar) || '؟'}</span>}
+                  {m.photo ? <img src={m.photo} alt="" style={{ objectPosition: photoPositionCss(m.photoPos) }} /> : <span>{initials(m.name_ar) || '؟'}</span>}
                 </div>
                 <div className="ap-member-title">
                   <strong>{m.name_ar || L('اسم جديد', 'New person')}</strong>
@@ -148,6 +148,16 @@ export default function AboutProfileSettings({ formData, setFormData, isAr = tru
               </div>
               {/* Photos are uploaded from the device only, never pasted as a link */}
               <ImageUploadField label={L('الصورة', 'Photo')} value={m.photo} onChange={(url) => setMember(m.id, { photo: url })} name={`team-${m.id}`} maxWidth={800} maxHeight={800} previewShape="round" isAr={isAr} />
+              {m.photo && (
+                <div className="ap-switch-row" role="radiogroup" aria-label={L('مكان الوش في الصورة', 'Face position')}>
+                  <span>{L('مكان الوش في الدايرة:', 'Face in the circle:')}</span>
+                  {PHOTO_POSITIONS.map((p) => (
+                    <button key={p.id} type="button" role="radio" aria-checked={m.photoPos === p.id} className={`ap-switch ${m.photoPos === p.id ? 'is-on' : ''}`} onClick={() => setMember(m.id, { photoPos: p.id })}>
+                      {L(p.ar, p.en)}
+                    </button>
+                  ))}
+                </div>
+              )}
 
               <div className="ap-switch-row">
                 <span>{L('يظهر في الكارت:', 'On the card:')}</span>

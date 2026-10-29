@@ -4,6 +4,7 @@ import useClientDownload from '../../hooks/useClientDownload';
 import { getWhatsAppUrl, getDynamicPhone } from '../../utils/founderCmsData';
 import { formatCurrencyPrice, getPriceBenchmark } from '../../utils/currencyAndBenchmark';
 import '../../styles/expat-suite.css';
+import { siteLink } from '../../config/siteConfig';
 
 const WaIcon = () => (
   <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor">
@@ -28,7 +29,8 @@ export default function WhatsAppAutomationBar({ property, lang = 'ar', currency 
   const priceFormatted = `${priceData.primary} ${priceData.symbol}${priceData.approx ? ` (${priceData.approx})` : ''}`;
   const hasPlan = Number(property.monthlyInstallment) > 0;
   const dynamicPhone = getDynamicPhone();
-  const url = typeof window !== 'undefined' ? window.location.href : '';
+  // Official domain, whatever address the page was opened from
+  const url = typeof window !== 'undefined' ? siteLink(window.location.pathname + window.location.search) : '';
   // Legal line only when the listing has a legal record — no blanket "100% verified" claims
   const legal = property.legalStatus
     ? (isAr ? property.legalStatus.ownershipType_ar : property.legalStatus.ownershipType_en || property.legalStatus.ownershipType_ar)

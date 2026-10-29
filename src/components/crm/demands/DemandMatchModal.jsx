@@ -1,5 +1,6 @@
 import { X, MapPin, AlertCircle, Home, Share2 } from 'lucide-react';
 import { formatWhatsAppPhone } from '../../../utils/matchingEngine';
+import { SITE_URL } from '../../../config/siteConfig';
 
 export default function DemandMatchModal({
   canViewPhone,
@@ -75,7 +76,7 @@ export default function DemandMatchModal({
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '14px' }}>
             {getMatchingProperties(matchModalDemand).map((p) => {
-              const siteOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://www.1lineestate.com';
+              const siteOrigin = SITE_URL;
               const shareText = `أهلاً بك أستاذ ${matchModalDemand.clientName || 'العميل'}، بخصوص طلبك العقاري في منصة 1Line: يسعدنا ترشيح هذا العقار المطابق لطلبك تماماً:\n"${p.title_ar || p.title}"\nالسعر: ${p.price.toLocaleString('en-US')} ج.م في ${p.locationName_ar || p.areaKey}\nالمعاينة والتفاصيل: ${siteOrigin}/properties/${p.id}`;
               const cleanPhone = matchModalDemand.phone ? matchModalDemand.phone.replace(/[^0-9]/g, '') : '';
 

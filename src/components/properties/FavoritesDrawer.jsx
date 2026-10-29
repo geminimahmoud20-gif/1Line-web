@@ -5,6 +5,7 @@ import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark.js';
 import { getWhatsAppUrl } from '../../utils/founderCmsData.js';
 import { trackEvent } from '../../utils/visitorTracker.js';
 import { thumbUrl } from '../../utils/imageThumbs';
+import { siteLink } from '../../config/siteConfig';
 
 export default function FavoritesDrawer({
   isOpen,
@@ -49,7 +50,7 @@ export default function FavoritesDrawer({
       msg += `\n🏠 *${idx + 1}. ${title}* (كود: #${p.id})\n`;
       msg += `📍 *الموقع:* ${loc}\n`;
       msg += `💰 *السعر:* ${p.price?.toLocaleString('en-US')} ج.م\n`;
-      msg += `🔗 ${window.location.origin}/properties/${p.id}\n`;
+      msg += `🔗 ${siteLink(`/properties/${p.id}`)}\n`;
     });
 
     msg += `\n----------------------------------------\n`;

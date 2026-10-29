@@ -154,7 +154,7 @@ export default function PropertyExtrasEditor({ form, setForm, isAr = true }) {
           <NumField label={L('المدفوع لجهاز المدينة', 'Paid to the city authority')} value={finance.paidToAuthority} onChange={(v) => setFinance('paidToAuthority', v)} suffix={EGP} />
           <TextField label={L('ملاحظة الأوفر برايس', 'Over-price note')} value={finance.overPriceNote_ar} onChange={(v) => setFinance('overPriceNote_ar', v)} placeholder={L('مثال: متبقي 3 أقساط لجهاز المدينة', 'e.g. 3 authority installments left')} />
           <NumField label={L('تكاليف المرافق (عدادات/غاز) استرشادي', 'Utilities (meters/gas), indicative')} value={finance.utilitiesCost} onChange={(v) => setFinance('utilitiesCost', v)} suffix={EGP} />
-          <NumField label={L('تكلفة نقل الملكية/التسجيل استرشادي', 'Transfer/registration, indicative')} value={finance.transferCost} onChange={(v) => setFinance('transferCost', v)} suffix={EGP} />
+          <NumField label={L('مراجعة سندات الملكية وتحرير العقود (استرشادي)', 'Title-deed review & contracts, indicative')} value={finance.transferCost} onChange={(v) => setFinance('transferCost', v)} suffix={EGP} />
           <TextField label={L('ملاحظة التكاليف', 'Fees note')} value={finance.feesNote_ar} onChange={(v) => setFinance('feesNote_ar', v)} placeholder={L('مثال: التسجيل بالشهر العقاري على المشتري', 'e.g. registry fees paid by buyer')} />
         </div>
       </Section>

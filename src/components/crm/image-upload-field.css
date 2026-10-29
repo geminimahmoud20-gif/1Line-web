@@ -23,3 +23,26 @@
 .iuf-remove { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; color: var(--ui-danger); }
 .iuf-hint { color: var(--ui-text-3); font-size: var(--ui-fs-1); line-height: 1.5; }
 .iuf-error { color: var(--ui-danger); font-size: var(--ui-fs-1); font-weight: 600; }
+
+/* "A new version is live" pill (NewVersionNotice) */
+.crm-new-version {
+  position: fixed;
+  inset-inline: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 3000;
+  margin-inline: auto;
+  max-width: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px 10px 16px;
+  border-radius: 14px;
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-gold);
+  color: var(--ui-text);
+  font-weight: 700;
+  font-size: var(--ui-fs-2);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+}
+.crm-new-version .btn { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; }

@@ -4,7 +4,7 @@
  * and injects Google-compliant Schema.org RealEstateListing & Organization schemas.
  */
 
-import { SITE_URL, BRAND, CONTACT, SERVICE_AREAS } from '../config/siteConfig';
+import { SITE_URL, BRAND, CONTACT, SERVICE_AREAS, siteLink } from '../config/siteConfig';
 import { getDynamicPhone } from './founderCmsData';
 import { getSiteSettings, subscribeSiteSettings } from './siteSettings';
 
@@ -133,7 +133,7 @@ export function generateSocialShareSnippet(property, lang = 'ar') {
   const priceFormatted = property.price ? Number(property.price).toLocaleString('en-US') + ' ج.م' : '';
   const sizeFormatted = property.size ? `${property.size} م²` : '';
   const propUrl = typeof window !== 'undefined' 
-    ? `${window.location.origin}/properties/${property.id}`
+    ? siteLink(`/properties/${property.id}`)
     : `${BASE_URL}/properties/${property.id}`;
 
   if (isAr) {

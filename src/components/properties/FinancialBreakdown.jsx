@@ -109,9 +109,9 @@ export default function FinancialBreakdown({ property, lang = 'ar', currency = '
       {/* 5. Indicative utilities & transfer */}
       {fb.fees && (
         <div className="xs-fin-block">
-          <h4><FileText size={15} aria-hidden="true" /> {L('المرافق ونقل الملكية (استرشادي)', 'Utilities & transfer (indicative)')}</h4>
+          <h4><FileText size={15} aria-hidden="true" /> {L('مراجعة سندات الملكية وتحرير العقود (استرشادي)', 'Title-deed review & contract drafting (indicative)')}</h4>
           {fb.fees.utilities > 0 && <Row label={L('المرافق والعدادات', 'Utilities & meters')}><Money value={fb.fees.utilities} {...m} /></Row>}
-          {fb.fees.transfer > 0 && <Row label={L('نقل الملكية والتسجيل', 'Transfer & registration')}><Money value={fb.fees.transfer} {...m} /></Row>}
+          {fb.fees.transfer > 0 && <Row label={L('مراجعة سندات الملكية وتحرير العقود', 'Title-deed review & contract drafting')}><Money value={fb.fees.transfer} {...m} /></Row>}
           {fb.fees.note_ar && <p className="xs-fin-note">{fb.fees.note_ar}</p>}
         </div>
       )}
