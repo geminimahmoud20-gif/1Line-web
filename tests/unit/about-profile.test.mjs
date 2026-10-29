@@ -36,7 +36,7 @@ test('team: grouped, hidden people and nameless cards left out, each field has i
   };
   const groups = visibleTeam(about);
   assert.deepEqual(groups.map((g) => g.id), ['management', 'advisors']);
-  assert.deepEqual(groups[0].members[0], { id: 'a', name: 'أحمد', role: 'مدير', bio: 'نبذة', photo: 'https://x/a.jpg', whatsapp: '201012345678' });
+  assert.deepEqual(groups[0].members[0], { id: 'a', name: 'أحمد', role: 'مدير', bio: 'نبذة', photo: 'https://x/a.jpg', photoPos: 'top', whatsapp: '201012345678' });
   assert.deepEqual(groups[1].members.map((m) => m.name), ['سارة', 'منى']);
   assert.equal(groups[1].members[0].photo, '');
   assert.equal(groups[1].members[0].bio, '');

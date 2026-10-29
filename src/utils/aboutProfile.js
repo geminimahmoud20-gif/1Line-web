@@ -34,6 +34,14 @@ export const TEAM_GROUPS = [
 
 export const LIMITS = { team: 40, gallery: 12 };
 
+/** Which part of a portrait the round frame keeps: the face is usually in the top third */
+export const PHOTO_POSITIONS = [
+  { id: 'top', ar: 'الوش فوق', en: 'Face high', css: '50% 18%' },
+  { id: 'center', ar: 'في النص', en: 'Centre', css: '50% 50%' },
+  { id: 'bottom', ar: 'تحت', en: 'Low', css: '50% 85%' }
+];
+export const photoPositionCss = (id) => (PHOTO_POSITIONS.find((p) => p.id === id) || PHOTO_POSITIONS[0]).css;
+
 const clean = (v) => String(v ?? '').trim();
 const on = (v) => v !== false;
 const pick = (isAr, item, key) => clean(isAr ? item[`${key}_ar`] : (item[`${key}_en`] || item[`${key}_ar`]));
@@ -42,7 +50,7 @@ const newId = (prefix) => `${prefix}-${Date.now().toString(36)}${Math.random().t
 /** A blank team card for the CRM; it stays hidden until it has a name */
 export const blankMember = (group = 'advisors') => ({
   id: newId('m'), group, name_ar: '', name_en: '', role_ar: '', role_en: '', bio_ar: '', bio_en: '',
-  photo: '', whatsapp: '', visible: true, show: { photo: true, role: true, bio: true, whatsapp: false }
+  photo: '', photoPos: 'top', whatsapp: '', visible: true, show: { photo: true, role: true, bio: true, whatsapp: false }
 });
 
 export const blankPhoto = (url = '') => ({ id: newId('g'), url, caption_ar: '', caption_en: '', visible: true });
@@ -62,6 +70,7 @@ export function normalizeAbout(raw) {
     id: clean(m.id) || newId('m'),
     group: groups.has(m.group) ? m.group : 'advisors',
     visible: on(m.visible),
+    photoPos: PHOTO_POSITIONS.some((p) => p.id === m.photoPos) ? m.photoPos : 'top',
     show: { photo: on(m.show?.photo), role: on(m.show?.role), bio: on(m.show?.bio), whatsapp: m.show?.whatsapp === true }
   }));
   const gallery = (Array.isArray(a.gallery) ? a.gallery : []).filter((g) => g && clean(g.url) && !clean(g.url).startsWith('data:'))
@@ -102,6 +111,7 @@ export function visibleTeam(about, isAr = true) {
         role: m.show.role ? pick(isAr, m, 'role') : '',
         bio: m.show.bio ? pick(isAr, m, 'bio') : '',
         photo: m.show.photo ? clean(m.photo) : '',
+        photoPos: m.photoPos,
         whatsapp: wa
       };
     })

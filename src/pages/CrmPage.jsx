@@ -23,6 +23,7 @@ import GoLiveWizardModal from '../components/crm/GoLiveWizardModal';
 import CrmSidebar from '../components/crm/CrmSidebar';
 import CrmTopbar from '../components/crm/CrmTopbar';
 import CrmCommandPalette from '../components/crm/CrmCommandPalette';
+import NewVersionNotice from '../components/crm/NewVersionNotice';
 import '../components/crm/CrmLayout.css';
 import '../components/crm/crm-luxury.css';
 import '../components/crm/crm-dark-surfaces.css';
@@ -672,6 +673,7 @@ export default function CrmPage({
   return (
     <MotionRoot>
     <ConfirmProvider cancelLabel={isAr ? 'إلغاء' : 'Cancel'}>
+    <NewVersionNotice isAr={isAr} />
     <div 
       className={`crm-layout ${isAr ? 'rtl-dir' : 'ltr-dir'}`}
       style={{

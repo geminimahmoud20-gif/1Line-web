@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Building2, Users, Image as ImageIcon, MessageCircle, X } from 'lucide-react';
-import { visibleCompanyFacts, visibleTeam, visibleGallery, sectionOn, initials } from '../../utils/aboutProfile';
+import { visibleCompanyFacts, visibleTeam, visibleGallery, sectionOn, initials, photoPositionCss } from '../../utils/aboutProfile';
 import '../../styles/about-profile.css';
 
 /** Company facts card: only rows the team filled in and left switched on */
@@ -41,7 +41,7 @@ export function AboutTeam({ about, isAr }) {
             {g.members.map((m) => (
               <article key={m.id} className="abp-member">
                 <div className="abp-avatar">
-                  {m.photo ? <img src={m.photo} alt={m.name} loading="lazy" /> : <span aria-hidden="true">{initials(m.name)}</span>}
+                  {m.photo ? <img src={m.photo} alt={m.name} loading="lazy" style={{ objectPosition: photoPositionCss(m.photoPos) }} /> : <span aria-hidden="true">{initials(m.name)}</span>}
                 </div>
                 <h4 className="abp-name">{m.name}</h4>
                 {m.role && <p className="abp-role">{m.role}</p>}
