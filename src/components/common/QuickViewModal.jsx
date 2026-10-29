@@ -17,6 +17,7 @@ import { listingBadges } from '../../utils/listingBadges';
 import { cardFeatures } from '../../utils/buildingFeatures';
 import { isMultiUnitOrBuilding } from '../../utils/currencyAndBenchmark';
 import './quickview.css';
+import { siteLink } from '../../config/siteConfig';
 
 export default function QuickViewModal({ 
   property, 
@@ -93,7 +94,7 @@ export default function QuickViewModal({
   };
 
   const handleShare = () => {
-    const propUrl = `${window.location.origin}/properties/${property.id}`;
+    const propUrl = siteLink(`/properties/${property.id}`);
     const shareText = isAr 
       ? `تفقد هذا العقار المعتمد على منصة 1Line: ${title} بسعر ${priceData.primary} ${priceData.symbol}\n${propUrl}`
       : `Check out this verified property on 1Line: ${title} for ${priceData.primary} ${priceData.symbol}\n${propUrl}`;

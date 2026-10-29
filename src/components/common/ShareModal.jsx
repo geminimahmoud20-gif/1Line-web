@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { X, Check, Copy, MessageSquare, Share2 } from 'lucide-react';
+import { siteLink } from '../../config/siteConfig';
 
 export default function ShareModal({ isOpen, onClose, lang = 'ar', triggerToast, shareData }) {
   const [copied, setCopied] = useState(false);
   if (!isOpen) return null;
 
   const isAr = lang === 'ar';
-  const url = shareData?.url || (typeof window !== 'undefined' ? (window.location.origin + window.location.pathname) : 'https://oneline-sohag.com');
+  const url = shareData?.url || siteLink(typeof window !== 'undefined' ? window.location.pathname : '/');
   const modalTitle = shareData?.title 
     ? (isAr ? `مشاركة: ${shareData.title}` : `Share: ${shareData.title}`)
     : (isAr ? 'مشاركة منصة 1Line العقارية' : 'Share 1Line Platform');

@@ -8,7 +8,16 @@
 
 const envUrl = (import.meta.env?.VITE_SITE_URL || '').replace(/\/+$/, '');
 
-export const SITE_URL = envUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://www.1lineestate.com');
+export const CANONICAL_URL = 'https://www.1lineestate.com';
+
+// Links people share (WhatsApp, PDFs, schema) always name the official domain, whatever address
+// the page was opened from: the CRM opened on a vercel.app address used to share vercel.app
+// links. Only a local dev server keeps its own origin, so links work while testing.
+const isLocal = typeof window !== 'undefined' && /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
+export const SITE_URL = envUrl || (isLocal ? window.location.origin : CANONICAL_URL);
+
+/** Public link to a page of the site: siteLink('/properties/12') */
+export const siteLink = (path = '/') => `${SITE_URL}${path.startsWith('/') ? path : `/${path}`}`;
 
 export const BRAND = {
   name_ar: 'ون لاين للاستشارات والتسويق العقاري',

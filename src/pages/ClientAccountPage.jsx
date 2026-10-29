@@ -13,6 +13,7 @@ import AccountInquiriesTab from '../components/account/AccountInquiriesTab';
 import AccountCompareTab from '../components/account/AccountCompareTab';
 import { LEAD_TYPE_NAMES } from './ClientAccountPageData';
 import '../styles/client-auth-modes.css';
+import { siteLink } from '../config/siteConfig';
 
 /**
  * Lead Stages & Color Scheme
@@ -120,7 +121,7 @@ export default function ClientAccountPage({
       msg += `\n🏠 *${idx + 1}. ${title}* (كود: #${p.id})\n`;
       msg += `📍 ${loc}\n`;
       msg += `💰 ${Number(p.price).toLocaleString('en-US')} ج.م\n`;
-      msg += `🔗 ${window.location.origin}/properties/${p.id}\n`;
+      msg += `🔗 ${siteLink(`/properties/${p.id}`)}\n`;
     });
 
     msg += `\n----------------------------------------\n`;

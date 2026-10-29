@@ -9,6 +9,7 @@ import {
   LANDING_KINDS, LANDING_AREAS, parseLanding, landingListings, landingSummary, landingCopy, landingFaq, landingPath
 } from '../utils/seoLanding';
 import '../styles/landing.css';
+import { siteLink } from '../config/siteConfig';
 
 /**
  * A search landing page: "شقق للبيع في سوهاج الجديدة" (/sohag/:kind/:area?). Real listings of the
@@ -59,7 +60,7 @@ export default function LandingPage({ properties = [], lang = 'ar', currency = '
       '@type': 'ItemList',
       name: copy.h1,
       numberOfItems: listings.length,
-      itemListElement: listings.slice(0, 30).map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: `${window.location.origin}/properties/${encodeURIComponent(p.id)}`, name: p.title_ar || p.title_en || '' }))
+      itemListElement: listings.slice(0, 30).map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: siteLink(`/properties/${encodeURIComponent(p.id)}`), name: p.title_ar || p.title_en || '' }))
     });
     // These two describe this page only
     return () => ['landing-faq-schema', 'landing-list-schema'].forEach((id) => document.getElementById(id)?.remove());

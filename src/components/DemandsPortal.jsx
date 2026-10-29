@@ -12,6 +12,7 @@ import { isValidPhoneNumber } from '../utils/securityShield';
 import '../styles/expat-suite.css';
 import { recordTimeLabel } from '../utils/relativeTime';
 import AreaOptions from './common/AreaOptions';
+import { siteLink } from '../config/siteConfig';
 
 export const DemandsPortal = ({
   lang,
@@ -692,7 +693,7 @@ export const DemandsPortal = ({
                     <button
                       type="button"
                       onClick={() => {
-                        const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/demands` : 'https://www.1lineestate.com/demands';
+                        const shareUrl = siteLink('/demands');
                         const text = isAr
                           ? `🔥 فرصة بيع مباشرة في سوهاج على منصة 1Line:\n${dem.text_ar}\n💰 الميزانية: ${formattedBudget} ج.م\n📍 المنطقة: ${areaName}\n\nإذا كان لديك عقار مطابق أو تعرف مالكاً، يمكنك المطابقة والتواصل فوراً هنا:\n${shareUrl}`
                           : `Buyer Demand in Sohag on 1Line:\n${dem.text_en}\nBudget: ${formattedBudget} EGP\n${shareUrl}`;

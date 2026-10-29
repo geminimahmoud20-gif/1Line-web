@@ -12,6 +12,7 @@ import CompareColumn from './CompareColumn';
 import CompareDuel from './CompareDuel';
 import { countLabel } from '../../utils/arabicCount';
 import { thumbUrl } from '../../utils/imageThumbs';
+import { siteLink } from '../../config/siteConfig';
 
 export default function PropertyCompareDrawer({
   isOpen,
@@ -167,7 +168,7 @@ export default function PropertyCompareDrawer({
         ? [p.legalStatus.ownershipType_ar, p.legalStatus.licenseStatus_ar].filter(Boolean).join(' • ')
         : '';
       msg += `• الموقف القانوني: ${legalLine || 'نراجع معك المستندات قبل التعاقد'}\n`;
-      msg += `• الرابط: ${window.location.origin}/properties/${p.id}\n\n`;
+      msg += `• الرابط: ${siteLink(`/properties/${p.id}`)}\n\n`;
     });
 
     msg += isAr 
