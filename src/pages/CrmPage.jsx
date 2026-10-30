@@ -14,6 +14,7 @@ import AdCampaignsPanel from '../components/crm/AdCampaignsPanel';
 import SystemSection, { RestrictedSection } from '../components/crm/SystemSection';
 import { announceNewLeads, announceDownloads, announceIntake } from '../utils/newLeadAlerts';
 import { unlockChimeOnFirstTouch } from '../utils/notificationHub';
+import { getDynamicPhone } from '../utils/founderCmsData';
 import { subscribeToClientDownloads, subscribeToIntake, logoutUser } from '../firebaseLazy';
 import useIdleLock from '../components/crm/useIdleLock';
 import { setManifestFor } from '../utils/appManifest';
@@ -316,7 +317,10 @@ export default function CrmPage({
   const seesDownloads = crmAuthenticated && (isSuperAdminUser || ['sales_manager'].includes(activeRole));
   useEffect(() => {
     if (!seesDownloads) return undefined;
-    return subscribeToClientDownloads(setClientDownloads, 30);
+    // Downloads made with the company's own number are the team trying the site: not a client
+    const own = String(getDynamicPhone() || '').replace(/\D/g, '').slice(-10);
+    const isOwn = (d) => own.length === 10 && String(d?.clientPhone || '').replace(/\D/g, '').slice(-10) === own;
+    return subscribeToClientDownloads((list) => setClientDownloads((list || []).filter((d) => !isOwn(d))), 30);
   }, [seesDownloads]);
   useEffect(() => {
     if (seesDownloads) announceDownloads(clientDownloads, { isAr: lang === 'ar', toast: triggerToast });

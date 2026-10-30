@@ -1999,3 +1999,23 @@ mark.crm-search-highlight {
   .crm-user-menu__btn { padding: 0 var(--ui-s-1); }
   .crm-page-title__sub { display: none; }
 }
+
+/* Phones: the bell's panel spans the screen under the top bar instead of hanging off the bell
+   (anchored to the bell it ran past the screen edge and cut the title and tabs) */
+@media (max-width: 640px) {
+  .crm-notif-dropdown {
+    position: fixed;
+    top: calc(var(--crm-topbar-h, 64px) + 6px);
+    inset-inline: 8px;
+    width: auto;
+    max-width: none;
+    max-height: calc(100dvh - var(--crm-topbar-h, 64px) - 20px);
+    display: flex;
+    flex-direction: column;
+    padding: 14px 12px;
+  }
+  .crm-notif-body { max-height: none; flex: 1; min-height: 0; }
+  .crm-notif-tabs { overflow-x: auto; scrollbar-width: none; }
+  .crm-notif-tabs::-webkit-scrollbar { display: none; }
+  .crm-notif-tab-btn { flex: 1 0 auto; white-space: nowrap; min-height: 36px; font-size: 12px; }
+}
