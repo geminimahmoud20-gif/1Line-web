@@ -86,7 +86,7 @@ export default function SlaCountdownBadge({
           }}
         >
           {escalation.targetDepartment === 'founder'
-            ? (isAr ? '👑 المؤسس' : 'Founder')
+            ? (isAr ? 'المؤسس' : 'Founder')
             : (isAr ? 'مدير العمليات' : 'Manager')}
         </span>
       )}

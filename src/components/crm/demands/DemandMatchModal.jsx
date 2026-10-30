@@ -55,8 +55,8 @@ export default function DemandMatchModal({
             {isAr ? matchModalDemand.text_ar : matchModalDemand.text_en || matchModalDemand.text_ar}
           </p>
           <div style={{ display: 'flex', gap: '14px', marginTop: '8px', fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
-            <span>📍 {isAr ? (matchModalDemand.area_ar || matchModalDemand.area) : matchModalDemand.area}</span>
-            <span>💰 {(typeof matchModalDemand.budget === 'number' ? matchModalDemand.budget : parseInt(String(matchModalDemand.budget).replace(/,/g, '')) || 0).toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}</span>
+            <span>{isAr ? (matchModalDemand.area_ar || matchModalDemand.area) : matchModalDemand.area}</span>
+            <span>{(typeof matchModalDemand.budget === 'number' ? matchModalDemand.budget : parseInt(String(matchModalDemand.budget).replace(/,/g, '')) || 0).toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}</span>
           </div>
         </div>
 
@@ -114,8 +114,8 @@ export default function DemandMatchModal({
                         <span>{isAr ? (p.locationName_ar || p.areaKey) : (p.locationName_en || p.areaKey)}</span>
                       </small>
                       <div style={{ display: 'flex', gap: '10px', marginTop: '8px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
-                        {p.size && <span>📐 {p.size} م²</span>}
-                        {p.bedrooms && <span>🛏️ {p.bedrooms} غرف</span>}
+                        {p.size && <span>{p.size} م²</span>}
+                        {p.bedrooms && <span>{p.bedrooms} غرف</span>}
                       </div>
                     </div>
 
@@ -144,7 +144,7 @@ export default function DemandMatchModal({
                       </a>
                     ) : (
                       <div style={{ marginTop: '10px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', textAlign: 'center' }}>
-                        {!canViewPhone ? (isAr ? '🔒 الهاتف محجوب للمراقبين' : '🔒 Phone hidden for viewers') : (isAr ? 'رقم العميل غير متاح للمراسلة' : 'No direct client phone recorded')}
+                        {!canViewPhone ? (isAr ? 'الهاتف محجوب للمراقبين' : 'Phone hidden for viewers') : (isAr ? 'رقم العميل غير متاح للمراسلة' : 'No direct client phone recorded')}
                       </div>
                     )}
                   </div>

@@ -12,6 +12,7 @@ import { isValidPhoneNumber } from '../../utils/securityShield';
 import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 import VisitorJourney from './analytics/VisitorJourney';
 import LeadScorePill from './LeadScorePill';
+import { useConfirm } from '../ui';
 
 export default function CustomerProfileModal({
   isOpen,
@@ -23,6 +24,7 @@ export default function CustomerProfileModal({
   triggerToast,
   userRole = 'super_admin'
 }) {
+  const confirm = useConfirm();
   const isAr = lang === 'ar';
   useBodyScrollLock(isOpen);
   const isSubmittingRef = useRef(false);
@@ -59,17 +61,15 @@ export default function CustomerProfileModal({
   // Dirty State (Unsaved Changes) Protection
   const hasUnsavedProfile = Boolean(isEditing || (newLogText && newLogText.trim()));
 
-  const handleSafeClose = useCallback(() => {
+  const handleSafeClose = useCallback(async () => {
     if (hasUnsavedProfile) {
-      const confirmClose = window.confirm(
-        isAr
+      const confirmClose = await confirm({ message: isAr
           ? 'لديك تعديلات أو ملاحظات غير محفوظة في ملف العميل، هل أنت متأكد من الخروج وتجاهلها؟'
-          : 'You have unsaved changes or notes in this profile. Are you sure you want to discard them?'
-      );
+          : 'You have unsaved changes or notes in this profile. Are you sure you want to discard them?', tone: 'primary' });
       if (!confirmClose) return;
     }
     onClose();
-  }, [hasUnsavedProfile, isAr, onClose]);
+  }, [hasUnsavedProfile, isAr, onClose, confirm]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -84,12 +84,12 @@ export default function CustomerProfileModal({
 
   // Available Tag Presets
   const AVAILABLE_TAGS = [
-    { id: 'vip', name_ar: '💎 VIP كاش', name_en: 'VIP Cash' },
-    { id: 'expat', name_ar: '✈️ مغترب بالخليج', name_en: 'Gulf Expat' },
-    { id: 'investor', name_ar: '📈 مستثمر تجاري', name_en: 'Commercial Investor' },
-    { id: 'urgent', name_ar: '🔥 مستعجل للشراء', name_en: 'Urgent Buyer' },
-    { id: 'installment', name_ar: '🏦 يفضل التقسيط', name_en: 'Installments Preferred' },
-    { id: 'negotiator', name_ar: '🤝 مفاوض جاد', name_en: 'Serious Negotiator' }
+    { id: 'vip', name_ar: 'VIP كاش', name_en: 'VIP Cash' },
+    { id: 'expat', name_ar: 'مغترب بالخليج', name_en: 'Gulf Expat' },
+    { id: 'investor', name_ar: 'مستثمر تجاري', name_en: 'Commercial Investor' },
+    { id: 'urgent', name_ar: 'مستعجل للشراء', name_en: 'Urgent Buyer' },
+    { id: 'installment', name_ar: 'يفضل التقسيط', name_en: 'Installments Preferred' },
+    { id: 'negotiator', name_ar: 'مفاوض جاد', name_en: 'Serious Negotiator' }
   ];
 
   // Toggle Tag
@@ -198,7 +198,7 @@ export default function CustomerProfileModal({
 
       setIsEditing(false);
       if (triggerToast) {
-        triggerToast(isAr ? 'تم حفظ وتحديث ملف العميل الشامل بنجاح! 💾' : 'Customer 360 profile updated!', 'success');
+        triggerToast(isAr ? 'تم حفظ وتحديث ملف العميل الشامل بنجاح!' : 'Customer 360 profile updated!', 'success');
       }
     } finally {
       isSubmittingRef.current = false;
@@ -264,7 +264,7 @@ export default function CustomerProfileModal({
               justifyContent: 'center',
               fontSize: 'var(--crm-text-xl)'
             }}>
-              {formData.temperature === 'hot' ? '🔥' : formData.temperature === 'warm' ? '⚡' : formData.temperature === 'cold' ? '❄️' : '—'}
+              {String(formData.name || '').trim().charAt(0) || '—'}
             </div>
 
             <div>
@@ -276,7 +276,7 @@ export default function CustomerProfileModal({
                 </span>
               </div>
               <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
-                📍 {formData.cityOrExpat} • {isAr ? 'المسؤول:' : 'Agent:'} {formData.assignedTo}
+                {formData.cityOrExpat} • {isAr ? 'المسؤول:' : 'Agent:'} {formData.assignedTo}
               </span>
             </div>
           </div>
@@ -429,7 +429,7 @@ export default function CustomerProfileModal({
               borderRadius: '8px'
             }}
           >
-            👤 {isAr ? 'الملف الشخصي والمالي' : 'Overview & Financials'}
+            {isAr ? 'الملف الشخصي والمالي' : 'Overview & Financials'}
           </button>
           <button
             type="button"
@@ -444,7 +444,7 @@ export default function CustomerProfileModal({
               borderRadius: '8px'
             }}
           >
-            🌐 {isAr ? 'رحلة ونقرات الزائر' : 'Digital Journey'} ({journeyEvents.length})
+            {isAr ? 'رحلة ونقرات الزائر' : 'Digital Journey'} ({journeyEvents.length})
           </button>
           <button
             type="button"
@@ -459,7 +459,7 @@ export default function CustomerProfileModal({
               borderRadius: '8px'
             }}
           >
-            🏢 {isAr ? 'العقارات المرشحة' : 'Matched Properties'} ({matchedProperties.length})
+            {isAr ? 'العقارات المرشحة' : 'Matched Properties'} ({matchedProperties.length})
           </button>
           <button
             type="button"
@@ -474,7 +474,7 @@ export default function CustomerProfileModal({
               borderRadius: '8px'
             }}
           >
-            🕒 {isAr ? 'سجل المكالمات' : 'Call Logs'} ({(lead.activityLogs || []).length})
+            {isAr ? 'سجل المكالمات' : 'Call Logs'} ({(lead.activityLogs || []).length})
           </button>
           <button
             type="button"
@@ -489,7 +489,7 @@ export default function CustomerProfileModal({
               borderRadius: '8px'
             }}
           >
-            📅 {isAr ? 'المتابعة القادمة' : 'Next Action'}
+            {isAr ? 'المتابعة القادمة' : 'Next Action'}
           </button>
         </div>
 
@@ -551,7 +551,7 @@ export default function CustomerProfileModal({
                     border: `1px solid ${isLiveTracked ? 'var(--crm-positive)' : 'var(--crm-warn-line)'}`,
                     fontSize: 'var(--crm-text-xs)'
                   }}>
-                    {isLiveTracked ? '🟢 ' + (isAr ? 'مسجلة من جهاز العميل' : 'Recorded on client device') : (isAr ? 'غير متاحة' : 'Not available')}
+                    {isLiveTracked ? (isAr ? 'مسجلة من جهاز العميل' : 'Recorded on client device') : (isAr ? 'غير متاحة' : 'Not available')}
                   </span>
 
                   {dwellTimeLabel && (
@@ -568,21 +568,21 @@ export default function CustomerProfileModal({
                   const getEventLabel = (type) => {
                     switch (type) {
                       case 'whatsapp_click':
-                        return { text: isAr ? '💬 نقرة واتساب' : '💬 WhatsApp Click', color: 'var(--crm-positive)', bg: 'var(--crm-positive-soft)', border: 'var(--crm-positive-line)' };
+                        return { text: isAr ? 'نقرة واتساب' : 'WhatsApp Click', color: 'var(--crm-positive)', bg: 'var(--crm-positive-soft)', border: 'var(--crm-positive-line)' };
                       case 'calculator_used':
-                        return { text: isAr ? '🧮 حاسبة التمويل' : '🧮 Calculator Used', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)', border: 'var(--crm-info-line)' };
+                        return { text: isAr ? 'حاسبة التمويل' : 'Calculator Used', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)', border: 'var(--crm-info-line)' };
                       case 'property_view':
-                        return { text: isAr ? '👁️ تصفح عقار' : '👁️ Listing Viewed', color: 'var(--crm-accent-text)', bg: 'var(--crm-warn-soft)', border: 'var(--crm-warn-line)' };
+                        return { text: isAr ? 'تصفح عقار' : 'Listing Viewed', color: 'var(--crm-accent-text)', bg: 'var(--crm-warn-soft)', border: 'var(--crm-warn-line)' };
                       case 'compare_added':
-                        return { text: isAr ? '⚖️ إضافة للمقارنة' : '⚖️ Added to Compare', color: 'var(--crm-violet)', bg: 'var(--crm-violet-soft)', border: 'var(--crm-violet-line)' };
+                        return { text: isAr ? 'إضافة للمقارنة' : 'Added to Compare', color: 'var(--crm-violet)', bg: 'var(--crm-violet-soft)', border: 'var(--crm-violet-line)' };
                       case 'favorite_added':
-                        return { text: isAr ? '❤️ إضافة للمفضلة' : '❤️ Favorited', color: 'var(--crm-danger)', bg: 'var(--crm-danger-soft)', border: 'var(--crm-danger-line)' };
+                        return { text: isAr ? 'إضافة للمفضلة' : 'Favorited', color: 'var(--crm-danger)', bg: 'var(--crm-danger-soft)', border: 'var(--crm-danger-line)' };
                       case 'brochure_request':
-                        return { text: isAr ? '📑 طلب بروشور (واتساب)' : '📑 Brochure request', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)', border: 'var(--crm-info-line)' };
+                        return { text: isAr ? 'طلب بروشور (واتساب)' : 'Brochure request', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)', border: 'var(--crm-info-line)' };
                       case 'brochure_download':
-                        return { text: isAr ? '📑 تنزيل بروشور' : '📑 PDF Brochure', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)', border: 'var(--crm-info-line)' };
+                        return { text: isAr ? 'تنزيل بروشور' : 'PDF Brochure', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)', border: 'var(--crm-info-line)' };
                       default:
-                        return { text: isAr ? '🌐 تصفح الموقع' : '🌐 Page View', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)', border: 'var(--crm-info-line)' };
+                        return { text: isAr ? 'تصفح الموقع' : 'Page View', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)', border: 'var(--crm-info-line)' };
                     }
                   };
 
@@ -623,7 +623,7 @@ export default function CustomerProfileModal({
                           </strong>
                         </div>
                         <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
-                          📍 {formData.cityOrExpat || 'سوهاج'} • {isAr ? 'عبر متصفح الهاتف / الويب' : 'Mobile / Web'}
+                          {formData.cityOrExpat || 'سوهاج'} • {isAr ? 'عبر متصفح الهاتف / الويب' : 'Mobile / Web'}
                         </span>
                       </div>
 
@@ -641,7 +641,7 @@ export default function CustomerProfileModal({
           {profileTab === 'properties' && (
             <div>
               <h4 style={{ margin: '0 0 14px 0', color: 'var(--crm-ink)', fontSize: 'var(--crm-text-md)', fontWeight: 700 }}>
-                🏢 {isAr ? 'العقارات والوحدات المقترحة لهذا العميل:' : 'Matched & Recommended Units:'}
+                {isAr ? 'العقارات والوحدات المقترحة لهذا العميل:' : 'Matched & Recommended Units:'}
               </h4>
 
               {matchedProperties.length === 0 && (
@@ -671,7 +671,7 @@ export default function CustomerProfileModal({
                         {isAr ? prop.title_ar : prop.title_en}
                       </strong>
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', fontWeight: 'bold' }}>
-                        💰 {prop.price?.toLocaleString('en-US')} ج.م • {prop.size} م²
+                        {prop.price?.toLocaleString('en-US')} ج.م • {prop.size} م²
                       </span>
                     </div>
 
@@ -706,7 +706,7 @@ export default function CustomerProfileModal({
                 boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
               }}>
                 <label style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold', display: 'block', marginBottom: '8px', color: 'var(--crm-ink)' }}>
-                  ✍️ {isAr ? 'تسجيل ملاحظة اتصال أو نتيجة مكالمة جديدة:' : 'Log Call / Meeting Notes:'}
+                  {isAr ? 'تسجيل ملاحظة اتصال أو نتيجة مكالمة جديدة:' : 'Log Call / Meeting Notes:'}
                 </label>
 
                 <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
@@ -716,10 +716,10 @@ export default function CustomerProfileModal({
                     className="form-input"
                     style={{ padding: '6px 10px', fontSize: 'var(--crm-text-sm)', width: '160px', background: 'var(--crm-subtle)', border: '1px solid var(--crm-line-strong)', borderRadius: '6px', color: 'var(--crm-ink)' }}
                   >
-                    <option value="call">📞 مكالمة هاتفية</option>
-                    <option value="whatsapp">💬 محادثة واتساب</option>
-                    <option value="meeting">🤝 اجتماع / معاينة</option>
-                    <option value="offer">📑 تقديم عرض سعر</option>
+                    <option value="call">مكالمة هاتفية</option>
+                    <option value="whatsapp">محادثة واتساب</option>
+                    <option value="meeting">اجتماع / معاينة</option>
+                    <option value="offer">تقديم عرض سعر</option>
                   </select>
 
                   <input
@@ -766,7 +766,7 @@ export default function CustomerProfileModal({
                         </span>
                       </div>
                       {log.agent && (
-                        <small style={{ color: 'var(--crm-accent-text)', fontWeight: 'bold' }}>👤 {log.agent}</small>
+                        <small style={{ color: 'var(--crm-accent-text)', fontWeight: 'bold' }}>{log.agent}</small>
                       )}
                     </div>
                   ))
@@ -785,7 +785,7 @@ export default function CustomerProfileModal({
               boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
             }}>
               <h4 style={{ margin: '0 0 14px 0', color: 'var(--crm-ink)', fontSize: 'var(--crm-text-md)', fontWeight: 700 }}>
-                📅 {isAr ? 'جدولة الإجراء القادم وموعد المتابعة' : 'Scheduled Next Action'}
+                {isAr ? 'جدولة الإجراء القادم وموعد المتابعة' : 'Scheduled Next Action'}
               </h4>
 
               <div className="cms-form-grid" style={{ gridTemplateColumns: '1fr 1.5fr', gap: '14px', marginBottom: '16px' }}>

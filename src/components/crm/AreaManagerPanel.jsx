@@ -5,9 +5,11 @@ import { groupedAreas, childrenOf, mainAreas, areaFamily, isMainArea, suggestedA
 import { useProperties } from '../../context/PropertiesContext';
 import AreaFormModal from './AreaFormModal';
 import { moveLeadsToArea, moveDemandsToArea } from '../../firebaseLazy';
+import { useConfirm } from '../ui';
 
 export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties = [] }) {
   const isAr = lang === 'ar';
+  const confirm = useConfirm();
   const [areas, setAreas] = useState(() => getAreas());
   const [searchQuery, setSearchQuery] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -256,12 +258,12 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
 
   // Reset to Defaults
   const handleResetDefaults = async () => {
-    if (window.confirm(isAr ? 'هل أنت متأكد من رغبتك في استعادة قائمة الأحياء والمناطق الافتراضية الأصلية لسوهاج؟' : 'Reset areas to default?')) {
+    if (await confirm({ message: isAr ? 'هل أنت متأكد من رغبتك في استعادة قائمة الأحياء والمناطق الافتراضية الأصلية لسوهاج؟' : 'Reset areas to default?', tone: 'danger' })) {
       setIsSaving(true);
       try {
         await resetAreasToDefault();
         setAreas(getAreas());
-        if (triggerToast) triggerToast(isAr ? 'تمت استعادة قائمة الأحياء الافتراضية بنجاح 🔄' : 'Areas reset to defaults', 'success');
+        if (triggerToast) triggerToast(isAr ? 'تمت استعادة قائمة الأحياء الافتراضية بنجاح' : 'Areas reset to defaults', 'success');
       } catch (err) {
         console.error('Error resetting areas:', err);
       } finally {

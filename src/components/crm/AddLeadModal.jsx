@@ -51,17 +51,17 @@ export default function AddLeadModal({
     nextActionNote: 'مكالمة هاتفية لتأكيد المواصفات والميزانية',
     nextFollowUpAt: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
     notes: '',
-    tags: ['💎 VIP كاش', '🔥 مستعجل للشراء']
+    tags: ['VIP كاش', 'مستعجل للشراء']
   }));
 
   if (!isOpen) return null;
 
   const AVAILABLE_TAGS = [
-    { id: 'vip', name_ar: '💎 VIP كاش', name_en: 'VIP Cash' },
-    { id: 'expat', name_ar: '✈️ مغترب بالخليج', name_en: 'Gulf Expat' },
-    { id: 'investor', name_ar: '📈 مستثمر تجاري', name_en: 'Commercial Investor' },
-    { id: 'urgent', name_ar: '🔥 مستعجل للشراء', name_en: 'Urgent Buyer' },
-    { id: 'installment', name_ar: '🏦 يفضل التقسيط', name_en: 'Installments Preferred' }
+    { id: 'vip', name_ar: 'VIP كاش', name_en: 'VIP Cash' },
+    { id: 'expat', name_ar: 'مغترب بالخليج', name_en: 'Gulf Expat' },
+    { id: 'investor', name_ar: 'مستثمر تجاري', name_en: 'Commercial Investor' },
+    { id: 'urgent', name_ar: 'مستعجل للشراء', name_en: 'Urgent Buyer' },
+    { id: 'installment', name_ar: 'يفضل التقسيط', name_en: 'Installments Preferred' }
   ];
 
   const handleToggleTag = (tagText) => {
@@ -242,11 +242,11 @@ export default function AddLeadModal({
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
               >
-                <option value="buyer">👤 مشتري (Buyer)</option>
-                <option value="seller">🏡 بائع / مالك (Seller)</option>
-                <option value="investor">📈 مستثمر (Investor)</option>
-                <option value="broker">🤝 وسيط عقاري (Broker)</option>
-                <option value="request">⚡ طلب خاص (Special)</option>
+                <option value="buyer">{isAr ? 'مشتري' : 'Buyer'}</option>
+                <option value="seller">{isAr ? 'بائع / مالك' : 'Seller / owner'}</option>
+                <option value="investor">{isAr ? 'مستثمر' : 'Investor'}</option>
+                <option value="broker">{isAr ? 'وسيط عقاري' : 'Broker'}</option>
+                <option value="request">{isAr ? 'طلب خاص' : 'Special request'}</option>
               </select>
             </div>
 
@@ -295,9 +295,9 @@ export default function AddLeadModal({
                 value={formData.temperature}
                 onChange={(e) => setFormData({ ...formData, temperature: e.target.value })}
               >
-                <option value="hot">🔥 ساخن جداً (Hot)</option>
-                <option value="warm">⚡ دافئ (Warm)</option>
-                <option value="cold">❄️ بارد (Cold)</option>
+                <option value="hot">{isAr ? 'ساخن جداً' : 'Hot'}</option>
+                <option value="warm">{isAr ? 'دافئ' : 'Warm'}</option>
+                <option value="cold">{isAr ? 'بارد' : 'Cold'}</option>
               </select>
             </div>
 
@@ -314,17 +314,17 @@ export default function AddLeadModal({
 
             {/* Lead Source */}
             <div className="form-group-item">
-              <label>{isAr ? 'مصدر العميل (Source):' : 'Lead Source:'}</label>
+              <label>{isAr ? 'مصدر العميل:' : 'Lead Source:'}</label>
               <select
                 value={formData.source}
                 onChange={(e) => setFormData({ ...formData, source: e.target.value })}
               >
-                <option value="اتصال مباشر / هاتف">{isAr ? '📞 اتصال مباشر / هاتف' : 'Direct Call'}</option>
-                <option value="واتساب مباشر">{isAr ? '💬 واتساب مباشر' : 'Direct WhatsApp'}</option>
-                <option value="إعلان فيسبوك / انستغرام">{isAr ? '📱 إعلان فيسبوك / انستغرام' : 'Social Media Ad'}</option>
-                <option value="زيارة مقر الشركة">{isAr ? '🏢 زيارة مقر الشركة' : 'Office Walk-in'}</option>
-                <option value="ترشيح عميل سابق">{isAr ? '🤝 ترشيح عميل سابق' : 'Referral'}</option>
-                <option value="الموقع الإلكتروني">{isAr ? '🌐 استمارة الموقع' : 'Website Form'}</option>
+                <option value="اتصال مباشر / هاتف">{isAr ? 'اتصال مباشر / هاتف' : 'Direct Call'}</option>
+                <option value="واتساب مباشر">{isAr ? 'واتساب مباشر' : 'Direct WhatsApp'}</option>
+                <option value="إعلان فيسبوك / انستغرام">{isAr ? 'إعلان فيسبوك / انستغرام' : 'Social Media Ad'}</option>
+                <option value="زيارة مقر الشركة">{isAr ? 'زيارة مقر الشركة' : 'Office Walk-in'}</option>
+                <option value="ترشيح عميل سابق">{isAr ? 'ترشيح عميل سابق' : 'Referral'}</option>
+                <option value="الموقع الإلكتروني">{isAr ? 'استمارة الموقع' : 'Website Form'}</option>
               </select>
             </div>
 
@@ -355,7 +355,7 @@ export default function AddLeadModal({
           {/* Tags */}
           <div style={{ marginTop: '14px' }}>
             <label style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
-              🏷️ {isAr ? 'الوسوم وتصنيف العميل:' : 'Tags:'}
+              {isAr ? 'الوسوم وتصنيف العميل:' : 'Tags:'}
             </label>
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
               {AVAILABLE_TAGS.map(tagObj => {

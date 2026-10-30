@@ -26,6 +26,7 @@ import CrmSidebar from '../components/crm/CrmSidebar';
 import CrmTopbar from '../components/crm/CrmTopbar';
 import CrmCommandPalette from '../components/crm/CrmCommandPalette';
 import NewVersionNotice from '../components/crm/NewVersionNotice';
+import { BRAND } from '../config/siteConfig';
 import '../components/crm/CrmLayout.css';
 import '../components/crm/crm-luxury.css';
 import '../components/crm/crm-dark-surfaces.css';
@@ -845,7 +846,7 @@ export default function CrmPage({
                 gap: '4px'
               }}
             >
-              <span>{isAr ? 'العودة لصلاحيات المدير العام 👑' : 'Return to Super Admin'}</span>
+              <span>{isAr ? 'العودة لصلاحيات المدير العام' : 'Return to Super Admin'}</span>
             </button>
           </div>
         )}
@@ -1009,17 +1010,9 @@ export default function CrmPage({
           )}
         </div>
 
-        {/* 4. Minimal Executive Footer */}
+        {/* 4. Footer: just the company and year (it claimed "v2.4 Enterprise" and "TLS 1.3 • AES-256") */}
         <footer className="crm-footer">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'var(--crm-positive-solid)', boxShadow: '0 0 6px rgba(16, 185, 129, 0.6)' }} />
-            <span>{isAr ? '1Line PropTech Suite v2.4 Enterprise — منصة عقارية ذكية مؤمنة' : '1Line PropTech Suite v2.4 Enterprise — Secure Intelligent Platform'}</span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <span>{isAr ? 'جلسة مشفرة (TLS 1.3 • AES-256)' : 'Encrypted Session (TLS 1.3)'}</span>
-            <span>{isAr ? '© 2026 شركة ون لاين للتطوير العقاري' : '© 2026 1Line Real Estate'}</span>
-          </div>
+          <span>{isAr ? `© ${new Date().getFullYear()} ${BRAND.name_ar}` : `© ${new Date().getFullYear()} ${BRAND.name_en}`}</span>
         </footer>
       </div>
 

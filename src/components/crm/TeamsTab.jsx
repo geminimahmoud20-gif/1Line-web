@@ -173,9 +173,9 @@ function DeleteTeamModal({ team, otherTeams, isAr, onClose, onConfirm, busy }) {
         <label className="tm-field">
           <span>{isAr ? 'الوجهة البديلة للعملاء والموظفين:' : 'Transfer leads & staff to:'}</span>
           <select value={fallbackId} onChange={(e) => setFallbackId(e.target.value)} disabled={busy}>
-            <option value={UNASSIGNED_DESK}>{isAr ? '⚪ غير مسند (القائمة العامة)' : '⚪ Unassigned Pool'}</option>
+            <option value={UNASSIGNED_DESK}>{isAr ? 'غير مسند (القائمة العامة)' : 'Unassigned Pool'}</option>
             {otherTeams.map((t) => (
-              <option key={t.id} value={t.id}>👥 {isAr ? t.name_ar : t.name_en}</option>
+              <option key={t.id} value={t.id}>{isAr ? t.name_ar : t.name_en}</option>
             ))}
           </select>
         </label>
@@ -279,7 +279,7 @@ export default function TeamsTab({ accessConfig, members = [], leads = [], isAr 
 
               <div className="tm-team-badges">
                 <span className={`tm-badge ${t.active ? 'tm-badge--green' : 'tm-badge--muted'}`}>
-                  {t.active ? (isAr ? '🟢 نشط' : 'Active') : (isAr ? '⚪ معطل' : 'Disabled')}
+                  {t.active ? (isAr ? 'نشط' : 'Active') : (isAr ? 'معطل' : 'Disabled')}
                 </span>
                 {t.roundRobin && (
                   <span className="tm-badge tm-badge--blue" title={isAr ? 'يشارك في التوزيع الدوري' : 'Round-Robin'}>

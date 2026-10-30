@@ -54,7 +54,7 @@ export default function HeroVideoSettings({
             onChange={(e) => setFormData({ ...formData, heroVideoEnabled: e.target.checked })}
             style={{ width: '20px', height: '20px', accentColor: 'var(--crm-info-solid)' }}
           />
-          <span>{formData.heroVideoEnabled !== false ? (isAr ? 'مفعّل 🟢' : 'Enabled') : (isAr ? 'معطّل ⚪' : 'Disabled')}</span>
+          <span>{formData.heroVideoEnabled !== false ? (isAr ? 'مفعّل' : 'Enabled') : (isAr ? 'معطّل' : 'Disabled')}</span>
         </label>
       </div>
 
@@ -210,7 +210,7 @@ export default function HeroVideoSettings({
                 style={{ accentColor: 'var(--accent-gold)' }}
               />
               <strong style={{ color: 'var(--crm-ink)', fontSize: 'var(--crm-text-md)' }}>
-                {isAr ? '🔳 تغطية سينمائية كاملة (Cover)' : 'Cinematic Fill (Cover)'}
+                {isAr ? 'تغطية سينمائية كاملة (Cover)' : 'Cinematic Fill (Cover)'}
               </strong>
             </div>
             <small style={{ color: 'var(--crm-muted)', display: 'block', paddingInlineStart: '24px', lineHeight: 1.5 }}>
@@ -239,7 +239,7 @@ export default function HeroVideoSettings({
                 style={{ accentColor: 'var(--accent-gold)' }}
               />
               <strong style={{ color: 'var(--crm-ink)', fontSize: 'var(--crm-text-md)' }}>
-                {isAr ? '🖼️ إظهار كامل إطار الفيديو 100% (Contain)' : 'Full Frame (Contain)'}
+                {isAr ? 'إظهار كامل إطار الفيديو 100% (Contain)' : 'Full Frame (Contain)'}
               </strong>
             </div>
             <small style={{ color: 'var(--crm-muted)', display: 'block', paddingInlineStart: '24px', lineHeight: 1.5 }}>
@@ -328,7 +328,7 @@ export default function HeroVideoSettings({
                 title={isAr ? 'إلغاء المقاطع الافتراضية وتشغيل المقطع الأساسي فقط' : 'Keep only active clip'}
                 style={{ color: 'var(--crm-accent-text)', borderColor: 'rgba(212, 175, 55, 0.4)' }}
               >
-                {isAr ? '⭐ تشغيل مقطعي فقط (حذف الافتراضية)' : 'Keep My Video Only'}
+                {isAr ? 'تشغيل مقطعي فقط (حذف الافتراضية)' : 'Keep My Video Only'}
               </button>
             )}
 
@@ -493,7 +493,7 @@ export default function HeroVideoSettings({
                 heroVideoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-modern-architecture-buildings-and-skyscrapers-41551-large.mp4'
               })}
             >
-              🏢 {isAr ? 'أبراج معمارية حديثة' : 'Modern Architecture'}
+              {isAr ? 'أبراج معمارية حديثة' : 'Modern Architecture'}
             </button>
             <button
               type="button"
@@ -503,7 +503,7 @@ export default function HeroVideoSettings({
                 heroVideoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-a-luxury-pool-resort-41553-large.mp4'
               })}
             >
-              🏡 {isAr ? 'منتجع وقصور فاخرة' : 'Luxury Resort'}
+              {isAr ? 'منتجع وقصور فاخرة' : 'Luxury Resort'}
             </button>
             <button
               type="button"
@@ -513,7 +513,7 @@ export default function HeroVideoSettings({
                 heroVideoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-drone-view-of-a-modern-residential-neighborhood-41555-large.mp4'
               })}
             >
-              🏘️ {isAr ? 'حي سكني راقٍ دروني' : 'Drone Neighborhood'}
+              {isAr ? 'حي سكني راقٍ دروني' : 'Drone Neighborhood'}
             </button>
           </div>
         </div>

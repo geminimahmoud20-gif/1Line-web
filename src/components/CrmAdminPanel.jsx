@@ -43,6 +43,7 @@ import useFullLeadStats from '../hooks/useFullLeadStats';
 import { useProperties } from '../context/PropertiesContext';
 import { areaFamily } from '../utils/areaLookup';
 import { getAreas } from '../utils/areasData';
+import { useConfirm } from './ui';
 
 export const CrmAdminPanel = ({
   lang = 'ar',
@@ -83,6 +84,7 @@ export const CrmAdminPanel = ({
 
   // Multi-Tenant RBAC Identity State
   const activeRole = propActiveRole || userRole || 'super_admin';
+  const confirm = useConfirm();
   const isAr = lang === 'ar';
   const myDealsOnly = false; // desk scoping happens below, on the data itself
 
@@ -351,7 +353,7 @@ export const CrmAdminPanel = ({
     setSelectedLeadIds([]);
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (selectedLeadIds.length === 0) return;
     if (!canDeleteLead(activeRole)) {
       if (triggerToast) {
@@ -359,7 +361,7 @@ export const CrmAdminPanel = ({
       }
       return;
     }
-    if (window.confirm(isAr ? `هل أنت متأكد من حذف ${selectedLeadIds.length} عميل محدد نهائياً؟` : `Delete ${selectedLeadIds.length} leads?`)) {
+    if (await confirm({ message: isAr ? `هل أنت متأكد من حذف ${selectedLeadIds.length} عميل محدد نهائياً؟` : `Delete ${selectedLeadIds.length} leads?`, tone: 'danger' })) {
       const idsToDelete = [...selectedLeadIds];
       setSelectedLeadIds([]);
       if (onDeleteLead) {
@@ -484,12 +486,12 @@ export const CrmAdminPanel = ({
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const parsed = JSON.parse(event.target.result);
         const importedLeads = parsed.leads || parsed;
         if (Array.isArray(importedLeads) && importedLeads.length > 0) {
-          if (window.confirm(isAr ? `استعادة ${importedLeads.length} عميل من ملف النسخة الاحتياطية إلى قاعدة البيانات؟ العملاء الموجودين حالياً مش هيتغيروا، بيتضاف بس اللي ناقص.` : `Restore ${importedLeads.length} leads to the database? Existing leads are left unchanged; only missing ones are added.`)) {
+          if (await confirm({ message: isAr ? `استعادة ${importedLeads.length} عميل من ملف النسخة الاحتياطية إلى قاعدة البيانات؟ العملاء الموجودين حالياً مش هيتغيروا، بيتضاف بس اللي ناقص.` : `Restore ${importedLeads.length} leads to the database? Existing leads are left unchanged; only missing ones are added.`, tone: 'danger' })) {
             // Written to Firestore (not this browser): the live list then shows them on every device
             restoreLeads(importedLeads).then((res) => {
               if (!res.ok) {
@@ -613,12 +615,12 @@ export const CrmAdminPanel = ({
   };
 
   // Delete Lead
-  const handleDeleteLeadClick = (leadId, leadName) => {
+  const handleDeleteLeadClick = async (leadId, leadName) => {
     if (!canDeleteLead(activeRole)) {
       if (triggerToast) triggerToast(isAr ? 'حذف العملاء متاح للمدير العام فقط — يمكنك أرشفة العميل بدلاً من ذلك' : 'Only Super Admin can delete leads', 'error');
       return;
     }
-    if (window.confirm(isAr ? `هل أنت متأكد من حذف بيانات العميل (${leadName || ''})؟` : `Delete lead ${leadName}?`)) {
+    if (await confirm({ message: isAr ? `هل أنت متأكد من حذف بيانات العميل (${leadName || ''})؟` : `Delete lead ${leadName}?`, tone: 'danger' })) {
       if (onDeleteLead) {
         onDeleteLead(leadId);
       } else {
@@ -959,6 +961,7 @@ export const CrmAdminPanel = ({
           leadFormData={leadFormData}
           setEditingLead={setEditingLead}
           setLeadFormData={setLeadFormData}
+          userRole={activeRole}
           t={t}
         />
       )}

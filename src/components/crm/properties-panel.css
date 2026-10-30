@@ -19,6 +19,12 @@
 .crm-props__chips { display: flex; gap: var(--ui-s-2); overflow-x: auto; scrollbar-width: none; max-width: 100%; }
 .crm-props__chips::-webkit-scrollbar { display: none; }
 .crm-props__chips .ui-chip { flex-shrink: 0; }
+@media (max-width: 639px) {
+  /* Status chips and the homepage-slots summary wrap: they were cut off at the left edge */
+  .crm-props__chips { flex-wrap: wrap; overflow-x: visible; }
+  .crm-props__slots-toggle { flex-wrap: wrap; }
+  .crm-props__slots-title { flex: 1 1 calc(100% - 40px); }
+}
 .crm-props__search {
   flex: 0 1 300px; display: flex; align-items: center; gap: var(--ui-s-2); height: var(--ui-control-h); padding: 0 var(--ui-s-3);
   background: var(--ui-surface); border: 1px solid var(--ui-line-strong); border-radius: var(--ui-r-md); color: var(--ui-text-3);
@@ -159,3 +165,5 @@
 }
 .crm-props__thumbs > span { flex: 1 1 220px; min-width: 0; font-size: var(--ui-fs-2); }
 .crm-props__thumbs > svg { color: var(--ui-accent); }
+
+.crm-prow__error { display: block; margin-top: var(--ui-s-1); color: var(--ui-danger); font-size: var(--ui-fs-1); }

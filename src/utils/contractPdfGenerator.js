@@ -1,226 +1,104 @@
-import { SITE_URL, LEGAL_IDS } from '../config/siteConfig';
-import { getDynamicPhone } from './founderCmsData';
+import { SITE_URL, LEGAL_IDS, BRAND, CONTACT } from '../config/siteConfig.js';
+import { getDynamicPhone } from './founderCmsData.js';
+
+// The reservation form (CRM → استوديو العقود). It used to be drawn with jsPDF, whose built-in fonts
+// have no Arabic letters, so the buyer's name and the unit printed as garbage, and missing fields
+// were filled with sample values (3,500,000 EGP, 165 m², 35,000 a month, "VERIFIED & ACTIVE").
+// It is now an Arabic page the browser prints or saves as PDF; a missing value prints as a blank
+// line to fill in by hand, never a made-up one.
+
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const BLANK = '..............................';
+const money = (n) => (Number(n) > 0 ? `${Math.round(Number(n)).toLocaleString('en-US')} ج.م` : BLANK);
+const text = (v) => (String(v ?? '').trim() ? esc(v) : BLANK);
+
+/** The form as a full HTML document (pure, so it can be tested) */
+export function buildReservationHtml(data = {}, { now = new Date() } = {}) {
+  const p = data.property || {};
+  const date = data.contractDate || now.toLocaleDateString('ar-EG-u-nu-latn', { year: 'numeric', month: 'long', day: 'numeric' });
+  const legal = [
+    LEGAL_IDS.commercialRegistry && `سجل تجاري: ${esc(LEGAL_IDS.commercialRegistry)}`,
+    LEGAL_IDS.taxCard && `بطاقة ضريبية: ${esc(LEGAL_IDS.taxCard)}`
+  ].filter(Boolean).join(' • ');
+  const row = (label, value) => `<tr><th>${label}</th><td>${value}</td></tr>`;
+  return `<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<title>استمارة حجز وحدة${data.buyerName ? ` - ${esc(data.buyerName)}` : ''}</title>
+<style>
+  @page { size: A4; margin: 14mm; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Cairo', 'Segoe UI', Tahoma, Arial, sans-serif; color: #0f172a; margin: 0; font-size: 13px; line-height: 1.7; }
+  header { display: flex; justify-content: space-between; gap: 16px; border-bottom: 3px solid #b8892e; padding-bottom: 10px; margin-bottom: 14px; }
+  header h1 { font-size: 18px; margin: 0; }
+  header small { color: #475569; display: block; }
+  h2 { font-size: 15px; text-align: center; margin: 4px 0 2px; }
+  .sub { text-align: center; color: #64748b; margin: 0 0 12px; }
+  section { border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; break-inside: avoid; }
+  section h3 { font-size: 13px; margin: 0 0 6px; color: #0b1b32; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: right; font-weight: 600; color: #475569; width: 34%; padding: 3px 0; vertical-align: top; }
+  td { padding: 3px 0; }
+  ol { margin: 0; padding-inline-start: 18px; }
+  .sign { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 18px; }
+  .sign div { border-top: 1px solid #94a3b8; padding-top: 6px; min-height: 70px; }
+  footer { margin-top: 16px; font-size: 11px; color: #64748b; text-align: center; }
+  .ltr { direction: ltr; unicode-bidi: embed; }
+</style></head>
+<body>
+<header>
+  <div><h1>${esc(BRAND.name_ar)}</h1><small>${esc(CONTACT.address_ar)}</small></div>
+  <div><small>التاريخ: ${esc(date)}</small>${data.transactionRef ? `<small>رقم العملية: <span class="ltr">${esc(data.transactionRef)}</span></small>` : ''}</div>
+</header>
+<h2>استمارة حجز وحدة وإيصال جدية حجز</h2>
+<p class="sub">مسودة للتوقيع، ماتبقاش سارية إلا بتوقيع الطرفين وختم الشركة</p>
+
+<section><h3>١. بيانات المشتري</h3><table>
+${row('الاسم', text(data.buyerName))}
+${row('الرقم القومي', text(data.buyerNationalId))}
+${row('التليفون', data.buyerPhone ? `<span class="ltr">${esc(data.buyerPhone)}</span>` : BLANK)}
+${row('العنوان', text(data.buyerAddress))}
+</table></section>
+
+<section><h3>٢. بيانات الوحدة</h3><table>
+${row('الوحدة', text(p.title_ar || p.title_en))}
+${row('الموقع', text(p.locationName_ar || p.locationName_en))}
+${row('المساحة', Number(p.size) > 0 ? `${esc(p.size)} م²` : BLANK)}
+${p.id ? row('كود الوحدة', `<span class="ltr">${esc(String(p.id).toUpperCase())}</span>`) : ''}
+</table></section>
+
+<section><h3>٣. المبالغ</h3><table>
+${row('إجمالي الثمن المتفق عليه', money(p.price))}
+${row('مبلغ جدية الحجز', money(data.depositAmount))}
+${row('طريقة الدفع', text(data.paymentMethod))}
+</table></section>
+
+<section><h3>٤. الشروط</h3><ol>
+  <li>الحجز ده بيحجز الوحدة لمدة (15) يوم لحد توقيع العقد النهائي.</li>
+  <li>الشركة بتراجع تسلسل الملكية وترخيص المبنى وبتسلّم ملخص مكتوب قبل العقد النهائي.</li>
+  <li>مبلغ جدية الحجز بيتخصم من المقدم عند توقيع العقد النهائي.</li>
+  <li>الاستمارة دي ماتبقاش سارية إلا بتوقيع الطرفين وختم الشركة. يُفضّل مراجعتها مع محامي المشتري قبل التوقيع.</li>
+</ol></section>
+
+<div class="sign">
+  <div><strong>الطرف الأول: ${esc(BRAND.name_ar)}</strong><br>الختم والتوقيع:</div>
+  <div><strong>الطرف الثاني (المشتري)</strong><br>الاسم: ${text(data.buyerName)}<br>التوقيع:</div>
+</div>
+
+<footer>${esc(BRAND.name_ar)} • <span class="ltr">${esc(getDynamicPhone())}</span> • <span class="ltr">${esc(SITE_URL.replace(/^https?:\/\//, ''))}</span>${legal ? ` • ${legal}` : ''}</footer>
+</body></html>`;
+}
+
 /**
- * Generate an official Arabic / Bilingual Unit Reservation Contract & Deposit Agreement
- * formatted according to Egyptian real estate legal standards in Sohag & New Sohag.
+ * Opens the form in a new tab and the print dialog (print or "Save as PDF").
+ * Pass a window opened during the click (popup blockers allow only those); falls back to opening one.
  */
-export const generateReservationContractPdf = async (contractData) => {
-  const { jsPDF } = await import('jspdf');
-  const doc = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: 'a4'
-  });
-
-  const {
-    buyerName = 'العميل الفاضل / المستثمر',
-    buyerPhone = '',
-    buyerNationalId = '',
-    buyerAddress = 'سوهاج - جمهورية مصر العربية',
-    property = {},
-    depositAmount = 50000,
-    paymentMethod = 'تحويل بنكي / إنستاباي (InstaPay)',
-    transactionRef = `REF-OL-${Math.floor(100000 + Math.random() * 900000)}`,
-    contractDate = new Date().toLocaleDateString('ar-EG-u-nu-latn', { year: 'numeric', month: 'long', day: 'numeric' })
-  } = contractData;
-
-  const propertyTitle = property.title_ar || property.title_en || 'وحدة سكنية فاخرة';
-  const propertyLocation = property.locationName_ar || property.locationName_en || 'سوهاج الجديدة';
-  const propertyPrice = Number(property.price || 3500000);
-  const propertySize = property.size || 165;
-  const propertyDownpayment = Number(property.downPayment || (propertyPrice * 0.2));
-  const propertyMonthly = Number(property.monthlyInstallment || 35000);
-
-  // 1. Top Luxury Header Banner
-  doc.setFillColor(9, 35, 71); // Navy #092347
-  doc.rect(0, 0, 210, 42, 'F');
-
-  // Gold Accent Strip
-  doc.setFillColor(255, 179, 0); // Gold #ffb300
-  doc.rect(0, 42, 210, 3, 'F');
-
-  // Company Header
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(18);
-  doc.setFont('helvetica', 'bold');
-  doc.text('1LINE REAL ESTATE DEVELOPMENT', 15, 18);
-
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(255, 224, 130);
-  doc.text('PRELIMINARY UNIT RESERVATION & DEPOSIT AGREEMENT', 15, 26);
-  doc.text('SOHAG & NEW SOHAG GOVERNORATE - EGYPT', 15, 32);
-
-  // Document Metadata Box (Right Side)
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(9);
-  doc.text(`REFERENCE: ${transactionRef}`, 145, 18);
-  doc.text(`DATE: ${new Date().toLocaleDateString('en-GB')}`, 145, 26);
-  doc.text('STATUS: VERIFIED & ACTIVE', 145, 34);
-
-  // 2. Arabic Document Title
-  doc.setTextColor(9, 35, 71);
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.text('ESTMARAT HAJZ WAHDA AQARIA & SANAD ESTELAM MOBTADA', 105, 54, { align: 'center' });
-  doc.setFontSize(9);
-  doc.setTextColor(100, 116, 139);
-  doc.text('Preliminary Unit Reservation & Deposit Form (draft for signature)', 105, 60, { align: 'center' });
-
-  // 3. Section 1: Buyer Information Box
-  doc.setFillColor(248, 250, 252);
-  doc.roundedRect(15, 66, 180, 32, 2, 2, 'F');
-  doc.setDrawColor(226, 232, 240);
-  doc.roundedRect(15, 66, 180, 32, 2, 2, 'D');
-
-  doc.setTextColor(9, 35, 71);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.text('1. BUYER & CLIENT INFORMATION / BAYANAT AL-MOSHTARY', 20, 73);
-
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(51, 65, 85);
-  doc.text(`Buyer Name: ${buyerName}`, 20, 80);
-  doc.text(`National ID: ${buyerNationalId}`, 20, 86);
-  doc.text(`Telephone / WhatsApp: ${buyerPhone}`, 20, 92);
-
-  doc.text(`Address: ${buyerAddress}`, 110, 80);
-  doc.text(`Payment Channel: ${paymentMethod}`, 110, 86);
-  doc.text(`Contract Date: ${contractDate}`, 110, 92);
-
-  // 4. Section 2: Property Specifications Box
-  doc.setFillColor(248, 250, 252);
-  doc.roundedRect(15, 103, 180, 38, 2, 2, 'F');
-  doc.setDrawColor(226, 232, 240);
-  doc.roundedRect(15, 103, 180, 38, 2, 2, 'D');
-
-  doc.setTextColor(9, 35, 71);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.text('2. PROPERTY SPECIFICATIONS & LOCATION / MWASAFAT AL-WAHDA', 20, 110);
-
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(51, 65, 85);
-  doc.text(`Unit Reference Code: ${property.id ? property.id.toUpperCase() : 'OL-UNIT-2026'}`, 20, 117);
-  doc.text(`Property Name: ${propertyTitle}`, 20, 123);
-  doc.text(`Location / City: ${propertyLocation}`, 20, 129);
-  doc.text(`Area Size: ${propertySize} Square Meters (sqm)`, 20, 135);
-
-  doc.text(`Bedrooms: ${property.bedrooms || 3} Rooms`, 110, 117);
-  doc.text(`Bathrooms: ${property.bathrooms || 2} Bathrooms`, 110, 123);
-  doc.text(`Building Status: Licensed & Registered`, 110, 129);
-  doc.text(`Handover Timeline: 2026 - Ready / Semi-Finished`, 110, 135);
-
-  // 5. Section 3: Financial Schedule & Deposit Breakdown
-  doc.setFillColor(238, 242, 255); // Indigo Tint
-  doc.roundedRect(15, 146, 180, 44, 2, 2, 'F');
-  doc.setDrawColor(199, 210, 254);
-  doc.roundedRect(15, 146, 180, 44, 2, 2, 'D');
-
-  doc.setTextColor(13, 72, 161);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.text('3. FINANCIAL SCHEDULE & DEPOSIT RECEIPT / GADWAL AL-SADAD', 20, 153);
-
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(30, 41, 59);
-
-  // Financial Items
-  doc.text('Total Agreed Price:', 20, 161);
-  doc.setFont('helvetica', 'bold');
-  doc.text(`${propertyPrice.toLocaleString('en-US')} EGP`, 75, 161);
-
-  doc.setFont('helvetica', 'normal');
-  doc.text('Reservation Deposit Paid:', 20, 168);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(16, 185, 129); // Emerald
-  doc.text(`${depositAmount.toLocaleString('en-US')} EGP (CONFIRMED)`, 75, 168);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(30, 41, 59);
-  doc.text('Remaining Downpayment:', 20, 175);
-  doc.setFont('helvetica', 'bold');
-  doc.text(`${Math.max(0, propertyDownpayment - depositAmount).toLocaleString('en-US')} EGP`, 75, 175);
-
-  doc.setFont('helvetica', 'normal');
-  doc.text('Estimated Monthly Installment:', 20, 182);
-  doc.setFont('helvetica', 'bold');
-  doc.text(`${propertyMonthly.toLocaleString('en-US')} EGP / Month`, 75, 182);
-
-  // Right Side Financial Verification Stamp Box
-  doc.setFillColor(255, 255, 255);
-  doc.roundedRect(125, 158, 62, 26, 2, 2, 'F');
-  doc.setDrawColor(255, 179, 0);
-  doc.roundedRect(125, 158, 62, 26, 2, 2, 'D');
-
-  doc.setTextColor(217, 119, 6);
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'bold');
-  doc.text('RESERVATION DEPOSIT', 130, 165);
-  doc.setFontSize(11);
-  doc.text(`${depositAmount.toLocaleString('en-US')} EGP`, 130, 172);
-  doc.setFontSize(7);
-  doc.setTextColor(100, 116, 139);
-  doc.text(`Receipt: ${transactionRef}`, 130, 178);
-
-  // 6. Section 4: Legal Terms & Buyer Protection
-  doc.setTextColor(9, 35, 71);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.text('4. LEGAL CONDITIONS & CLIENT RIGHTS / SHOROT WA AHKAAM', 15, 198);
-
-  doc.setFontSize(7.5);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(71, 85, 105);
-  doc.text('1. This preliminary reservation holds the specified unit for (15) calendar days to complete final contract signing.', 15, 204);
-  doc.text('2. 1Line reviews the title chain and building licence and shares a written summary before the final contract.', 15, 209);
-  doc.text('3. The reservation deposit is officially credited toward the unit downpayment upon final contract execution.', 15, 214);
-  doc.text('4. Valid only when signed by both parties and stamped by 1Line. Review it with your own lawyer before signing.', 15, 219);
-
-  // 7. Signatures & Official Endorsement Section
-  doc.setDrawColor(203, 213, 225);
-  doc.line(15, 226, 195, 226);
-
-  // First Party (1Line)
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(9, 35, 71);
-  doc.text('FIRST PARTY: 1LINE REAL ESTATE', 20, 233);
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(100, 116, 139);
-  doc.text('Chairman & Founder: Dr. Mahmoud Elbaz', 20, 239);
-  doc.text('Company stamp: ______________________', 20, 245);
-  doc.text('Signature: __________________________', 20, 255);
-
-  // Second Party (Buyer)
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(9, 35, 71);
-  doc.text('SECOND PARTY: BUYER & APPLICANT', 120, 233);
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(100, 116, 139);
-  doc.text(`Applicant Name: ${buyerName}`, 120, 239);
-  doc.text(`National ID: ${buyerNationalId}`, 120, 245);
-  doc.text('Signature: __________________________', 120, 255);
-
-  // 8. Footer Legal Bar
-  doc.setFillColor(9, 35, 71);
-  doc.rect(0, 280, 210, 17, 'F');
-
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'normal');
-  doc.text('1Line Real Estate Development & Brokerage - Sohag & New Sohag, Egypt', 15, 287);
-  // Registry number only when the company has entered its real one (siteConfig LEGAL_IDS)
-  doc.text(`Hotline: ${getDynamicPhone()}  |  ${SITE_URL.replace(/^https?:\/\//, '')}${LEGAL_IDS.commercialRegistry ? `  |  CR: ${LEGAL_IDS.commercialRegistry}` : ''}`, 15, 292);
-
-  // Save the PDF file
-  const filename = `1Line_Contract_${transactionRef}_${new Date().toISOString().slice(0, 10)}.pdf`;
-  doc.save(filename);
-  return filename;
+export const generateReservationContractPdf = async (contractData, targetWindow = null) => {
+  const win = targetWindow || window.open('', '_blank');
+  if (!win) throw new Error('popup-blocked');
+  win.document.open();
+  win.document.write(buildReservationHtml(contractData));
+  win.document.close();
+  win.focus();
+  setTimeout(() => { try { win.print(); } catch { /* the page stays open to print by hand */ } }, 400);
+  return true;
 };

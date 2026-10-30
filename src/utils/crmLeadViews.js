@@ -215,8 +215,9 @@ export function isStale(l, now = Date.now(), hours = STALE_HOURS) {
   return !!last && now - last > hours * 3600 * 1000;
 }
 
-const ACTIVE_STAGES = ['new', 'contacted', 'site_visit', 'negotiating', 'closing'];
-const leadBudget = (l) => parseMoney(l.budget) || parseMoney(l.details?.budget) || parseMoney(l.details?.expectedPrice);
+// Shared with the pipeline's summary, so both screens give the same open-deal numbers
+export const ACTIVE_STAGES = ['new', 'contacted', 'site_visit', 'negotiating', 'closing'];
+export const leadBudget = (l) => parseMoney(l.budget) || parseMoney(l.details?.budget) || parseMoney(l.details?.expectedPrice);
 
 /**
  * Dashboard numbers. The active pipeline is open deals only (not archived, won or lost).

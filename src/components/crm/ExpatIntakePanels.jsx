@@ -191,7 +191,7 @@ export function RemoteInspectionsPanel({ properties = [], canEdit = false, isSup
                 <div className="cxi-row-actions">
                   {r.phone
                     ? <a className="cxi-btn cxi-btn--wa" href={waLink(r.phone, msg)} target="_blank" rel="noopener noreferrer"><MessageCircle size={14} /> <span dir="ltr">{r.phone}</span></a>
-                    : <span className="cxi-btn" title="الرقم متاح لفريق المبيعات فقط">🔒 الرقم محجوب</span>}
+                    : <span className="cxi-btn" title="الرقم متاح لفريق المبيعات فقط">الرقم محجوب</span>}
                   <StatusSelect list={STATUSES} value={r.status || 'new'} disabled={!canEdit} onChange={(s) => setStatus(r, s)} />
                 </div>
               </article>
@@ -313,7 +313,7 @@ export function TradeInsPanel({ properties = [], canEdit = false, triggerToast }
                 <div className="cxi-row-actions">
                   {r.phone
                     ? <a className="cxi-btn cxi-btn--wa" href={waLink(r.phone, `مرحباً ${r.name} 👋 معك 1Line بخصوص طلب البدل العقاري.`)} target="_blank" rel="noopener noreferrer"><MessageCircle size={14} /> <span dir="ltr">{r.phone}</span></a>
-                    : <span className="cxi-btn" title="الرقم متاح لفريق المبيعات فقط">🔒 الرقم محجوب</span>}
+                    : <span className="cxi-btn" title="الرقم متاح لفريق المبيعات فقط">الرقم محجوب</span>}
                   <StatusSelect list={TRADE_STATUSES} value={r.status || 'new'} disabled={!canEdit} onChange={(s) => setStatus(r, s)} />
                 </div>
               </article>

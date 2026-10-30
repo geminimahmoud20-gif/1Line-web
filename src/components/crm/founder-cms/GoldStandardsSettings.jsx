@@ -104,12 +104,12 @@ export default function GoldStandardsSettings({
                   onChange={(e) => handleGoldStandardChange(idx, 'icon', e.target.value)}
                   style={{ padding: '6px 10px', fontSize: 'var(--crm-text-sm)', borderRadius: '4px', background: 'var(--crm-subtle)', color: 'var(--crm-on-dark)', border: '1px solid var(--border-light)' }}
                 >
-                  <option value="ShieldCheck">🛡️ ShieldCheck (درع الأمان)</option>
-                  <option value="Scale">⚖️ Scale (ميزان العدالة والتقييم)</option>
-                  <option value="Award">🏆 Award (جائزة واعتماد)</option>
-                  <option value="Video">📹 Video (معاينة فيديو)</option>
-                  <option value="FileCheck">📑 FileCheck (فحص مستندات)</option>
-                  <option value="Lock">🔒 Lock (أمان وحماية)</option>
+                  <option value="ShieldCheck">ShieldCheck (درع الأمان)</option>
+                  <option value="Scale">Scale (ميزان العدالة والتقييم)</option>
+                  <option value="Award">Award (جائزة واعتماد)</option>
+                  <option value="Video">Video (معاينة فيديو)</option>
+                  <option value="FileCheck">FileCheck (فحص مستندات)</option>
+                  <option value="Lock">Lock (أمان وحماية)</option>
                 </select>
               </div>
             </div>

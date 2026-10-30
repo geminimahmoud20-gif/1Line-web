@@ -110,3 +110,20 @@ html:not(.dark-theme):not([data-theme="dark"]) .crm-layout { --crm-canvas: #F5F3
 /* Properties table: cells a bit tighter so status and actions stay on screen (properties-panel.css styles the rest) */
 .admin-data-table.crm-props-table { min-width: 0; }
 .crm-layout .admin-data-table.crm-props-table :is(th, td) { padding-inline: 8px !important; }
+
+/* ── Phones (≤639px): nothing runs off the screen, rows wrap instead of hiding buttons, and the
+      numbers sit two to a row so the list starts on the first screen ── */
+@media (max-width: 639px) {
+  /* Projects table: scrolls sideways inside its frame instead of squeezing a word per line */
+  .crm-projects-table-wrap .crm-modern-table { min-width: 680px; }
+  /* Stat cards (فريق المبيعات وغيرها): two per row */
+  .crm-layout .crm-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .crm-layout .crm-stats-grid .crm-stat-card { padding: 12px; gap: 8px; flex-direction: column; align-items: flex-start; }
+  .crm-layout .crm-stats-grid .crm-stat-num { font-size: var(--crm-text-lg); }
+  /* Promoted-property picker (إعادة الاستهداف) and similar pill selects stay inside the screen */
+  .crm-layout .crm-select-custom-pill { max-width: 100%; min-width: 0; }
+  /* Tap targets: at least 40px for the small icon buttons on client cards and the pipeline */
+  .crm-layout :is(.crm-icon-btn, .crm-phone-copy-btn, .kanban-stage-collapse-btn) { min-width: 40px; min-height: 40px; }
+  .crm-layout :is(.crm-btn-quick, .kb-btn, .crm-leads__temp) { min-height: 40px; }
+  .crm-layout .crm-leads input[type='checkbox'] { width: 22px; height: 22px; }
+}

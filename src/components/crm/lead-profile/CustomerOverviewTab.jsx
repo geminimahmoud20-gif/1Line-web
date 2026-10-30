@@ -22,7 +22,7 @@ export default function CustomerOverviewTab({
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <h4 style={{ margin: 0, color: 'var(--crm-ink)', fontSize: 'var(--crm-text-md)', fontWeight: 700 }}>
-          📊 {isAr ? 'البيانات الشخصية والقدرة المالية' : 'Client Profile & Financial Capability'}
+          {isAr ? 'البيانات الشخصية والقدرة المالية' : 'Client Profile & Financial Capability'}
         </h4>
         {canEditLead(userRole, lead) ? (
           <button
@@ -52,7 +52,7 @@ export default function CustomerOverviewTab({
       {/* Tags Strip */}
       <div style={{ marginBottom: '16px' }}>
         <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-body)', display: 'block', marginBottom: '6px', fontWeight: '600' }}>
-          🏷️ {isAr ? 'وسوم وتصنيف العميل:' : 'Client Tags:'}
+          {isAr ? 'وسوم وتصنيف العميل:' : 'Client Tags:'}
         </label>
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
           {AVAILABLE_TAGS.map(tagObj => {
@@ -148,9 +148,9 @@ export default function CustomerOverviewTab({
               value={formData.financing}
               onChange={(e) => setFormData({ ...formData, financing: e.target.value })}
             >
-              <option value="cash">💵 كاش فوري (Cash)</option>
-              <option value="installments">💳 تقسيط على أقساط مريحة</option>
-              <option value="mortgage">🏦 تمويل عقاري بنكي</option>
+              <option value="cash">كاش فوري (Cash)</option>
+              <option value="installments">تقسيط على أقساط مريحة</option>
+              <option value="mortgage">تمويل عقاري بنكي</option>
             </select>
           </div>
 
@@ -176,9 +176,9 @@ export default function CustomerOverviewTab({
               onChange={(e) => setFormData({ ...formData, temperature: e.target.value })}
             >
               <option value="">غير محدد</option>
-              <option value="hot">🔥 ساخن جداً (Hot - شراء خلال 7 أيام)</option>
-              <option value="warm">⚡ دافئ (Warm - شراء خلال شهر)</option>
-              <option value="cold">❄️ بارد / مستكشف (Cold)</option>
+              <option value="hot">ساخن جداً (Hot - شراء خلال 7 أيام)</option>
+              <option value="warm">دافئ (Warm - شراء خلال شهر)</option>
+              <option value="cold">بارد / مستكشف (Cold)</option>
             </select>
           </div>
 

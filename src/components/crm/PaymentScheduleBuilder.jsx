@@ -5,17 +5,20 @@ import {
   Printer, 
   Calendar, 
   DollarSign, 
-  QrCode, 
-  ShieldCheck 
+  ShieldCheck,
+  Loader2
 } from 'lucide-react';
 import { amountInArabicWords } from '../../utils/tafqeet';
+import { issueReceipt } from '../../firebaseLazy';
+import { BRAND } from '../../config/siteConfig';
 
 export default function PaymentScheduleBuilder({
   properties = [],
   leads = [],
   lang = 'ar',
   // Receipts acknowledge money taken, so only finance (perm `fin`) and the super admin issue them
-  canIssueReceipts = false
+  canIssueReceipts = false,
+  triggerToast = () => {}
 }) {
   const isAr = lang === 'ar';
 
@@ -23,7 +26,8 @@ export default function PaymentScheduleBuilder({
   const [selectedLeadId, setSelectedLeadId] = useState(leads[0]?.id || '');
   
   // Custom Calculation Parameters
-  const [customPrice, setCustomPrice] = useState(3500000);
+  // Starts at the picked unit's price (it used to start at a fixed 3,500,000 whatever the unit)
+  const [customPrice, setCustomPrice] = useState(() => Number(properties[0]?.price) || 0);
   const [downPaymentPercent, setDownPaymentPercent] = useState(20);
   const [years, setYears] = useState(5);
   const [frequency, setFrequency] = useState('quarterly'); // 'monthly' | 'quarterly' | 'semi_annual' | 'annual'
@@ -31,15 +35,17 @@ export default function PaymentScheduleBuilder({
 
   // E-Receipt Modal State
   const [showReceiptModal, setShowReceiptModal] = useState(false);
-  const [receiptDepositAmount, setReceiptDepositAmount] = useState(50000);
+  const [receiptDepositAmount, setReceiptDepositAmount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('cash'); // 'cash' | 'bank_transfer' | 'cheque' | 'vodafone_cash'
-  const [receiptSerial] = useState(() => `ONE-REC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
+  // The number comes from the server when the receipt is issued and saved (services/receipts.js)
+  const [issued, setIssued] = useState(null); // { number, at }
+  const [issuing, setIssuing] = useState(false);
 
   const selectedProp = properties.find(p => p.id === selectedPropertyId) || properties[0] || {};
   const selectedLead = leads.find(l => l.id === selectedLeadId) || leads[0] || {};
 
   // Financial Calculations
-  const totalPrice = customPrice || selectedProp.price || 3500000;
+  const totalPrice = customPrice || Number(selectedProp.price) || 0;
   const downPaymentAmount = Math.round((totalPrice * downPaymentPercent) / 100);
   const maintenanceAmount = Math.round((totalPrice * maintenancePercent) / 100);
   const remainingForInstallments = totalPrice - downPaymentAmount;
@@ -93,6 +99,36 @@ export default function PaymentScheduleBuilder({
     window.print();
   };
 
+  const openReceipt = () => {
+    setIssued(null);
+    setReceiptDepositAmount(0);
+    setShowReceiptModal(true);
+  };
+
+  const RECEIPT_ERRORS = {
+    forbidden: 'الإيصالات للإدارة المالية والمدير العام بس.',
+    offline: 'مفيش اتصال بقاعدة البيانات. جرّب تاني.',
+    error: 'الإيصال ماتسجلش. جرّب تاني.'
+  };
+  const handleIssueReceipt = async () => {
+    if (!selectedLead.id || !selectedProp.id) { triggerToast('اختار العميل والوحدة الأول', 'error'); return; }
+    if (!(receiptDepositAmount > 0)) { triggerToast('اكتب المبلغ اللي اتقبض', 'error'); return; }
+    setIssuing(true);
+    const res = await issueReceipt({
+      leadId: selectedLead.id,
+      leadName: selectedLead.name,
+      propertyId: selectedProp.id,
+      propertyTitle: selectedProp.title_ar || selectedProp.title_en,
+      amount: receiptDepositAmount,
+      totalPrice,
+      method: paymentMethod
+    });
+    setIssuing(false);
+    if (!res.ok) { triggerToast(RECEIPT_ERRORS[res.reason] || RECEIPT_ERRORS.error, 'error'); return; }
+    setIssued({ number: res.number, at: new Date() });
+    triggerToast(`اتسجل الإيصال رقم ${res.number}`, 'success');
+  };
+
   return (
     <div className="payment-schedule-builder-card">
       <div style={{
@@ -118,7 +154,7 @@ export default function PaymentScheduleBuilder({
         <button
           type="button"
           className="btn btn-primary"
-          onClick={() => setShowReceiptModal(true)}
+          onClick={openReceipt}
           style={{ background: 'var(--gradient-gold)', display: 'flex', alignItems: 'center', gap: '6px' }}
         >
           <FileText size={16} />
@@ -138,7 +174,7 @@ export default function PaymentScheduleBuilder({
         marginBottom: '24px'
       }}>
         <h4 style={{ fontSize: 'var(--crm-text-base)', marginBottom: '16px', color: 'var(--crm-accent-text)' }}>
-          ⚙️ {isAr ? 'تخصيص معايير الخطة المالية للوحدة' : 'Payment Plan Parameters'}
+          {isAr ? 'تخصيص معايير الخطة المالية للوحدة' : 'Payment Plan Parameters'}
         </h4>
 
         <div className="cms-form-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
@@ -213,12 +249,12 @@ export default function PaymentScheduleBuilder({
               onChange={(e) => setYears(parseInt(e.target.value))}
             >
               <option value="1">سنة واحدة (1 Yr)</option>
-              <option value="2">سنتان (2 Yrs)</option>
-              <option value="3">3 سنوات (3 Yrs)</option>
-              <option value="4">4 سنوات (4 Yrs)</option>
-              <option value="5">5 سنوات (5 Yrs)</option>
-              <option value="6">6 سنوات (6 Yrs)</option>
-              <option value="7">7 سنوات (7 Yrs)</option>
+              <option value="2">{isAr ? 'سنتين' : '2 years'}</option>
+              <option value="3">{isAr ? '3 سنين' : '3 years'}</option>
+              <option value="4">{isAr ? '4 سنين' : '4 years'}</option>
+              <option value="5">{isAr ? '5 سنين' : '5 years'}</option>
+              <option value="6">{isAr ? '6 سنين' : '6 years'}</option>
+              <option value="7">{isAr ? '7 سنين' : '7 years'}</option>
             </select>
           </div>
 
@@ -290,7 +326,7 @@ export default function PaymentScheduleBuilder({
       {/* Schedule Table Preview */}
       <div className="admin-table-wrapper">
         <h4 style={{ margin: '0 0 14px 0', fontSize: 'var(--crm-text-md)' }}>
-          📑 {isAr ? 'جدول الدفعات المقترح:' : 'Proposed payment schedule:'}
+          {isAr ? 'جدول الدفعات المقترح:' : 'Proposed payment schedule:'}
         </h4>
         <table className="admin-data-table">
           <thead>
@@ -345,7 +381,11 @@ export default function PaymentScheduleBuilder({
                 </label>
                 <input id="psb-field-8"
                   type="number"
-                  value={receiptDepositAmount}
+                  inputMode="numeric"
+                  min="1"
+                  placeholder={isAr ? 'المبلغ اللي اتقبض' : 'Amount received'}
+                  value={receiptDepositAmount || ''}
+                  disabled={Boolean(issued)}
                   onChange={(e) => setReceiptDepositAmount(parseInt(e.target.value) || 0)}
                   style={{ width: '100%', padding: '6px 10px', borderRadius: '4px' }}
                 />
@@ -356,6 +396,7 @@ export default function PaymentScheduleBuilder({
                 </label>
                 <select id="psb-field-9"
                   value={paymentMethod}
+                  disabled={Boolean(issued)}
                   onChange={(e) => setPaymentMethod(e.target.value)}
                   style={{ width: '100%', padding: '6px 10px', borderRadius: '4px' }}
                 >
@@ -379,23 +420,23 @@ export default function PaymentScheduleBuilder({
               {/* Receipt Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid var(--crm-warn)', paddingBottom: '14px', marginBottom: '18px' }}>
                 <div>
-                  <h2 style={{ margin: 0, color: 'var(--crm-ink)', fontSize: 'var(--crm-text-lg)' }}>شركة 1Line للحلول العقارية</h2>
-                  <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>1LINE REAL ESTATE SOLUTIONS — SOHAG HQ</span>
+                  <h2 style={{ margin: 0, color: 'var(--crm-ink)', fontSize: 'var(--crm-text-lg)' }}>{BRAND.name_ar}</h2>
+                  <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>{BRAND.legalName}</span>
                 </div>
                 <div style={{ textAlign: isAr ? 'left' : 'right' }}>
-                  <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 'bold', color: 'var(--crm-accent-text)', display: 'block' }}>رقم الإيصال الإلكتروني:</span>
-                  <strong style={{ fontSize: 'var(--crm-text-base)', color: 'var(--crm-ink)' }}>{receiptSerial}</strong>
-                  <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'block' }}>التاريخ: {new Date().toLocaleDateString('ar-EG-u-nu-latn')}</span>
+                  <span style={{ fontSize: 'var(--crm-text-xs)', fontWeight: 'bold', color: 'var(--crm-accent-text)', display: 'block' }}>رقم الإيصال:</span>
+                  <strong dir="ltr" style={{ fontSize: 'var(--crm-text-base)', color: 'var(--crm-ink)' }}>{issued ? issued.number : 'بيتحدد لما تسجّله'}</strong>
+                  <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'block' }}>التاريخ: {(issued?.at || new Date()).toLocaleDateString('ar-EG-u-nu-latn')}</span>
                 </div>
               </div>
 
               {/* Receipt Details Box */}
               <div style={{ background: 'var(--crm-subtle)', padding: '16px', borderRadius: '6px', marginBottom: '16px', fontSize: 'var(--crm-text-base)', lineHeight: '1.8' }}>
                 <p style={{ margin: 0 }}>
-                  استلمنا من السيد / السيدة: <strong style={{ color: 'var(--crm-ink)', textDecoration: 'underline' }}>{selectedLead.name || 'العميل الموقر'}</strong>
+                  استلمنا من السيد / السيدة: <strong style={{ color: 'var(--crm-ink)', textDecoration: 'underline' }}>{selectedLead.name || '—'}</strong>
                 </p>
                 <p style={{ margin: 0 }}>
-                  رقم الهاتف: <strong>{selectedLead.phone || '010XXXXXXXX'}</strong>
+                  رقم الهاتف: <strong dir="ltr">{selectedLead.phone || selectedLead.whatsapp || '—'}</strong>
                 </p>
                 <p style={{ margin: 0 }}>
                   مبلغ وقدره: <strong style={{ color: 'var(--crm-positive)', fontSize: 'var(--crm-text-lg)' }}>{receiptDepositAmount.toLocaleString('en-US')} ج.م</strong> ({amountInArabicWords(receiptDepositAmount)}).
@@ -411,24 +452,10 @@ export default function PaymentScheduleBuilder({
                 </p>
               </div>
 
-              {/* QR Verification & Signatures */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '16px', borderTop: '1px solid var(--crm-line-strong)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ padding: '6px', background: 'var(--crm-surface-ink)', borderRadius: '6px', color: 'var(--crm-on-dark)' }}>
-                    <QrCode size={44} />
-                  </div>
-                  <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', maxWidth: '140px' }}>
-                    رمز QR للتحقق الرقمي من صحة الإيصال في النظام المركزي
-                  </span>
-                </div>
-
-                <div style={{ textAlign: 'center' }}>
-                  <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'block' }}>خاتم وتوقيع الإدارة المالية:</span>
-                  <div style={{ marginTop: '6px', color: 'var(--crm-accent-text)', fontWeight: 'bold', fontSize: 'var(--crm-text-base)' }}>
-                    شركة 1Line للاستثمار العقاري
-                  </div>
-                  <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)' }}>✓ تم السداد والاعتماد إلكترونياً</span>
-                </div>
+              {/* Signatures: the receipt counts once it is signed and stamped */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', paddingTop: '16px', borderTop: '1px solid var(--crm-line-strong)', fontSize: 'var(--crm-text-sm)' }}>
+                <div>توقيع المستلم: ..........................</div>
+                <div>ختم وتوقيع الشركة: ..........................</div>
               </div>
             </div>
 
@@ -437,15 +464,17 @@ export default function PaymentScheduleBuilder({
               <button type="button" className="btn btn-outline" onClick={() => setShowReceiptModal(false)}>
                 {isAr ? 'إغلاق' : 'Close'}
               </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handlePrintReceipt}
-                style={{ background: 'var(--gradient-gold)', display: 'flex', alignItems: 'center', gap: '6px' }}
-              >
-                <Printer size={16} />
-                <span>{isAr ? 'طباعة الإيصال' : 'Print receipt'}</span>
-              </button>
+              {issued ? (
+                <button type="button" className="btn btn-primary" onClick={handlePrintReceipt} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Printer size={16} />
+                  <span>{isAr ? 'طباعة الإيصال' : 'Print receipt'}</span>
+                </button>
+              ) : (
+                <button type="button" className="btn btn-primary" onClick={handleIssueReceipt} disabled={issuing} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {issuing ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
+                  <span>{isAr ? 'سجّل الإيصال وخد رقم' : 'Save and number the receipt'}</span>
+                </button>
+              )}
             </div>
           </div>
         </div>

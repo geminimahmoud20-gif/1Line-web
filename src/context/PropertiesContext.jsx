@@ -278,10 +278,12 @@ export function PropertiesProvider({ children }) {
   const [cloudPropertyIds, setCloudPropertyIds] = useState(null);
   const requestLiveCatalog = useCallback(() => setLiveCatalog(true), []);
   useEffect(() => {
-    const applyCloud = (setter, storageKey, pruneDemos = false) => (cloudDocs) => {
+    // pruneDemos: once the database holds real items of this kind, the bundled samples go away.
+    // markLive: remember it for the next visit (listings only: the first paint reads it).
+    const applyCloud = (setter, storageKey, pruneDemos = false, markLive = pruneDemos) => (cloudDocs) => {
       if (!Array.isArray(cloudDocs) || cloudDocs.length === 0) return;
       const liveDocs = cloudDocs.filter((d) => !d.deleted);
-      if (pruneDemos && liveDocs.length > 0) {
+      if (markLive && liveDocs.length > 0) {
         try { localStorage.setItem(CATALOG_LIVE_KEY, '1'); } catch { /* storage unavailable */ }
       }
       setter((prev) => {
@@ -306,7 +308,8 @@ export function PropertiesProvider({ children }) {
       });
     };
     const applyProperties = applyCloud(setProperties, 'oneline_properties', true);
-    const applyProjects = applyCloud(setProjects, 'oneline_mega_projects');
+    // Sample projects used to stay next to real ones until each was deleted by hand
+    const applyProjects = applyCloud(setProjects, 'oneline_mega_projects', true, false);
     let unsubs = [];
     const goLive = () => {
       unsubs = [

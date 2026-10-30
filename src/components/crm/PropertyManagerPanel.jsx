@@ -422,7 +422,7 @@ export default function PropertyManagerPanel({
         images: [selected, ...rest]
       };
     });
-    triggerToast(isAr ? 'تم تعيين الصورة كغلاف رئيسي للعقار 🌟' : 'Set as primary cover photo', 'success');
+    triggerToast(isAr ? 'تم تعيين الصورة كغلاف رئيسي للعقار' : 'Set as primary cover photo', 'success');
   };
 
   const handleRemoveImage = (indexToRemove) => {

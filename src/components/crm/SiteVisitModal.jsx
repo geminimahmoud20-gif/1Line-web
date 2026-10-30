@@ -9,6 +9,7 @@ import {
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { leadScore } from '../../utils/crmLeadViews';
 import { getGoogleCalendarUrl, downloadIcsFile } from '../../utils/calendarHelper';
+import { CONTACT } from '../../config/siteConfig';
 
 export default function SiteVisitModal({
   isOpen,
@@ -27,8 +28,9 @@ export default function SiteVisitModal({
     return tomorrow.toISOString().slice(0, 10);
   });
   const [visitTime, setVisitTime] = useState('16:00');
-  const [agentName, setAgentName] = useState(lead?.assignedTo || 'Dr. Mahmoud Elbaz');
-  const [meetingLocation, setMeetingLocation] = useState('مقر شركة 1Line العقارية - شرق سوهاج');
+  // The person who goes with the client: typed in (it is sent to the client), not picked from sample names
+  const [agentName, setAgentName] = useState('');
+  const [meetingLocation, setMeetingLocation] = useState(`مقر الشركة: ${CONTACT.address_ar}`);
   const [notes, setNotes] = useState('معاينة ميدانية للوحدة مع شرح الموقف القانوني');
 
   if (!isOpen || !lead) return null;
@@ -140,7 +142,7 @@ export default function SiteVisitModal({
               >
                 {properties.map(p => (
                   <option key={p.id} value={p.id}>
-                    {isAr ? p.title_ar : p.title_en} — {p.price?.toLocaleString('en-US')} ج.م ({p.areaKey})
+                    {isAr ? p.title_ar : p.title_en} — {p.price?.toLocaleString('en-US')} ج.م
                   </option>
                 ))}
               </select>
@@ -173,17 +175,16 @@ export default function SiteVisitModal({
 
             {/* Assigned Consultant */}
             <div className="form-group-item">
-              <label style={{ color: 'var(--crm-body)', fontWeight: 'bold', fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'المستشار المرافق بالمعاينة' : 'Accompanying Advisor'}</label>
-              <select
+              <label style={{ color: 'var(--crm-body)', fontWeight: 'bold', fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'المستشار المرافق بالمعاينة *' : 'Accompanying Advisor *'}</label>
+              <input
+                type="text"
+                required
+                maxLength={60}
                 value={agentName}
+                placeholder={isAr ? 'اسم الموظف اللي هيحضر مع العميل' : 'Name of the staff member attending'}
                 onChange={(e) => setAgentName(e.target.value)}
                 style={{ background: 'var(--crm-card)', border: '1px solid var(--crm-line-strong)', borderRadius: '6px', color: 'var(--crm-ink)' }}
-              >
-                <option value="Dr. Mahmoud Elbaz">Dr. Mahmoud Elbaz</option>
-                <option value="Sales Team A - م/ أحمد عثمان">م/ أحمد عثمان (Sales A)</option>
-                <option value="Sales Team B - أ/ كريم الشريف">أ/ كريم الشريف (Sales B)</option>
-                <option value="Executive Management">Executive Management</option>
-              </select>
+              />
             </div>
 
             {/* Meeting Point */}
@@ -229,7 +230,7 @@ export default function SiteVisitModal({
                     start: startDt,
                     filename: `viewing-${lead.name}-${visitDate}.ics`
                   });
-                  if (triggerToast) triggerToast(isAr ? 'تم تنزيل موعد المعاينة لتقويم الهاتف 📅' : 'Viewing downloaded to calendar (.ics)', 'success');
+                  if (triggerToast) triggerToast(isAr ? 'تم تنزيل موعد المعاينة لتقويم الهاتف' : 'Viewing downloaded to calendar (.ics)', 'success');
                 }}
                 title={isAr ? 'تنزيل موعد المعاينة لتقويم الهاتف (Apple / Android)' : 'Download .ics calendar event'}
               >

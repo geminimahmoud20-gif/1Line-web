@@ -141,7 +141,7 @@ export default function AlertsSettingsPanel() {
             <button
               type="button"
               className="btn btn-sm btn-outline"
-              onClick={() => { playNotificationChime(); showSystemAlert('🔔 تجربة — 1Line', { body: 'الإشعارات شغالة على الجهاز ده.', tag: 'test', data: { url: '/crm' } }); }}
+              onClick={() => { playNotificationChime(); showSystemAlert('تجربة — 1Line', { body: 'الإشعارات شغالة على الجهاز ده.', tag: 'test', data: { url: '/crm' } }); }}
             >
               <Bell size={14} /><span>جرّب إشعار</span>
             </button>

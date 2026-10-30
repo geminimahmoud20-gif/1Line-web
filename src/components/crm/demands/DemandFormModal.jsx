@@ -162,9 +162,9 @@ export default function DemandFormModal({
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
               style={{ fontWeight: 'bold' }}
             >
-              <option value="published">{isAr ? '✅ معتمد ومنشور مباشرة على الموقع' : 'Published / Live'}</option>
-              <option value="pending">{isAr ? '⏳ قيد المراجعة (غير ظاهر للجمهور)' : 'Pending Review'}</option>
-              <option value="archived">{isAr ? '📁 مؤرشف / تم إغلاق الصفقة' : 'Archived / Closed'}</option>
+              <option value="published">{isAr ? 'معتمد ومنشور مباشرة على الموقع' : 'Published / Live'}</option>
+              <option value="pending">{isAr ? 'قيد المراجعة (غير ظاهر للجمهور)' : 'Pending Review'}</option>
+              <option value="archived">{isAr ? 'مؤرشف / تم إغلاق الصفقة' : 'Archived / Closed'}</option>
             </select>
           </div>
 

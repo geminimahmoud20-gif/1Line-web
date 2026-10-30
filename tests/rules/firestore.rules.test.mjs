@@ -536,3 +536,32 @@ test('daily report: reads leads, listings and analytics over REST, claims each d
   if ((await store.claimDay(target)) !== true) throw new Error('claim after release');
   await assertFails(getDoc(doc(asAdmin(), `report_log/${target}`)));
 });
+
+// ── Reservation receipts: numbered from a counter, issued once ────────────
+const receipt = (db, uid, seq, extra = {}) => {
+  const id = `REC-2026-${String(seq).padStart(4, '0')}`;
+  return [doc(db, `receipts/${id}`), { number: id, year: 2026, seq, leadId: 'a', amount: 50000, totalPrice: 1000000, method: 'cash', issuedBy: uid, issuedAt: serverTimestamp(), ...extra }];
+};
+const issue = (db, uid, seq, extra = {}, counter = seq) => {
+  const b = writeBatch(db);
+  b.set(doc(db, 'counters/receipts_2026'), { last: counter, updatedAt: serverTimestamp() });
+  b.set(...receipt(db, uid, seq, extra));
+  return b.commit();
+};
+
+test('receipts: finance issues them in order, each number once, never edited', async () => {
+  const fin = as('finance');
+  await assertSucceeds(issue(fin, 'u-finance', 1));
+  await assertSucceeds(issue(asAdmin(), ADMIN_UID, 2));
+  await assertFails(issue(fin, 'u-finance', 2, {}, 3)); // the number doesn't match the counter
+  await assertFails(issue(fin, 'u-finance', 4, {}, 4)); // the counter can't jump ahead
+  await assertFails(setDoc(...receipt(fin, 'u-finance', 3))); // a receipt without moving the counter
+  await assertFails(issue(fin, 'someone-else', 3)); // issued in someone else's name
+  await assertFails(issue(fin, 'u-finance', 3, { amount: 0 }));
+  await assertSucceeds(issue(fin, 'u-finance', 3));
+  await assertFails(setDoc(doc(fin, 'receipts/REC-2026-0001'), { amount: 1 }, { merge: true }));
+  await assertFails(deleteDoc(doc(fin, 'receipts/REC-2026-0001')));
+  await assertSucceeds(getDoc(doc(fin, 'receipts/REC-2026-0001')));
+  await assertFails(getDoc(doc(as('agent_east'), 'receipts/REC-2026-0001')));
+  await assertFails(issue(as('sales_manager'), 'u-sales_manager', 4));
+});

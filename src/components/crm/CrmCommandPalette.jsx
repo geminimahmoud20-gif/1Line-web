@@ -49,24 +49,24 @@ export default function CrmCommandPalette({
   const quickActions = useMemo(() => [
     {
       id: 'act_add_lead',
-      title_ar: 'إضافة عميل جديد ➕',
-      title_en: 'Add New Lead ➕',
+      title_ar: 'إضافة عميل جديد',
+      title_en: 'Add New Lead',
       category: 'actions',
       shortcut: 'L',
       action: () => onAction?.('add_lead')
     },
     {
       id: 'act_add_prop',
-      title_ar: 'إضافة عقار جديد بالمحفظة 🏢',
-      title_en: 'Add New Property 🏢',
+      title_ar: 'إضافة عقار جديد بالمحفظة',
+      title_en: 'Add New Property',
       category: 'actions',
       shortcut: 'P',
       action: () => onAction?.('add_property')
     },
     {
       id: 'act_add_demand',
-      title_ar: 'إضافة طلب مشتري ⚡',
-      title_en: 'Add Buyer Demand ⚡',
+      title_ar: 'إضافة طلب مشتري',
+      title_en: 'Add Buyer Demand',
       category: 'actions',
       shortcut: 'D',
       action: () => onAction?.('add_demand')
@@ -81,7 +81,7 @@ export default function CrmCommandPalette({
     },
     {
       id: 'act_matching',
-      title_ar: 'المطابقات الذكية التلقائية (AI Match)',
+      title_ar: 'المطابقات الذكية التلقائية',
       title_en: 'Open Smart AI Matching',
       category: 'actions',
       shortcut: 'M',
@@ -105,8 +105,8 @@ export default function CrmCommandPalette({
     },
     {
       id: 'act_theme',
-      title_ar: theme === 'dark' ? 'التحويل للوضع النهاري ☀️' : 'التحويل للوضع الليلي الفاخر 🌙',
-      title_en: theme === 'dark' ? 'Switch to Light Mode ☀️' : 'Switch to Dark Mode 🌙',
+      title_ar: theme === 'dark' ? 'التحويل للوضع النهاري' : 'التحويل للوضع الليلي الفاخر',
+      title_en: theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode',
       category: 'actions',
       shortcut: 'T',
       action: () => toggleTheme?.()

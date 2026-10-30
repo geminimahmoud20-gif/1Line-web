@@ -7,6 +7,7 @@ import ProjectFormModal from './ProjectFormModal';
 import OfferModal from './OfferModal';
 import './projects-manager.css';
 import { offerState } from '../../utils/propertyOffers';
+import { useConfirm } from '../ui';
 
 /**
  * MegaProjectsManagerPanel Component
@@ -23,6 +24,7 @@ export default function MegaProjectsManagerPanel({
   openRequest = null,
   readOnly = false
 }) {
+  const confirm = useConfirm();
   const isAr = lang === 'ar';
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -178,8 +180,8 @@ export default function MegaProjectsManagerPanel({
       : (isAr ? 'المشروع ظاهر على الموقع تاني' : 'Project is visible on the site again'), 'success');
   };
 
-  const handleDelete = (projId, title) => {
-    if (window.confirm(isAr ? `هل أنت متأكد من حذف مشروع: ${title}؟` : `Are you sure you want to delete ${title}?`)) {
+  const handleDelete = async (projId, title) => {
+    if (await confirm({ message: isAr ? `هل أنت متأكد من حذف مشروع: ${title}؟` : `Are you sure you want to delete ${title}?`, tone: 'danger' })) {
       if (onDeleteProject) {
         const res = onDeleteProject(projId);
         if (res !== false) {
