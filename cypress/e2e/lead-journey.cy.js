@@ -81,7 +81,7 @@ describe('Lead journey: public form → Firestore → CRM', () => {
       for (const f of ['phone', 'whatsapp', 'email']) expect(lead.fields, `lead.${f}`).not.to.have.property(f);
       expect(field(lead, 'assignedTo'), 'routed to a desk').to.be.a('string').and.not.be.empty;
       cy.request({ url: `${FS}/lead_contacts/${id}`, headers: OWNER }).then(({ body: contact }) => {
-        expect(String(field(contact, 'phone') || field(contact, 'whatsapp'))).to.contain('1012345678');
+        expect(String(field(contact, 'phone') || field(contact, 'whatsapp'))).to.contain(PHONE.slice(1));
         expect(field(contact, 'assignedTo')).to.eq(field(lead, 'assignedTo'));
       });
     });
