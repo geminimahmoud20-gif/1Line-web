@@ -181,6 +181,8 @@ export default function AgentCommissionLeaderboard({
                   height: '48px',
                   borderRadius: '50%',
                   background: index === 0 ? 'var(--crm-surface-ink)' : 'var(--crm-subtle)',
+                  color: index === 0 ? 'var(--crm-on-dark)' : 'var(--crm-ink)',
+                  fontWeight: 700,
                   border: index === 0 ? '1px solid rgba(179, 138, 69, 0.3)' : '1px solid var(--crm-line)',
                   display: 'flex',
                   alignItems: 'center',
