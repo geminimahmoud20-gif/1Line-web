@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { handleNotify, buildMessage, parseCallMeBot, makeSenders, sendAll, FRESH_MS, maskPhone, scrubDigits } from '../../api/_notify-core.js';
+import { handleNotify, handleTest, buildMessage, parseCallMeBot, makeSenders, sendAll, FRESH_MS, maskPhone, scrubDigits, crmPath } from '../../api/_notify-core.js';
 
 const NOW = Date.parse('2026-10-02T12:00:00Z');
 const lead = { name: 'أحمد', type: 'buyer', assignedTo: 'Sales Team A', source: 'sell_wizard', details: { area: 'الكوثر', budget: '2,000,000' }, phone: '01011112222', email: 'a@b.c', whatsapp: '01011112222' };
@@ -109,4 +109,62 @@ test('a flood sends one warning instead of one message per request', async () =>
   assert.deepEqual(out.map((b) => b.sent ?? b.skipped), [1, 'flood', 'flood', 'flood']);
   assert.equal(sent.length, 2);
   assert.match(sent[1], /طلبات كتير جداً/);
+});
+
+test('a send that fails is tried again, then the record is given back and the failure recorded', async () => {
+  const claimed = new Set();
+  const status = [];
+  let attempts = 0;
+  const d = {
+    ...deps({ data: lead, createdAtMs: NOW }, { claimed }),
+    sendAll: async () => { attempts += 1; return 0; },
+    releaseClaim: async (k, id) => { claimed.delete(`${k}/${id}`); },
+    recordStatus: async (s) => { status.push(s); },
+    sleep: async () => {}
+  };
+  const r = await handleNotify({ kind: 'leads', id: 'F1' }, d, 'https://s');
+  assert.equal(r.status, 502);
+  assert.equal(attempts, 2);
+  assert.equal(claimed.has('leads/F1'), false);
+  assert.deepEqual(status, [{ ok: false, ref: 'leads/F1' }]);
+  // the browser's retry can now alert it, and success is recorded
+  d.sendAll = async () => 1;
+  assert.deepEqual((await handleNotify({ kind: 'leads', id: 'F1' }, d, 'https://s')).body, { sent: 1 });
+  assert.deepEqual(status[1], { ok: true, ref: 'leads/F1' });
+});
+
+test('second attempt that works counts as sent; bookkeeping errors never block the alert', async () => {
+  let n = 0;
+  const d = { ...deps({ data: lead, createdAtMs: NOW }), sendAll: async () => (n++ === 0 ? 0 : 1), sleep: async () => {}, recordStatus: async () => { throw new Error('down'); } };
+  assert.deepEqual((await handleNotify({ kind: 'leads', id: 'R1' }, d, 'https://s')).body, { sent: 1 });
+});
+
+test('CallMeBot error pages answered with 200 count as failures', async () => {
+  const page = (text) => async () => ({ ok: true, text: async () => text });
+  const [bad] = makeSenders({ WHATSAPP_CALLMEBOT: '201011112222:abc' }, page('<p>APIKey is invalid. You need to get the apikey</p>'));
+  assert.equal(await bad('hi'), false);
+  const [good] = makeSenders({ WHATSAPP_CALLMEBOT: '201011112222:abc' }, page('<p>Message queued. You will receive it in a few seconds.</p>'));
+  assert.equal(await good('hi'), true);
+});
+
+test('test message: sent through the same numbers and recorded', async () => {
+  const status = [];
+  const sent = [];
+  const r = await handleTest({ sendAll: async (t) => { sent.push(t); return 2; }, recordStatus: async (s) => status.push(s) }, 'https://s', 2);
+  assert.deepEqual(r, { status: 200, body: { sent: 2, channels: 2 } });
+  assert.match(sent[0], /رسالة تجربة/);
+  assert.deepEqual(status, [{ ok: true, ref: 'test' }]);
+  assert.equal((await handleTest({ sendAll: async () => 0 }, 'https://s', 1)).status, 502);
+});
+
+test('a buyer demand reads in Arabic and the link opens the record', () => {
+  const rec = { name: 'منى', type: 'buyer_demand', details: { propertyType: 'apartment', budget: '1500000', area: 'new_sohag' } };
+  const text = buildMessage('leads', 'L77', rec, 'https://site');
+  assert.match(text, /طلب شراء جديد/);
+  assert.match(text, /النوع: طلب شراء \(مطلوب\)/);
+  assert.match(text, /العقار: شقة/);
+  assert.ok(!text.includes('buyer_demand'));
+  assert.match(text, /https:\/\/site\/crm\?lead=L77/);
+  assert.equal(crmPath('remote_inspections', 'x'), '/crm?tab=expat');
+  assert.equal(crmPath('trade_ins', 'x'), '/crm?tab=trade_ins');
 });

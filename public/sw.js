@@ -82,3 +82,21 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+// CRM alerts (src/utils/newLeadAlerts.js → showSystemAlert): tapping one brings the CRM forward on
+// the record it is about — the open CRM tab if there is one, else a new one at data.url.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const data = event.notification.data || {};
+  const target = new URL(typeof data.url === 'string' && data.url.startsWith('/') ? data.url : '/crm', self.location.origin);
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
+      const crm = windows.find((w) => new URL(w.url).pathname.startsWith('/crm'));
+      if (crm) {
+        crm.postMessage({ type: 'oneline_open', url: target.pathname + target.search, leadId: data.leadId || '' });
+        return crm.focus();
+      }
+      return self.clients.openWindow(target.href);
+    })
+  );
+});

@@ -1725,6 +1725,16 @@ button.crm-lead-chip.is-dupe:hover { text-decoration: underline; }
   gap: 8px;
 }
 
+.crm-notif-hint {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--crm-subtle);
+  color: var(--crm-muted);
+  font-size: var(--crm-text-xs);
+  line-height: 1.6;
+}
+
 /* ── Topbar Action Buttons & Tools ───────────────────────── */
 .crm-role-lock-box {
   display: inline-flex;

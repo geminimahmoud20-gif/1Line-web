@@ -4,10 +4,14 @@ import { getMergedCrmRoles } from './crmRoles';
 import InstallAppButton from '../common/InstallAppButton';
 import { LOCK_OPTIONS, getLockMinutes, setLockMinutes, lockLabel, markCrmActive } from '../../utils/idleLock';
 import { getActiveAccessConfig, subscribeToAccessConfig } from '../../services/accessConfig';
-import { desktopAlertsSupported, desktopAlertsEnabled, enableDesktopAlerts, describeDownload, formatLeadHeadline } from '../../utils/newLeadAlerts';
+import { desktopAlertsState, enableDesktopAlerts, describeDownload, formatLeadHeadline, intakeHeadline, INTAKE_KINDS } from '../../utils/newLeadAlerts';
+import { loadAlertsSeenAt, saveAlertsSeenAt } from '../../firebaseLazy';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export default function CrmTopbar({
   clientDownloads = [],
+  intakeRequests = [],
   isAr = true,
   leads = [],
   properties = [],
@@ -35,7 +39,7 @@ export default function CrmTopbar({
   // This device's auto-lock delay (utils/idleLock); the CRM page applies it
   const [lockMinutes, setLockMinutesState] = useState(getLockMinutes);
   const [notifTab, setNotifTab] = useState('all'); // 'all' | 'leads' | 'downloads' | 'demands'
-  const [desktopAlerts, setDesktopAlerts] = useState(desktopAlertsEnabled);
+  const [alertsState, setAlertsState] = useState(desktopAlertsState);
   const [accessCfg, setAccessCfg] = useState(getActiveAccessConfig);
   useEffect(() => subscribeToAccessConfig(setAccessCfg), []);
   const currentRolesList = useMemo(() => getMergedCrmRoles(accessCfg), [accessCfg]);
@@ -73,19 +77,33 @@ export default function CrmTopbar({
     [clientDownloads, downloadsSeenAt]
   );
 
-  // Leads unseen by this browser session
+  // Requests not seen yet. "Seen" is kept per team member (staff_prefs) as well as in this browser,
+  // so a request seen on the laptop is not counted again on the phone. The first time, only the
+  // last 24 hours count — not every lead ever left on «جديد».
   const [leadsSeenAt, setLeadsSeenAt] = useState(() => {
-    try { return Number(localStorage.getItem('oneline_crm_leads_seen_at')) || 0; } catch { return 0; }
+    try { return Number(localStorage.getItem('oneline_crm_leads_seen_at')) || Date.now() - DAY_MS; } catch { return Date.now() - DAY_MS; }
   });
-  const unseenNewLeads = useMemo(() => {
-    return leads.filter((l) => {
-      if (l.status && l.status !== 'new') return false;
-      // createdAt is a Firestore Timestamp for cloud leads, an ISO string for older / offline ones
-      const c = l.createdAt;
-      const t = (c && typeof c.toMillis === 'function') ? c.toMillis() : (Date.parse(c || l.timestamp || '') || 0);
-      return !leadsSeenAt || t > leadsSeenAt;
-    });
-  }, [leads, leadsSeenAt]);
+  useEffect(() => {
+    let live = true;
+    loadAlertsSeenAt().then((ms) => {
+      if (!live || !ms) return;
+      setLeadsSeenAt((cur) => Math.max(cur, ms));
+      setDownloadsSeenAt((cur) => Math.max(cur, ms));
+    }).catch(() => {});
+    return () => { live = false; };
+  }, []);
+  const createdMs = (r) => {
+    const c = r.createdAt;
+    return (c && typeof c.toMillis === 'function') ? c.toMillis() : (Date.parse(c || r.createdAtIso || r.timestamp || '') || 0);
+  };
+  const unseenNewLeads = useMemo(
+    () => leads.filter((l) => (!l.status || l.status === 'new') && createdMs(l) > leadsSeenAt),
+    [leads, leadsSeenAt]
+  );
+  const unseenIntake = useMemo(
+    () => intakeRequests.filter((r) => (!r.status || r.status === 'new') && createdMs(r) > leadsSeenAt),
+    [intakeRequests, leadsSeenAt]
+  );
 
   const markAllSeen = () => {
     const now = Date.now();
@@ -95,6 +113,7 @@ export default function CrmTopbar({
       localStorage.setItem('oneline_crm_downloads_seen_at', String(now));
       localStorage.setItem('oneline_crm_leads_seen_at', String(now));
     } catch { /* not remembered */ }
+    saveAlertsSeenAt(now).catch(() => {});
   };
 
   // Everything counts as seen when the panel closes, not when it opens (it used to empty itself first)
@@ -104,7 +123,7 @@ export default function CrmTopbar({
     wasOpen.current = showNotifMenu;
   }, [showNotifMenu]);
 
-  const totalNotifications = pendingDemands.length + unseenNewLeads.length + recentDownloads.length;
+  const totalNotifications = pendingDemands.length + unseenNewLeads.length + unseenIntake.length + recentDownloads.length;
 
   // Dynamic breadcrumb labels
   const tabTitles = {
@@ -422,7 +441,7 @@ export default function CrmTopbar({
                   className={`crm-notif-tab-btn ${notifTab === 'leads' ? 'is-active' : ''}`}
                   onClick={() => setNotifTab('leads')}
                 >
-                  {isAr ? 'العملاء' : 'Leads'} ({unseenNewLeads.length})
+                  {isAr ? 'العملاء' : 'Leads'} ({unseenNewLeads.length + unseenIntake.length})
                 </button>
                 <button
                   type="button"
@@ -441,15 +460,25 @@ export default function CrmTopbar({
               </div>
 
               <div className="crm-notif-body">
-                {desktopAlertsSupported() && !desktopAlerts && (
+                {alertsState === 'default' && (
                   <button
                     type="button"
                     className="crm-topbar-tool-btn"
-                    onClick={async () => setDesktopAlerts(await enableDesktopAlerts())}
+                    onClick={async () => { await enableDesktopAlerts(); setAlertsState(desktopAlertsState()); }}
                     style={{ width: '100%', justifyContent: 'center' }}
                   >
-                    <Bell size={13} /> {isAr ? 'تفعيل إشعارات سطح المكتب' : 'Enable desktop alerts'}
+                    <Bell size={13} /> {isAr ? 'فعّل الإشعارات على الجهاز ده' : 'Turn on alerts on this device'}
                   </button>
+                )}
+                {alertsState === 'denied' && (
+                  <small className="crm-notif-hint">
+                    {isAr ? 'الإشعارات مقفولة للموقع ده من إعدادات المتصفح. افتحها من القفل جنب العنوان ← الإشعارات ← سماح.' : 'Notifications are blocked for this site in the browser settings.'}
+                  </small>
+                )}
+                {alertsState === 'unsupported' && (
+                  <small className="crm-notif-hint">
+                    {isAr ? 'المتصفح ده مش بيدعم الإشعارات. على الآيفون: ثبّت الـCRM على الشاشة الرئيسية (مشاركة ← إضافة إلى الشاشة الرئيسية) وافتحه من هناك.' : 'This browser has no notifications. On iPhone, add the CRM to the Home Screen and open it from there.'}
+                  </small>
                 )}
 
                 {/* Unseen New Leads */}
@@ -474,8 +503,31 @@ export default function CrmTopbar({
                           {formatLeadHeadline(l, isAr)}
                         </div>
                         <small style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-xs)' }}>
-                          {l.name || (isAr ? 'عميل' : 'Client')} • {l.phone || l.whatsapp || ''}
+                          {l.name || (isAr ? 'عميل' : 'Client')}{(l.phone || l.whatsapp) ? ` • ${l.phone || l.whatsapp}` : ''}
                         </small>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Expat remote inspections and trade-ins */}
+                {(notifTab === 'all' || notifTab === 'leads') && unseenIntake.length > 0 && (
+                  <div className="crm-notif-card is-leads">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <strong style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)' }}>
+                        {isAr ? 'طلبات المغتربين والبدل' : 'Expat & trade-in requests'}
+                      </strong>
+                      <span className="crm-search-result-badge">{unseenIntake.length}</span>
+                    </div>
+                    {unseenIntake.slice(0, 5).map((r) => (
+                      <div
+                        key={`${r._kind}-${r.id}`}
+                        className="crm-notif-item"
+                        onClick={() => { setActiveTab((INTAKE_KINDS[r._kind] || INTAKE_KINDS.remote_inspections).tab); setShowNotifMenu(false); }}
+                      >
+                        <div style={{ fontWeight: 'bold', color: 'var(--crm-ink)', fontSize: 'var(--crm-text-xs)' }}>
+                          {intakeHeadline(r, isAr)}
+                        </div>
                       </div>
                     ))}
                   </div>

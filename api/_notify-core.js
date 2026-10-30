@@ -24,7 +24,7 @@ export const FRESH_MS = 15 * 60 * 1000;
 const TYPE_LABELS = {
   buyer: 'شراء', seller: 'بيع', investor: 'استثمار', broker: 'وسيط', callback_request: 'اتصال سريع',
   deposit: 'جدية حجز', special_request: 'طلب خاص', bespoke_request: 'طلب خاص VIP', financing: 'تمويل',
-  valuation: 'تقييم', viewing_request: 'طلب معاينة', visit: 'معاينة ميدانية', viewing: 'طلب معاينة',
+  valuation: 'تقييم', buyer_demand: 'طلب شراء (مطلوب)', request: 'طلب شراء', viewing_request: 'طلب معاينة', visit: 'معاينة ميدانية', viewing: 'طلب معاينة',
   account: 'حساب جديد', client_registration: 'تسجيل حساب'
 };
 
@@ -58,6 +58,11 @@ export function formatReceived(ms) {
   }
 }
 
+/** Where the alert's link lands: the lead itself, or the section that lists the request */
+export const crmPath = (kind, id) => (kind === 'leads'
+  ? `/crm?lead=${encodeURIComponent(id)}`
+  : `/crm?tab=${{ demands: 'demands', remote_inspections: 'expat', trade_ins: 'trade_ins' }[kind] || 'dashboard'}`);
+
 /**
  * Alert text from the stored record. extra: { phone, receivedMs } — phone is read from the
  * contact record only to show its last 3 digits.
@@ -75,7 +80,7 @@ export function buildMessage(kind, id, rec, siteUrl, extra = {}) {
     const area = clean(areaLabel(rec.area || d.area), 40);
     const kind = clean(propertyTypeLabel(d.propertyType || rec.propertyType), 30) || 'عقار';
     headline = `🏠 عرض بيع: ${area ? `${kind} في ${area}` : `${kind} جديد`} — 1Line`;
-  } else if (rec.type === 'buyer') {
+  } else if (rec.type === 'buyer' || rec.type === 'buyer_demand') {
     headline = `🎯 طلب شراء جديد — 1Line`;
   } else if (rec.type === 'broker') {
     headline = `🤝 انضمام وسيط عقاري معتمد — 1Line`;
@@ -92,8 +97,10 @@ export function buildMessage(kind, id, rec, siteUrl, extra = {}) {
   lines.push(`الاسم: ${clean(rec.name || rec.clientName || '—', 60)}`);
   const tail = maskPhone(extra.phone);
   if (tail) lines.push(`الموبايل: ${tail}`);
-  const type = TYPE_LABELS[rec.type] || clean(rec.type || rec.purpose || propertyTypeLabel(rec.propertyType), 40);
+  const type = TYPE_LABELS[rec.type] || clean(rec.purpose || (rec.type ? propertyTypeLabel(rec.type) : '') || propertyTypeLabel(rec.propertyType), 40);
   if (type) lines.push(`النوع: ${type}`);
+  const what = clean(propertyTypeLabel(d.propertyType), 30);
+  if (what && what !== type) lines.push(`العقار: ${what}`);
   const area = clean(areaLabel(d.area || rec.area || rec.location || rec.district), 60);
   if (area) lines.push(`المنطقة: ${area}`);
   const budget = clean(d.budget || rec.budget || d.expectedPrice || rec.expectedPrice, 40);
@@ -105,7 +112,7 @@ export function buildMessage(kind, id, rec, siteUrl, extra = {}) {
   if (summary) lines.push(`الملخص: ${summary}`);
   const photos = Array.isArray(d.images) ? d.images.length : 0;
   if (photos) lines.push(`الصور: ${photos}`);
-  lines.push(`افتح الـ CRM: ${siteUrl}/crm`);
+  lines.push(`افتح الطلب: ${siteUrl}${crmPath(kind, id)}`);
   return lines.join('\n');
 }
 
@@ -149,8 +156,41 @@ export async function handleNotify(body, deps, siteUrl, ip = 'unknown') {
     const contact = deps.readContact ? await deps.readContact(req.kind, req.id) : null;
     phone = contact?.phone || contact?.whatsapp || rec.data.phone || rec.data.whatsapp || '';
   } catch { /* the receipt still goes out without the last digits */ }
-  const sent = await deps.sendAll(buildMessage(req.kind, req.id, rec.data, siteUrl, { phone, receivedMs: rec.createdAtMs }));
-  return { status: 200, body: { sent } };
+  const text = buildMessage(req.kind, req.id, rec.data, siteUrl, { phone, receivedMs: rec.createdAtMs });
+  const sent = await sendWithRetry(deps, text);
+  const ref = `${req.kind}/${req.id}`;
+  if (sent > 0) {
+    await safely(() => deps.recordStatus?.({ ok: true, ref }));
+    return { status: 200, body: { sent } };
+  }
+  // Nothing went out: give the record back so the next call (the browser retries once) can
+  // alert it, and leave a trace the CRM shows under «تنبيهات الواتساب»
+  await safely(() => deps.releaseClaim?.(req.kind, req.id));
+  await safely(() => deps.recordStatus?.({ ok: false, ref }));
+  return { status: 502, body: { sent: 0, error: 'send-failed' } };
+}
+
+const safely = async (fn) => { try { await fn(); } catch { /* bookkeeping never blocks the alert */ } };
+
+/** One more try after a short pause when no number received the message */
+export async function sendWithRetry(deps, text, pauseMs = 1500) {
+  const first = await deps.sendAll(text);
+  if (first > 0) return first;
+  await (deps.sleep ? deps.sleep(pauseMs) : new Promise((r) => setTimeout(r, pauseMs)));
+  return deps.sendAll(text);
+}
+
+/** The «ابعت رسالة تجربة» button in the CRM: same senders, a fixed text, the result recorded */
+export const TEST_MESSAGE = (siteUrl) => [
+  '✅ 1Line: رسالة تجربة لتنبيهات الواتساب',
+  'لو الرسالة دي وصلتك، تنبيهات الطلبات الجديدة شغالة على الرقم ده.',
+  `افتح الـ CRM: ${siteUrl}/crm`
+].join('\n');
+
+export async function handleTest(deps, siteUrl, channels) {
+  const sent = await deps.sendAll(TEST_MESSAGE(siteUrl));
+  await safely(() => deps.recordStatus?.({ ok: sent > 0, ref: 'test' }));
+  return { status: sent > 0 ? 200 : 502, body: { sent, channels } };
 }
 
 // ── WhatsApp senders ──────────────────────────────────────────────────────────
@@ -158,6 +198,8 @@ export async function handleNotify(body, deps, siteUrl, ip = 'unknown') {
 // Meta WhatsApp Cloud API (official): WHATSAPP_CLOUD_TOKEN, WHATSAPP_CLOUD_PHONE_ID, WHATSAPP_CLOUD_TO
 //   (comma-separated numbers) and WHATSAPP_CLOUD_TEMPLATE — an approved template whose body is a
 //   single {{1}} parameter (language WHATSAPP_CLOUD_LANG, default "ar").
+
+export const CALLMEBOT_ERROR = /api\s*key\s+is\s+invalid|invalid\s+(?:phone|apikey)|not\s+(?:yet\s+)?activated|you\s+need\s+to\s+(?:get|activate)/i;
 
 export function parseCallMeBot(value) {
   return String(value || '').split(',').map((s) => s.trim()).filter(Boolean).map((pair) => {
@@ -172,7 +214,10 @@ export function makeSenders(env, fetchImpl = fetch) {
     senders.push(async (text) => {
       const url = `https://api.callmebot.com/whatsapp.php?phone=${r.phone}&apikey=${encodeURIComponent(r.apikey)}&text=${encodeURIComponent(text)}`;
       const res = await fetchImpl(url);
-      return res.ok;
+      if (!res.ok) return false;
+      // CallMeBot can answer 200 with an error page (a wrong or not-yet-activated key)
+      const body = typeof res.text === 'function' ? await res.text().catch(() => '') : '';
+      return !CALLMEBOT_ERROR.test(body);
     });
   }
   const to = String(env.WHATSAPP_CLOUD_TO || '').split(',').map((s) => s.trim().replace(/^\+/, '')).filter((s) => /^\d{8,15}$/.test(s));
