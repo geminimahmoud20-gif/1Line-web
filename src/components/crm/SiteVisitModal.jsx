@@ -130,7 +130,7 @@ export default function SiteVisitModal({
 
           <div className="cms-form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
             {/* Property Select */}
-            <div className="form-group-item" style={{ gridColumn: 'span 2' }}>
+            <div className="form-group-item" style={{ gridColumn: '1 / -1' }}>
               <label style={{ color: 'var(--crm-body)', fontWeight: 'bold', fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'العقار المراد معاينته *' : 'Target Property *'}</label>
               <select
                 value={selectedPropertyId}

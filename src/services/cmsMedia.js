@@ -64,8 +64,9 @@ export const uploadCmsMedia = async (file, kind = 'video', onProgress, onStart, 
   let moved = false;
   let cancelled = false;
   onStart?.(() => { cancelled = true; ctrl.abort(); });
-  // Watchdog: nothing transferred in 30s means the upload is not going to start
-  const stallTimer = setTimeout(() => { if (!moved) ctrl.abort(); }, 30 * 1000);
+  // Watchdog: nothing transferred in 60s means the upload is not going to start (60, not 30:
+  // a phone on weak mobile data can take that long just to get the upload signed)
+  const stallTimer = setTimeout(() => { if (!moved) ctrl.abort(); }, 60 * 1000);
 
   try {
     const blob = await upload(path, file, {

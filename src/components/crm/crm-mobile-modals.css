@@ -1,0 +1,101 @@
+/* CRM forms in a window (عقار، عميل جديد، تعديل عميل، معاينة، ملف العميل، خطة السداد…) on phones:
+   one column, a full-screen sheet with the title and the save button always in reach, and 16px
+   inputs so iOS doesn't zoom in. They all share .property-form-modal-card / .cms-form-grid. */
+@media (max-width: 640px) {
+  .track-modal-backdrop:has(> .property-form-modal-card) {
+    padding: 0;
+    align-items: stretch;
+    overflow: hidden;
+  }
+  .property-form-modal-card {
+    max-width: none !important;
+    width: 100% !important;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    padding: 0 14px calc(14px + env(safe-area-inset-bottom));
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    animation: none;
+  }
+  .property-form-modal-card .modal-form-header {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    margin: 0 -14px 14px;
+    padding: calc(10px + env(safe-area-inset-top)) 14px 10px;
+    background: inherit;
+    background-color: var(--crm-card, var(--ui-surface));
+    gap: 10px;
+  }
+  /* Headers with a name, badges and action buttons (ملف العميل) wrap instead of pushing ✕ off screen */
+  .property-form-modal-card .modal-form-header { flex-wrap: wrap; }
+  .property-form-modal-card .modal-form-header > div {
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+  .property-form-modal-card .modal-form-header > div:last-child:not(:first-child) { margin-inline-start: auto; }
+  .property-form-modal-card .modal-form-header h3 {
+    font-size: 1rem;
+    line-height: 1.4;
+    margin: 0;
+  }
+  .property-form-modal-card .modal-form-header .drawer-close-btn {
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+  }
+
+  /* Every two- or three-column grid in the form becomes one column */
+  .cms-form-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    margin-bottom: 16px;
+  }
+  .cms-form-grid > *,
+  .property-form-modal-card .form-group-item {
+    min-width: 0;
+  }
+  .property-form-modal-card .form-group-item input,
+  .property-form-modal-card .form-group-item select,
+  .property-form-modal-card .form-group-item textarea,
+  .property-form-modal-card input.form-input,
+  .property-form-modal-card select.form-input,
+  .property-form-modal-card textarea.form-input {
+    font-size: 16px;
+    max-width: 100%;
+    min-height: 46px;
+  }
+  .property-form-modal-card .form-group-item textarea { min-height: 96px; }
+  .property-form-modal-card input[type='checkbox'],
+  .property-form-modal-card input[type='radio'] { min-height: 0; }
+  /* The street label and its map button: the button drops under the label instead of squeezing it */
+  .property-form-modal-card .form-group-item > div:first-child:has(> button) {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* Photos: a big tap area */
+  .property-form-modal-card .cms-image-uploader-box > div:first-child { flex-wrap: wrap; gap: 4px; }
+  .property-form-modal-card .dropzone-label { padding: 22px 12px; min-height: 120px; justify-content: center; }
+
+  /* Save / cancel stay at the bottom of the screen */
+  .property-form-modal-card .cms-modal-actions {
+    position: sticky;
+    bottom: calc(-14px - env(safe-area-inset-bottom));
+    z-index: 3;
+    margin-inline: -14px;
+    margin-bottom: 0;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+    background-color: var(--crm-card, var(--ui-surface));
+    border-top: 1px solid var(--crm-line, var(--ui-line));
+    gap: 8px;
+  }
+  .property-form-modal-card .cms-modal-actions .btn {
+    flex: 1;
+    min-height: 48px;
+    justify-content: center;
+  }
+  .property-form-modal-card .cms-modal-actions .btn-primary { flex: 2; }
+}

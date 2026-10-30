@@ -2,8 +2,9 @@ import { useRef, useState } from 'react';
 import { Camera, Loader2, RefreshCw, X } from 'lucide-react';
 import { photoSlotsFor, INLINE_PHOTO_BUDGET } from '../../utils/sellerListing';
 import { uploadSellerPhoto } from '../../services/sellerPhotos';
+import { isImageFile, isHeic, MAX_PHOTO_MB } from '../../utils/imageUploadService';
 
-const MAX_FILE_BYTES = 25 * 1024 * 1024;
+const MAX_FILE_BYTES = MAX_PHOTO_MB * 1024 * 1024;
 
 /** One labelled spot per photo; tapping a spot opens the camera / gallery for that spot only. */
 export default function SellPhotoSlots({ isAr, propertyType, value = {}, onChange }) {
@@ -31,7 +32,7 @@ export default function SellPhotoSlots({ isAr, propertyType, value = {}, onChang
     if (!file || !slotId) return;
     const setError = (msg) => setErrors((prev) => ({ ...prev, [slotId]: msg }));
     setError('');
-    if (!file.type.startsWith('image/')) return setError(L('ده مش ملف صورة', 'Not an image'));
+    if (!isImageFile(file)) return setError(L('ده مش ملف صورة', 'Not an image'));
     if (file.size > MAX_FILE_BYTES) return setError(L('الصورة كبيرة قوي', 'Image too large'));
 
     setBusy((prev) => ({ ...prev, [slotId]: true }));
@@ -43,7 +44,9 @@ export default function SellPhotoSlots({ isAr, propertyType, value = {}, onChang
       }
       onChange({ ...value, [slotId]: res.url });
     } catch {
-      setError(L('الصورة دي ما اتفتحتش، جرّب صورة تانية', 'Couldn’t read this photo, try another'));
+      setError(isHeic(file)
+        ? L('الصورة دي بصيغة HEIC ومش بتتفتح هنا. اختار من إعدادات الكاميرا «JPEG / الأكثر توافقاً» أو ابعتها لنا واتساب.', 'This HEIC photo can’t be opened here. Set the camera to JPEG, or send it on WhatsApp.')
+        : L('الصورة دي ما اتفتحتش، جرّب صورة تانية', 'Couldn’t read this photo, try another'));
     } finally {
       setBusy((prev) => ({ ...prev, [slotId]: false }));
     }

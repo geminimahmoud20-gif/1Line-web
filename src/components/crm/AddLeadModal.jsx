@@ -329,7 +329,7 @@ export default function AddLeadModal({
             </div>
 
             {/* Next Action Note */}
-            <div className="form-group-item" style={{ gridColumn: 'span 2' }}>
+            <div className="form-group-item" style={{ gridColumn: '1 / -1' }}>
               <label>{isAr ? 'الإجراء القادم المباشر (Next Action) *:' : 'Next Action *:'}</label>
               <input
                 type="text"
