@@ -21,6 +21,12 @@ import {
   cleanPhoneNumber 
 } from '../../utils/founderCmsData';
 
+// +201223222956 → +20 122 322 2956: easier to read and to dial from the screen
+const readablePhone = (num) => {
+  const d = String(num || '').replace(/\D/g, '');
+  return d.startsWith('20') && d.length === 12 ? `+20 ${d.slice(2, 5)} ${d.slice(5, 8)} ${d.slice(8)}` : num;
+};
+
 export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
   const isAr = lang === 'ar';
   const { contact, social } = useSiteSettings();
@@ -90,11 +96,12 @@ export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
           <div className="footer-col">
             <h4 className="footer-col-title">{isAr ? 'العقارات والمشروعات' : 'Properties & Portals'}</h4>
             <ul className="footer-links">
-              <li><Link to="/properties">{isAr ? 'استكشاف كافة العقارات' : 'Explore Properties'}</Link></li>
+              <li><Link to="/properties">{isAr ? 'كل العقارات' : 'All properties'}</Link></li>
               <li><Link to="/sohag/apartments-for-sale">{isAr ? 'شقق للبيع في سوهاج' : 'Apartments for sale in Sohag'}</Link></li>
               <li><Link to="/projects">{isAr ? 'المشروعات والكمبوندات' : 'Mega Projects Hub'}</Link></li>
               <li><Link to="/market-intelligence">{isAr ? 'مؤشرات أسعار السوق' : 'Market Intelligence'}</Link></li>
-              <li><Link to="/financing">{isAr ? 'حاسبة تقسيط المشروعات' : 'Project installment calculator'}</Link></li>
+              <li><Link to="/financing">{isAr ? 'التمويل والتقسيط' : 'Financing'}</Link></li>
+              <li><Link to="/sell">{isAr ? 'اعرض عقارك للبيع' : 'Sell your property'}</Link></li>
             </ul>
           </div>
 
@@ -114,12 +121,12 @@ export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
                   }}
                   className="footer-btn-link"
                 >
-                  {isAr ? 'عن 1Line ورؤية المؤسس' : 'About & Founder'}
+                  {isAr ? 'كلمة المؤسس' : 'A word from the founder'}
                 </button>
               </li>
-              <li><Link to="/private-office">{isAr ? 'المكتب الخاص VIP' : 'Private Office VIP'}</Link></li>
-              <li><Link to="/investor">{isAr ? 'مركز المستثمرين' : 'Investor Desk'}</Link></li>
-              <li><Link to="/special-requests">{isAr ? 'الطلبات العقارية الخاصة' : 'Bespoke Requests'}</Link></li>
+              <li><Link to="/private-office">{isAr ? 'المكتب الخاص لكبار العملاء' : 'Private office'}</Link></li>
+              <li><Link to="/investor">{isAr ? 'بوابة المستثمرين' : 'Investors'}</Link></li>
+              <li><Link to="/special-requests">{isAr ? 'اطلب عقار بمواصفاتك' : 'Request a property'}</Link></li>
               <li><Link to="/broker">{isAr ? 'شبكة الوسطاء والشركاء' : 'Brokers Network'}</Link></li>
               <li><Link to="/about">{isAr ? 'عن الشركة' : 'About us'}</Link></li>
               <li><Link to="/about#faq">{isAr ? 'الأسئلة الشائعة' : 'FAQ'}</Link></li>
@@ -135,7 +142,7 @@ export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
             </div>
             <div className="footer-contact-item">
               <Phone size={15} className="contact-icon" />
-              <a href={getPhoneCallUrl(currentPhone)} dir="ltr" className="contact-link">{currentPhone}</a>
+              <a href={getPhoneCallUrl(currentPhone)} dir="ltr" className="contact-link">{readablePhone(currentPhone)}</a>
             </div>
             <div className="footer-contact-item">
               <Mail size={15} className="contact-icon" />
@@ -161,7 +168,7 @@ export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
         {/* Footer Bottom Bar */}
         <div className="footer-bottom-bar">
           <div className="footer-copyright">
-            <span>© {new Date().getFullYear()} {BRAND.legalName}. {isAr ? 'جميع الحقوق محفوظة' : 'All rights reserved.'}</span>
+            <span><bdi dir="ltr">© {new Date().getFullYear()} {BRAND.legalName}</bdi> — {isAr ? 'جميع الحقوق محفوظة' : 'All rights reserved.'}</span>
             {LEGAL_IDS.commercialRegistry && (
               <span>{isAr ? 'سجل تجاري' : 'CR'} <bdi>{LEGAL_IDS.commercialRegistry}</bdi></span>
             )}

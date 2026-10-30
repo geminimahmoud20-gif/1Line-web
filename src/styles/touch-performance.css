@@ -32,9 +32,10 @@ a, button, [role="button"], input, select, textarea, label, summary {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
-  .header-container.glass-capsule { background: rgba(255, 255, 255, 0.97); }
+  /* Fully solid: at 97% the page behind (a dark card, the footer logo) showed through as a ghost */
+  .header-container.glass-capsule { background: #FFFFFF; }
   .dark-theme .header-container.glass-capsule,
-  [data-theme="dark"] .header-container.glass-capsule { background: rgba(11, 27, 50, 0.97); }
+  [data-theme="dark"] .header-container.glass-capsule { background: #0B1B32; }
   .dark-theme .site-header,
   [data-theme="dark"] .site-header { background: rgba(7, 11, 20, 0.97) !important; }
   .mobile-floating-bottom-bar { background: rgba(255, 255, 255, 0.99); }

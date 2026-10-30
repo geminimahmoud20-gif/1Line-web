@@ -3,6 +3,7 @@ import { Calculator, TrendingUp, Sparkles, Copy, Check, Building2, Landmark, Han
 import { trackEvent } from '../../utils/visitorTracker';
 import { getWhatsAppUrl, getDynamicPhone } from '../../utils/founderCmsData';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
+import '../../styles/roi-years.css';
 
 // Big amounts read as 3,500,000 while typing; the field takes digits only
 const groupDigits = (n) => (Number(n) > 0 ? Number(n).toLocaleString('en-US') : '');
@@ -685,12 +686,12 @@ export default function MortgageRoiCalculator({
                 </div>
 
                 <div className="calc-breakdown-glass-row">
-                  <span className="glass-row-lbl">{isAr ? 'القيمة الرأسمالية المتوقعة (5 سنوات)' : 'Est. Property Value (5 Yrs)'}</span>
+                  <span className="glass-row-lbl">{isAr ? 'سعر العقار المتوقع بعد 5 سنين' : 'Est. property value after 5 yrs'}</span>
                   <strong className="glass-row-val text-blue-light">{formatCurrency(estimatedValueAfter5Years)}</strong>
                 </div>
 
                 <div className="calc-breakdown-glass-row total-highlight-row">
-                  <span className="glass-row-lbl">{isAr ? 'إجمالي الأرباح والعوائد (5 سنوات)' : 'Total 5-Yr Returns'}</span>
+                  <span className="glass-row-lbl">{isAr ? 'إجمالي العائد في 5 سنين (زيادة السعر + صافي الإيجار)' : '5-yr total return (price increase + net rent)'}</span>
                   <strong className="glass-row-val text-success">
                     {formatCurrency(estimatedValueAfter5Years - price + (annualNetIncome * 5))}
                   </strong>
@@ -755,7 +756,7 @@ export default function MortgageRoiCalculator({
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 700 }}>
                     <Sparkles size={14} style={{ color: '#ffca28' }} />
-                    <span>{isAr ? 'نمو رأس المال التراكمي (5 سنوات)' : '5-Year Wealth Forecast'}</span>
+                    <span>{isAr ? 'سعر العقار المتوقع سنة بسنة' : 'Expected value, year by year'}</span>
                   </span>
                   <span style={{
                     background: 'rgba(255, 202, 40, 0.2)',
@@ -766,36 +767,43 @@ export default function MortgageRoiCalculator({
                     fontSize: '0.72rem',
                     fontWeight: 700
                   }}>
-                    +{Math.round(((estimatedValueAfter5Years - price) / price) * 100)}% {isAr ? 'عائد رأسمالي' : 'Gain'}
+                    +{Math.round(((estimatedValueAfter5Years - price) / price) * 100)}% {isAr ? 'في 5 سنين' : 'in 5 yrs'}
                   </span>
                 </div>
 
-                {/* Micro Progression Timeline */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '6px', textAlign: 'center', margin: '10px 0' }}>
+                {/* Value year by year: five columns on a wide screen, one row per year on a phone
+                    (five columns of full prices ran off the card) */}
+                <ol className="roi-years">
                   {[1, 2, 3, 4, 5].map((yr) => {
                     const yrVal = Math.round(price * Math.pow(1 + (annualAppreciation / 100), yr));
+                    const share = Math.round((yrVal / Math.max(1, estimatedValueAfter5Years)) * 100);
                     return (
-                      <div key={yr} style={{ background: 'rgba(255, 255, 255, 0.08)', borderRadius: '6px', padding: '6px 2px' }}>
-                        <div style={{ fontSize: '0.66rem', color: 'var(--crm-faint)' }}>{isAr ? `سنة ${yr}` : `Yr ${yr}`}</div>
-                        <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#ffca28', marginTop: '2px' }}>
-                          {formatCurrency(yrVal)}
-                        </div>
-                      </div>
+                      <li key={yr} className="roi-year">
+                        <span className="roi-year-label">{isAr ? `بعد ${yr === 1 ? 'سنة' : yr === 2 ? 'سنتين' : `${yr} سنين`}` : `Year ${yr}`}</span>
+                        <bdi className="roi-year-value">{formatCurrency(yrVal)}</bdi>
+                        <span className="roi-year-bar" aria-hidden="true"><span style={{ width: `${share}%` }} /></span>
+                      </li>
                     );
                   })}
-                </div>
+                </ol>
 
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
+                  gap: '10px',
                   paddingTop: '8px',
                   borderTop: '1px solid rgba(255, 255, 255, 0.15)',
                   fontSize: '0.76rem'
                 }}>
-                  <span style={{ color: '#cbd5e1' }}>{isAr ? 'صافي الربح التراكمي المتوقع:' : 'Net Capital Profit:'}</span>
-                  <strong style={{ color: 'var(--crm-positive)', fontWeight: 700 }}>+{formatCurrency(estimatedValueAfter5Years - price)}</strong>
+                  <span style={{ color: '#cbd5e1' }}>{isAr ? 'زيادة سعر العقار المتوقعة (5 سنين):' : 'Expected price increase (5 yrs):'}</span>
+                  <strong style={{ color: '#4ADE80', fontWeight: 800, whiteSpace: 'nowrap' }}><bdi dir="ltr">+{formatCurrency(estimatedValueAfter5Years - price)}</bdi></strong>
                 </div>
+                <p className="roi-years-note">
+                  {isAr
+                    ? `أرقام تقديرية محسوبة على زيادة ${annualAppreciation}% في السنة اللي اخترتها، مش وعد بعائد. قبل خصم ضريبة التصرفات ورسوم البيع.`
+                    : `Estimates at the ${annualAppreciation}% yearly growth you chose, not a promised return; before sale tax and fees.`}
+                </p>
               </div>
 
               <div className="calc-card-footer" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px' }}>
