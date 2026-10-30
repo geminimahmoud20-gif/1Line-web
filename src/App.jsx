@@ -67,7 +67,18 @@ const AIPropertyAdvisorModal = lazy(OVERLAY_LOADERS.AIPropertyAdvisorModal);
 const QuickSearchModal = lazy(OVERLAY_LOADERS.QuickSearchModal);
 const ClientAuthModal = lazy(OVERLAY_LOADERS.ClientAuthModal);
 const RemoteInspectionModal = lazy(OVERLAY_LOADERS.RemoteInspectionModal);
-const prefetchOverlays = () => Object.values(OVERLAY_LOADERS).forEach((load) => load().catch(() => {}));
+// One overlay per idle moment: fetching and compiling all twelve at once blocked the page for a
+// few hundred milliseconds right when people start tapping on a phone
+const prefetchOverlays = () => {
+  const queue = Object.values(OVERLAY_LOADERS);
+  const idle = (fn) => ('requestIdleCallback' in window ? window.requestIdleCallback(fn, { timeout: 4000 }) : setTimeout(fn, 400));
+  const next = () => {
+    const load = queue.shift();
+    if (!load) return;
+    load().catch(() => {}).finally(() => idle(next));
+  };
+  next();
+};
 
 // Luxury Route Transition Fallback Spinner
 // Full screen height, so the footer stays below the fold while the page loads (no layout jump)
@@ -111,6 +122,7 @@ import './App.css';
 import './styles/luxury-system.css';
 import './styles/home-luxe.css';
 import './styles/mobile-polish.css';
+import './styles/touch-performance.css';
 import AppRoutes from './AppRoutes';
 import { withoutContact } from './utils/sellerListing';
 
@@ -216,7 +228,9 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
-    window.scrollTo(0, 0);
+    // Jump, don't glide: html has smooth scrolling for in-page links, which made every new page
+    // open where the last one was and then slide up
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     getOrCreateSession();
     trackEvent('page_view', { path: location.pathname });
   }, [location.pathname]);

@@ -1138,10 +1138,10 @@
   animation: hxLivePulse 2s infinite;
 }
 
+/* Transform and opacity only, so the pulse runs on the compositor instead of repainting */
 @keyframes hxLivePulse {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-  70% { transform: scale(1.15); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  0%, 100% { transform: scale(0.95); opacity: 1; }
+  70% { transform: scale(1.15); opacity: 0.55; }
 }
 
 .hx-seller-tag-icon {

@@ -1,0 +1,59 @@
+/* =============================================================
+   Phones: smoother scrolling and quicker taps
+   Loaded last (main.jsx) so it wins over the older theme files.
+   ============================================================= */
+
+/* No double-tap-to-zoom wait on links and buttons; pinch zoom still works */
+a, button, [role="button"], input, select, textarea, label, summary {
+  touch-action: manipulation;
+}
+
+/* A page wider than the screen is cut off without turning <html>/<body> into scroll boxes
+   (overflow-x: hidden did, which costs every scroll frame and breaks sticky headers) */
+@supports (overflow: clip) {
+  html, body { overflow-x: clip; }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  /* A fixed page background is repainted on every scroll frame on phones */
+  html, body { background-attachment: scroll; }
+
+  /* Bars and chips that stay on screen while the page moves: a blur behind them is
+     recalculated every frame, so phones get a solid surface instead */
+  .site-header,
+  .header-container.glass-capsule,
+  .mobile-floating-bottom-bar,
+  .mobile-detail-sticky-bar,
+  .pcx-chip,
+  .pcx-icon-btn,
+  .pcx-count,
+  .hx-pill,
+  .hx-btn {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  .header-container.glass-capsule { background: rgba(255, 255, 255, 0.97); }
+  .dark-theme .header-container.glass-capsule,
+  [data-theme="dark"] .header-container.glass-capsule { background: rgba(11, 27, 50, 0.97); }
+  .dark-theme .site-header,
+  [data-theme="dark"] .site-header { background: rgba(7, 11, 20, 0.97) !important; }
+  .mobile-floating-bottom-bar { background: rgba(255, 255, 255, 0.99); }
+  .hx-pill { background: rgba(11, 27, 50, 0.6); }
+
+  /* Instant feedback on touch: the pressed state shows on the first frame */
+  a:active, button:active, [role="button"]:active { transition-duration: 0s !important; }
+}
+
+/* Sections far below the screen are laid out and painted only when they come near it, so the
+   first screen is ready sooner and opening the menu repaints less. The remembered size keeps
+   the scroll bar steady. */
+@media (hover: none) and (pointer: coarse) {
+  .hx-seller,
+  .hx-bento-section,
+  .hm-testimonials,
+  .xs-family,
+  .site-footer {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 900px;
+  }
+}
