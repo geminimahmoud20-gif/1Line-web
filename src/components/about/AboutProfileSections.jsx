@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Building2, Users, Image as ImageIcon, MessageCircle, X } from 'lucide-react';
-import { visibleCompanyFacts, visibleTeam, visibleGallery, sectionOn, initials, photoPositionCss } from '../../utils/aboutProfile';
+import { Building2, Users, Image as ImageIcon, MessageCircle, X, Scale, Award, CheckCircle2 } from 'lucide-react';
+import { visibleCompanyFacts, visibleTeam, featuredTeam, visibleGallery, sectionOn, initials, photoPositionCss } from '../../utils/aboutProfile';
 import '../../styles/about-profile.css';
 
 /** Company facts card: only rows the team filled in and left switched on */
@@ -24,16 +24,56 @@ export function AboutCompanyFacts({ about, isAr }) {
   );
 }
 
+const waLink = (m, isAr) => `https://wa.me/${m.whatsapp}?text=${encodeURIComponent(isAr ? `مرحباً ${m.name}، وصلت لحضرتك من موقع 1Line.` : `Hello ${m.name}, I found you on the 1Line website.`)}`;
+
+/** A bio of several lines reads as a list of credentials; one sentence stays a sentence */
+function MemberBio({ m, className }) {
+  if (m.points.length > 1) {
+    return (
+      <ul className={`abp-points ${className || ''}`}>
+        {m.points.map((p) => <li key={p}><CheckCircle2 size={16} aria-hidden="true" /><span>{p}</span></li>)}
+      </ul>
+    );
+  }
+  return m.bio ? <p className={className || 'abp-bio'}>{m.bio}</p> : null;
+}
+
+/** The person who matters most to a buyer's peace of mind (the legal advisor), shown large */
+function Spotlight({ m, isAr }) {
+  const Icon = m.legal ? Scale : Award;
+  return (
+    <article className="abp-spotlight">
+      <div className="abp-spotlight-photo">
+        {m.photo
+          ? <img src={m.photo} alt={m.name} loading="lazy" style={{ objectPosition: photoPositionCss(m.photoPos) }} />
+          : <span aria-hidden="true">{initials(m.name)}</span>}
+      </div>
+      <div className="abp-spotlight-body">
+        {m.role && <span className="abp-spotlight-badge"><Icon size={16} aria-hidden="true" /> {m.role}</span>}
+        <h3 className="abp-spotlight-name">{m.name}</h3>
+        <MemberBio m={m} className="abp-spotlight-bio" />
+        {m.whatsapp && (
+          <a className="abp-wa" href={waLink(m, isAr)} target="_blank" rel="noopener noreferrer">
+            <MessageCircle size={15} aria-hidden="true" /> {isAr ? 'تواصل على واتساب' : 'WhatsApp'}
+          </a>
+        )}
+      </div>
+    </article>
+  );
+}
+
 /** Team and partners, by group; each card shows only what was switched on */
 export function AboutTeam({ about, isAr }) {
+  const featured = featuredTeam(about, isAr);
   const groups = visibleTeam(about, isAr);
-  if (!sectionOn(about, 'team') || groups.length === 0) return null;
+  if (!sectionOn(about, 'team') || (groups.length === 0 && featured.length === 0)) return null;
   return (
     <section className="abp-section section-container" aria-labelledby="abp-team-title">
       <div className="section-header-centered">
         <span className="section-pill"><Users size={14} className="text-gold" /><span>{isAr ? 'فريق 1Line' : 'The 1Line team'}</span></span>
         <h2 id="abp-team-title" className="about-section-h2">{isAr ? 'الناس اللي هتشتغل معاك' : 'The people you will work with'}</h2>
       </div>
+      {featured.map((m) => <Spotlight key={m.id} m={m} isAr={isAr} />)}
       {groups.map((g) => (
         <div key={g.id} className="abp-group">
           {groups.length > 1 && <h3 className="abp-group-title">{g.label}</h3>}
@@ -45,9 +85,9 @@ export function AboutTeam({ about, isAr }) {
                 </div>
                 <h4 className="abp-name">{m.name}</h4>
                 {m.role && <p className="abp-role">{m.role}</p>}
-                {m.bio && <p className="abp-bio">{m.bio}</p>}
+                <MemberBio m={m} />
                 {m.whatsapp && (
-                  <a className="abp-wa" href={`https://wa.me/${m.whatsapp}?text=${encodeURIComponent(isAr ? `مرحباً ${m.name}، وصلت لحضرتك من موقع 1Line.` : `Hello ${m.name}, I found you on the 1Line website.`)}`} target="_blank" rel="noopener noreferrer">
+                  <a className="abp-wa" href={waLink(m, isAr)} target="_blank" rel="noopener noreferrer">
                     <MessageCircle size={15} aria-hidden="true" /> {isAr ? 'واتساب' : 'WhatsApp'}
                   </a>
                 )}

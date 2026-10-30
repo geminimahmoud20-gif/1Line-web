@@ -135,6 +135,7 @@ export default function AboutProfileSettings({ formData, setFormData, isAr = tru
               </div>
 
               <Switch checked={m.visible} onChange={(v) => setMember(m.id, { visible: v })} label={L('يظهر على الموقع', 'Shown on the site')} />
+              <Switch checked={m.featured} onChange={(v) => setMember(m.id, { featured: v })} label={L('بطاقة مميزة كبيرة في أول الفريق (المستشار القانوني مثلاً)', 'Large featured card at the top of the team')} />
 
               <div className="ap-grid">
                 <Field label={L('الاسم', 'Name')} value={m.name_ar} onChange={(v) => setMember(m.id, { name_ar: v })} placeholder={L('مثال: م. أحمد علي', 'e.g. Eng. Ahmed Ali')} />
@@ -142,7 +143,7 @@ export default function AboutProfileSettings({ formData, setFormData, isAr = tru
                 <Field label={L('المسمى', 'Role')} value={m.role_ar} onChange={(v) => setMember(m.id, { role_ar: v })} placeholder={L('مثال: مستشار مبيعات', 'e.g. Sales advisor')} />
                 <Field label={L('المسمى بالإنجليزي', 'Role (English)')} value={m.role_en} dir="ltr" onChange={(v) => setMember(m.id, { role_en: v })} />
               </div>
-              <Field label={L('نبذة قصيرة (سطرين)', 'Short bio (two lines)')} value={m.bio_ar} multiline maxLength={220} onChange={(v) => setMember(m.id, { bio_ar: v })} />
+              <Field label={L('النبذة — كل سطر بيظهر كنقطة', 'Bio — each line shows as a point')} value={m.bio_ar} multiline maxLength={m.featured ? 400 : 220} onChange={(v) => setMember(m.id, { bio_ar: v })} />
               <div className="ap-grid">
                 <Field label={L('رقم الواتساب (اختياري)', 'WhatsApp (optional)')} value={m.whatsapp} dir="ltr" maxLength={20} onChange={(v) => setMember(m.id, { whatsapp: v })} placeholder="01xxxxxxxxx" />
               </div>

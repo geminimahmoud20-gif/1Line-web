@@ -42,6 +42,24 @@ export const PHOTO_POSITIONS = [
 ];
 export const photoPositionCss = (id) => (PHOTO_POSITIONS.find((p) => p.id === id) || PHOTO_POSITIONS[0]).css;
 
+/** The legal advisor stands out unless switched off: a card that is not set either way follows the role */
+const LEGAL_ROLE = /قانون|legal|lawyer|محام/i;
+const isLegalRole = (m) => LEGAL_ROLE.test(`${m?.role_ar || ''} ${m?.role_en || ''}`);
+
+/**
+ * A bio written as lines («_ خبرة 40 سنة» on each line) becomes a list of points; a bio written
+ * as one sentence stays one paragraph (a single point).
+ */
+export function bioPoints(text) {
+  return String(text ?? '')
+    .split(/\r?\n|\s+[_•·]\s*|^[_•·]\s*/u)
+    .map((line) => line.replace(/^[\s_\-•·*–]+/u, '').trim())
+    .filter(Boolean);
+}
+
+/** «ا.زكريا» → «أ. زكريا»: the usual way to write the title, with its hamza and a space */
+export const displayName = (name) => clean(name).replace(/^ا\.\s*/u, 'أ. ').replace(/^(أ|د|م)\.(?=\S)/u, '$1. ');
+
 const clean = (v) => String(v ?? '').trim();
 const on = (v) => v !== false;
 const pick = (isAr, item, key) => clean(isAr ? item[`${key}_ar`] : (item[`${key}_en`] || item[`${key}_ar`]));
@@ -50,7 +68,7 @@ const newId = (prefix) => `${prefix}-${Date.now().toString(36)}${Math.random().t
 /** A blank team card for the CRM; it stays hidden until it has a name */
 export const blankMember = (group = 'advisors') => ({
   id: newId('m'), group, name_ar: '', name_en: '', role_ar: '', role_en: '', bio_ar: '', bio_en: '',
-  photo: '', photoPos: 'top', whatsapp: '', visible: true, show: { photo: true, role: true, bio: true, whatsapp: false }
+  photo: '', photoPos: 'top', whatsapp: '', visible: true, featured: false, show: { photo: true, role: true, bio: true, whatsapp: false }
 });
 
 export const blankPhoto = (url = '') => ({ id: newId('g'), url, caption_ar: '', caption_en: '', visible: true });
@@ -71,6 +89,7 @@ export function normalizeAbout(raw) {
     group: groups.has(m.group) ? m.group : 'advisors',
     visible: on(m.visible),
     photoPos: PHOTO_POSITIONS.some((p) => p.id === m.photoPos) ? m.photoPos : 'top',
+    featured: typeof m.featured === 'boolean' ? m.featured : isLegalRole(m),
     show: { photo: on(m.show?.photo), role: on(m.show?.role), bio: on(m.show?.bio), whatsapp: m.show?.whatsapp === true }
   }));
   const gallery = (Array.isArray(a.gallery) ? a.gallery : []).filter((g) => g && clean(g.url) && !clean(g.url).startsWith('data:'))
@@ -97,24 +116,35 @@ export function waDigits(input) {
   return d.length >= 10 && d.length <= 15 ? d : '';
 }
 
-/** Team grouped for the page: only shown people with a name, each field only when switched on */
+const visibleMember = (m, isAr) => {
+  const wa = m.show.whatsapp ? waDigits(m.whatsapp) : '';
+  const bio = m.show.bio ? pick(isAr, m, 'bio') : '';
+  return {
+    id: m.id,
+    name: displayName(pick(isAr, m, 'name')),
+    role: m.show.role ? pick(isAr, m, 'role') : '',
+    bio,
+    points: bioPoints(bio),
+    photo: m.show.photo ? clean(m.photo) : '',
+    photoPos: m.photoPos,
+    whatsapp: wa,
+    legal: isLegalRole(m)
+  };
+};
+const shown = (m, isAr) => m.visible && pick(isAr, m, 'name');
+
+/** People shown large at the top of the team (the legal advisor by default) */
+export function featuredTeam(about, isAr = true) {
+  return normalizeAbout(about).team.filter((m) => m.featured && shown(m, isAr)).map((m) => visibleMember(m, isAr));
+}
+
+/** Team grouped for the page: only shown people with a name, each field only when switched on; featured people are left to featuredTeam */
 export function visibleTeam(about, isAr = true) {
   const { team } = normalizeAbout(about);
   return TEAM_GROUPS.map((g) => ({
     id: g.id,
     label: isAr ? g.ar : g.en,
-    members: team.filter((m) => m.group === g.id && m.visible && pick(isAr, m, 'name')).map((m) => {
-      const wa = m.show.whatsapp ? waDigits(m.whatsapp) : '';
-      return {
-        id: m.id,
-        name: pick(isAr, m, 'name'),
-        role: m.show.role ? pick(isAr, m, 'role') : '',
-        bio: m.show.bio ? pick(isAr, m, 'bio') : '',
-        photo: m.show.photo ? clean(m.photo) : '',
-        photoPos: m.photoPos,
-        whatsapp: wa
-      };
-    })
+    members: team.filter((m) => m.group === g.id && !m.featured && shown(m, isAr)).map((m) => visibleMember(m, isAr))
   })).filter((g) => g.members.length > 0);
 }
 

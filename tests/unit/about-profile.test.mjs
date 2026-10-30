@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeAbout, sectionOn, visibleCompanyFacts, visibleTeam, visibleGallery, waDigits, initials, moveItem, blankMember, LIMITS } from '../../src/utils/aboutProfile.js';
+import { normalizeAbout, sectionOn, visibleCompanyFacts, visibleTeam, featuredTeam, bioPoints, displayName, visibleGallery, waDigits, initials, moveItem, blankMember, LIMITS } from '../../src/utils/aboutProfile.js';
 
 test('nothing saved yet: every section on, no facts, no team, no photos', () => {
   const a = normalizeAbout(undefined);
@@ -36,7 +36,7 @@ test('team: grouped, hidden people and nameless cards left out, each field has i
   };
   const groups = visibleTeam(about);
   assert.deepEqual(groups.map((g) => g.id), ['management', 'advisors']);
-  assert.deepEqual(groups[0].members[0], { id: 'a', name: 'أحمد', role: 'مدير', bio: 'نبذة', photo: 'https://x/a.jpg', photoPos: 'top', whatsapp: '201012345678' });
+  assert.deepEqual(groups[0].members[0], { id: 'a', name: 'أحمد', role: 'مدير', bio: 'نبذة', points: ['نبذة'], photo: 'https://x/a.jpg', photoPos: 'top', whatsapp: '201012345678', legal: false });
   assert.deepEqual(groups[1].members.map((m) => m.name), ['سارة', 'منى']);
   assert.equal(groups[1].members[0].photo, '');
   assert.equal(groups[1].members[0].bio, '');
@@ -62,4 +62,31 @@ test('helpers: WhatsApp digits, initials, moving cards, blank card', () => {
   const m = blankMember('partners');
   assert.equal(m.group, 'partners');
   assert.equal(m.show.whatsapp, false);
+});
+
+test('the legal advisor is featured by default, shown once, and can be switched back to a normal card', () => {
+  const advisor = { id: 'z', group: 'advisors', name_ar: 'ا.زكريا الحويج', role_ar: 'المستشار القانوني', bio_ar: '_ مدير عام الشهر العقاري بسوهاج سابقا\n_خبرة اكثر من 40 سنة في صياغة العقود \n_ محامي حر ', photo: 'https://x/z.jpg' };
+  const about = { team: [advisor, { id: 's', group: 'advisors', name_ar: 'سارة', role_ar: 'مستشارة مبيعات' }] };
+  const [f] = featuredTeam(about);
+  assert.equal(f.name, 'أ. زكريا الحويج');
+  assert.equal(f.legal, true);
+  assert.deepEqual(f.points, ['مدير عام الشهر العقاري بسوهاج سابقا', 'خبرة اكثر من 40 سنة في صياغة العقود', 'محامي حر']);
+  // not repeated in the grid below
+  assert.deepEqual(visibleTeam(about).flatMap((g) => g.members.map((m) => m.id)), ['s']);
+  // switched off in the CRM: back in the grid
+  const off = { team: [{ ...advisor, featured: false }] };
+  assert.deepEqual(featuredTeam(off), []);
+  assert.equal(visibleTeam(off)[0].members[0].id, 'z');
+  // anyone can be featured; a hidden card never is
+  assert.equal(featuredTeam({ team: [{ name_ar: 'منى', featured: true }] }).length, 1);
+  assert.equal(featuredTeam({ team: [{ ...advisor, visible: false }] }).length, 0);
+});
+
+test('bio points and title spelling', () => {
+  assert.deepEqual(bioPoints('سطر واحد عادي - بشرطة'), ['سطر واحد عادي - بشرطة']);
+  assert.deepEqual(bioPoints('• أولاً\n• ثانياً'), ['أولاً', 'ثانياً']);
+  assert.deepEqual(bioPoints(''), []);
+  assert.equal(displayName('د.محمود الباز'), 'د. محمود الباز');
+  assert.equal(displayName('م. أحمد'), 'م. أحمد');
+  assert.equal(displayName('Sara'), 'Sara');
 });
