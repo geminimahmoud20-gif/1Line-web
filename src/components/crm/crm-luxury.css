@@ -647,7 +647,7 @@
   .crm-topbar-right > div:has(> .crm-role-select),
   .crm-top-chip,
   .crm-breadcrumb { display: none !important; }
-  .crm-topbar-left { flex: 0 0 auto; }
+  .crm-topbar-left { flex: 1 1 auto; min-width: 0; } /* shrinks (title gets …) instead of pushing the account button off screen */
 }
 @media (max-width: 420px) {
   .crm-topbar-right button > span:not([class]) { display: none; }

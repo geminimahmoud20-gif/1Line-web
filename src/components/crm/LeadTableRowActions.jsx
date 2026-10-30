@@ -71,7 +71,7 @@ export default function LeadTableRowActions({
               const newStatus = !prevArchived;
               if (onUpdateLead) onUpdateLead(lead.id, { isArchived: newStatus, lastActivityAt: new Date().toISOString() }, lead.version);
               triggerToast?.(
-                isAr ? (newStatus ? 'تم نقل العميل للأرشيف 📦' : 'تم استعادة العميل من الأرشيف') : (newStatus ? 'Lead archived' : 'Lead restored'),
+                isAr ? (newStatus ? 'تم نقل العميل للأرشيف' : 'تم استعادة العميل من الأرشيف') : (newStatus ? 'Lead archived' : 'Lead restored'),
                 'info',
                 {
                   onUndo: () => {

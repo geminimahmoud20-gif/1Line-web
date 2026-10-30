@@ -5,7 +5,7 @@ import StageDeliverableModal from './StageDeliverableModal';
 import './crm-kanban.css';
 import { getAreas } from '../../utils/areasData';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
-import { leadScore } from '../../utils/crmLeadViews';
+import { leadScore, ACTIVE_STAGES, leadBudget } from '../../utils/crmLeadViews';
 import { validateStageTransition, HIGH_VALUE_DEAL_THRESHOLD } from '../../services/stateMachineEngine';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 import { PageHeader, KpiRow, KpiTile, Chip } from '../ui';
@@ -280,8 +280,11 @@ export default function KanbanPipeline({
     let totalVol = 0;
     let highValue = 0;
     let overdue = 0;
-    filteredLeads.forEach(l => {
-      const b = getLeadBudget(l);
+    // Open deals only (not won, lost or archived), counted the same way as the dashboard:
+    // the board also shows the won/lost columns, which made its total look bigger than the dashboard's
+    const open = filteredLeads.filter((l) => !l.isArchived && ACTIVE_STAGES.includes(l.status || 'new'));
+    open.forEach(l => {
+      const b = leadBudget(l);
       totalVol += b;
       if (b >= HIGH_VALUE_DEAL_THRESHOLD) highValue++;
       if (isNewOverdue(l, now)) overdue++;
@@ -290,7 +293,7 @@ export default function KanbanPipeline({
       totalVol,
       highValue,
       overdue,
-      activeCount: filteredLeads.length
+      activeCount: open.length
     };
   }, [filteredLeads, now]);
 
@@ -511,12 +514,12 @@ export default function KanbanPipeline({
 
       <KpiRow label={isAr ? 'ملخص المسار' : 'Pipeline summary'}>
         <KpiTile
-          label={isAr ? 'صفقات ظاهرة' : 'Deals shown'}
+          label={isAr ? 'صفقات مفتوحة' : 'Open deals'}
           value={pipelineOverview.activeCount}
           icon={<Users size={16} />}
         />
         <KpiTile
-          label={isAr ? 'قيمة الصفقات' : 'Pipeline value'}
+          label={isAr ? 'قيمة الصفقات المفتوحة' : 'Open pipeline value'}
           value={pipelineOverview.totalVol > 0 ? pipelineOverview.totalVol / 1000000 : null}
           digits={1}
           unit={isAr ? 'مليون ج.م' : 'M EGP'}

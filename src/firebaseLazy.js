@@ -110,6 +110,7 @@ export const reportClientError = lazyCall('reportClientError');
 export const deleteClientErrors = lazyCall('deleteClientErrors');
 export const resolveContactIntent = lazyCall('resolveContactIntent');
 export const uploadCmsMedia = lazyCall('uploadCmsMedia');
+export const issueReceipt = lazyCall('issueReceipt');
 export const getCmsStorageStatus = lazyCall('getCmsStorageStatus');
 export const submitIntakeRecord = lazyCall('submitIntakeRecord');
 export const updateIntakeRecord = lazyCall('updateIntakeRecord');

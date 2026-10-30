@@ -9,14 +9,21 @@ export default function AgentCommissionLeaderboard({
   lang = 'ar'
 }) {
   const isAr = lang === 'ar';
-  const [commissionRate, setCommissionRate] = useState(2.0); // 2% default commission
+  // 2% unless this device picked another rate (kept, so it doesn't reset every visit)
+  const [commissionRate, setCommissionRate] = useState(() => {
+    try { const v = parseFloat(localStorage.getItem('crm_commission_rate')); return [1, 1.5, 2, 2.5, 3].includes(v) ? v : 2; } catch { return 2; }
+  });
+  const pickRate = (v) => {
+    setCommissionRate(v);
+    try { localStorage.setItem('crm_commission_rate', String(v)); } catch { /* private mode: this visit only */ }
+  };
 
   // Desks come from the team settings (CRM → إدارة المنظومة → الفرق), not a fixed list.
   // Targets are only known for the original desks; a new team shows no target bar.
   const KNOWN = {
-    'Dr. Mahmoud Elbaz': { avatar: '👑', target: 20000000 },
-    'Sales Team A': { avatar: '🏆', target: 15000000 },
-    'Sales Team B': { avatar: '🌟', target: 12000000 }
+    'Dr. Mahmoud Elbaz': { target: 20000000 },
+    'Sales Team A': { target: 15000000 },
+    'Sales Team B': { target: 12000000 }
   };
   const agentsList = getLiveLeadDesks(getActiveAccessConfig())
     .filter((d) => d.value !== UNASSIGNED_DESK)
@@ -25,7 +32,8 @@ export default function AgentCommissionLeaderboard({
       name: d.value,
       title_ar: d.label_ar,
       title_en: d.label_en,
-      avatar: KNOWN[d.value]?.avatar || '👤',
+      // First letter of the team's name instead of an emoji
+      avatar: String(d.label_ar || d.value || '').replace(/^(د\.|أ\.|م\/)\s*/, '').trim().charAt(0) || '؟',
       target: KNOWN[d.value]?.target || null
     }));
 
@@ -96,11 +104,11 @@ export default function AgentCommissionLeaderboard({
           fontSize: 'var(--crm-text-sm)'
         }}>
           <span style={{ color: 'var(--crm-accent-text)', fontWeight: 'bold' }}>
-            💼 {isAr ? 'نسبة العمولة المعتمدة:' : 'Commission Rate:'}
+            {isAr ? 'نسبة العمولة المعتمدة:' : 'Commission Rate:'}
           </span>
           <select
-            value={commissionRate}
-            onChange={(e) => setCommissionRate(parseFloat(e.target.value))}
+            value={commissionRate.toFixed(1)}
+            onChange={(e) => pickRate(parseFloat(e.target.value))}
             style={{
               background: 'transparent',
               border: 'none',
@@ -125,7 +133,7 @@ export default function AgentCommissionLeaderboard({
             <DollarSign size={22} />
           </div>
           <div className="crm-stat-info">
-            <span className="crm-stat-num">{(totalCompanyClosedVolume / 1000000).toFixed(1)} M</span>
+            <span className="crm-stat-num">{(totalCompanyClosedVolume / 1000000).toFixed(1)} {isAr ? 'مليون ج.م' : 'M EGP'}</span>
             <span className="crm-stat-lbl">{isAr ? 'إجمالي المبيعات المغلقة' : 'Total Closed Volume (EGP)'}</span>
           </div>
         </div>
@@ -186,16 +194,13 @@ export default function AgentCommissionLeaderboard({
 
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <strong style={{ fontSize: 'var(--crm-text-lg)', color: 'var(--crm-ink)' }}>{agent.name}</strong>
-                    {index === 0 && (
+                    <strong style={{ fontSize: 'var(--crm-text-lg)', color: 'var(--crm-ink)' }}>{(isAr ? agent.title_ar : agent.title_en) || agent.name}</strong>
+                    {index === 0 && agent.closedVolume > 0 && (
                       <span className="badge" style={{ background: 'var(--crm-accent-soft)', color: 'var(--crm-accent-text)', fontWeight: 'bold', border: '1px solid rgba(179, 138, 69, 0.25)' }}>
-                        ⭐ {isAr ? 'متصدر المبيعات' : 'Top Closer'}
+                        {isAr ? 'متصدر المبيعات' : 'Top Closer'}
                       </span>
                     )}
                   </div>
-                  <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
-                    {isAr ? agent.title_ar : agent.title_en}
-                  </span>
                 </div>
               </div>
 
@@ -206,7 +211,7 @@ export default function AgentCommissionLeaderboard({
                     {isAr ? 'المبيعات المنفذة:' : 'Closed Deals:'}
                   </span>
                   <strong style={{ fontSize: 'var(--crm-text-lg)', color: 'var(--crm-positive)' }}>
-                    {(agent.closedVolume / 1000000).toFixed(2)} M ج.م
+                    {(agent.closedVolume / 1000000).toFixed(2)} {isAr ? 'مليون ج.م' : 'M EGP'}
                   </strong>
                 </div>
 
@@ -264,9 +269,9 @@ export default function AgentCommissionLeaderboard({
               fontSize: 'var(--crm-text-xs)',
               color: 'var(--crm-muted)'
             }}>
-              <span>👥 {isAr ? 'إجمالي العملاء:' : 'Leads:'} <strong>{agent.totalLeads}</strong></span>
-              <span>🚗 {isAr ? 'المعاينات المنجزة:' : 'Site Visits:'} <strong>{agent.siteVisitsCount}</strong></span>
-              <span>💼 {isAr ? 'صفقات قيد الإغلاق:' : 'In Closing:'} <strong>{(agent.pipelineVolume / 1000000).toFixed(1)} M</strong></span>
+              <span>{isAr ? 'إجمالي العملاء:' : 'Leads:'} <strong>{agent.totalLeads}</strong></span>
+              <span>{isAr ? 'المعاينات المنجزة:' : 'Site Visits:'} <strong>{agent.siteVisitsCount}</strong></span>
+              <span>{isAr ? 'صفقات قيد الإغلاق:' : 'In Closing:'} <strong>{(agent.pipelineVolume / 1000000).toFixed(1)} {isAr ? 'مليون ج.م' : 'M EGP'}</strong></span>
               {agent.closedWithoutAmount > 0 && (
                 <span style={{ color: 'var(--crm-warn)' }} title={isAr ? 'سجّل قيمة الصفقة في بيانات العميل عشان تتحسب' : 'Record the deal amount on the lead so it counts'}>
                   ⚠ {isAr ? `${agent.closedWithoutAmount} صفقة ناجحة بدون قيمة (محسوبة صفر)` : `${agent.closedWithoutAmount} won deal(s) with no amount (counted as 0)`}

@@ -210,9 +210,9 @@ export default function RetargetingHub({
         </div>
 
         {/* Target Property Switcher for Campaigns */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', minWidth: 0, maxWidth: '100%' }}>
           <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: 600 }}>
-            🏢 {isAr ? 'العقار المروج له:' : 'Promoted Property:'}
+            {isAr ? 'العقار المروج له:' : 'Promoted Property:'}
           </span>
           <select
             value={selectedPropertyId}
@@ -241,7 +241,6 @@ export default function RetargetingHub({
           onClick={() => setActiveSegment('vip_cash')}
           style={{ padding: '12px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
         >
-          <span style={{ fontSize: 'var(--crm-text-md)' }}>💎</span>
           <strong>{isAr ? 'عملاء VIP كاش' : 'VIP Cash'}</strong>
           <small style={{ opacity: 0.8 }}>({segmentedLeads.vip_cash.length} {isAr ? 'عميل' : 'leads'})</small>
         </button>
@@ -252,7 +251,6 @@ export default function RetargetingHub({
           onClick={() => setActiveSegment('installment')}
           style={{ padding: '12px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
         >
-          <span style={{ fontSize: 'var(--crm-text-md)' }}>🏦</span>
           <strong>{isAr ? 'باحثو الأقساط' : 'Installments'}</strong>
           <small style={{ opacity: 0.8 }}>({segmentedLeads.installment.length} {isAr ? 'عميل' : 'leads'})</small>
         </button>
@@ -263,7 +261,6 @@ export default function RetargetingHub({
           onClick={() => setActiveSegment('investors')}
           style={{ padding: '12px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
         >
-          <span style={{ fontSize: 'var(--crm-text-md)' }}>📈</span>
           <strong>{isAr ? 'المستثمرون' : 'Investors'}</strong>
           <small style={{ opacity: 0.8 }}>({segmentedLeads.investors.length} {isAr ? 'عميل' : 'leads'})</small>
         </button>
@@ -274,7 +271,6 @@ export default function RetargetingHub({
           onClick={() => setActiveSegment('price_drop')}
           style={{ padding: '12px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
         >
-          <span style={{ fontSize: 'var(--crm-text-md)' }}>⚡</span>
           <strong>{isAr ? 'تخفيض الأسعار' : 'Price Drops'}</strong>
           <small style={{ opacity: 0.8 }}>({segmentedLeads.price_drop.length} {isAr ? 'مهتم' : 'leads'})</small>
         </button>
@@ -285,7 +281,6 @@ export default function RetargetingHub({
           onClick={() => setActiveSegment('dormant')}
           style={{ padding: '12px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
         >
-          <span style={{ fontSize: 'var(--crm-text-md)' }}>❄️</span>
           <strong>{isAr ? 'عملاء باردون خاملون' : 'Dormant (>30d)'}</strong>
           <small style={{ opacity: 0.8 }}>({segmentedLeads.dormant.length} {isAr ? 'عميل' : 'leads'})</small>
         </button>
@@ -364,10 +359,10 @@ export default function RetargetingHub({
                     </td>
                     <td>
                       <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-positive)', fontWeight: 'bold', display: 'block' }}>
-                        💰 {lead.details?.budget ? parseInt(lead.details.budget).toLocaleString('en-US') + ' ج.م' : 'مرنة'}
+                        {lead.details?.budget ? parseInt(lead.details.budget).toLocaleString('en-US') + ' ج.م' : 'مرنة'}
                       </span>
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
-                        📍 {lead.details?.area || 'سوهاج'}
+                        {lead.details?.area || 'سوهاج'}
                       </span>
                     </td>
                     <td style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { routeLeadAutomatically } from '../../utils/leadRoutingEngine';
 import { isUnassigned } from '../../utils/crmLeadViews';
+import { useConfirm } from '../ui';
 
 /**
  * Automation that really runs:
@@ -10,14 +11,15 @@ import { isUnassigned } from '../../utils/crmLeadViews';
  *    website lead gets (VIP / commercial / area keywords / round-robin) and saves each one.
  */
 export default function AutomationTab({ isAr, leads = [], onUpdateLead, triggerToast }) {
+  const confirm = useConfirm();
   const [running, setRunning] = useState(false);
   const pending = leads.filter(isUnassigned);
 
-  const distributeNow = () => {
+  const distributeNow = async () => {
     if (!onUpdateLead || pending.length === 0) return;
-    const ok = window.confirm(isAr
+    const ok = await confirm({ message: isAr
       ? `توزيع ${pending.length} عميل غير مُسند على الفرق حسب قواعد التوزيع؟ كل عميل هيتسجل عليه الفريق وسبب التوزيع.`
-      : `Assign ${pending.length} unassigned leads to teams using the routing rules?`);
+      : `Assign ${pending.length} unassigned leads to teams using the routing rules?`, tone: 'danger' });
     if (!ok) return;
     setRunning(true);
     // Each assignment counts toward the next one's round-robin balance
@@ -52,7 +54,7 @@ export default function AutomationTab({ isAr, leads = [], onUpdateLead, triggerT
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
         <div className="crm-surface-navy" style={{ background: 'var(--crm-brand-navy)', padding: '20px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
           <h4 style={{ marginBottom: '10px', color: 'var(--crm-gold-on-dark)' }}>
-            📱 {isAr ? 'تنبيه واتساب للفريق عند كل طلب جديد' : 'WhatsApp alert on every new request'}
+            {isAr ? 'تنبيه واتساب للفريق عند كل طلب جديد' : 'WhatsApp alert on every new request'}
           </h4>
           <p style={{ fontSize: 'var(--crm-text-base)', color: 'var(--crm-muted)', marginBottom: '0' }}>
             {isAr
@@ -63,7 +65,7 @@ export default function AutomationTab({ isAr, leads = [], onUpdateLead, triggerT
 
         <div className="crm-surface-navy" style={{ background: 'var(--crm-brand-navy)', padding: '20px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
           <h4 style={{ marginBottom: '10px', color: 'var(--crm-positive)' }}>
-            🎯 {isAr ? 'التوزيع التلقائي للعملاء' : 'Automatic lead routing'}
+            {isAr ? 'التوزيع التلقائي للعملاء' : 'Automatic lead routing'}
           </h4>
           <p style={{ fontSize: 'var(--crm-text-base)', color: 'var(--crm-muted)', marginBottom: '16px' }}>
             {isAr

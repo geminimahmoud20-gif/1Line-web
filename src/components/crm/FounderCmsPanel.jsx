@@ -8,6 +8,7 @@ import { captureVideoFrame } from '../../utils/videoPoster';
 import { uploadProfilePhoto } from '../../utils/imageUploadService';
 import GoldStandardsSettings from './founder-cms/GoldStandardsSettings';
 import AboutProfileSettings from './founder-cms/AboutProfileSettings';
+import { useConfirm } from '../ui';
 
 /**
  * DEV ONLY: send the file to the Vite dev-server endpoint (scripts/vite-local-media.mjs), which
@@ -38,6 +39,7 @@ function uploadToLocalSite(file, onProgress, onStart, onOptimising) {
 
 export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
   const isAr = lang === 'ar';
+  const confirm = useConfirm();
   const [formData, setFormData] = useState(() => getFounderSettings());
   const [isSaving, setIsSaving] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState('founder'); // 'founder' | 'quote' | 'stats' | 'pillars'
@@ -59,7 +61,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
       if (success) {
         triggerToast(
           isAr 
-            ? 'تم حفظ وتحديث بيانات المؤسس والشركة ونشرها سحابياً على كامل الموقع فوراً! 🚀' 
+            ? 'تم حفظ وتحديث بيانات المؤسس والشركة ونشرها سحابياً على كامل الموقع فوراً!'
             : 'Corporate & Founder profile updated and published live to cloud!', 
           'success'
         );
@@ -75,7 +77,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
   };
 
   const handleReset = async () => {
-    if (window.confirm(isAr ? 'هل أنت متأكد من استعادة النصوص والإعدادات الافتراضية؟' : 'Reset all corporate text to defaults?')) {
+    if (await confirm({ message: isAr ? 'هل أنت متأكد من استعادة النصوص والإعدادات الافتراضية؟' : 'Reset all corporate text to defaults?', tone: 'danger' })) {
       await resetFounderSettings();
       setFormData(DEFAULT_FOUNDER_CMS);
       triggerToast(isAr ? 'تمت استعادة الإعدادات الافتراضية بنجاح' : 'Reset to default settings', 'info');
@@ -379,7 +381,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
           onClick={() => setActiveSubTab('hero_video')}
         >
           <Film size={14} />
-          <span>{isAr ? '🎬 الفيديو والهيرو السينمائي' : 'Hero Video & Media'}</span>
+          <span>{isAr ? 'الفيديو والهيرو السينمائي' : 'Hero Video & Media'}</span>
         </button>
 
         <button
@@ -433,7 +435,7 @@ export default function FounderCmsPanel({ lang = 'ar', triggerToast }) {
           onClick={() => setActiveSubTab('gold_standards')}
         >
           <Award size={14} />
-          <span>{isAr ? '🛡️ معايير الأمان الأربعة (الرئيسية)' : '4 Golden Standards'}</span>
+          <span>{isAr ? 'معايير الأمان الأربعة (الرئيسية)' : '4 Golden Standards'}</span>
         </button>
       </div>
 

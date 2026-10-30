@@ -11,6 +11,7 @@ import { getAreas } from '../../utils/areasData';
 import { findArea, placeAreas, inArea } from '../../utils/areaLookup';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { recordTimeLabel } from '../../utils/relativeTime';
+import { useConfirm } from '../ui';
 
 
 
@@ -28,6 +29,7 @@ export default function DemandsManagerPanel({
   openRequest = null,
   readOnly = false
 }) {
+  const confirm = useConfirm();
   const isAr = lang === 'ar';
   const canViewPhone = canViewLeadPhone(userRole);
 
@@ -226,8 +228,8 @@ export default function DemandsManagerPanel({
     );
   };
 
-  const handleQuickReject = (demandId) => {
-    if (window.confirm(isAr ? 'هل أنت متأكد من رفض وحذف هذا الطلب؟' : 'Are you sure you want to reject and delete this request?')) {
+  const handleQuickReject = async (demandId) => {
+    if (await confirm({ message: isAr ? 'هل أنت متأكد من رفض وحذف هذا الطلب؟' : 'Are you sure you want to reject and delete this request?', tone: 'danger' })) {
       const res = onDeleteDemand?.(demandId);
       if (res === false) return;
       triggerToast?.(isAr ? 'تم حذف الطلب' : 'Demand rejected/deleted', 'info');
@@ -280,7 +282,7 @@ export default function DemandsManagerPanel({
       </div>
 
       {/* Quick KPI Stat Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginBottom: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '14px', marginBottom: '20px' }}>
         <div className="crm-metric-card-executive">
           <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', fontWeight: '600' }}>{isAr ? 'إجمالي الطلبات' : 'Total Demands'}</span>
           <div style={{ fontSize: 'var(--crm-text-xl)', fontWeight: 800, color: 'var(--crm-ink)', marginTop: '4px' }}>
@@ -413,7 +415,7 @@ export default function DemandsManagerPanel({
           </button>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '18px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(360px, 100%), 1fr))', gap: '18px' }}>
           {filteredDemands.map((demand) => {
             const isPending = demand.status === 'pending';
             const urgencyColor = demand.urgency === 'high' ? 'var(--crm-danger)' : demand.urgency === 'medium' ? 'var(--crm-warn)' : 'var(--crm-info)';

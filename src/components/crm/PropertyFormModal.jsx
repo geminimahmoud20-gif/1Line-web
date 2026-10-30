@@ -11,6 +11,7 @@ import PhotoManager from './PhotoManager';
 import { AMENITY_GROUPS, amenityCategory } from '../../utils/amenityCategories';
 import './property-amenities.css';
 import AreaOptions from '../common/AreaOptions';
+import { useConfirm } from '../ui';
 
 export default function PropertyFormModal({
   areas,
@@ -36,6 +37,7 @@ export default function PropertyFormModal({
   setShowMapPicker,
   uploadProgressText
 }) {
+  const confirm = useConfirm();
   const areaKnown = Boolean(form?.areaKey) && areas.some((a) => a.id === form.areaKey && a.id !== 'all');
   const hasDirtyContent = Boolean(
     (form?.title && String(form.title).trim()) ||
@@ -44,13 +46,11 @@ export default function PropertyFormModal({
     (form?.description && String(form.description).trim())
   );
 
-  const handleSafeClose = () => {
+  const handleSafeClose = async () => {
     if (hasDirtyContent) {
-      const confirmClose = window.confirm(
-        isAr
+      const confirmClose = await confirm({ message: isAr
           ? 'لديك بيانات وصور عقار تم إدخالها، هل أنت متأكد من الإلغاء والخروج دون حفظ؟'
-          : 'You have entered property details or photos. Are you sure you want to discard them?'
-      );
+          : 'You have entered property details or photos. Are you sure you want to discard them?', tone: 'primary' });
       if (!confirmClose) return;
     }
     setShowAddModal(false);
@@ -145,10 +145,10 @@ export default function PropertyFormModal({
                   onChange={(e) => setForm({ ...form, status: e.target.value })}
                   style={{ fontWeight: 'bold' }}
                 >
-                  <option value="published">🟢 {isAr ? 'منشور ونشط على الموقع' : 'Published Live'}</option>
-                  <option value="hidden">⚪ {isAr ? 'مخفي مؤقتاً (مسودة)' : 'Hidden / Draft'}</option>
-                  <option value="under_negotiation">🟡 {isAr ? 'تحت التفاوض / حجز مبدئي' : 'Under Negotiation'}</option>
-                  <option value="sold">🔴 {isAr ? 'تم البيع بنجاح' : 'Sold'}</option>
+                  <option value="published">{isAr ? 'منشور ونشط على الموقع' : 'Published Live'}</option>
+                  <option value="hidden">{isAr ? 'مخفي مؤقتاً (مسودة)' : 'Hidden / Draft'}</option>
+                  <option value="under_negotiation">{isAr ? 'تحت التفاوض / حجز مبدئي' : 'Under Negotiation'}</option>
+                  <option value="sold">{isAr ? 'تم البيع بنجاح' : 'Sold'}</option>
                 </select>
               </div>
 
@@ -212,7 +212,7 @@ export default function PropertyFormModal({
                   style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                 />
                 <label htmlFor="featured-checkbox" style={{ cursor: 'pointer', margin: 0, fontWeight: 'bold' }}>
-                  ⭐ {isAr ? 'تمييز في الصفحة الرئيسية' : 'Featured on Homepage'}
+                  {isAr ? 'تمييز في الصفحة الرئيسية' : 'Featured on Homepage'}
                 </label>
               </div>
               {form.featured && (
@@ -322,7 +322,7 @@ export default function PropertyFormModal({
                   onClick={() => setShowMapPicker(true)}
                   style={{ padding: '2px 8px', fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', borderColor: 'var(--crm-accent)' }}
                 >
-                  📍 {isAr ? 'تحديد دقيق على الخريطة' : 'Pin on Map'}
+                  {isAr ? 'تحديد دقيق على الخريطة' : 'Pin on Map'}
                 </button>
               </div>
               <input
@@ -460,7 +460,7 @@ export default function PropertyFormModal({
                   alignItems: 'center',
                   gap: '8px'
                 }}>
-                  <span>🏬 {isAr ? 'وحدة تجارية: مساحة نشاط مفتوحة (تم إيقاف عدد غرف النوم تلقائياً = 0).' : 'Commercial Unit: Open retail space (Bedrooms locked to 0).'}</span>
+                  <span>{isAr ? 'وحدة تجارية: مساحة نشاط مفتوحة (تم إيقاف عدد غرف النوم تلقائياً = 0).' : 'Commercial Unit: Open retail space (Bedrooms locked to 0).'}</span>
                 </div>
               </>
             ) : form.type === 'land' ? (
@@ -495,7 +495,7 @@ export default function PropertyFormModal({
                   alignItems: 'center',
                   gap: '8px'
                 }}>
-                  <span>📐 {isAr ? 'أرض فضاء: بدون غرف أو حمامات أو طوابق (تم الضبط تلقائياً إلى 0).' : 'Vacant Land: No bedrooms, bathrooms or floors (Locked to 0).'}</span>
+                  <span>{isAr ? 'أرض فضاء: بدون غرف أو حمامات أو طوابق (تم الضبط تلقائياً إلى 0).' : 'Vacant Land: No bedrooms, bathrooms or floors (Locked to 0).'}</span>
                 </div>
               </>
             ) : form.type === 'office' ? (
@@ -536,7 +536,7 @@ export default function PropertyFormModal({
                   alignItems: 'center',
                   gap: '8px'
                 }}>
-                  <span>💼 {isAr ? 'مقر إداري / عيادة: تقسيمات مكاتب مرخصة (غرف النوم السكنية = 0).' : 'Office / Clinic: Administrative partitions (Residential bedrooms = 0).'}</span>
+                  <span>{isAr ? 'مقر إداري / عيادة: تقسيمات مكاتب مرخصة (غرف النوم السكنية = 0).' : 'Office / Clinic: Administrative partitions (Residential bedrooms = 0).'}</span>
                 </div>
               </>
             ) : form.type === 'building' ? (
@@ -586,7 +586,7 @@ export default function PropertyFormModal({
                   alignItems: 'center',
                   gap: '8px'
                 }}>
-                  <span>🏢 {isAr ? 'عقار كامل (سكني + تجاري): لن يتم حساب متوسط سعر المتر السكني البسيط تلقائياً لتجنب تشويه التقييم، وسيتم عرض تفصيل الوحدات للعملاء.' : 'Full Building (Mixed-Use): Flat price/sqm calculation is disabled to protect fair valuation.'}</span>
+                  <span>{isAr ? 'عقار كامل (سكني + تجاري): لن يتم حساب متوسط سعر المتر السكني البسيط تلقائياً لتجنب تشويه التقييم، وسيتم عرض تفصيل الوحدات للعملاء.' : 'Full Building (Mixed-Use): Flat price/sqm calculation is disabled to protect fair valuation.'}</span>
                 </div>
               </>
             ) : (

@@ -7,6 +7,7 @@ import { subscribeToAccessConfig, getActiveAccessConfig } from '../../services/a
 import RolesTab from './RolesTab';
 import TeamsTab from './TeamsTab';
 import './team-panel.css';
+import { useConfirm } from '../ui';
 
 const ERRORS = {
   self: ['مينفعش تغيّر صلاحياتك أو توقف حسابك بنفسك. خلي مدير عام تاني يعملها.', "You can't change your own access."],
@@ -96,6 +97,7 @@ function AddMemberModal({ isAr, roles = [], teams = [], busy, onClose, onSubmit 
 
 export default function TeamPanel({ lang = 'ar', leads = [], triggerToast }) {
   const isAr = lang === 'ar';
+  const confirm = useConfirm();
   const [subTab, setSubTab] = useState('members'); // 'members' | 'roles' | 'teams'
   const [members, setMembers] = useState(undefined); // undefined = loading
   const [loadError, setLoadError] = useState(null);
@@ -149,9 +151,9 @@ export default function TeamPanel({ lang = 'ar', leads = [], triggerToast }) {
   };
 
   const act = async (m, action, extra = {}) => {
-    if (action === 'remove' && !window.confirm(isAr ? `شيل ${m.name || m.email} من الفريق؟ مش هيقدر يدخل لوحة التحكم تاني.` : `Remove ${m.email} from the team?`)) return;
-    if (action === 'signout' && !window.confirm(isAr ? `تسجيل خروج ${m.name || m.email} من كل الأجهزة؟ هيطلب منه يدخل الإيميل والباسورد تاني، وصلاحياته هتتحدث.` : `Sign ${m.email} out everywhere? They will sign in again with their current access.`)) return;
-    if (action === 'disable' && !window.confirm(isAr ? `إيقاف حساب ${m.name || m.email}؟ هيخرج من لوحة التحكم فورًا.` : `Disable ${m.email}?`)) return;
+    if (action === 'remove' && !await confirm({ message: isAr ? `شيل ${m.name || m.email} من الفريق؟ مش هيقدر يدخل لوحة التحكم تاني.` : `Remove ${m.email} from the team?`, tone: 'danger' })) return;
+    if (action === 'signout' && !await confirm({ message: isAr ? `تسجيل خروج ${m.name || m.email} من كل الأجهزة؟ هيطلب منه يدخل الإيميل والباسورد تاني، وصلاحياته هتتحدث.` : `Sign ${m.email} out everywhere? They will sign in again with their current access.`, tone: 'danger' })) return;
+    if (action === 'disable' && !await confirm({ message: isAr ? `إيقاف حساب ${m.name || m.email}؟ هيخرج من لوحة التحكم فورًا.` : `Disable ${m.email}?`, tone: 'danger' })) return;
     setBusyUid(m.uid);
     const res = await teamAction({ action, uid: m.uid, ...extra });
     setBusyUid(null);
@@ -172,7 +174,7 @@ export default function TeamPanel({ lang = 'ar', leads = [], triggerToast }) {
   const signOutAll = async () => {
     const targets = (members || []).filter((m) => m.uid !== me && !m.disabled);
     if (!targets.length) return;
-    if (!window.confirm(isAr ? `تسجيل خروج ${targets.length} موظف من كل الأجهزة؟ كل واحد هيدخل الإيميل والباسورد تاني وصلاحياته هتتحدث.` : `Sign ${targets.length} members out everywhere?`)) return;
+    if (!await confirm({ message: isAr ? `تسجيل خروج ${targets.length} موظف من كل الأجهزة؟ كل واحد هيدخل الإيميل والباسورد تاني وصلاحياته هتتحدث.` : `Sign ${targets.length} members out everywhere?`, tone: 'danger' })) return;
     setSigningOutAll(true);
     let failed = 0;
     for (const m of targets) {

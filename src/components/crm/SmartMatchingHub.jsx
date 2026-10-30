@@ -220,7 +220,7 @@ export default function SmartMatchingHub({
         <div className="crm-header-title-group">
           <h2 className="crm-header-main-title">
             <Sparkles size={22} style={{ color: 'var(--crm-accent-text)' }} />
-            <span>{isAr ? 'محرك المطابقة الذكي اللحظي AI' : 'Live Smart AI Matching Engine'}</span>
+            <span>{isAr ? 'المطابقات الذكية' : 'Live Smart AI Matching Engine'}</span>
           </h2>
           <div className="crm-header-subtitle">
             <span>
@@ -242,7 +242,7 @@ export default function SmartMatchingHub({
               fontWeight: 700
             }}
           >
-            🔥 80%+ {isAr ? 'مطابقة مثالية' : 'Super Match'}
+            80%+ {isAr ? 'مطابقة مثالية' : 'Super Match'}
           </button>
           <button
             type="button"
@@ -255,7 +255,7 @@ export default function SmartMatchingHub({
               fontWeight: 700
             }}
           >
-            ⚡ 60%+ {isAr ? 'كل الفرص' : 'All Deals'}
+            60%+ {isAr ? 'كل الفرص' : 'All Deals'}
           </button>
         </div>
       </div>
@@ -335,7 +335,7 @@ export default function SmartMatchingHub({
                     {/* Buyer Side */}
                     <div style={{ borderInlineEnd: '1px solid var(--crm-line)', paddingInlineEnd: '10px' }}>
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-info)', fontWeight: 'bold', display: 'block', marginBottom: '3px' }}>
-                        👤 {isAr ? 'المشتري الراغب:' : 'Buyer Request:'}
+                        {isAr ? 'المشتري الراغب:' : 'Buyer Request:'}
                       </span>
                       <strong 
                         onClick={() => onOpenLead?.(lead)}
@@ -353,30 +353,29 @@ export default function SmartMatchingHub({
                         {lead.name}
                       </strong>
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                        <span>📱</span>
                         <bdi dir="ltr" style={{ unicodeBidi: 'isolate', fontVariantNumeric: 'tabular-nums' }}>{formatPhoneNumber(lead.whatsapp || lead.phone) || '—'}</bdi>
                       </span>
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', display: 'block', marginTop: '4px', fontWeight: '700' }}>
-                        💰 {isAr ? 'ميزانية:' : 'Budget:'} {parseMoney(lead.details?.budget) || parseMoney(lead.budget) ? (parseMoney(lead.details?.budget) || parseMoney(lead.budget)).toLocaleString('en-US') + ' ج.م' : (isAr ? 'غير محددة بعد' : 'Not set')}
+                        {isAr ? 'ميزانية:' : 'Budget:'} {parseMoney(lead.details?.budget) || parseMoney(lead.budget) ? (parseMoney(lead.details?.budget) || parseMoney(lead.budget)).toLocaleString('en-US') + ' ج.م' : (isAr ? 'غير محددة بعد' : 'Not set')}
                       </span>
                     </div>
 
                     {/* Matched Property Side */}
                     <div>
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', fontWeight: 'bold', display: 'block', marginBottom: '3px' }}>
-                        🏢 {isAr ? 'العقار المطابق:' : 'Matched Property:'}
+                        {isAr ? 'العقار المطابق:' : 'Matched Property:'}
                       </span>
                       <strong style={{ fontSize: 'var(--crm-text-md)', color: 'var(--crm-ink)', fontWeight: 700, display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: '2px' }}>
                         {isAr ? property.title_ar : property.title_en}
                       </strong>
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-body)', display: 'block' }}>
-                        📐 {property.size} م² • 📍 {getLocalizedArea(property.areaKey)}
+                        {property.size} م² • {getLocalizedArea(property.areaKey)}
                       </span>
                       <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', display: 'block', marginTop: '4px', fontWeight: 700 }}>
                         {property.price && Number(property.price) > 0 ? (
-                          <>💵 {isAr ? 'السعر:' : 'Price:'} {Number(property.price).toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}</>
+                          <>{isAr ? 'السعر:' : 'Price:'} {Number(property.price).toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'}</>
                         ) : (
-                          <span style={{ color: 'var(--crm-warn)' }}>💵 {isAr ? 'السعر: عند التواصل / غير محدد' : 'Price: Upon inquiry'}</span>
+                          <span style={{ color: 'var(--crm-warn)' }}>{isAr ? 'السعر: عند التواصل / غير محدد' : 'Price: Upon inquiry'}</span>
                         )}
                       </span>
                     </div>

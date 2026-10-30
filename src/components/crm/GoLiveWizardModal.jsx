@@ -48,7 +48,7 @@ export default function GoLiveWizardModal({
     };
     await saveFounderSettings(updated);
     setFounderSettings(updated);
-    if (triggerToast) triggerToast(isAr ? 'تم حفظ رقم الهاتف والواتساب ونشره سحابياً على كامل الموقع! 📞' : 'Real phone saved across site & cloud!', 'success');
+    if (triggerToast) triggerToast(isAr ? 'تم حفظ رقم الهاتف والواتساب ونشره سحابياً على كامل الموقع!' : 'Real phone saved across site & cloud!', 'success');
   };
 
   // Safe Demo Cleansing: Download backup first, then purge
@@ -67,7 +67,7 @@ export default function GoLiveWizardModal({
     a.href = url;
     a.download = `OneLine_Full_Backup_${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
-    if (triggerToast) triggerToast(isAr ? 'تم تنزيل النسخة الاحتياطية بنجاح 💾' : 'Backup downloaded successfully', 'success');
+    if (triggerToast) triggerToast(isAr ? 'تم تنزيل النسخة الاحتياطية بنجاح' : 'Backup downloaded successfully', 'success');
   };
 
   return (
@@ -166,7 +166,7 @@ export default function GoLiveWizardModal({
               fontSize: 'var(--crm-text-md)',
               color: readinessScore >= 80 ? 'var(--crm-on-dark-positive)' : 'var(--crm-gold-on-dark)'
             }}>
-              {readinessScore}% {readinessScore >= 80 ? (isAr ? 'جاهز للإطلاق 🚀' : 'Ready') : (isAr ? 'يتطلب خطوات إضافية' : 'Pending steps')}
+              {readinessScore}% {readinessScore >= 80 ? (isAr ? 'جاهز للإطلاق' : 'Ready') : (isAr ? 'يتطلب خطوات إضافية' : 'Pending steps')}
             </strong>
           </div>
 
@@ -395,7 +395,7 @@ export default function GoLiveWizardModal({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '16px', padding: '18px' }}>
               <h4 style={{ color: 'var(--crm-on-dark)', margin: '0 0 8px 0', fontSize: 'var(--crm-text-md)' }}>
-                🌐 {isAr ? 'كيفية ربط الموقع بدومينكم الرسمي' : 'How to deploy to your official domain'}
+                {isAr ? 'كيفية ربط الموقع بدومينكم الرسمي' : 'How to deploy to your official domain'}
               </h4>
               <ol style={{ color: 'var(--crm-on-dark-muted)', fontSize: 'var(--crm-text-sm)', lineHeight: 1.8, paddingRight: '20px' }}>
                 <li>قم بتشغيل أمر البناء النهائي: <code>npm run build</code> ليتم إنشاء مجلد <code>dist</code> جاهز للرفع.</li>

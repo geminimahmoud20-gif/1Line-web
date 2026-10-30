@@ -367,6 +367,14 @@ export default function CrmInboxPanel({
     }
   ], [categorized, unhandledCounts, intents, openIntents]);
 
+  // Until someone picks a tab, open on the one that has requests waiting: the inbox always opened on
+  // «بيع وتثمين», so «5 waiting» sat above an empty list when the waiting requests were buyers.
+  const [tabPicked, setTabPicked] = useState(false);
+  if (!tabPicked && !unhandledCounts[activeTab]) {
+    const busiest = tabsList.filter((t) => t.unhandled > 0).sort((x, y) => y.unhandled - x.unhandled)[0];
+    if (busiest && busiest.id !== activeTab) setActiveTab(busiest.id);
+  }
+
   const myUid = currentUser?.uid || '';
 
   // Current tab items for the chosen view and search
@@ -495,7 +503,7 @@ export default function CrmInboxPanel({
   // The SLA notice opens the unclaimed list on the tab holding most of the late requests
   const showLate = () => {
     const tab = Object.entries(sla.byTab).sort((x, y) => y[1] - x[1])[0]?.[0];
-    if (tab) setActiveTab(tab);
+    if (tab) { setTabPicked(true); setActiveTab(tab); }
     setView('unclaimed');
     setSearchQuery('');
   };
@@ -568,7 +576,7 @@ export default function CrmInboxPanel({
         <Tabs
           label={isAr ? 'نوع الطلب' : 'Request type'}
           value={activeTab}
-          onChange={(id) => setActiveTab(id)}
+          onChange={(id) => { setTabPicked(true); setActiveTab(id); }}
           items={tabsList.map((t) => {
             const IconComp = t.icon;
             return { id: t.id, label: isAr ? t.label_ar : t.label_en, icon: <IconComp size={16} aria-hidden="true" />, count: t.unhandled || null };

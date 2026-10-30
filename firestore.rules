@@ -643,6 +643,26 @@ service cloud.firestore {
       allow read, write: if hasPerm('fin') || isAdmin();
     }
 
+    // 🧾 Reservation receipts: numbered from counters/receipts_<year> in one transaction
+    // (services/receipts.js). Issued once and never edited or deleted, so the numbers stay a record.
+    match /receipts/{receiptId} {
+      allow read: if hasPerm('fin') || isAdmin();
+      allow create: if (hasPerm('fin') || isAdmin())
+        && request.resource.data.number == receiptId
+        && request.resource.data.issuedBy == request.auth.uid
+        && request.resource.data.amount is int && request.resource.data.amount > 0
+        && request.resource.data.issuedAt == request.time
+        && getAfter(/databases/$(database)/documents/counters/$(('receipts_' + string(request.resource.data.year)))).data.last == request.resource.data.seq;
+      allow update, delete: if false;
+    }
+    match /counters/{counterId} {
+      allow read: if counterId.matches('receipts_[0-9]{4}') && (hasPerm('fin') || isAdmin());
+      allow create: if counterId.matches('receipts_[0-9]{4}') && (hasPerm('fin') || isAdmin())
+        && request.resource.data.last == 1;
+      allow update: if counterId.matches('receipts_[0-9]{4}') && (hasPerm('fin') || isAdmin())
+        && request.resource.data.last == resource.data.last + 1;
+    }
+
     // 🚨 Complaints (خدمة العملاء والشكاوى)
     match /complaints/{compId} {
       allow read: if isStaff();

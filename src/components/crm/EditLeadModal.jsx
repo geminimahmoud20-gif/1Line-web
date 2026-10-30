@@ -5,13 +5,15 @@ import { getAreas } from '../../utils/areasData';
 import { isKnownArea } from '../../utils/areaLookup';
 import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 import AreaOptions from '../common/AreaOptions';
+import DeskOptions from './DeskOptions';
 
 export default function EditLeadModal({
   handleSaveLeadEdits,
   isAr,
   leadFormData,
   setEditingLead,
-  setLeadFormData
+  setLeadFormData,
+  userRole = 'super_admin'
 }) {
   useBodyScrollLock(true);
   const mouseDownOnBackdropRef = useRef(false);
@@ -170,9 +172,9 @@ export default function EditLeadModal({
                 onChange={(e) => setLeadFormData({ ...leadFormData, temperature: e.target.value })}
               >
                 <option value="">{isAr ? 'غير محدد' : 'Not set'}</option>
-                <option value="hot">🔥 {isAr ? 'ساخن' : 'Hot'}</option>
-                <option value="warm">⚡ {isAr ? 'متوسط' : 'Warm'}</option>
-                <option value="cold">❄️ {isAr ? 'بارد' : 'Cold'}</option>
+                <option value="hot">{isAr ? 'ساخن' : 'Hot'}</option>
+                <option value="warm">{isAr ? 'متوسط' : 'Warm'}</option>
+                <option value="cold">{isAr ? 'بارد' : 'Cold'}</option>
               </select>
             </div>
 
@@ -193,10 +195,8 @@ export default function EditLeadModal({
                 aria-label={isAr ? 'المسؤول' : 'Owner'}
                 onChange={(e) => setLeadFormData({ ...leadFormData, assignedTo: e.target.value })}
               >
-                <option value="Dr. Mahmoud Elbaz">Dr. Mahmoud Elbaz</option>
-                <option value="Sales Team A">Sales Team A</option>
-                <option value="Sales Team B">Sales Team B</option>
-                <option value="Unassigned">Unassigned</option>
+                {/* The CRM's real teams (إدارة المنظومة → الفرق), not a fixed English list */}
+                <DeskOptions role={userRole} current={leadFormData.assignedTo || 'Unassigned'} lang={isAr ? 'ar' : 'en'} />
               </select>
             </div>
           </div>

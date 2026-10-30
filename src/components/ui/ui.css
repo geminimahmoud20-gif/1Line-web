@@ -279,7 +279,11 @@
   .ui-page-head { margin-bottom: var(--ui-s-4); }
   .ui-page-head__title { font-size: var(--ui-fs-5); }
   .ui-page-head__desc { display: none; }
-  .ui-page-head__actions { flex-wrap: nowrap; overflow-x: auto; width: 100%; }
+  /* Wraps to a second row: sideways scrolling hid «تصدير» half off the screen with no hint */
+  .ui-page-head__actions { flex-wrap: wrap; width: 100%; }
+  .ui-page-head__actions > * { flex: 1 1 auto; }
+  /* Long badges («مش ظاهرة على الموقع · ناقص: صور») wrap inside their card */
+  .ui-badge { max-width: 100%; height: auto; min-height: 24px; padding-block: 2px; white-space: normal; line-height: 1.4; }
 }
 
 /* ── Chip (filter) ── */

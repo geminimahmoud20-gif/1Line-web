@@ -142,7 +142,7 @@ export default function CrmSidebar({
             {
               id: 'matching',
               icon: Sparkles,
-              label_ar: 'المطابقات الذكية AI',
+              label_ar: 'المطابقات الذكية',
               label_en: 'Smart AI Match'
             },
             {
@@ -191,7 +191,7 @@ export default function CrmSidebar({
           {
             id: 'matching',
             icon: Sparkles,
-            label_ar: 'المطابقات الذكية AI',
+            label_ar: 'المطابقات الذكية',
             label_en: 'Smart AI Match'
           },
           {
@@ -211,7 +211,7 @@ export default function CrmSidebar({
           ...(canWorkRequests ? [{
             id: 'expat',
             icon: Globe2,
-            label_ar: 'خدمات المغتربين VIP',
+            label_ar: 'خدمات المغتربين',
             label_en: 'Expat VIP Desk'
           },
           {
