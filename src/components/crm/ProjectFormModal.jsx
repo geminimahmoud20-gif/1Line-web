@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Building2, Calculator, Home, Image as ImageIcon, Loader2, Save, Store, Upload, X } from 'lucide-react';
 import PhotoManager from './PhotoManager';
-import { uploadMultipleImages } from '../../utils/imageUploadService';
+import { uploadMultipleImages, isImageFile, failedPhotosMessage, MAX_PHOTO_MB } from '../../utils/imageUploadService';
 import { arYears, planExample } from '../../utils/projectFacts';
 import './project-form.css';
 
-const MAX_FILE_MB = 15;
+const MAX_FILE_MB = MAX_PHOTO_MB;
 const STAGES = [
   { key: 'concrete', ar: 'الخرسانات', en: 'Structure' },
   { key: 'masonry', ar: 'المباني والحوائط', en: 'Masonry' },
@@ -36,7 +36,7 @@ export default function ProjectFormModal({ formData, setFormData, onSubmit, onCl
   const stageAverage = Math.round(STAGES.reduce((s, st) => s + (Number(stages[st.key]) || 0), 0) / STAGES.length);
 
   const addFiles = async (fileList) => {
-    const files = Array.from(fileList || []).filter((f) => f.type.startsWith('image/'));
+    const files = Array.from(fileList || []).filter(isImageFile);
     const tooBig = files.filter((f) => f.size > MAX_FILE_MB * 1024 * 1024);
     const ok = files.filter((f) => f.size <= MAX_FILE_MB * 1024 * 1024);
     if (tooBig.length) triggerToast(L(`${tooBig.length} صورة أكبر من ${MAX_FILE_MB}MB واترفضت`, `${tooBig.length} photo(s) over ${MAX_FILE_MB}MB were skipped`), 'error');
@@ -47,6 +47,7 @@ export default function ProjectFormModal({ formData, setFormData, onSubmit, onCl
       if (urls.inlineCount > 0) {
         triggerToast(L(`${urls.inlineCount} صورة ماترفعتش على السيرفر. اخرج وادخل تاني وارفعها من جديد.`, `${urls.inlineCount} photo(s) did not reach the server; sign in again and re-upload.`), 'error');
       }
+      if (urls.failed?.length) triggerToast(failedPhotosMessage(urls.failed, isAr), 'error');
       // New photos go after the current ones, so the cover stays the cover
       if (urls.length) setFormData((f) => ({ ...f, images: [...(f.images || []).filter(Boolean), ...urls] }));
     } catch (err) {

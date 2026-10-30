@@ -19,7 +19,7 @@ import InteractiveMapPickerModal from './InteractiveMapPickerModal';
 import WhatsAppMatchNotifierModal from './WhatsAppMatchNotifierModal';
 import { findMatchingClientsForProperty } from '../../utils/matchingEngine';
 
-import { uploadMultipleImages, uploadInlinePhoto } from '../../utils/imageUploadService';
+import { uploadMultipleImages, uploadInlinePhoto, isImageFile, failedPhotosMessage, MAX_PHOTO_MB } from '../../utils/imageUploadService';
 import ThumbBackfillCard from './ThumbBackfillCard';
 
 // Accurate GPS Coordinates map for Sohag Districts
@@ -304,7 +304,7 @@ export default function PropertyManagerPanel({
   };
 
   // Advanced Cloud Upload & Multi-Image Canvas Compressor
-  const MAX_FILE_SIZE_MB = 15;
+  const MAX_FILE_SIZE_MB = MAX_PHOTO_MB;
   const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [uploadProgressText, setUploadProgressText] = useState('');
@@ -319,7 +319,7 @@ export default function PropertyManagerPanel({
     const oversizedFiles = [];
 
     files.forEach((file) => {
-      if (!file.type.startsWith('image/')) return;
+      if (!isImageFile(file)) return;
       if (file.size > MAX_FILE_SIZE_BYTES) {
         oversizedFiles.push(file.name);
       } else {
@@ -355,6 +355,7 @@ export default function PropertyManagerPanel({
         }
       );
 
+      if (uploadedUrls.failed?.length) triggerToast(failedPhotosMessage(uploadedUrls.failed, isAr), 'error');
       if (uploadedUrls.inlineCount > 0) {
         triggerToast(
           isAr

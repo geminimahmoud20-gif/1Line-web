@@ -106,8 +106,8 @@ export default function PropertyFormModal({
                 ) : (
                   <>
                     <Upload size={26} className="text-primary" />
-                    <span>{isAr ? 'اسحب الصور وأفلتها هنا، أو انقر للاختيار' : 'Drag & drop photos here, or click to browse'}</span>
-                    <small>{isAr ? 'ضغط تلقائي فائق السرعة • JPG, PNG, WebP حتى 15MB' : 'Instant smart compression • JPG, PNG, WebP up to 15MB'}</small>
+                    <span>{isAr ? 'دوس هنا واختار الصور (أو اسحبها هنا من الكمبيوتر)' : 'Tap to pick photos (or drag them here)'}</span>
+                    <small>{isAr ? 'تقدر تختار كذا صورة مرة واحدة • بتتصغّر لوحدها قبل الرفع' : 'Pick several at once • shrunk automatically before upload'}</small>
                   </>
                 )}
               </label>
