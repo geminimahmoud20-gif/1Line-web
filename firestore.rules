@@ -368,6 +368,11 @@ service cloud.firestore {
 
     // 📣 Last WhatsApp alert that went out and last one that didn't (api/notify.js, service account).
     // No customer data: times and a record reference. The CRM shows it to admins.
+    // 📊 One doc per Cairo day the daily WhatsApp report went out (api/daily-report.js, service account)
+    match /report_log/{day} {
+      allow read, write: if false;
+    }
+
     match /notify_status/{docId} {
       allow read: if isAdmin();
       allow write: if false;

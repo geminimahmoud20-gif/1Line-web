@@ -85,3 +85,28 @@ export const saveAlertsSeenAt = async (ms) => {
     return false;
   }
 };
+
+// ── The daily WhatsApp report (api/daily-report.js): see it now, or send a test copy ──
+
+/** mode 'preview' → { ok, text, day } ; mode 'test' → { ok, parts } ; else { ok: false, error } */
+export const runDailyReport = async (mode = 'preview') => {
+  const user = auth?.currentUser;
+  if (!user) return { ok: false, error: 'unauthenticated' };
+  let res;
+  try {
+    res = await fetch('/api/daily-report', {
+      method: 'POST',
+      headers: { authorization: `Bearer ${await user.getIdToken()}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ mode })
+    });
+  } catch {
+    return { ok: false, error: 'network' };
+  }
+  let data = null;
+  try { data = await res.json(); } catch { /* the site's HTML: no server functions here */ }
+  if (!data) return { ok: false, error: 'no-api' };
+  if (res.status === 503) return { ok: false, error: 'not-configured', serviceAccount: data.serviceAccount !== false };
+  if (res.status === 403) return { ok: false, error: 'forbidden' };
+  if (!res.ok) return { ok: false, error: data.error || 'send-failed' };
+  return { ok: true, ...data };
+};
