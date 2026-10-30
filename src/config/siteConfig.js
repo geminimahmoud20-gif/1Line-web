@@ -33,10 +33,19 @@ export const CONTACT = {
   email: 'contact@oneline-sohag.com',
   address_ar: 'برج أحمد حلمي الشريف، شارع الجمهورية، سوهاج',
   address_en: 'Ahmed Helmy El-Sherif Tower, El-Gomhoreya St., Sohag',
-  hours_ar: 'يومياً 10 صباحاً – 10 مساءً (عدا الجمعة)',
-  hours_en: 'Daily 10:00–22:00 (closed Friday)',
+  hours_ar: 'يومياً من 1 الظهر لـ 9 بالليل (عدا الجمعة)',
+  hours_en: 'Daily 1 pm – 9 pm (closed Friday)',
   mapsUrl: 'https://maps.google.com/?q=' + encodeURIComponent('شارع الجمهورية برج احمد حلمي الشريف سوهاج'),
   geo: { lat: 26.5569, lng: 31.6948 },
+};
+
+/** The same office hours as numbers (Cairo time), for "open now" and the search-engine card */
+export const OFFICE_HOURS = { open: 13, close: 21, closedDays: ['Fri'] };
+
+/** Viewing time slots offered to visitors, inside the office hours */
+export const VIEWING_SLOTS = {
+  morning: { ar: 'بعد الضهر (1 – 5 م)', en: 'Afternoon (1–5 pm)' },
+  evening: { ar: 'بالليل (5 – 9 م)', en: 'Evening (5–9 pm)' }
 };
 
 export const SERVICE_AREAS = {

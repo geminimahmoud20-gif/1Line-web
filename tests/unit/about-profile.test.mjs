@@ -11,8 +11,8 @@ test('nothing saved yet: every section on, no facts, no team, no photos', () => 
 });
 
 test('a section switched off stays off', () => {
-  assert.equal(sectionOn({ sections: { pillars: false } }, 'pillars'), false);
-  assert.equal(sectionOn({ sections: { pillars: false } }, 'founder'), true);
+  assert.equal(sectionOn({ sections: { hq: false } }, 'hq'), false);
+  assert.equal(sectionOn({ sections: { hq: false } }, 'founder'), true);
 });
 
 test('company facts: only filled and switched on, English falls back to Arabic', () => {

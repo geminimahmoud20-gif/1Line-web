@@ -4,6 +4,9 @@ import { Building2, ShieldCheck, CheckCircle2, Quote, MessageSquare, Phone, MapP
 import LogoEmblem from '../components/LogoEmblem';
 import { getFounderSettings, cleanPhoneNumber, getWhatsAppUrl, DEFAULT_FOUNDER_CMS } from '../utils/founderCmsData';
 import { updatePageSeo, buildBreadcrumbSchema } from '../utils/seoHelper';
+import { CONTACT } from '../config/siteConfig';
+import { useSiteSettings } from '../utils/siteSettings';
+import { readablePhone } from '../utils/phoneDisplay';
 import { sectionOn, visibleCompanyFacts } from '../utils/aboutProfile';
 import { AboutCompanyFacts, AboutTeam, AboutGallery } from '../components/about/AboutProfileSections';
 
@@ -32,10 +35,10 @@ export default function AboutPage({ lang = 'ar' }) {
   useEffect(() => {
     updatePageSeo({
       title: isAr 
-        ? 'عن 1Line ورؤية المؤسس د. محمود الباز | المنصة العقارية الأولى بسوهاج' 
+        ? 'عن 1Line ورؤية المؤسس د. محمود الباز | وساطة واستشارات عقارية في سوهاج' 
         : 'About 1Line & Founder Dr. Mahmoud Elbaz | Premier Real Estate Platform in Sohag',
       description: isAr 
-        ? 'تعرف على قصة 1Line، معايير الأمان الأربعة المعتمدة، وسيرة المؤسس د. محمود الباز استشاري التقييم والتطوير العقاري بسوهاج.' 
+        ? 'تعرف على 1Line: إزاي بنشتغل، فريقنا ومستشارنا القانوني، وسيرة المؤسس د. محمود الباز استشاري التقييم والتطوير العقاري بسوهاج.' 
         : 'Discover 1Line story, certified institutional standards, and Dr. Mahmoud Elbaz leadership profile.',
       url: '/about',
       type: 'website',
@@ -60,11 +63,21 @@ export default function AboutPage({ lang = 'ar' }) {
   }, []);
 
   const cleanPhone = cleanPhoneNumber(cms.phoneNumber);
+  const { contact } = useSiteSettings();
   // Sections and company facts the team switched on in the CRM (الفريق وبيانات الشركة والصور)
   const about = cms.about;
   const show = (id) => sectionOn(about, id);
   const facts = visibleCompanyFacts(about, isAr);
   const factOf = (key) => facts.find((f) => f.key === key)?.value || '';
+  // The address as saved, without a leading «المقر الرئيسي:» (the card already says where it is)
+  const address = String(isAr ? (cms.headquarters_ar || CONTACT.address_ar) : (cms.headquarters_en || CONTACT.address_en)).replace(/^\s*(المقر الرئيسي|Headquarters)\s*[:：-]\s*/u, '');
+  // One set of working hours for the whole site: بيانات الشركة if filled in, else إعدادات الموقع
+  const hours = factOf('hours') || (isAr ? contact.hours_ar : contact.hours_en);
+  const legalIds = [
+    factOf('commercialReg') && `${isAr ? 'سجل تجاري' : 'Commercial registry'} ${factOf('commercialReg')}`,
+    factOf('taxId') && `${isAr ? 'بطاقة ضريبية' : 'Tax ID'} ${factOf('taxId')}`,
+    factOf('license') && `${isAr ? 'ترخيص' : 'Licence'} ${factOf('license')}`
+  ].filter(Boolean);
 
   const stats = [
     {
@@ -99,8 +112,8 @@ export default function AboutPage({ lang = 'ar' }) {
       icon: <ShieldCheck size={24} className="gold-std-icon text-emerald" />,
       title_ar: 'مراجعة المستندات قبل العرض',
       title_en: 'Documents reviewed before listing',
-      desc_ar: 'فحص شامل لتسلسل الملكية، تراخيص البناء، ومراجعة العقود والتوكيلات من الإدارة القانونية قبل عرض أي عقار.',
-      desc_en: 'Comprehensive title deed review, municipal permits verification, and zero legal disputes before any listing.',
+      desc_ar: 'بنراجع تسلسل الملكية وتراخيص البناء والعقود والتوكيلات مع المستشار القانوني قبل ما نعرض العقار، ونقولك على أي ملاحظة قبل التعاقد.',
+      desc_en: 'We check the chain of title, building permits, contracts and powers of attorney with our legal advisor before listing, and tell you about anything we find before you sign.',
       badge_ar: 'قبل التعاقد',
       badge_en: 'Before contract'
     },
@@ -117,43 +130,22 @@ export default function AboutPage({ lang = 'ar' }) {
     {
       num: '03',
       icon: <Award size={24} className="gold-std-icon text-gold" />,
-      title_ar: 'أتعاب مكتوبة ومطابقة فورية',
-      title_en: 'Written Fees & Fast Match',
-      desc_ar: 'تسويق احترافي لأصحاب العقارات، مع عرض العقار أولاً على المشترين المسجلين لدينا بطلبات مطابقة.',
-      desc_en: 'Professional marketing, presenting your property first to registered buyers with matching briefs.',
-      badge_ar: 'معاينة مجانية للموقع',
-      badge_en: 'Free on-site viewing'
+      title_ar: 'أتعاب مكتوبة من الأول',
+      title_en: 'Fees agreed in writing',
+      desc_ar: 'بنتفق على الأتعاب كتابة قبل ما نبدأ، والمعاينة مجانية، وبنعرض عقارك الأول على المشترين المسجلين عندنا اللي طلبهم مطابق.',
+      desc_en: 'Fees are agreed in writing before we start, viewings are free, and your property goes first to registered buyers whose requests match it.',
+      badge_ar: 'للبايعين',
+      badge_en: 'For sellers'
     },
     {
       num: '04',
       icon: <Video size={24} className="gold-std-icon text-sky" />,
-      title_ar: 'منظومة رعاية مغتربي الخليج',
-      title_en: 'Gulf Expats Concierge Desk',
-      desc_ar: 'معاينات فيديو مباشرة، ومتابعة التوكيلات والتحويلات البنكية الرسمية، وتحديثات مكتوبة حتى تسليم المفتاح.',
-      desc_en: 'Live 4K video walk-throughs, certified power of attorney facilitation, and complete remote ownership procedures.',
-      badge_ar: 'خدمة كبار المغتربين',
-      badge_en: 'Expats VIP'
-    }
-  ];
-
-  const corporatePillars = [
-    {
-      title_ar: 'الرؤية المؤسسية',
-      title_en: 'Our Vision',
-      desc_ar: 'أن تكون 1Line المرجع الأول والأكثر موثوقية للاستثمار والوساطة العقارية المعتمدة في سوهاج والصعيد، مع تطبيق أعلى المعايير الرقمية الشفافة.',
-      desc_en: 'To be Upper Egypt’s benchmark in institutional real estate intelligence, legal certainty, and transparent proptech solutions.'
-    },
-    {
-      title_ar: 'الرسالة والقيم',
-      title_en: 'Our Mission & Values',
-      desc_ar: 'حماية وتنمية ثروات الأسر والمستثمرين من خلال الفحص القانوني المعتمد، التسعير الهندسي الدقيق، وإنهاء الصفقات بأعلى درجات الاحترافية والنزاهة.',
-      desc_en: 'Protecting and multiplying client capital through strict legal validation, fair engineering valuations, and ethical deal-making.'
-    },
-    {
-      title_ar: 'الالتزام التام',
-      title_en: 'Our Commitment',
-      desc_ar: 'لا ندرج أي عقار غير مرخص، ولا نقبل أي ممارسات تضليلية. كل عقار معروض على منصتنا يمر بلجنة اعتماد ثلاثية قبل ظهوره للعملاء.',
-      desc_en: 'Zero tolerance for unlicensed units. Every property undergoes a 3-tier vetting committee before being presented to clients.'
+      title_ar: 'خدمة المصريين في الخارج',
+      title_en: 'For Egyptians abroad',
+      desc_ar: 'معاينة بالفيديو المباشر، ومتابعة التوكيلات والتحويلات البنكية الرسمية، وتحديثات مكتوبة لحد ما تستلم.',
+      desc_en: 'Live video viewings, help with powers of attorney and official bank transfers, and written updates until handover.',
+      badge_ar: 'للمغتربين',
+      badge_en: 'Expats'
     }
   ];
 
@@ -174,7 +166,7 @@ export default function AboutPage({ lang = 'ar' }) {
 
             <div className="about-hero-badge">
               <Building2 size={16} className="text-gold" />
-              <span>{isAr ? 'وساطة واستشارات عقارية معتمدة — سوهاج والقاهرة الكبرى' : 'Certified brokerage & advisory — Sohag & Greater Cairo'}</span>
+              <span>{isAr ? 'وساطة واستشارات عقارية — سوهاج والقاهرة الكبرى' : 'Real estate brokerage & advisory — Sohag & Greater Cairo'}</span>
             </div>
           </div>
 
@@ -193,8 +185,8 @@ export default function AboutPage({ lang = 'ar' }) {
 
           <p className="about-hero-subtitle">
             {isAr 
-              ? 'تأسست 1Line Solutions لتكون المؤسسة العقارية الأكثر احترافية وأماناً؛ نجمع بين الخبرة الميدانية المتراكمة، التدقيق القانوني الصارم، والتقييم السعري العادل لضمان نجاح كل قرار استثماري.' 
-              : 'Founded to lead Upper Egypt’s real estate landscape through uncompromising legal compliance, fair pricing benchmarks, and bespoke investor advisory.'}
+              ? '1Line شركة وساطة واستشارات عقارية في سوهاج. بنراجع مستندات العقار مع المستشار القانوني قبل ما نعرضه، وبنسعّر بمقارنات حقيقية من نفس المنطقة، وكل اتفاق معانا مكتوب.'
+              : '1Line is a real estate brokerage and advisory firm in Sohag. We review a property’s papers with our legal advisor before listing it, price from real comparables in the same area, and put every agreement in writing.'}
           </p>
 
           {/* 4 Top Stats Counter Cards */}
@@ -229,7 +221,7 @@ export default function AboutPage({ lang = 'ar' }) {
               />
               <div className="about-portrait-seal">
                 <ShieldCheck size={14} className="seal-emerald-icon" />
-                <span>{isAr ? 'التزاماتنا في كل صفقة' : 'Our commitments'}</span>
+                <span>{isAr ? 'المؤسس' : 'Founder'}</span>
               </div>
             </div>
 
@@ -273,7 +265,7 @@ export default function AboutPage({ lang = 'ar' }) {
                 {isAr ? cms.founderQuote_ar : cms.founderQuote_en}
               </p>
               <div className="founder-quote-auth">
-                <span>{isAr ? '— رؤية التأسيس والريادة، د. محمود الباز' : '— Dr. Mahmoud Elbaz, Founder & Chairman'}</span>
+                <span>{isAr ? `— ${cms.founderName_ar || 'د. محمود الباز'}` : `— ${cms.founderName_en || 'Dr. Mahmoud Elbaz'}`}</span>
               </div>
             </div>
 
@@ -289,13 +281,7 @@ export default function AboutPage({ lang = 'ar' }) {
                 <span>{isAr ? `استشارة واتساب مع ${cms.founderName_ar || 'د. محمود الباز'}` : 'Direct WhatsApp Consultation'}</span>
               </a>
 
-              <a
-                href={`tel:${cleanPhone}`}
-                className="btn-founder-phone"
-              >
-                <Phone size={15} />
-                <span>{isAr ? 'الاتصال بمكتب الإدارة' : 'Call Executive Office'}</span>
-              </a>
+              {/* One way to reach the founder here; the office line is in «زورنا» below */}
             </div>
           </div>
         </div>
@@ -312,14 +298,14 @@ export default function AboutPage({ lang = 'ar' }) {
         <div className="section-header-centered">
           <span className="section-pill">
             <ShieldCheck size={14} className="text-gold" />
-            <span>{isAr ? 'معايير 1Line المعتمدة' : 'Institutional Standards'}</span>
+            <span>{isAr ? 'إزاي بنشتغل' : 'How we work'}</span>
           </span>
           <h2 className="about-section-h2">
-            {isAr ? 'لماذا يختار الملاك والمستثمرون 1Line؟' : 'Why Prime Investors & Expat Families Trust 1Line'}
+            {isAr ? 'ليه الملاك والمشترين بيتعاملوا مع 1Line؟' : 'Why owners and buyers work with 1Line'}
           </h2>
           <p className="about-section-desc">
             {isAr 
-              ? 'صممنا منظومة عمل صارمة تقلل مخاطر الشراء والبيع: مراجعة المستندات قبل العرض، وتسعير بمقارنات فعلية، واتفاقات مكتوبة.' 
+              ? 'أربع خطوات بنمشي عليها في كل صفقة عشان نقلل مخاطر البيع والشراء.'
               : 'Our process reduces buying and selling risk: documents reviewed before listing, comparable-based pricing and written agreements.'}
           </p>
         </div>
@@ -340,24 +326,6 @@ export default function AboutPage({ lang = 'ar' }) {
       </section>
       )}
 
-      {/* 🏛️ 4. CORPORATE PILLARS: VISION, MISSION & VALUES */}
-      {show('pillars') && (
-      <section className="about-pillars-section section-container">
-        <div className="pillars-grid">
-          {corporatePillars.map((p, idx) => (
-            <div key={idx} className="pillar-luxury-card">
-              <div className="pillar-glow-accent" />
-              <div className="pillar-header">
-                <Sparkles size={18} className="text-gold" />
-                <h3 className="pillar-title">{isAr ? p.title_ar : p.title_en}</h3>
-              </div>
-              <p className="pillar-desc">{isAr ? p.desc_ar : p.desc_en}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-      )}
-
       {/* 📍 5. HEADQUARTERS & PHYSICAL ACCREDITATION */}
       {show('hq') && (
       <section className="about-hq-section section-container">
@@ -365,35 +333,36 @@ export default function AboutPage({ lang = 'ar' }) {
           <div className="hq-details-col">
             <div className="hq-badge">
               <MapPin size={14} className="text-gold" />
-              <span>{isAr ? 'المقر الرئيسي المعتمد' : 'Corporate Headquarters'}</span>
+              <span>{isAr ? 'زورنا' : 'Visit us'}</span>
             </div>
             <h2 className="hq-title">
               {isAr ? 'يسعدنا استقبالكم في مقر الشركة الرئيسي بسوهاج' : 'Visit Our Corporate Headquarters in Sohag'}
             </h2>
             <p className="hq-desc">
-              {isAr ? (cms.headquarters_ar || 'محافظة سوهاج - شارع الجمهورية - برج أحمد حلمي الشريف') : (cms.headquarters_en || 'Sohag - El Gomhoria St., Ahmed Helmy El Sherif Tower')}
+              {address}
             </p>
 
             <div className="hq-features-list">
               <div className="hq-feature-item">
                 <Clock size={16} className="text-gold" />
-                <span>{factOf('hours') ? `${isAr ? 'مواعيد العمل' : 'Working hours'}: ${factOf('hours')}` : (isAr ? 'ساعات العمل: يومياً من 10:00 صباحاً حتى 10:00 مساءً (ما عدا الجمعة)' : 'Working Hours: 10:00 AM – 10:00 PM (Sat–Thu)')}</span>
+                <span>{isAr ? 'مواعيد العمل' : 'Working hours'}: {hours}</span>
               </div>
               <div className="hq-feature-item">
                 <Phone size={16} className="text-gold" />
-                <span><bdi>{cleanPhone}</bdi> — {isAr ? 'مكتب الإدارة والحجوزات' : 'Executive Desk'}</span>
+                <a href={`tel:${cleanPhone}`} className="hq-phone-link"><bdi dir="ltr">{readablePhone(cleanPhone)}</bdi></a>
               </div>
-              <div className="hq-feature-item">
-                <ShieldCheck size={16} className="text-emerald" />
-                <span>{factOf('commercialReg')
-                  ? `${isAr ? 'السجل التجاري' : 'Commercial registry'}: ${factOf('commercialReg')}`
-                  : (isAr ? 'سجل تجاري وبطاقة ضريبية معتمدة • استشارات هندسية وقانونية مرخصة' : 'Licensed Real Estate Firm • Certified Advisory')}</span>
-              </div>
+              {/* Registry and tax numbers only when filled in (CRM → بيانات الشركة); no claim without them */}
+              {legalIds.length > 0 && (
+                <div className="hq-feature-item">
+                  <ShieldCheck size={16} className="text-emerald" />
+                  <span>{legalIds.join(' • ')}</span>
+                </div>
+              )}
             </div>
 
             <div className="hq-actions">
               <a
-                href={`https://maps.google.com/?q=${encodeURIComponent('شارع الجمهورية برج احمد حلمي الشريف سوهاج')}`}
+                href={CONTACT.mapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-hq-map"
@@ -417,8 +386,8 @@ export default function AboutPage({ lang = 'ar' }) {
           <div className="hq-emblem-col">
             <div className="hq-emblem-halo">
               <LogoEmblem size={80} />
-              <span className="hq-emblem-name">1LINE REAL ESTATE</span>
-              <span className="hq-emblem-sub">{isAr ? 'عقارات سوهاج المعتمدة' : 'Accredited Sohag Real Estate'}</span>
+              <span className="hq-emblem-name" dir="ltr">1Line</span>
+              <span className="hq-emblem-sub">{isAr ? 'وساطة واستشارات عقارية • سوهاج' : 'Brokerage & advisory • Sohag'}</span>
             </div>
           </div>
         </div>
@@ -440,26 +409,26 @@ export default function AboutPage({ lang = 'ar' }) {
           <div className="vip-cta-text">
             <span className="vip-pill-badge">
               <Sparkles size={13} />
-              <span>{isAr ? 'استشارة استثمارية خاصة' : 'VIP Private Advisory'}</span>
+              <span>{isAr ? 'مش لاقي اللي بتدور عليه؟' : 'Not found it yet?'}</span>
             </span>
             <h2 className="vip-cta-heading">
-              {isAr ? 'جاهز لاستثمار عقاري آمن ومدروس في سوهاج؟' : 'Ready for a Secure & Lucrative Real Estate Move?'}
+              {isAr ? 'قولنا عايز إيه وإحنا ندوّرلك' : 'Tell us what you need and we will look for it'}
             </h2>
             <p className="vip-cta-sub">
               {isAr 
-                ? 'فريقنا الاستشاري برئاسة د. محمود الباز مستعد لمراجعة طلبك ومطابقته فورياً مع أفضل الفرص المسجلة والمرخصة.' 
-                : 'Our certified advisors are ready to evaluate your portfolio and match you with prime off-market deals.'}
+                ? `ابعتلنا طلبك، وفريق ${cms.founderName_ar || 'د. محمود الباز'} هيدوّرلك على العقارات المعروضة عندنا اللي تناسبه.`
+                : 'Send your request and our team will match it with the properties we have.'}
             </p>
           </div>
 
           <div className="vip-cta-btns">
             <Link to="/properties" className="btn-vip-primary">
-              <span>{isAr ? 'تصفح العقارات المعتمدة' : 'Explore Verified Properties'}</span>
+              <span>{isAr ? 'تصفح العقارات' : 'Browse properties'}</span>
               {isAr ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
             </Link>
             <Link to="/special-requests" className="btn-vip-secondary">
               <Sparkles size={15} className="text-gold" />
-              <span>{isAr ? 'طلب عقار خاص VIP' : 'Submit Bespoke Request'}</span>
+              <span>{isAr ? 'اطلب عقار بمواصفاتك' : 'Request a property'}</span>
             </Link>
           </div>
         </div>
