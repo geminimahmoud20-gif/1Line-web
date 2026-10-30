@@ -5,6 +5,7 @@ import { injectJsonLdSchema } from '../../utils/seoHelper';
 import { CONTACT, SERVICE_AREAS } from '../../config/siteConfig';
 import { useSiteSettings } from '../../utils/siteSettings';
 import { getDynamicPhone, getWhatsAppUrl } from '../../utils/founderCmsData';
+import { readablePhone } from '../../utils/phoneDisplay';
 
 export default function FaqSection({ lang = 'ar' }) {
   const isAr = lang === 'ar';
@@ -21,7 +22,7 @@ export default function FaqSection({ lang = 'ar' }) {
     { id: 'all', label: isAr ? 'جميع الأسئلة' : 'All Questions' },
     { id: 'services', label: isAr ? 'الخدمات والمناطق' : 'Services & Areas' },
     { id: 'valuation', label: isAr ? 'التقييم والتسعير' : 'Valuation' },
-    { id: 'legal', label: isAr ? 'الفحص والضمان' : 'Legal Due Diligence' },
+    { id: 'legal', label: isAr ? 'المراجعة القانونية' : 'Legal review' },
     { id: 'expats', label: isAr ? 'المغتربون والرسوم' : 'Expats & Fees' },
   ], [isAr]);
 
@@ -43,14 +44,14 @@ export default function FaqSection({ lang = 'ar' }) {
       id: 'services-overview',
       category: 'services',
       icon: Building2,
-      question: isAr ? 'ما الخدمات التي تقدمها 1Line Solutions؟' : 'What services does 1Line Solutions offer?',
+      question: isAr ? 'ما الخدمات التي تقدمها 1Line؟' : 'What services does 1Line offer?',
       answer: isAr
-        ? 'ون لاين (1Line Solutions) شركة وساطة واستشارات عقارية متخصصة في الأصول عالية القيمة: بيع وشراء الأراضي والشقق والفيلات والمحلات والمكاتب، التقييم السعري الهندسي المعتمد، مراجعة مستندات الملكية والتراخيص قبل التعاقد، المكتب الخاص للصفقات غير المعلنة (Off-Market)، وإدارة متكاملة لطلبات المغتربين.'
-        : '1Line Solutions is a premier real estate brokerage and advisory firm for high-value assets: land, residential, luxury villas, commercial shops, certified engineering valuation, title review, discreet Off-Market deals, and remote expat services.',
-      highlight: isAr ? 'وساطة مؤسسية مرخصة • استشارات صفقات كبرى' : 'Licensed Advisory • High-Value Transactions',
+        ? '1Line شركة وساطة واستشارات عقارية: بيع وشراء الأراضي والشقق والفيلات والمحلات والمكاتب، تقييم سعر العقار بمقارنات من السوق، مراجعة مستندات الملكية والتراخيص مع المستشار القانوني قبل التعاقد، المكتب الخاص للصفقات غير المعلنة، وخدمة كاملة للمصريين في الخارج.'
+        : '1Line is a real estate brokerage and advisory firm: land, flats, villas, shops and offices, pricing from market comparables, title and permit review with our legal advisor before contracts, a private office for unlisted deals, and a full service for Egyptians abroad.',
+      highlight: isAr ? 'بيع • شراء • تقييم • مراجعة قانونية' : 'Sell • buy • value • legal review',
       action: {
         to: '/properties',
-        label: isAr ? 'تصفح المشروعات والفرص' : 'Browse Properties'
+        label: isAr ? 'تصفح العقارات' : 'Browse properties'
       }
     },
     {
@@ -73,9 +74,9 @@ export default function FaqSection({ lang = 'ar' }) {
       icon: Calculator,
       question: isAr ? 'كيف أعرف سعر السوق العادل لعقاري؟' : 'How do I determine the fair market price of my property?',
       answer: isAr
-        ? 'يمكنك استخدام خوارزمية التقييم في صفحة «قيّم عقارك» لتحصل على نطاق سعري استرشادي دقيق خلال دقيقتين. بعد ذلك يعاين مستشار التقييم العقار ميدانياً ويقارنه بعروض وصفقات حقيقية نُفذت في نفس الشارع لتقديم تقرير تقييم هندسي واستراتيجية تسعير تحميك من الركود أو البيع بأقل من القيمة.'
-        : 'Use our smart valuation engine on the "Valuation" page for an immediate indicative estimate. A valuation advisor then inspects the site and benchmarks with verified closed deals in the same street to formulate a precise market report.',
-      highlight: isAr ? 'تقييم فوري بالذكاء الاصطناعي + معاينة ميدانية' : 'Instant AI estimate + On-site inspection',
+        ? 'ابدأ بصفحة «قيّم عقارك» وهتاخد نطاق سعر استرشادي في دقيقتين. بعدها مستشار التقييم بيعاين العقار على الطبيعة ويقارنه بعروض وصفقات حقيقية في نفس المنطقة، ويقولك على سعر عرض مناسب يحميك من البيع بأقل أو الركود.'
+        : 'Start with the "Valuation" page for an indicative range in two minutes. A valuation advisor then inspects the property and compares it with real listings and deals in the same area to suggest an asking price.',
+      highlight: isAr ? 'نطاق سعر استرشادي + معاينة على الطبيعة' : 'Indicative range + on-site inspection',
       action: {
         to: '/valuation',
         label: isAr ? 'احسب القيمة العادلة الآن مجاناً' : 'Calculate Fair Value Now'
@@ -87,8 +88,8 @@ export default function FaqSection({ lang = 'ar' }) {
       icon: ShieldCheck,
       question: isAr ? 'هل تراجعون المستندات القانونية قبل البيع أو الشراء؟' : 'Do you review legal documents before listing or purchase?',
       answer: isAr
-        ? 'نعم، بكل حسم. نراجع تسلسل الملكية وتراخيص البناء وسريان وصحة التوكيلات قبل عرض أي عقار، ونسلم المشتري والبائع ملخص التدقيق القانوني قبل إبرام أي تعاقد للمساعدة في كشف النزاعات أو المخالفات، مع تشجيع الطرفين دائماً على الاستعانة بمحاميهم الخاص.'
-        : 'Yes, rigorously. We examine chain of title, building permits, and power of attorney validity before listing, delivering a comprehensive legal review summary before contracts to help both parties spot disputes early. We always encourage both sides to use their own lawyer.',
+        ? 'أيوه. بنراجع مع المستشار القانوني تسلسل الملكية وتراخيص البناء وسريان التوكيلات قبل ما نعرض العقار، ونسلم المشتري والبائع ملخص التدقيق القانوني قبل إبرام أي تعاقد للمساعدة في كشف النزاعات أو المخالفات، مع تشجيع الطرفين دائماً على الاستعانة بمحاميهم الخاص.'
+        : 'Yes. With our legal advisor we examine chain of title, building permits, and power of attorney validity before listing, delivering a comprehensive legal review summary before contracts to help both parties spot disputes early. We always encourage both sides to use their own lawyer.',
       highlight: isAr ? 'مراجعة تسلسل الملكية والتراخيص قبل العرض' : 'Title & permit review before listing',
       action: {
         isWhatsApp: true,
@@ -128,9 +129,9 @@ export default function FaqSection({ lang = 'ar' }) {
       icon: PhoneCall,
       question: isAr ? 'كيف يمكنني التواصل مع فريق 1Line؟' : 'How do I get in touch with 1Line team?',
       answer: isAr
-        ? `يمكنك الاتصال هاتفياً أو عبر واتساب مباشرة على مدار اليوم على رقم ${phone}. كما نرحب بزيارتك لمقرنا الرئيسي في (${CONTACT.address_ar}) خلال مواعيد العمل الرسمية (${contact.hours_ar})، أو مراسلتنا على ${contact.email}.`
-        : `Reach us via phone or WhatsApp 7 days a week at ${phone}. You are also welcome at our flagship office (${CONTACT.address_en}) during operating hours (${contact.hours_en}), or email ${contact.email}.`,
-      highlight: isAr ? 'استجابة سريعة هاتفياً وعبر واتساب' : 'Direct Phone & WhatsApp Hotline',
+        ? `اتصل بينا أو ابعت واتساب على ${readablePhone(phone)} في مواعيد العمل (${contact.hours_ar}). ونرحب بزيارتك في مقرنا (${CONTACT.address_ar})، أو راسلنا على ${contact.email}.`
+        : `Call or WhatsApp ${readablePhone(phone)} during working hours (${contact.hours_en}). You are welcome at our office (${CONTACT.address_en}), or email ${contact.email}.`,
+      highlight: isAr ? 'تليفون وواتساب في مواعيد العمل' : 'Phone & WhatsApp during working hours',
       action: {
         isCall: true,
         label: isAr ? 'اتصل الآن بالرقم المباشر' : 'Call Direct Hotline'
@@ -330,9 +331,9 @@ export default function FaqSection({ lang = 'ar' }) {
               <div className="lx-concierge-icon-wrap" aria-hidden="true">
                 <MessageSquare size={20} strokeWidth={2} />
               </div>
+              {/* No "online now": nobody can promise that at 3 in the morning */}
               <div className="lx-concierge-status">
-                <span className="lx-live-dot" />
-                <span>{isAr ? 'مستشار الصفقات متصل الآن' : 'Advisor Online'}</span>
+                <span>{isAr ? 'بنرد في مواعيد العمل' : 'We reply during working hours'}</span>
               </div>
             </div>
 
@@ -342,7 +343,7 @@ export default function FaqSection({ lang = 'ar' }) {
             
             <p className="lx-concierge-desc">
               {isAr 
-                ? 'فريق إدارة الأصول والاستشارات العقارية بسوهاج والقاهرة جاهز لمناقشة تسعير عقارك، فحص المستندات، أو ترتيب معاينة مباشرة.'
+                ? 'كلمنا عن تسعير عقارك، أو مراجعة المستندات، أو ترتيب معاينة.'
                 : 'Our asset advisory team is ready to discuss property valuation, title audit, or arrange a private consultation.'}
             </p>
 
@@ -363,18 +364,18 @@ export default function FaqSection({ lang = 'ar' }) {
               >
                 <PhoneCall size={16} strokeWidth={2} />
                 <span>{isAr ? 'اتصال هاتفي مباشر' : 'Call Direct Line'}</span>
-                <bdi className="lx-concierge-phone-num">{phone}</bdi>
+                <bdi className="lx-concierge-phone-num" dir="ltr">{readablePhone(phone)}</bdi>
               </a>
             </div>
 
             <div className="lx-concierge-trust-points">
               <div className="lx-trust-point">
                 <ShieldCheck size={15} strokeWidth={2.2} />
-                <span>{isAr ? 'سرية تامة لبيانات العميل والصفقة' : '100% Client & Deal Discretion'}</span>
+                <span>{isAr ? 'بياناتك وتفاصيل صفقتك مش بتتشارك مع حد' : 'Your details and deal stay private'}</span>
               </div>
               <div className="lx-trust-point">
                 <Clock size={15} strokeWidth={2.2} />
-                <span>{isAr ? 'طوال أيام الأسبوع: 9ص - 10م' : 'Hours: 7 days a week, 9am - 10pm'}</span>
+                <span>{isAr ? contact.hours_ar : contact.hours_en}</span>
               </div>
               <div className="lx-trust-point">
                 <FileCheck2 size={15} strokeWidth={2.2} />

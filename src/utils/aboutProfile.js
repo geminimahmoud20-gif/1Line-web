@@ -9,7 +9,6 @@ export const ABOUT_SECTIONS = [
   { id: 'team', ar: 'فريق العمل والشركاء', en: 'Team & partners' },
   { id: 'gallery', ar: 'صور الشركة', en: 'Company photos' },
   { id: 'standards', ar: 'معايير العمل', en: 'Standards' },
-  { id: 'pillars', ar: 'الرؤية والقيم', en: 'Vision & values' },
   { id: 'hq', ar: 'المقر والتواصل', en: 'Office & contact' },
   { id: 'faq', ar: 'الأسئلة الشائعة', en: 'FAQ' },
   { id: 'cta', ar: 'دعوة التواصل في الآخر', en: 'Closing call to action' }

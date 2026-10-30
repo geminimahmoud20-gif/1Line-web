@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { readablePhone } from '../../utils/phoneDisplay';
 import { 
   MapPin, 
   Phone, 
@@ -20,12 +21,6 @@ import {
   getPhoneCallUrl, 
   cleanPhoneNumber 
 } from '../../utils/founderCmsData';
-
-// +201223222956 → +20 122 322 2956: easier to read and to dial from the screen
-const readablePhone = (num) => {
-  const d = String(num || '').replace(/\D/g, '');
-  return d.startsWith('20') && d.length === 12 ? `+20 ${d.slice(2, 5)} ${d.slice(5, 8)} ${d.slice(8)}` : num;
-};
 
 export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
   const isAr = lang === 'ar';
