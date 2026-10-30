@@ -5,6 +5,7 @@ import { PhoneInputField } from '../PhoneInputField';
 import { trackEvent } from '../../utils/visitorTracker';
 import { checkFormSpamProtection, isValidPhoneNumber } from '../../utils/securityShield';
 import SubmissionSuccess from '../common/SubmissionSuccess';
+import { nameProblem, phoneProblem } from '../../utils/contactValidation';
 
 /**
  * Reservation request (no online payment).
@@ -63,14 +64,15 @@ export default function DepositModal({
     }
     const trimmedName = form.name.trim();
     const trimmedPhone = form.phone.trim();
-    if (!trimmedName || !trimmedPhone) {
-      triggerToast?.(isAr ? 'يرجى إدخال الاسم ورقم الهاتف' : 'Please enter your name and phone', 'error');
+    const nameErr = nameProblem(trimmedName, isAr);
+    if (nameErr || !trimmedPhone) {
+      triggerToast?.(nameErr || (isAr ? 'اكتب رقم الموبايل' : 'Enter your mobile number'), 'error');
       return;
     }
 
     const fullPhone = trimmedPhone.startsWith('+') ? trimmedPhone : `${phoneCountry}${trimmedPhone.replace(/^0+/, '')}`;
     if (!isValidPhoneNumber(fullPhone)) {
-      triggerToast?.(isAr ? 'رقم الهاتف غير صالح، يرجى كتابة رقم صحيح' : 'Invalid phone number format', 'error');
+      triggerToast?.(phoneProblem(fullPhone, null, isAr), 'error');
       return;
     }
 

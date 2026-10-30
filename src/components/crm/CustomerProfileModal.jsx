@@ -13,6 +13,7 @@ import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 import VisitorJourney from './analytics/VisitorJourney';
 import LeadScorePill from './LeadScorePill';
 import { useConfirm } from '../ui';
+import { phoneProblem } from '../../utils/contactValidation';
 
 export default function CustomerProfileModal({
   isOpen,
@@ -146,12 +147,12 @@ export default function CustomerProfileModal({
     }
 
     if (formData.phone && !isValidPhoneNumber(formData.phone)) {
-      if (triggerToast) triggerToast(isAr ? 'رقم الهاتف الأساسي غير صحيح — يرجى كتابة رقم مصري 01xxxxxxxxx أو رقم دولي يبدأ بـ +' : 'Invalid primary phone format', 'error');
+      if (triggerToast) triggerToast(`${isAr ? 'الرقم الأساسي' : 'Primary phone'}: ${phoneProblem(formData.phone, null, isAr)}`, 'error');
       return;
     }
 
     if (whatsappTrimmed && !isValidPhoneNumber(whatsappTrimmed)) {
-      if (triggerToast) triggerToast(isAr ? 'رقم الواتساب غير صحيح — يرجى كتابة رقم مصري 01xxxxxxxxx أو رقم دولي يبدأ بـ +' : 'Invalid WhatsApp number format', 'error');
+      if (triggerToast) triggerToast(`${isAr ? 'الواتساب' : 'WhatsApp'}: ${phoneProblem(whatsappTrimmed, null, isAr)}`, 'error');
       return;
     }
 

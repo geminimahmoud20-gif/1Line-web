@@ -11,8 +11,12 @@ const AUTH = 'http://127.0.0.1:9099';
 const OWNER = { Authorization: 'Bearer owner' }; // emulator admin access, bypasses rules
 
 const MANAGER = { email: 'manager@journey.test', password: 'journey-pass-1234' };
-const LEAD_NAME = `عميل اختبار ${Date.now().toString(36)}`;
-const PHONE = '01012345678';
+// A real-looking first and family name (the forms refuse test words and digits in names): the
+// family name is the run time spelled in Arabic letters, so each run finds its own lead
+const LETTERS = 'ابتثجحخدذرزسشصضطظعغفقكلمنهوي';
+const runTag = Date.now().toString(28).split('').map((c) => LETTERS[parseInt(c, 28)]).join('').replace(/(.)\1\1+/g, '$1$1');
+const LEAD_NAME = `زينب ${runTag}`;
+const PHONE = '01097531864'; // the forms refuse placeholder numbers like 01012345678
 
 const field = (doc, name) => {
   const v = doc.fields?.[name];
@@ -77,7 +81,7 @@ describe('Lead journey: public form → Firestore → CRM', () => {
       for (const f of ['phone', 'whatsapp', 'email']) expect(lead.fields, `lead.${f}`).not.to.have.property(f);
       expect(field(lead, 'assignedTo'), 'routed to a desk').to.be.a('string').and.not.be.empty;
       cy.request({ url: `${FS}/lead_contacts/${id}`, headers: OWNER }).then(({ body: contact }) => {
-        expect(String(field(contact, 'phone') || field(contact, 'whatsapp'))).to.contain('1012345678');
+        expect(String(field(contact, 'phone') || field(contact, 'whatsapp'))).to.contain(PHONE.slice(1));
         expect(field(contact, 'assignedTo')).to.eq(field(lead, 'assignedTo'));
       });
     });

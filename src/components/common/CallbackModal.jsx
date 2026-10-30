@@ -4,6 +4,7 @@ import { checkFormSpamProtection } from '../../utils/securityShield';
 import { getAreas } from '../../utils/areasData';
 import PhoneInputField from '../PhoneInputField';
 import AreaOptions from './AreaOptions';
+import { nameProblem, phoneProblem } from '../../utils/contactValidation';
 
 export default function CallbackModal({ isOpen, onClose, lang = 'ar', onSubmitCallback, triggerToast }) {
   const [form, setForm] = useState({
@@ -64,14 +65,16 @@ export default function CallbackModal({ isOpen, onClose, lang = 'ar', onSubmitCa
       return;
     }
 
-    if (!form.name || !form.name.trim()) {
-      triggerToast(isAr ? 'الاسم بالكامل إلزامي' : 'Full name is required', 'error');
+    const nameErr = nameProblem(form.name, isAr);
+    if (nameErr) {
+      triggerToast(nameErr, 'error');
       return;
     }
 
     const cleanPhone = (form.phone || form.whatsapp || '').trim().replace(/[\s\-()]/g, '');
-    if (!cleanPhone || cleanPhone.length < 8) {
-      setPhoneError(isAr ? 'يرجى إدخال رقم هاتف صحيح للتواصل' : 'Valid phone number is required');
+    const phoneErr = phoneProblem(cleanPhone, country, isAr);
+    if (phoneErr) {
+      setPhoneError(phoneErr);
       return;
     }
 

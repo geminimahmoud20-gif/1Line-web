@@ -14,6 +14,7 @@ import { PROPERTY_TYPES, CAIRO_AREAS, FALLBACK_M2, FINISHING, LEGAL_DOCS, SPEC_F
 import SellPhotoSlots from './sell/SellPhotoSlots';
 import './sell/sell-wizard.css';
 import AreaOptions from './common/AreaOptions';
+import { nameProblem, phoneProblem } from '../utils/contactValidation';
 
 const STEPS = [
   { ar: 'العقار والعنوان', en: 'Property & address' },
@@ -146,9 +147,10 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
     const phone = splitPhone(a.phone, phoneCountry);
     const wa = sameAsPhone ? splitPhone(a.phone, phoneCountry) : splitPhone(a.whatsapp, waCountry);
     const fits = (country, local) => SUPPORTED_COUNTRIES.find((c) => c.code === country)?.regex.test(local) ?? true;
-    if (String(a.name || '').trim().length < 2) errs.name = L('اكتب اسمك', 'Enter your name');
-    if (!phone.local || !fits(phoneCountry, phone.local)) errs.phone = L('رقم الموبايل مش مظبوط', 'Check the phone number');
-    if (!sameAsPhone && (!wa.local || !fits(waCountry, wa.local))) errs.whatsapp = L('رقم الواتساب مش مظبوط', 'Check the WhatsApp number');
+    const nameErr = nameProblem(a.name, isAr);
+    if (nameErr) errs.name = nameErr;
+    if (!phone.local || !fits(phoneCountry, phone.local)) errs.phone = phoneProblem(phone.local, phoneCountry, isAr) || L('رقم الموبايل مش مظبوط', 'Check the phone number');
+    if (!sameAsPhone && (!wa.local || !fits(waCountry, wa.local))) errs.whatsapp = phoneProblem(wa.local, waCountry, isAr) || L('رقم الواتساب مش مظبوط', 'Check the WhatsApp number');
     setErrors(errs);
     if (Object.keys(errs).length) return;
 

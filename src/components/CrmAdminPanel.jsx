@@ -44,6 +44,7 @@ import { useProperties } from '../context/PropertiesContext';
 import { areaFamily } from '../utils/areaLookup';
 import { getAreas } from '../utils/areasData';
 import { useConfirm } from './ui';
+import { phoneProblem } from '../utils/contactValidation';
 
 export const CrmAdminPanel = ({
   lang = 'ar',
@@ -554,12 +555,12 @@ export const CrmAdminPanel = ({
     }
 
     if (leadFormData.phone && !isValidPhoneNumber(leadFormData.phone)) {
-      triggerToast(isAr ? 'رقم الهاتف الأساسي غير صحيح — يرجى كتابة رقم مصري (01xxxxxxxxx) أو رقم دولي يبدأ بـ +' : 'Invalid phone number format', 'error');
+      triggerToast(`${isAr ? 'الرقم الأساسي' : 'Primary phone'}: ${phoneProblem(leadFormData.phone, null, isAr)}`, 'error');
       return;
     }
 
     if (cleanWhatsapp && !isValidPhoneNumber(cleanWhatsapp)) {
-      triggerToast(isAr ? 'رقم الواتساب غير صحيح — يرجى كتابة رقم مصري (01xxxxxxxxx) أو رقم دولي يبدأ بـ +' : 'Invalid WhatsApp number format', 'error');
+      triggerToast(`${isAr ? 'الواتساب' : 'WhatsApp'}: ${phoneProblem(cleanWhatsapp, null, isAr)}`, 'error');
       return;
     }
 

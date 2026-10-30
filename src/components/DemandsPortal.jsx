@@ -13,6 +13,7 @@ import '../styles/expat-suite.css';
 import { recordTimeLabel } from '../utils/relativeTime';
 import AreaOptions from './common/AreaOptions';
 import { siteLink } from '../config/siteConfig';
+import { contactProblem } from '../utils/contactValidation';
 
 export const DemandsPortal = ({
   lang,
@@ -181,8 +182,9 @@ export const DemandsPortal = ({
     const trimmedName = referralForm.name.trim();
     const trimmedPhone = referralForm.phone.trim();
 
-    if (!trimmedName || !trimmedPhone) {
-      triggerToast?.(isAr ? 'يرجى كتابة اسمك ورقم الهاتف للتواصل' : 'Name and phone are required', 'error');
+    const problem = contactProblem({ name: trimmedName, phone: trimmedPhone }, isAr);
+    if (problem) {
+      triggerToast?.(problem, 'error');
       return;
     }
 

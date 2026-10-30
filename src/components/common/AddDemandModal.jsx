@@ -5,6 +5,7 @@ import { SUPPORTED_COUNTRIES } from '../../utils/phoneCountries';
 import { getAreas } from '../../utils/areasData';
 import { checkFormSpamProtection } from '../../utils/securityShield';
 import AreaOptions from './AreaOptions';
+import { nameProblem } from '../../utils/contactValidation';
 
 const PROP_TYPE_OPTIONS = [
   { value: 'apartment', label_ar: 'شقة سكنية', label_en: 'Apartment' },
@@ -73,8 +74,9 @@ export default function AddDemandModal({
     }
 
     // Validation of mandatory fields: Name, WhatsApp, Property Type, Area
-    if (!formData.name.trim()) {
-      triggerToast?.(isAr ? 'يرجى إدخال اسمك الكريم (إلزامي)' : 'Full Name is required', 'error');
+    const nameErr = nameProblem(formData.name, isAr);
+    if (nameErr) {
+      triggerToast?.(nameErr, 'error');
       return;
     }
 
