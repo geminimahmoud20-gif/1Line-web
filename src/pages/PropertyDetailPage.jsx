@@ -38,6 +38,7 @@ import PropertyOverviewTab from '../components/properties/detail/PropertyOvervie
 import { paymentTerms, hasInstallmentPlan, termLabel } from '../utils/paymentTerms';
 import { similarListings } from '../utils/similarListings';
 import { CONTACT, OFFICE_HOURS, VIEWING_SLOTS } from '../config/siteConfig';
+import { nameProblem, phoneProblem } from '../utils/contactValidation';
 
 const FACT_ICONS = { size: Maximize2, rooms: BedDouble, baths: Bath, floor: Layers, finishing: Sparkles, handover: Clock3 };
 
@@ -278,14 +279,17 @@ export default function PropertyDetailPage({
       return;
     }
 
-    if (!bookingForm.name || bookingForm.name.trim().length < 2) {
-      triggerToast(isAr ? 'الرجاء إدخال اسمك (إلزامي)' : 'Please enter your name', 'error');
+    const nameErr = nameProblem(bookingForm.name, isAr);
+    if (nameErr) {
+      triggerToast(nameErr, 'error');
       return;
     }
 
     const fullPhone = normalizeBookingPhone(bookingForm.phone);
-    if (!fullPhone) {
-      setPhoneError(isAr ? 'اكتب رقم واتساب صحيح: 01XXXXXXXXX أو رقم دولي يبدأ بـ +' : 'Enter a valid WhatsApp number: 01XXXXXXXXX or an international number starting with +');
+    // Egyptian and Gulf mobiles only, not placeholder numbers
+    const bookingPhoneErr = fullPhone ? phoneProblem(fullPhone, null, isAr) : phoneProblem(bookingForm.phone, null, isAr);
+    if (!fullPhone || bookingPhoneErr) {
+      setPhoneError(bookingPhoneErr || phoneProblem('', null, isAr));
       return;
     }
     setPhoneError('');

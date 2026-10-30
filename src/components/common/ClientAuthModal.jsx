@@ -5,6 +5,7 @@ import PhoneInputField from '../PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../../utils/phoneCountries';
 import { readAccounts } from '../../utils/clientAccounts';
 import '../../styles/client-auth-modes.css';
+import { nameProblem, phoneProblem, emailProblem } from '../../utils/contactValidation';
 
 export default function ClientAuthModal({ lang = 'ar' }) {
   const isAr = lang === 'ar';
@@ -95,15 +96,16 @@ export default function ClientAuthModal({ lang = 'ar' }) {
     const cleanPhone = (formData.whatsapp || '').trim().replace(/[^0-9]/g, '');
 
     // 1. Strict Name Check
-    if (!cleanName || cleanName.length < 3) {
-      setErrorMsg(isAr ? 'يرجى إدخال اسم صحيح لا يقل عن 3 أحرف' : 'Please enter a valid full name (at least 3 characters)');
+    const nameErr = nameProblem(cleanName, isAr);
+    if (nameErr) {
+      setErrorMsg(nameErr);
       return;
     }
 
     // 2. Strict Email Check
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!cleanEmail || !emailRegex.test(cleanEmail)) {
-      setErrorMsg(isAr ? 'يرجى إدخال بريد إلكتروني صحيح (مثال: name@domain.com)' : 'Please enter a valid email address');
+    const emailErr = emailProblem(cleanEmail, isAr, { required: true });
+    if (emailErr) {
+      setErrorMsg(emailErr);
       return;
     }
 
@@ -115,9 +117,7 @@ export default function ClientAuthModal({ lang = 'ar' }) {
     }
 
     if (countryObj?.regex && !countryObj.regex.test(cleanPhone)) {
-      const err = isAr 
-        ? `رقم الواتساب غير متوافق مع صيغة دولة ${countryObj.name} (${countryObj.placeholder})` 
-        : `Invalid phone format for ${countryObj.name} (${countryObj.placeholder})`;
+      const err = phoneProblem(cleanPhone, countryObj.code, isAr);
       setPhoneError(err);
       setErrorMsg(err);
       return;

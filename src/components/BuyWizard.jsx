@@ -23,6 +23,7 @@ import { getAreas } from '../utils/areasData';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
 import SubmissionSuccess from './common/SubmissionSuccess';
 import AreaOptions from './common/AreaOptions';
+import { nameProblem, phoneProblem } from '../utils/contactValidation';
 
 export const BuyWizard = ({ 
   lang = 'ar', 
@@ -51,6 +52,12 @@ export const BuyWizard = ({
   const validateAndSubmit = async (e) => {
     e.preventDefault();
 
+    const nameErr = nameProblem(buyerAnswers.name, isAr);
+    if (nameErr) {
+      setPhoneError(nameErr);
+      return;
+    }
+
     const cleanPhone = (buyerAnswers.phone || '').trim().replace(/[\s\-()]/g, '');
     const cleanWhatsapp = (buyerAnswers.whatsapp || '').trim().replace(/[\s\-()]/g, '');
 
@@ -68,12 +75,12 @@ export const BuyWizard = ({
     const isWhatsappValid = whatsappCountryObj ? whatsappCountryObj.regex.test(cleanWhatsapp) : true;
 
     if (!isPhoneValid) {
-      setPhoneError(isAr ? 'رقم الهاتف غير متوافق مع صيغة الدولة المحددة' : 'Phone number does not match country format');
+      setPhoneError(phoneProblem(cleanPhone, buyerCountry, isAr));
       return;
     }
     
     if (!isWhatsappValid) {
-      setWhatsappError(isAr ? 'رقم الواتساب غير متوافق مع صيغة الدولة المحددة' : 'WhatsApp number does not match country format');
+      setWhatsappError(phoneProblem(cleanWhatsapp, whatsappCountry, isAr));
       return;
     }
 

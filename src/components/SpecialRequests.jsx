@@ -16,6 +16,7 @@ import { getAreas } from '../utils/areasData';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
 import { checkFormSpamProtection } from '../utils/securityShield';
 import AreaOptions from './common/AreaOptions';
+import { nameProblem, phoneProblem } from '../utils/contactValidation';
 
 export const SpecialRequests = ({
   lang = 'ar',
@@ -74,8 +75,9 @@ export const SpecialRequests = ({
       return;
     }
 
-    if (!form.name || !form.name.trim()) {
-      triggerToast?.(isAr ? 'يرجى إدخال اسمك الكريم (إلزامي)' : 'Please enter your name', 'error');
+    const nameErr = nameProblem(form.name, isAr);
+    if (nameErr) {
+      triggerToast?.(nameErr, 'error');
       return;
     }
 
@@ -108,12 +110,12 @@ export const SpecialRequests = ({
     const isWhatsappValid = whatsappCountryObj ? whatsappCountryObj.regex.test(form.whatsapp.trim()) : true;
 
     if (!isPhoneValid) {
-      setPhoneError(isAr ? 'رقم الهاتف غير متوافق مع صيغة الدولة المحددة' : 'Phone number does not match country format');
+      setPhoneError(phoneProblem(form.phone.trim(), phoneCountry, isAr));
       return;
     }
     
     if (!isWhatsappValid) {
-      setWhatsappError(isAr ? 'رقم الواتساب غير متوافق مع صيغة الدولة المحددة' : 'WhatsApp number does not match country format');
+      setWhatsappError(phoneProblem(form.whatsapp.trim(), whatsappCountry, isAr));
       return;
     }
 

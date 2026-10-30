@@ -17,6 +17,7 @@ import { getAreas } from '../../utils/areasData';
 import { areaNameOf } from '../../utils/areaLookup';
 import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import AreaOptions from './AreaOptions';
+import { nameProblem, phoneProblem } from '../../utils/contactValidation';
 
 export default function QuickPortalLeadCard({
   portalType = 'buy',
@@ -77,8 +78,9 @@ export default function QuickPortalLeadCard({
     setPhoneError('');
 
     const cleanName = name.trim();
-    if (!cleanName) {
-      if (triggerToast) triggerToast(isAr ? 'الرجاء إدخال الاسم بالكامل' : 'Please enter full name', 'warning');
+    const nameErr = nameProblem(cleanName, isAr);
+    if (nameErr) {
+      if (triggerToast) triggerToast(nameErr, 'warning');
       return;
     }
 
@@ -90,7 +92,7 @@ export default function QuickPortalLeadCard({
 
     const countryObj = SUPPORTED_COUNTRIES.find(c => c.code === whatsappCountry);
     if (countryObj && !countryObj.regex.test(cleanWa)) {
-      setPhoneError(isAr ? 'رقم الواتساب غير متوافق مع صيغة الدولة المختارة' : 'Invalid WhatsApp format');
+      setPhoneError(phoneProblem(cleanWa, whatsappCountry, isAr));
       return;
     }
 

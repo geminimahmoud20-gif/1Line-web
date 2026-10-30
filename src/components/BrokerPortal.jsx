@@ -7,6 +7,7 @@ import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { getAreas } from '../utils/areasData';
 import { PROPERTY_TYPES } from '../data/propertiesData';
 import AreaOptions from './common/AreaOptions';
+import { nameProblem, phoneProblem } from '../utils/contactValidation';
 
 // What a broker gets from the network. Deliberately no rates or amounts: fees are agreed per deal in writing.
 const BROKER_PERKS = [
@@ -50,7 +51,9 @@ export const BrokerPortal = ({
     const cleanPhone = (brokerForm.phone || '').trim().replace(/[\s\-()]/g, '');
     const cleanWhatsapp = (brokerForm.whatsapp || '').trim().replace(/[\s\-()]/g, '');
 
-    if (!brokerForm.name || !brokerForm.name.trim()) {
+    const nameErr = nameProblem(brokerForm.name, isAr);
+    if (nameErr) {
+      setWhatsappError(nameErr);
       return;
     }
 
@@ -66,12 +69,12 @@ export const BrokerPortal = ({
     const isWhatsappValid = whatsappCountryObj ? whatsappCountryObj.regex.test(cleanWhatsapp) : true;
 
     if (!isPhoneValid) {
-      setPhoneError(isAr ? 'رقم الهاتف غير متوافق مع صيغة الدولة المحددة' : 'Phone number does not match country format');
+      setPhoneError(phoneProblem(cleanPhone, phoneCountry, isAr));
       return;
     }
     
     if (!isWhatsappValid) {
-      setWhatsappError(isAr ? 'رقم الواتساب غير متوافق مع صيغة الدولة المحددة' : 'WhatsApp number does not match country format');
+      setWhatsappError(phoneProblem(cleanWhatsapp, whatsappCountry, isAr));
       return;
     }
 

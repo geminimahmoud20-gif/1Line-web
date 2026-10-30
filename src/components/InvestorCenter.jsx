@@ -5,6 +5,7 @@ import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { getAreas } from '../utils/areasData';
 import useClientDownload from '../hooks/useClientDownload';
 import AreaOptions from './common/AreaOptions';
+import { contactProblem } from '../utils/contactValidation';
 
 // Dynamic ROI Yields based on property type in Sohag
 const YIELD_RATES = {
@@ -76,7 +77,9 @@ export const InvestorCenter = ({
     const cleanPhone = (investorForm.phone || '').trim().replace(/[\s\-()]/g, '');
     const cleanWhatsapp = (investorForm.whatsapp || '').trim().replace(/[\s\-()]/g, '');
 
-    if (!investorForm.name || !investorForm.name.trim()) {
+    const problem = contactProblem({ name: investorForm.name, phone: cleanPhone, phoneCountry, phoneOptional: true, whatsapp: cleanWhatsapp, whatsappCountry }, isAr);
+    if (problem) {
+      triggerToast?.(problem, 'error');
       return;
     }
 

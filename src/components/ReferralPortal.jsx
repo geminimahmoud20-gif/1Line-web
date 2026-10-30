@@ -4,6 +4,7 @@ import {
 } from 'lucide-react';
 import PhoneInputField from './PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
+import { contactProblem } from '../utils/contactValidation';
 
 export const ReferralPortal = ({
   lang,
@@ -35,6 +36,12 @@ export const ReferralPortal = ({
     // Check referral phone format
     const referralCountryObj = SUPPORTED_COUNTRIES.find(c => c.code === referralCountry);
     const isReferralValid = referralCountryObj ? referralCountryObj.regex.test(referralForm.referralPhone) : true;
+
+    const isAr = lang === 'ar';
+    const referrerErr = contactProblem({ name: referralForm.referrerName, phone: referralForm.referrerPhone, phoneCountry: referrerCountry }, isAr);
+    if (referrerErr) { setReferrerError(referrerErr); return; }
+    const referralErr = contactProblem({ name: referralForm.referralName, phone: referralForm.referralPhone, phoneCountry: referralCountry }, isAr);
+    if (referralErr) { setReferralError(referralErr); return; }
 
     if (!isReferrerValid) {
       setReferrerError(lang === 'ar' ? 'رقم الهاتف غير متوافق مع صيغة الدولة المحددة' : 'Referrer phone number does not match country format');

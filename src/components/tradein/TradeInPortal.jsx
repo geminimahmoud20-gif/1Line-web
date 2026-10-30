@@ -9,6 +9,7 @@ import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import { checkFormSpamProtection } from '../../utils/securityShield';
 import { updatePageSeo, buildBreadcrumbSchema } from '../../utils/seoHelper';
 import '../../styles/expat-suite.css';
+import { nameProblem, phoneProblem } from '../../utils/contactValidation';
 
 const fmt = (n) => Math.round(Number(n) || 0).toLocaleString('en-US');
 const numOrEmpty = (v) => (v === '' ? '' : Math.max(0, Number(String(v).replace(/[^\d.]/g, '')) || 0));
@@ -65,9 +66,14 @@ export default function TradeInPortal({ lang = 'ar', properties = [], onCreateLe
       if (!Number(f.offerSize)) return L('اكتب مساحة عقارك', 'Enter your property size');
     }
     if (s === 3) {
-      if (cleanText(f.name, 100).length < 2) return L('اكتب اسمك', 'Enter your name');
+      const nameErr = nameProblem(cleanText(f.name, 100), isAr);
+      if (nameErr) return nameErr;
       const local = normalizeLocalPhone(f.phone);
       if (local.length < 6 || local.length > 13) return L('رقم الهاتف غير مكتمل', 'Phone number looks incomplete');
+      // Egyptian and Gulf mobiles only, not placeholder numbers
+      const tc = getCountry(f.countryId);
+      const phoneErr = phoneProblem(tc.editableCode ? `+${local}` : `${tc.code}${local.replace(/^0/, '')}`, null, isAr);
+      if (phoneErr) return phoneErr;
       if (f.diffMode !== 'even' && !Number(f.diffAmount)) return L('اكتب قيمة الفرق التقريبية أو اختر بدل رأس برأس', 'Enter the approximate difference or choose an even swap');
     }
     return '';

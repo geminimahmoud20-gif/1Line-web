@@ -7,6 +7,7 @@ import { EXPAT_COUNTRIES, getCountry, cleanText, normalizeLocalPhone, clockIn } 
 import '../../styles/expat-suite.css';
 import DayChips from '../common/DayChips';
 import { thumbUrl } from '../../utils/imageThumbs';
+import { nameProblem, phoneProblem } from '../../utils/contactValidation';
 
 const COVERAGE = [
   { id: 'live_call', icon: Video, ar: 'مكالمة فيديو حية على واتساب', en: 'Live WhatsApp video call', desc_ar: 'تمشي مع الاستشاري جوه الوحدة وتسأل وقت ما تحب', desc_en: 'Walk the unit with the advisor and ask anything' },
@@ -112,13 +113,17 @@ export default function RemoteInspectionModal({ property, isOpen, onClose, lang 
     if (!spam.allowed) { setError(isAr ? spam.message_ar : spam.message_en); return; }
 
     const cleanName = cleanText(name, 100);
-    if (cleanName.length < 2) { setError(isAr ? 'اكتب اسمك من فضلك' : 'Please enter your name'); return; }
+    const nameErr = nameProblem(cleanName, isAr);
+    if (nameErr) { setError(nameErr); return; }
 
     const local = normalizeLocalPhone(phone);
     const cc = dialCode.replace(/[^\d+]/g, '');
     if (!/^\+\d{1,4}$/.test(cc)) { setError(isAr ? 'اكتب كود الدولة، مثال: +44' : 'Enter a country code, e.g. +44'); return; }
     if (local.length < 6 || local.length > 13) { setError(isAr ? 'رقم الهاتف غير مكتمل' : 'Phone number looks incomplete'); return; }
     const fullPhone = `${cc}${local}`;
+    // Egyptian and Gulf mobiles only (owner's rule), not placeholder numbers
+    const phoneErr = phoneProblem(fullPhone, null, isAr);
+    if (phoneErr) { setError(phoneErr); return; }
 
     // Open WhatsApp inside the click so popup blockers allow it; storage continues in the background
     const waUrl = buildWhatsApp(fullPhone);

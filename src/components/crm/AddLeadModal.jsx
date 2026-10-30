@@ -7,6 +7,7 @@ import DeskOptions from './DeskOptions';
 import { DESK_BY_ROLE } from '../../utils/rbacRules';
 import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 import AreaOptions from '../common/AreaOptions';
+import { nameProblem, phoneProblem } from '../../utils/contactValidation';
 
 export default function AddLeadModal({
   isOpen,
@@ -80,8 +81,10 @@ export default function AddLeadModal({
     const nameTrimmed = formData.name.trim();
     const whatsappTrimmed = (formData.whatsapp || formData.phone || '').trim();
 
-    if (!nameTrimmed) {
-      if (triggerToast) triggerToast(isAr ? 'الرجاء إدخال اسم العميل بالكامل (إلزامي)!' : 'Full Name is required!', 'error');
+    // Same rule as the site's forms: first and family name, letters only
+    const nameErr = nameProblem(nameTrimmed, isAr);
+    if (nameErr) {
+      if (triggerToast) triggerToast(nameErr, 'error');
       return;
     }
 
@@ -96,7 +99,7 @@ export default function AddLeadModal({
       [formData.altPhone, isAr ? 'الرقم البديل' : 'Alternate phone']
     ].find(([value]) => value && value.trim() && !isValidPhoneNumber(value));
     if (badPhone) {
-      if (triggerToast) triggerToast(isAr ? `${badPhone[1]} غير صحيح — اكتب موبايل مصري (01xxxxxxxxx) أو رقماً دولياً يبدأ بـ +` : `${badPhone[1]} is invalid`, 'error');
+      if (triggerToast) triggerToast(`${badPhone[1]}: ${phoneProblem(badPhone[0], null, isAr)}`, 'error');
       return;
     }
 

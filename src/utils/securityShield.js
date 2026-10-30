@@ -1,4 +1,5 @@
 import DOMPurify from 'dompurify';
+import { phoneProblem } from './contactValidation.js';
 
 /**
  * 🛡️ ONELINE ENTERPRISE SECURITY SHIELD & CRYPTO SUITE 2026
@@ -172,17 +173,12 @@ export function normalizePhoneNumber(phone) {
 }
 
 /**
- * Egyptian mobile (010/011/012/015 + 8 digits) or an international number written
- * with + / 00 (Gulf expats, 8–15 digits per E.164). Accepts Arabic-Indic digits.
+ * Egyptian (010/011/012/015) or Gulf mobile that isn't a placeholder number; Arabic digits and
+ * +20 / 0020 / spaces are fine. The rule lives in utils/contactValidation.js (phoneProblem).
  */
 export function isValidPhoneNumber(phone) {
   if (!phone || typeof phone !== 'string') return false;
-  const raw = toLatinDigits(phone).trim();
-  if (/[^0-9+\s\-().]/.test(raw)) return false;
-  const local = normalizePhoneNumber(raw);
-  if (/^01[0125]\d{8}$/.test(local)) return true;
-  const intl = raw.replace(/[^0-9+]/g, '').replace(/^00/, '+');
-  return /^\+(?!20)[1-9]\d{7,14}$/.test(intl);
+  return phoneProblem(phone) === '';
 }
 
 /**
