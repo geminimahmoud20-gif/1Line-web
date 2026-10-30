@@ -52,10 +52,10 @@ function DailyReportSection() {
   return (
     <section style={box}>
       <strong style={{ color: 'var(--crm-ink)', fontSize: 'var(--crm-text-md)' }}>التقرير اليومي على الواتساب</strong>
-      <p style={line}>كل يوم الصبح (حوالي 8 أو 9) بيوصل على نفس أرقام التنبيهات تقرير عن امبارح: الزوار، الطلبات الجديدة ومصادرها ومناطقها، اللي مستني رد، أداء الفريق، أكتر العقارات اهتمام، وقرارات مقترحة. من غير أسماء أو أرقام عملاء.</p>
+      <p style={line}>كل يوم بعد نص الليل (حوالي 12، وفي التوقيت الصيفي حوالي 1) بيوصل على نفس أرقام التنبيهات تقرير عن اليوم اللي خلص: الزوار، الطلبات الجديدة ومصادرها ومناطقها، اللي مستني رد، أداء الفريق، أكتر العقارات اهتمام، وقرارات مقترحة. من غير أسماء أو أرقام عملاء.</p>
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         <button type="button" className="btn btn-sm btn-outline" onClick={() => run('preview')} disabled={!!busy}>
-          {busy === 'preview' ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}<span>اعرض تقرير امبارح</span>
+          {busy === 'preview' ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}<span>اعرض تقرير آخر يوم</span>
         </button>
         <button type="button" className="crm-btn-primary-gold" onClick={() => run('test')} disabled={!!busy}>
           {busy === 'test' ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}<span>ابعته دلوقتي (تجربة)</span>

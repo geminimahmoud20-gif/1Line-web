@@ -233,7 +233,7 @@ export function buildDailyReport(data, { now = Date.now(), siteUrl = 'https://ww
   const dayLabel = new Intl.DateTimeFormat('ar-EG-u-nu-latn', { timeZone: 'Africa/Cairo', weekday: 'long', day: 'numeric', month: 'numeric' }).format(new Date(start + 12 * HOUR));
   const L = [];
   L.push(`📊 تقرير 1Line اليومي — ${dayLabel}`);
-  L.push('(أرقام امبارح، والنسبة مقارنة بمتوسط الـ7 أيام اللي قبله)');
+  L.push('(أرقام اليوم ده كله من 12 لـ12، والنسبة مقارنة بمتوسط الـ7 أيام اللي قبله)');
   L.push('');
   L.push('👥 الزوار');
   L.push(`• زيارات: ${fmt(sessions)} ${trend(sessions, avgOf((d) => n(d.sessions)))}`);
@@ -261,8 +261,8 @@ export function buildDailyReport(data, { now = Date.now(), siteUrl = 'https://ww
   if (overdue) todo.push(`• ${overdue} متابعة فات معادها`);
   if (unassigned) todo.push(`• ${unassigned} طلب من غير موظف مسؤول`);
   if (data.notifyStatus && data.notifyStatus.lastFailAt > data.notifyStatus.lastOkAt) todo.push('• تنبيهات الواتساب: آخر رسالة ماوصلتش');
-  if (n(data.errorsYesterday) >= 10) todo.push(`• ${fmt(data.errorsYesterday)} خطأ في الموقع امبارح (إدارة المنظومة ← أخطاء الموقع)`);
-  L.push(todo.length ? '⚠️ محتاج يتعمل النهارده' : '✅ مفيش طلبات متأخرة');
+  if (n(data.errorsYesterday) >= 10) todo.push(`• ${fmt(data.errorsYesterday)} خطأ في الموقع في اليوم ده (إدارة المنظومة ← أخطاء الموقع)`);
+  L.push(todo.length ? '⚠️ محتاج يتعمل أول الشغل بكرة' : '✅ مفيش طلبات متأخرة');
   L.push(...todo);
   L.push('');
 
@@ -275,7 +275,7 @@ export function buildDailyReport(data, { now = Date.now(), siteUrl = 'https://ww
   for (const [d, t] of teamRows) L.push(`• ${d}: ${t.total} طلب، اترد على ${t.replied}${t.won ? `، اتقفل ${t.won}` : ''}`);
   L.push('');
 
-  L.push(`🏠 العقارات: ${live.length} معروض${newListings ? ` · ${newListings} جديد امبارح` : ''}`);
+  L.push(`🏠 العقارات: ${live.length} معروض${newListings ? ` · ${newListings} جديد في اليوم ده` : ''}`);
   topProps.forEach((s, i) => L.push(`${i + 1}. ${titleOf(s.id)} — ${s.views} مشاهدة${contactsByProp[s.id] ? `، ${contactsByProp[s.id]} تواصل (8 أيام)` : ''}`));
   const searchTop = topEntries(Object.fromEntries(Object.entries(today.searchAreas || {}).filter(([k]) => k !== 'all')), 3);
   if (searchTop.length) L.push(`🔍 الناس دوّرت على: ${searchTop.map(([k, v]) => `${areaName(k)} (${v})`).join('، ')}`);
@@ -283,7 +283,7 @@ export function buildDailyReport(data, { now = Date.now(), siteUrl = 'https://ww
 
   // Suggested decisions, only from the numbers above
   const ideas = [];
-  if (waiting.length) ideas.push(`رد على الـ${waiting.length} طلب المستنيين قبل الضهر؛ الطلب اللي بيستنى أكتر من ساعتين فرصته بتقل.`);
+  if (waiting.length) ideas.push(`رد على الـ${waiting.length} طلب المستنيين أول ما الشغل يبدأ؛ الطلب اللي بيستنى أكتر من ساعتين فرصته بتقل.`);
   const gap = Object.entries(demandByArea)
     .map(([a, d]) => ({ a, d, supply: liveByArea[a] || 0 }))
     .filter((x) => x.d >= 8 && x.supply <= 2)

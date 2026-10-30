@@ -1,6 +1,7 @@
 // =============================================================
 //  Vercel Function: the owner's daily WhatsApp report (logic in api/_daily-report-core.js).
-//    GET   — Vercel Cron, every morning (vercel.json "crons"). Sends once per Cairo day.
+//    GET   — Vercel Cron, just after midnight Cairo (22:00 UTC, vercel.json "crons"): the day that
+//            just ended. Sends once per Cairo day.
 //    POST { mode: 'preview' | 'test' } with a super admin's ID token — the CRM's
 //          «اعرض التقرير» and «ابعته دلوقتي» buttons (a test send says so and can repeat).
 //

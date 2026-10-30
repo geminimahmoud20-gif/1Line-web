@@ -73,7 +73,7 @@ test('the report counts yesterday, compares with the week and lists what needs d
   assert.match(r.text, /اتقفلت: 1 · اتخسرت: 2/);
   assert.match(r.text, /السعر \/ الميزانية مش مناسبة \(2\)/);
   assert.match(r.text, /1\. شقة 150م بسوهاج الجديدة — 40 مشاهدة، 2 تواصل/);
-  assert.match(r.text, /2 معروض · 1 جديد امبارح/);
+  assert.match(r.text, /2 معروض · 1 جديد في اليوم ده/);
   assert.match(r.text, /كمان: طلبات مشترين 1 · بدل 1/);
   assert.match(r.text, /https:\/\/s\/crm/);
   // never a customer's name or phone
