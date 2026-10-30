@@ -261,7 +261,7 @@ export default function CallbackModal({ isOpen, onClose, lang = 'ar', onSubmitCa
                 {[
                   { id: 'immediate', label_ar: 'خلال 15 دقيقة (عاجل)', label_en: 'Within 15 mins (Urgent)' },
                   { id: 'evening', label_ar: 'فترة مسائية هادئة (6م - 10م)', label_en: 'Evening (6 PM - 10 PM)' },
-                  { id: 'tomorrow', label_ar: 'غداً صباحاً (10ص - 2ظ)', label_en: 'Tomorrow Morning' }
+                  { id: 'tomorrow', label_ar: 'بكرة بعد الضهر (1 – 5 م)', label_en: 'Tomorrow afternoon' }
                 ].map((t) => {
                   const isSelected = form.preferredTime === t.id;
                   return (

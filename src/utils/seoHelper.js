@@ -4,7 +4,7 @@
  * and injects Google-compliant Schema.org RealEstateListing & Organization schemas.
  */
 
-import { SITE_URL, BRAND, CONTACT, SERVICE_AREAS, siteLink } from '../config/siteConfig';
+import { SITE_URL, BRAND, CONTACT, SERVICE_AREAS, OFFICE_HOURS, siteLink } from '../config/siteConfig';
 import { getDynamicPhone } from './founderCmsData';
 import { getSiteSettings, subscribeSiteSettings } from './siteSettings';
 
@@ -238,8 +238,8 @@ export function buildOrganizationSchema() {
     openingHoursSpecification: [{
       '@type': 'OpeningHoursSpecification',
       dayOfWeek: ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'],
-      opens: '10:00',
-      closes: '22:00'
+      opens: `${String(OFFICE_HOURS.open).padStart(2, '0')}:00`,
+      closes: `${String(OFFICE_HOURS.close).padStart(2, '0')}:00`
     }],
     areaServed: [
       { '@type': 'AdministrativeArea', name: 'محافظة سوهاج' },

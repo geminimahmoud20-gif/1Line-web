@@ -77,7 +77,7 @@ export default function DepositModal({
     isSubmittingRef.current = true;
     setIsProcessing(true);
     try {
-      const timeLabel = { any: 'أي وقت', morning: 'صباحاً', evening: 'مساءً' }[form.preferredTime];
+      const timeLabel = { any: 'أي وقت', morning: 'بعد الضهر', evening: 'بالليل' }[form.preferredTime];
       const lead = onConfirmDeposit
         ? await onConfirmDeposit({
           name: trimmedName,
@@ -216,8 +216,8 @@ export default function DepositModal({
                 <div className="lx-segmented">
                   {[
                     ['any', isAr ? 'أي وقت' : 'Any time'],
-                    ['morning', isAr ? 'صباحاً' : 'Morning'],
-                    ['evening', isAr ? 'مساءً' : 'Evening'],
+                    ['morning', isAr ? 'بعد الضهر' : 'Afternoon'],
+                    ['evening', isAr ? 'بالليل' : 'Evening'],
                   ].map(([val, label]) => (
                     <button
                       key={val}

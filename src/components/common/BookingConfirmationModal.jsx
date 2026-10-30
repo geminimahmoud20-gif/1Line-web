@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { CheckCircle2, Copy, Check, MessageSquare, X, Calendar, MapPin, Building, Video, Phone, Printer } from 'lucide-react';
 import { getWhatsAppUrl, getDynamicPhone } from '../../utils/founderCmsData';
+import { VIEWING_SLOTS } from '../../config/siteConfig';
 
-const SLOT_AR = { morning: 'صباحاً (10 ص – 2 م)', evening: 'مساءً (5 م – 9 م)' };
-const SLOT_EN = { morning: 'Morning (10:00–14:00)', evening: 'Evening (17:00–21:00)' };
+const SLOT_AR = { morning: VIEWING_SLOTS.morning.ar, evening: VIEWING_SLOTS.evening.ar };
+const SLOT_EN = { morning: VIEWING_SLOTS.morning.en, evening: VIEWING_SLOTS.evening.en };
 
 /**
  * Receipt for a viewing REQUEST. The team still has to confirm the appointment,

@@ -37,6 +37,7 @@ import '../styles/property-detail-polish.css';
 import PropertyOverviewTab from '../components/properties/detail/PropertyOverviewTab';
 import { paymentTerms, hasInstallmentPlan, termLabel } from '../utils/paymentTerms';
 import { similarListings } from '../utils/similarListings';
+import { CONTACT, OFFICE_HOURS, VIEWING_SLOTS } from '../config/siteConfig';
 
 const FACT_ICONS = { size: Maximize2, rooms: BedDouble, baths: Bath, floor: Layers, finishing: Sparkles, handover: Clock3 };
 
@@ -56,13 +57,13 @@ const normalizeBookingPhone = (raw) => {
   return null;
 };
 
-// Office hours from siteConfig CONTACT: daily 10:00–22:00 Cairo time, closed Friday
+// Office hours from siteConfig OFFICE_HOURS (Cairo time)
 const isOfficeOpenNow = () => {
   try {
     const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Africa/Cairo', weekday: 'short', hour: 'numeric', hourCycle: 'h23' }).formatToParts(new Date());
     const day = parts.find((p) => p.type === 'weekday')?.value;
     const hour = Number(parts.find((p) => p.type === 'hour')?.value);
-    return day !== 'Fri' && hour >= 10 && hour < 22;
+    return !OFFICE_HOURS.closedDays.includes(day) && hour >= OFFICE_HOURS.open && hour < OFFICE_HOURS.close;
   } catch {
     return false;
   }
@@ -299,7 +300,7 @@ export default function PropertyDetailPage({
       // Time-based reference: readable, and unique enough to find the request in the CRM
       const serialCode = `1L-${Date.now().toString(36).toUpperCase()}`;
       const isVideo = bookingForm.tourType === 'video';
-      const slotAr = bookingForm.slot === 'morning' ? 'صباحاً (10 ص – 2 م)' : 'مساءً (5 م – 9 م)';
+      const slotAr = (VIEWING_SLOTS[bookingForm.slot] || VIEWING_SLOTS.evening).ar;
       const fullBookingRecord = {
         ...bookingForm,
         name: bookingForm.name.trim(),
@@ -669,8 +670,8 @@ export default function PropertyDetailPage({
                   <span className={`agent-status-badge ${officeOpen ? '' : 'is-off-hours'}`}>
                     <span className={officeOpen ? 'green-dot' : 'pd-off-dot'} />
                     {officeOpen
-                      ? (isAr ? 'متاحون الآن — يومياً 10 ص – 10 م' : 'Available now — daily 10:00–22:00')
-                      : (isAr ? 'خارج مواعيد العمل — نرد من 10 صباحاً (عدا الجمعة)' : 'Outside office hours — we reply from 10:00 (closed Friday)')}
+                      ? (isAr ? `متاحين دلوقتي — ${CONTACT.hours_ar}` : `Available now — ${CONTACT.hours_en}`)
+                      : (isAr ? 'خارج مواعيد العمل — بنرد من 1 الظهر (عدا الجمعة)' : 'Outside office hours — we reply from 1 pm (closed Friday)')}
                   </span>
                 </div>
               </div>
@@ -797,10 +798,10 @@ export default function PropertyDetailPage({
                           aria-checked={bookingForm.slot === 'morning'}
                           className={`slot-pill ${bookingForm.slot === 'morning' ? 'active' : ''}`}
                           onClick={() => setBookingForm({ ...bookingForm, slot: 'morning' })}
-                          title={isAr ? '10 ص – 2 م' : '10:00–14:00'}
+                          title={isAr ? VIEWING_SLOTS.morning.ar : VIEWING_SLOTS.morning.en}
                         >
                           <Sun size={13} aria-hidden="true" />
-                          <span>{isAr ? 'صباحاً' : 'Morning'}</span>
+                          <span>{isAr ? 'بعد الضهر' : 'Afternoon'}</span>
                         </button>
                         <button
                           type="button"
@@ -808,10 +809,10 @@ export default function PropertyDetailPage({
                           aria-checked={bookingForm.slot !== 'morning'}
                           className={`slot-pill ${bookingForm.slot !== 'morning' ? 'active' : ''}`}
                           onClick={() => setBookingForm({ ...bookingForm, slot: 'evening' })}
-                          title={isAr ? '5 م – 9 م' : '17:00–21:00'}
+                          title={isAr ? VIEWING_SLOTS.evening.ar : VIEWING_SLOTS.evening.en}
                         >
                           <Moon size={13} aria-hidden="true" />
-                          <span>{isAr ? 'مساءً' : 'Evening'}</span>
+                          <span>{isAr ? 'بالليل' : 'Evening'}</span>
                         </button>
                       </div>
                     </fieldset>

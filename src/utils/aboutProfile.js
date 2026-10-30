@@ -21,7 +21,7 @@ export const COMPANY_FIELDS = [
   { key: 'taxId', ar: 'البطاقة الضريبية', en: 'Tax ID', hint_ar: 'الرقم الضريبي' },
   { key: 'license', ar: 'الترخيص', en: 'Licence', hint_ar: 'مثال: ترخيص مزاولة الوساطة العقارية رقم …' },
   { key: 'coverage', ar: 'مناطق العمل', en: 'Where we work', hint_ar: 'مثال: سوهاج والقاهرة الكبرى' },
-  { key: 'hours', ar: 'مواعيد العمل', en: 'Working hours', hint_ar: 'مثال: يومياً 10 ص – 10 م (عدا الجمعة)' },
+  { key: 'hours', ar: 'مواعيد العمل', en: 'Working hours', hint_ar: 'مثال: يومياً من 1 الظهر لـ 9 بالليل (عدا الجمعة)' },
   { key: 'teamSize', ar: 'حجم الفريق', en: 'Team size', hint_ar: 'مثال: 12 موظف ومستشار' }
 ];
 
