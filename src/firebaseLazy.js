@@ -76,6 +76,7 @@ export const loadNotifyStatus = lazyCall('loadNotifyStatus');
 export const sendTestAlert = lazyCall('sendTestAlert');
 export const loadAlertsSeenAt = lazyCall('loadAlertsSeenAt');
 export const saveAlertsSeenAt = lazyCall('saveAlertsSeenAt');
+export const runDailyReport = lazyCall('runDailyReport');
 export const updateLeadField = lazyCall('updateLeadField');
 export const deleteLead = lazyCall('deleteLead');
 export const deleteLeads = lazyCall('deleteLeads');

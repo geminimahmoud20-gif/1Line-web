@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Bell, Send, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
-import { loadNotifyStatus, sendTestAlert } from '../../firebaseLazy';
+import { Bell, Send, CheckCircle2, AlertTriangle, Loader2, FileText } from 'lucide-react';
+import { loadNotifyStatus, sendTestAlert, runDailyReport } from '../../firebaseLazy';
 import { desktopAlertsState, enableDesktopAlerts, showSystemAlert } from '../../utils/newLeadAlerts';
 import { playNotificationChime } from '../../utils/notificationHub';
 
@@ -24,6 +24,50 @@ const TEST_RESULT = {
 
 const box = { background: 'var(--crm-card)', border: '1px solid var(--crm-line)', borderRadius: '12px', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '10px' };
 const line = { fontSize: 'var(--crm-text-sm)', color: 'var(--crm-body)', lineHeight: 1.7, margin: 0 };
+
+const REPORT_ERRORS = {
+  'not-configured': (r) => (r.serviceAccount === false
+    ? 'مفتاح Firebase (FIREBASE_SERVICE_ACCOUNT) مش موجود في إعدادات Vercel.'
+    : 'مفيش رقم واتساب متسجل للتنبيهات في Vercel (WHATSAPP_CALLMEBOT).'),
+  forbidden: () => 'التقرير للمدير العام بس.',
+  'no-api': () => 'التقرير شغال على الموقع الحقيقي بس (www.1lineestate.com).',
+  network: () => 'مفيش نت. جرّب تاني.',
+  unauthenticated: () => 'سجّل دخولك تاني وجرّب.'
+};
+
+/** The daily WhatsApp report: what it says today, and a test copy on demand */
+function DailyReportSection() {
+  const [busy, setBusy] = useState('');
+  const [preview, setPreview] = useState('');
+  const [msg, setMsg] = useState(null);
+  const run = async (mode) => {
+    setBusy(mode);
+    setMsg(null);
+    const r = await runDailyReport(mode);
+    setBusy('');
+    if (!r.ok) { setMsg({ ok: false, text: (REPORT_ERRORS[r.error] || (() => 'التقرير ماطلعش. جرّب تاني بعد شوية.'))(r) }); return; }
+    if (mode === 'preview') setPreview(r.text || '');
+    else setMsg({ ok: true, text: `اتبعت على الواتساب${r.parts > 1 ? ` في ${r.parts} رسايل` : ''}.` });
+  };
+  return (
+    <section style={box}>
+      <strong style={{ color: 'var(--crm-ink)', fontSize: 'var(--crm-text-md)' }}>التقرير اليومي على الواتساب</strong>
+      <p style={line}>كل يوم الصبح (حوالي 8 أو 9) بيوصل على نفس أرقام التنبيهات تقرير عن امبارح: الزوار، الطلبات الجديدة ومصادرها ومناطقها، اللي مستني رد، أداء الفريق، أكتر العقارات اهتمام، وقرارات مقترحة. من غير أسماء أو أرقام عملاء.</p>
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <button type="button" className="btn btn-sm btn-outline" onClick={() => run('preview')} disabled={!!busy}>
+          {busy === 'preview' ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}<span>اعرض تقرير امبارح</span>
+        </button>
+        <button type="button" className="crm-btn-primary-gold" onClick={() => run('test')} disabled={!!busy}>
+          {busy === 'test' ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}<span>ابعته دلوقتي (تجربة)</span>
+        </button>
+      </div>
+      {msg && <p role="status" style={{ ...line, fontWeight: 700, color: msg.ok ? 'var(--crm-positive)' : 'var(--crm-danger)' }}>{msg.text}</p>}
+      {preview && (
+        <pre dir="rtl" style={{ margin: 0, whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: 'var(--crm-text-sm)', lineHeight: 1.8, color: 'var(--crm-ink)', background: 'var(--crm-subtle)', border: '1px solid var(--crm-line)', borderRadius: '10px', padding: '12px 14px', maxHeight: '520px', overflow: 'auto' }}>{preview}</pre>
+      )}
+    </section>
+  );
+}
 
 export default function AlertsSettingsPanel() {
   const [status, setStatus] = useState(undefined); // undefined: loading, null: nothing recorded yet
@@ -76,6 +120,8 @@ export default function AlertsSettingsPanel() {
           <p role="status" style={{ ...line, fontWeight: 700, color: result.ok ? 'var(--crm-positive)' : 'var(--crm-danger)' }}>{result.text}</p>
         )}
       </section>
+
+      <DailyReportSection />
 
       <section style={box}>
         <strong style={{ color: 'var(--crm-ink)', fontSize: 'var(--crm-text-md)' }}>إشعارات الجهاز ده</strong>

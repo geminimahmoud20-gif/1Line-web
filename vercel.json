@@ -5,6 +5,9 @@
   "framework": "vite",
   "cleanUrls": false,
   "trailingSlash": false,
+  "crons": [
+    { "path": "/api/daily-report", "schedule": "0 6 * * *" }
+  ],
   "rewrites": [
     {
       "source": "/crm/:path*",

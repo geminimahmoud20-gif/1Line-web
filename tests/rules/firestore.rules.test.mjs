@@ -504,3 +504,35 @@ test('WhatsApp taps (contact_intents): server-written, staff read, lead editors 
   await assertFails(setDoc(doc(as('sales_agent'), 'contact_intents/W-NEW1'), { ref: 'W-NEW1', status: 'open' }));
   await assertFails(deleteDoc(doc(as('sales_agent'), 'contact_intents/W-7K3Q')));
 });
+
+// ── api/daily-report.js against the emulator (REST reads + once-a-day claim) ──
+test('daily report: reads leads, listings and analytics over REST, claims each day once', async () => {
+  const { reportStore } = await import('../../api/daily-report.js');
+  const { buildDailyReport, reportDays, cairoDayRange } = await import('../../api/_daily-report-core.js');
+  const store = reportStore({ project_id: 'demo-1line-rules' });
+  const now = Date.now();
+  const { target } = reportDays(now);
+  const [start] = cairoDayRange(target);
+  const at = (h) => new Date(start + h * 3600 * 1000);
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    const db = ctx.firestore();
+    await setDoc(doc(db, 'leads/r1'), { name: 'زينب', type: 'buyer', source: 'website', area: 'new_sohag', status: 'new', createdAt: at(10) });
+    await setDoc(doc(db, 'leads/r2'), { type: 'seller', status: 'contacted', createdAt: at(12), firstContactedAt: at(13).toISOString() });
+    await setDoc(doc(db, 'properties/p1'), { title_ar: 'شقة تجربة', areaKey: 'new_sohag', status: 'published', price: 1000000 });
+    await setDoc(doc(db, `analytics_daily/${target}_0`), { date: target, sessions: 40, pageViews: 90, contacts: { whatsapp: 3 } });
+    await setDoc(doc(db, `analytics_daily/${target}_3`), { date: target, sessions: 10 });
+    await setDoc(doc(db, 'analytics_properties/p1'), { propertyId: 'p1', days: { [target]: 12 } });
+    await setDoc(doc(db, 'contact_intents/i1'), { channel: 'whatsapp', propertyId: 'p1', createdAt: at(9) });
+    await setDoc(doc(db, 'settings/areas_cms'), { areas: [{ id: 'new_sohag', name_ar: 'سوهاج الجديدة' }] });
+  });
+  const data = await store.load(now);
+  if (!data.leads.some((l) => l.id === "r1") || data.daily[target].sessions !== 50 || data.daily[target].contacts.whatsapp !== 3) throw new Error(`loaded ${JSON.stringify({ leads: data.leads.map((l) => [l.id, l.createdAt]), day: data.daily[target] })}`);
+  if (data.areaNames.new_sohag !== 'سوهاج الجديدة' || data.intents.length !== 1 || data.propertyStats[0].days[target] !== 12) throw new Error('names / intents / stats');
+  const r = buildDailyReport(data, { now });
+  if (!/زيارات: 50/.test(r.text) || !/طلبات جديدة: 2 /.test(r.text) || !/شقة تجربة — 12 مشاهدة/.test(r.text) || /زينب/.test(r.text)) throw new Error(`${r.text}\n${JSON.stringify(data.leads.map((l) => [l.id, l.createdAt]))}`);
+  if ((await store.claimDay(target)) !== true) throw new Error('first claim');
+  if ((await store.claimDay(target)) !== false) throw new Error('second claim');
+  await store.releaseDay(target);
+  if ((await store.claimDay(target)) !== true) throw new Error('claim after release');
+  await assertFails(getDoc(doc(asAdmin(), `report_log/${target}`)));
+});
