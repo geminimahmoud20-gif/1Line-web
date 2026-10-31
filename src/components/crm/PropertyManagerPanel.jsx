@@ -441,9 +441,8 @@ export default function PropertyManagerPanel({
       name_ar: '',
       name_en: '',
       category: 'education',
-      distance: '500 متر',
-      timeWalk: '6 دقائق',
-      timeDrive: '2 دقيقة'
+      // Typed by staff; walk and drive times are worked out from it on the site
+      distance: ''
     };
     setForm(prev => ({
       ...prev,
