@@ -109,6 +109,8 @@ async function route(request) {
     const code = String(err?.code || '');
     if (code.includes('EMAIL_EXISTS')) return json(409, { error: 'email-exists' });
     if (code.includes('INVALID_EMAIL')) return json(400, { error: 'invalid-email' });
+    // Firestore's daily free read quota used up (HTTP 429): say so instead of a vague error
+    if (/\b429\b|RESOURCE_EXHAUSTED|Quota exceeded/i.test(`${err?.message || ''} ${code}`)) return json(503, { error: 'quota' });
     return json(502, { error: 'auth-error' });
   }
 }

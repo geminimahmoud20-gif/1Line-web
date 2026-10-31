@@ -2,7 +2,7 @@ import { db, auth, isFirebaseConfigured } from '../firebase.js';
 import { checkIsAdmin } from './auth.js';
 import { approvalStamp } from '../utils/publishApproval.js';
 
-import { collection, addDoc, getDocs, doc, setDoc, query, orderBy, limit, onSnapshot, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, setDoc, deleteDoc, query, orderBy, limit, onSnapshot, serverTimestamp, writeBatch } from 'firebase/firestore';
 
 // ===================== PROPERTIES =====================
 
@@ -104,10 +104,19 @@ export const upsertCatalogItem = async (collectionName, item) => {
   }
 };
 
-export const deleteCatalogItem = async (collectionName, id) => {
+/**
+ * Removes an item. A tombstone ({ deleted: true }) is kept only for items the site also ships as
+ * bundled samples (`keepTombstone`), so the sample doesn't come back; anything else is deleted
+ * outright — every document left behind is read again on each catalog refresh.
+ */
+export const deleteCatalogItem = async (collectionName, id, { keepTombstone = true } = {}) => {
   if (!CATALOG_COLLECTIONS.has(collectionName) || id === undefined || id === null) return { ok: false, reason: 'invalid' };
   if (!isFirebaseConfigured() || !db) return { ok: false, reason: 'not-configured' };
   try {
+    if (!keepTombstone) {
+      await deleteDoc(doc(db, collectionName, String(id)));
+      return { ok: true };
+    }
     await setDoc(doc(db, collectionName, String(id)), { id, deleted: true, updatedAt: new Date().toISOString() });
     return { ok: true };
   } catch (error) {
