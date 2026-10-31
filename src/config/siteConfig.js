@@ -30,7 +30,7 @@ export const BRAND = {
 };
 
 export const CONTACT = {
-  email: 'contact@oneline-sohag.com',
+  email: '1linesolutions@gmail.com',
   address_ar: 'برج أحمد حلمي الشريف، شارع الجمهورية، سوهاج',
   address_en: 'Ahmed Helmy El-Sherif Tower, El-Gomhoreya St., Sohag',
   hours_ar: 'يومياً من 1 الظهر لـ 9 بالليل (عدا الجمعة)',
