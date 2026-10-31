@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { areaMarketStats, budgetMatches, liveListings, assetClass, sampleKind } from '../../src/utils/marketStats.js';
+import { areaMarketStats, budgetMatches, liveListings, assetClass, sampleKind, typeConflict, pricedListings } from '../../src/utils/marketStats.js';
 
 const props = [
   { id: 1, areaKey: 'east', type: 'apartment', price: 2000000, size: 100, status: 'published' },
@@ -27,8 +27,9 @@ test('per-area medians split homes and commercial', () => {
   assert.equal(east.total, 3);
   assert.equal(east.residential.medianPpm, 22500); // median of 20000 and 25000
   assert.equal(east.commercial.medianPpm, 80000);
-  assert.equal(girga.residential.count, 1);
-  assert.equal(girga.residential.ppmSample, 0); // no area → no price per m²
+  assert.equal(girga.villa.count, 1); // villas are their own market, not averaged with flats
+  assert.equal(girga.residential.count, 0);
+  assert.equal(girga.villa.ppmSample, 0); // no size → no price per m²
 });
 
 test('budget matches count what is listed now', () => {
@@ -60,4 +61,41 @@ test('each kind of property keeps its own price range; one listing is labelled a
   assert.equal(sampleKind(2), 'pair');
   assert.equal(sampleKind(north.commercial.ppmSample), 'single');
   assert.equal(sampleKind(0), 'none');
+});
+
+test('flats and villas are priced separately', () => {
+  // Live New Sohag (Oct 2026): five flats and one villa
+  const list = [
+    { id: 1, areaKey: 'ns', type: 'apartment', price: 2520000, size: 156 },
+    { id: 2, areaKey: 'ns', type: 'apartment', price: 2600000, size: 180 },
+    { id: 3, areaKey: 'ns', type: 'apartment', price: 2300000, size: 183 },
+    { id: 4, areaKey: 'ns', type: 'apartment', price: 2600000, size: 152 },
+    { id: 5, areaKey: 'ns', type: 'apartment', price: 2000000, size: 140 },
+    { id: 6, areaKey: 'ns', type: 'villa', price: 9750000, size: 500 },
+  ];
+  const [ns] = areaMarketStats(list);
+  assert.deepEqual(ns.classes, ['residential', 'villa']);
+  assert.equal(ns.residential.medianPpm, 14444); // 12,568 · 14,286 · 14,444 · 16,154 · 17,105
+  assert.equal(ns.villa.medianPpm, 19500);
+});
+
+test('a listing saved under a type its own text contradicts stays out of the prices', () => {
+  // Live Corniche East (Oct 2026): a corner shop saved as «شقة» (the form default)
+  const shopAsFlat = { id: 's', areaKey: 'c', type: 'apartment', category: 'residential', price: 16850000, size: 226,
+    title_ar: 'تجاري موج النيل _ ناصية على شارعين · خطوات من الكورنيش', description_ar: 'موقع  تجاري مميز جدا و استيراتيجي' };
+  assert.equal(typeConflict(shopAsFlat), 'commercial');
+  assert.equal(pricedListings([shopAsFlat]).length, 0);
+  const [c] = areaMarketStats([shopAsFlat, { id: 'k', areaKey: 'c', type: 'commercial', price: 23700000, size: 320, title_ar: 'مشروع الماسة التجاري' }]);
+  assert.equal(c.residential.count, 0);
+  assert.equal(c.commercial.count, 1);
+  // Ordinary titles are not flagged
+  for (const p of [
+    { type: 'apartment', title_ar: 'شقة فيو نيلي ش الجمهورية استيلم فوري' },
+    { type: 'apartment', title_ar: 'شقه روف علي المحور الرئيسي بموقع استيراتيجي' },
+    { type: 'apartment', title_ar: 'شقة بإطلالة طبيعية', description_ar: 'قريبة من المحلات والخدمات' },
+    { type: 'villa', title_ar: 'فيلا _ مجاورة 7 _ خلف الرئيسي البحري' },
+    { type: 'commercial', title_ar: 'تجاري نايل بلازا _ الكورنيش الشرقي' },
+    { type: 'office', title_ar: 'مكتب اداري بمشروع نايل بلازا' },
+  ]) assert.equal(typeConflict(p), '', p.title_ar);
+  assert.equal(typeConflict({ type: 'office', title_ar: 'شقة 3 غرف للبيع' }), 'residential');
 });

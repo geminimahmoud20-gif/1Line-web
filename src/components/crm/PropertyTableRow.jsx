@@ -11,6 +11,7 @@ import RowMenu from './RowMenu';
 import { propertyTypeLabel } from '../../utils/placeLabels';
 import { sizeLabel, isLandType, isAgriculturalType, isIndustrialType } from '../../utils/propertyKinds';
 import { thumbUrl } from '../../utils/imageThumbs';
+import { typeConflict } from '../../utils/marketStats';
 import { approvalLabel, blockedByApproval, approveUpdate, rejectUpdate } from '../../utils/publishApproval';
 
 const STATUS_OPTIONS = [
@@ -162,6 +163,13 @@ export default function PropertyTableRow({
             {prop.homeExcluded && !prop.featured && <Badge icon={<EyeOff size={11} aria-hidden="true" />}>{isAr ? 'مش في الرئيسية' : 'Off homepage'}</Badge>}
             {liveOffer && <Badge tone="warning" icon={<Flame size={11} aria-hidden="true" />}>−{liveOffer.pct}% · {shortLeft(liveOffer.msLeft, isAr)}</Badge>}
             {offer === 'invalid' && <Badge tone="danger">{isAr ? 'راجع العرض' : 'Fix offer'}</Badge>}
+            {!isTrash && typeConflict(prop) && (
+              <Badge tone="danger" title={isAr ? 'العنوان أو الوصف بيقول نوع تاني غير النوع المتسجل. لحد ما يتصلح، سعرها مش داخل في متوسطات أسعار المناطق.' : 'The title or description says another type than the saved one; left out of area price figures until fixed.'}>
+                {isAr
+                  ? `راجع النوع: متسجلة ${typeName} والوصف ${({ commercial: 'تجاري', administrative: 'إداري', residential: 'سكني' })[typeConflict(prop)]}`
+                  : 'Check the type'}
+              </Badge>
+            )}
             {prop.badge_ar && <Badge>{isAr ? prop.badge_ar : prop.badge_en}</Badge>}
           </span>
           {!isTrash && blockedByApproval(prop) && (

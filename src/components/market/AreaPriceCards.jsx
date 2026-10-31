@@ -7,7 +7,8 @@ import './area-price-cards.css';
 // a shop's price never stretches the homes' range, and a single listing is labelled as one listing.
 
 const CLASS_LABELS = {
-  residential: { ar: 'سكني', en: 'Homes', hint_ar: 'شقق وفيلات', hint_en: 'flats and villas' },
+  residential: { ar: 'شقق', en: 'Flats', hint_ar: 'سكني', hint_en: 'homes' },
+  villa: { ar: 'فيلات وبيوت', en: 'Villas', hint_ar: 'شامل الأرض', hint_en: 'land included' },
   commercial: { ar: 'تجاري', en: 'Shops', hint_ar: 'محلات ومعارض', hint_en: 'shops and showrooms' },
   administrative: { ar: 'إداري', en: 'Offices', hint_ar: 'مكاتب وعيادات', hint_en: 'offices and clinics' },
   land: { ar: 'أراضي مباني', en: 'Building land', hint_ar: '', hint_en: '' },

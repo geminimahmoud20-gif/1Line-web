@@ -1,7 +1,9 @@
 // Market figures computed from the listings actually published on the site (no invented growth,
 // yields or "live registry data"). Pure; tested in tests/unit/market-stats.test.mjs.
 
-const RESIDENTIAL = new Set(['apartment', 'villa', 'duplex', 'penthouse', 'studio', 'chalet', 'townhouse', 'twinhouse', 'residential']);
+// Flats and villas are two markets: a villa's price per m² carries its own land and garden
+const RESIDENTIAL = new Set(['apartment', 'duplex', 'penthouse', 'studio', 'chalet', 'residential']);
+const VILLAS = new Set(['villa', 'townhouse', 'twinhouse', 'house']);
 // Shops and showrooms are priced very differently from offices and clinics, so they are two classes
 const COMMERCIAL = new Set(['commercial', 'retail', 'shop', 'showroom']);
 const ADMINISTRATIVE = new Set(['office', 'clinic', 'medical', 'administrative']);
@@ -9,7 +11,7 @@ const AGRICULTURAL = new Set(['agri_land', 'farm']);
 const INDUSTRIAL = new Set(['factory', 'warehouse', 'industrial_land']);
 
 /** The market a listing is priced in: each one gets its own medians and ranges */
-export const ASSET_CLASSES = ['residential', 'commercial', 'administrative', 'land', 'building', 'agricultural', 'industrial'];
+export const ASSET_CLASSES = ['residential', 'villa', 'commercial', 'administrative', 'land', 'building', 'agricultural', 'industrial'];
 
 export const assetClass = (p) => {
   const type = p?.type;
@@ -20,9 +22,38 @@ export const assetClass = (p) => {
   if (type === 'building' || category === 'building') return 'building';
   if (ADMINISTRATIVE.has(type) || category === 'administrative') return 'administrative';
   if (COMMERCIAL.has(type) || category === 'commercial') return 'commercial';
+  if (VILLAS.has(type)) return 'villa';
   if (RESIDENTIAL.has(type) || category === 'residential') return 'residential';
   return 'other';
 };
+
+// Arabic folded for word checks (أ/إ/آ → ا, ة → ه, ى → ي)
+const fold = (s) => String(s || '').replace(/[ً-ْـ]/g, '').replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي');
+// A word at the start of a word, optionally after ال / و / ب / بال / وال / لل
+const has = (text, words) => words.some((w) => new RegExp(`(^|[^\\u0600-\\u06FF])(ال|و|ب|بال|وال|لل)?${w}`).test(text));
+const SHOP_WORDS = ['تجاري', 'محل', 'محلات', 'معرض', 'ريتيل', 'مول'];
+const OFFICE_WORDS = ['اداري', 'مكتب', 'مكاتب', 'عياده', 'عيادات'];
+const HOME_WORDS = ['شقه', 'شقق', 'فيلا', 'فيلات', 'سكني', 'روف', 'دوبلكس', 'بنتهاوس', 'استوديو'];
+
+/**
+ * A listing whose saved type says one thing and whose title and description another — e.g. saved
+ * as «شقة» (the form's default) but titled «تجاري … ناصية على شارعين». Its price would land in
+ * the wrong market, so it is left out of the figures until the type is fixed in the CRM.
+ * Returns the class the text points to, or '' when there is no clear conflict.
+ */
+export function typeConflict(p) {
+  const cls = assetClass(p);
+  const title = fold(p?.title_ar);
+  const text = `${title} ${fold(p?.description_ar)}`;
+  if (cls === 'residential' || cls === 'villa') {
+    if (has(title, HOME_WORDS)) return '';
+    if (has(text, SHOP_WORDS)) return 'commercial';
+    if (has(text, OFFICE_WORDS)) return 'administrative';
+  }
+  if ((cls === 'commercial' || cls === 'administrative') && has(title, ['شقه', 'شقق', 'فيلا', 'فيلات'])
+      && !has(title, [...SHOP_WORDS, ...OFFICE_WORDS])) return 'residential';
+  return '';
+}
 
 /** Published, real (non-sample, not deleted) listings with a price. */
 export const liveListings = (properties = []) => properties.filter((p) => p
@@ -57,14 +88,17 @@ const classStats = (list) => {
  */
 export const sampleKind = (n) => (n >= 3 ? 'median' : n === 2 ? 'pair' : n === 1 ? 'single' : 'none');
 
+/** Listings the price figures use: live, and not saved under a type their own text contradicts */
+export const pricedListings = (properties = []) => liveListings(properties).filter((p) => !typeConflict(p));
+
 /**
  * Per area: listing counts, and for each asset class present its own median price per m², price per
- * m² range and unit price range (homes, shops, offices, land… never mixed in one range).
+ * m² range and unit price range (flats, villas, shops, offices, land… never mixed in one range).
  * `classes` lists the classes the area has, in ASSET_CLASSES order.
  */
 export function areaMarketStats(properties = []) {
   const byArea = new Map();
-  for (const p of liveListings(properties)) {
+  for (const p of pricedListings(properties)) {
     const key = p.areaKey || 'other';
     if (!byArea.has(key)) byArea.set(key, []);
     byArea.get(key).push(p);
