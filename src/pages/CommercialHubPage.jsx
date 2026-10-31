@@ -139,7 +139,7 @@ export default function CommercialHubPage({ lang = 'ar', currency = 'EGP', prope
 
         <section className="xs-hub-calc" aria-labelledby="xs-hub-calc-title">
           <h2 id="xs-hub-calc-title"><Calculator size={20} aria-hidden="true" /> {L('احسب عائد أي محل أو عيادة', 'Work out the yield of any shop or clinic')}</h2>
-          <p>{L('حط سعر الشراء والمساحة والإيجار المتوقع للمتر، وشوف معدل الرسملة وفترة الاسترداد فوراً.', 'Enter the price, area and expected rent per m² to see cap rate and payback instantly.')}</p>
+          <p>{L('حط سعر الشراء والمساحة والإيجار الشهري المتوقع، وشوف صافي العائد وفترة الاسترداد فوراً.', 'Enter the price, area and expected monthly rent to see net yield and payback instantly.')}</p>
           <RentalYieldCalculator lang={lang} currency={currency} />
           <p className="xs-hub-more">
             <Link to="/properties?type=commercial">{L('كل المحلات التجارية ←', 'All retail units →')}</Link>
