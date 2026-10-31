@@ -86,7 +86,7 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
     const size = num(a.size);
     // No automatic estimate for farmland and industrial units yet: valued by hand
     if (!size || !area || isCairo || isAgriculturalType(type) || isIndustrialType(type)) return null;
-    const cls = type === 'retail' || type === 'office' ? 'commercial' : type === 'land' ? 'land' : 'residential';
+    const cls = assetClass({ type }); // shops with shops, offices with offices, homes with homes
     const comps = liveListings(siteListings)
       .filter((p) => p.areaKey === area && assetClass(p) === cls && Number(p.size) > 0)
       .map((p) => Number(p.price) / Number(p.size));
@@ -97,7 +97,7 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
       basis = 'comparables';
     } else {
       const base = districts.find((d) => d.id === area)?.avgPricePerMeter || FALLBACK_M2[area] || 21500;
-      m2 = cls === 'commercial' ? base * (type === 'retail' ? 2.1 : 1.45) : cls === 'land' ? base * 0.85 : base;
+      m2 = cls === 'commercial' ? base * 2.1 : cls === 'administrative' ? base * 1.45 : cls === 'land' ? base * 0.85 : base;
       basis = cls === 'residential' ? 'area' : `benchmark_${cls}`;
     }
     const finish = cls === 'land' ? 1 : (FINISHING.find((f) => f.id === a.finishing)?.multiplier || 1);
