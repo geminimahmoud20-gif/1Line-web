@@ -99,6 +99,18 @@ export function computeRentalYield({ price, size, rentPerSqm, occupancyPct = 90,
   };
 }
 
+/**
+ * Is a yield believable? Shops and offices in Egypt rent for roughly 6–15% of their price a
+ * year, so a result far outside that almost always means the rent was typed for the wrong unit
+ * (the whole shop entered as per-m², or the reverse). 'high' | 'low' | null.
+ */
+export function yieldSanity(r) {
+  if (!r) return null;
+  if (r.grossYieldPct > 30) return 'high';
+  if (r.grossYieldPct < 2) return 'low';
+  return null;
+}
+
 // ── Transparent financial breakdown ────────────────────────────
 /**
  * Everything the buyer pays, from the listing's own numbers.

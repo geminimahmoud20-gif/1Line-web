@@ -1178,3 +1178,13 @@
   .pagination-nav-btn { min-width: 44px; padding: 0 10px; }
   .pagination-nav-btn span { display: none; }
 }
+
+/* Rental yield calculator: the rent unit switch, the converted value, and the "check your numbers" note */
+.xs-field .xs-seg { align-self: flex-start; margin-bottom: 6px; }
+.xs-field-hint { display: block; margin-top: 4px; font-size: 0.78rem; color: var(--xs-muted, #64748b); }
+.xs-yield-warn {
+  display: flex; gap: 8px; align-items: flex-start; margin: 4px 0 12px; padding: 10px 12px; border-radius: 12px;
+  background: rgba(217, 119, 6, 0.1); color: #92400e; font-size: 0.86rem; line-height: 1.6;
+}
+.xs-yield-warn svg { flex-shrink: 0; margin-top: 3px; }
+.dark-theme .xs-yield-warn, :root[data-theme="dark"] .xs-yield-warn { background: rgba(251, 191, 36, 0.12); color: #FCD34D; }
