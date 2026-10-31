@@ -12,15 +12,16 @@ export default class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
 
+  // A file from an older deploy that is gone after a new one (a tab left open across a deploy)
+  static isStaleChunk(error) {
+    const msg = error?.message || String(error || '');
+    return /preload CSS|dynamically imported module|Loading chunk|Failed to fetch|Importing a module script failed|reading 'default'/.test(msg);
+  }
+
   componentDidCatch(error, errorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     const msg = error?.message || String(error || '');
-    if (
-      msg.includes('preload CSS') || 
-      msg.includes('dynamically imported module') || 
-      msg.includes('Loading chunk') ||
-      msg.includes('Failed to fetch')
-    ) {
+    if (ErrorBoundary.isStaleChunk(error)) {
       const reloadKey = '1line_chunk_reload_attempt';
       const lastAttempt = sessionStorage.getItem(reloadKey);
       if (!lastAttempt || (Date.now() - Number(lastAttempt)) > 15000) {
@@ -50,6 +51,16 @@ export default class ErrorBoundary extends React.Component {
   };
 
   render() {
+    // New version just deployed: a short, calm screen while the page reloads (no stack trace)
+    if (this.state.hasError && ErrorBoundary.isStaleChunk(this.state.error)) {
+      return (
+        <div role="status" style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24, textAlign: 'center' }}>
+          <RefreshCw size={28} aria-hidden="true" />
+          <strong style={{ fontSize: '1.05rem' }}>فيه نسخة أحدث من الموقع، بنحدّث الصفحة…</strong>
+          <button type="button" className="btn btn-primary" onClick={this.handleReload}>تحديث الآن</button>
+        </div>
+      );
+    }
     if (this.state.hasError) {
       return (
         <div style={{
