@@ -1,0 +1,58 @@
+/* «عندك عقار للبيع؟» search on the buyer requests page */
+.oms {
+  background: var(--bg-card, #fff); border: 1px solid rgba(13, 72, 161, 0.12); border-radius: 20px;
+  padding: 24px; margin-bottom: 24px; box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+}
+.oms-title {
+  display: flex; align-items: flex-start; gap: 10px; margin: 0 0 18px;
+  font-size: 1.1rem; font-weight: 800; line-height: 1.6; color: var(--text-primary, #0f172a);
+}
+.oms-title svg { flex-shrink: 0; margin-top: 5px; color: #d97706; }
+.oms-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; align-items: end; }
+.oms-field { display: grid; gap: 6px; margin: 0; }
+.oms-field > span { font-size: 0.85rem; font-weight: 700; color: var(--text-secondary, #475569); }
+.oms-field select {
+  height: 48px; width: 100%; padding: 0 14px; border-radius: 12px; border: 1.5px solid #cbd5e1;
+  background: var(--bg-card, #fff); color: var(--text-primary, #0f172a); font: inherit; font-size: 0.95rem;
+}
+.oms-field select:focus-visible { outline: 2px solid #0d48a1; outline-offset: 1px; }
+.oms-submit { height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 12px; font-weight: 800; }
+
+.oms-result {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px;
+  margin-top: 18px; padding: 16px 18px; border-radius: 16px; border: 1px solid #e2e8f0; background: #f8fafc;
+}
+.oms-result.is-found { border-color: #86efac; background: #f0fdf4; }
+.oms-result-text { flex: 1 1 260px; min-width: 0; }
+.oms-result-text strong { display: flex; align-items: flex-start; gap: 8px; font-size: 1rem; font-weight: 800; line-height: 1.6; color: #334155; }
+.oms-result.is-found .oms-result-text strong { color: #065f46; }
+.oms-result-text strong svg { flex-shrink: 0; margin-top: 4px; color: #d97706; }
+.oms-result.is-found .oms-result-text strong svg { color: #10b981; }
+.oms-result-text p { margin: 4px 0 0; font-size: 0.88rem; line-height: 1.7; color: #64748b; }
+.oms-result-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.oms-result-actions .btn { min-height: 44px; padding: 0 18px; border-radius: 10px; font-weight: 800; }
+
+@media (max-width: 480px) {
+  .oms { padding: 18px 16px; }
+  .oms-title { font-size: 1.02rem; }
+  .oms-result-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
+}
+
+.dark-theme .oms { border-color: rgba(212, 175, 55, 0.22); box-shadow: none; }
+.dark-theme .oms-field select { border-color: rgba(255, 255, 255, 0.2); }
+.dark-theme .oms-result { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.14); }
+.dark-theme .oms-result.is-found { background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.4); }
+.dark-theme .oms-result-text strong { color: #e2e8f0; }
+.dark-theme .oms-result.is-found .oms-result-text strong { color: #6ee7b7; }
+.dark-theme .oms-result-text p { color: #94a3b8; }
+.oms-result-what {
+  display: inline-block; margin-top: 6px; padding: 3px 10px; border-radius: 999px;
+  background: rgba(13, 72, 161, 0.07); color: #1e3a8a; font-size: 0.8rem; font-weight: 700;
+}
+.dark-theme .oms-result-what { background: rgba(255, 255, 255, 0.08); color: #cbd5e1; }
+.oms-result-actions .btn { white-space: nowrap; }
+@media (max-width: 480px) { .oms-result-actions .btn { padding: 0 10px !important; min-height: 46px !important; } }
+/* The site's navy primary button disappears on the dark card: use the gold accent there */
+/* art-direction.css sets .btn-primary with !important, so these must too */
+.dark-theme .oms .btn-primary { background: #d4af37 !important; color: #0f172a !important; }
+.dark-theme .oms .btn-primary:hover { background: #e0bf4f !important; }

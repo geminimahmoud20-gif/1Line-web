@@ -46,14 +46,8 @@ export default function PortalsPage({
   handleBrokerCheckbox,
   submitBrokerPortal,
   demands,
-  ownerSearch,
-  setOwnerSearch,
-  isScanningMap,
-  setIsScanningMap,
   ownerMatchesFound,
   setOwnerMatchesFound,
-  scanningMessage,
-  setScanningMessage,
   navigateTo,
   triggerToast,
   handleAddNewLead,
@@ -102,9 +96,9 @@ export default function PortalsPage({
       case 'demands':
         return {
           breadcrumb: isAr ? 'طلبات المشترين' : 'Buyer Demands',
-          badge: isAr ? 'طلبات المشترين' : 'Live Real Estate Market Demands',
+          badge: isAr ? 'طلبات حقيقية من مشترين' : 'Real buyer requests',
           title: isAr ? 'طلبات المشترين: عندك عقار يطابق طلب؟' : 'Buyer requests: have a matching property?',
-          subtitle: isAr ? 'إن كان لديك عقار يطابق أحد هذه الطلبات، اعرضه ليصل مباشرة للمشتري.' : 'Browse active cash buyers and match your property for fast closing.'
+          subtitle: isAr ? 'دي طلبات مشترين حقيقيين بيدوّروا على عقار. لو عندك عقار مناسب، سجّله وإحنا نوصّله للمشتري.' : 'Browse active cash buyers and match your property for fast closing.'
         };
       case 'referral':
         return {
@@ -257,14 +251,8 @@ export default function PortalsPage({
               lang={lang}
               t={t}
               demands={demands}
-              ownerSearch={ownerSearch}
-              setOwnerSearch={setOwnerSearch}
-              isScanningMap={isScanningMap}
-              setIsScanningMap={setIsScanningMap}
               ownerMatchesFound={ownerMatchesFound}
               setOwnerMatchesFound={setOwnerMatchesFound}
-              scanningMessage={scanningMessage}
-              setScanningMessage={setScanningMessage}
               navigateTo={navigateTo}
               setSellerAnswers={setSellerAnswers}
               triggerToast={triggerToast}

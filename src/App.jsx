@@ -483,10 +483,7 @@ function AppContent() {
   };
 
   // Demands Match State
-  const [ownerSearch, setOwnerSearch] = useState('');
-  const [isScanningMap, setIsScanningMap] = useState(false);
   const [ownerMatchesFound, setOwnerMatchesFound] = useState([]);
-  const [scanningMessage, setScanningMessage] = useState('');
 
   return (
     <div 
@@ -633,16 +630,13 @@ function AppContent() {
             invPeriod={invPeriod}
             invPropType={invPropType}
             investorForm={investorForm}
-            isScanningMap={isScanningMap}
             lang={lang}
             leads={leads}
             navigate={navigate}
             ownerMatchesFound={ownerMatchesFound}
-            ownerSearch={ownerSearch}
             projects={projects}
             properties={properties}
             roiRes={roiRes}
-            scanningMessage={scanningMessage}
             sellerAnswers={sellerAnswers}
             sellerStep={sellerStep}
             setAddDemandModalOpen={setAddDemandModalOpen}
@@ -655,11 +649,8 @@ function AppContent() {
             setInvPeriod={setInvPeriod}
             setInvPropType={setInvPropType}
             setInvestorForm={setInvestorForm}
-            setIsScanningMap={setIsScanningMap}
             setLeads={setLeads}
             setOwnerMatchesFound={setOwnerMatchesFound}
-            setOwnerSearch={setOwnerSearch}
-            setScanningMessage={setScanningMessage}
             setSellerAnswers={setSellerAnswers}
             setSellerStep={setSellerStep}
             setShowInvResultForm={setShowInvResultForm}
