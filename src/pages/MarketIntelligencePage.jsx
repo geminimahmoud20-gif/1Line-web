@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { TrendingUp, Building, Sparkles, ShieldCheck, MapPin, CheckCircle2, Calculator, ArrowRight, ArrowLeft, Home, Store } from 'lucide-react';
-import { areaMarketStats, budgetMatches, liveListings } from '../utils/marketStats';
+import { areaMarketStats, budgetMatches, liveListings, assetClass, median } from '../utils/marketStats';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
+import AreaPriceCards from '../components/market/AreaPriceCards';
 import { getAreas } from '../utils/areasData';
 import { updatePageSeo, buildBreadcrumbSchema } from '../utils/seoHelper';
 
@@ -38,19 +39,17 @@ export default function MarketIntelligencePage({ lang = 'ar', properties = [] })
 
   const live = useMemo(() => liveListings(properties), [properties]);
   const stats = useMemo(() => areaMarketStats(properties), [properties]);
-  const hasCommercial = stats.some((d) => d.commercial?.medianPpm);
   const matches = useMemo(() => budgetMatches(properties, userBudget), [properties, userBudget]);
   const overall = useMemo(() => {
-    const ppm = live.filter((p) => Number(p.size) > 0 && ['apartment', 'villa', 'duplex', 'penthouse', 'studio', 'residential'].includes(p.type))
-      .map((p) => Number(p.price) / Number(p.size)).sort((a, b) => a - b);
-    return { residential: ppm.length ? Math.round(ppm[Math.floor(ppm.length / 2)]) : 0 };
+    // Same classes and median as the area cards below
+    const ppm = live.filter((p) => Number(p.size) > 0 && assetClass(p) === 'residential').map((p) => Number(p.price) / Number(p.size));
+    return { residential: Math.round(median(ppm)) };
   }, [live]);
   const areaName = (id) => {
     const a = areas.find((x) => x.id === id);
     return a ? (isAr ? a.name_ar : a.name_en || a.name_ar) : id;
   };
   const n = (v) => Number(v || 0).toLocaleString('en-US');
-  const short = (v) => (v >= 1e6 ? `${(v / 1e6).toFixed(1)} ${isAr ? 'مليون' : 'M'}` : `${n(Math.round(v / 1000))} ${isAr ? 'ألف' : 'K'}`);
 
   return (
     <div className="market-intelligence-page-wrapper">
@@ -167,42 +166,13 @@ export default function MarketIntelligencePage({ lang = 'ar', properties = [] })
           <div className="matrix-header-flex">
             <div>
               <h3>{isAr ? 'سعر المتر حسب المنطقة (من العروض الحالية)' : 'Price per m² by district (current listings)'}</h3>
-              <p>{isAr ? 'الوسيط = السعر اللي نص العروض أقل منه ونصها أعلى. السكني والتجاري محسوبين كل واحد لوحده.' : 'Median = half the listings are below it, half above. Homes and commercial are computed separately.'}</p>
+              <p>{isAr ? 'كل نوع محسوب لوحده (سكني، تجاري، إداري، أراضي). الوسيط = السعر اللي نص العروض أقل منه ونصها أعلى، ومحسوب لما يكون فيه 3 عروض أو أكتر.' : 'Each kind is computed on its own (homes, shops, offices, land). The median (half below, half above) is shown from 3 listings up.'}</p>
             </div>
           </div>
-          {/* The commercial column only shows once some area has a commercial median */}
           {stats.length === 0 ? (
             <p style={{ margin: '12px 0 0' }}>{isAr ? 'لسه مفيش عقارات منشورة كفاية لحساب المتوسطات.' : 'Not enough published listings yet.'}</p>
           ) : (
-            <div className="matrix-table-scroll">
-              <table className="market-data-table">
-                <thead>
-                  <tr>
-                    <th>{isAr ? 'المنطقة' : 'District'}</th>
-                    <th>{isAr ? 'عروض حالية' : 'Listings'}</th>
-                    <th>{isAr ? 'متر السكني (وسيط)' : 'Homes / m² (median)'}</th>
-                    {hasCommercial && <th>{isAr ? 'متر التجاري (وسيط)' : 'Commercial / m² (median)'}</th>}
-                    <th>{isAr ? 'نطاق الأسعار' : 'Price range'}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stats.map((d) => {
-                    const prices = [d.residential, d.commercial, d.land].filter((c) => c.count);
-                    const min = Math.min(...prices.map((c) => c.minPrice));
-                    const max = Math.max(...prices.map((c) => c.maxPrice));
-                    return (
-                      <tr key={d.areaId}>
-                        <td><div className="district-cell"><MapPin size={15} className="text-primary" /><strong>{areaName(d.areaId)}</strong></div></td>
-                        <td>{n(d.total)}</td>
-                        <td>{d.residential.medianPpm ? <strong className="cell-price">{n(d.residential.medianPpm)} {isAr ? 'ج.م' : 'EGP'}</strong> : '—'}{d.residential.ppmSample ? <small style={{ display: 'block', opacity: 0.7 }}>{isAr ? `من ${d.residential.ppmSample} عرض` : `from ${d.residential.ppmSample}`}</small> : null}</td>
-                        {hasCommercial && <td>{d.commercial.medianPpm ? <strong className="cell-price">{n(d.commercial.medianPpm)} {isAr ? 'ج.م' : 'EGP'}</strong> : '—'}{d.commercial.ppmSample ? <small style={{ display: 'block', opacity: 0.7 }}>{isAr ? `من ${d.commercial.ppmSample} عرض` : `from ${d.commercial.ppmSample}`}</small> : null}</td>}
-                        <td>{Number.isFinite(min) ? `${short(min)} – ${short(max)}` : '—'}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <AreaPriceCards stats={stats} areaName={areaName} isAr={isAr} />
           )}
         </div>
         <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '10px 4px 0' }}>

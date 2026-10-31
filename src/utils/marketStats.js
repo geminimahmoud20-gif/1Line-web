@@ -2,12 +2,25 @@
 // yields or "live registry data"). Pure; tested in tests/unit/market-stats.test.mjs.
 
 const RESIDENTIAL = new Set(['apartment', 'villa', 'duplex', 'penthouse', 'studio', 'chalet', 'townhouse', 'twinhouse', 'residential']);
-const COMMERCIAL = new Set(['commercial', 'office', 'clinic', 'medical', 'administrative', 'retail', 'shop']);
+// Shops and showrooms are priced very differently from offices and clinics, so they are two classes
+const COMMERCIAL = new Set(['commercial', 'retail', 'shop', 'showroom']);
+const ADMINISTRATIVE = new Set(['office', 'clinic', 'medical', 'administrative']);
+const AGRICULTURAL = new Set(['agri_land', 'farm']);
+const INDUSTRIAL = new Set(['factory', 'warehouse', 'industrial_land']);
+
+/** The market a listing is priced in: each one gets its own medians and ranges */
+export const ASSET_CLASSES = ['residential', 'commercial', 'administrative', 'land', 'building', 'agricultural', 'industrial'];
 
 export const assetClass = (p) => {
-  if (p?.category === 'land' || p?.type === 'land') return 'land';
-  if (RESIDENTIAL.has(p?.type) || p?.category === 'residential') return 'residential';
-  if (COMMERCIAL.has(p?.type) || ['commercial', 'administrative'].includes(p?.category)) return 'commercial';
+  const type = p?.type;
+  const category = p?.category;
+  if (AGRICULTURAL.has(type) || category === 'agricultural') return 'agricultural';
+  if (INDUSTRIAL.has(type) || category === 'industrial') return 'industrial';
+  if (category === 'land' || type === 'land') return 'land';
+  if (type === 'building' || category === 'building') return 'building';
+  if (ADMINISTRATIVE.has(type) || category === 'administrative') return 'administrative';
+  if (COMMERCIAL.has(type) || category === 'commercial') return 'commercial';
+  if (RESIDENTIAL.has(type) || category === 'residential') return 'residential';
   return 'other';
 };
 
@@ -31,12 +44,24 @@ const classStats = (list) => {
     count: list.length,
     medianPpm: median(ppm),
     ppmSample: ppm.length,
+    minPpm: ppm.length ? Math.min(...ppm) : 0,
+    maxPpm: ppm.length ? Math.max(...ppm) : 0,
     minPrice: prices.length ? Math.min(...prices) : 0,
     maxPrice: prices.length ? Math.max(...prices) : 0,
   };
 };
 
-/** Per area: listing counts and median price per m² for homes and for commercial units. */
+/**
+ * How much a price-per-m² figure can be trusted: 'median' (3+ listings), 'pair' (the average of
+ * two) or 'single' (one listing's own price). Shown so one listing isn't read as a district price.
+ */
+export const sampleKind = (n) => (n >= 3 ? 'median' : n === 2 ? 'pair' : n === 1 ? 'single' : 'none');
+
+/**
+ * Per area: listing counts, and for each asset class present its own median price per m², price per
+ * m² range and unit price range (homes, shops, offices, land… never mixed in one range).
+ * `classes` lists the classes the area has, in ASSET_CLASSES order.
+ */
 export function areaMarketStats(properties = []) {
   const byArea = new Map();
   for (const p of liveListings(properties)) {
@@ -44,13 +69,12 @@ export function areaMarketStats(properties = []) {
     if (!byArea.has(key)) byArea.set(key, []);
     byArea.get(key).push(p);
   }
-  return [...byArea.entries()].map(([areaId, list]) => ({
-    areaId,
-    total: list.length,
-    residential: classStats(list.filter((p) => assetClass(p) === 'residential')),
-    commercial: classStats(list.filter((p) => assetClass(p) === 'commercial')),
-    land: classStats(list.filter((p) => assetClass(p) === 'land')),
-  })).sort((a, b) => b.total - a.total);
+  return [...byArea.entries()].map(([areaId, list]) => {
+    const row = { areaId, total: list.length };
+    for (const cls of ASSET_CLASSES) row[cls] = classStats(list.filter((p) => assetClass(p) === cls));
+    row.classes = ASSET_CLASSES.filter((cls) => row[cls].count > 0);
+    return row;
+  }).sort((a, b) => b.total - a.total);
 }
 
 /** What a budget can buy right now: matching listings per area and asset class. */

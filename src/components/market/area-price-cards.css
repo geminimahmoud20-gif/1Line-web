@@ -1,0 +1,25 @@
+/* Market page: price per m² by area, one card per area and one line per kind of property */
+.apc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr)); gap: 14px; }
+.apc-card {
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  background: var(--bg-card, #fff);
+  padding: 14px 16px;
+  min-width: 0;
+}
+.apc-head { display: flex; align-items: center; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); color: var(--primary); }
+.apc-head h4 { flex: 1; min-width: 0; margin: 0; font-size: 1.02rem; font-weight: 800; color: var(--text-primary); line-height: 1.5; }
+.apc-count { flex-shrink: 0; font-size: 0.78rem; font-weight: 700; color: var(--text-muted); background: var(--bg-slate); border-radius: 999px; padding: 3px 10px; }
+.apc-rows { list-style: none; margin: 0; padding: 0; }
+.apc-row { padding: 12px 0; border-bottom: 1px dashed var(--border-color); }
+.apc-row:last-child { border-bottom: 0; padding-bottom: 2px; }
+.apc-row-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.apc-class { font-weight: 800; color: var(--text-primary); font-size: 0.95rem; }
+.apc-class small { font-weight: 600; color: var(--text-muted); font-size: 0.8rem; }
+.apc-ppm { font-size: 1.08rem; font-weight: 800; color: var(--primary); white-space: nowrap; }
+.apc-na { font-size: 0.82rem; color: var(--text-muted); }
+.apc-row-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; font-size: 0.8rem; color: var(--text-muted); }
+.apc-row-meta bdi { font-weight: 700; color: var(--text-secondary, var(--text-primary)); }
+.apc-basis.is-single, .apc-basis.is-pair { color: #b45309; font-weight: 700; }
+.dark-theme .apc-card, :root[data-theme='dark'] .apc-card { background: #111827; border-color: #334155; }
+.dark-theme .apc-basis.is-single, .dark-theme .apc-basis.is-pair { color: #fbbf24; }
