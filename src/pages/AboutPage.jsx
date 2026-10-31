@@ -9,6 +9,7 @@ import { useSiteSettings } from '../utils/siteSettings';
 import { readablePhone } from '../utils/phoneDisplay';
 import { sectionOn, visibleCompanyFacts } from '../utils/aboutProfile';
 import { AboutCompanyFacts, AboutTeam, AboutGallery } from '../components/about/AboutProfileSections';
+import AboutShareCard from '../components/about/AboutShareCard';
 
 // The questions (by category, with FAQPage schema) live here rather than on the long homepage
 const FaqSection = lazy(() => import('../components/home/FaqSection'));
@@ -63,7 +64,7 @@ export default function AboutPage({ lang = 'ar' }) {
   }, []);
 
   const cleanPhone = cleanPhoneNumber(cms.phoneNumber);
-  const { contact } = useSiteSettings();
+  const { contact, social } = useSiteSettings();
   // Sections and company facts the team switched on in the CRM (الفريق وبيانات الشركة والصور)
   const about = cms.about;
   const show = (id) => sectionOn(about, id);
@@ -202,6 +203,8 @@ export default function AboutPage({ lang = 'ar' }) {
           </div>
         </div>
       </section>
+
+      <AboutShareCard isAr={isAr} social={social} />
 
       {/* 👑 2. EXECUTIVE LEADERSHIP SHOWCASE: DR. MAHMOUD ELBAZ */}
       {show('founder') && (

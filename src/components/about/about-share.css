@@ -1,0 +1,41 @@
+/* About page: «ابعت صفحة الشركة» card with share buttons and the social accounts */
+.about-share { margin-top: 8px; margin-bottom: 8px; }
+.about-share-card {
+  display: grid; gap: 16px; padding: 22px; border-radius: 20px;
+  background: #fff; border: 1px solid rgba(13, 72, 161, 0.12);
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+}
+.about-share-title { margin: 0; font-size: 1.15rem; font-weight: 800; color: #0f172a; }
+.about-share-sub { margin: 6px 0 0; font-size: 0.92rem; line-height: 1.7; color: #475569; }
+.about-share-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.about-share-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 46px; padding: 0 18px; border-radius: 12px; cursor: pointer;
+  border: 1px solid rgba(13, 72, 161, 0.18); background: #fff; color: #0f172a;
+  font: inherit; font-size: 0.92rem; font-weight: 700; text-decoration: none;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+.about-share-btn:hover { border-color: rgba(13, 72, 161, 0.4); }
+.about-share-btn:focus-visible { outline: 2px solid #0d48a1; outline-offset: 2px; }
+.about-share-btn--primary { background: #0d48a1; border-color: #0d48a1; color: #fff; }
+.about-share-btn--primary:hover { background: #0b3d89; }
+.about-share-btn--wa { background: #25d366; border-color: #25d366; color: #fff; }
+.about-share-btn--wa:hover { background: #1fb457; border-color: #1fb457; }
+.about-share-follow { display: grid; gap: 8px; padding-top: 14px; border-top: 1px solid rgba(13, 72, 161, 0.1); }
+.about-share-follow-label { font-size: 0.85rem; font-weight: 700; color: #475569; }
+
+@media (min-width: 760px) {
+  .about-share-card { grid-template-columns: 1fr auto; align-items: center; padding: 26px 30px; }
+  .about-share-follow { grid-column: 1 / -1; grid-template-columns: auto 1fr; align-items: center; gap: 14px; }
+}
+@media (max-width: 480px) {
+  .about-share-card { padding: 18px 16px; }
+  .about-share-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); }
+  .about-share-btn { padding: 0 10px; }
+}
+
+.dark-theme .about-share-card { background: rgba(255, 255, 255, 0.04); border-color: rgba(212, 175, 55, 0.22); box-shadow: none; }
+.dark-theme .about-share-title { color: #fff; }
+.dark-theme .about-share-sub, .dark-theme .about-share-follow-label { color: #cbd5e1; }
+.dark-theme .about-share-btn:not(.about-share-btn--primary):not(.about-share-btn--wa) { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.18); color: #f1f5f9; }
+.dark-theme .about-share-follow { border-top-color: rgba(255, 255, 255, 0.1); }

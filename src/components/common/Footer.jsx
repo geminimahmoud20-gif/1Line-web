@@ -11,8 +11,8 @@ import {
   Clock
 } from 'lucide-react';
 import { BRAND, LEGAL_IDS } from '../../config/siteConfig';
-import { useSiteSettings, SOCIAL_NETWORKS } from '../../utils/siteSettings';
-import './footer-social.css';
+import { useSiteSettings } from '../../utils/siteSettings';
+import SocialLinks from './SocialIcons';
 import LogoEmblem from '../LogoEmblem';
 import InstallAppButton from './InstallAppButton';
 import { 
@@ -25,7 +25,6 @@ import {
 export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
   const isAr = lang === 'ar';
   const { contact, social } = useSiteSettings();
-  const socialLinks = SOCIAL_NETWORKS.filter((n) => social[n.id]);
   const [cms, setCms] = useState(() => getFounderSettings());
 
   useEffect(() => {
@@ -74,15 +73,7 @@ export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
               <span>{isAr ? 'وساطة واستشارات مرخصة • مراجعة المستندات قبل التعاقد' : 'Licensed Advisory • Document Audit Before Contract'}</span>
             </div>
 
-            {socialLinks.length > 0 && (
-              <ul className="footer-social" aria-label={isAr ? 'حساباتنا على السوشيال ميديا' : 'Our social accounts'}>
-                {socialLinks.map((n) => (
-                  <li key={n.id}>
-                    <a href={social[n.id]} target="_blank" rel="noopener noreferrer me" className="footer-social-link">{n.label}</a>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <SocialLinks social={social} isAr={isAr} variant="footer" />
 
             <InstallAppButton lang={lang} className="footer-install-app" />
           </div>
