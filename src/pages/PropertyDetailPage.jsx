@@ -39,6 +39,7 @@ import { paymentTerms, hasInstallmentPlan, termLabel } from '../utils/paymentTer
 import { similarListings } from '../utils/similarListings';
 import { CONTACT, OFFICE_HOURS, VIEWING_SLOTS } from '../config/siteConfig';
 import { nameProblem, phoneProblem } from '../utils/contactValidation';
+import { blockedByApproval } from '../utils/publishApproval';
 
 const FACT_ICONS = { size: Maximize2, rooms: BedDouble, baths: Bath, floor: Layers, finishing: Sparkles, handover: Clock3 };
 
@@ -92,7 +93,7 @@ export default function PropertyDetailPage({
   const [, setViewsCount] = useState(() => (id ? getPropertyViews(id) || 0 : 0));
 
   // Deleted / hidden / draft listings are not public, even by direct link
-  const isPublicListing = (p) => p && !p.isDeleted && !['trash', 'hidden', 'draft'].includes(p.status);
+  const isPublicListing = (p) => p && !p.isDeleted && !['trash', 'hidden', 'draft'].includes(p.status) && !blockedByApproval(p);
 
   // Find Property
   const property = useMemo(() => {

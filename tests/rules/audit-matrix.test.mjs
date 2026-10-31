@@ -80,7 +80,7 @@ test('MATRIX: sales_manager reads all leads & contacts, edits all leads, cannot 
   // Cannot delete leads (super_admin only)
   await assertFails(deleteDoc(doc(mgr, 'leads/lead-a')));
   // inv.edit restored for sales_manager pending owner decision
-  await assertSucceeds(setDoc(doc(mgr, 'properties/prop-1'), { title: 'Updated' }, { merge: true }));
+  await assertSucceeds(setDoc(doc(mgr, 'properties/prop-1'), { title: 'Updated', approval: 'pending' }, { merge: true }));
 });
 
 // ── 3. SALES AGENT (DESK A) PERMISSIONS & SCOPING ───────────────────────────
@@ -110,7 +110,7 @@ test('MATRIX: property_manager manages properties, denied lead contacts and deal
   const pm = asPropertyManager();
   // Can manage properties
   await assertSucceeds(getDoc(doc(pm, 'properties/prop-1')));
-  await assertSucceeds(setDoc(doc(pm, 'properties/prop-1'), { price: 3000000 }, { merge: true }));
+  await assertSucceeds(setDoc(doc(pm, 'properties/prop-1'), { price: 3000000, approval: 'pending' }, { merge: true }));
   // Denied lead contacts (PII protection!)
   await assertFails(getDoc(doc(pm, 'lead_contacts/lead-a')));
   // Denied deals

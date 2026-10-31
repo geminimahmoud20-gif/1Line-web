@@ -29,12 +29,15 @@ export const decodeFields = (fields = {}) =>
 /**
  * REST documents → the list subscribeToCatalog hands the app: { ...data, id } with the item's own
  * id field winning. Tombstones stay (as { id, deleted }) so visitors' cached copies drop the item.
+ * An item waiting for (or refused) the general manager's approval goes out as a tombstone too:
+ * visitors never receive it (src/utils/publishApproval.js).
  */
 export function toCatalogItems(documents = []) {
   return documents.map((d) => {
     const data = decodeFields(d.fields);
     const docId = String(d.name || '').split('/').pop();
     const id = data.id ?? docId;
-    return data.deleted ? { id, deleted: true, updatedAt: data.updatedAt || null } : { ...data, id };
+    const offSite = data.deleted || data.approval === 'pending' || data.approval === 'rejected';
+    return offSite ? { id, deleted: true, updatedAt: data.updatedAt || null } : { ...data, id };
   });
 }

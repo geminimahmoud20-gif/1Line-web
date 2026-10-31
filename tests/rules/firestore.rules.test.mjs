@@ -1,7 +1,7 @@
 // Firestore security rules tests. Needs the Firestore emulator (Java 11+):
 //   npm run test:rules
 import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
-import { doc, getDoc, setDoc, deleteDoc, collection, query, where, orderBy, limit, getDocs, collectionGroup, writeBatch, deleteField, documentId, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, updateDoc, collection, query, where, orderBy, limit, getDocs, collectionGroup, writeBatch, deleteField, documentId, serverTimestamp } from 'firebase/firestore';
 import fs from 'node:fs';
 import { test, before, after, beforeEach } from 'node:test';
 
@@ -92,11 +92,13 @@ test('demands: contact-bearing docs are staff-only, even when published', async 
   await assertFails(setDoc(doc(guest(), 'demands/new2'), { name: 'Buyer', phone: '01000000002', status: 'published' }));
 });
 
-test('public_demands: public read, editors write contact-free published copies', async () => {
+test('public_demands: public read, only the general manager writes contact-free published copies', async () => {
   const pm = as('property_manager');
-  await assertSucceeds(setDoc(doc(pm, 'public_demands/p1'), { text_ar: 't', status: 'published', budget: 1 }));
-  await assertFails(setDoc(doc(pm, 'public_demands/p2'), { text_ar: 't', status: 'published', phone: '010' }));
-  await assertFails(setDoc(doc(pm, 'public_demands/p3'), { text_ar: 't', status: 'pending' }));
+  const gm = asAdmin();
+  await assertFails(setDoc(doc(pm, 'public_demands/p1'), { text_ar: 't', status: 'published', budget: 1 }));
+  await assertSucceeds(setDoc(doc(gm, 'public_demands/p1'), { text_ar: 't', status: 'published', budget: 1 }));
+  await assertFails(setDoc(doc(gm, 'public_demands/p2'), { text_ar: 't', status: 'published', phone: '010' }));
+  await assertFails(setDoc(doc(gm, 'public_demands/p3'), { text_ar: 't', status: 'pending' }));
   await assertFails(setDoc(doc(as('sales_agent'), 'public_demands/p4'), { text_ar: 't', status: 'published' }));
   await assertFails(setDoc(doc(guest(), 'public_demands/p5'), { text_ar: 't', status: 'published' }));
   await assertSucceeds(getDocs(collection(guest(), 'public_demands')));
@@ -564,4 +566,41 @@ test('receipts: finance issues them in order, each number once, never edited', a
   await assertSucceeds(getDoc(doc(fin, 'receipts/REC-2026-0001')));
   await assertFails(getDoc(doc(as('agent_east'), 'receipts/REC-2026-0001')));
   await assertFails(issue(as('sales_manager'), 'u-sales_manager', 4));
+});
+
+// ── Publishing needs the general manager (src/utils/publishApproval.js) ──────────────────
+test('approval: staff saves of listings and projects must wait for the general manager', async () => {
+  const pm = as('property_manager');
+  const gm = asAdmin();
+  for (const col of ['properties', 'projects']) {
+    await assertFails(setDoc(doc(pm, `${col}/s1`), { id: 's1', title_ar: 'x' }));
+    await assertFails(setDoc(doc(pm, `${col}/s1`), { id: 's1', title_ar: 'x', approval: 'approved' }));
+    await assertFails(setDoc(doc(pm, `${col}/s1`), { id: 's1', title_ar: 'x', approval: 'rejected' }));
+    await assertSucceeds(setDoc(doc(pm, `${col}/s1`), { id: 's1', title_ar: 'x', approval: 'pending' }));
+    // Removing from the site (tombstone) needs no approval
+    await assertSucceeds(setDoc(doc(pm, `${col}/s1`), { id: 's1', deleted: true }));
+    // The manager publishes and approves
+    await assertSucceeds(setDoc(doc(gm, `${col}/s2`), { id: 's2', title_ar: 'y', approval: 'approved' }));
+    await assertSucceeds(setDoc(doc(gm, `${col}/s2`), { id: 's2', title_ar: 'y' }));
+    // A staff edit to a live item sends it back for approval
+    await assertFails(setDoc(doc(pm, `${col}/s2`), { price: 5 }, { merge: true }));
+    await assertSucceeds(setDoc(doc(pm, `${col}/s2`), { price: 5, approval: 'pending' }, { merge: true }));
+  }
+  // Roles without inventory edit still can't write at all
+  await assertFails(setDoc(doc(as('sales_agent'), 'properties/s3'), { id: 's3', approval: 'pending' }));
+});
+
+test('approval: only the general manager publishes a buyer request', async () => {
+  const pm = as('property_manager');
+  const gm = asAdmin();
+  // Staff can add requests that wait, not published ones
+  await assertSucceeds(setDoc(doc(pm, 'demands/s1'), { name: 'Buyer', phone: '01000000002', status: 'pending' }));
+  await assertFails(setDoc(doc(pm, 'demands/s2'), { name: 'Buyer', phone: '01000000002', status: 'published' }));
+  await assertFails(updateDoc(doc(pm, 'demands/s1'), { status: 'published' }));
+  await assertSucceeds(updateDoc(doc(gm, 'demands/s1'), { status: 'published' }));
+  // On a published request, staff may change working fields but not the public text without unpublishing
+  await assertSucceeds(updateDoc(doc(pm, 'demands/p1'), { notes: 'call back Sunday' }));
+  await assertFails(updateDoc(doc(pm, 'demands/p1'), { text_ar: 'changed' }));
+  await assertSucceeds(updateDoc(doc(pm, 'demands/p1'), { text_ar: 'changed', status: 'pending' }));
+  await assertSucceeds(updateDoc(doc(gm, 'demands/s1'), { text_ar: 'gm edit' }));
 });

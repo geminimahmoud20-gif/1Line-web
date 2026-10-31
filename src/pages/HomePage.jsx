@@ -20,6 +20,7 @@ import HomeOffers from '../components/home/HomeOffers';
 
 import HomeHero from '../components/home/HomeHero';
 import HomeMarketplace from '../components/home/HomeMarketplace';
+import { blockedByApproval } from '../utils/publishApproval';
 
 // Below the fold: their own chunks, fetched right after the hero renders instead of in the entry bundle
 const FamilyLegacySection = lazy(() => import('../components/family/FamilyLegacySection'));
@@ -234,7 +235,7 @@ export default function HomePage({
 
   // Exclude hidden, draft, and deleted properties from public homepage
   const publishedProperties = safeProperties.filter(
-    (p) => !p.isDeleted && p.status !== 'trash' && p.status !== 'hidden' && p.status !== 'draft'
+    (p) => !p.isDeleted && p.status !== 'trash' && p.status !== 'hidden' && p.status !== 'draft' && !blockedByApproval(p)
   );
   const activePublished = publishedProperties;
 

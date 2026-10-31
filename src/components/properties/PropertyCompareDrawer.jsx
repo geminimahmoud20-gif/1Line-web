@@ -13,6 +13,7 @@ import CompareDuel from './CompareDuel';
 import { countLabel } from '../../utils/arabicCount';
 import { thumbUrl } from '../../utils/imageThumbs';
 import { siteLink } from '../../config/siteConfig';
+import { blockedByApproval } from '../../utils/publishApproval';
 
 export default function PropertyCompareDrawer({
   isOpen,
@@ -92,7 +93,7 @@ export default function PropertyCompareDrawer({
     const currentIds = new Set(compareList.map(p => p.id));
     return availableProperties.filter(p => {
       if (currentIds.has(p.id)) return false;
-      if (p.isDeleted || p.status === 'trash' || p.status === 'hidden') return false;
+      if (p.isDeleted || p.status === 'trash' || p.status === 'hidden' || blockedByApproval(p)) return false;
       if (!selectorSearch.trim()) return true;
       const q = selectorSearch.toLowerCase();
       const titleAr = (p.title_ar || '').toLowerCase();

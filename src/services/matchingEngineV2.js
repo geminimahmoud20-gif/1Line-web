@@ -33,7 +33,7 @@ export function calculateMatchScore(buyerProfileOrLead, property, _options = {})
   
   // ── 1. NEGATIVE & EXCLUSION FILTERING ───────────────────────────────────────
   // A) Deleted or Hidden Properties
-  if (property.isDeleted || property.status === 'trash' || property.status === 'hidden' || property.status === 'sold') {
+  if (property.isDeleted || property.status === 'trash' || property.status === 'hidden' || property.status === 'sold' || ['pending', 'rejected'].includes(property.approval)) {
     return {
       score: 0,
       isExcluded: true,

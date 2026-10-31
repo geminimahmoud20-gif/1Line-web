@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import useOpenRequest from '../../hooks/useOpenRequest';
 import { Zap, Plus, Check, Trash2, Edit3, Clock, MapPin, DollarSign, Phone, MessageSquare, Search, CheckCircle, EyeOff, Sparkles, Download } from 'lucide-react';
 import { exportToCsv } from '../../utils/exportCsv';
-import { canViewLeadPhone, maskPhoneNumber, canEditProperties } from '../../utils/rbacRules';
+import { canViewLeadPhone, maskPhoneNumber } from '../../utils/rbacRules';
 import { reconcilePublicDemands } from '../../firebaseLazy';
 import DemandFormModal from './demands/DemandFormModal';
 import DemandMatchModal from './demands/DemandMatchModal';
@@ -12,6 +12,7 @@ import { findArea, placeAreas, inArea } from '../../utils/areaLookup';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { recordTimeLabel } from '../../utils/relativeTime';
 import { useConfirm } from '../ui';
+import './demands-approval.css';
 
 
 
@@ -30,6 +31,8 @@ export default function DemandsManagerPanel({
   readOnly = false
 }) {
   const confirm = useConfirm();
+  // Only the general manager publishes a request (firestore.rules enforces it too)
+  const isManager = userRole === 'super_admin';
   const isAr = lang === 'ar';
   const canViewPhone = canViewLeadPhone(userRole);
 
@@ -40,9 +43,9 @@ export default function DemandsManagerPanel({
   const [editingDemand, setEditingDemand] = useState(null);
   const [matchModalDemand, setMatchModalDemand] = useState(null);
 
-  // Once per session, an editor brings public_demands (the contact-free copies visitors read)
-  // in line with the published demands — covers demands published before the copies existed.
-  const canPublish = canEditProperties(userRole);
+  // Once per session, the general manager brings public_demands (the contact-free copies visitors
+  // read) in line with the published demands — covers demands published before the copies existed.
+  const canPublish = isManager;
   const hasDemands = demands.length > 0;
   useEffect(() => {
     if (!canPublish || !hasDemands) return;
@@ -210,7 +213,9 @@ export default function DemandsManagerPanel({
     } else {
       const res = onAddDemand?.(demandPayload);
       if (res === false) return;
-      triggerToast?.(isAr ? 'تمت إضافة ونشر الطلب بنجاح' : 'New demand published successfully', 'success');
+      triggerToast?.(canPublish || demandPayload.status !== 'published'
+        ? (isAr ? 'اتضاف الطلب' : 'Request added')
+        : (isAr ? 'اتضاف الطلب، وهيتنشر بعد موافقة المدير العام' : 'Request added; it is published once the general manager approves it'), 'success');
     }
 
     setShowAddModal(false);
@@ -598,6 +603,12 @@ export default function DemandsManagerPanel({
                 <div style={{ borderTop: '1px solid var(--crm-line)', paddingTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   {isPending ? (
                     <>
+                      {!canPublish && (
+                        <span role="status" className="dmp-awaiting">
+                          {isAr ? 'بانتظار موافقة المدير العام' : 'Waiting for approval'}
+                        </span>
+                      )}
+                      {canPublish && (
                       <button
                         type="button"
                         className="btn btn-sm btn-primary"
@@ -620,6 +631,7 @@ export default function DemandsManagerPanel({
                         <Check size={14} />
                         <span>{isAr ? 'موافقة ونشر في الموقع' : 'Approve & Publish Live'}</span>
                       </button>
+                      )}
 
                       {properties.length > 0 && (
                         <button

@@ -1,3 +1,4 @@
+import { blockedByApproval } from './publishApproval.js';
 // =============================================================
 //  Limited-time offers on listings — shared by the public site and the CRM, so what the admin
 //  schedules is exactly what visitors see, and an offer disappears on its own after its last day.
@@ -87,7 +88,7 @@ export function getActiveOffer(property, now = Date.now()) {
 /** Published listings with a running offer, ending soonest first */
 export function getOfferListings(list = [], now = Date.now()) {
   return list
-    .filter((p) => p && !p.isDemo && !p.isDeleted && !['trash', 'hidden', 'draft', 'sold'].includes(p.status))
+    .filter((p) => p && !p.isDemo && !p.isDeleted && !['trash', 'hidden', 'draft', 'sold'].includes(p.status) && !blockedByApproval(p))
     .map((property) => ({ property, offer: getActiveOffer(property, now) }))
     .filter((x) => x.offer)
     .sort((a, b) => a.offer.endsAt - b.offer.endsAt);
