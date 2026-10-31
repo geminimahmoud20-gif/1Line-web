@@ -3,6 +3,7 @@
 // because it sits in the same area, and when nothing fits the section stays empty.
 // Pure, unit-tested in tests/unit/similar-listings.test.mjs.
 import { categoryOfType } from './propertyKinds.js';
+import { blockedByApproval } from './publishApproval.js';
 
 const PRICE_BAND = 0.4; // ±40% of the listing's price
 const num = (v) => {
@@ -10,7 +11,7 @@ const num = (v) => {
   return Number.isFinite(n) && n > 0 ? n : 0;
 };
 const closeness = (a, b, band) => (a && b ? Math.max(0, 1 - Math.abs(a - b) / (a * band)) : 0);
-const isPublic = (p) => p && !p.isDeleted && !['trash', 'hidden', 'draft', 'sold'].includes(p.status);
+const isPublic = (p) => p && !p.isDeleted && !['trash', 'hidden', 'draft', 'sold'].includes(p.status) && !blockedByApproval(p);
 
 export function similarListings(property, list = [], limit = 3) {
   if (!property) return [];

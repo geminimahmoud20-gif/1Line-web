@@ -7,6 +7,7 @@ import { getCommercialInsights, isCommercialAsset, computeRentalYield } from '..
 import { getWhatsAppUrl } from '../utils/founderCmsData';
 import { updatePageSeo, buildBreadcrumbSchema } from '../utils/seoHelper';
 import '../styles/expat-suite.css';
+import { blockedByApproval } from '../utils/publishApproval';
 
 const isMedical = (p) => {
   const ins = getCommercialInsights(p);
@@ -48,7 +49,7 @@ export default function CommercialHubPage({ lang = 'ar', currency = 'EGP', prope
   }, [lang]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pool = useMemo(
-    () => properties.filter((p) => !p.isDeleted && !['trash', 'hidden', 'draft'].includes(p.status) && isCommercialAsset(p)),
+    () => properties.filter((p) => !p.isDeleted && !['trash', 'hidden', 'draft'].includes(p.status) && !blockedByApproval(p) && isCommercialAsset(p)),
     [properties]
   );
 

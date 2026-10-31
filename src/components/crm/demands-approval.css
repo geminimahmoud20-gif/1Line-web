@@ -1,0 +1,5 @@
+/* A staff member's view of a request waiting for the general manager */
+.dmp-awaiting {
+  flex: 1; display: inline-flex; align-items: center; justify-content: center; min-height: 34px; padding: 0 10px;
+  border-radius: 8px; background: var(--crm-warn-soft); color: var(--crm-warn); font-size: var(--crm-text-xs); font-weight: 700;
+}

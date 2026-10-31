@@ -2,6 +2,7 @@
 // Pure, unit-tested in tests/unit/project-facts.test.mjs.
 import { monthlyFor } from './paymentTerms.js';
 import { getActiveOffer } from './propertyOffers.js';
+import { blockedByApproval } from './publishApproval.js';
 
 const num = (v) => {
   const n = Number(v);
@@ -18,7 +19,7 @@ export const projectPath = (p) => `/projects/${encodeURIComponent(String(p?.id |
 export function projectUnits(project, list = []) {
   if (!project?.id) return [];
   return list.filter((u) => u && u.projectId === project.id && !u.isDeleted
-    && !['trash', 'hidden', 'draft', 'sold'].includes(u.status));
+    && !['trash', 'hidden', 'draft', 'sold'].includes(u.status) && !blockedByApproval(u));
 }
 
 /**
@@ -49,7 +50,7 @@ export function projectStages(project, isAr = true) {
 }
 
 /** Hidden from the CRM (المشروعات → 👁) keeps a project off every public page */
-export const isProjectPublic = (p) => Boolean(p) && !p.isHidden && !p.isDeleted && p.status !== 'hidden';
+export const isProjectPublic = (p) => Boolean(p) && !p.isHidden && !p.isDeleted && p.status !== 'hidden' && !blockedByApproval(p);
 export const siteProjects = (list = []) => (Array.isArray(list) ? list.filter(isProjectPublic) : []);
 
 /**

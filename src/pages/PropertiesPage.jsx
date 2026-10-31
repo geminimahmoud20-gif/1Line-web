@@ -27,6 +27,7 @@ import { finishingGroupOf } from '../utils/unitHandover';
 import '../styles/light-headers.css';
 import LandingLinks from '../components/properties/LandingLinks';
 import { inArea } from '../utils/areaLookup';
+import { blockedByApproval } from '../utils/publishApproval';
 
 // Area centre for listings placed only by their area (map bubbles, "search this area")
 const areaCenterOf = (key) => {
@@ -187,7 +188,7 @@ export default function PropertiesPage({
   const matchedProperties = useMemo(() => {
     // 1. Initial pool: exclude deleted, trash, hidden, draft
     const pool = safeProperties.filter((prop) => {
-      return !(prop.isDeleted || prop.status === 'trash' || prop.status === 'hidden' || prop.status === 'draft');
+      return !(prop.isDeleted || prop.status === 'trash' || prop.status === 'hidden' || prop.status === 'draft' || blockedByApproval(prop));
     });
 
     // 2. If semantic query exists, rank by semantic engine

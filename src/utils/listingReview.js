@@ -4,6 +4,7 @@
 // =============================================================
 import { listingSampleFlags } from './sampleDataFlags.js';
 import { getNormalizedPropertyStatus } from './crmLeadViews.js';
+import { blockedByApproval } from './publishApproval.js';
 
 export const NO_AREA = '__none';
 
@@ -85,7 +86,9 @@ const inRange = (value, min, max) => {
 export function matchesFilters(p, f, issues) {
   const st = listingStatus(p);
   if (f.status === 'trash') { if (st !== 'trash') return false; } else if (st === 'trash') return false;
-  if (f.status && !['all', 'trash'].includes(f.status) && st !== f.status) return false;
+  // 'approval': waiting for (or refused by) the general manager, whatever its status
+  if (f.status === 'approval') { if (!blockedByApproval(p)) return false; }
+  else if (f.status && !['all', 'trash'].includes(f.status) && st !== f.status) return false;
   if (f.type && f.type !== 'all' && p.type !== f.type) return false;
   if (f.area && f.area !== 'all') {
     // f.areaIds: the chosen area and, for a main area, its sub-areas
