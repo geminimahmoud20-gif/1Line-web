@@ -1,3 +1,4 @@
+import { blockedByApproval } from './publishApproval.js';
 // =============================================================
 //  1LINE — Real estate trade-in (بدل) options and matching engine
 //  Used by the public wizard (instant inventory preview) and the CRM tab (client ↔ client swaps).
@@ -99,7 +100,7 @@ export function matchInventory(request, properties = [], limit = 6) {
   if (!w) return [];
   const budget = reachBudget(request);
   return properties
-    .filter((p) => !p.isDeleted && !['trash', 'hidden', 'draft', 'sold'].includes(p.status))
+    .filter((p) => !p.isDeleted && !['trash', 'hidden', 'draft', 'sold'].includes(p.status) && !blockedByApproval(p))
     .filter((p) => w.matchProperty(p))
     .filter((p) => !(request.wantType === 'bigger_apartment' && request.offerType === 'apartment' && Number(request.offerSize) && Number(p.size) <= Number(request.offerSize)))
     .filter((p) => !budget || Number(p.price) <= budget * 1.15)

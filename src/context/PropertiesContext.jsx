@@ -24,6 +24,7 @@ import {
   subscribeToCatalog,
   upsertCatalogItem,
   upsertCatalogItems,
+  currentApprover,
   importLeads,
   deleteCatalogItem,
   syncPendingLeads,
@@ -41,6 +42,7 @@ import { track, propertyFacts, analyticsVisitorId } from '../utils/analytics';
 import { fetchPublicCatalog, PUBLIC_CATALOG_REFRESH_MS } from '../utils/publicCatalog';
 import { applySiteSettings, SITE_SETTINGS_KEY } from '../utils/siteSettings';
 import { usePreferences } from './PreferencesContext';
+import { demandEditStamp } from '../utils/publishApproval';
 import { useUIModal } from './UIModalContext';
 
 // ── Browser cache of leads/demands ───────────────────────────────────────────
@@ -130,11 +132,34 @@ export function PropertiesProvider({ children }) {
     });
   }, []);
 
+  // The approval stamp the cloud save added (src/utils/publishApproval.js), copied onto this
+  // device's copy so the CRM shows «بانتظار موافقة المدير العام» right away
+  const applyApproval = useCallback((collectionName, saved) => {
+    if (!saved?.id) return;
+    const keys = ['approval', 'submittedAt', 'submittedBy', 'approvedAt', 'approvedBy', 'rejectedAt'];
+    const fields = Object.fromEntries(keys.filter((k) => k in saved).map((k) => [k, saved[k]]));
+    const mapOne = (p) => (String(p.id) === String(saved.id) ? { ...p, ...fields } : p);
+    if (collectionName !== 'properties') return; // projects: see withProjectApproval
+    setProperties((prev) => {
+      const updated = prev.map(mapOne);
+      try { localStorage.setItem('oneline_properties', JSON.stringify(updated)); } catch { /* quota / private mode */ }
+      return updated;
+    });
+  }, []);
+
   // Cloud write results → one honest toast. Local state is already updated, so the UI never waits.
-  const reportCatalogSync = useCallback((promise, id) => {
+  const reportCatalogSync = useCallback((promise, id, collectionName = 'properties') => {
     Promise.resolve(promise).then((res) => {
-      markSync(id, res?.ok ? null : (res?.reason || 'error'));
-      if (res?.ok) return;
+      if (collectionName === 'properties') markSync(id, res?.ok ? null : (res?.reason || 'error'));
+      if (res?.ok) {
+        if (res.item) applyApproval(collectionName, res.item);
+        if (res.item?.approval === 'pending') {
+          triggerToast(lang === 'ar'
+            ? 'اتحفظ، وهيظهر على الموقع بعد موافقة المدير العام'
+            : 'Saved. It goes on the site once the general manager approves it', 'info');
+        }
+        return;
+      }
       const isAr = lang === 'ar';
       const msg = res?.reason === 'too-large'
         ? (isAr ? 'لم يُنشر على الموقع: حجم البيانات/الصور المضمّنة أكبر من الحد المسموح (1MB). ارفع الصور كروابط بدلاً من تضمينها.' : 'Not published: item exceeds 1MB — use image URLs.')
@@ -143,7 +168,7 @@ export function PropertiesProvider({ children }) {
           : (isAr ? 'تم الحفظ على هذا الجهاز فقط — تعذّر النشر السحابي، أعد المحاولة عند توفر الاتصال.' : 'Saved on this device only — cloud sync failed.');
       triggerToast(msg, 'error');
     }).catch(() => {});
-  }, [lang, triggerToast, markSync]);
+  }, [lang, triggerToast, markSync, applyApproval]);
 
   // Synced after each render; handlers also set it immediately so back-to-back updates see each other
   const propertiesRef = useRef(properties);
@@ -239,15 +264,29 @@ export function PropertiesProvider({ children }) {
   const persistProjects = (list) => {
     try { localStorage.setItem('oneline_mega_projects', JSON.stringify(list)); } catch { /* quota / private mode */ }
   };
+  // Same as applyApproval, for projects (declared after their state)
+  const withProjectApproval = useCallback((promise) => Promise.resolve(promise).then((res) => {
+    const saved = res?.item;
+    if (saved?.id) {
+      setProjects((prev) => {
+        const updated = prev.map((p) => (String(p.id) === String(saved.id)
+          ? { ...p, approval: saved.approval, submittedAt: saved.submittedAt, submittedBy: saved.submittedBy, approvedAt: saved.approvedAt, approvedBy: saved.approvedBy, rejectedAt: saved.rejectedAt }
+          : p));
+        try { localStorage.setItem('oneline_mega_projects', JSON.stringify(updated)); } catch { /* quota / private mode */ }
+        return updated;
+      });
+    }
+    return res;
+  }), []);
 
   const handleAddProject = useCallback((newProj) => {
     const updated = [newProj, ...projectsRef.current];
     projectsRef.current = updated;
     setProjects(updated);
     persistProjects(updated);
-    reportCatalogSync(upsertCatalogItem('projects', newProj));
+    reportCatalogSync(withProjectApproval(upsertCatalogItem('projects', newProj)), newProj.id, 'projects');
     triggerToast(lang === 'ar' ? 'تم إضافة المشروع' : 'Project added', 'success');
-  }, [lang, triggerToast, reportCatalogSync]);
+  }, [lang, triggerToast, reportCatalogSync, withProjectApproval]);
 
   const handleUpdateProject = useCallback((id, updatedData) => {
     const current = projectsRef.current.find((p) => p.id === id);
@@ -257,9 +296,9 @@ export function PropertiesProvider({ children }) {
     projectsRef.current = updated;
     setProjects(updated);
     persistProjects(updated);
-    reportCatalogSync(upsertCatalogItem('projects', merged));
+    reportCatalogSync(withProjectApproval(upsertCatalogItem('projects', merged)), id, 'projects');
     triggerToast(lang === 'ar' ? 'تم تحديث بيانات المشروع' : 'Project updated', 'success');
-  }, [lang, triggerToast, reportCatalogSync]);
+  }, [lang, triggerToast, reportCatalogSync, withProjectApproval]);
 
   const handleDeleteProject = useCallback((id) => {
     const updated = projectsRef.current.filter((p) => p.id !== id);
@@ -442,6 +481,8 @@ export function PropertiesProvider({ children }) {
     const valid = Array.isArray(stored) ? stored.filter(d => d && typeof d === 'object').map(tagDemoDemand) : DEMO_DEMANDS;
     return valid.length > 0 ? valid : DEMO_DEMANDS;
   });
+  const demandsRef = useRef(demands);
+  useEffect(() => { demandsRef.current = demands; }, [demands]);
 
   // Add New Lead Handler
   const handleAddNewLead = useCallback(async (leadData, extraData, sourceLabel) => {
@@ -623,8 +664,20 @@ export function PropertiesProvider({ children }) {
     }
   }, [handleAddNewLead]);
 
-  const handleAddAdminDemand = useCallback((demandPayload) => {
-    const sanitizedPayload = sanitizeObject(demandPayload);
+  // Only the general manager publishes a buyer request (src/utils/publishApproval.js; the rules
+  // enforce it too): a staff member's «نشر» or edit to a published text waits for approval.
+  const demandStampFor = useCallback(async (current, updates) => {
+    let isManager = false;
+    try { isManager = Boolean((await currentApprover())?.isManager); } catch { /* offline: treat as staff */ }
+    const next = demandEditStamp(current, updates, { isManager });
+    if (!isManager && updates?.status === 'published' && next.status !== 'published') {
+      triggerToast(lang === 'ar' ? 'اتحفظ، وهيتنشر على الموقع بعد موافقة المدير العام' : 'Saved. It is published once the general manager approves it', 'info');
+    }
+    return next;
+  }, [lang, triggerToast]);
+
+  const handleAddAdminDemand = useCallback(async (demandPayload) => {
+    const sanitizedPayload = sanitizeObject(await demandStampFor(null, demandPayload));
     setDemands((prev) => {
       const updated = [sanitizedPayload, ...prev];
       persistDemands(updated);
@@ -633,9 +686,11 @@ export function PropertiesProvider({ children }) {
     if (isFirebaseActive()) {
       saveDemand(sanitizedPayload);
     }
-  }, []);
+  }, [demandStampFor]);
 
-  const handleApproveDemand = useCallback((demandId) => {
+  const handleApproveDemand = useCallback(async (demandId) => {
+    const current = demandsRef.current.find((d) => d.id === demandId);
+    if ((await demandStampFor(current, { status: 'published' })).status !== 'published') return;
     setDemands((prev) => {
       const updated = prev.map(d => d.id === demandId ? { 
         ...d, 
@@ -654,9 +709,10 @@ export function PropertiesProvider({ children }) {
     if (isFirebaseActive()) {
       updateDemandStatus(demandId, { status: 'published', approvedAt: new Date().toISOString() });
     }
-  }, []);
+  }, [demandStampFor]);
 
-  const handleUpdateDemand = useCallback((demandId, updatedData) => {
+  const handleUpdateDemand = useCallback(async (demandId, rawUpdates) => {
+    const updatedData = await demandStampFor(demandsRef.current.find((d) => d.id === demandId), rawUpdates);
     setDemands((prev) => {
       const updated = prev.map(d => d.id === demandId ? { ...d, ...updatedData } : d);
       persistDemands(updated);
@@ -665,7 +721,7 @@ export function PropertiesProvider({ children }) {
     if (isFirebaseActive()) {
       updateDemandStatus(demandId, updatedData);
     }
-  }, []);
+  }, [demandStampFor]);
 
   const handleDeleteDemand = useCallback((demandId) => {
     setDemands((prev) => {

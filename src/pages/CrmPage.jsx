@@ -855,6 +855,7 @@ export default function CrmPage({
         <div className="crm-content-area" id="crm-main-content">
           {activeTab === 'properties' ? (
             <PropertyManagerPanel
+              canApprove={activeRole === 'super_admin'}
               openRequest={openRequest}
               projects={projects}
               readOnly={!can.editInventory}
@@ -888,6 +889,7 @@ export default function CrmPage({
             />
           ) : activeTab === 'projects' ? (
             <MegaProjectsManagerPanel
+              canApprove={activeRole === 'super_admin'}
               openRequest={openRequest}
               readOnly={!can.editInventory}
               projects={projects}

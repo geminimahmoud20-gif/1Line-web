@@ -45,3 +45,17 @@ test('the site falls back to the live listener when the catalog route is missing
     { contact: { email: 'a@b.co' } }
   );
 });
+
+test('items waiting for the general manager reach visitors only as tombstones', () => {
+  const docs = [
+    { name: 'x/properties/a', fields: { title_ar: { stringValue: 'live' } } },
+    { name: 'x/properties/b', fields: { title_ar: { stringValue: 'wait' }, approval: { stringValue: 'pending' } } },
+    { name: 'x/properties/c', fields: { title_ar: { stringValue: 'no' }, approval: { stringValue: 'rejected' } } },
+    { name: 'x/properties/d', fields: { title_ar: { stringValue: 'ok' }, approval: { stringValue: 'approved' } } }
+  ];
+  const out = toCatalogItems(docs);
+  assert.equal(out[0].title_ar, 'live');
+  assert.deepEqual(out[1], { id: 'b', deleted: true, updatedAt: null });
+  assert.deepEqual(out[2], { id: 'c', deleted: true, updatedAt: null });
+  assert.equal(out[3].title_ar, 'ok');
+});

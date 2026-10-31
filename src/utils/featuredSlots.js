@@ -11,6 +11,7 @@
 // =============================================================
 
 import { isSiteReady } from './siteReady.js';
+import { blockedByApproval } from './publishApproval.js';
 
 // Six cards fill two even rows of three; with fewer listings the grid shrinks to a count that
 // still makes full rows (see homeGridCount) so the homepage never shows a half-empty row.
@@ -38,7 +39,7 @@ export const addDays = (days, from = Date.now()) => toDayInput(from + days * DAY
 
 /** Same visibility rule the public homepage uses: on sale, not hidden, and complete (siteReady) */
 export const isPublishedProperty = (p) =>
-  !!p && !p.isDeleted && !['trash', 'hidden', 'draft', 'sold'].includes(p.status) && isSiteReady(p);
+  !!p && !p.isDeleted && !['trash', 'hidden', 'draft', 'sold'].includes(p.status) && !blockedByApproval(p) && isSiteReady(p);
 
 /** 'none' | 'scheduled' | 'active' | 'expired' */
 export function featuredState(p, now = Date.now()) {

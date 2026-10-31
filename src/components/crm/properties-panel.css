@@ -167,3 +167,8 @@
 .crm-props__thumbs > svg { color: var(--ui-accent); }
 
 .crm-prow__error { display: block; margin-top: var(--ui-s-1); color: var(--ui-danger); font-size: var(--ui-fs-1); }
+
+/* Waiting for / refused by the general manager, with the manager's approve / reject buttons */
+.crm-prow__approval { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
+.crm-prow__approval small { font-size: var(--ui-fs-1); color: var(--ui-text-2); }
+.crm-prow__approval .ui-btn { min-height: 32px; }
