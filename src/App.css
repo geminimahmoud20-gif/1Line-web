@@ -5649,15 +5649,18 @@
 
 .amenity-metrics-row {
   display: flex;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 4px 14px;
   font-size: 0.78rem;
   color: var(--text-muted);
 }
 
+/* Distance and times wrap as whole pieces, never «800 / متر» */
 .metric-dist, .metric-time {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  white-space: nowrap;
 }
 
 /* --- CMS Image Uploader Dropzone --- */

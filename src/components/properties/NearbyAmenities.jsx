@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { getAreaById } from '../../utils/areasData';
 import { amenityCategory, categoriesIn } from '../../utils/amenityCategories';
+import { amenityMetrics, namedAmenities } from '../../utils/amenityDistance';
 
 const ICONS = { School, Baby, Hospital, Pill, ShoppingCart, ShoppingBag, UtensilsCrossed, Landmark, Banknote, Building2, Shield, Train, Route, Fuel, Trees, Dumbbell, Hotel, MapPin };
 const iconFor = (category) => ICONS[amenityCategory(category).icon] || MapPin;
@@ -25,9 +26,12 @@ export default function NearbyAmenities({ property, lang = 'ar' }) {
 
   // Listing landmarks first, then the area's landmarks from the CRM. No built-in generic list:
   // a New Sohag villa must not claim to be 500 m from the Corniche.
-  const fromListing = Array.isArray(property?.nearbyAmenities) && property.nearbyAmenities.length > 0;
-  const fromArea = !fromListing && Array.isArray(areaData?.amenities) && areaData.amenities.length > 0;
-  const rawAmenities = fromListing ? property.nearbyAmenities : fromArea ? areaData.amenities : [];
+  // Landmarks without a name (added in the CRM and never filled in) are left out
+  const listingAmenities = namedAmenities(property?.nearbyAmenities);
+  const areaAmenities = namedAmenities(areaData?.amenities);
+  const fromListing = listingAmenities.length > 0;
+  const fromArea = !fromListing && areaAmenities.length > 0;
+  const rawAmenities = fromListing ? listingAmenities : fromArea ? areaAmenities : [];
 
   if (rawAmenities.length === 0) {
     return (
@@ -110,6 +114,7 @@ export default function NearbyAmenities({ property, lang = 'ar' }) {
       <div className="amenities-items-grid">
         {filteredAmenities.map((item) => {
           const IconComponent = item.icon;
+          const m = amenityMetrics(item, isAr);
           return (
             <div key={item.id} className="amenity-item-card">
               <div className="amenity-item-icon-box">
@@ -117,20 +122,20 @@ export default function NearbyAmenities({ property, lang = 'ar' }) {
               </div>
               <div className="amenity-item-content">
                 <h4>{isAr ? item.name_ar : (item.name_en || item.name_ar)}</h4>
-                {/* Landmarks typed in the CRM carry a distance only; drive and walk times show when known */}
+                {/* Walk / drive times worked out from the distance (utils/amenityDistance.js) */}
                 <div className="amenity-metrics-row">
-                  {item.distance && (
+                  {m.distance && (
                     <span className="metric-dist">
                       <Navigation size={13} />
-                      {item.distance}
+                      {m.distance}
                     </span>
                   )}
-                  {(item.timeDrive || item.timeWalk) && (
+                  {(m.walk || m.drive) && (
                     <span className="metric-time">
                       <Clock size={13} />
                       {[
-                        item.timeDrive && (isAr ? `${item.timeDrive} بالسيارة` : `${item.timeDrive} drive`),
-                        item.timeWalk && (isAr ? `${item.timeWalk} مشي` : `${item.timeWalk} walk`)
+                        m.walk && (isAr ? `${m.walk} مشي` : `${m.walk} walk`),
+                        m.drive && (isAr ? `${m.drive} بالعربية` : `${m.drive} drive`)
                       ].filter(Boolean).join(' · ')}
                     </span>
                   )}
