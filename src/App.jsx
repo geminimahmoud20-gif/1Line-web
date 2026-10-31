@@ -411,7 +411,9 @@ function AppContent() {
       area: data.area || '',
       type: 'seller',
       landingPage: '/sell',
-      notes: `عرض بيع ${propLabel} في ${areaLabel} بمساحة ${data.size || ''}م²${priceDesc}${floorDesc}${finishingDesc}${specsDesc}${featuresDesc}${legalSummary}${photosDesc}`,
+      // Filled in from a «سجّل وحدتك» link the team sent (utils/sellLink.js)
+      ...(data.sharedBy ? { source: 'رابط تسجيل وحدة', sharedBy: data.sharedBy } : {}),
+      notes: `عرض بيع ${propLabel} في ${areaLabel} بمساحة ${data.size || ''}م²${priceDesc}${floorDesc}${finishingDesc}${specsDesc}${featuresDesc}${legalSummary}${photosDesc}${data.sharedBy ? ` | من رابط بعته: ${data.sharedBy}` : ''}`,
       // The lead is visible to roles that may not see contact details: phone/name stay out of details
       details: withoutContact(data)
     });

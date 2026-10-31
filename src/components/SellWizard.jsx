@@ -11,6 +11,7 @@ import SubmissionSuccess from './common/SubmissionSuccess';
 import { toLatinDigits } from '../utils/latinDigits';
 import { featuresFor, featureLabels, orderedPhotos, sellerAssetClass } from '../utils/sellerListing';
 import { PROPERTY_TYPES, CAIRO_AREAS, FALLBACK_M2, FINISHING, LEGAL_DOCS, SPEC_FIELDS, floorLabel } from './sell/sellOptions';
+import { readSellLink } from '../utils/sellLink';
 import SellPhotoSlots from './sell/SellPhotoSlots';
 import './sell/sell-wizard.css';
 import AreaOptions from './common/AreaOptions';
@@ -66,6 +67,19 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedRef, setSubmittedRef] = useState(null);
   const [districts, setDistricts] = useState(() => getAreas().filter((d) => d.id !== 'all'));
+
+  // Opened from a shared «سجّل وحدتك» link: start with its kind and area, and remember who sent it
+  useEffect(() => {
+    const fromLink = readSellLink(window.location.search, {
+      typeIds: PROPERTY_TYPES.map((t) => t.id),
+      areaIds: [...getAreas().map((d) => d.id).filter((id) => id !== 'all'), ...CAIRO_AREAS.map((c) => c.id)]
+    });
+    const patch = {};
+    if (fromLink.propertyType) patch.propertyType = fromLink.propertyType;
+    if (fromLink.area) patch.area = fromLink.area;
+    if (fromLink.sharedBy) patch.sharedBy = fromLink.sharedBy;
+    if (Object.keys(patch).length) setSellerAnswers((prev) => ({ ...prev, ...patch }));
+  }, [setSellerAnswers]);
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('oneline_wizard_started', { detail: { type: 'sell' } }));
