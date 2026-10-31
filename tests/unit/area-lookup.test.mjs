@@ -136,3 +136,19 @@ test('a request text inside a main area matches through its sub-areas', () => {
   assert.equal(recordInArea({ area_ar: 'محل على الكورنيش' }, 'sohag_east', list), true);
   assert.equal(recordInArea({ area: 'a1' }, 'sohag_west', list), true);
 });
+
+test('an area named only «سوهاج» in English does not swallow every Sohag request', () => {
+  // Live data (Oct 2026): «سوهاج (ش البحر)» has name_en «سوهاج» and label «سوهاح (ش البحر)»
+  const list = [
+    { id: 'new_sohag', name_ar: 'سوهاج الجديدة', name_en: 'New Sohag', label_ar: 'سوهاج الجديدة (الحي الأول / النخيل)' },
+    { id: 'bahr', name_ar: 'سوهاج (ش البحر)', name_en: 'سوهاج', label_ar: 'سوهاح (ش البحر)' },
+    { id: 'zahraa', name_ar: 'سوهاج (الزهراء)', name_en: 'Sohag (Zahraa)' }
+  ];
+  const fromNewSohag = { area: 'new_sohag', area_ar: 'سوهاج الجديدة' };
+  assert.equal(recordInArea(fromNewSohag, 'bahr', list), false);
+  assert.equal(recordInArea(fromNewSohag, 'new_sohag', list), true);
+  assert.equal(recordInArea({ area: 'zahraa', area_ar: 'سوهاج (الزهراء)' }, 'bahr', list), false);
+  assert.ok(!areaWords(list[1]).includes('سوهاج'));
+  // Older records with an unknown id are still placed by their text
+  assert.equal(recordInArea({ area: 'east', area_ar: 'شقة على البحر' }, 'bahr', list), true);
+});

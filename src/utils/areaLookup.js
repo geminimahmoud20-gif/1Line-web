@@ -44,15 +44,18 @@ export const formArea = (id, areas, { allowAll = false } = {}) => {
  * between slashes ("سوهاج (الشبان / الهلال)" → "الشبان", "الهلال"). Folded; 3+ letters only,
  * and the bare city name is never enough on its own.
  */
+// The city's own name (and its common misspelling) says nothing about which area a text means
+const CITY_NAMES = ['سوهاج', 'سوهاح', 'sohag'];
+
 export function areaWords(area) {
   const out = new Set();
   for (const raw of [area?.name_ar, area?.name_en, area?.label_ar]) {
-    const name = foldAr(raw);
+    const name = foldAr(raw).trim();
     if (!name) continue;
-    out.add(name);
+    if (!CITY_NAMES.includes(name)) out.add(name);
     for (const part of name.split(/[()/،,\-–]+/)) {
       const p = part.replace(/^(ش|شارع|حي)\s+/, '').trim();
-      if (p.length >= 3 && !['سوهاج', 'sohag'].includes(p)) out.add(p);
+      if (p.length >= 3 && !CITY_NAMES.includes(p)) out.add(p);
     }
   }
   return [...out];
@@ -79,6 +82,10 @@ export function recordInArea(record, areaId, areas) {
   // A main area covers its sub-areas (areaFamily is defined below; hoisted)
   const family = areaFamily(areaId, areas);
   if (family.includes(record.area) || family.includes(record.areaKey)) return true;
+  // A record saved with one of the live areas belongs to that area only; its free text
+  // («سوهاج الجديدة»…) is read just for older records whose area isn't in the list
+  const known = new Set(placeAreas(areas).map((a) => a.id));
+  if (known.has(record.area) || known.has(record.areaKey)) return false;
   const t = foldAr([record.area_ar, record.area_en, record.location].filter(Boolean).join(' '));
   if (!t) return false;
   return family.some((id) => {

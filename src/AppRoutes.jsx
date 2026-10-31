@@ -59,16 +59,13 @@ export default function AppRoutes({
   invPeriod,
   invPropType,
   investorForm,
-  isScanningMap,
   lang,
   leads,
   navigate,
   ownerMatchesFound,
-  ownerSearch,
   projects,
   properties,
   roiRes,
-  scanningMessage,
   sellerAnswers,
   sellerStep,
   setAddDemandModalOpen,
@@ -81,11 +78,8 @@ export default function AppRoutes({
   setInvPeriod,
   setInvPropType,
   setInvestorForm,
-  setIsScanningMap,
   setLeads,
   setOwnerMatchesFound,
-  setOwnerSearch,
-  setScanningMessage,
   setSellerAnswers,
   setSellerStep,
   setShowInvResultForm,
@@ -297,14 +291,8 @@ export default function AppRoutes({
             lang={lang}
             t={t}
             demands={demands}
-            ownerSearch={ownerSearch}
-            setOwnerSearch={setOwnerSearch}
-            isScanningMap={isScanningMap}
-            setIsScanningMap={setIsScanningMap}
             ownerMatchesFound={ownerMatchesFound}
             setOwnerMatchesFound={setOwnerMatchesFound}
-            scanningMessage={scanningMessage}
-            setScanningMessage={setScanningMessage}
             navigateTo={(path) => navigate('/' + path)}
             setSellerAnswers={setSellerAnswers}
             triggerToast={triggerToast}
