@@ -855,6 +855,7 @@ export default function CrmPage({
         <div className="crm-content-area" id="crm-main-content">
           {activeTab === 'properties' ? (
             <PropertyManagerPanel
+              shareRef={currentUser?.email || ''}
               openRequest={openRequest}
               projects={projects}
               readOnly={!can.editInventory}

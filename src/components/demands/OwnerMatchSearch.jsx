@@ -2,7 +2,11 @@ import { Search, CheckCircle2, Info } from 'lucide-react';
 import AreaOptions from '../common/AreaOptions';
 import { areaNameOf } from '../../utils/areaLookup';
 import { DEMAND_CATEGORIES, requestsCountAr } from './demandCategories';
+import ShareSellLink from '../common/ShareSellLink';
 import './owner-match-search.css';
+
+// The seller form's type for each request kind (src/components/sell/sellOptions.js)
+const SELL_TYPE = { apartment: 'apartment', villa: 'villa', retail: 'retail', office: 'office', land: 'land', agricultural: 'agri_land', industrial: 'factory' };
 
 /**
  * «عندك عقار للبيع؟»: an owner picks the type and area and sees how many published buyer
@@ -50,6 +54,8 @@ export default function OwnerMatchSearch({ isAr, areas, search, onChange, result
           <span>{L('دوّر على مشترين', 'Find buyers')}</span>
         </button>
       </form>
+
+      <ShareSellLink isAr={isAr} type={SELL_TYPE[search.type] || ''} area={search.area} />
 
       {result !== null && (
         <div className={`oms-result ${result > 0 ? 'is-found' : 'is-empty'}`} role="status">

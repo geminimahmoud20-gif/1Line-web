@@ -33,6 +33,7 @@ const SHORT_TYPE_EN = { apartment: 'Apartments', villa: 'Villas', commercial: 'S
 const LIST_PAGE = 25;
 import OfferModal from './OfferModal';
 import { getNormalizedPropertyStatus } from '../../utils/crmLeadViews';
+import ShareSellLink from '../common/ShareSellLink';
 import { useProperties } from '../../context/PropertiesContext';
 import { paymentTerms, paymentFields, paymentProblem } from '../../utils/paymentTerms';
 import { areaFamily } from '../../utils/areaLookup';
@@ -108,7 +109,8 @@ export default function PropertyManagerPanel({
   onClearExternalData = () => {},
   openRequest = null,
   readOnly = false,
-  projects = []
+  projects = [],
+  shareRef = ''
 }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingPropertyId, setEditingPropertyId] = useState(null);
@@ -680,6 +682,9 @@ export default function PropertyManagerPanel({
           </>
         )}
       />
+
+      {/* A link to the seller form for an owner on WhatsApp; requests come back marked with who sent it */}
+      <ShareSellLink isAr={isAr} refName={shareRef} compact />
 
       {importOpen && (
         <DataImportModal
