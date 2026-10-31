@@ -23,3 +23,4 @@
 .apc-basis.is-single, .apc-basis.is-pair { color: #b45309; font-weight: 700; }
 .dark-theme .apc-card, :root[data-theme='dark'] .apc-card { background: #111827; border-color: #334155; }
 .dark-theme .apc-basis.is-single, .dark-theme .apc-basis.is-pair { color: #fbbf24; }
+.dark-theme .apc-ppm, :root[data-theme='dark'] .apc-ppm { color: #f8fafc; }

@@ -5,7 +5,7 @@ import PhoneInputField from './PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { getAreas } from '../utils/areasData';
 import { useProperties } from '../context/PropertiesContext';
-import { liveListings, assetClass, median } from '../utils/marketStats';
+import { pricedListings, assetClass, median } from '../utils/marketStats';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
 import SubmissionSuccess from './common/SubmissionSuccess';
 import { toLatinDigits } from '../utils/latinDigits';
@@ -87,7 +87,7 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
     // No automatic estimate for farmland and industrial units yet: valued by hand
     if (!size || !area || isCairo || isAgriculturalType(type) || isIndustrialType(type)) return null;
     const cls = assetClass({ type }); // shops with shops, offices with offices, homes with homes
-    const comps = liveListings(siteListings)
+    const comps = pricedListings(siteListings)
       .filter((p) => p.areaKey === area && assetClass(p) === cls && Number(p.size) > 0)
       .map((p) => Number(p.price) / Number(p.size));
     let m2;
@@ -98,7 +98,7 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
     } else {
       const base = districts.find((d) => d.id === area)?.avgPricePerMeter || FALLBACK_M2[area] || 21500;
       m2 = cls === 'commercial' ? base * 2.1 : cls === 'administrative' ? base * 1.45 : cls === 'land' ? base * 0.85 : base;
-      basis = cls === 'residential' ? 'area' : `benchmark_${cls}`;
+      basis = cls === 'residential' || cls === 'villa' ? 'area' : `benchmark_${cls}`;
     }
     const finish = cls === 'land' ? 1 : (FINISHING.find((f) => f.id === a.finishing)?.multiplier || 1);
     const avg = size * m2 * finish;

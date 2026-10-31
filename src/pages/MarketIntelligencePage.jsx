@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { TrendingUp, Building, Sparkles, ShieldCheck, MapPin, CheckCircle2, Calculator, ArrowRight, ArrowLeft, Home, Store } from 'lucide-react';
-import { areaMarketStats, budgetMatches, liveListings, assetClass, median } from '../utils/marketStats';
+import { areaMarketStats, budgetMatches, liveListings, pricedListings, assetClass, median } from '../utils/marketStats';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
 import AreaPriceCards from '../components/market/AreaPriceCards';
 import { getAreas } from '../utils/areasData';
@@ -41,10 +41,10 @@ export default function MarketIntelligencePage({ lang = 'ar', properties = [] })
   const stats = useMemo(() => areaMarketStats(properties), [properties]);
   const matches = useMemo(() => budgetMatches(properties, userBudget), [properties, userBudget]);
   const overall = useMemo(() => {
-    // Same classes and median as the area cards below
-    const ppm = live.filter((p) => Number(p.size) > 0 && assetClass(p) === 'residential').map((p) => Number(p.price) / Number(p.size));
-    return { residential: Math.round(median(ppm)) };
-  }, [live]);
+    // Same listings, classes and median as the area cards below: flats only, every area
+    const ppm = pricedListings(properties).filter((p) => Number(p.size) > 0 && assetClass(p) === 'residential').map((p) => Number(p.price) / Number(p.size));
+    return { residential: Math.round(median(ppm)), sample: ppm.length };
+  }, [properties]);
   const areaName = (id) => {
     const a = areas.find((x) => x.id === id);
     return a ? (isAr ? a.name_ar : a.name_en || a.name_ar) : id;
@@ -106,7 +106,7 @@ export default function MarketIntelligencePage({ lang = 'ar', properties = [] })
           <div className="summary-stat-box">
             <div className="stat-icon-wrap bg-green"><Home size={22} /></div>
             <div>
-              <span className="stat-lbl">{isAr ? 'متوسط متر السكني (الوسيط)' : 'Median home price / m²'}</span>
+              <span className="stat-lbl">{isAr ? `وسيط متر الشقق (${overall.sample} عرض، كل المناطق)` : `Median flat price / m² (${overall.sample} listings, all areas)`}</span>
               <strong className="stat-num text-success">{overall.residential ? `${n(overall.residential)} ${isAr ? 'ج.م' : 'EGP'}` : '—'}</strong>
             </div>
           </div>
