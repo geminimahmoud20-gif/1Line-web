@@ -4,7 +4,7 @@
 //  `site` is settings/site_cms (contact, social, FAQ, testimonials, page SEO); the client cleans it.
 //  Visitors load this instead of opening a live Firestore listener each, so a visit costs
 //  no Firestore reads: Vercel's CDN serves the same copy to everyone and the function reads
-//  Firestore at most about once a minute per region. The CRM keeps its live listener.
+//  Firestore at most about once every 5 minutes per region. The CRM keeps its live listener.
 //
 //  Environment (Vercel → Settings → Environment Variables):
 //    FIREBASE_SERVICE_ACCOUNT — optional here; without it the (publicly readable) collections are
@@ -14,8 +14,10 @@
 import { SignJWT, importPKCS8 } from 'jose';
 import { CATALOG_COLLECTIONS, PAGE_SIZE, MAX_DOCS, toCatalogItems, decodeFields } from './_catalog-core.js';
 
-const FRESH_SECONDS = 60;
-const STALE_SECONDS = 600;
+// Each refresh reads every listing and project document, so it is kept to about every 5 minutes
+// (the free Firestore plan allows 50,000 reads a day); a stale copy may be served up to a day.
+const FRESH_SECONDS = 300;
+const STALE_SECONDS = 86400;
 
 const json = (status, body, cache = 'no-store') => new Response(JSON.stringify(body), {
   status,

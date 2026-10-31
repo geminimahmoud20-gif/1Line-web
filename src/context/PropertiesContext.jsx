@@ -233,7 +233,9 @@ export function PropertiesProvider({ children }) {
     propertiesRef.current = updated; // back-to-back updates (slot reordering) must see each other
     setProperties(updated);
     persistProperties(updated);
-    reportCatalogSync(deleteCatalogItem('properties', id));
+    // Only bundled samples need a tombstone to stay gone; everything else is deleted outright
+    const isSample = DEMO_PROPERTIES.some((p) => String(p.id) === String(id));
+    reportCatalogSync(deleteCatalogItem('properties', id, { keepTombstone: isSample }));
   }, [reportCatalogSync]);
 
   // Mega Projects State
@@ -305,7 +307,8 @@ export function PropertiesProvider({ children }) {
     projectsRef.current = updated;
     setProjects(updated);
     persistProjects(updated);
-    reportCatalogSync(deleteCatalogItem('projects', id));
+    const isSample = MEGA_PROJECTS.some((p) => String(p.id) === String(id));
+    reportCatalogSync(deleteCatalogItem('projects', id, { keepTombstone: isSample }));
     triggerToast(lang === 'ar' ? 'تم حذف المشروع' : 'Project deleted', 'info');
   }, [lang, triggerToast, reportCatalogSync]);
 

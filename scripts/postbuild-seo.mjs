@@ -143,8 +143,13 @@ const fromFirestoreValue = (v) => {
   return undefined;
 };
 
+// Only the production build reads the live listings: preview builds (one per PR push), CI and
+// local builds would otherwise spend the free Firestore read quota (SEO_FETCH=1 forces it).
+const READ_LIVE = process.env.VERCEL_ENV === 'production' || process.env.SEO_FETCH === '1';
+
 async function fetchCollection(name) {
   const out = [];
+  if (!READ_LIVE) return out;
   let pageToken = '';
   try {
     for (let page = 0; page < 10; page++) {

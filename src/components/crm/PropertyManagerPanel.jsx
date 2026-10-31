@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import useOpenRequest from '../../hooks/useOpenRequest';
-import { Building, Plus, Upload, Search, Star, ChevronDown, AlertTriangle, SlidersHorizontal, X } from 'lucide-react';
+import { Building, Plus, Upload, Search, Star, ChevronDown, AlertTriangle, SlidersHorizontal, X, Trash2 } from 'lucide-react';
 import { PageHeader, Button, Card, Badge, Chip, EmptyState, SegmentedControl, Select, Input, useConfirm } from '../ui';
 import { toLatinDigits } from '../../utils/latinDigits';
 import ListingsBulkBar from './ListingsBulkBar';
@@ -305,6 +305,22 @@ export default function PropertyManagerPanel({
         triggerToast(isAr ? 'تم الحذف النهائي للعقار' : 'Property permanently deleted', 'info');
       }
     }
+  };
+
+  // Deletes everything in the trash for good. Leftover trashed listings are still read from the
+  // database on every catalog refresh, so clearing them keeps the site within its daily quota.
+  const handleEmptyTrash = async () => {
+    const trashed = properties.filter((p) => getNormalizedPropertyStatus(p) === 'trash');
+    if (!trashed.length) return;
+    if (!(await confirm({
+      title: isAr ? `حذف ${trashed.length} عقار من المهملات نهائياً؟` : `Delete ${trashed.length} trashed listings for good?`,
+      message: isAr ? 'مش هتقدر ترجّعهم تاني.' : 'This cannot be undone.',
+      confirmLabel: isAr ? 'احذف الكل' : 'Delete all',
+      cancelLabel: isAr ? 'لأ' : 'Cancel',
+      tone: 'danger'
+    }))) return;
+    for (const p of trashed) onDeleteProperty(p.id);
+    triggerToast(isAr ? `اتحذف ${trashed.length} عقار من المهملات` : `${trashed.length} listings deleted`, 'info');
   };
 
   // Advanced Cloud Upload & Multi-Image Canvas Compressor
@@ -802,6 +818,11 @@ export default function PropertyManagerPanel({
               <Chip pressed={statusFilter === 'approval'} count={approvalCount} onClick={() => setStatusFilter('approval')}>
                 {canApprove ? (isAr ? 'مستنية موافقتك' : 'Awaiting your approval') : (isAr ? 'بانتظار موافقة المدير' : 'Awaiting approval')}
               </Chip>
+            )}
+            {statusFilter === 'trash' && trashCount > 0 && !readOnly && (
+              <Button size="sm" variant="ghost" icon={<Trash2 size={14} aria-hidden="true" />} onClick={handleEmptyTrash}>
+                {isAr ? `فضّي المهملات (${trashCount})` : `Empty trash (${trashCount})`}
+              </Button>
             )}
           </div>
 

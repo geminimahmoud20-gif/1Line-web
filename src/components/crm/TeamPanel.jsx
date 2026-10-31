@@ -18,7 +18,9 @@ const ERRORS = {
   forbidden: ['الشاشة دي للمدير العام بس.', 'Super admin only.'],
   unauthenticated: ['سجّل دخول تاني.', 'Please sign in again.'],
   'not-found': ['الحساب ده مش موجود.', 'Account not found.'],
-  network: ['مفيش اتصال، جرّب تاني.', 'Network error, try again.']
+  network: ['مفيش اتصال، جرّب تاني.', 'Network error, try again.'],
+  quota: ['قاعدة البيانات وصلت للحد اليومي المجاني للقراءة، فقائمة الفريق مش هتتحمّل لحد ما الحد يتجدد الساعة 9 الصبح بتوقيت مصر. الحسابات نفسها شغالة عادي.', 'The database hit its free daily read limit; the team list loads again after the daily reset (9:00 Cairo).'],
+  'auth-error': ['خدمة الحسابات مردتش، جرّب تاني بعد دقيقة.', 'The accounts service did not answer; try again in a minute.']
 };
 const errorText = (code, isAr) => (ERRORS[code] || ['حصل خطأ، جرّب تاني.', 'Something went wrong.'])[isAr ? 0 : 1];
 
