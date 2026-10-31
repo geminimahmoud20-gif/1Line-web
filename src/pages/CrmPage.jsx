@@ -696,7 +696,7 @@ export default function CrmPage({
 
           <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'center' }}>
             <a 
-              href="mailto:contact@oneline-sohag.com?subject=طلب مساعدة من مدير النظام" 
+              href="mailto:1linesolutions@gmail.com?subject=طلب مساعدة من مدير النظام" 
               style={{ 
                 fontSize: 'var(--crm-text-sm)', 
                 color: 'var(--crm-accent-text)', 
