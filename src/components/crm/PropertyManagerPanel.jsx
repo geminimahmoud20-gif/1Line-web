@@ -34,6 +34,7 @@ const LIST_PAGE = 25;
 import OfferModal from './OfferModal';
 import { getNormalizedPropertyStatus } from '../../utils/crmLeadViews';
 import ShareSellLink from '../common/ShareSellLink';
+import { blockedByApproval } from '../../utils/publishApproval';
 import { useProperties } from '../../context/PropertiesContext';
 import { paymentTerms, paymentFields, paymentProblem } from '../../utils/paymentTerms';
 import { areaFamily } from '../../utils/areaLookup';
@@ -110,7 +111,8 @@ export default function PropertyManagerPanel({
   openRequest = null,
   readOnly = false,
   projects = [],
-  shareRef = ''
+  shareRef = '',
+  canApprove = false
 }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingPropertyId, setEditingPropertyId] = useState(null);
@@ -441,9 +443,8 @@ export default function PropertyManagerPanel({
       name_ar: '',
       name_en: '',
       category: 'education',
-      distance: '500 متر',
-      timeWalk: '6 دقائق',
-      timeDrive: '2 دقيقة'
+      // Typed by staff; walk and drive times are worked out from it on the site
+      distance: ''
     };
     setForm(prev => ({
       ...prev,
@@ -537,16 +538,18 @@ export default function PropertyManagerPanel({
   };
 
   // Memoized status counts in a single pass $O(N)$
-  const { activeCount, hiddenCount, negotiationCount, soldCount, trashCount } = useMemo(() => {
+  const { activeCount, hiddenCount, negotiationCount, soldCount, trashCount, approvalCount } = useMemo(() => {
     let active = 0;
     let hidden = 0;
     let negotiation = 0;
     let sold = 0;
     let trash = 0;
+    let approval = 0;
 
     for (let i = 0; i < properties.length; i++) {
       const p = properties[i];
       const st = getNormalizedPropertyStatus(p);
+      if (st !== 'trash' && blockedByApproval(p)) approval++;
       if (st === 'trash') trash++;
       else if (st === 'published') active++;
       else if (st === 'hidden') hidden++;
@@ -559,7 +562,8 @@ export default function PropertyManagerPanel({
       hiddenCount: hidden,
       negotiationCount: negotiation,
       soldCount: sold,
-      trashCount: trash
+      trashCount: trash,
+      approvalCount: approval
     };
   }, [properties]);
 
@@ -794,6 +798,11 @@ export default function PropertyManagerPanel({
             <Chip pressed={statusFilter === 'under_negotiation'} count={negotiationCount} onClick={() => setStatusFilter('under_negotiation')}>{isAr ? 'تحت التفاوض' : 'Negotiation'}</Chip>
             <Chip pressed={statusFilter === 'sold'} count={soldCount} onClick={() => setStatusFilter('sold')}>{isAr ? 'اتباعت' : 'Sold'}</Chip>
             <Chip pressed={statusFilter === 'trash'} count={trashCount} onClick={() => setStatusFilter('trash')}>{isAr ? 'المهملات' : 'Trash'}</Chip>
+            {(approvalCount > 0 || statusFilter === 'approval') && (
+              <Chip pressed={statusFilter === 'approval'} count={approvalCount} onClick={() => setStatusFilter('approval')}>
+                {canApprove ? (isAr ? 'مستنية موافقتك' : 'Awaiting your approval') : (isAr ? 'بانتظار موافقة المدير' : 'Awaiting approval')}
+              </Chip>
+            )}
           </div>
 
           <div className="crm-props__filterbar">
@@ -960,6 +969,7 @@ export default function PropertyManagerPanel({
                       onDiscardLocal={cloudPropertyIds && !cloudPropertyIds.has(String(prop.id)) ? handleDiscardLocal : undefined}
                       onUploadInline={readOnly ? undefined : handleUploadInline}
                       inlineProgress={uploadingInline?.id === prop.id ? uploadingInline : null}
+                      canApprove={canApprove && !readOnly}
                     />
                   ))
                 )}

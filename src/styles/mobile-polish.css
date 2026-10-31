@@ -347,3 +347,10 @@ html .demands-add-cta .btn { display: inline-flex; align-items: center; gap: 8px
   html .about-stat-number { font-size: 1.6rem; }
   html .about-stat-sub { font-size: 0.76rem; }
 }
+
+/* Phones: the footer already leaves room for the bottom nav bar (art-direction.css, 84px + safe
+   area), so the body's own 70px under it only showed a strip of page background below the dark
+   footer. Pages without the footer keep the body padding. */
+@media (max-width: 768px) {
+  html body:has(.site-footer) { padding-bottom: 0; }
+}

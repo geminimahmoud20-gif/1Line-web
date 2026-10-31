@@ -856,6 +856,7 @@ export default function CrmPage({
           {activeTab === 'properties' ? (
             <PropertyManagerPanel
               shareRef={currentUser?.email || ''}
+              canApprove={activeRole === 'super_admin'}
               openRequest={openRequest}
               projects={projects}
               readOnly={!can.editInventory}
@@ -889,6 +890,7 @@ export default function CrmPage({
             />
           ) : activeTab === 'projects' ? (
             <MegaProjectsManagerPanel
+              canApprove={activeRole === 'super_admin'}
               openRequest={openRequest}
               readOnly={!can.editInventory}
               projects={projects}

@@ -1,4 +1,6 @@
-import { db, isFirebaseConfigured } from '../firebase.js';
+import { db, auth, isFirebaseConfigured } from '../firebase.js';
+import { checkIsAdmin } from './auth.js';
+import { approvalStamp } from '../utils/publishApproval.js';
 
 import { collection, addDoc, getDocs, doc, setDoc, query, orderBy, limit, onSnapshot, serverTimestamp, writeBatch } from 'firebase/firestore';
 
@@ -73,19 +75,29 @@ export const subscribeToCatalog = (collectionName, callback) => {
 };
 
 /**
- * Create or replace one catalog item. Resolves { ok, reason }:
- * reason = 'not-configured' | 'too-large' | Firestore error code.
+ * Who is saving: the general manager publishes, anyone else's save waits for approval
+ * (src/utils/publishApproval.js; firestore.rules enforces the same).
+ */
+export const currentApprover = async () => {
+  const user = auth?.currentUser || null;
+  return { isManager: await checkIsAdmin(user), who: user?.email || user?.uid || '' };
+};
+
+/**
+ * Create or replace one catalog item. Resolves { ok, reason, item } (item = what was saved,
+ * with its approval stamp). reason = 'not-configured' | 'too-large' | Firestore error code.
  */
 export const upsertCatalogItem = async (collectionName, item) => {
   if (!CATALOG_COLLECTIONS.has(collectionName) || !item || item.id === undefined || item.id === null) {
     return { ok: false, reason: 'invalid' };
   }
   if (!isFirebaseConfigured() || !db) return { ok: false, reason: 'not-configured' };
-  const { data, bytes } = toFirestorePayload({ ...item, deleted: false, updatedAt: new Date().toISOString() });
+  const stamped = approvalStamp({ ...item, deleted: false, updatedAt: new Date().toISOString() }, await currentApprover());
+  const { data, bytes } = toFirestorePayload(stamped);
   if (bytes > MAX_DOC_BYTES) return { ok: false, reason: 'too-large' };
   try {
     await setDoc(doc(db, collectionName, String(item.id)), data);
-    return { ok: true };
+    return { ok: true, item: stamped };
   } catch (error) {
     console.error(`Firebase upsertCatalogItem [${collectionName}] error:`, error);
     return { ok: false, reason: error?.code || 'error' };
@@ -112,11 +124,12 @@ export const upsertCatalogItems = async (collectionName, items = []) => {
   if (!CATALOG_COLLECTIONS.has(collectionName)) return { ok: false, written: 0, skipped: [], reason: 'invalid' };
   if (!isFirebaseConfigured() || !db) return { ok: false, written: 0, skipped: [], reason: 'not-configured' };
   const now = new Date().toISOString();
+  const approver = await currentApprover();
   const skipped = [];
   const docs = [];
   for (const item of items) {
     if (!item || item.id === undefined || item.id === null) { skipped.push({ id: item?.id, reason: 'invalid' }); continue; }
-    const { data, bytes } = toFirestorePayload({ ...item, deleted: false, updatedAt: now });
+    const { data, bytes } = toFirestorePayload(approvalStamp({ ...item, deleted: false, updatedAt: now }, { ...approver, now }));
     if (bytes > MAX_DOC_BYTES) { skipped.push({ id: item.id, reason: 'too-large' }); continue; }
     docs.push([String(item.id), data]);
   }

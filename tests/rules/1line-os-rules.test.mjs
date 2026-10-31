@@ -97,9 +97,11 @@ test('1line-os: sales_manager has inv.edit restored pending owner decision', asy
   // Manager reads properties
   await assertSucceeds(getDoc(doc(mgr, 'properties/prop-1')));
   // Manager can edit property because inv.edit was restored
-  await assertSucceeds(setDoc(doc(mgr, 'properties/prop-1'), { price: 999999 }, { merge: true }));
+  // …but the edit waits for the general manager
+  await assertFails(setDoc(doc(mgr, 'properties/prop-1'), { price: 999999 }, { merge: true }));
+  await assertSucceeds(setDoc(doc(mgr, 'properties/prop-1'), { price: 999999, approval: 'pending' }, { merge: true }));
   // Property manager can also edit properties
-  await assertSucceeds(setDoc(doc(asPropertyManager(), 'properties/prop-1'), { price: 2500000 }, { merge: true }));
+  await assertSucceeds(setDoc(doc(asPropertyManager(), 'properties/prop-1'), { price: 2500000, approval: 'pending' }, { merge: true }));
 });
 
 test('1line-os: tasks access scoping, editor restriction, and createdBy/createdAt immutability', async () => {

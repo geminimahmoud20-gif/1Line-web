@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Edit3, Eye, EyeOff, FileDown, Flame, MessageSquare, RotateCcw, Star, Trash2, Camera, Send, CloudOff } from 'lucide-react';
+import { Edit3, Eye, EyeOff, FileDown, Flame, MessageSquare, RotateCcw, Star, Trash2, Camera, Send, CloudOff, Check, X, Hourglass } from 'lucide-react';
 import { offerState, getActiveOffer } from '../../utils/propertyOffers';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { FeaturedPeriodLabel } from './HomepageSlotsBoard';
@@ -11,6 +11,7 @@ import RowMenu from './RowMenu';
 import { propertyTypeLabel } from '../../utils/placeLabels';
 import { sizeLabel, isLandType, isAgriculturalType, isIndustrialType } from '../../utils/propertyKinds';
 import { thumbUrl } from '../../utils/imageThumbs';
+import { approvalLabel, blockedByApproval, approveUpdate, rejectUpdate } from '../../utils/publishApproval';
 
 const STATUS_OPTIONS = [
   { value: 'published', ar: 'معروض', en: 'Live' },
@@ -84,7 +85,8 @@ export default function PropertyTableRow({
   onRetrySync,
   onDiscardLocal,
   onUploadInline,
-  inlineProgress = null
+  inlineProgress = null,
+  canApprove = false
 }) {
   const [busy, setBusy] = useState(false);
   const [brochureError, setBrochureError] = useState(false);
@@ -162,6 +164,26 @@ export default function PropertyTableRow({
             {offer === 'invalid' && <Badge tone="danger">{isAr ? 'راجع العرض' : 'Fix offer'}</Badge>}
             {prop.badge_ar && <Badge>{isAr ? prop.badge_ar : prop.badge_en}</Badge>}
           </span>
+          {!isTrash && blockedByApproval(prop) && (
+            <span className="crm-prow__approval" role="status">
+              <Badge tone={prop.approval === 'rejected' ? 'danger' : 'warning'} icon={prop.approval === 'rejected' ? <X size={11} aria-hidden="true" /> : <Hourglass size={11} aria-hidden="true" />}>
+                {approvalLabel(prop, isAr)}
+              </Badge>
+              {prop.submittedBy && prop.approval === 'pending' && <small><bdi>{prop.submittedBy}</bdi></small>}
+              {canApprove && (
+                <>
+                  <Button size="sm" onClick={() => { if (onUpdateProperty(prop.id, approveUpdate()) !== false) triggerToast(isAr ? 'اتوافق عليها وهتظهر على الموقع' : 'Approved; it is now on the site', 'success'); }}>
+                    <Check size={14} aria-hidden="true" /> {isAr ? 'موافقة ونشر' : 'Approve'}
+                  </Button>
+                  {prop.approval === 'pending' && (
+                    <Button size="sm" variant="ghost" onClick={() => { if (onUpdateProperty(prop.id, rejectUpdate()) !== false) triggerToast(isAr ? 'اترفضت ومش هتظهر على الموقع' : 'Rejected; kept off the site', 'info'); }}>
+                      {isAr ? 'رفض' : 'Reject'}
+                    </Button>
+                  )}
+                </>
+              )}
+            </span>
+          )}
           {syncIssue && (
             <span className="crm-prow__sync" role="status">
               <Badge tone="danger" icon={<CloudOff size={11} aria-hidden="true" />} title={syncReasonText(syncIssue, isAr)}>

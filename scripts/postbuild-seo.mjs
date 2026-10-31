@@ -170,11 +170,13 @@ async function fetchCollection(name) {
 }
 
 const fetchRealListings = async () => (await fetchCollection('properties'))
-  .filter((p) => p.id && !p.isDemo && !p.deleted && !p.isDeleted && !['trash', 'hidden', 'draft', 'sold'].includes(p.status));
+  .filter((p) => p.id && !p.isDemo && !p.deleted && !p.isDeleted && !['trash', 'hidden', 'draft', 'sold'].includes(p.status)
+    && !['pending', 'rejected'].includes(p.approval)); // waiting for the general manager
 
 // Projects shown on the site: not samples, not hidden in the CRM
 const fetchPublicProjects = async () => (await fetchCollection('projects'))
-  .filter((p) => p.id && !p.isDemo && !p.isHidden && !p.isDeleted && p.status !== 'hidden');
+  .filter((p) => p.id && !p.isDemo && !p.isHidden && !p.isDeleted && p.status !== 'hidden'
+    && !['pending', 'rejected'].includes(p.approval));
 
 /**
  * A search landing page (/sohag/:kind/:area?) as static HTML: title, description, canonical,

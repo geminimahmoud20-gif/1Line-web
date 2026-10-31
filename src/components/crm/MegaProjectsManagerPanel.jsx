@@ -8,6 +8,7 @@ import OfferModal from './OfferModal';
 import './projects-manager.css';
 import { offerState } from '../../utils/propertyOffers';
 import { useConfirm } from '../ui';
+import { approvalLabel, blockedByApproval, approveUpdate, rejectUpdate } from '../../utils/publishApproval';
 
 /**
  * MegaProjectsManagerPanel Component
@@ -22,7 +23,8 @@ export default function MegaProjectsManagerPanel({
   lang = 'ar',
   triggerToast = () => {},
   openRequest = null,
-  readOnly = false
+  readOnly = false,
+  canApprove = false
 }) {
   const confirm = useConfirm();
   const isAr = lang === 'ar';
@@ -333,6 +335,23 @@ export default function MegaProjectsManagerPanel({
                           <span className="pjm-badge is-hidden"><EyeOff size={11} aria-hidden="true" />{isAr ? 'مخفي من الموقع' : 'Hidden'}</span>
                         )}
                         {offerBadge(p)}
+                        {blockedByApproval(p) && (
+                          <span className="pjm-approval" role="status">
+                            <span className={`pjm-badge ${p.approval === 'rejected' ? 'is-hidden' : 'is-offer'}`} title={approvalLabel(p, isAr)}>{p.approval === 'rejected' ? (isAr ? 'مرفوض' : 'Rejected') : (isAr ? 'بانتظار الموافقة' : 'Awaiting approval')}</span>
+                            {canApprove && !readOnly && (
+                              <>
+                                <button type="button" className="pjm-approve" onClick={() => { if (onUpdateProject(p.id, approveUpdate()) !== false) triggerToast(isAr ? 'اتوافق على المشروع وهيظهر على الموقع' : 'Approved; the project is on the site', 'success'); }}>
+                                  {isAr ? 'موافقة ونشر' : 'Approve'}
+                                </button>
+                                {p.approval === 'pending' && (
+                                  <button type="button" className="pjm-reject" onClick={() => { if (onUpdateProject(p.id, rejectUpdate()) !== false) triggerToast(isAr ? 'اترفض ومش هيظهر على الموقع' : 'Rejected; kept off the site', 'info'); }}>
+                                    {isAr ? 'رفض' : 'Reject'}
+                                  </button>
+                                )}
+                              </>
+                            )}
+                          </span>
+                        )}
                         {projectSampleFlags(p).length > 0 && (
                           <span title={`${isAr ? 'لسه فيه قيم من النموذج القديم: ' : 'Still has old form defaults: '}${projectSampleFlags(p).join(' • ')}`} style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-warn)', fontWeight: 'bold', marginInlineStart: 6, cursor: 'help' }}>
                             ⚠️ {isAr ? 'راجع البيانات' : 'Review data'}
