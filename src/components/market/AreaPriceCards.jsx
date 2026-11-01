@@ -49,24 +49,24 @@ export default function AreaPriceCards({ stats = [], areaName = (id) => id, isAr
               const label = CLASS_LABELS[cls] || { ar: cls, en: cls };
               return (
                 <li key={cls} className="apc-row">
-                  <div className="apc-row-top">
-                    <span className="apc-class">
-                      {L(label.ar, label.en)}
-                      {(isAr ? label.hint_ar : label.hint_en) && <small> · {L(label.hint_ar, label.hint_en)}</small>}
-                    </span>
+                  {/* One line: kind + how many listings | price per m². Details on one quiet line under it */}
+                  <div className="apc-row-main">
+                    <div className="apc-row-name">
+                      <span className="apc-class" title={L(label.hint_ar, label.hint_en) || undefined}>{L(label.ar, label.en)}</span>
+                      <span className={`apc-chip is-${kind}`}>
+                        {kind === 'median' ? L(`وسيط ${listings(c.ppmSample)}`, `median of ${c.ppmSample}`) : listings(c.count)}
+                      </span>
+                    </div>
                     {c.ppmSample > 0 ? (
-                      <strong className="apc-ppm"><bdi>{n(c.medianPpm)}</bdi> {L('ج.م/م²', 'EGP/m²')}</strong>
+                      <div className="apc-price">
+                        <strong><bdi>{n(c.medianPpm)}</bdi></strong>
+                        <small>{L('ج.م للمتر', 'EGP/m²')}</small>
+                      </div>
                     ) : (
                       <span className="apc-na">{L('المساحة مش مسجلة', 'no area given')}</span>
                     )}
                   </div>
-                  <div className="apc-row-meta">
-                    <span className={`apc-basis is-${kind}`}>
-                      {kind === 'median' && L(`وسيط ${listings(c.ppmSample)}`, `median of ${c.ppmSample}`)}
-                      {kind === 'pair' && L('متوسط عرضين بس', 'average of 2 only')}
-                      {kind === 'single' && L('سعر عرض واحد، مش متوسط منطقة', 'one listing, not an area average')}
-                      {kind === 'none' && listings(c.count)}
-                    </span>
+                  <p className="apc-detail">
                     {c.ppmSample >= 2 && c.minPpm !== c.maxPpm && (
                       <span>{L('المتر', 'Per m²')} {range(n(c.minPpm), n(c.maxPpm))}</span>
                     )}
@@ -75,7 +75,8 @@ export default function AreaPriceCards({ stats = [], areaName = (id) => id, isAr
                         ? <>{L('الوحدة', 'Unit')} {range(money(c.minPrice), money(c.maxPrice))}</>
                         : <>{L('سعر الوحدة', 'Unit price')} <bdi>{money(c.minPrice)}</bdi></>}
                     </span>
-                  </div>
+                    {cls === 'villa' && <span>{L('السعر شامل الأرض', 'land included')}</span>}
+                  </p>
                 </li>
               );
             })}
