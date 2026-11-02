@@ -136,7 +136,7 @@ export function PropertiesProvider({ children }) {
   // device's copy so the CRM shows «بانتظار موافقة المدير العام» right away
   const applyApproval = useCallback((collectionName, saved) => {
     if (!saved?.id) return;
-    const keys = ['approval', 'submittedAt', 'submittedBy', 'approvedAt', 'approvedBy', 'rejectedAt'];
+    const keys = ['approval', 'submittedAt', 'approvedAt', 'rejectedAt'];
     const fields = Object.fromEntries(keys.filter((k) => k in saved).map((k) => [k, saved[k]]));
     const mapOne = (p) => (String(p.id) === String(saved.id) ? { ...p, ...fields } : p);
     if (collectionName !== 'properties') return; // projects: see withProjectApproval
@@ -272,7 +272,7 @@ export function PropertiesProvider({ children }) {
     if (saved?.id) {
       setProjects((prev) => {
         const updated = prev.map((p) => (String(p.id) === String(saved.id)
-          ? { ...p, approval: saved.approval, submittedAt: saved.submittedAt, submittedBy: saved.submittedBy, approvedAt: saved.approvedAt, approvedBy: saved.approvedBy, rejectedAt: saved.rejectedAt }
+          ? { ...p, approval: saved.approval, submittedAt: saved.submittedAt, approvedAt: saved.approvedAt, rejectedAt: saved.rejectedAt }
           : p));
         try { localStorage.setItem('oneline_mega_projects', JSON.stringify(updated)); } catch { /* quota / private mode */ }
         return updated;

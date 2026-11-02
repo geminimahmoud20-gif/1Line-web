@@ -15,7 +15,8 @@ import SystemSection, { RestrictedSection } from '../components/crm/SystemSectio
 import { announceNewLeads, announceDownloads, announceIntake } from '../utils/newLeadAlerts';
 import { unlockChimeOnFirstTouch } from '../utils/notificationHub';
 import { getDynamicPhone } from '../utils/founderCmsData';
-import { subscribeToClientDownloads, subscribeToIntake, logoutUser } from '../firebaseLazy';
+import { subscribeToClientDownloads, subscribeToIntake, logoutUser, stripStaffIdentity } from '../firebaseLazy';
+import { hasStaffIdentity } from '../utils/publishApproval';
 import useIdleLock from '../components/crm/useIdleLock';
 import { setManifestFor } from '../utils/appManifest';
 import { markCrmActive, LOCKED_FLAG } from '../utils/idleLock';
@@ -124,6 +125,18 @@ export default function CrmPage({
     ? (resolveRole(currentUser.role) || 'viewer')
     : (resolveRole(userRole) || (hasLocalSessionFlag ? 'super_admin' : 'viewer'));
   const isSuperAdminUser = verifiedUserRole === 'super_admin';
+  // Older saves stamped the staff email on public listings / projects; the general manager's
+  // session removes it once (src/utils/publishApproval.js STAFF_IDENTITY_FIELDS)
+  const identityCleanTried = useRef(false);
+  useEffect(() => {
+    if (identityCleanTried.current || !isSuperAdminUser) return;
+    const props = properties.filter(hasStaffIdentity).map((p) => p.id);
+    const projs = projects.filter(hasStaffIdentity).map((p) => p.id);
+    if (props.length === 0 && projs.length === 0) return;
+    identityCleanTried.current = true;
+    stripStaffIdentity('properties', props).catch(() => {});
+    stripStaffIdentity('projects', projs).catch(() => {});
+  }, [isSuperAdminUser, properties, projects]);
   // null = "no simulation": follows the verified role until the super admin picks another one
   const [simulatedRole, setSimulatedRole] = useState(null);
   const selectedRole = isSuperAdminUser && knownRole(simulatedRole) ? simulatedRole : verifiedUserRole;

@@ -4,6 +4,8 @@
 //  Items saved before this existed have no field and count as approved.
 //  Anyone else's save is stamped 'pending' and stays off the site until approved; firestore.rules
 //  refuses any other value from them, and /api/catalog drops non-approved items for visitors.
+//  Listings are public documents, so no staff identity (email, uid) is stamped on them:
+//  STAFF_IDENTITY_FIELDS are dropped on every save (older saves carried the staff email there).
 //  Pure functions (tests/unit/publish-approval.test.mjs).
 // =============================================================
 
@@ -15,21 +17,34 @@ export const isAwaitingApproval = (item) => item?.approval === APPROVAL.pending;
 /** Not allowed on the site yet: waiting, or sent back */
 export const blockedByApproval = (item) => item?.approval === APPROVAL.pending || item?.approval === APPROVAL.rejected;
 
+/** Fields older saves wrote with the staff member's email; never written now */
+export const STAFF_IDENTITY_FIELDS = ['submittedBy', 'approvedBy'];
+
+const withoutStaffIdentity = (item) => {
+  const out = { ...item };
+  for (const k of STAFF_IDENTITY_FIELDS) delete out[k];
+  return out;
+};
+
+/** Whether a saved item still carries a staff identity field */
+export const hasStaffIdentity = (item) => Boolean(item) && STAFF_IDENTITY_FIELDS.some((k) => k in item);
+
 /**
  * The item as it should be saved. `isManager`: the signed-in account is the general manager.
  * Anyone else's save sends it for approval. The manager's own items go live; an item someone
  * else sent stays waiting (or rejected) until the manager presses «موافقة» (approveUpdate),
  * so pinning or fixing a typo on it doesn't approve it by accident.
  */
-export function approvalStamp(item, { isManager = false, who = '', now = new Date().toISOString() } = {}) {
+export function approvalStamp(item, { isManager = false, now = new Date().toISOString() } = {}) {
   if (!item || item.deleted) return item;
-  if (!isManager) return { ...item, approval: APPROVAL.pending, submittedAt: now, submittedBy: who };
-  if (item.approval === APPROVAL.pending || item.approval === APPROVAL.rejected) return item;
-  return { ...item, approval: APPROVAL.approved, approvedAt: item.approvedAt || now, approvedBy: item.approvedBy || who };
+  const clean = withoutStaffIdentity(item);
+  if (!isManager) return { ...clean, approval: APPROVAL.pending, submittedAt: now };
+  if (clean.approval === APPROVAL.pending || clean.approval === APPROVAL.rejected) return clean;
+  return { ...clean, approval: APPROVAL.approved, approvedAt: clean.approvedAt || now };
 }
 
 /** The manager's «موافقة»: the update that puts a waiting item on the site */
-export const approveUpdate = (now = new Date().toISOString()) => ({ approval: APPROVAL.approved, approvedAt: now, approvedBy: '', rejectedAt: '' });
+export const approveUpdate = (now = new Date().toISOString()) => ({ approval: APPROVAL.approved, approvedAt: now, rejectedAt: '' });
 
 /** The manager's «رفض»: stays off the site; the next edit by staff sends it back for approval */
 export const rejectUpdate = (now = new Date().toISOString()) => ({ approval: APPROVAL.rejected, rejectedAt: now });

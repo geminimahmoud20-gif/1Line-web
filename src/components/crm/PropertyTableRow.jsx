@@ -177,7 +177,6 @@ export default function PropertyTableRow({
               <Badge tone={prop.approval === 'rejected' ? 'danger' : 'warning'} icon={prop.approval === 'rejected' ? <X size={11} aria-hidden="true" /> : <Hourglass size={11} aria-hidden="true" />}>
                 {approvalLabel(prop, isAr)}
               </Badge>
-              {prop.submittedBy && prop.approval === 'pending' && <small><bdi>{prop.submittedBy}</bdi></small>}
               {canApprove && (
                 <>
                   <Button size="sm" onClick={() => { if (onUpdateProperty(prop.id, approveUpdate()) !== false) triggerToast(isAr ? 'اتوافق عليها وهتظهر على الموقع' : 'Approved; it is now on the site', 'success'); }}>
