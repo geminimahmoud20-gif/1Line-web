@@ -38,6 +38,7 @@ import { blockedByApproval } from '../../utils/publishApproval';
 import { useProperties } from '../../context/PropertiesContext';
 import { paymentTerms, paymentFields, paymentProblem } from '../../utils/paymentTerms';
 import { areaFamily } from '../../utils/areaLookup';
+import { linkedContactLead, leadWithPhone, listingContactProblem, listingContactLead } from '../../utils/listingContact';
 const SOHAG_AREA_COORDINATES = {
   east: { lat: 26.5569, lng: 31.7001 },
   new_sohag: { lat: 26.4715, lng: 31.6620 },
@@ -92,7 +93,11 @@ const DEFAULT_FORM_STATE = {
   // No legal record until the team actually reviews the documents (CRM → الموقف القانوني)
   legalStatus: null,
   customBenchmarkPrice: '',
-  nearbyAmenities: []
+  nearbyAmenities: [],
+  // Who offers the unit; the contact's name and phone are typed here but saved as a client, never on the listing
+  listedBy: '',
+  contactName: '',
+  contactPhone: ''
 };
 
 export default function PropertyManagerPanel({
@@ -104,6 +109,7 @@ export default function PropertyManagerPanel({
   onDeleteProperty,
   onImportProperties,
   onImportLeads,
+  onAddContactLead,
   lang = 'ar',
   triggerToast,
   externalNewPropertyData = null,
@@ -184,6 +190,7 @@ export default function PropertyManagerPanel({
   const isAr = lang === 'ar';
 
   const [form, setForm] = useState(DEFAULT_FORM_STATE);
+  const [saving, setSaving] = useState(false);
 
   // Handle external conversion request (from CRM Leads to Property)
   const [prevExternalData, setPrevExternalData] = useState(null);
@@ -220,7 +227,9 @@ export default function PropertyManagerPanel({
       installmentMonths: paymentTerms(prop).months || '',
       bedrooms: hasNoRooms(prop.type) ? 0 : (prop.bedrooms || 0),
       bathrooms: isLandType(prop.type) ? 0 : (prop.bathrooms || 0),
-      status: prop.status || (prop.isArchived ? 'hidden' : 'published')
+      status: prop.status || (prop.isArchived ? 'hidden' : 'published'),
+      contactName: '',
+      contactPhone: ''
     });
     setShowAddModal(true);
   };
@@ -483,8 +492,9 @@ export default function PropertyManagerPanel({
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (saving) return;
     if (!form.title_ar || !form.price || !form.size) {
       triggerToast(isAr ? 'يرجى ملء الحقول الأساسية (العنوان، السعر، المساحة)' : 'Please fill required fields (title, price, size)', 'error');
       return;
@@ -509,6 +519,16 @@ export default function PropertyManagerPanel({
       triggerToast(payProblem, 'error');
       return;
     }
+    // A new unit needs who is offering it and their phone, unless it came from a client already
+    const linkedLead = linkedContactLead(form, leads);
+    const contactProb = listingContactProblem(
+      { name: form.contactName, phone: form.contactPhone, listedBy: form.listedBy },
+      { required: !editingPropertyId && !linkedLead && !form.sourceLeadId, isAr }
+    );
+    if (contactProb) {
+      triggerToast(contactProb, 'error');
+      return;
+    }
 
     // 🗺️ Assign Real GPS Coordinates matching the selected Sohag district
     const baseCoords = areaCenter(form.areaKey) || { lat: 26.5569, lng: 31.7001 };
@@ -521,8 +541,9 @@ export default function PropertyManagerPanel({
 
     // Cleanse sector-specific attributes (land, shops, offices, farms and factories have 0 bedrooms)
     const isLand = isLandType(form.type);
+    const { contactName, contactPhone, ...formFields } = form;
     const cleanForm = {
-      ...form,
+      ...formFields,
       ...paymentFields(form),
       category: categoryOfType(form.type),
       bedrooms: hasNoRooms(form.type) ? 0 : (parseInt(form.bedrooms) || 0),
@@ -530,12 +551,27 @@ export default function PropertyManagerPanel({
       floor: isLand ? 0 : (parseInt(form.floor) || 0)
     };
 
+    // The contact typed on the form becomes a client in «العملاء» (or links to the one with that phone)
+    const propId = editingPropertyId || 'prop-' + Date.now();
+    if (String(contactPhone || '').trim() && !linkedLead) {
+      const known = leadWithPhone(contactPhone, leads);
+      if (known) {
+        cleanForm.sourceLeadId = known.id;
+      } else if (onAddContactLead) {
+        setSaving(true);
+        const res = await onAddContactLead([listingContactLead({ ...cleanForm, id: propId }, { name: contactName, phone: contactPhone, listedBy: form.listedBy || 'owner' })]);
+        setSaving(false);
+        if (res?.ok && res.ids?.[0]) cleanForm.sourceLeadId = res.ids[0];
+        else triggerToast(isAr ? 'الوحدة هتتحفظ، بس رقم صاحبها ما اتسجلش في العملاء. جرّب تاني من تعديل الوحدة.' : "The unit is saved but its contact wasn't added to clients. Try again from edit.", 'error');
+      }
+    }
+
     if (editingPropertyId) {
       onUpdateProperty(editingPropertyId, { ...cleanForm, coordinates: finalCoords });
       triggerToast(isAr ? 'تم تحديث بيانات العقار وموقعه على الخريطة بنجاح!' : 'Property updated successfully!', 'success');
     } else {
       const newProp = {
-        id: 'prop-' + Date.now(),
+        id: propId,
         ...cleanForm,
         coordinates: finalCoords
       };
@@ -1020,6 +1056,8 @@ export default function PropertyManagerPanel({
           badgePresets={badgePresets}
           editingPropertyId={editingPropertyId}
           form={form}
+          contactLead={linkedContactLead(form, leads)}
+          saving={saving}
           handleAddCustomAmenity={handleAddCustomAmenity}
           handleDragLeave={handleDragLeave}
           handleDragOver={handleDragOver}
