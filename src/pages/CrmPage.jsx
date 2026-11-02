@@ -868,6 +868,7 @@ export default function CrmPage({
               onDeleteProperty={guard(can.deleteInventory, onDeleteProperty)}
               onImportProperties={can.editInventory ? handleImportProperties : undefined}
               onImportLeads={can.importLeads ? handleImportLeads : undefined}
+              onAddContactLead={can.editInventory ? handleImportLeads : undefined}
               lang={lang}
               triggerToast={triggerToast}
               externalNewPropertyData={externalPropertyData}

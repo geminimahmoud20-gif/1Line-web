@@ -8,6 +8,7 @@ import HandoverFieldsEditor from './HandoverFieldsEditor';
 import PaymentTermsEditor from './PaymentTermsEditor';
 import { AVAILABILITY_OPTIONS, REVIEW_OPTIONS, reviewState } from '../../utils/listingBadges';
 import PhotoManager from './PhotoManager';
+import ListingContactFields from './ListingContactFields';
 import { AMENITY_GROUPS, amenityCategory } from '../../utils/amenityCategories';
 import './property-amenities.css';
 import AreaOptions from '../common/AreaOptions';
@@ -19,6 +20,8 @@ export default function PropertyFormModal({
   badgePresets,
   editingPropertyId,
   form,
+  contactLead = null,
+  saving = false,
   handleAddCustomAmenity,
   handleDragLeave,
   handleDragOver,
@@ -229,6 +232,14 @@ export default function PropertyFormModal({
               )}
             </div>
           </div>
+
+          <ListingContactFields
+            form={form}
+            setForm={setForm}
+            contactLead={contactLead}
+            required={!editingPropertyId && !contactLead && !form.sourceLeadId}
+            isAr={isAr}
+          />
 
           {/* Standard Form Grid */}
           <div className="cms-form-grid">
@@ -753,8 +764,8 @@ export default function PropertyFormModal({
             <button type="button" className="btn btn-outline" onClick={() => setShowAddModal(false)}>
               {isAr ? 'إلغاء' : 'Cancel'}
             </button>
-            <button type="submit" className="btn btn-primary">
-              <Save size={16} />
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              {saving ? <Loader2 size={16} className="spin-animation" /> : <Save size={16} />}
               <span>{editingPropertyId ? (isAr ? 'حفظ التعديلات' : 'Save Changes') : (isAr ? 'نشر العقار فوراً' : 'Publish Property')}</span>
             </button>
           </div>
