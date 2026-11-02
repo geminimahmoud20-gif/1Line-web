@@ -1,14 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { approvalStamp, approveUpdate, rejectUpdate, blockedByApproval, isAwaitingApproval, demandEditStamp, approvalLabel } from '../../src/utils/publishApproval.js';
+import { approvalStamp, hasStaffIdentity, approveUpdate, rejectUpdate, blockedByApproval, isAwaitingApproval, demandEditStamp, approvalLabel } from '../../src/utils/publishApproval.js';
 
 const now = '2026-10-31T12:00:00.000Z';
 
 test('a staff save always waits for the general manager', () => {
   const live = { id: 'p1', price: 100, approval: 'approved', approvedAt: '2026-01-01' };
-  const s = approvalStamp({ ...live, price: 120 }, { isManager: false, who: 'agent@x.com', now });
+  const s = approvalStamp({ ...live, price: 120 }, { isManager: false, now });
   assert.equal(s.approval, 'pending');
-  assert.equal(s.submittedBy, 'agent@x.com');
+  assert.equal(s.submittedAt, now);
+  // No staff email on a public listing, and an older save's email is dropped
+  assert.equal('submittedBy' in approvalStamp({ ...live, submittedBy: 'old@x.com' }, { isManager: false, now }), false);
   assert.equal(blockedByApproval(s), true);
   // Even an old item with no approval field
   assert.equal(approvalStamp({ id: 'p2' }, { isManager: false, now }).approval, 'pending');
@@ -17,14 +19,15 @@ test('a staff save always waits for the general manager', () => {
 });
 
 test("the manager's own items go live; someone else's wait for «موافقة»", () => {
-  const mine = approvalStamp({ id: 'p1' }, { isManager: true, who: 'gm@x.com', now });
+  const mine = approvalStamp({ id: 'p1' }, { isManager: true, now });
   assert.equal(mine.approval, 'approved');
-  assert.equal(mine.approvedBy, 'gm@x.com');
+  assert.equal('approvedBy' in mine, false);
   const waiting = { id: 'p2', approval: 'pending' };
   assert.equal(approvalStamp({ ...waiting, featured: true }, { isManager: true, now }).approval, 'pending');
-  const approved = approvalStamp({ ...waiting, ...approveUpdate(now) }, { isManager: true, who: 'gm@x.com', now });
+  const approved = approvalStamp({ ...waiting, ...approveUpdate(now) }, { isManager: true, now });
   assert.equal(approved.approval, 'approved');
-  assert.equal(approved.approvedBy, 'gm@x.com');
+  assert.equal(hasStaffIdentity(approved), false);
+  assert.equal(hasStaffIdentity({ id: 'x', approvedBy: 'gm@x.com' }), true);
   assert.equal(approved.approvedAt, now);
   const rejected = approvalStamp({ ...waiting, ...rejectUpdate(now) }, { isManager: true, now });
   assert.equal(rejected.approval, 'rejected');

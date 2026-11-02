@@ -1,8 +1,8 @@
 import { db, auth, isFirebaseConfigured } from '../firebase.js';
 import { checkIsAdmin } from './auth.js';
-import { approvalStamp } from '../utils/publishApproval.js';
+import { approvalStamp, STAFF_IDENTITY_FIELDS } from '../utils/publishApproval.js';
 
-import { collection, addDoc, getDocs, doc, setDoc, deleteDoc, query, orderBy, limit, onSnapshot, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, setDoc, deleteDoc, query, orderBy, limit, onSnapshot, serverTimestamp, writeBatch, deleteField, updateDoc } from 'firebase/firestore';
 
 // ===================== PROPERTIES =====================
 
@@ -80,7 +80,22 @@ export const subscribeToCatalog = (collectionName, callback) => {
  */
 export const currentApprover = async () => {
   const user = auth?.currentUser || null;
-  return { isManager: await checkIsAdmin(user), who: user?.email || user?.uid || '' };
+  return { isManager: await checkIsAdmin(user) };
+};
+
+/**
+ * Removes the staff email older saves stamped on public listings / projects (submittedBy,
+ * approvedBy). The general manager's CRM session calls this once for the items that still
+ * carry it. Returns how many documents were cleaned.
+ */
+export const stripStaffIdentity = async (collectionName, ids = []) => {
+  if (!CATALOG_COLLECTIONS.has(collectionName) || !isFirebaseConfigured() || !db || ids.length === 0) return 0;
+  const unset = Object.fromEntries(STAFF_IDENTITY_FIELDS.map((k) => [k, deleteField()]));
+  // One update per document: a listing that exists only on this device fails alone
+  const results = await Promise.allSettled(ids.map((id) => updateDoc(doc(db, collectionName, String(id)), unset)));
+  const done = results.filter((r) => r.status === 'fulfilled').length;
+  if (done < ids.length) console.warn(`stripStaffIdentity [${collectionName}]: ${ids.length - done} not cleaned`);
+  return done;
 };
 
 /**
