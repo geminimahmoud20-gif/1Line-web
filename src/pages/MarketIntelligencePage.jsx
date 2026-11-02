@@ -6,6 +6,7 @@ import { getWhatsAppUrl } from '../utils/founderCmsData';
 import AreaPriceCards from '../components/market/AreaPriceCards';
 import { getAreas } from '../utils/areasData';
 import { updatePageSeo, buildBreadcrumbSchema } from '../utils/seoHelper';
+import { countPhrase } from '../utils/arabicCount';
 
 export default function MarketIntelligencePage({ lang = 'ar', properties = [] }) {
   const navigate = useNavigate();
@@ -106,7 +107,7 @@ export default function MarketIntelligencePage({ lang = 'ar', properties = [] })
           <div className="summary-stat-box">
             <div className="stat-icon-wrap bg-green"><Home size={22} /></div>
             <div>
-              <span className="stat-lbl">{isAr ? `وسيط متر الشقق (${overall.sample} عرض، كل المناطق)` : `Median flat price / m² (${overall.sample} listings, all areas)`}</span>
+              <span className="stat-lbl">{isAr ? `وسيط متر الشقق (${countPhrase('listing', overall.sample)}، كل المناطق)` : `Median flat price / m² (${countPhrase('listing', overall.sample, false)}, all areas)`}</span>
               <strong className="stat-num text-success">{overall.residential ? `${n(overall.residential)} ${isAr ? 'ج.م' : 'EGP'}` : '—'}</strong>
             </div>
           </div>
@@ -120,8 +121,8 @@ export default function MarketIntelligencePage({ lang = 'ar', properties = [] })
           <div className="summary-stat-box">
             <div className="stat-icon-wrap bg-purple"><ShieldCheck size={22} /></div>
             <div>
-              <span className="stat-lbl">{isAr ? 'قبل أي نشر أو تعاقد' : 'Before listing or contract'}</span>
-              <strong className="stat-num">{isAr ? 'مراجعة المستندات' : 'Document review'}</strong>
+              <span className="stat-lbl">{isAr ? 'مناطق فيها عروض' : 'Areas with listings'}</span>
+              <strong className="stat-num">{n(stats.length)}</strong>
             </div>
           </div>
         </div>
@@ -139,8 +140,12 @@ export default function MarketIntelligencePage({ lang = 'ar', properties = [] })
             <div className="advisor-input-box">
               <label htmlFor="mi-budget">{isAr ? 'ميزانيتك:' : 'Your budget:'}</label>
               <div className="advisor-num-input-wrap">
-                <input id="mi-budget" type="number" min="100000" max="100000000" step="100000" value={userBudget}
-                  onChange={(e) => setUserBudget(Math.max(0, parseInt(e.target.value) || 0))} className="advisor-direct-input" />
+                {/* Shown with thousands separators (2,500,000); typed digits in any script are read */}
+                <input id="mi-budget" type="text" inputMode="numeric" dir="ltr" value={userBudget ? n(userBudget) : ''}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660)).replace(/\D/g, '');
+                    setUserBudget(Math.min(1000000000, Number(digits) || 0));
+                  }} className="advisor-direct-input" />
                 <span>{isAr ? 'ج.م' : 'EGP'}</span>
               </div>
             </div>
@@ -148,7 +153,7 @@ export default function MarketIntelligencePage({ lang = 'ar', properties = [] })
           <div className="advisor-result-banner">
             <div className="advisor-res-district">
               <span className="res-tag">{isAr ? 'في حدود ميزانيتك' : 'Within your budget'}</span>
-              <h5>{isAr ? `${n(matches.count)} عقار معروض` : `${n(matches.count)} listings`}</h5>
+              <h5>{matches.count ? countPhrase('property', matches.count, isAr) : (isAr ? 'مفيش عقارات' : 'No listings')}</h5>
               <p>
                 {matches.areas.length
                   ? matches.areas.slice(0, 4).map(([id, c]) => `${areaName(id)} (${c})`).join(isAr ? '، ' : ', ')
@@ -177,7 +182,7 @@ export default function MarketIntelligencePage({ lang = 'ar', properties = [] })
         </div>
         <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '10px 4px 0' }}>
           {isAr
-            ? 'دي أسعار معروضة مش أسعار بيع نهائية، ومش بنعرض توقعات نمو أو عوائد إيجارية لأن مفيش بيانات صفقات كفاية تثبتها. لعائد وحدة معينة اطلب إيجارات مقارنة فعلية.'
+            ? 'دي أسعار معروضة مش أسعار بيع نهائية. السعر اللي عليه «عرض واحد» أو «عرضين» سعر وحدات بعينها مش متوسط المنطقة. ومش بنعرض توقعات نمو أو عوائد إيجارية لأن مفيش بيانات صفقات كفاية تثبتها. لعائد وحدة معينة اطلب إيجارات مقارنة فعلية.'
             : 'These are asking prices, not final sale prices. No growth or rental-yield forecasts are shown because there is not enough deal data to support them. Ask for real comparable rents for any unit.'}
         </p>
 
