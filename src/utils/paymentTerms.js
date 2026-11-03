@@ -131,7 +131,7 @@ export function paymentProblem(form = {}, isAr = true) {
   const resale = form.paymentType === 'resale';
   const months = Math.round(num(form.installmentMonths));
   const every = everyOf(form.installmentEvery);
-  if (!months) return resale ? L('اكتب المدة المتبقية من الأقساط', 'Enter the term left') : L('اكتب مدة التقسيط', 'Enter the installment term');
+  if (!months) return resale ? L('اكتب عدد الأقساط المتبقية', 'Enter the installments left') : L('اكتب عدد الأقساط', 'Enter the number of installments');
   if (months > MAX_TERM_MONTHS) return L(`أقصى مدة ${MAX_TERM_MONTHS / 12} سنة`, `The longest term is ${MAX_TERM_MONTHS / 12} years`);
   if (months % every !== 0) return L(`المدة لازم تتقسم على ${every} شهور (القسط ${everyLabel(every)})`, `The term must be a multiple of ${every} months`);
   if (!num(form.installmentAmount) && !num(form.installmentTotal) && !num(form.price)) return L('اكتب قيمة القسط', 'Enter the installment amount');
