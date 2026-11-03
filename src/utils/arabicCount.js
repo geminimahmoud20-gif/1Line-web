@@ -4,6 +4,7 @@ const FORMS = {
   bath: { one: 'حمام', two: 'حمامين', few: 'حمامات', many: 'حمام', en: ['bath', 'baths'] },
   listing: { one: 'عرض', two: 'عرضين', few: 'عروض', many: 'عرض', en: ['listing', 'listings'] },
   property: { one: 'عقار', two: 'عقارين', few: 'عقارات', many: 'عقار', en: ['property', 'properties'] },
+  unit: { one: 'وحدة', two: 'وحدتين', few: 'وحدات', many: 'وحدة', en: ['listing', 'listings'] },
   area: { one: 'منطقة', two: 'منطقتين', few: 'مناطق', many: 'منطقة', en: ['area', 'areas'] }
 };
 
@@ -23,7 +24,7 @@ export const countLabel = (kind, n, isAr = true) => `${n} ${countWord(kind, n, i
 export function countPhrase(kind, n, isAr = true) {
   const v = Math.abs(Math.trunc(Number(n) || 0));
   if (!isAr) return `${v} ${countWord(kind, v, false)}`;
-  if (v === 1) return `${FORMS[kind].one} ${kind === 'area' ? 'واحدة' : 'واحد'}`;
+  if (v === 1) return `${FORMS[kind].one} ${kind === 'area' || kind === 'unit' ? 'واحدة' : 'واحد'}`;
   if (v === 2) return FORMS[kind].two;
   return `${v} ${countWord(kind, v, true)}`;
 }

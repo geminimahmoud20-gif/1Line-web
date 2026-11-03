@@ -14,6 +14,7 @@ import {
 } from '../../utils/featuredSlots';
 import './homepage-slots.css';
 import { thumbUrl } from '../../utils/imageThumbs';
+import { countPhrase } from '../../utils/arabicCount';
 
 const fmtDay = (v, isAr) => (v ? new Date(`${v}T12:00:00`).toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-GB', { day: 'numeric', month: 'short' }) : '');
 
@@ -266,7 +267,7 @@ export default function HomepageSlotsBoard({ properties = [], onUpdateProperty, 
             value=""
             onChange={(e) => { const p = properties.find((x) => String(x.id) === e.target.value); if (p) setEditing(p); }}
           >
-            <option value="">{isAr ? `اختار من ${pinnable.length} وحدة معروضة` : `Choose from ${pinnable.length} live listings`}</option>
+            <option value="">{isAr ? `اختار من ${countPhrase('unit', pinnable.length)} معروضة` : `Choose from ${pinnable.length} live listings`}</option>
             {pinnable.map((p) => <option key={p.id} value={p.id}>{title(p)} · {String(p.id).toUpperCase()}</option>)}
           </select>
         </div>

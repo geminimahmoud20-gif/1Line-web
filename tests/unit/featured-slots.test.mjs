@@ -51,3 +51,13 @@ test('the homepage only shows counts that make full rows', () => {
   const eight = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map((id) => p(id));
   assert.equal(getHomepageSlots(eight, HOME_FEATURED_SLOTS).length, 6);
 });
+
+test('auto-filled homepage slots are the newest listings, whatever order the list comes in', async () => {
+  const { getHomepageSlots, listingAge } = await import('../../src/utils/featuredSlots.js');
+  const ready = (id, extra = {}) => ({ id, title_ar: `وحدة ${id}`, price: 1000000, size: 100, areaKey: 'west', type: 'apartment', status: 'published', images: ['https://x/a.jpg'], ...extra });
+  const list = [ready('prop-1792517248233'), ready('prop-1793208340768'), ready('prop-1793021808741'), ready('prop-1792599991789')];
+  const ids = (l) => getHomepageSlots(l, 2).map((s) => s.property.id);
+  assert.deepEqual(ids(list), ['prop-1793208340768', 'prop-1793021808741']);
+  assert.deepEqual(ids([...list].reverse()), ['prop-1793208340768', 'prop-1793021808741']);
+  assert.ok(listingAge({ id: 'x', createdAt: '2026-01-01' }) > listingAge({ id: 'prop-1600000000000' }));
+});
