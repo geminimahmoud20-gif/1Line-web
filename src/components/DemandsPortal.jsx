@@ -14,6 +14,9 @@ import OwnerMatchSearch from './demands/OwnerMatchSearch';
 import { DEMAND_CATEGORIES, inDemandCategory } from './demands/demandCategories';
 import { siteLink } from '../config/siteConfig';
 import { contactProblem } from '../utils/contactValidation';
+import { demandCaption, drawDemandCard } from '../utils/demandShareCard';
+import { getDynamicWhatsApp } from '../utils/founderCmsData';
+import { readablePhone } from '../utils/phoneDisplay';
 
 export const DemandsPortal = ({
   lang,
@@ -90,6 +93,68 @@ export const DemandsPortal = ({
     setOwnerMatchesFound(null);
     setSearch({ type: '', area: '' });
   };
+
+  // Share one request: a square image of it (utils/demandShareCard) and a ready caption with the link
+  // to this request (#demand-<id>). Phones get the share sheet with the image (Facebook, WhatsApp,
+  // Instagram…); on a computer the image downloads and the caption is copied, ready to paste in a post.
+  const [shareNote, setShareNote] = useState(null); // { id, text }
+  const shareDemand = async (dem, areaName, formattedBudget) => {
+    const url = siteLink(`/demands#demand-${encodeURIComponent(dem.id)}`);
+    const cat = DEMAND_CATEGORIES.find((c) => c.test(dem.type));
+    const typeLabel = cat ? cat.single_ar : '';
+    const caption = isAr
+      ? demandCaption(dem, { areaName, typeLabel, url, whatsapp: readablePhone(getDynamicWhatsApp()) })
+      : [`Buyer request in Sohag on 1Line:`, dem.text_en || dem.text_ar, `Budget: ${formattedBudget} EGP`, `Area: ${areaName}`, url].join('\n');
+    const blob = await drawDemandCard({
+      typeLabel: typeLabel || 'عقار', areaName, budget: formatBudget(dem.budget) || '',
+      text: dem.text_ar, payment: { cash: 'كاش', installments: 'تقسيط', both: 'كاش أو تقسيط' }[dem.paymentMethod] || ''
+    }).catch(() => null);
+    const file = blob ? new File([blob], `1line-request-${dem.id}.png`, { type: 'image/png' }) : null;
+    const touch = window.matchMedia?.('(pointer: coarse)').matches;
+    if (touch && typeof navigator.share === 'function') {
+      try {
+        if (file && navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], text: caption });
+        else await navigator.share({ text: caption });
+        return;
+      } catch (err) {
+        if (err?.name === 'AbortError') return;
+      }
+    }
+    let copied = false;
+    try { await navigator.clipboard.writeText(caption); copied = true; } catch { /* not allowed here */ }
+    if (file) {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(file);
+      a.download = file.name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    }
+    if (!file && !copied) {
+      window.open(`https://wa.me/?text=${encodeURIComponent(caption)}`, '_blank', 'noopener');
+      return;
+    }
+    setShareNote({
+      id: dem.id,
+      text: isAr
+        ? `${file ? 'الصورة اتحمّلت' : ''}${file && copied ? ' و' : ''}${copied ? 'الكلام اتنسخ' : ''}: افتح فيسبوك أو واتساب، ارفع الصورة والصق الكلام.`
+        : `${file ? 'Image downloaded' : ''}${file && copied ? ', ' : ''}${copied ? 'caption copied' : ''}: paste it in your post.`
+    });
+    setTimeout(() => setShareNote((n) => (n?.id === dem.id ? null : n)), 9000);
+  };
+
+  // A shared link (/demands#demand-<id>) scrolls to that request and highlights it once
+  const sharedHandled = useRef(false);
+  useEffect(() => {
+    if (sharedHandled.current || typeof window === 'undefined') return;
+    const m = /^#demand-(.+)$/.exec(window.location.hash || '');
+    if (!m) return;
+    const el = document.getElementById(`demand-${decodeURIComponent(m[1])}`);
+    if (!el) return;
+    sharedHandled.current = true;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.add('is-shared-target');
+    setTimeout(() => el.classList.remove('is-shared-target'), 3500);
+  }, [allPublished]);
 
   // Filtered Demands to display in the grid
   const displayedDemands = useMemo(() => {
@@ -400,7 +465,7 @@ export const DemandsPortal = ({
             const TypeIcon = typeBadge.Icon;
 
             return (
-              <div key={dem.id} className="demand-card">
+              <div key={dem.id} id={`demand-${dem.id}`} className="demand-card">
                 {/* Dynamic Urgency Top Accent Bar */}
                 <div 
                   className="demand-card-accent-bar" 
@@ -500,13 +565,7 @@ export const DemandsPortal = ({
                     {/* Tertiary: Viral Social Referral loop via WhatsApp */}
                     <button
                       type="button"
-                      onClick={() => {
-                        const shareUrl = siteLink('/demands');
-                        const text = isAr
-                          ? `🔥 فرصة بيع مباشرة في سوهاج على منصة 1Line:\n${dem.text_ar}\n💰 الميزانية: ${formattedBudget} ج.م\n📍 المنطقة: ${areaName}\n\nإذا كان لديك عقار مطابق أو تعرف مالكاً، يمكنك المطابقة والتواصل فوراً هنا:\n${shareUrl}`
-                          : `Buyer Demand in Sohag on 1Line:\n${dem.text_en}\nBudget: ${formattedBudget} EGP\n${shareUrl}`;
-                        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-                      }}
+                      onClick={() => shareDemand(dem, areaName, formattedBudget)}
                       style={{
                         background: 'rgba(37, 211, 102, 0.08)',
                         border: '1px solid rgba(37, 211, 102, 0.28)',
@@ -520,11 +579,12 @@ export const DemandsPortal = ({
                         fontSize: '0.82rem',
                         fontWeight: '700'
                       }}
-                      title={isAr ? 'مشاركة هذا الطلب عبر واتساب' : 'Share on WhatsApp'}
+                      title={isAr ? 'مشاركة الطلب بصورة وكلام جاهزين' : 'Share with an image and caption'}
                     >
                       <MessageCircle size={15} />
                       <span>{isAr ? 'مشاركة' : 'Share'}</span>
                     </button>
+                    {shareNote?.id === dem.id && <p className="demand-share-note" role="status">{shareNote.text}</p>}
                   </div>
                 </div>
               </div>
