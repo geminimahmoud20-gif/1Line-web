@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Wallet } from 'lucide-react';
 import { paymentFields, paymentProblem, termLabel, periodsLabel, INSTALLMENT_EVERY, isPlanType } from '../../utils/paymentTerms';
 import './property-extras.css';
@@ -15,15 +14,16 @@ export default function PaymentTermsEditor({ form, setForm, isAr = true }) {
   const L = (ar, en) => (isAr ? ar : en);
   const kind = isPlanType(form.paymentType) ? form.paymentType : 'cash';
   const resale = kind === 'resale';
-  const months = Number(form.installmentMonths) || 0;
-  // The term is typed in years when it is whole years, else in months; stored in months either way
-  const [unit, setUnit] = useState(() => (months && months % 12 === 0 ? 'years' : (months ? 'months' : 'years')));
-  const termValue = months ? (unit === 'years' ? Math.round((months / 12) * 100) / 100 : months) : '';
+  // The term is typed as the number of installments (more exact than months or years): stored as
+  // months = installments × months between them, so changing «كل» keeps the count
+  const every = Number(form.installmentEvery) || 1;
+  const count = Number(form.installmentMonths) ? Math.round(Number(form.installmentMonths) / every) : '';
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
-  const setTerm = (value, u = unit) => {
-    const n = Math.max(0, Number(value) || 0);
-    set({ installmentMonths: n ? Math.round(u === 'years' ? n * 12 : n) : '' });
+  const setCount = (value) => {
+    const n = Math.max(0, Math.round(Number(value) || 0));
+    set({ installmentMonths: n ? n * every : '' });
   };
+  const setEvery = (e) => set({ installmentEvery: e, installmentMonths: count ? count * e : form.installmentMonths });
 
   const plan = paymentFields(form);
   const problem = paymentProblem(form, isAr);
@@ -76,22 +76,20 @@ export default function PaymentTermsEditor({ form, setForm, isAr = true }) {
               </label>
               <label className="pxe-field">
                 <span>{L('القسط كل', 'Paid')}</span>
-                <select value={plan.installmentEvery || 1} onChange={(e) => set({ installmentEvery: Number(e.target.value) })}>
+                <select value={plan.installmentEvery || 1} onChange={(e) => setEvery(Number(e.target.value))}>
                   {INSTALLMENT_EVERY.map((x) => (
                     <option key={x.months} value={x.months}>{isAr ? `${x.ar} (${x.every_ar})` : x.en}</option>
                   ))}
                 </select>
               </label>
               <label className="pxe-field">
-                <span>{resale ? L('المدة المتبقية', 'Term left') : L('المدة', 'Term')}</span>
-                <div className="pxe-pay-term">
-                  <input type="number" min="1" step={unit === 'years' ? '0.5' : '1'} inputMode="decimal" value={termValue}
-                    onChange={(e) => setTerm(e.target.value)} />
-                  <select value={unit} onChange={(e) => setUnit(e.target.value)} aria-label={L('وحدة المدة', 'Term unit')}>
-                    <option value="months">{L('شهور', 'months')}</option>
-                    <option value="years">{L('سنين', 'years')}</option>
-                  </select>
+                <span>{resale ? L('عدد الأقساط المتبقية', 'Installments left') : L('عدد الأقساط', 'Number of installments')}</span>
+                <div className="pxe-input-wrap">
+                  <input type="number" min="1" step="1" inputMode="numeric" value={count}
+                    onChange={(e) => setCount(e.target.value)} />
+                  <em>{L('قسط', 'inst.')}</em>
                 </div>
+                {plan.installmentMonths > 0 && <small className="pxe-hint">{L(`المدة: ${termLabel(plan.installmentMonths)}`, `Term: ${termLabel(plan.installmentMonths, false)}`)}</small>}
               </label>
             </div>
 

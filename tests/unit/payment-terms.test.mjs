@@ -38,7 +38,7 @@ test('older listings: a typed installment or a term means installment, nothing m
 
 test('a plan that does not add up is caught before saving', () => {
   assert.equal(paymentProblem({ paymentType: 'cash' }), '');
-  assert.match(paymentProblem({ paymentType: 'installment', price: 1e6 }), /مدة/);
+  assert.match(paymentProblem({ paymentType: 'installment', price: 1e6 }), /عدد الأقساط/);
   assert.match(paymentProblem({ paymentType: 'installment', price: 1e6, installmentMonths: 12, downPayment: 1e6 }), /المقدم/);
   assert.match(paymentProblem({ paymentType: 'installment', price: 1e6, installmentTotal: 9e5, installmentMonths: 12 }), /أقل من سعر الكاش/);
   assert.equal(paymentProblem({ paymentType: 'installment', price: 1e6, installmentMonths: 24, downPayment: 2e5 }), '');
