@@ -4,6 +4,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ROUTE_SEO } from '../src/config/routeSeo.js';
 import { landingPages, landingListings, landingSummary, landingCopy, landingFaq, landingPath } from '../src/utils/seoLanding.js';
+import {
+  esc, sanitizeMetaText, strictReplace, fmtPrice, buildPropertyShell, buildProjectShell, withRoot, routeBody,
+  newestFirst, isPublicListing, isPublicProject
+} from '../src/utils/seoShell.js';
+
+export { esc, sanitizeMetaText, strictReplace, fmtPrice, buildPropertyShell, buildProjectShell };
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
@@ -16,30 +22,6 @@ if (!siteUrl && fs.existsSync(path.join(root, '.env'))) {
 }
 siteUrl = (siteUrl || 'https://www.1lineestate.com').replace(/\/+$/, '');
 
-// ── Sanitization and escaping helpers ──────────────────────────────────────────────────
-export const esc = (s) => String(s ?? '')
-  .replace(/&/g, '&amp;')
-  .replace(/"/g, '&quot;')
-  .replace(/</g, '&lt;')
-  .replace(/>/g, '&gt;');
-
-/**
- * Strips phone numbers, email addresses, and contact URLs to prevent privacy leaks in metadata.
- */
-export const sanitizeMetaText = (text) => {
-  if (!text) return '';
-  return String(text)
-    .replace(/(?:\+?20|0020|0)?1[0125]\d{8}\b/g, '') // Egyptian mobile numbers
-    .replace(/\b\d{8,14}\b/g, '')                     // Landlines or numeric series
-    .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '') // Emails
-    .replace(/https?:\/\/(wa\.me|api\.whatsapp\.com)[^\s]+/g, '')    // WhatsApp links
-    .replace(/\s+/g, ' ')
-    .trim();
-};
-
-/**
- * Replaces a pattern in HTML template and verifies that the replacement succeeded (never fails silently).
- */
 /**
  * Shells for sitemap routes the hand-written list doesn't cover (/sell, /buy, /demands…), from the
  * same titles the app sets (src/config/routeSeo.js). Without one, a route is served the homepage's
@@ -56,74 +38,6 @@ export function routeShellConfigs(staticRoutes, existing = [], routeSeo = ROUTE_
     out.push({ path: key, title: `${seo.title_ar} | 1Line Solutions`, desc: seo.desc_ar, breadcrumbName: seo.title_ar });
   }
   return out;
-}
-
-export function strictReplace(html, pattern, replacement, label) {
-  if (!pattern.test(html)) {
-    throw new Error(`postbuild-seo: Mandatory template tag for [${label}] was not found in HTML template.`);
-  }
-  return html.replace(pattern, replacement);
-}
-
-export const fmtPrice = (n) => (Number(n) > 0 ? `${Number(n).toLocaleString('en-US')} ج.م` : '');
-
-/**
- * Builds and validates an HTML shell for a property listing.
- */
-export function buildPropertyShell(template, p, baseOrigin) {
-  const origin = (baseOrigin || siteUrl).replace(/\/+$/, '');
-  const title = `${sanitizeMetaText(p.title_ar || p.title_en || 'عقار')} | 1Line Solutions`;
-  const location = sanitizeMetaText(p.locationName_ar || p.areaKey || '');
-  const summary = [location, fmtPrice(p.price), p.size ? `${p.size} م²` : ''].filter(Boolean).join(' — ');
-  const rawDesc = p.description_ar || p.description_en || summary || '';
-  const desc = sanitizeMetaText(rawDesc).slice(0, 180);
-  const image = Array.isArray(p.images) && /^https?:\/\//.test(p.images[0] || '') ? p.images[0] : `${origin}/og-image.jpg`;
-  const url = `${origin}/properties/${encodeURIComponent(p.id)}`;
-  const today = new Date().toISOString().slice(0, 10);
-
-  const breadcrumbsSchema = JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'الرئيسية', item: `${origin}/` },
-      { '@type': 'ListItem', position: 2, name: 'العقارات', item: `${origin}/properties` },
-      { '@type': 'ListItem', position: 3, name: sanitizeMetaText(p.title_ar || p.title_en || 'عقار'), item: url }
-    ]
-  }, null, 2);
-
-  const propertySchema = JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'RealEstateListing',
-    name: sanitizeMetaText(p.title_ar || p.title_en || 'عقار'),
-    description: desc,
-    url: url,
-    image: Array.isArray(p.images) && p.images.length > 0 ? p.images : [image],
-    offers: {
-      '@type': 'Offer',
-      price: Number(p.price) || 0,
-      priceCurrency: 'EGP',
-      availability: p.status === 'sold' ? 'https://schema.org/Sold' : 'https://schema.org/InStock',
-      validFrom: p.createdAt || today
-    }
-  }, null, 2);
-
-  let html = template;
-  html = strictReplace(html, /<title>[\s\S]*?<\/title>/, `<title>${esc(title)}</title>`, 'title');
-  html = strictReplace(html, /(<meta name="description" content=")[^"]*(")/, `$1${esc(desc)}$2`, 'description');
-  html = strictReplace(html, /(<link rel="canonical" href=")[^"]*(")/, `$1${esc(url)}$2`, 'canonical');
-  html = strictReplace(html, /(<meta property="og:type" content=")[^"]*(")/, '$1article$2', 'og:type');
-  html = strictReplace(html, /(<meta property="og:url" content=")[^"]*(")/, `$1${esc(url)}$2`, 'og:url');
-  html = strictReplace(html, /(<meta property="og:title" content=")[^"]*(")/, `$1${esc(title)}$2`, 'og:title');
-  html = strictReplace(html, /(<meta property="og:description" content=")[^"]*(")/, `$1${esc(summary || desc)}$2`, 'og:desc');
-  html = strictReplace(html, /(<meta property="og:image" content=")[^"]*(")/, `$1${esc(image)}$2`, 'og:image');
-  html = strictReplace(html, /(<meta name="twitter:title" content=")[^"]*(")/, `$1${esc(title)}$2`, 'twitter:title');
-  html = strictReplace(html, /(<meta name="twitter:description" content=")[^"]*(")/, `$1${esc(summary || desc)}$2`, 'twitter:desc');
-  html = strictReplace(html, /(<meta name="twitter:image" content=")[^"]*(")/, `$1${esc(image)}$2`, 'twitter:image');
-
-  // Inject structured data
-  html = html.replace('</head>', `    <script type="application/ld+json" id="breadcrumb-schema">\n${breadcrumbsSchema}\n    </script>\n    <script type="application/ld+json" id="property-jsonld-schema">\n${propertySchema}\n    </script>\n  </head>`);
-
-  return html;
 }
 
 // ── Firestore Data Fetcher ─────────────────────────────────────────────────────────────
@@ -174,14 +88,10 @@ async function fetchCollection(name) {
   return out;
 }
 
-const fetchRealListings = async () => (await fetchCollection('properties'))
-  .filter((p) => p.id && !p.isDemo && !p.deleted && !p.isDeleted && !['trash', 'hidden', 'draft', 'sold'].includes(p.status)
-    && !['pending', 'rejected'].includes(p.approval)); // waiting for the general manager
+const fetchRealListings = async () => newestFirst((await fetchCollection('properties')).filter(isPublicListing));
 
 // Projects shown on the site: not samples, not hidden in the CRM
-const fetchPublicProjects = async () => (await fetchCollection('projects'))
-  .filter((p) => p.id && !p.isDemo && !p.isHidden && !p.isDeleted && p.status !== 'hidden'
-    && !['pending', 'rejected'].includes(p.approval));
+const fetchPublicProjects = async () => (await fetchCollection('projects')).filter(isPublicProject);
 
 /**
  * A search landing page (/sohag/:kind/:area?) as static HTML: title, description, canonical,
@@ -203,7 +113,7 @@ export function buildLandingShell(template, page, listings, origin = siteUrl) {
     { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) }
   ];
   const items = own.slice(0, 40).map((p) => `<li><a href="/properties/${encodeURIComponent(p.id)}">${esc(sanitizeMetaText(p.title_ar || p.title_en || 'عقار'))}</a>${p.price ? ` — ${esc(fmtPrice(p.price))}` : ''}</li>`).join('');
-  const body = `<main dir="rtl"><h1>${esc(copy.h1)}</h1><p>${esc(copy.intro)}</p>${items ? `<ul>${items}</ul>` : ''}`
+  const body = `<main class="seo-shell" dir="rtl"><h1>${esc(copy.h1)}</h1><p>${esc(copy.intro)}</p>${items ? `<ul>${items}</ul>` : ''}`
     + `<section><h2>أسئلة شائعة</h2>${faq.map((f) => `<h3>${esc(f.q)}</h3><p>${esc(f.a)}</p>`).join('')}</section></main>`;
 
   let html = template;
@@ -227,7 +137,9 @@ export async function runPostbuild() {
     throw new Error(`postbuild-seo: ${indexHtmlPath} does not exist. Run vite build first.`);
   }
 
-  let indexHtml = fs.readFileSync(indexHtmlPath, 'utf8');
+  // app.html is the untouched template from an earlier run (index.html then carries the homepage text)
+  const appHtmlPath = path.join(dist, 'app.html');
+  let indexHtml = fs.readFileSync(fs.existsSync(appHtmlPath) ? appHtmlPath : indexHtmlPath, 'utf8');
   if (indexHtml.includes('%VITE_SITE_URL%')) {
     indexHtml = indexHtml.replaceAll('%VITE_SITE_URL%', siteUrl);
     fs.writeFileSync(indexHtmlPath, indexHtml);
@@ -376,6 +288,12 @@ Sitemap: ${siteUrl}/sitemap.xml
 
     // Inject BreadcrumbList JSON-LD into the head
     html = html.replace('</head>', `    <script type="application/ld+json" id="breadcrumb-schema">\n${breadcrumbLd}\n    </script>\n  </head>`);
+    // The page's text in #root, with links to the listings / projects it lists
+    html = withRoot(html, routeBody({
+      h1: item.breadcrumbName, desc: item.desc, path: item.path,
+      listings: item.path === 'properties' ? realListings : [],
+      projects: item.path === 'projects' ? projects : []
+    }), item.path);
 
     const dir = path.join(dist, item.path);
     fs.mkdirSync(dir, { recursive: true });
@@ -394,6 +312,16 @@ Sitemap: ${siteUrl}/sitemap.xml
     prerenderedListings++;
   }
 
+  // 5b. Project page shells
+  let prerenderedProjects = 0;
+  for (const p of projects) {
+    if (!/^[\w-]{1,80}$/.test(p.id)) continue;
+    const dir = path.join(dist, 'projects', p.id);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'index.html'), buildProjectShell(indexHtml, p, siteUrl));
+    prerenderedProjects++;
+  }
+
   // 6. Search landing page shells
   for (const page of landings) {
     const dir = path.join(dist, ...page.path.split('/').filter(Boolean));
@@ -401,7 +329,18 @@ Sitemap: ${siteUrl}/sitemap.xml
     fs.writeFileSync(path.join(dir, 'index.html'), buildLandingShell(indexHtml, page, realListings, siteUrl));
   }
 
-  console.log(`postbuild-seo: ${urls.length} URLs → sitemap.xml, robots.txt, 404.html; ${prerenderedStatic} static shells; ${prerenderedListings} listing shells; ${landings.length} landing pages; ${projects.length} projects (${siteUrl})`);
+  // 7. The homepage: its text and the newest listings in #root. Every route without a shell of
+  //    its own is served app.html (vercel.json rewrites), the template with an empty #root, so a
+  //    CRM or account page never starts with the homepage's text.
+  fs.writeFileSync(path.join(dist, 'app.html'), indexHtml);
+  const homeTitle = (indexHtml.match(/<title>([\s\S]*?)<\/title>/) || [])[1] || '1Line Solutions';
+  const homeDesc = (indexHtml.match(/<meta name="description" content="([^"]*)"/) || [])[1] || '';
+  fs.writeFileSync(indexHtmlPath, withRoot(indexHtml, routeBody({
+    h1: homeTitle.replace(/&amp;/g, '&').split('|')[0].trim(), desc: homeDesc.replace(/&quot;/g, '"').replace(/&amp;/g, '&'),
+    listings: realListings, projects: projects.slice(0, 12)
+  }), 'home'));
+
+  console.log(`postbuild-seo: ${urls.length} URLs → sitemap.xml, robots.txt, 404.html; ${prerenderedStatic} static shells; ${prerenderedListings} listing shells; ${prerenderedProjects} project shells; ${landings.length} landing pages; ${projects.length} projects (${siteUrl})`);
 }
 
 const isDirectRun = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);

@@ -108,7 +108,7 @@ test('buildLandingShell: a search page readable without JavaScript', () => {
   const html = buildLandingShell(templateHtml, page, listings, 'https://www.1lineestate.com');
   assert.match(html, /<title>شقق للبيع في سوهاج الجديدة — أسعار \d{4} \| 1Line Solutions<\/title>/);
   assert.match(html, /<link rel="canonical" href="https:\/\/www\.1lineestate\.com\/sohag\/apartments-for-sale\/new-sohag"/);
-  assert.match(html, /<div id="root"><main dir="rtl"><h1>شقق للبيع في سوهاج الجديدة<\/h1>/);
+  assert.match(html, /<div id="root"><main class="seo-shell" dir="rtl"><h1>شقق للبيع في سوهاج الجديدة<\/h1>/);
   assert.match(html, /<a href="\/properties\/p1">/);
   assert.match(html, /"@type": "FAQPage"/);
   assert.ok(!html.includes('<b>150</b>'), 'listing titles are escaped');
