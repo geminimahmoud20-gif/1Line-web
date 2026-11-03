@@ -13,8 +13,12 @@ export default function ConcurrencyConflictModal({
   if (!isOpen || !conflictData) return null;
 
   const editorName = conflictData.currentEntity?.lastEditedBy || conflictData.heldBy || (isAr ? 'زميل آخر' : 'another colleague');
-  const updatedAt = conflictData.currentEntity?.updatedAt
-    ? new Date(conflictData.currentEntity.updatedAt).toLocaleTimeString(isAr ? 'ar-EG-u-nu-latn' : 'en-US', { hour: '2-digit', minute: '2-digit' })
+  // updatedAt is a Firestore Timestamp on cloud leads, an ISO string on older ones
+  const raw = conflictData.currentEntity?.updatedAt;
+  const when = raw && typeof raw.toDate === 'function' ? raw.toDate()
+    : (raw && typeof raw.seconds === 'number' ? new Date(raw.seconds * 1000) : (raw ? new Date(raw) : null));
+  const updatedAt = when && !Number.isNaN(when.getTime())
+    ? when.toLocaleTimeString(isAr ? 'ar-EG-u-nu-latn' : 'en-US', { hour: '2-digit', minute: '2-digit' })
     : null;
 
   return (
