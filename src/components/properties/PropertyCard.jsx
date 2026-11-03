@@ -44,6 +44,7 @@ import '../../styles/property-card.css';
 import { countWord } from '../../utils/arabicCount';
 import { listingBadges } from '../../utils/listingBadges';
 import { thumbUrl } from '../../utils/imageThumbs';
+import { paymentTerms, planSummary, termLabel } from '../../utils/paymentTerms';
 
 const FEATURE_ICONS = { elevator: ArrowUpDown, garage: Car, garden: Trees, landShare: Landmark };
 
@@ -130,7 +131,10 @@ export default function PropertyCard({
   // A running limited-time offer (CRM → العروض); samples never carry one
   // Samples and sold units never carry one
   const offer = property.isDemo || property.status === 'sold' ? null : getActiveOffer(property);
-  const priceData = formatCurrencyPrice(offer ? offer.price : property.price, currency, lang);
+  // A plan (installments / resale) shows what is paid now, with the installment under it
+  const terms = paymentTerms(property);
+  const plan = offer ? null : planSummary(terms, (n) => String(n), isAr);
+  const priceData = formatCurrencyPrice(offer ? offer.price : (plan ? (plan.now ? plan.now.amount : terms.amount) : property.price), currency, lang);
   const benchmark = getPriceBenchmark(property, lang);
   const detailsUrl = `/properties/${property.id}`;
 
@@ -437,6 +441,7 @@ export default function PropertyCard({
             <bdi className="pcx-price-val">{priceData.primary}</bdi>
             <span className="pcx-price-cur">{priceData.symbol}</span>
             {offer && <span className="pcx-price-tag">{isAr ? 'كاش' : 'cash'}</span>}
+            {plan && <span className="pcx-price-tag pcx-price-tag--plan">{plan.now ? (plan.resale ? (isAr ? 'كاش للمالك' : 'to seller') : (isAr ? 'مقدم' : 'down')) : (isAr ? 'قسط' : 'installment')}</span>}
           </div>
           {benchmark?.pricePerMeterFormatted ? (
             <span className="pcx-ppm" title={benchmark.badgeLabel}>
@@ -450,6 +455,14 @@ export default function PropertyCard({
             </span>
           ) : null}
         </div>
+
+        {plan && (
+          <span className="pcx-plan">
+            {isAr
+              ? `${plan.now ? '+ ' : ''}${plan.resale ? 'أقساط متبقية: ' : ''}${fmt(terms.amount)} ج.م ${plan.everyLabel} لمدة ${termLabel(terms.months)}`
+              : `${plan.now ? '+ ' : ''}${fmt(terms.amount)} EGP ${plan.everyLabel} over ${termLabel(terms.months, false)}`}
+          </span>
+        )}
 
         {priceData.approx && (
           <span className="pcx-fx" title={isAr ? 'سعر استرشادي بعملة العرض المختارة — التعاقد بالجنيه' : 'Indicative, in your display currency — contract in EGP'}>

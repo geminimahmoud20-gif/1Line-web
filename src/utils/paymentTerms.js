@@ -1,6 +1,13 @@
-// How a listing is paid for: cash, or an installment plan (down payment + term + installment total).
-// The monthly installment is never typed: it is (installment total − down payment) ÷ months, so the
-// numbers a buyer sees always add up. Pure helpers, unit-tested in tests/unit/payment-terms.test.mjs.
+// How a listing is paid for:
+//   cash         one price
+//   installment  a plan from the owner / developer: down payment, then an installment every
+//                1 / 3 / 6 / 12 months for the term
+//   resale       a unit bought on installments being sold on: the buyer pays the seller an amount
+//                in cash now (what was paid + the premium) and takes over the installments left
+// The team types the down payment (or the cash to the seller), the installment and how often, and the
+// term; the total is worked out (down + installment × number of installments), never typed. Older
+// listings saved a total and a term instead; they still read the same, with the installment computed.
+// Pure helpers, unit-tested in tests/unit/payment-terms.test.mjs.
 
 const num = (v) => {
   const n = Number(v);
@@ -8,8 +15,23 @@ const num = (v) => {
 };
 
 export const MAX_TERM_MONTHS = 240;
+export const PLAN_TYPES = ['installment', 'resale'];
+export const isPlanType = (t) => PLAN_TYPES.includes(t);
 
-/** Monthly installment for a plan, rounded up to the pound so the schedule never falls short */
+/** Months between two installments: monthly, quarterly, every six months, yearly */
+export const INSTALLMENT_EVERY = [
+  { months: 1, ar: 'شهري', every_ar: 'كل شهر', adverb_ar: 'شهرياً', en: 'monthly' },
+  { months: 3, ar: 'ربع سنوي', every_ar: 'كل 3 شهور', adverb_ar: 'كل 3 شهور', en: 'quarterly' },
+  { months: 6, ar: 'نصف سنوي', every_ar: 'كل 6 شهور', adverb_ar: 'كل 6 شهور', en: 'every 6 months' },
+  { months: 12, ar: 'سنوي', every_ar: 'كل سنة', adverb_ar: 'سنوياً', en: 'yearly' }
+];
+const everyOf = (v) => (INSTALLMENT_EVERY.some((e) => e.months === Number(v)) ? Number(v) : 1);
+export const everyLabel = (every, isAr = true) => {
+  const e = INSTALLMENT_EVERY.find((x) => x.months === everyOf(every));
+  return isAr ? e.ar : e.en;
+};
+
+/** Monthly installment for a total-based plan, rounded up to the pound so the schedule never falls short */
 export function monthlyFor({ total, down, months }) {
   const t = num(total);
   const m = Math.round(num(months));
@@ -18,62 +40,105 @@ export function monthlyFor({ total, down, months }) {
   return Math.ceil((t - d) / m);
 }
 
+/** Installments in a term: 5 years paid quarterly = 20 */
+export const periodsIn = (months, every = 1) => {
+  const m = Math.round(num(months));
+  return m ? Math.ceil(m / everyOf(every)) : 0;
+};
+
+/**
+ * The plan worked out from what the team typed: { down, months, every, periods, amount, total }.
+ * The installment amount wins; without one (older listings) it is the total left after the down
+ * payment spread over the installments.
+ */
+function planNumbers(p) {
+  const months = Math.round(num(p.installmentMonths) || num(p.installmentYears) * 12);
+  const every = everyOf(p.installmentEvery);
+  const periods = periodsIn(months, every);
+  const down = num(p.downPayment);
+  let amount = num(p.installmentAmount);
+  let total;
+  if (amount && periods) {
+    total = down + amount * periods;
+  } else {
+    total = num(p.installmentTotal) || num(p.price);
+    amount = periods && total > down ? Math.ceil((total - down) / periods) : 0;
+    // A plan without a term (older records) keeps the monthly installment that was typed
+    if (!periods && num(p.monthlyInstallment)) amount = num(p.monthlyInstallment);
+  }
+  return { down, months, every, periods, amount, total };
+}
+
 /**
  * The listing's payment terms as one object:
  *   { type: 'cash' } or
- *   { type: 'installment', down, months, total, monthly, years }
+ *   { type: 'installment' | 'resale', down, months, every, periods, amount, total, monthly, years, cashPrice }
+ * monthly is the installment per month (amount ÷ months between installments), for older screens.
  * Older listings without paymentType count as installment when they carry an installment or a term.
  */
 export function paymentTerms(p = {}) {
   const months = Math.round(num(p.installmentMonths) || num(p.installmentYears) * 12);
   const legacyPlan = num(p.monthlyInstallment) > 0 || months > 0;
-  const type = p.paymentType === 'cash' || p.paymentType === 'installment'
+  const type = p.paymentType === 'cash' || isPlanType(p.paymentType)
     ? p.paymentType
     : (legacyPlan ? 'installment' : 'cash');
   if (type === 'cash') return { type: 'cash' };
-  const total = num(p.installmentTotal) || num(p.price);
-  const down = num(p.downPayment);
-  // A plan without a term (older records) keeps the installment that was typed
-  const monthly = months ? monthlyFor({ total, down, months }) : num(p.monthlyInstallment);
-  return { type: 'installment', down, months, total, monthly, years: months / 12 };
+  const n = planNumbers(p);
+  // The cash price, when the seller also takes full cash and it differs from the plan's total
+  const cashPrice = num(p.price) && num(p.price) !== n.total ? num(p.price) : 0;
+  return { type, ...n, monthly: n.amount ? Math.ceil(n.amount / n.every) : 0, years: n.months / 12, cashPrice };
 }
 
-/** True when the terms can be shown as a plan: a term and something left to pay after the down payment */
-export const hasInstallmentPlan = (t) => t?.type === 'installment' && t.months > 0 && t.monthly > 0;
+/** True when the terms can be shown as a plan: a term and an installment */
+export const hasInstallmentPlan = (t) => isPlanType(t?.type) && t.months > 0 && t.amount > 0;
 
 /**
  * The fields stored on the listing for the chosen terms. Cash clears every installment field, so an
- * old plan never shows on a cash listing; installment stores the computed monthly and the term in
- * months and years (years is what filters and older screens read).
+ * old plan never shows on a cash listing. A plan stores the installment, how often, the term (months
+ * and years, which filters and older screens read), the total and the monthly equivalent.
  */
 export function paymentFields(form = {}) {
-  if (form.paymentType !== 'installment') {
-    return { paymentType: 'cash', downPayment: 0, monthlyInstallment: 0, installmentMonths: 0, installmentYears: 0, installmentTotal: 0 };
+  if (!isPlanType(form.paymentType)) {
+    return {
+      paymentType: 'cash', downPayment: 0, monthlyInstallment: 0, installmentMonths: 0, installmentYears: 0,
+      installmentTotal: 0, installmentAmount: 0, installmentEvery: 1
+    };
   }
   const months = Math.min(MAX_TERM_MONTHS, Math.round(num(form.installmentMonths)));
-  const total = num(form.installmentTotal) || num(form.price);
-  const down = num(form.downPayment);
+  const n = planNumbers({ ...form, installmentMonths: months, installmentYears: 0 });
   return {
-    paymentType: 'installment',
-    downPayment: down,
+    paymentType: form.paymentType,
+    downPayment: n.down,
     installmentMonths: months,
     installmentYears: Math.round((months / 12) * 100) / 100,
-    installmentTotal: total,
-    monthlyInstallment: monthlyFor({ total, down, months })
+    installmentEvery: n.every,
+    installmentAmount: n.amount,
+    installmentTotal: n.total,
+    monthlyInstallment: n.amount ? Math.ceil(n.amount / n.every) : 0
   };
 }
 
-/** What is wrong with an installment plan before it is saved, or '' when it is fine */
+/** The listing price for a plan with no cash price typed: the plan's total */
+export function planPrice(form = {}) {
+  if (!isPlanType(form.paymentType)) return num(form.price);
+  return num(form.price) || paymentFields(form).installmentTotal;
+}
+
+/** What is wrong with a plan before it is saved, or '' when it is fine */
 export function paymentProblem(form = {}, isAr = true) {
-  if (form.paymentType !== 'installment') return '';
+  if (!isPlanType(form.paymentType)) return '';
+  const L = (ar, en) => (isAr ? ar : en);
+  const resale = form.paymentType === 'resale';
   const months = Math.round(num(form.installmentMonths));
-  const total = num(form.installmentTotal) || num(form.price);
-  const down = num(form.downPayment);
-  if (!months) return isAr ? 'اكتب مدة التقسيط' : 'Enter the installment term';
-  if (months > MAX_TERM_MONTHS) return isAr ? `أقصى مدة ${MAX_TERM_MONTHS / 12} سنة` : `The longest term is ${MAX_TERM_MONTHS / 12} years`;
-  if (!total) return isAr ? 'اكتب إجمالي سعر التقسيط' : 'Enter the installment total';
-  if (down >= total) return isAr ? 'المقدم لازم يكون أقل من إجمالي سعر التقسيط' : 'The down payment must be below the installment total';
-  if (num(form.price) && total < num(form.price)) return isAr ? 'إجمالي التقسيط أقل من سعر الكاش — راجع الأرقام' : 'The installment total is below the cash price';
+  const every = everyOf(form.installmentEvery);
+  if (!months) return resale ? L('اكتب المدة المتبقية من الأقساط', 'Enter the term left') : L('اكتب مدة التقسيط', 'Enter the installment term');
+  if (months > MAX_TERM_MONTHS) return L(`أقصى مدة ${MAX_TERM_MONTHS / 12} سنة`, `The longest term is ${MAX_TERM_MONTHS / 12} years`);
+  if (months % every !== 0) return L(`المدة لازم تتقسم على ${every} شهور (القسط ${everyLabel(every)})`, `The term must be a multiple of ${every} months`);
+  if (!num(form.installmentAmount) && !num(form.installmentTotal) && !num(form.price)) return L('اكتب قيمة القسط', 'Enter the installment amount');
+  if (resale && !num(form.downPayment)) return L('اكتب المطلوب كاش للمالك (المدفوع + الأوفر)', 'Enter the cash asked by the seller');
+  const n = planNumbers({ ...form, installmentYears: 0 });
+  if (!num(form.installmentAmount) && n.down >= n.total) return L('المقدم لازم يكون أقل من إجمالي السعر', 'The down payment must be below the total');
+  if (!resale && num(form.price) && n.total < num(form.price)) return L('إجمالي التقسيط أقل من سعر الكاش — راجع الأرقام', 'The installment total is below the cash price');
   return '';
 }
 
@@ -91,4 +156,33 @@ export function termLabel(months, isAr = true) {
   if (m === 1) return 'شهر';
   if (m === 2) return 'شهرين';
   return m <= 10 ? `${m} شهور` : `${m} شهر`;
+}
+
+/** «20 قسط» / «قسطين» */
+export function periodsLabel(n, isAr = true) {
+  const v = Math.round(num(n));
+  if (!isAr) return `${v} installment${v === 1 ? '' : 's'}`;
+  if (v === 1) return 'قسط واحد';
+  if (v === 2) return 'قسطين';
+  return v <= 10 ? `${v} أقساط` : `${v} قسط`;
+}
+
+/**
+ * How the plan reads to a buyer, in parts the pages lay out:
+ *   now:   { label, amount }   what is paid now (down payment / cash to the seller), or null
+ *   then:  "قسط 30,000 ج.م كل 3 شهور لمدة 5 سنين (20 قسط)"
+ *   total: the whole price with the installments
+ * `fmt` formats an amount with its currency.
+ */
+export function planSummary(t, fmt, isAr = true) {
+  if (!hasInstallmentPlan(t)) return null;
+  const e = INSTALLMENT_EVERY.find((x) => x.months === t.every) || INSTALLMENT_EVERY[0];
+  const resale = t.type === 'resale';
+  const now = t.down > 0
+    ? { label: isAr ? (resale ? 'المطلوب كاش للمالك' : 'المقدم') : (resale ? 'Cash to the seller' : 'Down payment'), amount: t.down }
+    : null;
+  const then = isAr
+    ? `${resale ? 'وتكمّل أقساط متبقية: ' : ''}قسط ${fmt(t.amount)} ${e.every_ar} لمدة ${termLabel(t.months)}${t.every > 1 || t.periods <= 60 ? ` (${periodsLabel(t.periods)})` : ''}`
+    : `${resale ? 'then the remaining installments: ' : ''}${fmt(t.amount)} ${e.en} over ${termLabel(t.months, false)} (${periodsLabel(t.periods, false)})`;
+  return { now, then, total: t.total, resale, everyLabel: isAr ? e.ar : e.en };
 }

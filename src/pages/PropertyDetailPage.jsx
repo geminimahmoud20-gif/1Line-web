@@ -35,7 +35,7 @@ import { getFamilyInfo } from '../utils/propertyInsights';
 import '../styles/expat-suite.css';
 import '../styles/property-detail-polish.css';
 import PropertyOverviewTab from '../components/properties/detail/PropertyOverviewTab';
-import { paymentTerms, hasInstallmentPlan, termLabel } from '../utils/paymentTerms';
+import { paymentTerms, hasInstallmentPlan, planSummary } from '../utils/paymentTerms';
 import { similarListings } from '../utils/similarListings';
 import { CONTACT, OFFICE_HOURS, VIEWING_SLOTS } from '../config/siteConfig';
 import { nameProblem, phoneProblem } from '../utils/contactValidation';
@@ -252,14 +252,17 @@ export default function PropertyDetailPage({
   ].filter((u) => String(u.value || '').trim() !== '');
   const benchmark = getPriceBenchmark(property, lang);
   // The plan from CRM → طريقة السداد, shown under the price; cash listings show nothing extra
+  // A plan (installments / resale with installments left) leads with what is paid now, then the
+  // installments, then the total; a cash listing shows its price
   const terms = paymentTerms(property);
-  const planLine = hasInstallmentPlan(terms) ? (() => {
-    const fmt = (n) => { const d = formatCurrencyPrice(n, currency, lang); return `${d.primary} ${d.symbol}`; };
-    const down = terms.down > 0 ? (isAr ? `مقدم ${fmt(terms.down)} + ` : `${fmt(terms.down)} down + `) : '';
-    return isAr
-      ? `أو تقسيط: ${down}${fmt(terms.monthly)} شهرياً لمدة ${termLabel(terms.months)}`
-      : `Or installments: ${down}${fmt(terms.monthly)}/month over ${termLabel(terms.months, false)}`;
-  })() : '';
+  const fmtMoney = (n) => { const d = formatCurrencyPrice(n, currency, lang); return `${d.primary} ${d.symbol}`; };
+  const plan = planSummary(terms, fmtMoney, isAr);
+  const headPrice = plan
+    ? formatCurrencyPrice(plan.now ? plan.now.amount : terms.amount, currency, lang)
+    : priceData;
+  const payChip = !plan ? (isAr ? 'كاش' : 'Cash')
+    : plan.resale ? (isAr ? 'إعادة بيع بالتقسيط' : 'Resale, installments left')
+    : terms.cashPrice ? (isAr ? 'كاش أو تقسيط' : 'Cash or installments') : (isAr ? 'تقسيط' : 'Installments');
 
   // Sector separation
   const isMultiUnit = isMultiUnitOrBuilding(property);
@@ -345,21 +348,29 @@ export default function PropertyDetailPage({
     <>
     <div className="detail-price-box">
       <div className="pd-price-head">
-        <span className="price-tag-sub">{isAr ? 'السعر الإجمالي' : 'Total Price'}</span>
-        <span className={`pd-pay-chip is-${hasInstallmentPlan(terms) ? 'plan' : 'cash'}`}>
-          {hasInstallmentPlan(terms) ? (isAr ? 'كاش أو تقسيط' : 'Cash or installments') : (isAr ? 'كاش' : 'Cash')}
+        <span className="price-tag-sub">
+          {plan ? (plan.now ? plan.now.label : (isAr ? 'القسط' : 'Installment')) : (isAr ? 'السعر الإجمالي' : 'Total Price')}
         </span>
+        <span className={`pd-pay-chip is-${hasInstallmentPlan(terms) ? 'plan' : 'cash'}`}>{payChip}</span>
       </div>
       <div className="price-num-row">
-        <h2>{priceData.primary}</h2>
-        <span className="curr">{priceData.symbol}</span>
+        <h2>{headPrice.primary}</h2>
+        <span className="curr">{headPrice.symbol}</span>
       </div>
-      {priceData.isConverted && (
+      {headPrice.isConverted && (
         <span className="price-converted-sub">
-          ≈ {priceData.originalEgp}
+          ≈ {headPrice.originalEgp}
         </span>
       )}
-      {planLine && <span className="pd-plan-line">{planLine}</span>}
+      {plan && (
+        <>
+          <span className="pd-plan-line">{plan.now ? `+ ${plan.then}` : plan.then}</span>
+          <span className="pd-plan-total">
+            {isAr ? 'الإجمالي: ' : 'Total: '}<bdi>{fmtMoney(plan.total)}</bdi>
+            {terms.cashPrice > 0 && <>{isAr ? ' · أو كاش: ' : ' · or cash: '}<bdi>{fmtMoney(terms.cashPrice)}</bdi></>}
+          </span>
+        </>
+      )}
       {/* "Above the area average" stays in the price & area tab; the price box only shows good news */}
       {benchmark && benchmark.badgeType !== 'premium' && (
         <div className={`benchmark-hero-pill is-${benchmark.badgeType}`}>

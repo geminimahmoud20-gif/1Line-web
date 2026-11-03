@@ -13,6 +13,7 @@ import { AMENITY_GROUPS, amenityCategory } from '../../utils/amenityCategories';
 import './property-amenities.css';
 import AreaOptions from '../common/AreaOptions';
 import { useConfirm } from '../ui';
+import { isPlanType } from '../../utils/paymentTerms';
 
 export default function PropertyFormModal({
   areas,
@@ -356,12 +357,16 @@ export default function PropertyFormModal({
 
             {/* Price */}
             <div className="form-group-item">
-              <label>{isAr ? 'السعر الإجمالي (ج.م) *' : 'Total Price (EGP) *'}</label>
+              {/* A plan (installments / resale) works out its total from the installments: the cash price is optional */}
+              <label>{isPlanType(form.paymentType)
+                ? (isAr ? 'سعر الكاش (ج.م) — اختياري' : 'Cash price (EGP), optional')
+                : (isAr ? 'السعر الإجمالي (ج.م) *' : 'Total Price (EGP) *')}</label>
               <input
                 type="number"
-                value={form.price}
+                value={form.price || ''}
+                placeholder={isPlanType(form.paymentType) ? (isAr ? 'لو البايع يقبل كاش كامل' : 'If the seller takes full cash') : ''}
                 onChange={(e) => setForm({ ...form, price: parseInt(e.target.value) || 0 })}
-                required
+                required={!isPlanType(form.paymentType)}
               />
             </div>
 

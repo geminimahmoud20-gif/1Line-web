@@ -36,7 +36,7 @@ import { getNormalizedPropertyStatus } from '../../utils/crmLeadViews';
 import ShareSellLink from '../common/ShareSellLink';
 import { blockedByApproval } from '../../utils/publishApproval';
 import { useProperties } from '../../context/PropertiesContext';
-import { paymentTerms, paymentFields, paymentProblem } from '../../utils/paymentTerms';
+import { paymentTerms, paymentFields, paymentProblem, planPrice } from '../../utils/paymentTerms';
 import { areaFamily } from '../../utils/areaLookup';
 import { linkedContactLead, leadWithPhone, listingContactProblem, listingContactLead } from '../../utils/listingContact';
 const SOHAG_AREA_COORDINATES = {
@@ -225,6 +225,8 @@ export default function PropertyManagerPanel({
       // Older listings have no paymentType: read it from the installment they carry
       paymentType: paymentTerms(prop).type,
       installmentMonths: paymentTerms(prop).months || '',
+      installmentEvery: paymentTerms(prop).every || 1,
+      installmentAmount: paymentTerms(prop).amount || '',
       bedrooms: hasNoRooms(prop.type) ? 0 : (prop.bedrooms || 0),
       bathrooms: isLandType(prop.type) ? 0 : (prop.bathrooms || 0),
       status: prop.status || (prop.isArchived ? 'hidden' : 'published'),
@@ -495,13 +497,21 @@ export default function PropertyManagerPanel({
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (saving) return;
-    if (!form.title_ar || !form.price || !form.size) {
+    // A plan says what is missing in it (the installment, the term…) before the general checks
+    const payProblem = paymentProblem(form, isAr);
+    if (payProblem) {
+      triggerToast(payProblem, 'error');
+      return;
+    }
+    // A plan with no cash price is listed at its total (down + installments)
+    const listPrice = planPrice(form);
+    if (!form.title_ar || !listPrice || !form.size) {
       triggerToast(isAr ? 'يرجى ملء الحقول الأساسية (العنوان، السعر، المساحة)' : 'Please fill required fields (title, price, size)', 'error');
       return;
     }
 
     // 🛡️ Validate no negative or zero values for critical numeric fields
-    if (form.price <= 0) {
+    if (listPrice <= 0) {
       triggerToast(isAr ? 'السعر يجب أن يكون أكبر من صفر' : 'Price must be greater than zero', 'error');
       return;
     }
@@ -512,11 +522,6 @@ export default function PropertyManagerPanel({
     // An area missing from the areas list shows on the site under the wrong name, so pick one first
     if (!form.areaKey || form.areaKey === 'all' || !areas.some((a) => a.id === form.areaKey)) {
       triggerToast(isAr ? 'اختار المنطقة: من غيرها الوحدة مش هتظهر على الموقع' : 'Pick an area: without one the listing stays off the site', 'error');
-      return;
-    }
-    const payProblem = paymentProblem(form, isAr);
-    if (payProblem) {
-      triggerToast(payProblem, 'error');
       return;
     }
     // A new unit needs who is offering it and their phone, unless it came from a client already
@@ -545,6 +550,7 @@ export default function PropertyManagerPanel({
     const cleanForm = {
       ...formFields,
       ...paymentFields(form),
+      price: listPrice,
       category: categoryOfType(form.type),
       bedrooms: hasNoRooms(form.type) ? 0 : (parseInt(form.bedrooms) || 0),
       bathrooms: isLand ? 0 : (parseInt(form.bathrooms) || 0),

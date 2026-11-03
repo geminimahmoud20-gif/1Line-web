@@ -571,3 +571,8 @@ html .pcx-chip--remote.pcx-chip--icon::after { content: ''; position: absolute; 
   .pcx-media { aspect-ratio: 16 / 10; }
   .pcx-feats { display: none; }
 }
+
+/* A plan's card: what is paid now, then the installment (utils/paymentTerms planSummary) */
+.pcx-price-tag--plan { color: #1E40AF; background: #EFF6FF; }
+.dark-theme .pcx-price-tag--plan, :root[data-theme="dark"] .pcx-price-tag--plan { color: #93C5FD; background: rgba(59, 130, 246, 0.14); }
+.pcx-plan { display: block; margin-top: -4px; font-size: 0.8rem; font-weight: 700; line-height: 1.6; color: var(--text-secondary, #475569); }
