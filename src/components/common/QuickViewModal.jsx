@@ -4,7 +4,7 @@ import { X, MapPin, Maximize2, BedDouble, Bath, MessageSquare, ArrowLeft, ArrowR
 import { Link } from 'react-router-dom';
 import { useUIModal } from '../../context/UIModalContext';
 import '../../styles/expat-suite.css';
-import { getWhatsAppUrl } from '../../utils/founderCmsData';
+import { getWhatsAppUrl, getDynamicPhone } from '../../utils/founderCmsData';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark';
 import BrandWatermark from './BrandWatermark';
 import { isWatermarked } from '../../utils/watermark';
@@ -13,6 +13,8 @@ import { countLabel } from '../../utils/arabicCount';
 import { paymentTerms, termLabel, isPlanType, everyLabel } from '../../utils/paymentTerms';
 import { areaLabel } from '../../utils/placeLabels';
 import { getAreas } from '../../utils/areasData';
+import { listingCaption } from '../../utils/listingShare';
+import { readablePhone } from '../../utils/phoneDisplay';
 import { listingBadges } from '../../utils/listingBadges';
 import { cardFeatures } from '../../utils/buildingFeatures';
 import { isMultiUnitOrBuilding } from '../../utils/currencyAndBenchmark';
@@ -95,9 +97,8 @@ export default function QuickViewModal({
 
   const handleShare = () => {
     const propUrl = siteLink(`/properties/${property.id}`);
-    const shareText = isAr 
-      ? `تفقد هذا العقار المعتمد على منصة 1Line: ${title} بسعر ${priceData.primary} ${priceData.symbol}\n${propUrl}`
-      : `Check out this verified property on 1Line: ${title} for ${priceData.primary} ${priceData.symbol}\n${propUrl}`;
+    // The same caption as the listing page's share bar (utils/listingShare): price or plan, facts, link
+    const shareText = listingCaption(property, { url: propUrl, phone: readablePhone(getDynamicPhone()), areaName: place, isAr });
 
     if (onOpenShare) {
       onOpenShare({
@@ -110,8 +111,7 @@ export default function QuickViewModal({
     } else if (typeof navigator !== 'undefined' && navigator.share) {
       navigator.share({
         title,
-        text: shareText,
-        url: propUrl
+        text: shareText
       }).catch((err) => {
         if (err?.name !== 'AbortError') {
           navigator.clipboard?.writeText(propUrl);

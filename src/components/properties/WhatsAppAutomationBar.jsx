@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { FileText, Share2, Check, Sparkles } from 'lucide-react';
 import useClientDownload from '../../hooks/useClientDownload';
-import { getWhatsAppUrl, getDynamicPhone } from '../../utils/founderCmsData';
-import { formatCurrencyPrice, getPriceBenchmark } from '../../utils/currencyAndBenchmark';
+import { getDynamicPhone } from '../../utils/founderCmsData';
+import { listingCaption } from '../../utils/listingShare';
+import { readablePhone } from '../../utils/phoneDisplay';
+import { areaLabel } from '../../utils/placeLabels';
+import { getAreas } from '../../utils/areasData';
 import '../../styles/expat-suite.css';
 import { siteLink } from '../../config/siteConfig';
 
@@ -16,56 +19,17 @@ const WaIcon = () => (
  * Share toolbar under the gallery: brochure PDF (registered clients), 9:16 story card, WhatsApp and native share.
  * The shared text only states facts the listing actually carries.
  */
-export default function WhatsAppAutomationBar({ property, lang = 'ar', currency = 'EGP', triggerToast, onOpenStoryCard }) {
+export default function WhatsAppAutomationBar({ property, lang = 'ar', triggerToast, onOpenStoryCard }) {
   const [copied, setCopied] = useState(false);
 
   const isAr = lang === 'ar';
   const title = isAr ? property.title_ar : property.title_en;
-  const location = isAr ? property.locationName_ar : property.locationName_en;
-  const priceData = formatCurrencyPrice(property.price, currency, lang);
-  const benchmark = getPriceBenchmark(property, lang);
-  const fmt = (n) => (Number(n) || 0).toLocaleString('en-US');
-
-  const priceFormatted = `${priceData.primary} ${priceData.symbol}${priceData.approx ? ` (${priceData.approx})` : ''}`;
-  const hasPlan = Number(property.monthlyInstallment) > 0;
   const dynamicPhone = getDynamicPhone();
   // Official domain, whatever address the page was opened from
   const url = typeof window !== 'undefined' ? siteLink(window.location.pathname + window.location.search) : '';
-  // Legal line only when the listing has a legal record — no blanket "100% verified" claims
-  const legal = property.legalStatus
-    ? (isAr ? property.legalStatus.ownershipType_ar : property.legalStatus.ownershipType_en || property.legalStatus.ownershipType_ar)
-    : '';
-
-  const lines = isAr
-    ? [
-      '*🏛️ تفاصيل العقار من 1Line*',
-      `📌 *العقار:* ${title}`,
-      `📍 *الموقع:* ${location}`,
-      `💰 *السعر:* ${priceFormatted}`,
-      benchmark ? (benchmark.isMultiUnit ? `🏢 *طبيعة العقار:* ${benchmark.badgeLabel}` : `📊 *مقارنة بالحي:* ${benchmark.badgeLabel}`) : null,
-      hasPlan ? `💵 *المقدم:* ${fmt(property.downPayment)} ج.م — *القسط:* ${fmt(property.monthlyInstallment)} ج.م شهرياً` : '💵 *السداد:* كاش',
-      benchmark?.isMultiUnit && benchmark.unitBreakdown?.summary
-        ? `📐 *المكونات:* مساحة الأرض ${property.size} م² — ${benchmark.unitBreakdown.summary}`
-        : `📐 *المساحة:* ${property.size} م²${property.bedrooms ? ` — ${property.bedrooms} غرف` : ''}`,
-      legal ? `🛡️ *الموقف القانوني:* ${legal}` : null,
-      `🔗 ${url}`,
-      `📞 للمعاينة: ${dynamicPhone}`
-    ]
-    : [
-      '*🏛️ Property details — 1Line*',
-      `📌 *Listing:* ${title}`,
-      `📍 *Location:* ${location}`,
-      `💰 *Price:* ${priceFormatted}`,
-      benchmark ? (benchmark.isMultiUnit ? `🏢 *Asset Type:* ${benchmark.badgeLabel}` : `📊 *District comparison:* ${benchmark.badgeLabel}`) : null,
-      hasPlan ? `💵 *Down:* ${fmt(property.downPayment)} EGP — *Monthly:* ${fmt(property.monthlyInstallment)} EGP` : '💵 *Payment:* cash',
-      benchmark?.isMultiUnit && benchmark.unitBreakdown?.summary
-        ? `📐 *Breakdown:* Plot ${property.size} m² — ${benchmark.unitBreakdown.summary}`
-        : `📐 *Area:* ${property.size} m²${property.bedrooms ? ` — ${property.bedrooms} beds` : ''}`,
-      legal ? `🛡️ *Legal status:* ${legal}` : null,
-      `🔗 ${url}`,
-      `📞 Viewings: ${dynamicPhone}`
-    ];
-  const shareText = lines.filter(Boolean).join('\n');
+  // Plain caption (no emoji, no *bold*): it is pasted into Facebook as often as WhatsApp (utils/listingShare)
+  const areaName = property.areaKey ? areaLabel(property.areaKey, isAr, getAreas()) : '';
+  const shareText = listingCaption(property, { url, phone: readablePhone(dynamicPhone), areaName, isAr });
 
   const download = useClientDownload();
   const [brochureBusy, setBrochureBusy] = useState(false);
@@ -85,13 +49,14 @@ export default function WhatsAppAutomationBar({ property, lang = 'ar', currency 
     }
   });
 
-  const handleWhatsApp = () => window.open(getWhatsAppUrl(shareText), '_blank', 'noopener');
+  // Share with anyone on WhatsApp (they pick the chat); asking 1Line about the unit is the page's contact button
+  const handleWhatsApp = () => window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank', 'noopener');
 
   // Native share sheet on phones; copy as a fallback
   const handleShare = async () => {
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
-        await navigator.share({ title, text: shareText.replace(`🔗 ${url}\n`, ''), url });
+        await navigator.share({ title, text: shareText });
         return;
       } catch (err) {
         if (err?.name === 'AbortError') return;

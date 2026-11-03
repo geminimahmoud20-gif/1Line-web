@@ -42,7 +42,7 @@ test('buildPropertyShell: generates complete metadata for listing 1 (prop-179251
 
   // 4. Twitter / X Card Tags
   assert.ok(html.includes('<meta name="twitter:card" content="summary_large_image"'));
-  assert.ok(html.includes('<meta name="twitter:title" content="شقة فاخرة للبيع كورنيش النيل سوهاج | 1Line Solutions"'));
+  assert.ok(html.includes('<meta name="twitter:title" content="شقة فاخرة للبيع كورنيش النيل سوهاج"'));
   assert.ok(html.includes(`<meta name="twitter:image" content="${p1.images[0].replace(/&/g, '&amp;')}"`));
 
   // 5. Schema.org BreadcrumbList & RealEstateListing
@@ -76,8 +76,8 @@ test('buildPropertyShell: generates complete metadata for listing 2 (prop-imp-mu
 
   assert.ok(html.includes('<title>محل تجاري للبيع في مجمع البنوك سوهاج الجديدة | 1Line Solutions</title>'));
   assert.ok(html.includes('<link rel="canonical" href="https://1-line-qkzp9.vercel.app/properties/prop-imp-mutwknz3-137"'));
-  assert.ok(html.includes('<meta property="og:title" content="محل تجاري للبيع في مجمع البنوك سوهاج الجديدة | 1Line Solutions"'));
-  assert.ok(html.includes('<meta name="twitter:title" content="محل تجاري للبيع في مجمع البنوك سوهاج الجديدة | 1Line Solutions"'));
+  assert.ok(html.includes('<meta property="og:title" content="محل تجاري للبيع في مجمع البنوك سوهاج الجديدة"'));
+  assert.ok(html.includes('<meta name="twitter:title" content="محل تجاري للبيع في مجمع البنوك سوهاج الجديدة"'));
   assert.ok(html.includes('id="breadcrumb-schema"'));
   assert.ok(html.includes('"@type": "RealEstateListing"'));
   assert.ok(!html.includes('01123456789'), 'Owner phone must not appear in metadata');
