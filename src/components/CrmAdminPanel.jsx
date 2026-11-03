@@ -115,11 +115,16 @@ export const CrmAdminPanel = ({
       }
       const currentLead = leads.find((l) => l.id === id);
       const currentVersion = currentLead?.version || 1;
-      if (expectedVersion !== null && expectedVersion !== undefined && expectedVersion !== currentVersion) {
+      // A real conflict is someone else's save in between. The panel's own earlier save (a drawer still
+      // holding the version it opened with) or a system update (routing, WhatsApp) is not: the write
+      // below only touches the fields being changed.
+      const editedByOther = Boolean(currentLead?.lastEditedUid) && currentLead.lastEditedUid !== currentUser?.uid;
+      if (expectedVersion !== null && expectedVersion !== undefined && expectedVersion !== currentVersion && editedByOther) {
         setConflictModalState({
           isOpen: true,
           conflictData: {
             currentEntity: currentLead,
+            currentVersion,
             heldBy: currentLead?.lastEditedBy || (isAr ? 'زميل آخر' : 'another user')
           },
           pendingUpdate: { id, fields }
@@ -131,7 +136,7 @@ export const CrmAdminPanel = ({
       const payload = {
         ...fields,
         version: nextVersion,
-        lastEditedBy: currentUser?.name || 'مستخدم 1Line',
+        lastEditedBy: currentUser?.displayName || currentUser?.name || currentUser?.email?.split('@')[0] || 'مستخدم 1Line',
         lastEditedUid: currentUser?.uid || null
       };
 
