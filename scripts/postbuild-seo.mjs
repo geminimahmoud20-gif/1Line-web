@@ -137,9 +137,13 @@ export async function runPostbuild() {
     throw new Error(`postbuild-seo: ${indexHtmlPath} does not exist. Run vite build first.`);
   }
 
-  // app.html is the untouched template from an earlier run (index.html then carries the homepage text)
+  // A fresh vite build leaves index.html untouched; when this script already ran on it (index.html
+  // carries the homepage text), app.html is that run's untouched template. An app.html left over from
+  // an older build next to a fresh index.html is ignored.
   const appHtmlPath = path.join(dist, 'app.html');
-  let indexHtml = fs.readFileSync(fs.existsSync(appHtmlPath) ? appHtmlPath : indexHtmlPath, 'utf8');
+  const builtHtml = fs.readFileSync(indexHtmlPath, 'utf8');
+  const alreadyRun = builtHtml.includes('<div id="root"><main class="seo-shell"');
+  let indexHtml = alreadyRun && fs.existsSync(appHtmlPath) ? fs.readFileSync(appHtmlPath, 'utf8') : builtHtml;
   if (indexHtml.includes('%VITE_SITE_URL%')) {
     indexHtml = indexHtml.replaceAll('%VITE_SITE_URL%', siteUrl);
     fs.writeFileSync(indexHtmlPath, indexHtml);

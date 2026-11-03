@@ -140,7 +140,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
     <style>
-      /* The page's text the build puts in #root for search engines (src/utils/seoShell.js), readable until the app replaces it */
+      /* The page's text the build puts in #root for search engines (src/utils/seoShell.js). Visitors never
+         see it: the app replaces it on start, and showing it for that moment flashed raw text on refresh.
+         It stays in the HTML for crawlers; without JavaScript the <noscript> rule below shows it. */
+      .seo-shell { display: none; }
+    </style>
+    <noscript><style>.seo-shell { display: block !important; }</style></noscript>
+    <style>
       .seo-shell { max-width: 960px; margin: 0 auto; padding: 16px; font-family: Cairo, system-ui, sans-serif; line-height: 1.8; color: #1e293b; overflow-wrap: anywhere; }
       .seo-shell img { max-width: 100%; height: auto; border-radius: 12px; }
       .seo-shell a { color: #0d48a1; }
