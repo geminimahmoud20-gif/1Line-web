@@ -66,6 +66,22 @@ const byOrder = (a, b) => {
 };
 
 /**
+ * How new a listing is: its createdAt, else the time in its id ('prop-1793208340768'), else updatedAt.
+ * Most listings have no createdAt, and the CRM and the site get them in different orders (live
+ * listener vs /api/catalog), so the auto-filled slots must not depend on list order.
+ */
+export function listingAge(p) {
+  const created = Date.parse(p?.createdAt || p?.timestamp || '');
+  if (Number.isFinite(created)) return created;
+  const fromId = /(\d{12,13})/.exec(String(p?.id || ''));
+  if (fromId) return Number(fromId[1]);
+  const updated = Date.parse(p?.updatedAt || '');
+  return Number.isFinite(updated) ? updated : 0;
+}
+
+const newestFirst = (a, b) => listingAge(b) - listingAge(a); // a tie keeps list order (stable sort)
+
+/**
  * Resolves the homepage slots.
  * Returns [{ property, source: 'featured' | 'auto' }] — active featured first (by order),
  * remaining slots filled with the newest published listings so the grid is never half empty.
@@ -74,7 +90,7 @@ export function getHomepageSlots(list = [], limit = HOME_FEATURED_SLOTS, now = D
   const published = list.filter(isPublishedProperty);
   const featured = published.filter((p) => featuredState(p, now) === 'active').sort(byOrder).slice(0, limit);
   const taken = new Set(featured.map((p) => p.id));
-  const filler = published.filter((p) => !taken.has(p.id) && !p.homeExcluded).slice(0, Math.max(0, limit - featured.length));
+  const filler = published.filter((p) => !taken.has(p.id) && !p.homeExcluded).sort(newestFirst).slice(0, Math.max(0, limit - featured.length));
   const slots = [
     ...featured.map((property) => ({ property, source: 'featured' })),
     ...filler.map((property) => ({ property, source: 'auto' }))
