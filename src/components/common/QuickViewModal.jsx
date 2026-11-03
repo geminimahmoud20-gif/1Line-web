@@ -10,7 +10,7 @@ import BrandWatermark from './BrandWatermark';
 import { isWatermarked } from '../../utils/watermark';
 import useClientDownload from '../../hooks/useClientDownload';
 import { countLabel } from '../../utils/arabicCount';
-import { paymentTerms, termLabel } from '../../utils/paymentTerms';
+import { paymentTerms, termLabel, isPlanType, everyLabel } from '../../utils/paymentTerms';
 import { areaLabel } from '../../utils/placeLabels';
 import { getAreas } from '../../utils/areasData';
 import { listingBadges } from '../../utils/listingBadges';
@@ -46,9 +46,9 @@ export default function QuickViewModal({
   const isLand = isLandType(property.type) || (!isIndustrial(property) && title && title.includes('أرض'));
   const isCommercial = !isLand && !isSpecial && (property.type === 'commercial' || property.category === 'commercial' || (title && (title.includes('محل') || title.includes('معرض') || title.includes('ريتيل') || title.includes('تجاري'))));
   const isOffice = !isLand && !isCommercial && !isSpecial && (property.type === 'office' || property.category === 'administrative' || (title && (title.includes('مكتب') || title.includes('عيادة') || title.includes('إداري'))));
-  const priceData = formatCurrencyPrice(property.price, currency, lang);
-  // Cash, or the plan set in CRM → طريقة السداد (the monthly is computed there, never typed)
+  // Cash, or the plan set in CRM → طريقة السداد; a plan leads with what is paid now
   const terms = paymentTerms(property);
+  const priceData = formatCurrencyPrice(isPlanType(terms.type) && terms.amount > 0 ? (terms.down || terms.amount) : property.price, currency, lang);
   const money = (n) => { const d = formatCurrencyPrice(n, currency, lang); return `${d.primary} ${d.symbol}`; };
   // Where it is: the written address, else the area's name; nothing when neither is known
   const place = String(location || '').trim() || (property.areaKey ? areaLabel(property.areaKey, isAr, getAreas()) : '');
@@ -236,7 +236,7 @@ export default function QuickViewModal({
             <div className="qv-price">
               <strong className="qv-price-num"><bdi>{priceData.primary}</bdi> <small>{priceData.symbol}</small></strong>
               <span className={`qv-pay-chip ${terms.type === 'cash' ? 'is-cash' : 'is-plan'}`}>
-                {terms.type === 'cash' ? (isAr ? 'كاش' : 'Cash') : (isAr ? 'تقسيط' : 'Installments')}
+                {terms.type === 'cash' ? (isAr ? 'كاش' : 'Cash') : terms.type === 'resale' ? (isAr ? 'إعادة بيع بالتقسيط' : 'Resale, installments left') : (isAr ? 'تقسيط' : 'Installments')}
               </span>
               {perM2 > 0 && <span className="qv-per-m2"><bdi>{perM2.toLocaleString('en-US')}</bdi> {isAr ? 'ج.م/م²' : 'EGP/m²'}</span>}
             </div>
@@ -329,23 +329,23 @@ export default function QuickViewModal({
             {brief && <p className="quickview-desc qv-brief">{brief}</p>}
 
             {/* An installment plan's figures; a cash listing says so in the chip by the price */}
-            {terms.type === 'installment' && (
+            {isPlanType(terms.type) && (
               <div className="quickview-finance-grid">
                 <div className="finance-cell">
-                  <span className="finance-lbl">{isAr ? 'المقدم' : 'Down payment'}</span>
+                  <span className="finance-lbl">{terms.type === 'resale' ? (isAr ? 'المطلوب كاش للمالك' : 'Cash to the seller') : (isAr ? 'المقدم' : 'Down payment')}</span>
                   <strong className="finance-val">{terms.down > 0 ? money(terms.down) : (isAr ? 'بدون مقدم' : 'None')}</strong>
                 </div>
-                {terms.monthly > 0 && (
+                {terms.amount > 0 && (
                   <div className="finance-cell highlight-cell">
                     <span className="finance-lbl">
-                      {isAr ? 'القسط الشهري' : 'Monthly'}{terms.months > 0 && ` · ${termLabel(terms.months, isAr)}`}
+                      {isAr ? `القسط ال${everyLabel(terms.every)}` : `Installment (${everyLabel(terms.every, false)})`}{terms.months > 0 && ` · ${termLabel(terms.months, isAr)}`}
                     </span>
-                    <strong className="finance-val text-primary">{money(terms.monthly)}</strong>
+                    <strong className="finance-val text-primary">{money(terms.amount)}</strong>
                   </div>
                 )}
                 {terms.months > 0 && terms.total > 0 && (
                   <div className="finance-cell">
-                    <span className="finance-lbl">{isAr ? 'إجمالي التقسيط' : 'Installment total'}</span>
+                    <span className="finance-lbl">{isAr ? 'الإجمالي' : 'Total'}</span>
                     <strong className="finance-val">{money(terms.total)}</strong>
                   </div>
                 )}
