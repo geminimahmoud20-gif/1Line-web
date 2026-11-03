@@ -53,3 +53,12 @@ test('section pages link every listing, newest first; hidden ones are left out',
   assert.doesNotMatch(body, /\/properties\/c|\/properties\/d/);
   assert.match(body, /<h1>العقارات<\/h1>/);
 });
+
+test('a shared buyer request previews as what is wanted, where and for how much', async () => {
+  const { buildDemandShell } = await import('../../src/utils/seoShell.js');
+  const html = buildDemandShell(template, { id: 'd1', type: 'apartment', area_ar: 'سوهاج الجديدة', budget: 4000000, text_ar: 'مطلوب شقة بكمبوند ريتاج 2 فوق 150م، للتواصل 01012345678' }, 'https://www.1lineestate.com');
+  assert.match(html, /<meta property="og:title" content="مطلوب للشراء: شقة سكنية في سوهاج الجديدة بميزانية 4,000,000 ج.م"/);
+  assert.match(html, /<link rel="canonical" href="https:\/\/www.1lineestate.com\/demands\/d1"/);
+  assert.match(rootText(html), /<h1>مطلوب للشراء: شقة سكنية في سوهاج الجديدة<\/h1>/);
+  assert.doesNotMatch(html, /01012345678/);
+});

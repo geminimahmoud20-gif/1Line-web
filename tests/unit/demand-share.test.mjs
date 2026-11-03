@@ -19,3 +19,11 @@ test('the caption has no emoji and ends with the link and hashtags', () => {
 test('hashtags skip the generic governorate name', () => {
   assert.equal(demandHashtags({ areaName: 'محافظة سوهاج' }), '#عقارات_سوهاج #1Line');
 });
+
+test('the share text says what, where and for how much', async () => {
+  const { demandShareText } = await import('../../src/utils/demandShareCard.js');
+  assert.equal(
+    demandShareText({ budget: 4000000 }, { areaName: 'سوهاج الجديدة', typeLabel: 'شقة سكنية' }),
+    'مطلوب للشراء: شقة سكنية في سوهاج الجديدة بميزانية حتى 4,000,000 ج.م.\nعندك وحدة مناسبة أو تعرف مالك؟ شوف الطلب وتواصل معانا:'
+  );
+});

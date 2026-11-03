@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Zap, Sparkles, CheckCircle2, AlertCircle, MapPin, 
   Clock, Building2, Home, Store, Briefcase, Compass, Users, Coins, Flame, 
-  Repeat2, MessageCircle, Send, Sprout, Factory
+  Repeat2, Send, Sprout, Factory
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getAreas } from '../utils/areasData';
@@ -14,9 +14,8 @@ import OwnerMatchSearch from './demands/OwnerMatchSearch';
 import { DEMAND_CATEGORIES, inDemandCategory } from './demands/demandCategories';
 import { siteLink } from '../config/siteConfig';
 import { contactProblem } from '../utils/contactValidation';
-import { demandCaption, drawDemandCard } from '../utils/demandShareCard';
-import { getDynamicWhatsApp } from '../utils/founderCmsData';
-import { readablePhone } from '../utils/phoneDisplay';
+import { demandShareText } from '../utils/demandShareCard';
+import ShareMenu from './common/ShareMenu';
 
 export const DemandsPortal = ({
   lang,
@@ -94,59 +93,25 @@ export const DemandsPortal = ({
     setSearch({ type: '', area: '' });
   };
 
-  // Share one request: a square image of it (utils/demandShareCard) and a ready caption with the link
-  // to this request (#demand-<id>). Phones get the share sheet with the image (Facebook, WhatsApp,
-  // Instagram…); on a computer the image downloads and the caption is copied, ready to paste in a post.
-  const [shareNote, setShareNote] = useState(null); // { id, text }
-  const shareDemand = async (dem, areaName, formattedBudget) => {
-    const url = siteLink(`/demands#demand-${encodeURIComponent(dem.id)}`);
+  // Share one request on the platforms (components/common/ShareMenu): its own page /demands/<id>, whose
+  // link preview says what is wanted, where and for how much (api/page-shell), and a short text for
+  // WhatsApp / Telegram / X. Visitors it brings land on the request itself.
+  const shareFor = (dem, areaName) => {
     const cat = DEMAND_CATEGORIES.find((c) => c.test(dem.type));
     const typeLabel = cat ? cat.single_ar : '';
-    const caption = isAr
-      ? demandCaption(dem, { areaName, typeLabel, url, whatsapp: readablePhone(getDynamicWhatsApp()) })
-      : [`Buyer request in Sohag on 1Line:`, dem.text_en || dem.text_ar, `Budget: ${formattedBudget} EGP`, `Area: ${areaName}`, url].join('\n');
-    const blob = await drawDemandCard({
-      typeLabel: typeLabel || 'عقار', areaName, budget: formatBudget(dem.budget) || '',
-      text: dem.text_ar, payment: { cash: 'كاش', installments: 'تقسيط', both: 'كاش أو تقسيط' }[dem.paymentMethod] || ''
-    }).catch(() => null);
-    const file = blob ? new File([blob], `1line-request-${dem.id}.png`, { type: 'image/png' }) : null;
-    const touch = window.matchMedia?.('(pointer: coarse)').matches;
-    if (touch && typeof navigator.share === 'function') {
-      try {
-        if (file && navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], text: caption });
-        else await navigator.share({ text: caption });
-        return;
-      } catch (err) {
-        if (err?.name === 'AbortError') return;
-      }
-    }
-    let copied = false;
-    try { await navigator.clipboard.writeText(caption); copied = true; } catch { /* not allowed here */ }
-    if (file) {
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(file);
-      a.download = file.name;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-    }
-    if (!file && !copied) {
-      window.open(`https://wa.me/?text=${encodeURIComponent(caption)}`, '_blank', 'noopener');
-      return;
-    }
-    setShareNote({
-      id: dem.id,
-      text: isAr
-        ? `${file ? 'الصورة اتحمّلت' : ''}${file && copied ? ' و' : ''}${copied ? 'الكلام اتنسخ' : ''}: افتح فيسبوك أو واتساب، ارفع الصورة والصق الكلام.`
-        : `${file ? 'Image downloaded' : ''}${file && copied ? ', ' : ''}${copied ? 'caption copied' : ''}: paste it in your post.`
-    });
-    setTimeout(() => setShareNote((n) => (n?.id === dem.id ? null : n)), 9000);
+    const url = siteLink(`/demands/${encodeURIComponent(dem.id)}`);
+    const text = isAr
+      ? demandShareText(dem, { areaName, typeLabel })
+      : `Buyer request in Sohag on 1Line: ${dem.text_en || dem.text_ar}`;
+    return { url, text, title: isAr ? 'طلب شراء على 1Line' : 'Buyer request on 1Line' };
   };
 
   // A shared link (/demands#demand-<id>) scrolls to that request and highlights it once
   const sharedHandled = useRef(false);
   useEffect(() => {
     if (sharedHandled.current || typeof window === 'undefined') return;
-    const m = /^#demand-(.+)$/.exec(window.location.hash || '');
+    // /demands/<id> (a shared link) or /demands#demand-<id> (older shares)
+    const m = /^\/demands\/([^/?#]+)/.exec(window.location.pathname) || /^#demand-(.+)$/.exec(window.location.hash || '');
     if (!m) return;
     const el = document.getElementById(`demand-${decodeURIComponent(m[1])}`);
     if (!el) return;
@@ -562,29 +527,8 @@ export const DemandsPortal = ({
                       <span>{isAr ? 'أعرف مالكاً' : 'Refer Owner'}</span>
                     </button>
 
-                    {/* Tertiary: Viral Social Referral loop via WhatsApp */}
-                    <button
-                      type="button"
-                      onClick={() => shareDemand(dem, areaName, formattedBudget)}
-                      style={{
-                        background: 'rgba(37, 211, 102, 0.08)',
-                        border: '1px solid rgba(37, 211, 102, 0.28)',
-                        color: '#128C4A',
-                        borderRadius: '8px',
-                        padding: '8px 12px',
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '5px',
-                        fontSize: '0.82rem',
-                        fontWeight: '700'
-                      }}
-                      title={isAr ? 'مشاركة الطلب بصورة وكلام جاهزين' : 'Share with an image and caption'}
-                    >
-                      <MessageCircle size={15} />
-                      <span>{isAr ? 'مشاركة' : 'Share'}</span>
-                    </button>
-                    {shareNote?.id === dem.id && <p className="demand-share-note" role="status">{shareNote.text}</p>}
+                    {/* Share on Facebook / WhatsApp / Telegram / X: the link brings visitors to this request */}
+                    <ShareMenu {...shareFor(dem, areaName)} isAr={isAr} className="demand-share" />
                   </div>
                 </div>
               </div>

@@ -302,6 +302,26 @@ export default function AppRoutes({
         }
       />
 
+      {/* A shared request: the same page, scrolled to it (DemandsPortal); its link preview comes from api/page-shell */}
+      <Route
+        path="/demands/:demandId"
+        element={
+          <PortalsPage
+            portalType="demands"
+            lang={lang}
+            t={t}
+            demands={demands}
+            ownerMatchesFound={ownerMatchesFound}
+            setOwnerMatchesFound={setOwnerMatchesFound}
+            navigateTo={(path) => navigate('/' + path)}
+            setSellerAnswers={setSellerAnswers}
+            triggerToast={triggerToast}
+            handleAddNewLead={handleAddNewLead}
+            onOpenAddDemand={() => setAddDemandModalOpen(true)}
+          />
+        }
+      />
+
       <Route
         path="/vault"
         element={<Navigate to="/properties" replace />}

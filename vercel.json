@@ -19,6 +19,7 @@
     },
     { "source": "/properties/:id", "destination": "/api/page-shell?kind=property&id=:id" },
     { "source": "/projects/:id", "destination": "/api/page-shell?kind=project&id=:id" },
+    { "source": "/demands/:id", "destination": "/api/page-shell?kind=demand&id=:id" },
     { "source": "/sohag/:kind", "destination": "/app.html" },
     { "source": "/sohag/:kind/:area", "destination": "/app.html" }
   ],

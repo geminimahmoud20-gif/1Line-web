@@ -213,3 +213,35 @@ export const isPublicListing = (p) => Boolean(p?.id) && !p.isDemo && !p.deleted 
 
 export const isPublicProject = (p) => Boolean(p?.id) && !p.isDemo && !p.isHidden && !p.isDeleted && !p.deleted
   && p.status !== 'hidden' && !['pending', 'rejected'].includes(p.approval);
+
+/** The type of a request as people say it («شقة سكنية»), the same groups the requests page uses */
+const DEMAND_TYPE_AR = {
+  apartment: 'شقة سكنية', villa: 'فيلا أو بيت', house: 'فيلا أو بيت', retail: 'محل تجاري', commercial: 'محل تجاري', shop: 'محل تجاري',
+  office: 'مكتب أو عيادة', administrative: 'مكتب أو عيادة', clinic: 'مكتب أو عيادة', land: 'أرض', building: 'أرض أو مبنى'
+};
+
+/**
+ * Shell for one buyer request (/demands/<id>): what is wanted, where and for how much as the link
+ * preview Facebook / WhatsApp show, and the request's text in #root. `d` is a public_demands
+ * document (no contact data is ever stored there).
+ */
+export function buildDemandShell(template, d, origin) {
+  origin = String(origin || 'https://www.1lineestate.com').replace(/\/+$/, '');
+  const type = DEMAND_TYPE_AR[d.type] || 'عقار';
+  const area = sanitizeMetaText(d.area_ar || '');
+  const budget = fmtPrice(d.budget);
+  const headline = `مطلوب للشراء: ${type}${area ? ` في ${area}` : ''}`;
+  const text = sanitizeMetaText(d.text_ar || '');
+  const desc = [budget ? `الميزانية حتى ${budget}` : '', text].filter(Boolean).join(' — ').slice(0, 180)
+    || 'طلب شراء حقيقي على 1Line. عندك وحدة مناسبة؟ تواصل معانا.';
+  const url = `${origin}/demands/${encodeURIComponent(d.id)}`;
+  const html = headTags(template, {
+    title: `${headline} | 1Line Solutions`, desc, url, ogTitle: `${headline}${budget ? ` بميزانية ${budget}` : ''}`,
+    ogDesc: `${text ? `${text.slice(0, 140)} — ` : ''}عندك وحدة مناسبة أو تعرف مالك؟ اعرضها على 1Line.`, type: 'article', label: 'demand'
+  });
+  const body = nav([['/', 'الرئيسية'], ['/demands', 'طلبات المشترين'], ['', headline]])
+    + `<article><h1>${esc(headline)}</h1>${text ? `<p>${esc(text)}</p>` : ''}`
+    + list([budget ? `الميزانية: حتى ${esc(budget)}` : '', area ? `المنطقة: ${esc(area)}` : ''].filter(Boolean))
+    + '<p><a href="/sell">عندك وحدة مناسبة؟ اعرضها على 1Line</a></p></article>' + footerNav();
+  return withRoot(html, body, 'demand');
+}
