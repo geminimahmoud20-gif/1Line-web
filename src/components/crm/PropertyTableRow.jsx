@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Edit3, Eye, EyeOff, FileDown, Flame, MessageSquare, RotateCcw, Star, Trash2, Camera, Send, CloudOff, Check, X, Hourglass } from 'lucide-react';
+import { Edit3, Eye, EyeOff, FileDown, Flame, MessageSquare, RotateCcw, Star, Trash2, Camera, Send, CloudOff, Check, X, Hourglass, Megaphone } from 'lucide-react';
 import { offerState, getActiveOffer } from '../../utils/propertyOffers';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { FeaturedPeriodLabel } from './HomepageSlotsBoard';
@@ -77,6 +77,7 @@ export default function PropertyTableRow({
   handleRestore,
   handlePermanentDelete,
   onUpdateProperty,
+  onFacebookPost,
   triggerToast,
   setSlotEditing,
   setOfferEditing,
@@ -278,6 +279,7 @@ export default function PropertyTableRow({
                 !readOnly && { id: 'feature', icon: <Star size={13} />, label: prop.featured ? (isAr ? 'شيله من الصفحة الرئيسية' : 'Remove from homepage') : (isAr ? 'ميّزه في الصفحة الرئيسية' : 'Feature on homepage'), onSelect: toggleFeatured },
                 !readOnly && !prop.featured && { id: 'home-exclude', icon: <EyeOff size={13} />, label: prop.homeExcluded ? (isAr ? 'رجّعها للصفحة الرئيسية' : 'Allow on homepage') : (isAr ? 'متظهرش في الصفحة الرئيسية' : 'Keep off homepage'), onSelect: toggleHomeExcluded },
                 !readOnly && setOfferEditing && { id: 'offer', icon: <Flame size={13} />, label: offer === 'none' ? (isAr ? 'عرض كاش لفترة محدودة' : 'Limited-time offer') : (isAr ? 'تعديل العرض' : 'Edit offer'), onSelect: () => setOfferEditing(prop) },
+                onFacebookPost && { id: 'facebook', icon: <Megaphone size={13} />, label: isAr ? 'منشور فيسبوك (صورة + كلام)' : 'Facebook post', onSelect: () => onFacebookPost(prop) },
                 { id: 'brochure', icon: <FileDown size={13} />, label: busy ? (isAr ? 'بنجهّز البروشور…' : 'Preparing…') : (isAr ? 'بروشور للعميل' : 'Brochure'), disabled: busy, onSelect: async () => { setBusy(true); setBrochureError(false); const ok = await downloadBrochure(prop); setBusy(false); if (!ok) setBrochureError(true); } },
                 { id: 'notify', icon: <MessageSquare size={13} />, label: isAr ? 'ابعته للعملاء المهتمين' : 'Send to matching clients', onSelect: () => { setNotifierProperty(prop); setNotifierEventType(status === 'sold' ? 'sold_unit' : 'new_unit'); } },
                 !readOnly && { id: 'trash', separator: true, danger: true, icon: <Trash2 size={13} />, label: isAr ? 'نقل للمهملات' : 'Move to trash', onSelect: () => handleSoftDelete(prop.id) }

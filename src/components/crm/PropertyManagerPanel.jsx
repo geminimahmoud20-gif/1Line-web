@@ -32,6 +32,7 @@ const SHORT_TYPE_AR = { apartment: 'شقق ودوبلكس', villa: 'فيلات',
 const SHORT_TYPE_EN = { apartment: 'Apartments', villa: 'Villas', commercial: 'Shops', office: 'Offices & clinics', land: 'Land', agri_land: 'Farmland', farm: 'Farms', factory: 'Factories', warehouse: 'Warehouses', industrial_land: 'Industrial land' };
 const LIST_PAGE = 25;
 import OfferModal from './OfferModal';
+import FacebookPostModal from './FacebookPostModal';
 import { getNormalizedPropertyStatus } from '../../utils/crmLeadViews';
 import ShareSellLink from '../common/ShareSellLink';
 import { blockedByApproval } from '../../utils/publishApproval';
@@ -178,6 +179,7 @@ export default function PropertyManagerPanel({
   const [notifierEventType, setNotifierEventType] = useState('new_unit');
   const [areas, setAreas] = useState(() => getAreas());
   const [slotEditing, setSlotEditing] = useState(null); // property being scheduled for the homepage
+  const [fbPost, setFbPost] = useState(null); // listing whose Facebook post is open
   const [offerEditing, setOfferEditing] = useState(null); // property whose limited-time offer is being edited
   const [importOpen, setImportOpen] = useState(false);
 
@@ -802,6 +804,10 @@ export default function PropertyManagerPanel({
         />
       )}
 
+      {fbPost && (
+        <FacebookPostModal property={fbPost} areas={areas} isAr={isAr} triggerToast={triggerToast} onClose={() => setFbPost(null)} />
+      )}
+
       {offerEditing && (
         <OfferModal
           property={offerEditing}
@@ -1022,6 +1028,7 @@ export default function PropertyManagerPanel({
                       handleRestore={handleRestore}
                       handlePermanentDelete={handlePermanentDelete}
                       onUpdateProperty={onUpdateProperty}
+                      onFacebookPost={setFbPost}
                       triggerToast={triggerToast}
                       setSlotEditing={setSlotEditing}
                       setOfferEditing={setOfferEditing}
