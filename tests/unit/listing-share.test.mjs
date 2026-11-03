@@ -26,3 +26,19 @@ test('the caption: no emoji, no WhatsApp bold, no phone from the description, li
   assert.match(c, /#عقارات_سوهاج #سوهاج_الجديدة #شقة_للبيع #1Line$/);
   assert.doesNotMatch(c, /01012345678|\*|[\u{1F300}-\u{1FAFF}�]/u);
 });
+
+test('the Facebook post: hook, ✓ facts, a reason to comment, phone, link, hashtags', async () => {
+  const { facebookCaption } = await import('../../src/utils/listingShare.js');
+  const c = facebookCaption(roof, { url: 'https://www.1lineestate.com/properties/x', phone: '0122 322 2956', areaName: 'سوهاج الجديدة' });
+  const lines = c.split('\n');
+  assert.equal(lines[0], 'شقة للبيع في سوهاج الجديدة | 156 م² | بـ 2,520,000 ج.م');
+  assert.ok(lines.includes('✓ السعر: 2,520,000 ج.م كاش'));
+  assert.ok(lines.includes('✓ 3 غرف'));
+  assert.ok(lines.includes('✓ استلام فوري'));
+  assert.match(c, /اكتب «تفاصيل» في الكومنت/);
+  assert.match(c, /#عقارات_سوهاج #سوهاج_الجديدة #شقة_للبيع #1Line #وان_لاين$/);
+  assert.doesNotMatch(c, /01012345678|[\u{1F300}-\u{1FAFF}�]/u);
+  const plan = facebookCaption({ ...roof, paymentType: 'resale', price: 0, downPayment: 450000, installmentAmount: 60000, installmentEvery: 6, installmentMonths: 36 }, { areaName: 'سوهاج الجديدة' });
+  assert.match(plan.split('\n')[0], /بـ 450,000 ج.م كاش للمالك وقسط نصف سنوي/);
+  assert.match(plan, /✓ القسط: 60,000 ج.م نصف سنوي لمدة 3 سنين/);
+});

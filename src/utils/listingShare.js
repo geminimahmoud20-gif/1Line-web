@@ -99,3 +99,56 @@ export function listingCaption(p, { url = '', phone = '', areaName = '', isAr = 
     ];
   return lines.filter((l, i, a) => l !== '' || (i > 0 && a[i - 1] !== '')).join('\n').trim();
 }
+
+/**
+ * A Facebook post for the company page: a hook line (what, where, size, price or plan), the facts as
+ * a ✓ list, a short description, a reason to comment («اكتب تفاصيل…»), the phone, the link, hashtags.
+ * ✓ (U+2713) is a plain symbol, not an emoji, so it shows the same everywhere.
+ */
+export function facebookCaption(p, { url = '', phone = '', areaName = '' } = {}) {
+  const type = TYPE_AR[p.type] || 'عقار';
+  const place = clean(p.locationName_ar) || areaName;
+  const area = areaName || place;
+  const t = paymentTerms(p);
+  const plan = hasInstallmentPlan(t) ? planSummary(t, money, true) : null;
+  const size = Number(p.size) > 0 ? `${Number(p.size)} م²` : '';
+  const priceHook = plan
+    ? (plan.now ? `بـ${plan.resale ? ' ' : 'مقدم '}${money(plan.now.amount)}${plan.resale ? ' كاش للمالك' : ''} وقسط ${plan.everyLabel}` : `بقسط ${plan.everyLabel} ${money(t.amount)}`)
+    : (Number(p.price) > 0 ? `بـ ${money(p.price)}` : '');
+  const hook = [`${type} للبيع${area ? ` في ${area}` : ''}`, size, priceHook].filter(Boolean).join(' | ');
+  const n = (v) => Number(v) || 0;
+  const facts = [
+    plan
+      ? [plan.now ? `${plan.now.label}: ${money(plan.now.amount)}` : '', `القسط: ${money(t.amount)} ${plan.everyLabel} لمدة ${termLabelOf(t.months)}`, `الإجمالي: ${money(plan.total)}${t.cashPrice ? ` (أو كاش ${money(t.cashPrice)})` : ''}`]
+      : [Number(p.price) > 0 ? `السعر: ${money(p.price)} كاش` : ''],
+    size ? `المساحة: ${size}` : '',
+    n(p.bedrooms) ? `${n(p.bedrooms)} ${n(p.bedrooms) >= 3 && n(p.bedrooms) <= 10 ? 'غرف' : 'غرفة'}${n(p.bathrooms) ? ` و${n(p.bathrooms)} ${n(p.bathrooms) >= 3 && n(p.bathrooms) <= 10 ? 'حمامات' : 'حمام'}` : ''}` : '',
+    n(p.floor) ? `الدور ${n(p.floor)}` : '',
+    clean(p.finishing_ar) ? `التشطيب: ${clean(p.finishing_ar)}` : '',
+    p.completionStatus === 'ready' ? 'استلام فوري' : (p.deliveryYear ? `الاستلام: ${p.deliveryYear}` : ''),
+    p.legalStatus?.ownershipType_ar ? `الموقف القانوني: ${clean(p.legalStatus.ownershipType_ar)}` : '',
+    place ? `الموقع: ${place}` : ''
+  ].flat().filter(Boolean).map((f) => `✓ ${f}`);
+  const desc = clean(p.description_ar);
+  const short = desc.length > 260 ? `${desc.slice(0, 260).replace(/\s+\S*$/, '')}…` : desc;
+  return [
+    hook,
+    clean(p.title_ar) && clean(p.title_ar) !== hook ? clean(p.title_ar) : '',
+    '',
+    ...facts,
+    short ? `\n${short}` : '',
+    '',
+    'مهتم؟ اكتب «تفاصيل» في الكومنت وهنبعتلك الصور والفيديو والعنوان على الخاص.',
+    phone ? `للمعاينة والحجز اتصل أو واتساب: ${phone}` : '',
+    url ? `كل الصور والتفاصيل: ${url}` : '',
+    '',
+    ['#عقارات_سوهاج', area ? `#${area.replace(/[()،,.]/g, '').trim().replace(/\s+/g, '_')}` : '', `#${type.replace(/\s+/g, '_')}_للبيع`, '#1Line', '#وان_لاين'].filter(Boolean).join(' ')
+  ].filter((l, i, a) => l !== '' || (i > 0 && a[i - 1] !== '')).join('\n').trim();
+}
+
+// «5 سنين» / «18 شهر» without importing the label twice
+function termLabelOf(months) {
+  const m = Math.round(Number(months) || 0);
+  if (m % 12 === 0) { const y = m / 12; return y === 1 ? 'سنة' : y === 2 ? 'سنتين' : (y <= 10 ? `${y} سنين` : `${y} سنة`); }
+  return m <= 10 ? `${m} شهور` : `${m} شهر`;
+}
