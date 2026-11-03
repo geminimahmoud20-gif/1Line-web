@@ -56,3 +56,8 @@
 /* art-direction.css sets .btn-primary with !important, so these must too */
 .dark-theme .oms .btn-primary { background: #d4af37 !important; color: #0f172a !important; }
 .dark-theme .oms .btn-primary:hover { background: #e0bf4f !important; }
+
+/* A request opened from a shared link (/demands#demand-<id>) is outlined for a moment */
+.demand-card.is-shared-target { outline: 3px solid #d97706; outline-offset: 3px; transition: outline-color 0.3s; scroll-margin-top: 90px; }
+.demand-share-note { flex-basis: 100%; margin: 6px 0 0; padding: 8px 12px; border-radius: 10px; background: #ecfdf5; color: #065f46; font-size: 0.82rem; font-weight: 700; line-height: 1.6; }
+.dark-theme .demand-share-note { background: rgba(16, 185, 129, 0.12); color: #6ee7b7; }
