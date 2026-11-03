@@ -9,6 +9,8 @@
 //  Tests: tests/unit/postbuild-seo.test.mjs, tests/unit/seo-shell.test.mjs
 // =============================================================
 
+import { listingPreview } from './listingShare.js';
+
 export const esc = (s) => String(s ?? '')
   .replace(/&/g, '&amp;')
   .replace(/"/g, '&quot;')
@@ -155,7 +157,10 @@ export function buildPropertyShell(template, p, origin) {
     }
   }, null, 2).replace(/</g, '\\u003c');
 
-  let html = headTags(template, { title, desc, url, ogDesc: summary || desc, image, type: 'article', label: 'property' });
+  // Link preview: the listing's own title (og:site_name already names 1Line), and price + facts
+  // under it, e.g. «مقدم 200,000 ج.م + قسط 30,000 ج.م ربع سنوي — 156 م² · 3 غرف · سوهاج الجديدة»
+  const preview = listingPreview(p);
+  let html = headTags(template, { title, desc, url, ogTitle: preview.title, ogDesc: preview.description || summary || desc, image, type: 'article', label: 'property' });
   html = html.replace('</head>', `    <script type="application/ld+json" id="breadcrumb-schema">\n${breadcrumbsSchema}\n    </script>\n    <script type="application/ld+json" id="property-jsonld-schema">\n${propertySchema}\n    </script>\n  </head>`);
   return withRoot(html, propertyBody(p), 'property');
 }
@@ -183,19 +188,22 @@ export function buildProjectShell(template, p, origin) {
 }
 
 /** title / description / canonical / Open Graph / Twitter tags of the template */
-export function headTags(template, { title, desc, url, ogDesc = desc, image = '', type = '', label }) {
+export function headTags(template, { title, desc, url, ogDesc = desc, ogTitle = title, image = '', type = '', label }) {
   let html = template;
   html = strictReplace(html, /<title>[\s\S]*?<\/title>/, `<title>${esc(title)}</title>`, `${label} title`);
   html = strictReplace(html, /(<meta name="description" content=")[^"]*(")/, `$1${esc(desc)}$2`, `${label} description`);
   html = strictReplace(html, /(<link rel="canonical" href=")[^"]*(")/, `$1${esc(url)}$2`, `${label} canonical`);
   if (type) html = strictReplace(html, /(<meta property="og:type" content=")[^"]*(")/, `$1${type}$2`, `${label} og:type`);
   html = strictReplace(html, /(<meta property="og:url" content=")[^"]*(")/, `$1${esc(url)}$2`, `${label} og:url`);
-  html = strictReplace(html, /(<meta property="og:title" content=")[^"]*(")/, `$1${esc(title)}$2`, `${label} og:title`);
+  html = strictReplace(html, /(<meta property="og:title" content=")[^"]*(")/, `$1${esc(ogTitle)}$2`, `${label} og:title`);
   html = strictReplace(html, /(<meta property="og:description" content=")[^"]*(")/, `$1${esc(ogDesc)}$2`, `${label} og:desc`);
   if (image) html = strictReplace(html, /(<meta property="og:image" content=")[^"]*(")/, `$1${esc(image)}$2`, `${label} og:image`);
-  html = strictReplace(html, /(<meta name="twitter:title" content=")[^"]*(")/, `$1${esc(title)}$2`, `${label} twitter:title`);
+  html = strictReplace(html, /(<meta name="twitter:title" content=")[^"]*(")/, `$1${esc(ogTitle)}$2`, `${label} twitter:title`);
   html = strictReplace(html, /(<meta name="twitter:description" content=")[^"]*(")/, `$1${esc(ogDesc)}$2`, `${label} twitter:desc`);
   if (image) html = strictReplace(html, /(<meta name="twitter:image" content=")[^"]*(")/, `$1${esc(image)}$2`, `${label} twitter:image`);
+  // The template's 1200×630 size belongs to og-image.jpg; a listing photo has its own, so let the reader measure it
+  if (image && !/\/og-image\.jpg$/.test(image)) html = html.replace(/\s*<meta property="og:image:(?:width|height)" content="\d+" \/>/g, '');
+  if (image) html = html.replace('</head>', `    <meta property="og:image:alt" content="${esc(ogTitle)}" />\n  </head>`);
   return html;
 }
 
