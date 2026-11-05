@@ -1,7 +1,8 @@
 // =============================================================
-//  «رشّحلي وحدتي»: how well a listed home fits a buyer's five qualifying answers (what matters
-//  most, home or investment, family size, ready now or can wait, cash budget or down payment +
-//  monthly installment). Each part scores 0..1 with a reason the buyer can read; parts the buyer
+//  «رشّحلي عقاري»: how well a listed property fits a buyer's qualifying answers (the kind of
+//  property, what it is for, area, family size or minimum size, ready now or can wait, cash budget
+//  or down payment + monthly installment, and what matters most). Only properties of the kind asked
+//  for are ranked; each part scores 0..1 with a reason the buyer can read, and parts the buyer
 //  marked as most important weigh more. Pure: tests/unit/buyer-match.test.mjs.
 // =============================================================
 import { assetClass, liveListings } from './marketStats.js';
@@ -9,14 +10,59 @@ import { paymentTerms, hasInstallmentPlan } from './paymentTerms.js';
 import { finishingGroupOf } from './unitHandover.js';
 import { inArea } from './areaLookup.js';
 
-/** What the buyer can mark as «most important» (question 1) */
-export const PRIORITIES = [
+/**
+ * The kinds of property a buyer can ask for, one per market (utils/marketStats assetClass).
+ * `home`: a family lives in it (rooms matter); `handover`: it can be bought before it is built.
+ */
+export const KINDS = [
+  { id: 'residential', ar: 'شقة', sub: 'شقق ودوبلكس وروف', home: true, handover: true },
+  { id: 'villa', ar: 'فيلا أو بيت', sub: 'فيلا، تاون هاوس، بيت مستقل', home: true, handover: true },
+  { id: 'commercial', ar: 'محل أو معرض', sub: 'محلات ومعارض ومولات', handover: true },
+  { id: 'administrative', ar: 'مكتب أو عيادة', sub: 'إداري وطبي', handover: true },
+  { id: 'building', ar: 'عمارة أو مبنى كامل', sub: 'للسكن أو الإيجار', handover: true },
+  { id: 'land', ar: 'أرض مباني', sub: 'أرض للبناء عليها' },
+  { id: 'agricultural', ar: 'أرض زراعية', sub: 'أطيان ومزارع' },
+  { id: 'industrial', ar: 'صناعي أو مخزن', sub: 'مصانع ومخازن وأراضي صناعية', handover: true }
+];
+export const kindOf = (id) => KINDS.find((k) => k.id === id) || KINDS[0];
+
+/** What it is for, per kind: [{ id, ar, sub }] (the first is «use it myself», the second «invest») */
+export function purposesFor(kindId) {
+  const k = kindOf(kindId);
+  if (k.home) {
+    return [
+      { id: 'home', ar: 'سكن', sub: 'الأنسب لظروف أسرتي وفي حدود إمكانياتي' },
+      { id: 'invest', ar: 'استثمار', sub: 'ارتفاع في السعر أو إيجار مستمر' }
+    ];
+  }
+  if (k.id === 'land') {
+    return [
+      { id: 'home', ar: 'أبني عليها لنفسي', sub: 'بيت أو عمارة للعيلة' },
+      { id: 'invest', ar: 'استثمار', sub: 'أشتري وأبيع بعد ما سعرها يزيد، أو أبني وأبيع' }
+    ];
+  }
+  if (k.id === 'agricultural') {
+    return [
+      { id: 'home', ar: 'أزرعها وأشغّلها', sub: 'زراعة أو مشروع إنتاج' },
+      { id: 'invest', ar: 'استثمار', sub: 'أأجّرها أو أستنى سعرها يزيد' }
+    ];
+  }
+  return [
+    { id: 'home', ar: 'أشغّلها بنفسي', sub: k.id === 'building' ? 'أسكن فيه أو أستخدمه' : 'أفتح فيه نشاطي' },
+    { id: 'invest', ar: 'استثمار', sub: 'إيجار شهري أو إعادة بيع' }
+  ];
+}
+
+/** What the buyer can mark as «most important» (the last question); rooms for homes only */
+const ALL_PRIORITIES = [
   { id: 'area', ar: 'الموقع', en: 'Location' },
   { id: 'size', ar: 'المساحة', en: 'Size' },
-  { id: 'rooms', ar: 'عدد الغرف', en: 'Bedrooms' },
-  { id: 'finishing', ar: 'التشطيب', en: 'Finishing' },
+  { id: 'rooms', ar: 'عدد الغرف', en: 'Bedrooms', home: true },
+  { id: 'finishing', ar: 'التشطيب والجاهزية', en: 'Finishing' },
   { id: 'price', ar: 'السعر ونظام السداد', en: 'Price & plan' }
 ];
+export const PRIORITIES = ALL_PRIORITIES;
+export const prioritiesFor = (kindId) => ALL_PRIORITIES.filter((p) => !p.home || kindOf(kindId).home);
 
 /** Family size (question 3) → bedrooms a home needs */
 export const FAMILY_SIZES = [
@@ -38,6 +84,9 @@ const fmt = (n) => Math.round(n).toLocaleString('en-US');
 
 /** Homes only: flats and villas a family would live in */
 export const isHome = (p) => ['residential', 'villa'].includes(assetClass(p));
+/** A listing of the kind the buyer asked for (no kind: homes, as the first version did) */
+export const isKind = (p, kindId) => (kindId ? assetClass(p) === kindId : isHome(p));
+const rentedNow = (p) => (Array.isArray(p.features_ar) ? p.features_ar : []).some((f) => String(f).includes('مؤجر'));
 
 const bedroomsOf = (p) => num(p.bedrooms ?? p.rooms);
 const handoverOf = (p) => (p.completionStatus === 'ready' || p.completionStatus === 'under_construction' ? p.completionStatus : '');
@@ -85,6 +134,7 @@ function areaPart(p, a, areas) {
 }
 
 function roomsPart(p, a) {
+  if (a.kind && !kindOf(a.kind).home) return { score: 1, ok: null };
   const need = FAMILY_SIZES.find((f) => f.id === a.family)?.rooms || 0;
   if (!need) return { score: 1, ok: null };
   const rooms = bedroomsOf(p);
@@ -95,6 +145,7 @@ function roomsPart(p, a) {
 }
 
 function deliveryPart(p, a) {
+  if (a.kind && !kindOf(a.kind).handover) return { score: 1, ok: null };
   if (!a.delivery || a.delivery === 'any') return { score: 1, ok: null };
   const state = handoverOf(p);
   if (!state) return { score: 0.5, ok: null, text: 'موعد الاستلام مش مكتوب' };
@@ -111,6 +162,24 @@ function deliveryPart(p, a) {
 
 function purposePart(p, a) {
   const group = finishingGroupOf(p);
+  const kind = a.kind ? kindOf(a.kind) : null;
+  // Land and farmland: the purpose doesn't change which plot fits
+  if (kind && !kind.handover) return { score: 1, ok: null };
+  if (kind && !kind.home) {
+    if (a.purpose === 'invest') {
+      if (rentedNow(p)) return { score: 1, ok: true, text: 'مؤجّرة حالياً وبتدخّل دخل من أول يوم' };
+      if (hasInstallmentPlan(paymentTerms(p)) || handoverOf(p) === 'under_construction') {
+        return { score: 0.9, ok: true, text: 'شراء بنظام سداد أو قبل الاستلام بيكبّر العائد' };
+      }
+      return { score: 0.7, ok: null };
+    }
+    if (a.purpose === 'home') {
+      if (handoverOf(p) === 'ready' || group === 'finished') return { score: 1, ok: true, text: 'جاهزة تبدأ فيها على طول' };
+      if (handoverOf(p) === 'under_construction') return { score: 0.4, ok: false, text: 'لسه تحت الإنشاء، مش هتقدر تشغّلها دلوقتي' };
+      return { score: 0.7, ok: null };
+    }
+    return { score: 1, ok: null };
+  }
   if (a.purpose === 'invest') {
     const plan = hasInstallmentPlan(paymentTerms(p));
     if (handoverOf(p) === 'under_construction' || plan) {
@@ -172,24 +241,27 @@ export function matchUnit(p, answers = {}, areas = [], { only = null } = {}) {
   };
 }
 
-/** Live homes ranked by fit, best first: [{ property, ...matchUnit }] */
-export function rankHomes(properties = [], answers = {}, areas = [], limit = 6) {
+/** Live listings of the kind asked for, ranked by fit, best first: [{ property, ...matchUnit }] */
+export function rankUnits(properties = [], answers = {}, areas = [], limit = 6) {
   return liveListings(properties)
-    .filter(isHome)
+    .filter((p) => isKind(p, answers.kind))
     .map((property) => ({ property, ...matchUnit(property, answers, areas) }))
     .sort((x, y) => y.score - x.score)
     .slice(0, limit);
 }
+/** The first version's name: homes only when no kind is given */
+export const rankHomes = rankUnits;
 
 /** The answers as one WhatsApp message to the team */
 export function answersMessage(a = {}, areaName = (id) => id) {
   const fam = FAMILY_SIZES.find((f) => f.id === a.family);
   const lines = [
-    'مرحباً 1Line، جاوبت على أسئلة «رشّحلي وحدتي»:',
+    'مرحباً 1Line، جاوبت على أسئلة «رشّحلي عقاري»:',
+    a.kind ? `بدوّر على: ${kindOf(a.kind).ar}` : '',
     a.priorities?.length ? `أهم حاجة: ${a.priorities.map((id) => PRIORITIES.find((x) => x.id === id)?.ar).filter(Boolean).join('، ')}` : '',
     a.areas?.length ? `المنطقة: ${a.areas.map(areaName).join('، ')}` : '',
     num(a.minSize) ? `المساحة: من ${num(a.minSize)} م²` : '',
-    a.purpose ? `الغرض: ${a.purpose === 'invest' ? 'استثمار' : 'سكن'}` : '',
+    a.purpose ? `الغرض: ${purposesFor(a.kind).find((x) => x.id === a.purpose)?.ar || ''}` : '',
     fam ? `الأسرة: ${fam.ar}` : '',
     a.delivery ? `الاستلام: ${a.delivery === 'now' ? 'مستعجل (فوري)' : a.delivery === 'wait' ? 'ممكن أستنى لسعر وتقسيط أحسن' : 'مش فارقة'}` : '',
     a.payment === 'cash'

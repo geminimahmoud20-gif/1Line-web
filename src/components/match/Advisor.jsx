@@ -2,7 +2,7 @@ import AdvisorFace from './AdvisorFace';
 import './advisor.css';
 
 /**
- * 1Line's guide on «رشّحلي وحدتي»: the founder drawn as a cartoon (AdvisorFace) in a round frame
+ * 1Line's guide on «رشّحلي عقاري»: the founder drawn as a cartoon (AdvisorFace) in a round frame
  * that moves like a live call: blinking, a nodding head, a mouth that talks, a glint on the glasses, a turning gold ring, a gentle float and tilt, sound waves while he asks, «…» while
  * he thinks, and a green tick with sparkles on the results. CSS only; still for reduced motion.
  * mood: 'idle' | 'talk' | 'think' | 'happy'

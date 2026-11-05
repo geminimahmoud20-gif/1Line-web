@@ -65,7 +65,7 @@ describe('Homepage Exhaustive Deep Audit', () => {
     });
   });
 
-  it('4. Hero «رشّحلي وحدتي» card leads to the buyer questions', () => {
+  it('4. Hero «رشّحلي عقاري» card leads to the buyer questions', () => {
     // The hero search filters were replaced by this card on the owner's request
     cy.get('.hx-match').should('be.visible');
     cy.get('.hx-match .adv').should('be.visible');

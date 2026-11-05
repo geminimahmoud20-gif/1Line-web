@@ -1,7 +1,7 @@
 // =============================================================
 //  A broker's file in the CRM: the units they brought (linked by sourceLeadId or listingIds) with
 //  the stage each one is at and the buyer requests it fits, and the requests they brought (matched by
-//  phone) with the listed units that fit them. «Fits» reuses the «رشّحلي وحدتي» scoring
+//  phone) with the listed units that fit them. «Fits» reuses the «رشّحلي عقاري» scoring
 //  (utils/buyerMatch) with the request read as answers; a different kind of property scores 0.
 //  Pure: tests/unit/broker-file.test.mjs.
 // =============================================================
@@ -47,7 +47,7 @@ export function demandStage(d = {}) {
 
 const isOpenDemand = (d) => demandStage(d).id !== 'closed';
 
-/** A request read as «رشّحلي وحدتي» answers: area, budget against the total price, minimum size */
+/** A request read as «رشّحلي عقاري» answers: area, budget against the total price, minimum size */
 export const demandAnswers = (d = {}) => ({
   areas: d.area && d.area !== 'all' ? [d.area] : [],
   payment: 'cash',

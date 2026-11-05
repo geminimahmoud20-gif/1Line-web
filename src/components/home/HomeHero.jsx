@@ -1,10 +1,16 @@
 import { HERO_POSTER_DEFAULT } from '../../pages/HomePageData';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, Pause, Play, Volume2, VolumeX, Zap, Maximize2 } from 'lucide-react';
 import { HeroSponsorChip } from './SponsoredPlacements';
 import LogoEmblem from '../LogoEmblem';
 import Advisor from '../match/Advisor';
 import '../../styles/hero-match.css';
+
+// The /match page loads on its own; fetch it ahead (idle, or as soon as a finger or mouse nears the
+// button) so the tap opens it at once instead of showing the loading screen
+let matchLoad;
+const preloadMatch = () => { matchLoad ||= import('../../pages/MatchPage').catch(() => { matchLoad = null; }); };
 
 export default function HomeHero({
   activeClipIndex,
@@ -30,6 +36,15 @@ export default function HomeHero({
   videoMuted,
   videoPlaying
 }) {
+  // Warm the /match page once the home page has settled
+  useEffect(() => {
+    if ('requestIdleCallback' in window) {
+      const id = window.requestIdleCallback(preloadMatch, { timeout: 4000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const t = setTimeout(preloadMatch, 2500);
+    return () => clearTimeout(t);
+  }, []);
   return (
     <section className="hx-hero" aria-label={lang === 'ar' ? 'البحث عن عقار' : 'Property search'}>
       {/* Cinematic Video Background Engine */}
@@ -256,16 +271,16 @@ export default function HomeHero({
           )}
         </p>
 
-        {/* «رشّحلي وحدتي» in place of the search filters: the advisor asks five questions and ranks the homes (/match) */}
-        <div className="hx-match" role="region" aria-label={lang === 'ar' ? 'رشّحلي وحدتي' : 'Find my home'}>
+        {/* «رشّحلي عقاري» in place of the search filters: the advisor asks a few questions and ranks the listings (/match) */}
+        <div className="hx-match" role="region" aria-label={lang === 'ar' ? 'رشّحلي عقاري' : 'Find my property'}>
           <Advisor mood="talk" size={92} className="hx-match-advisor" />
           <div className="hx-match-text">
-            <strong>{lang === 'ar' ? 'مش عارف تبدأ منين؟ نرشّحلك وحدتك في دقيقة' : 'Not sure where to start? We find your home in a minute'}</strong>
-            <span>{lang === 'ar' ? '5 أسئلة بسيطة عن احتياجك وميزانيتك، ونوريك الوحدات المعروضة ونسبة مطابقة كل واحدة لطلبك.' : 'Five short questions about your needs and budget, then the listed homes ranked by fit.'}</span>
+            <strong>{lang === 'ar' ? 'مش عارف تبدأ منين؟ نرشّحلك عقارك في دقيقة' : 'Not sure where to start? We find your property in a minute'}</strong>
+            <span>{lang === 'ar' ? 'شقة، محل، مكتب أو أرض: أسئلة بسيطة عن احتياجك وميزانيتك، ونوريك المعروض ونسبة مطابقة كل عقار لطلبك.' : 'A few short questions about your needs and budget, then the listed properties ranked by fit.'}</span>
           </div>
-          <Link to="/match" className="hx-match-btn">
+          <Link to="/match" className="hx-match-btn" onPointerEnter={preloadMatch} onTouchStart={preloadMatch} onFocus={preloadMatch}>
             <Sparkles size={18} strokeWidth={2} aria-hidden="true" />
-            <span>{lang === 'ar' ? 'رشّحلي وحدتي' : 'Find my home'}</span>
+            <span>{lang === 'ar' ? 'رشّحلي عقاري' : 'Find my property'}</span>
           </Link>
         </div>
 

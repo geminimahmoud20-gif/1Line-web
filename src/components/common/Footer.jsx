@@ -37,7 +37,7 @@ export default function Footer({ lang = 'ar' }) {
   // One short list of the pages people look for most (the full site map lives in the header menus)
   const links = [
     ['/properties', 'العقارات', 'Properties'],
-    ['/match', 'رشّحلي وحدتي', 'Find my home'],
+    ['/match', 'رشّحلي عقاري', 'Find my property'],
     ['/projects', 'المشروعات', 'Projects'],
     ['/developers', 'شركات التطوير', 'Developers'],
     ['/market-intelligence', 'أسعار المتر', 'Prices per m²'],

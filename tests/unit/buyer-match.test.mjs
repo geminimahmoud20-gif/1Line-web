@@ -51,3 +51,35 @@ test('the WhatsApp message lists the answers', () => {
   assert.ok(msg.includes('الغرض: استثمار'));
   assert.ok(msg.includes('المقدم: 300,000 ج.م'));
 });
+
+test('every kind of property: only listings of the kind asked for are ranked', async () => {
+  const { rankUnits } = await import('../../src/utils/buyerMatch.js');
+  const shop = flat({ id: 'shop', type: 'shop', title_ar: 'محل تجاري', bedrooms: 0 });
+  const plot = flat({ id: 'plot', type: 'land', title_ar: 'أرض', bedrooms: 0, completionStatus: '' });
+  const home = flat({ id: 'home' });
+  assert.deepEqual(rankUnits([shop, plot, home], { kind: 'commercial' }, areas).map((x) => x.property.id), ['shop']);
+  assert.deepEqual(rankUnits([shop, plot, home], { kind: 'land' }, areas).map((x) => x.property.id), ['plot']);
+  assert.deepEqual(rankUnits([shop, plot, home], {}, areas).map((x) => x.property.id), ['home']);
+});
+
+test('a shop is not judged by rooms, and land not by handover or purpose', () => {
+  const shop = flat({ type: 'shop', title_ar: 'محل', bedrooms: 0, completionStatus: 'ready' });
+  const r = matchUnit(shop, { kind: 'commercial', family: '7+', purpose: 'home', delivery: 'now', payment: 'cash', budget: 2_500_000 }, areas);
+  assert.equal(r.score, 100);
+  assert.ok(r.matches.includes('جاهزة تبدأ فيها على طول'));
+  const plot = flat({ type: 'land', title_ar: 'أرض', completionStatus: '' });
+  const p = matchUnit(plot, { kind: 'land', purpose: 'invest', delivery: 'now', payment: 'cash', budget: 2_500_000 }, areas);
+  assert.equal(p.score, 100);
+});
+
+test('investing in a rented shop reads as income from day one', () => {
+  const shop = flat({ type: 'shop', title_ar: 'محل', features_ar: ['مؤجر حالياً'] });
+  const r = matchUnit(shop, { kind: 'commercial', purpose: 'invest' }, areas);
+  assert.ok(r.matches.some((t) => t.includes('مؤجّرة حالياً')));
+});
+
+test('the WhatsApp message names the kind and the purpose for it', async () => {
+  const msg = answersMessage({ kind: 'land', purpose: 'home', payment: 'cash', budget: 1_000_000 });
+  assert.ok(msg.includes('بدوّر على: أرض مباني'));
+  assert.ok(msg.includes('الغرض: أبني عليها لنفسي'));
+});

@@ -1,4 +1,4 @@
-/* /match «رشّحلي وحدتي»: the 1Line advisor asks one question at a time in a speech bubble, the answers are big
+/* /match «رشّحلي عقاري»: the 1Line advisor asks one question at a time in a speech bubble, the answers are big
    tappable options, then ranked homes with a match ring and the reasons for it. */
 .mt-page { background: var(--sand, #F7F5F0); padding: 20px 0 64px; min-height: 70vh; }
 .mt-wrap { max-width: 860px; margin: 0 auto; padding-inline: 16px; display: flex; flex-direction: column; gap: 16px; }
@@ -114,4 +114,27 @@
   .mt-result { grid-template-columns: 1fr; }
   .mt-cta { flex-direction: column; align-items: stretch; }
   .mt-cta-actions { flex-direction: column; }
+}
+
+/* Question count, «ليه بنسأل؟», a listing count per kind and a trust line */
+.mt-count { margin: 0 0 4px; font-size: 0.74rem; font-weight: 800; letter-spacing: 0.3px; color: var(--accent-gold-soft, #D9B97E); }
+.mt-why {
+  display: flex; align-items: flex-start; gap: 8px; margin: 0 0 14px; padding: 12px 14px; border-radius: 14px;
+  background: var(--accent-gold-light); color: var(--text-primary); font-size: 0.88rem; line-height: 1.8;
+  animation: mt-pop 0.35s ease;
+}
+.mt-why svg { flex: none; margin-top: 4px; color: var(--accent-gold); }
+.mt-why b { font-weight: 800; }
+.mt-options.is-kinds .mt-option { position: relative; padding-inline-end: 72px; }
+.mt-option-count {
+  position: absolute; inset-inline-end: 12px; top: 50%; transform: translateY(-50%);
+  font-size: 0.72rem; font-weight: 800; padding: 3px 8px; border-radius: 99px; background: var(--bg-slate, #EEF1F5); color: var(--text-muted);
+}
+.mt-empty-note { margin: 0; padding: 14px; border-radius: 14px; border: 1px dashed var(--border-hover); color: var(--text-muted); line-height: 1.8; }
+.mt-trust { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 14px 0 0; font-size: 0.8rem; color: var(--text-muted); }
+@media (max-width: 640px) {
+  .mt-options.is-kinds { grid-template-columns: 1fr 1fr; }
+  .mt-options.is-kinds .mt-option { flex-direction: column; align-items: flex-start; gap: 8px; min-height: 96px; padding: 12px; }
+  .mt-options.is-kinds .mt-option-count { top: 10px; transform: none; }
+  .mt-options.is-kinds .mt-option-text small { display: none; }
 }
