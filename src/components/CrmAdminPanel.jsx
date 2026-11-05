@@ -1094,6 +1094,7 @@ export const CrmAdminPanel = ({
           setQuickDrawerLead(null);
         }}
         properties={properties}
+        demands={demands}
         filteredLeads={filteredLeads}
         isAr={isAr}
         triggerToast={triggerToast}

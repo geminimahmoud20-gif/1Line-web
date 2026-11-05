@@ -1,0 +1,17 @@
+/* «ملف الوسيط» lists in the lead drawer */
+.bf-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.bf-item { padding: 12px; border: 1px solid var(--crm-line); border-radius: 12px; background: var(--crm-card); }
+.bf-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.bf-title { font-weight: 700; color: var(--crm-ink); text-decoration: none; line-height: 1.5; display: inline-flex; align-items: center; gap: 4px; }
+a.bf-title:hover { color: var(--crm-accent-text); }
+.bf-meta { margin: 4px 0 0; font-size: var(--crm-text-sm); color: var(--crm-muted); }
+.bf-fits { list-style: none; margin: 10px 0 0; padding: 10px 0 0; border-top: 1px dashed var(--crm-line); display: flex; flex-direction: column; gap: 8px; }
+.bf-fits li { display: flex; align-items: flex-start; gap: 10px; }
+.bf-score { flex: none; min-width: 48px; text-align: center; padding: 3px 8px; border-radius: 999px; font-weight: 800; font-size: var(--crm-text-sm); }
+.bf-score.is-high { background: var(--crm-positive-soft, rgba(16, 185, 129, 0.14)); color: var(--crm-positive); }
+.bf-score.is-mid { background: rgba(217, 119, 6, 0.14); color: var(--crm-accent-text); }
+.bf-score.is-low { background: var(--crm-subtle); color: var(--crm-muted); }
+.bf-fit-text { font-size: var(--crm-text-sm); color: var(--crm-body); line-height: 1.6; min-width: 0; }
+.bf-fit-text a { color: var(--crm-ink); }
+.bf-fit-text small { display: block; color: var(--crm-muted); }
+.bf-none { margin: 10px 0 0; font-size: var(--crm-text-sm); color: var(--crm-muted); }

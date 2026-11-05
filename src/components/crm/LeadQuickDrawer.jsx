@@ -14,6 +14,8 @@ import { leadScore, LEAD_SCORE_HIGH } from '../../utils/crmLeadViews';
 import { rankAndNominateProperties } from '../../services/matchingEngineV2';
 import { Drawer, Button, IconButton, Badge, Chip, Tabs, Textarea, EmptyState, useConfirm } from '../ui';
 import './lead-drawer.css';
+import BrokerFile from './lead-profile/BrokerFile';
+import { brokerUnits, brokerDemands } from '../../utils/brokerFile';
 
 // One history line: "[stamp]: text", older lines start with an emoji and can carry "undefined" from missing form fields
 function parseNoteLine(line) {
@@ -35,6 +37,7 @@ export default function LeadQuickDrawer({
   onConvertToProperty,
   onOpenFullProfile,
   properties = [],
+  demands = [],
   filteredLeads = [],
   isAr = true,
   triggerToast,
@@ -89,6 +92,13 @@ export default function LeadQuickDrawer({
     () => (lead ? rankAndNominateProperties(lead, properties) : { matches: [] }),
     [lead, properties]
   );
+
+  // «ملف الوسيط»: for brokers, and for anyone who brought units or requests
+  const brokerCount = useMemo(
+    () => (lead ? brokerUnits(lead, properties).length + brokerDemands(lead, demands).length : 0),
+    [lead, properties, demands]
+  );
+  const showBrokerFile = Boolean(lead) && (lead.type === 'broker' || brokerCount > 0);
 
   // Every hook above runs on each render; the early return must stay after them (React rules of hooks)
   if (!lead) return null;
@@ -386,6 +396,7 @@ export default function LeadQuickDrawer({
             items={[
               { id: 'overview', label: isAr ? 'المتابعة' : 'Follow-up' },
               { id: 'matching', label: isAr ? 'العقارات المناسبة' : 'Matches', count: matchingResult.matches.length },
+              ...(showBrokerFile ? [{ id: 'broker', label: isAr ? 'ملف الوسيط' : 'Broker file', count: brokerCount || null }] : []),
               { id: 'timeline', label: isAr ? 'السجل' : 'History', count: timeline.length || null }
             ]}
           />
@@ -421,6 +432,10 @@ export default function LeadQuickDrawer({
               onUpdateLead={onUpdateLead}
               triggerToast={triggerToast}
             />
+          )}
+
+          {activeTab === 'broker' && showBrokerFile && (
+            <BrokerFile lead={lead} properties={properties} demands={demands} />
           )}
 
           {activeTab === 'timeline' && (

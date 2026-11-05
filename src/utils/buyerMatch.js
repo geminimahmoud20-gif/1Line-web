@@ -142,9 +142,10 @@ function sizePart(p, a) {
  * { score 0..100, matches: [text], misses: [text], notes: [text] } for one home.
  * `answers`: { priorities: [], areas: [], minSize, purpose: 'home'|'invest', family, delivery:
  * 'now'|'wait'|'any', payment: 'cash'|'installments', budget, down, monthly }
+ * `only` limits the score to some parts, e.g. ['budget', 'area', 'size'].
  */
-export function matchUnit(p, answers = {}, areas = []) {
-  const parts = {
+export function matchUnit(p, answers = {}, areas = [], { only = null } = {}) {
+  const all = {
     budget: budgetPart(p, answers),
     area: areaPart(p, answers, areas),
     rooms: roomsPart(p, answers),
@@ -152,6 +153,8 @@ export function matchUnit(p, answers = {}, areas = []) {
     purpose: purposePart(p, answers),
     size: sizePart(p, answers)
   };
+  // `only`: score just these parts (a buyer request has no family size or handover answer to judge by)
+  const parts = only ? Object.fromEntries(Object.entries(all).filter(([k]) => only.includes(k))) : all;
   const boosted = new Set((answers.priorities || []).map((id) => PRIORITY_PART[id]).filter(Boolean));
   let total = 0;
   let got = 0;
