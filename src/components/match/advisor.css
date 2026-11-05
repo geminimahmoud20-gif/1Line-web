@@ -1,0 +1,39 @@
+/* The advisor's motion: breathing, a slow nod, blinks, a glint across the glasses, a mouth that
+   moves while he asks, a raised brow when thinking, and smiling eyes with a nod when happy. */
+.adv { position: relative; flex: none; }
+.adv-svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 16px 20px rgba(7, 17, 31, 0.25)); }
+
+.adv-body { animation: adv-breathe 4s ease-in-out infinite; transform-origin: 100px 240px; }
+@keyframes adv-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.012, 1.02); } }
+
+.adv-head { animation: adv-nod 5s ease-in-out infinite; transform-origin: 100px 150px; }
+@keyframes adv-nod { 0%, 100% { transform: rotate(0deg); } 30% { transform: rotate(-2.5deg); } 60% { transform: rotate(1.5deg) translateY(1px); } }
+
+.adv-lid { transform: scaleY(0); transform-box: fill-box; transform-origin: center top; animation: adv-blink 4.2s infinite; }
+@keyframes adv-blink { 0%, 93%, 100% { transform: scaleY(0); } 96% { transform: scaleY(1); } }
+
+.adv-glint { animation: adv-glint 5.5s ease-in-out infinite; }
+@keyframes adv-glint { 0%, 70% { transform: skewX(-25deg) translateX(0); } 90%, 100% { transform: skewX(-25deg) translateX(160px); } }
+
+.adv-happy-eyes { opacity: 0; }
+.adv-mouth { transform-box: fill-box; transform-origin: center top; }
+
+/* Talking */
+.adv.is-talk .adv-mouth { animation: adv-talk 0.34s ease-in-out infinite alternate; }
+@keyframes adv-talk { from { transform: scaleY(0.55); } to { transform: scaleY(1.25); } }
+
+/* Thinking: head tilted, one brow up */
+.adv.is-think .adv-head { animation: adv-think 3s ease-in-out infinite; }
+.adv.is-think .adv-brow:last-of-type { transform: translateY(-3px); }
+@keyframes adv-think { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(-3deg) translateY(-1px); } }
+
+/* Happy: smiling eyes, a bigger smile, a cheerful nod */
+.adv.is-happy .adv-eyes { opacity: 0; }
+.adv.is-happy .adv-happy-eyes { opacity: 1; }
+.adv.is-happy .adv-mouth { transform: scale(1.15, 1.3); }
+.adv.is-happy .adv-head { animation: adv-cheer 1.2s ease-in-out infinite; }
+@keyframes adv-cheer { 0%, 100% { transform: translateY(0) rotate(0deg); } 40% { transform: translateY(-4px) rotate(-2deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .adv *, .adv-body, .adv-head { animation: none !important; }
+}

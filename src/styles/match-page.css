@@ -1,4 +1,4 @@
-/* /match «رشّحلي شقتي»: «بيتو» asks one question at a time in a speech bubble, the answers are big
+/* /match «رشّحلي شقتي»: the 1Line advisor asks one question at a time in a speech bubble, the answers are big
    tappable options, then ranked homes with a match ring and the reasons for it. */
 .mt-page { background: var(--sand, #F7F5F0); padding: 20px 0 64px; min-height: 70vh; }
 .mt-wrap { max-width: 860px; margin: 0 auto; padding-inline: 16px; display: flex; flex-direction: column; gap: 16px; }

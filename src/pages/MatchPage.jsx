@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check, X, Info, MessageSquare, RotateCcw, Home, TrendingUp, Zap, Hourglass, Shuffle, Wallet, CalendarClock } from 'lucide-react';
-import Beto from '../components/match/Beto';
+import Advisor from '../components/match/Advisor';
 import { PRIORITIES, FAMILY_SIZES, rankHomes, answersMessage, isHome } from '../utils/buyerMatch';
 import { liveListings } from '../utils/marketStats';
 import { getAreas } from '../utils/areasData';
@@ -16,9 +16,9 @@ const STEPS = 5;
 const digits = (v) => String(v ?? '').replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660)).replace(/\D/g, '').slice(0, 11);
 const money = (v) => (v ? Number(v).toLocaleString('en-US') : '');
 
-// What «بيتو» says on each step: the question first, then a line that helps the buyer answer
+// What the advisor says on each step: the question first, then a line that helps the buyer answer
 const LINES = [
-  ['أهلاً، أنا بيتو! إيه أهم حاجة لازم تكون في شقتك؟', 'اختار حاجة أو أكتر، ولو الموقع أو المساحة مهمين قولّي تفاصيلهم.'],
+  ['أهلاً بيك! أنا مستشارك في 1Line. إيه أهم حاجة لازم تكون في شقتك؟', 'اختار حاجة أو أكتر، ولو الموقع أو المساحة مهمين قولّي تفاصيلهم.'],
   ['حضرتك بتفكر في الشقة سكن ولا استثمار؟', 'للسكن بندوّر على الأنسب لأسرتك، وللاستثمار على أعلى عائد وارتفاع في السعر.'],
   ['عدد أفراد أسرتك كام؟', 'عشان نعرف تحتاج كام غرفة.'],
   ['مستعجل على الاستلام، ولا ممكن تستنى شوية بسعر وتقسيط أحسن؟', 'المشروع في أوله بيكون أقل سعر وأطول تقسيط، وكل ما بيتحرك السعر بيزيد.'],
@@ -80,7 +80,7 @@ export default function MatchPage({ properties = [], lang = 'ar' }) {
         {step < STEPS ? (
           <section className="mt-card" aria-labelledby="mt-q">
             <header className="mt-guide">
-              <Beto mood={mood} size={128} />
+              <Advisor mood={mood} size={128} />
               <div className="mt-bubble" key={step}>
                 <p id="mt-q" className="mt-question">{line}</p>
                 <p className="mt-hint">{hint}</p>
@@ -188,7 +188,7 @@ export default function MatchPage({ properties = [], lang = 'ar' }) {
         ) : (
           <section aria-labelledby="mt-results">
             <header className="mt-card mt-guide is-results">
-              <Beto mood="happy" size={120} />
+              <Advisor mood="happy" size={120} />
               <div className="mt-bubble">
                 <p id="mt-results" className="mt-question">
                   {results.length ? `لقيتلك ${results.length === 1 ? 'وحدة' : results.length === 2 ? 'وحدتين' : `${results.length} وحدات`}، مترتبين من الأنسب لطلبك` : 'لسه مفيش شقق معروضة تناسب طلبك'}
