@@ -168,9 +168,10 @@ export default function HomePage({
     
     // 🌐 Update Homepage SEO & Organization Schema
     updatePageSeo({
-      title: lang === 'ar' ? 'وساطة واستشارات عقارية في سوهاج والقاهرة الكبرى' : 'Real Estate Brokerage & Advisory in Sohag and Greater Cairo',
+      // «عقارات سوهاج» is what people search for; the title and description lead with it
+      title: lang === 'ar' ? 'عقارات سوهاج للبيع | شقق وفيلات ومحلات وأراضي في سوهاج الجديدة' : 'Real Estate Brokerage & Advisory in Sohag and Greater Cairo',
       description: lang === 'ar'
-        ? 'ون لاين للاستشارات والتسويق العقاري: بيع وشراء وتقييم الأراضي والوحدات عالية القيمة في سوهاج والقاهرة الكبرى، مع مراجعة قانونية للمستندات قبل التعاقد، بإشراف د. محمود الباز.'
+        ? 'عقارات سوهاج للبيع: شقق وفيلات ومحلات ومكاتب وأراضي في سوهاج وسوهاج الجديدة بأسعار حقيقية من العروض الحالية، ومستندات مراجعة قانونياً قبل التعاقد. 1Line للاستشارات والتسويق العقاري.'
         : '1Line Solutions: buying, selling and valuing high-value land and property in Sohag and Greater Cairo, with legal document review before contract, led by Dr. Mahmoud Elbaz.',
       url: '/',
       type: 'website',

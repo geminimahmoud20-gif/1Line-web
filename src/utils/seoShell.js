@@ -10,6 +10,22 @@
 // =============================================================
 
 import { listingPreview } from './listingShare.js';
+import { LANDING_KINDS, LANDING_AREAS, landingPath } from './seoLanding.js';
+
+const areaOf = (p) => LANDING_AREAS.find((a) => a.id === p?.areaKey) || null;
+const kindOf = (p) => LANDING_KINDS.find((k) => k.types.includes(p?.type)) || null;
+
+/**
+ * A listing's page title: its own title, plus where it is when the title doesn't say «سوهاج»
+ * (people search «شقة للبيع في سوهاج الجديدة», not the owner's wording). The site page
+ * (PropertyDetailPage) and the shell use the same one.
+ */
+export function listingSeoTitle(p) {
+  const title = sanitizeMetaText(p?.title_ar || p?.title_en || 'عقار');
+  if (title.includes('سوهاج')) return title;
+  const area = areaOf(p);
+  return `${title} — ${area ? area.ar : 'سوهاج'}`;
+}
 
 export const esc = (s) => String(s ?? '')
   .replace(/&/g, '&amp;')
@@ -44,6 +60,8 @@ const list = (items) => (items.length ? `<ul>${items.map((x) => `<li>${x}</li>`)
 const nav = (crumbs) => `<nav aria-label="مسار الصفحة">${crumbs.map(([href, name]) => (href ? `<a href="${esc(href)}">${esc(name)}</a>` : `<span>${esc(name)}</span>`)).join(' › ')}</nav>`;
 const SITE_LINKS = [
   ['/properties', 'كل العقارات'], ['/projects', 'المشروعات والكمبوندات'], ['/market-intelligence', 'أسعار المتر في سوهاج'],
+  ['/sohag/apartments-for-sale', 'شقق للبيع في سوهاج'], ['/sohag/villas-for-sale', 'فيلات للبيع في سوهاج'],
+  ['/sohag/shops-for-sale', 'محلات للبيع في سوهاج'], ['/sohag/offices-clinics-for-sale', 'مكاتب وعيادات للبيع في سوهاج'],
   ['/sell', 'اعرض عقارك للبيع'], ['/demands', 'طلبات المشترين'], ['/about', 'عن 1Line']
 ];
 const footerNav = () => `<nav aria-label="روابط الموقع">${list(SITE_LINKS.map(([h, n]) => `<a href="${h}">${esc(n)}</a>`))}</nav>`;
@@ -54,7 +72,7 @@ export const withRoot = (html, body, label) => strictReplace(html, /<div id="roo
 const TYPE_AR = { apartment: 'شقة', villa: 'فيلا', house: 'منزل', commercial: 'محل تجاري', retail: 'محل تجاري', office: 'مكتب', clinic: 'عيادة', land: 'أرض', building: 'مبنى' };
 
 /** The listing page's text: title, location, key facts, photo, description, features */
-export function propertyBody(p) {
+export function propertyBody(p, related = []) {
   const title = sanitizeMetaText(p.title_ar || p.title_en || 'عقار');
   const facts = [
     TYPE_AR[p.type] ? `النوع: ${TYPE_AR[p.type]}` : '',
@@ -68,12 +86,40 @@ export function propertyBody(p) {
   const image = Array.isArray(p.images) && /^https:\/\//.test(p.images[0] || '') ? p.images[0] : '';
   const features = (Array.isArray(p.features_ar) ? p.features_ar : []).filter((f) => typeof f === 'string' && f.trim()).slice(0, 30).map((f) => clean(f, 120));
   const location = sanitizeMetaText(p.locationName_ar || '');
+  const area = areaOf(p);
+  const kind = kindOf(p);
+  const more = [
+    Number(p.size) > 0 && Number(p.price) > 0 ? `سعر المتر: ${Math.round(Number(p.price) / Number(p.size)).toLocaleString('en-US')} ج.م` : '',
+    Number(p.downPayment) > 0 ? `المقدم: ${fmtPrice(p.downPayment)}` : '',
+    Number(p.installmentAmount) > 0 ? `القسط: ${fmtPrice(p.installmentAmount)}` : '',
+    p.finishing_ar ? `التشطيب: ${sanitizeMetaText(p.finishing_ar)}` : '',
+    p.completionStatus === 'ready' ? 'الاستلام: فوري' : (p.completionStatus === 'under_construction' ? `الاستلام: تحت الإنشاء${Number(p.deliveryYear) ? ` (${Number(p.deliveryYear)})` : ''}` : '')
+  ].filter(Boolean).map((f) => esc(f));
+  // Where it sits on the site: its kind's page in Sohag and in its area, and nearby listings
+  const sections = [
+    kind ? [landingPath(kind), `${kind.ar} في سوهاج`] : null,
+    kind && area ? [landingPath(kind, area), `${kind.ar} في ${area.ar}`] : null,
+    ['/market-intelligence', `أسعار المتر في ${area ? area.ar : 'سوهاج'}`]
+  ].filter((x) => x && !SITE_LINKS.some(([h]) => h === x[0]));
+  const nearby = related.filter((r) => r.id !== p.id).slice(0, 6);
+  const placeLine = [location, area ? `${area.ar}، سوهاج` : 'سوهاج'].filter(Boolean).join(' — ');
   return nav([['/', 'الرئيسية'], ['/properties', 'العقارات'], ['', title]])
-    + `<article><h1>${esc(title)}</h1>${location ? `<p>${esc(location)}</p>` : ''}${list(facts)}`
+    + `<article><h1>${esc(title)}</h1><p>${esc(placeLine)}</p>${list(facts)}${list(more)}`
     + (image ? `<img src="${esc(image)}" alt="${esc(title)}" width="640" height="420" loading="lazy">` : '')
     + (p.description_ar ? `<h2>الوصف</h2><p>${clean(p.description_ar)}</p>` : '')
     + (features.length ? `<h2>المميزات</h2>${list(features)}` : '')
-    + '</article>' + footerNav();
+    + '</article>'
+    + (nearby.length ? `<h2>عقارات قريبة${area ? ` في ${esc(area.ar)}` : ''}</h2>${list(nearby.map(listingLink))}` : '')
+    + `<h2>تصفح عقارات سوهاج</h2>${list(sections.map(([h, n]) => `<a href="${esc(h)}">${esc(n)}</a>`))}`
+    + footerNav();
+}
+
+/** Listings to link from a listing's page: the same area first, then the same kind, newest first */
+export function relatedListings(p, all = []) {
+  const others = newestFirst(all.filter((x) => x && x.id !== p.id && isPublicListing(x)));
+  const sameArea = others.filter((x) => x.areaKey && x.areaKey === p.areaKey);
+  const sameKind = others.filter((x) => !sameArea.includes(x) && kindOf(x) && kindOf(x) === kindOf(p));
+  return [...sameArea, ...sameKind];
 }
 
 /** The project page's text */
@@ -120,9 +166,9 @@ export function routeBody({ h1, desc, path = '', listings = [], projects = [] })
 export const newestFirst = (items) => [...items].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
 
 /** Shell for a listing: head tags + JSON-LD + the page's text in #root */
-export function buildPropertyShell(template, p, origin) {
+export function buildPropertyShell(template, p, origin, all = []) {
   origin = String(origin || 'https://www.1lineestate.com').replace(/\/+$/, '');
-  const title = `${sanitizeMetaText(p.title_ar || p.title_en || 'عقار')} | 1Line Solutions`;
+  const title = `${listingSeoTitle(p)} | 1Line Solutions`;
   const location = sanitizeMetaText(p.locationName_ar || p.areaKey || '');
   const summary = [location, fmtPrice(p.price), p.size ? `${p.size} م²` : ''].filter(Boolean).join(' — ');
   const rawDesc = p.description_ar || p.description_en || summary || '';
@@ -162,7 +208,7 @@ export function buildPropertyShell(template, p, origin) {
   const preview = listingPreview(p);
   let html = headTags(template, { title, desc, url, ogTitle: preview.title, ogDesc: preview.description || summary || desc, image, type: 'article', label: 'property' });
   html = html.replace('</head>', `    <script type="application/ld+json" id="breadcrumb-schema">\n${breadcrumbsSchema}\n    </script>\n    <script type="application/ld+json" id="property-jsonld-schema">\n${propertySchema}\n    </script>\n  </head>`);
-  return withRoot(html, propertyBody(p), 'property');
+  return withRoot(html, propertyBody(p, relatedListings(p, all)), 'property');
 }
 
 /** Shell for a project page */

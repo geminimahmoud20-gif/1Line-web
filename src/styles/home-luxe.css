@@ -215,6 +215,7 @@
 }
 
 .hx-eyebrow {
+  line-height: 1.6;
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
@@ -538,10 +539,11 @@
   .hx-hero { min-height: auto; }
   .hx-hero-inner { width: calc(100% - 24px); padding-block: 20px 24px; }
   /* Phones: the headline and the search fit the first screen, above the bottom bar */
-  .hx-eyebrow, .hx-lede { display: none; }
+  .hx-lede { display: none; }
   .hx-title { font-size: clamp(1.5rem, 6.6vw, 1.8rem); line-height: 1.35; margin-bottom: 16px; }
-  .hx-eyebrow { font-size: 0.68rem; letter-spacing: 0.16em; margin-bottom: 16px; gap: 8px; }
-  .hx-eyebrow .hx-eyebrow-emblem { width: 20px; height: 20px; }
+  /* The page's <h1> stays on phones (Google reads the phone page) as one short line: «عقارات سوهاج • …» */
+  .hx-eyebrow { font-size: 0.74rem; letter-spacing: 0.04em; margin-bottom: 10px; gap: 8px; }
+  .hx-eyebrow .hx-eyebrow-emblem, .hx-eyebrow span[dir="ltr"] { display: none; }
   .hx-eyebrow i { display: none; }
   .hx-lede { margin: 14px auto 24px; line-height: 1.8; }
   .hx-lede span {
