@@ -11,7 +11,7 @@ import '../components/market/market-page.css';
 import { updatePageSeo, buildBreadcrumbSchema } from '../utils/seoHelper';
 import { countPhrase } from '../utils/arabicCount';
 
-export default function MarketIntelligencePage({ lang = 'ar', properties = [] }) {
+export default function MarketIntelligencePage({ lang = 'ar', properties = [], projects = [] }) {
   const navigate = useNavigate();
   const [userBudget, setUserBudget] = useState(2500000);
   const [areas, setAreas] = useState(getAreas);
@@ -20,9 +20,9 @@ export default function MarketIntelligencePage({ lang = 'ar', properties = [] })
   // Dynamic SEO Meta Tags for Market Intelligence
   useEffect(() => {
     updatePageSeo({
-      title: isAr ? 'أسعار المتر في سوهاج من العروض الحالية | 1Line' : 'Sohag price per m² from current listings | 1Line',
-      description: isAr 
-        ? 'متوسط سعر المتر في كل منطقة بسوهاج محسوب من العقارات المعروضة حالياً على 1Line، وإيه اللي تقدر تلاقيه بميزانيتك.'
+      title: isAr ? 'أسعار المتر في سوهاج حسب المنطقة | 1Line' : 'Sohag price per m² by area | 1Line',
+      description: isAr
+        ? 'سعر المتر في كل منطقة بسوهاج ومناطقها الفرعية، من العروض الحالية على 1Line أو تقدير فريقنا، وإيه اللي تقدر تلاقيه بميزانيتك.'
         : 'Price per m² in each Sohag district, computed from the listings currently on 1Line, and what your budget can find.',
       url: '/market-intelligence',
       type: 'website',
@@ -118,7 +118,7 @@ export default function MarketIntelligencePage({ lang = 'ar', properties = [] })
             <h2 id="mi-areas-title">{isAr ? 'سعر المتر حسب المنطقة' : 'Price per m² by area'}</h2>
             <p>{isAr ? 'السعر الكبير لمتر الشقق في المنطقة كلها. افتح «الأسعار حسب النوع» للمحلات والمكاتب والأراضي.' : 'The large figure is for flats across the area. Open «Prices by kind» for shops, offices and land.'}</p>
           </div>
-          <MarketAreaList areas={areas} properties={properties} isAr={isAr} />
+          <MarketAreaList areas={areas} properties={properties} projects={projects} isAr={isAr} />
         </section>
 
         {/* What a budget can find right now */}

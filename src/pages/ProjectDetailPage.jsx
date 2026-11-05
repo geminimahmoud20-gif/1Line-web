@@ -15,6 +15,10 @@ import { updatePageSeo, buildBreadcrumbSchema } from '../utils/seoHelper';
 import useClientDownload from '../hooks/useClientDownload';
 import { arYears, pct, planExample, projectStages, projectUnits, projectOffer } from '../utils/projectFacts';
 import OfferCountdown from '../components/properties/OfferCountdown';
+import { useDevelopers, projectDeveloper, developerPath } from '../utils/developers';
+import { projectPriceStats } from '../utils/projectStats';
+import { getAreas } from '../utils/areasData';
+import { areaPathName } from '../utils/areaLookup';
 import '../styles/property-detail-polish.css';
 import '../styles/projects-modern.css';
 import '../styles/project-detail.css';
@@ -34,6 +38,9 @@ export default function ProjectDetailPage({ projects = [], properties = [], lang
   const all = projects && projects.length > 0 ? projects : MEGA_PROJECTS;
   const project = all.find((p) => String(p.id) === String(id));
   const units = useMemo(() => projectUnits(project, properties), [project, properties]);
+  const developers = useDevelopers();
+  const developer = project ? projectDeveloper(project, developers) : null;
+  const priceStats = useMemo(() => (project ? projectPriceStats(project, properties) : null), [project, properties]);
 
   const title = project ? (isAr ? project.title_ar : project.title_en || project.title_ar) : '';
   const description = project ? (isAr ? project.description_ar : project.description_en || project.description_ar) : '';
@@ -58,8 +65,13 @@ export default function ProjectDetailPage({ projects = [], properties = [], lang
 
   if (!project) return <NotFoundPage lang={lang} />;
 
-  const location = isAr ? project.location_ar : project.location_en || project.location_ar;
-  const dev = isAr ? project.developer_ar : project.developer_en || project.developer_ar;
+  const areaName = project.areaKey ? areaPathName(project.areaKey, getAreas(), isAr) : '';
+  // The area from the CRM leads; the typed address follows it when it adds something
+  const typedLocation = isAr ? project.location_ar : project.location_en || project.location_ar;
+  const location = areaName && typedLocation && !String(typedLocation).includes(areaName.split(' · ').pop())
+    ? `${areaName} · ${typedLocation}` : (typedLocation || areaName);
+  const dev = developer ? (isAr ? developer.name_ar : developer.name_en || developer.name_ar) : (isAr ? project.developer_ar : project.developer_en || project.developer_ar);
+  const ppm = priceStats?.avgPricePerMeter || 0;
   const type = isAr ? project.type_ar : project.type_en || project.type_ar;
   const delivery = isAr ? project.deliveryDate_ar : project.deliveryDate_en || project.deliveryDate_ar;
   const features = ((isAr ? project.features_ar : project.features_en) || []).filter(Boolean);
@@ -91,6 +103,13 @@ export default function ProjectDetailPage({ projects = [], properties = [], lang
     downPct > 0 && { key: 'down', Icon: Wallet, label: isAr ? 'المقدم' : 'Down payment', value: `${pct(downPct)}%` },
     years > 0 && { key: 'plan', Icon: Layers, label: isAr ? 'التقسيط' : 'Plan', value: isAr ? arYears(years) : `${years} yrs` },
     delivery && { key: 'delivery', Icon: CalendarClock, label: isAr ? 'التسليم' : 'Delivery', value: delivery },
+    ppm > 0 && {
+      key: 'ppm', Icon: Wallet,
+      label: priceStats.source === 'units'
+        ? (isAr ? `متوسط سعر المتر (${priceStats.units === 1 ? 'وحدة واحدة' : `${priceStats.units} وحدات`} معروضة)` : `Avg price / m² (${priceStats.units} listed)`)
+        : (isAr ? 'متوسط سعر المتر (سعر المطوّر)' : 'Avg price / m² (developer)'),
+      value: `${ppm.toLocaleString('en-US')} ${isAr ? 'ج.م' : 'EGP'}`
+    },
     project.area_sqm && { key: 'area', Icon: Maximize2, label: isAr ? 'مساحة المشروع' : 'Project area', value: String(project.area_sqm) },
     total > 0 && { key: 'units', Icon: HomeIcon, label: isAr ? 'عدد الوحدات' : 'Units', value: total.toLocaleString('en-US') }
   ].filter(Boolean);
@@ -144,7 +163,8 @@ export default function ProjectDetailPage({ projects = [], properties = [], lang
               </div>
               {dev && (
                 <p className="pjd-dev">
-                  <Building2 size={15} aria-hidden="true" /><span>{isAr ? 'المطوّر: ' : 'Developer: '}{dev}</span>
+                  <Building2 size={15} aria-hidden="true" />
+                  <span>{isAr ? 'المطوّر: ' : 'Developer: '}{developer ? <Link to={developerPath(developer)} className="pjd-dev-link">{dev}</Link> : dev}</span>
                   {project.brandTag && <span className="pj-brand" dir="ltr">{project.brandTag}</span>}
                 </p>
               )}

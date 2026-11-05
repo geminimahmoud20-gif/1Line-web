@@ -3,16 +3,20 @@ import { Link } from 'react-router-dom';
 import { MapPin, ChevronDown } from 'lucide-react';
 import { areaPrice } from '../../utils/areaPricing';
 import { areaMarketStats, classLabel } from '../../utils/marketStats';
-import { groupedAreas, mainAreaOf, shortAreaName } from '../../utils/areaLookup';
+import { groupedAreas, mainAreaOf, shortAreaName, inArea } from '../../utils/areaLookup';
+import { projectPriceStats } from '../../utils/projectStats';
+import { projectPath } from '../../utils/projectFacts';
+import { useDevelopers, projectDeveloper } from '../../utils/developers';
 import { AreaClassRows } from './AreaPriceCards';
 import './market-area-list.css';
 
 // The market page's main list: each main area with its price per m² (from its listings or typed
 // in the CRM, as chosen per area), its sub-areas under it, and the prices by kind folded away.
 
-export default function MarketAreaList({ areas = [], properties = [], isAr = true }) {
+export default function MarketAreaList({ areas = [], properties = [], projects = [], isAr = true }) {
   const L = (ar, en) => (isAr ? ar : en);
   const n = (v) => Math.round(Number(v) || 0).toLocaleString('en-US');
+  const developers = useDevelopers();
 
   const groups = useMemo(() => {
     // Listings counted under their main area for the «by kind» lines
@@ -23,14 +27,18 @@ export default function MarketAreaList({ areas = [], properties = [], isAr = tru
         main,
         price: areaPrice(main, properties, areas),
         kinds: byKind.get(main.id) || null,
+        // Projects in the area or its sub-areas, priced from their listed units or the developer's figure
+        projects: projects
+          .filter((p) => !p.isDemo && p.areaKey && inArea(p.areaKey, main.id, areas))
+          .map((p) => ({ p, stats: projectPriceStats(p, properties), dev: projectDeveloper(p, developers) })),
         subs: children
           .map((c) => ({ area: c, price: areaPrice(c, properties, areas) }))
           .filter((s) => s.price.ppm > 0 || s.price.count > 0)
           .sort((a, b) => b.price.count - a.price.count)
       }))
-      .filter((g) => g.price.ppm > 0 || g.price.count > 0)
+      .filter((g) => g.price.ppm > 0 || g.price.count > 0 || g.projects.length > 0)
       .sort((a, b) => b.price.count - a.price.count || b.price.ppm - a.price.ppm);
-  }, [areas, properties]);
+  }, [areas, properties, projects, developers]);
 
   const listings = (c) => (isAr
     ? (c === 1 ? 'عرض واحد' : c === 2 ? 'عرضين' : `${n(c)} عروض`)
@@ -60,7 +68,7 @@ export default function MarketAreaList({ areas = [], properties = [], isAr = tru
 
   return (
     <div className="mal-list">
-      {groups.map(({ main, price, kinds, subs }) => {
+      {groups.map(({ main, price, kinds, subs, projects: areaProjects }) => {
         const src = source(price);
         return (
           <article key={main.id} className="mal-card">
@@ -90,6 +98,27 @@ export default function MarketAreaList({ areas = [], properties = [], isAr = tru
                   );
                 })}
               </ul>
+            )}
+
+            {areaProjects.length > 0 && (
+              <div className="mal-projects">
+                <h4>{L('المشروعات في المنطقة', 'Projects here')}</h4>
+                <ul>
+                  {areaProjects.map(({ p, stats, dev }) => (
+                    <li key={p.id}>
+                      <Link to={projectPath(p)} className="mal-project">
+                        <span className="mal-project-name">
+                          <span>{isAr ? p.title_ar : p.title_en || p.title_ar}</span>
+                          {dev && <small>{isAr ? dev.name_ar : dev.name_en || dev.name_ar}</small>}
+                        </span>
+                        {stats.avgPricePerMeter > 0
+                          ? priceTag({ ppm: stats.avgPricePerMeter })
+                          : <span className="mal-price is-none">{L('اسأل', 'Ask')}</span>}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
 
             <footer className="mal-foot">

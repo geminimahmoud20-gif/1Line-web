@@ -41,6 +41,7 @@ import { enqueuePendingLead, pendingLeadCount } from '../utils/leadQueue';
 import { track, propertyFacts, analyticsVisitorId } from '../utils/analytics';
 import { fetchPublicCatalog, PUBLIC_CATALOG_REFRESH_MS } from '../utils/publicCatalog';
 import { applySiteSettings, SITE_SETTINGS_KEY } from '../utils/siteSettings';
+import { applyDevelopers } from '../utils/developers';
 import { usePreferences } from './PreferencesContext';
 import { demandEditStamp } from '../utils/publishApproval';
 import { useUIModal } from './UIModalContext';
@@ -375,6 +376,7 @@ export function PropertiesProvider({ children }) {
       applyProperties(res.properties);
       applyProjects(res.projects);
       applySiteSettings(res.site);
+      if (res.developers) applyDevelopers(res.developers);
     });
     load();
     const timer = setInterval(() => {

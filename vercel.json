@@ -14,12 +14,13 @@
       "destination": "/app.html"
     },
     {
-      "source": "/:path(properties|about|about-us|private-office|off-market|financing|buy|sell|valuation|investor|broker|demands|vault|referral|special|special-requests|projects|market-intelligence|my-account|favorites|compare|crm|privacy|terms|trade-in|commercial-hub)",
+      "source": "/:path(properties|about|about-us|private-office|off-market|financing|buy|sell|valuation|investor|broker|demands|vault|referral|special|special-requests|projects|market-intelligence|my-account|favorites|compare|crm|privacy|terms|trade-in|commercial-hub|developers)",
       "destination": "/app.html"
     },
     { "source": "/properties/:id", "destination": "/api/page-shell?kind=property&id=:id" },
     { "source": "/projects/:id", "destination": "/api/page-shell?kind=project&id=:id" },
     { "source": "/demands/:id", "destination": "/api/page-shell?kind=demand&id=:id" },
+    { "source": "/developers/:slug", "destination": "/app.html" },
     { "source": "/sohag/:kind", "destination": "/app.html" },
     { "source": "/sohag/:kind/:area", "destination": "/app.html" }
   ],

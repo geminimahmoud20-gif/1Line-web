@@ -85,6 +85,7 @@ export default function Footer({ lang = 'ar', onOpenAboutFounder }) {
               <li><Link to="/properties">{isAr ? 'كل العقارات' : 'All properties'}</Link></li>
               <li><Link to="/sohag/apartments-for-sale">{isAr ? 'شقق للبيع في سوهاج' : 'Apartments for sale in Sohag'}</Link></li>
               <li><Link to="/projects">{isAr ? 'المشروعات والكمبوندات' : 'Mega Projects Hub'}</Link></li>
+              <li><Link to="/developers">{isAr ? 'شركات التطوير' : 'Developers'}</Link></li>
               <li><Link to="/market-intelligence">{isAr ? 'أسعار المتر في سوهاج' : 'Market Intelligence'}</Link></li>
               <li><Link to="/financing">{isAr ? 'التمويل والتقسيط' : 'Financing'}</Link></li>
               <li><Link to="/sell">{isAr ? 'اعرض عقارك للبيع' : 'Sell your property'}</Link></li>

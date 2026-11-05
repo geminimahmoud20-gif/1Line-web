@@ -1,6 +1,9 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { MessageSquare, ArrowRight, ArrowLeft, LayoutGrid, Home, Store, SearchX } from 'lucide-react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { MessageSquare, ArrowRight, ArrowLeft, LayoutGrid, Home, Store, SearchX, Building2 } from 'lucide-react';
+import { useDevelopers, projectDeveloper } from '../utils/developers';
+import { getAreas } from '../utils/areasData';
+import { areaPathName, mainAreas, inArea, shortAreaName } from '../utils/areaLookup';
 import { MEGA_PROJECTS } from '../data/projectsData';
 import ProjectCard from '../components/projects/ProjectCard';
 import '../styles/projects-modern.css';
@@ -14,6 +17,17 @@ export default function ProjectsPage({
 }) {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const navigate = useNavigate();
+  // Area and developer filters live in the address (?area=…&developer=…) so a filtered list can be shared
+  const [params, setParams] = useSearchParams();
+  const areaFilter = params.get('area') || '';
+  const devFilter = params.get('developer') || '';
+  const setFilter = (key, value) => setParams((prev) => {
+    const next = new URLSearchParams(prev);
+    if (value) next.set(key, value); else next.delete(key);
+    return next;
+  }, { replace: true });
+  const developers = useDevelopers();
+  const areas = useMemo(() => getAreas(), []);
 
   const isAr = lang === 'ar';
 
@@ -36,10 +50,22 @@ export default function ProjectsPage({
 
   const allProjects = projects && projects.length > 0 ? projects : MEGA_PROJECTS;
 
-  const filteredProjects = useMemo(() => {
-    if (selectedCategory === 'all') return allProjects;
-    return allProjects.filter(p => p.category === selectedCategory);
-  }, [selectedCategory, allProjects]);
+  const filteredProjects = useMemo(() => allProjects.filter((p) =>
+    (selectedCategory === 'all' || p.category === selectedCategory)
+    && (!areaFilter || inArea(p.areaKey, areaFilter, areas))
+    && (!devFilter || projectDeveloper(p, developers)?.id === devFilter)
+  ), [selectedCategory, allProjects, areaFilter, devFilter, areas, developers]);
+
+  // Only the areas and developers that have a project here are offered
+  const areaChoices = useMemo(() => mainAreas(areas).filter((a) => allProjects.some((p) => inArea(p.areaKey, a.id, areas))), [areas, allProjects]);
+  const devChoices = useMemo(() => developers.filter((d) => allProjects.some((p) => projectDeveloper(p, developers)?.id === d.id)), [developers, allProjects]);
+  const cardFacts = (p) => {
+    const d = projectDeveloper(p, developers);
+    return {
+      developerName: d ? (isAr ? d.name_ar : d.name_en || d.name_ar) : '',
+      areaName: p.areaKey ? areaPathName(p.areaKey, areas, isAr) : ''
+    };
+  };
 
   const handleInquireProject = (project) => {
     const title = isAr ? project.title_ar : project.title_en;
@@ -121,6 +147,32 @@ export default function ProjectsPage({
               </button>
             ))}
           </div>
+
+          {(areaChoices.length > 0 || devChoices.length > 0) && (
+            <div className="pj-subfilters">
+              {areaChoices.length > 0 && (
+                <label>
+                  <span>{isAr ? 'المنطقة' : 'Area'}</span>
+                  <select value={areaFilter} onChange={(e) => setFilter('area', e.target.value)}>
+                    <option value="">{isAr ? 'كل المناطق' : 'All areas'}</option>
+                    {areaChoices.map((a) => <option key={a.id} value={a.id}>{shortAreaName(a, areas, isAr)}</option>)}
+                  </select>
+                </label>
+              )}
+              {devChoices.length > 0 && (
+                <label>
+                  <span>{isAr ? 'شركة التطوير' : 'Developer'}</span>
+                  <select value={devFilter} onChange={(e) => setFilter('developer', e.target.value)}>
+                    <option value="">{isAr ? 'كل الشركات' : 'All developers'}</option>
+                    {devChoices.map((d) => <option key={d.id} value={d.id}>{isAr ? d.name_ar : d.name_en || d.name_ar}</option>)}
+                  </select>
+                </label>
+              )}
+              {developers.length > 0 && (
+                <Link to="/developers" className="pj-devs-link"><Building2 size={16} aria-hidden="true" />{isAr ? 'شركات التطوير' : 'Developers'}</Link>
+              )}
+            </div>
+          )}
         </div>
       </header>
 
@@ -128,8 +180,8 @@ export default function ProjectsPage({
         {filteredProjects.length === 0 ? (
           <div className="pj-empty">
             <SearchX size={36} aria-hidden="true" />
-            <p>{isAr ? 'لا توجد مشروعات من هذا النوع حالياً.' : 'No projects of this type right now.'}</p>
-            <button type="button" className="pj-btn pj-btn--ghost" onClick={() => setSelectedCategory('all')}>
+            <p>{isAr ? 'مفيش مشروعات بالاختيارات دي دلوقتي.' : 'No projects match these filters right now.'}</p>
+            <button type="button" className="pj-btn pj-btn--ghost" onClick={() => { setSelectedCategory('all'); setParams({}, { replace: true }); }}>
               {isAr ? 'عرض كل المشروعات' : 'Show all projects'}
             </button>
           </div>
@@ -145,6 +197,7 @@ export default function ProjectsPage({
                 index={i}
                 featured={i === 0}
                 onInquire={handleInquireProject}
+                {...cardFacts(project)}
               />
             ))}
           </div>

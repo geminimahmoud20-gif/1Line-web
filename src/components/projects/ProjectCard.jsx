@@ -25,11 +25,12 @@ export function ProgressRing({ value, label }) {
  * features and the brochure live on the project page the card opens.
  * `featured` lays the first project out wide, with its short description.
  */
-export default function ProjectCard({ project, isAr, currency, lang, featured = false, index = 0, onInquire }) {
+export default function ProjectCard({ project, isAr, currency, lang, featured = false, index = 0, onInquire, developerName = '', areaName = '' }) {
   const [imgFailed, setImgFailed] = useState(false);
   const title = isAr ? project.title_ar : project.title_en;
-  const location = isAr ? project.location_ar : project.location_en;
-  const dev = isAr ? project.developer_ar : project.developer_en;
+  // The area and the developer linked in the CRM lead; the typed text is the fallback
+  const location = areaName || (isAr ? project.location_ar : project.location_en);
+  const dev = developerName || (isAr ? project.developer_ar : project.developer_en);
   const delivery = isAr ? project.deliveryDate_ar : project.deliveryDate_en;
   const desc = isAr ? project.description_ar : project.description_en;
   const type = isAr ? project.type_ar : project.type_en;
@@ -69,10 +70,10 @@ export default function ProjectCard({ project, isAr, currency, lang, featured = 
         <div className="pj-media-bottom">
           <p className="pj-loc"><MapPin size={14} aria-hidden="true" /><span>{location}</span></p>
           <h3 className="pj-title" title={title}>{title}</h3>
-          <p className="pj-dev">
+          {dev && <p className="pj-dev">
             <Building2 size={13} aria-hidden="true" /><span>{dev}</span>
             {project.brandTag && <span className="pj-brand" dir="ltr">{project.brandTag}</span>}
-          </p>
+          </p>}
         </div>
       </Link>
 

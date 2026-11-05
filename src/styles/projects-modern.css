@@ -553,3 +553,21 @@ html:not(.dark-theme) .pj-filter button:focus-visible { outline-color: var(--pj-
   .pj-card:hover,
   .pj-card:hover .pj-media img { transform: none; }
 }
+
+/* Area / developer filters under the type tabs, and the link to the developers list */
+.pj-subfilters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; margin-top: 14px; }
+.pj-subfilters label { display: flex; flex-direction: column; gap: 4px; min-width: 180px; flex: 0 1 220px; }
+.pj-subfilters label span { font-size: 0.78rem; font-weight: 700; color: var(--pj-muted); }
+.pj-subfilters select {
+  min-height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--pj-line);
+  background: #FFFFFF; color: #0B1B32; font: inherit; font-weight: 600;
+}
+.pj-devs-link {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 12px;
+  border: 1px solid var(--pj-gold); background: var(--pj-surface); color: var(--pj-gold-text); font-weight: 700; text-decoration: none;
+}
+.pj-devs-link:hover { background: rgba(169, 130, 74, 0.1); }
+@media (max-width: 600px) {
+  .pj-subfilters label { flex: 1 1 140px; min-width: 0; }
+  .pj-devs-link { flex: 1 1 100%; justify-content: center; }
+}

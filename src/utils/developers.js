@@ -52,6 +52,16 @@ const readCache = () => {
   try { return normalizeDevelopers(JSON.parse(localStorage.getItem(CACHE_KEY) || '[]')); } catch { return []; }
 };
 
+const UPDATED_EVENT = 'oneline_developers_updated';
+
+/** The list from the cached /api/catalog: kept on this device and handed to open pages */
+export function applyDevelopers(list) {
+  const clean = normalizeDevelopers(list);
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(clean)); } catch { /* private mode */ }
+  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(UPDATED_EVENT, { detail: clean }));
+  return clean;
+}
+
 export async function saveDevelopers(list) {
   const clean = normalizeDevelopers(list);
   try { localStorage.setItem(CACHE_KEY, JSON.stringify(clean)); } catch { /* private mode */ }
@@ -60,13 +70,52 @@ export async function saveDevelopers(list) {
   return clean;
 }
 
-/** The developers list, live from settings/developers (cached on this device for a fast start) */
-export function useDevelopers() {
-  const [list, setList] = useState(readCache);
-  useEffect(() => subscribeToSettings(DEVELOPERS_KEY, (data) => {
-    const clean = normalizeDevelopers(data?.list);
-    setList(clean);
-    try { localStorage.setItem(CACHE_KEY, JSON.stringify(clean)); } catch { /* private mode */ }
-  }), []);
-  return list;
+/**
+ * { list, loaded }: the developers list, live from settings/developers (cached on this device for a
+ * fast start). `loaded` turns true once the saved list has been read, so a page can tell «not
+ * loaded yet» from «no such developer».
+ */
+export function useDevelopersState() {
+  const [state, setState] = useState(() => ({ list: readCache(), loaded: false }));
+  useEffect(() => {
+    // No saved list at all never calls back: stop waiting after a few seconds
+    const timer = setTimeout(() => setState((s) => (s.loaded ? s : { ...s, loaded: true })), 12000);
+    // Visitors get the list with the cached catalog, usually before Firestore has even loaded
+    const onCatalog = (e) => {
+      clearTimeout(timer);
+      setState({ list: Array.isArray(e.detail) ? e.detail : readCache(), loaded: true });
+    };
+    window.addEventListener(UPDATED_EVENT, onCatalog);
+    const unsubscribe = subscribeToSettings(DEVELOPERS_KEY, (data) => {
+      clearTimeout(timer);
+      const clean = normalizeDevelopers(data?.list);
+      setState({ list: clean, loaded: true });
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify(clean)); } catch { /* private mode */ }
+    });
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener(UPDATED_EVENT, onCatalog);
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
+  }, []);
+  return state;
 }
+
+/** The developers list, live from settings/developers */
+export function useDevelopers() {
+  return useDevelopersState().list;
+}
+
+/** The developer's page on the site */
+export const developerPath = (d) => `/developers/${encodeURIComponent(developerSlug(d))}`;
+
+/** The developer a /developers/<slug> link points to (its slug, or its id for older links) */
+export const findDeveloper = (slug, developers = []) => {
+  const key = String(slug || '').toLowerCase();
+  if (!key) return null;
+  return developers.find((d) => developerSlug(d) === key) || developers.find((d) => String(d.id).toLowerCase() === key) || null;
+};
+
+/** The developer of a project: the linked record, else one whose name matches the old free-text name */
+export const projectDeveloper = (project, developers = []) => developerOf(project, developers)
+  || (str(project?.developer_ar) ? developers.find((d) => d.name_ar === str(project.developer_ar)) || null : null);

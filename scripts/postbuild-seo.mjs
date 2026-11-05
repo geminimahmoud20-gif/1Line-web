@@ -171,6 +171,7 @@ export async function runPostbuild() {
     ['/investor', '0.7', 'monthly'],
     ['/market-intelligence', '0.7', 'weekly'],
     ['/projects', '0.7', 'weekly'],
+    ['/developers', '0.6', 'weekly'],
     ['/about', '0.7', 'monthly'],
     ['/financing', '0.6', 'monthly'],
     ['/demands', '0.6', 'daily'],
@@ -247,10 +248,16 @@ Sitemap: ${siteUrl}/sitemap.xml
       breadcrumbName: 'دليل المشروعات'
     },
     {
+      path: 'developers',
+      title: 'شركات التطوير العقاري في سوهاج ومشروعاتها | 1Line Solutions',
+      desc: 'شركات التطوير العقاري في سوهاج: مشروعات كل شركة، مناطقها، ومتوسط سعر المتر فيها.',
+      breadcrumbName: 'شركات التطوير'
+    },
+    {
       path: 'market-intelligence',
-      title: 'أسعار المتر في سوهاج من العروض الحالية | 1Line Solutions',
-      desc: 'متوسط سعر المتر في كل منطقة بسوهاج محسوب من العقارات المعروضة حالياً على 1Line، وإيه اللي تقدر تلاقيه بميزانيتك.',
-      breadcrumbName: 'أسعار المتر ومؤشرات السوق'
+      title: 'أسعار المتر في سوهاج حسب المنطقة | 1Line Solutions',
+      desc: 'سعر المتر في كل منطقة بسوهاج ومناطقها الفرعية، من العروض الحالية على 1Line أو تقدير فريقنا، وإيه اللي تقدر تلاقيه بميزانيتك.',
+      breadcrumbName: 'أسعار المتر'
     },
     {
       path: 'financing',

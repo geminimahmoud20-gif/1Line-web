@@ -211,6 +211,7 @@ export default function Header({
         { path: '/', label: isAr ? 'الرئيسية' : 'Home', icon: Home },
         { path: '/properties', label: isAr ? 'العقارات' : 'Properties', icon: Building },
         { path: '/projects', label: isAr ? 'المشروعات والكمبوندات' : 'Projects & compounds', icon: Layers },
+        { path: '/developers', label: isAr ? 'شركات التطوير' : 'Developers', icon: Building },
         { path: '/demands', label: isAr ? 'طلبات المشترين' : 'Buyer demands', icon: FileText },
         { path: '/commercial-hub', label: isAr ? 'عيادات ومحلات ومكاتب' : 'Clinics, shops & offices', icon: Stethoscope },
         { path: '/market-intelligence', label: isAr ? 'أسعار المتر في سوهاج' : 'Price per m²', icon: TrendingUp }

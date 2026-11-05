@@ -17,6 +17,7 @@ const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const PrivateOfficePage = lazy(() => import('./pages/PrivateOfficePage'));
 const ProjectsPage = lazy(() => import('./pages/ProjectsPage'));
 const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage'));
+const DevelopersPage = lazy(() => import('./pages/DevelopersPage'));
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const PropertiesPage = lazy(() => import('./pages/PropertiesPage'));
 const PropertyDetailPage = lazy(() => import('./pages/PropertyDetailPage'));
@@ -395,6 +396,22 @@ export default function AppRoutes({
         }
       />
 
+      {/* Developers: the list, and one company with its projects */}
+      {['/developers', '/developers/:slug'].map((p) => (
+        <Route
+          key={p}
+          path={p}
+          element={
+            <DevelopersPage
+              lang={lang}
+              currency={currency}
+              projects={publicProjects}
+              properties={siteProperties}
+            />
+          }
+        />
+      ))}
+
       {/* Search landing pages: "شقق للبيع في سوهاج الجديدة" (utils/seoLanding) */}
       {['/sohag/:kind', '/sohag/:kind/:area'].map((p) => (
         <Route
@@ -423,6 +440,7 @@ export default function AppRoutes({
             lang={lang}
             currency={currency}
             properties={siteProperties}
+            projects={publicProjects}
             triggerToast={triggerToast}
           />
         }
