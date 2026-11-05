@@ -195,17 +195,26 @@ export async function runPostbuild() {
     ['/privacy', '0.2', 'yearly'],
   ];
 
+  // lastmod is when the page's content last changed, not the build date: a listing's own update,
+  // and for the pages that list listings the newest one. Other pages carry none (Google ignores a
+  // lastmod that moves on every build for pages that didn't change).
+  const dayOf = (v) => {
+    const t = typeof v === 'string' || typeof v === 'number' ? new Date(v) : null;
+    return t && !Number.isNaN(t.getTime()) ? t.toISOString().slice(0, 10) : '';
+  };
+  const newestDay = realListings.map((p) => dayOf(p.updatedAt) || dayOf(p.createdAt)).filter(Boolean).sort().pop() || today;
+  const LISTS_LISTINGS = new Set(['/', '/properties']);
   const urls = [
-    ...staticRoutes.map(([loc, priority, freq]) => ({ loc, priority, freq })),
-    ...landings.map((l) => ({ loc: l.path, priority: l.area ? '0.7' : '0.8', freq: 'daily' })),
-    ...realListings.map((p) => ({ loc: `/properties/${encodeURIComponent(p.id)}`, priority: '0.8', freq: 'weekly' })),
-    ...projects.filter((p) => /^[\w-]{1,80}$/.test(p.id)).map((p) => ({ loc: `/projects/${encodeURIComponent(p.id)}`, priority: '0.6', freq: 'weekly' })),
+    ...staticRoutes.map(([loc, priority, freq]) => ({ loc, priority, freq, lastmod: LISTS_LISTINGS.has(loc) ? newestDay : '' })),
+    ...landings.map((l) => ({ loc: l.path, priority: l.area ? '0.7' : '0.8', freq: 'daily', lastmod: newestDay })),
+    ...realListings.map((p) => ({ loc: `/properties/${encodeURIComponent(p.id)}`, priority: '0.8', freq: 'weekly', lastmod: dayOf(p.updatedAt) || dayOf(p.createdAt) })),
+    ...projects.filter((p) => /^[\w-]{1,80}$/.test(p.id)).map((p) => ({ loc: `/projects/${encodeURIComponent(p.id)}`, priority: '0.6', freq: 'weekly', lastmod: dayOf(p.updatedAt) })),
   ];
 
   // 1. Sitemap.xml
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map((u) => `  <url><loc>${siteUrl}${u.loc}</loc><lastmod>${today}</lastmod><changefreq>${u.freq}</changefreq><priority>${u.priority}</priority></url>`).join('\n')}
+${urls.map((u) => `  <url><loc>${siteUrl}${u.loc}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ''}<changefreq>${u.freq}</changefreq><priority>${u.priority}</priority></url>`).join('\n')}
 </urlset>
 `;
   fs.writeFileSync(path.join(dist, 'sitemap.xml'), xml);
@@ -336,7 +345,7 @@ Sitemap: ${siteUrl}/sitemap.xml
   let prerenderedListings = 0;
   for (const p of realListings) {
     if (!/^[\w-]{1,80}$/.test(p.id)) continue;
-    const html = buildPropertyShell(indexHtml, p, siteUrl);
+    const html = buildPropertyShell(indexHtml, p, siteUrl, realListings);
     const dir = path.join(dist, 'properties', p.id);
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, 'index.html'), html);

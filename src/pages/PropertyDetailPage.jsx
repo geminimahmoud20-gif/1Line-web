@@ -23,6 +23,7 @@ import { getWhatsAppUrl, getPhoneCallUrl } from '../utils/founderCmsData';
 import HistoricalPriceChart from '../components/properties/HistoricalPriceChart';
 import SocialStoryCardModal from '../components/properties/SocialStoryCardModal';
 import { updatePageSeo, buildPropertySchema, buildBreadcrumbSchema, injectJsonLdSchema } from '../utils/seoHelper';
+import { listingSeoTitle } from '../utils/seoShell';
 import { checkFormSpamProtection } from '../utils/securityShield';
 import { formatCurrencyPrice, getPriceBenchmark, isMultiUnitOrBuilding } from '../utils/currencyAndBenchmark';
 import BookingConfirmationModal from '../components/common/BookingConfirmationModal';
@@ -119,7 +120,7 @@ export default function PropertyDetailPage({
       ]);
 
       updatePageSeo({
-        title: propTitle,
+        title: isAr ? listingSeoTitle(property) : propTitle,
         description: propDesc,
         image: property.image || (property.images && property.images[0]),
         url: `/properties/${property.id}`,

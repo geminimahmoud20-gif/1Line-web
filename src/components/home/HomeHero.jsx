@@ -234,14 +234,15 @@ export default function HomeHero({
       )}
 
       <div className="hx-hero-inner">
-        <p className="hx-eyebrow">
+        {/* The page's one <h1>: what people search for («عقارات سوهاج»); the slogan below is a styled line */}
+        <h1 className="hx-eyebrow">
           <LogoEmblem size={22} className="hx-eyebrow-emblem" />
           <span dir="ltr">1LINE REAL ESTATE SOLUTIONS</span>
           <i aria-hidden="true" />
-          <span>{lang === 'ar' ? 'سوهاج • القاهرة الكبرى' : 'SOHAG • GREATER CAIRO'}</span>
-        </p>
+          <span>{lang === 'ar' ? 'عقارات سوهاج • القاهرة الكبرى' : 'SOHAG REAL ESTATE • GREATER CAIRO'}</span>
+        </h1>
 
-        <h1 className="hx-title">
+        <p className="hx-title">
           {lang === 'ar' ? (
             <>
               <span>العقار ليس مجرد مساحة..</span>
@@ -255,7 +256,7 @@ export default function HomeHero({
               <span>It is <em>value</em> built on the right <em>decision</em>.</span>
             </>
           )}
-        </h1>
+        </p>
 
         <p className="hx-lede">
           {lang === 'ar' ? (

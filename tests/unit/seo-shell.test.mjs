@@ -62,3 +62,21 @@ test('a shared buyer request previews as what is wanted, where and for how much'
   assert.match(rootText(html), /<h1>مطلوب للشراء: شقة سكنية في سوهاج الجديدة<\/h1>/);
   assert.doesNotMatch(html, /01012345678/);
 });
+
+test('a listing page names where it is, and links to nearby listings and its kind pages', async () => {
+  const { listingSeoTitle, relatedListings } = await import('../../src/utils/seoShell.js');
+  const tpl = template;
+  const p = { id: 'a1', type: 'apartment', title_ar: 'شقة جاردن سيتي 4', areaKey: 'new_sohag', status: 'published', price: 2_000_000, size: 150, createdAt: '2026-11-01' };
+  const near = { id: 'a2', type: 'apartment', title_ar: 'شقة تانية', areaKey: 'new_sohag', status: 'published', price: 1_800_000, size: 120, createdAt: '2026-11-02' };
+  const hidden = { ...near, id: 'a3', status: 'hidden' };
+  assert.equal(listingSeoTitle(p), 'شقة جاردن سيتي 4 — سوهاج الجديدة');
+  assert.equal(listingSeoTitle({ title_ar: 'شقة في سوهاج' }), 'شقة في سوهاج');
+  assert.deepEqual(relatedListings(p, [p, near, hidden]).map((x) => x.id), ['a2']);
+  const html = buildPropertyShell(tpl, p, 'https://www.1lineestate.com', [p, near, hidden]);
+  assert.ok(html.includes('<title>شقة جاردن سيتي 4 — سوهاج الجديدة | 1Line Solutions</title>'));
+  assert.ok(html.includes('href="/properties/a2"'));
+  assert.ok(!html.includes('href="/properties/a3"'));
+  assert.ok(html.includes('href="/sohag/apartments-for-sale/new-sohag"'));
+  assert.ok(html.includes('سعر المتر: 13,333 ج.م'));
+  assert.equal((html.match(/<h1/g) || []).length, 1);
+});

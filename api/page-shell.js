@@ -48,7 +48,7 @@ export async function GET(request) {
     const items = kind === 'project' ? data.projects : data.properties;
     const item = (Array.isArray(items) ? items : []).find((x) => String(x?.id) === id);
     if (!item || !(kind === 'project' ? isPublicProject(item) : isPublicListing(item))) return plain();
-    const page = kind === 'project' ? buildProjectShell(template, item, SITE_URL) : buildPropertyShell(template, item, SITE_URL);
+    const page = kind === 'project' ? buildProjectShell(template, item, SITE_URL) : buildPropertyShell(template, item, SITE_URL, Array.isArray(data.properties) ? data.properties : []);
     return html(page, 'public, s-maxage=600, stale-while-revalidate=86400');
   } catch (err) {
     console.error('page-shell failed:', err?.message || err);
