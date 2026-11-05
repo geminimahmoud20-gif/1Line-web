@@ -509,6 +509,29 @@ export const mergeLeads = async (keepId, mergedFields, removeIds = []) => {
 };
 
 /**
+ * One client by id, with their phone when this account may see it. The live list holds only the
+ * newest 150, so a unit's owner who came in earlier isn't in it (the listing form's «صاحب الوحدة»).
+ * Returns { status: 'ok', lead } | { status: 'missing' } (deleted or merged away) |
+ * { status: 'denied' } (another desk's client) | { status: 'error' }.
+ */
+export const fetchLeadById = async (leadId) => {
+  if (!isFirebaseConfigured() || !db || !leadId) return { status: 'error' };
+  try {
+    const snap = await getDoc(doc(db, 'leads', String(leadId)));
+    if (!snap.exists()) return { status: 'missing' };
+    let contact = {};
+    try {
+      const c = await getDoc(doc(db, 'lead_contacts', String(leadId)));
+      if (c.exists()) contact = c.data();
+    } catch { /* this role doesn't see client phones */ }
+    const { assignedTo: _desk, ...phones } = contact;
+    return { status: 'ok', lead: { ...snap.data(), ...phones, id: snap.id } };
+  } catch (error) {
+    return { status: error?.code === 'permission-denied' ? 'denied' : 'error' };
+  }
+};
+
+/**
  * Every lead this account may read (no contact docs), for dashboard totals. The live list only
  * holds the newest 150, so numbers computed from it alone go wrong once there are more.
  * Paged by document id (500 a page) up to `max`. Returns { ok, leads, truncated }.
