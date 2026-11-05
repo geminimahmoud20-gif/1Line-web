@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import { MessageSquare, Menu, X, Search, Globe, Share2, Sun, Moon, Volume2, VolumeX, MoreHorizontal, Scale, Building, Sparkles, FileText, ChevronDown, Home, TrendingUp, Award, Layers, Heart, ArrowRight, ArrowLeft, Lock, User, ShieldCheck, Repeat2, Stethoscope, PlusCircle, Landmark, Briefcase, Info, Phone, MessageCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MessageSquare, Menu, X, Search, Globe, Share2, Sun, Moon, Volume2, VolumeX, MoreHorizontal, Scale, Building, Sparkles, FileText, ChevronDown, Home, TrendingUp, Award, Layers, Heart, ArrowRight, ArrowLeft, Lock, User, ShieldCheck, Repeat2, Stethoscope, PlusCircle, Landmark, Briefcase, Info, Phone, MessageCircle, ChevronLeft, ChevronRight, Users } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import InstallAppButton from './InstallAppButton';
 import CurrencySwitcher from './CurrencySwitcher';
@@ -169,7 +169,7 @@ export default function Header({
       label: isAr ? 'خدمات' : 'Services',
       title: isAr ? 'طلبات المشترين وخدمات واستشارات VIP' : 'Buyer demands, VIP services & advisory',
       icon: Sparkles,
-      activePaths: ['/match', '/demands', '/special-requests', '/market-intelligence', '/financing', '/investor', '/private-office', '/off-market', '/trade-in', '/commercial-hub'],
+      activePaths: ['/match', '/broker', '/demands', '/special-requests', '/market-intelligence', '/financing', '/investor', '/private-office', '/off-market', '/trade-in', '/commercial-hub'],
       // Three short sections so the menu reads at a glance: buy & sell, prices & finance, premium clients
       groups: [
         {
@@ -179,7 +179,8 @@ export default function Header({
             { path: '/match', label: isAr ? 'رشّحلي وحدتي' : 'Find my home', desc: isAr ? '5 أسئلة ونرشّحلك الأنسب' : '5 questions, the best fits', badge: isAr ? 'جديد' : 'New', icon: Sparkles },
             { path: '/demands', label: isAr ? 'طلبات المشترين' : 'Buyer demands', desc: isAr ? 'مشترين بيدوّروا على عقار زي عقارك' : 'Buyers looking for a property like yours', icon: FileText },
             { path: '/trade-in', label: isAr ? 'بدّل عقارك' : 'Trade in', desc: isAr ? 'بفرق كاش أو رأس برأس' : 'With or without a cash difference', badge: isAr ? 'جديد' : 'New', icon: Repeat2 },
-            { path: '/commercial-hub', label: isAr ? 'عيادات ومحلات ومكاتب' : 'Clinics, shops & offices', desc: isAr ? 'الموقع والركن وحاسبة العائد' : 'Location, parking & yield', icon: Stethoscope }
+            { path: '/commercial-hub', label: isAr ? 'عيادات ومحلات ومكاتب' : 'Clinics, shops & offices', desc: isAr ? 'الموقع والركن وحاسبة العائد' : 'Location, parking & yield', icon: Stethoscope },
+            { path: '/broker', label: isAr ? 'شبكة الوسطاء' : 'Brokers network', desc: isAr ? 'اعرض وحدات عملائك وطلباتهم معانا' : 'List your clients’ units and requests with us', icon: Users }
           ]
         },
         {
@@ -226,6 +227,7 @@ export default function Header({
         { path: '/sell', label: isAr ? 'اعرض عقارك للبيع' : 'Sell your property', icon: PlusCircle },
         { path: '/trade-in', label: isAr ? 'بدّل عقارك' : 'Trade in', badge: isAr ? 'جديد' : 'New', icon: Repeat2 },
         { path: '/financing', label: isAr ? 'التمويل والتقسيط' : 'Financing', icon: Landmark },
+        { path: '/broker', label: isAr ? 'شبكة الوسطاء' : 'Brokers network', icon: Users },
         { path: '/special-requests', label: isAr ? 'اطلب عقار بمواصفاتك' : 'Request a property', badge: 'VIP', icon: Sparkles }
       ]
     },

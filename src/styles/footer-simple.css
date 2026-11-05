@@ -1,0 +1,37 @@
+/* Simple footer: brand and contact on one row, one line of key links, a quiet bottom bar */
+.ft .ft-wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; flex-direction: column; gap: 22px; }
+.ft-top { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.ft-brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.ft-brand > div { display: flex; flex-direction: column; gap: 2px; }
+.ft-name { font-size: 1.35rem; font-weight: 900; letter-spacing: 1px; color: #fff; }
+.ft-name .brand-one { color: #D9B97E; margin-inline-end: 2px; }
+.ft-sub { font-size: 0.86rem; color: #94A3B8; }
+.ft-contact { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ft-phone, .ft-wa { white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 999px;
+  font-weight: 700; font-size: 0.92rem; text-decoration: none;
+}
+.ft-phone { color: #E2E8F0; border: 1px solid rgba(255, 255, 255, 0.18); }
+.ft-phone:hover { border-color: #D9B97E; color: #fff; }
+.ft-wa { background: #1f9d55; color: #fff; }
+.ft-wa:hover { background: #188046; }
+
+.ft-links { display: flex; flex-wrap: wrap; gap: 6px 22px; padding: 16px 0; border-top: 1px solid rgba(255, 255, 255, 0.08); border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+.ft-links a { color: #CBD5E1; text-decoration: none; font-size: 0.92rem; font-weight: 600; min-height: 32px; display: inline-flex; align-items: center; }
+.ft-links a:hover { color: #D9B97E; }
+
+.ft-bottom { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 20px; font-size: 0.8rem; color: #94A3B8; }
+.ft-copy a { color: #CBD5E1; text-decoration: underline; text-underline-offset: 3px; }
+.ft-hq { display: inline-flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+.ft-hq svg { color: #D9B97E; flex: none; }
+.ft-bottom .footer-scroll-top-btn { margin-inline-start: auto; }
+
+@media (max-width: 640px) {
+  .ft .ft-wrap { padding: 0 16px; gap: 18px; }
+  .ft-top { flex-direction: column; align-items: flex-start; }
+  .ft-contact { width: 100%; }
+  .ft-phone, .ft-wa { flex: 1; justify-content: center; }
+  .ft-links { gap: 4px 16px; }
+  .ft-bottom { flex-direction: column; align-items: flex-start; }
+  .ft-bottom .footer-scroll-top-btn { display: none; }
+}
