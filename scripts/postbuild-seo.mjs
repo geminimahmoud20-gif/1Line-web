@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ROUTE_SEO } from '../src/config/routeSeo.js';
+import { siteListingsQuery, queryDocuments } from '../api/_catalog-core.js';
 import { landingPages, landingListings, landingSummary, landingCopy, landingFaq, landingPath } from '../src/utils/seoLanding.js';
 import {
   esc, sanitizeMetaText, strictReplace, fmtPrice, buildPropertyShell, buildProjectShell, withRoot, routeBody,
@@ -61,11 +62,27 @@ const fromFirestoreValue = (v) => {
 // local builds would otherwise spend the free Firestore read quota (SEO_FETCH=1 forces it).
 const READ_LIVE = process.env.VERCEL_ENV === 'production' || process.env.SEO_FETCH === '1';
 
+const toItem = (d) => {
+  const f = Object.fromEntries(Object.entries(d.fields || {}).map(([k, v]) => [k, fromFirestoreValue(v)]));
+  return { ...f, id: String(f.id || d.name.split('/').pop()) };
+};
+
 async function fetchCollection(name) {
   const out = [];
   if (!READ_LIVE) return out;
   let pageToken = '';
   try {
+    // A build reads as a visitor: firestore.rules allow only the listings on the site, so ask for those
+    if (name === 'properties') {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 15000);
+      const res = await fetch(`https://firestore.googleapis.com/v1/projects/${FIRESTORE_PROJECT}/databases/(default)/documents:runQuery?key=${FIRESTORE_KEY}`, {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(siteListingsQuery()), signal: ctrl.signal
+      });
+      clearTimeout(timer);
+      if (!res.ok) { console.warn(`postbuild-seo: Firestore ${name} unavailable (${res.status})`); return out; }
+      return queryDocuments(await res.json()).map(toItem);
+    }
     for (let page = 0; page < 10; page++) {
       const url = `https://firestore.googleapis.com/v1/projects/${FIRESTORE_PROJECT}/databases/(default)/documents/${name}?pageSize=300&key=${FIRESTORE_KEY}${pageToken ? `&pageToken=${pageToken}` : ''}`;
       const ctrl = new AbortController();
@@ -74,11 +91,7 @@ async function fetchCollection(name) {
       clearTimeout(timer);
       if (!res.ok) { console.warn(`postbuild-seo: Firestore ${name} unavailable (${res.status})`); break; }
       const data = await res.json();
-      for (const d of data.documents || []) {
-        const f = Object.fromEntries(Object.entries(d.fields || {}).map(([k, v]) => [k, fromFirestoreValue(v)]));
-        const id = f.id || d.name.split('/').pop();
-        out.push({ ...f, id: String(id) });
-      }
+      for (const d of data.documents || []) out.push(toItem(d));
       if (!data.nextPageToken) break;
       pageToken = encodeURIComponent(data.nextPageToken);
     }

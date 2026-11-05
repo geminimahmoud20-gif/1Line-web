@@ -30,14 +30,41 @@ export const decodeFields = (fields = {}) =>
  * REST documents → the list subscribeToCatalog hands the app: { ...data, id } with the item's own
  * id field winning. Tombstones stay (as { id, deleted }) so visitors' cached copies drop the item.
  * An item waiting for (or refused) the general manager's approval goes out as a tombstone too:
- * visitors never receive it (src/utils/publishApproval.js).
+ * visitors never receive it (src/utils/publishApproval.js). So does a hidden, draft or trashed
+ * listing: its exact location and legal file are for staff.
  */
+const OFF_SITE_STATUSES = ['hidden', 'draft', 'trash', 'pending', 'rejected'];
+
+/**
+ * Listing statuses a visitor may read. firestore.rules lets anyone without a staff account read a
+ * listing only with one of these, so an unauthenticated read asks for exactly these (the REST
+ * query below). Same list as SITE_STATUSES in src/services/catalog.js.
+ */
+export const SITE_STATUSES = ['published', 'under_negotiation', 'reserved', 'deposit_paid', 'contracted', 'sold'];
+
+/** Firestore REST :runQuery body for the listings on the site */
+export const siteListingsQuery = () => ({
+  structuredQuery: {
+    from: [{ collectionId: 'properties' }],
+    where: {
+      fieldFilter: {
+        field: { fieldPath: 'status' },
+        op: 'IN',
+        value: { arrayValue: { values: SITE_STATUSES.map((s) => ({ stringValue: s })) } }
+      }
+    }
+  }
+});
+
+/** The documents in a :runQuery reply (rows without a document only report progress) */
+export const queryDocuments = (rows) => (Array.isArray(rows) ? rows.map((r) => r?.document).filter(Boolean) : []);
 export function toCatalogItems(documents = []) {
   return documents.map((d) => {
     const data = decodeFields(d.fields);
     const docId = String(d.name || '').split('/').pop();
     const id = data.id ?? docId;
-    const offSite = data.deleted || data.approval === 'pending' || data.approval === 'rejected';
+    const offSite = data.deleted || data.approval === 'pending' || data.approval === 'rejected'
+      || OFF_SITE_STATUSES.includes(data.status);
     return offSite ? { id, deleted: true, updatedAt: data.updatedAt || null } : { ...data, id };
   });
 }

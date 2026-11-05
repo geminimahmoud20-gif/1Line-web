@@ -2,26 +2,9 @@ import { db, auth, isFirebaseConfigured } from '../firebase.js';
 import { checkIsAdmin } from './auth.js';
 import { approvalStamp, STAFF_IDENTITY_FIELDS } from '../utils/publishApproval.js';
 
-import { collection, addDoc, getDocs, doc, setDoc, deleteDoc, query, orderBy, limit, onSnapshot, serverTimestamp, writeBatch, deleteField, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, setDoc, deleteDoc, query, where, onSnapshot, serverTimestamp, writeBatch, deleteField, updateDoc } from 'firebase/firestore';
 
 // ===================== PROPERTIES =====================
-
-/**
- * Load all properties from Firestore (or return null for local fallback).
- */
-export const loadProperties = async (maxCount = 100) => {
-  if (isFirebaseConfigured() && db) {
-    try {
-      const q = query(collection(db, 'properties'), orderBy('createdAt', 'desc'), limit(maxCount));
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
-    } catch (error) {
-      console.error('Firebase loadProperties error:', error);
-      return null;
-    }
-  }
-  return null;
-};
 
 /**
  * Save a new property to Firestore.
@@ -60,10 +43,20 @@ const toFirestorePayload = (item) => {
  * Real-time listener for a catalog collection. Returns an unsubscribe function or null.
  * callback receives [{ id, ...data }] including tombstones.
  */
-export const subscribeToCatalog = (collectionName, callback) => {
+/** Listing statuses visitors may read (firestore.rules allows only these to non-staff) */
+export const SITE_STATUSES = ['published', 'under_negotiation', 'reserved', 'deposit_paid', 'contracted', 'sold'];
+
+/**
+ * Live listener on the catalog. `siteOnly` (visitors, when /api/catalog is unreachable) asks only
+ * for listings on the site, the query the rules let a visitor run; the CRM reads everything.
+ */
+export const subscribeToCatalog = (collectionName, callback, { siteOnly = false } = {}) => {
   if (!CATALOG_COLLECTIONS.has(collectionName) || !isFirebaseConfigured() || !db) return null;
   try {
-    return onSnapshot(collection(db, collectionName), (snapshot) => {
+    const source = siteOnly && collectionName === 'properties'
+      ? query(collection(db, collectionName), where('status', 'in', SITE_STATUSES))
+      : collection(db, collectionName);
+    return onSnapshot(source, (snapshot) => {
       callback(snapshot.docs.map((d) => ({ ...d.data(), id: d.data().id ?? d.id })));
     }, (err) => {
       console.warn(`Firebase subscribeToCatalog [${collectionName}] warning:`, err);
