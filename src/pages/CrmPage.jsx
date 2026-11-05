@@ -905,6 +905,8 @@ export default function CrmPage({
           ) : activeTab === 'projects' ? (
             <MegaProjectsManagerPanel
               canApprove={activeRole === 'super_admin'}
+              properties={properties}
+              canEditDevelopers={activeRole === 'super_admin' || activeRole === 'admin'}
               openRequest={openRequest}
               readOnly={!can.editInventory}
               projects={projects}

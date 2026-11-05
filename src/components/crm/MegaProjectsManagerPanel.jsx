@@ -4,6 +4,8 @@ import { Building2, Plus, Edit3, Trash2, MapPin, Search, Eye, EyeOff, Flame } fr
 import { projectSampleFlags } from '../../utils/sampleDataFlags';
 import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 import ProjectFormModal from './ProjectFormModal';
+import DevelopersPanel from './DevelopersPanel';
+import { useDevelopers } from '../../utils/developers';
 import OfferModal from './OfferModal';
 import './projects-manager.css';
 import { offerState } from '../../utils/propertyOffers';
@@ -24,8 +26,12 @@ export default function MegaProjectsManagerPanel({
   triggerToast = () => {},
   openRequest = null,
   readOnly = false,
-  canApprove = false
+  canApprove = false,
+  properties = [],
+  canEditDevelopers = false
 }) {
+  const developers = useDevelopers();
+  const [view, setView] = useState('projects'); // 'projects' | 'developers'
   const confirm = useConfirm();
   const isAr = lang === 'ar';
   const [searchQuery, setSearchQuery] = useState('');
@@ -134,6 +140,7 @@ export default function MegaProjectsManagerPanel({
       startPrice: Number(formData.startPrice),
       downPaymentPercent: Number(formData.downPaymentPercent) || 0,
       installmentYears: Number(formData.installmentYears) || 0,
+      avgPricePerMeter: Number(formData.avgPricePerMeter) || 0,
       progress: numOr(formData.progress, 0),
       totalUnits: numOr(formData.totalUnits, 0),
       availableUnits: numOr(formData.availableUnits, 0),
@@ -255,6 +262,17 @@ export default function MegaProjectsManagerPanel({
         </div>
       </div>
 
+      <div className="crm-triage-scroll-strip" role="tablist" style={{ margin: '0 0 16px' }}>
+        {[['projects', isAr ? 'المشروعات' : 'Projects', projects.length], ['developers', isAr ? 'المطورين' : 'Developers', developers.length]].map(([id, label, n]) => (
+          <button key={id} type="button" role="tab" aria-selected={view === id} className={`crm-triage-tab-btn ${view === id ? 'is-active' : ''}`} onClick={() => setView(id)}>
+            <span>{label} ({n})</span>
+          </button>
+        ))}
+      </div>
+
+      {view === 'developers' ? (
+        <DevelopersPanel developers={developers} projects={projects} properties={properties} isAr={isAr} canEdit={canEditDevelopers} triggerToast={triggerToast} />
+      ) : (<>
       {/* Filter & Search Toolbar */}
       <div className="crm-modern-triage-hub" style={{ marginBottom: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
@@ -445,6 +463,7 @@ export default function MegaProjectsManagerPanel({
           </tbody>
         </table>
       </div>
+      </>)}
 
       {offerEditing && (
         <OfferModal
@@ -476,6 +495,8 @@ export default function MegaProjectsManagerPanel({
           editing={Boolean(editingProjectId)}
           isAr={isAr}
           triggerToast={triggerToast}
+          developers={developers}
+          properties={properties}
         />
       )}
     </div>

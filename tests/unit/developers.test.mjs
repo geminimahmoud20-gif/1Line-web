@@ -1,0 +1,39 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { normalizeDevelopers, developerSlug, projectsOf } from '../../src/utils/developers.js';
+import { projectPriceStats } from '../../src/utils/projectStats.js';
+
+test('developers: only clean fields, a name required, safe links only', () => {
+  const [d, ...rest] = normalizeDevelopers([
+    { id: 'dev-1', name_ar: ' شركة الأمل ', name_en: 'Al Amal Developments', logo: 'javascript:alert(1)', website: 'https://amal.example', extra: 'x' },
+    { id: 'dev-2', name_ar: '' },
+    { id: 'dev-1', name_ar: 'مكرر' }
+  ]);
+  assert.equal(rest.length, 0);
+  assert.equal(d.name_ar, 'شركة الأمل');
+  assert.equal(d.logo, '');
+  assert.equal(d.website, 'https://amal.example');
+  assert.equal('extra' in d, false);
+  assert.equal(developerSlug(d), 'al-amal-developments');
+  assert.equal(developerSlug({ id: 'dev-9', name_en: '' }), 'dev-9');
+});
+
+test("a developer's projects: linked ones, and old ones that only carry the name", () => {
+  const dev = { id: 'dev-1', name_ar: 'شركة الأمل' };
+  const projects = [{ id: 'a', developerId: 'dev-1' }, { id: 'b', developer_ar: 'شركة الأمل' }, { id: 'c', developerId: 'dev-2', developer_ar: 'شركة الأمل' }, { id: 'd', developerId: 'dev-1', isDeleted: true }];
+  assert.deepEqual(projectsOf(dev, projects).map((p) => p.id), ['a', 'b']);
+});
+
+test('project price per m²: from its listings on sale, else the typed figure', () => {
+  const project = { id: 'pj1', avgPricePerMeter: 15000 };
+  const props = [
+    { id: 1, projectId: 'pj1', price: 2_000_000, size: 100, status: 'published' },
+    { id: 2, projectId: 'pj1', price: 2_400_000, size: 120, status: 'published' },
+    { id: 3, projectId: 'pj1', price: 9_000_000, size: 100, status: 'hidden' },
+    { id: 4, projectId: 'pj2', price: 1_000_000, size: 100, status: 'published' }
+  ];
+  const s = projectPriceStats(project, props);
+  assert.deepEqual([s.avgPricePerMeter, s.source, s.units, s.minPrice, s.maxPrice], [20000, 'units', 2, 2_000_000, 2_400_000]);
+  assert.deepEqual([projectPriceStats(project, []).avgPricePerMeter, projectPriceStats(project, []).source], [15000, 'manual']);
+  assert.equal(projectPriceStats({ id: 'x' }, []).source, '');
+});

@@ -1,0 +1,72 @@
+// =============================================================
+//  Developers (شركات التطوير): one record per company, kept in settings/developers ({ list })
+//  like the areas list. The CRM edits it (admins: firestore.rules settings write); projects point
+//  to a developer by developerId and keep developer_ar as a copy of the name for older screens.
+//  Pure helpers are tested in tests/unit/developers.test.mjs.
+// =============================================================
+import { useEffect, useState } from 'react';
+import { saveSettings, subscribeToSettings } from '../firebaseLazy.js';
+
+export const DEVELOPERS_KEY = 'developers';
+const CACHE_KEY = 'oneline_developers';
+
+export const EMPTY_DEVELOPER = {
+  id: '', name_ar: '', name_en: '', logo: '', about_ar: '', founded: '', deliveredProjects: '', phone: '', website: '', facebook: ''
+};
+
+const str = (v, max = 400) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
+
+/** A link-safe name for the developer's page: the English name, else the id */
+export function developerSlug(d) {
+  const base = str(d?.name_en).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return base || String(d?.id || '').toLowerCase();
+}
+
+/** Clean list: known fields only, a name required, ids kept, duplicates (same id) dropped */
+export function normalizeDevelopers(list) {
+  const seen = new Set();
+  return (Array.isArray(list) ? list : [])
+    .map((d) => ({
+      id: str(d?.id, 60) || `dev-${Date.now()}`,
+      name_ar: str(d?.name_ar, 120),
+      name_en: str(d?.name_en, 120),
+      logo: /^https?:\/\//.test(str(d?.logo, 600)) ? str(d.logo, 600) : '',
+      about_ar: str(d?.about_ar, 2000),
+      founded: str(String(d?.founded ?? ''), 10),
+      deliveredProjects: str(String(d?.deliveredProjects ?? ''), 10),
+      phone: str(d?.phone, 30),
+      website: /^https?:\/\//.test(str(d?.website)) ? str(d.website) : '',
+      facebook: /^https?:\/\//.test(str(d?.facebook)) ? str(d.facebook) : ''
+    }))
+    .filter((d) => d.name_ar && !seen.has(d.id) && seen.add(d.id));
+}
+
+export const developerOf = (project, developers = []) =>
+  (project?.developerId && developers.find((d) => d.id === project.developerId)) || null;
+
+/** The developer's projects (by developerId, or by the old free-text name when not linked yet) */
+export const projectsOf = (developer, projects = []) => (Array.isArray(projects) ? projects : []).filter((p) =>
+  p && !p.isDeleted && (p.developerId === developer.id || (!p.developerId && str(p.developer_ar) && str(p.developer_ar) === developer.name_ar)));
+
+const readCache = () => {
+  try { return normalizeDevelopers(JSON.parse(localStorage.getItem(CACHE_KEY) || '[]')); } catch { return []; }
+};
+
+export async function saveDevelopers(list) {
+  const clean = normalizeDevelopers(list);
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(clean)); } catch { /* private mode */ }
+  const ok = await saveSettings(DEVELOPERS_KEY, { list: clean });
+  if (ok === false) throw new Error('saveSettings returned false');
+  return clean;
+}
+
+/** The developers list, live from settings/developers (cached on this device for a fast start) */
+export function useDevelopers() {
+  const [list, setList] = useState(readCache);
+  useEffect(() => subscribeToSettings(DEVELOPERS_KEY, (data) => {
+    const clean = normalizeDevelopers(data?.list);
+    setList(clean);
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(clean)); } catch { /* private mode */ }
+  }), []);
+  return list;
+}
