@@ -18,7 +18,7 @@ const money = (v) => (v ? Number(v).toLocaleString('en-US') : '');
 
 // What the advisor says on each step: the question first, then a line that helps the buyer answer
 const LINES = [
-  ['أهلاً بيك! أنا مستشارك في 1Line. إيه أهم حاجة لازم تكون في شقتك؟', 'اختار حاجة أو أكتر، ولو الموقع أو المساحة مهمين قولّي تفاصيلهم.'],
+  ['أهلاً بيك! أنا مستشارك في 1Line. إيه أهم حاجة لازم تكون في وحدتك؟', 'اختار حاجة أو أكتر، ولو الموقع أو المساحة مهمين قولّي تفاصيلهم.'],
   ['حضرتك بتفكر في الشقة سكن ولا استثمار؟', 'للسكن بندوّر على الأنسب لأسرتك، وللاستثمار على أعلى عائد وارتفاع في السعر.'],
   ['عدد أفراد أسرتك كام؟', 'عشان نعرف تحتاج كام غرفة.'],
   ['مستعجل على الاستلام، ولا ممكن تستنى شوية بسعر وتقسيط أحسن؟', 'المشروع في أوله بيكون أقل سعر وأطول تقسيط، وكل ما بيتحرك السعر بيزيد.'],
@@ -39,8 +39,8 @@ export default function MatchPage({ properties = [], lang = 'ar' }) {
 
   useEffect(() => {
     updatePageSeo({
-      title: isAr ? 'رشّحلي شقتي: 5 أسئلة ونرشّحلك الأنسب | 1Line' : 'Find my home: 5 questions | 1Line',
-      description: isAr ? 'جاوب على 5 أسئلة بسيطة عن احتياجك وميزانيتك، ونوريك الشقق المعروضة في سوهاج ومدى مطابقة كل واحدة لطلبك.' : 'Answer 5 short questions and see how well each listed home in Sohag fits.',
+      title: isAr ? 'رشّحلي وحدتي: 5 أسئلة ونرشّحلك الأنسب | 1Line' : 'Find my home: 5 questions | 1Line',
+      description: isAr ? 'جاوب على 5 أسئلة بسيطة عن احتياجك وميزانيتك، ونوريك الوحدات المعروضة في سوهاج ومدى مطابقة كل واحدة لطلبك.' : 'Answer 5 short questions and see how well each listed home in Sohag fits.',
       url: '/match',
       type: 'website'
     });
@@ -74,7 +74,7 @@ export default function MatchPage({ properties = [], lang = 'ar' }) {
     <div className="mt-page" dir={isAr ? 'rtl' : 'ltr'}>
       <div className="mt-wrap">
         <nav className="mt-crumbs" aria-label="مسار الصفحة">
-          <Link to="/">الرئيسية</Link><span aria-hidden="true">/</span><span aria-current="page">رشّحلي شقتي</span>
+          <Link to="/">الرئيسية</Link><span aria-hidden="true">/</span><span aria-current="page">رشّحلي وحدتي</span>
         </nav>
 
         {step < STEPS ? (
@@ -191,7 +191,7 @@ export default function MatchPage({ properties = [], lang = 'ar' }) {
               <Advisor mood="happy" size={120} />
               <div className="mt-bubble">
                 <p id="mt-results" className="mt-question">
-                  {results.length ? `لقيتلك ${results.length === 1 ? 'وحدة' : results.length === 2 ? 'وحدتين' : `${results.length} وحدات`}، مترتبين من الأنسب لطلبك` : 'لسه مفيش شقق معروضة تناسب طلبك'}
+                  {results.length ? `لقيتلك ${results.length === 1 ? 'وحدة' : results.length === 2 ? 'وحدتين' : `${results.length} وحدات`}، مترتبين من الأنسب لطلبك` : 'لسه مفيش وحدات معروضة تناسب طلبك'}
                 </p>
                 <p className="mt-hint">نسبة المطابقة محسوبة من إجاباتك. ابعتلنا طلبك ونرشّحلك كمان من الوحدات اللي لسه منزلتش.</p>
               </div>

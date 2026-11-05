@@ -1,5 +1,5 @@
 // =============================================================
-//  «رشّحلي شقتي»: how well a listed home fits a buyer's five qualifying answers (what matters
+//  «رشّحلي وحدتي»: how well a listed home fits a buyer's five qualifying answers (what matters
 //  most, home or investment, family size, ready now or can wait, cash budget or down payment +
 //  monthly installment). Each part scores 0..1 with a reason the buyer can read; parts the buyer
 //  marked as most important weigh more. Pure: tests/unit/buyer-match.test.mjs.
@@ -182,7 +182,7 @@ export function rankHomes(properties = [], answers = {}, areas = [], limit = 6) 
 export function answersMessage(a = {}, areaName = (id) => id) {
   const fam = FAMILY_SIZES.find((f) => f.id === a.family);
   const lines = [
-    'مرحباً 1Line، جاوبت على أسئلة «رشّحلي شقتي»:',
+    'مرحباً 1Line، جاوبت على أسئلة «رشّحلي وحدتي»:',
     a.priorities?.length ? `أهم حاجة: ${a.priorities.map((id) => PRIORITIES.find((x) => x.id === id)?.ar).filter(Boolean).join('، ')}` : '',
     a.areas?.length ? `المنطقة: ${a.areas.map(areaName).join('، ')}` : '',
     num(a.minSize) ? `المساحة: من ${num(a.minSize)} م²` : '',

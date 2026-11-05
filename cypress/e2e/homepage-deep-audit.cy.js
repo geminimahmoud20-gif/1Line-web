@@ -65,12 +65,13 @@ describe('Homepage Exhaustive Deep Audit', () => {
     });
   });
 
-  it('4. Hero Smart Search & Suggestions Dropdown', () => {
-    cy.get('.hx-field--keyword input').should('be.visible').type('سوهاج', { force: true });
-    cy.get('.hero-live-suggestions-dropdown').should('be.visible');
-    cy.get('.hero-clear-input-btn').should('be.visible').click();
-    cy.get('.hx-field--keyword input').should('have.value', '');
-    cy.get('.hero-live-suggestions-dropdown').should('not.exist');
+  it('4. Hero «رشّحلي وحدتي» card leads to the buyer questions', () => {
+    // The hero search filters were replaced by this card on the owner's request
+    cy.get('.hx-match').should('be.visible');
+    cy.get('.hx-match .adv').should('be.visible');
+    cy.get('.hx-match-btn').should('have.attr', 'href', '/match').click();
+    cy.location('pathname').should('eq', '/match');
+    cy.get('.mt-question').should('contain', 'مستشارك في 1Line');
   });
 
   it('5. Marketplace Tabs Switching (Properties vs Cash Demands)', () => {
