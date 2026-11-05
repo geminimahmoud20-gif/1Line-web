@@ -18,6 +18,7 @@ const PrivateOfficePage = lazy(() => import('./pages/PrivateOfficePage'));
 const ProjectsPage = lazy(() => import('./pages/ProjectsPage'));
 const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage'));
 const DevelopersPage = lazy(() => import('./pages/DevelopersPage'));
+const MatchPage = lazy(() => import('./pages/MatchPage'));
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const PropertiesPage = lazy(() => import('./pages/PropertiesPage'));
 const PropertyDetailPage = lazy(() => import('./pages/PropertyDetailPage'));
@@ -395,6 +396,9 @@ export default function AppRoutes({
           />
         }
       />
+
+      {/* «رشّحلي شقتي»: buyer questions and homes ranked by fit */}
+      <Route path="/match" element={<MatchPage lang={lang} properties={siteProperties} />} />
 
       {/* Developers: the list, and one company with its projects */}
       {['/developers', '/developers/:slug'].map((p) => (

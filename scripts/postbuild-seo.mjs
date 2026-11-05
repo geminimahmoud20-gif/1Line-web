@@ -172,6 +172,7 @@ export async function runPostbuild() {
     ['/market-intelligence', '0.7', 'weekly'],
     ['/projects', '0.7', 'weekly'],
     ['/developers', '0.6', 'weekly'],
+    ['/match', '0.7', 'monthly'],
     ['/about', '0.7', 'monthly'],
     ['/financing', '0.6', 'monthly'],
     ['/demands', '0.6', 'daily'],
@@ -246,6 +247,12 @@ Sitemap: ${siteUrl}/sitemap.xml
       title: 'دليل المشروعات والكمبوندات الكبرى بسوهاج 2026 | 1Line Solutions',
       desc: 'تصفح الكمبوندات السكنية والمولات التجارية والأبراج الإدارية بسوهاج مع متابعة حية لنسب التنفيذ الإنشائي.',
       breadcrumbName: 'دليل المشروعات'
+    },
+    {
+      path: 'match',
+      title: 'رشّحلي شقتي: 5 أسئلة ونرشّحلك الأنسب في سوهاج | 1Line Solutions',
+      desc: 'جاوب على 5 أسئلة بسيطة عن احتياجك وميزانيتك، ونوريك الشقق المعروضة في سوهاج ومدى مطابقة كل واحدة لطلبك.',
+      breadcrumbName: 'رشّحلي شقتي'
     },
     {
       path: 'developers',
