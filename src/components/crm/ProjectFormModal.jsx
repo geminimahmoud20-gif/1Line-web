@@ -4,6 +4,9 @@ import PhotoManager from './PhotoManager';
 import { uploadMultipleImages, isImageFile, failedPhotosMessage, MAX_PHOTO_MB } from '../../utils/imageUploadService';
 import { arYears, planExample } from '../../utils/projectFacts';
 import './project-form.css';
+import AreaOptions from '../common/AreaOptions';
+import { getAreas } from '../../utils/areasData';
+import { projectPriceStats } from '../../utils/projectStats';
 
 const MAX_FILE_MB = MAX_PHOTO_MB;
 const STAGES = [
@@ -18,12 +21,14 @@ const STAGES = [
  * listings), price & plan with a worked example, construction stages, units, amenities, description.
  * The panel owns the data and saving; this draws the form.
  */
-export default function ProjectFormModal({ formData, setFormData, onSubmit, onClose, isSaving, editing, isAr = true, triggerToast = () => {} }) {
+export default function ProjectFormModal({ formData, setFormData, onSubmit, onClose, isSaving, editing, isAr = true, triggerToast = () => {}, developers = [], properties = [] }) {
   const L = (ar, en) => (isAr ? ar : en);
   const [uploading, setUploading] = useState('');
   const [dragging, setDragging] = useState(false);
   const [featureDraft, setFeatureDraft] = useState('');
   const set = (patch) => setFormData((f) => ({ ...f, ...patch }));
+  const areas = getAreas().filter((a) => a.id !== 'all');
+  const stats = projectPriceStats(formData, properties);
   const images = (formData.images || []).filter(Boolean);
   const stages = formData.progressBreakdown || {};
   const features = Array.isArray(formData.features_ar)
@@ -108,10 +113,28 @@ export default function ProjectFormModal({ formData, setFormData, onSubmit, onCl
               </label>
               <label className="pjf-field">
                 <span>{L('الشركة المطورة', 'Developer')}</span>
-                <input type="text" value={formData.developer_ar || ''} onChange={(e) => set({ developer_ar: e.target.value })} />
+                {/* Pick from «المطورين»; an old project keeps its typed name until linked */}
+                <select
+                  value={formData.developerId || ''}
+                  onChange={(e) => {
+                    const d = developers.find((x) => x.id === e.target.value);
+                    set({ developerId: d ? d.id : '', developer_ar: d ? d.name_ar : formData.developer_ar, developer_en: d ? d.name_en : formData.developer_en });
+                  }}
+                >
+                  <option value="">{formData.developer_ar && !formData.developerId ? `${formData.developer_ar} (${L('مش مربوط', 'not linked')})` : L('اختار المطوّر…', 'Choose…')}</option>
+                  {developers.map((d) => <option key={d.id} value={d.id}>{d.name_ar}</option>)}
+                </select>
+                {developers.length === 0 && <small className="pjf-hint">{L('ضيف المطورين الأول من «المطورين» فوق.', 'Add developers first under «Developers».')}</small>}
               </label>
               <label className="pjf-field">
-                <span>{L('الموقع', 'Location')}</span>
+                <span>{L('المنطقة', 'Area')}</span>
+                <select value={formData.areaKey || ''} onChange={(e) => set({ areaKey: e.target.value })}>
+                  <option value="">{L('اختار المنطقة…', 'Choose…')}</option>
+                  <AreaOptions areas={areas} isAr={isAr} />
+                </select>
+              </label>
+              <label className="pjf-field">
+                <span>{L('العنوان بالتفصيل', 'Address')}</span>
                 <input type="text" value={formData.location_ar || ''} onChange={(e) => set({ location_ar: e.target.value })} placeholder={L('سوهاج الجديدة - الحي الثالث', 'New Sohag - District 3')} />
               </label>
               <label className="pjf-field">
@@ -147,6 +170,16 @@ export default function ProjectFormModal({ formData, setFormData, onSubmit, onCl
               <label className="pjf-field">
                 <span>{L('سعر الوحدة يبدأ من (ج.م) *', 'Units from (EGP) *')}</span>
                 <input type="number" min="0" inputMode="numeric" required value={formData.startPrice || ''} onChange={(e) => set({ startPrice: e.target.value })} />
+              </label>
+              <label className="pjf-field">
+                <span>{L('متوسط سعر المتر (ج.م)', 'Avg price / m² (EGP)')}</span>
+                <input type="number" min="0" inputMode="numeric" value={formData.avgPricePerMeter || ''} onChange={(e) => set({ avgPricePerMeter: e.target.value })}
+                  placeholder={stats.source === 'units' ? String(stats.avgPricePerMeter) : ''} />
+                <small className="pjf-hint">
+                  {stats.source === 'units'
+                    ? L(`محسوب من ${stats.units} وحدة معروضة: ${stats.avgPricePerMeter.toLocaleString('en-US')} ج.م/م² (ده اللي بيظهر)`, `From ${stats.units} listings: ${stats.avgPricePerMeter.toLocaleString('en-US')} EGP/m²`)
+                    : L('بيتحسب لوحده من الوحدات المربوطة بالمشروع. لو مفيش، اكتب سعر المطوّر.', 'Worked out from linked listings; type the developer price if none.')}
+                </small>
               </label>
               <label className="pjf-field">
                 <span>{L('المقدم %', 'Down %')}</span>

@@ -20,6 +20,7 @@
 .pjf-field.is-wide { grid-column: 1 / -1; }
 .pjf-field > span { color: var(--crm-muted); font-size: var(--crm-text-xs); font-weight: 700; }
 .pjf-field input,
+.pjf-field select,
 .pjf-field textarea,
 .pjf-chips {
   width: 100%; min-height: 40px; padding: 8px 10px; border: 1px solid var(--crm-line-strong); border-radius: 10px;
@@ -67,3 +68,5 @@
   .pjf-grid, .pjf-grid.is-4, .pjf-stages { grid-template-columns: minmax(0, 1fr); }
   .pjf-grid.is-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+.pjf-hint { font-size: var(--crm-text-xs); line-height: 1.6; color: var(--crm-muted); }
