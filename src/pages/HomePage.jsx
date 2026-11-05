@@ -4,13 +4,10 @@ import { DollarSign, ArrowRight, ArrowLeft, ShieldCheck, Sparkles, Calculator, X
 
 import MarketTickerBar from '../components/home/MarketTickerBar';
 
-import { MEGA_PROJECTS } from '../data/projectsData';
 import { DEMO_DEMANDS, isRealItem } from '../data/demoData';
 import { getFounderSettings } from '../utils/founderCmsData';
 import { heroSlides, slideIntervalMs } from '../utils/videoPoster';
-import { getAreas } from '../utils/areasData';
 import { updatePageSeo, buildOrganizationSchema } from '../utils/seoHelper';
-import { parseSemanticQuery } from '../utils/semanticSearchEngine';
 import ScrollReveal from '../components/common/ScrollReveal';
 import { SELLER_PROOF } from '../config/siteConfig';
 import { getHomepageSlots } from '../utils/featuredSlots';
@@ -20,7 +17,6 @@ import HomeOffers from '../components/home/HomeOffers';
 
 import HomeHero from '../components/home/HomeHero';
 import HomeMarketplace from '../components/home/HomeMarketplace';
-import HomeMatchTeaser from '../components/home/HomeMatchTeaser';
 import { blockedByApproval } from '../utils/publishApproval';
 
 // Below the fold: their own chunks, fetched right after the hero renders instead of in the entry bundle
@@ -40,19 +36,9 @@ export default function HomePage({
   compareList = [],
   onToggleCompare,
   onQuickView,
-  onOpenAddDemand,
-  projects = []
+  onOpenAddDemand
 }) {
   const navigate = useNavigate();
-
-  // Smart Search States
-  const [searchPurpose, setSearchPurpose] = useState('buy'); // 'buy' | 'sell' | 'invest'
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [searchArea, setSearchArea] = useState('all');
-  const [searchType, setSearchType] = useState('all');
-  const [searchBudget, setSearchBudget] = useState('all');
-  const [districts, setDistricts] = useState(() => getAreas());
 
   // Dynamic Corporate & Hero Stats Settings from CMS
   const [founderSettings, setFounderSettings] = useState(() => getFounderSettings());
@@ -72,18 +58,6 @@ export default function HomePage({
   const [clipFade, setClipFade] = useState(false);
   const [showTheaterModal, setShowTheaterModal] = useState(false);
   const heroVideoRef = useRef(null);
-  const omniboxRef = useRef(null);
-
-  // Close omnibox live suggestions on outside click
-  useEffect(() => {
-    const handleOutsideClick = (e) => {
-      if (omniboxRef.current && !omniboxRef.current.contains(e.target)) {
-        setShowSuggestions(false);
-      }
-    };
-    document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
-  }, []);
 
   // Sync CMS founder & contact updates in real time
   useEffect(() => {
@@ -190,9 +164,7 @@ export default function HomePage({
 
   useEffect(() => {
     const handleUpdate = () => setFounderSettings(getFounderSettings());
-    const handleAreasUpdate = () => setDistricts(getAreas());
     window.addEventListener('oneline_founder_cms_updated', handleUpdate);
-    window.addEventListener('oneline_areas_updated', handleAreasUpdate);
     
     // 🌐 Update Homepage SEO & Organization Schema
     updatePageSeo({
@@ -220,7 +192,6 @@ export default function HomePage({
 
     return () => {
       window.removeEventListener('oneline_founder_cms_updated', handleUpdate);
-      window.removeEventListener('oneline_areas_updated', handleAreasUpdate);
     };
   }, [lang]);
 
@@ -278,69 +249,6 @@ export default function HomePage({
     return (Math.round((totalDemandLiquidity / 1000000) * 10) / 10).toLocaleString('en-US');
   }, [totalDemandLiquidity]);
 
-  // Categorized Omnibox Search Matchers (Districts, Projects, and Properties)
-  const matchingDistricts = useMemo(() => {
-    if (!searchKeyword.trim()) return [];
-    const q = searchKeyword.toLowerCase().trim();
-    return districts.filter(a => 
-      a.id !== 'all' && ((a.name_ar && a.name_ar.toLowerCase().includes(q)) || (a.name_en && a.name_en.toLowerCase().includes(q)))
-    ).slice(0, 3);
-  }, [searchKeyword, districts]);
-
-  const matchingProjects = useMemo(() => {
-    if (!searchKeyword.trim()) return [];
-    const q = searchKeyword.toLowerCase().trim();
-    // Projects added in the CRM; the bundled samples only until the catalogue has loaded
-    return (projects.length > 0 ? projects : MEGA_PROJECTS).filter(p =>
-      (p.title_ar && p.title_ar.toLowerCase().includes(q)) || 
-      (p.title_en && p.title_en.toLowerCase().includes(q))
-    ).slice(0, 2);
-  }, [searchKeyword, projects]);
-
-  const matchingProperties = useMemo(() => {
-    if (!searchKeyword.trim()) return [];
-    const q = searchKeyword.toLowerCase().trim();
-    return activePublished.filter(p => {
-      const tAr = (p.title_ar || '').toLowerCase();
-      const tEn = (p.title_en || '').toLowerCase();
-      const lAr = (p.locationName_ar || '').toLowerCase();
-      return tAr.includes(q) || tEn.includes(q) || lAr.includes(q);
-    }).slice(0, 3);
-  }, [searchKeyword, activePublished]);
-
-  const handleHeroSearch = (e) => {
-    e.preventDefault();
-    const queryParams = new URLSearchParams();
-    const trimmed = searchKeyword.trim();
-    
-    if (trimmed !== '') {
-      queryParams.set('q', trimmed);
-      // Run deep semantic NLP extraction
-      const parsed = parseSemanticQuery(trimmed);
-      if (parsed.filters.area && searchArea === 'all') queryParams.set('area', parsed.filters.area);
-      if (parsed.filters.type && searchType === 'all') queryParams.set('type', parsed.filters.type);
-      if (parsed.filters.maxPrice && searchBudget === 'all') {
-        if (parsed.filters.maxPrice <= 3000000) queryParams.set('budget', 'under_3m');
-        else if (parsed.filters.maxPrice <= 6000000) queryParams.set('budget', '3m_to_6m');
-        else queryParams.set('budget', 'above_6m');
-      }
-      if (parsed.filters.bedrooms) queryParams.set('bedrooms', String(parsed.filters.bedrooms));
-    }
-
-    if (searchArea !== 'all') queryParams.set('area', searchArea);
-    if (searchType !== 'all') queryParams.set('type', searchType);
-    if (searchBudget !== 'all') queryParams.set('budget', searchBudget);
-
-    // 📡 Telemetry event
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('oneline_search_started', {
-        detail: { keyword: trimmed, area: searchArea, type: searchType, budget: searchBudget }
-      }));
-    }
-
-    navigate(`/properties?${queryParams.toString()}`);
-  };
-
   return (
     <div className="homepage-wrapper">
       {/* 🌟 1. HERO SECTION */}
@@ -350,9 +258,7 @@ export default function HomePage({
         activeVideoUrl={activeVideoUrl}
         clipFade={clipFade}
         currentClip={currentClip}
-        districts={districts}
         founderSettings={founderSettings}
-        handleHeroSearch={handleHeroSearch}
         handleVideoEnded={handleVideoEnded}
         heroAd={heroAd}
         heroStills={heroStills}
@@ -363,25 +269,8 @@ export default function HomePage({
         heroVideoRef={heroVideoRef}
         isDataSaver={isDataSaver}
         lang={lang}
-        matchingDistricts={matchingDistricts}
-        matchingProjects={matchingProjects}
-        matchingProperties={matchingProperties}
-        navigate={navigate}
-        omniboxRef={omniboxRef}
-        searchArea={searchArea}
-        searchBudget={searchBudget}
-        searchKeyword={searchKeyword}
-        searchPurpose={searchPurpose}
-        searchType={searchType}
-        setSearchArea={setSearchArea}
-        setSearchBudget={setSearchBudget}
-        setSearchKeyword={setSearchKeyword}
-        setSearchPurpose={setSearchPurpose}
-        setSearchType={setSearchType}
-        setShowSuggestions={setShowSuggestions}
         setShowTheaterModal={setShowTheaterModal}
         showHeroVideo={showHeroVideo}
-        showSuggestions={showSuggestions}
         switchClip={switchClip}
         toggleVideoMute={toggleVideoMute}
         toggleVideoPlayback={toggleVideoPlayback}
@@ -391,9 +280,6 @@ export default function HomePage({
 
       {/* 📈 REAL-TIME SOHAG PROPTECH MARKET TICKER */}
       <MarketTickerBar lang={lang} demands={realDemands} />
-
-      {/* «رشّحلي شقتي»: five questions with the 1Line advisor, then homes ranked by fit (/match) */}
-      <HomeMatchTeaser lang={lang} />
 
       {/* 🏢 2. SOHAG LIVE MARKETPLACE HUB (Consolidated Segmented Discovery) */}
       <HomeMarketplace

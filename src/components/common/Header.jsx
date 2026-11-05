@@ -176,7 +176,7 @@ export default function Header({
           id: 'deal',
           title: isAr ? 'بيع وشراء' : 'Buy & sell',
           items: [
-            { path: '/match', label: isAr ? 'رشّحلي شقتي' : 'Find my home', desc: isAr ? '5 أسئلة ونرشّحلك الأنسب' : '5 questions, the best fits', badge: isAr ? 'جديد' : 'New', icon: Sparkles },
+            { path: '/match', label: isAr ? 'رشّحلي وحدتي' : 'Find my home', desc: isAr ? '5 أسئلة ونرشّحلك الأنسب' : '5 questions, the best fits', badge: isAr ? 'جديد' : 'New', icon: Sparkles },
             { path: '/demands', label: isAr ? 'طلبات المشترين' : 'Buyer demands', desc: isAr ? 'مشترين بيدوّروا على عقار زي عقارك' : 'Buyers looking for a property like yours', icon: FileText },
             { path: '/trade-in', label: isAr ? 'بدّل عقارك' : 'Trade in', desc: isAr ? 'بفرق كاش أو رأس برأس' : 'With or without a cash difference', badge: isAr ? 'جديد' : 'New', icon: Repeat2 },
             { path: '/commercial-hub', label: isAr ? 'عيادات ومحلات ومكاتب' : 'Clinics, shops & offices', desc: isAr ? 'الموقع والركن وحاسبة العائد' : 'Location, parking & yield', icon: Stethoscope }
@@ -211,7 +211,7 @@ export default function Header({
       links: [
         { path: '/', label: isAr ? 'الرئيسية' : 'Home', icon: Home },
         { path: '/properties', label: isAr ? 'العقارات' : 'Properties', icon: Building },
-        { path: '/match', label: isAr ? 'رشّحلي شقتي' : 'Find my home', badge: isAr ? 'جديد' : 'New', icon: Sparkles },
+        { path: '/match', label: isAr ? 'رشّحلي وحدتي' : 'Find my home', badge: isAr ? 'جديد' : 'New', icon: Sparkles },
         { path: '/projects', label: isAr ? 'المشروعات والكمبوندات' : 'Projects & compounds', icon: Layers },
         { path: '/developers', label: isAr ? 'شركات التطوير' : 'Developers', icon: Building },
         { path: '/demands', label: isAr ? 'طلبات المشترين' : 'Buyer demands', icon: FileText },
