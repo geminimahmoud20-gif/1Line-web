@@ -56,17 +56,25 @@ function planNumbers(p) {
   const every = everyOf(p.installmentEvery);
   const periods = periodsIn(months, every);
   const down = num(p.downPayment);
+  // Yearly payments on top of the installments (common in resale and developer plans)
+  const yearlyAmount = num(p.yearlyPaymentAmount);
+  const yearlyCount = yearlyAmount ? Math.round(num(p.yearlyPaymentCount)) : 0;
+  const yearly = yearlyAmount && yearlyCount ? yearlyAmount * yearlyCount : 0;
   let amount = num(p.installmentAmount);
   let total;
   if (amount && periods) {
-    total = down + amount * periods;
+    total = down + amount * periods + yearly;
+  } else if (periods && !num(p.installmentTotal) && num(p.monthlyInstallment) && every === 1) {
+    // Older listings typed the monthly installment and the term: that is the plan as written
+    amount = num(p.monthlyInstallment);
+    total = down + amount * periods + yearly;
   } else {
     total = num(p.installmentTotal) || num(p.price);
-    amount = periods && total > down ? Math.ceil((total - down) / periods) : 0;
+    amount = periods && total > down + yearly ? Math.ceil((total - down - yearly) / periods) : 0;
     // A plan without a term (older records) keeps the monthly installment that was typed
     if (!periods && num(p.monthlyInstallment)) amount = num(p.monthlyInstallment);
   }
-  return { down, months, every, periods, amount, total };
+  return { down, months, every, periods, amount, total, yearlyAmount: yearly ? yearlyAmount : 0, yearlyCount: yearly ? yearlyCount : 0 };
 }
 
 /**
@@ -101,7 +109,7 @@ export function paymentFields(form = {}) {
   if (!isPlanType(form.paymentType)) {
     return {
       paymentType: 'cash', downPayment: 0, monthlyInstallment: 0, installmentMonths: 0, installmentYears: 0,
-      installmentTotal: 0, installmentAmount: 0, installmentEvery: 1
+      installmentTotal: 0, installmentAmount: 0, installmentEvery: 1, yearlyPaymentAmount: 0, yearlyPaymentCount: 0
     };
   }
   const months = Math.min(MAX_TERM_MONTHS, Math.round(num(form.installmentMonths)));
@@ -114,6 +122,8 @@ export function paymentFields(form = {}) {
     installmentEvery: n.every,
     installmentAmount: n.amount,
     installmentTotal: n.total,
+    yearlyPaymentAmount: n.yearlyAmount,
+    yearlyPaymentCount: n.yearlyCount,
     monthlyInstallment: n.amount ? Math.ceil(n.amount / n.every) : 0
   };
 }
@@ -135,6 +145,7 @@ export function paymentProblem(form = {}, isAr = true) {
   if (months > MAX_TERM_MONTHS) return L(`أقصى مدة ${MAX_TERM_MONTHS / 12} سنة`, `The longest term is ${MAX_TERM_MONTHS / 12} years`);
   if (months % every !== 0) return L(`المدة لازم تتقسم على ${every} شهور (القسط ${everyLabel(every)})`, `The term must be a multiple of ${every} months`);
   if (!num(form.installmentAmount) && !num(form.installmentTotal) && !num(form.price)) return L('اكتب قيمة القسط', 'Enter the installment amount');
+  if (num(form.yearlyPaymentAmount) && !Math.round(num(form.yearlyPaymentCount))) return L('اكتب عدد الدفعات السنوية', 'Enter how many yearly payments');
   if (resale && !num(form.downPayment)) return L('اكتب المطلوب كاش للمالك (المدفوع + الأوفر)', 'Enter the cash asked by the seller');
   const n = planNumbers({ ...form, installmentYears: 0 });
   if (!num(form.installmentAmount) && n.down >= n.total) return L('المقدم لازم يكون أقل من إجمالي السعر', 'The down payment must be below the total');
@@ -167,12 +178,38 @@ export function periodsLabel(n, isAr = true) {
   return v <= 10 ? `${v} أقساط` : `${v} قسط`;
 }
 
+// How often, agreeing with the count: «قسط واحد ربع سنوي», «قسطين ربع سنويين», «9 أقساط ربع سنوية», «27 قسط ربع سنوي»
+const ADJ = {
+  1: ['شهري', 'شهريين', 'شهرية'], 3: ['ربع سنوي', 'ربع سنويين', 'ربع سنوية'],
+  6: ['نصف سنوي', 'نصف سنويين', 'نصف سنوية'], 12: ['سنوي', 'سنويين', 'سنوية']
+};
+
+/** «9 أقساط ربع سنوية» — the count and how often, never a number of months */
+export function installmentsPhrase(n, every = 1, isAr = true) {
+  const v = Math.round(num(n));
+  const adj = ADJ[everyOf(every)];
+  if (!isAr) return `${v} ${everyLabel(every, false)} installment${v === 1 ? '' : 's'}`;
+  if (v === 1) return `قسط واحد ${adj[0]}`;
+  if (v === 2) return `قسطين ${adj[1]}`;
+  return v <= 10 ? `${v} أقساط ${adj[2]}` : `${v} قسط ${adj[0]}`;
+}
+
+/** «3 دفعات سنوية» / «دفعة سنوية واحدة» / «دفعتين سنويتين» */
+export function yearlyPhrase(n, isAr = true) {
+  const v = Math.round(num(n));
+  if (!isAr) return `${v} yearly payment${v === 1 ? '' : 's'}`;
+  if (v === 1) return 'دفعة سنوية واحدة';
+  if (v === 2) return 'دفعتين سنويتين';
+  return v <= 10 ? `${v} دفعات سنوية` : `${v} دفعة سنوية`;
+}
+
 /**
  * How the plan reads to a buyer, in parts the pages lay out:
- *   now:   { label, amount }   what is paid now (down payment / cash to the seller), or null
- *   then:  "قسط 30,000 ج.م كل 3 شهور لمدة 5 سنين (20 قسط)"
- *   total: the whole price with the installments
- * `fmt` formats an amount with its currency.
+ *   now:    { label, amount }   what is paid now (down payment / cash to the seller), or null
+ *   then:   «9 أقساط ربع سنوية × 99,500 ج.م»
+ *   yearly: «3 دفعات سنوية × 200,000 ج.م», or ''
+ *   total:  the whole price with the installments
+ * Never a number of months: plans are counted in installments. `fmt` formats an amount.
  */
 export function planSummary(t, fmt, isAr = true) {
   if (!hasInstallmentPlan(t)) return null;
@@ -181,8 +218,7 @@ export function planSummary(t, fmt, isAr = true) {
   const now = t.down > 0
     ? { label: isAr ? (resale ? 'المطلوب كاش للمالك' : 'المقدم') : (resale ? 'Cash to the seller' : 'Down payment'), amount: t.down }
     : null;
-  const then = isAr
-    ? `${resale ? 'وتكمّل أقساط متبقية: ' : ''}قسط ${fmt(t.amount)} ${e.every_ar} لمدة ${termLabel(t.months)}${t.every > 1 || t.periods <= 60 ? ` (${periodsLabel(t.periods)})` : ''}`
-    : `${resale ? 'then the remaining installments: ' : ''}${fmt(t.amount)} ${e.en} over ${termLabel(t.months, false)} (${periodsLabel(t.periods, false)})`;
-  return { now, then, total: t.total, resale, everyLabel: isAr ? e.ar : e.en };
+  const then = `${resale ? (isAr ? 'باقي ' : 'remaining: ') : ''}${installmentsPhrase(t.periods, t.every, isAr)} × ${fmt(t.amount)}`;
+  const yearly = t.yearlyAmount && t.yearlyCount ? `${yearlyPhrase(t.yearlyCount, isAr)} × ${fmt(t.yearlyAmount)}` : '';
+  return { now, then, yearly, total: t.total, resale, everyLabel: isAr ? e.ar : e.en };
 }

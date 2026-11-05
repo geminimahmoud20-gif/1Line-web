@@ -152,7 +152,7 @@ function buildPage(d, { photo, logo, qr }) {
   if (d.plan) {
     body.append(h('div', { margin: '10px 36px 0', font: `500 13.5px ${FONT}`, color: INK }, [
       h('b', { color: NAVY }, 'متاح تقسيط لهذه الوحدة: '),
-      [d.plan.down && `مقدم ${d.plan.down}`, `قسط شهري ${d.plan.monthly}`, `لمدة ${d.plan.years}`].filter(Boolean).join(' • ')
+      [d.plan.down, d.plan.installments, d.plan.yearly].filter(Boolean).join(' • ')
     ]));
   }
 

@@ -10,7 +10,7 @@ import BrandWatermark from './BrandWatermark';
 import { isWatermarked } from '../../utils/watermark';
 import useClientDownload from '../../hooks/useClientDownload';
 import { countLabel } from '../../utils/arabicCount';
-import { paymentTerms, termLabel, isPlanType, everyLabel } from '../../utils/paymentTerms';
+import { paymentTerms, isPlanType, everyLabel, installmentsPhrase, yearlyPhrase } from '../../utils/paymentTerms';
 import { areaLabel } from '../../utils/placeLabels';
 import { getAreas } from '../../utils/areasData';
 import { listingCaption } from '../../utils/listingShare';
@@ -338,9 +338,15 @@ export default function QuickViewModal({
                 {terms.amount > 0 && (
                   <div className="finance-cell highlight-cell">
                     <span className="finance-lbl">
-                      {isAr ? `القسط ال${everyLabel(terms.every)}` : `Installment (${everyLabel(terms.every, false)})`}{terms.months > 0 && ` · ${termLabel(terms.months, isAr)}`}
+                      {terms.periods > 0 ? installmentsPhrase(terms.periods, terms.every, isAr) : (isAr ? `القسط ال${everyLabel(terms.every)}` : `Installment (${everyLabel(terms.every, false)})`)}
                     </span>
                     <strong className="finance-val text-primary">{money(terms.amount)}</strong>
+                  </div>
+                )}
+                {terms.yearlyAmount > 0 && (
+                  <div className="finance-cell">
+                    <span className="finance-lbl">{yearlyPhrase(terms.yearlyCount, isAr)}</span>
+                    <strong className="finance-val">{money(terms.yearlyAmount)}</strong>
                   </div>
                 )}
                 {terms.months > 0 && terms.total > 0 && (

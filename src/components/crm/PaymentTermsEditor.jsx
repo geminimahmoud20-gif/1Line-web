@@ -1,5 +1,5 @@
 import { Wallet } from 'lucide-react';
-import { paymentFields, paymentProblem, termLabel, periodsLabel, INSTALLMENT_EVERY, isPlanType } from '../../utils/paymentTerms';
+import { paymentFields, paymentProblem, installmentsPhrase, yearlyPhrase, INSTALLMENT_EVERY, isPlanType } from '../../utils/paymentTerms';
 import './property-extras.css';
 
 const KINDS = [
@@ -89,7 +89,26 @@ export default function PaymentTermsEditor({ form, setForm, isAr = true }) {
                     onChange={(e) => setCount(e.target.value)} />
                   <em>{L('قسط', 'inst.')}</em>
                 </div>
-                {plan.installmentMonths > 0 && <small className="pxe-hint">{L(`المدة: ${termLabel(plan.installmentMonths)}`, `Term: ${termLabel(plan.installmentMonths, false)}`)}</small>}
+              </label>
+            </div>
+
+            {/* Yearly payments on top of the installments: they change the total */}
+            <div className="pxe-grid">
+              <label className="pxe-field">
+                <span>{L('الدفعة السنوية (لو فيه)', 'Yearly payment (if any)')}</span>
+                <div className="pxe-input-wrap">
+                  <input type="number" min="0" inputMode="numeric" value={form.yearlyPaymentAmount || ''} placeholder="0"
+                    onChange={(e) => set({ yearlyPaymentAmount: Math.max(0, Number(e.target.value) || 0) || '' })} />
+                  <em>{L('ج.م', 'EGP')}</em>
+                </div>
+              </label>
+              <label className="pxe-field">
+                <span>{resale ? L('عدد الدفعات السنوية المتبقية', 'Yearly payments left') : L('عدد الدفعات السنوية', 'Number of yearly payments')}</span>
+                <div className="pxe-input-wrap">
+                  <input type="number" min="0" step="1" inputMode="numeric" value={form.yearlyPaymentCount || ''} placeholder="0"
+                    onChange={(e) => set({ yearlyPaymentCount: Math.max(0, Math.round(Number(e.target.value) || 0)) || '' })} />
+                  <em>{L('دفعة', 'pay.')}</em>
+                </div>
               </label>
             </div>
 
@@ -99,8 +118,8 @@ export default function PaymentTermsEditor({ form, setForm, isAr = true }) {
                   <strong>{L('الإجمالي: ', 'Total: ')}{money(plan.installmentTotal)}</strong>
                   {' — '}
                   {L(
-                    `${plan.downPayment ? `${resale ? 'كاش للمالك' : 'مقدم'} ${money(plan.downPayment)} + ` : ''}${periodsLabel(periods)} × ${money(plan.installmentAmount)} على ${termLabel(plan.installmentMonths)}`,
-                    `${plan.downPayment ? `${money(plan.downPayment)} now + ` : ''}${periods} × ${money(plan.installmentAmount)} over ${termLabel(plan.installmentMonths, false)}`
+                    `${plan.downPayment ? `${resale ? 'كاش للمالك' : 'مقدم'} ${money(plan.downPayment)} + ` : ''}${installmentsPhrase(periods, plan.installmentEvery)} × ${money(plan.installmentAmount)}${plan.yearlyPaymentAmount ? ` + ${yearlyPhrase(plan.yearlyPaymentCount)} × ${money(plan.yearlyPaymentAmount)}` : ''}`,
+                    `${plan.downPayment ? `${money(plan.downPayment)} now + ` : ''}${periods} × ${money(plan.installmentAmount)}${plan.yearlyPaymentAmount ? ` + ${plan.yearlyPaymentCount} × ${money(plan.yearlyPaymentAmount)} yearly` : ''}`
                   )}
                 </>
               )}

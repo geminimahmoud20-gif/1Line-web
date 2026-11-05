@@ -365,6 +365,7 @@ export default function PropertyDetailPage({
       {plan && (
         <>
           <span className="pd-plan-line">{plan.now ? `+ ${plan.then}` : plan.then}</span>
+          {plan.yearly && <span className="pd-plan-line">+ {plan.yearly}</span>}
           <span className="pd-plan-total">
             {isAr ? 'الإجمالي: ' : 'Total: '}<bdi>{fmtMoney(plan.total)}</bdi>
             {terms.cashPrice > 0 && <>{isAr ? ' · أو كاش: ' : ' · or cash: '}<bdi>{fmtMoney(terms.cashPrice)}</bdi></>}
