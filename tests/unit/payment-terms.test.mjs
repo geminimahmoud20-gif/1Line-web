@@ -12,7 +12,7 @@ test('the monthly installment is the rest after the down payment over the term, 
 test('cash clears every installment field so an old plan never shows', () => {
   assert.deepEqual(paymentFields({ paymentType: 'cash', downPayment: 100, monthlyInstallment: 5, installmentMonths: 12 }), {
     paymentType: 'cash', downPayment: 0, monthlyInstallment: 0, installmentMonths: 0, installmentYears: 0, installmentTotal: 0,
-    installmentAmount: 0, installmentEvery: 1
+    installmentAmount: 0, installmentEvery: 1, yearlyPaymentAmount: 0, yearlyPaymentCount: 0
   });
 });
 
@@ -70,11 +70,25 @@ test('resale with installments left leads with the cash to the seller', () => {
   assert.equal(t.total, 450_000 + 360_000);
   const s = planSummary(t, (n) => `${n.toLocaleString('en-US')} ج.م`);
   assert.equal(s.now.label, 'المطلوب كاش للمالك');
-  assert.match(s.then, /قسط 60,000 ج.م كل 6 شهور لمدة 3 سنين \(6 أقساط\)/);
+  assert.equal(s.then, 'باقي 6 أقساط نصف سنوية × 60,000 ج.م');
   assert.match(paymentProblem({ ...p, downPayment: 0 }), /المطلوب كاش/);
 });
 
 test('older total-based plans read the same', () => {
   const t = paymentTerms({ paymentType: 'installment', price: 1_000_000, installmentTotal: 1_200_000, downPayment: 300_000, installmentMonths: 18 });
   assert.deepEqual([t.every, t.periods, t.amount, t.monthly, t.total, t.cashPrice], [1, 18, 50_000, 50_000, 1_200_000, 1_000_000]);
+});
+
+test('yearly payments add to the total and read by count, never in months', async () => {
+  const { installmentsPhrase, yearlyPhrase } = await import('../../src/utils/paymentTerms.js');
+  const form = { paymentType: 'resale', downPayment: 1_848_412, installmentAmount: 99_500, installmentEvery: 3, installmentMonths: 27, yearlyPaymentAmount: 200_000, yearlyPaymentCount: 2 };
+  const f = paymentFields(form);
+  assert.equal(f.installmentTotal, 1_848_412 + 99_500 * 9 + 200_000 * 2);
+  assert.equal(f.yearlyPaymentCount, 2);
+  const s = planSummary(paymentTerms({ ...form, ...f }), (n) => `${n.toLocaleString('en-US')} ج.م`);
+  assert.equal(s.then, 'باقي 9 أقساط ربع سنوية × 99,500 ج.م');
+  assert.equal(s.yearly, 'دفعتين سنويتين × 200,000 ج.م');
+  assert.match(paymentProblem({ ...form, yearlyPaymentCount: 0 }), /عدد الدفعات السنوية/);
+  assert.deepEqual([1, 2, 9, 27].map((n) => installmentsPhrase(n, 3)), ['قسط واحد ربع سنوي', 'قسطين ربع سنويين', '9 أقساط ربع سنوية', '27 قسط ربع سنوي']);
+  assert.equal(yearlyPhrase(3), '3 دفعات سنوية');
 });

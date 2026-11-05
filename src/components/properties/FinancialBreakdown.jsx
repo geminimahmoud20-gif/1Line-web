@@ -1,7 +1,7 @@
 import { Receipt, Wallet, Wrench, Landmark, FileText, Info } from 'lucide-react';
 import { computeFinanceBreakdown } from '../../utils/propertyInsights';
 import { formatApprox } from '../../utils/fxRates';
-import { termLabel } from '../../utils/paymentTerms';
+import { termLabel, installmentsPhrase, everyLabel } from '../../utils/paymentTerms';
 import '../../styles/expat-suite.css';
 
 const fmt = (n) => Math.round(Number(n) || 0).toLocaleString('en-US');
@@ -63,10 +63,18 @@ export default function FinancialBreakdown({ property, lang = 'ar', currency = '
       {/* 1. Cash — or 2. the installment plan set in CRM → طريقة السداد */}
       {plan ? (
         <div className="xs-fin-block">
-          <h4><Wallet size={15} aria-hidden="true" /> {L(`التقسيط على ${termLabel(plan.months)}`, `Installments over ${termLabel(plan.months, false)}`)}</h4>
-          <Row label={L('المقدم', 'Down payment')} hint={plan.down > 0 ? pct(plan.downPct) : null}>
+          <h4><Wallet size={15} aria-hidden="true" /> {plan.installment
+            ? L(`التقسيط: ${installmentsPhrase(plan.installment.count, plan.installment.every)}`, `Installments: ${installmentsPhrase(plan.installment.count, plan.installment.every, false)}`)
+            : L(`التقسيط على ${termLabel(plan.months)}`, `Installments over ${termLabel(plan.months, false)}`)}</h4>
+          <Row label={property.paymentType === 'resale' ? L('المطلوب كاش للمالك', 'Cash to the seller') : L('المقدم', 'Down payment')} hint={plan.down > 0 ? pct(plan.downPct) : null}>
             {plan.down > 0 ? <Money value={plan.down} {...m} /> : <span className="xs-money">{L('بدون مقدم', 'None')}</span>}
           </Row>
+          {plan.installment && (
+            <Row label={L(`القسط ال${everyLabel(plan.installment.every)}`, `Installment (${everyLabel(plan.installment.every, false)})`)} hint={`× ${plan.installment.count}`}>
+              <Money value={plan.installment.amount} strong {...m} />
+            </Row>
+          )}
+          {plan.yearly && <Row label={L('الدفعة السنوية', 'Yearly payment')} hint={`× ${plan.yearly.count}`}><Money value={plan.yearly.amount} {...m} /></Row>}
           {plan.monthly > 0 && <Row label={L('القسط الشهري', 'Monthly installment')} hint={L(`× ${plan.months} شهر`, `× ${plan.months} months`)}><Money value={plan.monthly} strong {...m} /></Row>}
           {plan.quarterly > 0 && <Row label={L('القسط ربع السنوي', 'Quarterly installment')}><Money value={plan.quarterly} {...m} /></Row>}
           {plan.handover > 0 && <Row label={L('دفعة الاستلام', 'Handover payment')}><Money value={plan.handover} {...m} /></Row>}

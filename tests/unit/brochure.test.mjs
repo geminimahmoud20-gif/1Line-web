@@ -27,7 +27,7 @@ test('brochure: running offer shows the discounted cash price', () => {
 
 test('brochure: plan only when the listing has one; legal rows from the record', () => {
   const d = brochureData({ id: 'p2', price: 1, installmentYears: 2, monthlyInstallment: 20000, downPayment: 300000, legalStatus: { ownershipType_ar: 'مسجل', reviewedBy: 'أ. سامي' } }, { now: NOW });
-  assert.deepEqual(d.plan, { down: '300,000 ج.م', monthly: '20,000 ج.م', years: 'سنتين' });
+  assert.deepEqual(d.plan, { down: 'المقدم 300,000 ج.م', installments: '24 قسط شهري × 20,000 ج.م', yearly: '' });
   assert.deepEqual(d.legal, [['سند الملكية والشهر العقاري', 'مسجل'], ['راجعه', 'أ. سامي']]);
   assert.equal(brochureCode({ id: 'abcdefghijkl' }), 'ABCDEFGH');
 });

@@ -5,6 +5,7 @@
 import { normalizeAreaKey, getAreas } from './areasData.js';
 import { SITE_URL } from '../config/siteConfig.js';
 import { inArea } from './areaLookup.js';
+import { paymentTerms, planSummary } from './paymentTerms.js';
 
 /**
  * Normalizes phone number for WhatsApp URL
@@ -147,8 +148,10 @@ export function generateWhatsAppMessage(eventType, client, property, alternative
   const priceFormatted = (property.price || 0).toLocaleString('en-US');
   // Only the listing's own plan goes to the client; no invented 20% / 60-month figures
   const planLines = [
-    property.downPayment ? `💳 المقدم: ${Number(property.downPayment).toLocaleString('en-US')} ج.م` : '',
-    property.monthlyInstallment ? `📅 القسط الشهري: ${Number(property.monthlyInstallment).toLocaleString('en-US')} ج.م` : '',
+    ...(() => {
+      const s = planSummary(paymentTerms(property), (n) => `${Number(n).toLocaleString('en-US')} ج.م`, true);
+      return s ? [s.now ? `💳 ${s.now.label}: ${Number(s.now.amount).toLocaleString('en-US')} ج.م` : '', `📅 الأقساط: ${s.then}`, s.yearly ? `📅 الدفعات السنوية: ${s.yearly}` : ''] : [];
+    })(),
   ].filter(Boolean).join('\n');
   const origin = SITE_URL;
   const propertyUrl = `${origin}/properties/${property.id}`;

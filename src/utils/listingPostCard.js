@@ -7,7 +7,7 @@
 //  area, the key facts as chips, and the 1LINE brand with the phone and the site. Photos that refuse
 //  to be drawn (no CORS) leave a navy background instead of failing.
 // =============================================================
-import { paymentTerms, hasInstallmentPlan, everyLabel } from './paymentTerms.js';
+import { paymentTerms, hasInstallmentPlan, installmentsPhrase } from './paymentTerms.js';
 
 export const POST_FORMATS = {
   post: { w: 1080, h: 1350, photo: 0.56, label_ar: 'منشور (4:5)', label_en: 'Post 4:5' },
@@ -27,8 +27,8 @@ export function priceBadge(p) {
   if (hasInstallmentPlan(t)) {
     const resale = t.type === 'resale';
     return t.down > 0
-      ? { label: resale ? 'كاش للمالك' : 'المقدم', amount: `${money(t.down)} ج.م`, sub: `+ قسط ${money(t.amount)} ج.م ${everyLabel(t.every)}` }
-      : { label: 'القسط', amount: `${money(t.amount)} ج.م`, sub: everyLabel(t.every) };
+      ? { label: resale ? 'كاش للمالك' : 'المقدم', amount: `${money(t.down)} ج.م`, sub: `+ ${installmentsPhrase(t.periods, t.every)} × ${money(t.amount)}` }
+      : { label: 'القسط', amount: `${money(t.amount)} ج.م`, sub: installmentsPhrase(t.periods, t.every) };
   }
   return { label: 'السعر', amount: Number(p.price) > 0 ? `${money(p.price)} ج.م` : 'السعر عند التواصل', sub: Number(p.price) > 0 ? 'كاش' : '' };
 }

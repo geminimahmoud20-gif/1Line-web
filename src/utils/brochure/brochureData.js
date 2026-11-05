@@ -5,6 +5,7 @@
 // =============================================================
 
 import { getActiveOffer } from '../propertyOffers.js';
+import { paymentTerms, planSummary } from '../paymentTerms.js';
 
 const TYPE_AR = {
   apartment: 'شقة', villa: 'فيلا', duplex: 'دوبلكس', penthouse: 'بنتهاوس', studio: 'ستوديو',
@@ -31,7 +32,6 @@ const day = (ms) => {
   return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 };
 
-const yearsAr = (y) => (y === 1 ? 'سنة' : y === 2 ? 'سنتين' : `${y} ${y <= 10 ? 'سنوات' : 'سنة'}`);
 
 /** The code the team and the client use for the unit (falls back to a short id) */
 export const brochureCode = (p) => text(p.unitCode) || String(p.id || '').slice(0, 8).toUpperCase();
@@ -57,10 +57,11 @@ export function brochureData(property, { now = Date.now(), siteUrl = '' } = {}) 
   if (text(legalSrc.reviewedBy)) legal.push(['راجعه', `${text(legalSrc.reviewedBy)}${legalSrc.reviewDate ? ` (${text(legalSrc.reviewDate)})` : ''}`]);
 
   // Cash is the norm; a plan shows only when the listing has one
-  const years = num(p.installmentYears);
-  const monthly = num(p.monthlyInstallment);
-  const plan = years && monthly
-    ? { down: num(p.downPayment) ? money(num(p.downPayment)) : '', monthly: money(monthly), years: yearsAr(years) }
+  // The plan as it was typed (9 quarterly installments, yearly payments…), never a monthly equivalent
+  const terms = paymentTerms(p);
+  const summary = planSummary(terms, money, true);
+  const plan = summary
+    ? { down: summary.now ? `${summary.now.label} ${money(summary.now.amount)}` : '', installments: summary.then, yearly: summary.yearly }
     : null;
 
   const description = text(p.description_ar);

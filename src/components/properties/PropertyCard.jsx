@@ -44,7 +44,7 @@ import '../../styles/property-card.css';
 import { countWord } from '../../utils/arabicCount';
 import { listingBadges } from '../../utils/listingBadges';
 import { thumbUrl } from '../../utils/imageThumbs';
-import { paymentTerms, planSummary, termLabel } from '../../utils/paymentTerms';
+import { paymentTerms, planSummary } from '../../utils/paymentTerms';
 
 const FEATURE_ICONS = { elevator: ArrowUpDown, garage: Car, garden: Trees, landShare: Landmark };
 
@@ -133,7 +133,7 @@ export default function PropertyCard({
   const offer = property.isDemo || property.status === 'sold' ? null : getActiveOffer(property);
   // A plan (installments / resale) shows what is paid now, with the installment under it
   const terms = paymentTerms(property);
-  const plan = offer ? null : planSummary(terms, (n) => String(n), isAr);
+  const plan = offer ? null : planSummary(terms, (n) => `${fmt(n)} ${isAr ? 'ج.م' : 'EGP'}`, isAr);
   const priceData = formatCurrencyPrice(offer ? offer.price : (plan ? (plan.now ? plan.now.amount : terms.amount) : property.price), currency, lang);
   const benchmark = getPriceBenchmark(property, lang);
   const detailsUrl = `/properties/${property.id}`;
@@ -459,8 +459,8 @@ export default function PropertyCard({
         {plan && (
           <span className="pcx-plan">
             {isAr
-              ? `${plan.now ? '+ ' : ''}${plan.resale ? 'أقساط متبقية: ' : ''}${fmt(terms.amount)} ج.م ${plan.everyLabel} لمدة ${termLabel(terms.months)}`
-              : `${plan.now ? '+ ' : ''}${fmt(terms.amount)} EGP ${plan.everyLabel} over ${termLabel(terms.months, false)}`}
+              ? `${plan.now ? '+ ' : ''}${plan.then}${plan.yearly ? ` + ${plan.yearly}` : ''}`
+              : `${plan.now ? '+ ' : ''}${plan.then}${plan.yearly ? ` + ${plan.yearly}` : ''}`}
           </span>
         )}
 

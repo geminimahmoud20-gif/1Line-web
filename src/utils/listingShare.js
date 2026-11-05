@@ -23,7 +23,7 @@ export function priceLine(p, isAr = true) {
   if (hasInstallmentPlan(t)) {
     const s = planSummary(t, fmt, isAr);
     const now = s.now ? `${s.now.label} ${fmt(s.now.amount)} + ` : '';
-    return isAr ? `${now}قسط ${fmt(t.amount)} ${s.everyLabel}` : `${now}${fmt(t.amount)} ${s.everyLabel}`;
+    return `${now}${s.then}`;
   }
   return Number(p.price) > 0 ? fmt(p.price) : '';
 }
@@ -75,7 +75,7 @@ export function listingCaption(p, { url = '', phone = '', areaName = '', isAr = 
       title,
       '',
       plan
-        ? [plan.now ? `${plan.now.label}: ${fmt(plan.now.amount)}` : '', plan.now ? `+ ${plan.then}` : plan.then, `الإجمالي: ${fmt(plan.total)}${t.cashPrice ? ` · أو كاش ${fmt(t.cashPrice)}` : ''}`].filter(Boolean).join('\n')
+        ? [plan.now ? `${plan.now.label}: ${fmt(plan.now.amount)}` : '', plan.now ? `+ ${plan.then}` : plan.then, plan.yearly ? `+ ${plan.yearly}` : '', `الإجمالي: ${fmt(plan.total)}${t.cashPrice ? ` · أو كاش ${fmt(t.cashPrice)}` : ''}`].filter(Boolean).join('\n')
         : (Number(p.price) > 0 ? `السعر: ${fmt(p.price)} (كاش)` : ''),
       factsLine(p, { areaName, isAr }),
       finishing ? `التشطيب: ${finishing}` : '',
@@ -113,13 +113,13 @@ export function facebookCaption(p, { url = '', phone = '', areaName = '' } = {})
   const plan = hasInstallmentPlan(t) ? planSummary(t, money, true) : null;
   const size = Number(p.size) > 0 ? `${Number(p.size)} م²` : '';
   const priceHook = plan
-    ? (plan.now ? `بـ${plan.resale ? ' ' : 'مقدم '}${money(plan.now.amount)}${plan.resale ? ' كاش للمالك' : ''} وقسط ${plan.everyLabel}` : `بقسط ${plan.everyLabel} ${money(t.amount)}`)
+    ? (plan.now ? `بـ${plan.resale ? ' ' : 'مقدم '}${money(plan.now.amount)}${plan.resale ? ' كاش للمالك' : ''} والباقي أقساط ${plan.everyLabel}ة` : `بأقساط ${plan.everyLabel}ة ${money(t.amount)}`)
     : (Number(p.price) > 0 ? `بـ ${money(p.price)}` : '');
   const hook = [`${type} للبيع${area ? ` في ${area}` : ''}`, size, priceHook].filter(Boolean).join(' | ');
   const n = (v) => Number(v) || 0;
   const facts = [
     plan
-      ? [plan.now ? `${plan.now.label}: ${money(plan.now.amount)}` : '', `القسط: ${money(t.amount)} ${plan.everyLabel} لمدة ${termLabelOf(t.months)}`, `الإجمالي: ${money(plan.total)}${t.cashPrice ? ` (أو كاش ${money(t.cashPrice)})` : ''}`]
+      ? [plan.now ? `${plan.now.label}: ${money(plan.now.amount)}` : '', `الأقساط: ${plan.then}`, plan.yearly ? `الدفعات السنوية: ${plan.yearly}` : '', `الإجمالي: ${money(plan.total)}${t.cashPrice ? ` (أو كاش ${money(t.cashPrice)})` : ''}`]
       : [Number(p.price) > 0 ? `السعر: ${money(p.price)} كاش` : ''],
     size ? `المساحة: ${size}` : '',
     n(p.bedrooms) ? `${n(p.bedrooms)} ${n(p.bedrooms) >= 3 && n(p.bedrooms) <= 10 ? 'غرف' : 'غرفة'}${n(p.bathrooms) ? ` و${n(p.bathrooms)} ${n(p.bathrooms) >= 3 && n(p.bathrooms) <= 10 ? 'حمامات' : 'حمام'}` : ''}` : '',
@@ -144,11 +144,4 @@ export function facebookCaption(p, { url = '', phone = '', areaName = '' } = {})
     '',
     ['#عقارات_سوهاج', area ? `#${area.replace(/[()،,.]/g, '').trim().replace(/\s+/g, '_')}` : '', `#${type.replace(/\s+/g, '_')}_للبيع`, '#1Line', '#وان_لاين'].filter(Boolean).join(' ')
   ].filter((l, i, a) => l !== '' || (i > 0 && a[i - 1] !== '')).join('\n').trim();
-}
-
-// «5 سنين» / «18 شهر» without importing the label twice
-function termLabelOf(months) {
-  const m = Math.round(Number(months) || 0);
-  if (m % 12 === 0) { const y = m / 12; return y === 1 ? 'سنة' : y === 2 ? 'سنتين' : (y <= 10 ? `${y} سنين` : `${y} سنة`); }
-  return m <= 10 ? `${m} شهور` : `${m} شهر`;
 }

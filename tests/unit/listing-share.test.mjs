@@ -12,9 +12,9 @@ test('the link preview is the title, then price and facts', () => {
 
 test('a plan leads with what is paid now', () => {
   const plan = { ...roof, paymentType: 'installment', price: 0, downPayment: 200000, installmentAmount: 30000, installmentEvery: 3, installmentMonths: 60 };
-  assert.equal(priceLine(plan), 'المقدم 200,000 ج.م + قسط 30,000 ج.م ربع سنوي');
+  assert.equal(priceLine(plan), 'المقدم 200,000 ج.م + 20 قسط ربع سنوي × 30,000 ج.م');
   const c = listingCaption(plan, { url: 'https://www.1lineestate.com/properties/x' });
-  assert.match(c, /المقدم: 200,000 ج.م\n\+ قسط 30,000 ج.م كل 3 شهور لمدة 5 سنين \(20 قسط\)\nالإجمالي: 800,000 ج.م/);
+  assert.match(c, /المقدم: 200,000 ج.م\n\+ 20 قسط ربع سنوي × 30,000 ج.م\nالإجمالي: 800,000 ج.م/);
 });
 
 test('the caption: no emoji, no WhatsApp bold, no phone from the description, link and hashtags', () => {
@@ -39,6 +39,7 @@ test('the Facebook post: hook, ✓ facts, a reason to comment, phone, link, hash
   assert.match(c, /#عقارات_سوهاج #سوهاج_الجديدة #شقة_للبيع #1Line #وان_لاين$/);
   assert.doesNotMatch(c, /01012345678|[\u{1F300}-\u{1FAFF}�]/u);
   const plan = facebookCaption({ ...roof, paymentType: 'resale', price: 0, downPayment: 450000, installmentAmount: 60000, installmentEvery: 6, installmentMonths: 36 }, { areaName: 'سوهاج الجديدة' });
-  assert.match(plan.split('\n')[0], /بـ 450,000 ج.م كاش للمالك وقسط نصف سنوي/);
-  assert.match(plan, /✓ القسط: 60,000 ج.م نصف سنوي لمدة 3 سنين/);
+  assert.match(plan.split('\n')[0], /بـ 450,000 ج.م كاش للمالك والباقي أقساط نصف سنوية/);
+  assert.match(plan, /✓ الأقساط: باقي 6 أقساط نصف سنوية × 60,000 ج.م/);
+  assert.doesNotMatch(plan, /شهر|سنين/);
 });

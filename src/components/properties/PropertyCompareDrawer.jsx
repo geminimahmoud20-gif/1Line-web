@@ -14,6 +14,7 @@ import { countLabel } from '../../utils/arabicCount';
 import { thumbUrl } from '../../utils/imageThumbs';
 import { siteLink } from '../../config/siteConfig';
 import { blockedByApproval } from '../../utils/publishApproval';
+import { paymentTerms, planSummary } from '../../utils/paymentTerms';
 
 export default function PropertyCompareDrawer({
   isOpen,
@@ -161,8 +162,10 @@ export default function PropertyCompareDrawer({
       else if (isOff) specsText = p.adminType_ar || (isAr ? 'مقر إداري / عيادة' : 'Office/Clinic');
       else specsText = `${countLabel('room', p.bedrooms || 0, isAr)} / ${countLabel('bath', p.bathrooms || 0, isAr)}`;
       msg += `• المساحة: ${sizeLabel(p, true) || `${p.size} م²`} (${specsText})\n`;
-      msg += `• المقدم: ${p.downPayment ? `${p.downPayment.toLocaleString('en-US')} ج.م` : 'كاش'}\n`;
-      msg += `• القسط: ${p.monthlyInstallment ? `${p.monthlyInstallment.toLocaleString('en-US')} ج.م/شهرياً (${p.installmentYears || 0} سنوات)` : 'كاش فقط'}\n`;
+      {
+        const s = planSummary(paymentTerms(p), (n) => `${Number(n).toLocaleString('en-US')} ج.م`, true);
+        msg += s ? `• ${s.now ? `${s.now.label} ${Number(s.now.amount).toLocaleString('en-US')} ج.م + ` : ''}${s.then}${s.yearly ? ` + ${s.yearly}` : ''}\n` : '• السداد: كاش\n';
+      }
       msg += `• الموقع: ${loc}\n`;
       // Only what the listing's legal review actually recorded; never a blanket guarantee
       const legalLine = p.legalStatus
