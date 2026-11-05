@@ -13,7 +13,7 @@
 //    the live listener whenever this route fails.
 // =============================================================
 import { SignJWT, importPKCS8 } from 'jose';
-import { CATALOG_COLLECTIONS, PAGE_SIZE, MAX_DOCS, toCatalogItems, decodeFields } from './_catalog-core.js';
+import { CATALOG_COLLECTIONS, PAGE_SIZE, MAX_DOCS, toCatalogItems, decodeFields, siteListingsQuery, queryDocuments } from './_catalog-core.js';
 
 // Each refresh reads every listing and project document, so it is kept to about every 5 minutes
 // (the free Firestore plan allows 50,000 reads a day); a stale copy may be served up to a day.
@@ -51,6 +51,14 @@ async function accessToken(sa) {
 }
 
 async function listCollection(base, docRoot, name, headers) {
+  // Without the service account the read is a visitor's: the rules allow only the listings on the site
+  if (name === 'properties' && !headers.authorization) {
+    const res = await fetch(`${base}/v1/${docRoot}:runQuery`, {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(siteListingsQuery())
+    });
+    if (!res.ok) throw new Error(`${name} ${res.status}`);
+    return toCatalogItems(queryDocuments(await res.json()));
+  }
   const documents = [];
   let pageToken = '';
   do {

@@ -354,12 +354,14 @@ export function PropertiesProvider({ children }) {
     // Sample projects used to stay next to real ones until each was deleted by hand
     const applyProjects = applyCloud(setProjects, 'oneline_mega_projects', true, false);
     let unsubs = [];
-    const goLive = () => {
+    // siteOnly: a visitor whose /api/catalog failed reads the listings on the site straight from
+    // the database (all a visitor may read); the CRM's live listener reads everything
+    const goLive = (siteOnly = false) => {
       unsubs = [
         subscribeToCatalog('properties', (docs) => {
           applyProperties(docs);
           if (Array.isArray(docs)) setCloudPropertyIds(new Set(docs.filter((d) => !d.deleted).map((d) => String(d.id))));
-        }),
+        }, { siteOnly }),
         subscribeToCatalog('projects', applyProjects),
         // The site settings travel with the cached catalog; without it (CRM, local dev) read them directly
         subscribeToSettings(SITE_SETTINGS_KEY, applySiteSettings)
@@ -372,7 +374,7 @@ export function PropertiesProvider({ children }) {
     let cancelled = false;
     const load = () => fetchPublicCatalog().then((res) => {
       if (cancelled || unsubs.length) return;
-      if (!res) { goLive(); return; }
+      if (!res) { goLive(true); return; }
       applyProperties(res.properties);
       applyProjects(res.projects);
       applySiteSettings(res.site);

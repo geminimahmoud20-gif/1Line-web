@@ -249,8 +249,12 @@ service cloud.firestore {
     }
 
     // 🏠 3. PROPERTIES INVENTORY
+    // Visitors read only listings that are on the site (live, under negotiation, sold…); hidden,
+    // draft and trashed ones, with their exact location and legal file, are for staff only.
+    // Keep in sync with SITE_STATUSES in src/services/catalog.js (the visitors' query filters on it).
     match /properties/{propId} {
-      allow read: if true;
+      allow read: if isStaff()
+        || resource.data.get('status', '') in ['published', 'under_negotiation', 'reserved', 'deposit_paid', 'contracted', 'sold'];
       allow create, update: if isInventoryEditor() && publishAllowed(request.resource.data);
       allow delete: if hasPerm('inv.delete');
     }

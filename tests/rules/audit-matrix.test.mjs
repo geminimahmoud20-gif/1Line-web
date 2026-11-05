@@ -37,7 +37,7 @@ beforeEach(async () => {
     await setDoc(doc(db, 'deals/deal-b'), { title: 'Deal B', assignedTo: 'Sales Team B', stage: 'proposal' });
 
     // Seed properties
-    await setDoc(doc(db, 'properties/prop-1'), { title: 'Villa 1', grade: 'A', status: 'available' });
+    await setDoc(doc(db, 'properties/prop-1'), { title: 'Villa 1', grade: 'A', status: 'published' });
 
     // Seed demands
     await setDoc(doc(db, 'demands/dem-1'), { clientName: 'Buyer 1', status: 'published' });
