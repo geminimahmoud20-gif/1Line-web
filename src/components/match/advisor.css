@@ -1,39 +1,75 @@
-/* The advisor's motion: breathing, a slow nod, blinks, a glint across the glasses, a mouth that
-   moves while he asks, a raised brow when thinking, and smiling eyes with a nod when happy. */
-.adv { position: relative; flex: none; }
-.adv-svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 16px 20px rgba(7, 17, 31, 0.25)); }
+/* The advisor portrait: a photo in a round frame with a turning gold ring and a soft float, plus a
+   badge per mood (sound bars while asking, «…» while thinking, a green tick and sparkles on results). */
+.adv { position: relative; flex: none; width: var(--adv-size); height: var(--adv-size); animation: adv-float 4s ease-in-out infinite; }
+@keyframes adv-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 
-.adv-body { animation: adv-breathe 4s ease-in-out infinite; transform-origin: 100px 240px; }
-@keyframes adv-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.012, 1.02); } }
+.adv-ring {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(from 0deg, #F3DCA4, #B38A45, #7C5E30, #D9B97E, #F3DCA4);
+  animation: adv-spin 6s linear infinite;
+  box-shadow: 0 18px 34px -14px rgba(7, 17, 31, 0.55);
+}
+@keyframes adv-spin { to { transform: rotate(360deg); } }
 
-.adv-head { animation: adv-nod 5s ease-in-out infinite; transform-origin: 100px 150px; }
-@keyframes adv-nod { 0%, 100% { transform: rotate(0deg); } 30% { transform: rotate(-2.5deg); } 60% { transform: rotate(1.5deg) translateY(1px); } }
+.adv-frame {
+  position: absolute; inset: 5%; border-radius: 50%; overflow: hidden; background: #E9EDF2;
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.85);
+  animation: adv-tilt 6s ease-in-out infinite;
+}
+@keyframes adv-tilt { 0%, 100% { transform: rotate(0deg); } 35% { transform: rotate(-2.5deg); } 70% { transform: rotate(1.5deg); } }
+.adv-photo { width: 100%; height: 100%; object-fit: cover; display: block; transform: scale(1.04); transform-origin: 50% 40%; }
+/* A light sweep across the portrait now and then */
+.adv-gloss {
+  position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  background: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, 0.35) 48%, transparent 58%);
+  background-size: 250% 100%; background-position: 120% 0; animation: adv-gloss 6s ease-in-out infinite;
+}
+@keyframes adv-gloss { 0%, 70% { background-position: 120% 0; } 100% { background-position: -60% 0; } }
 
-.adv-lid { transform: scaleY(0); transform-box: fill-box; transform-origin: center top; animation: adv-blink 4.2s infinite; }
-@keyframes adv-blink { 0%, 93%, 100% { transform: scaleY(0); } 96% { transform: scaleY(1); } }
+/* «Online» dot */
+.adv-online {
+  position: absolute; width: 16%; height: 16%; bottom: 6%; inset-inline-end: 6%; border-radius: 50%;
+  background: #22C55E; box-shadow: 0 0 0 3px #fff; animation: adv-online 2s ease-in-out infinite;
+}
+@keyframes adv-online { 0%, 100% { box-shadow: 0 0 0 3px #fff, 0 0 0 3px rgba(34, 197, 94, 0.5); } 50% { box-shadow: 0 0 0 3px #fff, 0 0 0 9px rgba(34, 197, 94, 0); } }
 
-.adv-glint { animation: adv-glint 5.5s ease-in-out infinite; }
-@keyframes adv-glint { 0%, 70% { transform: skewX(-25deg) translateX(0); } 90%, 100% { transform: skewX(-25deg) translateX(160px); } }
+/* Sound waves around the frame while he talks */
+.adv-wave { position: absolute; inset: 0; border-radius: 50%; border: 2px solid rgba(217, 185, 126, 0.7); opacity: 0; }
+.adv.is-talk .adv-wave { animation: adv-wave 2s ease-out infinite; }
+.adv.is-talk .adv-wave.is-late { animation-delay: 1s; }
+@keyframes adv-wave { 0% { opacity: 0.8; transform: scale(1); } 100% { opacity: 0; transform: scale(1.35); } }
 
-.adv-happy-eyes { opacity: 0; }
-.adv-mouth { transform-box: fill-box; transform-origin: center top; }
+/* Mood badges sit on the frame's edge */
+.adv-badge {
+  position: absolute; display: flex; align-items: center; justify-content: center; gap: 3px;
+  min-width: 34%; height: 24%; padding: 0 8%; border-radius: 999px; opacity: 0; transform: scale(0.6);
+  transition: opacity 0.25s ease, transform 0.25s ease; box-shadow: 0 8px 18px -8px rgba(7, 17, 31, 0.5);
+}
+.adv-talk { top: 2%; inset-inline-start: -6%; background: #0B1B32; }
+.adv-talk i { display: block; width: 9%; min-width: 3px; height: 40%; border-radius: 3px; background: #D9B97E; animation: adv-bars 0.9s ease-in-out infinite; }
+.adv-talk i:nth-child(2) { animation-delay: 0.15s; }
+.adv-talk i:nth-child(3) { animation-delay: 0.3s; }
+.adv-talk i:nth-child(4) { animation-delay: 0.45s; }
+@keyframes adv-bars { 0%, 100% { transform: scaleY(0.4); } 50% { transform: scaleY(1.3); } }
+.adv-think { top: 2%; inset-inline-start: -6%; background: #fff; }
+.adv-think i { display: block; width: 14%; min-width: 4px; aspect-ratio: 1; border-radius: 50%; background: #0B1B32; animation: adv-dots 1.2s ease-in-out infinite; }
+.adv-think i:nth-child(2) { animation-delay: 0.2s; }
+.adv-think i:nth-child(3) { animation-delay: 0.4s; }
+@keyframes adv-dots { 0%, 100% { opacity: 0.3; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-30%); } }
+.adv-happy { top: 0; inset-inline-start: -2%; min-width: 0; width: 28%; height: 28%; padding: 0; border-radius: 50%; background: #22C55E; }
 
-/* Talking */
-.adv.is-talk .adv-mouth { animation: adv-talk 0.34s ease-in-out infinite alternate; }
-@keyframes adv-talk { from { transform: scaleY(0.55); } to { transform: scaleY(1.25); } }
+.adv.is-talk .adv-talk, .adv.is-think .adv-think, .adv.is-happy .adv-happy { opacity: 1; transform: scale(1); }
 
-/* Thinking: head tilted, one brow up */
-.adv.is-think .adv-head { animation: adv-think 3s ease-in-out infinite; }
-.adv.is-think .adv-brow:last-of-type { transform: translateY(-3px); }
-@keyframes adv-think { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(-3deg) translateY(-1px); } }
-
-/* Happy: smiling eyes, a bigger smile, a cheerful nod */
-.adv.is-happy .adv-eyes { opacity: 0; }
-.adv.is-happy .adv-happy-eyes { opacity: 1; }
-.adv.is-happy .adv-mouth { transform: scale(1.15, 1.3); }
-.adv.is-happy .adv-head { animation: adv-cheer 1.2s ease-in-out infinite; }
-@keyframes adv-cheer { 0%, 100% { transform: translateY(0) rotate(0deg); } 40% { transform: translateY(-4px) rotate(-2deg); } }
+/* Sparkles on the results */
+.adv-spark { position: absolute; width: 9%; height: 9%; opacity: 0; background: #F3DCA4; clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); }
+.adv-spark.s1 { top: 6%; inset-inline-end: 0; }
+.adv-spark.s2 { bottom: 22%; inset-inline-start: -8%; animation-delay: 0.4s !important; }
+.adv-spark.s3 { top: -8%; inset-inline-end: 30%; animation-delay: 0.8s !important; }
+.adv.is-happy .adv-spark { animation: adv-spark 1.6s ease-in-out infinite; }
+@keyframes adv-spark { 0%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); } 50% { opacity: 1; transform: scale(1.2) rotate(45deg); } }
+.adv.is-happy { animation: adv-hop 1.2s ease-in-out infinite; }
+@keyframes adv-hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-9px); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .adv *, .adv-body, .adv-head { animation: none !important; }
+  .adv, .adv * { animation: none !important; }
 }
