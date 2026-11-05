@@ -4,6 +4,7 @@ import { Search, X, Building, MapPin, Layers, Calculator, TrendingUp, FileText, 
 import { getAreas } from '../../utils/areasData.js';
 import { MEGA_PROJECTS } from '../../data/projectsData.js';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark.js';
+import { areaPrice } from '../../utils/areaPricing.js';
 import { thumbUrl } from '../../utils/imageThumbs';
 
 export default function QuickSearchModal({
@@ -331,7 +332,9 @@ export default function QuickSearchModal({
                     {searchResults.areas.map((a) => {
                       const thisIndex = runningIndex++;
                       const isSelected = selectedIndex === thisIndex;
-                      const benchmarkObj = formatCurrencyPrice(a.avgPricePerMeter, currency, lang);
+                      // The same figure as the market page (listings or the team's own), never a seeded one
+                      const ap = areaPrice(a, properties, areas);
+                      const benchmarkObj = ap.ppm > 0 ? formatCurrencyPrice(ap.ppm, currency, lang) : null;
                       return (
                         <div
                           key={a.id}
@@ -346,10 +349,12 @@ export default function QuickSearchModal({
                             <span className="item-main-title">{isAr ? a.name_ar : a.name_en}</span>
                             <span className="item-sub-meta">{isAr ? a.description_ar : a.label_en}</span>
                           </div>
-                          <div className="item-end-price">
-                            <span className="area-meter-label">{isAr ? 'متوسط المتر' : 'Avg/m²'}</span>
-                            <strong className="area-meter-val">{benchmarkObj.primary} {benchmarkObj.symbol}</strong>
-                          </div>
+                          {benchmarkObj && (
+                            <div className="item-end-price">
+                              <span className="area-meter-label">{isAr ? 'متوسط المتر' : 'Avg/m²'}</span>
+                              <strong className="area-meter-val">{benchmarkObj.primary} {benchmarkObj.symbol}</strong>
+                            </div>
+                          )}
                         </div>
                       );
                     })}

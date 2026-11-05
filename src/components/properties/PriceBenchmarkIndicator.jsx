@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { TrendingDown, TrendingUp, CheckCircle2, ShieldCheck, BarChart3, Building2, Store, Home, Layers } from 'lucide-react';
-import { getDistrictBenchmark, formatCurrencyPrice, isMultiUnitOrBuilding, parseUnitBreakdown, isResidentialProperty } from '../../utils/currencyAndBenchmark';
+import { formatCurrencyPrice, isMultiUnitOrBuilding, parseUnitBreakdown, isResidentialProperty } from '../../utils/currencyAndBenchmark';
 import { getAreaById, getAreas } from '../../utils/areasData';
 import { useProperties } from '../../context/PropertiesContext';
-import { areaPrice, priceModeOf } from '../../utils/areaPricing';
+import { areaReferencePrice } from '../../utils/areaPricing';
 import { assetClass } from '../../utils/marketStats';
 
 export default function PriceBenchmarkIndicator({ property, lang = 'ar', currency = 'EGP' }) {
@@ -22,11 +22,17 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
   const areaKey = property?.areaKey || 'default';
   const areaData = getAreaById(areaKey);
   const { properties: allListings = [] } = useProperties();
-  // An area priced from its listings compares against their median (3+ of the same kind), as the
-  // market page shows; otherwise the figure typed in the CRM
-  const live = areaData && priceModeOf(areaData) === 'auto' ? areaPrice(areaData, allListings, getAreas()) : null;
-  const fromListings = live && live.source === 'listings' && live.sample >= 3 && live.cls === assetClass(property) ? live.ppm : 0;
-  const districtAvg = property?.customBenchmarkPrice || fromListings || (areaData && areaData.avgPricePerMeter) || getDistrictBenchmark(areaKey);
+  // Only a real figure: a benchmark typed on the listing, the median of 3+ listings of the same kind
+  // in the area, or the area's price when the team set it by hand. No built-in or seeded numbers:
+  // without one there is no «below / above the market» verdict.
+  const reference = Number(property?.customBenchmarkPrice) > 0
+    ? { ppm: Number(property.customBenchmarkPrice), source: 'listing', sample: 0 }
+    : areaReferencePrice(areaData, allListings, getAreas(), assetClass(property));
+  const districtAvg = reference?.ppm || 0;
+  const referenceNote = !reference ? ''
+    : reference.source === 'listings'
+      ? (isAr ? `متوسط المنطقة = وسيط ${reference.sample} عروض مشابهة معروضة دلوقتي على 1Line، ويختلف حسب الدور والتشطيب والواجهة.` : `Area average = median of ${reference.sample} similar listings now on 1Line; floor, finishing and frontage change it.`)
+      : (isAr ? 'متوسط المنطقة تقدير فريق 1Line، ويختلف حسب الدور والتشطيب والواجهة.' : 'The area average is the 1Line team\'s estimate; floor, finishing and frontage change it.');
   const currentDistrictName = (isAr ? areaData?.name_ar : areaData?.name_en) || (isAr ? 'سوهاج عام' : 'Sohag Average');
 
   // Multi-unit mixed-use building view (e.g. 4 apartments + 3 shops, multi-floor house)
@@ -143,7 +149,7 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
   // by frontage, activity and zoning, so comparing them with it would flag fair prices as "overpriced".
   const isResidential = isResidentialProperty(property);
   const sizeM2 = Number(property?.size) || 0;
-  if (property && (!sizeM2 || (!isResidential && !property.customBenchmarkPrice))) {
+  if (property && (!sizeM2 || !districtAvg || (!isResidential && !property.customBenchmarkPrice))) {
     const perM = sizeM2 ? formatCurrencyPrice(Math.round((Number(property.price) || 0) / sizeM2), currency, lang) : null;
     return (
       <div className="price-benchmark-card">
@@ -161,6 +167,8 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
         <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
           {!sizeM2
             ? (isAr ? 'المساحة مش مسجلة، فمفيش مقارنة لسعر المتر.' : 'No area recorded, so there is no price-per-m² comparison.')
+            : isResidential && !districtAvg
+              ? (isAr ? 'لسه مفيش عروض مشابهة كفاية في المنطقة نقارن بيها (محتاجين 3 على الأقل). اسأل مستشارنا عن أسعار صفقات قريبة.' : 'Not enough similar listings in the area to compare with yet (3 needed). Ask us about nearby deals.')
             : (isAr
               ? 'متوسط الحي محسوب للشقق والفيلات بس. المحلات والمكاتب والأراضي سعرها بيتحدد بالواجهة والنشاط والترخيص، فمش بنقارنها بيه. اسأل مستشارنا عن صفقات مشابهة في نفس الشارع.'
               : 'The district average covers homes only. Shops, offices and land are priced by frontage, activity and zoning, so they are not compared with it. Ask us for comparable deals on the same street.')}
@@ -306,9 +314,7 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
       }}>
         <ShieldCheck size={14} className="text-gold" style={{ flexShrink: 0 }} />
         <span>
-          {isAr
-            ? 'متوسط سعر المتر في المنطقة رقم استرشادي يحدّثه فريق 1Line من لوحة التحكم، ويختلف حسب الدور والتشطيب والواجهة.'
-            : 'The area average is an indicative figure maintained by the 1Line team; floor, finishing and frontage change it.'}
+          {referenceNote}
         </span>
       </div>
     </div>

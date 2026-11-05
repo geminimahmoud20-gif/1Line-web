@@ -22,9 +22,6 @@ export const CAIRO_AREAS = [
   { id: 'cairo_other', ar: 'منطقة تانية في القاهرة الكبرى', en: 'Other Greater Cairo area' }
 ];
 
-// Per-m² fallback when a district has no average set in the CRM
-export const FALLBACK_M2 = { east: 21500, new_sohag: 17800, corniche: 31000, thakafa: 15200, center: 18500, kawthar: 12000 };
-
 export const FINISHING = [
   { id: 'ultra_lux', ar: 'ألترا سوبر لوكس', en: 'Ultra super lux', multiplier: 1.25 },
   { id: 'super_lux', ar: 'سوبر لوكس', en: 'Super lux', multiplier: 1.15 },
