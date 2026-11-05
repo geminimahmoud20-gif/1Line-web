@@ -582,7 +582,9 @@ export async function addArea(areaData) {
     center: areaData.center || { lat: 26.5569, lng: 31.7001 },
     zoom: areaData.zoom || 14,
     description_ar: areaData.description_ar?.trim() || '',
-    avgPricePerMeter: Number(areaData.avgPricePerMeter) || 15000,
+    // No invented figure: an area priced from its listings may have none typed
+    avgPricePerMeter: Number(areaData.avgPricePerMeter) || 0,
+    priceMode: areaData.priceMode === 'manual' ? 'manual' : 'auto',
     annualGrowthRate: Number.isFinite(Number(areaData.annualGrowthRate)) ? Number(areaData.annualGrowthRate) : 0,
     // A new area starts without landmarks or price history; never borrow another area's figures
     historicalPrices: Array.isArray(areaData.historicalPrices) ? areaData.historicalPrices : [],

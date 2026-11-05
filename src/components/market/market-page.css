@@ -1,0 +1,71 @@
+/* /market-intelligence: three figures, the area list, the budget check, tips and a WhatsApp ask.
+   Plain cards on the page background; one accent colour; nothing nested more than one box deep. */
+.mi-body { display: flex; flex-direction: column; gap: 28px; padding-bottom: 56px; }
+
+.mi-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.mi-stat {
+  display: flex; flex-direction: column; gap: 4px; padding: 16px 18px;
+  border: 1px solid var(--border-color); border-radius: 16px; background: var(--bg-card);
+  box-shadow: 0 10px 30px -18px rgba(8, 18, 33, 0.35);
+}
+.mi-stat > span { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); }
+.mi-stat strong { font-size: 1.55rem; font-weight: 800; line-height: 1.2; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.mi-stat strong small { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); }
+.mi-stat em { font-style: normal; font-size: 0.76rem; color: var(--text-muted); }
+
+.mi-section-head { margin-bottom: 14px; }
+.mi-section-head h2, .mi-budget h2, .mi-tips h2, .mi-cta h2 { margin: 0; font-size: 1.3rem; font-weight: 800; line-height: 1.4; color: var(--text-primary); }
+.mi-section-head p { margin: 4px 0 0; font-size: 0.9rem; line-height: 1.7; color: var(--text-muted); }
+
+.mi-budget { padding: 20px; border-radius: 18px; border: 1px solid var(--border-color); background: var(--bg-card); }
+.mi-budget-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
+.mi-budget-head p { margin: 2px 0 0; font-size: 0.88rem; color: var(--text-muted); }
+.mi-budget-icon { flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--accent-gold-light); color: var(--accent-gold); }
+.mi-budget-row { display: grid; grid-template-columns: minmax(220px, 280px) 1fr auto; align-items: center; gap: 16px; }
+.mi-budget-input { display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); }
+.mi-budget-field {
+  display: flex; align-items: center; gap: 8px; min-height: 50px; padding: 0 14px;
+  border: 1px solid var(--border-hover); border-radius: 12px; background: var(--bg-card);
+}
+.mi-budget-field:focus-within { border-color: var(--accent-gold); box-shadow: 0 0 0 3px var(--accent-gold-light); }
+.mi-budget-field input {
+  flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; padding: 0;
+  font: inherit; font-size: 1.15rem; font-weight: 800; color: var(--text-primary); font-variant-numeric: tabular-nums;
+}
+.mi-budget-field em { flex: none; font-style: normal; font-weight: 700; color: var(--text-muted); }
+.mi-budget-result { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.mi-budget-result strong { font-size: 1.1rem; font-weight: 800; color: var(--text-primary); }
+.mi-budget-result span { font-size: 0.86rem; line-height: 1.6; color: var(--text-muted); }
+.mi-budget-cta, .mi-cta-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 22px;
+  border-radius: 999px; font-weight: 800; text-decoration: none; white-space: nowrap;
+}
+.mi-budget-cta { background: var(--primary); color: #fff; }
+.mi-budget-cta:hover { background: var(--primary-light); }
+
+.mi-bottom { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
+.mi-tips, .mi-cta { padding: 20px; border-radius: 18px; border: 1px solid var(--border-color); background: var(--bg-card); }
+.mi-tips ul { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 10px; }
+.mi-tips li { display: flex; gap: 10px; font-size: 0.92rem; line-height: 1.7; color: var(--text-primary); }
+.mi-tips li svg { flex: none; margin-top: 5px; color: var(--success); }
+.mi-cta { display: flex; flex-direction: column; gap: 10px; background: var(--primary); border-color: transparent; }
+.mi-cta h2 { color: #fff; }
+.mi-cta p { margin: 0; font-size: 0.92rem; line-height: 1.7; color: rgba(255, 255, 255, 0.82); }
+.mi-cta-btn { align-self: flex-start; margin-top: auto; background: #1f9d55; color: #fff; }
+.mi-cta-btn:hover { background: #188046; }
+
+@media (max-width: 900px) {
+  .mi-budget-row { grid-template-columns: 1fr; gap: 12px; }
+  .mi-budget-cta { width: 100%; }
+  .mi-bottom { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .mi-body { gap: 22px; }
+  .mi-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mi-stats .mi-stat:nth-child(2) { grid-column: 1 / -1; order: -1; }
+  .mi-stat { padding: 14px; }
+  .mi-stat strong { font-size: 1.35rem; }
+  .mi-budget, .mi-tips, .mi-cta { padding: 16px; border-radius: 16px; }
+  .mi-cta-btn { align-self: stretch; }
+  .mi-section-head h2, .mi-budget h2, .mi-tips h2, .mi-cta h2 { font-size: 1.15rem; }
+}

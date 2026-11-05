@@ -1,10 +1,13 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { TrendingUp, Building, Sparkles, ShieldCheck, MapPin, CheckCircle2, Calculator, ArrowRight, ArrowLeft, Home, Store } from 'lucide-react';
-import { areaMarketStats, budgetMatches, liveListings, pricedListings, assetClass, median } from '../utils/marketStats';
+import { TrendingUp, Calculator, ArrowRight, ArrowLeft, CheckCircle2, MessageCircle } from 'lucide-react';
+import { budgetMatches, liveListings, pricedListings, assetClass, median } from '../utils/marketStats';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
-import AreaPriceCards from '../components/market/AreaPriceCards';
+import MarketAreaList from '../components/market/MarketAreaList';
 import { getAreas } from '../utils/areasData';
+import { areaPrice } from '../utils/areaPricing';
+import { mainAreas, areaPathName } from '../utils/areaLookup';
+import '../components/market/market-page.css';
 import { updatePageSeo, buildBreadcrumbSchema } from '../utils/seoHelper';
 import { countPhrase } from '../utils/arabicCount';
 
@@ -39,17 +42,15 @@ export default function MarketIntelligencePage({ lang = 'ar', properties = [] })
   }, []);
 
   const live = useMemo(() => liveListings(properties), [properties]);
-  const stats = useMemo(() => areaMarketStats(properties), [properties]);
+  // Main areas that show a price, whichever source each one uses
+  const pricedAreas = useMemo(() => mainAreas(areas).filter((a) => areaPrice(a, properties, areas).ppm > 0).length, [areas, properties]);
   const matches = useMemo(() => budgetMatches(properties, userBudget), [properties, userBudget]);
   const overall = useMemo(() => {
     // Same listings, classes and median as the area cards below: flats only, every area
     const ppm = pricedListings(properties).filter((p) => Number(p.size) > 0 && assetClass(p) === 'residential').map((p) => Number(p.price) / Number(p.size));
     return { residential: Math.round(median(ppm)), sample: ppm.length };
   }, [properties]);
-  const areaName = (id) => {
-    const a = areas.find((x) => x.id === id);
-    return a ? (isAr ? a.name_ar : a.name_en || a.name_ar) : id;
-  };
+  const areaName = (id) => areaPathName(id, areas, isAr) || (isAr ? 'منطقة تانية' : 'Other');
   const n = (v) => Number(v || 0).toLocaleString('en-US');
 
   return (
@@ -83,131 +84,96 @@ export default function MarketIntelligencePage({ lang = 'ar', properties = [] })
 
           <div className="market-badge-pill">
             <TrendingUp size={16} className="text-gold" />
-            <span>{isAr ? 'مؤشرات من العروض الحالية' : 'From current listings'}</span>
+            <span>{isAr ? 'بيتحدّث مع كل عرض جديد' : 'Updated with every listing'}</span>
           </div>
 
-          <h1>{isAr ? 'أسعار المتر في سوهاج حسب المنطقة' : 'Price per m² across Sohag'}</h1>
+          <h1>{isAr ? 'أسعار المتر في سوهاج' : 'Price per m² in Sohag'}</h1>
           <p>
             {isAr
-              ? 'الأرقام هنا محسوبة من العقارات المعروضة على 1Line دلوقتي، مش من سجلات الشهر العقاري ولا توقعات. بتتغير مع كل عرض بيتضاف أو يتباع.'
-              : 'Figures are computed from the listings on 1Line right now — not registry records or forecasts. They change as listings are added or sold.'}
+              ? 'سعر المتر في كل منطقة ومناطقها الفرعية، ومكتوب جنب كل رقم مصدره: متوسط العروض الحالية على 1Line أو تقدير فريقنا.'
+              : 'Price per m² for each area and its sub-areas, with the source next to every figure: current 1Line listings or our team\'s estimate.'}
           </p>
         </div>
       </div>
 
-      <div className="market-content-container">
-        <div className="market-summary-stats-grid">
-          <div className="summary-stat-box">
-            <div className="stat-icon-wrap bg-blue"><Building size={22} /></div>
-            <div>
-              <span className="stat-lbl">{isAr ? 'عقارات معروضة الآن' : 'Listings now'}</span>
-              <strong className="stat-num text-primary">{n(live.length)}</strong>
-            </div>
+      <div className="market-content-container mi-body">
+        <div className="mi-stats">
+          <div className="mi-stat">
+            <span>{isAr ? 'عقارات معروضة دلوقتي' : 'Listings now'}</span>
+            <strong>{n(live.length)}</strong>
           </div>
-          <div className="summary-stat-box">
-            <div className="stat-icon-wrap bg-green"><Home size={22} /></div>
-            <div>
-              <span className="stat-lbl">{isAr ? `وسيط متر الشقق (${countPhrase('listing', overall.sample)}، كل المناطق)` : `Median flat price / m² (${countPhrase('listing', overall.sample, false)}, all areas)`}</span>
-              <strong className="stat-num text-success">{overall.residential ? `${n(overall.residential)} ${isAr ? 'ج.م' : 'EGP'}` : '—'}</strong>
-            </div>
+          <div className="mi-stat">
+            <span>{isAr ? 'وسيط متر الشقق' : 'Median flat price / m²'}</span>
+            <strong>{overall.residential ? <><bdi>{n(overall.residential)}</bdi> <small>{isAr ? 'ج.م' : 'EGP'}</small></> : '—'}</strong>
+            {overall.sample > 0 && <em>{isAr ? `من ${countPhrase('listing', overall.sample)} في كل المناطق` : `from ${countPhrase('listing', overall.sample, false)}`}</em>}
           </div>
-          <div className="summary-stat-box">
-            <div className="stat-icon-wrap bg-gold"><MapPin size={22} /></div>
-            <div>
-              <span className="stat-lbl">{isAr ? 'أكتر منطقة فيها عروض' : 'Most listings in'}</span>
-              <strong className="stat-num">{stats[0] ? areaName(stats[0].areaId) : '—'}</strong>
-            </div>
-          </div>
-          <div className="summary-stat-box">
-            <div className="stat-icon-wrap bg-purple"><ShieldCheck size={22} /></div>
-            <div>
-              <span className="stat-lbl">{isAr ? 'مناطق فيها عروض' : 'Areas with listings'}</span>
-              <strong className="stat-num">{n(stats.length)}</strong>
-            </div>
+          <div className="mi-stat">
+            <span>{isAr ? 'مناطق ليها سعر' : 'Areas priced'}</span>
+            <strong>{n(pricedAreas)}</strong>
           </div>
         </div>
 
+        <section className="mi-section" aria-labelledby="mi-areas-title">
+          <div className="mi-section-head">
+            <h2 id="mi-areas-title">{isAr ? 'سعر المتر حسب المنطقة' : 'Price per m² by area'}</h2>
+            <p>{isAr ? 'السعر الكبير لمتر الشقق في المنطقة كلها. افتح «الأسعار حسب النوع» للمحلات والمكاتب والأراضي.' : 'The large figure is for flats across the area. Open «Prices by kind» for shops, offices and land.'}</p>
+          </div>
+          <MarketAreaList areas={areas} properties={properties} isAr={isAr} />
+        </section>
+
         {/* What a budget can find right now */}
-        <div className="market-budget-advisor-card">
-          <div className="advisor-header-row">
-            <div className="advisor-title-wrap">
-              <div className="advisor-glow-icon"><Calculator size={20} className="text-white" /></div>
-              <div>
-                <h4>{isAr ? 'ميزانيتك تلاقي إيه دلوقتي؟' : 'What can your budget find now?'}</h4>
-                <p>{isAr ? 'عدد العقارات المعروضة حالياً في حدود ميزانيتك، حسب المنطقة' : 'Listings currently within your budget, by district'}</p>
-              </div>
+        <section className="mi-budget" aria-labelledby="mi-budget-title">
+          <div className="mi-budget-head">
+            <span className="mi-budget-icon"><Calculator size={20} aria-hidden="true" /></span>
+            <div>
+              <h2 id="mi-budget-title">{isAr ? 'ميزانيتك تلاقي إيه دلوقتي؟' : 'What can your budget find now?'}</h2>
+              <p>{isAr ? 'اكتب ميزانيتك ونقولك كام عقار معروض في حدودها وفين.' : 'Type your budget to see how many listings fit and where.'}</p>
             </div>
-            <div className="advisor-input-box">
-              <label htmlFor="mi-budget">{isAr ? 'ميزانيتك:' : 'Your budget:'}</label>
-              <div className="advisor-num-input-wrap">
+          </div>
+          <div className="mi-budget-row">
+            <label htmlFor="mi-budget" className="mi-budget-input">
+              <span>{isAr ? 'الميزانية' : 'Budget'}</span>
+              <span className="mi-budget-field">
                 {/* Shown with thousands separators (2,500,000); typed digits in any script are read */}
                 <input id="mi-budget" type="text" inputMode="numeric" dir="ltr" value={userBudget ? n(userBudget) : ''}
                   onChange={(e) => {
                     const digits = e.target.value.replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660)).replace(/\D/g, '');
                     setUserBudget(Math.min(1000000000, Number(digits) || 0));
-                  }} className="advisor-direct-input" />
-                <span>{isAr ? 'ج.م' : 'EGP'}</span>
-              </div>
-            </div>
-          </div>
-          <div className="advisor-result-banner">
-            <div className="advisor-res-district">
-              <span className="res-tag">{isAr ? 'في حدود ميزانيتك' : 'Within your budget'}</span>
-              <h5>{matches.count ? countPhrase('property', matches.count, isAr) : (isAr ? 'مفيش عقارات' : 'No listings')}</h5>
-              <p>
+                  }} />
+                <em>{isAr ? 'ج.م' : 'EGP'}</em>
+              </span>
+            </label>
+            <div className="mi-budget-result" aria-live="polite">
+              <strong>{matches.count ? countPhrase('property', matches.count, isAr) : (isAr ? 'مفيش عقارات في الحدود دي' : 'No listings in this range')}</strong>
+              <span>
                 {matches.areas.length
                   ? matches.areas.slice(0, 4).map(([id, c]) => `${areaName(id)} (${c})`).join(isAr ? '، ' : ', ')
-                  : (isAr ? 'مفيش عروض حالياً في الحدود دي — اطلب اللي محتاجه ونبلغك أول ما يتوفر.' : 'Nothing listed in this range right now — post a request and we will tell you when it appears.')}
-              </p>
+                  : (isAr ? 'اطلب اللي محتاجه ونبلغك أول ما يتوفر.' : 'Post a request and we will tell you when one appears.')}
+              </span>
             </div>
-            <div className="advisor-res-yield">
-              <Link to={`/properties?maxPrice=${userBudget}`} className="btn btn-primary">{isAr ? 'اعرض العقارات' : 'See listings'}</Link>
-            </div>
+            <Link to={matches.count ? `/properties?maxPrice=${userBudget}` : '/special-requests'} className="mi-budget-cta">
+              {matches.count ? (isAr ? 'اعرض العقارات' : 'See listings') : (isAr ? 'اطلب عقار' : 'Request a property')}
+            </Link>
           </div>
-        </div>
+        </section>
 
-        {/* District table from current listings */}
-        <div className="market-matrix-card">
-          <div className="matrix-header-flex">
-            <div>
-              <h3>{isAr ? 'سعر المتر حسب المنطقة (من العروض الحالية)' : 'Price per m² by district (current listings)'}</h3>
-              <p>{isAr ? 'كل نوع محسوب لوحده (سكني، تجاري، إداري، أراضي). الوسيط = السعر اللي نص العروض أقل منه ونصها أعلى، ومحسوب لما يكون فيه 3 عروض أو أكتر.' : 'Each kind is computed on its own (homes, shops, offices, land). The median (half below, half above) is shown from 3 listings up.'}</p>
-            </div>
-          </div>
-          {stats.length === 0 ? (
-            <p style={{ margin: '12px 0 0' }}>{isAr ? 'لسه مفيش عقارات منشورة كفاية لحساب المتوسطات.' : 'Not enough published listings yet.'}</p>
-          ) : (
-            <AreaPriceCards stats={stats} areaName={areaName} isAr={isAr} />
-          )}
-        </div>
-        <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '10px 4px 0' }}>
-          {isAr
-            ? 'دي أسعار معروضة مش أسعار بيع نهائية. السعر اللي عليه «عرض واحد» أو «عرضين» سعر وحدات بعينها مش متوسط المنطقة. ومش بنعرض توقعات نمو أو عوائد إيجارية لأن مفيش بيانات صفقات كفاية تثبتها. لعائد وحدة معينة اطلب إيجارات مقارنة فعلية.'
-            : 'These are asking prices, not final sale prices. No growth or rental-yield forecasts are shown because there is not enough deal data to support them. Ask for real comparable rents for any unit.'}
-        </p>
-
-        <div className="market-insights-grid">
-          <div className="insight-card">
-            <div className="insight-card-header">
-              <Sparkles size={18} className="text-gold" />
-              <h4>{isAr ? 'قبل ما تقرر' : 'Before you decide'}</h4>
-            </div>
-            <ul className="insights-points-list">
-              <li><CheckCircle2 size={16} className="text-success" /><span>{isAr ? 'قارن سعر المتر للوحدة بالوسيط في نفس المنطقة ونفس النوع (سكني مع سكني، تجاري مع تجاري).' : 'Compare a unit\'s price per m² with the median for the same district and type.'}</span></li>
-              <li><CheckCircle2 size={16} className="text-success" /><span>{isAr ? 'للمحلات والعيادات: اطلب إيجارات مقارنة فعلية في نفس الشارع قبل ما تحسب أي عائد.' : 'For shops and clinics, ask for real comparable rents on the same street before estimating any return.'}</span></li>
-              <li><CheckCircle2 size={16} className="text-success" /><span>{isAr ? 'راجع المستندات وموقف الترخيص والتسجيل مع محاميك قبل أي دفع.' : 'Review documents, licence and registration with your lawyer before paying anything.'}</span></li>
+        <div className="mi-bottom">
+          <section className="mi-tips" aria-labelledby="mi-tips-title">
+            <h2 id="mi-tips-title">{isAr ? 'قبل ما تقرر' : 'Before you decide'}</h2>
+            <ul>
+              <li><CheckCircle2 size={16} aria-hidden="true" /><span>{isAr ? 'قارن سعر متر الوحدة بسعر نفس المنطقة ونفس النوع (شقة مع شقة، محل مع محل).' : 'Compare a unit\'s price per m² with the same area and kind.'}</span></li>
+              <li><CheckCircle2 size={16} aria-hidden="true" /><span>{isAr ? 'الرقم اللي جنبه «من عرض واحد» أو «عرضين» سعر وحدات بعينها، مش متوسط المنطقة.' : 'A figure from one or two listings is those units\' price, not the area\'s.'}</span></li>
+              <li><CheckCircle2 size={16} aria-hidden="true" /><span>{isAr ? 'دي أسعار معروضة مش أسعار بيع نهائية. راجع المستندات مع محاميك قبل أي دفع.' : 'These are asking prices, not sale prices. Check the papers with your lawyer before paying.'}</span></li>
             </ul>
-          </div>
-          <div className="insight-card cta-consult-card">
-            <div className="insight-card-header">
-              <Store size={18} className="text-white" />
-              <h4>{isAr ? 'عايز مقارنة لوحدة معينة؟' : 'Need a comparison for a specific unit?'}</h4>
-            </div>
-            <p>{isAr ? 'ابعتلنا الوحدة اللي بتفكر فيها، ونبعتلك العروض المشابهة في نفس المنطقة وأسعارها.' : 'Send us the unit you are considering and we will share similar listings in the same area with their prices.'}</p>
-            <a href={getWhatsAppUrl(isAr ? 'مرحباً، عايز مقارنة أسعار لوحدة بفكر فيها' : 'Hello, I would like a price comparison for a unit')} target="_blank" rel="noopener noreferrer" className="btn btn-whatsapp btn-full">
+          </section>
+          <section className="mi-cta" aria-labelledby="mi-cta-title">
+            <h2 id="mi-cta-title">{isAr ? 'عايز مقارنة لوحدة معينة؟' : 'Need a comparison for a unit?'}</h2>
+            <p>{isAr ? 'ابعتلنا الوحدة اللي بتفكر فيها ونبعتلك العروض المشابهة في نفس المنطقة وأسعارها.' : 'Send us the unit and we will send similar listings in the same area with their prices.'}</p>
+            <a href={getWhatsAppUrl(isAr ? 'مرحباً، عايز مقارنة أسعار لوحدة بفكر فيها' : 'Hello, I would like a price comparison for a unit')} target="_blank" rel="noopener noreferrer" className="mi-cta-btn">
+              <MessageCircle size={18} aria-hidden="true" />
               <span>{isAr ? 'اطلب مقارنة على واتساب' : 'Ask on WhatsApp'}</span>
             </a>
-          </div>
+          </section>
         </div>
       </div>
     </div>

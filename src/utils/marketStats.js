@@ -126,3 +126,20 @@ export function budgetMatches(properties = [], budget = 0) {
     classes: byClass,
   };
 }
+
+/** How each kind is named on the site: { ar, en, hint_ar, hint_en } */
+export const CLASS_LABELS = {
+  residential: { ar: 'شقق', en: 'Flats', hint_ar: 'سكني', hint_en: 'homes' },
+  villa: { ar: 'فيلات وبيوت', en: 'Villas', hint_ar: 'شامل الأرض', hint_en: 'land included' },
+  commercial: { ar: 'تجاري', en: 'Shops', hint_ar: 'محلات ومعارض', hint_en: 'shops and showrooms' },
+  administrative: { ar: 'إداري', en: 'Offices', hint_ar: 'مكاتب وعيادات', hint_en: 'offices and clinics' },
+  land: { ar: 'أراضي مباني', en: 'Building land', hint_ar: '', hint_en: '' },
+  building: { ar: 'مباني كاملة', en: 'Whole buildings', hint_ar: '', hint_en: '' },
+  agricultural: { ar: 'زراعي', en: 'Farmland', hint_ar: '', hint_en: '' },
+  industrial: { ar: 'صناعي', en: 'Industrial', hint_ar: '', hint_en: '' }
+};
+
+export const classLabel = (cls, isAr = true) => {
+  const label = CLASS_LABELS[cls] || { ar: cls, en: cls };
+  return isAr ? label.ar : label.en;
+};

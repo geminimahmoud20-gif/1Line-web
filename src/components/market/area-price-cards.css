@@ -33,3 +33,10 @@
 .dark-theme .apc-detail { border-top-color: rgba(255, 255, 255, 0.08); }
 .dark-theme .apc-chip.is-single, .dark-theme .apc-chip.is-pair { color: #fbbf24; }
 .dark-theme .apc-price strong, :root[data-theme='dark'] .apc-price strong { color: #f8fafc; }
+
+/* Inside an area's «by kind» fold: plain lines with a rule between them, no box in a box */
+.apc-rows.is-flat { gap: 0; }
+.apc-rows.is-flat .apc-row { background: none; border-radius: 0; padding: 12px 0; border-top: 1px solid var(--border-color); }
+.apc-rows.is-flat .apc-row:first-child { border-top: 0; }
+.apc-rows.is-flat .apc-detail { border-top: 0; padding-top: 0; margin-top: 4px; }
+.dark-theme .apc-rows.is-flat .apc-row, :root[data-theme='dark'] .apc-rows.is-flat .apc-row { background: none; }

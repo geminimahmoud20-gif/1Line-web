@@ -1,0 +1,19 @@
+/* Area pricing source: a two-way switch in the area form, and the «all areas» bar in the Areas panel */
+.area-price-mode { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.area-price-mode-label { font-size: var(--crm-text-sm); color: var(--crm-on-dark-muted); }
+.area-price-mode-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px; border-radius: 10px; border: 1px solid var(--crm-line); }
+.area-price-mode-switch button {
+  min-height: 40px; border: 0; border-radius: 8px; background: transparent; color: var(--crm-on-dark-muted);
+  font: inherit; font-weight: 700; cursor: pointer;
+}
+.area-price-mode-switch button.is-on { background: var(--crm-accent); color: var(--crm-on-accent, var(--crm-card)); }
+.area-price-mode small { font-size: var(--crm-text-xs); color: var(--crm-faint); line-height: 1.6; }
+
+.area-price-mode-bar {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+  margin-bottom: 20px; padding: 14px 18px; border-radius: 12px; border: 1px solid var(--crm-line);
+}
+.area-price-mode-bar > div:first-child { display: flex; flex-direction: column; gap: 2px; }
+.area-price-mode-bar strong { color: var(--crm-ink); font-size: var(--crm-text-md); }
+.area-price-mode-bar span { color: var(--crm-muted); font-size: var(--crm-text-sm); }
+.area-price-mode-actions { display: flex; flex-wrap: wrap; gap: 8px; }
