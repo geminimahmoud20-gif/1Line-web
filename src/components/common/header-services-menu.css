@@ -1,0 +1,100 @@
+/* «خدمات» menu in the desktop header: three titled columns on a solid card (the old single
+   290px column on a 96% glass let the hero's headline show through and wrapped long labels). */
+.luxury-dropdown-menu.svc-menu {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  width: min(780px, calc(100vw - 48px));
+  min-width: 0;
+  padding: 14px;
+  background: var(--bg-card);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid var(--border-hover);
+  border-radius: 18px;
+  box-shadow: 0 24px 48px -16px rgba(8, 18, 33, 0.28), 0 2px 6px rgba(8, 18, 33, 0.06);
+  /* Centred under the «خدمات» pill rather than hanging off one side */
+  right: 50%;
+  transform: translateX(50%);
+  animation: svcIn 0.18s ease-out;
+}
+[dir="ltr"] .luxury-dropdown-menu.svc-menu { left: auto; right: 50%; }
+@keyframes svcIn { from { opacity: 0; margin-top: -6px; } to { opacity: 1; margin-top: 0; } }
+
+.svc-col { display: flex; flex-direction: column; gap: 2px; padding: 4px; min-width: 0; }
+.svc-col + .svc-col { border-inline-start: 1px solid var(--border-color); padding-inline-start: 10px; }
+.svc-col-title {
+  margin: 0 0 6px;
+  padding: 0 8px 8px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+  letter-spacing: 0;
+}
+
+.svc-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 8px;
+  border-radius: 12px;
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+.svc-item:hover, .svc-item:focus-visible { background: var(--secondary); }
+.svc-item.active { background: var(--secondary); }
+.svc-item.active .svc-title { color: var(--accent-gold); }
+
+.svc-icon {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: var(--accent-gold-light);
+  color: var(--accent-gold);
+}
+.svc-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.svc-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text-primary);
+}
+.svc-desc { font-size: 0.76rem; font-weight: 500; line-height: 1.45; color: var(--text-muted); }
+.svc-badge {
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--accent-gold-border);
+  background: var(--accent-gold-light);
+  color: var(--accent-gold);
+  font-size: 0.66rem;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+/* Laptops: two columns, the third wraps under them */
+@media (max-width: 1100px) {
+  .luxury-dropdown-menu.svc-menu { grid-template-columns: repeat(2, minmax(0, 1fr)); width: min(520px, calc(100vw - 32px)); }
+  .svc-col:nth-child(3) { border-inline-start: 0; padding-inline-start: 4px; }
+}
+
+/* Header links: a size up and darker than the old 0.82rem muted grey, so the bar reads at a glance */
+.site-header .luxury-nav-pill {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  padding: 7px 13px;
+}
+.site-header .luxury-nav-pill.active { font-weight: 800; }
+.site-header .luxury-nav-pill.open { color: var(--accent-gold); border-color: var(--accent-gold-border); background: var(--accent-gold-light); }
+@media (max-width: 1280px) {
+  .site-header .luxury-nav-pill { font-size: 0.86rem; padding: 7px 10px; }
+}

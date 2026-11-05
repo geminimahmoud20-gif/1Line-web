@@ -7,6 +7,7 @@ import InstallAppButton from './InstallAppButton';
 import CurrencySwitcher from './CurrencySwitcher';
 import { getWhatsAppUrl, getPhoneCallUrl } from '../../utils/founderCmsData';
 import '../../styles/mobile-drawer.css';
+import './header-services-menu.css';
 import { playNotificationChime } from '../../utils/notificationHub';
 import { useClientAuth } from '../../context/ClientAuthContext';
 import useBodyScrollLock from '../../hooks/useBodyScrollLock';
@@ -169,62 +170,33 @@ export default function Header({
       title: isAr ? 'طلبات المشترين وخدمات واستشارات VIP' : 'Buyer demands, VIP services & advisory',
       icon: Sparkles,
       activePaths: ['/demands', '/special-requests', '/market-intelligence', '/financing', '/investor', '/private-office', '/off-market', '/trade-in', '/commercial-hub'],
-      items: [
+      // Three short sections so the menu reads at a glance: buy & sell, prices & finance, premium clients
+      groups: [
         {
-          path: '/demands',
-          label: isAr ? 'طلبات المشترين' : 'Buyer Demands',
-          desc: isAr ? 'مشترين بيدوّروا على عقار زي عقارك' : 'Buyers looking for a property like yours',
-          icon: FileText
+          id: 'deal',
+          title: isAr ? 'بيع وشراء' : 'Buy & sell',
+          items: [
+            { path: '/demands', label: isAr ? 'طلبات المشترين' : 'Buyer demands', desc: isAr ? 'مشترين بيدوّروا على عقار زي عقارك' : 'Buyers looking for a property like yours', icon: FileText },
+            { path: '/trade-in', label: isAr ? 'بدّل عقارك' : 'Trade in', desc: isAr ? 'بفرق كاش أو رأس برأس' : 'With or without a cash difference', badge: isAr ? 'جديد' : 'New', icon: Repeat2 },
+            { path: '/commercial-hub', label: isAr ? 'عيادات ومحلات ومكاتب' : 'Clinics, shops & offices', desc: isAr ? 'الموقع والركن وحاسبة العائد' : 'Location, parking & yield', icon: Stethoscope }
+          ]
         },
         {
-          path: '/trade-in',
-          label: isAr ? 'بدّل عقارك (البدل العقاري)' : 'Trade in your property',
-          desc: isAr ? 'شقة بفيلا، أرض بعمارة — بفرق كاش أو رأس برأس' : 'Swap with or without a cash difference',
-          badge: isAr ? 'جديد' : 'New',
-          badgeType: 'gold',
-          icon: Repeat2
+          id: 'prices',
+          title: isAr ? 'أسعار وتمويل' : 'Prices & finance',
+          items: [
+            { path: '/market-intelligence', label: isAr ? 'أسعار المتر في سوهاج' : 'Price per m²', desc: isAr ? 'متوسط كل منطقة من العروض الحالية' : 'Each area, from current listings', icon: TrendingUp },
+            { path: '/financing', label: isAr ? 'التمويل والتقسيط' : 'Financing', desc: isAr ? 'حاسبة القسط وبرامج التمويل' : 'Instalment calculator & programmes', icon: Landmark }
+          ]
         },
         {
-          path: '/commercial-hub',
-          label: isAr ? 'عيادات ومحلات ومكاتب' : 'Clinics, shops & offices',
-          desc: isAr ? 'مؤشرات الكثافة والركن وحاسبة العائد' : 'Traffic, parking & yield indicators',
-          icon: Stethoscope
-        },
-        {
-          path: '/private-office',
-          label: isAr ? 'المكتب الخاص: صفقات خاصة وحصرية (Off-Market)' : '1Line Private Office (Off-Market)',
-          desc: isAr ? 'عقارات وقصور مليونية حصرية بأعلى معايير الخصوصية' : 'Exclusive multi-million acquisitions & estates',
-          badge: isAr ? 'حصري' : 'Exclusive',
-          badgeType: 'gold',
-          icon: Lock
-        },
-        {
-          path: '/special-requests',
-          label: isAr ? 'طلب عقار خاص VIP' : 'VIP Bespoke Requests',
-          desc: isAr ? 'طلب بمواصفات خاصة وخصوصية تامة' : 'Private bespoke sourcing for premium clients',
-          badge: 'VIP',
-          badgeType: 'gold',
-          icon: Sparkles
-        },
-        {
-          path: '/market-intelligence',
-          label: isAr ? 'مؤشرات أسعار السوق' : 'Market Intelligence',
-          desc: isAr ? 'تحليل يومي لسعر المتر بسوهاج' : 'Real-time sqm price indices & trends',
-          icon: TrendingUp
-        },
-        {
-          path: '/investor',
-          label: isAr ? 'بوابة كبار المستثمرين' : 'Investor Portal',
-          desc: isAr ? 'محافظ عقارية وأراضي كبرى' : 'High-yield portfolios & lands',
-          badge: 'ROI',
-          badgeType: 'gold',
-          icon: Briefcase
-        },
-        {
-          path: '/financing',
-          label: isAr ? 'التمويل والتقسيط' : 'Financing',
-          desc: isAr ? 'حاسبة القسط وبرامج التمويل العقاري' : 'Instalment calculator & mortgage programmes',
-          icon: Landmark
+          id: 'vip',
+          title: isAr ? 'كبار العملاء' : 'Premium clients',
+          items: [
+            { path: '/private-office', label: isAr ? 'المكتب الخاص' : 'Private office', desc: isAr ? 'صفقات حصرية بسرية تامة' : 'Off-market deals in confidence', badge: isAr ? 'حصري' : 'Exclusive', icon: Lock },
+            { path: '/special-requests', label: isAr ? 'اطلب عقار بمواصفاتك' : 'Bespoke request', desc: isAr ? 'نوصلك للعقار اللي في دماغك' : 'We source exactly what you want', badge: 'VIP', icon: Sparkles },
+            { path: '/investor', label: isAr ? 'بوابة المستثمرين' : 'Investors', desc: isAr ? 'أراضي ومحافظ استثمارية كبيرة' : 'Large land & portfolios', icon: Briefcase }
+          ]
         }
       ]
     }
@@ -241,7 +213,7 @@ export default function Header({
         { path: '/projects', label: isAr ? 'المشروعات والكمبوندات' : 'Projects & compounds', icon: Layers },
         { path: '/demands', label: isAr ? 'طلبات المشترين' : 'Buyer demands', icon: FileText },
         { path: '/commercial-hub', label: isAr ? 'عيادات ومحلات ومكاتب' : 'Clinics, shops & offices', icon: Stethoscope },
-        { path: '/market-intelligence', label: isAr ? 'مؤشرات أسعار السوق' : 'Market prices', icon: TrendingUp }
+        { path: '/market-intelligence', label: isAr ? 'أسعار المتر في سوهاج' : 'Price per m²', icon: TrendingUp }
       ]
     },
     {
@@ -349,34 +321,33 @@ export default function Header({
                 </button>
 
                 {isOpen && (
-                  <div className="luxury-dropdown-menu">
-                    {hub.items.map((item) => {
-                      const ItemIcon = item.icon;
-                      const itemActive = isActive(item.path);
-                      return (
-                        <Link
-                          key={item.path}
-                          to={item.path}
-                          className={`luxury-dropdown-item ${itemActive ? 'active' : ''}`}
-                          onClick={() => setActiveDropdown(null)}
-                        >
-                          <div className="dropdown-item-icon-box">
-                            <ItemIcon size={15} />
-                          </div>
-                          <div className="dropdown-item-text">
-                            <div className="dropdown-item-title-row">
-                              <span className="dropdown-item-title">{item.label}</span>
-                              {item.badge && (
-                                <span className={`luxury-badge luxury-badge-${item.badgeType || 'gold'}`}>
-                                  {item.badge}
+                  <div className="luxury-dropdown-menu svc-menu" role="menu">
+                    {hub.groups.map((group) => (
+                      <section key={group.id} className="svc-col" aria-label={group.title}>
+                        <h3 className="svc-col-title">{group.title}</h3>
+                        {group.items.map((item) => {
+                          const ItemIcon = item.icon;
+                          return (
+                            <Link
+                              key={item.path}
+                              to={item.path}
+                              role="menuitem"
+                              className={`svc-item ${isActive(item.path) ? 'active' : ''}`}
+                              onClick={() => setActiveDropdown(null)}
+                            >
+                              <span className="svc-icon"><ItemIcon size={16} /></span>
+                              <span className="svc-text">
+                                <span className="svc-title">
+                                  {item.label}
+                                  {item.badge && <span className="svc-badge">{item.badge}</span>}
                                 </span>
-                              )}
-                            </div>
-                            <span className="dropdown-item-desc">{item.desc}</span>
-                          </div>
-                        </Link>
-                      );
-                    })}
+                                <span className="svc-desc">{item.desc}</span>
+                              </span>
+                            </Link>
+                          );
+                        })}
+                      </section>
+                    ))}
                   </div>
                 )}
               </div>
