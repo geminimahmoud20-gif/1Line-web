@@ -1,7 +1,8 @@
 // =============================================================
 //  Vercel Function: the public catalog (properties + projects) in one cached response.
-//    GET → { ok: true, at, properties: [...], projects: [...], site: {...} | null }
-//  `site` is settings/site_cms (contact, social, FAQ, testimonials, page SEO); the client cleans it.
+//    GET → { ok: true, at, properties: [...], projects: [...], site: {...} | null, developers: [...] }
+//  `site` is settings/site_cms (contact, social, FAQ, testimonials, page SEO); `developers` is
+//  settings/developers' list (the developer pages). The client cleans both.
 //  Visitors load this instead of opening a live Firestore listener each, so a visit costs
 //  no Firestore reads: Vercel's CDN serves the same copy to everyone and the function reads
 //  Firestore at most about once every 5 minutes per region. The CRM keeps its live listener.
@@ -64,9 +65,9 @@ async function listCollection(base, docRoot, name, headers) {
 }
 
 // One settings document; a missing or unreadable one is not an error for the catalog
-async function readSiteSettings(base, docRoot, headers) {
+async function readSettings(base, docRoot, headers, key) {
   try {
-    const res = await fetch(`${base}/v1/${docRoot}/settings/site_cms`, { headers });
+    const res = await fetch(`${base}/v1/${docRoot}/settings/${key}`, { headers });
     if (!res.ok) return null;
     const doc = await res.json();
     return decodeFields(doc.fields);
@@ -85,11 +86,13 @@ export async function GET() {
     const headers = emulator
       ? { authorization: 'Bearer owner' }
       : (sa?.private_key && sa?.client_email ? { authorization: `Bearer ${await accessToken(sa)}` } : {});
-    const [[properties, projects], site] = await Promise.all([
+    const [[properties, projects], site, devs] = await Promise.all([
       Promise.all(CATALOG_COLLECTIONS.map((name) => listCollection(base, docRoot, name, headers))),
-      readSiteSettings(base, docRoot, headers)
+      readSettings(base, docRoot, headers, 'site_cms'),
+      readSettings(base, docRoot, headers, 'developers')
     ]);
-    return json(200, { ok: true, at: new Date().toISOString(), properties, projects, site },
+    const developers = Array.isArray(devs?.list) ? devs.list : [];
+    return json(200, { ok: true, at: new Date().toISOString(), properties, projects, site, developers },
       `public, max-age=0, s-maxage=${FRESH_SECONDS}, stale-while-revalidate=${STALE_SECONDS}`);
   } catch (err) {
     console.error('catalog failed:', err?.message || err);

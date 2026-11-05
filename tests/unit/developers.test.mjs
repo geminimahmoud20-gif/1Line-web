@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeDevelopers, developerSlug, projectsOf } from '../../src/utils/developers.js';
+import { normalizeDevelopers, developerSlug, projectsOf, findDeveloper, developerPath, projectDeveloper } from '../../src/utils/developers.js';
 import { projectPriceStats } from '../../src/utils/projectStats.js';
 
 test('developers: only clean fields, a name required, safe links only', () => {
@@ -36,4 +36,15 @@ test('project price per m²: from its listings on sale, else the typed figure', 
   assert.deepEqual([s.avgPricePerMeter, s.source, s.units, s.minPrice, s.maxPrice], [20000, 'units', 2, 2_000_000, 2_400_000]);
   assert.deepEqual([projectPriceStats(project, []).avgPricePerMeter, projectPriceStats(project, []).source], [15000, 'manual']);
   assert.equal(projectPriceStats({ id: 'x' }, []).source, '');
+});
+
+test('developers: page links resolve by slug or id, projects find their developer by link or name', () => {
+  const devs = [{ id: 'dev-1', name_ar: 'شركة الأمل', name_en: 'Al Amal' }, { id: 'dev-2', name_ar: 'النيل', name_en: '' }];
+  assert.equal(developerPath(devs[0]), '/developers/al-amal');
+  assert.equal(findDeveloper('al-amal', devs).id, 'dev-1');
+  assert.equal(findDeveloper('DEV-2', devs).id, 'dev-2');
+  assert.equal(findDeveloper('nope', devs), null);
+  assert.equal(projectDeveloper({ developerId: 'dev-2' }, devs).id, 'dev-2');
+  assert.equal(projectDeveloper({ developer_ar: 'شركة الأمل' }, devs).id, 'dev-1');
+  assert.equal(projectDeveloper({ developer_ar: 'غير معروف' }, devs), null);
 });

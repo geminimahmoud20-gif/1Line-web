@@ -37,7 +37,12 @@ test('the site falls back to the live listener when the catalog route is missing
   assert.equal(await fetchPublicCatalog(async () => { throw new Error('offline'); }), null);
   assert.deepEqual(
     await fetchPublicCatalog(reply(200, 'application/json; charset=utf-8', { ok: true, properties: [{ id: 1 }], projects: [] })),
-    { properties: [{ id: 1 }], projects: [], site: null }
+    { properties: [{ id: 1 }], projects: [], site: null, developers: null }
+  );
+  // The developers list rides along too (older cached responses have none)
+  assert.deepEqual(
+    (await fetchPublicCatalog(reply(200, 'application/json', { ok: true, properties: [], projects: [], developers: [{ id: 'd1', name_ar: 'أ' }] }))).developers,
+    [{ id: 'd1', name_ar: 'أ' }]
   );
   // The site settings document rides along when it exists
   assert.deepEqual(

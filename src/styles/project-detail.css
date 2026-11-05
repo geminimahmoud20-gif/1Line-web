@@ -127,3 +127,4 @@
   .pjd-plan strong { white-space: normal; font-size: 0.92rem; }
 }
 .pjd-offer { margin-top: 14px; text-align: start; }
+.pjd-dev-link { color: var(--pj-gold-text); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
