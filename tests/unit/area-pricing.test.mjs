@@ -45,3 +45,14 @@ test('areas saved before the choice existed are priced from listings', () => {
   assert.equal(priceModeOf({}), 'auto');
   assert.equal(priceModeOf({ priceMode: 'manual' }), 'manual');
 });
+
+test('reference price: 3+ listings of the kind, else a deliberate manual figure, else nothing', async () => {
+  const { areaReferencePrice } = await import('../../src/utils/areaPricing.js');
+  const three = [flat('new', 1_000_000, 100), flat('new', 1_200_000, 100), flat('d5', 1_400_000, 100)];
+  assert.deepEqual(areaReferencePrice(areas[0], three, areas), { ppm: 12000, source: 'listings', sample: 3 });
+  // Two listings and an auto area: no figure, even though a seeded 12,000 is stored
+  assert.equal(areaReferencePrice(areas[0], three.slice(0, 2), areas), null);
+  assert.deepEqual(areaReferencePrice(areas[2], [], areas), { ppm: 20000, source: 'manual', sample: 0 });
+  // Shops are not compared with flats
+  assert.equal(areaReferencePrice(areas[0], three, areas, 'commercial'), null);
+});

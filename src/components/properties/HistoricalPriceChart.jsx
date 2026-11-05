@@ -1,26 +1,13 @@
-import { useState, useEffect } from 'react';
 import { TrendingUp, Award, ArrowUpRight } from 'lucide-react';
-import { getAreaById } from '../../utils/areasData';
 
-export default function HistoricalPriceChart({ areaKey = '', customPoints = null, lang = 'ar' }) {
-  const [, setTick] = useState(0);
+export default function HistoricalPriceChart({ customPoints = null, lang = 'ar' }) {
   const isAr = lang === 'ar';
 
-  // Live listen for area data modifications from CRM
-  useEffect(() => {
-    const handleUpdate = () => setTick(t => t + 1);
-    window.addEventListener('oneline_areas_updated', handleUpdate);
-    return () => window.removeEventListener('oneline_areas_updated', handleUpdate);
-  }, []);
+  // Only price points saved on the listing itself. The areas' built-in 2023–2026 series were
+  // example figures (no screen edits them), so a chart drawn from them presented invented history.
+  const points = (Array.isArray(customPoints) && customPoints.length > 1) ? customPoints : null;
 
-  const areaData = getAreaById(areaKey);
-
-  // Points come from the listing or the area data kept in the CRM — never from a built-in series
-  const points = (Array.isArray(customPoints) && customPoints.length > 1)
-    ? customPoints
-    : (areaData?.historicalPrices?.length > 1 ? areaData.historicalPrices : null);
-
-  // Nothing to chart until the area has published prices: the tab shows the benchmark alone
+  // Nothing to chart without real points: the tab shows the price comparison alone
   if (!points) return null;
 
   const startPrice = points[0]?.price || 1;

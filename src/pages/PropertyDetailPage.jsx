@@ -657,7 +657,6 @@ export default function PropertyDetailPage({
 
                   {/* 📈 Historical Price Trends & Capital Growth Chart */}
                   <HistoricalPriceChart
-                    areaKey={property.areaKey}
                     customPoints={property.historicalPrices}
                     lang={lang}
                   />

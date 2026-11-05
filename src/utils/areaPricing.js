@@ -51,3 +51,21 @@ export function areaPrice(area, properties = [], areas = []) {
   const { ppm, sample } = prices[cls];
   return { ppm, mode, source: 'listings', cls, sample, kind: sampleKind(sample), count };
 }
+
+/**
+ * A price per m² it is fair to compare a unit against, or null when there is none:
+ *  - the median of 3+ listings of the same kind in the area (sub-areas included), or
+ *  - the figure typed in the CRM, only when the team chose «يدوي» for the area.
+ * Never a built-in or seeded figure. { ppm, source: 'listings' | 'manual', sample }.
+ */
+export function areaReferencePrice(area, properties = [], areas = [], cls = 'residential') {
+  if (!area) return null;
+  const ids = new Set(areaFamily(area.id, areas));
+  const ppm = pricedListings(properties)
+    .filter((p) => ids.has(String(p.areaKey || '')) && assetClass(p) === cls && Number(p.size) > 0)
+    .map((p) => Number(p.price) / Number(p.size));
+  if (ppm.length >= 3) return { ppm: Math.round(median(ppm)), source: 'listings', sample: ppm.length };
+  const manual = Math.round(Number(area.avgPricePerMeter) || 0);
+  if (priceModeOf(area) === 'manual' && manual > 0) return { ppm: manual, source: 'manual', sample: 0 };
+  return null;
+}
