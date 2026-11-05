@@ -84,13 +84,18 @@
 
 .mdw-group { display: flex; flex-direction: column; }
 .mdw-group-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin: 0 0 4px;
   padding: 0 4px;
-  font-size: 0.76rem;
+  font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0;
-  color: var(--text-muted);
+  color: var(--accent-gold);
 }
+/* A hairline after the section name so the three groups read as sections */
+.mdw-group-title::after { content: ''; flex: 1; height: 1px; background: var(--border-color); }
 
 .mdw-link {
   display: flex;
@@ -101,8 +106,8 @@
   border-radius: 12px;
   color: var(--text-primary);
   text-decoration: none;
-  font-size: 0.98rem;
-  font-weight: 700;
+  font-size: 0.97rem;
+  font-weight: 600;
 }
 .mdw-link:active { background: var(--secondary); }
 .mdw-link.is-active { background: var(--secondary); }
