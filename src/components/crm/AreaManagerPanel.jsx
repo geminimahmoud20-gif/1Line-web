@@ -4,6 +4,7 @@ import { getAreas, addArea, updateArea, deleteArea, resetAreasToDefault, normali
 import { groupedAreas, childrenOf, mainAreas, areaFamily, isMainArea, suggestedArrangement } from '../../utils/areaLookup';
 import { useProperties } from '../../context/PropertiesContext';
 import AreaFormModal from './AreaFormModal';
+import { areaPrice, priceModeOf } from '../../utils/areaPricing';
 import { moveLeadsToArea, moveDemandsToArea } from '../../firebaseLazy';
 import { useConfirm } from '../ui';
 
@@ -122,7 +123,8 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
       lng: 31.7001,
       zoom: 14,
       description_ar: '',
-      avgPricePerMeter: 15000,
+      avgPricePerMeter: '',
+      priceMode: 'auto',
       annualGrowthRate: 0,
       parentId: ''
     });
@@ -142,7 +144,8 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
       lng: area.center?.lng ?? 31.7001,
       zoom: area.zoom ?? 14,
       description_ar: area.description_ar || '',
-      avgPricePerMeter: area.avgPricePerMeter ?? 15000,
+      avgPricePerMeter: area.avgPricePerMeter ?? '',
+      priceMode: priceModeOf(area),
       annualGrowthRate: area.annualGrowthRate ?? 0,
       parentId: isMainArea(area, areas) ? '' : (area.parentId || '')
     });
@@ -158,14 +161,16 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
     }
     const lat = Number(formData.lat);
     const lng = Number(formData.lng);
-    const price = Number(formData.avgPricePerMeter);
+    const manual = formData.priceMode === 'manual';
+    // From listings the typed figure is optional (kept for later); manual needs one
+    const price = formData.avgPricePerMeter === '' ? 0 : Number(formData.avgPricePerMeter);
     const growth = Number(formData.annualGrowthRate);
     // Egypt bounding box — catches swapped or mistyped coordinates before they reach the public map
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < 22 || lat > 32 || lng < 24.5 || lng > 37) {
       if (triggerToast) triggerToast(isAr ? 'الإحداثيات خارج مصر — تأكد من خط العرض (22–32) وخط الطول (24.5–37)' : 'Coordinates must be inside Egypt', 'error');
       return;
     }
-    if (!Number.isFinite(price) || price < 1000 || price > 1000000) {
+    if ((manual || price) && (!Number.isFinite(price) || price < 1000 || price > 1000000)) {
       if (triggerToast) triggerToast(isAr ? 'متوسط سعر المتر يجب أن يكون بين 1,000 و 1,000,000 ج.م' : 'Price per m² must be 1,000–1,000,000 EGP', 'error');
       return;
     }
@@ -187,6 +192,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
           zoom: parseInt(formData.zoom, 10) || 14,
           description_ar: formData.description_ar,
           avgPricePerMeter: price,
+          priceMode: manual ? 'manual' : 'auto',
           annualGrowthRate: growth,
           parentId: formData.parentId || ''
         });
@@ -201,6 +207,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
           zoom: parseInt(formData.zoom, 10) || 14,
           description_ar: formData.description_ar.trim(),
           avgPricePerMeter: price,
+          priceMode: manual ? 'manual' : 'auto',
           annualGrowthRate: growth,
           // A main area with sub-areas stays main (one level only)
           parentId: childrenOf(activeArea.id, areas).length ? '' : (formData.parentId || '')
@@ -280,6 +287,46 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
   // A main area counts its sub-areas' listings too
   const getFamilyPropertiesCount = (areaId) => areaFamily(areaId, areas).reduce((n, id) => n + getAreaPropertiesCount(id), 0);
 
+  // What the site shows for an area's price per m², and where it comes from
+  const areaPriceLabel = (area) => {
+    const r = areaPrice(area, properties, areas);
+    const fmt = (v) => v.toLocaleString('en-US');
+    if (r.source === 'manual') return isAr ? `يدوي: ${fmt(r.ppm)} ج.م/م²` : `Manual: ${fmt(r.ppm)} EGP/m²`;
+    if (r.source === 'listings') return isAr ? `من المعروض: ${fmt(r.ppm)} ج.م/م² (${r.sample} ${r.sample === 1 ? 'عرض' : 'عروض'})` : `From listings: ${fmt(r.ppm)} EGP/m² (${r.sample})`;
+    return r.mode === 'manual' ? (isAr ? 'يدوي: مفيش سعر مكتوب' : 'Manual: no figure') : (isAr ? 'من المعروض: لسه مفيش عروض' : 'From listings: none yet');
+  };
+  const modeCounts = useMemo(() => {
+    const places = areas.filter((a) => a.id !== 'all');
+    const manual = places.filter((a) => priceModeOf(a) === 'manual').length;
+    return { manual, auto: places.length - manual };
+  }, [areas]);
+  // One switch for every area at once; each area can still be changed on its own from «تعديل»
+  const handleAllPriceMode = async (mode) => {
+    const missing = mode === 'manual' ? areas.filter((a) => a.id !== 'all' && !(Number(a.avgPricePerMeter) > 0)).length : 0;
+    const ok = await confirm({
+      title: isAr ? (mode === 'manual' ? 'كل المناطق بسعر يدوي؟' : 'كل المناطق من متوسط المعروض؟') : 'Change every area?',
+      message: isAr
+        ? (mode === 'manual'
+          ? `الموقع هيعرض السعر اللي مكتوب في كل منطقة.${missing ? ` فيه ${missing} منطقة مفيهاش سعر مكتوب ومش هيظهر لها سعر لحد ما تكتبه.` : ''}`
+          : 'الموقع هيحسب سعر المتر في كل منطقة من الوحدات المعروضة فيها دلوقتي. الأسعار اللي مكتوبة بتفضل محفوظة لو رجعت لليدوي.')
+        : 'Every area switches to this pricing source.',
+      confirmLabel: isAr ? 'طبّق' : 'Apply',
+      tone: 'default'
+    });
+    if (!ok) return;
+    setIsSaving(true);
+    try {
+      await saveAreas(areas.map((a) => (a.id === 'all' ? a : { ...a, priceMode: mode })));
+      setAreas(getAreas());
+      if (triggerToast) triggerToast(isAr ? 'اتغيّر تسعير كل المناطق' : 'Pricing updated for every area', 'success');
+    } catch (err) {
+      console.error('Error saving price mode:', err);
+      if (triggerToast) triggerToast(isAr ? 'حصل خطأ في الحفظ' : 'Save failed', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="crm-subpanel-container animate-fadeIn">
       {/* Modern Header Strip */}
@@ -346,6 +393,26 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
               ✕
             </button>
           )}
+        </div>
+      </div>
+
+      {/* Where the site's price per m² comes from: per area, with one switch for all */}
+      <div className="crm-card area-price-mode-bar">
+        <div>
+          <strong>{isAr ? 'تسعير المناطق على الموقع' : 'Area prices on the site'}</strong>
+          <span>
+            {isAr
+              ? `${modeCounts.auto} من متوسط المعروض، ${modeCounts.manual} يدوي. تقدر تغيّر أي منطقة لوحدها من «تعديل».`
+              : `${modeCounts.auto} from listings, ${modeCounts.manual} manual. Change any area from Edit.`}
+          </span>
+        </div>
+        <div className="area-price-mode-actions">
+          <button type="button" className="crm-btn-secondary-modern" disabled={isSaving || modeCounts.manual === 0} onClick={() => handleAllPriceMode('auto')}>
+            {isAr ? 'الكل من المعروض' : 'All from listings'}
+          </button>
+          <button type="button" className="crm-btn-secondary-modern" disabled={isSaving || modeCounts.auto === 0} onClick={() => handleAllPriceMode('manual')}>
+            {isAr ? 'الكل يدوي' : 'All manual'}
+          </button>
         </div>
       </div>
 
@@ -488,7 +555,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
                     color: 'var(--crm-accent-text)',
                     border: '1px solid rgba(217, 119, 6, 0.25)'
                   }}>
-                    {isAr ? `متوسط: ${(area.avgPricePerMeter || 15000).toLocaleString('en-US')} ج.م/م²` : `Avg: ${(area.avgPricePerMeter || 15000).toLocaleString('en-US')} EGP/m²`}
+                    {areaPriceLabel(area)}
                   </span>
                   {Number(area.annualGrowthRate) > 0 && <span style={{
                     fontSize: 'var(--crm-text-xs)',
@@ -612,6 +679,7 @@ export default function AreaManagerPanel({ lang = 'ar', triggerToast, properties
           hasChildren={modalMode === 'edit' && Boolean(activeArea) && childrenOf(activeArea.id, areas).length > 0}
           setFormData={setFormData}
           setModalMode={setModalMode}
+          pricePreview={activeArea && modalMode === 'edit' ? areaPrice({ ...activeArea, priceMode: 'auto' }, properties, areas) : null}
         />
       )}
 

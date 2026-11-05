@@ -1,0 +1,54 @@
+/* Market page: one card per main area. Name + where the figure comes from on one side, the price
+   on the other; sub-areas as plain lines under it; prices by kind folded away. */
+.mal-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(400px, 100%), 1fr)); gap: 16px; align-items: start; }
+.mal-card {
+  display: flex; flex-direction: column;
+  border: 1px solid var(--border-color); border-radius: 18px; background: var(--bg-card);
+  padding: 18px 18px 14px; min-width: 0;
+  box-shadow: 0 1px 2px rgba(8, 18, 33, 0.04);
+}
+.mal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.mal-name { display: flex; align-items: flex-start; gap: 10px; min-width: 0; color: var(--accent-gold); }
+.mal-name svg { flex: none; margin-top: 4px; }
+.mal-name h3 { margin: 0; font-size: 1.12rem; font-weight: 800; line-height: 1.4; color: var(--text-primary); }
+
+.mal-src { display: inline-block; margin-top: 2px; font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
+.mal-src.is-ok { color: var(--success, #15803d); }
+.mal-src.is-thin { color: var(--warning-text, #b45309); }
+.mal-src.is-manual { color: var(--accent-gold); }
+
+.mal-price { display: flex; flex-direction: column; align-items: flex-end; flex: none; line-height: 1.15; }
+.mal-price bdi { font-size: 1.05rem; font-weight: 800; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.mal-price small { font-size: 0.72rem; font-weight: 600; color: var(--text-muted); }
+.mal-price.is-big bdi { font-size: 1.5rem; color: var(--primary); }
+.mal-price.is-none { color: var(--text-muted); font-weight: 700; }
+
+.mal-subs { list-style: none; margin: 14px 0 0; padding: 0; border-top: 1px solid var(--border-color); }
+.mal-subs li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px dashed var(--border-color); }
+.mal-subs li:last-child { border-bottom: 0; }
+.mal-sub-name { display: flex; flex-direction: column; min-width: 0; }
+.mal-sub-name span { font-weight: 700; color: var(--text-primary); font-size: 0.95rem; }
+
+.mal-foot { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.mal-kinds { border-radius: 12px; background: var(--bg-slate); padding: 0 12px; }
+.mal-kinds summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  min-height: 44px; cursor: pointer; list-style: none; font-weight: 700; font-size: 0.9rem; color: var(--text-primary);
+}
+.mal-kinds summary::-webkit-details-marker { display: none; }
+.mal-kinds summary svg { transition: transform 0.2s ease; color: var(--text-muted); }
+.mal-kinds[open] summary svg { transform: rotate(180deg); }
+.mal-kinds[open] { padding-bottom: 6px; }
+.mal-link {
+  align-self: flex-start; display: inline-flex; align-items: center; min-height: 40px;
+  font-weight: 700; font-size: 0.9rem; color: var(--primary); text-decoration: underline; text-underline-offset: 4px;
+}
+.mal-empty { margin: 12px 0 0; color: var(--text-muted); }
+
+.dark-theme .mal-price.is-big bdi, :root[data-theme='dark'] .mal-price.is-big bdi { color: #f8fafc; }
+.dark-theme .mal-link, :root[data-theme='dark'] .mal-link { color: var(--accent-gold); }
+
+@media (max-width: 480px) {
+  .mal-card { padding: 16px 14px 12px; border-radius: 16px; }
+  .mal-price.is-big bdi { font-size: 1.3rem; }
+}

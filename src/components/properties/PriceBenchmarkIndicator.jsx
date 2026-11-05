@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { TrendingDown, TrendingUp, CheckCircle2, ShieldCheck, BarChart3, Building2, Store, Home, Layers } from 'lucide-react';
 import { getDistrictBenchmark, formatCurrencyPrice, isMultiUnitOrBuilding, parseUnitBreakdown, isResidentialProperty } from '../../utils/currencyAndBenchmark';
-import { getAreaById } from '../../utils/areasData';
+import { getAreaById, getAreas } from '../../utils/areasData';
+import { useProperties } from '../../context/PropertiesContext';
+import { areaPrice, priceModeOf } from '../../utils/areaPricing';
+import { assetClass } from '../../utils/marketStats';
 
 export default function PriceBenchmarkIndicator({ property, lang = 'ar', currency = 'EGP' }) {
   const isAr = lang === 'ar';
@@ -18,7 +21,12 @@ export default function PriceBenchmarkIndicator({ property, lang = 'ar', currenc
   const unitBreakdown = isMultiUnit ? parseUnitBreakdown(property, isAr) : null;
   const areaKey = property?.areaKey || 'default';
   const areaData = getAreaById(areaKey);
-  const districtAvg = property?.customBenchmarkPrice || (areaData && areaData.avgPricePerMeter) || getDistrictBenchmark(areaKey);
+  const { properties: allListings = [] } = useProperties();
+  // An area priced from its listings compares against their median (3+ of the same kind), as the
+  // market page shows; otherwise the figure typed in the CRM
+  const live = areaData && priceModeOf(areaData) === 'auto' ? areaPrice(areaData, allListings, getAreas()) : null;
+  const fromListings = live && live.source === 'listings' && live.sample >= 3 && live.cls === assetClass(property) ? live.ppm : 0;
+  const districtAvg = property?.customBenchmarkPrice || fromListings || (areaData && areaData.avgPricePerMeter) || getDistrictBenchmark(areaKey);
   const currentDistrictName = (isAr ? areaData?.name_ar : areaData?.name_en) || (isAr ? 'سوهاج عام' : 'Sohag Average');
 
   // Multi-unit mixed-use building view (e.g. 4 apartments + 3 shops, multi-floor house)
