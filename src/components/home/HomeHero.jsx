@@ -1,6 +1,6 @@
 import { HERO_POSTER_DEFAULT } from '../../pages/HomePageData';
 import { Link } from 'react-router-dom';
-import { Building, MapPin, Sparkles, Home, Landmark, Pause, Play, Volume2, VolumeX, Zap, Maximize2 } from 'lucide-react';
+import { Sparkles, Pause, Play, Volume2, VolumeX, Zap, Maximize2 } from 'lucide-react';
 import { HeroSponsorChip } from './SponsoredPlacements';
 import LogoEmblem from '../LogoEmblem';
 import Advisor from '../match/Advisor';
@@ -268,23 +268,6 @@ export default function HomeHero({
             <span>{lang === 'ar' ? 'رشّحلي وحدتي' : 'Find my home'}</span>
           </Link>
         </div>
-
-        {/* One-tap discovery pills — each maps to a filter the listings page actually supports */}
-        <nav className="hx-pills" aria-label={lang === 'ar' ? 'اختصارات البحث' : 'Quick searches'}>
-          {[
-            { ar: 'بيع كاش مباشر', en: 'Direct cash sale', to: '/properties?paymentPlan=cash', icon: Zap },
-            { ar: 'سوهاج الجديدة', en: 'New Sohag', to: '/properties?area=new_sohag', icon: MapPin },
-            { ar: 'كورنيش النيل', en: 'Nile Corniche', to: '/properties?area=corniche', icon: MapPin },
-            { ar: 'شارع الجمهورية', en: 'El-Gomhoreya St.', to: `/properties?q=${encodeURIComponent('الجمهورية')}`, icon: Landmark },
-            { ar: 'فيلات مستقلة', en: 'Villas', to: '/properties?type=villa', icon: Home },
-            { ar: 'محلات تجارية', en: 'Retail shops', to: '/properties?type=commercial', icon: Building }
-          ].map(({ ar, en, to, icon: Icon }) => (
-            <Link key={to} to={to} className="hx-pill">
-              <Icon size={13} strokeWidth={1.75} aria-hidden="true" />
-              <span>{lang === 'ar' ? ar : en}</span>
-            </Link>
-          ))}
-        </nav>
 
         <HeroSponsorChip campaign={heroAd} lang={lang} />
       </div>

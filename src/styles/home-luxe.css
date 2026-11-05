@@ -3458,3 +3458,18 @@
 @media (max-width: 640px) {
   .hx-cert-modern, .hx-comps-modern, .hx-radar-modern, .hx-expat-modern, .hx-seller-media { display: none; }
 }
+
+/* Quick-browse shortcuts under the homepage listings (they used to float over the hero video) */
+.hx-quick { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin-top: 24px; }
+.hx-quick-label { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-inline-end: 4px; }
+.hx-quick .hx-pill {
+  border-color: var(--border-hover); background: var(--bg-card); color: var(--text-primary);
+  -webkit-backdrop-filter: none; backdrop-filter: none; font-weight: 600;
+}
+.hx-quick .hx-pill svg { color: var(--accent-gold); }
+.hx-quick .hx-pill:hover { background: var(--accent-gold-light); border-color: var(--accent-gold); }
+@media (max-width: 640px) {
+  .hx-quick { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; }
+  .hx-quick::-webkit-scrollbar { display: none; }
+  .hx-quick .hx-pill, .hx-quick-label { flex: none; }
+}
