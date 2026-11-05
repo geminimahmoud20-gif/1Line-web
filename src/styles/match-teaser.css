@@ -19,3 +19,5 @@
   .mtz-text { flex-basis: 100%; }
   .mtz-btn { width: 100%; justify-content: center; }
 }
+/* A soft gold halo so the navy shirt doesn't melt into the navy strip */
+.mtz-beto { background: radial-gradient(circle at 50% 58%, rgba(217, 185, 126, 0.32), transparent 66%); border-radius: 50%; }

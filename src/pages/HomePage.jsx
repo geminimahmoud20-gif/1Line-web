@@ -392,7 +392,7 @@ export default function HomePage({
       {/* 📈 REAL-TIME SOHAG PROPTECH MARKET TICKER */}
       <MarketTickerBar lang={lang} demands={realDemands} />
 
-      {/* «رشّحلي شقتي»: five questions with «بيتو», then homes ranked by fit (/match) */}
+      {/* «رشّحلي شقتي»: five questions with the 1Line advisor, then homes ranked by fit (/match) */}
       <HomeMatchTeaser lang={lang} />
 
       {/* 🏢 2. SOHAG LIVE MARKETPLACE HUB (Consolidated Segmented Discovery) */}
