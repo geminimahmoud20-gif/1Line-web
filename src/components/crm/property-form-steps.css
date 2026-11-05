@@ -1,0 +1,50 @@
+/* The unit form as numbered steps (PropertyFormSteps) */
+.pfs { margin: 0 0 14px; border: 1px solid var(--crm-line); border-radius: 14px; background: var(--crm-card); min-width: 0; }
+.pfs-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
+.pfs-num {
+  display: grid; place-items: center; width: 28px; height: 28px; flex: none; border-radius: 50%;
+  background: var(--crm-accent-text); color: var(--crm-card); font-weight: 800; font-size: 0.85rem;
+}
+.pfs-title { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+.pfs-title b { font-size: var(--crm-text-base); font-weight: 800; }
+.pfs-title small { font-size: var(--crm-text-xs); color: var(--crm-muted); }
+.pfs-body { padding: 0 14px 14px; min-width: 0; }
+.pfs.is-collapsible > summary { list-style: none; cursor: pointer; }
+.pfs.is-collapsible > summary::-webkit-details-marker { display: none; }
+.pfs.is-collapsible .pfs-num { background: var(--crm-line-strong, var(--crm-line)); color: var(--crm-ink, inherit); }
+.pfs-chev { color: var(--crm-muted); transition: transform 0.2s; }
+.pfs[open] .pfs-chev { transform: rotate(180deg); }
+/* Steps hold the old blocks: drop their own outer spacing */
+.pfs-body > .cms-image-uploader-box, .pfs-body > .lcf, .pfs-body > .pxe-sec { margin-top: 0; }
+
+.pfc { position: sticky; top: 0; z-index: 3; margin: 0 0 14px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--crm-line); background: var(--crm-card); box-shadow: 0 6px 16px -12px rgba(15, 23, 42, 0.4); }
+.pfc-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.pfc-top b { font-size: var(--crm-text-sm); white-space: nowrap; }
+.pfc-bar { flex: 1; height: 6px; border-radius: 999px; background: var(--crm-line); overflow: hidden; }
+.pfc-bar span { display: block; height: 100%; background: var(--crm-accent-text); transition: width 0.3s; }
+.pfc.is-done .pfc-bar span { background: var(--crm-positive); }
+.pfc-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pfc-chip {
+  display: inline-flex; align-items: center; gap: 4px; min-height: 32px; padding: 0 10px; border-radius: 999px;
+  border: 1px dashed var(--crm-line-strong, var(--crm-line)); background: transparent; color: var(--crm-muted);
+  font: inherit; font-size: var(--crm-text-xs); font-weight: 700; cursor: pointer;
+}
+.pfc-chip.is-ok { border-style: solid; color: var(--crm-positive); }
+
+.pf-label-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; }
+.pf-suggest {
+  max-width: 100%; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--crm-accent-text); background: transparent;
+  color: var(--crm-accent-text); font: inherit; font-size: var(--crm-text-xs); font-weight: 700; cursor: pointer;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* Save stays in reach at the bottom of the form */
+.property-cms-form > .cms-modal-actions.pf-sticky-actions {
+  position: sticky; bottom: 0; z-index: 3; margin: 0 -4px; padding: 12px 4px; background: var(--crm-card);
+  border-top: 1px solid var(--crm-line);
+}
+
+/* On a phone the checklist takes a fifth of the screen: let it scroll away with the form */
+@media (max-width: 640px) {
+  .pfc { position: static; }
+}
