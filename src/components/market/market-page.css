@@ -1,6 +1,6 @@
 /* /market-intelligence: three figures, the area list, the budget check, tips and a WhatsApp ask.
    Plain cards on the page background; one accent colour; nothing nested more than one box deep. */
-.mi-body { display: flex; flex-direction: column; gap: 28px; padding-bottom: 56px; }
+.mi-body { display: flex; flex-direction: column; gap: 28px; }
 
 .mi-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .mi-stat {

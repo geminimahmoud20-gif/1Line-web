@@ -428,49 +428,53 @@ button.sidebar-deposit-banner .deposit-banner-left > span { display: flex; flex-
 
 /* ── §8 Consent bar ───────────────────────────────────────── */
 .lx-consent {
+  /* A small card in the bottom corner (not a wide bar across the middle of the page): the page and
+     its buttons stay usable while the visitor decides. The chat button sits in the other corner. */
   position: fixed;
-  inset-inline: 16px;
+  inset-inline-start: 16px;
   bottom: calc(16px + env(safe-area-inset-bottom));
   z-index: 2400; /* above the page, below dialogs (2500+), so it never covers a modal's buttons */
-  max-width: 720px;
-  margin-inline: auto;
+  width: min(380px, calc(100vw - 32px));
+  box-sizing: border-box;
   display: flex;
-  gap: 16px;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 10px;
   background: var(--navy-950);
   color: #E5E7EB;
-  border-radius: 16px;
-  padding: 14px 18px;
-  box-shadow: 0 20px 50px -12px rgba(8, 18, 33, 0.45);
-  font-size: 0.9rem;
-  line-height: 1.7;
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.45);
 }
 .lx-consent p { margin: 0; color: #E5E7EB !important; }
 .lx-consent a { color: #D9B97E; text-decoration: underline; text-underline-offset: 3px; } /* WCAG 1.4.1: not colour alone */
-.lx-consent-actions { display: flex; gap: 8px; flex: none; }
+.lx-consent-actions { display: flex; gap: 8px; }
+.lx-consent-actions > * { flex: 1; }
+.lx-consent .lx-btn-sm { min-height: 40px; padding: 6px 12px; font-size: 0.85rem; }
 .lx-consent .lx-btn-primary { background: #D9B97E; color: var(--navy-950); }
 .lx-consent .lx-btn-ghost { color: #E5E7EB; border-color: rgba(255, 255, 255, 0.28); }
 .lx-consent-short { display: none; }
 @media (max-width: 768px) {
-  /* Compact single bar: avoids overlapping hero search and bottom navigation bar */
-  .lx-consent { 
-    inset-inline: 12px; 
-    flex-wrap: wrap; 
-    gap: 8px 10px; 
-    padding: 12px 14px; 
-    border-radius: 14px; 
-    font-size: 0.85rem; 
-    line-height: 1.5; 
-    bottom: calc(76px + env(safe-area-inset-bottom, 12px));
+  /* Phones: one slim row above the bottom navigation bar: short text, then the two buttons */
+  .lx-consent {
+    inset-inline: 10px;
+    width: auto;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    bottom: calc(74px + env(safe-area-inset-bottom, 0px));
     z-index: 2500;
   }
-  .lx-consent p { flex: 1 1 100%; }
-  .lx-consent-actions { flex: 1 1 100%; display: flex; gap: 8px; }
-  .lx-consent-actions > * { flex: 1; }
+  .lx-consent p { flex: 1; min-width: 0; }
+  .lx-consent-actions { flex: none; gap: 6px; }
   .lx-consent-long { display: none; }
   .lx-consent-short { display: inline; }
-  .lx-consent .lx-btn-sm { min-height: 44px; padding: 8px 14px; font-size: 0.85rem; }
+  .lx-consent .lx-btn-sm { min-height: 40px; padding: 6px 10px; font-size: 0.8rem; white-space: nowrap; }
 }
 
 /* ── §9 Not found & legal pages ───────────────────────────── */
