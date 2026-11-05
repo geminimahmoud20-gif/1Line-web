@@ -1,4 +1,6 @@
-import { UserRound, Lock } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { UserRound, Lock, Unlink } from 'lucide-react';
+import { fetchLeadById } from '../../services/leads';
 import { LISTED_BY, listedByLabel } from '../../utils/listingContact';
 import { readablePhone } from '../../utils/phoneDisplay';
 import './listing-contact.css';
@@ -6,11 +8,24 @@ import './listing-contact.css';
 /**
  * «صاحب الوحدة» on the listing form: who offers the unit (owner, broker…) and their name and phone.
  * The phone is saved as a client in «العملاء», never on the listing (listings are public).
- * `contactLead`: the client already linked to this unit, shown instead of the inputs.
+ * `contactLead`: the client already linked to this unit, shown instead of the inputs. The CRM's
+ * live list holds only the newest clients, so a linked client who isn't in it is read by id.
  */
 export default function ListingContactFields({ form, setForm, contactLead, required, isAr }) {
   const L = (ar, en) => (isAr ? ar : en);
   const linked = contactLead || form.sourceLeadId;
+  const [fetched, setFetched] = useState({ id: null, status: 'idle', lead: null });
+  const wantId = !contactLead && form.sourceLeadId ? String(form.sourceLeadId) : null;
+  useEffect(() => {
+    if (!wantId) return undefined;
+    let live = true;
+    fetchLeadById(wantId).then((res) => { if (live) setFetched({ id: wantId, ...res }); });
+    return () => { live = false; };
+  }, [wantId]);
+  const lookup = wantId && fetched.id === wantId ? fetched : { status: wantId ? 'loading' : 'idle' };
+  const client = contactLead || (lookup.status === 'ok' ? lookup.lead : null);
+  // A link to a client that no longer exists: let the team type the owner again
+  const unlink = () => setForm({ ...form, sourceLeadId: '' });
   return (
     <fieldset className="lcf">
       <legend className="lcf-title">
@@ -34,13 +49,24 @@ export default function ListingContactFields({ form, setForm, contactLead, requi
         {linked ? (
           <div className="lcf-linked" role="status">
             <span className="lcf-linked-label">{L('مربوطة بالعميل', 'Linked client')}</span>
-            {contactLead ? (
+            {client ? (
               <>
-                <strong>{contactLead.name || L('بدون اسم', 'No name')}</strong>
-                {(contactLead.phone || contactLead.whatsapp)
-                  ? <a href={`tel:${contactLead.phone || contactLead.whatsapp}`} dir="ltr">{readablePhone(contactLead.phone || contactLead.whatsapp)}</a>
+                <strong>{client.name || L('بدون اسم', 'No name')}</strong>
+                {(client.phone || client.whatsapp)
+                  ? <a href={`tel:${client.phone || client.whatsapp}`} dir="ltr">{readablePhone(client.phone || client.whatsapp)}</a>
                   : <small>{L('الرقم مخفي حسب صلاحيتك', 'Phone hidden for your role')}</small>}
                 {form.listedBy && <small>{listedByLabel(form.listedBy, isAr)}</small>}
+              </>
+            ) : lookup.status === 'loading' ? (
+              <small>{L('بنجيب بيانات العميل…', 'Loading the client…')}</small>
+            ) : lookup.status === 'denied' ? (
+              <small>{L('العميل ده على مكتب تاني، ومش ظاهر حسب صلاحيتك', "This client is on another desk and hidden for your role")}</small>
+            ) : lookup.status === 'missing' ? (
+              <>
+                <small className="lcf-warn">{L('العميل المربوط اتمسح أو اتدمج مع عميل تاني', 'The linked client was deleted or merged')}</small>
+                <button type="button" className="lcf-unlink" onClick={unlink}>
+                  <Unlink size={14} aria-hidden="true" />{L('سجّل صاحب الوحدة من جديد', 'Enter the owner again')}
+                </button>
               </>
             ) : (
               <small>{L('العميل محفوظ في «العملاء»', 'Saved in clients')}</small>
