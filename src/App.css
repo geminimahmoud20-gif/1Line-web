@@ -7182,7 +7182,8 @@ html.dark .mobile-sticky-price strong {
 .site-footer {
   background: linear-gradient(180deg, var(--navy-950) 0%, #030a16 100%);
   color: #cbd5e1;
-  margin-top: 60px;
+  /* Pages end with their own bottom padding; a margin here doubled it into an empty band */
+  margin-top: 0;
   border-top: 1px solid rgba(179, 138, 69, 0.15);
   position: relative;
   z-index: 10;

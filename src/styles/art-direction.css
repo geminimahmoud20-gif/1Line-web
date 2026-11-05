@@ -390,7 +390,8 @@
     color: #cbd5e1;
     padding: 56px 0 24px;
     border-top: 1px solid rgba(197, 160, 89, 0.28);
-    box-shadow: 0 -15px 40px rgba(0, 0, 0, 0.6);
+    /* No dark shadow above it: on the light pages its 40px black blur read as a grey band */
+    box-shadow: none;
     position: relative;
     z-index: 10;
 }

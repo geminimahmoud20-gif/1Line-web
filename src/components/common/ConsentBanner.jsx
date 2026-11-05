@@ -73,11 +73,11 @@ export default function ConsentBanner({ lang = 'ar' }) {
         {/* Full sentence on desktop; one line on phones so the banner doesn't cover the hero search */}
         <span className="lx-consent-long">
           {isAr
-            ? 'بموافقتك نقيس تصفحك للموقع (الوحدات والبحث والحاسبة) ونتائج إعلاناتنا على فيسبوك وإنستجرام، لنرشّح لك الأنسب، من غير أسماء أو أرقام. بياناتك في النماذج تُستخدم فقط للرد على طلبك.'
+            ? 'بموافقتك نقيس تصفحك للموقع ونتائج إعلاناتنا على فيسبوك وإنستجرام، من غير أسماء أو أرقام. بيانات النماذج للرد على طلبك بس.'
             : 'We use analytics, including Facebook/Instagram ad measurement, only with your consent. Form data is used only to respond to your request.'}
         </span>
         <span className="lx-consent-short">
-          {isAr ? 'نشغّل أدوات القياس بموافقتك فقط.' : 'Analytics run only with your consent.'}
+          {isAr ? 'أدوات القياس بموافقتك.' : 'Analytics need your OK.'}
         </span>{' '}
         <Link to="/privacy">
           <span className="lx-consent-long">{isAr ? 'سياسة الخصوصية' : 'Privacy policy'}</span>
@@ -89,7 +89,7 @@ export default function ConsentBanner({ lang = 'ar' }) {
           {isAr ? 'موافق' : 'Accept'}
         </button>
         <button type="button" className="lx-btn lx-btn-ghost lx-btn-sm" onClick={() => decide('declined')}>
-          {isAr ? 'الضروري فقط' : 'Essential only'}
+          {isAr ? 'لا، شكراً' : 'No thanks'}
         </button>
       </div>
     </div>
