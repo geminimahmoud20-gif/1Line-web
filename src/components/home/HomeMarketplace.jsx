@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Building, Users, MapPin, DollarSign, ArrowRight, ArrowLeft, ShieldCheck, Sparkles } from 'lucide-react';
+import { Building, Users, MapPin, DollarSign, ArrowRight, ArrowLeft, ShieldCheck, Sparkles, Zap, Home, Landmark } from 'lucide-react';
 import PropertyCard from '../properties/PropertyCard';
 import ScrollReveal from '../common/ScrollReveal';
 import { recordTimeLabel } from '../../utils/relativeTime';
@@ -120,6 +120,24 @@ export default function HomeMarketplace({
               </div>
             </div>
           )}
+
+          {/* Quick shortcuts to common listing filters (moved here from the hero, next to the listings they open) */}
+          <nav className="hx-quick" aria-label={lang === 'ar' ? 'تصفّح بسرعة' : 'Quick browse'}>
+            <span className="hx-quick-label">{lang === 'ar' ? 'تصفّح بسرعة:' : 'Quick browse:'}</span>
+            {[
+              { ar: 'بيع كاش مباشر', en: 'Direct cash sale', to: '/properties?paymentPlan=cash', icon: Zap },
+              { ar: 'سوهاج الجديدة', en: 'New Sohag', to: '/properties?area=new_sohag', icon: MapPin },
+              { ar: 'كورنيش النيل', en: 'Nile Corniche', to: '/properties?area=corniche', icon: MapPin },
+              { ar: 'شارع الجمهورية', en: 'El-Gomhoreya St.', to: `/properties?q=${encodeURIComponent('الجمهورية')}`, icon: Landmark },
+              { ar: 'فيلات مستقلة', en: 'Villas', to: '/properties?type=villa', icon: Home },
+              { ar: 'محلات تجارية', en: 'Retail shops', to: '/properties?type=commercial', icon: Building }
+            ].map(({ ar, en, to, icon: Icon }) => (
+              <Link key={to} to={to} className="hx-pill">
+                <Icon size={14} strokeWidth={1.75} aria-hidden="true" />
+                <span>{lang === 'ar' ? ar : en}</span>
+              </Link>
+            ))}
+          </nav>
 
           {/* Clean, Refined Navigation Action */}
           <div style={{ display: 'flex', justifyContent: 'center', marginTop: '28px' }}>

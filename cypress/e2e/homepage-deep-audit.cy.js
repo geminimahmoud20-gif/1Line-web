@@ -87,7 +87,7 @@ describe('Homepage Exhaustive Deep Audit', () => {
     cy.get('.properties-grid-4').should('be.visible');
   });
 
-  it('6. Hero discovery pills point at real listing filters', () => {
+  it('6. Quick-browse pills under the listings point at real listing filters', () => {
     cy.get('.hx-pill').should('have.length.at.least', 3).each(($pill) => {
       expect($pill.attr('href')).to.match(/^\/properties\?/);
     });
