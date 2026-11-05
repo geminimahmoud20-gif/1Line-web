@@ -20,6 +20,7 @@ import HomeOffers from '../components/home/HomeOffers';
 
 import HomeHero from '../components/home/HomeHero';
 import HomeMarketplace from '../components/home/HomeMarketplace';
+import HomeMatchTeaser from '../components/home/HomeMatchTeaser';
 import { blockedByApproval } from '../utils/publishApproval';
 
 // Below the fold: their own chunks, fetched right after the hero renders instead of in the entry bundle
@@ -390,6 +391,9 @@ export default function HomePage({
 
       {/* 📈 REAL-TIME SOHAG PROPTECH MARKET TICKER */}
       <MarketTickerBar lang={lang} demands={realDemands} />
+
+      {/* «رشّحلي شقتي»: five questions with «بيتو», then homes ranked by fit (/match) */}
+      <HomeMatchTeaser lang={lang} />
 
       {/* 🏢 2. SOHAG LIVE MARKETPLACE HUB (Consolidated Segmented Discovery) */}
       <HomeMarketplace

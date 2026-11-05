@@ -14,7 +14,7 @@
       "destination": "/app.html"
     },
     {
-      "source": "/:path(properties|about|about-us|private-office|off-market|financing|buy|sell|valuation|investor|broker|demands|vault|referral|special|special-requests|projects|market-intelligence|my-account|favorites|compare|crm|privacy|terms|trade-in|commercial-hub|developers)",
+      "source": "/:path(properties|about|about-us|private-office|off-market|financing|buy|sell|valuation|investor|broker|demands|vault|referral|special|special-requests|projects|market-intelligence|my-account|favorites|compare|crm|privacy|terms|trade-in|commercial-hub|developers|match)",
       "destination": "/app.html"
     },
     { "source": "/properties/:id", "destination": "/api/page-shell?kind=property&id=:id" },
