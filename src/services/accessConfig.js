@@ -4,7 +4,8 @@
 // =============================================================
 
 import { doc, onSnapshot } from 'firebase/firestore';
-import { db, isFirebaseConfigured } from '../firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { db, auth, isFirebaseConfigured } from '../firebase';
 import { teamAction } from '../firebaseService';
 import { DEFAULT_ACCESS, normalizeAccess } from '../utils/accessModel.js';
 
@@ -47,6 +48,9 @@ export const getActiveAccessConfig = () => currentConfig;
 
 /**
  * Subscribes to real-time changes in settings/access.
+ * The document is staff-only (firestore.rules), so the listener starts once someone is signed in
+ * and starts again on every sign-in: the CRM page mounts before its login, and a listener refused
+ * before sign-in would otherwise never deliver. Until then the cached/default config stands.
  * Returns unsubscribe function.
  */
 export function subscribeToAccessConfig(callback) {
@@ -58,33 +62,42 @@ export function subscribeToAccessConfig(callback) {
   }
 
   let unsubDoc = null;
-  try {
-    const accessDocRef = doc(db, 'settings', 'access');
-    unsubDoc = onSnapshot(
-      accessDocRef,
-      (snap) => {
-        if (snap.exists()) {
-          const data = snap.data();
-          const parsed = normalizeAccess(data?.json || data);
-          notifyListeners(parsed);
-        } else {
-          notifyListeners(DEFAULT_ACCESS);
+  const listen = () => {
+    if (unsubDoc) { unsubDoc(); unsubDoc = null; }
+    try {
+      unsubDoc = onSnapshot(
+        doc(db, 'settings', 'access'),
+        (snap) => {
+          if (snap.exists()) {
+            const data = snap.data();
+            notifyListeners(normalizeAccess(data?.json || data));
+          } else {
+            notifyListeners(DEFAULT_ACCESS);
+          }
+        },
+        (err) => {
+          // Not signed in as staff, or offline: keep using cached/default
+          if (err?.code !== 'permission-denied') {
+            console.warn('subscribeToAccessConfig snapshot warning:', err);
+          }
         }
-      },
-      (err) => {
-        // If permission denied or offline, keep using cached/default
-        if (err?.code !== 'permission-denied') {
-          console.warn('subscribeToAccessConfig snapshot warning:', err);
-        }
-      }
-    );
-  } catch (err) {
-    console.warn('subscribeToAccessConfig setup error:', err);
-  }
+      );
+    } catch (err) {
+      console.warn('subscribeToAccessConfig setup error:', err);
+    }
+  };
+
+  const unsubAuth = auth
+    ? onAuthStateChanged(auth, (user) => {
+      if (user) listen();
+      else if (unsubDoc) { unsubDoc(); unsubDoc = null; }
+    })
+    : null;
 
   return () => {
     listeners.delete(callback);
     if (unsubDoc) unsubDoc();
+    if (unsubAuth) unsubAuth();
   };
 }
 

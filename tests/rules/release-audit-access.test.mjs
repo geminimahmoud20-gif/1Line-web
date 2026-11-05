@@ -27,6 +27,7 @@ beforeEach(async () => {
     await setDoc(doc(db, 'notify_log/leads__a1'), { kind: 'leads' });
     await setDoc(doc(db, 'analytics_daily/2026-10-13_0'), { batches: 1 });
     await setDoc(doc(db, 'settings/areas_cms'), { areas: [] });
+    await setDoc(doc(db, 'settings/access'), { json: '{}' });
     await setDoc(doc(db, 'properties/p1'), { title_ar: 'عقار', status: 'published' });
     await setDoc(doc(db, 'commission_invoices/i1'), { amount: 100 });
   });
@@ -80,4 +81,11 @@ test('commission invoices are for finance and the admin only', async () => {
   for (const role of ['viewer', 'sales_manager', 'agent_east']) {
     await assertFails(getDoc(doc(staff(role), 'commission_invoices/i1')));
   }
+});
+
+test('the roles and teams setting is for staff; the site settings stay public', async () => {
+  await assertFails(getDoc(doc(guest(), 'settings/access')));
+  await assertSucceeds(getDoc(doc(guest(), 'settings/areas_cms')));
+  await assertSucceeds(getDoc(doc(staff('viewer'), 'settings/access')));
+  await assertFails(getDoc(doc(env.authenticatedContext('client-1').firestore(), 'settings/access')));
 });
