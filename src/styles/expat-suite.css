@@ -1188,3 +1188,14 @@
 }
 .xs-yield-warn svg { flex-shrink: 0; margin-top: 3px; }
 .dark-theme .xs-yield-warn, :root[data-theme="dark"] .xs-yield-warn { background: rgba(251, 191, 36, 0.12); color: #FCD34D; }
+
+/* Payment plan steps (FinancialBreakdown): what is paid when, in order */
+.xs-fin-steps { list-style: none; margin: 4px 0 0; padding: 0; display: grid; }
+.xs-fin-steps li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px dashed var(--xs-line); }
+.xs-fin-steps li:last-child { border-bottom: 0; }
+.xs-fin-step-label { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.xs-fin-step-label b { font-size: 0.9rem; font-weight: 800; color: var(--xs-ink); }
+.xs-fin-step-label small { font-size: 0.74rem; font-weight: 600; line-height: 1.5; color: var(--xs-muted); }
+:is(.xs-fin-bar, .xs-fin-legend) .is-year { background: #3F7D5C; }
+.xs-fin-total > span:first-child { display: flex; flex-direction: column; gap: 2px; }
+.xs-fin-total small { font-size: 0.72rem; font-weight: 600; opacity: 0.8; }

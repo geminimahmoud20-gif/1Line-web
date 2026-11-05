@@ -1,7 +1,7 @@
 import { Receipt, Wallet, Wrench, Landmark, FileText, Info } from 'lucide-react';
 import { computeFinanceBreakdown } from '../../utils/propertyInsights';
 import { formatApprox } from '../../utils/fxRates';
-import { termLabel, installmentsPhrase, everyLabel } from '../../utils/paymentTerms';
+import { installmentsPhrase, everyLabel, yearlyPhrase } from '../../utils/paymentTerms';
 import '../../styles/expat-suite.css';
 
 const fmt = (n) => Math.round(Number(n) || 0).toLocaleString('en-US');
@@ -49,6 +49,15 @@ export default function FinancialBreakdown({ property, lang = 'ar', currency = '
   const planTotal = plan ? (Number(property.installmentTotal) || (plan.incomplete ? fb.price : plan.total)) : 0;
   const premiumPct = plan && fb.cashPrice ? ((planTotal - fb.cashPrice) / fb.cashPrice) * 100 : 0;
   if (!hasExtras && !(fb.cashDiscountPct > 0) && !plan) return null;
+  const resale = property.paymentType === 'resale';
+  // The total split into what is paid now, the installments, yearly and handover payments (bar + legend)
+  const parts = plan ? [
+    { key: 'down', label: resale ? L('كاش للمالك', 'To seller') : L('المقدم', 'Down'), value: plan.down },
+    { key: 'inst', label: L('الأقساط', 'Installments'), value: plan.installment ? plan.installment.amount * plan.installment.count : plan.monthly * plan.months + plan.quarterly * Math.floor(plan.months / 3) },
+    { key: 'year', label: L('الدفعات السنوية', 'Yearly'), value: plan.yearly ? plan.yearly.amount * plan.yearly.count : 0 },
+    { key: 'hand', label: L('الاستلام', 'Handover'), value: plan.handover },
+    { key: 'rest', label: L('غير مجدول', 'Unscheduled'), value: plan.unscheduled }
+  ].filter((x) => x.value > 0).map((x, _, all) => ({ ...x, share: (x.value / all.reduce((t, y) => t + y.value, 0)) * 100 })) : [];
 
   return (
     <section className="xs-fin" aria-labelledby="xs-fin-title">
@@ -62,27 +71,74 @@ export default function FinancialBreakdown({ property, lang = 'ar', currency = '
 
       {/* 1. Cash — or 2. the installment plan set in CRM → طريقة السداد */}
       {plan ? (
-        <div className="xs-fin-block">
-          <h4><Wallet size={15} aria-hidden="true" /> {plan.installment
-            ? L(`التقسيط: ${installmentsPhrase(plan.installment.count, plan.installment.every)}`, `Installments: ${installmentsPhrase(plan.installment.count, plan.installment.every, false)}`)
-            : L(`التقسيط على ${termLabel(plan.months)}`, `Installments over ${termLabel(plan.months, false)}`)}</h4>
-          <Row label={property.paymentType === 'resale' ? L('المطلوب كاش للمالك', 'Cash to the seller') : L('المقدم', 'Down payment')} hint={plan.down > 0 ? pct(plan.downPct) : null}>
-            {plan.down > 0 ? <Money value={plan.down} {...m} /> : <span className="xs-money">{L('بدون مقدم', 'None')}</span>}
-          </Row>
-          {plan.installment && (
-            <Row label={L(`القسط ال${everyLabel(plan.installment.every)}`, `Installment (${everyLabel(plan.installment.every, false)})`)} hint={`× ${plan.installment.count}`}>
-              <Money value={plan.installment.amount} strong {...m} />
-            </Row>
-          )}
-          {plan.yearly && <Row label={L('الدفعة السنوية', 'Yearly payment')} hint={`× ${plan.yearly.count}`}><Money value={plan.yearly.amount} {...m} /></Row>}
-          {plan.monthly > 0 && <Row label={L('القسط الشهري', 'Monthly installment')} hint={L(`× ${plan.months} شهر`, `× ${plan.months} months`)}><Money value={plan.monthly} strong {...m} /></Row>}
-          {plan.quarterly > 0 && <Row label={L('القسط ربع السنوي', 'Quarterly installment')}><Money value={plan.quarterly} {...m} /></Row>}
-          {plan.handover > 0 && <Row label={L('دفعة الاستلام', 'Handover payment')}><Money value={plan.handover} {...m} /></Row>}
-          {plan.unscheduled > 0 && <Row label={L('رصيد غير مجدول (نؤكده كتابياً)', 'Unscheduled balance (confirmed in writing)')}><Money value={plan.unscheduled} muted {...m} /></Row>}
-          <Row label={L('إجمالي سعر التقسيط', 'Installment total')} hint={premiumPct >= 0.5 ? L(`أعلى من الكاش بـ ${pct(premiumPct)}`, `${pct(premiumPct)} above cash`) : null}>
+        <>
+          <div className="xs-fin-block">
+            <h4><Wallet size={15} aria-hidden="true" /> {resale ? L('إعادة بيع: تدفع للمالك وتكمّل الأقساط', 'Resale: pay the seller, take over the installments') : L('خطة السداد', 'Payment plan')}</h4>
+            {/* How the total splits: what is paid now, the installments, yearly and handover payments */}
+            {parts.length > 1 && (
+              <>
+                <div className="xs-fin-bar" role="img" aria-label={parts.map((x) => `${x.label} ${pct(x.share)}`).join('، ')}>
+                  {parts.map((x) => <span key={x.key} className={`is-${x.key}`} style={{ flexGrow: x.value }} />)}
+                </div>
+                <div className="xs-fin-legend">
+                  {parts.map((x) => <span key={x.key}><i className={`is-${x.key}`} />{x.label} {pct(x.share)}</span>)}
+                </div>
+              </>
+            )}
+            <ol className="xs-fin-steps">
+              <li>
+                <span className="xs-fin-step-label">
+                  <b>{resale ? L('المطلوب كاش للمالك', 'Cash to the seller') : L('المقدم', 'Down payment')}</b>
+                  <small>{resale ? L('المدفوع + الأوفر، عند التعاقد', 'Paid + premium, at signing') : L('عند التعاقد', 'At signing')}</small>
+                </span>
+                {plan.down > 0 ? <Money value={plan.down} strong {...m} /> : <span className="xs-money">{L('بدون مقدم', 'None')}</span>}
+              </li>
+              {plan.installment && (
+                <li>
+                  <span className="xs-fin-step-label">
+                    <b>{L(`القسط ال${everyLabel(plan.installment.every)}`, `Installment (${everyLabel(plan.installment.every, false)})`)}</b>
+                    <small>{installmentsPhrase(plan.installment.count, plan.installment.every, isAr)}{L(` · المجموع ${fmt(plan.installment.amount * plan.installment.count)} ج.م`, ` · ${fmt(plan.installment.amount * plan.installment.count)} EGP in all`)}</small>
+                  </span>
+                  <Money value={plan.installment.amount} strong {...m} />
+                </li>
+              )}
+              {plan.yearly && (
+                <li>
+                  <span className="xs-fin-step-label">
+                    <b>{L('الدفعة السنوية', 'Yearly payment')}</b>
+                    <small>{yearlyPhrase(plan.yearly.count, isAr)}{L(` · المجموع ${fmt(plan.yearly.amount * plan.yearly.count)} ج.م`, ` · ${fmt(plan.yearly.amount * plan.yearly.count)} EGP in all`)}</small>
+                  </span>
+                  <Money value={plan.yearly.amount} {...m} />
+                </li>
+              )}
+              {plan.monthly > 0 && (
+                <li>
+                  <span className="xs-fin-step-label"><b>{L('القسط الشهري', 'Monthly installment')}</b><small>{L(`${plan.months} قسط`, `${plan.months} installments`)}</small></span>
+                  <Money value={plan.monthly} strong {...m} />
+                </li>
+              )}
+              {plan.quarterly > 0 && (
+                <li><span className="xs-fin-step-label"><b>{L('القسط ربع السنوي', 'Quarterly installment')}</b></span><Money value={plan.quarterly} {...m} /></li>
+              )}
+              {plan.handover > 0 && (
+                <li><span className="xs-fin-step-label"><b>{L('دفعة الاستلام', 'Handover payment')}</b><small>{L('عند استلام الوحدة', 'At handover')}</small></span><Money value={plan.handover} {...m} /></li>
+              )}
+              {plan.unscheduled > 0 && (
+                <li><span className="xs-fin-step-label"><b>{L('رصيد غير مجدول', 'Unscheduled balance')}</b><small>{L('نؤكده كتابياً قبل الحجز', 'Confirmed in writing before reservation')}</small></span><Money value={plan.unscheduled} muted {...m} /></li>
+              )}
+            </ol>
+          </div>
+          <div className="xs-fin-total">
+            <span>
+              {L('إجمالي ما تدفعه', 'Total you pay')}
+              {premiumPct >= 0.5 && <small>{L(`أعلى من الكاش بـ ${pct(premiumPct)}`, `${pct(premiumPct)} above cash`)}</small>}
+            </span>
             <Money value={planTotal} strong {...m} />
-          </Row>
-        </div>
+          </div>
+          {fb.cashPrice > 0 && fb.cashPrice < planTotal && Number(property.price) !== planTotal && (
+            <p className="xs-fin-note"><Info size={13} aria-hidden="true" />{L(`ولو كاش: ${fmt(fb.cashPrice)} ج.م (توفّر ${fmt(planTotal - fb.cashPrice)} ج.م)`, `Or cash: ${fmt(fb.cashPrice)} EGP (saves ${fmt(planTotal - fb.cashPrice)} EGP)`)}</p>
+          )}
+        </>
       ) : (
       <div className="xs-fin-block">
         <h4><Wallet size={15} aria-hidden="true" /> {L('السداد كاش', 'Cash')}</h4>
