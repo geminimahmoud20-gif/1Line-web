@@ -295,8 +295,10 @@ service cloud.firestore {
     }
 
     // ⚙️ 6. SITE & FOUNDER SETTINGS (areas CMS, founder CMS)
+    // Everything here is site content except `access` (roles, their permissions and the teams),
+    // which only the CRM reads
     match /settings/{settingId} {
-      allow read: if true;
+      allow read: if settingId != 'access' || isStaff();
       allow write: if isAdmin();
     }
 
