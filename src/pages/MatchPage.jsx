@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Check, X, Info, MessageSquare, RotateCcw, Home, TrendingUp, Zap, Hourglass, Shuffle, Wallet, CalendarClock } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, X, Info, MessageSquare, RotateCcw, Home, TrendingUp, Zap, Hourglass, Shuffle, Wallet, CalendarClock, Building2, Building, Store, Briefcase, LandPlot, Sprout, Factory, HelpCircle, Wrench, MapPin } from 'lucide-react';
 import Advisor from '../components/match/Advisor';
-import { PRIORITIES, FAMILY_SIZES, rankHomes, answersMessage, isHome } from '../utils/buyerMatch';
+import { KINDS, kindOf, isKind, purposesFor, prioritiesFor, FAMILY_SIZES, rankUnits, answersMessage } from '../utils/buyerMatch';
 import { liveListings } from '../utils/marketStats';
 import { getAreas } from '../utils/areasData';
 import { mainAreas, inArea, shortAreaName } from '../utils/areaLookup';
@@ -11,142 +11,205 @@ import { thumbUrl } from '../utils/imageThumbs';
 import { updatePageSeo } from '../utils/seoHelper';
 import '../styles/match-page.css';
 
-const EMPTY = { priorities: [], areas: [], minSize: '', purpose: '', family: '', delivery: '', payment: 'installments', budget: '', down: '', monthly: '' };
-const STEPS = 5;
+const EMPTY = { kind: '', purpose: '', areas: [], anyArea: false, family: '', minSize: '', delivery: '', payment: 'installments', budget: '', down: '', monthly: '', priorities: [] };
 const digits = (v) => String(v ?? '').replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660)).replace(/\D/g, '').slice(0, 11);
 const money = (v) => (v ? Number(v).toLocaleString('en-US') : '');
+const KIND_ICONS = { residential: Building2, villa: Home, commercial: Store, administrative: Briefcase, building: Building, land: LandPlot, agricultural: Sprout, industrial: Factory };
+const roomsText = (n) => (n === 1 ? 'غرفة' : n === 2 ? 'غرفتين' : `${n} غرف`);
 
-// What the advisor says on each step: the question first, then a line that helps the buyer answer
-const LINES = [
-  ['أهلاً بيك! أنا مستشارك في 1Line. إيه أهم حاجة لازم تكون في وحدتك؟', 'اختار حاجة أو أكتر، ولو الموقع أو المساحة مهمين قولّي تفاصيلهم.'],
-  ['حضرتك بتفكر في الشقة سكن ولا استثمار؟', 'للسكن بندوّر على الأنسب لأسرتك، وللاستثمار على أعلى عائد وارتفاع في السعر.'],
-  ['عدد أفراد أسرتك كام؟', 'عشان نعرف تحتاج كام غرفة.'],
-  ['مستعجل على الاستلام، ولا ممكن تستنى شوية بسعر وتقسيط أحسن؟', 'المشروع في أوله بيكون أقل سعر وأطول تقسيط، وكل ما بيتحرك السعر بيزيد.'],
-  ['آخر سؤال: حابب تدفع إزاي، وفي حدود كام؟', 'كده نقدر نختار لك الأنسب إن شاء الله.']
-];
+/**
+ * The questions, in order, for the kind of property chosen: what the advisor asks, a line that
+ * helps answer it, and «ليه بنسأل؟», the reason the answer changes the recommendation.
+ */
+function stepsFor(a) {
+  const kind = a.kind ? kindOf(a.kind) : null;
+  const steps = [
+    { id: 'kind', q: 'أهلاً بيك! أنا مستشارك في 1Line. بتدوّر على أنهي نوع عقار؟',
+      hint: 'اختار النوع الأقرب لطلبك.',
+      why: 'كل نوع عقار ليه سوق وأسعار مختلفة، فبنقارنك بالعقارات اللي من نفس النوع بس، عشان النسبة تبقى حقيقية.' },
+    { id: 'purpose', q: kind?.home ? 'حضرتك بتشتري للسكن ولا للاستثمار؟' : 'هتستخدمه بنفسك ولا للاستثمار؟',
+      hint: 'الإجابة دي بتغيّر اللي بندوّر عليه في العقار.',
+      why: kind?.home
+        ? 'للسكن بنفضّل الجاهز والمتشطب المناسب لأسرتك، وللاستثمار بنفضّل اللي فيه فرصة ارتفاع سعر أو إيجار ونظام سداد يخلّي رأس مالك يشتغل.'
+        : 'لو هتشغّله بنفسك بنفضّل الجاهز اللي تبدأ فيه على طول، ولو استثمار بنفضّل المؤجّر أو اللي بنظام سداد وفرصة ارتفاع سعره أكبر.' },
+    { id: 'area', q: 'في أنهي منطقة؟',
+      hint: 'تقدر تختار أكتر من منطقة، أو «أي منطقة» لو مش فارقة معاك.',
+      why: 'الموقع أكتر حاجة بتفرق في السعر وفي قربك من شغلك ومدارس ولادك، وده اللي بيحدد قيمة العقار بعدين.' },
+    kind?.home
+      ? { id: 'space', q: 'عدد أفراد أسرتك كام؟',
+        hint: 'ولو عندك مساحة معيّنة في دماغك اكتبها (اختياري).',
+        why: 'من عدد الأفراد بنعرف تحتاج كام أوضة، فمنرشّحلكش شقة هتضيق عليكم أو أكبر من احتياجك وتدفع فيها زيادة.' }
+      : { id: 'space', q: 'محتاج مساحة قد إيه تقريباً؟',
+        hint: 'اكتب أقل مساحة تنفعك، أو سيبها فاضية لو مش متأكد.',
+        why: kind && !kind.handover
+          ? 'المساحة بتحدد السعر الإجمالي ونوع المشروع اللي ينفع عليها، فبنستبعد اللي أصغر من احتياجك.'
+          : 'المساحة بتحدد إذا كان المكان هيكفي نشاطك والسعر الإجمالي، فبنستبعد اللي أصغر من احتياجك.' }
+  ];
+  if (!kind || kind.handover) {
+    steps.push({ id: 'delivery', q: 'مستعجل على الاستلام، ولا ممكن تستنى شوية؟',
+      hint: 'اختار اللي يناسب ظروفك.',
+      why: 'العقار تحت الإنشاء بيكون سعره أقل وتقسيطه أطول، والجاهز بتستلمه وتستخدمه على طول. فده بيحدد إحنا نوريك أنهي.' });
+  }
+  steps.push(
+    { id: 'payment', q: 'حابب تدفع إزاي، وفي حدود كام؟',
+      hint: 'رقم تقريبي كفاية.',
+      why: 'بنقارن سعر كل عقار أو مقدّمه وقسطه بإمكانياتك، فمنضيّعش وقتك في حاجة فوق ميزانيتك. أرقامك مش بتتبعت لحد غير لما إنت تبعتها.' },
+    { id: 'priorities', q: 'آخر سؤال: إيه أهم حاجة عندك؟',
+      hint: 'اختار حاجة أو أكتر، أو سيبها لو كله مهم زي بعضه.',
+      why: 'الحاجة اللي تختارها بتاخد وزن أكبر في نسبة المطابقة، فالعقار اللي بيحققها بيطلع الأول.' }
+  );
+  return steps;
+}
 
 export default function MatchPage({ properties = [], lang = 'ar' }) {
   const isAr = lang === 'ar';
-  const [step, setStep] = useState(0); // 0..4 questions, 5 = results
+  const [step, setStep] = useState(0);
   const [a, setA] = useState(EMPTY);
   const set = (patch) => setA((x) => ({ ...x, ...patch }));
   const toggle = (key, id) => setA((x) => ({ ...x, [key]: x[key].includes(id) ? x[key].filter((v) => v !== id) : [...x[key], id] }));
   const areas = useMemo(() => getAreas(), []);
-  const homes = useMemo(() => liveListings(properties).filter(isHome), [properties]);
-  // Only areas that have homes listed are offered
-  const areaChoices = useMemo(() => mainAreas(areas).filter((m) => homes.some((p) => inArea(p.areaKey, m.id, areas))), [areas, homes]);
-  const results = useMemo(() => (step === STEPS ? rankHomes(properties, a, areas, 6) : []), [step, properties, a, areas]);
+  const steps = useMemo(() => stepsFor(a), [a]);
+  const STEPS = steps.length;
+  const cur = steps[step];
+  const live = useMemo(() => liveListings(properties), [properties]);
+  // How many listings each kind has, and only areas that have the chosen kind listed
+  const kindCount = useMemo(() => Object.fromEntries(KINDS.map((k) => [k.id, live.filter((p) => isKind(p, k.id)).length])), [live]);
+  const areaChoices = useMemo(() => {
+    const list = live.filter((p) => isKind(p, a.kind));
+    return mainAreas(areas).filter((m) => list.some((p) => inArea(p.areaKey, m.id, areas)));
+  }, [areas, live, a.kind]);
+  const results = useMemo(() => (step === STEPS ? rankUnits(properties, a, areas, 6) : []), [step, STEPS, properties, a, areas]);
+  const kind = a.kind ? kindOf(a.kind) : null;
 
   useEffect(() => {
     updatePageSeo({
-      title: isAr ? 'رشّحلي وحدتي: 5 أسئلة ونرشّحلك الأنسب | 1Line' : 'Find my home: 5 questions | 1Line',
-      description: isAr ? 'جاوب على 5 أسئلة بسيطة عن احتياجك وميزانيتك، ونوريك الوحدات المعروضة في سوهاج ومدى مطابقة كل واحدة لطلبك.' : 'Answer 5 short questions and see how well each listed home in Sohag fits.',
+      title: isAr ? 'رشّحلي عقاري: أسئلة قليلة ونرشّحلك الأنسب | 1Line' : 'Find my property | 1Line',
+      description: isAr ? 'شقة، فيلا، محل، مكتب أو أرض: جاوب على أسئلة قليلة عن احتياجك وميزانيتك، ونوريك العقارات المعروضة في سوهاج ومدى مطابقة كل واحد لطلبك.' : 'Answer a few questions and see how well each listed property in Sohag fits.',
       url: '/match',
       type: 'website'
     });
   }, [isAr]);
 
-  useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [step]);
+  // Each new question starts at the top; the first one opens there already (no scroll animation on arrival)
+  const firstRender = useRef(true);
+  useEffect(() => {
+    if (firstRender.current) { firstRender.current = false; return; }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [step]);
 
-  const canNext = [
-    a.priorities.length > 0,
-    Boolean(a.purpose),
-    Boolean(a.family),
-    Boolean(a.delivery),
-    a.payment === 'cash' ? Number(a.budget) > 0 : Number(a.down) > 0 || Number(a.monthly) > 0
-  ][step];
+  const ready = {
+    kind: Boolean(a.kind),
+    purpose: Boolean(a.purpose),
+    area: a.anyArea || a.areas.length > 0 || areaChoices.length === 0,
+    space: kind?.home ? Boolean(a.family) : true,
+    delivery: Boolean(a.delivery),
+    payment: a.payment === 'cash' ? Number(a.budget) > 0 : Number(a.down) > 0 || Number(a.monthly) > 0,
+    priorities: true
+  };
+  const canNext = cur ? ready[cur.id] : false;
   const areaName = (id) => shortAreaName(areas.find((x) => x.id === id), areas, true) || id;
-  const [line, hint] = LINES[step] || [];
-  const mood = step === STEPS ? 'happy' : step === 3 ? 'think' : 'talk';
+  const mood = step === STEPS ? 'happy' : cur?.id === 'delivery' || cur?.id === 'payment' ? 'think' : 'talk';
   const Next = isAr ? ArrowLeft : ArrowRight;
   const Back = isAr ? ArrowRight : ArrowLeft;
+  // Picking another kind clears the answers that depend on it
+  const pickKind = (id) => setA((x) => (x.kind === id ? x : { ...EMPTY, payment: x.payment, budget: x.budget, down: x.down, monthly: x.monthly, kind: id }));
+  const noun = kind?.home ? 'وحدة' : 'عقار';
+  const countText = (n) => (n === 1 ? noun : n === 2 ? (kind?.home ? 'وحدتين' : 'عقارين') : `${n} ${kind?.home ? 'وحدات' : 'عقارات'}`);
 
-  const option = (key, value, label, sub, Icon) => (
+  const option = (key, value, label, sub, Icon, extra) => (
     <button key={value} type="button" role="radio" aria-checked={a[key] === value}
       className={`mt-option${a[key] === value ? ' is-on' : ''}`}
-      onClick={() => set({ [key]: value })}>
+      onClick={() => (key === 'kind' ? pickKind(value) : set({ [key]: value }))}>
       {Icon && <span className="mt-option-icon"><Icon size={20} aria-hidden="true" /></span>}
       <span className="mt-option-text"><strong>{label}</strong>{sub && <small>{sub}</small>}</span>
+      {extra}
     </button>
+  );
+  const sizeField = (label) => (
+    <label className="mt-sub mt-field">
+      <span>{label}</span>
+      <span className="mt-input"><input type="text" inputMode="numeric" dir="ltr" placeholder={kind?.home ? '120' : '100'} value={a.minSize}
+        onChange={(e) => set({ minSize: digits(e.target.value).slice(0, 6) })} /><em>م²</em></span>
+    </label>
   );
 
   return (
     <div className="mt-page" dir={isAr ? 'rtl' : 'ltr'}>
       <div className="mt-wrap">
         <nav className="mt-crumbs" aria-label="مسار الصفحة">
-          <Link to="/">الرئيسية</Link><span aria-hidden="true">/</span><span aria-current="page">رشّحلي وحدتي</span>
+          <Link to="/">الرئيسية</Link><span aria-hidden="true">/</span><span aria-current="page">رشّحلي عقاري</span>
         </nav>
 
         {step < STEPS ? (
           <section className="mt-card" aria-labelledby="mt-q">
             <header className="mt-guide">
               <Advisor mood={mood} size={128} />
-              <div className="mt-bubble" key={step}>
-                <p id="mt-q" className="mt-question">{line}</p>
-                <p className="mt-hint">{hint}</p>
+              <div className="mt-bubble" key={cur.id}>
+                <p className="mt-count">سؤال {step + 1} من {STEPS}</p>
+                <p id="mt-q" className="mt-question">{cur.q}</p>
+                <p className="mt-hint">{cur.hint}</p>
               </div>
             </header>
 
             <ol className="mt-progress" aria-label={`السؤال ${step + 1} من ${STEPS}`}>
-              {Array.from({ length: STEPS }, (_, i) => <li key={i} className={i < step ? 'is-done' : i === step ? 'is-now' : ''} />)}
+              {steps.map((x, i) => <li key={x.id} className={i < step ? 'is-done' : i === step ? 'is-now' : ''} />)}
             </ol>
 
+            <p className="mt-why" key={`why-${cur.id}`}>
+              <HelpCircle size={17} aria-hidden="true" />
+              <span><b>ليه بنسأل؟</b> {cur.why}</span>
+            </p>
+
             <div className="mt-answers">
-              {step === 0 && (
-                <>
-                  <div className="mt-chips" role="group" aria-label="أهم المواصفات">
-                    {PRIORITIES.map((p) => (
-                      <button key={p.id} type="button" aria-pressed={a.priorities.includes(p.id)}
-                        className={`mt-chip${a.priorities.includes(p.id) ? ' is-on' : ''}`} onClick={() => toggle('priorities', p.id)}>
-                        {a.priorities.includes(p.id) && <Check size={15} aria-hidden="true" />}{p.ar}
+              {cur.id === 'kind' && (
+                <div className="mt-options is-grid is-kinds" role="radiogroup" aria-label="نوع العقار">
+                  {KINDS.map((k) => option('kind', k.id, k.ar, k.sub, KIND_ICONS[k.id],
+                    kindCount[k.id] > 0 ? <span className="mt-option-count">{kindCount[k.id]} معروض</span> : null))}
+                </div>
+              )}
+
+              {cur.id === 'purpose' && (
+                <div className="mt-options" role="radiogroup" aria-label="الغرض">
+                  {purposesFor(a.kind).map((x, i) => option('purpose', x.id, x.ar, x.sub, i === 0 ? (kind?.home ? Home : Wrench) : TrendingUp))}
+                </div>
+              )}
+
+              {cur.id === 'area' && (
+                areaChoices.length ? (
+                  <div className="mt-chips" role="group" aria-label="المنطقة">
+                    <button type="button" aria-pressed={a.anyArea}
+                      className={`mt-chip${a.anyArea ? ' is-on' : ''}`} onClick={() => set({ anyArea: !a.anyArea, areas: [] })}>
+                      {a.anyArea && <Check size={15} aria-hidden="true" />}أي منطقة
+                    </button>
+                    {areaChoices.map((m) => (
+                      <button key={m.id} type="button" aria-pressed={a.areas.includes(m.id)}
+                        className={`mt-chip${a.areas.includes(m.id) ? ' is-on' : ''}`}
+                        onClick={() => { toggle('areas', m.id); set({ anyArea: false }); }}>
+                        {a.areas.includes(m.id) ? <Check size={15} aria-hidden="true" /> : <MapPin size={15} aria-hidden="true" />}{shortAreaName(m, areas, true)}
                       </button>
                     ))}
                   </div>
-                  {a.priorities.includes('area') && areaChoices.length > 0 && (
-                    <fieldset className="mt-sub">
-                      <legend>في أنهي منطقة؟</legend>
-                      <div className="mt-chips">
-                        {areaChoices.map((m) => (
-                          <button key={m.id} type="button" aria-pressed={a.areas.includes(m.id)}
-                            className={`mt-chip is-small${a.areas.includes(m.id) ? ' is-on' : ''}`} onClick={() => toggle('areas', m.id)}>
-                            {shortAreaName(m, areas, true)}
-                          </button>
-                        ))}
-                      </div>
-                    </fieldset>
-                  )}
-                  {a.priorities.includes('size') && (
-                    <label className="mt-sub mt-field">
-                      <span>أقل مساحة تناسبك</span>
-                      <span className="mt-input"><input type="text" inputMode="numeric" dir="ltr" placeholder="120" value={a.minSize}
-                        onChange={(e) => set({ minSize: digits(e.target.value).slice(0, 4) })} /><em>م²</em></span>
-                    </label>
-                  )}
+                ) : <p className="mt-empty-note">لسه مفيش {kind?.ar || 'عقارات'} معروضة في مناطق محددة، كمّل وهنرشّحلك من كل المعروض ونسجّل طلبك.</p>
+              )}
+
+              {cur.id === 'space' && (kind?.home ? (
+                <>
+                  <div className="mt-options is-grid" role="radiogroup" aria-label="عدد أفراد الأسرة">
+                    {FAMILY_SIZES.map((f) => option('family', f.id, f.ar, `${roomsText(f.rooms)} أو أكتر`))}
+                  </div>
+                  {sizeField('أقل مساحة تناسبك (اختياري)')}
                 </>
-              )}
+              ) : sizeField('أقل مساحة تنفعك (اختياري)'))}
 
-              {step === 1 && (
-                <div className="mt-options" role="radiogroup" aria-label="الغرض">
-                  {option('purpose', 'home', 'سكن', 'الأنسب لظروف أسرتي وفي حدود إمكانياتي', Home)}
-                  {option('purpose', 'invest', 'استثمار', 'أعلى عائد: ارتفاع في السعر أو إيجار مستمر', TrendingUp)}
-                </div>
-              )}
-
-              {step === 2 && (
-                <div className="mt-options is-grid" role="radiogroup" aria-label="عدد أفراد الأسرة">
-                  {FAMILY_SIZES.map((f) => option('family', f.id, f.ar, `${f.rooms === 1 ? 'غرفة' : f.rooms === 2 ? 'غرفتين' : `${f.rooms} غرف`} أو أكتر`))}
-                </div>
-              )}
-
-              {step === 3 && (
+              {cur.id === 'delivery' && (
                 <div className="mt-options" role="radiogroup" aria-label="الاستلام">
-                  {option('delivery', 'now', 'مستعجل', 'عايز أستلم فوراً', Zap)}
+                  {option('delivery', 'now', 'مستعجل', 'عايز أستلم وأستخدم فوراً', Zap)}
                   {option('delivery', 'wait', 'ممكن أستنى', 'لو ده هيدّيني سعر أقل وتقسيط أطول', Hourglass)}
                   {option('delivery', 'any', 'مش فارقة', 'اعرض عليّ الاتنين', Shuffle)}
                 </div>
               )}
 
-              {step === 4 && (
+              {cur.id === 'payment' && (
                 <>
                   <div className="mt-options is-grid" role="radiogroup" aria-label="طريقة الدفع">
                     {option('payment', 'installments', 'تقسيط', 'مقدم وقسط شهري', CalendarClock)}
@@ -174,6 +237,17 @@ export default function MatchPage({ properties = [], lang = 'ar' }) {
                   )}
                 </>
               )}
+
+              {cur.id === 'priorities' && (
+                <div className="mt-chips" role="group" aria-label="أهم حاجة">
+                  {prioritiesFor(a.kind).map((p) => (
+                    <button key={p.id} type="button" aria-pressed={a.priorities.includes(p.id)}
+                      className={`mt-chip${a.priorities.includes(p.id) ? ' is-on' : ''}`} onClick={() => toggle('priorities', p.id)}>
+                      {a.priorities.includes(p.id) && <Check size={15} aria-hidden="true" />}{p.ar}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <footer className="mt-nav">
@@ -184,6 +258,7 @@ export default function MatchPage({ properties = [], lang = 'ar' }) {
                 {step === STEPS - 1 ? 'رشّحلي' : 'التالي'}<Next size={17} aria-hidden="true" />
               </button>
             </footer>
+            <p className="mt-trust"><Info size={14} aria-hidden="true" />الترشيح من العقارات المعروضة فعلاً على 1Line، ومش محتاج رقم تليفون.</p>
           </section>
         ) : (
           <section aria-labelledby="mt-results">
@@ -191,9 +266,9 @@ export default function MatchPage({ properties = [], lang = 'ar' }) {
               <Advisor mood="happy" size={120} />
               <div className="mt-bubble">
                 <p id="mt-results" className="mt-question">
-                  {results.length ? `لقيتلك ${results.length === 1 ? 'وحدة' : results.length === 2 ? 'وحدتين' : `${results.length} وحدات`}، مترتبين من الأنسب لطلبك` : 'لسه مفيش وحدات معروضة تناسب طلبك'}
+                  {results.length ? `لقيتلك ${countText(results.length)}، مترتبين من الأنسب لطلبك` : `لسه مفيش ${kind?.ar || 'عقارات'} معروضة تناسب طلبك`}
                 </p>
-                <p className="mt-hint">نسبة المطابقة محسوبة من إجاباتك. ابعتلنا طلبك ونرشّحلك كمان من الوحدات اللي لسه منزلتش.</p>
+                <p className="mt-hint">نسبة المطابقة محسوبة من إجاباتك. ابعتلنا طلبك ونرشّحلك كمان من العقارات اللي لسه منزلتش على الموقع.</p>
               </div>
             </header>
 
@@ -228,7 +303,7 @@ export default function MatchPage({ properties = [], lang = 'ar' }) {
             <div className="mt-card mt-cta">
               <div>
                 <h2>عايز ترشيحات أكتر؟</h2>
-                <p>ابعت إجاباتك لفريق 1Line على واتساب، ونرشّحلك وحدات مناسبة ونرتّب معاينة.</p>
+                <p>ابعت إجاباتك لفريق 1Line على واتساب، ونرشّحلك عقارات مناسبة ونرتّب معاينة.</p>
               </div>
               <div className="mt-cta-actions">
                 <a className="mt-btn is-wa" href={getWhatsAppUrl(answersMessage(a, areaName))} target="_blank" rel="noopener noreferrer">
