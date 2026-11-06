@@ -19,7 +19,7 @@
 }
 @keyframes mt-pop { from { opacity: 0; transform: translateY(6px) scale(0.97); } to { opacity: 1; transform: none; } }
 .mt-question { margin: 0; font-size: 1.2rem; font-weight: 800; line-height: 1.6; color: #fff; }
-.mt-hint { margin: 6px 0 0; font-size: 0.88rem; line-height: 1.7; color: rgba(255, 255, 255, 0.75); }
+.mt-hint { margin: 8px 0 0; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.12); font-size: 0.9rem; line-height: 1.75; color: rgba(255, 255, 255, 0.85); }
 
 .mt-progress { display: flex; gap: 6px; list-style: none; margin: 18px 0 14px; padding: 0; }
 .mt-progress li { flex: 1; height: 6px; border-radius: 99px; background: var(--border-hover); transition: background 0.3s; }
@@ -116,15 +116,8 @@
   .mt-cta-actions { flex-direction: column; }
 }
 
-/* Question count, «ليه بنسأل؟», a listing count per kind and a trust line */
+/* Question count, a listing count per kind and a trust line */
 .mt-count { margin: 0 0 4px; font-size: 0.74rem; font-weight: 800; letter-spacing: 0.3px; color: var(--accent-gold-soft, #D9B97E); }
-.mt-why {
-  display: flex; align-items: flex-start; gap: 8px; margin: 0 0 14px; padding: 12px 14px; border-radius: 14px;
-  background: var(--accent-gold-light); color: var(--text-primary); font-size: 0.88rem; line-height: 1.8;
-  animation: mt-pop 0.35s ease;
-}
-.mt-why svg { flex: none; margin-top: 4px; color: var(--accent-gold); }
-.mt-why b { font-weight: 800; }
 .mt-options.is-kinds .mt-option { position: relative; padding-inline-end: 72px; }
 .mt-option-count {
   position: absolute; inset-inline-end: 12px; top: 50%; transform: translateY(-50%);
