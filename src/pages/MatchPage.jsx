@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Check, X, Info, MessageSquare, RotateCcw, Home, TrendingUp, Zap, Hourglass, Shuffle, Wallet, CalendarClock, Building2, Building, Store, Briefcase, LandPlot, Sprout, Factory, HelpCircle, Wrench, MapPin } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, X, Info, MessageSquare, RotateCcw, Home, TrendingUp, Zap, Hourglass, Shuffle, Wallet, CalendarClock, Building2, Building, Store, Briefcase, LandPlot, Sprout, Factory, Wrench, MapPin } from 'lucide-react';
 import Advisor from '../components/match/Advisor';
 import { KINDS, kindOf, isKind, purposesFor, prioritiesFor, FAMILY_SIZES, rankUnits, answersMessage } from '../utils/buyerMatch';
 import { liveListings } from '../utils/marketStats';
@@ -18,45 +18,35 @@ const KIND_ICONS = { residential: Building2, villa: Home, commercial: Store, adm
 const roomsText = (n) => (n === 1 ? 'غرفة' : n === 2 ? 'غرفتين' : `${n} غرف`);
 
 /**
- * The questions, in order, for the kind of property chosen: what the advisor asks, a line that
- * helps answer it, and «ليه بنسأل؟», the reason the answer changes the recommendation.
+ * The questions, in order, for the kind of property chosen: what the advisor asks, and one short
+ * line under it saying what the answer changes in the recommendation.
  */
 function stepsFor(a) {
   const kind = a.kind ? kindOf(a.kind) : null;
   const steps = [
     { id: 'kind', q: 'أهلاً بيك! أنا مستشارك في 1Line. بتدوّر على أنهي نوع عقار؟',
-      hint: 'اختار النوع الأقرب لطلبك.',
-      why: 'كل نوع عقار ليه سوق وأسعار مختلفة، فبنقارنك بالعقارات اللي من نفس النوع بس، عشان النسبة تبقى حقيقية.' },
-    { id: 'purpose', q: kind?.home ? 'حضرتك بتشتري للسكن ولا للاستثمار؟' : 'هتستخدمه بنفسك ولا للاستثمار؟',
-      hint: 'الإجابة دي بتغيّر اللي بندوّر عليه في العقار.',
-      why: kind?.home
-        ? 'للسكن بنفضّل الجاهز والمتشطب المناسب لأسرتك، وللاستثمار بنفضّل اللي فيه فرصة ارتفاع سعر أو إيجار ونظام سداد يخلّي رأس مالك يشتغل.'
-        : 'لو هتشغّله بنفسك بنفضّل الجاهز اللي تبدأ فيه على طول، ولو استثمار بنفضّل المؤجّر أو اللي بنظام سداد وفرصة ارتفاع سعره أكبر.' },
+      hint: 'كل نوع ليه أسعاره، فهنقارنك بنفس النوع بس عشان النسبة تطلع دقيقة.' },
+    { id: 'purpose', q: kind?.home ? 'بتشتري للسكن ولا للاستثمار؟' : 'هتستخدمه بنفسك ولا للاستثمار؟',
+      hint: kind?.home
+        ? 'للسكن هنفضّل الجاهز المريح لأسرتك، وللاستثمار اللي سعره هيزيد أو بيجيب إيجار.'
+        : 'لو هتشغّله هنفضّل الجاهز تبدأ فيه على طول، ولو استثمار هنفضّل المؤجّر أو اللي بالتقسيط.' },
     { id: 'area', q: 'في أنهي منطقة؟',
-      hint: 'تقدر تختار أكتر من منطقة، أو «أي منطقة» لو مش فارقة معاك.',
-      why: 'الموقع أكتر حاجة بتفرق في السعر وفي قربك من شغلك ومدارس ولادك، وده اللي بيحدد قيمة العقار بعدين.' },
+      hint: 'الموقع أكتر حاجة بتفرق في السعر. اختار منطقة أو أكتر، أو «أي منطقة».' },
     kind?.home
       ? { id: 'space', q: 'عدد أفراد أسرتك كام؟',
-        hint: 'ولو عندك مساحة معيّنة في دماغك اكتبها (اختياري).',
-        why: 'من عدد الأفراد بنعرف تحتاج كام أوضة، فمنرشّحلكش شقة هتضيق عليكم أو أكبر من احتياجك وتدفع فيها زيادة.' }
+        hint: 'عشان نرشّحلك عدد أوض مناسب: مايضيقش عليكم، ومتدفعش في مساحة زيادة.' }
       : { id: 'space', q: 'محتاج مساحة قد إيه تقريباً؟',
-        hint: 'اكتب أقل مساحة تنفعك، أو سيبها فاضية لو مش متأكد.',
-        why: kind && !kind.handover
-          ? 'المساحة بتحدد السعر الإجمالي ونوع المشروع اللي ينفع عليها، فبنستبعد اللي أصغر من احتياجك.'
-          : 'المساحة بتحدد إذا كان المكان هيكفي نشاطك والسعر الإجمالي، فبنستبعد اللي أصغر من احتياجك.' }
+        hint: 'المساحة بتحدد السعر وإذا كان المكان هيكفيك. سيبها فاضية لو مش متأكد.' }
   ];
   if (!kind || kind.handover) {
-    steps.push({ id: 'delivery', q: 'مستعجل على الاستلام، ولا ممكن تستنى شوية؟',
-      hint: 'اختار اللي يناسب ظروفك.',
-      why: 'العقار تحت الإنشاء بيكون سعره أقل وتقسيطه أطول، والجاهز بتستلمه وتستخدمه على طول. فده بيحدد إحنا نوريك أنهي.' });
+    steps.push({ id: 'delivery', q: 'مستعجل على الاستلام، ولا ممكن تستنى؟',
+      hint: 'تحت الإنشاء أرخص وتقسيطه أطول، والجاهز بتستلمه وتستخدمه على طول.' });
   }
   steps.push(
     { id: 'payment', q: 'حابب تدفع إزاي، وفي حدود كام؟',
-      hint: 'رقم تقريبي كفاية.',
-      why: 'بنقارن سعر كل عقار أو مقدّمه وقسطه بإمكانياتك، فمنضيّعش وقتك في حاجة فوق ميزانيتك. أرقامك مش بتتبعت لحد غير لما إنت تبعتها.' },
+      hint: 'عشان منوريكش حاجة فوق ميزانيتك. رقم تقريبي كفاية، ومش بيتبعت لحد.' },
     { id: 'priorities', q: 'آخر سؤال: إيه أهم حاجة عندك؟',
-      hint: 'اختار حاجة أو أكتر، أو سيبها لو كله مهم زي بعضه.',
-      why: 'الحاجة اللي تختارها بتاخد وزن أكبر في نسبة المطابقة، فالعقار اللي بيحققها بيطلع الأول.' }
+      hint: 'اللي تختاره بياخد وزن أكبر في الترتيب. ولو كله مهم زي بعضه سيبها.' }
   );
   return steps;
 }
@@ -155,10 +145,6 @@ export default function MatchPage({ properties = [], lang = 'ar' }) {
               {steps.map((x, i) => <li key={x.id} className={i < step ? 'is-done' : i === step ? 'is-now' : ''} />)}
             </ol>
 
-            <p className="mt-why" key={`why-${cur.id}`}>
-              <HelpCircle size={17} aria-hidden="true" />
-              <span><b>ليه بنسأل؟</b> {cur.why}</span>
-            </p>
 
             <div className="mt-answers">
               {cur.id === 'kind' && (
