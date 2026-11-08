@@ -4,7 +4,6 @@ import {
   ArrowLeft, ArrowRight, Building2, CalendarClock, Check, FileDown, Layers, MapPin, Maximize2,
   Flame, MessageSquare, Navigation, Phone, Sparkles, Wallet, Home as HomeIcon
 } from 'lucide-react';
-import { MEGA_PROJECTS } from '../data/projectsData';
 import PropertyGallery from '../components/properties/PropertyGallery';
 import PropertyCard from '../components/properties/PropertyCard';
 import { ProgressRing } from '../components/projects/ProjectCard';
@@ -35,7 +34,7 @@ export default function ProjectDetailPage({ projects = [], properties = [], lang
   const navigate = useNavigate();
   const download = useClientDownload();
   const isAr = lang === 'ar';
-  const all = projects && projects.length > 0 ? projects : MEGA_PROJECTS;
+  const all = Array.isArray(projects) ? projects : [];
   const project = all.find((p) => String(p.id) === String(id));
   const units = useMemo(() => projectUnits(project, properties), [project, properties]);
   const developers = useDevelopers();

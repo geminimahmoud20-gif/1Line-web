@@ -4,7 +4,6 @@ import { MessageSquare, ArrowRight, ArrowLeft, LayoutGrid, Home, Store, SearchX,
 import { useDevelopers, projectDeveloper } from '../utils/developers';
 import { getAreas } from '../utils/areasData';
 import { areaPathName, mainAreas, inArea, shortAreaName } from '../utils/areaLookup';
-import { MEGA_PROJECTS } from '../data/projectsData';
 import ProjectCard from '../components/projects/ProjectCard';
 import '../styles/projects-modern.css';
 import { openWhatsAppSafely } from '../utils/founderCmsData';
@@ -48,7 +47,8 @@ export default function ProjectsPage({
     });
   }, [lang, isAr]);
 
-  const allProjects = projects && projects.length > 0 ? projects : MEGA_PROJECTS;
+  // Only real projects: the bundled samples are never shown to visitors
+  const allProjects = useMemo(() => (Array.isArray(projects) ? projects : []), [projects]);
 
   const filteredProjects = useMemo(() => allProjects.filter((p) =>
     (selectedCategory === 'all' || p.category === selectedCategory)
@@ -177,7 +177,15 @@ export default function ProjectsPage({
       </header>
 
       <div className="pj-wrap pj-main">
-        {filteredProjects.length === 0 ? (
+        {allProjects.length === 0 ? (
+          <div className="pj-empty">
+            <SearchX size={36} aria-hidden="true" />
+            <p>{isAr ? 'بنجهّز قائمة المشروعات. كلمنا على واتساب ونقولك المتاح دلوقتي.' : 'Projects are on their way. Message us on WhatsApp for what is available now.'}</p>
+            <button type="button" className="pj-btn pj-btn--ghost" onClick={() => openWhatsAppSafely(isAr ? 'مرحباً 1Line، إيه المشروعات المتاحة دلوقتي في سوهاج؟' : 'Hello 1Line, which projects are available in Sohag now?')}>
+              {isAr ? 'اسأل على واتساب' : 'Ask on WhatsApp'}
+            </button>
+          </div>
+        ) : filteredProjects.length === 0 ? (
           <div className="pj-empty">
             <SearchX size={36} aria-hidden="true" />
             <p>{isAr ? 'مفيش مشروعات بالاختيارات دي دلوقتي.' : 'No projects match these filters right now.'}</p>
