@@ -47,3 +47,9 @@ test('a project offer runs against the starting price and ends on its last day',
   assert.equal(projectOffer({ ...project, isDemo: true }, now), null);
   assert.equal(projectOffer({ id: 'x', startPrice: 1 }, now), null);
 });
+
+test('the bundled sample projects never reach the public site', async () => {
+  const { siteProjects } = await import('../../src/utils/projectFacts.js');
+  const out = siteProjects([{ id: 'proj-1', isDemo: true }, { id: 'p-real', isDemo: false }, { id: 'p-hidden', isHidden: true }]);
+  assert.deepEqual(out.map((p) => p.id), ['p-real']);
+});

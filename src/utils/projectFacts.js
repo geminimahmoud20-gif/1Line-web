@@ -49,8 +49,8 @@ export function projectStages(project, isAr = true) {
     .map((s) => ({ key: s.key, label: isAr ? s.ar : s.en, value: pct(bk[s.key]) }));
 }
 
-/** Hidden from the CRM (المشروعات → 👁) keeps a project off every public page */
-export const isProjectPublic = (p) => Boolean(p) && !p.isHidden && !p.isDeleted && p.status !== 'hidden' && !blockedByApproval(p);
+/** Hidden from the CRM (المشروعات → 👁) keeps a project off every public page; so does a bundled sample */
+export const isProjectPublic = (p) => Boolean(p) && !p.isDemo && !p.isHidden && !p.isDeleted && p.status !== 'hidden' && !blockedByApproval(p);
 export const siteProjects = (list = []) => (Array.isArray(list) ? list.filter(isProjectPublic) : []);
 
 /**

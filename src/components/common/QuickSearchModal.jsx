@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, X, Building, MapPin, Layers, Calculator, TrendingUp, FileText, ArrowRight, ArrowLeft, CornerDownLeft, Sparkles } from 'lucide-react';
 import { getAreas } from '../../utils/areasData.js';
-import { MEGA_PROJECTS } from '../../data/projectsData.js';
 import { formatCurrencyPrice } from '../../utils/currencyAndBenchmark.js';
 import { areaPrice } from '../../utils/areaPricing.js';
 import { thumbUrl } from '../../utils/imageThumbs';
@@ -126,8 +125,8 @@ export default function QuickSearchModal({
     }).slice(0, 4);
 
     // 3. Matching Mega Projects
-    // Projects added in the CRM; the bundled samples only until the catalogue has loaded
-    const matchedProjects = (projects.length > 0 ? projects : MEGA_PROJECTS).filter((proj) => {
+    // Projects added in the CRM (never the bundled samples)
+    const matchedProjects = projects.filter((proj) => !proj.isDemo).filter((proj) => {
       const titleAr = (proj.title_ar || '').toLowerCase();
       const titleEn = (proj.title_en || '').toLowerCase();
       const devAr = (proj.developer_ar || '').toLowerCase();
