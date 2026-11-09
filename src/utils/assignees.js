@@ -46,3 +46,11 @@ export function assignmentUpdates(lead, value, people = [], nowIso = new Date().
 
 /** A display name for a team member */
 export const personName = (m = {}) => m.name || (m.email ? m.email.split('@')[0] : '') || m.uid || '';
+
+/** What to show for a select value: the person's name, or the desk's name in the UI language */
+export function assigneeLabel(value, people = [], isAr = true, desks = []) {
+  if (isPersonValue(value)) return personFor(value, people)?.name || '';
+  const desk = desks.find((d) => d.value === value);
+  if (desk) return isAr ? desk.label_ar : desk.label_en;
+  return value === 'Unassigned' ? (isAr ? 'غير مسند' : 'Unassigned') : (value || '');
+}

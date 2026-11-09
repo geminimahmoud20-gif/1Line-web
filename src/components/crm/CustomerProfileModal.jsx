@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import useTeamMembers from '../../hooks/useTeamMembers';
-import { assigneeValue, assignmentUpdates } from '../../utils/assignees';
+import { assigneeValue, assignmentUpdates, assigneeLabel } from '../../utils/assignees';
+import { getLiveLeadDesks } from '../../utils/rbacRules';
 import { Phone, MessageSquare, CheckCircle2, Plus, Send, Activity, Lock, Calendar, Download } from 'lucide-react';
 
 
@@ -60,6 +61,8 @@ export default function CustomerProfileModal({
     nextActionDate: lead?.nextActionDate || '',
     nextActionNote: lead?.nextActionNote || lead?.followUp || ''
   });
+  // The owner by name for the header, never the select's internal value
+  const ownerLabel = assigneeLabel(formData.assignedTo, teamMembers, isAr, getLiveLeadDesks()) || lead?.ownerName || '';
 
   // Call Log / Note Input State
   const [newLogText, setNewLogText] = useState('');
@@ -284,7 +287,7 @@ export default function CustomerProfileModal({
                 </span>
               </div>
               <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
-                {formData.cityOrExpat} • {isAr ? 'المسؤول:' : 'Agent:'} {formData.assignedTo}
+                {formData.cityOrExpat} • {isAr ? 'المسؤول:' : 'Agent:'} {ownerLabel}
               </span>
             </div>
           </div>
@@ -401,7 +404,7 @@ export default function CustomerProfileModal({
           </div>
           <div>
             <span style={{ color: 'var(--crm-muted)', display: 'block', fontSize: 'var(--crm-text-xs)', fontWeight: '600' }}>{isAr ? 'المسؤول' : 'Agent'}</span>
-            <span style={{ fontWeight: 'bold', color: 'var(--crm-ink)' }}>{formData.assignedTo}</span>
+            <span style={{ fontWeight: 'bold', color: 'var(--crm-ink)' }}>{ownerLabel}</span>
           </div>
           <div>
             <span style={{ color: 'var(--crm-muted)', display: 'block', fontSize: 'var(--crm-text-xs)', fontWeight: '600' }}>{isAr ? 'مصدر الحملة' : 'Source'}</span>

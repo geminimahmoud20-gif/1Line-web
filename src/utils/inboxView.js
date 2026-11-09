@@ -1,3 +1,4 @@
+import { DESK_BY_ROLE } from './rbacRules.js';
 // CRM inbox (CrmInboxPanel): which requests it lists, who holds each one, how old it is and how
 // its notes split into the client's words and the CRM's own log lines.
 // Pure helpers, unit-tested in tests/unit/inbox-view.test.mjs.
@@ -178,8 +179,16 @@ export function splitNotes(notes = '') {
 }
 
 /**
+ * The desk queue a team member works from: their own desk, else the one their role uses
+ * (rbacRules DESK_BY_ROLE, the same as firestore.rules leadDesk()). '' when neither is known.
+ */
+export const memberDesk = (member = {}) => member.desk || DESK_BY_ROLE[member.role] || '';
+
+/**
  * Field changes for handing a request to a team member, or back to nobody (member = null).
- * The member's own desk is used when they have one, so their desk queue can see the request.
+ * The lead moves to the member's desk queue, so they see it: a sales agent with no desk of
+ * their own works the «Sales Advisor Team» queue, and a lead left on another desk stayed
+ * invisible to them.
  */
 export function reassignUpdates(lead, member, nowIso = new Date().toISOString()) {
   if (!member) {
@@ -196,7 +205,7 @@ export function reassignUpdates(lead, member, nowIso = new Date().toISOString())
     ownerName: name,
     claimedBy: name,
     ownerUid: member.uid || null,
-    assignedTo: member.desk || lead?.assignedTo || 'Unassigned',
+    assignedTo: memberDesk(member) || lead?.assignedTo || 'Unassigned',
     claimedAt: nowIso,
     assignedAt: nowIso
   };

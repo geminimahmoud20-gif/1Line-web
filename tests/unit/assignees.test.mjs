@@ -30,3 +30,14 @@ test('choosing a team clears the person so the team queue picks the lead up', ()
   assert.equal(upd.ownerUid, null);
   assert.equal(upd.ownerName, null);
 });
+
+test('a salesperson without a desk of their own gets the client on their role queue', async () => {
+  const { memberDesk } = await import('../../src/utils/inboxView.js');
+  const agent = { uid: 'u9', name: 'محمود كمال', desk: '', role: 'sales_agent' };
+  assert.equal(memberDesk(agent), 'Sales Advisor Team');
+  const upd = assignmentUpdates({ assignedTo: 'Sales Management' }, 'user:u9', [agent], NOW);
+  assert.equal(upd.assignedTo, 'Sales Advisor Team');
+  assert.equal(upd.ownerUid, 'u9');
+  // an unknown role with no desk keeps the lead where it was
+  assert.equal(assignmentUpdates({ assignedTo: 'Sales Management' }, 'user:u8', [{ uid: 'u8', name: 'x', desk: '', role: 'custom' }], NOW).assignedTo, 'Sales Management');
+});
