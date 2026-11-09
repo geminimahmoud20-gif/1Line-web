@@ -7,6 +7,8 @@ import { leadToRow } from '../utils/transfer/leadSchema';
 
 import { restoreLeads, mergeLeads } from '../firebaseLazy';
 import { canExportCsv, canDeleteLead, canManagePayments, canEditLeadsRole, assignableDesks, scopeLeadsForAccess } from '../utils/rbacRules';
+import { assignmentUpdates, personFor, assigneeValue } from '../utils/assignees';
+import useTeamMembers from '../hooks/useTeamMembers';
 import { permsOfRole } from '../utils/accessModel';
 import { isValidPhoneNumber } from '../utils/securityShield';
 
@@ -211,6 +213,8 @@ export const CrmAdminPanel = ({
 
   // Edit Lead Modal State
   const [editingLead, setEditingLead] = useState(null);
+  // People on the team, for «المستشار المسؤول» by name in the edit form
+  const teamMembers = useTeamMembers(leads);
   const [leadFormData, setLeadFormData] = useState({
     name: '',
     phone: '',
@@ -314,23 +318,31 @@ export const CrmAdminPanel = ({
     }
   };
 
-  const handleBulkAssign = (newAgent) => {
+  const handleBulkAssign = (newAgent, people = []) => {
     if (selectedLeadIds.length === 0 || !newAgent) return;
-    if (!canEditLeads || !assignableDesks(activeRole, myDesk || null).some((d) => d.value === newAgent)) {
+    // A person by name (utils/assignees): allowed when their desk is one this role may assign to,
+    // or, for a manager who assigns anywhere, whatever their desk
+    const person = personFor(newAgent, people);
+    const desks = assignableDesks(activeRole, myDesk || null);
+    const deskAllowed = (value) => desks.some((d) => d.value === value);
+    const allowed = person ? (person.desk ? deskAllowed(person.desk) : desks.length > 2) : deskAllowed(newAgent);
+    if (!canEditLeads || !allowed) {
       if (triggerToast) triggerToast(isAr ? 'صلاحياتك الحالية لا تسمح بتعيين العملاء' : 'Your role cannot assign leads', 'error');
       return;
     }
     const priorAssignments = selectedLeadIds.map(id => {
       const found = leads.find(l => l.id === id);
-      return { id, assignedTo: found?.assignedTo || 'Unassigned', version: found?.version };
+      return {
+        id, assignedTo: found?.assignedTo || 'Unassigned', version: found?.version,
+        owner: { ownerName: found?.ownerName || null, claimedBy: found?.claimedBy || null, ownerUid: found?.ownerUid || null }
+      };
     });
     const targetIds = [...selectedLeadIds];
 
     targetIds.forEach(id => {
       const leadItem = leads.find(l => l.id === id);
-      if (onUpdateLead) onUpdateLead(id, { 
-        assignedTo: newAgent,
-        assignedAt: new Date().toISOString(),
+      if (onUpdateLead) onUpdateLead(id, {
+        ...assignmentUpdates(leadItem, newAgent, people),
         lastActivityAt: new Date().toISOString()
       }, leadItem?.version);
     });
@@ -343,12 +355,12 @@ export const CrmAdminPanel = ({
     });
     if (triggerToast) {
       triggerToast(
-        isAr ? `تم تعيين ${targetIds.length} عميل إلى ${newAgent}` : `Assigned ${targetIds.length} leads to ${newAgent}`,
+        isAr ? `تم تعيين ${targetIds.length} عميل إلى ${person?.name || newAgent}` : `Assigned ${targetIds.length} leads to ${person?.name || newAgent}`,
         'success',
         {
           onUndo: () => {
-            priorAssignments.forEach(({ id, assignedTo }) => {
-              if (onUpdateLead) onUpdateLead(id, { assignedTo });
+            priorAssignments.forEach(({ id, assignedTo, owner }) => {
+              if (onUpdateLead) onUpdateLead(id, { assignedTo, ...owner });
             });
           },
           undoLabel: isAr ? 'تراجع' : 'Undo',
@@ -537,7 +549,7 @@ export const CrmAdminPanel = ({
       notes: lead.notes || '',
       status: lead.status || 'new',
       temperature: lead.temperature || '',
-      assignedTo: lead.assignedTo || 'Unassigned',
+      assignedTo: assigneeValue(lead),
       nextFollowUpAt: lead.nextFollowUpAt ? String(lead.nextFollowUpAt).slice(0, 16) : '',
       followUp: lead.followUp || 'Pending Contact'
     });
@@ -593,7 +605,8 @@ export const CrmAdminPanel = ({
       notes: leadFormData.notes,
       status: leadFormData.status,
       temperature: leadFormData.temperature || '',
-      assignedTo: leadFormData.assignedTo,
+      // A changed owner only; a person keeps their name on the lead (utils/assignees)
+      ...(leadFormData.assignedTo !== assigneeValue(editingLead) ? assignmentUpdates(editingLead, leadFormData.assignedTo, teamMembers) : { assignedTo: editingLead.assignedTo || 'Unassigned' }),
       nextFollowUpAt: leadFormData.nextFollowUpAt ? new Date(leadFormData.nextFollowUpAt).toISOString() : null,
       followUp: leadFormData.followUp,
       updatedAt: nowIso,
@@ -968,6 +981,7 @@ export const CrmAdminPanel = ({
           setEditingLead={setEditingLead}
           setLeadFormData={setLeadFormData}
           userRole={activeRole}
+          people={teamMembers}
           t={t}
         />
       )}

@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import useTeamMembers from '../../hooks/useTeamMembers';
+import { assigneeValue, assignmentUpdates } from '../../utils/assignees';
 import { Phone, MessageSquare, CheckCircle2, Plus, Send, Activity, Lock, Calendar, Download } from 'lucide-react';
 
 
@@ -34,6 +36,9 @@ export default function CustomerProfileModal({
   const [profileTab, setProfileTab] = useState('overview'); // 'overview' | 'properties' | 'timeline' | 'actions'
   const [isEditing, setIsEditing] = useState(false);
 
+  // People on the team, for «المستشار المسؤول» by name
+  const teamMembers = useTeamMembers(lead ? [lead] : []);
+
   // Form State
   const [formData, setFormData] = useState({
     name: lead?.name || '',
@@ -44,13 +49,14 @@ export default function CustomerProfileModal({
     type: lead?.type || 'buyer',
     status: lead?.status || 'new',
     temperature: lead?.temperature || '',
-    assignedTo: lead?.assignedTo || 'Sales Advisor Team',
+    // The owner as the select shows it: a desk, or `user:<uid>` for a person (utils/assignees)
+    assignedTo: assigneeValue(lead || {}),
     budget: lead?.details?.budget || lead?.details?.expectedPrice || '',
     // No saved area stays empty (it used to become 'east', saved back on the next edit)
     area: (!lead?.details?.area || lead?.details?.area === 'undefined') ? (lead?.area || '') : lead.details.area,
     propertyType: (!lead?.details?.propertyType || lead?.details?.propertyType === 'undefined') ? 'apartment' : lead.details.propertyType,
     financing: lead?.financing || 'cash', // 'cash' | 'installments' | 'mortgage'
-    tags: lead?.tags || ['VIP كاش', 'جاهز للمعاينة'],
+    tags: Array.isArray(lead?.tags) ? lead.tags : [],
     nextActionDate: lead?.nextActionDate || '',
     nextActionNote: lead?.nextActionNote || lead?.followUp || ''
   });
@@ -177,7 +183,8 @@ export default function CustomerProfileModal({
         type: formData.type,
         status: formData.status,
         temperature: formData.temperature,
-        assignedTo: formData.assignedTo,
+        // Only a changed owner is written, so saving other fields never reassigns the client
+        ...(formData.assignedTo !== assigneeValue(lead) ? assignmentUpdates(lead, formData.assignedTo, teamMembers) : {}),
         financing: formData.financing,
         tags: formData.tags,
         nextActionDate: formData.nextActionDate,
@@ -510,6 +517,7 @@ export default function CustomerProfileModal({
               setFormData={setFormData}
               setIsEditing={setIsEditing}
               userRole={userRole}
+              people={teamMembers}
             />
           )}
 
