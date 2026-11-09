@@ -29,6 +29,12 @@ export const BRAND = {
   founder_en: 'Dr. Mahmoud Elbaz',
 };
 
+/** The company's own social pages: shown on the site and given to Google (sameAs) even before
+ *  anyone fills them in the CRM; a link saved there for the same network takes over. */
+export const OFFICIAL_SOCIAL = Object.freeze({
+  facebook: 'https://www.facebook.com/profile.php?id=61568924733170'
+});
+
 export const CONTACT = {
   email: '1linesolutions@gmail.com',
   address_ar: 'برج أحمد حلمي الشريف، شارع الجمهورية، سوهاج',

@@ -5,7 +5,8 @@ import { normalizeSiteSettings, safeHttpsUrl, DEFAULT_SITE_SETTINGS } from '../.
 test('no document → today\'s contact details, nothing else shown', () => {
   const s = normalizeSiteSettings(null);
   assert.deepEqual(s.contact, { ...DEFAULT_SITE_SETTINGS.contact });
-  assert.deepEqual(s.social, {});
+  assert.deepEqual(s.social, { ...DEFAULT_SITE_SETTINGS.social });
+  assert.match(s.social.facebook, /^https:\/\/www\.facebook\.com\//);
   assert.deepEqual(s.faq, []);
   assert.deepEqual(s.testimonials, []);
   assert.deepEqual(s.seo, {});
@@ -20,6 +21,8 @@ test('links must be https and, for a network, on that network', () => {
   assert.equal(safeHttpsUrl('https://facebook.com.evil.com/x', ['facebook.com']), '');
   const s = normalizeSiteSettings({ social: { facebook: 'https://facebook.com/1line', instagram: 'javascript:x', unknown: 'https://a.com' } });
   assert.deepEqual(s.social, { facebook: 'https://facebook.com/1line' });
+  // a hostile value for the official network falls back to the company page, never to the bad link
+  assert.equal(normalizeSiteSettings({ social: { facebook: 'javascript:x' } }).social.facebook, DEFAULT_SITE_SETTINGS.social.facebook);
 });
 
 test('bad contact values fall back to the defaults', () => {

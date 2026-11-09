@@ -10,7 +10,7 @@
 // =============================================================
 
 import { useSyncExternalStore } from 'react';
-import { CONTACT } from '../config/siteConfig.js';
+import { CONTACT, OFFICIAL_SOCIAL } from '../config/siteConfig.js';
 
 export const SITE_SETTINGS_KEY = 'site_cms';
 const CACHE_KEY = 'oneline_site_settings_v1';
@@ -47,7 +47,7 @@ export const DEFAULT_SITE_SETTINGS = Object.freeze({
     hours_en: CONTACT.hours_en,
     mapsUrl: CONTACT.mapsUrl
   }),
-  social: Object.freeze({}),
+  social: Object.freeze({ ...OFFICIAL_SOCIAL }),
   faq: Object.freeze([]),
   testimonials: Object.freeze([]),
   seo: Object.freeze({}),
@@ -88,7 +88,7 @@ export function normalizeSiteSettings(raw) {
   const s = src.social && typeof src.social === 'object' ? src.social : {};
   const social = {};
   for (const net of SOCIAL_NETWORKS) {
-    const url = safeHttpsUrl(s[net.id], net.hosts);
+    const url = safeHttpsUrl(s[net.id], net.hosts) || OFFICIAL_SOCIAL[net.id] || '';
     if (url) social[net.id] = url;
   }
 
