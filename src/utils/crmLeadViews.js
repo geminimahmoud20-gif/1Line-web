@@ -106,6 +106,24 @@ export function leadSourceKey(l = {}) {
   return 'other';
 }
 
+// Campaign names the site records for visits that came without one (visitorTracker)
+const NO_CAMPAIGN = new Set(['', 'direct', 'organic', 'none', 'direct_visit', 'organic_referral']);
+
+/**
+ * The ad campaign that brought a lead, from the link it clicked (utm_campaign / utm_content), or
+ * null for a visit that came without one: { campaign, ad, source }.
+ */
+export function leadCampaign(l = {}) {
+  const a = l.marketingAttribution || {};
+  const campaign = String(a.campaign || l.utmCampaign || '').trim();
+  if (NO_CAMPAIGN.has(campaign.toLowerCase())) return null;
+  return {
+    campaign: campaign.slice(0, 60),
+    ad: String(a.content || '').trim().slice(0, 60),
+    source: String(a.source || l.utmSource || '').trim().slice(0, 30)
+  };
+}
+
 /** Extract requested visit / appointment date from lead object */
 export function getLeadVisitDate(l = {}) {
   const d = l.details || {};
