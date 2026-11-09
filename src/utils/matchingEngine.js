@@ -5,6 +5,7 @@
 import { normalizeAreaKey, getAreas } from './areasData.js';
 import { SITE_URL } from '../config/siteConfig.js';
 import { inArea } from './areaLookup.js';
+import { isSellerLead } from './crmLeadViews.js';
 import { paymentTerms, planSummary } from './paymentTerms.js';
 
 /**
@@ -38,8 +39,9 @@ export function findMatchingClientsForProperty(property, leads = [], demands = [
 
   // 1. Match with CRM Leads
   leads.forEach((lead) => {
-    // Only target active buyers or special requests
-    if (lead.status === 'closed' || lead.status === 'lost') return;
+    // Only target active buyers or special requests: an owner who came to sell is not a buyer
+    if (lead.status === 'closed' || lead.status === 'lost' || lead.isArchived) return;
+    if (isSellerLead(lead)) return;
 
     let score = 0;
     const details = lead.details || {};

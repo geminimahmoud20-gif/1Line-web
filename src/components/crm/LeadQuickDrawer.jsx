@@ -6,11 +6,13 @@ import { areaNameOf } from '../../utils/areaLookup';
 import { trackEvent } from '../../utils/visitorTracker';
 import LeadDrawerOverview from './lead-profile/LeadDrawerOverview';
 import LeadDrawerMatching from './lead-profile/LeadDrawerMatching';
+import LeadDrawerBuyers from './lead-profile/LeadDrawerBuyers';
+import { stagesFor, buyersForSeller } from '../../utils/leadPipeline';
 import LostReasonModal from './LostReasonModal';
 import { validateStageTransition } from '../../services/stateMachineEngine';
 import StageDeliverableModal from './StageDeliverableModal';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
-import { leadScore, LEAD_SCORE_HIGH } from '../../utils/crmLeadViews';
+import { leadScore, LEAD_SCORE_HIGH, isSellerLead } from '../../utils/crmLeadViews';
 import { rankAndNominateProperties } from '../../services/matchingEngineV2';
 import { Drawer, Button, IconButton, Badge, Chip, Tabs, Textarea, EmptyState, useConfirm } from '../ui';
 import './lead-drawer.css';
@@ -39,6 +41,7 @@ export default function LeadQuickDrawer({
   properties = [],
   demands = [],
   filteredLeads = [],
+  allLeads = [],
   isAr = true,
   triggerToast,
   activeRole = 'super_admin'
@@ -87,10 +90,16 @@ export default function LeadQuickDrawer({
     };
   }, [isOpen]);
 
+  // An owner selling a unit gets buyers for it, not units to buy (utils/leadPipeline)
+  const sellerFile = Boolean(lead) && isSellerLead(lead);
   // The same ranking the "matches" tab shows, so the tab count and the list agree
   const matchingResult = useMemo(
-    () => (lead ? rankAndNominateProperties(lead, properties) : { matches: [] }),
-    [lead, properties]
+    () => (lead && !sellerFile ? rankAndNominateProperties(lead, properties) : { matches: [] }),
+    [lead, sellerFile, properties]
+  );
+  const sellerBuyers = useMemo(
+    () => (lead && sellerFile ? buyersForSeller(lead, allLeads.length ? allLeads : filteredLeads, demands) : []),
+    [lead, sellerFile, allLeads, filteredLeads, demands]
   );
 
   // «ملف الوسيط»: for brokers, and for anyone who brought units or requests
@@ -115,15 +124,9 @@ export default function LeadQuickDrawer({
   const egWhatsapp = cleanWhatsapp.startsWith('0') ? `2${cleanWhatsapp}` : (cleanWhatsapp.startsWith('20') ? cleanWhatsapp : `20${cleanWhatsapp}`);
 
   // Stage Pipeline Steps
-  const stages = [
-    { id: 'new', label_ar: 'جديد', label_en: 'New', tone: 'info' },
-    { id: 'contacted', label_ar: 'اتصلنا', label_en: 'Contacted', tone: 'primary' },
-    { id: 'site_visit', label_ar: 'معاينة', label_en: 'Viewing', tone: 'warning' },
-    { id: 'negotiating', label_ar: 'تفاوض', label_en: 'Negotiating', tone: 'warning' },
-    { id: 'closing', label_ar: 'توقيع وحجز', label_en: 'Closing', tone: 'success' },
-    { id: 'closed', label_ar: 'صفقة ناجحة', label_en: 'Closed', tone: 'success' },
-    { id: 'lost', label_ar: 'خسرانة', label_en: 'Lost', tone: 'danger' }
-  ];
+  // A buyer's or an owner's stages (same ids, different names and rules)
+  const STAGE_TONES = { new: 'info', contacted: 'primary', site_visit: 'warning', negotiating: 'warning', closing: 'success', closed: 'success', lost: 'danger' };
+  const stages = [...stagesFor(lead), { id: 'lost', label_ar: 'خسرانة', label_en: 'Lost' }].map((st) => ({ ...st, tone: STAGE_TONES[st.id] }));
 
   const currentStageIndex = stages.findIndex(s => s.id === (lead.status || 'new'));
 
@@ -248,7 +251,7 @@ export default function LeadQuickDrawer({
   const propType = (!rawPropType || rawPropType === 'undefined' || rawPropType === 'null') ? 'عقار' : rawPropType;
   const propTypeName = PROPERTY_TYPES.find(p => p.id === propType)?.name_ar || (propType === 'undefined' ? 'عقار' : propType);
 
-  const isSeller = lead.type === 'seller' || lead.landingPage === '/sell' || Boolean(lead.details?.askingPrice);
+  const isSeller = sellerFile;
   const isViewingRequest = lead.type === 'viewing_request' || lead.type === 'visit' || Boolean(lead.details?.visitDate) || Boolean(lead.viewingPropertyId);
 
   let whatsappTemplates;
@@ -395,7 +398,9 @@ export default function LeadQuickDrawer({
             onChange={setActiveTab}
             items={[
               { id: 'overview', label: isAr ? 'المتابعة' : 'Follow-up' },
-              { id: 'matching', label: isAr ? 'العقارات المناسبة' : 'Matches', count: matchingResult.matches.length },
+              sellerFile
+                ? { id: 'matching', label: isAr ? 'مشترين مناسبين' : 'Buyers', count: sellerBuyers.length }
+                : { id: 'matching', label: isAr ? 'العقارات المناسبة' : 'Matches', count: matchingResult.matches.length },
               ...(showBrokerFile ? [{ id: 'broker', label: isAr ? 'ملف الوسيط' : 'Broker file', count: brokerCount || null }] : []),
               { id: 'timeline', label: isAr ? 'السجل' : 'History', count: timeline.length || null }
             ]}
@@ -421,7 +426,11 @@ export default function LeadQuickDrawer({
             />
           )}
 
-          {activeTab === 'matching' && (
+          {activeTab === 'matching' && sellerFile && (
+            <LeadDrawerBuyers lead={lead} buyers={sellerBuyers} areaName={areaName} propTypeName={propTypeName} isAr={isAr} />
+          )}
+
+          {activeTab === 'matching' && !sellerFile && (
             <LeadDrawerMatching
               areaName={areaName}
               egWhatsapp={hasRealPhone ? egWhatsapp : ''}

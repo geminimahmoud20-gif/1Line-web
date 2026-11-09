@@ -5,7 +5,8 @@ import StageDeliverableModal from './StageDeliverableModal';
 import './crm-kanban.css';
 import { getAreas } from '../../utils/areasData';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
-import { leadScore, ACTIVE_STAGES, leadBudget } from '../../utils/crmLeadViews';
+import { leadScore, ACTIVE_STAGES, leadBudget, isSellerLead } from '../../utils/crmLeadViews';
+import { SELLER_STAGES, pipelineKind } from '../../utils/leadPipeline';
 import { validateStageTransition, HIGH_VALUE_DEAL_THRESHOLD } from '../../services/stateMachineEngine';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 import { PageHeader, KpiRow, KpiTile, Chip } from '../ui';
@@ -14,7 +15,7 @@ import { stageSinceMs, isStalled, isNewOverdue, daysLabel, shortMoney, STALE_DAY
 
 const CARDS_PER_STAGE = 5;
 
-const PIPELINE_STAGES = [
+const BASE_STAGES = [
   { id: 'new', title_ar: 'طلبات جديدة', title_en: 'New Inquiries', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)' },
   { id: 'contacted', title_ar: 'اتصلنا', title_en: 'Contacted', color: 'var(--crm-violet)', bg: 'var(--crm-violet-soft)' },
   { id: 'site_visit', title_ar: 'معاينات', title_en: 'Site Visits', color: 'var(--crm-accent-text)', bg: 'var(--crm-warn-soft)' },
@@ -22,6 +23,21 @@ const PIPELINE_STAGES = [
   { id: 'closing', title_ar: 'توقيع وحجز', title_en: 'Closing / Deposit', color: 'var(--crm-positive)', bg: 'var(--crm-positive-soft)' },
   { id: 'closed', title_ar: 'صفقات ناجحة', title_en: 'Closed Won', color: 'var(--crm-positive)', bg: 'var(--crm-positive-soft)' }
 ];
+
+// The same columns named for an owner's sale (utils/leadPipeline): inspection & valuation, listed, sold
+const SELLER_COLUMNS = BASE_STAGES.map((st) => {
+  const sel = SELLER_STAGES.find((x) => x.id === st.id);
+  return sel ? { ...st, title_ar: sel.column_ar, title_en: sel.column_en } : st;
+});
+/** A lead's own stage names: an owner's card offers «معروض للبيع», not «تفاوض» */
+const stagesOfLead = (lead) => (pipelineKind(lead) === 'seller' ? SELLER_COLUMNS : BASE_STAGES);
+// Buyers / owners / investors chips: an owner is anyone who came to sell or value (isSellerLead)
+const matchesType = (l, type) => {
+  if (type === 'all') return true;
+  if (type === 'seller') return isSellerLead(l);
+  if (type === 'buyer') return !isSellerLead(l) && l.type !== 'investor';
+  return l.type === type;
+};
 
 const PROPERTY_TYPE_NAMES = {
   apartment: 'شقة سكنية',
@@ -67,6 +83,8 @@ export default function KanbanPipeline({
   const [leadToDelete, setLeadToDelete] = useState(null);
   const [blockerModal, setBlockerModal] = useState({ isOpen: false, blockerInfo: null, lead: null });
   const [filterType, setFilterType] = useState('all');
+  // Columns read as an owner's pipeline when only owners are shown
+  const PIPELINE_STAGES = filterType === 'seller' ? SELLER_COLUMNS : BASE_STAGES;
   const [searchQuery, setSearchQuery] = useState('');
   const [collapsedStages, setCollapsedStages] = useState(() => {
     try {
@@ -228,7 +246,7 @@ export default function KanbanPipeline({
     return leads.filter(l => {
       // Archived (hidden test or duplicate) requests stay out of the board
       if (l.isArchived) return false;
-      if (filterType !== 'all' && l.type !== filterType) return false;
+      if (!matchesType(l, filterType)) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.trim().toLowerCase();
         const nameMatch = (l.name || '').toLowerCase().includes(q);
@@ -266,7 +284,7 @@ export default function KanbanPipeline({
       }
     });
     return { leadsByStage: groups, stageStatsMap: stats };
-  }, [filteredLeads]);
+  }, [filteredLeads, PIPELINE_STAGES]);
 
   // Clock for overdue calculations
   const [now, setNow] = useState(() => Date.now());
@@ -816,7 +834,7 @@ export default function KanbanPipeline({
                               {stageIndex < PIPELINE_STAGES.length - 1 && (
                                 <button type="button" onClick={(e) => { closeMenu(e); handleMoveToNextStage(lead); }}>
                                   {isAr ? <ChevronLeft size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}
-                                  {isAr ? `انقل لـ«${PIPELINE_STAGES[stageIndex + 1].title_ar}»` : `Move to ${PIPELINE_STAGES[stageIndex + 1].title_en}`}
+                                  {isAr ? `انقل لـ«${stagesOfLead(lead)[stageIndex + 1].title_ar}»` : `Move to ${stagesOfLead(lead)[stageIndex + 1].title_en}`}
                                 </button>
                               )}
                               {/* Direct Jump To Any Stage */}
@@ -824,7 +842,7 @@ export default function KanbanPipeline({
                                 <span className="kb-menu-header-label">
                                   {isAr ? 'نقل مباشر إلى مرحلة:' : 'Direct Move to:'}
                                 </span>
-                                {PIPELINE_STAGES.filter(s => s.id !== (lead.status || 'new')).map(targetStage => (
+                                {stagesOfLead(lead).filter(s => s.id !== (lead.status || 'new')).map(targetStage => (
                                   <button
                                     key={targetStage.id}
                                     type="button"

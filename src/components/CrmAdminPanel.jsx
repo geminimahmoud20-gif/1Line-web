@@ -1096,6 +1096,7 @@ export const CrmAdminPanel = ({
         properties={properties}
         demands={demands}
         filteredLeads={filteredLeads}
+        allLeads={leads}
         isAr={isAr}
         triggerToast={triggerToast}
         activeRole={activeRole}

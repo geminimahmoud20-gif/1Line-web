@@ -3,6 +3,7 @@
 // Implements Dr. Mahmoud Elbaz / 1Line Official Company Playbook rules.
 
 import { createHandoffTask } from '../models/schema.js';
+import { pipelineKind, askingPriceOf } from '../utils/leadPipeline.js';
 
 export const HIGH_VALUE_DEAL_THRESHOLD = 5_000_000; // 5 Million EGP threshold requires Founder Sign-off
 
@@ -116,8 +117,23 @@ export function validateStageTransition(lead, targetStageId, context = {}) {
     return { allowed: true, reason: null, nextTask: null };
   }
 
+  // An owner selling a property has its own pipeline (utils/leadPipeline): no buyer profile,
+  // no 3 nominations and no viewing report, but a price to list it at before it is offered
+  const isSeller = pipelineKind(lead) === 'seller';
+  if (isSeller && targetStageId === 'negotiating') {
+    const asking = askingPriceOf(lead) || Number(context.askingPrice) || 0;
+    if (!asking) {
+      return {
+        allowed: false,
+        deliverableKey: 'seller_asking_price',
+        missingDeliverable: 'قبل ما نعرض العقار: سجّل السعر اللي المالك عايزه بعد المعاينة والتقييم.',
+        reason: 'Seller needs an asking price before the unit is listed'
+      };
+    }
+  }
+
   // 3. Transition to 'qualified' requires the 5 qualification questions (BuyerProfile)
-  if (targetStageId === 'qualified') {
+  if (!isSeller && targetStageId === 'qualified') {
     const profile = lead.buyerProfile || context.buyerProfile || lead.details;
     const hasBudget = profile?.budget || (profile?.budgetMin && profile?.budgetMax);
     const hasPayment = profile?.paymentMethod;
@@ -135,7 +151,7 @@ export function validateStageTransition(lead, targetStageId, context = {}) {
   }
 
   // 4. Transition to 'matched' requires at least 3 nominations OR an open search request
-  if (targetStageId === 'matched') {
+  if (!isSeller && targetStageId === 'matched') {
     const nominationsCount = (lead.nominations?.length || 0) + (context.nominations?.length || 0);
     const hasSearchRequest = lead.hasOpenSearchRequest || context.hasOpenSearchRequest;
 
@@ -150,7 +166,7 @@ export function validateStageTransition(lead, targetStageId, context = {}) {
   }
 
   // 5. Transition to 'proposal' / 'negotiating' requires completed site visit report
-  if (targetStageId === 'negotiating' || targetStageId === 'proposal') {
+  if (!isSeller && (targetStageId === 'negotiating' || targetStageId === 'proposal')) {
     const hasVisitReport = lead.siteVisitReport || context.siteVisitReport || lead.siteVisit?.completed;
     if (!hasVisitReport) {
       return {
