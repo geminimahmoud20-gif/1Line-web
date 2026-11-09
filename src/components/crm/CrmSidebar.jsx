@@ -67,6 +67,10 @@ export default function CrmSidebar({
     return leads.filter((l) => isInboxActive(l) && needsAction(l)).length;
   }, [leads]);
 
+  // The clients the leads list shows by default (archived test/duplicate records and lost deals
+  // sit under their own filters), so the badge matches the list instead of counting every record
+  const openLeadsCount = useMemo(() => leads.filter((l) => !l.isArchived && l.status !== 'lost').length, [leads]);
+
   // Keep system group open if active tab is related
   const [sidebarTab, setSidebarTab] = useState(activeTab);
   if (sidebarTab !== activeTab) {
@@ -131,7 +135,7 @@ export default function CrmSidebar({
               icon: Users,
               label_ar: 'العملاء والمبيعات',
               label_en: 'Leads & Pipeline',
-              badge: leads.length
+              badge: openLeadsCount
             },
             {
               id: 'kanban',
@@ -180,7 +184,7 @@ export default function CrmSidebar({
             icon: Users,
             label_ar: 'العملاء والمبيعات',
             label_en: 'Leads & Pipeline',
-            badge: leads.length
+            badge: openLeadsCount
           },
           {
             id: 'kanban',
@@ -276,7 +280,7 @@ export default function CrmSidebar({
         ]
       }
     ];
-  }, [workspaceMode, leads.length, unassignedInboxCount, properties.length, pendingDemandsCount, demands.length, projects.length, activeRole, canRetarget, canWorkRequests]);
+  }, [workspaceMode, openLeadsCount, unassignedInboxCount, properties.length, pendingDemandsCount, demands.length, projects.length, activeRole, canRetarget, canWorkRequests]);
 
   const handleItemClick = (id) => {
     setActiveTab(id);
