@@ -85,10 +85,10 @@
 /* Legacy App.css badges still at 11.5px (property code, section counters) — lift to the 12px floor */
 .crm-layout :is(.prop-id-tag, .count-badge-gold) { font-size: var(--crm-text-xs) !important; }
 
-/* ── DEF-20: layering instead of white-on-white (light mode, CRM only) ──
-   Warm ivory canvas under white cards: the cards read as surfaces and the canvas no longer glares.
-   Scoped to .crm-layout because --crm-canvas is shared with the public calculators. */
-html:not(.dark-theme):not([data-theme="dark"]) .crm-layout { --crm-canvas: #F5F3EE; }
+/* ── Light mode canvas (CRM only): plain white, as the team asked; cards separate from it by their
+   hairline border instead of a tinted background. Scoped to .crm-layout because --crm-canvas is
+   shared with the public calculators. */
+html:not(.dark-theme):not([data-theme="dark"]) .crm-layout { --crm-canvas: var(--ui-surface); }
 
 /* ── DEF-17 / DEF-22: row click + keyboard triage ── */
 .crm-layout .crm-table tbody tr.crm-lead-row { cursor: pointer; }
