@@ -97,7 +97,7 @@
 /* Property form: farmland size in feddan + qirat (PropertyFormModal) */
 .pf-size-hint { display: block; margin-top: 4px; font-size: var(--crm-text-xs); color: var(--crm-muted); }
 .pf-feddan { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.pf-loc-hint { display: block; margin-top: 4px; font-size: var(--crm-text-xs); line-height: 1.6; color: var(--crm-warn); }
+.pf-loc-hint { display: block; margin-top: 4px; font-size: var(--crm-text-xs); line-height: 1.6; color: var(--crm-muted); }
 .pf-loc-hint.is-exact { color: var(--crm-positive); }
 
 .pxe-building { margin-top: 12px; }
@@ -121,3 +121,8 @@
 .pxe-pay-term { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
 .pxe-pay-term select { width: auto; }
 .pxe-hint { font-size: 0.7rem; color: var(--crm-muted); }
+
+/* Rooms, bathrooms and floor side by side: three short numbers, one row, on any width */
+.pf-rooms-row { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.pf-rooms-row .form-group-item { min-width: 0; }
+.pf-rooms-row input { width: 100%; }

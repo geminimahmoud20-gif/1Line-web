@@ -171,17 +171,6 @@ export default function PropertyFormModal({
                 />
               </div>
 
-              {/* English Title */}
-              <div className="form-group-item">
-                <label>{isAr ? 'عنوان العقار (إنجليزي)' : 'Title (English)'}</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Luxury Apartment for Sale in East Sohag"
-                  value={form.title_en}
-                  onChange={(e) => setForm({ ...form, title_en: e.target.value })}
-                />
-              </div>
-
               {/* Exact Location Name & Map Pin Trigger */}
               <div className="form-group-item">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
@@ -208,7 +197,7 @@ export default function PropertyFormModal({
                   </span>
                 ) : (
                   <span className="pf-loc-hint">
-                    {isAr ? 'الموقع مش متحدد بدقة: الوحدة هتظهر ضمن دايرة المنطقة على خريطة الموقع. دوس «تحديد دقيق على الخريطة» علشان يبقى ليها دبوس.' : 'No exact spot: the listing shows in its area circle on the site map. Use "Pin on Map" to give it its own pin.'}
+                    {isAr ? 'اختياري: «تحديد دقيق على الخريطة» يدّي الوحدة دبوس خاص بيها على الخريطة.' : 'Optional: "Pin on Map" gives the listing its own pin.'}
                   </span>
                 )}
               </div>
@@ -464,9 +453,9 @@ export default function PropertyFormModal({
                   </div>
                 </>
               ) : (
-                <>
+                <div className="pf-rooms-row">
                   <div className="form-group-item">
-                    <label>{isAr ? 'عدد غرف النوم' : 'Bedrooms'}</label>
+                    <label>{isAr ? 'غرف النوم' : 'Bedrooms'}</label>
                     <input
                       type="number"
                       value={form.bedrooms}
@@ -475,7 +464,7 @@ export default function PropertyFormModal({
                   </div>
 
                   <div className="form-group-item">
-                    <label>{isAr ? 'عدد الحمامات' : 'Bathrooms'}</label>
+                    <label>{isAr ? 'الحمامات' : 'Bathrooms'}</label>
                     <input
                       type="number"
                       value={form.bathrooms}
@@ -484,14 +473,14 @@ export default function PropertyFormModal({
                   </div>
 
                   <div className="form-group-item">
-                    <label>{isAr ? 'رقم الدور' : 'Floor'}</label>
+                    <label>{isAr ? 'الدور' : 'Floor'}</label>
                     <input
                       type="number"
                       value={form.floor}
                       onChange={(e) => setForm({ ...form, floor: parseInt(e.target.value) || 0 })}
                     />
                   </div>
-                </>
+                </div>
               )}
             </div>
           </FormStep>
@@ -586,6 +575,16 @@ export default function PropertyFormModal({
           </FormStep>
 
           <FormStep id="pf-step-more" n={6} title={isAr ? 'تفاصيل إضافية (اختياري)' : 'More details (optional)'} hint={isAr ? 'الاستلام، المبنى، التكاليف، الخدمات القريبة' : 'Handover, building, costs, nearby'} collapsible>
+            {/* English title: only for the English version of the site, so it lives with the optional details */}
+            <div className="form-group-item">
+              <label>{isAr ? 'عنوان العقار بالإنجليزي' : 'Title (English)'}</label>
+              <input
+                type="text"
+                placeholder="e.g. Apartment for sale in East Sohag"
+                value={form.title_en}
+                onChange={(e) => setForm({ ...form, title_en: e.target.value })}
+              />
+            </div>
             <HandoverFieldsEditor form={form} setForm={setForm} isAr={isAr} />
             <BuildingFieldsEditor form={form} setForm={setForm} isAr={isAr} />
 
