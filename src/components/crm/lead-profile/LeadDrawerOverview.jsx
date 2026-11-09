@@ -2,6 +2,9 @@ import { Phone, MessageSquare, Calendar, Send, Building, Download, ExternalLink,
 import { getGoogleCalendarUrl, downloadIcsFile } from '../../../utils/calendarHelper';
 import { Button, Badge, Select, Input } from '../../ui';
 import LeadCommissionBox from './LeadCommissionBox';
+import SellerAskingPrice from './SellerAskingPrice';
+import { isSellerLead } from '../../../utils/crmLeadViews';
+import { askingPriceOf } from '../../../utils/leadPipeline';
 
 // One-tap call results; the text is what goes into the lead's history
 const CALL_OUTCOMES = [
@@ -30,7 +33,7 @@ export default function LeadDrawerOverview({
   onUpdateLead
 }) {
   const details = lead?.details || {};
-  const isSeller = lead?.type === 'seller' || lead?.landingPage === '/sell' || Boolean(details.askingPrice) || Boolean(details.propertyType && details.size);
+  const isSeller = isSellerLead(lead || {}) || lead?.type === 'seller' || lead?.landingPage === '/sell' || Boolean(details.askingPrice) || Boolean(details.propertyType && details.size);
   const scheduledTime = lead?.nextFollowUpAt || details.visitDate;
   const scheduledDate = scheduledTime ? new Date(scheduledTime) : null;
   const hasSchedule = scheduledDate && Number.isFinite(scheduledDate.getTime());
@@ -58,7 +61,7 @@ export default function LeadDrawerOverview({
 
   const sellerFacts = [
     [L('المساحة', 'Size'), details.size && `${details.size} ${L('م²', 'm²')}`],
-    [details.askingPrice ? L('السعر المطلوب', 'Asking price') : L('التقدير الآلي', 'Estimate'), (details.askingPrice || details.estimatedAvg) && `${Number(details.askingPrice || details.estimatedAvg).toLocaleString('en-US')} ${L('ج.م', 'EGP')}`],
+    [askingPriceOf(lead) ? L('السعر المطلوب', 'Asking price') : L('التقدير الآلي', 'Estimate'), (askingPriceOf(lead) || details.estimatedAvg) && `${Number(askingPriceOf(lead) || details.estimatedAvg).toLocaleString('en-US')} ${L('ج.م', 'EGP')}`],
     [L('الغرف', 'Rooms'), details.rooms],
     [L('الدور', 'Floor'), details.floor && (details.floor === 'ground' ? L('أرضي', 'Ground') : details.floor)],
     [L('التشطيب', 'Finishing'), details.finishingLabelAr],
@@ -98,6 +101,7 @@ export default function LeadDrawerOverview({
               ))}
             </ul>
           )}
+          {onUpdateLead && <SellerAskingPrice key={lead.id} lead={lead} isAr={isAr} onUpdateLead={onUpdateLead} />}
           {onConvertToProperty && (
             <Button block icon={<Building size={16} aria-hidden="true" />} onClick={() => onConvertToProperty(lead)}>
               {L('اعمل منه مسودة عقار', 'Create a listing draft')}
