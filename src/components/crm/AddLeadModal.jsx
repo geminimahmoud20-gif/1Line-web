@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
+import useTeamMembers from '../../hooks/useTeamMembers';
+import { assignmentUpdates } from '../../utils/assignees';
 import { UserPlus, Save } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { getAreas } from '../../utils/areasData';
@@ -17,6 +19,8 @@ export default function AddLeadModal({
   triggerToast,
   userRole = 'super_admin'
 }) {
+  // People on the team, for «المستشار المسؤول» by name
+  const teamMembers = useTeamMembers();
   const isAr = lang === 'ar';
   useBodyScrollLock(isOpen);
   const isSubmittingRef = useRef(false);
@@ -124,7 +128,8 @@ export default function AddLeadModal({
         type: formData.type,
         status: 'new',
         temperature: formData.temperature,
-        assignedTo: formData.assignedTo,
+        // A desk, or a person by name with their desk (utils/assignees)
+        ...assignmentUpdates({}, formData.assignedTo, teamMembers),
         financing: formData.financing,
         tags: formData.tags,
         notes: formData.notes,
@@ -311,7 +316,7 @@ export default function AddLeadModal({
                 value={formData.assignedTo}
                 onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
               >
-                <DeskOptions role={userRole} current={formData.assignedTo} lang={lang} />
+                <DeskOptions role={userRole} current={formData.assignedTo} lang={lang} people={teamMembers} />
               </select>
             </div>
 

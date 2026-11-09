@@ -8,6 +8,7 @@ import AreaOptions from '../common/AreaOptions';
 import DeskOptions from './DeskOptions';
 
 export default function EditLeadModal({
+  people = [],
   handleSaveLeadEdits,
   isAr,
   leadFormData,
@@ -196,7 +197,7 @@ export default function EditLeadModal({
                 onChange={(e) => setLeadFormData({ ...leadFormData, assignedTo: e.target.value })}
               >
                 {/* The CRM's real teams (إدارة المنظومة → الفرق), not a fixed English list */}
-                <DeskOptions role={userRole} current={leadFormData.assignedTo || 'Unassigned'} lang={isAr ? 'ar' : 'en'} />
+                <DeskOptions role={userRole} current={leadFormData.assignedTo || 'Unassigned'} lang={isAr ? 'ar' : 'en'} people={people} />
               </select>
             </div>
           </div>

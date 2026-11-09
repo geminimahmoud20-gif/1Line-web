@@ -6,6 +6,7 @@ import { canViewLeadPhone, maskPhoneNumber, canEditLead } from '../../../utils/r
 import AreaOptions from '../../common/AreaOptions';
 
 export default function CustomerOverviewTab({
+  people = [],
   AVAILABLE_TAGS,
   formData,
   handleSaveProfile,
@@ -190,7 +191,7 @@ export default function CustomerOverviewTab({
               value={formData.assignedTo}
               onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
             >
-              <DeskOptions role={userRole} current={formData.assignedTo} lang={lang} />
+              <DeskOptions role={userRole} current={formData.assignedTo} lang={lang} people={people} />
             </select>
           </div>
         </div>

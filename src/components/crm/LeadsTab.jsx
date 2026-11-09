@@ -4,6 +4,8 @@ import {
 } from 'lucide-react';
 import { formatFollowUp, formatBudget } from '../../utils/crmLabels';
 import DeskOptions from './DeskOptions';
+import useTeamMembers from '../../hooks/useTeamMembers';
+import { assigneeValue, assignmentUpdates, personFor } from '../../utils/assignees';
 import ExportMenu from './ExportMenu';
 import DataImportModal from './DataImportModal';
 import { getAreas } from '../../utils/areasData';
@@ -246,6 +248,8 @@ export default function LeadsTab({
   };
   const [importOpen, setImportOpen] = useState(false);
   const { leadsHasMore, loadMoreLeads, searchAllLeads } = useProperties();
+  // People on the team, for «المسؤول» by name (falls back to the names already holding leads)
+  const teamMembers = useTeamMembers(leads);
   const [serverSearching, setServerSearching] = useState(false);
   // The list holds the newest clients only; this looks the term up across all of them on the server
   const runServerSearch = async () => {
@@ -576,10 +580,10 @@ export default function LeadsTab({
                 className="ui-select"
                 aria-label={isAr ? 'تعيين مسؤول للمحدد' : 'Assign selected'}
                 value=""
-                onChange={(e) => { if (e.target.value) handleBulkAssign(e.target.value); }}
+                onChange={(e) => { if (e.target.value) handleBulkAssign(e.target.value, teamMembers); }}
               >
                 <option value="" disabled>{isAr ? 'تعيين مسؤول' : 'Assign to'}</option>
-                <DeskOptions role={activeRole} lang={lang} />
+                <DeskOptions role={activeRole} lang={lang} people={teamMembers} />
               </select>
               <ChevronDown size={16} className="ui-select-wrap__chev" aria-hidden="true" />
             </span>
@@ -918,27 +922,27 @@ export default function LeadsTab({
                     <td data-label={isAr ? 'المسؤول' : 'Agent'}>
                       <div className="crm-agent-select-wrap">
                         <div className="crm-agent-avatar-sm">
-                          {l.assignedTo && l.assignedTo !== 'Unassigned' ? l.assignedTo.charAt(0) : '—'}
+                          {(l.ownerName || l.claimedBy || (l.assignedTo && l.assignedTo !== 'Unassigned' ? l.assignedTo : '—')).charAt(0)}
                         </div>
                         <select 
                           disabled={!canEdit}
-                          value={l.assignedTo || 'Unassigned'} 
+                          value={assigneeValue(l)}
                           aria-label={isAr ? `المسؤول عن ${l.name || 'العميل'}` : `Owner of ${l.name || 'lead'}`}
                           onChange={(e) => {
-                            const prevAgent = l.assignedTo || 'Unassigned';
-                            const newAgent = e.target.value;
+                            const prevValue = assigneeValue(l);
+                            const choice = e.target.value;
+                            const shown = personFor(choice, teamMembers)?.name || choice;
                             if (onUpdateLead) {
-                              onUpdateLead(l.id, { 
-                                assignedTo: newAgent,
-                                assignedAt: new Date().toISOString(),
+                              onUpdateLead(l.id, {
+                                ...assignmentUpdates(l, choice, teamMembers),
                                 lastActivityAt: new Date().toISOString()
                               }, l.version);
                               triggerToast?.(
-                                isAr ? `تم تعيين (${l.name || 'العميل'}) للمسؤول: ${newAgent}` : `Assigned ${l.name || 'lead'} to ${newAgent}`,
+                                isAr ? `تم تعيين (${l.name || 'العميل'}) للمسؤول: ${shown}` : `Assigned ${l.name || 'lead'} to ${shown}`,
                                 'success',
                                 {
                                   onUndo: () => {
-                                    onUpdateLead(l.id, { assignedTo: prevAgent, lastActivityAt: new Date().toISOString() });
+                                    onUpdateLead(l.id, { ...assignmentUpdates(l, prevValue, teamMembers), assignedTo: l.assignedTo || 'Unassigned', lastActivityAt: new Date().toISOString() });
                                   },
                                   undoLabel: isAr ? 'تراجع' : 'Undo',
                                   duration: 6000
@@ -949,7 +953,7 @@ export default function LeadsTab({
                           className="crm-agent-select"
                           title={isAr ? 'تعيين مسؤول المبيعات' : 'Assign Agent'}
                         >
-                          <DeskOptions role={activeRole} current={l.assignedTo || 'Unassigned'} lang={lang} />
+                          <DeskOptions role={activeRole} current={assigneeValue(l)} lang={lang} people={teamMembers} />
                         </select>
                       </div>
                     </td>
