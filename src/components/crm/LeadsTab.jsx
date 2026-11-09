@@ -395,8 +395,8 @@ export default function LeadsTab({
       <PageHeader
         title={isAr ? 'العملاء' : 'Clients'}
         description={isAr
-          ? `${leads.length} عميل · ${filteredLeads.length} ظاهرين بالفلتر الحالي · نسبة الإغلاق ${kpiStats.winRate}%`
-          : `${leads.length} clients · ${filteredLeads.length} shown · win rate ${kpiStats.winRate}%`}
+          ? `${leads.length} عميل${counts.archived || counts.lost ? ` (منهم ${[counts.archived && `${counts.archived} مؤرشف`, counts.lost && `${counts.lost} خسرانة`].filter(Boolean).join(' و')})` : ''} · ${filteredLeads.length} ظاهرين بالفلتر الحالي · نسبة الإغلاق ${kpiStats.winRate}%`
+          : `${leads.length} clients${counts.archived || counts.lost ? ` (${[counts.archived && `${counts.archived} archived`, counts.lost && `${counts.lost} lost`].filter(Boolean).join(', ')})` : ''} · ${filteredLeads.length} shown · win rate ${kpiStats.winRate}%`}
         actions={(
           <>
             {canEdit && (
