@@ -7,6 +7,7 @@ import InstallAppButton from './InstallAppButton';
 import CurrencySwitcher from './CurrencySwitcher';
 import { getWhatsAppUrl, getPhoneCallUrl } from '../../utils/founderCmsData';
 import '../../styles/mobile-drawer.css';
+import { tagged } from '../../utils/shareLinks';
 import './header-services-menu.css';
 import { playNotificationChime } from '../../utils/notificationHub';
 import { useClientAuth } from '../../context/ClientAuthContext';
@@ -243,6 +244,16 @@ export default function Header({
   ];
   const Chevron = isAr ? ChevronLeft : ChevronRight;
   const closeMenu = () => setMobileMenuOpen(false);
+  // The phone's own share sheet (WhatsApp, Messenger, copy…) for the page on screen; the site's
+  // share window where the browser has none
+  const shareThisPage = async () => {
+    closeMenu();
+    const url = tagged(window.location.href.split('#')[0], 'share_sheet');
+    if (navigator.share) {
+      try { await navigator.share({ title: document.title, url }); return; } catch (err) { if (err?.name === 'AbortError') return; }
+    }
+    onOpenShare?.();
+  };
 
   return (
     <header className="site-header sticky-header" dir={isAr ? 'rtl' : 'ltr'}>
@@ -647,6 +658,10 @@ export default function Header({
                   <span>{isAr ? `المفضلة (${favoritesCount})` : `Saved (${favoritesCount})`}</span>
                 </button>
               )}
+              <button type="button" className="mdw-fav mdw-share" onClick={shareThisPage}>
+                <Share2 size={16} aria-hidden="true" />
+                <span>{isAr ? 'شارك الصفحة دي (واتساب وغيره)' : 'Share this page (WhatsApp and more)'}</span>
+              </button>
               <InstallAppButton lang={lang} className="is-block mobile-drawer-install" onDone={closeMenu} />
             </div>
 

@@ -5,6 +5,9 @@ import LeadCommissionBox from './LeadCommissionBox';
 import SellerAskingPrice from './SellerAskingPrice';
 import { isSellerLead } from '../../../utils/crmLeadViews';
 import { askingPriceOf } from '../../../utils/leadPipeline';
+import { sharePagesFor, sharePageMessage } from '../../../utils/sharePages';
+import { SITE_URL } from '../../../config/siteConfig';
+import { useState } from 'react';
 
 // One-tap call results; the text is what goes into the lead's history
 const CALL_OUTCOMES = [
@@ -39,6 +42,11 @@ export default function LeadDrawerOverview({
   const hasSchedule = scheduledDate && Number.isFinite(scheduledDate.getTime());
   const viewingProp = properties.find(p => p.id === (lead?.viewingPropertyId || details.propertyId));
   const L = (ar, en) => (isAr ? ar : en);
+  // «ابعتله صفحة»: a page of the site on WhatsApp, owners' pages first for an owner
+  const pages = sharePagesFor(isSeller);
+  const [pagePath, setPagePath] = useState(pages[0].path);
+  const page = pages.find((p) => p.path === pagePath) || pages[0];
+  const pageMessage = sharePageMessage(page, { name: lead?.name, siteUrl: SITE_URL });
 
   const handleDownloadCalendar = () => {
     if (!hasSchedule) return;
@@ -166,6 +174,29 @@ export default function LeadDrawerOverview({
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {egWhatsapp && (
+        <section className="crm-ld__block" aria-labelledby="crm-ld-page">
+          <h3 id="crm-ld-page" className="crm-ld__h"><ExternalLink size={16} aria-hidden="true" />{L('ابعتله صفحة من الموقع', 'Send a page of the site')}</h3>
+          <Select
+            label={L('الصفحة', 'Page')}
+            value={pagePath}
+            onChange={(e) => setPagePath(e.target.value)}
+            options={pages.map((p) => ({ value: p.path, label: p.ar }))}
+          />
+          <p className="crm-ld__tpl-msg crm-ld__page-preview">{pageMessage}</p>
+          <div className="crm-ld__row">
+            <a
+              href={`https://wa.me/${egWhatsapp}?text=${encodeURIComponent(pageMessage)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ui-btn ui-btn--secondary ui-btn--sm"
+            >
+              <Send size={16} aria-hidden="true" />{L('ابعتها واتساب', 'Send on WhatsApp')}
+            </a>
+          </div>
         </section>
       )}
 
