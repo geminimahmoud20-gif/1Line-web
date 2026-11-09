@@ -2,7 +2,11 @@
 //  1LINE SOLUTIONS SOHAG - SERVICE WORKER (PWA & OFFLINE RESILIENCE)
 // =============================================================
 
-const CACHE_NAME = 'oneline-sohag-v15';
+// Bumping the name drops every older cache on activate, including an app shell saved by an old
+// worker: that stale '/' pointed at a bundle from before the deploy and crashed with
+// «Cannot read properties of undefined (reading 'default')» once its chunks were gone.
+const CACHE_NAME = 'oneline-sohag-v16';
+const SHELL_URL = '/';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
@@ -48,10 +52,17 @@ self.addEventListener('fetch', (event) => {
   // Server functions & CRM admin portal: never cache or intercept them
   if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/crm')) return;
 
-  // Network-first strategy for navigation (HTML pages) to ensure instant updates
+  // Pages: always the network. Each good response refreshes the offline copy of the app shell,
+  // so the copy shown on a dropped connection is the latest deploy, never the one from install day.
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match('/'))
+      fetch(event.request).then((response) => {
+        if (response && response.ok && response.type === 'basic') {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(SHELL_URL, copy)).catch(() => {});
+        }
+        return response;
+      }).catch(() => caches.match(SHELL_URL))
     );
     return;
   }
