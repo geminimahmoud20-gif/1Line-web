@@ -10,7 +10,7 @@ import { getAreas } from '../../utils/areasData';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import LostReasonModal from './LostReasonModal';
 import MergeLeadsModal from './MergeLeadsModal';
-import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, RESPONSE_SLA_MS, isOverdue, isUnassigned, isStale, localDayKey, getLeadVisitDate, getLeadVisitSlot, isViewingLead, isSellerLead, isAccountLead } from '../../utils/crmLeadViews';
+import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, RESPONSE_SLA_MS, isOverdue, isDueToday, isUnassigned, isStale, localDayKey, getLeadVisitDate, getLeadVisitSlot, isViewingLead, isSellerLead, isAccountLead } from '../../utils/crmLeadViews';
 import { useProperties } from '../../context/PropertiesContext';
 import LeadTableRowActions from './LeadTableRowActions';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
@@ -203,6 +203,8 @@ export default function LeadsTab({
       late: open.filter((l) => waitingMs(l, now) > RESPONSE_SLA_MS).length,
       dupes: open.filter((l) => duplicateIds.has(l.id)).length,
       overdue: open.filter((l) => isOverdue(l, localDayKey(now))).length,
+      // What the «متابعة النهارده» chip lists: a follow-up due today or already late (filterLeads 'due')
+      due: open.filter((l) => isDueToday(l, localDayKey(now)) || isOverdue(l, localDayKey(now))).length,
       unassigned: open.filter(isUnassigned).length,
       stale: open.filter((l) => isStale(l, now)).length,
       lost: leads.filter((l) => !l.isArchived && l.status === 'lost').length,
@@ -426,7 +428,7 @@ export default function LeadsTab({
         <Chip pressed={leadFilter === 'viewing_request'} count={counts.viewings} onClick={() => { setLeadFilter('viewing_request'); setLeadSort?.('visit_date'); }}>
           {isAr ? 'طلبات معاينة' : 'Viewings'}
         </Chip>
-        <Chip pressed={leadFilter === 'due'} count={counts.overdue || counts.awaiting || 0} className={counts.overdue > 0 ? 'is-alert' : undefined} onClick={() => setLeadFilter('due')}>
+        <Chip pressed={leadFilter === 'due'} count={counts.due} className={counts.overdue > 0 ? 'is-alert' : undefined} onClick={() => setLeadFilter('due')}>
           {counts.overdue > 0 ? (isAr ? 'متابعات متأخرة' : 'Overdue') : (isAr ? 'متابعة النهارده' : 'Due today')}
         </Chip>
         {counts.unassigned > 0 && (
