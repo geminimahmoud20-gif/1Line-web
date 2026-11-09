@@ -8,6 +8,7 @@ import { leadToRow } from '../utils/transfer/leadSchema';
 import { restoreLeads, mergeLeads } from '../firebaseLazy';
 import { canExportCsv, canDeleteLead, canManagePayments, canEditLeadsRole, assignableDesks, scopeLeadsForAccess } from '../utils/rbacRules';
 import { assignmentUpdates, personFor, assigneeValue } from '../utils/assignees';
+import { memberDesk } from '../utils/inboxView';
 import useTeamMembers from '../hooks/useTeamMembers';
 import { permsOfRole } from '../utils/accessModel';
 import { isValidPhoneNumber } from '../utils/securityShield';
@@ -262,6 +263,21 @@ export const CrmAdminPanel = ({
     } catch { /* storage unavailable — still backfill */ }
     orphans.forEach((l) => onUpdateLead(l.id, { assignedTo: 'Unassigned' }));
   }, [canAssignAll, onUpdateLead, firebaseConnected, leads]);
+
+  // A client handed to a salesperson before their desk was followed stayed on its old desk, out of
+  // that person's queue. A manager's session moves each such client to its owner's desk once.
+  const ownerDeskTried = useRef(new Set());
+  useEffect(() => {
+    if (!canAssignAll || !onUpdateLead || !firebaseConnected || !teamMembers.length) return;
+    leads.forEach((l) => {
+      if (!l?._cloud || !l.ownerUid || ownerDeskTried.current.has(l.id)) return;
+      const member = teamMembers.find((m) => m.uid === l.ownerUid);
+      const desk = member ? memberDesk(member) : '';
+      if (!desk || l.assignedTo === desk) return;
+      ownerDeskTried.current.add(l.id);
+      onUpdateLead(l.id, { assignedTo: desk });
+    });
+  }, [canAssignAll, onUpdateLead, firebaseConnected, leads, teamMembers]);
 
   // Phones still stored on the lead doc (saved before lead_contacts, or by a browser on an old
   // build) are readable by every CRM role; a manager's session moves them into lead_contacts.
