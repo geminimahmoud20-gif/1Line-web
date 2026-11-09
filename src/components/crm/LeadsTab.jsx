@@ -477,6 +477,36 @@ export default function LeadsTab({
             {isAr ? 'دوّر في الكل' : 'Search all'}
           </Button>
         )}
+        {setLeadSort && (
+          <Select
+            hideLabel
+            className="crm-leads__sort"
+            label={isAr ? 'الترتيب' : 'Sort'}
+            value={leadSort}
+            onChange={(e) => setLeadSort(e.target.value)}
+            options={LEAD_SORTS.map((o) => ({ value: o.id, label: isAr ? `ترتيب: ${o.ar}` : `Sort: ${o.en}` }))}
+          />
+        )}
+        <div className="crm-leads__cols" ref={columnPickerRef}>
+          <Button variant="secondary" icon={<Columns3 size={16} aria-hidden="true" />} aria-expanded={showColumnPicker} onClick={() => setShowColumnPicker((v) => !v)}>
+            {isAr ? 'الأعمدة' : 'Columns'}
+          </Button>
+          {showColumnPicker && (
+            <div className="crm-leads__cols-menu" role="group" aria-label={isAr ? 'الأعمدة الظاهرة' : 'Visible columns'}>
+              {COLUMN_OPTIONS.map((col) => (
+                <label key={col.key} className="crm-leads__cols-item">
+                  <input type="checkbox" checked={!!visibleColumns[col.key]} onChange={() => toggleColumn(col.key)} />
+                  <span>{isAr ? col.ar : col.en}</span>
+                </label>
+              ))}
+              <div className="crm-leads__cols-foot">
+                <span>{isAr ? 'الاسم والإجراءات ظاهرين دايماً' : 'Name and actions always show'}</span>
+                <Button variant="ghost" size="sm" onClick={resetColumns}>{isAr ? 'إظهار الكل' : 'Show all'}</Button>
+              </div>
+              <p className="crm-leads__cols-keys">{isAr ? 'اختصارات: J / K للتنقل · Enter للفتح · W واتساب · S الحالة' : 'Shortcuts: J / K move · Enter open · W WhatsApp · S status'}</p>
+            </div>
+          )}
+        </div>
         <Button
           variant="secondary"
           className="crm-leads__filters-toggle"
@@ -532,39 +562,11 @@ export default function LeadsTab({
             onChange={(e) => setAreaFilter(e.target.value)}
             options={[{ value: 'all', label: isAr ? 'كل المناطق' : 'All areas' }, ...getAreas().filter((a) => a.id !== 'all').map((a) => ({ value: a.id, label: isAr ? a.name_ar : (a.name_en || a.name_ar) }))]}
           />
-          {setLeadSort && (
-            <Select
-              hideLabel
-              label={isAr ? 'الترتيب' : 'Sort'}
-              value={leadSort}
-              onChange={(e) => setLeadSort(e.target.value)}
-              options={LEAD_SORTS.map((o) => ({ value: o.id, label: isAr ? `ترتيب: ${o.ar}` : `Sort: ${o.en}` }))}
-            />
-          )}
           {hasActiveFilters && (
             <Button variant="ghost" icon={<RotateCcw size={16} aria-hidden="true" />} onClick={resetFilters}>
               {isAr ? 'امسح الفلاتر' : 'Clear filters'}
             </Button>
           )}
-          <div className="crm-leads__cols" ref={columnPickerRef}>
-            <Button variant="ghost" icon={<Columns3 size={16} aria-hidden="true" />} aria-expanded={showColumnPicker} onClick={() => setShowColumnPicker((v) => !v)}>
-              {isAr ? 'الأعمدة' : 'Columns'}
-            </Button>
-            {showColumnPicker && (
-              <div className="crm-leads__cols-menu" role="group" aria-label={isAr ? 'الأعمدة الظاهرة' : 'Visible columns'}>
-                {COLUMN_OPTIONS.map((col) => (
-                  <label key={col.key} className="crm-leads__cols-item">
-                    <input type="checkbox" checked={!!visibleColumns[col.key]} onChange={() => toggleColumn(col.key)} />
-                    <span>{isAr ? col.ar : col.en}</span>
-                  </label>
-                ))}
-                <div className="crm-leads__cols-foot">
-                  <span>{isAr ? 'الاسم والإجراءات ظاهرين دايماً' : 'Name and actions always show'}</span>
-                  <Button variant="ghost" size="sm" onClick={resetColumns}>{isAr ? 'إظهار الكل' : 'Show all'}</Button>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
@@ -621,9 +623,6 @@ export default function LeadsTab({
       )}
 
       {/* Leads Table */}
-      <p className="crm-kbd-hint" aria-hidden="true">
-        {isAr ? 'اختصارات: J / K للتنقل · Enter للمعاينة · W واتساب · S الحالة' : 'Shortcuts: J / K move · Enter open · W WhatsApp · S status'}
-      </p>
       <div className="crm-table-scroll-wrapper">
         <table className="crm-table" data-kbd="leads">
         <thead>
@@ -772,6 +771,11 @@ export default function LeadsTab({
                               <CopyPlus size={12} aria-hidden="true" />{isAr ? `مكرر (${dupCount + 1})` : `Duplicate (${dupCount + 1})`}
                             </button>
                           )}
+                          {Array.isArray(l.tags) && l.tags.length > 0 && (
+                            <span className="crm-lead-chip is-tag" title={l.tags.join(' · ')}>
+                              {l.tags[0]}{l.tags.length > 1 ? ` +${l.tags.length - 1}` : ''}
+                            </span>
+                          )}
                           {l.status === 'lost' && l.lostReason && (
                             <span className="crm-lead-chip is-lost" title={l.lostNote || ''}>
                               <Ban size={12} aria-hidden="true" />{(() => { const r = LOST_REASONS.find((x) => x.id === l.lostReason); return r ? (isAr ? r.ar : r.en) : l.lostReason; })()}
@@ -779,16 +783,6 @@ export default function LeadsTab({
                           )}
                         </div>
 
-                        {/* Tags Display */}
-                        {l.tags && l.tags.length > 0 && (
-                          <div className="crm-client-tags-wrap">
-                            {l.tags.slice(0, 2).map((t, i) => (
-                              <span key={i} className="crm-client-tag-pill">
-                                {t}
-                              </span>
-                            ))}
-                          </div>
-                        )}
                       </div>
                     </div>
                   </td>
