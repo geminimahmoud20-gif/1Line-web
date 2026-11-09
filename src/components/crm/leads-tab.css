@@ -130,7 +130,9 @@
   .crm-layout .crm-leads .crm-table tbody tr td[data-label='الإجراءات'],
   .crm-layout .crm-leads .crm-table tbody tr td[data-label='Actions'] { padding-top: var(--ui-s-2); border-top: 1px solid var(--ui-line); }
   .crm-layout .crm-leads .crm-table tbody tr.crm-lead-row.is-kbd-active td { background: none !important; }
-  .crm-layout .crm-leads .crm-empty-state-card, .crm-layout .crm-leads .crm-leads__empty-cell { grid-column: 1 / -1; }
+  /* The empty message is a row's first cell too: it must span the card, not sit in the 28px checkbox column */
+  .crm-layout .crm-leads .crm-empty-state-card,
+  .crm-layout .crm-leads .crm-table tbody tr td.crm-leads__empty-cell { grid-column: 1 / -1; grid-row: auto; }
 }
 
 @media (max-width: 767px) {
