@@ -12,7 +12,7 @@ import LostReasonModal from './LostReasonModal';
 import { validateStageTransition } from '../../services/stateMachineEngine';
 import StageDeliverableModal from './StageDeliverableModal';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
-import { leadScore, LEAD_SCORE_HIGH, isSellerLead } from '../../utils/crmLeadViews';
+import { leadScore, LEAD_SCORE_HIGH, isSellerLead, leadCampaign } from '../../utils/crmLeadViews';
 import { rankAndNominateProperties } from '../../services/matchingEngineV2';
 import { Drawer, Button, IconButton, Badge, Chip, Tabs, Textarea, EmptyState, useConfirm } from '../ui';
 import './lead-drawer.css';
@@ -305,6 +305,8 @@ export default function LeadQuickDrawer({
 
   const score = leadScore(lead);
   const currentStage = stages[currentStageIndex] || stages[0];
+  // The ad that brought this client (utm_campaign / utm_content on the link it clicked)
+  const campaign = leadCampaign(lead);
   const temperature = { hot: { ar: 'ساخن', en: 'Hot', tone: 'danger' }, warm: { ar: 'دافئ', en: 'Warm', tone: 'warning' }, cold: { ar: 'بارد', en: 'Cold', tone: 'info' } }[lead.temperature];
   const phoneText = formatPhoneNumber(lead.phone || lead.whatsapp) || '—';
   const timeline = (lead.notes || '').split('\n').map(parseNoteLine).filter(Boolean);
@@ -362,6 +364,11 @@ export default function LeadQuickDrawer({
                 {isAr ? `اهتمام ${score.score}%` : `Score ${score.score}%`}
               </Badge>
               {temperature && <Badge tone={temperature.tone} dot>{isAr ? temperature.ar : temperature.en}</Badge>}
+              {campaign && (
+                <Badge tone="accent" title={[campaign.source, campaign.campaign, campaign.ad].filter(Boolean).join(' · ')}>
+                  {isAr ? `حملة: ${campaign.campaign}` : `Campaign: ${campaign.campaign}`}{campaign.ad ? ` · ${campaign.ad}` : ''}
+                </Badge>
+              )}
             </div>
             {hasRealPhone && (
               <div className="crm-ld__quick">

@@ -173,3 +173,14 @@ test('dashboard: active pipeline excludes won, lost and archived; desk scope', (
   assert.equal(desk.winRate, 100);
   assert.equal(desk.unassignedList.length, 1); // the shared pool stays visible
 });
+
+test('leadCampaign: the ad that brought the lead, nothing for a visit without one', async () => {
+  const { leadCampaign } = await import('../../src/utils/crmLeadViews.js');
+  assert.deepEqual(
+    leadCampaign({ utmSource: 'facebook', utmCampaign: 'buyers-sohag', marketingAttribution: { source: 'facebook', campaign: 'buyers-sohag', content: 'v10-life-savings' } }),
+    { campaign: 'buyers-sohag', ad: 'v10-life-savings', source: 'facebook' }
+  );
+  assert.equal(leadCampaign({ utmSource: 'مباشر', utmCampaign: 'direct' }), null);
+  assert.equal(leadCampaign({ marketingAttribution: { source: 'Facebook', campaign: 'organic_referral' } }), null);
+  assert.equal(leadCampaign({}), null);
+});
