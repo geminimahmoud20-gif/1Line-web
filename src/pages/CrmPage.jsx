@@ -102,7 +102,7 @@ export default function CrmPage({
       if (triggerToast) triggerToast(lang === 'ar' ? 'صلاحياتك الحالية لا تسمح بهذا الإجراء' : 'Your role does not allow this action', 'error');
       return;
     }
-    const ADMIN_PANEL_TABS = ['inbox', 'dashboard', 'leads', 'kanban', 'matching', 'agents', 'financials', 'retargeting', 'analytics'];
+    const ADMIN_PANEL_TABS = ['inbox', 'dashboard', 'leads', 'kanban', 'matching', 'agents', 'financials', 'retargeting', 'campaigns', 'analytics'];
     const tab = { add_lead: 'leads', add_property: 'properties', add_demand: 'demands', add_project: 'projects' }[type]
       || (ADMIN_PANEL_TABS.includes(activeTab) ? activeTab : 'dashboard');
     setActiveTab(tab);
@@ -173,6 +173,7 @@ export default function CrmPage({
     // Bulk file import of clients (and owners from a property file): managers only
     importLeads: activeRole === 'super_admin' || activeRole === 'sales_manager' || Boolean(userPerms?.includes('ld.import')),
     // Campaigns message clients directly: sales roles that see real numbers
+    campaigns: activeRole === 'super_admin' || Boolean(userPerms?.includes('ld.manage')),
     retarget: activeRole === 'super_admin' || (canEditLeadsRole(activeRole, userPerms) && Boolean(userPerms?.includes('ld.phone')))
   };
   const canAddMap = { lead: can.editLeads, property: can.editListings, demand: can.manageDemands, project: can.editProjects, retarget: can.retarget };
@@ -778,6 +779,7 @@ export default function CrmPage({
         projects={projects}
         activeRole={activeRole}
         canRetarget={can.retarget}
+        canCampaigns={can.campaigns}
         canWorkRequests={can.editLeads}
         collapsed={sidebarCollapsed}
         onToggleCollapse={handleToggleCollapse}

@@ -139,6 +139,7 @@ export default function CrmTopbar({
     properties: isAr ? 'محفظة العقارات' : 'Properties Portfolio',
     demands: isAr ? 'طلبات المشترين' : 'Buyer Demands',
     projects: isAr ? 'المشروعات الكبرى' : 'Mega Projects',
+    campaigns: isAr ? 'تقرير الحملات' : 'Campaign Report',
     ads: isAr ? 'الإعلانات والحملات' : 'Ads & Campaigns',
     financials: isAr ? 'المالية والأقساط' : 'Financials & Loans',
     analytics: isAr ? 'تحليلات وذكاء المنصة' : 'Visitor Intelligence & Analytics',

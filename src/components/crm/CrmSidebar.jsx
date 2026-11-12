@@ -17,6 +17,7 @@ export default function CrmSidebar({
   projects = [],
   activeRole = 'super_admin',
   canRetarget = true,
+  canCampaigns = false,
   canWorkRequests = true,
   collapsed = false,
   onToggleCollapse,
@@ -204,6 +205,13 @@ export default function CrmSidebar({
             label_ar: 'فريق المبيعات والعمولات',
             label_en: 'Agents Leaderboard'
           },
+          // What each ad brought and cost: managers only
+          ...(canCampaigns ? [{
+            id: 'campaigns',
+            icon: Megaphone,
+            label_ar: 'تقرير الحملات',
+            label_en: 'Campaign Report'
+          }] : []),
           // Messages clients in bulk: only roles that work leads and see real numbers
           ...(canRetarget ? [{
             id: 'retargeting',
@@ -280,7 +288,7 @@ export default function CrmSidebar({
         ]
       }
     ];
-  }, [workspaceMode, openLeadsCount, unassignedInboxCount, properties.length, pendingDemandsCount, demands.length, projects.length, activeRole, canRetarget, canWorkRequests]);
+  }, [workspaceMode, openLeadsCount, unassignedInboxCount, properties.length, pendingDemandsCount, demands.length, projects.length, activeRole, canRetarget, canCampaigns, canWorkRequests]);
 
   const handleItemClick = (id) => {
     setActiveTab(id);

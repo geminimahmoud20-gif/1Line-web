@@ -18,6 +18,7 @@ import KanbanPipeline from './crm/KanbanPipeline';
 import SmartMatchingHub from './crm/SmartMatchingHub';
 import AICopywriterModal from './crm/AICopywriterModal';
 import AgentCommissionLeaderboard from './crm/AgentCommissionLeaderboard';
+import CampaignReportPanel from './crm/CampaignReportPanel';
 import PaymentScheduleBuilder from './crm/PaymentScheduleBuilder';
 import RetargetingHub from './crm/RetargetingHub';
 import CustomerProfileModal from './crm/CustomerProfileModal';
@@ -900,6 +901,15 @@ export const CrmAdminPanel = ({
           lang={lang}
           triggerToast={triggerToast}
         />
+      )}
+
+      {/* 📣 Campaign report: leads, visits and cost per ad campaign (managers) */}
+      {adminTab === 'campaigns' && (
+        (isSuperRole || perms.includes('ld.manage')) ? (
+          <CampaignReportPanel leads={leads} lang={lang} />
+        ) : (
+          <div className="crm-table-container">{isAr ? 'تقرير الحملات للمدير العام ومديري المبيعات.' : 'The campaign report is for admins and sales managers.'}</div>
+        )
       )}
 
       {/* 📑 TAB 6: FINANCIALS & INSTALLMENT BUILDER */}
