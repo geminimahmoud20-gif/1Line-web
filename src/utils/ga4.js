@@ -9,17 +9,11 @@
  * 5. Safe Configuration: Disabled by default if VITE_GA4_MEASUREMENT_ID is missing or invalid.
  */
 
-const CONSENT_KEY = 'oneline_consent_v1';
 const RAW_MEASUREMENT_ID = (import.meta.env?.VITE_GA4_MEASUREMENT_ID || '').trim();
 const MEASUREMENT_ID_REGEX = /^G-[A-Z0-9]+$/i;
 
-export const hasAnalyticsConsent = () => {
-  try {
-    return typeof window !== 'undefined' && localStorage.getItem(CONSENT_KEY) === 'accepted';
-  } catch {
-    return false;
-  }
-};
+// No consent prompt: measurement is on for every visitor on public pages
+export const hasAnalyticsConsent = () => typeof window !== 'undefined';
 
 export const GA4_ID = MEASUREMENT_ID_REGEX.test(RAW_MEASUREMENT_ID) ? RAW_MEASUREMENT_ID : null;
 
@@ -175,11 +169,3 @@ export function trackGa4LeadSubmitted({ form = 'website', leadId }) {
   }
 }
 
-// Listen for storage changes to handle consent changes across tabs/components
-if (isBrowser) {
-  window.addEventListener('storage', (e) => {
-    if (e.key === CONSENT_KEY && e.newValue === 'accepted') {
-      initGa4();
-    }
-  });
-}

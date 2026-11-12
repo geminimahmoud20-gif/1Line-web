@@ -12,7 +12,6 @@
 const ENDPOINT = '/api/track';
 import { trackGa4PageView, trackGa4ContactClick, trackGa4FormStart, trackGa4LeadSubmitted } from './ga4.js';
 import { sendMetaEvent } from './metaPixel.js';
-const CONSENT_KEY = 'oneline_consent_v1';
 const VID_KEY = 'oneline_vid';
 const FIRST_SEEN_KEY = 'oneline_vid_first';
 const SESSIONS_KEY = 'oneline_vid_sessions';
@@ -36,7 +35,7 @@ const asKey = (v) => {
   return /^[A-Za-z0-9_-]{1,64}$/.test(s) ? s : undefined;
 };
 
-export const hasAnalyticsConsent = () => isBrowser && safe(() => localStorage.getItem(CONSENT_KEY) === 'accepted', false);
+export const hasAnalyticsConsent = () => isBrowser;
 const isStaffPage = () => isBrowser && window.location.pathname.startsWith('/crm');
 
 // ── Where the visit came from (first touch of the session) ───────────────────
