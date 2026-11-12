@@ -3,7 +3,7 @@ import { getGoogleCalendarUrl, downloadIcsFile } from '../../../utils/calendarHe
 import { Button, Badge, Select, Input } from '../../ui';
 import LeadCommissionBox from './LeadCommissionBox';
 import SellerAskingPrice from './SellerAskingPrice';
-import { isSellerLead } from '../../../utils/crmLeadViews';
+import { isSellerLead, firstContactPatch } from '../../../utils/crmLeadViews';
 import { askingPriceOf } from '../../../utils/leadPipeline';
 import { sharePagesFor, sharePageMessage } from '../../../utils/sharePages';
 import { SITE_URL } from '../../../config/siteConfig';
@@ -42,6 +42,11 @@ export default function LeadDrawerOverview({
   const hasSchedule = scheduledDate && Number.isFinite(scheduledDate.getTime());
   const viewingProp = properties.find(p => p.id === (lead?.viewingPropertyId || details.propertyId));
   const L = (ar, en) => (isAr ? ar : en);
+  // Sending a message counts as the first reply: the "no reply" clock stops
+  const markContacted = () => {
+    const patch = firstContactPatch(lead);
+    if (patch && onUpdateLead) onUpdateLead(lead.id, patch, lead.version);
+  };
   // «ابعتله صفحة»: a page of the site on WhatsApp, owners' pages first for an owner
   const pages = sharePagesFor(isSeller);
   const [pagePath, setPagePath] = useState(pages[0].path);
@@ -165,6 +170,7 @@ export default function LeadDrawerOverview({
                 </div>
                 <a
                   href={`https://wa.me/${egWhatsapp}?text=${encodeURIComponent(tpl.msg)}`}
+                  onClick={markContacted}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="ui-btn ui-btn--secondary ui-btn--sm"
@@ -190,6 +196,7 @@ export default function LeadDrawerOverview({
           <div className="crm-ld__row">
             <a
               href={`https://wa.me/${egWhatsapp}?text=${encodeURIComponent(pageMessage)}`}
+              onClick={markContacted}
               target="_blank"
               rel="noopener noreferrer"
               className="ui-btn ui-btn--secondary ui-btn--sm"

@@ -192,3 +192,13 @@ test('an ad client must be answered within 15 minutes, the rest within 2 hours',
   assert.equal(responseSlaMs({ source: 'Direct Entry' }), RESPONSE_SLA_MS);
   assert.equal(AD_RESPONSE_SLA_MS, 15 * 60 * 1000);
 });
+
+test('tapping call or WhatsApp on an uncontacted client records the first contact once', async () => {
+  const { firstContactPatch } = await import('../../src/utils/crmLeadViews.js');
+  const p = firstContactPatch({ status: 'new' }, '2026-11-12T10:00:00.000Z');
+  assert.deepEqual(p, { lastContactedAt: '2026-11-12T10:00:00.000Z', lastActivityAt: '2026-11-12T10:00:00.000Z', status: 'contacted' });
+  assert.equal(firstContactPatch({ status: 'new', lastContactedAt: '2026-11-12T09:00:00Z' }), null);
+  assert.equal(firstContactPatch({ status: 'new', firstContactedAt: '2026-11-12T09:00:00Z' }), null);
+  assert.equal(firstContactPatch({ status: 'negotiating' }).status, undefined);
+  assert.equal(firstContactPatch(null), null);
+});
