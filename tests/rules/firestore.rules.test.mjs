@@ -359,6 +359,15 @@ test('notify: reads the stored record over REST and claims each record once', as
   await assertFails(setDoc(doc(asAdmin(), 'notify_status/whatsapp'), { lastOkAt: 'x' }));
 });
 
+test('campaign_spend: only people who manage leads read or write it', async () => {
+  await assertSucceeds(setDoc(doc(as('sales_manager'), 'campaign_spend/all'), { amounts: { 'buyers-sohag': 1200 } }));
+  await assertSucceeds(getDoc(doc(as('sales_manager'), 'campaign_spend/all')));
+  await assertSucceeds(getDoc(doc(asAdmin(), 'campaign_spend/all')));
+  await assertFails(getDoc(doc(as('sales_agent'), 'campaign_spend/all')));
+  await assertFails(setDoc(doc(as('sales_agent'), 'campaign_spend/all'), { amounts: { x: 1 } }));
+  await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'campaign_spend/all')));
+});
+
 test('staff_prefs: each member reads and writes only their own bell marker', async () => {
   const mgr = env.authenticatedContext('u-mgr', { role: 'sales_manager' }).firestore();
   await assertSucceeds(setDoc(doc(mgr, 'staff_prefs/u-mgr'), { alertsSeenAt: 1761700000000 }));

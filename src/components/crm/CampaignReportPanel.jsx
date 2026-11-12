@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Megaphone } from 'lucide-react';
 import { campaignReport, campaignTotals, PERIODS } from '../../utils/campaignReport';
+import { loadCampaignSpend, saveCampaignSpend } from '../../firebaseLazy';
 import { EmptyState } from '../ui';
 import './campaign-report.css';
 
@@ -22,13 +23,27 @@ export default function CampaignReportPanel({ leads = [], lang = 'ar' }) {
   );
   const totals = useMemo(() => campaignTotals(rows), [rows]);
 
-  // Kept on this device only (no shared store for it yet), so the note below says so
+  // Shared with the other managers (campaign_spend/all); this device keeps a copy in case the
+  // shared one can't be reached, and the note below says which one is in use
+  const [shared, setShared] = useState(null); // null: not known yet
+  const saveTimer = useRef(0);
+  useEffect(() => {
+    let alive = true;
+    loadCampaignSpend().then((remote) => {
+      if (!alive) return;
+      if (remote) { setSpend((local) => ({ ...local, ...remote })); setShared(true); } else setShared(false);
+    }).catch(() => alive && setShared(false));
+    return () => { alive = false; clearTimeout(saveTimer.current); };
+  }, []);
+
   const setRowSpend = (key, value) => {
     const n = Math.max(0, Math.round(Number(String(value).replace(/[^\d.]/g, '')) || 0));
     const next = { ...spend, [key]: n };
     if (!n) delete next[key];
     setSpend(next);
     try { localStorage.setItem(SPEND_KEY, JSON.stringify(next)); } catch { /* private mode: this visit only */ }
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => { saveCampaignSpend(next).then((ok) => setShared(ok)).catch(() => setShared(false)); }, 800);
   };
 
   return (
@@ -93,7 +108,9 @@ export default function CampaignReportPanel({ leads = [], lang = 'ar' }) {
               </li>
             ))}
           </ul>
-          <p className="cr-note">{L('المصروف بيتحفظ على الجهاز ده بس. الأرقام من العملاء المسجّلين في الـ CRM، فبتشمل اللي ما وافقوش على أي حاجة وكمان اللي مجاوبوش.', 'Spend is saved on this device only. Counts come from the leads in the CRM.')}</p>
+          <p className="cr-note">{shared === false
+            ? L('المصروف متحفظ على الجهاز ده بس دلوقتي (مقدرناش نوصل للمخزن المشترك). الأرقام من العملاء المسجّلين في الـ CRM.', 'Spend is saved on this device only right now. Counts come from the leads in the CRM.')
+            : L('المصروف بيتحفظ ويظهر لكل المديرين. الأرقام من العملاء المسجّلين في الـ CRM.', 'Spend is shared with the other managers. Counts come from the leads in the CRM.')}</p>
         </>
       )}
     </div>

@@ -18,6 +18,7 @@ export * from './services/downloads.js';
 export * from './services/deals.js';
 export { issueReceipt } from './services/receipts.js';
 export { loadNotifyStatus, sendTestAlert, loadAlertsSeenAt, saveAlertsSeenAt, runDailyReport } from './services/staffNotify.js';
+export { loadCampaignSpend, saveCampaignSpend } from './services/campaignSpend.js';
 export { REQUEST_CONTACT_FIELDS } from './services/requestContacts.js';
 export * from './services/demands.js';
 export * from './services/analytics.js';
