@@ -184,3 +184,11 @@ test('leadCampaign: the ad that brought the lead, nothing for a visit without on
   assert.equal(leadCampaign({ marketingAttribution: { source: 'Facebook', campaign: 'organic_referral' } }), null);
   assert.equal(leadCampaign({}), null);
 });
+
+test('an ad client must be answered within 15 minutes, the rest within 2 hours', async () => {
+  const { responseSlaMs, AD_RESPONSE_SLA_MS, RESPONSE_SLA_MS } = await import('../../src/utils/crmLeadViews.js');
+  assert.equal(responseSlaMs({ marketingAttribution: { source: 'facebook', campaign: 'buyers-sohag' } }), AD_RESPONSE_SLA_MS);
+  assert.equal(responseSlaMs({ source: 'Facebook Ads' }), AD_RESPONSE_SLA_MS);
+  assert.equal(responseSlaMs({ source: 'Direct Entry' }), RESPONSE_SLA_MS);
+  assert.equal(AD_RESPONSE_SLA_MS, 15 * 60 * 1000);
+});

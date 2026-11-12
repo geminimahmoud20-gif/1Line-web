@@ -26,6 +26,7 @@ import GoLiveWizardModal from '../components/crm/GoLiveWizardModal';
 import CrmSidebar from '../components/crm/CrmSidebar';
 import CrmTopbar from '../components/crm/CrmTopbar';
 import CrmCommandPalette from '../components/crm/CrmCommandPalette';
+import AlertHealthBanner from '../components/crm/AlertHealthBanner';
 import NewVersionNotice from '../components/crm/NewVersionNotice';
 import { BRAND } from '../config/siteConfig';
 import '../components/crm/CrmLayout.css';
@@ -873,6 +874,9 @@ export default function CrmPage({
 
         {/* 3. Main Dynamic Content Area */}
         <div className="crm-content-area" id="crm-main-content">
+          {activeRole === 'super_admin' && (
+            <AlertHealthBanner onOpen={() => { setSystemSubTab('alerts'); setActiveTab('system'); }} />
+          )}
           {activeTab === 'properties' ? (
             <PropertyManagerPanel
               shareRef={currentUser?.email || ''}

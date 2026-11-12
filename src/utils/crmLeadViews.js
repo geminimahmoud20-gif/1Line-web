@@ -287,6 +287,12 @@ export function waitingMs(l, now = Date.now()) {
 /** Leads waiting longer than this without a first reply are flagged */
 export const RESPONSE_SLA_MS = 2 * 60 * 60 * 1000;
 
+/** A client from an ad is waiting for a reply right now: 15 minutes is when it still converts */
+export const AD_RESPONSE_SLA_MS = 15 * 60 * 1000;
+
+/** Reply time this lead should get: 15 minutes for ad clients, 2 hours for the rest */
+export const responseSlaMs = (l = {}) => (leadSourceKey(l) === 'ads' || leadCampaign(l) ? AD_RESPONSE_SLA_MS : RESPONSE_SLA_MS);
+
 /** Map normalised phone -> ids, for phones held by two or more active leads */
 export function findDuplicateGroups(leads = []) {
   const byPhone = new Map();
