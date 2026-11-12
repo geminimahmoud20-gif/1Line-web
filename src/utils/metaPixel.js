@@ -4,10 +4,11 @@
 //
 //  - The Pixel ID comes from CRM → إعدادات الموقع → الإعلانات (site_cms.tracking.metaPixelId),
 //    or VITE_META_PIXEL_ID at build time. No ID → nothing loads.
-//  - Loads only after the visitor accepts measurement (oneline_consent_v1 === 'accepted'),
-//    and never on the CRM or a client's account (PDPL 151/2020).
+//  - Runs on public pages with no consent prompt, and never on the CRM or a client's account.
 //  - No personal data: no advanced matching, automatic form/button collection switched off,
 //    events carry only the listing id, type, area and price.
+//  - Leads, visit requests and contact clicks are also sent from the server (api/capi.js, Meta's
+//    Conversions API) with the same event_id, so an ad blocker doesn't hide them from the campaign.
 //  Events arrive through analytics.track(), the same stream the CRM analytics use.
 // =============================================================
 
@@ -63,6 +64,44 @@ export function metaEventFor(type, m = {}) {
   }
 }
 
+// Events that also go through the server (api/capi.js); Meta merges them by event_id
+const CAPI_NAMES = new Set(['Lead', 'Schedule', 'Contact']);
+const newEventId = () => {
+  try { if (window.crypto?.randomUUID) return window.crypto.randomUUID().replace(/-/g, ''); } catch { /* fall through */ }
+  return `e${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
+};
+const cookie = (name) => {
+  try { return document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`))?.[1] || ''; } catch { return ''; }
+};
+// _fbc is set by the Pixel; before it loads, build it from the ad click id in the URL
+const clickId = () => {
+  const c = cookie('_fbc');
+  if (c) return c;
+  try {
+    const id = new URLSearchParams(window.location.search).get('fbclid');
+    return id ? `fb.1.${Date.now()}.${id}` : '';
+  } catch { return ''; }
+};
+
+function sendToServer(ev, eventId) {
+  try {
+    fetch('/api/capi', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      keepalive: true,
+      body: JSON.stringify({
+        event_name: ev.name,
+        event_id: eventId,
+        event_source_url: window.location.href,
+        pixel_id: pixelId(),
+        fbp: cookie('_fbp'),
+        fbc: clickId(),
+        custom_data: ev.params
+      })
+    }).catch(() => {});
+  } catch { /* never affects the page */ }
+}
+
 let loadedId = '';
 let lastPage = { path: '', at: 0 };
 const sentLeads = new Set();
@@ -99,7 +138,8 @@ export function initMetaPixel() {
 /** Forward one analytics event (called by analytics.track). */
 export function sendMetaEvent(type, m = {}) {
   const ev = metaEventFor(type, m);
-  if (!ev || !initMetaPixel()) return;
+  if (!ev || !canRun()) return;
+  const pixelRunning = initMetaPixel();
   if (ev.name === 'PageView') {
     const path = String(m.path || window.location.pathname).split('?')[0];
     const now = Date.now();
@@ -111,7 +151,11 @@ export function sendMetaEvent(type, m = {}) {
     if (sentLeads.has(k)) return;
     sentLeads.add(k);
   }
-  try { window.fbq('track', ev.name, ev.params); } catch { /* blocked by the browser */ }
+  const eventId = CAPI_NAMES.has(ev.name) ? newEventId() : undefined;
+  if (pixelRunning) {
+    try { window.fbq('track', ev.name, ev.params, eventId ? { eventID: eventId } : undefined); } catch { /* blocked by the browser */ }
+  }
+  if (eventId) sendToServer(ev, eventId);
 }
 
 // The ID usually arrives with the site settings a moment after the first page view
