@@ -498,8 +498,8 @@ function AppContent() {
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
-      {/* Privacy notice & analytics consent (loads Clarity only after acceptance) */}
-      <ConsentBanner lang={lang} />
+      {/* Privacy notice & analytics consent (starts measurement on public pages, no prompt) */}
+      <ConsentBanner />
 
       {/* Quick View Modal */}
       {quickViewProperty && (

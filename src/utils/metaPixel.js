@@ -14,7 +14,6 @@
 import { isPrivatePath } from './privatePaths.js';
 import { getSiteSettings, subscribeSiteSettings } from './siteSettings.js';
 
-const CONSENT_KEY = 'oneline_consent_v1';
 const PIXEL_ID_RE = /^\d{8,20}$/;
 const isBrowser = typeof window !== 'undefined';
 
@@ -27,9 +26,8 @@ export const cleanPixelId = (v) => {
 const envId = cleanPixelId(import.meta.env?.VITE_META_PIXEL_ID);
 const pixelId = () => cleanPixelId(getSiteSettings()?.tracking?.metaPixelId) || envId;
 
-const hasConsent = () => {
-  try { return localStorage.getItem(CONSENT_KEY) === 'accepted'; } catch { return false; }
-};
+// Measurement runs on every public page without a consent prompt (staff pages are excluded in canRun)
+const hasConsent = () => true;
 
 const num = (v) => {
   const n = Number(v);
@@ -120,8 +118,5 @@ export function sendMetaEvent(type, m = {}) {
 if (isBrowser) {
   subscribeSiteSettings(() => {
     if (!loadedId && initMetaPixel()) sendMetaEvent('page_view', { path: window.location.pathname });
-  });
-  window.addEventListener('storage', (e) => {
-    if (e.key === CONSENT_KEY && e.newValue === 'accepted' && initMetaPixel()) sendMetaEvent('page_view', { path: window.location.pathname });
   });
 }
