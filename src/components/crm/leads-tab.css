@@ -169,3 +169,8 @@
   .crm-layout .crm-leads .crm-table tbody tr td:is([data-label='المسؤول'], [data-label='Agent']) { flex: 1 1 140px; }
   .crm-layout .crm-leads .crm-table tbody tr td.crm-leads__empty-cell { flex: 1 1 100%; }
 }
+
+/* Today's urgent work: late first replies and follow-ups due, one tap to the list */
+.crm-leads__urgent { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: var(--ui-s-3); }
+.crm-leads__urgent-btn { min-height: 40px; padding: 0 14px; border-radius: var(--ui-r-md); border: 1px solid var(--ui-line-strong); background: var(--ui-surface-2); color: var(--ui-text); font: inherit; font-weight: 700; cursor: pointer; }
+.crm-leads__urgent-btn.is-late { border-color: var(--ui-danger); }

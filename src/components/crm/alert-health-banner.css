@@ -1,0 +1,4 @@
+.crm-alert-health { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; padding: 10px 14px; border-radius: var(--ui-r-md); background: var(--ui-surface-2); border: 1px solid var(--ui-danger); color: var(--ui-text); }
+.crm-alert-health svg { flex: none; color: var(--ui-danger); }
+.crm-alert-health p { flex: 1 1 220px; margin: 0; line-height: 1.7; font-weight: 700; }
+.crm-alert-health__x { border: 0; background: transparent; color: inherit; cursor: pointer; min-width: 36px; min-height: 36px; }

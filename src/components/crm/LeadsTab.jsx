@@ -12,7 +12,7 @@ import { getAreas } from '../../utils/areasData';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import LostReasonModal from './LostReasonModal';
 import MergeLeadsModal from './MergeLeadsModal';
-import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, RESPONSE_SLA_MS, isOverdue, isDueToday, isUnassigned, isStale, localDayKey, getLeadVisitDate, getLeadVisitSlot, isViewingLead, isSellerLead, isAccountLead } from '../../utils/crmLeadViews';
+import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, responseSlaMs, isOverdue, isDueToday, isUnassigned, isStale, localDayKey, getLeadVisitDate, getLeadVisitSlot, isViewingLead, isSellerLead, isAccountLead } from '../../utils/crmLeadViews';
 import { useProperties } from '../../context/PropertiesContext';
 import LeadTableRowActions from './LeadTableRowActions';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
@@ -202,7 +202,7 @@ export default function LeadsTab({
       accountUnanswered: accounts.filter((l) => (!l.status || l.status === 'new') && !l.firstContactedAt).length,
       buyers: open.filter((l) => l.type === 'buyer' && !isViewingLead(l) && !isAccountLead(l)).length,
       awaiting: open.filter((l) => waitingMs(l, now) > 0).length,
-      late: open.filter((l) => waitingMs(l, now) > RESPONSE_SLA_MS).length,
+      late: open.filter((l) => waitingMs(l, now) > responseSlaMs(l)).length,
       dupes: open.filter((l) => duplicateIds.has(l.id)).length,
       overdue: open.filter((l) => isOverdue(l, localDayKey(now))).length,
       // What the «متابعة النهارده» chip lists: a follow-up due today or already late (filterLeads 'due')
@@ -423,6 +423,21 @@ export default function LeadsTab({
           </>
         )}
       />
+
+      {(counts.late > 0 || counts.due > 0) && (
+        <div className="crm-leads__urgent" role="status">
+          {counts.late > 0 && (
+            <button type="button" className="crm-leads__urgent-btn is-late" onClick={() => setLeadFilter('unanswered')}>
+              {isAr ? `${counts.late} عميل اتأخر الرد عليه` : `${counts.late} waiting too long`}
+            </button>
+          )}
+          {counts.due > 0 && (
+            <button type="button" className="crm-leads__urgent-btn" onClick={() => setLeadFilter('due')}>
+              {isAr ? `${counts.due} متابعة النهارده أو متأخرة` : `${counts.due} follow-ups due`}
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="crm-leads__views" role="group" aria-label={isAr ? 'عرض العملاء' : 'Client views'}>
         <Chip pressed={leadFilter === 'all'} count={counts.all} onClick={() => setLeadFilter('all')}>{isAr ? 'الكل' : 'All'}</Chip>
@@ -760,8 +775,8 @@ export default function LeadsTab({
                           <span className="crm-lead-chip">{sourceLabel(l)}</span>
                           {waited > 0 && (
                             <span
-                              className={`crm-lead-chip ${waited > RESPONSE_SLA_MS ? 'is-late' : 'is-waiting'}`}
-                              title={isAr ? 'وقت من غير أول رد' : 'Time without a first reply'}
+                              className={`crm-lead-chip ${waited > responseSlaMs(l) ? 'is-late' : 'is-waiting'}`}
+                              title={isAr ? (responseSlaMs(l) < 3600000 ? 'وقت من غير أول رد. عميل إعلان: المطلوب خلال ١٥ دقيقة' : 'وقت من غير أول رد') : 'Time without a first reply'}
                             >
                               <Timer size={12} aria-hidden="true" />{isAr ? `بدون رد ${fmtWait(waited)}` : `No reply ${fmtWait(waited)}`}
                             </span>
