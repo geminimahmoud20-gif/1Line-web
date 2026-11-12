@@ -2,7 +2,7 @@
 //  1LINE SOLUTIONS CRM - ENTERPRISE RBAC PERMISSIONS MATRIX
 // =============================================================
 
-import { DEFAULT_ACCESS } from './accessModel.js';
+import { DEFAULT_ACCESS, canEditInventory } from './accessModel.js';
 import { formatPhoneNumber } from './crmNoteSanitizer.js';
 
 export const CRM_ROLES = {
@@ -174,10 +174,11 @@ export const canExportCsv = (role, perms = null) => {
 /**
  * Validates whether a given user/role can edit properties
  */
-export const canEditProperties = (role, perms = null) => {
+export const canEditProperties = (role, perms = null, area = '') => {
   if (role === CRM_ROLES.SUPER_ADMIN) return true;
-  // With the account's own permission list, decide like firestore.rules: by 'inv.edit', not the role name
-  if (Array.isArray(perms)) return perms.includes('inv.edit') || perms.includes('*');
+  // With the account's own permission list, decide like firestore.rules: by what the role grants
+  // for this kind of item ('listings' | 'projects' | 'demands', any when empty), not the role name
+  if (Array.isArray(perms)) return canEditInventory(perms, area);
   return role === CRM_ROLES.PROPERTY_MANAGER || role === CRM_ROLES.SALES_MANAGER;
 };
 

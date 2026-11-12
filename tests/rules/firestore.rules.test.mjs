@@ -590,6 +590,54 @@ test('approval: staff saves of listings and projects must wait for the general m
   await assertFails(setDoc(doc(as('sales_agent'), 'properties/s3'), { id: 's3', approval: 'pending' }));
 });
 
+// ── Inventory split by kind of item, and a separate right to publish ─────────────────────
+const withPerms = (uid, perms) => env.authenticatedContext(uid, { role: `r_${uid}`, staff: true, perms, desk: '' }).firestore();
+
+test('inventory: a projects-only role edits projects, and they wait for approval', async () => {
+  const proj = withPerms('u-proj', ['inv.projects']);
+  await assertSucceeds(setDoc(doc(proj, 'projects/x1'), { id: 'x1', title_ar: 'مشروع', approval: 'pending' }));
+  // not published on its own, and not another kind of item
+  await assertFails(setDoc(doc(proj, 'projects/x2'), { id: 'x2', title_ar: 'مشروع', approval: 'approved' }));
+  await assertFails(setDoc(doc(proj, 'properties/x1'), { id: 'x1', title_ar: 'عقار', approval: 'pending' }));
+  // editing an existing buyer request is the demands permission
+  await assertFails(updateDoc(doc(proj, 'demands/p1'), { notes: 'edited' }));
+});
+
+test('inventory: a listings-only role edits listings, not projects', async () => {
+  const list = withPerms('u-list', ['inv.listings']);
+  await assertSucceeds(setDoc(doc(list, 'properties/x1'), { id: 'x1', title_ar: 'عقار', approval: 'pending' }));
+  await assertFails(setDoc(doc(list, 'projects/x1'), { id: 'x1', title_ar: 'مشروع', approval: 'pending' }));
+});
+
+test('inventory: «كل المخزون» (inv.edit) still covers listings, projects and requests', async () => {
+  const all = withPerms('u-all', ['inv.edit']);
+  await assertSucceeds(setDoc(doc(all, 'properties/x1'), { id: 'x1', approval: 'pending' }));
+  await assertSucceeds(setDoc(doc(all, 'projects/x1'), { id: 'x1', approval: 'pending' }));
+  await assertSucceeds(setDoc(doc(all, 'demands/x1'), { name: 'Buyer', phone: '01000000002', status: 'pending' }));
+  // and still can't publish
+  await assertFails(setDoc(doc(all, 'projects/x2'), { id: 'x2', approval: 'approved' }));
+});
+
+test('inventory: inv.publish publishes and approves, without any other inventory permission', async () => {
+  const pub = withPerms('u-pub', ['inv.publish']);
+  await assertSucceeds(setDoc(doc(pub, 'properties/x1'), { id: 'x1', title_ar: 'عقار', approval: 'approved' }));
+  await assertSucceeds(setDoc(doc(pub, 'projects/x1'), { id: 'x1', title_ar: 'مشروع', approval: 'approved' }));
+  // approving what the team submitted
+  await assertSucceeds(setDoc(doc(withPerms('u-proj', ['inv.projects']), 'projects/x3'), { id: 'x3', approval: 'pending' }));
+  await assertSucceeds(setDoc(doc(pub, 'projects/x3'), { approval: 'approved' }, { merge: true }));
+  // buyer requests too
+  await assertSucceeds(setDoc(doc(withPerms('u-dem', ['inv.demands']), 'demands/d1'), { name: 'Buyer', phone: '01000000002', status: 'pending' }));
+  await assertSucceeds(updateDoc(doc(pub, 'demands/d1'), { status: 'published' }));
+  // deleting stays its own permission
+  await assertFails(deleteDoc(doc(pub, 'projects/x1')));
+});
+
+test('inventory: a role with no inventory permission still writes nothing', async () => {
+  const none = withPerms('u-none', ['ld.edit', 'ld.phone']);
+  await assertFails(setDoc(doc(none, 'properties/x1'), { id: 'x1', approval: 'pending' }));
+  await assertFails(setDoc(doc(none, 'projects/x1'), { id: 'x1', approval: 'pending' }));
+});
+
 test('approval: only the general manager publishes a buyer request', async () => {
   const pm = as('property_manager');
   const gm = asAdmin();

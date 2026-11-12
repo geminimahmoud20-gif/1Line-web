@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ShieldCheck, Plus, Pencil, Trash2, X, Lock, Check } from 'lucide-react';
-import { PERMISSIONS, PERM_GROUPS, SUPER_ADMIN, makeId } from '../../utils/accessModel';
+import { PERMISSIONS, PERM_GROUPS, PERM_IMPLIED_BY, SUPER_ADMIN, makeId } from '../../utils/accessModel';
 import { saveRoleApi, deleteRoleApi } from '../../services/accessConfig';
 
 function RoleModal({ role, isAr, onClose, onSave, busy }) {
@@ -122,14 +122,17 @@ function RoleModal({ role, isAr, onClose, onSave, busy }) {
                     </button>
                   )}
                 </div>
+                {(group.hint_ar || group.hint_en) && <p className="tm-perm-hint">{isAr ? group.hint_ar : group.hint_en}</p>}
                 <div className="tm-perm-items">
                   {groupPerms.map((perm) => {
-                    const checked = form.perms.includes(perm.id);
+                    // Covered by a wider permission that is on («كل المخزون»): shown ticked and locked
+                    const implied = Boolean(PERM_IMPLIED_BY[perm.id]) && form.perms.includes(PERM_IMPLIED_BY[perm.id]);
+                    const checked = form.perms.includes(perm.id) || implied;
                     return (
-                      <label key={perm.id} className={`tm-perm-checkbox ${checked ? 'is-checked' : ''} ${isLocked ? 'is-disabled' : ''}`}>
+                      <label key={perm.id} className={`tm-perm-checkbox ${checked ? 'is-checked' : ''} ${isLocked || implied ? 'is-disabled' : ''}`}>
                         <input
                           type="checkbox"
-                          disabled={isLocked}
+                          disabled={isLocked || implied}
                           checked={checked}
                           onChange={() => togglePerm(perm.id)}
                         />

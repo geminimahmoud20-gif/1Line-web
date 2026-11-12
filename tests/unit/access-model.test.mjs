@@ -183,3 +183,26 @@ test('dynamic desks work seamlessly with getLiveLeadDesks and assignableDesks', 
   const desksForAgent = assignableDesks('sales_agent', 'Desk Alpha', customConfig);
   assert.deepEqual(desksForAgent.map((d) => d.value), ['Desk Alpha', 'Unassigned']);
 });
+
+test('inventory permissions: one kind of item, «كل المخزون», and publishing', async () => {
+  const { canEditInventory, canPublishInventory, PERM_IDS, canUploadMedia } = await import('../../src/utils/accessModel.js');
+  assert.ok(['inv.listings', 'inv.projects', 'inv.demands', 'inv.publish', 'inv.edit', 'inv.delete'].every((p) => PERM_IDS.includes(p)));
+  // a projects-only role edits projects and nothing else
+  assert.equal(canEditInventory(['inv.projects'], 'projects'), true);
+  assert.equal(canEditInventory(['inv.projects'], 'listings'), false);
+  assert.equal(canEditInventory(['inv.projects'], 'demands'), false);
+  assert.equal(canEditInventory(['inv.projects']), true); // any kind of inventory
+  // roles saved before the split keep working
+  assert.equal(canEditInventory(['inv.edit'], 'listings'), true);
+  assert.equal(canEditInventory(['inv.edit'], 'demands'), true);
+  // whoever publishes can also fix what they approve
+  assert.equal(canEditInventory(['inv.publish'], 'projects'), true);
+  assert.equal(canPublishInventory(['inv.edit', 'inv.projects']), false);
+  assert.equal(canPublishInventory(['inv.publish']), true);
+  assert.equal(canEditInventory(['ld.edit', 'ld.phone']), false);
+  // listing photos follow the permission to edit listings or projects
+  const media = (perms) => canUploadMedia({ staff: true, role: 'r', perms }, 'image');
+  assert.equal(media(['inv.projects']), true);
+  assert.equal(media(['inv.listings']), true);
+  assert.equal(media(['inv.demands']), false);
+});

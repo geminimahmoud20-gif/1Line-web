@@ -36,6 +36,17 @@ export const getUserClaims = async (user) => {
 
 const isAdminClaims = (claims) => claims.admin === true || claims.role === 'admin' || claims.role === 'super_admin';
 
+/** The general manager, or an account whose role has «ينشر» (inv.publish): their saves go live */
+export const canPublishInventoryUser = async (user) => {
+  if (!user) return false;
+  try {
+    const claims = await getUserClaims(user);
+    return isAdminClaims(claims) || canPublishInventory(accessFromClaims(claims).perms);
+  } catch {
+    return false;
+  }
+};
+
 export const checkIsAdmin = async (user) => {
   if (!user) return false;
   try {
@@ -45,7 +56,7 @@ export const checkIsAdmin = async (user) => {
   }
 };
 
-import { accessFromClaims } from '../utils/accessModel.js';
+import { accessFromClaims, canPublishInventory } from '../utils/accessModel.js';
 
 // Staff roles are Firebase custom claims ({ role: 'sales_agent' }), set server-side with
 // scripts/set-crm-role.mjs — a user cannot change their own claims. Must match firestore.rules.
