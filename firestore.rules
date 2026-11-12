@@ -48,14 +48,32 @@ service cloud.firestore {
     function isLeadEditor() {
       return hasPerm('ld.edit') || hasPerm('ld.manage');
     }
-    function isInventoryEditor() {
-      return hasPerm('inv.edit');
+    // Inventory is split by kind of item: 'inv.listings', 'inv.projects', 'inv.demands'. 'inv.edit'
+    // covers all three (roles saved before the split carry it) and 'inv.publish' also edits, since
+    // whoever approves an item can fix it. One list lookup per check (see myPerms above).
+    // Same tests as canEditInventory() in src/utils/accessModel.js.
+    function invAllows(kind) {
+      return request.auth != null && (isAdmin() || myPerms().hasAny(['inv.edit', 'inv.publish', kind]));
     }
-    // Publishing needs the general manager (المدير العام): a listing or project saved by anyone
-    // else is stored as approval 'pending' and stays off the site until approved. Removing
-    // an item (tombstone) needs no approval. See src/utils/publishApproval.js.
+    function canEditListings() {
+      return invAllows('inv.listings');
+    }
+    function canEditProjects() {
+      return invAllows('inv.projects');
+    }
+    function canEditDemands() {
+      return invAllows('inv.demands');
+    }
+    // Any inventory work: the shared collections (areas, developers, search requests…)
+    function isInventoryEditor() {
+      return request.auth != null && (isAdmin() || myPerms().hasAny(['inv.edit', 'inv.publish', 'inv.listings', 'inv.projects', 'inv.demands']));
+    }
+    // Publishing needs the general manager (المدير العام) or an account with 'inv.publish': a
+    // listing or project saved by anyone else is stored as approval 'pending' and stays off the
+    // site until approved. Removing an item (tombstone) needs no approval.
+    // See src/utils/publishApproval.js.
     function publishAllowed(data) {
-      return isAdmin() || data.get('approval', '') == 'pending' || data.get('deleted', false) == true;
+      return hasPerm('inv.publish') || data.get('approval', '') == 'pending' || data.get('deleted', false) == true;
     }
     // A buyer request's text as the site shows it; staff edits to these on a published request
     // send it back for approval
@@ -64,7 +82,7 @@ service cloud.firestore {
               'timeframe', 'urgency', 'minSize'];
     }
     function demandPublishAllowed() {
-      return isAdmin()
+      return hasPerm('inv.publish')
         || request.resource.data.get('status', '') != 'published'
         || (resource.data.get('status', '') == 'published'
             && !request.resource.data.diff(resource.data).affectedKeys().hasAny(publicDemandContent()));
@@ -227,12 +245,12 @@ service cloud.firestore {
                     && request.resource.data.keys().size() <= 60
                     && boundedText(request.resource.data, 'notes', 2000)
                     && boundedText(request.resource.data, 'description', 3000)
-                    // A visitor cannot publish their own demand; only the general manager publishes
-                    && (isAdmin() || request.resource.data.get('status', 'pending') != 'published')
-                    && (isInventoryEditor() || !('status' in request.resource.data) || request.resource.data.status == 'pending');
+                    // A visitor cannot publish their own demand; only the general manager (or 'inv.publish') publishes
+                    && (hasPerm('inv.publish') || request.resource.data.get('status', 'pending') != 'published')
+                    && (canEditDemands() || !('status' in request.resource.data) || request.resource.data.status == 'pending');
       // Staff only. Visitors read public_demands; phones are in request_contacts.
       allow read: if isStaff();
-      allow update: if (isInventoryEditor() || hasPerm('ld.manage')) && keepsContactFields() && demandPublishAllowed();
+      allow update: if (canEditDemands() || hasPerm('ld.manage')) && keepsContactFields() && demandPublishAllowed();
       allow delete: if isAdmin();
     }
 
@@ -240,12 +258,12 @@ service cloud.firestore {
     // manager's approval (editors may only remove a copy) (syncPublicDemand in src/services/demands.js; same field list there).
     match /public_demands/{demandId} {
       allow read: if true;
-      allow create, update: if isAdmin()
+      allow create, update: if hasPerm('inv.publish')
                             && request.resource.data.keys().hasOnly([
                               'text_ar', 'text_en', 'area', 'area_ar', 'area_en', 'type', 'budget', 'paymentMethod',
                               'timeframe', 'urgency', 'minSize', 'status', 'timestamp', 'createdAt', 'approvedAt', 'updatedAt'])
                             && request.resource.data.status == 'published';
-      allow delete: if isInventoryEditor();
+      allow delete: if canEditDemands();
     }
 
     // 🏠 3. PROPERTIES INVENTORY
@@ -255,7 +273,7 @@ service cloud.firestore {
     match /properties/{propId} {
       allow read: if isStaff()
         || resource.data.get('status', '') in ['published', 'under_negotiation', 'reserved', 'deposit_paid', 'contracted', 'sold'];
-      allow create, update: if isInventoryEditor() && publishAllowed(request.resource.data);
+      allow create, update: if canEditListings() && publishAllowed(request.resource.data);
       allow delete: if hasPerm('inv.delete');
     }
 
@@ -305,7 +323,7 @@ service cloud.firestore {
     // 🏢 7. PROJECTS & MEGA DEVELOPMENTS
     match /projects/{projectId} {
       allow read: if true;
-      allow create, update: if isInventoryEditor() && publishAllowed(request.resource.data);
+      allow create, update: if canEditProjects() && publishAllowed(request.resource.data);
       allow delete: if hasPerm('inv.delete');
     }
 

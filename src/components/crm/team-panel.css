@@ -126,3 +126,6 @@
   .tm-subnav { width: 100%; justify-content: stretch; }
   .tm-subtab { flex: 1; justify-content: center; font-size: 12px; padding: 6px 8px; }
 }
+
+/* A group's note under its title, e.g. why a save waits for approval */
+.tm-perm-hint { margin: 2px 0 8px; font-size: var(--crm-text-xs, 12px); line-height: 1.6; color: var(--crm-muted); }

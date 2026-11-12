@@ -39,6 +39,7 @@ import { isFirebaseAuthAvailable, loginUser, requestPasswordReset } from '../fir
 import { useAuth } from '../context/AuthContext';
 import { useProperties } from '../context/PropertiesContext';
 import { parseMoney } from '../utils/crmLeadViews';
+import { canEditInventory, canPublishInventory } from '../utils/accessModel';
 import { canEditProperties, canEditLeadsRole, DESK_BY_ROLE, scopeLeadsForAccess } from '../utils/rbacRules';
 import { permsOfRole, PERM_IDS, LEGACY_DESK } from '../utils/accessModel';
 import { verifyAdminCredentials, checkRateLimit, recordFailedAttempt, resetFailedAttempts } from '../utils/securityShield';
@@ -96,7 +97,7 @@ export default function CrmPage({
   if (openRequest && openRequest.tab !== activeTab) setOpenRequest(null);
   const requestOpen = (type) => {
     // Never open a form the role can't save (the same checks guard the handlers themselves)
-    const allowed = { add_lead: can.editLeads, add_property: can.editInventory, add_demand: can.manageDemands, add_project: can.editInventory }[type];
+    const allowed = { add_lead: can.editLeads, add_property: can.editListings, add_demand: can.manageDemands, add_project: can.editProjects }[type];
     if (allowed === false) {
       if (triggerToast) triggerToast(lang === 'ar' ? 'صلاحياتك الحالية لا تسمح بهذا الإجراء' : 'Your role does not allow this action', 'error');
       return;
@@ -160,9 +161,13 @@ export default function CrmPage({
     [leads, activeRole, userPerms, userDesk]
   );
   const can = {
-    editInventory: canEditProperties(activeRole, userPerms),
+    // Inventory by kind of item; «ينشر» (inv.publish) also edits what it approves, and
+    // only «ينشر» takes a save live, anyone else's waits for approval
+    publish: activeRole === 'super_admin' || canPublishInventory(userPerms),
+    editListings: canEditProperties(activeRole, userPerms, 'listings'),
+    editProjects: canEditProperties(activeRole, userPerms, 'projects'),
     deleteInventory: activeRole === 'super_admin' || activeRole === 'property_manager' || Boolean(userPerms?.includes('inv.delete')),
-    manageDemands: ['super_admin', 'sales_manager', 'property_manager'].includes(activeRole) || Boolean(userPerms?.includes('inv.edit')),
+    manageDemands: ['super_admin', 'sales_manager', 'property_manager'].includes(activeRole) || canEditInventory(userPerms || [], 'demands'),
     // viewer / finance / property_manager read leads but don't change their pipeline
     editLeads: canEditLeadsRole(activeRole, userPerms),
     // Bulk file import of clients (and owners from a property file): managers only
@@ -170,7 +175,7 @@ export default function CrmPage({
     // Campaigns message clients directly: sales roles that see real numbers
     retarget: activeRole === 'super_admin' || (canEditLeadsRole(activeRole, userPerms) && Boolean(userPerms?.includes('ld.phone')))
   };
-  const canAddMap = { lead: can.editLeads, property: can.editInventory, demand: can.manageDemands, project: can.editInventory, retarget: can.retarget };
+  const canAddMap = { lead: can.editLeads, property: can.editListings, demand: can.manageDemands, project: can.editProjects, retarget: can.retarget };
   // Returns false when blocked so callers that check `=== false` don't report success
   const guard = (allowed, fn) => (...args) => {
     if (!allowed) {
@@ -869,19 +874,19 @@ export default function CrmPage({
           {activeTab === 'properties' ? (
             <PropertyManagerPanel
               shareRef={currentUser?.email || ''}
-              canApprove={activeRole === 'super_admin'}
+              canApprove={can.publish}
               openRequest={openRequest}
               projects={projects}
-              readOnly={!can.editInventory}
+              readOnly={!can.editListings}
               properties={properties}
               leads={visibleLeads}
               demands={demands}
-              onAddProperty={guard(can.editInventory, onAddProperty)}
-              onUpdateProperty={guard(can.editInventory, onUpdateProperty)}
+              onAddProperty={guard(can.editListings, onAddProperty)}
+              onUpdateProperty={guard(can.editListings, onUpdateProperty)}
               onDeleteProperty={guard(can.deleteInventory, onDeleteProperty)}
-              onImportProperties={can.editInventory ? handleImportProperties : undefined}
+              onImportProperties={can.editListings ? handleImportProperties : undefined}
               onImportLeads={can.importLeads ? handleImportLeads : undefined}
-              onAddContactLead={can.editInventory ? handleImportLeads : undefined}
+              onAddContactLead={can.editListings ? handleImportLeads : undefined}
               lang={lang}
               triggerToast={triggerToast}
               externalNewPropertyData={externalPropertyData}
@@ -900,18 +905,19 @@ export default function CrmPage({
               onUnpublishDemand={guard(can.manageDemands, onUnpublishDemand)}
               lang={lang}
               userRole={activeRole}
+              canPublish={can.publish}
               triggerToast={triggerToast}
             />
           ) : activeTab === 'projects' ? (
             <MegaProjectsManagerPanel
-              canApprove={activeRole === 'super_admin'}
+              canApprove={can.publish}
               properties={properties}
               canEditDevelopers={activeRole === 'super_admin' || activeRole === 'admin'}
               openRequest={openRequest}
-              readOnly={!can.editInventory}
+              readOnly={!can.editProjects}
               projects={projects}
-              onAddProject={guard(can.editInventory, onAddProject)}
-              onUpdateProject={guard(can.editInventory, onUpdateProject)}
+              onAddProject={guard(can.editProjects, onAddProject)}
+              onUpdateProject={guard(can.editProjects, onUpdateProject)}
               onDeleteProject={guard(can.deleteInventory, onDeleteProject)}
               lang={lang}
               triggerToast={triggerToast}

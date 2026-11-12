@@ -1,5 +1,5 @@
 import { db, auth, isFirebaseConfigured } from '../firebase.js';
-import { checkIsAdmin } from './auth.js';
+import { canPublishInventoryUser } from './auth.js';
 import { approvalStamp, STAFF_IDENTITY_FIELDS } from '../utils/publishApproval.js';
 
 import { collection, addDoc, doc, setDoc, deleteDoc, query, where, onSnapshot, serverTimestamp, writeBatch, deleteField, updateDoc } from 'firebase/firestore';
@@ -68,12 +68,12 @@ export const subscribeToCatalog = (collectionName, callback, { siteOnly = false 
 };
 
 /**
- * Who is saving: the general manager publishes, anyone else's save waits for approval
- * (src/utils/publishApproval.js; firestore.rules enforces the same).
+ * Who is saving: the general manager, or a role with «ينشر», publishes; anyone else's save waits
+ * for approval (src/utils/publishApproval.js; firestore.rules enforces the same).
  */
 export const currentApprover = async () => {
   const user = auth?.currentUser || null;
-  return { isManager: await checkIsAdmin(user) };
+  return { isManager: await canPublishInventoryUser(user) };
 };
 
 /**

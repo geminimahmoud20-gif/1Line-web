@@ -26,13 +26,14 @@ export default function DemandsManagerPanel({
   onUnpublishDemand,
   lang = 'ar',
   userRole = 'super_admin',
+  canPublish: canPublishProp,
   triggerToast,
   openRequest = null,
   readOnly = false
 }) {
   const confirm = useConfirm();
-  // Only the general manager publishes a request (firestore.rules enforces it too)
-  const isManager = userRole === 'super_admin';
+  // Only the general manager, or a role with «ينشر», publishes a request (firestore.rules enforces it too)
+  const isManager = canPublishProp ?? userRole === 'super_admin';
   const isAr = lang === 'ar';
   const canViewPhone = canViewLeadPhone(userRole);
 

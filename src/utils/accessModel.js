@@ -21,7 +21,14 @@ export const PERMISSIONS = [
   { id: 'ld.manage', group: 'leads', ar: 'يدير كل العملاء وينقلهم بين الفرق', en: 'Manage every lead and move leads between teams' },
   { id: 'ld.phone', group: 'leads', ar: 'يشوف أرقام وإيميلات العملاء', en: 'See client phones and emails' },
   { id: 'ld.import', group: 'leads', ar: 'استيراد عملاء من ملف', en: 'Import leads from a file' },
-  { id: 'inv.edit', group: 'inventory', ar: 'إضافة وتعديل العقارات والمشروعات والطلبات', en: 'Add and edit listings, projects and demands' },
+  // Inventory, one switch per kind of item. «كل المخزون» (inv.edit) covers the three at once and is
+  // what the roles saved before this split carry. Whoever lacks «ينشر» saves for approval: the item
+  // stays off the site until someone with it approves (src/utils/publishApproval.js).
+  { id: 'inv.listings', group: 'inventory', ar: 'العقارات: يضيف ويعدّل', en: 'Listings: add and edit' },
+  { id: 'inv.projects', group: 'inventory', ar: 'المشروعات: يضيف ويعدّل', en: 'Projects: add and edit' },
+  { id: 'inv.demands', group: 'inventory', ar: 'طلبات المشترين: يضيف ويعدّل', en: 'Buyer requests: add and edit' },
+  { id: 'inv.edit', group: 'inventory', ar: 'كل ما سبق مرة واحدة', en: 'All of the above at once' },
+  { id: 'inv.publish', group: 'inventory', ar: 'ينشر من غير موافقة ويوافق على اللي الفريق قدّمه', en: 'Publish without approval, approve the team’s items' },
   { id: 'inv.delete', group: 'inventory', ar: 'حذف العقارات والمشروعات', en: 'Delete listings and projects' },
   { id: 'deal.all', group: 'deals', ar: 'يشوف كل الصفقات', en: 'See every deal' },
   { id: 'deal.edit', group: 'deals', ar: 'يضيف ويعدّل الصفقات (كلها لو معاه «كل الصفقات»، وإلا صفقات فريقه)', en: 'Add and edit deals (all with “every deal”, otherwise their team’s)' },
@@ -30,9 +37,27 @@ export const PERMISSIONS = [
 ];
 export const PERM_IDS = PERMISSIONS.map((p) => p.id);
 
+/** The permission that lets someone edit one kind of inventory (inv.edit and inv.publish also do) */
+export const INVENTORY_PERM = { listings: 'inv.listings', projects: 'inv.projects', demands: 'inv.demands' };
+/** Shown ticked, and locked, while «كل المخزون» is on */
+export const PERM_IMPLIED_BY = { 'inv.listings': 'inv.edit', 'inv.projects': 'inv.edit', 'inv.demands': 'inv.edit' };
+
+/**
+ * Whether a permission list may edit one kind of inventory ('listings' | 'projects' | 'demands'),
+ * or any kind when `area` is empty. Same test as firestore.rules canEditListings() and friends.
+ */
+export function canEditInventory(perms = [], area = '') {
+  if (!Array.isArray(perms)) return false;
+  if (perms.includes('*') || perms.includes('inv.edit') || perms.includes('inv.publish')) return true;
+  return area ? perms.includes(INVENTORY_PERM[area]) : Object.values(INVENTORY_PERM).some((p) => perms.includes(p));
+}
+
+/** Whether a permission list may publish without approval and approve what others submitted */
+export const canPublishInventory = (perms = []) => Array.isArray(perms) && (perms.includes('*') || perms.includes('inv.publish'));
+
 export const PERM_GROUPS = [
   { id: 'leads', ar: 'العملاء', en: 'Leads' },
-  { id: 'inventory', ar: 'العقارات', en: 'Inventory' },
+  { id: 'inventory', ar: 'العقارات', en: 'Inventory', hint_ar: 'اللي مالوش «ينشر» بيضيف ويعدّل، بس اللي يحفظه بيستنى موافقة قبل ما يظهر على الموقع.', hint_en: 'Without “Publish”, what they save waits for approval before it is on the site.' },
   { id: 'deals', ar: 'الصفقات', en: 'Deals' },
   { id: 'finance', ar: 'المالية والتقارير', en: 'Finance & reports' }
 ];
@@ -176,7 +201,7 @@ export function canUploadMedia(claims = {}, kind = 'image') {
   const access = accessFromClaims(claims);
   if (access.isAdmin) return true;
   if (kind === 'video') return false;
-  return access.perms.includes('inv.edit');
+  return canEditInventory(access.perms, 'listings') || canEditInventory(access.perms, 'projects');
 }
 
 /** Custom claims for a member: other claims kept, CRM access replaced. role null → access removed. */
