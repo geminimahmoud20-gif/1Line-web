@@ -327,6 +327,12 @@ service cloud.firestore {
       allow delete: if hasPerm('inv.delete');
     }
 
+    // 📣 7b. CAMPAIGN SPEND — what each ad campaign cost, typed in the campaign report.
+    // Managers only (never public): one doc `all` with the amounts.
+    match /campaign_spend/{docId} {
+      allow read, write: if hasPerm('ld.manage');
+    }
+
     // 📢 8. SPONSORED ADS & CAMPAIGNS
     match /advertisements/{adId} {
       allow read: if true;
