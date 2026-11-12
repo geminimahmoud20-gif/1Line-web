@@ -131,3 +131,14 @@
   .mt-options.is-kinds .mt-option-count { top: 10px; transform: none; }
   .mt-options.is-kinds .mt-option-text small { display: none; }
 }
+
+/* «سيب رقمك»: a short form under the matches */
+.mt-lead { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+.mt-lead h2 { margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--text-primary); }
+.mt-lead p { margin: 0; color: var(--text-muted); line-height: 1.7; }
+.mt-lead-field { display: flex; flex-direction: column; gap: 6px; font-weight: 700; color: var(--text-primary); }
+.mt-lead-field input { min-height: 46px; padding: 0 12px; border: 1px solid var(--border-light, #d6d6d6); border-radius: 10px; font: inherit; background: var(--surface, #fff); color: inherit; }
+.mt-lead-error { color: #b42318 !important; font-weight: 700; }
+.mt-lead.is-done { flex-direction: row; align-items: center; gap: 12px; }
+.mt-lead.is-done svg { flex: none; color: #067647; }
+.mt-lead .mt-btn { width: 100%; justify-content: center; min-height: 48px; }

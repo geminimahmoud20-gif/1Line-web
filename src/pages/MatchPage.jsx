@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check, X, Info, MessageSquare, RotateCcw, Home, TrendingUp, Zap, Hourglass, Shuffle, Wallet, CalendarClock, Building2, Building, Store, Briefcase, LandPlot, Sprout, Factory, Wrench, MapPin } from 'lucide-react';
 import Advisor from '../components/match/Advisor';
+import MatchLeadForm from '../components/match/MatchLeadForm';
 import { KINDS, kindOf, isKind, purposesFor, prioritiesFor, FAMILY_SIZES, rankUnits, answersMessage } from '../utils/buyerMatch';
 import { liveListings } from '../utils/marketStats';
 import { getAreas } from '../utils/areasData';
@@ -285,6 +286,8 @@ export default function MatchPage({ properties = [], lang = 'ar' }) {
                 );
               })}
             </ul>
+
+            <MatchLeadForm answers={a} message={answersMessage(a, areaName)} areaName={areaName} />
 
             <div className="mt-card mt-cta">
               <div>
