@@ -241,9 +241,9 @@
 .ui-kpi-row:focus-visible { outline: none; box-shadow: var(--ui-sh-focus); border-radius: var(--ui-r-lg); }
 .ui-kpi-row { display: grid; gap: var(--ui-s-3); grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
 @media (max-width: 639px) {
-  .ui-kpi-row { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin-inline: calc(var(--ui-s-4) * -1); padding-inline: var(--ui-s-4); }
-  .ui-kpi-row::-webkit-scrollbar { display: none; }
-  .ui-kpi-row > * { flex: 0 0 62%; scroll-snap-align: start; }
+  /* Two per row, all visible: the sideways carousel clipped a card and its text with no sign it scrolled */
+  .ui-kpi-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ui-s-2); }
+  .ui-kpi-row > :last-child:nth-child(odd) { grid-column: 1 / -1; }
   .ui-kpi__value { font-size: var(--ui-fs-6); }
 }
 
