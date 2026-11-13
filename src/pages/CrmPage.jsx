@@ -15,7 +15,7 @@ import SystemSection, { RestrictedSection } from '../components/crm/SystemSectio
 import { announceNewLeads, announceDownloads, announceIntake } from '../utils/newLeadAlerts';
 import { unlockChimeOnFirstTouch } from '../utils/notificationHub';
 import { getDynamicPhone } from '../utils/founderCmsData';
-import { subscribeToClientDownloads, subscribeToIntake, logoutUser, stripStaffIdentity } from '../firebaseLazy';
+import { subscribeToClientDownloads, subscribeToIntake, logoutUser, stripStaffIdentity, updateTask } from '../firebaseLazy';
 import { hasStaffIdentity } from '../utils/publishApproval';
 import useIdleLock from '../components/crm/useIdleLock';
 import { setManifestFor } from '../utils/appManifest';
@@ -40,7 +40,7 @@ import { MotionRoot, ConfirmProvider } from '../components/ui';
 import { isFirebaseAuthAvailable, loginUser, requestPasswordReset } from '../firebaseService';
 import { useAuth } from '../context/AuthContext';
 import { useTasks, useTasksSync } from '../hooks/useTasks';
-import { taskCounts } from '../utils/tasks';
+import { taskCounts, tasksOfEndedLeads, autoCompletion } from '../utils/tasks';
 import { useProperties } from '../context/PropertiesContext';
 import { parseMoney } from '../utils/crmLeadViews';
 import { canEditInventory, canPublishInventory } from '../utils/accessModel';
@@ -185,6 +185,16 @@ export default function CrmPage({
   useTasksSync(currentUser?.uid, can.campaigns);
   const { tasks: allTasks } = useTasks();
   const taskBadge = taskCounts(allTasks, currentUser?.uid).due;
+  // A client who closed or was lost no longer needs chasing: close their open tasks (once per task)
+  const autoClosed = useRef(new Set());
+  useEffect(() => {
+    if (!crmAuthenticated) return;
+    for (const t of tasksOfEndedLeads(allTasks, leads)) {
+      if (autoClosed.current.has(t.id)) continue;
+      autoClosed.current.add(t.id);
+      updateTask(t.id, autoCompletion());
+    }
+  }, [allTasks, leads, crmAuthenticated]);
   const canAddMap = { lead: can.editLeads, property: can.editListings, demand: can.manageDemands, project: can.editProjects, retarget: can.retarget };
   // Returns false when blocked so callers that check `=== false` don't report success
   const guard = (allowed, fn) => (...args) => {
