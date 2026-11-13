@@ -33,20 +33,23 @@ export function campaignReport(leads = [], { by = 'campaign', days = 0, now = Da
     if (since && leadCreatedMs(l) < since) continue;
     const ad = by === 'ad' ? (c.ad || '—') : '';
     const key = spendKey(c.campaign, ad === '—' ? '' : ad) + (by === 'ad' && ad === '—' ? '::—' : '');
-    const row = rows.get(key) || { key, campaign: c.campaign, ad, source: c.source, leads: 0, contacted: 0, visits: 0, closed: 0, lost: 0, toVisit: [] };
+    const row = rows.get(key) || { key, campaign: c.campaign, ad, source: c.source, leads: 0, contacted: 0, visits: 0, closed: 0, lost: 0, toVisit: [], reasons: {} };
     row.leads += 1;
     if (reachedAny(l, CONTACTED)) row.contacted += 1;
     if (reachedAny(l, VISITED)) { row.visits += 1; row.toVisit.push(msToReach(l, VISITED)); }
     if (reachedAny(l, ['closed'])) row.closed += 1;
-    if (l.status === 'lost') row.lost += 1;
+    if (l.status === 'lost') { row.lost += 1; const why = l.lostReason || 'other'; row.reasons[why] = (row.reasons[why] || 0) + 1; }
     rows.set(key, row);
   }
   return [...rows.values()]
     .map((r) => {
       const cost = Number(spend[r.key]) || 0;
-      const { toVisit, ...rest } = r;
+      const { toVisit, reasons, ...rest } = r;
+      // The reason most lost clients gave (ties: the one that came first), with how many
+      const top = Object.entries(reasons).sort((a, b) => b[1] - a[1])[0];
       return {
         ...rest,
+        topLostReason: top ? { id: top[0], count: top[1] } : null,
         avgDaysToVisit: avgDays(toVisit),
         spend: cost,
         costPerLead: cost && r.leads ? Math.round(cost / r.leads) : 0,

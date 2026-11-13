@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Megaphone } from 'lucide-react';
 import { campaignReport, campaignTotals, PERIODS } from '../../utils/campaignReport';
+import { LOST_REASONS } from '../../utils/crmLeadViews';
 import { loadCampaignSpend, saveCampaignSpend } from '../../firebaseLazy';
 import { EmptyState } from '../ui';
 import './campaign-report.css';
@@ -89,6 +90,10 @@ export default function CampaignReportPanel({ leads = [], lang = 'ar' }) {
                   <strong>{r.campaign}</strong>
                   {by === 'ad' && <span>{r.ad}</span>}
                   {r.source && <small>{r.source}</small>}
+                  {r.topLostReason && (() => {
+                    const reason = LOST_REASONS.find((x) => x.id === r.topLostReason.id);
+                    return <small className="cr-lost">{L(`أكتر سبب ضياع: ${reason?.ar || 'سبب آخر'} (${r.topLostReason.count})`, `Top loss reason: ${reason?.en || 'Other'} (${r.topLostReason.count})`)}</small>;
+                  })()}
                   {r.avgDaysToVisit > 0 && <small>{L(`متوسط ${r.avgDaysToVisit} يوم لحد المعاينة`, `Avg ${r.avgDaysToVisit} days to a visit`)}</small>}
                 </div>
                 <dl className="cr-nums">

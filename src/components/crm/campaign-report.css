@@ -31,3 +31,4 @@
   .cr-seg { flex: 1 1 100%; }
   .cr-seg button { flex: 1; padding: 0 8px; }
 }
+.cr-name .cr-lost { color: var(--ui-danger); }
