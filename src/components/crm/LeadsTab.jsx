@@ -12,7 +12,7 @@ import { getAreas } from '../../utils/areasData';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import LostReasonModal from './LostReasonModal';
 import MergeLeadsModal from './MergeLeadsModal';
-import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, responseSlaMs, isOverdue, isDueToday, isUnassigned, isStale, localDayKey, getLeadVisitDate, getLeadVisitSlot, isViewingLead, isSellerLead, isAccountLead } from '../../utils/crmLeadViews';
+import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, responseSlaMs, escalationLevel, isOverdue, isDueToday, isUnassigned, isStale, localDayKey, getLeadVisitDate, getLeadVisitSlot, isViewingLead, isSellerLead, isAccountLead } from '../../utils/crmLeadViews';
 import { useProperties } from '../../context/PropertiesContext';
 import LeadTableRowActions from './LeadTableRowActions';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
@@ -775,10 +775,10 @@ export default function LeadsTab({
                           <span className="crm-lead-chip">{sourceLabel(l)}</span>
                           {waited > 0 && (
                             <span
-                              className={`crm-lead-chip ${waited > responseSlaMs(l) ? 'is-late' : 'is-waiting'}`}
+                              className={`crm-lead-chip ${escalationLevel(l, now) === 2 ? 'is-late is-escalated' : waited > responseSlaMs(l) ? 'is-late' : 'is-waiting'}`}
                               title={isAr ? (responseSlaMs(l) < 3600000 ? 'وقت من غير أول رد. عميل إعلان: المطلوب خلال ١٥ دقيقة' : 'وقت من غير أول رد') : 'Time without a first reply'}
                             >
-                              <Timer size={12} aria-hidden="true" />{isAr ? `بدون رد ${fmtWait(waited)}` : `No reply ${fmtWait(waited)}`}
+                              <Timer size={12} aria-hidden="true" />{isAr ? `${escalationLevel(l, now) === 2 ? 'متصعّد · ' : ''}بدون رد ${fmtWait(waited)}` : `${escalationLevel(l, now) === 2 ? 'Escalated · ' : ''}No reply ${fmtWait(waited)}`}
                             </span>
                           )}
                           {dupCount > 0 && (
