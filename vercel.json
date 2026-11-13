@@ -21,8 +21,9 @@
     { "source": "/projects/:id", "destination": "/api/page-shell?kind=project&id=:id" },
     { "source": "/demands/:id", "destination": "/api/page-shell?kind=demand&id=:id" },
     { "source": "/developers/:slug", "destination": "/app.html" },
-    { "source": "/sohag/:kind", "destination": "/app.html" },
-    { "source": "/sohag/:kind/:area", "destination": "/app.html" }
+    { "source": "/sohag/:kind", "destination": "/api/page-shell?kind=landing&slug=:kind" },
+    { "source": "/sohag/:kind/:area", "destination": "/api/page-shell?kind=landing&slug=:kind&area=:area" },
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" }
   ],
   "headers": [
     {

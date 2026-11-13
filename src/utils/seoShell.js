@@ -10,7 +10,7 @@
 // =============================================================
 
 import { listingPreview } from './listingShare.js';
-import { LANDING_KINDS, LANDING_AREAS, landingPath } from './seoLanding.js';
+import { LANDING_KINDS, LANDING_AREAS, landingPath, landingListings, landingSummary, landingCopy, landingFaq } from './seoLanding.js';
 
 const areaOf = (p) => LANDING_AREAS.find((a) => a.id === p?.areaKey) || null;
 const kindOf = (p) => LANDING_KINDS.find((k) => k.types.includes(p?.type)) || null;
@@ -290,4 +290,41 @@ export function buildDemandShell(template, d, origin) {
     + list([budget ? `الميزانية: حتى ${esc(budget)}` : '', area ? `المنطقة: ${esc(area)}` : ''].filter(Boolean))
     + '<p><a href="/sell">عندك وحدة مناسبة؟ اعرضها على 1Line</a></p></article>' + footerNav();
   return withRoot(html, body, 'demand');
+}
+
+/**
+ * A search landing page (/sohag/:kind/:area?) as static HTML: title, description, canonical,
+ * breadcrumbs and FAQ JSON-LD, plus the H1, intro, listing links and FAQ inside #root, so search
+ * engines read the page before any script runs (React replaces it on load).
+ */
+export function buildLandingShell(template, page, listings, origin) {
+  const { kind, area } = page;
+  const own = landingListings(listings, kind, area);
+  const s = landingSummary(own);
+  const copy = landingCopy(kind, area, s);
+  const faq = landingFaq(kind, area, s);
+  const url = `${origin}${landingPath(kind, area)}`;
+  const title = `${copy.title} | 1Line Solutions`;
+  const crumbs = [{ name: 'الرئيسية', item: `${origin}/` }, { name: `${kind.ar} في سوهاج`, item: `${origin}${landingPath(kind)}` }];
+  if (area) crumbs.push({ name: copy.h1, item: url });
+  const ld = [
+    { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, ...c })) },
+    { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) }
+  ];
+  const items = own.slice(0, 40).map((p) => `<li><a href="/properties/${encodeURIComponent(p.id)}">${esc(sanitizeMetaText(p.title_ar || p.title_en || 'عقار'))}</a>${p.price ? ` — ${esc(fmtPrice(p.price))}` : ''}</li>`).join('');
+  const body = `<main class="seo-shell" dir="rtl"><h1>${esc(copy.h1)}</h1><p>${esc(copy.intro)}</p>${items ? `<ul>${items}</ul>` : ''}`
+    + `<section><h2>أسئلة شائعة</h2>${faq.map((f) => `<h3>${esc(f.q)}</h3><p>${esc(f.a)}</p>`).join('')}</section></main>`;
+
+  let html = template;
+  html = strictReplace(html, /<title>[\s\S]*?<\/title>/, `<title>${esc(title)}</title>`, 'landing title');
+  html = strictReplace(html, /(<meta name="description" content=")[^"]*(")/, `$1${esc(copy.description)}$2`, 'landing description');
+  html = strictReplace(html, /(<link rel="canonical" href=")[^"]*(")/, `$1${esc(url)}$2`, 'landing canonical');
+  html = strictReplace(html, /(<meta property="og:url" content=")[^"]*(")/, `$1${esc(url)}$2`, 'landing og:url');
+  html = strictReplace(html, /(<meta property="og:title" content=")[^"]*(")/, `$1${esc(title)}$2`, 'landing og:title');
+  html = strictReplace(html, /(<meta property="og:description" content=")[^"]*(")/, `$1${esc(copy.description)}$2`, 'landing og:desc');
+  html = strictReplace(html, /(<meta name="twitter:title" content=")[^"]*(")/, `$1${esc(title)}$2`, 'landing twitter:title');
+  html = strictReplace(html, /(<meta name="twitter:description" content=")[^"]*(")/, `$1${esc(copy.description)}$2`, 'landing twitter:desc');
+  html = strictReplace(html, /<div id="root"><\/div>/, `<div id="root">${body}</div>`, 'landing root');
+  html = html.replace('</head>', `${ld.map((o) => `    <script type="application/ld+json">\n${JSON.stringify(o, null, 2).replace(/</g, '\\u003c')}\n    </script>`).join('\n')}\n  </head>`);
+  return html;
 }
