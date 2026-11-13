@@ -913,7 +913,7 @@ export const CrmAdminPanel = ({
       {/* 📣 Campaign report: leads, visits and cost per ad campaign (managers) */}
       {adminTab === 'campaigns' && (
         (isSuperRole || perms.includes('ld.manage')) ? (
-          <CampaignReportPanel leads={leads} lang={lang} />
+          <CampaignReportPanel leads={leads} lang={lang} triggerToast={triggerToast} />
         ) : (
           <div className="crm-table-container">{isAr ? 'تقرير الحملات للمدير العام ومديري المبيعات.' : 'The campaign report is for admins and sales managers.'}</div>
         )

@@ -32,3 +32,14 @@
   .cr-seg button { flex: 1; padding: 0 8px; }
 }
 .cr-name .cr-lost { color: var(--ui-danger); }
+
+/* The ad link builder */
+.cr-builder { margin-bottom: 14px; border: 1px solid var(--ui-line-strong); border-radius: 12px; background: var(--ui-surface); }
+.cr-builder > summary { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; cursor: pointer; font-weight: 700; }
+.cr-builder__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; padding: 0 14px 10px; }
+.cr-builder__grid label { display: grid; gap: 4px; font-size: 0.85rem; color: var(--ui-text-3); }
+.cr-builder__grid select, .cr-builder__grid input, .cr-builder__out input { min-height: 40px; padding: 0 10px; border: 1px solid var(--ui-line-strong); border-radius: 8px; background: var(--ui-surface); color: var(--ui-text); font: inherit; width: 100%; min-width: 0; }
+.cr-builder__warn, .cr-builder__hint { margin: 0 14px 10px; font-size: 0.85rem; line-height: 1.7; }
+.cr-builder__warn { color: var(--ui-danger); }
+.cr-builder__hint { color: var(--ui-text-3); }
+.cr-builder__out { display: flex; gap: 8px; padding: 0 14px 14px; }
