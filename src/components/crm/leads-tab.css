@@ -274,3 +274,7 @@
   .crm-layout .crm-leads .crm-action-group .crm-icon-btn { width: 36px; height: 36px; }
   .crm-layout .crm-leads .crm-action-group .crm-btn-quick { height: 36px; }
 }
+
+/* Source chips: an icon each; ads stand out (they are the clients with the 15-minute reply target) */
+.crm-layout .crm-leads .crm-lead-chip.is-source { display: inline-flex; align-items: center; gap: 4px; }
+.crm-layout .crm-leads .crm-lead-chip.is-source-ads { background: var(--ui-primary-tint); color: var(--ui-primary-text); font-weight: var(--ui-fw-semibold); }
