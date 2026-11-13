@@ -5,7 +5,7 @@
 // Bumping the name drops every older cache on activate, including an app shell saved by an old
 // worker: that stale '/' pointed at a bundle from before the deploy and crashed with
 // «Cannot read properties of undefined (reading 'default')» once its chunks were gone.
-const CACHE_NAME = 'oneline-sohag-v16';
+const CACHE_NAME = 'oneline-sohag-v17';
 const SHELL_URL = '/';
 const STATIC_ASSETS = [
   '/',
@@ -92,6 +92,21 @@ self.addEventListener('fetch', (event) => {
       });
     })
   );
+});
+
+// Phone reminder from the hourly job (scripts/send-followup-reminders.mjs): a short digest of late
+// replies and follow-ups due. Tapping it opens the clients list (notificationclick below).
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch { /* plain text or empty */ }
+  event.waitUntil(self.registration.showNotification(String(data.title || '1Line'), {
+    body: String(data.body || ''),
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    tag: 'oneline-followups',
+    renotify: true,
+    data: { url: typeof data.url === 'string' ? data.url : '/crm?tab=leads' }
+  }));
 });
 
 // CRM alerts (src/utils/newLeadAlerts.js → showSystemAlert): tapping one brings the CRM forward on

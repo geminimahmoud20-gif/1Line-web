@@ -368,6 +368,22 @@ test('campaign_spend: only people who manage leads read or write it', async () =
   await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'campaign_spend/all')));
 });
 
+test('push_subscriptions: a member manages only their own, never the server digest record, and the private key is closed', async () => {
+  const mgr = env.authenticatedContext('u-mgr', { role: 'sales_manager' }).firestore();
+  const sub = { endpoint: 'https://push.example/abc', keys: { p256dh: 'x', auth: 'y' } };
+  await assertSucceeds(setDoc(doc(mgr, 'push_subscriptions/u-mgr'), { subs: [sub], manager: true, name: 'منى', updatedAt: 'now' }));
+  await assertSucceeds(getDoc(doc(mgr, 'push_subscriptions/u-mgr')));
+  // not another member's, not with a forged digest record, not too many devices, not a stranger
+  await assertFails(setDoc(doc(mgr, 'push_subscriptions/u-other'), { subs: [sub] }));
+  await assertFails(getDoc(doc(as('sales_agent'), 'push_subscriptions/u-mgr')));
+  await assertFails(setDoc(doc(mgr, 'push_subscriptions/u-mgr'), { subs: [sub], lastDigest: { sig: '9|9|9', at: 'x' } }));
+  await assertFails(setDoc(doc(mgr, 'push_subscriptions/u-mgr'), { subs: [sub, sub, sub, sub, sub, sub] }));
+  await assertFails(setDoc(doc(mgr, 'push_subscriptions/u-mgr'), { subs: [sub], isAdmin: true }));
+  await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'push_subscriptions/u-mgr')));
+  await assertFails(getDoc(doc(asAdmin(), 'push_private/vapid')));
+  await assertFails(setDoc(doc(asAdmin(), 'push_private/vapid'), { privateKey: 'x' }));
+});
+
 test('staff_prefs: each member reads and writes only their own bell marker', async () => {
   const mgr = env.authenticatedContext('u-mgr', { role: 'sales_manager' }).firestore();
   await assertSucceeds(setDoc(doc(mgr, 'staff_prefs/u-mgr'), { alertsSeenAt: 1761700000000 }));
