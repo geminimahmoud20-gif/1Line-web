@@ -4,6 +4,7 @@
  */
 
 import { track } from './analytics';
+import { carryTouch } from './attributionTouches';
 
 const STORAGE_KEYS = {
   SESSION: 'oneline_visitor_session',
@@ -321,6 +322,26 @@ function formatDuration(seconds) {
  * Extracts UTM parameters (source, medium, campaign, content, term) + Referrer
  */
 const STORAGE_KEY_ATTRIBUTION = 'oneline_lead_attribution';
+const LAST_TOUCH_KEY = 'oneline_last_touch'; // the last visit that came from somewhere (kept across visits, localStorage)
+const FIRST_TOUCH_KEY = 'oneline_first_touch'; // the very first one, never overwritten
+
+const readJson = (store, key) => { try { return JSON.parse(store.getItem(key) || 'null'); } catch { return null; } };
+
+/** Credits a direct return to the stored touch, remembers a new one, and keeps this visit's answer for its pages */
+function settle(attribution) {
+  const { attribution: result, remember } = carryTouch(attribution, readJson(localStorage, LAST_TOUCH_KEY));
+  try {
+    if (remember) {
+      localStorage.setItem(LAST_TOUCH_KEY, JSON.stringify(result));
+      if (!readJson(localStorage, FIRST_TOUCH_KEY)) localStorage.setItem(FIRST_TOUCH_KEY, JSON.stringify(result));
+    }
+    sessionStorage.setItem(STORAGE_KEY_ATTRIBUTION, JSON.stringify(result));
+  } catch { /* storage unavailable — non-fatal */ }
+  return result;
+}
+
+/** The first touch ever recorded on this browser, or null */
+export const getFirstTouch = () => { try { return readJson(localStorage, FIRST_TOUCH_KEY); } catch { return null; } };
 
 export function captureMarketingAttribution() {
   if (typeof window === 'undefined') return null;
@@ -346,8 +367,7 @@ export function captureMarketingAttribution() {
         landingPage: window.location.pathname,
         capturedAt: new Date().toISOString()
       };
-      sessionStorage.setItem(STORAGE_KEY_ATTRIBUTION, JSON.stringify(attribution));
-      return attribution;
+      return settle(attribution);
     }
 
     // Fallback: check existing
@@ -375,17 +395,17 @@ export function captureMarketingAttribution() {
         landingPage: window.location.pathname,
         capturedAt: new Date().toISOString()
       };
-      sessionStorage.setItem(STORAGE_KEY_ATTRIBUTION, JSON.stringify(organicAttribution));
-      return organicAttribution;
+      return settle(organicAttribution);
     }
 
-    return {
+    // Direct: credited to the last touch from somewhere when there is a recent one
+    return settle({
       source: 'مباشر (Direct / Organic)',
       medium: 'none',
       campaign: 'direct_visit',
       landingPage: window.location.pathname,
       capturedAt: new Date().toISOString()
-    };
+    });
   } catch (err) {
     return { source: 'مباشر', medium: 'none', campaign: 'direct' };
   }
