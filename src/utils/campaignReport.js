@@ -1,9 +1,11 @@
 // =============================================================
 //  «تقرير الحملات»: per ad campaign (utm_campaign) or per ad (utm_content), how many leads came,
 //  how far they got, and what each cost. Pure, so tests/unit/campaign-report.test.mjs runs it.
-//  A lead "reached a visit" when its status is site_visit or later (or it closed).
+//  A lead "reached a visit" when it is in site_visit or later, or its stage history shows it ever was
+//  (so a client lost after a visit still counts as a visit, and avgDaysToVisit can be worked out).
 // =============================================================
 import { leadCampaign, leadCreatedMs } from './crmLeadViews.js';
+import { reachedAny, msToReach, avgDays } from './stageHistory.js';
 
 const VISITED = new Set(['site_visit', 'negotiating', 'closing', 'closed']);
 const CONTACTED = new Set(['contacted', ...VISITED]);
@@ -31,19 +33,21 @@ export function campaignReport(leads = [], { by = 'campaign', days = 0, now = Da
     if (since && leadCreatedMs(l) < since) continue;
     const ad = by === 'ad' ? (c.ad || '—') : '';
     const key = spendKey(c.campaign, ad === '—' ? '' : ad) + (by === 'ad' && ad === '—' ? '::—' : '');
-    const row = rows.get(key) || { key, campaign: c.campaign, ad, source: c.source, leads: 0, contacted: 0, visits: 0, closed: 0, lost: 0 };
+    const row = rows.get(key) || { key, campaign: c.campaign, ad, source: c.source, leads: 0, contacted: 0, visits: 0, closed: 0, lost: 0, toVisit: [] };
     row.leads += 1;
-    if (CONTACTED.has(l.status)) row.contacted += 1;
-    if (VISITED.has(l.status)) row.visits += 1;
-    if (l.status === 'closed') row.closed += 1;
+    if (reachedAny(l, CONTACTED)) row.contacted += 1;
+    if (reachedAny(l, VISITED)) { row.visits += 1; row.toVisit.push(msToReach(l, VISITED)); }
+    if (reachedAny(l, ['closed'])) row.closed += 1;
     if (l.status === 'lost') row.lost += 1;
     rows.set(key, row);
   }
   return [...rows.values()]
     .map((r) => {
       const cost = Number(spend[r.key]) || 0;
+      const { toVisit, ...rest } = r;
       return {
-        ...r,
+        ...rest,
+        avgDaysToVisit: avgDays(toVisit),
         spend: cost,
         costPerLead: cost && r.leads ? Math.round(cost / r.leads) : 0,
         costPerVisit: cost && r.visits ? Math.round(cost / r.visits) : 0,

@@ -89,6 +89,7 @@ export default function CampaignReportPanel({ leads = [], lang = 'ar' }) {
                   <strong>{r.campaign}</strong>
                   {by === 'ad' && <span>{r.ad}</span>}
                   {r.source && <small>{r.source}</small>}
+                  {r.avgDaysToVisit > 0 && <small>{L(`متوسط ${r.avgDaysToVisit} يوم لحد المعاينة`, `Avg ${r.avgDaysToVisit} days to a visit`)}</small>}
                 </div>
                 <dl className="cr-nums">
                   <div><dt>{L('عملاء', 'Leads')}</dt><dd>{r.leads}</dd></div>

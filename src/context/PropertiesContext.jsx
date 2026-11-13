@@ -44,6 +44,7 @@ import { applySiteSettings, SITE_SETTINGS_KEY } from '../utils/siteSettings';
 import { applyDevelopers } from '../utils/developers';
 import { usePreferences } from './PreferencesContext';
 import { demandEditStamp } from '../utils/publishApproval';
+import { stageHistoryAfter, initialStageHistory } from '../utils/stageHistory';
 import { useUIModal } from './UIModalContext';
 
 // ── Browser cache of leads/demands ───────────────────────────────────────────
@@ -572,6 +573,7 @@ export function PropertiesProvider({ children }) {
         createdBy: standardizedData.createdBy || 'online_visitor',
         lastActivityAt: nowIso,
         followUp: 'Pending Contact',
+        stageHistory: initialStageHistory(nowIso),
         activityLogs: [{
           timestamp: nowIso,
           action: 'تسجيل العميل لأول مرة عبر المنصة'
@@ -848,6 +850,11 @@ export function PropertiesProvider({ children }) {
       if ((s && s !== 'new') || updatedFields.lastContactedAt) {
         extra.firstContactedAt = updatedFields.lastContactedAt || nowIso;
       }
+    }
+    // When the lead entered each stage (the lead itself keeps only its current one)
+    if (current && updatedFields.status) {
+      const history = stageHistoryAfter(current, updatedFields.status, nowIso);
+      if (history) extra.stageHistory = history;
     }
     // When a deal is won, for this month's commission figures
     if (updatedFields.status === 'closed' && current?.status !== 'closed' && !updatedFields.closedAt) {
