@@ -34,7 +34,7 @@ import {
 import { playNotificationChime } from '../utils/notificationHub';
 import { sanitizeObject, normalizePhoneNumber } from '../utils/securityShield';
 import { withoutContactFields } from '../utils/leadContactFields';
-import { identifyVisitor, getCurrentSessionJourney, getAttributionData } from '../utils/visitorTracker';
+import { identifyVisitor, getCurrentSessionJourney, getAttributionData, getFirstTouch } from '../utils/visitorTracker';
 import { routeLeadAutomatically } from '../utils/leadRoutingEngine';
 import { isRecordArray, readStoredJson, rememberMyDemand } from '../utils/browserStorage';
 import { normalizeAreaKey } from '../utils/areasData';
@@ -586,7 +586,8 @@ export function PropertiesProvider({ children }) {
         // Ties the request to this visitor's browsing profile (only when they accepted analytics)
         analyticsVisitorId: analyticsVisitorId(),
         isLiveTracked: true,
-        marketingAttribution: attribution,
+        // This visit's source, and the visitor's very first one (when they differ the profile shows both)
+        marketingAttribution: { ...attribution, ...(getFirstTouch() ? { firstTouch: getFirstTouch() } : {}) },
         utmSource: attribution?.source || 'مباشر',
         utmCampaign: attribution?.campaign || 'direct',
         ...standardizedData,

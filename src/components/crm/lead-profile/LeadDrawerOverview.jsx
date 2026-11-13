@@ -1,4 +1,4 @@
-import { Phone, MessageSquare, Calendar, Send, Building, Download, ExternalLink, Plus, Search } from 'lucide-react';
+import { Phone, MessageSquare, Calendar, Send, Building, Download, ExternalLink, Plus, Search, Compass } from 'lucide-react';
 import { getGoogleCalendarUrl, downloadIcsFile } from '../../../utils/calendarHelper';
 import { Button, Badge, Select, Input } from '../../ui';
 import LeadCommissionBox from './LeadCommissionBox';
@@ -10,6 +10,7 @@ import { sharePagesFor, sharePageMessage } from '../../../utils/sharePages';
 import { SITE_URL } from '../../../config/siteConfig';
 import { useState } from 'react';
 import { answersFacts } from '../../../utils/buyerMatch';
+import { attributionFacts } from '../../../utils/attributionTouches';
 
 // One-tap call results; the text is what goes into the lead's history
 const CALL_OUTCOMES = [
@@ -93,8 +94,23 @@ export default function LeadDrawerOverview({
   // What the buyer answered in «رشّحلي عقاري» (saved with the lead as data)
   const matchFacts = isSeller ? [] : answersFacts(details.matchAnswers, Array.isArray(details.areas) ? details.areas.filter(Boolean) : []);
 
+  // Where the client came from: the source, the campaign and ad, the page, and a return after an earlier visit
+  const sourceFacts = attributionFacts(lead);
+
   return (
     <div className="crm-ld__stack">
+      {sourceFacts.length > 0 && (
+        <section className="crm-ld__block" aria-labelledby="crm-ld-source">
+          <div className="crm-ld__block-head">
+            <h3 id="crm-ld-source" className="crm-ld__h"><Compass size={16} aria-hidden="true" />{L('من فين جه؟', 'Where from')}</h3>
+          </div>
+          <dl className="crm-ld__facts">
+            {sourceFacts.map(([label, value, wide]) => (
+              <div key={label} className={wide ? 'crm-ld__fact--wide' : undefined}><dt>{label}</dt><dd>{value}</dd></div>
+            ))}
+          </dl>
+        </section>
+      )}
       {matchFacts.length > 0 && (
         <section className="crm-ld__block" aria-labelledby="crm-ld-match">
           <div className="crm-ld__block-head">
