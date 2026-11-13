@@ -2,3 +2,5 @@
 .crm-alert-health svg { flex: none; color: var(--ui-danger); }
 .crm-alert-health p { flex: 1 1 220px; margin: 0; line-height: 1.7; font-weight: 700; }
 .crm-alert-health__x { border: 0; background: transparent; color: inherit; cursor: pointer; min-width: 36px; min-height: 36px; }
+.crm-alert-health--info { border-color: var(--ui-line-strong); }
+.crm-alert-health--info svg { color: var(--ui-primary); }

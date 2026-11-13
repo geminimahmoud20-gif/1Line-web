@@ -26,6 +26,7 @@ import GoLiveWizardModal from '../components/crm/GoLiveWizardModal';
 import CrmSidebar from '../components/crm/CrmSidebar';
 import CrmTopbar from '../components/crm/CrmTopbar';
 import CrmCommandPalette from '../components/crm/CrmCommandPalette';
+import PushReminderPrompt from '../components/crm/PushReminderPrompt';
 import AlertHealthBanner from '../components/crm/AlertHealthBanner';
 import NewVersionNotice from '../components/crm/NewVersionNotice';
 import { BRAND } from '../config/siteConfig';
@@ -874,6 +875,9 @@ export default function CrmPage({
 
         {/* 3. Main Dynamic Content Area */}
         <div className="crm-content-area" id="crm-main-content">
+          {can.editLeads && (
+            <PushReminderPrompt manager={Boolean(can.campaigns)} name={currentUser?.displayName || (currentUser?.email || '').split('@')[0]} />
+          )}
           {activeRole === 'super_admin' && (
             <AlertHealthBanner onOpen={() => { setSystemSubTab('alerts'); setActiveTab('system'); }} />
           )}

@@ -327,6 +327,21 @@ service cloud.firestore {
       allow delete: if hasPerm('inv.delete');
     }
 
+    // 📲 Phone reminders: each staff member's own push subscriptions (devices that agreed to get the
+    // follow-up reminder). The hourly job reads them with the service account and records what it
+    // last sent in `lastDigest`, which the browser can't write. The VAPID private key lives in
+    // push_private/*, which no client can read or write (no rule = denied).
+    match /push_subscriptions/{uid} {
+      allow read, delete: if isStaff() && request.auth.uid == uid;
+      allow create: if isStaff() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['subs', 'manager', 'name', 'updatedAt'])
+        && request.resource.data.subs is list && request.resource.data.subs.size() <= 5;
+      allow update: if isStaff() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['subs', 'manager', 'name', 'updatedAt', 'lastDigest'])
+        && request.resource.data.subs is list && request.resource.data.subs.size() <= 5
+        && request.resource.data.get('lastDigest', null) == resource.data.get('lastDigest', null);
+    }
+
     // 📣 7b. CAMPAIGN SPEND — what each ad campaign cost, typed in the campaign report.
     // Managers only (never public): one doc `all` with the amounts.
     match /campaign_spend/{docId} {

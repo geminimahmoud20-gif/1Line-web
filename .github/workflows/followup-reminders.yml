@@ -1,0 +1,54 @@
+# Hourly phone reminders for the sales team: clients waiting past the reply target and follow-ups
+# due (scripts/send-followup-reminders.mjs). Sends only 09:00–21:00 Cairo time. The first run also
+# creates the push key pair the CRM needs before it offers the reminder to anyone, so run it once
+# from the Actions tab (Run workflow) after merging.
+#
+# Needs the repository secret FIREBASE_SERVICE_ACCOUNT (already used by the other workflows).
+name: Follow-up reminders
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Only print who would be reminded
+        type: boolean
+        default: false
+
+concurrency:
+  group: followup-reminders
+  cancel-in-progress: false
+
+env:
+  TZ: Africa/Cairo
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Key
+        env:
+          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$SERVICE_ACCOUNT" ]; then echo "::error::Repository secret FIREBASE_SERVICE_ACCOUNT is missing."; exit 1; fi
+          printf '%s' "$SERVICE_ACCOUNT" > "$RUNNER_TEMP/service-account.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/service-account.json" >> "$GITHUB_ENV"
+
+      - name: Send reminders
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts firebase-admin@13 web-push@3
+          if [ "$DRY_RUN" = "true" ]; then node scripts/send-followup-reminders.mjs --dry-run; else node scripts/send-followup-reminders.mjs; fi
+
+      - name: Remove key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/service-account.json"
