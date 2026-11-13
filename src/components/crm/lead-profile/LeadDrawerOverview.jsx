@@ -3,6 +3,7 @@ import { getGoogleCalendarUrl, downloadIcsFile } from '../../../utils/calendarHe
 import { Button, Badge, Select, Input } from '../../ui';
 import LeadCommissionBox from './LeadCommissionBox';
 import SellerAskingPrice from './SellerAskingPrice';
+import { auditContactUse } from '../../../utils/contactAudit';
 import { isSellerLead, firstContactPatch } from '../../../utils/crmLeadViews';
 import { askingPriceOf } from '../../../utils/leadPipeline';
 import { sharePagesFor, sharePageMessage } from '../../../utils/sharePages';
@@ -44,6 +45,7 @@ export default function LeadDrawerOverview({
   const L = (ar, en) => (isAr ? ar : en);
   // Sending a message counts as the first reply: the "no reply" clock stops
   const markContacted = () => {
+    auditContactUse(lead, 'whatsapp');
     const patch = firstContactPatch(lead);
     if (patch && onUpdateLead) onUpdateLead(lead.id, patch, lead.version);
   };

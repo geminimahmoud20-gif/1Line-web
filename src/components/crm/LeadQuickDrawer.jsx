@@ -12,6 +12,7 @@ import LostReasonModal from './LostReasonModal';
 import { validateStageTransition } from '../../services/stateMachineEngine';
 import StageDeliverableModal from './StageDeliverableModal';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
+import { auditContactUse } from '../../utils/contactAudit';
 import { leadScore, LEAD_SCORE_HIGH, isSellerLead, leadCampaign, firstContactPatch } from '../../utils/crmLeadViews';
 import { rankAndNominateProperties } from '../../services/matchingEngineV2';
 import { Drawer, Button, IconButton, Badge, Chip, Tabs, Textarea, EmptyState, useConfirm } from '../ui';
@@ -169,7 +170,8 @@ export default function LeadQuickDrawer({
   };
 
   // Tapping call or WhatsApp counts as the first reply: the "no reply" clock stops without a manual log
-  const markContacted = () => {
+  const markContacted = (channel) => {
+    auditContactUse(lead, channel);
     const patch = firstContactPatch(lead);
     if (patch && onUpdateLead) onUpdateLead(lead.id, patch, lead.version);
   };
@@ -378,10 +380,10 @@ export default function LeadQuickDrawer({
             </div>
             {hasRealPhone && (
               <div className="crm-ld__quick">
-                <a href={`tel:${cleanPhone}`} onClick={markContacted} className="ui-btn ui-btn--secondary ui-btn--sm">
+                <a href={`tel:${cleanPhone}`} onClick={() => markContacted('call')} className="ui-btn ui-btn--secondary ui-btn--sm">
                   <Phone size={16} aria-hidden="true" />{isAr ? 'اتصال' : 'Call'}
                 </a>
-                <a href={`https://wa.me/${egWhatsapp}`} target="_blank" rel="noopener noreferrer" onClick={markContacted} className="ui-btn ui-btn--secondary ui-btn--sm">
+                <a href={`https://wa.me/${egWhatsapp}`} target="_blank" rel="noopener noreferrer" onClick={() => markContacted('whatsapp')} className="ui-btn ui-btn--secondary ui-btn--sm">
                   <MessageSquare size={16} aria-hidden="true" />{isAr ? 'واتساب' : 'WhatsApp'}
                 </a>
               </div>
