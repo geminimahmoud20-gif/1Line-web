@@ -17,6 +17,7 @@ import VisitorJourney from './analytics/VisitorJourney';
 import LeadScorePill from './LeadScorePill';
 import { useConfirm } from '../ui';
 import { phoneProblem } from '../../utils/contactValidation';
+import { auditContactUse } from '../../utils/contactAudit';
 
 export default function CustomerProfileModal({
   isOpen,
@@ -298,7 +299,7 @@ export default function CustomerProfileModal({
               <button
                 type="button"
                 className="btn btn-sm"
-                onClick={() => window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}`, '_blank', 'noopener,noreferrer')}
+                onClick={() => { auditContactUse(lead, 'whatsapp'); window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}`, '_blank', 'noopener,noreferrer'); }}
                 style={{ padding: '6px 12px', fontSize: 'var(--crm-text-sm)', background: 'var(--crm-positive-soft)', color: 'var(--crm-positive)', border: '1px solid var(--crm-positive-line)', fontWeight: 'bold' }}
               >
                 <MessageSquare size={14} />
@@ -316,7 +317,7 @@ export default function CustomerProfileModal({
               <button
                 type="button"
                 className="btn btn-sm"
-                onClick={() => window.open(`tel:${formData.phone}`, '_self')}
+                onClick={() => { auditContactUse(lead, 'call'); window.open(`tel:${formData.phone}`, '_self'); }}
                 style={{ padding: '6px 12px', fontSize: 'var(--crm-text-sm)', background: 'var(--crm-brand-navy)', color: 'var(--crm-on-dark)', border: '1px solid var(--crm-brand-navy)', fontWeight: 'bold' }}
               >
                 <Phone size={14} />

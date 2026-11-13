@@ -28,7 +28,8 @@ import {
   importLeads,
   deleteCatalogItem,
   syncPendingLeads,
-  subscribeToSettings
+  subscribeToSettings,
+  logAuditEvent
 } from '../firebaseLazy';
 import { playNotificationChime } from '../utils/notificationHub';
 import { sanitizeObject, normalizePhoneNumber } from '../utils/securityShield';
@@ -45,6 +46,7 @@ import { applyDevelopers } from '../utils/developers';
 import { usePreferences } from './PreferencesContext';
 import { demandEditStamp } from '../utils/publishApproval';
 import { stageHistoryAfter, initialStageHistory } from '../utils/stageHistory';
+import { assignmentEvent } from '../utils/auditEvents';
 import { useUIModal } from './UIModalContext';
 
 // ── Browser cache of leads/demands ───────────────────────────────────────────
@@ -851,6 +853,9 @@ export function PropertiesProvider({ children }) {
         extra.firstContactedAt = updatedFields.lastContactedAt || nowIso;
       }
     }
+    // Who held the client and who has it now, for the audit log
+    const reassigned = assignmentEvent(current, updatedFields);
+    if (reassigned) logAuditEvent(reassigned).catch(() => {});
     // When the lead entered each stage (the lead itself keeps only its current one)
     if (current && updatedFields.status) {
       const history = stageHistoryAfter(current, updatedFields.status, nowIso);
