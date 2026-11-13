@@ -46,8 +46,8 @@ test('copy and FAQ quote the real figures; an empty place says so and quotes not
 });
 
 test('only places with figures get a page, in the sitemap too', () => {
-  assert.deepEqual(guidePages(list).map((g) => g.path), ['/guides/how-to-buy-apartment-sohag', '/guides/price-per-meter-sohag', '/guides/price-per-meter-new-sohag', '/guides/price-per-meter-east-sohag']);
-  assert.deepEqual(guidePages([]).map((g) => g.path), ['/guides/how-to-buy-apartment-sohag']); // the article needs no listings
+  assert.deepEqual(guidePages(list).map((g) => g.path), ['/guides/how-to-buy-apartment-sohag', '/guides/how-to-buy-land-sohag', '/guides/real-estate-financing-egypt', '/guides/price-per-meter-sohag', '/guides/price-per-meter-new-sohag', '/guides/price-per-meter-east-sohag']);
+  assert.deepEqual(guidePages([]).map((g) => g.path), ['/guides/how-to-buy-apartment-sohag', '/guides/how-to-buy-land-sohag', '/guides/real-estate-financing-egypt']); // the article needs no listings
   const locs = sitemapUrls({ listings: list }).map((u) => u.loc);
   assert.ok(locs.includes('/guides/price-per-meter-new-sohag'));
   assert.ok(!sitemapUrls({ listings: [] }).some((u) => u.loc.startsWith('/guides/price')));
@@ -71,4 +71,14 @@ test('the buying guide parses, has a shell with its steps, and quotes no invente
   assert.match(html, /مراجعة|راجع الأوراق/);
   assert.match(html, /FAQPage/);
   assert.doesNotMatch(JSON.stringify(g.article), /\d+\s*(%|٪|في المية)/);
+});
+
+import { ARTICLES } from '../../src/utils/seoGuideArticles.js';
+test('articles have unique slugs and quote no percentage or fee (those change by year)', () => {
+  assert.equal(new Set(ARTICLES.map((a) => a.slug)).size, ARTICLES.length);
+  for (const a of ARTICLES) {
+    const body = JSON.stringify([a.intro, a.sections.map((s) => [s.p, s.ul]), a.faq]);
+    assert.doesNotMatch(body, /[0-9٠-٩]+\s*(%|٪|جنيه|ج\.م)/, a.slug);
+    assert.ok(a.description.length <= 165, a.slug);
+  }
 });
