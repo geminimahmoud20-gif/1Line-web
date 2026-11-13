@@ -21,7 +21,7 @@ const firstName = (lead) => String(lead?.name || '').trim().replace(/\s+/g, ' ')
  * [{ id, task }] for one client given to one person. `task` has the same shape as a task made in the CRM
  * (src/utils/tasks.js, firestore.rules crm_tasks); the client's id and first names, never a phone.
  */
-export function cadenceTasks({ lead, seller, now = Date.now() }) {
+export function cadenceTasks({ lead, seller, now = Date.now(), createdBy = 'system' }) {
   if (!lead?.id || !seller?.uid) return [];
   const name = firstName(lead);
   const at = new Date(now).toISOString();
@@ -38,7 +38,7 @@ export function cadenceTasks({ lead, seller, now = Date.now() }) {
       leadName: name,
       assigneeUid: String(seller.uid),
       assigneeName: String(seller.name || '').slice(0, 80),
-      createdBy: 'system',
+      createdBy: String(createdBy),
       createdByName: 'المتابعة التلقائية',
       createdAt: at,
       doneAt: '',
@@ -46,4 +46,19 @@ export function cadenceTasks({ lead, seller, now = Date.now() }) {
       updatedAt: at
     }
   }));
+}
+
+const WEEK = 7 * 86_400_000;
+const ms = (v) => (typeof v?.toMillis === 'function' ? v.toMillis() : typeof v?.seconds === 'number' ? v.seconds * 1000 : Date.parse(v) || 0);
+
+/**
+ * Clients that a person owns, who are still new and untouched, arrived this week and have no follow-up task
+ * yet (a client given to them by hand, or by a manager). The same ids as the server's, so the two never double.
+ */
+export function leadsNeedingCadence(leads = [], tasks = [], uid, now = Date.now()) {
+  if (!uid) return [];
+  const withTasks = new Set(tasks.map((t) => t.leadId).filter(Boolean));
+  return leads.filter((l) => l && l.id && l.ownerUid === uid && !l.isArchived && l.status === 'new'
+    && !l.firstContactedAt && !withTasks.has(l.id)
+    && now - (ms(l.createdAt) || ms(l.timestamp)) <= WEEK);
 }

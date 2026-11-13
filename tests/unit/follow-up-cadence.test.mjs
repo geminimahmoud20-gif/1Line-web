@@ -40,3 +40,17 @@ test('nothing without a client id or an owner; days are Egypt days', () => {
   assert.equal(cairoDay(Date.parse('2026-11-13T22:30:00Z')), '2026-11-14');
   assert.equal(cadenceTasks({ lead: { id: 'x' }, seller, now: NOW })[0].task.leadName, 'العميل');
 });
+
+import { leadsNeedingCadence } from '../../src/utils/followUpCadence.js';
+test('a new untouched client owned by me with no tasks needs the cadence; others do not', () => {
+  const now = Date.parse('2026-11-13T12:00:00Z');
+  const mk = (o) => ({ id: 'x', ownerUid: 'me', status: 'new', createdAt: '2026-11-12T10:00:00Z', ...o });
+  const leads = [
+    mk({ id: 'a' }), mk({ id: 'b', ownerUid: 'other' }), mk({ id: 'c', status: 'contacted' }),
+    mk({ id: 'd', firstContactedAt: '2026-11-12T11:00:00Z' }), mk({ id: 'e', createdAt: '2026-10-01T00:00:00Z' }),
+    mk({ id: 'f' }), mk({ id: 'g', isArchived: true })
+  ];
+  const got = leadsNeedingCadence(leads, [{ leadId: 'f' }], 'me', now).map((l) => l.id);
+  assert.deepEqual(got, ['a']);
+  assert.equal(cadenceTasks({ lead: { id: 'a', name: 'س' }, seller: { uid: 'me' }, createdBy: 'me' })[0].task.createdBy, 'me');
+});
