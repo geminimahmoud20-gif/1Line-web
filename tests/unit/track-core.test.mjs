@@ -96,3 +96,22 @@ test('search text never keeps phone numbers or e-mails', () => {
   const b = sanitizeBatch(consented([{ t: 'search', m: { query: 'شقة 3 غرف 01012345678 a@b.com ٠١٠١٢٣٤٥٦٧٨', area: 'east' } }]), NOW);
   assert.equal(b.events[0].m.query, 'شقة 3 غرف');
 });
+
+test('the team’s own browsers are counted apart and touch nothing else', () => {
+  const body = { v: 1, consent: true, vid: 'v_abcdefghij', sid: 's_abcdefghij', ctx: { source: 'direct', internal: true }, events: [
+    { t: 'session_start', ts: Date.now(), m: {} }, { t: 'page_view', ts: Date.now(), m: { path: '/properties' } },
+    { t: 'property_view', ts: Date.now(), m: { propertyId: 'p1', area: 'new_sohag' } }, { t: 'contact_click', ts: Date.now(), m: { channel: 'whatsapp' } },
+    { t: 'lead_submitted', ts: Date.now(), m: { form: 'match' } }
+  ] };
+  const batch = sanitizeBatch(body);
+  assert.equal(batch.ctx.internal, true);
+  const writes = buildWrites(batch, { docRoot: 'projects/p/databases/(default)/documents', now: Date.parse('2026-11-13T10:00:00Z') });
+  assert.equal(writes.length, 1); // one daily document: no visitor, session, listing or raw-batch write
+  assert.match(writes[0].update.name, /analytics_daily\//);
+  const incs = Object.fromEntries(writes[0].updateTransforms.map((t) => [t.fieldPath, Number(t.increment.integerValue)]));
+  assert.deepEqual(incs, { 'internal.batches': 1, 'internal.sessions': 1, 'internal.pageViews': 1, 'internal.contacts': 1, 'internal.leads': 1 });
+  // the same batch from the public is counted the normal way
+  const pub = sanitizeBatch({ ...body, ctx: { source: 'direct' } });
+  assert.equal(pub.ctx.internal, false);
+  assert.ok(buildWrites(pub, { docRoot: 'projects/p/databases/(default)/documents', now: Date.now() }).length > 1);
+});

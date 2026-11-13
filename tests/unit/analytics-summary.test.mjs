@@ -41,3 +41,15 @@ test('visitor interests and helpers', () => {
   assert.equal(formatSeconds(200), '3د 20ث');
   assert.deepEqual(topEntries({ a: 0, b: 2 }), [['b', 2]]);
 });
+
+test('the team’s own visits are a separate figure, not part of the headline numbers', async () => {
+  const { kpis, sumDays } = await import('../../src/utils/analyticsSummary.js');
+  const { totals } = sumDays([
+    { date: '2026-11-13', sessions: 10, pageViews: 30, internal: { sessions: 4, pageViews: 9, contacts: 2 } },
+    { date: '2026-11-13', sessions: 5, internal: { sessions: 1, leads: 1 } }
+  ]);
+  const k = kpis(totals);
+  assert.equal(k.sessions, 15);
+  assert.deepEqual(k.internal, { sessions: 5, pageViews: 9, contacts: 2, leads: 1 });
+  assert.deepEqual(kpis({}).internal, { sessions: 0, pageViews: 0, contacts: 0, leads: 0 });
+});

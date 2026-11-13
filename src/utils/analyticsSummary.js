@@ -82,6 +82,13 @@ export function kpis(t = {}) {
     contactRate: pct(contacts, sessions),
     // Share of traffic sent without analytics consent (counted, but not tied to a visitor)
     anonymousShare: pct(t.anonymousBatches || 0, t.batches || 0),
+    // The company's own browsers, counted apart (not in any number above)
+    internal: {
+      sessions: t.internal?.sessions || 0,
+      pageViews: t.internal?.pageViews || 0,
+      contacts: t.internal?.contacts || 0,
+      leads: t.internal?.leads || 0,
+    },
   };
 }
 

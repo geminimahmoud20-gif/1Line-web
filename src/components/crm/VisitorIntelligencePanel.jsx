@@ -9,6 +9,7 @@ import {
 import { loadAnalyticsDays, loadTopAnalyticsProperties, loadHotVisitors, loadRecentSessions } from '../../firebaseLazy';
 import { Section, Kpi, BarList, DayColumns, LevelBadge } from './analytics/AnalyticsBits';
 import { card } from './analytics/analyticsStyles';
+import { isInternalBrowser, setInternalBrowser } from '../../utils/analytics';
 
 const RANGES = [7, 30, 90];
 const DEVICE_LABELS = { mobile: ['موبايل', 'Mobile'], tablet: ['تابلت', 'Tablet'], desktop: ['كمبيوتر', 'Desktop'] };
@@ -23,6 +24,7 @@ export default function VisitorIntelligencePanel({ properties = [], leads = [], 
   const [state, setState] = useState({ loading: true, error: null, days: [], props: [], visitors: [], sessions: [] });
   const [refreshTick, setRefreshTick] = useState(0);
   const [now, setNow] = useState(() => Date.now());
+  const [internalOn, setInternalOn] = useState(isInternalBrowser);
 
   const load = useCallback(async (days) => {
     setState((s) => ({ ...s, loading: true, error: null }));
@@ -110,6 +112,24 @@ export default function VisitorIntelligencePanel({ properties = [], leads = [], 
         <Kpi tone="positive" label={isAr ? 'طلبات مسجلة' : 'Requests'} value={n(k.leads)} sub={isAr ? `تحويل ${k.conversionRate}% من الزيارات` : `${k.conversionRate}% of visits`} />
         <Kpi tone="warn" label={isAr ? 'حاسبة التمويل' : 'Calculator'} value={n(k.calculatorUses)} sub={isAr ? `بدأوا نموذج ${n(k.formStarts)}` : `${n(k.formStarts)} forms started`} />
       </div>
+
+      <p style={{ margin: 0, color: 'var(--crm-muted)', fontSize: 'var(--crm-text-sm)', lineHeight: 1.8 }}>
+        {k.internal.sessions > 0
+          ? (isAr
+            ? `الأرقام فوق للزوار بس. فريق الشركة (متصفحات فتحت الـ CRM أو اتعلّمت داخلية) محسوب لوحده: ${n(k.internal.sessions)} زيارة، ${n(k.internal.contacts)} ضغطة تواصل، ${n(k.internal.leads)} طلب.`
+            : `The figures above are the public's. The team's own browsers are counted apart: ${n(k.internal.sessions)} visits, ${n(k.internal.contacts)} contact clicks, ${n(k.internal.leads)} requests.`)
+          : (isAr ? 'الأرقام فوق للزوار بس. زيارات فريق الشركة (المتصفحات اللي فتحت الـ CRM) بتتحسب لوحدها من النهارده، والأيام اللي فاتت متجمّعة ومش قابلة للفصل.' : 'Figures above are the public\'s; the team\'s own browsers are counted apart from now on (earlier days cannot be split).')}
+        {' '}
+        <button
+          type="button"
+          className="btn btn-sm btn-outline"
+          onClick={() => { const next = !internalOn; setInternalBrowser(next); setInternalOn(next); }}
+          aria-pressed={internalOn}
+        >
+          {internalOn ? (isAr ? 'المتصفح ده معلّم «داخلي»، الغي' : 'This browser is marked internal, undo') : (isAr ? 'علّم المتصفح ده «داخلي»' : 'Mark this browser as internal')}
+        </button>
+        <span> {isAr ? 'لأي جهاز تاني افتح الموقع بإضافة ‎?internal=1 للينك.' : 'On another device open the site with ?internal=1.'}</span>
+      </p>
 
       <Section title={isAr ? 'الزيارات يوم بيوم' : 'Visits per day'} hint={isAr ? 'العمود = عدد الزيارات، والنقطة الخضرا = يوم اتسجل فيه طلب.' : 'Bars = visits; green dot = a day with requests.'}>
         <DayColumns days={series} isAr={isAr} />
