@@ -60,3 +60,11 @@ test('a client lost after a visit still counts as a visit, and the days to the v
   assert.equal(row.lost, 2);
   assert.equal(row.avgDaysToVisit, 3);
 });
+
+test('the most common reason clients of a campaign were lost is reported', () => {
+  const lost = (reason) => ({ ...lead('buyers', 'lost'), lostReason: reason });
+  const rows = campaignReport([lost('price'), lost('price'), lost('no_response'), lead('buyers', 'new'), lead('owners', 'new')], { now: NOW });
+  const b = rows.find((r) => r.campaign === 'buyers');
+  assert.deepEqual(b.topLostReason, { id: 'price', count: 2 });
+  assert.equal(rows.find((r) => r.campaign === 'owners').topLostReason, null);
+});
