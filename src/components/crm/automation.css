@@ -1,0 +1,6 @@
+/* Automatic assignment switch in الأتمتة */
+.crm-auto-assign { margin-bottom: 14px; }
+.crm-auto-assign__row { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; line-height: 1.7; }
+.crm-auto-assign__row input { margin-top: 5px; width: 18px; height: 18px; flex: none; }
+.crm-auto-assign__warn { margin: 8px 0 0; color: var(--crm-danger); font-weight: 700; }
+.crm-auto-assign__note { margin: 8px 0 0; color: var(--crm-muted); font-size: var(--crm-text-sm); }

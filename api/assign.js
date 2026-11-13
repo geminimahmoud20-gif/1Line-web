@@ -105,6 +105,10 @@ export async function POST(request) {
       body: payload ? JSON.stringify(payload) : undefined
     });
 
+    // The owner can switch this off (CRM → الأتمتة): settings/automation { autoAssign: false }
+    const setting = await fs('GET', 'settings/automation');
+    if (setting.ok && (await setting.json())?.fields?.autoAssign?.booleanValue === false) return json(200, { assigned: false, reason: 'off' });
+
     const res = await fs('GET', `leads/${encodeURIComponent(id)}`);
     if (res.status === 404) return json(404, { assigned: false, reason: 'not-saved-yet' });
     if (!res.ok) throw new Error(`read ${res.status}`);
@@ -148,6 +152,22 @@ export async function POST(request) {
     });
     if (write.status === 400 || write.status === 409 || write.status === 412) return json(200, { assigned: false, reason: 'taken' });
     if (!write.ok) throw new Error(`write ${write.status}`);
+    // The audit log: written here with the service account, as «النظام» (no staff member did it)
+    const nowIso = new Date().toISOString();
+    const entry = {
+      actorId: 'system', actorUid: 'system', actorEmail: 'auto-assign',
+      action: 'LEAD_AUTO_ASSIGNED', type: 'LEAD_AUTO_ASSIGNED', actionType: 'LEAD_AUTO_ASSIGNED',
+      entityType: 'leads', targetCollection: 'leads', entityId: id, targetId: id,
+      createdAt: nowIso
+    };
+    const log = await fs('POST', 'audit_logs', {
+      fields: {
+        ...Object.fromEntries(Object.entries(entry).map(([k, v]) => [k, { stringValue: v }])),
+        timestamp: { timestampValue: nowIso },
+        details: { mapValue: { fields: { to: { stringValue: fields.ownerName }, team: { stringValue: fields.assignedTo } } } }
+      }
+    });
+    if (!log.ok) console.error('assign: audit entry not written', log.status);
     // The contact record carries the team too, so the new owner's team sees the phone
     if (fields.assignedTo !== lead.assignedTo) {
       const c = await fs('PATCH', `lead_contacts/${encodeURIComponent(id)}?updateMask.fieldPaths=assignedTo`, { fields: { assignedTo: { stringValue: fields.assignedTo } } });

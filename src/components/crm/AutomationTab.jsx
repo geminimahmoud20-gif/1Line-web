@@ -1,7 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { loadSettings, saveSettings } from '../../firebaseLazy';
+import { listTeamMembers } from '../../firebaseService';
+import { sellersOf } from '../../../api/_assign-core.js';
 import { routeLeadAutomatically } from '../../utils/leadRoutingEngine';
 import { isUnassigned } from '../../utils/crmLeadViews';
 import { useConfirm } from '../ui';
+import './automation.css';
 
 /**
  * Automation that really runs:
@@ -14,6 +18,25 @@ export default function AutomationTab({ isAr, leads = [], onUpdateLead, triggerT
   const confirm = useConfirm();
   const [running, setRunning] = useState(false);
   const pending = leads.filter(isUnassigned);
+
+  // «توزيع تلقائي على البياعين» (api/assign.js): on unless settings/automation says autoAssign: false
+  const [autoAssign, setAutoAssign] = useState(null); // null: not known yet
+  const [sellerCount, setSellerCount] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    loadSettings('automation').then((s) => { if (alive) setAutoAssign(s?.autoAssign !== false); }).catch(() => alive && setAutoAssign(true));
+    listTeamMembers().then((r) => { if (alive && r?.ok && Array.isArray(r.members)) setSellerCount(sellersOf(r.members).length); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
+  const toggleAutoAssign = async () => {
+    const next = !autoAssign;
+    setAutoAssign(next);
+    const saved = await saveSettings('automation', { autoAssign: next });
+    if (!saved) {
+      setAutoAssign(!next);
+      triggerToast(isAr ? 'مقدرناش نحفظ الإعداد' : 'Could not save the setting', 'error');
+    }
+  };
 
   const distributeNow = async () => {
     if (!onUpdateLead || pending.length === 0) return;
@@ -72,6 +95,18 @@ export default function AutomationTab({ isAr, leads = [], onUpdateLead, triggerT
               ? 'كل عميل جديد من الموقع بيتوزع لوحده: ميزانية 5 مليون أو أكتر للفريق المخصص للـ VIP، والتجاري لفريقه، وبعدين حسب كلمات المنطقة لكل فريق، والباقي بالدور على الأقل حِملاً. القواعد والفرق بتتظبط من شاشة الصلاحيات.'
               : 'Every new website lead is routed automatically: 5M+ budgets to the VIP team, commercial to its team, then team area keywords, then round-robin. Teams and rules live in the roles screen.'}
           </p>
+          <div className="crm-auto-assign">
+            <label className="crm-auto-assign__row">
+              <input type="checkbox" checked={autoAssign !== false} disabled={autoAssign === null} onChange={toggleAutoAssign} />
+              <span>{isAr ? 'وزّع كل عميل جديد من الموقع على بياع بالاسم (الأقل عملاء مفتوحين في فريقه)' : 'Give each new website client to a salesperson by name (fewest open clients on their team)'}</span>
+            </label>
+            {sellerCount === 0 && (
+              <p className="crm-auto-assign__warn" role="alert">
+                {isAr ? 'مفيش بياعين بحسابات على فرق (دور يقدر يعدّل العملاء ومش مدير)، فالتوزيع على البياعين مش هيشتغل. ضيف بياعين من الفريق والصلاحيات.' : 'No salespeople with an account on a team, so assigning to a person will not run. Add some in Team & roles.'}
+              </p>
+            )}
+            {sellerCount > 0 && <p className="crm-auto-assign__note">{isAr ? `${sellerCount} بياع في التوزيع. بيتسجّل كل توزيع في سجل المراجعة.` : `${sellerCount} salespeople in rotation. Each assignment is in the audit log.`}</p>}
+          </div>
           <button className="btn btn-accent" type="button" onClick={distributeNow} disabled={running || !onUpdateLead || pending.length === 0}>
             {pending.length === 0
               ? (isAr ? 'مفيش عملاء غير مُسندين' : 'No unassigned leads')

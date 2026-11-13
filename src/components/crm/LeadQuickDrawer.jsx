@@ -372,6 +372,11 @@ export default function LeadQuickDrawer({
                 {isAr ? `اهتمام ${score.score}%` : `Score ${score.score}%`}
               </Badge>
               {temperature && <Badge tone={temperature.tone} dot>{isAr ? temperature.ar : temperature.en}</Badge>}
+              {lead.autoAssigned && (
+                <Badge tone="info" title={lead.ownerName ? (isAr ? `اتوزّع تلقائياً على ${lead.ownerName}` : `Auto-assigned to ${lead.ownerName}`) : undefined}>
+                  {isAr ? 'اتوزّع تلقائياً' : 'Auto-assigned'}
+                </Badge>
+              )}
               {campaign && (
                 <Badge tone="accent" title={[campaign.source, campaign.campaign, campaign.ad].filter(Boolean).join(' · ')}>
                   {isAr ? `حملة: ${campaign.campaign}` : `Campaign: ${campaign.campaign}`}{campaign.ad ? ` · ${campaign.ad}` : ''}
