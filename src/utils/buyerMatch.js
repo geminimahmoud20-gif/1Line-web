@@ -305,3 +305,31 @@ export function answersMessage(a = {}, areaName = (id) => id) {
   ];
   return lines.filter(Boolean).join('\n');
 }
+
+/**
+ * The answers a buyer gave in «رشّحلي عقاري», as [label, value, wide?] rows for the client's profile.
+ * Only the questions they answered; the area names come from the lead (they are saved with it).
+ */
+export function answersFacts(a = {}, areaNames = []) {
+  if (!a || typeof a !== 'object') return [];
+  const fam = FAMILY_SIZES.find((f) => f.id === a.family);
+  const rows = [];
+  if (a.kind) rows.push(['بيدوّر على', kindOf(a.kind).ar]);
+  const purpose = a.purpose ? purposesFor(a.kind).find((x) => x.id === a.purpose)?.ar : '';
+  if (purpose) rows.push(['الغرض', purpose]);
+  const where = areaNames.length ? areaNames : (a.areas || []);
+  if (where.length) rows.push(['المنطقة', where.join('، '), true]);
+  else if (a.anyArea) rows.push(['المنطقة', 'أي منطقة']);
+  if (fam) rows.push(['الأسرة', fam.ar]);
+  if (num(a.minSize)) rows.push(['المساحة', `من ${num(a.minSize)} م²`]);
+  if (a.delivery) rows.push(['الاستلام', a.delivery === 'now' ? 'مستعجل (فوري)' : a.delivery === 'wait' ? 'ممكن يستنى' : 'مش فارقة']);
+  if (a.payment === 'cash') {
+    if (num(a.budget)) rows.push(['الميزانية (كاش)', `${fmt(num(a.budget))} ج.م`]);
+  } else {
+    if (num(a.down)) rows.push(['المقدم', `${fmt(num(a.down))} ج.م`]);
+    if (num(a.monthly)) rows.push(['القسط الشهري', `${fmt(num(a.monthly))} ج.م`]);
+  }
+  const pri = (a.priorities || []).map((id) => PRIORITIES.find((x) => x.id === id)?.ar).filter(Boolean);
+  if (pri.length) rows.push(['أهم حاجة عنده', pri.join('، '), true]);
+  return rows;
+}
