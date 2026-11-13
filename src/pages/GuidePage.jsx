@@ -7,6 +7,7 @@ import { updatePageSeo, buildBreadcrumbSchema, injectJsonLdSchema } from '../uti
 import { LANDING_AREAS } from '../utils/seoLanding';
 import { parseGuide, guideRows, guideCopy, guideFaq, guidePath, rowFigure } from '../utils/seoGuides';
 import { liveListings } from '../utils/marketStats';
+import { articlePath } from '../utils/seoGuideArticles';
 import '../styles/landing.css';
 
 /**
@@ -18,10 +19,12 @@ export default function GuidePage({ properties = [] }) {
   const page = parseGuide(slug);
   const area = page?.area || null;
   const listings = useMemo(() => liveListings(properties), [properties]);
-  const rows = useMemo(() => (page ? guideRows(listings, area) : []), [listings, page, area]);
-  const copy = page ? guideCopy(area, rows) : null;
-  const faq = page ? guideFaq(area, rows) : [];
-  const path = page ? guidePath(area) : '';
+  const article = page?.article || null;
+  const rows = useMemo(() => (page && !article ? guideRows(listings, area) : []), [listings, page, area, article]);
+  const copy = article ? { h1: article.h1, title: article.title, description: article.description, intro: article.intro } : (page ? guideCopy(area, rows) : null);
+  const faq = article ? article.faq : (page ? guideFaq(area, rows) : []);
+  const path = article ? articlePath(article) : (page ? guidePath(area) : '');
+  const aptRow = useMemo(() => (article ? guideRows(listings).find((r) => r.kind.slug === 'apartments-for-sale') : null), [listings, article]);
   // Other places with a guide of their own
   const others = useMemo(() => (page ? [null, ...LANDING_AREAS]
     .filter((a) => (a?.id || '') !== (area?.id || ''))
@@ -33,7 +36,7 @@ export default function GuidePage({ properties = [] }) {
       title: copy.title,
       description: copy.description,
       url: path,
-      noindex: rows.length === 0,
+      noindex: !article && rows.length === 0,
       schemaId: 'breadcrumb-schema',
       schema: buildBreadcrumbSchema([{ name: 'الرئيسية', url: '/' }, { name: copy.h1, url: path }])
     });
@@ -43,7 +46,7 @@ export default function GuidePage({ properties = [] }) {
       mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } }))
     });
     return () => document.getElementById('guide-faq-schema')?.remove();
-  }, [page, path, copy?.title, copy?.description, rows.length, faq]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [page, path, copy?.title, copy?.description, rows.length, faq, article]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!page) return <NotFoundPage lang="ar" />;
   const where = area ? area.ar : 'سوهاج';
@@ -59,6 +62,20 @@ export default function GuidePage({ properties = [] }) {
         <h1>{copy.h1}</h1>
         <p className="ld-intro">{copy.intro}</p>
       </header>
+
+      {article && article.sections.map((x) => (
+        <section key={x.h} className="gd-sec">
+          <h2>{x.h}</h2>
+          {(x.p || []).map((t) => <p key={t}>{t}</p>)}
+          {x.ul && <ul>{x.ul.map((t) => <li key={t}>{t}</li>)}</ul>}
+        </section>
+      ))}
+
+      {aptRow && (
+        <p className="gd-live">
+          دلوقتي على 1Line: {rowFigure(aptRow)}. <Link to="/sohag/apartments-for-sale">شوف الشقق المعروضة</Link> أو <Link to={guidePath()}>تفاصيل سعر المتر</Link>.
+        </p>
+      )}
 
       {rows.length > 0 && (
         <section aria-label="سعر المتر لكل نوع">
@@ -77,11 +94,11 @@ export default function GuidePage({ properties = [] }) {
 
       <section className="ld-ask">
         <div>
-          <h2>عايز تعرف سعر عقار معيّن؟</h2>
+          <h2>{article ? 'عايز تشتري بأوراق مراجَعة؟' : 'عايز تعرف سعر عقار معيّن؟'}</h2>
           <p>ابعتلنا المنطقة والمساحة ونديك تقييم مبني على عروض مشابهة، ونراجع أوراق العقار قبل أي دفع.</p>
         </div>
         <div className="ld-ask-actions">
-          <Link to="/valuation" className="ld-btn ld-btn--primary"><Search size={16} aria-hidden="true" />قيّم عقارك</Link>
+          <Link to={article ? '/buy' : '/valuation'} className="ld-btn ld-btn--primary"><Search size={16} aria-hidden="true" />{article ? 'اطلب شقتك' : 'قيّم عقارك'}</Link>
           <a href={getWhatsAppUrl(`مرحباً 1Line، عايز أعرف سعر المتر في ${where}.`)} target="_blank" rel="noopener noreferrer" className="ld-btn ld-btn--wa"><MessageSquare size={16} aria-hidden="true" />واتساب</a>
         </div>
       </section>
@@ -96,7 +113,7 @@ export default function GuidePage({ properties = [] }) {
       )}
 
       <section className="ld-faq">
-        <h2>أسئلة شائعة عن {copy.h1}</h2>
+        <h2>{article ? 'أسئلة شائعة عن شراء شقة في سوهاج' : `أسئلة شائعة عن ${copy.h1}`}</h2>
         {faq.map((f) => (
           <details key={f.q}><summary>{f.q}</summary><p>{f.a}</p></details>
         ))}

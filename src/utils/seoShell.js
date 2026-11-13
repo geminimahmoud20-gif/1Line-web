@@ -12,6 +12,7 @@
 import { listingPreview } from './listingShare.js';
 import { LANDING_KINDS, LANDING_AREAS, landingPath, landingListings, landingSummary, landingCopy, landingFaq } from './seoLanding.js';
 import { guideRows, guideCopy, guideFaq, guidePath, rowFigure } from './seoGuides.js';
+import { articlePath } from './seoGuideArticles.js';
 
 const areaOf = (p) => LANDING_AREAS.find((a) => a.id === p?.areaKey) || null;
 const kindOf = (p) => LANDING_KINDS.find((k) => k.types.includes(p?.type)) || null;
@@ -332,11 +333,11 @@ export function buildLandingShell(template, page, listings, origin) {
 
 /** The price guide page (/guides/price-per-meter-new-sohag): its figures and FAQ inside #root */
 export function buildGuideShell(template, page, listings, origin) {
-  const { area } = page;
-  const rows = guideRows(listings, area);
-  const copy = guideCopy(area, rows);
-  const faq = guideFaq(area, rows);
-  const url = `${origin}${guidePath(area)}`;
+  const { area, article } = page;
+  const rows = article ? [] : guideRows(listings, area);
+  const copy = article ? { h1: article.h1, title: article.title, description: article.description, intro: article.intro } : guideCopy(area, rows);
+  const faq = article ? article.faq : guideFaq(area, rows);
+  const url = `${origin}${article ? articlePath(article) : guidePath(area)}`;
   const title = `${copy.title} | 1Line Solutions`;
   const crumbs = [{ name: 'الرئيسية', item: `${origin}/` }, { name: copy.h1, item: url }];
   const ld = [
@@ -344,7 +345,8 @@ export function buildGuideShell(template, page, listings, origin) {
     { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) }
   ];
   const items = rows.map((r) => `<li><a href="${esc(r.path)}">${esc(r.kind.ar)}</a>: ${esc(rowFigure(r))}</li>`).join('');
-  const body = `<main class="seo-shell" dir="rtl"><h1>${esc(copy.h1)}</h1><p>${esc(copy.intro)}</p>${items ? `<ul>${items}</ul>` : ''}`
+  const steps = article ? article.sections.map((x) => `<section><h2>${esc(x.h)}</h2>${(x.p || []).map((t) => `<p>${esc(t)}</p>`).join('')}${x.ul ? `<ul>${x.ul.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}</section>`).join('') : '';
+  const body = `<main class="seo-shell" dir="rtl"><h1>${esc(copy.h1)}</h1><p>${esc(copy.intro)}</p>${steps}${items ? `<ul>${items}</ul>` : ''}`
     + `<section><h2>أسئلة شائعة</h2>${faq.map((f) => `<h3>${esc(f.q)}</h3><p>${esc(f.a)}</p>`).join('')}</section></main>`;
 
   let html = template;

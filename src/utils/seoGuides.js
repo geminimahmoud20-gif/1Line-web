@@ -9,6 +9,7 @@
 // =============================================================
 import { LANDING_KINDS, LANDING_AREAS, landingListings, landingPath } from './seoLanding.js';
 import { median } from './marketStats.js';
+import { ARTICLES, parseArticle, articlePath } from './seoGuideArticles.js';
 
 const PREFIX = 'price-per-meter-';
 
@@ -16,6 +17,8 @@ export const guidePath = (area = null) => `/guides/${PREFIX}${area ? area.slug :
 
 /** URL slug → { area } (area null for the whole city), or null for an unknown guide */
 export function parseGuide(slug) {
+  const article = parseArticle(slug);
+  if (article) return { article, area: null };
   if (typeof slug !== 'string' || !slug.startsWith(PREFIX)) return null;
   const rest = slug.slice(PREFIX.length);
   if (rest === 'sohag') return { area: null };
@@ -79,7 +82,7 @@ export function guideFaq(area, rows) {
 
 /** Guides worth indexing: the city, and each area whose own listings carry a price per m² */
 export function guidePages(list) {
-  const out = [];
+  const out = ARTICLES.map((article) => ({ article, area: null, path: articlePath(article), rows: [] }));
   const city = guideRows(list);
   if (city.length) out.push({ area: null, path: guidePath(), rows: city });
   for (const area of LANDING_AREAS) {
