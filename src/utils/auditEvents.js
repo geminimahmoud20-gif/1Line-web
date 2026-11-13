@@ -9,6 +9,7 @@
 export const AUDIT_LABELS = {
   CONTACT_USED: { ar: 'استخدم رقم عميل', en: 'Used a client’s phone' },
   LEAD_REASSIGNED: { ar: 'نقل عميل لبياع أو فريق', en: 'Reassigned a client' },
+  LEAD_AUTO_ASSIGNED: { ar: 'توزيع تلقائي لعميل جديد', en: 'Auto-assigned a new client' },
   LEAD_CLAIMED: { ar: 'استلم عميل', en: 'Claimed a client' },
   BULK_LEADS_ASSIGNED: { ar: 'وزّع عملاء بالجملة', en: 'Bulk-assigned clients' },
   BULK_LEADS_DELETED: { ar: 'حذف عملاء بالجملة', en: 'Bulk-deleted clients' },
@@ -60,6 +61,7 @@ export function describeAudit(entry = {}, isAr = true) {
   const d = entry.details || entry.metadata || {};
   const action = entry.action || entry.actionType || '';
   if (action === 'CONTACT_USED') return `${(CHANNELS[d.channel] || {})[isAr ? 'ar' : 'en'] || ''} — ${entry.targetId || ''}`.trim();
+  if (action === 'LEAD_AUTO_ASSIGNED') return `${d.to || '—'} (${d.team || ''}) — ${entry.targetId || ''}`;
   if (action === 'LEAD_REASSIGNED') return `${d.from || '—'} ← ${d.to || '—'} (${entry.targetId || ''})`;
   const bits = [entry.targetCollection, entry.targetId && entry.targetId !== 'global' ? entry.targetId : ''].filter(Boolean);
   return bits.join(' · ');

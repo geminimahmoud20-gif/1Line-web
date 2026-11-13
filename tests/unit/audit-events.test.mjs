@@ -31,3 +31,8 @@ test('labels and one-line descriptions', () => {
   assert.equal(describeAudit({ action: 'CONTACT_USED', targetId: 'lead-1', details: { channel: 'call' } }), 'اتصال — lead-1');
   assert.equal(describeAudit({ action: 'LEAD_REASSIGNED', targetId: 'lead-1', details: { from: 'أ', to: 'ب' } }), 'أ ← ب (lead-1)');
 });
+
+test('an automatic assignment has its own label and a readable line', () => {
+  assert.equal(auditLabel('LEAD_AUTO_ASSIGNED'), 'توزيع تلقائي لعميل جديد');
+  assert.equal(describeAudit({ action: 'LEAD_AUTO_ASSIGNED', targetId: 'lead-9', details: { to: 'منى', team: 'Sales Team A' } }), 'منى (Sales Team A) — lead-9');
+});
