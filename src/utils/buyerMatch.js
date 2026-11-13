@@ -241,6 +241,40 @@ export function matchUnit(p, answers = {}, areas = [], { only = null } = {}) {
   };
 }
 
+/**
+ * The things a buyer won't compromise on, for matching a unit to a buyer who answered «رشّحلي عقاري»
+ * earlier (the CRM, when a new unit arrives): the kind of property, the area, the budget and the
+ * minimum size. Rooms and handover only change the score.
+ */
+export function hardFit(p, answers = {}, areas = []) {
+  return {
+    kind: isKind(p, answers.kind),
+    area: areaPart(p, answers, areas).score > 0,
+    budget: budgetPart(p, answers).score >= 0.5,
+    size: sizePart(p, answers).score > 0
+  };
+}
+
+/** The answers worth keeping on a lead: only the questions' own values, as plain strings and lists */
+export function cleanAnswers(a = {}) {
+  const text = (v, max = 40) => String(v ?? '').replace(/[^\p{L}\p{N}_ .-]/gu, '').slice(0, max);
+  const list = (v, max = 8) => (Array.isArray(v) ? v.map((x) => text(x, 40)).filter(Boolean).slice(0, max) : []);
+  return {
+    kind: text(a.kind),
+    purpose: text(a.purpose),
+    areas: list(a.areas),
+    anyArea: Boolean(a.anyArea),
+    family: text(a.family),
+    minSize: text(a.minSize, 8),
+    delivery: text(a.delivery),
+    payment: a.payment === 'cash' ? 'cash' : 'installments',
+    budget: text(a.budget, 12),
+    down: text(a.down, 12),
+    monthly: text(a.monthly, 12),
+    priorities: list(a.priorities)
+  };
+}
+
 /** Live listings of the kind asked for, ranked by fit, best first: [{ property, ...matchUnit }] */
 export function rankUnits(properties = [], answers = {}, areas = [], limit = 6) {
   return liveListings(properties)

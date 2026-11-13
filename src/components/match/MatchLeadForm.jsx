@@ -3,7 +3,7 @@ import { PhoneCall, Check } from 'lucide-react';
 import PhoneInputField from '../PhoneInputField';
 import { nameProblem, phoneProblem } from '../../utils/contactValidation';
 import { useProperties } from '../../context/PropertiesContext';
-import { kindOf } from '../../utils/buyerMatch';
+import { kindOf, cleanAnswers } from '../../utils/buyerMatch';
 
 const numOf = (v) => Number(String(v ?? '').replace(/\D/g, '')) || 0;
 
@@ -41,7 +41,8 @@ export default function MatchLeadForm({ answers, message, areaName }) {
         area: answers.areas?.[0] || '',
         budget: budget || '',
         notes: message,
-        details: { areas: (answers.areas || []).map(areaName), payment: answers.payment, down: answers.down, monthly: answers.monthly },
+        // The answers as data (not only the note): the CRM matches new units to this buyer with them
+        details: { matchAnswers: cleanAnswers(answers), areas: (answers.areas || []).map(areaName), payment: answers.payment, down: answers.down, monthly: answers.monthly },
         type: 'buyer_instant',
         status: 'new',
         timestamp: new Date().toISOString()

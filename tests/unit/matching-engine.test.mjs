@@ -75,3 +75,32 @@ test('results are best first', () => {
   const out = findMatchingClientsForProperty(apartment, [lower, best]);
   assert.deepEqual(ids(out), [best.id, lower.id]);
 });
+
+// ── Buyers who answered «رشّحلي عقاري»: their real answers are used ──
+const answered = (matchAnswers, extra = {}) => buyer({ matchAnswers }, extra);
+const flat = { id: 'p9', type: 'apartment', areaKey: 'new_sohag', price: 2000000, size: 120, bedrooms: 3, status: 'published' };
+
+test('a buyer\'s answers drive the match: size, area and budget must fit', () => {
+  const fits = answered({ kind: 'residential', areas: ['new_sohag'], payment: 'cash', budget: '2200000', minSize: '100' });
+  const tooSmall = answered({ kind: 'residential', areas: ['new_sohag'], payment: 'cash', budget: '2200000', minSize: '200' });
+  const overBudget = answered({ kind: 'residential', areas: ['new_sohag'], payment: 'cash', budget: '1000000' });
+  const elsewhere = answered({ kind: 'residential', areas: ['akhmeem'], payment: 'cash', budget: '2200000' });
+  const wrongKind = answered({ kind: 'commercial', areas: ['new_sohag'], payment: 'cash', budget: '2200000' });
+  const out = findMatchingClientsForProperty(flat, [fits, tooSmall, overBudget, elsewhere, wrongKind]);
+  assert.deepEqual(ids(out), [fits.id]);
+  assert.ok(out[0].score >= MATCH_THRESHOLD);
+});
+
+test('an installment buyer is matched against the unit\'s plan, not left without a budget', () => {
+  const withPlan = { ...flat, id: 'p10', paymentType: 'installment', downPayment: 200000, monthlyInstallment: 20000, installmentMonths: 90, installmentTotal: 2000000, installmentAmount: 20000, installmentEvery: 1 };
+  const ok = answered({ kind: 'residential', areas: ['new_sohag'], payment: 'installments', down: '300000', monthly: '25000' });
+  const broke = answered({ kind: 'residential', areas: ['new_sohag'], payment: 'installments', down: '20000', monthly: '2000' });
+  const out = findMatchingClientsForProperty(withPlan, [ok, broke]);
+  assert.ok(ids(out).includes(ok.id));
+  assert.ok(!ids(out).includes(broke.id));
+});
+
+test('leads without answers still use the plain matching', () => {
+  const plain = buyer({ propertyType: 'apartment', area: 'new_sohag', budget: 2000000 });
+  assert.deepEqual(ids(findMatchingClientsForProperty(flat, [plain])), [plain.id]);
+});
