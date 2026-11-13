@@ -28,6 +28,21 @@ export default function AutomationTab({ isAr, leads = [], onUpdateLead, triggerT
     listTeamMembers().then((r) => { if (alive && r?.ok && Array.isArray(r.members)) setSellerCount(sellersOf(r.members).length); }).catch(() => {});
     return () => { alive = false; };
   }, []);
+  // «متابعة تلقائية»: the first week's tasks for the new owner (api/assign.js), on unless cadence: false
+  const [cadence, setCadence] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    loadSettings('automation').then((s) => { if (alive) setCadence(s?.cadence !== false); }).catch(() => alive && setCadence(true));
+    return () => { alive = false; };
+  }, []);
+  const toggleCadence = async () => {
+    const next = !cadence;
+    setCadence(next);
+    if (!(await saveSettings('automation', { cadence: next }))) {
+      setCadence(!next);
+      triggerToast(isAr ? 'مقدرناش نحفظ الإعداد' : 'Could not save the setting', 'error');
+    }
+  };
   const toggleAutoAssign = async () => {
     const next = !autoAssign;
     setAutoAssign(next);
@@ -105,6 +120,10 @@ export default function AutomationTab({ isAr, leads = [], onUpdateLead, triggerT
                 {isAr ? 'مفيش بياعين بحسابات على فرق (دور يقدر يعدّل العملاء ومش مدير)، فالتوزيع على البياعين مش هيشتغل. ضيف بياعين من الفريق والصلاحيات.' : 'No salespeople with an account on a team, so assigning to a person will not run. Add some in Team & roles.'}
               </p>
             )}
+            <label className="crm-auto-assign__row">
+              <input type="checkbox" checked={cadence !== false} disabled={cadence === null} onChange={toggleCadence} />
+              <span>{isAr ? 'اعمل للبياع الجديد مهام متابعة تلقائي (اتصال النهارده، واتساب بكرة، اتصال تاني بعد ٣ أيام)' : 'Give the new owner follow-up tasks (call today, WhatsApp tomorrow, second call in 3 days)'}</span>
+            </label>
             {sellerCount > 0 && <p className="crm-auto-assign__note">{isAr ? `${sellerCount} بياع في التوزيع. بيتسجّل كل توزيع في سجل المراجعة.` : `${sellerCount} salespeople in rotation. Each assignment is in the audit log.`}</p>}
           </div>
           <button className="btn btn-accent" type="button" onClick={distributeNow} disabled={running || !onUpdateLead || pending.length === 0}>

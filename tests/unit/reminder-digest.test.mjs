@@ -78,3 +78,14 @@ test('ad clients escalate after two hours, others after a day; answered or close
   assert.equal(escalationLevel(lead({ createdAt: min(25 * 60), firstContactedAt: min(60) }), NOW), 0);
   assert.equal(escalationLevel(lead({ createdAt: min(25 * 60), isArchived: true }), NOW), 0);
 });
+
+test('a person\'s late and due-today tasks are in their phone digest, and only theirs', () => {
+  const t = (over) => ({ status: 'open', assigneeUid: 'u1', dueAt: '2026-11-13', ...over });
+  const tasks = [t({ dueAt: '2026-11-12' }), t({}), t({ dueAt: '2026-11-20' }), t({ status: 'done' }), t({ assigneeUid: 'u2' })];
+  const d = digestFor([], me, { now: NOW, tasks });
+  assert.equal(d.tasksLate, 1);
+  assert.equal(d.tasksToday, 1);
+  assert.match(d.body, /2 مهمة \(1 متأخرة\)/);
+  assert.equal(digestFor([], me, { now: NOW, tasks: [t({ dueAt: '2026-11-20' })] }), null);
+  assert.notEqual(d.sig, digestFor([], me, { now: NOW, tasks: [t({})] }).sig);
+});

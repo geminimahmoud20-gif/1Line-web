@@ -5,6 +5,7 @@
 //  tests/unit/reminder-digest.test.mjs use it.
 // =============================================================
 import { waitingMs, responseSlaMs, escalationLevel, isOverdue, isDueToday, localDayKey } from './crmLeadViews.js';
+import { taskCounts } from './tasks.js';
 
 const isOpen = (l) => !l.isArchived && l.status !== 'lost' && l.status !== 'closed';
 const NO_OWNER = (l) => !l.ownerUid && !l.ownerName && !l.claimedBy && (!l.assignedTo || l.assignedTo === 'Unassigned');
@@ -22,7 +23,7 @@ export const ownedBy = (l, member = {}) => Boolean(
  * @param {object[]} leads
  * @param {{uid?: string, name?: string, manager?: boolean}} member
  */
-export function digestFor(leads = [], member = {}, { now = Date.now() } = {}) {
+export function digestFor(leads = [], member = {}, { now = Date.now(), tasks = [] } = {}) {
   const today = localDayKey(now);
   let late = 0;
   let due = 0;
@@ -45,15 +46,20 @@ export function digestFor(leads = [], member = {}, { now = Date.now() } = {}) {
       escalatedOthers += 1;
     }
   }
-  if (!late && !due && !unassignedLate && !escalatedOthers) return null;
+  // Tasks assigned to this person that are late or due today (crm_tasks)
+  const mineTasks = member.uid ? taskCounts(tasks, member.uid, now) : { overdue: 0, today: 0 };
+  const tasksLate = mineTasks.overdue;
+  const tasksToday = mineTasks.today;
+  if (!late && !due && !unassignedLate && !escalatedOthers && !tasksLate && !tasksToday) return null;
   const parts = [];
   if (late) parts.push(`${late} عميل مستني ردّك${escalatedMine ? ` (${escalatedMine} وصل للمدير)` : ''}`);
   if (due) parts.push(`${due} متابعة ${overdue ? 'النهارده أو متأخرة' : 'النهارده'}`);
   if (unassignedLate) parts.push(`${unassignedLate} عميل لسه من غير بياع`);
+  if (tasksLate || tasksToday) parts.push(`${tasksLate + tasksToday} مهمة${tasksLate ? ` (${tasksLate} متأخرة)` : ' النهارده'}`);
   if (escalatedOthers) parts.push(`${escalatedOthers} عميل اتأخر الرد عليه عند بياعين`);
   return {
-    late, due, overdue, unassignedLate, escalatedMine, escalatedOthers,
-    sig: `${late}|${due}|${unassignedLate}|${escalatedMine}|${escalatedOthers}`,
+    late, due, overdue, unassignedLate, escalatedMine, escalatedOthers, tasksLate, tasksToday,
+    sig: `${late}|${due}|${unassignedLate}|${escalatedMine}|${escalatedOthers}|${tasksLate}|${tasksToday}`,
     title: 'عندك شغل مستني في 1Line',
     body: parts.join(' · ')
   };

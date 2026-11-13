@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // =============================================================
 //  Hourly phone reminders for the sales team (Web Push): one short message per person who has
-//  clients waiting past the reply target or follow-ups due today / late (src/utils/reminderDigest.js).
+//  clients waiting past the reply target, follow-ups due today / late and tasks (crm_tasks) due today or late
+//  (src/utils/reminderDigest.js).
 //
 //    • The first run creates the push key pair: the private half in push_private/vapid (no client
 //      can read it), the public half in settings/push for the CRM to subscribe devices with.
@@ -70,16 +71,18 @@ const [due, fresh] = await Promise.all([
   db.collection('leads').where('nextFollowUpAt', '<=', `${today}`).get(),
   db.collection('leads').where('status', '==', 'new').get()
 ]);
+const taskSnap = await db.collection('crm_tasks').where('status', '==', 'open').get();
+const tasks = taskSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
 const byId = new Map();
 for (const d of [...due.docs, ...fresh.docs]) byId.set(d.id, { id: d.id, ...d.data() });
 const leads = [...byId.values()];
-console.log(`${leads.length} leads checked, ${subscribers.length} people with phones`);
+console.log(`${leads.length} leads and ${tasks.length} open tasks checked, ${subscribers.length} people with phones`);
 
 let sent = 0;
 for (const doc of subscribers) {
   const data = doc.data();
   const member = { uid: doc.id, name: data.name || '', manager: Boolean(data.manager) };
-  const digest = digestFor(leads, member, { now: now.getTime() });
+  const digest = digestFor(leads, member, { now: now.getTime(), tasks });
   if (!force && !shouldSend(digest, data.lastDigest, now.getTime())) continue;
   if (!digest) continue;
   const payload = JSON.stringify({ title: digest.title, body: digest.body, url: '/crm?tab=leads' });
