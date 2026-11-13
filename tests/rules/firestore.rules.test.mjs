@@ -720,3 +720,49 @@ test('approval: only the general manager publishes a buyer request', async () =>
   await assertSucceeds(updateDoc(doc(pm, 'demands/p1'), { text_ar: 'changed', status: 'pending' }));
   await assertSucceeds(updateDoc(doc(gm, 'demands/s1'), { text_ar: 'gm edit' }));
 });
+
+// ── Tasks ────────────────────────────────────────────────────────────────
+const task = (over = {}) => ({
+  title: 'اتصل بالعميل', note: '', dueAt: '2026-11-14', priority: 'normal', status: 'open', kind: 'call', leadId: 'a', leadName: 'A',
+  assigneeUid: 'u-sales_agent', assigneeName: 'بياع', createdBy: 'u-sales_agent', createdByName: 'بياع', createdAt: '2026-11-13T10:00:00.000Z', doneAt: '', doneBy: '', updatedAt: '2026-11-13T10:00:00.000Z', ...over
+});
+
+test('crm_tasks: a salesperson creates, reads, ticks and deletes their own', async () => {
+  const me = as('sales_agent');
+  await assertSucceeds(setDoc(doc(me, 'crm_tasks/t1'), task()));
+  await assertSucceeds(getDoc(doc(me, 'crm_tasks/t1')));
+  await assertSucceeds(getDocs(query(collection(me, 'crm_tasks'), where('assigneeUid', '==', 'u-sales_agent'))));
+  await assertSucceeds(updateDoc(doc(me, 'crm_tasks/t1'), { status: 'done', doneAt: '2026-11-13T11:00:00.000Z', doneBy: 'u-sales_agent', updatedAt: 'x' }));
+  await assertSucceeds(deleteDoc(doc(me, 'crm_tasks/t1')));
+});
+
+test('crm_tasks: a salesperson cannot give a task to someone else, forge the creator, or read the team\'s', async () => {
+  const me = as('sales_agent');
+  await assertFails(setDoc(doc(me, 'crm_tasks/t2'), task({ assigneeUid: 'u-other' })));
+  await assertFails(setDoc(doc(me, 'crm_tasks/t3'), task({ createdBy: 'u-other' })));
+  await assertFails(setDoc(doc(me, 'crm_tasks/t4'), task({ status: 'done' })));
+  await assertFails(getDocs(collection(me, 'crm_tasks'))); // the whole team's list is the manager's
+  await env.withSecurityRulesDisabled(async (ctx) => { await setDoc(doc(ctx.firestore(), 'crm_tasks/other'), task({ assigneeUid: 'u-other', createdBy: 'u-other' })); });
+  await assertFails(getDoc(doc(me, 'crm_tasks/other')));
+  await assertFails(updateDoc(doc(me, 'crm_tasks/other'), { status: 'done' }));
+  await assertFails(deleteDoc(doc(me, 'crm_tasks/other')));
+});
+
+test('crm_tasks: a manager assigns to anyone, reads all and reassigns; a viewer or a stranger does nothing', async () => {
+  const mgr = as('sales_manager');
+  await assertSucceeds(setDoc(doc(mgr, 'crm_tasks/m1'), task({ assigneeUid: 'u-sales_agent', createdBy: 'u-sales_manager' })));
+  await assertSucceeds(getDocs(collection(mgr, 'crm_tasks')));
+  await assertSucceeds(updateDoc(doc(mgr, 'crm_tasks/m1'), { assigneeUid: 'u-other', assigneeName: 'تاني' }));
+  await assertSucceeds(deleteDoc(doc(mgr, 'crm_tasks/m1')));
+  await assertFails(setDoc(doc(as('viewer'), 'crm_tasks/v1'), task({ assigneeUid: 'u-viewer', createdBy: 'u-viewer' })));
+  await assertFails(getDoc(doc(guest(), 'crm_tasks/m1')));
+  await assertFails(setDoc(doc(guest(), 'crm_tasks/g1'), task()));
+});
+
+test('crm_tasks: only the shape is accepted (no phone field, a title, a known priority)', async () => {
+  const me = as('sales_agent');
+  await assertFails(setDoc(doc(me, 'crm_tasks/s1'), task({ phone: '01000000000' })));
+  await assertFails(setDoc(doc(me, 'crm_tasks/s2'), task({ title: '' })));
+  await assertFails(setDoc(doc(me, 'crm_tasks/s3'), task({ priority: 'urgent' })));
+  await assertFails(setDoc(doc(me, 'crm_tasks/s4'), task({ title: 'x'.repeat(141) })));
+});

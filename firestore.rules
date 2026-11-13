@@ -358,6 +358,42 @@ service cloud.firestore {
       allow read, write: if hasPerm('ld.manage');
     }
 
+    // ✅ 7c. CRM TASKS («مهامي», crm_tasks: not the operational `tasks` handoffs below): things a team member has to do by a day, with or without a client behind
+    // them (a client's id and name only, never a phone). A lead editor creates tasks for themselves, a
+    // lead manager for anyone; you read the ones assigned to you, a manager reads all. Changing who a
+    // task is for, or deleting someone else's, is the manager's. Same shape as src/utils/tasks.js.
+    match /crm_tasks/{taskId} {
+      function taskKeys() {
+        return ['title', 'note', 'dueAt', 'priority', 'status', 'kind', 'leadId', 'leadName', 'assigneeUid', 'assigneeName',
+                'createdBy', 'createdByName', 'createdAt', 'doneAt', 'doneBy', 'updatedAt'];
+      }
+      function validTask(d) {
+        return d.keys().hasOnly(taskKeys())
+          && d.title is string && d.title.size() > 0 && d.title.size() <= 140
+          && d.get('note', '') is string && d.get('note', '').size() <= 1000
+          && d.get('dueAt', '') is string && d.get('dueAt', '').size() <= 16
+          && d.priority in ['high', 'normal', 'low']
+          && d.status in ['open', 'done']
+          && d.get('kind', 'other') in ['call', 'whatsapp', 'visit', 'docs', 'other']
+          && d.get('leadId', '') is string && d.get('leadId', '').size() <= 80
+          && d.get('leadName', '') is string && d.get('leadName', '').size() <= 80
+          && d.assigneeUid is string && d.assigneeUid.size() > 0 && d.assigneeUid.size() <= 128
+          && d.createdBy is string;
+      }
+      allow read: if isStaff() && (hasPerm('ld.manage') || resource.data.assigneeUid == request.auth.uid);
+      allow create: if isLeadEditor()
+        && validTask(request.resource.data)
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.status == 'open'
+        && (request.resource.data.assigneeUid == request.auth.uid || hasPerm('ld.manage'));
+      allow update: if isLeadEditor()
+        && (resource.data.assigneeUid == request.auth.uid || hasPerm('ld.manage'))
+        && validTask(request.resource.data)
+        && request.resource.data.createdBy == resource.data.createdBy
+        && (request.resource.data.assigneeUid == resource.data.assigneeUid || hasPerm('ld.manage'));
+      allow delete: if isLeadEditor() && (resource.data.createdBy == request.auth.uid || hasPerm('ld.manage'));
+    }
+
     // 📢 8. SPONSORED ADS & CAMPAIGNS
     match /advertisements/{adId} {
       allow read: if true;
