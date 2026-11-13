@@ -14,6 +14,7 @@ import { SignJWT, importPKCS8 } from 'jose';
 import { teamStore, staffRegistry, accessStore } from './_team-core.js';
 import { eligible, sellersOf, chooseSeller, ownerFields, MAX_OPEN_COUNT } from './_assign-core.js';
 import { createRateLimiter, clientIp } from './_rate-limit.js';
+import { cadenceTasks } from '../src/utils/followUpCadence.js';
 
 const FIREBASE_PROJECT_ID = 'line-c9601';
 const limitIp = createRateLimiter({ max: 40, windowMs: 10 * 60 * 1000 });
@@ -105,9 +106,12 @@ export async function POST(request) {
       body: payload ? JSON.stringify(payload) : undefined
     });
 
-    // The owner can switch this off (CRM → الأتمتة): settings/automation { autoAssign: false }
+    // The owner can switch this off (CRM → الأتمتة): settings/automation { autoAssign: false }, and the
+    // follow-up tasks separately with { cadence: false }
     const setting = await fs('GET', 'settings/automation');
-    if (setting.ok && (await setting.json())?.fields?.autoAssign?.booleanValue === false) return json(200, { assigned: false, reason: 'off' });
+    const flags = setting.ok ? ((await setting.json())?.fields || {}) : {};
+    if (flags.autoAssign?.booleanValue === false) return json(200, { assigned: false, reason: 'off' });
+    const cadenceOn = flags.cadence?.booleanValue !== false;
 
     const res = await fs('GET', `leads/${encodeURIComponent(id)}`);
     if (res.status === 404) return json(404, { assigned: false, reason: 'not-saved-yet' });
@@ -173,7 +177,24 @@ export async function POST(request) {
       const c = await fs('PATCH', `lead_contacts/${encodeURIComponent(id)}?updateMask.fieldPaths=assignedTo`, { fields: { assignedTo: { stringValue: fields.assignedTo } } });
       if (!c.ok && c.status !== 404) console.error('assign: contact desk not updated', c.status);
     }
-    return json(200, { assigned: true });
+    // The first week's follow-up as tasks for the new owner. Created once (a retry finds them), and a failure
+    // here never undoes the assignment.
+    let tasks = 0;
+    if (cadenceOn) {
+      try {
+        const seller_ = { uid: seller.uid, name: fields.ownerName };
+        for (const { id: taskId, task } of cadenceTasks({ lead: { ...lead, id }, seller: seller_ })) {
+          const t = await fs('PATCH', `crm_tasks/${encodeURIComponent(taskId)}?currentDocument.exists=false`, {
+            fields: Object.fromEntries(Object.entries(task).map(([k, v]) => [k, toValue(v)]))
+          });
+          if (t.ok) tasks += 1;
+          else if (t.status !== 409 && t.status !== 412 && t.status !== 400) console.error('assign: follow-up task not written', t.status);
+        }
+      } catch (e) {
+        console.error('assign: follow-up tasks failed:', e?.message || e);
+      }
+    }
+    return json(200, { assigned: true, tasks });
   } catch (err) {
     console.error('assign failed:', err?.message || err);
     return json(502, { error: 'assign-failed' });
