@@ -1,17 +1,58 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Megaphone } from 'lucide-react';
+import { Megaphone, Copy, Link2 } from 'lucide-react';
 import { campaignReport, campaignTotals, PERIODS } from '../../utils/campaignReport';
 import { LOST_REASONS } from '../../utils/crmLeadViews';
 import { loadCampaignSpend, saveCampaignSpend } from '../../firebaseLazy';
 import { EmptyState } from '../ui';
+import { LANDINGS, PLATFORMS, buildUtmLink, slugify } from '../../utils/utmLinks';
+import { SITE_URL } from '../../config/siteConfig';
 import './campaign-report.css';
 
 const SPEND_KEY = 'crm_campaign_spend_v1';
 const readSpend = () => { try { return JSON.parse(localStorage.getItem(SPEND_KEY) || '{}') || {}; } catch { return {}; } };
 const fmt = (n) => (n ? Number(n).toLocaleString('en-US') : '—');
 
+/** Makes the ad link that the report below reads (the guide used to be a document outside the CRM) */
+function LinkBuilder({ L, onCopied }) {
+  const [path, setPath] = useState(LANDINGS[0].path);
+  const [platform, setPlatform] = useState('facebook');
+  const [campaign, setCampaign] = useState('');
+  const [content, setContent] = useState('');
+  const link = buildUtmLink({ siteUrl: SITE_URL, path, platform, campaign, content });
+  const typedButEmpty = campaign.trim() && !slugify(campaign);
+  const landing = LANDINGS.find((l) => l.path === path);
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(link); onCopied(true); } catch { onCopied(false); }
+  };
+  return (
+    <details className="cr-builder">
+      <summary><Link2 size={16} aria-hidden="true" /> {L('جهّز لينك إعلان', 'Build an ad link')}</summary>
+      <div className="cr-builder__grid">
+        <label><span>{L('الإعلان بيودّي لفين؟', 'Where does the ad land?')}</span>
+          <select value={path} onChange={(e) => setPath(e.target.value)}>{LANDINGS.map((l) => <option key={l.path} value={l.path}>{l.ar}</option>)}</select>
+        </label>
+        <label><span>{L('المنصة', 'Platform')}</span>
+          <select value={platform} onChange={(e) => setPlatform(e.target.value)}>{PLATFORMS.map((p) => <option key={p.id} value={p.id}>{p.ar}</option>)}</select>
+        </label>
+        <label><span>{L('اسم الحملة (إنجليزي)', 'Campaign name (Latin)')}</span>
+          <input value={campaign} onChange={(e) => setCampaign(e.target.value)} placeholder="sohag-buyers" dir="ltr" />
+        </label>
+        <label><span>{L('اسم الإعلان أو الفيديو (اختياري)', 'Ad / video (optional)')}</span>
+          <input value={content} onChange={(e) => setContent(e.target.value)} placeholder="video-01" dir="ltr" />
+        </label>
+      </div>
+      {typedButEmpty && <p className="cr-builder__warn">{L('الاسم لازم فيه حروف إنجليزي أو أرقام (مثلاً sohag-buyers)', 'Use Latin letters or digits')}</p>}
+      {!landing?.leads && <p className="cr-builder__hint">{L('الصفحة دي بتجيب زوار بس، مش بتسجّل عميل بالرقم. للتسجيل: رشّحلي عقاري أو بيع عقارك أو طلب خاص.', 'This page brings visitors but does not capture a lead.')}</p>}
+      <div className="cr-builder__out">
+        <input readOnly value={link} dir="ltr" aria-label={L('اللينك', 'Link')} placeholder={L('اكتب اسم الحملة ويظهر اللينك هنا', 'The link appears here')} />
+        <button type="button" className="ui-btn ui-btn--primary ui-btn--sm" disabled={!link} onClick={copy}><Copy size={14} aria-hidden="true" />{L('انسخ', 'Copy')}</button>
+      </div>
+    </details>
+  );
+}
+
 /** «تقرير الحملات»: what each ad brought, how far those clients got, and what that cost. */
-export default function CampaignReportPanel({ leads = [], lang = 'ar' }) {
+export default function CampaignReportPanel({ leads = [], lang = 'ar', triggerToast }) {
   const isAr = lang === 'ar';
   const L = (ar, en) => (isAr ? ar : en);
   const [by, setBy] = useState('campaign');
@@ -54,6 +95,8 @@ export default function CampaignReportPanel({ leads = [], lang = 'ar' }) {
         <p>{L('كل حملة جابت كام عميل، وكام منهم وصل لمعاينة وإغلاق. اكتب المصروف عشان تشوف تكلفة العميل وتكلفة المعاينة.', 'Leads, visits and closings per campaign, with cost per lead and per visit once you enter the spend.')}</p>
       </header>
 
+      <LinkBuilder L={L} onCopied={(ok) => triggerToast?.(ok ? L('اللينك اتنسخ', 'Link copied') : L('معرفناش ننسخ، انسخه من الخانة', 'Could not copy, select it from the box'), ok ? 'success' : 'error')} />
+
       <div className="cr-controls">
         <div className="cr-seg" role="radiogroup" aria-label={L('التجميع', 'Group by')}>
           {[['campaign', L('بالحملة', 'By campaign')], ['ad', L('بالإعلان / الفيديو', 'By ad')]].map(([id, label]) => (
@@ -71,7 +114,7 @@ export default function CampaignReportPanel({ leads = [], lang = 'ar' }) {
         <EmptyState
           icon={<Megaphone size={22} />}
           title={L('مفيش عملاء من حملات في الفترة دي', 'No campaign leads in this period')}
-          description={L('أي عميل يدخل من لينك فيه utm_campaign هيظهر هنا بحملته. استخدم لينكات الحملة اللي في الدليل.', 'Leads that arrive through a link with utm_campaign appear here.')}
+          description={L('أي عميل يدخل من لينك فيه utm_campaign هيظهر هنا بحملته. اعمل لينك الإعلان من «جهّز لينك إعلان» فوق.', 'Leads that arrive through a link with utm_campaign appear here. Build the ad link above.')}
         />
       ) : (
         <>
