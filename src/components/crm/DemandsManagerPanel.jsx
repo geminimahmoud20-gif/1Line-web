@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import useOpenRequest from '../../hooks/useOpenRequest';
 import { Zap, Plus, Check, Trash2, Edit3, Clock, MapPin, DollarSign, Phone, MessageSquare, Search, CheckCircle, EyeOff, Sparkles, Download } from 'lucide-react';
 import { exportToCsv } from '../../utils/exportCsv';
+import { auditDataExport } from '../../utils/contactAudit';
 import { canViewLeadPhone, maskPhoneNumber } from '../../utils/rbacRules';
 import { reconcilePublicDemands } from '../../firebaseLazy';
 import DemandFormModal from './demands/DemandFormModal';
@@ -107,6 +108,7 @@ export default function DemandsManagerPanel({
       phone: canViewPhone ? (d.phone || '—') : maskPhoneNumber(d.phone, userRole)
     }));
     exportToCsv('OneLine_Buyer_Demands', exportedData, headers);
+    auditDataExport('OneLine_Buyer_Demands', 'csv', exportedData.length);
     triggerToast?.(isAr ? 'تم تصدير الطلبات بنجاح إلى ملف Excel!' : 'Demands exported to CSV!', 'success');
   };
 

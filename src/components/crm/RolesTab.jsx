@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ShieldCheck, Plus, Pencil, Trash2, X, Lock, Check } from 'lucide-react';
 import { PERMISSIONS, PERM_GROUPS, PERM_IMPLIED_BY, SUPER_ADMIN, makeId } from '../../utils/accessModel';
 import { saveRoleApi, deleteRoleApi } from '../../services/accessConfig';
+import { auditRoleSaved, auditRoleDeleted } from '../../utils/contactAudit';
 
 function RoleModal({ role, isAr, onClose, onSave, busy }) {
   const isEditing = Boolean(role?.id);
@@ -211,6 +212,7 @@ export default function RolesTab({ accessConfig, members = [], isAr = true, trig
     const res = await saveRoleApi(role);
     setBusy(false);
     if (res.ok) {
+      auditRoleSaved(roles.find((r) => r.id === role.id) || null, role);
       triggerToast(isAr ? 'تم حفظ الدور وتحديث الصلاحيات بنجاح' : 'Role saved successfully', 'success');
       setEditingRole(null);
     } else {
@@ -223,6 +225,7 @@ export default function RolesTab({ accessConfig, members = [], isAr = true, trig
     const res = await deleteRoleApi(roleId, fallbackRoleId);
     setBusy(false);
     if (res.ok) {
+      auditRoleDeleted(roleId, fallbackRoleId);
       triggerToast(isAr ? 'تم حذف الدور ونقل الموظفين للدور البديل' : 'Role deleted successfully', 'success');
       setDeletingRole(null);
     } else {

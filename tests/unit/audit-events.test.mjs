@@ -36,3 +36,21 @@ test('an automatic assignment has its own label and a readable line', () => {
   assert.equal(auditLabel('LEAD_AUTO_ASSIGNED'), 'توزيع تلقائي لعميل جديد');
   assert.equal(describeAudit({ action: 'LEAD_AUTO_ASSIGNED', targetId: 'lead-9', details: { to: 'منى', team: 'Sales Team A' } }), 'منى (Sales Team A) — lead-9');
 });
+
+test('a deleted client is logged by id only; a role change lists what was gained and lost', async () => {
+  const { leadDeletedEvent, roleChangeEvent, roleDeletedEvent, dataExportEvent, describeAudit, auditLabel } = await import('../../src/utils/auditEvents.js');
+  assert.deepEqual(leadDeletedEvent('l1'), { actionType: 'LEAD_DELETED', targetCollection: 'leads', targetId: 'l1', details: {} });
+  assert.equal(leadDeletedEvent(''), null);
+  const before = { id: 'sales', perms: ['ld.edit', 'ld.phone'] };
+  const ev = roleChangeEvent(before, { id: 'sales', perms: ['ld.edit', 'export'] });
+  assert.deepEqual(ev.details, { created: false, added: ['export'], removed: ['ld.phone'] });
+  assert.equal(roleChangeEvent(before, { id: 'sales', perms: ['ld.phone', 'ld.edit'] }), null); // saved with no change
+  assert.equal(roleChangeEvent(null, { id: 'new', perms: ['ld.edit'] }).details.created, true);
+  assert.equal(roleDeletedEvent('old', 'sales').details.fallback, 'sales');
+  const exp = dataExportEvent('1Line_Properties', 'excel', 12);
+  assert.deepEqual(exp.details, { format: 'excel', count: 12 });
+  assert.equal(dataExportEvent('', 'csv', 1), null);
+  assert.match(describeAudit({ action: 'ROLE_SAVED', targetId: 'sales', details: ev.details }), /\+export.*−ld\.phone/);
+  assert.match(describeAudit({ action: 'DATA_EXPORTED', targetCollection: '1Line_Properties', details: exp.details }), /1Line_Properties · excel · 12/);
+  assert.equal(auditLabel('LEAD_DELETED'), 'حذف عميل');
+});

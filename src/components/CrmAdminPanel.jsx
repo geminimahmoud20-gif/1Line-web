@@ -6,6 +6,7 @@ import { exportRows } from '../utils/transfer/exportTable';
 import { leadToRow } from '../utils/transfer/leadSchema';
 
 import { restoreLeads, mergeLeads } from '../firebaseLazy';
+import { auditLeadDeleted, auditContactUse } from '../utils/contactAudit';
 import { canExportCsv, canDeleteLead, canManagePayments, canEditLeadsRole, assignableDesks, scopeLeadsForAccess } from '../utils/rbacRules';
 import { assignmentUpdates, personFor, assigneeValue } from '../utils/assignees';
 import { memberDesk } from '../utils/inboxView';
@@ -658,6 +659,7 @@ export const CrmAdminPanel = ({
       return;
     }
     if (await confirm({ message: isAr ? `هل أنت متأكد من حذف بيانات العميل (${leadName || ''})؟` : `Delete lead ${leadName}?`, tone: 'danger' })) {
+      auditLeadDeleted(leadId);
       if (onDeleteLead) {
         onDeleteLead(leadId);
       } else {
@@ -672,6 +674,7 @@ export const CrmAdminPanel = ({
   const onWhatsAppClick = (lead) => {
     // Counts as contacting the client (first reply time, last contact)
     if (onUpdateLead && lead?.id) onUpdateLead(lead.id, { lastContactedAt: new Date().toISOString() }, lead.version);
+    auditContactUse(lead, 'whatsapp');
     if (handleWhatsAppAction) {
       handleWhatsAppAction(lead);
     } else {

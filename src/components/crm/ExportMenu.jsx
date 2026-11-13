@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Download, ChevronDown, FileSpreadsheet, FileText, FileJson } from 'lucide-react';
 import { exportRows } from '../../utils/transfer/exportTable';
+import { auditDataExport } from '../../utils/contactAudit';
 import './data-transfer.css';
 import { Button } from '../ui';
 
@@ -28,7 +29,12 @@ export default function ExportMenu({ getRows, getJson, baseName, sheetName, labe
     setBusy(true);
     try {
       if (onExport) await onExport(format);
-      else await exportRows(format === 'json' ? [] : getRows(), { format, baseName, sheetName, jsonPayload: format === 'json' ? getJson() : undefined });
+      else {
+        const rows = format === 'json' ? [] : getRows();
+        await exportRows(rows, { format, baseName, sheetName, jsonPayload: format === 'json' ? getJson() : undefined });
+        // The trail records that a table left the CRM and how big it was, never its contents
+        auditDataExport(baseName, format, format === 'json' ? 0 : rows.length);
+      }
       onDone?.(format, true);
     } catch (e) {
       console.error('Export failed', e);
