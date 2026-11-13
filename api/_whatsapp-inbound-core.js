@@ -127,6 +127,18 @@ export function newLeadFields(msg, intent = null) {
   if (msg.ref) fields.contactRef = s(msg.ref);
   if (propertyId) fields.propertyId = s(propertyId);
   if (intent?.source && intent.source !== 'direct') fields.utmSource = s(intent.source);
+  // A tap that came from an ad carries its campaign: the lead is credited to it like a form lead is
+  if (intent?.campaign) {
+    fields.utmCampaign = s(intent.campaign);
+    fields.marketingAttribution = map({
+      source: s(intent.source || 'direct'),
+      medium: s(intent.medium || 'none'),
+      campaign: s(intent.campaign),
+      content: s(intent.content || ''),
+      landingPage: s(intent.path || '/'),
+      capturedAt: ts(msg.at)
+    });
+  }
   return fields;
 }
 
@@ -148,7 +160,7 @@ export const intentLinkFields = (leadId, nowIso) => ({
 export function intentFromDoc(docJson) {
   const f = docJson?.fields || {};
   const v = (k) => String(f[k]?.stringValue || '');
-  return { propertyId: v('propertyId'), path: v('path'), source: v('source'), status: v('status') };
+  return { propertyId: v('propertyId'), path: v('path'), source: v('source'), medium: v('medium'), campaign: v('campaign'), content: v('content'), status: v('status') };
 }
 
 /**

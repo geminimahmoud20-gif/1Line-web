@@ -17,7 +17,7 @@ test('reference codes are short and unambiguous; the prefilled text gets one, on
 
 test('the server keeps only the reference, page, unit and source; no personal data gets through', () => {
   const clean = sanitizeIntent({ ref: 'W-7K3Q', path: '/properties/p1', propertyId: 'p1', source: 'facebook', device: 'mobile', phone: '0100', name: 'x', message: 'hello' });
-  assert.deepEqual(clean, { ref: 'W-7K3Q', channel: 'whatsapp', path: '/properties/p1', propertyId: 'p1', source: 'facebook', placement: '', device: 'mobile' });
+  assert.deepEqual(clean, { ref: 'W-7K3Q', channel: 'whatsapp', path: '/properties/p1', propertyId: 'p1', source: 'facebook', medium: '', campaign: '', content: '', placement: '', device: 'mobile' });
   assert.equal(sanitizeIntent({ ref: 'W-0O1I' }), null);
   assert.equal(sanitizeIntent({ ref: 'x' }), null);
   assert.equal(sanitizeIntent({ ref: 'W-7K3Q', path: 'javascript:alert(1)' }).path, '/');
@@ -34,4 +34,14 @@ test('handleIntent: rate limits before parsing, rejects junk, writes once', asyn
   assert.equal(await handleIntent('{"ref":"W-7K3Q","path":"/"}', '1.1.1.1', deps()), 204);
   assert.equal(writes.length, 1);
   assert.equal(await handleIntent('{"ref":"W-7K3Q"}', '1.1.1.1', deps({ write: async () => false })), 502);
+});
+
+test('the ad behind a tap (campaign, medium, ad) is kept as plain keys, and nothing else from a utm link', () => {
+  const clean = sanitizeIntent({ ref: 'W-7K3Q', source: 'facebook', medium: 'paid_social', campaign: 'sohag-buyers', content: 'video-01' });
+  assert.deepEqual([clean.medium, clean.campaign, clean.content], ['paid_social', 'sohag-buyers', 'video-01']);
+  const hostile = sanitizeIntent({ ref: 'W-7K3Q', campaign: 'a b<script>', content: '01012345678 call me' });
+  assert.deepEqual([hostile.campaign, hostile.content], ['', '']);
+  const f = intentFields(clean, 0);
+  assert.equal(f.campaign.stringValue, 'sohag-buyers');
+  assert.equal(intentFields(sanitizeIntent({ ref: 'W-7K3Q' }), 0).campaign.stringValue, '');
 });
