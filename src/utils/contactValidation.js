@@ -45,6 +45,19 @@ export function nameProblem(name, isAr = true) {
 
 export const isPersonName = (name) => nameProblem(name) === '';
 
+// Words that describe a property or a job, not a person: «شقة», «سمسار», «العقاري»
+const NOTE_WORDS = new Set(['شقة', 'شقه', 'شقق', 'فيلا', 'ارض', 'أرض', 'محل', 'عقار', 'العقار', 'العقاري', 'عقارات', 'سمسار', 'وسيط', 'تليفون', 'موبايل', 'رقم', 'واتس', 'واتساب', 'بيع', 'للبيع', 'للايجار', 'للإيجار', 'مطلوب', 'مستعجل']);
+
+/**
+ * A softer check than nameProblem, for the CRM: the name is acceptable but one of its words reads like a
+ * note or a job («عبدالعزيز الشهر العقاري»). Returns the hint to show, or ''; it never blocks saving.
+ */
+export function nameNote(name, isAr = true) {
+  const hit = nameWords(name).find((w) => NOTE_WORDS.has(w));
+  if (!hit) return '';
+  return isAr ? `كلمة «${hit}» شكلها ملاحظة مش جزء من الاسم. لو كده اكتبها في الملاحظات.` : `“${hit}” looks like a note, not part of the name. Put it in the notes if so.`;
+}
+
 // ── Phones: Egyptian or Gulf mobiles only ────────────────────────────────
 
 // local = the number without the country code and without the leading 0

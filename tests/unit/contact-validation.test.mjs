@@ -37,3 +37,14 @@ test('emails: valid, typo hints, throwaway and placeholder addresses', () => {
   assert.match(emailProblem('ahmed@gmial.com'), /gmail\.com/);
   for (const e of ['ahmed', 'ahmed@', 'ahmed@gmail', 'a..b@gmail.com', 'x@mailinator.com', 'me@yopmail.com', 'test@gmail.com', 'ahmed@example.com']) bad(emailProblem(e));
 });
+
+test('nameNote softly flags a word that reads like a note, and says nothing about a real name', async () => {
+  const { nameNote, nameProblem } = await import('../../src/utils/contactValidation.js');
+  assert.match(nameNote('عبدالعزيز الشهر العقاري'), /«العقاري»/);
+  assert.match(nameNote('أحمد سمسار'), /«سمسار»/);
+  assert.equal(nameNote('أحمد عبد العال'), '');
+  assert.equal(nameNote('محمود كمال'), '');
+  assert.equal(nameNote(''), '');
+  // a hint, not a block: the name itself is still accepted
+  assert.equal(nameProblem('عبدالعزيز الشهر العقاري'), '');
+});

@@ -50,7 +50,7 @@ import { useProperties } from '../context/PropertiesContext';
 import { areaFamily } from '../utils/areaLookup';
 import { getAreas } from '../utils/areasData';
 import { useConfirm } from './ui';
-import { phoneProblem } from '../utils/contactValidation';
+import { phoneProblem, nameProblem } from '../utils/contactValidation';
 
 export const CrmAdminPanel = ({
   lang = 'ar',
@@ -582,6 +582,12 @@ export const CrmAdminPanel = ({
     if (!leadFormData.name || !leadFormData.name.trim()) {
       triggerToast(isAr ? 'الاسم بالكامل إلزامي!' : 'Full Name is required!', 'error');
       return;
+    }
+
+    // The same name rule as the add form, but only when the name was changed (old clients keep their names)
+    if (leadFormData.name.trim() !== String(editingLead.name || '').trim()) {
+      const nameErr = nameProblem(leadFormData.name, isAr);
+      if (nameErr) { triggerToast(nameErr, 'error'); return; }
     }
 
     const cleanWhatsapp = (leadFormData.whatsapp || leadFormData.phone || '').trim().replace(/[\s\-()]/g, '');
