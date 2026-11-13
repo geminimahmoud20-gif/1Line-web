@@ -9,7 +9,7 @@ import DeskOptions from './DeskOptions';
 import { DESK_BY_ROLE } from '../../utils/rbacRules';
 import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 import AreaOptions from '../common/AreaOptions';
-import { nameProblem, phoneProblem } from '../../utils/contactValidation';
+import { nameProblem, nameNote, phoneProblem } from '../../utils/contactValidation';
 
 export default function AddLeadModal({
   isOpen,
@@ -198,6 +198,7 @@ export default function AddLeadModal({
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
+              {nameNote(formData.name, isAr) && <small role="note" style={{ color: 'var(--ui-warning)' }}>{nameNote(formData.name, isAr)}</small>}
             </div>
 
             {/* Primary Phone */}

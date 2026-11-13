@@ -1,3 +1,4 @@
+import { nameNote } from '../../utils/contactValidation';
 import { useEffect, useRef } from 'react';
 import { Save, X } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
@@ -53,6 +54,7 @@ export default function EditLeadModal({
                 onChange={(e) => setLeadFormData({ ...leadFormData, name: e.target.value })}
                 required
               />
+              {nameNote(leadFormData.name, isAr) && <small role="note" style={{ color: 'var(--ui-warning)' }}>{nameNote(leadFormData.name, isAr)}</small>}
             </div>
 
             <div className="form-group-item">
