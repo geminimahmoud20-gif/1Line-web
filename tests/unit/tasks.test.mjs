@@ -81,3 +81,16 @@ test('completing and reopening, and the due label', () => {
   assert.equal(dueLabel(mk({ dueAt: '2026-12-02' }), true, NOW), '12/02');
   assert.equal(dueLabel(mk(), true, NOW), 'من غير ميعاد');
 });
+
+import { tasksOfEndedLeads, autoCompletion } from '../../src/utils/tasks.js';
+test('open tasks of closed or lost clients are picked up for auto-closing', () => {
+  const leads = [{ id: 'a', status: 'closed' }, { id: 'b', status: 'lost' }, { id: 'c', status: 'contacted' }];
+  const tasks = [
+    { id: 1, leadId: 'a', status: 'open' }, { id: 2, leadId: 'b', status: 'open' },
+    { id: 3, leadId: 'c', status: 'open' }, { id: 4, leadId: 'a', status: 'done' }, { id: 5, status: 'open' }
+  ];
+  assert.deepEqual(tasksOfEndedLeads(tasks, leads).map((t) => t.id), [1, 2]);
+  const p = autoCompletion(0);
+  assert.equal(p.status, 'done');
+  assert.equal(p.doneBy, 'auto');
+});
