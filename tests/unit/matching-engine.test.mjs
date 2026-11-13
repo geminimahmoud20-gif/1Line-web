@@ -104,3 +104,24 @@ test('leads without answers still use the plain matching', () => {
   const plain = buyer({ propertyType: 'apartment', area: 'new_sohag', budget: 2000000 });
   assert.deepEqual(ids(findMatchingClientsForProperty(flat, [plain])), [plain.id]);
 });
+
+test('a unit far below the buyer’s budget is not a match (a typo in the budget must not match everything)', () => {
+  const typo = buyer({ propertyType: 'apartment', area: 'new_sohag', budget: 50_000_000 }); // 25× the unit
+  assert.ok(scoreBuyer(apartment, { type: 'apartment', area: 'new_sohag', budget: 50_000_000 }).score < MATCH_THRESHOLD);
+  assert.deepEqual(ids(findMatchingClientsForProperty(apartment, [typo])), []);
+});
+
+test('the screen gets one row per buyer with the best listings, and never a sold, sample or unpriced one', async () => {
+  const { matchBuyersToProperties } = await import('../../src/utils/matchingEngine.js');
+  const mk = (id, extra = {}) => ({ id, type: 'apartment', areaKey: 'new_sohag', price: 2_000_000, size: 120, status: 'published', ...extra });
+  const props = [mk('a'), mk('b', { price: 2_400_000 }), mk('c', { price: 2_100_000 }), mk('d', { price: 2_050_000 }), mk('sold', { status: 'sold' }), mk('demo', { isDemo: true }), mk('free', { price: 0 })];
+  const one = buyer({ propertyType: 'apartment', area: 'new_sohag', budget: 2_500_000 });
+  const twin = buyer({ propertyType: 'apartment', area: 'new_sohag', budget: 2_500_000 }, { phone: one.phone }); // the same person again
+  const closed = buyer({ propertyType: 'apartment', area: 'new_sohag', budget: 2_500_000 }, { status: 'closed' });
+  const rows = matchBuyersToProperties([one, twin, closed], props);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].total, 4);
+  assert.equal(rows[0].items.length, 3);
+  assert.ok(rows[0].items.every((i) => !['sold', 'demo', 'free'].includes(i.property.id)));
+  assert.ok(rows[0].items[0].score >= rows[0].items[2].score);
+});

@@ -5,6 +5,7 @@ const FORMS = {
   listing: { one: 'عرض', two: 'عرضين', few: 'عروض', many: 'عرض', en: ['listing', 'listings'] },
   property: { one: 'عقار', two: 'عقارين', few: 'عقارات', many: 'عقار', en: ['property', 'properties'] },
   unit: { one: 'وحدة', two: 'وحدتين', few: 'وحدات', many: 'وحدة', en: ['listing', 'listings'] },
+  buyer: { one: 'مشتري', two: 'مشتريين', few: 'مشترين', many: 'مشتري', en: ['buyer', 'buyers'] },
   deal: { one: 'صفقة', two: 'صفقتين', few: 'صفقات', many: 'صفقة', en: ['deal', 'deals'] },
   area: { one: 'منطقة', two: 'منطقتين', few: 'مناطق', many: 'منطقة', en: ['area', 'areas'] }
 };

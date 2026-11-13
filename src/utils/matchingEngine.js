@@ -6,7 +6,7 @@ import { normalizeAreaKey, getAreas } from './areasData.js';
 import { SITE_URL } from '../config/siteConfig.js';
 import { inArea } from './areaLookup.js';
 import { isSellerLead, parseMoney } from './crmLeadViews.js';
-import { assetClass } from './marketStats.js';
+import { assetClass, liveListings } from './marketStats.js';
 import { matchUnit, hardFit } from './buyerMatch.js';
 import { paymentTerms, planSummary } from './paymentTerms.js';
 
@@ -28,6 +28,8 @@ export function formatWhatsAppPhone(phone) {
 export const BUDGET_STRETCH = 1.2;
 /** Out of 100: area 40, kind of property 30, budget 30; below this a buyer is not matched */
 export const MATCH_THRESHOLD = 70;
+/** A unit under a quarter of the buyer's budget is not what they are after (a typo in the budget, or a buyer for something bigger): capped below the threshold */
+export const MIN_BUDGET_RATIO = 0.25;
 
 const phoneKey = (phone) => String(phone || '').replace(/[^0-9]/g, '').slice(-10);
 
@@ -47,6 +49,7 @@ export function scoreBuyer(property, buyer) {
   const buyerClass = buyer.type ? assetClass({ type: buyer.type }) : '';
   const reasons = [];
   let score = 0;
+  let capped = false;
 
   if (buyerClass && propertyClass && buyerClass !== propertyClass) return null;
   if (buyerClass) { score += 30; reasons.push('نفس نوع العقار'); } else score += 10;
@@ -60,13 +63,14 @@ export function scoreBuyer(property, buyer) {
   if (buyer.budget > 0 && price > 0) {
     const ratio = price / buyer.budget;
     if (ratio > BUDGET_STRETCH) return null;
-    if (ratio <= 1) { score += ratio >= 0.6 ? 30 : 20; reasons.push('داخل الميزانية'); }
+    if (ratio < MIN_BUDGET_RATIO) { score += 10; reasons.push('العقار أرخص بكتير من الميزانية، راجع الميزانية'); capped = true; }
+    else if (ratio <= 1) { score += ratio >= 0.6 ? 30 : 20; reasons.push('داخل الميزانية'); }
     else if (ratio <= 1.1) { score += 20; reasons.push('قريبة من الميزانية'); }
     else { score += 8; reasons.push('أعلى من الميزانية بشوية'); }
   } else {
     score += 10;
   }
-  return { score: Math.min(100, score), reasons };
+  return { score: Math.min(capped ? MATCH_THRESHOLD - 10 : 100, score), reasons };
 }
 
 /**
@@ -171,6 +175,32 @@ export function findMatchingClientsForProperty(property, leads = [], demands = [
 
   // Best score first; among equals the closer budget
   return [...byPhone.values()].sort((a, b) => b.score - a.score || (b.leadBudget || 0) - (a.leadBudget || 0));
+}
+
+/**
+ * The matching screen's data: one row per buyer (a person, by phone) with the best few listings that
+ * fit them, best buyer first. Listings that are sold, hidden, sample or unpriced never appear, and the
+ * buyer rules are findMatchingClientsForProperty's (active buyers only, kind, area, budget, answers).
+ * @returns {{key: string, lead: object|null, name: string, phone: string, budget: number, best: number, total: number,
+ *            items: {property: object, score: number, reasons: string[]}[]}[]}
+ */
+export function matchBuyersToProperties(leads = [], properties = [], { minScore = MATCH_THRESHOLD, perBuyer = 3 } = {}) {
+  const leadById = new Map(leads.map((l) => [String(l.id), l]));
+  const rows = new Map();
+  for (const property of liveListings(properties)) {
+    for (const m of findMatchingClientsForProperty(property, leads, [])) {
+      if (m.score < minScore) continue;
+      const key = phoneKey(m.phone) || `id:${m.id}`;
+      let row = rows.get(key);
+      if (!row) { row = { key, lead: null, name: m.name, phone: m.phone, budget: 0, best: 0, items: [] }; rows.set(key, row); }
+      if (m.score > row.best) { row.best = m.score; row.lead = leadById.get(String(m.id)) || row.lead; row.name = m.name; row.phone = m.phone; }
+      row.budget = Math.max(row.budget, m.leadBudget || 0);
+      row.items.push({ property, score: m.score, reasons: m.reasons });
+    }
+  }
+  return [...rows.values()]
+    .map((r) => ({ ...r, total: r.items.length, items: r.items.sort((a, b) => b.score - a.score).slice(0, perBuyer) }))
+    .sort((a, b) => b.best - a.best || b.total - a.total);
 }
 
 /**
