@@ -4,7 +4,7 @@ import { enqueuePendingLead, readPendingLeads, writePendingLeads } from '../util
 import { collection, getDocs, getDoc, doc, query, where, orderBy, limit, onSnapshot, serverTimestamp, writeBatch, deleteField, documentId, Timestamp, startAfter, runTransaction } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { getUserClaims } from './auth.js';
-import { notifyStaff } from './staffNotify.js';
+import { notifyStaff, requestAutoAssign } from './staffNotify.js';
 import { phoneVariants } from '../utils/phoneVariants.js';
 import { CONTACT_FIELDS, withoutContactFields } from '../utils/leadContactFields.js';
 
@@ -56,6 +56,7 @@ const writeLead = async (rawLead, extra = {}) => {
     batch.set(doc(db, 'lead_contacts', id), { ...contact, assignedTo: deskOf(payload) });
     await batch.commit();
     notifyStaff('leads', id);
+    requestAutoAssign(id);
     return { ...rawLead, id };
   };
   const appId = rawLead?.id;

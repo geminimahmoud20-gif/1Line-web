@@ -23,6 +23,27 @@ export const notifyStaff = (kind, id) => {
   } catch { /* never affects the form */ }
 };
 
+/**
+ * Ask api/assign.js to give a client who just arrived from the website to a salesperson (the
+ * person on the client's team with the fewest open clients). The lead is written to Firestore in
+ * the background, so the first try waits a moment and one retry covers a slow save. Fire-and-forget:
+ * a missing or unconfigured route changes nothing, the client simply stays on its team's queue.
+ */
+export const requestAutoAssign = (id) => {
+  try {
+    if (!id || typeof window === 'undefined' || window.location.protocol !== 'https:' || auth?.currentUser) return;
+    const send = (retry) => fetch('/api/assign', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id: String(id) }),
+      keepalive: true
+    }).then((res) => {
+      if (res.status === 404 && retry) setTimeout(() => send(false), 8000);
+    }).catch(() => {});
+    setTimeout(() => send(true), 2500);
+  } catch { /* never affects the form */ }
+};
+
 // ── CRM → إدارة المنظومة → تنبيهات الطلبات ──
 
 /** notify_status/whatsapp: { lastOkAt, lastOkRef, lastFailAt, lastFailRef, channels } or null */
