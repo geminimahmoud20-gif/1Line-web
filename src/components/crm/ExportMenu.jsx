@@ -50,7 +50,7 @@ export default function ExportMenu({ getRows, getJson, baseName, sheetName, labe
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        {busy ? 'جاري التجهيز…' : label}
+        <span className="dx-menu__label">{busy ? 'جاري التجهيز…' : label}</span>
       </Button>
       {open && (
         <div className="dx-menu-list" role="menu">

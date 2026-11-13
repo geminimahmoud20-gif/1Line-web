@@ -201,3 +201,76 @@
   .crm-layout .crm-leads .crm-action-group .crm-btn-quick { height: 40px; flex: 1 1 auto; justify-content: center; }
 }
 .crm-layout .crm-leads .crm-lead-chip.is-escalated { box-shadow: inset 0 0 0 1px var(--ui-danger); font-weight: var(--ui-fw-bold); }
+
+/* ===== Clients on a phone, redesigned =====
+   The page title is already in the top bar, so the header is one slim row (new client, and import /
+   export as icons). The urgent strip repeats two of the view chips, so it goes. Column choice means
+   nothing on cards. Each client is a compact card:
+     name
+     phone · source · wait
+     [call] [open] [WhatsApp] [more]
+     budget · type · area
+     status · temperature · score
+     next step
+     owner                                                                                         */
+@media (max-width: 768px) {
+  .crm-layout .crm-leads .ui-page-head { margin-bottom: var(--ui-s-2); }
+  .crm-layout .crm-leads .ui-page-head__titles { display: none; }
+  .crm-layout .crm-leads .ui-page-head__actions { flex: 1 1 100%; gap: var(--ui-s-2); }
+  .crm-layout .crm-leads .ui-page-head__actions > :first-child { flex: 1 1 auto; }
+  .crm-layout .crm-leads .crm-leads__import,
+  .crm-layout .crm-leads .dx-menu { flex: 0 0 44px; }
+  .crm-layout .crm-leads .crm-leads__import { width: 44px; padding: 0; justify-content: center; }
+  .crm-layout .crm-leads .crm-leads__lbl,
+  .crm-layout .crm-leads .dx-menu__label,
+  .crm-layout .crm-leads .dx-menu .ui-btn > svg:last-child { display: none; }
+  .crm-layout .crm-leads .dx-menu .ui-btn { width: 44px; padding: 0; justify-content: center; }
+  .crm-leads__urgent { display: none; }
+  .crm-layout .crm-leads .crm-leads__cols { display: none; }
+  .crm-layout .crm-leads .crm-leads__toolbar { gap: var(--ui-s-2); }
+
+  /* Card */
+  .crm-layout .crm-leads .crm-table tbody tr { padding: var(--ui-s-3); gap: var(--ui-s-2) var(--ui-s-3); }
+  .crm-layout .crm-leads .crm-table .crm-client-identity-wrap .ui-avatar,
+  .crm-layout .crm-leads .crm-table .crm-client-identity-wrap [class*='avatar'] { display: none; }
+  .crm-layout .crm-leads .crm-client-identity-meta { display: flex; flex-direction: row; flex: 1 1 0; min-width: 0; flex-wrap: wrap; align-items: center; gap: 2px var(--ui-s-3); }
+  .crm-layout .crm-leads .crm-client-identity-meta > .crm-client-identity-row:first-child { flex: 1 1 100%; }
+  .crm-layout .crm-leads .crm-client-name-link { font-size: var(--ui-fs-4); font-weight: var(--ui-fw-bold); text-align: start; }
+  .crm-layout .crm-leads .crm-lead-meta { display: flex; flex-wrap: nowrap; gap: var(--ui-s-1); overflow: hidden; }
+  .crm-layout .crm-leads .crm-lead-meta .crm-lead-chip.is-tag { display: none; }
+  /* Budget, type and area on one line */
+  .crm-layout .crm-leads .crm-lead-req-cell { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--ui-s-2); }
+  .crm-layout .crm-leads .crm-lead-budget-val { font-size: var(--ui-fs-4); }
+  .crm-layout .crm-leads .crm-lead-spec-sub { font-size: var(--ui-fs-2); color: var(--ui-text-3); }
+  /* Status, temperature and score share one line, as plain chips rather than three bordered controls */
+  .crm-layout .crm-leads .crm-table tbody tr td:is([data-label='الجدية والحرارة'], [data-label='Score & Temp'],
+    [data-label='الحالة'], [data-label='Status']) { flex: 0 0 auto; }
+  .crm-layout .crm-leads .crm-status-select-wrap { padding: 0 var(--ui-s-2); min-height: 32px; border-radius: var(--ui-r-full); }
+  .crm-layout .crm-leads .crm-status-select-wrap .crm-status-select,
+  .crm-layout .crm-leads .crm-table .crm-status-select { border: 0; background-color: transparent; box-shadow: none; min-height: 30px; height: 30px; padding-inline: var(--ui-s-1); font-size: var(--ui-fs-2); font-weight: var(--ui-fw-semibold); }
+  .crm-layout .crm-leads .crm-leads__score { gap: var(--ui-s-2); }
+  .crm-layout .crm-leads .crm-leads__temp { min-height: 32px; border: 0; background: var(--ui-surface-2); padding-inline: var(--ui-s-2); font-size: var(--ui-fs-2); }
+  /* Follow-up and owner: one quiet line each */
+  .crm-layout .crm-leads .crm-table tbody tr td:is([data-label='المتابعة القادمة'], [data-label='Next Action'], [data-label='المسؤول'], [data-label='Agent']) { flex: 1 1 100%; }
+  .crm-layout .crm-leads .crm-next-action-pill { max-width: 100%; }
+  .crm-layout .crm-leads .crm-next-action-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .crm-layout .crm-leads .crm-agent-select-wrap { padding: 0; min-height: 28px; }
+}
+
+/* The card, tighter still: no copy button (the number is tap-to-call), no empty follow-up
+   placeholder, follow-up and owner side by side, smaller buttons */
+@media (max-width: 768px) {
+  .crm-layout .crm-leads .crm-phone-copy-btn { display: none; }
+  .crm-layout .crm-leads .crm-next-action-empty { display: none; }
+  .crm-layout .crm-leads .crm-table tbody tr td:is([data-label='المتابعة القادمة'], [data-label='Next Action']):has(.crm-next-action-empty) { display: none; }
+  .crm-layout .crm-leads .crm-table tbody tr td:is([data-label='المتابعة القادمة'], [data-label='Next Action'], [data-label='المسؤول'], [data-label='Agent']) { flex: 1 1 calc(50% - var(--ui-s-3)); min-width: 0; }
+  .crm-layout .crm-leads .crm-table tbody tr { padding: var(--ui-s-2) var(--ui-s-3) var(--ui-s-3); gap: var(--ui-s-1) var(--ui-s-3); }
+  .crm-layout .crm-leads .crm-phone-mono-pill { padding: 0; background: none; border: 0; font-size: var(--ui-fs-3); }
+  .crm-layout .crm-leads .crm-lead-chip { min-height: 22px; font-size: var(--ui-fs-1); }
+  .crm-layout .crm-leads .crm-lead-req-cell { gap: 0 var(--ui-s-2); }
+  .crm-layout .crm-leads .crm-agent-select { max-width: 100%; text-overflow: ellipsis; }
+  .crm-layout .crm-leads .crm-table tbody tr td:is([data-label='الإجراءات'], [data-label='Actions']) { padding-bottom: var(--ui-s-1); }
+  .crm-layout .crm-leads .crm-icon-btn.is-call,
+  .crm-layout .crm-leads .crm-action-group .crm-icon-btn { width: 36px; height: 36px; }
+  .crm-layout .crm-leads .crm-action-group .crm-btn-quick { height: 36px; }
+}
