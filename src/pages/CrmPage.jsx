@@ -15,7 +15,7 @@ import SystemSection, { RestrictedSection } from '../components/crm/SystemSectio
 import { announceNewLeads, announceDownloads, announceIntake } from '../utils/newLeadAlerts';
 import { unlockChimeOnFirstTouch } from '../utils/notificationHub';
 import { getDynamicPhone } from '../utils/founderCmsData';
-import { subscribeToClientDownloads, subscribeToIntake, logoutUser, stripStaffIdentity, updateTask } from '../firebaseLazy';
+import { subscribeToClientDownloads, subscribeToIntake, logoutUser, stripStaffIdentity, updateTask, addTaskWithId, loadSettings } from '../firebaseLazy';
 import { hasStaffIdentity } from '../utils/publishApproval';
 import useIdleLock from '../components/crm/useIdleLock';
 import { setManifestFor } from '../utils/appManifest';
@@ -41,6 +41,7 @@ import { isFirebaseAuthAvailable, loginUser, requestPasswordReset } from '../fir
 import { useAuth } from '../context/AuthContext';
 import { useTasks, useTasksSync } from '../hooks/useTasks';
 import { taskCounts, tasksOfEndedLeads, autoCompletion } from '../utils/tasks';
+import { cadenceTasks, leadsNeedingCadence } from '../utils/followUpCadence';
 import { useProperties } from '../context/PropertiesContext';
 import { parseMoney } from '../utils/crmLeadViews';
 import { canEditInventory, canPublishInventory } from '../utils/accessModel';
@@ -183,7 +184,7 @@ export default function CrmPage({
   // Tasks: one shared subscription for the sidebar badge, the tasks tab and a client's drawer;
   // a manager sees the whole team's, everyone else the tasks assigned to them
   useTasksSync(currentUser?.uid, can.campaigns);
-  const { tasks: allTasks } = useTasks();
+  const { tasks: allTasks, ready: tasksReady } = useTasks();
   const taskBadge = taskCounts(allTasks, currentUser?.uid).due;
   // A client who closed or was lost no longer needs chasing: close their open tasks (once per task)
   const autoClosed = useRef(new Set());
@@ -195,6 +196,24 @@ export default function CrmPage({
       updateTask(t.id, autoCompletion());
     }
   }, [allTasks, leads, crmAuthenticated]);
+  // A client who was given to this person by hand (or by a manager) gets the same first-week follow-up the
+  // automatic assignment makes, once the person's tasks are loaded and show none for him
+  const cadenced = useRef(new Set());
+  useEffect(() => {
+    const uid = currentUser?.uid;
+    if (!crmAuthenticated || !tasksReady || !uid || !can.editLeads) return;
+    const todo = leadsNeedingCadence(leads, allTasks, uid).filter((l) => !cadenced.current.has(l.id));
+    if (!todo.length) return;
+    todo.forEach((l) => cadenced.current.add(l.id));
+    (async () => {
+      const s = await loadSettings('automation').catch(() => null);
+      if (s?.cadence === false) return;
+      const seller = { uid, name: currentUser?.displayName || currentUser?.name || currentUser?.email?.split('@')[0] || '' };
+      for (const l of todo.slice(0, 10)) {
+        for (const { id, task } of cadenceTasks({ lead: l, seller, createdBy: uid })) await addTaskWithId(id, task);
+      }
+    })();
+  }, [allTasks, tasksReady, leads, crmAuthenticated, currentUser, can.editLeads]);
   const canAddMap = { lead: can.editLeads, property: can.editListings, demand: can.manageDemands, project: can.editProjects, retarget: can.retarget };
   // Returns false when blocked so callers that check `=== false` don't report success
   const guard = (allowed, fn) => (...args) => {

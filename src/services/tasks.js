@@ -1,5 +1,5 @@
 import { db, isFirebaseConfigured } from '../firebase.js';
-import { collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, limit } from 'firebase/firestore';
+import { collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, limit } from 'firebase/firestore';
 
 // CRM tasks (crm_tasks/{id}, shape and access in firestore.rules). A salesperson subscribes to the tasks
 // assigned to them; a manager to everyone's. Changing the assignee is the manager's.
@@ -48,6 +48,18 @@ export async function removeTask(id) {
     return true;
   } catch (e) {
     console.warn('removeTask failed:', e?.code || e?.message);
+    return false;
+  }
+}
+
+/** Create a task under a fixed id (so a second device or a retry writes the same one); true when saved */
+export async function addTaskWithId(id, task) {
+  if (!isFirebaseConfigured() || !db || !id || !task) return false;
+  try {
+    await setDoc(doc(db, 'crm_tasks', id), task);
+    return true;
+  } catch (e) {
+    console.warn('addTaskWithId failed:', e?.code || e?.message);
     return false;
   }
 }
