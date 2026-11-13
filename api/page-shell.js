@@ -9,8 +9,9 @@
 //  Data: /api/catalog (CDN cached), so this adds no database reads. Anything missing → the
 //  plain app (app.html), exactly what these URLs served before.
 // =============================================================
-import { buildPropertyShell, buildProjectShell, buildDemandShell, buildLandingShell, isPublicListing, isPublicProject } from '../src/utils/seoShell.js';
+import { buildPropertyShell, buildProjectShell, buildDemandShell, buildLandingShell, buildGuideShell, isPublicListing, isPublicProject } from '../src/utils/seoShell.js';
 import { parseLanding, landingListings } from '../src/utils/seoLanding.js';
+import { parseGuide, guideRows } from '../src/utils/seoGuides.js';
 import { decodeFields } from './_catalog-core.js';
 
 // public_demands is readable by anyone (firestore.rules): the site's own web key reads one request
@@ -22,12 +23,29 @@ const html = (body, cache) => new Response(body, { status: 200, headers: { 'cont
 
 export async function GET(request) {
   const url = new URL(request.url);
-  const kind = ['project', 'demand', 'landing'].includes(url.searchParams.get('kind')) ? url.searchParams.get('kind') : 'property';
+  const kind = ['project', 'demand', 'landing', 'guide'].includes(url.searchParams.get('kind')) ? url.searchParams.get('kind') : 'property';
   const id = url.searchParams.get('id') || '';
   const appRes = await fetch(`${url.origin}/app.html`).catch(() => null);
   const template = appRes?.ok ? await appRes.text() : '';
   if (!template) return new Response('', { status: 503, headers: { 'cache-control': 'no-store', 'retry-after': '5' } });
   const plain = () => html(template, 'public, s-maxage=60');
+
+  if (kind === 'guide') {
+    const slug = url.searchParams.get('slug') || '';
+    const page = /^[\w-]{1,80}$/.test(slug) ? parseGuide(slug) : null;
+    if (!page) return plain();
+    try {
+      const res = await fetch(`${url.origin}/api/catalog`);
+      if (!res.ok) return plain();
+      const data = await res.json();
+      const listings = (Array.isArray(data.properties) ? data.properties : []).filter(isPublicListing);
+      if (!guideRows(listings, page.area).length) return plain();
+      return html(buildGuideShell(template, page, listings, SITE_URL), 'public, s-maxage=600, stale-while-revalidate=86400');
+    } catch (err) {
+      console.error('page-shell guide failed:', err?.message || err);
+      return plain();
+    }
+  }
 
   if (kind === 'landing') {
     const slug = url.searchParams.get('slug') || '';

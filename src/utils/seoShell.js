@@ -11,6 +11,7 @@
 
 import { listingPreview } from './listingShare.js';
 import { LANDING_KINDS, LANDING_AREAS, landingPath, landingListings, landingSummary, landingCopy, landingFaq } from './seoLanding.js';
+import { guideRows, guideCopy, guideFaq, guidePath, rowFigure } from './seoGuides.js';
 
 const areaOf = (p) => LANDING_AREAS.find((a) => a.id === p?.areaKey) || null;
 const kindOf = (p) => LANDING_KINDS.find((k) => k.types.includes(p?.type)) || null;
@@ -325,6 +326,37 @@ export function buildLandingShell(template, page, listings, origin) {
   html = strictReplace(html, /(<meta name="twitter:title" content=")[^"]*(")/, `$1${esc(title)}$2`, 'landing twitter:title');
   html = strictReplace(html, /(<meta name="twitter:description" content=")[^"]*(")/, `$1${esc(copy.description)}$2`, 'landing twitter:desc');
   html = strictReplace(html, /<div id="root"><\/div>/, `<div id="root">${body}</div>`, 'landing root');
+  html = html.replace('</head>', `${ld.map((o) => `    <script type="application/ld+json">\n${JSON.stringify(o, null, 2).replace(/</g, '\\u003c')}\n    </script>`).join('\n')}\n  </head>`);
+  return html;
+}
+
+/** The price guide page (/guides/price-per-meter-new-sohag): its figures and FAQ inside #root */
+export function buildGuideShell(template, page, listings, origin) {
+  const { area } = page;
+  const rows = guideRows(listings, area);
+  const copy = guideCopy(area, rows);
+  const faq = guideFaq(area, rows);
+  const url = `${origin}${guidePath(area)}`;
+  const title = `${copy.title} | 1Line Solutions`;
+  const crumbs = [{ name: 'الرئيسية', item: `${origin}/` }, { name: copy.h1, item: url }];
+  const ld = [
+    { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, ...c })) },
+    { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) }
+  ];
+  const items = rows.map((r) => `<li><a href="${esc(r.path)}">${esc(r.kind.ar)}</a>: ${esc(rowFigure(r))}</li>`).join('');
+  const body = `<main class="seo-shell" dir="rtl"><h1>${esc(copy.h1)}</h1><p>${esc(copy.intro)}</p>${items ? `<ul>${items}</ul>` : ''}`
+    + `<section><h2>أسئلة شائعة</h2>${faq.map((f) => `<h3>${esc(f.q)}</h3><p>${esc(f.a)}</p>`).join('')}</section></main>`;
+
+  let html = template;
+  html = strictReplace(html, /<title>[\s\S]*?<\/title>/, `<title>${esc(title)}</title>`, 'guide title');
+  html = strictReplace(html, /(<meta name="description" content=")[^"]*(")/, `$1${esc(copy.description)}$2`, 'guide description');
+  html = strictReplace(html, /(<link rel="canonical" href=")[^"]*(")/, `$1${esc(url)}$2`, 'guide canonical');
+  html = strictReplace(html, /(<meta property="og:url" content=")[^"]*(")/, `$1${esc(url)}$2`, 'guide og:url');
+  html = strictReplace(html, /(<meta property="og:title" content=")[^"]*(")/, `$1${esc(title)}$2`, 'guide og:title');
+  html = strictReplace(html, /(<meta property="og:description" content=")[^"]*(")/, `$1${esc(copy.description)}$2`, 'guide og:desc');
+  html = strictReplace(html, /(<meta name="twitter:title" content=")[^"]*(")/, `$1${esc(title)}$2`, 'guide twitter:title');
+  html = strictReplace(html, /(<meta name="twitter:description" content=")[^"]*(")/, `$1${esc(copy.description)}$2`, 'guide twitter:desc');
+  html = strictReplace(html, /<div id="root"><\/div>/, `<div id="root">${body}</div>`, 'guide root');
   html = html.replace('</head>', `${ld.map((o) => `    <script type="application/ld+json">\n${JSON.stringify(o, null, 2).replace(/</g, '\\u003c')}\n    </script>`).join('\n')}\n  </head>`);
   return html;
 }

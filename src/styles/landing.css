@@ -48,3 +48,12 @@
 .ld-browse h3 { margin: 0 0 10px; font-size: 1rem; }
 .ld-browse h3 a { color: var(--ld-ink); text-decoration: none; }
 .ld-browse h3 a:hover { color: var(--ld-gold); }
+
+/* Price guide rows (/guides/price-per-meter-…) */
+.gd-table { display: grid; gap: 10px; margin-bottom: 12px; }
+.gd-row { display: grid; grid-template-columns: minmax(110px, 0.7fr) 2fr; gap: 4px 16px; align-items: center; padding: 14px 16px; border: 1px solid var(--ld-line); border-radius: 14px; background: var(--ld-card); color: var(--ld-ink); text-decoration: none; }
+.gd-row:hover { border-color: var(--ld-gold); }
+.gd-kind { font-weight: 800; }
+.gd-fig { font-variant-numeric: tabular-nums; font-weight: 600; line-height: 1.7; }
+.gd-n { grid-column: 1 / -1; color: var(--ld-muted); }
+@media (max-width: 640px) { .gd-row { grid-template-columns: 1fr; } }

@@ -20,6 +20,7 @@ const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage'));
 const DevelopersPage = lazy(() => import('./pages/DevelopersPage'));
 const MatchPage = lazy(() => import('./pages/MatchPage'));
 const LandingPage = lazy(() => import('./pages/LandingPage'));
+const GuidePage = lazy(() => import('./pages/GuidePage'));
 const PropertiesPage = lazy(() => import('./pages/PropertiesPage'));
 const PropertyDetailPage = lazy(() => import('./pages/PropertyDetailPage'));
 const TradeInPortal = lazy(() => import('./components/tradein/TradeInPortal'));
@@ -435,6 +436,9 @@ export default function AppRoutes({
           }
         />
       ))}
+
+      {/* Price guides: "سعر المتر في سوهاج الجديدة" (utils/seoGuides) */}
+      <Route path="/guides/:slug" element={<GuidePage properties={siteProperties} />} />
 
       {/* Sohag Real Estate Market Intelligence & Price Benchmark */}
       <Route

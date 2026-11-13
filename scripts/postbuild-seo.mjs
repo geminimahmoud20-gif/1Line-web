@@ -5,10 +5,11 @@ import { fileURLToPath } from 'node:url';
 import { ROUTE_SEO } from '../src/config/routeSeo.js';
 import { siteListingsQuery, queryDocuments } from '../api/_catalog-core.js';
 import { landingPages, landingPath } from '../src/utils/seoLanding.js';
+import { guidePages } from '../src/utils/seoGuides.js';
 import { STATIC_ROUTES, sitemapUrls, renderSitemap } from '../src/utils/sitemapXml.js';
 import {
   esc, sanitizeMetaText, strictReplace, fmtPrice, buildPropertyShell, buildProjectShell, withRoot, routeBody,
-  newestFirst, isPublicListing, isPublicProject, buildLandingShell
+  newestFirst, isPublicListing, isPublicProject, buildLandingShell, buildGuideShell
 } from '../src/utils/seoShell.js';
 
 export { esc, sanitizeMetaText, strictReplace, fmtPrice, buildPropertyShell, buildProjectShell, buildLandingShell };
@@ -134,6 +135,7 @@ export async function runPostbuild() {
   const realListings = await fetchRealListings();
   const projects = await fetchPublicProjects();
   const landings = landingPages(realListings);
+  const guides = guidePages(realListings);
   const today = new Date().toISOString().slice(0, 10);
 
   const staticRoutes = STATIC_ROUTES;
@@ -295,6 +297,13 @@ Sitemap: ${siteUrl}/sitemap.xml
     fs.writeFileSync(path.join(dir, 'index.html'), buildLandingShell(indexHtml, page, realListings, siteUrl));
   }
 
+  // 6b. Price guide shells
+  for (const page of guides) {
+    const dir = path.join(dist, ...page.path.split('/').filter(Boolean));
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'index.html'), buildGuideShell(indexHtml, page, realListings, siteUrl));
+  }
+
   // 7. The homepage: its text and the newest listings in #root. Every route without a shell of
   //    its own is served app.html (vercel.json rewrites), the template with an empty #root, so a
   //    CRM or account page never starts with the homepage's text.
@@ -306,7 +315,7 @@ Sitemap: ${siteUrl}/sitemap.xml
     listings: realListings, projects: projects.slice(0, 12)
   }), 'home'));
 
-  console.log(`postbuild-seo: ${urls.length} URLs → sitemap-build.xml, robots.txt, 404.html; ${prerenderedStatic} static shells; ${prerenderedListings} listing shells; ${prerenderedProjects} project shells; ${landings.length} landing pages; ${projects.length} projects (${siteUrl})`);
+  console.log(`postbuild-seo: ${urls.length} URLs → sitemap-build.xml, robots.txt, 404.html; ${prerenderedStatic} static shells; ${prerenderedListings} listing shells; ${prerenderedProjects} project shells; ${landings.length} landing pages; ${guides.length} guides; ${projects.length} projects (${siteUrl})`);
 }
 
 const isDirectRun = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);

@@ -23,6 +23,7 @@
     { "source": "/developers/:slug", "destination": "/app.html" },
     { "source": "/sohag/:kind", "destination": "/api/page-shell?kind=landing&slug=:kind" },
     { "source": "/sohag/:kind/:area", "destination": "/api/page-shell?kind=landing&slug=:kind&area=:area" },
+    { "source": "/guides/:slug", "destination": "/api/page-shell?kind=guide&slug=:slug" },
     { "source": "/sitemap.xml", "destination": "/api/sitemap" }
   ],
   "headers": [
