@@ -47,3 +47,34 @@ test('a digest is sent when it changes or the last one is old, not every run', (
   assert.equal(shouldSend(d, { sig: '1|2|0', at: min(300) }, NOW), true);
   assert.equal(shouldSend(d, { sig: '0|2|0', at: min(10) }, NOW), true);
 });
+
+test('a client unanswered for a day is escalated: the owner is told it reached the manager, the manager hears about it', () => {
+  const day = 25 * 60;
+  const leads = [
+    lead({ ownerUid: 'u1', createdAt: min(day) }),     // mine, over a day
+    lead({ ownerUid: 'u1', createdAt: min(300) }),     // mine, late but not escalated
+    lead({ ownerUid: 'u2', createdAt: min(day) }),     // someone else's, over a day
+    lead({ ownerUid: 'u2', createdAt: min(300) })      // someone else's, not yet
+  ];
+  const mine = digestFor(leads, me, { now: NOW });
+  assert.equal(mine.late, 2);
+  assert.equal(mine.escalatedMine, 1);
+  assert.match(mine.body, /2 عميل مستني ردّك \(1 وصل للمدير\)/);
+  assert.equal(mine.escalatedOthers, 0); // a salesperson is not told about colleagues' clients
+  const boss = digestFor(leads, { uid: 'm1', name: 'مدير', manager: true }, { now: NOW });
+  assert.equal(boss.escalatedOthers, 2); // u1 and u2 day-old clients
+  assert.match(boss.body, /اتأخر الرد عليه عند بياعين/);
+  assert.notEqual(mine.sig, boss.sig);
+});
+
+test('ad clients escalate after two hours, others after a day; answered or closed ones never', async () => {
+  const { escalationLevel } = await import('../../src/utils/crmLeadViews.js');
+  const ad = { marketingAttribution: { source: 'facebook', campaign: 'c' } };
+  assert.equal(escalationLevel(lead({ ...ad, createdAt: min(10) }), NOW), 0);
+  assert.equal(escalationLevel(lead({ ...ad, createdAt: min(60) }), NOW), 1);
+  assert.equal(escalationLevel(lead({ ...ad, createdAt: min(130) }), NOW), 2);
+  assert.equal(escalationLevel(lead({ createdAt: min(600) }), NOW), 1);
+  assert.equal(escalationLevel(lead({ createdAt: min(25 * 60) }), NOW), 2);
+  assert.equal(escalationLevel(lead({ createdAt: min(25 * 60), firstContactedAt: min(60) }), NOW), 0);
+  assert.equal(escalationLevel(lead({ createdAt: min(25 * 60), isArchived: true }), NOW), 0);
+});

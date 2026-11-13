@@ -4,7 +4,7 @@
 //  message per client. Pure: scripts/send-followup-reminders.mjs (hourly) and
 //  tests/unit/reminder-digest.test.mjs use it.
 // =============================================================
-import { waitingMs, responseSlaMs, isOverdue, isDueToday, localDayKey } from './crmLeadViews.js';
+import { waitingMs, responseSlaMs, escalationLevel, isOverdue, isDueToday, localDayKey } from './crmLeadViews.js';
 
 const isOpen = (l) => !l.isArchived && l.status !== 'lost' && l.status !== 'closed';
 const NO_OWNER = (l) => !l.ownerUid && !l.ownerName && !l.claimedBy && (!l.assignedTo || l.assignedTo === 'Unassigned');
@@ -28,26 +28,32 @@ export function digestFor(leads = [], member = {}, { now = Date.now() } = {}) {
   let due = 0;
   let overdue = 0;
   let unassignedLate = 0;
+  let escalatedMine = 0; // mine, and the managers have been told
+  let escalatedOthers = 0; // someone else's, past the escalation time: the manager's to chase
   for (const l of leads) {
     if (!l || !isOpen(l)) continue;
     const mine = ownedBy(l, member);
     const waited = waitingMs(l, now);
     if (mine) {
       if (waited > responseSlaMs(l)) late += 1;
+      if (escalationLevel(l, now) === 2) escalatedMine += 1;
       if (isDueToday(l, today) || isOverdue(l, today)) due += 1;
       if (isOverdue(l, today)) overdue += 1;
     } else if (member.manager && NO_OWNER(l) && waited > responseSlaMs(l)) {
       unassignedLate += 1;
+    } else if (member.manager && !NO_OWNER(l) && escalationLevel(l, now) === 2) {
+      escalatedOthers += 1;
     }
   }
-  if (!late && !due && !unassignedLate) return null;
+  if (!late && !due && !unassignedLate && !escalatedOthers) return null;
   const parts = [];
-  if (late) parts.push(`${late} عميل مستني ردّك`);
+  if (late) parts.push(`${late} عميل مستني ردّك${escalatedMine ? ` (${escalatedMine} وصل للمدير)` : ''}`);
   if (due) parts.push(`${due} متابعة ${overdue ? 'النهارده أو متأخرة' : 'النهارده'}`);
   if (unassignedLate) parts.push(`${unassignedLate} عميل لسه من غير بياع`);
+  if (escalatedOthers) parts.push(`${escalatedOthers} عميل اتأخر الرد عليه عند بياعين`);
   return {
-    late, due, overdue, unassignedLate,
-    sig: `${late}|${due}|${unassignedLate}`,
+    late, due, overdue, unassignedLate, escalatedMine, escalatedOthers,
+    sig: `${late}|${due}|${unassignedLate}|${escalatedMine}|${escalatedOthers}`,
     title: 'عندك شغل مستني في 1Line',
     body: parts.join(' · ')
   };

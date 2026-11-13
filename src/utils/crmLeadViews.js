@@ -305,6 +305,22 @@ export const AD_RESPONSE_SLA_MS = 15 * 60 * 1000;
 /** Reply time this lead should get: 15 minutes for ad clients, 2 hours for the rest */
 export const responseSlaMs = (l = {}) => (leadSourceKey(l) === 'ads' || leadCampaign(l) ? AD_RESPONSE_SLA_MS : RESPONSE_SLA_MS);
 
+/**
+ * A client still unanswered after this long goes up to the managers: a day for ordinary clients,
+ * 2 hours for ad clients (who by then have usually called someone else).
+ */
+export const ESCALATE_AFTER_MS = 24 * 60 * 60 * 1000;
+export const AD_ESCALATE_AFTER_MS = 2 * 60 * 60 * 1000;
+export const escalateAfterMs = (l = {}) => (responseSlaMs(l) === AD_RESPONSE_SLA_MS ? AD_ESCALATE_AFTER_MS : ESCALATE_AFTER_MS);
+
+/** 0 = fine, 1 = past the reply target, 2 = escalated to the managers */
+export function escalationLevel(l, now = Date.now()) {
+  const waited = waitingMs(l, now);
+  if (!waited) return 0;
+  if (waited > escalateAfterMs(l)) return 2;
+  return waited > responseSlaMs(l) ? 1 : 0;
+}
+
 /** Map normalised phone -> ids, for phones held by two or more active leads */
 export function findDuplicateGroups(leads = []) {
   const byPhone = new Map();

@@ -200,3 +200,4 @@
   .crm-layout .crm-leads .crm-action-group .crm-icon-btn { width: 40px; height: 40px; }
   .crm-layout .crm-leads .crm-action-group .crm-btn-quick { height: 40px; flex: 1 1 auto; justify-content: center; }
 }
+.crm-layout .crm-leads .crm-lead-chip.is-escalated { box-shadow: inset 0 0 0 1px var(--ui-danger); font-weight: var(--ui-fw-bold); }
