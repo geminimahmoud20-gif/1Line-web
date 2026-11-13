@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Trophy, Award, DollarSign, Target } from 'lucide-react';
 import { parseMoney } from '../../utils/crmLeadViews';
 import { getLiveLeadDesks, UNASSIGNED_DESK } from '../../utils/rbacRules';
 import { getActiveAccessConfig } from '../../services/accessConfig';
+import { loadSettings, saveSettings } from '../../firebaseLazy';
 
 export default function AgentCommissionLeaderboard({
   leads = [],
@@ -25,8 +26,27 @@ export default function AgentCommissionLeaderboard({
     'Sales Team A': { target: 15000000 },
     'Sales Team B': { target: 12000000 }
   };
+  // Targets the managers set (settings/targets: { desks: { <desk>: egp } }) win over the built-in ones
+  const [savedTargets, setSavedTargets] = useState({});
+  const [editingTarget, setEditingTarget] = useState(null);
+  const [targetDraft, setTargetDraft] = useState('');
+  useEffect(() => {
+    let alive = true;
+    loadSettings('targets').then((t) => { if (alive && t?.desks && typeof t.desks === 'object') setSavedTargets(t.desks); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
+  const saveTarget = async (desk) => {
+    const egp = Math.round(Number(String(targetDraft).replace(/[^\d.]/g, '')) * 1_000_000);
+    const next = { ...savedTargets };
+    if (egp > 0) next[desk] = egp; else delete next[desk];
+    setSavedTargets(next);
+    setEditingTarget(null);
+    try { await saveSettings('targets', { desks: next }); } catch { /* the figure shows for this visit; saving needs an admin */ }
+  };
+  const deskValues = new Set();
   const agentsList = getLiveLeadDesks(getActiveAccessConfig())
     .filter((d) => d.value !== UNASSIGNED_DESK)
+    .map((d) => { deskValues.add(d.value); return d; })
     .map((d) => ({
       id: d.value,
       name: d.value,
@@ -34,14 +54,17 @@ export default function AgentCommissionLeaderboard({
       title_en: d.label_en,
       // First letter of the team's name instead of an emoji
       avatar: String(d.label_ar || d.value || '').replace(/^(د\.|أ\.|م\/)\s*/, '').trim().charAt(0) || '؟',
-      target: KNOWN[d.value]?.target || null
+      target: savedTargets[d.value] || KNOWN[d.value]?.target || null,
+      belongs: (l) => l.assignedTo === d.value
     }));
+  // Clients with no team (or one that no longer exists) get a row too, so the totals cover every client
+  agentsList.push({ id: '__none', name: '__none', title_ar: 'من غير فريق', title_en: 'No team', avatar: '؟', target: null, belongs: (l) => !deskValues.has(l.assignedTo), noTeam: true });
 
   // Volumes use the amount actually recorded on the lead. A deal with no amount counts as 0 and is
   // flagged, instead of being assumed to be 3–3.5M (which inflated sales and commissions).
   const amountOf = (l) => parseMoney(l.budget) || parseMoney(l.details?.budget) || parseMoney(l.details?.expectedPrice);
   const agentStats = agentsList.map((agent) => {
-    const assignedLeads = leads.filter(l => l.assignedTo === agent.name);
+    const assignedLeads = leads.filter((l) => agent.belongs(l));
     const closedLeads = assignedLeads.filter(l => l.status === 'closed');
     const scheduledVisits = assignedLeads.filter(l => l.status === 'site_visit' || l.siteVisit);
     const closedVolume = closedLeads.reduce((acc, l) => acc + amountOf(l), 0);
@@ -64,7 +87,7 @@ export default function AgentCommissionLeaderboard({
       earnedCommission,
       targetPercent
     };
-  }).sort((a, b) => b.closedVolume - a.closedVolume);
+  }).filter((a) => !a.noTeam || a.totalLeads > 0).sort((a, b) => b.closedVolume - a.closedVolume);
 
   // Total Company Metrics
   const totalCompanyClosedVolume = agentStats.reduce((a, b) => a + b.closedVolume, 0);
@@ -234,6 +257,20 @@ export default function AgentCommissionLeaderboard({
               </div>
             </div>
 
+            {/* Set or change the monthly target (a real team only) */}
+            {!agent.noTeam && (editingTarget === agent.name ? (
+              <form onSubmit={(e) => { e.preventDefault(); saveTarget(agent.name); }} style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '10px', flexWrap: 'wrap' }}>
+                <label style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{isAr ? 'المستهدف الشهري (مليون ج.م)' : 'Monthly target (M EGP)'}</label>
+                <input type="number" inputMode="decimal" min="0" step="0.5" value={targetDraft} onChange={(e) => setTargetDraft(e.target.value)} autoFocus style={{ width: '90px', padding: '6px 8px' }} />
+                <button type="submit" className="ui-btn ui-btn--primary ui-btn--sm">{isAr ? 'حفظ' : 'Save'}</button>
+                <button type="button" className="ui-btn ui-btn--ghost ui-btn--sm" onClick={() => setEditingTarget(null)}>{isAr ? 'إلغاء' : 'Cancel'}</button>
+              </form>
+            ) : (
+              <button type="button" className="ui-btn ui-btn--ghost ui-btn--sm" style={{ marginTop: '8px' }} onClick={() => { setEditingTarget(agent.name); setTargetDraft(agent.target ? String(agent.target / 1000000) : ''); }}>
+                {agent.target ? (isAr ? 'تعديل المستهدف' : 'Edit target') : (isAr ? 'حدد مستهدف شهري' : 'Set a monthly target')}
+              </button>
+            ))}
+
             {/* Target Progress Bar (only for desks with a set target) */}
             {agent.targetPercent !== null && <div style={{ marginTop: '10px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--crm-text-xs)', marginBottom: '6px' }}>
@@ -264,7 +301,8 @@ export default function AgentCommissionLeaderboard({
             {/* Micro Stats Strip */}
             <div style={{
               display: 'flex',
-              gap: '16px',
+              flexWrap: 'wrap',
+              gap: '6px 16px',
               marginTop: '12px',
               paddingTop: '10px',
               borderTop: '1px solid rgba(255,255,255,0.05)',
