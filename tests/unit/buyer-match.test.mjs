@@ -83,3 +83,21 @@ test('the WhatsApp message names the kind and the purpose for it', async () => {
   assert.ok(msg.includes('بدوّر على: أرض مباني'));
   assert.ok(msg.includes('الغرض: أبني عليها لنفسي'));
 });
+
+test('the buyer’s answers become readable rows for the client profile', async () => {
+  const { answersFacts } = await import('../../src/utils/buyerMatch.js');
+  const rows = answersFacts({ kind: 'residential', purpose: 'home', areas: ['new_sohag'], family: '3-4', minSize: '120', delivery: 'now', payment: 'installments', down: '300000', monthly: '8000', priorities: ['price', 'area'] }, ['سوهاج الجديدة']);
+  const map = Object.fromEntries(rows.map(([k, v]) => [k, v]));
+  assert.equal(map['بيدوّر على'], 'شقة');
+  assert.equal(map['المنطقة'], 'سوهاج الجديدة');
+  assert.equal(map['الأسرة'], '3 أو 4 أفراد');
+  assert.equal(map['المساحة'], 'من 120 م²');
+  assert.equal(map['الاستلام'], 'مستعجل (فوري)');
+  assert.equal(map['المقدم'], '300,000 ج.م');
+  assert.equal(map['القسط الشهري'], '8,000 ج.م');
+  assert.equal(map['أهم حاجة عنده'], 'السعر ونظام السداد، الموقع');
+  assert.equal(map['الميزانية (كاش)'], undefined);
+  assert.deepEqual(answersFacts(undefined), []);
+  assert.deepEqual(answersFacts({}), []);
+  assert.equal(Object.fromEntries(answersFacts({ kind: 'land', payment: 'cash', budget: '900000', anyArea: true }))['الميزانية (كاش)'], '900,000 ج.م');
+});

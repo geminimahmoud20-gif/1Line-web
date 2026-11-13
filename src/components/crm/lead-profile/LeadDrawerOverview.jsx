@@ -1,4 +1,4 @@
-import { Phone, MessageSquare, Calendar, Send, Building, Download, ExternalLink, Plus } from 'lucide-react';
+import { Phone, MessageSquare, Calendar, Send, Building, Download, ExternalLink, Plus, Search } from 'lucide-react';
 import { getGoogleCalendarUrl, downloadIcsFile } from '../../../utils/calendarHelper';
 import { Button, Badge, Select, Input } from '../../ui';
 import LeadCommissionBox from './LeadCommissionBox';
@@ -9,6 +9,7 @@ import { askingPriceOf } from '../../../utils/leadPipeline';
 import { sharePagesFor, sharePageMessage } from '../../../utils/sharePages';
 import { SITE_URL } from '../../../config/siteConfig';
 import { useState } from 'react';
+import { answersFacts } from '../../../utils/buyerMatch';
 
 // One-tap call results; the text is what goes into the lead's history
 const CALL_OUTCOMES = [
@@ -89,8 +90,23 @@ export default function LeadDrawerOverview({
     .filter((url) => typeof url === 'string' && url)
     .map((url, i) => ({ url, label: Array.isArray(details.photoLabels) ? details.photoLabels[i] || '' : '' }));
 
+  // What the buyer answered in «رشّحلي عقاري» (saved with the lead as data)
+  const matchFacts = isSeller ? [] : answersFacts(details.matchAnswers, Array.isArray(details.areas) ? details.areas.filter(Boolean) : []);
+
   return (
     <div className="crm-ld__stack">
+      {matchFacts.length > 0 && (
+        <section className="crm-ld__block" aria-labelledby="crm-ld-match">
+          <div className="crm-ld__block-head">
+            <h3 id="crm-ld-match" className="crm-ld__h"><Search size={16} aria-hidden="true" />{L('طلب العميل (رشّحلي عقاري)', 'What the buyer asked for')}</h3>
+          </div>
+          <dl className="crm-ld__facts">
+            {matchFacts.map(([label, value, wide]) => (
+              <div key={label} className={wide ? 'crm-ld__fact--wide' : undefined}><dt>{label}</dt><dd>{value}</dd></div>
+            ))}
+          </dl>
+        </section>
+      )}
       {isSeller && (
         <section className="crm-ld__block" aria-labelledby="crm-ld-seller">
           <div className="crm-ld__block-head">
