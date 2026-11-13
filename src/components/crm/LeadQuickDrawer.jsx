@@ -443,6 +443,7 @@ export default function LeadQuickDrawer({
               viewingDateTime={viewingDateTime}
               whatsappTemplates={whatsappTemplates}
               onUpdateLead={onUpdateLead}
+              triggerToast={triggerToast}
             />
           )}
 

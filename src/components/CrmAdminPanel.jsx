@@ -20,6 +20,7 @@ import SmartMatchingHub from './crm/SmartMatchingHub';
 import AICopywriterModal from './crm/AICopywriterModal';
 import AgentCommissionLeaderboard from './crm/AgentCommissionLeaderboard';
 import CampaignReportPanel from './crm/CampaignReportPanel';
+import TasksPanel from './crm/TasksPanel';
 import SellerReportPanel from './crm/SellerReportPanel';
 import PaymentScheduleBuilder from './crm/PaymentScheduleBuilder';
 import RetargetingHub from './crm/RetargetingHub';
@@ -923,6 +924,20 @@ export const CrmAdminPanel = ({
         ) : (
           <div className="crm-table-container">{isAr ? 'تقرير الحملات للمدير العام ومديري المبيعات.' : 'The campaign report is for admins and sales managers.'}</div>
         )
+      )}
+
+      {/* ✅ Tasks: today's work across all clients (a manager can switch to the whole team's) */}
+      {adminTab === 'tasks' && (
+        <TasksPanel
+          leads={leads}
+          members={teamMembers}
+          me={{ uid: currentUser?.uid, name: currentUser?.displayName || currentUser?.name || currentUser?.email?.split('@')[0] || '' }}
+          canManage={isSuperRole || perms.includes('ld.manage')}
+          lang={lang}
+          triggerToast={triggerToast}
+          onOpenLead={(l) => setQuickDrawerLead(l)}
+          onUpdateLead={onUpdateLead}
+        />
       )}
 
       {/* 📑 TAB 6: FINANCIALS & INSTALLMENT BUILDER */}

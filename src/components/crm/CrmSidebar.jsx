@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { Inbox, LayoutGrid, Users, Target, Building, Zap, Sparkles, Calculator, Activity, ShieldCheck, ChevronDown, Search, X, Moon, Sun, LogOut, MapPin, Database, Award, Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame, Megaphone, Globe2, Repeat2, Bug, UserCog, Palette, Bell } from 'lucide-react';
+import { Inbox, LayoutGrid, Users, Target, Building, Zap, Sparkles, Calculator, Activity, ShieldCheck, ChevronDown, Search, X, Moon, Sun, LogOut, MapPin, Database, Award, Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame, Megaphone, Globe2, Repeat2, Bug, UserCog, Palette, Bell, ListChecks } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import { usePreferences } from '../../context/PreferencesContext';
 import { CRM_ROLES } from './crmRoles';
@@ -19,6 +19,7 @@ export default function CrmSidebar({
   canRetarget = true,
   canCampaigns = false,
   canWorkRequests = true,
+  tasksBadge = 0,
   collapsed = false,
   onToggleCollapse,
   width = 270,
@@ -132,6 +133,14 @@ export default function CrmSidebar({
               badgeDanger: unassignedInboxCount > 0
             },
             {
+              id: 'tasks',
+              icon: ListChecks,
+              label_ar: 'مهامي',
+              label_en: 'My tasks',
+              badge: tasksBadge > 0 ? tasksBadge : undefined,
+              badgeDanger: tasksBadge > 0
+            },
+            {
               id: 'leads',
               icon: Users,
               label_ar: 'العملاء والمبيعات',
@@ -179,6 +188,14 @@ export default function CrmSidebar({
             icon: LayoutGrid,
             label_ar: 'لوحة القيادة',
             label_en: 'Dashboard'
+          },
+          {
+            id: 'tasks',
+            icon: ListChecks,
+            label_ar: 'مهامي',
+            label_en: 'My tasks',
+            badge: tasksBadge > 0 ? tasksBadge : undefined,
+            badgeDanger: tasksBadge > 0
           },
           {
             id: 'leads',
@@ -288,7 +305,7 @@ export default function CrmSidebar({
         ]
       }
     ];
-  }, [workspaceMode, openLeadsCount, unassignedInboxCount, properties.length, pendingDemandsCount, demands.length, projects.length, activeRole, canRetarget, canCampaigns, canWorkRequests]);
+  }, [workspaceMode, openLeadsCount, unassignedInboxCount, properties.length, pendingDemandsCount, demands.length, projects.length, activeRole, canRetarget, canCampaigns, canWorkRequests, tasksBadge]);
 
   const handleItemClick = (id) => {
     setActiveTab(id);

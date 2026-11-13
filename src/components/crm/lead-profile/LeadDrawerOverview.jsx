@@ -11,6 +11,7 @@ import { SITE_URL } from '../../../config/siteConfig';
 import { useState } from 'react';
 import { answersFacts } from '../../../utils/buyerMatch';
 import { attributionFacts } from '../../../utils/attributionTouches';
+import LeadTasks from './LeadTasks';
 
 // One-tap call results; the text is what goes into the lead's history
 const CALL_OUTCOMES = [
@@ -36,7 +37,8 @@ export default function LeadDrawerOverview({
   showViewingForm,
   viewingDateTime,
   whatsappTemplates,
-  onUpdateLead
+  onUpdateLead,
+  triggerToast
 }) {
   const details = lead?.details || {};
   const isSeller = isSellerLead(lead || {}) || lead?.type === 'seller' || lead?.landingPage === '/sell' || Boolean(details.askingPrice) || Boolean(details.propertyType && details.size);
@@ -99,6 +101,7 @@ export default function LeadDrawerOverview({
 
   return (
     <div className="crm-ld__stack">
+      <LeadTasks lead={lead} isAr={isAr} triggerToast={triggerToast} onUpdateLead={onUpdateLead} />
       {sourceFacts.length > 0 && (
         <section className="crm-ld__block" aria-labelledby="crm-ld-source">
           <div className="crm-ld__block-head">

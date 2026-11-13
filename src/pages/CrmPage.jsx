@@ -39,6 +39,8 @@ import '../components/crm/crm-mobile-modals.css';
 import { MotionRoot, ConfirmProvider } from '../components/ui';
 import { isFirebaseAuthAvailable, loginUser, requestPasswordReset } from '../firebaseService';
 import { useAuth } from '../context/AuthContext';
+import { useTasks, useTasksSync } from '../hooks/useTasks';
+import { taskCounts } from '../utils/tasks';
 import { useProperties } from '../context/PropertiesContext';
 import { parseMoney } from '../utils/crmLeadViews';
 import { canEditInventory, canPublishInventory } from '../utils/accessModel';
@@ -104,7 +106,7 @@ export default function CrmPage({
       if (triggerToast) triggerToast(lang === 'ar' ? 'صلاحياتك الحالية لا تسمح بهذا الإجراء' : 'Your role does not allow this action', 'error');
       return;
     }
-    const ADMIN_PANEL_TABS = ['inbox', 'dashboard', 'leads', 'kanban', 'matching', 'agents', 'financials', 'retargeting', 'campaigns', 'analytics'];
+    const ADMIN_PANEL_TABS = ['inbox', 'dashboard', 'leads', 'kanban', 'matching', 'agents', 'financials', 'retargeting', 'campaigns', 'tasks', 'analytics'];
     const tab = { add_lead: 'leads', add_property: 'properties', add_demand: 'demands', add_project: 'projects' }[type]
       || (ADMIN_PANEL_TABS.includes(activeTab) ? activeTab : 'dashboard');
     setActiveTab(tab);
@@ -178,6 +180,11 @@ export default function CrmPage({
     campaigns: activeRole === 'super_admin' || Boolean(userPerms?.includes('ld.manage')),
     retarget: activeRole === 'super_admin' || (canEditLeadsRole(activeRole, userPerms) && Boolean(userPerms?.includes('ld.phone')))
   };
+  // Tasks: one shared subscription for the sidebar badge, the tasks tab and a client's drawer;
+  // a manager sees the whole team's, everyone else the tasks assigned to them
+  useTasksSync(currentUser?.uid, can.campaigns);
+  const { tasks: allTasks } = useTasks();
+  const taskBadge = taskCounts(allTasks, currentUser?.uid).due;
   const canAddMap = { lead: can.editLeads, property: can.editListings, demand: can.manageDemands, project: can.editProjects, retarget: can.retarget };
   // Returns false when blocked so callers that check `=== false` don't report success
   const guard = (allowed, fn) => (...args) => {
@@ -782,6 +789,7 @@ export default function CrmPage({
         activeRole={activeRole}
         canRetarget={can.retarget}
         canCampaigns={can.campaigns}
+        tasksBadge={taskBadge}
         canWorkRequests={can.editLeads}
         collapsed={sidebarCollapsed}
         onToggleCollapse={handleToggleCollapse}

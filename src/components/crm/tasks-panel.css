@@ -1,0 +1,42 @@
+/* «مهامي» */
+.crm-layout .tk-panel { background: transparent; border: 0; box-shadow: none; padding: 0; font-family: var(--ui-font); display: grid; gap: var(--ui-s-4); }
+.tk-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ui-s-3); }
+.tk-head h2 { display: flex; align-items: center; gap: var(--ui-s-2); margin: 0; font-size: var(--ui-fs-6); }
+.tk-head p { margin: 2px 0 0; color: var(--ui-text-3); font-size: var(--ui-fs-3); }
+.tk-seg { display: inline-flex; border: 1px solid var(--ui-line-strong); border-radius: var(--ui-r-md); overflow: hidden; }
+.tk-seg button { min-height: 40px; padding: 0 var(--ui-s-4); border: 0; background: var(--ui-surface); color: var(--ui-text-2); font: inherit; font-weight: var(--ui-fw-semibold); display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.tk-seg button.is-on { background: var(--ui-primary); color: var(--ui-on-primary, var(--ui-surface)); }
+.tk-form { display: grid; gap: var(--ui-s-2); padding: var(--ui-s-3); border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); background: var(--ui-surface); }
+.tk-input { min-height: 42px; padding: 0 var(--ui-s-3); border: 1px solid var(--ui-line-strong); border-radius: var(--ui-r-md); background: var(--ui-surface); color: var(--ui-text); font: inherit; min-width: 0; }
+.tk-chips { display: flex; flex-wrap: wrap; gap: var(--ui-s-2); }
+.tk-chips button { min-height: 36px; padding: 0 var(--ui-s-3); border: 1px solid var(--ui-line-strong); border-radius: var(--ui-r-full); background: var(--ui-surface); color: var(--ui-text-2); font: inherit; cursor: pointer; }
+.tk-chips button.is-on { background: var(--ui-primary); color: var(--ui-on-primary, var(--ui-surface)); border-color: var(--ui-primary); }
+.tk-row-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--ui-s-2); }
+.tk-form-acts { display: flex; gap: var(--ui-s-2); }
+.tk-empty { margin: 0; padding: var(--ui-s-6) var(--ui-s-4); text-align: center; color: var(--ui-text-3); border: 2px dashed var(--ui-line-strong); border-radius: var(--ui-r-lg); }
+.tk-section h3 { display: flex; align-items: center; gap: var(--ui-s-2); margin: 0 0 var(--ui-s-2); font-size: var(--ui-fs-4); }
+.tk-section h3 span { padding: 0 var(--ui-s-2); border-radius: var(--ui-r-full); background: var(--ui-surface-2); color: var(--ui-text-2); font-size: var(--ui-fs-2); }
+.tk-section.is-danger h3 { color: var(--ui-danger); }
+.tk-section.is-danger h3 span { background: var(--ui-danger-tint); color: var(--ui-danger); }
+.tk-section.is-primary h3 span { background: var(--ui-primary-tint); color: var(--ui-primary-text); }
+.tk-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--ui-s-2); }
+.tk-row { display: flex; align-items: flex-start; gap: var(--ui-s-3); padding: var(--ui-s-3); border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); background: var(--ui-surface); }
+.tk-row.is-done { opacity: 0.65; }
+.tk-row.is-done .tk-title { text-decoration: line-through; }
+.tk-tick { flex: none; width: 44px; height: 44px; margin: -8px; display: inline-flex; align-items: center; justify-content: center; border: 0; background: none; color: var(--ui-text-3); cursor: pointer; }
+.tk-row.is-done .tk-tick { color: var(--ui-success); }
+.tk-body { flex: 1 1 auto; min-width: 0; display: grid; gap: 2px; }
+.tk-title { overflow-wrap: anywhere; line-height: 1.5; }
+.tk-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-s-2); margin: 0; color: var(--ui-text-3); font-size: var(--ui-fs-2); }
+.tk-meta > span:first-child { display: inline-flex; align-items: center; gap: 4px; }
+.tk-pill { padding: 1px var(--ui-s-2); border-radius: var(--ui-r-full); background: var(--ui-surface-2); color: var(--ui-text-2); font-size: var(--ui-fs-1); font-weight: var(--ui-fw-semibold); }
+.tk-pill.is-high { background: var(--ui-danger-tint); color: var(--ui-danger); }
+.tk-pill.is-who { background: var(--ui-primary-tint); color: var(--ui-primary-text); }
+.tk-lead { padding: 0; border: 0; background: none; color: var(--ui-primary-text); font: inherit; font-weight: var(--ui-fw-semibold); text-decoration: underline; cursor: pointer; }
+.tk-note { margin: 0; color: var(--ui-text-2); font-size: var(--ui-fs-2); line-height: 1.6; }
+.tk-acts { display: flex; flex-wrap: wrap; gap: var(--ui-s-1); }
+.tk-more { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; border: 0; background: none; color: var(--ui-text-2); font: inherit; font-weight: var(--ui-fw-semibold); cursor: pointer; }
+@media (max-width: 560px) {
+  .tk-row { flex-wrap: wrap; }
+  .tk-acts { margin-inline-start: 44px; }
+}
