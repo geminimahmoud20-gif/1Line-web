@@ -4,10 +4,13 @@
 //  (src/utils/seoShell.js): head tags, JSON-LD and the page's text inside #root, so search engines
 //  read a new listing right away instead of waiting for the next deploy.
 //    GET ?kind=property|project&id=…   (vercel.json rewrites; built shells are served first)
+//    GET ?kind=landing&slug=…&area=…   a search page (/sohag/apartments-for-sale/new-sohag) that
+//                                      has listings but no built shell yet; empty ones stay the app
 //  Data: /api/catalog (CDN cached), so this adds no database reads. Anything missing → the
 //  plain app (app.html), exactly what these URLs served before.
 // =============================================================
-import { buildPropertyShell, buildProjectShell, buildDemandShell, isPublicListing, isPublicProject } from '../src/utils/seoShell.js';
+import { buildPropertyShell, buildProjectShell, buildDemandShell, buildLandingShell, isPublicListing, isPublicProject } from '../src/utils/seoShell.js';
+import { parseLanding, landingListings } from '../src/utils/seoLanding.js';
 import { decodeFields } from './_catalog-core.js';
 
 // public_demands is readable by anyone (firestore.rules): the site's own web key reads one request
@@ -19,12 +22,33 @@ const html = (body, cache) => new Response(body, { status: 200, headers: { 'cont
 
 export async function GET(request) {
   const url = new URL(request.url);
-  const kind = ['project', 'demand'].includes(url.searchParams.get('kind')) ? url.searchParams.get('kind') : 'property';
+  const kind = ['project', 'demand', 'landing'].includes(url.searchParams.get('kind')) ? url.searchParams.get('kind') : 'property';
   const id = url.searchParams.get('id') || '';
   const appRes = await fetch(`${url.origin}/app.html`).catch(() => null);
   const template = appRes?.ok ? await appRes.text() : '';
   if (!template) return new Response('', { status: 503, headers: { 'cache-control': 'no-store', 'retry-after': '5' } });
   const plain = () => html(template, 'public, s-maxage=60');
+
+  if (kind === 'landing') {
+    const slug = url.searchParams.get('slug') || '';
+    const areaSlug = url.searchParams.get('area') || '';
+    if (!/^[\w-]{1,60}$/.test(slug) || (areaSlug && !/^[\w-]{1,60}$/.test(areaSlug))) return plain();
+    const page = parseLanding(slug, areaSlug);
+    if (!page) return plain();
+    try {
+      const res = await fetch(`${url.origin}/api/catalog`);
+      if (!res.ok) return plain();
+      const data = await res.json();
+      const listings = (Array.isArray(data.properties) ? data.properties : []).filter(isPublicListing);
+      // A page with nothing to list stays the plain app: thin pages are not offered to search engines
+      if (!landingListings(listings, page.kind, page.area).length) return plain();
+      return html(buildLandingShell(template, page, listings, SITE_URL), 'public, s-maxage=600, stale-while-revalidate=86400');
+    } catch (err) {
+      console.error('page-shell landing failed:', err?.message || err);
+      return plain();
+    }
+  }
+
   if (!/^[\w-]{1,80}$/.test(id)) return plain();
 
   if (kind === 'demand') {

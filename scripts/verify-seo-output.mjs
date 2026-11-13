@@ -60,7 +60,7 @@ for (const file of files) {
 }
 
 // Check sitemap.xml
-const sitemap = fs.readFileSync(path.join(dist, 'sitemap.xml'), 'utf8');
+const sitemap = fs.readFileSync(path.join(dist, 'sitemap-build.xml'), 'utf8');
 const sitemapValidXml = sitemap.startsWith('<?xml') && sitemap.includes('</urlset>');
 const sitemapUrls = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map(m => m[1]);
 const privateInSitemap = sitemapUrls.some(u => u.includes('/crm') || u.includes('/my-account'));

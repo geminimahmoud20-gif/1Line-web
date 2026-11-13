@@ -4,13 +4,14 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ROUTE_SEO } from '../src/config/routeSeo.js';
 import { siteListingsQuery, queryDocuments } from '../api/_catalog-core.js';
-import { landingPages, landingListings, landingSummary, landingCopy, landingFaq, landingPath } from '../src/utils/seoLanding.js';
+import { landingPages, landingPath } from '../src/utils/seoLanding.js';
+import { STATIC_ROUTES, sitemapUrls, renderSitemap } from '../src/utils/sitemapXml.js';
 import {
   esc, sanitizeMetaText, strictReplace, fmtPrice, buildPropertyShell, buildProjectShell, withRoot, routeBody,
-  newestFirst, isPublicListing, isPublicProject
+  newestFirst, isPublicListing, isPublicProject, buildLandingShell
 } from '../src/utils/seoShell.js';
 
-export { esc, sanitizeMetaText, strictReplace, fmtPrice, buildPropertyShell, buildProjectShell };
+export { esc, sanitizeMetaText, strictReplace, fmtPrice, buildPropertyShell, buildProjectShell, buildLandingShell };
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
@@ -106,43 +107,6 @@ const fetchRealListings = async () => newestFirst((await fetchCollection('proper
 // Projects shown on the site: not samples, not hidden in the CRM
 const fetchPublicProjects = async () => (await fetchCollection('projects')).filter(isPublicProject);
 
-/**
- * A search landing page (/sohag/:kind/:area?) as static HTML: title, description, canonical,
- * breadcrumbs and FAQ JSON-LD, plus the H1, intro, listing links and FAQ inside #root, so search
- * engines read the page before any script runs (React replaces it on load).
- */
-export function buildLandingShell(template, page, listings, origin = siteUrl) {
-  const { kind, area } = page;
-  const own = landingListings(listings, kind, area);
-  const s = landingSummary(own);
-  const copy = landingCopy(kind, area, s);
-  const faq = landingFaq(kind, area, s);
-  const url = `${origin}${landingPath(kind, area)}`;
-  const title = `${copy.title} | 1Line Solutions`;
-  const crumbs = [{ name: 'الرئيسية', item: `${origin}/` }, { name: `${kind.ar} في سوهاج`, item: `${origin}${landingPath(kind)}` }];
-  if (area) crumbs.push({ name: copy.h1, item: url });
-  const ld = [
-    { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, ...c })) },
-    { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) }
-  ];
-  const items = own.slice(0, 40).map((p) => `<li><a href="/properties/${encodeURIComponent(p.id)}">${esc(sanitizeMetaText(p.title_ar || p.title_en || 'عقار'))}</a>${p.price ? ` — ${esc(fmtPrice(p.price))}` : ''}</li>`).join('');
-  const body = `<main class="seo-shell" dir="rtl"><h1>${esc(copy.h1)}</h1><p>${esc(copy.intro)}</p>${items ? `<ul>${items}</ul>` : ''}`
-    + `<section><h2>أسئلة شائعة</h2>${faq.map((f) => `<h3>${esc(f.q)}</h3><p>${esc(f.a)}</p>`).join('')}</section></main>`;
-
-  let html = template;
-  html = strictReplace(html, /<title>[\s\S]*?<\/title>/, `<title>${esc(title)}</title>`, 'landing title');
-  html = strictReplace(html, /(<meta name="description" content=")[^"]*(")/, `$1${esc(copy.description)}$2`, 'landing description');
-  html = strictReplace(html, /(<link rel="canonical" href=")[^"]*(")/, `$1${esc(url)}$2`, 'landing canonical');
-  html = strictReplace(html, /(<meta property="og:url" content=")[^"]*(")/, `$1${esc(url)}$2`, 'landing og:url');
-  html = strictReplace(html, /(<meta property="og:title" content=")[^"]*(")/, `$1${esc(title)}$2`, 'landing og:title');
-  html = strictReplace(html, /(<meta property="og:description" content=")[^"]*(")/, `$1${esc(copy.description)}$2`, 'landing og:desc');
-  html = strictReplace(html, /(<meta name="twitter:title" content=")[^"]*(")/, `$1${esc(title)}$2`, 'landing twitter:title');
-  html = strictReplace(html, /(<meta name="twitter:description" content=")[^"]*(")/, `$1${esc(copy.description)}$2`, 'landing twitter:desc');
-  html = strictReplace(html, /<div id="root"><\/div>/, `<div id="root">${body}</div>`, 'landing root');
-  html = html.replace('</head>', `${ld.map((o) => `    <script type="application/ld+json">\n${JSON.stringify(o, null, 2).replace(/</g, '\\u003c')}\n    </script>`).join('\n')}\n  </head>`);
-  return html;
-}
-
 // ── Main Build Runner ──────────────────────────────────────────────────────────────────
 export async function runPostbuild() {
   const indexHtmlPath = path.join(dist, 'index.html');
@@ -172,52 +136,14 @@ export async function runPostbuild() {
   const landings = landingPages(realListings);
   const today = new Date().toISOString().slice(0, 10);
 
-  const staticRoutes = [
-    ['/', '1.0', 'daily'],
-    ['/properties', '0.9', 'daily'],
-    ['/sell', '0.9', 'monthly'],
-    ['/valuation', '0.8', 'monthly'],
-    ['/buy', '0.8', 'monthly'],
-    ['/private-office', '0.8', 'monthly'],
-    ['/trade-in', '0.8', 'monthly'],
-    ['/commercial-hub', '0.8', 'weekly'],
-    ['/investor', '0.7', 'monthly'],
-    ['/market-intelligence', '0.7', 'weekly'],
-    ['/projects', '0.7', 'weekly'],
-    ['/developers', '0.6', 'weekly'],
-    ['/match', '0.7', 'monthly'],
-    ['/about', '0.7', 'monthly'],
-    ['/financing', '0.6', 'monthly'],
-    ['/demands', '0.6', 'daily'],
-    ['/special-requests', '0.5', 'monthly'],
-    ['/broker', '0.4', 'monthly'],
-    ['/referral', '0.4', 'monthly'],
-    ['/privacy', '0.2', 'yearly'],
-  ];
+  const staticRoutes = STATIC_ROUTES;
+  const urls = sitemapUrls({ listings: realListings, projects, today });
 
-  // lastmod is when the page's content last changed, not the build date: a listing's own update,
-  // and for the pages that list listings the newest one. Other pages carry none (Google ignores a
-  // lastmod that moves on every build for pages that didn't change).
-  const dayOf = (v) => {
-    const t = typeof v === 'string' || typeof v === 'number' ? new Date(v) : null;
-    return t && !Number.isNaN(t.getTime()) ? t.toISOString().slice(0, 10) : '';
-  };
-  const newestDay = realListings.map((p) => dayOf(p.updatedAt) || dayOf(p.createdAt)).filter(Boolean).sort().pop() || today;
-  const LISTS_LISTINGS = new Set(['/', '/properties']);
-  const urls = [
-    ...staticRoutes.map(([loc, priority, freq]) => ({ loc, priority, freq, lastmod: LISTS_LISTINGS.has(loc) ? newestDay : '' })),
-    ...landings.map((l) => ({ loc: l.path, priority: l.area ? '0.7' : '0.8', freq: 'daily', lastmod: newestDay })),
-    ...realListings.map((p) => ({ loc: `/properties/${encodeURIComponent(p.id)}`, priority: '0.8', freq: 'weekly', lastmod: dayOf(p.updatedAt) || dayOf(p.createdAt) })),
-    ...projects.filter((p) => /^[\w-]{1,80}$/.test(p.id)).map((p) => ({ loc: `/projects/${encodeURIComponent(p.id)}`, priority: '0.6', freq: 'weekly', lastmod: dayOf(p.updatedAt) })),
-  ];
-
-  // 1. Sitemap.xml
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map((u) => `  <url><loc>${siteUrl}${u.loc}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ''}<changefreq>${u.freq}</changefreq><priority>${u.priority}</priority></url>`).join('\n')}
-</urlset>
-`;
-  fs.writeFileSync(path.join(dist, 'sitemap.xml'), xml);
+  // 1. The sitemap. Vercel serves /sitemap.xml from api/sitemap.js (the live catalog), so this copy,
+  // built from the listings at deploy time, is the fallback it serves if the catalog can't be read.
+  fs.writeFileSync(path.join(dist, 'sitemap-build.xml'), renderSitemap(siteUrl, urls));
+  // A static file at /sitemap.xml would win over the rewrite to api/sitemap.js, so make sure none is left
+  fs.rmSync(path.join(dist, 'sitemap.xml'), { force: true });
 
   // 2. Robots.txt
   fs.writeFileSync(path.join(dist, 'robots.txt'), `User-agent: *
@@ -380,7 +306,7 @@ Sitemap: ${siteUrl}/sitemap.xml
     listings: realListings, projects: projects.slice(0, 12)
   }), 'home'));
 
-  console.log(`postbuild-seo: ${urls.length} URLs → sitemap.xml, robots.txt, 404.html; ${prerenderedStatic} static shells; ${prerenderedListings} listing shells; ${prerenderedProjects} project shells; ${landings.length} landing pages; ${projects.length} projects (${siteUrl})`);
+  console.log(`postbuild-seo: ${urls.length} URLs → sitemap-build.xml, robots.txt, 404.html; ${prerenderedStatic} static shells; ${prerenderedListings} listing shells; ${prerenderedProjects} project shells; ${landings.length} landing pages; ${projects.length} projects (${siteUrl})`);
 }
 
 const isDirectRun = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
