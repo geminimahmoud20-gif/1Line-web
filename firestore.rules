@@ -157,11 +157,21 @@ service cloud.firestore {
 
     // The pipeline lives on the lead's status. Moving a lead INTO closing / won is a deal action,
     // so it needs deal.edit (the same right /deals uses); other stage changes are lead work.
+    // «deal.edit» covers «deal.add» and «deal.close» (roles saved before the split carry it)
+    function canEditDeals() {
+      return hasPerm('deal.edit') || hasPerm('deal.add') || hasPerm('deal.close');
+    }
+    function canCloseDeals() {
+      return hasPerm('deal.edit') || hasPerm('deal.close');
+    }
     function closesDealOnlyWithDealRights() {
       return !('status' in request.resource.data)
           || request.resource.data.status == resource.data.get('status', '')
           || !(request.resource.data.status in ['closing', 'closed'])
-          || hasPerm('deal.edit');
+          || canCloseDeals();
+    }
+    function canViewFinance() {
+      return hasPerm('fin') || hasPerm('fin.view');
     }
 
     // 🛡️ 1. LEADS & CUSTOMER INQUIRIES
@@ -620,9 +630,9 @@ service cloud.firestore {
       // deal.edit: every deal with deal.all, otherwise only the member's own desk (+ the pool)
       allow read: if hasPerm('deal.all')
                   || (isDeskAgent() && inMyLeadQueue(resource.data));
-      allow create: if hasPerm('deal.edit')
+      allow create: if canEditDeals()
                     && (hasPerm('deal.all') || inMyLeadQueue(request.resource.data));
-      allow update: if hasPerm('deal.edit')
+      allow update: if canEditDeals()
                     && (hasPerm('deal.all') || (inMyLeadQueue(resource.data) && inMyLeadQueue(request.resource.data)));
       allow delete: if isAdmin();
     }
@@ -700,17 +710,19 @@ service cloud.firestore {
 
     // 💰 Commission Invoices & Collections (الفوترة والتحصيل)
     match /commission_invoices/{invId} {
-      allow read, write: if hasPerm('fin') || isAdmin();
+      allow read: if canViewFinance() || isAdmin();
+      allow write: if hasPerm('fin') || isAdmin();
     }
 
     match /collections/{colId} {
-      allow read, write: if hasPerm('fin') || isAdmin();
+      allow read: if canViewFinance() || isAdmin();
+      allow write: if hasPerm('fin') || isAdmin();
     }
 
     // 🧾 Reservation receipts: numbered from counters/receipts_<year> in one transaction
     // (services/receipts.js). Issued once and never edited or deleted, so the numbers stay a record.
     match /receipts/{receiptId} {
-      allow read: if hasPerm('fin') || isAdmin();
+      allow read: if canViewFinance() || isAdmin();
       allow create: if (hasPerm('fin') || isAdmin())
         && request.resource.data.number == receiptId
         && request.resource.data.issuedBy == request.auth.uid
@@ -720,7 +732,7 @@ service cloud.firestore {
       allow update, delete: if false;
     }
     match /counters/{counterId} {
-      allow read: if counterId.matches('receipts_[0-9]{4}') && (hasPerm('fin') || isAdmin());
+      allow read: if counterId.matches('receipts_[0-9]{4}') && (canViewFinance() || isAdmin());
       allow create: if counterId.matches('receipts_[0-9]{4}') && (hasPerm('fin') || isAdmin())
         && request.resource.data.last == 1;
       allow update: if counterId.matches('receipts_[0-9]{4}') && (hasPerm('fin') || isAdmin())

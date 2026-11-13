@@ -10,7 +10,7 @@ import { canExportCsv, canDeleteLead, canManagePayments, canEditLeadsRole, assig
 import { assignmentUpdates, personFor, assigneeValue } from '../utils/assignees';
 import { memberDesk } from '../utils/inboxView';
 import useTeamMembers from '../hooks/useTeamMembers';
-import { permsOfRole } from '../utils/accessModel';
+import { permsOfRole, canViewFinance, canCloseDeals as canCloseDealsPerm } from '../utils/accessModel';
 import { isValidPhoneNumber } from '../utils/securityShield';
 
 // Enterprise PropTech Modules
@@ -787,7 +787,7 @@ export const CrmAdminPanel = ({
           onOpenContractStudio={() => setShowContractStudio(true)}
           deskView={!seesAllLeads}
           scopeDesk={myDesk || null}
-          showMoney={isSuperRole || perms.includes('fin') || perms.includes('ld.manage')}
+          showMoney={isSuperRole || canViewFinance(perms) || perms.includes('ld.manage')}
           onOpenCopywriter={() => setShowAICopywriter(true)}
         />
       )}
@@ -871,7 +871,7 @@ export const CrmAdminPanel = ({
           canEdit={canEditLeads}
           canExport={canExport}
           canClaimLead={canClaimLead}
-          canCloseDeals={isSuperRole || perms.includes('deal.edit')}
+          canCloseDeals={isSuperRole || canCloseDealsPerm(perms)}
           sourceFilter={sourceFilter}
           setSourceFilter={setSourceFilter}
           dateFilter={dateFilter}

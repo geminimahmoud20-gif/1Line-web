@@ -24,7 +24,7 @@ export const getMergedCrmRoles = (config = null) => {
         agentName: r.name_ar,
         icon: r.icon || '👤',
         canDelete: r.perms?.includes('ld.manage') || r.perms?.includes('inv.delete') || false,
-        canViewAgencyFinancials: r.perms?.includes('fin') || false
+        canViewAgencyFinancials: r.perms?.includes('fin') || r.perms?.includes('fin.view') || false
       });
     } else {
       existing.label_ar = r.name_ar || existing.label_ar;

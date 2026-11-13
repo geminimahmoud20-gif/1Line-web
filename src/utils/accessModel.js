@@ -30,17 +30,27 @@ export const PERMISSIONS = [
   { id: 'inv.edit', group: 'inventory', ar: 'كل ما سبق مرة واحدة', en: 'All of the above at once' },
   { id: 'inv.publish', group: 'inventory', ar: 'ينشر من غير موافقة ويوافق على اللي الفريق قدّمه', en: 'Publish without approval, approve the team’s items' },
   { id: 'inv.delete', group: 'inventory', ar: 'حذف العقارات والمشروعات', en: 'Delete listings and projects' },
-  { id: 'deal.all', group: 'deals', ar: 'يشوف كل الصفقات', en: 'See every deal' },
-  { id: 'deal.edit', group: 'deals', ar: 'يضيف ويعدّل الصفقات (كلها لو معاه «كل الصفقات»، وإلا صفقات فريقه)', en: 'Add and edit deals (all with “every deal”, otherwise their team’s)' },
-  { id: 'fin', group: 'finance', ar: 'المالية والمدفوعات', en: 'Finance and payments' },
-  { id: 'export', group: 'finance', ar: 'تصدير التقارير', en: 'Export reports' }
+  { id: 'deal.all', group: 'deals', ar: 'يشوف كل الصفقات (مش صفقات فريقه بس)', en: 'See every deal (not only their team’s)' },
+  // «كل الصفقات» (deal.edit) covers the two below at once and is what the roles saved before this split
+  // carry. Closing is its own right so a role can work deals without marking them won (commissions).
+  { id: 'deal.add', group: 'deals', ar: 'الصفقات: يضيف ويعدّل (من غير ما يقفلها)', en: 'Deals: add and edit (not close)' },
+  { id: 'deal.close', group: 'deals', ar: 'الصفقات: يحوّلها «قيد الإغلاق» أو «اتقفلت»', en: 'Deals: move to closing or won' },
+  { id: 'deal.edit', group: 'deals', ar: 'كل ما سبق مرة واحدة (صفقات فريقه، أو كلها لو معاه «يشوف كل الصفقات»)', en: 'All of the above at once (their team’s deals, or all with “see every deal”)' },
+  // Finance: «يشوف بس» is read-only; «يعدّل» (fin) covers it and is what older roles carry
+  { id: 'fin.view', group: 'finance', ar: 'المالية: يشوف بس (الفواتير والتحصيل والإيصالات والمبالغ)', en: 'Finance: view only (invoices, collections, receipts, amounts)' },
+  { id: 'fin', group: 'finance', ar: 'المالية: يشوف ويعدّل ويصدر إيصالات', en: 'Finance: view, edit and issue receipts' },
+  { id: 'export', group: 'finance', ar: 'تصدير التقارير والعملاء', en: 'Export reports and clients' }
 ];
 export const PERM_IDS = PERMISSIONS.map((p) => p.id);
 
 /** The permission that lets someone edit one kind of inventory (inv.edit and inv.publish also do) */
 export const INVENTORY_PERM = { listings: 'inv.listings', projects: 'inv.projects', demands: 'inv.demands' };
 /** Shown ticked, and locked, while «كل المخزون» is on */
-export const PERM_IMPLIED_BY = { 'inv.listings': 'inv.edit', 'inv.projects': 'inv.edit', 'inv.demands': 'inv.edit' };
+export const PERM_IMPLIED_BY = {
+  'inv.listings': 'inv.edit', 'inv.projects': 'inv.edit', 'inv.demands': 'inv.edit',
+  'deal.add': 'deal.edit', 'deal.close': 'deal.edit',
+  'fin.view': 'fin'
+};
 
 /**
  * Whether a permission list may edit one kind of inventory ('listings' | 'projects' | 'demands'),
@@ -52,14 +62,22 @@ export function canEditInventory(perms = [], area = '') {
   return area ? perms.includes(INVENTORY_PERM[area]) : Object.values(INVENTORY_PERM).some((p) => perms.includes(p));
 }
 
+const has = (perms, ...ids) => Array.isArray(perms) && (perms.includes('*') || ids.some((id) => perms.includes(id)));
+/** Same tests as firestore.rules canEditDeals() / canCloseDeals() */
+export const canEditDeals = (perms = []) => has(perms, 'deal.edit', 'deal.add', 'deal.close');
+export const canCloseDeals = (perms = []) => has(perms, 'deal.edit', 'deal.close');
+/** See finance (amounts, invoices, receipts) / change it: rules read `fin` or `fin.view`, write `fin` */
+export const canViewFinance = (perms = []) => has(perms, 'fin', 'fin.view');
+export const canEditFinance = (perms = []) => has(perms, 'fin');
+
 /** Whether a permission list may publish without approval and approve what others submitted */
 export const canPublishInventory = (perms = []) => Array.isArray(perms) && (perms.includes('*') || perms.includes('inv.publish'));
 
 export const PERM_GROUPS = [
   { id: 'leads', ar: 'العملاء', en: 'Leads' },
   { id: 'inventory', ar: 'العقارات', en: 'Inventory', hint_ar: 'اللي مالوش «ينشر» بيضيف ويعدّل، بس اللي يحفظه بيستنى موافقة قبل ما يظهر على الموقع.', hint_en: 'Without “Publish”, what they save waits for approval before it is on the site.' },
-  { id: 'deals', ar: 'الصفقات', en: 'Deals' },
-  { id: 'finance', ar: 'المالية والتقارير', en: 'Finance & reports' }
+  { id: 'deals', ar: 'الصفقات', en: 'Deals', hint_ar: 'اللي معاه «يضيف ويعدّل» بس يشتغل على الصفقة لكن مايقدرش يقفلها. «يقفل» هو اللي بيحوّلها «قيد الإغلاق» أو «اتقفلت» (وبيدخل في العمولات).', hint_en: 'With “add and edit” only, they work deals but cannot close them. “Close” moves a deal to closing or won (it feeds commissions).' },
+  { id: 'finance', ar: 'المالية والتقارير', en: 'Finance & reports', hint_ar: '«يشوف بس» للمراقب أو المحاسب اللي بيراجع من غير ما يعدّل. «يشوف ويعدّل» هو اللي بيصدر الإيصالات ويسجّل التحصيل. والتصدير بيعتمد على «تصدير» وبس، مش على اسم الدور.', hint_en: '“View only” is for someone who reviews without changing anything. Exporting depends on “Export” alone, not on the role’s name.' }
 ];
 
 // Roles as they were hard-coded before. Keep in sync with legacyPerms()/legacyDesk() in firestore.rules.

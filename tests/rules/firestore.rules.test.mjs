@@ -458,6 +458,49 @@ test('leads: moving a lead to closing / won needs deal.edit; other stages are le
   await assertSucceeds(setDoc(doc(noDeals, 'leads/w1'), { notes: 'متابعة بعد البيع' }, { merge: true }));
 });
 
+test('deals: «deal.add» works deals but cannot close; «deal.close» can; the old «deal.edit» does both', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'leads/dl1'), { name: 'صفقة', status: 'negotiating', assignedTo: 'Sales Team A' });
+    await setDoc(doc(ctx.firestore(), 'leads/dl2'), { name: 'صفقة', status: 'negotiating', assignedTo: 'Sales Team A' });
+    await setDoc(doc(ctx.firestore(), 'leads/dl3'), { name: 'صفقة', status: 'negotiating', assignedTo: 'Sales Team A' });
+    await setDoc(doc(ctx.firestore(), 'deals/dd1'), { assignedTo: 'Sales Team A', title: 'x' });
+  });
+  const member = (id, perms) => env.authenticatedContext(`u-${id}`, { role: `r_${id}`, staff: true, perms: ['ld.edit', 'ld.phone', ...perms], desk: 'Sales Team A' }).firestore();
+  const adder = member('adder', ['deal.add']);
+  await assertSucceeds(setDoc(doc(adder, 'deals/dd1'), { title: 'y' }, { merge: true }));
+  await assertSucceeds(setDoc(doc(adder, 'leads/dl1'), { status: 'site_visit' }, { merge: true }));
+  await assertFails(setDoc(doc(adder, 'leads/dl1'), { status: 'closing' }, { merge: true }));
+  await assertFails(setDoc(doc(adder, 'leads/dl1'), { status: 'closed' }, { merge: true }));
+  const closer = member('closer', ['deal.close']);
+  await assertSucceeds(setDoc(doc(closer, 'leads/dl2'), { status: 'closed' }, { merge: true }));
+  await assertSucceeds(setDoc(doc(closer, 'deals/dd1'), { title: 'z' }, { merge: true }));
+  const legacy = member('legacy', ['deal.edit']);
+  await assertSucceeds(setDoc(doc(legacy, 'leads/dl3'), { status: 'closing' }, { merge: true }));
+  // no deal right at all: neither deals nor closing
+  const none = member('none', []);
+  await assertFails(setDoc(doc(none, 'deals/dd1'), { title: 'q' }, { merge: true }));
+});
+
+test('finance: «fin.view» reads invoices, collections and receipts but writes nothing; «fin» does both', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'commission_invoices/i1'), { amount: 100 });
+    await setDoc(doc(ctx.firestore(), 'collections/c1'), { amount: 50 });
+    await setDoc(doc(ctx.firestore(), 'receipts/r1'), { number: 'r1', amount: 10 });
+  });
+  const viewer = env.authenticatedContext('u-fv', { role: 'r_fv', staff: true, perms: ['fin.view'] }).firestore();
+  await assertSucceeds(getDoc(doc(viewer, 'commission_invoices/i1')));
+  await assertSucceeds(getDoc(doc(viewer, 'collections/c1')));
+  await assertSucceeds(getDoc(doc(viewer, 'receipts/r1')));
+  await assertFails(setDoc(doc(viewer, 'commission_invoices/i1'), { amount: 999 }));
+  await assertFails(setDoc(doc(viewer, 'collections/c1'), { amount: 999 }));
+  const editor = env.authenticatedContext('u-fe', { role: 'r_fe', staff: true, perms: ['fin'] }).firestore();
+  await assertSucceeds(getDoc(doc(editor, 'commission_invoices/i1')));
+  await assertSucceeds(setDoc(doc(editor, 'commission_invoices/i1'), { amount: 200 }));
+  const nobody = env.authenticatedContext('u-fn', { role: 'r_fn', staff: true, perms: ['ld.edit'] }).firestore();
+  await assertFails(getDoc(doc(nobody, 'commission_invoices/i1')));
+  await assertFails(getDoc(doc(nobody, 'receipts/r1')));
+});
+
 test('analytics: read by managers/admins only, never written from a browser', async () => {
   await env.withSecurityRulesDisabled(async (ctx) => {
     const db = ctx.firestore();

@@ -206,3 +206,31 @@ test('inventory permissions: one kind of item, «كل المخزون», and publ
   assert.equal(media(['inv.listings']), true);
   assert.equal(media(['inv.demands']), false);
 });
+
+test('deals and finance have their own rights; the older wide ones still cover them', async () => {
+  const { canEditDeals, canCloseDeals, canViewFinance, canEditFinance, PERM_IDS, PERM_IMPLIED_BY } = await import('../../src/utils/accessModel.js');
+  assert.ok(['deal.add', 'deal.close', 'fin.view'].every((p) => PERM_IDS.includes(p)));
+  // «deal.add» works deals but cannot close; «deal.close» can; the old «deal.edit» does both
+  assert.equal(canEditDeals(['deal.add']), true);
+  assert.equal(canCloseDeals(['deal.add']), false);
+  assert.equal(canCloseDeals(['deal.close']), true);
+  assert.equal(canEditDeals(['deal.close']), true);
+  assert.equal(canEditDeals(['deal.edit']), true);
+  assert.equal(canCloseDeals(['deal.edit']), true);
+  assert.equal(canEditDeals(['ld.edit']), false);
+  // finance: view-only does not edit; the old «fin» does both
+  assert.equal(canViewFinance(['fin.view']), true);
+  assert.equal(canEditFinance(['fin.view']), false);
+  assert.equal(canViewFinance(['fin']), true);
+  assert.equal(canEditFinance(['fin']), true);
+  assert.equal(canViewFinance([]), false);
+  assert.deepEqual([PERM_IMPLIED_BY['deal.add'], PERM_IMPLIED_BY['deal.close'], PERM_IMPLIED_BY['fin.view']], ['deal.edit', 'deal.edit', 'fin']);
+});
+
+test('exporting depends on the «export» right when the account has a permission list, not on the role name', async () => {
+  const { canExportCsv } = await import('../../src/utils/rbacRules.js');
+  assert.equal(canExportCsv('sales_manager', ['ld.edit']), false);
+  assert.equal(canExportCsv('r_custom', ['export']), true);
+  assert.equal(canExportCsv('sales_manager', null), true); // no list known: the old role defaults
+  assert.equal(canExportCsv('sales_agent', null), false);
+});
