@@ -1,0 +1,34 @@
+/* «تقارير الأداء» */
+.crm-layout .pr-panel { display: grid; gap: var(--ui-s-4); font-family: var(--ui-font); }
+.pr-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ui-s-3); }
+.pr-head h2 { display: flex; align-items: center; gap: var(--ui-s-2); margin: 0; font-size: var(--ui-fs-6); }
+.pr-head p { margin: 2px 0 0; color: var(--ui-text-3); font-size: var(--ui-fs-3); }
+.pr-seg { display: inline-flex; border: 1px solid var(--ui-line-strong); border-radius: var(--ui-r-md); overflow: hidden; }
+.pr-seg button { min-height: 40px; padding: 0 var(--ui-s-3); border: 0; background: var(--ui-surface); color: var(--ui-text-2); font: inherit; font-weight: var(--ui-fw-semibold); cursor: pointer; }
+.pr-seg button.is-on { background: var(--ui-primary); color: var(--ui-on-primary, var(--ui-surface)); }
+.pr-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ui-s-3); }
+@media (min-width: 900px) { .pr-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.pr-card { display: grid; gap: 2px; padding: var(--ui-s-3); border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); background: var(--ui-surface); min-width: 0; }
+.pr-card__label { color: var(--ui-text-3); font-size: var(--ui-fs-2); }
+.pr-card__value { font-size: var(--ui-fs-6); overflow-wrap: anywhere; }
+.pr-card__delta { display: inline-flex; align-items: center; gap: 4px; color: var(--ui-text-3); font-size: var(--ui-fs-2); }
+.pr-card__delta.is-up { color: var(--ui-success); }
+.pr-card__delta.is-down { color: var(--ui-danger); }
+.pr-block { padding: var(--ui-s-4); border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); background: var(--ui-surface); display: grid; gap: var(--ui-s-3); min-width: 0; }
+.pr-block h3 { margin: 0; font-size: var(--ui-fs-5); }
+.pr-block h3 small { color: var(--ui-text-3); font-weight: normal; }
+.pr-funnel { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--ui-s-3); }
+.pr-funnel__top { display: flex; justify-content: space-between; gap: var(--ui-s-2); }
+.pr-funnel__top small { color: var(--ui-text-3); font-weight: normal; }
+.pr-bar { height: 8px; border-radius: var(--ui-r-full); background: var(--ui-surface-2); overflow: hidden; }
+.pr-bar i { display: block; height: 100%; background: var(--ui-primary); border-radius: inherit; }
+.pr-funnel__meta { color: var(--ui-text-3); font-size: var(--ui-fs-2); min-height: 1em; }
+.pr-note { margin: 0; color: var(--ui-text-2); font-size: var(--ui-fs-3); }
+.pr-table-wrap { overflow-x: auto; }
+.pr-table { width: 100%; border-collapse: collapse; font-size: var(--ui-fs-3); }
+.pr-table th, .pr-table td { padding: var(--ui-s-2); text-align: start; border-bottom: 1px solid var(--ui-line); white-space: nowrap; }
+.pr-table thead th { color: var(--ui-text-3); font-weight: var(--ui-fw-semibold); }
+.pr-team { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--ui-s-2); }
+.pr-team li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-s-2) var(--ui-s-4); padding: var(--ui-s-2) 0; border-bottom: 1px solid var(--ui-line); }
+.pr-team__name { flex: 1 1 100%; font-weight: var(--ui-fw-semibold); }
+.pr-team .is-bad { color: var(--ui-danger); }
