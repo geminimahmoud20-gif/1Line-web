@@ -167,7 +167,8 @@ export const canDeleteLead = (role) => {
  * Validates whether a given user/role can export CSV reports
  */
 export const canExportCsv = (role, perms = null) => {
-  if (perms?.includes('export')) return true;
+  // With the account's own permission list, only «export» decides (never the role's name)
+  if (Array.isArray(perms)) return perms.includes('export') || perms.includes('*');
   return role === CRM_ROLES.SUPER_ADMIN || role === CRM_ROLES.SALES_MANAGER || role === CRM_ROLES.FINANCE;
 };
 
