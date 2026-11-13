@@ -38,6 +38,21 @@ const asKey = (v) => {
 export const hasAnalyticsConsent = () => isBrowser;
 const isStaffPage = () => isBrowser && window.location.pathname.startsWith('/crm');
 
+// ── The company's own browsers ───────────────────────────────────────────────
+// A browser that opened the CRM, or that was opened with ?internal=1 (clear it with ?internal=0), is
+// the team's: its visits are counted apart on the server and never reach GA4 or the Meta Pixel.
+const INTERNAL_KEY = 'oneline_internal';
+export const isInternalBrowser = () => isBrowser && safe(() => localStorage.getItem(INTERNAL_KEY) === '1', false);
+export const setInternalBrowser = (on) => safe(() => (on ? localStorage.setItem(INTERNAL_KEY, '1') : localStorage.removeItem(INTERNAL_KEY)));
+if (isBrowser) {
+  safe(() => {
+    const q = new URLSearchParams(window.location.search).get('internal');
+    if (q === '1') setInternalBrowser(true);
+    else if (q === '0') setInternalBrowser(false);
+    else if (isStaffPage()) setInternalBrowser(true);
+  });
+}
+
 // ── Where the visit came from (first touch of the session) ───────────────────
 const SOURCE_HOSTS = [
   ['facebook', /facebook\.|fb\.|messenger/], ['instagram', /instagram\./], ['google', /google\./],
@@ -147,7 +162,7 @@ function send(useBeacon) {
     firstSeen: v?.firstSeen,
     newVisitor: Boolean(v && pendingFlags.newVisitor),
     dayFirst: Boolean(v && pendingFlags.dayFirst),
-    ctx: { device: deviceClass(), lang: document.documentElement.lang === 'en' ? 'en' : 'ar', ...src },
+    ctx: { device: deviceClass(), lang: document.documentElement.lang === 'en' ? 'en' : 'ar', ...src, ...(isInternalBrowser() ? { internal: true } : {}) },
     events,
   });
   pendingFlags = { newVisitor: false, dayFirst: false };
@@ -180,6 +195,9 @@ export function track(type, meta = {}) {
   if (STAGE_OF[type]) markStage(STAGE_OF[type]);
   if (queue.length >= FLUSH_SIZE) flushAnalytics();
   else if (!timer) timer = setTimeout(() => { timer = null; flushAnalytics(); }, FLUSH_DELAY_MS);
+
+  // The team's own clicks and test requests are not the public's: nothing goes on to GA4 or the Pixel
+  if (isInternalBrowser()) return;
 
   // Forward supported events to GA4 safely (deduplicated, consent-checked, no PII)
   if (type === 'page_view') {

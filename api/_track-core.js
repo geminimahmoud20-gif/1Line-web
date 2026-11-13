@@ -111,6 +111,8 @@ const sanitizeContext = (ctx = {}) => ({
   campaign: key(ctx.campaign),
   referrer: str(80)(ctx.referrer),
   landing: path(ctx.landing),
+  // The company's own browsers (staff who opened the CRM, or a device marked with ?internal=1)
+  internal: ctx.internal === true,
 });
 
 /** Validate one POST body. Returns null when nothing usable was sent. */
@@ -187,6 +189,20 @@ export function buildWrites(batch, { docRoot, now = Date.now(), shard = 0, batch
   const expireAt = new Date(now + RAW_RETENTION_DAYS * 86_400_000);
 
   const daily = new DocWrite(`${docRoot}/analytics_daily/${day}_${shard}`).set('date', day).set('updatedAt', at);
+
+  // The team's own visits are counted apart and touch nothing else: no visitor, session or listing
+  // numbers, so the figures above them stay the public's
+  if (batch.ctx.internal) {
+    daily.inc(['internal', 'batches']);
+    for (const e of batch.events) {
+      if (e.t === 'session_start') daily.inc(['internal', 'sessions']);
+      else if (e.t === 'page_view') daily.inc(['internal', 'pageViews']);
+      else if (e.t === 'contact_click') daily.inc(['internal', 'contacts']);
+      else if (e.t === 'lead_submitted') daily.inc(['internal', 'leads']);
+    }
+    return [daily.toWrite()];
+  }
+
   const props = new Map();
   const propDoc = (id) => {
     if (!props.has(id)) props.set(id, new DocWrite(`${docRoot}/analytics_properties/${id}`).set('propertyId', id));
