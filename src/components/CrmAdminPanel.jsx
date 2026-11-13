@@ -19,6 +19,7 @@ import SmartMatchingHub from './crm/SmartMatchingHub';
 import AICopywriterModal from './crm/AICopywriterModal';
 import AgentCommissionLeaderboard from './crm/AgentCommissionLeaderboard';
 import CampaignReportPanel from './crm/CampaignReportPanel';
+import SellerReportPanel from './crm/SellerReportPanel';
 import PaymentScheduleBuilder from './crm/PaymentScheduleBuilder';
 import RetargetingHub from './crm/RetargetingHub';
 import CustomerProfileModal from './crm/CustomerProfileModal';
@@ -895,12 +896,15 @@ export const CrmAdminPanel = ({
 
       {/* 🏆 TAB 5: TEAM COMMISSIONS & LEADERBOARD */}
       {adminTab === 'agents' && (
-        <AgentCommissionLeaderboard
-          leads={leads}
-          properties={properties}
-          lang={lang}
-          triggerToast={triggerToast}
-        />
+        <>
+          <AgentCommissionLeaderboard
+            leads={leads}
+            properties={properties}
+            lang={lang}
+            triggerToast={triggerToast}
+          />
+          {(isSuperRole || perms.includes('ld.manage')) && <SellerReportPanel leads={leads} lang={lang} />}
+        </>
       )}
 
       {/* 📣 Campaign report: leads, visits and cost per ad campaign (managers) */}
