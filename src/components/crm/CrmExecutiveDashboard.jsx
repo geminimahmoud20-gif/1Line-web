@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { computeDashboardMetrics } from '../../utils/crmLeadViews';
 import { commissionForecast } from '../../utils/commission';
+import { countWord } from '../../utils/arabicCount';
 import { DESK_BY_ROLE } from '../../utils/rbacRules';
 import { Users, Zap, Briefcase, Clock, Target, AlertTriangle, CheckCircle2, TrendingUp, Phone, Sparkles, Award, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 import { leadScore, LEAD_SCORE_HIGH } from '../../utils/crmLeadViews';
@@ -85,10 +86,11 @@ export default function CrmExecutiveDashboard({
         )}
         actions={(
           <>
-            <Button icon={<Clock size={16} aria-hidden="true" />} onClick={() => goLeads('due')}>
+            {/* The filled button is the one with something in it */}
+            <Button variant={metrics.dueTodayCount > 0 || metrics.newLeadsCount === 0 ? 'primary' : 'secondary'} icon={<Clock size={16} aria-hidden="true" />} onClick={() => goLeads('due')}>
               {L(`متابعات النهارده (${metrics.dueTodayCount})`, `Today's follow-ups (${metrics.dueTodayCount})`)}
             </Button>
-            <Button variant="secondary" icon={<Users size={16} aria-hidden="true" />} onClick={() => goLeads('new')}>
+            <Button variant={metrics.dueTodayCount === 0 && metrics.newLeadsCount > 0 ? 'primary' : 'secondary'} icon={<Users size={16} aria-hidden="true" />} onClick={() => goLeads('new')}>
               {L(`العملاء الجداد (${metrics.newLeadsCount})`, `New leads (${metrics.newLeadsCount})`)}
             </Button>
             <Button variant="ghost" icon={<Target size={16} aria-hidden="true" />} onClick={() => onSwitchTab?.('kanban')}>
@@ -114,7 +116,7 @@ export default function CrmExecutiveDashboard({
           digits={1}
           unit={L('مليون ج.م', 'M EGP')}
           emptyText={L('مفيش ميزانيات متسجّلة', 'No budgets recorded')}
-          hint={L(`${metrics.openCount} صفقة مفتوحة${metrics.scoped ? ' عندك' : ''}`, `${metrics.openCount} open deals`)}
+          hint={L(`${metrics.openCount} ${countWord('deal', metrics.openCount)} مفتوحة${metrics.scoped ? ' عندك' : ''}`, `${metrics.openCount} open deals`)}
           icon={<TrendingUp size={16} />}
           onClick={() => onSwitchTab?.('kanban')}
         />
