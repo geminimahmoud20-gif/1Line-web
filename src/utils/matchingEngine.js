@@ -7,6 +7,7 @@ import { SITE_URL } from '../config/siteConfig.js';
 import { inArea } from './areaLookup.js';
 import { isSellerLead, parseMoney } from './crmLeadViews.js';
 import { assetClass } from './marketStats.js';
+import { matchUnit, hardFit } from './buyerMatch.js';
 import { paymentTerms, planSummary } from './paymentTerms.js';
 
 /**
@@ -90,14 +91,40 @@ export function findMatchingClientsForProperty(property, leads = [], demands = [
     if (lead.status === 'closed' || lead.status === 'lost' || lead.isArchived) return;
     if (isSellerLead(lead)) return;
     const details = lead.details || {};
+    const contactPhone = lead.whatsapp || lead.phone;
+    if (!contactPhone) return;
+
+    // A buyer who answered «رشّحلي عقاري» left real answers: size, rooms, handover, installments…
+    // They are scored the way the website scored them for the buyer, and kind, area, budget and minimum size are firm.
+    const answers = details.matchAnswers;
+    if (answers && typeof answers === 'object' && answers.kind) {
+      const areas = getAreas();
+      const hard = hardFit(property, answers, areas);
+      if (!hard.kind || !hard.area || !hard.budget || !hard.size) return;
+      const fit = matchUnit(property, answers, areas);
+      if (fit.score < MATCH_THRESHOLD) return;
+      keep({
+        id: lead.id,
+        name: lead.name || 'عميل 1Line',
+        phone: contactPhone,
+        whatsapp: contactPhone,
+        source: 'قاعدة بيانات العملاء (CRM)',
+        score: fit.score,
+        reasons: fit.matches,
+        leadArea: normalizeAreaKey((answers.areas || [])[0] || ''),
+        leadType: answers.kind,
+        leadBudget: parseMoney(answers.payment === 'cash' ? answers.budget : answers.down),
+        notes: lead.notes || ''
+      });
+      return;
+    }
+
     // lead.type is the kind of request («buyer», «viewing»…), not of property: only propertyType counts
     const buyer = {
       type: details.propertyType || lead.propertyType || '',
       area: normalizeAreaKey(details.area || lead.area || ''),
       budget: parseMoney(details.budget) || parseMoney(details.expectedPrice) || parseMoney(lead.budget)
     };
-    const contactPhone = lead.whatsapp || lead.phone;
-    if (!contactPhone) return;
     const fit = scoreBuyer(property, buyer);
     if (!fit || fit.score < MATCH_THRESHOLD) return;
     keep({
