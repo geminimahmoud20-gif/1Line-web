@@ -45,3 +45,18 @@ test('totals add up and price the whole spend', () => {
   assert.equal(t.costPerLead, 100);
   assert.equal(t.costPerVisit, 300);
 });
+
+test('a client lost after a visit still counts as a visit, and the days to the visit are averaged', () => {
+  const day = 86400000;
+  const made = (id, history, status) => ({ id, status, createdAt: new Date(NOW - 10 * day).toISOString(), marketingAttribution: { source: 'facebook', campaign: 'buyers' }, stageHistory: history.map(([s, d]) => ({ s, at: new Date(NOW - d * day).toISOString() })) });
+  const leads = [
+    made(1, [['new', 10], ['site_visit', 6], ['lost', 2]], 'lost'),
+    made(2, [['new', 10], ['site_visit', 8]], 'site_visit'),
+    made(3, [['new', 10], ['lost', 9]], 'lost')
+  ];
+  const row = campaignReport(leads, { now: NOW })[0];
+  assert.equal(row.leads, 3);
+  assert.equal(row.visits, 2);
+  assert.equal(row.lost, 2);
+  assert.equal(row.avgDaysToVisit, 3);
+});
