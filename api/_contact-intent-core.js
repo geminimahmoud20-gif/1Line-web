@@ -18,6 +18,10 @@ export function sanitizeIntent(body) {
     path: path(body.path),
     propertyId: key(body.propertyId),
     source: key(body.source, 40) || 'direct',
+    // The ad that brought the visitor (utm_*): names the campaign, not the person
+    medium: key(body.medium, 40),
+    campaign: key(body.campaign, 64),
+    content: key(body.content, 64),
     placement: key(body.placement, 40),
     device: body.device === 'mobile' ? 'mobile' : 'desktop'
   };
@@ -32,6 +36,9 @@ export function intentFields(intent, now = Date.now()) {
     path: s(intent.path),
     propertyId: s(intent.propertyId),
     source: s(intent.source),
+    medium: s(intent.medium || ''),
+    campaign: s(intent.campaign || ''),
+    content: s(intent.content || ''),
     placement: s(intent.placement),
     device: s(intent.device),
     status: s('open'),

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
-import { verifyChallenge, validSignature, phoneFromWaId, inboundMessages, newLeadFields, handleInbound, leadIdFor } from '../../api/_whatsapp-inbound-core.js';
+import { verifyChallenge, validSignature, phoneFromWaId, inboundMessages, newLeadFields, handleInbound, leadIdFor, intentFromDoc } from '../../api/_whatsapp-inbound-core.js';
 
 const SECRET = 'app-secret';
 const sign = (body) => `sha256=${createHmac('sha256', SECRET).update(body).digest('hex')}`;
@@ -75,4 +75,19 @@ test('handleInbound creates new clients, updates known ones and links the site t
   ]);
   assert.equal((await handleInbound(body, 'sha256=bad', deps)).status, 401);
   assert.equal(leadIdFor({ waId: '201012345678' }), 'wa-201012345678');
+});
+
+test('a first message from an ad tap is credited to the campaign, like a form lead', () => {
+  const [m] = inboundMessages(payload([msg('201012345678', 'ازيك رقم المرجع: W-7K3Q')]));
+  const intent = intentFromDoc({ fields: {
+    propertyId: { stringValue: '' }, path: { stringValue: '/match' }, source: { stringValue: 'facebook' },
+    medium: { stringValue: 'paid_social' }, campaign: { stringValue: 'sohag-buyers' }, content: { stringValue: 'video-01' }, status: { stringValue: 'open' }
+  } });
+  assert.equal(intent.campaign, 'sohag-buyers');
+  const f = newLeadFields(m, intent);
+  assert.equal(f.utmCampaign.stringValue, 'sohag-buyers');
+  const a = f.marketingAttribution.mapValue.fields;
+  assert.deepEqual([a.source.stringValue, a.medium.stringValue, a.campaign.stringValue, a.content.stringValue, a.landingPage.stringValue], ['facebook', 'paid_social', 'sohag-buyers', 'video-01', '/match']);
+  // no ad, no attribution map: the lead stays an organic WhatsApp one
+  assert.equal('marketingAttribution' in newLeadFields(m, { path: '/', source: 'direct' }), false);
 });

@@ -52,10 +52,17 @@ const pageContext = () => {
       || (/facebook\.|fb\.|messenger/.test(ref) ? 'facebook' : /instagram\./.test(ref) ? 'instagram' : /google\./.test(ref) ? 'google' : /tiktok\./.test(ref) ? 'tiktok' : '');
     source = source.replace(/[^\w-]/g, '').slice(0, 40);
   }
+  // The campaign and ad (utm_campaign / utm_content) of this visit, or of the visitor's last visit from an ad
+  let touch = null;
+  try { touch = JSON.parse(sessionStorage.getItem('oneline_lead_attribution') || 'null'); } catch { /* none */ }
+  const clean = (v, max) => (/^[\w-]{1,80}$/.test(String(v || '')) ? String(v).slice(0, max) : '');
+  const campaign = clean(touch?.campaign, 64);
+  const paid = campaign && !['direct', 'direct_visit', 'organic', 'organic_referral', 'none'].includes(campaign);
   return {
     path: path.slice(0, 120),
     propertyId: unit ? unit[1] : '',
-    source: String(source).slice(0, 40),
+    source: String(paid ? (clean(touch?.source, 40) || source) : source).slice(0, 40),
+    ...(paid ? { campaign, medium: clean(touch?.medium, 40), content: clean(touch?.content, 64) } : {}),
     device: window.matchMedia?.('(max-width: 768px)').matches ? 'mobile' : 'desktop'
   };
 };
