@@ -1,6 +1,9 @@
 import RowMenu from './RowMenu';
+import { firstContactPatch } from '../../utils/crmLeadViews';
+import { auditContactUse } from '../../utils/contactAudit';
 import {
   Eye,
+  Phone,
   MessageSquare,
   User,
   Edit3,
@@ -30,6 +33,24 @@ export default function LeadTableRowActions({
 }) {
   return (
     <div className="crm-action-group" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+      {/* Call: one tap, and it counts as the first reply (same as the drawer's call button) */}
+      {(lead.phone || lead.whatsapp) && (
+        <a
+          href={`tel:${String(lead.phone || lead.whatsapp).replace(/[^0-9+]/g, '')}`}
+          className="crm-icon-btn is-call"
+          onClick={(e) => {
+            e.stopPropagation();
+            auditContactUse(lead, 'call');
+            const patch = firstContactPatch(lead);
+            if (patch && onUpdateLead) onUpdateLead(lead.id, patch, lead.version);
+          }}
+          title={isAr ? 'اتصل بالعميل' : 'Call'}
+          aria-label={isAr ? `اتصل بـ ${lead.name || 'العميل'}` : `Call ${lead.name || 'client'}`}
+        >
+          <Phone size={16} />
+        </a>
+      )}
+
       {/* Primary 1: Quick Drawer Fast Triage */}
       <button
         type="button"

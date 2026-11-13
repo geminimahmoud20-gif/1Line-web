@@ -415,7 +415,7 @@ export default function LeadsTab({
             )}
             {canExport && (
               <ExportMenu
-                label={isAr ? `تصدير (${filteredLeads.length})` : `Export (${filteredLeads.length})`}
+                label={isAr ? 'تصدير' : 'Export'}
                 disabled={filteredLeads.length === 0}
                 onExport={(format) => handleExportCSV(filteredLeads, format)}
               />
@@ -835,7 +835,7 @@ export default function LeadsTab({
                     <td data-label={isAr ? 'الجدية والحرارة' : 'Score & Temp'}>
                       <div className="crm-leads__score">
                         {(() => { const sc = leadScore(l); return (
-                          <Badge tone={sc.score >= LEAD_SCORE_HIGH ? 'success' : 'neutral'} title={sc.reasons.join(' • ')}>{sc.score}%</Badge>
+                          <Badge tone={sc.score >= LEAD_SCORE_HIGH ? 'success' : 'neutral'} title={sc.reasons.join(' • ')}><span className="crm-leads__score-label">{isAr ? 'جدية ' : 'Score '}</span>{sc.score}%</Badge>
                         ); })()}
                         <button
                           type="button"
