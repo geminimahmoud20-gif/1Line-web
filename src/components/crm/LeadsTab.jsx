@@ -1,6 +1,7 @@
 import {
   Download, Trash2, Clock, Plus, UserPlus, SlidersHorizontal, Search, X, RotateCcw, ChevronDown,
-  Copy, Upload, Columns3, Timer, CopyPlus, Plane, Ban, CalendarClock
+  Copy, Upload, Columns3, Timer, CopyPlus, Plane, Ban, CalendarClock,
+  Megaphone, Globe, MessageCircle, Users, Share2, FileUp, PenLine, CircleHelp
 } from 'lucide-react';
 import { formatFollowUp, formatBudget } from '../../utils/crmLabels';
 import DeskOptions from './DeskOptions';
@@ -240,6 +241,13 @@ export default function LeadsTab({
     const h = Math.floor(m / 60);
     if (h < 48) return isAr ? `${h} س` : `${h}h`;
     return isAr ? `${Math.floor(h / 24)} يوم` : `${Math.floor(h / 24)}d`;
+  };
+  // One icon per source, so where a client came from reads at a glance (ads are tinted: they get the 15-minute reply target)
+  const SOURCE_ICONS = { website: Globe, whatsapp: MessageCircle, ads: Megaphone, broker: Users, referral: Share2, import: FileUp, manual: PenLine, other: CircleHelp };
+  const renderSource = (lead) => {
+    const key = leadSourceKey(lead);
+    const Icon = SOURCE_ICONS[key] || CircleHelp;
+    return <span className={`crm-lead-chip is-source is-source-${key}`}><Icon size={12} aria-hidden="true" />{sourceLabel(lead)}</span>;
   };
   const sourceLabel = (l) => { const s = LEAD_SOURCES.find((x) => x.id === leadSourceKey(l)); return s ? (isAr ? s.ar : s.en) : ''; };
   const openMerge = (l) => {
@@ -772,7 +780,7 @@ export default function LeadsTab({
                         </div>
 
                         <div className="crm-lead-meta">
-                          <span className="crm-lead-chip">{sourceLabel(l)}</span>
+                          {renderSource(l)}
                           {waited > 0 && (
                             <span
                               className={`crm-lead-chip ${escalationLevel(l, now) === 2 ? 'is-late is-escalated' : waited > responseSlaMs(l) ? 'is-late' : 'is-waiting'}`}
