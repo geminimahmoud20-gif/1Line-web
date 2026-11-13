@@ -20,6 +20,7 @@ import SmartMatchingHub from './crm/SmartMatchingHub';
 import AICopywriterModal from './crm/AICopywriterModal';
 import AgentCommissionLeaderboard from './crm/AgentCommissionLeaderboard';
 import CampaignReportPanel from './crm/CampaignReportPanel';
+import PerformanceReportPanel from './crm/PerformanceReportPanel';
 import TasksPanel from './crm/TasksPanel';
 import SellerReportPanel from './crm/SellerReportPanel';
 import PaymentScheduleBuilder from './crm/PaymentScheduleBuilder';
@@ -923,6 +924,15 @@ export const CrmAdminPanel = ({
           <CampaignReportPanel leads={leads} lang={lang} triggerToast={triggerToast} />
         ) : (
           <div className="crm-table-container">{isAr ? 'تقرير الحملات للمدير العام ومديري المبيعات.' : 'The campaign report is for admins and sales managers.'}</div>
+        )
+      )}
+
+      {/* 📊 Performance: week vs week, funnel, sources, team tasks (managers) */}
+      {adminTab === 'performance' && (
+        (isSuperRole || perms.includes('ld.manage')) ? (
+          <PerformanceReportPanel leads={leads} lang={lang} />
+        ) : (
+          <div className="crm-table-container">{isAr ? 'تقارير الأداء للمدير العام ومديري المبيعات.' : 'Performance reports are for admins and sales managers.'}</div>
         )
       )}
 

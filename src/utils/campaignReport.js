@@ -6,6 +6,7 @@
 // =============================================================
 import { leadCampaign, leadCreatedMs } from './crmLeadViews.js';
 import { reachedAny, msToReach, avgDays } from './stageHistory.js';
+import { leadCommission } from './commission.js';
 
 const VISITED = new Set(['site_visit', 'negotiating', 'closing', 'closed']);
 const CONTACTED = new Set(['contacted', ...VISITED]);
@@ -33,11 +34,14 @@ export function campaignReport(leads = [], { by = 'campaign', days = 0, now = Da
     if (since && leadCreatedMs(l) < since) continue;
     const ad = by === 'ad' ? (c.ad || '—') : '';
     const key = spendKey(c.campaign, ad === '—' ? '' : ad) + (by === 'ad' && ad === '—' ? '::—' : '');
-    const row = rows.get(key) || { key, campaign: c.campaign, ad, source: c.source, leads: 0, contacted: 0, visits: 0, closed: 0, lost: 0, toVisit: [], reasons: {} };
+    const row = rows.get(key) || { key, campaign: c.campaign, ad, source: c.source, leads: 0, contacted: 0, visits: 0, closed: 0, lost: 0, toVisit: [], reasons: {}, wonCommission: 0, expectedCommission: 0 };
     row.leads += 1;
     if (reachedAny(l, CONTACTED)) row.contacted += 1;
     if (reachedAny(l, VISITED)) { row.visits += 1; row.toVisit.push(msToReach(l, VISITED)); }
     if (reachedAny(l, ['closed'])) row.closed += 1;
+    // What the client's deal pays: the whole commission once closed, the stage-weighted part while open
+    if (l.status === 'closed') row.wonCommission += leadCommission(l).gross;
+    else if (l.status !== 'lost') row.expectedCommission += leadCommission(l).weighted;
     if (l.status === 'lost') { row.lost += 1; const why = l.lostReason || 'other'; row.reasons[why] = (row.reasons[why] || 0) + 1; }
     rows.set(key, row);
   }
@@ -54,6 +58,8 @@ export function campaignReport(leads = [], { by = 'campaign', days = 0, now = Da
         spend: cost,
         costPerLead: cost && r.leads ? Math.round(cost / r.leads) : 0,
         costPerVisit: cost && r.visits ? Math.round(cost / r.visits) : 0,
+        // commission won for every pound spent (1.5 = 1.5 EGP back per 1 EGP), once a spend is entered
+        returnPerEgp: cost && r.wonCommission ? Math.round((r.wonCommission / cost) * 100) / 100 : 0,
         visitRate: r.leads ? Math.round((r.visits / r.leads) * 100) : 0
       };
     })
@@ -62,6 +68,6 @@ export function campaignReport(leads = [], { by = 'campaign', days = 0, now = Da
 
 /** Totals row for the same rows */
 export function campaignTotals(rows = []) {
-  const t = rows.reduce((s, r) => ({ leads: s.leads + r.leads, contacted: s.contacted + r.contacted, visits: s.visits + r.visits, closed: s.closed + r.closed, spend: s.spend + r.spend }), { leads: 0, contacted: 0, visits: 0, closed: 0, spend: 0 });
-  return { ...t, costPerLead: t.spend && t.leads ? Math.round(t.spend / t.leads) : 0, costPerVisit: t.spend && t.visits ? Math.round(t.spend / t.visits) : 0 };
+  const t = rows.reduce((s, r) => ({ leads: s.leads + r.leads, contacted: s.contacted + r.contacted, visits: s.visits + r.visits, closed: s.closed + r.closed, spend: s.spend + r.spend, wonCommission: s.wonCommission + (r.wonCommission || 0), expectedCommission: s.expectedCommission + (r.expectedCommission || 0) }), { leads: 0, contacted: 0, visits: 0, closed: 0, spend: 0, wonCommission: 0, expectedCommission: 0 });
+  return { ...t, costPerLead: t.spend && t.leads ? Math.round(t.spend / t.leads) : 0, costPerVisit: t.spend && t.visits ? Math.round(t.spend / t.visits) : 0, returnPerEgp: t.spend && t.wonCommission ? Math.round((t.wonCommission / t.spend) * 100) / 100 : 0 };
 }

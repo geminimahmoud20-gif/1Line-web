@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { Inbox, LayoutGrid, Users, Target, Building, Zap, Sparkles, Calculator, Activity, ShieldCheck, ChevronDown, Search, X, Moon, Sun, LogOut, MapPin, Database, Award, Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame, Megaphone, Globe2, Repeat2, Bug, UserCog, Palette, Bell, ListChecks } from 'lucide-react';
+import { Inbox, LayoutGrid, Users, Target, Building, Zap, Sparkles, Calculator, Activity, ShieldCheck, ChevronDown, Search, X, Moon, Sun, LogOut, MapPin, Database, Award, Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame, Megaphone, Globe2, Repeat2, Bug, UserCog, Palette, Bell, ListChecks, BarChart3 } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import { usePreferences } from '../../context/PreferencesContext';
 import { CRM_ROLES } from './crmRoles';
@@ -228,6 +228,12 @@ export default function CrmSidebar({
             icon: Megaphone,
             label_ar: 'تقرير الحملات',
             label_en: 'Campaign Report'
+          }] : []),
+          ...(canCampaigns ? [{
+            id: 'performance',
+            icon: BarChart3,
+            label_ar: 'تقارير الأداء',
+            label_en: 'Performance'
           }] : []),
           // Messages clients in bulk: only roles that work leads and see real numbers
           ...(canRetarget ? [{
