@@ -48,7 +48,7 @@ export function sitemapUrls({ listings = [], projects = [], today = new Date().t
   return [
     ...STATIC_ROUTES.map(([loc, priority, freq]) => ({ loc, priority, freq, lastmod: LISTS_LISTINGS.has(loc) ? newestDay : '' })),
     ...landingPages(listings).map((l) => ({ loc: l.path, priority: l.area ? '0.7' : '0.8', freq: 'daily', lastmod: newestDay })),
-    ...guidePages(listings).map((g) => ({ loc: g.path, priority: g.area ? '0.6' : '0.7', freq: 'daily', lastmod: newestDay })),
+    ...guidePages(listings).map((g) => ({ loc: g.path, priority: g.area ? '0.6' : '0.7', freq: g.article ? 'monthly' : 'daily', lastmod: g.article ? '' : newestDay })),
     ...listings.map((p) => ({ loc: `/properties/${encodeURIComponent(p.id)}`, priority: '0.8', freq: 'weekly', lastmod: dayOf(p.updatedAt) || dayOf(p.createdAt) })),
     ...projects.filter((p) => /^[\w-]{1,80}$/.test(p.id)).map((p) => ({ loc: `/projects/${encodeURIComponent(p.id)}`, priority: '0.6', freq: 'weekly', lastmod: dayOf(p.updatedAt) }))
   ];

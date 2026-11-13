@@ -39,7 +39,7 @@ export async function GET(request) {
       if (!res.ok) return plain();
       const data = await res.json();
       const listings = (Array.isArray(data.properties) ? data.properties : []).filter(isPublicListing);
-      if (!guideRows(listings, page.area).length) return plain();
+      if (!page.article && !guideRows(listings, page.area).length) return plain();
       return html(buildGuideShell(template, page, listings, SITE_URL), 'public, s-maxage=600, stale-while-revalidate=86400');
     } catch (err) {
       console.error('page-shell guide failed:', err?.message || err);

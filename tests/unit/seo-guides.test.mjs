@@ -46,11 +46,11 @@ test('copy and FAQ quote the real figures; an empty place says so and quotes not
 });
 
 test('only places with figures get a page, in the sitemap too', () => {
-  assert.deepEqual(guidePages(list).map((g) => g.path), ['/guides/price-per-meter-sohag', '/guides/price-per-meter-new-sohag', '/guides/price-per-meter-east-sohag']);
-  assert.deepEqual(guidePages([]), []);
+  assert.deepEqual(guidePages(list).map((g) => g.path), ['/guides/how-to-buy-apartment-sohag', '/guides/price-per-meter-sohag', '/guides/price-per-meter-new-sohag', '/guides/price-per-meter-east-sohag']);
+  assert.deepEqual(guidePages([]).map((g) => g.path), ['/guides/how-to-buy-apartment-sohag']); // the article needs no listings
   const locs = sitemapUrls({ listings: list }).map((u) => u.loc);
   assert.ok(locs.includes('/guides/price-per-meter-new-sohag'));
-  assert.ok(!sitemapUrls({ listings: [] }).some((u) => u.loc.startsWith('/guides')));
+  assert.ok(!sitemapUrls({ listings: [] }).some((u) => u.loc.startsWith('/guides/price')));
 });
 
 test('the shell puts the figures and FAQ in #root and the canonical in the head', () => {
@@ -60,4 +60,15 @@ test('the shell puts the figures and FAQ in #root and the canonical in the head'
   assert.match(html, /<h1>سعر المتر في سوهاج الجديدة<\/h1>/);
   assert.match(html, /30,000/);
   assert.match(html, /FAQPage/);
+});
+
+test('the buying guide parses, has a shell with its steps, and quotes no invented figure', () => {
+  const g = parseGuide('how-to-buy-apartment-sohag');
+  assert.ok(g.article && g.area === null);
+  const tpl = '<html><head><title>x</title><meta name="description" content="x"><link rel="canonical" href="x"><meta property="og:url" content="x"><meta property="og:title" content="x"><meta property="og:description" content="x"><meta name="twitter:title" content="x"><meta name="twitter:description" content="x"></head><body><div id="root"></div></body></html>';
+  const html = buildGuideShell(tpl, g, [], 'https://example.com');
+  assert.match(html, /guides\/how-to-buy-apartment-sohag/);
+  assert.match(html, /مراجعة|راجع الأوراق/);
+  assert.match(html, /FAQPage/);
+  assert.doesNotMatch(JSON.stringify(g.article), /\d+\s*(%|٪|في المية)/);
 });
