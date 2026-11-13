@@ -409,8 +409,8 @@ export default function LeadsTab({
               </Button>
             )}
             {onImportLeads && (
-              <Button variant="secondary" icon={<Upload size={16} aria-hidden="true" />} onClick={() => setImportOpen(true)}>
-                {isAr ? 'استيراد' : 'Import'}
+              <Button variant="secondary" className="crm-leads__import" icon={<Upload size={16} aria-hidden="true" />} onClick={() => setImportOpen(true)} aria-label={isAr ? 'استيراد عملاء' : 'Import clients'}>
+                <span className="crm-leads__lbl">{isAr ? 'استيراد' : 'Import'}</span>
               </Button>
             )}
             {canExport && (
