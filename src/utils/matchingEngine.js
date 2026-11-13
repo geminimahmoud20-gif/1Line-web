@@ -5,7 +5,8 @@
 import { normalizeAreaKey, getAreas } from './areasData.js';
 import { SITE_URL } from '../config/siteConfig.js';
 import { inArea } from './areaLookup.js';
-import { isSellerLead } from './crmLeadViews.js';
+import { isSellerLead, parseMoney } from './crmLeadViews.js';
+import { assetClass } from './marketStats.js';
 import { paymentTerms, planSummary } from './paymentTerms.js';
 
 /**
@@ -22,118 +23,127 @@ export function formatWhatsAppPhone(phone) {
   return cleaned;
 }
 
+/** A unit more than 20% above the buyer's budget is never offered (see BUDGET_STRETCH) */
+export const BUDGET_STRETCH = 1.2;
+/** Out of 100: area 40, kind of property 30, budget 30; below this a buyer is not matched */
+export const MATCH_THRESHOLD = 70;
+
+const phoneKey = (phone) => String(phone || '').replace(/[^0-9]/g, '').slice(-10);
+
+/**
+ * How well a property fits one buyer (a lead or a buyer request), or null when it clearly doesn't.
+ *  - Kind: compared by market class (an «apartment» listing fits a buyer who asked for «residential»,
+ *    which is what the website forms save). A different kind is never a match; an unknown kind is neutral.
+ *  - Area: the buyer's area, or any area when none was given.
+ *  - Budget: the unit must fit the budget. Up to 20% above it is still shown, lower; more is dropped.
+ *    A budget written in words or Arabic digits is read ("2 مليون"). No budget is neutral.
+ * @returns {{score: number, reasons: string[]} | null}
+ */
+export function scoreBuyer(property, buyer) {
+  const price = parseMoney(property.price);
+  const propertyArea = normalizeAreaKey(property.areaKey);
+  const propertyClass = property.type ? assetClass({ type: property.type }) : '';
+  const buyerClass = buyer.type ? assetClass({ type: buyer.type }) : '';
+  const reasons = [];
+  let score = 0;
+
+  if (buyerClass && propertyClass && buyerClass !== propertyClass) return null;
+  if (buyerClass) { score += 30; reasons.push('نفس نوع العقار'); } else score += 10;
+
+  if (buyer.area) {
+    if (propertyArea === 'all' || inArea(propertyArea, buyer.area, getAreas())) { score += 40; reasons.push('نفس المنطقة'); }
+  } else {
+    score += 20;
+  }
+
+  if (buyer.budget > 0 && price > 0) {
+    const ratio = price / buyer.budget;
+    if (ratio > BUDGET_STRETCH) return null;
+    if (ratio <= 1) { score += ratio >= 0.6 ? 30 : 20; reasons.push('داخل الميزانية'); }
+    else if (ratio <= 1.1) { score += 20; reasons.push('قريبة من الميزانية'); }
+    else { score += 8; reasons.push('أعلى من الميزانية بشوية'); }
+  } else {
+    score += 10;
+  }
+  return { score: Math.min(100, score), reasons };
+}
+
 /**
  * Finds all leads and demands matching a given property
  * @param {Object} property The property being added, sold, or updated
  * @param {Array} leads Registered CRM leads
  * @param {Array} demands Public/Office buyer demands
- * @returns {Array} List of matched client profiles with calculated match score
+ * @returns {Array} List of matched client profiles with calculated match score, best first. A person
+ * registered more than once (same phone) appears once, with the best score.
  */
 export function findMatchingClientsForProperty(property, leads = [], demands = []) {
   if (!property) return [];
+  const byPhone = new Map();
+  const keep = (entry) => {
+    const key = phoneKey(entry.phone) || `id:${entry.id}`;
+    const prev = byPhone.get(key);
+    if (!prev || entry.score > prev.score) byPhone.set(key, entry);
+  };
 
-  const matched = [];
-  const propertyPrice = typeof property.price === 'number' ? property.price : parseInt(String(property.price).replace(/,/g, '')) || 0;
-  const propertyArea = normalizeAreaKey(property.areaKey);
-  const propertyType = property.type || '';
-
-  // 1. Match with CRM Leads
+  // 1. CRM leads: active buyers only (an owner who came to sell is not a buyer)
   leads.forEach((lead) => {
-    // Only target active buyers or special requests: an owner who came to sell is not a buyer
     if (lead.status === 'closed' || lead.status === 'lost' || lead.isArchived) return;
     if (isSellerLead(lead)) return;
-
-    let score = 0;
     const details = lead.details || {};
-    const rawLeadArea = details.area || lead.area || '';
-    const leadArea = normalizeAreaKey(rawLeadArea);
-    const leadType = details.propertyType || lead.type || '';
-    const leadBudget = parseInt(String(details.budget || details.expectedPrice || lead.budget || 0).replace(/[^0-9]/g, '')) || 0;
-
-    // Area Match (+40)
-    if (leadArea && (inArea(propertyArea, leadArea, getAreas()) || propertyArea === 'all')) {
-      score += 40;
-    }
-
-    // Property Type Match (+30)
-    if (leadType && (leadType === propertyType || leadType === 'all')) {
-      score += 30;
-    }
-
-    // Budget Tolerance (within ±25%) (+30)
-    if (leadBudget > 0 && propertyPrice > 0) {
-      const minBudget = propertyPrice * 0.75;
-      const maxBudget = propertyPrice * 1.25;
-      if (leadBudget >= minBudget && leadBudget <= maxBudget) {
-        score += 30;
-      }
-    }
-
-    // Must have a valid phone number and at least 60% match (requires multiple criteria)
+    // lead.type is the kind of request («buyer», «viewing»…), not of property: only propertyType counts
+    const buyer = {
+      type: details.propertyType || lead.propertyType || '',
+      area: normalizeAreaKey(details.area || lead.area || ''),
+      budget: parseMoney(details.budget) || parseMoney(details.expectedPrice) || parseMoney(lead.budget)
+    };
     const contactPhone = lead.whatsapp || lead.phone;
-    if (score >= 60 && contactPhone) {
-      matched.push({
-        id: lead.id,
-        name: lead.name || 'عميل 1Line',
-        phone: contactPhone,
-        whatsapp: contactPhone,
-        source: 'قاعدة بيانات العملاء (CRM)',
-        score: Math.min(100, score),
-        leadArea,
-        leadType,
-        leadBudget,
-        notes: lead.notes || ''
-      });
-    }
+    if (!contactPhone) return;
+    const fit = scoreBuyer(property, buyer);
+    if (!fit || fit.score < MATCH_THRESHOLD) return;
+    keep({
+      id: lead.id,
+      name: lead.name || 'عميل 1Line',
+      phone: contactPhone,
+      whatsapp: contactPhone,
+      source: 'قاعدة بيانات العملاء (CRM)',
+      score: fit.score,
+      reasons: fit.reasons,
+      leadArea: buyer.area,
+      leadType: buyer.type,
+      leadBudget: buyer.budget,
+      notes: lead.notes || ''
+    });
   });
 
-  // 2. Match with Buyer Demands (if phone is provided)
+  // 2. Buyer demands (if a phone is provided)
   demands.forEach((demand) => {
     if (demand.status !== 'published' && demand.status !== 'pending') return;
-
-    let score = 0;
-    const rawDemandArea = demand.area || '';
-    const demandArea = normalizeAreaKey(rawDemandArea);
-    const demandType = demand.type || '';
-    const demandBudget = typeof demand.budget === 'number' ? demand.budget : parseInt(String(demand.budget).replace(/,/g, '')) || 0;
-
-    if (demandArea && (inArea(propertyArea, demandArea, getAreas()) || propertyArea === 'all')) {
-      score += 40;
-    }
-    if (demandType && (demandType === propertyType || demandType === 'all')) {
-      score += 30;
-    }
-    if (demandBudget > 0 && propertyPrice > 0) {
-      const minBudget = propertyPrice * 0.75;
-      const maxBudget = propertyPrice * 1.25;
-      if (demandBudget >= minBudget && demandBudget <= maxBudget) {
-        score += 30;
-      }
-    }
-
+    const buyer = {
+      type: demand.type || '',
+      area: normalizeAreaKey(demand.area || ''),
+      budget: parseMoney(demand.budget)
+    };
     const contactPhone = demand.whatsapp || demand.phone;
-    if (score >= 60 && contactPhone) {
-      // Avoid duplicates if same phone exists
-      const exists = matched.some(m => m.phone === contactPhone);
-      if (!exists) {
-        matched.push({
-          id: demand.id,
-          name: demand.clientName || 'مشتري عقار',
-          phone: contactPhone,
-          whatsapp: contactPhone,
-          source: 'طلبات المشترين (Demands)',
-          score: Math.min(100, score),
-          leadArea: demandArea,
-          leadType: demandType,
-          leadBudget: demandBudget,
-          notes: demand.text_ar || ''
-        });
-      }
-    }
+    if (!contactPhone) return;
+    const fit = scoreBuyer(property, buyer);
+    if (!fit || fit.score < MATCH_THRESHOLD) return;
+    keep({
+      id: demand.id,
+      name: demand.clientName || 'مشتري عقار',
+      phone: contactPhone,
+      whatsapp: contactPhone,
+      source: 'طلبات المشترين (Demands)',
+      score: fit.score,
+      reasons: fit.reasons,
+      leadArea: buyer.area,
+      leadType: buyer.type,
+      leadBudget: buyer.budget,
+      notes: demand.text_ar || ''
+    });
   });
 
-  // Sort descending by match score
-  return matched.sort((a, b) => b.score - a.score);
+  // Best score first; among equals the closer budget
+  return [...byPhone.values()].sort((a, b) => b.score - a.score || (b.leadBudget || 0) - (a.leadBudget || 0));
 }
 
 /**
