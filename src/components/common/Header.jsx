@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import { MessageSquare, Menu, X, Search, Globe, Share2, Sun, Moon, Volume2, VolumeX, MoreHorizontal, Scale, Building, Sparkles, FileText, ChevronDown, Home, TrendingUp, Award, Layers, Heart, ArrowRight, ArrowLeft, Lock, User, ShieldCheck, Repeat2, Stethoscope, PlusCircle, Landmark, Briefcase, Info, Phone, MessageCircle, ChevronLeft, ChevronRight, Users } from 'lucide-react';
+import { MessageSquare, Menu, X, Search, Globe, Share2, Sun, Moon, Volume2, VolumeX, MoreHorizontal, Scale, Building, Sparkles, FileText, ChevronDown, Home, TrendingUp, Layers, Heart, ArrowRight, ArrowLeft, Lock, User, ShieldCheck, Repeat2, Stethoscope, PlusCircle, Landmark, Briefcase, Info, Phone, MessageCircle, ChevronLeft, ChevronRight, Users } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import InstallAppButton from './InstallAppButton';
 import CurrencySwitcher from './CurrencySwitcher';
@@ -156,12 +156,12 @@ export default function Header({
       icon: PlusCircle
     },
     {
-      id: 'about',
+      id: 'match',
       type: 'link',
-      path: '/about',
-      label: isAr ? 'عن الشركة' : 'About Us',
-      title: isAr ? 'عن 1Line ورؤية الإدارة والمؤسس' : 'About 1Line & Leadership',
-      icon: Award
+      path: '/match',
+      label: isAr ? 'رشّحلي عقاري' : 'Find my property',
+      title: isAr ? 'قولنا عايز إيه ونرشّحلك الأنسب' : 'Tell us what you need, we match it',
+      icon: Sparkles
     },
     {
       // Five links stay in the bar; buyer demands and the VIP services share one menu
@@ -170,7 +170,7 @@ export default function Header({
       label: isAr ? 'خدمات' : 'Services',
       title: isAr ? 'طلبات المشترين وخدمات واستشارات VIP' : 'Buyer demands, VIP services & advisory',
       icon: Sparkles,
-      activePaths: ['/match', '/broker', '/demands', '/special-requests', '/market-intelligence', '/financing', '/investor', '/private-office', '/off-market', '/trade-in', '/commercial-hub'],
+      activePaths: ['/broker', '/demands', '/special-requests', '/market-intelligence', '/financing', '/investor', '/private-office', '/trade-in', '/commercial-hub'],
       // Three short sections so the menu reads at a glance: buy & sell, prices & finance, premium clients
       groups: [
         {
