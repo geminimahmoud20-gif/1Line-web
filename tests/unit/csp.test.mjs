@@ -35,6 +35,8 @@ test('the policy lets the services the site depends on through, and spares the s
   assert.match(source, /sw\\?\.js/, 'sw.js must be excluded from the page CSP');
   for (const host of ['https://*.googleapis.com', 'https://www.google.com']) assert.ok(directive(policy, 'connect-src').includes(host), `connect-src lacks ${host}`);
   for (const host of ['https://www.google.com/recaptcha/', 'https://www.gstatic.com/recaptcha/']) assert.ok(directive(policy, 'script-src').includes(host), `script-src lacks ${host} (App Check)`);
+  // Firebase Auth loads its sign-in helper from apis.google.com; blocked, every visit logged a «script-src-elem» error in the CRM
+  assert.ok(directive(policy, 'script-src').includes('https://apis.google.com'), 'script-src lacks https://apis.google.com (Firebase Auth)');
   assert.ok(directive(policy, 'object-src').includes("'none'"));
   assert.ok(directive(policy, 'frame-ancestors').includes("'self'"));
 });
