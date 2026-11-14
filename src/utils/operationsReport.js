@@ -15,9 +15,9 @@ const num = (v) => (typeof v === 'number' ? v : parseInt(String(v ?? '').replace
 const createdMs = (r) => toMs(r?.createdAt) || toMs(r?.timestamp);
 const top = (counts, k = 5) => Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, k).map(([id, count]) => ({ id, count }));
 
-/** Counts of a list in two ranges, as { cur, prev, change } */
-const pair = (list, range, prevRange) => {
-  const count = (r) => (r ? list.filter((x) => inRange(createdMs(x), r)).length : null);
+/** Counts of a list in two ranges, as { cur, prev, change } (`when` says which date counts, the creation date by default) */
+const pair = (list, range, prevRange, when = createdMs) => {
+  const count = (r) => (r ? list.filter((x) => inRange(when(x), r)).length : null);
   const cur = count(range);
   const prev = count(prevRange);
   return { cur, prev, change: prev > 0 ? Math.round(((cur - prev) / prev) * 100) : null };
@@ -55,6 +55,9 @@ export function portfolioReport(properties = [], { range, prevRange = null, now 
     total: real.length - byStatus.trash,
     byStatus,
     added: pair(real, range, prevRange),
+    // sold in the period: only listings marked sold since the sale date started being recorded (soldAt) count
+    soldIn: pair(real.filter((p) => getNormalizedPropertyStatus(p) === 'sold'), range, prevRange, (p) => toMs(p.soldAt)),
+    soldWithDate: real.filter((p) => getNormalizedPropertyStatus(p) === 'sold' && toMs(p.soldAt) > 0).length,
     kinds,
     areas: top(areas).map((a) => ({ ...a, label: areaNames[a.id] || (a.id === '—' ? 'من غير منطقة' : a.id) })),
     incomplete,

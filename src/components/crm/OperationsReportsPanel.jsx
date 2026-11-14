@@ -59,7 +59,8 @@ export default function OperationsReportsPanel({ part = 'portfolio', properties 
           <Card label={L('إجمالي العقارات', 'All listings')} value={num(portfolio.total)} />
           <Card label={L('منشورة على الموقع', 'Published')} value={num(live)} />
           <Card label={L('تحت التفاوض', 'Under negotiation')} value={num(portfolio.byStatus.under_negotiation)} />
-          <Card label={L('اتباعت', 'Sold')} value={num(portfolio.byStatus.sold)} />
+          <Card label={L('اتباعت (الإجمالي)', 'Sold (all time)')} value={num(portfolio.byStatus.sold)} />
+          <Card label={L('اتباعت في الفترة', 'Sold in the period')} value={num(portfolio.soldIn.cur)}><Delta v={portfolio.soldIn} L={L} /></Card>
           <Card label={L('اتضافت في الفترة', 'Added in the period')} value={num(portfolio.added.cur)}><Delta v={portfolio.added} L={L} /></Card>
           <Card label={L('ناقصة بيانات', 'Incomplete')} value={num(portfolio.incomplete)} />
         </div>
@@ -87,6 +88,9 @@ export default function OperationsReportsPanel({ part = 'portfolio', properties 
             <li className={portfolio.incomplete ? 'is-warn' : 'is-good'}><span>{portfolio.incomplete
               ? `${portfolio.incomplete} عقار منشور ناقصه بيانات (${portfolio.issues.map((i) => `${i.label} ${i.count}`).join('، ')}) — الموقع بيخبّي الناقص.`
               : 'كل العقارات المنشورة بياناتها كاملة.'}</span></li>
+            {portfolio.byStatus.sold > portfolio.soldWithDate && (
+              <li className="is-info"><span>{`${portfolio.byStatus.sold - portfolio.soldWithDate} عقار من اللي اتباعوا ملهمش تاريخ بيع (اتباعوا قبل ما نبدأ نسجّله)، فمش داخلين في «اتباعت في الفترة».`}</span></li>
+            )}
             <li className={portfolio.stale ? 'is-warn' : 'is-good'}><span>{portfolio.stale
               ? `${portfolio.stale} عقار منشور محدّثش من أكتر من ٦٠ يوم — راجع سعره وإتاحته.`
               : 'مفيش عقار منشور قديم من غير تحديث.'}</span></li>
