@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Search, Clock, AlertCircle } from 'lucide-react';
 import { formatFollowUp } from '../../utils/crmLabels';
+import { getWhatsAppUrl } from '../../utils/founderCmsData';
 
 export default function TrackLeadModal({ isOpen, onClose, leads = [], lang }) {
   const [searchPhone, setSearchPhone] = useState('');
@@ -81,7 +82,17 @@ export default function TrackLeadModal({ isOpen, onClose, leads = [], lang }) {
             ) : (
               <div className="no-lead-found">
                 <AlertCircle size={32} className="text-warning" />
-                <p>{lang === 'ar' ? 'لم يتم العثور على طلبات مرتبطة بهذا الرقم. يمكنك إرسال طلب جديد الآن.' : 'No requests found for this number.'}</p>
+                <p>{lang === 'ar'
+                  ? 'مش لاقيين طلب بالرقم ده على الجهاز ده. التتبع هنا بيظهر الطلبات اللي اتبعتت من نفس الجهاز. لو بعتّ طلبك من جهاز تاني، كلّمنا على واتساب ونرد عليك بحالته.'
+                  : 'No request with this number on this device. Tracking here shows requests sent from this device. If you sent it from another one, message us on WhatsApp and we will tell you its status.'}</p>
+                <a
+                  className="btn btn-primary"
+                  href={getWhatsAppUrl(lang === 'ar' ? `عايز أعرف حالة طلبي. رقمي: ${searchPhone.trim()}` : `I would like the status of my request. My number: ${searchPhone.trim()}`)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {lang === 'ar' ? 'اسأل على واتساب' : 'Ask on WhatsApp'}
+                </a>
               </div>
             )}
           </div>
