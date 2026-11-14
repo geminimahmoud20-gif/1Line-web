@@ -94,3 +94,41 @@ test('open tasks of closed or lost clients are picked up for auto-closing', () =
   assert.equal(p.status, 'done');
   assert.equal(p.doneBy, 'auto');
 });
+
+import { daysLate, filterTasks, dayProgress, editPatch, TEMPLATES, SNOOZE_OPTIONS } from '../../src/utils/tasks.js';
+const N2 = new Date(2026, 10, 13, 12, 0).getTime();
+test('daysLate counts whole days, 0 when not late', () => {
+  assert.equal(daysLate({ status: 'open', dueAt: '2026-11-10' }, N2), 3);
+  assert.equal(daysLate({ status: 'open', dueAt: '2026-11-13' }, N2), 0);
+  assert.equal(daysLate({ status: 'done', dueAt: '2026-11-01' }, N2), 0);
+  assert.equal(dueLabel({ status: 'open', dueAt: '2026-11-10' }, true, N2), 'متأخرة 3 أيام');
+});
+test('filterTasks matches text in the title, client or person, plus kind, priority and assignee', () => {
+  const ts = [
+    { id: 1, title: 'اتصل بسعيد', leadName: 'سعيد', kind: 'call', priority: 'high', assigneeUid: 'a' },
+    { id: 2, title: 'ابعت كتالوج', leadName: 'منى', kind: 'whatsapp', priority: 'normal', assigneeUid: 'b', assigneeName: 'Ali' }
+  ];
+  assert.deepEqual(filterTasks(ts, { q: 'سعيد' }).map((t) => t.id), [1]);
+  assert.deepEqual(filterTasks(ts, { q: 'ali' }).map((t) => t.id), [2]);
+  assert.deepEqual(filterTasks(ts, { kind: 'whatsapp' }).map((t) => t.id), [2]);
+  assert.deepEqual(filterTasks(ts, { priority: 'high', assignee: 'a' }).map((t) => t.id), [1]);
+  assert.equal(filterTasks(ts, {}).length, 2);
+});
+test('dayProgress: done today against what is still due', () => {
+  const ts = [
+    { assigneeUid: 'a', status: 'done', doneAt: new Date(2026, 10, 13, 9, 0).toISOString() },
+    { assigneeUid: 'a', status: 'done', doneAt: new Date(2026, 10, 12, 9, 0).toISOString() },
+    { assigneeUid: 'a', status: 'open', dueAt: '2026-11-13' },
+    { assigneeUid: 'a', status: 'open', dueAt: '2026-11-01' },
+    { assigneeUid: 'a', status: 'open', dueAt: '2026-11-20' },
+    { assigneeUid: 'b', status: 'open', dueAt: '2026-11-13' }
+  ];
+  assert.deepEqual(dayProgress(ts, 'a', N2), { done: 1, total: 3 });
+});
+test('editPatch validates like a new task', () => {
+  assert.equal(editPatch({ title: '  ' }), null);
+  const p = editPatch({ title: '  اتصل   بسعيد ', dueAt: '2026-11-15T10:30', priority: 'x', kind: 'call', note: 'ملاحظة' }, N2);
+  assert.deepEqual([p.title, p.dueAt, p.priority, p.kind], ['اتصل بسعيد', '2026-11-15T10:30', 'normal', 'call']);
+  assert.equal(editPatch({ title: 'a', dueAt: 'soon' }).dueAt, '');
+  assert.ok(TEMPLATES.every((t) => t.ar && t.kind && t.due) && SNOOZE_OPTIONS.length === 3);
+});
