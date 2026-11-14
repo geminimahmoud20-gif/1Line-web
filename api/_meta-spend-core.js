@@ -15,11 +15,10 @@ const fail = (code, detail = '') => Object.assign(new Error(`${code}${detail ? `
 
 const accountPath = (id) => `act_${String(id).replace(/^act_/, '').replace(/\D/g, '')}`;
 
-/** All pages of the account's insights (lifetime spend per ad: campaign, ad, spend, currency) */
-export async function fetchAdInsights({ accountId, token, fetchImpl = fetch }) {
+/** All pages of the account's insights for the given params (Bearer token in a header, never in the URL) */
+async function fetchInsights({ accountId, token, params, fetchImpl = fetch }) {
   if (!accountId || !token) throw fail('not-configured');
-  const params = new URLSearchParams({ level: 'ad', fields: 'campaign_id,campaign_name,ad_name,spend,account_currency', date_preset: 'maximum', limit: '500' });
-  let url = `${GRAPH}/${accountPath(accountId)}/insights?${params}`;
+  let url = `${GRAPH}/${accountPath(accountId)}/insights?${new URLSearchParams(params)}`;
   const rows = [];
   for (let page = 0; url && page < MAX_PAGES; page += 1) {
     const res = await fetchImpl(url, { headers: { authorization: `Bearer ${token}` } });
@@ -33,6 +32,57 @@ export async function fetchAdInsights({ accountId, token, fetchImpl = fetch }) {
     url = body?.paging?.next || '';
   }
   return rows;
+}
+
+/** Lifetime spend per ad: campaign, ad, spend, currency */
+export const fetchAdInsights = ({ accountId, token, fetchImpl }) => fetchInsights({
+  accountId, token, fetchImpl,
+  params: { level: 'ad', fields: 'campaign_id,campaign_name,ad_name,spend,account_currency', date_preset: 'maximum', limit: '500' }
+});
+
+export const PERF_PRESETS = ['last_7d', 'last_30d', 'maximum'];
+
+/** One row per campaign for a period: spend, reach, clicks and the results Meta counted (leads, messages) */
+export const fetchCampaignInsights = ({ accountId, token, preset = 'last_30d', fetchImpl }) => fetchInsights({
+  accountId, token, fetchImpl,
+  params: {
+    level: 'campaign',
+    fields: 'campaign_id,campaign_name,spend,impressions,reach,frequency,inline_link_clicks,actions,account_currency',
+    date_preset: PERF_PRESETS.includes(preset) ? preset : 'last_30d',
+    limit: '500'
+  }
+});
+
+const actionCount = (actions, type) => Number((Array.isArray(actions) ? actions : []).find((a) => a?.action_type === type)?.value) || 0;
+
+/**
+ * { currency, campaigns: [{ id, name, spend, impressions, reach, frequency, linkClicks, leads, messages, results }] }
+ * "lead" already includes the form and pixel leads, so those are only used when it is missing (no double counting).
+ */
+export function performanceFromInsights(rows = []) {
+  const currencies = new Set();
+  const campaigns = [];
+  for (const r of rows) {
+    const spend = Number(r?.spend);
+    if (!r?.campaign_name || !(spend > 0)) continue;
+    if (r.account_currency) currencies.add(String(r.account_currency).toUpperCase());
+    const leads = actionCount(r.actions, 'lead') || actionCount(r.actions, 'onsite_conversion.lead_grouped') || actionCount(r.actions, 'offsite_conversion.fb_pixel_lead');
+    const messages = actionCount(r.actions, 'onsite_conversion.messaging_conversation_started_7d');
+    campaigns.push({
+      id: String(r.campaign_id || r.campaign_name).slice(0, 64),
+      name: String(r.campaign_name).slice(0, 80),
+      spend: Math.round(spend),
+      impressions: Math.round(Number(r.impressions) || 0),
+      reach: Math.round(Number(r.reach) || 0),
+      frequency: Math.round((Number(r.frequency) || 0) * 10) / 10,
+      linkClicks: Math.round(Number(r.inline_link_clicks) || 0),
+      leads,
+      messages,
+      results: leads + messages
+    });
+  }
+  campaigns.sort((a, b) => b.spend - a.spend);
+  return { currency: currencies.size === 1 ? [...currencies][0] : currencies.size ? 'MIXED' : '', campaigns };
 }
 
 /**

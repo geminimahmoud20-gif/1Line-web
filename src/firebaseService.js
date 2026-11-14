@@ -23,7 +23,7 @@ export { pushSupported, pushReminderState, enablePushReminders, disablePushRemin
 export { loadCampaignSpend, saveCampaignSpend, loadCampaignLinks, saveCampaignLinks } from './services/campaignSpend.js';
 export { subscribeToTasks, addTask, addTaskWithId, updateTask, removeTask } from './services/tasks.js';
 export { loadGoals, saveGoals } from './services/goals.js';
-export { pullMetaSpend } from './services/adsSpend.js';
+export { pullMetaSpend, pullMetaPerformance } from './services/adsSpend.js';
 export { REQUEST_CONTACT_FIELDS } from './services/requestContacts.js';
 export * from './services/demands.js';
 export * from './services/analytics.js';
