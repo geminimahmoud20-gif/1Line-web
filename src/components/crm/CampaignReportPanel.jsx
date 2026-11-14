@@ -7,6 +7,7 @@ import { EmptyState } from '../ui';
 import { LANDINGS, PLATFORMS, buildUtmLink, slugify } from '../../utils/utmLinks';
 import { SITE_URL } from '../../config/siteConfig';
 import { applyPull } from '../../../api/_meta-spend-core.js';
+import AdsPerformance from './AdsPerformance';
 import './campaign-report.css';
 
 const SPEND_KEY = 'crm_campaign_spend_v1';
@@ -166,6 +167,8 @@ export default function CampaignReportPanel({ leads = [], lang = 'ar', triggerTo
         <p>{L('كل حملة جابت كام عميل، وكام منهم وصل لمعاينة وإغلاق. اكتب المصروف عشان تشوف تكلفة العميل وتكلفة المعاينة.', 'Leads, visits and closings per campaign, with cost per lead and per visit once you enter the spend.')}</p>
       </header>
 
+      <AdsPerformance lang={lang} />
+
       <LinkBuilder L={L} onCopied={(ok) => triggerToast?.(ok ? L('اللينك اتنسخ', 'Link copied') : L('معرفناش ننسخ، انسخه من الخانة', 'Could not copy, select it from the box'), ok ? 'success' : 'error')} />
 
       <div className="cr-pull">
@@ -174,17 +177,19 @@ export default function CampaignReportPanel({ leads = [], lang = 'ar', triggerTo
         </button>
         {pull && <p role="status" className={`cr-pull__msg ${pull.ok ? 'is-ok' : 'is-bad'}`}>{pull.text}</p>}
         {pull?.unmatched?.length > 0 && (
-          <details className="cr-pull__more" open={Boolean(pull.unmatched[0]?.id)}>
+          <details className="cr-pull__more">
             <summary>{L(`${pull.unmatched.length} حملة في ميتا مش مربوطة بحملة في التقرير`, 'Unmatched Meta campaigns')}</summary>
-            {pull.unmatched[0]?.id
+            {pull.unmatched[0]?.id && reportKeys.length === 0
+              ? <p>{L('لسه مفيش عملاء في الـCRM داخلين بحملة (utm_campaign)، فمفيش حملة تتربط بيها. اعمل لينك الإعلان من «جهّز لينك إعلان» عشان العملاء الجداد يتسجلوا بحملتهم. وأداء الحملات الكامل ظاهر فوق في «أداء الإعلانات».', 'No CRM lead carries a campaign yet, so there is nothing to pair with.')}</p>
+              : pull.unmatched[0]?.id
               ? <p>{L('اختار لكل حملة من ميتا الحملة اللي بتجيب عملاءها في الـCRM، والصرف هيتحسب عليها. اللي مالهاش عملاء مسجلين هنا سيبها.', 'Pick the CRM campaign each Meta campaign belongs to.')}</p>
               : <p>{L('عشان تتطابق، اسم الحملة في ميتا (بعد ما يتحوّل لحروف إنجليزي صغيرة وشرطات) لازم يساوي utm_campaign في لينك الإعلان. الحملات دي:', 'A match needs the campaign name to equal the utm_campaign.')}</p>}
             <ul className="cr-pair">{pull.unmatched.map((u) => (
               <li key={u.id || u.slug}>
                 <span><bdi>{u.name}</bdi> <small>{fmt(u.spend)} {L('ج.م', 'EGP')}</small></span>
-                {u.id && (
+                {u.id && reportKeys.length > 0 && (
                   <select aria-label={L(`اربط ${u.name} بحملة`, `Pair ${u.name}`)} value="" onChange={(e) => pairCampaign(u.id, e.target.value)} disabled={reportKeys.length === 0}>
-                    <option value="">{reportKeys.length ? L('اربطها بحملة…', 'Pair with…') : L('مفيش حملات في التقرير لسه', 'No campaigns in the report yet')}</option>
+                    <option value="">{L('اربطها بحملة…', 'Pair with…')}</option>
                     {reportKeys.map((k) => <option key={k} value={k}>{k}</option>)}
                   </select>
                 )}

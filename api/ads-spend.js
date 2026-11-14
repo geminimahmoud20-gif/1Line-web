@@ -1,6 +1,7 @@
 // =============================================================
 //  Vercel Function: pull what the Facebook / Instagram campaigns cost (logic in api/_meta-spend-core.js).
 //    POST with a sales manager's or super admin's ID token — the CRM's «اسحب الصرف من فيسبوك» button.
+//    POST {mode:'performance', preset} instead returns one row per campaign for a period (spend, reach, clicks, leads, messages)
 //  Returns the lifetime spend per campaign and per ad, as {key: EGP}; the CRM matches it to its report rows and
 //  saves it (campaign_spend/all). Nothing is stored here.
 //
@@ -9,7 +10,7 @@
 //    META_AD_ACCOUNT_ID   — the ad account number, with or without the act_ prefix
 // =============================================================
 import { createRemoteJWKSet, jwtVerify, decodeJwt } from 'jose';
-import { fetchAdInsights, spendFromInsights } from './_meta-spend-core.js';
+import { fetchAdInsights, fetchCampaignInsights, performanceFromInsights, spendFromInsights } from './_meta-spend-core.js';
 import { roleOf } from './_team-core.js';
 import { createRateLimiter, clientIp } from './_rate-limit.js';
 
@@ -42,7 +43,13 @@ export async function POST(request) {
   const accountId = process.env.META_AD_ACCOUNT_ID;
   const token = process.env.META_ADS_TOKEN;
   if (!accountId || !token) return json(503, { error: 'not-configured', token: Boolean(token), account: Boolean(accountId) });
+  let body = null;
+  try { body = await request.json(); } catch { /* the spend pull sends no body */ }
   try {
+    if (body?.mode === 'performance') {
+      const rows = await fetchCampaignInsights({ accountId, token, preset: body.preset });
+      return json(200, { ok: true, ...performanceFromInsights(rows) });
+    }
     const rows = await fetchAdInsights({ accountId, token });
     return json(200, { ok: true, ...spendFromInsights(rows), rows: rows.length });
   } catch (err) {
