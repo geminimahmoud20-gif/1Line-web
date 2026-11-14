@@ -1,6 +1,8 @@
 /* CRM → العقارات (redesign phase 3): header, featured block, notices and filters from the UI kit. */
-.crm-props { display: flex; flex-direction: column; gap: var(--ui-s-4); font-family: var(--ui-font); color: var(--ui-text); }
-.crm-props .ui-page-head { margin-bottom: 0; }
+.crm-props { display: flex; flex-direction: column; gap: var(--ui-s-3); font-family: var(--ui-font); color: var(--ui-text); }
+.crm-props .ui-page-head { margin-bottom: var(--ui-s-1); align-items: center; }
+/* Tabs hug their content instead of stretching across the page */
+.crm-props > .ui-seg { align-self: flex-start; }
 .crm-props__slots-toggle {
   width: 100%; display: flex; align-items: center; gap: var(--ui-s-2); padding: 0;
   border: 0; background: none; font: inherit; color: var(--ui-text); text-align: start; cursor: pointer;
@@ -39,8 +41,8 @@
 
 /* Filter bar: search grows, then type, area, sort, more filters, clear */
 .crm-props__filterbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-s-2); }
-.crm-props__filterbar .crm-props__search { flex: 1 1 240px; }
-.crm-props__filterbar > .ui-field { flex: 0 1 180px; min-width: 140px; }
+.crm-props__filterbar .crm-props__search { flex: 1 1 200px; }
+.crm-props__filterbar > .ui-field { flex: 0 1 150px; min-width: 120px; }
 @media (max-width: 639px) {
   .crm-props__filterbar > .ui-field { flex: 1 1 45%; }
 }
