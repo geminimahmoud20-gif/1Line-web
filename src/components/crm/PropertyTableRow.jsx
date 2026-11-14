@@ -231,7 +231,7 @@ export default function PropertyTableRow({
 
       <td className="crm-prow__specs">{specsLine(prop, isAr)}</td>
 
-      <td className="crm-prow__status">
+      <td className={`crm-prow__status ${heldBack ? 'is-held' : ''}`}>
         {isTrash ? (
           <Badge tone="danger">{isAr ? 'في المهملات' : 'In trash'}</Badge>
         ) : heldBack ? (
