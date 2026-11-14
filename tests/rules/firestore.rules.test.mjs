@@ -789,3 +789,69 @@ test('crm_goals: one document, only the known fields, and not deletable', async 
   await assertSucceeds(setDoc(doc(mgr, 'crm_goals/current'), goals()));
   await assertFails(deleteDoc(doc(mgr, 'crm_goals/current')));
 });
+
+const noteDoc = (uid, over = {}) => ({
+  entityType: 'lead', entityId: 'a', entityName: 'A', text: 'كلموه النهارده', mentions: [], authorUid: uid, authorName: 'م', createdAt: '2026-11-14T10:00:00.000Z', ...over
+});
+
+test('team_directory: each member writes only their own name card; staff read them all', async () => {
+  const me = as('sales_agent');
+  await assertSucceeds(setDoc(doc(me, 'team_directory/u-sales_agent'), { name: 'بياع', desk: 'Sales Team A', role: 'sales_agent', updatedAt: 'x' }));
+  await assertFails(setDoc(doc(me, 'team_directory/u-other'), { name: 'تاني', desk: '', role: '', updatedAt: 'x' }));
+  await assertFails(setDoc(doc(me, 'team_directory/u-sales_agent'), { name: 'بياع', phone: '010' }));
+  await assertSucceeds(getDocs(collection(as('viewer'), 'team_directory')));
+  await assertFails(getDocs(collection(guest(), 'team_directory')));
+});
+
+test('crm_notes on a client follow the client: managers see all, a desk agent their own queue, a mention opens one', async () => {
+  const mgr = as('sales_manager');
+  await assertSucceeds(setDoc(doc(mgr, 'crm_notes/n1'), noteDoc('u-sales_manager', { entityId: 'a', mentions: ['u-agent_east'] })));
+  await assertSucceeds(setDoc(doc(mgr, 'crm_notes/n2'), noteDoc('u-sales_manager', { entityId: 'b' })));
+  const east = env.authenticatedContext('u-agent_east', { role: 'agent_east' }).firestore(); // desk: Sales Team A
+  const byLead = (db, id) => getDocs(query(collection(db, 'crm_notes'), where('entityType', '==', 'lead'), where('entityId', '==', id)));
+  await assertSucceeds(byLead(east, 'a'));
+  await assertFails(byLead(east, 'b'));
+  await assertSucceeds(byLead(mgr, 'b'));
+  await assertSucceeds(setDoc(doc(east, 'crm_notes/n3'), noteDoc('u-agent_east', { entityId: 'a' })));
+  await assertFails(setDoc(doc(east, 'crm_notes/n4'), noteDoc('u-agent_east', { entityId: 'b' })));
+  await assertFails(setDoc(doc(east, 'crm_notes/n5'), noteDoc('u-someone-else', { entityId: 'a' })));
+  await assertFails(byLead(guest(), 'a'));
+  // a mention lets someone outside the queue read that note
+  const west = env.authenticatedContext('u-agent_new_sohag', { role: 'agent_new_sohag' }).firestore();
+  await assertFails(getDoc(doc(west, 'crm_notes/n1')));
+  await env.withSecurityRulesDisabled(async (ctx) => { await setDoc(doc(ctx.firestore(), 'crm_notes/n6'), noteDoc('u-sales_manager', { entityId: 'a', mentions: ['u-agent_new_sohag'] })); });
+  await assertSucceeds(getDoc(doc(west, 'crm_notes/n6')));
+});
+
+test('crm_notes: the team thread is for staff, notes are never edited, only their author or a lead manager deletes', async () => {
+  const me = as('sales_agent');
+  const chat = (uid) => noteDoc(uid, { entityType: 'team', entityId: 'general', entityName: '' });
+  await assertSucceeds(setDoc(doc(me, 'crm_notes/t1'), chat('u-sales_agent')));
+  await assertSucceeds(getDocs(query(collection(as('viewer'), 'crm_notes'), where('entityType', '==', 'team'), where('entityId', '==', 'general'))));
+  await assertFails(updateDoc(doc(me, 'crm_notes/t1'), { text: 'edited' }));
+  await assertFails(setDoc(doc(me, 'crm_notes/t2'), { ...chat('u-sales_agent'), text: '' }));
+  await assertFails(setDoc(doc(me, 'crm_notes/t3'), { ...chat('u-sales_agent'), text: 'x'.repeat(1501) }));
+  await assertFails(setDoc(doc(me, 'crm_notes/t4'), { ...chat('u-sales_agent'), extra: 1 }));
+  await assertFails(setDoc(doc(guest(), 'crm_notes/t5'), chat('x')));
+  await assertFails(deleteDoc(doc(as('finance'), 'crm_notes/t1')));
+  await assertSucceeds(deleteDoc(doc(as('sales_manager'), 'crm_notes/t1')));
+  await assertSucceeds(setDoc(doc(me, 'crm_notes/t6'), chat('u-sales_agent')));
+  await assertSucceeds(deleteDoc(doc(me, 'crm_notes/t6')));
+});
+
+test('crm_mentions: anyone on the team sends one, only the person it is for reads, ticks and clears it', async () => {
+  const sender = as('sales_agent');
+  const m = (over = {}) => ({ toUid: 'u-finance', fromUid: 'u-sales_agent', fromName: 'بياع', entityType: 'lead', entityId: 'a', entityName: 'A', snippet: 'بص على ده', createdAt: '2026-11-14T10:00:00.000Z', ...over });
+  await assertSucceeds(setDoc(doc(sender, 'crm_mentions/m1'), m()));
+  await assertFails(setDoc(doc(sender, 'crm_mentions/m2'), m({ fromUid: 'u-someone-else' })));
+  await assertFails(setDoc(doc(sender, 'crm_mentions/m3'), m({ snippet: 'x'.repeat(161) })));
+  const to = as('finance');
+  await assertSucceeds(getDocs(query(collection(to, 'crm_mentions'), where('toUid', '==', 'u-finance'))));
+  await assertFails(getDoc(doc(sender, 'crm_mentions/m1')));
+  await assertFails(getDocs(query(collection(sender, 'crm_mentions'), where('toUid', '==', 'u-finance'))));
+  await assertFails(updateDoc(doc(to, 'crm_mentions/m1'), { snippet: 'changed' }));
+  await assertSucceeds(updateDoc(doc(to, 'crm_mentions/m1'), { readAt: '2026-11-14T11:00:00.000Z' }));
+  await assertFails(updateDoc(doc(sender, 'crm_mentions/m1'), { readAt: 'x' }));
+  await assertFails(deleteDoc(doc(sender, 'crm_mentions/m1')));
+  await assertSucceeds(deleteDoc(doc(to, 'crm_mentions/m1')));
+});

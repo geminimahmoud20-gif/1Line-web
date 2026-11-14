@@ -15,6 +15,7 @@ import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 import { auditContactUse } from '../../utils/contactAudit';
 import { leadScore, LEAD_SCORE_HIGH, isSellerLead, leadCampaign, firstContactPatch } from '../../utils/crmLeadViews';
 import { rankAndNominateProperties } from '../../services/matchingEngineV2';
+import NotesThread from './NotesThread';
 import { Drawer, Button, IconButton, Badge, Chip, Tabs, Textarea, EmptyState, useConfirm } from '../ui';
 import './lead-drawer.css';
 import BrokerFile from './lead-profile/BrokerFile';
@@ -53,7 +54,7 @@ export default function LeadQuickDrawer({
   const [showViewingForm, setShowViewingForm] = useState(false);
   const [lostOpen, setLostOpen] = useState(false);
   const [blockerModal, setBlockerModal] = useState({ isOpen: false, blockerInfo: null });
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'matching' | 'timeline'
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'matching' | 'team' | 'timeline'
   const confirm = useConfirm();
 
   // Dirty State (Unsaved Changes) Protection
@@ -422,6 +423,7 @@ export default function LeadQuickDrawer({
                 ? { id: 'matching', label: isAr ? 'مشترين مناسبين' : 'Buyers', count: sellerBuyers.length }
                 : { id: 'matching', label: isAr ? 'العقارات المناسبة' : 'Matches', count: matchingResult.matches.length },
               ...(showBrokerFile ? [{ id: 'broker', label: isAr ? 'ملف الوسيط' : 'Broker file', count: brokerCount || null }] : []),
+              { id: 'team', label: isAr ? 'الفريق' : 'Team' },
               { id: 'timeline', label: isAr ? 'السجل' : 'History', count: timeline.length || null }
             ]}
           />
@@ -466,6 +468,10 @@ export default function LeadQuickDrawer({
 
           {activeTab === 'broker' && showBrokerFile && (
             <BrokerFile lead={lead} properties={properties} demands={demands} />
+          )}
+
+          {activeTab === 'team' && (
+            <NotesThread entityType="lead" entityId={lead.id} entityName={lead.name || ''} lang={isAr ? 'ar' : 'en'} className="crm-ld__team" />
           )}
 
           {activeTab === 'timeline' && (

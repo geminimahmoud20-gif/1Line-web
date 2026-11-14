@@ -22,6 +22,8 @@ import AgentCommissionLeaderboard from './crm/AgentCommissionLeaderboard';
 import CampaignReportPanel from './crm/CampaignReportPanel';
 import ReportsHub from './crm/ReportsHub';
 import { getAreas } from '../utils/areasData';
+import TeamChatPanel from './crm/TeamChatPanel';
+import { takePendingLead } from '../utils/openLead';
 import TasksPanel from './crm/TasksPanel';
 import SellerReportPanel from './crm/SellerReportPanel';
 import PaymentScheduleBuilder from './crm/PaymentScheduleBuilder';
@@ -217,6 +219,14 @@ export const CrmAdminPanel = ({
     window.addEventListener('oneline_open_lead', handleOpenFromEvent);
     return () => window.removeEventListener('oneline_open_lead', handleOpenFromEvent);
   }, [leads, adminTab, setAdminTab]);
+  // A client asked for before this screen was open (a team mention): open it once the list is here
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const found = takePendingLead(leads);
+      if (found) setQuickDrawerLead(found);
+    }, 0);
+    return () => clearTimeout(t);
+  }, [leads]);
 
   // Edit Lead Modal State
   const [editingLead, setEditingLead] = useState(null);
@@ -949,6 +959,9 @@ export const CrmAdminPanel = ({
           <div className="crm-table-container">{isAr ? 'مركز التقارير للمدير العام ومديري المبيعات.' : 'Reports are for admins and sales managers.'}</div>
         )
       )}
+
+      {/* Team chat: one thread for the whole team */}
+      {adminTab === 'chat' && <TeamChatPanel lang={lang} />}
 
       {/* ✅ Tasks: today's work across all clients (a manager can switch to the whole team's) */}
       {adminTab === 'tasks' && (

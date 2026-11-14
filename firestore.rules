@@ -358,6 +358,72 @@ service cloud.firestore {
       allow read, write: if hasPerm('ld.manage');
     }
 
+    // 🗒️ 7b2. TEAM NOTES AND CHAT: a note on a client, a listing or a project, or in the team's general thread
+    // (entityType 'team'), with @mentions that reach the person as a notification (crm_mentions). Staff read and
+    // write; a note on a client follows the client's visibility (managers see all, a desk agent the notes on
+    // their own queue, anyone the notes they wrote or were mentioned in). Notes are never edited, only
+    // deleted by their author or a lead manager. A person reads and ticks only their own notifications.
+    // team_directory/{uid} is each member's own name card, so a colleague can be picked in an @mention.
+    // Same shapes as src/utils/teamNotes.js.
+    match /team_directory/{uid} {
+      allow read: if isStaff();
+      allow create, update: if isStaff() && uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['name', 'desk', 'role', 'updatedAt'])
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 80
+        && request.resource.data.get('desk', '') is string && request.resource.data.get('desk', '').size() <= 60
+        && request.resource.data.get('role', '') is string && request.resource.data.get('role', '').size() <= 40
+        && request.resource.data.get('updatedAt', '') is string && request.resource.data.get('updatedAt', '').size() <= 40;
+      allow delete: if isAdmin();
+    }
+    match /crm_notes/{noteId} {
+      function validNote(d) {
+        return d.keys().hasOnly(['entityType', 'entityId', 'entityName', 'text', 'mentions', 'authorUid', 'authorName', 'createdAt'])
+          && d.entityType in ['lead', 'property', 'project', 'team']
+          && d.entityId is string && d.entityId.size() > 0 && d.entityId.size() <= 128
+          && d.get('entityName', '') is string && d.get('entityName', '').size() <= 80
+          && d.text is string && d.text.size() > 0 && d.text.size() <= 1500
+          && d.mentions is list && d.mentions.size() <= 10
+          && d.authorUid == request.auth.uid
+          && d.authorName is string && d.authorName.size() <= 80
+          && d.createdAt is string && d.createdAt.size() <= 40;
+      }
+      // One myPerms() lookup: calling hasPerm() several times here ran into the 1000-expression limit
+      function seesLead(leadId) {
+        let p = myPerms();
+        return isAdmin() || 'ld.all' in p || 'ld.manage' in p
+          || ('ld.edit' in p && inMyLeadQueue(get(leadPath(leadId)).data));
+      }
+      allow read: if isStaff() && (
+        resource.data.entityType != 'lead'
+        || resource.data.authorUid == request.auth.uid
+        || request.auth.uid in resource.data.mentions
+        || seesLead(resource.data.entityId));
+      allow create: if isStaff() && validNote(request.resource.data)
+        && (request.resource.data.entityType != 'lead' || seesLead(request.resource.data.entityId));
+      allow update: if false;
+      allow delete: if isStaff() && (resource.data.authorUid == request.auth.uid || hasPerm('ld.manage'));
+    }
+    match /crm_mentions/{mentionId} {
+      function validMention(d) {
+        return d.keys().hasOnly(['toUid', 'fromUid', 'fromName', 'entityType', 'entityId', 'entityName', 'snippet', 'createdAt', 'readAt'])
+          && d.toUid is string && d.toUid.size() > 0 && d.toUid.size() <= 128
+          && d.fromUid == request.auth.uid
+          && d.fromName is string && d.fromName.size() <= 80
+          && d.entityType in ['lead', 'property', 'project', 'team']
+          && d.entityId is string && d.entityId.size() > 0 && d.entityId.size() <= 128
+          && d.get('entityName', '') is string && d.get('entityName', '').size() <= 80
+          && d.snippet is string && d.snippet.size() <= 160
+          && d.createdAt is string && d.createdAt.size() <= 40
+          && d.get('readAt', '') is string && d.get('readAt', '').size() <= 40;
+      }
+      allow read: if isStaff() && resource.data.toUid == request.auth.uid;
+      allow create: if isStaff() && validMention(request.resource.data);
+      allow update: if isStaff() && resource.data.toUid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readAt'])
+        && request.resource.data.readAt is string;
+      allow delete: if isStaff() && resource.data.toUid == request.auth.uid;
+    }
+
     // ✅ 7c. CRM TASKS («مهامي», crm_tasks: not the operational `tasks` handoffs below): things a team member has to do by a day, with or without a client behind
     // them (a client's id and name only, never a phone). A lead editor creates tasks for themselves, a
     // lead manager for anyone; you read the ones assigned to you, a manager reads all. Changing who a

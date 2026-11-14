@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { Inbox, LayoutGrid, Users, Target, Building, Zap, Sparkles, Calculator, Activity, ShieldCheck, ChevronDown, Search, X, Moon, Sun, LogOut, MapPin, Database, Award, Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame, Megaphone, Globe2, Repeat2, Bug, UserCog, Palette, Bell, ListChecks, BarChart3, CalendarCheck, Briefcase, Building2 } from 'lucide-react';
+import { Inbox, LayoutGrid, Users, Target, Building, Zap, Sparkles, Calculator, Activity, ShieldCheck, ChevronDown, Search, X, Moon, Sun, LogOut, MapPin, Database, Award, Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame, Megaphone, Globe2, Repeat2, Bug, UserCog, Palette, Bell, ListChecks, MessagesSquare, BarChart3, CalendarCheck, Briefcase, Building2 } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import { usePreferences } from '../../context/PreferencesContext';
 import { CRM_ROLES } from './crmRoles';
@@ -151,6 +151,12 @@ export default function CrmSidebar({
               badgeDanger: tasksBadge > 0
             },
             {
+              id: 'chat',
+              icon: MessagesSquare,
+              label_ar: 'محادثة الفريق',
+              label_en: 'Team chat'
+            },
+            {
               id: 'leads',
               icon: Users,
               label_ar: 'العملاء والمبيعات',
@@ -202,6 +208,12 @@ export default function CrmSidebar({
             label_en: 'My tasks',
             badge: tasksBadge > 0 ? tasksBadge : undefined,
             badgeDanger: tasksBadge > 0
+          },
+          {
+            id: 'chat',
+            icon: MessagesSquare,
+            label_ar: 'محادثة الفريق',
+            label_en: 'Team chat'
           },
           {
             id: 'dashboard',

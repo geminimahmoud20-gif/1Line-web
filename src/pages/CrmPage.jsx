@@ -25,6 +25,10 @@ import { RemoteInspectionsPanel, TradeInsPanel } from '../components/crm/ExpatIn
 import GoLiveWizardModal from '../components/crm/GoLiveWizardModal';
 import CrmSidebar from '../components/crm/CrmSidebar';
 import CrmTopbar from '../components/crm/CrmTopbar';
+import { useTeamDirectorySync } from '../hooks/useTeamDirectory';
+import { useMentionsSync } from '../hooks/useMentions';
+import { requestOpenLead } from '../utils/openLead';
+import { playNotificationChime } from '../utils/notificationHub';
 import CrmCommandPalette from '../components/crm/CrmCommandPalette';
 import PushReminderPrompt from '../components/crm/PushReminderPrompt';
 import AlertHealthBanner from '../components/crm/AlertHealthBanner';
@@ -109,7 +113,7 @@ export default function CrmPage({
       if (triggerToast) triggerToast(lang === 'ar' ? 'صلاحياتك الحالية لا تسمح بهذا الإجراء' : 'Your role does not allow this action', 'error');
       return;
     }
-    const ADMIN_PANEL_TABS = ['inbox', 'dashboard', 'leads', 'kanban', 'matching', 'agents', 'financials', 'retargeting', 'campaigns', 'performance', 'tasks', 'analytics'];
+    const ADMIN_PANEL_TABS = ['inbox', 'dashboard', 'leads', 'kanban', 'matching', 'agents', 'financials', 'retargeting', 'campaigns', 'performance', 'tasks', 'chat', 'analytics'];
     const tab = { add_lead: 'leads', add_property: 'properties', add_demand: 'demands', add_project: 'projects' }[type]
       || (ADMIN_PANEL_TABS.includes(activeTab) ? activeTab : 'dashboard');
     setActiveTab(tab);
@@ -187,6 +191,27 @@ export default function CrmPage({
   // a manager sees the whole team's, everyone else the tasks assigned to them
   useTasksSync(currentUser?.uid, can.campaigns);
   const { tasks: allTasks, ready: tasksReady } = useTasks();
+  // Team notes and chat: this person's name card (so colleagues can @mention them), the colleagues' cards, and
+  // the messages addressed to them, which ring and toast when one arrives while the CRM is open
+  const teamSelf = currentUser?.uid ? {
+    uid: currentUser.uid,
+    name: currentUser.displayName || currentUser.name || (currentUser.email || '').split('@')[0] || '',
+    desk: userDesk || '',
+    role: activeRole,
+    canManage: can.campaigns
+  } : null;
+  useTeamDirectorySync(teamSelf);
+  useMentionsSync(currentUser?.uid, (fresh) => {
+    playNotificationChime('chime');
+    const m = fresh[0];
+    triggerToast?.(lang === 'ar' ? `${m.fromName || 'زميل'} بعتلك رسالة: ${m.snippet}` : `${m.fromName || 'A colleague'}: ${m.snippet}`, 'info');
+  });
+  const openMention = (m) => {
+    if (m.entityType === 'lead') { setActiveTab('leads'); requestOpenLead(m.entityId); }
+    else if (m.entityType === 'property') setActiveTab('properties');
+    else if (m.entityType === 'project') setActiveTab('projects');
+    else setActiveTab('chat');
+  };
   const taskBadge = taskCounts(allTasks, currentUser?.uid).due;
   // A client who closed or was lost no longer needs chasing: close their open tasks (once per task)
   const autoClosed = useRef(new Set());
@@ -867,6 +892,7 @@ export default function CrmPage({
           setShowGoLiveWizard={setShowGoLiveWizard}
           onToggleMobileSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
           onOpenCommandPalette={() => setShowCommandPalette(true)}
+          onOpenMention={openMention}
           onRequestOpen={requestOpen}
           canAdd={canAddMap}
         />
