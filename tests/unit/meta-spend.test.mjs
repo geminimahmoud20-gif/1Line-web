@@ -48,3 +48,28 @@ test('only campaigns and ads the report knows are saved; the rest are listed as 
   assert.equal(r.matched, 1);
   assert.deepEqual(r.unmatched, [{ slug: 'other-camp', name: 'Other Camp', spend: 40 }]);
 });
+
+test('campaigns are kept by Meta id, so Arabic names can be paired by hand and their spend goes to the paired campaign', () => {
+  const pull = spendFromInsights([
+    { campaign_id: '11', campaign_name: 'اعلان برج الشرق', ad_name: 'a', spend: '100', account_currency: 'EGP' },
+    { campaign_id: '11', campaign_name: 'اعلان برج الشرق', ad_name: 'b', spend: '50.4', account_currency: 'EGP' },
+    { campaign_id: '22', campaign_name: 'Sohag Buyers', ad_name: 'a', spend: '30', account_currency: 'EGP' },
+    { campaign_id: '33', campaign_name: 'Zero', ad_name: 'a', spend: '0', account_currency: 'EGP' }
+  ]);
+  assert.deepEqual(pull.metaCampaigns, [{ id: '11', name: 'اعلان برج الشرق', spend: 150 }, { id: '22', name: 'Sohag Buyers', spend: 30 }]);
+  const opts = { campaignKeys: ['sohag-buyers', 'east-tower'], adKeys: [] };
+  const none = applyPull(pull, opts);
+  assert.deepEqual(none.amounts, { 'sohag-buyers': 30 });
+  assert.deepEqual(none.unmatched, [{ id: '11', slug: '', name: 'اعلان برج الشرق', spend: 150 }]);
+  const paired = applyPull(pull, { ...opts, links: { 11: 'east-tower' } });
+  assert.deepEqual(paired.amounts, { 'sohag-buyers': 30, 'east-tower': 150 });
+  assert.equal(paired.matched, 2);
+  assert.deepEqual(paired.linked, [{ id: '11', name: 'اعلان برج الشرق', spend: 150, target: 'east-tower' }]);
+  assert.deepEqual(paired.unmatched, []);
+  // a pairing to a campaign the report no longer has is ignored; a campaign that matches by name is not paired twice
+  assert.equal(applyPull(pull, { ...opts, links: { 11: 'gone', 22: 'east-tower' } }).unmatched.length, 1);
+  assert.deepEqual(applyPull(pull, { ...opts, links: { 22: 'east-tower' } }).amounts, { 'sohag-buyers': 30 });
+  // two Meta campaigns on one CRM campaign add up
+  const two = applyPull({ metaCampaigns: [{ id: '1', name: 'ا', spend: 10 }, { id: '2', name: 'ب', spend: 5 }] }, { campaignKeys: ['k'], links: { 1: 'k', 2: 'k' } });
+  assert.deepEqual(two.amounts, { k: 15 });
+});

@@ -18,7 +18,7 @@ const accountPath = (id) => `act_${String(id).replace(/^act_/, '').replace(/\D/g
 /** All pages of the account's insights (lifetime spend per ad: campaign, ad, spend, currency) */
 export async function fetchAdInsights({ accountId, token, fetchImpl = fetch }) {
   if (!accountId || !token) throw fail('not-configured');
-  const params = new URLSearchParams({ level: 'ad', fields: 'campaign_name,ad_name,spend,account_currency', date_preset: 'maximum', limit: '500' });
+  const params = new URLSearchParams({ level: 'ad', fields: 'campaign_id,campaign_name,ad_name,spend,account_currency', date_preset: 'maximum', limit: '500' });
   let url = `${GRAPH}/${accountPath(accountId)}/insights?${params}`;
   const rows = [];
   for (let page = 0; url && page < MAX_PAGES; page += 1) {
@@ -43,11 +43,18 @@ export function spendFromInsights(rows = []) {
   const campaigns = {};
   const ads = {};
   const names = {};
+  const metas = new Map(); // every campaign with spend, by Meta's own id, whatever its name's script
   const currencies = new Set();
   const skipped = new Set(); // campaigns whose names have no Latin letters or digits: they can't match a link
   for (const r of rows) {
     const amount = Number(r?.spend);
     const camp = slugify(r?.campaign_name || '');
+    if (r?.campaign_name && amount > 0) {
+      const id = String(r.campaign_id || r.campaign_name).slice(0, 64);
+      const m = metas.get(id) || { id, name: String(r.campaign_name).slice(0, 80), spend: 0 };
+      m.spend += amount;
+      metas.set(id, m);
+    }
     if (r?.campaign_name && !camp && amount > 0) skipped.add(String(r.campaign_name).slice(0, 80));
     if (!camp || !(amount > 0)) continue;
     if (r.account_currency) currencies.add(String(r.account_currency).toUpperCase());
@@ -57,16 +64,38 @@ export function spendFromInsights(rows = []) {
     if (ad) ads[`${camp}::${ad}`] = (ads[`${camp}::${ad}`] || 0) + amount;
   }
   const round = (m) => Object.fromEntries(Object.entries(m).map(([k, v]) => [k, Math.round(v)]));
-  return { currency: currencies.size === 1 ? [...currencies][0] : currencies.size ? 'MIXED' : '', campaigns: round(campaigns), ads: round(ads), names, skipped: [...skipped] };
+  const metaCampaigns = [...metas.values()].map((m) => ({ ...m, spend: Math.round(m.spend) })).filter((m) => m.spend > 0);
+  return { currency: currencies.size === 1 ? [...currencies][0] : currencies.size ? 'MIXED' : '', campaigns: round(campaigns), ads: round(ads), names, skipped: [...skipped], metaCampaigns };
 }
 
-/** What to do with a pull given the report's known keys: amounts to save, and the campaigns that matched nothing */
-export function applyPull(pull, { campaignKeys = [], adKeys = [] } = {}) {
+/**
+ * What to do with a pull given the report's known keys: amounts to save, and the campaigns that matched nothing.
+ * `links` ({ metaCampaignId: reportCampaignKey }) is the manual pairing for campaigns whose names can't match
+ * a link (Arabic names, or a name that differs from the utm_campaign): their spend goes to the paired campaign.
+ */
+export function applyPull(pull, { campaignKeys = [], adKeys = [], links = {} } = {}) {
   const known = new Set(campaignKeys);
   const knownAds = new Set(adKeys);
   const amounts = {};
   for (const [k, v] of Object.entries(pull.campaigns || {})) if (known.has(k)) amounts[k] = v;
   for (const [k, v] of Object.entries(pull.ads || {})) if (knownAds.has(k)) amounts[k] = v;
-  const unmatched = Object.keys(pull.campaigns || {}).filter((k) => !known.has(k)).map((k) => ({ slug: k, name: pull.names?.[k] || k, spend: pull.campaigns[k] }));
-  return { amounts, matched: Object.keys(amounts).filter((k) => !k.includes('::')).length, unmatched };
+  const linked = [];
+  let unmatched;
+  if (Array.isArray(pull.metaCampaigns)) {
+    unmatched = [];
+    for (const m of pull.metaCampaigns) {
+      const slug = slugify(m.name);
+      if (slug && known.has(slug)) continue; // matched by its name already
+      const target = links?.[m.id];
+      if (target && known.has(target)) {
+        amounts[target] = (amounts[target] || 0) + m.spend;
+        linked.push({ id: m.id, name: m.name, spend: m.spend, target });
+      } else {
+        unmatched.push({ id: m.id, slug, name: m.name, spend: m.spend });
+      }
+    }
+  } else {
+    unmatched = Object.keys(pull.campaigns || {}).filter((k) => !known.has(k)).map((k) => ({ slug: k, name: pull.names?.[k] || k, spend: pull.campaigns[k] }));
+  }
+  return { amounts, matched: Object.keys(amounts).filter((k) => !k.includes('::')).length, unmatched, linked };
 }
