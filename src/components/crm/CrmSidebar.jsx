@@ -170,10 +170,11 @@ export default function CrmSidebar({
       ];
     }
 
+    // Grouped by what the person is doing: the day's work, selling, the stock, then every report together
     return [
       {
-        label_ar: 'العمليات والمبيعات',
-        label_en: 'Core Operations',
+        label_ar: 'شغل النهارده',
+        label_en: 'Today',
         items: [
           {
             id: 'inbox',
@@ -184,12 +185,6 @@ export default function CrmSidebar({
             badgeDanger: unassignedInboxCount > 0
           },
           {
-            id: 'dashboard',
-            icon: LayoutGrid,
-            label_ar: 'لوحة القيادة',
-            label_en: 'Dashboard'
-          },
-          {
             id: 'tasks',
             icon: ListChecks,
             label_ar: 'مهامي',
@@ -197,6 +192,18 @@ export default function CrmSidebar({
             badge: tasksBadge > 0 ? tasksBadge : undefined,
             badgeDanger: tasksBadge > 0
           },
+          {
+            id: 'dashboard',
+            icon: LayoutGrid,
+            label_ar: 'لوحة القيادة',
+            label_en: 'Dashboard'
+          }
+        ]
+      },
+      {
+        label_ar: 'البيع والمتابعة',
+        label_en: 'Selling',
+        items: [
           {
             id: 'leads',
             icon: Users,
@@ -216,32 +223,6 @@ export default function CrmSidebar({
             label_ar: 'المطابقات الذكية',
             label_en: 'Smart AI Match'
           },
-          {
-            id: 'agents',
-            icon: Trophy,
-            label_ar: 'فريق المبيعات والعمولات',
-            label_en: 'Agents Leaderboard'
-          },
-          // What each ad brought and cost: managers only
-          ...(canCampaigns ? [{
-            id: 'campaigns',
-            icon: Megaphone,
-            label_ar: 'تقرير الحملات',
-            label_en: 'Campaign Report'
-          }] : []),
-          ...(canCampaigns ? [{
-            id: 'performance',
-            icon: BarChart3,
-            label_ar: 'تقارير الأداء',
-            label_en: 'Performance'
-          }] : []),
-          // Messages clients in bulk: only roles that work leads and see real numbers
-          ...(canRetarget ? [{
-            id: 'retargeting',
-            icon: Flame,
-            label_ar: 'إعادة الاستهداف الذكي',
-            label_en: 'Smart Retargeting'
-          }] : []),
           // Client requests (expat viewings, swaps): the people who follow up on them
           ...(canWorkRequests ? [{
             id: 'expat',
@@ -254,11 +235,18 @@ export default function CrmSidebar({
             icon: Repeat2,
             label_ar: 'صفقات التبادل العقاري',
             label_en: 'Trade-in Deals'
+          }] : []),
+          // Messages clients in bulk: only roles that work leads and see real numbers
+          ...(canRetarget ? [{
+            id: 'retargeting',
+            icon: Flame,
+            label_ar: 'إعادة الاستهداف الذكي',
+            label_en: 'Smart Retargeting'
           }] : [])
         ]
       },
       {
-        label_ar: 'إدارة الأصول والعروض',
+        label_ar: 'العقارات والعروض',
         label_en: 'Assets & Listings',
         items: [
           {
@@ -293,9 +281,28 @@ export default function CrmSidebar({
         ]
       },
       {
-        label_ar: 'الذكاء والتحليلات',
-        label_en: 'Finance & Intelligence',
+        label_ar: 'التقارير والتحليلات',
+        label_en: 'Reports & Analytics',
         items: [
+          // One place for the sales, portfolio and demand reports over any dates: managers
+          ...(canCampaigns ? [{
+            id: 'performance',
+            icon: BarChart3,
+            label_ar: 'مركز التقارير',
+            label_en: 'Reports Center'
+          },
+          {
+            id: 'campaigns',
+            icon: Megaphone,
+            label_ar: 'تقرير الحملات',
+            label_en: 'Campaign Report'
+          }] : []),
+          {
+            id: 'agents',
+            icon: Trophy,
+            label_ar: 'فريق المبيعات والعمولات',
+            label_en: 'Agents Leaderboard'
+          },
           {
             id: 'financials',
             icon: Calculator,

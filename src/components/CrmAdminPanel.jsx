@@ -20,7 +20,8 @@ import SmartMatchingHub from './crm/SmartMatchingHub';
 import AICopywriterModal from './crm/AICopywriterModal';
 import AgentCommissionLeaderboard from './crm/AgentCommissionLeaderboard';
 import CampaignReportPanel from './crm/CampaignReportPanel';
-import PerformanceReportPanel from './crm/PerformanceReportPanel';
+import ReportsHub from './crm/ReportsHub';
+import { getAreas } from '../utils/areasData';
 import TasksPanel from './crm/TasksPanel';
 import SellerReportPanel from './crm/SellerReportPanel';
 import PaymentScheduleBuilder from './crm/PaymentScheduleBuilder';
@@ -50,7 +51,6 @@ import { formatWhatsAppPhone } from '../utils/matchingEngine';
 import useFullLeadStats from '../hooks/useFullLeadStats';
 import { useProperties } from '../context/PropertiesContext';
 import { areaFamily } from '../utils/areaLookup';
-import { getAreas } from '../utils/areasData';
 import { useConfirm } from './ui';
 import { phoneProblem, nameProblem } from '../utils/contactValidation';
 
@@ -75,6 +75,7 @@ export const CrmAdminPanel = ({
   onAddNewLead,
   onImportLeads,
   demands = [],
+  intake = [],
   onSwitchToDemands,
   onSwitchToProperties,
   onSwitchToProjects,
@@ -927,12 +928,20 @@ export const CrmAdminPanel = ({
         )
       )}
 
-      {/* 📊 Performance: week vs week, funnel, sources, team tasks (managers) */}
+      {/* 📊 Reports hub: sales, portfolio, demands and services over any dates, plus links to the other reports (managers) */}
       {adminTab === 'performance' && (
         (isSuperRole || perms.includes('ld.manage')) ? (
-          <PerformanceReportPanel leads={leads} lang={lang} />
+          <ReportsHub
+            leads={leads}
+            properties={properties}
+            demands={demands}
+            intake={intake}
+            areaNames={Object.fromEntries(getAreas().map((a) => [a.id, a.name_ar || a.id]))}
+            lang={lang}
+            onOpenTab={onSwitchTab}
+          />
         ) : (
-          <div className="crm-table-container">{isAr ? 'تقارير الأداء للمدير العام ومديري المبيعات.' : 'Performance reports are for admins and sales managers.'}</div>
+          <div className="crm-table-container">{isAr ? 'مركز التقارير للمدير العام ومديري المبيعات.' : 'Reports are for admins and sales managers.'}</div>
         )
       )}
 
