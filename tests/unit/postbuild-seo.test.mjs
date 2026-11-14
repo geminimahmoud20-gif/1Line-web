@@ -113,3 +113,16 @@ test('buildLandingShell: a search page readable without JavaScript', () => {
   assert.match(html, /"@type": "FAQPage"/);
   assert.ok(!html.includes('<b>150</b>'), 'listing titles are escaped');
 });
+
+test('link preview uses the 640px copy of the first photo when it exists, the structured data keeps the full one', () => {
+  const full = 'https://abc123.public.blob.vercel-storage.com/seller/a-x.jpg?sm=1';
+  const small = 'https://abc123.public.blob.vercel-storage.com/cms/thumbs/seller_a-x.w640.jpg';
+  const p = { id: 'p1', title_ar: 'شقة', price: 1000000, size: 100, images: [full], status: 'published' };
+  const html = buildPropertyShell(templateHtml, p, 'https://www.1lineestate.com');
+  assert.ok(html.includes(`<meta property="og:image" content="${small}"`));
+  assert.ok(html.includes(`<meta name="twitter:image" content="${small}"`));
+  assert.ok(html.includes(full.replace(/&/g, '\\u0026')) || html.includes(full), 'JSON-LD keeps the full photo');
+  // a photo with no copy yet is used as it is
+  const plain = 'https://abc123.public.blob.vercel-storage.com/seller/b-y.jpg';
+  assert.ok(buildPropertyShell(templateHtml, { ...p, images: [plain] }, 'https://www.1lineestate.com').includes(`<meta property="og:image" content="${plain}"`));
+});

@@ -9,6 +9,7 @@
 //  Tests: tests/unit/postbuild-seo.test.mjs, tests/unit/seo-shell.test.mjs
 // =============================================================
 
+import { thumbUrl } from './imageThumbs.js';
 import { listingPreview } from './listingShare.js';
 import { LANDING_KINDS, LANDING_AREAS, landingPath, landingListings, landingSummary, landingCopy, landingFaq } from './seoLanding.js';
 import { guideRows, guideCopy, guideFaq, guidePath, rowFigure } from './seoGuides.js';
@@ -168,6 +169,14 @@ export function routeBody({ h1, desc, path = '', listings = [], projects = [] })
 export const newestFirst = (items) => [...items].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
 
 /** Shell for a listing: head tags + JSON-LD + the page's text in #root */
+/**
+ * The picture a link preview shows. WhatsApp and Facebook drop a preview image that is too large (WhatsApp
+ * about 300 KB), and a listing's first photo is a 1600px original. Where its 640px copy exists (photos
+ * saved after the thumbnail step) the preview uses that, so the card always carries its picture; the page's
+ * structured data keeps the full photo.
+ */
+export const socialImage = (url) => thumbUrl(url);
+
 export function buildPropertyShell(template, p, origin, all = []) {
   origin = String(origin || 'https://www.1lineestate.com').replace(/\/+$/, '');
   const title = `${listingSeoTitle(p)} | 1Line Solutions`;
@@ -208,7 +217,7 @@ export function buildPropertyShell(template, p, origin, all = []) {
   // Link preview: the listing's own title (og:site_name already names 1Line), and price + facts
   // under it, e.g. «مقدم 200,000 ج.م + قسط 30,000 ج.م ربع سنوي — 156 م² · 3 غرف · سوهاج الجديدة»
   const preview = listingPreview(p);
-  let html = headTags(template, { title, desc, url, ogTitle: preview.title, ogDesc: preview.description || summary || desc, image, type: 'article', label: 'property' });
+  let html = headTags(template, { title, desc, url, ogTitle: preview.title, ogDesc: preview.description || summary || desc, image: socialImage(image), type: 'article', label: 'property' });
   html = html.replace('</head>', `    <script type="application/ld+json" id="breadcrumb-schema">\n${breadcrumbsSchema}\n    </script>\n    <script type="application/ld+json" id="property-jsonld-schema">\n${propertySchema}\n    </script>\n  </head>`);
   return withRoot(html, propertyBody(p, relatedListings(p, all)), 'property');
 }
@@ -230,7 +239,7 @@ export function buildProjectShell(template, p, origin) {
       { '@type': 'ListItem', position: 3, name, item: url }
     ]
   }, null, 2).replace(/</g, '\\u003c');
-  let html = headTags(template, { title, desc, url, ogDesc: desc, image, type: 'article', label: 'project' });
+  let html = headTags(template, { title, desc, url, ogDesc: desc, image: socialImage(image), type: 'article', label: 'project' });
   html = html.replace('</head>', `    <script type="application/ld+json" id="breadcrumb-schema">\n${crumbs}\n    </script>\n  </head>`);
   return withRoot(html, projectBody(p), 'project');
 }
