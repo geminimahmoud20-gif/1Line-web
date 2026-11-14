@@ -221,7 +221,7 @@ export default function ProjectsPage({
               <MessageSquare size={17} aria-hidden="true" />
               <span>{isAr ? 'كلّمنا على واتساب' : 'Message us on WhatsApp'}</span>
             </button>
-            <Link to="/special" className="pj-btn pj-btn--ghost">
+            <Link to="/special-requests" className="pj-btn pj-btn--ghost">
               <span>{isAr ? 'طلب بمواصفات خاصة' : 'Custom request'}</span>
               {isAr ? <ArrowLeft size={16} aria-hidden="true" /> : <ArrowRight size={16} aria-hidden="true" />}
             </Link>

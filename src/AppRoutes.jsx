@@ -174,7 +174,7 @@ export default function AppRoutes({
       />
       <Route
         path="/off-market"
-        element={<PrivateOfficePage lang={lang} triggerToast={triggerToast} />}
+        element={<Navigate to="/private-office" replace />}
       />
 
       {/* 4. Financing & Mortgage Calculator Page */}
@@ -343,18 +343,7 @@ export default function AppRoutes({
         }
       />
 
-      <Route
-        path="/special"
-        element={
-          <PortalsPage
-            portalType="special"
-            lang={lang}
-            t={t}
-            triggerToast={triggerToast}
-            handleAddNewLead={handleAddNewLead}
-          />
-        }
-      />
+      <Route path="/special" element={<Navigate to="/special-requests" replace />} />
 
       <Route
         path="/special-requests"
