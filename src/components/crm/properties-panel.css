@@ -102,7 +102,10 @@
 .crm-prow__select.is-under_negotiation .ui-select { background: var(--ui-warning-tint); color: var(--ui-warning); }
 .crm-prow__select.is-sold .ui-select { background: var(--ui-info-tint); color: var(--ui-info); }
 .crm-prow__cell-actions { white-space: nowrap; }
-.crm-prow__actions { display: flex; align-items: center; gap: var(--ui-s-1); }
+.crm-prow__actions { display: grid; grid-template-columns: 88px 36px 36px; align-items: center; justify-content: start; gap: var(--ui-s-1); }
+/* One slot per control, the same in every row: [publish / show / waiting] [edit] [more] */
+.crm-prow__actions > :first-child { justify-self: start; }
+.crm-prow__actions.is-trash { grid-template-columns: auto 36px; }
 .crm-prow__actions > * { vertical-align: middle; }
 .crm-prow__live { color: var(--ui-success); }
 .crm-prow__danger { color: var(--ui-danger); }
@@ -182,3 +185,15 @@
 /* The owner-form link is a small action, not a full-width box */
 .crm-props > .ssl { align-self: flex-start; margin-top: 0; }
 .crm-props > .ssl .ssl-toggle { min-height: 40px; }
+
+/* The table has to fit a ~1000px content area without sliding the actions out of view */
+.crm-layout .crm-props .crm-props-table th,
+.crm-layout .crm-props .crm-props-table td { padding-inline: var(--ui-s-3); }
+.crm-prow__main { min-width: 240px; }
+.crm-layout .crm-props .crm-props-table td.crm-prow__status { width: 140px; min-width: 140px; }
+.crm-prow__select { min-width: 124px; }
+
+/* Nothing pinned to the homepage: a thin dashed row, not a card */
+.crm-props__slots.is-empty { padding: 0; background: transparent; border-style: dashed; box-shadow: none; }
+.crm-props__slots.is-empty .crm-props__slots-toggle { min-height: 40px; padding: 0 var(--ui-s-3); }
+.crm-props__slots.is-empty .crm-props__slots-title { color: var(--ui-text-2); font-weight: var(--ui-fw-regular); }
