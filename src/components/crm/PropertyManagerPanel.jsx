@@ -609,9 +609,10 @@ export default function PropertyManagerPanel({
     for (let i = 0; i < properties.length; i++) {
       const p = properties[i];
       const st = getNormalizedPropertyStatus(p);
-      if (st !== 'trash' && blockedByApproval(p)) approval++;
-      if (st === 'trash') trash++;
-      else if (st === 'published') active++;
+      if (st === 'trash') { trash++; continue; }
+      // waiting for or refused by the manager: not on the site, so counted only under «مستنية موافقة»
+      if (blockedByApproval(p)) { approval++; continue; }
+      if (st === 'published') active++;
       else if (st === 'hidden') hidden++;
       else if (st === 'under_negotiation') negotiation++;
       else if (st === 'sold') sold++;

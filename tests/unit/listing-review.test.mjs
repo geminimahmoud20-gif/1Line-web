@@ -58,7 +58,7 @@ test('report: status, data quality, ready-to-publish, per area incl. no area, me
   ];
   const r = listingReport(list, areas, (t) => (t === 'apartment' ? 'شقق' : t));
   assert.equal(r.total, 4);
-  assert.deepEqual(r.byStatus, { published: 1, hidden: 2, under_negotiation: 0, sold: 1 });
+  assert.deepEqual(r.byStatus, { published: 1, hidden: 2, under_negotiation: 0, sold: 1, approval: 0 });
   assert.equal(r.quality.ready, 3);
   assert.equal(r.quality.photo, 1);
   assert.equal(r.quality.area, 1);
@@ -69,4 +69,26 @@ test('report: status, data quality, ready-to-publish, per area incl. no area, me
   assert.equal(r.areas.find((a) => a.id === NO_AREA).label, 'من غير منطقة');
   assert.deepEqual([r.types[0].label, r.types[0].count, r.types[0].medianPrice], ['شقق', 4, 2000000]);
   assert.equal(listingStatus({ status: 'draft' }), 'hidden');
+});
+
+// ── A listing the manager has not approved (or rejected) is not «معروضة» ──
+const P = (o) => ({ id: Math.random().toString(36).slice(2), status: 'published', title_ar: 'شقة', price: 1e6, size: 100, areaKey: 'a', images: ['https://x/1.jpg'], ...o });
+
+test('a pending or rejected listing is left out of the status lists and shows under the approval one', () => {
+  const live = P({});
+  const pending = P({ approval: 'pending' });
+  const rejected = P({ approval: 'rejected', status: 'hidden' });
+  const approved = P({ approval: 'approved' });
+  const inList = (status) => [live, pending, rejected, approved].filter((p) => matchesFilters(p, { status }, [])).map((p) => p);
+  assert.deepEqual(inList('published'), [live, approved]);
+  assert.deepEqual(inList('hidden'), []);
+  assert.deepEqual(inList('approval'), [pending, rejected]);
+  assert.equal(inList('all').length, 4);
+});
+
+test('the report counts them as awaiting approval, not on the site or in the site value', () => {
+  const r = listingReport([P({}), P({ approval: 'pending' }), P({ approval: 'rejected' }), P({ approval: 'approved', status: 'under_negotiation' })], [{ id: 'a', name_ar: 'أ' }]);
+  assert.deepEqual([r.byStatus.published, r.byStatus.under_negotiation, r.byStatus.approval], [1, 1, 2]);
+  assert.equal(r.onSiteValue, 2e6);
+  assert.equal(r.areas[0].onSite, 2);
 });
