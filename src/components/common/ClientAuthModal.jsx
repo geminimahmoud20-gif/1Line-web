@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { X, ShieldCheck, Heart, Scale, MessageSquare, CheckCircle2, ArrowLeft, ArrowRight, Copy, Check, Sparkles, User, Mail, ExternalLink } from 'lucide-react';
+import { X, ShieldCheck, Heart, Scale, MessageSquare, CheckCircle2, ArrowLeft, ArrowRight, Copy, Check, Sparkles, User, ExternalLink } from 'lucide-react';
 import { useClientAuth } from '../../context/ClientAuthContext';
 import PhoneInputField from '../PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../../utils/phoneCountries';
 import { readAccounts } from '../../utils/clientAccounts';
 import '../../styles/client-auth-modes.css';
-import { nameProblem, phoneProblem, emailProblem } from '../../utils/contactValidation';
+import { nameProblem, phoneProblem } from '../../utils/contactValidation';
 
 export default function ClientAuthModal({ lang = 'ar' }) {
   const isAr = lang === 'ar';
@@ -26,7 +26,6 @@ export default function ClientAuthModal({ lang = 'ar' }) {
   const [step, setStep] = useState('input'); // 'input' | 'activated'
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
     whatsapp: ''
   });
   const [country, setCountry] = useState('+20');
@@ -92,20 +91,12 @@ export default function ClientAuthModal({ lang = 'ar' }) {
     setPhoneError('');
 
     const cleanName = (formData.name || '').trim();
-    const cleanEmail = (formData.email || '').trim().toLowerCase();
     const cleanPhone = (formData.whatsapp || '').trim().replace(/[^0-9]/g, '');
 
     // 1. Strict Name Check
     const nameErr = nameProblem(cleanName, isAr);
     if (nameErr) {
       setErrorMsg(nameErr);
-      return;
-    }
-
-    // 2. Strict Email Check
-    const emailErr = emailProblem(cleanEmail, isAr, { required: true });
-    if (emailErr) {
-      setErrorMsg(emailErr);
       return;
     }
 
@@ -129,7 +120,6 @@ export default function ClientAuthModal({ lang = 'ar' }) {
       // 1-Click direct activation: saves account, merges favorites, registers CRM lead immediately
       const result = await activateClientDirectly({
         name: cleanName,
-        email: cleanEmail,
         whatsapp: cleanPhone,
         country
       }, { keepModalOpen: true });
@@ -309,24 +299,6 @@ export default function ClientAuthModal({ lang = 'ar' }) {
               />
             </div>
 
-            <div className="auth-input-group">
-              <label htmlFor="client-email">
-                <Mail size={14} className="text-muted" />
-                <span>{isAr ? 'البريد الإلكتروني *' : 'Email Address *'}</span>
-              </label>
-              <input
-                id="client-email"
-                name="email"
-                type="email"
-                required
-                placeholder="example@domain.com"
-                value={formData.email}
-                onChange={handleInputChange}
-                className="auth-text-input"
-                dir="ltr"
-              />
-            </div>
-
             {/* PhoneInputField with Country Selector */}
             <div className="auth-input-group">
               <PhoneInputField
@@ -414,10 +386,6 @@ export default function ClientAuthModal({ lang = 'ar' }) {
                 <div className="wa-detail-row">
                   <span className="detail-k">{isAr ? 'الاسم:' : 'Name:'}</span>
                   <span className="detail-v">{activatedClient?.name || formData.name}</span>
-                </div>
-                <div className="wa-detail-row">
-                  <span className="detail-k">{isAr ? 'البريد:' : 'Email:'}</span>
-                  <span className="detail-v" dir="ltr">{activatedClient?.email || formData.email}</span>
                 </div>
                 <div className="wa-detail-row">
                   <span className="detail-k">{isAr ? 'الواتساب:' : 'WhatsApp:'}</span>
