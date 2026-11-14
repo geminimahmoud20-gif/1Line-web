@@ -11,10 +11,13 @@ const when = (ms) => (ms ? new Intl.DateTimeFormat('ar-EG-u-nu-latn', {
   timeZone: 'Africa/Cairo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true
 }).format(new Date(ms)) : '');
 
+// Latin tokens inside an Arabic sentence get their own direction so the order doesn't scramble
+const ltr = (t) => `\u2066${t}\u2069`;
+
 const TEST_RESULT = {
   'not-configured': (r) => (r.serviceAccount === false
-    ? 'تنبيهات الواتساب مش متظبطة: مفتاح Firebase (FIREBASE_SERVICE_ACCOUNT) مش موجود في إعدادات Vercel.'
-    : 'تنبيهات الواتساب مش متظبطة: مفيش رقم متسجل. في Vercel ← Settings ← Environment Variables حط WHATSAPP_CALLMEBOT بالشكل 2010xxxxxxxx:المفتاح وبعدين اعمل Redeploy.'),
+    ? `تنبيهات الواتساب مش متظبطة: مفتاح Firebase (${ltr('FIREBASE_SERVICE_ACCOUNT')}) مش موجود في إعدادات ${ltr('Vercel')}.`
+    : `تنبيهات الواتساب مش متظبطة: مفيش رقم متسجل. في ${ltr('Vercel → Settings → Environment Variables')} حط ${ltr('WHATSAPP_CALLMEBOT')} بالشكل ${ltr('2010xxxxxxxx:KEY')} وبعدين اعمل Redeploy.`),
   'send-failed': () => 'الرسالة ماوصلتش لأي رقم. غالبًا مفتاح CallMeBot غلط أو الرقم لسه مش مفعّل عندهم.',
   forbidden: () => 'الزرار ده للمدير العام بس.',
   'no-api': () => 'الزرار شغال على الموقع الحقيقي بس (www.1lineestate.com).',
@@ -27,8 +30,8 @@ const line = { fontSize: 'var(--crm-text-sm)', color: 'var(--crm-body)', lineHei
 
 const REPORT_ERRORS = {
   'not-configured': (r) => (r.serviceAccount === false
-    ? 'مفتاح Firebase (FIREBASE_SERVICE_ACCOUNT) مش موجود في إعدادات Vercel.'
-    : 'مفيش رقم واتساب متسجل للتنبيهات في Vercel (WHATSAPP_CALLMEBOT).'),
+    ? `مفتاح Firebase (${ltr('FIREBASE_SERVICE_ACCOUNT')}) مش موجود في إعدادات ${ltr('Vercel')}.`
+    : `مفيش رقم واتساب متسجل للتنبيهات في ${ltr('Vercel')} (${ltr('WHATSAPP_CALLMEBOT')}).`),
   forbidden: () => 'التقرير للمدير العام بس.',
   'no-api': () => 'التقرير شغال على الموقع الحقيقي بس (www.1lineestate.com).',
   network: () => 'مفيش نت. جرّب تاني.',
@@ -95,7 +98,7 @@ export default function AlertsSettingsPanel() {
   const failingNow = status && status.lastFailAt > status.lastOkAt;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '720px' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 380px), 1fr))', gap: '16px', alignItems: 'start' }}>
       <section style={box}>
         <strong style={{ color: 'var(--crm-ink)', fontSize: 'var(--crm-text-md)' }}>تنبيهات الواتساب للطلبات الجديدة</strong>
         <p style={line}>كل طلب جديد من الموقع بيوصل رسالة واتساب للفريق فيها ملخص الطلب ولينك بيفتحه في الـCRM. لو الإرسال فشل، السيرفر بيحاول تاني.</p>
