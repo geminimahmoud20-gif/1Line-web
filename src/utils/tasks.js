@@ -136,6 +136,8 @@ export const dueLabel = (task, isAr = true, now = Date.now()) => {
   if (day === today) return `${isAr ? 'النهارده' : 'Today'}${time}`;
   if (day === dayKeyFrom(now, 1)) return `${isAr ? 'بكرة' : 'Tomorrow'}${time}`;
   if (day === dayKeyFrom(now, -1)) return `${isAr ? 'إمبارح' : 'Yesterday'}${time}`;
+  const late = daysLate(task, now);
+  if (late > 1) return isAr ? `متأخرة ${late} أيام` : `${late} days late`;
   return `${day.slice(5).replace('-', '/')}${time}`;
 };
 
@@ -147,3 +149,70 @@ export function tasksOfEndedLeads(tasks = [], leads = []) {
 }
 /** The patch that closes such a task on its own (doneBy says it was not a person) */
 export const autoCompletion = (now = Date.now()) => ({ ...completion({ uid: 'auto' }, now), doneBy: 'auto' });
+
+// ── The «مهامي» screen's tools ──────────────────────────────────────────────
+
+/** One-tap starters for the add form: the title, the kind and when */
+export const TEMPLATES = [
+  { id: 'call', ar: 'اتصل بالعميل', kind: 'call', priority: 'high', due: 'today' },
+  { id: 'wa', ar: 'ابعت الكتالوج واتساب', kind: 'whatsapp', priority: 'normal', due: 'today' },
+  { id: 'visit', ar: 'رتّب معاينة', kind: 'visit', priority: 'normal', due: 'tomorrow' },
+  { id: 'docs', ar: 'اطلب الأوراق', kind: 'docs', priority: 'normal', due: '3d' },
+  { id: 'follow', ar: 'متابعة بعد المعاينة', kind: 'call', priority: 'normal', due: 'tomorrow' }
+];
+
+/** «أجّلها»: how far to move a task */
+export const SNOOZE_OPTIONS = [
+  { id: 'tomorrow', ar: 'بكرة', en: 'Tomorrow', days: 1 },
+  { id: '3d', ar: 'بعد ٣ أيام', en: 'In 3 days', days: 3 },
+  { id: 'week', ar: 'الأسبوع الجاي', en: 'Next week', days: 7 }
+];
+
+/** Whole days a task is late (0 when it is not) */
+export function daysLate(task, now = Date.now()) {
+  if (bucketOf(task, now) !== 'overdue') return 0;
+  const day = String(task.dueAt || '').slice(0, 10);
+  const today = dayKeyFrom(now);
+  return Math.max(0, Math.round((Date.parse(`${today}T00:00:00Z`) - Date.parse(`${day}T00:00:00Z`)) / DAY));
+}
+
+/** Tasks matching a search text (title, client, note), a kind, a priority and a person; empty filters pass everything */
+export function filterTasks(tasks = [], { q = '', kind = '', priority = '', assignee = '' } = {}) {
+  const needle = String(q).trim().toLowerCase();
+  return tasks.filter((t) => (!kind || t.kind === kind)
+    && (!priority || t.priority === priority)
+    && (!assignee || t.assigneeUid === assignee)
+    && (!needle || [t.title, t.leadName, t.note, t.assigneeName].some((x) => String(x || '').toLowerCase().includes(needle))));
+}
+
+/** { done, total }: tasks due today or earlier that are done today / still open, for the day's progress ring */
+export function dayProgress(tasks = [], uid, now = Date.now()) {
+  const today = dayKeyFrom(now);
+  let done = 0;
+  let open = 0;
+  for (const t of tasks) {
+    if (uid && t.assigneeUid !== uid) continue;
+    if (t.status === 'done') { if (String(t.doneAt || '').length >= 10 && dayKeyFrom(Date.parse(t.doneAt)) === today) done += 1; continue; }
+    const b = bucketOf(t, now);
+    if (b === 'overdue' || b === 'today') open += 1;
+  }
+  return { done, total: done + open };
+}
+
+/** The patch that moves every given task to tomorrow (a late one keeps its time of day) */
+export const pushAllPatch = (task, now = Date.now()) => ({ dueAt: snoozed(task, 1, now), updatedAt: new Date(now).toISOString() });
+
+/** Editable fields of a task, validated like buildTask (null when the title is empty) */
+export function editPatch({ title, dueAt, priority, kind, note }, now = Date.now()) {
+  const t = String(title ?? '').trim().replace(/\s+/g, ' ').slice(0, 140);
+  if (!t) return null;
+  const due = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/.test(String(dueAt)) ? String(dueAt) : '';
+  return {
+    title: t,
+    dueAt: due,
+    priority: PRIORITIES.some((p) => p.id === priority) ? priority : 'normal',
+    kind: KINDS.some((k) => k.id === kind) ? kind : 'other',
+    note: String(note ?? '').trim().slice(0, 1000),
+    updatedAt: new Date(now).toISOString()
+  };
+}

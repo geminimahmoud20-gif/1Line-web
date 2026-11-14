@@ -960,6 +960,7 @@ export const CrmAdminPanel = ({
           triggerToast={triggerToast}
           onOpenLead={(l) => setQuickDrawerLead(l)}
           onUpdateLead={onUpdateLead}
+          onWhatsApp={onWhatsAppClick}
         />
       )}
 

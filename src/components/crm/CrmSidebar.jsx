@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { Inbox, LayoutGrid, Users, Target, Building, Zap, Sparkles, Calculator, Activity, ShieldCheck, ChevronDown, Search, X, Moon, Sun, LogOut, MapPin, Database, Award, Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame, Megaphone, Globe2, Repeat2, Bug, UserCog, Palette, Bell, ListChecks, BarChart3 } from 'lucide-react';
+import { Inbox, LayoutGrid, Users, Target, Building, Zap, Sparkles, Calculator, Activity, ShieldCheck, ChevronDown, Search, X, Moon, Sun, LogOut, MapPin, Database, Award, Cpu, PanelLeftClose, PanelLeftOpen, Trophy, Flame, Megaphone, Globe2, Repeat2, Bug, UserCog, Palette, Bell, ListChecks, BarChart3, CalendarCheck, Briefcase, Building2 } from 'lucide-react';
 import LogoEmblem from '../LogoEmblem';
 import { usePreferences } from '../../context/PreferencesContext';
 import { CRM_ROLES } from './crmRoles';
@@ -33,6 +33,15 @@ export default function CrmSidebar({
   const [systemExpanded, setSystemExpanded] = useState(activeTab === 'system' || activeTab === 'areas' || activeTab === 'corporate');
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef(null);
+  // Which nav sections are folded: remembered per browser. A section never starts folded if it holds the open page.
+  const [folded, setFolded] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('oneline_crm_nav_folded') || '{}') || {}; } catch { return {}; }
+  });
+  const toggleSection = (key) => setFolded((f) => {
+    const next = { ...f, [key]: !f[key] };
+    try { localStorage.setItem('oneline_crm_nav_folded', JSON.stringify(next)); } catch { /* storage is optional */ }
+    return next;
+  });
 
   const isSalesRole = ['sales_agent', 'agent_east', 'agent_new_sohag'].includes(activeRole);
   const roleObj = useMemo(() => CRM_ROLES.find(r => r.id === activeRole), [activeRole]);
@@ -123,6 +132,7 @@ export default function CrmSidebar({
         {
           label_ar: 'مهام المبيعات المركزة',
           label_en: 'Sales Focus Workspace',
+          icon: Target,
           items: [
             {
               id: 'inbox',
@@ -175,6 +185,7 @@ export default function CrmSidebar({
       {
         label_ar: 'شغل النهارده',
         label_en: 'Today',
+        icon: CalendarCheck,
         items: [
           {
             id: 'inbox',
@@ -203,6 +214,7 @@ export default function CrmSidebar({
       {
         label_ar: 'البيع والمتابعة',
         label_en: 'Selling',
+        icon: Briefcase,
         items: [
           {
             id: 'leads',
@@ -248,6 +260,7 @@ export default function CrmSidebar({
       {
         label_ar: 'العقارات والعروض',
         label_en: 'Assets & Listings',
+        icon: Building2,
         items: [
           {
             id: 'properties',
@@ -283,6 +296,7 @@ export default function CrmSidebar({
       {
         label_ar: 'التقارير والتحليلات',
         label_en: 'Reports & Analytics',
+        icon: BarChart3,
         items: [
           // One place for the sales, portfolio and demand reports over any dates: managers
           ...(canCampaigns ? [{
@@ -492,42 +506,67 @@ export default function CrmSidebar({
 
               if (filteredItems.length === 0) return null;
 
+              const key = section.label_en;
+              const SectionIcon = section.icon;
+              const holdsActive = section.items.some((item) => item.id === activeTab);
+              // Searching, the icons-only bar and the section with the open page always show their items
+              const isOpen = collapsed || isFiltering || holdsActive || !folded[key];
+              // What needs attention inside a folded section stays visible on its header
+              const alerts = section.items.reduce((n, item) => n + (item.badgeDanger && Number.isFinite(parseInt(item.badge, 10)) ? parseInt(item.badge, 10) : 0), 0);
+              const listId = `crm-nav-section-${idx}`;
+
               return (
-                <div key={idx} className="crm-sidebar-section">
+                <div key={key} className={`crm-sidebar-section ${isOpen ? 'is-open' : 'is-folded'}`}>
                   {!collapsed && (
-                    <div className="crm-sidebar-section-label">
-                      {isAr ? section.label_ar : section.label_en}
-                    </div>
+                    <button
+                      type="button"
+                      className="crm-section-head"
+                      onClick={() => toggleSection(key)}
+                      aria-expanded={isOpen}
+                      aria-controls={listId}
+                      disabled={isFiltering || holdsActive}
+                      title={holdsActive ? (isAr ? 'القسم ده فيه الصفحة المفتوحة' : 'This section holds the open page') : undefined}
+                    >
+                      {SectionIcon && <span className="crm-section-head__icon"><SectionIcon size={16} aria-hidden="true" /></span>}
+                      <span className="crm-section-head__label">{isAr ? section.label_ar : section.label_en}</span>
+                      {!isOpen && alerts > 0 && <span className="crm-item-badge badge-danger">{alerts}</span>}
+                      {!isOpen && alerts === 0 && <span className="crm-section-head__count">{filteredItems.length}</span>}
+                      <ChevronDown size={14} aria-hidden="true" className="crm-section-head__chevron" />
+                    </button>
                   )}
 
-                  {filteredItems.map(item => {
-                    const Icon = item.icon;
-                    const isActive = activeTab === item.id;
-                    const label = isAr ? item.label_ar : item.label_en;
+                  {isOpen && (
+                    <div id={listId} className="crm-section-items">
+                      {filteredItems.map(item => {
+                        const Icon = item.icon;
+                        const isActive = activeTab === item.id;
+                        const label = isAr ? item.label_ar : item.label_en;
 
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => handleItemClick(item.id)}
-                        className={`crm-sidebar-item ${isActive ? 'is-active' : ''}`}
-                        data-tooltip={label}
-                        aria-current={isActive ? 'page' : undefined}
-                      >
-                        <div className="crm-item-main">
-                          <span className="crm-item-icon">
-                            <Icon size={17} />
-                          </span>
-                          <span className="crm-item-label">{label}</span>
-                        </div>
-                        {item.badge !== undefined && (
-                          <span className={`crm-item-badge ${item.badgeDanger ? 'badge-danger' : ''}`}>
-                            {item.badge}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => handleItemClick(item.id)}
+                            className={`crm-sidebar-item ${isActive ? 'is-active' : ''}`}
+                            data-tooltip={label}
+                            aria-current={isActive ? 'page' : undefined}
+                          >
+                            <div className="crm-item-main">
+                              <span className="crm-item-icon">
+                                <Icon size={17} />
+                              </span>
+                              <span className="crm-item-label">{label}</span>
+                            </div>
+                            {item.badge !== undefined && (
+                              <span className={`crm-item-badge ${item.badgeDanger ? 'badge-danger' : ''}`}>
+                                {item.badge}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             })}
