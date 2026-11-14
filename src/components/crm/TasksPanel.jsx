@@ -5,6 +5,7 @@ import { addTask, updateTask, removeTask } from '../../firebaseLazy';
 import {
   PRIORITIES, KINDS, DUE_PRESETS, buildTask, groupTasks, taskCounts, dueFromPreset, snoozed, completion, reopening, dueLabel
 } from '../../utils/tasks';
+import { MyGoals } from './GoalsPanel';
 import './tasks-panel.css';
 
 const SECTIONS = [
@@ -161,6 +162,7 @@ export default function TasksPanel({ leads = [], members = [], me, canManage = f
         )}
       </header>
 
+      <MyGoals leads={leads} uid={me?.uid} lang={lang} />
       <TaskForm isAr={isAr} me={me} members={members} canAssign={canManage} triggerToast={triggerToast} />
 
       {!ready ? <p className="tk-empty">{isAr ? 'بيتحمّل…' : 'Loading…'}</p> : empty && (

@@ -766,3 +766,26 @@ test('crm_tasks: only the shape is accepted (no phone field, a title, a known pr
   await assertFails(setDoc(doc(me, 'crm_tasks/s3'), task({ priority: 'urgent' })));
   await assertFails(setDoc(doc(me, 'crm_tasks/s4'), task({ title: 'x'.repeat(141) })));
 });
+
+// ── Monthly goals ────────────────────────────────────────────────────────
+const goals = (over = {}) => ({ team: { closed: 8, commission: 400000 }, people: { 'u-sales_agent': { closed: 3 } }, updatedAt: 'x', updatedBy: 'u-sales_manager', ...over });
+
+test('crm_goals: a manager sets them, staff read them, nobody else writes', async () => {
+  await assertSucceeds(setDoc(doc(as('sales_manager'), 'crm_goals/current'), goals()));
+  await assertSucceeds(getDoc(doc(as('sales_agent'), 'crm_goals/current')));
+  await assertSucceeds(getDoc(doc(as('viewer'), 'crm_goals/current')));
+  await assertFails(setDoc(doc(as('sales_agent'), 'crm_goals/current'), goals()));
+  await assertFails(setDoc(doc(as('viewer'), 'crm_goals/current'), goals()));
+  await assertFails(getDoc(doc(guest(), 'crm_goals/current')));
+  await assertFails(setDoc(doc(guest(), 'crm_goals/current'), goals()));
+});
+
+test('crm_goals: one document, only the known fields, and not deletable', async () => {
+  const mgr = as('sales_manager');
+  await assertFails(setDoc(doc(mgr, 'crm_goals/other'), goals()));
+  await assertFails(setDoc(doc(mgr, 'crm_goals/current'), goals({ note: 'x' })));
+  await assertFails(setDoc(doc(mgr, 'crm_goals/current'), goals({ team: 'many' })));
+  await assertFails(setDoc(doc(mgr, 'crm_goals/current'), goals({ people: Object.fromEntries(Array.from({ length: 61 }, (_, i) => [`u${i}`, { closed: 1 }])) })));
+  await assertSucceeds(setDoc(doc(mgr, 'crm_goals/current'), goals()));
+  await assertFails(deleteDoc(doc(mgr, 'crm_goals/current')));
+});

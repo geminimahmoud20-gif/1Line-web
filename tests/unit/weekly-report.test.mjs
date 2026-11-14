@@ -8,6 +8,7 @@ const iso = (daysAgo, extra = 0) => new Date(NOW - daysAgo * DAY + extra).toISOS
 const lead = (o) => ({ id: Math.random().toString(36).slice(2), status: 'new', createdAt: iso(3), source: 'ads', ...o });
 
 const data = () => ({
+  goals: { team: { closed: 4, leads: 5 }, people: { a: { closed: 3 } } },
   leads: [
     lead({ ownerName: 'Ali', ownerUid: 'a', firstContactedAt: iso(3, 600_000), status: 'closed', dealValue: 1_000_000, commissionPct: 2, stageHistory: [{ s: 'site_visit', at: iso(2) }, { s: 'closed', at: iso(1) }], name: 'زينب مرتضى', phone: '01011112222' }),
     lead({ ownerName: 'Ali', ownerUid: 'a', firstContactedAt: iso(4, 900_000), status: 'site_visit', stageHistory: [{ s: 'site_visit', at: iso(2) }] }),
@@ -69,4 +70,12 @@ test('a test send is labelled and does not claim the week', async () => {
   assert.equal(claimed, false);
   assert.match(d.sent[0], /نسخة تجربة/);
   assert.ok(splitMessage('x').length === 1);
+});
+
+test('the report shows the month\'s goals against the pace and who is behind', () => {
+  const r = buildWeeklyReport(data(), { now: NOW });
+  assert.match(r.text, /🎯 أهداف الشهر \(يوم 14 من 30\)/);
+  assert.match(r.text, /صفقات: 1 من 4 \(25%\)/);
+  assert.match(r.text, /متأخرين عن هدفهم: Ali/);
+  assert.ok(!/🎯/.test(buildWeeklyReport({ leads: [], tasks: [] }, { now: NOW }).text)); // no goals set: no section
 });
