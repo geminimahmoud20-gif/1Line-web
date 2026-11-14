@@ -13,7 +13,7 @@ import { getAreas } from '../../utils/areasData';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import LostReasonModal from './LostReasonModal';
 import MergeLeadsModal from './MergeLeadsModal';
-import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, responseSlaMs, escalationLevel, isOverdue, isDueToday, isUnassigned, isStale, localDayKey, getLeadVisitDate, getLeadVisitSlot, isViewingLead, isSellerLead, isAccountLead, isBuyerLead } from '../../utils/crmLeadViews';
+import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, responseSlaMs, escalationLevel, isOverdue, isDueToday, isUnassigned, isStale, localDayKey, getLeadVisitDate, getLeadVisitSlot, isViewingLead, isSellerLead, isAccountLead, isBuyerLead, leadCreatedMs } from '../../utils/crmLeadViews';
 import { useProperties } from '../../context/PropertiesContext';
 import LeadTableRowActions from './LeadTableRowActions';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
@@ -406,9 +406,15 @@ export default function LeadsTab({
       )}
       <PageHeader
         title={isAr ? 'العملاء' : 'Clients'}
-        description={isAr
-          ? `${leads.length} عميل${counts.archived || counts.lost ? ` (منهم ${[counts.archived && `${counts.archived} مؤرشف`, counts.lost && `${counts.lost} خسرانة`].filter(Boolean).join(' و')})` : ''} · ${filteredLeads.length} ظاهرين بالفلتر الحالي · نسبة الإغلاق ${kpiStats.winRate}%`
-          : `${leads.length} clients${counts.archived || counts.lost ? ` (${[counts.archived && `${counts.archived} archived`, counts.lost && `${counts.lost} lost`].filter(Boolean).join(', ')})` : ''} · ${filteredLeads.length} shown · win rate ${kpiStats.winRate}%`}
+        description={(
+          <span className="crm-leads__stats">
+            <span><b>{leads.length}</b> {isAr ? 'عميل' : 'clients'}</span>
+            {counts.archived > 0 && <span><b>{counts.archived}</b> {isAr ? 'مؤرشف' : 'archived'}</span>}
+            {counts.lost > 0 && <span><b>{counts.lost}</b> {isAr ? 'خسرانة' : 'lost'}</span>}
+            <span><b>{filteredLeads.length}</b> {isAr ? 'ظاهر بالفلتر' : 'shown'}</span>
+            <span>{isAr ? 'نسبة الإغلاق' : 'Win rate'} <b><bdi>{kpiStats.winRate}%</bdi></b></span>
+          </span>
+        )}
         actions={(
           <>
             {canEdit && (
@@ -719,7 +725,7 @@ export default function LeadsTab({
                 <tr
                   key={l.id}
                   data-lead-id={l.id}
-                  className={`crm-lead-row ${rowIndex === kbdIndex ? 'is-kbd-active' : ''}`}
+                  className={`crm-lead-row ${rowIndex === kbdIndex ? 'is-kbd-active' : ''} ${temp === 'hot' ? 'is-hot' : ''} ${isOverdue(l, localDayKey(now)) ? 'is-overdue' : ''}`}
                   aria-current={rowIndex === kbdIndex ? 'true' : undefined}
                   data-selected={isSelected || undefined}
                   onClick={(e) => {
@@ -781,6 +787,9 @@ export default function LeadsTab({
 
                         <div className="crm-lead-meta">
                           {renderSource(l)}
+                          {leadCreatedMs(l) > 0 && now - leadCreatedMs(l) > 60000 && (
+                            <span className="crm-lead-age" title={isAr ? 'من إمتى العميل اتضاف' : 'When the client was added'}>{isAr ? `من ${fmtWait(now - leadCreatedMs(l))}` : `${fmtWait(now - leadCreatedMs(l))} ago`}</span>
+                          )}
                           {waited > 0 && (
                             <span
                               className={`crm-lead-chip ${escalationLevel(l, now) === 2 ? 'is-late is-escalated' : waited > responseSlaMs(l) ? 'is-late' : 'is-waiting'}`}
@@ -794,10 +803,11 @@ export default function LeadsTab({
                               <CopyPlus size={12} aria-hidden="true" />{isAr ? `مكرر (${dupCount + 1})` : `Duplicate (${dupCount + 1})`}
                             </button>
                           )}
-                          {Array.isArray(l.tags) && l.tags.length > 0 && (
-                            <span className="crm-lead-chip is-tag" title={l.tags.join(' · ')}>
-                              {l.tags[0]}{l.tags.length > 1 ? ` +${l.tags.length - 1}` : ''}
-                            </span>
+                          {Array.isArray(l.tags) && l.tags.slice(0, 2).map((tag) => (
+                            <span key={tag} className="crm-lead-chip is-tag" title={l.tags.join(' · ')}>{tag}</span>
+                          ))}
+                          {Array.isArray(l.tags) && l.tags.length > 2 && (
+                            <span className="crm-lead-chip" title={l.tags.join(' · ')}>+{l.tags.length - 2}</span>
                           )}
                           {l.status === 'lost' && l.lostReason && (
                             <span className="crm-lead-chip is-lost" title={l.lostNote || ''}>
@@ -915,22 +925,36 @@ export default function LeadsTab({
                   {/* Next Action / Follow-up */}
                   {visibleColumns.nextAction && (
                     <td data-label={isAr ? 'المتابعة القادمة' : 'Next Action'}>
-                      <div 
-                        className="crm-next-action-cell"
-                        onClick={() => setQuickDrawerLead(l)}
-                        title={isAr ? 'انقر لتحديث المتابعة والمعاينة السريعة' : 'Click to update next action'}
-                      >
-                        {l.nextActionNote || l.followUp ? (
-                          <div className="crm-next-action-pill">
-                            <Clock size={14} className="crm-next-action-icon" aria-hidden="true" />
-                            <span className="crm-next-action-text" title={formatFollowUp(l.nextActionNote || l.followUp, isAr)}>{formatFollowUp(l.nextActionNote || l.followUp, isAr)}</span>
+                      {(() => {
+                        const note = formatFollowUp(l.nextActionNote || l.followUp, isAr);
+                        const day = localDayKey(now);
+                        const overdue = isOverdue(l, day);
+                        const today = !overdue && isDueToday(l, day);
+                        const when = l.nextFollowUpAt ? new Date(l.nextFollowUpAt) : null;
+                        const whenLabel = overdue
+                          ? (isAr ? 'متأخرة' : 'Overdue')
+                          : today
+                            ? (isAr ? 'النهارده' : 'Today')
+                            : (when && !Number.isNaN(when.getTime()) ? new Intl.DateTimeFormat(isAr ? 'ar-EG-u-nu-latn' : 'en', { day: 'numeric', month: 'short' }).format(when) : '');
+                        return (
+                          <div
+                            className={`crm-next ${overdue ? 'is-overdue' : today ? 'is-today' : ''}`}
+                            onClick={() => setQuickDrawerLead(l)}
+                            title={isAr ? 'انقر لتحديث المتابعة والمعاينة السريعة' : 'Click to update next action'}
+                          >
+                            {note || whenLabel ? (
+                              <>
+                                {whenLabel && <span className="crm-next__when"><Clock size={13} aria-hidden="true" />{whenLabel}</span>}
+                                {note && <span className="crm-next__note" title={note}>{note}</span>}
+                              </>
+                            ) : (
+                              <span className="crm-next-action-empty">
+                                <Plus size={14} aria-hidden="true" />{isAr ? 'حدد متابعة' : 'Add action'}
+                              </span>
+                            )}
                           </div>
-                        ) : (
-                          <span className="crm-next-action-empty">
-                            <Plus size={14} aria-hidden="true" />{isAr ? 'حدد متابعة' : 'Add action'}
-                          </span>
-                        )}
-                      </div>
+                        );
+                      })()}
                     </td>
                   )}
 
