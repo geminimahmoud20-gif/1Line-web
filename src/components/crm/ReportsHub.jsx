@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
-import { BarChart3, Users, Building, Zap, Target, UserMinus, Activity, Megaphone, Trophy, Calculator, ChevronLeft } from 'lucide-react';
+import { BarChart3, Users, Building, Zap, Target, UserMinus, PhoneCall, Activity, Megaphone, Trophy, Calculator, ChevronLeft } from 'lucide-react';
 import { resolveRange, comparisonRange } from '../../utils/reportPeriods';
 import PerformanceReportPanel from './PerformanceReportPanel';
 import OperationsReportsPanel from './OperationsReportsPanel';
 import GoalsPanel from './GoalsPanel';
 import LostReportPanel from './LostReportPanel';
+import CallsReportPanel from './CallsReportPanel';
 import ReportControls from './ReportControls';
 import './performance-report.css';
 
@@ -12,6 +13,7 @@ const TABS = [
   { id: 'sales', icon: Users, ar: 'العملاء والمبيعات', en: 'Clients & sales' },
   { id: 'portfolio', icon: Building, ar: 'العقارات', en: 'Portfolio' },
   { id: 'demand', icon: Zap, ar: 'الطلبات والخدمات', en: 'Demands & services' },
+  { id: 'calls', icon: PhoneCall, ar: 'الاتصالات', en: 'Calls' },
   { id: 'lost', icon: UserMinus, ar: 'ضياع العملاء', en: 'Lost clients' },
   { id: 'goals', icon: Target, ar: 'الأهداف', en: 'Goals' }
 ];
@@ -63,6 +65,7 @@ export default function ReportsHub({ leads = [], properties = [], demands = [], 
       {tab === 'portfolio' && <OperationsReportsPanel part="portfolio" properties={properties} areaNames={areaNames} range={range} prevRange={prevRange} now={now} lang={lang} />}
       {tab === 'demand' && <OperationsReportsPanel part="demand" demands={demands} intake={intake} areaNames={areaNames} range={range} prevRange={prevRange} now={now} lang={lang} />}
 
+      {tab === 'calls' && <CallsReportPanel leads={leads} range={range} prevRange={prevRange} lang={lang} />}
       {tab === 'lost' && <LostReportPanel leads={leads} range={range} prevRange={prevRange} lang={lang} onOpenLead={onOpenLead} />}
       {tab === 'goals' && <GoalsPanel leads={leads} members={members} me={me} canManage={canManage} lang={lang} triggerToast={triggerToast} />}
 

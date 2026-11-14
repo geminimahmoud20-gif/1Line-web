@@ -42,6 +42,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTasks, useTasksSync } from '../hooks/useTasks';
 import { taskCounts, tasksOfEndedLeads, autoCompletion } from '../utils/tasks';
 import { cadenceTasks, leadsNeedingCadence } from '../utils/followUpCadence';
+import CallOutcomePrompt from '../components/crm/CallOutcomePrompt';
 import { useProperties } from '../context/PropertiesContext';
 import { parseMoney } from '../utils/crmLeadViews';
 import { canEditInventory, canPublishInventory } from '../utils/accessModel';
@@ -803,6 +804,8 @@ export default function CrmPage({
         '--current-sidebar-w': sidebarCollapsed ? '72px' : `${sidebarWidth}px`
       }}
     >
+      <CallOutcomePrompt leads={leads} onUpdateLead={guard(can.editLeads, onUpdateLead)} me={{ uid: currentUser?.uid, name: currentUser?.displayName || currentUser?.name || currentUser?.email?.split('@')[0] || '' }} isAr={isAr} enabled={crmAuthenticated && can.editLeads} />
+
       {/* 1. Presidential Sidebar */}
       <CrmSidebar
         activeTab={activeTab}
