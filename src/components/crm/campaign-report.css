@@ -57,3 +57,14 @@
 .cr-pair li > span { flex: 1 1 220px; min-width: 0; overflow-wrap: anywhere; }
 .cr-pair small { color: var(--ui-text-3); }
 .cr-pair select { flex: 0 1 220px; min-width: 160px; min-height: 40px; }
+
+/* The report by kind of ad */
+.cr-kinds { margin-bottom: var(--ui-s-3); }
+.cr-kinds h3 { margin: 0 0 var(--ui-s-2); font-size: var(--ui-fs-3); }
+.cr-kinds__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: var(--ui-s-2); }
+.cr-kind { padding: var(--ui-s-3); border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); background: var(--ui-surface); }
+.cr-kind strong { display: block; margin-bottom: var(--ui-s-2); font-size: var(--ui-fs-2); }
+.cr-kind dl { display: grid; grid-template-columns: 1fr 1fr; gap: var(--ui-s-1) var(--ui-s-3); margin: 0; }
+.cr-kind dl > div { display: flex; justify-content: space-between; gap: var(--ui-s-2); font-size: var(--ui-fs-1); }
+.cr-kind dt { color: var(--ui-text-3); }
+.cr-kind dd { margin: 0; font-weight: var(--ui-fw-bold); font-variant-numeric: tabular-nums; }

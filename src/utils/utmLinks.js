@@ -17,6 +17,36 @@ export const LANDINGS = [
   { path: '/', ar: 'الصفحة الرئيسية', leads: false }
 ];
 
+/**
+ * The four kinds of ad the team runs, each with the page it sends people to and a name prefix. The campaign is
+ * named «<prefix>-<name>» (buyers-sohag-nov), so the report can add each kind up on its own and show which
+ * one brings clients cheapest: general buyers, owners, the AI ads for the site, and ads for one listing.
+ */
+export const CAMPAIGN_TYPES = [
+  { id: 'buyers', prefix: 'buyers', ar: 'مشترين (إعلان عام)', landing: '/match' },
+  { id: 'owners', prefix: 'owners', ar: 'ملاك (بيع عقارك)', landing: '/sell' },
+  { id: 'ai', prefix: 'ai', ar: 'إعلانات AI للموقع', landing: '/match' },
+  { id: 'unit', prefix: 'unit', ar: 'وحدة محددة', landing: 'unit' }
+];
+
+/** The kind a campaign belongs to by its name's prefix; 'other' for any other name */
+export function campaignTypeOf(campaign) {
+  const c = String(campaign || '').toLowerCase();
+  const t = CAMPAIGN_TYPES.find((x) => c === x.prefix || c.startsWith(`${x.prefix}-`) || c.startsWith(`${x.prefix}_`));
+  return t ? t.id : 'other';
+}
+
+/** «unit» + «Villa 127» → «unit-villa-127»; the name part alone when no kind is chosen */
+export function typedCampaignName(typeId, name) {
+  const t = CAMPAIGN_TYPES.find((x) => x.id === typeId);
+  const n = slugify(name);
+  if (!t) return n;
+  return slugify(n ? `${t.prefix}-${n}` : t.prefix);
+}
+
+/** A listing's own page, the landing of an ad for one unit */
+export const isUnitPath = (path) => /^\/properties\/[\w-]{1,80}$/.test(String(path || ''));
+
 export const PLATFORMS = [
   { id: 'facebook', ar: 'فيسبوك', source: 'facebook', medium: 'paid_social' },
   { id: 'instagram', ar: 'إنستجرام', source: 'instagram', medium: 'paid_social' },
@@ -43,7 +73,7 @@ export function slugify(text) {
 export function buildUtmLink({ siteUrl, path = '/', platform = 'facebook', campaign = '', content = '' } = {}) {
   const p = PLATFORMS.find((x) => x.id === platform);
   const camp = slugify(campaign);
-  if (!p || !camp || !siteUrl || !LANDINGS.some((l) => l.path === path)) return '';
+  if (!p || !camp || !siteUrl || !(LANDINGS.some((l) => l.path === path) || isUnitPath(path))) return '';
   const q = new URLSearchParams({ utm_source: p.source, utm_medium: p.medium, utm_campaign: camp });
   const ad = slugify(content);
   if (ad) q.set('utm_content', ad);
