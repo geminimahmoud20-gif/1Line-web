@@ -9,6 +9,7 @@ import {
 import { firstContactPatch } from '../../utils/crmLeadViews';
 import { auditContactUse } from '../../utils/contactAudit';
 import { MyGoals } from './GoalsPanel';
+import SilentLeads from './SilentLeads';
 import './tasks-panel.css';
 
 const SECTIONS = [
@@ -314,6 +315,7 @@ export default function TasksPanel({ leads = [], members = [], me, canManage = f
       </div>
 
       <MyGoals leads={leads} uid={me?.uid} lang={lang} />
+      <SilentLeads leads={leads} tasks={tasks} uid={team ? '' : me?.uid} me={me} isAr={isAr} onCall={call} onWhatsApp={whatsapp} onOpenLead={onOpenLead} triggerToast={triggerToast} />
       <TaskForm isAr={isAr} me={me} members={members} canAssign={canManage} triggerToast={triggerToast} />
 
       <div className="tk-filters">
