@@ -137,12 +137,13 @@ export default function EditLeadModal({
                 aria-label={isAr ? 'الحالة' : 'Status'}
                 onChange={(e) => setLeadFormData({ ...leadFormData, status: e.target.value })}
               >
-                <option value="new">{isAr ? 'جديد' : 'New'}</option>
-                <option value="contacted">{isAr ? 'تم التواصل' : 'Contacted'}</option>
-                <option value="site_visit">{isAr ? 'معاينة مجدولة' : 'Site visit'}</option>
-                <option value="negotiating">{isAr ? 'قيد التفاوض' : 'Negotiating'}</option>
-                <option value="closing">{isAr ? 'توقيع وحجز' : 'Closing'}</option>
-                <option value="closed">{isAr ? 'صفقة ناجحة' : 'Closed won'}</option>
+                <option value="new">{isAr ? 'عميل محتمل' : 'Lead'}</option>
+                <option value="contacted">{isAr ? 'مؤهل' : 'Qualified'}</option>
+                <option value="site_visit">{isAr ? 'اجتماع / معاينة' : 'Meeting / viewing'}</option>
+                <option value="negotiating">{isAr ? 'تفاوض' : 'Negotiation'}</option>
+                <option value="closing">{isAr ? 'إغلاق (توقيع وحجز)' : 'Closing'}</option>
+                <option value="closed">{isAr ? 'إغلاق' : 'Closed'}</option>
+                <option value="inactive">{isAr ? 'غير متفاعل' : 'Unresponsive'}</option>
               </select>
             </div>
 

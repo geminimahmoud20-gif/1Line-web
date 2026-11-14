@@ -11,12 +11,12 @@ import { dayOf, inRange, eachDay } from './reportPeriods.js';
 
 export const ORDER = ['new', 'contacted', 'site_visit', 'negotiating', 'closing', 'closed'];
 export const STAGE_LABELS = {
-  new: { ar: 'عميل جديد', en: 'New' },
-  contacted: { ar: 'اتكلمنا معاه', en: 'Contacted' },
-  site_visit: { ar: 'وصل لمعاينة', en: 'Reached a viewing' },
+  new: { ar: 'عميل محتمل', en: 'Lead' },
+  contacted: { ar: 'مؤهل', en: 'Qualified' },
+  site_visit: { ar: 'وصل لاجتماع / معاينة', en: 'Reached a meeting / viewing' },
   negotiating: { ar: 'تفاوض', en: 'Negotiating' },
-  closing: { ar: 'توقيع وحجز', en: 'Closing' },
-  closed: { ar: 'صفقة ناجحة', en: 'Closed won' }
+  closing: { ar: 'إغلاق (توقيع وحجز)', en: 'Closing' },
+  closed: { ar: 'إغلاق ناجح', en: 'Closed won' }
 };
 const from = (i) => ORDER.slice(i); // this stage or any later one
 const VISITED = new Set(from(2));

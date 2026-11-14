@@ -58,13 +58,14 @@ export function makeLeadFormatters(isAr, t = {}) {
 
   const formatLeadStatus = (status) => {
     const map = {
-      new: ['جديد', 'New'],
-      contacted: ['تم التواصل', 'Contacted'],
-      site_visit: ['معاينة مجدولة', 'Site visit'],
-      negotiating: ['قيد التفاوض', 'Negotiating'],
-      closing: ['توقيع وحجز', 'Closing'],
-      closed: ['صفقة ناجحة', 'Closed won'],
-      lost: ['مفقود', 'Lost']
+      new: ['عميل محتمل', 'Lead'],
+      contacted: ['مؤهل', 'Qualified'],
+      site_visit: ['اجتماع / معاينة', 'Meeting / viewing'],
+      negotiating: ['تفاوض', 'Negotiation'],
+      closing: ['إغلاق (توقيع وحجز)', 'Closing'],
+      closed: ['إغلاق', 'Closed'],
+      lost: ['خسارة', 'Lost'],
+      inactive: ['غير متفاعل', 'Unresponsive']
     };
     const hit = map[status] || map.new;
     return isAr ? hit[0] : hit[1];

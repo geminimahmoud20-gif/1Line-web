@@ -264,7 +264,7 @@ export default function CrmTopbar({
                       <div className="crm-search-result-sub">{l.phone}</div>
                     </div>
                     <span className="crm-search-result-badge">
-                      {isAr ? ({ new: 'جديد', contacted: 'تم التواصل', site_visit: 'معاينة', negotiating: 'تفاوض', closing: 'توقيع', closed: 'ناجحة' }[l.status] || 'جديد') : (l.status || 'new')}
+                      {isAr ? ({ new: 'عميل محتمل', contacted: 'مؤهل', site_visit: 'اجتماع / معاينة', negotiating: 'تفاوض', closing: 'إغلاق', closed: 'إغلاق', inactive: 'غير متفاعل' }[l.status] || 'عميل محتمل') : (l.status || 'new')}
                     </span>
                   </div>
                 ))}

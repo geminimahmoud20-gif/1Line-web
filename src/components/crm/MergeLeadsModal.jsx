@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { leadCreatedMs, leadSourceKey, LEAD_SOURCES } from '../../utils/crmLeadViews';
 
-const STAGE = { new: ['طلب جديد', 'New'], contacted: ['تم التواصل', 'Contacted'], site_visit: ['معاينة', 'Site visit'], negotiating: ['تفاوض', 'Negotiating'], closing: ['توقيع وحجز', 'Closing'], closed: ['صفقة ناجحة', 'Won'], lost: ['خسرانة', 'Lost'] };
+const STAGE = { new: ['عميل محتمل', 'Lead'], contacted: ['مؤهل', 'Qualified'], site_visit: ['اجتماع / معاينة', 'Meeting / viewing'], negotiating: ['تفاوض', 'Negotiation'], closing: ['إغلاق (توقيع وحجز)', 'Closing'], closed: ['إغلاق', 'Closed'], lost: ['خسارة', 'Lost'], inactive: ['غير متفاعل', 'Unresponsive'] };
 
 /**
  * Same phone on several leads: pick the record to keep, the others are folded into it and deleted.

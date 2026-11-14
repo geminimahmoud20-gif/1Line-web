@@ -76,7 +76,7 @@ const readLeadCache = () => {
   } catch { return []; }
   return readStoredJson('oneline_crm_leads', [], isRecordArray);
 };
-const LEAD_STAGE_AR = { new: 'طلب جديد', contacted: 'تم التواصل', site_visit: 'معاينة', negotiating: 'تفاوض', closing: 'توقيع وحجز', closed: 'صفقة ناجحة', lost: 'خسرانة' };
+const LEAD_STAGE_AR = { new: 'عميل محتمل', contacted: 'مؤهل', site_visit: 'اجتماع / معاينة', negotiating: 'تفاوض', closing: 'إغلاق (توقيع وحجز)', closed: 'إغلاق', lost: 'خسارة', inactive: 'غير متفاعل' };
 const LEAD_FIELD_AR = { assignedTo: 'المسؤول', temperature: 'درجة الحرارة', score: 'الجدية', notes: 'الملاحظات', nextFollowUpAt: 'موعد المتابعة', isArchived: 'الأرشفة', tags: 'الوسوم', lastContactedAt: 'تواصل' };
 /** One readable line for the lead's activity log */
 const describeLeadChange = (f = {}) => {

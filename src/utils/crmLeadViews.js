@@ -225,7 +225,8 @@ export function localDayKey(value = new Date()) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-const isClosedOut = (l) => l.isArchived || l.status === 'closed' || l.status === 'lost';
+// A lead that is finished or paused as «غير متفاعل»: nobody chases it
+const isClosedOut = (l) => l.isArchived || l.status === 'closed' || l.status === 'lost' || l.status === 'inactive';
 const followUpDay = (l) => (l.nextFollowUpAt ? localDayKey(l.nextFollowUpAt) : '');
 
 /** Follow-up date already passed (open leads only) */
@@ -235,7 +236,7 @@ export const isOverdue = (l, todayKey = localDayKey()) => !isClosedOut(l) && !!f
 export const isDueToday = (l, todayKey = localDayKey()) => !isClosedOut(l)
   && (followUpDay(l) === todayKey || (typeof l.followUp === 'string' && l.followUp.includes(todayKey)));
 
-export const isUnassigned = (l) => !l.isArchived && l.status !== 'lost' && l.status !== 'closed'
+export const isUnassigned = (l) => !l.isArchived && l.status !== 'lost' && l.status !== 'closed' && l.status !== 'inactive'
   && (!l.assignedTo || l.assignedTo === 'Unassigned');
 
 /** Open lead with no activity for `hours` (default 48) */
@@ -419,7 +420,7 @@ function inDateRange(l, range, now) {
  * Leads table filter.
  * opts: { myDealsOnly, activeRole, agentName, leadFilter, temperatureFilter, areaFilter, sourceFilter,
  *         dateFilter, searchQuery, today, now, duplicateIds }
- * leadFilter: 'all' | 'archived' | 'lost' | 'won' | 'new' | 'awaiting' | 'dupes' | 'due' | 'overdue' | 'unassigned'
+ * leadFilter: 'all' | 'archived' | 'lost' | 'inactive' | 'won' | 'new' | 'awaiting' | 'dupes' | 'due' | 'overdue' | 'unassigned'
  *   | 'stale' | 'qualified' | a lead type.
  * Archived and lost leads only show under their own filter. today (YYYY-MM-DD) and now (ms)
  * default to the current time; tests pass them in.
@@ -449,6 +450,8 @@ export function filterLeads(leads = [], opts = {}) {
       return false;
     } else if (leadFilter === 'won') {
       if (l.status !== 'closed') return false;
+    } else if (leadFilter === 'inactive') {
+      if (l.status !== 'inactive') return false;
     } else if (leadFilter === 'new') {
       if (l.status !== 'new' && l.status) return false;
     } else if (leadFilter === 'awaiting') {

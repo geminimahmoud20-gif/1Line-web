@@ -7,7 +7,7 @@
 import { waitingMs, responseSlaMs, escalationLevel, isOverdue, isDueToday, localDayKey } from './crmLeadViews.js';
 import { taskCounts } from './tasks.js';
 
-const isOpen = (l) => !l.isArchived && l.status !== 'lost' && l.status !== 'closed';
+const isOpen = (l) => !l.isArchived && l.status !== 'lost' && l.status !== 'closed' && l.status !== 'inactive';
 const NO_OWNER = (l) => !l.ownerUid && !l.ownerName && !l.claimedBy && (!l.assignedTo || l.assignedTo === 'Unassigned');
 export const RESEND_AFTER_MS = 4 * 3600 * 1000;
 

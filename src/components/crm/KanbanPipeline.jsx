@@ -7,6 +7,8 @@ import { getAreas } from '../../utils/areasData';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { leadScore, ACTIVE_STAGES, leadBudget, isSellerLead } from '../../utils/crmLeadViews';
 import { SELLER_STAGES, pipelineKind } from '../../utils/leadPipeline';
+import { boardColumnOf, PROGRESS_STAGE_IDS } from '../../utils/dealStages';
+import LostReasonModal from './LostReasonModal';
 import { validateStageTransition, HIGH_VALUE_DEAL_THRESHOLD } from '../../services/stateMachineEngine';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 import { PageHeader, KpiRow, KpiTile, Chip } from '../ui';
@@ -15,14 +17,19 @@ import { stageSinceMs, isStalled, isNewOverdue, daysLabel, shortMoney, STALE_DAY
 
 const CARDS_PER_STAGE = 5;
 
+// Seven columns: five steps ending in «إغلاق» (a lead in the old «توقيع وحجز» step sits there too), then
+// غير متفاعل and خسارة. Same status ids as before (utils/dealStages).
 const BASE_STAGES = [
-  { id: 'new', title_ar: 'طلبات جديدة', title_en: 'New Inquiries', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)' },
-  { id: 'contacted', title_ar: 'اتصلنا', title_en: 'Contacted', color: 'var(--crm-violet)', bg: 'var(--crm-violet-soft)' },
-  { id: 'site_visit', title_ar: 'معاينات', title_en: 'Site Visits', color: 'var(--crm-accent-text)', bg: 'var(--crm-warn-soft)' },
+  { id: 'new', title_ar: 'عملاء محتملين', title_en: 'Leads', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)' },
+  { id: 'contacted', title_ar: 'مؤهل', title_en: 'Qualified', color: 'var(--crm-violet)', bg: 'var(--crm-violet-soft)' },
+  { id: 'site_visit', title_ar: 'اجتماع / معاينة', title_en: 'Meeting / viewing', color: 'var(--crm-accent-text)', bg: 'var(--crm-warn-soft)' },
   { id: 'negotiating', title_ar: 'تفاوض', title_en: 'Negotiation', color: 'var(--crm-warn)', bg: 'var(--crm-warn-soft)' },
-  { id: 'closing', title_ar: 'توقيع وحجز', title_en: 'Closing / Deposit', color: 'var(--crm-positive)', bg: 'var(--crm-positive-soft)' },
-  { id: 'closed', title_ar: 'صفقات ناجحة', title_en: 'Closed Won', color: 'var(--crm-positive)', bg: 'var(--crm-positive-soft)' }
+  { id: 'closed', title_ar: 'إغلاق', title_en: 'Closed', color: 'var(--crm-positive)', bg: 'var(--crm-positive-soft)' },
+  { id: 'inactive', title_ar: 'غير متفاعل', title_en: 'Unresponsive', color: 'var(--crm-muted)', bg: 'var(--crm-line)' },
+  { id: 'lost', title_ar: 'خسارة', title_en: 'Lost', color: 'var(--crm-danger)', bg: 'var(--crm-danger-soft)' }
 ];
+// The first five columns are steps forward; «next» and «back» only move inside them
+const PROGRESS_COUNT = PROGRESS_STAGE_IDS.length;
 
 // The same columns named for an owner's sale (utils/leadPipeline): inspection & valuation, listed, sold
 const SELLER_COLUMNS = BASE_STAGES.map((st) => {
@@ -81,6 +88,8 @@ export default function KanbanPipeline({
   const [draggedLeadId, setDraggedLeadId] = useState(null);
   const [schedulingVisitLead, setSchedulingVisitLead] = useState(null);
   const [leadToDelete, setLeadToDelete] = useState(null);
+  // A lead dropped on «خسارة» asks why first
+  const [lostFor, setLostFor] = useState(null);
   const [blockerModal, setBlockerModal] = useState({ isOpen: false, blockerInfo: null, lead: null });
   const [filterType, setFilterType] = useState('all');
   // Columns read as an owner's pipeline when only owners are shown
@@ -268,7 +277,7 @@ export default function KanbanPipeline({
       stats[s.id] = { count: 0, totalVolume: 0, budgetedCount: 0, unbudgetedCount: 0 };
     });
     filteredLeads.forEach((l) => {
-      const st = l.status || 'new';
+      const st = boardColumnOf(l.status);
       if (!groups[st]) {
         groups[st] = [];
         stats[st] = { count: 0, totalVolume: 0, budgetedCount: 0, unbudgetedCount: 0 };
@@ -330,6 +339,8 @@ export default function KanbanPipeline({
     const leadId = e.dataTransfer.getData('text/plain') || draggedLeadId;
     if (leadId) {
       const targetLead = leads.find(l => l.id === leadId);
+      if (targetLead && boardColumnOf(targetLead.status) === targetStageId) { setDraggedLeadId(null); return; }
+      if (targetLead && targetStageId === 'lost') { setLostFor(targetLead); setDraggedLeadId(null); return; }
       if (targetLead && onUpdateLead) {
         const validation = validateStageTransition(targetLead, targetStageId, {
           userRole: activeRole,
@@ -349,7 +360,8 @@ export default function KanbanPipeline({
         const updates = { 
           status: targetStageId,
           statusUpdatedAt: new Date().toISOString(),
-          lastActivityAt: new Date().toISOString()
+          lastActivityAt: new Date().toISOString(),
+          ...(prevStageId === 'lost' ? { lostReason: null, lostNote: null, lostAt: null } : {})
         };
         if (validation.nextTask) {
           updates.latestHandoffTask = validation.nextTask;
@@ -375,8 +387,8 @@ export default function KanbanPipeline({
 
   // Quick Move to Next Stage
   const handleMoveToNextStage = (lead) => {
-    const currentIndex = PIPELINE_STAGES.findIndex(s => s.id === (lead.status || 'new'));
-    if (currentIndex < PIPELINE_STAGES.length - 1) {
+    const currentIndex = PIPELINE_STAGES.findIndex(s => s.id === boardColumnOf(lead.status));
+    if (currentIndex >= 0 && currentIndex < PROGRESS_COUNT - 1) {
       const prevStageId = lead.status || 'new';
       const nextStage = PIPELINE_STAGES[currentIndex + 1];
       const validation = validateStageTransition(lead, nextStage.id, {
@@ -421,8 +433,8 @@ export default function KanbanPipeline({
 
   // Quick Move to Previous Stage
   const handleMoveToPrevStage = (lead) => {
-    const currentIndex = PIPELINE_STAGES.findIndex(s => s.id === (lead.status || 'new'));
-    if (currentIndex > 0) {
+    const currentIndex = PIPELINE_STAGES.findIndex(s => s.id === boardColumnOf(lead.status));
+    if (currentIndex > 0 && currentIndex < PROGRESS_COUNT) {
       const currentStageId = lead.status || 'new';
       const prevStage = PIPELINE_STAGES[currentIndex - 1];
       if (onUpdateLead) {
@@ -450,7 +462,8 @@ export default function KanbanPipeline({
 
   // Direct Move to Any Specific Stage
   const handleMoveToSpecificStage = (lead, targetStageId) => {
-    if (!lead || !targetStageId || lead.status === targetStageId) return;
+    if (!lead || !targetStageId || boardColumnOf(lead.status) === targetStageId) return;
+    if (targetStageId === 'lost') { setLostFor(lead); return; }
     const prevStageId = lead.status || 'new';
     const validation = validateStageTransition(lead, targetStageId, {
       userRole: activeRole,
@@ -469,7 +482,8 @@ export default function KanbanPipeline({
       const updates = { 
         status: targetStageId,
         statusUpdatedAt: new Date().toISOString(),
-        lastActivityAt: new Date().toISOString()
+        lastActivityAt: new Date().toISOString(),
+        ...(prevStageId === 'lost' ? { lostReason: null, lostNote: null, lostAt: null } : {})
       };
       if (validation.nextTask) {
         updates.latestHandoffTask = validation.nextTask;
@@ -738,7 +752,7 @@ export default function KanbanPipeline({
                     // New request nobody called within 24 hours (createdAt or timestamp, whichever it has)
                     const isOverdue = isNewOverdue(lead, now);
 
-                    const stageIndex = PIPELINE_STAGES.findIndex(s => s.id === (lead.status || 'new'));
+                    const stageIndex = PIPELINE_STAGES.findIndex(s => s.id === boardColumnOf(lead.status));
                     const closeMenu = (e) => e.currentTarget.closest('details')?.removeAttribute('open');
                     const leadName = lead.name?.trim() || (isAr ? 'عميل بدون اسم' : 'Unnamed lead');
 
@@ -831,7 +845,7 @@ export default function KanbanPipeline({
                               <MoreHorizontal size={16} aria-hidden="true" />
                             </summary>
                             <div className="kb-menu">
-                              {stageIndex < PIPELINE_STAGES.length - 1 && (
+                              {stageIndex >= 0 && stageIndex < PROGRESS_COUNT - 1 && (
                                 <button type="button" onClick={(e) => { closeMenu(e); handleMoveToNextStage(lead); }}>
                                   {isAr ? <ChevronLeft size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}
                                   {isAr ? `انقل لـ«${stagesOfLead(lead)[stageIndex + 1].title_ar}»` : `Move to ${stagesOfLead(lead)[stageIndex + 1].title_en}`}
@@ -842,7 +856,7 @@ export default function KanbanPipeline({
                                 <span className="kb-menu-header-label">
                                   {isAr ? 'نقل مباشر إلى مرحلة:' : 'Direct Move to:'}
                                 </span>
-                                {stagesOfLead(lead).filter(s => s.id !== (lead.status || 'new')).map(targetStage => (
+                                {stagesOfLead(lead).filter(s => s.id !== boardColumnOf(lead.status)).map(targetStage => (
                                   <button
                                     key={targetStage.id}
                                     type="button"
@@ -865,7 +879,7 @@ export default function KanbanPipeline({
                                   <Edit3 size={14} aria-hidden="true" />{isAr ? 'تعديل البيانات' : 'Edit'}
                                 </button>
                               )}
-                              <button type="button" disabled={stageIndex <= 0} onClick={(e) => { closeMenu(e); handleMoveToPrevStage(lead); }}>
+                              <button type="button" disabled={stageIndex <= 0 || stageIndex >= PROGRESS_COUNT} onClick={(e) => { closeMenu(e); handleMoveToPrevStage(lead); }}>
                                 {isAr ? <ChevronRight size={14} aria-hidden="true" /> : <ChevronLeft size={14} aria-hidden="true" />}{isAr ? 'إرجاع للمرحلة السابقة' : 'Previous stage'}
                               </button>
                               {onUpdateLead && (
@@ -970,6 +984,25 @@ export default function KanbanPipeline({
       )}
 
       {/* 1Line OS Deliverable Gate Blocker Modal */}
+      {lostFor && (
+        <LostReasonModal
+          lead={lostFor}
+          isAr={isAr}
+          onCancel={() => setLostFor(null)}
+          onConfirm={({ lostReason, lostNote }) => {
+            onUpdateLead?.(lostFor.id, {
+              status: 'lost',
+              lostReason,
+              lostNote,
+              lostAt: new Date().toISOString(),
+              statusUpdatedAt: new Date().toISOString(),
+              lastActivityAt: new Date().toISOString()
+            }, lostFor.version);
+            triggerToast?.(isAr ? 'اتسجلت خسارة مع السبب' : 'Marked as lost', 'info');
+            setLostFor(null);
+          }}
+        />
+      )}
       <StageDeliverableModal
         isOpen={blockerModal.isOpen}
         onClose={() => setBlockerModal({ isOpen: false, blockerInfo: null, lead: null })}
