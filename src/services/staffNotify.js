@@ -107,15 +107,15 @@ export const saveAlertsSeenAt = async (ms) => {
   }
 };
 
-// ── The daily WhatsApp report (api/daily-report.js): see it now, or send a test copy ──
+// ── The daily / weekly WhatsApp reports (api/daily-report.js, api/weekly-report.js): see it now, or send a test copy ──
 
 /** mode 'preview' → { ok, text, day } ; mode 'test' → { ok, parts } ; else { ok: false, error } */
-export const runDailyReport = async (mode = 'preview') => {
+export const runDailyReport = async (mode = 'preview', kind = 'daily') => {
   const user = auth?.currentUser;
   if (!user) return { ok: false, error: 'unauthenticated' };
   let res;
   try {
-    res = await fetch('/api/daily-report', {
+    res = await fetch(kind === 'weekly' ? '/api/weekly-report' : '/api/daily-report', {
       method: 'POST',
       headers: { authorization: `Bearer ${await user.getIdToken()}`, 'content-type': 'application/json' },
       body: JSON.stringify({ mode })

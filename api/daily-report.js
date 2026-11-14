@@ -120,6 +120,7 @@ export function reportStore(sa) {
   };
 
   return {
+    list,
     async load(now) {
       const { target, before } = reportDays(now);
       const weekStart = cairoDayRange(before[0])[0];

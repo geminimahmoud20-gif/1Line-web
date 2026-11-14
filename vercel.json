@@ -6,7 +6,8 @@
   "cleanUrls": false,
   "trailingSlash": false,
   "crons": [
-    { "path": "/api/daily-report", "schedule": "0 22 * * *" }
+    { "path": "/api/daily-report", "schedule": "0 22 * * *" },
+    { "path": "/api/weekly-report", "schedule": "0 5 * * 6" }
   ],
   "rewrites": [
     {
