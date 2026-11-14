@@ -382,7 +382,7 @@ export default function MegaProjectsManagerPanel({
                     <div style={{ fontSize: 'var(--crm-text-sm)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--crm-muted)' }}>
                         <MapPin size={12} />
-                        <span>{location}</span>
+                        <span className="crm-proj__loc" title={location}>{location}</span>
                       </div>
                       {dev
                         ? <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-ink)', fontWeight: '700' }}>{dev}</span>

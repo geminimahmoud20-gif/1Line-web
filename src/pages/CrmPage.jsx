@@ -36,6 +36,7 @@ import '../components/crm/crm-dark-surfaces.css';
 import '../components/crm/crm-density.css';
 import '../styles/crm-bridge.css';
 import '../components/crm/crm-mobile-modals.css';
+import '../components/crm/crm-type.css';
 import { MotionRoot, ConfirmProvider } from '../components/ui';
 import { isFirebaseAuthAvailable, loginUser, requestPasswordReset } from '../firebaseService';
 import { useAuth } from '../context/AuthContext';
