@@ -9,6 +9,7 @@ import { assetClass } from '../utils/marketStats';
 import { areaReferencePrice } from '../utils/areaPricing';
 import { getWhatsAppUrl } from '../utils/founderCmsData';
 import SubmissionSuccess from './common/SubmissionSuccess';
+import ConsentNote from './common/ConsentNote';
 import { toLatinDigits } from '../utils/latinDigits';
 import { featuresFor, featureLabels, orderedPhotos, sellerAssetClass } from '../utils/sellerListing';
 import { PROPERTY_TYPES, CAIRO_AREAS, FINISHING, LEGAL_DOCS, SPEC_FIELDS, floorLabel } from './sell/sellOptions';
@@ -426,6 +427,7 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
               {isSubmitting ? L('بنبعت…', 'Sending…') : L('ابعت عقاري', 'Send my property')}
             </button>
           </div>
+          <ConsentNote isAr={isAr} />
         </form>
       )}
 
