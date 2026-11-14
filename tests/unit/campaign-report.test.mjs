@@ -68,3 +68,16 @@ test('the most common reason clients of a campaign were lost is reported', () =>
   assert.deepEqual(b.topLostReason, { id: 'price', count: 2 });
   assert.equal(rows.find((r) => r.campaign === 'owners').topLostReason, null);
 });
+
+import { typeSummary } from '../../src/utils/campaignReport.js';
+
+test('rows are added up per kind of ad, cheapest client first is for the reader to see', () => {
+  const row = (campaign, leads, spend, visits = 0, closed = 0) => ({ campaign, leads, spend, visits, closed, contacted: 0, wonCommission: 0, expectedCommission: 0 });
+  const s = typeSummary([row('buyers-a', 10, 1000, 3, 1), row('buyers-b', 5, 500), row('owners-x', 2, 400), row('weird', 1, 0), row('unit-v', 0, 0)]);
+  assert.deepEqual(s.map((g) => g.type), ['buyers', 'owners', 'other']); // unit-v has nothing: left out
+  assert.equal(s[0].leads, 15);
+  assert.equal(s[0].campaigns, 2);
+  assert.equal(s[0].costPerLead, 100);
+  assert.equal(s[1].costPerLead, 200);
+  assert.equal(s[0].label, 'مشترين (إعلان عام)');
+});

@@ -5,6 +5,7 @@
 //  (so a client lost after a visit still counts as a visit, and avgDaysToVisit can be worked out).
 // =============================================================
 import { leadCampaign, leadCreatedMs } from './crmLeadViews.js';
+import { CAMPAIGN_TYPES, campaignTypeOf } from './utmLinks.js';
 import { reachedAny, msToReach, avgDays } from './stageHistory.js';
 import { leadCommission } from './commission.js';
 
@@ -70,4 +71,23 @@ export function campaignReport(leads = [], { by = 'campaign', days = 0, now = Da
 export function campaignTotals(rows = []) {
   const t = rows.reduce((s, r) => ({ leads: s.leads + r.leads, contacted: s.contacted + r.contacted, visits: s.visits + r.visits, closed: s.closed + r.closed, spend: s.spend + r.spend, wonCommission: s.wonCommission + (r.wonCommission || 0), expectedCommission: s.expectedCommission + (r.expectedCommission || 0) }), { leads: 0, contacted: 0, visits: 0, closed: 0, spend: 0, wonCommission: 0, expectedCommission: 0 });
   return { ...t, costPerLead: t.spend && t.leads ? Math.round(t.spend / t.leads) : 0, costPerVisit: t.spend && t.visits ? Math.round(t.spend / t.visits) : 0, returnPerEgp: t.spend && t.wonCommission ? Math.round((t.wonCommission / t.spend) * 100) / 100 : 0 };
+}
+
+/**
+ * The report's rows added up per kind of ad (buyers, owners, ai, unit, then the rest), only the kinds that have
+ * a lead or spend: [{ type, label, campaigns, ...totals }]. Rows are by campaign (not by ad).
+ */
+export function typeSummary(rows = []) {
+  const groups = new Map();
+  for (const r of rows) {
+    const t = campaignTypeOf(r.campaign);
+    if (!groups.has(t)) groups.set(t, []);
+    groups.get(t).push(r);
+  }
+  const labels = Object.fromEntries(CAMPAIGN_TYPES.map((t) => [t.id, t.ar]));
+  labels.other = 'أخرى';
+  return [...CAMPAIGN_TYPES.map((t) => t.id), 'other']
+    .filter((id) => groups.has(id))
+    .map((id) => ({ type: id, label: labels[id], campaigns: groups.get(id).length, ...campaignTotals(groups.get(id)) }))
+    .filter((g) => g.leads > 0 || g.spend > 0);
 }

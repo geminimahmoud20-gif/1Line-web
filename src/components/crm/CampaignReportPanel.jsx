@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Megaphone, Copy, Link2, RefreshCw } from 'lucide-react';
-import { campaignReport, campaignTotals, PERIODS } from '../../utils/campaignReport';
+import { campaignReport, campaignTotals, typeSummary, PERIODS } from '../../utils/campaignReport';
 import { LOST_REASONS } from '../../utils/crmLeadViews';
 import { loadCampaignSpend, saveCampaignSpend, loadCampaignLinks, saveCampaignLinks, pullMetaSpend } from '../../firebaseLazy';
 import { EmptyState } from '../ui';
-import { LANDINGS, PLATFORMS, buildUtmLink, slugify } from '../../utils/utmLinks';
+import { LANDINGS, PLATFORMS, CAMPAIGN_TYPES, buildUtmLink, slugify, typedCampaignName } from '../../utils/utmLinks';
 import { SITE_URL } from '../../config/siteConfig';
 import { applyPull } from '../../../api/_meta-spend-core.js';
 import AdsPerformance from './AdsPerformance';
@@ -15,14 +15,30 @@ const readSpend = () => { try { return JSON.parse(localStorage.getItem(SPEND_KEY
 const fmt = (n) => (n ? Number(n).toLocaleString('en-US') : '—');
 
 /** Makes the ad link that the report below reads (the guide used to be a document outside the CRM) */
-function LinkBuilder({ L, onCopied }) {
+function LinkBuilder({ L, onCopied, properties = [] }) {
+  const [kind, setKind] = useState('buyers'); // one of CAMPAIGN_TYPES, or '' for a free name
   const [path, setPath] = useState(LANDINGS[0].path);
+  const [unitId, setUnitId] = useState('');
   const [platform, setPlatform] = useState('facebook');
   const [campaign, setCampaign] = useState('');
   const [content, setContent] = useState('');
-  const link = buildUtmLink({ siteUrl: SITE_URL, path, platform, campaign, content });
+  const type = CAMPAIGN_TYPES.find((t) => t.id === kind);
+  const isUnit = kind === 'unit';
+  // Listings a visitor can open: not hidden, drafts, sold, in the trash or waiting for approval
+  const units = useMemo(() => properties.filter((p) => p?.id && !p.isDemo && !p.deleted && !p.isDeleted
+    && !['trash', 'hidden', 'draft', 'sold'].includes(p.status) && !['pending', 'rejected'].includes(p.approval)), [properties]);
+  const unit = units.find((u) => String(u.id) === unitId);
+  const landingPath = isUnit ? (unit ? `/properties/${unit.id}` : '') : path;
+  const nameInput = isUnit && !campaign.trim() && unit ? String(unit.code || unit.id) : campaign;
+  const finalCampaign = typedCampaignName(kind, nameInput);
+  const link = landingPath ? buildUtmLink({ siteUrl: SITE_URL, path: landingPath, platform, campaign: finalCampaign, content }) : '';
   const typedButEmpty = campaign.trim() && !slugify(campaign);
   const landing = LANDINGS.find((l) => l.path === path);
+  const pickKind = (id) => {
+    setKind(id);
+    const t = CAMPAIGN_TYPES.find((x) => x.id === id);
+    if (t && t.landing !== 'unit') setPath(t.landing);
+  };
   const copy = async () => {
     try { await navigator.clipboard.writeText(link); onCopied(true); } catch { onCopied(false); }
   };
@@ -30,23 +46,40 @@ function LinkBuilder({ L, onCopied }) {
     <details className="cr-builder">
       <summary><Link2 size={16} aria-hidden="true" /> {L('جهّز لينك إعلان', 'Build an ad link')}</summary>
       <div className="cr-builder__grid">
-        <label><span>{L('الإعلان بيودّي لفين؟', 'Where does the ad land?')}</span>
-          <select value={path} onChange={(e) => setPath(e.target.value)}>{LANDINGS.map((l) => <option key={l.path} value={l.path}>{l.ar}</option>)}</select>
+        <label><span>{L('نوع الإعلان', 'Kind of ad')}</span>
+          <select value={kind} onChange={(e) => pickKind(e.target.value)}>
+            {CAMPAIGN_TYPES.map((t) => <option key={t.id} value={t.id}>{t.ar}</option>)}
+            <option value="">{L('حر (اسم من عندك)', 'Free name')}</option>
+          </select>
         </label>
+        {isUnit ? (
+          <label><span>{L('الوحدة', 'Listing')}</span>
+            <select value={unitId} onChange={(e) => setUnitId(e.target.value)}>
+              <option value="">{L('اختار وحدة معروضة…', 'Pick a listing…')}</option>
+              {units.map((u) => <option key={u.id} value={String(u.id)}>{(u.title_ar || u.title_en || u.code || u.id)}</option>)}
+            </select>
+          </label>
+        ) : (
+          <label><span>{L('الإعلان بيودّي لفين؟', 'Where does the ad land?')}</span>
+            <select value={path} onChange={(e) => setPath(e.target.value)}>{LANDINGS.map((l) => <option key={l.path} value={l.path}>{l.ar}</option>)}</select>
+          </label>
+        )}
         <label><span>{L('المنصة', 'Platform')}</span>
           <select value={platform} onChange={(e) => setPlatform(e.target.value)}>{PLATFORMS.map((p) => <option key={p.id} value={p.id}>{p.ar}</option>)}</select>
         </label>
-        <label><span>{L('اسم الحملة (إنجليزي)', 'Campaign name (Latin)')}</span>
-          <input value={campaign} onChange={(e) => setCampaign(e.target.value)} placeholder="sohag-buyers" dir="ltr" />
+        <label><span>{type ? L(`اسم الحملة (بعد «${type.prefix}-»)`, `Campaign name (after “${type.prefix}-”)`) : L('اسم الحملة (إنجليزي)', 'Campaign name (Latin)')}</span>
+          <input value={campaign} onChange={(e) => setCampaign(e.target.value)} placeholder={isUnit ? L('اختياري: كود الوحدة', 'optional') : 'sohag-nov'} dir="ltr" />
         </label>
         <label><span>{L('اسم الإعلان أو الفيديو (اختياري)', 'Ad / video (optional)')}</span>
           <input value={content} onChange={(e) => setContent(e.target.value)} placeholder="video-01" dir="ltr" />
         </label>
       </div>
-      {typedButEmpty && <p className="cr-builder__warn">{L('الاسم لازم فيه حروف إنجليزي أو أرقام (مثلاً sohag-buyers)', 'Use Latin letters or digits')}</p>}
-      {!landing?.leads && <p className="cr-builder__hint">{L('الصفحة دي بتجيب زوار بس، مش بتسجّل عميل بالرقم. للتسجيل: رشّحلي عقاري أو بيع عقارك أو طلب خاص.', 'This page brings visitors but does not capture a lead.')}</p>}
+      {finalCampaign && <p className="cr-builder__hint">{L('اسم الحملة في التقرير:', 'Campaign in the report:')} <bdi dir="ltr">{finalCampaign}</bdi></p>}
+      {typedButEmpty && <p className="cr-builder__warn">{L('الاسم لازم فيه حروف إنجليزي أو أرقام (مثلاً sohag-nov)', 'Use Latin letters or digits')}</p>}
+      {!isUnit && !landing?.leads && <p className="cr-builder__hint">{L('الصفحة دي بتجيب زوار بس، مش بتسجّل عميل بالرقم. للتسجيل: رشّحلي عقاري أو بيع عقارك أو طلب خاص.', 'This page brings visitors but does not capture a lead.')}</p>}
+      {isUnit && <p className="cr-builder__hint">{L('الإعلان بيفتح صفحة الوحدة نفسها: العميل بيتصل أو يبعت واتساب أو يطلب معاينة، وكل ده بيتسجّل باسم الحملة.', 'The ad opens the listing itself; calls, WhatsApp and visit requests are recorded under the campaign.')}</p>}
       <div className="cr-builder__out">
-        <input readOnly value={link} dir="ltr" aria-label={L('اللينك', 'Link')} placeholder={L('اكتب اسم الحملة ويظهر اللينك هنا', 'The link appears here')} />
+        <input readOnly value={link} dir="ltr" aria-label={L('اللينك', 'Link')} placeholder={isUnit && !unit ? L('اختار الوحدة ويظهر اللينك هنا', 'Pick a listing') : L('اكتب اسم الحملة ويظهر اللينك هنا', 'The link appears here')} />
         <button type="button" className="ui-btn ui-btn--primary ui-btn--sm" disabled={!link} onClick={copy}><Copy size={14} aria-hidden="true" />{L('انسخ', 'Copy')}</button>
       </div>
     </details>
@@ -54,7 +87,7 @@ function LinkBuilder({ L, onCopied }) {
 }
 
 /** «تقرير الحملات»: what each ad brought, how far those clients got, and what that cost. */
-export default function CampaignReportPanel({ leads = [], lang = 'ar', triggerToast }) {
+export default function CampaignReportPanel({ leads = [], properties = [], lang = 'ar', triggerToast }) {
   const isAr = lang === 'ar';
   const L = (ar, en) => (isAr ? ar : en);
   const [by, setBy] = useState('campaign');
@@ -66,6 +99,7 @@ export default function CampaignReportPanel({ leads = [], lang = 'ar', triggerTo
     [leads, by, period, spend]
   );
   const totals = useMemo(() => campaignTotals(rows), [rows]);
+  const kinds = useMemo(() => typeSummary(rows), [rows]);
 
   // Shared with the other managers (campaign_spend/all); this device keeps a copy in case the
   // shared one can't be reached, and the note below says which one is in use
@@ -169,7 +203,7 @@ export default function CampaignReportPanel({ leads = [], lang = 'ar', triggerTo
 
       <AdsPerformance lang={lang} />
 
-      <LinkBuilder L={L} onCopied={(ok) => triggerToast?.(ok ? L('اللينك اتنسخ', 'Link copied') : L('معرفناش ننسخ، انسخه من الخانة', 'Could not copy, select it from the box'), ok ? 'success' : 'error')} />
+      <LinkBuilder L={L} properties={properties} onCopied={(ok) => triggerToast?.(ok ? L('اللينك اتنسخ', 'Link copied') : L('معرفناش ننسخ، انسخه من الخانة', 'Could not copy, select it from the box'), ok ? 'success' : 'error')} />
 
       <div className="cr-pull">
         <button type="button" className="ui-btn ui-btn--secondary ui-btn--sm" onClick={pullSpend} disabled={pulling}>
@@ -242,6 +276,25 @@ export default function CampaignReportPanel({ leads = [], lang = 'ar', triggerTo
             <div><b>{fmt(totals.costPerLead)}</b><span>{L('تكلفة العميل (ج.م)', 'Cost / lead')}</span></div>
             <div><b>{fmt(totals.costPerVisit)}</b><span>{L('تكلفة المعاينة (ج.م)', 'Cost / visit')}</span></div>
           </div>
+
+          {kinds.length > 0 && (
+            <section className="cr-kinds" aria-label={L('الأداء حسب نوع الإعلان', 'By kind of ad')}>
+              <h3>{L('حسب نوع الإعلان', 'By kind of ad')}</h3>
+              <div className="cr-kinds__grid">
+                {kinds.map((k) => (
+                  <div key={k.type} className="cr-kind">
+                    <strong>{k.label}</strong>
+                    <dl>
+                      <div><dt>{L('عملاء', 'Leads')}</dt><dd>{k.leads}</dd></div>
+                      <div><dt>{L('معاينة', 'Visits')}</dt><dd>{k.visits}</dd></div>
+                      <div><dt>{L('اتقفل', 'Closed')}</dt><dd>{k.closed}</dd></div>
+                      <div><dt>{L('تكلفة العميل', 'Cost / lead')}</dt><dd>{fmt(k.costPerLead)}</dd></div>
+                    </dl>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           <ul className="cr-rows">
             {rows.map((r) => (
