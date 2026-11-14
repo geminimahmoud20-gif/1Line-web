@@ -1,0 +1,29 @@
+/* CRM type scale: one smaller, calmer set of sizes for everything inside the CRM.
+   The base was the site's 17px body text, so any element without its own size (lists, paragraphs,
+   table cells of the older panels) came out large next to the 13–14px kit components. Loaded last. */
+.crm-layout { font-size: var(--ui-fs-3); line-height: 1.55; }
+.crm-layout :is(p, li, dd, dt, td, th, label, summary, small) { line-height: 1.55; }
+.crm-layout small { font-size: var(--ui-fs-1); }
+.crm-content-area h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: 0; }
+.crm-content-area h2 { font-size: 1.0625rem; font-weight: 700; letter-spacing: 0; }
+.crm-content-area h3 { font-size: 0.9375rem; font-weight: 650; letter-spacing: 0; }
+.crm-content-area h4 { font-size: 0.875rem; font-weight: 600; letter-spacing: 0; }
+.crm-content-area .ui-page-head__title { font-size: 1.25rem; }
+.crm-content-area .ui-page-head__desc { font-size: var(--ui-fs-2); }
+
+/* Phones: form fields stay 16px so iOS Safari does not zoom in on focus */
+@media (max-width: 1023px), (pointer: coarse) {
+  .crm-layout :is(input, select, textarea) { font-size: 16px; }
+}
+
+/* Findings in the reports: calm rows, not big alert boxes */
+.crm-layout .pr-findings li { padding: var(--ui-s-2) var(--ui-s-3); font-size: var(--ui-fs-2); border-radius: var(--ui-r-md); }
+
+/* A project's location: at most two lines, the full text on hover */
+.crm-proj__loc { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 260px; font-size: var(--ui-fs-1); }
+
+/* Meta ↔ CRM campaign pairing list */
+.crm-layout .cr-pull__more { font-size: var(--ui-fs-2); }
+.crm-layout .cr-pull__more summary { font-size: var(--ui-fs-2); font-weight: 600; min-height: 40px; }
+.crm-layout .cr-pull__more p { margin: 0 0 var(--ui-s-2); color: var(--ui-text-3); }
+.crm-layout .cr-pair li { padding-block: 2px; }

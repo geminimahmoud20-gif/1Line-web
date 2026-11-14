@@ -210,7 +210,7 @@ export default function AgentCommissionLeaderboard({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: 'var(--crm-text-xl)',
+                  fontSize: 'var(--crm-text-lg)',
                   boxShadow: 'var(--shadow-sm)',
                   flexShrink: 0
                 }}>
@@ -219,7 +219,7 @@ export default function AgentCommissionLeaderboard({
 
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <strong style={{ fontSize: 'var(--crm-text-lg)', color: 'var(--crm-ink)' }}>{(isAr ? agent.title_ar : agent.title_en) || agent.name}</strong>
+                    <strong style={{ fontSize: 'var(--crm-text-md)', color: 'var(--crm-ink)' }}>{(isAr ? agent.title_ar : agent.title_en) || agent.name}</strong>
                     {index === 0 && agent.closedVolume > 0 && (
                       <span className="badge" style={{ background: 'var(--crm-accent-soft)', color: 'var(--crm-accent-text)', fontWeight: 'bold', border: '1px solid rgba(179, 138, 69, 0.25)' }}>
                         {isAr ? 'متصدر المبيعات' : 'Top Closer'}
@@ -235,7 +235,7 @@ export default function AgentCommissionLeaderboard({
                   <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)', display: 'block' }}>
                     {isAr ? 'المبيعات المنفذة:' : 'Closed Deals:'}
                   </span>
-                  <strong style={{ fontSize: 'var(--crm-text-lg)', color: 'var(--crm-positive)' }}>
+                  <strong style={{ fontSize: 'var(--crm-text-md)', color: 'var(--crm-positive)' }}>
                     {(agent.closedVolume / 1000000).toFixed(2)} {isAr ? 'مليون ج.م' : 'M EGP'}
                   </strong>
                 </div>
@@ -250,7 +250,7 @@ export default function AgentCommissionLeaderboard({
                   <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-accent-text)', display: 'block', fontWeight: 'bold' }}>
                     {isAr ? 'العمولة المستحقة (' + commissionRate + '%):' : 'Earned Commission:'}
                   </span>
-                  <strong style={{ fontSize: 'var(--crm-text-lg)', color: 'var(--crm-accent-text)' }}>
+                  <strong style={{ fontSize: 'var(--crm-text-md)', color: 'var(--crm-accent-text)' }}>
                     {agent.earnedCommission.toLocaleString('en-US')} ج.م
                   </strong>
                 </div>
