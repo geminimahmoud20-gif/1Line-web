@@ -943,6 +943,7 @@ export const CrmAdminPanel = ({
             areaNames={Object.fromEntries(getAreas().map((a) => [a.id, a.name_ar || a.id]))}
             lang={lang}
             onOpenTab={onSwitchTab}
+            onOpenLead={(l) => setQuickDrawerLead(l)}
           />
         ) : (
           <div className="crm-table-container">{isAr ? 'مركز التقارير للمدير العام ومديري المبيعات.' : 'Reports are for admins and sales managers.'}</div>
