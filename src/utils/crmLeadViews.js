@@ -164,6 +164,17 @@ export function isSellerLead(l = {}) {
   );
 }
 
+/**
+ * Someone who wants to buy: not an owner selling, an investor, a broker, a client account or a visit request
+ * (those have their own chips). The «شراء» chip used to take only type 'buyer', so a client entered or imported as a
+ * «طلب خاص» (type 'request'), a website demand or with no type at all never showed up under it.
+ */
+export function isBuyerLead(l = {}) {
+  const type = (l.type || '').toLowerCase();
+  if (type === 'investor' || type === 'broker') return false;
+  return !isSellerLead(l) && !isViewingLead(l) && !isAccountLead(l);
+}
+
 export function isAccountLead(l = {}) {
   const type = (l.type || '').toLowerCase();
   const source = (l.source || '').toLowerCase();
@@ -462,7 +473,7 @@ export function filterLeads(leads = [], opts = {}) {
     } else if (leadFilter === 'account') {
       if (!isAccountLead(l)) return false;
     } else if (leadFilter === 'buyer') {
-      if (l.type !== 'buyer' || isViewingLead(l) || isAccountLead(l)) return false;
+      if (!isBuyerLead(l)) return false;
     } else if (leadFilter !== 'all' && l.type !== leadFilter) {
       return false;
     }

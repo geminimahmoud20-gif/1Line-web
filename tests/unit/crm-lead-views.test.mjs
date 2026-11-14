@@ -202,3 +202,11 @@ test('tapping call or WhatsApp on an uncontacted client records the first contac
   assert.equal(firstContactPatch({ status: 'negotiating' }).status, undefined);
   assert.equal(firstContactPatch(null), null);
 });
+
+test('the «شراء» filter takes every client who wants to buy, not only those typed exactly "buyer"', async () => {
+  const { isBuyerLead } = await import('../../src/utils/crmLeadViews.js');
+  const yes = [{ type: 'buyer' }, { type: 'request' }, { type: 'buyer_demand' }, { type: '' }, {}];
+  const no = [{ type: 'seller' }, { type: 'valuation' }, { type: 'investor' }, { type: 'broker' }, { type: 'account' }, { type: 'viewing_request' }, { type: 'buyer', details: { askingPrice: 1e6 } }, { type: 'request', notes: 'عايز معاينة' }];
+  for (const l of yes) assert.equal(isBuyerLead(l), true, JSON.stringify(l));
+  for (const l of no) assert.equal(isBuyerLead(l), false, JSON.stringify(l));
+});

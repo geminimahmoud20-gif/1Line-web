@@ -13,7 +13,7 @@ import { getAreas } from '../../utils/areasData';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import LostReasonModal from './LostReasonModal';
 import MergeLeadsModal from './MergeLeadsModal';
-import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, responseSlaMs, escalationLevel, isOverdue, isDueToday, isUnassigned, isStale, localDayKey, getLeadVisitDate, getLeadVisitSlot, isViewingLead, isSellerLead, isAccountLead } from '../../utils/crmLeadViews';
+import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, responseSlaMs, escalationLevel, isOverdue, isDueToday, isUnassigned, isStale, localDayKey, getLeadVisitDate, getLeadVisitSlot, isViewingLead, isSellerLead, isAccountLead, isBuyerLead } from '../../utils/crmLeadViews';
 import { useProperties } from '../../context/PropertiesContext';
 import LeadTableRowActions from './LeadTableRowActions';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
@@ -201,7 +201,7 @@ export default function LeadsTab({
       sellerUnanswered: sellers.filter((l) => (!l.status || l.status === 'new') && !l.firstContactedAt).length,
       accounts: accounts.length,
       accountUnanswered: accounts.filter((l) => (!l.status || l.status === 'new') && !l.firstContactedAt).length,
-      buyers: open.filter((l) => l.type === 'buyer' && !isViewingLead(l) && !isAccountLead(l)).length,
+      buyers: open.filter(isBuyerLead).length,
       awaiting: open.filter((l) => waitingMs(l, now) > 0).length,
       late: open.filter((l) => waitingMs(l, now) > responseSlaMs(l)).length,
       dupes: open.filter((l) => duplicateIds.has(l.id)).length,
