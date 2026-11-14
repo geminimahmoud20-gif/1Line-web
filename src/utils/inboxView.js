@@ -5,17 +5,18 @@ import { DESK_BY_ROLE } from './rbacRules.js';
 
 /** The stages the inbox itself moves a request through; later ones belong to the pipeline */
 export const INBOX_STAGES = [
-  { id: 'new', label_ar: 'جديد', label_en: 'New' },
-  { id: 'contacted', label_ar: 'اتصلنا', label_en: 'Contacted' },
-  { id: 'site_visit', label_ar: 'معاينة', label_en: 'Site visit' }
+  { id: 'new', label_ar: 'عميل محتمل', label_en: 'Lead' },
+  { id: 'contacted', label_ar: 'مؤهل', label_en: 'Qualified' },
+  { id: 'site_visit', label_ar: 'اجتماع / معاينة', label_en: 'Meeting / viewing' }
 ];
 export const isInboxStage = (status) => INBOX_STAGES.some((s) => s.id === (status || 'new'));
 
 const PIPELINE_LABELS = {
   negotiating: { ar: 'تفاوض', en: 'Negotiation' },
-  closing: { ar: 'توقيع وحجز', en: 'Closing' },
-  closed: { ar: 'صفقة ناجحة', en: 'Won' },
-  lost: { ar: 'خسرناه', en: 'Lost' }
+  closing: { ar: 'إغلاق (توقيع وحجز)', en: 'Closing' },
+  closed: { ar: 'إغلاق', en: 'Closed' },
+  lost: { ar: 'خسرناه', en: 'Lost' },
+  inactive: { ar: 'غير متفاعل', en: 'Unresponsive' }
 };
 /** Name of a stage the inbox can't set (shown instead of the stage buttons) */
 export const pipelineStageLabel = (status, isAr = true) => {
@@ -50,7 +51,7 @@ export function isLeadClaimedByMe(lead, uid, staffName) {
 }
 
 /** Archived, won and lost requests are finished: they never show in the inbox */
-export const isInboxActive = (lead) => Boolean(lead) && !lead.isArchived && lead.status !== 'closed' && lead.status !== 'lost';
+export const isInboxActive = (lead) => Boolean(lead) && !lead.isArchived && lead.status !== 'closed' && lead.status !== 'lost' && lead.status !== 'inactive';
 
 /** Still needs someone: nobody took it yet, or it was taken but nobody has called */
 export const needsAction = (lead) => isLeadUnclaimed(lead) || (lead.status || 'new') === 'new';

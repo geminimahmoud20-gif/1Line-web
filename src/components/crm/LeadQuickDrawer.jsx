@@ -7,7 +7,8 @@ import { trackEvent } from '../../utils/visitorTracker';
 import LeadDrawerOverview from './lead-profile/LeadDrawerOverview';
 import LeadDrawerMatching from './lead-profile/LeadDrawerMatching';
 import LeadDrawerBuyers from './lead-profile/LeadDrawerBuyers';
-import { stagesFor, buyersForSeller } from '../../utils/leadPipeline';
+import { boardStagesFor, buyersForSeller } from '../../utils/leadPipeline';
+import { boardColumnOf } from '../../utils/dealStages';
 import LostReasonModal from './LostReasonModal';
 import { validateStageTransition } from '../../services/stateMachineEngine';
 import StageDeliverableModal from './StageDeliverableModal';
@@ -127,10 +128,12 @@ export default function LeadQuickDrawer({
 
   // Stage Pipeline Steps
   // A buyer's or an owner's stages (same ids, different names and rules)
-  const STAGE_TONES = { new: 'info', contacted: 'primary', site_visit: 'warning', negotiating: 'warning', closing: 'success', closed: 'success', lost: 'danger' };
-  const stages = [...stagesFor(lead), { id: 'lost', label_ar: 'خسرانة', label_en: 'Lost' }].map((st) => ({ ...st, tone: STAGE_TONES[st.id] }));
+  const STAGE_TONES = { new: 'info', contacted: 'primary', site_visit: 'warning', negotiating: 'warning', closed: 'success', inactive: 'neutral', lost: 'danger' };
+  const stages = boardStagesFor(lead).map((st) => ({ ...st, tone: STAGE_TONES[st.id] }));
 
-  const currentStageIndex = stages.findIndex(s => s.id === (lead.status || 'new'));
+  // The old «توقيع وحجز» step sits in the «إغلاق» chip (boardColumnOf)
+  const currentColumn = boardColumnOf(lead.status);
+  const currentStageIndex = stages.findIndex(s => s.id === currentColumn);
 
   const handleUpdateStatus = (newStatus, lostFields) => {
     if (!onUpdateLead) return;
@@ -403,12 +406,12 @@ export default function LeadQuickDrawer({
             </div>
             <div className="crm-ld__stages">
               {stages.slice(0, 6).map((st) => (
-                <Chip key={st.id} pressed={(lead.status || 'new') === st.id} onClick={() => handleUpdateStatus(st.id)}>
+                <Chip key={st.id} pressed={currentColumn === st.id} onClick={() => handleUpdateStatus(st.id)}>
                   {isAr ? st.label_ar : st.label_en}
                 </Chip>
               ))}
               <Chip className="crm-ld__lost" pressed={lead.status === 'lost'} onClick={() => handleUpdateStatus('lost')}>
-                {isAr ? 'خسرانة' : 'Lost'}
+                {isAr ? 'خسارة' : 'Lost'}
               </Chip>
             </div>
           </section>

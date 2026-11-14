@@ -37,14 +37,15 @@ export function mapLeadType(value) {
 export function mapLeadStatus(value) {
   const t = normKey(value);
   if (!t) return null;
-  if (['new', 'contacted', 'site visit', 'negotiating', 'closing', 'closed', 'lost'].includes(t)) return t.replace(' ', '_');
-  if (/خسر|خسران|مفقود|ملغي|لاغي|lost|cancel/.test(t)) return 'lost';
-  if (/ناجح|تم البيع|مغلق|closed|won|تمت/.test(t)) return 'closed';
+  if (['new', 'contacted', 'site visit', 'negotiating', 'closing', 'closed', 'lost', 'inactive'].includes(t)) return t.replace(' ', '_');
+  if (/خسر|خسار|خسران|مفقود|ملغي|لاغي|lost|cancel/.test(t)) return 'lost';
+  if (/غير متفاعل|غير متفاعله|inactive|unrespons|لا يرد/.test(t)) return 'inactive';
   if (/توقيع|حجز|عربون|closing|deposit/.test(t)) return 'closing';
+  if (/ناجح|تم البيع|مغلق|اغلاق|closed|won|تمت/.test(t)) return 'closed';
   if (/تفاوض|negotiat/.test(t)) return 'negotiating';
-  if (/معاينه|زياره|visit/.test(t)) return 'site_visit';
-  if (/تواصل|اتصال|متابعه|contacted|follow/.test(t)) return 'contacted';
-  if (/جديد|new/.test(t)) return 'new';
+  if (/اجتماع|معاينه|زياره|visit|meeting/.test(t)) return 'site_visit';
+  if (/موهل|qualified|تواصل|اتصال|متابعه|contacted|follow/.test(t)) return 'contacted';
+  if (/جديد|محتمل|new|lead/.test(t)) return 'new';
   return null;
 }
 
@@ -100,7 +101,7 @@ export function rowToLead(row, { areas = [], now = new Date() } = {}) {
 /** Export: one lead → { [label]: value } */
 export function leadToRow(l) {
   const typeLabel = { buyer: 'مشتري', seller: 'بائع / مالك', broker: 'وسيط', investor: 'مستثمر', request: 'طلب خاص' };
-  const statusLabel = { new: 'جديد', contacted: 'تم التواصل', site_visit: 'معاينة', negotiating: 'تفاوض', closing: 'توقيع وحجز', closed: 'صفقة ناجحة', lost: 'صفقة خسرانة' };
+  const statusLabel = { new: 'عميل محتمل', contacted: 'مؤهل', site_visit: 'اجتماع / معاينة', negotiating: 'تفاوض', closing: 'إغلاق (توقيع وحجز)', closed: 'إغلاق', lost: 'خسارة', inactive: 'غير متفاعل' };
   const created = l.createdAt?.toDate ? l.createdAt.toDate().toISOString() : (l.createdAt || l.timestamp || '');
   const values = {
     name: l.name || '',

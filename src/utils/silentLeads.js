@@ -7,7 +7,7 @@ import { toMs, leadCreatedMs } from './crmLeadViews.js';
 
 const DAY = 86_400_000;
 export const SILENT_DAYS = 7;
-const CLOSED = new Set(['closed', 'lost']);
+const CLOSED = new Set(['closed', 'lost', 'inactive']);
 
 /** When someone last did something with the client (ms), or when he arrived */
 export const lastTouchMs = (l) => Math.max(toMs(l?.lastActivityAt), toMs(l?.lastContactedAt), toMs(l?.updatedAt), 0) || leadCreatedMs(l) || 0;

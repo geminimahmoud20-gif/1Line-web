@@ -21,7 +21,7 @@ import { leadScore, LEAD_SCORE_HIGH } from '../../utils/crmLeadViews';
 import { PageHeader, Button, Chip, Select, Badge, Avatar, EmptyState } from '../ui';
 import { cx } from '../ui/cx';
 import './leads-tab.css';
-const MORE_FILTER_KEYS = ['qualified', 'account', 'stale', 'dupes', 'archived', 'won', 'lost'];
+const MORE_FILTER_KEYS = ['qualified', 'account', 'stale', 'dupes', 'archived', 'won', 'inactive', 'lost'];
 
 const COLUMN_OPTIONS = [
   { key: 'requirements', ar: 'المواصفات والميزانية', en: 'Requirements & budget' },
@@ -32,13 +32,14 @@ const COLUMN_OPTIONS = [
 ];
 
 const STAGE_OPTIONS = [
-  { value: 'new', ar: 'جديد', en: 'New' },
-  { value: 'contacted', ar: 'اتصلنا', en: 'Contacted' },
-  { value: 'site_visit', ar: 'معاينة', en: 'Viewing' },
-  { value: 'negotiating', ar: 'تفاوض', en: 'Negotiating' },
-  { value: 'closing', ar: 'توقيع وحجز', en: 'Closing' },
-  { value: 'closed', ar: 'صفقة ناجحة', en: 'Closed won' },
-  { value: 'lost', ar: 'خسرانة', en: 'Lost' }
+  { value: 'new', ar: 'عميل محتمل', en: 'Lead' },
+  { value: 'contacted', ar: 'مؤهل', en: 'Qualified' },
+  { value: 'site_visit', ar: 'اجتماع / معاينة', en: 'Meeting / viewing' },
+  { value: 'negotiating', ar: 'تفاوض', en: 'Negotiation' },
+  { value: 'closing', ar: 'إغلاق (توقيع وحجز)', en: 'Closing (signing & deposit)' },
+  { value: 'closed', ar: 'إغلاق', en: 'Closed' },
+  { value: 'inactive', ar: 'غير متفاعل', en: 'Unresponsive' },
+  { value: 'lost', ar: 'خسارة', en: 'Lost' }
 ];
 
 const TEMPERATURES = {
@@ -212,6 +213,7 @@ export default function LeadsTab({
       stale: open.filter((l) => isStale(l, now)).length,
       lost: leads.filter((l) => !l.isArchived && l.status === 'lost').length,
       won: leads.filter((l) => !l.isArchived && l.status === 'closed').length,
+      inactive: leads.filter((l) => !l.isArchived && l.status === 'inactive').length,
       archived: leads.filter((l) => l.isArchived).length
     };
   }, [leads, duplicateIds, now]);
@@ -347,7 +349,7 @@ export default function LeadsTab({
         }, l.version);
       }
     }
-    const stageNames = { new: 'طلب جديد', contacted: 'تم التواصل', site_visit: 'معاينة', negotiating: 'تفاوض', closing: 'توقيع وحجز', closed: 'ناجحة', lost: 'خسرانة' };
+    const stageNames = Object.fromEntries(STAGE_OPTIONS.map((st) => [st.value, st.ar]));
     triggerToast?.(isAr ? `تم نقل ${selectedLeadIds.length} عميل إلى مرحلة: ${stageNames[newStatus] || newStatus}` : `Updated status for ${selectedLeadIds.length} leads`, 'success');
   };
 
@@ -410,7 +412,7 @@ export default function LeadsTab({
           <span className="crm-leads__stats">
             <span><b>{leads.length}</b> {isAr ? 'عميل' : 'clients'}</span>
             {counts.archived > 0 && <span><b>{counts.archived}</b> {isAr ? 'مؤرشف' : 'archived'}</span>}
-            {counts.lost > 0 && <span><b>{counts.lost}</b> {isAr ? 'خسرانة' : 'lost'}</span>}
+            {counts.lost > 0 && <span><b>{counts.lost}</b> {isAr ? 'خسارة' : 'lost'}</span>}
             <span><b>{filteredLeads.length}</b> {isAr ? 'ظاهر بالفلتر' : 'shown'}</span>
             <span>{isAr ? 'نسبة الإغلاق' : 'Win rate'} <b><bdi>{kpiStats.winRate}%</bdi></b></span>
           </span>
@@ -478,13 +480,14 @@ export default function LeadsTab({
           onChange={(e) => e.target.value && setLeadFilter(e.target.value)}
           placeholder={isAr ? 'حالات تانية' : 'More views'}
           options={[
-            { value: 'qualified', label: isAr ? 'مؤهلين للشراء' : 'Qualified' },
+            { value: 'qualified', label: isAr ? 'جدية عالية' : 'High score' },
             { value: 'account', label: isAr ? `حسابات جديدة (${counts.accounts})` : `Accounts (${counts.accounts})` },
             ...(counts.stale > 0 ? [{ value: 'stale', label: isAr ? `راكدين (${counts.stale})` : `Stale (${counts.stale})` }] : []),
             ...(counts.dupes > 0 ? [{ value: 'dupes', label: isAr ? `مكررين بالرقم (${counts.dupes})` : `Duplicates (${counts.dupes})` }] : []),
             { value: 'archived', label: isAr ? `مؤرشفين (${counts.archived})` : `Archived (${counts.archived})` },
             { value: 'won', label: isAr ? `صفقات ناجحة (${counts.won})` : `Won (${counts.won})` },
-            { value: 'lost', label: isAr ? `صفقات خسرانة (${counts.lost})` : `Lost (${counts.lost})` }
+            { value: 'inactive', label: isAr ? `غير متفاعل (${counts.inactive})` : `Unresponsive (${counts.inactive})` },
+            { value: 'lost', label: isAr ? `خسارة (${counts.lost})` : `Lost (${counts.lost})` }
           ]}
         />
       </div>

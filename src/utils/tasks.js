@@ -141,7 +141,7 @@ export const dueLabel = (task, isAr = true, now = Date.now()) => {
   return `${day.slice(5).replace('-', '/')}${time}`;
 };
 
-const ENDED = new Set(['closed', 'lost']);
+const ENDED = new Set(['closed', 'lost', 'inactive']);
 /** Open tasks of a client who has since closed or been lost: nobody should keep chasing them */
 export function tasksOfEndedLeads(tasks = [], leads = []) {
   const ended = new Set(leads.filter((l) => l && ENDED.has(l.status)).map((l) => l.id));

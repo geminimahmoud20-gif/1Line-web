@@ -92,7 +92,7 @@ export function findMatchingClientsForProperty(property, leads = [], demands = [
 
   // 1. CRM leads: active buyers only (an owner who came to sell is not a buyer)
   leads.forEach((lead) => {
-    if (lead.status === 'closed' || lead.status === 'lost' || lead.isArchived) return;
+    if (lead.status === 'closed' || lead.status === 'lost' || lead.status === 'inactive' || lead.isArchived) return;
     if (isSellerLead(lead)) return;
     const details = lead.details || {};
     const contactPhone = lead.whatsapp || lead.phone;

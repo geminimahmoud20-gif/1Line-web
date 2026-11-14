@@ -72,6 +72,15 @@ export const STAGE_DEFINITIONS = {
     requiredDeliverable: 'تسجيل السعر المنفذ وفاتورة العمولة وجدول التحصيل',
     handoffTo: 9
   },
+  inactive: {
+    id: 'inactive',
+    title_ar: 'غير متفاعل',
+    title_en: 'Unresponsive',
+    ownerDept: 'sales',
+    slaHours: null,
+    requiredDeliverable: null,
+    handoffTo: null
+  },
   lost: {
     id: 'lost',
     title_ar: 'صفقة خاسرة / مغلقة',
@@ -206,8 +215,22 @@ export function validateStageTransition(lead, targetStageId, context = {}) {
     }
   }
 
-  // 7. Transition to 'closed' requires Gate 3 checklist passed and executed price
+  // 7. Transition to 'closed' requires Gate 3 checklist passed and executed price.
+  //    «إغلاق» is one stage now: a deal that did not go through the old «closing» step still has to show
+  //    the Gate 2 checklist and the written offer, so no control is lost by skipping that step.
   if (targetStageId === 'closed') {
+    if (currentStageId !== 'closing') {
+      const gate2Passed = lead.gate2Passed || context.gate2Passed;
+      const hasOffer = lead.writtenOffer || context.writtenOffer;
+      if (!gate2Passed || !hasOffer) {
+        return {
+          allowed: false,
+          deliverableKey: 'gate2_and_written_offer',
+          missingDeliverable: 'المخرج الإلزامي: يلزم استيفاء بنود البوابة 2 (تأكيد السعر والتوفر ومذكرة العقار) ووجود عرض شراء مكتوب.',
+          reason: 'Requires Gate 2 checklist and written purchase offer'
+        };
+      }
+    }
     const gate3Passed = lead.gate3Passed || context.gate3Passed;
     const executedPrice = lead.executedPrice || context.executedPrice;
     if (!gate3Passed || !executedPrice || executedPrice <= 0) {

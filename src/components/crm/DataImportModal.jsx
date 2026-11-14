@@ -10,7 +10,7 @@ import './data-transfer.css';
 const TYPE_AR = { apartment: 'شقة', villa: 'فيلا / منزل', commercial: 'تجاري', office: 'إداري / طبي', land: 'أرض' };
 const STATUS_AR = { published: 'منشور', hidden: 'مخفي', under_negotiation: 'تفاوض', sold: 'مباع' };
 const LEAD_TYPE_AR = { buyer: 'مشتري', seller: 'بائع / مالك', broker: 'وسيط', investor: 'مستثمر', request: 'طلب خاص' };
-const LEAD_STATUS_AR = { new: 'جديد', contacted: 'تم التواصل', site_visit: 'معاينة', negotiating: 'تفاوض', closing: 'توقيع وحجز', closed: 'صفقة ناجحة' };
+const LEAD_STATUS_AR = { new: 'عميل محتمل', contacted: 'مؤهل', site_visit: 'اجتماع / معاينة', negotiating: 'تفاوض', closing: 'إغلاق (توقيع وحجز)', closed: 'إغلاق', lost: 'خسارة', inactive: 'غير متفاعل' };
 const fmt = (n) => (Number(n) ? Number(n).toLocaleString('en-US') : '—');
 
 const ERRORS = {
