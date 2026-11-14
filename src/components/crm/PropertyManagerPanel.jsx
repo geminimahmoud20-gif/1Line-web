@@ -763,7 +763,7 @@ export default function PropertyManagerPanel({
       )}
 
       {/* What visitors see on the homepage right now: featured slots, periods, order (folded by default) */}
-      <Card padding="compact" className="crm-props__slots">
+      <Card padding="compact" className={`crm-props__slots ${homeSummary.live === 0 && homeSummary.blocked.length === 0 ? 'is-empty' : ''}`}>
         <button
           type="button"
           className="crm-props__slots-toggle"

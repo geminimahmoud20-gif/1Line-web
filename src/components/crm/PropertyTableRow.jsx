@@ -234,6 +234,11 @@ export default function PropertyTableRow({
       <td className="crm-prow__status">
         {isTrash ? (
           <Badge tone="danger">{isAr ? 'في المهملات' : 'In trash'}</Badge>
+        ) : heldBack ? (
+          /* Not on the site whatever its saved status says: show that instead of a green «معروض» */
+          <Badge tone={prop.approval === 'rejected' ? 'danger' : 'warning'} icon={prop.approval === 'rejected' ? <X size={11} aria-hidden="true" /> : <Hourglass size={11} aria-hidden="true" />}>
+            {prop.approval === 'rejected' ? (isAr ? 'مرفوضة' : 'Rejected') : (isAr ? 'مستنية موافقة' : 'Awaiting approval')}
+          </Badge>
         ) : (
           <Select
             hideLabel
@@ -248,7 +253,7 @@ export default function PropertyTableRow({
       </td>
 
       <td className="crm-prow__cell-actions">
-        <div className="crm-prow__actions">
+        <div className={`crm-prow__actions ${isTrash ? 'is-trash' : ''}`}>
         {isTrash ? (
           <>
             <Button size="sm" variant="secondary" icon={<RotateCcw size={14} aria-hidden="true" />} disabled={readOnly} onClick={() => handleRestore(prop.id)}>
