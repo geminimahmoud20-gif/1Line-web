@@ -722,9 +722,7 @@ export default function PropertyManagerPanel({
     <div className="property-manager-panel crm-props">
       <PageHeader
         title={isAr ? 'العقارات' : 'Listings'}
-        description={isAr
-          ? `${activeCount} معروض · ${hiddenCount} للمراجعة · ${negotiationCount} تحت التفاوض${soldCount ? ` · ${soldCount} اتباع` : ''}`
-          : `${activeCount} live · ${hiddenCount} hidden · ${negotiationCount} in negotiation${soldCount ? ` · ${soldCount} sold` : ''}`}
+        description={isAr ? `${properties.length - trashCount} وحدة` : `${properties.length - trashCount} listings`}
         actions={(
           <>
             <Button icon={<Plus size={16} aria-hidden="true" />} onClick={handleOpenAdd} disabled={readOnly} title={readOnly ? (isAr ? 'دورك للعرض فقط' : 'View-only role') : undefined}>
@@ -858,16 +856,18 @@ export default function PropertyManagerPanel({
           {/* Status tabs, then one row: search, type, area, sort, more filters */}
           <div className="crm-props__chips crm-props__status" role="group" aria-label={isAr ? 'حالة العرض' : 'Display status'}>
             <Chip pressed={statusFilter === 'all'} count={properties.length - trashCount} onClick={() => setStatusFilter('all')}>{isAr ? 'الكل' : 'All'}</Chip>
-            <Chip pressed={statusFilter === 'published'} count={activeCount} onClick={() => setStatusFilter('published')}>{isAr ? 'معروضة' : 'Live'}</Chip>
-            <Chip pressed={statusFilter === 'hidden'} count={hiddenCount} onClick={() => setStatusFilter('hidden')}>{isAr ? 'مخفية / للمراجعة' : 'Hidden / to review'}</Chip>
-            <Chip pressed={statusFilter === 'under_negotiation'} count={negotiationCount} onClick={() => setStatusFilter('under_negotiation')}>{isAr ? 'تحت التفاوض' : 'Negotiation'}</Chip>
-            <Chip pressed={statusFilter === 'sold'} count={soldCount} onClick={() => setStatusFilter('sold')}>{isAr ? 'اتباعت' : 'Sold'}</Chip>
-            <Chip pressed={statusFilter === 'trash'} count={trashCount} onClick={() => setStatusFilter('trash')}>{isAr ? 'المهملات' : 'Trash'}</Chip>
+            {/* What needs the manager's decision comes first, with a warning tone */}
             {(approvalCount > 0 || statusFilter === 'approval') && (
-              <Chip pressed={statusFilter === 'approval'} count={approvalCount} onClick={() => setStatusFilter('approval')}>
+              <Chip className="is-warn" pressed={statusFilter === 'approval'} count={approvalCount} onClick={() => setStatusFilter('approval')}>
                 {canApprove ? (isAr ? 'مستنية موافقتك' : 'Awaiting your approval') : (isAr ? 'بانتظار موافقة المدير' : 'Awaiting approval')}
               </Chip>
             )}
+            <Chip pressed={statusFilter === 'published'} count={activeCount} onClick={() => setStatusFilter('published')}>{isAr ? 'معروضة' : 'Live'}</Chip>
+            <Chip pressed={statusFilter === 'hidden'} count={hiddenCount} onClick={() => setStatusFilter('hidden')}>{isAr ? 'مخفية / للمراجعة' : 'Hidden / to review'}</Chip>
+            <Chip className={negotiationCount === 0 ? 'is-zero' : undefined} pressed={statusFilter === 'under_negotiation'} count={negotiationCount} onClick={() => setStatusFilter('under_negotiation')}>{isAr ? 'تحت التفاوض' : 'Negotiation'}</Chip>
+            <Chip className={soldCount === 0 ? 'is-zero' : undefined} pressed={statusFilter === 'sold'} count={soldCount} onClick={() => setStatusFilter('sold')}>{isAr ? 'اتباعت' : 'Sold'}</Chip>
+            {/* The trash is not a status to work in: kept at the far end, quiet */}
+            <Chip className="crm-props__trash" icon={<Trash2 size={13} aria-hidden="true" />} pressed={statusFilter === 'trash'} count={trashCount} onClick={() => setStatusFilter('trash')}>{isAr ? 'المهملات' : 'Trash'}</Chip>
             {statusFilter === 'trash' && trashCount > 0 && !readOnly && (
               <Button size="sm" variant="ghost" icon={<Trash2 size={14} aria-hidden="true" />} onClick={handleEmptyTrash}>
                 {isAr ? `فضّي المهملات (${trashCount})` : `Empty trash (${trashCount})`}

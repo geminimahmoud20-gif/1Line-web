@@ -9,6 +9,9 @@ import { loadAlertsSeenAt, saveAlertsSeenAt } from '../../firebaseLazy';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+// The command palette key: ⌘K on a Mac, Ctrl K elsewhere (the title already says Ctrl + K)
+const SHORTCUT_LABEL = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent || '') ? '⌘K' : 'Ctrl K';
+
 export default function CrmTopbar({
   clientDownloads = [],
   intakeRequests = [],
@@ -234,7 +237,7 @@ export default function CrmTopbar({
             title={isAr ? 'لوحة الأوامر السريعة (Ctrl + K)' : 'Command Palette (Ctrl + K)'}
             className="crm-topbar-kbd-pill"
           >
-            ⌘K
+            {SHORTCUT_LABEL}
           </button>
         </div>
 

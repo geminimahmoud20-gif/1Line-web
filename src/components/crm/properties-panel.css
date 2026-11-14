@@ -172,3 +172,13 @@
 .crm-prow__approval { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
 .crm-prow__approval small { font-size: var(--ui-fs-1); color: var(--ui-text-2); }
 .crm-prow__approval .ui-btn { min-height: 32px; }
+
+/* Status chips: what needs a decision first (amber), empty ones dimmed, the trash quiet at the far end */
+.crm-props__chips .ui-chip.is-warn { border-color: var(--ui-warning); background: var(--ui-warning-tint); color: var(--ui-text); font-weight: var(--ui-fw-semibold); }
+.crm-props__chips .ui-chip.is-warn[aria-pressed='true'] { background: var(--ui-warning); border-color: var(--ui-warning); color: var(--ui-on-primary); }
+.crm-props__chips .ui-chip.is-zero:not([aria-pressed='true']) { opacity: 0.55; }
+.crm-props__chips .ui-chip.crm-props__trash { margin-inline-start: auto; border-style: dashed; color: var(--ui-text-3); }
+.crm-props__chips .ui-chip.crm-props__trash[aria-pressed='true'] { color: var(--ui-on-primary); border-style: solid; }
+/* The owner-form link is a small action, not a full-width box */
+.crm-props > .ssl { align-self: flex-start; margin-top: 0; }
+.crm-props > .ssl .ssl-toggle { min-height: 40px; }
