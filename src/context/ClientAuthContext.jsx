@@ -147,9 +147,9 @@ export function ClientAuthProvider({
       throw new Error(isAr ? 'يرجى إدخال اسم صحيح لا يقل عن 3 أحرف' : 'Please enter a valid full name (at least 3 characters)');
     }
 
-    // 2. Validate Email Address Format
+    // 2. Email is optional now (name + a valid WhatsApp number are enough); check its format only when given
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!cleanEmail || !emailRegex.test(cleanEmail)) {
+    if (cleanEmail && !emailRegex.test(cleanEmail)) {
       throw new Error(isAr ? 'يرجى إدخال بريد إلكتروني صحيح (مثال: name@domain.com)' : 'Please enter a valid email address');
     }
 
