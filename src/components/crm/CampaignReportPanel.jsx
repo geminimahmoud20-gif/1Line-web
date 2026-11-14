@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Megaphone, Copy, Link2 } from 'lucide-react';
+import { Megaphone, Copy, Link2, RefreshCw } from 'lucide-react';
 import { campaignReport, campaignTotals, PERIODS } from '../../utils/campaignReport';
 import { LOST_REASONS } from '../../utils/crmLeadViews';
-import { loadCampaignSpend, saveCampaignSpend } from '../../firebaseLazy';
+import { loadCampaignSpend, saveCampaignSpend, pullMetaSpend } from '../../firebaseLazy';
 import { EmptyState } from '../ui';
 import { LANDINGS, PLATFORMS, buildUtmLink, slugify } from '../../utils/utmLinks';
 import { SITE_URL } from '../../config/siteConfig';
+import { applyPull } from '../../../api/_meta-spend-core.js';
 import './campaign-report.css';
 
 const SPEND_KEY = 'crm_campaign_spend_v1';
@@ -88,6 +89,47 @@ export default function CampaignReportPanel({ leads = [], lang = 'ar', triggerTo
     saveTimer.current = setTimeout(() => { saveCampaignSpend(next).then((ok) => setShared(ok)).catch(() => setShared(false)); }, 800);
   };
 
+  // Facebook / Instagram spend straight from the ad account (api/ads-spend.js), matched to the report's own
+  // campaigns and ads; what matches nothing is listed so the link names can be fixed
+  const [pulling, setPulling] = useState(false);
+  const [pull, setPull] = useState(null); // { ok, text, unmatched, skipped }
+  const pullSpend = async () => {
+    setPulling(true);
+    setPull(null);
+    const r = await pullMetaSpend();
+    setPulling(false);
+    if (!r.ok) {
+      const text = {
+        'not-configured': L(`السحب التلقائي مش متفعّل لسه: ضيف في Vercel المتغيّرين META_ADS_TOKEN (توكن فيه صلاحية ads_read) و META_AD_ACCOUNT_ID (رقم الحساب الإعلاني)${r.token === false ? ' — التوكن ناقص' : ''}${r.account === false ? ' — رقم الحساب ناقص' : ''}.`, 'Not set up: add META_ADS_TOKEN and META_AD_ACCOUNT_ID in Vercel.'),
+        'bad-token': L('توكن ميتا مرفوض أو منتهي. اعمل توكن جديد (يفضّل System User) وحدّثه في Vercel.', 'Meta rejected the token.'),
+        forbidden: L('السحب لمديري المبيعات والمدير العام بس.', 'Managers only.'),
+        'no-api': L('السحب شغال على الموقع الحقيقي بس.', 'Works on the live site only.'),
+        network: L('مفيش نت. جرّب تاني.', 'Offline.')
+      }[r.error] || L(`ميتا ردّت بخطأ${r.detail ? `: ${r.detail}` : ''}. جرّب بعد شوية.`, 'Meta returned an error.');
+      setPull({ ok: false, text });
+      return;
+    }
+    if (r.currency && r.currency !== 'EGP') {
+      setPull({ ok: false, text: L(`عملة الحساب الإعلاني ${r.currency === 'MIXED' ? 'مختلطة' : r.currency}، والتقرير بالجنيه. ما سحبناش حاجة عشان الأرقام ما تتلخبطش.`, 'The ad account is not in EGP; nothing was imported.') });
+      return;
+    }
+    const known = (by2) => campaignReport(leads, { by: by2 }).map((x) => x.key);
+    const out = applyPull(r, { campaignKeys: known('campaign'), adKeys: known('ad') });
+    if (Object.keys(out.amounts).length) {
+      const next = { ...spend, ...out.amounts };
+      setSpend(next);
+      try { localStorage.setItem(SPEND_KEY, JSON.stringify(next)); } catch { /* this visit only */ }
+      clearTimeout(saveTimer.current);
+      saveCampaignSpend(next).then((ok) => setShared(ok)).catch(() => setShared(false));
+    }
+    setPull({
+      ok: true,
+      text: out.matched ? L(`اتسحب الصرف لـ ${out.matched} حملة وحُدّث في التقرير.`, `Spend imported for ${out.matched} campaigns.`) : L('ما لقيناش حملة في ميتا اسمها زي حملاتك في التقرير.', 'No Meta campaign matches the report.'),
+      unmatched: out.unmatched,
+      skipped: r.skipped || []
+    });
+  };
+
   return (
     <div className="crm-table-container cr-panel">
       <header className="cr-head">
@@ -96,6 +138,21 @@ export default function CampaignReportPanel({ leads = [], lang = 'ar', triggerTo
       </header>
 
       <LinkBuilder L={L} onCopied={(ok) => triggerToast?.(ok ? L('اللينك اتنسخ', 'Link copied') : L('معرفناش ننسخ، انسخه من الخانة', 'Could not copy, select it from the box'), ok ? 'success' : 'error')} />
+
+      <div className="cr-pull">
+        <button type="button" className="ui-btn ui-btn--secondary ui-btn--sm" onClick={pullSpend} disabled={pulling}>
+          <RefreshCw size={14} aria-hidden="true" className={pulling ? 'animate-spin' : ''} /> {pulling ? L('بيسحب…', 'Pulling…') : L('اسحب الصرف من فيسبوك', 'Pull spend from Facebook')}
+        </button>
+        {pull && <p role="status" className={`cr-pull__msg ${pull.ok ? 'is-ok' : 'is-bad'}`}>{pull.text}</p>}
+        {pull?.unmatched?.length > 0 && (
+          <details className="cr-pull__more">
+            <summary>{L(`${pull.unmatched.length} حملة في ميتا مش مطابقة لأي حملة في التقرير`, 'Unmatched Meta campaigns')}</summary>
+            <p>{L('عشان تتطابق، اسم الحملة في ميتا (بعد ما يتحوّل لحروف إنجليزي صغيرة وشرطات) لازم يساوي utm_campaign في لينك الإعلان. الحملات دي:', 'A match needs the campaign name to equal the utm_campaign.')}</p>
+            <ul>{pull.unmatched.map((u) => <li key={u.slug}><bdi>{u.name}</bdi> <small>({u.slug}) — {fmt(u.spend)} {L('ج.م', 'EGP')}</small></li>)}</ul>
+          </details>
+        )}
+        {pull?.skipped?.length > 0 && <p className="cr-note">{L('حملات أسماؤها عربي بس مبتتطابقش مع اللينك (اللينك بحروف إنجليزي):', 'Names with no Latin letters cannot match:')} <bdi>{pull.skipped.join('، ')}</bdi></p>}
+      </div>
 
       <div className="cr-controls">
         <div className="cr-seg" role="radiogroup" aria-label={L('التجميع', 'Group by')}>
