@@ -35,15 +35,16 @@ const REPORT_ERRORS = {
   unauthenticated: () => 'سجّل دخولك تاني وجرّب.'
 };
 
-/** The daily WhatsApp report: what it says today, and a test copy on demand */
-function DailyReportSection() {
+/** A WhatsApp report (daily or weekly): what it says now, and a test copy on demand */
+function ReportSection({ kind = 'daily' }) {
+  const weekly = kind === 'weekly';
   const [busy, setBusy] = useState('');
   const [preview, setPreview] = useState('');
   const [msg, setMsg] = useState(null);
   const run = async (mode) => {
     setBusy(mode);
     setMsg(null);
-    const r = await runDailyReport(mode);
+    const r = await runDailyReport(mode, kind);
     setBusy('');
     if (!r.ok) { setMsg({ ok: false, text: (REPORT_ERRORS[r.error] || (() => 'التقرير ماطلعش. جرّب تاني بعد شوية.'))(r) }); return; }
     if (mode === 'preview') setPreview(r.text || '');
@@ -51,11 +52,13 @@ function DailyReportSection() {
   };
   return (
     <section style={box}>
-      <strong style={{ color: 'var(--crm-ink)', fontSize: 'var(--crm-text-md)' }}>التقرير اليومي على الواتساب</strong>
-      <p style={line}>كل يوم بعد نص الليل (حوالي 12، وفي التوقيت الصيفي حوالي 1) بيوصل على نفس أرقام التنبيهات تقرير عن اليوم اللي خلص: الزوار، الطلبات الجديدة ومصادرها ومناطقها، اللي مستني رد، أداء الفريق، أكتر العقارات اهتمام، وقرارات مقترحة. من غير أسماء أو أرقام عملاء.</p>
+      <strong style={{ color: 'var(--crm-ink)', fontSize: 'var(--crm-text-md)' }}>{weekly ? 'التقرير الأسبوعي على الواتساب' : 'التقرير اليومي على الواتساب'}</strong>
+      <p style={line}>{weekly
+        ? 'كل سبت الصبح بيوصل على نفس أرقام التنبيهات تقرير الأسبوع اللي فات (٧ أيام) مقارنة بالأسبوع اللي قبله: العملاء الجدد، الرد في الميعاد ووقته، المعاينات، الصفقات وعمولتها، المهام، أقوى مصدر وأكتر بياع صفقات، وملاحظات من الأرقام. من غير أسماء أو أرقام عملاء.'
+        : 'كل يوم بعد نص الليل (حوالي 12، وفي التوقيت الصيفي حوالي 1) بيوصل على نفس أرقام التنبيهات تقرير عن اليوم اللي خلص: الزوار، الطلبات الجديدة ومصادرها ومناطقها، اللي مستني رد، أداء الفريق، أكتر العقارات اهتمام، وقرارات مقترحة. من غير أسماء أو أرقام عملاء.'}</p>
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         <button type="button" className="btn btn-sm btn-outline" onClick={() => run('preview')} disabled={!!busy}>
-          {busy === 'preview' ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}<span>اعرض تقرير آخر يوم</span>
+          {busy === 'preview' ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}<span>{weekly ? 'اعرض تقرير آخر أسبوع' : 'اعرض تقرير آخر يوم'}</span>
         </button>
         <button type="button" className="crm-btn-primary-gold" onClick={() => run('test')} disabled={!!busy}>
           {busy === 'test' ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}<span>ابعته دلوقتي (تجربة)</span>
@@ -121,7 +124,8 @@ export default function AlertsSettingsPanel() {
         )}
       </section>
 
-      <DailyReportSection />
+      <ReportSection kind="daily" />
+      <ReportSection kind="weekly" />
 
       <section style={box}>
         <strong style={{ color: 'var(--crm-ink)', fontSize: 'var(--crm-text-md)' }}>إشعارات الجهاز ده</strong>
