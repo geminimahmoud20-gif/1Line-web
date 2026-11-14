@@ -1,15 +1,17 @@
 import { useMemo, useState } from 'react';
-import { BarChart3, Users, Building, Zap, Activity, Megaphone, Trophy, Calculator, ChevronLeft } from 'lucide-react';
+import { BarChart3, Users, Building, Zap, Target, Activity, Megaphone, Trophy, Calculator, ChevronLeft } from 'lucide-react';
 import { resolveRange, comparisonRange } from '../../utils/reportPeriods';
 import PerformanceReportPanel from './PerformanceReportPanel';
 import OperationsReportsPanel from './OperationsReportsPanel';
+import GoalsPanel from './GoalsPanel';
 import ReportControls from './ReportControls';
 import './performance-report.css';
 
 const TABS = [
   { id: 'sales', icon: Users, ar: 'العملاء والمبيعات', en: 'Clients & sales' },
   { id: 'portfolio', icon: Building, ar: 'العقارات', en: 'Portfolio' },
-  { id: 'demand', icon: Zap, ar: 'الطلبات والخدمات', en: 'Demands & services' }
+  { id: 'demand', icon: Zap, ar: 'الطلبات والخدمات', en: 'Demands & services' },
+  { id: 'goals', icon: Target, ar: 'الأهداف', en: 'Goals' }
 ];
 
 // The reports that live on their own screens, one tap away
@@ -21,7 +23,7 @@ const LINKS = [
 ];
 
 /** «مركز التقارير»: one place and one date range / comparison for every report (managers) */
-export default function ReportsHub({ leads = [], properties = [], demands = [], intake = [], areaNames = {}, lang = 'ar', onOpenTab }) {
+export default function ReportsHub({ leads = [], properties = [], demands = [], intake = [], members = [], me, canManage = false, areaNames = {}, lang = 'ar', onOpenTab, triggerToast }) {
   const isAr = lang !== 'en';
   const L = (ar, en) => (isAr ? ar : en);
   const [now] = useState(() => Date.now());
@@ -38,7 +40,7 @@ export default function ReportsHub({ leads = [], properties = [], demands = [], 
       <header className="pr-head">
         <div>
           <h2><BarChart3 size={22} aria-hidden="true" /> {L('مركز التقارير', 'Reports')}</h2>
-          <p>{L('اختار الفترة وقارنها، وبدّل بين الأقسام.', 'Pick the period, compare it, and switch between sections.')}</p>
+          <p>{L('اختار الفترة وقارنها، وبدّل بين الأقسام، وتابع أهداف الشهر.', 'Pick the period, compare it, switch sections, and follow the monthly goals.')}</p>
         </div>
       </header>
 
@@ -53,11 +55,13 @@ export default function ReportsHub({ leads = [], properties = [], demands = [], 
         })}
       </div>
 
-      <ReportControls ctl={ctl} range={range} prevRange={prevRange} now={now} isAr={isAr} />
+      {tab !== 'goals' && <ReportControls ctl={ctl} range={range} prevRange={prevRange} now={now} isAr={isAr} />}
 
       {tab === 'sales' && <PerformanceReportPanel leads={leads} lang={lang} range={range} prevRange={prevRange} now={now} />}
       {tab === 'portfolio' && <OperationsReportsPanel part="portfolio" properties={properties} areaNames={areaNames} range={range} prevRange={prevRange} now={now} lang={lang} />}
       {tab === 'demand' && <OperationsReportsPanel part="demand" demands={demands} intake={intake} areaNames={areaNames} range={range} prevRange={prevRange} now={now} lang={lang} />}
+
+      {tab === 'goals' && <GoalsPanel leads={leads} members={members} me={me} canManage={canManage} lang={lang} triggerToast={triggerToast} />}
 
       {onOpenTab && (
         <div className="pr-block">

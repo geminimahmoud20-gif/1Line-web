@@ -394,6 +394,19 @@ service cloud.firestore {
       allow delete: if isLeadEditor() && (resource.data.createdBy == request.auth.uid || hasPerm('ld.manage'));
     }
 
+    // 🎯 7d. MONTHLY GOALS (crm_goals/current): what the team and each salesperson aim for each month
+    // (new clients, viewings, deals, commission). Staff read them to see their own progress; a lead
+    // manager sets them. One document, numbers only, up to 60 people.
+    match /crm_goals/{goalId} {
+      allow read: if isStaff();
+      allow create, update: if goalId == 'current' && hasPerm('ld.manage')
+        && request.resource.data.keys().hasOnly(['team', 'people', 'updatedAt', 'updatedBy'])
+        && request.resource.data.team is map
+        && request.resource.data.people is map
+        && request.resource.data.people.size() <= 60;
+      allow delete: if false;
+    }
+
     // 📢 8. SPONSORED ADS & CAMPAIGNS
     match /advertisements/{adId} {
       allow read: if true;

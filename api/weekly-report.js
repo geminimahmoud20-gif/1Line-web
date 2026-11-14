@@ -52,11 +52,12 @@ async function run(mode) {
     const { status, body } = await runWeeklyReport({
       now: () => Date.now(),
       load: async () => {
-        const [leads, tasks] = await Promise.all([
+        const [leads, tasks, goals] = await Promise.all([
           store.list('leads', LEAD_FIELDS),
-          store.list('crm_tasks', TASK_FIELDS, 3000).catch((err) => { console.warn('weekly report: tasks skipped', err?.message); return []; })
+          store.list('crm_tasks', TASK_FIELDS, 3000).catch((err) => { console.warn('weekly report: tasks skipped', err?.message); return []; }),
+          store.get('crm_goals/current').catch((err) => { console.warn('weekly report: goals skipped', err?.message); return null; })
         ]);
-        return { leads, tasks };
+        return { leads, tasks, goals };
       },
       claimWeek: store.claimDay,
       releaseWeek: store.releaseDay,

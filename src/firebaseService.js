@@ -22,6 +22,7 @@ export { loadAuditEvents } from './services/auditLog.js';
 export { pushSupported, pushReminderState, enablePushReminders, disablePushReminders } from './services/pushReminders.js';
 export { loadCampaignSpend, saveCampaignSpend } from './services/campaignSpend.js';
 export { subscribeToTasks, addTask, addTaskWithId, updateTask, removeTask } from './services/tasks.js';
+export { loadGoals, saveGoals } from './services/goals.js';
 export { REQUEST_CONTACT_FIELDS } from './services/requestContacts.js';
 export * from './services/demands.js';
 export * from './services/analytics.js';

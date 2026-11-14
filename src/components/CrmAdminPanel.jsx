@@ -936,6 +936,10 @@ export const CrmAdminPanel = ({
             properties={properties}
             demands={demands}
             intake={intake}
+            members={teamMembers}
+            me={{ uid: currentUser?.uid, name: currentUser?.displayName || currentUser?.name || currentUser?.email?.split('@')[0] || '' }}
+            canManage
+            triggerToast={triggerToast}
             areaNames={Object.fromEntries(getAreas().map((a) => [a.id, a.name_ar || a.id]))}
             lang={lang}
             onOpenTab={onSwitchTab}

@@ -7,6 +7,7 @@
 // =============================================================
 import { periodMetrics, compareMetrics, cohortReports, sellerPerformance, insights } from '../src/utils/performanceReport.js';
 import { comparisonRange, addDays } from '../src/utils/reportPeriods.js';
+import { goalProgress, GOAL_KEYS } from '../src/utils/goals.js';
 import { cairoDay, splitMessage } from './_daily-report-core.js';
 
 export { splitMessage };
@@ -57,6 +58,19 @@ export function buildWeeklyReport(data, { now = Date.now(), siteUrl = 'https://w
   if (best) lines.push('', `🏅 أقوى مصدر: ${best.label} — ${best.leads} عميل، ${best.visitPct}% وصلوا لمعاينة`);
   const top = sellers.find((s) => s.name && s.closed > 0);
   if (top) lines.push(`🏆 أكتر صفقات: ${top.name} (${top.closed})`);
+
+  // The month's goals against the pace: each team goal that is set, and who is behind
+  const goalsNow = goalProgress(leads, data.goals, now);
+  if (goalsNow.team.length) {
+    lines.push('', `🎯 أهداف الشهر (يوم ${goalsNow.win.day} من ${goalsNow.win.days})`);
+    for (const r of goalsNow.team) {
+      const name = GOAL_KEYS.find((k) => k.id === r.key).ar;
+      const verdict = r.status === 'done' ? '✅ تحقق' : r.status === 'behind' ? '⚠️ متأخر عن الإيقاع' : r.status === 'ahead' ? '👍 سابق الإيقاع' : 'على الإيقاع';
+      lines.push(`${name}: ${num(r.actual)} من ${num(r.target)} (${r.pct}%) — ${verdict}`);
+    }
+    const late = goalsNow.people.filter((p) => p.name && p.rows.some((r) => r.status === 'behind')).map((p) => p.name);
+    if (late.length) lines.push(`متأخرين عن هدفهم: ${late.slice(0, 5).join('، ')}`);
+  }
 
   if (findings.length) {
     lines.push('', '💡 ملاحظات');
