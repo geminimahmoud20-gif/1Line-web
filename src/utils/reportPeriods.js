@@ -81,3 +81,7 @@ export function inRange(ms, range) {
   const d = dayOf(ms);
   return Boolean(d) && d >= range.from && d <= range.to;
 }
+
+/** '14 نوفمبر 2026' style, in Latin digits */
+export const dateText = (key) => new Date(`${key}T12:00:00Z`).toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+export const rangeText = (r) => (r.from === r.to ? dateText(r.from) : `${dateText(r.from)} – ${dateText(r.to)}`);

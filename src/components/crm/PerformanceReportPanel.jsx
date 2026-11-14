@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
-import { BarChart3, TrendingUp, TrendingDown, Download, AlertTriangle, CheckCircle2, Lightbulb } from 'lucide-react';
+import { useMemo } from 'react';
+import { TrendingUp, TrendingDown, Download, AlertTriangle, CheckCircle2, Lightbulb } from 'lucide-react';
 import { useTasks } from '../../hooks/useTasks';
 import { periodMetrics, compareMetrics, dailySeries, cohortReports, sellerPerformance, insights, STAGE_LABELS } from '../../utils/performanceReport';
-import { PRESETS, COMPARES, resolveRange, comparisonRange, dayOf } from '../../utils/reportPeriods';
+import { dateText, rangeText } from '../../utils/reportPeriods';
 import { LOST_REASONS } from '../../utils/crmLeadViews';
 import { EmptyState } from '../ui';
 import './performance-report.css';
@@ -15,8 +15,6 @@ const mins = (ms) => {
   const h = Math.round(m / 6) / 10;
   return h < 48 ? `${h} س` : `${Math.round(h / 24)} يوم`;
 };
-const dateText = (key) => new Date(`${key}T12:00:00Z`).toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
-const rangeText = (r) => (r.from === r.to ? dateText(r.from) : `${dateText(r.from)} – ${dateText(r.to)}`);
 
 // The headline numbers: how each is shown, and whether a fall is the good direction
 const METRICS = [
@@ -78,18 +76,11 @@ function Trend({ cur, prev, L }) {
 
 const csvCell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
 
-/** «تقارير الأداء»: any dates, against another period, with a trend, funnel, sources, team and findings (managers) */
-export default function PerformanceReportPanel({ leads = [], lang = 'ar' }) {
+/** The sales half of the reports hub: the range and comparison come from the hub's controls (managers) */
+export default function PerformanceReportPanel({ leads = [], lang = 'ar', range, prevRange = null, now }) {
   const isAr = lang !== 'en';
   const L = (ar, en) => (isAr ? ar : en);
   const { tasks } = useTasks();
-  const [now] = useState(() => Date.now());
-  const [preset, setPreset] = useState('30');
-  const [custom, setCustom] = useState({ from: '', to: '' });
-  const [mode, setMode] = useState('previous');
-
-  const range = useMemo(() => resolveRange(preset, now, custom), [preset, now, custom]);
-  const prevRange = useMemo(() => comparisonRange(range, mode), [range, mode]);
 
   const data = useMemo(() => {
     const cur = periodMetrics(leads, tasks, range);
@@ -130,31 +121,9 @@ export default function PerformanceReportPanel({ leads = [], lang = 'ar' }) {
   };
 
   return (
-    <section className="pr-panel" dir={isAr ? 'rtl' : 'ltr'}>
-      <header className="pr-head">
-        <div>
-          <h2><BarChart3 size={22} aria-hidden="true" /> {L('تقارير الأداء', 'Performance reports')}</h2>
-          <p>{L('اختار أي فترة وقارنها بفترة تانية.', 'Pick any dates and compare them with another period.')}</p>
-        </div>
+    <section className="pr-panel">
+      <div className="pr-toolbar">
         <button type="button" className="pr-export" onClick={exportCsv}><Download size={16} aria-hidden="true" /> {L('تصدير CSV', 'Export CSV')}</button>
-      </header>
-
-      <div className="pr-controls">
-        <div className="pr-chips" role="group" aria-label={L('الفترة', 'Period')}>
-          {PRESETS.map((p) => (
-            <button key={p.id} type="button" className={preset === p.id ? 'is-on' : ''} aria-pressed={preset === p.id} onClick={() => setPreset(p.id)}>{isAr ? p.ar : p.en}</button>
-          ))}
-        </div>
-        {preset === 'custom' && (
-          <div className="pr-custom">
-            <label><span>{L('من', 'From')}</span><input type="date" value={custom.from || range.from} max={dayOf(now)} onChange={(e) => setCustom((c) => ({ ...c, from: e.target.value, to: c.to || range.to }))} /></label>
-            <label><span>{L('إلى', 'To')}</span><input type="date" value={custom.to || range.to} max={dayOf(now)} onChange={(e) => setCustom((c) => ({ ...c, to: e.target.value, from: c.from || range.from }))} /></label>
-          </div>
-        )}
-        <label className="pr-compare"><span>{L('قارن بـ', 'Compare with')}</span>
-          <select value={mode} onChange={(e) => setMode(e.target.value)}>{COMPARES.map((c) => <option key={c.id} value={c.id}>{isAr ? c.ar : c.en}</option>)}</select>
-        </label>
-        <p className="pr-range"><b>{rangeText(range)}</b> ({range.days} {L('يوم', 'days')}){prevRange && <> · {L('مقابل', 'vs')} <b>{rangeText(prevRange)}</b></>}</p>
       </div>
 
       {data.findings.length > 0 && (

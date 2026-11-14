@@ -1073,6 +1073,7 @@ export default function CrmPage({
               onAddNewLead={guard(can.editLeads, onAddNewLead)}
               onImportLeads={can.importLeads ? handleImportLeads : undefined}
               demands={demands}
+              intake={intakeRequests}
               onSwitchToDemands={() => setActiveTab('demands')}
               onSwitchToProperties={() => setActiveTab('properties')}
               onSwitchToProjects={() => setActiveTab('projects')}
