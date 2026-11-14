@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import ConsentNote from './common/ConsentNote';
 import { 
   Building, 
   Home, 
@@ -560,6 +561,7 @@ export const BuyWizard = ({
                 </span>
               </button>
             </div>
+            <ConsentNote isAr={isAr} />
           </form>
         </div>
       )}

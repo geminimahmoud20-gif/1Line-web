@@ -4,6 +4,7 @@ import { checkFormSpamProtection } from '../../utils/securityShield';
 import { getAreas } from '../../utils/areasData';
 import PhoneInputField from '../PhoneInputField';
 import AreaOptions from './AreaOptions';
+import ConsentNote from './ConsentNote';
 import { nameProblem, phoneProblem } from '../../utils/contactValidation';
 
 export default function CallbackModal({ isOpen, onClose, lang = 'ar', onSubmitCallback, triggerToast }) {
@@ -321,6 +322,7 @@ export default function CallbackModal({ isOpen, onClose, lang = 'ar', onSubmitCa
             <span style={{ display: 'block', textAlign: 'center', fontSize: '0.74rem', color: '#94a3b8', marginTop: '6px' }}>
               🔒 {isAr ? 'بياناتك مشفرة ومحمية بخصوصية تامة وفق ميثاق 1Line للأمان الرقمي' : 'Your details are strictly confidential under 1Line Privacy Charter'}
             </span>
+            <ConsentNote isAr={isAr} />
           </div>
         </form>
       </div>

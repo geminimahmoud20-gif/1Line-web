@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { PhoneCall, Check } from 'lucide-react';
 import PhoneInputField from '../PhoneInputField';
+import ConsentNote from '../common/ConsentNote';
 import { nameProblem, phoneProblem } from '../../utils/contactValidation';
 import { useProperties } from '../../context/PropertiesContext';
 import { kindOf, cleanAnswers } from '../../utils/buyerMatch';
@@ -94,6 +95,7 @@ export default function MatchLeadForm({ answers, message, areaName }) {
       </div>
       {error && <p className="mt-lead-error" role="alert">{error}</p>}
       <button type="submit" className="mt-btn is-primary" disabled={busy}>{busy ? 'بنبعت…' : 'كلّموني'}</button>
+      <ConsentNote isAr />
     </form>
   );
 }

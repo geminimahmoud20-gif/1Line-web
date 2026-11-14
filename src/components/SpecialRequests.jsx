@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import ConsentNote from './common/ConsentNote';
 import { 
   Sparkles, 
   ShieldCheck, 
@@ -512,6 +513,7 @@ export const SpecialRequests = ({
             </>
           )}
         </button>
+        <ConsentNote isAr={isAr} />
       </form>
     </div>
   );
