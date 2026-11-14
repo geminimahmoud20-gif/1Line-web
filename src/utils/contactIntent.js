@@ -12,7 +12,7 @@ const ROUTE = '/api/contact-intent';
 const ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ'; // no 0/O, 1/I/L
 const REF_RE = /W-[2-9A-HJ-NP-Z]{4}/;
 
-export const makeRef = (rand = Math.random) => `W-${Array.from({ length: 4 }, () => ALPHABET[Math.floor(rand() * ALPHABET.length)]).join('')}`;
+export const makeRef = (rand = Math.random, prefix = 'W') => `${prefix}-${Array.from({ length: 4 }, () => ALPHABET[Math.floor(rand() * ALPHABET.length)]).join('')}`;
 
 const digits = (s) => String(s || '').replace(/\D/g, '');
 
@@ -92,10 +92,19 @@ export function prepareWhatsAppUrl(url, { propertyId = '', placement = '' } = {}
 
 // Page-wide: WhatsApp links (<a href="https://wa.me/…">) and window.open(...) both go through here,
 // so every "talk to us" button is covered without touching each component.
+let lastCall = 0;
 function onClick(e) {
   const a = e.target?.closest?.('a[href]');
   if (!a) return;
   const href = a.getAttribute('href') || '';
+  // A tap on a phone number: the call itself never reaches us, but which page and ad it came from does
+  if (/^tel:/i.test(href)) {
+    if (isPrivatePath(window.location.pathname) || Date.now() - lastCall < 8000) return;
+    lastCall = Date.now();
+    const ctx = pageContext();
+    send({ ref: makeRef(Math.random, 'C'), ...ctx, propertyId: String(a.dataset.propertyId || ctx.propertyId).slice(0, 80), placement: String(a.dataset.track || '').slice(0, 40) });
+    return;
+  }
   if (!whatsAppTarget(href)) return;
   const tagged = prepareWhatsAppUrl(href, { propertyId: a.dataset.propertyId, placement: a.dataset.track });
   if (tagged !== href) a.setAttribute('href', tagged);

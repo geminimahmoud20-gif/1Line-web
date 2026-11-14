@@ -45,3 +45,11 @@ test('the ad behind a tap (campaign, medium, ad) is kept as plain keys, and noth
   assert.equal(f.campaign.stringValue, 'sohag-buyers');
   assert.equal(intentFields(sanitizeIntent({ ref: 'W-7K3Q' }), 0).campaign.stringValue, '');
 });
+
+test('a tap on a phone number is a C- reference and a phone intent', () => {
+  assert.match(makeRef(Math.random, 'C'), /^C-[2-9A-HJ-NP-Z]{4}$/);
+  assert.equal(sanitizeIntent({ ref: 'C-7K3Q', campaign: 'buyers-sohag' }).channel, 'phone');
+  assert.equal(sanitizeIntent({ ref: 'W-7K3Q' }).channel, 'whatsapp');
+  assert.equal(sanitizeIntent({ ref: 'X-7K3Q' }), null);
+  assert.equal(intentFields(sanitizeIntent({ ref: 'C-7K3Q' }), 0).channel.stringValue, 'phone');
+});

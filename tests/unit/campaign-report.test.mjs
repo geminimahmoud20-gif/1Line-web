@@ -81,3 +81,25 @@ test('rows are added up per kind of ad, cheapest client first is for the reader 
   assert.equal(s[1].costPerLead, 200);
   assert.equal(s[0].label, 'مشترين (إعلان عام)');
 });
+
+test('WhatsApp and call taps from an ad are counted per campaign, even with no lead', () => {
+  const now = Date.parse('2026-11-14T12:00:00Z');
+  const taps = [
+    { campaign: 'buyers-a', content: 'v1', at: now - 86400000 },
+    { campaign: 'buyers-a', content: 'v2', at: now - 2 * 86400000 },
+    { campaign: 'owners-x', content: '', at: now - 40 * 86400000 },
+    { campaign: '', at: now }
+  ];
+  const lead = { id: 'L', status: 'new', createdAt: new Date(now - 86400000).toISOString(), marketingAttribution: { campaign: 'buyers-a', source: 'facebook' } };
+  const rows = campaignReport([lead], { now, taps });
+  const a = rows.find((r) => r.campaign === 'buyers-a');
+  assert.equal(a.contacts, 2);
+  assert.equal(a.leads, 1);
+  assert.equal(rows.find((r) => r.campaign === 'owners-x').leads, 0); // a row of its own
+  assert.equal(rows.find((r) => r.campaign === 'owners-x').contacts, 1);
+  assert.equal(campaignTotals(rows).contacts, 3);
+  // the period filter applies to taps too, and by ad they split on utm_content
+  assert.equal(campaignReport([lead], { now, taps, days: 7 }).find((r) => r.campaign === 'owners-x'), undefined);
+  const byAd = campaignReport([lead], { now, taps, by: 'ad' });
+  assert.deepEqual(byAd.filter((r) => r.campaign === 'buyers-a').map((r) => [r.ad, r.contacts]).sort(), [['v1', 1], ['v2', 1], ['—', 0]].sort());
+});
