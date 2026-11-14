@@ -7,6 +7,7 @@ import './project-form.css';
 import AreaOptions from '../common/AreaOptions';
 import { getAreas } from '../../utils/areasData';
 import { projectPriceStats } from '../../utils/projectStats';
+import { saveDevelopers, EMPTY_DEVELOPER } from '../../utils/developers';
 
 const MAX_FILE_MB = MAX_PHOTO_MB;
 const STAGES = [
@@ -21,12 +22,13 @@ const STAGES = [
  * listings), price & plan with a worked example, construction stages, units, amenities, description.
  * The panel owns the data and saving; this draws the form.
  */
-export default function ProjectFormModal({ formData, setFormData, onSubmit, onClose, isSaving, editing, isAr = true, triggerToast = () => {}, developers = [], properties = [] }) {
+export default function ProjectFormModal({ formData, setFormData, onSubmit, onClose, isSaving, editing, isAr = true, triggerToast = () => {}, developers = [], properties = [], canAddDeveloper = false }) {
   const L = (ar, en) => (isAr ? ar : en);
   const [uploading, setUploading] = useState('');
   const [dragging, setDragging] = useState(false);
   const [featureDraft, setFeatureDraft] = useState('');
   const set = (patch) => setFormData((f) => ({ ...f, ...patch }));
+  const [addingDev, setAddingDev] = useState(false);
   const areas = getAreas().filter((a) => a.id !== 'all');
   const stats = projectPriceStats(formData, properties);
   const images = (formData.images || []).filter(Boolean);
@@ -111,21 +113,57 @@ export default function ProjectFormModal({ formData, setFormData, onSubmit, onCl
                 <span>{L('تصنيف المشروع', 'Project type')}</span>
                 <input type="text" value={formData.type_ar || ''} onChange={(e) => set({ type_ar: e.target.value })} placeholder={L('كمبوند سكني / مول تجاري / برج إداري', 'Compound / mall / office tower')} />
               </label>
-              <label className="pjf-field">
-                <span>{L('الشركة المطورة', 'Developer')}</span>
-                {/* Pick from «المطورين»; an old project keeps its typed name until linked */}
-                <select
-                  value={formData.developerId || ''}
-                  onChange={(e) => {
-                    const d = developers.find((x) => x.id === e.target.value);
-                    set({ developerId: d ? d.id : '', developer_ar: d ? d.name_ar : formData.developer_ar, developer_en: d ? d.name_en : formData.developer_en });
-                  }}
-                >
-                  <option value="">{formData.developer_ar && !formData.developerId ? `${formData.developer_ar} (${L('مش مربوط', 'not linked')})` : L('اختار المطوّر…', 'Choose…')}</option>
-                  {developers.map((d) => <option key={d.id} value={d.id}>{d.name_ar}</option>)}
-                </select>
-                {developers.length === 0 && <small className="pjf-hint">{L('ضيف المطورين الأول من «المطورين» فوق.', 'Add developers first under «Developers».')}</small>}
-              </label>
+              <div className="pjf-field is-wide">
+                <label htmlFor="pjf-developer">{L('الشركة المطورة', 'Developer')}</label>
+                {/* Pick from «المطورين», or type the name; a typed one can be added to the list in one tap */}
+                {developers.length > 0 && (
+                  <select
+                    id="pjf-developer"
+                    value={formData.developerId || ''}
+                    onChange={(e) => {
+                      const d = developers.find((x) => x.id === e.target.value);
+                      set(d ? { developerId: d.id, developer_ar: d.name_ar, developer_en: d.name_en } : { developerId: '' });
+                    }}
+                  >
+                    <option value="">{L('اختار من المطورين المسجّلين…', 'Choose a registered developer…')}</option>
+                    {developers.map((d) => <option key={d.id} value={d.id}>{d.name_ar}</option>)}
+                  </select>
+                )}
+                {!formData.developerId && (
+                  <input
+                    id={developers.length ? undefined : 'pjf-developer'}
+                    type="text"
+                    value={formData.developer_ar || ''}
+                    onChange={(e) => set({ developerId: '', developer_ar: e.target.value, ...(e.target.value ? {} : { developer_en: '' }) })}
+                    placeholder={developers.length ? L('أو اكتب اسم الشركة المطورة', 'Or type the developer name') : L('اكتب اسم الشركة المطورة', 'Developer name')}
+                    aria-label={L('اسم الشركة المطورة', 'Developer name')}
+                  />
+                )}
+                {!formData.developerId && canAddDeveloper && String(formData.developer_ar || '').trim().length >= 2
+                  && !developers.some((d) => d.name_ar === String(formData.developer_ar).trim()) && (
+                  <button
+                    type="button"
+                    className="pjf-link"
+                    disabled={addingDev}
+                    onClick={async () => {
+                      setAddingDev(true);
+                      const name = String(formData.developer_ar).trim();
+                      const dev = { ...EMPTY_DEVELOPER, id: `dev-${Date.now()}`, name_ar: name, name_en: String(formData.developer_en || '').trim() };
+                      try {
+                        await saveDevelopers([...developers, dev]);
+                        set({ developerId: dev.id, developer_ar: dev.name_ar, developer_en: dev.name_en });
+                        triggerToast(L(`اتضافت «${name}» لقايمة المطورين`, 'Developer added'), 'success');
+                      } catch {
+                        triggerToast(L('مقدرناش نضيفه للقايمة (محتاج صلاحية مدير عام). الاسم هيتحفظ مع المشروع.', 'Could not add it to the list; the name is saved with the project.'), 'error');
+                      }
+                      setAddingDev(false);
+                    }}
+                  >
+                    {addingDev ? L('بيضيف…', 'Adding…') : L(`ضيف «${String(formData.developer_ar).trim()}» لقايمة المطورين`, 'Add to the developers list')}
+                  </button>
+                )}
+                {formData.developerId && <small className="pjf-hint">{L('مربوط بمطوّر مسجّل. اختار «اختار من المطورين المسجّلين…» عشان تكتب اسم تاني.', 'Linked to a registered developer.')}</small>}
+              </div>
               <label className="pjf-field">
                 <span>{L('المنطقة', 'Area')}</span>
                 <select value={formData.areaKey || ''} onChange={(e) => set({ areaKey: e.target.value })}>

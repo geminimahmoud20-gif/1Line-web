@@ -5,7 +5,7 @@ import { projectSampleFlags } from '../../utils/sampleDataFlags';
 import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 import ProjectFormModal from './ProjectFormModal';
 import DevelopersPanel from './DevelopersPanel';
-import { useDevelopers } from '../../utils/developers';
+import { useDevelopers, developerNameOf } from '../../utils/developers';
 import OfferModal from './OfferModal';
 import './projects-manager.css';
 import { offerState } from '../../utils/propertyOffers';
@@ -204,8 +204,8 @@ export default function MegaProjectsManagerPanel({
     return projects.filter(p => {
       const titleAr = (p.title_ar || '').toLowerCase();
       const titleEn = (p.title_en || '').toLowerCase();
-      const devAr = (p.developer_ar || '').toLowerCase();
-      const devEn = (p.developer_en || '').toLowerCase();
+      const devAr = developerNameOf(p, developers, true).toLowerCase();
+      const devEn = developerNameOf(p, developers, false).toLowerCase();
       const locAr = (p.location_ar || '').toLowerCase();
       const locEn = (p.location_en || '').toLowerCase();
       const q = searchQuery.trim().toLowerCase();
@@ -214,7 +214,7 @@ export default function MegaProjectsManagerPanel({
       const matchCat = selectedCategory === 'all' || p.category === selectedCategory;
       return matchSearch && matchCat;
     });
-  }, [projects, searchQuery, selectedCategory]);
+  }, [projects, developers, searchQuery, selectedCategory]);
 
   // Running or upcoming offer, next to the project name
   const offerBadge = (p) => {
@@ -333,7 +333,7 @@ export default function MegaProjectsManagerPanel({
             {filteredProjects.map((p) => {
               const title = isAr ? p.title_ar : p.title_en;
               const location = isAr ? p.location_ar : p.location_en;
-              const dev = isAr ? p.developer_ar : p.developer_en;
+              const dev = developerNameOf(p, developers, isAr);
               const bk = p.progressBreakdown || { concrete: 100, masonry: 80, finishing: 50 };
 
               return (
@@ -384,7 +384,9 @@ export default function MegaProjectsManagerPanel({
                         <MapPin size={12} />
                         <span>{location}</span>
                       </div>
-                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-ink)', fontWeight: '700' }}>{dev}</span>
+                      {dev
+                        ? <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-ink)', fontWeight: '700' }}>{dev}</span>
+                        : <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>{isAr ? 'المطور: مش محدد' : 'Developer: not set'}</span>}
                     </div>
                   </td>
                   <td>
@@ -497,6 +499,7 @@ export default function MegaProjectsManagerPanel({
           triggerToast={triggerToast}
           developers={developers}
           properties={properties}
+          canAddDeveloper={canEditDevelopers}
         />
       )}
     </div>

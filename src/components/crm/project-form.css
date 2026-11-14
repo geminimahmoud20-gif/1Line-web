@@ -70,3 +70,5 @@
 }
 
 .pjf-hint { font-size: var(--crm-text-xs); line-height: 1.6; color: var(--crm-muted); }
+.pjf-link { justify-self: start; min-height: 40px; padding: 0; border: 0; background: none; color: var(--crm-accent-text); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
+.pjf-link:disabled { opacity: 0.6; cursor: default; }
