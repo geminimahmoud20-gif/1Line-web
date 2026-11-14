@@ -48,3 +48,15 @@ test('developers: page links resolve by slug or id, projects find their develope
   assert.equal(projectDeveloper({ developer_ar: 'شركة الأمل' }, devs).id, 'dev-1');
   assert.equal(projectDeveloper({ developer_ar: 'غير معروف' }, devs), null);
 });
+
+import { developerNameOf } from '../../src/utils/developers.js';
+test('the developer name shows from the project, else from the developer it is linked to', () => {
+  const devs = [{ id: 'd1', name_ar: 'شركة الأمل', name_en: 'Amal' }, { id: 'd2', name_ar: 'بدون إنجليزي', name_en: '' }];
+  assert.equal(developerNameOf({ developer_ar: 'نسخة', developerId: 'd1' }, devs), 'نسخة');
+  assert.equal(developerNameOf({ developerId: 'd1' }, devs), 'شركة الأمل');
+  assert.equal(developerNameOf({ developerId: 'd1' }, devs, false), 'Amal');
+  assert.equal(developerNameOf({ developerId: 'd2' }, devs, false), 'بدون إنجليزي'); // English falls back to Arabic
+  assert.equal(developerNameOf({ developer_ar: '  حر  ' }, [], true), 'حر');
+  assert.equal(developerNameOf({}, devs), '');
+  assert.equal(developerNameOf({ developerId: 'gone' }, devs), '');
+});

@@ -44,6 +44,18 @@ export function normalizeDevelopers(list) {
 export const developerOf = (project, developers = []) =>
   (project?.developerId && developers.find((d) => d.id === project.developerId)) || null;
 
+/**
+ * The developer name to show for a project: the copy saved on the project (developer_ar / developer_en), else the
+ * linked developer's own name (a project saved before the developer existed or without the copy still shows it).
+ * English falls back to the Arabic name.
+ */
+export function developerNameOf(project, developers = [], isAr = true) {
+  const linked = developerOf(project, developers);
+  const ar = str(project?.developer_ar) || linked?.name_ar || '';
+  const en = str(project?.developer_en) || linked?.name_en || '';
+  return isAr ? ar : (en || ar);
+}
+
 /** The developer's projects (by developerId, or by the old free-text name when not linked yet) */
 export const projectsOf = (developer, projects = []) => (Array.isArray(projects) ? projects : []).filter((p) =>
   p && !p.isDeleted && (p.developerId === developer.id || (!p.developerId && str(p.developer_ar) && str(p.developer_ar) === developer.name_ar)));
