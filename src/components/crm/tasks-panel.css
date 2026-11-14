@@ -70,6 +70,7 @@
 .tk-filters { display: grid; gap: var(--ui-s-2); }
 .tk-search { display: flex; align-items: center; gap: var(--ui-s-2); min-height: 44px; padding: 0 var(--ui-s-3); border: 1px solid var(--ui-line-strong); border-radius: var(--ui-r-md); background: var(--ui-surface); color: var(--ui-text-3); }
 .tk-search input { flex: 1; min-width: 0; min-height: 40px; border: 0; background: none; color: var(--ui-text); font: inherit; outline: none; }
+
 .tk-silent { border: 1px solid var(--ui-line); border-radius: var(--ui-r-lg); background: var(--ui-surface); }
 .tk-silent__head { width: 100%; min-height: 52px; padding: 0 var(--ui-s-3); display: flex; align-items: center; gap: var(--ui-s-2); border: 0; background: none; color: var(--ui-text); font: inherit; text-align: start; cursor: pointer; }
 .tk-silent__title { font-weight: var(--ui-fw-semibold); }
