@@ -2038,4 +2038,5 @@ mark.crm-search-highlight {
 .crm-section-items { display: flex; flex-direction: column; gap: 3px; margin-top: var(--ui-s-1); }
 @media (prefers-reduced-motion: reduce) { .crm-section-head__chevron { transition: none; } }
 .crm-sidebar-group { margin-top: var(--ui-s-2); padding-top: var(--ui-s-2); border-top: 1px solid color-mix(in srgb, var(--ui-n0) 8%, transparent); }
-.crm-sidebar-group > .crm-sidebar-section-label { min-height: 40px; margin-bottom: var(--ui-s-1); padding: 0 var(--ui-s-3) !important; display: flex; align-items: center; border-radius: var(--ui-r-md); background: color-mix(in srgb, var(--ui-n0) 5%, transparent); color: var(--ui-n0) !important; font-size: var(--ui-fs-3) !important; font-weight: 700 !important; }
+.crm-section-title { min-height: 40px; margin-bottom: var(--ui-s-1); padding: 0 var(--ui-s-3); display: flex; align-items: center; border-radius: var(--ui-r-md); background: color-mix(in srgb, var(--ui-n0) 5%, transparent); color: var(--ui-n0); font-size: var(--ui-fs-3); font-weight: 700; }
+.crm-sidebar.is-collapsed .crm-section-title { display: none; }

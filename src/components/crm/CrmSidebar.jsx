@@ -575,7 +575,7 @@ export default function CrmSidebar({
             {activeRole === 'super_admin' && workspaceMode === 'full' && (
               <div className="crm-sidebar-group">
                 {!collapsed && (
-                  <div className="crm-sidebar-section-label">
+                  <div className="crm-section-title">
                     {isAr ? 'إدارة المنظومة' : 'Administration'}
                   </div>
                 )}
