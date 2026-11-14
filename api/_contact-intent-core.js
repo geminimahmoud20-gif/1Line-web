@@ -1,11 +1,11 @@
-// Pure logic for api/contact-intent.js: a visitor tapped WhatsApp on the site (see
+// Pure logic for api/contact-intent.js: a visitor tapped WhatsApp (or a phone number) on the site (see
 // src/utils/contactIntent.js). Only the reference, page and unit are stored: no name, phone or
 // message text exists at this point, and none is accepted.
 
 export const MAX_BODY_BYTES = 1024;
 export const INTENT_LIMITS = { perIp: { max: 12, windowMs: 10 * 60 * 1000 }, overall: { max: 600, windowMs: 60 * 60 * 1000 } };
 
-const REF_RE = /^W-[2-9A-HJ-NP-Z]{4}$/;
+const REF_RE = /^[WC]-[2-9A-HJ-NP-Z]{4}$/; // W-… a WhatsApp tap, C-… a tap on a phone number
 const key = (v, max = 80) => (typeof v === 'string' && /^[\w-]{1,80}$/.test(v) ? v.slice(0, max) : '');
 const path = (v) => (typeof v === 'string' && /^\/[\w\-/%.]{0,119}$/.test(v) ? v : '/');
 
@@ -14,7 +14,7 @@ export function sanitizeIntent(body) {
   if (!body || typeof body !== 'object' || !REF_RE.test(String(body.ref || ''))) return null;
   return {
     ref: body.ref,
-    channel: 'whatsapp',
+    channel: String(body.ref).startsWith('C-') ? 'phone' : 'whatsapp',
     path: path(body.path),
     propertyId: key(body.propertyId),
     source: key(body.source, 40) || 'direct',

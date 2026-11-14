@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react';
-import { MessageCircle, Link2, X, ExternalLink, RotateCcw } from 'lucide-react';
+import { MessageCircle, Phone, Link2, X, ExternalLink, RotateCcw } from 'lucide-react';
 import { Card, Badge, Button, Chip, Input, EmptyState } from '../ui';
 import { ageLabel } from '../../utils/inboxView';
 import { sitePageLabel } from '../../utils/sitePages';
 
-// Inbox → "واتساب من الموقع": one row per WhatsApp tap on the site (api/contact-intent.js). The chat
+// Inbox → "واتساب واتصال من الموقع": one row per WhatsApp or phone-number tap on the site (api/contact-intent.js). The chat
 // itself arrives on the company's WhatsApp carrying the same reference (W-…); staff link the row to
 // the person here, which creates the lead, or dismiss it.
 
@@ -39,7 +39,7 @@ export default function WhatsAppIntentsList({ intents, properties = [], isAr, no
   const openCount = (intents || []).filter((i) => (i.status || 'open') === 'open').length;
 
   if (intents === null) {
-    return <EmptyState title={L('مقدرناش نجيب ضغطات الواتساب', "Couldn't load WhatsApp taps")} description={L('اتأكد إنك داخل بحساب موظف.', 'Check that you are signed in as staff.')} />;
+    return <EmptyState title={L('مقدرناش نجيب ضغطات الواتساب والاتصال', "Couldn't load the taps")} description={L('اتأكد إنك داخل بحساب موظف.', 'Check that you are signed in as staff.')} />;
   }
 
   const submitLink = async (intent) => {
@@ -59,8 +59,8 @@ export default function WhatsAppIntentsList({ intents, properties = [], isAr, no
     <div className="crm-wa-intents">
       <p className="crm-inbox__summary">
         {L(
-          'كل مرة زائر بيدوس واتساب على الموقع بيتسجل هنا برقم مرجعي. الرسالة بتوصلكم على واتساب الشركة وفيها نفس الرقم: لما توصل، اربطها بالعميل هنا علشان تتحول لطلب وتتابعوه.',
-          'Each WhatsApp tap on the site is listed with a reference. The chat reaches the company WhatsApp with the same reference: link it to the person here to turn it into a lead.'
+          'كل مرة زائر بيدوس واتساب أو رقم تليفون على الموقع بيتسجل هنا (ومعاه الحملة اللي جه منها). الواتساب بيوصلكم برقم مرجعي في الرسالة: اربطه بالعميل هنا. المكالمة بتظهر في سجل مكالمات الشركة في نفس الوقت: لما تعرف الرقم اربطها بالعميل علشان تتحول لطلب وتتابعوه.',
+          'Each WhatsApp or phone-number tap on the site is listed here with the campaign it came from. A WhatsApp chat carries the reference; a call shows in the company call log at the same time. Link it to the person to turn it into a lead.'
         )}
       </p>
       <div className="crm-inbox__chips" role="group" aria-label={L('عرض', 'Show')}>
@@ -71,7 +71,7 @@ export default function WhatsAppIntentsList({ intents, properties = [], isAr, no
       {list.length === 0 ? (
         <EmptyState
           icon={<MessageCircle size={22} aria-hidden="true" />}
-          title={show === 'open' ? L('مفيش ضغطات مستنية ربط', 'Nothing waiting') : L('لسه مفيش ضغطات واتساب', 'No WhatsApp taps yet')}
+          title={show === 'open' ? L('مفيش ضغطات مستنية ربط', 'Nothing waiting') : L('لسه مفيش ضغطات واتساب أو اتصال', 'No taps yet')}
           description={L('أول ما زائر يدوس واتساب على أي وحدة أو صفحة هيظهر هنا.', 'Taps on WhatsApp buttons on the site show up here.')}
         />
       ) : (
@@ -85,7 +85,7 @@ export default function WhatsAppIntentsList({ intents, properties = [], isAr, no
               <li key={i.id}>
                 <Card padding="compact" className={`crm-inbox-item${status === 'open' ? ' is-new' : ''}`}>
                   <div className="crm-wa-intent__head">
-                    <span className="crm-wa-intent__ref"><bdi dir="ltr">{i.ref || i.id}</bdi></span>
+                    <span className="crm-wa-intent__ref">{i.channel === 'phone' ? <Phone size={12} aria-hidden="true" /> : <MessageCircle size={12} aria-hidden="true" />} <bdi dir="ltr">{i.ref || i.id}</bdi></span>
                     <span className="crm-wa-intent__when">{when}</span>
                     {status === 'linked' && <Badge tone="success">{L('اتربطت بعميل', 'Linked')}</Badge>}
                     {status === 'dismissed' && <Badge>{L('اتجاهلت', 'Dismissed')}</Badge>}
@@ -108,6 +108,12 @@ export default function WhatsAppIntentsList({ intents, properties = [], isAr, no
                       <dt>{L('المصدر', 'Source')}</dt>
                       <dd>{SOURCE_LABELS[i.source] || i.source || L('دخول مباشر', 'Direct')}</dd>
                     </div>
+                    {i.campaign && (
+                      <div>
+                        <dt>{L('الحملة', 'Campaign')}</dt>
+                        <dd><bdi dir="ltr">{i.campaign}</bdi></dd>
+                      </div>
+                    )}
                     <div>
                       <dt>{L('الجهاز', 'Device')}</dt>
                       <dd>{i.device === 'mobile' ? L('موبايل', 'Phone') : L('كمبيوتر', 'Computer')}</dd>
@@ -135,7 +141,7 @@ export default function WhatsAppIntentsList({ intents, properties = [], isAr, no
                   {linking === i.id && (
                     <form className="crm-wa-intent__link" onSubmit={(e) => { e.preventDefault(); submitLink(i); }}>
                       <Input label={L('اسم العميل', 'Client name')} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={L('زي ما ظهر على واتساب', 'As shown on WhatsApp')} />
-                      <Input label={L('رقم الواتساب', 'WhatsApp number')} required type="tel" inputMode="tel" dir="ltr" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="01xxxxxxxxx" />
+                      <Input label={i.channel === 'phone' ? L('رقم العميل', 'Client number') : L('رقم الواتساب', 'WhatsApp number')} required type="tel" inputMode="tel" dir="ltr" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="01xxxxxxxxx" />
                       <div className="crm-inbox-item__actions">
                         <Button size="sm" type="submit" disabled={busy || form.phone.replace(/\D/g, '').length < 8}>{L('اربط واعمل طلب', 'Link & create lead')}</Button>
                         <Button size="sm" variant="ghost" type="button" onClick={() => setLinking(null)}>{L('إلغاء', 'Cancel')}</Button>

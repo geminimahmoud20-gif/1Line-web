@@ -249,23 +249,32 @@ export default function CrmInboxPanel({
   const linkIntent = async (intent, { name, phone }) => {
     if (!onAddNewLead) return;
     const unit = intent.propertyId ? properties.find((p) => String(p.id) === String(intent.propertyId)) : null;
+    const isCall = intent.channel === 'phone';
+    // The lead belongs to the ad the visitor came from (what the tap recorded), not to the staff browser it is created in
+    const source = intent.source && intent.source !== 'direct' ? intent.source : '';
+    const attribution = intent.campaign
+      ? { source: source || 'paid', medium: intent.medium || '', campaign: intent.campaign, ...(intent.content ? { content: intent.content } : {}) }
+      : { source: source || 'direct' };
     await onAddNewLead({
-      name: name || (isAr ? 'عميل واتساب' : 'WhatsApp client'),
+      name: name || (isCall ? (isAr ? 'عميل اتصال' : 'Phone client') : (isAr ? 'عميل واتساب' : 'WhatsApp client')),
       phone,
       whatsapp: phone,
       type: 'buyer',
-      source: 'whatsapp_site',
+      source: isCall ? 'phone_site' : 'whatsapp_site',
       contactRef: intent.ref || intent.id,
+      marketingAttribution: attribution,
+      utmSource: attribution.source,
+      utmCampaign: attribution.campaign || attribution.source,
       ...(intent.propertyId ? { propertyId: String(intent.propertyId) } : {}),
       details: {
-        channel: 'whatsapp',
+        channel: isCall ? 'phone' : 'whatsapp',
         propertyCode: intent.propertyId ? String(intent.propertyId).toUpperCase() : '',
         ...(unit?.areaKey ? { area: unit.areaKey } : {}),
         ...(unit?.type ? { propertyType: unit.type } : {})
       },
       notes: isAr
-        ? `تواصل بالواتساب من الموقع${intent.propertyId ? ` على وحدة #${String(intent.propertyId).toUpperCase()}` : ''} · رقم المرجع ${intent.ref || intent.id}`
-        : `WhatsApp from the site${intent.propertyId ? ` about #${String(intent.propertyId).toUpperCase()}` : ''} · ref ${intent.ref || intent.id}`
+        ? `${isCall ? 'اتصال' : 'تواصل بالواتساب'} من الموقع${intent.propertyId ? ` على وحدة #${String(intent.propertyId).toUpperCase()}` : ''}${intent.campaign ? ` · حملة ${intent.campaign}` : ''} · رقم المرجع ${intent.ref || intent.id}`
+        : `${isCall ? 'Call' : 'WhatsApp'} from the site${intent.propertyId ? ` about #${String(intent.propertyId).toUpperCase()}` : ''}${intent.campaign ? ` · campaign ${intent.campaign}` : ''} · ref ${intent.ref || intent.id}`
     });
     if (await resolveIntent(intent, 'linked')) {
       triggerToast?.(isAr ? `اتعمل طلب لـ ${name || 'العميل'} واتربط بالمرجع ${intent.ref || intent.id}` : 'Lead created and linked', 'success');
@@ -359,7 +368,7 @@ export default function CrmInboxPanel({
     },
     {
       id: 'whatsapp',
-      label_ar: 'واتساب من الموقع',
+      label_ar: 'واتساب واتصال من الموقع',
       label_en: 'WhatsApp taps',
       icon: MessageCircle,
       count: (intents || []).length,

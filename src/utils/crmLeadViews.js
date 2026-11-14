@@ -165,14 +165,15 @@ export function isSellerLead(l = {}) {
 }
 
 /**
- * Someone who wants to buy: not an owner selling, an investor, a broker, a client account or a visit request
- * (those have their own chips). The «شراء» chip used to take only type 'buyer', so a client entered or imported as a
- * «طلب خاص» (type 'request'), a website demand or with no type at all never showed up under it.
+ * Someone who wants to buy: not an owner selling, an investor, a broker or a visit request (those have their own
+ * chips). A client who made an account on the site counts: that is how most buyers start, before a WhatsApp message
+ * or a call, and they used to sit only under «حسابات جديدة». The «شراء» chip used to take only type 'buyer', so a
+ * client entered or imported as a «طلب خاص» (type 'request'), a website demand or with no type never showed up.
  */
 export function isBuyerLead(l = {}) {
   const type = (l.type || '').toLowerCase();
   if (type === 'investor' || type === 'broker') return false;
-  return !isSellerLead(l) && !isViewingLead(l) && !isAccountLead(l);
+  return !isSellerLead(l) && !isViewingLead(l);
 }
 
 export function isAccountLead(l = {}) {

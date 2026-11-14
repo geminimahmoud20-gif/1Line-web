@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Megaphone, Copy, Link2, RefreshCw } from 'lucide-react';
 import { campaignReport, campaignTotals, typeSummary, PERIODS } from '../../utils/campaignReport';
 import { LOST_REASONS } from '../../utils/crmLeadViews';
-import { loadCampaignSpend, saveCampaignSpend, loadCampaignLinks, saveCampaignLinks, pullMetaSpend } from '../../firebaseLazy';
+import { loadCampaignSpend, saveCampaignSpend, loadCampaignLinks, saveCampaignLinks, pullMetaSpend, subscribeToContactIntents } from '../../firebaseLazy';
 import { EmptyState } from '../ui';
 import { LANDINGS, PLATFORMS, CAMPAIGN_TYPES, buildUtmLink, slugify, typedCampaignName } from '../../utils/utmLinks';
 import { SITE_URL } from '../../config/siteConfig';
@@ -94,9 +94,16 @@ export default function CampaignReportPanel({ leads = [], properties = [], lang 
   const [period, setPeriod] = useState('30');
   const [spend, setSpend] = useState(readSpend);
 
+  // Taps on WhatsApp / phone numbers that came from an ad: people who went to a chat or a call without a form
+  const [intents, setIntents] = useState([]);
+  useEffect(() => subscribeToContactIntents((list) => setIntents(Array.isArray(list) ? list : [])), []);
+  const taps = useMemo(() => intents.filter((i) => i.campaign).map((i) => ({
+    campaign: i.campaign, content: i.content || '', source: i.source || '',
+    at: i.createdAt?.toMillis ? i.createdAt.toMillis() : (Date.parse(i.createdAt || '') || 0)
+  })), [intents]);
   const rows = useMemo(
-    () => campaignReport(leads, { by, days: PERIODS.find((p) => p.id === period)?.days || 0, spend }),
-    [leads, by, period, spend]
+    () => campaignReport(leads, { by, days: PERIODS.find((p) => p.id === period)?.days || 0, spend, taps }),
+    [leads, by, period, spend, taps]
   );
   const totals = useMemo(() => campaignTotals(rows), [rows]);
   const kinds = useMemo(() => typeSummary(rows), [rows]);
@@ -270,6 +277,7 @@ export default function CampaignReportPanel({ leads = [], properties = [], lang 
       ) : (
         <>
           <div className="cr-totals">
+            <div><b>{totals.contacts}</b><span>{L('ضغطة تواصل', 'Contact taps')}</span></div>
             <div><b>{totals.leads}</b><span>{L('عميل', 'Leads')}</span></div>
             <div><b>{totals.visits}</b><span>{L('وصل لمعاينة', 'Reached a visit')}</span></div>
             <div><b>{totals.closed}</b><span>{L('اتقفل', 'Closed')}</span></div>
@@ -285,6 +293,7 @@ export default function CampaignReportPanel({ leads = [], properties = [], lang 
                   <div key={k.type} className="cr-kind">
                     <strong>{k.label}</strong>
                     <dl>
+                      <div><dt>{L('تواصل', 'Taps')}</dt><dd>{k.contacts || 0}</dd></div>
                       <div><dt>{L('عملاء', 'Leads')}</dt><dd>{k.leads}</dd></div>
                       <div><dt>{L('معاينة', 'Visits')}</dt><dd>{k.visits}</dd></div>
                       <div><dt>{L('اتقفل', 'Closed')}</dt><dd>{k.closed}</dd></div>
@@ -310,6 +319,7 @@ export default function CampaignReportPanel({ leads = [], properties = [], lang 
                   {r.avgDaysToVisit > 0 && <small>{L(`متوسط ${r.avgDaysToVisit} يوم لحد المعاينة`, `Avg ${r.avgDaysToVisit} days to a visit`)}</small>}
                 </div>
                 <dl className="cr-nums">
+                  <div><dt>{L('تواصل', 'Taps')}</dt><dd>{r.contacts || 0}</dd></div>
                   <div><dt>{L('عملاء', 'Leads')}</dt><dd>{r.leads}</dd></div>
                   <div><dt>{L('اتكلّم', 'Contacted')}</dt><dd>{r.contacted}</dd></div>
                   <div><dt>{L('معاينة', 'Visits')}</dt><dd>{r.visits}{r.leads ? <small> ({r.visitRate}%)</small> : null}</dd></div>
@@ -327,6 +337,7 @@ export default function CampaignReportPanel({ leads = [], properties = [], lang 
               </li>
             ))}
           </ul>
+          <p className="cr-note">{L('«تواصل» = كام زائر جه من الإعلان وداس واتساب أو رقم تليفون. «عملاء» = اللي سجّلوا بياناتهم (فورم أو حساب) أو اتربطوا من صندوق الوارد.', '“Taps” = visitors from the ad who tapped WhatsApp or a phone number; “Leads” = people whose details were recorded.')}</p>
           <p className="cr-note">{shared === false
             ? L('المصروف متحفظ على الجهاز ده بس دلوقتي (مقدرناش نوصل للمخزن المشترك). الأرقام من العملاء المسجّلين في الـ CRM.', 'Spend is saved on this device only right now. Counts come from the leads in the CRM.')
             : L('المصروف بيتحفظ ويظهر لكل المديرين. الأرقام من العملاء المسجّلين في الـ CRM.', 'Spend is shared with the other managers. Counts come from the leads in the CRM.')}</p>
