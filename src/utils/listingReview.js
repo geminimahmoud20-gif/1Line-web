@@ -88,7 +88,9 @@ export function matchesFilters(p, f, issues) {
   if (f.status === 'trash') { if (st !== 'trash') return false; } else if (st === 'trash') return false;
   // 'approval': waiting for (or refused by) the general manager, whatever its status
   if (f.status === 'approval') { if (!blockedByApproval(p)) return false; }
-  else if (f.status && !['all', 'trash'].includes(f.status) && st !== f.status) return false;
+  // a listing that is waiting for or refused by the manager is not on the site, so it is not «معروضة» (or any other
+  // status list); it shows under «all» and «approval» only
+  else if (f.status && !['all', 'trash'].includes(f.status) && (st !== f.status || blockedByApproval(p))) return false;
   if (f.type && f.type !== 'all' && p.type !== f.type) return false;
   if (f.area && f.area !== 'all') {
     // f.areaIds: the chosen area and, for a main area, its sub-areas
@@ -122,7 +124,8 @@ const median = (nums) => {
 export function listingReport(properties, areas = [], typeLabel = (t) => t) {
   const known = new Set(areas.map((a) => a.id));
   const live = properties.filter((p) => !p.isDemo && listingStatus(p) !== 'trash');
-  const byStatus = { published: 0, hidden: 0, under_negotiation: 0, sold: 0 };
+  // `approval`: waiting for or refused by the general manager, so not on the site whatever its status says
+  const byStatus = { published: 0, hidden: 0, under_negotiation: 0, sold: 0, approval: 0 };
   const quality = { ready: 0, title: 0, photo: 0, price: 0, size: 0, area: 0, legacy: 0 };
   const areaRows = new Map();
   const typeRows = new Map();
@@ -130,7 +133,7 @@ export function listingReport(properties, areas = [], typeLabel = (t) => t) {
   let onSiteValue = 0;
 
   for (const p of live) {
-    const st = listingStatus(p);
+    const st = blockedByApproval(p) ? 'approval' : listingStatus(p);
     byStatus[st] += 1;
     const issues = listingIssues(p, known);
     if (!issues.length) quality.ready += 1;

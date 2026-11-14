@@ -94,7 +94,9 @@ export default function PropertyTableRow({
   const [brochureError, setBrochureError] = useState(false);
   const status = getNormalizedPropertyStatus(prop);
   const isTrash = status === 'trash';
-  const isOnSite = !isTrash && status !== 'hidden';
+  // Waiting for (or refused by) the general manager: not on the site, whatever its status says
+  const heldBack = !isTrash && blockedByApproval(prop);
+  const isOnSite = !isTrash && status !== 'hidden' && !heldBack;
   const ready = issues.length === 0;
   // Photos kept inside the listing after a refused upload (data: URLs)
   const inlinePhotos = (prop.images || []).filter((u) => String(u).startsWith('data:image/')).length;
@@ -256,7 +258,14 @@ export default function PropertyTableRow({
           </>
         ) : (
           <>
-            {status === 'hidden' && ready ? (
+            {heldBack ? (
+              <IconButton
+                size="sm"
+                label={prop.approval === 'rejected' ? (isAr ? 'مش على الموقع: المدير العام رفضها' : 'Not on the site: rejected') : (isAr ? 'مش على الموقع: مستنية موافقة المدير العام' : 'Not on the site: waiting for approval')}
+                icon={<Hourglass size={16} aria-hidden="true" />}
+                disabled
+              />
+            ) : status === 'hidden' && ready ? (
               <Button size="sm" icon={<Send size={14} aria-hidden="true" />} disabled={readOnly} onClick={() => handleToggleVisibility(prop)}>
                 {isAr ? 'انشر' : 'Publish'}
               </Button>

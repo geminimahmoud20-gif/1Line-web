@@ -9,6 +9,7 @@ import { listingIssues, ISSUES } from './listingReview.js';
 import { LANDING_KINDS } from './seoLanding.js';
 import { median } from './marketStats.js';
 import { inRange } from './reportPeriods.js';
+import { blockedByApproval } from './publishApproval.js';
 
 const DAY = 86_400_000;
 const num = (v) => (typeof v === 'number' ? v : parseInt(String(v ?? '').replace(/[^\d]/g, ''), 10) || 0);
@@ -26,9 +27,13 @@ const pair = (list, range, prevRange, when = createdMs) => {
 /** The property portfolio: by status, by kind with the median price per m², by area, and what needs fixing */
 export function portfolioReport(properties = [], { range, prevRange = null, now = Date.now(), areaNames = {}, staleDays = 60 } = {}) {
   const real = properties.filter((p) => p && !p.isDemo);
-  const byStatus = { published: 0, under_negotiation: 0, sold: 0, hidden: 0, trash: 0 };
-  for (const p of real) byStatus[getNormalizedPropertyStatus(p)] += 1;
-  const live = real.filter((p) => getNormalizedPropertyStatus(p) === 'published');
+  // `approval`: waiting for or refused by the general manager, so not on the site whatever its status says
+  const byStatus = { published: 0, under_negotiation: 0, sold: 0, hidden: 0, trash: 0, approval: 0 };
+  for (const p of real) {
+    const st = getNormalizedPropertyStatus(p);
+    byStatus[st !== 'trash' && blockedByApproval(p) ? 'approval' : st] += 1;
+  }
+  const live = real.filter((p) => getNormalizedPropertyStatus(p) === 'published' && !blockedByApproval(p));
 
   const kinds = LANDING_KINDS.map((kind) => {
     const list = live.filter((p) => kind.types.includes(p.type));

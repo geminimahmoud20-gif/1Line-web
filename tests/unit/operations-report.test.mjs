@@ -75,3 +75,9 @@ test('portfolio: sold in the period counts only listings with a sale date, and s
   assert.deepEqual([r.soldIn.cur, r.soldIn.prev, r.soldWithDate], [1, 1, 2]);
   assert.equal(r.byStatus.sold, 3);
 });
+
+test('portfolio: a listing waiting for or refused by the manager is not counted as on the site', () => {
+  const r = portfolioReport([prop({}), prop({ approval: 'pending' }), prop({ approval: 'rejected' }), prop({ approval: 'approved' })], { range: week, now: NOW });
+  assert.deepEqual([r.byStatus.published, r.byStatus.approval], [2, 2]);
+  assert.equal(r.kinds.find((k) => k.label === 'الشقق').count, 2);
+});

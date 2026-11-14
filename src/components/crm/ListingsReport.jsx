@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Eye, ClipboardCheck, AlertTriangle, Handshake, BadgeCheck, Wallet, Download } from 'lucide-react';
+import { Eye, ClipboardCheck, AlertTriangle, Handshake, BadgeCheck, Wallet, Download, Hourglass } from 'lucide-react';
 import { Card, CardHeader, KpiRow, KpiTile, Button } from '../ui';
 import { listingReport, ISSUES, NO_AREA } from '../../utils/listingReview';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
@@ -49,6 +49,7 @@ export default function ListingsReport({ properties, areas, isAr, onOpenList }) 
     <div className="crm-lrep">
       <KpiRow label={L('ملخص العقارات', 'Listings summary')}>
         <KpiTile icon={<Eye size={18} />} label={L('معروض على الموقع', 'On the site')} value={r.byStatus.published} onClick={() => onOpenList({ status: 'published' })} />
+        {r.byStatus.approval > 0 && <KpiTile icon={<Hourglass size={18} />} label={L('مستنية موافقة', 'Awaiting approval')} value={r.byStatus.approval} onClick={() => onOpenList({ status: 'approval' })} />}
         <KpiTile icon={<ClipboardCheck size={18} />} label={L('للمراجعة', 'In review')} value={r.byStatus.hidden} hint={L(`${r.readyHidden} منهم جاهزين للنشر`, `${r.readyHidden} ready to publish`)} onClick={() => onOpenList({ status: 'hidden' })} />
         <KpiTile icon={<AlertTriangle size={18} />} label={L('ناقص بيانات', 'Incomplete')} value={incomplete} onClick={() => onOpenList({ readiness: 'incomplete' })} />
         <KpiTile icon={<Handshake size={18} />} label={L('تحت التفاوض', 'Negotiating')} value={r.byStatus.under_negotiation} onClick={() => onOpenList({ status: 'under_negotiation' })} />
