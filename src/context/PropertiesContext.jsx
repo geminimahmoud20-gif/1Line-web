@@ -38,6 +38,7 @@ import { identifyVisitor, getCurrentSessionJourney, getAttributionData, getFirst
 import { routeLeadAutomatically } from '../utils/leadRoutingEngine';
 import { isRecordArray, readStoredJson, rememberMyDemand } from '../utils/browserStorage';
 import { normalizeAreaKey } from '../utils/areasData';
+import { statusStamp } from '../utils/propertyStatus';
 import { enqueuePendingLead, pendingLeadCount } from '../utils/leadQueue';
 import { track, propertyFacts, analyticsVisitorId } from '../utils/analytics';
 import { fetchPublicCatalog, PUBLIC_CATALOG_REFRESH_MS } from '../utils/publicCatalog';
@@ -193,7 +194,7 @@ export function PropertiesProvider({ children }) {
   const handleUpdateProperty = useCallback((id, updatedData) => {
     const current = propertiesRef.current.find((p) => p.id === id);
     if (!current) return;
-    const merged = { ...current, ...updatedData };
+    const merged = { ...current, ...updatedData, ...statusStamp(current, updatedData) };
     const updated = propertiesRef.current.map((p) => (p.id === id ? merged : p));
     propertiesRef.current = updated; // back-to-back updates (slot reordering) must see each other
     setProperties(updated);

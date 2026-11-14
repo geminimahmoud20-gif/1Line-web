@@ -66,3 +66,12 @@ test('empty lists do not produce NaN', () => {
   assert.ok(!/NaN|undefined/.test(JSON.stringify([p, d, i])));
   assert.equal(p.added.prev, null);
 });
+
+test('portfolio: sold in the period counts only listings with a sale date, and says how many have none', () => {
+  const list = [
+    prop({ status: 'sold', soldAt: iso(2) }), prop({ status: 'sold', soldAt: iso(9) }), prop({ status: 'sold' }), prop({ status: 'published', soldAt: iso(2) })
+  ];
+  const r = portfolioReport(list, { range: week, prevRange: before, now: NOW });
+  assert.deepEqual([r.soldIn.cur, r.soldIn.prev, r.soldWithDate], [1, 1, 2]);
+  assert.equal(r.byStatus.sold, 3);
+});
