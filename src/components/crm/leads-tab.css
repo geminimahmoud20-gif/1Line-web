@@ -278,3 +278,43 @@
 /* Source chips: an icon each; ads stand out (they are the clients with the 15-minute reply target) */
 .crm-layout .crm-leads .crm-lead-chip.is-source { display: inline-flex; align-items: center; gap: 4px; }
 .crm-layout .crm-leads .crm-lead-chip.is-source-ads { background: var(--ui-primary-tint); color: var(--ui-primary-text); font-weight: var(--ui-fw-semibold); }
+
+/* ── Clients list: tidier header, row accents, a readable follow-up column ── */
+.crm-leads__stats { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-s-1) var(--ui-s-3); font-size: var(--ui-fs-2); color: var(--ui-text-3); }
+.crm-leads__stats > span { display: inline-flex; align-items: baseline; gap: 4px; }
+.crm-leads__stats b { color: var(--ui-text); font-weight: var(--ui-fw-bold); font-variant-numeric: tabular-nums; }
+.crm-leads__stats > span + span::before { content: ''; width: 3px; height: 3px; margin-inline-end: var(--ui-s-3); border-radius: 50%; background: var(--ui-line-strong); align-self: center; }
+
+.crm-leads__urgent { display: flex; flex-wrap: wrap; gap: var(--ui-s-2); margin-bottom: var(--ui-s-3); }
+.crm-layout .crm-leads__urgent-btn {
+  display: inline-flex; align-items: center; min-height: 32px; padding: 0 var(--ui-s-3); border: 1px solid var(--ui-line);
+  border-radius: var(--ui-r-full); background: var(--ui-warning-tint); color: var(--ui-warning); box-shadow: none;
+  font: var(--ui-fw-semibold) var(--ui-fs-2) / 1 var(--ui-font); cursor: pointer;
+}
+.crm-layout .crm-leads__urgent-btn.is-late { background: var(--ui-danger-tint); color: var(--ui-danger); }
+
+/* A coloured edge on the row: hot clients and late follow-ups stand out while scrolling */
+.crm-layout .crm-leads .crm-table tbody tr.crm-lead-row > td:first-child { border-inline-start: 3px solid transparent; }
+.crm-layout .crm-leads .crm-table tbody tr.crm-lead-row.is-hot > td:first-child { border-inline-start-color: var(--ui-warning); }
+.crm-layout .crm-leads .crm-table tbody tr.crm-lead-row.is-overdue > td:first-child { border-inline-start-color: var(--ui-danger); }
+
+.crm-layout .crm-leads .crm-lead-age { font-size: var(--ui-fs-1); color: var(--ui-text-3); align-self: center; }
+
+/* Follow-up: when (coloured), then the note on up to two lines */
+.crm-layout .crm-leads .crm-next { display: flex; flex-direction: column; gap: 2px; min-width: 120px; max-width: 190px; cursor: pointer; }
+.crm-layout .crm-leads .crm-next__when { display: inline-flex; align-items: center; gap: 4px; font-size: var(--ui-fs-1); font-weight: var(--ui-fw-semibold); color: var(--ui-text-2); }
+.crm-layout .crm-leads .crm-next.is-today .crm-next__when { color: var(--ui-warning); }
+.crm-layout .crm-leads .crm-next.is-overdue .crm-next__when { color: var(--ui-danger); }
+.crm-layout .crm-leads .crm-next__note { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: var(--ui-fs-1); line-height: 1.5; color: var(--ui-text-3); }
+
+/* Fit the table: tighter cells, the score and temperature stacked, a narrower owner picker */
+.crm-layout .crm-leads .crm-table { min-width: 0; }
+.crm-layout .crm-leads .crm-table td { padding: var(--ui-s-3); }
+.crm-layout .crm-leads .crm-table th { padding-inline: var(--ui-s-3); white-space: nowrap; }
+.crm-layout .crm-leads .crm-leads__score { flex-direction: column; align-items: flex-start; gap: var(--ui-s-1); }
+.crm-layout .crm-leads .crm-table .crm-agent-select { max-width: 120px; }
+.crm-layout .crm-leads .crm-status-select-wrap { min-width: 112px; }
+@media (max-width: 768px) {
+  .crm-layout .crm-leads .crm-next { max-width: none; flex-direction: row; align-items: center; flex-wrap: wrap; gap: var(--ui-s-2); }
+  .crm-layout .crm-leads .crm-leads__score { flex-direction: row; align-items: center; }
+}
