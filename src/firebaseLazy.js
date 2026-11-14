@@ -89,6 +89,7 @@ export const addTask = lazyCall('addTask');
 export const addTaskWithId = lazyCall('addTaskWithId');
 export const updateTask = lazyCall('updateTask');
 export const removeTask = lazyCall('removeTask');
+export const pullMetaSpend = lazyCall('pullMetaSpend');
 export const loadGoals = lazyCall('loadGoals');
 export const saveGoals = lazyCall('saveGoals');
 export const updateLeadField = lazyCall('updateLeadField');
