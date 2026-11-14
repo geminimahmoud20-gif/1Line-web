@@ -915,12 +915,15 @@ export default function CrmPage({
 
         {/* 3. Main Dynamic Content Area */}
         <div className="crm-content-area" id="crm-main-content">
-          {can.editLeads && (
-            <PushReminderPrompt manager={Boolean(can.campaigns)} name={currentUser?.displayName || (currentUser?.email || '').split('@')[0]} />
-          )}
-          {activeRole === 'super_admin' && (
-            <AlertHealthBanner onOpen={() => { setSystemSubTab('alerts'); setActiveTab('system'); }} />
-          )}
+          {/* The setup notices share one card instead of stacking as separate boxes above every page */}
+          <div className="crm-notices">
+            {can.editLeads && (
+              <PushReminderPrompt manager={Boolean(can.campaigns)} name={currentUser?.displayName || (currentUser?.email || '').split('@')[0]} />
+            )}
+            {activeRole === 'super_admin' && (
+              <AlertHealthBanner onOpen={() => { setSystemSubTab('alerts'); setActiveTab('system'); }} />
+            )}
+          </div>
           {activeTab === 'properties' ? (
             <PropertyManagerPanel
               shareRef={currentUser?.email || ''}
