@@ -78,6 +78,7 @@ export default function PropertyTableRow({
   handlePermanentDelete,
   onUpdateProperty,
   onFacebookPost,
+  onNotes,
   triggerToast,
   setSlotEditing,
   setOfferEditing,
@@ -296,6 +297,7 @@ export default function PropertyTableRow({
                 onFacebookPost && { id: 'facebook', icon: <Megaphone size={13} />, label: isAr ? 'منشور فيسبوك (صورة + كلام)' : 'Facebook post', onSelect: () => onFacebookPost(prop) },
                 { id: 'brochure', icon: <FileDown size={13} />, label: busy ? (isAr ? 'بنجهّز البروشور…' : 'Preparing…') : (isAr ? 'بروشور للعميل' : 'Brochure'), disabled: busy, onSelect: async () => { setBusy(true); setBrochureError(false); const ok = await downloadBrochure(prop); setBusy(false); if (!ok) setBrochureError(true); } },
                 { id: 'notify', icon: <MessageSquare size={13} />, label: isAr ? 'ابعته للعملاء المهتمين' : 'Send to matching clients', onSelect: () => { setNotifierProperty(prop); setNotifierEventType(status === 'sold' ? 'sold_unit' : 'new_unit'); } },
+                onNotes && { id: 'team-notes', icon: <MessageSquare size={13} />, label: isAr ? 'ملاحظات الفريق' : 'Team notes', onSelect: () => onNotes(prop) },
                 !readOnly && { id: 'trash', separator: true, danger: true, icon: <Trash2 size={13} />, label: isAr ? 'نقل للمهملات' : 'Move to trash', onSelect: () => handleSoftDelete(prop.id) }
               ]}
             />

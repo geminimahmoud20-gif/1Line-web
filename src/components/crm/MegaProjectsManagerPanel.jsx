@@ -1,12 +1,13 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import useOpenRequest from '../../hooks/useOpenRequest';
-import { Building2, Plus, Edit3, Trash2, MapPin, Search, Eye, EyeOff, Flame } from 'lucide-react';
+import { Building2, Plus, Edit3, Trash2, MapPin, Search, Eye, EyeOff, Flame, MessageSquare } from 'lucide-react';
 import { projectSampleFlags } from '../../utils/sampleDataFlags';
 import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 import ProjectFormModal from './ProjectFormModal';
 import DevelopersPanel from './DevelopersPanel';
 import { useDevelopers, developerNameOf } from '../../utils/developers';
 import OfferModal from './OfferModal';
+import NotesModal from './NotesModal';
 import './projects-manager.css';
 import { offerState } from '../../utils/propertyOffers';
 import { useConfirm } from '../ui';
@@ -56,6 +57,7 @@ export default function MegaProjectsManagerPanel({
   const [editingProjectId, setEditingProjectId] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [offerEditing, setOfferEditing] = useState(null);
+  const [notesFor, setNotesFor] = useState(null); // the project whose team notes are open
   
   // Form State
   const initialForm = {
@@ -439,6 +441,15 @@ export default function MegaProjectsManagerPanel({
                       </button>
                       <button
                         type="button"
+                        className="btn btn-sm btn-ghost pjm-act"
+                        onClick={() => setNotesFor(p)}
+                        title={isAr ? 'ملاحظات الفريق' : 'Team notes'}
+                        aria-label={isAr ? 'ملاحظات الفريق' : 'Team notes'}
+                      >
+                        <MessageSquare size={15} />
+                      </button>
+                      <button
+                        type="button"
                         className="btn btn-sm btn-ghost"
                         disabled={readOnly}
                         onClick={() => handleOpenEditModal(p)}
@@ -466,6 +477,8 @@ export default function MegaProjectsManagerPanel({
         </table>
       </div>
       </>)}
+
+      <NotesModal open={Boolean(notesFor)} onClose={() => setNotesFor(null)} entityType="project" entityId={String(notesFor?.id || '')} entityName={notesFor?.name || notesFor?.title_ar || notesFor?.title || ''} lang={lang} />
 
       {offerEditing && (
         <OfferModal

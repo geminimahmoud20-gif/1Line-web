@@ -25,6 +25,7 @@ import ThumbBackfillCard from './ThumbBackfillCard';
 // Accurate GPS Coordinates map for Sohag Districts
 import PropertyFormModal from './PropertyFormModal';
 import PropertyTableRow from './PropertyTableRow';
+import NotesModal from './NotesModal';
 import PropertyFacetFilter from './PropertyFacetFilter';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 
@@ -180,6 +181,7 @@ export default function PropertyManagerPanel({
   const [areas, setAreas] = useState(() => getAreas());
   const [slotEditing, setSlotEditing] = useState(null); // property being scheduled for the homepage
   const [fbPost, setFbPost] = useState(null); // listing whose Facebook post is open
+  const [notesFor, setNotesFor] = useState(null); // listing whose team notes are open
   const [offerEditing, setOfferEditing] = useState(null); // property whose limited-time offer is being edited
   const [importOpen, setImportOpen] = useState(false);
 
@@ -803,6 +805,7 @@ export default function PropertyManagerPanel({
         />
       )}
 
+      <NotesModal open={Boolean(notesFor)} onClose={() => setNotesFor(null)} entityType="property" entityId={String(notesFor?.id || '')} entityName={notesFor ? (notesFor.title_ar || notesFor.title_en || '') : ''} lang={isAr ? 'ar' : 'en'} />
       {fbPost && (
         <FacebookPostModal property={fbPost} areas={areas} isAr={isAr} triggerToast={triggerToast} onClose={() => setFbPost(null)} />
       )}
@@ -1030,6 +1033,7 @@ export default function PropertyManagerPanel({
                       handlePermanentDelete={handlePermanentDelete}
                       onUpdateProperty={onUpdateProperty}
                       onFacebookPost={setFbPost}
+                      onNotes={setNotesFor}
                       triggerToast={triggerToast}
                       setSlotEditing={setSlotEditing}
                       setOfferEditing={setOfferEditing}

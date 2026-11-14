@@ -60,7 +60,7 @@ import { getAreas } from '../utils/areasData';
 import { formArea } from '../utils/areaLookup';
 
 // Sections a link can open directly: /crm?tab=… (desktop-app shortcuts, WhatsApp alerts, tapped notifications)
-const URL_TABS = ['inbox', 'dashboard', 'leads', 'kanban', 'properties', 'demands', 'projects', 'expat', 'trade_ins'];
+const URL_TABS = ['inbox', 'dashboard', 'leads', 'kanban', 'properties', 'demands', 'projects', 'expat', 'trade_ins', 'chat'];
 
 export default function CrmPage({
   lang = 'ar',
