@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Megaphone, Copy, Link2, RefreshCw } from 'lucide-react';
 import { campaignReport, campaignTotals, PERIODS } from '../../utils/campaignReport';
 import { LOST_REASONS } from '../../utils/crmLeadViews';
-import { loadCampaignSpend, saveCampaignSpend, pullMetaSpend } from '../../firebaseLazy';
+import { loadCampaignSpend, saveCampaignSpend, loadCampaignLinks, saveCampaignLinks, pullMetaSpend } from '../../firebaseLazy';
 import { EmptyState } from '../ui';
 import { LANDINGS, PLATFORMS, buildUtmLink, slugify } from '../../utils/utmLinks';
 import { SITE_URL } from '../../config/siteConfig';
@@ -79,6 +79,16 @@ export default function CampaignReportPanel({ leads = [], lang = 'ar', triggerTo
     return () => { alive = false; clearTimeout(saveTimer.current); };
   }, []);
 
+  // Meta campaigns paired by hand with a report campaign: { metaCampaignId: campaignKey }
+  const [links, setLinks] = useState({});
+  useEffect(() => {
+    let alive = true;
+    loadCampaignLinks().then((remote) => { if (alive && remote) setLinks(remote); }).catch(() => { /* none yet */ });
+    return () => { alive = false; };
+  }, []);
+  const [lastPull, setLastPull] = useState(null); // the raw answer of the last pull, so a pairing re-applies without asking Meta again
+  const reportKeys = useMemo(() => campaignReport(leads, { by: 'campaign' }).map((x) => x.key), [leads]);
+
   const setRowSpend = (key, value) => {
     const n = Math.max(0, Math.round(Number(String(value).replace(/[^\d.]/g, '')) || 0));
     const next = { ...spend, [key]: n };
@@ -113,10 +123,18 @@ export default function CampaignReportPanel({ leads = [], lang = 'ar', triggerTo
       setPull({ ok: false, text: L(`عملة الحساب الإعلاني ${r.currency === 'MIXED' ? 'مختلطة' : r.currency}، والتقرير بالجنيه. ما سحبناش حاجة عشان الأرقام ما تتلخبطش.`, 'The ad account is not in EGP; nothing was imported.') });
       return;
     }
+    setLastPull(r);
+    finishPull(r, links);
+  };
+
+  // Matches a pull to the report (by name, then by the manual pairings), saves the amounts and says what's left over
+  const finishPull = (r, linksNow, quiet = false, drop = []) => {
     const known = (by2) => campaignReport(leads, { by: by2 }).map((x) => x.key);
-    const out = applyPull(r, { campaignKeys: known('campaign'), adKeys: known('ad') });
-    if (Object.keys(out.amounts).length) {
-      const next = { ...spend, ...out.amounts };
+    const out = applyPull(r, { campaignKeys: known('campaign'), adKeys: known('ad'), links: linksNow });
+    if (Object.keys(out.amounts).length || drop.length) {
+      const next = { ...spend };
+      for (const k of drop) delete next[k]; // a campaign that lost its pairing: its old total no longer applies
+      Object.assign(next, out.amounts);
       setSpend(next);
       try { localStorage.setItem(SPEND_KEY, JSON.stringify(next)); } catch { /* this visit only */ }
       clearTimeout(saveTimer.current);
@@ -124,10 +142,21 @@ export default function CampaignReportPanel({ leads = [], lang = 'ar', triggerTo
     }
     setPull({
       ok: true,
-      text: out.matched ? L(`اتسحب الصرف لـ ${out.matched} حملة وحُدّث في التقرير.`, `Spend imported for ${out.matched} campaigns.`) : L('ما لقيناش حملة في ميتا اسمها زي حملاتك في التقرير.', 'No Meta campaign matches the report.'),
+      text: out.matched ? L(`اتسحب الصرف لـ ${out.matched} حملة وحُدّث في التقرير.`, `Spend imported for ${out.matched} campaigns.`) : (quiet ? '' : L('ما لقيناش حملة في ميتا اسمها زي حملاتك في التقرير. اربط حملات ميتا بحملاتك من القايمة تحت.', 'No Meta campaign matches the report. Pair them below.')),
       unmatched: out.unmatched,
-      skipped: r.skipped || []
+      linked: out.linked,
+      skipped: Array.isArray(r.metaCampaigns) ? [] : (r.skipped || [])
     });
+  };
+
+  // Pair a Meta campaign with one of the report's campaigns ('' unpairs it) and apply it right away
+  const pairCampaign = (metaId, key) => {
+    const next = { ...links };
+    const before = next[metaId];
+    if (key) next[metaId] = key; else delete next[metaId];
+    setLinks(next);
+    saveCampaignLinks(next).catch(() => { /* kept for this visit */ });
+    if (lastPull) finishPull(lastPull, next, true, before && before !== key ? [before] : []);
   };
 
   return (
@@ -145,10 +174,36 @@ export default function CampaignReportPanel({ leads = [], lang = 'ar', triggerTo
         </button>
         {pull && <p role="status" className={`cr-pull__msg ${pull.ok ? 'is-ok' : 'is-bad'}`}>{pull.text}</p>}
         {pull?.unmatched?.length > 0 && (
+          <details className="cr-pull__more" open={Boolean(pull.unmatched[0]?.id)}>
+            <summary>{L(`${pull.unmatched.length} حملة في ميتا مش مربوطة بحملة في التقرير`, 'Unmatched Meta campaigns')}</summary>
+            {pull.unmatched[0]?.id
+              ? <p>{L('اختار لكل حملة من ميتا الحملة اللي بتجيب عملاءها في الـCRM، والصرف هيتحسب عليها. اللي مالهاش عملاء مسجلين هنا سيبها.', 'Pick the CRM campaign each Meta campaign belongs to.')}</p>
+              : <p>{L('عشان تتطابق، اسم الحملة في ميتا (بعد ما يتحوّل لحروف إنجليزي صغيرة وشرطات) لازم يساوي utm_campaign في لينك الإعلان. الحملات دي:', 'A match needs the campaign name to equal the utm_campaign.')}</p>}
+            <ul className="cr-pair">{pull.unmatched.map((u) => (
+              <li key={u.id || u.slug}>
+                <span><bdi>{u.name}</bdi> <small>{fmt(u.spend)} {L('ج.م', 'EGP')}</small></span>
+                {u.id && (
+                  <select aria-label={L(`اربط ${u.name} بحملة`, `Pair ${u.name}`)} value="" onChange={(e) => pairCampaign(u.id, e.target.value)} disabled={reportKeys.length === 0}>
+                    <option value="">{reportKeys.length ? L('اربطها بحملة…', 'Pair with…') : L('مفيش حملات في التقرير لسه', 'No campaigns in the report yet')}</option>
+                    {reportKeys.map((k) => <option key={k} value={k}>{k}</option>)}
+                  </select>
+                )}
+              </li>
+            ))}</ul>
+          </details>
+        )}
+        {pull?.linked?.length > 0 && (
           <details className="cr-pull__more">
-            <summary>{L(`${pull.unmatched.length} حملة في ميتا مش مطابقة لأي حملة في التقرير`, 'Unmatched Meta campaigns')}</summary>
-            <p>{L('عشان تتطابق، اسم الحملة في ميتا (بعد ما يتحوّل لحروف إنجليزي صغيرة وشرطات) لازم يساوي utm_campaign في لينك الإعلان. الحملات دي:', 'A match needs the campaign name to equal the utm_campaign.')}</p>
-            <ul>{pull.unmatched.map((u) => <li key={u.slug}><bdi>{u.name}</bdi> <small>({u.slug}) — {fmt(u.spend)} {L('ج.م', 'EGP')}</small></li>)}</ul>
+            <summary>{L(`${pull.linked.length} حملة مربوطة بإيدك`, 'Campaigns paired by hand')}</summary>
+            <ul className="cr-pair">{pull.linked.map((u) => (
+              <li key={u.id}>
+                <span><bdi>{u.name}</bdi> <small>{fmt(u.spend)} {L('ج.م', 'EGP')}</small></span>
+                <select aria-label={L(`غيّر ربط ${u.name}`, `Change pairing of ${u.name}`)} value={u.target} onChange={(e) => pairCampaign(u.id, e.target.value)}>
+                  {reportKeys.map((k) => <option key={k} value={k}>{k}</option>)}
+                  <option value="">{L('فك الربط', 'Unpair')}</option>
+                </select>
+              </li>
+            ))}</ul>
           </details>
         )}
         {pull?.skipped?.length > 0 && <p className="cr-note">{L('حملات أسماؤها عربي بس مبتتطابقش مع اللينك (اللينك بحروف إنجليزي):', 'Names with no Latin letters cannot match:')} <bdi>{pull.skipped.join('، ')}</bdi></p>}
