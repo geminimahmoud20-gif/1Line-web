@@ -95,7 +95,7 @@ self.addEventListener('fetch', (event) => {
 });
 
 // Phone reminder from the hourly job (scripts/send-followup-reminders.mjs): a short digest of late
-// replies and follow-ups due. Tapping it opens the clients list (notificationclick below).
+// replies and follow-ups due; also a team @mention (scripts/send-mention-pushes.mjs, its own tag). Tapping it opens the clients list (notificationclick below).
 self.addEventListener('push', (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch { /* plain text or empty */ }
@@ -103,9 +103,9 @@ self.addEventListener('push', (event) => {
     body: String(data.body || ''),
     icon: '/icon-192.png',
     badge: '/icon-192.png',
-    tag: 'oneline-followups',
+    tag: typeof data.tag === 'string' && data.tag ? data.tag : 'oneline-followups',
     renotify: true,
-    data: { url: typeof data.url === 'string' ? data.url : '/crm?tab=leads' }
+    data: { url: typeof data.url === 'string' ? data.url : '/crm?tab=leads', leadId: typeof data.leadId === 'string' ? data.leadId : '' }
   }));
 });
 
