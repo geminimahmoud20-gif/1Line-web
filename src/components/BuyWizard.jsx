@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { scrollToForm } from '../utils/scrollToForm';
 import ConsentNote from './common/ConsentNote';
 import { 
   Building, 
@@ -103,7 +104,7 @@ export const BuyWizard = ({
     try {
       const lead = await submitBuyerJourney(updatedAnswers);
       setSubmittedRef(lead?.id || `lead-${Date.now()}`);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      scrollToForm('.smart-valuation-wizard-box');
     } finally {
       setIsSubmitting(false);
     }
