@@ -11,6 +11,7 @@ import { getWhatsAppUrl } from '../utils/founderCmsData';
 import SubmissionSuccess from './common/SubmissionSuccess';
 import ConsentNote from './common/ConsentNote';
 import { toLatinDigits } from '../utils/latinDigits';
+import { scrollToForm } from '../utils/scrollToForm';
 import { featuresFor, featureLabels, orderedPhotos, sellerAssetClass } from '../utils/sellerListing';
 import { PROPERTY_TYPES, CAIRO_AREAS, FINISHING, LEGAL_DOCS, SPEC_FIELDS, floorLabel } from './sell/sellOptions';
 import { readSellLink } from '../utils/sellLink';
@@ -145,9 +146,9 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
     }
     setErrors({});
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollToForm('.sw');
   };
-  const back = () => { setErrors({}); setStep((s) => Math.max(s - 1, 0)); };
+  const back = () => { setErrors({}); setStep((s) => Math.max(s - 1, 0)); scrollToForm('.sw'); };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -201,7 +202,7 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
         whatsapp: wa.full
       });
       setSubmittedRef(lead?.id || `lead-${Date.now()}`);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      scrollToForm('.sw');
     } finally {
       setIsSubmitting(false);
     }
