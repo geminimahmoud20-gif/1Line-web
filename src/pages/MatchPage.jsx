@@ -67,10 +67,15 @@ export default function MatchPage({ properties = [], lang = 'ar' }) {
   const live = useMemo(() => liveListings(properties), [properties]);
   // How many listings each kind has, and only areas that have the chosen kind listed
   const kindCount = useMemo(() => Object.fromEntries(KINDS.map((k) => [k.id, live.filter((p) => isKind(p, k.id)).length])), [live]);
+  // Every main area is offered, the ones with stock of this kind first: a buyer for an area with nothing listed
+  // still gets their request recorded (and the team sees the gap)
   const areaChoices = useMemo(() => {
     const list = live.filter((p) => isKind(p, a.kind));
-    return mainAreas(areas).filter((m) => list.some((p) => inArea(p.areaKey, m.id, areas)));
+    return mainAreas(areas)
+      .map((m) => ({ ...m, stock: list.filter((p) => inArea(p.areaKey, m.id, areas)).length }))
+      .sort((x, y) => (y.stock > 0) - (x.stock > 0));
   }, [areas, live, a.kind]);
+  const noStockPicked = areaChoices.filter((m) => m.stock === 0 && a.areas.includes(m.id));
   const results = useMemo(() => (step === STEPS ? rankUnits(properties, a, areas, 6) : []), [step, STEPS, properties, a, areas]);
   const kind = a.kind ? kindOf(a.kind) : null;
 
@@ -181,6 +186,7 @@ export default function MatchPage({ properties = [], lang = 'ar' }) {
 
               {cur.id === 'area' && (
                 areaChoices.length ? (
+                  <>
                   <div className="mt-chips" role="group" aria-label="المنطقة">
                     <button type="button" aria-pressed={a.anyArea}
                       className={`mt-chip${a.anyArea ? ' is-on' : ''}`} onClick={() => set({ anyArea: !a.anyArea, areas: [] })}>
@@ -191,9 +197,14 @@ export default function MatchPage({ properties = [], lang = 'ar' }) {
                         className={`mt-chip${a.areas.includes(m.id) ? ' is-on' : ''}`}
                         onClick={() => { toggle('areas', m.id); set({ anyArea: false }); }}>
                         {a.areas.includes(m.id) ? <Check size={15} aria-hidden="true" /> : <MapPin size={15} aria-hidden="true" />}{shortAreaName(m, areas, true)}
+                        {m.stock === 0 && <small className="mt-chip-sub">مفيش معروض</small>}
                       </button>
                     ))}
                   </div>
+                  {noStockPicked.length > 0 && (
+                    <p className="mt-empty-note">{noStockPicked.map((m) => shortAreaName(m, areas, true)).join('، ')}: مفيش {kind?.ar || 'عقارات'} معروضة فيها دلوقتي. كمّل وهنسجّل طلبك ونبلّغك أول ما يتوفر، وهنرشّحلك الأقرب من باقي المناطق.</p>
+                  )}
+                  </>
                 ) : <p className="mt-empty-note">لسه مفيش {kind?.ar || 'عقارات'} معروضة في مناطق محددة، كمّل وهنرشّحلك من كل المعروض ونسجّل طلبك.</p>
               )}
 
