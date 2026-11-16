@@ -28,6 +28,17 @@ const STEPS = [
   { ar: 'السعر وبياناتك', en: 'Price & contact' }
 ];
 
+// What the progress bar tells the guest to do next
+const NEXT_HINT = {
+  type: { ar: 'ابدأ باختيار نوع العقار', en: 'Start by choosing the property type' },
+  area: { ar: 'الخطوة الجاية: اختار المنطقة', en: 'Next: choose the area' },
+  size: { ar: 'الخطوة الجاية: اكتب المساحة', en: 'Next: enter the size' },
+  address: { ar: 'الخطوة الجاية: اكتب العنوان', en: 'Next: enter the address' },
+  photos: { ar: 'الخطوة الجاية: ضيف صور العقار', en: 'Next: add photos' },
+  name: { ar: 'الخطوة الجاية: اكتب اسمك', en: 'Next: enter your name' },
+  phone: { ar: 'آخر حاجة: رقم موبايلك', en: 'Last: your phone number' }
+};
+
 const num = (v) => parseInt(toLatinDigits(v || ''), 10) || 0;
 const money = (n) => Number(n).toLocaleString('en-US');
 
@@ -256,12 +267,18 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
 
   return (
     <div className="sw" dir={isAr ? 'rtl' : 'ltr'}>
-      <div className="sw-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress.percent} aria-label={L('نسبة إنجاز الفورم', 'Form completion')}>
-        <svg viewBox="0 0 44 44" width="44" height="44" aria-hidden="true">
-          <circle className="sw-progress__track" cx="22" cy="22" r="18" />
-          <circle className="sw-progress__bar" cx="22" cy="22" r="18" strokeDasharray={`${(progress.percent / 100) * 113.1} 113.1`} />
-        </svg>
-        <span className="sw-progress__num">{progress.percent === 100 ? <Check size={16} aria-hidden="true" /> : `${progress.percent}%`}</span>
+      <div className="sw-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress.percent} aria-valuetext={`${progress.percent}%`} aria-label={L('نسبة إنجاز الفورم', 'Form completion')}>
+        <span className="sw-progress__ring">
+          <svg viewBox="0 0 44 44" width="48" height="48" aria-hidden="true">
+            <circle className="sw-progress__track" cx="22" cy="22" r="18" />
+            <circle className="sw-progress__bar" cx="22" cy="22" r="18" strokeDasharray={`${(progress.percent / 100) * 113.1} 113.1`} />
+          </svg>
+          <span className="sw-progress__num">{progress.percent === 100 ? <Check size={18} aria-hidden="true" /> : `${progress.percent}%`}</span>
+        </span>
+        <span className="sw-progress__text">
+          <strong>{progress.percent === 100 ? L('طلبك جاهز للإرسال', 'Your request is ready') : L(`طلبك اكتمل ${progress.done} من ${progress.total}`, `${progress.done} of ${progress.total} done`)}</strong>
+          <small>{progress.next ? L(NEXT_HINT[progress.next].ar, NEXT_HINT[progress.next].en) : L('راجع بياناتك وابعت', 'Review and send')}</small>
+        </span>
       </div>
       <ol className="sw-steps" aria-label={L('خطوات الطلب', 'Steps')}>
         {STEPS.map((s, i) => (

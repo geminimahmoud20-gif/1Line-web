@@ -15,3 +15,9 @@ test('full form is 100%', () => {
   const p = sellProgress({ propertyType: 'a', area: 'x', size: '100', address: 'abc', photoSlots: { f: 'u' }, name: 'محمود', phone: '01028394756' });
   assert.equal(p.percent, 100);
 });
+
+test('next is the first unanswered item, null when done', () => {
+  assert.equal(sellProgress({}).next, 'type');
+  assert.equal(sellProgress({ propertyType: 'a' }).next, 'area');
+  assert.equal(sellProgress({ propertyType: 'a', area: 'x', size: '100', address: 'abc', photoSlots: { f: 'u' }, name: 'محمود', phone: '01028394756' }).next, null);
+});
