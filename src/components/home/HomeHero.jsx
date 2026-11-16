@@ -272,8 +272,8 @@ export default function HomeHero({
           )}
         </p>
 
-        {/* «رشّحلي عقاري» in place of the search filters: the advisor asks a few questions and ranks the listings (/match) */}
-        <div className="hx-match" role="region" aria-label={lang === 'ar' ? 'رشّحلي عقاري' : 'Find my property'}>
+        {/* «رشح لي عقاري» in place of the search filters: the advisor asks a few questions and ranks the listings (/match) */}
+        <div className="hx-match" role="region" aria-label={lang === 'ar' ? 'رشح لي عقاري' : 'Find my property'}>
           <Advisor mood="talk" size={92} className="hx-match-advisor" />
           <div className="hx-match-text">
             <strong>{lang === 'ar' ? 'مش عارف تبدأ منين؟ نرشّحلك عقارك في دقيقة' : 'Not sure where to start? We find your property in a minute'}</strong>
@@ -281,7 +281,7 @@ export default function HomeHero({
           </div>
           <Link to="/match" className="hx-match-btn" onPointerEnter={preloadMatch} onTouchStart={preloadMatch} onFocus={preloadMatch}>
             <Sparkles size={18} strokeWidth={2} aria-hidden="true" />
-            <span>{lang === 'ar' ? 'رشّحلي عقاري' : 'Find my property'}</span>
+            <span>{lang === 'ar' ? 'رشح لي عقاري' : 'Find my property'}</span>
           </Link>
         </div>
 

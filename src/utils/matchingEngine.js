@@ -98,7 +98,7 @@ export function findMatchingClientsForProperty(property, leads = [], demands = [
     const contactPhone = lead.whatsapp || lead.phone;
     if (!contactPhone) return;
 
-    // A buyer who answered «رشّحلي عقاري» left real answers: size, rooms, handover, installments…
+    // A buyer who answered «رشح لي عقاري» left real answers: size, rooms, handover, installments…
     // They are scored the way the website scored them for the buyer, and kind, area, budget and minimum size are firm.
     const answers = details.matchAnswers;
     if (answers && typeof answers === 'object' && answers.kind) {

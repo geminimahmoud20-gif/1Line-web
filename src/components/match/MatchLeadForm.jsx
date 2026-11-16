@@ -47,7 +47,7 @@ export default function MatchLeadForm({ answers, message, areaName }) {
         type: 'buyer_instant',
         status: 'new',
         timestamp: new Date().toISOString()
-      }, { type: 'buyer_instant' }, 'رشّحلي عقاري');
+      }, { type: 'buyer_instant' }, 'رشح لي عقاري');
       setDone(true);
     } catch {
       setError('حصلت مشكلة في الإرسال، جرّب تاني أو ابعت على واتساب.');

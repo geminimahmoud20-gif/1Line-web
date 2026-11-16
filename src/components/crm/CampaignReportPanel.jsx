@@ -76,7 +76,7 @@ function LinkBuilder({ L, onCopied, properties = [] }) {
       </div>
       {finalCampaign && <p className="cr-builder__hint">{L('اسم الحملة في التقرير:', 'Campaign in the report:')} <bdi dir="ltr">{finalCampaign}</bdi></p>}
       {typedButEmpty && <p className="cr-builder__warn">{L('الاسم لازم فيه حروف إنجليزي أو أرقام (مثلاً sohag-nov)', 'Use Latin letters or digits')}</p>}
-      {!isUnit && !landing?.leads && <p className="cr-builder__hint">{L('الصفحة دي بتجيب زوار بس، مش بتسجّل عميل بالرقم. للتسجيل: رشّحلي عقاري أو بيع عقارك أو طلب خاص.', 'This page brings visitors but does not capture a lead.')}</p>}
+      {!isUnit && !landing?.leads && <p className="cr-builder__hint">{L('الصفحة دي بتجيب زوار بس، مش بتسجّل عميل بالرقم. للتسجيل: رشح لي عقاري أو بيع عقارك أو طلب خاص.', 'This page brings visitors but does not capture a lead.')}</p>}
       {isUnit && <p className="cr-builder__hint">{L('الإعلان بيفتح صفحة الوحدة نفسها: العميل بيتصل أو يبعت واتساب أو يطلب معاينة، وكل ده بيتسجّل باسم الحملة.', 'The ad opens the listing itself; calls, WhatsApp and visit requests are recorded under the campaign.')}</p>}
       <div className="cr-builder__out">
         <input readOnly value={link} dir="ltr" aria-label={L('اللينك', 'Link')} placeholder={isUnit && !unit ? L('اختار الوحدة ويظهر اللينك هنا', 'Pick a listing') : L('اكتب اسم الحملة ويظهر اللينك هنا', 'The link appears here')} />

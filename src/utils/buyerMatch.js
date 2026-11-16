@@ -1,5 +1,5 @@
 // =============================================================
-//  «رشّحلي عقاري»: how well a listed property fits a buyer's qualifying answers (the kind of
+//  «رشح لي عقاري»: how well a listed property fits a buyer's qualifying answers (the kind of
 //  property, what it is for, area, family size or minimum size, ready now or can wait, cash budget
 //  or down payment + monthly installment, and what matters most). Only properties of the kind asked
 //  for are ranked; each part scores 0..1 with a reason the buyer can read, and parts the buyer
@@ -242,7 +242,7 @@ export function matchUnit(p, answers = {}, areas = [], { only = null } = {}) {
 }
 
 /**
- * The things a buyer won't compromise on, for matching a unit to a buyer who answered «رشّحلي عقاري»
+ * The things a buyer won't compromise on, for matching a unit to a buyer who answered «رشح لي عقاري»
  * earlier (the CRM, when a new unit arrives): the kind of property, the area, the budget and the
  * minimum size. Rooms and handover only change the score.
  */
@@ -290,7 +290,7 @@ export const rankHomes = rankUnits;
 export function answersMessage(a = {}, areaName = (id) => id) {
   const fam = FAMILY_SIZES.find((f) => f.id === a.family);
   const lines = [
-    'مرحباً 1Line، جاوبت على أسئلة «رشّحلي عقاري»:',
+    'مرحباً 1Line، جاوبت على أسئلة «رشح لي عقاري»:',
     a.kind ? `بدوّر على: ${kindOf(a.kind).ar}` : '',
     a.priorities?.length ? `أهم حاجة: ${a.priorities.map((id) => PRIORITIES.find((x) => x.id === id)?.ar).filter(Boolean).join('، ')}` : '',
     a.areas?.length ? `المنطقة: ${a.areas.map(areaName).join('، ')}` : '',
@@ -307,7 +307,7 @@ export function answersMessage(a = {}, areaName = (id) => id) {
 }
 
 /**
- * The answers a buyer gave in «رشّحلي عقاري», as [label, value, wide?] rows for the client's profile.
+ * The answers a buyer gave in «رشح لي عقاري», as [label, value, wide?] rows for the client's profile.
  * Only the questions they answered; the area names come from the lead (they are saved with it).
  */
 export function answersFacts(a = {}, areaNames = []) {

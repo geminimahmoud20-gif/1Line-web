@@ -22,7 +22,7 @@ const sentAt = (lead, propertyId) => {
 
 /**
  * «المطابقات الذكية»: one card per buyer with the listings that fit them (utils/matchingEngine, the same
- * rules as the new-listing alerts: active buyers, the kind, area and budget, and their «رشّحلي» answers).
+ * rules as the new-listing alerts: active buyers, the kind, area and budget, and their «رشح لي» answers).
  * A listing already sent shows when; one that isn't for them can be set aside on this device.
  */
 export default function SmartMatchingHub({ leads = [], properties = [], onUpdateLead, onOpenLead, lang = 'ar', triggerToast }) {
