@@ -142,3 +142,17 @@
 .mt-lead.is-done { flex-direction: row; align-items: center; gap: 12px; }
 .mt-lead.is-done svg { flex: none; color: #067647; }
 .mt-lead .mt-btn { width: 100%; justify-content: center; min-height: 48px; }
+
+/* Completion ring beside the question segments */
+.mt-meter { display: flex; align-items: center; gap: 12px; margin: 16px 0 12px; }
+.mt-meter .mt-progress { flex: 1; margin: 0; }
+.mt-ring { position: relative; flex: none; width: 46px; height: 46px; display: grid; place-items: center; }
+.mt-ring svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.mt-ring-track { fill: none; stroke: #DCE8DF; stroke-width: 4.5; }
+.mt-ring-bar { fill: none; stroke: #16A34A; stroke-width: 4.5; stroke-linecap: round; transition: stroke-dasharray 400ms ease; }
+.mt-ring-num { position: relative; font-size: 0.75rem; font-weight: 800; color: #15803D; line-height: 1; }
+[data-theme='dark'] .mt-ring-track, .dark-theme .mt-ring-track { stroke: #24402F; }
+[data-theme='dark'] .mt-ring-num, .dark-theme .mt-ring-num { color: #4ADE80; }
+@media (max-width: 720px) {
+  .mt-nav { position: sticky; bottom: 78px; z-index: 5; padding-top: 10px; background: var(--bg-card); }
+}
