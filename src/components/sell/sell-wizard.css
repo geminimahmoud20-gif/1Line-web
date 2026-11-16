@@ -248,3 +248,6 @@
 [data-theme='dark'] .sw-auto-hint.is-problem { background: #2A2010; color: #F5D9A0; border-color: #5C4515; }
 /* Browser autofill paints inputs pale blue; keep them in the form's own colours */
 .sw input:-webkit-autofill, .sw input:-webkit-autofill:focus { -webkit-box-shadow: 0 0 0 100px var(--sw-bg) inset; box-shadow: 0 0 0 100px var(--sw-bg) inset; -webkit-text-fill-color: var(--sw-text); caret-color: var(--sw-text); }
+
+.sw-soft-note { display: block; margin-top: 6px; padding: 8px 10px; border-radius: 10px; background: #FFF7E6; color: #7C4A03; font-size: 0.8125rem; line-height: 1.6; }
+[data-theme='dark'] .sw-soft-note { background: #2A2010; color: #F5D9A0; }
