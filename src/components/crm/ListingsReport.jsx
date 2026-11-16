@@ -5,6 +5,7 @@ import { listingReport, ISSUES, NO_AREA } from '../../utils/listingReview';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { propertyTypeLabel } from '../../utils/placeLabels';
 import SupplyGapReport from './SupplyGapReport';
+import DemandGapReport from './DemandGapReport';
 
 const money = (n) => (n ? Number(n).toLocaleString('en-US') : '—');
 const short = (n, isAr) => {
@@ -20,7 +21,7 @@ const csvCell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
  * CRM → العقارات → التقارير: where the listings stand, what holds the review queue back, and how
  * each area and type compares. Every figure opens the list already filtered (onOpenList).
  */
-export default function ListingsReport({ properties, areas, isAr, onOpenList }) {
+export default function ListingsReport({ properties, areas, isAr, onOpenList, leads = [] }) {
   const L = (ar, en) => (isAr ? ar : en);
   const typeLabel = (id) => {
     const t = PROPERTY_TYPES.find((x) => x.id === id);
@@ -74,6 +75,8 @@ export default function ListingsReport({ properties, areas, isAr, onOpenList }) 
       )}
 
       <SupplyGapReport properties={properties} areas={areas} isAr={isAr} onOpenArea={(id) => onOpenList({ area: id })} />
+
+      <DemandGapReport properties={properties} leads={leads} areas={areas} isAr={isAr} onOpenArea={(id) => onOpenList({ area: id })} />
 
       <Card>
         <CardHeader title={L('اكتمال البيانات', 'Data completeness')} description={L('اللي ناقص يمنع النشر. اضغط على أي سطر عشان تشوف العقارات دي.', 'What blocks publishing. Click a row to see those listings.')} />

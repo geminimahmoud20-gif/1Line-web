@@ -239,3 +239,32 @@
   .crm-gap__matrix th, .crm-gap__matrix td { padding: var(--ui-s-2) var(--ui-s-2); }
   .crm-gap__matrix tbody th { max-width: 110px; white-space: normal; font-size: var(--ui-fs-1); }
 }
+
+/* Demand vs supply */
+.crm-gap__empty { margin: var(--ui-s-3) 0 0; font-size: var(--ui-fs-2); color: var(--ui-text-2); line-height: 1.7; }
+.crm-gap__prio { list-style: none; margin: var(--ui-s-3) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--ui-s-2); }
+.crm-gap__prio li { display: flex; align-items: center; gap: var(--ui-s-3); padding: var(--ui-s-2) var(--ui-s-3); border: 1px solid var(--ui-line); border-radius: var(--ui-r-md); }
+.crm-gap__prio li.is-good { background: var(--ui-success-tint); color: var(--ui-success); }
+.crm-gap__rank { flex: none; inline-size: 24px; block-size: 24px; display: grid; place-items: center; border-radius: var(--ui-r-full); background: var(--ui-danger-tint); color: var(--ui-danger); font-size: var(--ui-fs-1); font-weight: var(--ui-fw-bold); }
+.crm-gap__what { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: var(--ui-fs-3); }
+.crm-gap__what small { font-size: var(--ui-fs-1); color: var(--ui-text-3); }
+.crm-gap__what button, .crm-gap__area h4 button { padding: 0; border: 0; background: none; font: inherit; font-weight: var(--ui-fw-semibold); color: var(--ui-primary-text); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--ui-line-strong); }
+.crm-gap__short { flex: none; padding: 2px var(--ui-s-2); border-radius: var(--ui-r-full); background: var(--ui-danger-tint); color: var(--ui-danger); font-size: var(--ui-fs-1); font-weight: var(--ui-fw-bold); font-variant-numeric: tabular-nums; }
+.crm-gap__neg { color: var(--ui-danger); font-weight: var(--ui-fw-bold); }
+.crm-gap__pos { color: var(--ui-success); font-weight: var(--ui-fw-bold); }
+.crm-gap__pair { inline-size: 40%; min-inline-size: 120px; }
+.crm-gap__bar { display: block; block-size: 6px; margin: 2px 0; border-radius: var(--ui-r-full); }
+.crm-gap__bar.is-demand { background: var(--ui-warning); }
+.crm-gap__bar.is-supply { background: var(--ui-primary); }
+.crm-gap__areas { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--ui-s-3); margin-top: var(--ui-s-3); }
+.crm-gap__area { padding: var(--ui-s-3); border: 1px solid var(--ui-line); border-radius: var(--ui-r-md); display: flex; flex-direction: column; gap: var(--ui-s-2); }
+.crm-gap__area.is-empty { border-color: var(--ui-danger); }
+.crm-gap__area.is-weak { border-color: var(--ui-warning); }
+.crm-gap__area header { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-s-2); }
+.crm-gap__area h4 { margin: 0; font-size: var(--ui-fs-3); }
+.crm-gap__area p { margin: 0; font-size: var(--ui-fs-2); color: var(--ui-text-2); line-height: 1.6; }
+.crm-gap__area em { font-style: normal; font-weight: var(--ui-fw-semibold); color: var(--ui-text); }
+.crm-gap__nums { display: flex; gap: var(--ui-s-4); }
+.crm-gap__nums b { font-variant-numeric: tabular-nums; color: var(--ui-text); }
+.crm-gap__verdict { font-weight: var(--ui-fw-semibold); }
+.crm-gap__need { color: var(--ui-danger); font-weight: var(--ui-fw-semibold); }
