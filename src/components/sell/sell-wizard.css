@@ -167,25 +167,52 @@
 }
 .sw-hint { display: block; margin-top: 4px; font-size: 0.78rem; color: var(--text-muted, #64748b); }
 
-/* Green completion ring, pinned to the corner of the form */
+/* Completion bar: green ring + what is left, kept under the header while scrolling */
 .sw { position: relative; }
-.sw-progress { position: sticky; top: 84px; margin: 0 0 -44px auto; width: 44px; height: 44px; display: grid; place-items: center; z-index: 6; background: var(--sw-bg); border-radius: 50%; box-shadow: 0 2px 10px rgba(11, 28, 54, 0.18); }
-[dir='rtl'] .sw-progress { margin: 0 auto -44px 0; }
-.sw-progress svg { position: absolute; inset: 0; transform: rotate(-90deg); }
-.sw-progress__track { fill: none; stroke: var(--sw-line); stroke-width: 4; }
-.sw-progress__bar { fill: none; stroke: #16A34A; stroke-width: 4; stroke-linecap: round; transition: stroke-dasharray 300ms ease; }
-.sw-progress__num { position: relative; font-size: 0.6875rem; font-weight: 700; color: #15803D; line-height: 1; display: grid; place-items: center; }
-.sw-steps, .sw-steps__mobile { margin-inline-end: 52px; }
-.sw-areas__kids { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; scroll-margin-top: 90px; }
+.sw-progress { position: sticky; top: 84px; z-index: 6; display: flex; align-items: center; gap: 12px; margin: 0 0 18px; padding: 8px 14px 8px 12px; border: 1px solid var(--sw-line); border-radius: 16px; background: var(--sw-bg); box-shadow: 0 6px 16px -10px rgba(11, 28, 54, 0.3); }
+.sw-progress__ring { position: relative; flex: none; width: 48px; height: 48px; display: grid; place-items: center; }
+.sw-progress__ring svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.sw-progress__track { fill: none; stroke: #DCE8DF; stroke-width: 4.5; }
+.sw-progress__bar { fill: none; stroke: #16A34A; stroke-width: 4.5; stroke-linecap: round; transition: stroke-dasharray 400ms ease; }
+.sw-progress__num { position: relative; display: grid; place-items: center; font-size: 0.8125rem; font-weight: 800; color: #15803D; line-height: 1; }
+.sw-progress__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sw-progress__text strong { font-size: 0.9375rem; font-weight: 700; color: var(--sw-text); }
+.sw-progress__text small { font-size: 0.8125rem; color: var(--sw-muted); line-height: 1.4; }
+[data-theme='dark'] .sw-progress__track { stroke: #24402F; }
+[data-theme='dark'] .sw-progress__num { color: #4ADE80; }
+.sw-areas__kids { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; scroll-margin-top: 140px; }
 .sw-areas .sw-chips { margin-top: 8px; }
-@media (max-width: 720px) {
-  .sw-steps { margin-inline-end: 52px; }
-  .sw-steps__mobile { margin-inline-end: 52px; min-height: 28px; }
-}
+
+/* Steps still ahead stay readable */
+.sw-steps li { color: var(--sw-text); border-top-color: #CFC8B8; }
+.sw-steps li:not(.is-current):not(.is-done) { color: #4A5568; }
+.sw-steps li:not(.is-current):not(.is-done) .sw-steps__dot { background: #E8E2D4; color: var(--sw-text); font-weight: 700; }
+.sw-steps li.is-done { border-color: var(--sw-gold); }
+.sw-steps li.is-current { border-color: var(--sw-primary); border-top-width: 4px; font-weight: 700; }
+[data-theme='dark'] .sw-steps li { border-top-color: #3B475A; }
+[data-theme='dark'] .sw-steps li:not(.is-current):not(.is-done) { color: #B6BFCC; }
+[data-theme='dark'] .sw-steps li:not(.is-current):not(.is-done) .sw-steps__dot { background: #2A3547; color: #E2E8F0; }
+
+/* Property type tiles: larger icon, clear selected state */
+.sw-type { position: relative; min-height: 104px; gap: 10px; padding: 18px 8px; font-size: 0.9375rem; }
+.sw-type svg { width: 28px; height: 28px; color: var(--sw-muted); transition: color 150ms, transform 150ms; }
+.sw-type:hover { transform: translateY(-2px); box-shadow: 0 8px 18px -12px rgba(11, 28, 54, 0.35); }
+.sw-type:hover svg { color: var(--sw-gold); }
+.sw-type.is-active { box-shadow: 0 0 0 1px var(--sw-primary); }
+.sw-type.is-active::after { content: '✓'; position: absolute; top: 8px; inset-inline-end: 8px; width: 20px; height: 20px; border-radius: 50%; background: var(--sw-primary); color: var(--sw-on-primary); font-size: 0.75rem; line-height: 20px; text-align: center; }
 
 /* Spec questions as chips; the next/back bar stays in reach on phones */
 .sw-spec { scroll-margin-top: 90px; }
 .sw-spec .sw-chips { margin-top: 8px; }
 @media (max-width: 720px) {
   .sw-step + .sw-error + .sw-actions, .sw-step ~ .sw-actions { position: sticky; bottom: 78px; z-index: 5; margin-top: 16px; padding: 12px 0 4px; background: var(--sw-bg); box-shadow: 0 -10px 12px -8px var(--sw-bg); }
+}
+
+@media (max-width: 720px) {
+  .sw-progress { top: 72px; padding: 6px 12px 6px 10px; margin-bottom: 12px; }
+  .sw-progress__ring, .sw-progress__ring svg { width: 40px; height: 40px; }
+  .sw-type { min-height: 48px; padding: 8px 12px; }
+  .sw-type svg { width: 22px; height: 22px; }
+  .sw-type:hover { transform: none; }
+  .sw-type.is-active::after { position: static; flex: none; margin-inline-start: auto; }
 }

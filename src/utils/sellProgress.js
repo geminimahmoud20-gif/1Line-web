@@ -14,5 +14,6 @@ export function sellProgress(a = {}) {
   };
   const keys = Object.keys(items);
   const done = keys.filter((k) => items[k]).length;
-  return { items, done, total: keys.length, percent: Math.round((done / keys.length) * 100) };
+  const next = keys.find((k) => !items[k]) || null;
+  return { items, done, total: keys.length, next, percent: Math.round((done / keys.length) * 100) };
 }
