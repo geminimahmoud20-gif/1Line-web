@@ -190,7 +190,6 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
       if (input) input.focus({ preventScroll: true });
     }, 120);
   };
-  const progress = sellProgress(a, step, reached);
   const pickRole = (role) => { set({ sellerRole: role }); goTo('.sw-types'); };
   const pickType = (id) => { chooseType(id); goTo('.sw-areas'); };
   const pickArea = (id, hasChildren) => {
@@ -332,7 +331,11 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
     );
   }
 
-  const autoReady = step === 3 && !isSubmitting && !autoPaused && Object.keys(contactCheck().errs).length === 0;
+  const contact = contactCheck().errs;
+  const progress = sellProgress(a, step, reached, { contactOk: { name: !contact.name, phone: !contact.phone && !contact.whatsapp } });
+  const autoReady = step === 3 && !isSubmitting && !autoPaused && Object.keys(contact).length === 0;
+  // Why the request is not going out yet: shown as soon as something was typed, never silently
+  const contactHint = step === 3 && (a.name || a.phone) ? (contact.name || contact.phone || contact.whatsapp || '') : '';
   const Next = isAr ? ArrowLeft : ArrowRight;
   const Prev = isAr ? ArrowRight : ArrowLeft;
   const specFields = SPEC_FIELDS[type] || [];
@@ -584,8 +587,8 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
               onEdit={() => { setAutoPaused(true); nameRef.current?.focus(); }}
             />
           ) : (
-            <p className="sw-auto-hint">
-              {isSubmitting ? L('بنبعت طلبك…', 'Sending your request…') : autoPaused ? L('عدّلت بياناتك؟ هنبعت الطلب أول ما تكتب الاسم والرقم صح.', 'Fix your details and the request goes out automatically.') : L('اكتب اسمك ورقمك وطلبك هيتبعت لوحده، من غير ضغط على زرار.', 'Enter your name and number and the request is sent for you, no button needed.')}
+            <p className={`sw-auto-hint${contactHint ? ' is-problem' : ''}`} role={contactHint ? 'alert' : undefined}>
+              {contactHint ? contactHint : isSubmitting ? L('بنبعت طلبك…', 'Sending your request…') : autoPaused ? L('عدّلت بياناتك؟ هنبعت الطلب أول ما تكتب الاسم والرقم صح.', 'Fix your details and the request goes out automatically.') : L('اكتب اسمك ورقمك وطلبك هيتبعت لوحده، من غير ضغط على زرار.', 'Enter your name and number and the request is sent for you, no button needed.')}
             </p>
           )}
           {errors.submit && <p className="sw-error" role="alert">{errors.submit}</p>}
