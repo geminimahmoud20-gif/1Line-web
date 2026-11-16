@@ -169,7 +169,8 @@
 
 /* Green completion ring, pinned to the corner of the form */
 .sw { position: relative; }
-.sw-progress { position: absolute; top: 14px; inset-inline-end: 14px; width: 44px; height: 44px; display: grid; place-items: center; z-index: 2; background: var(--sw-bg); border-radius: 50%; }
+.sw-progress { position: sticky; top: 84px; margin: 0 0 -44px auto; width: 44px; height: 44px; display: grid; place-items: center; z-index: 6; background: var(--sw-bg); border-radius: 50%; box-shadow: 0 2px 10px rgba(11, 28, 54, 0.18); }
+[dir='rtl'] .sw-progress { margin: 0 auto -44px 0; }
 .sw-progress svg { position: absolute; inset: 0; transform: rotate(-90deg); }
 .sw-progress__track { fill: none; stroke: var(--sw-line); stroke-width: 4; }
 .sw-progress__bar { fill: none; stroke: #16A34A; stroke-width: 4; stroke-linecap: round; transition: stroke-dasharray 300ms ease; }
