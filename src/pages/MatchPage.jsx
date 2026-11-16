@@ -47,7 +47,7 @@ function stepsFor(a) {
     { id: 'payment', q: 'حابب تدفع إزاي، وفي حدود كام؟',
       hint: 'عشان منوريكش حاجة فوق ميزانيتك. رقم تقريبي كفاية، ومش بيتبعت لحد.' },
     { id: 'priorities', q: 'آخر سؤال: إيه الحاجة اللي متقدرش تتنازل عنها؟',
-      hint: 'العقارات اللي فيها الحاجة دي هتطلعلك الأول. ولو كله مهم، دوس «رشّحلي» على طول.' }
+      hint: 'العقارات اللي فيها الحاجة دي هتطلعلك الأول. ولو كله مهم، دوس «رشح لي» على طول.' }
   );
   return steps;
 }
@@ -74,7 +74,7 @@ export default function MatchPage({ properties = [], lang = 'ar' }) {
 
   useEffect(() => {
     updatePageSeo({
-      title: isAr ? 'رشّحلي عقاري: أسئلة قليلة ونرشّحلك الأنسب | 1Line' : 'Find my property | 1Line',
+      title: isAr ? 'رشح لي عقاري: أسئلة قليلة ونرشّحلك الأنسب | 1Line' : 'Find my property | 1Line',
       description: isAr ? 'شقة، فيلا، محل، مكتب أو أرض: جاوب على أسئلة قليلة عن احتياجك وميزانيتك، ونوريك العقارات المعروضة في سوهاج ومدى مطابقة كل واحد لطلبك.' : 'Answer a few questions and see how well each listed property in Sohag fits.',
       url: '/match',
       type: 'website'
@@ -138,7 +138,7 @@ export default function MatchPage({ properties = [], lang = 'ar' }) {
     <div className="mt-page" dir={isAr ? 'rtl' : 'ltr'}>
       <div className="mt-wrap">
         <nav className="mt-crumbs" aria-label="مسار الصفحة">
-          <Link to="/">الرئيسية</Link><span aria-hidden="true">/</span><span aria-current="page">رشّحلي عقاري</span>
+          <Link to="/">الرئيسية</Link><span aria-hidden="true">/</span><span aria-current="page">رشح لي عقاري</span>
         </nav>
 
         {step < STEPS ? (
@@ -261,7 +261,7 @@ export default function MatchPage({ properties = [], lang = 'ar' }) {
                 <button type="button" className="mt-btn is-ghost" onClick={() => setStep(step - 1)}><Back size={17} aria-hidden="true" />رجوع</button>
               )}
               <button type="button" className="mt-btn is-primary" disabled={!canNext} onClick={() => setStep(step + 1)}>
-                {step === STEPS - 1 ? 'رشّحلي' : 'التالي'}<Next size={17} aria-hidden="true" />
+                {step === STEPS - 1 ? 'رشح لي' : 'التالي'}<Next size={17} aria-hidden="true" />
               </button>
             </footer>
             <p className="mt-trust"><Info size={14} aria-hidden="true" />الترشيح من العقارات المعروضة فعلاً على 1Line، ومش محتاج رقم تليفون.</p>

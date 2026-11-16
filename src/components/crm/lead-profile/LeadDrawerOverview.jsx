@@ -93,7 +93,7 @@ export default function LeadDrawerOverview({
     .filter((url) => typeof url === 'string' && url)
     .map((url, i) => ({ url, label: Array.isArray(details.photoLabels) ? details.photoLabels[i] || '' : '' }));
 
-  // What the buyer answered in «رشّحلي عقاري» (saved with the lead as data)
+  // What the buyer answered in «رشح لي عقاري» (saved with the lead as data)
   const matchFacts = isSeller ? [] : answersFacts(details.matchAnswers, Array.isArray(details.areas) ? details.areas.filter(Boolean) : []);
 
   // Where the client came from: the source, the campaign and ad, the page, and a return after an earlier visit
@@ -117,7 +117,7 @@ export default function LeadDrawerOverview({
       {matchFacts.length > 0 && (
         <section className="crm-ld__block" aria-labelledby="crm-ld-match">
           <div className="crm-ld__block-head">
-            <h3 id="crm-ld-match" className="crm-ld__h"><Search size={16} aria-hidden="true" />{L('طلب العميل (رشّحلي عقاري)', 'What the buyer asked for')}</h3>
+            <h3 id="crm-ld-match" className="crm-ld__h"><Search size={16} aria-hidden="true" />{L('طلب العميل (رشح لي عقاري)', 'What the buyer asked for')}</h3>
           </div>
           <dl className="crm-ld__facts">
             {matchFacts.map(([label, value, wide]) => (

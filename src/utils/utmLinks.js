@@ -8,7 +8,7 @@
 
 /** The pages an ad can send people to, and what each one captures */
 export const LANDINGS = [
-  { path: '/match', ar: 'رشّحلي عقاري (بيسجّل عميل بالرقم)', leads: true },
+  { path: '/match', ar: 'رشح لي عقاري (بيسجّل عميل بالرقم)', leads: true },
   { path: '/sell', ar: 'بيع عقارك (ملاك)', leads: true },
   { path: '/valuation', ar: 'قيّم عقارك (ملاك)', leads: true },
   { path: '/special-requests', ar: 'طلب خاص (مشتري)', leads: true },

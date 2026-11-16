@@ -387,7 +387,7 @@ export default function AppRoutes({
         }
       />
 
-      {/* «رشّحلي عقاري»: buyer questions and homes ranked by fit */}
+      {/* «رشح لي عقاري»: buyer questions and homes ranked by fit */}
       <Route path="/match" element={<MatchPage lang={lang} properties={siteProperties} />} />
 
       {/* Developers: the list, and one company with its projects */}

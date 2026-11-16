@@ -76,7 +76,7 @@ test('results are best first', () => {
   assert.deepEqual(ids(out), [best.id, lower.id]);
 });
 
-// ── Buyers who answered «رشّحلي عقاري»: their real answers are used ──
+// ── Buyers who answered «رشح لي عقاري»: their real answers are used ──
 const answered = (matchAnswers, extra = {}) => buyer({ matchAnswers }, extra);
 const flat = { id: 'p9', type: 'apartment', areaKey: 'new_sohag', price: 2000000, size: 120, bedrooms: 3, status: 'published' };
 
