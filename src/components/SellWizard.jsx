@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { isAgriculturalType, isIndustrialType, isLandType, formatFeddan } from '../utils/propertyKinds';
 import { ArrowLeft, ArrowRight, Check, ChevronDown, Info, MessageCircle, Send } from 'lucide-react';
 import PhoneInputField from './PhoneInputField';
@@ -17,8 +17,9 @@ import { PROPERTY_TYPES, CAIRO_AREAS, FINISHING, LEGAL_DOCS, SPEC_FIELDS, floorL
 import { readSellLink } from '../utils/sellLink';
 import SellPhotoSlots from './sell/SellPhotoSlots';
 import './sell/sell-wizard.css';
-import AreaOptions from './common/AreaOptions';
 import { nameProblem, phoneProblem } from '../utils/contactValidation';
+import { sellProgress } from '../utils/sellProgress';
+import { mainAreas, childrenOf, shortAreaName } from '../utils/areaLookup';
 
 const STEPS = [
   { ar: 'العقار والعنوان', en: 'Property & address' },
@@ -127,6 +128,27 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
     set({ propertyType: id, features: features.filter((f) => keep.includes(f)), ...(sellerAssetClass(id) !== sellerAssetClass(type) ? { photoSlots: {} } : {}) });
   };
 
+  // After a choice, bring the next question into view so the guest never hunts for it
+  const sizeRef = useRef(null);
+  const goTo = (target) => {
+    window.setTimeout(() => {
+      const el = typeof target === 'string' ? document.querySelector(target) : target;
+      if (!el) return;
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const input = el.matches('input,select,textarea') ? el : el.querySelector('input,select,textarea');
+      if (input) input.focus({ preventScroll: true });
+    }, 120);
+  };
+  const progress = sellProgress(a);
+  const pickType = (id) => { chooseType(id); goTo('.sw-areas'); };
+  const pickArea = (id, hasChildren) => {
+    set({ area: id });
+    goTo(hasChildren ? '.sw-areas__kids' : sizeRef.current);
+  };
+  const mains = mainAreas(districts);
+  const activeMain = mains.find((m) => m.id === area || childrenOf(m.id, districts).some((c) => c.id === area));
+  const kids = activeMain ? childrenOf(activeMain.id, districts) : [];
+
   const toggle = (field, list, id) => set({ [field]: list.includes(id) ? list.filter((x) => x !== id) : [...list, id] });
 
   const stepError = [
@@ -234,6 +256,13 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
 
   return (
     <div className="sw" dir={isAr ? 'rtl' : 'ltr'}>
+      <div className="sw-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress.percent} aria-label={L('نسبة إنجاز الفورم', 'Form completion')}>
+        <svg viewBox="0 0 44 44" width="44" height="44" aria-hidden="true">
+          <circle className="sw-progress__track" cx="22" cy="22" r="18" />
+          <circle className="sw-progress__bar" cx="22" cy="22" r="18" strokeDasharray={`${(progress.percent / 100) * 113.1} 113.1`} />
+        </svg>
+        <span className="sw-progress__num">{progress.percent === 100 ? <Check size={16} aria-hidden="true" /> : `${progress.percent}%`}</span>
+      </div>
       <ol className="sw-steps" aria-label={L('خطوات الطلب', 'Steps')}>
         {STEPS.map((s, i) => (
           <li key={s.en} className={i === step ? 'is-current' : i < step ? 'is-done' : ''} aria-current={i === step ? 'step' : undefined}>
@@ -249,7 +278,7 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
           <h3 className="sw-title">{L('عاوز تبيع إيه؟', 'What are you selling?')}</h3>
           <div className="sw-types" role="radiogroup" aria-label={L('نوع العقار', 'Property type')}>
             {PROPERTY_TYPES.map(({ id, ar, en, icon: Icon }) => (
-              <button key={id} type="button" role="radio" aria-checked={a.propertyType === id} className={`sw-type ${a.propertyType === id ? 'is-active' : ''}`} onClick={() => chooseType(id)}>
+              <button key={id} type="button" role="radio" aria-checked={a.propertyType === id} className={`sw-type ${a.propertyType === id ? 'is-active' : ''}`} onClick={() => pickType(id)}>
                 <Icon size={22} aria-hidden="true" />
                 <span>{isAr ? ar : en}</span>
               </button>
@@ -257,20 +286,36 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
           </div>
 
           <div className="sw-grid">
-            <label className="sw-field">
+            <div className="sw-field sw-field--wide sw-areas" role="group" aria-label={L('المنطقة', 'Area')}>
               <span>{L('المنطقة', 'Area')}</span>
-              <select value={area} onChange={(e) => set({ area: e.target.value })} aria-invalid={Boolean(errors.step) && !area}>
-                <option value="" disabled>{L('اختار المنطقة', 'Choose the area')}</option>
-                <AreaOptions areas={districts} isAr={isAr} includeAll={false} />
-                <optgroup label={L('القاهرة الكبرى', 'Greater Cairo')}>
-                  {CAIRO_AREAS.map((c) => <option key={c.id} value={c.id}>{isAr ? c.ar : c.en}</option>)}
-                </optgroup>
-              </select>
-            </label>
+              <div className="sw-chips">
+                {mains.map((m) => {
+                  const has = childrenOf(m.id, districts).length > 0;
+                  return (
+                    <button key={m.id} type="button" aria-pressed={activeMain?.id === m.id} className={`sw-chip ${activeMain?.id === m.id ? 'is-on' : ''}`} onClick={() => pickArea(m.id, has)}>{shortAreaName(m, districts, isAr)}</button>
+                  );
+                })}
+                {CAIRO_AREAS.map((c) => (
+                  <button key={c.id} type="button" aria-pressed={area === c.id} className={`sw-chip ${area === c.id ? 'is-on' : ''}`} onClick={() => pickArea(c.id, false)}>{isAr ? c.ar : c.en}</button>
+                ))}
+              </div>
+              {kids.length > 0 && (
+                <div className="sw-areas__kids">
+                  <small>{L('وفين بالظبط؟', 'Which part?')}</small>
+                  <div className="sw-chips">
+                    <button type="button" aria-pressed={area === activeMain.id} className={`sw-chip ${area === activeMain.id ? 'is-on' : ''}`} onClick={() => pickArea(activeMain.id, false)}>{L('مش متأكد / عام', 'Not sure / general')}</button>
+                    {kids.map((c) => (
+                      <button key={c.id} type="button" aria-pressed={area === c.id} className={`sw-chip ${area === c.id ? 'is-on' : ''}`} onClick={() => pickArea(c.id, false)}>{shortAreaName(c, districts, isAr)}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {errors.step && !area && <small className="sw-error">{L('اختار المنطقة', 'Choose the area')}</small>}
+            </div>
             <label className="sw-field">
               <span>{L('المساحة', 'Size')}</span>
               <div className="sw-suffix">
-                <input type="text" inputMode="numeric" placeholder={isAgriculturalType(type) ? '4200' : '150'} value={a.size || ''} onChange={(e) => set({ size: toLatinDigits(e.target.value).replace(/\D/g, '').slice(0, 7) })} />
+                <input ref={sizeRef} type="text" inputMode="numeric" enterKeyHint="next" placeholder={isAgriculturalType(type) ? '4200' : '150'} value={a.size || ''} onChange={(e) => set({ size: toLatinDigits(e.target.value).replace(/\D/g, '').slice(0, 7) })} />
                 <span>{L('م²', 'm²')}</span>
               </div>
               {isAgriculturalType(type) && (
@@ -279,7 +324,7 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
             </label>
             <label className="sw-field sw-field--wide">
               <span>{L('العنوان', 'Address')}</span>
-              <input type="text" maxLength={200} placeholder={L('اسم الشارع وأقرب علامة مميزة', 'Street name and nearest landmark')} value={a.address || ''} onChange={(e) => set({ address: e.target.value })} />
+              <input type="text" maxLength={200} enterKeyHint="next" onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); next(); } }} placeholder={L('اسم الشارع وأقرب علامة مميزة', 'Street name and nearest landmark')} value={a.address || ''} onChange={(e) => set({ address: e.target.value })} />
               <small>{L('للفريق بس، مش بيظهر في الإعلان.', 'For our team only, never shown in the listing.')}</small>
             </label>
           </div>

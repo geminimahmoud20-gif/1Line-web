@@ -166,3 +166,18 @@
   .sw *, .sw *::before { transition: none !important; animation: none !important; }
 }
 .sw-hint { display: block; margin-top: 4px; font-size: 0.78rem; color: var(--text-muted, #64748b); }
+
+/* Green completion ring, pinned to the corner of the form */
+.sw { position: relative; }
+.sw-progress { position: absolute; top: 14px; inset-inline-end: 14px; width: 44px; height: 44px; display: grid; place-items: center; z-index: 2; background: var(--sw-bg); border-radius: 50%; }
+.sw-progress svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.sw-progress__track { fill: none; stroke: var(--sw-line); stroke-width: 4; }
+.sw-progress__bar { fill: none; stroke: #16A34A; stroke-width: 4; stroke-linecap: round; transition: stroke-dasharray 300ms ease; }
+.sw-progress__num { position: relative; font-size: 0.6875rem; font-weight: 700; color: #15803D; line-height: 1; display: grid; place-items: center; }
+.sw-steps, .sw-steps__mobile { margin-inline-end: 52px; }
+.sw-areas__kids { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; scroll-margin-top: 90px; }
+.sw-areas .sw-chips { margin-top: 8px; }
+@media (max-width: 720px) {
+  .sw-steps { margin-inline-end: 52px; }
+  .sw-steps__mobile { margin-inline-end: 52px; min-height: 28px; }
+}
