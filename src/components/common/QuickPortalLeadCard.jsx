@@ -19,6 +19,15 @@ import { getWhatsAppUrl } from '../../utils/founderCmsData';
 import AreaOptions from './AreaOptions';
 import { nameProblem, phoneProblem } from '../../utils/contactValidation';
 
+const TYPE_NAMES = {
+  residential: { ar: 'شقة سكنية', en: 'an apartment' },
+  commercial: { ar: 'محل تجاري', en: 'a shop' },
+  villa: { ar: 'فيلا / تاون هاوس', en: 'a villa' },
+  office: { ar: 'مكتب أو عيادة', en: 'an office' },
+  land: { ar: 'قطعة أرض', en: 'a land plot' },
+  building: { ar: 'عمارة كاملة', en: 'a building' }
+};
+
 export default function QuickPortalLeadCard({
   portalType = 'buy',
   lang = 'ar',
@@ -31,6 +40,7 @@ export default function QuickPortalLeadCard({
   const [name, setName] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [whatsappCountry, setWhatsappCountry] = useState('+20');
+  const [role, setRole] = useState(''); // owner | broker, asked on the sell and valuation cards
   const [propertyType, setPropertyType] = useState('residential');
   const [area, setArea] = useState('all'); // "كل المناطق" until the visitor narrows it
   const [budget, setBudget] = useState('');
@@ -72,6 +82,7 @@ export default function QuickPortalLeadCard({
   };
 
   const labels = getPortalLabels();
+  const asksRole = portalType === 'sell' || portalType === 'valuation';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -81,6 +92,11 @@ export default function QuickPortalLeadCard({
     const nameErr = nameProblem(cleanName, isAr);
     if (nameErr) {
       if (triggerToast) triggerToast(nameErr, 'warning');
+      return;
+    }
+
+    if (asksRole && !role) {
+      if (triggerToast) triggerToast(isAr ? 'اختار إنت مالك العقار ولا وسيط' : 'Choose whether you are the owner or a broker', 'warning');
       return;
     }
 
@@ -109,7 +125,8 @@ export default function QuickPortalLeadCard({
       propertyType,
       area,
       budget: budget.trim(),
-      notes: notes.trim(),
+      notes: `${asksRole ? (role === 'broker' ? 'وسيط عقاري | ' : 'المالك | ') : ''}${notes.trim()}`.replace(/\s*\|\s*$/, ''),
+      ...(asksRole ? { sellerRole: role, details: { sellerRole: role } } : {}),
       source: `Portals 1-Step (${portalType})`,
       type: labels.leadType,
       status: 'new',
@@ -137,8 +154,8 @@ export default function QuickPortalLeadCard({
 
   if (submitted) {
     const waText = isAr
-      ? `مرحباً 1Line، أنا ${lastSubmittedLead?.name} سجلت طلباً سريعاً لـ (${lastSubmittedLead?.propertyType}) في (${areaNameOf(lastSubmittedLead?.area, areas) || 'سوهاج'}) وأريد المتابعة الفورية.`
-      : `Hello 1Line, I submitted a quick request for ${lastSubmittedLead?.propertyType} in ${areaNameOf(lastSubmittedLead?.area, areas, false) || 'Sohag'}.`;
+      ? `مرحباً 1Line، أنا ${lastSubmittedLead?.name}${lastSubmittedLead?.sellerRole === 'broker' ? ' (وسيط عقاري)' : lastSubmittedLead?.sellerRole === 'owner' ? ' (مالك العقار)' : ''} سجلت طلباً سريعاً لـ (${TYPE_NAMES[lastSubmittedLead?.propertyType]?.ar || lastSubmittedLead?.propertyType}) في (${areaNameOf(lastSubmittedLead?.area, areas) || 'سوهاج'}) وأريد المتابعة الفورية.`
+      : `Hello 1Line, I submitted a quick request for ${TYPE_NAMES[lastSubmittedLead?.propertyType]?.en || lastSubmittedLead?.propertyType} in ${areaNameOf(lastSubmittedLead?.area, areas, false) || 'Sohag'}.`;
 
     return (
       <div className="quick-portal-success-card">
@@ -168,6 +185,7 @@ export default function QuickPortalLeadCard({
             onClick={() => {
               setSubmitted(false);
               setName('');
+              setRole('');
               setWhatsapp('');
               setNotes('');
               setBudget('');
@@ -198,6 +216,26 @@ export default function QuickPortalLeadCard({
 
       <form onSubmit={handleSubmit} className="quick-portal-form">
         <div className="quick-form-grid">
+          {asksRole && (
+            <div className="quick-form-field quick-field-wide">
+              <label>
+                <User size={15} />
+                <span>{isAr ? 'إنت مين بالنسبة للعقار؟' : 'Who are you for this property?'}</span>
+                <strong className="required-star">*</strong>
+              </label>
+              <div className="options-pill-grid" role="radiogroup" aria-label={isAr ? 'إنت مين بالنسبة للعقار' : 'Your role'}>
+                {[
+                  { id: 'owner', ar: 'أنا المالك', en: "I'm the owner" },
+                  { id: 'broker', ar: 'وسيط عقاري', en: 'Real estate broker' }
+                ].map((o) => (
+                  <button key={o.id} type="button" role="radio" aria-checked={role === o.id} className={`opt-pill-btn ${role === o.id ? 'active' : ''}`} onClick={() => setRole(o.id)}>
+                    {isAr ? o.ar : o.en}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* 1. Full Name */}
           <div className="quick-form-field">
             <label>
