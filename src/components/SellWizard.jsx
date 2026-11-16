@@ -287,7 +287,7 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
     } catch {
       // A failed send must not retry on its own in a loop: stop the automatic send and let the guest retry
       setAutoPaused(true);
-      setErrors({ submit: L('حصلت مشكلة في الإرسال. جرّب تاني، أو ابعت التفاصيل على واتساب.', 'Sending failed. Try again, or send the details on WhatsApp.') });
+      setErrors({ submit: L('حصلت مشكلة من عندنا وإحنا لسه بنظبط الفورم. بياناتك متحفوظة، جرّب تاني بعد شوية، أو ابعت التفاصيل على واتساب.', 'Something went wrong on our side while we finish the form. Your details are kept; try again shortly or send them on WhatsApp.') });
     } finally {
       setIsSubmitting(false);
     }
@@ -332,6 +332,8 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
   }
 
   const contact = contactCheck().errs;
+  // Letters of another script than Arabic, with no Arabic at all: a gentle nudge, never a block
+  const latinName = /[A-Za-z]/.test(a.name || '') && !/[\u0600-\u06FF]/.test(a.name || '');
   const progress = sellProgress(a, step, reached, { contactOk: { name: !contact.name, phone: !contact.phone && !contact.whatsapp } });
   const autoReady = step === 3 && !isSubmitting && !autoPaused && Object.keys(contact).length === 0;
   // Why the request is not going out yet: shown as soon as something was typed, never silently
@@ -542,9 +544,10 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
 
           <div className="sw-grid">
             <label className="sw-field sw-field--wide">
-              <span>{L('اسمك', 'Your name')}</span>
-              <input ref={nameRef} type="text" autoComplete="name" maxLength={100} value={a.name || ''} onChange={(e) => { set({ name: e.target.value }); setAutoPaused(false); }} aria-invalid={Boolean(errors.name)} />
+              <span>{L('اسمك بالعربي', 'Your name')}</span>
+              <input ref={nameRef} type="text" autoComplete="name" maxLength={100} placeholder={L('مثال: أحمد علي', 'e.g. Ahmed Ali')} value={a.name || ''} onChange={(e) => { set({ name: e.target.value }); setAutoPaused(false); }} aria-invalid={Boolean(errors.name)} />
               {errors.name && <small className="sw-error" role="alert">{errors.name}</small>}
+              {!errors.name && latinName && <small className="sw-soft-note">{L('الأفضل تكتب اسمك بالعربي عشان فريقنا يكلمك صح. ومفيش مشكلة، هنبعت طلبك عادي.', 'Writing your name in Arabic helps our team reach you. No problem, your request still goes through.')}</small>}
             </label>
             <div className="sw-field sw-field--wide">
               <PhoneInputField
@@ -591,7 +594,15 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
               {contactHint ? contactHint : isSubmitting ? L('بنبعت طلبك…', 'Sending your request…') : autoPaused ? L('عدّلت بياناتك؟ هنبعت الطلب أول ما تكتب الاسم والرقم صح.', 'Fix your details and the request goes out automatically.') : L('اكتب اسمك ورقمك وطلبك هيتبعت لوحده، من غير ضغط على زرار.', 'Enter your name and number and the request is sent for you, no button needed.')}
             </p>
           )}
-          {errors.submit && <p className="sw-error" role="alert">{errors.submit}</p>}
+          {errors.submit && (
+            <>
+              <p className="sw-error" role="alert">{errors.submit}</p>
+              <a className="sw-wa" href={getWhatsAppUrl(sellWhatsappMessage({ name: a.name, role: a.sellerRole, typeLabel: PROPERTY_TYPES.find((t) => t.id === type)?.[isAr ? 'ar' : 'en'], areaLabel, size: a.size, address: a.address, askingPrice: a.askingPrice, isAr }))} target="_blank" rel="noopener noreferrer">
+                <MessageCircle size={16} aria-hidden="true" />
+                {L('ابعت بياناتك على واتساب', 'Send your details on WhatsApp')}
+              </a>
+            </>
+          )}
           {autoPaused && (
             <div className="sw-actions sw-actions--solo">
               <button type="submit" className="sw-btn sw-btn--primary" disabled={isSubmitting} aria-busy={isSubmitting}>
