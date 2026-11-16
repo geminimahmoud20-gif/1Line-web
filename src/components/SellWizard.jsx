@@ -19,6 +19,8 @@ import SellPhotoSlots from './sell/SellPhotoSlots';
 import './sell/sell-wizard.css';
 import { nameProblem, phoneProblem } from '../utils/contactValidation';
 import { sellProgress } from '../utils/sellProgress';
+import { ringMessage } from '../utils/ringMessage';
+import ProgressRing from './common/ProgressRing';
 import { mainAreas, childrenOf, shortAreaName } from '../utils/areaLookup';
 
 const STEPS = [
@@ -272,15 +274,10 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
 
   return (
     <div className="sw" dir={isAr ? 'rtl' : 'ltr'}>
-      <div className="sw-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress.percent} aria-valuetext={`${progress.percent}%`} aria-label={L('نسبة إنجاز الفورم', 'Form completion')}>
-        <span className="sw-progress__ring">
-          <svg viewBox="0 0 44 44" width="48" height="48" aria-hidden="true">
-            <circle className="sw-progress__track" cx="22" cy="22" r="18" />
-            <circle className="sw-progress__bar" cx="22" cy="22" r="18" strokeDasharray={`${(progress.percent / 100) * 113.1} 113.1`} />
-          </svg>
-          <span className="sw-progress__num">{progress.percent === 100 ? <Check size={18} aria-hidden="true" /> : `${progress.percent}%`}</span>
-        </span>
+      <div className="sw-progress">
+        <ProgressRing percent={progress.percent} size={76} label={L('نسبة إنجاز الفورم', 'Form completion')} />
         <span className="sw-progress__text">
+          <em>{ringMessage(progress.percent, isAr)}</em>
           <strong>{progress.percent === 100 ? L('طلبك جاهز للإرسال', 'Your request is ready') : L(`اكتملت ${progress.done} من ${progress.total} خطوات`, `${progress.done} of ${progress.total} steps done`)}</strong>
           <small>{L(NEXT_HINT[progress.next].ar, NEXT_HINT[progress.next].en)}</small>
         </span>

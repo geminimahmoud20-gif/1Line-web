@@ -1,0 +1,16 @@
+/* Emerald completion ring: friendly, large enough to read at a glance */
+.pr-ring { position: relative; flex: none; display: inline-grid; place-items: center; width: var(--pr-size, 72px); height: var(--pr-size, 72px); border-radius: 50%; background: #ECFDF5; box-shadow: 0 6px 16px -8px rgba(5, 150, 105, 0.55), inset 0 0 0 1px rgba(5, 150, 105, 0.12); }
+.pr-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.pr-track { fill: none; stroke: #BBF7D0; stroke-width: 4.5; }
+.pr-bar { fill: none; stroke-width: 4.5; stroke-linecap: round; transition: stroke-dasharray 500ms cubic-bezier(0.22, 1, 0.36, 1); }
+.pr-num { position: relative; display: inline-flex; align-items: baseline; justify-content: center; font-size: calc(var(--pr-size, 72px) * 0.3); font-weight: 800; color: #065F46; line-height: 1; font-variant-numeric: tabular-nums; }
+.pr-num small { font-size: 0.55em; font-weight: 700; margin-inline-start: 1px; }
+.pr-ring.is-full { background: #059669; box-shadow: 0 8px 20px -8px rgba(5, 150, 105, 0.8); animation: pr-pop 420ms ease; }
+.pr-ring.is-full .pr-track { stroke: rgba(255, 255, 255, 0.35); }
+.pr-ring.is-full .pr-bar { stroke: #FFFFFF; }
+.pr-ring.is-full .pr-num { color: #FFFFFF; }
+@keyframes pr-pop { 0% { transform: scale(0.85); } 60% { transform: scale(1.08); } 100% { transform: scale(1); } }
+[data-theme='dark'] .pr-ring:not(.is-full), .dark-theme .pr-ring:not(.is-full) { background: #052E22; }
+[data-theme='dark'] .pr-track, .dark-theme .pr-track { stroke: #14532D; }
+[data-theme='dark'] .pr-ring:not(.is-full) .pr-num, .dark-theme .pr-ring:not(.is-full) .pr-num { color: #6EE7B7; }
+@media (prefers-reduced-motion: reduce) { .pr-bar { transition: none; } .pr-ring.is-full { animation: none; } }

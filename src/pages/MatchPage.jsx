@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import ProgressRing from '../components/common/ProgressRing';
+import { ringMessage } from '../utils/ringMessage';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check, X, Info, MessageSquare, RotateCcw, Home, TrendingUp, Zap, Hourglass, Shuffle, Wallet, CalendarClock, Building2, Building, Store, Briefcase, LandPlot, Sprout, Factory, Wrench, MapPin } from 'lucide-react';
 import Advisor from '../components/match/Advisor';
@@ -152,17 +154,14 @@ export default function MatchPage({ properties = [], lang = 'ar' }) {
               </div>
             </header>
 
-            <div className="mt-meter" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} aria-valuetext={`${percent}%`} aria-label="نسبة إنجاز الأسئلة">
-              <span className="mt-ring">
-                <svg viewBox="0 0 44 44" width="46" height="46" aria-hidden="true">
-                  <circle className="mt-ring-track" cx="22" cy="22" r="18" />
-                  <circle className="mt-ring-bar" cx="22" cy="22" r="18" strokeDasharray={`${(percent / 100) * 113.1} 113.1`} />
-                </svg>
-                <span className="mt-ring-num">{percent}%</span>
-              </span>
-              <ol className="mt-progress" aria-label={`السؤال ${step + 1} من ${STEPS}`}>
-                {steps.map((x, i) => <li key={x.id} className={i < step ? 'is-done' : i === step ? 'is-now' : ''} />)}
-              </ol>
+            <div className="mt-meter">
+              <ProgressRing percent={percent} size={68} label="نسبة إنجاز الأسئلة" />
+              <div className="mt-meter-body">
+                <p className="mt-meter-msg"><strong>{ringMessage(percent)}</strong></p>
+                <ol className="mt-progress" aria-label={`السؤال ${step + 1} من ${STEPS}`}>
+                  {steps.map((x, i) => <li key={x.id} className={i < step ? 'is-done' : i === step ? 'is-now' : ''} />)}
+                </ol>
+              </div>
             </div>
 
 
