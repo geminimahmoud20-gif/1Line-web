@@ -47,3 +47,12 @@ test('contact step reaches 100% with name and phone', () => {
   assert.equal(p.next, 'send');
   assert.equal(sellProgress({ ...a, phone: '' }, 3).next, 'phone');
 });
+
+test('the last step follows the form\'s own checks when given', () => {
+  const a = { ...full1, photoSlots: { f: 'u' }, name: 'محمود', phone: '00000000000' };
+  assert.equal(sellProgress(a, 3).percent, 100); // loose check: looks complete
+  const strict = sellProgress(a, 3, 3, { contactOk: { name: true, phone: false } });
+  assert.equal(strict.percent, 88);
+  assert.equal(strict.next, 'phone');
+  assert.equal(sellProgress(a, 3, 3, { contactOk: { name: true, phone: true } }).percent, 100);
+});

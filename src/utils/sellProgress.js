@@ -10,7 +10,7 @@ export const SELL_STEP_COUNT = 4;
  * @param step   the step the guest is on (0-3)
  * @param reached the furthest step the guest has been to (so going back does not undo a finished step)
  */
-export function sellProgress(a = {}, step = 0, reached = step) {
+export function sellProgress(a = {}, step = 0, reached = step, { contactOk } = {}) {
   const far = Math.max(step, reached);
   const first = {
     role: a.sellerRole === 'owner' || a.sellerRole === 'broker',
@@ -19,10 +19,11 @@ export function sellProgress(a = {}, step = 0, reached = step) {
     size: parseInt(digits(a.size), 10) >= 20,
     address: String(a.address || '').trim().length >= 3
   };
-  const last = {
-    name: String(a.name || '').trim().length >= 2,
-    phone: digits(a.phone).length >= 8
-  };
+  // When the form passes its own checks (a real name, a valid number) the last step counts by them, so the ring
+  // never reaches 100% while the request would still be refused
+  const last = contactOk === undefined
+    ? { name: String(a.name || '').trim().length >= 2, phone: digits(a.phone).length >= 8 }
+    : { name: contactOk.name, phone: contactOk.phone };
   const share = (o) => Object.values(o).filter(Boolean).length / Object.keys(o).length;
   const hasPhotos = Object.keys(a.photoSlots || {}).length > 0;
   const fracs = [

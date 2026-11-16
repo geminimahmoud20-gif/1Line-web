@@ -242,3 +242,9 @@
 .sw-role.is-active { border-color: var(--sw-primary); background: var(--sw-gold-tint); box-shadow: 0 0 0 1px var(--sw-primary); }
 .sw-role.is-active svg { color: var(--sw-gold); }
 @media (max-width: 720px) { .sw-roles { grid-template-columns: 1fr; } .sw-role { padding: 12px 14px; } }
+
+/* What still blocks the automatic send, in a calm amber (it appears while the guest is still typing) */
+.sw-auto-hint.is-problem { background: #FFF7E6; color: #7C4A03; border: 1px solid #F5D9A0; }
+[data-theme='dark'] .sw-auto-hint.is-problem { background: #2A2010; color: #F5D9A0; border-color: #5C4515; }
+/* Browser autofill paints inputs pale blue; keep them in the form's own colours */
+.sw input:-webkit-autofill, .sw input:-webkit-autofill:focus { -webkit-box-shadow: 0 0 0 100px var(--sw-bg) inset; box-shadow: 0 0 0 100px var(--sw-bg) inset; -webkit-text-fill-color: var(--sw-text); caret-color: var(--sw-text); }
