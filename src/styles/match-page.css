@@ -153,3 +153,6 @@
 @media (max-width: 720px) {
   .mt-nav { position: sticky; bottom: 78px; z-index: 5; padding-top: 10px; background: var(--bg-card); }
 }
+
+.mt-chip-sub { margin-inline-start: 6px; padding: 1px 7px; border-radius: 999px; background: rgba(100, 116, 139, 0.14); color: var(--text-muted, #64748b); font-size: 0.7rem; font-weight: 600; }
+.mt-chip.is-on .mt-chip-sub { background: rgba(255, 255, 255, 0.2); color: inherit; }
