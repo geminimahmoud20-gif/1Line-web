@@ -200,3 +200,42 @@
 .crm-props__slots.is-empty { padding: 0; background: transparent; border-style: dashed; box-shadow: none; }
 .crm-props__slots.is-empty .crm-props__slots-toggle { min-height: 40px; padding: 0 var(--ui-s-3); }
 .crm-props__slots.is-empty .crm-props__slots-title { color: var(--ui-text-2); font-weight: var(--ui-fw-regular); }
+
+/* Supply gaps: area x kind matrix and price bands */
+.crm-gap__basis { display: inline-flex; gap: var(--ui-s-1); margin: var(--ui-s-3) 0; padding: 3px; border: 1px solid var(--ui-line); border-radius: var(--ui-r-full); background: var(--ui-surface-2); }
+.crm-gap__basis button { padding: var(--ui-s-1) var(--ui-s-3); border: 0; border-radius: var(--ui-r-full); background: transparent; font: inherit; font-size: var(--ui-fs-1); font-weight: var(--ui-fw-semibold); color: var(--ui-text-2); cursor: pointer; }
+.crm-gap__basis button.is-on { background: var(--ui-surface); color: var(--ui-text); box-shadow: var(--ui-shadow-1, 0 1px 3px rgba(0, 0, 0, 0.12)); }
+.crm-gap__verdicts { list-style: none; margin: 0 0 var(--ui-s-3); padding: 0; display: flex; flex-direction: column; gap: var(--ui-s-1); font-size: var(--ui-fs-2); }
+.crm-gap__verdicts li { padding: var(--ui-s-2) var(--ui-s-3); border-radius: var(--ui-r-md); border-inline-start: 3px solid var(--ui-line-strong); background: var(--ui-surface-2); }
+.crm-gap__verdicts li.is-bad { border-inline-start-color: var(--ui-danger); background: var(--ui-danger-tint); }
+.crm-gap__verdicts li.is-warn { border-inline-start-color: var(--ui-warning); background: var(--ui-warning-tint); }
+.crm-gap__verdicts li.is-good { border-inline-start-color: var(--ui-success); background: var(--ui-success-tint); }
+.crm-gap__matrix th, .crm-gap__matrix td { text-align: center; }
+.crm-gap__matrix tbody th, .crm-gap__matrix tfoot th { text-align: start; }
+.crm-gap__matrix thead th.is-missing { color: var(--ui-danger); }
+.crm-gap__matrix tfoot td, .crm-gap__matrix tfoot th { font-weight: var(--ui-fw-bold); background: var(--ui-surface-2); }
+.crm-gap__cell.is-gap { background: var(--ui-danger-tint); color: var(--ui-danger); }
+.crm-gap__cell.is-thin { background: var(--ui-warning-tint); color: var(--ui-warning); font-weight: var(--ui-fw-bold); }
+.crm-gap__cell.is-ok { background: var(--ui-success-tint); color: var(--ui-success); font-weight: var(--ui-fw-bold); }
+.crm-gap__tag { display: inline-block; padding: 2px var(--ui-s-2); border-radius: var(--ui-r-full); font-size: var(--ui-fs-1); font-weight: var(--ui-fw-semibold); background: var(--ui-surface-2); color: var(--ui-text-2); }
+.crm-gap__tag.is-empty { background: var(--ui-danger-tint); color: var(--ui-danger); }
+.crm-gap__tag.is-weak { background: var(--ui-warning-tint); color: var(--ui-warning); }
+.crm-gap__tag.is-ok { background: var(--ui-success-tint); color: var(--ui-success); }
+.crm-gap__note { padding: var(--ui-s-3) 0 0; }
+.crm-gap__bands { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--ui-s-3); margin-top: var(--ui-s-3); }
+.crm-gap__kind { padding: var(--ui-s-3); border: 1px solid var(--ui-line); border-radius: var(--ui-r-md); display: flex; flex-direction: column; gap: var(--ui-s-2); }
+.crm-gap__kind.is-missing { border-color: var(--ui-danger); }
+.crm-gap__kind header { display: flex; flex-direction: column; gap: 2px; }
+.crm-gap__kind h4 { margin: 0; font-size: var(--ui-fs-3); }
+.crm-gap__kind header span, .crm-gap__kind p { margin: 0; font-size: var(--ui-fs-1); color: var(--ui-text-3); }
+.crm-gap__kind ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--ui-s-1); }
+.crm-gap__kind li { display: flex; justify-content: space-between; gap: var(--ui-s-2); padding: var(--ui-s-1) var(--ui-s-2); border-radius: var(--ui-r-sm); font-size: var(--ui-fs-2); font-variant-numeric: tabular-nums; }
+.crm-gap__kind li.is-gap { background: var(--ui-danger-tint); color: var(--ui-danger); }
+.crm-gap__kind li.is-thin { background: var(--ui-warning-tint); }
+.crm-gap__kind li.is-ok { background: var(--ui-success-tint); }
+.crm-gap__matrix tbody th, .crm-gap__matrix tfoot th { position: sticky; inset-inline-start: 0; background: var(--ui-surface); z-index: 1; }
+.crm-gap__matrix tfoot th { background: var(--ui-surface-2); }
+@media (max-width: 640px) {
+  .crm-gap__matrix th, .crm-gap__matrix td { padding: var(--ui-s-2) var(--ui-s-2); }
+  .crm-gap__matrix tbody th { max-width: 110px; white-space: normal; font-size: var(--ui-fs-1); }
+}

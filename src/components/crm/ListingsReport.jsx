@@ -4,6 +4,7 @@ import { Card, CardHeader, KpiRow, KpiTile, Button } from '../ui';
 import { listingReport, ISSUES, NO_AREA } from '../../utils/listingReview';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { propertyTypeLabel } from '../../utils/placeLabels';
+import SupplyGapReport from './SupplyGapReport';
 
 const money = (n) => (n ? Number(n).toLocaleString('en-US') : '—');
 const short = (n, isAr) => {
@@ -71,6 +72,8 @@ export default function ListingsReport({ properties, areas, isAr, onOpenList }) 
           <Button size="sm" onClick={() => onOpenList({ status: 'hidden', readiness: 'ready' })}>{L('اعرضهم وانشرهم', 'Review and publish')}</Button>
         </div>
       )}
+
+      <SupplyGapReport properties={properties} areas={areas} isAr={isAr} onOpenArea={(id) => onOpenList({ area: id })} />
 
       <Card>
         <CardHeader title={L('اكتمال البيانات', 'Data completeness')} description={L('اللي ناقص يمنع النشر. اضغط على أي سطر عشان تشوف العقارات دي.', 'What blocks publishing. Click a row to see those listings.')} />
