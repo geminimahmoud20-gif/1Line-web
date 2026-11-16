@@ -98,6 +98,7 @@ export default function MatchPage({ properties = [], lang = 'ar' }) {
     priorities: true
   };
   const canNext = cur ? ready[cur.id] : false;
+  const percent = Math.round((step / STEPS) * 100);
   const areaName = (id) => shortAreaName(areas.find((x) => x.id === id), areas, true) || id;
   const mood = step === STEPS ? 'happy' : cur?.id === 'delivery' || cur?.id === 'payment' ? 'think' : 'talk';
   const Next = isAr ? ArrowLeft : ArrowRight;
@@ -107,10 +108,19 @@ export default function MatchPage({ properties = [], lang = 'ar' }) {
   const noun = kind?.home ? 'وحدة' : 'عقار';
   const countText = (n) => (n === 1 ? noun : n === 2 ? (kind?.home ? 'وحدتين' : 'عقارين') : `${n} ${kind?.home ? 'وحدات' : 'عقارات'}`);
 
+  // A single tap answers these questions, so move straight on instead of asking for «التالي»
+  const advanceTimer = useRef(null);
+  useEffect(() => () => window.clearTimeout(advanceTimer.current), []);
+  const autoAdvance = (key) => {
+    if (!['kind', 'purpose', 'delivery'].includes(key)) return;
+    window.clearTimeout(advanceTimer.current);
+    advanceTimer.current = window.setTimeout(() => setStep((s) => s + 1), 260);
+  };
+
   const option = (key, value, label, sub, Icon, extra) => (
     <button key={value} type="button" role="radio" aria-checked={a[key] === value}
       className={`mt-option${a[key] === value ? ' is-on' : ''}`}
-      onClick={() => (key === 'kind' ? pickKind(value) : set({ [key]: value }))}>
+      onClick={() => { if (key === 'kind') pickKind(value); else set({ [key]: value }); autoAdvance(key); }}>
       {Icon && <span className="mt-option-icon"><Icon size={20} aria-hidden="true" /></span>}
       <span className="mt-option-text"><strong>{label}</strong>{sub && <small>{sub}</small>}</span>
       {extra}
@@ -142,9 +152,18 @@ export default function MatchPage({ properties = [], lang = 'ar' }) {
               </div>
             </header>
 
-            <ol className="mt-progress" aria-label={`السؤال ${step + 1} من ${STEPS}`}>
-              {steps.map((x, i) => <li key={x.id} className={i < step ? 'is-done' : i === step ? 'is-now' : ''} />)}
-            </ol>
+            <div className="mt-meter" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} aria-valuetext={`${percent}%`} aria-label="نسبة إنجاز الأسئلة">
+              <span className="mt-ring">
+                <svg viewBox="0 0 44 44" width="46" height="46" aria-hidden="true">
+                  <circle className="mt-ring-track" cx="22" cy="22" r="18" />
+                  <circle className="mt-ring-bar" cx="22" cy="22" r="18" strokeDasharray={`${(percent / 100) * 113.1} 113.1`} />
+                </svg>
+                <span className="mt-ring-num">{percent}%</span>
+              </span>
+              <ol className="mt-progress" aria-label={`السؤال ${step + 1} من ${STEPS}`}>
+                {steps.map((x, i) => <li key={x.id} className={i < step ? 'is-done' : i === step ? 'is-now' : ''} />)}
+              </ol>
+            </div>
 
 
             <div className="mt-answers">
