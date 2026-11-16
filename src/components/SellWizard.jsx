@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { isAgriculturalType, isIndustrialType, isLandType, formatFeddan } from '../utils/propertyKinds';
-import { ArrowLeft, ArrowRight, Check, ChevronDown, Info, MessageCircle, Send } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, ChevronDown, Handshake, Info, MessageCircle, Send, UserRound } from 'lucide-react';
 import PhoneInputField from './PhoneInputField';
 import { SUPPORTED_COUNTRIES } from '../utils/phoneCountries';
 import { getAreas } from '../utils/areasData';
@@ -33,6 +33,7 @@ const STEPS = [
 
 // What the progress bar tells the guest to do next
 const NEXT_HINT = {
+  role: { ar: 'ابدأ بسؤال واحد: إنت مالك العقار ولا وسيط؟', en: 'First question: are you the owner or a broker?' },
   type: { ar: 'ابدأ باختيار نوع العقار', en: 'Start by choosing the property type' },
   area: { ar: 'الخطوة الجاية: اختار المنطقة', en: 'Next: choose the area' },
   size: { ar: 'الخطوة الجاية: اكتب المساحة', en: 'Next: enter the size' },
@@ -190,6 +191,7 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
     }, 120);
   };
   const progress = sellProgress(a, step, reached);
+  const pickRole = (role) => { set({ sellerRole: role }); goTo('.sw-types'); };
   const pickType = (id) => { chooseType(id); goTo('.sw-areas'); };
   const pickArea = (id, hasChildren) => {
     set({ area: id });
@@ -202,7 +204,8 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
   const toggle = (field, list, id) => set({ [field]: list.includes(id) ? list.filter((x) => x !== id) : [...list, id] });
 
   const stepError = [
-    !a.propertyType ? L('اختار نوع العقار', 'Choose the property type')
+    !(a.sellerRole === 'owner' || a.sellerRole === 'broker') ? L('اختار إنت مالك العقار ولا وسيط', 'Choose whether you are the owner or a broker')
+      : !a.propertyType ? L('اختار نوع العقار', 'Choose the property type')
       : !area ? L('اختار المنطقة', 'Choose the area')
       : num(a.size) < 20 ? L('اكتب المساحة (20 م² على الأقل)', 'Enter the size (20 m² or more)')
         : String(a.address || '').trim().length < 3 ? L('اكتب العنوان', 'Enter the address') : '',
@@ -307,10 +310,13 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
             { ar: 'فريقنا بيراجع بياناتك دلوقتي.', en: 'Our team is reviewing your details now.' },
             { ar: 'خلال يوم عمل مستشار من 1Line هيتصل بيك على الرقم اللي كتبته.', en: 'Within one business day a 1Line advisor calls you on the number you gave.' },
             { ar: 'بعدها نحدد معاد معاينة ونصوّر العقار تصوير احترافي.', en: 'Then we book a visit and shoot professional photos.' },
-            { ar: 'قبل أي إعلان، نتفق معاك على السعر وخطة التسويق.', en: 'Before any listing, we agree the price and marketing plan with you.' }
+            a.sellerRole === 'broker'
+              ? { ar: 'قبل أي إعلان، نراجع معاك تفويض المالك ونتفق على السعر وخطة التسويق.', en: "Before any listing, we review the owner's authorisation and agree the price and marketing plan." }
+              : { ar: 'قبل أي إعلان، نتفق معاك على السعر وخطة التسويق.', en: 'Before any listing, we agree the price and marketing plan with you.' }
           ]}
           whatsappText={sellWhatsappMessage({
             name: a.name,
+            role: a.sellerRole,
             typeLabel: PROPERTY_TYPES.find((t) => t.id === type)?.[isAr ? 'ar' : 'en'],
             areaLabel: areaLabel,
             size: a.size,
@@ -353,6 +359,18 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
 
       {step === 0 && (
         <section className="sw-step">
+          <h3 className="sw-title">{L('إنت مين بالنسبة للعقار؟', 'Who are you for this property?')}</h3>
+          <div className="sw-roles" role="radiogroup" aria-label={L('إنت مين بالنسبة للعقار', 'Your role')}>
+            {[
+              { id: 'owner', ar: 'أنا المالك', en: "I'm the owner", subAr: 'العقار ملكي', subEn: 'The property is mine', Icon: UserRound },
+              { id: 'broker', ar: 'وسيط عقاري', en: 'Real estate broker', subAr: 'بعرضه لصالح مالكه', subEn: "I'm listing it for its owner", Icon: Handshake }
+            ].map(({ id, ar, en, subAr, subEn, Icon }) => (
+              <button key={id} type="button" role="radio" aria-checked={a.sellerRole === id} className={`sw-role ${a.sellerRole === id ? 'is-active' : ''}`} onClick={() => pickRole(id)}>
+                <Icon size={22} aria-hidden="true" />
+                <span><strong>{isAr ? ar : en}</strong><small>{isAr ? subAr : subEn}</small></span>
+              </button>
+            ))}
+          </div>
           <h3 className="sw-title">{L('عاوز تبيع إيه؟', 'What are you selling?')}</h3>
           <div className="sw-types" role="radiogroup" aria-label={L('نوع العقار', 'Property type')}>
             {PROPERTY_TYPES.map(({ id, ar, en, icon: Icon }) => (

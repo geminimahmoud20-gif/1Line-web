@@ -230,3 +230,15 @@
 [data-theme='dark'] .sw-auto { background: linear-gradient(135deg, #062A20 0%, var(--sw-bg) 80%); border-color: #14532D; }
 [data-theme='dark'] .sw-auto__text strong { color: #6EE7B7; }
 @media (prefers-reduced-motion: reduce) { .sw-auto__bar > span { animation: none; transform: scaleX(1); } }
+
+/* Owner / broker question */
+.sw-roles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.sw-role { display: flex; align-items: center; gap: 12px; padding: 16px; border: 1.5px solid var(--sw-line); border-radius: var(--sw-r); background: var(--sw-bg); color: var(--sw-text); font: inherit; text-align: start; cursor: pointer; transition: border-color 150ms, background 150ms, box-shadow 150ms; }
+.sw-role svg { flex: none; width: 28px; height: 28px; color: var(--sw-muted); }
+.sw-role span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sw-role strong { font-size: 1rem; }
+.sw-role small { font-size: 0.8125rem; color: var(--sw-muted); }
+.sw-role:hover { border-color: var(--sw-gold); }
+.sw-role.is-active { border-color: var(--sw-primary); background: var(--sw-gold-tint); box-shadow: 0 0 0 1px var(--sw-primary); }
+.sw-role.is-active svg { color: var(--sw-gold); }
+@media (max-width: 720px) { .sw-roles { grid-template-columns: 1fr; } .sw-role { padding: 12px 14px; } }

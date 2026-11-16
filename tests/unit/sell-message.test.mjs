@@ -24,3 +24,9 @@ test('missing fields are left out, not shown empty', () => {
 test('english copy', () => {
   assert.match(sellWhatsappMessage({ name: 'Ali', typeLabel: 'Apartment', isAr: false }), /Hello 1Line, I'm Ali/);
 });
+
+test('the sender says whether they own the property or broker it', () => {
+  assert.match(sellWhatsappMessage({ name: 'علي', role: 'broker', typeLabel: 'شقة' }), /علي \(وسيط عقاري\)/);
+  assert.match(sellWhatsappMessage({ name: 'علي', role: 'owner', typeLabel: 'شقة' }), /علي \(مالك العقار\)/);
+  assert.ok(!sellWhatsappMessage({ name: 'علي', typeLabel: 'شقة' }).includes('('));
+});

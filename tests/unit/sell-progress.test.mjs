@@ -2,17 +2,22 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { sellProgress, SELL_STEP_COUNT } from '../../src/utils/sellProgress.js';
 
-const full1 = { propertyType: 'apartment', area: 'x', size: '٩٠', address: 'شارع النيل' };
+const full1 = { sellerRole: 'owner', propertyType: 'apartment', area: 'x', size: '٩٠', address: 'شارع النيل' };
 
 test('there are 4 steps', () => assert.equal(SELL_STEP_COUNT, 4));
 test('empty form is 0% of 4', () => {
   const p = sellProgress({});
   assert.equal(p.percent, 0);
   assert.equal(p.total, 4);
-  assert.equal(p.next, 'type');
+  assert.equal(p.next, 'role');
 });
-test('half of step 1 is 12.5%, rounded', () => {
-  assert.equal(sellProgress({ propertyType: 'a', area: 'x' }).percent, 13);
+test('the owner / broker answer counts and comes first', () => {
+  assert.equal(sellProgress({ sellerRole: 'broker' }).next, 'type');
+  assert.equal(sellProgress({ sellerRole: 'someone else' }).next, 'role');
+});
+test('part of step 1 counts as a fraction of its quarter', () => {
+  // role + type + area = 3 of 5 answers -> 0.6 of 25% = 15%
+  assert.equal(sellProgress({ sellerRole: 'owner', propertyType: 'a', area: 'x' }).percent, 15);
 });
 test('finishing step 1 is 1 of 4 and 25%', () => {
   const p = sellProgress(full1, 0);

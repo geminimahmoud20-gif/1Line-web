@@ -13,6 +13,7 @@ export const SELL_STEP_COUNT = 4;
 export function sellProgress(a = {}, step = 0, reached = step) {
   const far = Math.max(step, reached);
   const first = {
+    role: a.sellerRole === 'owner' || a.sellerRole === 'broker',
     type: Boolean(a.propertyType),
     area: Boolean(a.area),
     size: parseInt(digits(a.size), 10) >= 20,
