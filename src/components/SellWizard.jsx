@@ -34,9 +34,12 @@ const NEXT_HINT = {
   area: { ar: 'الخطوة الجاية: اختار المنطقة', en: 'Next: choose the area' },
   size: { ar: 'الخطوة الجاية: اكتب المساحة', en: 'Next: enter the size' },
   address: { ar: 'الخطوة الجاية: اكتب العنوان', en: 'Next: enter the address' },
-  photos: { ar: 'الخطوة الجاية: ضيف صور العقار', en: 'Next: add photos' },
-  name: { ar: 'الخطوة الجاية: اكتب اسمك', en: 'Next: enter your name' },
-  phone: { ar: 'آخر حاجة: رقم موبايلك', en: 'Last: your phone number' }
+  continue: { ar: 'كمّل بزرار «التالي»', en: 'Continue with «Next»' },
+  specs: { ar: 'اختار المواصفات والمميزات، وكلها اختيارية', en: 'Pick the specs and features, all optional' },
+  photos: { ar: 'ضيف صور العقار، أو كمّل من غير صور', en: 'Add photos, or continue without' },
+  name: { ar: 'اكتب اسمك', en: 'Enter your name' },
+  phone: { ar: 'آخر حاجة: رقم موبايلك', en: 'Last: your phone number' },
+  send: { ar: 'راجع بياناتك وابعت', en: 'Review and send' }
 };
 
 const num = (v) => parseInt(toLatinDigits(v || ''), 10) || 0;
@@ -75,6 +78,7 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
   const set = (patch) => setSellerAnswers((prev) => ({ ...prev, ...patch }));
 
   const [step, setStep] = useState(0);
+  const [reached, setReached] = useState(0);
   const [phoneCountry, setPhoneCountry] = useState('+20');
   const [waCountry, setWaCountry] = useState('+20');
   const [sameAsPhone, setSameAsPhone] = useState(true);
@@ -150,7 +154,7 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
       if (input) input.focus({ preventScroll: true });
     }, 120);
   };
-  const progress = sellProgress(a);
+  const progress = sellProgress(a, step, reached);
   const pickType = (id) => { chooseType(id); goTo('.sw-areas'); };
   const pickArea = (id, hasChildren) => {
     set({ area: id });
@@ -178,6 +182,7 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
       return;
     }
     setErrors({});
+    setReached((r) => Math.max(r, Math.min(step + 1, STEPS.length - 1)));
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
     scrollToForm('.sw');
   };
@@ -276,8 +281,8 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
           <span className="sw-progress__num">{progress.percent === 100 ? <Check size={18} aria-hidden="true" /> : `${progress.percent}%`}</span>
         </span>
         <span className="sw-progress__text">
-          <strong>{progress.percent === 100 ? L('طلبك جاهز للإرسال', 'Your request is ready') : L(`طلبك اكتمل ${progress.done} من ${progress.total}`, `${progress.done} of ${progress.total} done`)}</strong>
-          <small>{progress.next ? L(NEXT_HINT[progress.next].ar, NEXT_HINT[progress.next].en) : L('راجع بياناتك وابعت', 'Review and send')}</small>
+          <strong>{progress.percent === 100 ? L('طلبك جاهز للإرسال', 'Your request is ready') : L(`اكتملت ${progress.done} من ${progress.total} خطوات`, `${progress.done} of ${progress.total} steps done`)}</strong>
+          <small>{L(NEXT_HINT[progress.next].ar, NEXT_HINT[progress.next].en)}</small>
         </span>
       </div>
       <ol className="sw-steps" aria-label={L('خطوات الطلب', 'Steps')}>
