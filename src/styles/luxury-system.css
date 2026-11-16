@@ -298,6 +298,8 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   margin-bottom: 20px;
 }
 .lx-success-ref bdi { font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+.lx-success-intro { margin: 0 auto 18px; max-width: 460px; color: var(--text-muted, #5b6676); line-height: 1.8; }
+.lx-success-steps-title { margin: 0 0 10px; font-weight: 700; color: var(--text); }
 .lx-success-steps {
   text-align: start;
   margin: 0 auto 28px;

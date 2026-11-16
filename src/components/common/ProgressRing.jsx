@@ -1,9 +1,8 @@
-import { Check } from 'lucide-react';
 import './progress-ring.css';
 
 /**
  * Green completion ring used by the sell form and /match. Emerald reads as safe and "go",
- * the number sits in the middle, and a check mark replaces it at 100%.
+ * the percentage sits in the middle and turns solid green at 100%.
  */
 export default function ProgressRing({ percent = 0, size = 72, label }) {
   const p = Math.max(0, Math.min(100, Math.round(percent)));
@@ -22,7 +21,7 @@ export default function ProgressRing({ percent = 0, size = 72, label }) {
         <circle className="pr-track" cx="24" cy="24" r={r} />
         <circle className="pr-bar" cx="24" cy="24" r={r} stroke="url(#pr-grad)" strokeDasharray={`${(p / 100) * c} ${c}`} />
       </svg>
-      <span className="pr-num">{p === 100 ? <Check size={Math.round(size * 0.42)} strokeWidth={3} aria-hidden="true" /> : <>{p}<small>%</small></>}</span>
+      <span className="pr-num">{p}<small>%</small></span>
     </span>
   );
 }

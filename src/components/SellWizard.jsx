@@ -20,6 +20,7 @@ import './sell/sell-wizard.css';
 import { nameProblem, phoneProblem } from '../utils/contactValidation';
 import { sellProgress } from '../utils/sellProgress';
 import { ringMessage } from '../utils/ringMessage';
+import { sellWhatsappMessage, firstName } from '../utils/sellMessage';
 import ProgressRing from './common/ProgressRing';
 import { mainAreas, childrenOf, shortAreaName } from '../utils/areaLookup';
 
@@ -72,6 +73,35 @@ function Disclaimer({ isAr, compact = false }) {
   );
 }
 
+// After the contact details are complete the request goes by itself; the guest can stop it, fix a typo, or send now.
+function AutoSend({ seconds = 6, isAr, onSend, onEdit }) {
+  const [left, setLeft] = useState(seconds);
+  const sent = useRef(false);
+  useEffect(() => {
+    const t = window.setInterval(() => setLeft((n) => n - 1), 1000);
+    return () => window.clearInterval(t);
+  }, []);
+  useEffect(() => {
+    if (left <= 0 && !sent.current) { sent.current = true; onSend(); }
+  }, [left, onSend]);
+  const L = (ar, en) => (isAr ? ar : en);
+  return (
+    <div className="sw-auto" role="status" aria-live="polite">
+      <div className="sw-auto__text">
+        <strong>{L('بياناتك كاملة، هنبعت طلبك دلوقتي', 'Your details are complete, sending now')}</strong>
+        <small>{left > 0 ? L(`هيتبعت بعد ${left} ثواني. لو في غلطة عدّل بياناتك.`, `Sending in ${left}s. Spot a typo? Edit your details.`) : L('بنبعت…', 'Sending…')}</small>
+      </div>
+      <span className="sw-auto__bar" aria-hidden="true"><span style={{ animationDuration: `${seconds}s` }} /></span>
+      <div className="sw-auto__actions">
+        <button type="button" className="sw-btn sw-btn--primary" onClick={() => { if (!sent.current) { sent.current = true; onSend(); } }}>
+          <Send size={16} aria-hidden="true" />{L('ابعت دلوقتي', 'Send now')}
+        </button>
+        <button type="button" className="sw-btn sw-btn--ghost" onClick={onEdit}>{L('عدّل بياناتي', 'Edit my details')}</button>
+      </div>
+    </div>
+  );
+}
+
 export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, submitSellerJourney }) => {
   const isAr = lang === 'ar';
   const L = (ar, en) => (isAr ? ar : en);
@@ -86,6 +116,8 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
   const [sameAsPhone, setSameAsPhone] = useState(true);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [autoPaused, setAutoPaused] = useState(false);
+  const nameRef = useRef(null);
   const [submittedRef, setSubmittedRef] = useState(null);
   const [districts, setDistricts] = useState(() => getAreas().filter((d) => d.id !== 'all'));
 
@@ -112,6 +144,7 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
   // The owner picks the area: preselecting the first one filed untouched forms under it
   const area = a.area || '';
   const isCairo = area.startsWith('cairo_');
+  const areaLabel = (CAIRO_AREAS.find((c) => c.id === area)?.[isAr ? 'ar' : 'en']) || districts.find((d) => d.id === area)?.name_ar || '';
   const features = Array.isArray(a.features) ? a.features : [];
   const legalDocs = Array.isArray(a.legalDocs) ? a.legalDocs : [];
 
@@ -190,9 +223,8 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
   };
   const back = () => { setErrors({}); setStep((s) => Math.max(s - 1, 0)); scrollToForm('.sw'); };
 
-  const submit = async (e) => {
-    e.preventDefault();
-    if (isSubmitting) return;
+  // Name and numbers the way the server will read them, and what is wrong with them (nothing when ready)
+  const contactCheck = () => {
     const errs = {};
     const phone = splitPhone(a.phone, phoneCountry);
     const wa = sameAsPhone ? splitPhone(a.phone, phoneCountry) : splitPhone(a.whatsapp, waCountry);
@@ -201,6 +233,13 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
     if (nameErr) errs.name = nameErr;
     if (!phone.local || !fits(phoneCountry, phone.local)) errs.phone = phoneProblem(phone.local, phoneCountry, isAr) || L('رقم الموبايل مش مظبوط', 'Check the phone number');
     if (!sameAsPhone && (!wa.local || !fits(waCountry, wa.local))) errs.whatsapp = phoneProblem(wa.local, waCountry, isAr) || L('رقم الواتساب مش مظبوط', 'Check the WhatsApp number');
+    return { errs, phone, wa };
+  };
+
+  const submit = async (e) => {
+    e?.preventDefault?.();
+    if (isSubmitting) return;
+    const { errs, phone, wa } = contactCheck();
     setErrors(errs);
     if (Object.keys(errs).length) return;
 
@@ -243,6 +282,10 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
       });
       setSubmittedRef(lead?.id || `lead-${Date.now()}`);
       scrollToForm('.sw');
+    } catch {
+      // A failed send must not retry on its own in a loop: stop the automatic send and let the guest retry
+      setAutoPaused(true);
+      setErrors({ submit: L('حصلت مشكلة في الإرسال. جرّب تاني، أو ابعت التفاصيل على واتساب.', 'Sending failed. Try again, or send the details on WhatsApp.') });
     } finally {
       setIsSubmitting(false);
     }
@@ -254,20 +297,36 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
         <SubmissionSuccess
           lang={lang}
           reference={submittedRef}
-          title_ar="استلمنا بيانات عقارك"
-          title_en="We have your property details"
+          title_ar={`تمام${firstName(a.name) ? ` يا ${firstName(a.name)}` : ''}، طلبك وصل لفريقنا`}
+          title_en={`All set${firstName(a.name) ? `, ${firstName(a.name)}` : ''}, your request reached our team`}
+          intro_ar="شكرًا إنك اخترت 1Line. بياناتك عندنا دلوقتي، ومفيش حاجة هتتنشر من غير ما نتفق معاك الأول."
+          intro_en="Thank you for choosing 1Line. We have your details, and nothing is published until we agree it with you."
+          stepsTitle_ar="إيه اللي هيحصل بعد كده؟"
+          stepsTitle_en="What happens next?"
           steps={[
-            { ar: 'مستشار من 1Line هيكلمك خلال يوم عمل.', en: 'A 1Line advisor calls you within one business day.' },
-            { ar: 'نحدد معاد معاينة ونصوّر العقار تصوير احترافي.', en: 'We book a visit and shoot professional photos.' },
-            { ar: 'نتفق معاك على السعر وخطة التسويق قبل أي إعلان.', en: 'We agree the price and marketing plan before any listing.' }
+            { ar: 'فريقنا بيراجع بياناتك دلوقتي.', en: 'Our team is reviewing your details now.' },
+            { ar: 'خلال يوم عمل مستشار من 1Line هيتصل بيك على الرقم اللي كتبته.', en: 'Within one business day a 1Line advisor calls you on the number you gave.' },
+            { ar: 'بعدها نحدد معاد معاينة ونصوّر العقار تصوير احترافي.', en: 'Then we book a visit and shoot professional photos.' },
+            { ar: 'قبل أي إعلان، نتفق معاك على السعر وخطة التسويق.', en: 'Before any listing, we agree the price and marketing plan with you.' }
           ]}
-          whatsappText={isAr ? 'أهلاً 1Line، بعت بيانات عقاري وعاوز أتابع' : 'Hello 1Line, I sent my property details'}
+          whatsappText={sellWhatsappMessage({
+            name: a.name,
+            typeLabel: PROPERTY_TYPES.find((t) => t.id === type)?.[isAr ? 'ar' : 'en'],
+            areaLabel: areaLabel,
+            size: a.size,
+            address: a.address,
+            askingPrice: a.askingPrice,
+            isAr
+          })}
+          whatsappLabel_ar="ابعت تفاصيلك على واتساب عشان نسرّع الموضوع"
+          whatsappLabel_en="Send your details on WhatsApp to speed things up"
           secondaryLink={{ to: '/demands', ar: 'شوف طلبات المشترين الحالية', en: 'See current buyer requests' }}
         />
       </div>
     );
   }
 
+  const autoReady = step === 3 && !isSubmitting && !autoPaused && Object.keys(contactCheck().errs).length === 0;
   const Next = isAr ? ArrowLeft : ArrowRight;
   const Prev = isAr ? ArrowRight : ArrowLeft;
   const specFields = SPEC_FIELDS[type] || [];
@@ -463,14 +522,14 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
           <div className="sw-grid">
             <label className="sw-field sw-field--wide">
               <span>{L('اسمك', 'Your name')}</span>
-              <input type="text" autoComplete="name" maxLength={100} value={a.name || ''} onChange={(e) => set({ name: e.target.value })} aria-invalid={Boolean(errors.name)} />
+              <input ref={nameRef} type="text" autoComplete="name" maxLength={100} value={a.name || ''} onChange={(e) => { set({ name: e.target.value }); setAutoPaused(false); }} aria-invalid={Boolean(errors.name)} />
               {errors.name && <small className="sw-error" role="alert">{errors.name}</small>}
             </label>
             <div className="sw-field sw-field--wide">
               <PhoneInputField
                 label={L('رقم الموبايل', 'Mobile number')}
                 value={a.phone || ''}
-                onChange={(phone) => set(sameAsPhone ? { phone, whatsapp: phone } : { phone })}
+                onChange={(phone) => { set(sameAsPhone ? { phone, whatsapp: phone } : { phone }); setAutoPaused(false); }}
                 country={phoneCountry}
                 onCountryChange={(code) => { setPhoneCountry(code); if (sameAsPhone) setWaCountry(code); }}
                 error={errors.phone}
@@ -488,7 +547,7 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
                   label={L('رقم الواتساب', 'WhatsApp number')}
                   name="whatsapp"
                   value={a.whatsapp || ''}
-                  onChange={(whatsapp) => set({ whatsapp })}
+                  onChange={(whatsapp) => { set({ whatsapp }); setAutoPaused(false); }}
                   country={waCountry}
                   onCountryChange={setWaCountry}
                   error={errors.whatsapp}
@@ -499,14 +558,31 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
             )}
           </div>
 
+          {autoReady ? (
+            <AutoSend
+              key={`${a.name}|${a.phone}|${a.whatsapp}|${sameAsPhone}`}
+              isAr={isAr}
+              onSend={submit}
+              onEdit={() => { setAutoPaused(true); nameRef.current?.focus(); }}
+            />
+          ) : (
+            <p className="sw-auto-hint">
+              {isSubmitting ? L('بنبعت طلبك…', 'Sending your request…') : autoPaused ? L('عدّلت بياناتك؟ هنبعت الطلب أول ما تكتب الاسم والرقم صح.', 'Fix your details and the request goes out automatically.') : L('اكتب اسمك ورقمك وطلبك هيتبعت لوحده، من غير ضغط على زرار.', 'Enter your name and number and the request is sent for you, no button needed.')}
+            </p>
+          )}
+          {errors.submit && <p className="sw-error" role="alert">{errors.submit}</p>}
+          {autoPaused && (
+            <div className="sw-actions sw-actions--solo">
+              <button type="submit" className="sw-btn sw-btn--primary" disabled={isSubmitting} aria-busy={isSubmitting}>
+                <Send size={16} aria-hidden="true" />{L('ابعت طلبي', 'Send my request')}
+              </button>
+            </div>
+          )}
           <div className="sw-actions">
             <button type="button" className="sw-btn sw-btn--ghost" onClick={back}><Prev size={16} aria-hidden="true" />{L('رجوع', 'Back')}</button>
-            <button type="submit" className="sw-btn sw-btn--primary" disabled={isSubmitting} aria-busy={isSubmitting}>
-              <Send size={16} aria-hidden="true" />
-              {isSubmitting ? L('بنبعت…', 'Sending…') : L('ابعت عقاري', 'Send my property')}
-            </button>
+            <span />
           </div>
-          <ConsentNote isAr={isAr} />
+          <ConsentNote isAr={isAr} auto />
         </form>
       )}
 
