@@ -340,22 +340,36 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
         <section className="sw-step">
           <h3 className="sw-title">{L('مواصفات العقار', 'Property details')}</h3>
           <div className="sw-grid">
-            {specFields.map((f) => (
-              <label key={f.field} className="sw-field">
-                <span>{isAr ? f.ar : f.en}</span>
-                <select value={a[f.field] || f.def} onChange={(e) => set({ [f.field]: e.target.value })}>
-                  {f.options.map((o) => <option key={o.value} value={o.value}>{isAr ? o.ar : o.en}</option>)}
-                </select>
-              </label>
-            ))}
+            {specFields.map((f, i) => {
+              const cur = a[f.field] || f.def;
+              const many = f.options.length > 8;
+              return many ? (
+                <label key={f.field} className="sw-field sw-spec" data-spec={i}>
+                  <span>{isAr ? f.ar : f.en}</span>
+                  <select value={cur} onChange={(e) => { set({ [f.field]: e.target.value }); goTo(`[data-spec="${i + 1}"]`); }}>
+                    {f.options.map((o) => <option key={o.value} value={o.value}>{isAr ? o.ar : o.en}</option>)}
+                  </select>
+                </label>
+              ) : (
+                <div key={f.field} className="sw-field sw-field--wide sw-spec" data-spec={i} role="group" aria-label={isAr ? f.ar : f.en}>
+                  <span>{isAr ? f.ar : f.en}</span>
+                  <div className="sw-chips">
+                    {f.options.map((o) => (
+                      <button key={o.value} type="button" aria-pressed={String(cur) === String(o.value)} className={`sw-chip ${String(cur) === String(o.value) ? 'is-on' : ''}`} onClick={() => { set({ [f.field]: o.value }); goTo(`[data-spec="${i + 1}"]`); }}>{isAr ? o.ar : o.en}</button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
             {!noFinishing && (
-              <label className="sw-field">
+              <div className="sw-field sw-field--wide sw-spec" data-spec={specFields.length} role="group" aria-label={L('التشطيب', 'Finishing')}>
                 <span>{L('التشطيب', 'Finishing')}</span>
-                <select value={a.finishing || ''} onChange={(e) => set({ finishing: e.target.value })}>
-                  <option value="">{L('اختار', 'Choose')}</option>
-                  {FINISHING.map((f) => <option key={f.id} value={f.id}>{isAr ? f.ar : f.en}</option>)}
-                </select>
-              </label>
+                <div className="sw-chips">
+                  {FINISHING.map((f) => (
+                    <button key={f.id} type="button" aria-pressed={a.finishing === f.id} className={`sw-chip ${a.finishing === f.id ? 'is-on' : ''}`} onClick={() => { set({ finishing: f.id }); goTo('.sw-fieldset'); }}>{isAr ? f.ar : f.en}</button>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
 
