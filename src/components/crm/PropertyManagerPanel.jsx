@@ -839,7 +839,7 @@ export default function PropertyManagerPanel({
       />
 
       {view === 'report' ? (
-        <ListingsReport properties={properties} areas={areas} isAr={isAr} onOpenList={openList} />
+        <ListingsReport properties={properties} areas={areas} leads={leads} isAr={isAr} onOpenList={openList} />
       ) : (
         <>
           {legacyCount > 0 && issueFilter !== 'legacy' && (
