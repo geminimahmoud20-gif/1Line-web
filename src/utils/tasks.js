@@ -36,12 +36,25 @@ export const dueFromPreset = (presetId, now = Date.now()) => {
   return dayKeyFrom(now, p.days);
 };
 
-/** A task payload ready to store, or null when it has no title. `me`/`assignee`: { uid, name } */
+const DUE_RE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/;
+
+/**
+ * Why this task can't be saved, in words for the form; '' when it can. A task needs a title, a day and someone
+ * responsible (the assignee, else the person adding it).
+ */
+export function taskProblem({ title, dueAt, assignee, me } = {}, isAr = true) {
+  if (!String(title ?? '').trim()) return isAr ? 'اكتب المهمة الأول' : 'Write the task first';
+  if (!DUE_RE.test(String(dueAt ?? ''))) return isAr ? 'حدد ميعاد المهمة' : 'Pick a date for the task';
+  if (!assignee?.uid && !me?.uid) return isAr ? 'حدد المسؤول عن المهمة' : 'Choose who is responsible';
+  return '';
+}
+
+/** A task payload ready to store, or null when it has no title, no date or nobody responsible. `me`/`assignee`: { uid, name } */
 export function buildTask({ title, note = '', dueAt = '', priority = 'normal', kind = 'other', lead = null, assignee, me, now = Date.now() } = {}) {
+  if (taskProblem({ title, dueAt, assignee, me })) return null;
   const t = String(title ?? '').trim().replace(/\s+/g, ' ').slice(0, 140);
-  if (!t || !me?.uid) return null;
   const to = assignee?.uid ? assignee : me;
-  const due = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/.test(String(dueAt)) ? String(dueAt) : '';
+  const due = String(dueAt);
   const iso = new Date(now).toISOString();
   return {
     title: t,
@@ -212,14 +225,44 @@ export const pushAllPatch = (task, now = Date.now()) => ({ dueAt: snoozed(task, 
 /** Editable fields of a task, validated like buildTask (null when the title is empty) */
 export function editPatch({ title, dueAt, priority, kind, note }, now = Date.now()) {
   const t = String(title ?? '').trim().replace(/\s+/g, ' ').slice(0, 140);
-  if (!t) return null;
-  const due = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/.test(String(dueAt)) ? String(dueAt) : '';
+  // Editing never leaves a task without a date
+  if (!t || !DUE_RE.test(String(dueAt))) return null;
   return {
     title: t,
-    dueAt: due,
+    dueAt: String(dueAt),
     priority: PRIORITIES.some((p) => p.id === priority) ? priority : 'normal',
     kind: KINDS.some((k) => k.id === kind) ? kind : 'other',
     note: String(note ?? '').trim().slice(0, 1000),
     updatedAt: new Date(now).toISOString()
   };
+}
+
+
+/** Tries a client gets before «غير متفاعل» is the next step (utils/stageGate MAX_ATTEMPTS) */
+export const MAX_CALL_ATTEMPTS = 3;
+
+/**
+ * When to try again after a «لم يرد»: later the same day for the second try (the next morning when it is already
+ * evening), the next morning for the third.
+ */
+export function nextAttemptDue(attemptNo, now = Date.now()) {
+  const d = new Date(now);
+  if (attemptNo <= 2 && d.getHours() < 17) {
+    const at = new Date(now + 3 * 3600000);
+    return `${dayKeyFrom(at.getTime())}T${String(at.getHours()).padStart(2, '0')}:${String(at.getMinutes() >= 30 ? 30 : 0).padStart(2, '0')}`;
+  }
+  return `${dayKeyFrom(now, 1)}T11:00`;
+}
+
+/**
+ * The follow-up task a «لم يرد» creates: the next call, up to the third try. null once the tries are used up (the
+ * client can then be moved to غير متفاعل). `attempts` = «لم يرد» so far, this one included.
+ * [{ id, task }]: a fixed id, so a retry or a second device writes the same task.
+ */
+export function nextAttemptTask({ lead, attempts, me, now = Date.now() } = {}) {
+  const next = Number(attempts) + 1;
+  if (!lead?.id || !(attempts >= 1) || next > MAX_CALL_ATTEMPTS) return null;
+  const who = lead.name ? ` — ${String(lead.name).split(' ').slice(0, 2).join(' ')}` : '';
+  const task = buildTask({ title: `محاولة اتصال ${next} من ${MAX_CALL_ATTEMPTS}${who}`, dueAt: nextAttemptDue(next, now), priority: 'high', kind: 'call', lead, me, now });
+  return task ? { id: `retry-${lead.id}-${next}`, task } : null;
 }

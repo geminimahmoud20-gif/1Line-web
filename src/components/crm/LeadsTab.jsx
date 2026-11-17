@@ -18,7 +18,7 @@ import { planDuplicateMerges } from '../../utils/dedupePlan';
 import { guardStage, lastOutcomeLabel, outcomesOf } from '../../utils/stageGate';
 import { useTasks } from '../../hooks/useTasks';
 import { nextTaskFor, bucketOf, dueLabel } from '../../utils/tasks';
-import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, responseSlaMs, escalationLevel, isOverdue, isDueToday, isUnassigned, isStale, localDayKey, getLeadVisitDate, getLeadVisitSlot, isViewingLead, isSellerLead, isAccountLead, isBuyerLead, leadCreatedMs } from '../../utils/crmLeadViews';
+import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, responseSlaMs, escalationLevel, isOverdue, isDueToday, isUnassigned, isStale, localDayKey, getLeadVisitDate, getLeadVisitSlot, isViewingLead, isSellerLead, isAccountLead, isBuyerLead, leadCreatedMs, leadCampaign } from '../../utils/crmLeadViews';
 import { useProperties } from '../../context/PropertiesContext';
 import LeadTableRowActions from './LeadTableRowActions';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
@@ -847,8 +847,16 @@ export default function LeadsTab({
                           )}
                         </div>
 
-                        <div className="crm-lead-meta">
+                        {/* One source badge, and under it the campaign and the ad's name */}
+                        <div className="crm-lead-source">
                           {renderSource(l)}
+                          {(() => {
+                            const c = leadCampaign(l);
+                            const text = c ? [c.campaign, c.ad].filter(Boolean).join(' · ') : '';
+                            return text ? <span className="crm-lead-campaign" title={text}>{text}</span> : null;
+                          })()}
+                        </div>
+                        <div className="crm-lead-meta">
                           {leadCreatedMs(l) > 0 && now - leadCreatedMs(l) > 60000 && (
                             <span className="crm-lead-age" title={isAr ? 'من إمتى العميل اتضاف' : 'When the client was added'}>{isAr ? `من ${fmtWait(now - leadCreatedMs(l))}` : `${fmtWait(now - leadCreatedMs(l))} ago`}</span>
                           )}

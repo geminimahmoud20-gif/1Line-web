@@ -83,3 +83,4 @@
 .tk-silent__group h4 span { padding: 0 var(--ui-s-2); border-radius: var(--ui-r-full); background: var(--ui-surface-2); font-size: var(--ui-fs-2); }
 .tk-quick--flat { padding-inline-start: 0; }
 .tk-q:disabled { opacity: 0.6; cursor: default; }
+.tk-problem { color: var(--ui-danger); font-size: var(--ui-fs-2); }
