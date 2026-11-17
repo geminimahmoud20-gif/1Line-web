@@ -55,13 +55,15 @@ describe('Lead journey: public form → Firestore → CRM', () => {
         win.console.warn = keep(win.console.warn);
       }
     });
-    cy.contains('button', 'طلب سريع في خطوة واحدة', { timeout: 15000 }).click();
-    cy.get('form.quick-portal-form', { timeout: 15000 }).within(() => {
-      cy.get('input[placeholder*="أحمد"]').type(LEAD_NAME);
-      cy.get('input[placeholder*="0101234"]').type(PHONE);
+    // The buy wizard: type and area (phase 1) → budget (phase 2) → name and phone (phase 3)
+    cy.contains('button', 'متابعة الميزانية وطريقة الدفع', { timeout: 15000 }).click();
+    cy.contains('button', 'عرض الوحدات المطابقة واستلام العروض', { timeout: 15000 }).click();
+    cy.get('form.seller-contact-submission-form', { timeout: 15000 }).within(() => {
+      cy.get('input[placeholder*="كريم"]').type(LEAD_NAME);
+      cy.get('input[type="tel"]').first().type(PHONE); // the WhatsApp number follows it («نفس رقم الهاتف»)
       cy.get('button[type="submit"]').click();
     });
-    cy.contains('h3', 'تم استلام طلبك بنجاح', { timeout: 15000 }).should('be.visible');
+    cy.contains('h3', 'استلمنا طلبك', { timeout: 15000 }).should('be.visible');
     // Stay on the page until the write has landed: Cypress resets the page between tests, which
     // would cut off a Firestore write still in flight. If it never lands, print why.
     waitForLead().then((doc) => {
