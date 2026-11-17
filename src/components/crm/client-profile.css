@@ -1,29 +1,5 @@
-/* ملف العميل (CustomerProfileModal): a header with the person and one-tap actions, a stat grid, one tab bar and
-   a body that scrolls as a single sheet on phones. Colours come from the CRM tokens only. */
-.property-form-modal-card.cp {
-  --cp-gap: 14px;
-  display: flex; flex-direction: column;
-  max-width: 880px; width: 95%;
-  max-height: min(92dvh, 860px);
-  padding: 0; overflow: hidden;
-  background: var(--crm-card); color: var(--crm-ink);
-  border: 1px solid var(--crm-line-strong);
-}
-
-/* Header: avatar, name, close; the score and stage sit under the name */
+/* The client file's «التفاصيل» and «رحلة الزائر» tabs (the old full-profile window is gone). Tokens only. */
 .cp__head { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 4px 12px; padding: 16px 20px 10px; }
-.cp__avatar { grid-row: 1 / span 2; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-size: var(--crm-text-xl); font-weight: 700; background: var(--crm-info-soft); color: var(--crm-info); }
-.cp__avatar--hot { background: var(--crm-danger-soft); color: var(--crm-danger); }
-.cp__avatar--warm { background: var(--crm-warn-soft); color: var(--crm-warn); }
-.cp__who { min-width: 0; }
-.cp__name { margin: 0; font-size: var(--crm-text-lg); font-weight: 700; color: var(--crm-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cp__meta { margin: 2px 0 0; font-size: var(--crm-text-sm); color: var(--crm-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cp__close { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--crm-line-strong); background: var(--crm-subtle-2); color: var(--crm-ink); cursor: pointer; font-size: 1rem; }
-.cp__badges { grid-column: 2 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.cp__stage { display: inline-flex; align-items: center; min-height: 22px; padding: 0 10px; border-radius: 999px; background: var(--crm-subtle-2); border: 1px solid var(--crm-line-strong); color: var(--crm-body); font-size: var(--crm-text-xs); font-weight: 700; }
-
-/* Actions: the two things staff do most are big; calendar is icon-only */
-.cp__actions { display: flex; align-items: center; gap: 8px; padding: 6px 20px 12px; }
 .cp__btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--crm-line-strong); background: var(--crm-subtle); color: var(--crm-ink); font-size: var(--crm-text-base); font-weight: 700; cursor: pointer; }
 .cp__btn--wa { flex: 1; background: var(--crm-positive-soft); color: var(--crm-positive); border-color: var(--crm-positive-line); }
 .cp__btn--call { flex: 1; background: var(--crm-brand-navy); color: var(--crm-on-dark); border-color: var(--crm-brand-navy); }
@@ -31,30 +7,12 @@
 .cp__btn--primary { background: var(--crm-brand-navy); color: var(--crm-on-dark); border-color: var(--crm-brand-navy); }
 .cp__btn--block { width: 100%; }
 .cp__locked { flex: 1; display: inline-flex; align-items: center; gap: 6px; color: var(--crm-muted); font-size: var(--crm-text-sm); }
-
-/* Stats */
-.cp__stats { margin: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 1px; background: var(--crm-line); border-block: 1px solid var(--crm-line); }
-.cp__stat { background: var(--crm-subtle); padding: 8px 14px; min-width: 0; }
-.cp__stat dt { font-size: var(--crm-text-xs); font-weight: 600; color: var(--crm-muted); }
-.cp__stat dd { margin: 2px 0 0; font-size: var(--crm-text-sm); font-weight: 700; color: var(--crm-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-/* One tab bar */
-.cp__tabs { display: flex; gap: 2px; padding: 0 12px; border-bottom: 1px solid var(--crm-line); overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity; background: var(--crm-card); }
-.cp__tabs::-webkit-scrollbar { display: none; }
-.cp__tab { flex: 0 0 auto; scroll-snap-align: start; min-height: 46px; padding: 0 14px; border: 0; border-bottom: 3px solid transparent; background: none; color: var(--crm-muted); font-size: var(--crm-text-base); font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
-.cp__tab[aria-selected='true'] { color: var(--crm-ink); font-weight: 700; border-bottom-color: var(--crm-brand-navy); }
-.cp__count { min-width: 20px; padding: 0 6px; border-radius: 999px; background: var(--crm-subtle-2); color: var(--crm-body); font-size: var(--crm-text-xs); line-height: 20px; text-align: center; }
-
-.cp__body { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 20px 24px; overscroll-behavior: contain; }
 .cp__stack { display: flex; flex-direction: column; gap: var(--cp-gap); }
 .cp__h { margin: 0; display: flex; align-items: center; gap: 8px; font-size: var(--crm-text-md); font-weight: 700; color: var(--crm-ink); }
-.cp__empty { margin: 0; padding: 20px 8px; text-align: center; color: var(--crm-muted); font-size: var(--crm-text-sm); }
 .cp__note { padding: 12px 14px; border-radius: 10px; background: var(--crm-info-soft); border: 1px solid var(--crm-info-line); display: flex; flex-direction: column; gap: 6px; }
 .cp__note--ok { background: var(--crm-positive-soft); border-color: var(--crm-positive-line); }
 .cp__note p { margin: 0; font-size: var(--crm-text-sm); color: var(--crm-body); }
 .cp__chip { align-self: flex-start; padding: 2px 10px; border-radius: 999px; background: var(--crm-card); border: 1px solid var(--crm-line-strong); font-size: var(--crm-text-xs); font-weight: 700; color: var(--crm-body); }
-
-/* Journey events */
 .cp__events { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .cp__event { --cp-tone: var(--crm-info); display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 10px 14px; background: var(--crm-card); border: 1px solid var(--crm-line); border-inline-start: 4px solid var(--cp-tone); border-radius: 10px; }
 .cp__event[data-tone='positive'] { --cp-tone: var(--crm-positive); }
@@ -64,32 +22,6 @@
 .cp__event-tag { grid-column: 1; font-size: var(--crm-text-xs); font-weight: 700; color: var(--cp-tone); }
 .cp__event-title { grid-column: 1; font-size: var(--crm-text-base); color: var(--crm-ink); overflow-wrap: anywhere; }
 .cp__event-time { grid-column: 2; grid-row: 1; font-size: var(--crm-text-xs); color: var(--crm-faint); white-space: nowrap; }
-
-/* Matched units */
-.cp__cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.cp__card { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--crm-card); border: 1px solid var(--crm-line); border-radius: 10px; }
-.cp__card-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.cp__card-text strong { font-size: var(--crm-text-base); color: var(--crm-ink); overflow-wrap: anywhere; }
-.cp__card-text span { font-size: var(--crm-text-xs); font-weight: 700; color: var(--crm-positive); }
-
-/* History: a real timeline */
-.cp__logform { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; background: var(--crm-subtle); border: 1px solid var(--crm-line); border-radius: 10px; }
-.cp__logrow { display: grid; grid-template-columns: 160px 1fr auto; gap: 8px; }
-.cp__logrow .form-input { min-height: 44px; background: var(--crm-card); border: 1px solid var(--crm-line-strong); border-radius: 8px; color: var(--crm-ink); }
-.cp__timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-.cp__tl-item { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 0 16px 16px; margin-inline-start: 6px; border-inline-start: 2px solid var(--crm-line); }
-.cp__tl-item::before { content: ''; position: absolute; inset-inline-start: -7px; top: 3px; width: 12px; height: 12px; border-radius: 50%; background: var(--crm-card); border: 2px solid var(--crm-brand-navy); }
-.cp__tl-item:last-child { border-inline-start-color: transparent; padding-bottom: 0; }
-.cp__tl-time { font-size: var(--crm-text-xs); color: var(--crm-muted); font-variant-numeric: tabular-nums; }
-.cp__tl-text { font-size: var(--crm-text-base); line-height: 1.6; color: var(--crm-ink); overflow-wrap: anywhere; }
-.cp__tl-agent { font-size: var(--crm-text-xs); font-weight: 700; color: var(--crm-accent-text); }
-
-/* Follow-up */
-.cp__fields { display: grid; grid-template-columns: 1fr 1.5fr; gap: 12px; }
-.cp__field { display: flex; flex-direction: column; gap: 6px; font-size: var(--crm-text-sm); font-weight: 700; color: var(--crm-body); }
-.cp__field input { min-height: 44px; padding: 0 12px; background: var(--crm-card); border: 1px solid var(--crm-line-strong); border-radius: 8px; color: var(--crm-ink); font-weight: 400; }
-
-/* The profile tab (CustomerOverviewTab) */
 .cp-ov__head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
 .cp-ov__tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
 .cp-ov__tag { min-height: 32px; padding: 0 12px; border-radius: 999px; background: var(--crm-subtle); color: var(--crm-faint); border: 1px solid var(--crm-line-strong); font-size: var(--crm-text-xs); cursor: default; }
@@ -97,29 +29,21 @@
 .cp-ov__tag.is-edit { cursor: pointer; }
 .cp-ov__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
 .cp-ov__save { display: flex; margin-top: 18px; }
-
-@media (max-width: 640px) {
-  .property-form-modal-card.cp { width: 100%; height: 100dvh; max-height: 100dvh; border: 0; border-radius: 0; }
   .cp__head { padding: calc(12px + env(safe-area-inset-top)) 14px 8px; gap: 2px 10px; }
-  .cp__avatar { width: 40px; height: 40px; font-size: var(--crm-text-lg); }
-  .cp__name { font-size: var(--crm-text-md); }
-  .cp__actions { padding: 4px 14px 10px; }
-  .cp__stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .cp__stat { padding: 7px 12px; }
-  .cp__stat dd { font-size: var(--crm-text-sm); }
-  .cp__tabs { padding: 0 6px; }
-  .cp__body { padding: 14px 14px calc(24px + env(safe-area-inset-bottom)); }
-  .cp__cards, .cp__fields, .cp-ov__grid { grid-template-columns: 1fr; }
-  .cp__logrow { grid-template-columns: 1fr; }
-  .cp__logrow .cp__btn { width: 100%; }
-  /* Saving stays in reach while the form scrolls */
   .cp-ov__save { position: sticky; bottom: 0; margin-inline: -14px; padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); background: var(--crm-card); border-top: 1px solid var(--crm-line); }
   .cp-ov__save .btn { width: 100%; min-height: 48px; }
-}
-@media (min-width: 641px) and (max-width: 860px) {
-  .cp__stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-@media (min-width: 641px) {
   .cp__btn--wa, .cp__btn--call { flex: 0 0 auto; min-width: 150px; }
   .cp__locked { flex: 1; }
+@media (max-width: 640px) {
+  .cp-ov__grid { grid-template-columns: 1fr; }
+  /* Saving stays in reach while the form scrolls */
+  .cp-ov__save { position: sticky; bottom: 0; margin-inline: calc(var(--ui-s-4) * -1); padding: 10px var(--ui-s-4) calc(10px + env(safe-area-inset-bottom)); background: var(--crm-card); border-top: 1px solid var(--crm-line); }
+  .cp-ov__save .btn { width: 100%; min-height: 48px; }
 }
+
+/* The form now lives in the client drawer, not in the old modal that styled it: same fields, kit look, 16px so a phone does not zoom */
+.cp-ov__grid .form-group-item { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.cp-ov__grid .form-group-item label { font-size: var(--ui-fs-2); font-weight: var(--ui-fw-semibold); color: var(--ui-text-2); }
+.cp-ov__grid .form-group-item :is(input, select, textarea) { width: 100%; min-height: 44px; padding: 0 12px; font: inherit; font-size: 16px; color: var(--ui-text); background: var(--ui-surface); border: 1px solid var(--ui-line-strong); border-radius: var(--ui-r-md); box-sizing: border-box; }
+.cp-ov__grid .form-group-item :is(input, select, textarea):disabled { background: var(--ui-surface-2); color: var(--ui-text); border-color: var(--ui-line); opacity: 1; -webkit-text-fill-color: var(--ui-text); }
+.cp-ov__grid .form-group-item :is(input, select, textarea):focus-visible { outline: 2px solid var(--ui-primary); outline-offset: 1px; }
