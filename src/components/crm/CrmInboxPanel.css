@@ -112,3 +112,12 @@
 .crm-wa-intent__unit { display: inline-flex; align-items: center; gap: 4px; color: inherit; text-decoration: underline; text-underline-offset: 3px; }
 .crm-wa-intent__link { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--ui-s-3); margin-top: var(--ui-s-3); }
 .crm-wa-intent__link .crm-inbox-item__actions { grid-column: 1 / -1; }
+
+/* Phones: one row of view chips that scrolls sideways (the last one used to wrap alone onto a second row), and a tighter card */
+@media (max-width: 640px) {
+  .crm-inbox__chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .crm-inbox__chips::-webkit-scrollbar { display: none; }
+  .crm-inbox__chips > * { flex: 0 0 auto; }
+  .crm-inbox-item { gap: var(--ui-s-2); }
+  .crm-inbox-item__facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ui-s-2) var(--ui-s-3); padding: var(--ui-s-2) var(--ui-s-3); }
+}
