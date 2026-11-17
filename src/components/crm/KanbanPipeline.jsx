@@ -770,10 +770,12 @@ export default function KanbanPipeline({
                       >
                         <div className="kb-card-top">
                           <span className="kb-type">{typeBadge.label}</span>
-                          {sameNumber.has(lead.id) && (
-                            <span className="kb-dup" title={isAr ? 'نفس رقم الموبايل عنده طلبات تانية: غالبًا نفس الشخص. افتح «مكررين بالرقم» في العملاء عشان تدمجهم.' : 'The same phone has other requests: probably the same person. Merge them from the Leads tab.'}>
+                          {(sameNumber.has(lead.id) || lead.returningClient) && (
+                            <span className="kb-dup" title={isAr ? (lead.returningClient ? 'عميل راجع: اتحوّل لنفس الموظف اللي كان معاه طلبه القديم.' : 'نفس رقم الموبايل عنده طلبات تانية: غالبًا نفس الشخص. افتح «مكررين بالرقم» في العملاء عشان تدمجهم.') : 'The same phone has other requests: probably the same person. Merge them from the Leads tab.'}>
                               <CopyPlus size={11} aria-hidden="true" />
-                              {isAr ? `نفس الرقم · ${sameNumber.get(lead.id).length + 1} طلبات` : `Same number · ${sameNumber.get(lead.id).length + 1}`}
+                              {lead.returningClient
+                                ? (isAr ? 'عميل راجع' : 'Returning client')
+                                : (isAr ? `نفس الرقم · ${sameNumber.get(lead.id).length + 1} طلبات` : `Same number · ${sameNumber.get(lead.id).length + 1}`)}
                             </span>
                           )}
                           {budget >= HIGH_VALUE_DEAL_THRESHOLD && (
