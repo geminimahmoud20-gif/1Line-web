@@ -13,6 +13,9 @@ import { answersFacts } from '../../../utils/buyerMatch';
 import { attributionFacts } from '../../../utils/attributionTouches';
 import LeadTasks from './LeadTasks';
 import { sellerRoleOf, SELLER_ROLE_LABEL } from '../../../utils/sellerRole';
+import { PROPERTY_TYPES } from '../../../data/propertiesData';
+import { getAreas } from '../../../utils/areasData';
+import { areaNameOf } from '../../../utils/areaLookup';
 import { OUTCOMES, STAGE_RULES, attemptsOf } from '../../../utils/stageGate';
 import { LOST_REASONS } from '../../../utils/crmLeadViews';
 
@@ -78,7 +81,17 @@ export default function LeadDrawerOverview({
     start: scheduledDate
   }) : '';
 
+  // What the one-step card collects (it asks little by design): type, area and the rough price; the size, address
+  // and photos only come from the full form
+  const isQuick = /1-step/i.test(String(lead?.source || ''));
+  const rawArea = details.area || lead?.area;
+  const quickType = PROPERTY_TYPES.find((t) => t.id === (details.propertyType || lead?.propertyType))?.name_ar;
+  const quickArea = !rawArea ? '' : rawArea === 'all' ? L('كل المناطق', 'All areas') : areaNameOf(rawArea, getAreas(), isAr);
+  const quickPrice = !askingPriceOf(lead) && lead?.budget ? `${lead.budget} ${L('ج.م (تقريبي)', 'EGP (approx.)')}` : '';
   const sellerFacts = [
+    [L('نوع العقار', 'Type'), quickType],
+    [L('المنطقة', 'Area'), quickArea],
+    [L('السعر المطلوب', 'Asking price'), quickPrice],
     [L('المساحة', 'Size'), details.size && `${details.size} ${L('م²', 'm²')}`],
     [askingPriceOf(lead) ? L('السعر المطلوب', 'Asking price') : L('التقدير الآلي', 'Estimate'), (askingPriceOf(lead) || details.estimatedAvg) && `${Number(askingPriceOf(lead) || details.estimatedAvg).toLocaleString('en-US')} ${L('ج.م', 'EGP')}`],
     [L('الغرف', 'Rooms'), details.rooms],
@@ -132,6 +145,9 @@ export default function LeadDrawerOverview({
             <h3 id="crm-ld-seller" className="crm-ld__h"><Building size={16} aria-hidden="true" />{L('العقار المعروض للبيع', 'Property for sale')}</h3>
             {sellerRole && <Badge tone={sellerRole === 'broker' ? 'warning' : 'accent'}>{L(`من ${SELLER_ROLE_LABEL[sellerRole].ar}`, `From ${SELLER_ROLE_LABEL[sellerRole].en.toLowerCase()}`)}</Badge>}
           </div>
+          {isQuick && (
+            <p className="crm-ld__hint">{L('طلب سريع: الاسم والرقم ونوع العقار بس. المساحة والعنوان والصور لسه محتاجة منه (ابعتله صفحة «سجّل وحدتك» من تحت).', 'Quick request: name, phone and type only. Size, address and photos are still to collect (send the listing page below).')}</p>
+          )}
           {sellerFacts.length > 0 && (
             <dl className="crm-ld__facts">
               {sellerFacts.map(([label, value, wide]) => (
