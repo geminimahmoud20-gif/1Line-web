@@ -22,6 +22,7 @@ import { suggestNextStep, SKIP_LOG } from '../../utils/nextStep';
 import NextStepSheet from './NextStepSheet';
 import { sellerRoleOf, SELLER_ROLE_LABEL } from '../../utils/sellerRole';
 import { dueLabel, MAX_CALL_ATTEMPTS } from '../../utils/tasks';
+import { sourceText } from '../../utils/crmLabels';
 import { rankAndNominateProperties } from '../../services/matchingEngineV2';
 import NotesThread from './NotesThread';
 import { Drawer, Button, IconButton, Badge, Chip, Tabs, useConfirm } from '../ui';
@@ -337,7 +338,7 @@ export default function LeadQuickDrawer({
   const phoneText = formatPhoneNumber(lead.phone || lead.whatsapp) || '—';
   // One short line under the name: where it came from, who holds it (the campaign is in «من فين جه؟»)
   const holder = lead.ownerName || lead.claimedBy || (lead.assignedTo && lead.assignedTo !== 'Unassigned' ? lead.assignedTo : '');
-  const headerLine = [lead.source, holder ? (isAr ? `مع ${holder}` : `With ${holder}`) : null, lead.autoAssigned ? (isAr ? 'توزيع تلقائي' : 'auto-assigned') : null].filter(Boolean).join(' · ');
+  const headerLine = [sourceText(lead.source), holder ? (isAr ? `مع ${holder}` : `With ${holder}`) : null, lead.autoAssigned ? (isAr ? 'توزيع تلقائي' : 'auto-assigned') : null].filter(Boolean).join(' · ');
   const historyCount = buildTimeline(lead).events.length;
 
   return (

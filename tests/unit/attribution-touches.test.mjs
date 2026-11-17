@@ -34,11 +34,11 @@ test('the profile lists source, campaign, ad, page, return and a different first
     marketingAttribution: { ...ad, returning: true, firstTouch: { source: 'google', medium: 'organic', campaign: 'organic_referral', capturedAt: '2026-11-01T10:00:00Z' } }
   };
   const rows = Object.fromEntries(attributionFacts(lead).map(([k, v]) => [k, v]));
-  assert.equal(rows['الحملة'], 'sohag-buyers');
+  assert.equal(rows['الحملة'], 'سوهاج المشترين');
   assert.equal(rows['الإعلان / الفيديو'], 'video-01');
   assert.equal(rows['دخل على صفحة'], '/match');
-  assert.match(rows['زيارة'], /رجع مباشرة بعد ما جه من facebook/);
-  assert.match(rows['أول مرة جه'], /google/);
+  assert.match(rows['زيارة'], /رجع مباشرة بعد ما جه من فيسبوك/);
+  assert.match(rows['أول مرة جه'], /جوجل/);
   // a client typed in by hand: only the source
   assert.deepEqual(attributionFacts({ source: 'manual' }).map(([k]) => k), ['المصدر']);
   // the first touch is not repeated when it is the same as this one

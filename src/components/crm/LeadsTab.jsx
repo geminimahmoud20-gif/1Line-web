@@ -3,7 +3,7 @@ import {
   Copy, Upload, Columns3, Timer, CopyPlus, Plane, Ban, CalendarClock,
   Megaphone, Globe, MessageCircle, Users, Share2, FileUp, PenLine, CircleHelp
 } from 'lucide-react';
-import { formatFollowUp, formatBudget } from '../../utils/crmLabels';
+import { formatFollowUp, formatBudget, campaignLabel } from '../../utils/crmLabels';
 import DeskOptions from './DeskOptions';
 import useTeamMembers from '../../hooks/useTeamMembers';
 import { assigneeValue, assignmentUpdates, personFor } from '../../utils/assignees';
@@ -852,7 +852,7 @@ export default function LeadsTab({
                           {renderSource(l)}
                           {(() => {
                             const c = leadCampaign(l);
-                            const text = c ? [c.campaign, c.ad].filter(Boolean).join(' · ') : '';
+                            const text = c ? [campaignLabel(c.campaign), c.ad].filter(Boolean).join(' · ') : '';
                             return text ? <span className="crm-lead-campaign" title={text}>{text}</span> : null;
                           })()}
                         </div>

@@ -163,7 +163,8 @@ export function isSellerLead(l = {}) {
     !!l.details?.sellerRole ||
     /portals 1-step \((sell|valuation)\)/i.test(String(l.source || '')) ||
     !!l.details?.askingPrice ||
-    notes.includes('عرض بيع') ||
+    // Old leads with no type at all: the only trace of a sale offer is the text of its note
+    (!type && notes.includes('عرض بيع')) ||
     (l.landingPage && l.landingPage.includes('/sell'))
   );
 }

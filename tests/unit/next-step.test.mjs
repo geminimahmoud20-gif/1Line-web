@@ -34,3 +34,13 @@ test('dueReminders: mine, open, reached, not yet reminded', () => {
   assert.deepEqual(ids({ a: '2026-11-17T08:10' }), ['e']);
   assert.deepEqual(ids({ a: '2026-11-17T08:00' }), ['a', 'e']); // the task was moved: remind again
 });
+
+import { sourceText, campaignLabel } from '../../src/utils/crmLabels.js';
+test('raw source and campaign values read as Arabic', () => {
+  assert.equal(sourceText('Portals 1-Step (sell)'), 'نموذج سريع: عايز يبيع');
+  assert.equal(sourceText('website'), 'الموقع');
+  assert.equal(sourceText('حساب جديد'), 'حساب جديد');
+  assert.equal(campaignLabel('owners-leads-soh-owners-nov26'), 'الملاك عملاء سوهاج الملاك نوفمبر 26');
+  assert.equal(campaignLabel('حملة الصيف'), 'حملة الصيف');
+  assert.equal(campaignLabel(''), '');
+});

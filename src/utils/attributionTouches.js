@@ -6,6 +6,7 @@
 //  stands in for a direct return, and the very first touch is kept apart. Pure: tests/unit/attribution-touches.test.mjs.
 // =============================================================
 import { LEAD_SOURCES, leadSourceKey, leadCampaign } from './crmLeadViews.js';
+import { sourceText, campaignLabel } from './crmLabels.js';
 
 export const TOUCH_TTL_MS = 30 * 86_400_000;
 
@@ -42,13 +43,13 @@ export function attributionFacts(lead = {}) {
   if (source) rows.push(['المصدر', source.ar]);
   const a = lead.marketingAttribution || {};
   const camp = leadCampaign(lead);
-  if (camp) rows.push(['الحملة', camp.campaign]);
+  if (camp) rows.push(['الحملة', campaignLabel(camp.campaign)]);
   if (camp?.ad) rows.push(['الإعلان / الفيديو', camp.ad]);
   if (a.landingPage) rows.push(['دخل على صفحة', a.landingPage, true]);
-  if (a.returning) rows.push(['زيارة', `رجع مباشرة بعد ما جه من ${a.source || 'مصدر'}${a.capturedAt ? ` (${day(a.capturedAt)})` : ''}`, true]);
+  if (a.returning) rows.push(['زيارة', `رجع مباشرة بعد ما جه من ${sourceText(a.source) || 'مصدر'}${a.capturedAt ? ` (${day(a.capturedAt)})` : ''}`, true]);
   const first = a.firstTouch;
   if (first && first.capturedAt && (first.campaign !== a.campaign || first.source !== a.source)) {
-    rows.push(['أول مرة جه', `${first.source || '—'}${isDirectTouch(first) ? '' : ` · ${first.campaign}`} (${day(first.capturedAt)})`, true]);
+    rows.push(['أول مرة جه', `${sourceText(first.source) || '—'}${isDirectTouch(first) ? '' : ` · ${campaignLabel(first.campaign)}`} (${day(first.capturedAt)})`, true]);
   }
   return rows;
 }
