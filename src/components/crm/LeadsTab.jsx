@@ -26,6 +26,7 @@ import { leadScore, LEAD_SCORE_HIGH } from '../../utils/crmLeadViews';
 import { PageHeader, Button, Chip, Select, Badge, Avatar, EmptyState } from '../ui';
 import { cx } from '../ui/cx';
 import './leads-tab.css';
+import './client-card.css';
 const MORE_FILTER_KEYS = ['qualified', 'account', 'stale', 'dupes', 'archived', 'won', 'inactive', 'lost'];
 
 const COLUMN_OPTIONS = [
@@ -788,6 +789,7 @@ export default function LeadsTab({
                   key={l.id}
                   data-lead-id={l.id}
                   className={`crm-lead-row ${rowIndex === kbdIndex ? 'is-kbd-active' : ''} ${temp === 'hot' ? 'is-hot' : ''} ${isOverdue(l, localDayKey(now)) ? 'is-overdue' : ''}`}
+                  data-stage={l.status || 'new'}
                   aria-current={rowIndex === kbdIndex ? 'true' : undefined}
                   data-selected={isSelected || undefined}
                   onClick={(e) => {
