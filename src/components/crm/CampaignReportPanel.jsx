@@ -278,7 +278,7 @@ export default function CampaignReportPanel({ leads = [], properties = [], lang 
         <>
           <div className="cr-totals">
             <div><b>{totals.contacts}</b><span>{L('ضغطة تواصل (لسه من غير فورم)', 'Contact taps (no form yet)')}</span></div>
-            <div><b>{totals.leads}</b><span>{L('عميل', 'Leads')}</span></div>
+            <div><b>{totals.leads}</b><span>{L('عميل', 'Leads')}{totals.requests > totals.leads ? <small> {L(`(من ${totals.requests} طلب)`, `(from ${totals.requests} requests)`)}</small> : null}</span></div>
             <div><b>{totals.visits}</b><span>{L('وصل لمعاينة', 'Reached a visit')}</span></div>
             <div><b>{totals.closed}</b><span>{L('اتقفل', 'Closed')}</span></div>
             <div><b>{fmt(totals.costPerLead)}</b><span>{L('تكلفة العميل (ج.م)', 'Cost / lead')}</span></div>

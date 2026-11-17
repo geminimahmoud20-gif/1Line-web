@@ -112,3 +112,25 @@ test('taps already linked to a lead, or dismissed, are not counted again next to
   // a tap without a status (older data) still counts
   assert.equal(campaignReport([], { now, taps: [{ campaign: 'owners-x', at: now }] }).find((r) => r.campaign === 'owners-x').contacts, 1);
 });
+
+test('one person asking twice in a campaign is one lead, not two', () => {
+  const p = (status, extra = {}) => ({ ...lead('owners', status), phone: '+201094590572', ...extra });
+  const leads = [
+    p('new', { id: 'a', type: 'buyer' }),
+    p('site_visit', { id: 'b', type: 'seller', phone: '01094590572' }), // same person, other spelling of the number
+    { ...lead('owners', 'new'), id: 'c', phone: '01012345678' }
+  ];
+  const r = campaignReport(leads, { now: NOW }).find((x) => x.campaign === 'owners');
+  assert.equal(r.leads, 2); // two people
+  assert.equal(r.requests, 3); // three requests
+  assert.equal(r.visits, 1); // the person reached a visit once, not twice
+  assert.equal(r.contacted, 1);
+});
+test('a person is lost only when all their requests are lost; unrelated leads without a phone stay separate', () => {
+  const l1 = { ...lead('x', 'lost'), id: '1', phone: '01011112222', lostReason: 'price' };
+  const l2 = { ...lead('x', 'new'), id: '2', phone: '01011112222' };
+  assert.equal(campaignReport([l1, l2], { now: NOW }).find((r) => r.campaign === 'x').lost, 0);
+  assert.equal(campaignReport([l1, { ...l2, status: 'lost' }], { now: NOW }).find((r) => r.campaign === 'x').lost, 1);
+  const nophone = [{ ...lead('y', 'new'), id: 'p' }, { ...lead('y', 'new'), id: 'q' }];
+  assert.equal(campaignReport(nophone, { now: NOW }).find((r) => r.campaign === 'y').leads, 2);
+});
