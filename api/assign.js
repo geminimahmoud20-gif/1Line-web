@@ -13,7 +13,8 @@
 import { SignJWT, importPKCS8 } from 'jose';
 import { teamStore, staffRegistry, accessStore } from './_team-core.js';
 import { eligible, sellersOf, chooseSeller, ownerFields, MAX_OPEN_COUNT } from './_assign-core.js';
-import { lookupReturning } from './_returning-core.js';
+import { lookupReturning, findEarlier } from './_returning-core.js';
+import { pickPrimary, mergeFields, toFirestore } from './_merge-core.js';
 import { createRateLimiter, clientIp } from './_rate-limit.js';
 import { cadenceTasks } from '../src/utils/followUpCadence.js';
 
@@ -80,6 +81,40 @@ const sameSite = (request) => {
   }
 };
 
+/** Writes the merge; returns the open lead's id, or null when there is nothing to merge into (or a write failed) */
+async function mergeIntoOpen({ fs, id, lead, doc }) {
+  try {
+    const earlier = await findEarlier({ fs, plain, lead, id });
+    const primary = pickPrimary(earlier, lead);
+    if (!primary) return null;
+    const nowIso = new Date().toISOString();
+    const fields = mergeFields(primary, lead, id, nowIso);
+    const patch = (docId, f, updateTime) => fs('PATCH', `leads/${encodeURIComponent(docId)}?${Object.keys(f).map((k) => `updateMask.fieldPaths=${k}`).join('&')}&currentDocument.updateTime=${encodeURIComponent(updateTime)}`, {
+      fields: Object.fromEntries(Object.entries(f).map(([k, v]) => [k, toFirestore(v)]))
+    });
+    // The open client first: if that fails nothing has changed. Then this record; if that fails the client has the
+    // entry and the CRM's duplicate view still shows the leftover.
+    const a = await patch(primary.id, fields.primary, primary.updateTime);
+    if (!a.ok) return null;
+    const b = await patch(id, fields.incoming, doc.updateTime);
+    if (!b.ok) console.error('assign: merged record not archived', b.status);
+    const log = await fs('POST', 'audit_logs', {
+      fields: {
+        actorId: { stringValue: 'system' }, actorUid: { stringValue: 'system' }, actorEmail: { stringValue: 'auto-merge' },
+        action: { stringValue: 'LEAD_REQUEST_MERGED' }, type: { stringValue: 'LEAD_REQUEST_MERGED' }, actionType: { stringValue: 'LEAD_REQUEST_MERGED' },
+        entityType: { stringValue: 'leads' }, targetCollection: { stringValue: 'leads' }, entityId: { stringValue: primary.id }, targetId: { stringValue: primary.id },
+        createdAt: { stringValue: nowIso }, timestamp: { timestampValue: nowIso },
+        details: { mapValue: { fields: { from: { stringValue: id } } } }
+      }
+    });
+    if (!log.ok) console.error('assign: merge audit entry not written', log.status);
+    return primary.id;
+  } catch (e) {
+    console.error('assign: merge failed:', e?.message || e);
+    return null;
+  }
+}
+
 const ID_RE = /^[A-Za-z0-9_-]{1,80}$/;
 
 export async function POST(request) {
@@ -111,7 +146,8 @@ export async function POST(request) {
     // follow-up tasks separately with { cadence: false }
     const setting = await fs('GET', 'settings/automation');
     const flags = setting.ok ? ((await setting.json())?.fields || {}) : {};
-    if (flags.autoAssign?.booleanValue === false) return json(200, { assigned: false, reason: 'off' });
+    const assignOn = flags.autoAssign?.booleanValue !== false;
+    const mergeOn = flags.mergeRepeat?.booleanValue !== false;
     const cadenceOn = flags.cadence?.booleanValue !== false;
 
     const res = await fs('GET', `leads/${encodeURIComponent(id)}`);
@@ -120,6 +156,14 @@ export async function POST(request) {
     const doc = await res.json();
     const lead = plain(doc);
     if (!eligible(lead)) return json(200, { assigned: false, reason: 'not-eligible' });
+
+    // The same person filling a second form while their first request is still open: the new request goes into
+    // that client's timeline and this record is archived (never deleted). Any failure falls through to a normal lead.
+    if (mergeOn) {
+      const merged = await mergeIntoOpen({ fs, id, lead, doc });
+      if (merged) return json(200, { assigned: false, merged: true, into: merged });
+    }
+    if (!assignOn) return json(200, { assigned: false, reason: 'off' });
 
     const store = teamStore(auth, staffRegistry(fs), accessStore(fs), fs);
     const [members, config] = await Promise.all([store.listMembers(), store.getAccess()]);
