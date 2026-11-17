@@ -52,6 +52,9 @@ export function campaignReport(leads = [], { by = 'campaign', days = 0, now = Da
   for (const t of taps) {
     const campaign = String(t?.campaign || '').trim();
     if (!campaign) continue;
+    // A tap the team linked to the lead it became is already counted as a lead, and a dismissed one was not a person:
+    // only the taps that stayed taps count here, so the two numbers do not overlap
+    if (t.status === 'linked' || t.status === 'dismissed') continue;
     if (since && Number(t.at) < since) continue;
     const content = by === 'ad' ? String(t.content || '').trim() : '';
     const ad = by === 'ad' ? (content || '—') : '';
