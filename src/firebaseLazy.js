@@ -116,6 +116,7 @@ export const settingsExist = lazyCall('settingsExist');
 export const upsertCatalogItem = lazyCall('upsertCatalogItem');
 export const upsertCatalogItems = lazyCall('upsertCatalogItems');
 export const currentApprover = lazyCall('currentApprover');
+export const currentLeadManager = lazyCall('currentLeadManager');
 export const stripStaffIdentity = lazyCall('stripStaffIdentity');
 export const importLeads = lazyCall('importLeads');
 export const restoreLeads = lazyCall('restoreLeads');

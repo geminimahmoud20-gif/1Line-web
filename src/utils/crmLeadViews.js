@@ -303,14 +303,12 @@ export const RESPONSE_SLA_MS = 2 * 60 * 60 * 1000;
 
 /**
  * What to save when staff tap «اتصال» or «واتساب» on a client nobody has contacted yet: the first
- * contact time (stops the "no reply" clock) and the move to «اتكلمنا». Null once contact is recorded,
- * so repeat taps write nothing.
+ * contact time (stops the "no reply" clock). The stage does NOT move: that needs a logged outcome
+ * (utils/stageGate). Null once contact is recorded, so repeat taps write nothing.
  */
 export function firstContactPatch(l, nowIso = new Date().toISOString()) {
   if (!l || l.firstContactedAt || l.lastContactedAt) return null;
-  const patch = { lastContactedAt: nowIso, lastActivityAt: nowIso };
-  if (!l.status || l.status === 'new') patch.status = 'contacted';
-  return patch;
+  return { lastContactedAt: nowIso, lastActivityAt: nowIso };
 }
 
 /** A client from an ad is waiting for a reply right now: 15 minutes is when it still converts */

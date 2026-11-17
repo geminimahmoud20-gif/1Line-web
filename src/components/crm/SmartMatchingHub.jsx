@@ -6,6 +6,7 @@ import { matchBuyersToProperties, formatWhatsAppPhone, generateWhatsAppMessage, 
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 import { countPhrase } from '../../utils/arabicCount';
 import './smart-matching.css';
+import { outcomeEntry, outcomePatchFor } from '../../utils/stageGate';
 
 const DISMISS_KEY = 'crm_match_dismissed';
 const IDEAL = 85;
@@ -154,7 +155,10 @@ export default function SmartMatchingHub({ leads = [], properties = [], onUpdate
           lead={visitFor}
           properties={properties}
           onScheduleVisit={(leadId, visitDetails) => {
-            onUpdateLead?.(leadId, { status: 'site_visit', siteVisit: visitDetails, followUp: `معاينة مجدولة يوم ${visitDetails.visitDate}` });
+            // Booking the visit is the outcome «تم تحديد موعد معاينة» (utils/stageGate), which the stage lock asks for
+            const visitLead = leads.find((l) => String(l.id) === String(leadId));
+            const outcome = outcomePatchFor(visitLead || {}, outcomeEntry('viewing_set', {}, {}));
+            onUpdateLead?.(leadId, { ...outcome, status: 'site_visit', siteVisit: visitDetails, followUp: `معاينة مجدولة يوم ${visitDetails.visitDate}` });
           }}
           lang={lang}
           triggerToast={triggerToast}

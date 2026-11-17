@@ -6,6 +6,7 @@ import { routeLeadAutomatically } from '../../utils/leadRoutingEngine';
 import { isUnassigned } from '../../utils/crmLeadViews';
 import { useConfirm } from '../ui';
 import './automation.css';
+import StageRulesTable from './StageRulesTable';
 
 /**
  * Automation that really runs:
@@ -133,6 +134,7 @@ export default function AutomationTab({ isAr, leads = [], onUpdateLead, triggerT
           </button>
         </div>
       </div>
+      <StageRulesTable isAr={isAr} />
     </div>
   );
 }

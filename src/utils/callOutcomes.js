@@ -5,6 +5,7 @@
 // =============================================================
 import { toMs } from './crmLeadViews.js';
 import { dayOf, inRange } from './reportPeriods.js';
+import { OUTCOME_OF_CALL, outcomePatchFor, isPositiveOutcome } from './stageGate.js';
 
 export const OUTCOMES = [
   { id: 'answered', ar: 'ردّ وكلّمته', en: 'Answered' },
@@ -26,9 +27,18 @@ export const callEntry = (outcome, me, now = Date.now()) => OUTCOMES.some((o) =>
 export function outcomePatch(lead, entry) {
   if (!entry) return null;
   const label = OUTCOMES.find((o) => o.id === entry.o)?.ar;
+  const callOutcomes = [...(Array.isArray(lead?.callOutcomes) ? lead.callOutcomes : []), entry].slice(-KEEP);
+  // The same answer as an activity outcome (utils/stageGate): «ردّ» = تم التواصل … so the stage lock and the table see it
+  const unified = outcomePatchFor({ ...lead, callOutcomes }, { id: OUTCOME_OF_CALL[entry.o], at: entry.at, by: entry.by, n: entry.n });
   return {
-    callOutcomes: [...(Array.isArray(lead?.callOutcomes) ? lead.callOutcomes : []), entry].slice(-KEEP),
+    callOutcomes,
     lastCallOutcome: entry.o,
+    outcomes: unified.outcomes,
+    lastOutcome: unified.lastOutcome,
+    lastOutcomeAt: unified.lastOutcomeAt,
+    outcomeAttempts: unified.outcomeAttempts,
+    ...(unified.lastContactedAt ? { lastContactedAt: unified.lastContactedAt } : {}),
+    ...((lead?.status || 'new') === 'new' && isPositiveOutcome(unified.lastOutcome) ? { status: 'contacted' } : {}),
     lastActivityAt: entry.at,
     activityLogs: [{ timestamp: entry.at, action: `مكالمة: ${label}` }, ...(lead?.activityLogs || [])]
   };

@@ -20,6 +20,7 @@ import { PageHeader, Tabs, SegmentedControl, Chip, Badge, Button, IconButton, Se
 import { cx } from '../ui/cx';
 import './CrmInboxPanel.css';
 import { canViewLeadPhone, maskPhoneNumber } from '../../utils/rbacRules';
+import { guardStage } from '../../utils/stageGate';
 import { claimLeadAtomic } from '../../services/leads';
 import { normalizeAreaKey, getAreaById } from '../../utils/areasData';
 import { sanitizeAndMergeNotes, formatPhoneNumber } from '../../utils/crmNoteSanitizer';
@@ -466,6 +467,8 @@ export default function CrmInboxPanel({
   // is never sent back to "جديد" by a click here
   const handleSetStage = (lead, newStage) => {
     if (!onUpdateLead || !isInboxStage(lead.status)) return;
+    // The stage lock: log the activity outcome first (from the client's drawer)
+    if (!guardStage(lead, { status: newStage }, { role: userRole, toast: triggerToast })) return;
     const nowIso = new Date().toISOString();
     onUpdateLead(lead.id, {
       status: newStage,

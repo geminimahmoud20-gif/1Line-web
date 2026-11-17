@@ -64,6 +64,8 @@
   scroll-padding-inline: 8px;
   padding-inline: 4px;
 }
+/* The last stage (خسارة) must show in full: snap it to the end and leave room after it */
+.kanban-board-scroll-container > .kanban-stage-column:last-child { scroll-snap-align: end; margin-inline-end: 12px; }
 
 .kanban-stage-column {
   background: var(--crm-subtle);

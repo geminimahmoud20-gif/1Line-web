@@ -25,6 +25,7 @@ import {
   upsertCatalogItem,
   upsertCatalogItems,
   currentApprover,
+  currentLeadManager,
   importLeads,
   deleteCatalogItem,
   syncPendingLeads,
@@ -47,6 +48,7 @@ import { applyDevelopers } from '../utils/developers';
 import { usePreferences } from './PreferencesContext';
 import { demandEditStamp } from '../utils/publishApproval';
 import { stageHistoryAfter, initialStageHistory } from '../utils/stageHistory';
+import { checkStageChange } from '../utils/stageGate';
 import { assignmentEvent } from '../utils/auditEvents';
 import { useUIModal } from './UIModalContext';
 
@@ -843,9 +845,23 @@ export function PropertiesProvider({ children }) {
   }, []);
 
   // CRM Leads Handlers
-  const handleUpdateLead = useCallback(async (id, updatedFields) => {
+  const handleUpdateLead = useCallback(async (id, requestedFields) => {
+    // `_undo` marks the Undo button's change; it is never saved
+    const { _undo: isUndo, ...updatedFields } = requestedFields || {};
     const nowIso = new Date().toISOString();
     const current = leadsRef.current.find((l) => l.id === id);
+
+    // The stage lock: every stage change in the CRM comes through here. It needs a logged activity outcome, a
+    // reason for a negative one, and a manager to go back (utils/stageGate)
+    if (current && updatedFields.status && updatedFields.status !== (current.status || 'new') && !isUndo) {
+      let isManager = false;
+      try { isManager = Boolean(await currentLeadManager()); } catch { /* offline: treat as staff */ }
+      const gate = checkStageChange(current, updatedFields, { isManager });
+      if (!gate.ok) {
+        triggerToast(gate.message, 'error');
+        return false;
+      }
+    }
 
     // First reply time: set once, the first time the lead leaves 'new' or someone contacts it
     const extra = {};
