@@ -5,6 +5,7 @@ import StageDeliverableModal from './StageDeliverableModal';
 import './crm-kanban.css';
 import { getAreas } from '../../utils/areasData';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { leadScore, isOpenLead, leadBudget, isSellerLead, duplicatesById } from '../../utils/crmLeadViews';
 import { SELLER_STAGES, pipelineKind } from '../../utils/leadPipeline';
 import { boardColumnOf, PROGRESS_STAGE_IDS } from '../../utils/dealStages';
@@ -14,6 +15,7 @@ import { guardStage } from '../../utils/stageGate';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 import { PageHeader, KpiRow, KpiTile, Chip } from '../ui';
 import './kanban-redesign.css';
+import './kanban-mobile.css';
 import { stageSinceMs, isStalled, isNewOverdue, daysLabel, shortMoney, STALE_DAYS } from '../../utils/pipelineCards';
 
 const CARDS_PER_STAGE = 5;
@@ -94,9 +96,13 @@ export default function KanbanPipeline({
   // A lead dropped on «خسارة» asks why first
   const [lostFor, setLostFor] = useState(null);
   const [blockerModal, setBlockerModal] = useState({ isOpen: false, blockerInfo: null, lead: null });
-  const [filterType, setFilterType] = useState('all');
+  // Two separate pipelines: requests (buyers) and offers (owners and brokers), each with its own stages and card
+  const [filterType, setFilterType] = useState('buyer');
+  const isPhone = useMediaQuery('(max-width: 640px)');
+  const [phoneStage, setPhoneStage] = useState('new');
   // Columns read as an owner's pipeline when only owners are shown
   const PIPELINE_STAGES = filterType === 'seller' ? SELLER_COLUMNS : BASE_STAGES;
+  const phoneStageId = PIPELINE_STAGES.some((st) => st.id === phoneStage) ? phoneStage : PIPELINE_STAGES[0].id;
   const [searchQuery, setSearchQuery] = useState('');
   const [collapsedStages, setCollapsedStages] = useState(() => {
     try {
@@ -563,14 +569,7 @@ export default function KanbanPipeline({
           value={pipelineOverview.activeCount}
           icon={<Users size={16} />}
         />
-        <KpiTile
-          label={isAr ? 'ميزانيات المشترين' : 'Buyers\' budgets'}
-          value={pipelineOverview.totalVol > 0 ? pipelineOverview.totalVol / 1000000 : null}
-          digits={1}
-          unit={isAr ? 'مليون ج.م' : 'M EGP'}
-          emptyText={isAr ? 'مفيش ميزانيات متسجّلة' : 'No budgets yet'}
-          icon={<TrendingUp size={16} />}
-        />
+        {filterType === 'seller' ? (
         <KpiTile
           label={isAr ? 'قيمة العروض المعروضة' : 'Listed value'}
           value={pipelineOverview.supplyVol > 0 ? pipelineOverview.supplyVol / 1000000 : null}
@@ -579,6 +578,16 @@ export default function KanbanPipeline({
           emptyText={isAr ? 'مفيش أسعار متسجّلة' : 'No prices yet'}
           icon={<Building2 size={16} />}
         />
+        ) : (
+        <KpiTile
+          label={isAr ? 'ميزانيات المشترين' : 'Buyers\' budgets'}
+          value={pipelineOverview.totalVol > 0 ? pipelineOverview.totalVol / 1000000 : null}
+          digits={1}
+          unit={isAr ? 'مليون ج.م' : 'M EGP'}
+          emptyText={isAr ? 'مفيش ميزانيات متسجّلة' : 'No budgets yet'}
+          icon={<TrendingUp size={16} />}
+        />
+        )}
         <KpiTile
           label={isAr ? 'صفقات كبيرة (5 مليون+)' : 'Large deals (5M+)'}
           value={pipelineOverview.highValue}
@@ -594,9 +603,8 @@ export default function KanbanPipeline({
 
       <div className="crm-kanban__toolbar">
         <div className="crm-kanban__views" role="group" aria-label={isAr ? 'نوع العميل' : 'Client type'}>
-          <Chip pressed={filterType === 'all'} count={leads.filter(isOpenLead).length} onClick={() => setFilterType('all')}>{isAr ? 'الكل' : 'All'}</Chip>
-          <Chip pressed={filterType === 'buyer'} onClick={() => setFilterType('buyer')}>{isAr ? 'مشترين' : 'Buyers'}</Chip>
-          <Chip pressed={filterType === 'seller'} onClick={() => setFilterType('seller')}>{isAr ? 'بايعين' : 'Sellers'}</Chip>
+          <Chip pressed={filterType === 'buyer'} count={leads.filter((l) => isOpenLead(l) && matchesType(l, 'buyer')).length} onClick={() => setFilterType('buyer')}>{isAr ? 'طلبات (مشترين)' : 'Requests (buyers)'}</Chip>
+          <Chip pressed={filterType === 'seller'} count={leads.filter((l) => isOpenLead(l) && matchesType(l, 'seller')).length} onClick={() => setFilterType('seller')}>{isAr ? 'عروض (ملاك ووسطاء)' : 'Offers (owners, brokers)'}</Chip>
           <Chip pressed={filterType === 'investor'} onClick={() => setFilterType('investor')}>{isAr ? 'مستثمرين' : 'Investors'}</Chip>
         </div>
         <div className="crm-kanban__layout" role="group" aria-label={isAr ? 'شكل العرض' : 'Layout'}>
@@ -619,8 +627,18 @@ export default function KanbanPipeline({
         </label>
       </div>
 
+      {/* On a phone one stage fills the screen, picked from the row of stages above it */}
+      {isPhone && (
+        <div className="crm-kanban__stagepick" role="tablist" aria-label={isAr ? 'المراحل' : 'Stages'}>
+          {PIPELINE_STAGES.map((st) => (
+            <button key={st.id} type="button" role="tab" aria-selected={phoneStageId === st.id} className={phoneStageId === st.id ? 'is-on' : ''} onClick={() => setPhoneStage(st.id)}>
+              {isAr ? st.title_ar : st.title_en}<b>{(leadsByStage[st.id] || []).length}</b>
+            </button>
+          ))}
+        </div>
+      )}
       {/* Kanban Stages Board */}
-      {boardWidth > 0 && (
+      {!isPhone && boardWidth > 0 && (
         <div
           ref={topBarRef}
           className="crm-kanban__topscroll"
@@ -632,12 +650,12 @@ export default function KanbanPipeline({
       )}
       <div
         ref={boardRef}
-        className={`kanban-board-scroll-container${compact ? ' is-compact' : ''}`}
+        className={`kanban-board-scroll-container${compact ? ' is-compact' : ''}${isPhone ? ' is-phone' : ''}`}
         onScroll={() => syncScroll(boardRef.current, topBarRef.current)}
         style={{
           display: 'grid',
           // Empty columns stay narrow so the space goes to the stages that hold deals
-          gridTemplateColumns: PIPELINE_STAGES.map((s) => {
+          gridTemplateColumns: isPhone ? 'minmax(0, 1fr)' : PIPELINE_STAGES.map((s) => {
             if (collapsedStages.includes(s.id)) return '54px';
             const empty = !(leadsByStage[s.id] || []).length;
             if (compact) return empty ? 'minmax(110px, 0.5fr)' : 'minmax(170px, 1fr)';
@@ -645,8 +663,8 @@ export default function KanbanPipeline({
           }).join(' ')
         }}
       >
-        {PIPELINE_STAGES.map((stage) => {
-          const isCollapsed = collapsedStages.includes(stage.id);
+        {(isPhone ? PIPELINE_STAGES.filter((st) => st.id === phoneStageId) : PIPELINE_STAGES).map((stage) => {
+          const isCollapsed = !isPhone && collapsedStages.includes(stage.id);
           const allStageLeads = leadsByStage[stage.id] || [];
           const isOpen = openStages.includes(stage.id);
           const stageLeads = isOpen ? allStageLeads : allStageLeads.slice(0, CARDS_PER_STAGE);
@@ -834,14 +852,16 @@ export default function KanbanPipeline({
                             </>
                           )}
                           <span>{area}</span>
-                          <span aria-hidden="true" className="kb-meta-score-sep">·</span><span className="kb-meta-score" title={leadScore(lead).reasons.join(' • ')}>{isAr ? `اهتمام ${leadScore(lead).score}%` : `${leadScore(lead).score}% score`}</span>
+                          {pipelineKind(lead) !== 'seller' && (
+                            <><span aria-hidden="true" className="kb-meta-score-sep">·</span><span className="kb-meta-score" title={leadScore(lead).reasons.join(' • ')}>{isAr ? `اهتمام ${leadScore(lead).score}%` : `${leadScore(lead).score}% score`}</span></>
+                          )}
                         </p>
 
                         <div className="kb-value">
                           {budget > 0 ? (
                             <span className="kb-value-amount"><bdi>{budget.toLocaleString('en-US')}</bdi><small>{isAr ? 'ج.م' : 'EGP'}</small></span>
                           ) : (
-                            <span className="kb-value-empty">{isAr ? 'الميزانية: —' : 'Budget: —'}</span>
+                            <span className="kb-value-empty">{pipelineKind(lead) === 'seller' ? (isAr ? 'السعر المطلوب: —' : 'Asking price: —') : (isAr ? 'الميزانية: —' : 'Budget: —')}</span>
                           )}
                           <bdi dir="ltr" className="kb-phone">{formatPhoneNumber(lead.whatsapp || lead.phone) || '—'}</bdi>
                         </div>
