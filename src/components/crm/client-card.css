@@ -1,0 +1,50 @@
+/* =============================================================
+   Client cards: one visual language for the clients list (phones) and the inbox.
+   Each client is its own raised card, separated from the next by a clear gap, a colour edge that says where
+   the client is (stage; amber for a hot client, red for a late one), a soft layered shadow and a round face.
+   Colours come from the design tokens, so dark mode follows.
+   ============================================================= */
+.crm-lead-row,
+.crm-inbox-item { --lead-accent: var(--ui-line-strong); }
+[data-stage='new'] { --lead-accent: var(--ui-accent); }
+[data-stage='contacted'] { --lead-accent: var(--ui-info); }
+[data-stage='site_visit'] { --lead-accent: var(--ui-primary); }
+[data-stage='negotiating'] { --lead-accent: var(--ui-warning); }
+[data-stage='closing'],
+[data-stage='closed'] { --lead-accent: var(--ui-success); }
+[data-stage='inactive'],
+[data-stage='lost'] { --lead-accent: var(--ui-text-3); }
+.crm-lead-row.is-hot { --lead-accent: var(--ui-warning); }
+.crm-lead-row.is-overdue { --lead-accent: var(--ui-danger); }
+
+.crm-inbox__list { gap: var(--ui-s-4); }
+.crm-inbox-item.ui-card {
+  border: 1px solid var(--ui-line); border-inline-start: 5px solid var(--lead-accent); border-radius: 18px;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--ui-n900) 6%, transparent), 0 16px 30px -20px color-mix(in srgb, var(--ui-n900) 32%, transparent);
+}
+
+@media (max-width: 768px) {
+  .crm-layout .crm-leads .crm-table tbody tr.crm-lead-row {
+    margin-bottom: var(--ui-s-4);
+    padding: var(--ui-s-3) var(--ui-s-4) var(--ui-s-3);
+    border: 1px solid var(--ui-line); border-inline-start: 5px solid var(--lead-accent); border-radius: 18px;
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--ui-n900) 6%, transparent), 0 16px 30px -20px color-mix(in srgb, var(--ui-n900) 32%, transparent);
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+  }
+  .crm-layout .crm-leads .crm-table tbody tr.crm-lead-row:active { transform: scale(0.992); }
+  /* A round face with the first letters, tinted by the stage colour: the eye finds where a client starts */
+  .crm-layout .crm-leads .crm-table tbody tr.crm-lead-row .crm-client-identity-wrap { align-items: center; gap: var(--ui-s-3); }
+  .crm-layout .crm-leads .crm-table tbody tr.crm-lead-row .crm-client-identity-wrap .ui-avatar {
+    display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 44px; height: 44px; border-radius: 50%; overflow: hidden; font-size: var(--ui-fs-2); line-height: 1;
+    background: color-mix(in srgb, var(--lead-accent) 16%, var(--ui-surface)); color: var(--lead-accent);
+    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--lead-accent) 35%, transparent); font-weight: var(--ui-fw-bold);
+  }
+  /* The next card starts after a clear gap, and the actions sit on a hairline under the name */
+  .crm-layout .crm-leads .crm-table tbody tr.crm-lead-row td:is([data-label='الإجراءات'], [data-label='Actions']) { border-bottom-color: color-mix(in srgb, var(--lead-accent) 25%, var(--ui-line)); }
+  .crm-layout .crm-leads .crm-table-scroll-wrapper { padding-top: var(--ui-s-1); }
+}
+
+/* Desktop rows: the stage colour on the first cell, so a long table still reads client by client */
+@media (min-width: 769px) {
+  .crm-layout .crm-leads .crm-table tbody tr.crm-lead-row > td:first-child { border-inline-start: 4px solid var(--lead-accent); }
+}

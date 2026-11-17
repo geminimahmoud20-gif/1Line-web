@@ -19,6 +19,7 @@ import {
 import { PageHeader, Tabs, SegmentedControl, Chip, Badge, Button, IconButton, Select, Card, Avatar, EmptyState, MotionRoot } from '../ui';
 import { cx } from '../ui/cx';
 import './CrmInboxPanel.css';
+import './client-card.css';
 import { canViewLeadPhone, maskPhoneNumber } from '../../utils/rbacRules';
 import { guardStage } from '../../utils/stageGate';
 import { claimLeadAtomic } from '../../services/leads';
@@ -668,7 +669,7 @@ export default function CrmInboxPanel({
 
               return (
                 <li key={lead.id}>
-                  <Card padding="compact" className={cx('crm-inbox-item', isUnclaimed && 'is-new')}>
+                  <Card padding="compact" data-stage={lead.status || 'new'} className={cx('crm-inbox-item', isUnclaimed && 'is-new')}>
                     <div className="crm-inbox-item__head">
                       <Avatar name={lead.name || ''} />
                       <div className="crm-inbox-item__who">
