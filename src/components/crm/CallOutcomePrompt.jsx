@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Phone, X } from 'lucide-react';
 import { OUTCOMES, callEntry, outcomePatch } from '../../utils/callOutcomes';
+import { scheduleNextAttempt } from '../../utils/retryCall';
 import { readPendingCall, clearPendingCall } from '../../utils/pendingCall';
 import './call-outcome.css';
 
@@ -36,6 +37,8 @@ export default function CallOutcomePrompt({ leads = [], onUpdateLead, me, isAr =
   const choose = (outcome) => {
     const patch = lead ? outcomePatch(lead, callEntry(outcome, me)) : null;
     if (patch && onUpdateLead) onUpdateLead(lead.id, patch, lead.version);
+    // «ما ردّش»: the next try is a task, up to the third
+    if (patch && outcome === 'no_answer') scheduleNextAttempt({ id: lead.id, name: lead.name }, patch.outcomeAttempts, me);
     close();
   };
 

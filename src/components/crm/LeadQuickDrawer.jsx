@@ -17,6 +17,8 @@ import { auditContactUse } from '../../utils/contactAudit';
 import { leadScore, LEAD_SCORE_HIGH, isSellerLead, firstContactPatch, LOST_REASONS } from '../../utils/crmLeadViews';
 import { outcomeEntry, outcomeSave, outcomeById, guardStage } from '../../utils/stageGate';
 import { useAuth } from '../../context/AuthContext';
+import { scheduleNextAttempt } from '../../utils/retryCall';
+import { dueLabel, MAX_CALL_ATTEMPTS } from '../../utils/tasks';
 import { rankAndNominateProperties } from '../../services/matchingEngineV2';
 import NotesThread from './NotesThread';
 import { Drawer, Button, IconButton, Badge, Chip, Tabs, Textarea, EmptyState, useConfirm } from '../ui';
@@ -202,6 +204,14 @@ export default function LeadQuickDrawer({
     const callEntry = `[نتيجة ${dateStr} ${timeStr}]: ${label}${patch.outcomeAttempts > 1 && outcomeId === 'no_answer' ? ` · محاولة ${patch.outcomeAttempts}` : ''}${reasonLabel ? ` — ${reasonLabel}` : ''}`;
     onUpdateLead(lead.id, { ...patch, notes: lead.notes ? `${callEntry}\n${lead.notes}` : callEntry }, lead.version);
     triggerToast?.(isAr ? `اتسجّلت النتيجة: ${label}` : `Outcome logged: ${label}`, 'success');
+    // «لم يرد»: the next try becomes a task, up to the third; after that the client can move to غير متفاعل
+    if (outcomeId === 'no_answer') {
+      const attempts = patch.outcomeAttempts;
+      scheduleNextAttempt({ id: lead.id, name: lead.name }, attempts, me).then((t) => {
+        if (t) triggerToast?.(isAr ? `محاولة ${attempts} من ${MAX_CALL_ATTEMPTS} بلا رد. اتضافت مهمة المحاولة الجاية: ${dueLabel(t.task, true)}` : `Try ${attempts} of ${MAX_CALL_ATTEMPTS} unanswered; next call added as a task`, 'info');
+        else if (attempts >= MAX_CALL_ATTEMPTS) triggerToast?.(isAr ? `${MAX_CALL_ATTEMPTS} محاولات بلا رد. تقدر تنقله «غير متفاعل».` : `${MAX_CALL_ATTEMPTS} tries without an answer: you can mark it unresponsive.`, 'info');
+      });
+    }
     trackEvent('crm_call_logged', { leadId: lead.id, outcome: outcomeId });
   };
 

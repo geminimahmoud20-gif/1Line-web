@@ -3,7 +3,7 @@ import { CheckCircle2, Circle, Clock, Trash2, Plus, Users, ListChecks, ChevronDo
 import { useTasks } from '../../hooks/useTasks';
 import { addTask, updateTask, removeTask } from '../../firebaseLazy';
 import {
-  PRIORITIES, KINDS, DUE_PRESETS, TEMPLATES, SNOOZE_OPTIONS, buildTask, editPatch, groupTasks, taskCounts, dayProgress, filterTasks,
+  PRIORITIES, KINDS, DUE_PRESETS, TEMPLATES, SNOOZE_OPTIONS, buildTask, editPatch, taskProblem, groupTasks, taskCounts, dayProgress, filterTasks,
   dueFromPreset, snoozed, pushAllPatch, completion, reopening, dueLabel
 } from '../../utils/tasks';
 import { firstContactPatch } from '../../utils/crmLeadViews';
@@ -30,13 +30,18 @@ function EditForm({ t, isAr, onSave, onCancel }) {
   const [priority, setPriority] = useState(t.priority || 'normal');
   const [kind, setKind] = useState(t.kind || 'other');
   const [note, setNote] = useState(t.note || '');
+  const [problem, setProblem] = useState('');
   const submit = (e) => {
     e.preventDefault();
     const patch = editPatch({ title, dueAt: day && time ? `${day}T${time}` : day, priority, kind, note });
-    if (patch) onSave(patch);
+    // A task keeps its title and its day
+    if (!patch) { setProblem(taskProblem({ title, dueAt: day && time ? `${day}T${time}` : day, me: { uid: 'x' } }, isAr) || (isAr ? 'اكتب المهمة وحدد ميعادها' : 'A task needs a title and a day')); return; }
+    setProblem('');
+    onSave(patch);
   };
   return (
     <form className="tk-edit" onSubmit={submit}>
+      {problem && <small role="alert" className="tk-problem">{problem}</small>}
       <input className="tk-input" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={140} aria-label={isAr ? 'المهمة' : 'Task'} />
       <div className="tk-row-fields">
         <input type="date" className="tk-input" value={day} onChange={(e) => setDay(e.target.value)} aria-label={isAr ? 'اليوم' : 'Day'} />
@@ -157,7 +162,7 @@ export function TaskForm({ isAr, me, members = [], canAssign = false, lead = nul
     const day = preset === 'custom' ? customDay : dueFromPreset(preset);
     const assignee = canAssign && assigneeUid ? members.find((m) => m.uid === assigneeUid) : null;
     const payload = buildTask({ title, note, dueAt: day && time ? `${day}T${time}` : day, priority, kind, lead, assignee, me });
-    if (!payload) { triggerToast?.(isAr ? 'اكتب المهمة الأول' : 'Write the task first', 'error'); return; }
+    if (!payload) { triggerToast?.(taskProblem({ title, dueAt: day && time ? `${day}T${time}` : day, assignee, me }, isAr) || (isAr ? 'اكتب المهمة الأول' : 'Write the task first'), 'error'); return; }
     setBusy(true);
     const id = await addTask(payload);
     setBusy(false);
