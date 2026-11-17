@@ -58,3 +58,31 @@ export function dueReminders(tasks = [], uid, now = Date.now(), reminded = {}) {
 
 /** The activity-log line when the person chooses not to set a next step */
 export const SKIP_LOG = 'مفيش خطوة تانية';
+
+/** A timed task is announced to the phone from its reminder time until this long after it was due */
+export const ALERT_GRACE_MS = 30 * 60_000;
+
+/**
+ * Timed tasks of this person that the phone should be told about now (their reminder time has come, they are not
+ * long past, and the same due value was not announced before). `alerted` maps a task id to the due value announced.
+ * A task with only a day is covered by the hourly digest, not by this.
+ */
+export function dueSoonFor(tasks = [], uid, now = Date.now(), alerted = {}) {
+  return tasks.filter((t) => {
+    if (!t || t.status === 'done' || t.assigneeUid !== uid || String(t.dueAt || '').length <= 10) return false;
+    if (alerted[t.id] === t.dueAt) return false;
+    const at = reminderAt(t);
+    if (at == null || now < at) return false;
+    return now <= new Date(`${t.dueAt}:00`).getTime() + ALERT_GRACE_MS;
+  }).sort((a, b) => String(a.dueAt).localeCompare(String(b.dueAt)));
+}
+
+/** The push for one of those tasks */
+export function taskAlertPayload(task) {
+  const time = String(task.dueAt).slice(11, 16);
+  return {
+    title: `تذكير: ${task.title}`.slice(0, 120),
+    body: [task.leadName, `الساعة ${time}`].filter(Boolean).join(' · '),
+    url: '/crm?tab=tasks'
+  };
+}

@@ -89,3 +89,12 @@ test('a person\'s late and due-today tasks are in their phone digest, and only t
   assert.equal(digestFor([], me, { now: NOW, tasks: [t({ dueAt: '2026-11-20' })] }), null);
   assert.notEqual(d.sig, digestFor([], me, { now: NOW, tasks: [t({})] }).sig);
 });
+
+test('with a minimum gap the digest waits even when it changed', () => {
+  const d = { sig: 'x', body: 'b' };
+  const now = Date.parse('2026-11-17T10:00:00Z');
+  const last = { sig: 'y', at: '2026-11-17T09:30:00Z' };
+  assert.equal(shouldSend(d, last, now), true);
+  assert.equal(shouldSend(d, last, now, { minGapMs: 55 * 60 * 1000 }), false);
+  assert.equal(shouldSend(d, { sig: 'y', at: '2026-11-17T08:55:00Z' }, now, { minGapMs: 55 * 60 * 1000 }), true);
+});

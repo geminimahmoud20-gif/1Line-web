@@ -66,8 +66,10 @@ export function digestFor(leads = [], member = {}, { now = Date.now(), tasks = [
 }
 
 /** Send when it changed since the last digest, or the last one is old (so a day's backlog repeats, not every hour) */
-export function shouldSend(digest, last, now = Date.now()) {
+export function shouldSend(digest, last, now = Date.now(), { minGapMs = 0 } = {}) {
   if (!digest) return false;
   if (!last || !last.sig || !last.at) return true;
+  // The job now runs every 15 minutes for task alerts; the digest itself still goes out about once an hour
+  if (minGapMs && now - Date.parse(last.at) < minGapMs) return false;
   return last.sig !== digest.sig || now - Date.parse(last.at) > RESEND_AFTER_MS;
 }

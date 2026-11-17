@@ -1,4 +1,4 @@
-# Hourly phone reminders for the sales team: clients waiting past the reply target and follow-ups
+# Phone reminders for the sales team (every 15 minutes: a timed task is announced shortly before it is due; the digest goes out about hourly): clients waiting past the reply target and follow-ups
 # due (scripts/send-followup-reminders.mjs). Sends only 09:00–21:00 Cairo time. The first run also
 # creates the push key pair the CRM needs before it offers the reminder to anyone, so run it once
 # from the Actions tab (Run workflow) after merging.
@@ -8,7 +8,7 @@ name: Follow-up reminders
 
 on:
   schedule:
-    - cron: '17 * * * *'
+    - cron: '2,17,32,47 * * * *'
   workflow_dispatch:
     inputs:
       dry_run:

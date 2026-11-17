@@ -17,6 +17,7 @@
 
 import { initAdmin } from './backup-format.mjs';
 import { digestFor, shouldSend } from '../src/utils/reminderDigest.js';
+import { dueSoonFor, taskAlertPayload } from '../src/utils/nextStep.js';
 import { localDayKey } from '../src/utils/crmLeadViews.js';
 
 const dryRun = process.argv.includes('--dry-run');
@@ -54,8 +55,11 @@ webpush.setVapidDetails(SUBJECT, vapid.publicKey, vapid.privateKey);
 // ── Working hours (Cairo) ──
 const now = new Date();
 const hour = Number(new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hour12: false, timeZone: 'Africa/Cairo' }).format(now));
-if (!force && (hour < 9 || hour >= 21)) {
-  console.log(`outside 09:00–21:00 Cairo (${hour}h): nothing sent`);
+// The digest goes out 09:00–21:00; a task's own alert may come from 07:00 (a viewing at 08:00 reminds at 07:00)
+const digestHours = force || (hour >= 9 && hour < 21);
+const alertHours = force || (hour >= 7 && hour < 22);
+if (!digestHours && !alertHours) {
+  console.log(`outside working hours in Cairo (${hour}h): nothing sent`);
   process.exit(0);
 }
 
@@ -65,43 +69,81 @@ if (!subscribers.length) {
   process.exit(0);
 }
 
-// ── The leads that can matter ──
+// ── What can matter ──
+// The job runs every 15 minutes: a timed task is announced shortly before it is due, and the digest of waiting
+// clients still goes out about once an hour (shouldSend's minimum gap).
 const today = localDayKey(now);
-const [due, fresh] = await Promise.all([
-  db.collection('leads').where('nextFollowUpAt', '<=', `${today}`).get(),
-  db.collection('leads').where('status', '==', 'new').get()
-]);
+const nowMs = now.getTime();
 const taskSnap = await db.collection('crm_tasks').where('status', '==', 'open').get();
 const tasks = taskSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-const byId = new Map();
-for (const d of [...due.docs, ...fresh.docs]) byId.set(d.id, { id: d.id, ...d.data() });
-const leads = [...byId.values()];
+let leads = [];
+if (digestHours) {
+  const [due, fresh] = await Promise.all([
+    db.collection('leads').where('nextFollowUpAt', '<=', `${today}`).get(),
+    db.collection('leads').where('status', '==', 'new').get()
+  ]);
+  const byId = new Map();
+  for (const d of [...due.docs, ...fresh.docs]) byId.set(d.id, { id: d.id, ...d.data() });
+  leads = [...byId.values()];
+}
 console.log(`${leads.length} leads and ${tasks.length} open tasks checked, ${subscribers.length} people with phones`);
 
-let sent = 0;
-for (const doc of subscribers) {
-  const data = doc.data();
-  const member = { uid: doc.id, name: data.name || '', manager: Boolean(data.manager) };
-  const digest = digestFor(leads, member, { now: now.getTime(), tasks });
-  if (!force && !shouldSend(digest, data.lastDigest, now.getTime())) continue;
-  if (!digest) continue;
-  const payload = JSON.stringify({ title: digest.title, body: digest.body, url: '/crm?tab=leads' });
-  if (dryRun) { console.log(`[dry run] ${member.name || doc.id}: ${digest.body}`); continue; }
+/** Sends one payload to every device of a person; resolves { alive, delivered } (dead subscriptions are dropped) */
+async function pushTo(id, subs, message) {
+  const body = JSON.stringify(message);
   const alive = [];
   let delivered = 0;
-  for (const sub of data.subs) {
+  for (const sub of subs) {
     try {
-      await webpush.sendNotification(sub, payload, { TTL: 3600 });
+      await webpush.sendNotification(sub, body, { TTL: 3600 });
       alive.push(sub);
       delivered += 1;
     } catch (err) {
       if (err.statusCode === 404 || err.statusCode === 410) continue; // the device unsubscribed
       alive.push(sub);
-      console.error(`push failed (${err.statusCode || err.message}) for ${doc.id}`);
+      console.error(`push failed (${err.statusCode || err.message}) for ${id}`);
     }
   }
-  const patch = { subs: alive };
-  if (delivered) { patch.lastDigest = { sig: digest.sig, at: now.toISOString() }; sent += 1; }
-  await doc.ref.update(patch);
+  return { alive, delivered };
+}
+
+const openIds = new Set(tasks.map((t) => t.id));
+let sent = 0;
+for (const doc of subscribers) {
+  const data = doc.data();
+  const member = { uid: doc.id, name: data.name || '', manager: Boolean(data.manager) };
+  let subs = data.subs;
+  const patch = {};
+
+  // 1. The digest
+  if (digestHours) {
+    const digest = digestFor(leads, member, { now: nowMs, tasks });
+    if (digest && (force || shouldSend(digest, data.lastDigest, nowMs, { minGapMs: 55 * 60 * 1000 }))) {
+      if (dryRun) console.log(`[dry run] ${member.name || doc.id}: ${digest.body}`);
+      else {
+        const r = await pushTo(doc.id, subs, { title: digest.title, body: digest.body, url: '/crm?tab=leads' });
+        subs = r.alive;
+        if (r.delivered) { patch.lastDigest = { sig: digest.sig, at: now.toISOString() }; sent += 1; }
+      }
+    }
+  }
+
+  // 2. Timed tasks that are about to be due (each due value is announced once). What was announced is kept in
+  // push_state/{uid}, a collection no client can read or write, so no security rule has to know about it.
+  if (alertHours && tasks.some((t) => t.assigneeUid === doc.id && String(t.dueAt || '').length > 10)) {
+    const stateRef = db.doc(`push_state/${doc.id}`);
+    const alerted = { ...((await stateRef.get()).data()?.taskAlerts || {}) };
+    let changed = false;
+    for (const t of dueSoonFor(tasks, doc.id, nowMs, alerted).slice(0, 3)) {
+      if (dryRun) { console.log(`[dry run] ${member.name || doc.id}: ${taskAlertPayload(t).title}`); continue; }
+      const r = await pushTo(doc.id, subs, taskAlertPayload(t));
+      subs = r.alive;
+      if (r.delivered) { alerted[t.id] = t.dueAt; changed = true; sent += 1; }
+    }
+    for (const id of Object.keys(alerted)) if (!openIds.has(id)) { delete alerted[id]; changed = true; }
+    if (changed && !dryRun) await stateRef.set({ taskAlerts: alerted, updatedAt: now.toISOString() });
+  }
+
+  if (!dryRun && (subs.length !== data.subs.length || Object.keys(patch).length)) await doc.ref.update({ subs, ...patch });
 }
 console.log(`${sent} reminder${sent === 1 ? '' : 's'} sent`);
