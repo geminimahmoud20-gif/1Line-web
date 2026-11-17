@@ -12,7 +12,7 @@
 // =============================================================
 import { SignJWT, importPKCS8 } from 'jose';
 import { teamStore, staffRegistry, accessStore } from './_team-core.js';
-import { eligible, sellersOf, chooseSeller, ownerFields, MAX_OPEN_COUNT } from './_assign-core.js';
+import { eligible, sellersOf, chooseSeller, ownerFields, phoneVariants, returningOwner, MAX_OPEN_COUNT } from './_assign-core.js';
 import { createRateLimiter, clientIp } from './_rate-limit.js';
 import { cadenceTasks } from '../src/utils/followUpCadence.js';
 
@@ -145,10 +145,39 @@ export async function POST(request) {
       }).length;
     }
 
-    const seller = chooseSeller(lead, sellers, counts, config?.teams || []);
+    // A client who already asked before (same phone) goes back to their owner, and the new request is linked to the
+    // earlier one. Any failure here just falls back to the fewest-clients rule.
+    let returning = null;
+    try {
+      const variants = phoneVariants(lead.phone || lead.whatsapp);
+      const contactRows = [];
+      if (variants.length) {
+        const cq = await fs('POST', ':runQuery', {
+          structuredQuery: {
+            from: [{ collectionId: 'lead_contacts' }],
+            where: { fieldFilter: { field: { fieldPath: 'phone' }, op: 'IN', value: { arrayValue: { values: variants.map((v) => ({ stringValue: v })) } } } },
+            limit: 20
+          }
+        });
+        if (cq.ok) for (const r of await cq.json()) if (r.document) contactRows.push(r.document.name.split('/').pop());
+      }
+      const earlier = [];
+      for (const earlierId of contactRows.filter((x) => x !== id).slice(0, 10)) {
+        const r = await fs('GET', `leads/${encodeURIComponent(earlierId)}`);
+        if (r.ok) earlier.push({ id: earlierId, ...plain(await r.json()) });
+      }
+      returning = returningOwner(earlier, sellers);
+    } catch (e) {
+      console.error('assign: returning-client lookup failed:', e?.message || e);
+    }
+
+    const seller = returning?.seller || chooseSeller(lead, sellers, counts, config?.teams || []);
     if (!seller) return json(200, { assigned: false, reason: 'no-match' });
 
-    const fields = ownerFields(seller, lead);
+    const fields = {
+      ...ownerFields(seller, lead),
+      ...(returning ? { returningClient: true, previousLeadId: returning.previousLeadId } : {})
+    };
     const mask = Object.keys(fields).map((f) => `updateMask.fieldPaths=${f}`).join('&');
     // Only if nobody changed the lead since it was read (another assignment, a staff edit)
     const write = await fs('PATCH', `leads/${encodeURIComponent(id)}?${mask}&currentDocument.updateTime=${encodeURIComponent(doc.updateTime)}`, {
@@ -168,7 +197,7 @@ export async function POST(request) {
       fields: {
         ...Object.fromEntries(Object.entries(entry).map(([k, v]) => [k, { stringValue: v }])),
         timestamp: { timestampValue: nowIso },
-        details: { mapValue: { fields: { to: { stringValue: fields.ownerName }, team: { stringValue: fields.assignedTo } } } }
+        details: { mapValue: { fields: { to: { stringValue: fields.ownerName }, team: { stringValue: fields.assignedTo }, returning: { booleanValue: Boolean(returning) } } } }
       }
     });
     if (!log.ok) console.error('assign: audit entry not written', log.status);
