@@ -59,3 +59,28 @@ export function ownerFields(member, lead, nowIso = new Date().toISOString()) {
     autoAssigned: true
   };
 }
+
+/**
+ * The forms a phone can be stored as («+201094590572», «201094590572», «01094590572»): to find the same
+ * person's earlier requests whichever way they typed it. Empty when it is not a phone.
+ */
+export function phoneVariants(phone) {
+  const d = String(phone ?? '').replace(/[٠-٩]/g, (c) => String(c.charCodeAt(0) - 0x0660)).replace(/\D/g, '');
+  const local = d.startsWith('0020') ? d.slice(4) : d.startsWith('20') && d.length >= 12 ? d.slice(2) : d.startsWith('0') ? d.slice(1) : d;
+  if (local.length < 9 || local.length > 11) return [];
+  return [`+20${local}`, `20${local}`, `0${local}`, local];
+}
+
+/**
+ * A client who asks again goes back to the person who already has them, not to whoever has the fewest clients:
+ * the owner of the most recent earlier request (same phone) who is still on the team. null when there is none.
+ * @param {object[]} earlier  [{ id, ownerUid, createdAt, isArchived }]
+ * @param {object[]} sellers  sellersOf(members)
+ */
+export function returningOwner(earlier = [], sellers = []) {
+  const byUid = new Map(sellers.map((m) => [m.uid, m]));
+  const mine = earlier
+    .filter((l) => l && l.ownerUid && !l.isArchived && byUid.has(l.ownerUid))
+    .sort((a, b) => Date.parse(b.createdAt || 0) - Date.parse(a.createdAt || 0));
+  return mine.length ? { seller: byUid.get(mine[0].ownerUid), previousLeadId: String(mine[0].id) } : null;
+}

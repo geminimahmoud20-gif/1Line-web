@@ -235,6 +235,19 @@
   border-radius: 4px;
 }
 
+.kb-dup {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--crm-warn-soft);
+  color: var(--crm-warn);
+  border: 1px solid var(--crm-warn-line);
+  font-size: var(--crm-text-xs);
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
 .kb-time {
   display: inline-flex;
   align-items: center;

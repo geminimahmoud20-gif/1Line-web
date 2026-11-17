@@ -1,11 +1,11 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { ChevronDown, ChevronUp, Columns3, Rows3, MessageSquare, Calendar, Car, Clock, Edit3, Trash2, ChevronRight, ChevronLeft, AlertTriangle, Search, FolderOpen, MoreHorizontal, ShieldAlert, TrendingUp, Users, Archive, Hourglass } from 'lucide-react';
+import { ChevronDown, ChevronUp, Columns3, Rows3, MessageSquare, Calendar, Car, Clock, Edit3, Trash2, ChevronRight, ChevronLeft, AlertTriangle, Search, FolderOpen, MoreHorizontal, ShieldAlert, TrendingUp, Users, Archive, Hourglass, CopyPlus } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
 import StageDeliverableModal from './StageDeliverableModal';
 import './crm-kanban.css';
 import { getAreas } from '../../utils/areasData';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
-import { leadScore, ACTIVE_STAGES, leadBudget, isSellerLead } from '../../utils/crmLeadViews';
+import { leadScore, ACTIVE_STAGES, leadBudget, isSellerLead, duplicatesById } from '../../utils/crmLeadViews';
 import { SELLER_STAGES, pipelineKind } from '../../utils/leadPipeline';
 import { boardColumnOf, PROGRESS_STAGE_IDS } from '../../utils/dealStages';
 import LostReasonModal from './LostReasonModal';
@@ -85,6 +85,8 @@ export default function KanbanPipeline({
   triggerToast,
   activeRole = 'sales_agent'
 }) {
+  // Leads sharing a phone: the same person asking more than once shows up as several cards, so say so on each
+  const sameNumber = useMemo(() => duplicatesById(leads), [leads]);
   const [draggedLeadId, setDraggedLeadId] = useState(null);
   const [schedulingVisitLead, setSchedulingVisitLead] = useState(null);
   const [leadToDelete, setLeadToDelete] = useState(null);
@@ -768,6 +770,12 @@ export default function KanbanPipeline({
                       >
                         <div className="kb-card-top">
                           <span className="kb-type">{typeBadge.label}</span>
+                          {sameNumber.has(lead.id) && (
+                            <span className="kb-dup" title={isAr ? 'نفس رقم الموبايل عنده طلبات تانية: غالبًا نفس الشخص. افتح «مكررين بالرقم» في العملاء عشان تدمجهم.' : 'The same phone has other requests: probably the same person. Merge them from the Leads tab.'}>
+                              <CopyPlus size={11} aria-hidden="true" />
+                              {isAr ? `نفس الرقم · ${sameNumber.get(lead.id).length + 1} طلبات` : `Same number · ${sameNumber.get(lead.id).length + 1}`}
+                            </span>
+                          )}
                           {budget >= HIGH_VALUE_DEAL_THRESHOLD && (
                             <span
                               className="kb-high-value-pill"
