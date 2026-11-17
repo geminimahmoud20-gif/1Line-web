@@ -128,3 +128,27 @@
 .crm-nextstep__f { display: grid; gap: 4px; font-size: var(--text-sm, 13px); }
 .crm-nextstep__f select { min-height: 44px; border-radius: var(--radius-md, 10px); border: 1px solid var(--border); padding: 0 10px; background: var(--surface); color: inherit; }
 .crm-nextstep__err { color: var(--danger); margin: 0; font-size: var(--text-sm, 13px); }
+
+/* ── The client file in the same visual language as the cards ──
+   Each block is a raised card with round corners; the colour edge carries the client's stage (the colours are
+   defined in client-card.css), and the summary strip gets a tinted band so the first thing you see is who this is. */
+.crm-ld { --lead-accent: var(--ui-line-strong); }
+.crm-ld[data-stage='new'] { --lead-accent: var(--ui-accent); }
+.crm-ld[data-stage='contacted'] { --lead-accent: var(--ui-info); }
+.crm-ld[data-stage='site_visit'] { --lead-accent: var(--ui-primary); }
+.crm-ld[data-stage='negotiating'] { --lead-accent: var(--ui-warning); }
+.crm-ld[data-stage='closing'],
+.crm-ld[data-stage='closed'] { --lead-accent: var(--ui-success); }
+.crm-ld[data-stage='inactive'],
+.crm-ld[data-stage='lost'] { --lead-accent: var(--ui-text-3); }
+.crm-ld__summary {
+  padding: var(--ui-s-3) var(--ui-s-4); border-radius: 18px; border-inline-start: 5px solid var(--lead-accent);
+  background: color-mix(in srgb, var(--lead-accent) 9%, var(--ui-surface));
+}
+.crm-ld__block {
+  border-radius: 18px;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--ui-n900) 6%, transparent), 0 14px 26px -20px color-mix(in srgb, var(--ui-n900) 30%, transparent);
+}
+/* The next step is the block to act on: it carries the stage colour on its edge */
+.crm-ld__stack > .crm-ld__block:first-child { border-inline-start: 5px solid var(--lead-accent); }
+.crm-ld__stack { gap: var(--ui-s-4); }
