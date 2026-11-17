@@ -18,6 +18,8 @@ import { leadScore, LEAD_SCORE_HIGH, isSellerLead, firstContactPatch } from '../
 import { outcomeEntry, outcomeSave, outcomeById, guardStage } from '../../utils/stageGate';
 import { useAuth } from '../../context/AuthContext';
 import { scheduleNextAttempt } from '../../utils/retryCall';
+import { suggestNextStep, SKIP_LOG } from '../../utils/nextStep';
+import NextStepSheet from './NextStepSheet';
 import { sellerRoleOf, SELLER_ROLE_LABEL } from '../../utils/sellerRole';
 import { dueLabel, MAX_CALL_ATTEMPTS } from '../../utils/tasks';
 import { rankAndNominateProperties } from '../../services/matchingEngineV2';
@@ -58,6 +60,7 @@ export default function LeadQuickDrawer({
   const setActiveTab = (t) => { setLocalTab(t); onTabChange?.(t); };
   const confirm = useConfirm();
   const { currentUser } = useAuth();
+  const [nextStepFor, setNextStepFor] = useState('');
 
   // Dirty State (Unsaved Changes) Protection
   const hasUnsavedChanges = Boolean(newNote.trim() || (showViewingForm && (viewingDateTime || selectedViewingPropId)));
@@ -204,7 +207,18 @@ export default function LeadQuickDrawer({
         else if (attempts >= MAX_CALL_ATTEMPTS) triggerToast?.(isAr ? `${MAX_CALL_ATTEMPTS} محاولات بلا رد. تقدر تنقله «غير متفاعل».` : `${MAX_CALL_ATTEMPTS} tries without an answer: you can mark it unresponsive.`, 'info');
       });
     }
+    // every positive/neutral outcome must leave a next step (or a logged «no next step»)
+    if (suggestNextStep(outcomeId)) setNextStepFor(outcomeId);
     trackEvent('crm_call_logged', { leadId: lead.id, outcome: outcomeId });
+  };
+
+  const skipNextStep = () => {
+    const at = new Date().toISOString();
+    const who = currentUser?.displayName || currentUser?.name || currentUser?.email?.split('@')[0] || '';
+    onUpdateLead?.(lead.id, {
+      activityLogs: [{ timestamp: at, action: SKIP_LOG, kind: 'note', ...(who ? { agent: who } : {}) }, ...(Array.isArray(lead.activityLogs) ? lead.activityLogs : [])].slice(0, 100)
+    }, lead.version);
+    setNextStepFor('');
   };
 
   // Add Custom Note: saved in the activity log, so it has a real time in the client's history
@@ -481,6 +495,17 @@ export default function LeadQuickDrawer({
 
         </div>
       </Drawer>
+      {nextStepFor && (
+        <NextStepSheet
+          key={`${lead.id}-${nextStepFor}`}
+          lead={lead}
+          outcomeId={nextStepFor}
+          isAr={isAr}
+          me={{ uid: currentUser?.uid, name: currentUser?.displayName || currentUser?.name || currentUser?.email?.split('@')[0] || '' }}
+          onSaved={(t) => { setNextStepFor(''); triggerToast?.(isAr ? `اتضافت الخطوة الجاية: ${t.title} (${dueLabel(t, true)}). هفكّرك قبلها.` : 'Next step saved', 'success'); }}
+          onSkip={skipNextStep}
+        />
+      )}
       {lostOpen && (
         <LostReasonModal
           lead={lead}

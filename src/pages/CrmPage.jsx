@@ -31,6 +31,7 @@ import { requestOpenLead } from '../utils/openLead';
 import { playNotificationChime } from '../utils/notificationHub';
 import CrmCommandPalette from '../components/crm/CrmCommandPalette';
 import PushReminderPrompt from '../components/crm/PushReminderPrompt';
+import TaskReminders from '../components/crm/TaskReminders';
 import AlertHealthBanner from '../components/crm/AlertHealthBanner';
 import NewVersionNotice from '../components/crm/NewVersionNotice';
 import { BRAND } from '../config/siteConfig';
@@ -942,6 +943,7 @@ export default function CrmPage({
 
         {/* 3. Main Dynamic Content Area */}
         <div className="crm-content-area" id="crm-main-content">
+          <TaskReminders uid={currentUser?.uid} triggerToast={triggerToast} />
           {/* The setup notices share one card instead of stacking as separate boxes above every page */}
           <div className="crm-notices">
             {can.editLeads && (
