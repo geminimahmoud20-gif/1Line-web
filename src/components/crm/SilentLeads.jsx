@@ -9,11 +9,11 @@ const SHOWN = 8;
 const BUCKETS = [
   { id: 'month', ar: 'أكتر من شهر' },
   { id: 'fortnight', ar: 'أسبوعين لشهر' },
-  { id: 'week', ar: 'أسبوع لأسبوعين' }
+  { id: 'week', ar: '٣ أيام لأسبوعين' }
 ];
 
 /**
- * «عملاء ساكتين»: clients nobody has touched for a week or more and no task covers. Call or WhatsApp from the
+ * «عملاء ساكتين»: clients nobody has touched for three days or more and no task covers. Call or WhatsApp from the
  * row, or put a follow-up on today's list, which also takes the client off this one.
  */
 export default function SilentLeads({ leads = [], tasks = [], uid = '', me, isAr = true, onCall, onWhatsApp, onOpenLead, triggerToast }) {
@@ -44,7 +44,7 @@ export default function SilentLeads({ leads = [], tasks = [], uid = '', me, isAr
       </button>
       {open && (
         <div className="tk-silent__body">
-          <p className="tk-note">{isAr ? 'مفيش حد كلّمهم أو حدّث بياناتهم من أسبوع أو أكتر، ومفيش مهمة مفتوحة ليهم.' : 'Nobody has touched these for a week or more, and no task covers them.'}</p>
+          <p className="tk-note">{isAr ? 'مفيش حد كلّمهم أو حدّث بياناتهم من ٣ أيام أو أكتر، ومفيش مهمة مفتوحة ليهم.' : 'Nobody has touched these for three days or more, and no task covers them.'}</p>
           {BUCKETS.map((b) => {
             const group = shown.filter((r) => silenceBucket(r.days) === b.id);
             if (!group.length) return null;

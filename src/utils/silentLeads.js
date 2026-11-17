@@ -1,12 +1,12 @@
 // =============================================================
-//  «عملاء ساكتين»: open clients nobody has touched for a week or more (no call, no note, no stage move),
+//  «عملاء ساكتين»: open clients nobody has touched for three days or more (no call, no note, no stage move),
 //  that no open task is already chasing. The list a salesperson works through to wake them up, longest
 //  silence first. Pure: tests/unit/silent-leads.test.mjs
 // =============================================================
 import { toMs, leadCreatedMs } from './crmLeadViews.js';
 
 const DAY = 86_400_000;
-export const SILENT_DAYS = 7;
+export const SILENT_DAYS = 3;
 const CLOSED = new Set(['closed', 'lost', 'inactive']);
 
 /** When someone last did something with the client (ms), or when he arrived */
@@ -40,7 +40,7 @@ export function silenceLabel(days, isAr = true) {
   return months === 1 ? 'شهر' : months === 2 ? 'شهرين' : `${months} شهور`;
 }
 
-/** Buckets for grouping the list: 7–13 days, 14–29, 30+ */
+/** Buckets for grouping the list: 3–13 days, 14–29, 30+ */
 export function silenceBucket(days) {
   return days >= 30 ? 'month' : days >= 14 ? 'fortnight' : 'week';
 }
