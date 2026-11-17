@@ -85,6 +85,13 @@ export function bucketOf(task, now = Date.now()) {
 const byDue = (a, b) => String(a.dueAt || '9999').localeCompare(String(b.dueAt || '9999'));
 const byUrgency = (a, b) => rank(a.priority) - rank(b.priority) || byDue(a, b);
 
+/** The open task of this client that is due first (a task with no date comes last), or null */
+export function nextTaskFor(tasks = [], leadId) {
+  const mine = tasks.filter((t) => t && t.status !== 'done' && String(t.leadId) === String(leadId));
+  return mine.sort((a, b) => byDue(a, b))[0] || null;
+}
+
+
 /** { overdue, today, upcoming, nodate, done }, each in the order it should be worked */
 export function groupTasks(tasks = [], now = Date.now()) {
   const out = { overdue: [], today: [], upcoming: [], nodate: [], done: [] };
