@@ -38,3 +38,12 @@ test('labels and buckets', () => {
   assert.equal(silenceLabel(100), '3 شهور');
   assert.deepEqual([silenceBucket(8), silenceBucket(14), silenceBucket(45)], ['week', 'fortnight', 'month']);
 });
+
+test('a client untouched for three days is silent; two days is not', () => {
+  const now = Date.parse('2026-11-17T12:00:00Z');
+  const L = [
+    { id: 'a', status: 'contacted', lastActivityAt: '2026-11-14T10:00:00Z' },
+    { id: 'b', status: 'contacted', lastActivityAt: '2026-11-15T10:00:00Z' }
+  ];
+  assert.deepEqual(silentLeads(L, { now }).map((r) => r.lead.id), ['a']);
+});
