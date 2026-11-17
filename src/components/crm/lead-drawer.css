@@ -121,3 +121,10 @@
 .cf-words { margin: 0; padding: var(--ui-s-3); background: var(--ui-surface-2); border-radius: var(--ui-r-md); font-size: var(--ui-fs-2); line-height: var(--ui-lh); color: var(--ui-text); overflow-wrap: anywhere; }
 .cf-words small { display: block; margin-bottom: 2px; color: var(--ui-text-3); font-size: var(--ui-fs-1); }
 .crm-ld__fold-hint { margin-inline-start: auto; margin-inline-end: var(--ui-s-3); font-size: var(--ui-fs-1); font-weight: var(--ui-fw-regular); color: var(--ui-text-3); font-variant-numeric: tabular-nums; }
+
+/* «الخطوة الجاية؟» sheet */
+.crm-nextstep { display: grid; gap: var(--space-3, 12px); }
+.crm-nextstep__row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3, 12px); }
+.crm-nextstep__f { display: grid; gap: 4px; font-size: var(--text-sm, 13px); }
+.crm-nextstep__f select { min-height: 44px; border-radius: var(--radius-md, 10px); border: 1px solid var(--border); padding: 0 10px; background: var(--surface); color: inherit; }
+.crm-nextstep__err { color: var(--danger); margin: 0; font-size: var(--text-sm, 13px); }
