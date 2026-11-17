@@ -327,3 +327,14 @@
 
 .crm-layout .crm-leads .crm-lead-source { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin-top: var(--ui-s-1); min-width: 0; }
 .crm-lead-campaign { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--ui-fs-1); color: var(--ui-text-3); }
+
+/* Desktop: the new columns keep their room (the follow-up header and its «حدد متابعة» button were cut) and the
+   stage select no longer takes the width the others need */
+@media (min-width: 769px) {
+  .crm-layout .crm-leads .crm-table th.crm-th--next { min-width: 190px; }
+  .crm-layout .crm-leads .crm-table th.crm-th--outcome { min-width: 130px; }
+  .crm-layout .crm-leads .crm-table th.crm-th--status { min-width: 130px; width: 150px; }
+  .crm-layout .crm-leads .crm-table .crm-status-select-wrap { max-width: 160px; }
+  .crm-layout .crm-leads .crm-table .crm-next { min-width: 0; }
+  .crm-layout .crm-leads .crm-table .crm-next__note { max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
