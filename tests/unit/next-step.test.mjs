@@ -67,3 +67,11 @@ test('a finished task with nothing else planned suggests a follow-up', () => {
   assert.equal(s.kind, 'call');
   assert.equal(s.day, '2026-11-18');
 });
+
+import { panelHeadline } from '../../src/utils/newLeadAlerts.js';
+test('the bell\'s headline has no emoji and does not repeat the name', () => {
+  const h = panelHeadline({ type: 'seller', name: 'مؤمن رمضان', details: { propertyType: 'villa', area: 'west', size: 180 } }, true);
+  assert.ok(!/مؤمن/.test(h));
+  assert.ok(!/^[\u{1F300}-\u{1FAFF}]/u.test(h));
+  assert.ok(h.length > 3);
+});

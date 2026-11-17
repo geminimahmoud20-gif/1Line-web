@@ -56,6 +56,15 @@ export async function showSystemAlert(title, { body = '', tag = '', data = {}, o
   }
 }
 
+/** The headline for the bell's list: no leading emoji and no « — name» tail (the name has its own line under it) */
+export const panelHeadline = (lead, isAr = true) => {
+  let h = formatLeadHeadline(lead, isAr).replace(/^[\p{Extended_Pictographic}\uFE0F\s]+/u, '');
+  const name = String(lead?.name || (isAr ? 'عميل' : 'Client')).slice(0, 40);
+  const tail = ` — ${name}`;
+  if (h.endsWith(tail)) h = h.slice(0, -tail.length);
+  return h;
+};
+
 export const formatLeadHeadline = (lead, isAr = true) => {
   const d = lead?.details || {};
   const typeName = (key) => (key ? propertyTypeLabel(key, isAr) : (isAr ? 'عقار' : 'Property'));
