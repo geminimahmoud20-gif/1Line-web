@@ -210,3 +210,13 @@ test('the «شراء» filter takes every client who wants to buy, not only thos
   for (const l of yes) assert.equal(isBuyerLead(l), true, JSON.stringify(l));
   for (const l of no) assert.equal(isBuyerLead(l), false, JSON.stringify(l));
 });
+
+test('a request from the one-step sell card is a seller request', async () => {
+  const { isSellerLead } = await import('../../src/utils/crmLeadViews.js');
+  assert.equal(isSellerLead({ type: 'seller_instant', source: 'Portals 1-Step (sell)' }), true);
+  assert.equal(isSellerLead({ source: 'Portals 1-Step (valuation)' }), true);
+  assert.equal(isSellerLead({ details: { sellerRole: 'broker' } }), true);
+  // the buyer and investor cards are not
+  assert.equal(isSellerLead({ type: 'buyer_instant', source: 'Portals 1-Step (buy)' }), false);
+  assert.equal(isSellerLead({ type: 'investor_instant', source: 'Portals 1-Step (investor)' }), false);
+});

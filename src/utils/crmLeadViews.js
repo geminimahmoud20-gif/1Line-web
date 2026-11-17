@@ -155,9 +155,13 @@ export function isViewingLead(l = {}) {
 export function isSellerLead(l = {}) {
   const type = (l.type || '').toLowerCase();
   const notes = (l.notes || '').toLowerCase();
-  return (
+  return Boolean(
     type === 'seller' ||
     type === 'valuation' ||
+    // The one-step card on /sell and /valuation (type seller_instant, source «Portals 1-Step (sell)») asks owner or broker
+    type === 'seller_instant' ||
+    !!l.details?.sellerRole ||
+    /portals 1-step \((sell|valuation)\)/i.test(String(l.source || '')) ||
     !!l.details?.askingPrice ||
     notes.includes('عرض بيع') ||
     (l.landingPage && l.landingPage.includes('/sell'))
