@@ -36,6 +36,22 @@ export default function AutomationTab({ isAr, leads = [], onUpdateLead, triggerT
     loadSettings('automation').then((s) => { if (alive) setCadence(s?.cadence !== false); }).catch(() => alive && setCadence(true));
     return () => { alive = false; };
   }, []);
+  // «تحويل تلقائي»: an auto-assigned client nobody answers in 15 minutes moves once to someone else (scripts/reassign-unanswered.mjs).
+  // Off unless settings/automation says reassignUnanswered: true.
+  const [reassign, setReassign] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    loadSettings('automation').then((s) => { if (alive) setReassign(s?.reassignUnanswered === true); }).catch(() => alive && setReassign(false));
+    return () => { alive = false; };
+  }, []);
+  const toggleReassign = async () => {
+    const next = !reassign;
+    setReassign(next);
+    if (!(await saveSettings('automation', { reassignUnanswered: next }))) {
+      setReassign(!next);
+      triggerToast(isAr ? 'مقدرناش نحفظ الإعداد' : 'Could not save the setting', 'error');
+    }
+  };
   const toggleCadence = async () => {
     const next = !cadence;
     setCadence(next);
@@ -124,6 +140,10 @@ export default function AutomationTab({ isAr, leads = [], onUpdateLead, triggerT
             <label className="crm-auto-assign__row">
               <input type="checkbox" checked={cadence !== false} disabled={cadence === null} onChange={toggleCadence} />
               <span>{isAr ? 'اعمل للبياع الجديد مهام متابعة تلقائي (اتصال النهارده، واتساب بكرة، اتصال تاني بعد ٣ أيام)' : 'Give the new owner follow-up tasks (call today, WhatsApp tomorrow, second call in 3 days)'}</span>
+            </label>
+            <label className="crm-auto-assign__row">
+              <input type="checkbox" checked={reassign === true} disabled={reassign === null} onChange={toggleReassign} />
+              <span>{isAr ? 'لو عميل اتوزّع تلقائي ومحدش رد عليه خلال ١٥ دقيقة (من 9 صباحًا لـ 9 مساءً)، حوّله مرة واحدة لبياع تاني وسجّل السبب في ملفه' : 'If an auto-assigned client is not answered in 15 minutes (9am–9pm), move it once to another salesperson and log why'}</span>
             </label>
             {sellerCount > 0 && <p className="crm-auto-assign__note">{isAr ? `${sellerCount} بياع في التوزيع. بيتسجّل كل توزيع في سجل المراجعة.` : `${sellerCount} salespeople in rotation. Each assignment is in the audit log.`}</p>}
           </div>
