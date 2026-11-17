@@ -376,6 +376,4 @@ html .demands-add-cta .btn { display: inline-flex; align-items: center; gap: 8px
   html .portal-hero-title { font-size: 1.85rem; margin-bottom: 6px; }
   html .portal-hero-subtitle { font-size: 0.9rem; line-height: 1.55; }
   html .portal-content-wrapper { margin-top: -30px; }
-  html .portal-mode-toggle-strip { margin-bottom: 16px; max-width: 560px; }
-  html .portal-mode-btn { padding: 8px 12px; font-size: 0.82rem; white-space: nowrap; }
 }
