@@ -87,7 +87,7 @@ export default function TaskDoneFlow({ task, lead, me, isAr = true, onUpdateLead
     <Modal open onClose={onClose} size="sm" title={isAr ? 'حصل إيه؟' : 'What happened?'} description={`${task.title} — ${lead.name || ''}`} closeLabel={isAr ? 'إلغاء' : 'Cancel'}>
       <div className="crm-ld__row">
         {options.map((o) => (
-          <Button key={o.id} variant={o.kind === 'negative' ? 'ghost' : 'secondary'} size="sm" disabled={busy}
+          <Button key={o.id} variant="secondary" size="sm" disabled={busy}
             onClick={() => (o.kind === 'negative' ? (setNegative(o.id), setReason('')) : finish(o.id))}>{o.ar}</Button>
         ))}
       </div>

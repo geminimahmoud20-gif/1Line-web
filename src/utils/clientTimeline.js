@@ -30,6 +30,14 @@ export function parseNoteLine(line) {
   return m ? { meta: m[1], text: m[2] || m[1] } : { meta: '', text: clean };
 }
 
+/**
+ * The sentence the sell form writes into the notes («المالك · عرض بيع منزل مستقل / فيلا في سوهاج غرب بمساحة 180م² · السعر المطلوب: …»).
+ * It only repeats the request's fields, so it is not the client's own words.
+ */
+export const isGeneratedOfferLine = (text) => /^\s*(المالك|وسيط عقاري)\s*[·|]\s*عرض بيع/.test(String(text || ''));
+/** The notes without those generated lines */
+export const withoutGeneratedOffer = (text) => String(text || '').split('\n').filter((l) => !isGeneratedOfferLine(l)).join('\n').trim();
+
 /** { events: [{ key, at, meta, text, kind, agent, legacy }], words } */
 export function buildTimeline(input) {
   const lead = input || {};
@@ -45,6 +53,6 @@ export function buildTimeline(input) {
   const have = new Set(logs.map((e) => e.text));
   return {
     events: [...logs, ...legacy.filter((l) => !have.has(l.text))],
-    words: splitNotes(parsed.filter((p) => !(p.line && p.line.meta)).map((p) => p.raw).join('\n')).client
+    words: splitNotes(parsed.filter((p) => !(p.line && p.line.meta) && !isGeneratedOfferLine(p.raw)).map((p) => p.raw).join('\n')).client
   };
 }

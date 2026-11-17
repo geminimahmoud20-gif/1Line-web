@@ -651,7 +651,11 @@
 }
 @media (max-width: 420px) {
   /* The labels of the top bar's own buttons (not the items of the «+» menu, which are buttons in it too) */
-  .crm-topbar-right button:not(.crm-quick-action-item) > span:not([class]) { display: none; }
+  .crm-topbar-right button:not(.crm-quick-action-item):not(.crm-btn-primary-gold) > span:not([class]) { display: none; }
+}
+/* Phones: the page shows its own heading, so the top bar does not repeat it (cut to «العملاء والمب…») and the «جديد» button keeps its word */
+@media (max-width: 640px) {
+  .crm-page-title { display: none; }
 }
 
 /* ── Mobile ── */
