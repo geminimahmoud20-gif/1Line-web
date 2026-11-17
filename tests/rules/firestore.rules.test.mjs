@@ -61,7 +61,7 @@ test('leads: agents claim pool leads but cannot move leads to other desks', asyn
   const east = as('agent_east');
   await assertSucceeds(setDoc(doc(east, 'leads/u'), { assignedTo: 'Sales Team A' }, { merge: true }));
   await assertFails(setDoc(doc(east, 'leads/a'), { assignedTo: 'Sales Team B' }, { merge: true }));
-  await assertSucceeds(setDoc(doc(east, 'leads/a'), { status: 'contacted' }, { merge: true }));
+  await assertSucceeds(setDoc(doc(east, 'leads/a'), { status: 'contacted', outcomes: OUT }, { merge: true }));
   await assertFails(setDoc(doc(east, 'leads/b'), { status: 'contacted' }, { merge: true }));
 });
 
@@ -171,7 +171,7 @@ test('contacts: agents edit their lead\'s contact, and leads never gain phone fi
   await assertFails(setDoc(doc(east, 'leads/c1'), { phone: '01000000098' }, { merge: true }));
   await assertFails(setDoc(doc(as('sales_manager'), 'leads/a'), { phone: '01000000097' }, { merge: true }));
   // unchanged legacy phone on an un-migrated lead doesn't block other edits
-  await assertSucceeds(setDoc(doc(east, 'leads/a'), { status: 'contacted' }, { merge: true }));
+  await assertSucceeds(setDoc(doc(east, 'leads/a'), { status: 'contacted', outcomes: OUT }, { merge: true }));
 });
 
 test('contacts: a manager migrates an inline phone into lead_contacts', async () => {
@@ -449,11 +449,11 @@ test('leads: moving a lead to closing / won needs deal.edit; other stages are le
   });
   // a custom role that edits its team's leads but has no deal rights
   const noDeals = env.authenticatedContext('u-nodeal', { role: 'r_nodeal', staff: true, perms: ['ld.edit', 'ld.phone'], desk: 'Sales Team A' }).firestore();
-  await assertSucceeds(setDoc(doc(noDeals, 'leads/w1'), { status: 'site_visit' }, { merge: true }));
-  await assertFails(setDoc(doc(noDeals, 'leads/w1'), { status: 'closed' }, { merge: true }));
-  await assertFails(setDoc(doc(noDeals, 'leads/w1'), { status: 'closing' }, { merge: true }));
+  await assertSucceeds(setDoc(doc(noDeals, 'leads/w1'), { status: 'site_visit', outcomes: OUT }, { merge: true }));
+  await assertFails(setDoc(doc(noDeals, 'leads/w1'), { status: 'closed', outcomes: OUT }, { merge: true }));
+  await assertFails(setDoc(doc(noDeals, 'leads/w1'), { status: 'closing', outcomes: OUT }, { merge: true }));
   const withDeals = env.authenticatedContext('u-deal', { role: 'r_deal', staff: true, perms: ['ld.edit', 'ld.phone', 'deal.edit'], desk: 'Sales Team A' }).firestore();
-  await assertSucceeds(setDoc(doc(withDeals, 'leads/w1'), { status: 'closed' }, { merge: true }));
+  await assertSucceeds(setDoc(doc(withDeals, 'leads/w1'), { status: 'closed', outcomes: OUT }, { merge: true }));
   // editing other fields of an already-won lead is not a new close
   await assertSucceeds(setDoc(doc(noDeals, 'leads/w1'), { notes: 'متابعة بعد البيع' }, { merge: true }));
 });
@@ -468,14 +468,14 @@ test('deals: «deal.add» works deals but cannot close; «deal.close» can; the 
   const member = (id, perms) => env.authenticatedContext(`u-${id}`, { role: `r_${id}`, staff: true, perms: ['ld.edit', 'ld.phone', ...perms], desk: 'Sales Team A' }).firestore();
   const adder = member('adder', ['deal.add']);
   await assertSucceeds(setDoc(doc(adder, 'deals/dd1'), { title: 'y' }, { merge: true }));
-  await assertSucceeds(setDoc(doc(adder, 'leads/dl1'), { status: 'site_visit' }, { merge: true }));
-  await assertFails(setDoc(doc(adder, 'leads/dl1'), { status: 'closing' }, { merge: true }));
-  await assertFails(setDoc(doc(adder, 'leads/dl1'), { status: 'closed' }, { merge: true }));
+  await assertSucceeds(setDoc(doc(adder, 'leads/dl1'), { status: 'site_visit', outcomes: OUT }, { merge: true }));
+  await assertFails(setDoc(doc(adder, 'leads/dl1'), { status: 'closing', outcomes: OUT }, { merge: true }));
+  await assertFails(setDoc(doc(adder, 'leads/dl1'), { status: 'closed', outcomes: OUT }, { merge: true }));
   const closer = member('closer', ['deal.close']);
-  await assertSucceeds(setDoc(doc(closer, 'leads/dl2'), { status: 'closed' }, { merge: true }));
+  await assertSucceeds(setDoc(doc(closer, 'leads/dl2'), { status: 'closed', outcomes: OUT }, { merge: true }));
   await assertSucceeds(setDoc(doc(closer, 'deals/dd1'), { title: 'z' }, { merge: true }));
   const legacy = member('legacy', ['deal.edit']);
-  await assertSucceeds(setDoc(doc(legacy, 'leads/dl3'), { status: 'closing' }, { merge: true }));
+  await assertSucceeds(setDoc(doc(legacy, 'leads/dl3'), { status: 'closing', outcomes: OUT }, { merge: true }));
   // no deal right at all: neither deals nor closing
   const none = member('none', []);
   await assertFails(setDoc(doc(none, 'deals/dd1'), { title: 'q' }, { merge: true }));
@@ -721,6 +721,9 @@ test('approval: only the general manager publishes a buyer request', async () =>
   await assertSucceeds(updateDoc(doc(gm, 'demands/s1'), { text_ar: 'gm edit' }));
 });
 
+// A logged outcome («حصل إيه؟»): what the CRM always writes with a stage change by a non-manager
+const OUT = [{ id: 'reached', at: '2026-11-17T10:00:00.000Z', by: 'u-sales_agent' }];
+
 // ── Tasks ────────────────────────────────────────────────────────────────
 const task = (over = {}) => ({
   title: 'اتصل بالعميل', note: '', dueAt: '2026-11-14', priority: 'normal', status: 'open', kind: 'call', leadId: 'a', leadName: 'A',
@@ -854,4 +857,36 @@ test('crm_mentions: anyone on the team sends one, only the person it is for read
   await assertFails(updateDoc(doc(sender, 'crm_mentions/m1'), { readAt: 'x' }));
   await assertFails(deleteDoc(doc(sender, 'crm_mentions/m1')));
   await assertSucceeds(deleteDoc(doc(to, 'crm_mentions/m1')));
+});
+
+test('leads: a non-manager cannot change a stage without a logged outcome; a manager can; other edits are free', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'leads/sl1'), { name: 'عميل', status: 'new', assignedTo: 'Sales Team A' });
+    await setDoc(doc(ctx.firestore(), 'leads/sl2'), { name: 'عميل', assignedTo: 'Sales Team A' }); // an old client with no status at all
+  });
+  const agent = env.authenticatedContext('u-stage', { role: 'r_stage', staff: true, perms: ['ld.edit', 'ld.phone'], desk: 'Sales Team A' }).firestore();
+  await assertFails(setDoc(doc(agent, 'leads/sl1'), { status: 'contacted' }, { merge: true }));
+  await assertFails(setDoc(doc(agent, 'leads/sl1'), { status: 'contacted', outcomes: [] }, { merge: true }));
+  await assertSucceeds(setDoc(doc(agent, 'leads/sl1'), { status: 'contacted', outcomes: OUT }, { merge: true }));
+  // writing the same stage again, or any other field, is not a stage change
+  await assertSucceeds(setDoc(doc(agent, 'leads/sl1'), { status: 'contacted', notes: 'متابعة' }, { merge: true }));
+  await assertSucceeds(setDoc(doc(agent, 'leads/sl2'), { status: 'new' }, { merge: true }));
+  await assertFails(setDoc(doc(agent, 'leads/sl2'), { status: 'contacted' }, { merge: true }));
+  await env.withSecurityRulesDisabled(async (ctx) => { await setDoc(doc(ctx.firestore(), 'leads/sl3'), { name: 'قديم', status: 'new', assignedTo: 'Sales Team A', callOutcomes: [{ id: 'answered', at: '2026-11-01T10:00:00.000Z' }] }); });
+  await assertSucceeds(setDoc(doc(agent, 'leads/sl3'), { status: 'contacted' }, { merge: true })); // answered through the older call prompt
+  const mgr = as('sales_manager');
+  await assertSucceeds(setDoc(doc(mgr, 'leads/sl2'), { status: 'contacted' }, { merge: true }));
+});
+
+test('crm_tasks: a task needs a day; an older undated task can still be ticked off, but not re-saved with a bad date', async () => {
+  const me = as('sales_agent');
+  await assertFails(setDoc(doc(me, 'crm_tasks/nd1'), task({ dueAt: '' })));
+  await assertFails(setDoc(doc(me, 'crm_tasks/nd2'), task({ dueAt: 'بكرة' })));
+  await assertFails(setDoc(doc(me, 'crm_tasks/nd3'), task({ dueAt: '2026-11-14 10:00' })));
+  await assertSucceeds(setDoc(doc(me, 'crm_tasks/nd4'), task({ dueAt: '2026-11-14T10:30' })));
+  await env.withSecurityRulesDisabled(async (ctx) => { await setDoc(doc(ctx.firestore(), 'crm_tasks/old'), task({ dueAt: '' })); });
+  await assertSucceeds(updateDoc(doc(me, 'crm_tasks/old'), { status: 'done', doneAt: '2026-11-13T11:00:00.000Z', doneBy: 'u-sales_agent', updatedAt: 'x' }));
+  await assertSucceeds(updateDoc(doc(me, 'crm_tasks/old'), { dueAt: '2026-11-20' }));
+  await assertFails(updateDoc(doc(me, 'crm_tasks/old'), { dueAt: 'soon' }));
+  await assertFails(updateDoc(doc(me, 'crm_tasks/nd4'), { dueAt: '' }));
 });
