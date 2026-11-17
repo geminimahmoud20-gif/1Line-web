@@ -96,9 +96,9 @@ export default function CampaignReportPanel({ leads = [], properties = [], lang 
 
   // Taps on WhatsApp / phone numbers that came from an ad: people who went to a chat or a call without a form
   const [intents, setIntents] = useState([]);
-  useEffect(() => subscribeToContactIntents((list) => setIntents(Array.isArray(list) ? list : [])), []);
+  useEffect(() => subscribeToContactIntents((list) => setIntents(Array.isArray(list) ? list : []), 500), []);
   const taps = useMemo(() => intents.filter((i) => i.campaign).map((i) => ({
-    campaign: i.campaign, content: i.content || '', source: i.source || '',
+    campaign: i.campaign, content: i.content || '', source: i.source || '', status: i.status || 'open',
     at: i.createdAt?.toMillis ? i.createdAt.toMillis() : (Date.parse(i.createdAt || '') || 0)
   })), [intents]);
   const rows = useMemo(
@@ -277,7 +277,7 @@ export default function CampaignReportPanel({ leads = [], properties = [], lang 
       ) : (
         <>
           <div className="cr-totals">
-            <div><b>{totals.contacts}</b><span>{L('ضغطة تواصل', 'Contact taps')}</span></div>
+            <div><b>{totals.contacts}</b><span>{L('ضغطة تواصل (لسه من غير فورم)', 'Contact taps (no form yet)')}</span></div>
             <div><b>{totals.leads}</b><span>{L('عميل', 'Leads')}</span></div>
             <div><b>{totals.visits}</b><span>{L('وصل لمعاينة', 'Reached a visit')}</span></div>
             <div><b>{totals.closed}</b><span>{L('اتقفل', 'Closed')}</span></div>

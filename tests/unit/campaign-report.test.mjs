@@ -103,3 +103,12 @@ test('WhatsApp and call taps from an ad are counted per campaign, even with no l
   const byAd = campaignReport([lead], { now, taps, by: 'ad' });
   assert.deepEqual(byAd.filter((r) => r.campaign === 'buyers-a').map((r) => [r.ad, r.contacts]).sort(), [['v1', 1], ['v2', 1], ['—', 0]].sort());
 });
+
+test('taps already linked to a lead, or dismissed, are not counted again next to the leads', () => {
+  const now = Date.parse('2026-11-16T12:00:00Z');
+  const t = (status) => ({ campaign: 'owners-x', content: 'a', source: 'facebook', at: now - 3600e3, status });
+  const rows = campaignReport([], { now, taps: [t('open'), t('open'), t('linked'), t('dismissed')] });
+  assert.equal(rows.find((r) => r.campaign === 'owners-x').contacts, 2);
+  // a tap without a status (older data) still counts
+  assert.equal(campaignReport([], { now, taps: [{ campaign: 'owners-x', at: now }] }).find((r) => r.campaign === 'owners-x').contacts, 1);
+});
