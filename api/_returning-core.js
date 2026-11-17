@@ -12,8 +12,21 @@ import { phoneVariants, returningOwner } from './_assign-core.js';
  */
 export async function lookupReturning({ fs, plain, lead, id, sellers }) {
   try {
+    const earlier = await findEarlier({ fs, plain, lead, id });
+    return returningOwner(earlier.map((e) => ({ id: e.id, ...e.data })), sellers);
+  } catch (e) {
+    console.error('assign: returning-client lookup failed:', e?.message || e);
+    return null;
+  }
+}
+
+/**
+ * This person's other requests (same phone): [{ id, data, updateTime }], [] when there is no phone or the lookup fails.
+ */
+export async function findEarlier({ fs, plain, lead, id }) {
+  try {
     const variants = phoneVariants(lead?.phone || lead?.whatsapp);
-    if (!variants.length) return null;
+    if (!variants.length) return [];
     const ids = new Set();
     // The phone may be stored as «phone» or «whatsapp» on the contact record
     for (const field of ['phone', 'whatsapp']) {
@@ -31,11 +44,13 @@ export async function lookupReturning({ fs, plain, lead, id, sellers }) {
     const earlier = [];
     for (const earlierId of [...ids].slice(0, 10)) {
       const r = await fs('GET', `leads/${encodeURIComponent(earlierId)}`);
-      if (r.ok) earlier.push({ id: earlierId, ...plain(await r.json()) });
+      if (!r.ok) continue;
+      const d = await r.json();
+      earlier.push({ id: earlierId, data: plain(d), updateTime: d.updateTime });
     }
-    return returningOwner(earlier, sellers);
+    return earlier;
   } catch (e) {
-    console.error('assign: returning-client lookup failed:', e?.message || e);
-    return null;
+    console.error('assign: earlier-requests lookup failed:', e?.message || e);
+    return [];
   }
 }
