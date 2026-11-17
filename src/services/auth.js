@@ -57,6 +57,7 @@ export const checkIsAdmin = async (user) => {
 };
 
 import { accessFromClaims, canPublishInventory } from '../utils/accessModel.js';
+import { nameFromEmail } from '../utils/assignees.js';
 
 // Staff roles are Firebase custom claims ({ role: 'sales_agent' }), set server-side with
 // scripts/set-crm-role.mjs — a user cannot change their own claims. Must match firestore.rules.
@@ -247,7 +248,7 @@ export const monitorAuthState = (callback) => {
     callback(true, {
       uid: user.uid,
       email: user.email,
-      displayName: user.displayName || user.email?.split('@')[0] || 'Admin',
+      displayName: user.displayName || nameFromEmail(user.email) || 'Admin',
       role,
       perms: access.role ? access.perms : [],
       desk: access.desk || ''

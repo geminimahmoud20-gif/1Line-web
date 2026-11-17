@@ -10,6 +10,7 @@ import { firstContactPatch } from '../../utils/crmLeadViews';
 import { auditContactUse } from '../../utils/contactAudit';
 import { MyGoals } from './GoalsPanel';
 import SilentLeads from './SilentLeads';
+import TaskDoneFlow from './TaskDoneFlow';
 import './tasks-panel.css';
 
 const SECTIONS = [
@@ -255,15 +256,14 @@ export default function TasksPanel({ leads = [], members = [], me, canManage = f
   const leadById = useMemo(() => new Map(leads.map((l) => [String(l.id), l])), [leads]);
   const filtering = Boolean(q || kind || priority || person);
 
+  const [flowTask, setFlowTask] = useState(null);
   const tick = async (t) => {
     const done = t.status === 'done';
-    const ok = await updateTask(t.id, done ? reopening() : completion(me));
-    if (!ok) { triggerToast?.(isAr ? 'ماتحدّثتش، جرّب تاني' : 'Not updated', 'error'); return; }
     const lead = t.leadId ? leadById.get(String(t.leadId)) : null;
-    if (!done && lead && onUpdateLead) {
-      const at = new Date().toISOString();
-      onUpdateLead(lead.id, { lastActivityAt: at, activityLogs: [{ timestamp: at, action: `${isAr ? 'أنجز مهمة' : 'Task done'}: ${t.title}` }, ...(lead.activityLogs || [])] }, lead.version);
-    }
+    // A task behind a client asks what happened and what comes next before it closes
+    if (!done && lead && onUpdateLead) { setFlowTask(t); return; }
+    const ok = await updateTask(t.id, done ? reopening() : completion(me));
+    if (!ok) triggerToast?.(isAr ? 'ماتحدّثتش، جرّب تاني' : 'Not updated', 'error');
   };
   const move = async (t, days) => { if (!(await updateTask(t.id, { dueAt: snoozed(t, days), updatedAt: new Date().toISOString() }))) triggerToast?.(isAr ? 'ماتأجّلتش' : 'Not moved', 'error'); };
   const save = async (t, patch) => { if (!(await updateTask(t.id, patch))) triggerToast?.(isAr ? 'التعديل ماتحفظش' : 'Not saved', 'error'); };
@@ -294,6 +294,9 @@ export default function TasksPanel({ leads = [], members = [], me, canManage = f
 
   return (
     <div className="crm-table-container tk-panel">
+      {flowTask && leadById.get(String(flowTask.leadId)) && (
+        <TaskDoneFlow key={flowTask.id} task={flowTask} lead={leadById.get(String(flowTask.leadId))} me={me} isAr={isAr} onUpdateLead={onUpdateLead} triggerToast={triggerToast} onClose={() => setFlowTask(null)} />
+      )}
       <header className="tk-head">
         <div>
           <h2><ListChecks size={20} aria-hidden="true" /> {team ? (isAr ? 'مهام الفريق' : 'Team tasks') : (isAr ? 'مهامي' : 'My tasks')}</h2>

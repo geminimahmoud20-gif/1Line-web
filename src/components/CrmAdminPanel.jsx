@@ -54,6 +54,7 @@ import { useProperties } from '../context/PropertiesContext';
 import { areaFamily } from '../utils/areaLookup';
 import { useConfirm } from './ui';
 import { phoneProblem, nameProblem } from '../utils/contactValidation';
+import { userDisplayName } from '../utils/assignees';
 
 export const CrmAdminPanel = ({
   lang = 'ar',
@@ -146,7 +147,7 @@ export const CrmAdminPanel = ({
       const payload = {
         ...fields,
         version: nextVersion,
-        lastEditedBy: currentUser?.displayName || currentUser?.name || currentUser?.email?.split('@')[0] || 'مستخدم 1Line',
+        lastEditedBy: userDisplayName(currentUser, 'مستخدم 1Line'),
         lastEditedUid: currentUser?.uid || null
       };
 
@@ -974,7 +975,7 @@ export const CrmAdminPanel = ({
             demands={demands}
             intake={intake}
             members={teamMembers}
-            me={{ uid: currentUser?.uid, name: currentUser?.displayName || currentUser?.name || currentUser?.email?.split('@')[0] || '' }}
+            me={{ uid: currentUser?.uid, name: userDisplayName(currentUser) }}
             canManage
             triggerToast={triggerToast}
             areaNames={Object.fromEntries(getAreas().map((a) => [a.id, a.name_ar || a.id]))}
@@ -995,7 +996,7 @@ export const CrmAdminPanel = ({
         <TasksPanel
           leads={leads}
           members={teamMembers}
-          me={{ uid: currentUser?.uid, name: currentUser?.displayName || currentUser?.name || currentUser?.email?.split('@')[0] || '' }}
+          me={{ uid: currentUser?.uid, name: userDisplayName(currentUser) }}
           canManage={isSuperRole || perms.includes('ld.manage')}
           lang={lang}
           triggerToast={triggerToast}
