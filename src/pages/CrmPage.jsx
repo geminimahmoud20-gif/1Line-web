@@ -32,6 +32,7 @@ import { playNotificationChime } from '../utils/notificationHub';
 import CrmCommandPalette from '../components/crm/CrmCommandPalette';
 import PushReminderPrompt from '../components/crm/PushReminderPrompt';
 import TaskReminders from '../components/crm/TaskReminders';
+import { useCampaignNames } from '../utils/campaignNames';
 import AlertHealthBanner from '../components/crm/AlertHealthBanner';
 import NewVersionNotice from '../components/crm/NewVersionNotice';
 import { BRAND } from '../config/siteConfig';
@@ -192,6 +193,7 @@ export default function CrmPage({
   // Tasks: one shared subscription for the sidebar badge, the tasks tab and a client's drawer;
   // a manager sees the whole team's, everyone else the tasks assigned to them
   useTasksSync(currentUser?.uid, can.campaigns);
+  useCampaignNames();
   const { tasks: allTasks, ready: tasksReady } = useTasks();
   // Team notes and chat: this person's name card (so colleagues can @mention them), the colleagues' cards, and
   // the messages addressed to them, which ring and toast when one arrives while the CRM is open

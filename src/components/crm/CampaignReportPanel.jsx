@@ -4,6 +4,9 @@ import { campaignReport, campaignTotals, typeSummary, PERIODS } from '../../util
 import { LOST_REASONS } from '../../utils/crmLeadViews';
 import { loadCampaignSpend, saveCampaignSpend, loadCampaignLinks, saveCampaignLinks, pullMetaSpend, subscribeToContactIntents } from '../../firebaseLazy';
 import { EmptyState } from '../ui';
+import { campaignLabel } from '../../utils/crmLabels';
+import { customCampaignName, withCampaignName, setCampaignNames } from '../../utils/campaignNames';
+import { saveSettings } from '../../firebaseLazy';
 import { LANDINGS, PLATFORMS, CAMPAIGN_TYPES, buildUtmLink, slugify, typedCampaignName } from '../../utils/utmLinks';
 import { SITE_URL } from '../../config/siteConfig';
 import { applyPull } from '../../../api/_meta-spend-core.js';
@@ -13,6 +16,30 @@ import './campaign-report.css';
 const SPEND_KEY = 'crm_campaign_spend_v1';
 const readSpend = () => { try { return JSON.parse(localStorage.getItem(SPEND_KEY) || '{}') || {}; } catch { return {}; } };
 const fmt = (n) => (n ? Number(n).toLocaleString('en-US') : '—');
+
+/** «سمّي الحملة»: the Arabic name shown everywhere instead of the slug (one tap to edit, saved for the whole team) */
+function CampaignNameEditor({ slug, L }) {
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState('');
+  const [msg, setMsg] = useState('');
+  const current = customCampaignName(slug);
+  const save = async (e) => {
+    e.preventDefault();
+    const next = withCampaignName(slug, value);
+    setCampaignNames(next);
+    const ok = await saveSettings('campaign_names', { names: next });
+    setMsg(ok ? '' : L('الاسم اتحفظ عندك بس، محتاج صلاحية أدمن للفريق كله', 'Saved here only; admin rights are needed for the team'));
+    if (ok) setOpen(false);
+  };
+  if (!open) return <button type="button" className="cr-namebtn" onClick={() => { setValue(current); setOpen(true); }}>{current ? L('غيّر الاسم', 'Rename') : L('سمّي الحملة', 'Name it')}</button>;
+  return (
+    <form className="cr-nameform" onSubmit={save}>
+      <input value={value} maxLength={60} onChange={(e) => setValue(e.target.value)} placeholder={slug} aria-label={L('اسم الحملة بالعربي', 'Campaign name')} />
+      <button type="submit">{L('احفظ', 'Save')}</button>
+      {msg && <small role="alert">{msg}</small>}
+    </form>
+  );
+}
 
 /** Makes the ad link that the report below reads (the guide used to be a document outside the CRM) */
 function LinkBuilder({ L, onCopied, properties = [] }) {
@@ -309,7 +336,8 @@ export default function CampaignReportPanel({ leads = [], properties = [], lang 
             {rows.map((r) => (
               <li key={r.key} className="cr-row">
                 <div className="cr-name">
-                  <strong>{r.campaign}</strong>
+                  <strong>{campaignLabel(r.campaign)}</strong>
+                  {by !== 'ad' && <CampaignNameEditor slug={r.campaign} L={L} />}
                   {by === 'ad' && <span>{r.ad}</span>}
                   {r.source && <small>{r.source}</small>}
                   {r.topLostReason && (() => {

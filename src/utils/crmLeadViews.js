@@ -254,6 +254,8 @@ export function isStale(l, now = Date.now(), hours = STALE_HOURS) {
 
 // Shared with the pipeline's summary, so both screens give the same open-deal numbers
 export const ACTIVE_STAGES = ['new', 'contacted', 'site_visit', 'negotiating', 'closing'];
+/** An open deal: not archived, and in a working stage (not won, lost or paused). The one definition every screen counts with. */
+export const isOpenLead = (l) => Boolean(l) && !l.isArchived && ACTIVE_STAGES.includes(l.status || 'new');
 export const leadBudget = (l) => parseMoney(l.budget) || parseMoney(l.details?.budget) || parseMoney(l.details?.expectedPrice);
 
 /**
@@ -264,8 +266,10 @@ export const leadBudget = (l) => parseMoney(l.budget) || parseMoney(l.details?.b
 export function computeDashboardMetrics(allLeads = [], demands = [], { now = Date.now(), scopeDesk = null, commissionRate = 0.025 } = {}) {
   const todayKey = localDayKey(now);
   const leads = scopeDesk ? allLeads.filter((l) => l.assignedTo === scopeDesk) : allLeads;
-  const open = leads.filter((l) => !l.isArchived && ACTIVE_STAGES.includes(l.status || 'new'));
-  const pipelineValue = open.reduce((sum, l) => sum + leadBudget(l), 0);
+  const open = leads.filter(isOpenLead);
+  // A buyer's budget and an owner's asking price are different money: they are never added together
+  const pipelineValue = open.filter((l) => !isSellerLead(l)).reduce((sum, l) => sum + leadBudget(l), 0);
+  const supplyValue = open.filter(isSellerLead).reduce((sum, l) => sum + leadBudget(l), 0);
   const liveDemands = scopeDesk ? [] : demands.filter((d) => !d.isArchived && d.status !== 'archived' && d.status !== 'rejected');
   const purchasingPower = liveDemands.reduce((sum, d) => sum + parseMoney(d.budget), 0);
   const won = leads.filter((l) => l.status === 'closed');
@@ -276,6 +280,7 @@ export function computeDashboardMetrics(allLeads = [], demands = [], { now = Dat
     todayKey,
     scoped: !!scopeDesk,
     pipelineValue,
+    supplyValue,
     purchasingPower,
     expectedCommission: pipelineValue * commissionRate,
     openCount: open.length,

@@ -111,7 +111,7 @@ export default function CrmExecutiveDashboard({
 
       <KpiRow label={L('أهم الأرقام', 'Key figures')}>
         <KpiTile
-          label={metrics.scoped ? L('قيمة صفقاتي المفتوحة', 'My open pipeline') : L('قيمة الصفقات المفتوحة', 'Open pipeline value')}
+          label={metrics.scoped ? L('ميزانيات مشتريّ المفتوحين', 'My buyers\' budgets') : L('ميزانيات المشترين المفتوحين', 'Open buyers\' budgets')}
           value={metrics.pipelineValue > 0 ? metrics.pipelineValue / 1000000 : null}
           digits={1}
           unit={L('مليون ج.م', 'M EGP')}
