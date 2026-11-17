@@ -45,6 +45,8 @@ export function formatBudget(value, isAr = true) {
   return `${Math.round(n).toLocaleString('en-US')} ${isAr ? 'ج.م' : 'EGP'}`;
 }
 
+import { customCampaignName } from './campaignNamesStore.js';
+
 // ── Raw values shown to people: the source text, the campaign slug ───────────────────────────────
 
 const SOURCE_TEXT = [
@@ -82,6 +84,8 @@ const MONTH_YEAR = /^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)(\d{2})$/i
 export function campaignLabel(slug) {
   const v = String(slug ?? '').trim();
   if (!v) return '';
+  const custom = customCampaignName(v);
+  if (custom) return custom;
   if (/[؀-ۿ]/.test(v) && !/[-_]/.test(v)) return v;
   const out = [];
   for (const w of v.split(/[-_+\s]+/).filter(Boolean)) {

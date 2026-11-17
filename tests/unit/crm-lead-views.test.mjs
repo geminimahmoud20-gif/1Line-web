@@ -220,3 +220,15 @@ test('a request from the one-step sell card is a seller request', async () => {
   assert.equal(isSellerLead({ type: 'buyer_instant', source: 'Portals 1-Step (buy)' }), false);
   assert.equal(isSellerLead({ type: 'investor_instant', source: 'Portals 1-Step (investor)' }), false);
 });
+
+test('dashboard: buyers\' budgets and owners\' asking prices are never added together', () => {
+  const L = [
+    { id: 1, status: 'new', budget: 2000000 },
+    { id: 2, status: 'new', type: 'seller', budget: 35000000 },
+    { id: 3, status: 'closed', budget: 9000000 }
+  ];
+  const m = computeDashboardMetrics(L, []);
+  assert.equal(m.pipelineValue, 2000000);
+  assert.equal(m.supplyValue, 35000000);
+  assert.equal(m.openCount, 2);
+});

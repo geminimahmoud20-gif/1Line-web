@@ -1,11 +1,11 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { ChevronDown, ChevronUp, Columns3, Rows3, MessageSquare, Calendar, Car, Clock, Edit3, Trash2, ChevronRight, ChevronLeft, AlertTriangle, Search, FolderOpen, MoreHorizontal, ShieldAlert, TrendingUp, Users, Archive, Hourglass, CopyPlus } from 'lucide-react';
+import { Building2, ChevronDown, ChevronUp, Columns3, Rows3, MessageSquare, Calendar, Car, Clock, Edit3, Trash2, ChevronRight, ChevronLeft, AlertTriangle, Search, FolderOpen, MoreHorizontal, ShieldAlert, TrendingUp, Users, Archive, Hourglass, CopyPlus } from 'lucide-react';
 import SiteVisitModal from './SiteVisitModal';
 import StageDeliverableModal from './StageDeliverableModal';
 import './crm-kanban.css';
 import { getAreas } from '../../utils/areasData';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
-import { leadScore, ACTIVE_STAGES, leadBudget, isSellerLead, duplicatesById } from '../../utils/crmLeadViews';
+import { leadScore, isOpenLead, leadBudget, isSellerLead, duplicatesById } from '../../utils/crmLeadViews';
 import { SELLER_STAGES, pipelineKind } from '../../utils/leadPipeline';
 import { boardColumnOf, PROGRESS_STAGE_IDS } from '../../utils/dealStages';
 import LostReasonModal from './LostReasonModal';
@@ -308,19 +308,22 @@ export default function KanbanPipeline({
   // Executive pipeline metrics overview
   const pipelineOverview = useMemo(() => {
     let totalVol = 0;
+    let supplyVol = 0;
     let highValue = 0;
     let overdue = 0;
     // Open deals only (not won, lost or archived), counted the same way as the dashboard:
     // the board also shows the won/lost columns, which made its total look bigger than the dashboard's
-    const open = filteredLeads.filter((l) => !l.isArchived && ACTIVE_STAGES.includes(l.status || 'new'));
+    const open = filteredLeads.filter(isOpenLead);
     open.forEach(l => {
       const b = leadBudget(l);
-      totalVol += b;
+      // Buyers' budgets and owners' asking prices are counted apart
+      if (isSellerLead(l)) supplyVol += b; else totalVol += b;
       if (b >= HIGH_VALUE_DEAL_THRESHOLD) highValue++;
       if (isNewOverdue(l, now)) overdue++;
     });
     return {
       totalVol,
+      supplyVol,
       highValue,
       overdue,
       activeCount: open.length
@@ -561,12 +564,20 @@ export default function KanbanPipeline({
           icon={<Users size={16} />}
         />
         <KpiTile
-          label={isAr ? 'قيمة الصفقات المفتوحة' : 'Open pipeline value'}
+          label={isAr ? 'ميزانيات المشترين' : 'Buyers\' budgets'}
           value={pipelineOverview.totalVol > 0 ? pipelineOverview.totalVol / 1000000 : null}
           digits={1}
           unit={isAr ? 'مليون ج.م' : 'M EGP'}
           emptyText={isAr ? 'مفيش ميزانيات متسجّلة' : 'No budgets yet'}
           icon={<TrendingUp size={16} />}
+        />
+        <KpiTile
+          label={isAr ? 'قيمة العروض المعروضة' : 'Listed value'}
+          value={pipelineOverview.supplyVol > 0 ? pipelineOverview.supplyVol / 1000000 : null}
+          digits={1}
+          unit={isAr ? 'مليون ج.م' : 'M EGP'}
+          emptyText={isAr ? 'مفيش أسعار متسجّلة' : 'No prices yet'}
+          icon={<Building2 size={16} />}
         />
         <KpiTile
           label={isAr ? 'صفقات كبيرة (5 مليون+)' : 'Large deals (5M+)'}
@@ -583,7 +594,7 @@ export default function KanbanPipeline({
 
       <div className="crm-kanban__toolbar">
         <div className="crm-kanban__views" role="group" aria-label={isAr ? 'نوع العميل' : 'Client type'}>
-          <Chip pressed={filterType === 'all'} count={leads.filter((l) => !l.isArchived).length} onClick={() => setFilterType('all')}>{isAr ? 'الكل' : 'All'}</Chip>
+          <Chip pressed={filterType === 'all'} count={leads.filter(isOpenLead).length} onClick={() => setFilterType('all')}>{isAr ? 'الكل' : 'All'}</Chip>
           <Chip pressed={filterType === 'buyer'} onClick={() => setFilterType('buyer')}>{isAr ? 'مشترين' : 'Buyers'}</Chip>
           <Chip pressed={filterType === 'seller'} onClick={() => setFilterType('seller')}>{isAr ? 'بايعين' : 'Sellers'}</Chip>
           <Chip pressed={filterType === 'investor'} onClick={() => setFilterType('investor')}>{isAr ? 'مستثمرين' : 'Investors'}</Chip>

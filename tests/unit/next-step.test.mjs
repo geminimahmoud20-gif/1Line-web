@@ -44,3 +44,12 @@ test('raw source and campaign values read as Arabic', () => {
   assert.equal(campaignLabel('حملة الصيف'), 'حملة الصيف');
   assert.equal(campaignLabel(''), '');
 });
+
+import { setCampaignNames, withCampaignName } from '../../src/utils/campaignNamesStore.js';
+test('a name typed for a campaign wins over the guess', () => {
+  assert.equal(campaignLabel('owners-leads-soh-owners-nov26'), 'الملاك عملاء سوهاج الملاك نوفمبر 26');
+  setCampaignNames(withCampaignName('Owners-Leads-Soh-Owners-Nov26', 'ملاك سوهاج – نوفمبر'));
+  assert.equal(campaignLabel('owners-leads-soh-owners-nov26'), 'ملاك سوهاج – نوفمبر');
+  setCampaignNames({});
+  assert.equal(campaignLabel('owners-leads-soh-owners-nov26'), 'الملاك عملاء سوهاج الملاك نوفمبر 26');
+});
