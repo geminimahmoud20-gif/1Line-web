@@ -6,8 +6,10 @@ import { getMergedCrmRoles } from './crmRoles';
 import InstallAppButton from '../common/InstallAppButton';
 import { LOCK_OPTIONS, getLockMinutes, setLockMinutes, lockLabel, markCrmActive } from '../../utils/idleLock';
 import { getActiveAccessConfig, subscribeToAccessConfig } from '../../services/accessConfig';
-import { desktopAlertsState, enableDesktopAlerts, describeDownload, formatLeadHeadline, intakeHeadline, INTAKE_KINDS } from '../../utils/newLeadAlerts';
+import { desktopAlertsState, enableDesktopAlerts, describeDownload, panelHeadline, intakeHeadline, INTAKE_KINDS } from '../../utils/newLeadAlerts';
 import { loadAlertsSeenAt, saveAlertsSeenAt } from '../../firebaseLazy';
+import { ageLabel } from '../../utils/inboxView';
+import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -102,6 +104,8 @@ export default function CrmTopbar({
     const c = r.createdAt;
     return (c && typeof c.toMillis === 'function') ? c.toMillis() : (Date.parse(c || r.createdAtIso || r.timestamp || '') || 0);
   };
+  // The clock the bell's «منذ …» ages count from: read when the panel opens
+  const [bellNow, setBellNow] = useState(() => Date.now());
   const unseenNewLeads = useMemo(
     () => leads.filter((l) => (!l.status || l.status === 'new') && createdMs(l) > leadsSeenAt),
     [leads, leadsSeenAt]
@@ -419,7 +423,7 @@ export default function CrmTopbar({
           <button
             type="button"
             className="crm-notif-btn"
-            onClick={() => setShowNotifMenu(!showNotifMenu)}
+            onClick={() => { setBellNow(Date.now()); setShowNotifMenu(!showNotifMenu); }}
             title={isAr ? 'الإشعارات والتنبيهات' : 'Notifications'}
             aria-expanded={showNotifMenu}
           >
@@ -448,6 +452,7 @@ export default function CrmTopbar({
                 >
                   {isAr ? 'الكل' : 'All'} ({totalNotifications})
                 </button>
+                {((unseenNewLeads.length + unseenIntake.length) > 0 || notifTab === 'leads') && (
                 <button
                   type="button"
                   className={`crm-notif-tab-btn ${notifTab === 'leads' ? 'is-active' : ''}`}
@@ -455,6 +460,8 @@ export default function CrmTopbar({
                 >
                   {isAr ? 'العملاء' : 'Leads'} ({unseenNewLeads.length + unseenIntake.length})
                 </button>
+                )}
+                {((clientDownloads.length) > 0 || notifTab === 'downloads') && (
                 <button
                   type="button"
                   className={`crm-notif-tab-btn ${notifTab === 'downloads' ? 'is-active' : ''}`}
@@ -462,6 +469,8 @@ export default function CrmTopbar({
                 >
                   {isAr ? 'التحميلات' : 'Downloads'} ({clientDownloads.length})
                 </button>
+                )}
+                {((pendingDemands.length) > 0 || notifTab === 'demands') && (
                 <button
                   type="button"
                   className={`crm-notif-tab-btn ${notifTab === 'demands' ? 'is-active' : ''}`}
@@ -469,6 +478,7 @@ export default function CrmTopbar({
                 >
                   {isAr ? 'الطلبات' : 'Demands'} ({pendingDemands.length})
                 </button>
+                )}
               </div>
 
               <div className="crm-notif-body">
@@ -512,10 +522,10 @@ export default function CrmTopbar({
                         }}
                       >
                         <div style={{ fontWeight: 'bold', color: 'var(--crm-ink)', fontSize: 'var(--crm-text-xs)' }}>
-                          {formatLeadHeadline(l, isAr)}
+                          {panelHeadline(l, isAr)}
                         </div>
                         <small style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-xs)' }}>
-                          {l.name || (isAr ? 'عميل' : 'Client')}{(l.phone || l.whatsapp) ? ` • ${l.phone || l.whatsapp}` : ''}
+                          {[l.name || (isAr ? 'عميل' : 'Client'), (l.phone || l.whatsapp) ? formatPhoneNumber(l.phone || l.whatsapp) : '', createdMs(l) ? ageLabel(bellNow - createdMs(l), isAr) : ''].filter(Boolean).join(' • ')}
                         </small>
                       </div>
                     ))}
