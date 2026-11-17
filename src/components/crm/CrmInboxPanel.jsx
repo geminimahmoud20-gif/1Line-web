@@ -28,6 +28,7 @@ import { subscribeToContactIntents, resolveContactIntent } from '../../firebaseL
 import WhatsAppIntentsList from './WhatsAppIntentsList';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { listTeamMembers } from '../../services/team';
+import { userDisplayName } from '../../utils/assignees';
 import {
   INBOX_STAGES as STAGES, INBOX_VIEWS, TEAM_DESKS, isInboxStage, pipelineStageLabel, isLeadUnclaimed, isLeadClaimedByMe,
   isInboxActive, needsAction, matchesView, receivedMs, ageLabel, formatReceived, requestsCount, slaSummary, splitNotes,
@@ -283,7 +284,7 @@ export default function CrmInboxPanel({
   };
 
   const currentStaffName = useMemo(() => {
-    return currentUser?.displayName || currentUser?.name || currentUser?.email?.split('@')[0] || (isAr ? 'موظف 1Line' : 'Staff');
+    return userDisplayName(currentUser, isAr ? 'موظف 1Line' : 'Staff');
   }, [currentUser, isAr]);
 
   // Categorize leads into dedicated triage streams without keyword guessing

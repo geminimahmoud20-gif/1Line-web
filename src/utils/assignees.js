@@ -45,7 +45,15 @@ export function assignmentUpdates(lead, value, people = [], nowIso = new Date().
 }
 
 /** A display name for a team member */
-export const personName = (m = {}) => m.name || (m.email ? m.email.split('@')[0] : '') || m.uid || '';
+/** A readable name from an email's local part when nobody typed one: «mahmoudelbaz2593@x.com» → «Mahmoudelbaz» */
+export const nameFromEmail = (email) => {
+  const local = String(email || '').split('@')[0].replace(/\d+$/, '').replace(/[._-]+/g, ' ').trim();
+  return local.replace(/\b\w/g, (c) => c.toUpperCase());
+};
+/** The signed-in person's name for logs and tasks: the account name, else a readable form of the email, never the raw address */
+export const userDisplayName = (u, fallback = '') => u?.displayName || u?.name || nameFromEmail(u?.email) || fallback;
+
+export const personName = (m = {}) => m.name || nameFromEmail(m.email) || m.uid || '';
 
 /** What to show for a select value: the person's name, or the desk's name in the UI language */
 export function assigneeLabel(value, people = [], isAr = true, desks = []) {

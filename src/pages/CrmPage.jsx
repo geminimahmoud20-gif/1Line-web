@@ -59,6 +59,7 @@ import { buildingFromSellerFeatures } from '../utils/buildingFeatures';
 import { handoverFromSeller } from '../utils/unitHandover';
 import { getAreas } from '../utils/areasData';
 import { formArea } from '../utils/areaLookup';
+import { userDisplayName } from '../utils/assignees';
 
 // Sections a link can open directly: /crm?tab=… (desktop-app shortcuts, WhatsApp alerts, tapped notifications)
 const URL_TABS = ['inbox', 'dashboard', 'leads', 'kanban', 'properties', 'demands', 'projects', 'expat', 'trade_ins', 'chat'];
@@ -196,7 +197,7 @@ export default function CrmPage({
   // the messages addressed to them, which ring and toast when one arrives while the CRM is open
   const teamSelf = currentUser?.uid ? {
     uid: currentUser.uid,
-    name: currentUser.displayName || currentUser.name || (currentUser.email || '').split('@')[0] || '',
+    name: userDisplayName(currentUser),
     desk: userDesk || '',
     role: activeRole,
     canManage: can.campaigns
@@ -236,7 +237,7 @@ export default function CrmPage({
     (async () => {
       const s = await loadSettings('automation').catch(() => null);
       if (s?.cadence === false) return;
-      const seller = { uid, name: currentUser?.displayName || currentUser?.name || currentUser?.email?.split('@')[0] || '' };
+      const seller = { uid, name: userDisplayName(currentUser) };
       for (const l of todo.slice(0, 10)) {
         for (const { id, task } of cadenceTasks({ lead: l, seller, createdBy: uid })) await addTaskWithId(id, task);
       }
@@ -831,7 +832,7 @@ export default function CrmPage({
         '--current-sidebar-w': sidebarCollapsed ? '72px' : `${sidebarWidth}px`
       }}
     >
-      <CallOutcomePrompt leads={leads} onUpdateLead={guard(can.editLeads, onUpdateLead)} me={{ uid: currentUser?.uid, name: currentUser?.displayName || currentUser?.name || currentUser?.email?.split('@')[0] || '' }} isAr={isAr} enabled={crmAuthenticated && can.editLeads} />
+      <CallOutcomePrompt leads={leads} onUpdateLead={guard(can.editLeads, onUpdateLead)} me={{ uid: currentUser?.uid, name: userDisplayName(currentUser) }} isAr={isAr} enabled={crmAuthenticated && can.editLeads} />
 
       {/* 1. Presidential Sidebar */}
       <CrmSidebar
@@ -947,7 +948,7 @@ export default function CrmPage({
           {/* The setup notices share one card instead of stacking as separate boxes above every page */}
           <div className="crm-notices">
             {can.editLeads && (
-              <PushReminderPrompt manager={Boolean(can.campaigns)} name={currentUser?.displayName || (currentUser?.email || '').split('@')[0]} />
+              <PushReminderPrompt manager={Boolean(can.campaigns)} name={userDisplayName(currentUser)} />
             )}
             {activeRole === 'super_admin' && (
               <AlertHealthBanner onOpen={() => { setSystemSubTab('alerts'); setActiveTab('system'); }} />

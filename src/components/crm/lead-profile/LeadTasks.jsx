@@ -2,26 +2,24 @@ import { useMemo, useState } from 'react';
 import { CheckCircle2, Circle, ListChecks } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useTasks } from '../../../hooks/useTasks';
-import { updateTask } from '../../../firebaseLazy';
 import { TaskForm } from '../TasksPanel';
-import { bucketOf, completion, dueLabel } from '../../../utils/tasks';
+import { bucketOf, dueLabel } from '../../../utils/tasks';
 import { Badge } from '../../ui';
+import TaskDoneFlow from '../TaskDoneFlow';
+import { userDisplayName } from '../../../utils/assignees';
 
 /** The open tasks behind one client, and a quick way to add the next one */
 export default function LeadTasks({ lead, isAr, triggerToast, onUpdateLead, title }) {
   const { currentUser } = useAuth();
   const { tasks } = useTasks();
-  const me = useMemo(() => ({ uid: currentUser?.uid, name: currentUser?.displayName || currentUser?.name || currentUser?.email?.split('@')[0] || '' }), [currentUser]);
+  const me = useMemo(() => ({ uid: currentUser?.uid, name: userDisplayName(currentUser) }), [currentUser]);
   const open = useMemo(() => tasks.filter((t) => String(t.leadId) === String(lead?.id) && t.status !== 'done')
     .sort((a, b) => String(a.dueAt || '9999').localeCompare(String(b.dueAt || '9999'))), [tasks, lead?.id]);
+  const [flowTask, setFlowTask] = useState(null);
   const [now] = useState(() => Date.now()); // the drawer is short-lived: the time it opened is fine
   if (!lead?.id || !me.uid) return null;
 
-  const done = async (t) => {
-    if (!(await updateTask(t.id, completion(me)))) { triggerToast?.(isAr ? 'ماتحدّثتش، جرّب تاني' : 'Not updated', 'error'); return; }
-    const at = new Date().toISOString();
-    onUpdateLead?.(lead.id, { lastActivityAt: at, activityLogs: [{ timestamp: at, action: `${isAr ? 'أنجز مهمة' : 'Task done'}: ${t.title}` }, ...(lead.activityLogs || [])] }, lead.version);
-  };
+  const done = (t) => setFlowTask(t);
 
   return (
     <section className="crm-ld__block" aria-labelledby="crm-ld-tasks">
@@ -42,6 +40,7 @@ export default function LeadTasks({ lead, isAr, triggerToast, onUpdateLead, titl
           ))}
         </ul>
       )}
+      {flowTask && <TaskDoneFlow key={flowTask.id} task={flowTask} lead={lead} me={me} isAr={isAr} onUpdateLead={onUpdateLead} triggerToast={triggerToast} onClose={() => setFlowTask(null)} />}
       <TaskForm isAr={isAr} me={me} lead={{ id: lead.id, name: lead.name }} triggerToast={triggerToast} compact />
     </section>
   );

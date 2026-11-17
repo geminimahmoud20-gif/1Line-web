@@ -12,7 +12,9 @@ const SUGGESTIONS = {
   viewing_set: { title: 'معاينة مع العميل', kind: 'visit', priority: 'high', days: 1, needsTime: true },
   viewing_done: { title: 'متابعة بعد المعاينة', kind: 'call', priority: 'high', days: 1 },
   offer: { title: 'متابعة العرض', kind: 'call', priority: 'high', days: 2 },
-  agreed: { title: 'تجهيز العقد والأوراق', kind: 'docs', priority: 'high', days: 1 }
+  agreed: { title: 'تجهيز العقد والأوراق', kind: 'docs', priority: 'high', days: 1 },
+  // a task was ticked off and nothing else is planned for this client
+  task_done: { title: 'متابعة العميل', kind: 'call', priority: 'normal', days: 1 }
 };
 
 /** The suggested next task after this outcome, or null when none is needed (no answer has its own retries; negatives end the chase) */

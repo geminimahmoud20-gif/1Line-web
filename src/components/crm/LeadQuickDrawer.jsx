@@ -32,6 +32,7 @@ import { buildTimeline } from '../../utils/clientTimeline';
 import './lead-drawer.css';
 import BrokerFile from './lead-profile/BrokerFile';
 import { brokerUnits, brokerDemands } from '../../utils/brokerFile';
+import { userDisplayName } from '../../utils/assignees';
 
 export default function LeadQuickDrawer({
   lead,
@@ -190,7 +191,7 @@ export default function LeadQuickDrawer({
   // its reason, «لم يرد» counts the attempts, and a positive one moves a brand-new client to «مؤهل».
   const handleLogCall = (outcomeId, extra = {}) => {
     if (!onUpdateLead) return;
-    const me = { uid: currentUser?.uid, name: currentUser?.displayName || currentUser?.name || currentUser?.email?.split('@')[0] || '' };
+    const me = { uid: currentUser?.uid, name: userDisplayName(currentUser) };
     const entry = outcomeEntry(outcomeId, me, extra);
     if (!entry) {
       triggerToast?.(isAr ? 'النتيجة السلبية لازم يتسجّل معاها السبب.' : 'A negative outcome needs a reason.', 'error');
@@ -215,7 +216,7 @@ export default function LeadQuickDrawer({
 
   const skipNextStep = () => {
     const at = new Date().toISOString();
-    const who = currentUser?.displayName || currentUser?.name || currentUser?.email?.split('@')[0] || '';
+    const who = userDisplayName(currentUser);
     onUpdateLead?.(lead.id, {
       activityLogs: [{ timestamp: at, action: SKIP_LOG, kind: 'note', ...(who ? { agent: who } : {}) }, ...(Array.isArray(lead.activityLogs) ? lead.activityLogs : [])].slice(0, 100)
     }, lead.version);
@@ -227,7 +228,7 @@ export default function LeadQuickDrawer({
     e.preventDefault();
     if (!newNote.trim() || !onUpdateLead) return;
     const at = new Date().toISOString();
-    const me = currentUser?.displayName || currentUser?.name || currentUser?.email?.split('@')[0] || '';
+    const me = userDisplayName(currentUser);
     onUpdateLead(lead.id, {
       activityLogs: [{ timestamp: at, action: newNote.trim(), kind: 'note', ...(me ? { agent: me } : {}) }, ...(Array.isArray(lead.activityLogs) ? lead.activityLogs : [])].slice(0, 100),
       lastActivityAt: at
@@ -502,7 +503,7 @@ export default function LeadQuickDrawer({
           lead={lead}
           outcomeId={nextStepFor}
           isAr={isAr}
-          me={{ uid: currentUser?.uid, name: currentUser?.displayName || currentUser?.name || currentUser?.email?.split('@')[0] || '' }}
+          me={{ uid: currentUser?.uid, name: userDisplayName(currentUser) }}
           onSaved={(t) => { setNextStepFor(''); triggerToast?.(isAr ? `اتضافت الخطوة الجاية: ${t.title} (${dueLabel(t, true)}). هفكّرك قبلها.` : 'Next step saved', 'success'); }}
           onSkip={skipNextStep}
         />
