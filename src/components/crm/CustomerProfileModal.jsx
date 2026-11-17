@@ -2,6 +2,8 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import useTeamMembers from '../../hooks/useTeamMembers';
 import { assigneeValue, assignmentUpdates, assigneeLabel } from '../../utils/assignees';
 import { getLiveLeadDesks } from '../../utils/rbacRules';
+import { INBOX_STAGES, pipelineStageLabel } from '../../utils/inboxView';
+import './client-profile.css';
 import { Phone, MessageSquare, CheckCircle2, Plus, Send, Activity, Lock, Calendar, Download } from 'lucide-react';
 
 
@@ -10,7 +12,8 @@ import { generateGoogleCalendarUrl, downloadIcsFile } from '../../utils/calendar
 import CustomerOverviewTab from './lead-profile/CustomerOverviewTab';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { parseMoney } from '../../utils/crmLeadViews';
-import { normalizeAreaKey } from '../../utils/areasData';
+import { normalizeAreaKey, getAreas } from '../../utils/areasData';
+import { areaNameOf } from '../../utils/areaLookup';
 import { isValidPhoneNumber } from '../../utils/securityShield';
 import useBodyScrollLock from '../../hooks/useBodyScrollLock';
 import VisitorJourney from './analytics/VisitorJourney';
@@ -251,6 +254,41 @@ export default function CustomerProfileModal({
 
   const cleanPhone = (formData.whatsapp || formData.phone || '').replace(/[^0-9]/g, '');
 
+  const canContact = canViewLeadPhone(userRole);
+  const stageLabel = (INBOX_STAGES.find((st) => st.id === formData.status) || {})[isAr ? 'label_ar' : 'label_en'] || pipelineStageLabel(formData.status, isAr);
+  const logs = Array.isArray(lead.activityLogs) ? lead.activityLogs : [];
+  const when = (t) => {
+    const d = new Date(t);
+    return Number.isFinite(d.getTime()) ? `${d.toLocaleTimeString(isAr ? 'ar-EG-u-nu-latn' : 'en-US', { hour: '2-digit', minute: '2-digit' })} · ${d.toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US', { day: 'numeric', month: 'short' })}` : '';
+  };
+  const eventTone = (type) => {
+    switch (type) {
+      case 'whatsapp_click': return ['positive', isAr ? 'نقرة واتساب' : 'WhatsApp Click'];
+      case 'calculator_used': return ['info', isAr ? 'حاسبة التمويل' : 'Calculator Used'];
+      case 'property_view': return ['warn', isAr ? 'تصفح عقار' : 'Listing Viewed'];
+      case 'compare_added': return ['violet', isAr ? 'إضافة للمقارنة' : 'Added to Compare'];
+      case 'favorite_added': return ['danger', isAr ? 'إضافة للمفضلة' : 'Favorited'];
+      case 'brochure_request': return ['info', isAr ? 'طلب بروشور (واتساب)' : 'Brochure request'];
+      case 'brochure_download': return ['info', isAr ? 'تنزيل بروشور' : 'PDF Brochure'];
+      default: return ['info', isAr ? 'تصفح الموقع' : 'Page View'];
+    }
+  };
+  const tabs = [
+    { id: 'overview', label: isAr ? 'الملف' : 'Profile' },
+    { id: 'timeline', label: isAr ? 'السجل' : 'History', count: logs.length },
+    { id: 'actions', label: isAr ? 'المتابعة' : 'Follow-up' },
+    { id: 'properties', label: isAr ? 'عقارات مرشحة' : 'Matches', count: matchedProperties.length },
+    { id: 'journey', label: isAr ? 'رحلة الزائر' : 'Journey', count: journeyEvents.length }
+  ];
+  const stats = [
+    [isAr ? 'النوع' : 'Type', formData.type === 'buyer' ? (isAr ? 'مشتري' : 'Buyer') : (isAr ? 'بائع / معلن' : 'Seller')],
+    [isAr ? 'الميزانية' : 'Budget', formData.budget ? `${formData.budget} ${isAr ? 'ج.م' : 'EGP'}` : (isAr ? 'مرنة' : 'Flexible')],
+    [isAr ? 'المنطقة' : 'Area', !formData.area ? 'سوهاج' : formData.area === 'all' ? (isAr ? 'كل المناطق' : 'All areas') : (areaNameOf(formData.area, getAreas(), isAr) || formData.area)],
+    [isAr ? 'المسؤول' : 'Owner', ownerLabel || '—'],
+    [isAr ? 'المصدر' : 'Source', lead?.marketingAttribution?.source || lead?.utmSource || (isAr ? 'مباشر' : 'Direct')],
+    [isAr ? 'المتابعة' : 'Next', formData.nextActionDate || formData.nextActionNote || (isAr ? 'لسه' : 'Not set')]
+  ];
+
   return (
     <div
       className="track-modal-backdrop"
@@ -261,253 +299,87 @@ export default function CustomerProfileModal({
         }
       }}
     >
-      <div className="property-form-modal-card animate-fadeIn" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '860px', width: '95%', background: 'var(--crm-card)', color: 'var(--crm-ink)', border: '1px solid var(--crm-line-strong)', boxShadow: '0 20px 50px rgba(0,0,0,0.15)' }}>
-        {/* Header Bar */}
-        <div className="modal-form-header" style={{ borderBottom: '1px solid var(--crm-line)', paddingBottom: '16px', background: 'var(--crm-card)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              width: '46px',
-              height: '46px',
-              borderRadius: '50%',
-              background: formData.temperature === 'hot' ? 'var(--crm-danger-soft)' : formData.temperature === 'warm' ? 'var(--crm-warn-soft)' : 'var(--crm-info-soft)',
-              color: formData.temperature === 'hot' ? 'var(--crm-danger)' : formData.temperature === 'warm' ? 'var(--crm-warn)' : 'var(--crm-info)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 'var(--crm-text-xl)'
-            }}>
-              {String(formData.name || '').trim().charAt(0) || '—'}
-            </div>
-
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <h3 style={{ margin: 0, fontSize: 'var(--crm-text-lg)', color: 'var(--crm-ink)', fontWeight: 700 }}>{formData.name}</h3>
-                <LeadScorePill lead={{ ...lead, ...formData }} isAr={isAr} suffix={isAr ? ' اهتمام' : ' score'} />
-                <span className="badge" style={{ background: 'var(--crm-subtle-2)', color: 'var(--crm-body)', border: '1px solid var(--crm-line-strong)', fontSize: 'var(--crm-text-xs)', fontWeight: 'bold' }}>
-                  {formData.status?.toUpperCase()}
-                </span>
-              </div>
-              <span style={{ fontSize: 'var(--crm-text-sm)', color: 'var(--crm-muted)' }}>
-                {formData.cityOrExpat} • {isAr ? 'المسؤول:' : 'Agent:'} {ownerLabel}
-              </span>
-            </div>
+      <div className="property-form-modal-card cp animate-fadeIn" role="dialog" aria-modal="true" aria-label={formData.name} onClick={(e) => e.stopPropagation()}>
+        <header className="cp__head">
+          <span className={`cp__avatar cp__avatar--${formData.temperature || 'none'}`} aria-hidden="true">{String(formData.name || '').trim().charAt(0) || '—'}</span>
+          <div className="cp__who">
+            <h3 className="cp__name">{formData.name}</h3>
+            <p className="cp__meta">{[formData.cityOrExpat, ownerLabel ? `${isAr ? 'المسؤول:' : 'Owner:'} ${ownerLabel}` : ''].filter(Boolean).join(' · ')}</p>
           </div>
+          <button type="button" className="cp__close" onClick={handleSafeClose} aria-label={isAr ? 'إغلاق' : 'Close'}>✕</button>
+          <div className="cp__badges">
+            <LeadScorePill lead={{ ...lead, ...formData }} isAr={isAr} suffix={isAr ? ' اهتمام' : ' score'} />
+            <span className="cp__stage">{stageLabel}</span>
+          </div>
+        </header>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {/* Quick WhatsApp Action */}
-            {canViewLeadPhone(userRole) ? (
-              <button
-                type="button"
-                className="btn btn-sm"
-                onClick={() => { auditContactUse(lead, 'whatsapp'); window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}`, '_blank', 'noopener,noreferrer'); }}
-                style={{ padding: '6px 12px', fontSize: 'var(--crm-text-sm)', background: 'var(--crm-positive-soft)', color: 'var(--crm-positive)', border: '1px solid var(--crm-positive-line)', fontWeight: 'bold' }}
-              >
-                <MessageSquare size={14} />
-                <span>WhatsApp</span>
+        <div className="cp__actions">
+          {canContact ? (
+            <>
+              <button type="button" className="cp__btn cp__btn--wa" onClick={() => { auditContactUse(lead, 'whatsapp'); window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}`, '_blank', 'noopener,noreferrer'); }}>
+                <MessageSquare size={16} aria-hidden="true" /><span>{isAr ? 'واتساب' : 'WhatsApp'}</span>
               </button>
-            ) : (
-              <span className="badge" style={{ fontSize: 'var(--crm-text-xs)', background: 'var(--crm-subtle)', color: 'var(--crm-muted)', border: '1px solid var(--crm-line)' }}>
-                <Lock size={12} style={{ display: 'inline', marginInlineEnd: '4px' }} />
-                {isAr ? 'واتساب محجوب' : 'WhatsApp Protected'}
-              </span>
-            )}
-
-            {/* Quick Call Action */}
-            {canViewLeadPhone(userRole) ? (
-              <button
-                type="button"
-                className="btn btn-sm"
-                onClick={() => { auditContactUse(lead, 'call'); window.open(`tel:${formData.phone}`, '_self'); }}
-                style={{ padding: '6px 12px', fontSize: 'var(--crm-text-sm)', background: 'var(--crm-brand-navy)', color: 'var(--crm-on-dark)', border: '1px solid var(--crm-brand-navy)', fontWeight: 'bold' }}
-              >
-                <Phone size={14} />
-                <span>{isAr ? 'اتصال' : 'Call'}</span>
+              <button type="button" className="cp__btn cp__btn--call" onClick={() => { auditContactUse(lead, 'call'); window.open(`tel:${formData.phone}`, '_self'); }}>
+                <Phone size={16} aria-hidden="true" /><span>{isAr ? 'اتصال' : 'Call'}</span>
               </button>
-            ) : (
-              <span className="badge" style={{ fontSize: 'var(--crm-text-xs)', background: 'var(--crm-subtle)', color: 'var(--crm-muted)', border: '1px solid var(--crm-line)' }}>
-                <Lock size={12} style={{ display: 'inline', marginInlineEnd: '4px' }} />
-                {isAr ? 'اتصال محجوب' : 'Call Protected'}
-              </span>
-            )}
+            </>
+          ) : (
+            <span className="cp__locked"><Lock size={14} aria-hidden="true" />{isAr ? 'الاتصال والواتساب محجوبين لدورك' : 'Call and WhatsApp are protected for your role'}</span>
+          )}
+          <button
+            type="button"
+            className="cp__btn cp__btn--icon"
+            aria-label={isAr ? 'إضافة موعد معاينة في تقويم Google' : 'Add viewing to Google Calendar'}
+            title={isAr ? 'تقويم Google' : 'Google Calendar'}
+            onClick={() => {
+              const displayPhone = canContact ? formData.phone : maskPhoneNumber(formData.phone, userRole);
+              const calUrl = generateGoogleCalendarUrl({
+                title: `${isAr ? 'معاينة عقارية 1Line' : '1Line Property Viewing'}: ${formData.name}`,
+                description: `العميل: ${formData.name}\nالهاتف: ${displayPhone}\nنوع العقار: ${formData.propertyType}\nالملاحظات: ${formData.nextActionNote || (lead?.notes || 'معاينة ميدانية')}`,
+                location: `محافظة سوهاج - ${formData.area || 'المقر الرئيسي'}`,
+                startTime: formData.nextActionDate || new Date(Date.now() + 24 * 3600 * 1000)
+              });
+              window.open(calUrl, '_blank', 'noopener,noreferrer');
+              if (triggerToast) triggerToast(isAr ? 'جاري فتح تقويم Google لجدولة الموعد...' : 'Opening Google Calendar...', 'info');
+            }}
+          >
+            <Calendar size={18} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="cp__btn cp__btn--icon"
+            aria-label={isAr ? 'تنزيل ملف موعد .ics لأجهزة iPhone و Outlook' : 'Download .ics for Apple/Outlook'}
+            title=".ics"
+            onClick={() => {
+              const displayPhone = canContact ? formData.phone : maskPhoneNumber(formData.phone, userRole);
+              downloadIcsFile({
+                title: `معاينة عقارية 1Line: ${formData.name}`,
+                description: `العميل: ${formData.name} (${displayPhone})\nالملاحظات: ${formData.nextActionNote || (lead?.notes || 'معاينة عقارية')}`,
+                location: `محافظة سوهاج - ${formData.area || 'المقر'}`,
+                startTime: formData.nextActionDate || new Date(Date.now() + 24 * 3600 * 1000)
+              }, `1Line-${formData.name || 'Viewing'}.ics`);
+              if (triggerToast) triggerToast(isAr ? 'تم تنزيل ملف الموعد لتقويم هاتفك بنجاح!' : 'Calendar file (.ics) downloaded!', 'success');
+            }}
+          >
+            <Download size={18} aria-hidden="true" />
+          </button>
+        </div>
 
-            {/* Quick Google Calendar Sync */}
-            <button
-              type="button"
-              className="btn btn-sm"
-              title={isAr ? 'إضافة موعد معاينة في تقويم Google' : 'Sync viewing to Google Calendar'}
-              onClick={() => {
-                const displayPhone = canViewLeadPhone(userRole) ? formData.phone : maskPhoneNumber(formData.phone, userRole);
-                const calUrl = generateGoogleCalendarUrl({
-                  title: `${isAr ? 'معاينة عقارية 1Line' : '1Line Property Viewing'}: ${formData.name}`,
-                  description: `العميل: ${formData.name}\nالهاتف: ${displayPhone}\nنوع العقار: ${formData.propertyType}\nالملاحظات: ${formData.nextActionNote || (lead?.notes || 'معاينة ميدانية')}`,
-                  location: `محافظة سوهاج - ${formData.area || 'المقر الرئيسي'}`,
-                  startTime: formData.nextActionDate || new Date(Date.now() + 24 * 3600 * 1000)
-                });
-                window.open(calUrl, '_blank', 'noopener,noreferrer');
-                if (triggerToast) {
-                  triggerToast(isAr ? 'جاري فتح تقويم Google لجدولة الموعد...' : 'Opening Google Calendar...', 'info');
-                }
-              }}
-              style={{ padding: '6px 12px', fontSize: 'var(--crm-text-sm)', background: 'var(--crm-info-soft)', color: 'var(--crm-info)', border: '1px solid var(--crm-info-line)', fontWeight: 'bold' }}
-            >
-              <Calendar size={14} />
-              <span>{isAr ? 'تقويم Google' : 'Google Cal'}</span>
+        <dl className="cp__stats">
+          {stats.map(([label, value]) => (
+            <div key={label} className="cp__stat"><dt>{label}</dt><dd>{value}</dd></div>
+          ))}
+        </dl>
+
+        <div className="cp__tabs" role="tablist" aria-label={isAr ? 'أقسام ملف العميل' : 'Client sections'}>
+          {tabs.map((t) => (
+            <button key={t.id} type="button" role="tab" aria-selected={profileTab === t.id} className="cp__tab" onClick={() => setProfileTab(t.id)}>
+              {t.label}{t.count ? <span className="cp__count">{t.count}</span> : null}
             </button>
-
-            {/* Download .ics for Apple / Outlook */}
-            <button
-              type="button"
-              className="btn btn-sm"
-              title={isAr ? 'تنزيل ملف موعد .ics لأجهزة iPhone و Outlook' : 'Download .ics for Apple/Outlook'}
-              onClick={() => {
-                const displayPhone = canViewLeadPhone(userRole) ? formData.phone : maskPhoneNumber(formData.phone, userRole);
-                downloadIcsFile({
-                  title: `معاينة عقارية 1Line: ${formData.name}`,
-                  description: `العميل: ${formData.name} (${displayPhone})\nالملاحظات: ${formData.nextActionNote || (lead?.notes || 'معاينة عقارية')}`,
-                  location: `محافظة سوهاج - ${formData.area || 'المقر'}`,
-                  startTime: formData.nextActionDate || new Date(Date.now() + 24 * 3600 * 1000)
-                }, `1Line-${formData.name || 'Viewing'}.ics`);
-                if (triggerToast) {
-                  triggerToast(isAr ? 'تم تنزيل ملف الموعد لتقويم هاتفك بنجاح!' : 'Calendar file (.ics) downloaded!', 'success');
-                }
-              }}
-              style={{ padding: '6px 10px', fontSize: 'var(--crm-text-sm)', background: 'var(--crm-subtle)', color: 'var(--crm-body)', border: '1px solid var(--crm-line-strong)' }}
-            >
-              <Download size={13} />
-              <span>.ICS</span>
-            </button>
-
-            <button type="button" className="drawer-close-btn" onClick={handleSafeClose} style={{ background: 'var(--crm-subtle-2)', color: 'var(--crm-ink)', border: '1px solid var(--crm-line-strong)' }}>✕</button>
-          </div>
+          ))}
         </div>
 
-        {/* 📇 TOP CONDENSED SNAPSHOT STRIP - Clean Slate White */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
-          gap: '8px',
-          background: 'var(--crm-subtle)',
-          borderBottom: '1px solid var(--crm-line)',
-          padding: '10px 20px',
-          fontSize: 'var(--crm-text-xs)'
-        }}>
-          <div>
-            <span style={{ color: 'var(--crm-muted)', display: 'block', fontSize: 'var(--crm-text-xs)', fontWeight: '600' }}>{isAr ? 'نوع العميل' : 'Type'}</span>
-            <span style={{ fontWeight: 'bold', color: 'var(--crm-warn)' }}>{formData.type === 'buyer' ? (isAr ? 'مشتري جاد' : 'Buyer') : (isAr ? 'بائع / معلن' : 'Seller')}</span>
-          </div>
-          <div>
-            <span style={{ color: 'var(--crm-muted)', display: 'block', fontSize: 'var(--crm-text-xs)', fontWeight: '600' }}>{isAr ? 'الميزانية' : 'Budget'}</span>
-            <span style={{ fontWeight: 'bold', color: 'var(--crm-ink)' }}>{formData.budget ? `${formData.budget} ج.م` : (isAr ? 'مرنة / تفاوض' : 'Negotiable')}</span>
-          </div>
-          <div>
-            <span style={{ color: 'var(--crm-muted)', display: 'block', fontSize: 'var(--crm-text-xs)', fontWeight: '600' }}>{isAr ? 'المنطقة المطلوبة' : 'Target Area'}</span>
-            <span style={{ fontWeight: 'bold', color: 'var(--crm-ink)' }}>{formData.area || 'سوهاج'}</span>
-          </div>
-          <div>
-            <span style={{ color: 'var(--crm-muted)', display: 'block', fontSize: 'var(--crm-text-xs)', fontWeight: '600' }}>{isAr ? 'المسؤول' : 'Agent'}</span>
-            <span style={{ fontWeight: 'bold', color: 'var(--crm-ink)' }}>{ownerLabel}</span>
-          </div>
-          <div>
-            <span style={{ color: 'var(--crm-muted)', display: 'block', fontSize: 'var(--crm-text-xs)', fontWeight: '600' }}>{isAr ? 'مصدر الحملة' : 'Source'}</span>
-            <span style={{ fontWeight: 'bold', color: 'var(--crm-violet)', fontSize: 'var(--crm-text-xs)' }}>
-              {lead?.marketingAttribution?.source || lead?.utmSource || (isAr ? 'مباشر' : 'Direct')}
-            </span>
-          </div>
-          <div>
-            <span style={{ color: 'var(--crm-muted)', display: 'block', fontSize: 'var(--crm-text-xs)', fontWeight: '600' }}>{isAr ? 'المتابعة القادمة' : 'Next Action'}</span>
-            <span style={{ fontWeight: 'bold', color: 'var(--crm-info)' }}>{formData.nextActionDate || formData.nextActionNote || (isAr ? 'قريباً' : 'Soon')}</span>
-          </div>
-        </div>
-
-        {/* 360 Navigation Sub-Tabs - Clean White */}
-        <div style={{
-          display: 'flex',
-          gap: '8px',
-          padding: '10px 20px',
-          background: 'var(--crm-card)',
-          borderBottom: '1px solid var(--crm-line)',
-          overflowX: 'auto'
-        }}>
-          <button
-            type="button"
-            className="btn btn-sm"
-            onClick={() => setProfileTab('overview')}
-            style={{
-              fontSize: 'var(--crm-text-sm)',
-              fontWeight: profileTab === 'overview' ? 'bold' : '600',
-              background: profileTab === 'overview' ? 'var(--crm-brand-navy)' : 'var(--crm-subtle)',
-              color: profileTab === 'overview' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
-              border: profileTab === 'overview' ? '1px solid var(--crm-brand-navy)' : '1px solid var(--crm-line)',
-              borderRadius: '8px'
-            }}
-          >
-            {isAr ? 'الملف الشخصي والمالي' : 'Overview & Financials'}
-          </button>
-          <button
-            type="button"
-            className="btn btn-sm"
-            onClick={() => setProfileTab('journey')}
-            style={{
-              fontSize: 'var(--crm-text-sm)',
-              fontWeight: profileTab === 'journey' ? 'bold' : '600',
-              background: profileTab === 'journey' ? 'var(--crm-info-solid)' : 'var(--crm-subtle)',
-              color: profileTab === 'journey' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
-              border: profileTab === 'journey' ? '1px solid var(--crm-info)' : '1px solid var(--crm-line)',
-              borderRadius: '8px'
-            }}
-          >
-            {isAr ? 'رحلة ونقرات الزائر' : 'Digital Journey'} ({journeyEvents.length})
-          </button>
-          <button
-            type="button"
-            className="btn btn-sm"
-            onClick={() => setProfileTab('properties')}
-            style={{
-              fontSize: 'var(--crm-text-sm)',
-              fontWeight: profileTab === 'properties' ? 'bold' : '600',
-              background: profileTab === 'properties' ? 'var(--crm-warn-solid)' : 'var(--crm-subtle)',
-              color: profileTab === 'properties' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
-              border: profileTab === 'properties' ? '1px solid var(--crm-warn)' : '1px solid var(--crm-line)',
-              borderRadius: '8px'
-            }}
-          >
-            {isAr ? 'العقارات المرشحة' : 'Matched Properties'} ({matchedProperties.length})
-          </button>
-          <button
-            type="button"
-            className="btn btn-sm"
-            onClick={() => setProfileTab('timeline')}
-            style={{
-              fontSize: 'var(--crm-text-sm)',
-              fontWeight: profileTab === 'timeline' ? 'bold' : '600',
-              background: profileTab === 'timeline' ? 'var(--crm-violet-solid)' : 'var(--crm-subtle)',
-              color: profileTab === 'timeline' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
-              border: profileTab === 'timeline' ? '1px solid var(--crm-violet)' : '1px solid var(--crm-line)',
-              borderRadius: '8px'
-            }}
-          >
-            {isAr ? 'سجل المكالمات' : 'Call Logs'} ({(lead.activityLogs || []).length})
-          </button>
-          <button
-            type="button"
-            className="btn btn-sm"
-            onClick={() => setProfileTab('actions')}
-            style={{
-              fontSize: 'var(--crm-text-sm)',
-              fontWeight: profileTab === 'actions' ? 'bold' : '600',
-              background: profileTab === 'actions' ? 'var(--crm-positive-solid)' : 'var(--crm-subtle)',
-              color: profileTab === 'actions' ? 'var(--crm-on-dark)' : 'var(--crm-muted)',
-              border: profileTab === 'actions' ? '1px solid var(--crm-positive)' : '1px solid var(--crm-line)',
-              borderRadius: '8px'
-            }}
-          >
-            {isAr ? 'المتابعة القادمة' : 'Next Action'}
-          </button>
-        </div>
-
-        {/* Modal Body */}
-        <div style={{ padding: '20px', maxHeight: '550px', overflowY: 'auto' }}>
-          {/* TAB 1: OVERVIEW & FINANCIALS */}
+        <div className="cp__body">
           {profileTab === 'overview' && (
             <CustomerOverviewTab
               AVAILABLE_TAGS={AVAILABLE_TAGS}
@@ -525,180 +397,59 @@ export default function CustomerProfileModal({
             />
           )}
 
-          {/* TAB: DIGITAL JOURNEY & VISITOR CLICKSTREAM */}
           {/* Server-side analytics profile (visitor accepted analytics when submitting) */}
           {profileTab === 'journey' && lead.analyticsVisitorId && (
             <VisitorJourney visitorId={lead.analyticsVisitorId} properties={properties} isAr={isAr} />
           )}
           {profileTab === 'journey' && !lead.analyticsVisitorId && (
-            <div>
-              <div style={{
-                background: isLiveTracked ? 'var(--crm-positive-soft)' : 'var(--crm-info-soft)',
-                border: `1px solid ${isLiveTracked ? 'var(--crm-positive-line)' : 'var(--crm-info-line)'}`,
-                borderRadius: '8px',
-                padding: '14px 18px',
-                marginBottom: '16px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: '10px'
-              }}>
-                <div>
-                  <h4 style={{ margin: 0, color: isLiveTracked ? 'var(--crm-positive)' : 'var(--crm-info)', fontSize: 'var(--crm-text-md)', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700 }}>
-                    <Activity size={16} />
-                    <span>{isAr ? 'البصمة الرقمية وسلوك التصفح الفعلي للعميل' : 'Customer Digital Footprint & Dwell Time'}</span>
-                  </h4>
-                  <small style={{ color: 'var(--crm-body)' }}>
-                    {isLiveTracked 
-                      ? (isAr ? 'الصفحات والعقارات اللي العميل فتحها قبل ما يبعت طلبه' : 'Pages and listings the client opened before submitting.') 
-                      : (isAr ? 'مفيش رحلة تصفح متسجلة للعميل ده (بتتسجل بس لما يبعت طلبه من الموقع على جهازه)' : 'No browsing journey recorded (only captured when the client submits from the site).')}
-                  </small>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  <span className="badge" style={{
-                    background: isLiveTracked ? 'var(--crm-positive-soft)' : 'var(--crm-warn-soft)',
-                    color: isLiveTracked ? 'var(--crm-positive)' : 'var(--crm-warn)',
-                    fontWeight: 'bold',
-                    border: `1px solid ${isLiveTracked ? 'var(--crm-positive)' : 'var(--crm-warn-line)'}`,
-                    fontSize: 'var(--crm-text-xs)'
-                  }}>
-                    {isLiveTracked ? (isAr ? 'مسجلة من جهاز العميل' : 'Recorded on client device') : (isAr ? 'غير متاحة' : 'Not available')}
-                  </span>
-
-                  {dwellTimeLabel && (
-                  <span className="badge" style={{ background: 'var(--crm-info-soft)', color: 'var(--crm-info)', fontWeight: 'bold', border: '1px solid var(--crm-info-line)' }}>
-                    ⏱️ {isAr ? `مدة الجلسة: ${dwellTimeLabel}` : `Dwell Time: ${dwellTimeLabel}`}
-                  </span>
-                  )}
-                </div>
+            <div className="cp__stack">
+              <div className={`cp__note ${isLiveTracked ? 'cp__note--ok' : ''}`}>
+                <h4 className="cp__h"><Activity size={16} aria-hidden="true" />{isAr ? 'سلوك تصفح العميل قبل الطلب' : 'What the client browsed before the request'}</h4>
+                <p>
+                  {isLiveTracked
+                    ? (isAr ? 'الصفحات والعقارات اللي العميل فتحها قبل ما يبعت طلبه، متسجلة من جهازه.' : 'Pages and listings the client opened before submitting, recorded on their device.')
+                    : (isAr ? 'مفيش رحلة تصفح متسجلة للعميل ده (بتتسجل بس لما يبعت طلبه من الموقع على جهازه).' : 'No browsing journey recorded (only captured when the client submits from the site).')}
+                </p>
+                {dwellTimeLabel && <span className="cp__chip">{isAr ? `مدة الجلسة: ${dwellTimeLabel}` : `Dwell time: ${dwellTimeLabel}`}</span>}
               </div>
-
-              {/* Step-by-step Journey Stream */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <ol className="cp__events">
                 {journeyEvents.map((evt, idx) => {
-                  const getEventLabel = (type) => {
-                    switch (type) {
-                      case 'whatsapp_click':
-                        return { text: isAr ? 'نقرة واتساب' : 'WhatsApp Click', color: 'var(--crm-positive)', bg: 'var(--crm-positive-soft)', border: 'var(--crm-positive-line)' };
-                      case 'calculator_used':
-                        return { text: isAr ? 'حاسبة التمويل' : 'Calculator Used', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)', border: 'var(--crm-info-line)' };
-                      case 'property_view':
-                        return { text: isAr ? 'تصفح عقار' : 'Listing Viewed', color: 'var(--crm-accent-text)', bg: 'var(--crm-warn-soft)', border: 'var(--crm-warn-line)' };
-                      case 'compare_added':
-                        return { text: isAr ? 'إضافة للمقارنة' : 'Added to Compare', color: 'var(--crm-violet)', bg: 'var(--crm-violet-soft)', border: 'var(--crm-violet-line)' };
-                      case 'favorite_added':
-                        return { text: isAr ? 'إضافة للمفضلة' : 'Favorited', color: 'var(--crm-danger)', bg: 'var(--crm-danger-soft)', border: 'var(--crm-danger-line)' };
-                      case 'brochure_request':
-                        return { text: isAr ? 'طلب بروشور (واتساب)' : 'Brochure request', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)', border: 'var(--crm-info-line)' };
-                      case 'brochure_download':
-                        return { text: isAr ? 'تنزيل بروشور' : 'PDF Brochure', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)', border: 'var(--crm-info-line)' };
-                      default:
-                        return { text: isAr ? 'تصفح الموقع' : 'Page View', color: 'var(--crm-info)', bg: 'var(--crm-info-soft)', border: 'var(--crm-info-line)' };
-                    }
-                  };
-
-                  const badgeInfo = getEventLabel(evt.eventType);
-                  const title = evt.metadata?.title || evt.url || (isAr ? 'تصفح صفحة' : 'Page Visit');
-
+                  const [tone, text] = eventTone(evt.eventType);
                   return (
-                    <div
-                      key={evt.id || idx}
-                      style={{
-                        background: 'var(--crm-card)',
-                        border: '1px solid var(--crm-line)',
-                        borderInlineStart: `4px solid ${badgeInfo.color}`,
-                        borderRadius: '8px',
-                        padding: '12px 16px',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        gap: '12px',
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
-                      }}
-                    >
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px', flexWrap: 'wrap' }}>
-                          <span style={{
-                            background: badgeInfo.bg,
-                            color: badgeInfo.color,
-                            border: `1px solid ${badgeInfo.border}`,
-                            padding: '2px 8px',
-                            borderRadius: '4px',
-                            fontSize: 'var(--crm-text-xs)',
-                            fontWeight: 'bold'
-                          }}>
-                            {badgeInfo.text}
-                          </span>
-                          <strong style={{ fontSize: 'var(--crm-text-base)', color: 'var(--crm-ink)' }}>
-                            {title}
-                          </strong>
-                        </div>
-                        <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
-                          {formData.cityOrExpat || 'سوهاج'} • {isAr ? 'عبر متصفح الهاتف / الويب' : 'Mobile / Web'}
-                        </span>
-                      </div>
-
-                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-faint)', whiteSpace: 'nowrap' }}>
-                        {new Date(evt.timestamp).toLocaleTimeString(isAr ? 'ar-EG-u-nu-latn' : 'en-US')}
-                      </span>
-                    </div>
+                    <li key={evt.id || idx} className="cp__event" data-tone={tone}>
+                      <span className="cp__event-tag">{text}</span>
+                      <strong className="cp__event-title">{evt.metadata?.title || evt.url || (isAr ? 'تصفح صفحة' : 'Page Visit')}</strong>
+                      <span className="cp__event-time">{when(evt.timestamp)}</span>
+                    </li>
                   );
                 })}
-              </div>
+              </ol>
             </div>
           )}
 
-          {/* TAB 2: MATCHED & INSPECTED PROPERTIES */}
           {profileTab === 'properties' && (
-            <div>
-              <h4 style={{ margin: '0 0 14px 0', color: 'var(--crm-ink)', fontSize: 'var(--crm-text-md)', fontWeight: 700 }}>
-                {isAr ? 'العقارات والوحدات المقترحة لهذا العميل:' : 'Matched & Recommended Units:'}
-              </h4>
-
+            <div className="cp__stack">
+              <h4 className="cp__h">{isAr ? 'وحدات مقترحة للعميل' : 'Recommended units'}</h4>
               {matchedProperties.length === 0 && (
-                <p style={{ color: 'var(--crm-muted)', fontSize: 'var(--crm-text-sm)', margin: '0 0 12px' }}>
-                  {isAr
-                    ? 'مفيش وحدة منشورة بنفس النوع وفي حدود الميزانية دلوقتي.'
-                    : 'No published unit of this type within the budget right now.'}
-                </p>
+                <p className="cp__empty">{isAr ? 'مفيش وحدة منشورة بنفس النوع وفي حدود الميزانية دلوقتي.' : 'No published unit of this type within the budget right now.'}</p>
               )}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="cp__cards">
                 {matchedProperties.map((prop) => (
-                  <div
-                    key={prop.id}
-                    style={{
-                      background: 'var(--crm-card)',
-                      border: '1px solid var(--crm-line)',
-                      borderRadius: '8px',
-                      padding: '12px',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
-                    }}
-                  >
-                    <div>
-                      <strong style={{ fontSize: 'var(--crm-text-base)', display: 'block', color: 'var(--crm-ink)' }}>
-                        {isAr ? prop.title_ar : prop.title_en}
-                      </strong>
-                      <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-positive)', fontWeight: 'bold' }}>
-                        {prop.price?.toLocaleString('en-US')} ج.م • {prop.size} م²
-                      </span>
+                  <div key={prop.id} className="cp__card">
+                    <div className="cp__card-text">
+                      <strong>{isAr ? prop.title_ar : prop.title_en}</strong>
+                      <span>{prop.price?.toLocaleString('en-US')} {isAr ? 'ج.م' : 'EGP'} · {prop.size} {isAr ? 'م²' : 'm²'}</span>
                     </div>
-
                     <button
                       type="button"
-                      className="btn btn-sm btn-primary"
+                      className="cp__btn cp__btn--icon"
+                      aria-label={isAr ? 'إرسال الوحدة على الواتساب' : 'Send on WhatsApp'}
                       onClick={() => {
                         const waText = `أهلاً أ. ${formData.name}، بخصوص طلبك العقاري، نود ترشيح وحدة ${isAr ? prop.title_ar : prop.title_en} بسعر ${prop.price?.toLocaleString('en-US')} ج.م. هل نحدد موعداً للمعاينة؟`;
                         window.open(`https://wa.me/${formatWhatsAppPhone(cleanPhone)}?text=${encodeURIComponent(waText)}`, '_blank', 'noopener,noreferrer');
                       }}
-                      style={{ padding: '6px 10px', fontSize: 'var(--crm-text-xs)', background: 'var(--crm-brand-navy)', color: 'var(--crm-on-dark)', borderRadius: '6px' }}
-                      title={isAr ? 'إرسال بروشور الوحدة على الواتساب' : 'Send WhatsApp Brochure'}
                     >
-                      <Send size={13} />
+                      <Send size={16} aria-hidden="true" />
                     </button>
                   </div>
                 ))}
@@ -706,132 +457,60 @@ export default function CustomerProfileModal({
             </div>
           )}
 
-          {/* TAB 3: CALL LOGS & INTERACTIVE TIMELINE */}
           {profileTab === 'timeline' && (
-            <div>
-              {/* Add New Note Box */}
-              <form onSubmit={handleAddLog} style={{
-                background: 'var(--crm-card)',
-                border: '1px solid var(--crm-line-strong)',
-                borderRadius: '8px',
-                padding: '14px',
-                marginBottom: '20px',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
-              }}>
-                <label style={{ fontSize: 'var(--crm-text-sm)', fontWeight: 'bold', display: 'block', marginBottom: '8px', color: 'var(--crm-ink)' }}>
-                  {isAr ? 'تسجيل ملاحظة اتصال أو نتيجة مكالمة جديدة:' : 'Log Call / Meeting Notes:'}
-                </label>
-
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                  <select
-                    value={newLogType}
-                    onChange={(e) => setNewLogType(e.target.value)}
-                    className="form-input"
-                    style={{ padding: '6px 10px', fontSize: 'var(--crm-text-sm)', width: '160px', background: 'var(--crm-subtle)', border: '1px solid var(--crm-line-strong)', borderRadius: '6px', color: 'var(--crm-ink)' }}
-                  >
+            <div className="cp__stack">
+              <form onSubmit={handleAddLog} className="cp__logform">
+                <label htmlFor="cp-log-text" className="cp__h">{isAr ? 'سجّل مكالمة أو ملاحظة' : 'Log a call or note'}</label>
+                <div className="cp__logrow">
+                  <select value={newLogType} onChange={(e) => setNewLogType(e.target.value)} className="form-input cp__logtype" aria-label={isAr ? 'نوع التسجيل' : 'Type'}>
                     <option value="call">مكالمة هاتفية</option>
                     <option value="whatsapp">محادثة واتساب</option>
                     <option value="meeting">اجتماع / معاينة</option>
                     <option value="offer">تقديم عرض سعر</option>
                   </select>
-
                   <input
+                    id="cp-log-text"
                     type="text"
-                    placeholder={isAr ? 'اكتب ملخص المكالمة أو الاتفاق هنا...' : 'Enter note details...'}
+                    placeholder={isAr ? 'ملخص المكالمة أو الاتفاق...' : 'Enter note details...'}
                     value={newLogText}
                     onChange={(e) => setNewLogText(e.target.value)}
-                    className="form-input"
-                    style={{ flex: 1, fontSize: 'var(--crm-text-base)', background: 'var(--crm-card)', border: '1px solid var(--crm-line-strong)', borderRadius: '6px', color: 'var(--crm-ink)' }}
+                    className="form-input cp__logtext"
                     required
                   />
-
-                  <button type="submit" className="btn btn-sm btn-primary" style={{ padding: '6px 14px', background: 'var(--crm-brand-navy)', color: 'var(--crm-on-dark)', borderRadius: '6px', fontWeight: 'bold' }}>
-                    <Plus size={14} />
-                    <span>{isAr ? 'إضافة' : 'Add'}</span>
-                  </button>
+                  <button type="submit" className="cp__btn cp__btn--primary"><Plus size={16} aria-hidden="true" /><span>{isAr ? 'إضافة' : 'Add'}</span></button>
                 </div>
               </form>
-
-              {/* Timeline Items */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {(!lead.activityLogs || lead.activityLogs.length === 0) ? (
-                  <p style={{ textAlign: 'center', color: 'var(--crm-muted)', padding: '20px' }}>
-                    {isAr ? 'لا توجد سجلات اتصال سابقة' : 'No call logs recorded'}
-                  </p>
-                ) : (
-                  lead.activityLogs.map((log, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        background: 'var(--crm-card)',
-                        border: '1px solid var(--crm-line)',
-                        borderInlineStart: '4px solid var(--crm-brand-navy)',
-                        borderRadius: '8px',
-                        padding: '10px 14px',
-                        fontSize: 'var(--crm-text-base)',
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                        <strong style={{ color: 'var(--crm-ink)' }}>{log.action}</strong>
-                        <span style={{ fontSize: 'var(--crm-text-xs)', color: 'var(--crm-muted)' }}>
-                          {new Date(log.timestamp).toLocaleTimeString(isAr ? 'ar-EG-u-nu-latn' : 'en-US')} - {new Date(log.timestamp).toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US')}
-                        </span>
-                      </div>
-                      {log.agent && (
-                        <small style={{ color: 'var(--crm-accent-text)', fontWeight: 'bold' }}>{log.agent}</small>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
+              {logs.length === 0 ? (
+                <p className="cp__empty">{isAr ? 'لسه مفيش سجل. أي مكالمة أو ملاحظة بتسجّلها هتظهر هنا.' : 'No history yet. Calls and notes you log show up here.'}</p>
+              ) : (
+                <ol className="cp__timeline">
+                  {logs.map((log, idx) => (
+                    <li key={idx} className="cp__tl-item">
+                      <span className="cp__tl-time">{when(log.timestamp)}</span>
+                      <span className="cp__tl-text">{log.action}</span>
+                      {log.agent && <small className="cp__tl-agent">{log.agent}</small>}
+                    </li>
+                  ))}
+                </ol>
+              )}
             </div>
           )}
 
-          {/* TAB 4: NEXT ACTIONS & REMINDERS */}
           {profileTab === 'actions' && (
-            <div style={{
-              background: 'var(--crm-card)',
-              border: '1px solid var(--crm-line-strong)',
-              borderRadius: '8px',
-              padding: '20px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
-            }}>
-              <h4 style={{ margin: '0 0 14px 0', color: 'var(--crm-ink)', fontSize: 'var(--crm-text-md)', fontWeight: 700 }}>
-                {isAr ? 'جدولة الإجراء القادم وموعد المتابعة' : 'Scheduled Next Action'}
-              </h4>
-
-              <div className="cms-form-grid" style={{ gridTemplateColumns: '1fr 1.5fr', gap: '14px', marginBottom: '16px' }}>
-                <div className="form-group-item">
-                  <label style={{ color: 'var(--crm-body)', fontWeight: 'bold', fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'تاريخ ووقت المتابعة القادمة:' : 'Follow-up Date:'}</label>
-                  <input
-                    type="date"
-                    value={formData.nextActionDate}
-                    onChange={(e) => setFormData({ ...formData, nextActionDate: e.target.value })}
-                    style={{ background: 'var(--crm-card)', border: '1px solid var(--crm-line-strong)', borderRadius: '6px', color: 'var(--crm-ink)' }}
-                  />
-                </div>
-
-                <div className="form-group-item">
-                  <label style={{ color: 'var(--crm-body)', fontWeight: 'bold', fontSize: 'var(--crm-text-sm)' }}>{isAr ? 'تفاصيل الإجراء المطلوب:' : 'Action Details:'}</label>
-                  <input
-                    type="text"
-                    placeholder="مثال: الاتصال للتفاوض النهائي على مقدم شقة الكوثر"
-                    value={formData.nextActionNote}
-                    onChange={(e) => setFormData({ ...formData, nextActionNote: e.target.value })}
-                    style={{ background: 'var(--crm-card)', border: '1px solid var(--crm-line-strong)', borderRadius: '6px', color: 'var(--crm-ink)' }}
-                  />
-                </div>
+            <div className="cp__stack">
+              <h4 className="cp__h">{isAr ? 'الإجراء القادم وموعد المتابعة' : 'Next action'}</h4>
+              <div className="cp__fields">
+                <label className="cp__field">
+                  <span>{isAr ? 'تاريخ المتابعة' : 'Follow-up date'}</span>
+                  <input type="date" value={formData.nextActionDate} onChange={(e) => setFormData({ ...formData, nextActionDate: e.target.value })} />
+                </label>
+                <label className="cp__field">
+                  <span>{isAr ? 'المطلوب' : 'What to do'}</span>
+                  <input type="text" placeholder="مثال: الاتصال للتفاوض النهائي على مقدم الشقة" value={formData.nextActionNote} onChange={(e) => setFormData({ ...formData, nextActionNote: e.target.value })} />
+                </label>
               </div>
-
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleSaveProfile}
-                style={{ background: 'var(--crm-positive-solid)', color: 'var(--crm-on-dark)', border: 'none', borderRadius: '6px', fontWeight: 'bold' }}
-              >
-                <CheckCircle2 size={16} />
-                <span>{isAr ? 'اعتماد وحفظ موعد التذكير' : 'Save Reminder'}</span>
+              <button type="button" className="cp__btn cp__btn--primary cp__btn--block" onClick={handleSaveProfile}>
+                <CheckCircle2 size={16} aria-hidden="true" /><span>{isAr ? 'احفظ موعد المتابعة' : 'Save reminder'}</span>
               </button>
             </div>
           )}
