@@ -14,7 +14,7 @@ import { validateStageTransition } from '../../services/stateMachineEngine';
 import StageDeliverableModal from './StageDeliverableModal';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 import { auditContactUse } from '../../utils/contactAudit';
-import { leadScore, LEAD_SCORE_HIGH, isSellerLead, leadCampaign, firstContactPatch } from '../../utils/crmLeadViews';
+import { leadScore, LEAD_SCORE_HIGH, isSellerLead, firstContactPatch } from '../../utils/crmLeadViews';
 import { rankAndNominateProperties } from '../../services/matchingEngineV2';
 import NotesThread from './NotesThread';
 import { Drawer, Button, IconButton, Badge, Chip, Tabs, Textarea, EmptyState, useConfirm } from '../ui';
@@ -133,7 +133,6 @@ export default function LeadQuickDrawer({
 
   // The old «توقيع وحجز» step sits in the «إغلاق» chip (boardColumnOf)
   const currentColumn = boardColumnOf(lead.status);
-  const currentStageIndex = stages.findIndex(s => s.id === currentColumn);
 
   const handleUpdateStatus = (newStatus, lostFields) => {
     if (!onUpdateLead) return;
@@ -316,11 +315,11 @@ export default function LeadQuickDrawer({
   }
 
   const score = leadScore(lead);
-  const currentStage = stages[currentStageIndex] || stages[0];
-  // The ad that brought this client (utm_campaign / utm_content on the link it clicked)
-  const campaign = leadCampaign(lead);
   const temperature = { hot: { ar: 'ساخن', en: 'Hot', tone: 'danger' }, warm: { ar: 'دافئ', en: 'Warm', tone: 'warning' }, cold: { ar: 'بارد', en: 'Cold', tone: 'info' } }[lead.temperature];
   const phoneText = formatPhoneNumber(lead.phone || lead.whatsapp) || '—';
+  // One short line under the name: where it came from, who holds it (the campaign is in «من فين جه؟»)
+  const holder = lead.ownerName || lead.claimedBy || (lead.assignedTo && lead.assignedTo !== 'Unassigned' ? lead.assignedTo : '');
+  const headerLine = [lead.source, holder ? (isAr ? `مع ${holder}` : `With ${holder}`) : null, lead.autoAssigned ? (isAr ? 'توزيع تلقائي' : 'auto-assigned') : null].filter(Boolean).join(' · ');
   const timeline = (lead.notes || '').split('\n').map(parseNoteLine).filter(Boolean);
 
   return (
@@ -329,7 +328,7 @@ export default function LeadQuickDrawer({
         open
         onClose={safeClose}
         title={lead.name || (isAr ? 'عميل بدون اسم' : 'Unnamed client')}
-        description={[lead.source, lead.assignedTo && lead.assignedTo !== 'Unassigned' ? (isAr ? `مع ${lead.assignedTo}` : `With ${lead.assignedTo}`) : null].filter(Boolean).join(' · ') || null}
+        description={headerLine ? <span className="crm-ld__desc" title={headerLine}>{headerLine}</span> : null}
         closeLabel={isAr ? 'إغلاق' : 'Close'}
         headerActions={(
           <div className="crm-ld__nav">
@@ -376,16 +375,6 @@ export default function LeadQuickDrawer({
                 {isAr ? `اهتمام ${score.score}%` : `Score ${score.score}%`}
               </Badge>
               {temperature && <Badge tone={temperature.tone} dot>{isAr ? temperature.ar : temperature.en}</Badge>}
-              {lead.autoAssigned && (
-                <Badge tone="info" title={lead.ownerName ? (isAr ? `اتوزّع تلقائياً على ${lead.ownerName}` : `Auto-assigned to ${lead.ownerName}`) : undefined}>
-                  {isAr ? 'اتوزّع تلقائياً' : 'Auto-assigned'}
-                </Badge>
-              )}
-              {campaign && (
-                <Badge tone="accent" title={[campaign.source, campaign.campaign, campaign.ad].filter(Boolean).join(' · ')}>
-                  {isAr ? `حملة: ${campaign.campaign}` : `Campaign: ${campaign.campaign}`}{campaign.ad ? ` · ${campaign.ad}` : ''}
-                </Badge>
-              )}
             </div>
             {hasRealPhone && (
               <div className="crm-ld__quick">
@@ -402,7 +391,6 @@ export default function LeadQuickDrawer({
           <section className="crm-ld__stage" aria-labelledby="crm-ld-stage">
             <div className="crm-ld__stage-head">
               <h3 id="crm-ld-stage" className="crm-ld__h">{isAr ? 'المرحلة' : 'Stage'}</h3>
-              <Badge tone={currentStage.tone}>{isAr ? currentStage.label_ar : currentStage.label_en}</Badge>
             </div>
             <div className="crm-ld__stages">
               {stages.slice(0, 6).map((st) => (
