@@ -15,7 +15,9 @@ import LostReasonModal from './LostReasonModal';
 import MergeLeadsModal from './MergeLeadsModal';
 import MergeAllModal from './MergeAllModal';
 import { planDuplicateMerges } from '../../utils/dedupePlan';
-import { guardStage } from '../../utils/stageGate';
+import { guardStage, lastOutcomeLabel, outcomesOf } from '../../utils/stageGate';
+import { useTasks } from '../../hooks/useTasks';
+import { nextTaskFor, bucketOf, dueLabel } from '../../utils/tasks';
 import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, responseSlaMs, escalationLevel, isOverdue, isDueToday, isUnassigned, isStale, localDayKey, getLeadVisitDate, getLeadVisitSlot, isViewingLead, isSellerLead, isAccountLead, isBuyerLead, leadCreatedMs } from '../../utils/crmLeadViews';
 import { useProperties } from '../../context/PropertiesContext';
 import LeadTableRowActions from './LeadTableRowActions';
@@ -30,7 +32,8 @@ const COLUMN_OPTIONS = [
   { key: 'requirements', ar: 'المواصفات والميزانية', en: 'Requirements & budget' },
   { key: 'score', ar: 'الجدية والحرارة', en: 'Score & temperature' },
   { key: 'status', ar: 'المرحلة', en: 'Stage' },
-  { key: 'nextAction', ar: 'المتابعة الجاية', en: 'Next action' },
+  { key: 'lastOutcome', ar: 'آخر نتيجة', en: 'Last outcome' },
+  { key: 'nextAction', ar: 'المتابعة التالية', en: 'Next follow-up' },
   { key: 'agent', ar: 'المسؤول', en: 'Owner' }
 ];
 
@@ -50,6 +53,26 @@ const TEMPERATURES = {
   warm: { ar: 'دافئ', en: 'Warm', tone: 'warning' },
   cold: { ar: 'بارد', en: 'Cold', tone: 'info' }
 };
+
+const FIVE_MIN = 5 * 60 * 1000;
+
+/** A new client nobody answered yet: counts down the first five minutes (it hands over to «بدون رد» when it ends) */
+function FiveMinuteTimer({ since, isAr }) {
+  const [t, setT] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setT(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const left = FIVE_MIN - (t - since);
+  if (!since || left <= 0) return null;
+  const m = Math.floor(left / 60000);
+  const sec = String(Math.floor((left % 60000) / 1000)).padStart(2, '0');
+  return (
+    <span className={`crm-lead-chip ${left < 60000 ? 'is-late' : 'is-waiting'}`} title={isAr ? 'الرد في أول 5 دقايق بيفرق: كلّمه دلوقتي' : 'Reply within the first 5 minutes'}>
+      <Timer size={12} aria-hidden="true" /><bdi dir="ltr">{m}:{sec}</bdi> {isAr ? 'للرد' : 'to reply'}
+    </span>
+  );
+}
 
 export default function LeadsTab({
   activeRole,
@@ -98,7 +121,7 @@ export default function LeadsTab({
   setSourceFilter,
   dateFilter = 'all',
   setDateFilter,
-  leadSort = 'newest',
+  leadSort = 'waiting',
   setLeadSort,
   canEdit = true,
   canExport = false,
@@ -115,6 +138,7 @@ export default function LeadsTab({
     requirements: true,
     score: true,
     status: true,
+    lastOutcome: true,
     nextAction: true,
     agent: true,
   };
@@ -182,9 +206,12 @@ export default function LeadsTab({
     (leadFilter === 'viewing_request' ? 1 : 0) +
     (visibleColumns.score ? 1 : 0) +
     (visibleColumns.status ? 1 : 0) +
+    (visibleColumns.lastOutcome ? 1 : 0) +
     (visibleColumns.nextAction ? 1 : 0) +
     (visibleColumns.agent ? 1 : 0);
 
+  // The open tasks, for «المتابعة التالية»
+  const { tasks: allTasks } = useTasks();
   // Clock for the "no reply for …" badges; ticks once a minute
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -703,7 +730,8 @@ export default function LeadsTab({
             {leadFilter === 'viewing_request' && <th style={{ minWidth: '150px' }}>{isAr ? 'الميعاد المطلوب' : 'Requested Schedule'}</th>}
             {visibleColumns.score && <th>{isAr ? 'الجدية والحرارة' : 'Score & Temp'}</th>}
             {visibleColumns.status && <th>{isAr ? 'الحالة' : 'Status'}</th>}
-            {visibleColumns.nextAction && <th>{isAr ? 'المتابعة القادمة' : 'Next Action'}</th>}
+            {visibleColumns.lastOutcome && <th>{isAr ? 'آخر نتيجة' : 'Last outcome'}</th>}
+            {visibleColumns.nextAction && <th>{isAr ? 'المتابعة التالية' : 'Next follow-up'}</th>}
             {visibleColumns.agent && <th>{isAr ? 'المسؤول' : 'Agent'}</th>}
             <th>{isAr ? 'الإجراءات' : 'Actions'}</th>
           </tr>
@@ -729,6 +757,7 @@ export default function LeadsTab({
                   {leadFilter === 'viewing_request' && <td><div className="crm-skeleton-line" style={{ width: '90px', height: '14px' }} /></td>}
                   {visibleColumns.score && <td><div className="crm-skeleton-pill" style={{ width: '60px' }} /></td>}
                   {visibleColumns.status && <td><div className="crm-skeleton-pill" style={{ width: '70px' }} /></td>}
+                  {visibleColumns.lastOutcome && <td><div className="crm-skeleton-line" style={{ width: '90px', height: '13px' }} /></td>}
                   {visibleColumns.nextAction && <td><div className="crm-skeleton-line" style={{ width: '90px', height: '13px' }} /></td>}
                   {visibleColumns.agent && <td><div className="crm-skeleton-line" style={{ width: '80px', height: '13px' }} /></td>}
                   <td><div className="crm-skeleton-line" style={{ width: '70px', height: '24px' }} /></td>
@@ -823,7 +852,8 @@ export default function LeadsTab({
                           {leadCreatedMs(l) > 0 && now - leadCreatedMs(l) > 60000 && (
                             <span className="crm-lead-age" title={isAr ? 'من إمتى العميل اتضاف' : 'When the client was added'}>{isAr ? `من ${fmtWait(now - leadCreatedMs(l))}` : `${fmtWait(now - leadCreatedMs(l))} ago`}</span>
                           )}
-                          {waited > 0 && (
+                          {waited > 0 && waited < FIVE_MIN && <FiveMinuteTimer since={leadCreatedMs(l)} isAr={isAr} />}
+                          {waited >= FIVE_MIN && (
                             <span
                               className={`crm-lead-chip ${escalationLevel(l, now) === 2 ? 'is-late is-escalated' : waited > responseSlaMs(l) ? 'is-late' : 'is-waiting'}`}
                               title={isAr ? (responseSlaMs(l) < 3600000 ? 'وقت من غير أول رد. عميل إعلان: المطلوب خلال ١٥ دقيقة' : 'وقت من غير أول رد') : 'Time without a first reply'}
@@ -957,30 +987,48 @@ export default function LeadsTab({
                     </td>
                   )}
 
-                  {/* Next Action / Follow-up */}
-                  {visibleColumns.nextAction && (
-                    <td data-label={isAr ? 'المتابعة القادمة' : 'Next Action'}>
+                  {/* Last activity outcome and the tries */}
+                  {visibleColumns.lastOutcome && (
+                    <td data-label={isAr ? 'آخر نتيجة' : 'Last outcome'}>
                       {(() => {
+                        const label = lastOutcomeLabel(l);
+                        const last = outcomesOf(l).at(-1);
+                        return label
+                          ? <div className="crm-outcome" title={last ? new Date(last.at).toLocaleString(isAr ? 'ar-EG-u-nu-latn' : 'en-GB') : undefined}><strong>{label}</strong>{last && <small>{fmtWait(now - last.at)}</small>}</div>
+                          : <span className="crm-empty-value">—</span>;
+                      })()}
+                    </td>
+                  )}
+
+                  {/* Next follow-up: the client's next task (red when late), else its follow-up date */}
+                  {visibleColumns.nextAction && (
+                    <td data-label={isAr ? 'المتابعة التالية' : 'Next follow-up'}>
+                      {(() => {
+                        const task = nextTaskFor(allTasks, l.id);
                         const note = formatFollowUp(l.nextActionNote || l.followUp, isAr);
                         const day = localDayKey(now);
-                        const overdue = isOverdue(l, day);
-                        const today = !overdue && isDueToday(l, day);
+                        const taskLate = task ? bucketOf(task, now) === 'overdue' : false;
+                        const overdue = task ? taskLate : isOverdue(l, day);
+                        const today = !overdue && (task ? bucketOf(task, now) === 'today' : isDueToday(l, day));
                         const when = l.nextFollowUpAt ? new Date(l.nextFollowUpAt) : null;
-                        const whenLabel = overdue
-                          ? (isAr ? 'متأخرة' : 'Overdue')
-                          : today
-                            ? (isAr ? 'النهارده' : 'Today')
-                            : (when && !Number.isNaN(when.getTime()) ? new Intl.DateTimeFormat(isAr ? 'ar-EG-u-nu-latn' : 'en', { day: 'numeric', month: 'short' }).format(when) : '');
+                        const whenLabel = task
+                          ? dueLabel(task, isAr, now)
+                          : overdue
+                            ? (isAr ? 'متأخرة' : 'Overdue')
+                            : today
+                              ? (isAr ? 'النهارده' : 'Today')
+                              : (when && !Number.isNaN(when.getTime()) ? new Intl.DateTimeFormat(isAr ? 'ar-EG-u-nu-latn' : 'en', { day: 'numeric', month: 'short' }).format(when) : '');
+                        const text = task ? task.title : note;
                         return (
                           <div
                             className={`crm-next ${overdue ? 'is-overdue' : today ? 'is-today' : ''}`}
                             onClick={() => setQuickDrawerLead(l)}
                             title={isAr ? 'انقر لتحديث المتابعة والمعاينة السريعة' : 'Click to update next action'}
                           >
-                            {note || whenLabel ? (
+                            {text || whenLabel ? (
                               <>
                                 {whenLabel && <span className="crm-next__when"><Clock size={13} aria-hidden="true" />{whenLabel}</span>}
-                                {note && <span className="crm-next__note" title={note}>{note}</span>}
+                                {text && <span className="crm-next__note" title={text}>{text}</span>}
                               </>
                             ) : (
                               <span className="crm-next-action-empty">

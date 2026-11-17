@@ -132,3 +132,17 @@ test('editPatch validates like a new task', () => {
   assert.equal(editPatch({ title: 'a', dueAt: 'soon' }).dueAt, '');
   assert.ok(TEMPLATES.every((t) => t.ar && t.kind && t.due) && SNOOZE_OPTIONS.length === 3);
 });
+
+test('the next task of a client is its earliest open one', async () => {
+  const { nextTaskFor } = await import('../../src/utils/tasks.js');
+  const tasks = [
+    { id: 'a', leadId: 'L1', dueAt: '2026-11-20', status: 'open' },
+    { id: 'b', leadId: 'L1', dueAt: '2026-11-18T10:00', status: 'open' },
+    { id: 'c', leadId: 'L1', dueAt: '2026-11-17', status: 'done' },
+    { id: 'd', leadId: 'L2', dueAt: '2026-11-16', status: 'open' },
+    { id: 'e', leadId: 'L1', dueAt: '', status: 'open' }
+  ];
+  assert.equal(nextTaskFor(tasks, 'L1').id, 'b');
+  assert.equal(nextTaskFor(tasks, 'L2').id, 'd');
+  assert.equal(nextTaskFor(tasks, 'L3'), null);
+});

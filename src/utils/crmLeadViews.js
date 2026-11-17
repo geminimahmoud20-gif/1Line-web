@@ -509,7 +509,7 @@ export const LEAD_SORTS = [
   { id: 'activity', ar: 'آخر نشاط', en: 'Last activity' },
   { id: 'followup', ar: 'أقرب متابعة', en: 'Next follow-up' },
   { id: 'score', ar: 'الأعلى جدية', en: 'Highest score' },
-  { id: 'waiting', ar: 'الأطول انتظاراً للرد', en: 'Longest waiting' }
+  { id: 'waiting', ar: 'أقدم بلا رد', en: 'Oldest without a reply' }
 ];
 
 export function sortLeads(list = [], key = 'newest', now = Date.now()) {

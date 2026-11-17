@@ -320,3 +320,7 @@
 }
 
 .crm-leads__dupebar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ui-s-3); padding: var(--ui-s-3) var(--ui-s-4); margin-bottom: var(--ui-s-3); background: var(--ui-info-tint); border-radius: var(--ui-r-md); font-size: var(--ui-fs-2); color: var(--ui-text); }
+
+.crm-outcome { display: flex; flex-direction: column; gap: 2px; }
+.crm-outcome strong { font-size: var(--ui-fs-2); font-weight: var(--ui-fw-semibold); color: var(--ui-text); }
+.crm-outcome small { font-size: var(--ui-fs-1); color: var(--ui-text-3); }

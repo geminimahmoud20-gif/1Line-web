@@ -187,7 +187,8 @@ export const CrmAdminPanel = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [sourceFilter, setSourceFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
-  const [leadSort, setLeadSort] = useState('newest');
+  // The oldest client still waiting for a reply comes first; everyone already answered follows, newest first
+  const [leadSort, setLeadSort] = useState('waiting');
 
   // Customer 360 & Add Lead Modal States
   const [showAddLeadModal, setShowAddLeadModal] = useState(false);
