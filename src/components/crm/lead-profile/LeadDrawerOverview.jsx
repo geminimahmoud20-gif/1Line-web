@@ -185,7 +185,6 @@ export default function LeadDrawerOverview({
 
       <section className="crm-ld__block" aria-labelledby="crm-ld-call">
         <h3 id="crm-ld-call" className="crm-ld__h"><Phone size={16} aria-hidden="true" />{L('نتيجة المكالمة', 'Call result')}</h3>
-        <p className="crm-ld__hint">{L('دوسة واحدة بتسجّلها في سجل العميل.', 'One tap adds it to the client history.')}</p>
         <div className="crm-ld__row">
           {CALL_OUTCOMES.map((o) => (
             <Button key={o.ar} variant="secondary" size="sm" onClick={() => handleLogCall(isAr ? o.ar : o.en)}>
@@ -196,8 +195,8 @@ export default function LeadDrawerOverview({
       </section>
 
       {egWhatsapp && (
-        <section className="crm-ld__block" aria-labelledby="crm-ld-wa">
-          <h3 id="crm-ld-wa" className="crm-ld__h"><MessageSquare size={16} aria-hidden="true" />{L('رسايل واتساب جاهزة', 'WhatsApp templates')}</h3>
+        <details className="crm-ld__block crm-ld__fold">
+          <summary className="crm-ld__fold-sum"><MessageSquare size={16} aria-hidden="true" />{L('رسايل واتساب جاهزة', 'WhatsApp templates')}</summary>
           <ul className="crm-ld__list">
             {whatsappTemplates.map((tpl) => (
               <li key={tpl.title} className="crm-ld__tpl">
@@ -217,12 +216,12 @@ export default function LeadDrawerOverview({
               </li>
             ))}
           </ul>
-        </section>
+        </details>
       )}
 
       {egWhatsapp && (
-        <section className="crm-ld__block" aria-labelledby="crm-ld-page">
-          <h3 id="crm-ld-page" className="crm-ld__h"><ExternalLink size={16} aria-hidden="true" />{L('ابعتله صفحة من الموقع', 'Send a page of the site')}</h3>
+        <details className="crm-ld__block crm-ld__fold">
+          <summary className="crm-ld__fold-sum"><ExternalLink size={16} aria-hidden="true" />{L('ابعتله صفحة من الموقع', 'Send a page of the site')}</summary>
           <Select
             label={L('الصفحة', 'Page')}
             value={pagePath}
@@ -241,7 +240,7 @@ export default function LeadDrawerOverview({
               <Send size={16} aria-hidden="true" />{L('ابعتها واتساب', 'Send on WhatsApp')}
             </a>
           </div>
-        </section>
+        </details>
       )}
 
       <section className="crm-ld__block" aria-labelledby="crm-ld-schedule">
