@@ -31,7 +31,7 @@ test('finished requests leave the inbox; views pick what is shown', () => {
   const mineNew = { status: 'new', ownerUid: 'u1', ownerName: 'A' };
   const otherCalled = { status: 'negotiating', ownerUid: 'u2', ownerName: 'B' };
   assert.equal(isLeadUnclaimed(fresh), true);
-  assert.deepEqual([fresh, mineCalled, mineNew, otherCalled].map((l) => matchesView(l, 'todo', 'u1', 'A')), [true, false, true, false]);
+  assert.deepEqual([fresh, mineCalled, mineNew, otherCalled].map((l) => matchesView(l, 'todo', 'u1', 'A')), [true, false, false, false]);
   assert.deepEqual([fresh, mineCalled, mineNew, otherCalled].map((l) => matchesView(l, 'mine', 'u1', 'A')), [false, true, true, false]);
   assert.deepEqual([fresh, mineCalled, mineNew, otherCalled].map((l) => matchesView(l, 'all', 'u1', 'A')), [true, true, true, true]);
 });

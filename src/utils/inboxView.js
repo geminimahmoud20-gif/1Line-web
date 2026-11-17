@@ -53,8 +53,8 @@ export function isLeadClaimedByMe(lead, uid, staffName) {
 /** Archived, won and lost requests are finished: they never show in the inbox */
 export const isInboxActive = (lead) => Boolean(lead) && !lead.isArchived && lead.status !== 'closed' && lead.status !== 'lost' && lead.status !== 'inactive';
 
-/** Still needs someone: nobody took it yet, or it was taken but nobody has called */
-export const needsAction = (lead) => isLeadUnclaimed(lead) || (lead.status || 'new') === 'new';
+/** Still needs someone to take it. Once it is claimed or handed to a person it leaves this list and stays with its owner in العملاء */
+export const needsAction = (lead) => isLeadUnclaimed(lead);
 
 export const INBOX_VIEWS = [
   { id: 'todo', label_ar: 'محتاجة تصرّف', label_en: 'To do' },
