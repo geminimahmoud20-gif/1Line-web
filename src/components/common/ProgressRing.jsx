@@ -4,12 +4,12 @@ import './progress-ring.css';
  * Green completion ring used by the sell form and /match. Emerald reads as safe and "go",
  * the percentage sits in the middle and turns solid green at 100%.
  */
-export default function ProgressRing({ percent = 0, size = 72, label }) {
+export default function ProgressRing({ percent = 0, size, label }) {
   const p = Math.max(0, Math.min(100, Math.round(percent)));
   const r = 20;
   const c = 2 * Math.PI * r;
   return (
-    <span className={`pr-ring${p === 100 ? ' is-full' : ''}`} style={{ '--pr-size': `${size}px` }}
+    <span className={`pr-ring${p === 100 ? ' is-full' : ''}`} style={size ? { '--pr-size': `${size}px` } : undefined}
       role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={p} aria-valuetext={`${p}%`} aria-label={label}>
       <svg viewBox="0 0 48 48" aria-hidden="true">
         <defs>
