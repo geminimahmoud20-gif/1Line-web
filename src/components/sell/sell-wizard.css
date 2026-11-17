@@ -146,7 +146,7 @@
 .sw :focus-visible { outline: 2px solid var(--sw-gold); outline-offset: 2px; }
 
 @media (max-width: 720px) {
-  .sw { padding: 18px 16px; border-radius: 16px; }
+  .sw { padding: 14px 12px; border-radius: 16px; }
   .sw-steps { margin-bottom: 8px; gap: 4px; }
   .sw-steps li { padding-top: 0; border-top-width: 4px; border-radius: 2px; }
   .sw-steps__dot, .sw-steps__label { display: none; }

@@ -348,7 +348,7 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
         <ProgressRing percent={progress.percent} size={76} label={L('نسبة إنجاز الفورم', 'Form completion')} />
         <span className="sw-progress__text">
           <em>{ringMessage(progress.percent, isAr)}</em>
-          <strong>{progress.percent === 100 ? L('طلبك جاهز للإرسال', 'Your request is ready') : L(`اكتملت ${progress.done} من ${progress.total} خطوات`, `${progress.done} of ${progress.total} steps done`)}</strong>
+          <strong>{progress.percent === 100 ? L('طلبك جاهز للإرسال', 'Your request is ready') : L(`الخطوة ${step + 1} من ${progress.total}`, `Step ${step + 1} of ${progress.total}`)}</strong>
           <small>{L(NEXT_HINT[progress.next].ar, NEXT_HINT[progress.next].en)}</small>
         </span>
       </div>
