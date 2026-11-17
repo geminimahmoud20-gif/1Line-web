@@ -1,0 +1,11 @@
+/* The pipeline on a phone: a row of stages, one stage's cards at a time */
+.crm-kanban__stagepick { display: flex; gap: 6px; overflow-x: auto; padding: 4px 0 10px; scrollbar-width: none; }
+.crm-kanban__stagepick::-webkit-scrollbar { display: none; }
+.crm-kanban__stagepick button { flex: 0 0 auto; min-height: 44px; display: inline-flex; align-items: center; gap: 6px; padding: 0 14px; border: 1px solid var(--ui-border); border-radius: 999px; background: var(--ui-surface); color: var(--ui-text-2); font: inherit; font-weight: 600; cursor: pointer; }
+.crm-kanban__stagepick button b { min-width: 22px; padding: 1px 6px; border-radius: 999px; background: var(--ui-surface-2); color: var(--ui-text); font-size: 12px; text-align: center; }
+.crm-kanban__stagepick button.is-on { background: var(--ui-primary); border-color: var(--ui-primary); color: var(--ui-on-primary); }
+.crm-kanban__stagepick button.is-on b { background: rgb(255 255 255 / 0.2); color: inherit; }
+.kanban-board-scroll-container.is-phone { overflow: visible; }
+@media (max-width: 640px) {
+  .crm-kanban__layout { display: none; }
+}
