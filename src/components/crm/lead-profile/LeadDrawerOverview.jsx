@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { answersFacts } from '../../../utils/buyerMatch';
 import { attributionFacts } from '../../../utils/attributionTouches';
 import LeadTasks from './LeadTasks';
+import { sellerRoleOf, SELLER_ROLE_LABEL } from '../../../utils/sellerRole';
 import { OUTCOMES, STAGE_RULES, attemptsOf } from '../../../utils/stageGate';
 import { LOST_REASONS } from '../../../utils/crmLeadViews';
 
@@ -40,6 +41,7 @@ export default function LeadDrawerOverview({
   const hasSchedule = scheduledDate && Number.isFinite(scheduledDate.getTime());
   const viewingProp = properties.find(p => p.id === (lead?.viewingPropertyId || details.propertyId));
   const L = (ar, en) => (isAr ? ar : en);
+  const sellerRole = sellerRoleOf(lead);
   // The outcomes this stage offers (utils/stageGate STAGE_RULES), «لم يرد» attempts so far
   const stageOutcomes = (STAGE_RULES.find((s) => s.id === (lead?.status || 'new'))?.outcomes || []).map((id) => OUTCOMES.find((o) => o.id === id)).filter(Boolean);
   const attempts = attemptsOf(lead || {});
@@ -128,7 +130,7 @@ export default function LeadDrawerOverview({
         <section className="crm-ld__block" aria-labelledby="crm-ld-seller">
           <div className="crm-ld__block-head">
             <h3 id="crm-ld-seller" className="crm-ld__h"><Building size={16} aria-hidden="true" />{L('العقار المعروض للبيع', 'Property for sale')}</h3>
-            <Badge tone="accent">{L('من المالك', 'From owner')}</Badge>
+            {sellerRole && <Badge tone={sellerRole === 'broker' ? 'warning' : 'accent'}>{L(`من ${SELLER_ROLE_LABEL[sellerRole].ar}`, `From ${SELLER_ROLE_LABEL[sellerRole].en.toLowerCase()}`)}</Badge>}
           </div>
           {sellerFacts.length > 0 && (
             <dl className="crm-ld__facts">
@@ -138,11 +140,11 @@ export default function LeadDrawerOverview({
             </dl>
           )}
           {sellerPhotos.length > 0 && (
-            <ul className="crm-ld__photos" aria-label={L('صور المالك', 'Owner photos')}>
+            <ul className="crm-ld__photos" aria-label={L('صور العقار', 'Property photos')}>
               {sellerPhotos.map((p, i) => (
                 <li key={p.url}>
                   <a href={p.url} target="_blank" rel="noopener noreferrer">
-                    <img src={p.url} alt={p.label || L(`صورة ${i + 1} من المالك`, `Owner photo ${i + 1}`)} loading="lazy" />
+                    <img src={p.url} alt={p.label || L(`صورة ${i + 1} للعقار`, `Property photo ${i + 1}`)} loading="lazy" />
                     {p.label && <span>{p.label}</span>}
                   </a>
                 </li>

@@ -18,6 +18,7 @@ import { leadScore, LEAD_SCORE_HIGH, isSellerLead, firstContactPatch, LOST_REASO
 import { outcomeEntry, outcomeSave, outcomeById, guardStage } from '../../utils/stageGate';
 import { useAuth } from '../../context/AuthContext';
 import { scheduleNextAttempt } from '../../utils/retryCall';
+import { sellerRoleOf, SELLER_ROLE_LABEL } from '../../utils/sellerRole';
 import { dueLabel, MAX_CALL_ATTEMPTS } from '../../utils/tasks';
 import { rankAndNominateProperties } from '../../services/matchingEngineV2';
 import NotesThread from './NotesThread';
@@ -390,6 +391,9 @@ export default function LeadQuickDrawer({
                 {isAr ? `اهتمام ${score.score}%` : `Score ${score.score}%`}
               </Badge>
               {temperature && <Badge tone={temperature.tone} dot>{isAr ? temperature.ar : temperature.en}</Badge>}
+              {isSeller && sellerRoleOf(lead) && (
+                <Badge tone={sellerRoleOf(lead) === 'broker' ? 'warning' : 'accent'}>{SELLER_ROLE_LABEL[sellerRoleOf(lead)][isAr ? 'ar' : 'en']}</Badge>
+              )}
             </div>
             {hasRealPhone && (
               <div className="crm-ld__quick">
