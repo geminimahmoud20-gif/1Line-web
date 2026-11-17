@@ -50,3 +50,26 @@ test('the owner fields match what the CRM writes when someone is picked by name'
   const f = ownerFields(seller('a', 'Team A'), { assignedTo: 'Unassigned' }, '2026-11-13T12:00:00.000Z');
   assert.deepEqual(f, { ownerUid: 'a', ownerName: 'بياع a', claimedBy: 'بياع a', assignedTo: 'Team A', claimedAt: '2026-11-13T12:00:00.000Z', assignedAt: '2026-11-13T12:00:00.000Z', autoAssigned: true });
 });
+
+import { needsReassign, chooseReplacement, reassignFields, REASSIGN_AFTER_MS } from '../../api/_assign-core.js';
+test('an untouched auto-assigned client moves once, after 15 minutes, to someone else', () => {
+  const now = Date.parse('2026-11-17T10:00:00Z');
+  const base = { id: 'L', status: 'new', autoAssigned: true, ownerUid: 'a', ownerName: 'أمل', assignedAt: '2026-11-17T09:40:00Z', assignedTo: 'Sales Team A' };
+  assert.equal(needsReassign(base, now), true);
+  assert.equal(needsReassign({ ...base, assignedAt: '2026-11-17T09:50:00Z' }, now), false); // only 10 minutes
+  assert.equal(needsReassign({ ...base, autoAssigned: false }, now), false); // a manager gave it
+  assert.equal(needsReassign({ ...base, firstContactedAt: '2026-11-17T09:45:00Z' }, now), false);
+  assert.equal(needsReassign({ ...base, outcomes: [{ id: 'no_answer' }] }, now), false);
+  assert.equal(needsReassign({ ...base, status: 'contacted' }, now), false);
+  assert.equal(needsReassign({ ...base, autoReassignCount: 1 }, now), false);
+  assert.equal(needsReassign({ ...base, isArchived: true }, now), false);
+  const sellers = [{ uid: 'a', desk: 'Sales Team A' }, { uid: 'b', desk: 'Sales Team A' }, { uid: 'c', desk: 'Sales Team B' }];
+  assert.equal(chooseReplacement(base, sellers, { a: 0, b: 9 }).uid, 'b'); // never the current owner, even with the fewest clients
+  assert.equal(chooseReplacement(base, [{ uid: 'a', desk: 'Sales Team A' }], {}), null);
+  const f = reassignFields({ uid: 'b', name: 'بسمة', desk: 'Sales Team A' }, base, '2026-11-17T10:00:00Z');
+  assert.equal(f.ownerUid, 'b');
+  assert.equal(f.autoReassignCount, 1);
+  assert.equal(f.autoReassignedFrom, 'a');
+  assert.match(f.activityLogs[0].action, /من أمل إلى بسمة/);
+  assert.equal(REASSIGN_AFTER_MS, 900000);
+});

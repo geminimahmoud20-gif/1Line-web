@@ -84,3 +84,45 @@ export function returningOwner(earlier = [], sellers = []) {
     .sort((a, b) => Date.parse(b.createdAt || 0) - Date.parse(a.createdAt || 0));
   return mine.length ? { seller: byUid.get(mine[0].ownerUid), previousLeadId: String(mine[0].id) } : null;
 }
+
+// ── An auto-assigned client nobody answered ──────────────────────────────────────────────────────
+
+/** How long the new owner has to make first contact before the client moves to someone else */
+export const REASSIGN_AFTER_MS = 15 * 60 * 1000;
+/** A client moves at most once this way: after that the managers' escalation takes over */
+export const MAX_AUTO_REASSIGNS = 1;
+
+const ms = (v) => (typeof v === 'string' ? Date.parse(v) : typeof v === 'number' ? v : 0) || 0;
+
+/**
+ * True for a client the system gave to someone, who is still new and untouched after the reply target:
+ * not by hand (a manager's choice is never undone), not archived, nobody has called, messaged or logged anything.
+ */
+export function needsReassign(lead, now = Date.now(), { afterMs = REASSIGN_AFTER_MS } = {}) {
+  if (!lead || lead.isArchived || !lead.autoAssigned || !lead.ownerUid) return false;
+  if (lead.status && lead.status !== 'new') return false;
+  if (lead.firstContactedAt || lead.lastContactedAt || (Array.isArray(lead.outcomes) && lead.outcomes.length)) return false;
+  if ((lead.autoReassignCount || 0) >= MAX_AUTO_REASSIGNS) return false;
+  const since = Math.max(ms(lead.assignedAt), ms(lead.claimedAt));
+  return Boolean(since) && now - since >= afterMs;
+}
+
+/** The person to move the client to: the same rule as the first assignment, never the current owner. null when nobody else is available */
+export function chooseReplacement(lead, sellers = [], counts = {}, teams = []) {
+  return chooseSeller(lead, sellers.filter((m) => m.uid !== lead.ownerUid), counts, teams);
+}
+
+/** The lead fields for the move, with a history line saying why */
+export function reassignFields(member, lead, nowIso = new Date().toISOString()) {
+  const fields = ownerFields(member, lead, nowIso);
+  const from = lead.ownerName || lead.claimedBy || '';
+  const line = `تحويل تلقائي${from ? ` من ${from}` : ''} إلى ${fields.ownerName}: مفيش رد خلال ${Math.round(REASSIGN_AFTER_MS / 60000)} دقيقة`;
+  return {
+    ...fields,
+    autoReassignCount: (lead.autoReassignCount || 0) + 1,
+    autoReassignedFrom: lead.ownerUid,
+    autoReassignedAt: nowIso,
+    lastActivityAt: nowIso,
+    activityLogs: [{ timestamp: nowIso, action: line, kind: 'assign', agent: 'النظام' }, ...(Array.isArray(lead.activityLogs) ? lead.activityLogs : [])].slice(0, 100)
+  };
+}
