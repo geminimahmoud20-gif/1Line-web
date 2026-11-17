@@ -12,6 +12,8 @@ import { useState } from 'react';
 import { answersFacts } from '../../../utils/buyerMatch';
 import { attributionFacts } from '../../../utils/attributionTouches';
 import LeadTasks from './LeadTasks';
+import ClientTimeline from '../client-file/ClientTimeline';
+import { buildTimeline } from '../../../utils/clientTimeline';
 import { sellerRoleOf, SELLER_ROLE_LABEL } from '../../../utils/sellerRole';
 import { PROPERTY_TYPES } from '../../../data/propertiesData';
 import { getAreas } from '../../../utils/areasData';
@@ -35,7 +37,10 @@ export default function LeadDrawerOverview({
   viewingDateTime,
   whatsappTemplates,
   onUpdateLead,
-  triggerToast
+  triggerToast,
+  newNote,
+  setNewNote,
+  onAddNote
 }) {
   const details = lead?.details || {};
   const isSeller = isSellerLead(lead || {}) || lead?.type === 'seller' || lead?.landingPage === '/sell' || Boolean(details.askingPrice) || Boolean(details.propertyType && details.size);
@@ -111,98 +116,18 @@ export default function LeadDrawerOverview({
 
   // Where the client came from: the source, the campaign and ad, the page, and a return after an earlier visit
   const sourceFacts = attributionFacts(lead);
+  // What the client wrote himself (the notes without the team's log lines)
+  const words = buildTimeline(lead).words;
 
   return (
     <div className="crm-ld__stack">
-      <LeadTasks lead={lead} isAr={isAr} triggerToast={triggerToast} onUpdateLead={onUpdateLead} />
-      {sourceFacts.length > 0 && (
-        <section className="crm-ld__block" aria-labelledby="crm-ld-source">
-          <div className="crm-ld__block-head">
-            <h3 id="crm-ld-source" className="crm-ld__h"><Compass size={16} aria-hidden="true" />{L('من فين جه؟', 'Where from')}</h3>
-          </div>
-          <dl className="crm-ld__facts">
-            {sourceFacts.map(([label, value, wide]) => (
-              <div key={label} className={wide ? 'crm-ld__fact--wide' : undefined}><dt>{label}</dt><dd>{value}</dd></div>
-            ))}
-          </dl>
-        </section>
-      )}
-      {matchFacts.length > 0 && (
-        <section className="crm-ld__block" aria-labelledby="crm-ld-match">
-          <div className="crm-ld__block-head">
-            <h3 id="crm-ld-match" className="crm-ld__h"><Search size={16} aria-hidden="true" />{L('طلب العميل (رشح لي عقاري)', 'What the buyer asked for')}</h3>
-          </div>
-          <dl className="crm-ld__facts">
-            {matchFacts.map(([label, value, wide]) => (
-              <div key={label} className={wide ? 'crm-ld__fact--wide' : undefined}><dt>{label}</dt><dd>{value}</dd></div>
-            ))}
-          </dl>
-        </section>
-      )}
-      {isSeller && (
-        <section className="crm-ld__block" aria-labelledby="crm-ld-seller">
-          <div className="crm-ld__block-head">
-            <h3 id="crm-ld-seller" className="crm-ld__h"><Building size={16} aria-hidden="true" />{L('العقار المعروض للبيع', 'Property for sale')}</h3>
-            {sellerRole && <Badge tone={sellerRole === 'broker' ? 'warning' : 'accent'}>{L(`من ${SELLER_ROLE_LABEL[sellerRole].ar}`, `From ${SELLER_ROLE_LABEL[sellerRole].en.toLowerCase()}`)}</Badge>}
-          </div>
-          {isQuick && (
-            <p className="crm-ld__hint">{L('طلب سريع: الاسم والرقم ونوع العقار بس. المساحة والعنوان والصور لسه محتاجة منه (ابعتله صفحة «سجّل وحدتك» من تحت).', 'Quick request: name, phone and type only. Size, address and photos are still to collect (send the listing page below).')}</p>
-          )}
-          {sellerFacts.length > 0 && (
-            <dl className="crm-ld__facts">
-              {sellerFacts.map(([label, value, wide]) => (
-                <div key={label} className={wide ? 'crm-ld__fact--wide' : undefined}><dt>{label}</dt><dd>{value}</dd></div>
-              ))}
-            </dl>
-          )}
-          {sellerPhotos.length > 0 && (
-            <ul className="crm-ld__photos" aria-label={L('صور العقار', 'Property photos')}>
-              {sellerPhotos.map((p, i) => (
-                <li key={p.url}>
-                  <a href={p.url} target="_blank" rel="noopener noreferrer">
-                    <img src={p.url} alt={p.label || L(`صورة ${i + 1} للعقار`, `Property photo ${i + 1}`)} loading="lazy" />
-                    {p.label && <span>{p.label}</span>}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          )}
-          {onUpdateLead && <SellerAskingPrice key={lead.id} lead={lead} isAr={isAr} onUpdateLead={onUpdateLead} />}
-          {onConvertToProperty && (
-            <Button block icon={<Building size={16} aria-hidden="true" />} onClick={() => onConvertToProperty(lead)}>
-              {L('اعمل منه مسودة عقار', 'Create a listing draft')}
-            </Button>
-          )}
-        </section>
-      )}
-
-      <LeadCommissionBox key={lead?.id} lead={lead} isAr={isAr} onUpdateLead={onUpdateLead} />
-
-      {hasSchedule && (
-        <section className="crm-ld__block crm-ld__block--info" aria-labelledby="crm-ld-visit">
-          <div className="crm-ld__block-head">
-            <h3 id="crm-ld-visit" className="crm-ld__h"><Calendar size={16} aria-hidden="true" />{L('موعد المعاينة', 'Viewing')}</h3>
-            <strong className="crm-ld__when">
-              {scheduledDate.toLocaleString(isAr ? 'ar-EG-u-nu-latn' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' })}
-            </strong>
-          </div>
-          <div className="crm-ld__row">
-            <Button variant="secondary" size="sm" icon={<Download size={16} aria-hidden="true" />} onClick={handleDownloadCalendar}>
-              {L('حفظ في تقويم الموبايل', 'Save to phone calendar')}
-            </Button>
-            {googleCalUrl && (
-              <a href={googleCalUrl} target="_blank" rel="noopener noreferrer" className="ui-btn ui-btn--secondary ui-btn--sm">
-                <ExternalLink size={16} aria-hidden="true" />{L('تقويم Google', 'Google Calendar')}
-              </a>
-            )}
-          </div>
-        </section>
-      )}
+      {/* 1. What to do next, and what just happened */}
+      <LeadTasks lead={lead} isAr={isAr} triggerToast={triggerToast} onUpdateLead={onUpdateLead} title={L('الخطوة الجاية', 'Next step')} />
 
       <section className="crm-ld__block" aria-labelledby="crm-ld-call">
-        <h3 id="crm-ld-call" className="crm-ld__h"><Phone size={16} aria-hidden="true" />{L('نتيجة النشاط', 'Activity outcome')}</h3>
+        <h3 id="crm-ld-call" className="crm-ld__h"><Phone size={16} aria-hidden="true" />{L('حصل إيه؟', 'What happened?')}</h3>
         <p className="crm-ld__hint">
-          {L('سجّل اللي حصل: ده اللي بيفتح المرحلة اللي بعدها.', 'Log what happened: it unlocks the next stage.')}
+          {L('سجّل نتيجة آخر نشاط: ده اللي بيفتح المرحلة اللي بعدها.', 'Log the result of the last activity: it unlocks the next stage.')}
           {attempts > 0 && ` ${L(`آخر ${attempts} محاولة بلا رد.`, `${attempts} tries without an answer.`)}`}
         </p>
         <div className="crm-ld__row">
@@ -237,6 +162,86 @@ export default function LeadDrawerOverview({
           </form>
         )}
       </section>
+
+      {hasSchedule && (
+        <section className="crm-ld__block crm-ld__block--info" aria-labelledby="crm-ld-visit">
+          <div className="crm-ld__block-head">
+            <h3 id="crm-ld-visit" className="crm-ld__h"><Calendar size={16} aria-hidden="true" />{L('موعد المعاينة', 'Viewing')}</h3>
+            <strong className="crm-ld__when">
+              {scheduledDate.toLocaleString(isAr ? 'ar-EG-u-nu-latn' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' })}
+            </strong>
+          </div>
+          <div className="crm-ld__row">
+            <Button variant="secondary" size="sm" icon={<Download size={16} aria-hidden="true" />} onClick={handleDownloadCalendar}>
+              {L('حفظ في تقويم الموبايل', 'Save to phone calendar')}
+            </Button>
+            {googleCalUrl && (
+              <a href={googleCalUrl} target="_blank" rel="noopener noreferrer" className="ui-btn ui-btn--secondary ui-btn--sm">
+                <ExternalLink size={16} aria-hidden="true" />{L('تقويم Google', 'Google Calendar')}
+              </a>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* 2. What he asked for */}
+      {(isSeller || matchFacts.length > 0 || words) && (
+        <section className="crm-ld__block" aria-labelledby="crm-ld-seller">
+          <div className="crm-ld__block-head">
+            <h3 id="crm-ld-seller" className="crm-ld__h">
+              {isSeller ? <Building size={16} aria-hidden="true" /> : <Search size={16} aria-hidden="true" />}
+              {isSeller ? L('العقار المعروض للبيع', 'Property for sale') : L('طلب العميل', 'What he asked for')}
+            </h3>
+            {isSeller && sellerRole && <Badge tone={sellerRole === 'broker' ? 'warning' : 'accent'}>{L(`من ${SELLER_ROLE_LABEL[sellerRole].ar}`, `From ${SELLER_ROLE_LABEL[sellerRole].en.toLowerCase()}`)}</Badge>}
+          </div>
+          {isSeller && isQuick && (
+            <p className="crm-ld__hint">{L('طلب سريع: الاسم والرقم ونوع العقار بس. المساحة والعنوان والصور لسه محتاجة منه (ابعتله صفحة «سجّل وحدتك» من «الأدوات»).', 'Quick request: name, phone and type only. Size, address and photos are still to collect (send the listing page from Tools).')}</p>
+          )}
+          {(isSeller ? sellerFacts : matchFacts).length > 0 && (
+            <dl className="crm-ld__facts">
+              {(isSeller ? sellerFacts : matchFacts).map(([label, value, wide]) => (
+                <div key={label} className={wide ? 'crm-ld__fact--wide' : undefined}><dt>{label}</dt><dd>{value}</dd></div>
+              ))}
+            </dl>
+          )}
+          {words && <p className="cf-words"><small>{L('كتب بنفسه', 'In his words')}</small>{words}</p>}
+          {isSeller && sellerPhotos.length > 0 && (
+            <ul className="crm-ld__photos" aria-label={L('صور العقار', 'Property photos')}>
+              {sellerPhotos.map((p, i) => (
+                <li key={p.url}>
+                  <a href={p.url} target="_blank" rel="noopener noreferrer">
+                    <img src={p.url} alt={p.label || L(`صورة ${i + 1} للعقار`, `Property photo ${i + 1}`)} loading="lazy" />
+                    {p.label && <span>{p.label}</span>}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+          {isSeller && onUpdateLead && <SellerAskingPrice key={lead.id} lead={lead} isAr={isAr} onUpdateLead={onUpdateLead} />}
+          {isSeller && onConvertToProperty && (
+            <Button block icon={<Building size={16} aria-hidden="true" />} onClick={() => onConvertToProperty(lead)}>
+              {L('اعمل منه مسودة عقار', 'Create a listing draft')}
+            </Button>
+          )}
+        </section>
+      )}
+
+      {/* 3. Everything that happened */}
+      <ClientTimeline lead={lead} isAr={isAr} newNote={newNote} setNewNote={setNewNote} onAddNote={onAddNote} />
+
+      {/* 4. Tools, folded */}
+      {sourceFacts.length > 0 && (
+        <details className="crm-ld__block crm-ld__fold">
+          <summary className="crm-ld__fold-sum"><Compass size={16} aria-hidden="true" />{L('من فين جه؟', 'Where from')}</summary>
+          <dl className="crm-ld__facts">
+            {sourceFacts.map(([label, value, wide]) => (
+              <div key={label} className={wide ? 'crm-ld__fact--wide' : undefined}><dt>{label}</dt><dd>{value}</dd></div>
+            ))}
+          </dl>
+        </details>
+      )}
+
+      <LeadCommissionBox key={lead?.id} lead={lead} isAr={isAr} onUpdateLead={onUpdateLead} />
 
       {egWhatsapp && (
         <details className="crm-ld__block crm-ld__fold">

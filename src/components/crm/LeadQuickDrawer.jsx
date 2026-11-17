@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Phone, MessageSquare, Building, ChevronRight, ChevronLeft, Trash2, Plus, Eye } from 'lucide-react';
+import { Phone, MessageSquare, Building, ChevronRight, ChevronLeft, Trash2 } from 'lucide-react';
 import { PROPERTY_TYPES } from '../../data/propertiesData';
 import { getAreas } from '../../utils/areasData';
 import { areaNameOf } from '../../utils/areaLookup';
@@ -14,7 +14,7 @@ import { validateStageTransition } from '../../services/stateMachineEngine';
 import StageDeliverableModal from './StageDeliverableModal';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 import { auditContactUse } from '../../utils/contactAudit';
-import { leadScore, LEAD_SCORE_HIGH, isSellerLead, firstContactPatch, LOST_REASONS } from '../../utils/crmLeadViews';
+import { leadScore, LEAD_SCORE_HIGH, isSellerLead, firstContactPatch } from '../../utils/crmLeadViews';
 import { outcomeEntry, outcomeSave, outcomeById, guardStage } from '../../utils/stageGate';
 import { useAuth } from '../../context/AuthContext';
 import { scheduleNextAttempt } from '../../utils/retryCall';
@@ -22,30 +22,23 @@ import { sellerRoleOf, SELLER_ROLE_LABEL } from '../../utils/sellerRole';
 import { dueLabel, MAX_CALL_ATTEMPTS } from '../../utils/tasks';
 import { rankAndNominateProperties } from '../../services/matchingEngineV2';
 import NotesThread from './NotesThread';
-import { Drawer, Button, IconButton, Badge, Chip, Tabs, Textarea, EmptyState, useConfirm } from '../ui';
+import { Drawer, Button, IconButton, Badge, Chip, Tabs, useConfirm } from '../ui';
+import ClientDetails from './client-file/ClientDetails';
+import ClientJourney from './client-file/ClientJourney';
+import { buildTimeline } from '../../utils/clientTimeline';
 import './lead-drawer.css';
 import BrokerFile from './lead-profile/BrokerFile';
 import { brokerUnits, brokerDemands } from '../../utils/brokerFile';
 
-// One history line: "[stamp]: text", older lines start with an emoji and can carry "undefined" from missing form fields
-function parseNoteLine(line) {
-  const clean = line
-    .replace(/^(?:\u{1F4DE}|\u{1F4DD}|\u{1F4CD}|\u{2705}|\u{26A0}\u{FE0F}?|\s)+/u, '')
-    .replace(/في\s+(undefined|null)\b/gi, 'في سوهاج')
-    .replace(/\b(undefined|null)\b/gi, '')
-    .replace(/\s{2,}/g, ' ')
-    .trim();
-  if (!clean) return null;
-  const m = clean.match(/^\[([^\]]+)\]:?\s*(.*)$/);
-  return m ? { meta: m[1], text: m[2] || m[1] } : { meta: '', text: clean };
-}
 export default function LeadQuickDrawer({
   lead,
   onClose,
   onUpdateLead,
   onDeleteLead,
   onConvertToProperty,
-  onOpenFullProfile,
+  onNavigate,
+  tab: tabProp,
+  onTabChange,
   properties = [],
   demands = [],
   filteredLeads = [],
@@ -60,7 +53,9 @@ export default function LeadQuickDrawer({
   const [showViewingForm, setShowViewingForm] = useState(false);
   const [lostOpen, setLostOpen] = useState(false);
   const [blockerModal, setBlockerModal] = useState({ isOpen: false, blockerInfo: null });
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'matching' | 'team' | 'timeline'
+  const [localTab, setLocalTab] = useState('overview'); // 'overview' | 'details' | 'matching' | 'team' | 'journey'
+  const activeTab = tabProp || localTab;
+  const setActiveTab = (t) => { setLocalTab(t); onTabChange?.(t); };
   const confirm = useConfirm();
   const { currentUser } = useAuth();
 
@@ -199,11 +194,7 @@ export default function LeadQuickDrawer({
     }
     const patch = outcomeSave(lead, entry);
     const label = outcomeById(outcomeId)?.ar || outcomeId;
-    const reasonLabel = LOST_REASONS.find((r) => r.id === entry.reason)?.ar;
-    const dateStr = new Date().toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US');
-    const timeStr = new Date().toLocaleTimeString(isAr ? 'ar-EG-u-nu-latn' : 'en-US', { hour: '2-digit', minute: '2-digit' });
-    const callEntry = `[نتيجة ${dateStr} ${timeStr}]: ${label}${patch.outcomeAttempts > 1 && outcomeId === 'no_answer' ? ` · محاولة ${patch.outcomeAttempts}` : ''}${reasonLabel ? ` — ${reasonLabel}` : ''}`;
-    onUpdateLead(lead.id, { ...patch, notes: lead.notes ? `${callEntry}\n${lead.notes}` : callEntry }, lead.version);
+    onUpdateLead(lead.id, patch, lead.version);
     triggerToast?.(isAr ? `اتسجّلت النتيجة: ${label}` : `Outcome logged: ${label}`, 'success');
     // «لم يرد»: the next try becomes a task, up to the third; after that the client can move to غير متفاعل
     if (outcomeId === 'no_answer') {
@@ -216,22 +207,19 @@ export default function LeadQuickDrawer({
     trackEvent('crm_call_logged', { leadId: lead.id, outcome: outcomeId });
   };
 
-  // Add Custom Note
+  // Add Custom Note: saved in the activity log, so it has a real time in the client's history
   const handleAddNote = (e) => {
     e.preventDefault();
     if (!newNote.trim() || !onUpdateLead) return;
-    const dateStr = new Date().toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US');
-    const timeStr = new Date().toLocaleTimeString(isAr ? 'ar-EG-u-nu-latn' : 'en-US', { hour: '2-digit', minute: '2-digit' });
-    const noteEntry = `[ملاحظة ${dateStr} ${timeStr}]: ${newNote.trim()}`;
-    const updatedNotes = lead.notes ? `${noteEntry}\n${lead.notes}` : noteEntry;
-
+    const at = new Date().toISOString();
+    const me = currentUser?.displayName || currentUser?.name || currentUser?.email?.split('@')[0] || '';
     onUpdateLead(lead.id, {
-      notes: updatedNotes,
-      lastActivityAt: new Date().toISOString()
+      activityLogs: [{ timestamp: at, action: newNote.trim(), kind: 'note', ...(me ? { agent: me } : {}) }, ...(Array.isArray(lead.activityLogs) ? lead.activityLogs : [])].slice(0, 100),
+      lastActivityAt: at
     }, lead.version);
 
     setNewNote('');
-    triggerToast?.(isAr ? 'تمت إضافة الملاحظة بنجاح' : 'Note added', 'success');
+    triggerToast?.(isAr ? 'اتضافت الملاحظة' : 'Note added', 'success');
   };
 
   const handleDelete = async () => {
@@ -336,7 +324,7 @@ export default function LeadQuickDrawer({
   // One short line under the name: where it came from, who holds it (the campaign is in «من فين جه؟»)
   const holder = lead.ownerName || lead.claimedBy || (lead.assignedTo && lead.assignedTo !== 'Unassigned' ? lead.assignedTo : '');
   const headerLine = [lead.source, holder ? (isAr ? `مع ${holder}` : `With ${holder}`) : null, lead.autoAssigned ? (isAr ? 'توزيع تلقائي' : 'auto-assigned') : null].filter(Boolean).join(' · ');
-  const timeline = (lead.notes || '').split('\n').map(parseNoteLine).filter(Boolean);
+  const historyCount = buildTimeline(lead).events.length;
 
   return (
     <>
@@ -353,7 +341,7 @@ export default function LeadQuickDrawer({
               label={prevLead ? `${isAr ? 'العميل السابق' : 'Previous'}: ${prevLead.name || ''}` : (isAr ? 'العميل السابق' : 'Previous')}
               icon={isAr ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
               disabled={!prevLead}
-              onClick={() => prevLead && onOpenFullProfile?.(prevLead)}
+              onClick={() => prevLead && onNavigate?.(prevLead)}
             />
             <span className="crm-ld__counter" dir="ltr">{currentIndex + 1} / {filteredLeads.length || 1}</span>
             <IconButton
@@ -361,7 +349,7 @@ export default function LeadQuickDrawer({
               label={nextLead ? `${isAr ? 'العميل التالي' : 'Next'}: ${nextLead.name || ''}` : (isAr ? 'العميل التالي' : 'Next')}
               icon={isAr ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
               disabled={!nextLead}
-              onClick={() => nextLead && onOpenFullProfile?.(nextLead)}
+              onClick={() => nextLead && onNavigate?.(nextLead)}
             />
           </div>
         )}
@@ -377,9 +365,6 @@ export default function LeadQuickDrawer({
                 {isAr ? 'حوّله لعقار' : 'To listing'}
               </Button>
             )}
-            <Button size="sm" icon={<Eye size={16} aria-hidden="true" />} onClick={() => onOpenFullProfile?.(lead)}>
-              {isAr ? 'ملف العميل' : 'Client profile'}
-            </Button>
           </>
         )}
       >
@@ -428,13 +413,14 @@ export default function LeadQuickDrawer({
             value={activeTab}
             onChange={setActiveTab}
             items={[
-              { id: 'overview', label: isAr ? 'المتابعة' : 'Follow-up' },
+              { id: 'overview', label: isAr ? 'الملف' : 'File', count: historyCount || null },
+              { id: 'details', label: isAr ? 'التفاصيل' : 'Details' },
               sellerFile
                 ? { id: 'matching', label: isAr ? 'مشترين مناسبين' : 'Buyers', count: sellerBuyers.length }
                 : { id: 'matching', label: isAr ? 'العقارات المناسبة' : 'Matches', count: matchingResult.matches.length },
               ...(showBrokerFile ? [{ id: 'broker', label: isAr ? 'ملف الوسيط' : 'Broker file', count: brokerCount || null }] : []),
               { id: 'team', label: isAr ? 'الفريق' : 'Team' },
-              { id: 'timeline', label: isAr ? 'السجل' : 'History', count: timeline.length || null }
+              { id: 'journey', label: isAr ? 'رحلة الزائر' : 'Visitor journey' }
             ]}
           />
 
@@ -456,8 +442,17 @@ export default function LeadQuickDrawer({
               whatsappTemplates={whatsappTemplates}
               onUpdateLead={onUpdateLead}
               triggerToast={triggerToast}
+              newNote={newNote}
+              setNewNote={setNewNote}
+              onAddNote={handleAddNote}
             />
           )}
+
+          {activeTab === 'details' && (
+            <ClientDetails key={lead.id} lead={lead} onUpdateLead={onUpdateLead} isAr={isAr} lang={isAr ? 'ar' : 'en'} triggerToast={triggerToast} userRole={activeRole} />
+          )}
+
+          {activeTab === 'journey' && <ClientJourney lead={lead} properties={properties} isAr={isAr} />}
 
           {activeTab === 'matching' && sellerFile && (
             <LeadDrawerBuyers lead={lead} buyers={sellerBuyers} areaName={areaName} propTypeName={propTypeName} isAr={isAr} />
@@ -484,34 +479,6 @@ export default function LeadQuickDrawer({
             <NotesThread entityType="lead" entityId={lead.id} entityName={lead.name || ''} lang={isAr ? 'ar' : 'en'} className="crm-ld__team" />
           )}
 
-          {activeTab === 'timeline' && (
-            <div className="crm-ld__timeline">
-              <form onSubmit={handleAddNote} className="crm-ld__note-form">
-                <Textarea
-                  label={isAr ? 'ملاحظة جديدة' : 'New note'}
-                  rows={2}
-                  placeholder={isAr ? 'نتيجة مكالمة، طلب جديد من العميل...' : 'Call result, new request...'}
-                  value={newNote}
-                  onChange={(e) => setNewNote(e.target.value)}
-                />
-                <Button type="submit" size="sm" icon={<Plus size={16} aria-hidden="true" />} disabled={!newNote.trim()}>
-                  {isAr ? 'أضف للسجل' : 'Add to history'}
-                </Button>
-              </form>
-              {timeline.length === 0 ? (
-                <EmptyState title={isAr ? 'لسه مفيش ملاحظات' : 'No notes yet'} description={isAr ? 'أي مكالمة أو ملاحظة بتسجّلها هتظهر هنا.' : 'Calls and notes you log show up here.'} />
-              ) : (
-                <ol className="crm-ld__events">
-                  {timeline.map((ev, i) => (
-                    <li key={i}>
-                      {ev.meta && <span className="crm-ld__event-meta">{ev.meta}</span>}
-                      <span className="crm-ld__event-text">{ev.text}</span>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </div>
-          )}
         </div>
       </Drawer>
       {lostOpen && (

@@ -101,3 +101,23 @@
 }
 
 .crm-ld__stages::after { content: ''; flex: 0 0 var(--ui-s-3); }
+
+/* The client file: history, the client's own words */
+.cf-count { margin-inline-start: var(--ui-s-2); min-width: 22px; padding: 0 var(--ui-s-2); border-radius: var(--ui-r-full); background: var(--ui-surface-2); color: var(--ui-text-2); font-size: var(--ui-fs-1); line-height: 22px; text-align: center; font-weight: var(--ui-fw-regular); }
+.cf-note { display: flex; flex-direction: column; align-items: flex-start; gap: var(--ui-s-2); }
+.cf-note .ui-field { width: 100%; }
+.cf-events { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.cf-event { position: relative; display: flex; gap: var(--ui-s-3); padding-bottom: var(--ui-s-4); }
+.cf-event::before { content: ''; position: absolute; inset-inline-start: 13px; top: 28px; bottom: 0; width: 2px; background: var(--ui-line); }
+.cf-event:last-child { padding-bottom: 0; }
+.cf-event:last-child::before { display: none; }
+.cf-event__icon { flex: 0 0 28px; width: 28px; height: 28px; border-radius: var(--ui-r-full); display: grid; place-items: center; background: var(--ui-surface-2); color: var(--ui-text-3); }
+.cf-event--outcome .cf-event__icon { background: var(--ui-info-tint); color: var(--ui-info); }
+.cf-event--request .cf-event__icon { background: var(--ui-warning-tint); color: var(--ui-warning); }
+.cf-event--task .cf-event__icon { background: var(--ui-success-tint); color: var(--ui-success); }
+.cf-event__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding-top: 3px; }
+.cf-event__text { font-size: var(--ui-fs-2); line-height: var(--ui-lh); color: var(--ui-text); overflow-wrap: anywhere; }
+.cf-event__meta { font-size: var(--ui-fs-1); color: var(--ui-text-3); font-variant-numeric: tabular-nums; }
+.cf-words { margin: 0; padding: var(--ui-s-3); background: var(--ui-surface-2); border-radius: var(--ui-r-md); font-size: var(--ui-fs-2); line-height: var(--ui-lh); color: var(--ui-text); overflow-wrap: anywhere; }
+.cf-words small { display: block; margin-bottom: 2px; color: var(--ui-text-3); font-size: var(--ui-fs-1); }
+.crm-ld__fold-hint { margin-inline-start: auto; margin-inline-end: var(--ui-s-3); font-size: var(--ui-fs-1); font-weight: var(--ui-fw-regular); color: var(--ui-text-3); font-variant-numeric: tabular-nums; }

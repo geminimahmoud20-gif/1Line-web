@@ -8,7 +8,7 @@ import { bucketOf, completion, dueLabel } from '../../../utils/tasks';
 import { Badge } from '../../ui';
 
 /** The open tasks behind one client, and a quick way to add the next one */
-export default function LeadTasks({ lead, isAr, triggerToast, onUpdateLead }) {
+export default function LeadTasks({ lead, isAr, triggerToast, onUpdateLead, title }) {
   const { currentUser } = useAuth();
   const { tasks } = useTasks();
   const me = useMemo(() => ({ uid: currentUser?.uid, name: currentUser?.displayName || currentUser?.name || currentUser?.email?.split('@')[0] || '' }), [currentUser]);
@@ -26,7 +26,7 @@ export default function LeadTasks({ lead, isAr, triggerToast, onUpdateLead }) {
   return (
     <section className="crm-ld__block" aria-labelledby="crm-ld-tasks">
       <div className="crm-ld__block-head">
-        <h3 id="crm-ld-tasks" className="crm-ld__h"><ListChecks size={16} aria-hidden="true" />{isAr ? 'مهام العميل' : 'Client tasks'}</h3>
+        <h3 id="crm-ld-tasks" className="crm-ld__h"><ListChecks size={16} aria-hidden="true" />{title || (isAr ? 'مهام العميل' : 'Client tasks')}</h3>
         {open.length > 0 && <Badge tone="accent">{open.length}</Badge>}
       </div>
       {open.length > 0 && (

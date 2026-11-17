@@ -23,10 +23,8 @@ export default function LeadCommissionBox({ lead, isAr, onUpdateLead }) {
   };
 
   return (
-    <section className="crm-ld__block" aria-labelledby="crm-ld-commission">
-      <div className="crm-ld__block-head">
-        <h3 id="crm-ld-commission" className="crm-ld__h"><Coins size={16} aria-hidden="true" />{L('العمولة', 'Commission')}</h3>
-      </div>
+    <details className="crm-ld__block crm-ld__fold">
+      <summary className="crm-ld__fold-sum"><Coins size={16} aria-hidden="true" />{L('العمولة', 'Commission')}{c.gross ? <small className="crm-ld__fold-hint">{`${money(c.gross)} ${L('ج.م', 'EGP')}`}</small> : null}</summary>
       <dl className="crm-ld__facts">
         <div><dt>{L('قيمة الصفقة', 'Deal value')}</dt><dd>{c.value ? `${money(c.value)} ${L('ج.م', 'EGP')}` : '—'}</dd></div>
         <div><dt>{L('لو اتقفلت', 'If it closes')}</dt><dd>{c.gross ? `${money(c.gross)} ${L('ج.م', 'EGP')}` : '—'} <small>({c.pct}%)</small></dd></div>
@@ -52,6 +50,6 @@ export default function LeadCommissionBox({ lead, isAr, onUpdateLead }) {
           <Button size="sm" variant="secondary" disabled={!dirty || pctBad} onClick={save}>{L('احفظ', 'Save')}</Button>
         </div>
       )}
-    </section>
+    </details>
   );
 }

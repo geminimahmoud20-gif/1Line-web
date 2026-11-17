@@ -28,7 +28,6 @@ import TasksPanel from './crm/TasksPanel';
 import SellerReportPanel from './crm/SellerReportPanel';
 import PaymentScheduleBuilder from './crm/PaymentScheduleBuilder';
 import RetargetingHub from './crm/RetargetingHub';
-import CustomerProfileModal from './crm/CustomerProfileModal';
 
 import LeadsTab from './crm/LeadsTab';
 import ConcurrencyConflictModal from './crm/ConcurrencyConflictModal';
@@ -192,7 +191,8 @@ export const CrmAdminPanel = ({
 
   // Customer 360 & Add Lead Modal States
   const [showAddLeadModal, setShowAddLeadModal] = useState(false);
-  const [viewingProfileLead, setViewingProfileLead] = useState(null);
+  // The client file (drawer) opens on «الملف»; the old «ملف العميل» window is gone: its data is the «التفاصيل» tab
+  const [drawerTab, setDrawerTab] = useState('overview');
   const [selectedLeadIds, setSelectedLeadIds] = useState([]);
   const [quickDrawerLead, setQuickDrawerLead] = useState(null);
 
@@ -937,7 +937,7 @@ export const CrmAdminPanel = ({
           setSelectedLeadIds={setSelectedLeadIds}
           setShowAddLeadModal={setShowAddLeadModal}
           setTemperatureFilter={setTemperatureFilter}
-          setViewingProfileLead={setViewingProfileLead}
+          setViewingProfileLead={(l) => { setDrawerTab('details'); setQuickDrawerLead(l); }}
           temperatureFilter={temperatureFilter}
           triggerToast={triggerToast}
         />
@@ -1159,25 +1159,6 @@ export const CrmAdminPanel = ({
         </div>
       )}
 
-      {/* 👤 MODAL: CUSTOMER 360° INTELLIGENCE PROFILE */}
-      {viewingProfileLead && (
-        <CustomerProfileModal
-          isOpen={!!viewingProfileLead}
-          lead={viewingProfileLead}
-          properties={properties}
-          onClose={() => setViewingProfileLead(null)}
-          onUpdateLead={(leadId, updatedData, expectedVer) => {
-            const result = onUpdateLead ? onUpdateLead(leadId, updatedData, expectedVer) : undefined;
-            if (result === false) return false; // blocked by role — don't show an edit that didn't happen
-            setViewingProfileLead(prev => prev ? { ...prev, ...updatedData } : null);
-            return result;
-          }}
-          lang={lang}
-          triggerToast={triggerToast}
-          userRole={activeRole}
-        />
-      )}
-
       {/* ➕ MODAL: ADD NEW LEAD DIRECTLY */}
       {showAddLeadModal && (
         <AddLeadModal
@@ -1212,7 +1193,9 @@ export const CrmAdminPanel = ({
       {/* ⚡ DRAWER: HIGH-VELOCITY LEAD QUICK DRAWER */}
       <LeadQuickDrawer
         lead={quickDrawerLead}
-        onClose={() => setQuickDrawerLead(null)}
+        tab={drawerTab}
+        onTabChange={setDrawerTab}
+        onClose={() => { setQuickDrawerLead(null); setDrawerTab('overview'); }}
         onUpdateLead={(leadId, updatedData, expectedVer) => {
           const result = onUpdateLead ? onUpdateLead(leadId, updatedData, expectedVer) : undefined;
           if (result !== false) {
@@ -1222,10 +1205,7 @@ export const CrmAdminPanel = ({
         }}
         onDeleteLead={onDeleteLead}
         onConvertToProperty={onConvertToProperty}
-        onOpenFullProfile={(l) => {
-          setViewingProfileLead(l);
-          setQuickDrawerLead(null);
-        }}
+        onNavigate={(l) => setQuickDrawerLead(l)}
         properties={properties}
         demands={demands}
         filteredLeads={filteredLeads}
