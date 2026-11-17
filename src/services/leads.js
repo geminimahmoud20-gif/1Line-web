@@ -510,6 +510,36 @@ export const mergeLeads = async (keepId, mergedFields, removeIds = []) => {
 };
 
 /**
+ * «دمج كل المكرر»: for each plan (utils/dedupePlan) one batch, all or nothing per client: the kept request gets
+ * the merged fields and the others are archived with mergedInto (never deleted, so it can be undone from the
+ * archive). Returns { done, failed } counts of clients.
+ */
+export const mergeDuplicateGroups = async (plans = []) => {
+  const out = { done: 0, failed: 0 };
+  if (!isFirebaseConfigured() || !db) return { done: 0, failed: plans.length };
+  for (const plan of plans) {
+    try {
+      const keepId = String(plan.keep.id);
+      const { lead, contact } = splitLeadFields(plan.merged);
+      const desk = lead.assignedTo || deskOf(plan.keep);
+      const batch = writeBatch(db);
+      batch.set(doc(db, 'leads', keepId), { ...lead, updatedAt: serverTimestamp() }, { merge: true });
+      batch.set(doc(db, 'lead_contacts', keepId), { ...contact, assignedTo: desk || UNASSIGNED_DESK }, { merge: true });
+      for (const o of plan.others) {
+        if (String(o.id) === keepId) continue;
+        batch.set(doc(db, 'leads', String(o.id)), { ...plan.archive, updatedAt: serverTimestamp() }, { merge: true });
+      }
+      await batch.commit();
+      out.done += 1;
+    } catch (error) {
+      console.error('Firebase mergeDuplicateGroups error:', error);
+      out.failed += 1;
+    }
+  }
+  return out;
+};
+
+/**
  * One client by id, with their phone when this account may see it. The live list holds only the
  * newest 150, so a unit's owner who came in earlier isn't in it (the listing form's «صاحب الوحدة»).
  * Returns { status: 'ok', lead } | { status: 'missing' } (deleted or merged away) |

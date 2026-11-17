@@ -5,7 +5,7 @@ import { exportToCsv } from '../utils/exportCsv';
 import { exportRows } from '../utils/transfer/exportTable';
 import { leadToRow } from '../utils/transfer/leadSchema';
 
-import { restoreLeads, mergeLeads } from '../firebaseLazy';
+import { restoreLeads, mergeLeads, mergeDuplicateGroups } from '../firebaseLazy';
 import { auditLeadDeleted, auditContactUse } from '../utils/contactAudit';
 import { canExportCsv, canDeleteLead, canManagePayments, canEditLeadsRole, assignableDesks, scopeLeadsForAccess } from '../utils/rbacRules';
 import { assignmentUpdates, personFor, assigneeValue } from '../utils/assignees';
@@ -758,6 +758,31 @@ export const CrmAdminPanel = ({
     return true;
   };
 
+  // «دمج كل المكرر»: each plan (utils/dedupePlan) keeps one request and archives the others (nothing deleted)
+  const handleMergeAllDuplicates = async (plans) => {
+    if (!plans.length || !onUpdateLead) return false;
+    const applyLocal = (list) => setLeads((prev) => prev.map((l) => {
+      const plan = list.find((p) => p.keep.id === l.id);
+      if (plan) return { ...l, ...plan.merged };
+      return list.some((p) => p.others.some((o) => o.id === l.id)) ? { ...l, isArchived: true, mergedInto: String(list.find((p) => p.others.some((o) => o.id === l.id)).keep.id) } : l;
+    }));
+    if (firebaseConnected) {
+      const res = await mergeDuplicateGroups(plans);
+      if (res.done) applyLocal(plans);
+      if (res.failed) {
+        triggerToast(isAr ? `اتدمج ${res.done} عميل، و${res.failed} فشلوا ومتغيرش فيهم حاجة. جرّب تاني.` : `Merged ${res.done}; ${res.failed} failed and were left unchanged.`, 'error');
+        return res.done > 0;
+      }
+    } else {
+      for (const p of plans) {
+        await onUpdateLead(p.keep.id, p.merged);
+        for (const o of p.others) await onUpdateLead(o.id, p.archive);
+      }
+    }
+    triggerToast(isAr ? `اتدمج ${plans.length} عميل مكرر في ملفات موحّدة` : `Merged ${plans.length} duplicate clients`, 'success');
+    return true;
+  };
+
   // Login Gate
   // Hooks stay above the early return below (keyboard triage reads the visible rows)
   const [kbdIndex, setKbdIndex] = useLeadKeyboardTriage({ list: filteredLeads, onOpen: setQuickDrawerLead, onWhatsApp: onWhatsAppClick });
@@ -889,6 +914,7 @@ export const CrmAdminPanel = ({
           onWhatsAppClick={onWhatsAppClick}
           duplicateIds={duplicateIds}
           onMergeLeads={handleMergeLeads}
+          onMergeAllDuplicates={handleMergeAllDuplicates}
           canMergeLeads={canDeleteLead(activeRole)}
           canEdit={canEditLeads}
           canExport={canExport}

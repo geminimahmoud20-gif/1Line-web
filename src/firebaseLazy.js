@@ -120,6 +120,7 @@ export const stripStaffIdentity = lazyCall('stripStaffIdentity');
 export const importLeads = lazyCall('importLeads');
 export const restoreLeads = lazyCall('restoreLeads');
 export const mergeLeads = lazyCall('mergeLeads');
+export const mergeDuplicateGroups = lazyCall('mergeDuplicateGroups');
 export const loadAllLeadsForStats = lazyCall('loadAllLeadsForStats');
 export const loadLeadChangesSince = lazyCall('loadLeadChangesSince');
 export const loadAnalyticsDays = lazyCall('loadAnalyticsDays');
