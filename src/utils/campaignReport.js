@@ -4,7 +4,7 @@
 //  A lead "reached a visit" when it is in site_visit or later, or its stage history shows it ever was
 //  (so a client lost after a visit still counts as a visit, and avgDaysToVisit can be worked out).
 // =============================================================
-import { leadCampaign, leadCreatedMs } from './crmLeadViews.js';
+import { leadCampaign, leadCreatedMs, phoneKey } from './crmLeadViews.js';
 import { CAMPAIGN_TYPES, campaignTypeOf } from './utmLinks.js';
 import { reachedAny, msToReach, avgDays } from './stageHistory.js';
 import { leadCommission } from './commission.js';
@@ -29,22 +29,40 @@ export const spendKey = (campaign, ad = '') => (ad ? `${campaign}::${ad}` : camp
 export function campaignReport(leads = [], { by = 'campaign', days = 0, now = Date.now(), spend = {}, taps = [] } = {}) {
   const since = days > 0 ? now - days * 86400000 : 0;
   const rows = new Map();
-  for (const l of leads) {
+  // People, not requests: someone who asks twice (a buyer request and a sell request, a second try with another
+  // spelling of the name) is one person in a campaign. A person is told by their phone; a lead with no phone counts alone.
+  const personKey = (l, i) => phoneKey(l.phone) || phoneKey(l.whatsapp) || `lead:${l.id ?? `#${i}`}`;
+  for (const [i, l] of leads.entries()) {
     const c = leadCampaign(l);
     if (!c) continue;
     if (since && leadCreatedMs(l) < since) continue;
     const ad = by === 'ad' ? (c.ad || '—') : '';
     const key = spendKey(c.campaign, ad === '—' ? '' : ad) + (by === 'ad' && ad === '—' ? '::—' : '');
-    const row = rows.get(key) || { key, campaign: c.campaign, ad, source: c.source, contacts: 0, leads: 0, contacted: 0, visits: 0, closed: 0, lost: 0, toVisit: [], reasons: {}, wonCommission: 0, expectedCommission: 0 };
-    row.leads += 1;
-    if (reachedAny(l, CONTACTED)) row.contacted += 1;
-    if (reachedAny(l, VISITED)) { row.visits += 1; row.toVisit.push(msToReach(l, VISITED)); }
-    if (reachedAny(l, ['closed'])) row.closed += 1;
+    const row = rows.get(key) || { key, campaign: c.campaign, ad, source: c.source, contacts: 0, leads: 0, requests: 0, contacted: 0, visits: 0, closed: 0, lost: 0, toVisit: [], reasons: {}, wonCommission: 0, expectedCommission: 0, people: new Map() };
+    const pk = personKey(l, i);
+    if (!row.people.has(pk)) row.people.set(pk, []);
+    row.people.get(pk).push(l);
+    row.requests += 1;
     // What the client's deal pays: the whole commission once closed, the stage-weighted part while open
+    // (every request's deal counts: two requests are two deals)
     if (l.status === 'closed') row.wonCommission += leadCommission(l).gross;
     else if (l.status !== 'lost') row.expectedCommission += leadCommission(l).weighted;
-    if (l.status === 'lost') { row.lost += 1; const why = l.lostReason || 'other'; row.reasons[why] = (row.reasons[why] || 0) + 1; }
     rows.set(key, row);
+  }
+  for (const row of rows.values()) {
+    for (const reqs of (row.people || new Map()).values()) {
+      row.leads += 1;
+      if (reqs.some((l) => reachedAny(l, CONTACTED))) row.contacted += 1;
+      const visited = reqs.filter((l) => reachedAny(l, VISITED));
+      if (visited.length) { row.visits += 1; row.toVisit.push(Math.min(...visited.map((l) => msToReach(l, VISITED)))); }
+      if (reqs.some((l) => reachedAny(l, ['closed']))) row.closed += 1;
+      // Lost only when every one of their requests is lost (one still open means the person is still being worked)
+      if (reqs.every((l) => l.status === 'lost')) {
+        row.lost += 1;
+        const why = reqs[reqs.length - 1].lostReason || 'other';
+        row.reasons[why] = (row.reasons[why] || 0) + 1;
+      }
+    }
   }
   // Taps on WhatsApp or a phone number that came from an ad (contact_intents): the people who went straight to
   // a chat or a call without a form. Counted per campaign (or ad) like the leads; a campaign with taps and
@@ -59,14 +77,14 @@ export function campaignReport(leads = [], { by = 'campaign', days = 0, now = Da
     const content = by === 'ad' ? String(t.content || '').trim() : '';
     const ad = by === 'ad' ? (content || '—') : '';
     const key = spendKey(campaign, content) + (by === 'ad' && !content ? '::—' : '');
-    const row = rows.get(key) || { key, campaign, ad, source: String(t.source || ''), contacts: 0, leads: 0, contacted: 0, visits: 0, closed: 0, lost: 0, toVisit: [], reasons: {}, wonCommission: 0, expectedCommission: 0 };
+    const row = rows.get(key) || { key, campaign, ad, source: String(t.source || ''), contacts: 0, leads: 0, requests: 0, contacted: 0, visits: 0, closed: 0, lost: 0, toVisit: [], reasons: {}, wonCommission: 0, expectedCommission: 0, people: new Map() };
     row.contacts += 1;
     rows.set(key, row);
   }
   return [...rows.values()]
     .map((r) => {
       const cost = Number(spend[r.key]) || 0;
-      const { toVisit, reasons, ...rest } = r;
+      const { toVisit, reasons, people: _people, ...rest } = r;
       // The reason most lost clients gave (ties: the one that came first), with how many
       const top = Object.entries(reasons).sort((a, b) => b[1] - a[1])[0];
       return {
@@ -86,7 +104,7 @@ export function campaignReport(leads = [], { by = 'campaign', days = 0, now = Da
 
 /** Totals row for the same rows */
 export function campaignTotals(rows = []) {
-  const t = rows.reduce((s, r) => ({ contacts: s.contacts + (r.contacts || 0), leads: s.leads + r.leads, contacted: s.contacted + r.contacted, visits: s.visits + r.visits, closed: s.closed + r.closed, spend: s.spend + r.spend, wonCommission: s.wonCommission + (r.wonCommission || 0), expectedCommission: s.expectedCommission + (r.expectedCommission || 0) }), { contacts: 0, leads: 0, contacted: 0, visits: 0, closed: 0, spend: 0, wonCommission: 0, expectedCommission: 0 });
+  const t = rows.reduce((s, r) => ({ contacts: s.contacts + (r.contacts || 0), leads: s.leads + r.leads, requests: s.requests + (r.requests || 0), contacted: s.contacted + r.contacted, visits: s.visits + r.visits, closed: s.closed + r.closed, spend: s.spend + r.spend, wonCommission: s.wonCommission + (r.wonCommission || 0), expectedCommission: s.expectedCommission + (r.expectedCommission || 0) }), { contacts: 0, leads: 0, requests: 0, contacted: 0, visits: 0, closed: 0, spend: 0, wonCommission: 0, expectedCommission: 0 });
   return { ...t, costPerLead: t.spend && t.leads ? Math.round(t.spend / t.leads) : 0, costPerVisit: t.spend && t.visits ? Math.round(t.spend / t.visits) : 0, returnPerEgp: t.spend && t.wonCommission ? Math.round((t.wonCommission / t.spend) * 100) / 100 : 0 };
 }
 
