@@ -118,6 +118,7 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [autoPaused, setAutoPaused] = useState(false);
+  const [showCairo, setShowCairo] = useState(false);
   const nameRef = useRef(null);
   const [submittedRef, setSubmittedRef] = useState(null);
   const [districts, setDistricts] = useState(() => getAreas().filter((d) => d.id !== 'all'));
@@ -345,7 +346,7 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
   return (
     <div className="sw" dir={isAr ? 'rtl' : 'ltr'}>
       <div className="sw-progress">
-        <ProgressRing percent={progress.percent} size={76} label={L('نسبة إنجاز الفورم', 'Form completion')} />
+        <ProgressRing percent={progress.percent} label={L('نسبة إنجاز الفورم', 'Form completion')} />
         <span className="sw-progress__text">
           <em>{ringMessage(progress.percent, isAr)}</em>
           <strong>{progress.percent === 100 ? L('طلبك جاهز للإرسال', 'Your request is ready') : L(`اكتملت ${progress.done} من ${progress.total} خطوات`, `${progress.done} of ${progress.total} steps done`)}</strong>
@@ -389,6 +390,7 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
           <div className="sw-grid">
             <div className="sw-field sw-field--wide sw-areas" role="group" aria-label={L('المنطقة', 'Area')}>
               <span>{L('المنطقة', 'Area')}</span>
+              <small className="sw-areas__group">{L('سوهاج', 'Sohag')}</small>
               <div className="sw-chips">
                 {mains.map((m) => {
                   const has = childrenOf(m.id, districts).length > 0;
@@ -396,10 +398,19 @@ export const SellWizard = ({ lang = 'ar', sellerAnswers = {}, setSellerAnswers, 
                     <button key={m.id} type="button" aria-pressed={activeMain?.id === m.id} className={`sw-chip ${activeMain?.id === m.id ? 'is-on' : ''}`} onClick={() => pickArea(m.id, has)}>{shortAreaName(m, districts, isAr)}</button>
                   );
                 })}
-                {CAIRO_AREAS.map((c) => (
-                  <button key={c.id} type="button" aria-pressed={area === c.id} className={`sw-chip ${area === c.id ? 'is-on' : ''}`} onClick={() => pickArea(c.id, false)}>{isAr ? c.ar : c.en}</button>
-                ))}
               </div>
+              {/* Greater Cairo stays folded: most owners are in Sohag, and 15 chips in one cloud push the form down */}
+              <button type="button" className={`sw-areas__cairo${isCairo ? ' is-on' : ''}`} aria-expanded={showCairo || isCairo} onClick={() => setShowCairo((v) => !v)}>
+                {isCairo ? `${L('القاهرة الكبرى', 'Greater Cairo')}: ${CAIRO_AREAS.find((c) => c.id === area)?.[isAr ? 'ar' : 'en'] || ''}` : L('العقار في القاهرة الكبرى؟', 'Property in Greater Cairo?')}
+                <ChevronDown size={15} aria-hidden="true" className={showCairo || isCairo ? 'is-open' : ''} />
+              </button>
+              {(showCairo || isCairo) && (
+                <div className="sw-chips sw-areas__cairo-list">
+                  {CAIRO_AREAS.map((c) => (
+                    <button key={c.id} type="button" aria-pressed={area === c.id} className={`sw-chip ${area === c.id ? 'is-on' : ''}`} onClick={() => pickArea(c.id, false)}>{isAr ? c.ar : c.en}</button>
+                  ))}
+                </div>
+              )}
               {kids.length > 0 && (
                 <div className="sw-areas__kids">
                   <small>{L('وفين بالظبط؟', 'Which part?')}</small>
