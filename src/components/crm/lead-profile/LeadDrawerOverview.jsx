@@ -134,7 +134,7 @@ export default function LeadDrawerOverview({
           {stageOutcomes.map((o) => (
             <Button
               key={o.id}
-              variant={o.kind === 'negative' ? 'ghost' : 'secondary'}
+              variant="secondary"
               size="sm"
               onClick={() => (o.kind === 'negative' ? (setPendingNeg(o.id), setNegReason('')) : handleLogCall(o.id))}
             >

@@ -17,14 +17,14 @@ test('the activity log is the timeline, newest first, with a kind for each entry
 test('older note lines follow, once; the client\'s words are kept apart', () => {
   const lead = {
     activityLogs: [{ timestamp: '2026-11-17T09:00:00Z', action: 'مكالمة: ما ردّش' }],
-    notes: '[مكالمة 17/11 10:30]: ما ردّش\n[ملاحظة 16/11 09:00]: طلب مهلة\nوسيط عقاري | عرض بيع محل'
+    notes: '[مكالمة 17/11 10:30]: ما ردّش\n[ملاحظة 16/11 09:00]: طلب مهلة\nوسيط عقاري | عندي محل للبيع'
   };
   const { events, words } = buildTimeline(lead);
   assert.equal(events.length, 3);
   assert.equal(events[0].legacy, false);
   assert.deepEqual(events.slice(1).map((e) => e.legacy), [true, true]);
   assert.match(events[1].meta, /مكالمة/);
-  assert.match(words, /عرض بيع محل/);
+  assert.match(words, /عندي محل للبيع/);
   assert.doesNotMatch(words, /طلب مهلة/);
 });
 
@@ -36,4 +36,14 @@ test('nothing recorded is an empty timeline', () => {
 test('an older line loses its emoji and «undefined»', () => {
   assert.deepEqual(parseNoteLine('📞 [10:30]: كلّمته في undefined'), { meta: '10:30', text: 'كلّمته في سوهاج' });
   assert.equal(parseNoteLine('   '), null);
+});
+
+import { isGeneratedOfferLine, withoutGeneratedOffer } from '../../src/utils/clientTimeline.js';
+test('the sell form\'s own sentence is not the client\'s words', () => {
+  const gen = 'المالك · عرض بيع منزل مستقل / فيلا في سوهاج غرب بمساحة 180م² · السعر المطلوب: 21,000,000 ج.م';
+  assert.equal(isGeneratedOfferLine(gen), true);
+  assert.equal(isGeneratedOfferLine('وسيط عقاري | عرض بيع شقة'), true);
+  assert.equal(isGeneratedOfferLine('عايز أبيع بسرعة'), false);
+  assert.equal(withoutGeneratedOffer(`${gen}\nعايز أبيع بسرعة`), 'عايز أبيع بسرعة');
+  assert.equal(withoutGeneratedOffer(gen), '');
 });

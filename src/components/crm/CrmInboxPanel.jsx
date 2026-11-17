@@ -29,6 +29,7 @@ import WhatsAppIntentsList from './WhatsAppIntentsList';
 import { formatWhatsAppPhone } from '../../utils/matchingEngine';
 import { listTeamMembers } from '../../services/team';
 import { userDisplayName } from '../../utils/assignees';
+import { withoutGeneratedOffer } from '../../utils/clientTimeline';
 import {
   INBOX_STAGES as STAGES, INBOX_VIEWS, TEAM_DESKS, isInboxStage, pipelineStageLabel, isLeadUnclaimed, isLeadClaimedByMe,
   isInboxActive, needsAction, matchesView, receivedMs, ageLabel, formatReceived, requestsCount, slaSummary, splitNotes,
@@ -656,7 +657,8 @@ export default function CrmInboxPanel({
               const images = lead.details?.images || [];
               // CRM log lines ("[09:19 ص] تم تحديث المرحلة…") are split off before the client's text is tidied
               const { client: rawNotes, log } = splitNotes(lead.notes || '');
-              const notes = rawNotes ? cleanNotes(rawNotes) : '';
+              const ownWords = withoutGeneratedOffer(rawNotes);
+              const notes = ownWords ? cleanNotes(ownWords) : '';
               const got = receivedMs(lead);
               const when = formatReceived(got, currentTime, isAr);
               const age = Number.isFinite(got) ? ageLabel(currentTime - got, isAr) : '';
