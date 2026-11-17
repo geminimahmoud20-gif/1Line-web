@@ -85,7 +85,7 @@ test('reassigning writes the new account and desk, or clears the owner', () => {
   const u = reassignUpdates(lead, { uid: 'u9', name: 'Mona', desk: 'Sales Team B' }, 'T');
   assert.deepEqual(u, { ownerName: 'Mona', claimedBy: 'Mona', ownerUid: 'u9', assignedTo: 'Sales Team B', claimedAt: 'T', assignedAt: 'T' });
   assert.equal(reassignUpdates(lead, { uid: 'u9', email: 'mona@x.com' }, 'T').assignedTo, 'Sales Team A');
-  assert.equal(reassignUpdates(lead, { uid: 'u9', email: 'mona@x.com' }, 'T').ownerName, 'mona');
+  assert.equal(reassignUpdates(lead, { uid: 'u9', email: 'mona@x.com' }, 'T').ownerName, 'Mona');
   const back = reassignUpdates(lead, null, 'T');
   assert.equal(back.ownerUid, null);
   assert.equal(isLeadUnclaimed({ ...lead, ...back }), true);

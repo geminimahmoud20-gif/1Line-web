@@ -1,4 +1,5 @@
 import { DESK_BY_ROLE } from './rbacRules.js';
+import { nameFromEmail } from './assignees.js';
 // CRM inbox (CrmInboxPanel): which requests it lists, who holds each one, how old it is and how
 // its notes split into the client's words and the CRM's own log lines.
 // Pure helpers, unit-tested in tests/unit/inbox-view.test.mjs.
@@ -201,7 +202,7 @@ export function reassignUpdates(lead, member, nowIso = new Date().toISOString())
       assignedAt: nowIso
     };
   }
-  const name = member.name || (member.email ? member.email.split('@')[0] : '') || member.uid;
+  const name = member.name || nameFromEmail(member.email) || member.uid;
   return {
     ownerName: name,
     claimedBy: name,

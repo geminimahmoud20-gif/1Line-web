@@ -44,3 +44,17 @@ test('raw source and campaign values read as Arabic', () => {
   assert.equal(campaignLabel('حملة الصيف'), 'حملة الصيف');
   assert.equal(campaignLabel(''), '');
 });
+
+import { nameFromEmail, userDisplayName } from '../../src/utils/assignees.js';
+test('a name from an email never shows the raw address', () => {
+  assert.equal(nameFromEmail('mahmoudelbaz2593@gmail.com'), 'Mahmoudelbaz');
+  assert.equal(nameFromEmail('sara.ali_7@x.com'), 'Sara Ali');
+  assert.equal(userDisplayName({ displayName: 'د. محمود', email: 'a@b.c' }), 'د. محمود');
+  assert.equal(userDisplayName({ email: 'omar.k@x.com' }), 'Omar K');
+  assert.equal(userDisplayName(null, 'موظف'), 'موظف');
+});
+test('a finished task with nothing else planned suggests a follow-up', () => {
+  const s = suggestNextStep('task_done', NOW);
+  assert.equal(s.kind, 'call');
+  assert.equal(s.day, '2026-11-18');
+});
