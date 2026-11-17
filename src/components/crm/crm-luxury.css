@@ -653,10 +653,7 @@
   /* The labels of the top bar's own buttons (not the items of the «+» menu, which are buttons in it too) */
   .crm-topbar-right button:not(.crm-quick-action-item):not(.crm-btn-primary-gold) > span:not([class]) { display: none; }
 }
-/* Phones: the page shows its own heading, so the top bar does not repeat it (cut to «العملاء والمب…») and the «جديد» button keeps its word */
-@media (max-width: 640px) {
-  .crm-page-title { display: none; }
-}
+
 
 /* ── Mobile ── */
 @media (max-width: 768px) {
@@ -2003,6 +2000,10 @@ mark.crm-search-highlight {
   .crm-user-menu__role { display: none; }
   .crm-user-menu__btn { padding: 0 var(--ui-s-1); }
   .crm-page-title__sub { display: none; }
+}
+/* Phones: the page shows its own heading, so the top bar does not repeat it (cut to «العملاء والمب…»). Placed after the base rule: the same specificity, so the later one wins. */
+@media (max-width: 640px) {
+  .crm-page-title { display: none; }
 }
 
 /* Phones: the bell's panel spans the screen under the top bar instead of hanging off the bell
