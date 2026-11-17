@@ -13,6 +13,8 @@ import { getAreas } from '../../utils/areasData';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import LostReasonModal from './LostReasonModal';
 import MergeLeadsModal from './MergeLeadsModal';
+import MergeAllModal from './MergeAllModal';
+import { planDuplicateMerges } from '../../utils/dedupePlan';
 import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, responseSlaMs, escalationLevel, isOverdue, isDueToday, isUnassigned, isStale, localDayKey, getLeadVisitDate, getLeadVisitSlot, isViewingLead, isSellerLead, isAccountLead, isBuyerLead, leadCreatedMs } from '../../utils/crmLeadViews';
 import { useProperties } from '../../context/PropertiesContext';
 import LeadTableRowActions from './LeadTableRowActions';
@@ -89,6 +91,7 @@ export default function LeadsTab({
   triggerToast,
   duplicateIds = new Map(),
   onMergeLeads,
+  onMergeAllDuplicates,
   canMergeLeads = false,
   sourceFilter = 'all',
   setSourceFilter,
@@ -103,6 +106,8 @@ export default function LeadsTab({
 }) {
   const [lostFor, setLostFor] = useState(null);
   const [mergeGroup, setMergeGroup] = useState(null);
+  const [mergeAllOpen, setMergeAllOpen] = useState(false);
+  const mergePlans = useMemo(() => (mergeAllOpen ? planDuplicateMerges(leads) : []), [mergeAllOpen, leads]);
 
   // Column Visibility state & persistence
   const DEFAULT_VISIBLE_COLUMNS = {
@@ -397,6 +402,14 @@ export default function LeadsTab({
           onMerge={async (keepId, otherIds) => { await onMergeLeads(keepId, otherIds); setMergeGroup(null); }}
         />
       )}
+      {mergeAllOpen && (
+        <MergeAllModal
+          plans={mergePlans}
+          isAr={isAr}
+          onCancel={() => setMergeAllOpen(false)}
+          onConfirm={async () => { const ok = await onMergeAllDuplicates(mergePlans); if (ok) setMergeAllOpen(false); return ok; }}
+        />
+      )}
       {importOpen && (
         <DataImportModal
           entity="leads"
@@ -491,6 +504,13 @@ export default function LeadsTab({
           ]}
         />
       </div>
+
+      {leadFilter === 'dupes' && canMergeLeads && onMergeAllDuplicates && counts.dupes > 1 && (
+        <div className="crm-leads__dupebar">
+          <span>{isAr ? 'نفس العميل ملا أكتر من فورم؟ ادمجهم في ملف واحد، وكل طلب بيتسجل في سجل أحداثه.' : 'One client, several forms? Merge them into one file; each request goes into its history.'}</span>
+          <Button size="sm" onClick={() => setMergeAllOpen(true)}>{isAr ? 'دمج كل المكرر' : 'Merge all duplicates'}</Button>
+        </div>
+      )}
 
       <div className="crm-leads__toolbar">
         <label className="crm-leads__search">

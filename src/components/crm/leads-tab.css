@@ -318,3 +318,5 @@
   .crm-layout .crm-leads .crm-next { max-width: none; flex-direction: row; align-items: center; flex-wrap: wrap; gap: var(--ui-s-2); }
   .crm-layout .crm-leads .crm-leads__score { flex-direction: row; align-items: center; }
 }
+
+.crm-leads__dupebar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ui-s-3); padding: var(--ui-s-3) var(--ui-s-4); margin-bottom: var(--ui-s-3); background: var(--ui-info-tint); border-radius: var(--ui-r-md); font-size: var(--ui-fs-2); color: var(--ui-text); }
