@@ -10,6 +10,7 @@ import { SELLER_STAGES, pipelineKind } from '../../utils/leadPipeline';
 import { boardColumnOf, PROGRESS_STAGE_IDS } from '../../utils/dealStages';
 import LostReasonModal from './LostReasonModal';
 import { validateStageTransition, HIGH_VALUE_DEAL_THRESHOLD } from '../../services/stateMachineEngine';
+import { guardStage } from '../../utils/stageGate';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 import { PageHeader, KpiRow, KpiTile, Chip } from '../ui';
 import './kanban-redesign.css';
@@ -336,12 +337,16 @@ export default function KanbanPipeline({
     e.preventDefault();
   };
 
+  const stageOk = (lead, targetStageId) => guardStage(lead, { status: targetStageId, ...(targetStageId === 'lost' ? { lostReason: 'pending' } : {}) }, { role: activeRole, toast: triggerToast });
+
   const handleDrop = (e, targetStageId) => {
     e.preventDefault();
     const leadId = e.dataTransfer.getData('text/plain') || draggedLeadId;
     if (leadId) {
       const targetLead = leads.find(l => l.id === leadId);
       if (targetLead && boardColumnOf(targetLead.status) === targetStageId) { setDraggedLeadId(null); return; }
+      // The stage lock: log the activity outcome first, and only a manager goes back
+      if (targetLead && !stageOk(targetLead, targetStageId)) { setDraggedLeadId(null); return; }
       if (targetLead && targetStageId === 'lost') { setLostFor(targetLead); setDraggedLeadId(null); return; }
       if (targetLead && onUpdateLead) {
         const validation = validateStageTransition(targetLead, targetStageId, {
@@ -375,7 +380,7 @@ export default function KanbanPipeline({
             'success',
             {
               onUndo: () => {
-                onUpdateLead(leadId, { status: prevStageId, lastActivityAt: new Date().toISOString() });
+                onUpdateLead(leadId, { status: prevStageId, _undo: true, lastActivityAt: new Date().toISOString() });
               },
               undoLabel: isAr ? 'تراجع' : 'Undo',
               duration: 6000
@@ -393,6 +398,7 @@ export default function KanbanPipeline({
     if (currentIndex >= 0 && currentIndex < PROGRESS_COUNT - 1) {
       const prevStageId = lead.status || 'new';
       const nextStage = PIPELINE_STAGES[currentIndex + 1];
+      if (!stageOk(lead, nextStage.id)) return;
       const validation = validateStageTransition(lead, nextStage.id, {
         userRole: activeRole,
         isFounderApproved: lead.isFounderApproved || activeRole === 'super_admin'
@@ -422,7 +428,7 @@ export default function KanbanPipeline({
             'success',
             {
               onUndo: () => {
-                onUpdateLead(lead.id, { status: prevStageId, lastActivityAt: new Date().toISOString() });
+                onUpdateLead(lead.id, { status: prevStageId, _undo: true, lastActivityAt: new Date().toISOString() });
               },
               undoLabel: isAr ? 'تراجع' : 'Undo',
               duration: 6000
@@ -439,6 +445,7 @@ export default function KanbanPipeline({
     if (currentIndex > 0 && currentIndex < PROGRESS_COUNT) {
       const currentStageId = lead.status || 'new';
       const prevStage = PIPELINE_STAGES[currentIndex - 1];
+      if (!stageOk(lead, prevStage.id)) return;
       if (onUpdateLead) {
         onUpdateLead(lead.id, { 
           status: prevStage.id,
@@ -451,7 +458,7 @@ export default function KanbanPipeline({
             'info',
             {
               onUndo: () => {
-                onUpdateLead(lead.id, { status: currentStageId, lastActivityAt: new Date().toISOString() });
+                onUpdateLead(lead.id, { status: currentStageId, _undo: true, lastActivityAt: new Date().toISOString() });
               },
               undoLabel: isAr ? 'تراجع' : 'Undo',
               duration: 6000
@@ -465,6 +472,7 @@ export default function KanbanPipeline({
   // Direct Move to Any Specific Stage
   const handleMoveToSpecificStage = (lead, targetStageId) => {
     if (!lead || !targetStageId || boardColumnOf(lead.status) === targetStageId) return;
+    if (!stageOk(lead, targetStageId)) return;
     if (targetStageId === 'lost') { setLostFor(lead); return; }
     const prevStageId = lead.status || 'new';
     const validation = validateStageTransition(lead, targetStageId, {
@@ -498,7 +506,7 @@ export default function KanbanPipeline({
           'success',
           {
             onUndo: () => {
-              onUpdateLead(lead.id, { status: prevStageId, lastActivityAt: new Date().toISOString() });
+              onUpdateLead(lead.id, { status: prevStageId, _undo: true, lastActivityAt: new Date().toISOString() });
             },
             undoLabel: isAr ? 'تراجع' : 'Undo',
             duration: 6000

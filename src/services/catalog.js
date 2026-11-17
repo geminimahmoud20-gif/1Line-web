@@ -1,5 +1,6 @@
 import { db, auth, isFirebaseConfigured } from '../firebase.js';
-import { canPublishInventoryUser } from './auth.js';
+import { canPublishInventoryUser, getUserClaims } from './auth.js';
+import { isManagerRole } from '../utils/stageGate.js';
 import { approvalStamp, STAFF_IDENTITY_FIELDS } from '../utils/publishApproval.js';
 
 import { collection, addDoc, doc, setDoc, deleteDoc, query, where, onSnapshot, serverTimestamp, writeBatch, deleteField, updateDoc } from 'firebase/firestore';
@@ -71,6 +72,18 @@ export const subscribeToCatalog = (collectionName, callback, { siteOnly = false 
  * Who is saving: the general manager, or a role with «ينشر», publishes; anyone else's save waits
  * for approval (src/utils/publishApproval.js; firestore.rules enforces the same).
  */
+/** May this account move a client back a stage? Managers do; the local password session (no account) is the manager. */
+export const currentLeadManager = async () => {
+  const user = auth?.currentUser || null;
+  if (!user) return true;
+  try {
+    const claims = await getUserClaims(user);
+    return claims.admin === true || isManagerRole(claims.role) || (Array.isArray(claims.perms) && claims.perms.includes('ld.manage'));
+  } catch {
+    return false;
+  }
+};
+
 export const currentApprover = async () => {
   const user = auth?.currentUser || null;
   return { isManager: await canPublishInventoryUser(user) };

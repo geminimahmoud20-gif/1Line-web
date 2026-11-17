@@ -15,6 +15,7 @@ import LostReasonModal from './LostReasonModal';
 import MergeLeadsModal from './MergeLeadsModal';
 import MergeAllModal from './MergeAllModal';
 import { planDuplicateMerges } from '../../utils/dedupePlan';
+import { guardStage } from '../../utils/stageGate';
 import { LEAD_SOURCES, LEAD_SORTS, LOST_REASONS, leadSourceKey, waitingMs, responseSlaMs, escalationLevel, isOverdue, isDueToday, isUnassigned, isStale, localDayKey, getLeadVisitDate, getLeadVisitSlot, isViewingLead, isSellerLead, isAccountLead, isBuyerLead, leadCreatedMs } from '../../utils/crmLeadViews';
 import { useProperties } from '../../context/PropertiesContext';
 import LeadTableRowActions from './LeadTableRowActions';
@@ -344,18 +345,27 @@ export default function LeadsTab({
 
   const handleBulkStatusChange = async (newStatus) => {
     if (!selectedLeadIds.length || !onUpdateLead) return;
+    // The stage lock applies to each client: the ones without a logged outcome stay where they are
+    let moved = 0;
     for (const id of selectedLeadIds) {
       const l = leads.find(x => x.id === id);
-      if (l) {
+      if (l && guardStage(l, { status: newStatus, ...(newStatus === 'lost' ? { lostReason: 'pending' } : {}) }, { role: activeRole })) {
         await onUpdateLead(id, { 
           status: newStatus,
           statusUpdatedAt: new Date().toISOString(),
           lastActivityAt: new Date().toISOString()
         }, l.version);
+        moved += 1;
       }
     }
     const stageNames = Object.fromEntries(STAGE_OPTIONS.map((st) => [st.value, st.ar]));
-    triggerToast?.(isAr ? `تم نقل ${selectedLeadIds.length} عميل إلى مرحلة: ${stageNames[newStatus] || newStatus}` : `Updated status for ${selectedLeadIds.length} leads`, 'success');
+    const skipped = selectedLeadIds.length - moved;
+    triggerToast?.(
+      isAr
+        ? `اتنقل ${moved} عميل إلى: ${stageNames[newStatus] || newStatus}${skipped ? `. ${skipped} ما اتنقلوش: لازم تسجّل نتيجة النشاط لكل واحد الأول (أو الرجوع للمدير).` : ''}`
+        : `Moved ${moved}${skipped ? `, ${skipped} need an activity outcome first` : ''}`,
+      skipped ? 'info' : 'success'
+    );
   };
 
   const handleBulkTempChange = async (newTemp) => {
@@ -906,6 +916,8 @@ export default function LeadsTab({
                           onChange={(e) => {
                             const prevStatus = l.status || 'new';
                             const nextStatus = e.target.value;
+                            // The stage lock: the select snaps back (it is controlled by l.status) when refused
+                            if (!guardStage(l, { status: nextStatus, ...(nextStatus === 'lost' ? { lostReason: 'pending' } : {}) }, { role: activeRole, toast: triggerToast })) return;
                             if (nextStatus === 'lost') { setLostFor(l); return; }
                             if (onUpdateLead) {
                               onUpdateLead(l.id, { 
@@ -920,7 +932,7 @@ export default function LeadsTab({
                                 'info',
                                 {
                                   onUndo: () => {
-                                    onUpdateLead(l.id, { status: prevStatus, lastActivityAt: new Date().toISOString() });
+                                    onUpdateLead(l.id, { status: prevStatus, _undo: true, lastActivityAt: new Date().toISOString() });
                                   },
                                   undoLabel: isAr ? 'تراجع' : 'Undo',
                                   duration: 6000

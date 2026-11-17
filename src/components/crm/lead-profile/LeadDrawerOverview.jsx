@@ -12,15 +12,8 @@ import { useState } from 'react';
 import { answersFacts } from '../../../utils/buyerMatch';
 import { attributionFacts } from '../../../utils/attributionTouches';
 import LeadTasks from './LeadTasks';
-
-// One-tap call results; the text is what goes into the lead's history
-const CALL_OUTCOMES = [
-  { ar: 'لم يرد', en: 'No answer' },
-  { ar: 'طلب مهلة للاتصال', en: 'Call back later' },
-  { ar: 'مهتم ويبحث بجدية', en: 'Interested' },
-  { ar: 'تم تحديد موعد معاينة', en: 'Viewing set' },
-  { ar: 'غير مناسب / ميزانية أقل', en: 'Not a match' }
-];
+import { OUTCOMES, STAGE_RULES, attemptsOf } from '../../../utils/stageGate';
+import { LOST_REASONS } from '../../../utils/crmLeadViews';
 
 export default function LeadDrawerOverview({
   lead,
@@ -47,6 +40,11 @@ export default function LeadDrawerOverview({
   const hasSchedule = scheduledDate && Number.isFinite(scheduledDate.getTime());
   const viewingProp = properties.find(p => p.id === (lead?.viewingPropertyId || details.propertyId));
   const L = (ar, en) => (isAr ? ar : en);
+  // The outcomes this stage offers (utils/stageGate STAGE_RULES), «لم يرد» attempts so far
+  const stageOutcomes = (STAGE_RULES.find((s) => s.id === (lead?.status || 'new'))?.outcomes || []).map((id) => OUTCOMES.find((o) => o.id === id)).filter(Boolean);
+  const attempts = attemptsOf(lead || {});
+  const [pendingNeg, setPendingNeg] = useState('');
+  const [negReason, setNegReason] = useState('');
   // Sending a message counts as the first reply: the "no reply" clock stops
   const markContacted = () => {
     auditContactUse(lead, 'whatsapp');
@@ -184,14 +182,42 @@ export default function LeadDrawerOverview({
       )}
 
       <section className="crm-ld__block" aria-labelledby="crm-ld-call">
-        <h3 id="crm-ld-call" className="crm-ld__h"><Phone size={16} aria-hidden="true" />{L('نتيجة المكالمة', 'Call result')}</h3>
+        <h3 id="crm-ld-call" className="crm-ld__h"><Phone size={16} aria-hidden="true" />{L('نتيجة النشاط', 'Activity outcome')}</h3>
+        <p className="crm-ld__hint">
+          {L('سجّل اللي حصل: ده اللي بيفتح المرحلة اللي بعدها.', 'Log what happened: it unlocks the next stage.')}
+          {attempts > 0 && ` ${L(`آخر ${attempts} محاولة بلا رد.`, `${attempts} tries without an answer.`)}`}
+        </p>
         <div className="crm-ld__row">
-          {CALL_OUTCOMES.map((o) => (
-            <Button key={o.ar} variant="secondary" size="sm" onClick={() => handleLogCall(isAr ? o.ar : o.en)}>
-              {isAr ? o.ar : o.en}
+          {stageOutcomes.map((o) => (
+            <Button
+              key={o.id}
+              variant={o.kind === 'negative' ? 'ghost' : 'secondary'}
+              size="sm"
+              onClick={() => (o.kind === 'negative' ? (setPendingNeg(o.id), setNegReason('')) : handleLogCall(o.id))}
+            >
+              {o.ar}
             </Button>
           ))}
         </div>
+        {pendingNeg && (
+          <form
+            className="crm-ld__form"
+            onSubmit={(e) => { e.preventDefault(); if (!negReason) return; handleLogCall(pendingNeg, { reason: negReason }); setPendingNeg(''); setNegReason(''); }}
+          >
+            <Select
+              label={`${OUTCOMES.find((o) => o.id === pendingNeg)?.ar}: ${L('السبب', 'reason')}`}
+              required
+              value={negReason}
+              onChange={(e) => setNegReason(e.target.value)}
+              placeholder={L('اختار السبب', 'Choose a reason')}
+              options={LOST_REASONS.map((r) => ({ value: r.id, label: r.ar }))}
+            />
+            <div className="crm-ld__row">
+              <Button type="submit" size="sm" disabled={!negReason}>{L('سجّل', 'Log')}</Button>
+              <Button type="button" variant="ghost" size="sm" onClick={() => { setPendingNeg(''); setNegReason(''); }}>{L('إلغاء', 'Cancel')}</Button>
+            </div>
+          </form>
+        )}
       </section>
 
       {egWhatsapp && (

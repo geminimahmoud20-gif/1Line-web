@@ -14,7 +14,9 @@ import { validateStageTransition } from '../../services/stateMachineEngine';
 import StageDeliverableModal from './StageDeliverableModal';
 import { formatPhoneNumber } from '../../utils/crmNoteSanitizer';
 import { auditContactUse } from '../../utils/contactAudit';
-import { leadScore, LEAD_SCORE_HIGH, isSellerLead, firstContactPatch } from '../../utils/crmLeadViews';
+import { leadScore, LEAD_SCORE_HIGH, isSellerLead, firstContactPatch, LOST_REASONS } from '../../utils/crmLeadViews';
+import { outcomeEntry, outcomeSave, outcomeById, guardStage } from '../../utils/stageGate';
+import { useAuth } from '../../context/AuthContext';
 import { rankAndNominateProperties } from '../../services/matchingEngineV2';
 import NotesThread from './NotesThread';
 import { Drawer, Button, IconButton, Badge, Chip, Tabs, Textarea, EmptyState, useConfirm } from '../ui';
@@ -57,6 +59,7 @@ export default function LeadQuickDrawer({
   const [blockerModal, setBlockerModal] = useState({ isOpen: false, blockerInfo: null });
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'matching' | 'team' | 'timeline'
   const confirm = useConfirm();
+  const { currentUser } = useAuth();
 
   // Dirty State (Unsaved Changes) Protection
   const hasUnsavedChanges = Boolean(newNote.trim() || (showViewingForm && (viewingDateTime || selectedViewingPropId)));
@@ -136,6 +139,8 @@ export default function LeadQuickDrawer({
 
   const handleUpdateStatus = (newStatus, lostFields) => {
     if (!onUpdateLead) return;
+    // The stage lock: log what happened first (and only a manager goes back a stage)
+    if (!guardStage(lead, { status: newStatus, ...(newStatus === 'lost' ? { lostReason: lostFields?.lostReason || 'pending' } : {}) }, { role: activeRole, toast: triggerToast })) return;
     // A lost deal needs a reason first
     if (newStatus === 'lost' && !lostFields) { setLostOpen(true); return; }
 
@@ -179,25 +184,25 @@ export default function LeadQuickDrawer({
     if (patch && onUpdateLead) onUpdateLead(lead.id, patch, lead.version);
   };
 
-  // Quick Call Outcome Logger
-  const handleLogCall = (outcome) => {
+  // Activity outcome (utils/stageGate): one tap logs what happened. The stage lock reads it, a negative one carries
+  // its reason, «لم يرد» counts the attempts, and a positive one moves a brand-new client to «مؤهل».
+  const handleLogCall = (outcomeId, extra = {}) => {
     if (!onUpdateLead) return;
+    const me = { uid: currentUser?.uid, name: currentUser?.displayName || currentUser?.name || currentUser?.email?.split('@')[0] || '' };
+    const entry = outcomeEntry(outcomeId, me, extra);
+    if (!entry) {
+      triggerToast?.(isAr ? 'النتيجة السلبية لازم يتسجّل معاها السبب.' : 'A negative outcome needs a reason.', 'error');
+      return;
+    }
+    const patch = outcomeSave(lead, entry);
+    const label = outcomeById(outcomeId)?.ar || outcomeId;
+    const reasonLabel = LOST_REASONS.find((r) => r.id === entry.reason)?.ar;
     const dateStr = new Date().toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US');
     const timeStr = new Date().toLocaleTimeString(isAr ? 'ar-EG-u-nu-latn' : 'en-US', { hour: '2-digit', minute: '2-digit' });
-    const callEntry = `[مكالمة ${dateStr} ${timeStr}]: ${outcome}`;
-    const updatedNotes = lead.notes ? `${callEntry}\n${lead.notes}` : callEntry;
-
-    const nextStatus = outcome.includes('معاينة') ? 'site_visit' : (lead.status === 'new' ? 'contacted' : lead.status);
-
-    onUpdateLead(lead.id, {
-      notes: updatedNotes,
-      status: nextStatus,
-      lastContactedAt: new Date().toISOString(),
-      lastActivityAt: new Date().toISOString()
-    }, lead.version);
-
-    triggerToast?.(isAr ? `تم تسجيل المكالمة: "${outcome}"` : `Call logged: ${outcome}`, 'success');
-    trackEvent('crm_call_logged', { leadId: lead.id, outcome });
+    const callEntry = `[نتيجة ${dateStr} ${timeStr}]: ${label}${patch.outcomeAttempts > 1 && outcomeId === 'no_answer' ? ` · محاولة ${patch.outcomeAttempts}` : ''}${reasonLabel ? ` — ${reasonLabel}` : ''}`;
+    onUpdateLead(lead.id, { ...patch, notes: lead.notes ? `${callEntry}\n${lead.notes}` : callEntry }, lead.version);
+    triggerToast?.(isAr ? `اتسجّلت النتيجة: ${label}` : `Outcome logged: ${label}`, 'success');
+    trackEvent('crm_call_logged', { leadId: lead.id, outcome: outcomeId });
   };
 
   // Add Custom Note

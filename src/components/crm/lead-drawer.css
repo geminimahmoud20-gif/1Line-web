@@ -99,3 +99,5 @@
   .crm-ld__fold { padding: 0; }
   .crm-ld__fold > :not(summary) { margin: 0 var(--ui-s-3) var(--ui-s-3); }
 }
+
+.crm-ld__stages::after { content: ''; flex: 0 0 var(--ui-s-3); }
