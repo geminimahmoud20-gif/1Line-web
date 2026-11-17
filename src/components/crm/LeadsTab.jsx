@@ -729,9 +729,9 @@ export default function LeadsTab({
             {visibleColumns.requirements && <th>{isAr ? 'المواصفات والميزانية' : 'Requirements'}</th>}
             {leadFilter === 'viewing_request' && <th style={{ minWidth: '150px' }}>{isAr ? 'الميعاد المطلوب' : 'Requested Schedule'}</th>}
             {visibleColumns.score && <th>{isAr ? 'الجدية والحرارة' : 'Score & Temp'}</th>}
-            {visibleColumns.status && <th>{isAr ? 'الحالة' : 'Status'}</th>}
-            {visibleColumns.lastOutcome && <th>{isAr ? 'آخر نتيجة' : 'Last outcome'}</th>}
-            {visibleColumns.nextAction && <th>{isAr ? 'المتابعة التالية' : 'Next follow-up'}</th>}
+            {visibleColumns.status && <th className="crm-th--status">{isAr ? 'الحالة' : 'Status'}</th>}
+            {visibleColumns.lastOutcome && <th className="crm-th--outcome">{isAr ? 'آخر نتيجة' : 'Last outcome'}</th>}
+            {visibleColumns.nextAction && <th className="crm-th--next">{isAr ? 'المتابعة التالية' : 'Next follow-up'}</th>}
             {visibleColumns.agent && <th>{isAr ? 'المسؤول' : 'Agent'}</th>}
             <th>{isAr ? 'الإجراءات' : 'Actions'}</th>
           </tr>
