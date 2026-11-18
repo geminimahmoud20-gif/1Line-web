@@ -457,7 +457,7 @@ export function filterLeads(leads = [], opts = {}) {
   const {
     myDealsOnly = false, activeRole, agentName, leadFilter = 'all',
     temperatureFilter = 'all', areaFilter = 'all', areaIds = null, sourceFilter = 'all', dateFilter = 'all', searchQuery = '',
-    today, now = Date.now(), duplicateIds = null, ownerFilter = 'all'
+    today, now = Date.now(), duplicateIds = null, ownerFilter = 'all', situationById = null
   } = opts;
   const q = searchQuery.trim().toLowerCase();
   const todayKey = today || localDayKey(now);
@@ -507,6 +507,10 @@ export function filterLeads(leads = [], opts = {}) {
       if (!isAccountLead(l)) return false;
     } else if (leadFilter === 'buyer') {
       if (!isBuyerLead(l)) return false;
+    } else if (leadFilter === 'converted') {
+      if (situationById?.get(l.id) !== 'converted') return false;
+    } else if (leadFilter === 'not_fit') {
+      if (situationById?.get(l.id) !== 'not_fit') return false;
     } else if (leadFilter !== 'all' && l.type !== leadFilter) {
       return false;
     }
